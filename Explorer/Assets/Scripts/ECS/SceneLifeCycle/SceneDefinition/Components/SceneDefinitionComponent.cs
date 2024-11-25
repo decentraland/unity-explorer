@@ -14,30 +14,24 @@ namespace ECS.SceneLifeCycle.SceneDefinition
     {
         public SceneEntityDefinition Definition { get; }
         public IReadOnlyList<Vector2Int> Parcels { get; }
-        public IReadOnlyList<ParcelMathHelper.ParcelCorners> ParcelsCorners { get; }
         public IpfsPath IpfsPath { get; }
         public bool IsEmpty { get; }
         public bool IsSDK7 { get; }
         public ParcelMathHelper.SceneGeometry SceneGeometry { get; }
         public bool IsPortableExperience { get; }
 
-        public int InternalJobIndex { get; set; }
-
         public SceneDefinitionComponent(
             SceneEntityDefinition definition,
             IReadOnlyList<Vector2Int> parcels,
-            IReadOnlyList<ParcelMathHelper.ParcelCorners> parcelsCorners,
             ParcelMathHelper.SceneGeometry sceneGeometry,
             IpfsPath ipfsPath, bool isEmpty, bool isSDK7, bool isPortableExperience)
         {
             Definition = definition;
             Parcels = parcels;
-            ParcelsCorners = parcelsCorners;
             IpfsPath = ipfsPath;
             IsEmpty = isEmpty;
             IsSDK7 = isSDK7;
             SceneGeometry = sceneGeometry;
-            InternalJobIndex = -1;
             IsPortableExperience = isPortableExperience;
         }
     }
@@ -56,8 +50,6 @@ namespace ECS.SceneLifeCycle.SceneDefinition
                 minZ: -PORTABLE_EXPERIENCE_MAX_VALUES,
                 maxZ: PORTABLE_EXPERIENCE_MAX_VALUES),
             PORTABLE_EXPERIENCE_MAX_HEIGHT);
-        //PX don't care about parcel corners as they work on all the map.
-        private static readonly IReadOnlyList<ParcelMathHelper.ParcelCorners> PORTABLE_EXPERIENCES_PARCEL_CORNERS = new List<ParcelMathHelper.ParcelCorners>();
 
         public static SceneDefinitionComponent CreateFromDefinition(SceneEntityDefinition definition, IpfsPath ipfsPath, bool isPortableExperience = false) =>
             isPortableExperience ?
@@ -68,7 +60,6 @@ namespace ECS.SceneLifeCycle.SceneDefinition
             new (
                 definition,
                 parcels: definition.metadata.scene.DecodedParcels,
-                PORTABLE_EXPERIENCES_PARCEL_CORNERS,
                 PORTABLE_EXPERIENCES_SCENE_GEOMETRY,
                 ipfsPath,
                 isEmpty: false,
@@ -112,13 +103,12 @@ namespace ECS.SceneLifeCycle.SceneDefinition
             bool isSDK7,
             bool isPortableExperience)
         {
-            var parcelCorners = parcels.Select(ParcelMathHelper.CalculateCorners).ToList();
-            ParcelMathHelper.SceneGeometry sceneGeometry = ParcelMathHelper.CreateSceneGeometry(parcelCorners, definition.metadata.scene.DecodedBase);
+            ParcelMathHelper.SceneGeometry sceneGeometry = ParcelMathHelper.CreateSceneGeometry(parcels,
+                definition.metadata.scene.DecodedBase);
 
             return new SceneDefinitionComponent(
                 definition,
                 parcels,
-                parcelCorners,
                 sceneGeometry,
                 ipfsPath,
                 isEmpty,

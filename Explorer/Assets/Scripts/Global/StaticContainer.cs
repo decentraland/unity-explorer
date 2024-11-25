@@ -33,7 +33,6 @@ using DCL.WebRequests.Analytics;
 using ECS;
 using ECS.Prioritization;
 using ECS.SceneLifeCycle;
-using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.Reporting;
 using Global.AppArgs;
 using SceneRunner.Mapping;
@@ -60,7 +59,6 @@ namespace Global
         public readonly ObjectProxy<AvatarBase> MainPlayerAvatarBaseProxy = new ();
         public readonly ObjectProxy<IRoomHub> RoomHubProxy = new ();
         public readonly RealmData RealmData = new ();
-        public readonly PartitionDataContainer PartitionDataContainer = new ();
 
         private ProvidedInstance<CharacterObject> characterObject;
         private ProvidedAsset<PartitionSettingsAsset> partitionSettings;

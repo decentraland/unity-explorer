@@ -16,6 +16,7 @@ namespace Global
 {
     /// <summary>
     ///     Registers all components that should exist in the ECS
+    ///     refers to Protobuf components used for JS<->Managed communication
     /// </summary>
     public struct ComponentsContainer
     {
@@ -154,12 +155,8 @@ namespace Global
         private static IEnumerable<(Type type, IComponentPool pool)> GetMiscComponents()
         {
             // Partition Component
-            yield return (typeof(PartitionComponent), new ComponentPool.WithDefaultCtor<PartitionComponent>(defaultCapacity: 2000, onRelease: p =>
-            {
-                p.IsBehind = false;
-                p.Bucket = byte.MaxValue;
-                p.RawSqrDistance = 0;
-            }));
+            yield return (typeof(PartitionComponent),
+                new ComponentPool.WithDefaultCtor<PartitionComponent>(defaultCapacity: 256));
         }
     }
 }

@@ -104,6 +104,13 @@ namespace Global.Dynamic
 
             World world = World.Create();
 
+            World.SharedJobScheduler = new Schedulers.JobScheduler(new Schedulers.JobScheduler.Config
+            {
+#if UNITY_EDITOR
+                StrictAllocationMode = true,
+#endif
+            });
+
             bootstrapContainer = await BootstrapContainer.CreateAsync(debugSettings, sceneLoaderSettings: settings,
                 globalPluginSettingsContainer, launchSettings,
                 applicationParametersParser,

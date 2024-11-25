@@ -1,17 +1,14 @@
 ﻿using Arch.Core;
-using Arch.System;
 using Arch.SystemGroups;
 using DCL.Optimization.Pools;
 using ECS.Abstract;
 using ECS.Prioritization;
 using ECS.Prioritization.Components;
-using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
-using Unity.Collections;
-using Unity.Jobs;
+using System.Collections.Generic;
 using UnityEngine;
-using static ECS.Prioritization.ScenesPartitioningUtils;
-using static Utility.ParcelMathHelper;
+using UnityEngine.Profiling;
+using Utility;
 
 namespace ECS.SceneLifeCycle.Systems
 {
@@ -26,144 +23,125 @@ namespace ECS.SceneLifeCycle.Systems
     [UpdateInGroup(typeof(RealmGroup))]
     [UpdateAfter(typeof(LoadFixedPointersSystem))]
     [UpdateBefore(typeof(ResolveStaticPointersSystem))]
-    public partial class PartitionSceneEntitiesSystem : BaseUnityLoopSystem
+    public sealed partial class PartitionSceneEntitiesSystem : BaseUnityLoopSystem
     {
-        private const int DEPLOYED_SCENES_LIMIT = 90000; // 300x300 scenes (without empty)
-
         private readonly IComponentPool<PartitionComponent> partitionComponentPool;
         private readonly IReadOnlyCameraSamplingData readOnlyCameraSamplingData;
+        private readonly IPartitionSettings partitionSettings;
         private readonly IRealmPartitionSettings realmPartitionSettings;
 
-        private readonly byte emptyScenePartition;
-
-        internal readonly PartitionDataContainer partitionDataContainer;
-
-        private JobHandle partitionJobHandle;
-        private bool isRunningJob;
+        private readonly QueryDescription newScenesQuery;
+        private readonly QueryDescription existingScenesQuery;
 
         internal PartitionSceneEntitiesSystem(World world,
             IComponentPool<PartitionComponent> partitionComponentPool,
             IPartitionSettings partitionSettings,
             IReadOnlyCameraSamplingData readOnlyCameraSamplingData,
-            PartitionDataContainer partitionDataContainer,
             IRealmPartitionSettings realmPartitionSettings) : base(world)
         {
             this.partitionComponentPool = partitionComponentPool;
             this.readOnlyCameraSamplingData = readOnlyCameraSamplingData;
-            this.partitionDataContainer = partitionDataContainer;
             this.realmPartitionSettings = realmPartitionSettings;
+            this.partitionSettings = partitionSettings;
 
+            newScenesQuery = new QueryDescription()
+                            .WithAll<SceneDefinitionComponent>()
+                            .WithNone<PartitionComponent>();
 
-            partitionDataContainer.Initialize(DEPLOYED_SCENES_LIMIT, partitionSettings.SqrDistanceBuckets, partitionSettings);
-            emptyScenePartition = (byte)(partitionSettings.SqrDistanceBuckets.Count - 1);
-
-
-        }
-
-        public override void Dispose()
-        {
-            partitionJobHandle.Complete();
-            partitionDataContainer.Dispose();
-        }
-
-        internal void ForceCompleteJob()
-        {
-            partitionJobHandle.Complete();
+            existingScenesQuery = new QueryDescription()
+               .WithAll<SceneDefinitionComponent, PartitionComponent>();
         }
 
         protected override void Update(float t)
         {
-            // once the job is completed, we query and update all partitions
-            if (isRunningJob && partitionJobHandle.IsCompleted)
-            {
-                partitionJobHandle.Complete();
-                isRunningJob = false;
-                PartitionExistingEntityQuery(World);
-            }
+            World.Add<PartitionComponent>(in newScenesQuery);
 
-            if (!isRunningJob)
-            {
-                PartitionNewEntityQuery(World);
-            }
+            float unloadingDistance = (Mathf.Max(1, realmPartitionSettings.UnloadingDistanceToleranceInParcels)
+                                       + realmPartitionSettings.MaxLoadingDistanceInParcels)
+                                      * ParcelMathHelper.PARCEL_SIZE;
 
-            // Repartition if camera transform is qualified and the last job has already been completed
-            if (readOnlyCameraSamplingData.IsDirty && !isRunningJob && partitionDataContainer.CurrentPartitionIndex > 0)
+            PartitionScenes partitionScenes = new ()
             {
-                float unloadingDistance = (Mathf.Max(1, realmPartitionSettings.UnloadingDistanceToleranceInParcels) + realmPartitionSettings.MaxLoadingDistanceInParcels)
-                                          * PARCEL_SIZE;
-                float unloadingSqrDistance = unloadingDistance * unloadingDistance;
-                partitionJobHandle = partitionDataContainer.ScheduleJob(readOnlyCameraSamplingData, unloadingSqrDistance);
-                isRunningJob = true;
-            }
-        }
+                CameraPosition = readOnlyCameraSamplingData.Position,
+                CameraForward = readOnlyCameraSamplingData.Forward,
+                CameraIsDirty = readOnlyCameraSamplingData.IsDirty,
+                PartitionPool = partitionComponentPool,
+                UnloadingSqrDistance = unloadingDistance * unloadingDistance,
 
-        [Query]
-        [None(typeof(PartitionComponent))]
-        private void PartitionNewEntity(in Entity entity, ref SceneDefinitionComponent definition)
-        {
-            // If we partition empty scene then their number can grow infinitely as we don't have boundaries
-            if (definition.IsEmpty)
-            {
-                PartitionComponent partitionComponent = partitionComponentPool.Get();
-                // some default values to not break other systems
-                partitionComponent.Bucket = emptyScenePartition;
-                World.Add(entity, partitionComponent);
-                return;
-            }
-
-            if (definition.IsPortableExperience)
-            {
-                PartitionComponent partitionComponent = partitionComponentPool.Get();
-                partitionComponent.OutOfRange = false;
-                partitionComponent.Bucket = 0;
-                partitionComponent.IsBehind = false;
-                partitionComponent.RawSqrDistance = 1;
-                partitionComponent.IsDirty = true;
-                World.Add(entity, partitionComponent);
-                return;
-            }
-
-            if (definition.InternalJobIndex < 0)
-            {
-                ScheduleSceneDefinition(ref definition);
-            }
-            else
-            {
-                PartitionComponent partitionComponent = partitionComponentPool.Get();
-                partitionDataContainer.SetPartitionComponentData(definition.InternalJobIndex, ref partitionComponent);
-                World.Add(entity, partitionComponent);
-            }
-        }
-
-        protected void ScheduleSceneDefinition(ref SceneDefinitionComponent definition)
-        {
-            AddCorners(ref definition);
-
-            var partitionData = new PartitionData
-            {
-                IsDirty = readOnlyCameraSamplingData.IsDirty, RawSqrDistance = -1
+                // PartitionSettingsAsset.SqrDistanceBuckets is a List, so just cast to that so we don't
+                // waste time on virtual calls when accessing its elements.
+                DistanceBuckets = (List<int>)partitionSettings.SqrDistanceBuckets,
             };
-            partitionDataContainer.SetPartitionData(partitionData);
+
+            Profiler.BeginSample(nameof(PartitionScenes));
+
+            World.InlineQuery<PartitionScenes, SceneDefinitionComponent, PartitionComponent>(
+                in existingScenesQuery, ref partitionScenes);
+
+            Profiler.EndSample();
         }
 
-        protected void AddCorners(ref SceneDefinitionComponent definition)
+        private struct PartitionScenes : IForEach<SceneDefinitionComponent, PartitionComponent>
         {
-            var corners = new NativeArray<ParcelCorners>(definition.ParcelsCorners.Count, Allocator.Persistent);
+            public Vector3 CameraPosition;
+            public Vector3 CameraForward;
+            public bool CameraIsDirty;
+            public List<int> DistanceBuckets;
+            public IComponentPool<PartitionComponent> PartitionPool;
+            public float UnloadingSqrDistance;
 
-            for (var i = 0; i < definition.ParcelsCorners.Count; i++)
-                corners[i] = definition.ParcelsCorners[i];
+            public void Update(ref SceneDefinitionComponent definition, ref PartitionComponent partition)
+            {
+                if (partition != null && !CameraIsDirty)
+                    return;
+                else if (partition == null)
+                    partition = PartitionPool.Get();
 
-            partitionDataContainer.AddCorners(new ParcelCornersData(in corners));
-            definition.InternalJobIndex = partitionDataContainer.CurrentPartitionIndex;
+                if (definition.IsPortableExperience)
+                {
+                    partition.OutOfRange = false;
+                    partition.Bucket = 0;
+                    partition.IsBehind = false;
+                    partition.RawSqrDistance = 0f;
+                    partition.IsDirty = true;
+                    return;
+                }
+
+                ParcelMathHelper.SceneCircumscribedPlanes sceneBounds2d = definition.SceneGeometry.CircumscribedPlanes;
+                Vector3 min = new (sceneBounds2d.MinX, 0f, sceneBounds2d.MinZ);
+                Vector3 max = new (sceneBounds2d.MaxX, definition.SceneGeometry.Height, sceneBounds2d.MaxZ);
+
+                Bounds sceneBounds = new ();
+                sceneBounds.SetMinMax(min, max);
+
+                float sqrDistance = sceneBounds.SqrDistance(CameraPosition);
+
+                var bucketIndex = 0;
+
+                while (bucketIndex < DistanceBuckets.Count && sqrDistance >= DistanceBuckets[bucketIndex])
+                    bucketIndex++;
+
+                min -= CameraPosition;
+                max -= CameraPosition;
+
+                bool isBehind = sqrDistance > 0f
+                                && Vector3.Dot(CameraForward, new Vector3(min.x, min.y, min.z)) < 0f
+                                && Vector3.Dot(CameraForward, new Vector3(min.x, min.y, max.z)) < 0f
+                                && Vector3.Dot(CameraForward, new Vector3(min.x, max.y, min.z)) < 0f
+                                && Vector3.Dot(CameraForward, new Vector3(min.x, max.y, max.z)) < 0f
+                                && Vector3.Dot(CameraForward, new Vector3(max.x, min.y, min.z)) < 0f
+                                && Vector3.Dot(CameraForward, new Vector3(max.x, min.y, max.z)) < 0f
+                                && Vector3.Dot(CameraForward, new Vector3(max.x, max.y, min.z)) < 0f
+                                && Vector3.Dot(CameraForward, new Vector3(max.x, max.y, max.z)) < 0f;
+
+                bool isDirty = partition.IsBehind != isBehind || partition.Bucket != bucketIndex;
+
+                partition.Bucket = (byte)bucketIndex;
+                partition.IsBehind = isBehind;
+                partition.IsDirty = isDirty;
+                partition.OutOfRange = sqrDistance > UnloadingSqrDistance;
+                partition.RawSqrDistance = sqrDistance;
+            }
         }
-
-        [Query]
-        [None(typeof(PortableExperienceComponent))]
-        private void PartitionExistingEntity(ref SceneDefinitionComponent definition, ref PartitionComponent partitionComponent)
-        {
-            if (definition.InternalJobIndex < 0) return;
-            partitionDataContainer.SetPartitionComponentData(definition.InternalJobIndex, ref partitionComponent);
-        }
-
     }
 }
