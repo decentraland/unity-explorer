@@ -7,6 +7,8 @@ using System.Collections.Generic;
 using System.Linq;
 using SceneRunner.Scene;
 using System.Text.RegularExpressions;
+using DCL.FeatureFlags;
+using DCL.UserInAppInitializationFlow.StartupOperations;
 using Unity.Mathematics;
 using UnityEngine;
 
@@ -36,8 +38,6 @@ namespace Global.Dynamic
 
         [SerializeField] private string[] portableExperiencesEnsToLoadAtGameStart;
 
-        public Vector2Int TargetScene => targetScene;
-
         private bool isLocalSceneDevelopmentRealm;
         public bool IsLocalSceneDevelopmentRealm => isLocalSceneDevelopmentRealm
                                                     // This is for development purposes only,
@@ -49,7 +49,8 @@ namespace Global.Dynamic
             if (predefinedScenes.enabled)
                 return predefinedScenes.parcels.Select(p => new int2(p.x, p.y)).ToList();
 
-            return IsLocalSceneDevelopmentRealm ? new List<int2>(){new int2(TargetScene.x, TargetScene.y)}
+            return IsLocalSceneDevelopmentRealm
+                ? new List<int2> { new(targetScene.x, targetScene.y) }
                 : Array.Empty<int2>();
         }
 
@@ -131,6 +132,13 @@ namespace Global.Dynamic
             isLocalSceneDevelopmentRealm = true;
         }
 
+        private void ParsePositionAppParameter(string targetPositionParam)
+        {
+            if (!RealmHelper.TryParseParcelFromString(targetPositionParam, out var targetPosition)) return;
+
+            targetScene = targetPosition;
+        }
+
         private bool ParseLocalSceneParameter(string localSceneParameter)
         {
             if (string.IsNullOrEmpty(localSceneParameter)) return false;
@@ -150,5 +158,35 @@ namespace Global.Dynamic
         private bool IsRealmAValidUrl(string realmParam) =>
             Uri.TryCreate(realmParam, UriKind.Absolute, out Uri? uriResult)
             && (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps);
+
+        public Vector2Int GetStartParcel(IAppArgs appArgs, bool isLocalSceneDevelopment,
+            FeatureFlagsCache featureFlagsCache)
+        {
+            string? parcelToTeleportOverride = null;
+
+            //First we need to check if the user has passed a position as an argument. This is the case used on local scene development from creator hub/scene args
+            //Check https://github.com/decentraland/js-sdk-toolchain/blob/2c002ca9e6feb98a771337190db2945e013d7b93/packages/%40dcl/sdk-commands/src/commands/start/explorer-alpha.ts#L29
+            if (appArgs.TryGetValue(AppArgsFlags.POSITION, out parcelToTeleportOverride))
+            {
+                ParsePositionAppParameter(parcelToTeleportOverride);
+                return targetScene;
+            }
+
+            //If we are in editor, and its LSD, we want to ignore the feature flag
+            if (isLocalSceneDevelopment)
+                return targetScene;
+
+            //If not, we check the feature flag usage
+            var featureFlagOverride =
+                featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.GENESIS_STARTING_PARCEL) &&
+                featureFlagsCache.Configuration.TryGetTextPayload(FeatureFlagsStrings.GENESIS_STARTING_PARCEL,
+                    FeatureFlagsStrings.STRING_VARIANT, out parcelToTeleportOverride) &&
+                parcelToTeleportOverride != null;
+
+            if (featureFlagOverride)
+                ParsePositionAppParameter(parcelToTeleportOverride);
+
+            return targetScene;
+        }
     }
 }

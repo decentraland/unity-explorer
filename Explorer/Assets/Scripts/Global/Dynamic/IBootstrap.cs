@@ -11,6 +11,7 @@ using DCL.Web3.Identities;
 using Global.AppArgs;
 using SceneRunner.Debugging;
 using System.Threading;
+using DCL.FeatureFlags;
 using UnityEngine.UIElements;
 using Utility;
 
@@ -44,5 +45,6 @@ namespace Global.Dynamic
         UniTask UserInitializationAsync(DynamicWorldContainer dynamicWorldContainer, GlobalWorld globalWorld, Entity playerEntity, ISplashScreen splashScreen, CancellationToken ct);
 
         UniTask LoadStartingRealmAsync(DynamicWorldContainer dynamicWorldContainer, CancellationToken ct);
+        void SetupInitialParcel(bool isLocalSceneDevelopment, FeatureFlagsCache featureFlagsCache);
     }
 }

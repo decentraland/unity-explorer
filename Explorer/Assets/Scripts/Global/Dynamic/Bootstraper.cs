@@ -67,7 +67,6 @@ namespace Global.Dynamic
             cursorRoot.EnsureNotNull();
 
             startingRealm = URLDomain.FromString(realmLaunchSettings.GetStartingRealm(decentralandUrlsSource));
-            startingParcel = realmLaunchSettings.TargetScene;
 
             // Hides the debug UI during the initial flow
             debugUiRoot.rootVisualElement.EnsureNotNull().style.display = DisplayStyle.None;
@@ -219,6 +218,11 @@ namespace Global.Dynamic
                 throw new InvalidOperationException("Starting realm is not set");
 
             await dynamicWorldContainer.RealmController.SetRealmAsync(startingRealm.Value, ct);
+        }
+
+        public void SetupInitialParcel(bool isLocalSceneDevelopment, FeatureFlagsCache featureFlagsCache)
+        {
+            startingParcel = realmLaunchSettings.GetStartParcel(appArgs, isLocalSceneDevelopment, featureFlagsCache);
         }
 
         public async UniTask UserInitializationAsync(DynamicWorldContainer dynamicWorldContainer,
