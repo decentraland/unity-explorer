@@ -1,4 +1,4 @@
-namespace TexturesFuseComms;
+namespace TexturesFuseComms.Hosts;
 
 public class Host
 {
