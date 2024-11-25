@@ -9,8 +9,10 @@ using DCL.Diagnostics;
 using DCL.Input;
 using DCL.Input.Component;
 using DCL.InWorldCamera.ScreencaptureCamera.Settings;
+using DCL.InWorldCamera.ScreencaptureCamera.UI;
 using ECS.Abstract;
 using UnityEngine;
+using UnityEngine.UI;
 using static DCL.Input.Component.InputMapComponent;
 
 namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
@@ -25,6 +27,7 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
 
         private readonly InWorldCameraTransitionSettings settings;
         private readonly DCLInput.InWorldCameraActions inputSchema;
+        private readonly InWorldCameraController hudController;
         private readonly GameObject hud;
         private readonly CharacterController followTarget;
 
@@ -34,11 +37,11 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
         private ICinemachinePreset cinemachinePreset;
         private CinemachineVirtualCamera inWorldVirtualCamera;
 
-        public ToggleInWorldCameraActivitySystem(World world, InWorldCameraTransitionSettings settings, DCLInput.InWorldCameraActions inputSchema, GameObject hud, CharacterController followTarget) : base(world)
+        public ToggleInWorldCameraActivitySystem(World world, InWorldCameraTransitionSettings settings, DCLInput.InWorldCameraActions inputSchema, InWorldCameraController hudController, CharacterController followTarget) : base(world)
         {
             this.settings = settings;
             this.inputSchema = inputSchema;
-            this.hud = hud;
+            this.hudController = hudController;
             this.followTarget = followTarget;
 
             behindUpOffset = Vector3.up * settings.BehindUpOffset;
@@ -60,12 +63,17 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
             if (World.Has<InWorldCamera>(camera) && BlendingHasFinished())
                 SetFollowTarget();
 
-            if (inputSchema.ToggleInWorld!.triggered)
+            if (inputSchema.ToggleInWorld!.triggered) // Keyboard shortcut trigger
             {
                 if (World.Has<InWorldCamera>(camera))
                     DisableCamera();
                 else
                     EnableCamera();
+            }
+            else if (World.Has<EnableInWorldCameraUIRequest>(camera)) // UI trigger
+            {
+                EnableCamera();
+                World.Remove<EnableInWorldCameraUIRequest>(camera);
             }
 
             bool BlendingHasFinished() =>
@@ -93,7 +101,7 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
 
         private void DisableCamera()
         {
-            hud.SetActive(false); // TODO (Vit):Temporary solution, will be replaced by MVC
+            hudController.Hide();
 
             SwitchToThirdPersonCamera();
             SwitchCameraInput(to: Kind.PLAYER);
@@ -103,7 +111,7 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
 
         private void EnableCamera()
         {
-            hud.SetActive(true); // TODO (Vit):Temporary solution, will be replaced by MVC
+            hudController.Show();
 
             SwitchToInWorldCamera();
             SwitchCameraInput(to: Kind.IN_WORLD_CAMERA);

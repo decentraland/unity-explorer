@@ -3,6 +3,9 @@
 namespace DCL.InWorldCamera.ScreencaptureCamera
 {
     public struct InWorldCamera { }
+
+    public struct EnableInWorldCameraUIRequest { }
+
     public struct CameraTarget { public CharacterController Value; }
 
     public struct InWorldCameraInput

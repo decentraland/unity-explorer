@@ -649,7 +649,8 @@ namespace Global.Dynamic
                     staticContainer.WebRequestsContainer.WebRequestController,
                     bootstrapContainer.DecentralandUrlsSource,
                     container.MvcManager,
-                    mainUIView.SidebarView.InWorldCameraButton));
+                    mainUIView.SidebarView.InWorldCameraButton,
+                    globalWorld));
 
             if (dynamicWorldParams.EnableAnalytics)
                 globalPlugins.Add(new AnalyticsPlugin(
