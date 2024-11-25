@@ -5,6 +5,7 @@ using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using DCL.InWorldCamera.ReelActions;
 using DCL.Profiles;
 using DCL.WebRequests;
+using MVC;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Threading;
@@ -25,12 +26,13 @@ namespace DCL.InWorldCamera.PhotoDetail
         public PhotoDetailInfoController(PhotoDetailInfoView view,
             ICameraReelStorageService cameraReelStorageService,
             IWebRequestController webRequestController,
-            IProfileRepository profileRepository)
+            IProfileRepository profileRepository,
+            IMVCManager mvcManager)
         {
             this.view = view;
             this.cameraReelStorageService = cameraReelStorageService;
 
-            this.photoDetailPoolManager = new PhotoDetailPoolManager(view.visiblePersonViewPrefab, view.unusedVisiblePersonViewContainer, webRequestController, profileRepository, VISIBLE_PERSON_DEFAULT_POOL_SIZE, VISIBLE_PERSON_MAX_POOL_CAPACITY);
+            this.photoDetailPoolManager = new PhotoDetailPoolManager(view.visiblePersonViewPrefab, view.unusedVisiblePersonViewContainer, webRequestController, profileRepository, mvcManager, VISIBLE_PERSON_DEFAULT_POOL_SIZE, VISIBLE_PERSON_MAX_POOL_CAPACITY);
         }
 
         public async UniTask ShowPhotoDetailInfoAsync(string reelId, CancellationToken ct)

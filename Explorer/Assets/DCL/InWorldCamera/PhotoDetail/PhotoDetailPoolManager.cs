@@ -1,5 +1,6 @@
 using DCL.Profiles;
 using DCL.WebRequests;
+using MVC;
 using UnityEngine;
 using UnityEngine.Pool;
 
@@ -14,6 +15,7 @@ namespace DCL.InWorldCamera.PhotoDetail
             GameObject unusedVisiblePersonPoolObjectParent,
             IWebRequestController webRequestController,
             IProfileRepository profileRepository,
+            IMVCManager mvcManager,
             int visiblePersonDefaultCapacity,
             int visiblePersonMaxSize)
         {
@@ -21,7 +23,7 @@ namespace DCL.InWorldCamera.PhotoDetail
                 () =>
                 {
                     VisiblePersonView view = GameObject.Instantiate(visiblePersonPrefab);
-                    return new VisiblePersonController(view, webRequestController, profileRepository);
+                    return new VisiblePersonController(view, webRequestController, profileRepository, mvcManager);
                 },
                 visiblePerson => visiblePerson.view.gameObject.SetActive(true),
                 visiblePerson =>

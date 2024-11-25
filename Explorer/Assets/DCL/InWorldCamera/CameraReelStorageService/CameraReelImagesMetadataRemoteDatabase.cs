@@ -43,7 +43,7 @@ namespace DCL.InWorldCamera.CameraReelStorageService
 
         public async UniTask<CameraReelResponse> GetScreenshotsMetadataAsync(string uuid, CancellationToken ct)
         {
-            URLAddress url = urlBuilder.AppendDomain(userDomain)
+            URLAddress url = urlBuilder.AppendDomain(imageDomain)
                                        .AppendSubDirectory(URLSubdirectory.FromString(uuid))
                                        .AppendSubDirectory(URLSubdirectory.FromString("metadata"))
                                        .Build();
