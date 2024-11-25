@@ -292,10 +292,6 @@ MonoBehaviour:
       Severity: 0
     - Category: PLAYER_SDK_DATA
       Severity: 4
-    - Category: ASSET_BUNDLES
-      Severity: 0
-    - Category: ASSET_BUNDLES
-      Severity: 4
     - Category: BACKPACK
       Severity: 0
     - Category: BADGES
@@ -345,8 +341,6 @@ MonoBehaviour:
     - Category: ANIMATOR
       Severity: 1
     - Category: ARCHIPELAGO_REQUEST
-      Severity: 1
-    - Category: ASSET_BUNDLES
       Severity: 1
     - Category: ASSETS_PROVISION
       Severity: 1

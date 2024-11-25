@@ -1,13 +1,16 @@
-﻿using CommunicationData.URLHelpers;
+﻿using System;
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.MapRenderer.ComponentsFactory;
-using DCL.Utilities.Extensions;
 using DCL.WebRequests;
 using DG.Tweening;
 using System.Threading;
 using UnityEngine;
 using Utility;
+using UnityEngine.AddressableAssets;
+using UnityEngine.ResourceManagement.AsyncOperations;
+using Object = UnityEngine.Object;
 
 namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
 {
@@ -65,10 +68,22 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
             atlasChunk.MainSpriteRenderer.color = INITIAL_COLOR;
             var url = $"{CHUNKS_API}{chunkId.x}%2C{chunkId.y}.jpg";
 
-            var textureTask = webRequestController.GetTextureAsync(new CommonArguments(URLAddress.FromString(url)),
+            var textureTask = webRequestController.GetTextureAsync(
+                new CommonArguments(URLAddress.FromString(url), attemptsCount: 1, timeout: 5),
                 new GetTextureArguments(false), GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp, FilterMode.Trilinear),
                 linkedCts.Token, ReportCategory.UI);
-            var texture = await textureTask!.SuppressExceptionWithFallbackAsync(Texture2D.whiteTexture, SuppressExceptionWithFallback.Behaviour.SuppressAnyException, reportData: ReportCategory.UI)!;
+
+            Texture2D texture;
+
+            try
+            {
+                texture = await textureTask;
+            }
+            catch (Exception e)
+            {
+                ReportHub.LogException(e, ReportCategory.UI);
+                texture = await Addressables.LoadAssetAsync<Texture2D>($"{chunkId.x},{chunkId.y}").Task;
+            }
 
             textureContainer.AddChunk(chunkId, texture);
 

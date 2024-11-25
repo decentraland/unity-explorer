@@ -1,12 +1,14 @@
-using System;
+using DCL.Optimization.PerformanceBudgeting;
 
-namespace SceneRuntime.Factory.WebSceneSource.Cache
+namespace DCL.Optimization
 {
     public interface IJsSourcesCache
     {
         void Cache(string path, string sourceCode);
 
         bool TryGet(string path, out string? sourceCode);
+
+        void Unload(IPerformanceBudget budgetToUse);
 
         class Null : IJsSourcesCache
         {
@@ -20,6 +22,8 @@ namespace SceneRuntime.Factory.WebSceneSource.Cache
                 sourceCode = null;
                 return false;
             }
+
+            public void Unload(IPerformanceBudget budgetToUse) { }
         }
     }
 }

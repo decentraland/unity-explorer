@@ -3,6 +3,7 @@ using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Loading.Assets;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.LOD;
+using DCL.Optimization;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.Profiles;
@@ -46,6 +47,7 @@ namespace DCL.ResourcesUnloading
         private IRoadAssetPool? roadCache;
 
         private IEmoteStorage? emoteCache;
+        private IJsSourcesCache? jsSourcesCache;
 
         private readonly IPerformanceBudget unlimitedFPSBudget;
 
@@ -76,6 +78,7 @@ namespace DCL.ResourcesUnloading
             profileCache!.Unload(budgetToUse, budgeted ? PROFILE_UNLOAD_CHUNK : int.MaxValue);
             profileIntentionCache!.Unload(budgetToUse, budgeted ? PROFILE_UNLOAD_CHUNK : int.MaxValue);
             roadCache!.Unload(budgetToUse, budgeted ? GLTF_UNLOAD_CHUNK : int.MaxValue);
+            jsSourcesCache!.Unload(budgetToUse);
 
             ClearExtendedObjectPools(budgetToUse, budgeted ? POOLS_UNLOAD_CHUNK : int.MaxValue);
         }
@@ -127,6 +130,9 @@ namespace DCL.ResourcesUnloading
 
         public void Register(IEmoteStorage emoteStorage) =>
             this.emoteCache = emoteStorage;
+
+        public void Register(IJsSourcesCache jsSourcesCache) =>
+            this.jsSourcesCache = jsSourcesCache;
 
         public void UpdateProfilingCounters()
         {

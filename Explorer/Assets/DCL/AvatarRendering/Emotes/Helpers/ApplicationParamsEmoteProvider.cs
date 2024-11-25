@@ -26,7 +26,7 @@ namespace DCL.AvatarRendering.Emotes
             IEmoteProvider.OwnedEmotesRequestOptions requestOptions,
             List<IEmote> output)
         {
-            if (!appArgs.TryGetValue("self-preview-emotes", out string? emotesCsv))
+            if (!appArgs.TryGetValue(AppArgsFlags.SELF_PREVIEW_EMOTES, out string? emotesCsv))
                 return await source.GetOwnedEmotesAsync(userId, ct, requestOptions, output);
 
             URN[] pointers = emotesCsv!.Split(',', StringSplitOptions.RemoveEmptyEntries)

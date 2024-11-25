@@ -19,15 +19,15 @@ jobs:
 
     steps:
     - name: Check out code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Get the latest release info
       id: get_release
       run: |
         $releaseData = Invoke-RestMethod -Uri "https://api.github.com/repos/decentraland/unity-explorer/releases/latest"
         $version = $releaseData.tag_name
-        $windowsUrl = ($releaseData.assets | Where-Object { $_.name -eq "Decentraland_windows64.zip" }).browser_download_url
-        $macosUrl = ($releaseData.assets | Where-Object { $_.name -eq "Decentraland_macos.zip" }).browser_download_url
+        $windowsUrl = ($releaseData.assets | Where-Object { $_.name -eq "Decentraland_windows64_epic.zip" }).browser_download_url
+        $macosUrl = ($releaseData.assets | Where-Object { $_.name -eq "Decentraland_macos_epic.zip" }).browser_download_url
 
         Write-Host "Release version: $version"
         Write-Host "Windows download URL: $windowsUrl"
@@ -55,18 +55,18 @@ jobs:
       if: ${{ github.event.inputs.platform == 'windows' || github.event.inputs.platform == 'both' }}
       run: |
         echo "Downloading Windows build artifact..."
-        curl -L -o Decentraland_windows64.zip "${{ steps.get_release.outputs.windows_url }}"
+        curl -L -o Decentraland_windows64_epic.zip "${{ steps.get_release.outputs.windows_url }}"
         echo "Extracting Windows build artifact..."
-        Expand-Archive -Path Decentraland_windows64.zip -DestinationPath "C:\Users\runneradmin\tools\BuildPatchTool\BuildRoot_Windows"
+        Expand-Archive -Path Decentraland_windows64_epic.zip -DestinationPath "C:\Users\runneradmin\tools\BuildPatchTool\BuildRoot_Windows"
         echo "Windows build artifact extracted to C:\Users\runneradmin\tools\BuildPatchTool\BuildRoot_Windows"
-
+        
     - name: Download macOS build artifact
       if: ${{ github.event.inputs.platform == 'mac' || github.event.inputs.platform == 'both' }}
       run: |
         echo "Downloading macOS build artifact..."
-        curl -L -o Decentraland_macos.zip "${{ steps.get_release.outputs.macos_url }}"
+        curl -L -o Decentraland_macos_epic.zip "${{ steps.get_release.outputs.macos_url }}"
         echo "Extracting macOS build artifact..."
-        Expand-Archive -Path Decentraland_macos.zip -DestinationPath "C:\Users\runneradmin\MacBuildTemp"
+        Expand-Archive -Path Decentraland_macos_epic.zip -DestinationPath "C:\Users\runneradmin\MacBuildTemp"
         New-Item -ItemType Directory -Path "C:\Users\runneradmin\tools\BuildPatchTool\BuildRoot_Mac" -Force
         tar -xf "C:\Users\runneradmin\MacBuildTemp\build.tar" -C "C:\Users\runneradmin\tools\BuildPatchTool\BuildRoot_Mac"
         echo "macOS build artifact extracted to C:\Users\runneradmin\tools\BuildPatchTool\BuildRoot_Mac"

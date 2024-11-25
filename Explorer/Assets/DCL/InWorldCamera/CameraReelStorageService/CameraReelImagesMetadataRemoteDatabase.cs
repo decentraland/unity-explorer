@@ -10,7 +10,7 @@ using UnityEngine.Networking;
 
 namespace DCL.InWorldCamera.CameraReelStorageService
 {
-    internal class CameraReelImagesMetadataRemoteDatabase : ICameraReelImagesMetadataDatabase
+    public class CameraReelImagesMetadataRemoteDatabase : ICameraReelImagesMetadataDatabase
     {
         private readonly IWebRequestController webRequestController;
 
