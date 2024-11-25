@@ -10,6 +10,7 @@ using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
 using System;
+using System.Text.RegularExpressions;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.TestTools;
@@ -54,8 +55,8 @@ namespace DCL.CharacterMotion.Tests
 
             if (status == UniTaskStatus.Faulted)
             {
-                loadReport.SetException(new Exception());
-                LogAssert.Expect(LogType.Exception, "Exception: Exception of type 'System.Exception' was thrown.");
+                loadReport.SetException(new Exception(nameof(RestoreCameraDataOnFailure)));
+                LogAssert.Expect(LogType.Exception, new Regex($".*{nameof(RestoreCameraDataOnFailure)}.*"));
             }
             else
                 loadReport.SetCancelled();
