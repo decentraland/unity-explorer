@@ -59,9 +59,7 @@ namespace DCL.UserInAppInitializationFlow
             IDebugSettings debugSettings,
             IPortableExperiencesController portableExperiencesController,
             IRoomHub roomHub,
-            DiagnosticsContainer diagnosticsContainer,
-            bool localSceneDevelopment
-        )
+            DiagnosticsContainer diagnosticsContainer)
         {
             this.loadingStatus = loadingStatus;
             this.mvcManager = mvcManager;
@@ -78,8 +76,8 @@ namespace DCL.UserInAppInitializationFlow
             var loadLandscapeStartupOperation = new LoadLandscapeStartupOperation(loadingStatus, realmNavigator);
             checkOnboardingStartupOperation = new CheckOnboardingStartupOperation(loadingStatus, selfProfile, featureFlagsCache, decentralandUrlsSource, appParameters, realmNavigator);
             restartRealmStartupOperation = new RestartRealmStartupOperation(loadingStatus, realmController);
-            var initializeStartingParcelOperation = new SetOverrideStartingParcelOperation(realmNavigator, startParcel, featureFlagsCache, localSceneDevelopment);
-            var teleportStartupOperation = new TeleportStartupOperation(loadingStatus, realmNavigator, startParcel);
+            var teleportStartupOperation = new TeleportStartupOperation(loadingStatus, realmNavigator, startParcel,
+                featureFlagsCache, appParameters);
             var loadGlobalPxOperation = new LoadGlobalPortableExperiencesStartupOperation(loadingStatus, selfProfile, featureFlagsCache, debugSettings, portableExperiencesController);
             var sentryDiagnostics = new SentryDiagnosticStartupOperation(realmController, diagnosticsContainer);
 
@@ -93,7 +91,6 @@ namespace DCL.UserInAppInitializationFlow
                 loadLandscapeStartupOperation,
                 checkOnboardingStartupOperation,
                 restartRealmStartupOperation,
-                initializeStartingParcelOperation,
                 teleportStartupOperation,
                 loadGlobalPxOperation,
                 sentryDiagnostics

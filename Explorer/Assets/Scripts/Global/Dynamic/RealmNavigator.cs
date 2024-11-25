@@ -57,7 +57,6 @@ namespace Global.Dynamic
         private readonly ObjectProxy<Entity> cameraEntity;
         private readonly CameraSamplingData cameraSamplingData;
         private readonly bool isLocalSceneDevelopment;
-        private readonly FeatureFlagsCache featureFlagsCache;
 
         private readonly ITeleportOperation[] realmChangeOperations;
         private readonly ITeleportOperation[] teleportInSameRealmOperation;
@@ -65,9 +64,6 @@ namespace Global.Dynamic
 
         private URLDomain currentRealm;
         private Vector2Int currentParcel;
-
-        private bool overrideStartingParcel;
-        private string parcelToTeleportOverride;
 
         public event Action<bool>? RealmChanged;
 
@@ -90,8 +86,7 @@ namespace Global.Dynamic
             bool isLocalSceneDevelopment,
             ILoadingStatus loadingStatus,
             ICacheCleaner cacheCleaner,
-            IMemoryUsageProvider memoryUsageProvider,
-            FeatureFlagsCache featureFlagsCache)
+            IMemoryUsageProvider memoryUsageProvider)
         {
             this.loadingScreen = loadingScreen;
             this.mapRenderer = mapRenderer;
@@ -108,7 +103,6 @@ namespace Global.Dynamic
             this.isLocalSceneDevelopment = isLocalSceneDevelopment;
             this.globalWorld = globalWorld;
             this.loadingStatus = loadingStatus;
-            this.featureFlagsCache = featureFlagsCache;
             var livekitTimeout = TimeSpan.FromSeconds(10f);
 
             realmChangeOperations = new ITeleportOperation[]
@@ -134,12 +128,6 @@ namespace Global.Dynamic
                 new MoveToParcelInSameRealmTeleportOperation(this),
                 new CompleteLoadingStatus(),
             };
-        }
-
-        public void SetOverrideValues(bool overrideStartingParcel, string parcelToTeleportOverride)
-        {
-            this.overrideStartingParcel = overrideStartingParcel;
-            this.parcelToTeleportOverride = parcelToTeleportOverride;
         }
 
         public bool CheckIsNewRealm(URLDomain realm)
@@ -262,9 +250,6 @@ namespace Global.Dynamic
                 waitForSceneReadiness = await TeleportToWorldSpawnPointAsync(parcelToTeleport, teleportLoadReport, ct);
             else
             {
-                if (overrideStartingParcel)
-                    RealmHelper.TryParseParcelFromString(parcelToTeleportOverride, out parcelToTeleport);
-
                 waitForSceneReadiness = await TeleportToParcelAsync(parcelToTeleport, teleportLoadReport, ct);
             }
 

@@ -130,17 +130,14 @@ namespace Global.Dynamic
                     EnableLandscape = debugSettings.EnableLandscape,
                     EnableLOD = debugSettings.EnableLOD && !realmLaunchSettings.IsLocalSceneDevelopmentRealm,
                     EnableAnalytics = EnableAnalytics,
-                    HybridSceneParams = realmLaunchSettings.CreateHybridSceneParams(startingParcel),
+                    HybridSceneParams = realmLaunchSettings.CreateHybridSceneParams(),
                     LocalSceneDevelopmentRealm = realmLaunchSettings.GetLocalSceneDevelopmentRealm(decentralandUrlsSource) ?? string.Empty,
                     AppParameters = appArgs,
                 },
                 backgroundMusic,
-                staticContainer.PortableExperiencesController,
                 world,
                 playerEntity,
                 appArgs,
-                staticContainer.SceneRestrictionBusController,
-                staticContainer.LoadingStatus,
                 coroutineRunner,
                 ct);
         }

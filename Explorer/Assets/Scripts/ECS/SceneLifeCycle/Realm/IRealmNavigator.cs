@@ -44,6 +44,5 @@ namespace ECS.SceneLifeCycle.Realm
         UniTask<UniTask> TeleportToParcelAsync(Vector2Int parcel, AsyncLoadProcessReport processReport,
             CancellationToken ct);
 
-        void SetOverrideValues(bool overrideStartingParcel, string parcelToTeleportOverride);
     }
 }

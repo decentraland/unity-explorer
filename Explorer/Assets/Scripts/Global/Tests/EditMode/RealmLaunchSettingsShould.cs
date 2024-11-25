@@ -44,22 +44,6 @@ namespace Global.Tests.EditMode
             Assert.AreEqual(70, realmLaunchSettings.TargetScene.y);
         }
 
-        [Test]
-        public void ApplyStartingPositionFromAppArgs()
-        {
-            RealmLaunchSettings realmLaunchSettings = new RealmLaunchSettings();
-            ApplicationParametersParser applicationParametersParser = new (new[]
-            {
-                "--position",
-                "50,50",
-            });
-
-            realmLaunchSettings.ApplyConfig(applicationParametersParser);
-
-            Assert.AreEqual(50, realmLaunchSettings.TargetScene.x);
-            Assert.AreEqual(50, realmLaunchSettings.TargetScene.y);
-        }
-
         [TestCase("https://peer.decentraland.zone")]
         [TestCase("https://sdk-team-cdn.decentraland.org/ipfs/goerli-plaza-main-latest")]
         public void ApplyStartingRealmFromAppArgs(string realm)

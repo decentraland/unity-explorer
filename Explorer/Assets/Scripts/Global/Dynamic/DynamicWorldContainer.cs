@@ -151,12 +151,9 @@ namespace Global.Dynamic
             DynamicWorldDependencies dynamicWorldDependencies,
             DynamicWorldParams dynamicWorldParams,
             AudioClipConfig backgroundMusic,
-            IPortableExperiencesController portableExperiencesController,
             World globalWorld,
             Entity playerEntity,
             IAppArgs appArgs,
-            ISceneRestrictionBusController sceneRestrictionBusController,
-            ILoadingStatus loadingStatus,
             ICoroutineRunner coroutineRunner,
             CancellationToken ct)
         {
@@ -353,8 +350,7 @@ namespace Global.Dynamic
                 localSceneDevelopment,
                 staticContainer.LoadingStatus,
                 staticContainer.CacheCleaner,
-                staticContainer.SingletonSharedDependencies.MemoryBudget,
-                staticContainer.FeatureFlagsCache);
+                staticContainer.SingletonSharedDependencies.MemoryBudget);
 
             IHealthCheck livekitHealthCheck = bootstrapContainer.DebugSettings.EnableEmulateNoLivekitConnection
                 ? new IHealthCheck.AlwaysFails("Livekit connection is in debug, always fail mode")
@@ -391,8 +387,7 @@ namespace Global.Dynamic
                 bootstrapContainer.DebugSettings,
                 staticContainer.PortableExperiencesController,
                 container.RoomHub,
-                bootstrapContainer.DiagnosticsContainer,
-                localSceneDevelopment
+                bootstrapContainer.DiagnosticsContainer
             );
 
             var worldInfoHub = new LocationBasedWorldInfoHub(
@@ -421,8 +416,16 @@ namespace Global.Dynamic
                 { ShowEntityInfoChatCommand.REGEX, () => new ShowEntityInfoChatCommand(worldInfoHub) },
                 { ClearChatCommand.REGEX, () => new ClearChatCommand(chatHistory) },
                 { ReloadSceneChatCommand.REGEX, () => new ReloadSceneChatCommand(container.reloadSceneController) },
-                { LoadPortableExperienceChatCommand.REGEX, () => new LoadPortableExperienceChatCommand(portableExperiencesController, staticContainer.FeatureFlagsCache) },
-                { KillPortableExperienceChatCommand.REGEX, () => new KillPortableExperienceChatCommand(portableExperiencesController, staticContainer.FeatureFlagsCache) },
+                {
+                    LoadPortableExperienceChatCommand.REGEX,
+                    () => new LoadPortableExperienceChatCommand(staticContainer.PortableExperiencesController,
+                        staticContainer.FeatureFlagsCache)
+                },
+                {
+                    KillPortableExperienceChatCommand.REGEX,
+                    () => new KillPortableExperienceChatCommand(staticContainer.PortableExperiencesController,
+                        staticContainer.FeatureFlagsCache)
+                }
             };
 
             IChatMessagesBus coreChatMessageBus = new MultiplayerChatMessagesBus(container.MessagePipesHub, container.ProfileRepository, new MessageDeduplication<double>())
@@ -532,7 +535,9 @@ namespace Global.Dynamic
                     globalWorld, playerEntity),
                 new ErrorPopupPlugin(container.MvcManager, assetsProvisioner),
                 connectionStatusPanelPlugin,
-                new MinimapPlugin(container.MvcManager, container.MapRendererContainer, placesAPIService, staticContainer.RealmData, container.ChatMessagesBus, realmNavigator, staticContainer.ScenesCache, mainUIView, mapPathEventBus, sceneRestrictionBusController),
+                new MinimapPlugin(container.MvcManager, container.MapRendererContainer, placesAPIService,
+                    staticContainer.RealmData, container.ChatMessagesBus, realmNavigator, staticContainer.ScenesCache,
+                    mainUIView, mapPathEventBus, staticContainer.SceneRestrictionBusController),
                 new ChatPlugin(assetsProvisioner, container.MvcManager, container.ChatMessagesBus, chatHistory, entityParticipantTable, nametagsData, dclInput, unityEventSystem, mainUIView, staticContainer.InputBlock, globalWorld, playerEntity),
                 new ExplorePanelPlugin(
                     assetsProvisioner,

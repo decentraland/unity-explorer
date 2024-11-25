@@ -53,13 +53,17 @@ namespace Global.Dynamic
                 : Array.Empty<int2>();
         }
 
-        public HybridSceneParams CreateHybridSceneParams(Vector2Int startParcel)
+        public HybridSceneParams CreateHybridSceneParams()
         {
             if (initialRealm == InitialRealm.Localhost)
             {
                 return new HybridSceneParams
                 {
-                    StartParcel = startParcel, EnableHybridScene = useRemoteAssetsBundles, HybridSceneContentServer = remoteHybridSceneContentServer, World = remoteHybridSceneContentServer.Equals(HybridSceneContentServer.World) ? remoteHibridWorld : "",
+                    EnableHybridScene = useRemoteAssetsBundles,
+                    HybridSceneContentServer = remoteHybridSceneContentServer,
+                    World = remoteHybridSceneContentServer.Equals(HybridSceneContentServer.World)
+                        ? remoteHibridWorld
+                        : ""
                 };
             }
 
@@ -89,9 +93,6 @@ namespace Global.Dynamic
         {
             if (applicationParameters.TryGetValue(AppArgsFlags.REALM, out string? realm))
                 ParseRealmAppParameter(applicationParameters, realm);
-
-            if (applicationParameters.TryGetValue(AppArgsFlags.POSITION, out string? position))
-                ParsePositionAppParameter(position);
         }
 
         private void ParseRealmAppParameter(IAppArgs appParameters, string realmParamValue)
@@ -128,13 +129,6 @@ namespace Global.Dynamic
             initialRealm = InitialRealm.Custom;
             useRemoteAssetsBundles = false;
             isLocalSceneDevelopmentRealm = true;
-        }
-
-        private void ParsePositionAppParameter(string targetPositionParam)
-        {
-            if (!RealmHelper.TryParseParcelFromString(targetPositionParam, out var targetPosition)) return;
-
-            targetScene = targetPosition;
         }
 
         private bool ParseLocalSceneParameter(string localSceneParameter)
