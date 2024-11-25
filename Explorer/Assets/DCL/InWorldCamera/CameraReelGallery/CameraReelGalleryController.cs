@@ -316,7 +316,6 @@ namespace DCL.InWorldCamera.CameraReelGallery
         {
             isLoading = true;
             Dictionary<DateTime, List<CameraReelResponseCompact>> result = await pagedCameraReelManager.FetchNextPageAsync(ct);
-            float handleHeight = view.verticalScrollbar.handleRect.rect.height;
 
             foreach (var bucket in result)
             {
@@ -333,8 +332,8 @@ namespace DCL.InWorldCamera.CameraReelGallery
             }
             endVisible = currentSize - 1;
 
-            //Wait for layout to update after the addition of new elements
-            await UniTask.WaitWhile(() => Mathf.Approximately(view.verticalScrollbar.handleRect.rect.height, handleHeight) && currentSize > MINIMUM_ELEMENTS_FOR_WAITING_LAYOUT, cancellationToken: ct);
+            //ScrollRect gets updated in LateUpdate, therefore waiting for PostLateUpdate ensures that the layout has been correctly updated
+            await UniTask.Yield(PlayerLoopTiming.PostLateUpdate, ct);
 
             HandleElementsVisibility(ScrollDirection.UP);
 
