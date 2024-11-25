@@ -14,10 +14,9 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.UI
         private readonly Button sidebarButton;
         private readonly World world;
 
+        private SingleInstanceEntity? cameraInternal;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
-
-        private SingleInstanceEntity? cameraInternal;
         private SingleInstanceEntity? camera => cameraInternal ??= world.CacheCamera();
 
         public InWorldCameraController([NotNull] ViewFactoryMethod viewFactory, Button sidebarButton, World world) : base(viewFactory)
@@ -25,22 +24,42 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.UI
             this.world = world;
             this.sidebarButton = sidebarButton;
 
-            sidebarButton.onClick.AddListener(RequestInWorldCamera);
+            sidebarButton.onClick.AddListener(RequestEnableInWorldCamera);
+        }
+
+        protected override void OnViewInstantiated()
+        {
+            viewInstance.CloseButton.onClick.AddListener(RequestDisableInWorldCamera);
+
+            // viewInstance!.CameraReelButton.onClick.AddListener(OpenCameraReelGallery);
+            // viewInstance.TakeScreenshotButton.onClick.AddListener(TakeScreenshot);
+            // viewInstance.ShortcutsInfoButton.onClick.AddListener(() => { });
         }
 
         public override void Dispose()
         {
-            sidebarButton.onClick.RemoveListener(RequestInWorldCamera);
+            sidebarButton.onClick.RemoveListener(RequestEnableInWorldCamera);
+            viewInstance.CloseButton.onClick.RemoveListener(RequestDisableInWorldCamera);
+
             base.Dispose();
         }
 
-        private void RequestInWorldCamera()
+        private void RequestDisableInWorldCamera()
         {
-            if (CameraIsNotActive())
-                world.Add<EnableInWorldCameraUIRequest>(camera!.Value);
+            if (CameraIsActivated())
+                world.Add(camera!.Value, new ToggleInWorldCameraUIRequest { IsEnable = false });
 
-            bool CameraIsNotActive() =>
-                !world.Has<InWorldCamera>(camera!.Value) && !world.Has<EnableInWorldCameraUIRequest>(camera!.Value);
+            bool CameraIsActivated() =>
+                !world.Has<ToggleInWorldCameraUIRequest>(camera!.Value) && world.Has<InWorldCamera>(camera!.Value);
+        }
+
+        private void RequestEnableInWorldCamera()
+        {
+            if (CameraIsNotActivated())
+                world.Add(camera!.Value, new ToggleInWorldCameraUIRequest { IsEnable = true });
+
+            bool CameraIsNotActivated() =>
+                !world.Has<ToggleInWorldCameraUIRequest>(camera!.Value) && !world.Has<InWorldCamera>(camera!.Value);
         }
 
         public void Show()
@@ -63,5 +82,4 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.UI
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
             UniTask.Never(ct);
     }
-
 }

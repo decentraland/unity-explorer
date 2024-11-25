@@ -64,20 +64,23 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
                 SetFollowTarget();
 
             if (inputSchema.ToggleInWorld!.triggered) // Keyboard shortcut trigger
+                ToggleCamera(enable: !World.Has<InWorldCamera>(camera));
+            else if (World.TryGet(camera, out ToggleInWorldCameraUIRequest request)) // UI trigger
             {
-                if (World.Has<InWorldCamera>(camera))
-                    DisableCamera();
-                else
-                    EnableCamera();
-            }
-            else if (World.Has<EnableInWorldCameraUIRequest>(camera)) // UI trigger
-            {
-                EnableCamera();
-                World.Remove<EnableInWorldCameraUIRequest>(camera);
+                ToggleCamera(request.IsEnable);
+                World.Remove<ToggleInWorldCameraUIRequest>(camera);
             }
 
             bool BlendingHasFinished() =>
                 !followTarget.enabled && !cinemachinePreset.Brain.IsBlending;
+        }
+
+        private void ToggleCamera(bool enable)
+        {
+            if (enable)
+                EnableCamera();
+            else
+                DisableCamera();
         }
 
         private void SetFollowTarget()
@@ -132,6 +135,7 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
 
             float distanceToThirdPersonView =
                 Mathf.Abs(cinemachinePreset.ThirdPersonCameraData.Camera.transform.localPosition.z - inWorldVirtualCamera.transform.localPosition.z);
+
             float distanceToDroneCameraView =
                 Mathf.Abs(cinemachinePreset.DroneViewCameraData.Camera.transform.localPosition.z - inWorldVirtualCamera.transform.localPosition.z);
 
