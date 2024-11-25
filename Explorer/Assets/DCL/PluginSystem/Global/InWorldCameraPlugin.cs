@@ -5,20 +5,17 @@ using DCL.AssetsProvision;
 using DCL.Character;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.InWorldCamera.ScreencaptureCamera;
+using DCL.InWorldCamera.ScreencaptureCamera.Settings;
 using DCL.InWorldCamera.ScreencaptureCamera.Systems;
 using DCL.InWorldCamera.ScreencaptureCamera.UI;
-using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PlacesAPIService;
 using DCL.Profiles.Self;
-using DCL.WebRequests;
 using ECS;
 using System;
 using System.Threading;
 using UnityEngine;
-using UnityEngine.AddressableAssets;
 using Utility;
 using static DCL.PluginSystem.Global.InWorldCameraPlugin;
-using Object = UnityEngine.Object;
 
 namespace DCL.PluginSystem.Global
 {
@@ -32,19 +29,20 @@ namespace DCL.PluginSystem.Global
         private readonly IPlacesAPIService placesAPIService;
         private readonly ICharacterObject characterObject;
         private readonly ICoroutineRunner coroutineRunner;
+        private readonly InWorldCameraFactory factory;
         private readonly ICameraReelStorageService cameraReelStorageService;
 
-        private ProvidedAsset<GameObject> hudPrefab;
         private ScreenRecorder recorder;
         private GameObject hud;
+        private CharacterController followTarget;
         private ScreenshotMetadataBuilder metadataBuilder;
+        private InWorldCameraSettings settings;
 
-        public InWorldCameraPlugin(DCLInput input, IAssetsProvisioner assetsProvisioner, SelfProfile selfProfile,
+        public InWorldCameraPlugin(DCLInput input, SelfProfile selfProfile,
             RealmData realmData, Entity playerEntity, IPlacesAPIService placesAPIService, ICharacterObject characterObject, ICoroutineRunner coroutineRunner,
             ICameraReelStorageService cameraReelStorageService)
         {
             this.input = input;
-            this.assetsProvisioner = assetsProvisioner;
             this.selfProfile = selfProfile;
             this.realmData = realmData;
             this.playerEntity = playerEntity;
@@ -52,14 +50,16 @@ namespace DCL.PluginSystem.Global
             this.characterObject = characterObject;
             this.coroutineRunner = coroutineRunner;
             this.cameraReelStorageService = cameraReelStorageService;
+
+            factory = new InWorldCameraFactory();
         }
 
         public async UniTask InitializeAsync(InWorldCameraSettings settings, CancellationToken ct)
         {
-            hudPrefab = await assetsProvisioner.ProvideMainAssetAsync(settings.ScreencaptureHud, ct);
+            this.settings = settings;
 
-            hudPrefab.Value.SetActive(false);
-            hud = Object.Instantiate(hudPrefab.Value, Vector3.zero, Quaternion.identity);
+            hud = factory.CreateScreencaptureHud(settings.ScreencaptureHud);
+            followTarget = factory.CreateFollowTarget(settings.FollowTarget);
 
             recorder = new ScreenRecorder(hud.GetComponent<RectTransform>());
             metadataBuilder = new ScreenshotMetadataBuilder(selfProfile, characterObject.Controller, realmData, placesAPIService);
@@ -67,21 +67,27 @@ namespace DCL.PluginSystem.Global
 
         public void Dispose()
         {
-            hudPrefab.Dispose();
-            recorder.Dispose();
+            factory.Dispose();
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
-            ToggleInWorldCameraActivitySystem.InjectToWorld(ref builder, input.InWorldCamera, hud);
-            CaptureScreenshotSystem.InjectToWorld(ref builder, recorder, input.InWorldCamera, hud.GetComponent<ScreenshotHudView>(), playerEntity, metadataBuilder, coroutineRunner, cameraReelStorageService);
+            ToggleInWorldCameraActivitySystem.InjectToWorld(ref builder, settings.TransitionSettings, input.InWorldCamera, hud, followTarget);
+            EmitInWorldCameraInputSystem.InjectToWorld(ref builder, input.InWorldCamera);
+            MoveInWorldCameraSystem.InjectToWorld(ref builder, settings.MovementSettings, characterObject.Controller.transform);
+            CaptureScreenshotSystem.InjectToWorld(ref builder, recorder, hud.GetComponent<ScreenshotHudView>(), playerEntity, metadataBuilder, coroutineRunner, cameraReelStorageService);
         }
 
         [Serializable]
         public class InWorldCameraSettings : IDCLPluginSettings
         {
             [field: Header(nameof(InWorldCameraSettings))]
-            [field: SerializeField] internal AssetReferenceGameObject ScreencaptureHud { get; private set; }
+            [field: SerializeField] internal GameObject ScreencaptureHud { get; private set; }
+            [field: SerializeField] internal GameObject FollowTarget { get; private set; }
+
+            [field: Header("Configs")]
+            [field: SerializeField] internal InWorldCameraTransitionSettings TransitionSettings { get; private set; }
+            [field: SerializeField] internal InWorldCameraMovementSettings MovementSettings { get; private set; }
         }
     }
 }
