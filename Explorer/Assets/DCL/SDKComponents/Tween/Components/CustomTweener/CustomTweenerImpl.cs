@@ -1,5 +1,6 @@
 ﻿using CrdtEcsBridge.Components.Conversion;
 using CrdtEcsBridge.Components.Transform;
+using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
 using DCL.ECSComponents;
 using DG.Tweening;
 using DG.Tweening.Core;
@@ -107,10 +108,10 @@ namespace DCL.SDKComponents.Tween.Components
             switch (textureComponent.TextureMoveMovementType)
             {
                 case TextureMovementType.TmtOffset:
-                    material.SetTextureOffset(Shader.PropertyToID("_BaseMap"), currentValue);
+                    material.SetTextureOffset(TextureArrayConstants.BASE_MAP_ORIGINAL_TEXTURE, currentValue);
                     break;
                 case TextureMovementType.TmtTiling:
-                    material.SetTextureScale(Shader.PropertyToID("_BaseMap"), currentValue);
+                    material.SetTextureScale(TextureArrayConstants.BASE_MAP_ORIGINAL_TEXTURE, currentValue);
                     break;
             }
         }
