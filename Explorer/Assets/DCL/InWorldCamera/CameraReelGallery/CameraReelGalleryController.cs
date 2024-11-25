@@ -7,12 +7,14 @@ using DCL.InWorldCamera.CameraReelGallery.Components;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Optimization.Pools;
 using DG.Tweening;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.Pool;
 using UnityEngine.UI;
 using Utility;
 
@@ -46,7 +48,8 @@ namespace DCL.InWorldCamera.CameraReelGallery
         private const int GRID_POOL_DEFAULT_CAPACITY = 10;
         private const int GRID_POOL_MAX_SIZE = 500;
         private const int ANIMATION_DELAY = 300;
-        private const int MINIMUM_ELEMENTS_FOR_WAITING_LAYOUT = 30;
+
+        private static readonly ListObjectPool<CameraReelResponseCompact> CAMERA_REEL_RESPONSES_POOL = new ();
 
         private readonly CameraReelGalleryView view;
         private readonly ICameraReelStorageService cameraReelStorageService;
@@ -315,7 +318,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
         private async UniTask LoadMorePageAsync(CancellationToken ct)
         {
             isLoading = true;
-            Dictionary<DateTime, List<CameraReelResponseCompact>> result = await pagedCameraReelManager.FetchNextPageAsync(ct);
+            Dictionary<DateTime, List<CameraReelResponseCompact>> result = await pagedCameraReelManager.FetchNextPageAsync(CAMERA_REEL_RESPONSES_POOL, ct);
 
             foreach (var bucket in result)
             {
@@ -329,7 +332,9 @@ namespace DCL.InWorldCamera.CameraReelGallery
                     thumbnailImages[currentSize + i] = thumbnailViews[i];
 
                 currentSize += thumbnailViews.Count;
+                CAMERA_REEL_RESPONSES_POOL.Release(bucket.Value);
             }
+            DictionaryPool<DateTime, List<CameraReelResponseCompact>>.Release(result);
             endVisible = currentSize - 1;
 
             //ScrollRect gets updated in LateUpdate, therefore waiting for PostLateUpdate ensures that the layout has been correctly updated

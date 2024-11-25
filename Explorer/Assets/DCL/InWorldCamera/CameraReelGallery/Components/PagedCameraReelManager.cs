@@ -1,9 +1,11 @@
 using Cysharp.Threading.Tasks;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.InWorldCamera.CameraReelStorageService.Schemas;
+using DCL.Optimization.Pools;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using UnityEngine.Pool;
 
 namespace DCL.InWorldCamera.CameraReelGallery.Components
 {
@@ -32,7 +34,9 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
         }
 
 
-        public async UniTask<Dictionary<DateTime, List<CameraReelResponseCompact>>> FetchNextPageAsync(CancellationToken ct)
+        public async UniTask<Dictionary<DateTime, List<CameraReelResponseCompact>>> FetchNextPageAsync(
+            ListObjectPool<CameraReelResponseCompact> listPool,
+            CancellationToken ct)
         {
             CameraReelResponsesCompact response = await cameraReelStorageService.GetCompactScreenshotGalleryAsync(walletAddress, pageSize, currentOffset, ct);
             currentOffset += pageSize;
@@ -40,13 +44,13 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
             currentLoadedImages += response.images.Count;
             AllImagesLoaded = currentLoadedImages == totalImages;
 
-            Dictionary<DateTime, List<CameraReelResponseCompact>> elements = new ();
+            Dictionary<DateTime, List<CameraReelResponseCompact>> elements = DictionaryPool<DateTime, List<CameraReelResponseCompact>>.Get();
             for (int i = 0; i < response.images.Count; i++)
             {
                 DateTime imageBucket = GetImageDateTime(response.images[i]);
 
                 if (!elements.ContainsKey(imageBucket))
-                    elements[imageBucket] = new List<CameraReelResponseCompact>();
+                    elements[imageBucket] = listPool.Get();
 
                 elements[imageBucket].Add(response.images[i]);
             }
