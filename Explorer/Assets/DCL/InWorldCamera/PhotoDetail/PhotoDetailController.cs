@@ -27,11 +27,10 @@ namespace DCL.InWorldCamera.PhotoDetail
         private MetadataSidePanelAnimator metadataSidePanelAnimator;
         private CancellationTokenSource showReelCts = new ();
 
-        private bool isClosing;
         private bool metadataPanelIsOpen = true;
         private int currentReelIndex;
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Fullscreen;
 
         public PhotoDetailController(ViewFactoryMethod viewFactory,
             PhotoDetailInfoController photoDetailInfoController,
@@ -58,7 +57,6 @@ namespace DCL.InWorldCamera.PhotoDetail
 
         protected override void OnViewShow()
         {
-            viewInstance!.closeButton.onClick.AddListener(CloseButtonClicked);
             viewInstance.infoButton.onClick.AddListener(ToggleInfoSidePanel);
             viewInstance!.previousScreenshotButton.onClick.AddListener(ShowPreviousReel);
             viewInstance!.nextScreenshotButton.onClick.AddListener(ShowNextReel);
@@ -76,8 +74,7 @@ namespace DCL.InWorldCamera.PhotoDetail
 
         protected override void OnViewClose()
         {
-            viewInstance!.closeButton.onClick.RemoveListener(CloseButtonClicked);
-            viewInstance.infoButton.onClick.RemoveListener(ToggleInfoSidePanel);
+            viewInstance!.infoButton.onClick.RemoveListener(ToggleInfoSidePanel);
             viewInstance!.previousScreenshotButton.onClick.RemoveListener(ShowPreviousReel);
             viewInstance!.nextScreenshotButton.onClick.RemoveListener(ShowNextReel);
             viewInstance!.downloadButton.onClick.RemoveListener(DownloadReelClicked);
@@ -90,7 +87,6 @@ namespace DCL.InWorldCamera.PhotoDetail
 
         protected override void OnBeforeViewShow()
         {
-            isClosing = false;
             currentReelIndex = inputData.CurrentReelIndex;
             viewInstance!.deleteButton.gameObject.SetActive(inputData.UserOwnedReels);
             viewInstance!.previousScreenshotButton.gameObject.SetActive(false);
@@ -147,12 +143,8 @@ namespace DCL.InWorldCamera.PhotoDetail
             viewInstance!.nextScreenshotButton.gameObject.SetActive(index != allReels.Count - 1);
         }
 
-        private void CloseButtonClicked() =>
-            isClosing = true;
-
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
-            UniTask.WaitWhile(() => !isClosing, cancellationToken: ct);
-
+            viewInstance.closeButton.OnClickAsync(ct);
     }
 
     public readonly struct PhotoDetailParameter

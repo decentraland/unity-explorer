@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Browser;
 using DCL.Chat.MessageBus;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.InWorldCamera.CameraReelStorageService.Schemas;
@@ -15,7 +16,9 @@ namespace DCL.InWorldCamera.PhotoDetail
     public class PhotoDetailInfoController
     {
         private const int VISIBLE_PERSON_DEFAULT_POOL_SIZE = 20;
+        private const int EQUIPPED_WEARABLE_DEFAULT_POOL_SIZE = 20;
         private const int VISIBLE_PERSON_MAX_POOL_CAPACITY = 10000;
+        private const int EQUIPPED_WEARABLE_MAX_POOL_CAPACITY = 10000;
 
         private readonly PhotoDetailInfoView view;
         private readonly ICameraReelStorageService cameraReelStorageService;
@@ -27,12 +30,24 @@ namespace DCL.InWorldCamera.PhotoDetail
             ICameraReelStorageService cameraReelStorageService,
             IWebRequestController webRequestController,
             IProfileRepository profileRepository,
-            IMVCManager mvcManager)
+            IMVCManager mvcManager,
+            IWebBrowser webBrowser)
         {
             this.view = view;
             this.cameraReelStorageService = cameraReelStorageService;
 
-            this.photoDetailPoolManager = new PhotoDetailPoolManager(view.visiblePersonViewPrefab, view.unusedVisiblePersonViewContainer, webRequestController, profileRepository, mvcManager, VISIBLE_PERSON_DEFAULT_POOL_SIZE, VISIBLE_PERSON_MAX_POOL_CAPACITY);
+            this.photoDetailPoolManager = new PhotoDetailPoolManager(view.visiblePersonViewPrefab,
+                view.equippedWearablePrefab,
+                view.unusedVisiblePersonViewContainer,
+                view.unusedEquippedWearableViewContainer,
+                webRequestController,
+                profileRepository,
+                mvcManager,
+                webBrowser,
+                VISIBLE_PERSON_DEFAULT_POOL_SIZE,
+                VISIBLE_PERSON_MAX_POOL_CAPACITY,
+                EQUIPPED_WEARABLE_DEFAULT_POOL_SIZE,
+                EQUIPPED_WEARABLE_MAX_POOL_CAPACITY);
         }
 
         public async UniTask ShowPhotoDetailInfoAsync(string reelId, CancellationToken ct)

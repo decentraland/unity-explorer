@@ -225,6 +225,7 @@ GameObject:
   - component: {fileID: 6639280317080520532}
   - component: {fileID: 6773709763192892038}
   - component: {fileID: 7223857586908572035}
+  - component: {fileID: 1014815712935129}
   m_Layer: 5
   m_Name: EquippedWearable
   m_TagString: Untagged
@@ -293,6 +294,21 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 2
+--- !u!114 &1014815712935129
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2579611172039404072}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 418e32fcf25b4c708b94b3ea1e80bd9d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  wearableIcon: {fileID: 2211105550615006013}
+  wearableName: {fileID: 3755434680035034755}
+  wearableBuyButton: {fileID: 4840797863012381321}
 --- !u!1 &3322379950076496351
 GameObject:
   m_ObjectHideFlags: 0

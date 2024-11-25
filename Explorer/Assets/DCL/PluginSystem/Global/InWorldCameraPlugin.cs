@@ -88,7 +88,7 @@ namespace DCL.PluginSystem.Global
             metadataBuilder = new ScreenshotMetadataBuilder(selfProfile, characterObject.Controller, realmData, placesAPIService);
 
             mvcManager.RegisterController(new PhotoDetailController(viewFactoryMethod,
-                new PhotoDetailInfoController(explorePanelView.GetComponentInChildren<PhotoDetailInfoView>(), cameraReelStorageService, webRequestController, profileRepository, mvcManager),
+                new PhotoDetailInfoController(explorePanelView.GetComponentInChildren<PhotoDetailInfoView>(), cameraReelStorageService, webRequestController, profileRepository, mvcManager, webBrowser),
                 cameraReelScreenshotsStorage,
                 systemClipboard,
                 decentralandUrlsSource,

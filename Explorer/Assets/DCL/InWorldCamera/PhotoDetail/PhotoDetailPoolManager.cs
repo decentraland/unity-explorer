@@ -1,3 +1,4 @@
+using DCL.Browser;
 using DCL.Profiles;
 using DCL.WebRequests;
 using MVC;
@@ -19,6 +20,7 @@ namespace DCL.InWorldCamera.PhotoDetail
             IWebRequestController webRequestController,
             IProfileRepository profileRepository,
             IMVCManager mvcManager,
+            IWebBrowser webBrowser,
             int visiblePersonDefaultCapacity,
             int visiblePersonMaxSize,
             int equippedWearableDefaultCapacity,
@@ -48,7 +50,7 @@ namespace DCL.InWorldCamera.PhotoDetail
                 () =>
                 {
                     EquippedWearableView view = GameObject.Instantiate(equippedWearablePrefab);
-                    return new EquippedWearableController(view);
+                    return new EquippedWearableController(view, webBrowser);
                 },
                 equippedWearable => equippedWearable.view.gameObject.SetActive(true),
                 equippedWearable =>

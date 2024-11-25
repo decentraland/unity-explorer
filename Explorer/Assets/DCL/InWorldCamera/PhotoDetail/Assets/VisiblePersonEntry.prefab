@@ -209,7 +209,7 @@ MonoBehaviour:
   expandWearableButton: {fileID: 7370240177998520773}
   expandWearableButtonImage: {fileID: 5184066094468107970}
   userProfileButton: {fileID: 2850465004723359259}
-  wearableListContainer: {fileID: 8133810326388524162}
+  wearableListContainer: {fileID: 4179058193975869643}
   expandAnimationDuration: 0.3
   wearableListLoadingSpinner: {fileID: 8955437700179010400}
   wearableListEmptyMessage: {fileID: 6038513526629149962}
@@ -800,10 +800,6 @@ PrefabInstance:
     - target: {fileID: 2579611172039404072, guid: f3f4587bcfd104c3bbb76cd706b3dd20, type: 3}
       propertyPath: m_Name
       value: EquippedWearable
-      objectReference: {fileID: 0}
-    - target: {fileID: 2579611172039404072, guid: f3f4587bcfd104c3bbb76cd706b3dd20, type: 3}
-      propertyPath: m_IsActive
-      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6639280317080520532, guid: f3f4587bcfd104c3bbb76cd706b3dd20, type: 3}
       propertyPath: m_Pivot.x

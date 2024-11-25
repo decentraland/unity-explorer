@@ -63,6 +63,12 @@ namespace DCL.InWorldCamera.PhotoDetail
             isShowingWearables = false;
             wearablesLoaded = false;
             loadWearablesCts = loadWearablesCts.SafeRestart();
+
+            foreach (EquippedWearableController wearableController in wearableControllers)
+            {
+                wearableController.Release();
+                photoDetailPoolManager.ReleaseEquippedWearable(wearableController);
+            }
             wearableControllers.Clear();
         }
 
@@ -110,6 +116,7 @@ namespace DCL.InWorldCamera.PhotoDetail
             await UniTask.WhenAll(wearableTasks);
 
             view.wearableListLoadingSpinner.SetActive(false);
+            wearablesLoaded = true;
         }
     }
 }
