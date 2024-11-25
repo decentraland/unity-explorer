@@ -21,20 +21,31 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
     [LogCategory(ReportCategory.IN_WORLD_CAMERA)]
     public sealed partial class CaptureScreenshotSystem : BaseUnityLoopSystem
     {
+        private const float SPLASH_FX_DURATION = 0.5f;
+        private const float MIDDLE_PAUSE_FX_DURATION = 0.1f;
+        private const float IMAGE_TRANSITION_FX_DURATION = 0.5f;
+
         private readonly ScreenRecorder recorder;
         private readonly ScreenshotMetadataBuilder metadataBuilder;
         private readonly ScreenshotHudView hud;
 
         private readonly ICoroutineRunner coroutineRunner;
         private readonly ICameraReelStorageService cameraReelStorageService;
+        private readonly InWorldCameraController uiController;
         private readonly CancellationTokenSource ctx;
         private readonly Entity playerEntity;
 
         private SingleInstanceEntity camera;
 
-        public CaptureScreenshotSystem(World world, ScreenRecorder recorder,
-            ScreenshotHudView hud, Entity playerEntity, ScreenshotMetadataBuilder metadataBuilder, ICoroutineRunner coroutineRunner,
-            ICameraReelStorageService cameraReelStorageService)
+        public CaptureScreenshotSystem(
+            World world,
+            ScreenRecorder recorder,
+            ScreenshotHudView hud,
+            Entity playerEntity,
+            ScreenshotMetadataBuilder metadataBuilder,
+            ICoroutineRunner coroutineRunner,
+            ICameraReelStorageService cameraReelStorageService,
+            InWorldCameraController uiController)
             : base(world)
         {
             this.recorder = recorder;
@@ -43,6 +54,7 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
             this.metadataBuilder = metadataBuilder;
             this.coroutineRunner = coroutineRunner;
             this.cameraReelStorageService = cameraReelStorageService;
+            this.uiController = uiController;
 
             ctx = new CancellationTokenSource();
         }
@@ -72,6 +84,7 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
                     cameraReelStorageService.UploadScreenshotAsync(hud.Screenshot, hud.Metadata, ctx.Token).Forget();
 
                     hud.Canvas.enabled = true;
+                    uiController.PlayScreenshotFX(hud.Screenshot, SPLASH_FX_DURATION, MIDDLE_PAUSE_FX_DURATION, IMAGE_TRANSITION_FX_DURATION);
                 }
 
                 return;

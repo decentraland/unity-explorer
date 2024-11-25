@@ -5,6 +5,7 @@ using ECS.Abstract;
 using JetBrains.Annotations;
 using MVC;
 using System.Threading;
+using UnityEngine;
 using UnityEngine.UI;
 
 namespace DCL.InWorldCamera.ScreencaptureCamera.UI
@@ -39,7 +40,7 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.UI
         private void RequestTakeScreenshot()
         {
             if (!world.Has<TakeScreenshotUIRequest>(camera!.Value))
-                world.Add<TakeScreenshotUIRequest>(camera!.Value);
+                world.Add(camera!.Value, new TakeScreenshotUIRequest { Source = "UI" });
         }
 
         public override void Dispose()
@@ -59,6 +60,12 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.UI
         public void Hide()
         {
             viewInstance.HideAsync(default(CancellationToken)).Forget();
+        }
+
+        public void PlayScreenshotFX(Texture2D image, float splashDuration, float middlePauseDuration, float transitionDuration)
+        {
+            // AudioScriptableObjects.takeScreenshot.Play();
+            viewInstance.ScreenshotCaptureAnimation(image, splashDuration, middlePauseDuration, transitionDuration);
         }
 
         // protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>

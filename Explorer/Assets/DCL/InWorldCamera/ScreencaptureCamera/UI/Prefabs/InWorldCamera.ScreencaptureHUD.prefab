@@ -223,13 +223,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   <canvas>k__BackingField: {fileID: 405257682719442047}
   <raycaster>k__BackingField: {fileID: 405257682719442045}
+  shortcutsInfoPanel: {fileID: 8204676638934216250}
+  openShortcutsIcon: {fileID: 0}
+  closeShortcutsIcon: {fileID: 0}
+  whiteSplashImage: {fileID: 2926745434062198778}
+  cameraReelIcon: {fileID: 592682626191998567}
+  animatedImage: {fileID: 4429869035757732807}
   <CameraReelButton>k__BackingField: {fileID: 16720570550590676}
   <TakeScreenshotButton>k__BackingField: {fileID: 1364361359160270331}
   <CloseButton>k__BackingField: {fileID: 2406123707887843909}
   <ShortcutsInfoButton>k__BackingField: {fileID: 6051730746075302648}
-  shortcutsInfoPanel: {fileID: 8204676638934216250}
-  openShortcutsIcon: {fileID: 0}
-  closeShortcutsIcon: {fileID: 0}
 --- !u!1 &405257684294210920
 GameObject:
   m_ObjectHideFlags: 0
@@ -687,6 +690,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!224 &592682626191998567 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 608565686815090242, guid: 83437f351686bca419378abea4d2ed07, type: 3}
+  m_PrefabInstance: {fileID: 21302976712988709}
+  m_PrefabAsset: {fileID: 0}
 --- !u!224 &3137847304269106682 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 3152644595163223519, guid: 83437f351686bca419378abea4d2ed07, type: 3}
