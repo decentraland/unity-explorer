@@ -17,11 +17,9 @@ using MVC;
 using System;
 using System.Threading;
 using UnityEngine;
-using UnityEngine.AddressableAssets;
 using UnityEngine.UI;
 using Utility;
 using static DCL.PluginSystem.Global.InWorldCameraPlugin;
-using Object = UnityEngine.Object;
 
 namespace DCL.PluginSystem.Global
 {
@@ -72,7 +70,7 @@ namespace DCL.PluginSystem.Global
             factory.Dispose();
         }
 
-        public async UniTask InitializeAsync(InWorldCameraSettings settings, CancellationToken ct)
+        public UniTask InitializeAsync(InWorldCameraSettings settings, CancellationToken ct)
         {
             this.settings = settings;
 
@@ -84,9 +82,10 @@ namespace DCL.PluginSystem.Global
 
             cameraReelStorageService = new CameraReelRemoteStorageService(new CameraReelImagesMetadataRemoteDatabase(webRequestController, decentralandUrlsSource));
 
-            var persistentEmoteWheelOpenerController = new InWorldCameraSidebarButtonController(() => sidebarButton, mvcManager);
+            var inWorldCameraController = new InWorldCameraController(() => hud.GetComponent<InWorldCameraView>(), sidebarButton);
+            mvcManager.RegisterController(inWorldCameraController);
 
-            mvcManager.RegisterController(persistentEmoteWheelOpenerController);
+            return UniTask.CompletedTask;
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)

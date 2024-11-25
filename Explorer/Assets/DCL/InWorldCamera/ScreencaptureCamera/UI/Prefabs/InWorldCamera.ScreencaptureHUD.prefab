@@ -88,6 +88,7 @@ GameObject:
   - component: {fileID: 405257682719442046}
   - component: {fileID: 405257682719442045}
   - component: {fileID: 5645814392825967031}
+  - component: {fileID: 794990568023507601}
   m_Layer: 5
   m_Name: InWorldCamera.ScreencaptureHUD
   m_TagString: Untagged
@@ -207,6 +208,20 @@ MonoBehaviour:
         x: 
         y: 
     visiblePeople: []
+--- !u!114 &794990568023507601
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 405257682719442044}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bb08f986912043419dd43720c51ced9e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  <canvas>k__BackingField: {fileID: 405257682719442047}
+  <raycaster>k__BackingField: {fileID: 405257682719442045}
 --- !u!1 &405257684294210920
 GameObject:
   m_ObjectHideFlags: 0
@@ -468,7 +483,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: f0ef1b4fe9cb79648a48202939cd46f3, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 0071e477d02b34317b64d4eb2f3a927f, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -1404,18 +1419,6 @@ PrefabInstance:
     - target: {fileID: 8645804208939128870, guid: 7ed4827c381405e458c685420f6e002b, type: 3}
       propertyPath: m_PreferredHeight
       value: 20
-      objectReference: {fileID: 0}
-    - target: {fileID: 8854088955422039860, guid: 7ed4827c381405e458c685420f6e002b, type: 3}
-      propertyPath: m_Color.b
-      value: 0.09411765
-      objectReference: {fileID: 0}
-    - target: {fileID: 8854088955422039860, guid: 7ed4827c381405e458c685420f6e002b, type: 3}
-      propertyPath: m_Color.g
-      value: 0.08235294
-      objectReference: {fileID: 0}
-    - target: {fileID: 8854088955422039860, guid: 7ed4827c381405e458c685420f6e002b, type: 3}
-      propertyPath: m_Color.r
-      value: 0.08627451
       objectReference: {fileID: 0}
     - target: {fileID: 9016239706472270915, guid: 7ed4827c381405e458c685420f6e002b, type: 3}
       propertyPath: m_AnchoredPosition.y

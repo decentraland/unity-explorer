@@ -638,7 +638,18 @@ namespace Global.Dynamic
             globalPlugins.AddRange(staticContainer.SharedPlugins);
 
             if (appArgs.HasFlag(AppArgsFlags.CAMERA_REEL))
-                globalPlugins.Add(new InWorldCameraPlugin(dclInput, selfProfile, staticContainer.RealmData, playerEntity, placesAPIService, staticContainer.CharacterContainer.CharacterObject, coroutineRunner, staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource));
+                globalPlugins.Add(new InWorldCameraPlugin(
+                    dclInput,
+                    selfProfile,
+                    staticContainer.RealmData,
+                    playerEntity,
+                    placesAPIService,
+                    staticContainer.CharacterContainer.CharacterObject,
+                    coroutineRunner,
+                    staticContainer.WebRequestsContainer.WebRequestController,
+                    bootstrapContainer.DecentralandUrlsSource,
+                    container.MvcManager,
+                    mainUIView.SidebarView.InWorldCameraButton));
 
             if (dynamicWorldParams.EnableAnalytics)
                 globalPlugins.Add(new AnalyticsPlugin(
