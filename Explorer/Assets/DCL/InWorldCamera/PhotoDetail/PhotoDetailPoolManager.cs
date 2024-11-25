@@ -9,21 +9,26 @@ namespace DCL.InWorldCamera.PhotoDetail
     public class PhotoDetailPoolManager
     {
         private readonly IObjectPool<VisiblePersonController> visiblePersonPool;
+        private readonly IObjectPool<EquippedWearableController> equippedWearablePool;
 
         public PhotoDetailPoolManager(
             VisiblePersonView visiblePersonPrefab,
+            EquippedWearableView equippedWearablePrefab,
             GameObject unusedVisiblePersonPoolObjectParent,
+            GameObject unusedEquippedWearablePoolObjectParent,
             IWebRequestController webRequestController,
             IProfileRepository profileRepository,
             IMVCManager mvcManager,
             int visiblePersonDefaultCapacity,
-            int visiblePersonMaxSize)
+            int visiblePersonMaxSize,
+            int equippedWearableDefaultCapacity,
+            int equippedWearableMaxSize)
         {
             visiblePersonPool = new ObjectPool<VisiblePersonController>(
                 () =>
                 {
                     VisiblePersonView view = GameObject.Instantiate(visiblePersonPrefab);
-                    return new VisiblePersonController(view, webRequestController, profileRepository, mvcManager);
+                    return new VisiblePersonController(view, webRequestController, profileRepository, mvcManager, this);
                 },
                 visiblePerson => visiblePerson.view.gameObject.SetActive(true),
                 visiblePerson =>
@@ -38,6 +43,26 @@ namespace DCL.InWorldCamera.PhotoDetail
                 true,
                 visiblePersonDefaultCapacity,
                 visiblePersonMaxSize);
+
+            equippedWearablePool = new ObjectPool<EquippedWearableController>(
+                () =>
+                {
+                    EquippedWearableView view = GameObject.Instantiate(equippedWearablePrefab);
+                    return new EquippedWearableController(view);
+                },
+                equippedWearable => equippedWearable.view.gameObject.SetActive(true),
+                equippedWearable =>
+                {
+                    equippedWearable.view.transform.SetParent(unusedEquippedWearablePoolObjectParent.transform, false);
+                    equippedWearable.view.gameObject.SetActive(false);
+                },
+                equippedWearable =>
+                {
+                    GameObject.Destroy(equippedWearable.view.gameObject);
+                },
+                true,
+                equippedWearableDefaultCapacity,
+                equippedWearableMaxSize);
         }
 
         public VisiblePersonController GetVisiblePerson(RectTransform parent)
@@ -49,5 +74,15 @@ namespace DCL.InWorldCamera.PhotoDetail
 
         public void ReleaseVisiblePerson(VisiblePersonController controller) =>
             visiblePersonPool.Release(controller);
+
+        public EquippedWearableController GetEquippedWearable(RectTransform parent)
+        {
+            EquippedWearableController controller = equippedWearablePool.Get();
+            controller.view.transform.SetParent(parent, false);
+            return controller;
+        }
+
+        public void ReleaseEquippedWearable(EquippedWearableController controller) =>
+            equippedWearablePool.Release(controller);
     }
 }
