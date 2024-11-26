@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.HealthChecks;
 using Segment.Serialization;
 using System.Threading;
+using Utility.Types;
 
 namespace DCL.PerformanceAndDiagnostics.Analytics
 {
@@ -17,16 +18,16 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             this.analytics = analytics;
         }
 
-        public async UniTask<(bool success, string? errorMessage)> IsRemoteAvailableAsync(CancellationToken ct)
+        public async UniTask<Result> IsRemoteAvailableAsync(CancellationToken ct)
         {
             var result = await healthCheck.IsRemoteAvailableAsync(ct);
 
-            if (result.success == false)
+            if (result.Success == false)
                 analytics.Track(
                     EVENT_NAME,
                     new JsonObject
                     {
-                        ["message"] = result.errorMessage,
+                        ["message"] = result.ErrorMessage,
                     }
                 );
 

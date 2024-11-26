@@ -15,6 +15,8 @@ namespace ECS.SceneLifeCycle
 
         void AddNonRealScene(IReadOnlyList<Vector2Int> parcels);
 
+        void AddNonRealScene(Vector2Int parcel);
+
         void AddPortableExperienceScene(ISceneFacade sceneFacade, string sceneUrn);
 
         void RemoveNonRealScene(IReadOnlyList<Vector2Int> parcels);
@@ -60,6 +62,11 @@ namespace ECS.SceneLifeCycle
         {
             foreach (Vector2Int parcel in parcels)
                 nonRealSceneByParcel.Add(parcel);
+        }
+
+        public void AddNonRealScene(Vector2Int parcel)
+        {
+            nonRealSceneByParcel.Add(parcel);
         }
 
         public void RemoveNonRealScene(IReadOnlyList<Vector2Int> parcels)
