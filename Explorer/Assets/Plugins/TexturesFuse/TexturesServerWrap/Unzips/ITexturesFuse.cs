@@ -96,9 +96,13 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
             if (Application.platform is RuntimePlatform.LinuxPlayer or RuntimePlatform.LinuxEditor)
                 return NewManagedInstance();
 
+            ITexturesFuse NewWorker() =>
+                IPlatform.DEFAULT.Is(IPlatform.Kind.Windows)
+                    ? new NodeTexturesFuse()
+                    : new TexturesFuse(init, options, true);
+
             return new PooledTexturesFuse(
-                () => new TexturesFuse(init, options, true)
-                   .WithLog($"Worker: {++index}"),
+                () => NewWorker().WithLog($"Worker: {++index}"),
                 workersCount ?? (
                     IPlatform.DEFAULT.Is(IPlatform.Kind.Windows)
                         ? 1 // BC7 has issue with multithreading on Windows, should be solved later
