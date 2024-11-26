@@ -2,11 +2,11 @@
 using Cysharp.Threading.Tasks;
 using DCL.CharacterCamera;
 using DCL.ExplorePanel;
+using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.UI;
 using ECS.Abstract;
 using JetBrains.Annotations;
 using MVC;
-using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.UI;
@@ -18,16 +18,20 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.UI
         private readonly Button sidebarButton;
         private readonly World world;
         private readonly IMVCManager mvcManager;
+        private readonly ICameraReelStorageService storageService;
 
         private SingleInstanceEntity? cameraInternal;
+
+        private bool shortcutPanelIsOpen;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
         private SingleInstanceEntity? camera => cameraInternal ??= world.CacheCamera();
 
-        public InWorldCameraController([NotNull] ViewFactoryMethod viewFactory, Button sidebarButton, World world, IMVCManager mvcManager) : base(viewFactory)
+        public InWorldCameraController([NotNull] ViewFactoryMethod viewFactory, Button sidebarButton, World world, IMVCManager mvcManager, ICameraReelStorageService storageService) : base(viewFactory)
         {
             this.world = world;
             this.mvcManager = mvcManager;
+            this.storageService = storageService;
             this.sidebarButton = sidebarButton;
 
             sidebarButton.onClick.AddListener(RequestEnableInWorldCamera);
@@ -54,8 +58,12 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.UI
         public void Show()
         {
             sidebarButton.OnSelect(null);
+
             LaunchViewLifeCycleAsync(new CanvasOrdering(Layer, 0), new ControllerNoData(), default(CancellationToken))
                .Forget();
+
+            viewInstance!.TakeScreenshotButton.interactable = storageService.StorageStatus.HasFreeSpace;
+            viewInstance.NoStorageNotification.gameObject.SetActive(!storageService.StorageStatus.HasFreeSpace);
         }
 
         public void Hide()
@@ -110,7 +118,18 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.UI
 
         private void ToggleShortcutsInfo()
         {
-            throw new NotImplementedException();
+            if (shortcutPanelIsOpen)
+            {
+                viewInstance!.ShortcutsInfoPanel.HideAsync(CancellationToken.None).Forget();
+                viewInstance.ShortcutsInfoButton.OnDeselect(null);
+                shortcutPanelIsOpen = false;
+            }
+            else
+            {
+                viewInstance!.ShortcutsInfoPanel.ShowAsync(CancellationToken.None).Forget();
+                viewInstance.ShortcutsInfoButton.OnSelect(null);
+                shortcutPanelIsOpen = true;
+            }
         }
     }
 }

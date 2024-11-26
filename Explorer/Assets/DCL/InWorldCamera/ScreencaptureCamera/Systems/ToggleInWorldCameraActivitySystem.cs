@@ -12,7 +12,6 @@ using DCL.InWorldCamera.ScreencaptureCamera.Settings;
 using DCL.InWorldCamera.ScreencaptureCamera.UI;
 using ECS.Abstract;
 using UnityEngine;
-using UnityEngine.UI;
 using static DCL.Input.Component.InputMapComponent;
 
 namespace DCL.InWorldCamera.ScreencaptureCamera.Systems

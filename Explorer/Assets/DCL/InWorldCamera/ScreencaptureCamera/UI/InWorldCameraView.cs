@@ -1,4 +1,5 @@
-﻿using DG.Tweening;
+﻿using DCL.UI;
+using DG.Tweening;
 using MVC;
 using UnityEngine;
 using UnityEngine.UI;
@@ -7,8 +8,11 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.UI
 {
     public class InWorldCameraView : ViewBase, IView
     {
-        [Header("SHORTCUTS INFO PANEL")]
-        [SerializeField] private GameObject shortcutsInfoPanel;
+        [field: Space]
+        [field: SerializeField] public WarningNotificationView NoStorageNotification { get; private set; }
+
+        [field: Header("SHORTCUTS INFO PANEL")]
+        [field: SerializeField] public ElementWithCloseArea ShortcutsInfoPanel { get; private set; }
         [SerializeField] private Image openShortcutsIcon;
         [SerializeField] private Image closeShortcutsIcon;
 

@@ -1,5 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.InWorldCamera.CameraReelStorageService.Schemas;
+using DCL.Web3.Identities;
 using NSubstitute;
 using NUnit.Framework;
 using System.Threading;
@@ -20,7 +21,7 @@ namespace DCL.InWorldCamera.CameraReelStorageService.Tests
         public void Setup()
         {
             metadataDatabase = Substitute.For<ICameraReelImagesMetadataDatabase>();
-            storageService = new CameraReelRemoteStorageService(metadataDatabase, Substitute.For<ICameraReelScreenshotsStorage>());
+            storageService = new CameraReelRemoteStorageService(metadataDatabase, Substitute.For<ICameraReelScreenshotsStorage>(), USER_ADDRESS);
         }
 
         [Test]
