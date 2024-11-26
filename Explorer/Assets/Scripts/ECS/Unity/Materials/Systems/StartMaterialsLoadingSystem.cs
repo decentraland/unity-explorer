@@ -70,7 +70,7 @@ namespace ECS.Unity.Materials.Systems
             if (MaterialDataEqualityComparer.Equals(in materialComponent.Data, in materialData))
                 return;
 
-            InvalidatePrbInequality(ref materialComponent, ref materialData);
+            InvalidatePrbInequality(entity, ref materialComponent, ref materialData);
 
             MaterialData.TexturesData prevTextureData = materialComponent.Data.Textures;
             materialComponent.Data = materialData;
@@ -80,12 +80,12 @@ namespace ECS.Unity.Materials.Systems
             World.AddOrGet(entity, new ShouldInstanceMaterialComponent());
         }
 
-        private void InvalidatePrbInequality(ref MaterialComponent materialComponent, ref MaterialData materialData)
+        private void InvalidatePrbInequality(Entity entity, ref MaterialComponent materialComponent, ref MaterialData materialData)
         {
             // If isPbr is the same right the same material is reused
             if (materialComponent.Data.IsPbrMaterial != materialData.IsPbrMaterial)
             {
-                ReleaseMaterial.Execute(World!, ref materialComponent, destroyMaterial);
+                ReleaseMaterial.Execute(entity, World!, ref materialComponent, destroyMaterial);
                 materialComponent.Result = null;
             }
         }
@@ -176,7 +176,7 @@ namespace ECS.Unity.Materials.Systems
             if (textureComponent == null)
             {
                 // If component is being reused forget the previous promise
-                ReleaseMaterial.ReleaseIntention(World, ref promise, true);
+                ReleaseMaterial.ReleaseIntention(entity, World, ref promise, true);
                 return false;
             }
 
@@ -188,11 +188,14 @@ namespace ECS.Unity.Materials.Systems
                 return false;
 
             // If component is being reused forget the previous promise
-            ReleaseMaterial.ReleaseIntention(World, ref promise, true);
+            ReleaseMaterial.ReleaseIntention(entity, World, ref promise, true);
 
             // TODO this code must be unified to be able to load video textures in a common way
             if (textureComponentValue.IsVideoTexture)
             {
+                if (promise != null && promise.Value.Result != null && promise.Value.Result.Value.Asset != null)
+                    textureComponentValue.RemoveConsumer(entity, promise.Value.Result.Value.Asset, World);
+
                 var intention = new GetTextureIntention(textureComponentValue.VideoPlayerEntity);
 
                 promise = Promise.CreateFinalized(intention,

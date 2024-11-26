@@ -77,5 +77,14 @@ namespace ECS.Unity.Textures.Components
         {
             renderers.Add(renderer);
         }
+
+        /// <summary>
+        /// Removes a reference to a renderer that was consuming the same texture.
+        /// </summary>
+        /// <param name="renderer">The renderer to stop referencing to.</param>
+        public void RemoveConsumerMeshRenderer(MeshRenderer renderer)
+        {
+            renderers.Remove(renderer);
+        }
     }
 }
