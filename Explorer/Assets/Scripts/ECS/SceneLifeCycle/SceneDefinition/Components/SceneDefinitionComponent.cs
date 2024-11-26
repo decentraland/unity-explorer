@@ -20,8 +20,6 @@ namespace ECS.SceneLifeCycle.SceneDefinition
         public ParcelMathHelper.SceneGeometry SceneGeometry { get; }
         public bool IsPortableExperience { get; }
 
-        public int InternalJobIndex { get; set; }
-
         public SceneDefinitionComponent(
             SceneEntityDefinition definition,
             IReadOnlyList<Vector2Int> parcels,
@@ -35,7 +33,6 @@ namespace ECS.SceneLifeCycle.SceneDefinition
             IpfsPath = ipfsPath;
             IsSDK7 = isSDK7;
             SceneGeometry = sceneGeometry;
-            InternalJobIndex = -1;
             IsPortableExperience = isPortableExperience;
         }
     }

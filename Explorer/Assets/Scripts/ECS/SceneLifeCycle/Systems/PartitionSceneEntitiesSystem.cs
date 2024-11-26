@@ -35,6 +35,7 @@ namespace ECS.SceneLifeCycle.Systems
         private readonly IRealmPartitionSettings realmPartitionSettings;
 
         internal readonly PartitionDataContainer partitionDataContainer;
+        private readonly int lastBucketIndex;
 
         private JobHandle partitionJobHandle;
         private bool isRunningJob;
@@ -52,6 +53,9 @@ namespace ECS.SceneLifeCycle.Systems
             this.realmPartitionSettings = realmPartitionSettings;
 
             partitionDataContainer.Initialize(DEPLOYED_SCENES_LIMIT, partitionSettings.SqrDistanceBuckets, partitionSettings);
+
+            lastBucketIndex = partitionSettings.SqrDistanceBuckets[
+                partitionSettings.SqrDistanceBuckets.Count - 1];
         }
 
         public override void Dispose()
@@ -95,39 +99,33 @@ namespace ECS.SceneLifeCycle.Systems
         [None(typeof(PartitionComponent))]
         private void PartitionNewEntity(in Entity entity, ref SceneDefinitionComponent definition)
         {
+            PartitionComponent partitionComponent = partitionComponentPool.Get();
+            World.Add(entity, partitionComponent);
+
             if (definition.IsPortableExperience)
             {
-                PartitionComponent partitionComponent = partitionComponentPool.Get();
                 partitionComponent.OutOfRange = false;
                 partitionComponent.Bucket = 0;
                 partitionComponent.IsBehind = false;
                 partitionComponent.RawSqrDistance = 1;
                 partitionComponent.IsDirty = true;
-                World.Add(entity, partitionComponent);
                 return;
             }
 
-            if (definition.InternalJobIndex < 0)
-            {
-                ScheduleSceneDefinition(ref definition);
-            }
-            else
-            {
-                PartitionComponent partitionComponent = partitionComponentPool.Get();
-                partitionDataContainer.SetPartitionComponentData(definition.InternalJobIndex, ref partitionComponent);
-                World.Add(entity, partitionComponent);
-            }
-        }
-
-        protected void ScheduleSceneDefinition(ref SceneDefinitionComponent definition)
-        {
             AddCorners(ref definition);
 
-            var partitionData = new PartitionData
+            partitionComponent.Bucket = (byte)lastBucketIndex;
+            partitionComponent.IsBehind = true;
+            partitionComponent.RawSqrDistance = float.MaxValue;
+
+            if (partitionComponent.InternalJobIndex < 0)
+                partitionComponent.InternalJobIndex = partitionDataContainer.CurrentPartitionIndex;
+
+            partitionDataContainer.SetPartitionData(new PartitionData
             {
-                IsDirty = readOnlyCameraSamplingData.IsDirty, RawSqrDistance = -1
-            };
-            partitionDataContainer.SetPartitionData(partitionData);
+                IsDirty = readOnlyCameraSamplingData.IsDirty,
+                RawSqrDistance = -1,
+            });
         }
 
         protected void AddCorners(ref SceneDefinitionComponent definition)
@@ -138,16 +136,15 @@ namespace ECS.SceneLifeCycle.Systems
                 corners[i] = definition.ParcelsCorners[i];
 
             partitionDataContainer.AddCorners(new ParcelCornersData(in corners));
-            definition.InternalJobIndex = partitionDataContainer.CurrentPartitionIndex;
         }
 
         [Query]
+        [All(typeof(SceneDefinitionComponent))]
         [None(typeof(PortableExperienceComponent))]
-        private void PartitionExistingEntity(ref SceneDefinitionComponent definition, ref PartitionComponent partitionComponent)
+        private void PartitionExistingEntity(PartitionComponent partitionComponent)
         {
-            if (definition.InternalJobIndex < 0) return;
-            partitionDataContainer.SetPartitionComponentData(definition.InternalJobIndex, ref partitionComponent);
+            partitionDataContainer.SetPartitionComponentData(partitionComponent.InternalJobIndex,
+                ref partitionComponent);
         }
-
     }
 }
