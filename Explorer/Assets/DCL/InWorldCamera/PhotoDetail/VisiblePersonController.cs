@@ -117,6 +117,8 @@ namespace DCL.InWorldCamera.PhotoDetail
 
             view.wearableListLoadingSpinner.SetActive(false);
             wearablesLoaded = true;
+
+            LayoutRebuilder.ForceRebuildLayoutImmediate(view.transform as RectTransform);
         }
     }
 }

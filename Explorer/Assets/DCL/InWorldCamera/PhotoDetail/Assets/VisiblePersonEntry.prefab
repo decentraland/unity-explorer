@@ -801,6 +801,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: EquippedWearable
       objectReference: {fileID: 0}
+    - target: {fileID: 2579611172039404072, guid: f3f4587bcfd104c3bbb76cd706b3dd20, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 6639280317080520532, guid: f3f4587bcfd104c3bbb76cd706b3dd20, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
