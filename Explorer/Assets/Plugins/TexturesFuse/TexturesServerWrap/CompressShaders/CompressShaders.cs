@@ -9,7 +9,7 @@ using Utility;
 
 namespace Plugins.TexturesFuse.TexturesServerWrap.CompressShaders
 {
-    public class CompressShaders : ICompressShaders
+    internal class CompressShaders : ICompressShaders
     {
         private readonly Func<ITexturesFuse> texturesFuseFactory;
         private readonly IPlatform platformInfo;
@@ -48,7 +48,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.CompressShaders
             if (Directory.Exists(DIR) == false)
             {
                 Directory.CreateDirectory(DIR);
-                CopyFilesRecursively(ICompressShaders.ShadersDir(), DIR);
+                CompressShadersExtensions.CopyFilesRecursively(ICompressShaders.ShadersDir(), DIR);
             }
 
             using var texturesFuse = texturesFuseFactory()!;
@@ -64,14 +64,5 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.CompressShaders
 
         private bool ShouldIgnorePlatform() =>
             platformInfo.IsNot(IPlatform.Kind.Windows);
-
-        private static void CopyFilesRecursively(string sourcePath, string targetPath)
-        {
-            foreach (string dirPath in Directory.GetDirectories(sourcePath, "*", SearchOption.AllDirectories))
-                Directory.CreateDirectory(dirPath.Replace(sourcePath, targetPath));
-
-            foreach (string newPath in Directory.GetFiles(sourcePath, "*.*", SearchOption.AllDirectories))
-                File.Copy(newPath, newPath.Replace(sourcePath, targetPath), true);
-        }
     }
 }

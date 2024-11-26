@@ -18,7 +18,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
         private const int MMF_INPUT_CAPACITY = MB * 16;
         private const int MMF_OUTPUT_CAPACITY = MB * 4;
 
-        private const string CHILD_PROCESS = "node.exe";
+        public const string CHILD_PROCESS = "node.exe";
 
         private static readonly ProcessStartInfo START_INFO = new ()
         {

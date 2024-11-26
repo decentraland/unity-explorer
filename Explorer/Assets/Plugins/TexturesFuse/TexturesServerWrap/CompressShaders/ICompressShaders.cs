@@ -1,5 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Platforms;
+using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
+using System;
 using System.IO;
 using System.Threading;
 using UnityEngine;
@@ -18,16 +20,36 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.CompressShaders
 
         static string ShadersDir()
         {
-            char ps = IPlatform.DEFAULT.Is(IPlatform.Kind.Windows) ? '\\' : '/';
+            char ps = CompressShadersExtensions.PathSeparator;
 
             return Application.isEditor
                 ? $"Assets{ps}StreamingAssets{ps}plugins"
                 : $"Decentraland_Data{ps}StreamingAssets{ps}plugins";
         }
+
+        static string NodeDir()
+        {
+            char ps = CompressShadersExtensions.PathSeparator;
+
+            return Application.isEditor
+                ? $"Assets{ps}StreamingAssets{ps}fusenode"
+                : $"Decentraland_Data{ps}StreamingAssets{ps}fusenode";
+        }
+
+        static ICompressShaders NewDefault(Func<ITexturesFuse> texturesFuseFactory, IPlatform platformInfo) =>
+            new PlatformFilterCompressShaders(
+                new SeveralCompressShaders(
+                    new CompressShaders(texturesFuseFactory, platformInfo),
+                    new NodeCompressShaders()
+                ),
+                platformInfo
+            );
     }
 
     public static class CompressShadersExtensions
     {
+        public static char PathSeparator = IPlatform.DEFAULT.Is(IPlatform.Kind.Windows) ? '\\' : '/';
+
         public static UniTask WarmUpIfRequiredAsync(this ICompressShaders compressShaders, CancellationToken token) =>
             compressShaders.AreReady()
                 ? UniTask.CompletedTask
@@ -35,5 +57,14 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.CompressShaders
 
         public static LogCompressShaders WithLog(this ICompressShaders origin, string prefix) =>
             new (origin, prefix);
+
+        public static void CopyFilesRecursively(string sourcePath, string targetPath)
+        {
+            foreach (string dirPath in Directory.GetDirectories(sourcePath, "*", SearchOption.AllDirectories))
+                Directory.CreateDirectory(dirPath.Replace(sourcePath, targetPath));
+
+            foreach (string newPath in Directory.GetFiles(sourcePath, "*.*", SearchOption.AllDirectories))
+                File.Copy(newPath, newPath.Replace(sourcePath, targetPath), true);
+        }
     }
 }
