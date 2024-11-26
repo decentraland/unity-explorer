@@ -162,17 +162,17 @@ namespace Global.Dynamic
             Uri.TryCreate(realmParam, UriKind.Absolute, out Uri? uriResult)
             && (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps);
 
-        public void CheckStartParcelFeatureFlagOverride(IAppArgs appArgs, bool isLocalSceneDevelopment,
-            FeatureFlagsCache featureFlagsCache)
+        public void CheckStartParcelFeatureFlagOverride(IAppArgs appArgs, FeatureFlagsCache featureFlagsCache)
         {
-            //First we need to check if the user has passed a position as an argument. This is the case used on local scene development from creator hub/scene args
+            //First we need to check if the user has passed a position as an argument.
+            //If we have set a position trough args, the feature flag should not be taken into consideration
+            //This is the case used on local scene development from creator hub/scene args
             //Check https://github.com/decentraland/js-sdk-toolchain/blob/2c002ca9e6feb98a771337190db2945e013d7b93/packages/%40dcl/sdk-commands/src/commands/start/explorer-alpha.ts#L29
-            //Also, we could be in editor (no app args),  and its LSD, we want to ignore the feature flag
-            if (appArgs.TryGetValue(AppArgsFlags.POSITION, out var parcelToTeleportOverrideFromAppArgs) ||
-                isLocalSceneDevelopment)
+            if (appArgs.HasFlag(AppArgsFlags.POSITION))
                 return;
 
-
+            //Note: If you dont want the feature flag for the localhost hostname, remember to remove ir from the feature flag configuration
+            // (https://features.decentraland.systems/#/features/strategies/explorer-alfa-genesis-spawn-parcel)
             string? parcelToTeleportOverride = null;
             //If not, we check the feature flag usage
             var featureFlagOverride =
