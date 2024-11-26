@@ -193,9 +193,6 @@ namespace ECS.Unity.Materials.Systems
             // TODO this code must be unified to be able to load video textures in a common way
             if (textureComponentValue.IsVideoTexture)
             {
-                if (promise != null && promise.Value.Result != null && promise.Value.Result.Value.Asset != null)
-                    textureComponentValue.RemoveConsumer(entity, promise.Value.Result.Value.Asset, World);
-
                 var intention = new GetTextureIntention(textureComponentValue.VideoPlayerEntity);
 
                 promise = Promise.CreateFinalized(intention,
