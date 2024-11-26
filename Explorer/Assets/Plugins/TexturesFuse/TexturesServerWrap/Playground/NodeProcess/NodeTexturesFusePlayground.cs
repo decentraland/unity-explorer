@@ -1,4 +1,6 @@
 using Cysharp.Threading.Tasks;
+using DCL.Platforms;
+using Plugins.TexturesFuse.TexturesServerWrap.CompressShaders;
 using Plugins.TexturesFuse.TexturesServerWrap.Playground.Displays;
 using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using System.IO;
@@ -38,6 +40,10 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Playground.NodeProcess
 
         private async UniTaskVoid StartAsync(CancellationToken token)
         {
+            await ICompressShaders
+                 .NewDefault(() => new NodeTexturesFuse(inputArgs), new Platform())
+                 .WarmUpIfRequiredAsync(token);
+
             texturesFuse ??= new NodeTexturesFuse(inputArgs);
 
             byte[] data = await File.ReadAllBytesAsync(pathOrUri, token)!;
