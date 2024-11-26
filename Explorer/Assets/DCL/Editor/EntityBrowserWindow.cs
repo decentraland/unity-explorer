@@ -1,12 +1,12 @@
 using Arch.Core;
 using Arch.Core.Utils;
 using Global.Dynamic;
+using SceneRunner.Scene;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using SystemGroups.Visualiser;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Pool;
@@ -21,7 +21,8 @@ namespace DCL.Editor
             = { GUILayout.Height(EditorGUIUtility.singleLineHeight) };
 
         // World selector
-        private static readonly string[] GLOBAL_WORLD_ONLY = { "Global" };
+        private QueryDescription sceneFacades;
+        private World selectedWorld;
         private string[] worldNames;
 
         // Query editor
@@ -47,37 +48,46 @@ namespace DCL.Editor
             window.Show();
         }
 
+        private void OnEnable()
+        {
+            sceneFacades = new QueryDescription().WithAll<ISceneFacade>();
+        }
+
         private void OnGUI()
         {
             scrollY = EditorGUILayout.BeginScrollView(new Vector2(0f, scrollY)).y;
 
             // World selector
 
-            World world;
+            World globalWorld = GlobalWorld.ECSWorldInstance;
 
-            // TODO: Ability to select a scene world
-            /*if (SystemGroupSnapshot.Instance != null)
+            if (globalWorld != null)
             {
-                var worlds = SystemGroupSnapshot.Instance.SystemGroupWorlds();
+                using (ListPool<(string name, World world)>.Get(out List<(string name, World world)> worlds))
+                {
+                    worlds.Add(("Global", globalWorld));
+                    GetSceneWorlds getSceneWorlds = new () { Worlds = worlds };
 
-                if (worldNames == null || worldNames.Length != worlds.Count)
-                    worldNames = new string[worlds.Count];
+                    globalWorld.InlineQuery<GetSceneWorlds, ISceneFacade>(in sceneFacades,
+                        ref getSceneWorlds);
 
-                for (int i = 0; i < worldNames.Length; i++)
-                    worldNames[i] = worlds[i];
+                    if (worldNames == null || worldNames.Length != worlds.Count)
+                        worldNames = new string[worlds.Count];
 
-                int worldIndex = EditorGUILayout.Popup("World", 0, worldNames);
+                    for (var i = 0; i < worldNames.Length; i++)
+                        worldNames[i] = worlds[i].name;
 
-                //world = ???
+                    EditorGUI.BeginChangeCheck();
+
+                    int selectedWorldIndex = worlds.FindIndex(i => i.world == selectedWorld);
+                    selectedWorldIndex = EditorGUILayout.Popup("World", selectedWorldIndex, worldNames);
+
+                    if (EditorGUI.EndChangeCheck())
+                        selectedWorld = worlds[selectedWorldIndex].world;
+                }
             }
-            else*/
-            {
-                EditorGUI.BeginDisabledGroup(true);
-                EditorGUILayout.Popup("World", 0, GLOBAL_WORLD_ONLY);
-                EditorGUI.EndDisabledGroup();
-
-                world = GlobalWorld.ECSWorldInstance;
-            }
+            else
+                EditorGUILayout.Popup("World", -1, Array.Empty<string>());
 
             // Query editor
 
@@ -98,9 +108,9 @@ namespace DCL.Editor
 
             EditorGUIUtility.labelWidth = EditorGUIUtility.currentViewWidth * 0.4f;
 
-            if (world != null && query != QueryDescription.Null)
+            if (selectedWorld != null && query != QueryDescription.Null)
             {
-                foreach (Archetype archetype in world.Query(in query).GetArchetypeIterator())
+                foreach (Archetype archetype in selectedWorld.Query(in query).GetArchetypeIterator())
                     DrawEntities(archetype);
 
                 using (ListPool<int>.Get(out var keys))
@@ -404,6 +414,16 @@ namespace DCL.Editor
             public EntityUIState(int entityId)
             {
                 NiceName = entityId.ToString();
+            }
+        }
+
+        private struct GetSceneWorlds : IForEach<ISceneFacade>
+        {
+            public List<(string, World)> Worlds;
+
+            public void Update(ref ISceneFacade sceneFacade)
+            {
+                Worlds.Add((sceneFacade.Info.Name, sceneFacade.EcsExecutor.World));
             }
         }
 

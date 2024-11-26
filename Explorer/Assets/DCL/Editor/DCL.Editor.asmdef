@@ -2,7 +2,6 @@
     "name": "DCL.Editor",
     "rootNamespace": "",
     "references": [
-        "GUID:93de67908fd00d74fa58250a0deacd9f",
         "GUID:fc4fd35fb877e904d8cedee73b2256f6",
         "GUID:d07d357721497c3469c49e00cf077f4d",
         "GUID:3640f3c0b42946b0b8794a1ed8e06ca5",
