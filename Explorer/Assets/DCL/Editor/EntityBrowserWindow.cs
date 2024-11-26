@@ -43,7 +43,7 @@ namespace DCL.Editor
         [MenuItem("Arch/View/Entities")]
         private static void ShowWindow()
         {
-            var window = EditorWindow.GetWindow<EntityBrowserWindow>("Entities");
+            var window = GetWindow<EntityBrowserWindow>("Entities");
             window.Show();
         }
 
@@ -415,12 +415,11 @@ namespace DCL.Editor
             {
                 if (x != null && y != null)
                     return string.Compare(x.Name, y.Name, StringComparison.OrdinalIgnoreCase);
-
-                if (x == null && y == null)
+                else if (x == null && y == null)
                     return 0;
                 else if (x == null)
                     return 1;
-                else
+                else // y == null
                     return -1;
             }
         }
