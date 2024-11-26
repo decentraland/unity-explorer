@@ -655,7 +655,7 @@ namespace Global.Dynamic
             if (includeCameraReel)
                 globalPlugins.Add(new InWorldCameraPlugin(dclInput, assetsProvisioner, selfProfile, staticContainer.RealmData, playerEntity, placesAPIService, staticContainer.CharacterContainer.CharacterObject, coroutineRunner,
                     cameraReelStorageService, cameraReelStorageService, container.MvcManager, clipboard, bootstrapContainer.DecentralandUrlsSource, webBrowser, staticContainer.WebRequestsContainer.WebRequestController,
-                    container.ProfileRepository));
+                    container.ProfileRepository, container.ChatMessagesBus));
 
             if (dynamicWorldParams.EnableAnalytics)
                 globalPlugins.Add(new AnalyticsPlugin(

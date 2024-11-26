@@ -28,6 +28,7 @@ namespace DCL.InWorldCamera.PhotoDetail
         private CancellationTokenSource showReelCts = new ();
 
         private bool metadataPanelIsOpen = true;
+        private bool isClosing;
         private int currentReelIndex;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Fullscreen;
@@ -47,7 +48,12 @@ namespace DCL.InWorldCamera.PhotoDetail
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.webBrowser = webBrowser;
             this.shareToXMessage = shareToXMessage;
+
+            this.photoDetailInfoController.JumpIn += JumpInClicked;
         }
+
+        private void JumpInClicked() =>
+            isClosing = true;
 
         private void ToggleInfoSidePanel()
         {
@@ -57,7 +63,7 @@ namespace DCL.InWorldCamera.PhotoDetail
 
         protected override void OnViewShow()
         {
-            viewInstance.infoButton.onClick.AddListener(ToggleInfoSidePanel);
+            viewInstance!.infoButton.onClick.AddListener(ToggleInfoSidePanel);
             viewInstance!.previousScreenshotButton.onClick.AddListener(ShowPreviousReel);
             viewInstance!.nextScreenshotButton.onClick.AddListener(ShowNextReel);
             viewInstance!.downloadButton.onClick.AddListener(DownloadReelClicked);
@@ -91,6 +97,7 @@ namespace DCL.InWorldCamera.PhotoDetail
             viewInstance!.deleteButton.gameObject.SetActive(inputData.UserOwnedReels);
             viewInstance!.previousScreenshotButton.gameObject.SetActive(false);
             viewInstance!.nextScreenshotButton.gameObject.SetActive(false);
+            isClosing = false;
         }
 
         private void DownloadReelClicked() =>
@@ -144,7 +151,7 @@ namespace DCL.InWorldCamera.PhotoDetail
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
-            viewInstance.closeButton.OnClickAsync(ct);
+            UniTask.WhenAny(viewInstance.closeButton.OnClickAsync(ct),UniTask.WaitUntil(() => isClosing, cancellationToken: ct));
     }
 
     public readonly struct PhotoDetailParameter

@@ -4,6 +4,7 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Browser;
 using DCL.Character;
+using DCL.Chat.MessageBus;
 using DCL.Clipboard;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.InWorldCamera.PhotoDetail;
@@ -45,6 +46,7 @@ namespace DCL.PluginSystem.Global
         private readonly IWebBrowser webBrowser;
         private readonly IWebRequestController webRequestController;
         private readonly IProfileRepository profileRepository;
+        private readonly IChatMessagesBus chatMessagesBus;
 
         private ProvidedAsset<GameObject> hudPrefab;
         private ScreenRecorder recorder;
@@ -55,7 +57,7 @@ namespace DCL.PluginSystem.Global
             RealmData realmData, Entity playerEntity, IPlacesAPIService placesAPIService, ICharacterObject characterObject, ICoroutineRunner coroutineRunner,
             ICameraReelStorageService cameraReelStorageService, ICameraReelScreenshotsStorage cameraReelScreenshotsStorage, IMVCManager mvcManager,
             ISystemClipboard systemClipboard, IDecentralandUrlsSource decentralandUrlsSource, IWebBrowser webBrowser, IWebRequestController webRequestController,
-            IProfileRepository profileRepository)
+            IProfileRepository profileRepository, IChatMessagesBus chatMessagesBus)
         {
             this.input = input;
             this.assetsProvisioner = assetsProvisioner;
@@ -73,6 +75,7 @@ namespace DCL.PluginSystem.Global
             this.webBrowser = webBrowser;
             this.webRequestController = webRequestController;
             this.profileRepository = profileRepository;
+            this.chatMessagesBus = chatMessagesBus;
         }
 
         public async UniTask InitializeAsync(InWorldCameraSettings settings, CancellationToken ct)
@@ -88,7 +91,7 @@ namespace DCL.PluginSystem.Global
             metadataBuilder = new ScreenshotMetadataBuilder(selfProfile, characterObject.Controller, realmData, placesAPIService);
 
             mvcManager.RegisterController(new PhotoDetailController(viewFactoryMethod,
-                new PhotoDetailInfoController(explorePanelView.GetComponentInChildren<PhotoDetailInfoView>(), cameraReelStorageService, webRequestController, profileRepository, mvcManager, webBrowser),
+                new PhotoDetailInfoController(explorePanelView.GetComponentInChildren<PhotoDetailInfoView>(), cameraReelStorageService, webRequestController, profileRepository, mvcManager, webBrowser, chatMessagesBus),
                 cameraReelScreenshotsStorage,
                 systemClipboard,
                 decentralandUrlsSource,
