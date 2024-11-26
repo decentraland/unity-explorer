@@ -6,6 +6,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using SystemGroups.Visualiser;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Pool;
@@ -18,6 +19,10 @@ namespace DCL.Editor
         private float scrollY;
         private static readonly GUILayoutOption[] SINGLE_LINE_HEIGHT_LAYOUT
             = { GUILayout.Height(EditorGUIUtility.singleLineHeight) };
+
+        // World selector
+        private static readonly string[] GLOBAL_WORLD_ONLY = { "Global" };
+        private string[] worldNames;
 
         // Query editor
         private QueryDescription query = new ();
@@ -48,9 +53,31 @@ namespace DCL.Editor
 
             // World selector
 
-            EditorGUI.BeginDisabledGroup(true);
-            EditorGUILayout.Popup("World", 0, new[] { "Global" });
-            EditorGUI.EndDisabledGroup();
+            World world;
+
+            // TODO: Ability to select a scene world
+            /*if (SystemGroupSnapshot.Instance != null)
+            {
+                var worlds = SystemGroupSnapshot.Instance.SystemGroupWorlds();
+
+                if (worldNames == null || worldNames.Length != worlds.Count)
+                    worldNames = new string[worlds.Count];
+
+                for (int i = 0; i < worldNames.Length; i++)
+                    worldNames[i] = worlds[i];
+
+                int worldIndex = EditorGUILayout.Popup("World", 0, worldNames);
+
+                //world = ???
+            }
+            else*/
+            {
+                EditorGUI.BeginDisabledGroup(true);
+                EditorGUILayout.Popup("World", 0, GLOBAL_WORLD_ONLY);
+                EditorGUI.EndDisabledGroup();
+
+                world = GlobalWorld.ECSWorldInstance;
+            }
 
             // Query editor
 
@@ -71,20 +98,28 @@ namespace DCL.Editor
 
             EditorGUIUtility.labelWidth = EditorGUIUtility.currentViewWidth * 0.4f;
 
-            World world = GlobalWorld.ECSWorldInstance;
-
             if (world != null && query != QueryDescription.Null)
             {
                 foreach (Archetype archetype in world.Query(in query).GetArchetypeIterator())
                     DrawEntities(archetype);
 
-                foreach (int entityId in entityUiStates.Keys.ToArray())
-                    if (!existingEntities.Contains(entityId))
-                        entityUiStates.Remove(entityId);
+                using (ListPool<int>.Get(out var keys))
+                {
+                    keys.AddRange(entityUiStates.Keys);
 
-                foreach ((int entityId, int componentTypeId) in componentUiStates.Keys.ToArray())
-                    if (!existingEntities.Contains(entityId))
-                        componentUiStates.Remove((entityId, componentTypeId));
+                    foreach (int entityId in keys)
+                        if (!existingEntities.Contains(entityId))
+                            entityUiStates.Remove(entityId);
+                }
+
+                using (ListPool<(int, int)>.Get(out var keys))
+                {
+                    keys.AddRange(componentUiStates.Keys);
+
+                    foreach ((int entityId, int componentTypeId) in keys)
+                        if (!existingEntities.Contains(entityId))
+                            componentUiStates.Remove((entityId, componentTypeId));
+                }
 
                 existingEntities.Clear();
             }
@@ -246,7 +281,7 @@ namespace DCL.Editor
             {
                 Type type = registryTypes[i];
                 bool oldValue = types.Contains(type);
-                bool newValue = EditorGUILayout.Toggle(GetNiceName(type), oldValue);
+                bool newValue = GUILayout.Toggle(oldValue, GetNiceName(type));
                 containsAny = containsAny || newValue;
 
                 if (newValue != oldValue)
