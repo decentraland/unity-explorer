@@ -91,7 +91,6 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
             string hostUrl = decentralandUrlsSource.Url(DecentralandUrl.Host);
 
             var headers = new WebRequestHeadersInfo(request.init?.headers)
-                         .Add("Origin", hostUrl)
                          .Add("Referer", hostUrl)
                          .WithSign(signatureMetadata, unixTimestamp);
 
