@@ -74,6 +74,9 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
             pipe?.Dispose();
             pipeWriter?.Dispose();
             pipeReader?.Dispose();
+
+            activeProcess?.Close();
+            activeProcess?.Dispose();
         }
 
         public async UniTask<EnumResult<IOwnedTexture2D, NativeMethods.ImageResult>> TextureFromBytesAsync(IntPtr bytes, int bytesLength, TextureType type, CancellationToken token)
