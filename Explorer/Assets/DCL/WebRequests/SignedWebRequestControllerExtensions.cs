@@ -135,8 +135,7 @@ namespace DCL.WebRequests
                 ReportCategory.GENERIC_WEB_REQUEST,
                 new WebRequestHeadersInfo().WithSign(jsonMetaData, unixTimestamp),
                 WebRequestSignInfo.NewFromRaw(jsonMetaData, commonArguments.URL, unixTimestamp, "patch"),
-                null,
-                PATCH_GENERIC
+                null
             );
         }
     }
