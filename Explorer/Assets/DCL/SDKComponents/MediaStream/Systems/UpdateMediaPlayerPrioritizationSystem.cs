@@ -51,10 +51,17 @@ namespace DCL.SDKComponents.MediaStream
         {
             base.Initialize();
 
-            cachedCameraVerticalFOV = exposedCameraData.CinemachineBrain!.OutputCamera.fieldOfView;
-            cachedCameraHorizontalFOV = Camera.VerticalToHorizontalFieldOfView(exposedCameraData.CinemachineBrain.OutputCamera.fieldOfView, exposedCameraData.CinemachineBrain.OutputCamera.aspect);
-            float cameraHalfFov = cachedCameraVerticalFOV * 0.5f * Mathf.Deg2Rad;
-            cachedCameraTanValue = Mathf.Tan(cameraHalfFov);
+            if (exposedCameraData.CinemachineBrain != null)
+            {
+                cachedCameraVerticalFOV = exposedCameraData.CinemachineBrain!.OutputCamera.fieldOfView;
+                cachedCameraHorizontalFOV = Camera.VerticalToHorizontalFieldOfView(exposedCameraData.CinemachineBrain.OutputCamera.fieldOfView, exposedCameraData.CinemachineBrain.OutputCamera.aspect);
+                float cameraHalfFov = cachedCameraVerticalFOV * 0.5f * Mathf.Deg2Rad;
+                cachedCameraTanValue = Mathf.Tan(cameraHalfFov);
+            }
+            else
+            {
+                ReportHub.LogError(GetReportData(), "Missing cinemachine brain while initializing UpdateMediaPlayerPrioritizationSystem!");
+            }
         }
 
         protected override void Update(float t)

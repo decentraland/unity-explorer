@@ -63,8 +63,7 @@ namespace DCL.PluginSystem.World
 
         public async UniTask InitializeAsync(MediaPlayerPluginSettings settings, CancellationToken ct)
         {
-            VideoPrioritizationSettings videoPrioritizationSettings = await settings.VideoPrioritizationSettings.LoadAssetAsync<VideoPrioritizationSettings>();
-
+            VideoPrioritizationSettings videoPrioritizationSettings = (await assetsProvisioner.ProvideMainAssetAsync(settings.VideoPrioritizationSettings, ct: ct)).Value;
             mediaPlayerPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.MediaPlayerPrefab, ct: ct)).Value.GetComponent<MediaPlayer>();
             mediaPlayerPluginWrapper = new MediaPlayerPluginWrapper(sharedDependencies.ComponentPoolsRegistry, webRequestController, cacheCleaner, videoTexturePool, frameTimeBudget, mediaPlayerPrefab, worldVolumeMacBus, exposedCameraData, videoPrioritizationSettings);
 
