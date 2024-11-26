@@ -5,6 +5,7 @@ using DCL.Chat.MessageBus;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using DCL.InWorldCamera.ReelActions;
+using DCL.Passport;
 using DCL.Profiles;
 using DCL.WebRequests;
 using MVC;
@@ -27,10 +28,12 @@ namespace DCL.InWorldCamera.PhotoDetail
         private readonly PhotoDetailInfoView view;
         private readonly ICameraReelStorageService cameraReelStorageService;
         private readonly IChatMessagesBus chatMessagesBus;
+        private readonly IMVCManager mvcManager;
         private readonly PhotoDetailPoolManager photoDetailPoolManager;
         private readonly List<VisiblePersonController> visiblePersonControllers = new ();
 
         private Vector2Int screenshotParcel = Vector2Int.zero;
+        private string reelOwnerAddress;
 
         internal event Action JumpIn;
 
@@ -45,6 +48,7 @@ namespace DCL.InWorldCamera.PhotoDetail
             this.view = view;
             this.cameraReelStorageService = cameraReelStorageService;
             this.chatMessagesBus = chatMessagesBus;
+            this.mvcManager = mvcManager;
 
             this.photoDetailPoolManager = new PhotoDetailPoolManager(view.visiblePersonViewPrefab,
                 view.equippedWearablePrefab,
@@ -60,6 +64,14 @@ namespace DCL.InWorldCamera.PhotoDetail
                 EQUIPPED_WEARABLE_MAX_POOL_CAPACITY);
 
             this.view.jumpInButton.onClick.AddListener(JumpInClicked);
+            this.view.ownerProfileButton.onClick.AddListener(ShowOwnerPassportClicked);
+        }
+
+        private void ShowOwnerPassportClicked()
+        {
+            if (string.IsNullOrEmpty(reelOwnerAddress)) return;
+
+            mvcManager.ShowAsync(PassportController.IssueCommand(new PassportController.Params(reelOwnerAddress))).Forget();
         }
 
         public async UniTask ShowPhotoDetailInfoAsync(string reelId, CancellationToken ct)
@@ -70,6 +82,8 @@ namespace DCL.InWorldCamera.PhotoDetail
 
             screenshotParcel.x = Convert.ToInt32(reelData.metadata.scene.location.x);
             screenshotParcel.y = Convert.ToInt32(reelData.metadata.scene.location.y);
+
+            reelOwnerAddress = reelData.metadata.userAddress;
 
             view.dateText.SetText(ReelUtility.GetDateTimeFromString(reelData.metadata.dateTime).ToString("MMMM dd, yyyy", CultureInfo.InvariantCulture));
             view.ownerName.SetText(reelData.metadata.userName);
@@ -114,6 +128,7 @@ namespace DCL.InWorldCamera.PhotoDetail
         public void Dispose()
         {
             view.jumpInButton.onClick.RemoveListener(JumpInClicked);
+            view.ownerProfileButton.onClick.RemoveListener(ShowOwnerPassportClicked);
             JumpIn = null;
         }
     }

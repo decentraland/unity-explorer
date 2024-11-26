@@ -31,7 +31,7 @@ namespace DCL.InWorldCamera.PhotoDetail
         private bool isClosing;
         private int currentReelIndex;
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Fullscreen;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
         public PhotoDetailController(ViewFactoryMethod viewFactory,
             PhotoDetailInfoController photoDetailInfoController,
