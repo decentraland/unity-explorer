@@ -110,6 +110,9 @@ namespace DCL.WebRequests
             for (var i = 0; i < count; i++)
             {
                 WebRequestHeader header = info[i];
+
+                // Fix for: The header Origin is managed automatically, setting it may have no effect or result in unexpected behavior.
+                if (header.Name == "Origin") continue;
                 unityWebRequest.SetRequestHeader(header.Name, header.Value);
             }
         }
@@ -130,6 +133,13 @@ namespace DCL.WebRequests
             {
                 string name = AuthChainHeaderNames.Get(i);
                 string value = link.ToJson();
+
+                // Fix for: "The header Origin is managed automatically, setting it may have no effect or result in unexpected behavior."
+                if (name == "Origin")
+                {
+                    i++;
+                    continue;
+                }
                 unityWebRequest.SetRequestHeader(name, value);
 #if DEBUG
                 sb.AppendLine($"Header {name}: {value}");
