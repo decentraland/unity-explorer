@@ -609,6 +609,7 @@ MonoBehaviour:
   <ProfileMenuView>k__BackingField: {fileID: 9096970311108952280}
   <FaceFrame>k__BackingField: {fileID: 713957529403070190}
   <PersistentEmoteWheelOpener>k__BackingField: {fileID: 5415830858801336587}
+  <InWorldCameraButton>k__BackingField: {fileID: 8108662634941636583}
   <mapButton>k__BackingField: {fileID: 8108662634941636583}
   <backpackButton>k__BackingField: {fileID: 7310006030576766240}
   <cameraReelButton>k__BackingField: {fileID: 3655238427613538003}

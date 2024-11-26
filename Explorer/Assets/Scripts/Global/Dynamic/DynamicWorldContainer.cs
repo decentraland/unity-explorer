@@ -664,8 +664,7 @@ namespace Global.Dynamic
                     placesAPIService,
                     staticContainer.CharacterContainer.CharacterObject,
                     coroutineRunner,
-                    staticContainer.WebRequestsContainer.WebRequestController,
-                    bootstrapContainer.DecentralandUrlsSource,
+                    cameraReelStorageService,
                     container.MvcManager,
                     mainUIView.SidebarView.InWorldCameraButton,
                     globalWorld));
