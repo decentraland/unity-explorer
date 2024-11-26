@@ -9,5 +9,6 @@ namespace DCL.InWorldCamera.PhotoDetail
         [SerializeField] internal Image wearableIcon;
         [SerializeField] internal TMP_Text wearableName;
         [SerializeField] internal Button wearableBuyButton;
+        [SerializeField] internal float buyButtonAnimationDuration = 0.3f;
     }
 }
