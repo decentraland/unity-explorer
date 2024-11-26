@@ -3,6 +3,7 @@ using DCL.Ipfs;
 using ECS.Prioritization;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.IncreasingRadius;
+using ECS.SceneLifeCycle.Reporting;
 using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
@@ -26,7 +27,9 @@ namespace ECS.SceneLifeCycle.Tests
             system = new LoadPointersByIncreasingRadiusSystem(world,
                 parcelMathJobifiedHelper = new ParcelMathJobifiedHelper(),
                 realmPartitionSettings = Substitute.For<IRealmPartitionSettings>(),
-                partitionSettings = Substitute.For<IPartitionSettings>());
+                partitionSettings = Substitute.For<IPartitionSettings>(),
+                Substitute.For<ISceneReadinessReportQueue>(),
+                Substitute.For<IScenesCache>());
 
             realmPartitionSettings.ScenesDefinitionsRequestBatchSize.Returns(3000);
         }
