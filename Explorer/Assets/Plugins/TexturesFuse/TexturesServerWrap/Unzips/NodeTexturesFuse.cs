@@ -27,8 +27,8 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
             WindowStyle = ProcessWindowStyle.Hidden,
         };
 
-        private readonly MemoryMappedFile mmfInput;
-        private readonly MemoryMappedFile mmfOutput;
+        private static MemoryMappedFile? mmfInput;
+        private static MemoryMappedFile? mmfOutput;
 
         private readonly MemoryMappedViewStream inputFileStream;
         private readonly MemoryMappedViewStream outputFileStream;
@@ -70,8 +70,8 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
 
         public NodeTexturesFuse(InputArgs inputArgs)
         {
-            mmfInput = MemoryMappedFile.CreateNew("dcl_fuse_i", MMF_INPUT_CAPACITY);
-            mmfOutput = MemoryMappedFile.CreateNew("dcl_fuse_o", MMF_OUTPUT_CAPACITY);
+            mmfInput ??= MemoryMappedFile.CreateNew("dcl_fuse_i", MMF_INPUT_CAPACITY);
+            mmfOutput ??= MemoryMappedFile.CreateNew("dcl_fuse_o", MMF_OUTPUT_CAPACITY);
 
             inputFileStream = mmfInput.CreateViewStream(0, MMF_INPUT_CAPACITY);
             outputFileStream = mmfOutput.CreateViewStream(0, MMF_OUTPUT_CAPACITY);
@@ -81,8 +81,6 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
 
         public void Dispose()
         {
-            mmfInput.Dispose();
-            mmfOutput.Dispose();
             inputFileStream.Dispose();
             outputFileStream.Dispose();
             pipe?.Dispose();
