@@ -235,6 +235,12 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
+        <CameraReelGalleryShareToXMessage>k__BackingField: Check out what I'm doing
+          in Decentraland right now and join me!
+        <PhotoSuccessfullyUpdatedMessage>k__BackingField: Photo successfully updated
+        <PhotoSuccessfullyDeletedMessage>k__BackingField: Photo successfully deleted
+        <LinkCopiedMessage>k__BackingField: Link copied!
+        <StorageProgressBarText>k__BackingField: Storage {0}/{1} photos taken
     - rid: 1841402216112979969
       type: {class: CharacterContainer/Settings, ns: DCL.Character.Plugin, asm: DCL.Plugins}
       data:

@@ -1,4 +1,6 @@
 using System;
+
+using System;
 using System.Threading;
 
 namespace Utility.Types
@@ -19,6 +21,9 @@ namespace Utility.Types
 
         public static Result ErrorResult(string errorMessage) =>
             new (false, errorMessage);
+
+        public static Result CancelledResult() =>
+            new (false, nameof(OperationCanceledException));
     }
 
     public readonly struct Result<T>
@@ -39,6 +44,9 @@ namespace Utility.Types
 
         public static Result<T> ErrorResult(string errorMessage) =>
             new (default(T)!, errorMessage);
+
+        public static Result<T> CancelledResult() =>
+            new (default(T)!, nameof(OperationCanceledException));
     }
 
     public readonly struct EnumResult<TErrorEnum>
