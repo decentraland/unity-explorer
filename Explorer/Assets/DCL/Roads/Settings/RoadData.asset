@@ -23084,7 +23084,7 @@ MonoBehaviour:
     Rotation: {x: 0, y: 1, z: 0, w: 0}
     RoadModel: -70,-1
   - RoadCoordinate: {x: -51, y: -49}
-    Rotation: {x: 0, y: -0.70710677, z: 0, w: 0.70710677}
+    Rotation: {x: 0, y: 0.70710677, z: 0, w: 0.70710677}
     RoadModel: -51,-49
   - RoadCoordinate: {x: -49, y: 50}
     Rotation: {x: 0, y: 1, z: 0, w: 0}

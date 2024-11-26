@@ -27,7 +27,6 @@ namespace PortableExperiences.Controller
         private readonly IScenesCache scenesCache;
         private readonly World globalWorld;
         private readonly List<IPortableExperiencesController.SpawnResponse> spawnResponsesList = new ();
-        private readonly ServerAbout serverAbout = new ();
         private readonly FeatureFlagsCache featureFlagsCache;
         public Dictionary<ENS, Entity> PortableExperienceEntities { get; } = new ();
 
@@ -61,17 +60,20 @@ namespace PortableExperiences.Controller
                 }
             }
 
+            if (PortableExperienceEntities.ContainsKey(ens)) throw new Exception($"ENS {ens} is already loaded");
+
             string worldUrl = string.Empty;
 
             if (ens.IsValid) { worldUrl = ens.ConvertEnsToWorldUrl(); }
 
-            if (!worldUrl.IsValidUrl()) throw new ArgumentException("Invalid Spawn params. Provide a valid ENS name");
+            if (!worldUrl.IsValidUrl()) throw new ArgumentException($"Invalid Spawn params. Provide a valid ENS name {ens}");
 
             var portableExperiencePath = URLDomain.FromString(worldUrl);
             URLAddress url = portableExperiencePath.Append(new URLPath("/about"));
 
             GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> genericGetRequest = webRequestController.GetAsync(new CommonArguments(url), ct, ReportCategory.REALM);
 
+            ServerAbout serverAbout = new ServerAbout();
             ServerAbout result = await genericGetRequest.OverwriteFromJsonAsync(serverAbout, WRJsonParser.Unity);
 
             if (result.configurations.scenesUrn.Count == 0)
@@ -90,9 +92,11 @@ namespace PortableExperiences.Controller
                 portableExperiencePath.Value
             );
 
+
             ISceneFacade parentScene = scenesCache.Scenes.FirstOrDefault(s => s.SceneStateProvider.IsCurrent);
             string parentSceneName = parentScene != null ? parentScene.Info.Name : "main";
             Entity portableExperienceEntity = globalWorld.Create(new PortableExperienceRealmComponent(realmData, parentSceneName, isGlobalPortableExperience), new PortableExperienceComponent(ens));
+
             PortableExperienceEntities.Add(ens, portableExperienceEntity);
 
             return new IPortableExperiencesController.SpawnResponse

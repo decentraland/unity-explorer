@@ -121,5 +121,28 @@ namespace DCL.WebRequests
                 DELETE_GENERIC
             );
         }
+
+        public static GenericDownloadHandlerUtils.Adapter<GenericPatchRequest, GenericPatchArguments> SignedFetchPatchAsync(
+            this IWebRequestController controller,
+            CommonArguments commonArguments,
+            GenericPatchArguments patchArguments,
+            string jsonMetaData,
+            CancellationToken ct
+        )
+        {
+            ulong unixTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
+
+            return new GenericDownloadHandlerUtils.Adapter<GenericPatchRequest, GenericPatchArguments>(
+                controller,
+                commonArguments,
+                patchArguments,
+                ct,
+                ReportCategory.GENERIC_WEB_REQUEST,
+                new WebRequestHeadersInfo().WithSign(jsonMetaData, unixTimestamp),
+                WebRequestSignInfo.NewFromRaw(jsonMetaData, commonArguments.URL, unixTimestamp, "patch"),
+                null,
+                PATCH_GENERIC
+            );
+        }
     }
 }

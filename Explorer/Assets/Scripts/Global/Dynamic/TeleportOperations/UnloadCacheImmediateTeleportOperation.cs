@@ -3,9 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.ResourcesUnloading;
 using DCL.UserInAppInitializationFlow;
-using Unity.Profiling;
 using UnityEngine;
-using UnityEngine.InputSystem.LowLevel;
 using Utility.Types;
 
 namespace Global.Dynamic.TeleportOperations
