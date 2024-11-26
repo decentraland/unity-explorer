@@ -39,8 +39,8 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.CompressShaders
         static ICompressShaders NewDefault(Func<ITexturesFuse> texturesFuseFactory, IPlatform platformInfo) =>
             new PlatformFilterCompressShaders(
                 new SeveralCompressShaders(
-                    new CompressShaders(texturesFuseFactory, platformInfo),
-                    new NodeCompressShaders()
+                    new NodeCompressShaders(),
+                    new CompressShaders(texturesFuseFactory, platformInfo)
                 ),
                 platformInfo
             );

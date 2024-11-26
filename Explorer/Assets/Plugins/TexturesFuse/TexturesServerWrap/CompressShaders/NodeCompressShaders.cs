@@ -12,7 +12,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.CompressShaders
 
         public UniTask WarmUpAsync(CancellationToken token)
         {
-            if (AreReady() == false)
+            if (AreReady())
                 return UniTask.CompletedTask;
 
             CompressShadersExtensions.CopyFilesRecursively(ICompressShaders.NodeDir(), ".");
