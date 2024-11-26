@@ -3,6 +3,8 @@ using DCL.AsyncLoadReporting;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using DCL.SceneLoadingScreens;
+using DCL.SceneLoadingScreens.LoadingScreen;
+using DCL.Utilities.Extensions;
 using ECS;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Reporting;
@@ -23,12 +25,13 @@ namespace DCL.ParcelsService
         public static ParcelServiceContainer Create(IRealmData realmData,
             ISceneReadinessReportQueue sceneReadinessReportQueue,
             IDebugContainerBuilder debugContainerBuilder,
-            IMVCManager mvcManager,
+            LoadingScreenTimeout loadingScreenTimeout,
+            ILoadingScreen loadingScreen,
             SceneAssetLock assetLock)
         {
             var teleportController = new TeleportController(sceneReadinessReportQueue, assetLock);
 
-            BuildDebugWidget(teleportController, mvcManager, debugContainerBuilder);
+            BuildDebugWidget(teleportController, debugContainerBuilder, loadingScreen, loadingScreenTimeout);
 
             return new ParcelServiceContainer
             {
@@ -38,19 +41,12 @@ namespace DCL.ParcelsService
             };
         }
 
-        private static void BuildDebugWidget(ITeleportController teleportController, IMVCManager mvcManager, IDebugContainerBuilder debugContainerBuilder)
+        private static void BuildDebugWidget(ITeleportController teleportController, IDebugContainerBuilder debugContainerBuilder, ILoadingScreen loadingScreen, LoadingScreenTimeout loadingScreenTimeout)
         {
             var binding = new PersistentElementBinding<Vector2Int>(PersistentSetting.CreateVector2Int("teleportCoordinates"));
 
-            UniTask ShowLoadingScreenAsync(AsyncLoadProcessReport loadReport) =>
-                mvcManager.ShowAsync(
-                    SceneLoadingScreenController.IssueCommand(
-                        new SceneLoadingScreenController.Params(
-                            loadReport,
-                            TimeSpan.FromSeconds(30)
-                        )
-                    )
-                );
+            var timeout = new ElementBinding<float>((float)loadingScreenTimeout.Value.TotalSeconds,
+                evt => loadingScreenTimeout.Value = TimeSpan.FromSeconds(Mathf.Max(evt.newValue, 0)));
 
             debugContainerBuilder
                .TryAddWidget("Teleport")
@@ -58,26 +54,25 @@ namespace DCL.ParcelsService
                .AddControl(
                     new DebugButtonDef("To Parcel", () =>
                         {
-                            var loadReport = AsyncLoadProcessReport.Create()!;
-
-                            UniTask.WhenAll(
-                                        ShowLoadingScreenAsync(loadReport),
-                                        teleportController.TeleportToParcelAsync(binding.Value, loadReport, CancellationToken.None)
-                                    )
-                                   .Forget();
+                            loadingScreen.ShowWhileExecuteTaskAsync(
+                                              (report, token) => teleportController.TeleportToParcelAsync(binding.Value, report, token).SuppressToResultAsync()
+                                            , CancellationToken.None)
+                                         .Forget();
                         }
                     ),
                     new DebugButtonDef("To Spawn Point", () =>
                         {
-                            var loadReport = AsyncLoadProcessReport.Create()!;
-
-                            UniTask.WhenAll(
-                                        ShowLoadingScreenAsync(loadReport),
-                                        teleportController.TeleportToSceneSpawnPointAsync(binding.Value, loadReport, CancellationToken.None))
-                                   .Forget();
+                            loadingScreen.ShowWhileExecuteTaskAsync(
+                                              async (report, token) =>
+                                              {
+                                                  WaitForSceneReadiness? sceneReadiness = await teleportController.TeleportToSceneSpawnPointAsync(binding.Value, report, token);
+                                                  return await sceneReadiness.ToUniTask().SuppressToResultAsync();
+                                              }, CancellationToken.None)
+                                         .Forget();
                         }
                     )
-                );
+                )
+               .AddFloatField("Timeout (s)", timeout);
         }
     }
 }

@@ -1,26 +1,19 @@
-using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AsyncLoadReporting;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
-using DCL.Multiplayer.Connections.DecentralandUrls;
-using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.Utilities.Extensions;
-using ECS.SceneLifeCycle.Realm;
-using Global.AppArgs;
-using Global.Dynamic;
 using Global.Dynamic.DebugSettings;
 using PortableExperiences.Controller;
-using System;
 using System.Collections.Generic;
 using System.Threading;
 using Utility.Types;
 
 namespace DCL.UserInAppInitializationFlow.StartupOperations
 {
-    public class LoadGlobalPortableExperiencesStartupOperation : IStartupOperation
+    public class LoadGlobalPortableExperiencesStartupOperation : StartUpOperationBase
     {
         private readonly ILoadingStatus loadingStatus;
         private readonly ISelfProfile selfProfile;
@@ -42,13 +35,13 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
             this.portableExperiencesController = portableExperiencesController;
         }
 
-        public async UniTask<Result> ExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct)
+        protected override UniTask InternalExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct)
         {
             float finalizationProgress = loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.GlobalPXsLoading);
             LoadDebugPortableExperiences(ct);
             LoadRemotePortableExperiences(ct);
             report.SetProgress(finalizationProgress);
-            return Result.SuccessResult();
+            return UniTask.CompletedTask;
         }
 
         private void LoadRemotePortableExperiences(CancellationToken ct)

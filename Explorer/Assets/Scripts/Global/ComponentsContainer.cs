@@ -154,12 +154,9 @@ namespace Global
         private static IEnumerable<(Type type, IComponentPool pool)> GetMiscComponents()
         {
             // Partition Component
-            yield return (typeof(PartitionComponent), new ComponentPool.WithDefaultCtor<PartitionComponent>(defaultCapacity: 2000, onRelease: p =>
-            {
-                p.IsBehind = false;
-                p.Bucket = byte.MaxValue;
-                p.RawSqrDistance = 0;
-            }));
+            yield return (typeof(PartitionComponent),
+                new ComponentPool.WithDefaultCtor<PartitionComponent>(
+                    component => component.Clear()));
         }
     }
 }

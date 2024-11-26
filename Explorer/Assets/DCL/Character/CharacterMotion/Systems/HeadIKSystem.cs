@@ -22,7 +22,7 @@ namespace DCL.CharacterMotion.Systems
 {
     [LogCategory(ReportCategory.MOTION)]
     [UpdateInGroup(typeof(PresentationSystemGroup))]
-    [UpdateAfter(typeof(InterpolateCharacterSystem))]
+    [UpdateAfter(typeof(ChangeCharacterPositionGroup))]
     public partial class HeadIKSystem : BaseUnityLoopSystem
     {
         private bool headIKIsEnabled;

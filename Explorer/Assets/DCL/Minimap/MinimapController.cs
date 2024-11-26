@@ -255,8 +255,7 @@ namespace DCL.Minimap
             realmNavigator.RealmChanged -= OnRealmChanged;
             mapPathEventBus.OnShowPinInMinimapEdge -= ShowPinInMinimapEdge;
             mapPathEventBus.OnHidePinInMinimapEdge -= HidePinInMinimapEdge;
-            if (sceneRestrictionsController != null)
-                sceneRestrictionsController.Dispose();
+            sceneRestrictionsController?.Dispose();
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
