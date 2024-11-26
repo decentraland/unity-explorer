@@ -20,6 +20,13 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
 
         private const string CHILD_PROCESS = "node.exe";
 
+        private static readonly ProcessStartInfo START_INFO = new ()
+        {
+            FileName = CHILD_PROCESS,
+            UseShellExecute = true,
+            WindowStyle = ProcessWindowStyle.Hidden,
+        };
+
         private readonly MemoryMappedFile mmfInput;
         private readonly MemoryMappedFile mmfOutput;
 
@@ -154,14 +161,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
                 pipeReader = new BinaryReader(pipe);
                 pipeWriter = new BinaryWriter(pipe);
 
-                activeProcess = Process.Start(
-                    new ProcessStartInfo
-                    {
-                        FileName = CHILD_PROCESS,
-                        UseShellExecute = false,
-                        RedirectStandardError = true,
-                    }
-                )!;
+                activeProcess = Process.Start(START_INFO)!;
             }
 
             if (pipe!.IsConnected == false)
