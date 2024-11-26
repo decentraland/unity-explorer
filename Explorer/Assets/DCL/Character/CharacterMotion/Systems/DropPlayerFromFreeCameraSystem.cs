@@ -18,7 +18,7 @@ namespace DCL.CharacterMotion.Systems
     /// </summary>
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     [UpdateBefore(typeof(CameraGroup))]
-    [UpdateAfter(typeof(InterpolateCharacterSystem))] // prevent conflicts with interpolation
+    [UpdateAfter(typeof(ChangeCharacterPositionGroup))] // prevent conflicts with interpolation
     public partial class DropPlayerFromFreeCameraSystem : BaseUnityLoopSystem
     {
         private readonly InputAction dropAction;

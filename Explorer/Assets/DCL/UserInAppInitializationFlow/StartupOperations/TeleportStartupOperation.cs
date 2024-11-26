@@ -7,7 +7,7 @@ using Utility.Types;
 
 namespace DCL.UserInAppInitializationFlow.StartupOperations
 {
-    public class TeleportStartupOperation : IStartupOperation
+    public class TeleportStartupOperation : StartUpOperationBase
     {
         private readonly ILoadingStatus loadingStatus;
         private readonly IRealmNavigator realmNavigator;
@@ -20,13 +20,12 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
             this.startParcel = startParcel;
         }
 
-        public async UniTask<Result> ExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct)
+        protected override async UniTask InternalExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct)
         {
             float finalizationProgress = loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.PlayerTeleporting);
             AsyncLoadProcessReport teleportLoadReport = report.CreateChildReport(finalizationProgress);
             await realmNavigator.InitializeTeleportToSpawnPointAsync(teleportLoadReport, ct, startParcel);
             report.SetProgress(finalizationProgress);
-            return Result.SuccessResult();
         }
     }
 }
