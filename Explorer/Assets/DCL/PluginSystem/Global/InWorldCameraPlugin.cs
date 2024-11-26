@@ -84,7 +84,7 @@ namespace DCL.PluginSystem.Global
             recorder = new ScreenRecorder(hud.GetComponent<RectTransform>());
             metadataBuilder = new ScreenshotMetadataBuilder(selfProfile, characterObject.Controller, realmData, placesAPIService);
 
-            inWorldCameraController = new InWorldCameraController(() => hud.GetComponent<InWorldCameraView>(), sidebarButton, globalWorld);
+            inWorldCameraController = new InWorldCameraController(() => hud.GetComponent<InWorldCameraView>(), sidebarButton, globalWorld, mvcManager);
             mvcManager.RegisterController(inWorldCameraController);
 
             return UniTask.CompletedTask;

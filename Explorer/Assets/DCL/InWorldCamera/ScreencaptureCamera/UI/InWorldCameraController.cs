@@ -1,9 +1,12 @@
 ﻿using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.CharacterCamera;
+using DCL.ExplorePanel;
+using DCL.UI;
 using ECS.Abstract;
 using JetBrains.Annotations;
 using MVC;
+using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.UI;
@@ -14,15 +17,17 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.UI
     {
         private readonly Button sidebarButton;
         private readonly World world;
+        private readonly IMVCManager mvcManager;
 
         private SingleInstanceEntity? cameraInternal;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
         private SingleInstanceEntity? camera => cameraInternal ??= world.CacheCamera();
 
-        public InWorldCameraController([NotNull] ViewFactoryMethod viewFactory, Button sidebarButton, World world) : base(viewFactory)
+        public InWorldCameraController([NotNull] ViewFactoryMethod viewFactory, Button sidebarButton, World world, IMVCManager mvcManager) : base(viewFactory)
         {
             this.world = world;
+            this.mvcManager = mvcManager;
             this.sidebarButton = sidebarButton;
 
             sidebarButton.onClick.AddListener(RequestEnableInWorldCamera);
@@ -32,35 +37,37 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.UI
         {
             viewInstance!.CloseButton.onClick.AddListener(RequestDisableInWorldCamera);
             viewInstance.TakeScreenshotButton.onClick.AddListener(RequestTakeScreenshot);
-
-            // viewInstance!.CameraReelButton.onClick.AddListener(OpenCameraReelGallery);
-            // viewInstance.ShortcutsInfoButton.onClick.AddListener(() => { });
-        }
-
-        private void RequestTakeScreenshot()
-        {
-            if (!world.Has<TakeScreenshotUIRequest>(camera!.Value))
-                world.Add(camera!.Value, new TakeScreenshotUIRequest { Source = "UI" });
+            viewInstance.CameraReelButton.onClick.AddListener(OpenCameraReelGallery);
+            viewInstance.ShortcutsInfoButton.onClick.AddListener(ToggleShortcutsInfo);
         }
 
         public override void Dispose()
         {
-            sidebarButton.onClick.RemoveListener(RequestEnableInWorldCamera);
-            viewInstance.CloseButton.onClick.RemoveListener(RequestDisableInWorldCamera);
+            viewInstance!.CloseButton.onClick.RemoveListener(RequestDisableInWorldCamera);
+            viewInstance.TakeScreenshotButton.onClick.RemoveListener(RequestTakeScreenshot);
+            viewInstance.CameraReelButton.onClick.RemoveListener(OpenCameraReelGallery);
+            viewInstance.ShortcutsInfoButton.onClick.RemoveListener(ToggleShortcutsInfo);
 
             base.Dispose();
         }
 
         public void Show()
         {
+            sidebarButton.OnSelect(null);
             LaunchViewLifeCycleAsync(new CanvasOrdering(Layer, 0), new ControllerNoData(), default(CancellationToken))
                .Forget();
         }
 
         public void Hide()
         {
+            sidebarButton.OnDeselect(null);
             viewInstance.HideAsync(default(CancellationToken)).Forget();
         }
+
+        protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
+            UniTask.WhenAny(
+                viewInstance!.CloseButton.OnClickAsync(ct),
+                viewInstance.CameraReelButton.OnClickAsync(ct));
 
         public void PlayScreenshotFX(Texture2D image, float splashDuration, float middlePauseDuration, float transitionDuration)
         {
@@ -68,14 +75,20 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.UI
             viewInstance.ScreenshotCaptureAnimation(image, splashDuration, middlePauseDuration, transitionDuration);
         }
 
-        // protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
-        //     UniTask.WhenAny(
-        //         viewInstance!.CloseButton.OnClickAsync(ct),
-        //         viewInstance.BackgroundButton.OnClickAsync(ct));
-        //
+        private void OpenCameraReelGallery()
+        {
+            RequestDisableInWorldCamera();
 
-        protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
-            UniTask.Never(ct);
+            mvcManager.ShowAsync(
+                ExplorePanelController.IssueCommand(
+                    new ExplorePanelParameter(ExploreSections.CameraReel, BackpackSections.Avatar)));
+        }
+
+        private void RequestTakeScreenshot()
+        {
+            if (!world.Has<TakeScreenshotUIRequest>(camera!.Value))
+                world.Add(camera!.Value, new TakeScreenshotUIRequest { Source = "UI" });
+        }
 
         private void RequestDisableInWorldCamera()
         {
@@ -93,6 +106,11 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.UI
 
             bool CameraIsNotActivated() =>
                 !world.Has<ToggleInWorldCameraUIRequest>(camera!.Value) && !world.Has<InWorldCamera>(camera!.Value);
+        }
+
+        private void ToggleShortcutsInfo()
+        {
+            throw new NotImplementedException();
         }
     }
 }
