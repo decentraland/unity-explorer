@@ -64,6 +64,7 @@ namespace DCL.InWorldCamera.PhotoDetail
 
         public async UniTask ShowPhotoDetailInfoAsync(string reelId, CancellationToken ct)
         {
+            Release();
             view.loadingState.Show();
             CameraReelResponse reelData = await cameraReelStorageService.GetScreenshotsMetadataAsync(reelId, ct);
 
@@ -80,6 +81,9 @@ namespace DCL.InWorldCamera.PhotoDetail
 
         private async UniTask PopulateVisiblePersons(VisiblePerson[] visiblePeople, CancellationToken ct)
         {
+            if (visiblePeople == null || visiblePeople.Length == 0)
+                return;
+
             UniTask[] tasks = new UniTask[visiblePeople.Length];
             for (int i = 0; i < visiblePeople.Length; i++)
             {
@@ -104,6 +108,7 @@ namespace DCL.InWorldCamera.PhotoDetail
                 visiblePersonControllers[i].Release();
                 photoDetailPoolManager.ReleaseVisiblePerson(visiblePersonControllers[i]);
             }
+            visiblePersonControllers.Clear();
         }
 
         public void Dispose()

@@ -129,6 +129,7 @@ namespace DCL.InWorldCamera.PhotoDetail
 
         private async UniTaskVoid ShowReelAsync(int reelIndex, CancellationToken ct)
         {
+            viewInstance!.mainImageCanvasGroup.alpha = 0;
             viewInstance!.mainImageLoadingSpinner.gameObject.SetActive(true);
             CameraReelResponseCompact reel = inputData.AllReels[reelIndex];
 
