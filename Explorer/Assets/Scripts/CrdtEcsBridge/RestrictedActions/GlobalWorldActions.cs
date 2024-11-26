@@ -36,7 +36,7 @@ namespace CrdtEcsBridge.RestrictedActions
         public void MoveAndRotatePlayer(Vector3 newPlayerPosition, Vector3? newCameraTarget)
         {
             // Move player to new position (through InterpolateCharacterSystem -> TeleportPlayerQuery)
-            world.AddOrSet(playerEntity, new PlayerTeleportIntent(newPlayerPosition, Vector2Int.zero));
+            world.AddOrSet(playerEntity, new PlayerTeleportIntent(newPlayerPosition, Vector2Int.zero, CancellationToken.None));
 
             // Rotate player to look at camera target (through RotateCharacterSystem -> ForceLookAtQuery)
             if (newCameraTarget != null)
@@ -45,7 +45,7 @@ namespace CrdtEcsBridge.RestrictedActions
 
         public void RotateCamera(Vector3? newCameraTarget, Vector3 newPlayerPosition)
         {
-            if (newCameraTarget == null || world == null)
+            if (newCameraTarget == null)
                 return;
 
             // Rotate camera to look at new target (through ApplyCinemachineCameraInputSystem -> ForceLookAtQuery)

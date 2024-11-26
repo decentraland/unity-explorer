@@ -94,7 +94,7 @@ namespace DCL.UserInAppInitializationFlow
                 teleportStartupOperation,
                 loadGlobalPxOperation,
                 sentryDiagnostics
-            ).WithHandleExceptions();
+            );
         }
 
         public async UniTask ExecuteAsync(UserInAppInitializationFlowParameters parameters, CancellationToken ct)
@@ -134,7 +134,7 @@ namespace DCL.UserInAppInitializationFlow
                 {
                     var loadingResult = await LoadingScreen(parameters.ShowLoading)
                        .ShowWhileExecuteTaskAsync(
-                            async parentLoadReport =>
+                            async (parentLoadReport, ct) =>
                             {
                                 result = await startupOperation.ExecuteAsync(parentLoadReport, ct);
 

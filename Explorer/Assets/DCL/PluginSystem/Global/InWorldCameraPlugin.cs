@@ -8,10 +8,8 @@ using DCL.InWorldCamera.ScreencaptureCamera;
 using DCL.InWorldCamera.ScreencaptureCamera.Settings;
 using DCL.InWorldCamera.ScreencaptureCamera.Systems;
 using DCL.InWorldCamera.ScreencaptureCamera.UI;
-using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PlacesAPIService;
 using DCL.Profiles.Self;
-using DCL.WebRequests;
 using ECS;
 using MVC;
 using System;
@@ -40,9 +38,9 @@ namespace DCL.PluginSystem.Global
         private readonly Button sidebarButton;
         private readonly Arch.Core.World globalWorld;
 
+
         private ScreenRecorder recorder;
         private GameObject hud;
-        private CharacterController followTarget;
         private ScreenshotMetadataBuilder metadataBuilder;
         private ICameraReelStorageService cameraReelStorageService;
         private InWorldCameraSettings settings;
@@ -55,7 +53,8 @@ namespace DCL.PluginSystem.Global
             IWebRequestController webRequestController, IDecentralandUrlsSource decentralandUrlsSource,
             IMVCManager mvcManager,
             Button sidebarButton,
-            Arch.Core.World globalWorld)
+            Arch.Core.World globalWorld
+       )
         {
             this.input = input;
             this.selfProfile = selfProfile;
