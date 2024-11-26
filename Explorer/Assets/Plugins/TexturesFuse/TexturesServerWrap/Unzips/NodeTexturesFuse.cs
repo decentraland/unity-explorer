@@ -11,7 +11,7 @@ using Utility.Types;
 
 namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
 {
-    public class NodeTexturesFuse : ITexturesFuse
+    internal class NodeTexturesFuse : ITexturesFuse
     {
         private const int MB = 1024 * 1024;
 
@@ -60,6 +60,13 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
             public uint width;
             public uint height;
         }
+
+        public NodeTexturesFuse(NativeMethods.CMP_Compute_type computeType = NativeMethods.CMP_Compute_type.CMP_GPU_DXC) : this(
+            new InputArgs
+            {
+                encodeWith = computeType
+            }
+        ) { }
 
         public NodeTexturesFuse(InputArgs inputArgs)
         {
@@ -117,7 +124,11 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
 
         private void WriteToInputStream(IntPtr bytes, int bytesLength)
         {
-            unsafe { inputFileStream.Write(new Span<byte>(bytes.ToPointer()!, bytesLength)); }
+            unsafe
+            {
+                inputFileStream.Seek(0, SeekOrigin.Begin);
+                inputFileStream.Write(new Span<byte>(bytes.ToPointer()!, bytesLength));
+            }
         }
 
         private static void Write(BinaryWriter writer, InputArgs inputArgs)
