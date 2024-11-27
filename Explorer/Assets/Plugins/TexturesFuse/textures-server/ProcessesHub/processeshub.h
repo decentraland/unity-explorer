@@ -25,4 +25,6 @@ extern "C"
     FFI_API bool processeshub_is_running();
 
     FFI_API PH_Error processeshub_stop();
+    
+    FFI_API size_t processeshub_used_ram();
 }

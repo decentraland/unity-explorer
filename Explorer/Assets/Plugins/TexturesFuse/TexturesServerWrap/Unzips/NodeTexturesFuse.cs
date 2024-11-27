@@ -17,6 +17,8 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
         private const int MMF_INPUT_CAPACITY = MB * 16;
         private const int MMF_OUTPUT_CAPACITY = MB * 4;
 
+        private const int MEMORY_LIMIT_MB = MB * 256;
+
         public const string CHILD_PROCESS = "node.exe";
 
         private static MemoryMappedFile? mmfInput;
@@ -163,7 +165,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
 
         private async UniTask EnsureProcessLaunchedAsync(CancellationToken token)
         {
-            if (NativeMethodsProcessesHub.ProcessesHubIsRunning() == 0 || pipe!.IsConnected == false)
+            if (NativeMethodsProcessesHub.ProcessesHubIsRunning() == false || IsMemoryOverwhelmed() || pipe!.IsConnected == false)
             {
                 if (pipe != null)
                 {
@@ -184,7 +186,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
                 pipeReader = new BinaryReader(pipe);
                 pipeWriter = new BinaryWriter(pipe);
 
-                int result = NativeMethodsProcessesHub.ProcessesHubStart(CHILD_PROCESS);
+                var result = NativeMethodsProcessesHub.ProcessesHubStart(CHILD_PROCESS);
 
                 if (result != 0)
                 {
@@ -207,6 +209,21 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
             {
                 SEMAPHORE_SLIM.Release();
             }
+        }
+
+        private static bool IsMemoryOverwhelmed()
+        {
+            ulong usedRAM = NativeMethodsProcessesHub.ProcessesUsedRAM();
+
+            if (usedRAM == 0)
+                return false;
+
+            ReportHub.Log(
+                ReportCategory.TEXTURES,
+                $"NodeTexturesFuse used memory by node process: {(double)usedRAM / MB} MB"
+            );
+
+            return usedRAM > MEMORY_LIMIT_MB;
         }
     }
 }

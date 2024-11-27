@@ -1,5 +1,6 @@
 #include "processeshub.h"
-#include <windows.h>
+#include <Windows.h>
+#include <psapi.h>
 
 PROCESS_INFORMATION currentProcess = {0};
 const PROCESS_INFORMATION EMPTY_INFO = {0};
@@ -60,4 +61,21 @@ PH_Error processeshub_stop()
     CloseHandle(currentProcess.hThread);
     currentProcess = EMPTY_INFO;
     return PH_Error::Ok;
+}
+
+size_t processeshub_used_ram()
+{
+    if (!processeshub_is_running())
+    {
+        return 0;
+    }
+
+    PROCESS_MEMORY_COUNTERS memInfo;
+
+    if (GetProcessMemoryInfo(currentProcess.hProcess, &memInfo, sizeof(memInfo)))
+    {
+        return memInfo.WorkingSetSize;
+    }
+
+    return 0;
 }
