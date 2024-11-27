@@ -88,6 +88,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
         public async UniTask<EnumResult<IOwnedTexture2D, NativeMethods.ImageResult>> TextureFromBytesAsync(IntPtr bytes, int bytesLength, TextureType type, CancellationToken token)
         {
             await SEMAPHORE_SLIM.WaitAsync(token);
+            await UniTask.SwitchToThreadPool();
 
             using var scope = new ReleaseScope();
 
@@ -109,6 +110,8 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
 
             if (outputResult.code != NativeMethods.ImageResult.Success)
                 return EnumResult<IOwnedTexture2D, NativeMethods.ImageResult>.ErrorResult(outputResult.code, "Cannot read output message");
+
+            await UniTask.SwitchToMainThread();
 
             var t = await ManagedOwnedTexture2D.NewTextureFromStreamAsync(
                 outputFileStream,
