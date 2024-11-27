@@ -116,6 +116,8 @@ namespace DCL.Navmap
         public void SetPagination(int pageNumber, int pageSize, int totalResultCount,
             INavmapBus.SearchPlaceParams searchParams)
         {
+            view.NextPageButton.gameObject.SetActive(totalResultCount >= pageSize);
+            view.PreviousPageButton.gameObject.SetActive(totalResultCount >= pageSize);
             view.NextPageButton.interactable = totalResultCount / pageSize > pageNumber;
             view.PreviousPageButton.interactable = pageNumber > 0;
             paginationSearchParams = searchParams;
