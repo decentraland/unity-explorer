@@ -74,16 +74,17 @@ namespace ECS.Unity.AvatarShape.Systems
         public void FinalizeComponents(ref SDKAvatarShapeComponent sdkAvatarShapeComponent) =>
             MarkGlobalWorldEntityForDeletion(sdkAvatarShapeComponent.globalWorldEntity);
 
-        public void FinalizeComponents(in Query query)
-        {
+        public void FinalizeComponents(in Query query) =>
             FinalizeComponentsQuery(World);
-        }
 
         public void MarkGlobalWorldEntityForDeletion(Entity globalEntity)
         {
-            // Has to be deferred because many times it happens that the entity is marked for deletion after the
-            // AvatarCleanUpSystem.Update() and before the DestroyEntitiesSystem.Update(), probably has to do with
-            // non-synchronicity between global and scene ECS worlds...
+            // Has to be removed, otherwise scene loading may break after teleportation (no error anywhere to know why)
+            globalWorld.Remove<CharacterTransform>(globalEntity);
+
+            // Has to be deferred because many times it happens that the entity is marked for deletion AFTER the
+            // AvatarCleanUpSystem.Update() and BEFORE the DestroyEntitiesSystem.Update(), probably has to do with
+            // non-synchronicity between global and scene ECS worlds. AvatarCleanUpSystem resets the DeferDeletion.
             globalWorld.Add(globalEntity, new DeleteEntityIntention() { DeferDeletion = true });
         }
     }
