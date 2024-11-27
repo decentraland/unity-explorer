@@ -100,7 +100,6 @@ namespace ECS.SceneLifeCycle.Systems
         private void PartitionNewEntity(in Entity entity, ref SceneDefinitionComponent definition)
         {
             PartitionComponent partitionComponent = partitionComponentPool.Get();
-            World.Add(entity, partitionComponent);
 
             if (definition.IsPortableExperience)
             {
@@ -109,23 +108,26 @@ namespace ECS.SceneLifeCycle.Systems
                 partitionComponent.IsBehind = false;
                 partitionComponent.RawSqrDistance = 1;
                 partitionComponent.IsDirty = true;
-                return;
+            }
+            else
+            {
+                AddCorners(ref definition);
+
+                partitionComponent.Bucket = (byte)lastBucketIndex;
+                partitionComponent.IsBehind = true;
+                partitionComponent.RawSqrDistance = float.MaxValue;
+
+                if (partitionComponent.InternalJobIndex < 0)
+                    partitionComponent.InternalJobIndex = partitionDataContainer.CurrentPartitionIndex;
+
+                partitionDataContainer.SetPartitionData(new PartitionData
+                {
+                    IsDirty = readOnlyCameraSamplingData.IsDirty,
+                    RawSqrDistance = -1,
+                });
             }
 
-            AddCorners(ref definition);
-
-            partitionComponent.Bucket = (byte)lastBucketIndex;
-            partitionComponent.IsBehind = true;
-            partitionComponent.RawSqrDistance = float.MaxValue;
-
-            if (partitionComponent.InternalJobIndex < 0)
-                partitionComponent.InternalJobIndex = partitionDataContainer.CurrentPartitionIndex;
-
-            partitionDataContainer.SetPartitionData(new PartitionData
-            {
-                IsDirty = readOnlyCameraSamplingData.IsDirty,
-                RawSqrDistance = -1,
-            });
+            World.Add(entity, partitionComponent);
         }
 
         protected void AddCorners(ref SceneDefinitionComponent definition)
