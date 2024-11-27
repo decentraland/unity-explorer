@@ -1,6 +1,7 @@
 ﻿using DCL.DebugUtilities;
 using DCL.Landscape.Settings;
 using DCL.LOD;
+using DCL.SDKComponents.MediaStream.Settings;
 using ECS.Prioritization;
 using System;
 using System.Collections.Generic;
@@ -11,6 +12,7 @@ namespace DCL.Quality.Runtime
 {
     public class EnvironmentSettingsRuntime : IQualitySettingRuntime
     {
+        private PersistentSetting<int> maxSimultaneousVideos;
         private PersistentSetting<int> sceneLoadRadius;
         private PersistentSetting<int> lod1Threshold;
         private PersistentSetting<float> terrainLODBias;
@@ -19,6 +21,7 @@ namespace DCL.Quality.Runtime
         private PersistentSetting<float> chunkCullDistance;
 
         private readonly RealmPartitionSettingsAsset? realmPartitionSettings;
+        private readonly VideoPrioritizationSettings? videoPrioritizationSettings;
         private readonly ILODSettingsAsset? lodSettingsAsset;
         private readonly LandscapeData? landscapeData;
 
@@ -26,11 +29,15 @@ namespace DCL.Quality.Runtime
 
         public EnvironmentSettingsRuntime(
             RealmPartitionSettingsAsset? realmPartitionSettings,
+            VideoPrioritizationSettings? videoPrioritizationSettings,
             ILODSettingsAsset? lodSettingsAsset,
             LandscapeData? landscapeData)
         {
             if (realmPartitionSettings != null)
                 this.realmPartitionSettings = realmPartitionSettings;
+
+            if(videoPrioritizationSettings != null)
+                this.videoPrioritizationSettings = videoPrioritizationSettings;
 
             if (lodSettingsAsset != null)
                 this.lodSettingsAsset = lodSettingsAsset;
@@ -62,6 +69,9 @@ namespace DCL.Quality.Runtime
 
             SetChunkCullDistance(preset.environmentSettings.chunkCullDistance);
             this.chunkCullDistance.Value = preset.environmentSettings.chunkCullDistance;
+
+            SetMaxSimultaneousVideos(preset.environmentSettings.maxSimultaneousVideos);
+            this.maxSimultaneousVideos.Value = preset.environmentSettings.maxSimultaneousVideos;
         }
 
         public void RestoreState(QualitySettingsAsset.QualityCustomLevel currentPreset)
@@ -72,6 +82,7 @@ namespace DCL.Quality.Runtime
             detailDensity = PersistentSetting.CreateFloat("DetailDensity", currentPreset.environmentSettings.detailDensity).WithSetForceDefaultValue();
             grassDistance = PersistentSetting.CreateFloat("GrassDistance", currentPreset.environmentSettings.grassDistance).WithSetForceDefaultValue();
             chunkCullDistance = PersistentSetting.CreateFloat("ChunkCullDistance", currentPreset.environmentSettings.chunkCullDistance).WithSetForceDefaultValue();
+            maxSimultaneousVideos = PersistentSetting.CreateInt("MaxSimultaneousVideos", currentPreset.environmentSettings.lod1Threshold).WithSetForceDefaultValue();
 
             // Apply settings
             SetSceneLoadRadius(sceneLoadRadius.Value);
@@ -80,6 +91,7 @@ namespace DCL.Quality.Runtime
             SetDetailDensity(detailDensity.Value);
             SetGrassDistance(grassDistance.Value);
             SetChunkCullDistance(chunkCullDistance.Value);
+            SetMaxSimultaneousVideos(maxSimultaneousVideos.Value);
         }
 
         private void SetSceneLoadRadius(int maxLoadingDistanceInParcels)
@@ -88,6 +100,14 @@ namespace DCL.Quality.Runtime
                 return;
 
             realmPartitionSettings.MaxLoadingDistanceInParcels = maxLoadingDistanceInParcels;
+        }
+
+        private void SetMaxSimultaneousVideos(int maxSimultaneousVideos)
+        {
+            if(videoPrioritizationSettings == null)
+                return;
+
+            videoPrioritizationSettings.MaximumSimultaneousVideos = maxSimultaneousVideos;
         }
 
         private void SetLodThreshold(int lodThreshold, int index)

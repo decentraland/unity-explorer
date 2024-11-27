@@ -4,6 +4,7 @@ using ECS.StreamableLoading.Textures;
 using ECS.Unity.Materials.Components;
 using ECS.Unity.PrimitiveRenderer.Components;
 using ECS.Unity.Textures.Components;
+using ECS.Unity.Textures.Utils;
 using UnityEngine;
 using Utility.Primitives;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.Texture2DData, ECS.StreamableLoading.Textures.GetTextureIntention>;
@@ -25,7 +26,7 @@ namespace ECS.Unity.Materials
             primitiveMeshRendererComponent.DefaultMaterialIsUsed = false;
         }
 
-        public static void Execute(World world, ref MaterialComponent materialComponent, DestroyMaterial destroyMaterial)
+        public static void Execute(Entity entity, World world, ref MaterialComponent materialComponent, DestroyMaterial destroyMaterial)
         {
             switch (materialComponent.Status)
             {
@@ -43,14 +44,14 @@ namespace ECS.Unity.Materials
 
             void ReleaseTextures(ref MaterialComponent mat, bool forgetLoading)
             {
-                ReleaseIntention(world, ref mat.AlbedoTexPromise, forgetLoading);
-                ReleaseIntention(world, ref mat.EmissiveTexPromise, forgetLoading);
-                ReleaseIntention(world, ref mat.AlphaTexPromise, forgetLoading);
-                ReleaseIntention(world, ref mat.BumpTexPromise, forgetLoading);
+                ReleaseIntention(entity, world, ref mat.AlbedoTexPromise, forgetLoading);
+                ReleaseIntention(entity, world, ref mat.EmissiveTexPromise, forgetLoading);
+                ReleaseIntention(entity, world, ref mat.AlphaTexPromise, forgetLoading);
+                ReleaseIntention(entity, world, ref mat.BumpTexPromise, forgetLoading);
             }
         }
 
-        internal static void ReleaseIntention(World world, ref Promise? promise, bool forgetLoading)
+        internal static void ReleaseIntention(Entity entity, World world, ref Promise? promise, bool forgetLoading)
         {
             if (promise == null)
                 return;
@@ -59,6 +60,19 @@ namespace ECS.Unity.Materials
 
             if (forgetLoading)
                 promiseValue.ForgetLoading(world);
+
+            if (promiseValue.LoadingIntention.IsVideoTexture)
+            {
+                ref VideoTextureConsumer consumer = ref world.TryGetRef<VideoTextureConsumer>(entity, out bool hasConsumer);
+
+                if (hasConsumer)
+                {
+                    ref PrimitiveMeshRendererComponent meshRenderer = ref world.TryGetRef<PrimitiveMeshRendererComponent>(entity, out bool hasMesh);
+
+                    if(hasMesh)
+                        consumer.RemoveConsumerMeshRenderer(meshRenderer.MeshRenderer);
+                }
+            }
 
             promiseValue.TryDereference(world);
 

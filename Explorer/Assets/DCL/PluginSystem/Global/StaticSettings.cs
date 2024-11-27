@@ -5,6 +5,8 @@ using System;
 using System.Collections.Generic;
 using DCL.Roads.Settings;
 using DCL.AvatarRendering;
+using DCL.PluginSystem.World;
+using DCL.SDKComponents.MediaStream.Settings;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Profiling;
@@ -58,6 +60,12 @@ namespace DCL.PluginSystem.Global
         public class RealmPartitionSettingsRef : AssetReferenceT<RealmPartitionSettingsAsset>
         {
             public RealmPartitionSettingsRef(string guid) : base(guid) { }
+        }
+
+        [Serializable]
+        public class VideoPrioritizationSettingsRef : AssetReferenceT<VideoPrioritizationSettings>
+        {
+            public VideoPrioritizationSettingsRef(string guid) : base(guid) { }
         }
 
         [Serializable]
