@@ -4,27 +4,19 @@ using UnityEngine;
 
 namespace SceneRunner.Scene
 {
-    public class AssetValidation
+    static public class AssetValidation
     {
         public const int AB_MIN_SUPPORTED_VERSION_WINDOWS = 15;
         public const int AB_MIN_SUPPORTED_VERSION_MAC = 16;
 
-        public static bool ValidateSceneAssetBundleManifest(SceneAssetBundleManifest sceneAssetBundleManifest)
+        public static bool ValidateSceneAssetBundleManifest(SceneAssetBundleManifest sceneAssetBundleManifest, string errorMessage)
         {
-            string errorText = "SceneID: " + sceneAssetBundleManifest.GetSceneID();
-            return ValidateVersion(sceneAssetBundleManifest.GetVersion(), errorText);
+            return ValidateVersion(sceneAssetBundleManifest.GetVersion(), errorMessage);
         }
 
-        public static bool ValidateSceneAbDto_Hash(SceneAbDto sceneAbDto, string hash)
+        public static bool ValidateSceneAbDto(SceneAbDto sceneAbDto, string errorMessage)
         {
-            string errorText = "Wearable Hash: " + hash;
-            return ValidateVersion(sceneAbDto.version, errorText);
-        }
-
-        public static bool ValidateSceneAbDto_SceneID(SceneAbDto sceneAbDto, string sceneID)
-        {
-            string errorText = "Wearable SceneID: " + sceneID;
-            return ValidateVersion(sceneAbDto.version, errorText);
+            return ValidateVersion(sceneAbDto.version, errorMessage);
         }
 
         private static bool ValidateVersion(string version, string errorText)

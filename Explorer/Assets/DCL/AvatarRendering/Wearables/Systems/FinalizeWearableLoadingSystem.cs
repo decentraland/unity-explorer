@@ -230,7 +230,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
             {
                 if (result.Succeeded)
                 {
-                    AssetValidation.ValidateSceneAssetBundleManifest(result.Asset);
+                    AssetValidation.ValidateSceneAssetBundleManifest(result.Asset, "SceneID: " + result.Asset.GetSceneID());
                     wearable.ManifestResult = result;
                 }
                 else
