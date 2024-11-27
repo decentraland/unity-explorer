@@ -2,10 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Backpack;
 using DCL.UI;
 using DCL.WebRequests;
-using JetBrains.Annotations;
 using MVC;
-using Nethereum.ABI.Model;
-using System;
 using System.Threading;
 
 namespace DCL.RewardPanel

@@ -23,6 +23,7 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.UI
         private readonly IMVCManager mvcManager;
         private readonly ICameraReelStorageService storageService;
 
+        private ScreencaptureShortcutsController shortcutsController;
         private SingleInstanceEntity? cameraInternal;
 
         private bool shortcutPanelIsOpen;
@@ -47,7 +48,8 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.UI
             viewInstance.CameraReelButton.onClick.AddListener(OpenCameraReelGallery);
             viewInstance.ShortcutsInfoButton.onClick.AddListener(ToggleShortcutsInfo);
 
-            ToggleShortcutsInfo(toOpen: false);
+            shortcutsController = new ScreencaptureShortcutsController(() => viewInstance.ShortcutsInfoPanel);
+            mvcManager.RegisterController(shortcutsController);
         }
 
         public override void Dispose()
@@ -64,7 +66,7 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.UI
         {
             sidebarButton.OnSelect(null);
 
-            LaunchViewLifeCycleAsync(new CanvasOrdering(Layer, 0), new ControllerNoData(), default(CancellationToken))
+            LaunchViewLifeCycleAsync(new CanvasOrdering(Layer, 200), new ControllerNoData(), default(CancellationToken))
                .Forget();
 
             bool hasSpace = storageService.StorageStatus.HasFreeSpace;
@@ -129,14 +131,15 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.UI
         {
             if (toOpen)
             {
-                viewInstance!.ShortcutsInfoPanel.ShowAsync(CancellationToken.None).Forget();
-                viewInstance.ShortcutsInfoButton.OnSelect(null);
+                shortcutsController.LaunchViewLifeCycleAsync(new CanvasOrdering(shortcutsController.Layer, 0), new ControllerNoData(), default(CancellationToken))
+                   .Forget();
+                viewInstance!.ShortcutsInfoButton.OnSelect(null);
                 shortcutPanelIsOpen = true;
             }
             else
             {
-                viewInstance!.ShortcutsInfoPanel.HideAsync(CancellationToken.None).Forget();
-                viewInstance.ShortcutsInfoButton.OnDeselect(null);
+                shortcutsController.HideAsync(CancellationToken.None).Forget();
+                viewInstance!.ShortcutsInfoButton.OnDeselect(null);
                 shortcutPanelIsOpen = false;
             }
         }

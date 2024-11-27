@@ -6,7 +6,7 @@ using UnityEngine.UI;
 
 namespace DCL.UI
 {
-    public class ElementWithCloseArea : ViewBaseWithAnimationElement
+    public class ElementWithCloseArea : ViewBaseWithAnimationElement, IView
     {
         [field: SerializeField] internal Button closeAreaButton { get; private set; }
 
