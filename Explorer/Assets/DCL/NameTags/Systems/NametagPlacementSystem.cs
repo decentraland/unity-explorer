@@ -82,7 +82,7 @@ namespace DCL.Nametags
         {
             if (partitionComponent.IsBehind || IsOutOfRenderRange(camera, characterTransform) || (camera.Mode == CameraMode.FirstPerson && World.Has<PlayerComponent>(e))) return;
 
-            NametagView nametagView = CreateNameTagView(in avatarShape, profile.HasClaimedName);
+            NametagView nametagView = CreateNameTagView(in avatarShape, profile.HasClaimedName, true);
             UpdateTagPosition(nametagView, camera.Camera, characterTransform.Position);
 
             World.Add(e, nametagView);
@@ -121,7 +121,7 @@ namespace DCL.Nametags
 
             nametagView.Id = avatarShape.ID;
             nametagView.Username.color = chatEntryConfiguration.GetNameColor(avatarShape.Name);
-            nametagView.SetUsername(avatarShape.Name, avatarShape.ID.Substring(avatarShape.ID.Length - 4), profile.HasClaimedName);
+            nametagView.SetUsername(avatarShape.Name, avatarShape.ID.Substring(avatarShape.ID.Length - 4), profile.HasClaimedName, true);
             nametagView.gameObject.name = avatarShape.ID;
             UpdateTagTransparencyAndScale(nametagView, camera.Camera, characterTransform.Position);
 
@@ -187,7 +187,7 @@ namespace DCL.Nametags
         private bool IsOutOfRenderRange(CameraComponent camera, CharacterTransform characterTransform) =>
             Vector3.Distance(camera.Camera.transform.position, characterTransform.Position) > chatBubbleConfigurationSo.maxDistance;
 
-        private NametagView CreateNameTagView(in AvatarShapeComponent avatarShape, bool hasClaimedName, bool useVerifiedIcon = true)
+        private NametagView CreateNameTagView(in AvatarShapeComponent avatarShape, bool hasClaimedName, bool useVerifiedIcon)
         {
             NametagView nametagView = nametagViewPool.Get();
             nametagView.gameObject.name = avatarShape.ID;

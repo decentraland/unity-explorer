@@ -87,7 +87,7 @@ namespace DCL.Nametags
             messageContentAnchoredPosition = new (0, chatBubbleConfiguration.bubbleMarginOffsetHeight / 3);
         }
 
-        public void SetUsername(string username, string walletId, bool hasClaimedName, bool useVerifiedIcon = true)
+        public void SetUsername(string username, string walletId, bool hasClaimedName, bool useVerifiedIcon)
         {
             ResetElement();
 
