@@ -549,7 +549,8 @@ namespace Global.Dynamic
                 connectionStatusPanelPlugin,
                 new MinimapPlugin(container.MvcManager, container.MapRendererContainer, placesAPIService,
                     staticContainer.RealmData, container.ChatMessagesBus, realmNavigator, staticContainer.ScenesCache,
-                    mainUIView, mapPathEventBus, staticContainer.SceneRestrictionBusController),
+                    mainUIView, mapPathEventBus, staticContainer.SceneRestrictionBusController,
+                    $"{dynamicWorldParams.StartParcel.x},{dynamicWorldParams.StartParcel.y}"),
                 new ChatPlugin(assetsProvisioner, container.MvcManager, container.ChatMessagesBus, chatHistory, entityParticipantTable, nametagsData, dclInput, unityEventSystem, mainUIView, staticContainer.InputBlock, globalWorld, playerEntity),
                 new ExplorePanelPlugin(
                     assetsProvisioner,

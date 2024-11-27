@@ -53,6 +53,8 @@ namespace DCL.Minimap
         private Vector2Int previousParcelPosition;
         private SceneRestrictionsController? sceneRestrictionsController;
 
+        private readonly string startParcelInGenesis;
+
         public IReadOnlyDictionary<MapLayer, IMapLayerParameter> LayersParameters { get; } = new Dictionary<MapLayer, IMapLayerParameter>
             { { MapLayer.PlayerMarker, new PlayerMarkerParameter { BackgroundIsActive = false } } };
 
@@ -68,7 +70,8 @@ namespace DCL.Minimap
             IRealmNavigator realmNavigator,
             IScenesCache scenesCache,
             IMapPathEventBus mapPathEventBus,
-            ISceneRestrictionBusController sceneRestrictionBusController
+            ISceneRestrictionBusController sceneRestrictionBusController,
+            string startParcelInGenesis
         ) : base(viewFactory)
         {
             this.mapRenderer = mapRenderer;
@@ -80,6 +83,7 @@ namespace DCL.Minimap
             this.scenesCache = scenesCache;
             this.mapPathEventBus = mapPathEventBus;
             this.sceneRestrictionBusController = sceneRestrictionBusController;
+            this.startParcelInGenesis = startParcelInGenesis;
         }
 
         public void HookPlayerPositionTrackingSystem(TrackPlayerPositionSystem system) =>
@@ -97,7 +101,8 @@ namespace DCL.Minimap
             viewInstance.collapseMinimapButton.onClick.AddListener(CollapseMinimap);
             viewInstance.minimapRendererButton.Button.onClick.AddListener(() => mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Navmap))).Forget());
             viewInstance.sideMenuButton.onClick.AddListener(OpenSideMenu);
-            viewInstance.goToGenesisCityButton.onClick.AddListener(() => chatMessagesBus.Send($"/{ChatCommandsUtils.COMMAND_GOTO} 0,0", ORIGIN));
+            viewInstance.goToGenesisCityButton.onClick.AddListener(() =>
+                chatMessagesBus.Send($"/{ChatCommandsUtils.COMMAND_GOTO} {startParcelInGenesis}", ORIGIN));
             viewInstance.SideMenuCanvasGroup.alpha = 0;
             viewInstance.SideMenuCanvasGroup.gameObject.SetActive(false);
             new SideMenuController(viewInstance.sideMenuView);
