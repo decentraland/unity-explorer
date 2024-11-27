@@ -55,6 +55,13 @@ namespace MVC
                 controllersValue.SetViewCanvasActive(isActive);
         }
 
+        public void SetAllViewsCanvasActiveExcept<T>(bool isActive) where T : IController
+        {
+            foreach (IController controller in controllers.Values)
+                if (controller.GetType() != typeof(T) )
+                    controller.SetViewCanvasActive(isActive);
+        }
+
         public async UniTask ShowAsync<TView, TInputData>(ShowCommand<TView, TInputData> command, CancellationToken ct = default) where TView: IView
         {
             // Find the controller
