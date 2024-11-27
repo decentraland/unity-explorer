@@ -165,7 +165,12 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
 
         private async UniTask EnsureProcessLaunchedAsync(CancellationToken token)
         {
-            if (NativeMethodsProcessesHub.ProcessesHubIsRunning() == false || IsMemoryOverwhelmed() || pipe!.IsConnected == false)
+            bool isMemoryOverwhelmed = IsMemoryOverwhelmed();
+
+            if (isMemoryOverwhelmed)
+                NativeMethodsProcessesHub.ProcessesHubStop();
+
+            if (NativeMethodsProcessesHub.ProcessesHubIsRunning() == false || isMemoryOverwhelmed || pipe!.IsConnected == false)
             {
                 if (pipe != null)
                 {
