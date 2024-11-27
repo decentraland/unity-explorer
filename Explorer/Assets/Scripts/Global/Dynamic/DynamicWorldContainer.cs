@@ -217,7 +217,10 @@ namespace Global.Dynamic
                 ? new MVCManagerAnalyticsDecorator(coreMvcManager, bootstrapContainer.Analytics!)
                 : coreMvcManager;
 
-            var parcelServiceContainer = ParcelServiceContainer.Create(staticContainer.RealmData, staticContainer.SceneReadinessReportQueue, debugBuilder, container.MvcManager, staticContainer.SingletonSharedDependencies.SceneAssetLock);
+            var loadingScreenTimeout = new LoadingScreenTimeout();
+            ILoadingScreen loadingScreen = new LoadingScreen(container.MvcManager, loadingScreenTimeout);
+
+            var parcelServiceContainer = ParcelServiceContainer.Create(staticContainer.RealmData, staticContainer.SceneReadinessReportQueue, debugBuilder, loadingScreenTimeout, loadingScreen, staticContainer.SingletonSharedDependencies.SceneAssetLock);
             container.ParcelServiceContainer = parcelServiceContainer;
 
             var nftInfoAPIClient = new OpenSeaAPIClient(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
@@ -296,7 +299,9 @@ namespace Global.Dynamic
                 staticContainer.ScenesCache,
                 staticContainer.PartitionDataContainer,
                 staticContainer.SingletonSharedDependencies.SceneAssetLock,
-                debugBuilder);
+                debugBuilder,
+                staticContainer.ComponentsContainer.ComponentPoolsRegistry
+                               .GetReferenceTypePool<PartitionComponent>());
 
             bool localSceneDevelopment = !string.IsNullOrEmpty(dynamicWorldParams.LocalSceneDevelopmentRealm);
             container.reloadSceneController = new ECSReloadScene(staticContainer.ScenesCache, globalWorld, playerEntity, localSceneDevelopment);
@@ -333,8 +338,6 @@ namespace Global.Dynamic
                 staticContainer.EntityCollidersGlobalCache
             );
 
-            ILoadingScreen loadingScreen = new LoadingScreen(container.MvcManager);
-
             IRealmNavigator realmNavigator = new RealmNavigator(
                 loadingScreen,
                 container.MapRendererContainer.MapRenderer,
@@ -344,7 +347,7 @@ namespace Global.Dynamic
                 remoteEntities,
                 bootstrapContainer.DecentralandUrlsSource,
                 globalWorld,
-                container.LODContainer.RoadPlugin,
+                container.LODContainer.RoadAssetsPool, // TODO Plugins should not expose dependencies!
                 genesisTerrain,
                 worldsTerrain,
                 satelliteView,
@@ -497,7 +500,7 @@ namespace Global.Dynamic
                     staticContainer.ComponentsContainer.ComponentPoolsRegistry
                 ),
                 new WorldInfoPlugin(worldInfoHub, debugBuilder, chatHistory),
-                new CharacterMotionPlugin(assetsProvisioner, staticContainer.CharacterContainer.CharacterObject, debugBuilder, staticContainer.ComponentsContainer.ComponentPoolsRegistry),
+                new CharacterMotionPlugin(assetsProvisioner, staticContainer.CharacterContainer.CharacterObject, debugBuilder, staticContainer.ComponentsContainer.ComponentPoolsRegistry, staticContainer.SceneReadinessReportQueue),
                 new InputPlugin(dclInput, dclCursor, unityEventSystem, assetsProvisioner, dynamicWorldDependencies.CursorUIDocument, multiplayerEmotesMessageBus, container.MvcManager, debugBuilder, dynamicWorldDependencies.RootUIDocument, dynamicWorldDependencies.CursorUIDocument, exposedGlobalDataContainer.ExposedCameraData),
                 new GlobalInteractionPlugin(dclInput, dynamicWorldDependencies.RootUIDocument, assetsProvisioner, staticContainer.EntityCollidersGlobalCache, exposedGlobalDataContainer.GlobalInputEvents, dclCursor, unityEventSystem, container.MvcManager),
                 new CharacterCameraPlugin(assetsProvisioner, realmSamplingData, exposedGlobalDataContainer.ExposedCameraData, debugBuilder, dynamicWorldDependencies.CommandLineArgs, dclInput),
@@ -653,9 +656,9 @@ namespace Global.Dynamic
             globalPlugins.AddRange(staticContainer.SharedPlugins);
 
             if (includeCameraReel)
-                globalPlugins.Add(new InWorldCameraPlugin(dclInput, assetsProvisioner, selfProfile, staticContainer.RealmData, playerEntity, placesAPIService, staticContainer.CharacterContainer.CharacterObject, coroutineRunner,
+                globalPlugins.Add(new InWorldCameraPlugin(dclInput, selfProfile, staticContainer.RealmData, playerEntity, placesAPIService, staticContainer.CharacterContainer.CharacterObject, coroutineRunner,
                     cameraReelStorageService, cameraReelStorageService, container.MvcManager, clipboard, bootstrapContainer.DecentralandUrlsSource, webBrowser, staticContainer.WebRequestsContainer.WebRequestController,
-                    container.ProfileRepository, container.ChatMessagesBus));
+                    container.ProfileRepository, container.ChatMessagesBus, assetsProvisioner));
 
             if (dynamicWorldParams.EnableAnalytics)
                 globalPlugins.Add(new AnalyticsPlugin(
@@ -684,6 +687,7 @@ namespace Global.Dynamic
                 container.LODContainer.LodCache,
                 multiplayerEmotesMessageBus,
                 globalWorld,
+                staticContainer.SceneReadinessReportQueue,
                 localSceneDevelopment
             );
 

@@ -9,6 +9,7 @@ using DCL.Clipboard;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.InWorldCamera.PhotoDetail;
 using DCL.InWorldCamera.ScreencaptureCamera;
+using DCL.InWorldCamera.ScreencaptureCamera.Settings;
 using DCL.InWorldCamera.ScreencaptureCamera.Systems;
 using DCL.InWorldCamera.ScreencaptureCamera.UI;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -24,7 +25,6 @@ using UnityEngine;
 using UnityEngine.AddressableAssets;
 using Utility;
 using static DCL.PluginSystem.Global.InWorldCameraPlugin;
-using Object = UnityEngine.Object;
 
 namespace DCL.PluginSystem.Global
 {
@@ -47,20 +47,21 @@ namespace DCL.PluginSystem.Global
         private readonly IWebRequestController webRequestController;
         private readonly IProfileRepository profileRepository;
         private readonly IChatMessagesBus chatMessagesBus;
+        private readonly InWorldCameraFactory factory;
 
-        private ProvidedAsset<GameObject> hudPrefab;
         private ScreenRecorder recorder;
         private GameObject hud;
+        private CharacterController followTarget;
         private ScreenshotMetadataBuilder metadataBuilder;
+        private InWorldCameraSettings settings;
 
-        public InWorldCameraPlugin(DCLInput input, IAssetsProvisioner assetsProvisioner, SelfProfile selfProfile,
+        public InWorldCameraPlugin(DCLInput input, SelfProfile selfProfile,
             RealmData realmData, Entity playerEntity, IPlacesAPIService placesAPIService, ICharacterObject characterObject, ICoroutineRunner coroutineRunner,
             ICameraReelStorageService cameraReelStorageService, ICameraReelScreenshotsStorage cameraReelScreenshotsStorage, IMVCManager mvcManager,
             ISystemClipboard systemClipboard, IDecentralandUrlsSource decentralandUrlsSource, IWebBrowser webBrowser, IWebRequestController webRequestController,
-            IProfileRepository profileRepository, IChatMessagesBus chatMessagesBus)
+            IProfileRepository profileRepository, IChatMessagesBus chatMessagesBus, IAssetsProvisioner assetsProvisioner)
         {
             this.input = input;
-            this.assetsProvisioner = assetsProvisioner;
             this.selfProfile = selfProfile;
             this.realmData = realmData;
             this.playerEntity = playerEntity;
@@ -76,19 +77,23 @@ namespace DCL.PluginSystem.Global
             this.webRequestController = webRequestController;
             this.profileRepository = profileRepository;
             this.chatMessagesBus = chatMessagesBus;
+            this.assetsProvisioner = assetsProvisioner;
+
+            factory = new InWorldCameraFactory();
         }
 
         public async UniTask InitializeAsync(InWorldCameraSettings settings, CancellationToken ct)
         {
-            hudPrefab = await assetsProvisioner.ProvideMainAssetAsync(settings.ScreencaptureHud, ct);
-            PhotoDetailView photoDetailViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.PhotoDetailPrefab, ct: ct)).GetComponent<PhotoDetailView>();
-            ControllerBase<PhotoDetailView, PhotoDetailParameter>.ViewFactoryMethod viewFactoryMethod = PhotoDetailController.Preallocate(photoDetailViewAsset, null, out PhotoDetailView explorePanelView);
+            this.settings = settings;
 
-            hudPrefab.Value.SetActive(false);
-            hud = Object.Instantiate(hudPrefab.Value, Vector3.zero, Quaternion.identity);
+            hud = factory.CreateScreencaptureHud(settings.ScreencaptureHud);
+            followTarget = factory.CreateFollowTarget(settings.FollowTarget);
 
             recorder = new ScreenRecorder(hud.GetComponent<RectTransform>());
             metadataBuilder = new ScreenshotMetadataBuilder(selfProfile, characterObject.Controller, realmData, placesAPIService);
+
+            PhotoDetailView photoDetailViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.PhotoDetailPrefab, ct: ct)).GetComponent<PhotoDetailView>();
+            ControllerBase<PhotoDetailView, PhotoDetailParameter>.ViewFactoryMethod viewFactoryMethod = PhotoDetailController.Preallocate(photoDetailViewAsset, null, out PhotoDetailView explorePanelView);
 
             mvcManager.RegisterController(new PhotoDetailController(viewFactoryMethod,
                 new PhotoDetailInfoController(explorePanelView.GetComponentInChildren<PhotoDetailInfoView>(), cameraReelStorageService, webRequestController, profileRepository, mvcManager, webBrowser, chatMessagesBus),
@@ -101,21 +106,27 @@ namespace DCL.PluginSystem.Global
 
         public void Dispose()
         {
-            hudPrefab.Dispose();
-            recorder.Dispose();
+            factory.Dispose();
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
-            ToggleInWorldCameraActivitySystem.InjectToWorld(ref builder, input.InWorldCamera, hud);
-            CaptureScreenshotSystem.InjectToWorld(ref builder, recorder, input.InWorldCamera, hud.GetComponent<ScreenshotHudView>(), playerEntity, metadataBuilder, coroutineRunner, cameraReelStorageService);
+            ToggleInWorldCameraActivitySystem.InjectToWorld(ref builder, settings.TransitionSettings, input.InWorldCamera, hud, followTarget);
+            EmitInWorldCameraInputSystem.InjectToWorld(ref builder, input.InWorldCamera);
+            MoveInWorldCameraSystem.InjectToWorld(ref builder, settings.MovementSettings, characterObject.Controller.transform);
+            CaptureScreenshotSystem.InjectToWorld(ref builder, recorder, hud.GetComponent<ScreenshotHudView>(), playerEntity, metadataBuilder, coroutineRunner, cameraReelStorageService);
         }
 
         [Serializable]
         public class InWorldCameraSettings : IDCLPluginSettings
         {
             [field: Header(nameof(InWorldCameraSettings))]
-            [field: SerializeField] internal AssetReferenceGameObject ScreencaptureHud { get; private set; }
+            [field: SerializeField] internal GameObject ScreencaptureHud { get; private set; }
+            [field: SerializeField] internal GameObject FollowTarget { get; private set; }
+
+            [field: Header("Configs")]
+            [field: SerializeField] internal InWorldCameraTransitionSettings TransitionSettings { get; private set; }
+            [field: SerializeField] internal InWorldCameraMovementSettings MovementSettings { get; private set; }
 
             [field: Header("Photo detail")]
             [field: SerializeField] internal AssetReferenceGameObject PhotoDetailPrefab { get; private set; }
