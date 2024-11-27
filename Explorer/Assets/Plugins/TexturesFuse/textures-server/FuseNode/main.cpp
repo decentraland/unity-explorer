@@ -148,21 +148,27 @@ ImageResult NewImage(
         &width,
         &height,
         handle);
+
     if (result != Success)
     {
         fprintf(stderr, "Error when compressing, %d", result);
+
+        oResult->code = result;
+        oResult->outputLength = 0;
+        oResult->width = 0;
+        oResult->height = 0;
         return result;
     }
     else
     {
         printf("Compression finished: width %d, height %d, length %d\n", width, height, outputLength);
-    }
 
-    oResult->code = result;
-    oResult->outputLength = outputLength;
-    oResult->width = width;
-    oResult->height = height;
-    return Success;
+        oResult->code = result;
+        oResult->outputLength = outputLength;
+        oResult->width = width;
+        oResult->height = height;
+        return Success;
+    }
 }
 
 int main()
@@ -223,7 +229,8 @@ int main()
 
     while (1)
     {
-        if (!InBudget(selfProcess)){
+        if (!InBudget(selfProcess))
+        {
             fprintf(stderr, "Budget %d MB is overwhelmed", maxAllowedMemoryMB);
             return 1;
         }
@@ -240,14 +247,12 @@ int main()
         OutputResult oResult;
         BYTE *outputBytes;
         FfiHandle handle;
-        if (NewImage(ctx, reinterpret_cast<BYTE *>(pInputBuffer), &iArgs, &oResult, &outputBytes, &handle) != Success)
+        if (NewImage(ctx, reinterpret_cast<BYTE *>(pInputBuffer), &iArgs, &oResult, &outputBytes, &handle) == Success)
         {
-            return 1;
+            // Write to file
+            memcpy(pOutputBuffer, outputBytes, oResult.outputLength);
+            texturesfuse_release(ctx, handle);
         }
-
-        // Write to file
-        memcpy(pOutputBuffer, outputBytes, oResult.outputLength);
-        texturesfuse_release(ctx, handle);
 
         // Write options to pipe
         DWORD writtenBytes = 0;
