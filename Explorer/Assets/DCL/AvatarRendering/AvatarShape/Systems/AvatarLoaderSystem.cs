@@ -89,8 +89,9 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                 avatarShapeComponent.WearablePromise.ForgetLoading(World);
 
             WearablePromise newPromise = CreateWearablePromise(pbAvatarShape, partition);
+            avatarShapeComponent.ID = pbAvatarShape.Id;
+            avatarShapeComponent.Name = pbAvatarShape.Name;
             avatarShapeComponent.WearablePromise = newPromise;
-
             avatarShapeComponent.BodyShape = pbAvatarShape;
             avatarShapeComponent.HairColor = pbAvatarShape.GetHairColor().ToUnityColor();
             avatarShapeComponent.SkinColor = pbAvatarShape.GetSkinColor().ToUnityColor();
