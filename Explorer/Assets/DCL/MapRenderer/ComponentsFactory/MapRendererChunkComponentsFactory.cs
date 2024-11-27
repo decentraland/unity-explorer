@@ -179,8 +179,7 @@ namespace DCL.MapRenderer.ComponentsFactory
                     decentralandUrlsSource,
                     atlasChunkPrefab,
                     chunkLocalPosition,
-                    coordsCenter,
-                    parent
+                    coordsCenter
                 );
 
                 chunk.SetDrawOrder(MapRendererDrawOrder.ATLAS);
@@ -208,7 +207,7 @@ namespace DCL.MapRenderer.ComponentsFactory
             {
                 SpriteRenderer atlasChunkPrefab = await GetAtlasChunkPrefabAsync(parent, ct);
 
-                var chunk = new SatelliteChunkController(atlasChunkPrefab, webRequestController, textureContainer, chunkLocalPosition, chunkId, parent, MapRendererDrawOrder.SATELLITE_ATLAS);
+                var chunk = new SatelliteChunkController(atlasChunkPrefab, webRequestController, textureContainer, chunkLocalPosition, chunkId, MapRendererDrawOrder.SATELLITE_ATLAS);
                 await chunk.LoadImageAsync(chunkId, PARCELS_INSIDE_CHUNK * coordsUtils.ParcelSize, ct);
 
                 return chunk;

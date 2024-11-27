@@ -25,16 +25,14 @@ namespace DCL.MapRenderer.MapLayers.Atlas
             IDecentralandUrlsSource decentralandUrlsSource,
             SpriteRenderer prefab,
             Vector3 chunkLocalPosition,
-            Vector2Int coordsCenter,
-            Transform parent
+            Vector2Int coordsCenter
         )
         {
             this.webRequestController = webRequestController;
             this.decentralandUrlsSource = decentralandUrlsSource;
-
-            spriteRenderer = Object.Instantiate(prefab, parent);
+            spriteRenderer = prefab;
 #if UNITY_EDITOR
-            spriteRenderer.gameObject.name = $"Chunk {coordsCenter.x},{coordsCenter.y}";
+            prefab.gameObject.name = $"Chunk {coordsCenter.x},{coordsCenter.y}";
 #endif
             Transform transform = spriteRenderer.transform;
 

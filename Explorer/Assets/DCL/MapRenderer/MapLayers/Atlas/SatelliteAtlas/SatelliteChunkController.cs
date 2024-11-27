@@ -27,14 +27,13 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
         private int webRequestAttempts;
 
         public SatelliteChunkController(SpriteRenderer prefab, IWebRequestController webRequestController, MapRendererTextureContainer textureContainer, Vector3 chunkLocalPosition, Vector2Int coordsCenter,
-            Transform parent,
             int drawOrder)
         {
             this.webRequestController = webRequestController;
             this.textureContainer = textureContainer;
             internalCts = new CancellationTokenSource();
 
-            atlasChunk = Object.Instantiate(prefab, parent).GetComponent<AtlasChunk>();
+            atlasChunk = prefab.GetComponent<AtlasChunk>();
             atlasChunk.transform.localPosition = chunkLocalPosition;
             atlasChunk.LoadingSpriteRenderer.sortingOrder = drawOrder;
             atlasChunk.MainSpriteRenderer.sortingOrder = drawOrder;
