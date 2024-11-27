@@ -1,7 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using System;
-using System.Diagnostics;
 using System.IO;
 using System.IO.MemoryMappedFiles;
 using System.IO.Pipes;
@@ -20,13 +19,6 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
 
         public const string CHILD_PROCESS = "node.exe";
 
-        private static readonly ProcessStartInfo START_INFO = new ()
-        {
-            FileName = CHILD_PROCESS,
-            UseShellExecute = true,
-            WindowStyle = ProcessWindowStyle.Hidden,
-        };
-
         private static MemoryMappedFile? mmfInput;
         private static MemoryMappedFile? mmfOutput;
 
@@ -38,7 +30,6 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
         private NamedPipeServerStream? pipe;
         private BinaryWriter? pipeWriter;
         private BinaryReader? pipeReader;
-        private Process? activeProcess;
 
         [Serializable]
         [StructLayout(LayoutKind.Sequential, Pack = 1)]
@@ -87,8 +78,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
             pipeWriter?.Dispose();
             pipeReader?.Dispose();
 
-            activeProcess?.Close();
-            activeProcess?.Dispose();
+            NativeMethodsProcessesHub.ProcessesHubStop();
         }
 
         public async UniTask<EnumResult<IOwnedTexture2D, NativeMethods.ImageResult>> TextureFromBytesAsync(IntPtr bytes, int bytesLength, TextureType type, CancellationToken token)
@@ -149,7 +139,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
 
         private async UniTask EnsureProcessLaunchedAsync(CancellationToken token)
         {
-            if (activeProcess == null || activeProcess.Responding == false || activeProcess.HasExited)
+            if (NativeMethodsProcessesHub.ProcessesHubIsRunning() == 0)
             {
                 if (pipe != null)
                 {
@@ -170,7 +160,8 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
                 pipeReader = new BinaryReader(pipe);
                 pipeWriter = new BinaryWriter(pipe);
 
-                activeProcess = Process.Start(START_INFO)!;
+                if (NativeMethodsProcessesHub.ProcessesHubStart(CHILD_PROCESS) != 0)
+                    ReportHub.LogError(ReportCategory.TEXTURES, $"ProcessesHubStart Cannot launch process: {CHILD_PROCESS}");
             }
 
             if (pipe!.IsConnected == false)
