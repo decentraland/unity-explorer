@@ -667,6 +667,7 @@ namespace Global.Dynamic
                     coroutineRunner,
                     cameraReelStorageService,
                     container.MvcManager,
+                    dclCursor,
                     mainUIView.SidebarView.InWorldCameraButton,
                     globalWorld));
 

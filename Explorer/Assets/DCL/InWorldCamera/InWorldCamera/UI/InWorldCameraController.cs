@@ -72,16 +72,12 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.UI
             bool hasSpace = storageService.StorageStatus.HasFreeSpace;
             viewInstance!.TakeScreenshotButton.gameObject.SetActive(hasSpace);
             viewInstance.NoStorageNotification.gameObject.SetActive(!hasSpace);
-
-            mvcManager.SetAllViewsCanvasActiveExcept<InWorldCameraController>(false);
         }
 
         public void Hide(bool isInstant = false)
         {
             sidebarButton.OnDeselect(null);
             viewInstance.HideAsync(default(CancellationToken), isInstant).Forget();
-
-            mvcManager.SetAllViewsCanvasActiveExcept<InWorldCameraController>(true);
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>

@@ -11,6 +11,7 @@ using DCL.Input.Component;
 using DCL.InWorldCamera.ScreencaptureCamera.Settings;
 using DCL.InWorldCamera.ScreencaptureCamera.UI;
 using ECS.Abstract;
+using MVC;
 using UnityEngine;
 using static DCL.Input.Component.InputMapComponent;
 
@@ -29,6 +30,8 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
         private readonly InWorldCameraController hudController;
         private readonly GameObject hud;
         private readonly CharacterController followTarget;
+        private readonly ICursor cursor;
+        private readonly IMVCManager mvcManager;
 
         private SingleInstanceEntity camera;
         private SingleInstanceEntity inputMap;
@@ -36,12 +39,21 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
         private ICinemachinePreset cinemachinePreset;
         private CinemachineVirtualCamera inWorldVirtualCamera;
 
-        public ToggleInWorldCameraActivitySystem(World world, InWorldCameraTransitionSettings settings, DCLInput.InWorldCameraActions inputSchema, InWorldCameraController hudController, CharacterController followTarget) : base(world)
+        public ToggleInWorldCameraActivitySystem(
+            World world,
+            InWorldCameraTransitionSettings settings,
+            DCLInput.InWorldCameraActions inputSchema,
+            InWorldCameraController hudController,
+            CharacterController followTarget,
+            ICursor cursor,
+            IMVCManager mvcManager) : base(world)
         {
             this.settings = settings;
             this.inputSchema = inputSchema;
             this.hudController = hudController;
             this.followTarget = followTarget;
+            this.cursor = cursor;
+            this.mvcManager = mvcManager;
 
             behindUpOffset = Vector3.up * settings.BehindUpOffset;
         }
@@ -104,8 +116,11 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
         private void DisableCamera()
         {
             hudController.Hide();
+            mvcManager.SetAllViewsCanvasActiveExcept<InWorldCameraController>(true);
 
             SwitchToThirdPersonCamera();
+
+            cursor.Unlock();
             SwitchCameraInput(to: Kind.PLAYER);
 
             World.Remove<InWorldCamera, CameraTarget, CameraDampedFOV, CameraDampedAim, InWorldCameraInput>(camera);
@@ -114,8 +129,11 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
         private void EnableCamera()
         {
             hudController.Show();
+            mvcManager.SetAllViewsCanvasActiveExcept<InWorldCameraController>(false);
 
             SwitchToInWorldCamera();
+
+            cursor.Lock();
             SwitchCameraInput(to: Kind.IN_WORLD_CAMERA);
 
             World.Add(camera,
