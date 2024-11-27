@@ -14,8 +14,6 @@ const int mb = 1024 * 1024;
 const int mmfInputCapacity = mb * 16;
 const int mmfOutputCapacity = mb * 4;
 
-const int maxAllowedMemoryMB = 512;
-
 #pragma pack(push, 1)
 struct InputArgs
 {
@@ -35,18 +33,6 @@ struct OutputResult
 };
 
 #pragma pack(pop)
-
-bool InBudget(HANDLE process)
-{
-    PROCESS_MEMORY_COUNTERS memInfo;
-
-    if (GetProcessMemoryInfo(process, &memInfo, sizeof(memInfo)))
-    {
-        return (memInfo.WorkingSetSize) < maxAllowedMemoryMB * mb;
-    }
-
-    return false;
-}
 
 void Debug(FREE_IMAGE_FORMAT fif, const char *msg)
 {
@@ -229,12 +215,6 @@ int main()
 
     while (1)
     {
-        if (!InBudget(selfProcess))
-        {
-            fprintf(stderr, "Budget %d MB is overwhelmed", maxAllowedMemoryMB);
-            return 1;
-        }
-
         InputArgs iArgs;
         if (InputArgsFromPipe(hPipe, &iArgs))
         {

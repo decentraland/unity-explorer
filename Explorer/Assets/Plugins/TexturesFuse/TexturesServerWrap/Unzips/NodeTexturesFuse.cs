@@ -17,7 +17,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
         private const int MMF_INPUT_CAPACITY = MB * 16;
         private const int MMF_OUTPUT_CAPACITY = MB * 4;
 
-        private const int MEMORY_LIMIT_MB = MB * 256;
+        private const int MEMORY_LIMIT = MB * 1024; //GB
 
         public const string CHILD_PROCESS = "node.exe";
 
@@ -223,7 +223,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
                 $"NodeTexturesFuse used memory by node process: {(double)usedRAM / MB} MB"
             );
 
-            return usedRAM > MEMORY_LIMIT_MB;
+            return usedRAM > MEMORY_LIMIT;
         }
     }
 }
