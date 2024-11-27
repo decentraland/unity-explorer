@@ -8,7 +8,7 @@ namespace DCL.Navmap
 {
     public class CategoryToggleView : MonoBehaviour
     {
-        public event Action<MapLayer, bool> ToggleChanged;
+        public event Action<MapLayer, bool, CategoryToggleView> ToggleChanged;
 
         [field: SerializeField]
         public MapLayer Layer { get; private set; }
@@ -33,11 +33,16 @@ namespace DCL.Navmap
             Toggle.onValueChanged.AddListener(OnToggleValueChanged);
         }
 
-        private void OnToggleValueChanged(bool isOn)
+        public void SetVisualStatus(bool isOn)
         {
             Label.color = isOn ? OffColor : OnColor;
             Background.color = isOn ? OnColor : OffColor;
-            ToggleChanged?.Invoke(Layer, isOn);
+        }
+
+        private void OnToggleValueChanged(bool isOn)
+        {
+            SetVisualStatus(isOn);
+            ToggleChanged?.Invoke(Layer, isOn, this);
         }
     }
 }

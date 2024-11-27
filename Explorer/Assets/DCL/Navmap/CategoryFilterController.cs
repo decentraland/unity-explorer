@@ -1,8 +1,8 @@
 using DCL.MapRenderer;
 using DCL.MapRenderer.MapLayers;
+using DCL.PlacesAPIService;
 using System;
 using System.Collections.Generic;
-using UnityEngine;
 
 namespace DCL.Navmap
 {
@@ -11,6 +11,7 @@ namespace DCL.Navmap
         private readonly List<CategoryToggleView> categoryToggles;
         private readonly IMapRenderer mapRenderer;
         private readonly INavmapBus navmapBus;
+        private CategoryToggleView currentActiveToggle;
 
         public CategoryFilterController(List<CategoryToggleView> categoryToggles, IMapRenderer mapRenderer, INavmapBus navmapBus)
         {
@@ -23,10 +24,24 @@ namespace DCL.Navmap
                 mapRenderer.SetSharedLayer(categoryToggleView.Layer, false);
                 categoryToggleView.ToggleChanged += OnCategoryToggleChanged;
             }
+
+            navmapBus.OnPlaceSearched += OnPlaceSearched;
         }
 
-        private void OnCategoryToggleChanged(MapLayer mapLayer, bool isOn)
+        private void OnPlaceSearched(INavmapBus.SearchPlaceParams searchparams, IReadOnlyList<PlacesData.PlaceInfo> places, int totalresultcount)
         {
+            if (string.IsNullOrEmpty(searchparams.category) && currentActiveToggle != null)
+            {
+                currentActiveToggle.SetVisualStatus(false);
+                currentActiveToggle.Toggle.SetIsOnWithoutNotify(false);
+            }
+        }
+
+        private void OnCategoryToggleChanged(MapLayer mapLayer, bool isOn, CategoryToggleView toggleView)
+        {
+            if (isOn)
+                currentActiveToggle = toggleView;
+
             navmapBus.FilterByCategory(isOn ? mapLayer.ToString() : null);
             mapRenderer.SetSharedLayer(mapLayer, isOn);
         }
