@@ -22,6 +22,8 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
         private static MemoryMappedFile? mmfInput;
         private static MemoryMappedFile? mmfOutput;
 
+        private static readonly SemaphoreSlim SEMAPHORE_SLIM = new (1, 1);
+
         private readonly MemoryMappedViewStream inputFileStream;
         private readonly MemoryMappedViewStream outputFileStream;
 
@@ -68,6 +70,8 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
             outputFileStream = mmfOutput.CreateViewStream(0, MMF_OUTPUT_CAPACITY);
 
             this.inputArgs = inputArgs;
+
+            NativeMethodsProcessesHub.ProcessesHubStop();
         }
 
         public void Dispose()
@@ -83,6 +87,10 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
 
         public async UniTask<EnumResult<IOwnedTexture2D, NativeMethods.ImageResult>> TextureFromBytesAsync(IntPtr bytes, int bytesLength, TextureType type, CancellationToken token)
         {
+            await SEMAPHORE_SLIM.WaitAsync(token);
+
+            using var scope = new ReleaseScope();
+
             await EnsureProcessLaunchedAsync(token);
 
             WriteToInputStream(bytes, bytesLength);
@@ -91,12 +99,19 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
             var args = inputArgs;
             args.bytesLength = bytesLength;
             args.format = type.AsBC_Format();
-            Write(pipeWriter!, args);
+
+            var writeResult = Write(pipeWriter!, args);
+
+            if (writeResult.Success == false)
+                return EnumResult<IOwnedTexture2D, NativeMethods.ImageResult>.ErrorResult(NativeMethods.ImageResult.ErrorUnknown, writeResult.ErrorMessage!);
 
             var outputResult = OutputResultFromStream(pipeReader!);
 
             if (outputResult.code != NativeMethods.ImageResult.Success)
-                return EnumResult<IOwnedTexture2D, NativeMethods.ImageResult>.ErrorResult(outputResult.code, string.Empty);
+            {
+                NativeMethodsProcessesHub.ProcessesHubStop();
+                return EnumResult<IOwnedTexture2D, NativeMethods.ImageResult>.ErrorResult(outputResult.code, "Cannot read output message");
+            }
 
             var t = await ManagedOwnedTexture2D.NewTextureFromStreamAsync(
                 outputFileStream,
@@ -119,10 +134,19 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
             }
         }
 
-        private static void Write(BinaryWriter writer, InputArgs inputArgs)
+        private static Result Write(BinaryWriter writer, InputArgs inputArgs)
         {
-            ReadOnlySpan<byte> span = MemoryMarshal.AsBytes(MemoryMarshal.CreateReadOnlySpan(ref inputArgs, 1));
-            writer.Write(span);
+            try
+            {
+                ReadOnlySpan<byte> span = MemoryMarshal.AsBytes(MemoryMarshal.CreateReadOnlySpan(ref inputArgs, 1));
+                writer.Write(span);
+                return Result.SuccessResult();
+            }
+            catch (Exception e)
+            {
+                NativeMethodsProcessesHub.ProcessesHubStop();
+                return Result.ErrorResult($"Cannot write data to named pipe: {e.Message}");
+            }
         }
 
         private static OutputResult OutputResultFromStream(BinaryReader reader)
@@ -139,7 +163,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
 
         private async UniTask EnsureProcessLaunchedAsync(CancellationToken token)
         {
-            if (NativeMethodsProcessesHub.ProcessesHubIsRunning() == 0)
+            if (NativeMethodsProcessesHub.ProcessesHubIsRunning() == 0 || pipe!.IsConnected == false)
             {
                 if (pipe != null)
                 {
@@ -160,12 +184,29 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
                 pipeReader = new BinaryReader(pipe);
                 pipeWriter = new BinaryWriter(pipe);
 
-                if (NativeMethodsProcessesHub.ProcessesHubStart(CHILD_PROCESS) != 0)
-                    ReportHub.LogError(ReportCategory.TEXTURES, $"ProcessesHubStart Cannot launch process: {CHILD_PROCESS}");
-            }
+                int result = NativeMethodsProcessesHub.ProcessesHubStart(CHILD_PROCESS);
 
-            if (pipe!.IsConnected == false)
+                if (result != 0)
+                {
+                    ReportHub.LogWarning(ReportCategory.TEXTURES, $"ProcessesHubStart Cannot launch process: {CHILD_PROCESS} with result code: {result}, try again with force terminate");
+                    NativeMethodsProcessesHub.ProcessesHubStop();
+
+                    result = NativeMethodsProcessesHub.ProcessesHubStart(CHILD_PROCESS);
+
+                    if (result != 0)
+                        ReportHub.LogError(ReportCategory.TEXTURES, $"ProcessesHubStart Cannot launch process with force terminate: {CHILD_PROCESS} with result code: {result}");
+                }
+
                 await pipe.WaitForConnectionAsync(token)!;
+            }
+        }
+
+        private struct ReleaseScope : IDisposable
+        {
+            public void Dispose()
+            {
+                SEMAPHORE_SLIM.Release();
+            }
         }
     }
 }
