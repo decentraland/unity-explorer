@@ -13,7 +13,6 @@ using System.Diagnostics;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.UI;
-using Debug = UnityEngine.Debug;
 
 namespace DCL.InWorldCamera.ScreencaptureCamera.UI
 {
@@ -28,7 +27,7 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.UI
 
         private bool shortcutPanelIsOpen;
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Fullscreen;
         private SingleInstanceEntity? camera => cameraInternal ??= world.CacheCamera();
 
         public InWorldCameraController([NotNull] ViewFactoryMethod viewFactory, Button sidebarButton, World world, IMVCManager mvcManager, ICameraReelStorageService storageService) : base(viewFactory)
@@ -47,6 +46,8 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.UI
             viewInstance.TakeScreenshotButton.onClick.AddListener(RequestTakeScreenshot);
             viewInstance.CameraReelButton.onClick.AddListener(OpenCameraReelGallery);
             viewInstance.ShortcutsInfoButton.onClick.AddListener(ToggleShortcutsInfo);
+
+            ToggleShortcutsInfo(toOpen: false);
         }
 
         public override void Dispose()
@@ -66,8 +67,9 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.UI
             LaunchViewLifeCycleAsync(new CanvasOrdering(Layer, 0), new ControllerNoData(), default(CancellationToken))
                .Forget();
 
-            viewInstance!.TakeScreenshotButton.interactable = storageService.StorageStatus.HasFreeSpace;
-            viewInstance.NoStorageNotification.gameObject.SetActive(!storageService.StorageStatus.HasFreeSpace);
+            bool hasSpace = storageService.StorageStatus.HasFreeSpace;
+            viewInstance!.TakeScreenshotButton.gameObject.SetActive(hasSpace);
+            viewInstance.NoStorageNotification.gameObject.SetActive(!hasSpace);
         }
 
         public void Hide(bool isInstant = false)
@@ -120,19 +122,22 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.UI
                 !world.Has<ToggleInWorldCameraUIRequest>(camera!.Value) && !world.Has<InWorldCamera>(camera!.Value);
         }
 
-        private void ToggleShortcutsInfo()
+        private void ToggleShortcutsInfo() =>
+            ToggleShortcutsInfo(!shortcutPanelIsOpen);
+
+        private void ToggleShortcutsInfo(bool toOpen)
         {
-            if (shortcutPanelIsOpen)
-            {
-                viewInstance!.ShortcutsInfoPanel.HideAsync(CancellationToken.None).Forget();
-                viewInstance.ShortcutsInfoButton.OnDeselect(null);
-                shortcutPanelIsOpen = false;
-            }
-            else
+            if (toOpen)
             {
                 viewInstance!.ShortcutsInfoPanel.ShowAsync(CancellationToken.None).Forget();
                 viewInstance.ShortcutsInfoButton.OnSelect(null);
                 shortcutPanelIsOpen = true;
+            }
+            else
+            {
+                viewInstance!.ShortcutsInfoPanel.HideAsync(CancellationToken.None).Forget();
+                viewInstance.ShortcutsInfoButton.OnDeselect(null);
+                shortcutPanelIsOpen = false;
             }
         }
 

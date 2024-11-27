@@ -1,6 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
 using MVC;
-using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.UI;
