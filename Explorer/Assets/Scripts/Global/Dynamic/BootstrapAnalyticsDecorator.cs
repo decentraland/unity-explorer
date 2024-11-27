@@ -136,9 +136,9 @@ namespace Global.Dynamic
             });
         }
 
-        public void CheckInitialParcelFeatureFlagOverride(FeatureFlagsCache featureFlagsCache)
+        public void ApplyFeatureFlagConfigs(FeatureFlagsCache featureFlagsCache)
         {
-            core.CheckInitialParcelFeatureFlagOverride(featureFlagsCache);
+            core.ApplyFeatureFlagConfigs(featureFlagsCache);
             //No analytics to track on this step
         }
 

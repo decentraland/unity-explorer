@@ -220,7 +220,7 @@ namespace Global.Dynamic
             await dynamicWorldContainer.RealmController.SetRealmAsync(startingRealm.Value, ct);
         }
 
-        public void CheckInitialParcelFeatureFlagOverride(FeatureFlagsCache featureFlagsCache)
+        public void ApplyFeatureFlagConfigs(FeatureFlagsCache featureFlagsCache)
         {
             realmLaunchSettings.CheckStartParcelFeatureFlagOverride(appArgs, featureFlagsCache);
         }
