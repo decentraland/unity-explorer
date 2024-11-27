@@ -12,9 +12,17 @@
 
 extern "C"
 {
-    FFI_API int processeshub_start(char* processExePath);
+    enum PH_Error : int
+    {
+        Ok = 0,
+        ProcessIsRunning = 1,
+        CannotStartProcess = 2,
+        ProcessIsNotRunning = 3,
+    };
 
-    FFI_API int processeshub_is_running();
+    FFI_API PH_Error processeshub_start(char *processExePath);
 
-    FFI_API int processeshub_stop();
+    FFI_API bool processeshub_is_running();
+
+    FFI_API PH_Error processeshub_stop();
 }
