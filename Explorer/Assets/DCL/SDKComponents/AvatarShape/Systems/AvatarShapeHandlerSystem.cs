@@ -37,7 +37,7 @@ namespace ECS.Unity.AvatarShape.Systems
         }
 
         [Query]
-        [None(typeof(SDKAvatarShapeComponent))]
+        [None(typeof(SDKAvatarShapeComponent), typeof(DeleteEntityIntention))]
         private void LoadAvatarShape(Entity entity, ref PBAvatarShape pbAvatarShape, ref PartitionComponent partitionComponent, ref TransformComponent transformComponent)
         {
             World.Add(entity, new SDKAvatarShapeComponent(globalWorld.Create(pbAvatarShape, partitionComponent, new CharacterTransform(transformComponent.Transform))));
@@ -57,7 +57,7 @@ namespace ECS.Unity.AvatarShape.Systems
         private void HandleComponentRemoval(Entity entity, ref SDKAvatarShapeComponent sdkAvatarShapeComponent)
         {
             // If the component is removed at scene-world, the global-world representation should disappear entirely
-            globalWorld.Add(sdkAvatarShapeComponent.globalWorldEntity, new DeleteEntityIntention());
+            MarkGlobalWorldEntityForDeletion(sdkAvatarShapeComponent.globalWorldEntity);
 
             World.Remove<SDKAvatarShapeComponent>(entity);
         }
@@ -66,20 +66,25 @@ namespace ECS.Unity.AvatarShape.Systems
         [All(typeof(DeleteEntityIntention))]
         private void HandleEntityDestruction(Entity entity, ref SDKAvatarShapeComponent sdkAvatarShapeComponent)
         {
+            MarkGlobalWorldEntityForDeletion(sdkAvatarShapeComponent.globalWorldEntity);
             World.Remove<SDKAvatarShapeComponent>(entity);
-            World.Remove<PBAvatarShape>(entity);
-            globalWorld.Add(sdkAvatarShapeComponent.globalWorldEntity, new DeleteEntityIntention());
         }
 
         [Query]
-        public void FinalizeComponents(ref SDKAvatarShapeComponent sdkAvatarShapeComponent)
-        {
-            globalWorld.Add(sdkAvatarShapeComponent.globalWorldEntity, new DeleteEntityIntention());
-        }
+        public void FinalizeComponents(ref SDKAvatarShapeComponent sdkAvatarShapeComponent) =>
+            MarkGlobalWorldEntityForDeletion(sdkAvatarShapeComponent.globalWorldEntity);
 
         public void FinalizeComponents(in Query query)
         {
             FinalizeComponentsQuery(World);
+        }
+
+        public void MarkGlobalWorldEntityForDeletion(Entity globalEntity)
+        {
+            // Has to be deferred because many times it happens that the entity is marked for deletion after the
+            // AvatarCleanUpSystem.Update() and before the DestroyEntitiesSystem.Update(), probably has to do with
+            // non-synchronicity between global and scene ECS worlds...
+            globalWorld.Add(globalEntity, new DeleteEntityIntention() { DeferDeletion = true });
         }
     }
 }

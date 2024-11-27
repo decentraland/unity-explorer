@@ -6,15 +6,10 @@ using CrdtEcsBridge.Components;
 using CrdtEcsBridge.Components.Transform;
 using DCL.Character.Components;
 using DCL.Diagnostics;
-using DCL.ECSComponents;
 using DCL.Multiplayer.SDK.Components;
 using DCL.Optimization.Pools;
 using ECS.Abstract;
-using ECS.Groups;
 using ECS.LifeCycle.Components;
-using Utility;
-using Quaternion = UnityEngine.Quaternion;
-using Vector3 = UnityEngine.Vector3;
 
 namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
 {
@@ -35,7 +30,7 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
         }
 
         [Query]
-        [None(typeof(DeleteEntityIntention), typeof(PBAvatarShape))]
+        [None(typeof(DeleteEntityIntention))]
         private void PropagateTransformToScene(in CharacterTransform characterTransform, in PlayerCRDTEntity playerCRDTEntity)
         {
             if (!characterTransform.Transform.hasChanged) return;
