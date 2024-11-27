@@ -14,6 +14,7 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
 {
     public class SatelliteChunkController : IChunkController
     {
+        private const float SATURATION_VALUE = 0.5f;
         private const string CHUNKS_API = "https://media.githubusercontent.com/media/genesis-city/genesis.city/master/map/latest/3/";
         private static readonly Color FINAL_COLOR = Color.white;
         private static readonly Color INITIAL_COLOR = new (0, 0, 0, 0);
@@ -25,6 +26,7 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
         private CancellationTokenSource internalCts;
         private CancellationTokenSource linkedCts;
         private int webRequestAttempts;
+        private static readonly int SATURATION = Shader.PropertyToID("_Saturation");
 
         public SatelliteChunkController(SpriteRenderer prefab, IWebRequestController webRequestController, MapRendererTextureContainer textureContainer, Vector3 chunkLocalPosition, Vector2Int coordsCenter,
             int drawOrder)
@@ -33,6 +35,7 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
             this.textureContainer = textureContainer;
             internalCts = new CancellationTokenSource();
 
+            prefab.material.SetFloat(SATURATION, SATURATION_VALUE);
             atlasChunk = prefab.GetComponent<AtlasChunk>();
             atlasChunk.transform.localPosition = chunkLocalPosition;
             atlasChunk.LoadingSpriteRenderer.sortingOrder = drawOrder;
