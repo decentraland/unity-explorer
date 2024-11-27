@@ -5,6 +5,7 @@ using DCL.AvatarRendering.Emotes.Equipped;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.InWorldCamera.CameraReelStorageService.Schemas;
+using DCL.InWorldCamera.InWorldCamera.Playground;
 using DCL.InWorldCamera.ScreencaptureCamera.UI;
 using DCL.Ipfs;
 using DCL.Profiles;
@@ -26,7 +27,7 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Playground
         public string profileUrl = "https://peer-eu1.decentraland.org/lambdas/";
 
         public RectTransform canvasRectTransform;
-        public ScreenshotHudView hud;
+        public ScreenshotHudDebug hud;
 
         [Space(5)]
         public Texture2D Texture;

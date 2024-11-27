@@ -3,13 +3,17 @@ using Cysharp.Threading.Tasks;
 using DCL.CharacterCamera;
 using DCL.ExplorePanel;
 using DCL.InWorldCamera.CameraReelStorageService;
+using DCL.InWorldCamera.CameraReelStorageService.Schemas;
+using DCL.InWorldCamera.InWorldCamera.Playground;
 using DCL.UI;
 using ECS.Abstract;
 using JetBrains.Annotations;
 using MVC;
+using System.Diagnostics;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.UI;
+using Debug = UnityEngine.Debug;
 
 namespace DCL.InWorldCamera.ScreencaptureCamera.UI
 {
@@ -130,6 +134,16 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.UI
                 viewInstance.ShortcutsInfoButton.OnSelect(null);
                 shortcutPanelIsOpen = true;
             }
+        }
+
+        [Conditional("DEBUG")]
+        public void DebugCapture(Texture2D screenshot, ScreenshotMetadata metadata)
+        {
+            if (!viewInstance!.gameObject.TryGetComponent(out ScreenshotHudDebug hud))
+                hud = viewInstance.gameObject.AddComponent<ScreenshotHudDebug>();
+
+            hud.Screenshot = screenshot;
+            hud.Metadata = metadata;
         }
     }
 }

@@ -87,7 +87,9 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
                 moveVector += GetMousePanDelta(deltaTime, followTarget, input.Aim);
 
             Vector3 restrictedMovement = RestrictedMovementBySemiSphere(playerTransform.position, followTarget.transform, moveVector, settings.MaxDistanceFromPlayer);
-            followTarget.Move(restrictedMovement);
+
+            if (followTarget.enabled)
+                followTarget.Move(restrictedMovement);
         }
 
         private Vector3 GetMoveVectorFromInput(Transform target, float moveSpeed, float deltaTime, InWorldCameraInput input)
