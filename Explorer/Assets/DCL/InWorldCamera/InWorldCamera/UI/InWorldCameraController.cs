@@ -70,10 +70,10 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.UI
             viewInstance.NoStorageNotification.gameObject.SetActive(!storageService.StorageStatus.HasFreeSpace);
         }
 
-        public void Hide()
+        public void Hide(bool isInstant = false)
         {
             sidebarButton.OnDeselect(null);
-            viewInstance.HideAsync(default(CancellationToken)).Forget();
+            viewInstance.HideAsync(default(CancellationToken), isInstant).Forget();
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>

@@ -87,6 +87,7 @@ GameObject:
   - component: {fileID: 405257682719442047}
   - component: {fileID: 405257682719442046}
   - component: {fileID: 405257682719442045}
+  - component: {fileID: 8371678555041782618}
   - component: {fileID: 794990568023507601}
   m_Layer: 5
   m_Name: InWorldCamera.ScreencaptureHUD
@@ -184,6 +185,18 @@ MonoBehaviour:
   m_BlockingMask:
     serializedVersion: 2
     m_Bits: 4294967295
+--- !u!225 &8371678555041782618
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 405257682719442044}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 1
 --- !u!114 &794990568023507601
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -198,6 +211,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   <canvas>k__BackingField: {fileID: 405257682719442047}
   <raycaster>k__BackingField: {fileID: 405257682719442045}
+  canvasGroup: {fileID: 8371678555041782618}
   <NoStorageNotification>k__BackingField: {fileID: 8266421467152206612}
   <ShortcutsInfoPanel>k__BackingField: {fileID: 3454783969625503850}
   openShortcutsIcon: {fileID: 0}

@@ -1,6 +1,8 @@
-﻿using DCL.UI;
+﻿using Cysharp.Threading.Tasks;
+using DCL.UI;
 using DG.Tweening;
 using MVC;
+using System.Threading;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -8,6 +10,10 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.UI
 {
     public class InWorldCameraView : ViewBase, IView
     {
+        private const float ANIMATION_SPEED = 0.2f;
+
+        [SerializeField] private CanvasGroup canvasGroup;
+
         [field: Space]
         [field: SerializeField] public WarningNotificationView NoStorageNotification { get; private set; }
 
@@ -29,6 +35,7 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.UI
         [field: SerializeField] public Button CloseButton { get; private set; }
         [field: SerializeField] public Button ShortcutsInfoButton { get; private set; }
 
+
         public void ScreenshotCaptureAnimation(Texture2D screenshotImage, float splashDuration, float afterSplashPause, float transitionDuration)
         {
             currentVfxSequence?.Complete();
@@ -40,6 +47,21 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.UI
             whiteSplashImage.enabled = true;
 
             currentVfxSequence = CaptureVFXSequence(splashDuration, afterSplashPause, transitionDuration).Play();
+        }
+
+        protected override UniTask PlayShowAnimationAsync(CancellationToken ct)
+        {
+            canvasGroup.alpha = 0;
+            // UIAudioEventsBus.Instance.SendPlayContinuousAudioEvent(BackgroundMusic);
+            // UIAudioEventsBus.Instance.SendPlayAudioEvent(OpenMenu);
+            return canvasGroup.DOFade(1, ANIMATION_SPEED).SetEase(Ease.Linear).ToUniTask(cancellationToken: ct);
+        }
+
+        protected override UniTask PlayHideAnimationAsync(CancellationToken ct)
+        {
+            // UIAudioEventsBus.Instance.SendStopPlayingContinuousAudioEvent(BackgroundMusic);
+            // UIAudioEventsBus.Instance.SendPlayAudioEvent(CloseMenu);
+            return canvasGroup.DOFade(0, ANIMATION_SPEED).SetEase(Ease.Linear).ToUniTask(cancellationToken: ct);
         }
 
         private Sequence CaptureVFXSequence(float splashDuration, float afterSplashPause, float transitionDuration)

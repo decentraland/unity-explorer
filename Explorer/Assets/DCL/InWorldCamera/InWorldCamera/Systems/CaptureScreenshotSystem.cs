@@ -82,7 +82,7 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
 
             if (ScreenshotIsRequested())
             {
-                hudController.Hide();
+                hudController.Hide(isInstant: true);
                 coroutineRunner.StartCoroutine(recorder.CaptureScreenshot());
                 CollectMetadata();
             }
