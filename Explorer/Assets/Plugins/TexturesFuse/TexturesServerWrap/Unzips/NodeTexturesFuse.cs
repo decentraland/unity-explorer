@@ -108,10 +108,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
             var outputResult = OutputResultFromStream(pipeReader!);
 
             if (outputResult.code != NativeMethods.ImageResult.Success)
-            {
-                NativeMethodsProcessesHub.ProcessesHubStop();
                 return EnumResult<IOwnedTexture2D, NativeMethods.ImageResult>.ErrorResult(outputResult.code, "Cannot read output message");
-            }
 
             var t = await ManagedOwnedTexture2D.NewTextureFromStreamAsync(
                 outputFileStream,
