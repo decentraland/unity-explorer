@@ -218,7 +218,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
                 currentSize--;
                 ResetThumbnailsVisibility();
 
-                MonthGridController monthGridView = GetMonthGrid(ReelUtility.GetDateTimeFromString(reelToDeleteInfo.Datetime));
+                MonthGridController monthGridView = GetMonthGrid(ReelUtility.GetMonthDateTimeFromString(reelToDeleteInfo.Datetime));
                 monthGridView.RemoveThumbnail(reelToDeleteInfo.Id);
 
                 if (monthGridView.GridIsEmpty())

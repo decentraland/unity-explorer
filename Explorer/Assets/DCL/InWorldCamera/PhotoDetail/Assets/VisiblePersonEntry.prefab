@@ -204,15 +204,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a14562b459eb4460a9519a2cd3caba6c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  userName: {fileID: 8527337629603256020}
-  profileImage: {fileID: 3818055324079073058}
-  expandWearableButton: {fileID: 7370240177998520773}
-  expandWearableButtonImage: {fileID: 5184066094468107970}
-  userProfileButton: {fileID: 2850465004723359259}
-  wearableListContainer: {fileID: 4179058193975869643}
-  expandAnimationDuration: 0.3
-  wearableListLoadingSpinner: {fileID: 8955437700179010400}
-  wearableListEmptyMessage: {fileID: 6038513526629149962}
+  <userName>k__BackingField: {fileID: 8527337629603256020}
+  <profileImage>k__BackingField: {fileID: 3818055324079073058}
+  <expandWearableButton>k__BackingField: {fileID: 7370240177998520773}
+  <expandWearableButtonImage>k__BackingField: {fileID: 5184066094468107970}
+  <userProfileButton>k__BackingField: {fileID: 2850465004723359259}
+  <wearableListContainer>k__BackingField: {fileID: 4179058193975869643}
+  <expandAnimationDuration>k__BackingField: 0.3
+  <wearableListLoadingSpinner>k__BackingField: {fileID: 8955437700179010400}
+  <wearableListEmptyMessage>k__BackingField: {fileID: 6038513526629149962}
 --- !u!1 &5875980193931725140
 GameObject:
   m_ObjectHideFlags: 0

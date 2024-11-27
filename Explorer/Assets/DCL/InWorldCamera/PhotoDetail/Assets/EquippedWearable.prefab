@@ -306,10 +306,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 418e32fcf25b4c708b94b3ea1e80bd9d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  wearableIcon: {fileID: 2211105550615006013}
-  wearableName: {fileID: 3755434680035034755}
-  wearableBuyButton: {fileID: 4840797863012381321}
-  buyButtonAnimationDuration: 0.3
+  <wearableIcon>k__BackingField: {fileID: 2211105550615006013}
+  <wearableName>k__BackingField: {fileID: 3755434680035034755}
+  <wearableBuyButton>k__BackingField: {fileID: 4840797863012381321}
+  <buyButtonAnimationDuration>k__BackingField: 0.3
 --- !u!1 &3322379950076496351
 GameObject:
   m_ObjectHideFlags: 0

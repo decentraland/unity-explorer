@@ -7,14 +7,14 @@ namespace DCL.InWorldCamera.PhotoDetail
 {
     public class VisiblePersonView : MonoBehaviour
     {
-        [SerializeField] internal TMP_Text userName;
-        [SerializeField] internal ImageView profileImage;
-        [SerializeField] internal Button expandWearableButton;
-        [SerializeField] internal RectTransform expandWearableButtonImage;
-        [SerializeField] internal Button userProfileButton;
-        [SerializeField] internal RectTransform wearableListContainer;
-        [SerializeField] internal float expandAnimationDuration = 0.3f;
-        [SerializeField] internal GameObject wearableListLoadingSpinner;
-        [SerializeField] internal GameObject wearableListEmptyMessage;
+        [field: SerializeField] internal TMP_Text userName { get; private set; }
+        [field: SerializeField] internal ImageView profileImage { get; private set; }
+        [field: SerializeField] internal Button expandWearableButton { get; private set; }
+        [field: SerializeField] internal RectTransform expandWearableButtonImage { get; private set; }
+        [field: SerializeField] internal Button userProfileButton { get; private set; }
+        [field: SerializeField] internal RectTransform wearableListContainer { get; private set; }
+        [field: SerializeField] internal float expandAnimationDuration { get; private set; } = 0.3f;
+        [field: SerializeField] internal GameObject wearableListLoadingSpinner { get; private set; }
+        [field: SerializeField] internal GameObject wearableListEmptyMessage { get; private set; }
     }
 }

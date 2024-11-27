@@ -36,6 +36,7 @@ namespace DCL.InWorldCamera.PhotoDetail
                 visiblePerson =>
                 {
                     visiblePerson.view.transform.SetParent(unusedVisiblePersonPoolObjectParent.transform, false);
+                    visiblePerson.view.profileImage.SetImage(null);
                     visiblePerson.view.gameObject.SetActive(false);
                 },
                 visiblePerson =>
