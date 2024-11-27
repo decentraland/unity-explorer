@@ -1,7 +1,7 @@
 ﻿using TMPro;
 using UnityEngine;
 
-namespace DCL.MapRenderer.MapLayers.Categories
+namespace DCL.MapRenderer.MapLayers.Cluster
 {
     public class ClusterMarkerObject : MapRendererMarkerBase
     {

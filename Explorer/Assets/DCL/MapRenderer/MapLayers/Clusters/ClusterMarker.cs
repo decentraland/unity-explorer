@@ -5,7 +5,7 @@ using System;
 using UnityEngine;
 using UnityEngine.Pool;
 
-namespace DCL.MapRenderer.MapLayers.Categories
+namespace DCL.MapRenderer.MapLayers.Cluster
 {
     internal class ClusterMarker : IClusterMarker
     {

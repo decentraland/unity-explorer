@@ -1,10 +1,11 @@
 ﻿using DCL.MapRenderer.Culling;
+using DCL.MapRenderer.MapLayers.Cluster;
 using System;
 using UnityEngine;
 
 namespace DCL.MapRenderer.MapLayers.SearchResults
 {
-    internal interface ISearchResultMarker : IMapRendererMarker, IMapPositionProvider, IDisposable
+    internal interface ISearchResultMarker : IMapRendererMarker, IMapPositionProvider, IDisposable, IClusterableMarker
     {
         bool IsVisible { get; }
 

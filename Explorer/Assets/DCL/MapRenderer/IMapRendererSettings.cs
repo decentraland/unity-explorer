@@ -2,13 +2,13 @@ using DCL.AssetsProvision;
 using DCL.MapRenderer.ComponentsFactory;
 using DCL.MapRenderer.MapCameraController;
 using DCL.MapRenderer.MapLayers.Categories;
+using DCL.MapRenderer.MapLayers.Cluster;
 using DCL.MapRenderer.MapLayers.Favorites;
 using DCL.MapRenderer.MapLayers.ParcelHighlight;
 using DCL.MapRenderer.MapLayers.Pins;
 using DCL.MapRenderer.MapLayers.PlayerMarker;
 using DCL.MapRenderer.MapLayers.PointsOfInterest;
 using DCL.MapRenderer.MapLayers.SearchResults;
-using DCL.MapRenderer.MapLayers.Users;
 using DCL.MapRenderer.MapLayers.UsersMarker;
 using System;
 using UnityEngine;
@@ -42,6 +42,8 @@ namespace DCL.MapRenderer
         SearchResultMarkerObjectRef SearchResultMarker { get; }
 
         ClusterMarkerObjectRef ClusterMarker { get; }
+
+        ClusterMarkerObjectRef SearchResultsClusterMarker { get; }
 
         CategoryIconMappingsSO CategoryIconMappings { get; }
 

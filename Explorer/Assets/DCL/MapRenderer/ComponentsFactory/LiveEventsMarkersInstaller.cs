@@ -5,7 +5,7 @@ using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.Culling;
 using DCL.MapRenderer.MapLayers;
 using DCL.MapRenderer.MapLayers.Categories;
-using DCL.PlacesAPIService;
+using DCL.MapRenderer.MapLayers.Cluster;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -18,7 +18,6 @@ namespace DCL.MapRenderer.ComponentsFactory
         private const int PREWARM_COUNT = 60;
 
         private Dictionary<MapLayer, IMapLayerController> writer;
-        private IAssetsProvisioner assetsProvisioner;
         private IMapRendererSettings mapSettings;
         private IEventsApiService eventsApiService;
 
@@ -37,7 +36,6 @@ namespace DCL.MapRenderer.ComponentsFactory
         )
         {
             mapSettings = settings;
-            assetsProvisioner = assetsProv;
             eventsApiService = eventsApi;
             this.writer = layerWriter;
 

@@ -1,5 +1,7 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.MapRenderer.Culling;
+using DCL.MapRenderer.MapLayers.Categories;
+using DCL.MapRenderer.MapLayers.Cluster;
 using DCL.Navmap;
 using System.Collections.Generic;
 using System.Threading;
@@ -21,12 +23,15 @@ namespace DCL.MapRenderer.MapLayers.SearchResults
 
         private readonly IObjectPool<SearchResultMarkerObject> objectsPool;
         private readonly SearchResultsMarkerBuilder builder;
-        private readonly INavmapBus navmapBus;
+        private readonly ClusterController clusterController;
 
-        private readonly Dictionary<Vector2Int, ISearchResultMarker> markers = new();
+        private readonly Dictionary<Vector2Int, IClusterableMarker> markers = new();
 
         private Vector2Int decodePointer;
         private bool isEnabled;
+        private int zoomLevel = 1;
+        private float baseZoom = 1;
+        private float zoom = 1;
 
         public SearchResultMarkersController(
             IObjectPool<SearchResultMarkerObject> objectsPool,
@@ -34,12 +39,14 @@ namespace DCL.MapRenderer.MapLayers.SearchResults
             Transform instantiationParent,
             ICoordsUtils coordsUtils,
             IMapCullingController cullingController,
-            INavmapBus navmapBus)
+            INavmapBus navmapBus,
+            ClusterController clusterController)
             : base(instantiationParent, coordsUtils, cullingController)
         {
             this.objectsPool = objectsPool;
             this.builder = builder;
-            this.navmapBus = navmapBus;
+            this.clusterController = clusterController;
+
             navmapBus.OnPlaceSearched += OnPlaceSearched;
         }
 
@@ -48,13 +55,7 @@ namespace DCL.MapRenderer.MapLayers.SearchResults
         private void OnPlaceSearched(INavmapBus.SearchPlaceParams searchParams,
             IReadOnlyList<PlacesData.PlaceInfo> places, int totalResultCount)
         {
-            foreach (ISearchResultMarker? marker in markers.Values)
-            {
-                mapCullingController.StopTracking(marker);
-                marker.OnBecameInvisible();
-            }
-
-            markers.Clear();
+            ReleaseMarkers();
 
             if (!string.IsNullOrEmpty(searchParams.category))
                 return;
@@ -73,6 +74,7 @@ namespace DCL.MapRenderer.MapLayers.SearchResults
 
                 marker.SetData(placeInfo.title, position);
                 markers.Add(MapLayerUtils.GetParcelsCenter(placeInfo), marker);
+                marker.SetZoom(coordsUtils.ParcelSize, baseZoom, zoom);
 
                 if (isEnabled)
                     mapCullingController.StartTracking(marker, this);
@@ -84,8 +86,17 @@ namespace DCL.MapRenderer.MapLayers.SearchResults
 
         public void ApplyCameraZoom(float baseZoom, float zoom, int zoomLevel)
         {
+            this.baseZoom = baseZoom;
+            this.zoom = zoom;
+            this.zoomLevel = zoomLevel;
+
             foreach (ISearchResultMarker marker in markers.Values)
                 marker.SetZoom(coordsUtils.ParcelSize, baseZoom, zoom);
+
+            if (isEnabled)
+                clusterController.UpdateClusters(zoomLevel, baseZoom, zoom, markers);
+
+            clusterController.ApplyCameraZoom(baseZoom, zoom);
         }
 
         public UniTask Disable(CancellationToken cancellationToken)
@@ -95,6 +106,7 @@ namespace DCL.MapRenderer.MapLayers.SearchResults
                 mapCullingController.StopTracking(marker);
                 marker.OnBecameInvisible();
             }
+            clusterController.Disable();
 
             isEnabled = false;
             return UniTask.CompletedTask;
@@ -105,6 +117,7 @@ namespace DCL.MapRenderer.MapLayers.SearchResults
             foreach (ISearchResultMarker marker in markers.Values)
                 mapCullingController.StartTracking(marker, this);
 
+            clusterController.UpdateClusters(zoomLevel, baseZoom, zoom, markers);
             isEnabled = true;
         }
 
@@ -132,6 +145,18 @@ namespace DCL.MapRenderer.MapLayers.SearchResults
         public void OnMapObjectCulled(ISearchResultMarker marker)
         {
             marker.OnBecameInvisible();
+        }
+
+        private void ReleaseMarkers()
+        {
+            foreach (ISearchResultMarker marker in markers.Values)
+            {
+                mapCullingController.StopTracking(marker);
+                marker.OnBecameInvisible();
+            }
+
+            markers.Clear();
+            clusterController.Disable();
         }
     }
 }

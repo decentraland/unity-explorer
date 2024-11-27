@@ -1,6 +1,6 @@
 using DCL.MapRenderer.Culling;
 
-namespace DCL.MapRenderer.MapLayers.Categories
+namespace DCL.MapRenderer.MapLayers.Cluster
 {
     public interface IClusterableMarker : IMapPositionProvider
     {
