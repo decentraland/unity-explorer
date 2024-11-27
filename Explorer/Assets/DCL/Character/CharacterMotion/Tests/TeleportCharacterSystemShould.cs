@@ -43,6 +43,17 @@ namespace DCL.CharacterMotion.Tests
         }
 
         [Test]
+        public void ResolveTeleportImmediatelyWithoutAssetsToWait()
+        {
+            Entity e = world.Create(characterController, new CharacterPlatformComponent(), new PlayerTeleportIntent(new Vector3(100, 100, 100), new Vector2Int(22, 22), CancellationToken.None));
+
+            system!.Update(0);
+
+            Assert.That(world.Has<PlayerTeleportIntent>(e), Is.False);
+            Assert.That(characterController.transform.position, Is.EqualTo(new Vector3(100, 100, 100)));
+        }
+
+        [Test]
         public async Task RestoreCameraDataOnFailureAsync([Values(UniTaskStatus.Faulted, UniTaskStatus.Canceled)] UniTaskStatus status)
         {
             var cameraSamplingData = new CameraSamplingData();
