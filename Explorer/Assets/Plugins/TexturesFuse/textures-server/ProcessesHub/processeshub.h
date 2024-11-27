@@ -15,4 +15,6 @@ extern "C"
     FFI_API int processeshub_start(char* processExePath);
 
     FFI_API int processeshub_is_running();
+
+    FFI_API int processeshub_stop();
 }

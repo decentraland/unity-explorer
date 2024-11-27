@@ -7,3 +7,7 @@ int processeshub_start(char *processExePath)
 int processeshub_is_running()
 {
 }
+
+int processeshub_stop(){
+    
+}
