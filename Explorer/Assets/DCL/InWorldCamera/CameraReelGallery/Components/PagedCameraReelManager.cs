@@ -13,6 +13,7 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
     public class PagedCameraReelManager
     {
         public bool AllImagesLoaded { get; private set; }
+        public List<CameraReelResponseCompact> AllOrderedResponses { get; private set; } = new ();
 
         private readonly ICameraReelStorageService cameraReelStorageService;
         private readonly string walletAddress;
@@ -44,6 +45,7 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
 
             currentLoadedImages += response.images.Count;
             AllImagesLoaded = currentLoadedImages == totalImages;
+            AllOrderedResponses.AddRange(response.images);
 
             Dictionary<DateTime, List<CameraReelResponseCompact>> elements = DictionaryPool<DateTime, List<CameraReelResponseCompact>>.Get();
             for (int i = 0; i < response.images.Count; i++)

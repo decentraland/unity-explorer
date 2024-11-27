@@ -123,6 +123,7 @@ namespace DCL.InWorldCamera.PhotoDetail
 
         private void ShowReel(int reelIndex)
         {
+            CheckNavigationButtonVisibility(inputData.AllReels, reelIndex);
             showReelCts = showReelCts.SafeRestart();
             ShowReelAsync(reelIndex, showReelCts.Token).Forget();
         }
@@ -141,8 +142,6 @@ namespace DCL.InWorldCamera.PhotoDetail
             viewInstance.mainImageCanvasGroup.DOFade(1, viewInstance.imageFadeInDuration);
 
             await detailInfoTask;
-
-            CheckNavigationButtonVisibility(inputData.AllReels, reelIndex);
         }
 
         private void CheckNavigationButtonVisibility(List<CameraReelResponseCompact> allReels, int index)

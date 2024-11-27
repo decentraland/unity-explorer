@@ -12,7 +12,6 @@ using DCL.Optimization.Pools;
 using DG.Tweening;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -324,10 +323,8 @@ namespace DCL.InWorldCamera.CameraReelGallery
                 IReadOnlyList<ReelThumbnailController> thumbnailViews = monthGridView.Setup(bucket.Key, bucket.Value, optionButtonController,
                     (cameraReelResponse, sprite) => reelThumbnailCache.Add(cameraReelResponse, sprite),
                     cameraReelResponse =>
-                    {
-                        List<CameraReelResponseCompact> cameraReelResponseList = reelThumbnailCache.Keys.ToList();
-                        ThumbnailClicked?.Invoke(cameraReelResponseList, cameraReelResponseList.IndexOf(cameraReelResponse));
-                    });
+                        ThumbnailClicked?.Invoke(pagedCameraReelManager.AllOrderedResponses, pagedCameraReelManager.AllOrderedResponses.IndexOf(cameraReelResponse))
+                    );
 
                 for (int i = 0; i < thumbnailViews.Count; i++)
                     thumbnailImages[currentSize + i] = thumbnailViews[i];
