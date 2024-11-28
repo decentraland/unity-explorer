@@ -1,6 +1,6 @@
-using DCL.Character.CharacterMotion.Components;
 using TMPro;
 using UnityEngine;
+using Utility.Animations;
 
 namespace DCL.SceneLoadingScreens.SplashScreen
 {
@@ -26,8 +26,8 @@ namespace DCL.SceneLoadingScreens.SplashScreen
             splashScreenAnimation.transform.SetSiblingIndex(1);
             splashScreenAnimation.SetBool(AnimationHashes.ENABLE, true);
 
-            if (message != null)
-                PutText(message);
+            if (message == null) RemoveText();
+            else PutText(message);
         }
 
         public void Hide()

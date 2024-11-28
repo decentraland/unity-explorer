@@ -8,7 +8,6 @@ using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.AvatarRendering.Loading.Assets;
 using DCL.AvatarRendering.Loading.Components;
-using DCL.Character.CharacterMotion.Components;
 using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Systems;
@@ -26,6 +25,7 @@ using System;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using UnityEngine;
+using Utility.Animations;
 using EmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution,
     DCL.AvatarRendering.Emotes.GetEmotesByPointersIntention>;
 
