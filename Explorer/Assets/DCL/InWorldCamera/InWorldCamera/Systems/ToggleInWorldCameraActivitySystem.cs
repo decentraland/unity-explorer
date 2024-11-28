@@ -14,6 +14,7 @@ using DCL.InWorldCamera.ScreencaptureCamera.UI;
 using ECS.Abstract;
 using MVC;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using static DCL.Input.Component.InputMapComponent;
 
 namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
@@ -27,8 +28,8 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
         private readonly Vector3 behindUpOffset;
 
         private readonly InWorldCameraTransitionSettings settings;
-        private readonly DCLInput.InWorldCameraActions inputSchema;
         private readonly InWorldCameraController hudController;
+        private readonly InputAction toggleInWorldCameraShortcut;
         private readonly GameObject hud;
         private readonly CharacterController followTarget;
         private readonly ICursor cursor;
@@ -43,14 +44,14 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
         public ToggleInWorldCameraActivitySystem(
             World world,
             InWorldCameraTransitionSettings settings,
-            DCLInput.InWorldCameraActions inputSchema,
+            InputAction toggleInWorldCameraShortcut,
             InWorldCameraController hudController,
             CharacterController followTarget,
             ICursor cursor,
             IMVCManager mvcManager) : base(world)
         {
             this.settings = settings;
-            this.inputSchema = inputSchema;
+            this.toggleInWorldCameraShortcut = toggleInWorldCameraShortcut;
             this.hudController = hudController;
             this.followTarget = followTarget;
             this.cursor = cursor;
@@ -75,7 +76,7 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
             if (World.Has<InWorldCamera>(camera) && BlendingHasFinished())
                 SetFollowTarget();
 
-            if (inputSchema.ToggleInWorld!.triggered) // Keyboard shortcut trigger
+            if (toggleInWorldCameraShortcut!.triggered) // Keyboard shortcut trigger
                 ToggleCamera(enable: !World.Has<InWorldCamera>(camera));
             else if (World.TryGet(camera, out ToggleInWorldCameraUIRequest request)) // UI trigger
             {
