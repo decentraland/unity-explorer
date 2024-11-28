@@ -5,11 +5,13 @@ using DCL.MapRenderer.Culling;
 using DCL.MapRenderer.MapLayers.Cluster;
 using DCL.Optimization.Pools;
 using DCL.Utilities.Extensions;
+using NBitcoin;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Pool;
+using Utility;
 using ICoordsUtils = DCL.MapRenderer.CoordsUtils.ICoordsUtils;
 using IPlacesAPIService = DCL.PlacesAPIService.IPlacesAPIService;
 using PlacesData = DCL.PlacesAPIService.PlacesData;
@@ -33,6 +35,7 @@ namespace DCL.MapRenderer.MapLayers.PointsOfInterest
         private readonly IPlacesAPIService placesAPIService;
 
         private readonly Dictionary<Vector2Int, IClusterableMarker> markers = new ();
+        private readonly Dictionary<GameObject, ISceneOfInterestMarker> visibleMarkers = new ();
         private readonly List<Vector2Int> vectorCoords = new ();
         private Vector2Int decodePointer;
 
@@ -108,10 +111,16 @@ namespace DCL.MapRenderer.MapLayers.PointsOfInterest
         public void OnMapObjectBecameVisible(ISceneOfInterestMarker marker)
         {
             marker.OnBecameVisible();
+            GameObject? gameObject = marker.GetGameObject();
+            if(gameObject != null)
+                visibleMarkers.AddOrReplace(gameObject, marker);
         }
 
         public void OnMapObjectCulled(ISceneOfInterestMarker marker)
         {
+            GameObject? gameObject = marker.GetGameObject();
+            if(gameObject != null)
+                visibleMarkers.Remove(gameObject);
             marker.OnBecameInvisible();
         }
 
@@ -162,6 +171,30 @@ namespace DCL.MapRenderer.MapLayers.PointsOfInterest
             isEnabled = true;
             clusterController.UpdateClusters(zoomLevel, baseZoom, zoom, markers);
             return UniTask.CompletedTask;
+        }
+
+        private CancellationTokenSource ct = new ();
+        private ISceneOfInterestMarker? previousMarker;
+
+        public void HighlightObject(GameObject gameObject)
+        {
+            ct = ct.SafeRestart();
+
+            if (visibleMarkers.TryGetValue(gameObject, out ISceneOfInterestMarker marker))
+            {
+                previousMarker?.AnimateDeSelectionAsync(ct.Token);
+                marker.AnimateSelectionAsync(ct.Token);
+                previousMarker = marker;
+            }
+        }
+
+        public void DeHighlightObject(GameObject gameObject)
+        {
+            previousMarker = null;
+            ct = ct.SafeRestart();
+
+            if (visibleMarkers.TryGetValue(gameObject, out ISceneOfInterestMarker marker))
+                marker.AnimateDeSelectionAsync(ct.Token);
         }
     }
 }

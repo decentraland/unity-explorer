@@ -22,5 +22,7 @@ namespace DCL.MapRenderer.MapCameraController
         IPinMarker? GetPinMarkerOnParcel(Vector2Int parcel);
 
         Vector2 GetNormalizedPosition(Vector2Int parcel);
+
+        GameObject? ProcessMousePosition(Vector2 worldPosition);
     }
 }

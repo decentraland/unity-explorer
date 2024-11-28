@@ -179,6 +179,7 @@ namespace DCL.Navmap
                     navmapView.zoomView.zoomVerticalRange
                 ));
 
+            mapRenderer.SetSharedLayer(MapLayer.ScenesOfInterest, true);
             satelliteController.InjectCameraController(cameraController);
             navmapLocationController.InjectCameraController(cameraController);
             satelliteController.Activate();
@@ -201,6 +202,7 @@ namespace DCL.Navmap
             navmapView.WorldsWarningNotificationView.Hide();
             satelliteController.Deactivate();
 
+            mapRenderer.SetSharedLayer(MapLayer.ScenesOfInterest, false);
             zoomController.Deactivate();
             cameraController?.Release(this);
             NavmapBus.ClearHistory();

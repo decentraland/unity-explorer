@@ -1,7 +1,10 @@
-﻿using DCL.MapRenderer.CommonBehavior;
+﻿using Cysharp.Threading.Tasks;
+using DCL.MapRenderer.CommonBehavior;
 using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.Culling;
+using DG.Tweening;
 using System;
+using System.Threading;
 using UnityEngine;
 using UnityEngine.Pool;
 
@@ -74,5 +77,24 @@ namespace DCL.MapRenderer.MapLayers.PointsOfInterest
             if (poolableBehavior.instance != null)
                 poolableBehavior.instance.SetScale(scale, scale);
         }
+
+        public async UniTaskVoid AnimateSelectionAsync(CancellationToken ct)
+        {
+            if (poolableBehavior.instance != null)
+            {
+                await MarkerHelper.ScaleToAsync(poolableBehavior.instance.scalingParent, new Vector2 (1.5f, 1.5f), 0.5f, Ease.OutBack, ct);
+            }
+        }
+
+        public async UniTaskVoid AnimateDeSelectionAsync(CancellationToken ct)
+        {
+            if (poolableBehavior.instance != null)
+            {
+                await MarkerHelper.ScaleToAsync(poolableBehavior.instance.scalingParent, new Vector2 (1f, 1f), 0.5f, Ease.OutBack, ct);
+            }
+        }
+
+        public GameObject? GetGameObject() =>
+            poolableBehavior.instance != null ? poolableBehavior.instance.gameObject : null;
     }
 }

@@ -21,7 +21,7 @@ namespace DCL.MapRenderer.ComponentsFactory
         private IMapRendererSettings mapSettings;
         private IPlacesAPIService placesAPIService;
 
-        public async UniTask InstallAsync(
+        public async UniTask<IMapLayerController> InstallAsync(
             Dictionary<MapLayer, IMapLayerController> writer,
             List<IZoomScalingLayer> zoomScalingWriter,
             MapRendererConfiguration configuration,
@@ -61,6 +61,7 @@ namespace DCL.MapRenderer.ComponentsFactory
             await controller.InitializeAsync(cancellationToken);
             writer.Add(MapLayer.ScenesOfInterest, controller);
             zoomScalingWriter.Add(controller);
+            return controller;
         }
 
         private static SceneOfInterestMarkerObject CreatePoolMethod(MapRendererConfiguration configuration, SceneOfInterestMarkerObject prefab, ICoordsUtils coordsUtils)

@@ -100,12 +100,6 @@ namespace DCL.MapRenderer.ComponentsFactory
             PinMarkerController pinMarkerController = await pinMarkerInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, mapSettings, assetsProvisioner, mapPathEventBus, cancellationToken);
             RemoteUsersRequestController remoteUsersRequestController = new RemoteUsersRequestController(webRequestController, decentralandUrlsSource);
 
-            IObjectPool<IMapCameraControllerInternal> cameraControllersPool = new ObjectPool<IMapCameraControllerInternal>(
-                CameraControllerBuilder,
-                x => x.SetActive(true),
-                x => x.SetActive(false),
-                x => x.Dispose()
-            );
             ClusterMarkerObject? clusterPrefab = await GetClusterPrefabAsync(cancellationToken);
             ClusterMarkerObject? categoryMarkersClusterPrefab = await GetCategoryClusterPrefabAsync(cancellationToken);
             var clusterObjectsPool = new ObjectPool<ClusterMarkerObject>(
@@ -122,26 +116,49 @@ namespace DCL.MapRenderer.ComponentsFactory
 
             CategoryMarkerObject categoryMarkerPrefab = await GetCategoryMarkerPrefabAsync(cancellationToken);
             var liveEventsInstallTask = liveEventsMarkersInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, mapSettings, eventsApiService, clusterObjectsPool, categoryMarkerPrefab, cancellationToken);
+            var categoriesInstallerTask = categoriesMarkerInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, mapSettings, clusterObjectsPool, categoryMarkerPrefab, navmapBus, cancellationToken);
+            var sceneOfInterestInstallerTask = sceneOfInterestMarkerInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, assetsProvisioner, mapSettings, placesAPIService, clusterObjectsPool, cancellationToken);
+            var searchResultsInstallerTask = searchResultsMarkerInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, assetsProvisioner, mapSettings, cullingController, searchResultsClusterObjectsPool, navmapBus, cancellationToken);
 
             await UniTask.WhenAll(
                 CreateParcelAtlasAsync(layers, configuration, coordsUtils, cullingController, cancellationToken),
                 CreateSatelliteAtlasAsync(layers, configuration, coordsUtils, cullingController, cancellationToken),
                 playerMarkerInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, mapSettings, assetsProvisioner, mapPathEventBus, cancellationToken),
-                sceneOfInterestMarkerInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, assetsProvisioner, mapSettings, placesAPIService, clusterObjectsPool, cancellationToken),
-                categoriesMarkerInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, mapSettings, clusterObjectsPool, categoryMarkerPrefab, navmapBus, cancellationToken),
-                liveEventsInstallTask,
                 hotUsersMarkersInstaller.InstallAsync(layers, configuration, coordsUtils, cullingController, assetsProvisioner, mapSettings, teleportBusController, remoteUsersRequestController, cancellationToken),
-                searchResultsMarkerInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, assetsProvisioner, mapSettings, cullingController, searchResultsClusterObjectsPool, navmapBus, cancellationToken),
                 mapPathInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, mapSettings, assetsProvisioner, mapPathEventBus, notificationsBusController, cancellationToken)
                 /* List of other creators that can be executed in parallel */);
 
-            IMapLayerController liveEventController = await liveEventsInstallTask;
+            (IMapLayerController liveEventsInstaller,
+                IMapLayerController categoriesInstaller,
+                IMapLayerController sceneOfInterestInstaller,
+                IMapLayerController searchResultsInstaller) = await UniTask.WhenAll(
+                liveEventsInstallTask,
+                categoriesInstallerTask,
+                sceneOfInterestInstallerTask,
+                searchResultsInstallerTask
+            );
+
+            List<IMapLayerController> interactableLayerControllers = new List<IMapLayerController>()
+            {
+                liveEventsInstaller,
+                categoriesInstaller,
+                sceneOfInterestInstaller,
+                searchResultsInstaller
+            };
+
+            IObjectPool<IMapCameraControllerInternal> cameraControllersPool = new ObjectPool<IMapCameraControllerInternal>(
+                () => CameraControllerBuilder(interactableLayerControllers),
+                x => x.SetActive(true),
+                x => x.SetActive(false),
+                x => x.Dispose()
+            );
+
             return new MapRendererComponents(configuration, layers, zoomScalingLayers, cullingController, cameraControllersPool);
 
-            IMapCameraControllerInternal CameraControllerBuilder()
+            IMapCameraControllerInternal CameraControllerBuilder(List<IMapLayerController> interactableLayers)
             {
                 MapCameraObject instance = Object.Instantiate(mapCameraObjectPrefab, configuration.MapCamerasRoot);
-                var interactivityController = new MapCameraInteractivityController(configuration.MapCamerasRoot, instance.mapCamera, highlightMarkersPool, coordsUtils, pinMarkerController);
+                var interactivityController = new MapCameraInteractivityController(configuration.MapCamerasRoot, instance.mapCamera, highlightMarkersPool, coordsUtils, pinMarkerController, interactableLayers);
 
                 return new MapCameraController.MapCameraController(interactivityController, instance, coordsUtils, cullingController);
             }

@@ -23,7 +23,7 @@ namespace DCL.MapRenderer.ComponentsFactory
         private IAssetsProvisioner assetsProvisioner;
         private IMapRendererSettings mapSettings;
 
-        public async UniTask InstallAsync(
+        public async UniTask<IMapLayerController> InstallAsync(
             Dictionary<MapLayer, IMapLayerController> layerWriter,
             List<IZoomScalingLayer> zoomScalingWriter,
             MapRendererConfiguration configuration,
@@ -63,6 +63,7 @@ namespace DCL.MapRenderer.ComponentsFactory
             await controller.InitializeAsync(cancellationToken);
             writer.Add(MapLayer.SearchResults, controller);
             zoomScalingWriter.Add(controller);
+            return controller;
         }
 
         private static SearchResultMarkerObject CreatePoolMethod(MapRendererConfiguration configuration, SearchResultMarkerObject prefab, ICoordsUtils coordsUtils)

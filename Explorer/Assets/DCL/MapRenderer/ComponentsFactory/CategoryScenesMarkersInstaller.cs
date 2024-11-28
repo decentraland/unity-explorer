@@ -19,7 +19,7 @@ namespace DCL.MapRenderer.ComponentsFactory
         private Dictionary<MapLayer, IMapLayerController> writer;
         private IMapRendererSettings mapSettings;
 
-        public async UniTask InstallAsync(
+        public async UniTask<IMapLayerController> InstallAsync(
             Dictionary<MapLayer, IMapLayerController> layerWriter,
             List<IZoomScalingLayer> zoomScalingWriter,
             MapRendererConfiguration configuration,
@@ -41,7 +41,7 @@ namespace DCL.MapRenderer.ComponentsFactory
                 actionOnGet: obj => obj.gameObject.SetActive(true),
                 actionOnRelease: obj => obj.gameObject.SetActive(false));
 
-            var CategoryMarkersController = new CategoryMarkersController(
+            var categoryMarkersController = new CategoryMarkersController(
                 objectsPool,
                 CreateMarker,
                 configuration.CategoriesMarkersRoot,
@@ -52,8 +52,10 @@ namespace DCL.MapRenderer.ComponentsFactory
                 navmapBus
             );
 
-            await InitializeControllerAsync(CategoryMarkersController, MapLayer.Category, cancellationToken);
-            zoomScalingWriter.Add(CategoryMarkersController);
+            await InitializeControllerAsync(categoryMarkersController, MapLayer.Category, cancellationToken);
+            zoomScalingWriter.Add(categoryMarkersController);
+
+            return categoryMarkersController;
         }
 
         private async UniTask InitializeControllerAsync(IMapLayerController controller, MapLayer layer, CancellationToken cancellationToken)

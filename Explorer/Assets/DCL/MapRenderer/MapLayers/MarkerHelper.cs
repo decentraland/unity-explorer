@@ -7,9 +7,9 @@ using System;
 using System.Threading;
 using UnityEngine;
 
-namespace DCL.MapRenderer.MapLayers.Pins
+namespace DCL.MapRenderer.MapLayers
 {
-    public static class PinMarkerHelper
+    public static class MarkerHelper
     {
         private const float DEFAULT_SCALE_FACTOR = 1.3f;
         private const float DEFAULT_DURATION = .5f;

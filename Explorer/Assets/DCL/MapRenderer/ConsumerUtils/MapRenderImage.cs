@@ -135,9 +135,19 @@ namespace DCL.MapRenderer.ConsumerUtils
             if (dragging)
                 return;
 
+            GameObject? hitObject = null;
+
             Profiler.BeginSample(POINTER_MOVE_SAMPLE_NAME);
 
-            ProcessHover(eventData);
+            if (RectTransformUtility.ScreenPointToWorldPointInRectangle(rectTransform, eventData.position, hudCamera, out Vector3 worldPosition))
+            {
+                Vector2 rectSize = rectTransform.rect.size;
+                Vector2 localPosition = rectTransform.InverseTransformPoint(worldPosition);
+                Vector2 leftCornerRelativeLocalPosition = localPosition + (rectTransform.pivot * rectSize);
+                hitObject = interactivityController!.ProcessMousePosition(leftCornerRelativeLocalPosition / rectSize);
+            }
+
+            ProcessHover(eventData, hitObject);
 
             Profiler.EndSample();
         }
@@ -190,7 +200,7 @@ namespace DCL.MapRenderer.ConsumerUtils
             return rectTransform.TransformPoint(rectTransform.rect.size * (normalizedDiscretePosition - rectTransform.pivot));
         }
 
-        private void ProcessHover(PointerEventData eventData)
+        private void ProcessHover(PointerEventData eventData, GameObject? hitObject = null)
         {
             if (TryGetParcelUnderPointer(eventData, out Vector2Int parcel, out _, out Vector3 worldPosition, out IPinMarker? pinMarker))
             {
@@ -205,11 +215,15 @@ namespace DCL.MapRenderer.ConsumerUtils
 
                     previousParcel = parcel;
 
-                    if (pinMarker == null) { interactivityController!.HighlightParcel(parcel); }
+                    if (pinMarker == null && hitObject == null) { interactivityController!.HighlightParcel(parcel); }
                     else
                     {
-                        previousMarker = pinMarker;
-                        pinMarker.AnimateSelectionAsync(cts.Token).Forget();
+                        if (pinMarker != null)
+                        {
+                            previousMarker = pinMarker;
+                            pinMarker.AnimateSelectionAsync(cts.Token).Forget();
+                        }
+
                         interactivityController!.RemoveHighlight();
                     }
 

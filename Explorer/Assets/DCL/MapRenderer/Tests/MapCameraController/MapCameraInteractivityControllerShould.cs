@@ -5,6 +5,7 @@ using DCL.MapRenderer.MapLayers.ParcelHighlight;
 using DCL.MapRenderer.MapLayers.Pins;
 using NSubstitute;
 using NUnit.Framework;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Pool;
 
@@ -43,7 +44,7 @@ namespace DCL.MapRenderer.Tests.MapCameraController
                            return true;
                        });
 
-            controller = new MapCameraInteractivityController(null, camera, pool, coordUtils, null);
+            controller = new MapCameraInteractivityController(null, camera, pool, coordUtils, null, new List<IMapLayerController>());
         }
 
         [Test]
