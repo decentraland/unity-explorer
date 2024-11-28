@@ -107,6 +107,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3d761805ce62940dbafaa7bb64be222c
+    m_Address: ClusterMarkerObjectForSearchResults
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 3efe8a48fc3905f47a0648abd6859394
     m_Address: MapCameraObject
     m_ReadOnly: 0
