@@ -118,13 +118,15 @@ namespace ECS.SceneLifeCycle.Systems
                 partitionComponent.RawSqrDistance = float.MaxValue;
 
                 if (partitionComponent.InternalJobIndex < 0)
+                {
                     partitionComponent.InternalJobIndex = partitionDataContainer.CurrentPartitionIndex;
 
-                partitionDataContainer.SetPartitionData(new PartitionData
-                {
-                    IsDirty = readOnlyCameraSamplingData.IsDirty,
-                    RawSqrDistance = -1,
-                });
+                    partitionDataContainer.SetPartitionData(new PartitionData
+                    {
+                        IsDirty = readOnlyCameraSamplingData.IsDirty,
+                        RawSqrDistance = -1,
+                    });
+                }
             }
 
             World.Add(entity, partitionComponent);
