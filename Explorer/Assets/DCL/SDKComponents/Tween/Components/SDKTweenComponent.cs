@@ -2,11 +2,11 @@ using DCL.ECSComponents;
 
 namespace DCL.SDKComponents.Tween.Components
 {
-    public struct SDKTweenComponent
+    public struct SDKTweenComponent<T>
     {
         public bool IsDirty { get; set; }
         public TweenStateStatus TweenStateStatus { get; set; }
-        public ICustomTweener CustomTweener { get; set; }
+        public ICustomTweener<T> CustomTweener { get; set; }
 
         public bool IsActive() =>
             CustomTweener != null && CustomTweener.IsActive();

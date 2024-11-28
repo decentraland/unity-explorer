@@ -5,6 +5,7 @@ using DCL.ECSComponents;
 using DCL.SDKComponents.Tween.Components;
 using ECS.Unity.Materials.Components;
 using ECS.Unity.Transforms.Components;
+using UnityEngine;
 
 namespace DCL.SDKComponents.Tween.Helpers
 {
@@ -16,12 +17,12 @@ namespace DCL.SDKComponents.Tween.Helpers
                 static (component, tweenStateStatus) => component.State = tweenStateStatus, sdkEntity, tweenStateStatus);
         }
 
-        public static void UpdateTweenResult(ref SDKTransform sdkTransform, ref TransformComponent transformComponent, ICustomTweener tweener, bool shouldUpdateTransform)
+        public static void UpdateTweenResult<T>(ref SDKTransform sdkTransform, ref TransformComponent transformComponent, ICustomTweener<T> tweener, bool shouldUpdateTransform)
         {
             tweener.UpdateSDKTransform(ref sdkTransform);
 
             //we only set the SDK transform to dirty here if we didn't already update the transform, but if the sdkTransform was already dirty,
-            //we dont change it, as it might have pending updates to be done from the scene side.
+            //we don't change it, as it might have pending updates to be done from the scene side.
             if (shouldUpdateTransform)
             {
                 tweener.UpdateTransform(transformComponent.Transform);
@@ -31,7 +32,7 @@ namespace DCL.SDKComponents.Tween.Helpers
                 sdkTransform.IsDirty = true;
         }
 
-        public static void UpdateTweenResult(ICustomTweener tweener, ref MaterialComponent materialComponent, SDKTweenTextureComponent textureComponent, bool shouldUpdateMaterial)
+        public static void UpdateTweenResult(ICustomTweener<Vector2> tweener, ref MaterialComponent materialComponent, SDKTweenTextureComponent textureComponent, bool shouldUpdateMaterial)
         {
             if (shouldUpdateMaterial)
                 tweener.UpdateMaterial(textureComponent, materialComponent.Result!);

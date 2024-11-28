@@ -18,22 +18,22 @@ namespace DCL.SDKComponents.Tween.Components
             textureMoveTweenersPool = new ObjectPool<TextureMoveTweener>(() => new TextureMoveTweener());
         }
 
-        public ICustomTweener GetTweener(PBTween pbTween, float durationInSeconds)
+        public ICustomTweener<T> GetTweener<T>(PBTween pbTween, float durationInSeconds)
         {
-            ICustomTweener tweener = null;
+            ICustomTweener<T> tweener = null;
             switch (pbTween.ModeCase)
             {
                 case PBTween.ModeOneofCase.Move:
-                    tweener = positionTweenersPool.Get();
+                    tweener = (ICustomTweener<T>)positionTweenersPool.Get();
                     break;
                 case PBTween.ModeOneofCase.Rotate:
-                    tweener = rotationTweenersPool.Get();
+                    tweener = (ICustomTweener<T>)rotationTweenersPool.Get();
                     break;
                 case PBTween.ModeOneofCase.Scale:
-                    tweener = scaleTweenersPool.Get();
+                    tweener = (ICustomTweener<T>)scaleTweenersPool.Get();
                     break;
                 case PBTween.ModeOneofCase.TextureMove:
-                    tweener = textureMoveTweenersPool.Get();
+                    tweener = (ICustomTweener<T>)textureMoveTweenersPool.Get();
                     break;
             }
 
@@ -41,7 +41,7 @@ namespace DCL.SDKComponents.Tween.Components
             return tweener;
         }
 
-        public void Return(SDKTweenComponent sdkTweenComponent)
+        public void Return<T>(SDKTweenComponent<T> sdkTweenComponent)
         {
             if (sdkTweenComponent.CustomTweener == null)
                 return;

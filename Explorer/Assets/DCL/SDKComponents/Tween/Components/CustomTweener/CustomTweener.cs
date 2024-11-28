@@ -7,14 +7,16 @@ using UnityEngine;
 
 namespace DCL.SDKComponents.Tween.Components
 {
-    public abstract class CustomTweener<T, TU> : ICustomTweener
+    public abstract class CustomTweener<T, TU> : ICustomTweener<T>
         where T: struct
         where TU: struct, IPlugOptions
     {
-        protected T currentValue;
+        //protected T currentValue;
         private bool finished;
         private TweenerCore<T, T, TU> core;
-        private ICustomTweener customTweenerImplementation;
+        private ICustomTweener<T> customTweenerImplementation;
+
+        public T CurrentValue { get; set; }
 
         public void Initialize(PBTween pbTween, float durationInSeconds)
         {
@@ -33,7 +35,7 @@ namespace DCL.SDKComponents.Tween.Components
 
         public virtual void UpdateTransform(Transform transform) { }
 
-        public virtual void UpdateMaterial(SDKTweenTextureComponent textureComponent, Material material) { }
+       // public virtual void UpdateMaterial(SDKTweenTextureComponent textureComponent, Material material) { }
 
         public void Play() =>
             core.Play();

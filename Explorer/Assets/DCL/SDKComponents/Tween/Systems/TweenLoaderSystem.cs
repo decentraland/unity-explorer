@@ -23,12 +23,12 @@ namespace DCL.SDKComponents.Tween.Systems
         }
 
         [Query]
-        [None(typeof(SDKTweenComponent))]
-        private void LoadTween(in Entity entity, ref PBTween pbTween)
+        [None(typeof(SDKTweenComponent<>))]
+        private void LoadTween<T>(in Entity entity, ref PBTween pbTween)
         {
             if (pbTween.ModeCase == PBTween.ModeOneofCase.None) return;
 
-            var sdkTweenComponent = new SDKTweenComponent
+            var sdkTweenComponent = new SDKTweenComponent<T>
             {
                 IsDirty = true,
             };
