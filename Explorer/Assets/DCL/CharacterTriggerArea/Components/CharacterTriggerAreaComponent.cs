@@ -64,6 +64,7 @@ namespace DCL.CharacterTriggerArea.Components
             }
 
             monoBehaviour!.BoxCollider.size = AreaSize;
+            monoBehaviour.BoxCollider.enabled = true;
         }
 
         public void UpdateAreaSize(Vector3 size)
