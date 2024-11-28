@@ -19,6 +19,7 @@ using DCL.Chat.History;
 using DCL.Chat.MessageBus;
 using DCL.Clipboard;
 using DCL.DebugUtilities;
+using DCL.FeatureFlags;
 using DCL.Input;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.Landscape;
@@ -474,7 +475,7 @@ namespace Global.Dynamic
 
             ISystemClipboard clipboard = new UnityClipboard();
 
-            bool includeCameraReel = appArgs.HasFlag(AppArgsFlags.CAMERA_REEL) || Application.isEditor;
+            bool includeCameraReel = staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.CAMERA_REEL) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.CAMERA_REEL)) || Application.isEditor;
 
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
