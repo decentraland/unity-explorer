@@ -21,7 +21,7 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: MapOcean
-  m_Shader: {fileID: 4800000, guid: 9fd1b3184b41494408de6b559aaf6159, type: 3}
+  m_Shader: {fileID: 4800000, guid: f170ae3e465eb4630922844ff2959bcf, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
@@ -73,15 +73,15 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _OceanGround:
-        m_Texture: {fileID: 2800000, guid: d84dca6981e650f46bbbf26336b06395, type: 3}
+        m_Texture: {fileID: 2800000, guid: 9094ed31d76cc4836b85e849bdf90eb2, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _OceanNoise:
-        m_Texture: {fileID: 2800000, guid: 76f745f3e5dedda48a3fa8d483b64a7a, type: 3}
+        m_Texture: {fileID: 2800000, guid: 9ce5537a8d55647be899c85f69302dee, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _OceanShapes:
-        m_Texture: {fileID: 2800000, guid: 39ca4720de7831844931d7201e941e97, type: 3}
+        m_Texture: {fileID: 2800000, guid: 321345dcdea0f4747907506fc409be12, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _ParallaxMap:
@@ -115,8 +115,8 @@ Material:
     - _ClearCoatSmoothness: 0
     - _Cull: 2
     - _Cutoff: 0.5
-    - _DeepWaterFadeDepth: 1.41
-    - _DeepWaterFadeDepthMultiplier: 1
+    - _DeepWaterFadeDepth: 1.26
+    - _DeepWaterFadeDepthMultiplier: 0.99
     - _DetailAlbedoMapScale: 1
     - _DetailNormalMapScale: 1
     - _DstBlend: 0
@@ -125,7 +125,7 @@ Material:
     - _GlossMapScale: 0
     - _Glossiness: 0
     - _GlossyReflections: 0
-    - _HeightUVMultiplier: 15
+    - _HeightUVMultiplier: 30
     - _Metallic: 0
     - _OcclusionStrength: 1
     - _Parallax: 0.005
@@ -142,19 +142,19 @@ Material:
     - _WaterLevelMultiplier: 1
     - _WorkflowMode: 1
     - _ZWrite: 1
-    - _coast2water_fadedepth: 0.1
+    - _coast2water_fadedepth: 0
     - _iFrame: 0
     - _iFrameRate: 0
     - _iSampleRate: 0
     - _iTime: 0
     - _iTimeDelta: 0
     - _large_waveheight: 0.5
-    - _large_wavesize: 4
-    - _particle_amount: 70
-    - _small_waveheight: 0.6
-    - _small_wavesize: 0.5
-    - _water_glossylight_fact: 120
-    - _water_softlight_fact: 15
+    - _large_wavesize: 5
+    - _particle_amount: 73.1
+    - _small_waveheight: 0.407
+    - _small_wavesize: 1
+    - _water_glossylight_fact: 95
+    - _water_softlight_fact: 30
     m_Colors:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}

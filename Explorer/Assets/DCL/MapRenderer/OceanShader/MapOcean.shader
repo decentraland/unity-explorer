@@ -129,7 +129,7 @@ Shader "Unlit/MapOcean"
 
             float3 terrain_map( float2 p )
             {
-                return float3(0.7f, 0.55f, 0.4f)+tex2D(_OceanShapes, p * 2.0f).rgb*0.5f; // test-terrain is simply 'sandstone'
+                return float3(0.7f, 0.55f, 0.4f)+tex2D(_OceanGround, p * 2.0f).rgb*0.5f; // test-terrain is simply 'sandstone'
             }
 
             float water_map( float2 p, float height )
