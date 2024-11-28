@@ -120,7 +120,7 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
 
             SwitchToThirdPersonCamera();
 
-            cursor.Unlock();
+            // cursor.Unlock();
             SwitchCameraInput(to: Kind.PLAYER);
 
             World.Remove<InWorldCamera, CameraTarget, CameraDampedFOV, CameraDampedAim, InWorldCameraInput>(camera);
@@ -133,7 +133,7 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
 
             SwitchToInWorldCamera();
 
-            cursor.Lock();
+            // cursor.Lock();
             SwitchCameraInput(to: Kind.IN_WORLD_CAMERA);
 
             World.Add(camera,

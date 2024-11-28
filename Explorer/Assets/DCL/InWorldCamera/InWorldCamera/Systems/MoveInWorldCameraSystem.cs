@@ -4,6 +4,7 @@ using Cinemachine;
 using DCL.CharacterCamera;
 using DCL.CharacterCamera.Components;
 using DCL.Diagnostics;
+using DCL.Input;
 using DCL.InWorldCamera.ScreencaptureCamera.Settings;
 using ECS.Abstract;
 using UnityEngine;
@@ -17,15 +18,17 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
     {
         private readonly InWorldCameraMovementSettings settings;
         private readonly Transform playerTransform;
+        private readonly ICursor cursor;
 
         private SingleInstanceEntity camera;
         private ICinemachinePreset cinemachinePreset;
         private CinemachineVirtualCamera virtualCamera;
 
-        public MoveInWorldCameraSystem(World world, InWorldCameraMovementSettings settings, Transform playerTransform) : base(world)
+        public MoveInWorldCameraSystem(World world, InWorldCameraMovementSettings settings, Transform playerTransform, ICursor cursor) : base(world)
         {
             this.settings = settings;
             this.playerTransform = playerTransform;
+            this.cursor = cursor;
         }
 
         public override void Initialize()
@@ -44,7 +47,7 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
 
                 Translate(followTarget, input, t);
 
-                if (!input.MouseIsDragging)
+                if (cursor.IsLocked() || input.MouseIsDragging)
                     Rotate(ref World.Get<CameraDampedAim>(camera), followTarget.transform, input.Aim, t);
 
                 Zoom(ref World.Get<CameraDampedFOV>(camera), input.Zoom, t);
@@ -81,15 +84,12 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
 
         private void Translate(CharacterController followTarget, InWorldCameraInput input, float deltaTime)
         {
+            if (!followTarget.enabled) return;
+
             Vector3 moveVector = GetMoveVectorFromInput(followTarget.transform, settings.TranslationSpeed, deltaTime, input);
-
-            if (input.MouseIsDragging)
-                moveVector += GetMousePanDelta(deltaTime, followTarget, input.Aim);
-
             Vector3 restrictedMovement = RestrictedMovementBySemiSphere(playerTransform.position, followTarget.transform, moveVector, settings.MaxDistanceFromPlayer);
 
-            if (followTarget.enabled)
-                followTarget.Move(restrictedMovement);
+            followTarget.Move(restrictedMovement);
         }
 
         private Vector3 GetMoveVectorFromInput(Transform target, float moveSpeed, float deltaTime, InWorldCameraInput input)
@@ -99,15 +99,7 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
             Vector3 vertical = target.up.normalized * input.Panning;
 
             float speed = input.IsRunning ? moveSpeed * settings.RunSpeedMultiplayer : moveSpeed;
-
             return (forward + horizontal + vertical) * (speed * deltaTime);
-        }
-
-        private Vector3 GetMousePanDelta(float deltaTime, CharacterController followTarget, Vector2 mouseDelta)
-        {
-            var dragMove = new Vector3(mouseDelta.x, mouseDelta.y, 0);
-            dragMove = followTarget.transform.TransformDirection(dragMove);
-            return dragMove * (settings.MouseTranslationSpeed * deltaTime);
         }
 
         private static Vector3 RestrictedMovementBySemiSphere(Vector3 playerPosition, Transform target, Vector3 movementVector, float maxDistanceFromPlayer)

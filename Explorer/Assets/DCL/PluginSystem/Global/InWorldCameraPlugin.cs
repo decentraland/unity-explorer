@@ -98,7 +98,7 @@ namespace DCL.PluginSystem.Global
         {
             ToggleInWorldCameraActivitySystem.InjectToWorld(ref builder, settings.TransitionSettings, input.InWorldCamera, inWorldCameraController, followTarget, cursor, mvcManager);
             EmitInWorldCameraInputSystem.InjectToWorld(ref builder, input.InWorldCamera);
-            MoveInWorldCameraSystem.InjectToWorld(ref builder, settings.MovementSettings, characterObject.Controller.transform);
+            MoveInWorldCameraSystem.InjectToWorld(ref builder, settings.MovementSettings, characterObject.Controller.transform, cursor);
             CaptureScreenshotSystem.InjectToWorld(ref builder, recorder, playerEntity, metadataBuilder, coroutineRunner, cameraReelStorageService, inWorldCameraController);
         }
 
