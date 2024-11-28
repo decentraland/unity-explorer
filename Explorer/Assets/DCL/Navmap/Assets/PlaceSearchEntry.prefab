@@ -2209,7 +2209,7 @@ MonoBehaviour:
   resultButton: {fileID: 4885775388727539516}
   arrowImage: {fileID: 388879165536672829}
   resultAnimator: {fileID: 3063367541773527207}
-  <LiveContainer>k__BackingField: {fileID: 0}
+  <LiveContainer>k__BackingField: {fileID: 5002132805987034678}
 --- !u!95 &3063367541773527207
 Animator:
   serializedVersion: 5
