@@ -1,10 +1,13 @@
 ﻿using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.CharacterCamera;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
+using DCL.PluginSystem.Global;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.ResourcesUnloading;
+using DCL.SDKComponents.MediaStream.Settings;
 using DCL.SDKComponents.MediaStream.Wrapper;
 using DCL.Settings;
 using DCL.WebRequests;
@@ -29,6 +32,7 @@ namespace DCL.PluginSystem.World
         private readonly WorldVolumeMacBus worldVolumeMacBus;
         private MediaPlayer mediaPlayerPrefab;
         private MediaPlayerPluginWrapper mediaPlayerPluginWrapper;
+        private ExposedCameraData exposedCameraData;
 
         public MediaPlayerPlugin(
             ECSWorldSingletonSharedDependencies sharedDependencies,
@@ -37,7 +41,8 @@ namespace DCL.PluginSystem.World
             IAssetsProvisioner assetsProvisioner,
             IWebRequestController webRequestController,
             CacheCleaner cacheCleaner,
-            WorldVolumeMacBus worldVolumeMacBus)
+            WorldVolumeMacBus worldVolumeMacBus,
+            ExposedCameraData exposedCameraData)
         {
             this.frameTimeBudget = frameTimeBudget;
             this.sharedDependencies = sharedDependencies;
@@ -46,6 +51,7 @@ namespace DCL.PluginSystem.World
             this.webRequestController = webRequestController;
             this.cacheCleaner = cacheCleaner;
             this.worldVolumeMacBus = worldVolumeMacBus;
+            this.exposedCameraData = exposedCameraData;
         }
 
         public void Dispose() { }
@@ -57,8 +63,9 @@ namespace DCL.PluginSystem.World
 
         public async UniTask InitializeAsync(MediaPlayerPluginSettings settings, CancellationToken ct)
         {
+            VideoPrioritizationSettings videoPrioritizationSettings = (await assetsProvisioner.ProvideMainAssetAsync(settings.VideoPrioritizationSettings, ct: ct)).Value;
             mediaPlayerPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.MediaPlayerPrefab, ct: ct)).Value.GetComponent<MediaPlayer>();
-            mediaPlayerPluginWrapper = new MediaPlayerPluginWrapper(sharedDependencies.ComponentPoolsRegistry, webRequestController, cacheCleaner, videoTexturePool, frameTimeBudget, mediaPlayerPrefab, worldVolumeMacBus);
+            mediaPlayerPluginWrapper = new MediaPlayerPluginWrapper(sharedDependencies.ComponentPoolsRegistry, webRequestController, cacheCleaner, videoTexturePool, frameTimeBudget, mediaPlayerPrefab, worldVolumeMacBus, exposedCameraData, videoPrioritizationSettings);
 
         }
 
@@ -67,6 +74,8 @@ namespace DCL.PluginSystem.World
         {
             [field: SerializeField]
             public AssetReferenceGameObject MediaPlayerPrefab;
+
+            public StaticSettings.VideoPrioritizationSettingsRef VideoPrioritizationSettings;
         }
     }
 }

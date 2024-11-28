@@ -1,3 +1,8 @@
+using System;
+
+using System;
+using System.Threading;
+
 namespace Utility.Types
 {
     public readonly struct Result
@@ -16,6 +21,9 @@ namespace Utility.Types
 
         public static Result ErrorResult(string errorMessage) =>
             new (false, errorMessage);
+
+        public static Result CancelledResult() =>
+            new (false, nameof(OperationCanceledException));
     }
 
     public readonly struct Result<T>
@@ -36,6 +44,9 @@ namespace Utility.Types
 
         public static Result<T> ErrorResult(string errorMessage) =>
             new (default(T)!, errorMessage);
+
+        public static Result<T> CancelledResult() =>
+            new (default(T)!, nameof(OperationCanceledException));
     }
 
     public readonly struct EnumResult<TErrorEnum>
@@ -74,5 +85,27 @@ namespace Utility.Types
 
         public static EnumResult<TValue, TErrorEnum> ErrorResult(TErrorEnum state, string errorMessage) =>
             new (default(TValue)!, (state, errorMessage));
+
+        public static bool TryErrorIfCancelled(CancellationToken token, out EnumResult<TValue, TErrorEnum> result)
+        {
+            if (token.IsCancellationRequested)
+            {
+                result = ErrorResult(default(TErrorEnum)!, "Operation was cancelled");
+                return true;
+            }
+
+            result = SuccessResult(default(TValue)!);
+            return false;
+        }
+
+        public TValue Unwrap() =>
+            Success
+                ? Value
+                : throw new InvalidOperationException(
+                    $"Cannot unwrap error result: {Error!.Value.State} - {Error!.Value.Message}"
+                );
+
+        public override string ToString() =>
+            $"EnumResult<{typeof(TValue).Name}, {typeof(TErrorEnum).Name}>: {(Success ? "Success" : $"Error: {Error!.Value.State} - {Error.Value.Message}")}";
     }
 }

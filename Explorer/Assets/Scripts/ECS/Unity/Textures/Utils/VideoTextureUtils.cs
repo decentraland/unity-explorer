@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using CRDT;
 using ECS.StreamableLoading.Textures;
+using ECS.Unity.PrimitiveRenderer.Components;
 using ECS.Unity.Textures.Components;
 using System.Collections.Generic;
 using UnityEngine;
@@ -12,6 +13,7 @@ namespace ECS.Unity.Textures.Utils
     {
         public static bool TryAddConsumer(
             this in TextureComponent textureComponent,
+            Entity entity,
             IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap,
             IObjectPool<Texture2D> videoTexturesPool,
             World world,
@@ -27,9 +29,14 @@ namespace ECS.Unity.Textures.Utils
                     consumer = ref world.Get<VideoTextureConsumer>(videoPlayerEntity);
                 }
 
-
                 texture = consumer.Texture;
                 texture.AddReference();
+
+                ref PrimitiveMeshRendererComponent meshRenderer = ref world.TryGetRef<PrimitiveMeshRendererComponent>(entity, out bool hasMesh);
+
+                if (hasMesh)
+                    consumer.AddConsumerMeshRenderer(meshRenderer.MeshRenderer);
+
                 return true;
             }
 

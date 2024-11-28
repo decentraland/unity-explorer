@@ -22,9 +22,8 @@ namespace DCL.Character.CharacterCamera.Systems
     [UpdateInGroup(typeof(CameraGroup))]
     public partial class ControlCinemachineVirtualCameraSystem : BaseUnityLoopSystem
     {
-        private readonly ICinemachineCameraAudioSettings cinemachineCameraAudioSettings;
-
         private SingleInstanceEntity inputMap;
+        private readonly ICinemachineCameraAudioSettings cinemachineCameraAudioSettings;
         private int hotkeySwitchStateDirection = 1;
 
         internal ControlCinemachineVirtualCameraSystem(World world, ICinemachineCameraAudioSettings cinemachineCameraAudioSettings) : base(world)
@@ -56,7 +55,7 @@ namespace DCL.Character.CharacterCamera.Systems
         }
 
         [Query]
-        [None(typeof(CameraBlockerComponent))]
+        [None(typeof(CameraBlockerComponent), typeof(InWorldCamera.ScreencaptureCamera.InWorldCamera))]
         private void HandleCameraInput([Data] float dt, in CameraComponent cameraComponent)
         {
             if (cameraComponent.Mode == CameraMode.SDKCamera) return;
@@ -71,13 +70,7 @@ namespace DCL.Character.CharacterCamera.Systems
         }
 
         [Query]
-        private void UpdateCameraState(ref CameraComponent cameraComponent, ref ICinemachinePreset cinemachinePreset, ref CinemachineCameraState state)
-        {
-            if (cameraComponent.Mode == CameraMode.SDKCamera) return;
-            SwitchCamera(cameraComponent.Mode, ref cinemachinePreset, ref cameraComponent, ref state);
-        }
-
-        [Query]
+        [None(typeof(InWorldCamera.ScreencaptureCamera.InWorldCamera))]
         private void HandleZooming(ref CameraComponent cameraComponent, ref CameraInput input, in CursorComponent cursorComponent)
         {
             if (cursorComponent.IsOverUI)
@@ -91,13 +84,7 @@ namespace DCL.Character.CharacterCamera.Systems
         }
 
         [Query]
-        private void HandleFreeFlyState(ref CameraComponent cameraComponent, in CameraInput input)
-        {
-            if (input.SetFreeFly)
-                cameraComponent.Mode = cameraComponent.Mode != CameraMode.Free ? CameraMode.Free : CameraMode.ThirdPerson;
-        }
-
-        [Query]
+        [None(typeof(InWorldCamera.ScreencaptureCamera.InWorldCamera))]
         private void HandleSwitchState(ref CameraComponent cameraComponent, in CameraInput input)
         {
             if (!input.SwitchState)
@@ -107,135 +94,16 @@ namespace DCL.Character.CharacterCamera.Systems
                 hotkeySwitchStateDirection *= -1;
         }
 
-        private void SwitchCamera(CameraMode targetCameraMode, ref ICinemachinePreset cinemachinePreset, ref CameraComponent camera, ref CinemachineCameraState cameraState)
+        [Query]
+        [None(typeof(InWorldCamera.ScreencaptureCamera.InWorldCamera))]
+        private void HandleFreeFlyState(ref CameraComponent cameraComponent, in CameraInput input)
         {
-            if (IsCorrectCameraEnabled(camera.Mode, cinemachinePreset))
-                return;
-
-            ProcessCameraActivation(targetCameraMode, cinemachinePreset, ref camera, ref cameraState);
-        }
-
-        private static void SetActiveCamera(ref CinemachineCameraState cameraState, CinemachineVirtualCameraBase camera)
-        {
-            cameraState.CurrentCamera = camera;
-            camera.enabled = true;
-        }
-
-        private void ProcessCameraActivation(CameraMode targetCameraMode, ICinemachinePreset cinemachinePreset, ref CameraComponent camera, ref CinemachineCameraState cameraState)
-        {
-            CameraMode currentCameraMode = GetCurrentCameraMode(cameraState.CurrentCamera, cinemachinePreset);
-
-            cameraState.CurrentCamera.enabled = false;
-            camera.Mode = targetCameraMode;
-
-            if (targetCameraMode != currentCameraMode)
-            {
-                if (targetCameraMode == CameraMode.Free)
-                {
-                    ref InputMapComponent inputMapComponent = ref inputMap.GetInputMapComponent(World);
-                    inputMapComponent.UnblockInput(InputMapComponent.Kind.FREE_CAMERA);
-                    inputMapComponent.BlockInput(InputMapComponent.Kind.PLAYER);
-                }
-                else if (currentCameraMode == CameraMode.Free)
-                {
-                    ref InputMapComponent inputMapComponent = ref inputMap.GetInputMapComponent(World);
-                    inputMapComponent.UnblockInput(InputMapComponent.Kind.PLAYER);
-                    inputMapComponent.BlockInput(InputMapComponent.Kind.FREE_CAMERA);
-                }
-            }
-
-            switch (camera.Mode)
-            {
-                case CameraMode.FirstPerson:
-                    if (currentCameraMode == CameraMode.ThirdPerson)
-                        cinemachinePreset.FirstPersonCameraData.Camera.m_Transitions.m_InheritPosition = true;
-
-                    SetActiveCamera(ref cameraState, cinemachinePreset.FirstPersonCameraData.Camera);
-                    break;
-                case CameraMode.ThirdPerson:
-                    switch (currentCameraMode)
-                    {
-                        case CameraMode.FirstPerson:
-                            cinemachinePreset.ThirdPersonCameraData.Camera.m_Transitions.m_InheritPosition = false;
-                            cinemachinePreset.ThirdPersonCameraData.Camera.m_XAxis.Value = cinemachinePreset.FirstPersonCameraData.POV.m_HorizontalAxis.Value;
-
-                            // m_VerticalAxis goes from -90 to 90, so we convert that to a 0 to 1 value
-                            cinemachinePreset.ThirdPersonCameraData.Camera.m_YAxis.Value = (90 + cinemachinePreset.FirstPersonCameraData.POV.m_VerticalAxis.Value) / 180f;
-                            break;
-                        case CameraMode.DroneView:
-                            cinemachinePreset.ThirdPersonCameraData.Camera.m_Transitions.m_InheritPosition = true;
-                            break;
-                    }
-                    SetActiveCamera(ref cameraState, cinemachinePreset.ThirdPersonCameraData.Camera);
-                    break;
-                case CameraMode.DroneView:
-                    if (currentCameraMode == CameraMode.ThirdPerson)
-                        cinemachinePreset.DroneViewCameraData.Camera.m_Transitions.m_InheritPosition = true;
-
-                    SetActiveCamera(ref cameraState, cinemachinePreset.DroneViewCameraData.Camera);
-                    break;
-                case CameraMode.Free:
-                    SetActiveCamera(ref cameraState, cinemachinePreset.FreeCameraData.Camera);
-                    SetDefaultFreeCameraPosition(in cinemachinePreset);
-                    break;
-            }
-        }
-
-        private bool HandleModeSwitch(int direction, ref CameraComponent cameraComponent, bool pingPong)
-        {
-            switch (direction)
-            {
-                case > 0:
-                    switch (cameraComponent.Mode)
-                    {
-                        case CameraMode.DroneView:
-                            if (pingPong)
-                            {
-                                UIAudioEventsBus.Instance.SendPlayAudioEvent(cinemachineCameraAudioSettings.ZoomInAudio);
-                                cameraComponent.Mode = CameraMode.ThirdPerson;
-                            }
-
-                            return false;
-                        case CameraMode.ThirdPerson:
-                            UIAudioEventsBus.Instance.SendPlayAudioEvent(cinemachineCameraAudioSettings.ZoomOutAudio);
-                            cameraComponent.Mode = CameraMode.DroneView;
-                            return true;
-                        case CameraMode.FirstPerson:
-                            UIAudioEventsBus.Instance.SendPlayAudioEvent(cinemachineCameraAudioSettings.ZoomOutAudio);
-                            cameraComponent.Mode = CameraMode.ThirdPerson;
-                            return true;
-                    }
-
-
-                    break;
-                case < 0:
-                    switch (cameraComponent.Mode)
-                    {
-                        case CameraMode.DroneView:
-                            UIAudioEventsBus.Instance.SendPlayAudioEvent(cinemachineCameraAudioSettings.ZoomInAudio);
-                            cameraComponent.Mode = CameraMode.ThirdPerson;
-                            return true;
-                        case CameraMode.ThirdPerson:
-                            UIAudioEventsBus.Instance.SendPlayAudioEvent(cinemachineCameraAudioSettings.ZoomInAudio);
-                            cameraComponent.Mode = CameraMode.FirstPerson;
-                            return true;
-                        case CameraMode.FirstPerson:
-                            if (pingPong)
-                            {
-                                UIAudioEventsBus.Instance.SendPlayAudioEvent(cinemachineCameraAudioSettings.ZoomOutAudio);
-                                cameraComponent.Mode = CameraMode.ThirdPerson;
-                            }
-
-                            return false;
-                    }
-
-                    break;
-            }
-
-            return false;
+            if (input.SetFreeFly)
+                cameraComponent.Mode = cameraComponent.Mode != CameraMode.Free ? CameraMode.Free : CameraMode.ThirdPerson;
         }
 
         [Query]
+        [None(typeof(InWorldCamera.ScreencaptureCamera.InWorldCamera))]
         private void HandleOffset([Data] float dt, ref CameraComponent cameraComponent, ref ICinemachinePreset cinemachinePreset, in CameraInput input, in CursorComponent cursorComponent)
         {
             if (cameraComponent.Mode is not (CameraMode.DroneView or CameraMode.ThirdPerson))
@@ -275,15 +143,20 @@ namespace DCL.Character.CharacterCamera.Systems
             cameraData.CameraOffset.m_Offset = Vector3.MoveTowards(cameraData.CameraOffset.m_Offset, offset, cinemachinePreset.ShoulderChangeSpeed * dt);
         }
 
-        private static void SetDefaultFreeCameraPosition(in ICinemachinePreset preset)
+        [Query]
+        [None(typeof(InWorldCamera.ScreencaptureCamera.InWorldCamera))]
+        private void UpdateCameraState(ref CameraComponent cameraComponent, ref ICinemachinePreset cinemachinePreset, ref CinemachineCameraState state)
         {
-            // take previous position from third person camera
-            Vector3 tpPos = preset.ThirdPersonCameraData.Camera.transform.position;
-            preset.FreeCameraData.Camera.transform.position = tpPos + preset.FreeCameraData.DefaultPosition;
+            if (cameraComponent.Mode == CameraMode.SDKCamera) return;
+            SwitchCamera(cameraComponent.Mode, ref cinemachinePreset, ref cameraComponent, ref state);
+        }
 
-            // copy POV
-            preset.FreeCameraData.POV.m_HorizontalAxis.Value = preset.ThirdPersonCameraData.Camera.m_XAxis.Value;
-            preset.FreeCameraData.POV.m_VerticalAxis.Value = preset.ThirdPersonCameraData.Camera.m_YAxis.Value;
+        private void SwitchCamera(CameraMode targetCameraMode, ref ICinemachinePreset cinemachinePreset, ref CameraComponent camera, ref CinemachineCameraState cameraState)
+        {
+            if (IsCorrectCameraEnabled(camera.Mode, cinemachinePreset))
+                return;
+
+            ProcessCameraActivation(targetCameraMode, cinemachinePreset, ref camera, ref cameraState);
         }
 
         private bool IsCorrectCameraEnabled(CameraMode mode, ICinemachinePreset cinemachinePreset)
@@ -299,6 +172,139 @@ namespace DCL.Character.CharacterCamera.Systems
                 default:
                     return cinemachinePreset.FreeCameraData.Camera.enabled;
             }
+        }
+
+        private void ProcessCameraActivation(CameraMode targetCameraMode, ICinemachinePreset cinemachinePreset, ref CameraComponent camera, ref CinemachineCameraState cameraState)
+        {
+            CameraMode currentCameraMode = GetCurrentCameraMode(cameraState.CurrentCamera, cinemachinePreset);
+
+            cameraState.CurrentCamera.enabled = false;
+            camera.Mode = targetCameraMode;
+
+            if (targetCameraMode != currentCameraMode)
+                HandleInputBlock(targetCameraMode, currentCameraMode);
+
+            switch (camera.Mode)
+            {
+                case CameraMode.FirstPerson:
+                    if (currentCameraMode == CameraMode.ThirdPerson)
+                        cinemachinePreset.FirstPersonCameraData.Camera.m_Transitions.m_InheritPosition = true;
+
+                    SetActiveCamera(ref cameraState, cinemachinePreset.FirstPersonCameraData.Camera);
+                    break;
+                case CameraMode.ThirdPerson:
+                    switch (currentCameraMode)
+                    {
+                        case CameraMode.FirstPerson:
+                            cinemachinePreset.ThirdPersonCameraData.Camera.m_Transitions.m_InheritPosition = false;
+                            cinemachinePreset.ThirdPersonCameraData.Camera.m_XAxis.Value = cinemachinePreset.FirstPersonCameraData.POV.m_HorizontalAxis.Value;
+
+                            // m_VerticalAxis goes from -90 to 90, so we convert that to a 0 to 1 value
+                            cinemachinePreset.ThirdPersonCameraData.Camera.m_YAxis.Value = (90 + cinemachinePreset.FirstPersonCameraData.POV.m_VerticalAxis.Value) / 180f;
+                            break;
+                        case CameraMode.DroneView:
+                        case CameraMode.InWorld:
+                            cinemachinePreset.ThirdPersonCameraData.Camera.m_Transitions.m_InheritPosition = true;
+                            break;
+                    }
+
+                    SetActiveCamera(ref cameraState, cinemachinePreset.ThirdPersonCameraData.Camera);
+                    break;
+                case CameraMode.DroneView:
+                    if (currentCameraMode == CameraMode.ThirdPerson)
+                        cinemachinePreset.DroneViewCameraData.Camera.m_Transitions.m_InheritPosition = true;
+
+                    SetActiveCamera(ref cameraState, cinemachinePreset.DroneViewCameraData.Camera);
+                    break;
+                case CameraMode.Free:
+                    SetActiveCamera(ref cameraState, cinemachinePreset.FreeCameraData.Camera);
+
+                    // take previous position from third person camera
+                    Vector3 tpPos = cinemachinePreset.ThirdPersonCameraData.Camera.transform.position;
+                    cinemachinePreset.FreeCameraData.Camera.transform.position = tpPos + cinemachinePreset.FreeCameraData.DefaultPosition;
+
+                    // copy POV
+                    cinemachinePreset.FreeCameraData.POV.m_HorizontalAxis.Value = cinemachinePreset.ThirdPersonCameraData.Camera.m_XAxis.Value;
+                    cinemachinePreset.FreeCameraData.POV.m_VerticalAxis.Value = cinemachinePreset.ThirdPersonCameraData.Camera.m_YAxis.Value;
+                    break;
+            }
+
+            return;
+
+            void SetActiveCamera(ref CinemachineCameraState cameraState, CinemachineVirtualCameraBase camera)
+            {
+                cameraState.CurrentCamera = camera;
+                camera.enabled = true;
+            }
+        }
+
+        private void HandleInputBlock(CameraMode targetCameraMode, CameraMode currentCameraMode)
+        {
+            if (targetCameraMode == CameraMode.Free)
+            {
+                ref InputMapComponent inputMapComponent = ref inputMap.GetInputMapComponent(World);
+                inputMapComponent.UnblockInput(InputMapComponent.Kind.FREE_CAMERA);
+                inputMapComponent.BlockInput(InputMapComponent.Kind.PLAYER);
+            }
+            else if (currentCameraMode == CameraMode.Free)
+            {
+                ref InputMapComponent inputMapComponent = ref inputMap.GetInputMapComponent(World);
+                inputMapComponent.UnblockInput(InputMapComponent.Kind.PLAYER);
+                inputMapComponent.BlockInput(InputMapComponent.Kind.FREE_CAMERA);
+            }
+        }
+
+        private bool HandleModeSwitch(int direction, ref CameraComponent cameraComponent, bool pingPong)
+        {
+            switch (direction)
+            {
+                case > 0:
+                    switch (cameraComponent.Mode)
+                    {
+                        case CameraMode.DroneView:
+                            if (pingPong)
+                            {
+                                UIAudioEventsBus.Instance.SendPlayAudioEvent(cinemachineCameraAudioSettings.ZoomInAudio);
+                                cameraComponent.Mode = CameraMode.ThirdPerson;
+                            }
+
+                            return false;
+                        case CameraMode.ThirdPerson:
+                            UIAudioEventsBus.Instance.SendPlayAudioEvent(cinemachineCameraAudioSettings.ZoomOutAudio);
+                            cameraComponent.Mode = CameraMode.DroneView;
+                            return true;
+                        case CameraMode.FirstPerson:
+                            UIAudioEventsBus.Instance.SendPlayAudioEvent(cinemachineCameraAudioSettings.ZoomOutAudio);
+                            cameraComponent.Mode = CameraMode.ThirdPerson;
+                            return true;
+                    }
+
+                    break;
+                case < 0:
+                    switch (cameraComponent.Mode)
+                    {
+                        case CameraMode.DroneView:
+                            UIAudioEventsBus.Instance.SendPlayAudioEvent(cinemachineCameraAudioSettings.ZoomInAudio);
+                            cameraComponent.Mode = CameraMode.ThirdPerson;
+                            return true;
+                        case CameraMode.ThirdPerson:
+                            UIAudioEventsBus.Instance.SendPlayAudioEvent(cinemachineCameraAudioSettings.ZoomInAudio);
+                            cameraComponent.Mode = CameraMode.FirstPerson;
+                            return true;
+                        case CameraMode.FirstPerson:
+                            if (pingPong)
+                            {
+                                UIAudioEventsBus.Instance.SendPlayAudioEvent(cinemachineCameraAudioSettings.ZoomOutAudio);
+                                cameraComponent.Mode = CameraMode.ThirdPerson;
+                            }
+
+                            return false;
+                    }
+
+                    break;
+            }
+
+            return false;
         }
 
         private CameraMode GetCurrentCameraMode(CinemachineVirtualCameraBase currentCamera, ICinemachinePreset cinemachinePreset)

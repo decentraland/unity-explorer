@@ -10,6 +10,7 @@ using ECS.Unity.Materials.Systems;
 using ECS.Unity.Textures.Components;
 using NSubstitute;
 using NUnit.Framework;
+using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Pool;
