@@ -20,6 +20,6 @@
         public const string SKYBOX_SETTINGS = "alfa-skybox-settings";
         public const string SKYBOX_SETTINGS_VARIANT = "settings";
 
-        public const string CAMERA_REEL = "alpha-camera_reel";
+        public const string CAMERA_REEL = "alpha-camera-reel";
     }
 }
