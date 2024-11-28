@@ -82,6 +82,7 @@ namespace DCL.Rendering.Highlight
 
             public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
             {
+                Debug.Log($"ALE - m_HighLightRenderers: {m_HighLightRenderers.Count}");
                 if (m_HighLightRenderers is not { Count: > 0 })
                     return;
 
