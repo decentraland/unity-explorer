@@ -7,6 +7,7 @@ using DCL.Character.Components;
 using DCL.Chat.Commands;
 using DCL.Chat.MessageBus;
 using DCL.Diagnostics;
+using DCL.ECSComponents;
 using DCL.ExplorePanel;
 using DCL.MapRenderer;
 using DCL.MapRenderer.CommonBehavior;
@@ -155,8 +156,9 @@ namespace DCL.Minimap
         }
 
 
-        [All(typeof(PlayerComponent))]
         [Query]
+        [All(typeof(PlayerComponent))]
+        [None(typeof(PBAvatarShape))]
         private void QueryPlayerPosition(in CharacterTransform transformComponent)
         {
             Vector3 position = transformComponent.Position;

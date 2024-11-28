@@ -8,6 +8,7 @@ using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Settings;
 using DCL.CharacterMotion.Utils;
 using DCL.Diagnostics;
+using DCL.ECSComponents;
 using DCL.Multiplayer.Movement.Settings;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
@@ -47,7 +48,7 @@ namespace DCL.Multiplayer.Movement.Systems
         }
 
         [Query]
-        [None(typeof(PlayerComponent), typeof(DeleteEntityIntention))]
+        [None(typeof(PlayerComponent), typeof(PBAvatarShape), typeof(DeleteEntityIntention))]
         private void UpdateRemotePlayersMovement([Data] float deltaTime, ref CharacterTransform transComp,
             ref RemotePlayerMovementComponent remotePlayerMovement, ref InterpolationComponent intComp, ref ExtrapolationComponent extComp)
         {
