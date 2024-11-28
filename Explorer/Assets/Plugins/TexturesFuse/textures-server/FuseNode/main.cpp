@@ -3,6 +3,10 @@
 #include <stdio.h>
 #include <Windows.h>
 #include <psapi.h>
+#include <string>
+#include <stdlib.h>
+#include <stdio.h>
+
 #include "texturesfuse.h"
 
 const LPCWSTR InputFileAddress = L"dcl_fuse_i";
@@ -10,9 +14,6 @@ const LPCWSTR OutputFileAddress = L"dcl_fuse_o";
 const LPCWSTR PipeName = L"\\\\.\\pipe\\dcl_fuse_p";
 
 const int mb = 1024 * 1024;
-
-const int mmfInputCapacity = mb * 16;
-const int mmfOutputCapacity = mb * 4;
 
 #pragma pack(push, 1)
 struct InputArgs
@@ -157,9 +158,34 @@ ImageResult NewImage(
     }
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     printf("Start Node\n");
+
+    int mmfInputCapacity = 0;
+    int mmfOutputCapacity = 0;
+
+    for (size_t i = 0; i < argc - 1; i++)
+    {
+        std::string a = argv[i];
+        char *s = argv[i + 1];
+        if ("--mmfInputCapacity" == a)
+        {
+            mmfInputCapacity = atoi(s) * mb;
+        }
+        if ("--mmfOutputCapacity" == a)
+        {
+            mmfOutputCapacity = atoi(s) * mb;
+        }
+    }
+
+    if (!mmfInputCapacity || !mmfOutputCapacity)
+    {
+        printf("mmfInputCapacity or mmfOutputCapacity not provided\n");
+        return -1;
+    }
+
+    printf("mmfInputCapacity: %d, mmfOutputCapacity: %d\n", mmfInputCapacity, mmfOutputCapacity);
 
     HANDLE selfProcess = GetCurrentProcess();
 

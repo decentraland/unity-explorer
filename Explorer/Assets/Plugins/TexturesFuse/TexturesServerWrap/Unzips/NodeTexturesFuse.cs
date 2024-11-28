@@ -14,12 +14,12 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
     {
         private const int MB = 1024 * 1024;
 
-        private const int MMF_INPUT_CAPACITY = MB * 16;
-        private const int MMF_OUTPUT_CAPACITY = MB * 4;
+        private const int MMF_INPUT_CAPACITY = MB * 64;
+        private const int MMF_OUTPUT_CAPACITY = MB * 64;
 
         private const int MEMORY_LIMIT = MB * 1024; //GB
 
-        public const string CHILD_PROCESS = "node.exe";
+        public static readonly string CHILD_PROCESS = $"node.exe --mmfInputCapacity {MMF_INPUT_CAPACITY} --mmfOutputCapacity {MMF_OUTPUT_CAPACITY}";
 
         private static MemoryMappedFile? mmfInput;
         private static MemoryMappedFile? mmfOutput;
