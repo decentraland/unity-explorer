@@ -10,7 +10,6 @@ using DCL.Utilities;
 using DCL.Web3;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
-using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using SuperScrollView;
 using System;
 using System.Collections.Generic;
@@ -24,10 +23,10 @@ namespace DCL.Notifications.NotificationsMenu
     {
         private const int PIXELS_PER_UNIT = 50;
         private const int IDENTITY_CHANGE_POLLING_INTERVAL = 5000;
-        private static readonly List<NotificationType> NOTIFICATION_TYPES_TO_IGNORE = new ()
-        {
-            NotificationType.INTERNAL_ARRIVED_TO_DESTINATION
-        };
+        private static readonly List<NotificationType> NOTIFICATION_TYPES_TO_IGNORE = new()
+            {
+                NotificationType.INTERNAL_ARRIVED_TO_DESTINATION
+            };
 
         private readonly NotificationsMenuView view;
         private readonly NotificationsRequestController notificationsRequestController;
@@ -42,7 +41,7 @@ namespace DCL.Notifications.NotificationsMenu
         private readonly IWeb3IdentityCache web3IdentityCache;
 
         private CancellationTokenSource? notificationThumbnailCts;
-        private CancellationTokenSource? notificationPanelCts = new ();
+        private CancellationTokenSource? notificationPanelCts = new CancellationTokenSource();
         private int unreadNotifications;
         private Web3Address? previousWeb3Identity;
 
@@ -94,8 +93,14 @@ namespace DCL.Notifications.NotificationsMenu
         {
             notificationPanelCts = notificationPanelCts.SafeRestart();
 
-            if (!forceClose && !view.gameObject.activeSelf) { view.ShowAsync(notificationPanelCts.Token).Forget(); }
-            else if (view.gameObject.activeSelf) { view.HideAsync(notificationPanelCts.Token).Forget(); }
+            if (!forceClose && !view.gameObject.activeSelf)
+            {
+                view.ShowAsync(notificationPanelCts.Token).Forget();
+            }
+            else if (view.gameObject.activeSelf)
+            {
+                view.HideAsync(notificationPanelCts.Token).Forget();
+            }
         }
 
         private void OnViewShown()
@@ -223,18 +228,14 @@ namespace DCL.Notifications.NotificationsMenu
         private async UniTask LoadNotificationThumbnailAsync(NotificationView notificationView, INotification notificationData,
             CancellationToken ct)
         {
-            IOwnedTexture2D ownedTexture = await webRequestController.GetTextureAsync(
+            Texture2D texture = await webRequestController.GetTextureAsync(
                 new CommonArguments(URLAddress.FromString(notificationData.GetThumbnail())),
-                new GetTextureArguments(TextureType.Albedo),
+                new GetTextureArguments(false),
                 GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp),
                 ct,
                 ReportCategory.UI);
-
-            Texture2D texture = ownedTexture.Texture;
-
             Sprite? thumbnailSprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height),
                 VectorUtilities.OneHalf, PIXELS_PER_UNIT, 0, SpriteMeshType.FullRect, Vector4.one, false);
-
             //Try add has been added in case it happens that BE returns duplicated notifications id
             //In that case we will just use the same thumbnail for each notification with the same id
             notificationThumbnailCache.TryAdd(notificationData.Id, thumbnailSprite);
@@ -243,7 +244,7 @@ namespace DCL.Notifications.NotificationsMenu
 
         private void OnNotificationReceived(INotification notification)
         {
-            if (NOTIFICATION_TYPES_TO_IGNORE.Contains(notification.Type))
+            if(NOTIFICATION_TYPES_TO_IGNORE.Contains(notification.Type))
                 return;
 
             notifications.Insert(0, notification);

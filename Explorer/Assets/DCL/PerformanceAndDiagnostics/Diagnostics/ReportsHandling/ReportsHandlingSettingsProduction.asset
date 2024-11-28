@@ -188,8 +188,6 @@ MonoBehaviour:
       Severity: 4
     - Category: ANALYTICS
       Severity: 1
-    - Category: TEXTURES
-      Severity: 0
   sentryMatrix:
     entries:
     - Category: AUDIO_SOURCES

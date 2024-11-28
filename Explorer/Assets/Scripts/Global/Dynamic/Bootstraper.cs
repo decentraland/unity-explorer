@@ -20,8 +20,6 @@ using DCL.Web3.Identities;
 using Global.AppArgs;
 using Global.Dynamic.DebugSettings;
 using MVC;
-using Plugins.TexturesFuse.TexturesServerWrap.CompressShaders;
-using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using SceneRunner.Debugging;
 using SceneRuntime.Factory.WebSceneSource;
 using SceneRuntime.Factory.WebSceneSource.Cache;
@@ -38,8 +36,6 @@ namespace Global.Dynamic
         private readonly IDebugSettings debugSettings;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly IAppArgs appArgs;
-        private readonly ISplashScreen splashScreen;
-        private readonly ICompressShaders compressShaders;
         private readonly RealmLaunchSettings realmLaunchSettings;
         private readonly World world;
 
@@ -51,8 +47,6 @@ namespace Global.Dynamic
 
         public Bootstrap(IDebugSettings debugSettings,
             IAppArgs appArgs,
-            ISplashScreen splashScreen,
-            ICompressShaders compressShaders,
             IDecentralandUrlsSource decentralandUrlsSource,
             RealmLaunchSettings realmLaunchSettings,
             World world)
@@ -60,19 +54,16 @@ namespace Global.Dynamic
             this.debugSettings = debugSettings;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.appArgs = appArgs;
-            this.splashScreen = splashScreen;
-            this.compressShaders = compressShaders;
             this.realmLaunchSettings = realmLaunchSettings;
             this.world = world;
         }
 
-        public async UniTask PreInitializeSetupAsync(UIDocument cursorRoot,
+        public void PreInitializeSetup(UIDocument cursorRoot,
             UIDocument debugUiRoot,
-            CancellationToken token)
+            ISplashScreen splashScreen,
+            CancellationToken _)
         {
             splashScreen.Show();
-            await compressShaders.WarmUpIfRequiredAsync(token);
-
             cursorRoot.EnsureNotNull();
 
             startingRealm = URLDomain.FromString(realmLaunchSettings.GetStartingRealm(decentralandUrlsSource));
@@ -86,36 +77,15 @@ namespace Global.Dynamic
             DotNetLoggingPlugin.Initialize();
         }
 
-        public async UniTask<(StaticContainer?, bool)> LoadStaticContainerAsync(
-            BootstrapContainer bootstrapContainer,
-            PluginSettingsContainer globalPluginSettingsContainer,
-            DebugViewsCatalog debugViewsCatalog,
-            Entity playerEntity,
-            ITexturesFuse texturesFuse,
-            ISystemMemoryCap memoryCap,
-            CancellationToken ct
-        ) =>
-            await StaticContainer.CreateAsync(
-                bootstrapContainer.DecentralandUrlsSource,
-                bootstrapContainer.AssetsProvisioner,
-                bootstrapContainer.ReportHandlingSettings,
-                appArgs,
-                texturesFuse,
-                debugViewsCatalog,
-                globalPluginSettingsContainer,
-                bootstrapContainer.DiagnosticsContainer,
-                bootstrapContainer.IdentityCache,
-                bootstrapContainer.VerifiedEthereumApi,
-                bootstrapContainer.LocalSceneDevelopment,
-                bootstrapContainer.UseRemoteAssetBundles,
-                world,
-                playerEntity,
-                memoryCap,
-                bootstrapContainer.WorldVolumeMacBus,
-                EnableAnalytics,
-                bootstrapContainer.Analytics,
-                ct
-            );
+        public async UniTask<(StaticContainer?, bool)> LoadStaticContainerAsync(BootstrapContainer bootstrapContainer, PluginSettingsContainer globalPluginSettingsContainer, DebugViewsCatalog debugViewsCatalog, Entity playerEntity, ISystemMemoryCap memoryCap, CancellationToken ct) =>
+            await StaticContainer.CreateAsync(bootstrapContainer.DecentralandUrlsSource,
+                bootstrapContainer.AssetsProvisioner, bootstrapContainer.ReportHandlingSettings,
+                appArgs, debugViewsCatalog, globalPluginSettingsContainer,
+                bootstrapContainer.DiagnosticsContainer, bootstrapContainer.IdentityCache,
+                bootstrapContainer.VerifiedEthereumApi, bootstrapContainer.LocalSceneDevelopment,
+                bootstrapContainer.UseRemoteAssetBundles, world, playerEntity, memoryCap,
+                bootstrapContainer.WorldVolumeMacBus, EnableAnalytics, bootstrapContainer.Analytics,
+                ct);
 
         public async UniTask<(DynamicWorldContainer?, bool)> LoadDynamicWorldContainerAsync(BootstrapContainer bootstrapContainer,
             StaticContainer staticContainer,
@@ -124,6 +94,7 @@ namespace Global.Dynamic
             DynamicSettings dynamicSettings,
             UIDocument uiToolkitRoot,
             UIDocument cursorRoot,
+            ISplashScreen splashScreen,
             AudioClipConfig backgroundMusic,
             WorldInfoTool worldInfoTool,
             Entity playerEntity,
@@ -232,8 +203,6 @@ namespace Global.Dynamic
 
             GlobalWorld globalWorld = dynamicWorldContainer.GlobalWorldFactory.Create(sceneSharedContainer.SceneFactory,
                 sceneSharedContainer.V8ActiveEngines, playerEntity);
-
-
             dynamicWorldContainer.RealmController.GlobalWorld = globalWorld;
 
             staticContainer.DebugContainerBuilder.BuildWithFlex(debugUiRoot);
@@ -256,7 +225,7 @@ namespace Global.Dynamic
         }
 
         public async UniTask UserInitializationAsync(DynamicWorldContainer dynamicWorldContainer,
-            GlobalWorld globalWorld, Entity playerEntity, CancellationToken ct)
+            GlobalWorld globalWorld, Entity playerEntity, ISplashScreen splashScreen, CancellationToken ct)
         {
             splashScreen.Show();
 
@@ -269,7 +238,7 @@ namespace Global.Dynamic
                     FromLogout = false,
                     World = globalWorld.EcsWorld,
                     PlayerEntity = playerEntity,
-                }, ct);
+               }, ct);
 
             OpenDefaultUI(dynamicWorldContainer.MvcManager, ct);
             splashScreen.Hide();

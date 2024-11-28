@@ -42,18 +42,20 @@ namespace DCL.PluginSystem.Global
             NewNotificationController newNotificationController =
                 new NewNotificationController(
                     NewNotificationController.CreateLazily(newNotificationView, null),
-                    notificationsBusController,
-                    notificationIconTypes,
-                    rarityBackgroundMapping,
-                    webRequestController
-                );
-
+                        notificationsBusController,
+                        notificationIconTypes,
+                        rarityBackgroundMapping,
+                        webRequestController);
             mvcManager.RegisterController(newNotificationController);
         }
 
-        public void Dispose() { }
+        public void Dispose()
+        {
+        }
 
-        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
+        {
+        }
 
         public class NotificationSettings : IDCLPluginSettings
         {
@@ -73,4 +75,5 @@ namespace DCL.PluginSystem.Global
             }
         }
     }
+
 }

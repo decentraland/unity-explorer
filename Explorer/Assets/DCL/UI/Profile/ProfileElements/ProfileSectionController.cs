@@ -26,8 +26,7 @@ namespace DCL.UI.ProfileElements
             IWeb3IdentityCache identityCache,
             IProfileRepository profileRepository,
             IWebRequestController webRequestController,
-            ChatEntryConfigurationSO chatEntryConfiguration
-        ) : base(viewFactory)
+            ChatEntryConfigurationSO chatEntryConfiguration) : base(viewFactory)
         {
             this.identityCache = identityCache;
             this.profileRepository = profileRepository;
@@ -61,7 +60,6 @@ namespace DCL.UI.ProfileElements
             viewInstance!.FaceFrame.color = chatEntryConfiguration.GetNameColor(profile.Name);
 
             profileImageController!.StopLoading();
-
             //temporarily disabled the profile image request until we have the correct
             //picture deployment
             //await profileImageController!.RequestImageAsync(profile.Avatar.FaceSnapshotUrl, ct);
@@ -69,9 +67,7 @@ namespace DCL.UI.ProfileElements
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
-        protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
-            UniTask.Never(ct);
-
+        protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) => UniTask.Never(ct);
         public new void Dispose()
         {
             cts.SafeCancelAndDispose();

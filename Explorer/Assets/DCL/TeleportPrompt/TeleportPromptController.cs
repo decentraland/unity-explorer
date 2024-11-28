@@ -31,9 +31,7 @@ namespace DCL.TeleportPrompt
             ViewFactoryMethod viewFactory,
             ICursor cursor,
             IWebRequestController webRequestController,
-            IPlacesAPIService placesAPIService,
-            IChatMessagesBus chatMessagesBus
-        ) : base(viewFactory)
+            IPlacesAPIService placesAPIService, IChatMessagesBus chatMessagesBus) : base(viewFactory)
         {
             this.cursor = cursor;
             this.webRequestController = webRequestController;
@@ -47,6 +45,7 @@ namespace DCL.TeleportPrompt
             viewInstance.cancelButton.onClick.AddListener(Dismiss);
             viewInstance.continueButton.onClick.AddListener(Approve);
         }
+
 
         protected override void OnViewShow()
         {

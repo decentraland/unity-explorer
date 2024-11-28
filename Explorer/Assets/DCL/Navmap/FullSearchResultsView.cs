@@ -1,5 +1,6 @@
 using DCL.UI;
 using DCL.WebRequests;
+using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;

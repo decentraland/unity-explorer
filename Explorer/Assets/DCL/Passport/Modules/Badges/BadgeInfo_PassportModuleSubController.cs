@@ -4,7 +4,6 @@ using DCL.BadgesAPIService;
 using DCL.Diagnostics;
 using DCL.Passport.Fields.Badges;
 using DCL.WebRequests;
-using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -115,7 +114,6 @@ namespace DCL.Passport.Modules.Badges
                 foreach (TierData tier in tiers)
                 {
                     string tierCompletedAt = badgeInfo.GetTierCompletedDate(tier.tierId);
-
                     if (!isOwnProfile && string.IsNullOrEmpty(tierCompletedAt))
                         continue;
 
@@ -146,7 +144,6 @@ namespace DCL.Passport.Modules.Badges
         private void SelectLastCompletedTierButton(BadgeInfo badge, IReadOnlyList<TierData> tiers)
         {
             int? lastCompletedTierIndex = null;
-
             for (var i = 0; i < tiers.Count; i++)
             {
                 if (badge.data.progress.stepsDone >= tiers[i].criteria.steps)
@@ -154,7 +151,6 @@ namespace DCL.Passport.Modules.Badges
             }
 
             var selectedIndex = 0;
-
             for (var i = 0; i < instantiatedBadgeTierButtons.Count; i++)
             {
                 if (i != lastCompletedTierIndex)
@@ -228,7 +224,6 @@ namespace DCL.Passport.Modules.Badges
         private void SetupTierBadge(BadgeInfo badgeInfo, IReadOnlyList<TierData> tiers)
         {
             int nextTierToCompleteIndex = tiers.Count - 1;
-
             for (var i = 0; i < tiers.Count; i++)
             {
                 if (badgeInfo.data.progress.nextStepsTarget == tiers[i].criteria.steps)
@@ -270,14 +265,13 @@ namespace DCL.Passport.Modules.Badges
                 if (assets?.textures3d == null)
                     return;
 
-                string baseColorUrl = assets.textures3d.baseColor ?? string.Empty;
-                string normalUrl = assets.textures3d.normal ?? string.Empty;
-                string hrmUrl = assets.textures3d.hrm ?? string.Empty;
+                string baseColorUrl = assets.textures3d.baseColor;
+                string normalUrl = assets.textures3d.normal;
+                string hrmUrl = assets.textures3d.hrm;
 
-                Texture2D baseColorTexture = await RemoteTextureAsync(baseColorUrl, ct);
-                //TODO actually normal maps should be in Normal format, but the Shader relies on none BC5 format, should be fixed in the future
-                Texture2D normalTexture = await RemoteTextureAsync(normalUrl, ct);
-                Texture2D hrmTexture = await RemoteTextureAsync(hrmUrl, ct);
+                Texture2D baseColorTexture = await webRequestController.GetTextureAsync(new CommonArguments(URLAddress.FromString(baseColorUrl)), new GetTextureArguments(false), GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp, FilterMode.Bilinear), ct, ReportCategory.BADGES);
+                Texture2D normalTexture = await webRequestController.GetTextureAsync(new CommonArguments(URLAddress.FromString(normalUrl)), new GetTextureArguments(false), GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp, FilterMode.Bilinear), ct, ReportCategory.BADGES);
+                Texture2D hrmTexture = await webRequestController.GetTextureAsync(new CommonArguments(URLAddress.FromString(hrmUrl)), new GetTextureArguments(false), GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp, FilterMode.Bilinear), ct, ReportCategory.BADGES);
 
                 Set3DImage(baseColorTexture, normalTexture, hrmTexture);
                 SetBadgeInfoViewAsLoading(false);
@@ -290,15 +284,6 @@ namespace DCL.Passport.Modules.Badges
                 ReportHub.LogError(ReportCategory.BADGES, $"{ERROR_MESSAGE} ERROR: {e.Message}");
             }
         }
-
-        private async UniTask<Texture2D> RemoteTextureAsync(string url, CancellationToken ct, TextureType textureType = TextureType.Albedo) =>
-            (await webRequestController.GetTextureAsync(
-                new CommonArguments(URLAddress.FromString(url)),
-                new GetTextureArguments(textureType),
-                GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp, FilterMode.Bilinear),
-                ct,
-                ReportCategory.BADGES)
-            ).Texture;
 
         private void SetBadgeInfoViewAsLoading(bool isLoading)
         {

@@ -40,8 +40,7 @@ namespace DCL.Navmap
             IPlacesAPIService placesAPIService,
             FloatingPanelView floatingPanelView,
             IWebRequestController webRequestController,
-            IInputBlock inputBlock
-        )
+            IInputBlock inputBlock)
         {
             this.view = view;
             this.historyRecordPanelView = historyRecordPanelView;
@@ -93,7 +92,6 @@ namespace DCL.Navmap
                 historyRecordPanelView.gameObject.SetActive(true);
                 return;
             }
-
             historyRecordPanelView.gameObject.SetActive(false);
 
             // Suppress cancellation but let other exceptions be printed
@@ -118,7 +116,10 @@ namespace DCL.Navmap
                 GetAndShowPreviousSearches();
                 inputBlock.Disable(InputMapComponent.Kind.SHORTCUTS);
             }
-            else { inputBlock.Enable(InputMapComponent.Kind.SHORTCUTS); }
+            else
+            {
+                inputBlock.Enable(InputMapComponent.Kind.SHORTCUTS);
+            }
         }
 
         private async UniTask SearchAndShowAsync(string searchText)

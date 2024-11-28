@@ -3,10 +3,8 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.MapRenderer.ComponentsFactory;
-using DCL.Utilities.Extensions;
 using DCL.WebRequests;
 using DG.Tweening;
-using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using System.Threading;
 using UnityEngine;
 using Utility;
@@ -26,18 +24,11 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
         private readonly IWebRequestController webRequestController;
         private readonly AtlasChunk atlasChunk;
 
-        private CancellationTokenSource? internalCts;
-        private CancellationTokenSource? linkedCts;
+        private CancellationTokenSource internalCts;
+        private CancellationTokenSource linkedCts;
         private int webRequestAttempts;
 
-        private IOwnedTexture2D? currentOwnedTexture;
-
-        public SatelliteChunkController(
-            SpriteRenderer prefab,
-            IWebRequestController webRequestController,
-            MapRendererTextureContainer textureContainer,
-            Vector3 chunkLocalPosition,
-            Vector2Int coordsCenter,
+        public SatelliteChunkController(SpriteRenderer prefab, IWebRequestController webRequestController, MapRendererTextureContainer textureContainer, Vector3 chunkLocalPosition, Vector2Int coordsCenter,
             Transform parent,
             int drawOrder)
         {
@@ -65,9 +56,6 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
             internalCts?.Dispose();
             internalCts = null;
 
-            currentOwnedTexture?.Dispose();
-            currentOwnedTexture = null;
-
             if (atlasChunk)
                 UnityObjectUtils.SafeDestroy(atlasChunk.gameObject);
         }
@@ -81,23 +69,15 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
             var url = $"{CHUNKS_API}{chunkId.x}%2C{chunkId.y}.jpg";
 
             var textureTask = webRequestController.GetTextureAsync(
-                new CommonArguments(URLAddress.FromString(url)),
-                new GetTextureArguments(TextureType.Albedo),
-                GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp, FilterMode.Trilinear),
-                linkedCts.Token,
-                ReportCategory.UI
-            );
+                new CommonArguments(URLAddress.FromString(url), attemptsCount: 1, timeout: 5),
+                new GetTextureArguments(false), GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp, FilterMode.Trilinear),
+                linkedCts.Token, ReportCategory.UI);
 
             Texture2D texture;
 
-            currentOwnedTexture?.Dispose();
-            currentOwnedTexture = null;
-
             try
             {
-                currentOwnedTexture = await textureTask!;
-                await UniTask.SwitchToMainThread();
-                texture = currentOwnedTexture.Texture;
+                texture = await textureTask;
             }
             catch (Exception e)
             {

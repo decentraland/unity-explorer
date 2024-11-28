@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Profiles;
+using DCL.UI;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using MVC;
@@ -24,8 +25,8 @@ namespace DCL.UI.ProfileElements
         public ProfileWidgetController(ViewFactoryMethod viewFactory,
             IWeb3IdentityCache identityCache,
             IProfileRepository profileRepository,
-            IWebRequestController webRequestController
-        ) : base(viewFactory)
+            IWebRequestController webRequestController)
+            : base(viewFactory)
         {
             this.identityCache = identityCache;
             this.profileRepository = profileRepository;

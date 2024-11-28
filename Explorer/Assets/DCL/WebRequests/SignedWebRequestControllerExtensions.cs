@@ -4,6 +4,7 @@ using DCL.WebRequests.GenericDelete;
 using System;
 using System.Threading;
 using Utility.Times;
+using static DCL.WebRequests.WebRequestControllerExtensions;
 
 namespace DCL.WebRequests
 {
@@ -49,7 +50,8 @@ namespace DCL.WebRequests
                 ReportCategory.GENERIC_WEB_REQUEST,
                 new WebRequestHeadersInfo().WithSign(jsonMetaData, unixTimestamp),
                 WebRequestSignInfo.NewFromRaw(jsonMetaData, commonArguments.URL, unixTimestamp, "post"),
-                null
+                null,
+                POST_GENERIC
             );
         }
 
@@ -71,7 +73,8 @@ namespace DCL.WebRequests
                 ReportCategory.GENERIC_WEB_REQUEST,
                 new WebRequestHeadersInfo().WithSign(jsonMetaData, unixTimestamp),
                 WebRequestSignInfo.NewFromRaw(jsonMetaData, commonArguments.URL, unixTimestamp, "post"),
-                null
+                null,
+                POST_GENERIC
             );
         }
 
@@ -92,7 +95,8 @@ namespace DCL.WebRequests
                 ReportCategory.GENERIC_WEB_REQUEST,
                 new WebRequestHeadersInfo().WithSign(jsonMetaData, unixTimestamp),
                 WebRequestSignInfo.NewFromRaw(jsonMetaData, commonArguments.URL, unixTimestamp, "get"),
-                null
+                null,
+                GET_GENERIC
             );
         }
 
@@ -113,7 +117,8 @@ namespace DCL.WebRequests
                 ReportCategory.GENERIC_WEB_REQUEST,
                 new WebRequestHeadersInfo().WithSign(jsonMetaData, unixTimestamp),
                 WebRequestSignInfo.NewFromRaw(jsonMetaData, commonArguments.URL, unixTimestamp, "delete"),
-                null
+                null,
+                DELETE_GENERIC
             );
         }
 
@@ -135,7 +140,8 @@ namespace DCL.WebRequests
                 ReportCategory.GENERIC_WEB_REQUEST,
                 new WebRequestHeadersInfo().WithSign(jsonMetaData, unixTimestamp),
                 WebRequestSignInfo.NewFromRaw(jsonMetaData, commonArguments.URL, unixTimestamp, "patch"),
-                null
+                null,
+                PATCH_GENERIC
             );
         }
     }

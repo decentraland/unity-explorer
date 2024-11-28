@@ -1,8 +1,6 @@
-﻿using DCL.Diagnostics;
-using DCL.ECSComponents;
+﻿using DCL.ECSComponents;
 using ECS.Unity.Materials.Components.Defaults;
 using ECS.Unity.Textures.Components;
-using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using System;
 using UnityEngine;
 
@@ -26,12 +24,6 @@ namespace ECS.Unity.Materials.Components
                 AlphaTexture = alphaTexture;
                 EmissiveTexture = emissiveTexture;
                 BumpTexture = bumpTexture;
-
-                if (BumpTexture.HasValue && BumpTexture.Value.TextureType != TextureType.NormalMap)
-                    ReportHub.LogError(
-                        ReportCategory.TEXTURES,
-                        $"Provided wrong format for bump texture: {bumpTexture!.Value.Src}"
-                    );
             }
 
             public bool Equals(TexturesData other) =>

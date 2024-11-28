@@ -1,9 +1,9 @@
 ﻿using Arch.Core;
 using DCL.WebRequests;
 using ECS.Prioritization.Components;
+using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
 using NUnit.Framework;
-using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using System.Collections.Generic;
 using UnityEngine;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<UnityEngine.Texture2D, ECS.StreamableLoading.Textures.GetTextureIntention>;
@@ -22,7 +22,7 @@ namespace ECS.StreamableLoading.Tests
         {
             // set-up
             var world = World.Create();
-            var loadSystem = new LoadTextureSystem(world, new TexturesCache<GetTextureIntention>(), IWebRequestController.DEFAULT);
+            var loadSystem = new LoadTextureSystem(world, new TexturesCache(), IWebRequestController.DEFAULT);
             var promises = new List<Promise>(REQUESTS_COUNT);
             for (var i = 0; i < REQUESTS_COUNT; i++) promises.Add(NewPromise(world));
 
@@ -39,7 +39,7 @@ namespace ECS.StreamableLoading.Tests
 
         private Promise NewPromise(World world)
         {
-            var intention = new GetTextureIntention(successPath, string.Empty, TextureWrapMode.Repeat, FilterMode.Bilinear, TextureType.Albedo);
+            var intention = new GetTextureIntention(successPath, string.Empty,TextureWrapMode.Repeat, FilterMode.Bilinear, true);
 
             var partition = PartitionComponent.TOP_PRIORITY;
             return Promise.Create(world, intention, partition);

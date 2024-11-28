@@ -1,10 +1,11 @@
 using Arch.Core;
 using Arch.SystemGroups;
+using Arch.SystemGroups.Metadata;
+using CRDT;
 using Cysharp.Threading.Tasks;
 using DCL.WebRequests;
 using DCL.Diagnostics;
 using DCL.Optimization.PerformanceBudgeting;
-using DCL.Utilities.Extensions;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
@@ -33,13 +34,12 @@ namespace ECS.StreamableLoading.Textures
             // Attempts should be always 1 as there is a repeat loop in `LoadSystemBase`
             var result = await webRequestController.GetTextureAsync(
                 intention.CommonArguments,
-                new GetTextureArguments(intention.TextureType),
+                new GetTextureArguments(intention.IsReadable),
                 GetTextureWebRequest.CreateTexture(intention.WrapMode, intention.FilterMode),
                 ct,
-                GetReportData()
-            );
+                GetReportData());
 
-            return new StreamableLoadingResult<Texture2DData>(new Texture2DData(result.EnsureNotNull()));
+            return new StreamableLoadingResult<Texture2DData>(new Texture2DData(result));
         }
     }
 }

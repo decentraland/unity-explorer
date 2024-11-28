@@ -122,8 +122,7 @@ namespace DCL.Notifications.NewNotification
             viewInstance.NotificationView.NotificationType = notification.Type;
             viewInstance.NotificationView.Notification = notification;
             ProcessCustomMetadata(notification);
-
-            if (!string.IsNullOrEmpty(notification.GetThumbnail()))
+            if(!string.IsNullOrEmpty(notification.GetThumbnail()))
                 thumbnailImageController.RequestImage(notification.GetThumbnail(), true);
 
             viewInstance.NotificationView.NotificationTypeImage.sprite = notificationIconTypes.GetNotificationIcon(notification.Type);
@@ -138,7 +137,7 @@ namespace DCL.Notifications.NewNotification
             viewInstance.BadgeNotificationView.NotificationType = notification.Type;
             viewInstance.BadgeNotificationView.Notification = notification;
 
-            if (!string.IsNullOrEmpty(notification.GetThumbnail()))
+            if(!string.IsNullOrEmpty(notification.GetThumbnail()))
                 badgeThumbnailImageController.RequestImage(notification.GetThumbnail(), true, true);
 
             await AnimateBadgeNotificationAsync();
@@ -163,7 +162,9 @@ namespace DCL.Notifications.NewNotification
                 await notificationCanvasGroup.DOFade(1, ANIMATION_DURATION).ToUniTask(cancellationToken: cts.Token);
                 await UniTask.Delay(TimeSpan.FromSeconds(TIME_BEFORE_HIDE_NOTIFICATION), cancellationToken: cts.Token);
             }
-            catch (OperationCanceledException) { }
+            catch (OperationCanceledException)
+            {
+            }
             finally
             {
                 notificationCanvasGroup.interactable = false;
@@ -184,7 +185,10 @@ namespace DCL.Notifications.NewNotification
                 await UniTask.Delay(TimeSpan.FromSeconds(TIME_BEFORE_HIDE_NOTIFICATION), cancellationToken: cts.Token);
             }
             catch (OperationCanceledException) { }
-            finally { viewInstance.BadgeNotificationAnimator.SetTrigger(HIDE_BADGE_TRIGGER); }
+            finally
+            {
+                viewInstance.BadgeNotificationAnimator.SetTrigger(HIDE_BADGE_TRIGGER);
+            }
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>

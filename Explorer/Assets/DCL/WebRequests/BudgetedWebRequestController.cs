@@ -1,6 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Optimization.PerformanceBudgeting;
-using DCL.WebRequests.RequestsHub;
 
 namespace DCL.WebRequests
 {
@@ -32,7 +31,5 @@ namespace DCL.WebRequests
                 totalBudgetAcquired.Dispose();
             }
         }
-
-        IRequestHub IWebRequestController.requestHub => origin.requestHub;
     }
 }

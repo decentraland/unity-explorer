@@ -8,6 +8,7 @@ using DCL.UserInAppInitializationFlow;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
+using JetBrains.Annotations;
 using MVC;
 using System.Threading;
 using Utility;
@@ -43,8 +44,7 @@ namespace DCL.UI.ProfileElements
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
-        protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
-            UniTask.Never(ct);
+        protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) => UniTask.Never(ct);
 
         protected override void OnViewInstantiated()
         {

@@ -108,8 +108,9 @@ namespace DCL.PluginSystem.Global
         private SettingsController? settingsController;
         private BackpackSubPlugin? backpackSubPlugin;
 
-        public ExplorePanelPlugin(
-            IAssetsProvisioner assetsProvisioner,
+
+
+        public ExplorePanelPlugin(IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
             MapRendererContainer mapRendererContainer,
             IPlacesAPIService placesAPIService,

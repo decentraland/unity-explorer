@@ -41,7 +41,6 @@ using System.Collections.Generic;
 using System.Threading;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.UserInAppInitializationFlow;
-using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using PortableExperiences.Controller;
 using UnityEngine;
 using Utility;
@@ -68,7 +67,6 @@ namespace Global
         private ProvidedAsset<RealmPartitionSettingsAsset> realmPartitionSettings;
 
         private IAssetsProvisioner assetsProvisioner;
-        private ITexturesFuse texturesFuse;
 
         public ComponentsContainer ComponentsContainer { get; private set; }
         public CharacterContainer CharacterContainer { get; private set; }
@@ -109,7 +107,6 @@ namespace Global
             partitionSettings.Dispose();
             QualityContainer.Dispose();
             Profiler.Dispose();
-            texturesFuse.Dispose();
         }
 
         public async UniTask InitializeAsync(StaticSettings settings, CancellationToken ct)
@@ -127,7 +124,6 @@ namespace Global
             IAssetsProvisioner assetsProvisioner,
             IReportsHandlingSettings reportHandlingSettings,
             IAppArgs appArgs,
-            ITexturesFuse texturesFuse,
             DebugViewsCatalog debugViewsCatalog,
             IPluginSettingsContainer settingsContainer,
             DiagnosticsContainer diagnosticsContainer,
@@ -159,7 +155,6 @@ namespace Global
             container.assetsProvisioner = assetsProvisioner;
             container.MemoryCap = memoryCap;
             container.SceneRestrictionBusController = new SceneRestrictionBusController();
-            container.texturesFuse = texturesFuse;
 
             var exposedPlayerTransform = new ExposedTransform();
 
@@ -184,27 +179,18 @@ namespace Global
                 new SceneMapping()
             );
 
-            var cacheWidget = container.DebugContainerBuilder.TryAddWidget("Cache Textures");
-
             container.QualityContainer = await QualityContainer.CreateAsync(settingsContainer, container.assetsProvisioner);
-            container.CacheCleaner = new CacheCleaner(sharedDependencies.FrameTimeBudget, cacheWidget);
+            container.CacheCleaner = new CacheCleaner(sharedDependencies.FrameTimeBudget);
             container.ComponentsContainer = componentsContainer;
             container.SingletonSharedDependencies = sharedDependencies;
             container.Profiler = profilingProvider;
             container.EntityCollidersGlobalCache = new EntityCollidersGlobalCache();
             container.ExposedGlobalDataContainer = exposedGlobalDataContainer;
-
-            container.WebRequestsContainer = WebRequestsContainer.Create(
-                web3IdentityProvider,
-                texturesFuse,
-                container.DebugContainerBuilder,
-                staticSettings.WebRequestsBudget
-            );
-
+            container.WebRequestsContainer = WebRequestsContainer.Create(web3IdentityProvider,
+                container.DebugContainerBuilder, staticSettings.WebRequestsBudget);
             container.PhysicsTickProvider = new PhysicsTickProvider();
             container.FeatureFlagsCache = new FeatureFlagsCache();
             container.PortableExperiencesController = new ECSPortableExperiencesController(globalWorld, web3IdentityProvider, container.WebRequestsContainer.WebRequestController, container.ScenesCache, container.FeatureFlagsCache);
-
             container.FeatureFlagsProvider = new HttpFeatureFlagsProvider(container.WebRequestsContainer.WebRequestController,
                 container.FeatureFlagsCache);
 
@@ -219,7 +205,8 @@ namespace Global
                     diagnosticsContainer.Sentry!.AddCurrentSceneToScope(scope, container.ScenesCache.CurrentScene.Info);
             });
 
-            container.LoadingStatus = enableAnalytics ? new LoadingStatusAnalyticsDecorator(new LoadingStatus(), analyticsController) : new LoadingStatus();
+            container.LoadingStatus = enableAnalytics ?
+                new LoadingStatusAnalyticsDecorator(new LoadingStatus(), analyticsController) : new LoadingStatus();
 
             container.ECSWorldPlugins = new IDCLWorldPlugin[]
             {

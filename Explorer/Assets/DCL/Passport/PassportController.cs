@@ -164,7 +164,7 @@ namespace DCL.Passport
             else
                 OpenBadgesSection(inputData.BadgeIdSelected);
 
-            inputBlock.Disable(InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.CAMERA, InputMapComponent.Kind.PLAYER);
+            inputBlock.Disable(InputMapComponent.Kind.SHORTCUTS , InputMapComponent.Kind.CAMERA , InputMapComponent.Kind.PLAYER);
 
             viewInstance!.ErrorNotification.Hide(true);
 
@@ -175,7 +175,7 @@ namespace DCL.Passport
         {
             passportErrorsController!.Hide(true);
 
-            inputBlock.Enable(InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.CAMERA, InputMapComponent.Kind.PLAYER);
+            inputBlock.Enable(InputMapComponent.Kind.SHORTCUTS , InputMapComponent.Kind.CAMERA , InputMapComponent.Kind.PLAYER);
 
             characterPreviewController!.OnHide();
 
@@ -265,7 +265,6 @@ namespace DCL.Passport
                 module.Setup(profile);
 
             List<IPassportModuleController> passportModulesToSetup = passportSection == PassportSection.OVERVIEW ? overviewPassportModules : badgesPassportModules;
-
             foreach (IPassportModuleController module in passportModulesToSetup)
             {
                 if (module is BadgesDetails_PassportModuleController badgesDetailsController && !string.IsNullOrEmpty(badgeIdSelected))

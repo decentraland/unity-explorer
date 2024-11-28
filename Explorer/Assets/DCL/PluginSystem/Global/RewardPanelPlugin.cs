@@ -36,13 +36,12 @@ namespace DCL.PluginSystem.Global
             RewardInProgressNotification rewardInProgressNotification = (RewardInProgressNotification)notification;
 
             mvcManager.ShowAsync(RewardPanelController.IssueCommand(
-                           new RewardPanelParameter(
-                               notification.GetThumbnail(),
-                               rewardInProgressNotification.Metadata.Name,
-                               rewardInProgressNotification.Metadata.Rarity,
-                               rewardInProgressNotification.Metadata.Category))
-                       )
-                      .Forget();
+                new RewardPanelParameter(
+                    notification.GetThumbnail(),
+                    rewardInProgressNotification.Metadata.Name,
+                    rewardInProgressNotification.Metadata.Rarity,
+                    rewardInProgressNotification.Metadata.Category))
+            ).Forget();
         }
 
         public async UniTask InitializeAsync(RewardPanelSettings settings, CancellationToken ct)
@@ -55,9 +54,14 @@ namespace DCL.PluginSystem.Global
             mvcManager.RegisterController(rewardPanelController);
         }
 
-        public void Dispose() { }
+        public void Dispose()
+        {
 
-        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
+        }
+
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
+        {
+        }
 
         public class RewardPanelSettings : IDCLPluginSettings
         {
