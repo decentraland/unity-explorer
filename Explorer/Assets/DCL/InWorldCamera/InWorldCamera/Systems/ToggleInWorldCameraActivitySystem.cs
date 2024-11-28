@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
 using Cinemachine;
+using DCL.Character.CharacterCamera.Components;
 using DCL.Character.CharacterCamera.Systems;
 using DCL.CharacterCamera;
 using DCL.CharacterCamera.Components;
@@ -120,7 +121,10 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
 
             SwitchToThirdPersonCamera();
 
-            // cursor.Unlock();
+            cursor.Unlock();
+            ref var cursorComponent = ref World.Get<CursorComponent>(camera);
+            cursorComponent.CursorState = CursorState.Free;
+
             SwitchCameraInput(to: Kind.PLAYER);
 
             World.Remove<InWorldCamera, CameraTarget, CameraDampedFOV, CameraDampedAim, InWorldCameraInput>(camera);
@@ -133,7 +137,10 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
 
             SwitchToInWorldCamera();
 
-            // cursor.Lock();
+            cursor.Lock();
+            ref var cursorComponent = ref World.Get<CursorComponent>(camera);
+            cursorComponent.CursorState = CursorState.Locked;
+
             SwitchCameraInput(to: Kind.IN_WORLD_CAMERA);
 
             World.Add(camera,

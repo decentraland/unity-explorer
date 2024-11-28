@@ -28,8 +28,6 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.UI
 
         [field: Header("AUDIO")]
         [field: SerializeField] public AudioClipConfig SFXScreenshotCapture { get; private set; }
-        [field: SerializeField] public AudioClipConfig Open { get; private set; }
-        [field: SerializeField] public AudioClipConfig Close { get; private set; }
 
         [field: Header("BUTTONS")]
         [field: SerializeField] public Button CameraReelButton { get; private set; }
@@ -53,15 +51,11 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.UI
         protected override UniTask PlayShowAnimationAsync(CancellationToken ct)
         {
             canvasGroup.alpha = 0;
-            UIAudioEventsBus.Instance.SendPlayAudioEvent(Open);
             return canvasGroup.DOFade(1, ANIMATION_SPEED).SetEase(Ease.Linear).ToUniTask(cancellationToken: ct);
         }
 
-        protected override UniTask PlayHideAnimationAsync(CancellationToken ct)
-        {
-            UIAudioEventsBus.Instance.SendPlayAudioEvent(Close);
-            return canvasGroup.DOFade(0, ANIMATION_SPEED).SetEase(Ease.Linear).ToUniTask(cancellationToken: ct);
-        }
+        protected override UniTask PlayHideAnimationAsync(CancellationToken ct) =>
+            canvasGroup.DOFade(0, ANIMATION_SPEED).SetEase(Ease.Linear).ToUniTask(cancellationToken: ct);
 
         private Sequence CaptureVFXSequence(float splashDuration, float afterSplashPause, float transitionDuration)
         {

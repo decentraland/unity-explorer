@@ -84,7 +84,7 @@ namespace DCL.Input.Systems
         }
 
         [Query]
-        private void CheckExternalCameraLock(ref CameraComponent cameraComponent, ref CameraInput input)
+        private void CheckExternalCameraLock(ref CameraComponent cameraComponent)
         {
             shouldBeLocked = false;
             if (cameraComponent.IsDirty)
@@ -151,7 +151,7 @@ namespace DCL.Input.Systems
             }
 
             cursor.SetStyle(cursorStyle);
-            crosshairCanvas.SetCursorStyle(cursorStyle, cameraData.CameraMode == CameraMode.SDKCamera);
+            crosshairCanvas.SetCursorStyle(cursorStyle, cameraData.CameraMode == CameraMode.SDKCamera || cameraData.CameraMode == CameraMode.InWorld);
         }
 
         // We check if the gameObject is interactable or not, at least once.
@@ -187,7 +187,7 @@ namespace DCL.Input.Systems
             if (!cursor.IsLocked() && cursorComponent is { CursorState: CursorState.Locked })
                 nextState = CursorState.Free;
 
-            if (!isMouseOutOfBounds && isTemporalLock && cursorComponent is { CursorState: CursorState.Free, PositionIsDirty: true, IsOverUI: false })
+            if (!isMouseOutOfBounds && isTemporalLock && cursorComponent is { CursorState: CursorState.Free, IsOverUI: false })
                 nextState = CursorState.Panning;
 
             if (!isTemporalLock && cursorComponent is { CursorState: CursorState.Panning })
