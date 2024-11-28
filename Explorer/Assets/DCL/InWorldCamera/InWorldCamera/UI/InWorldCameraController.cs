@@ -29,7 +29,7 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.UI
 
         private bool shortcutPanelIsOpen;
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Fullscreen;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Overlay;
         private SingleInstanceEntity? camera => cameraInternal ??= world.CacheCamera();
 
         public InWorldCameraController([NotNull] ViewFactoryMethod viewFactory, Button sidebarButton, World world, IMVCManager mvcManager, ICameraReelStorageService storageService) : base(viewFactory)
@@ -66,9 +66,7 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.UI
         public void Show()
         {
             sidebarButton.OnSelect(null);
-
-            LaunchViewLifeCycleAsync(new CanvasOrdering(Layer, 200), new ControllerNoData(), default(CancellationToken))
-               .Forget();
+            mvcManager.ShowAsync(InWorldCameraController.IssueCommand(new ControllerNoData()));
 
             bool hasSpace = storageService.StorageStatus.HasFreeSpace;
             viewInstance!.TakeScreenshotButton.gameObject.SetActive(hasSpace);
@@ -97,8 +95,7 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.UI
             RequestDisableInWorldCamera();
 
             mvcManager.ShowAsync(
-                ExplorePanelController.IssueCommand(
-                    new ExplorePanelParameter(ExploreSections.CameraReel, BackpackSections.Avatar)));
+                ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.CameraReel, BackpackSections.Avatar)));
         }
 
         private void RequestTakeScreenshot()
