@@ -1,7 +1,11 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.AvatarRendering.Wearables;
+using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.Backpack;
 using DCL.Browser;
 using DCL.Character;
 using DCL.Chat.MessageBus;
@@ -47,6 +51,10 @@ namespace DCL.PluginSystem.Global
         private readonly IWebRequestController webRequestController;
         private readonly IProfileRepository profileRepository;
         private readonly IChatMessagesBus chatMessagesBus;
+        private readonly IWearableStorage wearableStorage;
+        private readonly IWearablesProvider wearablesProvider;
+        private readonly Arch.Core.World world;
+        private readonly URLDomain assetBundleURL;
         private readonly InWorldCameraFactory factory;
 
         private ScreenRecorder recorder;
@@ -59,7 +67,10 @@ namespace DCL.PluginSystem.Global
             RealmData realmData, Entity playerEntity, IPlacesAPIService placesAPIService, ICharacterObject characterObject, ICoroutineRunner coroutineRunner,
             ICameraReelStorageService cameraReelStorageService, ICameraReelScreenshotsStorage cameraReelScreenshotsStorage, IMVCManager mvcManager,
             ISystemClipboard systemClipboard, IDecentralandUrlsSource decentralandUrlsSource, IWebBrowser webBrowser, IWebRequestController webRequestController,
-            IProfileRepository profileRepository, IChatMessagesBus chatMessagesBus, IAssetsProvisioner assetsProvisioner)
+            IProfileRepository profileRepository, IChatMessagesBus chatMessagesBus, IAssetsProvisioner assetsProvisioner,
+            IWearableStorage wearableStorage, IWearablesProvider wearablesProvider,
+            Arch.Core.World world,
+            URLDomain assetBundleURL)
         {
             this.input = input;
             this.selfProfile = selfProfile;
@@ -78,6 +89,10 @@ namespace DCL.PluginSystem.Global
             this.profileRepository = profileRepository;
             this.chatMessagesBus = chatMessagesBus;
             this.assetsProvisioner = assetsProvisioner;
+            this.wearableStorage = wearableStorage;
+            this.wearablesProvider = wearablesProvider;
+            this.world = world;
+            this.assetBundleURL = assetBundleURL;
 
             factory = new InWorldCameraFactory();
         }
@@ -95,8 +110,26 @@ namespace DCL.PluginSystem.Global
             PhotoDetailView photoDetailViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.PhotoDetailPrefab, ct: ct)).GetComponent<PhotoDetailView>();
             ControllerBase<PhotoDetailView, PhotoDetailParameter>.ViewFactoryMethod viewFactoryMethod = PhotoDetailController.Preallocate(photoDetailViewAsset, null, out PhotoDetailView explorePanelView);
 
+            (NFTColorsSO rarityColorMappings, NftTypeIconSO categoryIconsMapping, NftTypeIconSO rarityBackgroundsMapping) = await UniTask.WhenAll(
+                assetsProvisioner.ProvideMainAssetValueAsync(settings.RarityColorMappings, ct),
+                assetsProvisioner.ProvideMainAssetValueAsync(settings.CategoryIconsMapping, ct),
+                assetsProvisioner.ProvideMainAssetValueAsync(settings.RarityBackgroundsMapping, ct));
+
             mvcManager.RegisterController(new PhotoDetailController(viewFactoryMethod,
-                new PhotoDetailInfoController(explorePanelView.GetComponentInChildren<PhotoDetailInfoView>(), cameraReelStorageService, webRequestController, profileRepository, mvcManager, webBrowser, chatMessagesBus),
+                new PhotoDetailInfoController(explorePanelView.GetComponentInChildren<PhotoDetailInfoView>(),
+                    cameraReelStorageService,
+                    webRequestController,
+                    profileRepository,
+                    mvcManager,
+                    webBrowser,
+                    chatMessagesBus,
+                    wearableStorage,
+                    wearablesProvider,
+                    decentralandUrlsSource,
+                    new ECSThumbnailProvider(realmData, world, assetBundleURL, webRequestController),
+                    rarityBackgroundsMapping,
+                    rarityColorMappings,
+                    categoryIconsMapping),
                 cameraReelScreenshotsStorage,
                 systemClipboard,
                 decentralandUrlsSource,
@@ -131,6 +164,14 @@ namespace DCL.PluginSystem.Global
             [field: Header("Photo detail")]
             [field: SerializeField] internal AssetReferenceGameObject PhotoDetailPrefab { get; private set; }
             [field: SerializeField, Tooltip("Spaces will be HTTP sanitized, care for special characters")] internal string ShareToXMessage { get; private set; }
+            [field: SerializeField]
+            internal AssetReferenceT<NftTypeIconSO> CategoryIconsMapping { get; private set; }
+
+            [field: SerializeField]
+            internal AssetReferenceT<NftTypeIconSO> RarityBackgroundsMapping { get; private set; }
+
+            [field: SerializeField]
+            internal AssetReferenceT<NFTColorsSO> RarityColorMappings { get; private set; }
         }
     }
 }

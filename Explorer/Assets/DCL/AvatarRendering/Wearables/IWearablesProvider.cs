@@ -1,3 +1,4 @@
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Wearables.Components;
 using System;
@@ -13,6 +14,8 @@ namespace DCL.AvatarRendering.Wearables
             string? category = null, CollectionType collectionType = CollectionType.All,
             string? name = null,
             List<IWearable>? results = null);
+
+        UniTask<IReadOnlyList<IWearable>> GetMissingDTOByURNs(List<URN> missingUrns, CancellationToken ct);
 
         public enum SortingField
         {

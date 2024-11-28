@@ -3424,29 +3424,9 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 5888857906923457301}
     m_Modifications:
-    - target: {fileID: 3578788839458141686, guid: 1726b4f11aba441ff8c67624362e9f92, type: 3}
-      propertyPath: m_Enabled
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4257879768617131048, guid: 1726b4f11aba441ff8c67624362e9f92, type: 3}
-      propertyPath: m_IsActive
-      value: 1
-      objectReference: {fileID: 0}
     - target: {fileID: 4407488380839927108, guid: 1726b4f11aba441ff8c67624362e9f92, type: 3}
       propertyPath: m_Name
       value: InfoSidePanelLoading
-      objectReference: {fileID: 0}
-    - target: {fileID: 4407488380839927108, guid: 1726b4f11aba441ff8c67624362e9f92, type: 3}
-      propertyPath: m_IsActive
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 7754206205638896819, guid: 1726b4f11aba441ff8c67624362e9f92, type: 3}
-      propertyPath: m_ShowMaskGraphic
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 8047090050746030544, guid: 1726b4f11aba441ff8c67624362e9f92, type: 3}
-      propertyPath: m_AnchoredPosition.y
-      value: -142
       objectReference: {fileID: 0}
     - target: {fileID: 8797775191845768574, guid: 1726b4f11aba441ff8c67624362e9f92, type: 3}
       propertyPath: m_Pivot.x
@@ -3527,10 +3507,6 @@ PrefabInstance:
     - target: {fileID: 8797775191845768574, guid: 1726b4f11aba441ff8c67624362e9f92, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 9120337457968213541, guid: 1726b4f11aba441ff8c67624362e9f92, type: 3}
-      propertyPath: m_Enabled
-      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

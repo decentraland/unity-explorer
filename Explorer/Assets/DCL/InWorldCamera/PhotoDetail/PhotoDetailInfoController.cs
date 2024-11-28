@@ -1,10 +1,14 @@
 using Cysharp.Threading.Tasks;
+using DCL.AvatarRendering.Wearables;
+using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.Backpack;
 using DCL.Browser;
 using DCL.Chat.Commands;
 using DCL.Chat.MessageBus;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using DCL.InWorldCamera.ReelActions;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Passport;
 using DCL.Profiles;
 using DCL.WebRequests;
@@ -43,7 +47,14 @@ namespace DCL.InWorldCamera.PhotoDetail
             IProfileRepository profileRepository,
             IMVCManager mvcManager,
             IWebBrowser webBrowser,
-            IChatMessagesBus chatMessagesBus)
+            IChatMessagesBus chatMessagesBus,
+            IWearableStorage wearableStorage,
+            IWearablesProvider wearablesProvider,
+            IDecentralandUrlsSource decentralandUrlsSource,
+            IThumbnailProvider thumbnailProvider,
+            NftTypeIconSO rarityBackgrounds,
+            NFTColorsSO rarityColors,
+            NftTypeIconSO categoryIcons)
         {
             this.view = view;
             this.cameraReelStorageService = cameraReelStorageService;
@@ -58,6 +69,13 @@ namespace DCL.InWorldCamera.PhotoDetail
                 profileRepository,
                 mvcManager,
                 webBrowser,
+                wearableStorage,
+                wearablesProvider,
+                decentralandUrlsSource,
+                thumbnailProvider,
+                rarityBackgrounds,
+                rarityColors,
+                categoryIcons,
                 VISIBLE_PERSON_DEFAULT_POOL_SIZE,
                 VISIBLE_PERSON_MAX_POOL_CAPACITY,
                 EQUIPPED_WEARABLE_DEFAULT_POOL_SIZE,

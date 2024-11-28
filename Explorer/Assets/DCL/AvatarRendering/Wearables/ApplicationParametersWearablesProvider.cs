@@ -70,6 +70,20 @@ namespace DCL.AvatarRendering.Wearables
             }
         }
 
+        public async UniTask<IReadOnlyList<IWearable>> GetMissingDTOByURNs(List<URN> missingUrns, CancellationToken ct)
+        {
+            (IReadOnlyCollection<IWearable>? maleWearables, IReadOnlyCollection<IWearable>? femaleWearables) = await UniTask.WhenAll(RequestPointersAsync(missingUrns, BodyShape.MALE, ct),
+                RequestPointersAsync(missingUrns, BodyShape.FEMALE, ct));
+            List<IWearable> result = new List<IWearable>();
+            if (maleWearables != null)
+                result.AddRange(maleWearables);
+
+            if (femaleWearables != null)
+                result.AddRange(femaleWearables);
+
+            return result;
+        }
+
         private async UniTask<IReadOnlyCollection<IWearable>?> RequestPointersAsync(IReadOnlyCollection<URN> pointers,
             BodyShape bodyShape,
             CancellationToken ct)

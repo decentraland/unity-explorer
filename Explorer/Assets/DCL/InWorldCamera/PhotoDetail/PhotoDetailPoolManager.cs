@@ -1,4 +1,8 @@
+using DCL.AvatarRendering.Wearables;
+using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.Backpack;
 using DCL.Browser;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Profiles;
 using DCL.WebRequests;
 using MVC;
@@ -21,6 +25,13 @@ namespace DCL.InWorldCamera.PhotoDetail
             IProfileRepository profileRepository,
             IMVCManager mvcManager,
             IWebBrowser webBrowser,
+            IWearableStorage wearableStorage,
+            IWearablesProvider wearablesProvider,
+            IDecentralandUrlsSource decentralandUrlsSource,
+            IThumbnailProvider thumbnailProvider,
+            NftTypeIconSO rarityBackgrounds,
+            NFTColorsSO rarityColors,
+            NftTypeIconSO categoryIcons,
             int visiblePersonDefaultCapacity,
             int visiblePersonMaxSize,
             int equippedWearableDefaultCapacity,
@@ -30,7 +41,7 @@ namespace DCL.InWorldCamera.PhotoDetail
                 () =>
                 {
                     VisiblePersonView view = GameObject.Instantiate(visiblePersonPrefab);
-                    return new VisiblePersonController(view, webRequestController, profileRepository, mvcManager, this);
+                    return new VisiblePersonController(view, webRequestController, profileRepository, mvcManager, wearableStorage, wearablesProvider, this);
                 },
                 visiblePerson => visiblePerson.view.gameObject.SetActive(true),
                 visiblePerson =>
@@ -51,9 +62,9 @@ namespace DCL.InWorldCamera.PhotoDetail
                 () =>
                 {
                     EquippedWearableView view = GameObject.Instantiate(equippedWearablePrefab);
-                    return new EquippedWearableController(view, webBrowser);
+                    return new EquippedWearableController(view, webBrowser, decentralandUrlsSource, thumbnailProvider, rarityBackgrounds, rarityColors, categoryIcons);
                 },
-                equippedWearable => equippedWearable.view.gameObject.SetActive(true),
+                equippedWearable => equippedWearable.view.gameObject.SetActive(false),
                 equippedWearable =>
                 {
                     equippedWearable.view.transform.SetParent(unusedEquippedWearablePoolObjectParent.transform, false);

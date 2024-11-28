@@ -1,5 +1,10 @@
 using Cysharp.Threading.Tasks;
+using DCL.AvatarRendering.Loading.Components;
+using DCL.AvatarRendering.Wearables;
+using DCL.AvatarRendering.Wearables.Components;
+using DCL.Backpack;
 using DCL.Browser;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using System;
 using System.Threading;
 
@@ -9,17 +14,43 @@ namespace DCL.InWorldCamera.PhotoDetail
     {
         internal readonly EquippedWearableView view;
         private readonly IWebBrowser webBrowser;
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
+        private readonly IThumbnailProvider thumbnailProvider;
+        private readonly NftTypeIconSO rarityBackgrounds;
+        private readonly NFTColorsSO rarityColors;
+        private readonly NftTypeIconSO categoryIcons;
+
+        private IWearable currentWearable;
 
 		public EquippedWearableController(EquippedWearableView view,
-            IWebBrowser webBrowser)
+            IWebBrowser webBrowser,
+            IDecentralandUrlsSource decentralandUrlsSource,
+            IThumbnailProvider thumbnailProvider,
+            NftTypeIconSO rarityBackgrounds,
+            NFTColorsSO rarityColors,
+            NftTypeIconSO categoryIcons)
 	    {
             this.view = view;
             this.webBrowser = webBrowser;
+            this.decentralandUrlsSource = decentralandUrlsSource;
+            this.thumbnailProvider = thumbnailProvider;
+            this.rarityBackgrounds = rarityBackgrounds;
+            this.rarityColors = rarityColors;
+            this.categoryIcons = categoryIcons;
+
+            this.view.wearableBuyButton.onClick.AddListener(BuyWearableButtonClicked);
         }
 
-        public async UniTask LoadWearable(string urn, CancellationToken ct)
+        public async UniTask LoadWearable(IWearable wearable, CancellationToken ct)
         {
-            view.wearableBuyButton.onClick.AddListener(BuyWearableButtonClicked);
+            currentWearable = wearable;
+
+            view.wearableName.text = wearable.DTO.Metadata.name;
+            view.rarityBackground.sprite = rarityBackgrounds.GetTypeImage(wearable.GetRarity());
+            view.flapBackground.color = rarityColors.GetColor(wearable.GetRarity());
+            view.categoryImage.sprite = categoryIcons.GetTypeImage(wearable.GetCategory());
+
+            view.wearableIcon.sprite = await thumbnailProvider.GetAsync(wearable, ct);
         }
 
         private void BuyWearableButtonClicked()
@@ -27,8 +58,7 @@ namespace DCL.InWorldCamera.PhotoDetail
             async UniTaskVoid AnimateAndAwaitAsync()
             {
                 await UniTask.Delay((int)(view.buyButtonAnimationDuration * 1000));
-                //TODO: get the marketplace URL from the wearable
-                webBrowser.OpenUrl("https://market.decentraland.org/browse?category=wearables");
+                webBrowser.OpenUrl(currentWearable.GetMarketplaceLink(decentralandUrlsSource));
             }
 
             AnimateAndAwaitAsync().Forget();
@@ -36,7 +66,7 @@ namespace DCL.InWorldCamera.PhotoDetail
 
         public void Release()
         {
-            view.wearableBuyButton.onClick.RemoveListener(BuyWearableButtonClicked);
+            //TODO: remove if not needed
         }
 
         public void Dispose()

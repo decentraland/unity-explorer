@@ -1,13 +1,17 @@
 using Arch.Core;
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.Web3.Identities;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;
+using ECS.StreamableLoading.Common.Components;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using ParamPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Helpers.WearablesResponse, DCL.AvatarRendering.Wearables.Components.Intentions.GetWearableByParamIntention>;
+using DTOPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Helpers.WearablesResponse, DCL.AvatarRendering.Wearables.Components.Intentions.GetWearableDTOByPointersIntention>;
 
 namespace DCL.AvatarRendering.Wearables
 {
@@ -82,6 +86,24 @@ namespace DCL.AvatarRendering.Wearables
             // Should be the same assigned in the intention as `results`
             return (wearablesPromise.Result.Value.Asset.Wearables,
                 wearablesPromise.Result.Value.Asset.TotalAmount);
+        }
+
+        public async UniTask<IReadOnlyList<IWearable>> GetMissingDTOByURNs(List<URN> missingUrns, CancellationToken ct)
+        {
+            var wearablesPromise = DTOPromise.Create(world!,
+                new GetWearableDTOByPointersIntention(missingUrns, new CommonLoadingArguments(URLAddress.EMPTY, cancellationTokenSource: new CancellationTokenSource())),
+                PartitionComponent.TOP_PRIORITY);
+
+            wearablesPromise = await wearablesPromise.ToUniTaskAsync(world!, cancellationToken: ct);
+
+            ct.ThrowIfCancellationRequested();
+
+            if (wearablesPromise.Result == null) return Enumerable.Empty<IWearable>().ToList();
+            if (!wearablesPromise.Result.HasValue) return Enumerable.Empty<IWearable>().ToList();
+            if (!wearablesPromise.Result!.Value.Succeeded) return Enumerable.Empty<IWearable>().ToList();
+
+            // Should be the same assigned in the intention as `results`
+            return wearablesPromise.Result.Value.Asset.Wearables;
         }
 
         private static string GetDirectionParamValue(IWearablesProvider.OrderBy orderBy)
