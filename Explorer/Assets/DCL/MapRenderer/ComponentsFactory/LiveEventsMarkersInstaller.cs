@@ -21,13 +21,12 @@ namespace DCL.MapRenderer.ComponentsFactory
         private IMapRendererSettings mapSettings;
         private IEventsApiService eventsApiService;
 
-        public async UniTask InstallAsync(
+        public async UniTask<IMapLayerController> InstallAsync(
             Dictionary<MapLayer, IMapLayerController> layerWriter,
             List<IZoomScalingLayer> zoomScalingWriter,
             MapRendererConfiguration configuration,
             ICoordsUtils coordsUtils,
             IMapCullingController cullingController,
-            IAssetsProvisioner assetsProv,
             IMapRendererSettings settings,
             IEventsApiService eventsApi,
             ObjectPool<ClusterMarkerObject> clusterObjectsPool,
@@ -45,6 +44,9 @@ namespace DCL.MapRenderer.ComponentsFactory
                 actionOnGet: obj => obj.gameObject.SetActive(true),
                 actionOnRelease: obj => obj.gameObject.SetActive(false));
 
+            var clusterController = new ClusterController(cullingController, clusterObjectsPool, CreateClusterMarker, coordsUtils);
+            clusterController.SetClusterIcon(mapSettings.CategoryIconMappings.GetCategoryImage(MapLayer.LiveEvents));
+
             LiveEventsMarkersController liveEventsMarkersController = new LiveEventsMarkersController(
                 eventsApiService,
                 objectsPool,
@@ -54,12 +56,13 @@ namespace DCL.MapRenderer.ComponentsFactory
                 cullingController,
                 mapSettings.CategoryIconMappings,
                 MapLayer.LiveEvents,
-                new ClusterController(cullingController, clusterObjectsPool, CreateClusterMarker, coordsUtils, MapLayer.LiveEvents, mapSettings.CategoryIconMappings)
+                clusterController
             );
 
             await liveEventsMarkersController.InitializeAsync(cancellationToken);
             writer.Add(MapLayer.LiveEvents, liveEventsMarkersController);
             zoomScalingWriter.Add(liveEventsMarkersController);
+            return liveEventsMarkersController;
         }
 
         private static CategoryMarkerObject CreatePoolMethod(MapRendererConfiguration configuration, CategoryMarkerObject prefab, ICoordsUtils coordsUtils)

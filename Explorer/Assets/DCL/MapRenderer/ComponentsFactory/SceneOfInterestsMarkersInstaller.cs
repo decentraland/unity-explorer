@@ -45,6 +45,9 @@ namespace DCL.MapRenderer.ComponentsFactory
                 actionOnGet: obj => obj.gameObject.SetActive(true),
                 actionOnRelease: obj => obj.gameObject.SetActive(false));
 
+            var clusterController = new ClusterController(cullingController, clusterObjectsPool, CreateClusterMarker, coordsUtils);
+            clusterController.SetClusterIcon(mapSettings.CategoryIconMappings.GetCategoryImage(MapLayer.ScenesOfInterest));
+
             var controller = new ScenesOfInterestMarkersController(
                 placesAPIService,
                 objectsPool,
@@ -52,7 +55,7 @@ namespace DCL.MapRenderer.ComponentsFactory
                 configuration.ScenesOfInterestMarkersRoot,
                 coordsUtils,
                 cullingController,
-                new ClusterController(cullingController, clusterObjectsPool, CreateClusterMarker, coordsUtils, MapLayer.ScenesOfInterest, mapSettings.CategoryIconMappings)
+                clusterController
             );
 
             await controller.InitializeAsync(cancellationToken);

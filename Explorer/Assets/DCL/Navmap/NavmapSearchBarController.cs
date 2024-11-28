@@ -4,6 +4,7 @@ using DCL.Input.Component;
 using DCL.UI;
 using System;
 using System.Threading;
+using UnityEngine;
 using Utility;
 
 namespace DCL.Navmap
@@ -232,7 +233,6 @@ namespace DCL.Navmap
             UpdateFilterAndSorting(NavmapSearchPlaceFilter.All, NavmapSearchPlaceSorting.None);
             currentSearchText = string.Empty;
             searchCancellationToken = searchCancellationToken.SafeRestart();
-
             navmapBus.SearchForPlaceAsync(INavmapBus.SearchPlaceParams.CreateWithDefaultParams(
                           page: 0,
                           filter: currentPlaceFilter,

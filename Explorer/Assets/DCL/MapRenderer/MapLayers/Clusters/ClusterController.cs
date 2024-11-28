@@ -15,24 +15,25 @@ namespace DCL.MapRenderer.MapLayers.Cluster
         private readonly IObjectPool<ClusterMarkerObject> clusterObjectsPool;
         private readonly CategoryMarkersController.ClusterMarkerBuilder clusterBuilder;
         private readonly ICoordsUtils coordsUtils;
-        private readonly MapLayer mapLayer;
-        private readonly CategoryIconMappingsSO categoryIconMappings;
+
         private int previousZoomLevel = -1;
+        private Sprite clusterIcon;
 
         public ClusterController(
             IMapCullingController mapCullingController,
             IObjectPool<ClusterMarkerObject> clusterObjectsPool,
             CategoryMarkersController.ClusterMarkerBuilder clusterBuilder,
-            ICoordsUtils coordsUtils,
-            MapLayer mapLayer,
-            CategoryIconMappingsSO categoryIconMappings)
+            ICoordsUtils coordsUtils)
         {
             this.mapCullingController = mapCullingController;
             this.clusterObjectsPool = clusterObjectsPool;
             this.clusterBuilder = clusterBuilder;
             this.coordsUtils = coordsUtils;
-            this.mapLayer = mapLayer;
-            this.categoryIconMappings = categoryIconMappings;
+        }
+
+        public void SetClusterIcon(Sprite currentIcon)
+        {
+            clusterIcon = currentIcon;
         }
 
         public void UpdateClusters(int zoomLevel, float baseZoom, float zoom, Dictionary<Vector2Int, IClusterableMarker> markers)
@@ -75,7 +76,7 @@ namespace DCL.MapRenderer.MapLayers.Cluster
 
                     var clusterMarker = clusterBuilder(clusterObjectsPool, mapCullingController, coordsUtils);
                     clusterMarker.SetData(string.Format("{0}", cell.Value.Count), averagePosition);
-                    clusterMarker.SetCategorySprite(categoryIconMappings.GetCategoryImage(mapLayer));
+                    clusterMarker.SetCategorySprite(clusterIcon);
                     clusterMarker.SetZoom(coordsUtils.ParcelSize, baseZoom, zoom);
                     clusterMarker.OnBecameVisible();
                     clusteredMarkers.Add(clusterMarker);

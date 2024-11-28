@@ -47,6 +47,9 @@ namespace DCL.MapRenderer.ComponentsFactory
                 actionOnGet: obj => obj.gameObject.SetActive(true),
                 actionOnRelease: obj => obj.gameObject.SetActive(false));
 
+            var clusterController = new ClusterController(cullingController, clusterObjectsPool, CreateClusterMarker, coordsUtils);
+            clusterController.SetClusterIcon(mapSettings.CategoryIconMappings.GetCategoryImage(MapLayer.SearchResults));
+
             var controller = new SearchResultMarkersController(
                 objectsPool,
                 CreateMarker,
@@ -54,7 +57,7 @@ namespace DCL.MapRenderer.ComponentsFactory
                 coordsUtils,
                 cullingController,
                 navmapBus,
-                new ClusterController(cullingController, clusterObjectsPool, CreateClusterMarker, coordsUtils, MapLayer.SearchResults, mapSettings.CategoryIconMappings)
+                clusterController
             );
 
             await controller.InitializeAsync(cancellationToken);

@@ -2,6 +2,7 @@
 using DCL.MapRenderer.Culling;
 using DCL.MapRenderer.MapLayers.Cluster;
 using DCL.Navmap;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -14,7 +15,6 @@ namespace DCL.MapRenderer.MapLayers.Categories
     internal class CategoryMarkersController : MapLayerControllerBase, IMapCullingListener<ICategoryMarker>, IMapLayerController, IZoomScalingLayer
     {
         private const string EMPTY_PARCEL_NAME = "Empty parcel";
-        private readonly MapLayer mapLayer;
 
         internal delegate ICategoryMarker CategoryMarkerBuilder(
             IObjectPool<CategoryMarkerObject> objectsPool,
@@ -28,7 +28,7 @@ namespace DCL.MapRenderer.MapLayers.Categories
 
         private readonly IObjectPool<CategoryMarkerObject> objectsPool;
         private readonly CategoryMarkerBuilder builder;
-        private readonly CategoryIconMappingsSO categoryIconMappings;
+        private readonly CategoryLayerIconMappingsSO categoryIconMappings;
         private readonly ClusterController clusterController;
         private readonly INavmapBus navmapBus;
 
@@ -46,8 +46,7 @@ namespace DCL.MapRenderer.MapLayers.Categories
             Transform instantiationParent,
             ICoordsUtils coordsUtils,
             IMapCullingController cullingController,
-            CategoryIconMappingsSO categoryIconMappings,
-            MapLayer mapLayer,
+            CategoryLayerIconMappingsSO categoryIconMappings,
             ClusterController clusterController,
             INavmapBus navmapBus)
             : base(instantiationParent, coordsUtils, cullingController)
@@ -55,7 +54,6 @@ namespace DCL.MapRenderer.MapLayers.Categories
             this.objectsPool = objectsPool;
             this.builder = builder;
             this.categoryIconMappings = categoryIconMappings;
-            this.mapLayer = mapLayer;
             this.clusterController = clusterController;
             this.navmapBus = navmapBus;
             this.navmapBus.OnPlaceSearched += OnPlaceSearched;
@@ -68,8 +66,11 @@ namespace DCL.MapRenderer.MapLayers.Categories
             if (string.IsNullOrEmpty(searchparams.category) || !string.IsNullOrEmpty(searchparams.text))
                 return;
 
-            if (!string.IsNullOrEmpty(searchparams.category) && searchparams.category == mapLayer.ToString())
-                ShowPlaces(places);
+            if (!string.IsNullOrEmpty(searchparams.category))
+            {
+                Enum.TryParse(searchparams.category, out CategoriesEnum mapLayer);
+                ShowPlaces(places, mapLayer);
+            }
         }
 
         public async UniTask InitializeAsync(CancellationToken cancellationToken)
@@ -77,9 +78,11 @@ namespace DCL.MapRenderer.MapLayers.Categories
 
         }
 
-        private void ShowPlaces(IReadOnlyList<PlacesData.PlaceInfo> places)
+        private void ShowPlaces(IReadOnlyList<PlacesData.PlaceInfo> places, CategoriesEnum mapLayer)
         {
             ReleaseMarkers();
+            Sprite categoryImage = categoryIconMappings.GetCategoryImage(mapLayer);
+            clusterController.SetClusterIcon(categoryImage);
             foreach (PlacesData.PlaceInfo placeInfo in places)
             {
                 if (markers.ContainsKey(MapLayerUtils.GetParcelsCenter(placeInfo)))
@@ -92,7 +95,7 @@ namespace DCL.MapRenderer.MapLayers.Categories
                 var position = coordsUtils.CoordsToPosition(MapLayerUtils.GetParcelsCenter(placeInfo));
 
                 marker.SetData(placeInfo.title, position);
-                marker.SetCategorySprite(categoryIconMappings.GetCategoryImage(mapLayer));
+                marker.SetCategorySprite(categoryImage);
                 markers.Add(MapLayerUtils.GetParcelsCenter(placeInfo), marker);
                 marker.SetZoom(coordsUtils.ParcelSize, baseZoom, zoom);
 

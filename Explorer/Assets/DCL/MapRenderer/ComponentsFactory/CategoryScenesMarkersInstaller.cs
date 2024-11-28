@@ -41,55 +41,19 @@ namespace DCL.MapRenderer.ComponentsFactory
                 actionOnGet: obj => obj.gameObject.SetActive(true),
                 actionOnRelease: obj => obj.gameObject.SetActive(false));
 
-            var artController = CreateCategoryController(MapLayer.Art, objectsPool, clusterObjectsPool, configuration, coordsUtils, cullingController, navmapBus);
-            var gameController = CreateCategoryController(MapLayer.Game, objectsPool, clusterObjectsPool, configuration, coordsUtils, cullingController, navmapBus);
-            var cryptoController = CreateCategoryController(MapLayer.Crypto, objectsPool, clusterObjectsPool, configuration, coordsUtils, cullingController, navmapBus);
-            var educationController = CreateCategoryController(MapLayer.Education, objectsPool, clusterObjectsPool, configuration, coordsUtils, cullingController, navmapBus);
-            var socialController = CreateCategoryController(MapLayer.Social, objectsPool, clusterObjectsPool, configuration, coordsUtils, cullingController, navmapBus);
-            var businessController = CreateCategoryController(MapLayer.Business, objectsPool, clusterObjectsPool, configuration, coordsUtils, cullingController, navmapBus);
-            var casinoController = CreateCategoryController(MapLayer.Casino, objectsPool, clusterObjectsPool, configuration, coordsUtils, cullingController, navmapBus);
-            var fashionController = CreateCategoryController(MapLayer.Fashion, objectsPool, clusterObjectsPool, configuration, coordsUtils, cullingController, navmapBus);
-            var musicController = CreateCategoryController(MapLayer.Music, objectsPool, clusterObjectsPool, configuration, coordsUtils, cullingController, navmapBus);
-            var shopController = CreateCategoryController(MapLayer.Shop, objectsPool, clusterObjectsPool, configuration, coordsUtils, cullingController, navmapBus);
-            var sportsController = CreateCategoryController(MapLayer.Sports, objectsPool, clusterObjectsPool, configuration, coordsUtils, cullingController, navmapBus);
-
-            await InitializeControllerAsync(artController, MapLayer.Art, cancellationToken);
-            zoomScalingWriter.Add(artController);
-            await InitializeControllerAsync(gameController, MapLayer.Game, cancellationToken);
-            zoomScalingWriter.Add(gameController);
-            await InitializeControllerAsync(cryptoController, MapLayer.Crypto, cancellationToken);
-            zoomScalingWriter.Add(cryptoController);
-            await InitializeControllerAsync(educationController, MapLayer.Education, cancellationToken);
-            zoomScalingWriter.Add(educationController);
-            await InitializeControllerAsync(socialController, MapLayer.Social, cancellationToken);
-            zoomScalingWriter.Add(socialController);
-            await InitializeControllerAsync(businessController, MapLayer.Business, cancellationToken);
-            zoomScalingWriter.Add(businessController);
-            await InitializeControllerAsync(casinoController, MapLayer.Casino, cancellationToken);
-            zoomScalingWriter.Add(casinoController);
-            await InitializeControllerAsync(fashionController, MapLayer.Fashion, cancellationToken);
-            zoomScalingWriter.Add(fashionController);
-            await InitializeControllerAsync(musicController, MapLayer.Music, cancellationToken);
-            zoomScalingWriter.Add(musicController);
-            await InitializeControllerAsync(shopController, MapLayer.Shop, cancellationToken);
-            zoomScalingWriter.Add(shopController);
-            await InitializeControllerAsync(sportsController, MapLayer.Sports, cancellationToken);
-            zoomScalingWriter.Add(sportsController);
-        }
-
-        private CategoryMarkersController CreateCategoryController(MapLayer layer, ObjectPool<CategoryMarkerObject> objectsPool, ObjectPool<ClusterMarkerObject> clusterObjectsPool, MapRendererConfiguration configuration, ICoordsUtils coordsUtils, IMapCullingController cullingController, INavmapBus navmapBus)
-        {
-            return new CategoryMarkersController(
+            var CategoryMarkersController = new CategoryMarkersController(
                 objectsPool,
                 CreateMarker,
                 configuration.CategoriesMarkersRoot,
                 coordsUtils,
                 cullingController,
-                mapSettings.CategoryIconMappings,
-                layer,
-                new ClusterController(cullingController, clusterObjectsPool, CreateClusterMarker, coordsUtils, layer, mapSettings.CategoryIconMappings),
+                mapSettings.CategoryLayerIconMappings,
+                new ClusterController(cullingController, clusterObjectsPool, CreateClusterMarker, coordsUtils),
                 navmapBus
             );
+
+            await InitializeControllerAsync(CategoryMarkersController, MapLayer.Category, cancellationToken);
+            zoomScalingWriter.Add(CategoryMarkersController);
         }
 
         private async UniTask InitializeControllerAsync(IMapLayerController controller, MapLayer layer, CancellationToken cancellationToken)
