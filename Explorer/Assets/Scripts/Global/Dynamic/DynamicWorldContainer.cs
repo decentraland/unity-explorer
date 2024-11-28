@@ -268,8 +268,7 @@ namespace Global.Dynamic
                 new EcsEmoteProvider(globalWorld, staticContainer.RealmData));
 
             container.wearablesProvider = new ApplicationParametersWearablesProvider(appArgs,
-                new ECSWearablesProvider(identityCache, globalWorld),
-                globalWorld);
+                new ECSWearablesProvider(identityCache, globalWorld));
 
             container.SceneRoomMetaDataSource = new SceneRoomMetaDataSource(staticContainer.RealmData, staticContainer.CharacterContainer.Transform, placesAPIService, dynamicWorldParams.IsolateScenesCommunication);
 

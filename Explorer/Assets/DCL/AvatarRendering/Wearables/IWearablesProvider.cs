@@ -1,5 +1,6 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Components;
 using System;
 using System.Collections.Generic;
@@ -9,13 +10,15 @@ namespace DCL.AvatarRendering.Wearables
 {
     public interface IWearablesProvider
     {
-        UniTask<(IReadOnlyList<IWearable> results, int totalAmount)> GetAsync(int pageSize, int pageNumber, CancellationToken ct,
+        public UniTask<(IReadOnlyList<IWearable> results, int totalAmount)> GetAsync(int pageSize, int pageNumber, CancellationToken ct,
             SortingField sortingField = SortingField.Date, OrderBy orderBy = OrderBy.Descending,
             string? category = null, CollectionType collectionType = CollectionType.All,
             string? name = null,
             List<IWearable>? results = null);
 
-        UniTask<IReadOnlyList<IWearable>> GetMissingDTOByURNs(List<URN> missingUrns, CancellationToken ct);
+        public UniTask<IReadOnlyCollection<IWearable>?> RequestPointersAsync(IReadOnlyCollection<URN> pointers,
+            BodyShape bodyShape,
+            CancellationToken ct);
 
         public enum SortingField
         {

@@ -1,5 +1,6 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
@@ -155,11 +156,25 @@ namespace DCL.InWorldCamera.PhotoDetail
                     missingUrns.Add(urn);
             }
 
-            await wearablesProvider.GetMissingDTOByURNs(missingUrns, ct);
+            await GetMissingWearablesByUrns(missingUrns, ct);
 
             ListPool<URN>.Release(missingUrns);
 
             return allUrns;
+        }
+
+        private async UniTask<IReadOnlyList<IWearable>> GetMissingWearablesByUrns(List<URN> missingUrns, CancellationToken ct)
+        {
+            (IReadOnlyCollection<IWearable>? maleWearables, IReadOnlyCollection<IWearable>? femaleWearables) = await UniTask.WhenAll(wearablesProvider.RequestPointersAsync(missingUrns, BodyShape.MALE, ct),
+                wearablesProvider.RequestPointersAsync(missingUrns, BodyShape.FEMALE, ct));
+            List<IWearable> result = new List<IWearable>();
+            if (maleWearables != null)
+                result.AddRange(maleWearables);
+
+            if (femaleWearables != null)
+                result.AddRange(femaleWearables);
+
+            return result;
         }
 
         public void Dispose()
