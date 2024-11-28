@@ -4,22 +4,24 @@ using UnityEngine;
 
 namespace SceneRunner.Scene
 {
-    static public class AssetValidation
+    public static class AssetValidation
     {
         public const int AB_MIN_SUPPORTED_VERSION_WINDOWS = 15;
         public const int AB_MIN_SUPPORTED_VERSION_MAC = 16;
+        public const string SceneIDError = "SceneID: ";
+        public const string WearableIDError = "WearableID: ";
 
-        public static bool ValidateSceneAssetBundleManifest(SceneAssetBundleManifest sceneAssetBundleManifest, string errorMessage)
+        public static bool ValidateSceneAssetBundleManifest(SceneAssetBundleManifest sceneAssetBundleManifest, string errorIDType, string errorID)
         {
-            return ValidateVersion(sceneAssetBundleManifest.GetVersion(), errorMessage);
+            return ValidateVersion(sceneAssetBundleManifest.GetVersion(), errorIDType, errorID);
         }
 
-        public static bool ValidateSceneAbDto(SceneAbDto sceneAbDto, string errorMessage)
+        public static bool ValidateSceneAbDto(SceneAbDto sceneAbDto, string errorIDType, string errorID)
         {
-            return ValidateVersion(sceneAbDto.version, errorMessage);
+            return ValidateVersion(sceneAbDto.version, errorIDType, errorID);
         }
 
-        private static bool ValidateVersion(string version, string errorText)
+        private static bool ValidateVersion(string version, string errorIDType, string errorID)
         {
             if (string.IsNullOrEmpty(version))
                 return true;
@@ -43,7 +45,7 @@ namespace SceneRunner.Scene
 
             if (intVersion < supportedVersion)
             {
-                ReportHub.LogError(ReportCategory.ASSET_BUNDLES, $"Asset bundle version {intVersion} is not supported. Minimum supported version is {supportedVersion}, Asset bundle {errorText} requires rebuild");
+                ReportHub.LogError(ReportCategory.ASSET_BUNDLES, $"Asset bundle version {intVersion} is not supported. Minimum supported version is {supportedVersion}, Asset bundle {errorIDType + errorID} requires rebuild");
                 return false;
             }
 

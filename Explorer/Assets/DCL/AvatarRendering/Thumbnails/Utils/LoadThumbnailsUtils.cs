@@ -48,7 +48,7 @@ namespace DCL.AvatarRendering.Thumbnails.Utils
             var sceneAbDto = await webRequestController.GetAsync(new CommonArguments(urlBuilder.Build(), attemptsCount: 1), ct, reportCategory)
                                                        .CreateFromJson<SceneAbDto>(WRJsonParser.Unity, WRThreadFlags.SwitchBackToMainThread);
 
-            AssetValidation.ValidateSceneAbDto(sceneAbDto, "Wearable Hash: " + hash);
+            AssetValidation.ValidateSceneAbDto(sceneAbDto, AssetValidation.WearableIDError, hash);
 
             return new SceneAssetBundleManifest(assetBundleURL, sceneAbDto.Version, sceneAbDto.Files, hash, sceneAbDto.Date);
         }
