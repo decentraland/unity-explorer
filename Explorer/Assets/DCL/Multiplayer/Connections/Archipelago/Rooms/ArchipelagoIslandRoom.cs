@@ -15,6 +15,7 @@ using System.Net.WebSockets;
 using System.Threading;
 using UnityEngine;
 using Utility.Multithreading;
+using Utility.Types;
 
 namespace DCL.Multiplayer.Connections.Archipelago.Rooms
 {
@@ -36,7 +37,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
                 new WebSocketArchipelagoLiveConnection(
                     () => new ClientWebSocket(),
                     new ArrayMemoryPool(ArrayPool<byte>.Create())
-                ).WithLog(),
+                ).WithLog().WithAutoReconnect(),
                 new ArrayMemoryPool(ArrayPool<byte>.Create()),
                 multiPool
             ).WithLog(),
@@ -99,7 +100,15 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
         {
             await using ExecuteOnThreadPoolScope _ = await ExecuteOnThreadPoolScope.NewScopeWithReturnOnMainThreadAsync();
             IWeb3Identity identity = web3IdentityCache.EnsuredIdentity();
-            await signFlow.EnsureConnectedAsync(adapterUrl, token);
+
+            var result = await signFlow.ReconnectAsync(adapterUrl, token);
+
+            if (!result.Success)
+            {
+                ReportHub.LogError(ReportCategory.COMMS_SCENE_HANDLER, $"Cannot reconnect to {adapterUrl}: {result.ErrorMessage}");
+                return LightResult<string>.FAILURE;
+            }
+
             string ethereumAddress = identity.Address;
             var messageForSignResult = await signFlow.MessageForSignAsync(ethereumAddress, token);
 
@@ -110,7 +119,17 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
                 return LightResult<string>.FAILURE;
             }
 
-            string signedMessage = identity.Sign(messageForSignResult.Result).ToJson();
+            string signedMessage;
+            try
+            {
+                signedMessage = identity.Sign(messageForSignResult.Result).ToJson();
+            }
+            catch (Exception e)
+            {
+                ReportHub.LogError(ReportCategory.COMMS_SCENE_HANDLER, $"Cannot sign message for welcome peer id: {e}");
+                return LightResult<string>.FAILURE;
+            }
+
             ReportHub.Log(ReportCategory.COMMS_SCENE_HANDLER, $"Signed message: {signedMessage}");
             return await signFlow.WelcomePeerIdAsync(signedMessage, token);
         }

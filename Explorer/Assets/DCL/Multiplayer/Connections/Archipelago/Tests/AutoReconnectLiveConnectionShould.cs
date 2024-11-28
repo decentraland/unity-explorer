@@ -1,0 +1,104 @@
+﻿using Cysharp.Threading.Tasks;
+using DCL.Multiplayer.Connections.Archipelago.LiveConnections;
+using DCL.Multiplayer.Connections.Archipelago.Rooms;
+using LiveKit.Internal.FFIClients.Pools.Memory;
+using NSubstitute;
+using NUnit.Framework;
+using System;
+using System.Threading;
+using System.Threading.Tasks;
+using UnityEngine.TestTools;
+using Utility.Types;
+
+namespace DCL.Multiplayer.Connections.Archipelago.Tests
+{
+    public class AutoReconnectLiveConnectionShould
+    {
+        private IArchipelagoLiveConnection origin;
+        private AutoReconnectLiveConnection autoReconnect;
+
+        [SetUp]
+        public void Setup()
+        {
+            origin = Substitute.For<IArchipelagoLiveConnection>();
+            autoReconnect = new AutoReconnectLiveConnection(origin);
+        }
+
+        [Test]
+        [TestCaseSource(nameof(TIMEOUT_VALUES))]
+        public async Task SpinConnectAsync(int ms)
+        {
+            await SpinFunctionUntilCancelled(ms, async token => await autoReconnect.ConnectAsync("test", token));
+        }
+
+        [Test]
+        [TestCaseSource(nameof(TIMEOUT_VALUES))]
+        public async Task SpinSendAsync(int ms)
+        {
+            async UniTask<EnumResult<IArchipelagoLiveConnection.ResponseError>> SendError()
+            {
+                await UniTask.Delay(50);
+                return EnumResult<IArchipelagoLiveConnection.ResponseError>.ErrorResult(IArchipelagoLiveConnection.ResponseError.ConnectionClosed, "Test Error");
+            }
+
+            origin.SendAsync(Arg.Any<MemoryWrap>(), Arg.Any<CancellationToken>())
+                  .Returns(args => SendError());
+
+            await SpinFunctionUntilCancelled(ms, async token => await autoReconnect.SendAsync(new MemoryWrap(), token));
+        }
+
+        [Test]
+        [TestCaseSource(nameof(TIMEOUT_VALUES))]
+        public async Task SpinReceiveAsync(int ms)
+        {
+            async UniTask<EnumResult<MemoryWrap, IArchipelagoLiveConnection.ResponseError>> ReceiveError()
+            {
+                await UniTask.Delay(50);
+                return EnumResult<MemoryWrap, IArchipelagoLiveConnection.ResponseError>.ErrorResult(IArchipelagoLiveConnection.ResponseError.ConnectionClosed, "Test Error");
+            }
+
+            origin.ReceiveAsync(Arg.Any<CancellationToken>())
+                  .Returns(args => ReceiveError());
+
+            await SpinFunctionUntilCancelled(ms, async token => await autoReconnect.ReceiveAsync(token));
+        }
+
+        private async Task SpinFunctionUntilCancelled(int ms, Func<CancellationToken, UniTask> func)
+        {
+            MockConnectAsyncError();
+
+            var cts = new CancellationTokenSource();
+
+            async UniTask WaitAndCancel()
+            {
+                await UniTask.Delay(ms);
+                cts.Cancel();
+            }
+
+            var funcFinished = false;
+
+            var winIndex = await UniTask.WhenAny(WaitAndCancel(), func(cts.Token).ContinueWith(() => funcFinished = true));
+            Assert.That(winIndex, Is.EqualTo(0));
+
+            await UniTask.Delay(ms + 200);
+
+            Assert.That(funcFinished, Is.True);
+        }
+
+        private void MockConnectAsyncError()
+        {
+            origin.IsConnected.Returns(false);
+
+            async UniTask<Result> ConnectAsync(CancellationToken token)
+            {
+                await UniTask.Delay(50, cancellationToken: token).SuppressCancellationThrow();
+                return Result.ErrorResult("Test Error");
+            }
+
+            origin.ConnectAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
+                  .Returns(args => ConnectAsync(args.Arg<CancellationToken>()));
+        }
+
+        private static readonly int[] TIMEOUT_VALUES = { 2, 200 };
+    }
+}

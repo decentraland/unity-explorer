@@ -1,4 +1,5 @@
 using System;
+using UnityEngine.Assertions;
 
 namespace Utility.Types
 {
@@ -44,6 +45,12 @@ namespace Utility.Types
 
         public static Result<T> CancelledResult() =>
             new (default(T)!, nameof(OperationCanceledException));
+
+        public static implicit operator Result<T>(Result result)
+        {
+            Assert.IsFalse(result.Success);
+            return ErrorResult(result.ErrorMessage!);
+        }
     }
 
     public readonly struct EnumResult<TErrorEnum>

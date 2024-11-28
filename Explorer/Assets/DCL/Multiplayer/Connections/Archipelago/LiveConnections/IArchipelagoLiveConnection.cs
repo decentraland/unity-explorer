@@ -13,7 +13,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
 
         UniTask<Result> ConnectAsync(string adapterUrl, CancellationToken token);
 
-        UniTask DisconnectAsync(CancellationToken token);
+        UniTask<Result> DisconnectAsync(CancellationToken token);
 
         /// <param name="data">takes the ownership for the data</param>
         /// <param name="token">cancellation token</param>
@@ -31,17 +31,17 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
 
     public static class ArchipelagoLiveConnectionExtensions
     {
-        public static IArchipelagoLiveConnection WithAutoReconnect(this IArchipelagoLiveConnection connection) =>
-            new AutoReconnectLiveConnection(connection);
+        public static AutoReconnectLiveConnection WithAutoReconnect(this IArchipelagoLiveConnection connection) =>
+            new (connection);
 
-        public static IArchipelagoLiveConnection WithLog(this IArchipelagoLiveConnection connection) =>
-            new LogArchipelagoLiveConnection(connection);
+        public static LogArchipelagoLiveConnection WithLog(this IArchipelagoLiveConnection connection) =>
+            new (connection);
 
-        public static async UniTask SendAsync<T>(this IArchipelagoLiveConnection connection, T message, IMemoryPool memoryPool, CancellationToken token) where T: IMessage
+        public static async UniTask<EnumResult<IArchipelagoLiveConnection.ResponseError>> SendAsync<T>(this IArchipelagoLiveConnection connection, T message, IMemoryPool memoryPool, CancellationToken token) where T: IMessage
         {
             using MemoryWrap memory = memoryPool.Memory(message);
             message.WriteTo(memory);
-            await connection.SendAsync(memory, token);
+            return await connection.SendAsync(memory, token);
         }
 
         /// <summary>

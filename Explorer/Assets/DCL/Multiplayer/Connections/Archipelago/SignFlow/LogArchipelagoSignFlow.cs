@@ -25,11 +25,12 @@ namespace DCL.Multiplayer.Connections.Archipelago.SignFlow
             this.log = log;
         }
 
-        public async UniTask EnsureConnectedAsync(string adapterUrl, CancellationToken token)
+        public async UniTask<Result> ReconnectAsync(string adapterUrl, CancellationToken token)
         {
             log($"{PREFIX} Connect start for {adapterUrl}");
-            await origin.EnsureConnectedAsync(adapterUrl, token);
+            var res = await origin.ReconnectAsync(adapterUrl, token);
             log($"{PREFIX} Connect finish for {adapterUrl}");
+            return res;
         }
 
         public async UniTask<LightResult<string>> MessageForSignAsync(string ethereumAddress, CancellationToken token)

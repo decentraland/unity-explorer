@@ -55,7 +55,7 @@ namespace DCL.Multiplayer.Connections.Demo
                         () => new ClientWebSocket(),
                         memoryPool
                     )
-                ).WithLog(),
+                ).WithLog().WithAutoReconnect(),
                 memoryPool,
                 multiPool
             ).WithLog();
