@@ -13,9 +13,11 @@ using DCL.WebRequests;
 using ECS.Abstract;
 using ECS.Unity.Groups;
 using ECS.Unity.Textures.Components;
+using ECS.Unity.Transforms.Components;
 using RenderHeads.Media.AVProVideo;
 using SceneRunner.Scene;
 using System.Threading;
+using UnityEngine;
 
 namespace DCL.SDKComponents.MediaStream
 {
@@ -71,6 +73,11 @@ namespace DCL.SDKComponents.MediaStream
 
             if (component.State != VideoState.VsError)
                 component.OpenMediaPromise.UrlReachabilityResolveAsync(webRequestController, component.URL, GetReportData(), component.Cts.Token).SuppressCancellationThrow().Forget();
+
+            // There is no way to set this from the scene code, at the moment
+            // If the player has no transform, it will appear at 0,0,0 and nobody will hear it if it is in 3D
+            if (component.MediaPlayer.TryGetComponent(out AudioSource mediaPlayerAudio))
+                mediaPlayerAudio.spatialBlend = World.Has<TransformComponent>(entity) ? 1.0f : 0.0f;
 
             World.Add(entity, component);
         }
