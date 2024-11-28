@@ -24,7 +24,8 @@ namespace DCL.RewardPanel
             IWebRequestController webRequestController,
             NFTColorsSO nftRarityColors,
             NftTypeIconSO nftRarityBackgrounds,
-            NftTypeIconSO nftCategoryIcons) : base(viewFactory)
+            NftTypeIconSO nftCategoryIcons
+        ) : base(viewFactory)
         {
             this.webRequestController = webRequestController;
             this.nftRarityColors = nftRarityColors;
@@ -51,7 +52,6 @@ namespace DCL.RewardPanel
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
             viewInstance.ContinueButton.OnClickAsync(ct);
-
     }
 
     public readonly struct RewardPanelParameter
