@@ -1,4 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
+using DCL.Audio;
 using DCL.UI;
 using DG.Tweening;
 using MVC;
@@ -14,27 +15,27 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.UI
 
         [SerializeField] private CanvasGroup canvasGroup;
 
-        [field: Space]
-        [field: SerializeField] public WarningNotificationView NoStorageNotification { get; private set; }
-
-        [field: Header("SHORTCUTS INFO PANEL")]
-        [field: SerializeField] public ElementWithCloseArea ShortcutsInfoPanel { get; private set; }
-        [SerializeField] private Image openShortcutsIcon;
-        [SerializeField] private Image closeShortcutsIcon;
-
         [Header("CAPTURE VFX")]
         [SerializeField] private Image whiteSplashImage;
         [SerializeField] private RectTransform cameraReelIcon;
         [SerializeField] private Image animatedImage;
-
         private Sequence currentVfxSequence;
+
+        [field: Space]
+        [field: SerializeField] public WarningNotificationView NoStorageNotification { get; private set; }
+
+        [field: SerializeField] public ElementWithCloseArea ShortcutsInfoPanel { get; private set; }
+
+        [field: Header("AUDIO")]
+        [field: SerializeField] public AudioClipConfig SFXScreenshotCapture { get; private set; }
+        [field: SerializeField] public AudioClipConfig Open { get; private set; }
+        [field: SerializeField] public AudioClipConfig Close { get; private set; }
 
         [field: Header("BUTTONS")]
         [field: SerializeField] public Button CameraReelButton { get; private set; }
         [field: SerializeField] public Button TakeScreenshotButton { get; private set; }
         [field: SerializeField] public Button CloseButton { get; private set; }
         [field: SerializeField] public Button ShortcutsInfoButton { get; private set; }
-
 
         public void ScreenshotCaptureAnimation(Texture2D screenshotImage, float splashDuration, float afterSplashPause, float transitionDuration)
         {
@@ -52,15 +53,13 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.UI
         protected override UniTask PlayShowAnimationAsync(CancellationToken ct)
         {
             canvasGroup.alpha = 0;
-            // UIAudioEventsBus.Instance.SendPlayContinuousAudioEvent(BackgroundMusic);
-            // UIAudioEventsBus.Instance.SendPlayAudioEvent(OpenMenu);
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(Open);
             return canvasGroup.DOFade(1, ANIMATION_SPEED).SetEase(Ease.Linear).ToUniTask(cancellationToken: ct);
         }
 
         protected override UniTask PlayHideAnimationAsync(CancellationToken ct)
         {
-            // UIAudioEventsBus.Instance.SendStopPlayingContinuousAudioEvent(BackgroundMusic);
-            // UIAudioEventsBus.Instance.SendPlayAudioEvent(CloseMenu);
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(Close);
             return canvasGroup.DOFade(0, ANIMATION_SPEED).SetEase(Ease.Linear).ToUniTask(cancellationToken: ct);
         }
 

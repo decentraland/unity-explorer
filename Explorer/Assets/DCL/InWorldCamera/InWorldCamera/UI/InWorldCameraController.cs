@@ -1,5 +1,6 @@
 ﻿using Arch.Core;
 using Cysharp.Threading.Tasks;
+using DCL.Audio;
 using DCL.CharacterCamera;
 using DCL.ExplorePanel;
 using DCL.InWorldCamera.CameraReelStorageService;
@@ -87,7 +88,7 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.UI
 
         public void PlayScreenshotFX(Texture2D image, float splashDuration, float middlePauseDuration, float transitionDuration)
         {
-            // AudioScriptableObjects.takeScreenshot.Play();
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(viewInstance.SFXScreenshotCapture);
             viewInstance.ScreenshotCaptureAnimation(image, splashDuration, middlePauseDuration, transitionDuration);
         }
 
