@@ -19,7 +19,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
 
         private const int MEMORY_LIMIT = MB * 1024; //GB
 
-        public static readonly string CHILD_PROCESS = $"node.exe --mmfInputCapacity {MMF_INPUT_CAPACITY} --mmfOutputCapacity {MMF_OUTPUT_CAPACITY}";
+        public const string CHILD_PROCESS = "node.exe";
 
         private static MemoryMappedFile? mmfInput;
         private static MemoryMappedFile? mmfOutput;
@@ -73,7 +73,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
 
             this.inputArgs = inputArgs;
 
-            NativeMethodsProcessesHub.ProcessesHubStop();
+            StopProcess();
         }
 
         public void Dispose()
@@ -84,7 +84,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
             pipeWriter?.Dispose();
             pipeReader?.Dispose();
 
-            NativeMethodsProcessesHub.ProcessesHubStop();
+            StopProcess();
         }
 
         public async UniTask<EnumResult<IOwnedTexture2D, NativeMethods.ImageResult>> TextureFromBytesAsync(IntPtr bytes, int bytesLength, TextureType type, CancellationToken token)
@@ -146,7 +146,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
             }
             catch (Exception e)
             {
-                NativeMethodsProcessesHub.ProcessesHubStop();
+                StopProcess();
                 return Result.ErrorResult($"Cannot write data to named pipe: {e.Message}");
             }
         }
@@ -168,9 +168,9 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
             bool isMemoryOverwhelmed = IsMemoryOverwhelmed();
 
             if (isMemoryOverwhelmed)
-                NativeMethodsProcessesHub.ProcessesHubStop();
+                StopProcess();
 
-            if (NativeMethodsProcessesHub.ProcessesHubIsRunning() == false || isMemoryOverwhelmed || pipe!.IsConnected == false)
+            if (IsProcessRunning() == false || isMemoryOverwhelmed || pipe!.IsConnected == false)
             {
                 if (pipe != null)
                 {
@@ -191,14 +191,14 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
                 pipeReader = new BinaryReader(pipe);
                 pipeWriter = new BinaryWriter(pipe);
 
-                var result = NativeMethodsProcessesHub.ProcessesHubStart(CHILD_PROCESS);
+                var result = StartProcess();
 
                 if (result != 0)
                 {
                     ReportHub.LogWarning(ReportCategory.TEXTURES, $"ProcessesHubStart Cannot launch process: {CHILD_PROCESS} with result code: {result}, try again with force terminate");
-                    NativeMethodsProcessesHub.ProcessesHubStop();
+                    StopProcess();
 
-                    result = NativeMethodsProcessesHub.ProcessesHubStart(CHILD_PROCESS);
+                    result = StartProcess();
 
                     if (result != 0)
                         ReportHub.LogError(ReportCategory.TEXTURES, $"ProcessesHubStart Cannot launch process with force terminate: {CHILD_PROCESS} with result code: {result}");
@@ -216,17 +216,51 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
             }
         }
 
+        private static bool IsProcessRunning()
+        {
+            bool r = NativeMethodsProcessesHub.ProcessesHubIsRunning();
+
+            ReportHub.Log(
+                ReportCategory.TEXTURES,
+                $"NodeTexturesFuse process is running: {r}"
+            );
+
+            return r;
+        }
+
+        private static PH_Error StartProcess()
+        {
+            var r = NativeMethodsProcessesHub.ProcessesHubStart(CHILD_PROCESS);
+
+            ReportHub.Log(
+                ReportCategory.TEXTURES,
+                $"NodeTexturesFuse start process '{CHILD_PROCESS}' with result: {r}"
+            );
+
+            return r;
+        }
+
+        private static void StopProcess()
+        {
+            var r = NativeMethodsProcessesHub.ProcessesHubStop();
+
+            ReportHub.Log(
+                ReportCategory.TEXTURES,
+                $"NodeTexturesFuse stop process with result: {r}"
+            );
+        }
+
         private static bool IsMemoryOverwhelmed()
         {
             ulong usedRAM = NativeMethodsProcessesHub.ProcessesUsedRAM();
-
-            if (usedRAM == 0)
-                return false;
 
             ReportHub.Log(
                 ReportCategory.TEXTURES,
                 $"NodeTexturesFuse used memory by node process: {(double)usedRAM / MB} MB"
             );
+
+            if (usedRAM == 0)
+                return false;
 
             return usedRAM > MEMORY_LIMIT;
         }

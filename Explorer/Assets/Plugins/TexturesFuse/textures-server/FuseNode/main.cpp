@@ -160,6 +160,8 @@ ImageResult NewImage(
 
 int main(int argc, char *argv[])
 {
+    SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX | SEM_NOOPENFILEERRORBOX);
+
     printf("Start Node\n");
 
     int mmfInputCapacity = 0;
@@ -181,8 +183,9 @@ int main(int argc, char *argv[])
 
     if (!mmfInputCapacity || !mmfOutputCapacity)
     {
-        printf("mmfInputCapacity or mmfOutputCapacity not provided\n");
-        return -1;
+        printf("mmfInputCapacity or mmfOutputCapacity not provided");
+        mmfInputCapacity = 64 * mb;
+        mmfOutputCapacity = 64 * mb;
     }
 
     printf("mmfInputCapacity: %d, mmfOutputCapacity: %d\n", mmfInputCapacity, mmfOutputCapacity);
