@@ -25,6 +25,11 @@ namespace DCL.InWorldCamera.PhotoDetail
         [field: SerializeField] internal Button twitterButton { get; private set; }
         [field: SerializeField] internal Button infoButton { get; private set; }
         [field: SerializeField] internal RectTransform infoButtonImageRectTransform { get; private set; }
+        [field: SerializeField] internal CanvasGroup deleteReelModal { get; private set; }
+        [field: SerializeField] internal float deleteModalAnimationDuration { get; private set; } = 0.3f;
+        [field: SerializeField] internal Button cancelDeleteIntentButton { get; private set; }
+        [field: SerializeField] internal Button cancelDeleteIntentBackgroundButton { get; private set; }
+        [field: SerializeField] internal Button deleteReelButton { get; private set; }
 
         private void Awake()
         {

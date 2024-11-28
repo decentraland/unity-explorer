@@ -41,7 +41,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
             }
         }
 
-        public event Action<List<CameraReelResponseCompact>, int>? ThumbnailClicked;
+        public event Action<List<CameraReelResponseCompact>, int, Action<CameraReelResponseCompact>>? ThumbnailClicked;
         public event Action<CameraReelStorageStatus>? StorageUpdated;
 
         private const int THUMBNAIL_POOL_DEFAULT_CAPACITY = 100;
@@ -209,7 +209,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
                 CameraReelStorageStatus response = await cameraReelStorageService.DeleteScreenshotAsync(reelToDeleteInfo.Id, ct);
 
                 int deletedIndex = -1;
-                for (int i = beginVisible; i < currentSize; i++)
+                for (int i = 0; i < currentSize; i++)
                     if (deletedIndex >= 0)
                         thumbnailImages[i - 1] = thumbnailImages[i];
                     else if (thumbnailImages[i].CameraReelResponse.id == reelToDeleteInfo.Id)
@@ -323,7 +323,11 @@ namespace DCL.InWorldCamera.CameraReelGallery
                 IReadOnlyList<ReelThumbnailController> thumbnailViews = monthGridView.Setup(bucket.Key, bucket.Value, optionButtonController,
                     (cameraReelResponse, sprite) => reelThumbnailCache.Add(cameraReelResponse, sprite),
                     cameraReelResponse =>
-                        ThumbnailClicked?.Invoke(pagedCameraReelManager.AllOrderedResponses, pagedCameraReelManager.AllOrderedResponses.IndexOf(cameraReelResponse))
+                        ThumbnailClicked?.Invoke(pagedCameraReelManager.AllOrderedResponses, pagedCameraReelManager.AllOrderedResponses.IndexOf(cameraReelResponse), compact =>
+                        {
+                            reelToDelete = compact;
+                            DeleteScreenshot();
+                        })
                     );
 
                 for (int i = 0; i < thumbnailViews.Count; i++)

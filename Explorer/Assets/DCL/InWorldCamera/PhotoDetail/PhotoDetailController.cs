@@ -9,14 +9,18 @@ using DG.Tweening;
 using MVC;
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using Utility;
 
 namespace DCL.InWorldCamera.PhotoDetail
 {
     public class PhotoDetailController : ControllerBase<PhotoDetailView, PhotoDetailParameter>
     {
+        private const int ANIMATION_DELAY = 300;
+
         private readonly PhotoDetailInfoController photoDetailInfoController;
         private readonly ICameraReelScreenshotsStorage cameraReelScreenshotsStorage;
         private readonly ISystemClipboard systemClipboard;
@@ -52,6 +56,33 @@ namespace DCL.InWorldCamera.PhotoDetail
             this.photoDetailInfoController.JumpIn += JumpInClicked;
         }
 
+        private void ShowDeleteModal()
+        {
+            // explorePanelEscapeAction.RegisterEscapeAction(HideDeleteModal);
+            viewInstance!.deleteReelModal.gameObject.SetActive(true);
+            viewInstance.deleteReelModal.DOFade(1f, viewInstance.deleteModalAnimationDuration);
+        }
+
+        private void HideDeleteModal(InputAction.CallbackContext callbackContext = default)
+        {
+            // explorePanelEscapeAction.RemoveEscapeAction(HideDeleteModal);
+            viewInstance!.deleteReelModal.DOFade(0f, viewInstance.deleteModalAnimationDuration).OnComplete(() => viewInstance.deleteReelModal.gameObject.SetActive(false));
+        }
+
+        private void DeletionModalCancelClick(bool waitForAnimation = true)
+        {
+            async UniTaskVoid AnimateAndAwaitAsync()
+            {
+                await UniTask.Delay(ANIMATION_DELAY);
+                HideDeleteModal();
+            }
+
+            if (waitForAnimation)
+                AnimateAndAwaitAsync().Forget();
+            else
+                HideDeleteModal();
+        }
+
         private void JumpInClicked() =>
             isClosing = true;
 
@@ -69,8 +100,20 @@ namespace DCL.InWorldCamera.PhotoDetail
             viewInstance!.downloadButton.onClick.AddListener(DownloadReelClicked);
             viewInstance!.linkButton.onClick.AddListener(CopyReelLinkClicked);
             viewInstance!.twitterButton.onClick.AddListener(ShareReelClicked);
+            viewInstance!.deleteButton.onClick.AddListener(ShowDeleteModal);
+            viewInstance!.cancelDeleteIntentButton?.onClick.AddListener(() => DeletionModalCancelClick());
+            viewInstance!.cancelDeleteIntentBackgroundButton?.onClick.AddListener(() => DeletionModalCancelClick(false));
+            viewInstance!.deleteReelButton?.onClick.AddListener(DeleteScreenshot);
 
             ShowReel(inputData.CurrentReelIndex);
+        }
+
+        private void DeleteScreenshot()
+        {
+            if (!inputData.UserOwnedReels) return;
+
+            inputData.ExecuteDeleteAction(currentReelIndex);
+            isClosing = true;
         }
 
         protected override void OnViewInstantiated()
@@ -86,6 +129,8 @@ namespace DCL.InWorldCamera.PhotoDetail
             viewInstance!.downloadButton.onClick.RemoveListener(DownloadReelClicked);
             viewInstance!.linkButton.onClick.RemoveListener(CopyReelLinkClicked);
             viewInstance!.twitterButton.onClick.RemoveListener(ShareReelClicked);
+            viewInstance!.deleteButton.onClick.RemoveListener(ShowDeleteModal);
+            HideDeleteModal();
 
             viewInstance.mainImageCanvasGroup.alpha = 0;
             photoDetailInfoController.Release();
@@ -154,17 +199,22 @@ namespace DCL.InWorldCamera.PhotoDetail
             UniTask.WhenAny(viewInstance.closeButton.OnClickAsync(ct),UniTask.WaitUntil(() => isClosing, cancellationToken: ct));
     }
 
-    public readonly struct PhotoDetailParameter
+    public struct PhotoDetailParameter
     {
         public readonly List<CameraReelResponseCompact> AllReels;
         public readonly int CurrentReelIndex;
         public readonly bool UserOwnedReels;
+        public event Action<CameraReelResponseCompact> ReelDeleteIntention;
 
-        public PhotoDetailParameter(List<CameraReelResponseCompact> allReels, int currentReelIndex, bool userOwnedReels)
+        public PhotoDetailParameter(List<CameraReelResponseCompact> allReels, int currentReelIndex, bool userOwnedReels, Action<CameraReelResponseCompact> reelDeleteAction)
         {
             this.AllReels = allReels;
             this.CurrentReelIndex = currentReelIndex;
             this.UserOwnedReels = userOwnedReels;
+            ReelDeleteIntention = reelDeleteAction;
         }
+
+        public void ExecuteDeleteAction(int index) =>
+            ReelDeleteIntention?.Invoke(AllReels[index]);
     }
 }
