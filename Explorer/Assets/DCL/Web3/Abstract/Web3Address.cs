@@ -5,6 +5,7 @@ namespace DCL.Web3
 {
     public readonly struct Web3Address
     {
+        public readonly string OriginalFormat;
         private readonly string address;
 
         public Web3Address(IWeb3Account web3Account) : this(web3Account.Address.address) {
@@ -12,6 +13,7 @@ namespace DCL.Web3
 
         public Web3Address(string address)
         {
+            OriginalFormat = address;
             this.address = address.ToLower();
         }
 

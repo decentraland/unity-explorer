@@ -30,6 +30,7 @@
         {
             public const string MESSAGE_SENT = "chat_message_sent";
             public const string BUBBLE_SWITCHED = "chat_bubble_switched";
+            public const string OPEN_SUPPORT = "open_support";
         }
 
         public static class Profile

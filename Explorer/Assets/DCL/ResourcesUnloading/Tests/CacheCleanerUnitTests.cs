@@ -2,6 +2,7 @@
 using DCL.AvatarRendering.Loading.Assets;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.LOD;
+using DCL.Optimization;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.Profiles;
@@ -37,6 +38,7 @@ namespace DCL.ResourcesUnloading.Tests
         private IRoadAssetPool roadAssetPool;
         private IEmoteStorage emoteStorage;
         private IStreamableCache<ProfileData, GetProfileIntention> profileIntentionCache;
+        private IJsSourcesCache jsSourcesCache;
 
         [SetUp]
         public void SetUp()
@@ -58,6 +60,7 @@ namespace DCL.ResourcesUnloading.Tests
             nftShapeCache = Substitute.For<IStreamableCache<Texture2DData, GetNFTShapeIntention>>();
             emoteStorage = Substitute.For<IEmoteStorage>();
             profileIntentionCache = Substitute.For<IStreamableCache<ProfileData, GetProfileIntention>>();
+            jsSourcesCache = Substitute.For<IJsSourcesCache>();
 
             cacheCleaner = new CacheCleaner(releasablePerformanceBudget);
 
@@ -74,6 +77,7 @@ namespace DCL.ResourcesUnloading.Tests
             cacheCleaner.Register(nftShapeCache);
             cacheCleaner.Register(emoteStorage);
             cacheCleaner.Register(profileIntentionCache);
+            cacheCleaner.Register(jsSourcesCache);
         }
 
         [TestCase(true, 1)]
@@ -95,6 +99,7 @@ namespace DCL.ResourcesUnloading.Tests
             assetBundleCache.Received(callsAmount).Unload(releasablePerformanceBudget, Arg.Any<int>());
             materialPool.Received(callsAmount).ClearThrottled(Arg.Any<int>());
             profileCache.Received(callsAmount).Unload(releasablePerformanceBudget, Arg.Any<int>());
+            jsSourcesCache.Received(callsAmount).Unload(releasablePerformanceBudget);
         }
     }
 }

@@ -22,8 +22,9 @@ namespace DCL.Character.CharacterCamera.Systems
     [UpdateInGroup(typeof(CameraGroup))]
     public partial class ControlCinemachineVirtualCameraSystem : BaseUnityLoopSystem
     {
+        private readonly ICinemachineCameraAudioSettings cinemachineCameraAudioSettings;
+
         private SingleInstanceEntity inputMap;
-        private ICinemachineCameraAudioSettings cinemachineCameraAudioSettings;
         private int hotkeySwitchStateDirection = 1;
 
         internal ControlCinemachineVirtualCameraSystem(World world, ICinemachineCameraAudioSettings cinemachineCameraAudioSettings) : base(world)
@@ -45,7 +46,7 @@ namespace DCL.Character.CharacterCamera.Systems
             cinemachinePreset.ThirdPersonCameraData.Camera.enabled = false;
             cinemachinePreset.DroneViewCameraData.Camera.enabled = false;
             cameraState.CurrentCamera = cinemachinePreset.ThirdPersonCameraData.Camera;
-            SetActiveCamera(cinemachinePreset.DefaultCameraMode, cinemachinePreset, ref camera, ref cameraState);
+            ProcessCameraActivation(cinemachinePreset.DefaultCameraMode, cinemachinePreset, ref camera, ref cameraState);
         }
 
         protected override void Update(float t)
@@ -111,7 +112,7 @@ namespace DCL.Character.CharacterCamera.Systems
             if (IsCorrectCameraEnabled(camera.Mode, cinemachinePreset))
                 return;
 
-            SetActiveCamera(targetCameraMode, cinemachinePreset, ref camera, ref cameraState);
+            ProcessCameraActivation(targetCameraMode, cinemachinePreset, ref camera, ref cameraState);
         }
 
         private static void SetActiveCamera(ref CinemachineCameraState cameraState, CinemachineVirtualCameraBase camera)
@@ -120,24 +121,27 @@ namespace DCL.Character.CharacterCamera.Systems
             camera.enabled = true;
         }
 
-        private void SetActiveCamera(CameraMode targetCameraMode, ICinemachinePreset cinemachinePreset, ref CameraComponent camera, ref CinemachineCameraState cameraState)
+        private void ProcessCameraActivation(CameraMode targetCameraMode, ICinemachinePreset cinemachinePreset, ref CameraComponent camera, ref CinemachineCameraState cameraState)
         {
             CameraMode currentCameraMode = GetCurrentCameraMode(cameraState.CurrentCamera, cinemachinePreset);
 
             cameraState.CurrentCamera.enabled = false;
             camera.Mode = targetCameraMode;
 
-            if (targetCameraMode != CameraMode.Free && currentCameraMode == CameraMode.Free)
+            if (targetCameraMode != currentCameraMode)
             {
-                ref InputMapComponent inputMapComponent = ref inputMap.GetInputMapComponent(World);
-                inputMapComponent.UnblockInput(InputMapComponent.Kind.PLAYER);
-                inputMapComponent.BlockInput(InputMapComponent.Kind.FREE_CAMERA);
-            }
-            else if (targetCameraMode == CameraMode.Free && currentCameraMode != CameraMode.Free)
-            {
-                ref InputMapComponent inputMapComponent = ref inputMap.GetInputMapComponent(World);
-                inputMapComponent.UnblockInput(InputMapComponent.Kind.FREE_CAMERA);
-                inputMapComponent.BlockInput(InputMapComponent.Kind.PLAYER);
+                if (targetCameraMode == CameraMode.Free)
+                {
+                    ref InputMapComponent inputMapComponent = ref inputMap.GetInputMapComponent(World);
+                    inputMapComponent.UnblockInput(InputMapComponent.Kind.FREE_CAMERA);
+                    inputMapComponent.BlockInput(InputMapComponent.Kind.PLAYER);
+                }
+                else if (currentCameraMode == CameraMode.Free)
+                {
+                    ref InputMapComponent inputMapComponent = ref inputMap.GetInputMapComponent(World);
+                    inputMapComponent.UnblockInput(InputMapComponent.Kind.PLAYER);
+                    inputMapComponent.BlockInput(InputMapComponent.Kind.FREE_CAMERA);
+                }
             }
 
             switch (camera.Mode)

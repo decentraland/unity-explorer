@@ -20,10 +20,16 @@ using System;
 using System.Linq;
 using System.Threading;
 using DCL.Diagnostics;
+using DCL.FeatureFlags;
 using DCL.Ipfs;
+using DCL.Optimization.PerformanceBudgeting;
+using DCL.Profiling;
+using DCL.ResourcesUnloading;
+using DCL.Web3;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common;
 using Global.Dynamic.TeleportOperations;
+using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
@@ -50,7 +56,8 @@ namespace Global.Dynamic
         private readonly bool landscapeEnabled;
         private readonly ObjectProxy<Entity> cameraEntity;
         private readonly CameraSamplingData cameraSamplingData;
-        private bool isLocalSceneDevelopment;
+        private readonly bool isLocalSceneDevelopment;
+        private readonly FeatureFlagsCache featureFlagsCache;
 
         private URLDomain currentRealm;
         private Vector2Int currentParcel;
@@ -78,7 +85,10 @@ namespace Global.Dynamic
             ObjectProxy<Entity> cameraEntity,
             CameraSamplingData cameraSamplingData,
             bool isLocalSceneDevelopment,
-            ILoadingStatus loadingStatus)
+            ILoadingStatus loadingStatus,
+            ICacheCleaner cacheCleaner,
+            IMemoryUsageProvider memoryUsageProvider,
+            FeatureFlagsCache featureFlagsCache)
         {
             this.loadingScreen = loadingScreen;
             this.mapRenderer = mapRenderer;
@@ -95,7 +105,7 @@ namespace Global.Dynamic
             this.isLocalSceneDevelopment = isLocalSceneDevelopment;
             this.globalWorld = globalWorld;
             this.loadingStatus = loadingStatus;
-
+            this.featureFlagsCache = featureFlagsCache;
             var livekitTimeout = TimeSpan.FromSeconds(10f);
 
             realmChangeOperations = new ITeleportOperation[]
@@ -108,13 +118,18 @@ namespace Global.Dynamic
                 new ChangeRealmTeleportOperation(this),
                 new LoadLandscapeTeleportOperation(this),
                 new PrewarmRoadAssetPoolsTeleportOperation(realmController, roadsPlugin),
+                new UnloadCacheImmediateTeleportOperation(cacheCleaner, memoryUsageProvider),
                 new MoveToParcelInNewRealmTeleportOperation(this),
-                new RestartRoomAsyncTeleportOperation(roomHub, livekitTimeout), new CompleteLoadingStatus()
+                new RestartRoomAsyncTeleportOperation(roomHub, livekitTimeout),
+                new CompleteLoadingStatus()
             };
 
             teleportInSameRealmOperation = new ITeleportOperation[]
             {
-                new RestartLoadingStatus(), new MoveToParcelInSameRealmTeleportOperation(this), new CompleteLoadingStatus()
+                new RestartLoadingStatus(),
+                new UnloadCacheImmediateTeleportOperation(cacheCleaner, memoryUsageProvider),
+                new MoveToParcelInSameRealmTeleportOperation(this),
+                new CompleteLoadingStatus()
             };
 
         }
@@ -238,8 +253,15 @@ namespace Global.Dynamic
             if (isWorld)
                 waitForSceneReadiness = await TeleportToWorldSpawnPointAsync(parcelToTeleport, teleportLoadReport, ct);
             else
+            {
+                if (parcelToTeleport == Vector2Int.zero &&
+                    featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.GENESIS_STARTING_PARCEL) &&
+                    featureFlagsCache.Configuration.TryGetTextPayload(FeatureFlagsStrings.GENESIS_STARTING_PARCEL, FeatureFlagsStrings.STRING_VARIANT, out string parcelCoords))
+                {
+                    RealmHelper.TryParseParcelFromString(parcelCoords, out parcelToTeleport);
+                }
                 waitForSceneReadiness = await TeleportToParcelAsync(parcelToTeleport, teleportLoadReport, ct);
-
+            }
             // add camera sampling data to the camera entity to start partitioning
             Assert.IsTrue(cameraEntity.Configured);
             globalWorld.Add(cameraEntity.Object, cameraSamplingData);
@@ -256,7 +278,7 @@ namespace Global.Dynamic
         }
 
         public async UniTask<Result> TryInitializeTeleportToParcelAsync(Vector2Int parcel, CancellationToken ct,
-            bool isLocal = false)
+            bool isLocal = false, bool forceChangeRealm = false)
         {
             ct.ThrowIfCancellationRequested();
 
@@ -264,7 +286,7 @@ namespace Global.Dynamic
             if (!parcelCheckResult.Success)
                 return parcelCheckResult;
 
-            if (!isLocal && !IsGenesisRealm())
+            if (forceChangeRealm || (!isLocal && !IsGenesisRealm()))
             {
                 var url = URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.Genesis));
                 return await TryChangeRealmAsync(url, ct, parcel);
@@ -384,13 +406,13 @@ namespace Global.Dynamic
             }
         }
 
-        public async UniTask SwitchMiscVisibilityAsync()
+        public void SwitchMiscVisibilityAsync()
         {
             bool isGenesis = IsGenesisRealm();
 
             RealmChanged?.Invoke(isGenesis);
             mapRenderer.SetSharedLayer(MapLayer.PlayerMarker, isGenesis);
-            await satelliteFloor.SwitchVisibilityAsync(isGenesis);
+            satelliteFloor.SetCurrentlyInGenesis(isGenesis);
             roadsPlugin.RoadAssetPool?.SwitchVisibility(isGenesis);
         }
 
@@ -424,7 +446,7 @@ namespace Global.Dynamic
         {
             await realmController.SetRealmAsync(realm, ct);
             currentRealm = realm;
-            await SwitchMiscVisibilityAsync();
+            SwitchMiscVisibilityAsync();
         }
 
         private bool IsGenesisRealm() =>

@@ -2,13 +2,13 @@
 name: Bug report
 about: Create a report to help us improve
 title: '[QA] Title' 
-labels: 'bug' 
+labels: 'bug, new'
 assignees: ''
 
 
 ---
 
-### **Explorer Alpha build versions:**
+### **Build version:**
 
 
 ### **Issue Description:**
@@ -20,13 +20,17 @@ assignees: ''
   2.
   3.
 
-### **Expected behaviour:**
+### ❌ **Actual Result:**
 
 
-### **Current behaviour:**
+### ✔️ **Expected Result:**
 
 
-#### **Evidence:**
+### **Repro Index:**
+<!-- Starting on 0/10 attempts -->
+
+### **Evidence:**
+
 
 #### **Additional Notes:**
 <!-- If the test is made on Mac, specify if the chip is M1 or Intel -->

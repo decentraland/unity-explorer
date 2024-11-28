@@ -3,6 +3,7 @@ using DCL.AuthenticationScreenFlow;
 using DCL.Chat;
 using DCL.ExplorePanel;
 using DCL.Passport;
+using DCL.UI.Sidebar;
 using MVC;
 using System;
 using System.Collections.Generic;
@@ -32,6 +33,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
                 { typeof(ExplorePanelController), CreateAnalytics<ExplorePanelController>(c => new MapEventsAnalytics(analytics, c.NavmapController)) },
                 { typeof(PassportController), CreateAnalytics<PassportController>(c => new PassportAnalytics(analytics, c)) },
                 { typeof(AuthenticationScreenController), CreateAnalytics<AuthenticationScreenController>(c => new AuthenticationScreenAnalytics(analytics, c)) },
+                { typeof(SidebarController), CreateAnalytics<SidebarController>(c => new SupportAnalytics(analytics, c)) },
             };
 
             Func<IController, IDisposable> CreateAnalytics<T>(Func<T, IDisposable> factory) where T: IController =>

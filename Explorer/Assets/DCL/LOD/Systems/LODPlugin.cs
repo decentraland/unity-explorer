@@ -106,7 +106,7 @@ namespace DCL.PluginSystem.Global
 
         public void Dispose()
         {
-            lodCache.UnloadImmediate();
+            lodCache.Unload(new NullPerformanceBudget(), int.MaxValue);
             lodGroupPool?.Dispose();
         }
     }

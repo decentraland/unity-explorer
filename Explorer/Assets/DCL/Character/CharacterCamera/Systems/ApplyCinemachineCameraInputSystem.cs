@@ -56,19 +56,15 @@ namespace DCL.CharacterCamera.Systems
                     break;
                 case CameraMode.Free:
                     ApplyPOV(cinemachinePreset.FreeCameraData.POV, in cameraInput);
-
-                    // Apply free movement
-                    ApplyFreeCameraMovement(dt, camera, cameraInput, cinemachinePreset);
-
-                    // Apply Field of View
-                    ApplyFOV(dt, cinemachinePreset, in cameraInput);
+                    ApplyFreeCameraMovement(dt, camera, cameraInput, cinemachinePreset); // Apply free movement
+                    ApplyFOV(dt, cinemachinePreset, in cameraInput); // Apply Field of View
                     break;
                 default:
                     ReportHub.LogError(GetReportData(), $"Camera mode is unknown {camera.Mode}");
                     break;
             }
 
-            cameraInput.SetFreeFly = isFreeCameraAllowed && input.Camera.ToggleFreeFly!.WasPressedThisFrame();
+            cameraInput.SetFreeFly = isFreeCameraAllowed && input.Camera.ToggleFreeFly!.triggered;
             cameraInput.SwitchState = input.Camera.SwitchState!.WasPressedThisFrame();
             cameraInput.ChangeShoulder = input.Camera.ChangeShoulder!.WasPressedThisFrame();
 
@@ -113,7 +109,7 @@ namespace DCL.CharacterCamera.Systems
             cinemachineTransform.localPosition += ((cameraTransform.forward * cameraInput.FreeMovement.y) +
                                                    (cameraTransform.up * cameraInput.FreePanning.y) +
                                                    (cameraTransform.right * cameraInput.FreeMovement.x))
-                                                  * cinemachinePreset.FreeCameraData.Speed * dt;
+                                                  * (cinemachinePreset.FreeCameraData.Speed * dt);
         }
 
         private static void ApplyPOV(CinemachinePOV cinemachinePOV, in CameraInput cameraInput)

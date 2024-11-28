@@ -128,7 +128,7 @@ namespace DCL.WebRequests
 
             foreach (AuthLink link in authChain)
             {
-                var name = $"x-identity-auth-chain-{i}";
+                string name = AuthChainHeaderNames.Get(i);
                 string value = link.ToJson();
                 unityWebRequest.SetRequestHeader(name, value);
 #if DEBUG
@@ -140,5 +140,23 @@ namespace DCL.WebRequests
             ReportHub.Log(ReportCategory.GENERIC_WEB_REQUEST, sb);
 #endif
         }
+    }
+
+    /// <remarks>Because <see cref="RequestEnvelope{TWebRequest,TWebRequestArgs}"/> is generic, we have
+    /// to put this out here, else we get a copy for every specific type of it we create.</remarks>
+    internal static class AuthChainHeaderNames
+    {
+        private static readonly string[] AUTH_CHAIN_HEADER_NAMES;
+
+        static AuthChainHeaderNames()
+        {
+            int maxAuthChainHeaders = Enum.GetNames(typeof(AuthLinkType)).Length;
+            AUTH_CHAIN_HEADER_NAMES = new string[maxAuthChainHeaders];
+            for (int i = 0; i < maxAuthChainHeaders; i++)
+                AUTH_CHAIN_HEADER_NAMES[i] = $"x-identity-auth-chain-{i}";
+        }
+
+        public static string Get(int index)
+            => AUTH_CHAIN_HEADER_NAMES[index];
     }
 }

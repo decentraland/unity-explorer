@@ -9,6 +9,7 @@ namespace CommunicationData.URLHelpers
         private const int SHORTEN_URN_PARTS = 6;
         private const int THIRD_PARTY_V2_SHORTEN_URN_PARTS = 7;
         private const string THIRD_PARTY_PART_ID = "collections-thirdparty";
+        private const string BASE_WEARABLES_COLLECTION_ID = "urn:decentraland:off-chain:base-avatars";
 
         private readonly string lowercaseUrn;
         private readonly string originalUrn;
@@ -171,6 +172,9 @@ namespace CommunicationData.URLHelpers
 
         public bool IsThirdPartyCollection() =>
             !string.IsNullOrEmpty(originalUrn) && originalUrn.Contains(THIRD_PARTY_PART_ID);
+
+        public bool IsBaseWearable() =>
+            !string.IsNullOrEmpty(originalUrn) && originalUrn.StartsWith(BASE_WEARABLES_COLLECTION_ID);
 
         private int CountParts()
         {

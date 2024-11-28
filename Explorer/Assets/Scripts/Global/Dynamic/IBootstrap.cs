@@ -12,6 +12,7 @@ using Global.AppArgs;
 using SceneRunner.Debugging;
 using System.Threading;
 using UnityEngine.UIElements;
+using Utility;
 
 namespace Global.Dynamic
 {
@@ -26,6 +27,7 @@ namespace Global.Dynamic
             WorldInfoTool worldInfoTool,
             Entity playerEntity,
             IAppArgs appArgs,
+            ICoroutineRunner coroutineRunner,
             CancellationToken ct);
 
         UniTask<bool> InitializePluginsAsync(StaticContainer staticContainer, DynamicWorldContainer dynamicWorldContainer,

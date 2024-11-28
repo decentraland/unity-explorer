@@ -52,6 +52,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b5fb13ac5db3bbb49a6e6aa3d2df0309
+    m_Address: Assets/DCL/PerformanceAndDiagnostics/Analytics/BuildData.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: d23ca58b5a012ef46a39310b9a2e4e05
     m_Address: MultiplayerDebugSettings
     m_ReadOnly: 0

@@ -458,9 +458,9 @@ namespace DCL.Chat
 
         private void CreateChatEntry(ChatMessage chatMessage)
         {
-            if (chatMessage.SentByOwnUser == false && entityParticipantTable.Has(chatMessage.WalletAddress))
+            if (chatMessage.SentByOwnUser == false && entityParticipantTable.TryGet(chatMessage.WalletAddress, out IReadOnlyEntityParticipantTable.Entry entry))
             {
-                Entity entity = entityParticipantTable.Entity(chatMessage.WalletAddress);
+                Entity entity = entry.Entity;
                 GenerateChatBubbleComponent(entity, chatMessage);
                 UIAudioEventsBus.Instance.SendPlayAudioEvent(viewInstance!.ChatReceiveMessageAudio);
             }

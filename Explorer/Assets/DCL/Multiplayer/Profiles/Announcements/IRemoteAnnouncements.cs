@@ -1,6 +1,6 @@
 using DCL.Multiplayer.Profiles.Bunches;
 
-namespace DCL.Multiplayer.Profiles.RemoteAnnouncements
+namespace DCL.Multiplayer.Profiles.Announcements
 {
     public interface IRemoteAnnouncements
     {

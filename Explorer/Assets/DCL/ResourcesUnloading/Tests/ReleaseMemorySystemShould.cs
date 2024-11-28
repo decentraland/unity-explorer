@@ -10,6 +10,20 @@ namespace DCL.ResourcesUnloading.Tests
 {
     public class ReleaseMemorySystemShould : UnitySystemTestBase<ReleaseMemorySystem>
     {
+        public class MockUnloadStrategy : UnloadStrategyBase
+        {
+            public int strategyRunCount;
+
+            public override void RunStrategy()
+            {
+                strategyRunCount++;
+            }
+
+            public MockUnloadStrategy(int failureThreshold) : base(failureThreshold)
+            {
+            }
+        }
+        
         
         private ReleaseMemorySystem releaseMemorySystem;
 
@@ -17,10 +31,10 @@ namespace DCL.ResourcesUnloading.Tests
         private IMemoryUsageProvider memoryBudgetProvider;
         private ICacheCleaner cacheCleaner;
 
-        private IUnloadStrategy[] unloadStrategies;
+        private UnloadStrategyBase[] unloadStrategies;
 
-        private IUnloadStrategy standardStrategy;
-        private IUnloadStrategy aggresiveStrategy;
+        private MockUnloadStrategy standardStrategy;
+        private MockUnloadStrategy aggresiveStrategy;
 
         private UnloadStrategyHandler unloadStrategyHandler;
 
@@ -29,8 +43,8 @@ namespace DCL.ResourcesUnloading.Tests
         {
             memoryBudgetProvider = Substitute.For<IMemoryUsageProvider>();
             cacheCleaner = Substitute.For<ICacheCleaner>();
-            standardStrategy = Substitute.For<IUnloadStrategy>();
-            aggresiveStrategy = Substitute.For<IUnloadStrategy>();
+            standardStrategy = new MockUnloadStrategy(1);
+            aggresiveStrategy = new MockUnloadStrategy(1);
 
             unloadStrategies = new[]
             {
@@ -52,15 +66,12 @@ namespace DCL.ResourcesUnloading.Tests
         [TestCase(MemoryUsageStatus.FULL, 1)]
         public void UnloadCacheWhenMemoryUsageIsNotNormal(MemoryUsageStatus memoryUsageStatus, int callsAmount)
         {
-            // Arrange
-            memoryBudgetProvider.GetMemoryUsageStatus().Returns(memoryUsageStatus);
-            standardStrategy.FailedOverThreshold().Returns(true);
-
             // Act
+            memoryBudgetProvider.GetMemoryUsageStatus().Returns(memoryUsageStatus);
             releaseMemorySystem.Update(0);
 
             // Assert
-            standardStrategy.Received(callsAmount).TryUnload(cacheCleaner);
+            Assert.AreEqual(callsAmount, standardStrategy.strategyRunCount);
         }
 
         [Test]
@@ -68,22 +79,19 @@ namespace DCL.ResourcesUnloading.Tests
         {
             // Arrange
             memoryBudgetProvider.GetMemoryUsageStatus().Returns(MemoryUsageStatus.WARNING);
-            standardStrategy.FailedOverThreshold().Returns(true);
 
             // Act
             releaseMemorySystem.Update(0);
 
             // Assert
-            Assert.AreEqual(unloadStrategyHandler.currentUnloadStrategy, 1);
-            standardStrategy.Received(1).TryUnload(cacheCleaner);
+            Assert.AreEqual(1, standardStrategy.strategyRunCount);
             
             // Act
             releaseMemorySystem.Update(0);
             
             // Assert
-            Assert.AreEqual(unloadStrategyHandler.currentUnloadStrategy, 1);
-            standardStrategy.Received(1).TryUnload(cacheCleaner);
-            aggresiveStrategy.Received(1).TryUnload(cacheCleaner);
+            Assert.AreEqual(2, standardStrategy.strategyRunCount);
+            Assert.AreEqual(1, aggresiveStrategy.strategyRunCount);
 
 
             // Act
@@ -91,9 +99,9 @@ namespace DCL.ResourcesUnloading.Tests
             releaseMemorySystem.Update(0);
 
             // Assert
-            Assert.AreEqual(unloadStrategyHandler.currentUnloadStrategy, 0);
-            standardStrategy.Received(1).ResetStrategy();
-            aggresiveStrategy.Received(1).ResetStrategy();
+            Assert.AreEqual(0, standardStrategy.currentFailureCount);
+            Assert.AreEqual(0, aggresiveStrategy.currentFailureCount);
+            Assert.IsFalse(standardStrategy.FaillingOverThreshold());
         }
         
         [Test]
@@ -101,30 +109,36 @@ namespace DCL.ResourcesUnloading.Tests
         {
             // Arrange
             memoryBudgetProvider.GetMemoryUsageStatus().Returns(MemoryUsageStatus.WARNING);
-            standardStrategy.FailedOverThreshold().Returns(true);
-            
             // Act
             releaseMemorySystem.Update(0);
 
             // Assert
-            Assert.AreEqual(unloadStrategyHandler.currentUnloadStrategy, 1);
-            standardStrategy.Received(1).TryUnload(cacheCleaner);
+            Assert.AreEqual(1, standardStrategy.strategyRunCount);
 
-            // Act
-            releaseMemorySystem.Update(0);
-
-            // Assert
-            Assert.AreEqual(unloadStrategyHandler.currentUnloadStrategy, 1);
-            standardStrategy.Received(1).TryUnload(cacheCleaner);
-            aggresiveStrategy.Received(1).TryUnload(cacheCleaner);
-            
             // Act
             releaseMemorySystem.Update(0);
             
             // Assert
-            Assert.AreEqual(unloadStrategyHandler.currentUnloadStrategy, 1);
-            standardStrategy.Received(1).TryUnload(cacheCleaner);
-            aggresiveStrategy.Received(2).TryUnload(cacheCleaner);
+            Assert.AreEqual(2, standardStrategy.strategyRunCount);
+            Assert.AreEqual(1, aggresiveStrategy.strategyRunCount);
+        }
+
+        [Test]
+        public void SkipAggressiveStrategyIfPreviousDidNotFail()
+        {
+            // Arrange
+            memoryBudgetProvider.GetMemoryUsageStatus().Returns(MemoryUsageStatus.WARNING);
+            standardStrategy.failureThreshold = 5;
+
+            // Act
+
+            for (var i = 0; i < 5; i++)
+                releaseMemorySystem.Update(0);
+
+
+            // Assert
+            Assert.AreEqual(5, standardStrategy.strategyRunCount);
+            Assert.AreEqual(0, aggresiveStrategy.strategyRunCount);
         }
 
         

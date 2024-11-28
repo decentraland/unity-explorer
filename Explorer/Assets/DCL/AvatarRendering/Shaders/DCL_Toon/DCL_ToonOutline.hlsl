@@ -29,6 +29,7 @@ struct VertexOutput
     float3 normalDir : TEXCOORD1;
     float3 tangentDir : TEXCOORD2;
     float3 bitangentDir : TEXCOORD3;
+    float4 positionCS : TEXCOORD4;
 
     UNITY_VERTEX_OUTPUT_STEREO
 };
@@ -81,21 +82,26 @@ VertexOutput vert (VertexInput v)
         //v.2.0.4.3 baked Normal Texture for Outline
         #ifdef _DCL_COMPUTE_SKINNING
             o.pos = UnityObjectToClipPos(lerp(float4(_GlobalAvatarBuffer[_lastAvatarVertCount + _lastWearableVertCount + v.index].position.xyz + _GlobalAvatarBuffer[_lastAvatarVertCount + _lastWearableVertCount + v.index].normal.xyz * Set_Outline_Width,1), float4(_GlobalAvatarBuffer[_lastAvatarVertCount + _lastWearableVertCount + v.index].position.xyz + _BakedNormalDir*Set_Outline_Width,1),_Is_BakedNormal));
+            float3 positionWS = TransformObjectToWorld(_GlobalAvatarBuffer[_lastAvatarVertCount + _lastWearableVertCount + v.index].position.xyz);
         #else
             o.pos = UnityObjectToClipPos(lerp(float4(v.vertex.xyz + v.normal*Set_Outline_Width,1), float4(v.vertex.xyz + _BakedNormalDir*Set_Outline_Width,1),_Is_BakedNormal));
+            float3 positionWS = TransformObjectToWorld(v.vertex.xyz);
         #endif
     #elif _OUTLINE_POS
         Set_Outline_Width = Set_Outline_Width*2;
         float signVar = dot(normalize(v.vertex.xyz),normalize(v.normal))<0 ? -1 : 1;
         o.pos = UnityObjectToClipPos(float4(v.vertex.xyz + signVar*normalize(v.vertex)*Set_Outline_Width, 1));
+        float3 positionWS = TransformObjectToWorld(_GlobalAvatarBuffer[_lastAvatarVertCount + _lastWearableVertCount + v.index].position.xyz);
     #endif
     //v.2.0.7.5
     o.pos.z = o.pos.z + _Offset_Z * _ClipCameraPos.z;
+    o.positionCS = TransformWorldToHClip(positionWS);
     return o;
 }
 
 float4 frag(VertexOutput i) : SV_Target
 {
+    Dithering(_FadeDistance, i.positionCS, _StartFadeDistance, _StartFadeDistance);
     //v.2.0.5
     // if (_ZOverDrawMode > 0.99f)
     // {

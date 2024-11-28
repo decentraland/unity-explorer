@@ -53,6 +53,9 @@ namespace DCL.Minimap
         internal SideMenuView sideMenuView { get; private set; }
 
         [field: SerializeField]
+        internal SceneRestrictionsView sceneRestrictionsView { get; private set; }
+
+        [field: SerializeField]
         internal Animator minimapAnimator { get; private set; }
 
         [field: SerializeField]

@@ -45,10 +45,5 @@ namespace DCL.Multiplayer.Connections.Rooms
 
         public Task DisconnectAsync(CancellationToken cancellationToken) =>
             Task.CompletedTask;
-
-        public void Disconnect()
-        {
-            //ignore
-        }
     }
 }

@@ -1,6 +1,7 @@
 using System.Threading;
 using Arch.Core;
 using Cysharp.Threading.Tasks;
+using DCL.Optimization.PerformanceBudgeting;
 using DCL.Roads.Components;
 using DCL.Roads.Systems;
 using Utility.Types;
@@ -11,18 +12,20 @@ namespace Global.Dynamic.TeleportOperations
     {
         private readonly World globalWorld;
         private readonly RoadPlugin roadPlugin;
+        private readonly IPerformanceBudget unlimitedFPSBudget;
 
         public DestroyAllRoadAssetsTeleportOperation(World globalWorld, RoadPlugin roadPlugin)
         {
             this.globalWorld = globalWorld;
             this.roadPlugin = roadPlugin;
+            unlimitedFPSBudget = new NullPerformanceBudget();
         }
 
         public UniTask<Result> ExecuteAsync(TeleportParams teleportParams, CancellationToken ct)
         {
             // Releases all the road assets, returning them to the pool and then destroys all the road assets
             globalWorld.Query(new QueryDescription().WithAll<RoadInfo>(), (entity) => globalWorld.Get<RoadInfo>(entity).Dispose(roadPlugin.RoadAssetPool));
-            roadPlugin.RoadAssetPool.UnloadImmediate();
+            roadPlugin.RoadAssetPool.Unload(unlimitedFPSBudget, int.MaxValue);
 
             return UniTask.FromResult(Result.SuccessResult());
         }

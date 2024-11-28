@@ -123,7 +123,7 @@ namespace ECS.Unity.SceneBoundsChecker
                     // While the collider remains inactive, the bounds will continue to be zero, causing incorrect calculations.
                     // Therefore, it is necessary to force the collider to be activated at least once
                     sdkCollider.ForceActiveBySceneBounds(auxiliaryBounds.extents == Vector3.zero
-                                                         || (auxiliaryBounds.max.y <= sceneGeometry.Height && sceneGeometry.CircumscribedPlanes.Contains(auxiliaryBounds)));
+                                                         || (auxiliaryBounds.max.y <= sceneGeometry.Height && sceneGeometry.CircumscribedPlanes.Contains(sdkCollider.Collider.bounds)));
 
                     // write the structure back
                     colliders[i] = sdkCollider;

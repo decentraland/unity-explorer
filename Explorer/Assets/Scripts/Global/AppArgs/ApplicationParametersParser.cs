@@ -14,7 +14,7 @@ namespace Global.AppArgs
 
         private static readonly IReadOnlyDictionary<string, string> ALWAYS_IN_EDITOR = new Dictionary<string, string>
         {
-            [IAppArgs.DEBUG_FLAG] = string.Empty,
+            [AppArgsFlags.DEBUG] = string.Empty,
         };
 
         public ApplicationParametersParser() : this(Environment.GetCommandLineArgs()) { }

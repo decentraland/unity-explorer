@@ -5,7 +5,9 @@ using DCL.CharacterCamera;
 using DCL.CharacterTriggerArea.Components;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
+using DCL.SceneRestrictionBusController.SceneRestriction;
 using DCL.SDKComponents.CameraModeArea.Components;
+using DCL.SceneRestrictionBusController.SceneRestrictionBus;
 using DCL.Utilities;
 using ECS.Abstract;
 using ECS.Groups;
@@ -32,12 +34,14 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
         private readonly World globalWorld;
         private readonly ObjectProxy<Entity> cameraEntityProxy;
         private readonly IExposedCameraData cameraData;
+        private readonly ISceneRestrictionBusController sceneRestrictionBusController;
 
-        public CameraModeAreaHandlerSystem(World world, World globalWorld, ObjectProxy<Entity> cameraEntityProxy, IExposedCameraData cameraData) : base(world)
+        public CameraModeAreaHandlerSystem(World world, World globalWorld, ObjectProxy<Entity> cameraEntityProxy, IExposedCameraData cameraData, ISceneRestrictionBusController sceneRestrictionBusController) : base(world)
         {
             this.globalWorld = globalWorld;
             this.cameraEntityProxy = cameraEntityProxy;
             this.cameraData = cameraData;
+            this.sceneRestrictionBusController = sceneRestrictionBusController;
         }
 
         protected override void Update(float t)
@@ -113,6 +117,8 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
             cameraModeBeforeLastAreaEnter = camera.Mode;
             camera.Mode = targetCameraMode;
             camera.AddCameraInputLock();
+
+            sceneRestrictionBusController.PushSceneRestriction(SceneRestriction.CreateCameraLocked(SceneRestrictionsAction.APPLIED));
         }
 
         internal void OnExitedCameraModeArea()
@@ -124,6 +130,8 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
             // If there are more locks then there is another newer camera mode area in place
             if (camera.CameraInputChangeEnabled)
                 camera.Mode = cameraModeBeforeLastAreaEnter;
+
+            sceneRestrictionBusController.PushSceneRestriction(SceneRestriction.CreateCameraLocked(SceneRestrictionsAction.REMOVED));
         }
 
         [Query]

@@ -201,13 +201,13 @@ namespace DCL.Multiplayer.Movement.Systems
 
         private void TryEnqueue(string walletId, NetworkMovementMessage fullMovementMessage)
         {
-            if (entityParticipantTable.Has(walletId) == false)
+            if (entityParticipantTable.TryGet(walletId, out IReadOnlyEntityParticipantTable.Entry entry) == false)
             {
                 ReportHub.LogWarning(ReportCategory.MULTIPLAYER_MOVEMENT, $"Entity for wallet {walletId} not found");
                 return;
             }
 
-            Entity entity = entityParticipantTable.Entity(walletId);
+            Entity entity = entry.Entity;
 
             if (globalWorld.TryGet(entity, out RemotePlayerMovementComponent remotePlayerMovementComponent))
                 remotePlayerMovementComponent.Enqueue(fullMovementMessage);

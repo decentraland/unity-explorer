@@ -86,7 +86,7 @@ namespace DCL.SDKComponents.MediaStream
 
             if (component.State != VideoState.VsError)
             {
-                float actualVolume = sdkComponent.Volume * worldVolumePercentage * masterVolumePercentage;
+                float actualVolume = (sdkComponent.HasVolume ? sdkComponent.Volume : MediaPlayerComponent.DEFAULT_VOLUME) * worldVolumePercentage * masterVolumePercentage;
                 component.MediaPlayer.UpdateVolume(sceneStateProvider.IsCurrent, sdkComponent.HasVolume, actualVolume);
             }
 
@@ -101,12 +101,12 @@ namespace DCL.SDKComponents.MediaStream
 
             if (component.State != VideoState.VsError)
             {
-                float actualVolume = sdkComponent.Volume * worldVolumePercentage * masterVolumePercentage;
+                float actualVolume = (sdkComponent.HasVolume ? sdkComponent.Volume : MediaPlayerComponent.DEFAULT_VOLUME) * worldVolumePercentage * masterVolumePercentage;
                 component.MediaPlayer.UpdateVolume(sceneStateProvider.IsCurrent, sdkComponent.HasVolume, actualVolume);
             }
 
             HandleComponentChange(ref component, sdkComponent, sdkComponent.Src, sdkComponent.HasPlaying, sdkComponent.Playing, sdkComponent, static (mediaPlayer, sdk) => mediaPlayer.UpdatePlaybackProperties(sdk));
-            ConsumePromise(ref component, sdkComponent.HasPlaying && sdkComponent.Playing, sdkComponent, static (mediaPlayer, sdk) => mediaPlayer.SetPlaybackProperties(sdk));
+            ConsumePromise(ref component, false, sdkComponent, static (mediaPlayer, sdk) => mediaPlayer.SetPlaybackProperties(sdk));
         }
 
         [Query]
@@ -134,9 +134,7 @@ namespace DCL.SDKComponents.MediaStream
         {
             if (!sdkComponent.IsDirty) return;
 
-            sceneData.TryGetMediaUrl(url, out URLAddress localMediaUrl);
-
-            if (component.URL != url && component.URL != localMediaUrl)
+            if (component.URL != url && (!sceneData.TryGetMediaUrl(url, out URLAddress localMediaUrl) || component.URL != localMediaUrl))
             {
                 component.MediaPlayer.CloseCurrentStream();
 
@@ -165,27 +163,34 @@ namespace DCL.SDKComponents.MediaStream
 
             if (component.OpenMediaPromise.IsReachableConsume(component.URL))
             {
-                component.MediaPlayer.OpenMedia(MediaPathType.AbsolutePathOrURL, component.URL, autoPlay);
+                //The problem is that video files coming from our content server are flagged as application/octet-stream,
+                //but mac OS without a specific content type cannot play them. (more info here https://github.com/RenderHeads/UnityPlugin-AVProVideo/issues/2008 )
+                //This adds a query param for video files from content server to force the correct content type
+                component.MediaPlayer.OpenMedia(MediaPathType.AbsolutePathOrURL, component.IsFromContentServer ? string.Format("{0}?includeMimeType", component.URL) : component.URL, autoPlay);
 
                 if (sdkVideoComponent != null)
                     onOpened?.Invoke(component.MediaPlayer, sdkVideoComponent);
             }
             else
             {
-                component.State = VideoState.VsError;
+                component.SetState(string.IsNullOrEmpty(component.URL) ? VideoState.VsNone : VideoState.VsError);
                 component.MediaPlayer.CloseCurrentStream();
             }
         }
 
         private void UpdateStreamUrl(ref MediaPlayerComponent component, string url)
         {
-            component.MediaPlayer.CloseCurrentStream();
-
-            if (!url.IsValidUrl() && sceneData.TryGetMediaUrl(url, out URLAddress mediaUrl))
-                url = mediaUrl;
+            bool isValidStreamUrl = url.IsValidUrl();
+            bool isValidLocalPath = false;
+            if (!isValidStreamUrl)
+            {
+                isValidLocalPath = sceneData.TryGetMediaUrl(url, out URLAddress mediaUrl);
+                if(isValidLocalPath)
+                    url = mediaUrl;
+            }
 
             component.URL = url;
-            component.State = url.IsValidUrl() ? VideoState.VsNone : VideoState.VsError;
+            component.SetState(isValidStreamUrl || isValidLocalPath || string.IsNullOrEmpty(url) ? VideoState.VsNone : VideoState.VsError);
         }
 
         public override void Dispose()
