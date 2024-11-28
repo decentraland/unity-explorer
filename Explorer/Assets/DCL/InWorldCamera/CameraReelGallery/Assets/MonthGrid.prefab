@@ -68,8 +68,7 @@ MonoBehaviour:
   m_text: Nov 2024
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 96ae0a2159a39234f858ea23bdcc74ad, type: 2}
-  m_sharedMaterial: {fileID: 735423033564544980, guid: 96ae0a2159a39234f858ea23bdcc74ad,
-    type: 2}
+  m_sharedMaterial: {fileID: 735423033564544980, guid: 96ae0a2159a39234f858ea23bdcc74ad, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -193,8 +192,8 @@ MonoBehaviour:
   m_ChildAlignment: 0
   m_StartCorner: 0
   m_StartAxis: 0
-  m_CellSize: {x: 272, y: 201}
-  m_Spacing: {x: 8, y: 8}
+  m_CellSize: {x: 306, y: 230}
+  m_Spacing: {x: 4, y: 4}
   m_Constraint: 1
   m_ConstraintCount: 6
 --- !u!1 &7827824164439875494
