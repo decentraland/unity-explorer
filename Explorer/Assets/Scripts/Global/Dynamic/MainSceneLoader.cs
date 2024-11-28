@@ -23,6 +23,7 @@ using SceneRunner.Debugging;
 using System;
 using System.Linq;
 using System.Threading;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UIElements;
 using Utility;
@@ -49,6 +50,7 @@ namespace Global.Dynamic
         [SerializeField] private DynamicSceneLoaderSettings settings = null!;
         [SerializeField] private DynamicSettings dynamicSettings = null!;
         [SerializeField] private GameObject splashRoot = null!;
+        [SerializeField] private TMP_Text splashScreenText = null!;
         [SerializeField] private Animator splashScreenAnimation = null!;
         [SerializeField] private Animator logoAnimation = null!;
         [SerializeField] private AudioClipConfig backgroundMusic = null!;
@@ -124,7 +126,7 @@ namespace Global.Dynamic
 
             World world = World.Create();
 
-            var splashScreen = new SplashScreen(splashScreenAnimation, splashRoot, debugSettings.ShowSplash);
+            var splashScreen = new SplashScreen(splashScreenAnimation, splashRoot, debugSettings.ShowSplash, splashScreenText);
 
             bootstrapContainer = await BootstrapContainer.CreateAsync(
                 debugSettings,
@@ -133,7 +135,9 @@ namespace Global.Dynamic
                 launchSettings,
                 applicationParametersParser,
                 splashScreen,
-                compressShaders.WithLog("Load Guard"),
+                compressShaders
+                   .WithSplashScreen(splashScreen)
+                   .WithLog("Load Guard"),
                 world,
                 destroyCancellationToken
             );
