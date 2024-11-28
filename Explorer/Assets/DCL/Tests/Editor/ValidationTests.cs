@@ -34,6 +34,9 @@ namespace DCL.Tests.Editor
             "node_modules",
             "dist",
             "sign-server",
+            "textures-server",
+            "simde",
+            "cube-wave-16x16"
         };
 
         [Test]

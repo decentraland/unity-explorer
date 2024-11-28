@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.WebRequests.RequestsHub;
 using System;
 
 namespace DCL.WebRequests
@@ -29,6 +30,8 @@ namespace DCL.WebRequests
 
             return await origin.SendAsync<TWebRequest, TWebRequestArgs, TWebRequestOp, TResult>(envelope, op);
         }
+
+        IRequestHub IWebRequestController.requestHub => origin.requestHub;
 
         public interface IReadOnlyOptions
         {

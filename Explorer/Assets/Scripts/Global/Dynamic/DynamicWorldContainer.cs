@@ -424,8 +424,8 @@ namespace Global.Dynamic
                 { ShowEntityInfoChatCommand.REGEX, () => new ShowEntityInfoChatCommand(worldInfoHub) },
                 { ClearChatCommand.REGEX, () => new ClearChatCommand(chatHistory) },
                 { ReloadSceneChatCommand.REGEX, () => new ReloadSceneChatCommand(container.reloadSceneController) },
-                { LoadPortableExperienceChatCommand.REGEX, () => new LoadPortableExperienceChatCommand(portableExperiencesController, staticContainer.FeatureFlagsCache)},
-                { KillPortableExperienceChatCommand.REGEX, () => new KillPortableExperienceChatCommand(portableExperiencesController, staticContainer.FeatureFlagsCache)},
+                { LoadPortableExperienceChatCommand.REGEX, () => new LoadPortableExperienceChatCommand(portableExperiencesController, staticContainer.FeatureFlagsCache) },
+                { KillPortableExperienceChatCommand.REGEX, () => new KillPortableExperienceChatCommand(portableExperiencesController, staticContainer.FeatureFlagsCache) },
             };
 
             IChatMessagesBus coreChatMessageBus = new MultiplayerChatMessagesBus(container.MessagePipesHub, container.ProfileRepository, new MessageDeduplication<double>())
@@ -596,9 +596,14 @@ namespace Global.Dynamic
                 new LoadingScreenPlugin(assetsProvisioner, container.MvcManager, audioMixerVolumesController,
                     staticContainer.InputBlock, debugBuilder, staticContainer.LoadingStatus),
                 new ExternalUrlPromptPlugin(assetsProvisioner, webBrowser, container.MvcManager, dclCursor),
-                new TeleportPromptPlugin(assetsProvisioner, container.MvcManager,
-                    staticContainer.WebRequestsContainer.WebRequestController, placesAPIService, dclCursor,
-                    container.ChatMessagesBus),
+                new TeleportPromptPlugin(
+                    assetsProvisioner,
+                    container.MvcManager,
+                    staticContainer.WebRequestsContainer.WebRequestController,
+                    placesAPIService,
+                    dclCursor,
+                    container.ChatMessagesBus
+                ),
                 new ChangeRealmPromptPlugin(
                     assetsProvisioner,
                     container.MvcManager,
