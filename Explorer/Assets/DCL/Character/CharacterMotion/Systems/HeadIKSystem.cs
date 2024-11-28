@@ -64,7 +64,9 @@ namespace DCL.CharacterMotion.Systems
         protected override void Update(float t)
         {
             UpdateDebugValues();
-            UpdateIKQuery(World, t, in camera.GetCameraComponent(World));
+
+            if (!World.Has<InWorldCamera.ScreencaptureCamera.InWorldCamera>(camera))
+                UpdateIKQuery(World, t, in camera.GetCameraComponent(World));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
