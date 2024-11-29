@@ -67,13 +67,14 @@ namespace DCL.InWorldCamera.PhotoDetail
             isShowingWearables = false;
             wearablesLoaded = false;
             view.expandWearableButtonImage.localScale = Vector3.one;
-            view.wearableListContainer.gameObject.SetActive(isShowingWearables);
+            view.wearableListContainer.gameObject.SetActive(false);
             view.wearableListLoadingSpinner.SetActive(false);
             view.wearableListEmptyMessage.SetActive(false);
             loadWearablesCts = loadWearablesCts.SafeRestart();
+            Color userColor = chatEntryConfiguration.GetNameColor(visiblePerson.userName);
 
             view.userName.text = visiblePerson.userName;
-            view.userName.color = chatEntryConfiguration.GetNameColor(visiblePerson.userName);
+            view.userName.color = userColor;
             view.userNameTag.text = $"#{visiblePerson.userAddress[^4..]}";
 
             Profile? profile = await profileRepository.GetAsync(visiblePerson.userAddress, ct);
@@ -82,8 +83,13 @@ namespace DCL.InWorldCamera.PhotoDetail
             else
                 view.userNameTag.gameObject.SetActive(false);
 
-            view.faceFrame.color = chatEntryConfiguration.GetNameColor(visiblePerson.userName);
+            view.faceFrame.color = userColor;
+            userColor.r += 0.3f;
+            userColor.g += 0.3f;
+            userColor.b += 0.3f;
+            view.faceRim.color = userColor;
 
+            //Check: ProfileWidgetController.cs @ line 68
             // await imageController!.RequestImageAsync(profile.Avatar.FaceSnapshotUrl, ct);
         }
 
