@@ -219,7 +219,6 @@ namespace DCL.MapRenderer.MapLayers.PointsOfInterest
             {
                 cts = cts.SafeRestart();
                 navmapBus.SelectPlaceAsync(marker.PlaceInfo, cts.Token, true).Forget();
-                navmapBus.ClearPlacesFromMap();
                 return true;
             }
 

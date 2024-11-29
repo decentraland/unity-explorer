@@ -4,6 +4,7 @@ using DCL.PlacesAPIService;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using UnityEngine;
 
 namespace DCL.Navmap
 {
@@ -25,6 +26,7 @@ namespace DCL.Navmap
         public event INavmapBus.SearchPlaceResultDelegate? OnPlaceSearched;
         public event Action<string?>? OnFilterByCategory;
         public event Action? OnClearPlacesFromMap;
+        public event Action<Vector2>? OnMoveCameraTo;
 
         public NavmapCommandBus(SearchPlaceFactory searchPlaceFactory,
             ShowPlaceInfoFactory showPlaceInfoFactory,
@@ -98,6 +100,9 @@ namespace DCL.Navmap
 
         public void ClearPlacesFromMap() =>
             OnClearPlacesFromMap?.Invoke();
+
+        public void MoveCameraTo(Vector2 position) =>
+            OnMoveCameraTo?.Invoke(position);
 
         private void OnSearchPlacePerformed(INavmapBus.SearchPlaceParams @params,
             IReadOnlyList<PlacesData.PlaceInfo> places, int totalResultCount) =>

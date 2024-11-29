@@ -211,7 +211,6 @@ namespace DCL.MapRenderer.MapLayers.Categories
             {
                 cts = cts.SafeRestart();
                 navmapBus.SelectEventAsync(marker.EventDTO, cts.Token, null, true).Forget();
-                navmapBus.ClearPlacesFromMap();
                 return true;
             }
 
