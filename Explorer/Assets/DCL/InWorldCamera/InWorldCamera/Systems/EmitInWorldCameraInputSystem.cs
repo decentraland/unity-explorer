@@ -4,6 +4,7 @@ using DCL.CharacterCamera;
 using DCL.Diagnostics;
 using ECS.Abstract;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 namespace DCL.InWorldCamera.Systems
 {
@@ -13,12 +14,14 @@ namespace DCL.InWorldCamera.Systems
     public partial class EmitInWorldCameraInputSystem : BaseUnityLoopSystem
     {
         private readonly DCLInput.InWorldCameraActions inputSchema;
+        private readonly InputAction toggleInWorldCameraShortcut;
 
         private SingleInstanceEntity camera;
 
-        public EmitInWorldCameraInputSystem(World world, DCLInput.InWorldCameraActions inputSchema) : base(world)
+        public EmitInWorldCameraInputSystem(World world, DCLInput.InWorldCameraActions inputSchema, InputAction toggleInWorldCameraShortcut) : base(world)
         {
             this.inputSchema = inputSchema;
+            this.toggleInWorldCameraShortcut = toggleInWorldCameraShortcut;
         }
 
         public override void Initialize()
@@ -28,6 +31,9 @@ namespace DCL.InWorldCamera.Systems
 
         protected override void Update(float t)
         {
+            if (toggleInWorldCameraShortcut.triggered)
+                World.Add(camera, new ToggleInWorldCameraRequest { IsEnable = !World.Has<InWorldCameraComponent>(camera) });
+
             ref InWorldCameraInput input = ref World.TryGetRef<InWorldCameraInput>(camera, out bool exists);
 
             if (exists)

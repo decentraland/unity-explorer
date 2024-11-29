@@ -29,7 +29,6 @@ namespace DCL.InWorldCamera.Systems
 
         private readonly InWorldCameraTransitionSettings settings;
         private readonly InWorldCameraController hudController;
-        private readonly InputAction toggleInWorldCameraShortcut;
         private readonly GameObject hud;
         private readonly CharacterController followTarget;
         private readonly ICursor cursor;
@@ -44,14 +43,12 @@ namespace DCL.InWorldCamera.Systems
         public ToggleInWorldCameraActivitySystem(
             World world,
             InWorldCameraTransitionSettings settings,
-            InputAction toggleInWorldCameraShortcut,
             InWorldCameraController hudController,
             CharacterController followTarget,
             ICursor cursor,
             IMVCManager mvcManager) : base(world)
         {
             this.settings = settings;
-            this.toggleInWorldCameraShortcut = toggleInWorldCameraShortcut;
             this.hudController = hudController;
             this.followTarget = followTarget;
             this.cursor = cursor;
@@ -76,12 +73,10 @@ namespace DCL.InWorldCamera.Systems
             if (World.Has<InWorldCameraComponent>(camera) && BlendingHasFinished())
                 SetFollowTarget();
 
-            if (toggleInWorldCameraShortcut!.triggered) // Keyboard shortcut trigger
-                ToggleCamera(enable: !World.Has<InWorldCameraComponent>(camera));
-            else if (World.TryGet(camera, out ToggleInWorldCameraUIRequest request)) // UI trigger
+            if (World.TryGet(camera, out ToggleInWorldCameraRequest request))
             {
                 ToggleCamera(request.IsEnable);
-                World.Remove<ToggleInWorldCameraUIRequest>(camera);
+                World.Remove<ToggleInWorldCameraRequest>(camera);
             }
 
             bool BlendingHasFinished() =>

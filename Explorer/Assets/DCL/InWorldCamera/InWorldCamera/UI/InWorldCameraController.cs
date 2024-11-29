@@ -39,7 +39,7 @@ namespace DCL.InWorldCamera.UI
             this.storageService = storageService;
             this.sidebarButton = sidebarButton;
 
-            sidebarButton.onClick.AddListener(RequestEnableInWorldCamera);
+            sidebarButton.onClick.AddListener(ToggleInWorldCamera);
         }
 
         protected override void OnViewInstantiated()
@@ -60,13 +60,15 @@ namespace DCL.InWorldCamera.UI
             viewInstance.CameraReelButton.onClick.RemoveListener(OpenCameraReelGallery);
             viewInstance.ShortcutsInfoButton.onClick.RemoveListener(ToggleShortcutsInfo);
 
+            sidebarButton.onClick.RemoveListener(ToggleInWorldCamera);
+
             base.Dispose();
         }
 
         public void Show()
         {
             sidebarButton.OnSelect(null);
-            mvcManager.ShowAsync(InWorldCameraController.IssueCommand(new ControllerNoData()));
+            mvcManager.ShowAsync(IssueCommand(new ControllerNoData()));
 
             bool hasSpace = storageService.StorageStatus.HasFreeSpace;
             viewInstance!.TakeScreenshotButton.gameObject.SetActive(hasSpace);
@@ -106,20 +108,14 @@ namespace DCL.InWorldCamera.UI
 
         private void RequestDisableInWorldCamera()
         {
-            if (CameraIsActivated())
-                world.Add(camera!.Value, new ToggleInWorldCameraUIRequest { IsEnable = false });
-
-            bool CameraIsActivated() =>
-                !world.Has<ToggleInWorldCameraUIRequest>(camera!.Value) && world.Has<InWorldCameraComponent>(camera!.Value);
+            if (!world.Has<ToggleInWorldCameraRequest>(camera!.Value))
+                world.Add(camera!.Value, new ToggleInWorldCameraRequest { IsEnable = false });
         }
 
-        private void RequestEnableInWorldCamera()
+        private void ToggleInWorldCamera()
         {
-            if (CameraIsNotActivated())
-                world.Add(camera!.Value, new ToggleInWorldCameraUIRequest { IsEnable = true });
-
-            bool CameraIsNotActivated() =>
-                !world.Has<ToggleInWorldCameraUIRequest>(camera!.Value) && !world.Has<InWorldCameraComponent>(camera!.Value);
+            if (!world.Has<ToggleInWorldCameraRequest>(camera!.Value))
+                world.Add(camera!.Value, new ToggleInWorldCameraRequest { IsEnable = !world.Has<InWorldCameraComponent>(camera!.Value) });
         }
 
         private void ToggleShortcutsInfo() =>
@@ -130,7 +126,8 @@ namespace DCL.InWorldCamera.UI
             if (toOpen)
             {
                 shortcutsController.LaunchViewLifeCycleAsync(new CanvasOrdering(shortcutsController.Layer, 0), new ControllerNoData(), default(CancellationToken))
-                   .Forget();
+                                   .Forget();
+
                 viewInstance!.ShortcutsInfoButton.OnSelect(null);
                 shortcutPanelIsOpen = true;
             }

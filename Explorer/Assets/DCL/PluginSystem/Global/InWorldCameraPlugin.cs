@@ -99,8 +99,8 @@ namespace DCL.PluginSystem.Global
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
-            ToggleInWorldCameraActivitySystem.InjectToWorld(ref builder, settings.TransitionSettings, input.Shortcuts.ToggleInWorldCamera, inWorldCameraController, followTarget, cursor, mvcManager);
-            EmitInWorldCameraInputSystem.InjectToWorld(ref builder, input.InWorldCamera);
+            ToggleInWorldCameraActivitySystem.InjectToWorld(ref builder, settings.TransitionSettings, inWorldCameraController, followTarget, cursor, mvcManager);
+            EmitInWorldCameraInputSystem.InjectToWorld(ref builder, input.InWorldCamera, input.Shortcuts.ToggleInWorldCamera);
             MoveInWorldCameraSystem.InjectToWorld(ref builder, settings.MovementSettings, characterObject.Controller.transform, cursor);
             CaptureScreenshotSystem.InjectToWorld(ref builder, recorder, playerEntity, metadataBuilder, coroutineRunner, cameraReelStorageService, inWorldCameraController);
         }
