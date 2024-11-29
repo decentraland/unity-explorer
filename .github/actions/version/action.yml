@@ -36,6 +36,8 @@ runs:
       if: ${{ !inputs.tag }}
       id: get_latest_version_tag
       run: |
+        git checkout --detach
+        git fetch origin main:main --tags
         tag=$(git describe --tags --match='v[0-9]*' --long main)
         echo "tag=$tag" >> $GITHUB_OUTPUT
       shell: bash
