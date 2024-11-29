@@ -93,10 +93,14 @@ namespace DCL.MapRenderer.MapLayers.Categories
                     marker.SetCategorySprite(categoryIconMappings.GetCategoryImage(mapLayer));
                     marker.SetData(eventDto.name, coordsUtils.CoordsToPosition(coords), null, eventDto);
                     markers.Add(coords, marker);
+
                     if(isEnabled)
-                        foreach (ICategoryMarker clusterableMarker in clusterController.UpdateClusters(zoomLevel, baseZoom, zoom, markers))
-                            mapCullingController.StartTracking(clusterableMarker, this);
+                        mapCullingController.StartTracking(marker, this);
                 }
+
+                if(isEnabled)
+                    foreach (ICategoryMarker clusterableMarker in clusterController.UpdateClusters(zoomLevel, baseZoom, zoom, markers))
+                        mapCullingController.StartTracking(clusterableMarker, this);
                 await UniTask.Delay(LIVE_EVENTS_POLLING_TIME, DelayType.Realtime, cancellationToken: ct);
             }
             while (ct.IsCancellationRequested == false);
