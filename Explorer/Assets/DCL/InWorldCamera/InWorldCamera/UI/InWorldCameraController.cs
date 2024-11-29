@@ -100,8 +100,8 @@ namespace DCL.InWorldCamera.UI
 
         private void RequestTakeScreenshot()
         {
-            if (!world.Has<TakeScreenshotUIRequest>(camera!.Value))
-                world.Add(camera!.Value, new TakeScreenshotUIRequest { Source = "UI" });
+            if (!world.Has<TakeScreenshotRequest>(camera!.Value))
+                world.Add(camera!.Value, new TakeScreenshotRequest { Source = "UI" });
         }
 
         private void RequestDisableInWorldCamera()

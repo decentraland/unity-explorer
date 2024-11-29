@@ -5,7 +5,7 @@ namespace DCL.InWorldCamera
     public struct InWorldCameraComponent { }
 
     public struct ToggleInWorldCameraUIRequest { public bool IsEnable; }
-    public struct TakeScreenshotUIRequest { public string Source; }
+    public struct TakeScreenshotRequest { public string Source; }
     public struct CameraTarget { public CharacterController Value; }
 
     public struct InWorldCameraInput
@@ -17,8 +17,6 @@ namespace DCL.InWorldCamera
         public Vector2 Aim;
         public bool MouseIsDragging;
         public float Zoom;
-
-        public bool TakeScreenshot;
     }
 
     public struct CameraDampedFOV

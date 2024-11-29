@@ -40,7 +40,8 @@ namespace DCL.InWorldCamera.Systems
                 input.MouseIsDragging = inputSchema.MouseDrag.IsPressed();
                 input.Zoom = inputSchema.Zoom.ReadValue<float>();
 
-                input.TakeScreenshot = inputSchema.Screenshot.triggered;
+                if (inputSchema.Screenshot.triggered && !World.Has<TakeScreenshotRequest>(camera))
+                    World.Add(camera, new TakeScreenshotRequest { Source = "Shortcut" });
             }
         }
     }

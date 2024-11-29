@@ -104,13 +104,13 @@ namespace DCL.InWorldCamera.Systems
         {
             if (recorder.State != RecordingState.IDLE) return false;
 
-            if (World.Has<TakeScreenshotUIRequest>(camera))
+            if (World.Has<TakeScreenshotRequest>(camera))
             {
-                World.Remove<TakeScreenshotUIRequest>(camera);
+                World.Remove<TakeScreenshotRequest>(camera);
                 return true;
             }
 
-            return World.TryGet(camera, out InWorldCameraInput input) && input.TakeScreenshot;
+            return false;
         }
 
         private void CollectMetadata()
