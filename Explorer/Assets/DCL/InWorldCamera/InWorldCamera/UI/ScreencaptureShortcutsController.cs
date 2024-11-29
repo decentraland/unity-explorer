@@ -6,6 +6,9 @@ using System.Threading;
 
 namespace DCL.InWorldCamera.UI
 {
+    /// <summary>
+    /// Handles Shortcuts popup on the InWorldCamera HUD.
+    /// </summary>
     public class ScreencaptureShortcutsController : ControllerBase<ElementWithCloseArea>
     {
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;

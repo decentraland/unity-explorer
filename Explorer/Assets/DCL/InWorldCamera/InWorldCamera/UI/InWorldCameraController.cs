@@ -17,6 +17,9 @@ using UnityEngine.UI;
 
 namespace DCL.InWorldCamera.UI
 {
+    /// <summary>
+    /// Handles Logic for the InWorldCamera HUD that appears when user enables InWorldCamera.
+    /// </summary>
     public class InWorldCameraController : ControllerBase<InWorldCameraView>
     {
         private readonly Button sidebarButton;
@@ -71,14 +74,14 @@ namespace DCL.InWorldCamera.UI
             mvcManager.ShowAsync(IssueCommand(new ControllerNoData()));
 
             bool hasSpace = storageService.StorageStatus.HasFreeSpace;
-            viewInstance!.TakeScreenshotButton.gameObject.SetActive(hasSpace);
-            viewInstance.NoStorageNotification.gameObject.SetActive(!hasSpace);
+            viewInstance?.TakeScreenshotButton.gameObject.SetActive(hasSpace);
+            viewInstance?.NoStorageNotification.gameObject.SetActive(!hasSpace);
         }
 
         public void Hide(bool isInstant = false)
         {
             sidebarButton.OnDeselect(null);
-            viewInstance.HideAsync(default(CancellationToken), isInstant).Forget();
+            viewInstance?.HideAsync(default(CancellationToken), isInstant).Forget();
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
@@ -89,7 +92,7 @@ namespace DCL.InWorldCamera.UI
         public void PlayScreenshotFX(Texture2D image, float splashDuration, float middlePauseDuration, float transitionDuration)
         {
             UIAudioEventsBus.Instance.SendPlayAudioEvent(viewInstance.SFXScreenshotCapture);
-            viewInstance.ScreenshotCaptureAnimation(image, splashDuration, middlePauseDuration, transitionDuration);
+            viewInstance?.ScreenshotCaptureAnimation(image, splashDuration, middlePauseDuration, transitionDuration);
         }
 
         private void OpenCameraReelGallery()
@@ -128,13 +131,13 @@ namespace DCL.InWorldCamera.UI
                 shortcutsController.LaunchViewLifeCycleAsync(new CanvasOrdering(shortcutsController.Layer, 0), new ControllerNoData(), default(CancellationToken))
                                    .Forget();
 
-                viewInstance!.ShortcutsInfoButton.OnSelect(null);
+                viewInstance?.ShortcutsInfoButton.OnSelect(null);
                 shortcutPanelIsOpen = true;
             }
             else
             {
                 shortcutsController.HideAsync(CancellationToken.None).Forget();
-                viewInstance!.ShortcutsInfoButton.OnDeselect(null);
+                viewInstance?.ShortcutsInfoButton.OnDeselect(null);
                 shortcutPanelIsOpen = false;
             }
         }
