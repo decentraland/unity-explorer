@@ -75,7 +75,6 @@ namespace DCL.MapRenderer.MapCameraController
                         return hitObject;
                     }
                 }
-
             }
             else
             {
@@ -88,7 +87,29 @@ namespace DCL.MapRenderer.MapCameraController
                     previouslyRaycastedObject = null;
                 }
             }
+            return hitObject;
+        }
 
+        public GameObject? ProcessMouseClick(Vector2 normalizedCoordinates)
+        {
+            GameObject? hitObject = null;
+            RaycastHit2D raycast = Physics2D.Raycast(GetLocalPosition(normalizedCoordinates), Vector2.zero, 10);
+
+            if (raycast.collider != null)
+            {
+                if(raycast.collider.gameObject == hitObject)
+                    return hitObject;
+
+                hitObject = raycast.collider.gameObject;
+
+                foreach (IMapLayerController mapLayerController in interactableLayers)
+                    if (mapLayerController.ClickObject(hitObject))
+                        return hitObject;
+            }
+            else
+            {
+                hitObject = null;
+            }
             return hitObject;
         }
 

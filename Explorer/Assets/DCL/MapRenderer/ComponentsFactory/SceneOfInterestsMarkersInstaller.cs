@@ -5,6 +5,7 @@ using DCL.MapRenderer.Culling;
 using DCL.MapRenderer.MapLayers;
 using DCL.MapRenderer.MapLayers.Cluster;
 using DCL.MapRenderer.MapLayers.PointsOfInterest;
+using DCL.Navmap;
 using DCL.PlacesAPIService;
 using System.Collections.Generic;
 using System.Threading;
@@ -31,6 +32,7 @@ namespace DCL.MapRenderer.ComponentsFactory
             IMapRendererSettings settings,
             IPlacesAPIService placesAPI,
             ObjectPool<ClusterMarkerObject> clusterObjectsPool,
+            INavmapBus navmapBus,
             CancellationToken cancellationToken
         )
         {
@@ -55,7 +57,8 @@ namespace DCL.MapRenderer.ComponentsFactory
                 configuration.ScenesOfInterestMarkersRoot,
                 coordsUtils,
                 cullingController,
-                clusterController
+                clusterController,
+                navmapBus
             );
 
             await controller.InitializeAsync(cancellationToken);

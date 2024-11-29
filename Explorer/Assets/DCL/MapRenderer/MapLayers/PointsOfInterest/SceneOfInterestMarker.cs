@@ -2,6 +2,7 @@
 using DCL.MapRenderer.CommonBehavior;
 using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.Culling;
+using DCL.PlacesAPIService;
 using DG.Tweening;
 using System;
 using System.Threading;
@@ -25,7 +26,11 @@ namespace DCL.MapRenderer.MapLayers.PointsOfInterest
 
         public bool IsVisible => poolableBehavior.isVisible;
 
+        public PlacesData.PlaceInfo PlaceInfo => placeInfo;
+
         public Vector2 Pivot => new (0.5f, 0.5f);
+
+        internal PlacesData.PlaceInfo placeInfo { get; private set; }
 
         internal string title { get; private set; }
 
@@ -42,9 +47,10 @@ namespace DCL.MapRenderer.MapLayers.PointsOfInterest
             cullingController.StopTracking(this);
         }
 
-        public void SetData(string title, Vector3 position)
+        public void SetData(string title, Vector3 position, PlacesData.PlaceInfo placeInfo)
         {
             poolableBehavior.SetCurrentPosition(coordsUtils.PivotPosition(this, position));
+            this.placeInfo = placeInfo;
             this.title = title.Length > MAX_TITLE_LENGTH ? title.Substring(0, MAX_TITLE_LENGTH) : title;
         }
 

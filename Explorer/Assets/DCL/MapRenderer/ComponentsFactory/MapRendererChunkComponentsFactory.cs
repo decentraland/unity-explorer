@@ -115,9 +115,9 @@ namespace DCL.MapRenderer.ComponentsFactory
                 actionOnRelease: obj => obj.gameObject.SetActive(false));
 
             CategoryMarkerObject categoryMarkerPrefab = await GetCategoryMarkerPrefabAsync(cancellationToken);
-            var liveEventsInstallTask = liveEventsMarkersInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, mapSettings, eventsApiService, clusterObjectsPool, categoryMarkerPrefab, cancellationToken);
+            var liveEventsInstallTask = liveEventsMarkersInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, mapSettings, eventsApiService, clusterObjectsPool, categoryMarkerPrefab, navmapBus, cancellationToken);
             var categoriesInstallerTask = categoriesMarkerInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, mapSettings, clusterObjectsPool, categoryMarkerPrefab, navmapBus, cancellationToken);
-            var sceneOfInterestInstallerTask = sceneOfInterestMarkerInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, assetsProvisioner, mapSettings, placesAPIService, clusterObjectsPool, cancellationToken);
+            var sceneOfInterestInstallerTask = sceneOfInterestMarkerInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, assetsProvisioner, mapSettings, placesAPIService, clusterObjectsPool, navmapBus, cancellationToken);
             var searchResultsInstallerTask = searchResultsMarkerInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, assetsProvisioner, mapSettings, cullingController, searchResultsClusterObjectsPool, navmapBus, cancellationToken);
 
             await UniTask.WhenAll(

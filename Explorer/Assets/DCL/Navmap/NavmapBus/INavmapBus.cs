@@ -41,10 +41,11 @@ namespace DCL.Navmap
         event Action<PlacesData.PlaceInfo>? OnDestinationSelected;
         event SearchPlaceResultDelegate? OnPlaceSearched;
         event Action<string?>? OnFilterByCategory;
+        event Action? OnClearPlacesFromMap;
 
-        UniTask SelectPlaceAsync(PlacesData.PlaceInfo place, CancellationToken ct);
+        UniTask SelectPlaceAsync(PlacesData.PlaceInfo place, CancellationToken ct, bool clearPreviousHistory = false);
 
-        UniTask SelectEventAsync(EventDTO @event, CancellationToken ct, PlacesData.PlaceInfo? place = null);
+        UniTask SelectEventAsync(EventDTO @event, CancellationToken ct, PlacesData.PlaceInfo? place = null, bool clearPreviousHistory = false);
 
         UniTask SearchForPlaceAsync(SearchPlaceParams @params, CancellationToken ct);
 
@@ -57,5 +58,7 @@ namespace DCL.Navmap
         void JumpIn(PlacesData.PlaceInfo place);
 
         void FilterByCategory(string? category);
+
+        void ClearPlacesFromMap();
     }
 }

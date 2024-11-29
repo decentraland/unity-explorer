@@ -71,10 +71,21 @@ namespace DCL.MapRenderer.ConsumerUtils
         public void OnPointerClick(PointerEventData eventData)
         {
             Profiler.BeginSample(POINTER_CLICK_SAMPLE_NAME);
-
-            if (isActive && !dragging && TryGetParcelUnderPointer(eventData, out Vector2Int parcel, out _, out _))
+            GameObject? hitObject = null;
+            if (isActive && !dragging)
             {
-                InvokeParcelClicked(parcel);
+                if (RectTransformUtility.ScreenPointToWorldPointInRectangle(rectTransform, eventData.position, hudCamera, out Vector3 worldPosition))
+                {
+                    Vector2 rectSize = rectTransform.rect.size;
+                    Vector2 localPosition = rectTransform.InverseTransformPoint(worldPosition);
+                    Vector2 leftCornerRelativeLocalPosition = localPosition + (rectTransform.pivot * rectSize);
+                    hitObject = interactivityController!.ProcessMouseClick(leftCornerRelativeLocalPosition / rectSize);
+                }
+
+                if(hitObject == null && TryGetParcelUnderPointer(eventData, out Vector2Int parcel, out _, out _))
+                {
+                    InvokeParcelClicked(parcel);
+                }
             }
 
             Profiler.EndSample();

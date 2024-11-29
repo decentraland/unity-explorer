@@ -15,6 +15,7 @@ namespace DCL.Navmap
         public event Action<PlacesData.PlaceInfo>? OnDestinationSelected;
         public event INavmapBus.SearchPlaceResultDelegate? OnPlaceSearched;
         public event Action<string?>? OnFilterByCategory;
+        public event Action? OnClearPlacesFromMap;
 
         public SharedNavmapBus(ObjectProxy<INavmapBus> source)
         {
@@ -28,18 +29,19 @@ namespace DCL.Navmap
             obj.OnDestinationSelected += OnDestinationSelected;
             obj.OnPlaceSearched += OnPlaceSearched;
             obj.OnFilterByCategory += OnFilterByCategory;
+            obj.OnClearPlacesFromMap += OnClearPlacesFromMap;
         }
 
-        public async UniTask SelectPlaceAsync(PlacesData.PlaceInfo place, CancellationToken ct)
+        public async UniTask SelectPlaceAsync(PlacesData.PlaceInfo place, CancellationToken ct, bool clearPreviousHistory = false)
         {
             if (source.Object == null) return;
-            await source.Object.SelectPlaceAsync(place, ct);
+            await source.Object.SelectPlaceAsync(place, ct, clearPreviousHistory);
         }
 
-        public async UniTask SelectEventAsync(EventDTO @event, CancellationToken ct, PlacesData.PlaceInfo? place = null)
+        public async UniTask SelectEventAsync(EventDTO @event, CancellationToken ct, PlacesData.PlaceInfo? place = null, bool clearPreviousHistory = false)
         {
             if (source.Object == null) return;
-            await source.Object.SelectEventAsync(@event, ct, place);
+            await source.Object.SelectEventAsync(@event, ct, place, clearPreviousHistory);
         }
 
         public async UniTask SearchForPlaceAsync(INavmapBus.SearchPlaceParams @params, CancellationToken ct)
@@ -67,5 +69,8 @@ namespace DCL.Navmap
 
         public void FilterByCategory(string? category) =>
             source.Object?.FilterByCategory(category);
+
+        public void ClearPlacesFromMap() =>
+            source.Object?.ClearPlacesFromMap();
     }
 }

@@ -2,6 +2,7 @@
 using DCL.EventsApi;
 using DCL.MapRenderer.Culling;
 using DCL.MapRenderer.MapLayers.Cluster;
+using DCL.Navmap;
 using NBitcoin;
 using System;
 using System.Collections.Generic;
@@ -28,6 +29,7 @@ namespace DCL.MapRenderer.MapLayers.Categories
         private readonly CategoryIconMappingsSO categoryIconMappings;
         private readonly IEventsApiService eventsApiService;
         private readonly ClusterController clusterController;
+        private readonly INavmapBus navmapBus;
 
         private readonly Dictionary<Vector2Int, IClusterableMarker> markers = new();
         private readonly Dictionary<GameObject, ICategoryMarker> visibleMarkers = new ();
@@ -51,7 +53,8 @@ namespace DCL.MapRenderer.MapLayers.Categories
             IMapCullingController cullingController,
             CategoryIconMappingsSO categoryIconMappings,
             MapLayer mapLayer,
-            ClusterController clusterController)
+            ClusterController clusterController,
+            INavmapBus navmapBus)
             : base(instantiationParent, coordsUtils, cullingController)
         {
             this.eventsApiService = eventsApiService;
@@ -60,6 +63,7 @@ namespace DCL.MapRenderer.MapLayers.Categories
             this.categoryIconMappings = categoryIconMappings;
             this.mapLayer = mapLayer;
             this.clusterController = clusterController;
+            this.navmapBus = navmapBus;
         }
 
         public UniTask InitializeAsync(CancellationToken cancellationToken)
@@ -87,7 +91,7 @@ namespace DCL.MapRenderer.MapLayers.Categories
 
                     ICategoryMarker marker = builder(objectsPool, mapCullingController, coordsUtils);
                     marker.SetCategorySprite(categoryIconMappings.GetCategoryImage(mapLayer));
-                    marker.SetData(eventDto.name, coordsUtils.CoordsToPosition(coords));
+                    marker.SetData(eventDto.name, coordsUtils.CoordsToPosition(coords), null, eventDto);
                     markers.Add(coords, marker);
                     if(isEnabled)
                         foreach (ICategoryMarker clusterableMarker in clusterController.UpdateClusters(zoomLevel, baseZoom, zoom, markers))
@@ -193,6 +197,21 @@ namespace DCL.MapRenderer.MapLayers.Categories
             {
                 deHighlightCt = deHighlightCt.SafeRestart();
                 marker.AnimateDeSelectionAsync(deHighlightCt.Token);
+                return true;
+            }
+
+            return false;
+        }
+
+        private CancellationTokenSource cts = new();
+
+        public bool ClickObject(GameObject gameObject)
+        {
+            if (visibleMarkers.TryGetValue(gameObject, out ICategoryMarker marker))
+            {
+                cts = cts.SafeRestart();
+                navmapBus.SelectEventAsync(marker.EventDTO, cts.Token, null, true).Forget();
+                navmapBus.ClearPlacesFromMap();
                 return true;
             }
 

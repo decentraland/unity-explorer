@@ -24,6 +24,7 @@ namespace DCL.Navmap
         public event Action<PlacesData.PlaceInfo>? OnDestinationSelected;
         public event INavmapBus.SearchPlaceResultDelegate? OnPlaceSearched;
         public event Action<string?>? OnFilterByCategory;
+        public event Action? OnClearPlacesFromMap;
 
         public NavmapCommandBus(SearchPlaceFactory searchPlaceFactory,
             ShowPlaceInfoFactory showPlaceInfoFactory,
@@ -34,8 +35,11 @@ namespace DCL.Navmap
             this.showEventInfoFactory = showEventInfoFactory;
         }
 
-        public async UniTask SelectPlaceAsync(PlacesData.PlaceInfo place, CancellationToken ct)
+        public async UniTask SelectPlaceAsync(PlacesData.PlaceInfo place, CancellationToken ct, bool clearPreviousHistory = false)
         {
+            if(clearPreviousHistory)
+                ClearHistory();
+
             INavmapCommand command = showPlaceInfoFactory.Invoke(place);
 
             await command.ExecuteAsync(ct);
@@ -43,8 +47,11 @@ namespace DCL.Navmap
             commands.Push(command);
         }
 
-        public async UniTask SelectEventAsync(EventDTO @event, CancellationToken ct, PlacesData.PlaceInfo? place = null)
+        public async UniTask SelectEventAsync(EventDTO @event, CancellationToken ct, PlacesData.PlaceInfo? place = null, bool clearPreviousHistory = false)
         {
+            if(clearPreviousHistory)
+                ClearHistory();
+
             INavmapCommand command = showEventInfoFactory.Invoke(@event, place);
 
             await command.ExecuteAsync(ct);
@@ -88,6 +95,9 @@ namespace DCL.Navmap
 
         public void FilterByCategory(string? category) =>
             OnFilterByCategory?.Invoke(category);
+
+        public void ClearPlacesFromMap() =>
+            OnClearPlacesFromMap?.Invoke();
 
         private void OnSearchPlacePerformed(INavmapBus.SearchPlaceParams @params,
             IReadOnlyList<PlacesData.PlaceInfo> places, int totalResultCount) =>

@@ -1,6 +1,7 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.MapRenderer.Culling;
 using DCL.MapRenderer.MapLayers.Cluster;
+using DCL.PlacesAPIService;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -11,7 +12,9 @@ namespace DCL.MapRenderer.MapLayers.PointsOfInterest
     {
         bool IsVisible { get; }
 
-        void SetData(string title, Vector3 position);
+        PlacesData.PlaceInfo PlaceInfo { get; }
+
+        void SetData(string title, Vector3 position, PlacesData.PlaceInfo placeInfo);
 
         void OnBecameVisible();
 

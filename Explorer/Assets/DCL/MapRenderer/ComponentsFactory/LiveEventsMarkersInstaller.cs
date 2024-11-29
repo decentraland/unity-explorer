@@ -6,6 +6,7 @@ using DCL.MapRenderer.Culling;
 using DCL.MapRenderer.MapLayers;
 using DCL.MapRenderer.MapLayers.Categories;
 using DCL.MapRenderer.MapLayers.Cluster;
+using DCL.Navmap;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -31,6 +32,7 @@ namespace DCL.MapRenderer.ComponentsFactory
             IEventsApiService eventsApi,
             ObjectPool<ClusterMarkerObject> clusterObjectsPool,
             CategoryMarkerObject prefab,
+            INavmapBus navmapBus,
             CancellationToken cancellationToken
         )
         {
@@ -56,7 +58,8 @@ namespace DCL.MapRenderer.ComponentsFactory
                 cullingController,
                 mapSettings.CategoryIconMappings,
                 MapLayer.LiveEvents,
-                clusterController
+                clusterController,
+                navmapBus
             );
 
             await liveEventsMarkersController.InitializeAsync(cancellationToken);

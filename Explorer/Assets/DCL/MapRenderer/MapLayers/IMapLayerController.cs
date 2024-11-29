@@ -40,5 +40,9 @@ namespace DCL.MapRenderer.MapLayers
 
         bool DeHighlightObject(GameObject gameObject) =>
             false;
+
+        bool ClickObject(GameObject gameObject) =>
+            false;
+
     }
 }

@@ -1,4 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
+using DCL.EventsApi;
 using DCL.MapRenderer.Culling;
 using DCL.MapRenderer.MapLayers.Cluster;
 using DCL.Navmap;
@@ -100,7 +101,7 @@ namespace DCL.MapRenderer.MapLayers.Categories
                 var marker = builder(objectsPool, mapCullingController, coordsUtils);
                 var position = coordsUtils.CoordsToPosition(MapLayerUtils.GetParcelsCenter(placeInfo));
 
-                marker.SetData(placeInfo.title, position);
+                marker.SetData(placeInfo.title, position, null, new EventDTO());
                 marker.SetCategorySprite(categoryImage);
                 markers.Add(MapLayerUtils.GetParcelsCenter(placeInfo), marker);
                 marker.SetZoom(coordsUtils.ParcelSize, baseZoom, zoom);
@@ -147,7 +148,7 @@ namespace DCL.MapRenderer.MapLayers.Categories
         {
             foreach (ICategoryMarker marker in markers.Values)
                 mapCullingController.StartTracking(marker, this);
-            
+
             foreach (ICategoryMarker clusterableMarker in clusterController.UpdateClusters(zoomLevel, baseZoom, zoom, markers))
                 mapCullingController.StartTracking(clusterableMarker, this);
             isEnabled = true;

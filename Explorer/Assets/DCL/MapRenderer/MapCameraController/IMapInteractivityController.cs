@@ -22,5 +22,7 @@ namespace DCL.MapRenderer.MapCameraController
         Vector2 GetNormalizedPosition(Vector2Int parcel);
 
         GameObject? ProcessMousePosition(Vector2 worldPosition);
+
+        GameObject? ProcessMouseClick(Vector2 worldPosition);
     }
 }

@@ -3,6 +3,7 @@ using DCL.MapRenderer.Culling;
 using DCL.MapRenderer.MapLayers.Cluster;
 using DCL.Navmap;
 using NBitcoin;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -53,6 +54,12 @@ namespace DCL.MapRenderer.MapLayers.SearchResults
             this.clusterController = clusterController;
 
             navmapBus.OnPlaceSearched += OnPlaceSearched;
+            navmapBus.OnClearPlacesFromMap += OnClearPlacesFromMap;
+        }
+
+        private void OnClearPlacesFromMap()
+        {
+            ReleaseMarkers();
         }
 
         public async UniTask InitializeAsync(CancellationToken cancellationToken) { }
@@ -81,10 +88,12 @@ namespace DCL.MapRenderer.MapLayers.SearchResults
                 markers.Add(MapLayerUtils.GetParcelsCenter(placeInfo), marker);
                 marker.SetZoom(coordsUtils.ParcelSize, baseZoom, zoom);
 
-                if (isEnabled)
-                    foreach (ISearchResultMarker clusterableMarker in clusterController.UpdateClusters(zoomLevel, baseZoom, zoom, markers))
-                        mapCullingController.StartTracking(clusterableMarker, this);
+                if(isEnabled)
+                    mapCullingController.StartTracking(marker, this);
             }
+            if (isEnabled)
+                foreach (ISearchResultMarker clusterableMarker in clusterController.UpdateClusters(zoomLevel, baseZoom, zoom, markers))
+                    mapCullingController.StartTracking(clusterableMarker, this);
         }
 
         private static bool IsEmptyParcel(PlacesData.PlaceInfo sceneInfo) =>
@@ -149,6 +158,7 @@ namespace DCL.MapRenderer.MapLayers.SearchResults
         public void OnMapObjectBecameVisible(ISearchResultMarker marker)
         {
             marker.OnBecameVisible();
+            marker.SetZoom(coordsUtils.ParcelSize, baseZoom, zoom);
             GameObject? gameObject = marker.GetGameObject();
             if(gameObject != null)
                 visibleMarkers.AddOrReplace(gameObject, marker);

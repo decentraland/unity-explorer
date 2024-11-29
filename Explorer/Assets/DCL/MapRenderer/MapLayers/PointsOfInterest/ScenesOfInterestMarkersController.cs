@@ -3,6 +3,7 @@ using DCL.Diagnostics;
 using DCL.Ipfs;
 using DCL.MapRenderer.Culling;
 using DCL.MapRenderer.MapLayers.Cluster;
+using DCL.Navmap;
 using DCL.Optimization.Pools;
 using DCL.Utilities.Extensions;
 using NBitcoin;
@@ -32,6 +33,7 @@ namespace DCL.MapRenderer.MapLayers.PointsOfInterest
         private readonly IObjectPool<SceneOfInterestMarkerObject> objectsPool;
         private readonly SceneOfInterestMarkerBuilder builder;
         private readonly ClusterController clusterController;
+        private readonly INavmapBus navmapBus;
         private readonly IPlacesAPIService placesAPIService;
 
         private readonly Dictionary<Vector2Int, IClusterableMarker> markers = new ();
@@ -55,13 +57,15 @@ namespace DCL.MapRenderer.MapLayers.PointsOfInterest
             Transform instantiationParent,
             ICoordsUtils coordsUtils,
             IMapCullingController cullingController,
-            ClusterController clusterController)
+            ClusterController clusterController,
+            INavmapBus navmapBus)
             : base(instantiationParent, coordsUtils, cullingController)
         {
             this.placesAPIService = placesAPIService;
             this.objectsPool = objectsPool;
             this.builder = builder;
             this.clusterController = clusterController;
+            this.navmapBus = navmapBus;
         }
 
         public async UniTask InitializeAsync(CancellationToken cancellationToken)
@@ -94,7 +98,7 @@ namespace DCL.MapRenderer.MapLayers.PointsOfInterest
                 var centerParcel = MapLayerUtils.GetParcelsCenter(placeInfo);
                 var position = coordsUtils.CoordsToPosition(centerParcel);
 
-                marker.SetData(placeInfo.title, position);
+                marker.SetData(placeInfo.title, position, placeInfo);
                 markers.Add(MapLayerUtils.GetParcelsCenter(placeInfo), marker);
 
                 if (isEnabled)
@@ -201,6 +205,21 @@ namespace DCL.MapRenderer.MapLayers.PointsOfInterest
             {
                 deHighlightCt = deHighlightCt.SafeRestart();
                 marker.AnimateDeSelectionAsync(deHighlightCt.Token);
+                return true;
+            }
+
+            return false;
+        }
+
+        private CancellationTokenSource cts = new();
+
+        public bool ClickObject(GameObject gameObject)
+        {
+            if (visibleMarkers.TryGetValue(gameObject, out ISceneOfInterestMarker marker))
+            {
+                cts = cts.SafeRestart();
+                navmapBus.SelectPlaceAsync(marker.PlaceInfo, cts.Token, true).Forget();
+                navmapBus.ClearPlacesFromMap();
                 return true;
             }
 
