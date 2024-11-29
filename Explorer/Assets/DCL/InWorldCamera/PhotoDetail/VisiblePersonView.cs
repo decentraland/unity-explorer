@@ -8,6 +8,7 @@ namespace DCL.InWorldCamera.PhotoDetail
     public class VisiblePersonView : MonoBehaviour
     {
         [field: SerializeField] internal TMP_Text userName { get; private set; }
+        [field: SerializeField] internal TMP_Text userNameTag { get; private set; }
         [field: SerializeField] internal ImageView profileImage { get; private set; }
         [field: SerializeField] internal Image faceFrame { get; private set; }
         [field: SerializeField] internal Button expandWearableButton { get; private set; }

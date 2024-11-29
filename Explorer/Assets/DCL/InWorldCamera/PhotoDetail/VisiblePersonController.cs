@@ -73,10 +73,16 @@ namespace DCL.InWorldCamera.PhotoDetail
             loadWearablesCts = loadWearablesCts.SafeRestart();
 
             view.userName.text = visiblePerson.userName;
+            view.userName.color = chatEntryConfiguration.GetNameColor(visiblePerson.userName);
+            view.userNameTag.text = $"#{visiblePerson.userAddress[^4..]}";
 
             Profile? profile = await profileRepository.GetAsync(visiblePerson.userAddress, ct);
+            if (profile is not null)
+                view.userNameTag.gameObject.SetActive(!profile.HasClaimedName);
+            else
+                view.userNameTag.gameObject.SetActive(false);
 
-            view.faceFrame.color = chatEntryConfiguration.GetNameColor(profile?.Name);
+            view.faceFrame.color = chatEntryConfiguration.GetNameColor(visiblePerson.userName);
 
             // await imageController!.RequestImageAsync(profile.Avatar.FaceSnapshotUrl, ct);
         }
