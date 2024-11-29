@@ -9,11 +9,7 @@ using DCL.Diagnostics;
 using DCL.Multiplayer.SDK.Components;
 using DCL.Optimization.Pools;
 using ECS.Abstract;
-using ECS.Groups;
 using ECS.LifeCycle.Components;
-using Utility;
-using Quaternion = UnityEngine.Quaternion;
-using Vector3 = UnityEngine.Vector3;
 
 namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
 {
