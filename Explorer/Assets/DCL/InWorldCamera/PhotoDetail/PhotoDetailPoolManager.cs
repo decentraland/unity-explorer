@@ -2,6 +2,7 @@ using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack;
 using DCL.Browser;
+using DCL.Chat;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Profiles;
 using DCL.WebRequests;
@@ -19,6 +20,7 @@ namespace DCL.InWorldCamera.PhotoDetail
         public PhotoDetailPoolManager(
             VisiblePersonView visiblePersonPrefab,
             EquippedWearableView equippedWearablePrefab,
+            Sprite emptyProfileImage,
             GameObject unusedVisiblePersonPoolObjectParent,
             GameObject unusedEquippedWearablePoolObjectParent,
             IWebRequestController webRequestController,
@@ -32,6 +34,7 @@ namespace DCL.InWorldCamera.PhotoDetail
             NftTypeIconSO rarityBackgrounds,
             NFTColorsSO rarityColors,
             NftTypeIconSO categoryIcons,
+            ChatEntryConfigurationSO chatEntryConfiguration,
             int visiblePersonDefaultCapacity,
             int visiblePersonMaxSize,
             int equippedWearableDefaultCapacity,
@@ -41,13 +44,13 @@ namespace DCL.InWorldCamera.PhotoDetail
                 () =>
                 {
                     VisiblePersonView view = GameObject.Instantiate(visiblePersonPrefab);
-                    return new VisiblePersonController(view, webRequestController, profileRepository, mvcManager, wearableStorage, wearablesProvider, this);
+                    return new VisiblePersonController(view, webRequestController, profileRepository, mvcManager, wearableStorage, wearablesProvider, this, chatEntryConfiguration);
                 },
                 visiblePerson => visiblePerson.view.gameObject.SetActive(true),
                 visiblePerson =>
                 {
                     visiblePerson.view.transform.SetParent(unusedVisiblePersonPoolObjectParent.transform, false);
-                    visiblePerson.view.profileImage.SetImage(null);
+                    visiblePerson.view.profileImage.SetImage(emptyProfileImage);
                     visiblePerson.view.gameObject.SetActive(false);
                 },
                 visiblePerson =>

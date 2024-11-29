@@ -9,6 +9,7 @@ namespace DCL.InWorldCamera.PhotoDetail
     {
         [field: SerializeField] internal TMP_Text userName { get; private set; }
         [field: SerializeField] internal ImageView profileImage { get; private set; }
+        [field: SerializeField] internal Image faceFrame { get; private set; }
         [field: SerializeField] internal Button expandWearableButton { get; private set; }
         [field: SerializeField] internal RectTransform expandWearableButtonImage { get; private set; }
         [field: SerializeField] internal Button userProfileButton { get; private set; }

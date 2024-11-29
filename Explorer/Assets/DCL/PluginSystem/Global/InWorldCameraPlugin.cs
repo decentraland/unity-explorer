@@ -8,6 +8,7 @@ using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack;
 using DCL.Browser;
 using DCL.Character;
+using DCL.Chat;
 using DCL.Chat.MessageBus;
 using DCL.Clipboard;
 using DCL.InWorldCamera.CameraReelStorageService;
@@ -110,10 +111,11 @@ namespace DCL.PluginSystem.Global
             PhotoDetailView photoDetailViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.PhotoDetailPrefab, ct: ct)).GetComponent<PhotoDetailView>();
             ControllerBase<PhotoDetailView, PhotoDetailParameter>.ViewFactoryMethod viewFactoryMethod = PhotoDetailController.Preallocate(photoDetailViewAsset, null, out PhotoDetailView explorePanelView);
 
-            (NFTColorsSO rarityColorMappings, NftTypeIconSO categoryIconsMapping, NftTypeIconSO rarityBackgroundsMapping) = await UniTask.WhenAll(
+            (NFTColorsSO rarityColorMappings, NftTypeIconSO categoryIconsMapping, NftTypeIconSO rarityBackgroundsMapping, ChatEntryConfigurationSO chatEntryConfiguration) = await UniTask.WhenAll(
                 assetsProvisioner.ProvideMainAssetValueAsync(settings.RarityColorMappings, ct),
                 assetsProvisioner.ProvideMainAssetValueAsync(settings.CategoryIconsMapping, ct),
-                assetsProvisioner.ProvideMainAssetValueAsync(settings.RarityBackgroundsMapping, ct));
+                assetsProvisioner.ProvideMainAssetValueAsync(settings.RarityBackgroundsMapping, ct),
+                assetsProvisioner.ProvideMainAssetValueAsync(settings.ChatEntryConfiguration, ct));
 
             mvcManager.RegisterController(new PhotoDetailController(viewFactoryMethod,
                 new PhotoDetailInfoController(explorePanelView.GetComponentInChildren<PhotoDetailInfoView>(),
@@ -129,7 +131,8 @@ namespace DCL.PluginSystem.Global
                     new ECSThumbnailProvider(realmData, world, assetBundleURL, webRequestController),
                     rarityBackgroundsMapping,
                     rarityColorMappings,
-                    categoryIconsMapping),
+                    categoryIconsMapping,
+                    chatEntryConfiguration),
                 cameraReelScreenshotsStorage,
                 systemClipboard,
                 decentralandUrlsSource,
@@ -164,14 +167,12 @@ namespace DCL.PluginSystem.Global
             [field: Header("Photo detail")]
             [field: SerializeField] internal AssetReferenceGameObject PhotoDetailPrefab { get; private set; }
             [field: SerializeField, Tooltip("Spaces will be HTTP sanitized, care for special characters")] internal string ShareToXMessage { get; private set; }
-            [field: SerializeField]
-            internal AssetReferenceT<NftTypeIconSO> CategoryIconsMapping { get; private set; }
+            [field: SerializeField] internal AssetReferenceT<NftTypeIconSO> CategoryIconsMapping { get; private set; }
 
-            [field: SerializeField]
-            internal AssetReferenceT<NftTypeIconSO> RarityBackgroundsMapping { get; private set; }
+            [field: SerializeField] internal AssetReferenceT<NftTypeIconSO> RarityBackgroundsMapping { get; private set; }
 
-            [field: SerializeField]
-            internal AssetReferenceT<NFTColorsSO> RarityColorMappings { get; private set; }
+            [field: SerializeField] internal AssetReferenceT<NFTColorsSO> RarityColorMappings { get; private set; }
+            [field: SerializeField] internal AssetReferenceT<ChatEntryConfigurationSO> ChatEntryConfiguration { get; private set; }
         }
     }
 }

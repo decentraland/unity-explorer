@@ -538,6 +538,7 @@ MonoBehaviour:
   <loadingState>k__BackingField: {fileID: 708128061540631327}
   <visiblePersonViewPrefab>k__BackingField: {fileID: 3983589861785833817, guid: 9a4f9c58c3f3f44b897156ed8c77b0e1, type: 3}
   <equippedWearablePrefab>k__BackingField: {fileID: 1014815712935129, guid: f3f4587bcfd104c3bbb76cd706b3dd20, type: 3}
+  <emptyProfileImage>k__BackingField: {fileID: 21300000, guid: b296cda0724854cf0861c9ff691847c2, type: 3}
 --- !u!1 &2695727088137606323
 GameObject:
   m_ObjectHideFlags: 0

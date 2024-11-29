@@ -4,6 +4,7 @@ using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.Chat;
 using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using DCL.Passport;
 using DCL.Profiles;
@@ -31,6 +32,7 @@ namespace DCL.InWorldCamera.PhotoDetail
         private readonly IWearablesProvider wearablesProvider;
         private readonly List<EquippedWearableController> wearableControllers = new();
         private readonly PhotoDetailPoolManager photoDetailPoolManager;
+        private readonly ChatEntryConfigurationSO chatEntryConfiguration;
 
         private VisiblePerson? visiblePerson;
         private bool isShowingWearables;
@@ -43,7 +45,8 @@ namespace DCL.InWorldCamera.PhotoDetail
             IMVCManager mvcManager,
             IWearableStorage wearableStorage,
             IWearablesProvider wearablesProvider,
-            PhotoDetailPoolManager photoDetailPoolManager)
+            PhotoDetailPoolManager photoDetailPoolManager,
+            ChatEntryConfigurationSO chatEntryConfiguration)
         {
             this.view = view;
             this.profileRepository = profileRepository;
@@ -51,6 +54,7 @@ namespace DCL.InWorldCamera.PhotoDetail
             this.wearableStorage = wearableStorage;
             this.wearablesProvider = wearablesProvider;
             this.photoDetailPoolManager = photoDetailPoolManager;
+            this.chatEntryConfiguration = chatEntryConfiguration;
 
             this.imageController = new ImageController(view.profileImage, webRequestController);
             this.view.userProfileButton.onClick.AddListener(ShowPersonPassportClicked);
@@ -71,9 +75,10 @@ namespace DCL.InWorldCamera.PhotoDetail
             view.userName.text = visiblePerson.userName;
 
             Profile? profile = await profileRepository.GetAsync(visiblePerson.userAddress, ct);
-            if (profile is null) return;
 
-            await imageController!.RequestImageAsync(profile.Avatar.FaceSnapshotUrl, ct);
+            view.faceFrame.color = chatEntryConfiguration.GetNameColor(profile?.Name);
+
+            // await imageController!.RequestImageAsync(profile.Avatar.FaceSnapshotUrl, ct);
         }
 
         public void Release()

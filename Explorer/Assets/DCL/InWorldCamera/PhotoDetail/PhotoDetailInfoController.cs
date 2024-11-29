@@ -3,6 +3,7 @@ using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack;
 using DCL.Browser;
+using DCL.Chat;
 using DCL.Chat.Commands;
 using DCL.Chat.MessageBus;
 using DCL.InWorldCamera.CameraReelStorageService;
@@ -54,7 +55,8 @@ namespace DCL.InWorldCamera.PhotoDetail
             IThumbnailProvider thumbnailProvider,
             NftTypeIconSO rarityBackgrounds,
             NFTColorsSO rarityColors,
-            NftTypeIconSO categoryIcons)
+            NftTypeIconSO categoryIcons,
+            ChatEntryConfigurationSO chatEntryConfiguration)
         {
             this.view = view;
             this.cameraReelStorageService = cameraReelStorageService;
@@ -63,6 +65,7 @@ namespace DCL.InWorldCamera.PhotoDetail
 
             this.photoDetailPoolManager = new PhotoDetailPoolManager(view.visiblePersonViewPrefab,
                 view.equippedWearablePrefab,
+                view.emptyProfileImage,
                 view.unusedVisiblePersonViewContainer,
                 view.unusedEquippedWearableViewContainer,
                 webRequestController,
@@ -76,6 +79,7 @@ namespace DCL.InWorldCamera.PhotoDetail
                 rarityBackgrounds,
                 rarityColors,
                 categoryIcons,
+                chatEntryConfiguration,
                 VISIBLE_PERSON_DEFAULT_POOL_SIZE,
                 VISIBLE_PERSON_MAX_POOL_CAPACITY,
                 EQUIPPED_WEARABLE_DEFAULT_POOL_SIZE,

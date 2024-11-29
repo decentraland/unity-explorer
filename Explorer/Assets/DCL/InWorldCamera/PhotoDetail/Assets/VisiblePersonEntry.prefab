@@ -206,6 +206,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   <userName>k__BackingField: {fileID: 8527337629603256020}
   <profileImage>k__BackingField: {fileID: 3818055324079073058}
+  <faceFrame>k__BackingField: {fileID: 6149910845844478580}
   <expandWearableButton>k__BackingField: {fileID: 7370240177998520773}
   <expandWearableButtonImage>k__BackingField: {fileID: 5184066094468107970}
   <userProfileButton>k__BackingField: {fileID: 2850465004723359259}
@@ -767,6 +768,17 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 5077979785437414200, guid: a1826d8f1a636401d821e18eb1cfcdd2, type: 3}
   m_PrefabInstance: {fileID: 110649423049494010}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &6149910845844478580 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 6111881968970258318, guid: a1826d8f1a636401d821e18eb1cfcdd2, type: 3}
+  m_PrefabInstance: {fileID: 110649423049494010}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!114 &7370240177998520773 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 7476328826736110655, guid: a1826d8f1a636401d821e18eb1cfcdd2, type: 3}
