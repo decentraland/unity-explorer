@@ -5,8 +5,6 @@ using DCL.AvatarRendering.Emotes.Equipped;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.InWorldCamera.CameraReelStorageService.Schemas;
-using DCL.InWorldCamera.InWorldCamera.Playground;
-using DCL.InWorldCamera.ScreencaptureCamera.UI;
 using DCL.Ipfs;
 using DCL.Profiles;
 using DCL.Profiles.Self;
@@ -20,7 +18,7 @@ using System.Threading;
 using UnityEngine;
 using Utility;
 
-namespace DCL.InWorldCamera.ScreencaptureCamera.Playground
+namespace DCL.InWorldCamera.Playground
 {
     public sealed class ScreenRecorderTester : MonoBehaviour
     {

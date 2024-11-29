@@ -1,8 +1,8 @@
 ﻿using UnityEngine;
 
-namespace DCL.InWorldCamera.ScreencaptureCamera
+namespace DCL.InWorldCamera
 {
-    public struct InWorldCamera { }
+    public struct InWorldCameraComponent { }
 
     public struct ToggleInWorldCameraUIRequest { public bool IsEnable; }
     public struct TakeScreenshotUIRequest { public string Source; }

@@ -5,7 +5,7 @@ using DCL.Diagnostics;
 using ECS.Abstract;
 using UnityEngine;
 
-namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
+namespace DCL.InWorldCamera.Systems
 {
     [UpdateInGroup(typeof(CameraGroup))]
     [UpdateAfter(typeof(ToggleInWorldCameraActivitySystem))]

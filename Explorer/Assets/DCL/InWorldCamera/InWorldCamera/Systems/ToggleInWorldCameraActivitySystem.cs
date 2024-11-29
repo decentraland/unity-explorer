@@ -9,15 +9,15 @@ using DCL.CharacterCamera.Systems;
 using DCL.Diagnostics;
 using DCL.Input;
 using DCL.Input.Component;
-using DCL.InWorldCamera.ScreencaptureCamera.Settings;
-using DCL.InWorldCamera.ScreencaptureCamera.UI;
+using DCL.InWorldCamera.Settings;
+using DCL.InWorldCamera.UI;
 using ECS.Abstract;
 using MVC;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using static DCL.Input.Component.InputMapComponent;
 
-namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
+namespace DCL.InWorldCamera.Systems
 {
     [UpdateInGroup(typeof(CameraGroup))]
     [UpdateBefore(typeof(ApplyCinemachineCameraInputSystem))]
@@ -73,11 +73,11 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
 
         protected override void Update(float t)
         {
-            if (World.Has<InWorldCamera>(camera) && BlendingHasFinished())
+            if (World.Has<InWorldCameraComponent>(camera) && BlendingHasFinished())
                 SetFollowTarget();
 
             if (toggleInWorldCameraShortcut!.triggered) // Keyboard shortcut trigger
-                ToggleCamera(enable: !World.Has<InWorldCamera>(camera));
+                ToggleCamera(enable: !World.Has<InWorldCameraComponent>(camera));
             else if (World.TryGet(camera, out ToggleInWorldCameraUIRequest request)) // UI trigger
             {
                 ToggleCamera(request.IsEnable);
@@ -128,7 +128,7 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
 
             SwitchCameraInput(to: Kind.PLAYER);
 
-            World.Remove<InWorldCamera, CameraTarget, CameraDampedFOV, CameraDampedAim, InWorldCameraInput>(camera);
+            World.Remove<InWorldCameraComponent, CameraTarget, CameraDampedFOV, CameraDampedAim, InWorldCameraInput>(camera);
         }
 
         private void EnableCamera()
@@ -145,7 +145,7 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
             SwitchCameraInput(to: Kind.IN_WORLD_CAMERA);
 
             World.Add(camera,
-                new InWorldCamera(),
+                new InWorldCameraComponent(),
                 new CameraTarget { Value = followTarget },
                 new CameraDampedFOV { Current = inWorldVirtualCamera.m_Lens.FieldOfView, Velocity = 0f, Target = inWorldVirtualCamera.m_Lens.FieldOfView },
                 new CameraDampedAim { Current = Vector2.up, Velocity = Vector2.up },

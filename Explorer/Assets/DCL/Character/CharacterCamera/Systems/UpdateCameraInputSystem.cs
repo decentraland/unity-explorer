@@ -5,6 +5,7 @@ using DCL.Character.CharacterCamera.Components;
 using DCL.CharacterCamera.Components;
 using DCL.Input;
 using DCL.Input.Systems;
+using DCL.InWorldCamera;
 using UnityEngine;
 
 namespace DCL.CharacterCamera.Systems
@@ -37,7 +38,7 @@ namespace DCL.CharacterCamera.Systems
 
         [Query]
         [All(typeof(CameraBlockerComponent))]
-        [None(typeof(InWorldCamera.ScreencaptureCamera.InWorldCamera))]
+        [None(typeof(InWorldCameraComponent))]
         private void ResetInput(ref CameraInput cameraInput)
         {
             cameraInput.ZoomIn = false;
@@ -48,7 +49,7 @@ namespace DCL.CharacterCamera.Systems
         }
 
         [Query]
-        [None(typeof(CameraBlockerComponent), typeof(InWorldCamera.ScreencaptureCamera.InWorldCamera))]
+        [None(typeof(CameraBlockerComponent), typeof(InWorldCameraComponent))]
         private void UpdateInput(ref CameraInput cameraInput, ref CursorComponent cursorComponent)
         {
             if (!cameraActions.enabled)

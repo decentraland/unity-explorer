@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace DCL.InWorldCamera.ScreencaptureCamera
+namespace DCL.InWorldCamera
 {
     public struct ScreenFrameData
     {

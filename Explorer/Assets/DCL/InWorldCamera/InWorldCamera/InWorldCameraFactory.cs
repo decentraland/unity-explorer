@@ -3,7 +3,7 @@ using UnityEngine;
 using Utility;
 using Object = UnityEngine.Object;
 
-namespace DCL.InWorldCamera.ScreencaptureCamera
+namespace DCL.InWorldCamera
 {
     public class InWorldCameraFactory : IDisposable
     {

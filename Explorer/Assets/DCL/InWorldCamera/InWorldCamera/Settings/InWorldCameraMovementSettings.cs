@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace DCL.InWorldCamera.ScreencaptureCamera.Settings
+namespace DCL.InWorldCamera.Settings
 {
     public class InWorldCameraMovementSettings : ScriptableObject
     {

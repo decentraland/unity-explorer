@@ -11,6 +11,7 @@ using DCL.CharacterMotion.Settings;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using DCL.Diagnostics;
+using DCL.InWorldCamera;
 using ECS.Abstract;
 using System.Runtime.CompilerServices;
 using UnityEngine;
@@ -65,7 +66,7 @@ namespace DCL.CharacterMotion.Systems
         {
             UpdateDebugValues();
 
-            if (!World.Has<InWorldCamera.ScreencaptureCamera.InWorldCamera>(camera))
+            if (!World.Has<InWorldCameraComponent>(camera))
                 UpdateIKQuery(World, t, in camera.GetCameraComponent(World));
         }
 

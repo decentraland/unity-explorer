@@ -1,7 +1,7 @@
 ﻿using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using UnityEngine;
 
-namespace DCL.InWorldCamera.InWorldCamera.Playground
+namespace DCL.InWorldCamera.Playground
 {
     public class ScreenshotHudDebug : MonoBehaviour
     {

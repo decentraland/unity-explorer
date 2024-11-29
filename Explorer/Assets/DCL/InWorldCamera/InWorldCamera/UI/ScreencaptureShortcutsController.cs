@@ -4,7 +4,7 @@ using JetBrains.Annotations;
 using MVC;
 using System.Threading;
 
-namespace DCL.InWorldCamera.ScreencaptureCamera.UI
+namespace DCL.InWorldCamera.UI
 {
     public class ScreencaptureShortcutsController : ControllerBase<ElementWithCloseArea>
     {

@@ -5,11 +5,11 @@ using DCL.CharacterCamera;
 using DCL.CharacterCamera.Components;
 using DCL.Diagnostics;
 using DCL.Input;
-using DCL.InWorldCamera.ScreencaptureCamera.Settings;
+using DCL.InWorldCamera.Settings;
 using ECS.Abstract;
 using UnityEngine;
 
-namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
+namespace DCL.InWorldCamera.Systems
 {
     [UpdateInGroup(typeof(CameraGroup))]
     [UpdateAfter(typeof(EmitInWorldCameraInputSystem))]
@@ -40,7 +40,7 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
 
         protected override void Update(float t)
         {
-            if (World.Has<InWorldCamera>(camera))
+            if (World.Has<InWorldCameraComponent>(camera))
             {
                 InWorldCameraInput input = World.Get<InWorldCameraInput>(camera);
                 CharacterController? followTarget = World.Get<CameraTarget>(camera).Value;

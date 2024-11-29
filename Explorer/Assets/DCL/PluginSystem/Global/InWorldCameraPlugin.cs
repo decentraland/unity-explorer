@@ -4,11 +4,10 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Character;
 using DCL.Input;
+using DCL.InWorldCamera;
 using DCL.InWorldCamera.CameraReelStorageService;
-using DCL.InWorldCamera.ScreencaptureCamera;
-using DCL.InWorldCamera.ScreencaptureCamera.Settings;
-using DCL.InWorldCamera.ScreencaptureCamera.Systems;
-using DCL.InWorldCamera.ScreencaptureCamera.UI;
+using DCL.InWorldCamera.Settings;
+using DCL.InWorldCamera.UI;
 using DCL.PlacesAPIService;
 using DCL.Profiles.Self;
 using ECS;
@@ -19,6 +18,10 @@ using UnityEngine;
 using UnityEngine.UI;
 using Utility;
 using static DCL.PluginSystem.Global.InWorldCameraPlugin;
+using CaptureScreenshotSystem = DCL.InWorldCamera.Systems.CaptureScreenshotSystem;
+using EmitInWorldCameraInputSystem = DCL.InWorldCamera.Systems.EmitInWorldCameraInputSystem;
+using MoveInWorldCameraSystem = DCL.InWorldCamera.Systems.MoveInWorldCameraSystem;
+using ToggleInWorldCameraActivitySystem = DCL.InWorldCamera.Systems.ToggleInWorldCameraActivitySystem;
 
 namespace DCL.PluginSystem.Global
 {

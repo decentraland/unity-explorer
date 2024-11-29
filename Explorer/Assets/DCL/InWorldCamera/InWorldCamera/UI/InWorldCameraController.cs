@@ -5,7 +5,7 @@ using DCL.CharacterCamera;
 using DCL.ExplorePanel;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.InWorldCamera.CameraReelStorageService.Schemas;
-using DCL.InWorldCamera.InWorldCamera.Playground;
+using DCL.InWorldCamera.Playground;
 using DCL.UI;
 using ECS.Abstract;
 using JetBrains.Annotations;
@@ -15,7 +15,7 @@ using System.Threading;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace DCL.InWorldCamera.ScreencaptureCamera.UI
+namespace DCL.InWorldCamera.UI
 {
     public class InWorldCameraController : ControllerBase<InWorldCameraView>
     {
@@ -110,7 +110,7 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.UI
                 world.Add(camera!.Value, new ToggleInWorldCameraUIRequest { IsEnable = false });
 
             bool CameraIsActivated() =>
-                !world.Has<ToggleInWorldCameraUIRequest>(camera!.Value) && world.Has<InWorldCamera>(camera!.Value);
+                !world.Has<ToggleInWorldCameraUIRequest>(camera!.Value) && world.Has<InWorldCameraComponent>(camera!.Value);
         }
 
         private void RequestEnableInWorldCamera()
@@ -119,7 +119,7 @@ namespace DCL.InWorldCamera.ScreencaptureCamera.UI
                 world.Add(camera!.Value, new ToggleInWorldCameraUIRequest { IsEnable = true });
 
             bool CameraIsNotActivated() =>
-                !world.Has<ToggleInWorldCameraUIRequest>(camera!.Value) && !world.Has<InWorldCamera>(camera!.Value);
+                !world.Has<ToggleInWorldCameraUIRequest>(camera!.Value) && !world.Has<InWorldCameraComponent>(camera!.Value);
         }
 
         private void ToggleShortcutsInfo() =>

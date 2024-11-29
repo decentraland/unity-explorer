@@ -7,7 +7,7 @@ using System.Threading;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace DCL.InWorldCamera.ScreencaptureCamera.UI
+namespace DCL.InWorldCamera.UI
 {
     public class InWorldCameraView : ViewBase, IView
     {

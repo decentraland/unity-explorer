@@ -7,7 +7,7 @@ using DCL.CharacterCamera;
 using DCL.Diagnostics;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.InWorldCamera.CameraReelStorageService.Schemas;
-using DCL.InWorldCamera.ScreencaptureCamera.UI;
+using DCL.InWorldCamera.UI;
 using DCL.Multiplayer.Profiles.Entities;
 using DCL.Profiles;
 using ECS.Abstract;
@@ -15,7 +15,7 @@ using System.Threading;
 using UnityEngine;
 using Utility;
 
-namespace DCL.InWorldCamera.ScreencaptureCamera.Systems
+namespace DCL.InWorldCamera.Systems
 {
     [UpdateInGroup(typeof(CameraGroup))]
     [UpdateAfter(typeof(ToggleInWorldCameraActivitySystem))]
