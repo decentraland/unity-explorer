@@ -1,7 +1,6 @@
 ﻿using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.MapLayers;
 using DCL.MapRenderer.MapLayers.ParcelHighlight;
-using DCL.MapRenderer.MapLayers.Pins;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Pool;
@@ -14,7 +13,6 @@ namespace DCL.MapRenderer.MapCameraController
         private readonly Transform cameraParent;
         private readonly IObjectPool<IParcelHighlightMarker> markersPool;
         private readonly ICoordsUtils coordsUtils;
-        private readonly PinMarkerController markerController;
         private readonly Camera camera;
         private readonly List<IMapLayerController> interactableLayers = new ();
 
@@ -28,13 +26,11 @@ namespace DCL.MapRenderer.MapCameraController
             Camera camera,
             IObjectPool<IParcelHighlightMarker> markersPool,
             ICoordsUtils coordsUtils,
-            PinMarkerController markerController,
             List<IMapLayerController> interactableLayers)
         {
             this.cameraParent = cameraParent;
             this.markersPool = markersPool;
             this.coordsUtils = coordsUtils;
-            this.markerController = markerController;
             this.camera = camera;
             this.interactableLayers.AddRange(interactableLayers);
         }
@@ -109,22 +105,10 @@ namespace DCL.MapRenderer.MapCameraController
             marker?.Deactivate();
         }
 
-        public bool TryGetParcel(Vector2 normalizedCoordinates, out Vector2Int parcel, out IPinMarker? mark)
+        public bool TryGetParcel(Vector2 normalizedCoordinates, out Vector2Int parcel)
         {
             bool parcelExists = coordsUtils.TryGetCoordsWithinInteractableBounds(GetLocalPosition(normalizedCoordinates), out parcel);
-            mark = null;
-            if (parcelExists) { mark = GetPinMarkerOnParcel(parcel); }
             return parcelExists;
-        }
-
-        public IPinMarker? GetPinMarkerOnParcel(Vector2Int parcel)
-        {
-            if (markerController != null) //This check is only needed for tests -_-
-            {
-                foreach (IPinMarker mark in markerController.markers.Values)
-                    if (mark.ParcelPosition == parcel) { return mark; }
-            }
-            return null;
         }
 
         public Vector2 GetNormalizedPosition(Vector2Int parcel)

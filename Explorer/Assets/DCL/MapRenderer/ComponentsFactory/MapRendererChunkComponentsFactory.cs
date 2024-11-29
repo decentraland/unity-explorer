@@ -140,6 +140,7 @@ namespace DCL.MapRenderer.ComponentsFactory
 
             List<IMapLayerController> interactableLayerControllers = new List<IMapLayerController>()
             {
+                pinMarkerController,
                 liveEventsInstaller,
                 categoriesInstaller,
                 sceneOfInterestInstaller,
@@ -158,8 +159,7 @@ namespace DCL.MapRenderer.ComponentsFactory
             IMapCameraControllerInternal CameraControllerBuilder(List<IMapLayerController> interactableLayers)
             {
                 MapCameraObject instance = Object.Instantiate(mapCameraObjectPrefab, configuration.MapCamerasRoot);
-                var interactivityController = new MapCameraInteractivityController(configuration.MapCamerasRoot, instance.mapCamera, highlightMarkersPool, coordsUtils, pinMarkerController, interactableLayers);
-
+                var interactivityController = new MapCameraInteractivityController(configuration.MapCamerasRoot, instance.mapCamera, highlightMarkersPool, coordsUtils, interactableLayers);
                 return new MapCameraController.MapCameraController(interactivityController, instance, coordsUtils, cullingController);
             }
         }

@@ -170,5 +170,8 @@ namespace DCL.MapRenderer.MapLayers.Pins
         {
             poolableBehavior.instance?.SetVisibility(false, onFinish);
         }
+
+        public GameObject? GetGameObject() =>
+            poolableBehavior.instance != null ? poolableBehavior.instance.gameObject : null;
     }
 }

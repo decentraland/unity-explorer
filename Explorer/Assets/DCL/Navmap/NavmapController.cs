@@ -91,7 +91,7 @@ namespace DCL.Navmap
             mapPathEventBus.OnRemovedDestination += RemoveDestination;
 
             this.navmapView.SatelliteRenderImage.ParcelClicked += OnParcelClicked;
-            this.navmapView.SatelliteRenderImage.HoveredMapPin += OnMapPinHovered;
+            //this.navmapView.SatelliteRenderImage.HoveredMapPin += OnMapPinHovered;
             this.navmapView.SatelliteRenderImage.HoveredParcel += OnParcelHovered;
 
             this.navmapView.SatelliteRenderImage.EmbedMapCameraDragBehavior(this.navmapView.MapCameraDragBehaviorData);
@@ -110,7 +110,7 @@ namespace DCL.Navmap
         {
             navmapView.SatelliteRenderImage.ParcelClicked -= OnParcelClicked;
             navmapView.SatelliteRenderImage.HoveredParcel -= OnParcelHovered;
-            navmapView.SatelliteRenderImage.HoveredMapPin -= OnMapPinHovered;
+            //navmapView.SatelliteRenderImage.HoveredMapPin -= OnMapPinHovered;
             animationCts?.Dispose();
             zoomController.Dispose();
             searchBarController.Dispose();

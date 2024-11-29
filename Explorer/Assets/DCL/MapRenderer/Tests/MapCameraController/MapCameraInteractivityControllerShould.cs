@@ -44,7 +44,7 @@ namespace DCL.MapRenderer.Tests.MapCameraController
                            return true;
                        });
 
-            controller = new MapCameraInteractivityController(null, camera, pool, coordUtils, null, new List<IMapLayerController>());
+            controller = new MapCameraInteractivityController(null, camera, pool, coordUtils, new List<IMapLayerController>());
         }
 
         [Test]
@@ -84,7 +84,7 @@ namespace DCL.MapRenderer.Tests.MapCameraController
 
             controller.Initialize(MapLayer.ParcelHoverHighlight);
 
-            Assert.IsTrue(controller.TryGetParcel(norm, out var parcel, out IPinMarker pinMarker));
+            Assert.IsTrue(controller.TryGetParcel(norm, out var parcel));
             Assert.AreEqual(expected, new Vector3(parcel.x, parcel.y, 0));
 
             controller.HighlightParcel(parcel);
