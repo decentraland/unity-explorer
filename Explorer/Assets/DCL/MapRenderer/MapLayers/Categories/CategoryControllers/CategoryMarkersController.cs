@@ -38,6 +38,7 @@ namespace DCL.MapRenderer.MapLayers.Categories
         private readonly Dictionary<Vector2Int, IClusterableMarker> markers = new();
         private readonly Dictionary<GameObject, ICategoryMarker> visibleMarkers = new ();
 
+        private CancellationTokenSource cts = new();
         private Vector2Int decodePointer;
         private CancellationTokenSource highlightCt = new ();
         private CancellationTokenSource deHighlightCt = new ();
@@ -101,7 +102,7 @@ namespace DCL.MapRenderer.MapLayers.Categories
                 var marker = builder(objectsPool, mapCullingController, coordsUtils);
                 var position = coordsUtils.CoordsToPosition(MapLayerUtils.GetParcelsCenter(placeInfo));
 
-                marker.SetData(placeInfo.title, position, null, new EventDTO());
+                marker.SetData(placeInfo.title, position, placeInfo, new EventDTO());
                 marker.SetCategorySprite(categoryImage);
                 markers.Add(MapLayerUtils.GetParcelsCenter(placeInfo), marker);
                 marker.SetZoom(coordsUtils.ParcelSize, baseZoom, zoom);
@@ -220,6 +221,18 @@ namespace DCL.MapRenderer.MapLayers.Categories
             {
                 deHighlightCt = deHighlightCt.SafeRestart();
                 marker.AnimateDeSelectionAsync(deHighlightCt.Token);
+                return true;
+            }
+
+            return false;
+        }
+
+        public bool ClickObject(GameObject gameObject)
+        {
+            if (visibleMarkers.TryGetValue(gameObject, out ICategoryMarker marker))
+            {
+                cts = cts.SafeRestart();
+                navmapBus.SelectPlaceAsync(marker.PlaceInfo, cts.Token, true).Forget();
                 return true;
             }
 

@@ -2,6 +2,7 @@
 using DCL.MapRenderer.CommonBehavior;
 using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.Culling;
+using DCL.PlacesAPIService;
 using DG.Tweening;
 using System;
 using System.Threading;
@@ -21,6 +22,7 @@ namespace DCL.MapRenderer.MapLayers.SearchResults
         private float currentBaseScale;
         private float currentNewScale;
 
+        public PlacesData.PlaceInfo PlaceInfo => placeInfo;
         public Vector3 CurrentPosition => poolableBehavior.currentPosition;
 
         public bool IsVisible => poolableBehavior.isVisible;
@@ -28,6 +30,7 @@ namespace DCL.MapRenderer.MapLayers.SearchResults
         public Vector2 Pivot => new (0.5f, 0.5f);
 
         internal string title { get; private set; }
+        internal PlacesData.PlaceInfo? placeInfo { get; private set; }
 
         public SearchResultMarker(IObjectPool<SearchResultMarkerObject> objectsPool, IMapCullingController cullingController, ICoordsUtils coordsUtils)
         {
@@ -42,10 +45,11 @@ namespace DCL.MapRenderer.MapLayers.SearchResults
             cullingController.StopTracking(this);
         }
 
-        public void SetData(string title, Vector3 position)
+        public void SetData(string title, Vector3 position, PlacesData.PlaceInfo place)
         {
             poolableBehavior.SetCurrentPosition(coordsUtils.PivotPosition(this, position));
             this.title = title.Length > MAX_TITLE_LENGTH ? title.Substring(0, MAX_TITLE_LENGTH) : title;
+            placeInfo = place;
         }
 
         public void OnBecameVisible()

@@ -25,11 +25,13 @@ namespace DCL.MapRenderer.MapLayers.SearchResults
 
         private readonly IObjectPool<SearchResultMarkerObject> objectsPool;
         private readonly SearchResultsMarkerBuilder builder;
+        private readonly INavmapBus navmapBus;
         private readonly ClusterController clusterController;
 
         private readonly Dictionary<Vector2Int, IClusterableMarker> markers = new();
         private readonly Dictionary<GameObject, ISearchResultMarker> visibleMarkers = new ();
 
+        private CancellationTokenSource cts = new();
         private Vector2Int decodePointer;
         private CancellationTokenSource highlightCt = new ();
         private CancellationTokenSource deHighlightCt = new ();
@@ -51,6 +53,7 @@ namespace DCL.MapRenderer.MapLayers.SearchResults
         {
             this.objectsPool = objectsPool;
             this.builder = builder;
+            this.navmapBus = navmapBus;
             this.clusterController = clusterController;
 
             navmapBus.OnPlaceSearched += OnPlaceSearched;
@@ -84,7 +87,7 @@ namespace DCL.MapRenderer.MapLayers.SearchResults
                 var centerParcel = MapLayerUtils.GetParcelsCenter(placeInfo);
                 var position = coordsUtils.CoordsToPosition(centerParcel);
 
-                marker.SetData(placeInfo.title, position);
+                marker.SetData(placeInfo.title, position, placeInfo);
                 markers.Add(MapLayerUtils.GetParcelsCenter(placeInfo), marker);
                 marker.SetZoom(coordsUtils.ParcelSize, baseZoom, zoom);
 
@@ -206,6 +209,18 @@ namespace DCL.MapRenderer.MapLayers.SearchResults
             {
                 deHighlightCt = deHighlightCt.SafeRestart();
                 marker.AnimateDeSelectionAsync(deHighlightCt.Token);
+                return true;
+            }
+
+            return false;
+        }
+
+        public bool ClickObject(GameObject gameObject)
+        {
+            if (visibleMarkers.TryGetValue(gameObject, out ISearchResultMarker marker))
+            {
+                cts = cts.SafeRestart();
+                navmapBus.SelectPlaceAsync(marker.PlaceInfo, cts.Token, true).Forget();
                 return true;
             }
 
