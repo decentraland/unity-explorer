@@ -107,7 +107,7 @@ PrefabInstance:
     - target: {fileID: 2749807465873248309, guid: 571c63ddcf1523b45a64fabd71cb6dd5, type: 3}
       propertyPath: m_Controller
       value: 
-      objectReference: {fileID: 22100000, guid: bc62642498f372d4890fbc7f976f88bf, type: 2}
+      objectReference: {fileID: 22100000, guid: f1b08e00e67a4594d83fef92e2dbf551, type: 2}
     - target: {fileID: 2788950014895397509, guid: 571c63ddcf1523b45a64fabd71cb6dd5, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -206,7 +206,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5656729445006871095, guid: 571c63ddcf1523b45a64fabd71cb6dd5, type: 3}
       propertyPath: m_Name
-      value: InWorldCameraButton Variant
+      value: InWorldCamera.SIdebarButton
       objectReference: {fileID: 0}
     - target: {fileID: 5656729445006871095, guid: 571c63ddcf1523b45a64fabd71cb6dd5, type: 3}
       propertyPath: m_IsActive
