@@ -35,8 +35,10 @@ namespace DCL.MapRenderer.MapLayers
 
         void SetParameter(IMapLayerParameter layerParameter) { }
 
-        void HighlightObject(GameObject gameObject) { }
+        bool HighlightObject(GameObject gameObject) =>
+            false;
 
-        void DeHighlightObject(GameObject gameObject) { }
+        bool DeHighlightObject(GameObject gameObject) =>
+            false;
     }
 }

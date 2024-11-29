@@ -37,7 +37,11 @@ namespace DCL.MapRenderer.MapLayers.PointsOfInterest
         private readonly Dictionary<Vector2Int, IClusterableMarker> markers = new ();
         private readonly Dictionary<GameObject, ISceneOfInterestMarker> visibleMarkers = new ();
         private readonly List<Vector2Int> vectorCoords = new ();
+
         private Vector2Int decodePointer;
+        private CancellationTokenSource highlightCt = new ();
+        private CancellationTokenSource deHighlightCt = new ();
+        private ISceneOfInterestMarker? previousMarker;
 
         private bool isEnabled;
         private int zoomLevel = 1;
@@ -173,28 +177,32 @@ namespace DCL.MapRenderer.MapLayers.PointsOfInterest
             return UniTask.CompletedTask;
         }
 
-        private CancellationTokenSource ct = new ();
-        private ISceneOfInterestMarker? previousMarker;
-
-        public void HighlightObject(GameObject gameObject)
+        public bool HighlightObject(GameObject gameObject)
         {
-            ct = ct.SafeRestart();
+            if (visibleMarkers.TryGetValue(gameObject, out ISceneOfInterestMarker marker))
+            {
+                highlightCt = highlightCt.SafeRestart();
+                previousMarker?.AnimateDeSelectionAsync(deHighlightCt.Token);
+                marker.AnimateSelectionAsync(highlightCt.Token);
+                previousMarker = marker;
+                return true;
+            }
+
+            return false;
+        }
+
+        public bool DeHighlightObject(GameObject gameObject)
+        {
+            previousMarker = null;
 
             if (visibleMarkers.TryGetValue(gameObject, out ISceneOfInterestMarker marker))
             {
-                previousMarker?.AnimateDeSelectionAsync(ct.Token);
-                marker.AnimateSelectionAsync(ct.Token);
-                previousMarker = marker;
+                deHighlightCt = deHighlightCt.SafeRestart();
+                marker.AnimateDeSelectionAsync(deHighlightCt.Token);
+                return true;
             }
-        }
 
-        public void DeHighlightObject(GameObject gameObject)
-        {
-            previousMarker = null;
-            ct = ct.SafeRestart();
-
-            if (visibleMarkers.TryGetValue(gameObject, out ISceneOfInterestMarker marker))
-                marker.AnimateDeSelectionAsync(ct.Token);
+            return false;
         }
     }
 }

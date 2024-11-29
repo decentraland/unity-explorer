@@ -1,12 +1,13 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.MapRenderer.Culling;
-using DCL.MapRenderer.MapLayers.Categories;
 using DCL.MapRenderer.MapLayers.Cluster;
 using DCL.Navmap;
+using NBitcoin;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Pool;
+using Utility;
 using ICoordsUtils = DCL.MapRenderer.CoordsUtils.ICoordsUtils;
 using PlacesData = DCL.PlacesAPIService.PlacesData;
 
@@ -26,8 +27,12 @@ namespace DCL.MapRenderer.MapLayers.SearchResults
         private readonly ClusterController clusterController;
 
         private readonly Dictionary<Vector2Int, IClusterableMarker> markers = new();
+        private readonly Dictionary<GameObject, ISearchResultMarker> visibleMarkers = new ();
 
         private Vector2Int decodePointer;
+        private CancellationTokenSource highlightCt = new ();
+        private CancellationTokenSource deHighlightCt = new ();
+        private ISearchResultMarker? previousMarker;
         private bool isEnabled;
         private int zoomLevel = 1;
         private float baseZoom = 1;
@@ -140,10 +145,16 @@ namespace DCL.MapRenderer.MapLayers.SearchResults
         public void OnMapObjectBecameVisible(ISearchResultMarker marker)
         {
             marker.OnBecameVisible();
+            GameObject? gameObject = marker.GetGameObject();
+            if(gameObject != null)
+                visibleMarkers.AddOrReplace(gameObject, marker);
         }
 
         public void OnMapObjectCulled(ISearchResultMarker marker)
         {
+            GameObject? gameObject = marker.GetGameObject();
+            if(gameObject != null)
+                visibleMarkers.Remove(gameObject);
             marker.OnBecameInvisible();
         }
 
@@ -157,6 +168,34 @@ namespace DCL.MapRenderer.MapLayers.SearchResults
 
             markers.Clear();
             clusterController.Disable();
+        }
+
+        public bool HighlightObject(GameObject gameObject)
+        {
+            if (visibleMarkers.TryGetValue(gameObject, out ISearchResultMarker marker))
+            {
+                highlightCt = highlightCt.SafeRestart();
+                previousMarker?.AnimateDeSelectionAsync(deHighlightCt.Token);
+                marker.AnimateSelectionAsync(highlightCt.Token);
+                previousMarker = marker;
+                return true;
+            }
+
+            return false;
+        }
+
+        public bool DeHighlightObject(GameObject gameObject)
+        {
+            previousMarker = null;
+
+            if (visibleMarkers.TryGetValue(gameObject, out ISearchResultMarker marker))
+            {
+                deHighlightCt = deHighlightCt.SafeRestart();
+                marker.AnimateDeSelectionAsync(deHighlightCt.Token);
+                return true;
+            }
+
+            return false;
         }
     }
 }

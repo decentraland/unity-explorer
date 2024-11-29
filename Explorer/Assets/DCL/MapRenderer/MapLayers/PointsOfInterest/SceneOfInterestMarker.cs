@@ -81,17 +81,13 @@ namespace DCL.MapRenderer.MapLayers.PointsOfInterest
         public async UniTaskVoid AnimateSelectionAsync(CancellationToken ct)
         {
             if (poolableBehavior.instance != null)
-            {
-                await MarkerHelper.ScaleToAsync(poolableBehavior.instance.scalingParent, new Vector2 (1.5f, 1.5f), 0.5f, Ease.OutBack, ct);
-            }
+                await MarkerHelper.ScaleToAsync(poolableBehavior.instance.scalingParent, new Vector2 (1.2f, 1.2f), 0.5f, Ease.OutBack, ct);
         }
 
         public async UniTaskVoid AnimateDeSelectionAsync(CancellationToken ct)
         {
             if (poolableBehavior.instance != null)
-            {
-                await MarkerHelper.ScaleToAsync(poolableBehavior.instance.scalingParent, new Vector2 (1f, 1f), 0.5f, Ease.OutBack, ct);
-            }
+                await MarkerHelper.ScaleToAsync(poolableBehavior.instance.scalingParent, Vector2.one, 0.5f, Ease.OutBack, ct, Vector3.one);
         }
 
         public GameObject? GetGameObject() =>

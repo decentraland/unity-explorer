@@ -62,9 +62,24 @@ namespace DCL.MapRenderer.MapCameraController
                 if (raycast.collider.gameObject == previouslyRaycastedObject)
                     return hitObject;
 
+                if (previouslyRaycastedObject != null)
+                {
+                    foreach (IMapLayerController mapLayerController in interactableLayers)
+                        mapLayerController.DeHighlightObject(previouslyRaycastedObject);
+
+                    previouslyRaycastedObject = null;
+                }
+
                 previouslyRaycastedObject = raycast.collider.gameObject;
+
                 foreach (IMapLayerController mapLayerController in interactableLayers)
-                    mapLayerController.HighlightObject(raycast.collider.gameObject);
+                {
+                    if (mapLayerController.HighlightObject(raycast.collider.gameObject))
+                    {
+                        return hitObject;
+                    }
+                }
+
             }
             else
             {
