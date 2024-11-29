@@ -11,7 +11,8 @@ namespace DCL.CharacterTriggerArea.Components
     public struct CharacterTriggerAreaComponent : IDirtyMarker
     {
         private static readonly IReadOnlyCollection<Transform> EMPTY_COLLECTION = Array.Empty<Transform>();
-        internal CharacterTriggerArea? monoBehaviour;
+        public CharacterTriggerArea? monoBehaviour { get; private set; }
+
         private readonly bool targetOnlyMainPlayer;
         private bool hasMonoBehaviour;
 
@@ -51,8 +52,7 @@ namespace DCL.CharacterTriggerArea.Components
 
             if (!hasMonoBehaviour)
             {
-                monoBehaviour = pool.Get();
-                hasMonoBehaviour = true;
+                SetMonoBehaviour(pool.Get());
 
                 if (targetOnlyMainPlayer)
                     monoBehaviour.TargetTransform = mainPlayerTransform;
@@ -99,6 +99,12 @@ namespace DCL.CharacterTriggerArea.Components
             }
 
             return false;
+        }
+
+        internal void SetMonoBehaviour(CharacterTriggerArea newMonoBehaviour)
+        {
+            monoBehaviour = newMonoBehaviour;
+            hasMonoBehaviour = newMonoBehaviour != null;
         }
     }
 }
