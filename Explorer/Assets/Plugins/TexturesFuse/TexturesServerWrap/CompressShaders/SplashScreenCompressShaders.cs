@@ -6,6 +6,8 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.CompressShaders
 {
     public class SplashScreenCompressShaders : ICompressShaders
     {
+        private const string MESSAGE = "Compiling shaders, please wait, this will only happen once.";
+
         private readonly ICompressShaders origin;
         private readonly ISplashScreen splashScreen;
 
@@ -23,7 +25,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.CompressShaders
             if (AreReady())
                 return;
 
-            using (splashScreen.ShowWithContext("Compiling shaders\nIt performs once..."))
+            using (splashScreen.ShowWithContext(MESSAGE))
                 await origin.WarmUpAsync(token);
         }
     }
