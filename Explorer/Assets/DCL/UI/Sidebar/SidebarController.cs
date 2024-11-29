@@ -29,6 +29,7 @@ namespace DCL.UI.Sidebar
         private readonly IProfileRepository profileRepository;
         private readonly IWeb3IdentityCache identityCache;
         private readonly IWebBrowser webBrowser;
+        private readonly bool includeCameraReel;
 
         private CancellationTokenSource profileWidgetCts = new ();
         private CancellationTokenSource systemMenuCts = new ();
@@ -48,7 +49,8 @@ namespace DCL.UI.Sidebar
             ChatEntryConfigurationSO chatEntryConfiguration,
             IWeb3IdentityCache identityCache,
             IProfileRepository profileRepository,
-            IWebBrowser webBrowser)
+            IWebBrowser webBrowser,
+            bool includeCameraReel)
             : base(viewFactory)
         {
             this.mvcManager = mvcManager;
@@ -61,6 +63,7 @@ namespace DCL.UI.Sidebar
             this.identityCache = identityCache;
             this.profileRepository = profileRepository;
             this.webBrowser = webBrowser;
+            this.includeCameraReel = includeCameraReel;
         }
 
         public override void Dispose()
@@ -90,6 +93,8 @@ namespace DCL.UI.Sidebar
             notificationsBusController.SubscribeToNotificationTypeReceived(NotificationType.REWARD_ASSIGNMENT, OnRewardNotificationReceived);
             notificationsBusController.SubscribeToNotificationTypeClick(NotificationType.REWARD_ASSIGNMENT, OnRewardNotificationClicked);
             viewInstance.sidebarSettingsWidget.OnViewHidden += OnSidebarSettingsClosed;
+
+            viewInstance.cameraReelButton.gameObject.SetActive(includeCameraReel);
         }
 
         private void OnHelpButtonClicked()
