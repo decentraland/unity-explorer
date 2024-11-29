@@ -11,6 +11,7 @@ namespace DCL.MapRenderer.MapLayers.Cluster
     {
         private readonly IMapCullingController mapCullingController;
         private readonly List<IClusterMarker> clusteredMarkers = new();
+        private readonly List<IClusterableMarker> visibleMarkers = new();
         private readonly Dictionary<Vector2Int, List<IClusterableMarker>> spatialHashGrid = new();
         private readonly IObjectPool<ClusterMarkerObject> clusterObjectsPool;
         private readonly CategoryMarkersController.ClusterMarkerBuilder clusterBuilder;
@@ -36,10 +37,11 @@ namespace DCL.MapRenderer.MapLayers.Cluster
             clusterIcon = currentIcon;
         }
 
-        public void UpdateClusters(int zoomLevel, float baseZoom, float zoom, Dictionary<Vector2Int, IClusterableMarker> markers)
+        public List<IClusterableMarker> UpdateClusters(int zoomLevel, float baseZoom, float zoom, Dictionary<Vector2Int, IClusterableMarker> markers)
         {
+            visibleMarkers.Clear();
             if (previousZoomLevel == zoomLevel)
-                return;
+                return visibleMarkers;
 
             previousZoomLevel = zoomLevel;
             float clusterCellSize = ClusterUtilities.CalculateCellSize(zoomLevel);
@@ -83,9 +85,12 @@ namespace DCL.MapRenderer.MapLayers.Cluster
                 }
                 else
                 {
+                    visibleMarkers.Add(cell.Value[0]);
                     cell.Value[0].OnBecameVisible();
                 }
             }
+
+            return visibleMarkers;
         }
 
         public void ApplyCameraZoom(float baseZoom, float zoom)

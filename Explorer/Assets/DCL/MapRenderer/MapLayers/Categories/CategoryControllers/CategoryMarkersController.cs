@@ -120,7 +120,8 @@ namespace DCL.MapRenderer.MapLayers.Categories
             this.zoomLevel = zoomLevel;
 
             if (isEnabled)
-                clusterController.UpdateClusters(zoomLevel, baseZoom, zoom, markers);
+                foreach (ICategoryMarker clusterableMarker in clusterController.UpdateClusters(zoomLevel, baseZoom, zoom, markers))
+                    mapCullingController.StartTracking(clusterableMarker, this);
 
             foreach (ICategoryMarker marker in markers.Values)
                 marker.SetZoom(coordsUtils.ParcelSize, baseZoom, zoom);
@@ -146,8 +147,9 @@ namespace DCL.MapRenderer.MapLayers.Categories
         {
             foreach (ICategoryMarker marker in markers.Values)
                 mapCullingController.StartTracking(marker, this);
-
-            clusterController.UpdateClusters(zoomLevel, baseZoom, zoom, markers);
+            
+            foreach (ICategoryMarker clusterableMarker in clusterController.UpdateClusters(zoomLevel, baseZoom, zoom, markers))
+                mapCullingController.StartTracking(clusterableMarker, this);
             isEnabled = true;
         }
 

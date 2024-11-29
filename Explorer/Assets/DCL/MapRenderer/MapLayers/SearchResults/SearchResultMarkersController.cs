@@ -82,7 +82,8 @@ namespace DCL.MapRenderer.MapLayers.SearchResults
                 marker.SetZoom(coordsUtils.ParcelSize, baseZoom, zoom);
 
                 if (isEnabled)
-                    mapCullingController.StartTracking(marker, this);
+                    foreach (ISearchResultMarker clusterableMarker in clusterController.UpdateClusters(zoomLevel, baseZoom, zoom, markers))
+                        mapCullingController.StartTracking(clusterableMarker, this);
             }
         }
 
@@ -99,7 +100,8 @@ namespace DCL.MapRenderer.MapLayers.SearchResults
                 marker.SetZoom(coordsUtils.ParcelSize, baseZoom, zoom);
 
             if (isEnabled)
-                clusterController.UpdateClusters(zoomLevel, baseZoom, zoom, markers);
+                foreach (ISearchResultMarker clusterableMarker in clusterController.UpdateClusters(zoomLevel, baseZoom, zoom, markers))
+                    mapCullingController.StartTracking(clusterableMarker, this);
 
             clusterController.ApplyCameraZoom(baseZoom, zoom);
         }
@@ -122,7 +124,9 @@ namespace DCL.MapRenderer.MapLayers.SearchResults
             foreach (ISearchResultMarker marker in markers.Values)
                 mapCullingController.StartTracking(marker, this);
 
-            clusterController.UpdateClusters(zoomLevel, baseZoom, zoom, markers);
+            foreach (ISearchResultMarker clusterableMarker in clusterController.UpdateClusters(zoomLevel, baseZoom, zoom, markers))
+                mapCullingController.StartTracking(clusterableMarker, this);
+
             isEnabled = true;
         }
 

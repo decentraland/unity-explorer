@@ -90,7 +90,8 @@ namespace DCL.MapRenderer.MapLayers.Categories
                     marker.SetData(eventDto.name, coordsUtils.CoordsToPosition(coords));
                     markers.Add(coords, marker);
                     if(isEnabled)
-                        mapCullingController.StartTracking(marker, this);
+                        foreach (ICategoryMarker clusterableMarker in clusterController.UpdateClusters(zoomLevel, baseZoom, zoom, markers))
+                            mapCullingController.StartTracking(clusterableMarker, this);
                 }
                 await UniTask.Delay(LIVE_EVENTS_POLLING_TIME, DelayType.Realtime, cancellationToken: ct);
             }
@@ -104,7 +105,8 @@ namespace DCL.MapRenderer.MapLayers.Categories
             this.zoomLevel = zoomLevel;
 
             if (isEnabled)
-                clusterController.UpdateClusters(zoomLevel, baseZoom, zoom, markers);
+                foreach (ICategoryMarker clusterableMarker in clusterController.UpdateClusters(zoomLevel, baseZoom, zoom, markers))
+                    mapCullingController.StartTracking(clusterableMarker, this);
 
             foreach (ICategoryMarker marker in markers.Values)
                 marker.SetZoom(coordsUtils.ParcelSize, baseZoom, zoom);
@@ -132,7 +134,8 @@ namespace DCL.MapRenderer.MapLayers.Categories
                 mapCullingController.StartTracking(marker, this);
 
             isEnabled = true;
-            clusterController.UpdateClusters(zoomLevel, baseZoom, zoom, markers);
+            foreach (ICategoryMarker clusterableMarker in clusterController.UpdateClusters(zoomLevel, baseZoom, zoom, markers))
+                mapCullingController.StartTracking(clusterableMarker, this);
             return UniTask.CompletedTask;
         }
 

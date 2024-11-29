@@ -141,7 +141,8 @@ namespace DCL.MapRenderer.MapLayers.PointsOfInterest
                 marker.SetZoom(coordsUtils.ParcelSize, baseZoom, zoom);
 
             if (isEnabled)
-                clusterController.UpdateClusters(zoomLevel, baseZoom, zoom, markers);
+                foreach (ISceneOfInterestMarker clusterableMarker in clusterController.UpdateClusters(zoomLevel, baseZoom, zoom, markers))
+                    mapCullingController.StartTracking(clusterableMarker, this);
 
             clusterController.ApplyCameraZoom(baseZoom, zoom);
         }
@@ -173,7 +174,8 @@ namespace DCL.MapRenderer.MapLayers.PointsOfInterest
                 mapCullingController.StartTracking(marker, this);
 
             isEnabled = true;
-            clusterController.UpdateClusters(zoomLevel, baseZoom, zoom, markers);
+            foreach (ISceneOfInterestMarker clusterableMarker in clusterController.UpdateClusters(zoomLevel, baseZoom, zoom, markers))
+                mapCullingController.StartTracking(clusterableMarker, this);
             return UniTask.CompletedTask;
         }
 
