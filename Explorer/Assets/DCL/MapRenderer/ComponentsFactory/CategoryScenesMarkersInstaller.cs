@@ -48,7 +48,7 @@ namespace DCL.MapRenderer.ComponentsFactory
                 coordsUtils,
                 cullingController,
                 mapSettings.CategoryLayerIconMappings,
-                new ClusterController(cullingController, clusterObjectsPool, CreateClusterMarker, coordsUtils),
+                new ClusterController(cullingController, clusterObjectsPool, CreateClusterMarker, coordsUtils, navmapBus),
                 navmapBus
             );
 

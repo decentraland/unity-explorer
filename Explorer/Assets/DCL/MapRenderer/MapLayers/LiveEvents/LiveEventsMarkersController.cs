@@ -181,6 +181,9 @@ namespace DCL.MapRenderer.MapLayers.Categories
 
         public bool HighlightObject(GameObject gameObject)
         {
+            if (clusterController.HighlightObject(gameObject))
+                return true;
+
             if (visibleMarkers.TryGetValue(gameObject, out ICategoryMarker marker))
             {
                 highlightCt = highlightCt.SafeRestart();
@@ -195,6 +198,9 @@ namespace DCL.MapRenderer.MapLayers.Categories
 
         public bool DeHighlightObject(GameObject gameObject)
         {
+            if (clusterController.DeHighlightObject(gameObject))
+                return true;
+
             previousMarker = null;
 
             if (visibleMarkers.TryGetValue(gameObject, out ICategoryMarker marker))
@@ -211,6 +217,9 @@ namespace DCL.MapRenderer.MapLayers.Categories
 
         public bool ClickObject(GameObject gameObject)
         {
+            if (clusterController.ClickObject(gameObject))
+                return true;
+
             if (visibleMarkers.TryGetValue(gameObject, out ICategoryMarker marker))
             {
                 cts = cts.SafeRestart();

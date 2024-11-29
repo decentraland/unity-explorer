@@ -39,7 +39,7 @@ namespace DCL.Navmap
 
         private void MoveCameraTo(Vector2 destination)
         {
-            //cameraController.TranslateTo(ParcelMathHelper.WorldToGridPositionUnclamped(destination), TRANSITION_TIME);
+            cameraController.TranslateTo(destination, TRANSITION_TIME);
         }
 
         private void ToggleFilterPanel()

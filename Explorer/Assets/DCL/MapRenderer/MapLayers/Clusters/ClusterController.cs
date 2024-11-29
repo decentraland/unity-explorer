@@ -1,9 +1,12 @@
 using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.Culling;
 using DCL.MapRenderer.MapLayers.Categories;
+using DCL.Navmap;
 using System.Collections.Generic;
+using System.Threading;
 using UnityEngine;
 using UnityEngine.Pool;
+using Utility;
 
 namespace DCL.MapRenderer.MapLayers.Cluster
 {
@@ -12,11 +15,16 @@ namespace DCL.MapRenderer.MapLayers.Cluster
         private readonly IMapCullingController mapCullingController;
         private readonly List<IClusterMarker> clusteredMarkers = new();
         private readonly List<IClusterableMarker> visibleMarkers = new();
+        private readonly Dictionary<GameObject, IClusterMarker> clusterVisibleMarkers = new ();
         private readonly Dictionary<Vector2Int, List<IClusterableMarker>> spatialHashGrid = new();
         private readonly IObjectPool<ClusterMarkerObject> clusterObjectsPool;
         private readonly CategoryMarkersController.ClusterMarkerBuilder clusterBuilder;
         private readonly ICoordsUtils coordsUtils;
+        private readonly INavmapBus navmapBus;
 
+        private CancellationTokenSource highlightCt = new ();
+        private CancellationTokenSource deHighlightCt = new ();
+        private IClusterMarker? previousMarker;
         private int previousZoomLevel = -1;
         private Sprite clusterIcon;
 
@@ -24,12 +32,14 @@ namespace DCL.MapRenderer.MapLayers.Cluster
             IMapCullingController mapCullingController,
             IObjectPool<ClusterMarkerObject> clusterObjectsPool,
             CategoryMarkersController.ClusterMarkerBuilder clusterBuilder,
-            ICoordsUtils coordsUtils)
+            ICoordsUtils coordsUtils,
+            INavmapBus navmapBus)
         {
             this.mapCullingController = mapCullingController;
             this.clusterObjectsPool = clusterObjectsPool;
             this.clusterBuilder = clusterBuilder;
             this.coordsUtils = coordsUtils;
+            this.navmapBus = navmapBus;
         }
 
         public void SetClusterIcon(Sprite currentIcon)
@@ -52,6 +62,7 @@ namespace DCL.MapRenderer.MapLayers.Cluster
             }
             clusteredMarkers.Clear();
             spatialHashGrid.Clear();
+            clusterVisibleMarkers.Clear();
 
             foreach (var markerEntry in markers)
             {
@@ -81,6 +92,7 @@ namespace DCL.MapRenderer.MapLayers.Cluster
                     clusterMarker.SetCategorySprite(clusterIcon);
                     clusterMarker.SetZoom(coordsUtils.ParcelSize, baseZoom, zoom);
                     clusterMarker.OnBecameVisible();
+                    clusterVisibleMarkers.Add(clusterMarker.GetGameObject(), clusterMarker);
                     clusteredMarkers.Add(clusterMarker);
                 }
                 else
@@ -109,5 +121,43 @@ namespace DCL.MapRenderer.MapLayers.Cluster
             }
         }
 
+        public bool HighlightObject(GameObject gameObject)
+        {
+            if (clusterVisibleMarkers.TryGetValue(gameObject, out IClusterMarker marker))
+            {
+                highlightCt = highlightCt.SafeRestart();
+                previousMarker?.AnimateDeSelectionAsync(deHighlightCt.Token);
+                marker.AnimateSelectionAsync(highlightCt.Token);
+                previousMarker = marker;
+                return true;
+            }
+
+            return false;
+        }
+
+        public bool DeHighlightObject(GameObject gameObject)
+        {
+            previousMarker = null;
+
+            if (clusterVisibleMarkers.TryGetValue(gameObject, out IClusterMarker marker))
+            {
+                deHighlightCt = deHighlightCt.SafeRestart();
+                marker.AnimateDeSelectionAsync(deHighlightCt.Token);
+                return true;
+            }
+
+            return false;
+        }
+
+        public bool ClickObject(GameObject gameObject)
+        {
+            if (clusterVisibleMarkers.TryGetValue(gameObject, out IClusterMarker marker))
+            {
+                navmapBus.MoveCameraTo(gameObject.transform.position);
+                return true;
+            }
+
+            return false;
+        }
     }
 }
