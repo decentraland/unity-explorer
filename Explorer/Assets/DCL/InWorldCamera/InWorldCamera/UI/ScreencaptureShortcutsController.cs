@@ -1,6 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.UI;
-using JetBrains.Annotations;
 using MVC;
 using System.Threading;
 
@@ -13,7 +12,7 @@ namespace DCL.InWorldCamera.UI
     {
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
-        public ScreencaptureShortcutsController([NotNull] ViewFactoryMethod viewFactory) : base(viewFactory) { }
+        public ScreencaptureShortcutsController(ViewFactoryMethod viewFactory) : base(viewFactory) { }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
             UniTask.CompletedTask;

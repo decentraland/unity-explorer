@@ -8,7 +8,6 @@ using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using DCL.InWorldCamera.Playground;
 using DCL.UI;
 using ECS.Abstract;
-using JetBrains.Annotations;
 using MVC;
 using System.Diagnostics;
 using System.Threading;
@@ -35,7 +34,7 @@ namespace DCL.InWorldCamera.UI
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Overlay;
         private SingleInstanceEntity? camera => cameraInternal ??= world.CacheCamera();
 
-        public InWorldCameraController([NotNull] ViewFactoryMethod viewFactory, Button sidebarButton, World world, IMVCManager mvcManager, ICameraReelStorageService storageService) : base(viewFactory)
+        public InWorldCameraController(ViewFactoryMethod viewFactory, Button sidebarButton, World world, IMVCManager mvcManager, ICameraReelStorageService storageService) : base(viewFactory)
         {
             this.world = world;
             this.mvcManager = mvcManager;
