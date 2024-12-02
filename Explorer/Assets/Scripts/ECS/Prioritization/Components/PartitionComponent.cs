@@ -53,8 +53,6 @@ namespace ECS.Prioritization.Components
         /// </summary>
         public bool IsBehind { get; set; }
 
-        public int InternalJobIndex { get; set; } = -1;
-
         public bool Equals(IPartitionComponent other) =>
             Bucket == other.Bucket && IsBehind == other.IsBehind;
 

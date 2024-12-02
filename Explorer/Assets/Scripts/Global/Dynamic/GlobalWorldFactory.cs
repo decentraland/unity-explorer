@@ -158,7 +158,14 @@ namespace Global.Dynamic
             ControlSceneUpdateLoopSystem.InjectToWorld(ref builder, realmPartitionSettings, destroyCancellationSource.Token, scenesCache, sceneReadinessReportQueue);
 
             IComponentPool<PartitionComponent> partitionComponentPool = componentPoolsRegistry.GetReferenceTypePool<PartitionComponent>();
-            PartitionSceneEntitiesSystem.InjectToWorld(ref builder, partitionComponentPool, partitionSettings, cameraSamplingData, staticContainer.PartitionDataContainer, staticContainer.RealmPartitionSettings);
+
+            IComponentPool<InternalJobIndexComponent> internalJobIndexPool = componentPoolsRegistry
+               .GetReferenceTypePool<InternalJobIndexComponent>();
+
+            PartitionSceneEntitiesSystem.InjectToWorld(ref builder, partitionComponentPool,
+                internalJobIndexPool, partitionSettings, cameraSamplingData,
+                staticContainer.PartitionDataContainer, staticContainer.RealmPartitionSettings);
+
             PartitionGlobalAssetEntitiesSystem.InjectToWorld(ref builder, partitionComponentPool, partitionSettings, cameraSamplingData);
 
             CheckCameraQualifiedForRepartitioningSystem.InjectToWorld(ref builder, partitionSettings, realmData, cameraSamplingData);

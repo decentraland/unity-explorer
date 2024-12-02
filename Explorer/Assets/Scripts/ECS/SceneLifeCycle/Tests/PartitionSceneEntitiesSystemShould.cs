@@ -19,6 +19,7 @@ namespace ECS.SceneLifeCycle.Tests
         private IPartitionSettings partitionSettings;
         private IReadOnlyCameraSamplingData samplingData;
         private IComponentPool<PartitionComponent> componentPool;
+        private IComponentPool<InternalJobIndexComponent> internalJobIndexPool;
 
         [SetUp]
         public void SetUp()
@@ -32,9 +33,14 @@ namespace ECS.SceneLifeCycle.Tests
             samplingData = Substitute.For<IReadOnlyCameraSamplingData>();
             componentPool = Substitute.For<IComponentPool<PartitionComponent>>();
             componentPool.Get().Returns(_ => new PartitionComponent());
+            internalJobIndexPool = Substitute.For<IComponentPool<InternalJobIndexComponent>>();
+            internalJobIndexPool.Get().Returns(_ => new InternalJobIndexComponent());
+
             IRealmPartitionSettings realmPartitionSettings = Substitute.For<IRealmPartitionSettings>();
 
-            system = new PartitionSceneEntitiesSystem(world, componentPool, partitionSettings, samplingData, new PartitionDataContainer(), realmPartitionSettings);
+            system = new PartitionSceneEntitiesSystem(world, componentPool, internalJobIndexPool,
+                partitionSettings, samplingData, new PartitionDataContainer(), realmPartitionSettings);
+
             system.partitionDataContainer.Restart();
         }
 
