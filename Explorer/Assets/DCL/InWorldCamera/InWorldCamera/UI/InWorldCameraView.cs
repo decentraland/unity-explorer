@@ -35,6 +35,9 @@ namespace DCL.InWorldCamera.UI
         [field: SerializeField] public Button CloseButton { get; private set; }
         [field: SerializeField] public Button ShortcutsInfoButton { get; private set; }
 
+        private Sequence sequence;
+        private Sequence vfxSequence => sequence ??= DOTween.Sequence();
+
         public void ScreenshotCaptureAnimation(Texture2D screenshotImage, float splashDuration, float afterSplashPause, float transitionDuration)
         {
             currentVfxSequence?.Complete();
@@ -45,7 +48,7 @@ namespace DCL.InWorldCamera.UI
             animatedImage.enabled = true;
             whiteSplashImage.enabled = true;
 
-            currentVfxSequence = CaptureVFXSequence(splashDuration, afterSplashPause, transitionDuration).Play();
+            currentVfxSequence = PrepareVFXSequence(splashDuration, afterSplashPause, transitionDuration).Play();
         }
 
         protected override UniTask PlayShowAnimationAsync(CancellationToken ct)
@@ -57,17 +60,17 @@ namespace DCL.InWorldCamera.UI
         protected override UniTask PlayHideAnimationAsync(CancellationToken ct) =>
             canvasGroup.DOFade(0, ANIMATION_SPEED).SetEase(Ease.Linear).ToUniTask(cancellationToken: ct);
 
-        private Sequence CaptureVFXSequence(float splashDuration, float afterSplashPause, float transitionDuration)
+        private Sequence PrepareVFXSequence(float splashDuration, float afterSplashPause, float transitionDuration)
         {
-            Sequence sequence = DOTween.Sequence();
+            vfxSequence.Kill();
 
-            sequence.Append(AnimateSplash(splashDuration));
-            sequence.AppendInterval(afterSplashPause); // Delay between splash and transition
-            sequence.Append(AnimateVFXImageTransition(transitionDuration));
-            sequence.Join(AnimateVFXImageScale(transitionDuration));
-            sequence.OnComplete(() => animatedImage.enabled = false);
+            vfxSequence.Append(AnimateSplash(splashDuration));
+            vfxSequence.AppendInterval(afterSplashPause); // Delay between splash and transition
+            vfxSequence.Append(AnimateVFXImageTransition(transitionDuration));
+            vfxSequence.Join(AnimateVFXImageScale(transitionDuration));
+            vfxSequence.OnComplete(() => animatedImage.enabled = false);
 
-            return sequence;
+            return vfxSequence;
         }
 
         private Tween AnimateSplash(float duration)
