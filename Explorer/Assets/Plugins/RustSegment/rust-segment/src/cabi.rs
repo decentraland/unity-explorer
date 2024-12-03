@@ -21,6 +21,7 @@ pub unsafe extern "C" fn segment_server_initialize(
 #[no_mangle]
 pub unsafe extern "C" fn segment_server_identify(
     used_id: *const c_char,
+    anon_id: *const c_char,
     traits_json: *const c_char,
     context_json: *const c_char,
 ) -> OperationHandleId {
@@ -42,6 +43,7 @@ pub unsafe extern "C" fn segment_server_identify(
 #[no_mangle]
 pub unsafe extern "C" fn segment_server_track(
     used_id: *const c_char,
+    anon_id: *const c_char,
     event_name: *const c_char,
     properties_json: *const c_char,
     context_json: *const c_char,

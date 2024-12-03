@@ -31,6 +31,7 @@ namespace Plugins.RustSegment.SegmentServerWrap.Playground
         {
             service.Identify(
                 "check_user_id",
+                null,
                 new JsonObject
                 {
                     ["env"] = "test",
