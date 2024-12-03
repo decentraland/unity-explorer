@@ -11,6 +11,7 @@ using DCL.InWorldCamera.UI;
 using DCL.Multiplayer.Profiles.Entities;
 using DCL.Profiles;
 using ECS.Abstract;
+using System;
 using System.Threading;
 using UnityEngine;
 using Utility;
@@ -93,11 +94,23 @@ namespace DCL.InWorldCamera.Systems
             screenshot = recorder.GetScreenshotAndReset();
             metadata = metadataBuilder.GetMetadataAndReset();
 
-            cameraReelStorageService.UploadScreenshotAsync(screenshot, metadata, ctx.Token).Forget();
+            try
+            {
+                cameraReelStorageService.UploadScreenshotAsync(screenshot, metadata, ctx.Token).Forget();
 
-            hudController.Show();
-            hudController.PlayScreenshotFX(screenshot, SPLASH_FX_DURATION, MIDDLE_PAUSE_FX_DURATION, IMAGE_TRANSITION_FX_DURATION);
-            hudController.DebugCapture(screenshot, metadata);
+                hudController.Show();
+                hudController.PlayScreenshotFX(screenshot, SPLASH_FX_DURATION, MIDDLE_PAUSE_FX_DURATION, IMAGE_TRANSITION_FX_DURATION);
+                hudController.DebugCapture(screenshot, metadata);
+            }
+            catch (OperationCanceledException) { }
+            catch (ScreenshotLimitReachedException)
+            {
+                hudController.Show();
+            }
+            catch (Exception e)
+            {
+                ReportHub.LogException(e, ReportCategory.CAMERA_REEL);
+            }
         }
 
         private bool ScreenshotIsRequested()
