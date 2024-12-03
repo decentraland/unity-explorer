@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace DCL.Character.CharacterMotion.Components
+namespace Utility.Animations
 {
     public static class AnimationHashes
     {
