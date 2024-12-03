@@ -128,6 +128,9 @@ namespace Global.Dynamic
                 }
 
                 bootstrap.InitializePlayerEntity(staticContainer!, playerEntity);
+                await bootstrap.InitializeFeatureFlagsAsync(bootstrapContainer.IdentityCache!.Identity,
+                    bootstrapContainer.DecentralandUrlsSource, staticContainer!, ct);
+                bootstrap.ApplyFeatureFlagConfigs(staticContainer!.FeatureFlagsCache);
 
                 (dynamicWorldContainer, isLoaded) = await bootstrap.LoadDynamicWorldContainerAsync(bootstrapContainer, staticContainer!, scenePluginSettingsContainer, settings,
                     dynamicSettings, uiToolkitRoot, cursorRoot, splashScreen, backgroundMusic, worldInfoTool.EnsureNotNull(), playerEntity,
@@ -140,10 +143,6 @@ namespace Global.Dynamic
                     GameReports.PrintIsDead();
                     return;
                 }
-
-                await bootstrap.InitializeFeatureFlagsAsync(bootstrapContainer.IdentityCache!.Identity, bootstrapContainer.DecentralandUrlsSource, staticContainer!, ct);
-
-                bootstrap.ApplyFeatureFlagConfigs(staticContainer!.FeatureFlagsCache);
 
                 if (await DoesApplicationRequireVersionUpdateAsync(applicationParametersParser, splashScreen, ct))
                     return; // stop bootstrapping;
