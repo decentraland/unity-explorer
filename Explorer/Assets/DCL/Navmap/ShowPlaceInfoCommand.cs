@@ -45,6 +45,7 @@ namespace DCL.Navmap
                 this.navmapView.SatelliteRenderImage.OnSearchResultParcelSelected(result);
 
             placesAndEventsPanelController.Toggle(PlacesAndEventsPanelController.Section.PLACE);
+            placesAndEventsPanelController.Expand();
 
             placeInfoPanelController.Set(placeInfo);
             placeInfoPanelController.Toggle(PlaceInfoPanelController.Section.OVERVIEW);
