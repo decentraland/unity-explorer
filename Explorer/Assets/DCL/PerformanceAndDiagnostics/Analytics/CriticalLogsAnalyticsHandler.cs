@@ -22,12 +22,16 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             AppDomain.CurrentDomain.UnhandledException -= TrackUnhandledException;
         }
 
-        private void TrackUnhandledException(object sender, UnhandledExceptionEventArgs args) =>
+        private void TrackUnhandledException(object sender, UnhandledExceptionEventArgs args)
+        {
+            var e = (Exception)args.ExceptionObject;
+
             analytics.Track(AnalyticsEvents.General.ERROR, new JsonObject
             {
-                { "type", "unhandled exception" },
-                { "message", TrimToPayloadLimit(((Exception)args.ExceptionObject).Message) },
+                { "type", e.GetType().ToString() },
+                { "message", TrimToPayloadLimit(e.Message) },
             });
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static string TrimToPayloadLimit(string message)
