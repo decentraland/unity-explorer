@@ -53,11 +53,12 @@ namespace DCL.SDKComponents.GltfNode.Systems
             // Debug.Log($"PRAVS - SetupGltfNode() - 1 - gltfEntity: {pbComponent.GltfContainerEntity} / path: {pbComponent.NodePath}");
             var gltfCRDTEntity = new CRDTEntity((int)pbComponent.GltfContainerEntity);
             if (!entitiesMap.TryGetValue(gltfCRDTEntity, out var gltfEntity)
+                || !World.Has<PBGltfContainer>(gltfEntity) // Maybe this check can even be removed...
                 || !World.TryGet(gltfEntity, out TransformComponent gltfEntityTransform))
                 return;
 
             // TODO: Find standard patch for the 'pbComponent.NodePath' against the path processed by GLTFast...
-            // Non-skeleton GLTFs seem to work OK, the problem is the ones with skeleton...
+            // Non-skeleton GLTFs seem to work OK, do the skeleton GLTFs have a path inconsistency (e.g. GLTFast vs BabylonSandbox vs Blender) 100% ???
 
             Transform? nodeTransform = null;
             // if ((nodeTransform = gltfEntityTransform.Transform.Find("Scene/Scene/"+pbComponent.NodePath)) == null)
@@ -78,13 +79,14 @@ namespace DCL.SDKComponents.GltfNode.Systems
             nodeCloneTransform.localScale = nodeTransform.localScale;
             nodeClone.SetActive(true);
 
+            // Populate GLTFNode entity with detected components
             var sdkTransform = sdkTransformPool.Get();
-            sdkTransform.Position.Value = nodeCloneTransform.position;
-            sdkTransform.Rotation.Value = nodeCloneTransform.rotation;
-            sdkTransform.Scale = nodeCloneTransform.lossyScale;
+            sdkTransform.Position.Value = nodeCloneTransform.localPosition;
+            sdkTransform.Rotation.Value = nodeCloneTransform.localRotation;
+            sdkTransform.Scale = nodeCloneTransform.localScale;
+            // sdkTransform.ParentId = pbComponent.GltfContainerEntity;
+            sdkTransform.ParentId = gltfCRDTEntity;
             World.Add(entity, sdkTransform, new TransformComponent(nodeCloneTransform));
-            // World.Add(entity, sdkTransform);
-
             ExposedTransformUtils.Put(
                 ecsToCrdtWriter,
                 sdkTransform,
