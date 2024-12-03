@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Platforms;
+using DCL.SceneLoadingScreens.SplashScreen;
 using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using System;
 using System.IO;
@@ -20,7 +21,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.CompressShaders
 
         static string ShadersDir()
         {
-            char ps = CompressShadersExtensions.PathSeparator;
+            char ps = CompressShadersExtensions.PATH_SEPARATOR;
 
             return Application.isEditor
                 ? $"Assets{ps}StreamingAssets{ps}plugins"
@@ -29,7 +30,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.CompressShaders
 
         static string NodeDir()
         {
-            char ps = CompressShadersExtensions.PathSeparator;
+            char ps = CompressShadersExtensions.PATH_SEPARATOR;
 
             return Application.isEditor
                 ? $"Assets{ps}StreamingAssets{ps}fusenode"
@@ -48,7 +49,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.CompressShaders
 
     public static class CompressShadersExtensions
     {
-        public static char PathSeparator = IPlatform.DEFAULT.Is(IPlatform.Kind.Windows) ? '\\' : '/';
+        public static readonly char PATH_SEPARATOR = IPlatform.DEFAULT.Is(IPlatform.Kind.Windows) ? '\\' : '/';
 
         public static UniTask WarmUpIfRequiredAsync(this ICompressShaders compressShaders, CancellationToken token) =>
             compressShaders.AreReady()
@@ -57,6 +58,9 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.CompressShaders
 
         public static LogCompressShaders WithLog(this ICompressShaders origin, string prefix) =>
             new (origin, prefix);
+
+        public static SplashScreenCompressShaders WithSplashScreen(this ICompressShaders origin, ISplashScreen splashScreen, bool hideOnFinish) =>
+            new (origin, splashScreen, hideOnFinish);
 
         public static void CopyFilesRecursively(string sourcePath, string targetPath)
         {
