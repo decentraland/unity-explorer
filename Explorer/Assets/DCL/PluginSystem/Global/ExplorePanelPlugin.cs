@@ -253,7 +253,7 @@ namespace DCL.PluginSystem.Global
 
             searchHistory = new PlayerPrefsSearchHistory();
 
-            NavmapZoomController zoomController = new (navmapView.zoomView, dclInput);
+            NavmapZoomController zoomController = new (navmapView.zoomView, dclInput, navmapBus);
 
             ObjectPool<PlaceElementView> placeElementsPool = await InitializePlaceElementsPoolAsync(navmapView.SearchBarResultPanel, ct);
             ObjectPool<EventElementView> eventElementsPool = await InitializeEventElementsForPlacePoolAsync(navmapView.PlacesAndEventsPanelView.PlaceInfoPanelView, ct);

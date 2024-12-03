@@ -27,6 +27,7 @@ namespace DCL.Navmap
         public event Action<string?>? OnFilterByCategory;
         public event Action? OnClearPlacesFromMap;
         public event Action<Vector2>? OnMoveCameraTo;
+        public event Action<bool>? OnZoomCamera;
 
         public NavmapCommandBus(SearchPlaceFactory searchPlaceFactory,
             ShowPlaceInfoFactory showPlaceInfoFactory,
@@ -103,6 +104,9 @@ namespace DCL.Navmap
 
         public void MoveCameraTo(Vector2 position) =>
             OnMoveCameraTo?.Invoke(position);
+
+        public void ZoomCamera(bool zoomIn) =>
+            OnZoomCamera?.Invoke(zoomIn);
 
         private void OnSearchPlacePerformed(INavmapBus.SearchPlaceParams @params,
             IReadOnlyList<PlacesData.PlaceInfo> places, int totalResultCount) =>

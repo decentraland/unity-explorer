@@ -44,6 +44,7 @@ namespace DCL.Navmap
         event Action<string?>? OnFilterByCategory;
         event Action? OnClearPlacesFromMap;
         event Action<Vector2> OnMoveCameraTo;
+        public event Action<bool>? OnZoomCamera;
 
         UniTask SelectPlaceAsync(PlacesData.PlaceInfo place, CancellationToken ct, bool clearPreviousHistory = false);
 
@@ -64,5 +65,7 @@ namespace DCL.Navmap
         void ClearPlacesFromMap();
 
         void MoveCameraTo(Vector2 position);
+
+        void ZoomCamera(bool zoomIn);
     }
 }
