@@ -32,7 +32,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         public void Initialize(IWeb3Identity? web3Identity)
         {
             TrackSystemInfo();
-            analytics.Identify(web3Identity?.Address ?? "not cached");
+            analytics.Identify(web3Identity?.Address ?? "not cached", null); //TODO provide logic
             analytics.Flush();
 
             isInitialized = true;
@@ -61,7 +61,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             {
                 analytics.Flush();
 
-                analytics.Identify(identity.Address, new JsonObject
+                analytics.Identify(identity.Address, null, new JsonObject //TODO provide logic
                     {
                         ["dcl_eth_address"] = identity.Address != null ? identity.Address.ToString() : UNDEFINED,
                         ["auth_chain"] = identity.AuthChain != null ? identity.AuthChain.ToString() : UNDEFINED,

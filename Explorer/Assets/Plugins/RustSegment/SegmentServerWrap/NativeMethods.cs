@@ -31,6 +31,7 @@ namespace Plugins.RustSegment.SegmentServerWrap
         [DllImport(LIBRARY_NAME, CallingConvention = CALLING_CONVENTION, CharSet = CHAR_SET, EntryPoint = "segment_server_identify")]
         internal static extern ulong SegmentServerIdentify(
             IntPtr usedId,
+            IntPtr anonId,
             IntPtr traitsJson,
             IntPtr contextJson
         );
@@ -38,6 +39,7 @@ namespace Plugins.RustSegment.SegmentServerWrap
         [DllImport(LIBRARY_NAME, CallingConvention = CALLING_CONVENTION, CharSet = CHAR_SET, EntryPoint = "segment_server_track")]
         internal static extern ulong SegmentServerTrack(
             IntPtr usedId,
+            IntPtr anonId,
             IntPtr eventName,
             IntPtr propertiesJson,
             IntPtr contextJson
