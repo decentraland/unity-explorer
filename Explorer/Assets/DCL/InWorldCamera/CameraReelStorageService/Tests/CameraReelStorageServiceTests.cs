@@ -1,5 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.InWorldCamera.CameraReelStorageService.Schemas;
+using DCL.Web3.Identities;
 using NSubstitute;
 using NUnit.Framework;
 using System.Threading;
@@ -20,7 +21,9 @@ namespace DCL.InWorldCamera.CameraReelStorageService.Tests
         public void Setup()
         {
             metadataDatabase = Substitute.For<ICameraReelImagesMetadataDatabase>();
-            storageService = new CameraReelRemoteStorageService(metadataDatabase, Substitute.For<ICameraReelScreenshotsStorage>());
+            metadataDatabase.GetStorageInfoAsync(USER_ADDRESS, Arg.Any<CancellationToken>())
+                            .Returns(UniTask.FromResult(new CameraReelStorageResponse { currentImages = 0, maxImages = 500 }));
+            storageService = new CameraReelRemoteStorageService(metadataDatabase, Substitute.For<ICameraReelScreenshotsStorage>(), USER_ADDRESS);
         }
 
         [Test]
@@ -37,7 +40,7 @@ namespace DCL.InWorldCamera.CameraReelStorageService.Tests
             // Assert
             Assert.That(result.ScreenshotsAmount, Is.EqualTo(expectedResponse.currentImages));
             Assert.That(result.MaxScreenshots, Is.EqualTo(expectedResponse.maxImages));
-            await metadataDatabase.Received(1).GetStorageInfoAsync(USER_ADDRESS, Arg.Any<CancellationToken>());
+            await metadataDatabase.Received(2).GetStorageInfoAsync(USER_ADDRESS, Arg.Any<CancellationToken>()); // 2 calls, because one is in the constructor
         }
 
         [Test]

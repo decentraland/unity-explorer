@@ -2,6 +2,7 @@ using DCL.Diagnostics;
 using DCL.Landscape.Settings;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Quality;
+using DCL.SDKComponents.MediaStream.Settings;
 using DCL.Settings.Configuration;
 using DCL.Settings.ModuleControllers;
 using DCL.Settings.Settings;
@@ -21,6 +22,7 @@ namespace DCL.Settings
         private readonly SettingsMenuConfiguration settingsMenuConfiguration;
         private readonly AudioMixer generalAudioMixer;
         private readonly RealmPartitionSettingsAsset realmPartitionSettingsAsset;
+        private readonly VideoPrioritizationSettings videoPrioritizationSettings;
         private readonly LandscapeData landscapeData;
         private readonly QualitySettingsAsset qualitySettingsAsset;
         private readonly ISystemMemoryCap memoryCap;
@@ -34,6 +36,7 @@ namespace DCL.Settings
             SettingsMenuConfiguration settingsMenuConfiguration,
             AudioMixer generalAudioMixer,
             RealmPartitionSettingsAsset realmPartitionSettingsAsset,
+            VideoPrioritizationSettings videoPrioritizationSettings,
             LandscapeData landscapeData,
             QualitySettingsAsset qualitySettingsAsset,
             ControlsSettingsAsset controlsSettingsAsset,
@@ -49,6 +52,7 @@ namespace DCL.Settings
             this.memoryCap = memoryCap;
             this.worldVolumeMacBus = worldVolumeMacBus;
             this.controlsSettingsAsset = controlsSettingsAsset;
+            this.videoPrioritizationSettings = videoPrioritizationSettings;
 
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
 
@@ -114,7 +118,7 @@ namespace DCL.Settings
                 generalGroupView.GroupTitle.text = group.GroupTitle;
 
                 foreach (SettingsModuleBindingBase module in group.Modules)
-                    controllers.Add(module?.CreateModule(generalGroupView.ModulesContainer, realmPartitionSettingsAsset, landscapeData, generalAudioMixer, qualitySettingsAsset, controlsSettingsAsset, memoryCap, worldVolumeMacBus));
+                    controllers.Add(module?.CreateModule(generalGroupView.ModulesContainer, realmPartitionSettingsAsset, videoPrioritizationSettings, landscapeData, generalAudioMixer, qualitySettingsAsset, controlsSettingsAsset, memoryCap, worldVolumeMacBus));
             }
         }
 

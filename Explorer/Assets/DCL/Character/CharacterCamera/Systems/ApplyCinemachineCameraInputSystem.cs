@@ -5,7 +5,7 @@ using Cinemachine;
 using DCL.Character.CharacterCamera.Systems;
 using DCL.CharacterCamera.Components;
 using DCL.Diagnostics;
-using DCL.InWorldCamera.ScreencaptureCamera;
+using DCL.InWorldCamera;
 using ECS.Abstract;
 using UnityEngine;
 
@@ -35,7 +35,7 @@ namespace DCL.CharacterCamera.Systems
         }
 
         [Query]
-        [None(typeof(CameraLookAtIntent), typeof(InWorldCamera.ScreencaptureCamera.InWorldCamera))]
+        [None(typeof(CameraLookAtIntent), typeof(InWorldCameraComponent))]
         private void Apply([Data] float dt, ref CameraComponent camera, ref CameraInput cameraInput, ref ICinemachinePreset cinemachinePreset)
         {
             switch (camera.Mode)
@@ -71,7 +71,7 @@ namespace DCL.CharacterCamera.Systems
         }
 
         [Query]
-        [None(typeof(InWorldCamera.ScreencaptureCamera.InWorldCamera))]
+        [None(typeof(InWorldCameraComponent))]
         private void ForceLookAt(in Entity entity, ref CameraComponent camera, ref ICinemachinePreset cinemachinePreset, in CameraLookAtIntent lookAtIntent)
         {
             switch (camera.Mode)

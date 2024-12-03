@@ -9,6 +9,7 @@ using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.Input.Component;
 using DCL.Optimization.PerformanceBudgeting;
+using DCL.Platforms;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.SceneLoadingScreens.SplashScreen;
@@ -16,10 +17,13 @@ using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using Global.AppArgs;
 using MVC;
+using Plugins.TexturesFuse.TexturesServerWrap.CompressShaders;
+using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using SceneRunner.Debugging;
 using System;
 using System.Linq;
 using System.Threading;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UIElements;
 using Utility;
@@ -46,6 +50,7 @@ namespace Global.Dynamic
         [SerializeField] private DynamicSceneLoaderSettings settings = null!;
         [SerializeField] private DynamicSettings dynamicSettings = null!;
         [SerializeField] private GameObject splashRoot = null!;
+        [SerializeField] private TMP_Text splashScreenText = null!;
         [SerializeField] private Animator splashScreenAnimation = null!;
         [SerializeField] private Animator logoAnimation = null!;
         [SerializeField] private AudioClipConfig backgroundMusic = null!;
@@ -96,7 +101,24 @@ namespace Global.Dynamic
 #else
                 Environment.GetCommandLineArgs()
 #endif
-                );
+            );
+
+            ITexturesFuse TextureFuseFactory()
+            {
+                return applicationParametersParser.HasFlag(AppArgsFlags.FORCE_NO_TEXTURE_COMPRESSION)
+                    ? ITexturesFuse.NewManagedInstance()
+                    : ITexturesFuse.NewDefault();
+            }
+
+            ICompressShaders compressShaders = ICompressShaders.NewDefault(TextureFuseFactory, IPlatform.DEFAULT);
+
+            if (applicationParametersParser.HasFlag(ICompressShaders.CMD_ARGS))
+            {
+                await compressShaders.WarmUpIfRequiredAsync(ct);
+                IPlatform.DEFAULT.Quit();
+                return;
+            }
+
             ISystemMemoryCap memoryCap = new SystemMemoryCap(MemoryCapMode.MAX_SYSTEM_MEMORY); // we use max memory on the loading screen
 
             settings.ApplyConfig(applicationParametersParser);
@@ -104,22 +126,31 @@ namespace Global.Dynamic
 
             World world = World.Create();
 
-            bootstrapContainer = await BootstrapContainer.CreateAsync(debugSettings, sceneLoaderSettings: settings,
-                globalPluginSettingsContainer, launchSettings,
+            var splashScreen = new SplashScreen(splashScreenAnimation, splashRoot, debugSettings.ShowSplash, splashScreenText);
+
+            bootstrapContainer = await BootstrapContainer.CreateAsync(
+                debugSettings,
+                sceneLoaderSettings: settings,
+                globalPluginSettingsContainer,
+                launchSettings,
                 applicationParametersParser,
+                splashScreen,
+                compressShaders
+                   .WithSplashScreen(splashScreen, hideOnFinish: false)
+                   .WithLog("Load Guard"),
                 world,
-                destroyCancellationToken);
+                destroyCancellationToken
+            );
 
             IBootstrap bootstrap = bootstrapContainer!.Bootstrap!;
 
             try
             {
-                var splashScreen = new SplashScreen(splashScreenAnimation, splashRoot, debugSettings.ShowSplash);
-                bootstrap.PreInitializeSetup(cursorRoot, debugUiRoot, splashScreen, destroyCancellationToken);
+                await bootstrap.PreInitializeSetupAsync(cursorRoot, debugUiRoot, destroyCancellationToken);
 
                 bool isLoaded;
                 Entity playerEntity = world.Create(new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY));
-                (staticContainer, isLoaded) = await bootstrap.LoadStaticContainerAsync(bootstrapContainer, globalPluginSettingsContainer, debugViewsCatalog, playerEntity, memoryCap, ct);
+                (staticContainer, isLoaded) = await bootstrap.LoadStaticContainerAsync(bootstrapContainer, globalPluginSettingsContainer, debugViewsCatalog, playerEntity, TextureFuseFactory(), memoryCap, ct);
 
                 if (!isLoaded)
                 {
@@ -130,7 +161,7 @@ namespace Global.Dynamic
                 bootstrap.InitializePlayerEntity(staticContainer!, playerEntity);
 
                 (dynamicWorldContainer, isLoaded) = await bootstrap.LoadDynamicWorldContainerAsync(bootstrapContainer, staticContainer!, scenePluginSettingsContainer, settings,
-                    dynamicSettings, uiToolkitRoot, cursorRoot, splashScreen, backgroundMusic, worldInfoTool.EnsureNotNull(), playerEntity,
+                    dynamicSettings, uiToolkitRoot, cursorRoot, backgroundMusic, worldInfoTool.EnsureNotNull(), playerEntity,
                     applicationParametersParser,
                     coroutineRunner: this,
                     destroyCancellationToken);
@@ -158,7 +189,7 @@ namespace Global.Dynamic
 
                 await bootstrap.LoadStartingRealmAsync(dynamicWorldContainer!, ct);
 
-                await bootstrap.UserInitializationAsync(dynamicWorldContainer!, globalWorld, playerEntity, splashScreen, ct);
+                await bootstrap.UserInitializationAsync(dynamicWorldContainer!, globalWorld, playerEntity, ct);
 
                 //This is done in order to release the memory usage of the splash screen logo animation sprites
                 //The logo is used only at first launch, so we can safely release it after the game is loaded

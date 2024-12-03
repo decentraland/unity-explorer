@@ -2,10 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Backpack;
 using DCL.UI;
 using DCL.WebRequests;
-using JetBrains.Annotations;
 using MVC;
-using Nethereum.ABI.Model;
-using System;
 using System.Threading;
 
 namespace DCL.RewardPanel
@@ -24,7 +21,8 @@ namespace DCL.RewardPanel
             IWebRequestController webRequestController,
             NFTColorsSO nftRarityColors,
             NftTypeIconSO nftRarityBackgrounds,
-            NftTypeIconSO nftCategoryIcons) : base(viewFactory)
+            NftTypeIconSO nftCategoryIcons
+        ) : base(viewFactory)
         {
             this.webRequestController = webRequestController;
             this.nftRarityColors = nftRarityColors;
@@ -51,7 +49,6 @@ namespace DCL.RewardPanel
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
             viewInstance.ContinueButton.OnClickAsync(ct);
-
     }
 
     public readonly struct RewardPanelParameter

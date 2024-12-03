@@ -697,15 +697,6 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
-                },
-                {
-                    ""name"": ""ToggleInWorld"",
-                    ""type"": ""Button"",
-                    ""id"": ""633a69c6-dec3-41ff-9fdf-bcd8c5049c19"",
-                    ""expectedControlType"": ""Button"",
-                    ""processors"": """",
-                    ""interactions"": """",
-                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -981,17 +972,6 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""groups"": """",
                     ""action"": ""ToggleFreeFly"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""ae2613fd-2d22-4d94-9b41-3f61b24cf1e4"",
-                    ""path"": ""<Keyboard>/c"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""ToggleInWorld"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -2140,6 +2120,15 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""ToggleInWorldCamera"",
+                    ""type"": ""Button"",
+                    ""id"": ""c03d925c-b9ee-4bf5-80b1-aeaf411e0b3f"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -2294,6 +2283,17 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""groups"": """",
                     ""action"": ""CameraReel"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""3019dc25-c783-4296-8da8-7d1681e7d4c6"",
+                    ""path"": ""<Keyboard>/c"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""ToggleInWorldCamera"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -2980,36 +2980,18 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             ""id"": ""941cde24-4210-40c2-b2a7-fb1737e2e30c"",
             ""actions"": [
                 {
-                    ""name"": ""ToggleInWorld"",
-                    ""type"": ""Button"",
-                    ""id"": ""1c0e90f7-a879-4d52-a0a1-03f102d8a464"",
-                    ""expectedControlType"": ""Button"",
-                    ""processors"": """",
-                    ""interactions"": """",
-                    ""initialStateCheck"": false
-                },
-                {
-                    ""name"": ""Screenshot"",
-                    ""type"": ""Button"",
-                    ""id"": ""7710aa41-5a63-496b-9e59-a35bacb9a6b0"",
-                    ""expectedControlType"": ""Button"",
-                    ""processors"": """",
-                    ""interactions"": """",
-                    ""initialStateCheck"": false
-                },
-                {
-                    ""name"": ""Rotation"",
+                    ""name"": ""Translation"",
                     ""type"": ""Value"",
-                    ""id"": ""09e6172f-a1e5-4be7-95e0-b37ffa54dab8"",
+                    ""id"": ""136e837d-9685-4d5d-bc2e-26686a2258e4"",
                     ""expectedControlType"": ""Vector2"",
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": true
                 },
                 {
-                    ""name"": ""Translation"",
+                    ""name"": ""Rotation"",
                     ""type"": ""Value"",
-                    ""id"": ""136e837d-9685-4d5d-bc2e-26686a2258e4"",
+                    ""id"": ""09e6172f-a1e5-4be7-95e0-b37ffa54dab8"",
                     ""expectedControlType"": ""Vector2"",
                     ""processors"": """",
                     ""interactions"": """",
@@ -3023,15 +3005,6 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": true
-                },
-                {
-                    ""name"": ""Run"",
-                    ""type"": ""Button"",
-                    ""id"": ""ad452450-abd8-40d1-9dbf-16deecefd5d5"",
-                    ""expectedControlType"": ""Button"",
-                    ""processors"": """",
-                    ""interactions"": """",
-                    ""initialStateCheck"": false
                 },
                 {
                     ""name"": ""Zoom"",
@@ -3050,9 +3023,170 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Run"",
+                    ""type"": ""Button"",
+                    ""id"": ""ad452450-abd8-40d1-9dbf-16deecefd5d5"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Screenshot"",
+                    ""type"": ""Button"",
+                    ""id"": ""1cd0ef80-54bb-4b36-ae15-87e32860dbed"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
+                {
+                    ""name"": ""1D Axis"",
+                    ""id"": ""a34cb645-f736-460b-8a27-b7f4b911fc29"",
+                    ""path"": ""1DAxis"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Panning"",
+                    ""isComposite"": true,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": ""Positive"",
+                    ""id"": ""9b7ec211-2a23-48bc-bc0b-5abefdfb954a"",
+                    ""path"": ""<Keyboard>/r"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Panning"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""Negative"",
+                    ""id"": ""240af9c4-cfbf-40b1-930f-f53621d6fbc6"",
+                    ""path"": ""<Keyboard>/f"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Panning"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""1D Axis"",
+                    ""id"": ""5755bc32-b0ab-4f7d-bb62-9c330023ef43"",
+                    ""path"": ""1DAxis"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Panning"",
+                    ""isComposite"": true,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": ""positive"",
+                    ""id"": ""4eb68057-c898-4eb2-a5c2-4da0d39e63cd"",
+                    ""path"": ""<Gamepad>/dpad/up"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Panning"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""negative"",
+                    ""id"": ""34afde17-2fbe-402a-bb37-b9126d64f2fe"",
+                    ""path"": ""<Gamepad>/dpad/down"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Panning"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""7971e86a-be75-41d4-a5db-fd8e26414e8f"",
+                    ""path"": ""<Keyboard>/leftShift"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Run"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""ff886156-4733-4a09-be56-75927b0718ea"",
+                    ""path"": ""<Gamepad>/rightTrigger"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Run"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""eb3ab56f-4e70-4dc1-8bec-c16a25b2ff65"",
+                    ""path"": ""<XInputController>/rightTrigger"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Run"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""62dfa0ab-cb90-4b04-98dc-a8ca411c1852"",
+                    ""path"": ""<Mouse>/delta"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Rotation"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""c44d5782-2fdc-4f52-b6a3-044fb2f8621a"",
+                    ""path"": ""<XInputController>/rightStick"",
+                    ""interactions"": """",
+                    ""processors"": ""ScaleVector2(x=2,y=2)"",
+                    ""groups"": """",
+                    ""action"": ""Rotation"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""e160e2e0-b473-420a-a250-cadb003fc50e"",
+                    ""path"": ""<Gamepad>/rightStick"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Rotation"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""1abe970b-78ce-4c2c-b841-f7d80a22589e"",
+                    ""path"": ""<Keyboard>/space"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Screenshot"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
                 {
                     ""name"": ""WASD"",
                     ""id"": ""4c515f86-ed5d-4f32-8273-78d2ede0b164"",
@@ -3186,138 +3320,6 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""isPartOfComposite"": false
                 },
                 {
-                    ""name"": ""1D Axis"",
-                    ""id"": ""a34cb645-f736-460b-8a27-b7f4b911fc29"",
-                    ""path"": ""1DAxis"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""Panning"",
-                    ""isComposite"": true,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": ""Positive"",
-                    ""id"": ""9b7ec211-2a23-48bc-bc0b-5abefdfb954a"",
-                    ""path"": ""<Keyboard>/r"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""Panning"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": true
-                },
-                {
-                    ""name"": ""Negative"",
-                    ""id"": ""240af9c4-cfbf-40b1-930f-f53621d6fbc6"",
-                    ""path"": ""<Keyboard>/f"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""Panning"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": true
-                },
-                {
-                    ""name"": ""1D Axis"",
-                    ""id"": ""5755bc32-b0ab-4f7d-bb62-9c330023ef43"",
-                    ""path"": ""1DAxis"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""Panning"",
-                    ""isComposite"": true,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": ""positive"",
-                    ""id"": ""4eb68057-c898-4eb2-a5c2-4da0d39e63cd"",
-                    ""path"": ""<Gamepad>/dpad/up"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""Panning"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": true
-                },
-                {
-                    ""name"": ""negative"",
-                    ""id"": ""34afde17-2fbe-402a-bb37-b9126d64f2fe"",
-                    ""path"": ""<Gamepad>/dpad/down"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""Panning"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": true
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""7971e86a-be75-41d4-a5db-fd8e26414e8f"",
-                    ""path"": ""<Keyboard>/leftShift"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""Run"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""ff886156-4733-4a09-be56-75927b0718ea"",
-                    ""path"": ""<Gamepad>/rightTrigger"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""Run"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""eb3ab56f-4e70-4dc1-8bec-c16a25b2ff65"",
-                    ""path"": ""<XInputController>/rightTrigger"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""Run"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""b172c6f9-d4bc-43e8-93c8-49b1040d8568"",
-                    ""path"": ""<Keyboard>/c"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""ToggleInWorld"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""67618fc3-7aae-4057-96fc-02acde036027"",
-                    ""path"": ""<Keyboard>/space"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""Screenshot"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""62dfa0ab-cb90-4b04-98dc-a8ca411c1852"",
-                    ""path"": ""<Mouse>/delta"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""Rotation"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
                     ""name"": """",
                     ""id"": ""0e5d2aa9-586f-45ea-8752-812bad7b0faf"",
                     ""path"": ""<Mouse>/scroll/y"",
@@ -3380,7 +3382,6 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         m_Camera_ChangeShoulder = m_Camera.FindAction("ChangeShoulder", throwIfNotFound: true);
         m_Camera_SwitchState = m_Camera.FindAction("SwitchState", throwIfNotFound: true);
         m_Camera_ToggleFreeFly = m_Camera.FindAction("ToggleFreeFly", throwIfNotFound: true);
-        m_Camera_ToggleInWorld = m_Camera.FindAction("ToggleInWorld", throwIfNotFound: true);
         // FreeCamera
         m_FreeCamera = asset.FindActionMap("FreeCamera", throwIfNotFound: true);
         m_FreeCamera_Movement = m_FreeCamera.FindAction("Movement", throwIfNotFound: true);
@@ -3419,6 +3420,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         m_Shortcuts_ToggleSceneDebugConsole = m_Shortcuts.FindAction("ToggleSceneDebugConsole", throwIfNotFound: true);
         m_Shortcuts_ToggleSceneDebugConsoleLarger = m_Shortcuts.FindAction("ToggleSceneDebugConsoleLarger", throwIfNotFound: true);
         m_Shortcuts_CameraReel = m_Shortcuts.FindAction("CameraReel", throwIfNotFound: true);
+        m_Shortcuts_ToggleInWorldCamera = m_Shortcuts.FindAction("ToggleInWorldCamera", throwIfNotFound: true);
         // Emotes
         m_Emotes = asset.FindActionMap("Emotes", throwIfNotFound: true);
         m_Emotes_Slot1 = m_Emotes.FindAction("Slot 1", throwIfNotFound: true);
@@ -3447,14 +3449,13 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         m_EmoteWheel_Slot9 = m_EmoteWheel.FindAction("Slot 9", throwIfNotFound: true);
         // InWorldCamera
         m_InWorldCamera = asset.FindActionMap("InWorldCamera", throwIfNotFound: true);
-        m_InWorldCamera_ToggleInWorld = m_InWorldCamera.FindAction("ToggleInWorld", throwIfNotFound: true);
-        m_InWorldCamera_Screenshot = m_InWorldCamera.FindAction("Screenshot", throwIfNotFound: true);
-        m_InWorldCamera_Rotation = m_InWorldCamera.FindAction("Rotation", throwIfNotFound: true);
         m_InWorldCamera_Translation = m_InWorldCamera.FindAction("Translation", throwIfNotFound: true);
+        m_InWorldCamera_Rotation = m_InWorldCamera.FindAction("Rotation", throwIfNotFound: true);
         m_InWorldCamera_Panning = m_InWorldCamera.FindAction("Panning", throwIfNotFound: true);
-        m_InWorldCamera_Run = m_InWorldCamera.FindAction("Run", throwIfNotFound: true);
         m_InWorldCamera_Zoom = m_InWorldCamera.FindAction("Zoom", throwIfNotFound: true);
         m_InWorldCamera_MouseDrag = m_InWorldCamera.FindAction("MouseDrag", throwIfNotFound: true);
+        m_InWorldCamera_Run = m_InWorldCamera.FindAction("Run", throwIfNotFound: true);
+        m_InWorldCamera_Screenshot = m_InWorldCamera.FindAction("Screenshot", throwIfNotFound: true);
     }
 
     public void Dispose()
@@ -3685,7 +3686,6 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
     private readonly InputAction m_Camera_ChangeShoulder;
     private readonly InputAction m_Camera_SwitchState;
     private readonly InputAction m_Camera_ToggleFreeFly;
-    private readonly InputAction m_Camera_ToggleInWorld;
     public struct CameraActions
     {
         private @DCLInput m_Wrapper;
@@ -3701,7 +3701,6 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         public InputAction @ChangeShoulder => m_Wrapper.m_Camera_ChangeShoulder;
         public InputAction @SwitchState => m_Wrapper.m_Camera_SwitchState;
         public InputAction @ToggleFreeFly => m_Wrapper.m_Camera_ToggleFreeFly;
-        public InputAction @ToggleInWorld => m_Wrapper.m_Camera_ToggleInWorld;
         public InputActionMap Get() { return m_Wrapper.m_Camera; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -3744,9 +3743,6 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @ToggleFreeFly.started += instance.OnToggleFreeFly;
             @ToggleFreeFly.performed += instance.OnToggleFreeFly;
             @ToggleFreeFly.canceled += instance.OnToggleFreeFly;
-            @ToggleInWorld.started += instance.OnToggleInWorld;
-            @ToggleInWorld.performed += instance.OnToggleInWorld;
-            @ToggleInWorld.canceled += instance.OnToggleInWorld;
         }
 
         private void UnregisterCallbacks(ICameraActions instance)
@@ -3784,9 +3780,6 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @ToggleFreeFly.started -= instance.OnToggleFreeFly;
             @ToggleFreeFly.performed -= instance.OnToggleFreeFly;
             @ToggleFreeFly.canceled -= instance.OnToggleFreeFly;
-            @ToggleInWorld.started -= instance.OnToggleInWorld;
-            @ToggleInWorld.performed -= instance.OnToggleInWorld;
-            @ToggleInWorld.canceled -= instance.OnToggleInWorld;
         }
 
         public void RemoveCallbacks(ICameraActions instance)
@@ -4056,6 +4049,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
     private readonly InputAction m_Shortcuts_ToggleSceneDebugConsole;
     private readonly InputAction m_Shortcuts_ToggleSceneDebugConsoleLarger;
     private readonly InputAction m_Shortcuts_CameraReel;
+    private readonly InputAction m_Shortcuts_ToggleInWorldCamera;
     public struct ShortcutsActions
     {
         private @DCLInput m_Wrapper;
@@ -4072,6 +4066,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         public InputAction @ToggleSceneDebugConsole => m_Wrapper.m_Shortcuts_ToggleSceneDebugConsole;
         public InputAction @ToggleSceneDebugConsoleLarger => m_Wrapper.m_Shortcuts_ToggleSceneDebugConsoleLarger;
         public InputAction @CameraReel => m_Wrapper.m_Shortcuts_CameraReel;
+        public InputAction @ToggleInWorldCamera => m_Wrapper.m_Shortcuts_ToggleInWorldCamera;
         public InputActionMap Get() { return m_Wrapper.m_Shortcuts; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -4117,6 +4112,9 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @CameraReel.started += instance.OnCameraReel;
             @CameraReel.performed += instance.OnCameraReel;
             @CameraReel.canceled += instance.OnCameraReel;
+            @ToggleInWorldCamera.started += instance.OnToggleInWorldCamera;
+            @ToggleInWorldCamera.performed += instance.OnToggleInWorldCamera;
+            @ToggleInWorldCamera.canceled += instance.OnToggleInWorldCamera;
         }
 
         private void UnregisterCallbacks(IShortcutsActions instance)
@@ -4157,6 +4155,9 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @CameraReel.started -= instance.OnCameraReel;
             @CameraReel.performed -= instance.OnCameraReel;
             @CameraReel.canceled -= instance.OnCameraReel;
+            @ToggleInWorldCamera.started -= instance.OnToggleInWorldCamera;
+            @ToggleInWorldCamera.performed -= instance.OnToggleInWorldCamera;
+            @ToggleInWorldCamera.canceled -= instance.OnToggleInWorldCamera;
         }
 
         public void RemoveCallbacks(IShortcutsActions instance)
@@ -4430,26 +4431,24 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
     // InWorldCamera
     private readonly InputActionMap m_InWorldCamera;
     private List<IInWorldCameraActions> m_InWorldCameraActionsCallbackInterfaces = new List<IInWorldCameraActions>();
-    private readonly InputAction m_InWorldCamera_ToggleInWorld;
-    private readonly InputAction m_InWorldCamera_Screenshot;
-    private readonly InputAction m_InWorldCamera_Rotation;
     private readonly InputAction m_InWorldCamera_Translation;
+    private readonly InputAction m_InWorldCamera_Rotation;
     private readonly InputAction m_InWorldCamera_Panning;
-    private readonly InputAction m_InWorldCamera_Run;
     private readonly InputAction m_InWorldCamera_Zoom;
     private readonly InputAction m_InWorldCamera_MouseDrag;
+    private readonly InputAction m_InWorldCamera_Run;
+    private readonly InputAction m_InWorldCamera_Screenshot;
     public struct InWorldCameraActions
     {
         private @DCLInput m_Wrapper;
         public InWorldCameraActions(@DCLInput wrapper) { m_Wrapper = wrapper; }
-        public InputAction @ToggleInWorld => m_Wrapper.m_InWorldCamera_ToggleInWorld;
-        public InputAction @Screenshot => m_Wrapper.m_InWorldCamera_Screenshot;
-        public InputAction @Rotation => m_Wrapper.m_InWorldCamera_Rotation;
         public InputAction @Translation => m_Wrapper.m_InWorldCamera_Translation;
+        public InputAction @Rotation => m_Wrapper.m_InWorldCamera_Rotation;
         public InputAction @Panning => m_Wrapper.m_InWorldCamera_Panning;
-        public InputAction @Run => m_Wrapper.m_InWorldCamera_Run;
         public InputAction @Zoom => m_Wrapper.m_InWorldCamera_Zoom;
         public InputAction @MouseDrag => m_Wrapper.m_InWorldCamera_MouseDrag;
+        public InputAction @Run => m_Wrapper.m_InWorldCamera_Run;
+        public InputAction @Screenshot => m_Wrapper.m_InWorldCamera_Screenshot;
         public InputActionMap Get() { return m_Wrapper.m_InWorldCamera; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -4459,58 +4458,52 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         {
             if (instance == null || m_Wrapper.m_InWorldCameraActionsCallbackInterfaces.Contains(instance)) return;
             m_Wrapper.m_InWorldCameraActionsCallbackInterfaces.Add(instance);
-            @ToggleInWorld.started += instance.OnToggleInWorld;
-            @ToggleInWorld.performed += instance.OnToggleInWorld;
-            @ToggleInWorld.canceled += instance.OnToggleInWorld;
-            @Screenshot.started += instance.OnScreenshot;
-            @Screenshot.performed += instance.OnScreenshot;
-            @Screenshot.canceled += instance.OnScreenshot;
-            @Rotation.started += instance.OnRotation;
-            @Rotation.performed += instance.OnRotation;
-            @Rotation.canceled += instance.OnRotation;
             @Translation.started += instance.OnTranslation;
             @Translation.performed += instance.OnTranslation;
             @Translation.canceled += instance.OnTranslation;
+            @Rotation.started += instance.OnRotation;
+            @Rotation.performed += instance.OnRotation;
+            @Rotation.canceled += instance.OnRotation;
             @Panning.started += instance.OnPanning;
             @Panning.performed += instance.OnPanning;
             @Panning.canceled += instance.OnPanning;
-            @Run.started += instance.OnRun;
-            @Run.performed += instance.OnRun;
-            @Run.canceled += instance.OnRun;
             @Zoom.started += instance.OnZoom;
             @Zoom.performed += instance.OnZoom;
             @Zoom.canceled += instance.OnZoom;
             @MouseDrag.started += instance.OnMouseDrag;
             @MouseDrag.performed += instance.OnMouseDrag;
             @MouseDrag.canceled += instance.OnMouseDrag;
+            @Run.started += instance.OnRun;
+            @Run.performed += instance.OnRun;
+            @Run.canceled += instance.OnRun;
+            @Screenshot.started += instance.OnScreenshot;
+            @Screenshot.performed += instance.OnScreenshot;
+            @Screenshot.canceled += instance.OnScreenshot;
         }
 
         private void UnregisterCallbacks(IInWorldCameraActions instance)
         {
-            @ToggleInWorld.started -= instance.OnToggleInWorld;
-            @ToggleInWorld.performed -= instance.OnToggleInWorld;
-            @ToggleInWorld.canceled -= instance.OnToggleInWorld;
-            @Screenshot.started -= instance.OnScreenshot;
-            @Screenshot.performed -= instance.OnScreenshot;
-            @Screenshot.canceled -= instance.OnScreenshot;
-            @Rotation.started -= instance.OnRotation;
-            @Rotation.performed -= instance.OnRotation;
-            @Rotation.canceled -= instance.OnRotation;
             @Translation.started -= instance.OnTranslation;
             @Translation.performed -= instance.OnTranslation;
             @Translation.canceled -= instance.OnTranslation;
+            @Rotation.started -= instance.OnRotation;
+            @Rotation.performed -= instance.OnRotation;
+            @Rotation.canceled -= instance.OnRotation;
             @Panning.started -= instance.OnPanning;
             @Panning.performed -= instance.OnPanning;
             @Panning.canceled -= instance.OnPanning;
-            @Run.started -= instance.OnRun;
-            @Run.performed -= instance.OnRun;
-            @Run.canceled -= instance.OnRun;
             @Zoom.started -= instance.OnZoom;
             @Zoom.performed -= instance.OnZoom;
             @Zoom.canceled -= instance.OnZoom;
             @MouseDrag.started -= instance.OnMouseDrag;
             @MouseDrag.performed -= instance.OnMouseDrag;
             @MouseDrag.canceled -= instance.OnMouseDrag;
+            @Run.started -= instance.OnRun;
+            @Run.performed -= instance.OnRun;
+            @Run.canceled -= instance.OnRun;
+            @Screenshot.started -= instance.OnScreenshot;
+            @Screenshot.performed -= instance.OnScreenshot;
+            @Screenshot.canceled -= instance.OnScreenshot;
         }
 
         public void RemoveCallbacks(IInWorldCameraActions instance)
@@ -4568,7 +4561,6 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         void OnChangeShoulder(InputAction.CallbackContext context);
         void OnSwitchState(InputAction.CallbackContext context);
         void OnToggleFreeFly(InputAction.CallbackContext context);
-        void OnToggleInWorld(InputAction.CallbackContext context);
     }
     public interface IFreeCameraActions
     {
@@ -4610,6 +4602,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         void OnToggleSceneDebugConsole(InputAction.CallbackContext context);
         void OnToggleSceneDebugConsoleLarger(InputAction.CallbackContext context);
         void OnCameraReel(InputAction.CallbackContext context);
+        void OnToggleInWorldCamera(InputAction.CallbackContext context);
     }
     public interface IEmotesActions
     {
@@ -4641,13 +4634,12 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
     }
     public interface IInWorldCameraActions
     {
-        void OnToggleInWorld(InputAction.CallbackContext context);
-        void OnScreenshot(InputAction.CallbackContext context);
-        void OnRotation(InputAction.CallbackContext context);
         void OnTranslation(InputAction.CallbackContext context);
+        void OnRotation(InputAction.CallbackContext context);
         void OnPanning(InputAction.CallbackContext context);
-        void OnRun(InputAction.CallbackContext context);
         void OnZoom(InputAction.CallbackContext context);
         void OnMouseDrag(InputAction.CallbackContext context);
+        void OnRun(InputAction.CallbackContext context);
+        void OnScreenshot(InputAction.CallbackContext context);
     }
 }
