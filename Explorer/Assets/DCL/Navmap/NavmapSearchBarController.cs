@@ -187,7 +187,10 @@ namespace DCL.Navmap
                 inputBlock.Disable(InputMapComponent.Kind.SHORTCUTS);
             }
             else
+            {
                 inputBlock.Enable(InputMapComponent.Kind.SHORTCUTS);
+                HideHistoryResults();
+            }
         }
 
         private void ShowPreviousSearches()
