@@ -10,11 +10,13 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.CompressShaders
 
         private readonly ICompressShaders origin;
         private readonly ISplashScreen splashScreen;
+        private readonly bool hideOnFinish;
 
-        public SplashScreenCompressShaders(ICompressShaders origin, ISplashScreen splashScreen)
+        public SplashScreenCompressShaders(ICompressShaders origin, ISplashScreen splashScreen, bool hideOnFinish)
         {
             this.origin = origin;
             this.splashScreen = splashScreen;
+            this.hideOnFinish = hideOnFinish;
         }
 
         public bool AreReady() =>
@@ -25,7 +27,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.CompressShaders
             if (AreReady())
                 return;
 
-            using (splashScreen.ShowWithContext(MESSAGE))
+            using (splashScreen.ShowWithContext(MESSAGE, hideOnFinish))
                 await origin.WarmUpAsync(token);
         }
     }

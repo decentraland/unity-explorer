@@ -136,7 +136,7 @@ namespace Global.Dynamic
                 applicationParametersParser,
                 splashScreen,
                 compressShaders
-                   .WithSplashScreen(splashScreen)
+                   .WithSplashScreen(splashScreen, hideOnFinish: false)
                    .WithLog("Load Guard"),
                 world,
                 destroyCancellationToken

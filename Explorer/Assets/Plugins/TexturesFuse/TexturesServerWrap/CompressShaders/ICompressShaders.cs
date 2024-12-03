@@ -59,8 +59,8 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.CompressShaders
         public static LogCompressShaders WithLog(this ICompressShaders origin, string prefix) =>
             new (origin, prefix);
 
-        public static SplashScreenCompressShaders WithSplashScreen(this ICompressShaders origin, ISplashScreen splashScreen) =>
-            new (origin, splashScreen);
+        public static SplashScreenCompressShaders WithSplashScreen(this ICompressShaders origin, ISplashScreen splashScreen, bool hideOnFinish) =>
+            new (origin, splashScreen, hideOnFinish);
 
         public static void CopyFilesRecursively(string sourcePath, string targetPath)
         {
