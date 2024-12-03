@@ -471,7 +471,8 @@ namespace Global.Dynamic
 
             ICameraReelImagesMetadataDatabase cameraReelImagesMetadataDatabase = new CameraReelImagesMetadataRemoteDatabase(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
             ICameraReelScreenshotsStorage cameraReelScreenshotsStorage = new CameraReelS3BucketScreenshotsStorage(staticContainer.WebRequestsContainer.WebRequestController);
-            CameraReelRemoteStorageService cameraReelStorageService = new CameraReelRemoteStorageService(cameraReelImagesMetadataDatabase, cameraReelScreenshotsStorage);
+
+            CameraReelRemoteStorageService cameraReelStorageService = new CameraReelRemoteStorageService(cameraReelImagesMetadataDatabase, cameraReelScreenshotsStorage, identityCache?.Identity?.Address);
 
             ISystemClipboard clipboard = new UnityClipboard();
 
@@ -662,7 +663,19 @@ namespace Global.Dynamic
             globalPlugins.AddRange(staticContainer.SharedPlugins);
 
             if (includeCameraReel)
-                globalPlugins.Add(new InWorldCameraPlugin(dclInput, selfProfile, staticContainer.RealmData, playerEntity, placesAPIService, staticContainer.CharacterContainer.CharacterObject, coroutineRunner, cameraReelStorageService));
+                globalPlugins.Add(new InWorldCameraPlugin(
+                    dclInput,
+                    selfProfile,
+                    staticContainer.RealmData,
+                    playerEntity,
+                    placesAPIService,
+                    staticContainer.CharacterContainer.CharacterObject,
+                    coroutineRunner,
+                    cameraReelStorageService,
+                    container.MvcManager,
+                    dclCursor,
+                    mainUIView.SidebarView.InWorldCameraButton,
+                    globalWorld));
 
             if (dynamicWorldParams.EnableAnalytics)
                 globalPlugins.Add(new AnalyticsPlugin(
