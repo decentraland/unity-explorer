@@ -1,7 +1,10 @@
-use core::str;
-use std::ffi::{c_char, CStr};
+use std::ffi::c_char;
 
-use crate::{server::SegmentServer, FfiCallbackFn, OperationHandleId, SEGMENT_SERVER};
+use crate::{
+    operations::{as_str, user_from},
+    server::SegmentServer,
+    FfiCallbackFn, OperationHandleId, INVALID_OPERATION_HANDLE_ID, SEGMENT_SERVER,
+};
 
 /// # Safety
 ///
@@ -25,14 +28,22 @@ pub unsafe extern "C" fn segment_server_identify(
     traits_json: *const c_char,
     context_json: *const c_char,
 ) -> OperationHandleId {
+    let user = user_from(used_id, anon_id);
+
+    if user.is_none() {
+        return INVALID_OPERATION_HANDLE_ID;
+    }
+
+    let user = user.unwrap();
+
     SEGMENT_SERVER.try_execute(&|segment, id| {
+        let user = user.clone();
         let segment = segment.clone();
-        let used_id = as_str(used_id);
         let traits_json = as_str(traits_json);
         let context_json = as_str(context_json);
 
         let operation =
-            SegmentServer::enqueue_identify(segment, id, used_id, traits_json, context_json);
+            SegmentServer::enqueue_identify(segment, id, user, traits_json, context_json);
         SEGMENT_SERVER.async_runtime.spawn(operation);
     })
 }
@@ -48,9 +59,17 @@ pub unsafe extern "C" fn segment_server_track(
     properties_json: *const c_char,
     context_json: *const c_char,
 ) -> OperationHandleId {
+    let user = user_from(used_id, anon_id);
+
+    if user.is_none() {
+        return INVALID_OPERATION_HANDLE_ID;
+    }
+
+    let user = user.unwrap();
+
     SEGMENT_SERVER.try_execute(&|segment, id| {
+        let user = user.clone();
         let segment = segment.clone();
-        let used_id = as_str(used_id);
         let event_name = as_str(event_name);
         let properties_json = as_str(properties_json);
         let context_json = as_str(context_json);
@@ -58,7 +77,7 @@ pub unsafe extern "C" fn segment_server_track(
         let operation = SegmentServer::enqueue_track(
             segment,
             id,
-            used_id,
+            user,
             event_name,
             properties_json,
             context_json,
@@ -79,9 +98,4 @@ pub extern "C" fn segment_server_flush() -> OperationHandleId {
 #[no_mangle]
 pub extern "C" fn segment_server_dispose() -> bool {
     SEGMENT_SERVER.dispose()
-}
-
-fn as_str<'a>(chars: *const c_char) -> &'a str {
-    let c_str = unsafe { CStr::from_ptr(chars) };
-    c_str.to_str().unwrap()
 }
