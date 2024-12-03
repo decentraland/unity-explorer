@@ -47,7 +47,8 @@ namespace DCL.PluginSystem.Global
                 webBrowser,
                 cursor,
                 nftInfoAPIClient,
-                webRequestController);
+                webRequestController
+            );
 
             mvcManager.RegisterController(nftPromptController);
         }

@@ -5,6 +5,7 @@ using Cinemachine;
 using DCL.Character.CharacterCamera.Systems;
 using DCL.CharacterCamera.Components;
 using DCL.Diagnostics;
+using DCL.InWorldCamera;
 using ECS.Abstract;
 using UnityEngine;
 
@@ -34,7 +35,7 @@ namespace DCL.CharacterCamera.Systems
         }
 
         [Query]
-        [None(typeof(CameraLookAtIntent))]
+        [None(typeof(CameraLookAtIntent), typeof(InWorldCameraComponent))]
         private void Apply([Data] float dt, ref CameraComponent camera, ref CameraInput cameraInput, ref ICinemachinePreset cinemachinePreset)
         {
             switch (camera.Mode)
@@ -56,27 +57,21 @@ namespace DCL.CharacterCamera.Systems
                     break;
                 case CameraMode.Free:
                     ApplyPOV(cinemachinePreset.FreeCameraData.POV, in cameraInput);
-
-                    // Apply free movement
-                    ApplyFreeCameraMovement(dt, camera, cameraInput, cinemachinePreset);
-
-                    // Apply Field of View
-                    ApplyFOV(dt, cinemachinePreset, in cameraInput);
+                    ApplyFreeCameraMovement(dt, camera, cameraInput, cinemachinePreset); // Apply free movement
+                    ApplyFOV(dt, cinemachinePreset, in cameraInput); // Apply Field of View
                     break;
                 default:
                     ReportHub.LogError(GetReportData(), $"Camera mode is unknown {camera.Mode}");
                     break;
             }
 
-            cameraInput.SetFreeFly = isFreeCameraAllowed && input.Camera.ToggleFreeFly!.WasPressedThisFrame();
+            cameraInput.SetFreeFly = isFreeCameraAllowed && input.Camera.ToggleFreeFly!.triggered;
             cameraInput.SwitchState = input.Camera.SwitchState!.WasPressedThisFrame();
             cameraInput.ChangeShoulder = input.Camera.ChangeShoulder!.WasPressedThisFrame();
-
-            // Update the brain manually
-            cinemachinePreset.Brain.ManualUpdate();
         }
 
         [Query]
+        [None(typeof(InWorldCameraComponent))]
         private void ForceLookAt(in Entity entity, ref CameraComponent camera, ref ICinemachinePreset cinemachinePreset, in CameraLookAtIntent lookAtIntent)
         {
             switch (camera.Mode)
@@ -113,7 +108,7 @@ namespace DCL.CharacterCamera.Systems
             cinemachineTransform.localPosition += ((cameraTransform.forward * cameraInput.FreeMovement.y) +
                                                    (cameraTransform.up * cameraInput.FreePanning.y) +
                                                    (cameraTransform.right * cameraInput.FreeMovement.x))
-                                                  * cinemachinePreset.FreeCameraData.Speed * dt;
+                                                  * (cinemachinePreset.FreeCameraData.Speed * dt);
         }
 
         private static void ApplyPOV(CinemachinePOV cinemachinePOV, in CameraInput cameraInput)

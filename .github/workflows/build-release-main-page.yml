@@ -64,4 +64,6 @@ jobs:
           files: |
             ./Decentraland_windows64.zip
             ./Decentraland_macos.zip
+            ./Decentraland_windows64_epic.zip
+            ./Decentraland_macos_epic.zip
           fail_on_unmatched_files: true

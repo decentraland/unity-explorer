@@ -1,5 +1,4 @@
 ﻿using Arch.Core;
-using Arch.System;
 using Arch.SystemGroups;
 using DCL.AsyncLoadReporting;
 using DCL.ECSComponents;
@@ -11,6 +10,8 @@ using SceneRunner.Scene;
 using System.Collections.Generic;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.UserInAppInitializationFlow;
+using ECS.Unity.Transforms.Components;
+using System;
 using UnityEngine;
 using UnityEngine.Pool;
 
@@ -19,6 +20,8 @@ namespace ECS.SceneLifeCycle.Systems
     [UpdateInGroup(typeof(SyncedPreRenderingSystemGroup))]
     public partial class GatherGltfAssetsSystem : BaseUnityLoopSystem
     {
+        private static readonly TimeSpan TIMEOUT = TimeSpan.FromSeconds(60);
+
         private const int FRAMES_COUNT = 90;
 
         private readonly ISceneReadinessReportQueue readinessReportQueue;
@@ -38,11 +41,13 @@ namespace ECS.SceneLifeCycle.Systems
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly MemoryBudget memoryBudget;
         private readonly ILoadingStatus loadingStatus;
+        private readonly Entity sceneContainerEntity;
 
         internal GatherGltfAssetsSystem(World world, ISceneReadinessReportQueue readinessReportQueue,
             ISceneData sceneData, EntityEventBuffer<GltfContainerComponent> eventsBuffer,
             ISceneStateProvider sceneStateProvider, MemoryBudget memoryBudget,
-            ILoadingStatus loadingStatus) : base(world)
+            ILoadingStatus loadingStatus,
+            Entity sceneContainerEntity) : base(world)
         {
             this.readinessReportQueue = readinessReportQueue;
             this.sceneData = sceneData;
@@ -50,6 +55,7 @@ namespace ECS.SceneLifeCycle.Systems
             this.sceneStateProvider = sceneStateProvider;
             this.memoryBudget = memoryBudget;
             this.loadingStatus = loadingStatus;
+            this.sceneContainerEntity = sceneContainerEntity;
 
             forEachEvent = GatherEntities;
         }
@@ -83,9 +89,7 @@ namespace ECS.SceneLifeCycle.Systems
 
                 if (reports == null && !readinessReportQueue.TryDequeue(sceneData.Parcels, out reports))
                 {
-                    // if there is no report to dequeue, nothing to do
-                    concluded = true;
-                    sceneData.SceneLoadingConcluded = true;
+                    Conclude();
                     return;
                 }
 
@@ -128,8 +132,8 @@ namespace ECS.SceneLifeCycle.Systems
                 entitiesUnderObservation.ExceptWith(toDelete);
                 ListPool<EntityReference>.Release(toDelete);
 
-                // If is still not concluded apply certain timeout to be in sync with `WaitForSceneReadiness`
-                if (Time.time - startTime > WaitForSceneReadiness.TIMEOUT.TotalSeconds)
+                // it's an internal timeout
+                if (Time.time - startTime > TIMEOUT.TotalSeconds)
                     concluded = true;
 
                 // Memory is full. Assets may be on deadlock. Show broken state of scene
@@ -148,9 +152,18 @@ namespace ECS.SceneLifeCycle.Systems
                 {
                     reports.Value.Dispose();
                     reports = null;
+                    Conclude();
                 }
                 loadingStatus.UpdateAssetsLoaded(assetsResolved, totalAssetsToResolve);
                 sceneData.SceneLoadingConcluded = concluded;
+            }
+
+            void Conclude()
+            {
+                concluded = true;
+                sceneData.SceneLoadingConcluded = true;
+                World.Get<TransformComponent>(sceneContainerEntity).Transform.position =
+                    sceneData.Geometry.BaseParcelPosition;
             }
         }
 

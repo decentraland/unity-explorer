@@ -1,6 +1,8 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Multiplayer.Connections.Rooms;
+using DCL.Multiplayer.Profiles.Announcements;
 using DCL.Multiplayer.Profiles.Bunches;
 using DCL.Multiplayer.Profiles.Poses;
 using DCL.Multiplayer.Profiles.RemoteAnnouncements;
@@ -20,12 +22,26 @@ namespace DCL.Multiplayer.Profiles.RemoteProfiles
             public readonly int Version;
             public readonly CancellationTokenSource Cts;
             public readonly DateTime StartedAt;
+            public readonly RoomSource FromRoom;
 
-            public PendingRequest(int version, CancellationTokenSource cts, DateTime startedAt)
+            public PendingRequest(int version, CancellationTokenSource cts, DateTime startedAt, RoomSource fromRoom)
             {
                 Version = version;
                 Cts = cts;
                 StartedAt = startedAt;
+                FromRoom = fromRoom;
+            }
+
+            internal bool TryAddRoom(RoomSource roomSource, out PendingRequest result)
+            {
+                if (EnumUtils.HasFlag(FromRoom, roomSource))
+                {
+                    result = default(PendingRequest);
+                    return false;
+                }
+
+                result = new PendingRequest(Version, Cts, StartedAt, FromRoom | roomSource);
+                return true;
             }
         }
 
@@ -70,13 +86,18 @@ namespace DCL.Multiplayer.Profiles.RemoteProfiles
                     pendingRequest.Cts.Cancel();
                 }
                 else
-
-                    // Nothing to do, the new one is already being requested
+                {
+                    // The new one is already being requested, update the room source if needed
+                    if (pendingRequest.TryAddRoom(remoteAnnouncement.FromRoom, out PendingRequest result))
+                        pendingProfiles[remoteAnnouncement.WalletId] = result;
                     return;
+                }
             }
 
             var cts = new CancellationTokenSource();
-            pendingProfiles[remoteAnnouncement.WalletId] = new PendingRequest(remoteAnnouncement.Version, cts, startedAt);
+
+            pendingProfiles[remoteAnnouncement.WalletId] = new PendingRequest(remoteAnnouncement.Version, cts, startedAt,
+                remoteAnnouncement.FromRoom | pendingRequest.FromRoom);
 
             try
             {
@@ -88,7 +109,8 @@ namespace DCL.Multiplayer.Profiles.RemoteProfiles
                     return;
                 }
 
-                remoteProfiles.Add(new RemoteProfile(profile, remoteAnnouncement.WalletId));
+                // Take the room source from the dictionary as the value could be updated
+                remoteProfiles.Add(new RemoteProfile(profile, remoteAnnouncement.WalletId, pendingProfiles[remoteAnnouncement.WalletId].FromRoom));
 
                 ReportHub.Log(ReportCategory.PROFILE,
                     $"{remoteAnnouncement} was downloaded for {(DateTime.Now - startedAt).TotalSeconds} s.");

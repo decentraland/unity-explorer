@@ -20,10 +20,17 @@ using System;
 using System.Linq;
 using System.Threading;
 using DCL.Diagnostics;
+using DCL.FeatureFlags;
 using DCL.Ipfs;
+using DCL.LOD;
+using DCL.Optimization.PerformanceBudgeting;
+using DCL.Profiling;
+using DCL.ResourcesUnloading;
+using DCL.Web3;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common;
 using Global.Dynamic.TeleportOperations;
+using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
@@ -43,16 +50,16 @@ namespace Global.Dynamic
         private readonly ITeleportController teleportController;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly World globalWorld;
-        private readonly RoadPlugin roadsPlugin;
+        private readonly RoadAssetsPool roadAssetsPool;
         private readonly TerrainGenerator genesisTerrain;
         private readonly WorldTerrainGenerator worldsTerrain;
         private readonly SatelliteFloor satelliteFloor;
         private readonly bool landscapeEnabled;
         private readonly ObjectProxy<Entity> cameraEntity;
         private readonly CameraSamplingData cameraSamplingData;
-        private bool isLocalSceneDevelopment;
+        private readonly bool isLocalSceneDevelopment;
+        private readonly FeatureFlagsCache featureFlagsCache;
 
-        private URLDomain currentRealm;
         private Vector2Int currentParcel;
 
         private readonly ITeleportOperation[] realmChangeOperations;
@@ -70,7 +77,7 @@ namespace Global.Dynamic
             IRemoteEntities remoteEntities,
             IDecentralandUrlsSource decentralandUrlsSource,
             World globalWorld,
-            RoadPlugin roadsPlugin,
+            RoadAssetsPool roadAssetsPool,
             TerrainGenerator genesisTerrain,
             WorldTerrainGenerator worldsTerrain,
             SatelliteFloor satelliteFloor,
@@ -78,13 +85,15 @@ namespace Global.Dynamic
             ObjectProxy<Entity> cameraEntity,
             CameraSamplingData cameraSamplingData,
             bool isLocalSceneDevelopment,
-            ILoadingStatus loadingStatus)
+            ILoadingStatus loadingStatus,
+            ICacheCleaner cacheCleaner,
+            IMemoryUsageProvider memoryUsageProvider,
+            FeatureFlagsCache featureFlagsCache)
         {
             this.loadingScreen = loadingScreen;
             this.mapRenderer = mapRenderer;
             this.realmController = realmController;
             this.teleportController = teleportController;
-            this.roadsPlugin = roadsPlugin;
             this.genesisTerrain = genesisTerrain;
             this.worldsTerrain = worldsTerrain;
             this.satelliteFloor = satelliteFloor;
@@ -95,7 +104,8 @@ namespace Global.Dynamic
             this.isLocalSceneDevelopment = isLocalSceneDevelopment;
             this.globalWorld = globalWorld;
             this.loadingStatus = loadingStatus;
-
+            this.roadAssetsPool = roadAssetsPool;
+            this.featureFlagsCache = featureFlagsCache;
             var livekitTimeout = TimeSpan.FromSeconds(10f);
 
             realmChangeOperations = new ITeleportOperation[]
@@ -104,24 +114,32 @@ namespace Global.Dynamic
                 new RemoveRemoteEntitiesTeleportOperation(remoteEntities, globalWorld),
                 new StopRoomAsyncTeleportOperation(roomHub, livekitTimeout),
                 new RemoveCameraSamplingDataTeleportOperation(globalWorld, cameraEntity),
-                new DestroyAllRoadAssetsTeleportOperation(globalWorld, roadsPlugin),
+                new DestroyAllRoadAssetsTeleportOperation(globalWorld, roadAssetsPool),
                 new ChangeRealmTeleportOperation(this),
                 new LoadLandscapeTeleportOperation(this),
-                new PrewarmRoadAssetPoolsTeleportOperation(realmController, roadsPlugin),
+                new PrewarmRoadAssetPoolsTeleportOperation(realmController, roadAssetsPool),
+                new UnloadCacheImmediateTeleportOperation(cacheCleaner, memoryUsageProvider),
                 new MoveToParcelInNewRealmTeleportOperation(this),
-                new RestartRoomAsyncTeleportOperation(roomHub, livekitTimeout), new CompleteLoadingStatus()
+                new RestartRoomAsyncTeleportOperation(roomHub, livekitTimeout),
+                new CompleteLoadingStatus()
             };
 
             teleportInSameRealmOperation = new ITeleportOperation[]
             {
-                new RestartLoadingStatus(), new MoveToParcelInSameRealmTeleportOperation(this), new CompleteLoadingStatus()
+                new RestartLoadingStatus(),
+                new UnloadCacheImmediateTeleportOperation(cacheCleaner, memoryUsageProvider),
+                new MoveToParcelInSameRealmTeleportOperation(this),
+                new CompleteLoadingStatus()
             };
 
         }
 
         public bool CheckIsNewRealm(URLDomain realm)
         {
-            if (realm == currentRealm || realm == realmController.RealmData.Ipfs.CatalystBaseUrl)
+            if (!realmController.RealmData.Configured)
+                return true;
+
+            if (realm == realmController.CurrentDomain || realm == realmController.RealmData.Ipfs.CatalystBaseUrl)
                 return false;
 
             return true;
@@ -140,11 +158,10 @@ namespace Global.Dynamic
         public async UniTask<Result> TryChangeRealmAsync(URLDomain realm, CancellationToken ct,
             Vector2Int parcelToTeleport = default)
         {
-            ct.ThrowIfCancellationRequested();
-
-            currentRealm = realmController.RealmData.Ipfs.CatalystBaseUrl;
+            if (ct.IsCancellationRequested)
+                return Result.CancelledResult();
             var loadResult
-                = await loadingScreen.ShowWhileExecuteTaskAsync(DoChangeRealmAsync(realm, parcelToTeleport, ct), ct);
+                = await loadingScreen.ShowWhileExecuteTaskAsync(DoChangeRealmAsync(realm, realmController.CurrentDomain, parcelToTeleport), ct);
 
             if (!loadResult.Success)
             {
@@ -158,13 +175,58 @@ namespace Global.Dynamic
             return loadResult;
         }
 
-        private Func<AsyncLoadProcessReport, UniTask<Result>> DoChangeRealmAsync(URLDomain realm,
-            Vector2Int parcelToTeleport,
-            CancellationToken ct)
+        private static async UniTask<Result> ExecuteTeleportOperationsAsync(TeleportParams teleportParams, ITeleportOperation[] ops, string logOpName, int attemptsCount, CancellationToken ct)
         {
-            return async parentLoadReport =>
+            var lastOpResult = Result.SuccessResult();
+
+            attemptsCount = Mathf.Max(1, attemptsCount);
+
+            for (var attempt = 0; attempt < attemptsCount; attempt++)
             {
-                ct.ThrowIfCancellationRequested();
+                lastOpResult = Result.SuccessResult();
+
+                foreach (ITeleportOperation op in ops)
+                {
+                    try
+                    {
+                        lastOpResult = await op.ExecuteAsync(teleportParams, ct);
+
+                        if (!lastOpResult.Success)
+                        {
+                            ReportHub.LogError(ReportCategory.REALM, $"Operation failed on {logOpName} attempt {attempt + 1}/{attemptsCount}: {lastOpResult.ErrorMessage}");
+                            break;
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        lastOpResult = Result.ErrorResult($"Unhandled exception on {logOpName} attempt {attempt + 1}/{attemptsCount}: {e}");
+                        ReportHub.LogError(ReportCategory.REALM, lastOpResult.ErrorMessage!);
+                        break;
+                    }
+                }
+
+                if (lastOpResult.Success)
+                    break;
+
+                if (ct.IsCancellationRequested)
+                {
+                    lastOpResult = Result.CancelledResult();
+                    break;
+                }
+            }
+
+            return lastOpResult;
+        }
+
+        private Func<AsyncLoadProcessReport, CancellationToken, UniTask<Result>> DoChangeRealmAsync(URLDomain realm, URLDomain? fallbackRealm, Vector2Int parcelToTeleport)
+        {
+            return async (parentLoadReport, ct) =>
+            {
+                const string LOG_NAME = "Changing Realm";
+                const string FALLBACK_LOG_NAME = "Returning to Previous Realm";
+
+                if (ct.IsCancellationRequested)
+                    return Result.CancelledResult();
 
                 var teleportParams = new TeleportParams
                 {
@@ -172,60 +234,29 @@ namespace Global.Dynamic
                     CurrentDestinationRealm = realm, ParentReport = parentLoadReport, LoadingStatus = loadingStatus
                 };
 
-                for (int attempt = 0; attempt < MAX_REALM_CHANGE_RETRIES; attempt++)
-                {
-                    bool success = true;
-                    foreach (var realmChangeOperation in realmChangeOperations)
-                    {
-                        try
-                        {
-                            var currentOperationResult = await realmChangeOperation.ExecuteAsync(teleportParams, ct);
-                            if (!currentOperationResult.Success)
-                            {
-                                success = false;
-                                ReportHub.LogError(ReportCategory.REALM, $"Operation failed on realm change attempt {attempt + 1}: {currentOperationResult.ErrorMessage}");
-                                break;
-                            }
-                        }
-                        catch (Exception e)
-                        {
-                            success = false;
-                            ReportHub.LogError(ReportCategory.REALM, $"Unhandled exception on realm change attempt {attempt + 1}: {e}");
-                            break;
-                        }
-                    }
+                Result opResult = await ExecuteTeleportOperationsAsync(teleportParams, realmChangeOperations, LOG_NAME, MAX_REALM_CHANGE_RETRIES, ct);
 
-                    if (success)
-                    {
-                        return Result.SuccessResult();
-                    }
+                if (opResult.Success)
+                    return opResult;
+
+                if (!fallbackRealm.HasValue)
+                {
+                    ReportHub.LogWarning(ReportCategory.REALM, "All attempts failed. No fallback realm is provided.");
+                    return opResult;
                 }
 
                 // All retries failed, try with the previous realm and parcel
                 ReportHub.LogWarning(ReportCategory.REALM, "All attempts failed. Trying with previous realm and parcel.");
-                teleportParams.CurrentDestinationRealm = currentRealm;
+
+                teleportParams.CurrentDestinationRealm = fallbackRealm.Value;
                 teleportParams.CurrentDestinationParcel = currentParcel;
 
-                foreach (ITeleportOperation realmChangeOperation in realmChangeOperations)
-                {
-                    try
-                    {
-                        Result currentOperationResult = await realmChangeOperation.ExecuteAsync(teleportParams, ct);
+                opResult = await ExecuteTeleportOperationsAsync(teleportParams, realmChangeOperations, FALLBACK_LOG_NAME, 1, ct);
 
-                        if (!currentOperationResult.Success)
-                        {
-                            parentLoadReport.SetProgress(1);
-                            return currentOperationResult;
-                        }
-                    }
-                    catch (Exception e)
-                    {
-                        parentLoadReport.SetProgress(1);
-                        return Result.ErrorResult($"Unhandled exception while changing realm {e}");
-                    }
-                }
+                if (!opResult.Success)
+                    parentLoadReport.SetProgress(1);
 
-                return Result.ErrorResult("Change realm failed, returned to previous realm");
+                return opResult;
             };
         }
 
@@ -238,8 +269,15 @@ namespace Global.Dynamic
             if (isWorld)
                 waitForSceneReadiness = await TeleportToWorldSpawnPointAsync(parcelToTeleport, teleportLoadReport, ct);
             else
+            {
+                if (parcelToTeleport == Vector2Int.zero &&
+                    featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.GENESIS_STARTING_PARCEL) &&
+                    featureFlagsCache.Configuration.TryGetTextPayload(FeatureFlagsStrings.GENESIS_STARTING_PARCEL, FeatureFlagsStrings.STRING_VARIANT, out string parcelCoords))
+                {
+                    RealmHelper.TryParseParcelFromString(parcelCoords, out parcelToTeleport);
+                }
                 waitForSceneReadiness = await TeleportToParcelAsync(parcelToTeleport, teleportLoadReport, ct);
-
+            }
             // add camera sampling data to the camera entity to start partitioning
             Assert.IsTrue(cameraEntity.Configured);
             globalWorld.Add(cameraEntity.Object, cameraSamplingData);
@@ -256,21 +294,22 @@ namespace Global.Dynamic
         }
 
         public async UniTask<Result> TryInitializeTeleportToParcelAsync(Vector2Int parcel, CancellationToken ct,
-            bool isLocal = false)
+            bool isLocal = false, bool forceChangeRealm = false)
         {
-            ct.ThrowIfCancellationRequested();
+            if (ct.IsCancellationRequested)
+                return Result.CancelledResult();
 
             Result parcelCheckResult = IsParcelInsideTerrain(parcel, isLocal, IsGenesisRealm());
             if (!parcelCheckResult.Success)
                 return parcelCheckResult;
 
-            if (!isLocal && !IsGenesisRealm())
+            if (forceChangeRealm || (!isLocal && !IsGenesisRealm()))
             {
                 var url = URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.Genesis));
                 return await TryChangeRealmAsync(url, ct, parcel);
             }
 
-            Result loadResult = await loadingScreen.ShowWhileExecuteTaskAsync(TryTeleportAsync(parcel, ct), ct);
+            Result loadResult = await loadingScreen.ShowWhileExecuteTaskAsync(TryTeleportAsync(parcel), ct);
 
             if (!loadResult.Success)
             {
@@ -281,33 +320,23 @@ namespace Global.Dynamic
             return loadResult;
         }
 
-        private Func<AsyncLoadProcessReport, UniTask<Result>> TryTeleportAsync(Vector2Int parcel, CancellationToken ct)
+        private Func<AsyncLoadProcessReport, CancellationToken, UniTask<Result>> TryTeleportAsync(Vector2Int parcel)
         {
-            return async parentLoadReport =>
+            return async (parentLoadReport, ct) =>
             {
-                ct.ThrowIfCancellationRequested();
+                const string LOG_NAME = "Teleporting to Parcel";
+
+                if (ct.IsCancellationRequested)
+                    return Result.CancelledResult();
+
                 var teleportParams = new TeleportParams
                 {
                     ParentReport = parentLoadReport, CurrentDestinationParcel = parcel, LoadingStatus = loadingStatus
                 };
-                foreach (var realmChangeOperation in teleportInSameRealmOperation)
-                {
-                    try
-                    {
-                        var currentOperationResult = await realmChangeOperation.ExecuteAsync(teleportParams, ct);
-                        if (!currentOperationResult.Success)
-                        {
-                            parentLoadReport.SetProgress(1);
-                            return currentOperationResult;
-                        }
-                    }
-                    catch (Exception e)
-                    {
-                        parentLoadReport.SetProgress(1);
-                        return Result.ErrorResult($"Unhandled exception while teleporting in same realm {e}");
-                    }
-                }
-                return Result.SuccessResult();
+
+                Result result = await ExecuteTeleportOperationsAsync(teleportParams, teleportInSameRealmOperation, LOG_NAME, 1, ct);
+                parentLoadReport.SetProgress(1);
+                return result;
             };
         }
 
@@ -384,14 +413,14 @@ namespace Global.Dynamic
             }
         }
 
-        public async UniTask SwitchMiscVisibilityAsync()
+        public void SwitchMiscVisibilityAsync()
         {
             bool isGenesis = IsGenesisRealm();
 
             RealmChanged?.Invoke(isGenesis);
             mapRenderer.SetSharedLayer(MapLayer.PlayerMarker, isGenesis);
-            await satelliteFloor.SwitchVisibilityAsync(isGenesis);
-            roadsPlugin.RoadAssetPool?.SwitchVisibility(isGenesis);
+            satelliteFloor.SetCurrentlyInGenesis(isGenesis);
+            roadAssetsPool.SwitchVisibility(isGenesis);
         }
 
         public async UniTask<UniTask> TeleportToParcelAsync(Vector2Int parcel, AsyncLoadProcessReport processReport,
@@ -400,7 +429,7 @@ namespace Global.Dynamic
             WaitForSceneReadiness? waitForSceneReadiness =
                 await teleportController.TeleportToSceneSpawnPointAsync(parcel, processReport, ct);
 
-            return waitForSceneReadiness.ToUniTask(ct);
+            return waitForSceneReadiness.ToUniTask();
         }
 
         private async UniTask<UniTask> TeleportToWorldSpawnPointAsync(Vector2Int parcelToTeleport,
@@ -417,17 +446,16 @@ namespace Global.Dynamic
             WaitForSceneReadiness? waitForSceneReadiness =
                 await teleportController.TeleportToSceneSpawnPointAsync(parcelToTeleport, processReport, ct);
 
-            return waitForSceneReadiness.ToUniTask(ct);
+            return waitForSceneReadiness.ToUniTask();
         }
 
         public async UniTask ChangeRealmAsync(URLDomain realm, CancellationToken ct)
         {
             await realmController.SetRealmAsync(realm, ct);
-            currentRealm = realm;
-            await SwitchMiscVisibilityAsync();
+            SwitchMiscVisibilityAsync();
         }
 
         private bool IsGenesisRealm() =>
-            !isLocalSceneDevelopment && !realmController.RealmData.ScenesAreFixed;
+            !isLocalSceneDevelopment && realmController.RealmData is { Configured: true, ScenesAreFixed: false };
     }
 }

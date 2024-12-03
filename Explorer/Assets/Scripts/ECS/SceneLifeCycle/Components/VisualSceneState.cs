@@ -1,18 +1,12 @@
-﻿using System;
-using UnityEngine;
-using UnityEngine.Serialization;
-
-namespace ECS.SceneLifeCycle.Components
+﻿namespace ECS.SceneLifeCycle.Components
 {
+    /// <summary>
+    ///     Does not exist for empty scenes
+    /// </summary>
     public struct VisualSceneState
     {
-        /// <summary>  The current VisualSceneState that the scene is, could be different from the CandidateVisualSceneState if we are delaying the switch from Scene -> LODs </summary>
         public VisualSceneStateEnum CurrentVisualSceneState;
-        /// <summary>  The VisualSceneState to which these scene is going to change to</summary>
-        public VisualSceneStateEnum CandidateVisualSceneState;
         public bool IsDirty;
-        /// <summary>  The time in Seconds that has passed since this scene started trying to change from one VisualSceneState to another</summary>
-        public float TimeToChange;
     }
 
     public enum VisualSceneStateEnum
@@ -20,7 +14,6 @@ namespace ECS.SceneLifeCycle.Components
         UNINITIALIZED,
         SHOWING_SCENE,
         SHOWING_LOD,
-        ROAD
+        ROAD,
     }
-
 }

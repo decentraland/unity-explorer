@@ -6,7 +6,7 @@ using Utility.Types;
 
 namespace DCL.UserInAppInitializationFlow.StartupOperations
 {
-    public class PreloadProfileStartupOperation : IStartupOperation
+    public class PreloadProfileStartupOperation : StartUpOperationBase
     {
         private readonly ILoadingStatus loadingStatus;
         private readonly ISelfProfile selfProfile;
@@ -17,12 +17,11 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
             this.selfProfile = selfProfile;
         }
 
-        public async UniTask<Result> ExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct)
+        protected override async UniTask InternalExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct)
         {
             float finalizationProgress = loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.ProfileLoading);
             await selfProfile.ProfileOrPublishIfNotAsync(ct);
             report.SetProgress(finalizationProgress);
-            return Result.SuccessResult();
         }
     }
 }

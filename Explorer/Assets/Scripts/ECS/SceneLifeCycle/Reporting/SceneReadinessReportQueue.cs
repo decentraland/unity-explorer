@@ -43,12 +43,21 @@ namespace ECS.SceneLifeCycle.Reporting
 
             for (var i = 0; i < parcels.Count; i++)
             {
-                if (queue.TryGetValue(parcels[i], out PooledLoadReportList list))
-                {
-                    report = list;
-                    queue.Remove(parcels[i]);
+                if (TryDequeue(parcels[i], out report))
                     return true;
-                }
+            }
+
+            report = null;
+            return false;
+        }
+
+        public bool TryDequeue(Vector2Int parcel, out PooledLoadReportList? report)
+        {
+            if (queue.TryGetValue(parcel, out PooledLoadReportList list))
+            {
+                report = list;
+                queue.Remove(parcel);
+                return true;
             }
 
             report = null;

@@ -3,7 +3,6 @@ using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
-using DCL.Character.CharacterMotion.Components;
 using DCL.Character.Components;
 using DCL.CharacterMotion.Animation;
 using DCL.CharacterMotion.Components;
@@ -13,6 +12,7 @@ using DCL.Utilities.Extensions;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using UnityEngine;
+using Utility.Animations;
 using static DCL.CharacterMotion.Animation.AnimationMovementBlendLogic;
 
 namespace DCL.Multiplayer.Movement.Systems

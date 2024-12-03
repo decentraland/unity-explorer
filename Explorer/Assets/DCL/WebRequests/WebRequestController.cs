@@ -2,6 +2,7 @@
 using DCL.Diagnostics;
 using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics;
+using DCL.WebRequests.RequestsHub;
 using System;
 using UnityEngine.Networking;
 using Utility.Multithreading;
@@ -12,13 +13,13 @@ namespace DCL.WebRequests
     {
         private readonly IWebRequestsAnalyticsContainer analyticsContainer;
         private readonly IWeb3IdentityCache web3IdentityCache;
+        private readonly IRequestHub requestHub;
 
-        public WebRequestController(IWeb3IdentityCache web3IdentityCache) : this(IWebRequestsAnalyticsContainer.DEFAULT, web3IdentityCache) { }
-
-        public WebRequestController(IWebRequestsAnalyticsContainer analyticsContainer, IWeb3IdentityCache web3IdentityCache)
+        public WebRequestController(IWebRequestsAnalyticsContainer analyticsContainer, IWeb3IdentityCache web3IdentityCache, IRequestHub requestHub)
         {
             this.analyticsContainer = analyticsContainer;
             this.web3IdentityCache = web3IdentityCache;
+            this.requestHub = requestHub;
         }
 
         public async UniTask<TResult?> SendAsync<TWebRequest, TWebRequestArgs, TWebRequestOp, TResult>(RequestEnvelope<TWebRequest, TWebRequestArgs> envelope, TWebRequestOp op)
@@ -73,7 +74,7 @@ namespace DCL.WebRequests
                         await UniTask.Delay(TimeSpan.FromSeconds(0.5f));
                     }
 
-                    if(envelope.CommonArguments.AttemptsDelayInMilliseconds() > 0)
+                    if (envelope.CommonArguments.AttemptsDelayInMilliseconds() > 0)
                         await UniTask.Delay(TimeSpan.FromMilliseconds(envelope.CommonArguments.AttemptsDelayInMilliseconds()));
 
                     if (exception.IsIrrecoverableError(attemptsLeft))
@@ -83,5 +84,7 @@ namespace DCL.WebRequests
 
             throw new Exception($"{nameof(WebRequestController)}: Unexpected code path!");
         }
+
+        IRequestHub IWebRequestController.requestHub => requestHub;
     }
 }

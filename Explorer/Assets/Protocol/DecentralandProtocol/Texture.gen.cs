@@ -200,7 +200,7 @@ namespace Decentraland.Common {
     public const int OffsetFieldNumber = 4;
     private global::Decentraland.Common.Vector2 offset_;
     /// <summary>
-    /// default = Vector2.Zero
+    /// Final uv = offset + (input_uv * tiling)
     /// </summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
@@ -215,7 +215,7 @@ namespace Decentraland.Common {
     public const int TilingFieldNumber = 5;
     private global::Decentraland.Common.Vector2 tiling_;
     /// <summary>
-    /// default = Vector2.Zero
+    /// default = Vector2.One; Tiling multiplier for texture repetition, only works for the texture property in PbrMaterial or UnlitMaterial.
     /// </summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]

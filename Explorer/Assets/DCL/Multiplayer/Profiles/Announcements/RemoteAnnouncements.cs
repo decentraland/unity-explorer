@@ -1,5 +1,6 @@
 using DCL.Multiplayer.Connections.Messaging;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
+using DCL.Multiplayer.Profiles.Announcements;
 using DCL.Multiplayer.Profiles.Bunches;
 using Decentraland.Kernel.Comms.Rfc4;
 using System.Collections.Generic;
@@ -19,7 +20,7 @@ namespace DCL.Multiplayer.Profiles.RemoteAnnouncements
         private void OnMessageReceived(ReceivedMessage<AnnounceProfileVersion> obj)
         {
             using (obj)
-                list.Add(new RemoteAnnouncement((int)obj.Payload.ProfileVersion, obj.FromWalletId));
+                list.Add(new RemoteAnnouncement((int)obj.Payload.ProfileVersion, obj.FromWalletId, obj.FromRoom));
         }
 
         public Bunch<RemoteAnnouncement> Bunch() =>

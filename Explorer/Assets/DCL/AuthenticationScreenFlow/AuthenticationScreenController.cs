@@ -6,6 +6,7 @@ using DCL.CharacterPreview;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.SceneLoadingScreens.SplashScreen;
@@ -61,6 +62,7 @@ namespace DCL.AuthenticationScreenFlow
         private readonly ICharacterPreviewFactory characterPreviewFactory;
         private readonly ISplashScreen splashScreenAnimator;
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
+        private readonly BuildData buildData;
 #if !UNITY_EDITOR
         private readonly FeatureFlagsCache featureFlagsCache;
 #endif
@@ -89,6 +91,7 @@ namespace DCL.AuthenticationScreenFlow
             ISplashScreen splashScreenAnimator,
             CharacterPreviewEventBus characterPreviewEventBus,
             AudioMixerVolumesController audioMixerVolumesController,
+            BuildData buildData,
             World world)
             : base(viewFactory)
         {
@@ -103,6 +106,7 @@ namespace DCL.AuthenticationScreenFlow
             this.splashScreenAnimator = splashScreenAnimator;
             this.characterPreviewEventBus = characterPreviewEventBus;
             this.audioMixerVolumesController = audioMixerVolumesController;
+            this.buildData = buildData;
             this.world = world;
         }
 
@@ -132,11 +136,12 @@ namespace DCL.AuthenticationScreenFlow
             viewInstance.VerificationCodeHintButton.onClick.AddListener(OpenOrCloseVerificationCodeHint);
             viewInstance.DiscordButton.onClick.AddListener(OpenDiscord);
             viewInstance.RequestAlphaAccessButton.onClick.AddListener(RequestAlphaAccess);
-            viewInstance.VersionText.text = Application.version;
-#if UNITY_EDITOR
-            viewInstance.VersionText.text = "editor-version";
-#endif
 
+#if UNITY_EDITOR
+            viewInstance.VersionText.text = $"editor-version - {buildData.InstallSource}";
+#else
+            viewInstance.VersionText.text = $"{Application.version} - {buildData.InstallSource}";
+#endif
             characterPreviewController = new AuthenticationScreenCharacterPreviewController(viewInstance.CharacterPreviewView, characterPreviewFactory, world, characterPreviewEventBus);
         }
 

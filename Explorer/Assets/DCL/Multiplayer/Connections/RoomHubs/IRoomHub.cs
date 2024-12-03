@@ -12,6 +12,6 @@ namespace DCL.Multiplayer.Connections.RoomHubs
 
         UniTask<bool> StartAsync();
 
-        UniTask StopIfNotAsync();
+        UniTask StopAsync();
     }
 }

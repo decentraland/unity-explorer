@@ -40,5 +40,9 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         AssetBundlesCDN,
 
         Badges,
+
+        CameraReelUsers,
+        CameraReelImages,
+        CameraReelLink,
     }
 }

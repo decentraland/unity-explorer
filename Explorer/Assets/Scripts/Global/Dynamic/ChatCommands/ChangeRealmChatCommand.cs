@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading;
 using UnityEngine;
+using Utility.Types;
 
 namespace Global.Dynamic.ChatCommands
 {
@@ -34,13 +35,16 @@ namespace Global.Dynamic.ChatCommands
 
         private readonly Dictionary<string, URLAddress> worldAddressesCaches = new ();
         private readonly IRealmNavigator realmNavigator;
+        private readonly EnvironmentValidator environmentValidator;
 
         private string? worldName;
         private string? realmUrl;
 
-        public ChangeRealmChatCommand(IRealmNavigator realmNavigator, IDecentralandUrlsSource decentralandUrlsSource)
+        public ChangeRealmChatCommand(IRealmNavigator realmNavigator, IDecentralandUrlsSource decentralandUrlsSource,
+            EnvironmentValidator environmentValidator)
         {
             this.realmNavigator = realmNavigator;
+            this.environmentValidator = environmentValidator;
 
             paramUrls = new Dictionary<string, string>
             {
@@ -71,6 +75,11 @@ namespace Global.Dynamic.ChatCommands
 
             var realm = URLDomain.FromString(realmUrl!);
 
+            var environmentValidationResult = environmentValidator.ValidateTeleport(realm.ToString());
+
+            if (!environmentValidationResult.Success)
+                return environmentValidationResult.ErrorMessage!;
+                
             Vector2Int parcel = default;
 
             if (match.Groups[3].Success && match.Groups[4].Success)

@@ -29,6 +29,7 @@ struct VertexOutput
     float3 normalDir : TEXCOORD1;
     float3 tangentDir : TEXCOORD2;
     float3 bitangentDir : TEXCOORD3;
+    float4 positionCS : TEXCOORD4;
 
     UNITY_VERTEX_OUTPUT_STEREO
 };
@@ -85,10 +86,12 @@ VertexOutput vert_highlight (VertexInput v)
     #endif
 
     o.pos.z = o.pos.z + _Offset_Z * _ClipCameraPos.z;
+    o.positionCS = TransformWorldToHClip(o.pos);
     return o;
 }
 
 float4 frag_highlight(VertexOutput i) : SV_Target
 {
+    Dithering(_FadeDistance, i.positionCS, _EndFadeDistance, _StartFadeDistance);
     return _HighlightColour;
 }

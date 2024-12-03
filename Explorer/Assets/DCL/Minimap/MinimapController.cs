@@ -7,6 +7,7 @@ using DCL.Character.Components;
 using DCL.Chat.Commands;
 using DCL.Chat.MessageBus;
 using DCL.Diagnostics;
+using DCL.ECSComponents;
 using DCL.ExplorePanel;
 using DCL.MapRenderer;
 using DCL.MapRenderer.CommonBehavior;
@@ -16,6 +17,7 @@ using DCL.MapRenderer.MapLayers;
 using DCL.MapRenderer.MapLayers.Pins;
 using DCL.MapRenderer.MapLayers.PlayerMarker;
 using DCL.PlacesAPIService;
+using DCL.SceneRestrictionBusController.SceneRestrictionBus;
 using DCL.UI;
 using DG.Tweening;
 using ECS;
@@ -44,11 +46,13 @@ namespace DCL.Minimap
         private readonly IRealmNavigator realmNavigator;
         private readonly IScenesCache scenesCache;
         private readonly IMapPathEventBus mapPathEventBus;
+        private readonly ISceneRestrictionBusController sceneRestrictionBusController;
 
         private CancellationTokenSource cts;
         private MapRendererTrackPlayerPosition mapRendererTrackPlayerPosition;
         private IMapCameraController? mapCameraController;
         private Vector2Int previousParcelPosition;
+        private SceneRestrictionsController? sceneRestrictionsController;
 
         public IReadOnlyDictionary<MapLayer, IMapLayerParameter> LayersParameters { get; } = new Dictionary<MapLayer, IMapLayerParameter>
             { { MapLayer.PlayerMarker, new PlayerMarkerParameter { BackgroundIsActive = false } } };
@@ -64,7 +68,8 @@ namespace DCL.Minimap
             IChatMessagesBus chatMessagesBus,
             IRealmNavigator realmNavigator,
             IScenesCache scenesCache,
-            IMapPathEventBus mapPathEventBus
+            IMapPathEventBus mapPathEventBus,
+            ISceneRestrictionBusController sceneRestrictionBusController
         ) : base(viewFactory)
         {
             this.mapRenderer = mapRenderer;
@@ -75,6 +80,7 @@ namespace DCL.Minimap
             this.realmNavigator = realmNavigator;
             this.scenesCache = scenesCache;
             this.mapPathEventBus = mapPathEventBus;
+            this.sceneRestrictionBusController = sceneRestrictionBusController;
         }
 
         public void HookPlayerPositionTrackingSystem(TrackPlayerPositionSystem system) =>
@@ -96,6 +102,7 @@ namespace DCL.Minimap
             viewInstance.SideMenuCanvasGroup.alpha = 0;
             viewInstance.SideMenuCanvasGroup.gameObject.SetActive(false);
             new SideMenuController(viewInstance.sideMenuView);
+            sceneRestrictionsController = new SceneRestrictionsController(viewInstance.sceneRestrictionsView, sceneRestrictionBusController);
             SetWorldMode(realmData.ScenesAreFixed);
             realmNavigator.RealmChanged += OnRealmChanged;
             mapPathEventBus.OnShowPinInMinimapEdge += ShowPinInMinimapEdge;
@@ -149,8 +156,9 @@ namespace DCL.Minimap
         }
 
 
-        [All(typeof(PlayerComponent))]
         [Query]
+        [All(typeof(PlayerComponent))]
+        [None(typeof(PBAvatarShape))]
         private void QueryPlayerPosition(in CharacterTransform transformComponent)
         {
             Vector3 position = transformComponent.Position;
@@ -249,6 +257,7 @@ namespace DCL.Minimap
             realmNavigator.RealmChanged -= OnRealmChanged;
             mapPathEventBus.OnShowPinInMinimapEdge -= ShowPinInMinimapEdge;
             mapPathEventBus.OnHidePinInMinimapEdge -= HidePinInMinimapEdge;
+            sceneRestrictionsController?.Dispose();
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>

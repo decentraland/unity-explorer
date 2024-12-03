@@ -1,3 +1,4 @@
+using DCL.Multiplayer.Connections.Rooms;
 using Decentraland.Kernel.Comms.Rfc4;
 using Google.Protobuf;
 using LiveKit.Internal.FFIClients.Pools;
@@ -9,14 +10,16 @@ namespace DCL.Multiplayer.Connections.Messaging
     {
         public readonly T Payload;
         public readonly string FromWalletId;
+        public readonly RoomSource FromRoom;
         private readonly Packet packet;
         private readonly IMultiPool multiPool;
 
-        public ReceivedMessage(T payload, Packet packet, string fromWalletId, IMultiPool multiPool)
+        public ReceivedMessage(T payload, Packet packet, string fromWalletId, IMultiPool multiPool, RoomSource fromRoom)
         {
             Payload = payload;
             FromWalletId = fromWalletId;
             this.multiPool = multiPool;
+            FromRoom = fromRoom;
             this.packet = packet;
         }
 
