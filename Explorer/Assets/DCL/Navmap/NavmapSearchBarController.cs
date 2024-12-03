@@ -4,7 +4,6 @@ using DCL.Input.Component;
 using DCL.UI;
 using System;
 using System.Threading;
-using UnityEngine;
 using Utility;
 
 namespace DCL.Navmap
@@ -30,12 +29,7 @@ namespace DCL.Navmap
         public bool Interactable
         {
             get => view.inputField.interactable;
-
-            set
-            {
-                view.inputField.interactable = value;
-                view.clearSearchButton.gameObject.SetActive(value && !string.IsNullOrEmpty(view.inputField.text));
-            }
+            set => view.inputField.interactable = value;
         }
 
         public NavmapSearchBarController(
