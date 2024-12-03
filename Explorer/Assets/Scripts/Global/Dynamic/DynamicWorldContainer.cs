@@ -421,8 +421,16 @@ namespace Global.Dynamic
                 { ShowEntityInfoChatCommand.REGEX, () => new ShowEntityInfoChatCommand(worldInfoHub) },
                 { ClearChatCommand.REGEX, () => new ClearChatCommand(chatHistory) },
                 { ReloadSceneChatCommand.REGEX, () => new ReloadSceneChatCommand(container.reloadSceneController) },
-                { LoadPortableExperienceChatCommand.REGEX, () => new LoadPortableExperienceChatCommand(portableExperiencesController, staticContainer.FeatureFlagsCache) },
-                { KillPortableExperienceChatCommand.REGEX, () => new KillPortableExperienceChatCommand(portableExperiencesController, staticContainer.FeatureFlagsCache) }
+                {
+                    LoadPortableExperienceChatCommand.REGEX,
+                    () => new LoadPortableExperienceChatCommand(staticContainer.PortableExperiencesController,
+                        staticContainer.FeatureFlagsCache)
+                },
+                {
+                    KillPortableExperienceChatCommand.REGEX,
+                    () => new KillPortableExperienceChatCommand(staticContainer.PortableExperiencesController,
+                        staticContainer.FeatureFlagsCache)
+                }
             };
 
             IChatMessagesBus coreChatMessageBus = new MultiplayerChatMessagesBus(container.MessagePipesHub, container.ProfileRepository, new MessageDeduplication<double>())
