@@ -10,6 +10,7 @@ using DCL.CharacterCamera.Settings;
 using DCL.Input;
 using DCL.Input.Component;
 using DCL.Input.Systems;
+using DCL.InWorldCamera;
 using ECS.Abstract;
 using UnityEngine;
 
@@ -55,7 +56,7 @@ namespace DCL.Character.CharacterCamera.Systems
         }
 
         [Query]
-        [None(typeof(CameraBlockerComponent), typeof(InWorldCamera.ScreencaptureCamera.InWorldCamera))]
+        [None(typeof(CameraBlockerComponent), typeof(InWorldCameraComponent))]
         private void HandleCameraInput([Data] float dt, in CameraComponent cameraComponent)
         {
             if (cameraComponent.Mode == CameraMode.SDKCamera) return;
@@ -70,7 +71,7 @@ namespace DCL.Character.CharacterCamera.Systems
         }
 
         [Query]
-        [None(typeof(InWorldCamera.ScreencaptureCamera.InWorldCamera))]
+        [None(typeof(InWorldCameraComponent))]
         private void HandleZooming(ref CameraComponent cameraComponent, ref CameraInput input, in CursorComponent cursorComponent)
         {
             if (cursorComponent.IsOverUI)
@@ -84,7 +85,7 @@ namespace DCL.Character.CharacterCamera.Systems
         }
 
         [Query]
-        [None(typeof(InWorldCamera.ScreencaptureCamera.InWorldCamera))]
+        [None(typeof(InWorldCameraComponent))]
         private void HandleSwitchState(ref CameraComponent cameraComponent, in CameraInput input)
         {
             if (!input.SwitchState)
@@ -95,7 +96,7 @@ namespace DCL.Character.CharacterCamera.Systems
         }
 
         [Query]
-        [None(typeof(InWorldCamera.ScreencaptureCamera.InWorldCamera))]
+        [None(typeof(InWorldCameraComponent))]
         private void HandleFreeFlyState(ref CameraComponent cameraComponent, in CameraInput input)
         {
             if (input.SetFreeFly)
@@ -103,7 +104,7 @@ namespace DCL.Character.CharacterCamera.Systems
         }
 
         [Query]
-        [None(typeof(InWorldCamera.ScreencaptureCamera.InWorldCamera))]
+        [None(typeof(InWorldCameraComponent))]
         private void HandleOffset([Data] float dt, ref CameraComponent cameraComponent, ref ICinemachinePreset cinemachinePreset, in CameraInput input, in CursorComponent cursorComponent)
         {
             if (cameraComponent.Mode is not (CameraMode.DroneView or CameraMode.ThirdPerson))
@@ -144,7 +145,7 @@ namespace DCL.Character.CharacterCamera.Systems
         }
 
         [Query]
-        [None(typeof(InWorldCamera.ScreencaptureCamera.InWorldCamera))]
+        [None(typeof(InWorldCameraComponent))]
         private void UpdateCameraState(ref CameraComponent cameraComponent, ref ICinemachinePreset cinemachinePreset, ref CinemachineCameraState state)
         {
             if (cameraComponent.Mode == CameraMode.SDKCamera) return;
