@@ -41,7 +41,7 @@ namespace DCL.InWorldCamera.PhotoDetail
             this.view.wearableBuyButton.onClick.AddListener(BuyWearableButtonClicked);
         }
 
-        public async UniTask LoadWearable(IWearable wearable, CancellationToken ct)
+        public async UniTask LoadWearableAsync(IWearable wearable, CancellationToken ct)
         {
             currentWearable = wearable;
 

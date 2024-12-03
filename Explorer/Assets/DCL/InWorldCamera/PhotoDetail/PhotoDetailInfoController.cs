@@ -111,11 +111,11 @@ namespace DCL.InWorldCamera.PhotoDetail
             view.ownerName.SetText(reelData.metadata.userName);
             view.sceneInfo.SetText($"{reelData.metadata.scene.name}, {screenshotParcel.x}, {screenshotParcel.y}");
 
-            await PopulateVisiblePersons(reelData.metadata.visiblePeople, ct);
+            await PopulateVisiblePersonsAsync(reelData.metadata.visiblePeople, ct);
             view.loadingState.Hide();
         }
 
-        private async UniTask PopulateVisiblePersons(VisiblePerson[] visiblePeople, CancellationToken ct)
+        private async UniTask PopulateVisiblePersonsAsync(VisiblePerson[] visiblePeople, CancellationToken ct)
         {
             if (visiblePeople == null || visiblePeople.Length == 0)
                 return;
@@ -125,7 +125,7 @@ namespace DCL.InWorldCamera.PhotoDetail
             {
                 VisiblePersonController visiblePersonController = photoDetailPoolManager.GetVisiblePerson(view.visiblePersonContainer);
                 visiblePersonControllers.Add(visiblePersonController);
-                tasks[i] = visiblePersonController.Setup(visiblePeople[i], ct);
+                tasks[i] = visiblePersonController.SetupAsync(visiblePeople[i], ct);
             }
 
             await UniTask.WhenAll(tasks);

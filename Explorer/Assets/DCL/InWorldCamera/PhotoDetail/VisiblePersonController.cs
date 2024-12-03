@@ -61,7 +61,7 @@ namespace DCL.InWorldCamera.PhotoDetail
             this.view.expandWearableButton.onClick.AddListener(WearableListButtonClicked);
         }
 
-        public async UniTask Setup(VisiblePerson visiblePerson, CancellationToken ct)
+        public async UniTask SetupAsync(VisiblePerson visiblePerson, CancellationToken ct)
         {
             this.visiblePerson = visiblePerson;
             isShowingWearables = false;
@@ -117,12 +117,12 @@ namespace DCL.InWorldCamera.PhotoDetail
             view.wearableListContainer.gameObject.SetActive(isShowingWearables);
 
             if (!wearablesLoaded)
-                LoadWearables(loadWearablesCts.Token).Forget();
+                LoadWearablesAsync(loadWearablesCts.Token).Forget();
 
             LayoutRebuilder.ForceRebuildLayoutImmediate(view.transform as RectTransform);
         }
 
-        private async UniTaskVoid LoadWearables(CancellationToken ct)
+        private async UniTaskVoid LoadWearablesAsync(CancellationToken ct)
         {
             view.wearableListLoadingSpinner.SetActive(true);
 
@@ -133,7 +133,7 @@ namespace DCL.InWorldCamera.PhotoDetail
                 return;
             }
 
-            List<URN> allPersonWearables = await GetPersonUrnsAndLoadMissingWearables(visiblePerson.wearables, ct);
+            List<URN> allPersonWearables = await GetPersonUrnsAndLoadMissingWearablesAsync(visiblePerson.wearables, ct);
             UniTask[] wearableTasks = new UniTask[allPersonWearables.Count];
 
             for (int i = 0; i < allPersonWearables.Count; i++)
@@ -141,7 +141,7 @@ namespace DCL.InWorldCamera.PhotoDetail
                 EquippedWearableController wearableController = photoDetailPoolManager.GetEquippedWearable(view.wearableListContainer);
                 wearableControllers.Add(wearableController);
                 if (wearableStorage.TryGetElement(allPersonWearables[i], out IWearable wearable))
-                    wearableTasks[i] = wearableController.LoadWearable(wearable, ct);
+                    wearableTasks[i] = wearableController.LoadWearableAsync(wearable, ct);
             }
 
             ListPool<URN>.Release(allPersonWearables);
@@ -159,7 +159,7 @@ namespace DCL.InWorldCamera.PhotoDetail
             LayoutRebuilder.ForceRebuildLayoutImmediate(view.transform as RectTransform);
         }
 
-        private async UniTask<List<URN>> GetPersonUrnsAndLoadMissingWearables(string[] personWearables, CancellationToken ct)
+        private async UniTask<List<URN>> GetPersonUrnsAndLoadMissingWearablesAsync(string[] personWearables, CancellationToken ct)
         {
             List<URN> missingUrns = ListPool<URN>.Get();
             List<URN> allUrns = ListPool<URN>.Get();
@@ -173,14 +173,14 @@ namespace DCL.InWorldCamera.PhotoDetail
                     missingUrns.Add(urn);
             }
 
-            await GetMissingWearablesByUrns(missingUrns, ct);
+            await GetMissingWearablesByUrnsAsync(missingUrns, ct);
 
             ListPool<URN>.Release(missingUrns);
 
             return allUrns;
         }
 
-        private async UniTask<IReadOnlyList<IWearable>> GetMissingWearablesByUrns(List<URN> missingUrns, CancellationToken ct)
+        private async UniTask<IReadOnlyList<IWearable>> GetMissingWearablesByUrnsAsync(List<URN> missingUrns, CancellationToken ct)
         {
             (IReadOnlyCollection<IWearable>? maleWearables, IReadOnlyCollection<IWearable>? femaleWearables) = await UniTask.WhenAll(wearablesProvider.RequestPointersAsync(missingUrns, BodyShape.MALE, ct),
                 wearablesProvider.RequestPointersAsync(missingUrns, BodyShape.FEMALE, ct));
