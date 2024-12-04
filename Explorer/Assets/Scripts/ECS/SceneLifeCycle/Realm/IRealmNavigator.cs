@@ -47,8 +47,6 @@ namespace ECS.SceneLifeCycle.Realm
 
         UniTask InitializeTeleportToSpawnPointAsync(AsyncLoadProcessReport teleportLoadReport, CancellationToken ct, Vector2Int parcelToTeleport = default);
 
-        UniTask LoadTerrainAsync(AsyncLoadProcessReport loadReport, CancellationToken ct);
-
         void SwitchMiscVisibilityAsync();
 
         UniTask ChangeRealmAsync(URLDomain realm, CancellationToken ct);

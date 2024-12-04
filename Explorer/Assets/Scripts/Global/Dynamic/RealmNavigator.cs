@@ -27,11 +27,8 @@ using DCL.ResourcesUnloading;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common;
 using Global.Dynamic.TeleportOperations;
-using Unity.Collections;
-using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Assertions;
-using Utility;
 using Utility.Types;
 
 namespace Global.Dynamic
@@ -50,7 +47,6 @@ namespace Global.Dynamic
         private readonly TerrainGenerator genesisTerrain;
         private readonly WorldTerrainGenerator worldsTerrain;
         private readonly SatelliteFloor satelliteFloor;
-        private readonly bool landscapeEnabled;
         private readonly ObjectProxy<Entity> cameraEntity;
         private readonly CameraSamplingData cameraSamplingData;
         private readonly bool isLocalSceneDevelopment;
@@ -77,13 +73,13 @@ namespace Global.Dynamic
             TerrainGenerator genesisTerrain,
             WorldTerrainGenerator worldsTerrain,
             SatelliteFloor satelliteFloor,
-            bool landscapeEnabled,
             ObjectProxy<Entity> cameraEntity,
             CameraSamplingData cameraSamplingData,
             bool isLocalSceneDevelopment,
             ILoadingStatus loadingStatus,
             ICacheCleaner cacheCleaner,
             IMemoryUsageProvider memoryUsageProvider,
+            ILandscape landscape,
             FeatureFlagsCache featureFlagsCache)
         {
             this.loadingScreen = loadingScreen;
@@ -93,7 +89,6 @@ namespace Global.Dynamic
             this.genesisTerrain = genesisTerrain;
             this.worldsTerrain = worldsTerrain;
             this.satelliteFloor = satelliteFloor;
-            this.landscapeEnabled = landscapeEnabled;
             this.cameraEntity = cameraEntity;
             this.cameraSamplingData = cameraSamplingData;
             this.decentralandUrlsSource = decentralandUrlsSource;
@@ -112,7 +107,7 @@ namespace Global.Dynamic
                 new RemoveCameraSamplingDataTeleportOperation(globalWorld, cameraEntity),
                 new DestroyAllRoadAssetsTeleportOperation(globalWorld, roadAssetsPool),
                 new ChangeRealmTeleportOperation(this),
-                new LoadLandscapeTeleportOperation(this),
+                new LoadLandscapeTeleportOperation(landscape),
                 new PrewarmRoadAssetPoolsTeleportOperation(realmController, roadAssetsPool),
                 new UnloadCacheImmediateTeleportOperation(cacheCleaner, memoryUsageProvider),
                 new MoveToParcelInNewRealmTeleportOperation(this),
@@ -320,10 +315,10 @@ namespace Global.Dynamic
             Result loadResult = await loadingScreen.ShowWhileExecuteTaskAsync(TryTeleportAsync(parcel), ct);
 
             if (!loadResult.Success)
-            {
-                ReportHub.LogError(ReportCategory.SCENE_LOADING,
-                    $"Error trying to teleport to a parcel {parcel}: {loadResult.ErrorMessage}");
-            }
+                ReportHub.LogError(
+                    ReportCategory.SCENE_LOADING,
+                    $"Error trying to teleport to a parcel {parcel}: {loadResult.ErrorMessage}"
+                );
 
             return loadResult;
         }
@@ -346,78 +341,6 @@ namespace Global.Dynamic
                 parentLoadReport.SetProgress(1);
                 return result;
             };
-        }
-
-        public async UniTask LoadTerrainAsync(AsyncLoadProcessReport landscapeLoadReport, CancellationToken ct)
-        {
-            if (landscapeEnabled)
-            {
-                if (IsGenesisRealm())
-                {
-                    //TODO (Juani): The globalWorld terrain would be hidden. We need to implement the re-usage when going back
-                    worldsTerrain.SwitchVisibility(false);
-
-                    if (!genesisTerrain.IsTerrainGenerated)
-                        await genesisTerrain.GenerateTerrainAndShowAsync(processReport: landscapeLoadReport,
-                            cancellationToken: ct);
-                    else
-                        await genesisTerrain.ShowAsync(landscapeLoadReport);
-                }
-                else
-                {
-                    genesisTerrain.Hide();
-
-                    if (isLocalSceneDevelopment)
-                        await GenerateStaticScenesTerrainAsync(landscapeLoadReport, ct);
-                    else // World Fixed Scenes
-                        await GenerateFixedScenesTerrainAsync(landscapeLoadReport, ct);
-                }
-            }
-        }
-
-        private async UniTask GenerateStaticScenesTerrainAsync(AsyncLoadProcessReport landscapeLoadReport, CancellationToken ct)
-        {
-            if (!worldsTerrain.IsInitialized)
-                return;
-
-            var staticScenesEntityDefinitions = await realmController.WaitForStaticScenesEntityDefinitionsAsync(ct);
-            if (!staticScenesEntityDefinitions.HasValue) return;
-
-            int parcelsAmount = staticScenesEntityDefinitions.Value.Value.Count;
-
-            using (var parcels = new NativeParallelHashSet<int2>(parcelsAmount, AllocatorManager.Persistent))
-            {
-                foreach (var staticScene in staticScenesEntityDefinitions.Value.Value)
-                {
-                    foreach (Vector2Int parcel in staticScene.metadata.scene.DecodedParcels) { parcels.Add(parcel.ToInt2()); }
-                }
-
-                await worldsTerrain.GenerateTerrainAsync(parcels, (uint)realmController.RealmData.GetHashCode(), landscapeLoadReport, cancellationToken: ct);
-            }
-        }
-
-        private async UniTask GenerateFixedScenesTerrainAsync(AsyncLoadProcessReport landscapeLoadReport, CancellationToken ct)
-        {
-            if (!worldsTerrain.IsInitialized)
-                return;
-
-            AssetPromise<SceneEntityDefinition, GetSceneDefinition>[]? promises = await realmController.WaitForFixedScenePromisesAsync(ct);
-
-            var parcelsAmount = 0;
-
-            foreach (AssetPromise<SceneEntityDefinition, GetSceneDefinition> promise in promises)
-                parcelsAmount += promise.Result!.Value.Asset!.metadata.scene.DecodedParcels.Count;
-
-            using (var parcels = new NativeParallelHashSet<int2>(parcelsAmount, AllocatorManager.Persistent))
-            {
-                foreach (AssetPromise<SceneEntityDefinition, GetSceneDefinition> promise in promises)
-                {
-                    foreach (Vector2Int parcel in promise.Result!.Value.Asset!.metadata.scene.DecodedParcels)
-                        parcels.Add(parcel.ToInt2());
-                }
-
-                await worldsTerrain.GenerateTerrainAsync(parcels, (uint)realmController.RealmData.GetHashCode(), landscapeLoadReport, cancellationToken: ct);
-            }
         }
 
         public void SwitchMiscVisibilityAsync()

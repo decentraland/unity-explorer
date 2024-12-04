@@ -74,6 +74,7 @@ using ECS.SceneLifeCycle.LocalSceneDevelopment;
 using ECS.SceneLifeCycle.Realm;
 using Global.AppArgs;
 using Global.Dynamic.ChatCommands;
+using Global.Dynamic.Landscapes;
 using LiveKit.Internal.FFIClients.Pools;
 using LiveKit.Internal.FFIClients.Pools.Memory;
 using LiveKit.Proto;
@@ -240,6 +241,7 @@ namespace Global.Dynamic
             var genesisTerrain = new TerrainGenerator(staticContainer.Profiler);
             var worldsTerrain = new WorldTerrainGenerator();
             var satelliteView = new SatelliteFloor();
+
             var landscapePlugin = new LandscapePlugin(satelliteView, genesisTerrain, worldsTerrain, assetsProvisioner,
                 debugBuilder, container.MapRendererContainer.TextureContainer,
                 staticContainer.WebRequestsContainer.WebRequestController, dynamicWorldParams.EnableLandscape,
@@ -339,6 +341,14 @@ namespace Global.Dynamic
                 staticContainer.EntityCollidersGlobalCache
             );
 
+            ILandscape landscape = new Landscape(
+                container.RealmController,
+                genesisTerrain,
+                worldsTerrain,
+                dynamicWorldParams.EnableLandscape,
+                localSceneDevelopment
+            );
+
             IRealmNavigator realmNavigator = new RealmNavigator(
                 loadingScreen,
                 container.MapRendererContainer.MapRenderer,
@@ -352,13 +362,13 @@ namespace Global.Dynamic
                 genesisTerrain,
                 worldsTerrain,
                 satelliteView,
-                dynamicWorldParams.EnableLandscape,
                 staticContainer.ExposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy,
                 exposedGlobalDataContainer.CameraSamplingData,
                 localSceneDevelopment,
                 staticContainer.LoadingStatus,
                 staticContainer.CacheCleaner,
                 staticContainer.SingletonSharedDependencies.MemoryBudget,
+                landscape,
                 staticContainer.FeatureFlagsCache);
 
             IHealthCheck livekitHealthCheck = bootstrapContainer.DebugSettings.EnableEmulateNoLivekitConnection
@@ -392,6 +402,7 @@ namespace Global.Dynamic
                 staticContainer.FeatureFlagsCache,
                 identityCache,
                 container.RealmController,
+                landscape,
                 dynamicWorldParams.AppParameters,
                 bootstrapContainer.DebugSettings,
                 staticContainer.PortableExperiencesController,

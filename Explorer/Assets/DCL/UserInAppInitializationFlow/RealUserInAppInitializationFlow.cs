@@ -55,6 +55,7 @@ namespace DCL.UserInAppInitializationFlow
             FeatureFlagsCache featureFlagsCache,
             IWeb3IdentityCache web3IdentityCache,
             IRealmController realmController,
+            ILandscape landscape,
             IAppArgs appParameters,
             IDebugSettings debugSettings,
             IPortableExperiencesController portableExperiencesController,
@@ -74,7 +75,7 @@ namespace DCL.UserInAppInitializationFlow
             var preloadProfileStartupOperation = new PreloadProfileStartupOperation(loadingStatus, selfProfile);
             var switchRealmMiscVisibilityStartupOperation = new SwitchRealmMiscVisibilityStartupOperation(loadingStatus, realmNavigator);
             loadPlayerAvatarStartupOperation = new LoadPlayerAvatarStartupOperation(loadingStatus, selfProfile, mainPlayerAvatarBaseProxy);
-            var loadLandscapeStartupOperation = new LoadLandscapeStartupOperation(loadingStatus, realmNavigator);
+            var loadLandscapeStartupOperation = new LoadLandscapeStartupOperation(loadingStatus, landscape);
             checkOnboardingStartupOperation = new CheckOnboardingStartupOperation(loadingStatus, selfProfile, featureFlagsCache, decentralandUrlsSource, appParameters, realmNavigator);
             restartRealmStartupOperation = new RestartRealmStartupOperation(loadingStatus, realmController);
             var teleportStartupOperation = new TeleportStartupOperation(loadingStatus, realmNavigator, startParcel);
