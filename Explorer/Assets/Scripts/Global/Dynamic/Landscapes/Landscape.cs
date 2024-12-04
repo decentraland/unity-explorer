@@ -63,6 +63,16 @@ namespace Global.Dynamic.Landscapes
             return EnumResult<LandscapeError>.SuccessResult();
         }
 
+        //TODO should it accept isLocal instead of encapsulating it?
+        public Result IsParcelInsideTerrain(Vector2Int parcel, bool isLocal)
+        {
+            IContainParcel terrain = isLocal && !realmController.IsGenesis() ? worldsTerrain : genesisTerrain;
+
+            return !terrain.Contains(parcel)
+                ? Result.ErrorResult($"Parcel {parcel} is outside of the bounds.")
+                : Result.SuccessResult();
+        }
+
         private async UniTask GenerateStaticScenesTerrainAsync(AsyncLoadProcessReport landscapeLoadReport, CancellationToken ct)
         {
             if (!worldsTerrain.IsInitialized)

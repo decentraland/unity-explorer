@@ -291,6 +291,9 @@ namespace Global.Dynamic
                 staticContainer.WebRequestsContainer.WebRequestController
             );
 
+
+            bool localSceneDevelopment = !string.IsNullOrEmpty(dynamicWorldParams.LocalSceneDevelopmentRealm);
+
             container.RealmController = new RealmController(
                 identityCache,
                 staticContainer.WebRequestsContainer.WebRequestController,
@@ -304,9 +307,9 @@ namespace Global.Dynamic
                 staticContainer.SingletonSharedDependencies.SceneAssetLock,
                 debugBuilder,
                 staticContainer.ComponentsContainer.ComponentPoolsRegistry
-                               .GetReferenceTypePool<PartitionComponent>());
+                               .GetReferenceTypePool<PartitionComponent>(),
+                localSceneDevelopment);
 
-            bool localSceneDevelopment = !string.IsNullOrEmpty(dynamicWorldParams.LocalSceneDevelopmentRealm);
             container.reloadSceneController = new ECSReloadScene(staticContainer.ScenesCache, globalWorld, playerEntity, localSceneDevelopment);
 
             if (localSceneDevelopment)
@@ -358,13 +361,10 @@ namespace Global.Dynamic
                 remoteEntities,
                 bootstrapContainer.DecentralandUrlsSource,
                 globalWorld,
-                container.LODContainer.RoadAssetsPool, // TODO Plugins should not expose dependencies!
-                genesisTerrain,
-                worldsTerrain,
+                container.LODContainer.RoadAssetsPool,
                 satelliteView,
                 staticContainer.ExposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy,
                 exposedGlobalDataContainer.CameraSamplingData,
-                localSceneDevelopment,
                 staticContainer.LoadingStatus,
                 staticContainer.CacheCleaner,
                 staticContainer.SingletonSharedDependencies.MemoryBudget,

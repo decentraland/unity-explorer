@@ -16,12 +16,6 @@ namespace ECS.SceneLifeCycle.Realm
         NotReachable,
     }
 
-    public enum RealmType
-    {
-        GenesisCity,
-        World
-    }
-
     public interface IRealmNavigator
     {
         public const string WORLDS_DOMAIN = "https://worlds-content-server.decentraland.org/world";
