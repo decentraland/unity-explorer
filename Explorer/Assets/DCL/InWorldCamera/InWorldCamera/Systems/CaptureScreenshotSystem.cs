@@ -72,7 +72,7 @@ namespace DCL.InWorldCamera.Systems
 
         protected override void Update(float t)
         {
-            if (recorder.State == RecordingState.CAPTURING)
+            if (recorder.State == RecordingState.CAPTURING || hudController.IsVfxInProgress)
                 return;
 
             if (recorder.State == RecordingState.SCREENSHOT_READY && metadataBuilder.MetadataIsReady)

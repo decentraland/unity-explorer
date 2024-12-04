@@ -19,6 +19,7 @@ namespace DCL.InWorldCamera.UI
         [SerializeField] private Image whiteSplashImage;
         [SerializeField] private RectTransform cameraReelIcon;
         [SerializeField] private Image animatedImage;
+
         private Sequence currentVfxSequence;
 
         [field: Space]
@@ -35,13 +36,11 @@ namespace DCL.InWorldCamera.UI
         [field: SerializeField] public Button CloseButton { get; private set; }
         [field: SerializeField] public Button ShortcutsInfoButton { get; private set; }
 
-        private Sequence sequence;
-        private Sequence vfxSequence => sequence ??= DOTween.Sequence();
+        public bool IsVfxInProgress => currentVfxSequence.IsActive() && !currentVfxSequence.IsComplete();
 
         public void ScreenshotCaptureAnimation(Texture2D screenshotImage, float splashDuration, float afterSplashPause, float transitionDuration)
         {
-            currentVfxSequence?.Complete();
-            currentVfxSequence?.Kill();
+            currentVfxSequence?.Kill(complete: true);
 
             animatedImage.sprite = Sprite.Create(screenshotImage, new Rect(0, 0, screenshotImage.width, screenshotImage.height), Vector2.zero);
 
@@ -62,13 +61,12 @@ namespace DCL.InWorldCamera.UI
 
         private Sequence PrepareVFXSequence(float splashDuration, float afterSplashPause, float transitionDuration)
         {
-            vfxSequence.Kill();
+            Sequence vfxSequence = DOTween.Sequence();
 
             vfxSequence.Append(AnimateSplash(splashDuration));
             vfxSequence.AppendInterval(afterSplashPause); // Delay between splash and transition
             vfxSequence.Append(AnimateVFXImageTransition(transitionDuration));
             vfxSequence.Join(AnimateVFXImageScale(transitionDuration));
-            vfxSequence.OnComplete(() => animatedImage.enabled = false);
 
             return vfxSequence;
         }
@@ -96,6 +94,10 @@ namespace DCL.InWorldCamera.UI
         private Tween AnimateVFXImageScale(float duration) =>
             animatedImage.rectTransform.DOScale(Vector2.zero, duration)
                          .SetEase(Ease.InOutQuad)
-                         .OnComplete(() => { animatedImage.rectTransform.localScale = Vector2.one; });
+                         .OnComplete(() =>
+                          {
+                              animatedImage.enabled = false;
+                              animatedImage.rectTransform.localScale = Vector2.one;
+                          });
     }
 }
