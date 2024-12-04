@@ -128,16 +128,6 @@ namespace Global.Dynamic
             return true;
         }
 
-        public async UniTask<bool> CheckRealmIsReachableAsync(URLDomain realm, CancellationToken ct)
-        {
-            ct.ThrowIfCancellationRequested();
-
-            if (!await realmController.IsReachableAsync(realm, ct))
-                return false;
-
-            return true;
-        }
-
         public async UniTask<EnumResult<ChangeRealmError>> TryChangeRealmAsync(
             URLDomain realm,
             CancellationToken ct,
