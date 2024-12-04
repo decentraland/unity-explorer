@@ -82,7 +82,6 @@ namespace Global.Dynamic.ChatCommands
                 return environmentValidationResult.ErrorMessage!;
 
             Vector2Int parcel = ParcelOrDefault(match);
-
             var result = await realmNavigator.TryChangeRealmAsync(realm, ct, parcel);
 
             if (result.Success)
@@ -100,7 +99,7 @@ namespace Global.Dynamic.ChatCommands
                    };
         }
 
-        private Vector2Int ParcelOrDefault(Match match)
+        private static Vector2Int ParcelOrDefault(Match match)
         {
             Vector2Int parcel = default;
 
