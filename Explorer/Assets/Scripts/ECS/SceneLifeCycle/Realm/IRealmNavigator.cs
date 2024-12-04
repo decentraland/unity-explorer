@@ -36,8 +36,11 @@ namespace ECS.SceneLifeCycle.Realm
             Vector2Int parcelToTeleport = default
         );
 
-        UniTask<Result> TryInitializeTeleportToParcelAsync(Vector2Int parcel, CancellationToken ct,
-            bool isLocal = false, bool forceChangeRealm = false);
+        UniTask<Result> TeleportToParcelAsync(
+            Vector2Int parcel,
+            CancellationToken ct,
+            bool isLocal
+        );
 
         UniTask InitializeTeleportToSpawnPointAsync(AsyncLoadProcessReport teleportLoadReport, CancellationToken ct, Vector2Int parcelToTeleport = default);
 

@@ -279,11 +279,10 @@ namespace Global.Dynamic
             await waitForSceneReadiness;
         }
 
-        public async UniTask<Result> TryInitializeTeleportToParcelAsync(
+        public async UniTask<Result> TeleportToParcelAsync(
             Vector2Int parcel,
             CancellationToken ct,
-            bool isLocal = false,
-            bool forceChangeRealm = false
+            bool isLocal = false
         )
         {
             if (ct.IsCancellationRequested)
@@ -294,14 +293,13 @@ namespace Global.Dynamic
             if (!parcelCheckResult.Success)
                 return parcelCheckResult;
 
-            if (forceChangeRealm || (!isLocal && !realmController.IsGenesis()))
+            if (!isLocal && !realmController.IsGenesis())
             {
-                var url = URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.Genesis));
-                var enumResult = await TryChangeRealmAsync(url, ct, parcel);
+                var enumResult = await TryChangeToGenesisAsync(parcel, ct);
                 return enumResult.AsResult();
             }
 
-            Result loadResult = await loadingScreen.ShowWhileExecuteTaskAsync(TryTeleportAsync(parcel), ct);
+            Result loadResult = await loadingScreen.ShowWhileExecuteTaskAsync(TryTeleportAsyncOperation(parcel), ct);
 
             if (!loadResult.Success)
                 ReportHub.LogError(
@@ -312,9 +310,15 @@ namespace Global.Dynamic
             return loadResult;
         }
 
-        private Func<AsyncLoadProcessReport, CancellationToken, UniTask<Result>> TryTeleportAsync(Vector2Int parcel)
+        private async UniTask<EnumResult<ChangeRealmError>> TryChangeToGenesisAsync(Vector2Int parcel, CancellationToken ct)
         {
-            return async (parentLoadReport, ct) =>
+            var genesisUrl = URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.Genesis));
+            var enumResult = await TryChangeRealmAsync(genesisUrl, ct, parcel);
+            return enumResult;
+        }
+
+        private Func<AsyncLoadProcessReport, CancellationToken, UniTask<Result>> TryTeleportAsyncOperation(Vector2Int parcel) =>
+            async (parentLoadReport, ct) =>
             {
                 const string LOG_NAME = "Teleporting to Parcel";
 
@@ -330,7 +334,6 @@ namespace Global.Dynamic
                 parentLoadReport.SetProgress(1);
                 return result;
             };
-        }
 
         public void SwitchMiscVisibilityAsync()
         {
