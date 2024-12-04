@@ -144,8 +144,8 @@ namespace Global.Dynamic
             if (await realmController.IsReachableAsync(realm, ct) == false)
                 return EnumResult<ChangeRealmError>.ErrorResult(ChangeRealmError.NotReachable);
 
-            var loadResult
-                = await loadingScreen.ShowWhileExecuteTaskAsync(DoChangeRealmAsync(realm, realmController.CurrentDomain, parcelToTeleport), ct);
+            var operation = DoChangeRealmAsync(realm, realmController.CurrentDomain, parcelToTeleport);
+            var loadResult = await loadingScreen.ShowWhileExecuteTaskAsync(operation, ct);
 
             if (!loadResult.Success)
             {
@@ -224,11 +224,7 @@ namespace Global.Dynamic
                 if (ct.IsCancellationRequested)
                     return Result.CancelledResult();
 
-                var teleportParams = new TeleportParams
-                {
-                    CurrentDestinationParcel = parcelToTeleport,
-                    CurrentDestinationRealm = realm, ParentReport = parentLoadReport, LoadingStatus = loadingStatus
-                };
+                var teleportParams = new TeleportParams(realm, parcelToTeleport, parentLoadReport, loadingStatus);
 
                 Result opResult = await ExecuteTeleportOperationsAsync(teleportParams, realmChangeOperations, LOG_NAME, MAX_REALM_CHANGE_RETRIES, ct);
 
@@ -244,8 +240,7 @@ namespace Global.Dynamic
                 // All retries failed, try with the previous realm and parcel
                 ReportHub.LogWarning(ReportCategory.REALM, "All attempts failed. Trying with previous realm and parcel.");
 
-                teleportParams.CurrentDestinationRealm = fallbackRealm.Value;
-                teleportParams.CurrentDestinationParcel = currentParcel;
+                teleportParams.ChangeDestination(fallbackRealm.Value, currentParcel);
 
                 opResult = await ExecuteTeleportOperationsAsync(teleportParams, realmChangeOperations, FALLBACK_LOG_NAME, 1, ct);
 
@@ -331,10 +326,12 @@ namespace Global.Dynamic
                 if (ct.IsCancellationRequested)
                     return Result.CancelledResult();
 
-                var teleportParams = new TeleportParams
-                {
-                    ParentReport = parentLoadReport, CurrentDestinationParcel = parcel, LoadingStatus = loadingStatus
-                };
+                var teleportParams = new TeleportParams(
+                    currentDestinationParcel: parcel,
+                    loadingStatus: loadingStatus,
+                    parentReport: parentLoadReport,
+                    currentDestinationRealm: URLDomain.EMPTY
+                );
 
                 Result result = await ExecuteTeleportOperationsAsync(teleportParams, teleportInSameRealmOperation, LOG_NAME, 1, ct);
                 parentLoadReport.SetProgress(1);
