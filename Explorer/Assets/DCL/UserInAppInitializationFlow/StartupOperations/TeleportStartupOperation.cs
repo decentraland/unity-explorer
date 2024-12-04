@@ -13,7 +13,8 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
         private readonly IRealmNavigator realmNavigator;
         private readonly Vector2Int startParcel;
 
-        public TeleportStartupOperation(ILoadingStatus loadingStatus, IRealmNavigator realmNavigator, Vector2Int startParcel)
+        public TeleportStartupOperation(ILoadingStatus loadingStatus, IRealmNavigator realmNavigator,
+            Vector2Int startParcel)
         {
             this.loadingStatus = loadingStatus;
             this.realmNavigator = realmNavigator;

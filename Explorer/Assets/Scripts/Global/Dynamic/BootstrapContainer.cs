@@ -76,7 +76,8 @@ namespace Global.Dynamic
             World world,
             CancellationToken ct)
         {
-            var decentralandUrlsSource = new DecentralandUrlsSource(sceneLoaderSettings.DecentralandEnvironment);
+            var decentralandUrlsSource = new DecentralandUrlsSource(sceneLoaderSettings.DecentralandEnvironment,
+                realmLaunchSettings.IsLocalSceneDevelopmentRealm);
             var browser = new UnityAppWebBrowser(decentralandUrlsSource);
             var web3AccountFactory = new Web3AccountFactory();
 
@@ -86,7 +87,7 @@ namespace Global.Dynamic
                 AssetsProvisioner = new AddressablesProvisioner(),
                 DecentralandUrlsSource = decentralandUrlsSource,
                 WebBrowser = browser,
-                LocalSceneDevelopment = realmLaunchSettings.IsLocalSceneDevelopmentRealm || realmLaunchSettings.GetStartingRealm(decentralandUrlsSource) == IRealmNavigator.LOCALHOST,
+                LocalSceneDevelopment = realmLaunchSettings.IsLocalSceneDevelopmentRealm,
                 UseRemoteAssetBundles = realmLaunchSettings.useRemoteAssetsBundles,
                 ApplicationParametersParser = applicationParametersParser,
                 DebugSettings = debugSettings,

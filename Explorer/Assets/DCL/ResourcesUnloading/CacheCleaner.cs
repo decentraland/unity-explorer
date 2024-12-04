@@ -91,7 +91,7 @@ namespace DCL.ResourcesUnloading
             profileCache!.Unload(budgetToUse, budgeted ? PROFILE_UNLOAD_CHUNK : int.MaxValue);
             profileIntentionCache!.Unload(budgetToUse, budgeted ? PROFILE_UNLOAD_CHUNK : int.MaxValue);
             roadCache!.Unload(budgetToUse, budgeted ? GLTF_UNLOAD_CHUNK : int.MaxValue);
-            jsSourcesCache!.Unload(budgetToUse);
+            jsSourcesCache?.Unload(budgetToUse);
 
             ClearExtendedObjectPools(budgetToUse, budgeted ? POOLS_UNLOAD_CHUNK : int.MaxValue);
         }

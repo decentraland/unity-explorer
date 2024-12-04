@@ -59,8 +59,7 @@ namespace DCL.UserInAppInitializationFlow
             IDebugSettings debugSettings,
             IPortableExperiencesController portableExperiencesController,
             IRoomHub roomHub,
-            DiagnosticsContainer diagnosticsContainer
-        )
+            DiagnosticsContainer diagnosticsContainer)
         {
             this.loadingStatus = loadingStatus;
             this.mvcManager = mvcManager;
@@ -106,11 +105,12 @@ namespace DCL.UserInAppInitializationFlow
             loadPlayerAvatarStartupOperation.AssignWorld(parameters.World, parameters.PlayerEntity);
             restartRealmStartupOperation.EnableReload(parameters.ReloadRealm);
 
-            using var playAudioScope = UIAudioEventsBus.Instance.NewPlayAudioScope(backgroundMusic);
+            using UIAudioEventsBus.PlayAudioScope playAudioScope = UIAudioEventsBus.Instance.NewPlayAudioScope(backgroundMusic);
 
             do
             {
                 if (parameters.FromLogout)
+
                     // Disconnect current livekit connection on logout so the avatar is removed from other peers
                     await roomHub.StopAsync().Timeout(TimeSpan.FromSeconds(10));
 
@@ -123,16 +123,18 @@ namespace DCL.UserInAppInitializationFlow
                 if (parameters.FromLogout)
                 {
                     // If we are coming from a logout, we teleport the user to Genesis Plaza and force realm change to reset the scene properly
-                    var teleportResult = await realmNavigator.TryInitializeTeleportToParcelAsync(Vector2Int.zero, ct, forceChangeRealm: true);
+                    Result teleportResult = await realmNavigator.TryInitializeTeleportToParcelAsync(Vector2Int.zero, ct, forceChangeRealm: true);
+
                     // Restart livekit connection
                     await roomHub.StartAsync().Timeout(TimeSpan.FromSeconds(10));
                     result = teleportResult.Success ? teleportResult : Result.ErrorResult(teleportResult.ErrorMessage);
+
                     // We need to flag the process as completed, otherwise the multiplayer systems will not run
                     loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.Completed);
                 }
                 else
                 {
-                    var loadingResult = await LoadingScreen(parameters.ShowLoading)
+                    Result loadingResult = await LoadingScreen(parameters.ShowLoading)
                        .ShowWhileExecuteTaskAsync(
                             async (parentLoadReport, ct) =>
                             {
