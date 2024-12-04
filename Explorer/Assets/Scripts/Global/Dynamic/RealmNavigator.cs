@@ -9,7 +9,6 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Entities;
 using DCL.ParcelsService;
-using DCL.Roads.Systems;
 using DCL.SceneLoadingScreens.LoadingScreen;
 using DCL.UserInAppInitializationFlow;
 using DCL.Utilities;
@@ -24,13 +23,10 @@ using DCL.FeatureFlags;
 using DCL.Ipfs;
 using DCL.LOD;
 using DCL.Optimization.PerformanceBudgeting;
-using DCL.Profiling;
 using DCL.ResourcesUnloading;
-using DCL.Web3;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common;
 using Global.Dynamic.TeleportOperations;
-using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
@@ -66,7 +62,7 @@ namespace Global.Dynamic
         private readonly ITeleportOperation[] teleportInSameRealmOperation;
         private readonly ILoadingStatus loadingStatus;
 
-        public event Action<bool>? RealmChanged;
+        public event Action<RealmType>? RealmChanged;
 
         public RealmNavigator(
             ILoadingScreen loadingScreen,
@@ -131,7 +127,6 @@ namespace Global.Dynamic
                 new MoveToParcelInSameRealmTeleportOperation(this),
                 new CompleteLoadingStatus()
             };
-
         }
 
         public bool CheckIsNewRealm(URLDomain realm)
@@ -145,7 +140,7 @@ namespace Global.Dynamic
             return true;
         }
 
-        public async UniTask<bool> CheckRealmIsReacheableAsync(URLDomain realm, CancellationToken ct)
+        public async UniTask<bool> CheckRealmIsReachableAsync(URLDomain realm, CancellationToken ct)
         {
             ct.ThrowIfCancellationRequested();
 
@@ -155,11 +150,21 @@ namespace Global.Dynamic
             return true;
         }
 
-        public async UniTask<Result> TryChangeRealmAsync(URLDomain realm, CancellationToken ct,
-            Vector2Int parcelToTeleport = default)
+        public async UniTask<EnumResult<ChangeRealmError>> TryChangeRealmAsync(
+            URLDomain realm,
+            CancellationToken ct,
+            Vector2Int parcelToTeleport = default
+        )
         {
             if (ct.IsCancellationRequested)
-                return Result.CancelledResult();
+                return EnumResult<ChangeRealmError>.ErrorResult(ChangeRealmError.ChangeCancelled);
+
+            if (CheckIsNewRealm(realm) == false)
+                return EnumResult<ChangeRealmError>.ErrorResult(ChangeRealmError.SameRealm);
+
+            if (await realmController.IsReachableAsync(realm, ct) == false)
+                return EnumResult<ChangeRealmError>.ErrorResult(ChangeRealmError.NotReachable);
+
             var loadResult
                 = await loadingScreen.ShowWhileExecuteTaskAsync(DoChangeRealmAsync(realm, realmController.CurrentDomain, parcelToTeleport), ct);
 
@@ -170,9 +175,11 @@ namespace Global.Dynamic
 
                 ReportHub.LogError(ReportCategory.REALM,
                     $"Error trying to teleport to a realm {realm}: {loadResult.ErrorMessage}");
+
+                return EnumResult<ChangeRealmError>.ErrorResult(ChangeRealmError.MessageError, loadResult.ErrorMessage!);
             }
 
-            return loadResult;
+            return EnumResult<ChangeRealmError>.SuccessResult();
         }
 
         private static async UniTask<Result> ExecuteTeleportOperationsAsync(TeleportParams teleportParams, ITeleportOperation[] ops, string logOpName, int attemptsCount, CancellationToken ct)
@@ -272,12 +279,11 @@ namespace Global.Dynamic
             {
                 if (parcelToTeleport == Vector2Int.zero &&
                     featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.GENESIS_STARTING_PARCEL) &&
-                    featureFlagsCache.Configuration.TryGetTextPayload(FeatureFlagsStrings.GENESIS_STARTING_PARCEL, FeatureFlagsStrings.STRING_VARIANT, out string parcelCoords))
-                {
-                    RealmHelper.TryParseParcelFromString(parcelCoords, out parcelToTeleport);
-                }
+                    featureFlagsCache.Configuration.TryGetTextPayload(FeatureFlagsStrings.GENESIS_STARTING_PARCEL, FeatureFlagsStrings.STRING_VARIANT, out string parcelCoords)) { RealmHelper.TryParseParcelFromString(parcelCoords, out parcelToTeleport); }
+
                 waitForSceneReadiness = await TeleportToParcelAsync(parcelToTeleport, teleportLoadReport, ct);
             }
+
             // add camera sampling data to the camera entity to start partitioning
             Assert.IsTrue(cameraEntity.Configured);
             globalWorld.Add(cameraEntity.Object, cameraSamplingData);
@@ -300,13 +306,15 @@ namespace Global.Dynamic
                 return Result.CancelledResult();
 
             Result parcelCheckResult = IsParcelInsideTerrain(parcel, isLocal, IsGenesisRealm());
+
             if (!parcelCheckResult.Success)
                 return parcelCheckResult;
 
             if (forceChangeRealm || (!isLocal && !IsGenesisRealm()))
             {
                 var url = URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.Genesis));
-                return await TryChangeRealmAsync(url, ct, parcel);
+                var enumResult = await TryChangeRealmAsync(url, ct, parcel);
+                return enumResult.AsResult();
             }
 
             Result loadResult = await loadingScreen.ShowWhileExecuteTaskAsync(TryTeleportAsync(parcel), ct);
@@ -376,14 +384,12 @@ namespace Global.Dynamic
             if (!staticScenesEntityDefinitions.HasValue) return;
 
             int parcelsAmount = staticScenesEntityDefinitions.Value.Value.Count;
+
             using (var parcels = new NativeParallelHashSet<int2>(parcelsAmount, AllocatorManager.Persistent))
             {
                 foreach (var staticScene in staticScenesEntityDefinitions.Value.Value)
                 {
-                    foreach (Vector2Int parcel in staticScene.metadata.scene.DecodedParcels)
-                    {
-                        parcels.Add(parcel.ToInt2());
-                    }
+                    foreach (Vector2Int parcel in staticScene.metadata.scene.DecodedParcels) { parcels.Add(parcel.ToInt2()); }
                 }
 
                 await worldsTerrain.GenerateTerrainAsync(parcels, (uint)realmController.RealmData.GetHashCode(), landscapeLoadReport, cancellationToken: ct);
@@ -398,6 +404,7 @@ namespace Global.Dynamic
             AssetPromise<SceneEntityDefinition, GetSceneDefinition>[]? promises = await realmController.WaitForFixedScenePromisesAsync(ct);
 
             var parcelsAmount = 0;
+
             foreach (AssetPromise<SceneEntityDefinition, GetSceneDefinition> promise in promises)
                 parcelsAmount += promise.Result!.Value.Asset!.metadata.scene.DecodedParcels.Count;
 
@@ -417,7 +424,7 @@ namespace Global.Dynamic
         {
             bool isGenesis = IsGenesisRealm();
 
-            RealmChanged?.Invoke(isGenesis);
+            RealmChanged?.Invoke(isGenesis ? RealmType.GenesisCity : RealmType.World);
             mapRenderer.SetSharedLayer(MapLayer.PlayerMarker, isGenesis);
             satelliteFloor.SetCurrentlyInGenesis(isGenesis);
             roadAssetsPool.SwitchVisibility(isGenesis);

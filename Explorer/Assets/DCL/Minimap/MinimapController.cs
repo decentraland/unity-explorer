@@ -86,9 +86,9 @@ namespace DCL.Minimap
         public void HookPlayerPositionTrackingSystem(TrackPlayerPositionSystem system) =>
             AddModule(new BridgeSystemBinding<TrackPlayerPositionSystem>(this, QueryPlayerPositionQuery, system));
 
-        private void OnRealmChanged(bool isGenesis)
+        private void OnRealmChanged(RealmType realmType)
         {
-            SetWorldMode(!isGenesis);
+            SetWorldMode(realmType is RealmType.World);
             previousParcelPosition = new Vector2Int(int.MaxValue, int.MaxValue);
         }
 
