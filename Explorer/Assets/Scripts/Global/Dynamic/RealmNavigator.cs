@@ -27,6 +27,7 @@ using DCL.ResourcesUnloading;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common;
 using Global.Dynamic.TeleportOperations;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Assertions;
 using Utility.Types;
@@ -112,7 +113,7 @@ namespace Global.Dynamic
             {
                 new RestartLoadingStatus(),
                 new UnloadCacheImmediateTeleportOperation(cacheCleaner, memoryUsageProvider),
-                new MoveToParcelInSameRealmTeleportOperation(this),
+                new MoveToParcelInSameRealmTeleportOperation(teleportController),
                 new CompleteLoadingStatus()
             };
         }
@@ -160,7 +161,13 @@ namespace Global.Dynamic
             return EnumResult<ChangeRealmError>.SuccessResult();
         }
 
-        private static async UniTask<Result> ExecuteTeleportOperationsAsync(TeleportParams teleportParams, ITeleportOperation[] ops, string logOpName, int attemptsCount, CancellationToken ct)
+        private static async UniTask<Result> ExecuteTeleportOperationsAsync(
+            TeleportParams teleportParams,
+            IReadOnlyCollection<ITeleportOperation> ops,
+            string logOpName,
+            int attemptsCount,
+            CancellationToken ct
+        )
         {
             var lastOpResult = Result.SuccessResult();
 
@@ -178,7 +185,11 @@ namespace Global.Dynamic
 
                         if (!lastOpResult.Success)
                         {
-                            ReportHub.LogError(ReportCategory.REALM, $"Operation failed on {logOpName} attempt {attempt + 1}/{attemptsCount}: {lastOpResult.ErrorMessage}");
+                            ReportHub.LogError(
+                                ReportCategory.REALM,
+                                $"Operation failed on {logOpName} attempt {attempt + 1}/{attemptsCount}: {lastOpResult.ErrorMessage}"
+                            );
+
                             break;
                         }
                     }
@@ -245,28 +256,33 @@ namespace Global.Dynamic
             };
         }
 
-        public async UniTask InitializeTeleportToSpawnPointAsync(AsyncLoadProcessReport teleportLoadReport,
-            CancellationToken ct, Vector2Int parcelToTeleport)
+        public async UniTask InitializeTeleportToSpawnPointAsync(
+            AsyncLoadProcessReport teleportLoadReport,
+            CancellationToken ct,
+            Vector2Int parcelToTeleport
+        )
         {
-            bool isWorld = realmController.RealmData.ScenesAreFixed;
-            UniTask waitForSceneReadiness;
+            bool isWorld = realmController.Type is RealmType.World;
+            WaitForSceneReadiness? waitForSceneReadiness;
 
             if (isWorld)
                 waitForSceneReadiness = await TeleportToWorldSpawnPointAsync(parcelToTeleport, teleportLoadReport, ct);
             else
-            {
-                if (parcelToTeleport == Vector2Int.zero &&
-                    featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.GENESIS_STARTING_PARCEL) &&
-                    featureFlagsCache.Configuration.TryGetTextPayload(FeatureFlagsStrings.GENESIS_STARTING_PARCEL, FeatureFlagsStrings.STRING_VARIANT, out string? parcelCoords))
-                    RealmHelper.TryParseParcelFromString(parcelCoords, out parcelToTeleport);
-
-                waitForSceneReadiness = await TeleportToParcelAsync(parcelToTeleport, teleportLoadReport, ct);
-            }
+                waitForSceneReadiness = await teleportController.TeleportToSceneSpawnPointAsync(GenesisStartingParcelOrDefault(parcelToTeleport), teleportLoadReport, ct);
 
             // add camera sampling data to the camera entity to start partitioning
             Assert.IsTrue(cameraEntity.Configured);
             globalWorld.Add(cameraEntity.Object, cameraSamplingData);
-            await waitForSceneReadiness;
+            await waitForSceneReadiness.ToUniTask();
+        }
+
+        private Vector2Int GenesisStartingParcelOrDefault(Vector2Int defaultParcel)
+        {
+            if (defaultParcel == Vector2Int.zero
+                && featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.GENESIS_STARTING_PARCEL)
+                && featureFlagsCache.Configuration.TryGetTextPayload(FeatureFlagsStrings.GENESIS_STARTING_PARCEL, FeatureFlagsStrings.STRING_VARIANT, out string? parcelCoords)) { RealmHelper.TryParseParcelFromString(parcelCoords, out defaultParcel); }
+
+            return defaultParcel;
         }
 
         public async UniTask<Result> TeleportToParcelAsync(
@@ -289,7 +305,7 @@ namespace Global.Dynamic
                 return enumResult.AsResult();
             }
 
-            Result loadResult = await loadingScreen.ShowWhileExecuteTaskAsync(TryTeleportAsyncOperation(parcel), ct);
+            Result loadResult = await loadingScreen.ShowWhileExecuteTaskAsync(TeleportToParcelAsyncOperation(parcel), ct);
 
             if (!loadResult.Success)
                 ReportHub.LogError(
@@ -307,7 +323,7 @@ namespace Global.Dynamic
             return enumResult;
         }
 
-        private Func<AsyncLoadProcessReport, CancellationToken, UniTask<Result>> TryTeleportAsyncOperation(Vector2Int parcel) =>
+        private Func<AsyncLoadProcessReport, CancellationToken, UniTask<Result>> TeleportToParcelAsyncOperation(Vector2Int parcel) =>
             async (parentLoadReport, ct) =>
             {
                 const string LOG_NAME = "Teleporting to Parcel";
@@ -336,17 +352,11 @@ namespace Global.Dynamic
             roadAssetsPool.SwitchVisibility(isGenesis);
         }
 
-        public async UniTask<UniTask> TeleportToParcelAsync(Vector2Int parcel, AsyncLoadProcessReport processReport,
-            CancellationToken ct)
-        {
-            WaitForSceneReadiness? waitForSceneReadiness =
-                await teleportController.TeleportToSceneSpawnPointAsync(parcel, processReport, ct);
-
-            return waitForSceneReadiness.ToUniTask();
-        }
-
-        private async UniTask<UniTask> TeleportToWorldSpawnPointAsync(Vector2Int parcelToTeleport,
-            AsyncLoadProcessReport processReport, CancellationToken ct)
+        private async UniTask<WaitForSceneReadiness?> TeleportToWorldSpawnPointAsync(
+            Vector2Int parcelToTeleport,
+            AsyncLoadProcessReport processReport,
+            CancellationToken ct
+        )
         {
             AssetPromise<SceneEntityDefinition, GetSceneDefinition>[]? promises = await realmController.WaitForFixedScenePromisesAsync(ct);
 
@@ -359,7 +369,7 @@ namespace Global.Dynamic
             WaitForSceneReadiness? waitForSceneReadiness =
                 await teleportController.TeleportToSceneSpawnPointAsync(parcelToTeleport, processReport, ct);
 
-            return waitForSceneReadiness.ToUniTask();
+            return waitForSceneReadiness;
         }
 
         public async UniTask ChangeRealmAsync(URLDomain realm, CancellationToken ct)
