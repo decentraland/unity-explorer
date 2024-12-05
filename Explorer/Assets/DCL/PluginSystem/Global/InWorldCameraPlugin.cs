@@ -14,6 +14,7 @@ using DCL.Clipboard;
 using DCL.Input;
 using DCL.InWorldCamera;
 using DCL.InWorldCamera.CameraReelStorageService;
+using DCL.InWorldCamera.PassportBridgeOpener;
 using DCL.InWorldCamera.PhotoDetail;
 using DCL.InWorldCamera.Settings;
 using DCL.InWorldCamera.UI;
@@ -146,6 +147,7 @@ namespace DCL.PluginSystem.Global
                     wearablesProvider,
                     decentralandUrlsSource,
                     new ECSThumbnailProvider(realmData, world, assetBundleURL, webRequestController),
+                    new PassportBridgeOpener(),
                     rarityBackgroundsMapping,
                     rarityColorMappings,
                     categoryIconsMapping,

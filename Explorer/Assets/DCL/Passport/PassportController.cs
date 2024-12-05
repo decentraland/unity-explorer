@@ -140,7 +140,7 @@ namespace DCL.Passport
             this.thumbnailHeight = thumbnailHeight;
             this.thumbnailWidth = thumbnailWidth;
 
-                passportProfileInfoController = new PassportProfileInfoController(selfProfile, world, playerEntity);
+            passportProfileInfoController = new PassportProfileInfoController(selfProfile, world, playerEntity);
             notificationBusController.SubscribeToNotificationTypeReceived(NotificationType.BADGE_GRANTED, OnBadgeNotificationReceived);
             notificationBusController.SubscribeToNotificationTypeClick(NotificationType.BADGE_GRANTED, OnBadgeNotificationClicked);
         }

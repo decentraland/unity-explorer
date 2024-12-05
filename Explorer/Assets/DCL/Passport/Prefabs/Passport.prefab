@@ -806,6 +806,7 @@ MonoBehaviour:
   <BadgesOverviewModuleView>k__BackingField: {fileID: 4605831326972397816}
   <BadgesDetailsModuleView>k__BackingField: {fileID: 5017960978050368999}
   <BadgeInfoModuleView>k__BackingField: {fileID: 2960552255454602728}
+  <CameraReelGalleryModuleView>k__BackingField: {fileID: 8447932679622754898}
   <MainContainer>k__BackingField: {fileID: 2324426899192856976}
   <AddLinkModal>k__BackingField: {fileID: 9054811651154528581}
   <ErrorNotification>k__BackingField: {fileID: 3800359461374942149}
@@ -814,6 +815,7 @@ MonoBehaviour:
   <PhotosSectionButton>k__BackingField: {fileID: 5178114501700794038}
   <OverviewSectionPanel>k__BackingField: {fileID: 1151176965044491678}
   <BadgesSectionPanel>k__BackingField: {fileID: 4271026606323506798}
+  <PhotosSectionPanel>k__BackingField: {fileID: 3391748916552129337}
 --- !u!1 &8054881179605822561
 GameObject:
   m_ObjectHideFlags: 0
@@ -4806,6 +4808,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &8447932679622754898 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 4110944459725859003, guid: ade6e83ad45fc4c7e81daa5a6e0f7bab, type: 3}
+  m_PrefabInstance: {fileID: 5489910175475559145}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1630969501407813165}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ec6735352be14eacb561225405a95c1d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!1 &9128344927387506921 stripped

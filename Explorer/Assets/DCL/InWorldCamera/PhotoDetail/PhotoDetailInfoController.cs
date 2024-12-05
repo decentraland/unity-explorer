@@ -10,7 +10,7 @@ using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using DCL.InWorldCamera.ReelActions;
 using DCL.Multiplayer.Connections.DecentralandUrls;
-using DCL.Passport;
+using DCL.InWorldCamera.PassportBridge;
 using DCL.Profiles;
 using DCL.WebRequests;
 using MVC;
@@ -34,6 +34,7 @@ namespace DCL.InWorldCamera.PhotoDetail
         private readonly ICameraReelStorageService cameraReelStorageService;
         private readonly IChatMessagesBus chatMessagesBus;
         private readonly IMVCManager mvcManager;
+        private readonly IPassportBridge passportBridge;
         private readonly PhotoDetailPoolManager photoDetailPoolManager;
         private readonly List<VisiblePersonController> visiblePersonControllers = new ();
 
@@ -53,6 +54,7 @@ namespace DCL.InWorldCamera.PhotoDetail
             IWearablesProvider wearablesProvider,
             IDecentralandUrlsSource decentralandUrlsSource,
             IThumbnailProvider thumbnailProvider,
+            IPassportBridge passportBridge,
             NftTypeIconSO rarityBackgrounds,
             NFTColorsSO rarityColors,
             NftTypeIconSO categoryIcons,
@@ -62,6 +64,7 @@ namespace DCL.InWorldCamera.PhotoDetail
             this.cameraReelStorageService = cameraReelStorageService;
             this.chatMessagesBus = chatMessagesBus;
             this.mvcManager = mvcManager;
+            this.passportBridge = passportBridge;
 
             this.photoDetailPoolManager = new PhotoDetailPoolManager(view.visiblePersonViewPrefab,
                 view.equippedWearablePrefab,
@@ -76,6 +79,7 @@ namespace DCL.InWorldCamera.PhotoDetail
                 wearablesProvider,
                 decentralandUrlsSource,
                 thumbnailProvider,
+                passportBridge,
                 rarityBackgrounds,
                 rarityColors,
                 categoryIcons,
@@ -93,7 +97,7 @@ namespace DCL.InWorldCamera.PhotoDetail
         {
             if (string.IsNullOrEmpty(reelOwnerAddress)) return;
 
-            mvcManager.ShowAsync(PassportController.IssueCommand(new PassportController.Params(reelOwnerAddress))).Forget();
+            passportBridge.OpenPassport(mvcManager, reelOwnerAddress);
         }
 
         public async UniTask ShowPhotoDetailInfoAsync(string reelId, CancellationToken ct)

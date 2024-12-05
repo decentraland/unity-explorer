@@ -3,6 +3,7 @@ using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack;
 using DCL.Browser;
 using DCL.Chat;
+using DCL.InWorldCamera.PassportBridge;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Profiles;
 using DCL.WebRequests;
@@ -31,6 +32,7 @@ namespace DCL.InWorldCamera.PhotoDetail
             IWearablesProvider wearablesProvider,
             IDecentralandUrlsSource decentralandUrlsSource,
             IThumbnailProvider thumbnailProvider,
+            IPassportBridge passportBridge,
             NftTypeIconSO rarityBackgrounds,
             NFTColorsSO rarityColors,
             NftTypeIconSO categoryIcons,
@@ -44,7 +46,7 @@ namespace DCL.InWorldCamera.PhotoDetail
                 () =>
                 {
                     VisiblePersonView view = GameObject.Instantiate(visiblePersonPrefab);
-                    return new VisiblePersonController(view, webRequestController, profileRepository, mvcManager, wearableStorage, wearablesProvider, this, chatEntryConfiguration);
+                    return new VisiblePersonController(view, webRequestController, profileRepository, mvcManager, wearableStorage, wearablesProvider, passportBridge, this, chatEntryConfiguration);
                 },
                 visiblePerson => visiblePerson.view.gameObject.SetActive(true),
                 visiblePerson =>

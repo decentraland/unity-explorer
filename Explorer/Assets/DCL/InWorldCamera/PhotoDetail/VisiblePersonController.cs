@@ -17,6 +17,7 @@ using System.Threading;
 using UnityEngine;
 using UnityEngine.Pool;
 using UnityEngine.UI;
+using DCL.InWorldCamera.PassportBridge;
 using Utility;
 
 namespace DCL.InWorldCamera.PhotoDetail
@@ -29,6 +30,7 @@ namespace DCL.InWorldCamera.PhotoDetail
         private readonly IMVCManager mvcManager;
         private readonly IWearableStorage wearableStorage;
         private readonly IWearablesProvider wearablesProvider;
+        private readonly IPassportBridge passportBridge;
         private readonly List<EquippedWearableController> wearableControllers = new();
         private readonly PhotoDetailPoolManager photoDetailPoolManager;
         private readonly ChatEntryConfigurationSO chatEntryConfiguration;
@@ -44,6 +46,7 @@ namespace DCL.InWorldCamera.PhotoDetail
             IMVCManager mvcManager,
             IWearableStorage wearableStorage,
             IWearablesProvider wearablesProvider,
+            IPassportBridge passportBridge,
             PhotoDetailPoolManager photoDetailPoolManager,
             ChatEntryConfigurationSO chatEntryConfiguration)
         {
@@ -52,6 +55,7 @@ namespace DCL.InWorldCamera.PhotoDetail
             this.mvcManager = mvcManager;
             this.wearableStorage = wearableStorage;
             this.wearablesProvider = wearablesProvider;
+            this.passportBridge = passportBridge;
             this.photoDetailPoolManager = photoDetailPoolManager;
             this.chatEntryConfiguration = chatEntryConfiguration;
 
@@ -106,7 +110,7 @@ namespace DCL.InWorldCamera.PhotoDetail
         {
             if (visiblePerson is null) return;
 
-            PassportBridge.OpenPassport(mvcManager, visiblePerson.userAddress);
+            passportBridge.OpenPassport(mvcManager, visiblePerson.userAddress);
         }
 
         private void WearableListButtonClicked()
