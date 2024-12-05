@@ -42,7 +42,7 @@ jobs:
           LATEST_RELEASE: ${{ steps.check_latest.outputs.latest_release }}
         run: |
           echo '{
-            "version": "$LATEST_RELEASE",
+            "version": "${{ env.LATEST_RELEASE }}",
             "timestamp": "'$(date -u +"%Y-%m-%dT%H:%M:%SZ")'"
           }' > latest.json
           aws s3 cp latest.json s3://$EXPLORER_TEAM_S3_BUCKET/$RELEASES_PATH/latest.json
