@@ -31,7 +31,7 @@ jobs:
           echo "latest_release=$LATEST_RELEASE" >> $GITHUB_OUTPUT
 
       - name: Run actions if release is the latest
-        if: steps.check_latest.outputs.latest_release
+        if: ${{ steps.check_latest.outputs.latest_release != '' }}
         env:
           AWS_MAX_ATTEMPTS: 3
           AWS_RETRY_MODE: standard
