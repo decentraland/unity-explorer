@@ -75,6 +75,7 @@ using ECS.SceneLifeCycle.Realm;
 using Global.AppArgs;
 using Global.Dynamic.ChatCommands;
 using Global.Dynamic.Landscapes;
+using Global.Dynamic.Misc;
 using LiveKit.Internal.FFIClients.Pools;
 using LiveKit.Internal.FFIClients.Pools.Memory;
 using LiveKit.Proto;
@@ -355,9 +356,15 @@ namespace Global.Dynamic
                 localSceneDevelopment
             );
 
+            IRealmMisc realmMisc = new RealmMisc(
+                container.MapRendererContainer.MapRenderer,
+                container.LODContainer.RoadAssetsPool,
+                satelliteView,
+                minimap
+            );
+
             IRealmNavigator realmNavigator = new RealmNavigator(
                 loadingScreen,
-                container.MapRendererContainer.MapRenderer,
                 container.RealmController,
                 parcelServiceContainer.TeleportController,
                 container.RoomHub,
@@ -365,7 +372,6 @@ namespace Global.Dynamic
                 bootstrapContainer.DecentralandUrlsSource,
                 globalWorld,
                 container.LODContainer.RoadAssetsPool,
-                satelliteView,
                 staticContainer.ExposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy,
                 exposedGlobalDataContainer.CameraSamplingData,
                 staticContainer.LoadingStatus,
@@ -373,7 +379,7 @@ namespace Global.Dynamic
                 staticContainer.SingletonSharedDependencies.MemoryBudget,
                 bootstrapContainer.Analytics!,
                 landscape,
-                minimap
+                realmMisc
             );
 
             IHealthCheck livekitHealthCheck = bootstrapContainer.DebugSettings.EnableEmulateNoLivekitConnection
@@ -407,6 +413,7 @@ namespace Global.Dynamic
                 staticContainer.FeatureFlagsCache,
                 identityCache,
                 container.RealmController,
+                realmMisc,
                 landscape,
                 dynamicWorldParams.AppParameters,
                 bootstrapContainer.DebugSettings,

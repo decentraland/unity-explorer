@@ -2,8 +2,6 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AsyncLoadReporting;
-using DCL.Landscape;
-using DCL.MapRenderer;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Entities;
@@ -20,7 +18,6 @@ using System.Threading;
 using DCL.Diagnostics;
 using DCL.Ipfs;
 using DCL.LOD;
-using DCL.Minimap;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.ResourcesUnloading;
@@ -55,7 +52,6 @@ namespace Global.Dynamic
 
         public RealmNavigator(
             ILoadingScreen loadingScreen,
-            IMapRenderer mapRenderer,
             IGlobalRealmController realmController,
             ITeleportController teleportController,
             IRoomHub roomHub,
@@ -63,7 +59,6 @@ namespace Global.Dynamic
             IDecentralandUrlsSource decentralandUrlsSource,
             World globalWorld,
             RoadAssetsPool roadAssetsPool,
-            SatelliteFloor satelliteFloor,
             ObjectProxy<Entity> cameraEntity,
             CameraSamplingData cameraSamplingData,
             ILoadingStatus loadingStatus,
@@ -71,7 +66,7 @@ namespace Global.Dynamic
             IMemoryUsageProvider memoryUsageProvider,
             IAnalyticsController analyticsController,
             ILandscape landscape,
-            Lazy<MinimapController> minimap)
+            IRealmMisc realmMisc)
         {
             this.loadingScreen = loadingScreen;
             this.realmController = realmController;
@@ -91,7 +86,7 @@ namespace Global.Dynamic
                 new StopRoomAsyncTeleportOperation(roomHub, livekitTimeout),
                 new RemoveCameraSamplingDataTeleportOperation(globalWorld, cameraEntity),
                 new DestroyAllRoadAssetsTeleportOperation(globalWorld, roadAssetsPool),
-                new ChangeRealmTeleportOperation(mapRenderer, roadAssetsPool, satelliteFloor, realmController, analyticsController, minimap),
+                new ChangeRealmTeleportOperation(realmController, analyticsController, realmMisc),
                 new LoadLandscapeTeleportOperation(landscape),
                 new PrewarmRoadAssetPoolsTeleportOperation(realmController, roadAssetsPool),
                 new UnloadCacheImmediateTeleportOperation(cacheCleaner, memoryUsageProvider),
