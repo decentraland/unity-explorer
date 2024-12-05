@@ -1,4 +1,5 @@
 using Arch.Core;
+using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.MapRenderer;
 using DCL.MapRenderer.CommonBehavior;
@@ -36,6 +37,7 @@ namespace DCL.Navmap
         private readonly RectTransform rectTransform;
         private readonly SatelliteController satelliteController;
         private readonly PlaceInfoToastController placeToastController;
+        private readonly IPlacesAPIService placesAPIService;
         private readonly IRealmData realmData;
         private readonly IMapPathEventBus mapPathEventBus;
         private readonly UIAudioEventsBus audioEventsBus;
@@ -43,6 +45,7 @@ namespace DCL.Navmap
         private readonly Mouse mouse;
         private readonly StringBuilder parcelTitleStringBuilder = new ();
         private readonly NavmapLocationController navmapLocationController;
+        private CancellationTokenSource? fetchPlaceAndShowCancellationToken;
 
         private CancellationTokenSource? animationCts;
         private IMapCameraController? cameraController;
@@ -70,7 +73,8 @@ namespace DCL.Navmap
             NavmapSearchBarController navmapSearchBarController,
             NavmapZoomController navmapZoomController,
             SatelliteController satelliteController,
-            PlaceInfoToastController placeToastController)
+            PlaceInfoToastController placeToastController,
+            IPlacesAPIService placesAPIService)
         {
             this.navmapView = navmapView;
             this.mapRenderer = mapRenderer;
@@ -88,6 +92,7 @@ namespace DCL.Navmap
             this.navmapView.DestinationInfoElement.QuitButton.onClick.AddListener(OnRemoveDestinationButtonClicked);
             this.satelliteController = satelliteController;
             this.placeToastController = placeToastController;
+            this.placesAPIService = placesAPIService;
             mapPathEventBus.OnRemovedDestination += RemoveDestination;
 
             this.navmapView.SatelliteRenderImage.ParcelClicked += OnParcelClicked;
@@ -140,14 +145,6 @@ namespace DCL.Navmap
             }
         }
 
-        private void OnMapPinHovered(Vector2Int parcel, IPinMarker pinMarker)
-        {
-            navmapView.MapPinTooltip.RectTransform.position = mouse.position.value;
-            navmapView.MapPinTooltip.Title.text = pinMarker.Title;
-            navmapView.MapPinTooltip.Description.text = pinMarker.Description;
-            navmapView.MapPinTooltip.Show();
-        }
-
         private void OnParcelHovered(Vector2 parcel)
         {
             if (parcel.Equals(lastParcelHovered)) return;
@@ -160,9 +157,18 @@ namespace DCL.Navmap
         {
             lastParcelClicked = clickedParcel;
             audioEventsBus.SendPlayAudioEvent(navmapView.ClickAudio);
-            // TODO: move the show of the toast when hovering over map pins after few seconds
-            // placeToastController.Show();
-            // placeToastController.Set(clickedParcel.Parcel);
+
+            async UniTaskVoid FetchPlaceAndShowAsync(CancellationToken ct)
+            {
+                PlacesData.PlaceInfo? place = await placesAPIService.GetPlaceAsync(clickedParcel.Parcel, ct, true);
+
+                if (place == null) return;
+
+                NavmapBus.SelectPlaceAsync(place, fetchPlaceAndShowCancellationToken.Token, true).Forget();
+            }
+
+            fetchPlaceAndShowCancellationToken = fetchPlaceAndShowCancellationToken.SafeRestart();
+            FetchPlaceAndShowAsync(fetchPlaceAndShowCancellationToken.Token).Forget();
         }
 
         public void Activate()

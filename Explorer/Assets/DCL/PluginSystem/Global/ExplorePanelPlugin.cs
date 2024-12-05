@@ -304,7 +304,8 @@ namespace DCL.PluginSystem.Global
                 searchBarController,
                 zoomController,
                 satelliteController,
-                placeToastController);
+                placeToastController,
+                placesAPIService);
 
             await backpackSubPlugin.InitializeAsync(settings.BackpackSettings, explorePanelView.GetComponentInChildren<BackpackView>(), ct);
 
