@@ -26,7 +26,6 @@ namespace DCL.InWorldCamera.UI
         private readonly IMVCManager mvcManager;
         private readonly ICameraReelStorageService storageService;
 
-        private ScreencaptureShortcutsController shortcutsController;
         private SingleInstanceEntity? cameraInternal;
 
         private bool shortcutPanelIsOpen;
@@ -50,9 +49,6 @@ namespace DCL.InWorldCamera.UI
             viewInstance.TakeScreenshotButton.onClick.AddListener(RequestTakeScreenshot);
             viewInstance.CameraReelButton.onClick.AddListener(OpenCameraReelGallery);
             viewInstance.ShortcutsInfoButton.onClick.AddListener(ToggleShortcutsInfo);
-
-            shortcutsController = new ScreencaptureShortcutsController(() => viewInstance.ShortcutsInfoPanel);
-            mvcManager.RegisterController(shortcutsController);
         }
 
         public override void Dispose()
@@ -79,6 +75,8 @@ namespace DCL.InWorldCamera.UI
 
         public void Hide(bool isInstant = false)
         {
+            ToggleShortcutsInfo(toOpen: false);
+
             sidebarButton.OnDeselect(null);
             viewInstance?.HideAsync(default(CancellationToken), isInstant).Forget();
         }
@@ -127,15 +125,13 @@ namespace DCL.InWorldCamera.UI
         {
             if (toOpen)
             {
-                shortcutsController.LaunchViewLifeCycleAsync(new CanvasOrdering(shortcutsController.Layer, 0), new ControllerNoData(), default(CancellationToken))
-                                   .Forget();
-
+                viewInstance?.ShortcutsInfoPanel.ShowAsync(CancellationToken.None).Forget();
                 viewInstance?.ShortcutsInfoButton.OnSelect(null);
                 shortcutPanelIsOpen = true;
             }
             else
             {
-                shortcutsController.HideAsync(CancellationToken.None).Forget();
+                viewInstance?.ShortcutsInfoPanel.HideAsync(CancellationToken.None).Forget();
                 viewInstance?.ShortcutsInfoButton.OnDeselect(null);
                 shortcutPanelIsOpen = false;
             }
