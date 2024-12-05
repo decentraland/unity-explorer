@@ -113,49 +113,45 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
                     switch (method)
                     {
                         case null:
-                            response = await webController
-                                .SignedFetchPostAsync<FlatFetchResponse<GenericPostRequest>, FlatFetchResponse>(
-                                    request.url,
-                                    new FlatFetchResponse<GenericPostRequest>(),
-                                    signatureMetadata,
-                                    GetReportData(),
-                                    cancellationTokenSource.Token);
+                            response = await webController.SignedFetchPostAsync<FlatFetchResponse<GenericPostRequest>, FlatFetchResponse>(
+                                request.url,
+                                new FlatFetchResponse<GenericPostRequest>(),
+                                signatureMetadata,
+                                GetReportData(),
+                                cancellationTokenSource.Token);
 
                             break;
                         case "post":
-                            response = await webController
-                                .PostAsync<FlatFetchResponse<GenericPostRequest>, FlatFetchResponse>(
-                                    request.url,
-                                    new FlatFetchResponse<GenericPostRequest>(),
-                                    GenericPostArguments.CreateJsonOrDefault(request.init?.body),
-                                    cancellationTokenSource.Token,
-                                    headersInfo:
-                                    headers,
-                                    signInfo: signInfo,
-                                    reportCategory: GetReportData());
+                            response = await webController.PostAsync<FlatFetchResponse<GenericPostRequest>, FlatFetchResponse>(
+                                request.url,
+                                new FlatFetchResponse<GenericPostRequest>(),
+                                GenericPostArguments.CreateJsonOrDefault(request.init?.body),
+                                cancellationTokenSource.Token,
+                                headersInfo:
+                                headers,
+                                signInfo: signInfo,
+                                reportCategory: GetReportData());
 
                             break;
                         case "get":
-                            response = await webController
-                                .GetAsync<FlatFetchResponse<GenericGetRequest>, FlatFetchResponse>(
-                                    request.url,
-                                    new FlatFetchResponse<GenericGetRequest>(),
-                                    cancellationTokenSource.Token,
-                                    headersInfo: headers,
-                                    signInfo: signInfo,
-                                    reportData: GetReportData());
+                            response = await webController.GetAsync<FlatFetchResponse<GenericGetRequest>, FlatFetchResponse>(
+                                request.url,
+                                new FlatFetchResponse<GenericGetRequest>(),
+                                cancellationTokenSource.Token,
+                                headersInfo: headers,
+                                signInfo: signInfo,
+                                reportData: GetReportData());
 
                             break;
                         case "put":
-                            response = await webController
-                                .PutAsync<FlatFetchResponse<GenericPutRequest>, FlatFetchResponse>(
-                                    request.url,
-                                    new FlatFetchResponse<GenericPutRequest>(),
-                                    GenericPutArguments.CreateJsonOrDefault(request.init?.body),
-                                    cancellationTokenSource.Token,
-                                    headersInfo: headers,
-                                    signInfo: signInfo,
-                                    reportCategory: GetReportData());
+                            response = await webController.PutAsync<FlatFetchResponse<GenericPutRequest>, FlatFetchResponse>(
+                                request.url,
+                                new FlatFetchResponse<GenericPutRequest>(),
+                                GenericPutArguments.CreateJsonOrDefault(request.init?.body),
+                                cancellationTokenSource.Token,
+                                headersInfo: headers,
+                                signInfo: signInfo,
+                                reportCategory: GetReportData());
 
                             break;
                         default: throw new Exception($"Method {method} is not supported for signed fetch");
@@ -163,12 +159,7 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
 
                     return response;
                 }
-                catch (UnityWebRequestException e)
-                {
-                    var flatFetchError = JsonConvert.DeserializeObject<FlatFetchError>(e.Text);
-                    return new FlatFetchResponse(false, e.ResponseCode, e.ResponseCode.ToString(), flatFetchError.error,
-                        e.ResponseHeaders);
-                }
+                catch (UnityWebRequestException e) { return new FlatFetchResponse(false, e.ResponseCode, e.ResponseCode.ToString(), e.Error, e.ResponseHeaders); }
                 catch (Exception e)
                 {
                     ReportHub.LogException(e, new ReportData(ReportCategory.SCENE_FETCH_REQUEST));
