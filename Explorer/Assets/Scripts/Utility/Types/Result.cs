@@ -1,5 +1,6 @@
 using System;
 using UnityEngine.Assertions;
+using System.Threading;
 
 namespace Utility.Types
 {
@@ -67,8 +68,20 @@ namespace Utility.Types
         public static EnumResult<TErrorEnum> SuccessResult() =>
             new (null);
 
-        public static EnumResult<TErrorEnum> ErrorResult(TErrorEnum state, string errorMessage) =>
+        public static EnumResult<TErrorEnum> ErrorResult(TErrorEnum state, string errorMessage = "") =>
             new ((state, errorMessage));
+
+        public static EnumResult<TErrorEnum> CancelledResult(TErrorEnum state) =>
+            ErrorResult(state, nameof(OperationCanceledException));
+
+        public Result AsResult()
+        {
+            if (Success)
+                return Result.SuccessResult();
+
+            var error = Error!.Value;
+            return Result.ErrorResult($"{error.State}: {error.Message}");
+        }
     }
 
     public readonly struct EnumResult<TValue, TErrorEnum>
@@ -89,5 +102,27 @@ namespace Utility.Types
 
         public static EnumResult<TValue, TErrorEnum> ErrorResult(TErrorEnum state, string errorMessage) =>
             new (default(TValue)!, (state, errorMessage));
+
+        public static bool TryErrorIfCancelled(CancellationToken token, out EnumResult<TValue, TErrorEnum> result)
+        {
+            if (token.IsCancellationRequested)
+            {
+                result = ErrorResult(default(TErrorEnum)!, "Operation was cancelled");
+                return true;
+            }
+
+            result = SuccessResult(default(TValue)!);
+            return false;
+        }
+
+        public TValue Unwrap() =>
+            Success
+                ? Value
+                : throw new InvalidOperationException(
+                    $"Cannot unwrap error result: {Error!.Value.State} - {Error!.Value.Message}"
+                );
+
+        public override string ToString() =>
+            $"EnumResult<{typeof(TValue).Name}, {typeof(TErrorEnum).Name}>: {(Success ? "Success" : $"Error: {Error!.Value.State} - {Error.Value.Message}")}";
     }
 }

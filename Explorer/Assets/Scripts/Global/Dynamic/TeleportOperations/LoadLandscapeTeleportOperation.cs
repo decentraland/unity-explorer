@@ -10,11 +10,11 @@ namespace Global.Dynamic.TeleportOperations
 {
     public class LoadLandscapeTeleportOperation : TeleportOperationBase
     {
-        private readonly IRealmNavigator realmNavigator;
+        private readonly ILandscape landscape;
 
-        public LoadLandscapeTeleportOperation(IRealmNavigator realmNavigator)
+        public LoadLandscapeTeleportOperation(ILandscape landscape)
         {
-            this.realmNavigator = realmNavigator;
+            this.landscape = landscape;
         }
 
         protected override async UniTask InternalExecuteAsync(TeleportParams teleportParams, CancellationToken ct)
@@ -24,7 +24,7 @@ namespace Global.Dynamic.TeleportOperations
             AsyncLoadProcessReport landscapeLoadReport
                 = teleportParams.ParentReport.CreateChildReport(finalizationProgress);
 
-            await realmNavigator.LoadTerrainAsync(landscapeLoadReport, ct);
+            await landscape.LoadTerrainAsync(landscapeLoadReport, ct);
             teleportParams.ParentReport.SetProgress(finalizationProgress);
         }
     }
