@@ -17,6 +17,8 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
         private readonly IArchipelagoLiveConnection origin;
         private string? cachedAdapterUrl;
 
+        private DateTime lastRecoveryAttempt = DateTime.MinValue;
+
         public bool IsConnected => origin.IsConnected;
 
         public AutoReconnectLiveConnection(IArchipelagoLiveConnection origin)
@@ -43,7 +45,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
             if (result.Error?.State is IArchipelagoLiveConnection.ResponseError.ConnectionClosed)
             {
                 ReportHub.Log(ReportCategory.COMMS_SCENE_HANDLER, "Connection error on sending, ensure to reconnect...");
-                var connectionResult = await EnsureConnectionAsync(token);
+                Result connectionResult = await EnsureConnectionAsync(token);
 
                 if (!connectionResult.Success)
                     return EnumResult<IArchipelagoLiveConnection.ResponseError>.ErrorResult(IArchipelagoLiveConnection.ResponseError.ConnectionClosed, connectionResult.ErrorMessage!);
@@ -62,7 +64,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
             {
                 ReportHub.Log(ReportCategory.COMMS_SCENE_HANDLER, "Connection error on receiving, ensure to reconnect...");
 
-                var connectionResult = await EnsureConnectionAsync(token);
+                Result connectionResult = await EnsureConnectionAsync(token);
 
                 if (!connectionResult.Success)
                     return EnumResult<MemoryWrap, IArchipelagoLiveConnection.ResponseError>.ErrorResult(IArchipelagoLiveConnection.ResponseError.ConnectionClosed, connectionResult.ErrorMessage!);
@@ -93,19 +95,24 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
                     continue;
                 }
 
+                await DelayRecoveryAsync(token);
+
                 string adapter = cachedAdapterUrl!;
                 result = await origin.ConnectAsync(adapter, token);
 
-                if (!result.Success)
-                {
-                    ReportHub.LogWarning(ReportCategory.COMMS_SCENE_HANDLER, $"Cannot ensure connection to {adapter} after {attemptNumber} attempts: {result.ErrorMessage}");
-                    await UniTask.Delay(RECOVERY_DELAY, cancellationToken: token).SuppressCancellationThrow();
-                }
+                if (!result.Success) { ReportHub.LogWarning(ReportCategory.COMMS_SCENE_HANDLER, $"Cannot ensure connection to {adapter} after {attemptNumber} attempts: {result.ErrorMessage}"); }
 
                 attemptNumber++;
+                lastRecoveryAttempt = DateTime.Now;
             }
 
             return Result.SuccessResult();
+
+            UniTask DelayRecoveryAsync(CancellationToken ct)
+            {
+                TimeSpan delay = RECOVERY_DELAY - (DateTime.Now - lastRecoveryAttempt);
+                return delay.TotalMilliseconds > 0 ? UniTask.Delay(delay, cancellationToken: ct) : UniTask.CompletedTask;
+            }
         }
     }
 }

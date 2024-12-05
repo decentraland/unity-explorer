@@ -61,7 +61,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
             if (IsWebSocketInvalid())
                 return EnumResult<IArchipelagoLiveConnection.ResponseError>
                    .ErrorResult(
-                        IArchipelagoLiveConnection.ResponseError.MessageError,
+                        IArchipelagoLiveConnection.ResponseError.ConnectionClosed,
                         $"Cannot send data, ensure that connection is correct, the connection is invalid: {current?.WebSocket.State}"
                     );
 
@@ -86,7 +86,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
         {
             if (IsWebSocketInvalid())
                 return EnumResult<MemoryWrap, IArchipelagoLiveConnection.ResponseError>.ErrorResult(
-                    IArchipelagoLiveConnection.ResponseError.MessageError,
+                    IArchipelagoLiveConnection.ResponseError.ConnectionClosed,
                     $"Cannot receive data, ensure that connection is correct, the connection is invalid: {current?.WebSocket.State}"
                 );
 

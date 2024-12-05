@@ -237,5 +237,11 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
 
             return (connectResult, roomSelection);
         }
+
+        public void Dispose()
+        {
+            cancellationTokenSource.SafeCancelAndDispose();
+            cancellationTokenSource = null;
+        }
     }
 }
