@@ -141,4 +141,16 @@ namespace Utility.Types
         Cancelled,
         UnexpectedException,
     }
+
+    public static class ResultExtensions
+    {
+        public static string AsMessage<TErrorEnum>(this (TErrorEnum State, string Message)? error)
+        {
+            if (error.HasValue)
+                return "Not an error";
+
+            (TErrorEnum state, string message) = error!.Value;
+            return $"{state}: {message}";
+        }
+    }
 }

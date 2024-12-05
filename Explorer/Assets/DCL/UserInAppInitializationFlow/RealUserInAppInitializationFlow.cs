@@ -163,7 +163,7 @@ namespace DCL.UserInAppInitializationFlow
                 }
 
                 if (result.Success == false)
-                    ReportHub.LogError(ReportCategory.DEBUG, result.Error.Value.Message!);
+                    ReportHub.LogError(ReportCategory.DEBUG, result.Error.AsMessage());
 
                 //TODO notification popup on failure
             }
