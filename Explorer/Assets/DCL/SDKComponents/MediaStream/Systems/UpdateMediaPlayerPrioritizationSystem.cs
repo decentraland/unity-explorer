@@ -93,13 +93,7 @@ namespace DCL.SDKComponents.MediaStream
         [None(typeof(VideoStateByPriorityComponent))]
         private void AddVideoStatesByPriority(Entity entity, in MediaPlayerComponent mediaPlayer, in VideoTextureConsumer videoTextureConsumer)
         {
-            // Using the diagonal of the box instead of the height, meshes that occupy "the same" area on screen should have the same priority
-            float videoMeshLocalSize = (videoTextureConsumer.BoundsMax - videoTextureConsumer.BoundsMin).magnitude;
-
-            VideoStateByPriorityComponent newVideoStateByPriority = new VideoStateByPriorityComponent(
-                                                                            entity,
-                                                                            videoMeshLocalSize * 0.5f,
-                                                                            mediaPlayer.IsPlaying);
+            VideoStateByPriorityComponent newVideoStateByPriority = new VideoStateByPriorityComponent(entity, mediaPlayer.IsPlaying);
 
 #if DEBUG_VIDEO_PRIORITIES
             // Adds a colored cube to a corner of the video mesh renderer which shows the priority of the video
@@ -189,7 +183,9 @@ namespace DCL.SDKComponents.MediaStream
                     // Skips videos that are too far
                     if (distance <= videoPrioritizationSettings.MaximumDistanceLimit)
                     {
-                        float screenSize = Mathf.Clamp01(CalculateObjectHeightRelativeToScreenHeight(videoStateByPriority.HalfSize, distance));
+                        // Using the diagonal of the box instead of the height, meshes that occupy "the same" area on screen should have the same priority
+                        float videoMeshLocalSize = (videoTextureConsumer.BoundsMax - videoTextureConsumer.BoundsMin).magnitude;
+                        float screenSize = Mathf.Clamp01(CalculateObjectHeightRelativeToScreenHeight(videoMeshLocalSize, distance));
 
                         // Skips videos that are too small on screen
                         if (screenSize >= videoPrioritizationSettings.MinimumSizeLimit)
@@ -202,7 +198,7 @@ namespace DCL.SDKComponents.MediaStream
                                                          dotProduct * videoPrioritizationSettings.AngleWeight;
 
 #if DEBUG_VIDEO_PRIORITIES
-                            ReportHub.Log(GetReportData(),$"VIDEO ENTITY[{videoStateByPriority.Entity.Id}] Dist: {distance} HSize:{videoStateByPriority.HalfSize} / {CalculateObjectHeightRelativeToScreenHeight(videoStateByPriority.HalfSize, distance)} Dot:{dotProduct} SCORE:{videoStateByPriority.Score}");
+                            ReportHub.Log(GetReportData(),$"VIDEO ENTITY[{videoStateByPriority.Entity.Id}] Dist: {distance} HSize:{videoMeshLocalSize} / {CalculateObjectHeightRelativeToScreenHeight(videoMeshLocalSize, distance)} Dot:{dotProduct} SCORE:{videoStateByPriority.Score}");
 #endif
 
                             // Sorts the playing video list by score, on insertion
