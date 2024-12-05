@@ -43,6 +43,12 @@ namespace DCL.Navmap
             await source.Object.SelectPlaceAsync(place, ct, clearPreviousHistory);
         }
 
+        public async UniTask SelectPlaceAsync(Vector2Int parcel, CancellationToken ct, bool clearPreviousHistory = false)
+        {
+            if (source.Object == null) return;
+            await source.Object.SelectPlaceAsync(parcel, ct, clearPreviousHistory);
+        }
+
         public async UniTask SelectEventAsync(EventDTO @event, CancellationToken ct, PlacesData.PlaceInfo? place = null, bool clearPreviousHistory = false)
         {
             if (source.Object == null) return;

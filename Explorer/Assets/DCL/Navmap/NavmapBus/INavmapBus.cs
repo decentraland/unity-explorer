@@ -47,6 +47,7 @@ namespace DCL.Navmap
         public event Action<bool>? OnZoomCamera;
 
         UniTask SelectPlaceAsync(PlacesData.PlaceInfo place, CancellationToken ct, bool clearPreviousHistory = false);
+        UniTask SelectPlaceAsync(Vector2Int parcel, CancellationToken ct, bool clearPreviousHistory = false);
 
         UniTask SelectEventAsync(EventDTO @event, CancellationToken ct, PlacesData.PlaceInfo? place = null, bool clearPreviousHistory = false);
 

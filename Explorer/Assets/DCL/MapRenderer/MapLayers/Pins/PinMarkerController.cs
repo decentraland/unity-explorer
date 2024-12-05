@@ -4,13 +4,13 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.ECSComponents;
+using DCL.MapPins.Components;
 using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.Culling;
-using DCL.MapPins.Components;
+using DCL.Navmap;
 using ECS.LifeCycle.Components;
 using MVC;
 using NBitcoin;
-using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -31,12 +31,14 @@ namespace DCL.MapRenderer.MapLayers.Pins
         private readonly Dictionary<GameObject, IPinMarker> visibleMarkers = new ();
         private readonly PinMarkerBuilder builder;
         private readonly IMapPathEventBus mapPathEventBus;
+        private readonly INavmapBus navmapBus;
 
         private MapPinBridgeSystem system;
 
         private bool isEnabled;
         private CancellationTokenSource highlightCt = new ();
         private CancellationTokenSource deHighlightCt = new ();
+        private CancellationTokenSource selectCt = new ();
         private IPinMarker? previousMarker;
 
         public PinMarkerController(
@@ -45,12 +47,14 @@ namespace DCL.MapRenderer.MapLayers.Pins
             Transform instantiationParent,
             ICoordsUtils coordsUtils,
             IMapCullingController cullingController,
-            IMapPathEventBus mapPathEventBus)
+            IMapPathEventBus mapPathEventBus,
+            INavmapBus navmapBus)
             : base(instantiationParent, coordsUtils, cullingController)
         {
             this.objectsPool = objectsPool;
             this.builder = builder;
             this.mapPathEventBus = mapPathEventBus;
+            this.navmapBus = navmapBus;
             this.mapPathEventBus.OnRemovedDestination += OnRemovedDestination;
         }
 
@@ -142,15 +146,18 @@ namespace DCL.MapRenderer.MapLayers.Pins
         {
             marker.OnBecameVisible();
             GameObject? gameObject = marker.GetGameObject();
-            if(gameObject != null)
+
+            if (gameObject != null)
                 visibleMarkers.AddOrReplace(gameObject, marker);
         }
 
         public void OnMapObjectCulled(IPinMarker marker)
         {
             GameObject? gameObject = marker.GetGameObject();
-            if(gameObject != null)
+
+            if (gameObject != null)
                 visibleMarkers.Remove(gameObject);
+
             marker.OnBecameInvisible();
         }
 
@@ -211,6 +218,19 @@ namespace DCL.MapRenderer.MapLayers.Pins
             {
                 deHighlightCt = deHighlightCt.SafeRestart();
                 marker.AnimateDeselectionAsync(deHighlightCt.Token);
+                return true;
+            }
+
+            return false;
+        }
+
+        public bool ClickObject(GameObject gameObject)
+        {
+            if (visibleMarkers.TryGetValue(gameObject, out IPinMarker marker))
+            {
+                selectCt = selectCt.SafeRestart();
+                navmapBus.SelectPlaceAsync(marker.ParcelPosition, selectCt.Token, true).Forget();
+
                 return true;
             }
 

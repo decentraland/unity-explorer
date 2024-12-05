@@ -4,6 +4,7 @@ using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.Culling;
 using DCL.MapRenderer.MapLayers;
 using DCL.MapRenderer.MapLayers.Pins;
+using DCL.Navmap;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -27,6 +28,7 @@ namespace DCL.MapRenderer.ComponentsFactory
             IMapRendererSettings settings,
             IAssetsProvisioner assetProv,
             IMapPathEventBus mapPathEventBus,
+            INavmapBus navmapBus,
             CancellationToken cancellationToken)
         {
             mapSettings = settings;
@@ -45,7 +47,8 @@ namespace DCL.MapRenderer.ComponentsFactory
                 configuration.PinMarkerRoot,
                 coordsUtils,
                 cullingController,
-                mapPathEventBus
+                mapPathEventBus,
+                navmapBus
             );
 
             writer.Add(MapLayer.Pins, controller);

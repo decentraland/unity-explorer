@@ -97,7 +97,7 @@ namespace DCL.MapRenderer.ComponentsFactory
             );
 
             MapCameraObject mapCameraObjectPrefab = (await assetsProvisioner.ProvideMainAssetAsync(mapSettings.MapCameraObject, ct: cancellationToken)).Value;
-            PinMarkerController pinMarkerController = await pinMarkerInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, mapSettings, assetsProvisioner, mapPathEventBus, cancellationToken);
+            PinMarkerController pinMarkerController = await pinMarkerInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, mapSettings, assetsProvisioner, mapPathEventBus, navmapBus, cancellationToken);
             RemoteUsersRequestController remoteUsersRequestController = new RemoteUsersRequestController(webRequestController, decentralandUrlsSource);
 
             ClusterMarkerObject? clusterPrefab = await GetClusterPrefabAsync(cancellationToken);

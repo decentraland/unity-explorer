@@ -13,6 +13,7 @@ namespace DCL.Navmap
         public delegate INavmapCommand SearchPlaceFactory(
             INavmapBus.SearchPlaceResultDelegate callback,
             INavmapBus.SearchPlaceParams @params);
+
         public delegate INavmapCommand ShowPlaceInfoFactory(PlacesData.PlaceInfo placeInfo);
         public delegate INavmapCommand ShowEventInfoFactory(EventDTO @event, PlacesData.PlaceInfo? place = null);
 
@@ -20,6 +21,7 @@ namespace DCL.Navmap
         private readonly SearchPlaceFactory searchPlaceFactory;
         private readonly ShowPlaceInfoFactory showPlaceInfoFactory;
         private readonly ShowEventInfoFactory showEventInfoFactory;
+        private readonly IPlacesAPIService placesAPIService;
 
         public event Action<PlacesData.PlaceInfo>? OnJumpIn;
         public event Action<PlacesData.PlaceInfo>? OnDestinationSelected;
@@ -31,16 +33,18 @@ namespace DCL.Navmap
 
         public NavmapCommandBus(SearchPlaceFactory searchPlaceFactory,
             ShowPlaceInfoFactory showPlaceInfoFactory,
-            ShowEventInfoFactory showEventInfoFactory)
+            ShowEventInfoFactory showEventInfoFactory,
+            IPlacesAPIService placesAPIService)
         {
             this.searchPlaceFactory = searchPlaceFactory;
             this.showPlaceInfoFactory = showPlaceInfoFactory;
             this.showEventInfoFactory = showEventInfoFactory;
+            this.placesAPIService = placesAPIService;
         }
 
         public async UniTask SelectPlaceAsync(PlacesData.PlaceInfo place, CancellationToken ct, bool clearPreviousHistory = false)
         {
-            if(clearPreviousHistory)
+            if (clearPreviousHistory)
                 ClearHistory();
 
             INavmapCommand command = showPlaceInfoFactory.Invoke(place);
@@ -50,9 +54,19 @@ namespace DCL.Navmap
             commands.Push(command);
         }
 
+        public async UniTask SelectPlaceAsync(Vector2Int parcel, CancellationToken ct, bool clearPreviousHistory = false)
+        {
+            PlacesData.PlaceInfo? place = await placesAPIService.GetPlaceAsync(parcel, ct, true);
+
+            // TODO: show empty parcel
+            if (place == null) return;
+
+            await SelectPlaceAsync(place, ct, clearPreviousHistory);
+        }
+
         public async UniTask SelectEventAsync(EventDTO @event, CancellationToken ct, PlacesData.PlaceInfo? place = null, bool clearPreviousHistory = false)
         {
-            if(clearPreviousHistory)
+            if (clearPreviousHistory)
                 ClearHistory();
 
             INavmapCommand command = showEventInfoFactory.Invoke(@event, place);

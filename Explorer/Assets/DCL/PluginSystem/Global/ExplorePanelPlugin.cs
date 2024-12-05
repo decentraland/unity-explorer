@@ -208,7 +208,7 @@ namespace DCL.PluginSystem.Global
         public async UniTask InitializeAsync(ExplorePanelSettings settings, CancellationToken ct)
         {
             INavmapBus navmapBus = new NavmapCommandBus(CreateSearchPlaceCommand,
-                CreateShowPlaceCommand, CreateShowEventCommand);
+                CreateShowPlaceCommand, CreateShowEventCommand, placesAPIService);
             explorePanelNavmapBus.SetObject(navmapBus);
 
             backpackSubPlugin = new BackpackSubPlugin(
