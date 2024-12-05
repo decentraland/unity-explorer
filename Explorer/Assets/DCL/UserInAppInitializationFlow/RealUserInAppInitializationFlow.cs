@@ -105,7 +105,7 @@ namespace DCL.UserInAppInitializationFlow
         {
             loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.Init);
 
-            Result result = default;
+            EnumResult<TaskError> result = default;
 
             loadPlayerAvatarStartupOperation.AssignWorld(parameters.World, parameters.PlayerEntity);
             restartRealmStartupOperation.EnableReload(parameters.ReloadRealm);
@@ -136,23 +136,25 @@ namespace DCL.UserInAppInitializationFlow
 
                     // Restart livekit connection
                     await roomHub.StartAsync().Timeout(TimeSpan.FromSeconds(10));
-                    result = changeRealmResult.AsResult();
+
+                    result = changeRealmResult.As(ChangeRealmErrors.AsTaskError);
 
                     // We need to flag the process as completed, otherwise the multiplayer systems will not run
                     loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.Completed);
                 }
                 else
                 {
-                    Result loadingResult = await LoadingScreen(parameters.ShowLoading)
+                    EnumResult<TaskError> loadingResult = await LoadingScreen(parameters.ShowLoading)
                        .ShowWhileExecuteTaskAsync(
                             async (parentLoadReport, ct) =>
                             {
-                                result = await startupOperation.ExecuteAsync(parentLoadReport, ct);
+                                var operationResult = await startupOperation.ExecuteAsync(parentLoadReport, ct);
+                                result = operationResult.AsEnumResult(inErrorCase: TaskError.MessageError);
 
                                 if (result.Success)
                                     parentLoadReport.SetProgress(loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.Completed));
 
-                                return result;
+                                return operationResult;
                             },
                             ct
                         );
@@ -161,7 +163,7 @@ namespace DCL.UserInAppInitializationFlow
                 }
 
                 if (result.Success == false)
-                    ReportHub.LogError(ReportCategory.DEBUG, result.ErrorMessage!);
+                    ReportHub.LogError(ReportCategory.DEBUG, result.Error.Value.Message!);
 
                 //TODO notification popup on failure
             }
@@ -171,7 +173,7 @@ namespace DCL.UserInAppInitializationFlow
             loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.Completed);
         }
 
-        private static void ApplyErrorIfLoadingScreenError(ref Result result, Result showResult)
+        private static void ApplyErrorIfLoadingScreenError(ref EnumResult<TaskError> result, EnumResult<TaskError> showResult)
         {
             if (!showResult.Success)
                 result = showResult;

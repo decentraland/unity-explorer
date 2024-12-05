@@ -1,6 +1,7 @@
 ﻿using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AsyncLoadReporting;
+using System;
 using System.Threading;
 using UnityEngine;
 using Utility.Types;
@@ -13,6 +14,19 @@ namespace ECS.SceneLifeCycle.Realm
         ChangeCancelled,
         SameRealm,
         NotReachable,
+    }
+
+    public static class ChangeRealmErrors
+    {
+        public static TaskError AsTaskError(this ChangeRealmError e) =>
+            e switch
+            {
+                ChangeRealmError.MessageError => TaskError.MessageError,
+                ChangeRealmError.ChangeCancelled => TaskError.Cancelled,
+                ChangeRealmError.SameRealm => TaskError.MessageError,
+                ChangeRealmError.NotReachable => TaskError.MessageError,
+                _ => throw new ArgumentOutOfRangeException(nameof(e), e, null)
+            };
     }
 
     public interface IRealmNavigator
@@ -33,7 +47,7 @@ namespace ECS.SceneLifeCycle.Realm
             Vector2Int parcelToTeleport = default
         );
 
-        UniTask<Result> TeleportToParcelAsync(Vector2Int parcel, CancellationToken ct, bool isLocal);
+        UniTask<EnumResult<TaskError>> TeleportToParcelAsync(Vector2Int parcel, CancellationToken ct, bool isLocal);
 
         UniTask InitializeTeleportToSpawnPointAsync(AsyncLoadProcessReport teleportLoadReport, CancellationToken ct, Vector2Int parcelToTeleport);
     }

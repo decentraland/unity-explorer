@@ -139,9 +139,9 @@ namespace Global.Dynamic
                     globalWorld.Add(cameraEntity.Object, cameraSamplingData);
 
                 ReportHub.LogError(ReportCategory.REALM,
-                    $"Error trying to teleport to a realm {realm}: {loadResult.ErrorMessage}");
+                    $"Error trying to teleport to a realm {realm}: {loadResult.Error.Value.Message}");
 
-                return EnumResult<ChangeRealmError>.ErrorResult(ChangeRealmError.MessageError, loadResult.ErrorMessage!);
+                return loadResult.As(ChangeRealmError.MessageError);
             }
 
             return EnumResult<ChangeRealmError>.SuccessResult();
@@ -257,32 +257,32 @@ namespace Global.Dynamic
             await waitForSceneReadiness.ToUniTask();
         }
 
-        public async UniTask<Result> TeleportToParcelAsync(
+        public async UniTask<EnumResult<TaskError>> TeleportToParcelAsync(
             Vector2Int parcel,
             CancellationToken ct,
             bool isLocal = false
         )
         {
             if (ct.IsCancellationRequested)
-                return Result.CancelledResult();
+                return EnumResult<TaskError>.CancelledResult(TaskError.Cancelled);
 
             Result parcelCheckResult = landscape.IsParcelInsideTerrain(parcel, isLocal);
 
             if (!parcelCheckResult.Success)
-                return parcelCheckResult;
+                return parcelCheckResult.AsEnumResult(TaskError.MessageError);
 
             if (!isLocal && !realmController.IsGenesis())
             {
                 var enumResult = await TryChangeToGenesisAsync(parcel, ct);
-                return enumResult.AsResult();
+                return enumResult.As(ChangeRealmErrors.AsTaskError);
             }
 
-            Result loadResult = await loadingScreen.ShowWhileExecuteTaskAsync(TeleportToParcelAsyncOperation(parcel), ct);
+            EnumResult<TaskError> loadResult = await loadingScreen.ShowWhileExecuteTaskAsync(TeleportToParcelAsyncOperation(parcel), ct);
 
             if (!loadResult.Success)
                 ReportHub.LogError(
                     ReportCategory.SCENE_LOADING,
-                    $"Error trying to teleport to a parcel {parcel}: {loadResult.ErrorMessage}"
+                    $"Error trying to teleport to a parcel {parcel}: {loadResult.Error!.Value.Message}"
                 );
 
             return loadResult;
