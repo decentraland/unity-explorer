@@ -140,10 +140,10 @@ namespace DCL.SDKComponents.MediaStream
                 if (mediaPlayer.MediaPlayer.Control.IsPlaying())
                 {
                     videoStateByPriority.WantsToPlay = true;
-                    videoStateByPriority.MediaPlayStartTime = Time.realtimeSinceStartup;
+                    videoStateByPriority.MediaPlayStartTime = Time.realtimeSinceStartup - (float)mediaPlayer.MediaPlayer.Control.GetCurrentTime();
 
 #if DEBUG_VIDEO_PRIORITIES
-                    ReportHub.Log(GetReportData(),"Video: PLAYED MANUALLY");
+                    ReportHub.Log(GetReportData(),$"Video: PLAYED MANUALLY: {videoStateByPriority.MediaPlayStartTime} // {mediaPlayer.MediaPlayer.Control.GetCurrentTime()}");
 #endif
                 }
                 else
@@ -257,7 +257,7 @@ namespace DCL.SDKComponents.MediaStream
                 videoStateByPriority.IsPlaying = true;
 
 #if DEBUG_VIDEO_PRIORITIES
-                ReportHub.Log(GetReportData(),"VIDEO RESUMED BY PRIORITY: " + videoStateByPriority.Entity.Id + " t:" + seekTime);
+                ReportHub.Log(GetReportData(),$"VIDEO RESUMED BY PRIORITY:  [{videoStateByPriority.Entity.Id}]  t: {seekTime} // {mediaPlayer.MediaPlayer.Control.GetCurrentTime()} -- {videoStateByPriority.MediaPlayStartTime}");
 #endif
             }
             else if(!mustPlay && (videoStateByPriority.IsPlaying || mediaPlayer.MediaPlayer.Control.IsPlaying()))
@@ -270,7 +270,7 @@ namespace DCL.SDKComponents.MediaStream
                 videoStateByPriority.IsPlaying = false;
 
 #if DEBUG_VIDEO_PRIORITIES
-                ReportHub.Log(GetReportData(),"VIDEO CULLED BY PRIORITY: " + videoStateByPriority.Entity.Id);
+                ReportHub.Log(GetReportData(),$"VIDEO CULLED BY PRIORITY: [{videoStateByPriority.Entity.Id}]  t: {mediaPlayer.MediaPlayer.Control.GetCurrentTime()}");
 #endif
             }
         }
