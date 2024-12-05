@@ -83,7 +83,7 @@ namespace DCL.UI.Sidebar
 
             viewInstance.settingsButton.onClick.AddListener(() => OpenExplorePanelInSection(ExploreSections.Settings));
             viewInstance.mapButton.onClick.AddListener(() => OpenExplorePanelInSection(ExploreSections.Navmap));
-            viewInstance.cameraReelButton.onClick.AddListener(() => OpenExplorePanelInSection(ExploreSections.CameraReel));
+
             viewInstance.ProfileWidget.OpenProfileButton.onClick.AddListener(OpenProfileMenu);
             viewInstance.sidebarSettingsButton.onClick.AddListener(OpenSidebarSettings);
             viewInstance.notificationsButton.onClick.AddListener(OpenNotificationsPanel);
@@ -94,7 +94,13 @@ namespace DCL.UI.Sidebar
             notificationsBusController.SubscribeToNotificationTypeClick(NotificationType.REWARD_ASSIGNMENT, OnRewardNotificationClicked);
             viewInstance.sidebarSettingsWidget.OnViewHidden += OnSidebarSettingsClosed;
 
-            viewInstance.cameraReelButton.gameObject.SetActive(includeCameraReel);
+            if (includeCameraReel)
+                viewInstance.cameraReelButton.onClick.AddListener(() => OpenExplorePanelInSection(ExploreSections.CameraReel));
+            else
+            {
+                viewInstance.cameraReelButton.gameObject.SetActive(false);
+                viewInstance.InWorldCameraButton.gameObject.SetActive(false);
+            }
         }
 
         private void OnHelpButtonClicked()
