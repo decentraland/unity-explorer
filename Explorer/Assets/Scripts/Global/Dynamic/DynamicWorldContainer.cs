@@ -288,7 +288,6 @@ namespace Global.Dynamic
                 staticContainer.WebRequestsContainer.WebRequestController
             );
 
-
             bool localSceneDevelopment = !string.IsNullOrEmpty(dynamicWorldParams.LocalSceneDevelopmentRealm);
 
             container.RealmController = new RealmController(
@@ -341,6 +340,13 @@ namespace Global.Dynamic
                 staticContainer.EntityCollidersGlobalCache
             );
 
+            var minimapPlugin = MinimapPlugin.NewInstance(container.MvcManager, container.MapRendererContainer, placesAPIService,
+                staticContainer.RealmData, container.ChatMessagesBus, staticContainer.ScenesCache,
+                mainUIView, mapPathEventBus, staticContainer.SceneRestrictionBusController,
+                $"{dynamicWorldParams.StartParcel.x},{dynamicWorldParams.StartParcel.y}",
+                out var minimap
+            );
+
             ILandscape landscape = new Landscape(
                 container.RealmController,
                 genesisTerrain,
@@ -365,7 +371,10 @@ namespace Global.Dynamic
                 staticContainer.LoadingStatus,
                 staticContainer.CacheCleaner,
                 staticContainer.SingletonSharedDependencies.MemoryBudget,
-                landscape);
+                bootstrapContainer.Analytics!,
+                landscape,
+                minimap
+            );
 
             IHealthCheck livekitHealthCheck = bootstrapContainer.DebugSettings.EnableEmulateNoLivekitConnection
                 ? new IHealthCheck.AlwaysFails("Livekit connection is in debug, always fail mode")
@@ -559,10 +568,7 @@ namespace Global.Dynamic
                     globalWorld, playerEntity, includeCameraReel),
                 new ErrorPopupPlugin(container.MvcManager, assetsProvisioner),
                 connectionStatusPanelPlugin,
-                new MinimapPlugin(container.MvcManager, container.MapRendererContainer, placesAPIService,
-                    staticContainer.RealmData, container.ChatMessagesBus, realmNavigator, staticContainer.ScenesCache,
-                    mainUIView, mapPathEventBus, staticContainer.SceneRestrictionBusController,
-                    $"{dynamicWorldParams.StartParcel.x},{dynamicWorldParams.StartParcel.y}"),
+                minimapPlugin,
                 new ChatPlugin(assetsProvisioner, container.MvcManager, container.ChatMessagesBus, chatHistory, entityParticipantTable, nametagsData, dclInput, unityEventSystem, mainUIView, staticContainer.InputBlock, globalWorld, playerEntity),
                 new ExplorePanelPlugin(
                     assetsProvisioner,
@@ -698,7 +704,6 @@ namespace Global.Dynamic
                 globalPlugins.Add(new AnalyticsPlugin(
                         bootstrapContainer.Analytics!,
                         staticContainer.Profiler,
-                        realmNavigator,
                         staticContainer.RealmData,
                         staticContainer.ScenesCache,
                         staticContainer.MainPlayerAvatarBaseProxy,

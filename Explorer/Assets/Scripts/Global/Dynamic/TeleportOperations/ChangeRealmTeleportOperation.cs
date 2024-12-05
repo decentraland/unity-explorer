@@ -4,29 +4,38 @@ using DCL.Landscape;
 using DCL.LOD;
 using DCL.MapRenderer;
 using DCL.MapRenderer.MapLayers;
+using DCL.Minimap;
+using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.UserInAppInitializationFlow;
 using ECS.SceneLifeCycle.Realm;
-
+using System;
 
 namespace Global.Dynamic.TeleportOperations
 {
     public class ChangeRealmTeleportOperation : TeleportOperationBase
     {
-        private readonly RealmNavigator realmNavigator;
         private readonly IRealmController realmController;
-
 
         private readonly IMapRenderer mapRenderer;
         private readonly RoadAssetsPool roadAssetsPool;
         private readonly SatelliteFloor satelliteFloor;
+        private readonly Lazy<MinimapController> minimap;
+        private readonly IAnalyticsController analyticsController;
 
-        public ChangeRealmTeleportOperation(RealmNavigator realmNavigator, IRealmController realmController, IMapRenderer mapRenderer, RoadAssetsPool roadAssetsPool, SatelliteFloor satelliteFloor)
+        public ChangeRealmTeleportOperation(
+            IMapRenderer mapRenderer,
+            RoadAssetsPool roadAssetsPool,
+            SatelliteFloor satelliteFloor,
+            IRealmController realmController,
+            IAnalyticsController analyticsController,
+            Lazy<MinimapController> minimap)
         {
-            this.realmNavigator = realmNavigator;
-            this.realmController = realmController;
             this.mapRenderer = mapRenderer;
             this.roadAssetsPool = roadAssetsPool;
             this.satelliteFloor = satelliteFloor;
+            this.analyticsController = analyticsController;
+            this.minimap = minimap;
+            this.realmController = realmController;
         }
 
         protected override async UniTask InternalExecuteAsync(TeleportParams teleportParams, CancellationToken ct)
@@ -34,18 +43,18 @@ namespace Global.Dynamic.TeleportOperations
             float finalizationProgress =
                 teleportParams.LoadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.RealmChanging);
 
-
             await realmController.SetRealmAsync(teleportParams.CurrentDestinationRealm, ct);
             SwitchMiscVisibilityAsync();
             teleportParams.ParentReport.SetProgress(finalizationProgress);
         }
 
-        public void SwitchMiscVisibilityAsync()
+        private void SwitchMiscVisibilityAsync()
         {
             var type = realmController.Type;
             bool isGenesis = type is RealmType.GenesisCity;
 
-            realmNavigator.ForceNotifyRealmChanged(type);
+            minimap.Value!.OnRealmChanged(type);
+            analyticsController.Flush();
             mapRenderer.SetSharedLayer(MapLayer.PlayerMarker, isGenesis);
             satelliteFloor.SetCurrentlyInGenesis(isGenesis);
             roadAssetsPool.SwitchVisibility(isGenesis);

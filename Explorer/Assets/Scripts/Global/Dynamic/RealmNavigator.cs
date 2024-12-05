@@ -20,7 +20,9 @@ using System.Threading;
 using DCL.Diagnostics;
 using DCL.Ipfs;
 using DCL.LOD;
+using DCL.Minimap;
 using DCL.Optimization.PerformanceBudgeting;
+using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.ResourcesUnloading;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common;
@@ -51,8 +53,6 @@ namespace Global.Dynamic
         private readonly ILoadingStatus loadingStatus;
         private readonly ILandscape landscape;
 
-        public event Action<RealmType>? RealmChanged;
-
         public RealmNavigator(
             ILoadingScreen loadingScreen,
             IMapRenderer mapRenderer,
@@ -69,7 +69,9 @@ namespace Global.Dynamic
             ILoadingStatus loadingStatus,
             ICacheCleaner cacheCleaner,
             IMemoryUsageProvider memoryUsageProvider,
-            ILandscape landscape)
+            IAnalyticsController analyticsController,
+            ILandscape landscape,
+            Lazy<MinimapController> minimap)
         {
             this.loadingScreen = loadingScreen;
             this.realmController = realmController;
@@ -89,7 +91,7 @@ namespace Global.Dynamic
                 new StopRoomAsyncTeleportOperation(roomHub, livekitTimeout),
                 new RemoveCameraSamplingDataTeleportOperation(globalWorld, cameraEntity),
                 new DestroyAllRoadAssetsTeleportOperation(globalWorld, roadAssetsPool),
-                new ChangeRealmTeleportOperation(this, realmController, mapRenderer, roadAssetsPool, satelliteFloor),
+                new ChangeRealmTeleportOperation(mapRenderer, roadAssetsPool, satelliteFloor, realmController, analyticsController, minimap),
                 new LoadLandscapeTeleportOperation(landscape),
                 new PrewarmRoadAssetPoolsTeleportOperation(realmController, roadAssetsPool),
                 new UnloadCacheImmediateTeleportOperation(cacheCleaner, memoryUsageProvider),
@@ -107,7 +109,7 @@ namespace Global.Dynamic
             };
         }
 
-        public bool CheckIsNewRealm(URLDomain realm)
+        private bool CheckIsNewRealm(URLDomain realm)
         {
             if (!realmController.RealmData.Configured)
                 return true;
@@ -336,11 +338,6 @@ namespace Global.Dynamic
                 await teleportController.TeleportToSceneSpawnPointAsync(parcelToTeleport, processReport, ct);
 
             return waitForSceneReadiness;
-        }
-
-        public void ForceNotifyRealmChanged(RealmType newRealm)
-        {
-            RealmChanged?.Invoke(newRealm);
         }
     }
 }

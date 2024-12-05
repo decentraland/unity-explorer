@@ -43,7 +43,6 @@ namespace DCL.Minimap
         private readonly IPlacesAPIService placesAPIService;
         private readonly IRealmData realmData;
         private readonly IChatMessagesBus chatMessagesBus;
-        private readonly IRealmNavigator realmNavigator;
         private readonly IScenesCache scenesCache;
         private readonly IMapPathEventBus mapPathEventBus;
         private readonly ISceneRestrictionBusController sceneRestrictionBusController;
@@ -68,7 +67,6 @@ namespace DCL.Minimap
             IPlacesAPIService placesAPIService,
             IRealmData realmData,
             IChatMessagesBus chatMessagesBus,
-            IRealmNavigator realmNavigator,
             IScenesCache scenesCache,
             IMapPathEventBus mapPathEventBus,
             ISceneRestrictionBusController sceneRestrictionBusController,
@@ -80,7 +78,6 @@ namespace DCL.Minimap
             this.placesAPIService = placesAPIService;
             this.realmData = realmData;
             this.chatMessagesBus = chatMessagesBus;
-            this.realmNavigator = realmNavigator;
             this.scenesCache = scenesCache;
             this.mapPathEventBus = mapPathEventBus;
             this.sceneRestrictionBusController = sceneRestrictionBusController;
@@ -90,7 +87,7 @@ namespace DCL.Minimap
         public void HookPlayerPositionTrackingSystem(TrackPlayerPositionSystem system) =>
             AddModule(new BridgeSystemBinding<TrackPlayerPositionSystem>(this, QueryPlayerPositionQuery, system));
 
-        private void OnRealmChanged(RealmType realmType)
+        public void OnRealmChanged(RealmType realmType)
         {
             SetWorldMode(realmType is RealmType.World);
             previousParcelPosition = new Vector2Int(int.MaxValue, int.MaxValue);
@@ -109,7 +106,6 @@ namespace DCL.Minimap
             new SideMenuController(viewInstance.sideMenuView);
             sceneRestrictionsController = new SceneRestrictionsController(viewInstance.sceneRestrictionsView, sceneRestrictionBusController);
             SetWorldMode(realmData.ScenesAreFixed);
-            realmNavigator.RealmChanged += OnRealmChanged;
             mapPathEventBus.OnShowPinInMinimapEdge += ShowPinInMinimapEdge;
             mapPathEventBus.OnHidePinInMinimapEdge += HidePinInMinimapEdge;
             mapPathEventBus.OnRemovedDestination += HidePinInMinimapEdge;
@@ -259,7 +255,6 @@ namespace DCL.Minimap
         public override void Dispose()
         {
             cts.SafeCancelAndDispose();
-            realmNavigator.RealmChanged -= OnRealmChanged;
             mapPathEventBus.OnShowPinInMinimapEdge -= ShowPinInMinimapEdge;
             mapPathEventBus.OnHidePinInMinimapEdge -= HidePinInMinimapEdge;
             sceneRestrictionsController?.Dispose();
