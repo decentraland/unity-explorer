@@ -4,7 +4,6 @@ using Cysharp.Threading.Tasks;
 using DCL.AsyncLoadReporting;
 using DCL.Landscape;
 using DCL.MapRenderer;
-using DCL.MapRenderer.MapLayers;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Entities;
@@ -38,13 +37,10 @@ namespace Global.Dynamic
         private const int MAX_REALM_CHANGE_RETRIES = 3;
 
         private readonly ILoadingScreen loadingScreen;
-        private readonly IMapRenderer mapRenderer;
         private readonly IGlobalRealmController realmController;
         private readonly ITeleportController teleportController;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly World globalWorld;
-        private readonly RoadAssetsPool roadAssetsPool;
-        private readonly SatelliteFloor satelliteFloor;
         private readonly ObjectProxy<Entity> cameraEntity;
         private readonly CameraSamplingData cameraSamplingData;
 
@@ -76,17 +72,14 @@ namespace Global.Dynamic
             ILandscape landscape)
         {
             this.loadingScreen = loadingScreen;
-            this.mapRenderer = mapRenderer;
             this.realmController = realmController;
             this.teleportController = teleportController;
-            this.satelliteFloor = satelliteFloor;
             this.cameraEntity = cameraEntity;
             this.cameraSamplingData = cameraSamplingData;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.globalWorld = globalWorld;
             this.loadingStatus = loadingStatus;
             this.landscape = landscape;
-            this.roadAssetsPool = roadAssetsPool;
             var livekitTimeout = TimeSpan.FromSeconds(10f);
 
             realmChangeOperations = new ITeleportOperation[]
@@ -96,7 +89,7 @@ namespace Global.Dynamic
                 new StopRoomAsyncTeleportOperation(roomHub, livekitTimeout),
                 new RemoveCameraSamplingDataTeleportOperation(globalWorld, cameraEntity),
                 new DestroyAllRoadAssetsTeleportOperation(globalWorld, roadAssetsPool),
-                new ChangeRealmTeleportOperation(this),
+                new ChangeRealmTeleportOperation(this, realmController, mapRenderer, roadAssetsPool, satelliteFloor),
                 new LoadLandscapeTeleportOperation(landscape),
                 new PrewarmRoadAssetPoolsTeleportOperation(realmController, roadAssetsPool),
                 new UnloadCacheImmediateTeleportOperation(cacheCleaner, memoryUsageProvider),
@@ -325,17 +318,6 @@ namespace Global.Dynamic
                 return result;
             };
 
-        public void SwitchMiscVisibilityAsync()
-        {
-            var type = realmController.Type;
-            bool isGenesis = type is RealmType.GenesisCity;
-
-            RealmChanged?.Invoke(type);
-            mapRenderer.SetSharedLayer(MapLayer.PlayerMarker, isGenesis);
-            satelliteFloor.SetCurrentlyInGenesis(isGenesis);
-            roadAssetsPool.SwitchVisibility(isGenesis);
-        }
-
         private async UniTask<WaitForSceneReadiness?> TeleportToWorldSpawnPointAsync(
             Vector2Int parcelToTeleport,
             AsyncLoadProcessReport processReport,
@@ -356,10 +338,9 @@ namespace Global.Dynamic
             return waitForSceneReadiness;
         }
 
-        public async UniTask ChangeRealmAsync(URLDomain realm, CancellationToken ct)
+        public void ForceNotifyRealmChanged(RealmType newRealm)
         {
-            await realmController.SetRealmAsync(realm, ct);
-            SwitchMiscVisibilityAsync();
+            RealmChanged?.Invoke(newRealm);
         }
     }
 }

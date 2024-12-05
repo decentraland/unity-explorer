@@ -39,9 +39,5 @@ namespace ECS.SceneLifeCycle.Realm
         UniTask<Result> TeleportToParcelAsync(Vector2Int parcel, CancellationToken ct, bool isLocal);
 
         UniTask InitializeTeleportToSpawnPointAsync(AsyncLoadProcessReport teleportLoadReport, CancellationToken ct, Vector2Int parcelToTeleport);
-
-        void SwitchMiscVisibilityAsync();
-
-        UniTask ChangeRealmAsync(URLDomain realm, CancellationToken ct);
     }
 }
