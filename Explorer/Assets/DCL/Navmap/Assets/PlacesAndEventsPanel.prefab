@@ -23567,6 +23567,10 @@ PrefabInstance:
       propertyPath: <BackButton>k__BackingField
       value: 
       objectReference: {fileID: 6261093015353576915}
+    - target: {fileID: 4581470978530328835, guid: c37bcced312ae48d8b34d3f11d85e4a3, type: 3}
+      propertyPath: <SearchIcon>k__BackingField
+      value: 
+      objectReference: {fileID: 1789255879121551302}
     - target: {fileID: 4630945072858927655, guid: c37bcced312ae48d8b34d3f11d85e4a3, type: 3}
       propertyPath: m_SizeDelta.x
       value: 21
@@ -23787,6 +23791,11 @@ PrefabInstance:
       addedObject: {fileID: 4630873061982229599}
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: c37bcced312ae48d8b34d3f11d85e4a3, type: 3}
+--- !u!1 &1789255879121551302 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 5811259303221985865, guid: c37bcced312ae48d8b34d3f11d85e4a3, type: 3}
+  m_PrefabInstance: {fileID: 5219965752432049551}
+  m_PrefabAsset: {fileID: 0}
 --- !u!224 &4127260807651820983 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 8158256326675281976, guid: c37bcced312ae48d8b34d3f11d85e4a3, type: 3}

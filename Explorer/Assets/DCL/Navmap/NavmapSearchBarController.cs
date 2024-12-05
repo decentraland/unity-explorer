@@ -107,11 +107,13 @@ namespace DCL.Navmap
         public void EnableBack()
         {
             view.BackButton.gameObject.SetActive(true);
+            view.SearchIcon.SetActive(false);
         }
 
         public void DisableBack()
         {
             view.BackButton.gameObject.SetActive(false);
+            view.SearchIcon.SetActive(true);
         }
 
         public void HideHistoryResults() =>
