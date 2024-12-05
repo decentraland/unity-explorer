@@ -16,6 +16,9 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
             GameObject unusedThumbnailPoolObjectParent,
             GameObject unusedGridPoolObjectParent,
             ICameraReelScreenshotsStorage cameraReelScreenshotsStorageService,
+            int gridLayoutFixedColumnCount,
+            int thumbnailHeight,
+            int thumbnailWidth,
             int thumbnailDefaultCapacity,
             int thumbnailMaxSize,
             int gridDefaultCapacity,
@@ -46,7 +49,12 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
                     MonthGridView view = GameObject.Instantiate(monthViewPrefab);
                     return new MonthGridController(view, this);
                 },
-                grid => grid.view.gameObject.SetActive(true),
+                grid =>
+                {
+                    grid.view.gridLayoutGroup.constraintCount = gridLayoutFixedColumnCount;
+                    grid.view.gridLayoutGroup.cellSize = new Vector2(thumbnailWidth, thumbnailHeight);
+                    grid.view.gameObject.SetActive(true);
+                },
                 grid =>
                 {
                     grid.view.transform.SetParent(unusedGridPoolObjectParent.transform, false);

@@ -246,6 +246,9 @@ MonoBehaviour:
         <PhotoSuccessfullyDeletedMessage>k__BackingField: Photo successfully deleted
         <LinkCopiedMessage>k__BackingField: Link copied!
         <StorageProgressBarText>k__BackingField: Storage {0}/{1} photos taken
+        <GridLayoutFixedColumnCount>k__BackingField: 6
+        <ThumbnailHeight>k__BackingField: 230
+        <ThumbnailWidth>k__BackingField: 306
     - rid: 1841402216112979969
       type: {class: CharacterContainer/Settings, ns: DCL.Character.Plugin, asm: DCL.Plugins}
       data:

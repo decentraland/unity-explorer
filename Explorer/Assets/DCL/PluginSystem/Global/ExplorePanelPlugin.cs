@@ -257,9 +257,11 @@ namespace DCL.PluginSystem.Global
             CameraReelView cameraReelView = explorePanelView.GetComponentInChildren<CameraReelView>();
             var cameraReelController = new CameraReelController(cameraReelView,
                 new CameraReelGalleryController(cameraReelView.cameraReelGalleryView, this.cameraReelStorageService,
-                    cameraReelScreenshotsStorage, webBrowser, decentralandUrlsSource, inputHandler, systemClipboard,
-                    settings.CameraReelGalleryShareToXMessage, settings.PhotoSuccessfullyDeletedMessage, settings.PhotoSuccessfullyUpdatedMessage, settings.LinkCopiedMessage,
-                   cameraReelView.optionsButton, cameraReelView.contextMenu),
+                    cameraReelScreenshotsStorage,
+                    settings.GridLayoutFixedColumnCount, settings.ThumbnailHeight, settings.ThumbnailWidth,
+                    cameraReelView.optionsButton, cameraReelView.contextMenu,
+                    webBrowser, decentralandUrlsSource, inputHandler, systemClipboard,
+                    settings.CameraReelGalleryShareToXMessage, settings.PhotoSuccessfullyDeletedMessage, settings.PhotoSuccessfullyUpdatedMessage, settings.LinkCopiedMessage),
                 cameraReelStorageService,
                 web3IdentityCache,
                 mvcManager,
@@ -318,6 +320,13 @@ namespace DCL.PluginSystem.Global
             public string LinkCopiedMessage { get; private set; }
             [field: SerializeField]
             public string StorageProgressBarText { get; private set; }
+
+            [field: SerializeField]
+            public int GridLayoutFixedColumnCount { get; private set; }
+            [field: SerializeField]
+            public int ThumbnailHeight { get; private set; }
+            [field: SerializeField]
+            public int ThumbnailWidth { get; private set; }
 
             public IReadOnlyCollection<URN> EmbeddedEmotesAsURN() =>
                 EmbeddedEmotes.Select(s => new URN(s)).ToArray();

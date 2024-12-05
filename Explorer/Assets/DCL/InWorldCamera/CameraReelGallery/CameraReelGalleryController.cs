@@ -54,14 +54,14 @@ namespace DCL.InWorldCamera.CameraReelGallery
 
         private readonly CameraReelGalleryView view;
         private readonly ICameraReelStorageService cameraReelStorageService;
-        private readonly IExplorePanelEscapeAction explorePanelEscapeAction;
+        private readonly IExplorePanelEscapeAction? explorePanelEscapeAction;
         private readonly ReelGalleryPoolManager reelGalleryPoolManager;
         private readonly Dictionary<DateTime, MonthGridController> monthViews = new ();
         private readonly Dictionary<CameraReelResponseCompact, Sprite> reelThumbnailCache = new ();
         private readonly OptionButtonController optionButtonController;
         private readonly ContextMenuController contextMenuController;
         private readonly Rect elementMaskRect;
-        private readonly string photoSuccessfullyDeletedMessage;
+        private readonly string? photoSuccessfullyDeletedMessage;
 
         private bool isLoading;
         private bool isDragging;
@@ -81,16 +81,19 @@ namespace DCL.InWorldCamera.CameraReelGallery
         public CameraReelGalleryController(CameraReelGalleryView view,
             ICameraReelStorageService cameraReelStorageService,
             ICameraReelScreenshotsStorage cameraReelScreenshotsStorage,
-            IWebBrowser webBrowser,
-            IDecentralandUrlsSource decentralandUrlsSource,
-            IExplorePanelEscapeAction explorePanelEscapeAction,
-            ISystemClipboard systemClipboard,
-            string shareToXMessage,
-            string photoSuccessfullyDeletedMessage,
-            string photoSuccessfullyUpdatedMessage,
-            string linkCopiedMessage,
+            int gridLayoutFixedColumnCount,
+            int thumbnailHeight,
+            int thumbnailWidth,
             OptionButtonView? optionButtonView = null,
-            ContextMenuView? contextMenuView = null)
+            ContextMenuView? contextMenuView = null,
+            IWebBrowser? webBrowser = null,
+            IDecentralandUrlsSource? decentralandUrlsSource = null,
+            IExplorePanelEscapeAction? explorePanelEscapeAction = null,
+            ISystemClipboard? systemClipboard = null,
+            string? shareToXMessage = null,
+            string? photoSuccessfullyDeletedMessage = null,
+            string? photoSuccessfullyUpdatedMessage = null,
+            string? linkCopiedMessage = null)
         {
             this.view = view;
             this.cameraReelStorageService = cameraReelStorageService;
@@ -110,8 +113,11 @@ namespace DCL.InWorldCamera.CameraReelGallery
             }
 
             reelGalleryPoolManager = new ReelGalleryPoolManager(view.thumbnailViewPrefab, view.monthGridPrefab, view.unusedThumbnailViewObject,
-                view.unusedGridViewObject, cameraReelScreenshotsStorage, THUMBNAIL_POOL_DEFAULT_CAPACITY, THUMBNAIL_POOL_MAX_SIZE, GRID_POOL_DEFAULT_CAPACITY,
-                GRID_POOL_MAX_SIZE);
+                view.unusedGridViewObject, cameraReelScreenshotsStorage,
+                gridLayoutFixedColumnCount,
+                thumbnailHeight,
+                thumbnailWidth,
+                THUMBNAIL_POOL_DEFAULT_CAPACITY, THUMBNAIL_POOL_MAX_SIZE, GRID_POOL_DEFAULT_CAPACITY, GRID_POOL_MAX_SIZE);
 
             view.cancelDeleteIntentButton?.onClick.AddListener(() => OnDeletionModalCancelClick());
             view.cancelDeleteIntentBackgroundButton?.onClick.AddListener(() => OnDeletionModalCancelClick(false));
@@ -127,7 +133,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
                         {
                             await this.cameraReelStorageService.UpdateScreenshotVisibilityAsync(cameraReelRes.id, publicFlag, ct);
                             cameraReelRes.isPublic = publicFlag;
-                            await ShowSuccessNotificationAsync(photoSuccessfullyUpdatedMessage);
+                            await ShowSuccessNotificationAsync(photoSuccessfullyUpdatedMessage!);
                         }
                         catch (UnityWebRequestException e)
                         {
@@ -141,16 +147,16 @@ namespace DCL.InWorldCamera.CameraReelGallery
 
                 this.contextMenuController.ShareToXRequested += cameraReelResponse =>
                 {
-                    ReelCommonActions.ShareReelToX(shareToXMessage, cameraReelResponse.id, decentralandUrlsSource, systemClipboard, webBrowser);
+                    ReelCommonActions.ShareReelToX(shareToXMessage!, cameraReelResponse.id, decentralandUrlsSource!, systemClipboard!, webBrowser!);
                 };
 
                 this.contextMenuController.CopyPictureLinkRequested += cameraReelResponse =>
                 {
-                    ReelCommonActions.CopyReelLink(cameraReelResponse.id, decentralandUrlsSource, systemClipboard);
-                    ShowSuccessNotificationAsync(linkCopiedMessage).Forget();
+                    ReelCommonActions.CopyReelLink(cameraReelResponse.id, decentralandUrlsSource!, systemClipboard!);
+                    ShowSuccessNotificationAsync(linkCopiedMessage!).Forget();
                 };
 
-                this.contextMenuController.DownloadRequested += cameraReelResponse => { ReelCommonActions.DownloadReel(cameraReelResponse.url, webBrowser); };
+                this.contextMenuController.DownloadRequested += cameraReelResponse => { ReelCommonActions.DownloadReel(cameraReelResponse.url, webBrowser!); };
 
                 this.contextMenuController.DeletePictureRequested += cameraReelResponse =>
                 {
@@ -162,14 +168,14 @@ namespace DCL.InWorldCamera.CameraReelGallery
 
         private void ShowDeleteModal()
         {
-            explorePanelEscapeAction.RegisterEscapeAction(HideDeleteModal);
+            explorePanelEscapeAction?.RegisterEscapeAction(HideDeleteModal);
             view.deleteReelModal.gameObject.SetActive(true);
             view.deleteReelModal.DOFade(1f, view.deleteModalAnimationDuration);
         }
 
         private void HideDeleteModal(InputAction.CallbackContext callbackContext = default)
         {
-            explorePanelEscapeAction.RemoveEscapeAction(HideDeleteModal);
+            explorePanelEscapeAction?.RemoveEscapeAction(HideDeleteModal);
             view.deleteReelModal.DOFade(0f, view.deleteModalAnimationDuration).OnComplete(() => view.deleteReelModal.gameObject.SetActive(false));
         }
 
@@ -482,7 +488,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
             StorageUpdated = null;
             view.cancelDeleteIntentButton?.onClick.RemoveAllListeners();
             view.cancelDeleteIntentBackgroundButton?.onClick.RemoveAllListeners();
-            explorePanelEscapeAction.RemoveEscapeAction(HideDeleteModal);
+            explorePanelEscapeAction?.RemoveEscapeAction(HideDeleteModal);
 
             if (optionButtonController is not null)
                 optionButtonController.Dispose();

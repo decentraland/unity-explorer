@@ -6,7 +6,6 @@ using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Chat;
 using DCL.InWorldCamera.CameraReelStorageService.Schemas;
-using DCL.Passport;
 using DCL.Profiles;
 using DCL.UI;
 using DCL.WebRequests;
@@ -107,7 +106,7 @@ namespace DCL.InWorldCamera.PhotoDetail
         {
             if (visiblePerson is null) return;
 
-            mvcManager.ShowAsync(PassportController.IssueCommand(new PassportController.Params(visiblePerson.userAddress))).Forget();
+            PassportBridge.OpenPassport(mvcManager, visiblePerson.userAddress);
         }
 
         private void WearableListButtonClicked()

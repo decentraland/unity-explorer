@@ -1,0 +1,16 @@
+{
+    "name": "PassportBridge",
+    "rootNamespace": "",
+    "references": [
+        "GUID:ae249ee11a6e0ea4aa01cefc0246a151"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
