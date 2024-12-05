@@ -113,7 +113,7 @@ namespace DCL.InWorldCamera.Systems
         private void DisableCamera()
         {
             hudController.Hide();
-            mvcManager.SetAllViewsCanvasActiveExcept<InWorldCameraController>(true);
+            mvcManager.SetAllViewsCanvasActive(except: hudController, true);
 
             SwitchToThirdPersonCamera();
 
@@ -129,7 +129,7 @@ namespace DCL.InWorldCamera.Systems
         private void EnableCamera()
         {
             hudController.Show();
-            mvcManager.SetAllViewsCanvasActiveExcept<InWorldCameraController>(false);
+            mvcManager.SetAllViewsCanvasActive(except: hudController, false);
 
             SwitchToInWorldCamera();
 
