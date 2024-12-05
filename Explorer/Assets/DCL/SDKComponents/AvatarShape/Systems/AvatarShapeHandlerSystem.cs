@@ -2,6 +2,7 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
+using DCL.AvatarRendering.Emotes;
 using DCL.Character.Components;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
@@ -12,6 +13,7 @@ using ECS.Prioritization.Components;
 using ECS.Unity.AvatarShape.Components;
 using ECS.Unity.Groups;
 using ECS.Unity.Transforms.Components;
+using Utility.Arch;
 
 namespace ECS.Unity.AvatarShape.Systems
 {
@@ -40,7 +42,14 @@ namespace ECS.Unity.AvatarShape.Systems
         [None(typeof(SDKAvatarShapeComponent), typeof(DeleteEntityIntention))]
         private void LoadAvatarShape(Entity entity, ref PBAvatarShape pbAvatarShape, ref PartitionComponent partitionComponent, ref TransformComponent transformComponent)
         {
-            World.Add(entity, new SDKAvatarShapeComponent(globalWorld.Create(pbAvatarShape, partitionComponent, new CharacterTransform(transformComponent.Transform))));
+            var globalWorldEntity = globalWorld.Create(
+                pbAvatarShape, partitionComponent,
+                new CharacterTransform(transformComponent.Transform),
+                new CharacterEmoteComponent());
+            World.Add(entity, new SDKAvatarShapeComponent(globalWorldEntity));
+
+            if (!string.IsNullOrEmpty(pbAvatarShape.ExpressionTriggerId))
+                globalWorld.Add(globalWorldEntity, new CharacterEmoteIntent() { EmoteId = pbAvatarShape.ExpressionTriggerId });
         }
 
         [Query]
@@ -50,6 +59,9 @@ namespace ECS.Unity.AvatarShape.Systems
                 return;
 
             globalWorld.Set(sdkAvatarShapeComponent.globalWorldEntity, pbAvatarShape);
+
+            if (!string.IsNullOrEmpty(pbAvatarShape.ExpressionTriggerId))
+                globalWorld.AddOrSet(sdkAvatarShapeComponent.globalWorldEntity, new CharacterEmoteIntent() { EmoteId = pbAvatarShape.ExpressionTriggerId });
         }
 
         [Query]

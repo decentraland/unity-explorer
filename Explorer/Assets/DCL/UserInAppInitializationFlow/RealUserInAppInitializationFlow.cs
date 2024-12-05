@@ -62,8 +62,7 @@ namespace DCL.UserInAppInitializationFlow
             IDebugSettings debugSettings,
             IPortableExperiencesController portableExperiencesController,
             IRoomHub roomHub,
-            DiagnosticsContainer diagnosticsContainer
-        )
+            DiagnosticsContainer diagnosticsContainer)
         {
             this.loadingStatus = loadingStatus;
             this.decentralandUrlsSource = decentralandUrlsSource;
@@ -110,7 +109,7 @@ namespace DCL.UserInAppInitializationFlow
             loadPlayerAvatarStartupOperation.AssignWorld(parameters.World, parameters.PlayerEntity);
             restartRealmStartupOperation.EnableReload(parameters.ReloadRealm);
 
-            using var playAudioScope = UIAudioEventsBus.Instance.NewPlayAudioScope(backgroundMusic);
+            using UIAudioEventsBus.PlayAudioScope playAudioScope = UIAudioEventsBus.Instance.NewPlayAudioScope(backgroundMusic);
 
             do
             {
@@ -143,7 +142,7 @@ namespace DCL.UserInAppInitializationFlow
                 }
                 else
                 {
-                    var loadingResult = await LoadingScreen(parameters.ShowLoading)
+                    Result loadingResult = await LoadingScreen(parameters.ShowLoading)
                        .ShowWhileExecuteTaskAsync(
                             async (parentLoadReport, ct) =>
                             {

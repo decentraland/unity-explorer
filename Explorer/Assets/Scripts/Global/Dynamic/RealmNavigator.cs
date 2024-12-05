@@ -19,7 +19,6 @@ using System;
 using System.Linq;
 using System.Threading;
 using DCL.Diagnostics;
-using DCL.FeatureFlags;
 using DCL.Ipfs;
 using DCL.LOD;
 using DCL.Optimization.PerformanceBudgeting;
@@ -48,7 +47,6 @@ namespace Global.Dynamic
         private readonly SatelliteFloor satelliteFloor;
         private readonly ObjectProxy<Entity> cameraEntity;
         private readonly CameraSamplingData cameraSamplingData;
-        private readonly FeatureFlagsCache featureFlagsCache;
 
         private Vector2Int currentParcel;
 
@@ -75,8 +73,7 @@ namespace Global.Dynamic
             ILoadingStatus loadingStatus,
             ICacheCleaner cacheCleaner,
             IMemoryUsageProvider memoryUsageProvider,
-            ILandscape landscape,
-            FeatureFlagsCache featureFlagsCache)
+            ILandscape landscape)
         {
             this.loadingScreen = loadingScreen;
             this.mapRenderer = mapRenderer;
@@ -90,7 +87,6 @@ namespace Global.Dynamic
             this.loadingStatus = loadingStatus;
             this.landscape = landscape;
             this.roadAssetsPool = roadAssetsPool;
-            this.featureFlagsCache = featureFlagsCache;
             var livekitTimeout = TimeSpan.FromSeconds(10f);
 
             realmChangeOperations = new ITeleportOperation[]
@@ -263,21 +259,12 @@ namespace Global.Dynamic
             if (isWorld)
                 waitForSceneReadiness = await TeleportToWorldSpawnPointAsync(parcelToTeleport, teleportLoadReport, ct);
             else
-                waitForSceneReadiness = await teleportController.TeleportToSceneSpawnPointAsync(GenesisStartingParcelOrDefault(parcelToTeleport), teleportLoadReport, ct);
+                waitForSceneReadiness = await teleportController.TeleportToSceneSpawnPointAsync(parcelToTeleport, teleportLoadReport, ct);
 
             // add camera sampling data to the camera entity to start partitioning
             Assert.IsTrue(cameraEntity.Configured);
             globalWorld.Add(cameraEntity.Object, cameraSamplingData);
             await waitForSceneReadiness.ToUniTask();
-        }
-
-        private Vector2Int GenesisStartingParcelOrDefault(Vector2Int defaultParcel)
-        {
-            if (defaultParcel == Vector2Int.zero
-                && featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.GENESIS_STARTING_PARCEL)
-                && featureFlagsCache.Configuration.TryGetTextPayload(FeatureFlagsStrings.GENESIS_STARTING_PARCEL, FeatureFlagsStrings.STRING_VARIANT, out string? parcelCoords)) { RealmHelper.TryParseParcelFromString(parcelCoords, out defaultParcel); }
-
-            return defaultParcel;
         }
 
         public async UniTask<Result> TeleportToParcelAsync(

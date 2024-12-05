@@ -16,7 +16,6 @@ namespace ECS.SceneLifeCycle.Systems
         private static readonly URLDomain WORLDS_CONTENT_URL = URLDomain.FromString("https://worlds-content-server.decentraland.org/contents/");
         private readonly HybridSceneContentServer hybridSceneContentServer;
         private readonly URLDomain hybridSceneContentServerDomain;
-        private readonly Vector2Int startParcel;
         private readonly string world;
         private HybridSceneHashedContent? hybridSceneHashedContent;
         private string? remoteSceneID;
@@ -25,7 +24,6 @@ namespace ECS.SceneLifeCycle.Systems
         {
             world = hybridSceneParams.World;
             hybridSceneContentServer = hybridSceneParams.HybridSceneContentServer;
-            startParcel = hybridSceneParams.StartParcel;
 
             switch (hybridSceneContentServer)
             {
@@ -48,7 +46,12 @@ namespace ECS.SceneLifeCycle.Systems
         {
             hybridSceneHashedContent = new HybridSceneHashedContent(webRequestController, definition, contentBaseUrl, assetBundleURL);
 
-            if (await hybridSceneHashedContent.TryGetRemoteSceneIDAsync(hybridSceneContentServerDomain, hybridSceneContentServer, startParcel, world, reportCategory)) { await hybridSceneHashedContent.GetRemoteSceneDefinitionAsync(hybridSceneContentServerDomain, reportCategory); }
+            if (await hybridSceneHashedContent.TryGetRemoteSceneIDAsync(hybridSceneContentServerDomain,
+                    hybridSceneContentServer, definition.metadata.scene.DecodedBase, world, reportCategory))
+            {
+                await hybridSceneHashedContent.GetRemoteSceneDefinitionAsync(hybridSceneContentServerDomain,
+                    reportCategory);
+            }
 
             return hybridSceneHashedContent;
         }

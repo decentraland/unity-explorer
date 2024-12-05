@@ -14,6 +14,7 @@ using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using SceneRunner.Debugging;
 using Segment.Serialization;
 using System.Threading;
+using DCL.FeatureFlags;
 using UnityEngine.UIElements;
 using Utility;
 using static DCL.PerformanceAndDiagnostics.Analytics.AnalyticsEvents;
@@ -135,6 +136,12 @@ namespace Global.Dynamic
             {
                 { STAGE_KEY, "6 - realm loaded" },
             });
+        }
+
+        public void ApplyFeatureFlagConfigs(FeatureFlagsCache featureFlagsCache)
+        {
+            core.ApplyFeatureFlagConfigs(featureFlagsCache);
+            //No analytics to track on this step
         }
 
         public async UniTask UserInitializationAsync(DynamicWorldContainer dynamicWorldContainer, GlobalWorld globalWorld, Entity playerEntity, CancellationToken ct)
