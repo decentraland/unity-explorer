@@ -22,6 +22,11 @@ namespace Utility.Types
 
         public static Result CancelledResult() =>
             new (false, nameof(OperationCanceledException));
+
+        public EnumResult<TErrorEnum> AsEnumResult<TErrorEnum>(TErrorEnum inErrorCase) =>
+            Success
+                ? EnumResult<TErrorEnum>.SuccessResult()
+                : EnumResult<TErrorEnum>.ErrorResult(inErrorCase, ErrorMessage!);
     }
 
     public readonly struct Result<T>
@@ -75,6 +80,16 @@ namespace Utility.Types
             var error = Error!.Value;
             return Result.ErrorResult($"{error.State}: {error.Message}");
         }
+
+        public EnumResult<TOther> As<TOther>(TOther inErrorCase) =>
+            Success
+                ? EnumResult<TOther>.SuccessResult()
+                : EnumResult<TOther>.ErrorResult(inErrorCase, Error!.Value.Message!);
+
+        public EnumResult<TOther> As<TOther>(Func<TErrorEnum, TOther> mapping) =>
+            Success
+                ? EnumResult<TOther>.SuccessResult()
+                : EnumResult<TOther>.ErrorResult(mapping(Error!.Value.State), Error!.Value.Message!);
     }
 
     public readonly struct EnumResult<TValue, TErrorEnum>
@@ -117,5 +132,13 @@ namespace Utility.Types
 
         public override string ToString() =>
             $"EnumResult<{typeof(TValue).Name}, {typeof(TErrorEnum).Name}>: {(Success ? "Success" : $"Error: {Error!.Value.State} - {Error.Value.Message}")}";
+    }
+
+    public enum TaskError
+    {
+        MessageError,
+        Timeout,
+        Cancelled,
+        UnexpectedException,
     }
 }
