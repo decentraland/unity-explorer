@@ -2,7 +2,8 @@ Shader "Unlit/MapOcean"
 {
     Properties
     {
-        _OceanShapes ("OceanShapes", 2D) = "white" {}
+        _GlobalTexture ("Global Texture", 2D) = "white" {}
+        _GroundHeightMap ("Ground Height Map", 2D) = "white" {}
         _OceanGround ("OceanGround", 2D) = "white" {}
         _OceanNoise ("OceanNoise", 2D) = "white" {}
         _WaterLevel ("WaterLevel", Range (0.0, 2.0)) = 0.94
@@ -18,9 +19,15 @@ Shader "Unlit/MapOcean"
         _water_softlight_fact("water_softlight_fact", Range (0.0, 30.0)) = 15.0  // range [1..200] (should be << smaller than glossy-fact)
         _water_glossylight_fact("water_glossylight_fact", Range (0.0, 150.0)) = 120.0 // range [1..200]
         _particle_amount("particle_amount", Range (0.0, 100.0)) = 70.0
-        _watercolor ("watercolor", Vector) = (0.43, 0.60, 0.66) // 'transparent' low-water color (RGB)
-        _watercolor2 ("watercolor2", Vector) = (0.06, 0.07, 0.11) // deep-water color (RGB, should be darker than the low-water color)
-        _water_specularcolor ("water_specularcolor", Vector) = (1.3, 1.3, 0.9)    // specular Color (RGB) of the water-highlights
+        _watercolor ("watercolor", Color) = (0.43, 0.60, 0.66) // 'transparent' low-water color (RGB)
+        _watercolor2 ("watercolor2", Color) = (0.06, 0.07, 0.11) // deep-water color (RGB, should be darker than the low-water color)
+        _water_specularcolor ("water_specularcolor", Color) = (1.3, 1.3, 0.9)    // specular Color (RGB) of the water-highlights
+        _LightDir ("Light Direction", Vector) = (0.5, 0.5, 3.0)
+        _terrainColourAddition ("Terrain Colour Addition", Color) = (0.7, 0.55, 0.4)
+        _heightAddition ("Height Addition", Float) = 0.15
+        _heightMultiplier ("Height Multiplier", Float) = 2.0
+        _heightClamp ("Height Clamp", Float) = 10.0
+        _intensity ("Intensity", Color) = (0.2126, 0.7152, 0.0722)
     }
     SubShader
     {
@@ -44,16 +51,20 @@ Shader "Unlit/MapOcean"
 
             struct v2f
             {
-                float2 uv : TEXCOORD0;
                 float4 vertex : SV_POSITION;
+                float2 uv : TEXCOORD0;
+                float2 uv_hm : TEXCOORD1;
+                float2 uv_gnd : TEXCOORD2;
+                float2 uv_noiz : TEXCOORD3;
             };
 
-            sampler2D _OceanShapes;
+            sampler2D _GroundHeightMap;
             sampler2D _OceanGround;
             sampler2D _OceanNoise;
-            float4 _OceanShapes_ST;
+            float4 _GroundHeightMap_ST;
             float4 _OceanGround_ST;
             float4 _OceanNoise_ST;
+            float4 _GlobalTexture_ST;
 
             float _WaterLevelMultiplier;
             float _WaterLevel;
@@ -71,6 +82,9 @@ Shader "Unlit/MapOcean"
             float3 _watercolor;
             float3 _watercolor2;
             float3 _water_specularcolor;
+            float3 _LightDir;
+            float3 _terrainColourAddition;
+            float3 _intensity;
 
             // 'hash' and 'noise' function by iq
             // License: Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Unported License.
@@ -103,33 +117,44 @@ Shader "Unlit/MapOcean"
                 return tex2Dlod(_OceanNoise, float4(p.x * 1.0f/256.0f, p.y * 1.0f/256.0f, 0.0f, 0.0f)).x;
             }
 
-            float height_map( float2 p )
-            {
-                float2x2 m = float2x2( 0.9563f*1.4f,  -0.2924f*1.4f,  0.2924f*1.4f,  0.9563f*1.4f );
-                p = p*6.0f;
-                float f = 0.6000f*noise1( p );p = mul(m,p)*1.1f;
-                f += 0.2500f*noise1( p ); p = mul(m,p)*1.32f;
-                f += 0.1666f*noise1( p ); p = mul(m,p)*1.11f;
-                f += 0.0834f*noise( p ); p = mul(m,p)*1.12f;
-                f += 0.0634f*noise( p ); p = mul(m,p)*1.13f;
-                f += 0.0444f*noise( p ); p = mul(m,p)*1.14f;
-                f += 0.0274f*noise( p ); p = mul(m,p)*1.15f;
-                f += 0.0134f*noise( p ); p = mul(m,p)*1.16f;
-                f += 0.0104f*noise( p ); p = mul(m,p)*1.17f;
-                f += 0.0084f*noise( p );
-            
-                const float FLAT_LEVEL = 0.525f;
-                if (f<FLAT_LEVEL)
-                    f = f;
-                else
-                    f = pow((f-FLAT_LEVEL)/(1.0f-FLAT_LEVEL), 2.0f)*(1.0f-FLAT_LEVEL)*2.0f+FLAT_LEVEL; // makes a smooth coast-increase
-                
-                return clamp(f, 0.0f, 10.0f);
-            }
+            //#define USETEXTUREHEIGHT 0
+            #define USETEXTUREHEIGHT 1
 
-            float3 terrain_map( float2 p )
+            float _heightAddition;
+            float _heightMultiplier;
+            float _heightClamp;
+            
+            float height_map( float2 uv )
             {
-                return float3(0.7f, 0.55f, 0.4f)+tex2D(_OceanGround, p * 2.0f).rgb*0.5f; // test-terrain is simply 'sandstone'
+                #if USETEXTUREHEIGHT
+                    float f = _heightAddition + (tex2Dlod(_GroundHeightMap, float4(uv, 0.0f, 0.0f)).r * _heightMultiplier);
+                #else
+                    float2x2 m = float2x2( 0.9563f*1.4f,  -0.2924f*1.4f,  0.2924f*1.4f,  0.9563f*1.4f );
+                    p = p*6.0f;
+                    float f = 0.6000f*noise1( p );p = mul(m,p)*1.1f;
+                    f += 0.2500f*noise1( p ); p = mul(m,p)*1.32f;
+                    f += 0.1666f*noise1( p ); p = mul(m,p)*1.11f;
+                    f += 0.0834f*noise( p ); p = mul(m,p)*1.12f;
+                    f += 0.0634f*noise( p ); p = mul(m,p)*1.13f;
+                    f += 0.0444f*noise( p ); p = mul(m,p)*1.14f;
+                    f += 0.0274f*noise( p ); p = mul(m,p)*1.15f;
+                    f += 0.0134f*noise( p ); p = mul(m,p)*1.16f;
+                    f += 0.0104f*noise( p ); p = mul(m,p)*1.17f;
+                    f += 0.0084f*noise( p );
+                
+                    const float FLAT_LEVEL = 0.525f;
+                    if (f<FLAT_LEVEL)
+                        f = f;
+                    else
+                        f = pow((f-FLAT_LEVEL)/(1.0f-FLAT_LEVEL), 2.0f)*(1.0f-FLAT_LEVEL)*2.0f+FLAT_LEVEL; // makes a smooth coast-increase
+                #endif
+                
+                return clamp(f, 0.0f, _heightClamp);
+            }
+            
+            float3 terrain_map( float2 uv )
+            {
+                return _terrainColourAddition+tex2D(_OceanGround, uv).rgb; // test-terrain is simply 'sandstone'
             }
 
             float water_map( float2 p, float height )
@@ -236,59 +261,62 @@ Shader "Unlit/MapOcean"
             {
                 v2f o;
                 o.vertex = UnityObjectToClipPos(v.vertex);
-                o.uv = TRANSFORM_TEX(v.uv, _OceanShapes);
+                o.uv = TRANSFORM_TEX(v.uv, _GlobalTexture);
+                o.uv_hm = TRANSFORM_TEX(o.uv, _GroundHeightMap);
+                o.uv_gnd = TRANSFORM_TEX(o.uv, _OceanGround);
+                o.uv_noiz = TRANSFORM_TEX(o.uv, _OceanNoise);
                 return o;
             }
 
             fixed4 frag (v2f i) : SV_Target
             {
-                light = float3(-0.0f, sin(_Time.y*0.5f)*0.5f + 0.35f, 2.8f); // position of the sun
-	            float2 uv = i.uv;//(i.uv.xy / _ScreenParams.xy - float2(-0.12f, 0.25f));
+                light = _LightDir; // position of the sun
 
 		        float WATER_LEVEL = _WaterLevel * _WaterLevelMultiplier;
                 float deepwater_fadedepth = (_DeepWaterFadeDepth * _DeepWaterFadeDepthMultiplier) + _coast2water_fadedepth;
                 
-                float height = height_map( uv );
+                float height = height_map( i.uv_hm );
                 float3 col;
                 
                 float waveheight = clamp(WATER_LEVEL*3.0f-1.5f, 0.0f, 1.0f);
-                float level = WATER_LEVEL + 0.2f*water_map(uv*15.0f + float2(_Time.y*0.1f, _Time.y*0.1f), waveheight);
+                float level = WATER_LEVEL + 0.2f*water_map(i.uv_noiz*15.0f + float2(_Time.y*0.1f, _Time.y*0.1f), waveheight);
                 if (height > level || false)
                 {
-                    col = CalcTerrain(uv, height);
+                    col = CalcTerrain(i.uv_gnd, height);
                 }
                 
                 if (height <= level)
                 {
                     float2 dif = float2(0.0f, 0.01f);
-                    float2 pos = uv * _HeightUVMultiplier + float2(_Time.y * 0.01f, _Time.y * 0.01f);
+                    float2 pos = i.uv * _HeightUVMultiplier + float2(_Time.y * 0.01f, _Time.y * 0.01f);
                     float h1 = water_map(pos-dif,waveheight);
                     float h2 = water_map(pos+dif,waveheight);
                     float h3 = water_map(pos-dif.yx,waveheight);
                     float h4 = water_map(pos+dif.yx,waveheight);
                     float3 normwater = normalize(float3(h3-h4, h1-h2, 0.125f)); // norm-vector of the 'bumpy' water-plane
-                    uv += normwater.xy*0.002f*(level-height); 
+                    i.uv += normwater.xy*0.002f*(level-height); 
                     
-                    col = CalcTerrain(uv, height);
+                    col = CalcTerrain(i.uv, height);
 
                     float coastfade = clamp((level-height)/_coast2water_fadedepth, 0.0f, 1.0f);
                     float coastfade2= clamp((level-height)/deepwater_fadedepth, 0.0f, 1.0f);
-                    float intensity = col.r*0.2126f+col.g*0.7152f+col.b*0.0722f;
+                    
+                    float intensity = col.rgb * _intensity.rgb;
                     _watercolor = lerp(_watercolor*intensity, _watercolor2, smoothstep(0.0f, 1.0f, coastfade2));
 
-                    float3 r0 = float3(uv, WATER_LEVEL);
+                    float3 r0 = float3(i.uv, WATER_LEVEL);
                     float3 rd = normalize( light - r0 ); // ray-direction to the light from water-position
                     float grad     = dot(normwater, rd); // dot-product of norm-vector and light-direction
                     float specular = pow(grad, _water_softlight_fact);  // used for soft highlights                          
                     float specular2= pow(grad, _water_glossylight_fact); // used for glossy highlights
                     float gradpos  = dot(float3(0.0f, 0.0f, 1.0f), rd);
                     float specular1= smoothstep(0.0f, 1.0f, pow(gradpos, 5.0f));  // used for diffusity (some darker corona around light's specular reflections...)                          
-                    float watershade  = 1.0f;//test_shadow( uv, level );
+                    float watershade  = 1.0f;//test_shadow( i.uv, level );
                     _watercolor *= 2.2f+watershade;
    		            _watercolor += (0.2f+0.8f*watershade) * ((grad-1.0f)*0.5f+specular) * 0.25f;
    		            _watercolor /= (1.0f+specular1*1.25f);
    		            _watercolor += watershade*specular2*_water_specularcolor;
-                    _watercolor += watershade*coastfade*(1.0f-coastfade2)*(float3(0.5f, 0.6f, 0.7f)*nautic(uv)+float3(1.0f, 1.0f, 1.0f)*particles(uv));
+                    _watercolor += watershade*coastfade*(1.0f-coastfade2)*(float3(0.5f, 0.6f, 0.7f)*nautic(i.uv_noiz)+float3(1.0f, 1.0f, 1.0f)*particles(i.uv_noiz));
                     
                     col = lerp(col, _watercolor, coastfade);
                 }
