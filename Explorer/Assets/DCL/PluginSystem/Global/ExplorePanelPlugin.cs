@@ -351,7 +351,6 @@ namespace DCL.PluginSystem.Global
             EventElementView CreatePoolElements(EventElementView asset)
             {
                 EventElementView placeElementView = Object.Instantiate(asset, view.EventsTabContainer.transform);
-                placeElementView.Init(webRequestController);
                 return placeElementView;
             }
         }

@@ -21,6 +21,7 @@ namespace DCL.Navmap
     public class PlaceInfoPanelController
     {
         private readonly PlaceInfoPanelView view;
+        private readonly IWebRequestController webRequestController;
         private readonly IPlacesAPIService placesAPIService;
         private readonly IMapPathEventBus mapPathEventBus;
         private readonly INavmapBus navmapBus;
@@ -55,6 +56,7 @@ namespace DCL.Navmap
             IWebBrowser webBrowser)
         {
             this.view = view;
+            this.webRequestController = webRequestController;
             this.placesAPIService = placesAPIService;
             this.mapPathEventBus = mapPathEventBus;
             this.navmapBus = navmapBus;
@@ -286,6 +288,7 @@ namespace DCL.Navmap
                 foreach (EventDTO @event in events)
                 {
                     EventElementView element = eventElementPool.Get();
+                    element.Init(webRequestController);
                     eventElements.Add(element);
 
                     var schedule = "";
