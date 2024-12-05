@@ -28,7 +28,7 @@ namespace DCL.MapRenderer.ConsumerUtils
         private IMapInteractivityController? interactivityController;
         private bool isActive;
         private Vector2Int previousParcel;
-        private CancellationTokenSource cts = new CancellationTokenSource();
+        private CancellationTokenSource cts = new ();
 
         private bool dragging => dragBehavior is { dragging: true };
 
@@ -147,7 +147,6 @@ namespace DCL.MapRenderer.ConsumerUtils
         /// </summary>
         public event Action<Vector2>? Hovered;
         public event Action<Vector2>? HoveredParcel;
-        public event Action<Vector2Int>? HoveredMapPin;
         public event Action? DragStarted;
 
         public void EmbedMapCameraDragBehavior(MapCameraDragBehavior.MapCameraDragBehaviorData data)

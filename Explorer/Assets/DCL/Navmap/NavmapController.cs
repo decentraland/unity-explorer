@@ -45,7 +45,7 @@ namespace DCL.Navmap
         private readonly Mouse mouse;
         private readonly StringBuilder parcelTitleStringBuilder = new ();
         private readonly NavmapLocationController navmapLocationController;
-        private CancellationTokenSource? fetchPlaceAndShowCancellationToken;
+        private CancellationTokenSource? fetchPlaceAndShowCancellationToken = new ();
 
         private CancellationTokenSource? animationCts;
         private IMapCameraController? cameraController;
@@ -96,7 +96,6 @@ namespace DCL.Navmap
             mapPathEventBus.OnRemovedDestination += RemoveDestination;
 
             this.navmapView.SatelliteRenderImage.ParcelClicked += OnParcelClicked;
-            //this.navmapView.SatelliteRenderImage.HoveredMapPin += OnMapPinHovered;
             this.navmapView.SatelliteRenderImage.HoveredParcel += OnParcelHovered;
 
             this.navmapView.SatelliteRenderImage.EmbedMapCameraDragBehavior(this.navmapView.MapCameraDragBehaviorData);
@@ -115,7 +114,7 @@ namespace DCL.Navmap
         {
             navmapView.SatelliteRenderImage.ParcelClicked -= OnParcelClicked;
             navmapView.SatelliteRenderImage.HoveredParcel -= OnParcelHovered;
-            //navmapView.SatelliteRenderImage.HoveredMapPin -= OnMapPinHovered;
+
             animationCts?.Dispose();
             zoomController.Dispose();
             searchBarController.Dispose();
