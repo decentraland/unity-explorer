@@ -165,8 +165,7 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
                 }
                 catch (UnityWebRequestException e)
                 {
-                    var flatFetchError = JsonConvert.DeserializeObject<FlatFetchError>(e.Text);
-                    return new FlatFetchResponse(false, e.ResponseCode, e.ResponseCode.ToString(), flatFetchError.error,
+                    return new FlatFetchResponse(false, e.ResponseCode, e.ResponseCode.ToString(), e.Error,
                         e.ResponseHeaders);
                 }
                 catch (Exception e)
