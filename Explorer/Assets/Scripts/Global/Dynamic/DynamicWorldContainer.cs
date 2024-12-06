@@ -419,6 +419,7 @@ namespace Global.Dynamic
                 bootstrapContainer.DebugSettings,
                 staticContainer.PortableExperiencesController,
                 container.RoomHub,
+                bootstrapContainer.Analytics.EnsureNotNull(),
                 bootstrapContainer.DiagnosticsContainer);
 
             var realmNavigator = new MainScreenFallbackRealmNavigator(

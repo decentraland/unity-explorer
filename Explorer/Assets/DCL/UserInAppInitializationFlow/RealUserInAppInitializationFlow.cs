@@ -10,6 +10,7 @@ using DCL.FeatureFlags;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.HealthChecks;
+using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Profiles.Self;
 using DCL.SceneLoadingScreens.LoadingScreen;
 using DCL.UserInAppInitializationFlow.StartupOperations;
@@ -63,6 +64,7 @@ namespace DCL.UserInAppInitializationFlow
             IDebugSettings debugSettings,
             IPortableExperiencesController portableExperiencesController,
             IRoomHub roomHub,
+            IAnalyticsController analyticsController,
             DiagnosticsContainer diagnosticsContainer)
         {
             this.loadingStatus = loadingStatus;
@@ -98,7 +100,7 @@ namespace DCL.UserInAppInitializationFlow
                 teleportStartupOperation,
                 loadGlobalPxOperation,
                 sentryDiagnostics
-            );
+            ).WithAnalytics(analyticsController);
         }
 
         public async UniTask ExecuteAsync(UserInAppInitializationFlowParameters parameters, CancellationToken ct)
