@@ -159,9 +159,6 @@ namespace DCL.UserInAppInitializationFlow
                             ct
                         );
 
-                    if (loadingResult.Success == false)
-                        ReportHub.LogError(ReportCategory.DEBUG, loadingResult.Error.AsMessage());
-
                     ApplyErrorIfLoadingScreenError(ref result, loadingResult);
                 }
 
