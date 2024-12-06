@@ -32,9 +32,9 @@ RectTransform:
   - {fileID: 5352466935574102746}
   m_Father: {fileID: 6822883530026945485}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 230.5, y: -18}
   m_SizeDelta: {x: 150, y: 36}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &6042271224112348
@@ -18576,6 +18576,7 @@ MonoBehaviour:
   <NewestButton>k__BackingField: {fileID: 866816097706218785}
   <NewestText>k__BackingField: {fileID: 8701081905020338742}
   <SortsSection>k__BackingField: {fileID: 3740883420033379307}
+  <FilterSection>k__BackingField: {fileID: 5429965016165498866}
   activeSortingBackgroundColor: {r: 1, g: 0.45490196, b: 0.22352941, a: 1}
   activeSortingTextColor: {r: 1, g: 1, b: 1, a: 1}
   inactiveSortingBackgroundColor: {r: 0, g: 0, b: 0, a: 0.101960786}

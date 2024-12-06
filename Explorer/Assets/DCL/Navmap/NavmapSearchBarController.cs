@@ -68,6 +68,7 @@ namespace DCL.Navmap
             searchFiltersView.MostActiveButton.onClick.AddListener(() => Search(NavmapSearchPlaceSorting.MostActive));
             searchFiltersView.Toggle(currentPlaceSorting);
             searchFiltersView.Toggle(currentPlaceFilter);
+            searchFiltersView.SetSortingActiveStatus(currentPlaceFilter == NavmapSearchPlaceFilter.All);
         }
 
         public void Dispose()
@@ -123,6 +124,7 @@ namespace DCL.Navmap
         {
             currentPlaceFilter = filter;
             searchFiltersView.Toggle(currentPlaceFilter);
+            searchFiltersView.SetSortingActiveStatus(filter == NavmapSearchPlaceFilter.All);
 
             bool isGlobalSearch = filter == NavmapSearchPlaceFilter.All;
 
@@ -137,6 +139,9 @@ namespace DCL.Navmap
             searchFiltersView.MostActiveButton.interactable = isGlobalSearch;
             searchFiltersView.BestRatedButton.interactable = isGlobalSearch;
         }
+
+        public void SetFilterActiveStatus(bool isActive) =>
+            searchFiltersView.FilterSection.SetActive(isActive);
 
         private void OnBackClicked()
         {
