@@ -243,7 +243,10 @@ namespace DCL.Minimap
 
         private void SetWorldMode(bool isWorldModeActivated)
         {
-            foreach (GameObject go in viewInstance!.objectsToActivateForGenesis)
+            if (viewInstance == null)
+                return;
+
+            foreach (GameObject go in viewInstance.objectsToActivateForGenesis)
                 go.SetActive(!isWorldModeActivated);
 
             foreach (GameObject go in viewInstance.objectsToActivateForWorlds)
