@@ -409,6 +409,8 @@ namespace DCL.InWorldCamera.CameraReelGallery
 
         private void HandleElementsVisibility(ScrollDirection scrollDirection)
         {
+            if (currentSize == 0) return;
+
             if (scrollDirection == ScrollDirection.UP)
             {
                 while (beginVisible >= 0 && ViewIntersectsImage(thumbnailImages[beginVisible].view.thumbnailImage))
