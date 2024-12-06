@@ -9,6 +9,7 @@ namespace DCL.InWorldCamera.CameraReelStorageService.Schemas
         public string userName;
         public string userAddress;
         public string dateTime;
+        public string placeId;
         public string realm;
         public Scene scene;
         public VisiblePerson[] visiblePeople;
