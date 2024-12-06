@@ -1,38 +1,44 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using LiveKit.Internal.FFIClients.Pools.Memory;
+using Org.BouncyCastle.Utilities;
 using System;
 using System.Threading;
 using Utility.Types;
 
 namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
 {
+    /// <summary>
+    ///     AutoReconnection will try to recover connection to the transport infinitely until it's cancelled
+    /// </summary>
     public class AutoReconnectLiveConnection : IArchipelagoLiveConnection
     {
+        private static readonly TimeSpan DEFAULT_RECOVERY_DELAY = TimeSpan.FromSeconds(5);
+
+        private readonly TimeSpan recoveryDelay;
+
         private readonly IArchipelagoLiveConnection origin;
-        private readonly Action<string> log;
         private string? cachedAdapterUrl;
+
+        private DateTime lastRecoveryAttempt = DateTime.MinValue;
 
         public bool IsConnected => origin.IsConnected;
 
-        public AutoReconnectLiveConnection(IArchipelagoLiveConnection origin) : this(
-            origin,
-            m => ReportHub.Log(ReportCategory.COMMS_SCENE_HANDLER, m)
-        ) { }
-
-        public AutoReconnectLiveConnection(IArchipelagoLiveConnection origin, Action<string> log)
+        public AutoReconnectLiveConnection(IArchipelagoLiveConnection origin, TimeSpan recoveryDelay)
         {
             this.origin = origin;
-            this.log = log;
+            this.recoveryDelay = recoveryDelay;
         }
+
+        public AutoReconnectLiveConnection(IArchipelagoLiveConnection origin) : this(origin, DEFAULT_RECOVERY_DELAY) { }
 
         public UniTask<Result> ConnectAsync(string adapterUrl, CancellationToken token)
         {
             cachedAdapterUrl = adapterUrl;
-            return origin.ConnectAsync(adapterUrl, token);
+            return EnsureConnectionAsync(token);
         }
 
-        public UniTask DisconnectAsync(CancellationToken token)
+        public UniTask<Result> DisconnectAsync(CancellationToken token)
         {
             cachedAdapterUrl = null;
             return origin.DisconnectAsync(token);
@@ -40,12 +46,16 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
 
         public async UniTask<EnumResult<IArchipelagoLiveConnection.ResponseError>> SendAsync(MemoryWrap data, CancellationToken token)
         {
-            var result = await origin.SendAsync(data, token);
+            EnumResult<IArchipelagoLiveConnection.ResponseError> result = await origin.SendAsync(data, token);
 
             if (result.Error?.State is IArchipelagoLiveConnection.ResponseError.ConnectionClosed)
             {
-                log("Connection error on sending, ensure to reconnect...");
-                await EnsureReconnectAsync(token);
+                ReportHub.Log(ReportCategory.COMMS_SCENE_HANDLER, "Connection error on sending, ensure to reconnect...");
+                Result connectionResult = await EnsureConnectionAsync(token);
+
+                if (!connectionResult.Success)
+                    return EnumResult<IArchipelagoLiveConnection.ResponseError>.ErrorResult(IArchipelagoLiveConnection.ResponseError.ConnectionClosed, connectionResult.ErrorMessage!);
+
                 return await SendAsync(data, token);
             }
 
@@ -54,29 +64,61 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
 
         public async UniTask<EnumResult<MemoryWrap, IArchipelagoLiveConnection.ResponseError>> ReceiveAsync(CancellationToken token)
         {
-            var result = await origin.ReceiveAsync(token);
+            EnumResult<MemoryWrap, IArchipelagoLiveConnection.ResponseError> result = await origin.ReceiveAsync(token);
 
             if (result.Error?.State is IArchipelagoLiveConnection.ResponseError.ConnectionClosed)
             {
-                log("Connection error on receiving, ensure to reconnect...");
-                await EnsureReconnectAsync(token);
+                ReportHub.Log(ReportCategory.COMMS_SCENE_HANDLER, "Connection error on receiving, ensure to reconnect...");
+
+                Result connectionResult = await EnsureConnectionAsync(token);
+
+                if (!connectionResult.Success)
+                    return EnumResult<MemoryWrap, IArchipelagoLiveConnection.ResponseError>.ErrorResult(IArchipelagoLiveConnection.ResponseError.ConnectionClosed, connectionResult.ErrorMessage!);
+
                 return await ReceiveAsync(token);
             }
 
             return result;
         }
 
-        private async UniTask EnsureReconnectAsync(CancellationToken token)
+        private async UniTask<Result> EnsureConnectionAsync(CancellationToken token)
         {
-            if (origin.IsConnected == false) await origin.ConnectAsync(CachedAdapterUrl(), token);
-        }
+            var attemptNumber = 1;
 
-        private string CachedAdapterUrl()
-        {
-            if (cachedAdapterUrl == null)
-                throw new Exception("Connection closed on receiving, no found cached adapter url");
+            if (origin.IsConnected) return Result.SuccessResult();
 
-            return cachedAdapterUrl;
+            var result = Result.ErrorResult("Not Started");
+
+            while (!result.Success)
+            {
+                if (token.IsCancellationRequested)
+                    return Result.CancelledResult();
+
+                if (cachedAdapterUrl == null)
+                {
+                    // Wait for the adapter URL to be set
+                    await UniTask.Yield();
+                    continue;
+                }
+
+                await DelayRecoveryAsync(token);
+
+                string adapter = cachedAdapterUrl!;
+                result = await origin.ConnectAsync(adapter, token);
+
+                if (!result.Success) { ReportHub.LogWarning(ReportCategory.COMMS_SCENE_HANDLER, $"Cannot ensure connection to {adapter} after {attemptNumber} attempts: {result.ErrorMessage}"); }
+
+                attemptNumber++;
+                lastRecoveryAttempt = DateTime.Now;
+            }
+
+            return Result.SuccessResult();
+
+            UniTask DelayRecoveryAsync(CancellationToken ct)
+            {
+                TimeSpan delay = recoveryDelay - (DateTime.Now - lastRecoveryAttempt);
+                return delay.TotalMilliseconds > 0 ? UniTask.Delay(delay, cancellationToken: ct) : UniTask.CompletedTask;
+            }
         }
     }
 }

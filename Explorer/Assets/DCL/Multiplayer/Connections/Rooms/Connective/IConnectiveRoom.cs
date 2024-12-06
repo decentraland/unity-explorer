@@ -1,12 +1,13 @@
 using Cysharp.Threading.Tasks;
 using LiveKit.Rooms;
+using System;
 
 namespace DCL.Multiplayer.Connections.Rooms.Connective
 {
     /// <summary>
     ///     Represent the core of the connection to a room
     /// </summary>
-    public interface IConnectiveRoom
+    public interface IConnectiveRoom : IDisposable
     {
         enum State
         {
@@ -57,6 +58,8 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
 
             public IRoom Room() =>
                 NullRoom.INSTANCE;
+
+            public void Dispose() { }
         }
     }
 
