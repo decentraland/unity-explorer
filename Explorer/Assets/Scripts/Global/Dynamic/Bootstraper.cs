@@ -229,7 +229,6 @@ namespace Global.Dynamic
             GlobalWorld globalWorld = dynamicWorldContainer.GlobalWorldFactory.Create(sceneSharedContainer.SceneFactory,
                 sceneSharedContainer.V8ActiveEngines, playerEntity);
 
-
             dynamicWorldContainer.RealmController.GlobalWorld = globalWorld;
 
             staticContainer.DebugContainerBuilder.BuildWithFlex(debugUiRoot);
@@ -263,14 +262,14 @@ namespace Global.Dynamic
 
             await dynamicWorldContainer.UserInAppInAppInitializationFlow.ExecuteAsync(
                 new UserInAppInitializationFlowParameters
-                {
-                    ShowAuthentication = debugSettings.ShowAuthentication,
-                    ShowLoading = debugSettings.ShowLoading,
-                    ReloadRealm = false,
-                    FromLogout = false,
-                    World = globalWorld.EcsWorld,
-                    PlayerEntity = playerEntity,
-                }, ct);
+                (
+                    showAuthentication: debugSettings.ShowAuthentication,
+                    showLoading: debugSettings.ShowLoading,
+                    reloadRealm: false,
+                    fromLogout: false,
+                    world: globalWorld.EcsWorld,
+                    playerEntity: playerEntity
+                ), ct);
 
             OpenDefaultUI(dynamicWorldContainer.MvcManager, ct);
             splashScreen.Hide();
