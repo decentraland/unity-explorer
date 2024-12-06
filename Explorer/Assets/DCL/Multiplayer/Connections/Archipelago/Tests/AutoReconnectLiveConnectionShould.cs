@@ -21,7 +21,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Tests
         public void Setup()
         {
             origin = Substitute.For<IArchipelagoLiveConnection>();
-            autoReconnect = new AutoReconnectLiveConnection(origin);
+            autoReconnect = new AutoReconnectLiveConnection(origin, TimeSpan.Zero); // UniTask.Delay is unpredictable in tests
         }
 
         [Test]
@@ -77,10 +77,12 @@ namespace DCL.Multiplayer.Connections.Archipelago.Tests
 
             var funcFinished = false;
 
-            var winIndex = await UniTask.WhenAny(WaitAndCancel(), func(cts.Token).ContinueWith(() => funcFinished = true));
+            func(cts.Token).ContinueWith(() => funcFinished = true).Forget();
+
+            int winIndex = await UniTask.WhenAny(WaitAndCancel(), UniTask.WaitUntil(() => funcFinished));
             Assert.That(winIndex, Is.EqualTo(0));
 
-            await UniTask.Delay(ms + 200);
+            await Task.Delay(ms + 500);
 
             Assert.That(funcFinished, Is.True);
         }

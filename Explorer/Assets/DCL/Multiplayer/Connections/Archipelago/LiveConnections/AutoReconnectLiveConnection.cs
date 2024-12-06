@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using LiveKit.Internal.FFIClients.Pools.Memory;
+using Org.BouncyCastle.Utilities;
 using System;
 using System.Threading;
 using Utility.Types;
@@ -12,7 +13,9 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
     /// </summary>
     public class AutoReconnectLiveConnection : IArchipelagoLiveConnection
     {
-        private static readonly TimeSpan RECOVERY_DELAY = TimeSpan.FromSeconds(5);
+        private static readonly TimeSpan DEFAULT_RECOVERY_DELAY = TimeSpan.FromSeconds(5);
+
+        private readonly TimeSpan recoveryDelay;
 
         private readonly IArchipelagoLiveConnection origin;
         private string? cachedAdapterUrl;
@@ -21,10 +24,13 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
 
         public bool IsConnected => origin.IsConnected;
 
-        public AutoReconnectLiveConnection(IArchipelagoLiveConnection origin)
+        public AutoReconnectLiveConnection(IArchipelagoLiveConnection origin, TimeSpan recoveryDelay)
         {
             this.origin = origin;
+            this.recoveryDelay = recoveryDelay;
         }
+
+        public AutoReconnectLiveConnection(IArchipelagoLiveConnection origin) : this(origin, DEFAULT_RECOVERY_DELAY) { }
 
         public UniTask<Result> ConnectAsync(string adapterUrl, CancellationToken token)
         {
@@ -110,7 +116,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
 
             UniTask DelayRecoveryAsync(CancellationToken ct)
             {
-                TimeSpan delay = RECOVERY_DELAY - (DateTime.Now - lastRecoveryAttempt);
+                TimeSpan delay = recoveryDelay - (DateTime.Now - lastRecoveryAttempt);
                 return delay.TotalMilliseconds > 0 ? UniTask.Delay(delay, cancellationToken: ct) : UniTask.CompletedTask;
             }
         }
