@@ -11,6 +11,7 @@ using DCL.Optimization.Pools;
 using DCL.SDKComponents.GltfNode.Components;
 using ECS.Abstract;
 using ECS.Groups;
+using ECS.LifeCycle;
 using ECS.LifeCycle.Components;
 using ECS.Unity.Transforms;
 using ECS.Unity.Transforms.Components;
@@ -24,7 +25,7 @@ namespace DCL.SDKComponents.GltfNode.Systems
     [UpdateInGroup(typeof(SyncedSimulationSystemGroup))]
     [UpdateAfter(typeof(ParentingTransformSystem))]
     // [LogCategory(ReportCategory.LogCategory)]
-    public partial class GltfNodeSystem : BaseUnityLoopSystem
+    public partial class GltfNodeSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
         private const string GLTF_ROOT_GO_NAME = "Scene/";
         private IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap;
@@ -85,7 +86,7 @@ namespace DCL.SDKComponents.GltfNode.Systems
             sdkTransform.Rotation.Value = nodeCloneTransform.localRotation;
             sdkTransform.Scale = nodeCloneTransform.localScale;
             // sdkTransform.ParentId = pbComponent.GltfContainerEntity;
-            sdkTransform.ParentId = gltfCRDTEntity;
+            // sdkTransform.ParentId = gltfCRDTEntity;
             World.Add(entity, sdkTransform, new TransformComponent(nodeCloneTransform));
             ExposedTransformUtils.Put(
                 ecsToCrdtWriter,
@@ -94,10 +95,45 @@ namespace DCL.SDKComponents.GltfNode.Systems
                 sceneData.Geometry.BaseParcelPosition,
                 false);
 
-            var component = new GltfNodeComponent();
-            // TODO: Cache stuff in GltfNodeComponent...
+            // TODO: Cache more stuff in GltfNodeComponent...
+            var component = new GltfNodeComponent()
+            {
+                originalNodeGameObject = nodeTransform.gameObject,
+                clonedNodeTransform = nodeCloneTransform
+            };
 
             World.Add(entity, component);
         }
+
+        // TODO: Add query for component deletion
+
+        [Query]
+        public void FinalizeComponents(ref GltfNodeComponent gltfNodeComponent, ref TransformComponent transformComponent)
+        {
+            // transformComponent.Dispose();
+            //
+            // // Clean GltfNode entity
+            // Transform[] children = new Transform[gltfNodeComponent.clonedNodeTransform.childCount];
+            // int index = 0;
+            // foreach (Transform child in gltfNodeComponent.clonedNodeTransform)
+            // {
+            //     children[index] = child;
+            //     index++;
+            // }
+            // foreach (Transform child in children)
+            // {
+            //     child.parent.SetParent(null);
+            // }
+            // GameObject.Destroy(gltfNodeComponent.clonedNodeTransform.gameObject);
+            //
+            // // Reset original GO
+            // gltfNodeComponent.originalNodeGameObject.SetActive(true);
+            //
+            // gltfNodeComponent.clonedNodeTransform = null;
+            // gltfNodeComponent.originalNodeGameObject = null;
+        }
+
+        public void FinalizeComponents(in Query query) =>
+            FinalizeComponentsQuery(World);
     }
 }

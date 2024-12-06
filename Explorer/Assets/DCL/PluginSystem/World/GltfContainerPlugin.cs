@@ -86,9 +86,8 @@ namespace DCL.PluginSystem.World
                 persistentEntities.SceneContainer);
 
             // GltfNode
-            GltfNodeSystem.InjectToWorld(ref builder, sharedDependencies.EntitiesMap, sharedDependencies.EcsToCRDTWriter, sdkTransformPool, sharedDependencies.SceneData);
+            finalizeWorldSystems.Add(GltfNodeSystem.InjectToWorld(ref builder, sharedDependencies.EntitiesMap, sharedDependencies.EcsToCRDTWriter, sdkTransformPool, sharedDependencies.SceneData));
             // TODO: GltfNodeLoadingState
-
 
             ResetDirtyFlagSystem<PBGltfContainer>.InjectToWorld(ref builder);
             finalizeWorldSystems.Add(CleanUpGltfContainerSystem.InjectToWorld(ref builder, assetsCache, sharedDependencies.EntityCollidersSceneCache));
