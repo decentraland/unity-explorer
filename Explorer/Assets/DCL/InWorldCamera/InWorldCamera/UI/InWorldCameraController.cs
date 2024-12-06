@@ -13,11 +13,13 @@ using System.Diagnostics;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.UI;
+using Utility;
+using CancellationTokenSource = System.Threading.CancellationTokenSource;
 
 namespace DCL.InWorldCamera.UI
 {
     /// <summary>
-    /// Handles Logic for the InWorldCamera HUD that appears when user enables InWorldCamera.
+    ///     Handles Logic for the InWorldCamera HUD that appears when user enables InWorldCamera.
     /// </summary>
     public class InWorldCameraController : ControllerBase<InWorldCameraView>
     {
@@ -30,6 +32,8 @@ namespace DCL.InWorldCamera.UI
 
         private bool shortcutPanelIsOpen;
 
+        private CancellationTokenSource ctx;
+
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Overlay;
         private SingleInstanceEntity? camera => cameraInternal ??= world.CacheCamera();
 
@@ -39,6 +43,8 @@ namespace DCL.InWorldCamera.UI
             this.mvcManager = mvcManager;
             this.storageService = storageService;
             this.sidebarButton = sidebarButton;
+
+            ctx = new CancellationTokenSource();
 
             sidebarButton.onClick.AddListener(ToggleInWorldCamera);
         }
@@ -61,6 +67,16 @@ namespace DCL.InWorldCamera.UI
             sidebarButton.onClick.RemoveListener(ToggleInWorldCamera);
 
             base.Dispose();
+        }
+
+        public void ToggleVisibility()
+        {
+            ctx = ctx.SafeRestart();
+
+            if (viewInstance!.isActiveAndEnabled)
+                viewInstance?.HideAsync(ctx.Token).Forget();
+            else
+                viewInstance?.ShowAsync(ctx.Token).Forget();
         }
 
         public void Show()

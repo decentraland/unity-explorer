@@ -4,7 +4,6 @@ using DCL.CharacterCamera;
 using DCL.Diagnostics;
 using ECS.Abstract;
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 namespace DCL.InWorldCamera.Systems
 {

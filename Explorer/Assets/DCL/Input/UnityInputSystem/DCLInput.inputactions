@@ -2997,6 +2997,15 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
+                },
+                {
+                    "name": "ShowHide",
+                    "type": "Button",
+                    "id": "cf1e68d1-cb76-496e-bcf9-7ebe352d5f9d",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
                 }
             ],
             "bindings": [
@@ -3316,6 +3325,17 @@
                     "processors": "",
                     "groups": "",
                     "action": "CameraReel",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "fe90b567-e21b-4a3a-ab23-2b25eb4b3441",
+                    "path": "<Keyboard>/u",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "ShowHide",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }
