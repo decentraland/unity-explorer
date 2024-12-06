@@ -130,7 +130,7 @@ namespace DCL.UI.SystemMenu
                         showAuthentication: true,
                         showLoading: true,
                         reloadRealm: true,
-                        fromLogout: true,
+                        loadSource: IUserInAppInitializationFlow.LoadSource.Logout,
                         world: world,
                         playerEntity: playerEntity
                     ),

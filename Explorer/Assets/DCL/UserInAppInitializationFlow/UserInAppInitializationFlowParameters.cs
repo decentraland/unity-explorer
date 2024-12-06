@@ -7,7 +7,7 @@ namespace DCL.UserInAppInitializationFlow
         public bool ShowAuthentication { get; }
         public bool ShowLoading { get; }
         public bool ReloadRealm { get; }
-        public bool FromLogout { get; }
+        public IUserInAppInitializationFlow.LoadSource LoadSource { get; }
         public World World { get; }
         public Entity PlayerEntity { get; }
 
@@ -15,7 +15,7 @@ namespace DCL.UserInAppInitializationFlow
             bool showAuthentication,
             bool showLoading,
             bool reloadRealm,
-            bool fromLogout,
+            IUserInAppInitializationFlow.LoadSource loadSource,
             World world,
             Entity playerEntity
         )
@@ -23,7 +23,7 @@ namespace DCL.UserInAppInitializationFlow
             ShowAuthentication = showAuthentication;
             ShowLoading = showLoading;
             ReloadRealm = reloadRealm;
-            FromLogout = fromLogout;
+            LoadSource = loadSource;
             World = world;
             PlayerEntity = playerEntity;
         }

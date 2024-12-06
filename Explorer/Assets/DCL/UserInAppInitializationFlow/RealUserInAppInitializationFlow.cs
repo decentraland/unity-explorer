@@ -114,7 +114,7 @@ namespace DCL.UserInAppInitializationFlow
 
             do
             {
-                if (parameters.FromLogout)
+                if (parameters.LoadSource is not IUserInAppInitializationFlow.LoadSource.StartUp)
 
                     // Disconnect current livekit connection on logout so the avatar is removed from other peers
                     await roomHub.StopAsync().Timeout(TimeSpan.FromSeconds(10));
@@ -125,7 +125,7 @@ namespace DCL.UserInAppInitializationFlow
                     await ShowAuthenticationScreenAsync(ct);
                 }
 
-                if (parameters.FromLogout)
+                if (parameters.LoadSource is IUserInAppInitializationFlow.LoadSource.Logout)
                 {
                     // If we are coming from a logout, we teleport the user to Genesis Plaza and force realm change to reset the scene properly
                     var url = URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.Genesis));
