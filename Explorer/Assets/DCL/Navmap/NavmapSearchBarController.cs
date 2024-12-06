@@ -209,6 +209,15 @@ namespace DCL.Navmap
             else
             {
                 inputBlock.Enable(InputMapComponent.Kind.SHORTCUTS);
+
+                WaitForClickThenHideHistoryResultsAsync(default).Forget();
+            }
+
+            return;
+
+            async UniTaskVoid WaitForClickThenHideHistoryResultsAsync(CancellationToken ct)
+            {
+                await UniTask.DelayFrame(5, cancellationToken: ct);
                 HideHistoryResults();
             }
         }
