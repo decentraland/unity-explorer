@@ -5,7 +5,14 @@ namespace DCL.SceneLoadingScreens.LoadingScreen
 {
     public class LoadingScreenTimeout
     {
-        public TimeSpan Value { get; private set; } = TimeSpan.FromMinutes(2);
+        public TimeSpan Value { get; private set; }
+
+        public LoadingScreenTimeout() : this(TimeSpan.FromMinutes(2)) { }
+
+        public LoadingScreenTimeout(TimeSpan timeout)
+        {
+            Value = timeout;
+        }
 
         public void Set(float seconds)
         {

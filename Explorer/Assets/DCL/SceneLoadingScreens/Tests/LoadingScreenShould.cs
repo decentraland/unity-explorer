@@ -14,8 +14,7 @@ namespace DCL.SceneLoadingScreens.Tests
 {
     public class LoadingScreenShould
     {
-        private static readonly LoadingScreenTimeout TIMEOUT = new()
-            { Value = TimeSpan.FromSeconds(60) };
+        private static readonly LoadingScreenTimeout TIMEOUT = new (TimeSpan.FromSeconds(60));
 
         /// <summary>
         ///     Happy path
@@ -118,7 +117,7 @@ namespace DCL.SceneLoadingScreens.Tests
                 return Result.CancelledResult();
             }
 
-            var loadingScreen = new LoadingScreen.LoadingScreen(mvc, new LoadingScreenTimeout { Value = TimeSpan.FromMilliseconds(200) });
+            var loadingScreen = new LoadingScreen.LoadingScreen(mvc, new LoadingScreenTimeout(TimeSpan.FromMilliseconds(200)));
             var result = await loadingScreen.ShowWhileExecuteTaskAsync(CreateOp, CancellationToken.None);
 
             // let internal operations spin to the end
