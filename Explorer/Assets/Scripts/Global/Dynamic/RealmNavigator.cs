@@ -141,7 +141,7 @@ namespace Global.Dynamic
                 ReportHub.LogError(ReportCategory.REALM,
                     $"Error trying to teleport to a realm {realm}: {loadResult.Error.Value.Message}");
 
-                return loadResult.As(ChangeRealmError.MessageError);
+                return loadResult.As(ChangeRealmErrors.AsChangeRealmError);
             }
 
             return EnumResult<ChangeRealmError>.SuccessResult();

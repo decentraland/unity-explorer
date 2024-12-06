@@ -27,6 +27,16 @@ namespace ECS.SceneLifeCycle.Realm
                 ChangeRealmError.NotReachable => TaskError.MessageError,
                 _ => throw new ArgumentOutOfRangeException(nameof(e), e, null)
             };
+
+        public static ChangeRealmError AsChangeRealmError(this TaskError e) =>
+            e switch
+            {
+                TaskError.MessageError => ChangeRealmError.MessageError,
+                TaskError.Timeout => ChangeRealmError.MessageError,
+                TaskError.Cancelled => ChangeRealmError.ChangeCancelled,
+                TaskError.UnexpectedException => ChangeRealmError.MessageError,
+                _ => throw new ArgumentOutOfRangeException(nameof(e), e, null)
+            };
     }
 
     public interface IRealmNavigator

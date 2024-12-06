@@ -363,7 +363,7 @@ namespace Global.Dynamic
                 minimap
             );
 
-            IRealmNavigator realmNavigator = new RealmNavigator(
+            IRealmNavigator baseRealmNavigator = new RealmNavigator(
                 loadingScreen,
                 container.RealmController,
                 parcelServiceContainer.TeleportController,
@@ -407,7 +407,7 @@ namespace Global.Dynamic
                 dynamicWorldParams.StartParcel,
                 staticContainer.MainPlayerAvatarBaseProxy,
                 backgroundMusic,
-                realmNavigator,
+                baseRealmNavigator,
                 loadingScreen,
                 staticContainer.FeatureFlagsProvider,
                 staticContainer.FeatureFlagsCache,
@@ -420,6 +420,13 @@ namespace Global.Dynamic
                 staticContainer.PortableExperiencesController,
                 container.RoomHub,
                 bootstrapContainer.DiagnosticsContainer);
+
+            var realmNavigator = new MainScreenFallbackRealmNavigator(
+                baseRealmNavigator,
+                container.UserInAppInAppInitializationFlow,
+                playerEntity,
+                globalWorld
+            );
 
             var worldInfoHub = new LocationBasedWorldInfoHub(
                 new WorldInfoHub(staticContainer.SingletonSharedDependencies.SceneMapping),

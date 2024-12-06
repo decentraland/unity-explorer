@@ -126,7 +126,7 @@ namespace DCL.UI.ConnectionStatusPanel
                     showAuthentication: true,
                     showLoading: true,
                     reloadRealm: true,
-                    loadSource: IUserInAppInitializationFlow.LoadSource.StartUp,
+                    loadSource: IUserInAppInitializationFlow.LoadSource.Recover,
                     world: world,
                     playerEntity: playerEntity
                 ),
