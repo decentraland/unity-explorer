@@ -24,11 +24,6 @@ namespace DCL.SDKComponents.MediaStream
         public readonly Entity Entity;
 
         /// <summary>
-        /// Half of the size of the mesh renderer (or mesh renderer group that consume the same video texture).
-        /// </summary>
-        public readonly float HalfSize;
-
-        /// <summary>
         /// Whether the video should be playing according to its priority.
         /// </summary>
         public bool IsPlaying;
@@ -43,10 +38,9 @@ namespace DCL.SDKComponents.MediaStream
         /// </summary>
         public MeshRenderer? DebugPrioritySign;
 
-        public VideoStateByPriorityComponent(Entity entity, float halfSize, bool wantsToPlay)
+        public VideoStateByPriorityComponent(Entity entity, bool wantsToPlay)
         {
             Entity = entity;
-            HalfSize = halfSize;
             WantsToPlay = wantsToPlay;
 
             Score = 0.0f;
