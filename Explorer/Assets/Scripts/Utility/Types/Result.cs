@@ -146,7 +146,7 @@ namespace Utility.Types
     {
         public static string AsMessage<TErrorEnum>(this (TErrorEnum State, string Message)? error)
         {
-            if (error.HasValue)
+            if (error.HasValue == false)
                 return "Not an error";
 
             (TErrorEnum state, string message) = error!.Value;
