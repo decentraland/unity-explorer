@@ -97,7 +97,7 @@ namespace DCL.InWorldCamera.UI
                          .OnComplete(() =>
                           {
                               animatedImage.enabled = false;
-                              animatedImage.rectTransform.localScale = Vector2.one;
+                              animatedImage.rectTransform.localScale = Vector3.one;
                           });
     }
 }

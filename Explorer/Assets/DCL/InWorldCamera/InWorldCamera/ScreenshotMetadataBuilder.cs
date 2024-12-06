@@ -97,8 +97,8 @@ namespace DCL.InWorldCamera
             return wearables.ToArray();
         }
 
-        internal void FillMetadata(Profile profile, RealmData realm, Vector2Int playerPosition, string sceneName, string placeId,
-            VisiblePerson[] visiblePeople)
+        internal void FillMetadata(Profile profile, RealmData realm, Vector2Int playerPosition,
+            string sceneName, string placeId, VisiblePerson[] visiblePeople)
         {
             if (metadata == null)
                 metadata = new ScreenshotMetadata

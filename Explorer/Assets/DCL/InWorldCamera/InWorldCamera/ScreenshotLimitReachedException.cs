@@ -2,5 +2,5 @@
 
 namespace DCL.InWorldCamera.Systems
 {
-    public class ScreenshotLimitReachedException : Exception { }
+    public sealed class ScreenshotLimitReachedException : Exception { }
 }
