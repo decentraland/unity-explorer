@@ -4,8 +4,18 @@ using System.Threading;
 
 namespace ECS.SceneLifeCycle.Realm
 {
+    public enum RealmType
+    {
+        GenesisCity,
+        World,
+    }
+
     public interface IRealmController
     {
+        RealmType Type { get; }
+
+        URLDomain? CurrentDomain { get; }
+
         IRealmData RealmData { get; }
 
         UniTask SetRealmAsync(URLDomain realm, CancellationToken ct);
@@ -18,5 +28,11 @@ namespace ECS.SceneLifeCycle.Realm
         ///     Dispose everything on application quit
         /// </summary>
         void DisposeGlobalWorld();
+    }
+
+    public static class RealmControllerExtensions
+    {
+        public static bool IsGenesis(this IRealmController realmController) =>
+            realmController.Type is RealmType.GenesisCity;
     }
 }

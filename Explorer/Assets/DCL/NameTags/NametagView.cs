@@ -58,6 +58,7 @@ namespace DCL.Nametags
 
         [field: SerializeField]
         public float MaxWidth { get; private set; }
+        public float alpha { private set; get; }
 
         private readonly Color finishColor = new (1, 1, 1, 0);
         private Vector2 messageContentAnchoredPosition;
@@ -70,7 +71,6 @@ namespace DCL.Nametags
         private Vector2 backgroundFinalSize;
         private Vector2 textContentInitialPosition;
         private Vector2 usernamePos;
-        private float alpha;
         private float previousDistance;
         private float additionalHeight;
         private readonly Color startingTextColor = new (1, 1, 1, 0);
@@ -87,7 +87,7 @@ namespace DCL.Nametags
             messageContentAnchoredPosition = new (0, chatBubbleConfiguration.bubbleMarginOffsetHeight / 3);
         }
 
-        public void SetUsername(string username, string walletId, bool hasClaimedName)
+        public void SetUsername(string username, string walletId, bool hasClaimedName, bool useVerifiedIcon)
         {
             ResetElement();
 
@@ -95,7 +95,7 @@ namespace DCL.Nametags
             cts = new CancellationTokenSource();
 
             isClaimedName = hasClaimedName;
-            VerifiedIcon.gameObject.SetActive(hasClaimedName);
+            VerifiedIcon.gameObject.SetActive(hasClaimedName && useVerifiedIcon);
             Username.text = hasClaimedName ? username : $"{username}<color=#FFFFFF66><font=\"LiberationSans SDF\">#{walletId}</font></color>";
             Username.rectTransform.sizeDelta = new Vector2(Username.preferredWidth, DEFAULT_HEIGHT);
             MessageContent.color = startingTextColor;
@@ -103,11 +103,11 @@ namespace DCL.Nametags
             float nametagMarginOffsetHeight = chatBubbleConfiguration?.nametagMarginOffsetHeight ?? DEFAULT_MARGIN_OFFSET_HEIGHT;
             float nametagMarginOffsetWidth = chatBubbleConfiguration?.nametagMarginOffsetWidth ?? DEFAULT_MARGIN_OFFSET_WIDTH;
 
-            if (hasClaimedName)
+            if (hasClaimedName && useVerifiedIcon)
             {
+                usernamePos.x = Username.rectTransform.anchoredPosition.x;
                 verifiedIconInitialPosition = new Vector2(Username.rectTransform.anchoredPosition.x + (Username.preferredWidth / 2) + (VerifiedIcon.sizeDelta.x / 2) - (nametagMarginOffsetHeight / 2), 0);
                 VerifiedIcon.anchoredPosition = verifiedIconInitialPosition;
-                usernamePos.x = Username.rectTransform.anchoredPosition.x;
                 usernamePos.x -= VerifiedIcon.sizeDelta.x / 2;
                 Username.rectTransform.anchoredPosition = usernamePos;
                 Background.size = new Vector2(Username.preferredWidth + nametagMarginOffsetWidth + VerifiedIcon.sizeDelta.x, Username.preferredHeight + nametagMarginOffsetHeight);

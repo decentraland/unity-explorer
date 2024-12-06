@@ -11,13 +11,13 @@ namespace DCL.PluginSystem.Global
 {
     public class ProfilingPlugin : IDCLGlobalPluginWithoutSettings
     {
-        private readonly IDebugViewProfiler profiler;
+        private readonly IProfiler profiler;
         private readonly IRealmData realmData;
         private readonly MemoryBudget memoryBudget;
         private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly IScenesCache scenesCache;
 
-        public ProfilingPlugin(IDebugViewProfiler profiler, IRealmData realmData, MemoryBudget memoryBudget, IDebugContainerBuilder debugContainerBuilder, IScenesCache scenesCache)
+        public ProfilingPlugin(IProfiler profiler, IRealmData realmData, MemoryBudget memoryBudget, IDebugContainerBuilder debugContainerBuilder, IScenesCache scenesCache)
         {
             this.profiler = profiler;
             this.realmData = realmData;

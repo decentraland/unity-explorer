@@ -84,7 +84,7 @@ namespace DCL.Input.Systems
         }
 
         [Query]
-        private void CheckExternalCameraLock(ref CameraComponent cameraComponent, ref CameraInput input)
+        private void CheckExternalCameraLock(ref CameraComponent cameraComponent)
         {
             shouldBeLocked = false;
             if (cameraComponent.IsDirty)
@@ -151,7 +151,7 @@ namespace DCL.Input.Systems
             }
 
             cursor.SetStyle(cursorStyle);
-            crosshairCanvas.SetCursorStyle(cursorStyle, cameraData.CameraMode == CameraMode.SDKCamera);
+            crosshairCanvas.SetCursorStyle(cursorStyle, cameraData.CameraMode == CameraMode.SDKCamera || cameraData.CameraMode == CameraMode.InWorld);
         }
 
         // We check if the gameObject is interactable or not, at least once.

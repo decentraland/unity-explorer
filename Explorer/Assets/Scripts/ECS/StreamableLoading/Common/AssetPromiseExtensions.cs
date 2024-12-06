@@ -19,7 +19,8 @@ namespace ECS.StreamableLoading.Common
                 result = promise.Result
                          ?? new StreamableLoadingResult<TAsset>(
                              reportData,
-                             new Exception("The promise generated no result")
+                             new Exception(
+                                 $"The promise of intention {promise.LoadingIntention.GetType()} generated no result")
                          );
 
                 return true;

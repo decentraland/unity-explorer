@@ -22,7 +22,6 @@ using ECS.StreamableLoading.Common.Components;
 using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.CompilerServices;
 using Utility;
 using AssetBundleManifestPromise = ECS.StreamableLoading.Common.AssetPromise<SceneRunner.Scene.SceneAssetBundleManifest, DCL.AvatarRendering.Wearables.Components.GetWearableAssetBundleManifestIntention>;
@@ -112,11 +111,10 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 URN shortenedPointer = loadingIntentionPointer;
                 loadingIntentionPointer = shortenedPointer.Shorten();
 
-                if (!wearableStorage.TryGetElement(loadingIntentionPointer, out IWearable wearable))
+                if (!wearableStorage.TryGetElement(loadingIntentionPointer, out var wearable))
                 {
-                    wearableStorage.Set(loadingIntentionPointer, IWearable.NewEmpty());
-                    missingPointers.Add(loadingIntentionPointer);
-                    continue;
+                    wearable = IWearable.NewEmpty();
+                    wearableStorage.Set(loadingIntentionPointer, wearable);
                 }
 
                 if (wearable.Model.Succeeded)
@@ -126,6 +124,12 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 }
                 else if (wearable.Model.Exception != null)
                     finishedDTOs++;
+                else if (!wearable.IsLoading)
+                {
+                    wearable.UpdateLoadingStatus(true);
+                    missingPointers.Add(loadingIntentionPointer);
+                }
+
             }
 
             if (missingPointers.Count > 0)
@@ -225,7 +229,10 @@ namespace DCL.AvatarRendering.Wearables.Systems
             if (promise.SafeTryConsume(World, GetReportCategory(), out StreamableLoadingResult<SceneAssetBundleManifest> result))
             {
                 if (result.Succeeded)
+                {
+                    AssetValidation.ValidateSceneAssetBundleManifest(result.Asset, AssetValidation.SceneIDError, result.Asset.GetSceneID());
                     wearable.ManifestResult = result;
+                }
                 else
                     SetDefaultWearables(defaultWearablesResolved, wearable, in bodyShape);
 
@@ -266,8 +273,14 @@ namespace DCL.AvatarRendering.Wearables.Systems
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static bool AllAssetsAreLoaded(IWearable wearable, BodyShape bodyShape) =>
-            wearable.WearableAssetResults[bodyShape].Results.All(static r => r is { IsInitialized: true });
+        private static bool AllAssetsAreLoaded(IWearable wearable, BodyShape bodyShape)
+        {
+            for (var i = 0; i < wearable.WearableAssetResults[bodyShape].Results.Length; i++)
+                if (wearable.WearableAssetResults[bodyShape].Results[i] is not { IsInitialized: true })
+                    return false;
+
+            return true;
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool AnyAssetHasFailed(IWearable wearable, BodyShape bodyShape) =>
@@ -298,6 +311,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 new CommonLoadingArguments(realmData.Ipfs.EntitiesActiveEndpoint, cancellationTokenSource: intention.CancellationTokenSource));
 
             var promise = AssetPromise<WearablesDTOList, GetWearableDTOByPointersIntention>.Create(World, wearableDtoByPointersIntention, partitionComponent);
+
             World.Create(promise, intention.BodyShape, partitionComponent);
         }
 

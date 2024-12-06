@@ -18,6 +18,7 @@ using System.Collections.Generic;
 using DCL.LOD;
 using DCL.Profiles;
 using ECS.StreamableLoading.NFTShapes;
+using SceneRuntime.Factory.WebSceneSource.Cache;
 using Unity.PerformanceTesting;
 using UnityEngine;
 using static Utility.Tests.TestsCategories;
@@ -33,7 +34,7 @@ namespace DCL.ResourcesUnloading.Tests
         // Caches
         private WearableStorage wearableStorage;
         private AttachmentsAssetsCache attachmentsAssetsCache;
-        private TexturesCache texturesCache;
+        private TexturesCache<GetTextureIntention> texturesCache;
         private AudioClipsCache audioClipsCache;
         private GltfContainerAssetsCache gltfContainerAssetsCache;
         private LODCache lodAssets;
@@ -43,6 +44,7 @@ namespace DCL.ResourcesUnloading.Tests
         private IProfileCache profileCache;
         private ProfileIntentionCache profileIntentionCache;
         private IComponentPoolsRegistry poolsRegistry;
+        private MemoryJsSourcesCache jsSourcesCache;
 
         private AssetBundleCache assetBundleCache;
 
@@ -54,7 +56,7 @@ namespace DCL.ResourcesUnloading.Tests
             releasablePerformanceBudget = Substitute.For<IReleasablePerformanceBudget>();
             poolsRegistry = Substitute.For<IComponentPoolsRegistry>();
 
-            texturesCache = new TexturesCache();
+            texturesCache = new TexturesCache<GetTextureIntention>();
             audioClipsCache = new AudioClipsCache();
             assetBundleCache = new AssetBundleCache();
             gltfContainerAssetsCache = new GltfContainerAssetsCache(poolsRegistry);
@@ -66,8 +68,9 @@ namespace DCL.ResourcesUnloading.Tests
             emoteStorage = new MemoryEmotesStorage();
             profileCache = new DefaultProfileCache();
             profileIntentionCache = new ProfileIntentionCache();
+            jsSourcesCache = new MemoryJsSourcesCache();
 
-            cacheCleaner = new CacheCleaner(releasablePerformanceBudget);
+            cacheCleaner = new CacheCleaner(releasablePerformanceBudget, null);
             cacheCleaner.Register(texturesCache);
             cacheCleaner.Register(audioClipsCache);
             cacheCleaner.Register(gltfContainerAssetsCache);
@@ -80,6 +83,7 @@ namespace DCL.ResourcesUnloading.Tests
             cacheCleaner.Register(emoteStorage);
             cacheCleaner.Register(profileCache);
             cacheCleaner.Register(profileIntentionCache);
+            cacheCleaner.Register(jsSourcesCache);
         }
 
         [TearDown]
@@ -119,6 +123,28 @@ namespace DCL.ResourcesUnloading.Tests
                    .MeasurementCount(20)
                    .GC()
                    .Run();
+        }
+
+        [Test, Performance]
+        [TestCase(1)]
+        [TestCase(10)]
+        [TestCase(100)]
+        public void CacheCleaningAllocations(int cachedElementsAmount)
+        {
+            // Arrange
+            releasablePerformanceBudget.TrySpendBudget().Returns(true);
+
+            for (var i = 0; i < cachedElementsAmount; i++)
+                FillCachesWithElements(hashID: $"test{i}");
+
+            SampleGroup totalAllocatedMemory = new SampleGroup("TotalAllocatedMemory", SampleUnit.Kilobyte, increaseIsBetter: false);
+
+            // Act
+            long memoryBefore = UnityEngine.Profiling.Profiler.GetTotalAllocatedMemoryLong();
+            cacheCleaner.UnloadCache();
+            long memoryAfter = UnityEngine.Profiling.Profiler.GetTotalAllocatedMemoryLong();
+
+            Measure.Custom(totalAllocatedMemory, (memoryAfter - memoryBefore) / 1024f);
         }
 
         [Category(INTEGRATION)]
@@ -165,6 +191,7 @@ namespace DCL.ResourcesUnloading.Tests
             Assert.That(attachmentsAssetsCache.cache.Count, Is.EqualTo(0));
             Assert.That(gltfContainerAssetsCache.cache.Count, Is.EqualTo(0));
             Assert.That(assetBundleCache.cache.Count, Is.EqualTo(0));
+            Assert.That(jsSourcesCache.Count, Is.EqualTo(0));
         }
 
         private void FillCachesWithElements(string hashID)
@@ -193,6 +220,8 @@ namespace DCL.ResourcesUnloading.Tests
             var cachedWearable = new CachedAttachment(wearableAsset, new GameObject());
             wearableAsset.AddReference();
             attachmentsAssetsCache.Release(cachedWearable); // add to cache
+
+            jsSourcesCache.Cache("a", new string('a', 1024 * 1024));
         }
     }
 }

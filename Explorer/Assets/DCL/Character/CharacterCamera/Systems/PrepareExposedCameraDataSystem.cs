@@ -3,7 +3,6 @@ using Arch.System;
 using Arch.SystemGroups;
 using Cinemachine;
 using DCL.Character.CharacterCamera.Components;
-using DCL.CharacterCamera.Components;
 using ECS.Abstract;
 using UnityEngine;
 

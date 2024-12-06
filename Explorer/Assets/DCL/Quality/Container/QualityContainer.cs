@@ -34,6 +34,7 @@ namespace DCL.Quality
             Settings settings = pluginSettingsContainer.GetSettings<Settings>();
 
             var realmPartitionSettings = await assetsProvisioner.ProvideMainAssetAsync(settings.RealmPartitionSettings, CancellationToken.None);
+            var videoPrioritizationSettings = await assetsProvisioner.ProvideMainAssetAsync(settings.VideoPrioritizationSettings, CancellationToken.None);
             var lodSettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.LODSettingAsset, CancellationToken.None);
             var landscapeData = await assetsProvisioner.ProvideMainAssetAsync(settings.LandscapeData, CancellationToken.None);
 
@@ -42,6 +43,7 @@ namespace DCL.Quality
                 rendererFeaturesCache,
                 settings.QualitySettings,
                 realmPartitionSettings.Value,
+                videoPrioritizationSettings.Value,
                 lodSettingsAsset.Value,
                 landscapeData.Value);
 
@@ -107,6 +109,9 @@ namespace DCL.Quality
 
             [field: SerializeField]
             public StaticSettings.RealmPartitionSettingsRef RealmPartitionSettings { get; private set; }
+
+            [field: SerializeField]
+            public StaticSettings.VideoPrioritizationSettingsRef VideoPrioritizationSettings { get; private set; }
 
             [field: SerializeField]
             public StaticSettings.LODSettingsRef LODSettingAsset { get; set; }

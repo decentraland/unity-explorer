@@ -15,7 +15,6 @@ using ECS.StreamableLoading.Common.Components;
 using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using UnityEngine;
 using Utility;
@@ -289,7 +288,15 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                 return mainFileAsset is { Succeeded: true };
             }
 
-            return results.All(static r => r is { Succeeded: true });
+            for (var i = 0; i < results.Length; i++)
+            {
+                StreamableLoadingResult<AttachmentAssetBase>? r = results[i];
+
+                if (r is not { Succeeded: true })
+                    return false;
+            }
+
+            return true;
         }
     }
 }

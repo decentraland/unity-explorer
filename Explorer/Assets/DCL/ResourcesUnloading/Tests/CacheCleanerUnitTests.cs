@@ -2,6 +2,7 @@
 using DCL.AvatarRendering.Loading.Assets;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.LOD;
+using DCL.Optimization;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.Profiles;
@@ -26,9 +27,9 @@ namespace DCL.ResourcesUnloading.Tests
         private IReleasablePerformanceBudget releasablePerformanceBudget;
         private IWearableStorage wearableStorage;
         private IAttachmentsAssetsCache attachmentsAssetsCache;
-        private IStreamableCache<Texture2DData, GetTextureIntention> texturesCache;
+        private ISizedStreamableCache<Texture2DData, GetTextureIntention> texturesCache;
         private IStreamableCache<AudioClipData, GetAudioClipIntention> audioClipsCache;
-        private IStreamableCache<Texture2DData, GetNFTShapeIntention> nftShapeCache;
+        private ISizedStreamableCache<Texture2DData, GetNFTShapeIntention> nftShapeCache;
         private IGltfContainerAssetsCache gltfContainerAssetsCache;
         private IStreamableCache<AssetBundleData, GetAssetBundleIntention> assetBundleCache;
         private IExtendedObjectPool<Material> materialPool;
@@ -37,6 +38,7 @@ namespace DCL.ResourcesUnloading.Tests
         private IRoadAssetPool roadAssetPool;
         private IEmoteStorage emoteStorage;
         private IStreamableCache<ProfileData, GetProfileIntention> profileIntentionCache;
+        private IJsSourcesCache jsSourcesCache;
 
         [SetUp]
         public void SetUp()
@@ -48,18 +50,19 @@ namespace DCL.ResourcesUnloading.Tests
             wearableStorage = Substitute.For<IWearableStorage>();
             attachmentsAssetsCache = Substitute.For<IAttachmentsAssetsCache>();
 
-            texturesCache = Substitute.For<IStreamableCache<Texture2DData, GetTextureIntention>>();
+            texturesCache = Substitute.For<ISizedStreamableCache<Texture2DData, GetTextureIntention>>();
             audioClipsCache = Substitute.For<IStreamableCache<AudioClipData, GetAudioClipIntention>>();
             assetBundleCache = Substitute.For<IStreamableCache<AssetBundleData, GetAssetBundleIntention>>();
             gltfContainerAssetsCache = Substitute.For<IGltfContainerAssetsCache>();
             profileCache = Substitute.For<IProfileCache>();
             lodAssetsPool = Substitute.For<ILODCache>();
             roadAssetPool = Substitute.For<IRoadAssetPool>();
-            nftShapeCache = Substitute.For<IStreamableCache<Texture2DData, GetNFTShapeIntention>>();
+            nftShapeCache = Substitute.For<ISizedStreamableCache<Texture2DData, GetNFTShapeIntention>>();
             emoteStorage = Substitute.For<IEmoteStorage>();
             profileIntentionCache = Substitute.For<IStreamableCache<ProfileData, GetProfileIntention>>();
+            jsSourcesCache = Substitute.For<IJsSourcesCache>();
 
-            cacheCleaner = new CacheCleaner(releasablePerformanceBudget);
+            cacheCleaner = new CacheCleaner(releasablePerformanceBudget, null);
 
             cacheCleaner.Register(wearableStorage);
             cacheCleaner.Register(texturesCache);
@@ -74,6 +77,7 @@ namespace DCL.ResourcesUnloading.Tests
             cacheCleaner.Register(nftShapeCache);
             cacheCleaner.Register(emoteStorage);
             cacheCleaner.Register(profileIntentionCache);
+            cacheCleaner.Register(jsSourcesCache);
         }
 
         [TestCase(true, 1)]
@@ -95,6 +99,7 @@ namespace DCL.ResourcesUnloading.Tests
             assetBundleCache.Received(callsAmount).Unload(releasablePerformanceBudget, Arg.Any<int>());
             materialPool.Received(callsAmount).ClearThrottled(Arg.Any<int>());
             profileCache.Received(callsAmount).Unload(releasablePerformanceBudget, Arg.Any<int>());
+            jsSourcesCache.Received(callsAmount).Unload(releasablePerformanceBudget);
         }
     }
 }

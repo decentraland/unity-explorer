@@ -41,13 +41,14 @@ namespace DCL.Navmap
         public event Action<PlacesData.PlaceInfo?> OnSetAsDestination;
         private readonly IChatMessagesBus chatMessagesBus;
 
-
         public FloatingPanelController(
             FloatingPanelView view,
             IPlacesAPIService placesAPIService,
             IWebRequestController webRequestController,
-            IMapPathEventBus mapPathEventBus, IChatMessagesBus chatMessagesBus,
-            NavmapZoomController zoomController)
+            IMapPathEventBus mapPathEventBus,
+            IChatMessagesBus chatMessagesBus,
+            NavmapZoomController zoomController
+        )
         {
             this.view = view;
             this.placesAPIService = placesAPIService;

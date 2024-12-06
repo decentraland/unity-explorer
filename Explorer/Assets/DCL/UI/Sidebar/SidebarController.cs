@@ -11,6 +11,7 @@ using DCL.SidebarBus;
 using DCL.UI.ProfileElements;
 using DCL.Web3.Identities;
 using MVC;
+using System;
 using System.Threading;
 using Utility;
 
@@ -28,9 +29,12 @@ namespace DCL.UI.Sidebar
         private readonly IProfileRepository profileRepository;
         private readonly IWeb3IdentityCache identityCache;
         private readonly IWebBrowser webBrowser;
+        private readonly bool includeCameraReel;
 
         private CancellationTokenSource profileWidgetCts = new ();
         private CancellationTokenSource systemMenuCts = new ();
+
+        public event Action? HelpOpened;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
 
@@ -45,7 +49,8 @@ namespace DCL.UI.Sidebar
             ChatEntryConfigurationSO chatEntryConfiguration,
             IWeb3IdentityCache identityCache,
             IProfileRepository profileRepository,
-            IWebBrowser webBrowser)
+            IWebBrowser webBrowser,
+            bool includeCameraReel)
             : base(viewFactory)
         {
             this.mvcManager = mvcManager;
@@ -58,6 +63,7 @@ namespace DCL.UI.Sidebar
             this.identityCache = identityCache;
             this.profileRepository = profileRepository;
             this.webBrowser = webBrowser;
+            this.includeCameraReel = includeCameraReel;
         }
 
         public override void Dispose()
@@ -77,6 +83,7 @@ namespace DCL.UI.Sidebar
 
             viewInstance.settingsButton.onClick.AddListener(() => OpenExplorePanelInSection(ExploreSections.Settings));
             viewInstance.mapButton.onClick.AddListener(() => OpenExplorePanelInSection(ExploreSections.Navmap));
+
             viewInstance.ProfileWidget.OpenProfileButton.onClick.AddListener(OpenProfileMenu);
             viewInstance.sidebarSettingsButton.onClick.AddListener(OpenSidebarSettings);
             viewInstance.notificationsButton.onClick.AddListener(OpenNotificationsPanel);
@@ -86,10 +93,21 @@ namespace DCL.UI.Sidebar
             notificationsBusController.SubscribeToNotificationTypeReceived(NotificationType.REWARD_ASSIGNMENT, OnRewardNotificationReceived);
             notificationsBusController.SubscribeToNotificationTypeClick(NotificationType.REWARD_ASSIGNMENT, OnRewardNotificationClicked);
             viewInstance.sidebarSettingsWidget.OnViewHidden += OnSidebarSettingsClosed;
+
+            if (includeCameraReel)
+                viewInstance.cameraReelButton.onClick.AddListener(() => OpenExplorePanelInSection(ExploreSections.CameraReel));
+            else
+            {
+                viewInstance.cameraReelButton.gameObject.SetActive(false);
+                viewInstance.InWorldCameraButton.gameObject.SetActive(false);
+            }
         }
 
-        private void OnHelpButtonClicked() =>
+        private void OnHelpButtonClicked()
+        {
             webBrowser.OpenUrl(DecentralandUrl.Help);
+            HelpOpened?.Invoke();
+        }
 
         private void OnAutoHideToggleChanged(bool value)
         {

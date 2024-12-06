@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using System.Threading;
+using Utility.Animations;
 using static DCL.Audio.Avatar.AvatarAudioSettings;
 
 namespace DCL.CharacterMotion.Animation

@@ -13,14 +13,13 @@ using DCL.SDKComponents.NFTShape.System;
 using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
-using DCL.WebRequests.WebContentSizes;
-using DCL.WebRequests.WebContentSizes.Sizes;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.DeferredLoading;
 using ECS.StreamableLoading.NFTShapes;
 using ECS.StreamableLoading.NFTShapes.URNs;
 using ECS.Unity.Transforms.Components;
+using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -30,11 +29,14 @@ namespace DCL.SDKComponents.NFTShape.Demo
     {
         private readonly IDemoWorld origin;
 
-        public NFTShapeDemoWorld(World world, IFramesPool framesPool, IReadOnlyFramePrefabs framePrefabs, params (PBNftShape textShape, PBVisibilityComponent visibility, PBBillboard billboard)[] list) : this(
-            world, framesPool, framePrefabs, list.AsReadOnly()
-        ) { }
+        public NFTShapeDemoWorld(World world, IFramesPool framesPool,
+            IReadOnlyFramePrefabs framePrefabs, IComponentPool<PartitionComponent> partitionComponentPool,
+            params (PBNftShape textShape, PBVisibilityComponent visibility, PBBillboard billboard)[] list)
+            : this(world, framesPool, framePrefabs, partitionComponentPool, list.AsReadOnly()) { }
 
-        public NFTShapeDemoWorld(World world, IFramesPool framesPool, IReadOnlyFramePrefabs framePrefabs, IReadOnlyList<(PBNftShape textShape, PBVisibilityComponent visibility, PBBillboard billboard)> list)
+        public NFTShapeDemoWorld(World world, IFramesPool framesPool,
+            IReadOnlyFramePrefabs framePrefabs, IComponentPool<PartitionComponent> partitionComponentPool,
+            IReadOnlyList<(PBNftShape textShape, PBVisibilityComponent visibility, PBBillboard billboard)> list)
         {
             var buffer = new EntityEventBuffer<NftShapeRendererComponent>(1);
 
@@ -43,21 +45,19 @@ namespace DCL.SDKComponents.NFTShape.Demo
                 w =>
                 {
                     foreach ((PBNftShape nftShape, PBVisibilityComponent visibility, PBBillboard billboard) in list)
-                        w.Create(nftShape, visibility, billboard, NewTransform(), new PartitionComponent { IsBehind = false, RawSqrDistance = 0 });
+                    {
+                        PartitionComponent partitionComponent = partitionComponentPool.Get();
+                        partitionComponent.IsBehind = false;
+                        partitionComponent.RawSqrDistance = 0f;
+
+                        w.Create(nftShape, visibility, billboard, NewTransform(), partitionComponent);
+                    }
                 },
                 w => new AssetsDeferredLoadingSystem(w, new NullPerformanceBudget(), new NullPerformanceBudget()),
                 w => new LoadNFTShapeSystem(
                     w,
                     new NftShapeCache(),
-                    new WebRequestController(
-                        new MemoryWeb3IdentityCache()
-                    ),
-                    new IWebContentSizes.Default(
-                        new MaxSize
-                        {
-                            maxSizeInBytes = 300 * 1024 * 1024
-                        }
-                    )
+                    IWebRequestController.DEFAULT
                 ).InitializeAndReturnSelf(),
                 w => new LoadCycleNftShapeSystem(w, new BasedURNSource(new DecentralandUrlsSource(DecentralandEnvironment.Org))),
                 w => new InstantiateNftShapeSystem(w, new PoolNFTShapeRendererFactory(new ComponentPoolsRegistry(), framesPool), new FrameTimeCapBudget.Default(), framePrefabs, buffer),

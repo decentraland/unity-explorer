@@ -16,12 +16,14 @@ using DCL.SDKComponents.SceneUI.Systems.UIPointerEvents;
 using DCL.SDKComponents.SceneUI.Systems.UIText;
 using DCL.SDKComponents.SceneUI.Systems.UITransform;
 using DCL.SDKComponents.SceneUI.Utils;
+using DCL.Utilities;
 using ECS.ComponentsPooling.Systems;
 using ECS.LifeCycle;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.UIElements;
 
 namespace DCL.PluginSystem.World
@@ -36,8 +38,9 @@ namespace DCL.PluginSystem.World
         private readonly MemoryBudget memoryBudgetProvider;
         private readonly IComponentPool<UITransformComponent> transformsPool;
         private readonly IInputBlock inputBlock;
+        public readonly ObjectProxy<DCLInput> inputProxy;
 
-        public SceneUIPlugin(ECSWorldSingletonSharedDependencies singletonSharedDependencies, IAssetsProvisioner assetsProvisioner, IInputBlock inputBlock)
+        public SceneUIPlugin(ECSWorldSingletonSharedDependencies singletonSharedDependencies, IAssetsProvisioner assetsProvisioner, IInputBlock inputBlock, ObjectProxy<DCLInput> inputProxy)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.inputBlock = inputBlock;
@@ -50,6 +53,7 @@ namespace DCL.PluginSystem.World
 
             frameTimeBudgetProvider = singletonSharedDependencies.FrameTimeBudget;
             memoryBudgetProvider = singletonSharedDependencies.MemoryBudget;
+            this.inputProxy = inputProxy;
         }
 
         public async UniTask InitializeAsync(Settings settings, CancellationToken ct)
@@ -60,6 +64,8 @@ namespace DCL.PluginSystem.World
             canvas.rootVisualElement.styleSheets.Add(scenesUIStyleSheet);
             canvas.rootVisualElement.AddToClassList("sceneUIMainCanvas");
             canvas.rootVisualElement.pickingMode = PickingMode.Ignore;
+
+            if (inputProxy.Configured) {inputProxy.Object.Shortcuts.ShowHideUI.performed += ChangeUIShowState; }
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
@@ -89,7 +95,16 @@ namespace DCL.PluginSystem.World
             finalizeWorldSystems.Add(ReleasePoolableComponentSystem<Label, UITextComponent>.InjectToWorld(ref builder, componentPoolsRegistry));
         }
 
-        public void Dispose() { }
+        private void ChangeUIShowState(InputAction.CallbackContext callbackContext)
+        {
+            if (canvas != null)
+                canvas.rootVisualElement.parent.style.display = canvas.rootVisualElement.parent.style.display.value == DisplayStyle.Flex ? DisplayStyle.None : DisplayStyle.Flex;
+        }
+
+        public void Dispose()
+        {
+            if (inputProxy.Configured) {inputProxy.Object.Shortcuts.ShowHideUI.performed -= ChangeUIShowState; }
+        }
 
         [Serializable]
         public class Settings : IDCLPluginSettings

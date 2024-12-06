@@ -4,6 +4,7 @@ using DCL.Chat.MessageBus;
 using DCL.MapRenderer;
 using DCL.Minimap;
 using DCL.PlacesAPIService;
+using DCL.SceneRestrictionBusController.SceneRestrictionBus;
 using DCL.UI.MainUI;
 using ECS;
 using ECS.SceneLifeCycle;
@@ -29,10 +30,14 @@ namespace DCL.PluginSystem.Global
         private readonly MainUIView mainUIView;
         private readonly IMapPathEventBus mapPathEventBus;
         private MinimapController minimapController;
+        private readonly ISceneRestrictionBusController sceneRestrictionBusController;
+
+        private readonly string startParcelInGenesis;
 
         public MinimapPlugin(IMVCManager mvcManager, MapRendererContainer mapRendererContainer, IPlacesAPIService placesAPIService,
             IRealmData realmData, IChatMessagesBus chatMessagesBus, IRealmNavigator realmNavigator, IScenesCache scenesCache, MainUIView mainUIView,
-            IMapPathEventBus mapPathEventBus)
+            IMapPathEventBus mapPathEventBus, ISceneRestrictionBusController sceneRestrictionBusController,
+            string startParcelInGenesis)
         {
             this.mvcManager = mvcManager;
             this.mapRendererContainer = mapRendererContainer;
@@ -43,6 +48,8 @@ namespace DCL.PluginSystem.Global
             this.scenesCache = scenesCache;
             this.mapPathEventBus = mapPathEventBus;
             this.mainUIView = mainUIView;
+            this.sceneRestrictionBusController = sceneRestrictionBusController;
+            this.startParcelInGenesis = startParcelInGenesis;
         }
 
         public void Dispose()
@@ -72,7 +79,9 @@ namespace DCL.PluginSystem.Global
                 chatMessagesBus,
                 realmNavigator,
                 scenesCache,
-                mapPathEventBus);
+                mapPathEventBus,
+                sceneRestrictionBusController,
+                startParcelInGenesis);
 
             mvcManager.RegisterController(minimapController);
         }

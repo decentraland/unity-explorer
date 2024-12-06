@@ -4,6 +4,7 @@ using CrdtEcsBridge.Components;
 using DCL.CharacterCamera;
 using DCL.CharacterTriggerArea.Components;
 using DCL.ECSComponents;
+using DCL.SceneRestrictionBusController.SceneRestrictionBus;
 using DCL.SDKComponents.CameraModeArea.Components;
 using DCL.SDKComponents.CameraModeArea.Systems;
 using DCL.Utilities;
@@ -35,7 +36,7 @@ namespace DCL.SDKComponents.CameraModeArea.Tests
             var cameraEntityProxy = new ObjectProxy<Entity>();
             cameraEntityProxy.SetObject(cameraEntity);
 
-            system = new CameraModeAreaHandlerSystem(world, globalWorld, cameraEntityProxy, Substitute.For<IExposedCameraData>());
+            system = new CameraModeAreaHandlerSystem(world, globalWorld, cameraEntityProxy, Substitute.For<IExposedCameraData>(), Substitute.For<ISceneRestrictionBusController>());
 
             entity = world.Create(PartitionComponent.TOP_PRIORITY);
             AddTransformToEntity(entity);

@@ -26,7 +26,8 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.Playgrounds
                     new DebugAnalyticsService(),
                     new ApplicationParametersParser(),
                     analyticsConfiguration.EnsureNotNull(),
-                    new LauncherTraits()
+                    new LauncherTraits(),
+                    new BuildData()
                 ),
                 new RealmData(),
                 new Profiler(),

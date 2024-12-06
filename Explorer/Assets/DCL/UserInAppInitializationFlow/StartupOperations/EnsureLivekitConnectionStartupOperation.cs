@@ -8,10 +8,10 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
 {
     public class EnsureLivekitConnectionStartupOperation : IStartupOperation
     {
-        private readonly RealFlowLoadingStatus loadingStatus;
+        private readonly ILoadingStatus loadingStatus;
         private readonly IHealthCheck healthCheck;
 
-        public EnsureLivekitConnectionStartupOperation(RealFlowLoadingStatus loadingStatus, IHealthCheck healthCheck)
+        public EnsureLivekitConnectionStartupOperation(ILoadingStatus loadingStatus, IHealthCheck healthCheck)
         {
             this.loadingStatus = loadingStatus;
             this.healthCheck = healthCheck;
@@ -19,14 +19,13 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
 
         public async UniTask<Result> ExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct)
         {
-            (bool success, string? errorMessage) result = await healthCheck.IsRemoteAvailableAsync(ct);
+            float finalizationProgress = loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.LiveKitConnectionEnsuring);
+            Result result = await healthCheck.IsRemoteAvailableAsync(ct);
 
-            if (result.success)
-                report.SetProgress(loadingStatus.SetStage(RealFlowLoadingStatus.Stage.LiveKitConnectionEnsured));
+            if (result.Success)
+                report.SetProgress(finalizationProgress);
 
-            return result.success
-                ? Result.SuccessResult()
-                : Result.ErrorResult(result.errorMessage!);
+            return result;
         }
     }
 }

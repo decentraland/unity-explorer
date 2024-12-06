@@ -22,6 +22,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 12f48d0297bd3f746b92a97878478086
+    m_Address: VideoPrioritizationSettings
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 134b7bf082a11ae499e9e62958051ca7
     m_Address: AnalyticsConfiguration
     m_ReadOnly: 0
@@ -49,6 +54,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: b47b66eab8da46b4cbcc30100e4194e0
     m_Address: SettingsMenuConfiguration
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b5fb13ac5db3bbb49a6e6aa3d2df0309
+    m_Address: Assets/DCL/PerformanceAndDiagnostics/Analytics/BuildData.asset
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

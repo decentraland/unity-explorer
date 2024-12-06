@@ -37,10 +37,16 @@ namespace DCL.PluginSystem.Global
             public AssetReferenceTexture DefaultEmmisive512 { get; private set; }
 
             [field: SerializeField]
-            public AssetReferenceTexture DefaultMask256 { get; private set; }
+            public AssetReferenceTexture DefaultMouthBrowMask256 { get; private set; }
 
             [field: SerializeField]
-            public AssetReferenceTexture DefaultMask512 { get; private set; }
+            public AssetReferenceTexture DefaultMouthBrowMask512 { get; private set; }
+
+            [field: SerializeField]
+            public AssetReferenceTexture DefaultEyesMask256 { get; private set; }
+
+            [field: SerializeField]
+            public AssetReferenceTexture DefaultEyesMask512 { get; private set; }
         }
 
         public static async UniTask<(DefaultTexturesContainer?, bool)> CreateAsync(
@@ -64,8 +70,10 @@ namespace DCL.PluginSystem.Global
                 defaultTextures.Add(new TextureArrayKey(TextureArrayConstants.NORMAL_MAP_TEX_ARR, 512), (await assetsProvisioner.ProvideMainAssetAsync(settings.DefaultNormal512, ct: ct)).Value);
                 defaultTextures.Add(new TextureArrayKey(TextureArrayConstants.EMISSIVE_MAP_TEX_ARR, 256), (await assetsProvisioner.ProvideMainAssetAsync(settings.DefaultEmmisive256, ct: ct)).Value);
                 defaultTextures.Add(new TextureArrayKey(TextureArrayConstants.EMISSIVE_MAP_TEX_ARR, 512), (await assetsProvisioner.ProvideMainAssetAsync(settings.DefaultEmmisive512, ct: ct)).Value);
-                defaultTextures.Add(new TextureArrayKey(TextureArrayConstants.MASK_ARR_TEX_SHADER_ID, 256), (await assetsProvisioner.ProvideMainAssetAsync(settings.DefaultMask256, ct: ct)).Value);
-                defaultTextures.Add(new TextureArrayKey(TextureArrayConstants.MASK_ARR_TEX_SHADER_ID, 512), (await assetsProvisioner.ProvideMainAssetAsync(settings.DefaultMask512, ct: ct)).Value);
+                defaultTextures.Add(new TextureArrayKey(TextureArrayConstants.MASK_ARR_TEX_SHADER_ID, 256, 0), (await assetsProvisioner.ProvideMainAssetAsync(settings.DefaultMouthBrowMask256, ct: ct)).Value);
+                defaultTextures.Add(new TextureArrayKey(TextureArrayConstants.MASK_ARR_TEX_SHADER_ID, 512, 0), (await assetsProvisioner.ProvideMainAssetAsync(settings.DefaultMouthBrowMask512, ct: ct)).Value);
+                defaultTextures.Add(new TextureArrayKey(TextureArrayConstants.MASK_ARR_TEX_SHADER_ID, 256, 1), (await assetsProvisioner.ProvideMainAssetAsync(settings.DefaultEyesMask256, ct: ct)).Value);
+                defaultTextures.Add(new TextureArrayKey(TextureArrayConstants.MASK_ARR_TEX_SHADER_ID, 512, 1), (await assetsProvisioner.ProvideMainAssetAsync(settings.DefaultEyesMask512, ct: ct)).Value);
 
                 // Compatibility for PBR shader
                 defaultTextures.Add(new TextureArrayKey(TextureArrayConstants.BASE_MAP_TEX_ARR, 256), mainTex256);

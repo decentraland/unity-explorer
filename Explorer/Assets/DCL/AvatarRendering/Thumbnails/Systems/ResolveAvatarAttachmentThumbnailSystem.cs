@@ -32,12 +32,15 @@ namespace DCL.AvatarRendering.Thumbnails.Systems
         private void CompleteWearableABThumbnailDownload(Entity entity, ref IAvatarAttachment wearable, ref AssetBundlePromise promise)
         {
             if (promise.TryForgetWithEntityIfCancelled(entity, World!))
+            {
+                wearable.ThumbnailAssetResult = null;
                 return;
+            }
+
 
             if (promise.TryConsume(World, out var result))
             {
                 wearable.ThumbnailAssetResult = result.ToFullRectSpriteData(LoadThumbnailsUtils.DEFAULT_THUMBNAIL);
-
                 World.Destroy(entity);
             }
         }
@@ -46,12 +49,14 @@ namespace DCL.AvatarRendering.Thumbnails.Systems
         private void CompleteWearableThumbnailDownload(Entity entity, ref IAvatarAttachment wearable, ref Promise promise)
         {
             if (promise.TryForgetWithEntityIfCancelled(entity, World!))
+            {
+                wearable.ThumbnailAssetResult = null;
                 return;
+            }
 
             if (promise.TryConsume(World, out StreamableLoadingResult<Texture2DData> result))
             {
                 wearable.ThumbnailAssetResult = result.ToFullRectSpriteData(LoadThumbnailsUtils.DEFAULT_THUMBNAIL);
-
                 World.Destroy(entity);
             }
         }

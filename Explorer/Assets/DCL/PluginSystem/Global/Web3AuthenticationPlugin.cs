@@ -7,6 +7,7 @@ using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.DebugUtilities;
 using DCL.FeatureFlags;
+using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Profiles.Self;
 using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.Web3.Authenticators;
@@ -16,6 +17,7 @@ using MVC;
 using System;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
 
 namespace DCL.PluginSystem.Global
 {
@@ -77,10 +79,9 @@ namespace DCL.PluginSystem.Global
         public async UniTask InitializeAsync(Web3AuthPluginSettings settings, CancellationToken ct)
         {
             AuthenticationScreenView authScreenPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.AuthScreenPrefab, ct: ct)).Value;
-
             ControllerBase<AuthenticationScreenView, ControllerNoData>.ViewFactoryMethod authScreenFactory = AuthenticationScreenController.CreateLazily(authScreenPrefab, null);
 
-            authenticationScreenController = new AuthenticationScreenController(authScreenFactory, web3Authenticator, selfProfile, featureFlagsCache, webBrowser, storedIdentityProvider, characterPreviewFactory, splashScreen, characterPreviewEventBus, audioMixerVolumesController, world);
+            authenticationScreenController = new AuthenticationScreenController(authScreenFactory, web3Authenticator, selfProfile, featureFlagsCache, webBrowser, storedIdentityProvider, characterPreviewFactory, splashScreen, characterPreviewEventBus, audioMixerVolumesController, settings.BuildData, world);
             mvcManager.RegisterController(authenticationScreenController);
         }
 
@@ -94,8 +95,8 @@ namespace DCL.PluginSystem.Global
     {
         [field: Header(nameof(Web3AuthenticationPlugin) + "." + nameof(Web3AuthPluginSettings))]
         [field: Space]
-        [field: SerializeField]
-        public AuthScreenObjectRef AuthScreenPrefab { get; private set; }
+        [field: SerializeField] public AuthScreenObjectRef AuthScreenPrefab { get; private set; }
+        [field: SerializeField] public BuildData BuildData { get; private set; }
 
         [Serializable]
         public class AuthScreenObjectRef : ComponentReference<AuthenticationScreenView>

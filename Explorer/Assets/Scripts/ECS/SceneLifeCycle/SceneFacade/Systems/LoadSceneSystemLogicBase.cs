@@ -86,7 +86,7 @@ namespace ECS.SceneLifeCycle.Systems
                 var sceneAbDto = await webRequestController.GetAsync(new CommonArguments(url), ct, reportCategory)
                     .CreateFromJson<SceneAbDto>(WRJsonParser.Unity, WRThreadFlags.SwitchToThreadPool);
 
-                if (sceneAbDto.ValidateVersion())
+                if (AssetValidation.ValidateSceneAbDto(sceneAbDto, AssetValidation.WearableIDError, sceneId))
                     return new SceneAssetBundleManifest(assetBundleURL, sceneAbDto.Version, sceneAbDto.files, sceneId, sceneAbDto.Date);
 
                 ReportHub.LogError(reportCategory.WithSessionStatic(), $"Asset Bundle Version Mismatch for {sceneId}");

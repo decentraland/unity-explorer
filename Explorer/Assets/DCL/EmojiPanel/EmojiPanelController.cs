@@ -38,14 +38,13 @@ namespace DCL.Emoji
             EmojiPanelConfigurationSO emojiPanelConfiguration,
             TextAsset emojiMappingJson,
             EmojiSectionView emojiSectionPrefab,
-            EmojiButton emojiButtonPrefab,
-            IInputBlock inputBlock)
+            EmojiButton emojiButtonPrefab)
         {
             this.view = view;
             this.emojiPanelConfiguration = emojiPanelConfiguration;
             this.emojiSectionPrefab = emojiSectionPrefab;
             this.emojiButtonPrefab = emojiButtonPrefab;
-            emojiSearchController = new EmojiSearchController(view.SearchPanelView, view.EmojiSearchedContent, emojiButtonPrefab, inputBlock);
+            emojiSearchController = new EmojiSearchController(view.SearchPanelView, view.EmojiSearchedContent, emojiButtonPrefab);
             emojiSearchController.OnSearchTextChanged += OnSearchTextChanged;
             emojiSearchController.OnEmojiSelected += emoji => OnEmojiSelected?.Invoke(emoji);
             foreach (var emojiData in JsonConvert.DeserializeObject<Dictionary<string, string>>(emojiMappingJson.text))

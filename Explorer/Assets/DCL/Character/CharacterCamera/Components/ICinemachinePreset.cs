@@ -17,6 +17,7 @@ namespace DCL.CharacterCamera.Components
         internal ICinemachineFirstPersonCameraData FirstPersonCameraData { get; }
 
         internal ICinemachineFreeCameraData FreeCameraData { get; }
+        internal ICinemachineFreeCameraData InWorldCameraData { get; }
 
         internal int ShoulderChangeSpeed { get; }
     }

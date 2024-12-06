@@ -15,7 +15,7 @@ namespace DCL.CharacterMotion.Systems
     /// </summary>
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     [LogCategory(ReportCategory.MOTION)]
-    [UpdateAfter(typeof(InterpolateCharacterSystem))]
+    [UpdateAfter(typeof(ChangeCharacterPositionGroup))]
     public partial class ExposePlayerTransformSystem : BaseUnityLoopSystem
     {
         private readonly Entity playerEntity;

@@ -64,6 +64,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         internal readonly List<MaterialSetup> materials;
         internal readonly UnityEngine.ComputeShader computeShaderInstance;
 
+        private static readonly int SHADER_FADINGDISTANCE_PARAM_ID = Shader.PropertyToID("_FadeDistance");
         private bool disposed;
 
         /// <summary>
@@ -81,6 +82,19 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             VertsOutRegion = default(FixedComputeBufferHandler.Slice);
 
             disposed = false;
+        }
+
+        /// <summary>
+        /// Changes the Fading Position parameter of all the materials of the meshes that form the avatar, including facial features.
+        /// This parameter is used for computing the transparency of the avatar regarding the distance of the camera to it.
+        /// </summary>
+        /// <param name="position">The reference position used for computing the distance from the avatar to the camera.</param>
+        public readonly void SetFadingDistance(float distance)
+        {
+            for (int i = 0; i < materials.Count; ++i)
+            {
+                materials[i].usedMaterial.SetFloat(SHADER_FADINGDISTANCE_PARAM_ID, distance);
+            }
         }
 
         public void Dispose(IAvatarMaterialPoolHandler objectPool, IObjectPool<UnityEngine.ComputeShader> computeShaderSkinningPool)

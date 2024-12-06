@@ -30,7 +30,7 @@ namespace DCL.DebugUtilities.UIBindings
         /// </summary>
         public event EventCallback<ChangeEvent<T>> OnValueChanged;
 
-        public ElementBinding(T defaultValue, EventCallback<ChangeEvent<T>> onValueChange = null)
+        public ElementBinding(T defaultValue, EventCallback<ChangeEvent<T>>? onValueChange = null)
         {
             Value = defaultValue;
             if (onValueChange != null) OnValueChanged += onValueChange;

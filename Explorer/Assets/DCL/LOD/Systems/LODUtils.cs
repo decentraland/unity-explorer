@@ -29,7 +29,7 @@ namespace DCL.LOD.Systems
                .ToArray();
 
         private static readonly ListObjectPool<TextureArraySlot?> TEXTURE_ARRAY_SLOTS = new (listInstanceDefaultCapacity: 10, defaultCapacity: 20);
-        public static string LOD_SHADER = "DCL/Scene_TexArray";
+        private static string LOD_SHADER = "DCL/Scene_TexArray";
         private static readonly List<Material> TEMP_MATERIALS = new (3);
 
         public static TextureArraySlot?[] ApplyTextureArrayToLOD(string sceneID, Vector2Int baseCoordinate, GameObject instantiatedLOD, TextureArrayContainer lodTextureArrayContainer)
@@ -76,21 +76,7 @@ namespace DCL.LOD.Systems
         {
             //We have to report ready scenes for LOD_0 which are not SDK7. Only then we can consider this scenes as loaded
             if (!sceneDefinitionComponent.IsSDK7 && sceneLODInfo.HasLOD(0))
-                ReportSDK6SceneLoaded(sceneDefinitionComponent, sceneReadinessReportQueue, scenesCache);
-        }
-
-        public static void ReportSDK6SceneLoaded(SceneDefinitionComponent sceneDefinitionComponent,
-            ISceneReadinessReportQueue sceneReadinessReportQueue, IScenesCache scenesCache)
-        {
-            scenesCache.AddNonRealScene(sceneDefinitionComponent.Parcels);
-            if (sceneReadinessReportQueue.TryDequeue(sceneDefinitionComponent.Parcels, out var reports))
-            {
-                for (var i = 0; i < reports!.Value.Count; i++)
-                {
-                    var report = reports.Value[i];
-                    report.SetProgress(1f);
-                }
-            }
+                SceneUtils.ReportSceneLoaded(sceneDefinitionComponent, sceneReadinessReportQueue, scenesCache);
         }
     }
 }

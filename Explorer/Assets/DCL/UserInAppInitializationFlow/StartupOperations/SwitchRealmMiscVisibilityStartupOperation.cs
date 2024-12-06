@@ -6,22 +6,22 @@ using Utility.Types;
 
 namespace DCL.UserInAppInitializationFlow.StartupOperations
 {
-    public class SwitchRealmMiscVisibilityStartupOperation : IStartupOperation
+    public class SwitchRealmMiscVisibilityStartupOperation : StartUpOperationBase
     {
-        private readonly RealFlowLoadingStatus loadingStatus;
+        private readonly ILoadingStatus loadingStatus;
         private readonly IRealmNavigator realmNavigator;
 
-        public SwitchRealmMiscVisibilityStartupOperation(RealFlowLoadingStatus loadingStatus, IRealmNavigator realmNavigator)
+        public SwitchRealmMiscVisibilityStartupOperation(ILoadingStatus loadingStatus, IRealmNavigator realmNavigator)
         {
             this.loadingStatus = loadingStatus;
             this.realmNavigator = realmNavigator;
         }
 
-        public async UniTask<Result> ExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct)
+        protected override async UniTask InternalExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct)
         {
-            await realmNavigator.SwitchMiscVisibilityAsync();
-            report.SetProgress(loadingStatus.SetStage(RealFlowLoadingStatus.Stage.EnvironmentMiscSet));
-            return Result.SuccessResult();
+            float finalizationProgress = loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.EnvironmentMiscSetting);
+            realmNavigator.SwitchMiscVisibilityAsync();
+            report.SetProgress(finalizationProgress);
         }
     }
 }

@@ -51,11 +51,7 @@ namespace DCL.Backpack
                 avatarSlotView.OnSlotButtonPressed += OnSlotButtonPressed;
                 avatarSlotView.OverrideHide.onClick.AddListener(() => RemoveForceRender(avatarSlotView.Category));
                 avatarSlotView.NoOverride.onClick.AddListener(() => AddForceRender(avatarSlotView.Category));
-                avatarSlotView.UnequipButton.onClick.AddListener(() =>
-                {
-                    RemoveForceRender(avatarSlotView.Category);
-                    backpackCommandBus.SendCommand(new BackpackUnEquipWearableCommand(avatarSlotView.SlotWearableUrn));
-                });
+                avatarSlotView.UnequipButton.onClick.AddListener(() => backpackCommandBus.SendCommand(new BackpackUnEquipWearableCommand(avatarSlotView.SlotWearableUrn)));
             }
         }
 

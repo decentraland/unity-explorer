@@ -172,6 +172,7 @@ namespace DCL.PluginSystem.Global
                 avatarTransformMatrixJobWrapper);
 
             NametagPlacementSystem.InjectToWorld(ref builder, nametagViewPool, chatEntryConfiguration, nametagsData, chatBubbleConfiguration);
+            NameTagCleanUpSystem.InjectToWorld(ref builder, nametagsData, nametagViewPool);
 
             //Debug scripts
             InstantiateRandomAvatarsSystem.InjectToWorld(ref builder, debugContainerBuilder, realmData, transformPoolRegistry, avatarRandomizerAsset);
@@ -192,11 +193,9 @@ namespace DCL.PluginSystem.Global
         {
             NametagView nametagPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.NametagView, ct: ct)).Value.GetComponent<NametagView>();
 
-#if UNITY_EDITOR
             var poolRoot = componentPoolsRegistry.RootContainerTransform();
             poolParent = new GameObject("POOL_CONTAINER_NameTags").transform;
             poolParent.parent = poolRoot;
-#endif
 
             nametagViewPool = new ObjectPool<NametagView>(
                 () =>

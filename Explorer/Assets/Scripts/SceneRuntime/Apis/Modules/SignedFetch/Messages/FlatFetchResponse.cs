@@ -9,6 +9,13 @@ using PropertyBag = Microsoft.ClearScript.PropertyBag;
 
 namespace SceneRuntime.Apis.Modules.SignedFetch.Messages
 {
+    public struct FlatFetchError
+    {
+        public bool ok;
+        public string error;
+        public string code;
+    }
+    
     [Serializable]
     [SuppressMessage("ReSharper", "InconsistentNaming")]
     public struct FlatFetchResponse

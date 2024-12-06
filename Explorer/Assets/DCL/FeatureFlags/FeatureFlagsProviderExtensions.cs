@@ -9,9 +9,6 @@ namespace DCL.FeatureFlags
 {
     public static class FeatureFlagsProviderExtensions
     {
-        private const string ARG_URL = "feature-flags-url";
-        private const string ARG_HOSTNAME = "feature-flags-hostname";
-
         public static async UniTask<FeatureFlagsConfiguration> InitializeAsync(
             this IFeatureFlagsProvider featureFlagsProvider,
             IDecentralandUrlsSource decentralandUrlsSource,
@@ -25,10 +22,10 @@ namespace DCL.FeatureFlags
             // #!/bin/bash
             // ./Decentraland.app --feature-flags-url https://feature-flags.decentraland.zone --feature-flags-hostname localhost
 
-            if(appParameters.TryGetValue(ARG_URL, out string featureFlagsUrl))
+            if(appParameters.TryGetValue(AppArgsFlags.FeatureFlags.URL, out string featureFlagsUrl))
                 options.URL = URLDomain.FromString(featureFlagsUrl);
 
-            if(appParameters.TryGetValue(ARG_HOSTNAME, out string hostName))
+            if(appParameters.TryGetValue(AppArgsFlags.FeatureFlags.HOSTNAME, out string hostName))
                 options.Hostname = hostName;
 
             options.UserId = userAddress;

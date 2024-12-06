@@ -3,7 +3,9 @@ using DCL.Optimization.PerformanceBudgeting;
 using ECS.StreamableLoading.Common.Components;
 using System;
 using System.Collections.Generic;
+using ECS.StreamableLoading.AssetBundles;
 using Unity.Profiling;
+using UnityEngine;
 
 namespace ECS.StreamableLoading.Cache
 {
@@ -70,7 +72,7 @@ namespace ECS.StreamableLoading.Cache
 
             for (int i = listedCache.Count - 1; frameTimeBudget.TrySpendBudget() && i >= 0 && maxUnloadAmount > 0; i--)
             {
-                (TLoadingIntention key, TAssetData asset) = listedCache[i];
+                (var key, var asset) = listedCache[i];
                 if (!asset.CanBeDisposed()) continue;
 
                 asset.Dispose();

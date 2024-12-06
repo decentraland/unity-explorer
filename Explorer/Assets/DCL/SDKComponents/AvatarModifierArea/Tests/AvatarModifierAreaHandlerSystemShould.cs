@@ -6,12 +6,15 @@ using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.CharacterTriggerArea.Components;
 using DCL.ECSComponents;
 using DCL.Profiles;
+using DCL.SceneRestrictionBusController.SceneRestrictionBus;
 using DCL.SDKComponents.AvatarModifierArea.Components;
 using DCL.SDKComponents.AvatarModifierArea.Systems;
+using DCL.Web3.Identities;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.TestSuite;
 using ECS.Unity.Transforms.Components;
+using NSubstitute;
 using NUnit.Framework;
 using System.Collections.Generic;
 using UnityEngine;
@@ -37,7 +40,7 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
         public void Setup()
         {
             globalWorld = World.Create();
-            system = new AvatarModifierAreaHandlerSystem(world, globalWorld);
+            system = new AvatarModifierAreaHandlerSystem(world, globalWorld, Substitute.For<ISceneRestrictionBusController>(), Substitute.For<IWeb3IdentityCache>());
 
             fakeTriggerAreaGO = new GameObject("fake character area trigger");
             characterTriggerArea = fakeTriggerAreaGO.AddComponent<CharacterTriggerArea.CharacterTriggerArea>();
@@ -223,7 +226,7 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
             // "Enter" trigger area
             characterTriggerArea.OnTriggerEnter(fakeAvatarShapeCollider);
             CharacterTriggerAreaComponent component = world.Get<CharacterTriggerAreaComponent>(triggerAreaEntity);
-            component.monoBehaviour = characterTriggerArea;
+            component.SetMonoBehaviour(characterTriggerArea);
             world.Set(triggerAreaEntity, component);
 
             system.Update(0f);
@@ -314,7 +317,7 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
             characterTriggerArea.OnTriggerEnter(fakeAvatar2ShapeCollider);
 
             CharacterTriggerAreaComponent component = world.Get<CharacterTriggerAreaComponent>(triggerAreaEntity);
-            component.monoBehaviour = characterTriggerArea;
+            component.SetMonoBehaviour(characterTriggerArea);
             world.Set(triggerAreaEntity, component);
 
             system.Update(0);
@@ -348,8 +351,6 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
             Object.DestroyImmediate(fakeAvatar2BaseGO);
         }
 
-        // TODO: leeaving scene ???
-
         [Test]
         public void HandleComponentRemoveCorrectly()
         {
@@ -381,7 +382,7 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
             // "Enter" trigger area
             characterTriggerArea.OnTriggerEnter(fakeAvatarShapeCollider);
             CharacterTriggerAreaComponent component = world.Get<CharacterTriggerAreaComponent>(triggerAreaEntity);
-            component.monoBehaviour = characterTriggerArea;
+            component.SetMonoBehaviour(characterTriggerArea);
             world.Set(triggerAreaEntity, component);
 
             system.Update(0);
@@ -429,7 +430,7 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
             // "Enter" trigger area
             characterTriggerArea.OnTriggerEnter(fakeAvatarShapeCollider);
             CharacterTriggerAreaComponent component = world.Get<CharacterTriggerAreaComponent>(triggerAreaEntity);
-            component.monoBehaviour = characterTriggerArea;
+            component.SetMonoBehaviour(characterTriggerArea);
             world.Set(triggerAreaEntity, component);
 
             system.Update(0);

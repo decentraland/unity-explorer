@@ -33,6 +33,10 @@ MonoBehaviour:
     m_Key: INCOMPATIBLE_BODY_SHAPE
     m_Metadata:
       m_Items: []
+  - m_Id: 136891422374617088
+    m_Key: CameraReel
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:

@@ -82,6 +82,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 73f988cecacd42e48920937e996e446d
+    m_Address: ScreencaptureCameraHUD
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 7dc631660587a41589ba55c08ff7fa73
     m_Address: ExplorePanel
     m_ReadOnly: 0

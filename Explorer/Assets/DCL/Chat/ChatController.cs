@@ -109,12 +109,12 @@ namespace DCL.Chat
         protected override void OnViewInstantiated()
         {
             cameraEntity = world.CacheCamera();
-            
+
             //We start processing messages once the view is ready
             chatMessagesBus.MessageAdded += OnMessageAdded;
             chatHistory.OnMessageAdded += CreateChatEntry;
             chatHistory.OnCleared += ChatHistoryOnOnCleared;
-            
+
             viewInstance!.OnChatViewPointerEnter += OnChatViewPointerEnter;
             viewInstance.OnChatViewPointerExit += OnChatViewPointerExit;
             viewInstance.CharacterCounter.SetMaximumLength(viewInstance.InputField.characterLimit);
@@ -124,7 +124,7 @@ namespace DCL.Chat
             viewInstance.InputField.onDeselect.AddListener(OnInputDeselected);
             viewInstance.CloseChatButton.onClick.AddListener(CloseChat);
             viewInstance.LoopList.InitListView(0, OnGetItemByIndex);
-            emojiPanelController = new EmojiPanelController(viewInstance.EmojiPanel, emojiPanelConfiguration, emojiMappingJson, emojiSectionViewPrefab, emojiButtonPrefab, inputBlock);
+            emojiPanelController = new EmojiPanelController(viewInstance.EmojiPanel, emojiPanelConfiguration, emojiMappingJson, emojiSectionViewPrefab, emojiButtonPrefab);
             emojiPanelController.OnEmojiSelected += AddEmojiToInput;
 
             emojiSuggestionPanelController = new EmojiSuggestionPanel(viewInstance.EmojiSuggestionPanel, emojiSuggestionViewPrefab, dclInput);
@@ -458,9 +458,9 @@ namespace DCL.Chat
 
         private void CreateChatEntry(ChatMessage chatMessage)
         {
-            if (chatMessage.SentByOwnUser == false && entityParticipantTable.Has(chatMessage.WalletAddress))
+            if (chatMessage.SentByOwnUser == false && entityParticipantTable.TryGet(chatMessage.WalletAddress, out IReadOnlyEntityParticipantTable.Entry entry))
             {
-                Entity entity = entityParticipantTable.Entity(chatMessage.WalletAddress);
+                Entity entity = entry.Entity;
                 GenerateChatBubbleComponent(entity, chatMessage);
                 UIAudioEventsBus.Instance.SendPlayAudioEvent(viewInstance!.ChatReceiveMessageAudio);
             }
