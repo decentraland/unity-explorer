@@ -1,4 +1,5 @@
 using Arch.Core;
+using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.MapRenderer;
 using DCL.MapRenderer.CommonBehavior;
@@ -27,7 +28,7 @@ namespace DCL.Navmap
         private const string WORLDS_WARNING_MESSAGE = "This is the Genesis City map. If you jump into any of this places you will leave the world you are currently visiting.";
         private const MapLayer ACTIVE_MAP_LAYERS =
             MapLayer.SatelliteAtlas | MapLayer.ParcelsAtlas | MapLayer.PlayerMarker | MapLayer.ParcelHoverHighlight | MapLayer.ScenesOfInterest | MapLayer.Favorites | MapLayer.HotUsersMarkers | MapLayer.Pins | MapLayer.SearchResults | MapLayer.LiveEvents |
-            MapLayer.Art | MapLayer.Business | MapLayer.Casino | MapLayer.Crypto | MapLayer.Education | MapLayer.Fashion | MapLayer.Game | MapLayer.Music | MapLayer.Shop | MapLayer.Social | MapLayer.Sports;
+            MapLayer.Category;
 
         private readonly NavmapView navmapView;
         private readonly IMapRenderer mapRenderer;
@@ -36,13 +37,14 @@ namespace DCL.Navmap
         private readonly RectTransform rectTransform;
         private readonly SatelliteController satelliteController;
         private readonly PlaceInfoToastController placeToastController;
+        private readonly IPlacesAPIService placesAPIService;
         private readonly IRealmData realmData;
         private readonly IMapPathEventBus mapPathEventBus;
         private readonly UIAudioEventsBus audioEventsBus;
         private readonly PlacesAndEventsPanelController placesAndEventsPanelController;
-        private readonly Mouse mouse;
         private readonly StringBuilder parcelTitleStringBuilder = new ();
         private readonly NavmapLocationController navmapLocationController;
+        private CancellationTokenSource? fetchPlaceAndShowCancellationToken = new ();
 
         private CancellationTokenSource? animationCts;
         private IMapCameraController? cameraController;
@@ -70,7 +72,8 @@ namespace DCL.Navmap
             NavmapSearchBarController navmapSearchBarController,
             NavmapZoomController navmapZoomController,
             SatelliteController satelliteController,
-            PlaceInfoToastController placeToastController)
+            PlaceInfoToastController placeToastController,
+            IPlacesAPIService placesAPIService)
         {
             this.navmapView = navmapView;
             this.mapRenderer = mapRenderer;
@@ -88,10 +91,10 @@ namespace DCL.Navmap
             this.navmapView.DestinationInfoElement.QuitButton.onClick.AddListener(OnRemoveDestinationButtonClicked);
             this.satelliteController = satelliteController;
             this.placeToastController = placeToastController;
+            this.placesAPIService = placesAPIService;
             mapPathEventBus.OnRemovedDestination += RemoveDestination;
 
             this.navmapView.SatelliteRenderImage.ParcelClicked += OnParcelClicked;
-            this.navmapView.SatelliteRenderImage.HoveredMapPin += OnMapPinHovered;
             this.navmapView.SatelliteRenderImage.HoveredParcel += OnParcelHovered;
 
             this.navmapView.SatelliteRenderImage.EmbedMapCameraDragBehavior(this.navmapView.MapCameraDragBehaviorData);
@@ -101,16 +104,15 @@ namespace DCL.Navmap
 
             navmapView.WorldsWarningNotificationView.Text.text = WORLDS_WARNING_MESSAGE;
             navmapView.WorldsWarningNotificationView.Hide();
-            mouse = InputSystem.GetDevice<Mouse>();
             NavmapFilterPanelController navmapFilterPanelController = new (mapRenderer, navmapView.LocationView.FiltersPanel);
-            navmapLocationController = new NavmapLocationController(navmapView.LocationView, world, playerEntity, navmapFilterPanelController);
+            navmapLocationController = new NavmapLocationController(navmapView.LocationView, world, playerEntity, navmapFilterPanelController, navmapBus);
         }
 
         public void Dispose()
         {
             navmapView.SatelliteRenderImage.ParcelClicked -= OnParcelClicked;
             navmapView.SatelliteRenderImage.HoveredParcel -= OnParcelHovered;
-            navmapView.SatelliteRenderImage.HoveredMapPin -= OnMapPinHovered;
+
             animationCts?.Dispose();
             zoomController.Dispose();
             searchBarController.Dispose();
@@ -140,14 +142,6 @@ namespace DCL.Navmap
             }
         }
 
-        private void OnMapPinHovered(Vector2Int parcel, IPinMarker pinMarker)
-        {
-            navmapView.MapPinTooltip.RectTransform.position = mouse.position.value;
-            navmapView.MapPinTooltip.Title.text = pinMarker.Title;
-            navmapView.MapPinTooltip.Description.text = pinMarker.Description;
-            navmapView.MapPinTooltip.Show();
-        }
-
         private void OnParcelHovered(Vector2 parcel)
         {
             if (parcel.Equals(lastParcelHovered)) return;
@@ -160,9 +154,18 @@ namespace DCL.Navmap
         {
             lastParcelClicked = clickedParcel;
             audioEventsBus.SendPlayAudioEvent(navmapView.ClickAudio);
-            // TODO: move the show of the toast when hovering over map pins after few seconds
-            // placeToastController.Show();
-            // placeToastController.Set(clickedParcel.Parcel);
+
+            async UniTaskVoid FetchPlaceAndShowAsync(CancellationToken ct)
+            {
+                PlacesData.PlaceInfo? place = await placesAPIService.GetPlaceAsync(clickedParcel.Parcel, ct, true);
+
+                if (place == null) return;
+
+                NavmapBus.SelectPlaceAsync(place, fetchPlaceAndShowCancellationToken.Token).Forget();
+            }
+
+            fetchPlaceAndShowCancellationToken = fetchPlaceAndShowCancellationToken.SafeRestart();
+            FetchPlaceAndShowAsync(fetchPlaceAndShowCancellationToken.Token).Forget();
         }
 
         public void Activate()
@@ -179,6 +182,7 @@ namespace DCL.Navmap
                     navmapView.zoomView.zoomVerticalRange
                 ));
 
+            mapRenderer.SetSharedLayer(MapLayer.ScenesOfInterest, true);
             satelliteController.InjectCameraController(cameraController);
             navmapLocationController.InjectCameraController(cameraController);
             satelliteController.Activate();
@@ -201,6 +205,7 @@ namespace DCL.Navmap
             navmapView.WorldsWarningNotificationView.Hide();
             satelliteController.Deactivate();
 
+            mapRenderer.SetSharedLayer(MapLayer.ScenesOfInterest, false);
             zoomController.Deactivate();
             cameraController?.Release(this);
             NavmapBus.ClearHistory();

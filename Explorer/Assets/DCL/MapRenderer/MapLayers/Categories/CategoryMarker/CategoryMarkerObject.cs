@@ -6,6 +6,7 @@ namespace DCL.MapRenderer.MapLayers.Categories
     public class CategoryMarkerObject : MapRendererMarkerBase
     {
         private const float Y_POSITION_OFFSET = -0.2f;
+        [field: SerializeField] internal Transform scalingParent { get; set; }
         [field: SerializeField] internal TextMeshPro title { get; set; }
         [field: SerializeField] internal SpriteRenderer[] renderers { get; private set; }
         [field: SerializeField] internal SpriteRenderer categorySprite { get; private set; }

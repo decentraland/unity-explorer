@@ -5,6 +5,7 @@ namespace DCL.MapRenderer.MapLayers.Cluster
 {
     public class ClusterMarkerObject : MapRendererMarkerBase
     {
+        [field: SerializeField] internal Transform scalingParent { get; set; }
         [field: SerializeField] internal TextMeshPro title { get; set; }
         [field: SerializeField] internal SpriteRenderer[] renderers { get; private set; }
         [field: SerializeField] internal SpriteRenderer categorySprite { get; private set; }
@@ -18,5 +19,6 @@ namespace DCL.MapRenderer.MapLayers.Cluster
         {
             transform.localScale = new Vector3(newScale, newScale, 1f);
         }
+
     }
 }

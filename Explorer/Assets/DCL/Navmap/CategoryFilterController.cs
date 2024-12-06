@@ -1,5 +1,6 @@
 using DCL.MapRenderer;
 using DCL.MapRenderer.MapLayers;
+using DCL.MapRenderer.MapLayers.Categories;
 using DCL.PlacesAPIService;
 using System;
 using System.Collections.Generic;
@@ -21,7 +22,6 @@ namespace DCL.Navmap
 
             foreach (CategoryToggleView categoryToggleView in this.categoryToggles)
             {
-                mapRenderer.SetSharedLayer(categoryToggleView.Layer, false);
                 categoryToggleView.ToggleChanged += OnCategoryToggleChanged;
             }
 
@@ -37,13 +37,13 @@ namespace DCL.Navmap
             }
         }
 
-        private void OnCategoryToggleChanged(MapLayer mapLayer, bool isOn, CategoryToggleView toggleView)
+        private void OnCategoryToggleChanged(CategoriesEnum mapLayer, bool isOn, CategoryToggleView toggleView)
         {
             if (isOn)
                 currentActiveToggle = toggleView;
 
             navmapBus.FilterByCategory(isOn ? mapLayer.ToString() : null);
-            mapRenderer.SetSharedLayer(mapLayer, isOn);
+            mapRenderer.SetSharedLayer(MapLayer.Category, isOn);
         }
 
         public void Dispose()

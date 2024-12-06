@@ -16,6 +16,7 @@ namespace DCL.Navmap
 
         private readonly NavmapZoomView view;
         private readonly DCLInput dclInput;
+        private readonly INavmapBus navmapBus;
 
         private AnimationCurve normalizedCurve;
         private int zoomSteps;
@@ -31,13 +32,19 @@ namespace DCL.Navmap
         private IMapCameraController cameraController;
         private bool blockZoom;
 
-        public NavmapZoomController(NavmapZoomView view, DCLInput dclInput)
+        public NavmapZoomController(
+            NavmapZoomView view,
+            DCLInput dclInput,
+            INavmapBus navmapBus)
         {
             this.view = view;
             this.dclInput = dclInput;
+            this.navmapBus = navmapBus;
 
             normalizedCurve = view.normalizedZoomCurve;
             zoomSteps = normalizedCurve.length;
+
+            this.navmapBus.OnZoomCamera += Zoom;
 
             CurveClamp01();
         }

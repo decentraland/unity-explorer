@@ -1,4 +1,5 @@
 using DCL.MapRenderer.MapLayers;
+using DCL.MapRenderer.MapLayers.Categories;
 using System;
 using TMPro;
 using UnityEngine;
@@ -8,10 +9,10 @@ namespace DCL.Navmap
 {
     public class CategoryToggleView : MonoBehaviour
     {
-        public event Action<MapLayer, bool, CategoryToggleView> ToggleChanged;
+        public event Action<CategoriesEnum, bool, CategoryToggleView> ToggleChanged;
 
         [field: SerializeField]
-        public MapLayer Layer { get; private set; }
+        public CategoriesEnum Layer { get; private set; }
 
         [field: SerializeField]
         public Toggle Toggle { get; private set; }

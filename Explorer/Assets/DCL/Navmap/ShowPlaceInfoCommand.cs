@@ -40,11 +40,8 @@ namespace DCL.Navmap
 
         public async UniTask ExecuteAsync(CancellationToken ct)
         {
-            if (VectorUtilities.TryParseVector2Int(placeInfo.base_position, out Vector2Int result))
-                //This will trigger a "parcel clicked" event with the data from the parcel
-                this.navmapView.SatelliteRenderImage.OnSearchResultParcelSelected(result);
-
             placesAndEventsPanelController.Toggle(PlacesAndEventsPanelController.Section.PLACE);
+            placesAndEventsPanelController.Expand();
 
             placeInfoPanelController.Set(placeInfo);
             placeInfoPanelController.Toggle(PlaceInfoPanelController.Section.OVERVIEW);

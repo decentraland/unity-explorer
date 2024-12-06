@@ -7,9 +7,9 @@ using System;
 using System.Threading;
 using UnityEngine;
 
-namespace DCL.MapRenderer.MapLayers.Pins
+namespace DCL.MapRenderer.MapLayers
 {
-    public static class PinMarkerHelper
+    public static class MarkerHelper
     {
         private const float DEFAULT_SCALE_FACTOR = 1.3f;
         private const float DEFAULT_DURATION = .5f;
@@ -31,7 +31,7 @@ namespace DCL.MapRenderer.MapLayers.Pins
             transform.localScale = originalScale;
         }
 
-        public static async UniTask ScaleToAsync(Transform transform, Vector3 targetScale, float duration, Ease ease, CancellationToken cancellationToken)
+        public static async UniTask ScaleToAsync(Transform transform, Vector3 targetScale, float duration, Ease ease, CancellationToken cancellationToken, Vector3? resetToScale = null)
         {
             Vector3 originalScale = transform.localScale;
 
@@ -40,7 +40,11 @@ namespace DCL.MapRenderer.MapLayers.Pins
             try { await tween.AsyncWaitForCompletion().WithCancellation(cancellationToken); }
             catch (OperationCanceledException)
             {
-                transform.localScale = originalScale;
+                if (resetToScale != null)
+                    transform.localScale = (Vector3) resetToScale;
+                else
+                    transform.localScale = originalScale;
+
                 tween.Kill();
                 throw;
             }

@@ -4,6 +4,7 @@ using DCL.PlacesAPIService;
 using DCL.Utilities;
 using System;
 using System.Threading;
+using UnityEngine;
 
 namespace DCL.Navmap
 {
@@ -15,6 +16,9 @@ namespace DCL.Navmap
         public event Action<PlacesData.PlaceInfo>? OnDestinationSelected;
         public event INavmapBus.SearchPlaceResultDelegate? OnPlaceSearched;
         public event Action<string?>? OnFilterByCategory;
+        public event Action? OnClearPlacesFromMap;
+        public event Action<Vector2>? OnMoveCameraTo;
+        public event Action<bool>? OnZoomCamera;
 
         public SharedNavmapBus(ObjectProxy<INavmapBus> source)
         {
@@ -28,12 +32,21 @@ namespace DCL.Navmap
             obj.OnDestinationSelected += OnDestinationSelected;
             obj.OnPlaceSearched += OnPlaceSearched;
             obj.OnFilterByCategory += OnFilterByCategory;
+            obj.OnClearPlacesFromMap += OnClearPlacesFromMap;
+            obj.OnMoveCameraTo += OnMoveCameraTo;
+            obj.OnZoomCamera += OnZoomCamera;
         }
 
         public async UniTask SelectPlaceAsync(PlacesData.PlaceInfo place, CancellationToken ct)
         {
             if (source.Object == null) return;
             await source.Object.SelectPlaceAsync(place, ct);
+        }
+
+        public async UniTask SelectPlaceAsync(Vector2Int parcel, CancellationToken ct)
+        {
+            if (source.Object == null) return;
+            await source.Object.SelectPlaceAsync(parcel, ct);
         }
 
         public async UniTask SelectEventAsync(EventDTO @event, CancellationToken ct, PlacesData.PlaceInfo? place = null)
@@ -67,5 +80,14 @@ namespace DCL.Navmap
 
         public void FilterByCategory(string? category) =>
             source.Object?.FilterByCategory(category);
+
+        public void ClearPlacesFromMap() =>
+            source.Object?.ClearPlacesFromMap();
+
+        public void MoveCameraTo(Vector2 position) =>
+            source.Object?.MoveCameraTo(position);
+
+        public void ZoomCamera(bool zoomIn) =>
+            source.Object?.ZoomCamera(zoomIn);
     }
 }

@@ -83,10 +83,20 @@ namespace DCL.Navmap
 
             if (DateTime.TryParse(@event.start_at, null, DateTimeStyles.RoundtripKind, out DateTime startAt))
             {
-                schedule = @event.live
-                    ? $"Event started {(DateTime.UtcNow - startAt).TotalMinutes} min ago"
+                if (@event.live)
+                {
+                    TimeSpan elapsed = DateTime.UtcNow - startAt;
+
+                    if (elapsed.TotalDays >= 1)
+                        schedule = $"Event started {(int)elapsed.TotalDays} day ago";
+                    else if (elapsed.TotalHours >= 1)
+                        schedule = $"Event started {(int)elapsed.TotalHours} hour ago";
+                    else
+                        schedule = $"Event started {(int)elapsed.TotalMinutes} min ago";
+                }
+                else
                     // TODO: we might need to convert to local, currently R:RFC1123 Fri, 18 Apr 2008 20:30:00 GMT
-                    : startAt.ToString("R");
+                    schedule = startAt.ToString("R");
             }
 
             if (@event.live)

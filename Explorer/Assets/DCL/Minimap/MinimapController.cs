@@ -187,6 +187,7 @@ namespace DCL.Minimap
         protected override void OnBlur()
         {
             mapCameraController?.SuspendRendering();
+            mapRenderer.SetSharedLayer(MapLayer.ScenesOfInterest, false);
         }
 
         protected override void OnFocus()
@@ -194,6 +195,7 @@ namespace DCL.Minimap
             mapCameraController?.ResumeRendering();
 
             mapRenderer.SetSharedLayer(MapLayer.SatelliteAtlas, true);
+            mapRenderer.SetSharedLayer(MapLayer.ScenesOfInterest, true);
         }
 
         private void GetPlaceInfoAsync(Vector3 playerPosition)

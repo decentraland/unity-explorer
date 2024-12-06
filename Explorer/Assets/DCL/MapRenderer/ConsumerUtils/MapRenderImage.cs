@@ -27,10 +27,8 @@ namespace DCL.MapRenderer.ConsumerUtils
         private Camera? hudCamera;
         private IMapInteractivityController? interactivityController;
         private bool isActive;
-        private IPinMarker? previousClickedMarker;
-        private IPinMarker? previousMarker;
         private Vector2Int previousParcel;
-        private CancellationTokenSource cts = new CancellationTokenSource();
+        private CancellationTokenSource cts = new ();
 
         private bool dragging => dragBehavior is { dragging: true };
 
@@ -73,11 +71,21 @@ namespace DCL.MapRenderer.ConsumerUtils
         public void OnPointerClick(PointerEventData eventData)
         {
             Profiler.BeginSample(POINTER_CLICK_SAMPLE_NAME);
-
-            if (isActive && !dragging && TryGetParcelUnderPointer(eventData, out Vector2Int parcel, out _, out _, out IPinMarker? pinMarker))
+            GameObject? hitObject = null;
+            if (isActive && !dragging)
             {
-                HandlePinMarkerClick(pinMarker);
-                InvokeParcelClicked(parcel, pinMarker);
+                if (RectTransformUtility.ScreenPointToWorldPointInRectangle(rectTransform, eventData.position, hudCamera, out Vector3 worldPosition))
+                {
+                    Vector2 rectSize = rectTransform.rect.size;
+                    Vector2 localPosition = rectTransform.InverseTransformPoint(worldPosition);
+                    Vector2 leftCornerRelativeLocalPosition = localPosition + (rectTransform.pivot * rectSize);
+                    hitObject = interactivityController!.ProcessMouseClick(leftCornerRelativeLocalPosition / rectSize);
+                }
+
+                if(hitObject == null && TryGetParcelUnderPointer(eventData, out Vector2Int parcel, out _, out _))
+                {
+                    InvokeParcelClicked(parcel);
+                }
             }
 
             Profiler.EndSample();
@@ -85,33 +93,15 @@ namespace DCL.MapRenderer.ConsumerUtils
 
         public void OnSearchResultParcelSelected(Vector2Int parcel)
         {
-            IPinMarker? pinMarker = interactivityController!.GetPinMarkerOnParcel(parcel);
-            HandlePinMarkerClick(pinMarker);
-            InvokeParcelClicked(parcel, pinMarker);
+            InvokeParcelClicked(parcel);
         }
 
-        private void HandlePinMarkerClick(IPinMarker? newPinMarker)
-        {
-            if (newPinMarker != previousClickedMarker)
-            {
-                previousClickedMarker?.AnimateDeselectionAsync(cts.Token).Forget();
-                newPinMarker?.AnimateSelectionAsync(cts.Token).Forget();
-                previousClickedMarker = newPinMarker;
-            }
-            else if (previousClickedMarker != null && newPinMarker == null)
-            {
-                previousClickedMarker.AnimateDeselectionAsync(cts.Token).Forget();
-                previousClickedMarker = null;
-            }
-        }
-
-        private void InvokeParcelClicked(Vector2Int parcel, IPinMarker? pinMarker)
+        private void InvokeParcelClicked(Vector2Int parcel)
         {
             ParcelClicked?.Invoke(new ParcelClickData
             {
                 Parcel = parcel,
-                WorldPosition = GetParcelWorldPosition(parcel),
-                PinMarker = pinMarker,
+                WorldPosition = GetParcelWorldPosition(parcel)
             });
         }
 
@@ -135,9 +125,19 @@ namespace DCL.MapRenderer.ConsumerUtils
             if (dragging)
                 return;
 
+            GameObject? hitObject = null;
+
             Profiler.BeginSample(POINTER_MOVE_SAMPLE_NAME);
 
-            ProcessHover(eventData);
+            if (RectTransformUtility.ScreenPointToWorldPointInRectangle(rectTransform, eventData.position, hudCamera, out Vector3 worldPosition))
+            {
+                Vector2 rectSize = rectTransform.rect.size;
+                Vector2 localPosition = rectTransform.InverseTransformPoint(worldPosition);
+                Vector2 leftCornerRelativeLocalPosition = localPosition + (rectTransform.pivot * rectSize);
+                hitObject = interactivityController!.ProcessMousePosition(leftCornerRelativeLocalPosition / rectSize);
+            }
+
+            ProcessHover(eventData, hitObject);
 
             Profiler.EndSample();
         }
@@ -147,7 +147,6 @@ namespace DCL.MapRenderer.ConsumerUtils
         /// </summary>
         public event Action<Vector2>? Hovered;
         public event Action<Vector2>? HoveredParcel;
-        public event Action<Vector2Int, IPinMarker>? HoveredMapPin;
         public event Action? DragStarted;
 
         public void EmbedMapCameraDragBehavior(MapCameraDragBehavior.MapCameraDragBehaviorData data)
@@ -175,11 +174,6 @@ namespace DCL.MapRenderer.ConsumerUtils
             hudCamera = null;
             interactivityController = null;
             texture = null;
-            previousClickedMarker?.DeselectImmediately(IPinMarker.ScaleType.NAVMAP);
-            previousMarker?.DeselectImmediately(IPinMarker.ScaleType.NAVMAP);
-
-            previousMarker = null;
-            previousClickedMarker = null;
 
             isActive = false;
         }
@@ -190,43 +184,33 @@ namespace DCL.MapRenderer.ConsumerUtils
             return rectTransform.TransformPoint(rectTransform.rect.size * (normalizedDiscretePosition - rectTransform.pivot));
         }
 
-        private void ProcessHover(PointerEventData eventData)
+        private void ProcessHover(PointerEventData eventData, GameObject? hitObject = null)
         {
-            if (TryGetParcelUnderPointer(eventData, out Vector2Int parcel, out _, out Vector3 worldPosition, out IPinMarker? pinMarker))
+            if (TryGetParcelUnderPointer(eventData, out Vector2Int parcel, out _, out Vector3 worldPosition))
             {
                 if (highlightEnabled && previousParcel != parcel)
                 {
-                    if (previousMarker != null && previousClickedMarker != previousMarker)
-                    {
-                        previousMarker.AnimateDeselectionAsync(cts.Token).Forget();
-                    }
-
-                    previousMarker = null;
-
                     previousParcel = parcel;
 
-                    if (pinMarker == null) { interactivityController!.HighlightParcel(parcel); }
+                    if (hitObject == null)
+                    {
+                        interactivityController!.HighlightParcel(parcel);
+                    }
                     else
                     {
-                        previousMarker = pinMarker;
-                        pinMarker.AnimateSelectionAsync(cts.Token).Forget();
                         interactivityController!.RemoveHighlight();
                     }
 
                     Hovered?.Invoke(worldPosition);
                     HoveredParcel?.Invoke(parcel);
-
-                    if (pinMarker != null)
-                        HoveredMapPin?.Invoke(parcel, pinMarker);
                 }
             }
             else if (highlightEnabled)
                 interactivityController!.RemoveHighlight();
         }
 
-        private bool TryGetParcelUnderPointer(PointerEventData eventData, out Vector2Int parcel, out Vector2 localPosition, out Vector3 worldPosition, out IPinMarker? pinMarker)
+        private bool TryGetParcelUnderPointer(PointerEventData eventData, out Vector2Int parcel, out Vector2 localPosition, out Vector3 worldPosition)
         {
-            pinMarker = null;
             Vector2 screenPoint = eventData.position;
 
             if (RectTransformUtility.ScreenPointToWorldPointInRectangle(rectTransform, screenPoint, hudCamera, out worldPosition))
@@ -234,7 +218,7 @@ namespace DCL.MapRenderer.ConsumerUtils
                 Vector2 rectSize = rectTransform.rect.size;
                 localPosition = rectTransform.InverseTransformPoint(worldPosition);
                 Vector2 leftCornerRelativeLocalPosition = localPosition + (rectTransform.pivot * rectSize);
-                return interactivityController!.TryGetParcel(leftCornerRelativeLocalPosition / rectSize, out parcel, out pinMarker);
+                return interactivityController!.TryGetParcel(leftCornerRelativeLocalPosition / rectSize, out parcel);
             }
 
             parcel = Vector2Int.zero;

@@ -22,6 +22,7 @@ namespace DCL.UI
         public void ClearClickListeners()
         {
             view.button.onClick.RemoveAllListeners();
+            OnButtonClicked = null;
         }
 
         public void SetButtonState(bool isOn)

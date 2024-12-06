@@ -175,7 +175,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1e0377de8b444804a5a73d9f12524107, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  SatelliteCreditsText: {fileID: 0}
+  SatelliteCreditsText: {fileID: 3178555896257618473}
   <SatelliteRenderImage>k__BackingField: {fileID: 1016802245327051856}
   <SatellitePixelPerfectMapRendererTextureProvider>k__BackingField: {fileID: 5012019790087633832}
 --- !u!1 &6160499980858837278
@@ -374,7 +374,7 @@ MonoBehaviour:
   m_FallbackScreenDPI: 96
   m_DefaultSpriteDPI: 96
   m_DynamicPixelsPerUnit: 1
-  m_PresetInfoIsWorld: 0
+  m_PresetInfoIsWorld: 1
 --- !u!114 &8235211841819826033
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -748,6 +748,17 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 1d0d4df81ba60464791e13877a968e38, type: 3}
+--- !u!114 &3178555896257618473 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 913762309639761086, guid: 1d0d4df81ba60464791e13877a968e38, type: 3}
+  m_PrefabInstance: {fileID: 2355992033125944983}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!224 &5836288190526832026 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 8091987123767866125, guid: 1d0d4df81ba60464791e13877a968e38, type: 3}

@@ -21,6 +21,7 @@ namespace DCL.Navmap
     public class PlaceInfoPanelController
     {
         private readonly PlaceInfoPanelView view;
+        private readonly IWebRequestController webRequestController;
         private readonly IPlacesAPIService placesAPIService;
         private readonly IMapPathEventBus mapPathEventBus;
         private readonly INavmapBus navmapBus;
@@ -55,6 +56,7 @@ namespace DCL.Navmap
             IWebBrowser webBrowser)
         {
             this.view = view;
+            this.webRequestController = webRequestController;
             this.placesAPIService = placesAPIService;
             this.mapPathEventBus = mapPathEventBus;
             this.navmapBus = navmapBus;
@@ -157,6 +159,12 @@ namespace DCL.Navmap
             view.OverviewTabSelected.SetActive(section == Section.OVERVIEW);
             view.PhotosTabContainer.SetActive(section == Section.PHOTOS);
             view.PhotosTabSelected.SetActive(section == Section.PHOTOS);
+
+            foreach (GameObject container in view.OverviewElementsThatShouldBeEnabled)
+                container.SetActive(section == Section.OVERVIEW);
+
+            foreach (GameObject container in view.OverviewElementsThatShouldBeDisabled)
+                container.SetActive(section != Section.OVERVIEW);
         }
 
         private void SetCategories(PlacesData.PlaceInfo place)
@@ -286,6 +294,7 @@ namespace DCL.Navmap
                 foreach (EventDTO @event in events)
                 {
                     EventElementView element = eventElementPool.Get();
+                    element.Init(webRequestController);
                     eventElements.Add(element);
 
                     var schedule = "";
