@@ -159,6 +159,12 @@ namespace DCL.Navmap
             view.OverviewTabSelected.SetActive(section == Section.OVERVIEW);
             view.PhotosTabContainer.SetActive(section == Section.PHOTOS);
             view.PhotosTabSelected.SetActive(section == Section.PHOTOS);
+
+            foreach (GameObject container in view.OverviewElementsThatShouldBeEnabled)
+                container.SetActive(section == Section.OVERVIEW);
+
+            foreach (GameObject container in view.OverviewElementsThatShouldBeDisabled)
+                container.SetActive(section != Section.OVERVIEW);
         }
 
         private void SetCategories(PlacesData.PlaceInfo place)
