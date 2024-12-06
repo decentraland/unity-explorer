@@ -25,6 +25,6 @@ namespace MVC
 
         void SetAllViewsCanvasActive(bool isActive);
 
-        void SetAllViewsCanvasActiveExcept<T>(bool isActive) where T : IController;
+        void SetAllViewsCanvasActive(IController except, bool isActive);
     }
 }

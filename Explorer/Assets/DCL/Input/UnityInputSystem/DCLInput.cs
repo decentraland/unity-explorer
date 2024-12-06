@@ -2111,24 +2111,6 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
-                },
-                {
-                    ""name"": ""CameraReel"",
-                    ""type"": ""Button"",
-                    ""id"": ""a85b7e84-9b6b-41d0-acbf-2e7f4e09b14d"",
-                    ""expectedControlType"": ""Button"",
-                    ""processors"": """",
-                    ""interactions"": """",
-                    ""initialStateCheck"": false
-                },
-                {
-                    ""name"": ""ToggleInWorldCamera"",
-                    ""type"": ""Button"",
-                    ""id"": ""c03d925c-b9ee-4bf5-80b1-aeaf411e0b3f"",
-                    ""expectedControlType"": ""Button"",
-                    ""processors"": """",
-                    ""interactions"": """",
-                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -2274,28 +2256,6 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""action"": ""ToggleSceneDebugConsoleLarger"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": true
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""8f588eae-933a-4996-83a4-5d873e81b509"",
-                    ""path"": ""<Keyboard>/k"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""CameraReel"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""3019dc25-c783-4296-8da8-7d1681e7d4c6"",
-                    ""path"": ""<Keyboard>/c"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""ToggleInWorldCamera"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
                 }
             ]
         },
@@ -3041,6 +3001,33 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""ToggleInWorldCamera"",
+                    ""type"": ""Button"",
+                    ""id"": ""75a0061a-897b-44f1-99ea-6f7f8bb64467"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""CameraReel"",
+                    ""type"": ""Button"",
+                    ""id"": ""31bfeb99-05fb-4d03-8b5b-625b9a978aca"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""ShowHide"",
+                    ""type"": ""Button"",
+                    ""id"": ""cf1e68d1-cb76-496e-bcf9-7ebe352d5f9d"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -3340,6 +3327,39 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""action"": ""MouseDrag"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""b9f0d7f8-e2b2-4cd0-ad96-72c08e57189f"",
+                    ""path"": ""<Keyboard>/c"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""ToggleInWorldCamera"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""e5a2c668-2319-4423-b37b-7f32451dba2c"",
+                    ""path"": ""<Keyboard>/k"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""CameraReel"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""fe90b567-e21b-4a3a-ab23-2b25eb4b3441"",
+                    ""path"": ""<Keyboard>/u"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""ShowHide"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -3419,8 +3439,6 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         m_Shortcuts_ToggleNametags = m_Shortcuts.FindAction("ToggleNametags", throwIfNotFound: true);
         m_Shortcuts_ToggleSceneDebugConsole = m_Shortcuts.FindAction("ToggleSceneDebugConsole", throwIfNotFound: true);
         m_Shortcuts_ToggleSceneDebugConsoleLarger = m_Shortcuts.FindAction("ToggleSceneDebugConsoleLarger", throwIfNotFound: true);
-        m_Shortcuts_CameraReel = m_Shortcuts.FindAction("CameraReel", throwIfNotFound: true);
-        m_Shortcuts_ToggleInWorldCamera = m_Shortcuts.FindAction("ToggleInWorldCamera", throwIfNotFound: true);
         // Emotes
         m_Emotes = asset.FindActionMap("Emotes", throwIfNotFound: true);
         m_Emotes_Slot1 = m_Emotes.FindAction("Slot 1", throwIfNotFound: true);
@@ -3456,6 +3474,9 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         m_InWorldCamera_MouseDrag = m_InWorldCamera.FindAction("MouseDrag", throwIfNotFound: true);
         m_InWorldCamera_Run = m_InWorldCamera.FindAction("Run", throwIfNotFound: true);
         m_InWorldCamera_Screenshot = m_InWorldCamera.FindAction("Screenshot", throwIfNotFound: true);
+        m_InWorldCamera_ToggleInWorldCamera = m_InWorldCamera.FindAction("ToggleInWorldCamera", throwIfNotFound: true);
+        m_InWorldCamera_CameraReel = m_InWorldCamera.FindAction("CameraReel", throwIfNotFound: true);
+        m_InWorldCamera_ShowHide = m_InWorldCamera.FindAction("ShowHide", throwIfNotFound: true);
     }
 
     public void Dispose()
@@ -4048,8 +4069,6 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
     private readonly InputAction m_Shortcuts_ToggleNametags;
     private readonly InputAction m_Shortcuts_ToggleSceneDebugConsole;
     private readonly InputAction m_Shortcuts_ToggleSceneDebugConsoleLarger;
-    private readonly InputAction m_Shortcuts_CameraReel;
-    private readonly InputAction m_Shortcuts_ToggleInWorldCamera;
     public struct ShortcutsActions
     {
         private @DCLInput m_Wrapper;
@@ -4065,8 +4084,6 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         public InputAction @ToggleNametags => m_Wrapper.m_Shortcuts_ToggleNametags;
         public InputAction @ToggleSceneDebugConsole => m_Wrapper.m_Shortcuts_ToggleSceneDebugConsole;
         public InputAction @ToggleSceneDebugConsoleLarger => m_Wrapper.m_Shortcuts_ToggleSceneDebugConsoleLarger;
-        public InputAction @CameraReel => m_Wrapper.m_Shortcuts_CameraReel;
-        public InputAction @ToggleInWorldCamera => m_Wrapper.m_Shortcuts_ToggleInWorldCamera;
         public InputActionMap Get() { return m_Wrapper.m_Shortcuts; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -4109,12 +4126,6 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @ToggleSceneDebugConsoleLarger.started += instance.OnToggleSceneDebugConsoleLarger;
             @ToggleSceneDebugConsoleLarger.performed += instance.OnToggleSceneDebugConsoleLarger;
             @ToggleSceneDebugConsoleLarger.canceled += instance.OnToggleSceneDebugConsoleLarger;
-            @CameraReel.started += instance.OnCameraReel;
-            @CameraReel.performed += instance.OnCameraReel;
-            @CameraReel.canceled += instance.OnCameraReel;
-            @ToggleInWorldCamera.started += instance.OnToggleInWorldCamera;
-            @ToggleInWorldCamera.performed += instance.OnToggleInWorldCamera;
-            @ToggleInWorldCamera.canceled += instance.OnToggleInWorldCamera;
         }
 
         private void UnregisterCallbacks(IShortcutsActions instance)
@@ -4152,12 +4163,6 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @ToggleSceneDebugConsoleLarger.started -= instance.OnToggleSceneDebugConsoleLarger;
             @ToggleSceneDebugConsoleLarger.performed -= instance.OnToggleSceneDebugConsoleLarger;
             @ToggleSceneDebugConsoleLarger.canceled -= instance.OnToggleSceneDebugConsoleLarger;
-            @CameraReel.started -= instance.OnCameraReel;
-            @CameraReel.performed -= instance.OnCameraReel;
-            @CameraReel.canceled -= instance.OnCameraReel;
-            @ToggleInWorldCamera.started -= instance.OnToggleInWorldCamera;
-            @ToggleInWorldCamera.performed -= instance.OnToggleInWorldCamera;
-            @ToggleInWorldCamera.canceled -= instance.OnToggleInWorldCamera;
         }
 
         public void RemoveCallbacks(IShortcutsActions instance)
@@ -4438,6 +4443,9 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
     private readonly InputAction m_InWorldCamera_MouseDrag;
     private readonly InputAction m_InWorldCamera_Run;
     private readonly InputAction m_InWorldCamera_Screenshot;
+    private readonly InputAction m_InWorldCamera_ToggleInWorldCamera;
+    private readonly InputAction m_InWorldCamera_CameraReel;
+    private readonly InputAction m_InWorldCamera_ShowHide;
     public struct InWorldCameraActions
     {
         private @DCLInput m_Wrapper;
@@ -4449,6 +4457,9 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         public InputAction @MouseDrag => m_Wrapper.m_InWorldCamera_MouseDrag;
         public InputAction @Run => m_Wrapper.m_InWorldCamera_Run;
         public InputAction @Screenshot => m_Wrapper.m_InWorldCamera_Screenshot;
+        public InputAction @ToggleInWorldCamera => m_Wrapper.m_InWorldCamera_ToggleInWorldCamera;
+        public InputAction @CameraReel => m_Wrapper.m_InWorldCamera_CameraReel;
+        public InputAction @ShowHide => m_Wrapper.m_InWorldCamera_ShowHide;
         public InputActionMap Get() { return m_Wrapper.m_InWorldCamera; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -4479,6 +4490,15 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @Screenshot.started += instance.OnScreenshot;
             @Screenshot.performed += instance.OnScreenshot;
             @Screenshot.canceled += instance.OnScreenshot;
+            @ToggleInWorldCamera.started += instance.OnToggleInWorldCamera;
+            @ToggleInWorldCamera.performed += instance.OnToggleInWorldCamera;
+            @ToggleInWorldCamera.canceled += instance.OnToggleInWorldCamera;
+            @CameraReel.started += instance.OnCameraReel;
+            @CameraReel.performed += instance.OnCameraReel;
+            @CameraReel.canceled += instance.OnCameraReel;
+            @ShowHide.started += instance.OnShowHide;
+            @ShowHide.performed += instance.OnShowHide;
+            @ShowHide.canceled += instance.OnShowHide;
         }
 
         private void UnregisterCallbacks(IInWorldCameraActions instance)
@@ -4504,6 +4524,15 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @Screenshot.started -= instance.OnScreenshot;
             @Screenshot.performed -= instance.OnScreenshot;
             @Screenshot.canceled -= instance.OnScreenshot;
+            @ToggleInWorldCamera.started -= instance.OnToggleInWorldCamera;
+            @ToggleInWorldCamera.performed -= instance.OnToggleInWorldCamera;
+            @ToggleInWorldCamera.canceled -= instance.OnToggleInWorldCamera;
+            @CameraReel.started -= instance.OnCameraReel;
+            @CameraReel.performed -= instance.OnCameraReel;
+            @CameraReel.canceled -= instance.OnCameraReel;
+            @ShowHide.started -= instance.OnShowHide;
+            @ShowHide.performed -= instance.OnShowHide;
+            @ShowHide.canceled -= instance.OnShowHide;
         }
 
         public void RemoveCallbacks(IInWorldCameraActions instance)
@@ -4601,8 +4630,6 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         void OnToggleNametags(InputAction.CallbackContext context);
         void OnToggleSceneDebugConsole(InputAction.CallbackContext context);
         void OnToggleSceneDebugConsoleLarger(InputAction.CallbackContext context);
-        void OnCameraReel(InputAction.CallbackContext context);
-        void OnToggleInWorldCamera(InputAction.CallbackContext context);
     }
     public interface IEmotesActions
     {
@@ -4641,5 +4668,8 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         void OnMouseDrag(InputAction.CallbackContext context);
         void OnRun(InputAction.CallbackContext context);
         void OnScreenshot(InputAction.CallbackContext context);
+        void OnToggleInWorldCamera(InputAction.CallbackContext context);
+        void OnCameraReel(InputAction.CallbackContext context);
+        void OnShowHide(InputAction.CallbackContext context);
     }
 }
