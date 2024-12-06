@@ -24,6 +24,7 @@ using DCL.ResourcesUnloading;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common;
 using Global.Dynamic.TeleportOperations;
+using Segment.Serialization;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Assertions;
@@ -48,6 +49,7 @@ namespace Global.Dynamic
         private readonly ITeleportOperation[] realmChangeOperations;
         private readonly ITeleportOperation[] teleportInSameRealmOperation;
         private readonly ILoadingStatus loadingStatus;
+        private readonly IAnalyticsController analyticsController;
         private readonly ILandscape landscape;
 
         public RealmNavigator(
@@ -76,6 +78,7 @@ namespace Global.Dynamic
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.globalWorld = globalWorld;
             this.loadingStatus = loadingStatus;
+            this.analyticsController = analyticsController;
             this.landscape = landscape;
             var livekitTimeout = TimeSpan.FromSeconds(10f);
 
@@ -147,7 +150,7 @@ namespace Global.Dynamic
             return EnumResult<ChangeRealmError>.SuccessResult();
         }
 
-        private static async UniTask<Result> ExecuteTeleportOperationsAsync(
+        private async UniTask<Result> ExecuteTeleportOperationsAsync(
             TeleportParams teleportParams,
             IReadOnlyCollection<ITeleportOperation> ops,
             string logOpName,
@@ -196,6 +199,16 @@ namespace Global.Dynamic
                     break;
                 }
             }
+
+            if (lastOpResult.Success == false)
+                analyticsController.Track(
+                    AnalyticsEvents.General.LOADING_ERROR,
+                    new JsonObject
+                    {
+                        ["type"] = "teleportation",
+                        ["message"] = lastOpResult.ErrorMessage,
+                    }
+                );
 
             return lastOpResult;
         }
