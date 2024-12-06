@@ -268,8 +268,7 @@ namespace Global.Dynamic
                 new EcsEmoteProvider(globalWorld, staticContainer.RealmData));
 
             container.wearablesProvider = new ApplicationParametersWearablesProvider(appArgs,
-                new ECSWearablesProvider(identityCache, globalWorld),
-                globalWorld);
+                new ECSWearablesProvider(identityCache, globalWorld));
 
             container.SceneRoomMetaDataSource = new SceneRoomMetaDataSource(staticContainer.RealmData, staticContainer.CharacterContainer.Transform, globalWorld, dynamicWorldParams.IsolateScenesCommunication);
 
@@ -680,19 +679,10 @@ namespace Global.Dynamic
             globalPlugins.AddRange(staticContainer.SharedPlugins);
 
             if (includeCameraReel)
-                globalPlugins.Add(new InWorldCameraPlugin(
-                    dclInput,
-                    selfProfile,
-                    staticContainer.RealmData,
-                    playerEntity,
-                    placesAPIService,
-                    staticContainer.CharacterContainer.CharacterObject,
-                    coroutineRunner,
-                    cameraReelStorageService,
-                    container.MvcManager,
-                    dclCursor,
-                    mainUIView.SidebarView.InWorldCameraButton,
-                    globalWorld));
+                globalPlugins.Add(new InWorldCameraPlugin(dclInput, selfProfile, staticContainer.RealmData, playerEntity, placesAPIService, staticContainer.CharacterContainer.CharacterObject, coroutineRunner,
+                    cameraReelStorageService, cameraReelStorageService, container.MvcManager, clipboard, bootstrapContainer.DecentralandUrlsSource, webBrowser, staticContainer.WebRequestsContainer.WebRequestController,
+                    container.ProfileRepository, container.ChatMessagesBus, assetsProvisioner, wearableCatalog, container.wearablesProvider, globalWorld, assetBundlesURL, dclCursor,
+                    mainUIView.SidebarView.InWorldCameraButton));
 
             if (dynamicWorldParams.EnableAnalytics)
                 globalPlugins.Add(new AnalyticsPlugin(
