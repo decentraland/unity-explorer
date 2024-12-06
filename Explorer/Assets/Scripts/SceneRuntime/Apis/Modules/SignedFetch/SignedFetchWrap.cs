@@ -161,7 +161,7 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
                 }
                 catch (UnityWebRequestException e)
                 {
-                    if (e.ResponseHeaders.TryGetValue("Content-type", out var contentType) && contentType.Contains("application/json"))
+                    if (e.ResponseHeaders.TryGetValue("Content-type", out var contentType) && contentType.Contains("application/json", StringComparison.OrdinalIgnoreCase))
                     {
                         var flatFetchError = JsonConvert.DeserializeObject<FlatFetchError>(e.Text);
                         return new FlatFetchResponse(false, e.ResponseCode, e.ResponseCode.ToString(), flatFetchError.error,
