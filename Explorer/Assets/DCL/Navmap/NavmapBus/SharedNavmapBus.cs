@@ -37,22 +37,22 @@ namespace DCL.Navmap
             obj.OnZoomCamera += OnZoomCamera;
         }
 
-        public async UniTask SelectPlaceAsync(PlacesData.PlaceInfo place, CancellationToken ct, bool clearPreviousHistory = false)
+        public async UniTask SelectPlaceAsync(PlacesData.PlaceInfo place, CancellationToken ct)
         {
             if (source.Object == null) return;
-            await source.Object.SelectPlaceAsync(place, ct, clearPreviousHistory);
+            await source.Object.SelectPlaceAsync(place, ct);
         }
 
-        public async UniTask SelectPlaceAsync(Vector2Int parcel, CancellationToken ct, bool clearPreviousHistory = false)
+        public async UniTask SelectPlaceAsync(Vector2Int parcel, CancellationToken ct)
         {
             if (source.Object == null) return;
-            await source.Object.SelectPlaceAsync(parcel, ct, clearPreviousHistory);
+            await source.Object.SelectPlaceAsync(parcel, ct);
         }
 
-        public async UniTask SelectEventAsync(EventDTO @event, CancellationToken ct, PlacesData.PlaceInfo? place = null, bool clearPreviousHistory = false)
+        public async UniTask SelectEventAsync(EventDTO @event, CancellationToken ct, PlacesData.PlaceInfo? place = null)
         {
             if (source.Object == null) return;
-            await source.Object.SelectEventAsync(@event, ct, place, clearPreviousHistory);
+            await source.Object.SelectEventAsync(@event, ct, place);
         }
 
         public async UniTask SearchForPlaceAsync(INavmapBus.SearchPlaceParams @params, CancellationToken ct)

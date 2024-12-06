@@ -42,7 +42,6 @@ namespace DCL.Navmap
         private readonly IMapPathEventBus mapPathEventBus;
         private readonly UIAudioEventsBus audioEventsBus;
         private readonly PlacesAndEventsPanelController placesAndEventsPanelController;
-        private readonly Mouse mouse;
         private readonly StringBuilder parcelTitleStringBuilder = new ();
         private readonly NavmapLocationController navmapLocationController;
         private CancellationTokenSource? fetchPlaceAndShowCancellationToken = new ();
@@ -105,7 +104,6 @@ namespace DCL.Navmap
 
             navmapView.WorldsWarningNotificationView.Text.text = WORLDS_WARNING_MESSAGE;
             navmapView.WorldsWarningNotificationView.Hide();
-            mouse = InputSystem.GetDevice<Mouse>();
             NavmapFilterPanelController navmapFilterPanelController = new (mapRenderer, navmapView.LocationView.FiltersPanel);
             navmapLocationController = new NavmapLocationController(navmapView.LocationView, world, playerEntity, navmapFilterPanelController, navmapBus);
         }
@@ -163,7 +161,7 @@ namespace DCL.Navmap
 
                 if (place == null) return;
 
-                NavmapBus.SelectPlaceAsync(place, fetchPlaceAndShowCancellationToken.Token, true).Forget();
+                NavmapBus.SelectPlaceAsync(place, fetchPlaceAndShowCancellationToken.Token).Forget();
             }
 
             fetchPlaceAndShowCancellationToken = fetchPlaceAndShowCancellationToken.SafeRestart();

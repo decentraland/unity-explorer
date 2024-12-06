@@ -237,7 +237,7 @@ namespace DCL.MapRenderer.MapLayers.PointsOfInterest
                 previouslyClicked = marker;
                 cts = cts.SafeRestart();
                 marker.ToggleSelection(true);
-                navmapBus.SelectPlaceAsync(marker.PlaceInfo, cts.Token, true).Forget();
+                navmapBus.SelectPlaceAsync(marker.PlaceInfo, cts.Token).Forget();
                 return true;
             }
 

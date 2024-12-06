@@ -119,6 +119,25 @@ namespace DCL.Navmap
         public void HideHistoryResults() =>
             historyRecordPanelView.gameObject.SetActive(false);
 
+        public void UpdateFilterAndSorting(NavmapSearchPlaceFilter filter, NavmapSearchPlaceSorting sorting)
+        {
+            currentPlaceFilter = filter;
+            searchFiltersView.Toggle(currentPlaceFilter);
+
+            bool isGlobalSearch = filter == NavmapSearchPlaceFilter.All;
+
+            // Enable sorting only for filter: All
+            if (!isGlobalSearch)
+                sorting = NavmapSearchPlaceSorting.None;
+
+            currentPlaceSorting = sorting;
+            searchFiltersView.Toggle(currentPlaceSorting);
+
+            searchFiltersView.NewestButton.interactable = isGlobalSearch;
+            searchFiltersView.MostActiveButton.interactable = isGlobalSearch;
+            searchFiltersView.BestRatedButton.interactable = isGlobalSearch;
+        }
+
         private void OnBackClicked()
         {
             backCancellationToken = backCancellationToken.SafeRestart();
@@ -238,25 +257,6 @@ namespace DCL.Navmap
                           sorting: currentPlaceSorting,
                           category: category), searchCancellationToken.Token)
                      .Forget();
-        }
-
-        private void UpdateFilterAndSorting(NavmapSearchPlaceFilter filter, NavmapSearchPlaceSorting sorting)
-        {
-            currentPlaceFilter = filter;
-            searchFiltersView.Toggle(currentPlaceFilter);
-
-            bool isGlobalSearch = filter == NavmapSearchPlaceFilter.All;
-
-            // Enable sorting only for filter: All
-            if (!isGlobalSearch)
-                sorting = NavmapSearchPlaceSorting.None;
-
-            currentPlaceSorting = sorting;
-            searchFiltersView.Toggle(currentPlaceSorting);
-
-            searchFiltersView.NewestButton.interactable = isGlobalSearch;
-            searchFiltersView.MostActiveButton.interactable = isGlobalSearch;
-            searchFiltersView.BestRatedButton.interactable = isGlobalSearch;
         }
     }
 }

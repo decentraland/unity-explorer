@@ -42,38 +42,32 @@ namespace DCL.Navmap
             this.placesAPIService = placesAPIService;
         }
 
-        public async UniTask SelectPlaceAsync(PlacesData.PlaceInfo place, CancellationToken ct, bool clearPreviousHistory = false)
+        public async UniTask SelectPlaceAsync(PlacesData.PlaceInfo place, CancellationToken ct)
         {
-            if (clearPreviousHistory)
-                ClearHistory();
-
             INavmapCommand command = showPlaceInfoFactory.Invoke(place);
 
             await command.ExecuteAsync(ct);
 
-            commands.Push(command);
+            AddCommand(command);
         }
 
-        public async UniTask SelectPlaceAsync(Vector2Int parcel, CancellationToken ct, bool clearPreviousHistory = false)
+        public async UniTask SelectPlaceAsync(Vector2Int parcel, CancellationToken ct)
         {
             PlacesData.PlaceInfo? place = await placesAPIService.GetPlaceAsync(parcel, ct, true);
 
             // TODO: show empty parcel
             if (place == null) return;
 
-            await SelectPlaceAsync(place, ct, clearPreviousHistory);
+            await SelectPlaceAsync(place, ct);
         }
 
-        public async UniTask SelectEventAsync(EventDTO @event, CancellationToken ct, PlacesData.PlaceInfo? place = null, bool clearPreviousHistory = false)
+        public async UniTask SelectEventAsync(EventDTO @event, CancellationToken ct, PlacesData.PlaceInfo? place = null)
         {
-            if (clearPreviousHistory)
-                ClearHistory();
-
             INavmapCommand command = showEventInfoFactory.Invoke(@event, place);
 
             await command.ExecuteAsync(ct);
 
-            commands.Push(command);
+            AddCommand(command);
         }
 
         public async UniTask SearchForPlaceAsync(INavmapBus.SearchPlaceParams @params, CancellationToken ct)
@@ -82,7 +76,7 @@ namespace DCL.Navmap
 
             await command.ExecuteAsync(ct);
 
-            commands.Push(command);
+            AddCommand(command);
         }
 
         public async UniTask GoBackAsync(CancellationToken ct)
@@ -125,5 +119,20 @@ namespace DCL.Navmap
         private void OnSearchPlacePerformed(INavmapBus.SearchPlaceParams @params,
             IReadOnlyList<PlacesData.PlaceInfo> places, int totalResultCount) =>
             OnPlaceSearched?.Invoke(@params, places, totalResultCount);
+
+        private void AddCommand(INavmapCommand command)
+        {
+            // Replace the last command of the stack if its the same type of command
+            // This is needed so the back feature always navigates to the previous screen
+            // We don't want the back button repeating the search commands if you clicked many places in the map
+            if (commands.TryPeek(out INavmapCommand prevCommand))
+                if (command.GetType() == prevCommand.GetType())
+                {
+                    prevCommand = commands.Pop();
+                    prevCommand.Dispose();
+                }
+
+            commands.Push(command);
+        }
     }
 }

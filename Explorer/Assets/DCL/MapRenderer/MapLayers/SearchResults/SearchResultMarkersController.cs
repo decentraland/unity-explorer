@@ -229,7 +229,7 @@ namespace DCL.MapRenderer.MapLayers.SearchResults
             if (visibleMarkers.TryGetValue(gameObject, out ISearchResultMarker marker))
             {
                 cts = cts.SafeRestart();
-                navmapBus.SelectPlaceAsync(marker.PlaceInfo, cts.Token, true).Forget();
+                navmapBus.SelectPlaceAsync(marker.PlaceInfo, cts.Token).Forget();
                 return true;
             }
 

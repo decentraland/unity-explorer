@@ -33,8 +33,7 @@ namespace DCL.MapRenderer.MapLayers.Pins
         private readonly IMapPathEventBus mapPathEventBus;
         private readonly INavmapBus navmapBus;
 
-        private MapPinBridgeSystem system;
-
+        private MapPinBridgeSystem? system;
         private bool isEnabled;
         private CancellationTokenSource highlightCt = new ();
         private CancellationTokenSource deHighlightCt = new ();
@@ -229,7 +228,7 @@ namespace DCL.MapRenderer.MapLayers.Pins
             if (visibleMarkers.TryGetValue(gameObject, out IPinMarker marker))
             {
                 selectCt = selectCt.SafeRestart();
-                navmapBus.SelectPlaceAsync(marker.ParcelPosition, selectCt.Token, true).Forget();
+                navmapBus.SelectPlaceAsync(marker.ParcelPosition, selectCt.Token).Forget();
 
                 return true;
             }

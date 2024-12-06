@@ -223,7 +223,7 @@ namespace DCL.MapRenderer.MapLayers.Categories
             if (visibleMarkers.TryGetValue(gameObject, out ICategoryMarker marker))
             {
                 cts = cts.SafeRestart();
-                navmapBus.SelectEventAsync(marker.EventDTO, cts.Token, null, true).Forget();
+                navmapBus.SelectEventAsync(marker.EventDTO, cts.Token, null).Forget();
                 return true;
             }
 

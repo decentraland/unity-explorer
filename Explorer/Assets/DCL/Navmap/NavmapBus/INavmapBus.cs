@@ -46,10 +46,10 @@ namespace DCL.Navmap
         event Action<Vector2> OnMoveCameraTo;
         public event Action<bool>? OnZoomCamera;
 
-        UniTask SelectPlaceAsync(PlacesData.PlaceInfo place, CancellationToken ct, bool clearPreviousHistory = false);
-        UniTask SelectPlaceAsync(Vector2Int parcel, CancellationToken ct, bool clearPreviousHistory = false);
+        UniTask SelectPlaceAsync(PlacesData.PlaceInfo place, CancellationToken ct);
+        UniTask SelectPlaceAsync(Vector2Int parcel, CancellationToken ct);
 
-        UniTask SelectEventAsync(EventDTO @event, CancellationToken ct, PlacesData.PlaceInfo? place = null, bool clearPreviousHistory = false);
+        UniTask SelectEventAsync(EventDTO @event, CancellationToken ct, PlacesData.PlaceInfo? place = null);
 
         UniTask SearchForPlaceAsync(SearchPlaceParams @params, CancellationToken ct);
 

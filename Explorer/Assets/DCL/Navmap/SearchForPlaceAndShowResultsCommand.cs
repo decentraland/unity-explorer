@@ -44,6 +44,9 @@ namespace DCL.Navmap
             placesAndEventsPanelController.Toggle(PlacesAndEventsPanelController.Section.SEARCH);
             searchResultPanelController.ClearResults();
             searchResultPanelController.SetLoadingState();
+            searchBarController.SetInputText(@params.text ?? @params.category ?? string.Empty);
+            searchBarController.UpdateFilterAndSorting(@params.filter, @params.sorting);
+            searchBarController.Interactable = true;
 
             await ProcessPlacesAsync(ct);
             await ProcessLiveEventsAsync(ct);
@@ -97,9 +100,6 @@ namespace DCL.Navmap
 
         private async UniTask ProcessPlacesAsync(CancellationToken ct)
         {
-            searchBarController.SetInputText(@params.text ?? @params.category ?? string.Empty);
-            searchBarController.Interactable = true;
-
             if (places == null)
             {
                 places = ListPool<PlacesData.PlaceInfo>.Get();
