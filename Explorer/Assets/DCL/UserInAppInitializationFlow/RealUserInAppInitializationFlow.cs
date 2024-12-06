@@ -105,7 +105,7 @@ namespace DCL.UserInAppInitializationFlow
         {
             loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.Init);
 
-            EnumResult<TaskError> result = default;
+            EnumResult<TaskError> result;
 
             loadPlayerAvatarStartupOperation.AssignWorld(parameters.World, parameters.PlayerEntity);
             restartRealmStartupOperation.EnableReload(parameters.ReloadRealm);
@@ -149,17 +149,13 @@ namespace DCL.UserInAppInitializationFlow
                             async (parentLoadReport, ct) =>
                             {
                                 var operationResult = await startupOperation.ExecuteAsync(parentLoadReport, ct);
-                                result = operationResult.AsEnumResult(inErrorCase: TaskError.MessageError);
-
-                                if (result.Success)
-                                    parentLoadReport.SetProgress(loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.Completed));
-
+                                if (operationResult.Success) parentLoadReport.SetProgress(loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.Completed));
                                 return operationResult;
                             },
                             ct
                         );
 
-                    ApplyErrorIfLoadingScreenError(ref result, loadingResult);
+                    result = loadingResult;
                 }
 
                 if (result.Success == false)
@@ -171,12 +167,6 @@ namespace DCL.UserInAppInitializationFlow
 
             await checkOnboardingStartupOperation.MarkOnboardingAsDoneAsync(parameters.World, parameters.PlayerEntity, ct);
             loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.Completed);
-        }
-
-        private static void ApplyErrorIfLoadingScreenError(ref EnumResult<TaskError> result, EnumResult<TaskError> showResult)
-        {
-            if (!showResult.Success)
-                result = showResult;
         }
 
         private async UniTask ShowAuthenticationScreenAsync(CancellationToken ct)
