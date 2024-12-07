@@ -12,4 +12,13 @@ namespace DCL.ParcelsService
 
         UniTask TeleportToParcelAsync(Vector2Int parcel, AsyncLoadProcessReport loadReport, CancellationToken ct);
     }
+
+    public static class TeleportControllerExtensions
+    {
+        public static async UniTask TryTeleportToSceneSpawnPointAsync(this ITeleportController teleportController, Vector2Int parcel, AsyncLoadProcessReport loadReport, CancellationToken ct)
+        {
+            WaitForSceneReadiness? waitForSceneReadiness = await teleportController.TeleportToSceneSpawnPointAsync(parcel, loadReport, ct);
+            await waitForSceneReadiness.ToUniTask();
+        }
+    }
 }

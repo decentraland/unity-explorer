@@ -61,7 +61,7 @@ namespace DCL.PluginSystem.Global
 
         }
 
-        private void OnRealmChanged(bool _) =>
+        private void OnRealmChanged(RealmType _) =>
             analytics.Flush();
 
         public UniTask Initialize(IPluginSettingsContainer container, CancellationToken ct) =>

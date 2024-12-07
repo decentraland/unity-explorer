@@ -1,3 +1,4 @@
+using CommunicationData.URLHelpers;
 using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
@@ -30,6 +31,7 @@ namespace DCL.UserInAppInitializationFlow
         private static readonly ILoadingScreen.EmptyLoadingScreen EMPTY_LOADING_SCREEN = new ();
 
         private readonly ILoadingStatus loadingStatus;
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly IMVCManager mvcManager;
         private readonly AudioClipConfig backgroundMusic;
         private readonly IRealmNavigator realmNavigator;
@@ -55,14 +57,15 @@ namespace DCL.UserInAppInitializationFlow
             FeatureFlagsCache featureFlagsCache,
             IWeb3IdentityCache web3IdentityCache,
             IRealmController realmController,
+            ILandscape landscape,
             IAppArgs appParameters,
             IDebugSettings debugSettings,
             IPortableExperiencesController portableExperiencesController,
             IRoomHub roomHub,
-            DiagnosticsContainer diagnosticsContainer
-        )
+            DiagnosticsContainer diagnosticsContainer)
         {
             this.loadingStatus = loadingStatus;
+            this.decentralandUrlsSource = decentralandUrlsSource;
             this.mvcManager = mvcManager;
             this.backgroundMusic = backgroundMusic;
             this.realmNavigator = realmNavigator;
@@ -74,7 +77,7 @@ namespace DCL.UserInAppInitializationFlow
             var preloadProfileStartupOperation = new PreloadProfileStartupOperation(loadingStatus, selfProfile);
             var switchRealmMiscVisibilityStartupOperation = new SwitchRealmMiscVisibilityStartupOperation(loadingStatus, realmNavigator);
             loadPlayerAvatarStartupOperation = new LoadPlayerAvatarStartupOperation(loadingStatus, selfProfile, mainPlayerAvatarBaseProxy);
-            var loadLandscapeStartupOperation = new LoadLandscapeStartupOperation(loadingStatus, realmNavigator);
+            var loadLandscapeStartupOperation = new LoadLandscapeStartupOperation(loadingStatus, landscape);
             checkOnboardingStartupOperation = new CheckOnboardingStartupOperation(loadingStatus, selfProfile, featureFlagsCache, decentralandUrlsSource, appParameters, realmNavigator);
             restartRealmStartupOperation = new RestartRealmStartupOperation(loadingStatus, realmController);
             var teleportStartupOperation = new TeleportStartupOperation(loadingStatus, realmNavigator, startParcel);
@@ -106,11 +109,12 @@ namespace DCL.UserInAppInitializationFlow
             loadPlayerAvatarStartupOperation.AssignWorld(parameters.World, parameters.PlayerEntity);
             restartRealmStartupOperation.EnableReload(parameters.ReloadRealm);
 
-            using var playAudioScope = UIAudioEventsBus.Instance.NewPlayAudioScope(backgroundMusic);
+            using UIAudioEventsBus.PlayAudioScope playAudioScope = UIAudioEventsBus.Instance.NewPlayAudioScope(backgroundMusic);
 
             do
             {
                 if (parameters.FromLogout)
+
                     // Disconnect current livekit connection on logout so the avatar is removed from other peers
                     await roomHub.StopAsync().Timeout(TimeSpan.FromSeconds(10));
 
@@ -123,16 +127,22 @@ namespace DCL.UserInAppInitializationFlow
                 if (parameters.FromLogout)
                 {
                     // If we are coming from a logout, we teleport the user to Genesis Plaza and force realm change to reset the scene properly
-                    var teleportResult = await realmNavigator.TryInitializeTeleportToParcelAsync(Vector2Int.zero, ct, forceChangeRealm: true);
+                    var url = URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.Genesis));
+                    var changeRealmResult = await realmNavigator.TryChangeRealmAsync(url, ct);
+
+                    if (changeRealmResult.Success == false)
+                        ReportHub.LogError(ReportCategory.AUTHENTICATION, changeRealmResult.AsResult().ErrorMessage!);
+
                     // Restart livekit connection
                     await roomHub.StartAsync().Timeout(TimeSpan.FromSeconds(10));
-                    result = teleportResult.Success ? teleportResult : Result.ErrorResult(teleportResult.ErrorMessage);
+                    result = changeRealmResult.AsResult();
+
                     // We need to flag the process as completed, otherwise the multiplayer systems will not run
                     loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.Completed);
                 }
                 else
                 {
-                    var loadingResult = await LoadingScreen(parameters.ShowLoading)
+                    Result loadingResult = await LoadingScreen(parameters.ShowLoading)
                        .ShowWhileExecuteTaskAsync(
                             async (parentLoadReport, ct) =>
                             {
@@ -163,7 +173,7 @@ namespace DCL.UserInAppInitializationFlow
         private static void ApplyErrorIfLoadingScreenError(ref Result result, Result showResult)
         {
             if (!showResult.Success)
-                result = Result.ErrorResult(showResult.ErrorMessage);
+                result = showResult;
         }
 
         private async UniTask ShowAuthenticationScreenAsync(CancellationToken ct)
