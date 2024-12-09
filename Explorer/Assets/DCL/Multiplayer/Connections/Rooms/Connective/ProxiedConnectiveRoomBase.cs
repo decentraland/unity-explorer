@@ -1,6 +1,7 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using LiveKit.Rooms;
+using System;
 
 namespace DCL.Multiplayer.Connections.Rooms.Connective
 {
@@ -74,5 +75,10 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
 
         public virtual IRoom Room() =>
             room;
+
+        public void Dispose()
+        {
+            current?.Dispose();
+        }
     }
 }

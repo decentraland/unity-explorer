@@ -23,11 +23,6 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
 
         public bool IsConnected => current?.WebSocket.State is WebSocketState.Open;
 
-        public WebSocketArchipelagoLiveConnection() : this(
-            () => new ClientWebSocket(),
-            new ArrayMemoryPool(ArrayPool<byte>.Shared!)
-        ) { }
-
         public WebSocketArchipelagoLiveConnection(Func<ClientWebSocket> webSocketFactory, IMemoryPool memoryPool)
         {
             this.webSocketFactory = webSocketFactory;
@@ -47,10 +42,18 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
             catch (Exception e) { return Result.ErrorResult($"Cannot connect to adapter url: {adapterUrl}, {e.Message}"); }
         }
 
-        public UniTask DisconnectAsync(CancellationToken token)
+        public async UniTask<Result> DisconnectAsync(CancellationToken token)
         {
-            TryUpdateWebSocket();
-            return current!.Value.WebSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, token)!.AsUniTask();
+            try
+            {
+                TryUpdateWebSocket();
+                await current!.Value.WebSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, token)!.AsUniTask();
+                return Result.SuccessResult();
+            }
+            catch (Exception e)
+            {
+                return Result.ErrorResult($"Cannot disconnect: {e}");
+            }
         }
 
         public async UniTask<EnumResult<IArchipelagoLiveConnection.ResponseError>> SendAsync(MemoryWrap data, CancellationToken token)
@@ -58,7 +61,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
             if (IsWebSocketInvalid())
                 return EnumResult<IArchipelagoLiveConnection.ResponseError>
                    .ErrorResult(
-                        IArchipelagoLiveConnection.ResponseError.MessageError,
+                        IArchipelagoLiveConnection.ResponseError.ConnectionClosed,
                         $"Cannot send data, ensure that connection is correct, the connection is invalid: {current?.WebSocket.State}"
                     );
 
@@ -83,7 +86,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
         {
             if (IsWebSocketInvalid())
                 return EnumResult<MemoryWrap, IArchipelagoLiveConnection.ResponseError>.ErrorResult(
-                    IArchipelagoLiveConnection.ResponseError.MessageError,
+                    IArchipelagoLiveConnection.ResponseError.ConnectionClosed,
                     $"Cannot receive data, ensure that connection is correct, the connection is invalid: {current?.WebSocket.State}"
                 );
 
