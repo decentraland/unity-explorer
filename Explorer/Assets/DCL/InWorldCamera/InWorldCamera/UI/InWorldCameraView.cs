@@ -92,12 +92,23 @@ namespace DCL.InWorldCamera.UI
         }
 
         private Tween AnimateVFXImageScale(float duration) =>
-            animatedImage.rectTransform.DOScale(Vector2.zero, duration)
+            animatedImage.rectTransform.DOScale(GetTargetScale(animatedImage.rectTransform, cameraReelIcon), duration)
                          .SetEase(Ease.InOutQuad)
                          .OnComplete(() =>
                           {
                               animatedImage.enabled = false;
                               animatedImage.rectTransform.localScale = Vector3.one;
                           });
+
+        private Vector3 GetTargetScale(RectTransform animatedRect, RectTransform targetRect)
+        {
+            Vector2 animatedSize = animatedRect.rect.size;
+            Vector2 targetSize = targetRect.rect.size;
+
+            float scaleX = targetSize.x / animatedSize.x;
+            float scaleY = targetSize.y / animatedSize.y;
+
+            return new Vector3(scaleX, scaleY, 1f);
+        }
     }
 }

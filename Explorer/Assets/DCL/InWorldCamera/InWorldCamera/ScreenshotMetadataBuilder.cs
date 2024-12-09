@@ -83,7 +83,7 @@ namespace DCL.InWorldCamera
 
             PlacesData.PlaceInfo? placeInfo = await placesAPIService.GetPlaceAsync(at, ct);
 
-            return (placeInfo?.title ?? "Unknown place", placeInfo.id);
+            return placeInfo == null ? ("Unknown place", "Unknown place") : (placeInfo.title, placeInfo.id);
         }
 
         private static string[] FilterNonBaseWearables(IReadOnlyCollection<URN> avatarWearables)
