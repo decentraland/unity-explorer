@@ -84,6 +84,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
             int gridLayoutFixedColumnCount,
             int thumbnailHeight,
             int thumbnailWidth,
+            bool gridShowMonth,
             OptionButtonView? optionButtonView = null,
             ContextMenuView? contextMenuView = null,
             IWebBrowser? webBrowser = null,
@@ -117,6 +118,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
                 gridLayoutFixedColumnCount,
                 thumbnailHeight,
                 thumbnailWidth,
+                gridShowMonth,
                 THUMBNAIL_POOL_DEFAULT_CAPACITY, THUMBNAIL_POOL_MAX_SIZE, GRID_POOL_DEFAULT_CAPACITY, GRID_POOL_MAX_SIZE);
 
             view.cancelDeleteIntentButton?.onClick.AddListener(() => OnDeletionModalCancelClick());
@@ -252,6 +254,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
 
         public async UniTask ShowWalletGalleryAsync(string walletAddress, CancellationToken ct, CameraReelStorageStatus? storageStatus = null)
         {
+            view.loadingSpinner.SetActive(true);
             loadNextPageCts = loadNextPageCts.SafeRestartLinked(ct);
             setPublicCts = setPublicCts.SafeRestart();
             deleteScreenshotCts = deleteScreenshotCts.SafeRestart();
@@ -266,6 +269,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
             await LoadMorePageAsync(ct);
 
             view.scrollRect.onValueChanged.AddListener(OnScrollRectValueChanged);
+            view.loadingSpinner.SetActive(false);
         }
 
         private void HideSuccessNotification()

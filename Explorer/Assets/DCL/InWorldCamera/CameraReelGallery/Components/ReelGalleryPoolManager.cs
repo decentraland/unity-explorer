@@ -10,6 +10,7 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
     {
         private readonly IObjectPool<ReelThumbnailController> reelThumbnailPool;
         private readonly IObjectPool<MonthGridController> reelGridPool;
+
         public ReelGalleryPoolManager(
             ReelThumbnailView reelThumbnailPrefab,
             MonthGridView monthViewPrefab,
@@ -19,6 +20,7 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
             int gridLayoutFixedColumnCount,
             int thumbnailHeight,
             int thumbnailWidth,
+            bool gridShowMonth,
             int thumbnailDefaultCapacity,
             int thumbnailMaxSize,
             int gridDefaultCapacity,
@@ -53,6 +55,7 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
                 {
                     grid.view.gridLayoutGroup.constraintCount = gridLayoutFixedColumnCount;
                     grid.view.gridLayoutGroup.cellSize = new Vector2(thumbnailWidth, thumbnailHeight);
+                    grid.view.monthText.gameObject.SetActive(gridShowMonth);
                     grid.view.gameObject.SetActive(true);
                 },
                 grid =>
