@@ -58,27 +58,23 @@ namespace DCL.InWorldCamera.PhotoDetail
 
         private void ShowDeleteModal()
         {
-            // explorePanelEscapeAction.RegisterEscapeAction(HideDeleteModal);
             viewInstance!.deleteReelModal.gameObject.SetActive(true);
             viewInstance.deleteReelModal.DOFade(1f, viewInstance.deleteModalAnimationDuration);
         }
 
-        private void HideDeleteModal(InputAction.CallbackContext callbackContext = default)
-        {
-            // explorePanelEscapeAction.RemoveEscapeAction(HideDeleteModal);
+        private void HideDeleteModal(InputAction.CallbackContext callbackContext = default) =>
             viewInstance!.deleteReelModal.DOFade(0f, viewInstance.deleteModalAnimationDuration).OnComplete(() => viewInstance.deleteReelModal.gameObject.SetActive(false));
-        }
 
         private void DeletionModalCancelClick(bool waitForAnimation = true)
         {
-            async UniTaskVoid AnimateAndAwaitAsync()
+            async UniTaskVoid DelayedHideDeleteModalAsync()
             {
                 await UniTask.Delay(ANIMATION_DELAY);
                 HideDeleteModal();
             }
 
             if (waitForAnimation)
-                AnimateAndAwaitAsync().Forget();
+                DelayedHideDeleteModalAsync().Forget();
             else
                 HideDeleteModal();
         }
@@ -197,24 +193,5 @@ namespace DCL.InWorldCamera.PhotoDetail
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
             UniTask.WhenAny(viewInstance.closeButton.OnClickAsync(ct),UniTask.WaitUntil(() => isClosing, cancellationToken: ct));
-    }
-
-    public struct PhotoDetailParameter
-    {
-        public readonly List<CameraReelResponseCompact> AllReels;
-        public readonly int CurrentReelIndex;
-        public readonly bool UserOwnedReels;
-        public event Action<CameraReelResponseCompact> ReelDeleteIntention;
-
-        public PhotoDetailParameter(List<CameraReelResponseCompact> allReels, int currentReelIndex, bool userOwnedReels, Action<CameraReelResponseCompact> reelDeleteAction)
-        {
-            this.AllReels = allReels;
-            this.CurrentReelIndex = currentReelIndex;
-            this.UserOwnedReels = userOwnedReels;
-            ReelDeleteIntention = reelDeleteAction;
-        }
-
-        public void ExecuteDeleteAction(int index) =>
-            ReelDeleteIntention?.Invoke(AllReels[index]);
     }
 }

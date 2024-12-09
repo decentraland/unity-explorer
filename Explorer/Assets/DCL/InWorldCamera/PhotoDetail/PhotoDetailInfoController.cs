@@ -89,6 +89,13 @@ namespace DCL.InWorldCamera.PhotoDetail
             this.view.ownerProfileButton.onClick.AddListener(ShowOwnerPassportClicked);
         }
 
+        public void Dispose()
+        {
+            view.jumpInButton.onClick.RemoveListener(JumpInClicked);
+            view.ownerProfileButton.onClick.RemoveListener(ShowOwnerPassportClicked);
+            JumpIn = null;
+        }
+
         private void ShowOwnerPassportClicked()
         {
             if (string.IsNullOrEmpty(reelOwnerAddress)) return;
@@ -145,13 +152,6 @@ namespace DCL.InWorldCamera.PhotoDetail
                 photoDetailPoolManager.ReleaseVisiblePerson(visiblePersonControllers[i]);
             }
             visiblePersonControllers.Clear();
-        }
-
-        public void Dispose()
-        {
-            view.jumpInButton.onClick.RemoveListener(JumpInClicked);
-            view.ownerProfileButton.onClick.RemoveListener(ShowOwnerPassportClicked);
-            JumpIn = null;
         }
     }
 }
