@@ -6,6 +6,7 @@ using DCL.ExplorePanel.Components;
 using DCL.InWorldCamera.CameraReelGallery.Components;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.InWorldCamera.CameraReelStorageService.Schemas;
+using DCL.InWorldCamera.ReelActions;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.Pools;
 using DG.Tweening;
@@ -40,7 +41,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
             }
         }
 
-        public event Action<CameraReelResponseCompact>? ThumbnailClicked;
+        public event Action<List<CameraReelResponseCompact>, int, Action<CameraReelResponseCompact>>? ThumbnailClicked;
         public event Action<CameraReelStorageStatus>? StorageUpdated;
 
         private const int THUMBNAIL_POOL_DEFAULT_CAPACITY = 100;
@@ -140,21 +141,16 @@ namespace DCL.InWorldCamera.CameraReelGallery
 
                 this.contextMenuController.ShareToXRequested += cameraReelResponse =>
                 {
-                    string description = shareToXMessage.Replace(" ", "%20");
-                    string url = $"{decentralandUrlsSource.Url(DecentralandUrl.CameraReelLink)}/{cameraReelResponse.id}";
-                    string xUrl = $"https://x.com/intent/post?text={description}&hashtags=DCLCamera&url={url}";
-
-                    systemClipboard.Set(xUrl);
-                    webBrowser.OpenUrl(xUrl);
+                    ReelCommonActions.ShareReelToX(shareToXMessage, cameraReelResponse.id, decentralandUrlsSource, systemClipboard, webBrowser);
                 };
 
                 this.contextMenuController.CopyPictureLinkRequested += cameraReelResponse =>
                 {
-                    systemClipboard.Set($"{decentralandUrlsSource.Url(DecentralandUrl.CameraReelLink)}/{cameraReelResponse.id}");
+                    ReelCommonActions.CopyReelLink(cameraReelResponse.id, decentralandUrlsSource, systemClipboard);
                     ShowSuccessNotificationAsync(linkCopiedMessage).Forget();
                 };
 
-                this.contextMenuController.DownloadRequested += cameraReelResponse => { webBrowser.OpenUrl(cameraReelResponse.url); };
+                this.contextMenuController.DownloadRequested += cameraReelResponse => { ReelCommonActions.DownloadReel(cameraReelResponse.url, webBrowser); };
 
                 this.contextMenuController.DeletePictureRequested += cameraReelResponse =>
                 {
@@ -213,7 +209,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
                 CameraReelStorageStatus response = await cameraReelStorageService.DeleteScreenshotAsync(reelToDeleteInfo.Id, ct);
 
                 int deletedIndex = -1;
-                for (int i = beginVisible; i < currentSize; i++)
+                for (int i = 0; i < currentSize; i++)
                     if (deletedIndex >= 0)
                         thumbnailImages[i - 1] = thumbnailImages[i];
                     else if (thumbnailImages[i].CameraReelResponse.id == reelToDeleteInfo.Id)
@@ -223,7 +219,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
                 currentSize--;
                 ResetThumbnailsVisibility();
 
-                MonthGridController monthGridView = GetMonthGrid(PagedCameraReelManager.GetDateTimeFromString(reelToDeleteInfo.Datetime));
+                MonthGridController monthGridView = GetMonthGrid(ReelUtility.GetMonthDateTimeFromString(reelToDeleteInfo.Datetime));
                 monthGridView.RemoveThumbnail(reelToDeleteInfo.Id);
 
                 if (monthGridView.GridIsEmpty())
@@ -326,7 +322,13 @@ namespace DCL.InWorldCamera.CameraReelGallery
 
                 IReadOnlyList<ReelThumbnailController> thumbnailViews = monthGridView.Setup(bucket.Key, bucket.Value, optionButtonController,
                     (cameraReelResponse, sprite) => reelThumbnailCache.Add(cameraReelResponse, sprite),
-                    cameraReelResponse => ThumbnailClicked?.Invoke(cameraReelResponse));
+                    cameraReelResponse =>
+                        ThumbnailClicked?.Invoke(pagedCameraReelManager.AllOrderedResponses, pagedCameraReelManager.AllOrderedResponses.IndexOf(cameraReelResponse), compact =>
+                        {
+                            reelToDelete = compact;
+                            DeleteScreenshot();
+                        })
+                    );
 
                 for (int i = 0; i < thumbnailViews.Count; i++)
                     thumbnailImages[currentSize + i] = thumbnailViews[i];
