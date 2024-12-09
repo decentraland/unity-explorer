@@ -34,6 +34,9 @@ namespace DCL.InWorldCamera.UI
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Overlay;
         private SingleInstanceEntity? camera => cameraInternal ??= world.CacheCamera();
 
+        public bool IsVfxInProgress => viewInstance != null && viewInstance.IsVfxInProgress;
+
+
         public InWorldCameraController(ViewFactoryMethod viewFactory, Button sidebarButton, World world, IMVCManager mvcManager, ICameraReelStorageService storageService) : base(viewFactory)
         {
             this.world = world;
