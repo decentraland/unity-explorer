@@ -8,6 +8,8 @@ using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack;
 using DCL.Browser;
 using DCL.Character;
+using DCL.DebugUtilities;
+using DCL.DebugUtilities.Views;
 using DCL.Chat;
 using DCL.Chat.MessageBus;
 using DCL.Clipboard;
@@ -60,10 +62,11 @@ namespace DCL.PluginSystem.Global
         private readonly IChatMessagesBus chatMessagesBus;
         private readonly IWearableStorage wearableStorage;
         private readonly IWearablesProvider wearablesProvider;
-        private readonly Arch.Core.World world;
         private readonly URLDomain assetBundleURL;
         private readonly ICursor cursor;
         private readonly Button sidebarButton;
+        private readonly Arch.Core.World globalWorld;
+        private readonly IDebugContainerBuilder debugContainerBuilder;
 
         private ScreenRecorder recorder;
         private GameObject hud;
@@ -78,10 +81,12 @@ namespace DCL.PluginSystem.Global
             ISystemClipboard systemClipboard, IDecentralandUrlsSource decentralandUrlsSource, IWebBrowser webBrowser, IWebRequestController webRequestController,
             IProfileRepository profileRepository, IChatMessagesBus chatMessagesBus, IAssetsProvisioner assetsProvisioner,
             IWearableStorage wearableStorage, IWearablesProvider wearablesProvider,
-            Arch.Core.World world,
             URLDomain assetBundleURL,
             ICursor cursor,
-            Button sidebarButton)
+            Button sidebarButton,
+            Arch.Core.World globalWorld,
+            IDebugContainerBuilder debugContainerBuilder
+       )
         {
             this.input = input;
             this.selfProfile = selfProfile;
@@ -102,10 +107,11 @@ namespace DCL.PluginSystem.Global
             this.assetsProvisioner = assetsProvisioner;
             this.wearableStorage = wearableStorage;
             this.wearablesProvider = wearablesProvider;
-            this.world = world;
             this.assetBundleURL = assetBundleURL;
             this.cursor = cursor;
             this.sidebarButton = sidebarButton;
+            this.globalWorld = globalWorld;
+            this.debugContainerBuilder = debugContainerBuilder;
 
             factory = new InWorldCameraFactory();
         }
@@ -145,7 +151,7 @@ namespace DCL.PluginSystem.Global
                     wearableStorage,
                     wearablesProvider,
                     decentralandUrlsSource,
-                    new ECSThumbnailProvider(realmData, world, assetBundleURL, webRequestController),
+                    new ECSThumbnailProvider(realmData, globalWorld, assetBundleURL, webRequestController),
                     rarityBackgroundsMapping,
                     rarityColorMappings,
                     categoryIconsMapping,
@@ -157,14 +163,14 @@ namespace DCL.PluginSystem.Global
                 settings.ShareToXMessage));
 
 
-            inWorldCameraController = new InWorldCameraController(() => hud.GetComponent<InWorldCameraView>(), sidebarButton, world, mvcManager, cameraReelStorageService);
+            inWorldCameraController = new InWorldCameraController(() => hud.GetComponent<InWorldCameraView>(), sidebarButton, globalWorld, mvcManager, cameraReelStorageService);
             mvcManager.RegisterController(inWorldCameraController);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
-            ToggleInWorldCameraActivitySystem.InjectToWorld(ref builder, settings.TransitionSettings, inWorldCameraController, followTarget, cursor, mvcManager);
-            EmitInWorldCameraInputSystem.InjectToWorld(ref builder, input.InWorldCamera, input.Shortcuts.ToggleInWorldCamera);
+            ToggleInWorldCameraActivitySystem.InjectToWorld(ref builder, settings.TransitionSettings, inWorldCameraController, followTarget, debugContainerBuilder, cursor, mvcManager, input.InWorldCamera);
+            EmitInWorldCameraInputSystem.InjectToWorld(ref builder, input.InWorldCamera);
             MoveInWorldCameraSystem.InjectToWorld(ref builder, settings.MovementSettings, characterObject.Controller.transform, cursor);
             CaptureScreenshotSystem.InjectToWorld(ref builder, recorder, playerEntity, metadataBuilder, coroutineRunner, cameraReelStorageService, inWorldCameraController);
         }
