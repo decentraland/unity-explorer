@@ -243,17 +243,17 @@ Shader "Unlit/MapOcean"
             float3 CalcTerrain(float2 uv, float height)
             {
                 float3 col = terrain_map( uv );
-                float h1 = height_map(uv-float2(0.0f, 0.01f));
-                float h2 = height_map(uv+float2(0.0f, 0.01f));
-                float h3 = height_map(uv-float2(0.01f, 0.0f));
-                float h4 = height_map(uv+float2(0.01f, 0.0f));
-                float3 norm = normalize(float3(h3-h4, h1-h2, 1.0f));
-                float3 r0 = float3(uv, height);
-                float3 rd = normalize( light - r0 );
-                float grad = dot(norm, rd);
-                col *= grad+pow(grad, 8.0f);
-                float terrainshade = 1.0f;//test_shadow( uv, height );
-                col = lerp(col*0.25f, col, terrainshade);
+                // float h1 = height_map(uv-float2(0.0f, 0.01f));
+                // float h2 = height_map(uv+float2(0.0f, 0.01f));
+                // float h3 = height_map(uv-float2(0.01f, 0.0f));
+                // float h4 = height_map(uv+float2(0.01f, 0.0f));
+                // float3 norm = normalize(float3(h3-h4, h1-h2, 1.0f));
+                // float3 r0 = float3(uv, height);
+                // float3 rd = normalize( light - r0 );
+                // float grad = dot(norm, rd);
+                // col *= grad+pow(grad, 8.0f);
+                // float terrainshade = 1.0f;//test_shadow( uv, height );
+                // col = lerp(col*0.25f, col, terrainshade);
                 return col;
             }
             
