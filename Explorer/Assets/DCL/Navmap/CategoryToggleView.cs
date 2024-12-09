@@ -29,6 +29,9 @@ namespace DCL.Navmap
         [field: SerializeField]
         public Color OffColor { get; private set; }
 
+        [field: SerializeField]
+        public Color OnColorText { get; private set; }
+
         private void Start()
         {
             Toggle.onValueChanged.AddListener(OnToggleValueChanged);
@@ -36,7 +39,7 @@ namespace DCL.Navmap
 
         public void SetVisualStatus(bool isOn)
         {
-            Label.color = isOn ? OffColor : OnColor;
+            Label.color = isOn ? OffColor : OnColorText;
             Background.color = isOn ? OnColor : OffColor;
         }
 
