@@ -92,7 +92,15 @@ public class SkyboxController : MonoBehaviour
     public void Initialize(Material skyboxMat, Light dirLight, AnimationClip skyboxAnimationClip, FeatureFlagsCache featureFlagsCache)
     {
         if (skyboxMat != null)
-            skyboxMaterial = skyboxMat;
+        {
+#if UNITY_EDITOR
+
+            // Create a copy so that the original asset does not get modified by UpdateSkyboxColor. Else
+            // we will get annoying mystery changes in Git.
+            skyboxMat = new Material(skyboxMat);
+#endif
+            skyboxMaterial = new Material(skyboxMat);
+        }
 
         if (dirLight != null)
             DirectionalLight = dirLight;
