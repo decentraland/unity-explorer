@@ -23,6 +23,4 @@ if(WIN32)
   set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} /ignore:4217")
 endif()
 
-add_executable(process_example SHARED)
-
-target_sources(process_example PRIVATE main.cpp)
+add_executable(process_example main.cpp)
