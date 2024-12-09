@@ -99,7 +99,7 @@ public class SkyboxController : MonoBehaviour
             // we will get annoying mystery changes in Git.
             skyboxMat = new Material(skyboxMat);
 #endif
-            skyboxMaterial = new Material(skyboxMat);
+            skyboxMaterial = skyboxMat;
         }
 
         if (dirLight != null)
