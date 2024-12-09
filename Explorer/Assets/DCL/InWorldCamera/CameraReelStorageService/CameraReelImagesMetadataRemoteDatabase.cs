@@ -1,5 +1,6 @@
 ﻿using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.WebRequests;
@@ -84,6 +85,22 @@ namespace DCL.InWorldCamera.CameraReelStorageService
 
             CameraReelResponsesCompact responseData = await webRequestController
                                                            .SignedFetchGetAsync(url, string.Empty, ct)
+                                                           .CreateFromJson<CameraReelResponsesCompact>(WRJsonParser.Unity);
+
+            return responseData;
+        }
+
+        public async UniTask<CameraReelResponsesCompact> UnsignedGetCompactScreenshotsAsync(string userAddress, int limit, int offset, CancellationToken ct)
+        {
+            URLAddress url = urlBuilder.AppendDomain(userDomain)
+                                       .AppendSubDirectory(URLSubdirectory.FromString(userAddress))
+                                       .AppendSubDirectory(URLSubdirectory.FromString($"images?limit={limit}&offset={offset}&compact=true"))
+                                       .Build();
+
+            urlBuilder.Clear();
+
+            CameraReelResponsesCompact responseData = await webRequestController
+                                                           .GetAsync(url, ct, ReportCategory.CAMERA_REEL)
                                                            .CreateFromJson<CameraReelResponsesCompact>(WRJsonParser.Unity);
 
             return responseData;

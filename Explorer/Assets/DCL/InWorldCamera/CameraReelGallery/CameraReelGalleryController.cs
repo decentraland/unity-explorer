@@ -62,6 +62,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
         private readonly ContextMenuController contextMenuController;
         private readonly Rect elementMaskRect;
         private readonly string? photoSuccessfullyDeletedMessage;
+        private readonly bool useSignedRequest;
 
         private bool isLoading;
         private bool isDragging;
@@ -85,6 +86,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
             int thumbnailHeight,
             int thumbnailWidth,
             bool gridShowMonth,
+            bool useSignedRequest,
             OptionButtonView? optionButtonView = null,
             ContextMenuView? contextMenuView = null,
             IWebBrowser? webBrowser = null,
@@ -106,6 +108,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
             this.view.scrollBarDragHandler.BeginDrag += ScrollBeginDrag;
             this.view.scrollBarDragHandler.EndDrag += ScrollEndDrag;
             this.elementMaskRect = this.view.elementMask.GetWorldRect();
+            this.useSignedRequest = useSignedRequest;
 
             if (optionButtonView is not null && contextMenuView is not null)
             {
@@ -263,7 +266,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
             previousY = 1f;
 
             storageStatus ??= await cameraReelStorageService.GetUserGalleryStorageInfoAsync(walletAddress, ct);
-            pagedCameraReelManager = new PagedCameraReelManager(cameraReelStorageService, walletAddress, storageStatus.Value.ScreenshotsAmount, view.paginationLimit);
+            pagedCameraReelManager = new PagedCameraReelManager(cameraReelStorageService, walletAddress, useSignedRequest, storageStatus.Value.ScreenshotsAmount, view.paginationLimit);
             thumbnailImages = new ReelThumbnailController[storageStatus.Value.MaxScreenshots];
 
             await LoadMorePageAsync(ct);

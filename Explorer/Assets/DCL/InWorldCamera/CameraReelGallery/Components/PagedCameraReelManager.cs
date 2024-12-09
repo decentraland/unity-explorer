@@ -19,6 +19,7 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
         private readonly string walletAddress;
         private readonly int pageSize;
         private readonly int totalImages;
+        private readonly bool useSignedRequest;
 
         private int currentOffset;
         private int currentLoadedImages;
@@ -26,11 +27,13 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
         public PagedCameraReelManager(
             ICameraReelStorageService cameraReelStorageService,
             string wallet,
+            bool useSignedRequest,
             int totalImages,
             int pageSize)
         {
             this.cameraReelStorageService = cameraReelStorageService;
             this.walletAddress = wallet;
+            this.useSignedRequest = useSignedRequest;
             this.totalImages = totalImages;
             this.pageSize = pageSize;
         }
@@ -40,7 +43,8 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
             ListObjectPool<CameraReelResponseCompact> listPool,
             CancellationToken ct)
         {
-            CameraReelResponsesCompact response = await cameraReelStorageService.GetCompactScreenshotGalleryAsync(walletAddress, pageSize, currentOffset, ct);
+            CameraReelResponsesCompact response = useSignedRequest ? await cameraReelStorageService.GetCompactScreenshotGalleryAsync(walletAddress, pageSize, currentOffset, ct)
+                : await cameraReelStorageService.UnsignedGetCompactScreenshotGalleryAsync(walletAddress, pageSize, currentOffset, ct);
             currentOffset += pageSize;
 
             currentLoadedImages += response.images.Count;
