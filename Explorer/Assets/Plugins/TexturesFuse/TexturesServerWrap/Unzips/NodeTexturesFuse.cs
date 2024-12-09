@@ -19,23 +19,19 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
 
         private const int MEMORY_LIMIT = MB * 1024; //GB
 
-        public const string CHILD_PROCESS_NAME = "node.exe";
-        private const string PIPE_PREFIX = "\\\\.\\pipe\\";
-        private const string SPACE = " ";
-        private const string CHILD_PROCESS_COMMAND = CHILD_PROCESS_NAME + SPACE + PIPE_PREFIX + NAMED_PIPE + SPACE + MMF_INPUT + SPACE + MMF_OUTPUT;
-
         /// <summary>
         /// Avoid collisions between editor and client
         /// </summary>
-#if UNITY_EDITOR
-        private const string ENVIRONMENT_POSTFIX = "editor";
-#else
-        private const string ENVIRONMENT_POSTFIX = "client";
-#endif
+        private static readonly string ENVIRONMENT_POSTFIX = System.Diagnostics.Process.GetCurrentProcess().Id.ToString();
 
-        private const string MMF_INPUT = "dcl_fuse_i_" + ENVIRONMENT_POSTFIX;
-        private const string MMF_OUTPUT = "dcl_fuse_o_" + ENVIRONMENT_POSTFIX;
-        private const string NAMED_PIPE = "dcl_fuse_p_" + ENVIRONMENT_POSTFIX;
+        private static readonly string MMF_INPUT = "dcl_fuse_i_" + ENVIRONMENT_POSTFIX;
+        private static readonly string MMF_OUTPUT = "dcl_fuse_o_" + ENVIRONMENT_POSTFIX;
+        private static readonly string NAMED_PIPE = "dcl_fuse_p_" + ENVIRONMENT_POSTFIX;
+
+        public const string CHILD_PROCESS_NAME = "node.exe";
+        private const string PIPE_PREFIX = "\\\\.\\pipe\\";
+        private const string SPACE = " ";
+        private static readonly string CHILD_PROCESS_COMMAND = CHILD_PROCESS_NAME + SPACE + PIPE_PREFIX + NAMED_PIPE + SPACE + MMF_INPUT + SPACE + MMF_OUTPUT;
 
         private static MemoryMappedFile? mmfInput;
         private static MemoryMappedFile? mmfOutput;
