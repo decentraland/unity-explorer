@@ -66,6 +66,7 @@ namespace DCL.MapRenderer.MapLayers.SearchResults
 
         public void OnBecameInvisible()
         {
+            ToggleSelection(false);
             poolableBehavior.OnBecameInvisible();
         }
 

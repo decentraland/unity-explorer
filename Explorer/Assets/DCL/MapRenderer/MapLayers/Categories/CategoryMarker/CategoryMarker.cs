@@ -81,6 +81,7 @@ namespace DCL.MapRenderer.MapLayers.Categories
 
         public void OnBecameInvisible()
         {
+            ToggleSelection(false);
             poolableBehavior.OnBecameInvisible();
         }
 

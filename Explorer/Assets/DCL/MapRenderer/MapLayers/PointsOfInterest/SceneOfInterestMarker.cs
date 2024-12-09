@@ -67,6 +67,7 @@ namespace DCL.MapRenderer.MapLayers.PointsOfInterest
 
         public void OnBecameInvisible()
         {
+            ToggleSelection(false);
             poolableBehavior.OnBecameInvisible();
         }
 
