@@ -58,6 +58,7 @@ namespace DCL.MapRenderer.MapLayers.SearchResults
 
             MarkerHelper.SetAlpha(poolableBehavior.OnBecameVisible().renderers, poolableBehavior.OnBecameVisible().textRenderers, 0);
             MarkerHelper.FadeToAsync(poolableBehavior.OnBecameVisible().renderers, poolableBehavior.OnBecameVisible().textRenderers, 1, 0.5f, Ease.OutBack, CancellationToken.None).Forget();
+            AnimateDeSelectionAsync(default).Forget();
 
             if(currentBaseScale != 0)
                 poolableBehavior.instance.SetScale(currentBaseScale, currentNewScale);
@@ -88,10 +89,7 @@ namespace DCL.MapRenderer.MapLayers.SearchResults
         public async UniTaskVoid AnimateSelectionAsync(CancellationToken ct)
         {
             if (poolableBehavior.instance != null)
-            {
-                poolableBehavior.instance.scalingParent.localScale = Vector3.one;
                 await MarkerHelper.ScaleToAsync(poolableBehavior.instance.scalingParent, new Vector2(1.2f, 1.2f), 0.5f, Ease.OutBack, ct);
-            }
         }
 
         public async UniTaskVoid AnimateDeSelectionAsync(CancellationToken ct)
