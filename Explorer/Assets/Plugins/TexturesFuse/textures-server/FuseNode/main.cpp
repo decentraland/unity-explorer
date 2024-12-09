@@ -169,7 +169,6 @@ int main(int argc, char *argv[])
         fprintf(stderr, "Error on initializing, pass NamedPipe and 2 MMF files");
         return 1;
     }
-
     char* PipeName = argv[1];          // "\\\\.\\pipe\\dcl_fuse_p";
     char* InputFileAddress = argv[2];  // "dcl_fuse_i";
     char* OutputFileAddress = argv[3]; // "dcl_fuse_o";
