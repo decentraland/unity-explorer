@@ -81,7 +81,7 @@ namespace DCL.InWorldCamera.Systems
                 return;
             }
 
-            if (ScreenshotIsRequested())
+            if (ScreenshotIsRequested() && cameraReelStorageService.StorageStatus.HasFreeSpace)
             {
                 hudController.Hide(isInstant: true);
                 coroutineRunner.StartCoroutine(recorder.CaptureScreenshot());

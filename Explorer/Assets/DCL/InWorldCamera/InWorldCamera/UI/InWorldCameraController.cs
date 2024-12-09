@@ -9,6 +9,7 @@ using DCL.InWorldCamera.Playground;
 using DCL.UI;
 using ECS.Abstract;
 using MVC;
+using System;
 using System.Diagnostics;
 using System.Threading;
 using UnityEngine;
@@ -49,6 +50,7 @@ namespace DCL.InWorldCamera.UI
 
             ctx = new CancellationTokenSource();
 
+            storageService.ScreenshotUploaded += OnScreenshotUploaded;
             sidebarButton.onClick.AddListener(ToggleInWorldCamera);
         }
 
@@ -67,6 +69,7 @@ namespace DCL.InWorldCamera.UI
             viewInstance.CameraReelButton.onClick.RemoveListener(OpenCameraReelGallery);
             viewInstance.ShortcutsInfoButton.onClick.RemoveListener(ToggleShortcutsInfo);
 
+            storageService.ScreenshotUploaded += OnScreenshotUploaded;
             sidebarButton.onClick.RemoveListener(ToggleInWorldCamera);
 
             base.Dispose();
@@ -87,7 +90,11 @@ namespace DCL.InWorldCamera.UI
             sidebarButton.OnSelect(null);
             mvcManager.ShowAsync(IssueCommand(new ControllerNoData()));
 
-            bool hasSpace = storageService.StorageStatus.HasFreeSpace;
+            AdjustToStorageSpace(storageService.StorageStatus.HasFreeSpace);
+        }
+
+        private void AdjustToStorageSpace(bool hasSpace)
+        {
             viewInstance?.TakeScreenshotButton.gameObject.SetActive(hasSpace);
             viewInstance?.NoStorageNotification.gameObject.SetActive(!hasSpace);
         }
@@ -155,6 +162,9 @@ namespace DCL.InWorldCamera.UI
                 shortcutPanelIsOpen = false;
             }
         }
+
+        private void OnScreenshotUploaded(CameraReelResponse _, CameraReelStorageStatus storage) =>
+            AdjustToStorageSpace(storage.HasFreeSpace);
 
         [Conditional("DEBUG")]
         public void DebugCapture(Texture2D screenshot, ScreenshotMetadata metadata)
