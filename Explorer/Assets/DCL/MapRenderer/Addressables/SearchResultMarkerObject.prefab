@@ -257,6 +257,9 @@ MonoBehaviour:
   <title>k__BackingField: {fileID: 4613185049253147113}
   <renderers>k__BackingField:
   - {fileID: 7726644933239631887}
+  <icon>k__BackingField: {fileID: 7726644933239631887}
+  <toggledSprite>k__BackingField: {fileID: 21300000, guid: cc1734496be8b4fa9a162d820565d2cf, type: 3}
+  <regularSprite>k__BackingField: {fileID: 21300000, guid: e177591664b9842f98c79c9dc3665311, type: 3}
 --- !u!60 &1645287525256421414
 PolygonCollider2D:
   m_ObjectHideFlags: 0

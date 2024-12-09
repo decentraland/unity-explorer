@@ -112,5 +112,11 @@ namespace DCL.MapRenderer.MapLayers.Categories
 
         public GameObject? GetGameObject() =>
             poolableBehavior.instance != null ? poolableBehavior.instance.gameObject : null;
+
+        public void ToggleSelection(bool isSelected)
+        {
+            if (poolableBehavior.instance != null)
+                poolableBehavior.instance.ToggleSelection(isSelected);
+        }
     }
 }

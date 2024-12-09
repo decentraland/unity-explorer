@@ -2,6 +2,7 @@
 using DCL.MapRenderer.MapLayers;
 using DCL.MapRenderer.MapLayers.ParcelHighlight;
 using System.Collections.Generic;
+using System.Threading;
 using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
@@ -18,6 +19,8 @@ namespace DCL.MapRenderer.MapCameraController
 
         private IParcelHighlightMarker? marker;
         private GameObject? previouslyRaycastedObject;
+        private CancellationTokenSource clickCt = new ();
+        private IMapRendererMarker? previouslyClickedMarker = null;
 
         public bool HighlightEnabled { get; private set; }
 
@@ -92,6 +95,11 @@ namespace DCL.MapRenderer.MapCameraController
 
         public GameObject? ProcessMouseClick(Vector2 normalizedCoordinates)
         {
+            clickCt = clickCt.SafeRestart();
+
+            previouslyClickedMarker?.ToggleSelection(false);
+            previouslyClickedMarker = null;
+
             GameObject? hitObject = null;
             RaycastHit2D raycast = Physics2D.Raycast(GetLocalPosition(normalizedCoordinates), Vector2.zero, 10);
 
@@ -103,8 +111,11 @@ namespace DCL.MapRenderer.MapCameraController
                 hitObject = raycast.collider.gameObject;
 
                 foreach (IMapLayerController mapLayerController in interactableLayers)
-                    if (mapLayerController.ClickObject(hitObject))
+                    if (mapLayerController.ClickObject(hitObject, clickCt, out IMapRendererMarker? clickedMarker))
+                    {
+                        previouslyClickedMarker = clickedMarker;
                         return hitObject;
+                    }
             }
             else
             {

@@ -9,6 +9,10 @@ namespace DCL.MapRenderer.MapLayers.SearchResults
         [field: SerializeField] internal Transform scalingParent { get; set; }
         [field: SerializeField] internal TextMeshPro title { get; set; }
         [field: SerializeField] internal SpriteRenderer[] renderers { get; private set; }
+        [field: SerializeField] internal SpriteRenderer icon { get; private set; }
+        [field: SerializeField] internal Sprite toggledSprite { get; private set; }
+        [field: SerializeField] internal Sprite regularSprite { get; private set; }
+
         private Vector3 titleBasePosition;
 
         private float titleBaseScale;
@@ -36,5 +40,8 @@ namespace DCL.MapRenderer.MapLayers.SearchResults
             float textScaleFactor = baseScale / newScale; // Calculate the inverse scale factor
             title.transform.localScale = new Vector3(titleBaseScale * textScaleFactor, titleBaseScale * textScaleFactor, 1f);
         }
+
+        public void ToggleSelection(bool isSelected) =>
+            icon.sprite = isSelected ? toggledSprite : regularSprite;
     }
 }

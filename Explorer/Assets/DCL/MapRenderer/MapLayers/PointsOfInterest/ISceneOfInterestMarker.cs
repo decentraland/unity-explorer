@@ -29,7 +29,5 @@ namespace DCL.MapRenderer.MapLayers.PointsOfInterest
         UniTaskVoid AnimateDeSelectionAsync(CancellationToken ct);
 
         GameObject? GetGameObject();
-
-        void ToggleSelection(bool isSelected);
     }
 }

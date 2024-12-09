@@ -45,8 +45,6 @@ namespace DCL.MapRenderer.MapLayers.PointsOfInterest
         private CancellationTokenSource deHighlightCt = new ();
         private ISceneOfInterestMarker? previousMarker;
 
-        private CancellationTokenSource cts = new();
-
         private bool isEnabled;
         private int zoomLevel = 1;
         private float baseZoom = 1;
@@ -219,25 +217,18 @@ namespace DCL.MapRenderer.MapLayers.PointsOfInterest
             return false;
         }
 
-        private ISceneOfInterestMarker? previouslyClicked;
-
-        public bool ClickObject(GameObject gameObject)
+        public bool ClickObject(GameObject gameObject, CancellationTokenSource cts, out IMapRendererMarker? mapRenderMarker)
         {
-            if (previouslyClicked != null)
-            {
-                previouslyClicked.ToggleSelection(false);
-                previouslyClicked = null;
-            }
+            mapRenderMarker = null;
 
             if (clusterController.ClickObject(gameObject))
                 return true;
 
             if (visibleMarkers.TryGetValue(gameObject, out ISceneOfInterestMarker marker))
             {
-                previouslyClicked = marker;
-                cts = cts.SafeRestart();
                 marker.ToggleSelection(true);
                 navmapBus.SelectPlaceAsync(marker.PlaceInfo, cts.Token).Forget();
+                mapRenderMarker = marker;
                 return true;
             }
 

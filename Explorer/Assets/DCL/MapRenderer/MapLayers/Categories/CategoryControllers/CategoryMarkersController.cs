@@ -38,7 +38,6 @@ namespace DCL.MapRenderer.MapLayers.Categories
         private readonly Dictionary<Vector2Int, IClusterableMarker> markers = new();
         private readonly Dictionary<GameObject, ICategoryMarker> visibleMarkers = new ();
 
-        private CancellationTokenSource cts = new();
         private Vector2Int decodePointer;
         private CancellationTokenSource highlightCt = new ();
         private CancellationTokenSource deHighlightCt = new ();
@@ -233,15 +232,17 @@ namespace DCL.MapRenderer.MapLayers.Categories
             return false;
         }
 
-        public bool ClickObject(GameObject gameObject)
+        public bool ClickObject(GameObject gameObject, CancellationTokenSource cts, out IMapRendererMarker? mapRenderMarker)
         {
+            mapRenderMarker = null;
             if (clusterController.ClickObject(gameObject))
                 return true;
 
             if (visibleMarkers.TryGetValue(gameObject, out ICategoryMarker marker))
             {
-                cts = cts.SafeRestart();
+                marker.ToggleSelection(true);
                 navmapBus.SelectPlaceAsync(marker.PlaceInfo, cts.Token).Forget();
+                mapRenderMarker = marker;
                 return true;
             }
 

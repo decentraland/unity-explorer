@@ -43,6 +43,8 @@ namespace DCL.MapRenderer.MapLayers.Pins
             this.cullingController = cullingController;
         }
 
+        public void ToggleSelection(bool isSelected) { }
+
         public void Dispose()
         {
             OnBecameInvisible();

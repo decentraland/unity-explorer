@@ -41,8 +41,10 @@ namespace DCL.MapRenderer.MapLayers
         bool DeHighlightObject(GameObject gameObject) =>
             false;
 
-        bool ClickObject(GameObject gameObject) =>
-            false;
-
+        bool ClickObject(GameObject gameObject, CancellationTokenSource cts, out IMapRendererMarker? mapRenderMarker)
+        {
+            mapRenderMarker = null;
+            return false;
+        }
     }
 }

@@ -38,6 +38,8 @@ namespace DCL.MapRenderer.MapLayers.Cluster
             this.coordsUtils = coordsUtils;
         }
 
+        public void ToggleSelection(bool isSelected) { }
+
         public void Dispose()
         {
             OnBecameInvisible();

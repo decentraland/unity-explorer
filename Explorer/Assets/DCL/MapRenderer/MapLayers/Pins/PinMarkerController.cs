@@ -37,7 +37,6 @@ namespace DCL.MapRenderer.MapLayers.Pins
         private bool isEnabled;
         private CancellationTokenSource highlightCt = new ();
         private CancellationTokenSource deHighlightCt = new ();
-        private CancellationTokenSource selectCt = new ();
         private IPinMarker? previousMarker;
 
         public PinMarkerController(
@@ -223,13 +222,13 @@ namespace DCL.MapRenderer.MapLayers.Pins
             return false;
         }
 
-        public bool ClickObject(GameObject gameObject)
+        public bool ClickObject(GameObject gameObject, CancellationTokenSource cts, out IMapRendererMarker? mapRendererMarker)
         {
+            mapRendererMarker = null;
             if (visibleMarkers.TryGetValue(gameObject, out IPinMarker marker))
             {
-                selectCt = selectCt.SafeRestart();
-                navmapBus.SelectPlaceAsync(marker.ParcelPosition, selectCt.Token).Forget();
-
+                navmapBus.SelectPlaceAsync(marker.ParcelPosition, cts.Token).Forget();
+                mapRendererMarker = marker;
                 return true;
             }
 

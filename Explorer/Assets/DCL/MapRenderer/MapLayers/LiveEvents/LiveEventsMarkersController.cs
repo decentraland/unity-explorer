@@ -213,17 +213,17 @@ namespace DCL.MapRenderer.MapLayers.Categories
             return false;
         }
 
-        private CancellationTokenSource cts = new();
-
-        public bool ClickObject(GameObject gameObject)
+        public bool ClickObject(GameObject gameObject, CancellationTokenSource cts, out IMapRendererMarker? mapRenderMarker)
         {
+            mapRenderMarker = null;
             if (clusterController.ClickObject(gameObject))
                 return true;
 
             if (visibleMarkers.TryGetValue(gameObject, out ICategoryMarker marker))
             {
-                cts = cts.SafeRestart();
+                marker.ToggleSelection(true);
                 navmapBus.SelectEventAsync(marker.EventDTO, cts.Token, null).Forget();
+                mapRenderMarker = marker;
                 return true;
             }
 

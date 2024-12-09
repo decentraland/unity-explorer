@@ -18,6 +18,8 @@ namespace DCL.MapRenderer.MapLayers.PlayerMarker
             SetActive(false);
         }
 
+        public void ToggleSelection(bool isSelected) { }
+
         public void Dispose()
         {
             if (markerObject)
