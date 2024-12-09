@@ -3028,6 +3028,15 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Close"",
+                    ""type"": ""Button"",
+                    ""id"": ""61065672-eecb-43b6-afd7-d1b548bd2a52"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -3360,6 +3369,17 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""action"": ""ShowHide"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""ead048b8-bc7b-451b-94b8-1504e46d3535"",
+                    ""path"": ""<Keyboard>/escape"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Close"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -3477,6 +3497,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         m_InWorldCamera_ToggleInWorldCamera = m_InWorldCamera.FindAction("ToggleInWorldCamera", throwIfNotFound: true);
         m_InWorldCamera_CameraReel = m_InWorldCamera.FindAction("CameraReel", throwIfNotFound: true);
         m_InWorldCamera_ShowHide = m_InWorldCamera.FindAction("ShowHide", throwIfNotFound: true);
+        m_InWorldCamera_Close = m_InWorldCamera.FindAction("Close", throwIfNotFound: true);
     }
 
     public void Dispose()
@@ -4446,6 +4467,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
     private readonly InputAction m_InWorldCamera_ToggleInWorldCamera;
     private readonly InputAction m_InWorldCamera_CameraReel;
     private readonly InputAction m_InWorldCamera_ShowHide;
+    private readonly InputAction m_InWorldCamera_Close;
     public struct InWorldCameraActions
     {
         private @DCLInput m_Wrapper;
@@ -4460,6 +4482,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         public InputAction @ToggleInWorldCamera => m_Wrapper.m_InWorldCamera_ToggleInWorldCamera;
         public InputAction @CameraReel => m_Wrapper.m_InWorldCamera_CameraReel;
         public InputAction @ShowHide => m_Wrapper.m_InWorldCamera_ShowHide;
+        public InputAction @Close => m_Wrapper.m_InWorldCamera_Close;
         public InputActionMap Get() { return m_Wrapper.m_InWorldCamera; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -4499,6 +4522,9 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @ShowHide.started += instance.OnShowHide;
             @ShowHide.performed += instance.OnShowHide;
             @ShowHide.canceled += instance.OnShowHide;
+            @Close.started += instance.OnClose;
+            @Close.performed += instance.OnClose;
+            @Close.canceled += instance.OnClose;
         }
 
         private void UnregisterCallbacks(IInWorldCameraActions instance)
@@ -4533,6 +4559,9 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @ShowHide.started -= instance.OnShowHide;
             @ShowHide.performed -= instance.OnShowHide;
             @ShowHide.canceled -= instance.OnShowHide;
+            @Close.started -= instance.OnClose;
+            @Close.performed -= instance.OnClose;
+            @Close.canceled -= instance.OnClose;
         }
 
         public void RemoveCallbacks(IInWorldCameraActions instance)
@@ -4671,5 +4700,6 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         void OnToggleInWorldCamera(InputAction.CallbackContext context);
         void OnCameraReel(InputAction.CallbackContext context);
         void OnShowHide(InputAction.CallbackContext context);
+        void OnClose(InputAction.CallbackContext context);
     }
 }
