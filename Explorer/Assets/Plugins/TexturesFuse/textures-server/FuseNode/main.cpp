@@ -9,10 +9,6 @@
 
 #include "texturesfuse.h"
 
-const LPCWSTR InputFileAddress = L"dcl_fuse_i";
-const LPCWSTR OutputFileAddress = L"dcl_fuse_o";
-const LPCWSTR PipeName = L"\\\\.\\pipe\\dcl_fuse_p";
-
 const int mb = 1024 * 1024;
 
 #pragma pack(push, 1)
@@ -88,11 +84,11 @@ int InputArgsFromPipe(const HANDLE hPipe, InputArgs *iArgs)
     return 0;
 }
 
-int OpenPipe(HANDLE *hPipe)
+int OpenPipe(HANDLE *hPipe, char* pipeName)
 {
     printf("Opening pipe\n");
-    *hPipe = CreateFile(
-        PipeName,
+    *hPipe = CreateFileA(
+        pipeName,
         GENERIC_READ | GENERIC_WRITE,
         0,
         nullptr,
@@ -164,22 +160,22 @@ int main(int argc, char *argv[])
 
     printf("Start Node\n");
 
+    // with passing additional channels
+    // const LPCWSTR InputFileAddress = L"dcl_fuse_i";
+    // const LPCWSTR OutputFileAddress = L"dcl_fuse_o";
+    // const LPCWSTR PipeName = L"\\\\.\\pipe\\dcl_fuse_p";
+    if (argc != 4)
+    {
+        fprintf(stderr, "Error on initializing, pass NamedPipe and 2 MMF files");
+        return 1;
+    }
+
+    char* PipeName = argv[1];          // "\\\\.\\pipe\\dcl_fuse_p";
+    char* InputFileAddress = argv[2];  // "dcl_fuse_i";
+    char* OutputFileAddress = argv[3]; // "dcl_fuse_o";
+
     int mmfInputCapacity = 0;
     int mmfOutputCapacity = 0;
-
-    for (size_t i = 0; i < argc - 1; i++)
-    {
-        std::string a = argv[i];
-        char *s = argv[i + 1];
-        if ("--mmfInputCapacity" == a)
-        {
-            mmfInputCapacity = atoi(s) * mb;
-        }
-        if ("--mmfOutputCapacity" == a)
-        {
-            mmfOutputCapacity = atoi(s) * mb;
-        }
-    }
 
     if (!mmfInputCapacity || !mmfOutputCapacity)
     {
@@ -202,14 +198,14 @@ int main(int argc, char *argv[])
     printf("Context initialized\n");
 
     printf("Opening files\n");
-    HANDLE hMmfInput = OpenFileMapping(FILE_MAP_READ, FALSE, InputFileAddress);
+    HANDLE hMmfInput = OpenFileMappingA(FILE_MAP_READ, FALSE, InputFileAddress);
     if (!hMmfInput)
     {
         fprintf(stderr, "Error on opening input file: %d", GetLastError());
         return 1;
     }
 
-    HANDLE hMmfOutput = OpenFileMapping(FILE_MAP_WRITE, FALSE, OutputFileAddress);
+    HANDLE hMmfOutput = OpenFileMappingA(FILE_MAP_WRITE, FALSE, OutputFileAddress);
     if (!hMmfInput)
     {
         fprintf(stderr, "Error on opening input file: %d", GetLastError());
@@ -235,7 +231,7 @@ int main(int argc, char *argv[])
     printf("File is mapped\n");
 
     HANDLE hPipe;
-    if (OpenPipe(&hPipe))
+    if (OpenPipe(&hPipe, PipeName))
     {
         CloseHandle(hMmfInput);
         CloseHandle(hMmfOutput);

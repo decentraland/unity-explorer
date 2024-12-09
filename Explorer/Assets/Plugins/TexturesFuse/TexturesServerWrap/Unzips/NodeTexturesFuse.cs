@@ -20,8 +20,9 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
         private const int MEMORY_LIMIT = MB * 1024; //GB
 
         public const string CHILD_PROCESS_NAME = "node.exe";
+        private const string PIPE_PREFIX = "\\\\.\\pipe\\";
         private const string SPACE = " ";
-        private const string CHILD_PROCESS_COMMAND = CHILD_PROCESS_NAME + SPACE + NAMED_PIPE + SPACE + MMF_INPUT + SPACE + MMF_OUTPUT;
+        private const string CHILD_PROCESS_COMMAND = CHILD_PROCESS_NAME + SPACE + PIPE_PREFIX + NAMED_PIPE + SPACE + MMF_INPUT + SPACE + MMF_OUTPUT;
 
         /// <summary>
         /// Avoid collisions between editor and client
