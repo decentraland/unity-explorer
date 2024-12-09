@@ -1,4 +1,5 @@
 using DCL.CharacterPreview;
+using DCL.InWorldCamera.CameraReelGallery;
 using DCL.Passport.Modals;
 using DCL.Passport.Modules;
 using DCL.Passport.Modules.Badges;
@@ -45,6 +46,9 @@ namespace DCL.Passport
         public BadgeInfo_PassportModuleView BadgeInfoModuleView { get; private set; }
 
         [field: SerializeField]
+        public CameraReelGalleryView CameraReelGalleryModuleView { get; private set; }
+
+        [field: SerializeField]
         public RectTransform MainContainer { get; private set; }
 
         [field: SerializeField]
@@ -60,9 +64,15 @@ namespace DCL.Passport
         public ButtonWithSelectableStateView BadgesSectionButton { get; private set; }
 
         [field: SerializeField]
+        public ButtonWithSelectableStateView PhotosSectionButton { get; private set; }
+
+        [field: SerializeField]
         public GameObject OverviewSectionPanel { get; private set; }
 
         [field: SerializeField]
         public GameObject BadgesSectionPanel { get; private set; }
+
+        [field: SerializeField]
+        public GameObject PhotosSectionPanel { get; private set; }
     }
 }

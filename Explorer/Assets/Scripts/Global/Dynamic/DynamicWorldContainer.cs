@@ -268,8 +268,7 @@ namespace Global.Dynamic
                 new EcsEmoteProvider(globalWorld, staticContainer.RealmData));
 
             container.wearablesProvider = new ApplicationParametersWearablesProvider(appArgs,
-                new ECSWearablesProvider(identityCache, globalWorld),
-                globalWorld);
+                new ECSWearablesProvider(identityCache, globalWorld));
 
             container.SceneRoomMetaDataSource = new SceneRoomMetaDataSource(staticContainer.RealmData, staticContainer.CharacterContainer.Transform, globalWorld, dynamicWorldParams.IsolateScenesCommunication);
 
@@ -672,6 +671,8 @@ namespace Global.Dynamic
                     notificationsBusController,
                     staticContainer.InputBlock,
                     container.RemoteMetadata,
+                    cameraReelStorageService,
+                    cameraReelStorageService,
                     globalWorld,
                     playerEntity
                 ),
@@ -689,7 +690,18 @@ namespace Global.Dynamic
                     staticContainer.CharacterContainer.CharacterObject,
                     coroutineRunner,
                     cameraReelStorageService,
+                    cameraReelStorageService,
                     container.MvcManager,
+                    clipboard,
+                    bootstrapContainer.DecentralandUrlsSource,
+                    webBrowser,
+                    staticContainer.WebRequestsContainer.WebRequestController,
+                    container.ProfileRepository,
+                    realmNavigator,
+                    assetsProvisioner,
+                    wearableCatalog,
+                    container.wearablesProvider,
+                    assetBundlesURL,
                     dclCursor,
                     mainUIView.SidebarView.InWorldCameraButton,
                     globalWorld,

@@ -1,18 +1,12 @@
-using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Components;
-using DCL.AvatarRendering.Wearables.Helpers;
-using ECS.Prioritization.Components;
-using ECS.StreamableLoading.Common;
 using Global.AppArgs;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using WearablePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Components.WearablesResolution,
-    DCL.AvatarRendering.Wearables.Components.Intentions.GetWearablesByPointersIntention>;
 
 namespace DCL.AvatarRendering.Wearables
 {
@@ -20,17 +14,13 @@ namespace DCL.AvatarRendering.Wearables
     {
         private readonly IAppArgs appArgs;
         private readonly IWearablesProvider source;
-        private readonly World world;
-        private readonly string[] allWearableCategories = WearablesConstants.CATEGORIES_PRIORITY.ToArray();
         private readonly List<IWearable> resultWearablesBuffer = new ();
 
         public ApplicationParametersWearablesProvider(IAppArgs appArgs,
-            IWearablesProvider source,
-            World world)
+            IWearablesProvider source)
         {
             this.appArgs = appArgs;
             this.source = source;
-            this.world = world;
         }
 
         public async UniTask<(IReadOnlyList<IWearable> results, int totalAmount)> GetAsync(int pageSize, int pageNumber, CancellationToken ct,
@@ -70,26 +60,10 @@ namespace DCL.AvatarRendering.Wearables
             }
         }
 
-        private async UniTask<IReadOnlyCollection<IWearable>?> RequestPointersAsync(IReadOnlyCollection<URN> pointers,
+        public async UniTask<IReadOnlyCollection<IWearable>?> RequestPointersAsync(IReadOnlyCollection<URN> pointers,
             BodyShape bodyShape,
-            CancellationToken ct)
-        {
-            var promise = WearablePromise.Create(world,
+            CancellationToken ct) =>
+                await source.RequestPointersAsync(pointers, bodyShape, ct);
 
-                // We pass all categories as force renderer to force the download of all of them
-                // Otherwise they will be skipped if any wearable is hiding the category
-                WearableComponentsUtils.CreateGetWearablesByPointersIntention(bodyShape, pointers, allWearableCategories),
-                PartitionComponent.TOP_PRIORITY);
-
-            promise = await promise.ToUniTaskAsync(world, cancellationToken: ct);
-
-            if (!promise.TryGetResult(world, out var result))
-                return null;
-
-            if (!result.Succeeded)
-                return null;
-
-            return result.Asset.Wearables;
-        }
     }
 }

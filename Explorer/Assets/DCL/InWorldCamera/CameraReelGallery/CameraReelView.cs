@@ -13,7 +13,6 @@ namespace DCL.InWorldCamera.CameraReelGallery
         [Header("Storage objects")]
         [SerializeField] internal StorageProgressBar storageProgressBar;
         [SerializeField] internal GameObject storageFullIcon;
-        [SerializeField] internal GameObject loadingSpinner;
         [SerializeField] internal GameObject emptyState;
         [SerializeField] internal CanvasGroup storageFullToast;
 
