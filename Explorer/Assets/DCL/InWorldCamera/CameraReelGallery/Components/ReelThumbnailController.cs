@@ -120,7 +120,7 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
         private void PointerExit()
         {
             if (!imageLoaded) return;
-            
+
             if (optionButton != null)
             {
                 if (optionButton.IsContextMenuOpen()) return;
