@@ -13,7 +13,7 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
     public class PagedCameraReelManager
     {
         public bool AllImagesLoaded { get; private set; }
-        public List<CameraReelResponseCompact> AllOrderedResponses { get; private set; } = new ();
+        public List<CameraReelResponseCompact> AllOrderedResponses { get; private set; } = new (32);
 
         private readonly ICameraReelStorageService cameraReelStorageService;
         private readonly string walletAddress;

@@ -66,7 +66,7 @@ namespace DCL.InWorldCamera.PhotoDetail
 
         public void Release()
         {
-            //TODO: remove if not needed
+            //TODO (Lorenzo): remove if not needed
         }
 
         public void Dispose()
