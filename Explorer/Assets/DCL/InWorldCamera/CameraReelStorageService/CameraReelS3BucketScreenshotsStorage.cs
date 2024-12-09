@@ -2,6 +2,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.WebRequests;
+using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using System.Threading;
 using UnityEngine;
 
@@ -22,10 +23,15 @@ namespace DCL.InWorldCamera.CameraReelStorageService
         public async UniTask<Texture2D> GetScreenshotThumbnailAsync(string url, CancellationToken ct = default) =>
             await GetImageAsync(url, ct);
 
-        private async UniTask<Texture2D> GetImageAsync(string url, CancellationToken ct = default) =>
-            await webRequestController.GetTextureAsync(
+        // TODO memory disposing
+        private async UniTask<Texture2D> GetImageAsync(string url, CancellationToken ct = default)
+        {
+            var texture = await webRequestController.GetTextureAsync(
                 new CommonArguments(URLAddress.FromString(url)),
-                new GetTextureArguments(false),
+                new GetTextureArguments(TextureType.Albedo),
                 GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp), ct, ReportCategory.CAMERA_REEL);
+
+            return texture.Texture;
+        }
     }
 }
