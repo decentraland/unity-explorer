@@ -9,7 +9,6 @@ using DCL.Utilities;
 using DCL.Web3.Identities;
 using ECS;
 using ECS.SceneLifeCycle;
-using ECS.SceneLifeCycle.Realm;
 using System.Threading;
 using Utility.Json;
 
@@ -18,7 +17,6 @@ namespace DCL.PluginSystem.Global
     public class AnalyticsPlugin : IDCLGlobalPlugin
     {
         private readonly IProfiler profiler;
-        private readonly IRealmNavigator realmNavigator;
         private readonly IRealmData realmData;
         private readonly IScenesCache scenesCache;
         private readonly IWeb3IdentityCache identityCache;
@@ -27,20 +25,25 @@ namespace DCL.PluginSystem.Global
 
         private readonly WalkedDistanceAnalytics walkedDistanceAnalytics;
 
-        public AnalyticsPlugin(IAnalyticsController analytics, IProfiler profiler, IRealmNavigator realmNavigator, IRealmData realmData, IScenesCache scenesCache,
-            ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy, IWeb3IdentityCache identityCache, IDebugContainerBuilder debugContainerBuilder)
+        public AnalyticsPlugin(
+            IAnalyticsController analytics,
+            IProfiler profiler,
+            IRealmData realmData,
+            IScenesCache scenesCache,
+            ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy,
+            IWeb3IdentityCache identityCache,
+            IDebugContainerBuilder debugContainerBuilder
+        )
         {
             this.analytics = analytics;
 
             this.profiler = profiler;
-            this.realmNavigator = realmNavigator;
             this.realmData = realmData;
             this.scenesCache = scenesCache;
             this.identityCache = identityCache;
             this.debugContainerBuilder = debugContainerBuilder;
 
             walkedDistanceAnalytics = new WalkedDistanceAnalytics(analytics, mainPlayerAvatarBaseProxy);
-            this.realmNavigator.RealmChanged += OnRealmChanged;
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
@@ -57,12 +60,7 @@ namespace DCL.PluginSystem.Global
         public void Dispose()
         {
             walkedDistanceAnalytics.Dispose();
-            this.realmNavigator.RealmChanged -= OnRealmChanged;
-
         }
-
-        private void OnRealmChanged(RealmType _) =>
-            analytics.Flush();
 
         public UniTask Initialize(IPluginSettingsContainer container, CancellationToken ct) =>
             UniTask.CompletedTask;

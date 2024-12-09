@@ -14,8 +14,7 @@ namespace DCL.SceneLoadingScreens.Tests
 {
     public class LoadingScreenShould
     {
-        private static readonly LoadingScreenTimeout TIMEOUT = new()
-            { Value = TimeSpan.FromSeconds(60) };
+        private static readonly LoadingScreenTimeout TIMEOUT = new (TimeSpan.FromSeconds(60));
 
         /// <summary>
         ///     Happy path
@@ -26,7 +25,7 @@ namespace DCL.SceneLoadingScreens.Tests
         {
             var loadingScreen = new LoadingScreen.LoadingScreen(CreateMVCManagerNeverFails(), TIMEOUT);
 
-            Result finalRes = await loadingScreen.ShowWhileExecuteTaskAsync(CreateOp, CancellationToken.None);
+            var finalRes = await loadingScreen.ShowWhileExecuteTaskAsync(CreateOp, CancellationToken.None);
 
             async UniTask<Result> CreateOp(AsyncLoadProcessReport report, CancellationToken ct)
             {
@@ -51,7 +50,7 @@ namespace DCL.SceneLoadingScreens.Tests
             var loadingScreen = new LoadingScreen.LoadingScreen(CreateMVCManagerNeverFails(), TIMEOUT);
             AsyncLoadProcessReport outerReport = null;
 
-            Result finalRes = await loadingScreen.ShowWhileExecuteTaskAsync(CreateOp, CancellationToken.None);
+            var finalRes = await loadingScreen.ShowWhileExecuteTaskAsync(CreateOp, CancellationToken.None);
 
             async UniTask<Result> CreateOp(AsyncLoadProcessReport report, CancellationToken ct)
             {
@@ -74,7 +73,7 @@ namespace DCL.SceneLoadingScreens.Tests
             var loadingScreen = new LoadingScreen.LoadingScreen(CreateMVCManagerThrowsException(), TIMEOUT);
             AsyncLoadProcessReport outerReport = null;
 
-            Result finalRes = await loadingScreen.ShowWhileExecuteTaskAsync(CreateOp, CancellationToken.None);
+            var finalRes = await loadingScreen.ShowWhileExecuteTaskAsync(CreateOp, CancellationToken.None);
 
             async UniTask<Result> CreateOp(AsyncLoadProcessReport report, CancellationToken ct)
             {
@@ -118,8 +117,8 @@ namespace DCL.SceneLoadingScreens.Tests
                 return Result.CancelledResult();
             }
 
-            var loadingScreen = new LoadingScreen.LoadingScreen(mvc, new LoadingScreenTimeout { Value = TimeSpan.FromMilliseconds(200) });
-            Result result = await loadingScreen.ShowWhileExecuteTaskAsync(CreateOp, CancellationToken.None);
+            var loadingScreen = new LoadingScreen.LoadingScreen(mvc, new LoadingScreenTimeout(TimeSpan.FromMilliseconds(200)));
+            var result = await loadingScreen.ShowWhileExecuteTaskAsync(CreateOp, CancellationToken.None);
 
             // let internal operations spin to the end
             await UniTask.Yield();
@@ -129,7 +128,7 @@ namespace DCL.SceneLoadingScreens.Tests
             Assert.IsTrue(mvcCancellation.IsCancellationRequested);
             Assert.IsTrue(opCancellation.IsCancellationRequested);
 
-            Assert.That(result.ErrorMessage, Is.EqualTo("Load Timeout!"));
+            Assert.That(result.Error!.Value.Message, Is.EqualTo("Load Timeout!"));
             Assert.That(outerReport!.GetStatus().TaskStatus, Is.EqualTo(UniTaskStatus.Faulted));
         }
 

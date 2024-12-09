@@ -120,16 +120,18 @@ namespace DCL.UI.ConnectionStatusPanel
                 return;
 
             await mvcManager.ShowAsync(new ShowCommand<ErrorPopupView, ErrorPopupData>(ErrorPopupData.Empty), ct);
+
             await userInAppInitializationFlow.ExecuteAsync(
-                new UserInAppInitializationFlowParameters
-                {
-                    ShowAuthentication = true,
-                    ShowLoading = true,
-                    ReloadRealm = true,
-                    FromLogout = false,
-                    World = world,
-                    PlayerEntity = playerEntity,
-                }, ct);
+                new UserInAppInitializationFlowParameters(
+                    showAuthentication: true,
+                    showLoading: true,
+                    reloadRealm: true,
+                    loadSource: IUserInAppInitializationFlow.LoadSource.Recover,
+                    world: world,
+                    playerEntity: playerEntity
+                ),
+                ct
+            );
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>

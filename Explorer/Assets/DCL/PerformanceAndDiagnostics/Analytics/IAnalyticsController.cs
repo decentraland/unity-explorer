@@ -1,4 +1,3 @@
-using DCL.Multiplayer.HealthChecks;
 using DCL.Web3.Identities;
 using ECS;
 using Segment.Serialization;
@@ -46,11 +45,5 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
             public void Flush() { }
         }
-    }
-
-    public static class AnalyticsExtensions
-    {
-        public static IHealthCheck WithFailAnalytics(this IHealthCheck origin, IAnalyticsController analyticsController) =>
-            new FailAnalyticsHealthCheckDecorator(origin, analyticsController);
     }
 }

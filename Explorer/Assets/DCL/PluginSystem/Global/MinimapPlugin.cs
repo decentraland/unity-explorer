@@ -8,82 +8,81 @@ using DCL.SceneRestrictionBusController.SceneRestrictionBus;
 using DCL.UI.MainUI;
 using ECS;
 using ECS.SceneLifeCycle;
-using ECS.SceneLifeCycle.Realm;
 using Global.Dynamic;
 using MVC;
+using System;
 using System.Threading;
-using ECS.SceneLifeCycle;
-using ECS.SceneLifeCycle.Realm;
-using Utility.Tasks;
 
 namespace DCL.PluginSystem.Global
 {
     public class MinimapPlugin : IDCLGlobalPlugin<MinimapPlugin.MinimapSettings>
     {
         private readonly IMVCManager mvcManager;
-        private readonly MapRendererContainer mapRendererContainer;
-        private readonly IPlacesAPIService placesAPIService;
-        private readonly IRealmData realmData;
-        private readonly IRealmNavigator realmNavigator;
-        private readonly IChatMessagesBus chatMessagesBus;
-        private readonly IScenesCache scenesCache;
-        private readonly MainUIView mainUIView;
-        private readonly IMapPathEventBus mapPathEventBus;
-        private MinimapController minimapController;
-        private readonly ISceneRestrictionBusController sceneRestrictionBusController;
+        private readonly Lazy<MinimapController> lazyMap;
 
-        private readonly string startParcelInGenesis;
-
-        public MinimapPlugin(IMVCManager mvcManager, MapRendererContainer mapRendererContainer, IPlacesAPIService placesAPIService,
-            IRealmData realmData, IChatMessagesBus chatMessagesBus, IRealmNavigator realmNavigator, IScenesCache scenesCache, MainUIView mainUIView,
+        private MinimapPlugin(IMVCManager mvcManager, MapRendererContainer mapRendererContainer, IPlacesAPIService placesAPIService,
+            IRealmData realmData, IChatMessagesBus chatMessagesBus, IScenesCache scenesCache, MainUIView mainUIView,
             IMapPathEventBus mapPathEventBus, ISceneRestrictionBusController sceneRestrictionBusController,
             string startParcelInGenesis)
         {
             this.mvcManager = mvcManager;
-            this.mapRendererContainer = mapRendererContainer;
-            this.placesAPIService = placesAPIService;
-            this.realmData = realmData;
-            this.chatMessagesBus = chatMessagesBus;
-            this.realmNavigator = realmNavigator;
-            this.scenesCache = scenesCache;
-            this.mapPathEventBus = mapPathEventBus;
-            this.mainUIView = mainUIView;
-            this.sceneRestrictionBusController = sceneRestrictionBusController;
-            this.startParcelInGenesis = startParcelInGenesis;
+
+            lazyMap = new Lazy<MinimapController>(() =>
+            {
+                return new MinimapController(
+                    () =>
+                    {
+                        MinimapView? view = mainUIView.MinimapView;
+                        view.gameObject.SetActive(true);
+                        return view;
+                    },
+                    mapRendererContainer.MapRenderer,
+                    mvcManager,
+                    placesAPIService,
+                    realmData,
+                    chatMessagesBus,
+                    scenesCache,
+                    mapPathEventBus,
+                    sceneRestrictionBusController,
+                    startParcelInGenesis);
+            });
+        }
+
+        public static MinimapPlugin NewInstance(
+            IMVCManager mvcManager,
+            MapRendererContainer mapRendererContainer,
+            IPlacesAPIService placesAPIService,
+            IRealmData realmData,
+            IChatMessagesBus chatMessagesBus,
+            IScenesCache scenesCache,
+            MainUIView mainUIView,
+            IMapPathEventBus mapPathEventBus,
+            ISceneRestrictionBusController sceneRestrictionBusController,
+            string startParcelInGenesis,
+            out Lazy<MinimapController> minimap)
+        {
+            var instance = new MinimapPlugin(mvcManager, mapRendererContainer, placesAPIService, realmData, chatMessagesBus, scenesCache, mainUIView, mapPathEventBus, sceneRestrictionBusController, startParcelInGenesis);
+            minimap = instance.lazyMap;
+            return instance;
         }
 
         public void Dispose()
         {
-            minimapController.Dispose();
+            if (lazyMap.IsValueCreated)
+                lazyMap.Value!.Dispose();
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
             TrackPlayerPositionSystem? trackPlayerPositionSystem = TrackPlayerPositionSystem.InjectToWorld(ref builder);
-            minimapController.HookPlayerPositionTrackingSystem(trackPlayerPositionSystem);
+            lazyMap.Value.HookPlayerPositionTrackingSystem(trackPlayerPositionSystem);
         }
 
-        public async UniTask InitializeAsync(MinimapSettings settings, CancellationToken ct)
+        public UniTask InitializeAsync(MinimapSettings settings, CancellationToken ct)
         {
-            minimapController = new MinimapController(
-                () =>
-                {
-                    MinimapView? view = mainUIView.MinimapView;
-                    view.gameObject.SetActive(true);
-                    return view;
-                },
-                mapRendererContainer.MapRenderer,
-                mvcManager,
-                placesAPIService,
-                realmData,
-                chatMessagesBus,
-                realmNavigator,
-                scenesCache,
-                mapPathEventBus,
-                sceneRestrictionBusController,
-                startParcelInGenesis);
-
+            var minimapController = lazyMap.Value!;
             mvcManager.RegisterController(minimapController);
+            return UniTask.CompletedTask;
         }
 
         public class MinimapSettings : IDCLPluginSettings { }
