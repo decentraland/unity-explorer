@@ -64,6 +64,13 @@ namespace DCL.MapRenderer.MapLayers.Categories
             this.clusterController = clusterController;
             this.navmapBus = navmapBus;
             this.navmapBus.OnPlaceSearched += OnPlaceSearched;
+            this.navmapBus.OnFilterByCategory += OnFilterByCategory;
+        }
+
+        private void OnFilterByCategory(string? category)
+        {
+            if(string.IsNullOrEmpty(category))
+                ReleaseMarkers();
         }
 
         private void OnPlaceSearched(INavmapBus.SearchPlaceParams searchparams, IReadOnlyList<PlacesData.PlaceInfo> places, int totalresultcount)
@@ -109,6 +116,9 @@ namespace DCL.MapRenderer.MapLayers.Categories
                 if (isEnabled)
                     mapCullingController.StartTracking(marker, this);
             }
+
+            foreach (ICategoryMarker clusterableMarker in clusterController.UpdateClusters(zoomLevel, baseZoom, zoom, markers))
+                mapCullingController.StartTracking(clusterableMarker, this);
         }
 
         private static bool IsEmptyParcel(PlacesData.PlaceInfo sceneInfo) =>

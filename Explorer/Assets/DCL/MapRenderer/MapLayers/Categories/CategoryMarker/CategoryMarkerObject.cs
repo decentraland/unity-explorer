@@ -9,6 +9,7 @@ namespace DCL.MapRenderer.MapLayers.Categories
         [field: SerializeField] internal Transform scalingParent { get; set; }
         [field: SerializeField] internal TextMeshPro title { get; set; }
         [field: SerializeField] internal SpriteRenderer[] renderers { get; private set; }
+        [field: SerializeField] internal TextMeshPro[] textRenderers { get; private set; }
         [field: SerializeField] internal SpriteRenderer categorySprite { get; private set; }
 
         [field: SerializeField] internal Sprite toggledSprite { get; private set; }

@@ -98,7 +98,6 @@ namespace DCL.MapRenderer.MapLayers.Cluster
                 else
                 {
                     visibleMarkers.Add(cell.Value[0]);
-                    cell.Value[0].OnBecameVisible();
                 }
             }
 

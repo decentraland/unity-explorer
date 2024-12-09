@@ -72,6 +72,9 @@ namespace DCL.MapRenderer.MapLayers.Categories
             poolableBehavior.OnBecameVisible().title.text = title;
             poolableBehavior.instance.SetCategorySprite(iconSprite);
 
+            MarkerHelper.SetAlpha(poolableBehavior.OnBecameVisible().renderers, poolableBehavior.OnBecameVisible().textRenderers, 0);
+            MarkerHelper.FadeToAsync(poolableBehavior.OnBecameVisible().renderers, poolableBehavior.OnBecameVisible().textRenderers, 1, 0.5f, Ease.OutBack, CancellationToken.None).Forget();
+
             if(currentBaseScale != 0)
                 poolableBehavior.instance.SetScale(currentBaseScale, currentNewScale);
         }

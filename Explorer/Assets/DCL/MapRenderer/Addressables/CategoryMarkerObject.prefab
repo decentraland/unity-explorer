@@ -225,9 +225,10 @@ MonoBehaviour:
   <title>k__BackingField: {fileID: 4613185049253147113}
   <renderers>k__BackingField:
   - {fileID: 5155384069659503510}
+  <textRenderers>k__BackingField:
+  - {fileID: 4613185049253147113}
   <categorySprite>k__BackingField: {fileID: 5155384069659503510}
   <toggledSprite>k__BackingField: {fileID: 21300000, guid: cc1734496be8b4fa9a162d820565d2cf, type: 3}
-  <regularSprite>k__BackingField: {fileID: 0}
 --- !u!61 &6988814289880308417
 BoxCollider2D:
   m_ObjectHideFlags: 0
