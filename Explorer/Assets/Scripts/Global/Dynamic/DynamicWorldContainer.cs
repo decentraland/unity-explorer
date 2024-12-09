@@ -627,7 +627,7 @@ namespace Global.Dynamic
                     assetsProvisioner,
                     container.MvcManager,
                     dclCursor,
-                    realmUrl => container.RealmController.SetRealmAsync(URLDomain.FromString(realmUrl), CancellationToken.None).Forget()),
+                    realmUrl => container.ChatMessagesBus.Send($"/{ChatCommandsUtils.COMMAND_GOTO} {realmUrl}",  "RestrictedActionAPI")),
                 new NftPromptPlugin(assetsProvisioner, webBrowser, container.MvcManager, nftInfoAPIClient, staticContainer.WebRequestsContainer.WebRequestController, dclCursor),
                 staticContainer.CharacterContainer.CreateGlobalPlugin(),
                 staticContainer.QualityContainer.CreatePlugin(),
