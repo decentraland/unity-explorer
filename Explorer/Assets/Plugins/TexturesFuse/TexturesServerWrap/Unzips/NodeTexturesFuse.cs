@@ -19,7 +19,19 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
 
         private const int MEMORY_LIMIT = MB * 1024; //GB
 
-        public const string CHILD_PROCESS = "node.exe";
+        /// <summary>
+        /// Avoid collisions between editor and client
+        /// </summary>
+        private static readonly string ENVIRONMENT_POSTFIX = System.Diagnostics.Process.GetCurrentProcess().Id.ToString();
+
+        private static readonly string MMF_INPUT = "dcl_fuse_i_" + ENVIRONMENT_POSTFIX;
+        private static readonly string MMF_OUTPUT = "dcl_fuse_o_" + ENVIRONMENT_POSTFIX;
+        private static readonly string NAMED_PIPE = "dcl_fuse_p_" + ENVIRONMENT_POSTFIX;
+
+        public const string CHILD_PROCESS_NAME = "node.exe";
+        private const string PIPE_PREFIX = "\\\\.\\pipe\\";
+        private const string SPACE = " ";
+        private static readonly string CHILD_PROCESS_COMMAND = CHILD_PROCESS_NAME + SPACE + PIPE_PREFIX + NAMED_PIPE + SPACE + MMF_INPUT + SPACE + MMF_OUTPUT;
 
         private static MemoryMappedFile? mmfInput;
         private static MemoryMappedFile? mmfOutput;
@@ -65,8 +77,8 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
 
         public NodeTexturesFuse(InputArgs inputArgs)
         {
-            mmfInput ??= MemoryMappedFile.CreateNew("dcl_fuse_i", MMF_INPUT_CAPACITY);
-            mmfOutput ??= MemoryMappedFile.CreateNew("dcl_fuse_o", MMF_OUTPUT_CAPACITY);
+            mmfInput ??= MemoryMappedFile.CreateNew(MMF_INPUT, MMF_INPUT_CAPACITY);
+            mmfOutput ??= MemoryMappedFile.CreateNew(MMF_OUTPUT, MMF_OUTPUT_CAPACITY);
 
             inputFileStream = mmfInput.CreateViewStream(0, MMF_INPUT_CAPACITY);
             outputFileStream = mmfOutput.CreateViewStream(0, MMF_OUTPUT_CAPACITY);
@@ -187,7 +199,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
                     pipeWriter = null;
                 }
 
-                pipe = new NamedPipeServerStream("dcl_fuse_p", PipeDirection.InOut);
+                pipe = new NamedPipeServerStream(NAMED_PIPE, PipeDirection.InOut);
                 pipeReader = new BinaryReader(pipe);
                 pipeWriter = new BinaryWriter(pipe);
 
@@ -195,13 +207,13 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
 
                 if (result != 0)
                 {
-                    ReportHub.LogWarning(ReportCategory.TEXTURES, $"ProcessesHubStart Cannot launch process: {CHILD_PROCESS} with result code: {result}, try again with force terminate");
+                    ReportHub.LogWarning(ReportCategory.TEXTURES, $"ProcessesHubStart Cannot launch process: '{CHILD_PROCESS_COMMAND}' with result code: {result}, try again with force terminate");
                     StopProcess();
 
                     result = StartProcess();
 
                     if (result != 0)
-                        ReportHub.LogError(ReportCategory.TEXTURES, $"ProcessesHubStart Cannot launch process with force terminate: {CHILD_PROCESS} with result code: {result}");
+                        ReportHub.LogError(ReportCategory.TEXTURES, $"ProcessesHubStart Cannot launch process with force terminate: '{CHILD_PROCESS_COMMAND}' with result code: {result}");
                 }
 
                 await pipe.WaitForConnectionAsync(token)!;
@@ -230,11 +242,11 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
 
         private static PH_Error StartProcess()
         {
-            var r = NativeMethodsProcessesHub.ProcessesHubStart(CHILD_PROCESS);
+            var r = NativeMethodsProcessesHub.ProcessesHubStart(CHILD_PROCESS_COMMAND);
 
             ReportHub.Log(
                 ReportCategory.TEXTURES,
-                $"NodeTexturesFuse start process '{CHILD_PROCESS}' with result: {r}"
+                $"NodeTexturesFuse start process '{CHILD_PROCESS_COMMAND}' with result: {r}"
             );
 
             return r;
