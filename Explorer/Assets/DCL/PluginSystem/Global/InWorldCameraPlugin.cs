@@ -9,9 +9,7 @@ using DCL.Backpack;
 using DCL.Browser;
 using DCL.Character;
 using DCL.DebugUtilities;
-using DCL.DebugUtilities.Views;
 using DCL.Chat;
-using DCL.Chat.MessageBus;
 using DCL.Clipboard;
 using DCL.Input;
 using DCL.InWorldCamera;
@@ -25,6 +23,7 @@ using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.WebRequests;
 using ECS;
+using ECS.SceneLifeCycle.Realm;
 using MVC;
 using System;
 using System.Threading;
@@ -59,7 +58,7 @@ namespace DCL.PluginSystem.Global
         private readonly IWebBrowser webBrowser;
         private readonly IWebRequestController webRequestController;
         private readonly IProfileRepository profileRepository;
-        private readonly IChatMessagesBus chatMessagesBus;
+        private readonly IRealmNavigator realmNavigator;
         private readonly IWearableStorage wearableStorage;
         private readonly IWearablesProvider wearablesProvider;
         private readonly URLDomain assetBundleURL;
@@ -79,7 +78,7 @@ namespace DCL.PluginSystem.Global
             RealmData realmData, Entity playerEntity, IPlacesAPIService placesAPIService, ICharacterObject characterObject, ICoroutineRunner coroutineRunner,
             ICameraReelStorageService cameraReelStorageService, ICameraReelScreenshotsStorage cameraReelScreenshotsStorage, IMVCManager mvcManager,
             ISystemClipboard systemClipboard, IDecentralandUrlsSource decentralandUrlsSource, IWebBrowser webBrowser, IWebRequestController webRequestController,
-            IProfileRepository profileRepository, IChatMessagesBus chatMessagesBus, IAssetsProvisioner assetsProvisioner,
+            IProfileRepository profileRepository, IRealmNavigator realmNavigator, IAssetsProvisioner assetsProvisioner,
             IWearableStorage wearableStorage, IWearablesProvider wearablesProvider,
             URLDomain assetBundleURL,
             ICursor cursor,
@@ -103,7 +102,7 @@ namespace DCL.PluginSystem.Global
             this.webBrowser = webBrowser;
             this.webRequestController = webRequestController;
             this.profileRepository = profileRepository;
-            this.chatMessagesBus = chatMessagesBus;
+            this.realmNavigator = realmNavigator;
             this.assetsProvisioner = assetsProvisioner;
             this.wearableStorage = wearableStorage;
             this.wearablesProvider = wearablesProvider;
@@ -147,7 +146,7 @@ namespace DCL.PluginSystem.Global
                     profileRepository,
                     mvcManager,
                     webBrowser,
-                    chatMessagesBus,
+                    realmNavigator,
                     wearableStorage,
                     wearablesProvider,
                     decentralandUrlsSource,

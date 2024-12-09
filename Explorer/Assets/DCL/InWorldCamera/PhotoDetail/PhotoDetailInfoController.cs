@@ -4,8 +4,6 @@ using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack;
 using DCL.Browser;
 using DCL.Chat;
-using DCL.Chat.Commands;
-using DCL.Chat.MessageBus;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using DCL.InWorldCamera.ReelActions;
@@ -13,18 +11,19 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Passport;
 using DCL.Profiles;
 using DCL.WebRequests;
+using ECS.SceneLifeCycle.Realm;
 using MVC;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Threading;
 using UnityEngine;
+using Utility;
 
 namespace DCL.InWorldCamera.PhotoDetail
 {
     public class PhotoDetailInfoController : IDisposable
     {
-        private const string ORIGIN = "jump in";
         private const int VISIBLE_PERSON_DEFAULT_POOL_SIZE = 20;
         private const int EQUIPPED_WEARABLE_DEFAULT_POOL_SIZE = 20;
         private const int VISIBLE_PERSON_MAX_POOL_CAPACITY = 10000;
@@ -32,13 +31,14 @@ namespace DCL.InWorldCamera.PhotoDetail
 
         private readonly PhotoDetailInfoView view;
         private readonly ICameraReelStorageService cameraReelStorageService;
-        private readonly IChatMessagesBus chatMessagesBus;
+        private readonly IRealmNavigator realmNavigator;
         private readonly IMVCManager mvcManager;
         private readonly PhotoDetailPoolManager photoDetailPoolManager;
         private readonly List<VisiblePersonController> visiblePersonControllers = new ();
 
         private Vector2Int screenshotParcel = Vector2Int.zero;
         private string reelOwnerAddress;
+        private CancellationTokenSource teleportCts = new ();
 
         internal event Action JumpIn;
 
@@ -48,7 +48,7 @@ namespace DCL.InWorldCamera.PhotoDetail
             IProfileRepository profileRepository,
             IMVCManager mvcManager,
             IWebBrowser webBrowser,
-            IChatMessagesBus chatMessagesBus,
+            IRealmNavigator realmNavigator,
             IWearableStorage wearableStorage,
             IWearablesProvider wearablesProvider,
             IDecentralandUrlsSource decentralandUrlsSource,
@@ -60,7 +60,7 @@ namespace DCL.InWorldCamera.PhotoDetail
         {
             this.view = view;
             this.cameraReelStorageService = cameraReelStorageService;
-            this.chatMessagesBus = chatMessagesBus;
+            this.realmNavigator = realmNavigator;
             this.mvcManager = mvcManager;
 
             this.photoDetailPoolManager = new PhotoDetailPoolManager(view.visiblePersonViewPrefab,
@@ -94,6 +94,7 @@ namespace DCL.InWorldCamera.PhotoDetail
             view.jumpInButton.onClick.RemoveListener(JumpInClicked);
             view.ownerProfileButton.onClick.RemoveListener(ShowOwnerPassportClicked);
             JumpIn = null;
+            teleportCts.SafeCancelAndDispose();
         }
 
         private void ShowOwnerPassportClicked()
@@ -141,7 +142,7 @@ namespace DCL.InWorldCamera.PhotoDetail
         private void JumpInClicked()
         {
             JumpIn?.Invoke();
-            chatMessagesBus.Send($"/{ChatCommandsUtils.COMMAND_GOTO} {screenshotParcel.x},{screenshotParcel.y}", ORIGIN);
+            realmNavigator.TeleportToParcelAsync(screenshotParcel, teleportCts.Token, false).Forget();
         }
 
         public void Release()

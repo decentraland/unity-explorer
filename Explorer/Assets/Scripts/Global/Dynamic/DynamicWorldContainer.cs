@@ -695,7 +695,7 @@ namespace Global.Dynamic
                     webBrowser,
                     staticContainer.WebRequestsContainer.WebRequestController,
                     container.ProfileRepository,
-                    container.ChatMessagesBus,
+                    realmNavigator,
                     assetsProvisioner,
                     wearableCatalog,
                     container.wearablesProvider,
