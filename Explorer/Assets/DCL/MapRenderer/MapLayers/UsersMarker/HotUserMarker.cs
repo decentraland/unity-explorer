@@ -1,6 +1,7 @@
 ﻿using DCL.MapRenderer.CommonBehavior;
 using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.MapLayers.UsersMarker;
+using System;
 using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
@@ -24,6 +25,8 @@ namespace DCL.MapRenderer.MapLayers.Users
 
             poolableBehavior = new MapMarkerPoolableBehavior<HotUserMarkerObject>(pool);
         }
+
+        public void ToggleSelection(bool isSelected) { }
 
         public void UpdateMarkerPosition(string playerId, Vector3 position)
         {

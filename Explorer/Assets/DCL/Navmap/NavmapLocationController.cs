@@ -19,7 +19,12 @@ namespace DCL.Navmap
         private readonly Entity playerEntity;
         private readonly NavmapFilterPanelController navmapFilterPanelController;
 
-        public NavmapLocationController(NavmapLocationView view, World world, Entity playerEntity, NavmapFilterPanelController navmapFilterPanelController)
+        public NavmapLocationController(
+            NavmapLocationView view,
+            World world,
+            Entity playerEntity,
+            NavmapFilterPanelController navmapFilterPanelController,
+            INavmapBus navmapBus)
         {
             this.world = world;
             this.playerEntity = playerEntity;
@@ -28,6 +33,13 @@ namespace DCL.Navmap
 
             view.CenterToPlayerButton.onClick.AddListener(CenterToPlayer);
             view.FilterPanelButton.onClick.AddListener(ToggleFilterPanel);
+
+            navmapBus.OnMoveCameraTo += MoveCameraTo;
+        }
+
+        private void MoveCameraTo(Vector2 destination)
+        {
+            cameraController.TranslateTo(destination, TRANSITION_TIME);
         }
 
         private void ToggleFilterPanel()

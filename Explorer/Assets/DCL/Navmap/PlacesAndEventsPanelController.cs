@@ -75,7 +75,7 @@ namespace DCL.Navmap
             }
         }
 
-        private void Expand()
+        public void Expand()
         {
             view.CollapseButton.gameObject.SetActive(true);
             view.ExpandButton.gameObject.SetActive(false);

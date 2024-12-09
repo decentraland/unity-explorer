@@ -395,6 +395,7 @@ GameObject:
   m_Component:
   - component: {fileID: 401758791842004506}
   - component: {fileID: 5514867554339137478}
+  - component: {fileID: 606435739276108845}
   m_Layer: 27
   m_Name: MapPinMarkerObject
   m_TagString: Untagged
@@ -444,6 +445,41 @@ MonoBehaviour:
   <destinationAnimationElipse>k__BackingField: {fileID: 3270835207172273817}
   <selectionScalingParent>k__BackingField: {fileID: 3193694967752250088}
   <pulseScalingParent>k__BackingField: {fileID: 7627252470461613519}
+--- !u!58 &606435739276108845
+CircleCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5678877870475829863}
+  m_Enabled: 1
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ForceSendLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ForceReceiveLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ContactCaptureLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CallbackLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IsTrigger: 0
+  m_UsedByEffector: 0
+  m_UsedByComposite: 0
+  m_Offset: {x: 0, y: 0.018538594}
+  serializedVersion: 2
+  m_Radius: 0.5185386
 --- !u!1 &6487472922783259709
 GameObject:
   m_ObjectHideFlags: 0

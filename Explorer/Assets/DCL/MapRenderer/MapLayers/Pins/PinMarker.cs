@@ -43,6 +43,8 @@ namespace DCL.MapRenderer.MapLayers.Pins
             this.cullingController = cullingController;
         }
 
+        public void ToggleSelection(bool isSelected) { }
+
         public void Dispose()
         {
             OnBecameInvisible();
@@ -68,7 +70,7 @@ namespace DCL.MapRenderer.MapLayers.Pins
             if (poolableBehavior.instance != null)
             {
                 selectionCancellationTokenSource = selectionCancellationTokenSource.SafeRestartLinked(ct);
-                await PinMarkerHelper.ScaleToAsync(poolableBehavior.instance.selectionScalingParent, new Vector2 (1.5f, 1.5f), 0.5f, Ease.OutBack, selectionCancellationTokenSource.Token);
+                await MarkerHelper.ScaleToAsync(poolableBehavior.instance.selectionScalingParent, new Vector2 (1.5f, 1.5f), 0.5f, Ease.OutBack, selectionCancellationTokenSource.Token);
             }
         }
 
@@ -92,7 +94,7 @@ namespace DCL.MapRenderer.MapLayers.Pins
             if (poolableBehavior.instance != null)
             {
                 selectionCancellationTokenSource = selectionCancellationTokenSource.SafeRestartLinked(ct);
-                await PinMarkerHelper.ScaleToAsync(poolableBehavior.instance.selectionScalingParent, Vector3.one, 0.5f, Ease.OutBack, selectionCancellationTokenSource.Token);
+                await MarkerHelper.ScaleToAsync(poolableBehavior.instance.selectionScalingParent, Vector3.one, 0.5f, Ease.OutBack, selectionCancellationTokenSource.Token);
                 //We dont reset the ct in this case because it was already restarted and linked to the ct of AnimateDeselectionAsync
                 ResetPulseAnimation(false);
             }
@@ -158,7 +160,7 @@ namespace DCL.MapRenderer.MapLayers.Pins
         private void ResetPulseAnimation(bool resetCt = true)
         {
             if (resetCt) pulseCancellationTokenSource = pulseCancellationTokenSource.SafeRestart();
-            if (!IsDestination && !IsSelected && poolableBehavior.instance != null) PinMarkerHelper.PulseScaleAsync(poolableBehavior.instance.pulseScalingParent, ct: pulseCancellationTokenSource.Token).Forget();
+            if (!IsDestination && !IsSelected && poolableBehavior.instance != null) MarkerHelper.PulseScaleAsync(poolableBehavior.instance.pulseScalingParent, ct: pulseCancellationTokenSource.Token).Forget();
         }
 
         public void Show(Action? onFinish = null)
@@ -170,5 +172,8 @@ namespace DCL.MapRenderer.MapLayers.Pins
         {
             poolableBehavior.instance?.SetVisibility(false, onFinish);
         }
+
+        public GameObject? GetGameObject() =>
+            poolableBehavior.instance != null ? poolableBehavior.instance.gameObject : null;
     }
 }

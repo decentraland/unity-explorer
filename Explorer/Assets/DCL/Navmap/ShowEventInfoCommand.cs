@@ -38,6 +38,7 @@ namespace DCL.Navmap
         public async UniTask ExecuteAsync(CancellationToken ct)
         {
             placesAndEventsPanelController.Toggle(PlacesAndEventsPanelController.Section.EVENT);
+            placesAndEventsPanelController.Expand();
 
             placeInfo ??= await placesAPIService.GetPlaceAsync(new Vector2Int(@event.coordinates[0], @event.coordinates[1]), ct, true);
 

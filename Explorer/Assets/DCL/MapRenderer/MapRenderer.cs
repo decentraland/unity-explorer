@@ -62,17 +62,7 @@ namespace DCL.MapRenderer
 
                 layers[MapLayer.SatelliteAtlas].SharedActive = true;
                 layers[MapLayer.SearchResults].SharedActive = true;
-                layers[MapLayer.Art].SharedActive = false;
-                layers[MapLayer.Business].SharedActive = false;
-                layers[MapLayer.Education].SharedActive = false;
-                layers[MapLayer.Casino].SharedActive = false;
-                layers[MapLayer.Crypto].SharedActive = false;
-                layers[MapLayer.Fashion].SharedActive = false;
-                layers[MapLayer.Game].SharedActive = false;
-                layers[MapLayer.Music].SharedActive = false;
-                layers[MapLayer.Shop].SharedActive = false;
-                layers[MapLayer.Social].SharedActive = false;
-                layers[MapLayer.Sports].SharedActive = false;
+                layers[MapLayer.Category].SharedActive = false;
             }
             catch (OperationCanceledException)
             {

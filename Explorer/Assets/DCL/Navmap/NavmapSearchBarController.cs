@@ -29,12 +29,7 @@ namespace DCL.Navmap
         public bool Interactable
         {
             get => view.inputField.interactable;
-
-            set
-            {
-                view.inputField.interactable = value;
-                view.clearSearchButton.gameObject.SetActive(value && !string.IsNullOrEmpty(view.inputField.text));
-            }
+            set => view.inputField.interactable = value;
         }
 
         public NavmapSearchBarController(
@@ -73,6 +68,7 @@ namespace DCL.Navmap
             searchFiltersView.MostActiveButton.onClick.AddListener(() => Search(NavmapSearchPlaceSorting.MostActive));
             searchFiltersView.Toggle(currentPlaceSorting);
             searchFiltersView.Toggle(currentPlaceFilter);
+            searchFiltersView.SetSortingActiveStatus(currentPlaceFilter == NavmapSearchPlaceFilter.All);
         }
 
         public void Dispose()
@@ -112,15 +108,40 @@ namespace DCL.Navmap
         public void EnableBack()
         {
             view.BackButton.gameObject.SetActive(true);
+            view.SearchIcon.SetActive(false);
         }
 
         public void DisableBack()
         {
             view.BackButton.gameObject.SetActive(false);
+            view.SearchIcon.SetActive(true);
         }
 
         public void HideHistoryResults() =>
             historyRecordPanelView.gameObject.SetActive(false);
+
+        public void UpdateFilterAndSorting(NavmapSearchPlaceFilter filter, NavmapSearchPlaceSorting sorting)
+        {
+            currentPlaceFilter = filter;
+            searchFiltersView.Toggle(currentPlaceFilter);
+            searchFiltersView.SetSortingActiveStatus(filter == NavmapSearchPlaceFilter.All);
+
+            bool isGlobalSearch = filter == NavmapSearchPlaceFilter.All;
+
+            // Enable sorting only for filter: All
+            if (!isGlobalSearch)
+                sorting = NavmapSearchPlaceSorting.None;
+
+            currentPlaceSorting = sorting;
+            searchFiltersView.Toggle(currentPlaceSorting);
+
+            searchFiltersView.NewestButton.interactable = isGlobalSearch;
+            searchFiltersView.MostActiveButton.interactable = isGlobalSearch;
+            searchFiltersView.BestRatedButton.interactable = isGlobalSearch;
+        }
+
+        public void SetFilterActiveStatus(bool isActive) =>
+            searchFiltersView.FilterSection.SetActive(isActive);
 
         private void OnBackClicked()
         {
@@ -186,7 +207,19 @@ namespace DCL.Navmap
                 inputBlock.Disable(InputMapComponent.Kind.SHORTCUTS);
             }
             else
+            {
                 inputBlock.Enable(InputMapComponent.Kind.SHORTCUTS);
+
+                WaitForClickThenHideHistoryResultsAsync(default).Forget();
+            }
+
+            return;
+
+            async UniTaskVoid WaitForClickThenHideHistoryResultsAsync(CancellationToken ct)
+            {
+                await UniTask.DelayFrame(5, cancellationToken: ct);
+                HideHistoryResults();
+            }
         }
 
         private void ShowPreviousSearches()
@@ -232,32 +265,12 @@ namespace DCL.Navmap
             UpdateFilterAndSorting(NavmapSearchPlaceFilter.All, NavmapSearchPlaceSorting.None);
             currentSearchText = string.Empty;
             searchCancellationToken = searchCancellationToken.SafeRestart();
-
             navmapBus.SearchForPlaceAsync(INavmapBus.SearchPlaceParams.CreateWithDefaultParams(
                           page: 0,
                           filter: currentPlaceFilter,
                           sorting: currentPlaceSorting,
                           category: category), searchCancellationToken.Token)
                      .Forget();
-        }
-
-        private void UpdateFilterAndSorting(NavmapSearchPlaceFilter filter, NavmapSearchPlaceSorting sorting)
-        {
-            currentPlaceFilter = filter;
-            searchFiltersView.Toggle(currentPlaceFilter);
-
-            bool isGlobalSearch = filter == NavmapSearchPlaceFilter.All;
-
-            // Enable sorting only for filter: All
-            if (!isGlobalSearch)
-                sorting = NavmapSearchPlaceSorting.None;
-
-            currentPlaceSorting = sorting;
-            searchFiltersView.Toggle(currentPlaceSorting);
-
-            searchFiltersView.NewestButton.interactable = isGlobalSearch;
-            searchFiltersView.MostActiveButton.interactable = isGlobalSearch;
-            searchFiltersView.BestRatedButton.interactable = isGlobalSearch;
         }
     }
 }

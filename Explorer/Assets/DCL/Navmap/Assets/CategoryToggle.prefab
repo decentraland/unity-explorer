@@ -174,7 +174,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0.5}
   m_AnchorMax: {x: 0, y: 0.5}
-  m_AnchoredPosition: {x: 37.7, y: 0}
+  m_AnchoredPosition: {x: 37.69995, y: 0}
   m_SizeDelta: {x: 77, y: 36}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &5556317457713696213
@@ -281,6 +281,7 @@ MonoBehaviour:
   <Background>k__BackingField: {fileID: 6063126508313874555}
   <OnColor>k__BackingField: {r: 1, g: 0.45490196, b: 0.22352941, a: 1}
   <OffColor>k__BackingField: {r: 0.9882353, g: 0.9882353, b: 0.9882353, a: 1}
+  <OnColorText>k__BackingField: {r: 0.08627451, g: 0.08235294, b: 0.09411765, a: 1}
 --- !u!1 &6669059782782397379
 GameObject:
   m_ObjectHideFlags: 0

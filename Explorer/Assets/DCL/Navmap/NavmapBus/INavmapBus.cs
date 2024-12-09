@@ -4,6 +4,7 @@ using DCL.PlacesAPIService;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using UnityEngine;
 
 namespace DCL.Navmap
 {
@@ -41,8 +42,12 @@ namespace DCL.Navmap
         event Action<PlacesData.PlaceInfo>? OnDestinationSelected;
         event SearchPlaceResultDelegate? OnPlaceSearched;
         event Action<string?>? OnFilterByCategory;
+        event Action? OnClearPlacesFromMap;
+        event Action<Vector2> OnMoveCameraTo;
+        public event Action<bool>? OnZoomCamera;
 
         UniTask SelectPlaceAsync(PlacesData.PlaceInfo place, CancellationToken ct);
+        UniTask SelectPlaceAsync(Vector2Int parcel, CancellationToken ct);
 
         UniTask SelectEventAsync(EventDTO @event, CancellationToken ct, PlacesData.PlaceInfo? place = null);
 
@@ -57,5 +62,11 @@ namespace DCL.Navmap
         void JumpIn(PlacesData.PlaceInfo place);
 
         void FilterByCategory(string? category);
+
+        void ClearPlacesFromMap();
+
+        void MoveCameraTo(Vector2 position);
+
+        void ZoomCamera(bool zoomIn);
     }
 }

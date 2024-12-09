@@ -43,7 +43,7 @@ namespace DCL.MapRenderer
         public CategoryIconMappingsSO CategoryIconMappings { get; private set; }
 
         [field: SerializeField]
-        public IMapRendererSettings.FavoriteMarkerObjectRef FavoriteMarker { get; private set; }
+        public CategoryLayerIconMappingsSO CategoryLayerIconMappings { get; private set; }
 
         [field: SerializeField]
         public IMapRendererSettings.HotUserMarkerRef UserMarker { get; private set; }
