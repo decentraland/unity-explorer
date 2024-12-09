@@ -57,7 +57,7 @@ namespace DCL.InWorldCamera.Playground
             Profile profile = await CreateProfile().ProfileAsync(default(CancellationToken));
 
             var builder = new ScreenshotMetadataBuilder(null, null, null, null);
-            builder.FillMetadata(profile, null, Vector2Int.one, "Test Playground", Array.Empty<VisiblePerson>());
+            builder.FillMetadata(profile, null, Vector2Int.one, "Test Playground", "Test place id", Array.Empty<VisiblePerson>());
             metadata = builder.GetMetadataAndReset();
             hud.Metadata = metadata;
         }
