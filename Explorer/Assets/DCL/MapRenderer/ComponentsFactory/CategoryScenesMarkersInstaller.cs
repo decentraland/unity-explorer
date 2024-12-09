@@ -1,11 +1,10 @@
 ﻿using Cysharp.Threading.Tasks;
-using DCL.AssetsProvision;
 using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.Culling;
 using DCL.MapRenderer.MapLayers;
 using DCL.MapRenderer.MapLayers.Categories;
+using DCL.MapRenderer.MapLayers.Cluster;
 using DCL.Navmap;
-using DCL.PlacesAPIService;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -19,7 +18,6 @@ namespace DCL.MapRenderer.ComponentsFactory
 
         private Dictionary<MapLayer, IMapLayerController> writer;
         private IMapRendererSettings mapSettings;
-        private IPlacesAPIService placesAPIService;
 
         public async UniTask InstallAsync(
             Dictionary<MapLayer, IMapLayerController> layerWriter,
@@ -28,7 +26,6 @@ namespace DCL.MapRenderer.ComponentsFactory
             ICoordsUtils coordsUtils,
             IMapCullingController cullingController,
             IMapRendererSettings settings,
-            IPlacesAPIService placesAPI,
             ObjectPool<ClusterMarkerObject> clusterObjectsPool,
             CategoryMarkerObject prefab,
             INavmapBus navmapBus,
@@ -36,7 +33,6 @@ namespace DCL.MapRenderer.ComponentsFactory
         )
         {
             mapSettings = settings;
-            placesAPIService = placesAPI;
             this.writer = layerWriter;
 
             var objectsPool = new ObjectPool<CategoryMarkerObject>(
@@ -84,7 +80,6 @@ namespace DCL.MapRenderer.ComponentsFactory
         private CategoryMarkersController CreateCategoryController(MapLayer layer, ObjectPool<CategoryMarkerObject> objectsPool, ObjectPool<ClusterMarkerObject> clusterObjectsPool, MapRendererConfiguration configuration, ICoordsUtils coordsUtils, IMapCullingController cullingController, INavmapBus navmapBus)
         {
             return new CategoryMarkersController(
-                placesAPIService,
                 objectsPool,
                 CreateMarker,
                 configuration.CategoriesMarkersRoot,

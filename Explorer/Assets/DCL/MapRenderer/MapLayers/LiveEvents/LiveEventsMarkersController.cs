@@ -1,7 +1,7 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.EventsApi;
 using DCL.MapRenderer.Culling;
-using DCL.PlacesAPIService;
+using DCL.MapRenderer.MapLayers.Cluster;
 using System;
 using System.Collections.Generic;
 using System.Threading;

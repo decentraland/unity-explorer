@@ -1,10 +1,11 @@
 using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.Culling;
+using DCL.MapRenderer.MapLayers.Categories;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Pool;
 
-namespace DCL.MapRenderer.MapLayers.Categories
+namespace DCL.MapRenderer.MapLayers.Cluster
 {
     internal class ClusterController
     {

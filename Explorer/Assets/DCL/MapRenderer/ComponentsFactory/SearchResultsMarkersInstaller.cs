@@ -3,6 +3,8 @@ using DCL.AssetsProvision;
 using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.Culling;
 using DCL.MapRenderer.MapLayers;
+using DCL.MapRenderer.MapLayers.Categories;
+using DCL.MapRenderer.MapLayers.Cluster;
 using DCL.MapRenderer.MapLayers.SearchResults;
 using DCL.Navmap;
 using DCL.PlacesAPIService;
@@ -29,6 +31,7 @@ namespace DCL.MapRenderer.ComponentsFactory
             IAssetsProvisioner assetsProv,
             IMapRendererSettings settings,
             IMapCullingController cullingController,
+            ObjectPool<ClusterMarkerObject> clusterObjectsPool,
             INavmapBus navmapBus,
             CancellationToken cancellationToken
         )
@@ -50,7 +53,8 @@ namespace DCL.MapRenderer.ComponentsFactory
                 configuration.ScenesOfInterestMarkersRoot,
                 coordsUtils,
                 cullingController,
-                navmapBus
+                navmapBus,
+                new ClusterController(cullingController, clusterObjectsPool, CreateClusterMarker, coordsUtils, MapLayer.SearchResults, mapSettings.CategoryIconMappings)
             );
 
             await controller.InitializeAsync(cancellationToken);
@@ -72,6 +76,9 @@ namespace DCL.MapRenderer.ComponentsFactory
 
         private static ISearchResultMarker CreateMarker(IObjectPool<SearchResultMarkerObject> objectsPool, IMapCullingController cullingController, ICoordsUtils coordsUtils) =>
             new SearchResultMarker(objectsPool, cullingController, coordsUtils);
+
+        private static IClusterMarker CreateClusterMarker(IObjectPool<ClusterMarkerObject> objectsPool, IMapCullingController cullingController, ICoordsUtils coordsUtils) =>
+            new ClusterMarker(objectsPool, cullingController, coordsUtils);
 
         private async UniTask<SearchResultMarkerObject> GetPrefabAsync(CancellationToken cancellationToken) =>
             (await assetsProvisioner.ProvideMainAssetAsync(mapSettings.SearchResultMarker, cancellationToken)).Value;

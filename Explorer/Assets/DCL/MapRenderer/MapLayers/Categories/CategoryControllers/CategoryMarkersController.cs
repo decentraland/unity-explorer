@@ -1,14 +1,12 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.MapRenderer.Culling;
+using DCL.MapRenderer.MapLayers.Cluster;
 using DCL.Navmap;
-using DCL.PlacesAPIService;
-using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Pool;
 using ICoordsUtils = DCL.MapRenderer.CoordsUtils.ICoordsUtils;
-using IPlacesAPIService = DCL.PlacesAPIService.IPlacesAPIService;
 using PlacesData = DCL.PlacesAPIService.PlacesData;
 
 namespace DCL.MapRenderer.MapLayers.Categories
@@ -31,7 +29,6 @@ namespace DCL.MapRenderer.MapLayers.Categories
         private readonly IObjectPool<CategoryMarkerObject> objectsPool;
         private readonly CategoryMarkerBuilder builder;
         private readonly CategoryIconMappingsSO categoryIconMappings;
-        private readonly IPlacesAPIService placesAPIService;
         private readonly ClusterController clusterController;
         private readonly INavmapBus navmapBus;
 
@@ -42,10 +39,8 @@ namespace DCL.MapRenderer.MapLayers.Categories
         private int zoomLevel = 1;
         private float baseZoom = 1;
         private float zoom = 1;
-        private bool arePlacesLoaded;
 
         public CategoryMarkersController(
-            IPlacesAPIService placesAPIService,
             IObjectPool<CategoryMarkerObject> objectsPool,
             CategoryMarkerBuilder builder,
             Transform instantiationParent,
@@ -57,7 +52,6 @@ namespace DCL.MapRenderer.MapLayers.Categories
             INavmapBus navmapBus)
             : base(instantiationParent, coordsUtils, cullingController)
         {
-            this.placesAPIService = placesAPIService;
             this.objectsPool = objectsPool;
             this.builder = builder;
             this.categoryIconMappings = categoryIconMappings;
@@ -105,8 +99,6 @@ namespace DCL.MapRenderer.MapLayers.Categories
                 if (isEnabled)
                     mapCullingController.StartTracking(marker, this);
             }
-
-            arePlacesLoaded = true;
         }
 
         private static bool IsEmptyParcel(PlacesData.PlaceInfo sceneInfo) =>
@@ -146,8 +138,8 @@ namespace DCL.MapRenderer.MapLayers.Categories
             foreach (ICategoryMarker marker in markers.Values)
                 mapCullingController.StartTracking(marker, this);
 
-            isEnabled = true;
             clusterController.UpdateClusters(zoomLevel, baseZoom, zoom, markers);
+            isEnabled = true;
         }
 
         public void ResetToBaseScale()

@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace DCL.MapRenderer.MapLayers.Categories
+namespace DCL.MapRenderer.MapLayers.Cluster
 {
     public static class ClusterUtilities
     {

@@ -3,7 +3,7 @@ using DCL.AssetsProvision;
 using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.Culling;
 using DCL.MapRenderer.MapLayers;
-using DCL.MapRenderer.MapLayers.Categories;
+using DCL.MapRenderer.MapLayers.Cluster;
 using DCL.MapRenderer.MapLayers.Favorites;
 using DCL.PlacesAPIService;
 using System.Collections.Generic;

@@ -2,7 +2,7 @@
 using DCL.Diagnostics;
 using DCL.Ipfs;
 using DCL.MapRenderer.Culling;
-using DCL.MapRenderer.MapLayers.Categories;
+using DCL.MapRenderer.MapLayers.Cluster;
 using DCL.Optimization.Pools;
 using DCL.Utilities.Extensions;
 using System;

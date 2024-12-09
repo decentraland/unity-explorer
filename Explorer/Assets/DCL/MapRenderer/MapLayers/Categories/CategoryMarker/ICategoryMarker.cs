@@ -1,4 +1,5 @@
 ﻿using DCL.MapRenderer.Culling;
+using DCL.MapRenderer.MapLayers.Cluster;
 using System;
 using UnityEngine;
 

@@ -46,8 +46,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 1246, y: 36}
+  m_AnchoredPosition: {x: -51.55963, y: 0}
+  m_SizeDelta: {x: 1142.8809, y: 36}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &8024795851923391369
 CanvasRenderer:
@@ -88,7 +88,7 @@ MonoBehaviour:
     m_Top: 0
     m_Bottom: 0
   m_ChildAlignment: 0
-  m_Spacing: 10
+  m_Spacing: 0
   m_ChildForceExpandWidth: 1
   m_ChildForceExpandHeight: 1
   m_ChildControlWidth: 0
@@ -755,6 +755,18 @@ PrefabInstance:
     - target: {fileID: 7890420208628435243, guid: d17a1ce06dc3945c4a6c8ca4a7e4b4f8, type: 3}
       propertyPath: <Layer>k__BackingField
       value: 262144
+      objectReference: {fileID: 0}
+    - target: {fileID: 7890420208628435243, guid: d17a1ce06dc3945c4a6c8ca4a7e4b4f8, type: 3}
+      propertyPath: <OnColor>k__BackingField.b
+      value: 0.22352941
+      objectReference: {fileID: 0}
+    - target: {fileID: 7890420208628435243, guid: d17a1ce06dc3945c4a6c8ca4a7e4b4f8, type: 3}
+      propertyPath: <OnColor>k__BackingField.g
+      value: 0.45490196
+      objectReference: {fileID: 0}
+    - target: {fileID: 7890420208628435243, guid: d17a1ce06dc3945c4a6c8ca4a7e4b4f8, type: 3}
+      propertyPath: <OnColor>k__BackingField.r
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
