@@ -19,7 +19,8 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
 
         private const int MEMORY_LIMIT = MB * 1024; //GB
 
-        public const string CHILD_PROCESS = "node.exe";
+        private const string SPACE = " ";
+        private const string CHILD_PROCESS = "node.exe" + SPACE + NAMED_PIPE + SPACE + MMF_INPUT + SPACE + MMF_OUTPUT;
 
         /// <summary>
         /// Avoid collisions between editor and client
@@ -208,13 +209,13 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
 
                 if (result != 0)
                 {
-                    ReportHub.LogWarning(ReportCategory.TEXTURES, $"ProcessesHubStart Cannot launch process: {CHILD_PROCESS} with result code: {result}, try again with force terminate");
+                    ReportHub.LogWarning(ReportCategory.TEXTURES, $"ProcessesHubStart Cannot launch process: '{CHILD_PROCESS}' with result code: {result}, try again with force terminate");
                     StopProcess();
 
                     result = StartProcess();
 
                     if (result != 0)
-                        ReportHub.LogError(ReportCategory.TEXTURES, $"ProcessesHubStart Cannot launch process with force terminate: {CHILD_PROCESS} with result code: {result}");
+                        ReportHub.LogError(ReportCategory.TEXTURES, $"ProcessesHubStart Cannot launch process with force terminate: '{CHILD_PROCESS}' with result code: {result}");
                 }
 
                 await pipe.WaitForConnectionAsync(token)!;
