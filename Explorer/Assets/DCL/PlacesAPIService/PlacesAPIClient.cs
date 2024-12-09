@@ -66,7 +66,7 @@ namespace DCL.PlacesAPIService
                 urlBuilder.AppendParameter(new URLParameter("order", sortDirection));
 
             if (!string.IsNullOrEmpty(category))
-                urlBuilder.AppendParameter(new URLParameter("category", category));
+                urlBuilder.AppendParameter(new URLParameter("categories", category.ToLower()));
 
             if (onlyFavorites != null)
                 urlBuilder.AppendParameter(ONLY_FAVORITES);

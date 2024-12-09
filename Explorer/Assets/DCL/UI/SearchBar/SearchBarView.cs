@@ -16,6 +16,9 @@ namespace DCL.UI
         [field: SerializeField]
         public Button BackButton { get; private set; }
 
+        [field: SerializeField]
+        public GameObject SearchIcon { get; private set; }
+
         [field: Header("Audio")]
         [field: SerializeField]
         public AudioClipConfig InputTextAudio { get; private set; }

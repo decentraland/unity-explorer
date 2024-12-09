@@ -1,7 +1,10 @@
-﻿using DCL.MapRenderer.CommonBehavior;
+﻿using Cysharp.Threading.Tasks;
+using DCL.MapRenderer.CommonBehavior;
 using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.Culling;
+using DG.Tweening;
 using System;
+using System.Threading;
 using UnityEngine;
 using UnityEngine.Pool;
 
@@ -34,6 +37,8 @@ namespace DCL.MapRenderer.MapLayers.Cluster
             this.cullingController = cullingController;
             this.coordsUtils = coordsUtils;
         }
+
+        public void ToggleSelection(bool isSelected) { }
 
         public void Dispose()
         {
@@ -82,5 +87,20 @@ namespace DCL.MapRenderer.MapLayers.Cluster
             if (poolableBehavior.instance != null)
                 poolableBehavior.instance.SetScale(scale, scale);
         }
+
+        public async UniTaskVoid AnimateSelectionAsync(CancellationToken ct)
+        {
+            if (poolableBehavior.instance != null)
+                await MarkerHelper.ScaleToAsync(poolableBehavior.instance.scalingParent, new Vector2 (1.2f, 1.2f), 0.5f, Ease.OutBack, ct);
+        }
+
+        public async UniTaskVoid AnimateDeSelectionAsync(CancellationToken ct)
+        {
+            if (poolableBehavior.instance != null)
+                await MarkerHelper.ScaleToAsync(poolableBehavior.instance.scalingParent, Vector2.one, 0.5f, Ease.OutBack, ct, Vector3.one);
+        }
+
+        public GameObject? GetGameObject() =>
+            poolableBehavior.instance != null ? poolableBehavior.instance.gameObject : null;
     }
 }

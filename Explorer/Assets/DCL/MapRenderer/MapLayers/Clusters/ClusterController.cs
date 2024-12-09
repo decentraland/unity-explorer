@@ -1,9 +1,12 @@
 using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.Culling;
 using DCL.MapRenderer.MapLayers.Categories;
+using DCL.Navmap;
 using System.Collections.Generic;
+using System.Threading;
 using UnityEngine;
 using UnityEngine.Pool;
+using Utility;
 
 namespace DCL.MapRenderer.MapLayers.Cluster
 {
@@ -11,34 +14,44 @@ namespace DCL.MapRenderer.MapLayers.Cluster
     {
         private readonly IMapCullingController mapCullingController;
         private readonly List<IClusterMarker> clusteredMarkers = new();
+        private readonly List<IClusterableMarker> visibleMarkers = new();
+        private readonly Dictionary<GameObject, IClusterMarker> clusterVisibleMarkers = new ();
         private readonly Dictionary<Vector2Int, List<IClusterableMarker>> spatialHashGrid = new();
         private readonly IObjectPool<ClusterMarkerObject> clusterObjectsPool;
         private readonly CategoryMarkersController.ClusterMarkerBuilder clusterBuilder;
         private readonly ICoordsUtils coordsUtils;
-        private readonly MapLayer mapLayer;
-        private readonly CategoryIconMappingsSO categoryIconMappings;
+        private readonly INavmapBus navmapBus;
+
+        private CancellationTokenSource highlightCt = new ();
+        private CancellationTokenSource deHighlightCt = new ();
+        private IClusterMarker? previousMarker;
         private int previousZoomLevel = -1;
+        private Sprite clusterIcon;
 
         public ClusterController(
             IMapCullingController mapCullingController,
             IObjectPool<ClusterMarkerObject> clusterObjectsPool,
             CategoryMarkersController.ClusterMarkerBuilder clusterBuilder,
             ICoordsUtils coordsUtils,
-            MapLayer mapLayer,
-            CategoryIconMappingsSO categoryIconMappings)
+            INavmapBus navmapBus)
         {
             this.mapCullingController = mapCullingController;
             this.clusterObjectsPool = clusterObjectsPool;
             this.clusterBuilder = clusterBuilder;
             this.coordsUtils = coordsUtils;
-            this.mapLayer = mapLayer;
-            this.categoryIconMappings = categoryIconMappings;
+            this.navmapBus = navmapBus;
         }
 
-        public void UpdateClusters(int zoomLevel, float baseZoom, float zoom, Dictionary<Vector2Int, IClusterableMarker> markers)
+        public void SetClusterIcon(Sprite currentIcon)
         {
+            clusterIcon = currentIcon;
+        }
+
+        public List<IClusterableMarker> UpdateClusters(int zoomLevel, float baseZoom, float zoom, Dictionary<Vector2Int, IClusterableMarker> markers)
+        {
+            visibleMarkers.Clear();
             if (previousZoomLevel == zoomLevel)
-                return;
+                return visibleMarkers;
 
             previousZoomLevel = zoomLevel;
             float clusterCellSize = ClusterUtilities.CalculateCellSize(zoomLevel);
@@ -49,6 +62,7 @@ namespace DCL.MapRenderer.MapLayers.Cluster
             }
             clusteredMarkers.Clear();
             spatialHashGrid.Clear();
+            clusterVisibleMarkers.Clear();
 
             foreach (var markerEntry in markers)
             {
@@ -75,16 +89,19 @@ namespace DCL.MapRenderer.MapLayers.Cluster
 
                     var clusterMarker = clusterBuilder(clusterObjectsPool, mapCullingController, coordsUtils);
                     clusterMarker.SetData(string.Format("{0}", cell.Value.Count), averagePosition);
-                    clusterMarker.SetCategorySprite(categoryIconMappings.GetCategoryImage(mapLayer));
+                    clusterMarker.SetCategorySprite(clusterIcon);
                     clusterMarker.SetZoom(coordsUtils.ParcelSize, baseZoom, zoom);
                     clusterMarker.OnBecameVisible();
+                    clusterVisibleMarkers.Add(clusterMarker.GetGameObject(), clusterMarker);
                     clusteredMarkers.Add(clusterMarker);
                 }
                 else
                 {
-                    cell.Value[0].OnBecameVisible();
+                    visibleMarkers.Add(cell.Value[0]);
                 }
             }
+
+            return visibleMarkers;
         }
 
         public void ApplyCameraZoom(float baseZoom, float zoom)
@@ -103,5 +120,44 @@ namespace DCL.MapRenderer.MapLayers.Cluster
             }
         }
 
+        public bool HighlightObject(GameObject gameObject)
+        {
+            if (clusterVisibleMarkers.TryGetValue(gameObject, out IClusterMarker marker))
+            {
+                highlightCt = highlightCt.SafeRestart();
+                previousMarker?.AnimateDeSelectionAsync(deHighlightCt.Token);
+                marker.AnimateSelectionAsync(highlightCt.Token);
+                previousMarker = marker;
+                return true;
+            }
+
+            return false;
+        }
+
+        public bool DeHighlightObject(GameObject gameObject)
+        {
+            previousMarker = null;
+
+            if (clusterVisibleMarkers.TryGetValue(gameObject, out IClusterMarker marker))
+            {
+                deHighlightCt = deHighlightCt.SafeRestart();
+                marker.AnimateDeSelectionAsync(deHighlightCt.Token);
+                return true;
+            }
+
+            return false;
+        }
+
+        public bool ClickObject(GameObject gameObject)
+        {
+            if (clusterVisibleMarkers.TryGetValue(gameObject, out IClusterMarker marker))
+            {
+                navmapBus.ZoomCamera(true);
+                navmapBus.MoveCameraTo(gameObject.transform.position);
+                return true;
+            }
+
+            return false;
+        }
     }
 }

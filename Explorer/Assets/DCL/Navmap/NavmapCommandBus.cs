@@ -4,6 +4,7 @@ using DCL.PlacesAPIService;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using UnityEngine;
 
 namespace DCL.Navmap
 {
@@ -12,6 +13,7 @@ namespace DCL.Navmap
         public delegate INavmapCommand SearchPlaceFactory(
             INavmapBus.SearchPlaceResultDelegate callback,
             INavmapBus.SearchPlaceParams @params);
+
         public delegate INavmapCommand ShowPlaceInfoFactory(PlacesData.PlaceInfo placeInfo);
         public delegate INavmapCommand ShowEventInfoFactory(EventDTO @event, PlacesData.PlaceInfo? place = null);
 
@@ -19,19 +21,25 @@ namespace DCL.Navmap
         private readonly SearchPlaceFactory searchPlaceFactory;
         private readonly ShowPlaceInfoFactory showPlaceInfoFactory;
         private readonly ShowEventInfoFactory showEventInfoFactory;
+        private readonly IPlacesAPIService placesAPIService;
 
         public event Action<PlacesData.PlaceInfo>? OnJumpIn;
         public event Action<PlacesData.PlaceInfo>? OnDestinationSelected;
         public event INavmapBus.SearchPlaceResultDelegate? OnPlaceSearched;
         public event Action<string?>? OnFilterByCategory;
+        public event Action? OnClearPlacesFromMap;
+        public event Action<Vector2>? OnMoveCameraTo;
+        public event Action<bool>? OnZoomCamera;
 
         public NavmapCommandBus(SearchPlaceFactory searchPlaceFactory,
             ShowPlaceInfoFactory showPlaceInfoFactory,
-            ShowEventInfoFactory showEventInfoFactory)
+            ShowEventInfoFactory showEventInfoFactory,
+            IPlacesAPIService placesAPIService)
         {
             this.searchPlaceFactory = searchPlaceFactory;
             this.showPlaceInfoFactory = showPlaceInfoFactory;
             this.showEventInfoFactory = showEventInfoFactory;
+            this.placesAPIService = placesAPIService;
         }
 
         public async UniTask SelectPlaceAsync(PlacesData.PlaceInfo place, CancellationToken ct)
@@ -40,7 +48,17 @@ namespace DCL.Navmap
 
             await command.ExecuteAsync(ct);
 
-            commands.Push(command);
+            AddCommand(command);
+        }
+
+        public async UniTask SelectPlaceAsync(Vector2Int parcel, CancellationToken ct)
+        {
+            PlacesData.PlaceInfo? place = await placesAPIService.GetPlaceAsync(parcel, ct, true);
+
+            // TODO: show empty parcel
+            if (place == null) return;
+
+            await SelectPlaceAsync(place, ct);
         }
 
         public async UniTask SelectEventAsync(EventDTO @event, CancellationToken ct, PlacesData.PlaceInfo? place = null)
@@ -49,7 +67,7 @@ namespace DCL.Navmap
 
             await command.ExecuteAsync(ct);
 
-            commands.Push(command);
+            AddCommand(command);
         }
 
         public async UniTask SearchForPlaceAsync(INavmapBus.SearchPlaceParams @params, CancellationToken ct)
@@ -58,7 +76,7 @@ namespace DCL.Navmap
 
             await command.ExecuteAsync(ct);
 
-            commands.Push(command);
+            AddCommand(command);
         }
 
         public async UniTask GoBackAsync(CancellationToken ct)
@@ -89,8 +107,32 @@ namespace DCL.Navmap
         public void FilterByCategory(string? category) =>
             OnFilterByCategory?.Invoke(category);
 
+        public void ClearPlacesFromMap() =>
+            OnClearPlacesFromMap?.Invoke();
+
+        public void MoveCameraTo(Vector2 position) =>
+            OnMoveCameraTo?.Invoke(position);
+
+        public void ZoomCamera(bool zoomIn) =>
+            OnZoomCamera?.Invoke(zoomIn);
+
         private void OnSearchPlacePerformed(INavmapBus.SearchPlaceParams @params,
             IReadOnlyList<PlacesData.PlaceInfo> places, int totalResultCount) =>
             OnPlaceSearched?.Invoke(@params, places, totalResultCount);
+
+        private void AddCommand(INavmapCommand command)
+        {
+            // Replace the last command of the stack if its the same type of command
+            // This is needed so the back feature always navigates to the previous screen
+            // We don't want the back button repeating the search commands if you clicked many places in the map
+            if (commands.TryPeek(out INavmapCommand prevCommand))
+                if (command.GetType() == prevCommand.GetType())
+                {
+                    prevCommand = commands.Pop();
+                    prevCommand.Dispose();
+                }
+
+            commands.Push(command);
+        }
     }
 }

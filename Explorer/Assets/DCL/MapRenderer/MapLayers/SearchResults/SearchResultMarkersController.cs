@@ -1,12 +1,14 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.MapRenderer.Culling;
-using DCL.MapRenderer.MapLayers.Categories;
 using DCL.MapRenderer.MapLayers.Cluster;
 using DCL.Navmap;
+using NBitcoin;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Pool;
+using Utility;
 using ICoordsUtils = DCL.MapRenderer.CoordsUtils.ICoordsUtils;
 using PlacesData = DCL.PlacesAPIService.PlacesData;
 
@@ -23,11 +25,16 @@ namespace DCL.MapRenderer.MapLayers.SearchResults
 
         private readonly IObjectPool<SearchResultMarkerObject> objectsPool;
         private readonly SearchResultsMarkerBuilder builder;
+        private readonly INavmapBus navmapBus;
         private readonly ClusterController clusterController;
 
         private readonly Dictionary<Vector2Int, IClusterableMarker> markers = new();
+        private readonly Dictionary<GameObject, ISearchResultMarker> visibleMarkers = new ();
 
         private Vector2Int decodePointer;
+        private CancellationTokenSource highlightCt = new ();
+        private CancellationTokenSource deHighlightCt = new ();
+        private ISearchResultMarker? previousMarker;
         private bool isEnabled;
         private int zoomLevel = 1;
         private float baseZoom = 1;
@@ -45,9 +52,16 @@ namespace DCL.MapRenderer.MapLayers.SearchResults
         {
             this.objectsPool = objectsPool;
             this.builder = builder;
+            this.navmapBus = navmapBus;
             this.clusterController = clusterController;
 
             navmapBus.OnPlaceSearched += OnPlaceSearched;
+            navmapBus.OnClearPlacesFromMap += OnClearPlacesFromMap;
+        }
+
+        private void OnClearPlacesFromMap()
+        {
+            ReleaseMarkers();
         }
 
         public async UniTask InitializeAsync(CancellationToken cancellationToken) { }
@@ -72,13 +86,16 @@ namespace DCL.MapRenderer.MapLayers.SearchResults
                 var centerParcel = MapLayerUtils.GetParcelsCenter(placeInfo);
                 var position = coordsUtils.CoordsToPosition(centerParcel);
 
-                marker.SetData(placeInfo.title, position);
+                marker.SetData(placeInfo.title, position, placeInfo);
                 markers.Add(MapLayerUtils.GetParcelsCenter(placeInfo), marker);
                 marker.SetZoom(coordsUtils.ParcelSize, baseZoom, zoom);
 
-                if (isEnabled)
+                if(isEnabled)
                     mapCullingController.StartTracking(marker, this);
             }
+            if (isEnabled)
+                foreach (ISearchResultMarker clusterableMarker in clusterController.UpdateClusters(zoomLevel, baseZoom, zoom, markers))
+                    mapCullingController.StartTracking(clusterableMarker, this);
         }
 
         private static bool IsEmptyParcel(PlacesData.PlaceInfo sceneInfo) =>
@@ -94,7 +111,8 @@ namespace DCL.MapRenderer.MapLayers.SearchResults
                 marker.SetZoom(coordsUtils.ParcelSize, baseZoom, zoom);
 
             if (isEnabled)
-                clusterController.UpdateClusters(zoomLevel, baseZoom, zoom, markers);
+                foreach (ISearchResultMarker clusterableMarker in clusterController.UpdateClusters(zoomLevel, baseZoom, zoom, markers))
+                    mapCullingController.StartTracking(clusterableMarker, this);
 
             clusterController.ApplyCameraZoom(baseZoom, zoom);
         }
@@ -117,7 +135,9 @@ namespace DCL.MapRenderer.MapLayers.SearchResults
             foreach (ISearchResultMarker marker in markers.Values)
                 mapCullingController.StartTracking(marker, this);
 
-            clusterController.UpdateClusters(zoomLevel, baseZoom, zoom, markers);
+            foreach (ISearchResultMarker clusterableMarker in clusterController.UpdateClusters(zoomLevel, baseZoom, zoom, markers))
+                mapCullingController.StartTracking(clusterableMarker, this);
+
             isEnabled = true;
         }
 
@@ -140,10 +160,17 @@ namespace DCL.MapRenderer.MapLayers.SearchResults
         public void OnMapObjectBecameVisible(ISearchResultMarker marker)
         {
             marker.OnBecameVisible();
+            marker.SetZoom(coordsUtils.ParcelSize, baseZoom, zoom);
+            GameObject? gameObject = marker.GetGameObject();
+            if(gameObject != null)
+                visibleMarkers.AddOrReplace(gameObject, marker);
         }
 
         public void OnMapObjectCulled(ISearchResultMarker marker)
         {
+            GameObject? gameObject = marker.GetGameObject();
+            if(gameObject != null)
+                visibleMarkers.Remove(gameObject);
             marker.OnBecameInvisible();
         }
 
@@ -157,6 +184,57 @@ namespace DCL.MapRenderer.MapLayers.SearchResults
 
             markers.Clear();
             clusterController.Disable();
+        }
+
+        public bool HighlightObject(GameObject gameObject)
+        {
+            if (clusterController.HighlightObject(gameObject))
+                return true;
+
+            if (visibleMarkers.TryGetValue(gameObject, out ISearchResultMarker marker))
+            {
+                highlightCt = highlightCt.SafeRestart();
+                previousMarker?.AnimateDeSelectionAsync(deHighlightCt.Token);
+                marker.AnimateSelectionAsync(highlightCt.Token);
+                previousMarker = marker;
+                return true;
+            }
+
+            return false;
+        }
+
+        public bool DeHighlightObject(GameObject gameObject)
+        {
+            if (clusterController.DeHighlightObject(gameObject))
+                return true;
+
+            previousMarker = null;
+
+            if (visibleMarkers.TryGetValue(gameObject, out ISearchResultMarker marker))
+            {
+                deHighlightCt = deHighlightCt.SafeRestart();
+                marker.AnimateDeSelectionAsync(deHighlightCt.Token);
+                return true;
+            }
+
+            return false;
+        }
+
+        public bool ClickObject(GameObject gameObject, CancellationTokenSource cts, out IMapRendererMarker? mapRendererMarker)
+        {
+            mapRendererMarker = null;
+            if (clusterController.ClickObject(gameObject))
+                return true;
+
+            if (visibleMarkers.TryGetValue(gameObject, out ISearchResultMarker marker))
+            {
+                marker.ToggleSelection(true);
+                navmapBus.SelectPlaceAsync(marker.PlaceInfo, cts.Token).Forget();
+                mapRendererMarker = marker;
+                return true;
+            }
+
+            return false;
         }
     }
 }

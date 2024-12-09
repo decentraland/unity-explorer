@@ -2,6 +2,7 @@
 using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.Culling;
 using DCL.MapRenderer.MapLayers;
+using DCL.Navmap;
 using DG.Tweening;
 using System;
 using UnityEngine;

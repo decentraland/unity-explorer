@@ -3,13 +3,16 @@ using DCL.Diagnostics;
 using DCL.Ipfs;
 using DCL.MapRenderer.Culling;
 using DCL.MapRenderer.MapLayers.Cluster;
+using DCL.Navmap;
 using DCL.Optimization.Pools;
 using DCL.Utilities.Extensions;
+using NBitcoin;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Pool;
+using Utility;
 using ICoordsUtils = DCL.MapRenderer.CoordsUtils.ICoordsUtils;
 using IPlacesAPIService = DCL.PlacesAPIService.IPlacesAPIService;
 using PlacesData = DCL.PlacesAPIService.PlacesData;
@@ -30,11 +33,17 @@ namespace DCL.MapRenderer.MapLayers.PointsOfInterest
         private readonly IObjectPool<SceneOfInterestMarkerObject> objectsPool;
         private readonly SceneOfInterestMarkerBuilder builder;
         private readonly ClusterController clusterController;
+        private readonly INavmapBus navmapBus;
         private readonly IPlacesAPIService placesAPIService;
 
         private readonly Dictionary<Vector2Int, IClusterableMarker> markers = new ();
+        private readonly Dictionary<GameObject, ISceneOfInterestMarker> visibleMarkers = new ();
         private readonly List<Vector2Int> vectorCoords = new ();
+
         private Vector2Int decodePointer;
+        private CancellationTokenSource highlightCt = new ();
+        private CancellationTokenSource deHighlightCt = new ();
+        private ISceneOfInterestMarker? previousMarker;
 
         private bool isEnabled;
         private int zoomLevel = 1;
@@ -48,13 +57,15 @@ namespace DCL.MapRenderer.MapLayers.PointsOfInterest
             Transform instantiationParent,
             ICoordsUtils coordsUtils,
             IMapCullingController cullingController,
-            ClusterController clusterController)
+            ClusterController clusterController,
+            INavmapBus navmapBus)
             : base(instantiationParent, coordsUtils, cullingController)
         {
             this.placesAPIService = placesAPIService;
             this.objectsPool = objectsPool;
             this.builder = builder;
             this.clusterController = clusterController;
+            this.navmapBus = navmapBus;
         }
 
         public async UniTask InitializeAsync(CancellationToken cancellationToken)
@@ -87,7 +98,7 @@ namespace DCL.MapRenderer.MapLayers.PointsOfInterest
                 var centerParcel = MapLayerUtils.GetParcelsCenter(placeInfo);
                 var position = coordsUtils.CoordsToPosition(centerParcel);
 
-                marker.SetData(placeInfo.title, position);
+                marker.SetData(placeInfo.title, position, placeInfo);
                 markers.Add(MapLayerUtils.GetParcelsCenter(placeInfo), marker);
 
                 if (isEnabled)
@@ -108,10 +119,16 @@ namespace DCL.MapRenderer.MapLayers.PointsOfInterest
         public void OnMapObjectBecameVisible(ISceneOfInterestMarker marker)
         {
             marker.OnBecameVisible();
+            GameObject? gameObject = marker.GetGameObject();
+            if(gameObject != null)
+                visibleMarkers.AddOrReplace(gameObject, marker);
         }
 
         public void OnMapObjectCulled(ISceneOfInterestMarker marker)
         {
+            GameObject? gameObject = marker.GetGameObject();
+            if(gameObject != null)
+                visibleMarkers.Remove(gameObject);
             marker.OnBecameInvisible();
         }
 
@@ -128,7 +145,8 @@ namespace DCL.MapRenderer.MapLayers.PointsOfInterest
                 marker.SetZoom(coordsUtils.ParcelSize, baseZoom, zoom);
 
             if (isEnabled)
-                clusterController.UpdateClusters(zoomLevel, baseZoom, zoom, markers);
+                foreach (ISceneOfInterestMarker clusterableMarker in clusterController.UpdateClusters(zoomLevel, baseZoom, zoom, markers))
+                    mapCullingController.StartTracking(clusterableMarker, this);
 
             clusterController.ApplyCameraZoom(baseZoom, zoom);
         }
@@ -160,8 +178,61 @@ namespace DCL.MapRenderer.MapLayers.PointsOfInterest
                 mapCullingController.StartTracking(marker, this);
 
             isEnabled = true;
-            clusterController.UpdateClusters(zoomLevel, baseZoom, zoom, markers);
+            foreach (ISceneOfInterestMarker clusterableMarker in clusterController.UpdateClusters(zoomLevel, baseZoom, zoom, markers))
+                mapCullingController.StartTracking(clusterableMarker, this);
             return UniTask.CompletedTask;
+        }
+
+        public bool HighlightObject(GameObject gameObject)
+        {
+            if (clusterController.HighlightObject(gameObject))
+                return true;
+
+            if (visibleMarkers.TryGetValue(gameObject, out ISceneOfInterestMarker marker))
+            {
+                highlightCt = highlightCt.SafeRestart();
+                previousMarker?.AnimateDeSelectionAsync(deHighlightCt.Token);
+                marker.AnimateSelectionAsync(highlightCt.Token);
+                previousMarker = marker;
+                return true;
+            }
+
+            return false;
+        }
+
+        public bool DeHighlightObject(GameObject gameObject)
+        {
+            if (clusterController.DeHighlightObject(gameObject))
+                return true;
+
+            previousMarker = null;
+
+            if (visibleMarkers.TryGetValue(gameObject, out ISceneOfInterestMarker marker))
+            {
+                deHighlightCt = deHighlightCt.SafeRestart();
+                marker.AnimateDeSelectionAsync(deHighlightCt.Token);
+                return true;
+            }
+
+            return false;
+        }
+
+        public bool ClickObject(GameObject gameObject, CancellationTokenSource cts, out IMapRendererMarker? mapRenderMarker)
+        {
+            mapRenderMarker = null;
+
+            if (clusterController.ClickObject(gameObject))
+                return true;
+
+            if (visibleMarkers.TryGetValue(gameObject, out ISceneOfInterestMarker marker))
+            {
+                marker.ToggleSelection(true);
+                navmapBus.SelectPlaceAsync(marker.PlaceInfo, cts.Token).Forget();
+                mapRenderMarker = marker;
+                return true;
+            }
+
+            return false;
         }
     }
 }

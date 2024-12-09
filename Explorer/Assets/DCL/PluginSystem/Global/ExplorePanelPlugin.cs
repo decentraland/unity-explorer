@@ -208,7 +208,7 @@ namespace DCL.PluginSystem.Global
         public async UniTask InitializeAsync(ExplorePanelSettings settings, CancellationToken ct)
         {
             INavmapBus navmapBus = new NavmapCommandBus(CreateSearchPlaceCommand,
-                CreateShowPlaceCommand, CreateShowEventCommand);
+                CreateShowPlaceCommand, CreateShowEventCommand, placesAPIService);
             explorePanelNavmapBus.SetObject(navmapBus);
 
             backpackSubPlugin = new BackpackSubPlugin(
@@ -253,7 +253,7 @@ namespace DCL.PluginSystem.Global
 
             searchHistory = new PlayerPrefsSearchHistory();
 
-            NavmapZoomController zoomController = new (navmapView.zoomView, dclInput);
+            NavmapZoomController zoomController = new (navmapView.zoomView, dclInput, navmapBus);
 
             ObjectPool<PlaceElementView> placeElementsPool = await InitializePlaceElementsPoolAsync(navmapView.SearchBarResultPanel, ct);
             ObjectPool<EventElementView> eventElementsPool = await InitializeEventElementsForPlacePoolAsync(navmapView.PlacesAndEventsPanelView.PlaceInfoPanelView, ct);
@@ -304,7 +304,8 @@ namespace DCL.PluginSystem.Global
                 searchBarController,
                 zoomController,
                 satelliteController,
-                placeToastController);
+                placeToastController,
+                placesAPIService);
 
             await backpackSubPlugin.InitializeAsync(settings.BackpackSettings, explorePanelView.GetComponentInChildren<BackpackView>(), ct);
 
@@ -350,7 +351,6 @@ namespace DCL.PluginSystem.Global
             EventElementView CreatePoolElements(EventElementView asset)
             {
                 EventElementView placeElementView = Object.Instantiate(asset, view.EventsTabContainer.transform);
-                placeElementView.Init(webRequestController);
                 return placeElementView;
             }
         }

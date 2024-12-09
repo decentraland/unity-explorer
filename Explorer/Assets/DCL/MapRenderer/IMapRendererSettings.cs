@@ -3,7 +3,6 @@ using DCL.MapRenderer.ComponentsFactory;
 using DCL.MapRenderer.MapCameraController;
 using DCL.MapRenderer.MapLayers.Categories;
 using DCL.MapRenderer.MapLayers.Cluster;
-using DCL.MapRenderer.MapLayers.Favorites;
 using DCL.MapRenderer.MapLayers.ParcelHighlight;
 using DCL.MapRenderer.MapLayers.Pins;
 using DCL.MapRenderer.MapLayers.PlayerMarker;
@@ -47,7 +46,7 @@ namespace DCL.MapRenderer
 
         CategoryIconMappingsSO CategoryIconMappings { get; }
 
-        FavoriteMarkerObjectRef FavoriteMarker { get; }
+        CategoryLayerIconMappingsSO CategoryLayerIconMappings { get; }
 
         HotUserMarkerRef UserMarker { get; }
 
@@ -77,12 +76,6 @@ namespace DCL.MapRenderer
         public class HotUserMarkerRef : ComponentReference<HotUserMarkerObject>
         {
             public HotUserMarkerRef(string guid) : base(guid) { }
-        }
-
-        [Serializable]
-        public class FavoriteMarkerObjectRef : ComponentReference<FavoriteMarkerObject>
-        {
-            public FavoriteMarkerObjectRef(string guid) : base(guid) { }
         }
 
         [Serializable]

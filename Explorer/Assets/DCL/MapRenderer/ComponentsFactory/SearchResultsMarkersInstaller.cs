@@ -23,7 +23,7 @@ namespace DCL.MapRenderer.ComponentsFactory
         private IAssetsProvisioner assetsProvisioner;
         private IMapRendererSettings mapSettings;
 
-        public async UniTask InstallAsync(
+        public async UniTask<IMapLayerController> InstallAsync(
             Dictionary<MapLayer, IMapLayerController> layerWriter,
             List<IZoomScalingLayer> zoomScalingWriter,
             MapRendererConfiguration configuration,
@@ -47,6 +47,9 @@ namespace DCL.MapRenderer.ComponentsFactory
                 actionOnGet: obj => obj.gameObject.SetActive(true),
                 actionOnRelease: obj => obj.gameObject.SetActive(false));
 
+            var clusterController = new ClusterController(cullingController, clusterObjectsPool, CreateClusterMarker, coordsUtils, navmapBus);
+            clusterController.SetClusterIcon(mapSettings.CategoryIconMappings.GetCategoryImage(MapLayer.SearchResults));
+
             var controller = new SearchResultMarkersController(
                 objectsPool,
                 CreateMarker,
@@ -54,12 +57,13 @@ namespace DCL.MapRenderer.ComponentsFactory
                 coordsUtils,
                 cullingController,
                 navmapBus,
-                new ClusterController(cullingController, clusterObjectsPool, CreateClusterMarker, coordsUtils, MapLayer.SearchResults, mapSettings.CategoryIconMappings)
+                clusterController
             );
 
             await controller.InitializeAsync(cancellationToken);
             writer.Add(MapLayer.SearchResults, controller);
             zoomScalingWriter.Add(controller);
+            return controller;
         }
 
         private static SearchResultMarkerObject CreatePoolMethod(MapRendererConfiguration configuration, SearchResultMarkerObject prefab, ICoordsUtils coordsUtils)

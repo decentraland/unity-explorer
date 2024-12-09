@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.MapRenderer.MapCameraController;
 using System;
 using System.Threading;
+using UnityEngine;
 
 namespace DCL.MapRenderer.MapLayers
 {
@@ -33,5 +34,17 @@ namespace DCL.MapRenderer.MapLayers
         UniTask Disable(CancellationToken cancellationToken);
 
         void SetParameter(IMapLayerParameter layerParameter) { }
+
+        bool HighlightObject(GameObject gameObject) =>
+            false;
+
+        bool DeHighlightObject(GameObject gameObject) =>
+            false;
+
+        bool ClickObject(GameObject gameObject, CancellationTokenSource cts, out IMapRendererMarker? mapRenderMarker)
+        {
+            mapRenderMarker = null;
+            return false;
+        }
     }
 }
