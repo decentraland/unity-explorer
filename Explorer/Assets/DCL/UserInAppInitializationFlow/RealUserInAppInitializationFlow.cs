@@ -13,6 +13,7 @@ using DCL.Multiplayer.HealthChecks;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Profiles.Self;
 using DCL.SceneLoadingScreens.LoadingScreen;
+using DCL.UI.ErrorPopup;
 using DCL.UserInAppInitializationFlow.StartupOperations;
 using DCL.UserInAppInitializationFlow.StartupOperations.Struct;
 using DCL.Utilities;
@@ -161,9 +162,11 @@ namespace DCL.UserInAppInitializationFlow
                 }
 
                 if (result.Success == false)
+                {
                     ReportHub.LogError(ReportCategory.DEBUG, result.Error.AsMessage());
 
-                //TODO notification popup on failure
+                    mvcManager.ShowAndForget(new ShowCommand<ErrorPopupView, ErrorPopupData>(ErrorPopupData.FromDescription(result.ErrorMessage!)), ct);
+                }
             }
             while (result.Success == false && parameters.ShowAuthentication);
 

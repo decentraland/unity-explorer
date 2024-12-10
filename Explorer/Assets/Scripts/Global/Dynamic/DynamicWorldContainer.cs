@@ -713,7 +713,8 @@ namespace Global.Dynamic
                     container.MvcManager,
                     dclCursor,
                     mainUIView.SidebarView.InWorldCameraButton,
-                    globalWorld));
+                    globalWorld,
+                    debugBuilder));
 
             if (dynamicWorldParams.EnableAnalytics)
                 globalPlugins.Add(new AnalyticsPlugin(
