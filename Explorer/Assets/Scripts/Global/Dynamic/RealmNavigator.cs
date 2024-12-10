@@ -328,7 +328,7 @@ namespace Global.Dynamic
         public void SwitchMiscVisibilityAsync()
         {
             var type = realmController.Type;
-            bool isGenesis = type is RealmType.GenesisCity;
+            bool isGenesis = realmController.IsGenesis();
 
             RealmChanged?.Invoke(type);
             mapRenderer.SetSharedLayer(MapLayer.PlayerMarker, isGenesis);

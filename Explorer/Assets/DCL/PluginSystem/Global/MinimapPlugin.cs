@@ -23,7 +23,7 @@ namespace DCL.PluginSystem.Global
         private readonly IMVCManager mvcManager;
         private readonly MapRendererContainer mapRendererContainer;
         private readonly IPlacesAPIService placesAPIService;
-        private readonly IRealmData realmData;
+        private readonly IRealmController realmController;
         private readonly IRealmNavigator realmNavigator;
         private readonly IChatMessagesBus chatMessagesBus;
         private readonly IScenesCache scenesCache;
@@ -35,14 +35,14 @@ namespace DCL.PluginSystem.Global
         private readonly string startParcelInGenesis;
 
         public MinimapPlugin(IMVCManager mvcManager, MapRendererContainer mapRendererContainer, IPlacesAPIService placesAPIService,
-            IRealmData realmData, IChatMessagesBus chatMessagesBus, IRealmNavigator realmNavigator, IScenesCache scenesCache, MainUIView mainUIView,
+            IRealmController realmController, IChatMessagesBus chatMessagesBus, IRealmNavigator realmNavigator, IScenesCache scenesCache, MainUIView mainUIView,
             IMapPathEventBus mapPathEventBus, ISceneRestrictionBusController sceneRestrictionBusController,
             string startParcelInGenesis)
         {
             this.mvcManager = mvcManager;
             this.mapRendererContainer = mapRendererContainer;
             this.placesAPIService = placesAPIService;
-            this.realmData = realmData;
+            this.realmController = realmController;
             this.chatMessagesBus = chatMessagesBus;
             this.realmNavigator = realmNavigator;
             this.scenesCache = scenesCache;
@@ -75,7 +75,7 @@ namespace DCL.PluginSystem.Global
                 mapRendererContainer.MapRenderer,
                 mvcManager,
                 placesAPIService,
-                realmData,
+                realmController,
                 chatMessagesBus,
                 realmNavigator,
                 scenesCache,
