@@ -168,7 +168,7 @@ namespace DCL.UserInAppInitializationFlow
                 if (result.Success == false)
                 {
                     string message = result.Error.AsMessage();
-                    ReportHub.LogError(ReportCategory.DEBUG, message);
+                    ReportHub.LogError(ReportCategory.AUTHENTICATION, message);
                 }
             }
             while (result.Success == false && parameters.ShowAuthentication);
@@ -187,8 +187,28 @@ namespace DCL.UserInAppInitializationFlow
             if (result.Success)
                 return UniTask.CompletedTask;
 
-            string message = result.Error.AsMessage();
+            string message = ToMessage(result);
             return mvcManager.ShowAsync(new ShowCommand<ErrorPopupView, ErrorPopupData>(ErrorPopupData.FromDescription(message)), ct);
+        }
+
+        private string ToMessage(EnumResult<TaskError> result)
+        {
+            if (result.Success)
+            {
+                ReportHub.LogError(ReportCategory.AUTHENTICATION, "Incorrect use case of error to message");
+                return "Incorrect error state";
+            }
+
+            var error = result.Error!.Value;
+
+            return error.State switch
+                   {
+                       TaskError.MessageError => $"Error: {error.Message}",
+                       TaskError.Timeout => "Load timeout",
+                       TaskError.Cancelled => "Operation cancelled",
+                       TaskError.UnexpectedException => "Critical error occured",
+                       _ => throw new ArgumentOutOfRangeException()
+                   };
         }
 
         private ILoadingScreen LoadingScreen(bool withUI) =>
