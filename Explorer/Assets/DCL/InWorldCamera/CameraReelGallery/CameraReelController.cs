@@ -13,6 +13,8 @@ namespace DCL.InWorldCamera.CameraReelGallery
 {
     public class CameraReelController : ISection, IDisposable
     {
+        public event Action Activated;
+
         private readonly CameraReelView view;
         private readonly RectTransform rectTransform;
         private readonly ICameraReelStorageService cameraReelStorageService;
@@ -96,6 +98,8 @@ namespace DCL.InWorldCamera.CameraReelGallery
             showCancellationTokenSource = showCancellationTokenSource.SafeRestart();
             view.gameObject.SetActive(true);
             ShowAsync(showCancellationTokenSource.Token).SuppressCancellationThrow().Forget();
+
+            Activated?.Invoke();
         }
 
         public void Deactivate()
