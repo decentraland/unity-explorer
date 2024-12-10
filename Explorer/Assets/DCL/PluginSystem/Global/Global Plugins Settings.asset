@@ -244,7 +244,7 @@ MonoBehaviour:
           in Decentraland right now and join me!
         <PhotoSuccessfullyUpdatedMessage>k__BackingField: Photo successfully updated
         <PhotoSuccessfullyDeletedMessage>k__BackingField: Photo successfully deleted
-        <PhotoSuccessfullyDownloadedMessage>k__BackingField: Photo downloaded
+        <PhotoSuccessfullyDownloadedMessage>k__BackingField: Photo successfully downloaded
         <LinkCopiedMessage>k__BackingField: Link copied!
         <StorageProgressBarText>k__BackingField: Storage {0}/{1} photos taken
         <GridLayoutFixedColumnCount>k__BackingField: 6
