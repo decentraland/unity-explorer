@@ -51,14 +51,14 @@ namespace DCL.StylizedSkybox.Scripts
             this.cubeBlurMaterial = cubeBlurMaterial;
 
             // Copy shader vars
-            kSLPropMainTex_copy = cubeCopyMaterial.shader.FindPropertyIndex("_MainTex");
-            kSLPropLevel_copy = cubeCopyMaterial.shader.FindPropertyIndex("_Level");
+            kSLPropMainTex_copy = cubeBlurMaterial.shader.GetPropertyNameId(cubeCopyMaterial.shader.FindPropertyIndex("_MainTex"));
+            kSLPropLevel_copy = cubeBlurMaterial.shader.GetPropertyNameId(cubeCopyMaterial.shader.FindPropertyIndex("_Level"));
             // Blur shader vars
-            kSLPropMainTex_blur = cubeBlurMaterial.shader.FindPropertyIndex("_MainTex");
-            kSLPropTexel_blur = cubeBlurMaterial.shader.FindPropertyIndex("_TexelSize");
-            kSLPropLevel_blur = cubeBlurMaterial.shader.FindPropertyIndex("_MipLevel");
-            kSLPropScale_blur = cubeBlurMaterial.shader.FindPropertyIndex("_BlurScale");
-            kSLPropCurrentCubeFace_blur = cubeBlurMaterial.shader.FindPropertyIndex("_Current_CubeFace");
+            kSLPropMainTex_blur = cubeBlurMaterial.shader.GetPropertyNameId(cubeBlurMaterial.shader.FindPropertyIndex("_MainTex"));
+            kSLPropTexel_blur = cubeBlurMaterial.shader.GetPropertyNameId(cubeBlurMaterial.shader.FindPropertyIndex("_TexelSize"));
+            kSLPropLevel_blur = cubeBlurMaterial.shader.GetPropertyNameId(cubeBlurMaterial.shader.FindPropertyIndex("_MipLevel"));
+            kSLPropScale_blur = cubeBlurMaterial.shader.GetPropertyNameId(cubeBlurMaterial.shader.FindPropertyIndex("_BlurScale"));
+            kSLPropCurrentCubeFace_blur = cubeBlurMaterial.shader.GetPropertyNameId(cubeBlurMaterial.shader.FindPropertyIndex("_Current_CubeFace"));
 
             renderPassEvent = RenderPassEvent.BeforeRenderingSkybox;
             profilingSampler = new ProfilingSampler($"{nameof(SkyboxToCubemapRendererFeature)}.{nameof(SkyboxToCubemapRenderPass)}");
@@ -116,8 +116,7 @@ namespace DCL.StylizedSkybox.Scripts
 
             using (new ProfilingScope(cmd_conv, profilingSampler_convolution))
             {
-                Material tempMat = new Material(cubeBlurMaterial.shader);
-                MaterialPropertyBlock tempMatPropBlock = new MaterialPropertyBlock();
+                //MaterialPropertyBlock tempMatPropBlock = new MaterialPropertyBlock();
 
                 int mipCount = 9;
                 int size = skyBoxCubeMapWidth >> 1;
@@ -131,17 +130,18 @@ namespace DCL.StylizedSkybox.Scripts
                         CoreUtils.SetRenderTarget(cmd_conv, skyBoxCubeMapRTHandle_Scratch, ClearFlag.None, Color.green, mipIndex, face);
 
                         cmd_conv.SetGlobalTexture("_MainTex", skyBoxCubeMapRTHandle);
-                        cmd_conv.SetGlobalFloat(kSLPropCurrentCubeFace_blur, nFaceIndex);
+                        //cmd_conv.SetGlobalFloat(kSLPropCurrentCubeFace_blur, nFaceIndex);
 
-                        tempMat.SetFloat(kSLPropTexel_blur, texelSize);
+                        cubeBlurMaterial.SetFloat(kSLPropTexel_blur, texelSize);
                         // Output mip range -> normalized range -> input mip range
-                        float level = mipIndex - 1.0f;
-                        tempMat.SetFloat(kSLPropLevel_blur, level);
-                        tempMat.SetFloat(kSLPropScale_blur, 1.0f);
-                        tempMat.SetFloat(kSLPropCurrentCubeFace_blur, nFaceIndex);
-                        tempMatPropBlock.SetFloat(kSLPropCurrentCubeFace_blur, nFaceIndex);
 
-                        CoreUtils.DrawFullScreen(cmd_conv, tempMat, tempMatPropBlock);
+                        float level = mipIndex - 1.0f;
+                        cubeBlurMaterial.SetFloat(kSLPropLevel_blur, level);
+                        cubeBlurMaterial.SetFloat(kSLPropScale_blur, 1.0f);
+                        cubeBlurMaterial.SetFloat(kSLPropCurrentCubeFace_blur, nFaceIndex);
+
+                        CoreUtils.DrawFullScreen(cmd_conv, cubeBlurMaterial);
+                        //CoreUtils.DrawFullScreen(cmd_conv, cubeBlurMaterial, tempMatPropBlock);
                     }
 
                     texelSize *= 2;
