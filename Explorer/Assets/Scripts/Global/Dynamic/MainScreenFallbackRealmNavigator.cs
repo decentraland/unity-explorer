@@ -32,7 +32,7 @@ namespace Global.Dynamic
             var result = await origin.TryChangeRealmAsync(realm, ct, parcelToTeleport);
 
             if (result.Success == false)
-                DispatchFallbackToMainScreen(result.AsResult().ErrorMessage!, ct);
+                DispatchFallbackToMainScreen(result.As(ChangeRealmErrors.AsTaskError), ct);
 
             return result;
         }
@@ -42,9 +42,7 @@ namespace Global.Dynamic
             var result = await origin.TeleportToParcelAsync(parcel, ct, isLocal);
 
             if (result.Success == false)
-
-                //TODO user friendly output
-                DispatchFallbackToMainScreen(result.AsResult().ErrorMessage!, ct);
+                DispatchFallbackToMainScreen(result, ct);
 
             return result;
         }
@@ -55,11 +53,11 @@ namespace Global.Dynamic
             catch (Exception e)
             {
                 ReportHub.LogException(e, ReportCategory.DEBUG);
-                DispatchFallbackToMainScreen("Unexpected error", ct);
+                DispatchFallbackToMainScreen(EnumResult<TaskError>.ErrorResult(TaskError.UnexpectedException), ct);
             }
         }
 
-        private void DispatchFallbackToMainScreen(string errorMessage, CancellationToken ct)
+        private void DispatchFallbackToMainScreen(EnumResult<TaskError> recoveryError, CancellationToken ct)
         {
             ReportHub.LogError(ReportCategory.DEBUG, "Error during loading. Fallback to main screen");
 
@@ -70,7 +68,7 @@ namespace Global.Dynamic
                 IUserInAppInitializationFlow.LoadSource.Recover,
                 world,
                 playerEntity,
-                recoveryErrorMessage: errorMessage
+                recoveryError
             );
 
             userInAppInitializationFlow.ExecuteAsync(parameters, ct).Forget();

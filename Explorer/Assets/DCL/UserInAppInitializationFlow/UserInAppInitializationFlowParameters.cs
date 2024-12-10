@@ -1,4 +1,5 @@
 using Arch.Core;
+using Utility.Types;
 
 namespace DCL.UserInAppInitializationFlow
 {
@@ -8,7 +9,7 @@ namespace DCL.UserInAppInitializationFlow
         public bool ShowLoading { get; }
         public bool ReloadRealm { get; }
         public IUserInAppInitializationFlow.LoadSource LoadSource { get; }
-        public string? RecoveryErrorMessage { get; }
+        public EnumResult<TaskError> RecoveryError { get; }
         public World World { get; }
         public Entity PlayerEntity { get; }
 
@@ -19,7 +20,7 @@ namespace DCL.UserInAppInitializationFlow
             IUserInAppInitializationFlow.LoadSource loadSource,
             World world,
             Entity playerEntity,
-            string? recoveryErrorMessage = null
+            EnumResult<TaskError> recoveryError = default
         )
         {
             ShowAuthentication = showAuthentication;
@@ -28,7 +29,7 @@ namespace DCL.UserInAppInitializationFlow
             LoadSource = loadSource;
             World = world;
             PlayerEntity = playerEntity;
-            RecoveryErrorMessage = recoveryErrorMessage;
+            RecoveryError = recoveryError;
         }
     }
 }
