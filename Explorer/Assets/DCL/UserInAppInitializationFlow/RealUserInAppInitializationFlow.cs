@@ -163,9 +163,9 @@ namespace DCL.UserInAppInitializationFlow
 
                 if (result.Success == false)
                 {
-                    ReportHub.LogError(ReportCategory.DEBUG, result.Error.AsMessage());
-
-                    mvcManager.ShowAndForget(new ShowCommand<ErrorPopupView, ErrorPopupData>(ErrorPopupData.FromDescription(result.ErrorMessage!)), ct);
+                    string message = result.Error.AsMessage();
+                    ReportHub.LogError(ReportCategory.DEBUG, message);
+                    mvcManager.ShowAndForget(new ShowCommand<ErrorPopupView, ErrorPopupData>(ErrorPopupData.FromDescription(message)), ct);
                 }
             }
             while (result.Success == false && parameters.ShowAuthentication);
