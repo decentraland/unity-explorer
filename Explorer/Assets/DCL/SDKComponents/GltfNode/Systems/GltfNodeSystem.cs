@@ -109,27 +109,29 @@ namespace DCL.SDKComponents.GltfNode.Systems
         // TODO: Add query for component deletion
 
         [Query]
-        public void FinalizeComponents(ref GltfNodeComponent gltfNodeComponent, ref TransformComponent transformComponent)
+        public void FinalizeComponents(ref GltfNodeComponent gltfNodeComponent, ref TransformComponent transformComponent, ref SDKTransform sdkTransform)
         {
-            // transformComponent.Dispose();
-            //
-            // // Clean GltfNode entity
-            // Transform[] children = new Transform[gltfNodeComponent.clonedNodeTransform.childCount];
-            // int index = 0;
-            // foreach (Transform child in gltfNodeComponent.clonedNodeTransform)
-            // {
-            //     children[index] = child;
-            //     index++;
-            // }
-            // foreach (Transform child in children)
-            // {
-            //     child.parent.SetParent(null);
-            // }
-            // GameObject.Destroy(gltfNodeComponent.clonedNodeTransform.gameObject);
-            //
-            // // Reset original GO
-            // gltfNodeComponent.originalNodeGameObject.SetActive(true);
-            //
+            transformComponent.Dispose();
+            // sdkTransformPool.Release(sdkTransform);
+
+            // Clean GltfNode entity
+            Transform[] children = new Transform[gltfNodeComponent.clonedNodeTransform.childCount];
+            int index = 0;
+            foreach (Transform child in gltfNodeComponent.clonedNodeTransform)
+            {
+                children[index] = child;
+                index++;
+            }
+            foreach (Transform child in children)
+            {
+                child.parent.SetParent(null);
+                // TODO: update every child entity transform parent to be the root scene ON CRDT AS WELL...
+            }
+            GameObject.Destroy(gltfNodeComponent.clonedNodeTransform.gameObject);
+
+            // Reset original GO
+            gltfNodeComponent.originalNodeGameObject.SetActive(true);
+
             // gltfNodeComponent.clonedNodeTransform = null;
             // gltfNodeComponent.originalNodeGameObject = null;
         }
