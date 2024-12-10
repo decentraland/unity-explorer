@@ -12,6 +12,7 @@ using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
+using Utility.Types;
 
 namespace DCL.Multiplayer.Connections.GateKeeper.Meta
 {
@@ -38,11 +39,14 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
                 ? new MetaData.Input(realmData.RealmName, Vector2Int.zero)
                 : new MetaData.Input(realmData.RealmName, characterTransform.Position.ToParcel());
 
-        public async UniTask<MetaData> MetaDataAsync(MetaData.Input input, CancellationToken token)
+        public async UniTask<Result<MetaData>> MetaDataAsync(MetaData.Input input, CancellationToken token)
         {
+            if (realmData.Configured == false)
+                return Result<MetaData>.ErrorResult("Realm data is not configured yet.");
+
             // Places API is relevant for Genesis City only
             if (realmData.ScenesAreFixed)
-                return new MetaData(input.RealmName, input);
+                return Result<MetaData>.SuccessResult(new MetaData(input.RealmName, input));
 
             using PooledObject<List<SceneEntityDefinition>> pooledEntityDefinitionList = ListPool<SceneEntityDefinition>.Get(out List<SceneEntityDefinition>? entityDefinitionList);
             using PooledObject<List<int2>> pooledPointersList = ListPool<int2>.Get(out List<int2>? pointersList);
@@ -59,9 +63,11 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
 
             StreamableLoadingResult<SceneDefinitions> result = promise.Result!.Value;
 
-            return result.Succeeded && entityDefinitionList.Count > 0
-                ? new MetaData(entityDefinitionList[0].id, input)
-                : new MetaData(null, input);
+            return Result<MetaData>.SuccessResult(
+                result.Succeeded && entityDefinitionList.Count > 0
+                    ? new MetaData(entityDefinitionList[0].id, input)
+                    : new MetaData(null, input)
+            );
         }
 
         public bool MetadataIsDirty => !realmData.ScenesAreFixed && characterTransform.Position.IsDirty;

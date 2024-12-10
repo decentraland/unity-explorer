@@ -84,7 +84,12 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
 
             try
             {
-                meta = await metaDataSource.MetaDataAsync(metaDataSource.GetMetadataInput(), token);
+                var result = await metaDataSource.MetaDataAsync(metaDataSource.GetMetadataInput(), token);
+
+                if (result.Success == false)
+                    return;
+
+                meta = result.Value;
 
                 UniTask waitForReconnectionRequiredTask;
 

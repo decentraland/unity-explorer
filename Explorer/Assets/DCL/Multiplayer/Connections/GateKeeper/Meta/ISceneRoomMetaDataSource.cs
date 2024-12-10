@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using System.Threading;
+using Utility.Types;
 
 namespace DCL.Multiplayer.Connections.GateKeeper.Meta
 {
@@ -12,7 +13,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
 
         MetaData.Input GetMetadataInput();
 
-        UniTask<MetaData> MetaDataAsync(MetaData.Input input, CancellationToken token);
+        UniTask<Result<MetaData>> MetaDataAsync(MetaData.Input input, CancellationToken token);
 
         bool MetadataIsDirty { get; }
     }

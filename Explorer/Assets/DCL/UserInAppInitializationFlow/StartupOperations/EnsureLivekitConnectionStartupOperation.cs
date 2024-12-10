@@ -17,7 +17,7 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
             this.healthCheck = healthCheck;
         }
 
-        public async UniTask<Result> ExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct)
+        public async UniTask<EnumResult<TaskError>> ExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct)
         {
             float finalizationProgress = loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.LiveKitConnectionEnsuring);
             Result result = await healthCheck.IsRemoteAvailableAsync(ct);
@@ -25,7 +25,7 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
             if (result.Success)
                 report.SetProgress(finalizationProgress);
 
-            return result;
+            return result.AsEnumResult(TaskError.MessageError);
         }
     }
 }
