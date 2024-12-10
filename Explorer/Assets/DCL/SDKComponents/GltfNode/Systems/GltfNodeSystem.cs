@@ -86,9 +86,8 @@ namespace DCL.SDKComponents.GltfNode.Systems
             sdkTransform.Rotation.Value = nodeCloneTransform.localRotation;
             sdkTransform.Scale = nodeCloneTransform.localScale;
 
-            // If no ParentId is assigned, the sdk transform system moves the GLTFNode GO as a child
-            // of the scene root GO.
-            sdkTransform.ParentId = gltfCRDTEntity;
+            // if SDKTransform is marked as Dirty, the transform system will re-parent its GO to the scene root
+            sdkTransform.IsDirty = false;
 
             var gltfNodeComponent = new GltfNodeComponent()
             {
