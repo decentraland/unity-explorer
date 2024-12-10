@@ -15,7 +15,7 @@ using Utility.Types;
 
 namespace DCL.UserInAppInitializationFlow.StartupOperations
 {
-    public class CheckOnboardingStartupOperation : IStartupOperation
+    public class CheckOnboardingStartupOperation : StartUpOperationBase
     {
         private const int TUTORIAL_STEP_DONE_MARK = 256;
 
@@ -46,12 +46,11 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
             this.realmNavigator = realmNavigator;
         }
 
-        public async UniTask<Result> ExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct)
+        protected override async UniTask InternalExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct)
         {
             float finalizationProgress = loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.OnboardingChecking);
             await CheckOnboardingAsync(ct);
             report.SetProgress(finalizationProgress);
-            return Result.SuccessResult();
         }
 
         private async UniTask CheckOnboardingAsync(CancellationToken ct)

@@ -9,5 +9,6 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         string DecentralandDomain { get; }
 
         string Url(DecentralandUrl decentralandUrl);
+        string GetHostnameForFeatureFlag();
     }
 }

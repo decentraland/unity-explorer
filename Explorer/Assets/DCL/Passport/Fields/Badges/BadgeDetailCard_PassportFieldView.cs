@@ -117,6 +117,7 @@ namespace DCL.Passport.Fields.Badges
         {
             string completedAtToLoad = !string.IsNullOrEmpty(badgeInfo.data.progress.lastCompletedTierAt) ? badgeInfo.data.progress.lastCompletedTierAt : badgeInfo.data.completedAt;
             BadgeDateText.text = !string.IsNullOrEmpty(completedAtToLoad) ? BadgesUtils.FormatTimestampDate(completedAtToLoad) : "—";
+
             BadgeDateText.gameObject.SetActive(
                 !ShouldShowBadgeProgressBar(badgeInfo, isOwnProfile) &&
                 ((!badgeInfo.isLocked && !string.IsNullOrEmpty(badgeInfo.data.completedAt)) ||
@@ -154,6 +155,7 @@ namespace DCL.Passport.Fields.Badges
         {
             BadgeImage.SetColor(badgeInfo.isLocked ? LockedBadgeImageColor : NonLockedBadgeImageColor);
             imageController?.SetImage(DefaultBadgeSprite);
+
             string imageToLoad = !string.IsNullOrEmpty(badgeInfo.data.progress.lastCompletedTierImage) ?
                 badgeInfo.data.progress.lastCompletedTierImage :
                 badgeInfo.data.assets is { textures2d: not null } ? badgeInfo.data.assets.textures2d.normal : "";

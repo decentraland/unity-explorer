@@ -23,21 +23,22 @@ namespace ECS.SceneLifeCycle.Components
         /// </summary>
         public AssetPromise<SceneDefinitions, GetSceneDefinitionList>? ActivePromise;
 
-        public VolatileScenePointers(List<SceneEntityDefinition> retrievedReusableList, List<int2> inputReusableList)
+        public VolatileScenePointers(List<SceneEntityDefinition> retrievedReusableList,
+            List<int2> inputReusableList, PartitionComponent partitionComponent)
         {
             RetrievedReusableList = retrievedReusableList;
             InputReusableList = inputReusableList;
             ActivePromise = null;
-            ActivePartitionComponent = new PartitionComponent
-            {
-                Bucket = 0,
-                //Lets lower the prio against asset bundles on the same bucket
-                IsBehind = true
-            };
+            ActivePartitionComponent = partitionComponent;
+
+            partitionComponent.Bucket = 0;
+
+            // Lets lower the prio against asset bundles on the same bucket
+            partitionComponent.IsBehind = true;
         }
 
-        public static VolatileScenePointers Create() =>
+        public static VolatileScenePointers Create(PartitionComponent partitionComponent) =>
             new (new List<SceneEntityDefinition>(PoolConstants.SCENES_COUNT),
-                new List<int2>(PoolConstants.SCENES_COUNT));
+                new List<int2>(PoolConstants.SCENES_COUNT), partitionComponent);
     }
 }

@@ -322,6 +322,7 @@ MonoBehaviour:
       detailDensity: 30
       grassDistance: 75
       chunkCullDistance: 1000
+      maxSimultaneousVideos: 1
   - volumeProfile: {fileID: -4880458653563171804}
     fogSettings:
       m_Fog: 1
@@ -334,6 +335,7 @@ MonoBehaviour:
       detailDensity: 70
       grassDistance: 150
       chunkCullDistance: 3000
+      maxSimultaneousVideos: 5
   - volumeProfile: {fileID: 8971067228855834029}
     fogSettings:
       m_Fog: 1
@@ -346,6 +348,7 @@ MonoBehaviour:
       detailDensity: 100
       grassDistance: 300
       chunkCullDistance: 7000
+      maxSimultaneousVideos: 10
   allRendererFeatures:
   - {fileID: -2846649767180898789, guid: 0c7b9d3b12885d541a70add26520ccdb, type: 2}
   - {fileID: 8138120187327749282, guid: 0c7b9d3b12885d541a70add26520ccdb, type: 2}

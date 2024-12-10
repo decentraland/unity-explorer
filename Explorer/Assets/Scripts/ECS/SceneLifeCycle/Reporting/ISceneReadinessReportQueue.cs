@@ -9,5 +9,7 @@ namespace ECS.SceneLifeCycle.Reporting
         void Enqueue(Vector2Int parcel, AsyncLoadProcessReport report);
 
         bool TryDequeue(IReadOnlyList<Vector2Int> parcels, out PooledLoadReportList? report);
+
+        bool TryDequeue(Vector2Int parcel, out PooledLoadReportList? report);
     }
 }

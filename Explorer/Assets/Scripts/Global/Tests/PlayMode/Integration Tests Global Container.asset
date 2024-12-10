@@ -51,6 +51,11 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
+        <VideoPrioritizationSettings>k__BackingField:
+          m_AssetGUID: 12f48d0297bd3f746b92a97878478086
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
         <LODSettingAsset>k__BackingField:
           m_AssetGUID: 0703f7736b8c9b244953ae7c6ff9a037
           m_SubObjectName: 
@@ -64,16 +69,6 @@ MonoBehaviour:
     - rid: 6784895265395441664
       type: {class: StaticSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
-        <ReportHandlingSettingsDevelopment>k__BackingField:
-          m_AssetGUID: 0dd75559898ca8d4db9fc8ab99ac2269
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_EditorAssetChanged: 0
-        <ReportHandlingSettingsProduction>k__BackingField:
-          m_AssetGUID: 6c1c35a66af59874a8373ebcd51572a4
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_EditorAssetChanged: 0
         <PartitionSettings>k__BackingField:
           m_AssetGUID: 8d266ff458e71f2439f9c30bd7e68d4a
           m_SubObjectName: 
@@ -84,9 +79,11 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
-        <FrameTimeCap>k__BackingField: 33
+        frameTimeCap: 33
+        frameTimeCapDeepProfiler: 300
         <ScenesLoadingBudget>k__BackingField: 100
         <AssetsLoadingBudget>k__BackingField: 50
+        <WebRequestsBudget>k__BackingField: 20
     - rid: 6784895265412481024
       type: {class: CharacterCameraSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -96,6 +93,11 @@ MonoBehaviour:
           m_SubObjectType: 
           m_EditorAssetChanged: 0
         <cinemachineCameraAudioSettingsReference>k__BackingField:
+          m_AssetGUID: 
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        <controlsSettingsAsset>k__BackingField:
           m_AssetGUID: 
           m_SubObjectName: 
           m_SubObjectType: 

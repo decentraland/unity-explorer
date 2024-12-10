@@ -226,7 +226,7 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
             // "Enter" trigger area
             characterTriggerArea.OnTriggerEnter(fakeAvatarShapeCollider);
             CharacterTriggerAreaComponent component = world.Get<CharacterTriggerAreaComponent>(triggerAreaEntity);
-            component.monoBehaviour = characterTriggerArea;
+            component.SetMonoBehaviour(characterTriggerArea);
             world.Set(triggerAreaEntity, component);
 
             system.Update(0f);
@@ -317,7 +317,7 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
             characterTriggerArea.OnTriggerEnter(fakeAvatar2ShapeCollider);
 
             CharacterTriggerAreaComponent component = world.Get<CharacterTriggerAreaComponent>(triggerAreaEntity);
-            component.monoBehaviour = characterTriggerArea;
+            component.SetMonoBehaviour(characterTriggerArea);
             world.Set(triggerAreaEntity, component);
 
             system.Update(0);
@@ -351,8 +351,6 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
             Object.DestroyImmediate(fakeAvatar2BaseGO);
         }
 
-        // TODO: leeaving scene ???
-
         [Test]
         public void HandleComponentRemoveCorrectly()
         {
@@ -384,7 +382,7 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
             // "Enter" trigger area
             characterTriggerArea.OnTriggerEnter(fakeAvatarShapeCollider);
             CharacterTriggerAreaComponent component = world.Get<CharacterTriggerAreaComponent>(triggerAreaEntity);
-            component.monoBehaviour = characterTriggerArea;
+            component.SetMonoBehaviour(characterTriggerArea);
             world.Set(triggerAreaEntity, component);
 
             system.Update(0);
@@ -432,7 +430,7 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
             // "Enter" trigger area
             characterTriggerArea.OnTriggerEnter(fakeAvatarShapeCollider);
             CharacterTriggerAreaComponent component = world.Get<CharacterTriggerAreaComponent>(triggerAreaEntity);
-            component.monoBehaviour = characterTriggerArea;
+            component.SetMonoBehaviour(characterTriggerArea);
             world.Set(triggerAreaEntity, component);
 
             system.Update(0);

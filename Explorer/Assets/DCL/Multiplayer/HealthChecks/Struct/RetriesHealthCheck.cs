@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using System;
 using System.Threading;
+using Utility.Types;
 
 namespace DCL.Multiplayer.HealthChecks.Struct
 {
@@ -20,14 +21,14 @@ namespace DCL.Multiplayer.HealthChecks.Struct
             this.delayBetweenRetries = delayBetweenRetries ?? DEFAULT_DELAY_BETWEEN_RETRIES;
         }
 
-        public async UniTask<(bool success, string? errorMessage)> IsRemoteAvailableAsync(CancellationToken ct)
+        public async UniTask<Result> IsRemoteAvailableAsync(CancellationToken ct)
         {
-            (bool success, string? errorMessage) result = (false, null);
+            var result = Result.SuccessResult();
 
             for (var i = 0; i < retriesCount; i++)
             {
                 result = await origin.IsRemoteAvailableAsync(ct);
-                if (result.success) break;
+                if (result.Success) break;
                 await UniTask.Delay(delayBetweenRetries, cancellationToken: ct);
             }
 

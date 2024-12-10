@@ -6,6 +6,7 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Audio;
 using DCL.Character.CharacterCamera.Components;
+using DCL.Character.CharacterCamera.Systems;
 using DCL.Character.Components;
 using DCL.CharacterCamera;
 using DCL.CharacterCamera.Components;
@@ -107,6 +108,7 @@ namespace DCL.PluginSystem.Global
             PrepareExposedCameraDataSystem.InjectToWorld(ref builder, cinemachinePreset.Brain);
             ChinemachineFieldOfViewSystem.InjectToWorld(ref builder);
             ApplyCinemachineSettingsSystem.InjectToWorld(ref builder, debugBuilder, controlsSettingsAsset.Value);
+            UpdateCinemachineBrainSystem.InjectToWorld(ref builder);
         }
     }
 }

@@ -480,6 +480,10 @@ MonoBehaviour:
       Severity: 1
     - Category: LIVEKIT
       Severity: 2
+    - Category: UNSPECIFIED
+      Severity: 3
+    - Category: UNSPECIFIED
+      Severity: 2
   sentryMatrix:
     entries: []
   debounceEnabled: 1

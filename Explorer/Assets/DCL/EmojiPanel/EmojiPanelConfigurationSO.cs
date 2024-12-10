@@ -6,7 +6,7 @@ using Utility;
 
 namespace DCL.Emoji
 {
-    [CreateAssetMenu(fileName = "EmojiPanelConfig", menuName = "SO/EmojiPanelConfig")]
+    [CreateAssetMenu(fileName = "EmojiPanelConfig", menuName = "DCL/SO/EmojiPanelConfig")]
     public class EmojiPanelConfigurationSO : ScriptableObject
     {
         [SerializeField] public List<EmojiSection> EmojiSections;

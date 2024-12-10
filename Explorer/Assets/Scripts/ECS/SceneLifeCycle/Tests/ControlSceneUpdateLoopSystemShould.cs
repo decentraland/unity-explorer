@@ -2,6 +2,7 @@
 using ECS.Prioritization;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
+using ECS.SceneLifeCycle.Reporting;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.SceneLifeCycle.Systems;
 using ECS.StreamableLoading.Common;
@@ -23,7 +24,7 @@ namespace ECS.SceneLifeCycle.Tests
         public void SetUp()
         {
             realmPartitionSettings = Substitute.For<IRealmPartitionSettings>();
-            system = new ControlSceneUpdateLoopSystem(world, realmPartitionSettings, CancellationToken.None, Substitute.For<IScenesCache>());
+            system = new ControlSceneUpdateLoopSystem(world, realmPartitionSettings, CancellationToken.None, Substitute.For<IScenesCache>(), Substitute.For<ISceneReadinessReportQueue>());
         }
 
         [Test]

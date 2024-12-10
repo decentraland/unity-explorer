@@ -26,7 +26,6 @@ using ECS.StreamableLoading.NFTShapes.URNs;
 using ECS.StreamableLoading.Textures;
 using System.Collections.Generic;
 using System.Threading;
-using UnityEngine;
 
 namespace DCL.PluginSystem.World
 {
@@ -37,10 +36,9 @@ namespace DCL.PluginSystem.World
         private readonly IPerformanceBudget instantiationFrameTimeBudgetProvider;
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
         private readonly IWebRequestController webRequestController;
-        private readonly IWebContentSizes webContentSizes;
         private readonly IFramePrefabs framePrefabs;
         private readonly ILazyMaxSize lazyMaxSize;
-        private readonly IStreamableCache<Texture2DData, GetNFTShapeIntention> cache = new NftShapeCache();
+        private readonly ISizedStreamableCache<Texture2DData, GetNFTShapeIntention> cache = new NftShapeCache();
 
         static NFTShapePlugin()
         {
@@ -83,7 +81,6 @@ namespace DCL.PluginSystem.World
             componentPoolsRegistry,
             webRequestController,
             cacheCleaner,
-            webContentSizes,
             framePrefabs,
             lazyMaxSize
         ) { }
@@ -95,7 +92,6 @@ namespace DCL.PluginSystem.World
             IComponentPoolsRegistry componentPoolsRegistry,
             IWebRequestController webRequestController,
             CacheCleaner cacheCleaner,
-            IWebContentSizes webContentSizes,
             IFramePrefabs framePrefabs,
             ILazyMaxSize lazyMaxSize
         )
@@ -105,7 +101,6 @@ namespace DCL.PluginSystem.World
             this.instantiationFrameTimeBudgetProvider = instantiationFrameTimeBudgetProvider;
             this.componentPoolsRegistry = componentPoolsRegistry;
             this.webRequestController = webRequestController;
-            this.webContentSizes = webContentSizes;
             this.framePrefabs = framePrefabs;
             this.lazyMaxSize = lazyMaxSize;
             cacheCleaner.Register(cache);
@@ -115,7 +110,6 @@ namespace DCL.PluginSystem.World
         {
             cache.Dispose();
         }
-
 
         public UniTask InitializeAsync(NFTShapePluginSettings settings, CancellationToken ct)
         {
@@ -132,7 +126,7 @@ namespace DCL.PluginSystem.World
         {
             var buffer = sharedDependencies.EntityEventsBuilder.Rent<NftShapeRendererComponent>();
 
-            LoadNFTShapeSystem.InjectToWorld(ref builder, cache, webRequestController, webContentSizes);
+            LoadNFTShapeSystem.InjectToWorld(ref builder, cache, webRequestController);
             LoadCycleNftShapeSystem.InjectToWorld(ref builder, new BasedURNSource(decentralandUrlsSource));
             InstantiateNftShapeSystem.InjectToWorld(ref builder, nftShapeRendererFactory, instantiationFrameTimeBudgetProvider, framePrefabs, buffer);
             VisibilityNftShapeSystem.InjectToWorld(ref builder, buffer);

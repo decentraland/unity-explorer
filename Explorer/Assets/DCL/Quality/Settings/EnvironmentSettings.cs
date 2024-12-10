@@ -11,5 +11,6 @@ namespace DCL.Quality
         public float detailDensity;
         public float grassDistance;
         public float chunkCullDistance;
+        public int maxSimultaneousVideos;
     }
 }

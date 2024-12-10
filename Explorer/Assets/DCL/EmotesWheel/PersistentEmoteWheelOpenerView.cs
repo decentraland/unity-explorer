@@ -1,4 +1,3 @@
-using DCL.Audio;
 using MVC;
 using UnityEngine;
 using UnityEngine.UI;

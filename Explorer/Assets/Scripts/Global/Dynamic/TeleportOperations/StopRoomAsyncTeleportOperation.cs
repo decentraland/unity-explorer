@@ -7,7 +7,7 @@ using Utility.Types;
 
 namespace Global.Dynamic.TeleportOperations
 {
-    public class StopRoomAsyncTeleportOperation : ITeleportOperation
+    public class StopRoomAsyncTeleportOperation : TeleportOperationBase
     {
         private readonly IRoomHub roomHub;
         private readonly TimeSpan livekitTimeout;
@@ -18,22 +18,13 @@ namespace Global.Dynamic.TeleportOperations
             this.livekitTimeout = livekitTimeout;
         }
 
-
-        public async UniTask<Result> ExecuteAsync(TeleportParams teleportParams, CancellationToken ct)
+        protected override async UniTask InternalExecuteAsync(TeleportParams teleportParams, CancellationToken ct)
         {
-            try
-            {
-                float finalizationProgress =
-                    teleportParams.LoadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.LivekitStopping);
+            float finalizationProgress =
+                teleportParams.LoadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.LivekitStopping);
 
-                await roomHub.StopAsync().Timeout(livekitTimeout);
-                teleportParams.ParentReport.SetProgress(finalizationProgress);
-                return Result.SuccessResult();
-            }
-            catch (Exception e)
-            {
-                return Result.ErrorResult("Cannot stop room");
-            }
+            await roomHub.StopAsync().Timeout(livekitTimeout);
+            teleportParams.ParentReport.SetProgress(finalizationProgress);
         }
     }
 }

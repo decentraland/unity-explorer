@@ -15,11 +15,23 @@ namespace ECS.Prioritization.Components
             IsBehind = false,
         };
 
+        /// <remarks>Only the component pool and tests may call this!</remarks>
+        public PartitionComponent() { }
+
+        public void Clear()
+        {
+            OutOfRange = false;
+            IsDirty = false;
+            RawSqrDistance = 0f;
+            Bucket = 0;
+            IsBehind = false;
+        }
+
         /// <summary>
         ///     Indicates that the partition is out of buckets range
         /// </summary>
         public bool OutOfRange { get; set; }
-        
+
         /// <summary>
         ///     Indicates that the partition value has changed and the processes assigned to it should be re-prioritized
         /// </summary>

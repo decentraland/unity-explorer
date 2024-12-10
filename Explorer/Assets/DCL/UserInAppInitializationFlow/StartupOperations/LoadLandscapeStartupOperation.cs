@@ -6,7 +6,7 @@ using Utility.Types;
 
 namespace DCL.UserInAppInitializationFlow.StartupOperations
 {
-    public class LoadLandscapeStartupOperation : IStartupOperation
+    public class LoadLandscapeStartupOperation : StartUpOperationBase
     {
         private readonly ILoadingStatus loadingStatus;
         private readonly IRealmNavigator realmNavigator;
@@ -17,13 +17,12 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
             this.realmNavigator = realmNavigator;
         }
 
-        public async UniTask<Result> ExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct)
+        protected override async UniTask InternalExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct)
         {
             float finalizationProgress = loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.LandscapeLoading);
             AsyncLoadProcessReport landscapeLoadReport = report.CreateChildReport(finalizationProgress);
             await realmNavigator.LoadTerrainAsync(landscapeLoadReport, ct);
             report.SetProgress(finalizationProgress);
-            return Result.SuccessResult();
         }
     }
 }

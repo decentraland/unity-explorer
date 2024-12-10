@@ -12,6 +12,7 @@ using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
 using DCL.Interaction.PlayerOriginated.Components;
 using DCL.Interaction.Utility;
+using DCL.InWorldCamera;
 using ECS.Abstract;
 using System.Runtime.CompilerServices;
 using UnityEngine;
@@ -53,12 +54,12 @@ namespace DCL.Interaction.PlayerOriginated.Systems
         }
 
         [Query]
-        private void RaycastFromCamera(ref CameraComponent camera, in CursorComponent cursorComponent)
+        private void RaycastFromCamera(Entity entity, ref CameraComponent camera, in CursorComponent cursorComponent)
         {
             ref PlayerOriginRaycastResultForSceneEntities raycastResultForSceneEntities = ref playerInteractionEntity.PlayerOriginRaycastResultForSceneEntities;
             ref PlayerOriginRaycastResultForGlobalEntities raycastResultForGlobalEntities = ref playerInteractionEntity.PlayerOriginRaycastResultForGlobalEntities;
 
-            if (cursorComponent.CursorState == CursorState.Panning)
+            if (cursorComponent.CursorState == CursorState.Panning || World.Has<InWorldCameraComponent>(entity))
             {
                 raycastResultForSceneEntities.Reset();
                 raycastResultForGlobalEntities.Reset();

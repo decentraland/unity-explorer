@@ -57,6 +57,22 @@ namespace DCL.InWorldCamera.CameraReelStorageService
             return responseData;
         }
 
+        public async UniTask<CameraReelResponsesCompact> GetCompactScreenshotsAsync(string userAddress, int limit, int offset, CancellationToken ct)
+        {
+            URLAddress url = urlBuilder.AppendDomain(userDomain)
+                                       .AppendSubDirectory(URLSubdirectory.FromString(userAddress))
+                                       .AppendSubDirectory(URLSubdirectory.FromString($"images?limit={limit}&offset={offset}&compact=true"))
+                                       .Build();
+
+            urlBuilder.Clear();
+
+            CameraReelResponsesCompact responseData = await webRequestController
+                                                           .SignedFetchGetAsync(url, string.Empty, ct)
+                                                           .CreateFromJson<CameraReelResponsesCompact>(WRJsonParser.Unity);
+
+            return responseData;
+        }
+
         public async UniTask<CameraReelStorageResponse> DeleteScreenshotAsync(string uuid, CancellationToken ct)
         {
             URLAddress url = urlBuilder.AppendDomain(imageDomain)
@@ -70,6 +86,20 @@ namespace DCL.InWorldCamera.CameraReelStorageService
                                                           .CreateFromJson<CameraReelStorageResponse>(WRJsonParser.Unity);
 
             return responseData;
+        }
+
+        public async UniTask UpdateScreenshotVisibilityAsync(string uuid, bool isPublic, CancellationToken ct)
+        {
+            URLAddress url = urlBuilder.AppendDomain(imageDomain)
+                                       .AppendSubDirectory(URLSubdirectory.FromString(uuid))
+                                       .AppendSubDirectory(URLSubdirectory.FromString("visibility"))
+                                       .Build();
+
+            urlBuilder.Clear();
+
+            await webRequestController
+                 .SignedFetchPatchAsync(url, GenericPatchArguments.CreateJson($"{{\"is_public\": {isPublic.ToString().ToLower()}}}"), string.Empty, ct)
+                 .WithNoOpAsync();
         }
 
         public async UniTask<CameraReelUploadResponse> UploadScreenshotAsync(byte[] image, ScreenshotMetadata metadata, CancellationToken ct)

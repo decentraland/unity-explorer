@@ -20,7 +20,7 @@ namespace ECS.SceneLifeCycle.Systems
     ///     </para>
     /// </summary>
     [UpdateInGroup(typeof(PresentationSystemGroup))]
-    [UpdateAfter(typeof(InterpolateCharacterSystem))]
+    [UpdateAfter(typeof(ChangeCharacterPositionGroup))]
     [UpdateAfter(typeof(CameraGroup))]
     public partial class CheckCameraQualifiedForRepartitioningSystem : BaseUnityLoopSystem
     {
@@ -41,7 +41,6 @@ namespace ECS.SceneLifeCycle.Systems
             if (!realmData.Configured)
                 return;
 
-            cameraSamplingData.IsDirty = false;
             ModifyCameraSamplingBasedOnTeleportIntentQuery(World);
             CheckCameraTransformChangedQuery(World);
         }

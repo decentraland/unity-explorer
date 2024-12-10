@@ -23,8 +23,6 @@ namespace DCL.LOD
             if (realmData.ScenesAreFixed) visualSceneState.CurrentVisualSceneState = VisualSceneStateEnum.SHOWING_SCENE;
 
             //If the scene is empty, no lods are possible
-            else if (sceneDefinitionComponent.IsEmpty)
-                visualSceneState.CurrentVisualSceneState = VisualSceneStateEnum.SHOWING_SCENE;
             else if (roadCoordinates.Contains(sceneDefinitionComponent.Definition.metadata.scene.DecodedBase))
                 visualSceneState.CurrentVisualSceneState = VisualSceneStateEnum.ROAD;
 

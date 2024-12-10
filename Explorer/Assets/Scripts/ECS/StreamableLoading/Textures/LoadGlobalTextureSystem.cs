@@ -14,6 +14,8 @@ namespace ECS.StreamableLoading.Textures
     [LogCategory(ReportCategory.TEXTURES)]
     public partial class LoadGlobalTextureSystem : LoadTextureSystem
     {
-        internal LoadGlobalTextureSystem(World world, IStreamableCache<Texture2DData, GetTextureIntention> cache, IWebRequestController webRequestController) : base(world, cache, webRequestController) { }
+        internal LoadGlobalTextureSystem(World world, IStreamableCache<Texture2DData, GetTextureIntention> cache, IWebRequestController webRequestController) : base(
+            world, cache, webRequestController
+        ) { }
     }
 }

@@ -1,19 +1,18 @@
 ﻿using Cysharp.Threading.Tasks;
 using MVC;
-using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace DCL.UI
 {
-    public class ElementWithCloseArea : ViewBaseWithAnimationElement
+    public class ElementWithCloseArea : ViewBaseWithAnimationElement, IView
     {
         [field: SerializeField] internal Button closeAreaButton { get; private set; }
 
         private void Awake()
         {
-            closeAreaButton.onClick.AddListener(CloseElement);
+            closeAreaButton?.onClick.AddListener(CloseElement);
         }
 
         public void CloseElement()

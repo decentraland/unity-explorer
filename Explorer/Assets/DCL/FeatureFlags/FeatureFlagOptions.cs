@@ -27,7 +27,7 @@ namespace DCL.FeatureFlags
                 AppName = "explorer",
                 URL = URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.FeatureFlags)),
                 Debug = false,
-                Hostname = decentralandUrlsSource.Url(DecentralandUrl.Host),
+                Hostname = decentralandUrlsSource.GetHostnameForFeatureFlag()
             };
     }
 }

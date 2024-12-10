@@ -7,6 +7,7 @@ using DCL.Character.Components;
 using DCL.Chat.Commands;
 using DCL.Chat.MessageBus;
 using DCL.Diagnostics;
+using DCL.ECSComponents;
 using DCL.ExplorePanel;
 using DCL.MapRenderer;
 using DCL.MapRenderer.CommonBehavior;
@@ -53,6 +54,8 @@ namespace DCL.Minimap
         private Vector2Int previousParcelPosition;
         private SceneRestrictionsController? sceneRestrictionsController;
 
+        private readonly string startParcelInGenesis;
+
         public IReadOnlyDictionary<MapLayer, IMapLayerParameter> LayersParameters { get; } = new Dictionary<MapLayer, IMapLayerParameter>
             { { MapLayer.PlayerMarker, new PlayerMarkerParameter { BackgroundIsActive = false } } };
 
@@ -68,7 +71,8 @@ namespace DCL.Minimap
             IRealmNavigator realmNavigator,
             IScenesCache scenesCache,
             IMapPathEventBus mapPathEventBus,
-            ISceneRestrictionBusController sceneRestrictionBusController
+            ISceneRestrictionBusController sceneRestrictionBusController,
+            string startParcelInGenesis
         ) : base(viewFactory)
         {
             this.mapRenderer = mapRenderer;
@@ -80,6 +84,7 @@ namespace DCL.Minimap
             this.scenesCache = scenesCache;
             this.mapPathEventBus = mapPathEventBus;
             this.sceneRestrictionBusController = sceneRestrictionBusController;
+            this.startParcelInGenesis = startParcelInGenesis;
         }
 
         public void HookPlayerPositionTrackingSystem(TrackPlayerPositionSystem system) =>
@@ -97,7 +102,8 @@ namespace DCL.Minimap
             viewInstance.collapseMinimapButton.onClick.AddListener(CollapseMinimap);
             viewInstance.minimapRendererButton.Button.onClick.AddListener(() => mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Navmap))).Forget());
             viewInstance.sideMenuButton.onClick.AddListener(OpenSideMenu);
-            viewInstance.goToGenesisCityButton.onClick.AddListener(() => chatMessagesBus.Send($"/{ChatCommandsUtils.COMMAND_GOTO} 0,0", ORIGIN));
+            viewInstance.goToGenesisCityButton.onClick.AddListener(() =>
+                chatMessagesBus.Send($"/{ChatCommandsUtils.COMMAND_GOTO} {startParcelInGenesis}", ORIGIN));
             viewInstance.SideMenuCanvasGroup.alpha = 0;
             viewInstance.SideMenuCanvasGroup.gameObject.SetActive(false);
             new SideMenuController(viewInstance.sideMenuView);
@@ -155,8 +161,9 @@ namespace DCL.Minimap
         }
 
 
-        [All(typeof(PlayerComponent))]
         [Query]
+        [All(typeof(PlayerComponent))]
+        [None(typeof(PBAvatarShape))]
         private void QueryPlayerPosition(in CharacterTransform transformComponent)
         {
             Vector3 position = transformComponent.Position;
@@ -255,8 +262,7 @@ namespace DCL.Minimap
             realmNavigator.RealmChanged -= OnRealmChanged;
             mapPathEventBus.OnShowPinInMinimapEdge -= ShowPinInMinimapEdge;
             mapPathEventBus.OnHidePinInMinimapEdge -= HidePinInMinimapEdge;
-            if (sceneRestrictionsController != null)
-                sceneRestrictionsController.Dispose();
+            sceneRestrictionsController?.Dispose();
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>

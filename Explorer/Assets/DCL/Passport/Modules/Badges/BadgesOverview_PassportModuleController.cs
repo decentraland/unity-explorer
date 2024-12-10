@@ -30,7 +30,8 @@ namespace DCL.Passport.Modules.Badges
             BadgesOverview_PassportModuleView view,
             BadgesAPIClient badgesAPIClient,
             PassportErrorsController passportErrorsController,
-            IWebRequestController webRequestController)
+            IWebRequestController webRequestController
+        )
         {
             this.view = view;
             this.badgesAPIClient = badgesAPIClient;
@@ -92,6 +93,7 @@ namespace DCL.Passport.Modules.Badges
             try
             {
                 var badges = await badgesAPIClient.FetchLatestAchievedBadgesAsync(walletId, ct);
+
                 foreach (var badgeInfo in badges)
                 {
                     var badgeOverviewItem = badgesOverviewItemsPool.Get();

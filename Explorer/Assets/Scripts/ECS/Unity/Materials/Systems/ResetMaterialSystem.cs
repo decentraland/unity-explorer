@@ -37,10 +37,10 @@ namespace ECS.Unity.Materials.Systems
 
         [Query]
         [None(typeof(PBMaterial))]
-        private void Reset(ref PrimitiveMeshRendererComponent meshRendererComponent, ref MaterialComponent materialComponent)
+        private void Reset(Entity entity, ref PrimitiveMeshRendererComponent meshRendererComponent, ref MaterialComponent materialComponent)
         {
             meshRendererComponent.SetDefaultMaterial(sceneData.Geometry.CircumscribedPlanes, sceneData.Geometry.Height);
-            ReleaseMaterial.Execute(World, ref materialComponent, destroyMaterial);
+            ReleaseMaterial.Execute(entity, World, ref materialComponent, destroyMaterial);
         }
     }
 }

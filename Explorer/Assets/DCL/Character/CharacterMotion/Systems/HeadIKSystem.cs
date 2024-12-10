@@ -11,6 +11,7 @@ using DCL.CharacterMotion.Settings;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using DCL.Diagnostics;
+using DCL.InWorldCamera;
 using ECS.Abstract;
 using System.Runtime.CompilerServices;
 using UnityEngine;
@@ -22,7 +23,7 @@ namespace DCL.CharacterMotion.Systems
 {
     [LogCategory(ReportCategory.MOTION)]
     [UpdateInGroup(typeof(PresentationSystemGroup))]
-    [UpdateAfter(typeof(InterpolateCharacterSystem))]
+    [UpdateAfter(typeof(ChangeCharacterPositionGroup))]
     public partial class HeadIKSystem : BaseUnityLoopSystem
     {
         private bool headIKIsEnabled;
@@ -64,7 +65,9 @@ namespace DCL.CharacterMotion.Systems
         protected override void Update(float t)
         {
             UpdateDebugValues();
-            UpdateIKQuery(World, t, in camera.GetCameraComponent(World));
+
+            if (!World.Has<InWorldCameraComponent>(camera))
+                UpdateIKQuery(World, t, in camera.GetCameraComponent(World));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

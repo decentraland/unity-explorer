@@ -1,0 +1,12 @@
+# const string ROOT = "../../../../";
+
+# string sources = Path.Join(ROOT, "Source");
+# string objectsPath = Path.Join(ROOT, "Temp/Objects");
+
+# var files = Directory.EnumerateFiles(sources, "*.*", SearchOption.AllDirectories);
+# var fileNames = files.Where(e => Path.GetExtension(e) == ".h").Select(Path.GetFileName);
+
+# Console.WriteLine(string.Join('\n', fileNames));
+
+
+CXX = g++

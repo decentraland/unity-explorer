@@ -14,7 +14,7 @@ namespace DCL.CharacterMotion.Systems
 {
     [LogCategory(ReportCategory.MOTION)]
     [UpdateInGroup(typeof(PresentationSystemGroup))]
-    [UpdateBefore(typeof(InterpolateCharacterSystem))]
+    [UpdateBefore(typeof(ChangeCharacterPositionGroup))]
     [UpdateBefore(typeof(RotateCharacterSystem))]
     public partial class CharacterPlatformSystem : BaseUnityLoopSystem
     {

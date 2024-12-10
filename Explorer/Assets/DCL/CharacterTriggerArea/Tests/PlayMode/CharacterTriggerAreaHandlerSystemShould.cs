@@ -76,7 +76,6 @@ namespace DCL.CharacterTriggerArea.Tests
             Object.DestroyImmediate(entityTransformComponent.Transform.gameObject);
             Object.DestroyImmediate(fakeMainPlayerGO);
             Object.DestroyImmediate(fakeMainPlayerAvatarGO);
-            Object.DestroyImmediate(characterTriggerArea.gameObject);
         }
 
         [Test]

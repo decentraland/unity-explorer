@@ -25,6 +25,7 @@ using System;
 using System.Threading;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using SceneRuntime.Factory.WebSceneSource;
+using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using UnityEngine.AddressableAssets;
 
 namespace Global.Tests.PlayMode
@@ -43,18 +44,23 @@ namespace Global.Tests.PlayMode
 
             IWeb3IdentityCache identityCache = new MemoryWeb3IdentityCache();
 
-            IWebJsSources webJsSources = new WebJsSources(new JsCodeResolver(new WebRequestController(
-                identityCache)));
+            IWebJsSources webJsSources = new WebJsSources(
+                new JsCodeResolver(
+                    IWebRequestController.DEFAULT
+                )
+            );
 
             IReportsHandlingSettings? reportSettings = Substitute.For<IReportsHandlingSettings>();
             reportSettings.IsEnabled(ReportHandler.DebugLog).Returns(true);
 
             var diagnosticsContainer = DiagnosticsContainer.Create(reportSettings);
 
-            (StaticContainer? staticContainer, bool success) = await StaticContainer.CreateAsync(dclUrls,
+            (StaticContainer? staticContainer, bool success) = await StaticContainer.CreateAsync(
+                dclUrls,
                 assetProvisioner,
                 Substitute.For<IReportsHandlingSettings>(),
                 Substitute.For<IAppArgs>(),
+                ITexturesFuse.NewTestInstance(),
                 new DebugViewsCatalog(),
                 globalSettingsContainer,
                 diagnosticsContainer,

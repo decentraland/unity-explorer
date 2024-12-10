@@ -26,7 +26,6 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
     [LogCategory(ReportCategory.CHARACTER_TRIGGER_AREA)]
     public partial class AvatarModifierAreaHandlerSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
-        private static readonly QueryDescription AVATAR_BASE_QUERY = new QueryDescription().WithAll<AvatarBase>();
         private readonly World globalWorld;
         private readonly FindAvatarQuery findAvatarQuery;
         private readonly ISceneRestrictionBusController sceneRestrictionBusController;
@@ -167,10 +166,12 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
 
         private class FindAvatarQuery
         {
+            private static readonly QueryDescription AVATAR_BASE_QUERY = new QueryDescription().WithAll<AvatarBase>();
+
             private readonly World globalWorld;
             private readonly ForEach cachedFindEntity;
 
-            private Entity foundedEntityOrNull = Entity.Null;
+            private Entity foundEntityOrNull = Entity.Null;
             private Transform? requiredTransform;
 
             public FindAvatarQuery(World globalWorld)
@@ -181,20 +182,20 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
 
             public LightResult<Entity> AvatarWithTransform(Transform avatarTransform)
             {
-                foundedEntityOrNull = Entity.Null;
+                foundEntityOrNull = Entity.Null;
                 requiredTransform = avatarTransform;
                 globalWorld.Query(in AVATAR_BASE_QUERY, cachedFindEntity);
 
-                return foundedEntityOrNull == Entity.Null
+                return foundEntityOrNull == Entity.Null
                     ? LightResult<Entity>.FAILURE
-                    : new LightResult<Entity>(foundedEntityOrNull);
+                    : new LightResult<Entity>(foundEntityOrNull);
             }
 
             private void FindEntity(Entity entity)
             {
-                if (foundedEntityOrNull != Entity.Null) return;
+                if (foundEntityOrNull != Entity.Null) return;
                 if (globalWorld.Get<AvatarBase>(entity).transform.parent != requiredTransform) return;
-                foundedEntityOrNull = entity;
+                foundEntityOrNull = entity;
             }
         }
     }

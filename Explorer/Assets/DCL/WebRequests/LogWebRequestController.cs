@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.WebRequests.RequestsHub;
 using System;
 
 namespace DCL.WebRequests
@@ -35,5 +36,7 @@ namespace DCL.WebRequests
                 throw; // don't re-throw it as a new exception as we loose the original type in that case
             }
         }
+
+        IRequestHub IWebRequestController.requestHub => origin.requestHub;
     }
 }
