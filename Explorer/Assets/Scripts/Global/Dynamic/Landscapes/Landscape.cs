@@ -39,12 +39,7 @@ namespace Global.Dynamic.Landscapes
             if (landscapeEnabled == false)
                 return EnumResult<LandscapeError>.ErrorResult(LandscapeError.LandscapeDisabled);
 
-            if (isLocalSceneDevelopment)
-            {
-                genesisTerrain.Hide();
-                await GenerateStaticScenesTerrainAsync(landscapeLoadReport, ct);
-            }
-            else if (realmController.IsGenesis())
+            if (realmController.IsGenesis())
             {
                 //TODO (Juani): The globalWorld terrain would be hidden. We need to implement the re-usage when going back
                 worldsTerrain.SwitchVisibility(false);
@@ -58,7 +53,11 @@ namespace Global.Dynamic.Landscapes
             else
             {
                 genesisTerrain.Hide();
-                await GenerateFixedScenesTerrainAsync(landscapeLoadReport, ct);
+
+                if (realmController.IsLocalScene())
+                    await GenerateStaticScenesTerrainAsync(landscapeLoadReport, ct);
+                else
+                    await GenerateFixedScenesTerrainAsync(landscapeLoadReport, ct);
             }
 
             return EnumResult<LandscapeError>.SuccessResult();

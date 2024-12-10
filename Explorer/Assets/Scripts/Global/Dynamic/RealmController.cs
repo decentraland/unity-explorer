@@ -57,7 +57,17 @@ namespace Global.Dynamic
 
         private readonly RealmNavigatorDebugView realmNavigatorDebugView;
 
-        public RealmType Type => IsGenesisRealm() ? RealmType.GenesisCity : RealmType.World;
+        public RealmType Type
+        {
+            get
+            {
+                if (isLocalSceneDevelopment)
+                    return RealmType.LocalScene;
+                if (realmData is { Configured: true, ScenesAreFixed: false })
+                    return RealmType.GenesisCity;
+                return RealmType.World;
+            }
+        }
 
         public URLDomain? CurrentDomain { get; private set; }
 
@@ -279,7 +289,5 @@ namespace Global.Dynamic
             return hostname;
         }
 
-        private bool IsGenesisRealm() =>
-            realmData is { Configured: true, ScenesAreFixed: false };
     }
 }

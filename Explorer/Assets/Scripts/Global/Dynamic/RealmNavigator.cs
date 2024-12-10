@@ -253,13 +253,13 @@ namespace Global.Dynamic
             Vector2Int parcelToTeleport
         )
         {
-            bool isGenesis = realmController.IsGenesis();
+            bool isWorld = realmController.Type is RealmType.World;
             WaitForSceneReadiness? waitForSceneReadiness;
             
-            if (isGenesis)
-                waitForSceneReadiness = await teleportController.TeleportToSceneSpawnPointAsync(parcelToTeleport, teleportLoadReport, ct);
-            else
+            if (isWorld)
                 waitForSceneReadiness = await TeleportToWorldSpawnPointAsync(parcelToTeleport, teleportLoadReport, ct);
+            else
+                waitForSceneReadiness = await teleportController.TeleportToSceneSpawnPointAsync(parcelToTeleport, teleportLoadReport, ct);
                 
             // add camera sampling data to the camera entity to start partitioning
             Assert.IsTrue(cameraEntity.Configured);
