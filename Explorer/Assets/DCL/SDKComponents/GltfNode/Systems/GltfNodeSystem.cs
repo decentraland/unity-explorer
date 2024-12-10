@@ -110,8 +110,8 @@ namespace DCL.SDKComponents.GltfNode.Systems
         [Query]
         public void FinalizeComponents(ref GltfNodeComponent gltfNodeComponent, ref TransformComponent transformComponent, ref SDKTransform sdkTransform)
         {
-            transformComponent.Dispose();
-            // sdkTransformPool.Release(sdkTransform);
+            transformComponent.Dispose(); // Triggers: InvalidOperationException: Trying to release an object that has already been released to the pool.
+            sdkTransformPool.Release(sdkTransform);
 
             // Clean GltfNode entity
             Transform[] children = new Transform[gltfNodeComponent.clonedNodeTransform.childCount];
@@ -126,11 +126,11 @@ namespace DCL.SDKComponents.GltfNode.Systems
                 child.parent.SetParent(null);
                 // TODO: update every child entity transform parent to be the root scene ON CRDT AS WELL...
             }
+
             GameObject.Destroy(gltfNodeComponent.clonedNodeTransform.gameObject);
 
             // Reset original GO
             gltfNodeComponent.originalNodeGameObject.SetActive(true);
-
             // gltfNodeComponent.clonedNodeTransform = null;
             // gltfNodeComponent.originalNodeGameObject = null;
         }
