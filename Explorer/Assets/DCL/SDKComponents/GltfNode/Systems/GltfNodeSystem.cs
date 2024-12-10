@@ -69,9 +69,9 @@ namespace DCL.SDKComponents.GltfNode.Systems
             Debug.Log($"PRAVS - SetupGltfNode() - 2 - gltfEntity: {pbComponent.GltfContainerEntity} / path: {pbComponent.NodePath}", nodeTransform);
 
             // Duplicate node and hide the original one (to be able to reset the node)
-            nodeTransform.gameObject.SetActive(false);
             GameObject nodeClone = GameObject.Instantiate(nodeTransform.gameObject, nodeTransform.parent);
             var nodeCloneTransform = nodeClone.transform;
+            nodeTransform.gameObject.SetActive(false);
 
             // TODO: This works but ends up putting the entity transform values using the unity values,
             // very far away from the scene, can we really escape using the relative transform values?
@@ -85,24 +85,25 @@ namespace DCL.SDKComponents.GltfNode.Systems
             sdkTransform.Position.Value = nodeCloneTransform.localPosition;
             sdkTransform.Rotation.Value = nodeCloneTransform.localRotation;
             sdkTransform.Scale = nodeCloneTransform.localScale;
-            // sdkTransform.ParentId = pbComponent.GltfContainerEntity;
-            // sdkTransform.ParentId = gltfCRDTEntity;
-            World.Add(entity, sdkTransform, new TransformComponent(nodeCloneTransform));
+
+            // If no ParentId is assigned, the sdk transform system moves the GLTFNode GO as a child
+            // of the scene root GO.
+            sdkTransform.ParentId = gltfCRDTEntity;
+
+            var gltfNodeComponent = new GltfNodeComponent()
+            {
+                originalNodeGameObject = nodeTransform.gameObject,
+                clonedNodeTransform = nodeCloneTransform
+            };
+            World.Add(entity, gltfNodeComponent, sdkTransform, new TransformComponent(nodeCloneTransform));
+
+            // Put transform on SDK entity so that the scene can read it
             ExposedTransformUtils.Put(
                 ecsToCrdtWriter,
                 sdkTransform,
                 crdtEntity,
                 sceneData.Geometry.BaseParcelPosition,
                 false);
-
-            // TODO: Cache more stuff in GltfNodeComponent...
-            var component = new GltfNodeComponent()
-            {
-                originalNodeGameObject = nodeTransform.gameObject,
-                clonedNodeTransform = nodeCloneTransform
-            };
-
-            World.Add(entity, component);
         }
 
         // TODO: Add query for component deletion
