@@ -187,7 +187,7 @@ namespace DCL.UserInAppInitializationFlow
             if (result.Success)
                 return UniTask.CompletedTask;
 
-            string message = ToMessage(result);
+            var message = $"{ToMessage(result)}\nPlease try again";
             return mvcManager.ShowAsync(new ShowCommand<ErrorPopupView, ErrorPopupData>(ErrorPopupData.FromDescription(message)), ct);
         }
 
