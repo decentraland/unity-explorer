@@ -86,10 +86,7 @@ namespace DCL.InWorldCamera.Systems
             }
 
             if (World.TryGet(camera, out ToggleInWorldCameraRequest request))
-            {
                 ToggleCamera(request.IsEnable);
-                World.Remove<ToggleInWorldCameraRequest>(camera);
-            }
         }
 
         private void ToggleCamera(bool enable)

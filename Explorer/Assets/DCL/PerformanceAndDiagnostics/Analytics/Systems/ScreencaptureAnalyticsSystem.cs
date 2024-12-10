@@ -15,11 +15,12 @@ using System.Text;
 namespace DCL.Analytics.Systems
 {
     [UpdateInGroup(typeof(CameraGroup))]
-    [UpdateAfter(typeof(CaptureScreenshotSystem))]
+    [UpdateBefore(typeof(ToggleInWorldCameraActivitySystem))]
+    [UpdateBefore(typeof(CleanupScreencaptureCameraSystem))]
     [LogCategory(ReportCategory.IN_WORLD_CAMERA)]
     public partial class ScreencaptureAnalyticsSystem : BaseUnityLoopSystem
     {
-        private static readonly StringBuilder ADDRESS_BUILDER = new (256);
+        private static readonly StringBuilder ADDRESS_BUILDER = new (64);
 
         private readonly IAnalyticsController analytics;
         private readonly ICameraReelStorageService storage;
@@ -62,6 +63,7 @@ namespace DCL.Analytics.Systems
             for (var i = 0; i < persons.Length; i++)
             {
                 ADDRESS_BUILDER.Append(persons[i].userAddress);
+
                 if (i < persons.Length - 1)
                     ADDRESS_BUILDER.Append(',');
             }
@@ -71,16 +73,11 @@ namespace DCL.Analytics.Systems
 
         protected override void Update(float t)
         {
-            if (World.TryGet(camera, out ToggleInWorldCameraRequest request))
-            {
-                if (request.IsEnable)
-                    analytics.Track(AnalyticsEvents.CameraReel.CAMERA_OPEN, new JsonObject
-                    {
-                        { "source", request.Source },
-                    });
-
-                World.Remove<ToggleInWorldCameraRequest>(camera);
-            }
+            if (World.TryGet(camera, out ToggleInWorldCameraRequest request) && request.IsEnable)
+                analytics.Track(AnalyticsEvents.CameraReel.CAMERA_OPEN, new JsonObject
+                {
+                    { "source", request.Source },
+                });
         }
     }
 }

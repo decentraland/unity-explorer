@@ -67,21 +67,23 @@ MonoBehaviour:
       isEnabled: 1
   - groupName: CameraReel
     events:
-    - eventName: camera_open
-      isEnabled: 1
-    - eventName: take_photo
-      isEnabled: 1
-    - eventName: camera_reel_open
-      isEnabled: 1
-    - eventName: photo_delete
-      isEnabled: 1
-    - eventName: photo_download
-      isEnabled: 1
     - eventName: photo_jump_to
       isEnabled: 1
     - eventName: photo_to_marketplace
       isEnabled: 1
-    - eventName: photo_share
+    - eventName: open_camera
+      isEnabled: 1
+    - eventName: take_photo
+      isEnabled: 1
+    - eventName: open_camera_reel
+      isEnabled: 1
+    - eventName: open_photo
+      isEnabled: 1
+    - eventName: share_photo
+      isEnabled: 1
+    - eventName: download_photo
+      isEnabled: 1
+    - eventName: delete_photo
       isEnabled: 1
   useLocalEnvVariableFallback: 0
   flushSize: 20
