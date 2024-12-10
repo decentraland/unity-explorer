@@ -108,7 +108,7 @@ namespace DCL.UserInAppInitializationFlow
         {
             loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.Init);
 
-            EnumResult<TaskError> result;
+            EnumResult<TaskError> result = default;
 
             loadPlayerAvatarStartupOperation.AssignWorld(parameters.World, parameters.PlayerEntity);
             restartRealmStartupOperation.EnableReload(parameters.ReloadRealm);
@@ -125,7 +125,11 @@ namespace DCL.UserInAppInitializationFlow
                 if (parameters.ShowAuthentication)
                 {
                     loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.AuthenticationScreenShowing);
-                    await ShowAuthenticationScreenAsync(ct);
+
+                    await UniTask.WhenAll(
+                        ShowAuthenticationScreenAsync(ct),
+                        ShowErrorPopupIfRequired(result, ct)
+                    );
                 }
 
                 if (parameters.LoadSource is IUserInAppInitializationFlow.LoadSource.Logout)
@@ -165,7 +169,6 @@ namespace DCL.UserInAppInitializationFlow
                 {
                     string message = result.Error.AsMessage();
                     ReportHub.LogError(ReportCategory.DEBUG, message);
-                    mvcManager.ShowAndForget(new ShowCommand<ErrorPopupView, ErrorPopupData>(ErrorPopupData.FromDescription(message)), ct);
                 }
             }
             while (result.Success == false && parameters.ShowAuthentication);
@@ -177,6 +180,15 @@ namespace DCL.UserInAppInitializationFlow
         private async UniTask ShowAuthenticationScreenAsync(CancellationToken ct)
         {
             await mvcManager.ShowAsync(AuthenticationScreenController.IssueCommand(), ct);
+        }
+
+        private UniTask ShowErrorPopupIfRequired(EnumResult<TaskError> result, CancellationToken ct)
+        {
+            if (result.Success)
+                return UniTask.CompletedTask;
+
+            string message = result.Error.AsMessage();
+            return mvcManager.ShowAsync(new ShowCommand<ErrorPopupView, ErrorPopupData>(ErrorPopupData.FromDescription(message)), ct);
         }
 
         private ILoadingScreen LoadingScreen(bool withUI) =>
