@@ -1,8 +1,10 @@
 using Arch.SystemGroups;
+using CrdtEcsBridge.Components.Transform;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.ResourcesUnloading;
+using DCL.SDKComponents.GltfNode.Systems;
 using DCL.WebRequests;
 using ECS.Abstract;
 using ECS.LifeCycle;
@@ -35,6 +37,7 @@ namespace DCL.PluginSystem.World
         private readonly bool useRemoteAssetBundles;
         private readonly IWebRequestController webRequestController;
         private readonly ILoadingStatus loadingStatus;
+        private readonly IComponentPool<SDKTransform> sdkTransformPool;
 
         public GltfContainerPlugin(ECSWorldSingletonSharedDependencies globalDeps, CacheCleaner cacheCleaner, ISceneReadinessReportQueue sceneReadinessReportQueue, IComponentPoolsRegistry poolsRegistry, bool localSceneDevelopment, bool useRemoteAssetBundles, IWebRequestController webRequestController, ILoadingStatus loadingStatus)
         {
@@ -45,7 +48,7 @@ namespace DCL.PluginSystem.World
             this.webRequestController = webRequestController;
             this.loadingStatus = loadingStatus;
             assetsCache = new GltfContainerAssetsCache(poolsRegistry);
-
+            sdkTransformPool = poolsRegistry.GetReferenceTypePool<SDKTransform>();
             cacheCleaner.Register(assetsCache);
         }
 
@@ -82,12 +85,12 @@ namespace DCL.PluginSystem.World
                 buffer, sharedDependencies.SceneStateProvider, globalDeps.MemoryBudget, loadingStatus,
                 persistentEntities.SceneContainer);
 
+            // GltfNode
+            finalizeWorldSystems.Add(GltfNodeSystem.InjectToWorld(ref builder, sharedDependencies.EntitiesMap, sharedDependencies.EcsToCRDTWriter, sdkTransformPool, sharedDependencies.SceneData));
+            // TODO: GltfNodeLoadingState
+
             ResetDirtyFlagSystem<PBGltfContainer>.InjectToWorld(ref builder);
-
-            var cleanUpGltfContainerSystem =
-                CleanUpGltfContainerSystem.InjectToWorld(ref builder, assetsCache, sharedDependencies.EntityCollidersSceneCache);
-
-            finalizeWorldSystems.Add(cleanUpGltfContainerSystem);
+            finalizeWorldSystems.Add(CleanUpGltfContainerSystem.InjectToWorld(ref builder, assetsCache, sharedDependencies.EntityCollidersSceneCache));
         }
     }
 }
