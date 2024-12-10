@@ -82,7 +82,7 @@ namespace DCL.SceneLoadingScreens.Tests
                 return EnumResult<TaskError>.SuccessResult();
             }
 
-            Assert.That(finalRes, Is.EqualTo(Result.SuccessResult()));
+            Assert.That(finalRes, Is.EqualTo(EnumResult<TaskError>.SuccessResult()));
         }
 
         [Test]
@@ -128,7 +128,7 @@ namespace DCL.SceneLoadingScreens.Tests
             Assert.IsTrue(mvcCancellation.IsCancellationRequested);
             Assert.IsTrue(opCancellation.IsCancellationRequested);
 
-            Assert.That(result.Error!.Value.Message, Is.EqualTo("Load Timeout!"));
+            Assert.That(result.Error!.Value.State, Is.EqualTo(TaskError.Timeout));
             Assert.That(outerReport!.GetStatus().TaskStatus, Is.EqualTo(UniTaskStatus.Faulted));
         }
 
@@ -144,6 +144,7 @@ namespace DCL.SceneLoadingScreens.Tests
                     mvcCancellation = info.Arg<ShowCommand<SceneLoadingScreenView, SceneLoadingScreenController.Params>>()
                                           .InputData.AsyncLoadProcessReport.WaitUntilFinishedAsync()
                                           .ToCancellationToken();
+
                     await UniTask.Never(mvcCancellation).SuppressCancellationThrow();
                 });
 
@@ -189,12 +190,12 @@ namespace DCL.SceneLoadingScreens.Tests
             return sub;
         }
 
-        private static Result[] PossibleResults() =>
+        private static EnumResult<TaskError>[] PossibleResults() =>
             new[]
             {
-                Result.SuccessResult(),
-                Result.ErrorResult("TEST ERROR"),
-                Result.CancelledResult(),
+                EnumResult<TaskError>.SuccessResult(),
+                EnumResult<TaskError>.ErrorResult(TaskError.MessageError, "TEST ERROR"),
+                EnumResult<TaskError>.CancelledResult(TaskError.Cancelled),
             };
     }
 }
