@@ -255,12 +255,12 @@ namespace Global.Dynamic
         {
             bool isWorld = realmController.Type is RealmType.World;
             WaitForSceneReadiness? waitForSceneReadiness;
-            
+
             if (isWorld)
                 waitForSceneReadiness = await TeleportToWorldSpawnPointAsync(parcelToTeleport, teleportLoadReport, ct);
             else
                 waitForSceneReadiness = await teleportController.TeleportToSceneSpawnPointAsync(parcelToTeleport, teleportLoadReport, ct);
-                
+
             // add camera sampling data to the camera entity to start partitioning
             Assert.IsTrue(cameraEntity.Configured);
             globalWorld.Add(cameraEntity.Object, cameraSamplingData);
