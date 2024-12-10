@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.Clipboard;
+using DCL.Diagnostics;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using DCL.InWorldCamera.ReelActions;
@@ -30,6 +31,7 @@ namespace DCL.InWorldCamera.PhotoDetail
 
         private MetadataSidePanelAnimator metadataSidePanelAnimator;
         private CancellationTokenSource showReelCts = new ();
+        private CancellationTokenSource downloadScreenshotCts = new ();
 
         private bool metadataPanelIsOpen = true;
         private bool isClosing;
@@ -141,8 +143,22 @@ namespace DCL.InWorldCamera.PhotoDetail
             isClosing = false;
         }
 
-        private void DownloadReelClicked() =>
-            ReelCommonActions.DownloadReel(inputData.AllReels[currentReelIndex].url, webBrowser);
+        private void DownloadReelClicked()
+        {
+            async UniTaskVoid DownloadAndOpenAsync(CancellationToken ct)
+            {
+                try
+                {
+                    await ReelCommonActions.DownloadReelToFileAsync(inputData.AllReels[currentReelIndex].url, ct);
+                }
+                catch (Exception e)
+                {
+                    ReportHub.LogException(e, new ReportData(ReportCategory.CAMERA_REEL));
+                }
+            }
+
+            DownloadAndOpenAsync(downloadScreenshotCts.Token).Forget();
+        }
 
         private void CopyReelLinkClicked() =>
             ReelCommonActions.CopyReelLink(inputData.AllReels[currentReelIndex].id, decentralandUrlsSource, systemClipboard);

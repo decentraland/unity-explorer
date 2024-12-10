@@ -261,7 +261,7 @@ namespace DCL.PluginSystem.Global
                     settings.GridLayoutFixedColumnCount, settings.ThumbnailHeight, settings.ThumbnailWidth, true, true,
                     cameraReelView.optionsButton, cameraReelView.contextMenu,
                     webBrowser, decentralandUrlsSource, inputHandler, systemClipboard,
-                    settings.CameraReelGalleryShareToXMessage, settings.PhotoSuccessfullyDeletedMessage, settings.PhotoSuccessfullyUpdatedMessage, settings.LinkCopiedMessage),
+                    settings.CameraReelGalleryShareToXMessage, settings.PhotoSuccessfullyDeletedMessage, settings.PhotoSuccessfullyUpdatedMessage, settings.PhotoSuccessfullyDownloadedMessage, settings.LinkCopiedMessage),
                 cameraReelStorageService,
                 web3IdentityCache,
                 mvcManager,
@@ -316,6 +316,8 @@ namespace DCL.PluginSystem.Global
             public string PhotoSuccessfullyUpdatedMessage { get; private set; }
             [field: SerializeField]
             public string PhotoSuccessfullyDeletedMessage { get; private set; }
+            [field: SerializeField]
+            public string PhotoSuccessfullyDownloadedMessage { get; private set; }
             [field: SerializeField]
             public string LinkCopiedMessage { get; private set; }
             [field: SerializeField]

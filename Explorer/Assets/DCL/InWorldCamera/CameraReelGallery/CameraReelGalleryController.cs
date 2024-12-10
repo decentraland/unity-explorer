@@ -72,6 +72,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
         private CancellationTokenSource showFailureCts = new ();
         private CancellationTokenSource setPublicCts = new ();
         private CancellationTokenSource deleteScreenshotCts = new ();
+        private CancellationTokenSource downloadScreenshotCts = new ();
         private ReelThumbnailController[] thumbnailImages;
         private int beginVisible;
         private int endVisible;
@@ -96,6 +97,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
             string? shareToXMessage = null,
             string? photoSuccessfullyDeletedMessage = null,
             string? photoSuccessfullyUpdatedMessage = null,
+            string? photoSuccessfullyDownloadedMessage = null,
             string? linkCopiedMessage = null)
         {
             this.view = view;
@@ -161,7 +163,24 @@ namespace DCL.InWorldCamera.CameraReelGallery
                     ShowSuccessNotificationAsync(linkCopiedMessage!).Forget();
                 };
 
-                this.contextMenuController.DownloadRequested += cameraReelResponse => { ReelCommonActions.DownloadReel(cameraReelResponse.url, webBrowser!); };
+                this.contextMenuController.DownloadRequested += cameraReelResponse =>
+                {
+                    async UniTaskVoid DownloadAndOpenAsync(CancellationToken ct)
+                    {
+                        try
+                        {
+                            await ReelCommonActions.DownloadReelToFileAsync(cameraReelResponse.url, ct);
+                            ShowSuccessNotificationAsync(photoSuccessfullyDownloadedMessage).Forget();
+                        }
+                        catch (Exception e)
+                        {
+                            ReportHub.LogException(e, new ReportData(ReportCategory.CAMERA_REEL));
+                            ShowFailureNotificationAsync().Forget();
+                        }
+                    }
+
+                    DownloadAndOpenAsync(downloadScreenshotCts.Token).Forget();
+                };
 
                 this.contextMenuController.DeletePictureRequested += cameraReelResponse =>
                 {
@@ -498,6 +517,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
             view.cancelDeleteIntentButton?.onClick.RemoveAllListeners();
             view.cancelDeleteIntentBackgroundButton?.onClick.RemoveAllListeners();
             explorePanelEscapeAction?.RemoveEscapeAction(HideDeleteModal);
+            downloadScreenshotCts.SafeCancelAndDispose();
 
             if (optionButtonController is not null)
                 optionButtonController.Dispose();
