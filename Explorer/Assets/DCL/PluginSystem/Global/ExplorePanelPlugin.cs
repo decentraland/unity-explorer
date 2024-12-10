@@ -262,6 +262,7 @@ namespace DCL.PluginSystem.Global
                    cameraReelView.optionsButton, cameraReelView.contextMenu),
                 cameraReelStorageService,
                 web3IdentityCache,
+                mvcManager,
                 settings.StorageProgressBarText);
 
             mvcManager.RegisterController(new
