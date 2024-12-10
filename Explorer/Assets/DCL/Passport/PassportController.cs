@@ -321,12 +321,20 @@ namespace DCL.Passport
             viewInstance.OverviewSectionPanel.SetActive(false);
             viewInstance.PhotosSectionPanel.SetActive(true);
             viewInstance.BadgesSectionPanel.SetActive(false);
+            viewInstance.BadgeInfoModuleView.gameObject.SetActive(false);
+            viewInstance.ViewportSoftMask.enabled = false;
             viewInstance.MainScroll.content = viewInstance.PhotosSectionPanel.transform as RectTransform;
             viewInstance.MainScroll.verticalNormalizedPosition = 1;
 
             cameraReelGalleryController.ShowWalletGalleryAsync(currentUserId, photoLoadingCts.Token).Forget();
 
             currentSection = PassportSection.PHOTOS;
+
+            if (!viewInstance.CharacterPreviewView.gameObject.activeSelf)
+            {
+                viewInstance.CharacterPreviewView.gameObject.SetActive(true);
+                characterPreviewController?.OnShow();
+            }
         }
 
         private void OpenOverviewSection()
@@ -340,6 +348,7 @@ namespace DCL.Passport
             viewInstance.OverviewSectionPanel.SetActive(true);
             viewInstance.BadgesSectionPanel.SetActive(false);
             viewInstance.PhotosSectionPanel.SetActive(false);
+            viewInstance.ViewportSoftMask.enabled = true;
             viewInstance.MainScroll.content = viewInstance.OverviewSectionPanel.transform as RectTransform;
             viewInstance.MainScroll.verticalNormalizedPosition = 1;
             viewInstance.CharacterPreviewView.gameObject.SetActive(true);
@@ -362,6 +371,7 @@ namespace DCL.Passport
             viewInstance.OverviewSectionPanel.SetActive(false);
             viewInstance.BadgesSectionPanel.SetActive(true);
             viewInstance.PhotosSectionPanel.SetActive(false);
+            viewInstance.ViewportSoftMask.enabled = true;
             viewInstance.MainScroll.content = viewInstance.BadgesSectionPanel.transform as RectTransform;
             viewInstance.MainScroll.verticalNormalizedPosition = 1;
             viewInstance.CharacterPreviewView.gameObject.SetActive(false);

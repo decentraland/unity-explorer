@@ -5,6 +5,7 @@ using DCL.Passport.Modules;
 using DCL.Passport.Modules.Badges;
 using DCL.UI;
 using MVC;
+using SoftMasking;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -74,5 +75,8 @@ namespace DCL.Passport
 
         [field: SerializeField]
         public GameObject PhotosSectionPanel { get; private set; }
+
+        [field: SerializeField]
+        public SoftMask ViewportSoftMask { get; private set; }
     }
 }
