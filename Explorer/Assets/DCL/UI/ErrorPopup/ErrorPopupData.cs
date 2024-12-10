@@ -12,8 +12,8 @@ namespace DCL.UI.ErrorPopup
         [SerializeField] private string? title;
         [SerializeField] private string? description;
 
-        public Sprite? Icon => icon;
-        public string? Title => title;
-        public string? Description => description;
+        public UIProperty<Sprite> Icon => icon.ToUIPropertyOrEmpty();
+        public UIProperty<string> Title => title.ToUIPropertyOrDefault();
+        public UIProperty<string> Description => description.ToUIPropertyOrDefault();
     }
 }
