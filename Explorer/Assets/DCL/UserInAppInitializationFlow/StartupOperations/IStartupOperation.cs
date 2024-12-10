@@ -8,7 +8,7 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
 {
     public interface IStartupOperation
     {
-        UniTask<Result> ExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct);
+        UniTask<EnumResult<TaskError>> ExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct);
     }
 
     public static class StartupOperation

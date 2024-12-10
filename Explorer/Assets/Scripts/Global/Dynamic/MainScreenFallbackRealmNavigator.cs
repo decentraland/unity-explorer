@@ -32,7 +32,7 @@ namespace Global.Dynamic
             var result = await origin.TryChangeRealmAsync(realm, ct, parcelToTeleport);
 
             if (result.Success == false)
-                DispatchFallbackToMainScreen(ct);
+                DispatchFallbackToMainScreen(result.AsResult().ErrorMessage!, ct);
 
             return result;
         }
@@ -42,7 +42,9 @@ namespace Global.Dynamic
             var result = await origin.TeleportToParcelAsync(parcel, ct, isLocal);
 
             if (result.Success == false)
-                DispatchFallbackToMainScreen(ct);
+
+                //TODO user friendly output
+                DispatchFallbackToMainScreen(result.AsResult().ErrorMessage!, ct);
 
             return result;
         }
@@ -50,10 +52,14 @@ namespace Global.Dynamic
         public async UniTask InitializeTeleportToSpawnPointAsync(AsyncLoadProcessReport teleportLoadReport, CancellationToken ct, Vector2Int parcelToTeleport)
         {
             try { await origin.InitializeTeleportToSpawnPointAsync(teleportLoadReport, ct, parcelToTeleport); }
-            catch (Exception) { DispatchFallbackToMainScreen(ct); }
+            catch (Exception e)
+            {
+                ReportHub.LogException(e, ReportCategory.DEBUG);
+                DispatchFallbackToMainScreen("Unexpected error", ct);
+            }
         }
 
-        private void DispatchFallbackToMainScreen(CancellationToken ct)
+        private void DispatchFallbackToMainScreen(string errorMessage, CancellationToken ct)
         {
             ReportHub.LogError(ReportCategory.DEBUG, "Error during loading. Fallback to main screen");
 
@@ -63,7 +69,8 @@ namespace Global.Dynamic
                 true,
                 IUserInAppInitializationFlow.LoadSource.Recover,
                 world,
-                playerEntity
+                playerEntity,
+                recoveryErrorMessage: errorMessage
             );
 
             userInAppInitializationFlow.ExecuteAsync(parameters, ct).Forget();

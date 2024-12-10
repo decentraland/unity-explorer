@@ -150,7 +150,7 @@ namespace Global.Dynamic
             return EnumResult<ChangeRealmError>.SuccessResult();
         }
 
-        private async UniTask<Result> ExecuteTeleportOperationsAsync(
+        private async UniTask<EnumResult<TaskError>> ExecuteTeleportOperationsAsync(
             TeleportParams teleportParams,
             IReadOnlyCollection<ITeleportOperation> ops,
             string logOpName,
@@ -158,13 +158,13 @@ namespace Global.Dynamic
             CancellationToken ct
         )
         {
-            var lastOpResult = Result.SuccessResult();
+            var lastOpResult = EnumResult<TaskError>.SuccessResult();
 
             attemptsCount = Mathf.Max(1, attemptsCount);
 
             for (var attempt = 0; attempt < attemptsCount; attempt++)
             {
-                lastOpResult = Result.SuccessResult();
+                lastOpResult = EnumResult<TaskError>.SuccessResult();
 
                 foreach (ITeleportOperation op in ops)
                 {
@@ -176,7 +176,7 @@ namespace Global.Dynamic
                         {
                             ReportHub.LogError(
                                 ReportCategory.REALM,
-                                $"Operation failed on {logOpName} attempt {attempt + 1}/{attemptsCount}: {lastOpResult.ErrorMessage}"
+                                $"Operation failed on {logOpName} attempt {attempt + 1}/{attemptsCount}: {lastOpResult.AsResult().ErrorMessage}"
                             );
 
                             break;
@@ -184,8 +184,8 @@ namespace Global.Dynamic
                     }
                     catch (Exception e)
                     {
-                        lastOpResult = Result.ErrorResult($"Unhandled exception on {logOpName} attempt {attempt + 1}/{attemptsCount}: {e}");
-                        ReportHub.LogError(ReportCategory.REALM, lastOpResult.ErrorMessage!);
+                        lastOpResult = EnumResult<TaskError>.ErrorResult(TaskError.UnexpectedException, $"Unhandled exception on {logOpName} attempt {attempt + 1}/{attemptsCount}: {e}");
+                        ReportHub.LogError(ReportCategory.REALM, lastOpResult.AsResult().ErrorMessage!);
                         break;
                     }
                 }
@@ -195,7 +195,7 @@ namespace Global.Dynamic
 
                 if (ct.IsCancellationRequested)
                 {
-                    lastOpResult = Result.CancelledResult();
+                    lastOpResult = EnumResult<TaskError>.CancelledResult(TaskError.Cancelled);
                     break;
                 }
             }
@@ -206,14 +206,14 @@ namespace Global.Dynamic
                     new JsonObject
                     {
                         ["type"] = "teleportation",
-                        ["message"] = lastOpResult.ErrorMessage,
+                        ["message"] = lastOpResult.AsResult().ErrorMessage,
                     }
                 );
 
             return lastOpResult;
         }
 
-        private Func<AsyncLoadProcessReport, CancellationToken, UniTask<Result>> DoChangeRealmAsync(URLDomain realm, URLDomain? fallbackRealm, Vector2Int parcelToTeleport)
+        private Func<AsyncLoadProcessReport, CancellationToken, UniTask<EnumResult<TaskError>>> DoChangeRealmAsync(URLDomain realm, URLDomain? fallbackRealm, Vector2Int parcelToTeleport)
         {
             return async (parentLoadReport, ct) =>
             {
@@ -221,11 +221,11 @@ namespace Global.Dynamic
                 const string FALLBACK_LOG_NAME = "Returning to Previous Realm";
 
                 if (ct.IsCancellationRequested)
-                    return Result.CancelledResult();
+                    return EnumResult<TaskError>.CancelledResult(TaskError.Cancelled);
 
                 var teleportParams = new TeleportParams(realm, parcelToTeleport, parentLoadReport, loadingStatus);
 
-                Result opResult = await ExecuteTeleportOperationsAsync(teleportParams, realmChangeOperations, LOG_NAME, MAX_REALM_CHANGE_RETRIES, ct);
+                EnumResult<TaskError> opResult = await ExecuteTeleportOperationsAsync(teleportParams, realmChangeOperations, LOG_NAME, MAX_REALM_CHANGE_RETRIES, ct);
 
                 if (opResult.Success)
                     return opResult;
@@ -308,13 +308,13 @@ namespace Global.Dynamic
             return enumResult;
         }
 
-        private Func<AsyncLoadProcessReport, CancellationToken, UniTask<Result>> TeleportToParcelAsyncOperation(Vector2Int parcel) =>
+        private Func<AsyncLoadProcessReport, CancellationToken, UniTask<EnumResult<TaskError>>> TeleportToParcelAsyncOperation(Vector2Int parcel) =>
             async (parentLoadReport, ct) =>
             {
                 const string LOG_NAME = "Teleporting to Parcel";
 
                 if (ct.IsCancellationRequested)
-                    return Result.CancelledResult();
+                    return EnumResult<TaskError>.CancelledResult(TaskError.Cancelled);
 
                 var teleportParams = new TeleportParams(
                     currentDestinationParcel: parcel,
@@ -323,7 +323,7 @@ namespace Global.Dynamic
                     currentDestinationRealm: URLDomain.EMPTY
                 );
 
-                Result result = await ExecuteTeleportOperationsAsync(teleportParams, teleportInSameRealmOperation, LOG_NAME, 1, ct);
+                EnumResult<TaskError> result = await ExecuteTeleportOperationsAsync(teleportParams, teleportInSameRealmOperation, LOG_NAME, 1, ct);
                 parentLoadReport.SetProgress(1);
                 return result;
             };

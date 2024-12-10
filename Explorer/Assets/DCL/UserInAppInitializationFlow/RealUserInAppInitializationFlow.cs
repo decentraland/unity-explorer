@@ -108,7 +108,9 @@ namespace DCL.UserInAppInitializationFlow
         {
             loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.Init);
 
-            EnumResult<TaskError> result = default;
+            EnumResult<TaskError> result = parameters.RecoveryErrorMessage is null
+                ? default(EnumResult<TaskError>)
+                : EnumResult<TaskError>.ErrorResult(TaskError.MessageError, parameters.RecoveryErrorMessage);
 
             loadPlayerAvatarStartupOperation.AssignWorld(parameters.World, parameters.PlayerEntity);
             restartRealmStartupOperation.EnableReload(parameters.ReloadRealm);

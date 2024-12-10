@@ -8,6 +8,7 @@ namespace DCL.UserInAppInitializationFlow
         public bool ShowLoading { get; }
         public bool ReloadRealm { get; }
         public IUserInAppInitializationFlow.LoadSource LoadSource { get; }
+        public string? RecoveryErrorMessage { get; }
         public World World { get; }
         public Entity PlayerEntity { get; }
 
@@ -17,7 +18,8 @@ namespace DCL.UserInAppInitializationFlow
             bool reloadRealm,
             IUserInAppInitializationFlow.LoadSource loadSource,
             World world,
-            Entity playerEntity
+            Entity playerEntity,
+            string? recoveryErrorMessage = null
         )
         {
             ShowAuthentication = showAuthentication;
@@ -26,6 +28,7 @@ namespace DCL.UserInAppInitializationFlow
             LoadSource = loadSource;
             World = world;
             PlayerEntity = playerEntity;
+            RecoveryErrorMessage = recoveryErrorMessage;
         }
     }
 }

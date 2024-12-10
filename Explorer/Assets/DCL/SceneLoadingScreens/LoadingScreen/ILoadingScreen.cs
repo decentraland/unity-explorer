@@ -8,16 +8,19 @@ namespace DCL.SceneLoadingScreens.LoadingScreen
 {
     public interface ILoadingScreen
     {
-        UniTask<EnumResult<TaskError>> ShowWhileExecuteTaskAsync(Func<AsyncLoadProcessReport, CancellationToken, UniTask<Result>> operation,
-            CancellationToken ct);
+        UniTask<EnumResult<TaskError>> ShowWhileExecuteTaskAsync(
+            Func<AsyncLoadProcessReport, CancellationToken, UniTask<EnumResult<TaskError>>> operation,
+            CancellationToken ct
+        );
 
         class EmptyLoadingScreen : ILoadingScreen
         {
             public async UniTask<EnumResult<TaskError>> ShowWhileExecuteTaskAsync(
-                Func<AsyncLoadProcessReport, CancellationToken, UniTask<Result>> operation,
+                Func<AsyncLoadProcessReport, CancellationToken, UniTask<EnumResult<TaskError>>> operation,
                 CancellationToken ct)
             {
                 var loadReport = AsyncLoadProcessReport.Create(ct);
+
                 try
                 {
                     await operation(loadReport, ct);

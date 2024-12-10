@@ -25,7 +25,7 @@ namespace DCL.SceneLoadingScreens.LoadingScreen
         ///     Binds the internal operation, asyncLoadProcessReport, and the loading Screen together so they can't finish at different time
         /// </summary>
         public async UniTask<EnumResult<TaskError>> ShowWhileExecuteTaskAsync(
-            Func<AsyncLoadProcessReport, CancellationToken, UniTask<Result>> operation, CancellationToken ct)
+            Func<AsyncLoadProcessReport, CancellationToken, UniTask<EnumResult<TaskError>>> operation, CancellationToken ct)
         {
             if (ct.IsCancellationRequested)
                 return EnumResult<TaskError>.CancelledResult(TaskError.Cancelled);
@@ -43,10 +43,10 @@ namespace DCL.SceneLoadingScreens.LoadingScreen
                 return isCancelled ? TaskError.Cancelled : TaskError.Timeout;
             }
 
-            async UniTask<Result> ExecuteOperationAsync()
+            async UniTask<EnumResult<TaskError>> ExecuteOperationAsync()
             {
-                Result result = await operation(loadReport, timeOut.Token);
-                loadReport.SetResult(result);
+                EnumResult<TaskError> result = await operation(loadReport, timeOut.Token);
+                loadReport.SetResult(result.AsResult());
                 return result;
             }
 
@@ -55,12 +55,12 @@ namespace DCL.SceneLoadingScreens.LoadingScreen
             async UniTask WaitForOperationResultOrTimeoutAsync()
             {
                 // one or another
-                (int winArgumentIndex, Result opResult, TaskError timeoutResult) = await UniTask.WhenAny(ExecuteOperationAsync(), ExecuteTimeOutOrCancelledAsync());
+                (int winArgumentIndex, EnumResult<TaskError> opResult, TaskError timeoutResult) = await UniTask.WhenAny(ExecuteOperationAsync(), ExecuteTimeOutOrCancelledAsync());
 
                 switch (winArgumentIndex)
                 {
                     case 0:
-                        finalResult = opResult.AsEnumResult(TaskError.MessageError);
+                        finalResult = opResult;
                         operationFinished.Cancel();
                         operationFinished.Dispose();
                         return;
@@ -75,14 +75,14 @@ namespace DCL.SceneLoadingScreens.LoadingScreen
                 }
             }
 
-            async UniTask<Result> ExecuteLoadingScreenAsync()
+            async UniTask<EnumResult<TaskError>> ExecuteLoadingScreenAsync()
             {
                 // The loading screen will be bound via load report 1-to-1 as ExecuteOperationAsync ensures the state of LoadReport:
                 // 1. if the operation has finished -> cancel the loading screen with Fade
                 // 2. if timeout has fired -> cancel the loading screen with Fade
                 // 3. if the outer cancellation token has fired -> cancel the loading screen immediately
 
-                Result result = await mvcManager.ShowAsync(
+                var result = await mvcManager.ShowAsync(
                                                      SceneLoadingScreenController.IssueCommand(new SceneLoadingScreenController.Params(loadReport)), ct)
                                                 .SuppressToResultAsync(ReportCategory.SCENE_LOADING);
 
