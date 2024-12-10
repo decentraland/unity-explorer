@@ -163,10 +163,8 @@ namespace DCL.UserInAppInitializationFlow
                 if (result.Success == false)
                 {
                     ReportHub.LogError(ReportCategory.DEBUG, result.ErrorMessage!);
-                    mvcManager.ShowAsync(
-                        new ShowCommand<ErrorPopupView, ErrorPopupData>(ErrorPopupData.FromDescription(result.ErrorMessage!)),
-                        ct
-                    ).Forget();
+
+                    mvcManager.ShowAndForget(new ShowCommand<ErrorPopupView, ErrorPopupData>(ErrorPopupData.FromDescription(result.ErrorMessage!)), ct);
                 }
             }
             while (result.Success == false && parameters.ShowAuthentication);
