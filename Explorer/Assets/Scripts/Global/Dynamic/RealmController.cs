@@ -280,6 +280,6 @@ namespace Global.Dynamic
         }
 
         private bool IsGenesisRealm() =>
-            !isLocalSceneDevelopment && realmData is { Configured: true, ScenesAreFixed: false };
+            realmData is { Configured: true, ScenesAreFixed: false };
     }
 }

@@ -253,14 +253,14 @@ namespace Global.Dynamic
             Vector2Int parcelToTeleport
         )
         {
-            bool isWorld = realmController.Type is RealmType.World;
+            bool isGenesis = realmController.IsGenesis();
             WaitForSceneReadiness? waitForSceneReadiness;
-
-            if (isWorld)
-                waitForSceneReadiness = await TeleportToWorldSpawnPointAsync(parcelToTeleport, teleportLoadReport, ct);
-            else
+            
+            if (isGenesis)
                 waitForSceneReadiness = await teleportController.TeleportToSceneSpawnPointAsync(parcelToTeleport, teleportLoadReport, ct);
-
+            else
+                waitForSceneReadiness = await TeleportToWorldSpawnPointAsync(parcelToTeleport, teleportLoadReport, ct);
+                
             // add camera sampling data to the camera entity to start partitioning
             Assert.IsTrue(cameraEntity.Configured);
             globalWorld.Add(cameraEntity.Object, cameraSamplingData);
@@ -328,7 +328,7 @@ namespace Global.Dynamic
         public void SwitchMiscVisibilityAsync()
         {
             var type = realmController.Type;
-            bool isGenesis = type is RealmType.GenesisCity;
+            bool isGenesis = realmController.IsGenesis();
 
             RealmChanged?.Invoke(type);
             mapRenderer.SetSharedLayer(MapLayer.PlayerMarker, isGenesis);
