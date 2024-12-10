@@ -45,6 +45,8 @@ MonoBehaviour:
       isEnabled: 1
     - eventName: chat_bubble_switched
       isEnabled: 1
+    - eventName: open_support
+      isEnabled: 1
   - groupName: Wearables
     events:
     - eventName: used_emote
@@ -62,6 +64,24 @@ MonoBehaviour:
     - eventName: badges_tab_opened
       isEnabled: 1
     - eventName: badge_ui_click
+      isEnabled: 1
+  - groupName: CameraReel
+    events:
+    - eventName: camera_open
+      isEnabled: 1
+    - eventName: take_photo
+      isEnabled: 1
+    - eventName: camera_reel_open
+      isEnabled: 1
+    - eventName: photo_delete
+      isEnabled: 1
+    - eventName: photo_download
+      isEnabled: 1
+    - eventName: photo_jump_to
+      isEnabled: 1
+    - eventName: photo_to_marketplace
+      isEnabled: 1
+    - eventName: photo_share
       isEnabled: 1
   useLocalEnvVariableFallback: 0
   flushSize: 20

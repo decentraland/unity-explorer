@@ -52,6 +52,20 @@
             public const string HEIGHT_REACHED = "vertical_height_reached";
         }
 
+        public static class CameraReel
+        {
+            public const string CAMERA_OPEN = "camera_open";
+            public const string TAKE_PHOTO = "take_photo";
+
+            public const string CAMERA_REEL_OPEN = "camera_reel_open";
+
+            public const string PHOTO_DELETE = "photo_delete";
+            public const string PHOTO_DOWNLOAD = "photo_download";
+            public const string PHOTO_JUMP_TO = "photo_jump_to";
+            public const string PHOTO_TO_MARKETPLACE = "photo_to_marketplace";
+            public const string PHOTO_SHARE = "photo_share";
+        }
+
         public static class Livekit
         {
             public const string LIVEKIT_HEALTH_CHECK_FAILED = "livekit_health_check_failed"; // 🔴 - needs testing

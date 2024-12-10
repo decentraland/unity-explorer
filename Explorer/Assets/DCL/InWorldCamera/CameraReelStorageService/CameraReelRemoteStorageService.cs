@@ -12,7 +12,7 @@ namespace DCL.InWorldCamera.CameraReelStorageService
         private readonly ICameraReelScreenshotsStorage screenshotsStorage;
         public CameraReelStorageStatus StorageStatus { get; private set; }
 
-        public event Action<CameraReelResponse, CameraReelStorageStatus>? ScreenshotUploaded;
+        public event Action<CameraReelResponse, CameraReelStorageStatus, string>? ScreenshotUploaded;
 
         public CameraReelRemoteStorageService(ICameraReelImagesMetadataDatabase imagesMetadataDatabase, ICameraReelScreenshotsStorage screenshotsStorage, string userAddress)
         {
@@ -48,14 +48,14 @@ namespace DCL.InWorldCamera.CameraReelStorageService
         public async UniTask UpdateScreenshotVisibilityAsync(string uuid, bool isPublic, CancellationToken ct = default) =>
             await imagesMetadataDatabase.UpdateScreenshotVisibilityAsync(uuid, isPublic, ct);
 
-        public async UniTask<CameraReelStorageStatus> UploadScreenshotAsync(Texture2D image, ScreenshotMetadata metadata, CancellationToken ct = default)
+        public async UniTask<CameraReelStorageStatus> UploadScreenshotAsync(Texture2D image, ScreenshotMetadata metadata, string source, CancellationToken ct = default)
         {
             if (!StorageStatus.HasFreeSpace) return StorageStatus;
 
             CameraReelUploadResponse response = await imagesMetadataDatabase.UploadScreenshotAsync(image.EncodeToJPG(), metadata, ct);
 
             StorageStatus = new CameraReelStorageStatus(response.currentImages, response.maxImages);
-            ScreenshotUploaded?.Invoke(response.image, StorageStatus);
+            ScreenshotUploaded?.Invoke(response.image, StorageStatus, source);
             return StorageStatus;
         }
 

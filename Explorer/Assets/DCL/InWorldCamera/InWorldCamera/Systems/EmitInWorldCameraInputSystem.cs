@@ -12,6 +12,8 @@ namespace DCL.InWorldCamera.Systems
     [LogCategory(ReportCategory.IN_WORLD_CAMERA)]
     public partial class EmitInWorldCameraInputSystem : BaseUnityLoopSystem
     {
+        public const string SOURCE_SHORTCUT = "Shortcut";
+
         private readonly DCLInput.InWorldCameraActions inputSchema;
 
         private SingleInstanceEntity camera;
@@ -29,7 +31,7 @@ namespace DCL.InWorldCamera.Systems
         protected override void Update(float t)
         {
             if (inputSchema.ToggleInWorldCamera.triggered)
-                World.Add(camera, new ToggleInWorldCameraRequest { IsEnable = !World.Has<InWorldCameraComponent>(camera) });
+                World.Add(camera, new ToggleInWorldCameraRequest { IsEnable = !World.Has<InWorldCameraComponent>(camera), Source = SOURCE_SHORTCUT });
 
             if (inputSchema.CameraReel.triggered || inputSchema.Close.triggered)
                 World.Add(camera, new ToggleInWorldCameraRequest { IsEnable = false });
@@ -47,7 +49,7 @@ namespace DCL.InWorldCamera.Systems
                 input.Zoom = inputSchema.Zoom.ReadValue<float>();
 
                 if (inputSchema.Screenshot.triggered && !World.Has<TakeScreenshotRequest>(camera))
-                    World.Add(camera, new TakeScreenshotRequest { Source = "Shortcut" });
+                    World.Add(camera, new TakeScreenshotRequest { Source = SOURCE_SHORTCUT});
             }
         }
     }

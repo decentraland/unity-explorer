@@ -39,6 +39,7 @@ namespace DCL.InWorldCamera.Systems
         private SingleInstanceEntity camera;
         private Texture2D? screenshot;
         private ScreenshotMetadata? metadata;
+        private string currentSource;
 
         public CaptureScreenshotSystem(
             World world,
@@ -96,29 +97,24 @@ namespace DCL.InWorldCamera.Systems
 
             try
             {
-                cameraReelStorageService.UploadScreenshotAsync(screenshot, metadata, ctx.Token).Forget();
+                cameraReelStorageService.UploadScreenshotAsync(screenshot, metadata, currentSource, ctx.Token).Forget();
 
                 hudController.Show();
                 hudController.PlayScreenshotFX(screenshot, SPLASH_FX_DURATION, MIDDLE_PAUSE_FX_DURATION, IMAGE_TRANSITION_FX_DURATION);
                 hudController.DebugCapture(screenshot, metadata);
             }
             catch (OperationCanceledException) { }
-            catch (ScreenshotLimitReachedException)
-            {
-                hudController.Show();
-            }
-            catch (Exception e)
-            {
-                ReportHub.LogException(e, ReportCategory.CAMERA_REEL);
-            }
+            catch (ScreenshotLimitReachedException) { hudController.Show(); }
+            catch (Exception e) { ReportHub.LogException(e, ReportCategory.CAMERA_REEL); }
         }
 
         private bool ScreenshotIsRequested()
         {
             if (recorder.State != RecordingState.IDLE) return false;
 
-            if (World.Has<TakeScreenshotRequest>(camera))
+            if (World.TryGet(camera, out TakeScreenshotRequest request))
             {
+                currentSource = request.Source;
                 World.Remove<TakeScreenshotRequest>(camera);
                 return true;
             }

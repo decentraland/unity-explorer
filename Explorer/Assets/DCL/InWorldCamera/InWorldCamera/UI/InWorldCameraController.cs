@@ -9,7 +9,6 @@ using DCL.InWorldCamera.Playground;
 using DCL.UI;
 using ECS.Abstract;
 using MVC;
-using System;
 using System.Diagnostics;
 using System.Threading;
 using UnityEngine;
@@ -24,6 +23,8 @@ namespace DCL.InWorldCamera.UI
     /// </summary>
     public class InWorldCameraController : ControllerBase<InWorldCameraView>
     {
+        private const string SOURCE_BUTTON = "Button";
+
         private readonly Button sidebarButton;
         private readonly World world;
         private readonly IMVCManager mvcManager;
@@ -129,7 +130,7 @@ namespace DCL.InWorldCamera.UI
         private void RequestTakeScreenshot()
         {
             if (!world.Has<TakeScreenshotRequest>(camera!.Value))
-                world.Add(camera!.Value, new TakeScreenshotRequest { Source = "UI" });
+                world.Add(camera!.Value, new TakeScreenshotRequest { Source = SOURCE_BUTTON });
         }
 
         private void RequestDisableInWorldCamera()
@@ -141,7 +142,7 @@ namespace DCL.InWorldCamera.UI
         private void ToggleInWorldCamera()
         {
             if (!world.Has<ToggleInWorldCameraRequest>(camera!.Value))
-                world.Add(camera!.Value, new ToggleInWorldCameraRequest { IsEnable = !world.Has<InWorldCameraComponent>(camera!.Value) });
+                world.Add(camera!.Value, new ToggleInWorldCameraRequest { IsEnable = !world.Has<InWorldCameraComponent>(camera!.Value), Source = SOURCE_BUTTON });
         }
 
         private void ToggleShortcutsInfo() =>
@@ -163,7 +164,7 @@ namespace DCL.InWorldCamera.UI
             }
         }
 
-        private void OnScreenshotUploaded(CameraReelResponse _, CameraReelStorageStatus storage) =>
+        private void OnScreenshotUploaded(CameraReelResponse _, CameraReelStorageStatus storage, string __) =>
             AdjustToStorageSpace(storage.HasFreeSpace);
 
         [Conditional("DEBUG")]

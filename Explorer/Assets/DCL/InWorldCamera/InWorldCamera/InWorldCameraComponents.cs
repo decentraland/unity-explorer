@@ -1,10 +1,15 @@
-﻿using UnityEngine;
+﻿using DCL.InWorldCamera.CameraReelStorageService.Schemas;
+using UnityEngine;
 
 namespace DCL.InWorldCamera
 {
     public struct InWorldCameraComponent { }
 
-    public struct ToggleInWorldCameraRequest { public bool IsEnable; }
+    public struct ToggleInWorldCameraRequest
+    {
+        public bool IsEnable;
+        public string Source;
+    }
     public struct TakeScreenshotRequest { public string Source; }
     public struct CameraTarget { public CharacterController Value; }
 

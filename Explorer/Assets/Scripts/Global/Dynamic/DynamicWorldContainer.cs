@@ -704,7 +704,8 @@ namespace Global.Dynamic
                         staticContainer.ScenesCache,
                         staticContainer.MainPlayerAvatarBaseProxy,
                         identityCache,
-                        debugBuilder
+                        debugBuilder,
+                        cameraReelStorageService
                     )
                 );
 

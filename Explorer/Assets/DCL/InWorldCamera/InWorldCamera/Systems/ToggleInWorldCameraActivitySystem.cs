@@ -14,7 +14,6 @@ using DCL.InWorldCamera.Settings;
 using DCL.InWorldCamera.UI;
 using ECS.Abstract;
 using MVC;
-using System;
 using UnityEngine;
 using static DCL.Input.Component.InputMapComponent;
 

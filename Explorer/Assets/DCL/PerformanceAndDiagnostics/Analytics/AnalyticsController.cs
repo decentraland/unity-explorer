@@ -26,6 +26,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             analytics = analyticsService;
             Configuration = configuration;
 
+            Configuration.Initialize();
             analytics.AddPlugin(new StaticCommonTraitsPlugin(appArgs, launcherTraits, buildData));
         }
 
