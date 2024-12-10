@@ -119,7 +119,7 @@ namespace DCL.UI.ConnectionStatusPanel
             if (value.Value is not ConnectionQuality.QualityLost)
                 return;
 
-            await mvcManager.ShowAsync(new ShowCommand<ErrorPopupView, ErrorPopupData>(ErrorPopupData.Empty), ct);
+            await mvcManager.ShowAsync(new ShowCommand<ErrorPopupView, ErrorPopupData>(ErrorPopupData.Default), ct);
             await userInAppInitializationFlow.ExecuteAsync(
                 new UserInAppInitializationFlowParameters
                 {
