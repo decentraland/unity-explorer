@@ -145,7 +145,8 @@ namespace Global.Dynamic
 
             // are replace by increasing radius
             var jobsMathHelper = new ParcelMathJobifiedHelper();
-            StartSplittingByRingsSystem.InjectToWorld(ref builder, realmPartitionSettings, jobsMathHelper);
+            StartSplittingByRingsSystem.InjectToWorld(ref builder, realmPartitionSettings, jobsMathHelper,
+                staticContainer.WebRequestsContainer.WebRequestController);
 
             LoadPointersByIncreasingRadiusSystem.InjectToWorld(ref builder, jobsMathHelper, realmPartitionSettings,
                 partitionSettings, sceneReadinessReportQueue, scenesCache);

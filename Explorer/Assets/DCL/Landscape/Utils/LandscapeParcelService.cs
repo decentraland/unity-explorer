@@ -66,6 +66,16 @@ namespace DCL.Landscape.Utils
 
             return nativeList;
         }
+
+        public NativeList<int2> GetRoads()
+        {
+            var nativeList = new NativeList<int2>(roads.Length, Allocator.Persistent);
+
+            foreach (var emptyParcel in roads)
+                nativeList.Add(new int2(emptyParcel));
+
+            return nativeList;
+        }
     }
 
     public struct FetchParcelResult
