@@ -27,6 +27,22 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
             CancellationToken token
         );
 
+        /// <summary>
+        ///     For test purposes
+        /// </summary>
+        class Mock : ITexturesFuse
+        {
+            public void Dispose() { }
+
+            public UniTask<EnumResult<IOwnedTexture2D, NativeMethods.ImageResult>> TextureFromBytesAsync(IntPtr bytes, int bytesLength, TextureType type, CancellationToken token) =>
+                UniTask.FromResult(
+                    EnumResult<IOwnedTexture2D, NativeMethods.ImageResult>.ErrorResult(
+                        NativeMethods.ImageResult.ErrorUnknown,
+                        "I am mock!"
+                    )
+                );
+        }
+
         interface IOptions
         {
             Mode Mode { get; }
@@ -60,7 +76,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
             }
         }
 
-        public static ITexturesFuse NewDefault(IOptions? options = null, int? workersCount = null)
+        public static ITexturesFuse NewDefault(IOptions? options = null, int? workersCount = null, bool useMockForFallback = false)
         {
             if (IPlatform.DEFAULT.Is(IPlatform.Kind.Linux))
             {
@@ -96,10 +112,22 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
             if (Application.platform is RuntimePlatform.LinuxPlayer or RuntimePlatform.LinuxEditor)
                 return NewManagedInstance();
 
-            ITexturesFuse NewWorker() =>
-                IPlatform.DEFAULT.Is(IPlatform.Kind.Windows)
+            ITexturesFuse NewPlatformWorker()
+            {
+                return IPlatform.DEFAULT.Is(IPlatform.Kind.Windows)
                     ? new AttemptsTexturesFuse(new NodeTexturesFuse())
                     : new TexturesFuse(init, options, true);
+            }
+
+            ITexturesFuse NewWorker()
+            {
+                ITexturesFuse platformWorker =
+                    useMockForFallback
+                        ? new Mock()
+                        : NewPlatformWorker();
+
+                return new FallbackTexturesFuse(platformWorker);
+            }
 
             return new PooledTexturesFuse(
                 () => NewWorker().WithLog($"Worker: {++index}"),
