@@ -24,17 +24,6 @@ namespace DCL.Navmap
             {
                 categoryToggleView.ToggleChanged += OnCategoryToggleChanged;
             }
-
-            navmapBus.OnPlaceSearched += OnPlaceSearched;
-        }
-
-        private void OnPlaceSearched(INavmapBus.SearchPlaceParams searchparams, IReadOnlyList<PlacesData.PlaceInfo> places, int totalresultcount)
-        {
-            if (string.IsNullOrEmpty(searchparams.category) && currentActiveToggle != null)
-            {
-                currentActiveToggle.SetVisualStatus(false);
-                currentActiveToggle.Toggle.SetIsOnWithoutNotify(false);
-            }
         }
 
         private void OnCategoryToggleChanged(CategoriesEnum mapLayer, bool isOn, CategoryToggleView toggleView)
@@ -43,6 +32,7 @@ namespace DCL.Navmap
                 currentActiveToggle = toggleView;
 
             navmapBus.FilterByCategory(isOn ? mapLayer.ToString() : null);
+            if (mapLayer is CategoriesEnum.All or CategoriesEnum.Favorites) return;
             mapRenderer.SetSharedLayer(MapLayer.Category, isOn);
         }
 

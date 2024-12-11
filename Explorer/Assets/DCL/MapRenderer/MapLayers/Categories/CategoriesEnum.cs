@@ -13,5 +13,7 @@ namespace DCL.MapRenderer.MapLayers.Categories
         Casino,
         Sports,
         Business,
+        All,
+        Favorites
     }
 }

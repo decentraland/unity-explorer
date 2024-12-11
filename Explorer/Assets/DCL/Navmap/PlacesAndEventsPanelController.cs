@@ -80,7 +80,7 @@ namespace DCL.Navmap
             view.CollapseButton.gameObject.SetActive(true);
             view.ExpandButton.gameObject.SetActive(false);
 
-            RectTransform transform = (RectTransform)view.transform;
+            RectTransform transform = (RectTransform)view.CollapseSection;
 
             collapseExpandCancellationToken = collapseExpandCancellationToken.SafeRestart();
 
@@ -94,7 +94,7 @@ namespace DCL.Navmap
             view.CollapseButton.gameObject.SetActive(false);
             view.ExpandButton.gameObject.SetActive(true);
 
-            RectTransform transform = (RectTransform)view.transform;
+            RectTransform transform = (RectTransform)view.CollapseSection;
 
             collapseExpandCancellationToken = collapseExpandCancellationToken.SafeRestart();
 

@@ -21,7 +21,7 @@ namespace DCL.Navmap
 
             public static SearchPlaceParams CreateWithDefaultParams(int page = 0, int pageSize = 50, string? text = null,
                 NavmapSearchPlaceFilter filter = NavmapSearchPlaceFilter.All,
-                NavmapSearchPlaceSorting sorting = NavmapSearchPlaceSorting.None,
+                NavmapSearchPlaceSorting sorting = NavmapSearchPlaceSorting.MostActive,
                 string? category = null) =>
                 new()
                 {

@@ -416,6 +416,8 @@ MonoBehaviour:
   - {fileID: 8812781191627118148}
   - {fileID: 441779482512146070}
   - {fileID: 2286216955777097308}
+  - {fileID: 6374069316316585952}
+  - {fileID: 3213349798447967743}
   SearchBarView: {fileID: 842886904578405180}
   SearchBarResultPanel: {fileID: 1139624930840749797}
   <PlacesAndEventsPanelView>k__BackingField: {fileID: 3519131758687248700}
@@ -3526,6 +3528,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 08644116a8ad44d98f16a9e5915e5292, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &3213349798447967743 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 4823341416009607881, guid: 60404242bfbb74ee0b0c50ee1f90ee88, type: 3}
+  m_PrefabInstance: {fileID: 7960094661819680566}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 08644116a8ad44d98f16a9e5915e5292, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!224 &3220452891105341307 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 4811734723808749645, guid: 60404242bfbb74ee0b0c50ee1f90ee88, type: 3}
@@ -3545,6 +3558,17 @@ MonoBehaviour:
 --- !u!114 &6025151870939236813 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 4461462354204544763, guid: 60404242bfbb74ee0b0c50ee1f90ee88, type: 3}
+  m_PrefabInstance: {fileID: 7960094661819680566}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 08644116a8ad44d98f16a9e5915e5292, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &6374069316316585952 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 3891903574144882902, guid: 60404242bfbb74ee0b0c50ee1f90ee88, type: 3}
   m_PrefabInstance: {fileID: 7960094661819680566}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 0}
@@ -3780,12 +3804,36 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3294148556523310526, guid: d330fb8cc4eee463fa5fddbbf652ab9e, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3294148556523310526, guid: d330fb8cc4eee463fa5fddbbf652ab9e, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3818665890658583685, guid: d330fb8cc4eee463fa5fddbbf652ab9e, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3818665890658583685, guid: d330fb8cc4eee463fa5fddbbf652ab9e, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3818665890658583685, guid: d330fb8cc4eee463fa5fddbbf652ab9e, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3818665890658583685, guid: d330fb8cc4eee463fa5fddbbf652ab9e, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4035667263217711451, guid: d330fb8cc4eee463fa5fddbbf652ab9e, type: 3}
       propertyPath: m_Name
       value: PlacesAndEventsPanel
       objectReference: {fileID: 0}
-    - target: {fileID: 4035667263217711451, guid: d330fb8cc4eee463fa5fddbbf652ab9e, type: 3}
-      propertyPath: m_IsActive
+    - target: {fileID: 6822883530026945485, guid: d330fb8cc4eee463fa5fddbbf652ab9e, type: 3}
+      propertyPath: m_SizeDelta.y
       value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []

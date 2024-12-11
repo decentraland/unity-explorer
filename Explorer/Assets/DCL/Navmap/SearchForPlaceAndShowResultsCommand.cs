@@ -46,7 +46,6 @@ namespace DCL.Navmap
             searchResultPanelController.SetLoadingState();
             searchBarController.SetInputText(@params.text ?? @params.category ?? string.Empty);
             searchBarController.UpdateFilterAndSorting(@params.filter, @params.sorting);
-            searchBarController.SetFilterActiveStatus(string.IsNullOrEmpty(@params.category));
             searchBarController.Interactable = true;
 
             await ProcessPlacesAsync(ct);
