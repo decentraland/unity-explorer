@@ -290,7 +290,7 @@ namespace DCL.PluginSystem.Global
                 new PlaceInfoPanelController(navmapView.PlaceToastView.PlacePanelView,
                     webRequestController, placesAPIService, mapPathEventBus, navmapBus, chatMessagesBus, eventsApiService,
                     eventElementsPool, shareContextMenu, webBrowser),
-                placesAPIService, eventsApiService);
+                placesAPIService, eventsApiService, navmapBus);
 
             navmapController = new NavmapController(navmapView,
                 mapRenderer,

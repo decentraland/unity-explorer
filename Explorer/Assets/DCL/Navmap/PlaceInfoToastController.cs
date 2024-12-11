@@ -14,24 +14,30 @@ namespace DCL.Navmap
         private readonly PlaceInfoPanelController placePanelController;
         private readonly IPlacesAPIService placesAPIService;
         private readonly IEventsApiService eventsApiService;
+        private readonly INavmapBus navmapBus;
 
         private CancellationTokenSource? fetchPlaceAndShowCancellationToken;
 
         public PlaceInfoToastController(PlaceInfoToastView view,
             PlaceInfoPanelController placePanelController,
             IPlacesAPIService placesAPIService,
-            IEventsApiService eventsApiService)
+            IEventsApiService eventsApiService,
+            INavmapBus navmapBus)
         {
             this.view = view;
             this.placePanelController = placePanelController;
             this.placesAPIService = placesAPIService;
             this.eventsApiService = eventsApiService;
+            this.navmapBus = navmapBus;
+            this.navmapBus.OnLongHover += Set;
 
             view.CloseButton.onClick.AddListener(Hide);
         }
 
-        public void Set(Vector2Int parcel)
+        private void Set(Vector2Int parcel, Vector2 screenPosition)
         {
+            Show();
+            view.RectTransform.anchoredPosition = screenPosition;
             async UniTaskVoid FetchPlaceAndShowAsync(CancellationToken ct)
             {
                 // TODO: show loading state

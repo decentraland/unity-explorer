@@ -24,6 +24,7 @@ namespace DCL.MapRenderer.MapLayers.Pins
 
         public Vector3 CurrentPosition => poolableBehavior.currentPosition;
         public Sprite? CurrentSprite => poolableBehavior.instance?.mapPinIcon.sprite;
+        public Vector2Int ParcelCoords => Vector2Int.zero;
 
         public bool IsVisible => poolableBehavior.isVisible;
         public bool IsDestination { get; private set; }

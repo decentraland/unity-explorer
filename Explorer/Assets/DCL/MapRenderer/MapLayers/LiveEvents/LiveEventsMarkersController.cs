@@ -179,13 +179,15 @@ namespace DCL.MapRenderer.MapLayers.Categories
             marker.OnBecameInvisible();
         }
 
-        public bool HighlightObject(GameObject gameObject)
+        public bool HighlightObject(GameObject gameObject, out IMapRendererMarker? mapMarker)
         {
+            mapMarker = null;
             if (clusterController.HighlightObject(gameObject))
                 return true;
 
             if (visibleMarkers.TryGetValue(gameObject, out ICategoryMarker marker))
             {
+                mapMarker = marker;
                 highlightCt = highlightCt.SafeRestart();
                 previousMarker?.AnimateDeSelectionAsync(deHighlightCt.Token);
                 marker.AnimateSelectionAsync(highlightCt.Token);

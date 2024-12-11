@@ -3,6 +3,7 @@ using DCL.MapRenderer.MapCameraController;
 using DCL.MapRenderer.MapLayers;
 using DCL.MapRenderer.MapLayers.ParcelHighlight;
 using DCL.MapRenderer.MapLayers.Pins;
+using DCL.Navmap;
 using NSubstitute;
 using NUnit.Framework;
 using System.Collections.Generic;
@@ -44,7 +45,7 @@ namespace DCL.MapRenderer.Tests.MapCameraController
                            return true;
                        });
 
-            controller = new MapCameraInteractivityController(null, camera, pool, coordUtils, new List<IMapLayerController>());
+            controller = new MapCameraInteractivityController(null, camera, pool, coordUtils, new List<IMapLayerController>(), Substitute.For<INavmapBus>());
         }
 
         [Test]

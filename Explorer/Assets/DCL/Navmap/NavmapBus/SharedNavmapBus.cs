@@ -19,6 +19,7 @@ namespace DCL.Navmap
         public event Action? OnClearPlacesFromMap;
         public event Action<Vector2>? OnMoveCameraTo;
         public event Action<bool>? OnZoomCamera;
+        public event Action<Vector2Int, Vector2>? OnLongHover;
 
         public SharedNavmapBus(ObjectProxy<INavmapBus> source)
         {
@@ -35,6 +36,7 @@ namespace DCL.Navmap
             obj.OnClearPlacesFromMap += OnClearPlacesFromMap;
             obj.OnMoveCameraTo += OnMoveCameraTo;
             obj.OnZoomCamera += OnZoomCamera;
+            obj.OnLongHover += OnLongHover;
         }
 
         public async UniTask SelectPlaceAsync(PlacesData.PlaceInfo place, CancellationToken ct)
@@ -89,5 +91,8 @@ namespace DCL.Navmap
 
         public void ZoomCamera(bool zoomIn) =>
             source.Object?.ZoomCamera(zoomIn);
+
+        public void SendLongHover(Vector2Int parcel, Vector2 screenPosition) =>
+            source.Object?.SendLongHover(parcel, screenPosition);
     }
 }

@@ -114,7 +114,7 @@ namespace DCL.MapRenderer.ConsumerUtils
             if (!highlightEnabled)
                 return;
 
-            interactivityController!.RemoveHighlight();
+            interactivityController!.ExitRenderImage();
         }
 
         public void OnPointerMove(PointerEventData eventData)
@@ -134,7 +134,7 @@ namespace DCL.MapRenderer.ConsumerUtils
                 Vector2 rectSize = rectTransform.rect.size;
                 Vector2 localPosition = rectTransform.InverseTransformPoint(worldPosition);
                 Vector2 leftCornerRelativeLocalPosition = localPosition + (rectTransform.pivot * rectSize);
-                hitObject = interactivityController!.ProcessMousePosition(leftCornerRelativeLocalPosition / rectSize);
+                hitObject = interactivityController!.ProcessMousePosition(leftCornerRelativeLocalPosition / rectSize, leftCornerRelativeLocalPosition);
             }
 
             ProcessHover(eventData, hitObject);
@@ -142,10 +142,6 @@ namespace DCL.MapRenderer.ConsumerUtils
             Profiler.EndSample();
         }
 
-        /// <summary>
-        ///     Notifies with the world position
-        /// </summary>
-        public event Action<Vector2>? Hovered;
         public event Action<Vector2>? HoveredParcel;
         public event Action? DragStarted;
 
@@ -201,7 +197,6 @@ namespace DCL.MapRenderer.ConsumerUtils
                         interactivityController!.RemoveHighlight();
                     }
 
-                    Hovered?.Invoke(worldPosition);
                     HoveredParcel?.Invoke(parcel);
                 }
             }

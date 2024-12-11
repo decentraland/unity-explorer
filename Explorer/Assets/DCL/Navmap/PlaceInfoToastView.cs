@@ -10,5 +10,8 @@ namespace DCL.Navmap
 
         [field: SerializeField]
         public PlaceInfoPanelView PlacePanelView { get; private set; }
+
+        [field: SerializeField]
+        public RectTransform RectTransform { get; private set; }
     }
 }

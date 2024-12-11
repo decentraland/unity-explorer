@@ -1,6 +1,9 @@
-﻿using DCL.MapRenderer.CoordsUtils;
+﻿using Cysharp.Threading.Tasks;
+using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.MapLayers;
 using DCL.MapRenderer.MapLayers.ParcelHighlight;
+using DCL.Navmap;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -14,6 +17,7 @@ namespace DCL.MapRenderer.MapCameraController
         private readonly Transform cameraParent;
         private readonly IObjectPool<IParcelHighlightMarker> markersPool;
         private readonly ICoordsUtils coordsUtils;
+        private readonly INavmapBus navmapBus;
         private readonly Camera camera;
         private readonly List<IMapLayerController> interactableLayers = new ();
 
@@ -21,6 +25,8 @@ namespace DCL.MapRenderer.MapCameraController
         private GameObject? previouslyRaycastedObject;
         private CancellationTokenSource clickCt = new ();
         private IMapRendererMarker? previouslyClickedMarker = null;
+        private CancellationTokenSource longHoverCt = new ();
+        private Vector2Int previousParcel = Vector2Int.zero;
 
         public bool HighlightEnabled { get; private set; }
 
@@ -29,11 +35,13 @@ namespace DCL.MapRenderer.MapCameraController
             Camera camera,
             IObjectPool<IParcelHighlightMarker> markersPool,
             ICoordsUtils coordsUtils,
-            List<IMapLayerController> interactableLayers)
+            List<IMapLayerController> interactableLayers,
+            INavmapBus navmapBus)
         {
             this.cameraParent = cameraParent;
             this.markersPool = markersPool;
             this.coordsUtils = coordsUtils;
+            this.navmapBus = navmapBus;
             this.camera = camera;
             this.interactableLayers.AddRange(interactableLayers);
         }
@@ -50,7 +58,7 @@ namespace DCL.MapRenderer.MapCameraController
             marker.SetCoordinates(parcel, localPosition);
         }
 
-        public GameObject? ProcessMousePosition(Vector2 normalizedCoordinates)
+        public GameObject? ProcessMousePosition(Vector2 normalizedCoordinates, Vector2 screenPosition)
         {
             GameObject? hitObject = null;
             RaycastHit2D raycast = Physics2D.Raycast(GetLocalPosition(normalizedCoordinates), Vector2.zero, 10);
@@ -73,8 +81,10 @@ namespace DCL.MapRenderer.MapCameraController
 
                 foreach (IMapLayerController mapLayerController in interactableLayers)
                 {
-                    if (mapLayerController.HighlightObject(raycast.collider.gameObject))
+                    if (mapLayerController.HighlightObject(raycast.collider.gameObject, out IMapRendererMarker? mapRenderMarker))
                     {
+                        longHoverCt = longHoverCt.SafeRestart();
+                        WaitAndShowPlaceInfoAsync(mapRenderMarker.ParcelCoords, screenPosition, longHoverCt.Token).Forget();
                         return hitObject;
                     }
                 }
@@ -89,8 +99,24 @@ namespace DCL.MapRenderer.MapCameraController
 
                     previouslyRaycastedObject = null;
                 }
+
+                TryGetParcel(normalizedCoordinates, out Vector2Int parcel);
+
+                if (parcel != previousParcel)
+                {
+                    previousParcel = parcel;
+                    longHoverCt = longHoverCt.SafeRestart();
+                    WaitAndShowPlaceInfoAsync(parcel, screenPosition, longHoverCt.Token).Forget();
+                }
             }
             return hitObject;
+        }
+
+        private async UniTaskVoid WaitAndShowPlaceInfoAsync(Vector2Int parcel, Vector2 screenPosition, CancellationToken ct)
+        {
+            await UniTask.Delay(1000, cancellationToken: ct);
+            if (ct.IsCancellationRequested) return;
+            navmapBus.SendLongHover(parcel, screenPosition);
         }
 
         public GameObject? ProcessMouseClick(Vector2 normalizedCoordinates)
@@ -135,6 +161,12 @@ namespace DCL.MapRenderer.MapCameraController
         public void RemoveHighlight()
         {
             marker?.Deactivate();
+        }
+
+        public void ExitRenderImage()
+        {
+            RemoveHighlight();
+            longHoverCt = longHoverCt.SafeRestart();
         }
 
         public bool TryGetParcel(Vector2 normalizedCoordinates, out Vector2Int parcel)
