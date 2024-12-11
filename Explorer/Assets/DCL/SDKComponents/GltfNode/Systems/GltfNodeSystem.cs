@@ -48,6 +48,8 @@ namespace DCL.SDKComponents.GltfNode.Systems
 
         protected override void Update(float t)
         {
+            HandleComponentRemovalQuery(World);
+
             SetupGltfNodeQuery(World);
         }
 
@@ -65,7 +67,7 @@ namespace DCL.SDKComponents.GltfNode.Systems
             // TODO: Find standard patch for the 'pbComponent.NodePath' against the path processed by GLTFast...
             // Non-skeleton GLTFs seem to work OK, do the skeleton GLTFs have a path inconsistency (e.g. GLTFast vs BabylonSandbox vs Blender) 100% ???
 
-            // stopWatch.Start();
+            stopWatch.Start();
 
             Transform? nodeTransform = null;
             // if ((nodeTransform = gltfEntityTransform.Transform.Find("Scene/Scene/"+pbComponent.NodePath)) == null)
@@ -109,18 +111,30 @@ namespace DCL.SDKComponents.GltfNode.Systems
                 sceneData.Geometry.BaseParcelPosition,
                 false);
 
-            // stopWatch.Stop();
-            // Debug.Log($"PRAVS - SetupGltfNode() - milliseconds: {stopWatch.ElapsedMilliseconds}");
+            stopWatch.Stop();
+            Debug.Log($"PRAVS - SetupGltfNode() - milliseconds: {stopWatch.ElapsedMilliseconds}");
         }
 
-        // TODO: Add query for component deletion
+        // TODO: Add query for GLTFContainer entity or component deletion
 
         [Query]
-        public void FinalizeComponents(Entity entity, ref GltfNodeComponent gltfNodeComponent, ref TransformComponent transformComponent, ref SDKTransform sdkTransform)
+        [None(typeof(PBGltfNode))]
+        public void HandleComponentRemoval(Entity entity, in GltfNodeComponent gltfNodeComponent, in TransformComponent transformComponent, ref SDKTransform sdkTransform) =>
+            Dispose(entity, in gltfNodeComponent, in transformComponent, ref sdkTransform);
+
+        [Query]
+        public void FinalizeComponents(Entity entity, in GltfNodeComponent gltfNodeComponent, in TransformComponent transformComponent, ref SDKTransform sdkTransform) =>
+            Dispose(entity, in gltfNodeComponent, in transformComponent, ref sdkTransform);
+
+        public void FinalizeComponents(in Query query) =>
+            FinalizeComponentsQuery(World);
+
+        private void Dispose(Entity entity, in GltfNodeComponent gltfNodeComponent, in TransformComponent transformComponent, ref SDKTransform sdkTransform)
         {
-            // stopWatch.Restart();
+            stopWatch.Restart();
 
             // Clean GltfNode entity
+            // TODO: Only remove children GO that are mapped to CRDT Entities
             /*Transform[] children = new Transform[gltfNodeComponent.clonedNodeTransform.childCount];
             int index = 0;
             foreach (Transform child in gltfNodeComponent.clonedNodeTransform)
@@ -139,16 +153,13 @@ namespace DCL.SDKComponents.GltfNode.Systems
             // Reset original GO
             gltfNodeComponent.originalNodeGameObject!.SetActive(true);
 
-            // stopWatch.Stop();
-            // Debug.Log($"PRAVS - FinalizeComponents() - milliseconds: {stopWatch.ElapsedMilliseconds}");
-
             // TODO: Remove SDKTransform from CRDT Entity as well ???
 
             sdkTransformPool.Release(sdkTransform);
             World.Remove<TransformComponent, SDKTransform, GltfNodeComponent>(entity);
-        }
 
-        public void FinalizeComponents(in Query query) =>
-            FinalizeComponentsQuery(World);
+            stopWatch.Stop();
+            Debug.Log($"PRAVS - FinalizeComponents() - milliseconds: {stopWatch.ElapsedMilliseconds}");
+        }
     }
 }
