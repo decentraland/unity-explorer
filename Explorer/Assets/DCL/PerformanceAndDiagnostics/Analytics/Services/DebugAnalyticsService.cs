@@ -10,9 +10,9 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.Services
     {
         private static readonly IEnumerable<KeyValuePair<string, JsonElement>> EMPTY = new Dictionary<string, JsonElement>();
 
-        public void Identify(string? userId, string? anonId, JsonObject? traits = null)
+        public void Identify(string? userId, JsonObject? traits = null)
         {
-            ReportHub.Log(ReportCategory.ANALYTICS, $"Identify: userId = {userId} | anonId = {anonId} | traits = {traits}");
+            ReportHub.Log(ReportCategory.ANALYTICS, $"Identify: userId = {userId} | traits = {traits}");
         }
 
         public void Track(string eventName, JsonObject? properties = null)

@@ -6,6 +6,7 @@ using Segment.Analytics;
 using Segment.Serialization;
 using System;
 using System.Collections.Generic;
+using UnityEngine.Device;
 using UnityEngine.Pool;
 
 namespace Plugins.RustSegment.SegmentServerWrap
@@ -23,10 +24,12 @@ namespace Plugins.RustSegment.SegmentServerWrap
         }
 
         private const string EMPTY_JSON = "{}";
+        private readonly string anonId;
         private volatile string? cachedUserId;
-        private volatile string? cachedAnonId;
+
         private readonly Dictionary<ulong, (Operation, List<MarshaledString>)> afterClean = new ();
         private readonly IContextSource contextSource = new ContextSource();
+
         private static volatile RustSegmentAnalyticsService? current;
 
         public RustSegmentAnalyticsService(string writerKey)
@@ -36,6 +39,8 @@ namespace Plugins.RustSegment.SegmentServerWrap
 
             if (current != null)
                 throw new Exception("Rust Segment previous instance is not disposed");
+
+            this.anonId = SystemInfo.deviceUniqueIdentifier!;
 
             using var mWriterKey = new MarshaledString(writerKey);
             bool result = NativeMethods.SegmentServerInitialize(mWriterKey.Ptr, Callback);
@@ -56,21 +61,11 @@ namespace Plugins.RustSegment.SegmentServerWrap
                 throw new Exception("Rust Segment dispose failed");
         }
 
-        public void Identify(string? userId, string? anonId, JsonObject? traits = null)
+        public void Identify(string? userId, JsonObject? traits = null)
         {
             lock (afterClean)
             {
-                if (userId == null && anonId == null)
-                {
-                    ReportHub.LogError(
-                        ReportCategory.ANALYTICS,
-                        "Segment Identify, you must provide userId or anonId, or both"
-                    );
-                    return;
-                }
-
                 cachedUserId = userId;
-                cachedAnonId = anonId;
 
                 var list = ListPool<MarshaledString>.Get()!;
 
@@ -101,7 +96,7 @@ namespace Plugins.RustSegment.SegmentServerWrap
                 var list = ListPool<MarshaledString>.Get()!;
 
                 var mUserId = new MarshaledString(cachedUserId);
-                var mAnonId = new MarshaledString(cachedAnonId);
+                var mAnonId = new MarshaledString(anonId);
                 var mEventName = new MarshaledString(eventName);
                 var mProperties = new MarshaledString(properties?.ToString() ?? EMPTY_JSON);
                 var mContext = new MarshaledString(contextSource.ContextJson());
@@ -173,7 +168,7 @@ namespace Plugins.RustSegment.SegmentServerWrap
 
         private void ReportIfIdentityWasNotCalled()
         {
-            if (string.IsNullOrWhiteSpace(cachedUserId!) && string.IsNullOrWhiteSpace(cachedAnonId!))
+            if (string.IsNullOrWhiteSpace(cachedUserId!) && string.IsNullOrWhiteSpace(anonId!))
                 ReportHub.LogError(
                     ReportCategory.ANALYTICS,
                     $"Segment to track an event, you must call Identify first"

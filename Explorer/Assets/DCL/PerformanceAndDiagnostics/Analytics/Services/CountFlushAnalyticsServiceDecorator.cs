@@ -18,11 +18,11 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.Services
             this.flushCount = flushCount;
         }
 
-        public void Identify(string? userId, string? anonId, JsonObject? traits = null)
+        public void Identify(string? userId, JsonObject? traits = null)
         {
             lock (monitor)
             {
-                origin.Identify(userId, anonId, traits);
+                origin.Identify(userId, traits);
                 IncreaseAndTryFlush();
             }
         }
