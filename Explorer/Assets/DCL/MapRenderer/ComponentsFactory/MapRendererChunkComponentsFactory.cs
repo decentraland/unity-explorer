@@ -159,7 +159,7 @@ namespace DCL.MapRenderer.ComponentsFactory
             IMapCameraControllerInternal CameraControllerBuilder(List<IMapLayerController> interactableLayers)
             {
                 MapCameraObject instance = Object.Instantiate(mapCameraObjectPrefab, configuration.MapCamerasRoot);
-                var interactivityController = new MapCameraInteractivityController(configuration.MapCamerasRoot, instance.mapCamera, highlightMarkersPool, coordsUtils, interactableLayers);
+                var interactivityController = new MapCameraInteractivityController(configuration.MapCamerasRoot, instance.mapCamera, highlightMarkersPool, coordsUtils, interactableLayers, navmapBus);
                 return new MapCameraController.MapCameraController(interactivityController, instance, coordsUtils, cullingController);
             }
         }

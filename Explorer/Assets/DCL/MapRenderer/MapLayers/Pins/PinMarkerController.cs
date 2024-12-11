@@ -194,10 +194,12 @@ namespace DCL.MapRenderer.MapLayers.Pins
             return UniTask.CompletedTask;
         }
 
-        public bool HighlightObject(GameObject gameObject)
+        public bool HighlightObject(GameObject gameObject, out IMapRendererMarker? mapMarker)
         {
+            mapMarker = null;
             if (visibleMarkers.TryGetValue(gameObject, out IPinMarker marker))
             {
+                mapMarker = marker;
                 highlightCt = highlightCt.SafeRestart();
                 previousMarker?.AnimateSelectionAsync(deHighlightCt.Token);
                 marker.AnimateSelectionAsync(highlightCt.Token);

@@ -2409,6 +2409,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   <CloseButton>k__BackingField: {fileID: 1007461183751036833}
   <PlacePanelView>k__BackingField: {fileID: 5089159727606938279}
+  <RectTransform>k__BackingField: {fileID: 1673198281260056598}
 --- !u!1 &4063699859217067372
 GameObject:
   m_ObjectHideFlags: 0
@@ -4604,6 +4605,8 @@ MonoBehaviour:
   <ParcelCountLabel>k__BackingField: {fileID: 172371242640318156}
   <AppearsOnContainer>k__BackingField: {fileID: 3435207277801023283}
   <AppearsOnCategories>k__BackingField: []
+  <OverviewElementsThatShouldBeEnabled>k__BackingField: []
+  <OverviewElementsThatShouldBeDisabled>k__BackingField: []
   <PhotosTabButton>k__BackingField: {fileID: 1394763361104185966}
   <PhotosTabContainer>k__BackingField: {fileID: 3435207277801023283}
   <PhotosTabSelected>k__BackingField: {fileID: 3435207277801023283}

@@ -16,6 +16,7 @@ namespace DCL.MapRenderer.MapLayers.Users
         public Vector3 CurrentPosition => poolableBehavior.currentPosition;
 
         public Vector2 Pivot { get; }
+        public Vector2Int ParcelCoords => Vector2Int.zero;
 
         private MapMarkerPoolableBehavior<HotUserMarkerObject> poolableBehavior;
 
