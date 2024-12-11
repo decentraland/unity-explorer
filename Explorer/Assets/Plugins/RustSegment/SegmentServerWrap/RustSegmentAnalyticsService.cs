@@ -24,6 +24,7 @@ namespace Plugins.RustSegment.SegmentServerWrap
         }
 
         private const string EMPTY_JSON = "{}";
+
         private readonly string anonId;
         private volatile string? cachedUserId;
 
@@ -69,7 +70,7 @@ namespace Plugins.RustSegment.SegmentServerWrap
 
                 var list = ListPool<MarshaledString>.Get()!;
 
-                var mUserId = new MarshaledString(userId);
+                var mUserId = new MarshaledString(cachedUserId);
                 var mAnonId = new MarshaledString(anonId);
                 var mTraits = new MarshaledString(traits?.ToString() ?? EMPTY_JSON);
                 var mContext = new MarshaledString(contextSource.ContextJson());
