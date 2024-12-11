@@ -66,7 +66,7 @@ namespace DCL.InWorldCamera.PhotoDetail
             this.photoDetailPoolManager = new PhotoDetailPoolManager(view.visiblePersonViewPrefab,
                 view.equippedWearablePrefab,
                 view.emptyProfileImage,
-                view.unusedVisiblePersonViewContainer,
+                view.visiblePersonContainer,
                 view.unusedEquippedWearableViewContainer,
                 webRequestController,
                 profileRepository,
@@ -131,7 +131,7 @@ namespace DCL.InWorldCamera.PhotoDetail
             UniTask[] tasks = new UniTask[visiblePeople.Length];
             for (int i = 0; i < visiblePeople.Length; i++)
             {
-                VisiblePersonController visiblePersonController = photoDetailPoolManager.GetVisiblePerson(view.visiblePersonContainer);
+                VisiblePersonController visiblePersonController = photoDetailPoolManager.GetVisiblePerson();
                 visiblePersonControllers.Add(visiblePersonController);
                 tasks[i] = visiblePersonController.SetupAsync(visiblePeople[i], ct);
             }

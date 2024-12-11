@@ -96,10 +96,7 @@ namespace DCL.InWorldCamera.PhotoDetail
         public void Release()
         {
             foreach (EquippedWearableController wearableController in wearableControllers)
-            {
-                wearableController.Release();
                 photoDetailPoolManager.ReleaseEquippedWearable(wearableController);
-            }
             wearableControllers.Clear();
         }
 

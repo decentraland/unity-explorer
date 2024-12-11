@@ -64,11 +64,6 @@ namespace DCL.InWorldCamera.PhotoDetail
             AnimateAndAwaitAsync().Forget();
         }
 
-        public void Release()
-        {
-            //TODO (Lorenzo): remove if not needed
-        }
-
         public void Dispose()
         {
             view.wearableBuyButton.onClick.RemoveAllListeners();
