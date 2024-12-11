@@ -18,7 +18,9 @@ using ECS.Unity.Transforms.Components;
 using ECS.Unity.Transforms.Systems;
 using SceneRunner.Scene;
 using System.Collections.Generic;
+using System.Diagnostics;
 using UnityEngine;
+using Debug = UnityEngine.Debug;
 
 namespace DCL.SDKComponents.GltfNode.Systems
 {
@@ -32,6 +34,8 @@ namespace DCL.SDKComponents.GltfNode.Systems
         private readonly IECSToCRDTWriter ecsToCrdtWriter;
         private readonly IComponentPool<SDKTransform> sdkTransformPool;
         private readonly ISceneData sceneData;
+
+        Stopwatch stopWatch = new Stopwatch();
 
         public GltfNodeSystem(World world, IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap, IECSToCRDTWriter ecsToCrdtWriter,
           IComponentPool<SDKTransform> sdkTransformPool, ISceneData sceneData) : base(world)
@@ -61,20 +65,21 @@ namespace DCL.SDKComponents.GltfNode.Systems
             // TODO: Find standard patch for the 'pbComponent.NodePath' against the path processed by GLTFast...
             // Non-skeleton GLTFs seem to work OK, do the skeleton GLTFs have a path inconsistency (e.g. GLTFast vs BabylonSandbox vs Blender) 100% ???
 
+            // stopWatch.Start();
+
             Transform? nodeTransform = null;
             // if ((nodeTransform = gltfEntityTransform.Transform.Find("Scene/Scene/"+pbComponent.NodePath)) == null)
             if ((nodeTransform = gltfEntityTransform.Transform.Find(GLTF_ROOT_GO_NAME+pbComponent.NodePath)) == null)
                 return;
 
-            Debug.Log($"PRAVS - SetupGltfNode() - 2 - gltfEntity: {pbComponent.GltfContainerEntity} / path: {pbComponent.NodePath}", nodeTransform);
+            // Debug.Log($"PRAVS - SetupGltfNode() - 2 - gltfEntity: {pbComponent.GltfContainerEntity} / path: {pbComponent.NodePath}", nodeTransform);
 
             // Duplicate node and hide the original one (to be able to reset the node)
+
             GameObject nodeClone = GameObject.Instantiate(nodeTransform.gameObject, nodeTransform.parent);
             var nodeCloneTransform = nodeClone.transform;
             nodeTransform.gameObject.SetActive(false);
 
-            // TODO: This works but ends up putting the entity transform values using the unity values,
-            // very far away from the scene, can we really escape using the relative transform values?
             nodeCloneTransform.localPosition = nodeTransform.localPosition;
             nodeCloneTransform.localRotation = nodeTransform.localRotation;
             nodeCloneTransform.localScale = nodeTransform.localScale;
@@ -94,7 +99,7 @@ namespace DCL.SDKComponents.GltfNode.Systems
                 originalNodeGameObject = nodeTransform.gameObject,
                 clonedNodeTransform = nodeCloneTransform
             };
-            World.Add(entity, gltfNodeComponent, sdkTransform, new TransformComponent(nodeCloneTransform));
+            World.Add(entity, gltfNodeComponent, new TransformComponent(nodeCloneTransform), sdkTransform);
 
             // Put transform on SDK entity so that the scene can read it
             ExposedTransformUtils.Put(
@@ -103,18 +108,20 @@ namespace DCL.SDKComponents.GltfNode.Systems
                 crdtEntity,
                 sceneData.Geometry.BaseParcelPosition,
                 false);
+
+            // stopWatch.Stop();
+            // Debug.Log($"PRAVS - SetupGltfNode() - milliseconds: {stopWatch.ElapsedMilliseconds}");
         }
 
         // TODO: Add query for component deletion
 
         [Query]
-        public void FinalizeComponents(ref GltfNodeComponent gltfNodeComponent, ref TransformComponent transformComponent, ref SDKTransform sdkTransform)
+        public void FinalizeComponents(Entity entity, ref GltfNodeComponent gltfNodeComponent, ref TransformComponent transformComponent, ref SDKTransform sdkTransform)
         {
-            transformComponent.Dispose(); // Triggers: InvalidOperationException: Trying to release an object that has already been released to the pool.
-            sdkTransformPool.Release(sdkTransform);
+            // stopWatch.Restart();
 
             // Clean GltfNode entity
-            Transform[] children = new Transform[gltfNodeComponent.clonedNodeTransform.childCount];
+            /*Transform[] children = new Transform[gltfNodeComponent.clonedNodeTransform.childCount];
             int index = 0;
             foreach (Transform child in gltfNodeComponent.clonedNodeTransform)
             {
@@ -125,14 +132,20 @@ namespace DCL.SDKComponents.GltfNode.Systems
             {
                 child.parent.SetParent(null);
                 // TODO: update every child entity transform parent to be the root scene ON CRDT AS WELL...
-            }
+            }*/
 
-            GameObject.Destroy(gltfNodeComponent.clonedNodeTransform.gameObject);
+            GameObject.Destroy(gltfNodeComponent.clonedNodeTransform!.gameObject);
 
             // Reset original GO
-            gltfNodeComponent.originalNodeGameObject.SetActive(true);
-            // gltfNodeComponent.clonedNodeTransform = null;
-            // gltfNodeComponent.originalNodeGameObject = null;
+            gltfNodeComponent.originalNodeGameObject!.SetActive(true);
+
+            // stopWatch.Stop();
+            // Debug.Log($"PRAVS - FinalizeComponents() - milliseconds: {stopWatch.ElapsedMilliseconds}");
+
+            // TODO: Remove SDKTransform from CRDT Entity as well ???
+
+            sdkTransformPool.Release(sdkTransform);
+            World.Remove<TransformComponent, SDKTransform, GltfNodeComponent>(entity);
         }
 
         public void FinalizeComponents(in Query query) =>
