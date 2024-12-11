@@ -11,6 +11,7 @@ using Global.AppArgs;
 using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using SceneRunner.Debugging;
 using System.Threading;
+using DCL.FeatureFlags;
 using UnityEngine.UIElements;
 using Utility;
 
@@ -44,5 +45,6 @@ namespace Global.Dynamic
         UniTask UserInitializationAsync(DynamicWorldContainer dynamicWorldContainer, GlobalWorld globalWorld, Entity playerEntity, CancellationToken ct);
 
         UniTask LoadStartingRealmAsync(DynamicWorldContainer dynamicWorldContainer, CancellationToken ct);
+        void ApplyFeatureFlagConfigs(FeatureFlagsCache featureFlagsCache);
     }
 }

@@ -15,7 +15,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.CompressShaders
         private readonly IPlatform platformInfo;
 
         private const string DIR = ICompressShaders.PLUGINS_PATH;
-        private const string EXTENSION = ".cmp";
+        private const string EXTENSION = "cmp";
 
         private static readonly byte[] EMPTY_PNG =
         {

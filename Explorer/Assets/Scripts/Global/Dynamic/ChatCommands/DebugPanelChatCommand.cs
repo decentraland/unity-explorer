@@ -3,7 +3,6 @@ using DCL.Chat.Commands;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.Views;
 using DCL.PluginSystem.Global;
-using System;
 using System.Text.RegularExpressions;
 using System.Threading;
 

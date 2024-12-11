@@ -23,6 +23,7 @@ using SceneRunner.Debugging;
 using System;
 using System.Linq;
 using System.Threading;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UIElements;
 using Utility;
@@ -49,6 +50,7 @@ namespace Global.Dynamic
         [SerializeField] private DynamicSceneLoaderSettings settings = null!;
         [SerializeField] private DynamicSettings dynamicSettings = null!;
         [SerializeField] private GameObject splashRoot = null!;
+        [SerializeField] private TMP_Text splashScreenText = null!;
         [SerializeField] private Animator splashScreenAnimation = null!;
         [SerializeField] private Animator logoAnimation = null!;
         [SerializeField] private AudioClipConfig backgroundMusic = null!;
@@ -124,7 +126,7 @@ namespace Global.Dynamic
 
             World world = World.Create();
 
-            var splashScreen = new SplashScreen(splashScreenAnimation, splashRoot, debugSettings.ShowSplash);
+            var splashScreen = new SplashScreen(splashScreenAnimation, splashRoot, debugSettings.ShowSplash, splashScreenText);
 
             bootstrapContainer = await BootstrapContainer.CreateAsync(
                 debugSettings,
@@ -133,7 +135,9 @@ namespace Global.Dynamic
                 launchSettings,
                 applicationParametersParser,
                 splashScreen,
-                compressShaders.WithLog("Load Guard"),
+                compressShaders
+                   .WithSplashScreen(splashScreen, hideOnFinish: false)
+                   .WithLog("Load Guard"),
                 world,
                 destroyCancellationToken
             );
@@ -155,6 +159,9 @@ namespace Global.Dynamic
                 }
 
                 bootstrap.InitializePlayerEntity(staticContainer!, playerEntity);
+                await bootstrap.InitializeFeatureFlagsAsync(bootstrapContainer.IdentityCache!.Identity,
+                    bootstrapContainer.DecentralandUrlsSource, staticContainer!, ct);
+                bootstrap.ApplyFeatureFlagConfigs(staticContainer!.FeatureFlagsCache);
 
                 (dynamicWorldContainer, isLoaded) = await bootstrap.LoadDynamicWorldContainerAsync(bootstrapContainer, staticContainer!, scenePluginSettingsContainer, settings,
                     dynamicSettings, uiToolkitRoot, cursorRoot, backgroundMusic, worldInfoTool.EnsureNotNull(), playerEntity,
@@ -167,8 +174,6 @@ namespace Global.Dynamic
                     GameReports.PrintIsDead();
                     return;
                 }
-
-                await bootstrap.InitializeFeatureFlagsAsync(bootstrapContainer.IdentityCache!.Identity, bootstrapContainer.DecentralandUrlsSource, staticContainer!, ct);
 
                 if (await DoesApplicationRequireVersionUpdateAsync(applicationParametersParser, splashScreen, ct))
                     return; // stop bootstrapping;
