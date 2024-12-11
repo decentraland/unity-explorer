@@ -59,7 +59,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             {
                 analytics.Flush();
 
-                analytics.Identify(identity.Address, new JsonObject //TODO provide logic
+                analytics.Identify(identity.Address, new JsonObject
                     {
                         ["dcl_eth_address"] = identity.Address != null ? identity.Address.ToString() : UNDEFINED,
                         ["auth_chain"] = identity.AuthChain != null ? identity.AuthChain.ToString() : UNDEFINED,
