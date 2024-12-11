@@ -22,6 +22,9 @@ using Utility;
 
 namespace DCL.InWorldCamera.PhotoDetail
 {
+    /// <summary>
+    ///     Handles the logic for the metadata representation of the photo.
+    /// </summary>
     public class PhotoDetailInfoController : IDisposable
     {
         private const int VISIBLE_PERSON_DEFAULT_POOL_SIZE = 20;

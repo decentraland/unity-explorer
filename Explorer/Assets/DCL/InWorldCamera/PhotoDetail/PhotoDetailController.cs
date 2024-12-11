@@ -9,7 +9,6 @@ using DG.Tweening;
 using MVC;
 using System;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -17,6 +16,9 @@ using Utility;
 
 namespace DCL.InWorldCamera.PhotoDetail
 {
+    /// <summary>
+    ///     Handles the logic for the photo detail view and his macro-actions.
+    /// </summary>
     public class PhotoDetailController : ControllerBase<PhotoDetailView, PhotoDetailParameter>
     {
         private const int ANIMATION_DELAY = 300;

@@ -10,13 +10,13 @@ namespace DCL.AvatarRendering.Wearables
 {
     public interface IWearablesProvider
     {
-        public UniTask<(IReadOnlyList<IWearable> results, int totalAmount)> GetAsync(int pageSize, int pageNumber, CancellationToken ct,
+        UniTask<(IReadOnlyList<IWearable> results, int totalAmount)> GetAsync(int pageSize, int pageNumber, CancellationToken ct,
             SortingField sortingField = SortingField.Date, OrderBy orderBy = OrderBy.Descending,
             string? category = null, CollectionType collectionType = CollectionType.All,
             string? name = null,
             List<IWearable>? results = null);
 
-        public UniTask<IReadOnlyCollection<IWearable>?> RequestPointersAsync(IReadOnlyCollection<URN> pointers,
+        UniTask<IReadOnlyCollection<IWearable>?> RequestPointersAsync(IReadOnlyCollection<URN> pointers,
             BodyShape bodyShape,
             CancellationToken ct);
 

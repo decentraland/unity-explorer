@@ -22,6 +22,10 @@ using Utility;
 
 namespace DCL.InWorldCamera.PhotoDetail
 {
+    /// <summary>
+    ///     Handles the logic for the visible person item in the photo detail view.
+    ///     It represents the user that appears in the photo and holds the user's wearables data.
+    /// </summary>
     public class VisiblePersonController : IDisposable
     {
         internal readonly VisiblePersonView view;

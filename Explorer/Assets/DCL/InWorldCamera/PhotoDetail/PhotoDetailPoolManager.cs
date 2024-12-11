@@ -12,6 +12,9 @@ using UnityEngine.Pool;
 
 namespace DCL.InWorldCamera.PhotoDetail
 {
+    /// <summary>
+    ///     Manager for the pools of the photo detail objects such as visible persons and equipped wearables.
+    /// </summary>
     public class PhotoDetailPoolManager
     {
         private readonly IObjectPool<VisiblePersonController> visiblePersonPool;
