@@ -17,6 +17,7 @@ namespace DCL.InWorldCamera
     {
         public Vector2 Translation;
         public float Panning;
+        public float Tilting;
         public bool IsRunning;
 
         public Vector2 Aim;
@@ -29,6 +30,13 @@ namespace DCL.InWorldCamera
         public float Current;
         public float Velocity;
         public float Target;
+    }
+
+    public struct CameraDampedTilt
+    {
+        public float Current;
+        public float Target;
+        public float Velocity;
     }
 
     public struct CameraDampedAim

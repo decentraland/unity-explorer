@@ -2945,6 +2945,15 @@
                     "initialStateCheck": true
                 },
                 {
+                    "name": "Tilting",
+                    "type": "Value",
+                    "id": "1c2141cf-b126-466c-b977-4d05d6f8e1ba",
+                    "expectedControlType": "Axis",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": true
+                },
+                {
                     "name": "Zoom",
                     "type": "Value",
                     "id": "95af3eff-4816-4d1d-b9e9-88a3ca0a78d5",
@@ -3422,6 +3431,50 @@
                     "processors": "",
                     "groups": "",
                     "action": "MouseDrag",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "1D Axis",
+                    "id": "ca86f8f2-253f-4627-ac67-dac115e6fa49",
+                    "path": "1DAxis",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Tilting",
+                    "isComposite": true,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "Positive",
+                    "id": "e919bff7-1886-4b39-b7e8-f219f9518b2c",
+                    "path": "<Keyboard>/e",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Tilting",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
+                    "name": "Negative",
+                    "id": "0b0b504d-d8d8-484c-97dc-8b177fbed41a",
+                    "path": "<Keyboard>/q",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Tilting",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
+                    "name": "",
+                    "id": "331f3147-d915-4749-ac2b-291207fb5b07",
+                    "path": "<Gamepad>/dpad/x",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Tilting",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

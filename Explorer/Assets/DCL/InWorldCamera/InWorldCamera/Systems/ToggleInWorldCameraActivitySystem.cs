@@ -132,7 +132,7 @@ namespace DCL.InWorldCamera.Systems
 
             SwitchCameraInput(to: Kind.PLAYER);
 
-            World.Remove<InWorldCameraComponent, CameraTarget, CameraDampedFOV, CameraDampedAim, InWorldCameraInput>(camera);
+            World.Remove<InWorldCameraComponent, CameraTarget, CameraDampedFOV, CameraDampedTilt, CameraDampedAim, InWorldCameraInput>(camera);
         }
 
         private void EnableCamera()
@@ -158,6 +158,7 @@ namespace DCL.InWorldCamera.Systems
                 new InWorldCameraComponent(),
                 new CameraTarget { Value = followTarget },
                 new CameraDampedFOV { Current = inWorldVirtualCamera.m_Lens.FieldOfView, Velocity = 0f, Target = inWorldVirtualCamera.m_Lens.FieldOfView },
+                new CameraDampedTilt { Current = 0f, Target = 0f, Velocity = 0f },
                 new CameraDampedAim { Current = Vector2.up, Velocity = Vector2.up },
                 new InWorldCameraInput());
         }

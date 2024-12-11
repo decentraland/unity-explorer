@@ -2967,6 +2967,15 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""initialStateCheck"": true
                 },
                 {
+                    ""name"": ""Tilting"",
+                    ""type"": ""Value"",
+                    ""id"": ""1c2141cf-b126-466c-b977-4d05d6f8e1ba"",
+                    ""expectedControlType"": ""Axis"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": true
+                },
+                {
                     ""name"": ""Zoom"",
                     ""type"": ""Value"",
                     ""id"": ""95af3eff-4816-4d1d-b9e9-88a3ca0a78d5"",
@@ -3446,6 +3455,50 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""action"": ""MouseDrag"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": ""1D Axis"",
+                    ""id"": ""ca86f8f2-253f-4627-ac67-dac115e6fa49"",
+                    ""path"": ""1DAxis"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Tilting"",
+                    ""isComposite"": true,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": ""Positive"",
+                    ""id"": ""e919bff7-1886-4b39-b7e8-f219f9518b2c"",
+                    ""path"": ""<Keyboard>/e"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Tilting"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""Negative"",
+                    ""id"": ""0b0b504d-d8d8-484c-97dc-8b177fbed41a"",
+                    ""path"": ""<Keyboard>/q"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Tilting"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""331f3147-d915-4749-ac2b-291207fb5b07"",
+                    ""path"": ""<Gamepad>/dpad/x"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Tilting"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -3556,6 +3609,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         m_InWorldCamera_Translation = m_InWorldCamera.FindAction("Translation", throwIfNotFound: true);
         m_InWorldCamera_Rotation = m_InWorldCamera.FindAction("Rotation", throwIfNotFound: true);
         m_InWorldCamera_Panning = m_InWorldCamera.FindAction("Panning", throwIfNotFound: true);
+        m_InWorldCamera_Tilting = m_InWorldCamera.FindAction("Tilting", throwIfNotFound: true);
         m_InWorldCamera_Zoom = m_InWorldCamera.FindAction("Zoom", throwIfNotFound: true);
         m_InWorldCamera_MouseDrag = m_InWorldCamera.FindAction("MouseDrag", throwIfNotFound: true);
         m_InWorldCamera_Run = m_InWorldCamera.FindAction("Run", throwIfNotFound: true);
@@ -4526,6 +4580,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
     private readonly InputAction m_InWorldCamera_Translation;
     private readonly InputAction m_InWorldCamera_Rotation;
     private readonly InputAction m_InWorldCamera_Panning;
+    private readonly InputAction m_InWorldCamera_Tilting;
     private readonly InputAction m_InWorldCamera_Zoom;
     private readonly InputAction m_InWorldCamera_MouseDrag;
     private readonly InputAction m_InWorldCamera_Run;
@@ -4541,6 +4596,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         public InputAction @Translation => m_Wrapper.m_InWorldCamera_Translation;
         public InputAction @Rotation => m_Wrapper.m_InWorldCamera_Rotation;
         public InputAction @Panning => m_Wrapper.m_InWorldCamera_Panning;
+        public InputAction @Tilting => m_Wrapper.m_InWorldCamera_Tilting;
         public InputAction @Zoom => m_Wrapper.m_InWorldCamera_Zoom;
         public InputAction @MouseDrag => m_Wrapper.m_InWorldCamera_MouseDrag;
         public InputAction @Run => m_Wrapper.m_InWorldCamera_Run;
@@ -4567,6 +4623,9 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @Panning.started += instance.OnPanning;
             @Panning.performed += instance.OnPanning;
             @Panning.canceled += instance.OnPanning;
+            @Tilting.started += instance.OnTilting;
+            @Tilting.performed += instance.OnTilting;
+            @Tilting.canceled += instance.OnTilting;
             @Zoom.started += instance.OnZoom;
             @Zoom.performed += instance.OnZoom;
             @Zoom.canceled += instance.OnZoom;
@@ -4604,6 +4663,9 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @Panning.started -= instance.OnPanning;
             @Panning.performed -= instance.OnPanning;
             @Panning.canceled -= instance.OnPanning;
+            @Tilting.started -= instance.OnTilting;
+            @Tilting.performed -= instance.OnTilting;
+            @Tilting.canceled -= instance.OnTilting;
             @Zoom.started -= instance.OnZoom;
             @Zoom.performed -= instance.OnZoom;
             @Zoom.canceled -= instance.OnZoom;
@@ -4759,6 +4821,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         void OnTranslation(InputAction.CallbackContext context);
         void OnRotation(InputAction.CallbackContext context);
         void OnPanning(InputAction.CallbackContext context);
+        void OnTilting(InputAction.CallbackContext context);
         void OnZoom(InputAction.CallbackContext context);
         void OnMouseDrag(InputAction.CallbackContext context);
         void OnRun(InputAction.CallbackContext context);

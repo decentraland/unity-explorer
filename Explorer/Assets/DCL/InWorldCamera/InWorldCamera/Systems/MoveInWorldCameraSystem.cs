@@ -50,6 +50,8 @@ namespace DCL.InWorldCamera.Systems
                 if (cursor.IsLocked() || input.MouseIsDragging)
                     Rotate(ref World.Get<CameraDampedAim>(camera), followTarget.transform, input.Aim, t);
 
+                Tilt(ref World.Get<CameraDampedTilt>(camera), followTarget.transform, input.Tilting, t);
+
                 Zoom(ref World.Get<CameraDampedFOV>(camera), input.Zoom, t);
             }
         }
@@ -79,7 +81,30 @@ namespace DCL.InWorldCamera.Systems
             if (newVerticalAngle > 180f) newVerticalAngle -= 360f;
             newVerticalAngle = Mathf.Clamp(newVerticalAngle, settings.MinVerticalAngle, settings.MaxVerticalAngle);
 
-            target.localRotation = Quaternion.Euler(newVerticalAngle, target.eulerAngles.y, 0f);
+            target.localRotation = Quaternion.Euler(newVerticalAngle, target.eulerAngles.y, target.eulerAngles.z);
+        }
+
+        private void Tilt(ref CameraDampedTilt tilt, Transform target, float tiltInput, float deltaTime)
+        {
+            if (!Mathf.Approximately(tiltInput, 0f))
+            {
+                float targetRotation = tiltInput * settings.TiltSpeed;
+                tilt.Target = targetRotation;
+            }
+            else
+                tilt.Target = 0f;
+
+            tilt.Current = Mathf.SmoothDamp(tilt.Current, tilt.Target, ref tilt.Velocity, settings.TiltDamping);
+
+            float tiltAmount = Mathf.Clamp(tilt.Current * deltaTime, -settings.MaxTiltPerFrame, settings.MaxTiltPerFrame);
+
+            float currentRoll = target.eulerAngles.z;
+            if (currentRoll > 180f) currentRoll -= 360f;
+
+            float newRoll = currentRoll + tiltAmount;
+            newRoll = Mathf.Clamp(newRoll, -settings.MaxTiltAngle, settings.MaxTiltAngle);
+
+            target.localRotation = Quaternion.Euler(target.eulerAngles.x, target.eulerAngles.y, newRoll);
         }
 
         private void Translate(CharacterController followTarget, InWorldCameraInput input, float deltaTime)
