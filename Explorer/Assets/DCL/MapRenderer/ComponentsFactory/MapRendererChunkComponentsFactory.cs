@@ -140,10 +140,10 @@ namespace DCL.MapRenderer.ComponentsFactory
 
             List<IMapLayerController> interactableLayerControllers = new List<IMapLayerController>()
             {
-                pinMarkerController,
                 liveEventsInstaller,
-                categoriesInstaller,
+                pinMarkerController,
                 sceneOfInterestInstaller,
+                categoriesInstaller,
                 searchResultsInstaller
             };
 
