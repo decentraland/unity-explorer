@@ -77,25 +77,11 @@ namespace DCL.LOD.Components
                 if (SceneLODInfoUtils.HasLODResult(metadata.SuccessfullLODs, 0))
                 {
                     //LOD0 is ready to be shown. Therefore, the relative percentage should be the cull percentage
-                    lods[0].screenRelativeTransitionHeight = metadata.CullRelativeHeightPercentage;
-                    lods[1].screenRelativeTransitionHeight = metadata.CullRelativeHeightPercentage - 0.001f;
-                }
-                else
-                {
-                    //LOD1 is ready to be shown. Therefore, the relative percentage of LOD1 should be the cull percentage, while LOD0 percentage should remain at 100% of the screen
-                    lods[0].screenRelativeTransitionHeight = 1;
-                    lods[1].screenRelativeTransitionHeight = metadata.CullRelativeHeightPercentage;
+                    lods[0].screenRelativeTransitionHeight = 0.01f;
+                    lods[1].screenRelativeTransitionHeight = 0.001f;
                 }
             }
-            else if (loadedLODAmount == 2)
-            {
-                // If both LODs are loaded, we set the cull percentage for LOD1 and then assign the mid point between cull and 100% for LOD0
-                // In the case of the "small" scenes, LOD1 will have even less presence, LOD0 will be visible at larger distances
-                const float SMALL_SCENE_PARCEL_COUNT = 10.0f; // This is an arbitrary value that will be tweaked depending on performance
-                float sceneSizeFactor = Mathf.Lerp(0.25f, 0.5f, (sceneParcels - 1) / SMALL_SCENE_PARCEL_COUNT);
-                lods[0].screenRelativeTransitionHeight = (1 - metadata.CullRelativeHeightPercentage) * sceneSizeFactor + metadata.CullRelativeHeightPercentage;
-                lods[1].screenRelativeTransitionHeight = metadata.CullRelativeHeightPercentage;
-            }
+
         }
 
 

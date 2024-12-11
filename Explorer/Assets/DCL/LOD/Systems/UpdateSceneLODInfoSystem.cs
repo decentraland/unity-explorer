@@ -54,7 +54,7 @@ namespace DCL.LOD.Systems
                 // LOD distances are currently using the old system so will only load in the LOD when the gameobject
                 // is in the correct bucket. Once the lods are in it will change LODs based on screenspace size in relation
                 // to height and dither the transition.
-                byte lodForAcquisition = GetLODLevelForPartition(ref partitionComponent, ref sceneLODInfo, sceneDefinitionComponent);
+                byte lodForAcquisition = 0;
                 if (!sceneLODInfo.HasLOD(lodForAcquisition))
                     StartLODPromise(ref sceneLODInfo, ref partitionComponent, sceneDefinitionComponent, lodForAcquisition);
             }
