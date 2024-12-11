@@ -15,10 +15,12 @@ namespace Global.Dynamic.ChatCommands
         private const string COMMAND_GOTO_LOCAL = "goto-local";
         private const string PARAMETER_RANDOM = "random";
 
-        public static readonly Regex REGEX =
+        public Regex Regex { get; } =
             new (
                 $@"^/({ChatCommandsUtils.COMMAND_GOTO}|{COMMAND_GOTO_LOCAL})\s+(?:(-?\d+)\s*,\s*(-?\d+)|{PARAMETER_RANDOM})$",
                 RegexOptions.Compiled);
+        public string Description => "/goto - Teleport to a specific location.";
+
         private readonly IRealmNavigator realmNavigator;
 
         private int x;

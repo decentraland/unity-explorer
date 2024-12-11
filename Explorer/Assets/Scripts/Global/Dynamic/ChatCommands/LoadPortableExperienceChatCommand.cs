@@ -27,7 +27,8 @@ namespace Global.Dynamic.ChatCommands
         private static readonly string COMMAND_PATTERN = $"^/(?<command>{Regex.Escape(COMMAND_PX)})";
         private static readonly string OPTIONAL_SUFFIX_PATTERN = $"(?<suffix>{Regex.Escape(ENS_SUFFIX)})?";
 
-        public static readonly Regex REGEX = new($"{COMMAND_PATTERN}{NAME_PATTERN}{OPTIONAL_SUFFIX_PATTERN}$", RegexOptions.Compiled);
+        public Regex Regex { get; } = new($"{COMMAND_PATTERN}{NAME_PATTERN}{OPTIONAL_SUFFIX_PATTERN}$", RegexOptions.Compiled);
+        public string Description => "/loadpx <name> - Load a Portable Experience";
 
         private readonly IPortableExperiencesController portableExperiencesController;
         private readonly FeatureFlagsCache featureFlagsCache;

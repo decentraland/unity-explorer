@@ -3,14 +3,13 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 using DCL.Chat.Commands;
 using ECS.SceneLifeCycle;
-using ECS.SceneLifeCycle.Systems;
-using System;
 
 namespace Global.Dynamic.ChatCommands
 {
     public class ReloadSceneChatCommand : IChatCommand
     {
-        public static readonly Regex REGEX = new (@"^/reload(?:\s+(\w+))?$", RegexOptions.Compiled);
+        public Regex Regex { get; } = new (@"^/reload(?:\s+(\w+))?$", RegexOptions.Compiled);
+        public string Description => "/reload - Reload the current scene";
 
         private readonly ECSReloadScene reloadScene;
 
@@ -23,6 +22,7 @@ namespace Global.Dynamic.ChatCommands
         {
             if (await reloadScene.TryReloadSceneAsync(ct))
                 return "🟢 Current scene has been reloaded";
+
             return "🔴 You need to be in a SDK7 scene to reload it.";
         }
     }

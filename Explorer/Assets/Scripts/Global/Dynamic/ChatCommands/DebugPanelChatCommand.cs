@@ -10,7 +10,8 @@ namespace Global.Dynamic.ChatCommands
 {
     public class DebugPanelChatCommand : IChatCommand
     {
-        public static readonly Regex REGEX = new (@"^/debug(?:\s+(\w+))?$", RegexOptions.Compiled);
+        public Regex Regex { get; } = new (@"^/debug(?:\s+(\w+))?$", RegexOptions.Compiled);
+        public string Description => "/debug - Toggle debug panel";
 
         private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly ConnectionStatusPanelPlugin connectionStatusPanelPlugin;
