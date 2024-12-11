@@ -515,7 +515,7 @@ namespace DCL.ECSComponents {
         public const int AlphaTextureFieldNumber = 5;
         private global::Decentraland.Common.TextureUnion alphaTexture_;
         /// <summary>
-        /// default = null
+        /// default = null. Note that tilling and offset properties are ignored for this texture.
         /// </summary>
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
@@ -932,7 +932,7 @@ namespace DCL.ECSComponents {
         public const int EmissiveTextureFieldNumber = 5;
         private global::Decentraland.Common.TextureUnion emissiveTexture_;
         /// <summary>
-        /// default = null
+        /// default = null. Note that tilling and offset properties are ignored for this texture.
         /// </summary>
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
@@ -947,7 +947,7 @@ namespace DCL.ECSComponents {
         public const int BumpTextureFieldNumber = 6;
         private global::Decentraland.Common.TextureUnion bumpTexture_;
         /// <summary>
-        /// default = null
+        /// default = null. Note that tilling and offset properties are ignored for this texture.
         /// </summary>
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
