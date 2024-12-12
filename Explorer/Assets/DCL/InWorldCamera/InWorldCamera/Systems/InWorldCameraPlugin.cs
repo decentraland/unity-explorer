@@ -16,6 +16,7 @@ using DCL.InWorldCamera;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.InWorldCamera.PhotoDetail;
 using DCL.InWorldCamera.Settings;
+using DCL.InWorldCamera.Systems;
 using DCL.InWorldCamera.UI;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PlacesAPIService;
@@ -172,6 +173,8 @@ namespace DCL.PluginSystem.Global
             EmitInWorldCameraInputSystem.InjectToWorld(ref builder, input.InWorldCamera);
             MoveInWorldCameraSystem.InjectToWorld(ref builder, settings.MovementSettings, characterObject.Controller.transform, cursor);
             CaptureScreenshotSystem.InjectToWorld(ref builder, recorder, playerEntity, metadataBuilder, coroutineRunner, cameraReelStorageService, inWorldCameraController);
+
+            CleanupScreencaptureCameraSystem.InjectToWorld(ref builder);
         }
 
         [Serializable]
