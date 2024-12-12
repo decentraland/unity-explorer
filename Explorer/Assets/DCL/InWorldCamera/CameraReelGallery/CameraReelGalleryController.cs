@@ -274,7 +274,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
             }
         }
 
-        public async UniTask ShowWalletGalleryAsync(string walletAddress, CancellationToken ct, CameraReelStorageStatus? storageStatus = null)
+        private void PrepareShowGallery(CancellationToken ct)
         {
             view.loadingSpinner.SetActive(true);
             loadNextPageCts = loadNextPageCts.SafeRestartLinked(ct);
@@ -283,15 +283,38 @@ namespace DCL.InWorldCamera.CameraReelGallery
 
             view.scrollRect.verticalNormalizedPosition = 1f;
             previousY = 1f;
+        }
+
+        private void FinishShowGallery()
+        {
+            view.scrollRect.onValueChanged.AddListener(OnScrollRectValueChanged);
+            view.loadingSpinner.SetActive(false);
+        }
+
+        public async UniTask ShowWalletGalleryAsync(string walletAddress, CancellationToken ct, CameraReelStorageStatus? storageStatus = null)
+        {
+            PrepareShowGallery(ct);
 
             storageStatus ??= await cameraReelStorageService.GetUserGalleryStorageInfoAsync(walletAddress, ct);
-            pagedCameraReelManager = new PagedCameraReelManager(cameraReelStorageService, walletAddress, useSignedRequest, storageStatus.Value.ScreenshotsAmount, view.paginationLimit);
+            pagedCameraReelManager = new PagedCameraReelManager(cameraReelStorageService, new PagedCameraReelManagerParameters(walletAddress, useSignedRequest), storageStatus.Value.ScreenshotsAmount, view.paginationLimit);
             thumbnailImages = new ReelThumbnailController[storageStatus.Value.MaxScreenshots];
 
             await LoadMorePageAsync(ct);
 
-            view.scrollRect.onValueChanged.AddListener(OnScrollRectValueChanged);
-            view.loadingSpinner.SetActive(false);
+            FinishShowGallery();
+        }
+
+        public async UniTask ShowPlaceGalleryAsync(string placeId, CancellationToken ct)
+        {
+            PrepareShowGallery(ct);
+
+            CameraReelStorageStatus storageStatus = await cameraReelStorageService.GetPlaceGalleryStorageInfoAsync(placeId, ct);
+            pagedCameraReelManager = new PagedCameraReelManager(cameraReelStorageService, new PagedCameraReelManagerParameters(placeId), storageStatus.ScreenshotsAmount, view.paginationLimit);
+            thumbnailImages = new ReelThumbnailController[storageStatus.MaxScreenshots];
+
+            await LoadMorePageAsync(ct);
+
+            FinishShowGallery();
         }
 
         private void HideSuccessNotification()

@@ -16,35 +16,47 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
         public List<CameraReelResponseCompact> AllOrderedResponses { get; private set; } = new (32);
 
         private readonly ICameraReelStorageService cameraReelStorageService;
-        private readonly string walletAddress;
+        private readonly PagedCameraReelManagerParameters parameters;
         private readonly int pageSize;
         private readonly int totalImages;
-        private readonly bool useSignedRequest;
 
         private int currentOffset;
         private int currentLoadedImages;
 
         public PagedCameraReelManager(
             ICameraReelStorageService cameraReelStorageService,
-            string wallet,
-            bool useSignedRequest,
+            PagedCameraReelManagerParameters parameters,
             int totalImages,
             int pageSize)
         {
             this.cameraReelStorageService = cameraReelStorageService;
-            this.walletAddress = wallet;
-            this.useSignedRequest = useSignedRequest;
+            this.parameters = parameters;
             this.totalImages = totalImages;
             this.pageSize = pageSize;
         }
-
 
         public async UniTask<Dictionary<DateTime, List<CameraReelResponseCompact>>> FetchNextPageAsync(
             ListObjectPool<CameraReelResponseCompact> listPool,
             CancellationToken ct)
         {
-            CameraReelResponsesCompact response = useSignedRequest ? await cameraReelStorageService.GetCompactScreenshotGalleryAsync(walletAddress, pageSize, currentOffset, ct)
-                : await cameraReelStorageService.UnsignedGetCompactScreenshotGalleryAsync(walletAddress, pageSize, currentOffset, ct);
+            CameraReelResponsesCompact response = await FetchResponseAsync(ct);
+
+            return ProcessResponse(response, listPool);
+        }
+
+        private async UniTask<CameraReelResponsesCompact> FetchResponseAsync(CancellationToken ct)
+        {
+            if (parameters.PlaceId != null)
+                return await cameraReelStorageService.GetCompactPlaceScreenshotGalleryAsync(parameters.PlaceId, pageSize, currentOffset, ct);
+
+            if (parameters.UseSignedRequest.HasValue && parameters.UseSignedRequest.Value)
+                return await cameraReelStorageService.GetCompactScreenshotGalleryAsync(parameters.WalletAddress, pageSize, currentOffset, ct);
+
+            return await cameraReelStorageService.UnsignedGetCompactScreenshotGalleryAsync(parameters.WalletAddress, pageSize, currentOffset, ct);
+        }
+
+        private Dictionary<DateTime, List<CameraReelResponseCompact>> ProcessResponse(CameraReelResponsesCompact response, ListObjectPool<CameraReelResponseCompact> listPool)
+        {
             currentOffset += pageSize;
 
             currentLoadedImages += response.images.Count;
@@ -66,4 +78,24 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
         }
     }
 
+    public struct PagedCameraReelManagerParameters
+    {
+        public readonly string? WalletAddress;
+        public readonly bool? UseSignedRequest;
+        public readonly string? PlaceId;
+
+        public PagedCameraReelManagerParameters(string walletAddress, bool useSignedRequest)
+        {
+            this.WalletAddress = walletAddress;
+            this.UseSignedRequest = useSignedRequest;
+            this.PlaceId = null;
+        }
+
+        public PagedCameraReelManagerParameters(string placeId)
+        {
+            this.WalletAddress = null;
+            this.UseSignedRequest = null;
+            this.PlaceId = placeId;
+        }
+    }
 }
