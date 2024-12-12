@@ -31,7 +31,7 @@
       "url": "https://package.openupm.com"
     },
     "com.atteneder.gltfast": {
-      "version": "git@github.com:decentraland/unity-gltf.git",
+      "version": "https://github.com/decentraland/unity-gltf.git",
       "depth": 0,
       "source": "git",
       "dependencies": {
@@ -40,7 +40,7 @@
         "com.unity.mathematics": "1.2.6",
         "com.unity.burst": "1.6.6"
       },
-      "hash": "ca77c4ae82a9e9f54dbc7a2eee9015edcc80b88c"
+      "hash": "e4587451389b6cf93b084ae434d0cc3d32a45076"
     },
     "com.brunomikoski.animationsequencer": {
       "version": "0.5.4",
