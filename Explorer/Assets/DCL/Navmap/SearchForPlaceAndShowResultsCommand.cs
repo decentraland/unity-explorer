@@ -44,7 +44,7 @@ namespace DCL.Navmap
             placesAndEventsPanelController.Toggle(PlacesAndEventsPanelController.Section.SEARCH);
             searchResultPanelController.ClearResults();
             searchResultPanelController.SetLoadingState();
-            searchBarController.SetInputText(@params.text ?? @params.category ?? string.Empty);
+            searchBarController.SetInputText((string.IsNullOrEmpty(@params.text) ? @params.category : @params.text) ?? string.Empty);
             searchBarController.UpdateFilterAndSorting(@params.filter, @params.sorting);
             searchBarController.Interactable = true;
 

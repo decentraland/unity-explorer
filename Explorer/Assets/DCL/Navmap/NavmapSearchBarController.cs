@@ -4,6 +4,7 @@ using DCL.Input.Component;
 using DCL.UI;
 using System;
 using System.Threading;
+using UnityEngine;
 using Utility;
 
 namespace DCL.Navmap
@@ -48,8 +49,6 @@ namespace DCL.Navmap
             this.searchHistory = searchHistory;
             this.navmapBus = navmapBus;
 
-            historyRecordPanelView.OnClickedHistoryRecord += ClickedHistoryResult;
-
             navmapBus.OnJumpIn += _ => ClearInput();
             navmapBus.OnFilterByCategory += SearchByCategory;
             view.inputField.onSelect.AddListener(_ => OnSearchBarSelected(true));
@@ -79,7 +78,7 @@ namespace DCL.Navmap
         public async UniTask DoDefaultSearch(CancellationToken ct)
         {
             currentSearchText = string.Empty;
-            UpdateFilterAndSorting(NavmapSearchPlaceFilter.All, NavmapSearchPlaceSorting.MostActive);
+            UpdateFilterAndSorting(NavmapSearchPlaceFilter.All, currentPlaceSorting);
             view.inputField.SetTextWithoutNotify(currentSearchText);
 
             await navmapBus.SearchForPlaceAsync(INavmapBus.SearchPlaceParams.CreateWithDefaultParams(
@@ -88,8 +87,10 @@ namespace DCL.Navmap
                 sorting: currentPlaceSorting), ct);
         }
 
-        public void SetInputText(string text) =>
+        public void SetInputText(string text)
+        {
             view.inputField.SetTextWithoutNotify(text);
+        }
 
         public void ClearInput()
         {
@@ -129,13 +130,6 @@ namespace DCL.Navmap
         {
             backCancellationToken = backCancellationToken.SafeRestart();
             navmapBus.GoBackAsync(backCancellationToken.Token).Forget();
-        }
-
-        private void ClickedHistoryResult(string historyText)
-        {
-            view.inputField.SetTextWithoutNotify(historyText);
-            OnInputValueChanged(historyText);
-            HideHistoryResults();
         }
 
         private void OnInputValueChanged(string searchText)
@@ -212,7 +206,7 @@ namespace DCL.Navmap
 
         private void SearchByCategory(string? category)
         {
-            UpdateFilterAndSorting(category is "Favorites" ? NavmapSearchPlaceFilter.Favorites : NavmapSearchPlaceFilter.All, NavmapSearchPlaceSorting.MostActive);
+            UpdateFilterAndSorting(category is "Favorites" ? NavmapSearchPlaceFilter.Favorites : NavmapSearchPlaceFilter.All, currentPlaceSorting);
             currentSearchText = string.Empty;
             currentCategory = category is "All" or "Favorites" ? string.Empty : category;
             searchCancellationToken = searchCancellationToken.SafeRestart();
