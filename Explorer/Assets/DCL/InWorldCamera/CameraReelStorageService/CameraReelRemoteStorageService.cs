@@ -48,6 +48,9 @@ namespace DCL.InWorldCamera.CameraReelStorageService
         public async UniTask UpdateScreenshotVisibilityAsync(string uuid, bool isPublic, CancellationToken ct = default) =>
             await imagesMetadataDatabase.UpdateScreenshotVisibilityAsync(uuid, isPublic, ct);
 
+        public async UniTask<CameraReelResponse> GetScreenshotsMetadataAsync(string uuid, CancellationToken ct = default) =>
+            await imagesMetadataDatabase.GetScreenshotsMetadataAsync(uuid, ct);
+
         public async UniTask<CameraReelStorageStatus> UploadScreenshotAsync(Texture2D image, ScreenshotMetadata metadata, string source, CancellationToken ct = default)
         {
             if (!StorageStatus.HasFreeSpace) return StorageStatus;

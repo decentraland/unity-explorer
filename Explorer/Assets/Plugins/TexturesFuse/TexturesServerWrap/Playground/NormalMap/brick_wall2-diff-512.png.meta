@@ -1,5 +1,9 @@
 fileFormatVersion: 2
+<<<<<<<< HEAD:Explorer/Assets/DCL/InWorldCamera/Textures/PhotoDetailInfoPanelAnimated.png.meta
+guid: 8ae4cb2a70690492487c2fc007c0e62a
+========
 guid: d2beae348c51a4177a86198a00382c7c
+>>>>>>>> dev:Explorer/Assets/Plugins/TexturesFuse/TexturesServerWrap/Playground/NormalMap/brick_wall2-diff-512.png.meta
 TextureImporter:
   internalIDToNameTable: []
   externalObjects: {}
@@ -94,7 +98,11 @@ TextureImporter:
     androidETC2FallbackOverride: 0
     forceMaximumCompressionQuality_BC6H_BC7: 0
   - serializedVersion: 3
+<<<<<<<< HEAD:Explorer/Assets/DCL/InWorldCamera/Textures/PhotoDetailInfoPanelAnimated.png.meta
+    buildTarget: iPhone
+========
     buildTarget: WebGL
+>>>>>>>> dev:Explorer/Assets/Plugins/TexturesFuse/TexturesServerWrap/Playground/NormalMap/brick_wall2-diff-512.png.meta
     maxTextureSize: 2048
     resizeAlgorithm: 0
     textureFormat: -1
