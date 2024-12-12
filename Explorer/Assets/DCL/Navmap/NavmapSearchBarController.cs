@@ -1,6 +1,8 @@
 using Cysharp.Threading.Tasks;
 using DCL.Input;
 using DCL.Input.Component;
+using DCL.MapRenderer.MapLayers.Categories;
+using DCL.Navmap.ScriptableObjects;
 using DCL.UI;
 using System;
 using System.Threading;
@@ -19,6 +21,7 @@ namespace DCL.Navmap
         private readonly IInputBlock inputBlock;
         private readonly ISearchHistory searchHistory;
         private readonly INavmapBus navmapBus;
+        private readonly CategoryMappingSO categoryMappingSO;
 
         private CancellationTokenSource? searchCancellationToken;
         private CancellationTokenSource? backCancellationToken;
@@ -40,7 +43,8 @@ namespace DCL.Navmap
             SearchFiltersView searchFiltersView,
             IInputBlock inputBlock,
             ISearchHistory searchHistory,
-            INavmapBus navmapBus)
+            INavmapBus navmapBus,
+            CategoryMappingSO categoryMappingSO)
         {
             this.view = view;
             this.historyRecordPanelView = historyRecordPanelView;
@@ -48,6 +52,7 @@ namespace DCL.Navmap
             this.inputBlock = inputBlock;
             this.searchHistory = searchHistory;
             this.navmapBus = navmapBus;
+            this.categoryMappingSO = categoryMappingSO;
 
             navmapBus.OnJumpIn += _ => ClearInput();
             navmapBus.OnFilterByCategory += SearchByCategory;
@@ -73,6 +78,18 @@ namespace DCL.Navmap
             view.inputField.onValueChanged.RemoveAllListeners();
             view.inputField.onSubmit.RemoveAllListeners();
             view.clearSearchButton.onClick.RemoveAllListeners();
+        }
+
+        public void SetInputFieldCategory(string? category)
+        {
+            view.inputField.readOnly = !string.IsNullOrEmpty(category);
+            view.inputFieldCategoryImage.gameObject.SetActive(!string.IsNullOrEmpty(category));
+
+            if (string.IsNullOrEmpty(category))
+                return;
+
+            if(Enum.TryParse(category, true, out CategoriesEnum categoryEnum))
+                view.inputFieldCategoryImage.sprite = categoryMappingSO.GetCategoryImage(categoryEnum);
         }
 
         public async UniTask DoDefaultSearch(CancellationToken ct)
@@ -208,13 +225,13 @@ namespace DCL.Navmap
         {
             UpdateFilterAndSorting(category is "Favorites" ? NavmapSearchPlaceFilter.Favorites : NavmapSearchPlaceFilter.All, currentPlaceSorting);
             currentSearchText = string.Empty;
-            currentCategory = category is "All" or "Favorites" ? string.Empty : category;
+            currentCategory = category;
             searchCancellationToken = searchCancellationToken.SafeRestart();
             navmapBus.SearchForPlaceAsync(INavmapBus.SearchPlaceParams.CreateWithDefaultParams(
                           page: 0,
                           filter: currentPlaceFilter,
                           sorting: currentPlaceSorting,
-                          category: currentCategory), searchCancellationToken.Token)
+                          category: category), searchCancellationToken.Token)
                      .Forget();
         }
     }
