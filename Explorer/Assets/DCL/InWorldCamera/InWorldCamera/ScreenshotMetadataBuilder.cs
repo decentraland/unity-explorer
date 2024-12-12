@@ -14,6 +14,10 @@ namespace DCL.InWorldCamera
 {
     public class ScreenshotMetadataBuilder
     {
+        private const string UNKNOWN_USER = "Unknown";
+        private const string UNKNOWN_PLACE = "Unknown place";
+        private const string WORLD_PLACE_ID = "not applicable";
+
         private readonly SelfProfile selfProfile;
         private readonly CharacterController characterObjectController;
         private readonly RealmData realmData;
@@ -59,8 +63,8 @@ namespace DCL.InWorldCamera
             {
                 visiblePeople.Add(new VisiblePerson
                 {
-                    userName = profile?.Name ?? "Unknown",
-                    userAddress = profile?.UserId ?? "Unknown",
+                    userName = profile?.Name ?? UNKNOWN_USER,
+                    userAddress = profile?.UserId ?? UNKNOWN_USER,
                     isGuest = false,
                     wearables = FilterNonBaseWearables(profile?.Avatar.Wearables ?? Array.Empty<URN>()),
                 });
@@ -79,11 +83,11 @@ namespace DCL.InWorldCamera
         private async UniTask<(string, string)> GetSceneInfoAsync(Vector2Int at, CancellationToken ct)
         {
             if (realmData.ScenesAreFixed)
-                return (realmData.RealmName.Replace(".dcl.eth", string.Empty), "not applicable");
+                return (realmData.RealmName.Replace(".dcl.eth", string.Empty), WORLD_PLACE_ID);
 
             PlacesData.PlaceInfo? placeInfo = await placesAPIService.GetPlaceAsync(at, ct);
 
-            return placeInfo == null ? ("Unknown place", "Unknown place") : (placeInfo.title, placeInfo.id);
+            return placeInfo == null ? (UNKNOWN_PLACE, UNKNOWN_PLACE) : (placeInfo.title, placeInfo.id);
         }
 
         private static string[] FilterNonBaseWearables(IReadOnlyCollection<URN> avatarWearables)

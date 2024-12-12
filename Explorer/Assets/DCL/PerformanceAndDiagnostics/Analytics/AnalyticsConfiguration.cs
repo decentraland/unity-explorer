@@ -108,9 +108,9 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
                 eventToggles = new Dictionary<string, AnalyticsEventToggle>();
 
             foreach (AnalyticsGroup group in groups)
-            foreach (AnalyticsEventToggle eventToggle in group.events)
-                if (eventToggles.TryAdd(eventToggle.eventName, eventToggle))
-                    eventToggles[eventToggle.eventName].isEnabled = true;
+                foreach (AnalyticsEventToggle eventToggle in group.events)
+                    if (eventToggles.TryAdd(eventToggle.eventName, eventToggle))
+                        eventToggles[eventToggle.eventName].isEnabled = true;
         }
 
         public bool EventIsEnabled(string eventName) =>
