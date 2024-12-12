@@ -74,6 +74,7 @@ using ECS.SceneLifeCycle.LocalSceneDevelopment;
 using ECS.SceneLifeCycle.Realm;
 using Global.AppArgs;
 using Global.Dynamic.ChatCommands;
+using Global.Dynamic.Landscapes;
 using LiveKit.Internal.FFIClients.Pools;
 using LiveKit.Internal.FFIClients.Pools.Memory;
 using LiveKit.Proto;
@@ -270,7 +271,7 @@ namespace Global.Dynamic
                 new ECSWearablesProvider(identityCache, globalWorld),
                 globalWorld);
 
-            container.SceneRoomMetaDataSource = new SceneRoomMetaDataSource(staticContainer.RealmData, staticContainer.CharacterContainer.Transform, placesAPIService, dynamicWorldParams.IsolateScenesCommunication);
+            container.SceneRoomMetaDataSource = new SceneRoomMetaDataSource(staticContainer.RealmData, staticContainer.CharacterContainer.Transform, globalWorld, dynamicWorldParams.IsolateScenesCommunication);
 
             var metaDataSource = new SceneRoomLogMetaDataSource(container.SceneRoomMetaDataSource);
 
@@ -287,6 +288,9 @@ namespace Global.Dynamic
                 staticContainer.WebRequestsContainer.WebRequestController
             );
 
+
+            bool localSceneDevelopment = !string.IsNullOrEmpty(dynamicWorldParams.LocalSceneDevelopmentRealm);
+
             container.RealmController = new RealmController(
                 identityCache,
                 staticContainer.WebRequestsContainer.WebRequestController,
@@ -300,9 +304,9 @@ namespace Global.Dynamic
                 staticContainer.SingletonSharedDependencies.SceneAssetLock,
                 debugBuilder,
                 staticContainer.ComponentsContainer.ComponentPoolsRegistry
-                               .GetReferenceTypePool<PartitionComponent>());
+                               .GetReferenceTypePool<PartitionComponent>(),
+                localSceneDevelopment);
 
-            bool localSceneDevelopment = !string.IsNullOrEmpty(dynamicWorldParams.LocalSceneDevelopmentRealm);
             container.reloadSceneController = new ECSReloadScene(staticContainer.ScenesCache, globalWorld, playerEntity, localSceneDevelopment);
 
             if (localSceneDevelopment)
@@ -337,6 +341,14 @@ namespace Global.Dynamic
                 staticContainer.EntityCollidersGlobalCache
             );
 
+            ILandscape landscape = new Landscape(
+                container.RealmController,
+                genesisTerrain,
+                worldsTerrain,
+                dynamicWorldParams.EnableLandscape,
+                localSceneDevelopment
+            );
+
             IRealmNavigator realmNavigator = new RealmNavigator(
                 loadingScreen,
                 container.MapRendererContainer.MapRenderer,
@@ -346,17 +358,14 @@ namespace Global.Dynamic
                 remoteEntities,
                 bootstrapContainer.DecentralandUrlsSource,
                 globalWorld,
-                container.LODContainer.RoadAssetsPool, // TODO Plugins should not expose dependencies!
-                genesisTerrain,
-                worldsTerrain,
+                container.LODContainer.RoadAssetsPool,
                 satelliteView,
-                dynamicWorldParams.EnableLandscape,
                 staticContainer.ExposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy,
                 exposedGlobalDataContainer.CameraSamplingData,
-                localSceneDevelopment,
                 staticContainer.LoadingStatus,
                 staticContainer.CacheCleaner,
-                staticContainer.SingletonSharedDependencies.MemoryBudget);
+                staticContainer.SingletonSharedDependencies.MemoryBudget,
+                landscape);
 
             IHealthCheck livekitHealthCheck = bootstrapContainer.DebugSettings.EnableEmulateNoLivekitConnection
                 ? new IHealthCheck.AlwaysFails("Livekit connection is in debug, always fail mode")
@@ -389,6 +398,7 @@ namespace Global.Dynamic
                 staticContainer.FeatureFlagsCache,
                 identityCache,
                 container.RealmController,
+                landscape,
                 dynamicWorldParams.AppParameters,
                 bootstrapContainer.DebugSettings,
                 staticContainer.PortableExperiencesController,
@@ -550,7 +560,7 @@ namespace Global.Dynamic
                 new ErrorPopupPlugin(container.MvcManager, assetsProvisioner),
                 connectionStatusPanelPlugin,
                 new MinimapPlugin(container.MvcManager, container.MapRendererContainer, placesAPIService,
-                    staticContainer.RealmData, container.ChatMessagesBus, realmNavigator, staticContainer.ScenesCache,
+                    container.RealmController, container.ChatMessagesBus, realmNavigator, staticContainer.ScenesCache,
                     mainUIView, mapPathEventBus, staticContainer.SceneRestrictionBusController,
                     $"{dynamicWorldParams.StartParcel.x},{dynamicWorldParams.StartParcel.y}"),
                 new ChatPlugin(assetsProvisioner, container.MvcManager, container.ChatMessagesBus, chatHistory, entityParticipantTable, nametagsData, dclInput, unityEventSystem, mainUIView, staticContainer.InputBlock, globalWorld, playerEntity),
@@ -617,7 +627,7 @@ namespace Global.Dynamic
                     assetsProvisioner,
                     container.MvcManager,
                     dclCursor,
-                    realmUrl => container.RealmController.SetRealmAsync(URLDomain.FromString(realmUrl), CancellationToken.None).Forget()),
+                    realmUrl => container.ChatMessagesBus.Send($"/{ChatCommandsUtils.COMMAND_GOTO} {realmUrl}",  "RestrictedActionAPI")),
                 new NftPromptPlugin(assetsProvisioner, webBrowser, container.MvcManager, nftInfoAPIClient, staticContainer.WebRequestsContainer.WebRequestController, dclCursor),
                 staticContainer.CharacterContainer.CreateGlobalPlugin(),
                 staticContainer.QualityContainer.CreatePlugin(),
@@ -682,7 +692,8 @@ namespace Global.Dynamic
                     container.MvcManager,
                     dclCursor,
                     mainUIView.SidebarView.InWorldCameraButton,
-                    globalWorld));
+                    globalWorld,
+                    debugBuilder));
 
             if (dynamicWorldParams.EnableAnalytics)
                 globalPlugins.Add(new AnalyticsPlugin(
