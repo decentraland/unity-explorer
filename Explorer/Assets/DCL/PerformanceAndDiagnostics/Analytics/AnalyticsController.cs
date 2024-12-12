@@ -13,7 +13,6 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
     {
         private readonly IAnalyticsService analytics;
 
-        private bool isInitialized;
         public AnalyticsConfiguration Configuration { get; }
 
         public AnalyticsController(
@@ -32,11 +31,10 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
         public void Initialize(IWeb3Identity? web3Identity)
         {
-            analytics.Identify(web3Identity?.Address ?? "not cached");
-            isInitialized = true;
+            if (web3Identity != null && web3Identity.Address != null)
+                analytics.Identify(web3Identity?.Address);
 
             TrackSystemInfo();
-
             analytics.Flush();
         }
 
@@ -50,9 +48,6 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
         public void Track(string eventName, JsonObject? properties = null)
         {
-            if (!isInitialized)
-                ReportHub.LogError(ReportCategory.ANALYTICS, $"Analytics {nameof(Track)} called before initialization. Event {eventName} won't be tracked.");
-
             if (Configuration.EventIsEnabled(eventName))
                 analytics.Track(eventName, properties);
         }
