@@ -9,8 +9,8 @@ namespace Global.Dynamic.ChatCommands
 {
     public class HelpChatCommand : IChatCommand
     {
-        public Regex Regex { get; } = new ($@"^/(help).*", RegexOptions.Compiled);
-        public string Description => "/help - Shows this help message\n";
+        public Regex Regex { get; } = new ("^/(help).*", RegexOptions.Compiled);
+        public string Description => "<b>/help</b> - Shows this help message";
 
         private readonly List<IChatCommand> commands;
 
@@ -23,9 +23,14 @@ namespace Global.Dynamic.ChatCommands
         {
             var sb = new StringBuilder();
 
-            sb.Append("Available commands:\n");
+            sb.AppendLine("Available commands:\n");
 
-            foreach (IChatCommand cmd in commands) { sb.Append(cmd.Description); }
+            foreach (IChatCommand cmd in commands)
+            {
+                if (string.IsNullOrEmpty(cmd.Description)) continue;
+
+                sb.AppendLine(cmd.Description);
+            }
 
             return UniTask.FromResult(sb.ToString());
         }

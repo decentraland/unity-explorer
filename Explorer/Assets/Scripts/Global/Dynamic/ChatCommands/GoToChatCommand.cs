@@ -19,7 +19,7 @@ namespace Global.Dynamic.ChatCommands
             new (
                 $@"^/({ChatCommandsUtils.COMMAND_GOTO}|{COMMAND_GOTO_LOCAL})\s+(?:(-?\d+)\s*,\s*(-?\d+)|{PARAMETER_RANDOM})$",
                 RegexOptions.Compiled);
-        public string Description => "/goto - Teleport to a specific location.";
+        public string Description => "<b>/goto <i><world> <x,y | random></i></b> - Teleport to a specific location.";
 
         private readonly IRealmNavigator realmNavigator;
 

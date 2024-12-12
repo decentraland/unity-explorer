@@ -28,7 +28,7 @@ namespace Global.Dynamic.ChatCommands
         private static readonly string OPTIONAL_SUFFIX_PATTERN = $"(?<suffix>{Regex.Escape(ENS_SUFFIX)})?";
 
         public Regex Regex { get; } = new($"{COMMAND_PATTERN}{NAME_PATTERN}{OPTIONAL_SUFFIX_PATTERN}$", RegexOptions.Compiled);
-        public string Description => "/loadpx <name> - Load a Portable Experience";
+        public string Description => string.Empty; // Internal command, don't advertise it in /help
 
         private readonly IPortableExperiencesController portableExperiencesController;
         private readonly FeatureFlagsCache featureFlagsCache;

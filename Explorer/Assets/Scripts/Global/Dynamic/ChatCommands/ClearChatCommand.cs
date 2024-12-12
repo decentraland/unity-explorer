@@ -8,8 +8,8 @@ namespace Global.Dynamic.ChatCommands
 {
     public class ClearChatCommand : IChatCommand
     {
-        public Regex Regex { get; } = new ($@"^/(clear).*", RegexOptions.Compiled);
-        public string Description => "/clear - Clear the chat";
+        public Regex Regex { get; } = new ("^/(clear).*", RegexOptions.Compiled);
+        public string Description => "<b>/clear</b> - Clear the chat";
 
         private readonly IChatHistory chatHistory;
 

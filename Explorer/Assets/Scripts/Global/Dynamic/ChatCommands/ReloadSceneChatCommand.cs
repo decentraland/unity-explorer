@@ -9,7 +9,7 @@ namespace Global.Dynamic.ChatCommands
     public class ReloadSceneChatCommand : IChatCommand
     {
         public Regex Regex { get; } = new (@"^/reload(?:\s+(\w+))?$", RegexOptions.Compiled);
-        public string Description => "/reload - Reload the current scene";
+        public string Description => "<b>/reload</b> - Reload the current scene";
 
         private readonly ECSReloadScene reloadScene;
 
