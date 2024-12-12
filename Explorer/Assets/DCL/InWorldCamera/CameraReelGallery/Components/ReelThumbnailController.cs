@@ -18,7 +18,7 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
         private OptionButtonController? optionButton;
         private CancellationTokenSource loadImageCts;
 
-        public event Action<CameraReelResponseCompact, Sprite>? ThumbnailLoaded;
+        public event Action<CameraReelResponseCompact, Texture>? ThumbnailLoaded;
         public event Action<CameraReelResponseCompact>? ThumbnailClicked;
 
         public CameraReelResponseCompact CameraReelResponse { get; private set; }
@@ -42,7 +42,7 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
                 this.optionButton.Hide += ToNormalAnimation;
 
             loadImageCts = loadImageCts.SafeRestart();
-            view.thumbnailImage.sprite = null;
+            view.thumbnailImage.texture = null;
             LoadImageAsync(loadImageCts.Token).Forget();
         }
 
@@ -54,13 +54,14 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
             float originalToSmallerRatio = thumbnailTexture.height * 1f / rectTransform.rect.height;
             float realWidth = originalToSmallerRatio * rectTransform.rect.width;
             float realWidthDiff = thumbnailTexture.width - realWidth;
-            view.thumbnailImage.sprite = Sprite.Create(thumbnailTexture, new Rect(realWidthDiff / 2f, 0, thumbnailTexture.width - realWidthDiff, thumbnailTexture.height), Vector3.zero);
+            view.thumbnailImage.texture = thumbnailTexture;
+            view.thumbnailImage.uvRect = new Rect((realWidthDiff / 2f) / thumbnailTexture.width, 0, (thumbnailTexture.width - realWidthDiff) / thumbnailTexture.width, 1);
 
             view.loadingBrightView.FinishLoadingAnimation(view.thumbnailImage.gameObject);
 
             view.thumbnailImage.DOFade(1f, view.thumbnailLoadedAnimationDuration).ToUniTask(cancellationToken: token).Forget();
 
-            ThumbnailLoaded?.Invoke(CameraReelResponse, view.thumbnailImage.sprite);
+            ThumbnailLoaded?.Invoke(CameraReelResponse, view.thumbnailImage.texture);
             view.button.onClick.AddListener( () => ThumbnailClicked?.Invoke(CameraReelResponse));
         }
 
@@ -78,7 +79,7 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
         {
             view.gameObject.SetActive(true);
             view.thumbnailImage.enabled = true;
-            view.thumbnailImage.sprite = null;
+            view.thumbnailImage.texture = null;
         }
 
         public void PoolRelease(Transform parent)

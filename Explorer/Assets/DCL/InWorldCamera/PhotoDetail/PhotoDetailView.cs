@@ -9,7 +9,7 @@ namespace DCL.InWorldCamera.PhotoDetail
         [field: SerializeField] internal RectTransform rootContainer { get; private set; }
         [field: SerializeField] internal float sidePanelAnimationDuration { get; private set; } = 0.5f;
         [field: SerializeField] internal float imageFadeInDuration { get; private set; } = 0.3f;
-        [field: SerializeField] internal Image mainImage { get; private set; }
+        [field: SerializeField] internal RawImage mainImage { get; private set; }
         [field: SerializeField] internal CanvasGroup mainImageCanvasGroup { get; private set; }
         [field: SerializeField] internal GameObject mainImageLoadingSpinner { get; private set; }
 
@@ -33,7 +33,7 @@ namespace DCL.InWorldCamera.PhotoDetail
 
         private void Awake()
         {
-            mainImage.sprite = null;
+            mainImage.texture = null;
             mainImageCanvasGroup.alpha = 0;
         }
     }
