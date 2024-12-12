@@ -72,10 +72,8 @@ namespace DCL.SDKComponents.MediaStream
             // If there are no seekable/buffered times, and we try to seek, AVPro may mistakenly play it from the start.
             await UniTask.WaitUntil(() => control.GetBufferedTimes().Count > 0);
 
-#if (UNITY_EDITOR_OSX || UNITY_STANDALONE_OSX)
-            // The only way found to make the video initialization consistent and reliable on MacOS even after a scene reload
+            // The only way found to make the video initialization consistent and reliable even after a scene reload
             await UniTask.Delay(TimeSpan.FromSeconds(1f));
-#endif
 
             control.SetLooping(sdkVideoPlayer is { HasLoop: true, Loop: true }); // default: false
             control.SetPlaybackRate(sdkVideoPlayer.HasPlaybackRate ? sdkVideoPlayer.PlaybackRate : MediaPlayerComponent.DEFAULT_PLAYBACK_RATE);
