@@ -6,20 +6,18 @@ using DCL.Navmap.ScriptableObjects;
 using DCL.UI;
 using System;
 using System.Threading;
-using UnityEngine;
 using Utility;
 
 namespace DCL.Navmap
 {
     public class NavmapSearchBarController : IDisposable
     {
-        private const int INPUT_DEBOUNCE_DELAY_MS = 1000;
+        public event Action<bool>? TogglePanel;
 
         private readonly SearchBarView view;
         private readonly HistoryRecordPanelView historyRecordPanelView;
         private readonly SearchFiltersView searchFiltersView;
         private readonly IInputBlock inputBlock;
-        private readonly ISearchHistory searchHistory;
         private readonly INavmapBus navmapBus;
         private readonly CategoryMappingSO categoryMappingSO;
 
@@ -29,7 +27,7 @@ namespace DCL.Navmap
         private NavmapSearchPlaceFilter currentPlaceFilter = NavmapSearchPlaceFilter.All;
         private NavmapSearchPlaceSorting currentPlaceSorting = NavmapSearchPlaceSorting.MostActive;
         private string? currentCategory;
-        private string currentSearchText = "";
+        private string currentSearchText = string.Empty;
 
         public bool Interactable
         {
@@ -50,7 +48,6 @@ namespace DCL.Navmap
             this.historyRecordPanelView = historyRecordPanelView;
             this.searchFiltersView = searchFiltersView;
             this.inputBlock = inputBlock;
-            this.searchHistory = searchHistory;
             this.navmapBus = navmapBus;
             this.categoryMappingSO = categoryMappingSO;
 
@@ -82,7 +79,8 @@ namespace DCL.Navmap
 
         public void SetInputFieldCategory(string? category)
         {
-            view.inputField.readOnly = !string.IsNullOrEmpty(category);
+            view.clearSearchButton.gameObject.SetActive(!string.IsNullOrEmpty(category) || !string.IsNullOrEmpty(currentSearchText));
+            Interactable = !string.IsNullOrEmpty(category);
             view.inputFieldCategoryImage.gameObject.SetActive(!string.IsNullOrEmpty(category));
 
             if (string.IsNullOrEmpty(category))
@@ -90,18 +88,6 @@ namespace DCL.Navmap
 
             if(Enum.TryParse(category, true, out CategoriesEnum categoryEnum))
                 view.inputFieldCategoryImage.sprite = categoryMappingSO.GetCategoryImage(categoryEnum);
-        }
-
-        public async UniTask DoDefaultSearch(CancellationToken ct)
-        {
-            currentSearchText = string.Empty;
-            UpdateFilterAndSorting(NavmapSearchPlaceFilter.All, currentPlaceSorting);
-            view.inputField.SetTextWithoutNotify(currentSearchText);
-
-            await navmapBus.SearchForPlaceAsync(INavmapBus.SearchPlaceParams.CreateWithDefaultParams(
-                page: 0,
-                filter: currentPlaceFilter,
-                sorting: currentPlaceSorting), ct);
         }
 
         public void SetInputText(string text)
@@ -112,11 +98,14 @@ namespace DCL.Navmap
         public void ClearInput()
         {
             view.inputField.SetTextWithoutNotify(string.Empty);
-
+            view.inputFieldCategoryImage.gameObject.SetActive(false);
             view.clearSearchButton.gameObject.SetActive(false);
 
-            searchCancellationToken = searchCancellationToken.SafeRestart();
-            DoDefaultSearch(searchCancellationToken.Token).Forget();
+            currentCategory = string.Empty;
+            currentSearchText = string.Empty;
+            TogglePanel?.Invoke(false);
+            navmapBus.ClearFilter();
+            navmapBus.ClearPlacesFromMap();
         }
 
         public void EnableBack()
@@ -136,6 +125,7 @@ namespace DCL.Navmap
 
         public void UpdateFilterAndSorting(NavmapSearchPlaceFilter filter, NavmapSearchPlaceSorting sorting)
         {
+            navmapBus.ClearPlacesFromMap();
             currentPlaceFilter = filter;
             searchFiltersView.Toggle(currentPlaceFilter);
 
@@ -164,12 +154,9 @@ namespace DCL.Navmap
 
             async UniTaskVoid SearchAsync(CancellationToken ct)
             {
-                await UniTask.Delay(INPUT_DEBOUNCE_DELAY_MS, cancellationToken: ct).SuppressCancellationThrow();
-
                 UpdateFilterAndSorting(NavmapSearchPlaceFilter.All, currentPlaceSorting);
 
-                searchHistory.Add(searchText);
-
+                TogglePanel?.Invoke(!string.IsNullOrEmpty(searchText));
                 await navmapBus.SearchForPlaceAsync(INavmapBus.SearchPlaceParams.CreateWithDefaultParams(
                                     page: 0,
                                     filter: currentPlaceFilter,
@@ -224,6 +211,14 @@ namespace DCL.Navmap
         private void SearchByCategory(string? category)
         {
             UpdateFilterAndSorting(category is "Favorites" ? NavmapSearchPlaceFilter.Favorites : NavmapSearchPlaceFilter.All, currentPlaceSorting);
+
+            if (string.IsNullOrEmpty(category))
+            {
+                ClearInput();
+                return;
+            }
+
+            TogglePanel?.Invoke(true);
             currentSearchText = string.Empty;
             currentCategory = category;
             searchCancellationToken = searchCancellationToken.SafeRestart();

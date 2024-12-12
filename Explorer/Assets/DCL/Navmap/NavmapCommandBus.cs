@@ -31,6 +31,7 @@ namespace DCL.Navmap
         public event Action<Vector2>? OnMoveCameraTo;
         public event Action<bool>? OnZoomCamera;
         public event Action<Vector2Int, Vector2> OnLongHover;
+        public event Action OnClearFilter;
 
         public NavmapCommandBus(SearchPlaceFactory searchPlaceFactory,
             ShowPlaceInfoFactory showPlaceInfoFactory,
@@ -119,6 +120,9 @@ namespace DCL.Navmap
 
         public void SendLongHover(Vector2Int parcel, Vector2 screenPosition) =>
             OnLongHover?.Invoke(parcel, screenPosition);
+
+        public void ClearFilter() =>
+            OnClearFilter?.Invoke();
 
         private void OnSearchPlacePerformed(INavmapBus.SearchPlaceParams @params,
             IReadOnlyList<PlacesData.PlaceInfo> places, int totalResultCount) =>

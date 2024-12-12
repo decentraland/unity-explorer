@@ -12,7 +12,7 @@ namespace DCL.Navmap
         private readonly List<CategoryToggleView> categoryToggles;
         private readonly IMapRenderer mapRenderer;
         private readonly INavmapBus navmapBus;
-        private CategoryToggleView currentActiveToggle;
+        private CategoryToggleView? currentActiveToggle;
 
         public CategoryFilterController(List<CategoryToggleView> categoryToggles, IMapRenderer mapRenderer, INavmapBus navmapBus)
         {
@@ -24,9 +24,21 @@ namespace DCL.Navmap
             {
                 categoryToggleView.ToggleChanged += OnCategoryToggleChanged;
             }
+
+            navmapBus.OnClearFilter += OnClearFilter;
         }
 
-        private void OnCategoryToggleChanged(CategoriesEnum mapLayer, bool isOn, CategoryToggleView toggleView)
+        private void OnClearFilter()
+        {
+            if (currentActiveToggle != null)
+            {
+                currentActiveToggle.Toggle.SetIsOnWithoutNotify(false);
+                currentActiveToggle.SetVisualStatus(false);
+                currentActiveToggle = null;
+            }
+        }
+
+        private void OnCategoryToggleChanged(CategoriesEnum mapLayer, bool isOn, CategoryToggleView? toggleView)
         {
             if (isOn)
                 currentActiveToggle = toggleView;

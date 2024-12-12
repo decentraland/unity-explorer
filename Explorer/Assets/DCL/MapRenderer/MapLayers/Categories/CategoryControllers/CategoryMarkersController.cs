@@ -65,6 +65,12 @@ namespace DCL.MapRenderer.MapLayers.Categories
             this.navmapBus = navmapBus;
             this.navmapBus.OnPlaceSearched += OnPlaceSearched;
             this.navmapBus.OnFilterByCategory += OnFilterByCategory;
+            this.navmapBus.OnClearPlacesFromMap += OnClearPlacesFromMap;
+        }
+
+        private void OnClearPlacesFromMap()
+        {
+            ReleaseMarkers();
         }
 
         private void OnFilterByCategory(string? category)

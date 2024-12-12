@@ -42,6 +42,7 @@ namespace DCL.Navmap
         event Action<PlacesData.PlaceInfo>? OnDestinationSelected;
         event SearchPlaceResultDelegate? OnPlaceSearched;
         event Action<string?>? OnFilterByCategory;
+        event Action? OnClearFilter;
         event Action? OnClearPlacesFromMap;
         event Action<Vector2> OnMoveCameraTo;
         public event Action<bool>? OnZoomCamera;
@@ -71,5 +72,7 @@ namespace DCL.Navmap
         void ZoomCamera(bool zoomIn);
 
         void SendLongHover(Vector2Int parcel, Vector2 screenPosition);
+
+        void ClearFilter();
     }
 }
