@@ -261,8 +261,9 @@ namespace Global.Dynamic
         {
             // We enable Inputs through the inputBlock so the block counters can be properly updated and the component Active flags are up-to-date as well
             // We restore all inputs except EmoteWheel and FreeCamera as they should be disabled by default
-            staticContainer!.InputBlock.Enable(InputMapComponent.Kind.IN_WORLD_CAMERA, InputMapComponent.Kind.SHORTCUTS,
-                InputMapComponent.Kind.PLAYER, InputMapComponent.Kind.EMOTES, InputMapComponent.Kind.CAMERA);
+            staticContainer!.InputBlock.EnableAll(InputMapComponent.Kind.FREE_CAMERA,
+                InputMapComponent.Kind.EMOTE_WHEEL);
+            
         }
 
         [ContextMenu(nameof(ValidateSettingsAsync))]
