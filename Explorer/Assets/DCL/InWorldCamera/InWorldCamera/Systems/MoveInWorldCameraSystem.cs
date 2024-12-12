@@ -23,6 +23,7 @@ namespace DCL.InWorldCamera.Systems
         private SingleInstanceEntity camera;
         private ICinemachinePreset cinemachinePreset;
         private CinemachineVirtualCamera virtualCamera;
+        private bool cursorWasLocked;
 
         public MoveInWorldCameraSystem(World world, InWorldCameraMovementSettings settings, Transform playerTransform, ICursor cursor) : base(world)
         {
@@ -47,10 +48,12 @@ namespace DCL.InWorldCamera.Systems
 
                 Translate(followTarget, input, t);
 
-                if (cursor.IsLocked() || input.MouseIsDragging)
+                bool cursorIsLocked = cursor.IsLocked();
+
+                if (cursorIsLocked || input.MouseIsDragging)
                     Rotate(ref World.Get<CameraDampedAim>(camera), followTarget.transform, input.Aim, t);
 
-                Tilt(ref World.Get<CameraDampedTilt>(camera), followTarget.transform, input.Tilting, t);
+                Tilt(ref World.Get<CameraDampedTilt>(camera), followTarget.transform, input.Tilting, resetTilt: cursorIsLocked != cursorWasLocked, t);
 
                 Zoom(ref World.Get<CameraDampedFOV>(camera), input.Zoom, t);
             }
@@ -84,11 +87,22 @@ namespace DCL.InWorldCamera.Systems
             target.localRotation = Quaternion.Euler(newVerticalAngle, target.eulerAngles.y, target.eulerAngles.z);
         }
 
-        private void Tilt(ref CameraDampedTilt tilt, Transform target, float tiltInput, float deltaTime)
+        private void Tilt(ref CameraDampedTilt tilt, Transform target, float tiltInput, bool resetTilt, float deltaTime)
         {
+            if (resetTilt)
+            {
+                tilt.Current = 0;
+                tilt.Target = 0;
+                tilt.Velocity = 0;
+
+                target.transform.localRotation = Quaternion.Euler(target.transform.eulerAngles.x, target.transform.eulerAngles.y, 0f);
+
+                cursorWasLocked = !cursorWasLocked;
+            }
+
             if (!Mathf.Approximately(tiltInput, 0f))
             {
-                float targetRotation = tiltInput * settings.TiltSpeed;
+                float targetRotation = -tiltInput * settings.TiltSpeed;
                 tilt.Target = targetRotation;
             }
             else
