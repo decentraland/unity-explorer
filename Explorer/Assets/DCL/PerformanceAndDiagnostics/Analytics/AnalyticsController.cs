@@ -13,7 +13,6 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
     {
         private readonly IAnalyticsService analytics;
 
-        private bool isInitialized;
         public AnalyticsConfiguration Configuration { get; }
 
         public AnalyticsController(
@@ -31,11 +30,11 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
         public void Initialize(IWeb3Identity? web3Identity)
         {
-            TrackSystemInfo();
-            analytics.Identify(web3Identity?.Address ?? "not cached");
-            analytics.Flush();
+            if (web3Identity != null && web3Identity.Address != null)
+                analytics.Identify(web3Identity?.Address);
 
-            isInitialized = true;
+            TrackSystemInfo();
+            analytics.Flush();
         }
 
         public void SetCommonParam(IRealmData realmData, IWeb3IdentityCache? identityCache, IExposedTransform playerTransform)
@@ -48,9 +47,6 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
         public void Track(string eventName, JsonObject? properties = null)
         {
-            if (!isInitialized)
-                ReportHub.LogError(ReportCategory.ANALYTICS, $"Analytics {nameof(Track)} called before initialization. Event {eventName} won't be tracked.");
-
             if (Configuration.EventIsEnabled(eventName))
                 analytics.Track(eventName, properties);
         }
@@ -74,7 +70,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
         private void TrackSystemInfo()
         {
-            analytics.Track(AnalyticsEvents.General.SYSTEM_INFO_REPORT, new JsonObject
+            Track(AnalyticsEvents.General.SYSTEM_INFO_REPORT, new JsonObject
             {
                 ["device_model"] = SystemInfo.deviceModel, // "XPS 17 9720 (Dell Inc.)"
                 ["operating_system"] = SystemInfo.operatingSystem, // "Windows 11  (10.0.22631) 64bit"

@@ -3,23 +3,27 @@ using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Character;
+using DCL.DebugUtilities;
+using DCL.DebugUtilities.Views;
+using DCL.Input;
+using DCL.InWorldCamera;
 using DCL.InWorldCamera.CameraReelStorageService;
-using DCL.InWorldCamera.ScreencaptureCamera;
-using DCL.InWorldCamera.ScreencaptureCamera.Settings;
-using DCL.InWorldCamera.ScreencaptureCamera.Systems;
-using DCL.InWorldCamera.ScreencaptureCamera.UI;
-using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.InWorldCamera.Settings;
+using DCL.InWorldCamera.UI;
 using DCL.PlacesAPIService;
 using DCL.Profiles.Self;
-using DCL.WebRequests;
 using ECS;
+using MVC;
 using System;
 using System.Threading;
 using UnityEngine;
-using UnityEngine.AddressableAssets;
+using UnityEngine.UI;
 using Utility;
 using static DCL.PluginSystem.Global.InWorldCameraPlugin;
-using Object = UnityEngine.Object;
+using CaptureScreenshotSystem = DCL.InWorldCamera.Systems.CaptureScreenshotSystem;
+using EmitInWorldCameraInputSystem = DCL.InWorldCamera.Systems.EmitInWorldCameraInputSystem;
+using MoveInWorldCameraSystem = DCL.InWorldCamera.Systems.MoveInWorldCameraSystem;
+using ToggleInWorldCameraActivitySystem = DCL.InWorldCamera.Systems.ToggleInWorldCameraActivitySystem;
 
 namespace DCL.PluginSystem.Global
 {
@@ -34,19 +38,31 @@ namespace DCL.PluginSystem.Global
         private readonly ICharacterObject characterObject;
         private readonly ICoroutineRunner coroutineRunner;
         private readonly InWorldCameraFactory factory;
-        private readonly IWebRequestController webRequestController;
-        private readonly IDecentralandUrlsSource decentralandUrlsSource;
+        private readonly IMVCManager mvcManager;
+        private readonly ICursor cursor;
+        private readonly Button sidebarButton;
+        private readonly Arch.Core.World globalWorld;
+        private readonly IDebugContainerBuilder debugContainerBuilder;
+        private readonly ICameraReelStorageService cameraReelStorageService;
 
         private ScreenRecorder recorder;
         private GameObject hud;
-        private CharacterController followTarget;
         private ScreenshotMetadataBuilder metadataBuilder;
-        private ICameraReelStorageService cameraReelStorageService;
         private InWorldCameraSettings settings;
+        private InWorldCameraController inWorldCameraController;
+        private CharacterController followTarget;
 
         public InWorldCameraPlugin(DCLInput input, SelfProfile selfProfile,
-            RealmData realmData, Entity playerEntity, IPlacesAPIService placesAPIService, ICharacterObject characterObject, ICoroutineRunner coroutineRunner,
-            IWebRequestController webRequestController, IDecentralandUrlsSource decentralandUrlsSource)
+            RealmData realmData, Entity playerEntity,
+            IPlacesAPIService placesAPIService,
+            ICharacterObject characterObject, ICoroutineRunner coroutineRunner,
+            CameraReelRemoteStorageService cameraReelRemoteStorageService,
+            IMVCManager mvcManager,
+            ICursor cursor,
+            Button sidebarButton,
+            Arch.Core.World globalWorld,
+            IDebugContainerBuilder debugContainerBuilder
+       )
         {
             this.input = input;
             this.selfProfile = selfProfile;
@@ -55,8 +71,12 @@ namespace DCL.PluginSystem.Global
             this.placesAPIService = placesAPIService;
             this.characterObject = characterObject;
             this.coroutineRunner = coroutineRunner;
-            this.webRequestController = webRequestController;
-            this.decentralandUrlsSource = decentralandUrlsSource;
+            this.cameraReelStorageService = cameraReelRemoteStorageService;
+            this.mvcManager = mvcManager;
+            this.cursor = cursor;
+            this.sidebarButton = sidebarButton;
+            this.globalWorld = globalWorld;
+            this.debugContainerBuilder = debugContainerBuilder;
 
             factory = new InWorldCameraFactory();
         }
@@ -66,7 +86,7 @@ namespace DCL.PluginSystem.Global
             factory.Dispose();
         }
 
-        public async UniTask InitializeAsync(InWorldCameraSettings settings, CancellationToken ct)
+        public UniTask InitializeAsync(InWorldCameraSettings settings, CancellationToken ct)
         {
             this.settings = settings;
 
@@ -76,15 +96,18 @@ namespace DCL.PluginSystem.Global
             recorder = new ScreenRecorder(hud.GetComponent<RectTransform>());
             metadataBuilder = new ScreenshotMetadataBuilder(selfProfile, characterObject.Controller, realmData, placesAPIService);
 
-            cameraReelStorageService = new CameraReelRemoteStorageService(new CameraReelImagesMetadataRemoteDatabase(webRequestController, decentralandUrlsSource));
+            inWorldCameraController = new InWorldCameraController(() => hud.GetComponent<InWorldCameraView>(), sidebarButton, globalWorld, mvcManager, cameraReelStorageService);
+            mvcManager.RegisterController(inWorldCameraController);
+
+            return UniTask.CompletedTask;
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
-            ToggleInWorldCameraActivitySystem.InjectToWorld(ref builder, settings.TransitionSettings, input.InWorldCamera, hud, followTarget);
+            ToggleInWorldCameraActivitySystem.InjectToWorld(ref builder, settings.TransitionSettings, inWorldCameraController, followTarget, debugContainerBuilder, cursor, mvcManager, input.InWorldCamera);
             EmitInWorldCameraInputSystem.InjectToWorld(ref builder, input.InWorldCamera);
-            MoveInWorldCameraSystem.InjectToWorld(ref builder, settings.MovementSettings, characterObject.Controller.transform);
-            CaptureScreenshotSystem.InjectToWorld(ref builder, recorder, hud.GetComponent<ScreenshotHudView>(), playerEntity, metadataBuilder, coroutineRunner, cameraReelStorageService);
+            MoveInWorldCameraSystem.InjectToWorld(ref builder, settings.MovementSettings, characterObject.Controller.transform, cursor);
+            CaptureScreenshotSystem.InjectToWorld(ref builder, recorder, playerEntity, metadataBuilder, coroutineRunner, cameraReelStorageService, inWorldCameraController);
         }
 
         [Serializable]

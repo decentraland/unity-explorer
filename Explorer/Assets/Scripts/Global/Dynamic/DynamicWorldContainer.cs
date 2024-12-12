@@ -17,8 +17,11 @@ using DCL.Chat;
 using DCL.Chat.Commands;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
+using DCL.Clipboard;
 using DCL.DebugUtilities;
+using DCL.FeatureFlags;
 using DCL.Input;
+using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.Landscape;
 using DCL.LOD.Systems;
 using DCL.MapRenderer;
@@ -71,6 +74,7 @@ using ECS.SceneLifeCycle.LocalSceneDevelopment;
 using ECS.SceneLifeCycle.Realm;
 using Global.AppArgs;
 using Global.Dynamic.ChatCommands;
+using Global.Dynamic.Landscapes;
 using LiveKit.Internal.FFIClients.Pools;
 using LiveKit.Internal.FFIClients.Pools.Memory;
 using LiveKit.Proto;
@@ -100,6 +104,8 @@ namespace Global.Dynamic
         private ECSReloadScene? reloadSceneController;
         private LocalSceneDevelopmentController? localSceneDevelopmentController;
         private IWearablesProvider? wearablesProvider;
+
+        private MultiplayerMovementMessageBus? multiplayerMovementMessageBus;
 
         public IMVCManager MvcManager { get; private set; } = null!;
 
@@ -136,8 +142,6 @@ namespace Global.Dynamic
 
         public IRoomHub RoomHub { get; private set; } = null!;
 
-        private MultiplayerMovementMessageBus? multiplayerMovementMessageBus;
-
         public override void Dispose()
         {
             ChatMessagesBus.Dispose();
@@ -151,12 +155,9 @@ namespace Global.Dynamic
             DynamicWorldDependencies dynamicWorldDependencies,
             DynamicWorldParams dynamicWorldParams,
             AudioClipConfig backgroundMusic,
-            IPortableExperiencesController portableExperiencesController,
             World globalWorld,
             Entity playerEntity,
             IAppArgs appArgs,
-            ISceneRestrictionBusController sceneRestrictionBusController,
-            ILoadingStatus loadingStatus,
             ICoroutineRunner coroutineRunner,
             CancellationToken ct)
         {
@@ -215,7 +216,10 @@ namespace Global.Dynamic
                 ? new MVCManagerAnalyticsDecorator(coreMvcManager, bootstrapContainer.Analytics!)
                 : coreMvcManager;
 
-            var parcelServiceContainer = ParcelServiceContainer.Create(staticContainer.RealmData, staticContainer.SceneReadinessReportQueue, debugBuilder, container.MvcManager, staticContainer.SingletonSharedDependencies.SceneAssetLock);
+            var loadingScreenTimeout = new LoadingScreenTimeout();
+            ILoadingScreen loadingScreen = new LoadingScreen(container.MvcManager, loadingScreenTimeout);
+
+            var parcelServiceContainer = ParcelServiceContainer.Create(staticContainer.RealmData, staticContainer.SceneReadinessReportQueue, debugBuilder, loadingScreenTimeout, loadingScreen, staticContainer.SingletonSharedDependencies.SceneAssetLock);
             container.ParcelServiceContainer = parcelServiceContainer;
 
             var nftInfoAPIClient = new OpenSeaAPIClient(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
@@ -234,6 +238,7 @@ namespace Global.Dynamic
             var genesisTerrain = new TerrainGenerator(staticContainer.Profiler);
             var worldsTerrain = new WorldTerrainGenerator();
             var satelliteView = new SatelliteFloor();
+
             var landscapePlugin = new LandscapePlugin(satelliteView, genesisTerrain, worldsTerrain, assetsProvisioner,
                 debugBuilder, container.MapRendererContainer.TextureContainer,
                 staticContainer.WebRequestsContainer.WebRequestController, dynamicWorldParams.EnableLandscape,
@@ -252,7 +257,7 @@ namespace Global.Dynamic
             var equippedEmotes = new EquippedEmotes();
             var forceRender = new List<string>();
 
-            List<URN> selfEmotes = new List<URN>();
+            var selfEmotes = new List<URN>();
             ParseParamsForcedEmotes(bootstrapContainer.ApplicationParametersParser, ref selfEmotes);
             ParseDebugForcedEmotes(bootstrapContainer.DebugSettings.EmotesToAddToUserProfile, ref selfEmotes);
 
@@ -266,7 +271,7 @@ namespace Global.Dynamic
                 new ECSWearablesProvider(identityCache, globalWorld),
                 globalWorld);
 
-            container.SceneRoomMetaDataSource = new SceneRoomMetaDataSource(staticContainer.RealmData, staticContainer.CharacterContainer.Transform, placesAPIService, dynamicWorldParams.IsolateScenesCommunication);
+            container.SceneRoomMetaDataSource = new SceneRoomMetaDataSource(staticContainer.RealmData, staticContainer.CharacterContainer.Transform, globalWorld, dynamicWorldParams.IsolateScenesCommunication);
 
             var metaDataSource = new SceneRoomLogMetaDataSource(container.SceneRoomMetaDataSource);
 
@@ -283,6 +288,9 @@ namespace Global.Dynamic
                 staticContainer.WebRequestsContainer.WebRequestController
             );
 
+
+            bool localSceneDevelopment = !string.IsNullOrEmpty(dynamicWorldParams.LocalSceneDevelopmentRealm);
+
             container.RealmController = new RealmController(
                 identityCache,
                 staticContainer.WebRequestsContainer.WebRequestController,
@@ -294,9 +302,11 @@ namespace Global.Dynamic
                 staticContainer.ScenesCache,
                 staticContainer.PartitionDataContainer,
                 staticContainer.SingletonSharedDependencies.SceneAssetLock,
-                debugBuilder);
+                debugBuilder,
+                staticContainer.ComponentsContainer.ComponentPoolsRegistry
+                               .GetReferenceTypePool<PartitionComponent>(),
+                localSceneDevelopment);
 
-            bool localSceneDevelopment = !string.IsNullOrEmpty(dynamicWorldParams.LocalSceneDevelopmentRealm);
             container.reloadSceneController = new ECSReloadScene(staticContainer.ScenesCache, globalWorld, playerEntity, localSceneDevelopment);
 
             if (localSceneDevelopment)
@@ -305,7 +315,7 @@ namespace Global.Dynamic
             container.RoomHub = localSceneDevelopment ? NullRoomHub.INSTANCE : new RoomHub(archipelagoIslandRoom, gateKeeperSceneRoom);
             container.MessagePipesHub = new MessagePipesHub(container.RoomHub, MultiPoolFactory(), MultiPoolFactory(), memoryPool);
 
-            RoomsStatus roomsStatus = new RoomsStatus(
+            var roomsStatus = new RoomsStatus(
                 container.RoomHub,
 
                 //override allowed only in Editor
@@ -331,7 +341,13 @@ namespace Global.Dynamic
                 staticContainer.EntityCollidersGlobalCache
             );
 
-            ILoadingScreen loadingScreen = new LoadingScreen(container.MvcManager);
+            ILandscape landscape = new Landscape(
+                container.RealmController,
+                genesisTerrain,
+                worldsTerrain,
+                dynamicWorldParams.EnableLandscape,
+                localSceneDevelopment
+            );
 
             IRealmNavigator realmNavigator = new RealmNavigator(
                 loadingScreen,
@@ -342,18 +358,14 @@ namespace Global.Dynamic
                 remoteEntities,
                 bootstrapContainer.DecentralandUrlsSource,
                 globalWorld,
-                container.LODContainer.RoadPlugin,
-                genesisTerrain,
-                worldsTerrain,
+                container.LODContainer.RoadAssetsPool,
                 satelliteView,
-                dynamicWorldParams.EnableLandscape,
                 staticContainer.ExposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy,
                 exposedGlobalDataContainer.CameraSamplingData,
-                localSceneDevelopment,
                 staticContainer.LoadingStatus,
                 staticContainer.CacheCleaner,
                 staticContainer.SingletonSharedDependencies.MemoryBudget,
-                staticContainer.FeatureFlagsCache);
+                landscape);
 
             IHealthCheck livekitHealthCheck = bootstrapContainer.DebugSettings.EnableEmulateNoLivekitConnection
                 ? new IHealthCheck.AlwaysFails("Livekit connection is in debug, always fail mode")
@@ -386,12 +398,12 @@ namespace Global.Dynamic
                 staticContainer.FeatureFlagsCache,
                 identityCache,
                 container.RealmController,
+                landscape,
                 dynamicWorldParams.AppParameters,
                 bootstrapContainer.DebugSettings,
                 staticContainer.PortableExperiencesController,
                 container.RoomHub,
-                bootstrapContainer.DiagnosticsContainer
-            );
+                bootstrapContainer.DiagnosticsContainer);
 
             var worldInfoHub = new LocationBasedWorldInfoHub(
                 new WorldInfoHub(staticContainer.SingletonSharedDependencies.SceneMapping),
@@ -405,7 +417,7 @@ namespace Global.Dynamic
             var chatHistory = new ChatHistory();
 
             var currentSceneInfo = new CurrentSceneInfo();
-            ConnectionStatusPanelPlugin connectionStatusPanelPlugin = new ConnectionStatusPanelPlugin(container.UserInAppInAppInitializationFlow, container.MvcManager, mainUIView, roomsStatus, currentSceneInfo, container.reloadSceneController, globalWorld, playerEntity, debugBuilder);
+            var connectionStatusPanelPlugin = new ConnectionStatusPanelPlugin(container.UserInAppInAppInitializationFlow, container.MvcManager, mainUIView, roomsStatus, currentSceneInfo, container.reloadSceneController, globalWorld, playerEntity, debugBuilder);
 
             var chatCommandsFactory = new Dictionary<Regex, Func<IChatCommand>>
             {
@@ -419,8 +431,16 @@ namespace Global.Dynamic
                 { ShowEntityInfoChatCommand.REGEX, () => new ShowEntityInfoChatCommand(worldInfoHub) },
                 { ClearChatCommand.REGEX, () => new ClearChatCommand(chatHistory) },
                 { ReloadSceneChatCommand.REGEX, () => new ReloadSceneChatCommand(container.reloadSceneController) },
-                { LoadPortableExperienceChatCommand.REGEX, () => new LoadPortableExperienceChatCommand(portableExperiencesController, staticContainer.FeatureFlagsCache)},
-                { KillPortableExperienceChatCommand.REGEX, () => new KillPortableExperienceChatCommand(portableExperiencesController, staticContainer.FeatureFlagsCache)},
+                {
+                    LoadPortableExperienceChatCommand.REGEX,
+                    () => new LoadPortableExperienceChatCommand(staticContainer.PortableExperiencesController,
+                        staticContainer.FeatureFlagsCache)
+                },
+                {
+                    KillPortableExperienceChatCommand.REGEX,
+                    () => new KillPortableExperienceChatCommand(staticContainer.PortableExperiencesController,
+                        staticContainer.FeatureFlagsCache)
+                }
             };
 
             IChatMessagesBus coreChatMessageBus = new MultiplayerChatMessagesBus(container.MessagePipesHub, container.ProfileRepository, new MessageDeduplication<double>())
@@ -463,6 +483,15 @@ namespace Global.Dynamic
 
             var badgesAPIClient = new BadgesAPIClient(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
 
+            ICameraReelImagesMetadataDatabase cameraReelImagesMetadataDatabase = new CameraReelImagesMetadataRemoteDatabase(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
+            ICameraReelScreenshotsStorage cameraReelScreenshotsStorage = new CameraReelS3BucketScreenshotsStorage(staticContainer.WebRequestsContainer.WebRequestController);
+
+            CameraReelRemoteStorageService cameraReelStorageService = new CameraReelRemoteStorageService(cameraReelImagesMetadataDatabase, cameraReelScreenshotsStorage, identityCache?.Identity?.Address);
+
+            ISystemClipboard clipboard = new UnityClipboard();
+
+            bool includeCameraReel = staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.CAMERA_REEL) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.CAMERA_REEL)) || Application.isEditor;
+
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
                 new MultiplayerPlugin(
@@ -487,7 +516,7 @@ namespace Global.Dynamic
                     staticContainer.ComponentsContainer.ComponentPoolsRegistry
                 ),
                 new WorldInfoPlugin(worldInfoHub, debugBuilder, chatHistory),
-                new CharacterMotionPlugin(assetsProvisioner, staticContainer.CharacterContainer.CharacterObject, debugBuilder, staticContainer.ComponentsContainer.ComponentPoolsRegistry),
+                new CharacterMotionPlugin(assetsProvisioner, staticContainer.CharacterContainer.CharacterObject, debugBuilder, staticContainer.ComponentsContainer.ComponentPoolsRegistry, staticContainer.SceneReadinessReportQueue),
                 new InputPlugin(dclInput, dclCursor, unityEventSystem, assetsProvisioner, dynamicWorldDependencies.CursorUIDocument, multiplayerEmotesMessageBus, container.MvcManager, debugBuilder, dynamicWorldDependencies.RootUIDocument, dynamicWorldDependencies.CursorUIDocument, exposedGlobalDataContainer.ExposedCameraData),
                 new GlobalInteractionPlugin(dclInput, dynamicWorldDependencies.RootUIDocument, assetsProvisioner, staticContainer.EntityCollidersGlobalCache, exposedGlobalDataContainer.GlobalInputEvents, dclCursor, unityEventSystem, container.MvcManager),
                 new CharacterCameraPlugin(assetsProvisioner, realmSamplingData, exposedGlobalDataContainer.ExposedCameraData, debugBuilder, dynamicWorldDependencies.CommandLineArgs, dclInput),
@@ -527,10 +556,13 @@ namespace Global.Dynamic
                     dynamicWorldDependencies.Web3Authenticator,
                     container.UserInAppInAppInitializationFlow,
                     profileCache, sidebarBus, chatEntryConfiguration,
-                    globalWorld, playerEntity),
+                    globalWorld, playerEntity, includeCameraReel),
                 new ErrorPopupPlugin(container.MvcManager, assetsProvisioner),
                 connectionStatusPanelPlugin,
-                new MinimapPlugin(container.MvcManager, container.MapRendererContainer, placesAPIService, staticContainer.RealmData, container.ChatMessagesBus, realmNavigator, staticContainer.ScenesCache, mainUIView, mapPathEventBus, sceneRestrictionBusController),
+                new MinimapPlugin(container.MvcManager, container.MapRendererContainer, placesAPIService,
+                    container.RealmController, container.ChatMessagesBus, realmNavigator, staticContainer.ScenesCache,
+                    mainUIView, mapPathEventBus, staticContainer.SceneRestrictionBusController,
+                    $"{dynamicWorldParams.StartParcel.x},{dynamicWorldParams.StartParcel.y}"),
                 new ChatPlugin(assetsProvisioner, container.MvcManager, container.ChatMessagesBus, chatHistory, entityParticipantTable, nametagsData, dclInput, unityEventSystem, mainUIView, staticContainer.InputBlock, globalWorld, playerEntity),
                 new ExplorePanelPlugin(
                     assetsProvisioner,
@@ -539,6 +571,10 @@ namespace Global.Dynamic
                     placesAPIService,
                     staticContainer.WebRequestsContainer.WebRequestController,
                     identityCache,
+                    cameraReelStorageService,
+                    cameraReelStorageService,
+                    clipboard,
+                    bootstrapContainer.DecentralandUrlsSource,
                     wearableCatalog,
                     characterPreviewFactory,
                     container.ProfileRepository,
@@ -569,7 +605,8 @@ namespace Global.Dynamic
                     playerEntity,
                     container.ChatMessagesBus,
                     staticContainer.MemoryCap,
-                    bootstrapContainer.WorldVolumeMacBus
+                    bootstrapContainer.WorldVolumeMacBus,
+                    includeCameraReel
                 ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),
@@ -578,14 +615,19 @@ namespace Global.Dynamic
                 new LoadingScreenPlugin(assetsProvisioner, container.MvcManager, audioMixerVolumesController,
                     staticContainer.InputBlock, debugBuilder, staticContainer.LoadingStatus),
                 new ExternalUrlPromptPlugin(assetsProvisioner, webBrowser, container.MvcManager, dclCursor),
-                new TeleportPromptPlugin(assetsProvisioner, container.MvcManager,
-                    staticContainer.WebRequestsContainer.WebRequestController, placesAPIService, dclCursor,
-                    container.ChatMessagesBus),
+                new TeleportPromptPlugin(
+                    assetsProvisioner,
+                    container.MvcManager,
+                    staticContainer.WebRequestsContainer.WebRequestController,
+                    placesAPIService,
+                    dclCursor,
+                    container.ChatMessagesBus
+                ),
                 new ChangeRealmPromptPlugin(
                     assetsProvisioner,
                     container.MvcManager,
                     dclCursor,
-                    realmUrl => container.RealmController.SetRealmAsync(URLDomain.FromString(realmUrl), CancellationToken.None).Forget()),
+                    realmUrl => container.ChatMessagesBus.Send($"/{ChatCommandsUtils.COMMAND_GOTO} {realmUrl}",  "RestrictedActionAPI")),
                 new NftPromptPlugin(assetsProvisioner, webBrowser, container.MvcManager, nftInfoAPIClient, staticContainer.WebRequestsContainer.WebRequestController, dclCursor),
                 staticContainer.CharacterContainer.CreateGlobalPlugin(),
                 staticContainer.QualityContainer.CreatePlugin(),
@@ -637,8 +679,21 @@ namespace Global.Dynamic
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);
 
-            if (appArgs.HasFlag(AppArgsFlags.CAMERA_REEL))
-                globalPlugins.Add(new InWorldCameraPlugin(dclInput, selfProfile, staticContainer.RealmData, playerEntity, placesAPIService, staticContainer.CharacterContainer.CharacterObject, coroutineRunner, staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource));
+            if (includeCameraReel)
+                globalPlugins.Add(new InWorldCameraPlugin(
+                    dclInput,
+                    selfProfile,
+                    staticContainer.RealmData,
+                    playerEntity,
+                    placesAPIService,
+                    staticContainer.CharacterContainer.CharacterObject,
+                    coroutineRunner,
+                    cameraReelStorageService,
+                    container.MvcManager,
+                    dclCursor,
+                    mainUIView.SidebarView.InWorldCameraButton,
+                    globalWorld,
+                    debugBuilder));
 
             if (dynamicWorldParams.EnableAnalytics)
                 globalPlugins.Add(new AnalyticsPlugin(
@@ -667,6 +722,7 @@ namespace Global.Dynamic
                 container.LODContainer.LodCache,
                 multiplayerEmotesMessageBus,
                 globalWorld,
+                staticContainer.SceneReadinessReportQueue,
                 localSceneDevelopment
             );
 

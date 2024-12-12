@@ -1,5 +1,3 @@
-using MVC;
-using MVC.PopupsController.PopupCloser;
 using UnityEngine;
 using UnityEngine.UI;
 

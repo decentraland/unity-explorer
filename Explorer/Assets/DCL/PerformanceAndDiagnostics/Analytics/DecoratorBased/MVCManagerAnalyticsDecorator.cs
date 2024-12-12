@@ -63,5 +63,8 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
         public void SetAllViewsCanvasActive(bool isActive) =>
             core.SetAllViewsCanvasActive(isActive);
+
+        public void SetAllViewsCanvasActive(IController except, bool isActive) =>
+            core.SetAllViewsCanvasActive(except, isActive);
     }
 }

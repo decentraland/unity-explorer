@@ -1,6 +1,7 @@
 using DCL.Diagnostics;
 using DCL.Web3.Chains;
 using DCL.Web3.Identities;
+using DCL.WebRequests.RequestsHub;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
@@ -110,7 +111,9 @@ namespace DCL.WebRequests
             for (var i = 0; i < count; i++)
             {
                 WebRequestHeader header = info[i];
-                unityWebRequest.SetRequestHeader(header.Name, header.Value);
+
+                try { unityWebRequest.SetRequestHeader(header.Name, header.Value); }
+                catch (InvalidOperationException e) { throw new Exception($"Cannot set header: {header.Name} - {header.Value}", e); }
             }
         }
 
@@ -152,11 +155,12 @@ namespace DCL.WebRequests
         {
             int maxAuthChainHeaders = Enum.GetNames(typeof(AuthLinkType)).Length;
             AUTH_CHAIN_HEADER_NAMES = new string[maxAuthChainHeaders];
+
             for (int i = 0; i < maxAuthChainHeaders; i++)
                 AUTH_CHAIN_HEADER_NAMES[i] = $"x-identity-auth-chain-{i}";
         }
 
-        public static string Get(int index)
-            => AUTH_CHAIN_HEADER_NAMES[index];
+        public static string Get(int index) =>
+            AUTH_CHAIN_HEADER_NAMES[index];
     }
 }
