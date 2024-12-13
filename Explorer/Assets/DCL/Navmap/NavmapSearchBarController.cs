@@ -110,18 +110,17 @@ namespace DCL.Navmap
 
         public void EnableBack()
         {
+            view.inputFieldCategoryImage.gameObject.SetActive(false);
             view.BackButton.gameObject.SetActive(true);
             view.SearchIcon.SetActive(false);
         }
 
         public void DisableBack()
         {
+            view.inputFieldCategoryImage.gameObject.SetActive(false);
             view.BackButton.gameObject.SetActive(false);
             view.SearchIcon.SetActive(true);
         }
-
-        public void HideHistoryResults() =>
-            historyRecordPanelView.gameObject.SetActive(false);
 
         public void UpdateFilterAndSorting(NavmapSearchPlaceFilter filter, NavmapSearchPlaceSorting sorting)
         {
@@ -180,16 +179,6 @@ namespace DCL.Navmap
             else
             {
                 inputBlock.Enable(InputMapComponent.Kind.SHORTCUTS);
-
-                WaitForClickThenHideHistoryResultsAsync(default).Forget();
-            }
-
-            return;
-
-            async UniTaskVoid WaitForClickThenHideHistoryResultsAsync(CancellationToken ct)
-            {
-                await UniTask.DelayFrame(5, cancellationToken: ct);
-                HideHistoryResults();
             }
         }
 

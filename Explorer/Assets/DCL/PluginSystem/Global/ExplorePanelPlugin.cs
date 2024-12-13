@@ -380,7 +380,7 @@ namespace DCL.PluginSystem.Global
                 searchResultPanelController!, searchBarController!, callback,
                 @params);
 
-        private INavmapCommand CreateShowPlaceCommand(PlacesData.PlaceInfo placeInfo) =>
+        private INavmapCommand<AdditionalParams> CreateShowPlaceCommand(PlacesData.PlaceInfo placeInfo) =>
             new ShowPlaceInfoCommand(placeInfo, navmapView!, placeInfoPanelController!, placesAndEventsPanelController!, eventsApiService,
                 searchBarController!);
 

@@ -44,13 +44,13 @@ namespace DCL.Navmap
         public async UniTask SelectPlaceAsync(PlacesData.PlaceInfo place, CancellationToken ct, bool isFromSearchResults = false)
         {
             if (source.Object == null) return;
-            await source.Object.SelectPlaceAsync(place, ct);
+            await source.Object.SelectPlaceAsync(place, ct, isFromSearchResults);
         }
 
         public async UniTask SelectPlaceAsync(Vector2Int parcel, CancellationToken ct, bool isFromSearchResults = false)
         {
             if (source.Object == null) return;
-            await source.Object.SelectPlaceAsync(parcel, ct);
+            await source.Object.SelectPlaceAsync(parcel, ct, isFromSearchResults);
         }
 
         public async UniTask SelectEventAsync(EventDTO @event, CancellationToken ct, PlacesData.PlaceInfo? place = null)

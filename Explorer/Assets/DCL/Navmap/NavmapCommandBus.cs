@@ -14,7 +14,7 @@ namespace DCL.Navmap
             INavmapBus.SearchPlaceResultDelegate callback,
             INavmapBus.SearchPlaceParams @params);
 
-        public delegate INavmapCommand ShowPlaceInfoFactory(PlacesData.PlaceInfo placeInfo);
+        public delegate INavmapCommand<AdditionalParams> ShowPlaceInfoFactory(PlacesData.PlaceInfo placeInfo);
         public delegate INavmapCommand ShowEventInfoFactory(EventDTO @event, PlacesData.PlaceInfo? place = null);
 
         private readonly Stack<INavmapCommand> commands = new ();
@@ -46,9 +46,12 @@ namespace DCL.Navmap
 
         public async UniTask SelectPlaceAsync(PlacesData.PlaceInfo place, CancellationToken ct, bool isFromSearchResults = false)
         {
-            INavmapCommand command = showPlaceInfoFactory.Invoke(place);
+            INavmapCommand<AdditionalParams> command = showPlaceInfoFactory.Invoke(place);
 
-            await command.ExecuteAsync(ct);
+            if (!isFromSearchResults)
+                ClearPlacesFromMap();
+
+            await command.ExecuteAsync(new AdditionalParams(isFromSearchResults), ct);
 
             AddCommand(command);
         }
@@ -60,7 +63,7 @@ namespace DCL.Navmap
             // TODO: show empty parcel
             if (place == null) return;
 
-            await SelectPlaceAsync(place, ct);
+            await SelectPlaceAsync(place, ct, isFromSearchResults);
         }
 
         public async UniTask SelectEventAsync(EventDTO @event, CancellationToken ct, PlacesData.PlaceInfo? place = null)
