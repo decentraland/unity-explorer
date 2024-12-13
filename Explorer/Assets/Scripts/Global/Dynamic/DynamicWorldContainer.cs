@@ -341,7 +341,7 @@ namespace Global.Dynamic
             );
 
             var minimapPlugin = MinimapPlugin.NewInstance(container.MvcManager, container.MapRendererContainer, placesAPIService,
-                staticContainer.RealmData, container.ChatMessagesBus, staticContainer.ScenesCache,
+                container.RealmController, container.ChatMessagesBus, staticContainer.ScenesCache,
                 mainUIView, mapPathEventBus, staticContainer.SceneRestrictionBusController,
                 $"{dynamicWorldParams.StartParcel.x},{dynamicWorldParams.StartParcel.y}",
                 out var minimap

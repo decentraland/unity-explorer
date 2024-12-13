@@ -72,7 +72,7 @@ namespace DCL.PluginSystem.Global
             IMVCManager mvcManager,
             MapRendererContainer mapRendererContainer,
             IPlacesAPIService placesAPIService,
-            IRealmData realmData,
+            IRealmController realmController,
             IChatMessagesBus chatMessagesBus,
             IScenesCache scenesCache,
             MainUIView mainUIView,
@@ -81,7 +81,7 @@ namespace DCL.PluginSystem.Global
             string startParcelInGenesis,
             out Lazy<MinimapController> minimap)
         {
-            var instance = new MinimapPlugin(mvcManager, mapRendererContainer, placesAPIService, realmData, chatMessagesBus, scenesCache, mainUIView, mapPathEventBus, sceneRestrictionBusController, startParcelInGenesis);
+            var instance = new MinimapPlugin(mvcManager, mapRendererContainer, placesAPIService, realmController, chatMessagesBus, scenesCache, mainUIView, mapPathEventBus, sceneRestrictionBusController, startParcelInGenesis);
             minimap = instance.lazyMap;
             return instance;
         }
