@@ -5,7 +5,7 @@ using UnityEngine.AddressableAssets;
 
 namespace DCL.StylizedSkybox.Scripts
 {
-    [CreateAssetMenu(menuName = "Create Stylized Skybox Settings", fileName = "StylizedSkyboxSettings", order = 0)]
+    [CreateAssetMenu(menuName = "DCL/SO/Stylized Skybox Settings", fileName = "StylizedSkyboxSettings")]
     public class StylizedSkyboxSettingsAsset : ScriptableObject
     {
         public StylizedSkyboxControllerRef StylizedSkyboxPrefab = null!;
