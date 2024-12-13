@@ -1,10 +1,15 @@
-﻿using UnityEngine;
+﻿using DCL.InWorldCamera.CameraReelStorageService.Schemas;
+using UnityEngine;
 
 namespace DCL.InWorldCamera
 {
     public struct InWorldCameraComponent { }
 
-    public struct ToggleInWorldCameraRequest { public bool IsEnable; }
+    public struct ToggleInWorldCameraRequest
+    {
+        public bool IsEnable;
+        public string Source;
+    }
     public struct TakeScreenshotRequest { public string Source; }
     public struct CameraTarget { public CharacterController Value; }
 
@@ -12,6 +17,7 @@ namespace DCL.InWorldCamera
     {
         public Vector2 Translation;
         public float Panning;
+        public float Tilting;
         public bool IsRunning;
 
         public Vector2 Aim;
@@ -24,6 +30,13 @@ namespace DCL.InWorldCamera
         public float Current;
         public float Velocity;
         public float Target;
+    }
+
+    public struct CameraDampedTilt
+    {
+        public float Current;
+        public float Target;
+        public float Velocity;
     }
 
     public struct CameraDampedAim

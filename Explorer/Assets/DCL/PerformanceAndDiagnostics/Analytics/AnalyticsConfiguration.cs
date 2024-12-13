@@ -102,19 +102,19 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         public void SetWriteKey(string writeKey) =>
             segmentWriteKey = writeKey;
 
-        public bool EventIsEnabled(string eventName)
+        public void Initialize()
         {
             if (eventToggles == null)
-            {
                 eventToggles = new Dictionary<string, AnalyticsEventToggle>();
 
-                foreach (AnalyticsGroup group in groups)
+            foreach (AnalyticsGroup group in groups)
                 foreach (AnalyticsEventToggle eventToggle in group.events)
-                    eventToggles.Add(eventToggle.eventName, eventToggle);
-            }
-
-            return eventToggles.TryGetValue(eventName, out AnalyticsEventToggle toggle) && toggle.isEnabled;
+                    if (eventToggles.TryAdd(eventToggle.eventName, eventToggle))
+                        eventToggles[eventToggle.eventName].isEnabled = true;
         }
+
+        public bool EventIsEnabled(string eventName) =>
+            eventToggles.TryGetValue(eventName, out AnalyticsEventToggle toggle) && toggle.isEnabled;
 
         [Serializable]
         public class AnalyticsEventToggle

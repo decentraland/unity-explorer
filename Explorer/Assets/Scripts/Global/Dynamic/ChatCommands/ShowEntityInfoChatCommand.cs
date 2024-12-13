@@ -12,7 +12,8 @@ namespace Global.Dynamic.ChatCommands
         private const string COMMAND_SHOW = "show-entity-components";
         private const string EXAMPLE = "/show-entity-components scene_name entity_id";
 
-        public static readonly Regex REGEX = new ($@"^/({COMMAND_SHOW}).*", RegexOptions.Compiled);
+        public Regex Regex { get; } = new ($"^/({COMMAND_SHOW}).*", RegexOptions.Compiled);
+        public string Description => "<b>/show <i><entity></i></b> - Show entity components info";
 
         private readonly IWorldInfoHub worldInfoHub;
 
