@@ -3,6 +3,8 @@ using Cysharp.Threading.Tasks;
 using DCL.Analytics.Systems;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.DebugUtilities;
+using DCL.InWorldCamera.CameraReelStorageService;
+using DCL.InWorldCamera.Systems;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Profiling;
 using DCL.Utilities;
@@ -11,6 +13,7 @@ using ECS;
 using ECS.SceneLifeCycle;
 using System.Threading;
 using Utility.Json;
+using ScreencaptureAnalyticsSystem = DCL.Analytics.Systems.ScreencaptureAnalyticsSystem;
 
 namespace DCL.PluginSystem.Global
 {
@@ -22,6 +25,7 @@ namespace DCL.PluginSystem.Global
         private readonly IWeb3IdentityCache identityCache;
         private readonly IAnalyticsController analytics;
         private readonly IDebugContainerBuilder debugContainerBuilder;
+        private readonly ICameraReelStorageService cameraReelStorageService;
 
         private readonly WalkedDistanceAnalytics walkedDistanceAnalytics;
 
@@ -32,7 +36,8 @@ namespace DCL.PluginSystem.Global
             IScenesCache scenesCache,
             ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy,
             IWeb3IdentityCache identityCache,
-            IDebugContainerBuilder debugContainerBuilder
+            IDebugContainerBuilder debugContainerBuilder,
+            ICameraReelStorageService cameraReelStorageService
         )
         {
             this.analytics = analytics;
@@ -42,6 +47,7 @@ namespace DCL.PluginSystem.Global
             this.scenesCache = scenesCache;
             this.identityCache = identityCache;
             this.debugContainerBuilder = debugContainerBuilder;
+            this.cameraReelStorageService = cameraReelStorageService;
 
             walkedDistanceAnalytics = new WalkedDistanceAnalytics(analytics, mainPlayerAvatarBaseProxy);
         }
@@ -55,6 +61,7 @@ namespace DCL.PluginSystem.Global
             TimeSpentInWorldAnalyticsSystem.InjectToWorld(ref builder, analytics, realmData);
             MovementBadgesSystem.InjectToWorld(ref builder, analytics, realmData, arguments.PlayerEntity, identityCache, debugContainerBuilder, walkedDistanceAnalytics);
             AnalyticsEmotesSystem.InjectToWorld(ref builder, analytics, realmData, arguments.PlayerEntity);
+            ScreencaptureAnalyticsSystem.InjectToWorld(ref builder, analytics, cameraReelStorageService);
         }
 
         public void Dispose()

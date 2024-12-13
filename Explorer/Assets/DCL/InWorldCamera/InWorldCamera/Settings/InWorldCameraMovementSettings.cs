@@ -22,5 +22,11 @@ namespace DCL.InWorldCamera.Settings
         [field: SerializeField] public float RotationDamping { get; private set; } = 0.1f;
         [field: SerializeField] public float MinVerticalAngle { get; private set; } = -90f;
         [field: SerializeField] public float MaxVerticalAngle { get; private set; } = 90f;
+
+        [field: Header("TILT")]
+        [field: SerializeField] public float TiltSpeed { get; private set; } = 30;
+        [field: SerializeField] public int MaxTiltPerFrame { get; private set; } = 30;
+        [field: SerializeField] public int MaxTiltAngle { get; private set; } = 360;
+        [field: SerializeField] public float TiltDamping { get; private set; } = 0.1f;
     }
 }

@@ -8,6 +8,7 @@ using DCL.SceneRestrictionBusController.SceneRestrictionBus;
 using DCL.UI.MainUI;
 using ECS;
 using ECS.SceneLifeCycle;
+using ECS.SceneLifeCycle.Realm;
 using Global.Dynamic;
 using MVC;
 using System;
@@ -20,9 +21,16 @@ namespace DCL.PluginSystem.Global
         private readonly IMVCManager mvcManager;
         private readonly Lazy<MinimapController> lazyMap;
 
-        private MinimapPlugin(IMVCManager mvcManager, MapRendererContainer mapRendererContainer, IPlacesAPIService placesAPIService,
-            IRealmData realmData, IChatMessagesBus chatMessagesBus, IScenesCache scenesCache, MainUIView mainUIView,
-            IMapPathEventBus mapPathEventBus, ISceneRestrictionBusController sceneRestrictionBusController,
+        private MinimapPlugin(
+            IMVCManager mvcManager,
+            MapRendererContainer mapRendererContainer,
+            IPlacesAPIService placesAPIService,
+            IRealmController realmController,
+            IChatMessagesBus chatMessagesBus,
+            IScenesCache scenesCache,
+            MainUIView mainUIView,
+            IMapPathEventBus mapPathEventBus,
+            ISceneRestrictionBusController sceneRestrictionBusController,
             string startParcelInGenesis)
         {
             this.mvcManager = mvcManager;
@@ -39,13 +47,25 @@ namespace DCL.PluginSystem.Global
                     mapRendererContainer.MapRenderer,
                     mvcManager,
                     placesAPIService,
-                    realmData,
+                realmController,
                     chatMessagesBus,
                     scenesCache,
                     mapPathEventBus,
                     sceneRestrictionBusController,
                     startParcelInGenesis);
             });
+        }
+
+        public void Dispose()
+        {
+            if (lazyMap.IsValueCreated)
+                lazyMap.Value!.Dispose();
+        }
+
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
+        {
+            TrackPlayerPositionSystem? trackPlayerPositionSystem = TrackPlayerPositionSystem.InjectToWorld(ref builder);
+            lazyMap.Value.HookPlayerPositionTrackingSystem(trackPlayerPositionSystem);
         }
 
         public static MinimapPlugin NewInstance(
@@ -64,18 +84,6 @@ namespace DCL.PluginSystem.Global
             var instance = new MinimapPlugin(mvcManager, mapRendererContainer, placesAPIService, realmData, chatMessagesBus, scenesCache, mainUIView, mapPathEventBus, sceneRestrictionBusController, startParcelInGenesis);
             minimap = instance.lazyMap;
             return instance;
-        }
-
-        public void Dispose()
-        {
-            if (lazyMap.IsValueCreated)
-                lazyMap.Value!.Dispose();
-        }
-
-        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
-        {
-            TrackPlayerPositionSystem? trackPlayerPositionSystem = TrackPlayerPositionSystem.InjectToWorld(ref builder);
-            lazyMap.Value.HookPlayerPositionTrackingSystem(trackPlayerPositionSystem);
         }
 
         public UniTask InitializeAsync(MinimapSettings settings, CancellationToken ct)
