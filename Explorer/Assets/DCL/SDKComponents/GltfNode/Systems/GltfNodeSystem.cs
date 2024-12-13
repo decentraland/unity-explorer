@@ -87,6 +87,11 @@ namespace DCL.SDKComponents.GltfNode.Systems
             var nodeCloneTransform = nodeClone.transform;
             nodeTransform.gameObject.SetActive(false);
 
+            // The original GO name has to be propagated to the clone, so that any other GLTFNode looked up
+            // In the same GLTF can be found through the existent GLTFNode cloned GO.
+            nodeTransform.gameObject.name += "(o)";
+            nodeCloneTransform.gameObject.name = nodeCloneTransform.gameObject.name.Replace("(Clone)", "");
+
             nodeCloneTransform.localPosition = nodeTransform.localPosition;
             nodeCloneTransform.localRotation = nodeTransform.localRotation;
             nodeCloneTransform.localScale = nodeTransform.localScale;
@@ -103,11 +108,7 @@ namespace DCL.SDKComponents.GltfNode.Systems
             // if SDKTransform is marked as Dirty, the transform system will re-parent its GO to the scene root
             sdkTransform.IsDirty = false;
 
-            var gltfNodeComponent = new GltfNodeComponent()
-            {
-                originalNodeGameObject = nodeTransform.gameObject,
-                clonedNodeTransform = nodeCloneTransform
-            };
+            var gltfNodeComponent = new GltfNodeComponent(nodeTransform.gameObject, nodeCloneTransform);
             World.Add(entity, gltfNodeComponent, new TransformComponent(nodeCloneTransform), sdkTransform);
 
             // Put transform on SDK entity so that the scene can read it
@@ -126,57 +127,81 @@ namespace DCL.SDKComponents.GltfNode.Systems
 
         [Query]
         [None(typeof(PBGltfNode), typeof(DeleteEntityIntention))]
-        private void HandleComponentRemoval(Entity entity, in GltfNodeComponent gltfNodeComponent, ref TransformComponent transformComponent, ref SDKTransform sdkTransform) =>
-            Dispose(entity, in gltfNodeComponent, ref transformComponent, ref sdkTransform);
+        private void HandleComponentRemoval(Entity entity, CRDTEntity crdtEntity, in GltfNodeComponent gltfNodeComponent, ref TransformComponent transformComponent, ref SDKTransform sdkTransform) =>
+            Dispose(entity, crdtEntity, in gltfNodeComponent, ref transformComponent, ref sdkTransform);
 
         [Query]
         [All(typeof(DeleteEntityIntention))]
-        private void HandleEntityDeletion(Entity entity, in GltfNodeComponent gltfNodeComponent, ref TransformComponent transformComponent, ref SDKTransform sdkTransform) =>
-            Dispose(entity, in gltfNodeComponent, ref transformComponent, ref sdkTransform);
+        private void HandleEntityDeletion(Entity entity, CRDTEntity crdtEntity, in GltfNodeComponent gltfNodeComponent, ref TransformComponent transformComponent, ref SDKTransform sdkTransform) =>
+            Dispose(entity, crdtEntity, in gltfNodeComponent, ref transformComponent, ref sdkTransform);
 
         [Query]
-        private void FinalizeComponents(Entity entity, in GltfNodeComponent gltfNodeComponent, ref TransformComponent transformComponent, ref SDKTransform sdkTransform) =>
-            Dispose(entity, in gltfNodeComponent, ref transformComponent, ref sdkTransform);
+        private void FinalizeComponents(Entity entity, CRDTEntity crdtEntity, in GltfNodeComponent gltfNodeComponent, ref TransformComponent transformComponent, ref SDKTransform sdkTransform) =>
+            Dispose(entity, crdtEntity, in gltfNodeComponent, ref transformComponent, ref sdkTransform);
 
         public void FinalizeComponents(in Query query) =>
             FinalizeComponentsQuery(World);
 
-        private void Dispose(Entity entity, in GltfNodeComponent gltfNodeComponent, ref TransformComponent transformComponent, ref SDKTransform sdkTransform)
+        private void Dispose(Entity entity, CRDTEntity crdtEntity, in GltfNodeComponent gltfNodeComponent, ref TransformComponent transformComponent, ref SDKTransform sdkTransform)
         {
             stopWatch.Restart();
 
+            // assign a regular Transform
+            var normalTransformComponent = transformPool.CreateTransformComponent(entity, crdtEntity);
+            normalTransformComponent.Transform.SetParent(transformComponent.Transform.parent);
+            normalTransformComponent.Transform.localPosition = transformComponent.Transform.localPosition;
+            normalTransformComponent.Transform.localRotation = transformComponent.Transform.localRotation;
+            normalTransformComponent.Transform.localScale = transformComponent.Transform.localScale;
+            normalTransformComponent.Transform.SetParent(null);
+            World.Add(entity, normalTransformComponent);
+
             // Clean GltfNode entity
             // TODO: Only remove children GO that are mapped to CRDT Entities (GLTF node may have other GLTF child nodes)
-            Transform[] children = new Transform[gltfNodeComponent.clonedNodeTransform.childCount];
-            int index = 0;
-            foreach (Transform child in gltfNodeComponent.clonedNodeTransform)
+            int nonOriginalChildrenCount = gltfNodeComponent.clonedNodeTransform.childCount - gltfNodeComponent.originalNodeChildrenNames.Count;
+            if (nonOriginalChildrenCount > 0)
             {
-                children[index] = child;
-                index++;
-            }
-            foreach (Transform child in children)
-            {
-                child.parent.SetParent(null);
-                Debug.Log($"PRAVS - UN-PARENTING child...", child);
-                // TODO: update every child entity transform parent to be the root scene ON CRDT AS WELL...
-            }
+                Transform[] childrenToDetach = new Transform[nonOriginalChildrenCount];
+                int index = 0;
+                foreach (Transform child in gltfNodeComponent.clonedNodeTransform)
+                {
+                    if (!gltfNodeComponent.originalNodeChildrenNames.Contains(child.name))
+                    {
+                        childrenToDetach[index] = child;
+                        index++;
+                    }
+                }
+                foreach (Transform child in childrenToDetach)
+                {
+                    // child.parent.SetParent(null);
+                    child.parent.SetParent(normalTransformComponent.Transform);
+                    Debug.Log($"PRAVS - UN-PARENTING child...", child);
 
-            // Replace duplicated transform by a dummy one
-            /*transformComponent.Transform = transformPool.Get();
-            transformComponent.UpdateCache();*/
+                    /*if (child.name.ToLower().StartsWith("entity"))
+                    {
 
-            // destroy duplicated node object
-            // GameObject.Destroy(gltfNodeComponent.clonedNodeTransform.gameObject);
-            GameObject.DestroyImmediate(gltfNodeComponent.clonedNodeTransform.gameObject); // to measure the real destruction cost
+                    }
+                    else
+                    {
+
+                    }*/
+
+                    // TODO: update every child entity transform parent to be the root scene ON CRDT AS WELL...
+                }
+            }
 
             // Reset original GO
+            gltfNodeComponent.originalNodeGameObject.name = gltfNodeComponent.originalNodeGameObject.name.Replace("(o)", "");
             gltfNodeComponent.originalNodeGameObject.SetActive(true);
 
             // TODO: Remove SDKTransform from CRDT Entity as well ???
 
             sdkTransformPool.Release(sdkTransform);
-            World.Remove<TransformComponent, SDKTransform, GltfNodeComponent>(entity);
-            // World.Remove<SDKTransform, GltfNodeComponent>(entity);
+            // World.Remove<TransformComponent, SDKTransform, GltfNodeComponent>(entity);
+            World.Remove<SDKTransform, GltfNodeComponent>(entity);
+
+            // destroy duplicated node object
+            // GameObject.Destroy(gltfNodeComponent.clonedNodeTransform.gameObject);
+            GameObject.DestroyImmediate(gltfNodeComponent.clonedNodeTransform.gameObject); // to measure the real destruction cost
 
             stopWatch.Stop();
             Debug.Log($"PRAVS - Dispose() - milliseconds: {stopWatch.ElapsedMilliseconds}");
