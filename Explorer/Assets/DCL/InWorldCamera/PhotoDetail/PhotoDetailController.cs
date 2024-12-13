@@ -28,7 +28,7 @@ namespace DCL.InWorldCamera.PhotoDetail
         public event Action Activated;
         public event Action JumpToPhotoPlace;
 
-        private readonly PhotoDetailInfoController photoDetailInfoController;
+        public readonly PhotoDetailInfoController PhotoDetailInfoController;
         private readonly ICameraReelScreenshotsStorage cameraReelScreenshotsStorage;
         private readonly ISystemClipboard systemClipboard;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
@@ -55,14 +55,14 @@ namespace DCL.InWorldCamera.PhotoDetail
             string shareToXMessage)
             : base(viewFactory)
         {
-            this.photoDetailInfoController = photoDetailInfoController;
+            this.PhotoDetailInfoController = photoDetailInfoController;
             this.cameraReelScreenshotsStorage = cameraReelScreenshotsStorage;
             this.systemClipboard = systemClipboard;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.webBrowser = webBrowser;
             this.shareToXMessage = shareToXMessage;
 
-            this.photoDetailInfoController.JumpIn += JumpInClicked;
+            this.PhotoDetailInfoController.JumpIn += JumpInClicked;
         }
 
         private void ShowDeleteModal()
@@ -144,7 +144,7 @@ namespace DCL.InWorldCamera.PhotoDetail
             HideDeleteModal();
 
             viewInstance.mainImageCanvasGroup.alpha = 0;
-            photoDetailInfoController.Release();
+            PhotoDetailInfoController.Release();
         }
 
         protected override void OnBeforeViewShow()
@@ -204,7 +204,7 @@ namespace DCL.InWorldCamera.PhotoDetail
             viewInstance!.mainImageLoadingSpinner.gameObject.SetActive(true);
             CameraReelResponseCompact reel = inputData.AllReels[reelIndex];
 
-            UniTask detailInfoTask = photoDetailInfoController.ShowPhotoDetailInfoAsync(reel.id, ct);
+            UniTask detailInfoTask = PhotoDetailInfoController.ShowPhotoDetailInfoAsync(reel.id, ct);
             Texture2D reelTexture = await cameraReelScreenshotsStorage.GetScreenshotImageAsync(reel.url, ct);
             viewInstance!.mainImage.texture = reelTexture;
             aspectRatioFitter.aspectRatio = reelTexture.width * 1f / reelTexture.height;

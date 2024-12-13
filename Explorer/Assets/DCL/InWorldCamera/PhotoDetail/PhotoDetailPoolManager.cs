@@ -8,6 +8,7 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Profiles;
 using DCL.WebRequests;
 using MVC;
+using System;
 using UnityEngine;
 using UnityEngine.Pool;
 
@@ -43,7 +44,8 @@ namespace DCL.InWorldCamera.PhotoDetail
             int visiblePersonDefaultCapacity,
             int visiblePersonMaxSize,
             int equippedWearableDefaultCapacity,
-            int equippedWearableMaxSize)
+            int equippedWearableMaxSize,
+            Action wearableMarketClicked)
         {
             visiblePersonPool = new ObjectPool<VisiblePersonController>(
                 createFunc: () => CreateVisiblePerson(visiblePersonPrefab, visiblePersonParent, webRequestController, profileRepository, mvcManager, wearableStorage, wearablesProvider, chatEntryConfiguration, passportBridge),
@@ -55,7 +57,7 @@ namespace DCL.InWorldCamera.PhotoDetail
                 visiblePersonMaxSize);
 
             equippedWearablePool = new ObjectPool<EquippedWearableController>(
-                createFunc: () => CreateEquippedWearable(equippedWearablePrefab, webBrowser, decentralandUrlsSource, thumbnailProvider, rarityBackgrounds, rarityColors, categoryIcons),
+                createFunc: () => CreateEquippedWearable(equippedWearablePrefab, webBrowser, decentralandUrlsSource, thumbnailProvider, rarityBackgrounds, rarityColors, categoryIcons, wearableMarketClicked),
                 actionOnGet: equippedWearable => equippedWearable.view.gameObject.SetActive(false),
                 actionOnRelease: equippedWearable => EquippedWearableRelease(equippedWearable, unusedEquippedWearablePoolObjectParent),
                 actionOnDestroy: equippedWearable => GameObject.Destroy(equippedWearable.view.gameObject),
@@ -90,10 +92,13 @@ namespace DCL.InWorldCamera.PhotoDetail
             IThumbnailProvider thumbnailProvider,
             NftTypeIconSO rarityBackgrounds,
             NFTColorsSO rarityColors,
-            NftTypeIconSO categoryIcons)
+            NftTypeIconSO categoryIcons,
+            Action marketClicked)
         {
             EquippedWearableView view = GameObject.Instantiate(equippedWearablePrefab);
-            return new EquippedWearableController(view, webBrowser, decentralandUrlsSource, thumbnailProvider, rarityBackgrounds, rarityColors, categoryIcons);
+            EquippedWearableController controller = new EquippedWearableController(view, webBrowser, decentralandUrlsSource, thumbnailProvider, rarityBackgrounds, rarityColors, categoryIcons);
+            controller.MarketClicked += marketClicked;
+            return controller;
         }
 
         private void VisiblePersonRelease(VisiblePersonController visiblePerson, Sprite emptyProfileImage)

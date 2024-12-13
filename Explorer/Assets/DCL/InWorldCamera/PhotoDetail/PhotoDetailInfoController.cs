@@ -27,6 +27,8 @@ namespace DCL.InWorldCamera.PhotoDetail
     /// </summary>
     public class PhotoDetailInfoController : IDisposable
     {
+        public event Action WearableMarketClicked;
+
         private const int VISIBLE_PERSON_DEFAULT_POOL_SIZE = 20;
         private const int EQUIPPED_WEARABLE_DEFAULT_POOL_SIZE = 20;
         private const int VISIBLE_PERSON_MAX_POOL_CAPACITY = 10000;
@@ -90,7 +92,8 @@ namespace DCL.InWorldCamera.PhotoDetail
                 VISIBLE_PERSON_DEFAULT_POOL_SIZE,
                 VISIBLE_PERSON_MAX_POOL_CAPACITY,
                 EQUIPPED_WEARABLE_DEFAULT_POOL_SIZE,
-                EQUIPPED_WEARABLE_MAX_POOL_CAPACITY);
+                EQUIPPED_WEARABLE_MAX_POOL_CAPACITY,
+                () => WearableMarketClicked?.Invoke());
 
             this.view.jumpInButton.onClick.AddListener(JumpInClicked);
             this.view.ownerProfileButton.onClick.AddListener(ShowOwnerPassportClicked);
@@ -101,6 +104,7 @@ namespace DCL.InWorldCamera.PhotoDetail
             view.jumpInButton.onClick.RemoveListener(JumpInClicked);
             view.ownerProfileButton.onClick.RemoveListener(ShowOwnerPassportClicked);
             JumpIn = null;
+            WearableMarketClicked = null;
             teleportCts.SafeCancelAndDispose();
         }
 

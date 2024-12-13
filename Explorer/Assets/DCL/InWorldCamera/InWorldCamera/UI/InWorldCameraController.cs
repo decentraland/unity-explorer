@@ -70,7 +70,7 @@ namespace DCL.InWorldCamera.UI
             viewInstance.CameraReelButton.onClick.RemoveListener(OpenCameraReelGallery);
             viewInstance.ShortcutsInfoButton.onClick.RemoveListener(ToggleShortcutsInfo);
 
-            storageService.ScreenshotUploaded += OnScreenshotUploaded;
+            storageService.ScreenshotUploaded -= OnScreenshotUploaded;
             sidebarButton.onClick.RemoveListener(ToggleInWorldCamera);
 
             base.Dispose();
