@@ -76,6 +76,16 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
 
             return elements;
         }
+
+        public void RemoveReelId(string reelId)
+        {
+            for (int i = 0; i < AllOrderedResponses.Count; i++)
+                if (AllOrderedResponses[i].id == reelId)
+                {
+                    AllOrderedResponses.RemoveAt(i);
+                    break;
+                }
+        }
     }
 
     public struct PagedCameraReelManagerParameters

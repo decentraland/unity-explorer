@@ -259,6 +259,8 @@ namespace DCL.InWorldCamera.CameraReelGallery
                     ReleaseGridView(monthGridView);
                 }
 
+                pagedCameraReelManager.RemoveReelId(reelToDeleteInfo.Id);
+
                 ScreenshotDeleted?.Invoke();
                 StorageUpdated?.Invoke(response);
 
