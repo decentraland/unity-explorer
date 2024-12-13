@@ -573,10 +573,6 @@ namespace Global.Dynamic
                 new ErrorPopupPlugin(container.MvcManager, assetsProvisioner),
                 connectionStatusPanelPlugin,
                 minimapPlugin,
-//                new MinimapPlugin(container.MvcManager, container.MapRendererContainer, placesAPIService,
-//                    container.RealmController, container.ChatMessagesBus, realmNavigator, staticContainer.ScenesCache,
-//                    mainUIView, mapPathEventBus, staticContainer.SceneRestrictionBusController,
-//                    $"{dynamicWorldParams.StartParcel.x},{dynamicWorldParams.StartParcel.y}"),
                 new ChatPlugin(assetsProvisioner, container.MvcManager, container.ChatMessagesBus, chatHistory, entityParticipantTable, nametagsData, dclInput, unityEventSystem, mainUIView, staticContainer.InputBlock, globalWorld, playerEntity),
                 new ExplorePanelPlugin(
                     assetsProvisioner,
