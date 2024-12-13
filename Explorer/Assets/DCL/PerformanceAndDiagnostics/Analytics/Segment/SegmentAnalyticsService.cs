@@ -24,8 +24,8 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             analytics.Flush();
         }
 
-        public void Identify(string userId, JsonObject? traits = null) =>
-            analytics.Identify(userId, traits!);
+        public void Identify(string? userId, JsonObject? traits = null) =>
+            analytics.Identify(userId!, traits!);
 
         public void Track(string eventName, JsonObject? properties = null) =>
             analytics.Track(eventName, properties!);

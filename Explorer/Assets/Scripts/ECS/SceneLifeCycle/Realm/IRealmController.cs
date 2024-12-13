@@ -8,6 +8,7 @@ namespace ECS.SceneLifeCycle.Realm
     {
         GenesisCity,
         World,
+        LocalScene
     }
 
     public interface IRealmController
@@ -34,5 +35,8 @@ namespace ECS.SceneLifeCycle.Realm
     {
         public static bool IsGenesis(this IRealmController realmController) =>
             realmController.Type is RealmType.GenesisCity;
+        
+        public static bool IsLocalScene(this IRealmController realmController) =>
+            realmController.Type is RealmType.LocalScene;
     }
 }

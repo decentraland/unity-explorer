@@ -27,10 +27,12 @@ namespace Global.Dynamic.ChatCommands
         // Parameters to URL mapping
         private readonly Dictionary<string, string> paramUrls;
 
-        public static readonly Regex REGEX =
+        public Regex Regex { get; } =
             new (
                 $@"^/({COMMAND_WORLD}|{ChatCommandsUtils.COMMAND_GOTO})\s+((?!-?\d+\s*,\s*-?\d+$).+?)(?:\s+(-?\d+)\s*,\s*(-?\d+))?$",
                 RegexOptions.Compiled);
+        public string Description => "<b>/world <i><world></i></b> - Teleport to a different realm";
+
         private readonly URLDomain worldDomain = URLDomain.FromString(IRealmNavigator.WORLDS_DOMAIN);
 
         private readonly Dictionary<string, URLAddress> worldAddressesCaches = new ();

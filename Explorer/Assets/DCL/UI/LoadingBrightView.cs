@@ -19,19 +19,19 @@ namespace DCL.UI
         public AudioClipConfig LoadingFinishedAudio { get; private set; }
 
 
-        public void StartLoadingAnimation(GameObject loadingHide)
+        public void StartLoadingAnimation(GameObject? loadingHide)
         {
             loadingTween.Kill();
             gameObject.SetActive(true);
-            loadingHide.SetActive(false);
+            loadingHide?.SetActive(false);
             loadingBrightObject.anchoredPosition = new Vector2(-referenceParent.rect.width, loadingBrightObject.anchoredPosition.y);
             loadingTween = loadingBrightObject.DOAnchorPosX(referenceParent.rect.width, 1f).SetEase(Ease.Linear).SetLoops(-1, LoopType.Restart);
         }
 
-        public void FinishLoadingAnimation(GameObject loadingHide)
+        public void FinishLoadingAnimation(GameObject? loadingHide)
         {
             gameObject.SetActive(false);
-            loadingHide.SetActive(true);
+            loadingHide?.SetActive(true);
             loadingTween.Kill();
             UIAudioEventsBus.Instance.SendPlayAudioEvent(LoadingFinishedAudio);
         }

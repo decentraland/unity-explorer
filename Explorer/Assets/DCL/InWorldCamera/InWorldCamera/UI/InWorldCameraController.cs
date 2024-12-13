@@ -13,23 +13,28 @@ using System.Diagnostics;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.UI;
+using Utility;
+using CancellationTokenSource = System.Threading.CancellationTokenSource;
 
 namespace DCL.InWorldCamera.UI
 {
     /// <summary>
-    /// Handles Logic for the InWorldCamera HUD that appears when user enables InWorldCamera.
+    ///     Handles Logic for the InWorldCamera HUD that appears when user enables InWorldCamera.
     /// </summary>
     public class InWorldCameraController : ControllerBase<InWorldCameraView>
     {
+        private const string SOURCE_BUTTON = "Button";
+
         private readonly Button sidebarButton;
         private readonly World world;
         private readonly IMVCManager mvcManager;
         private readonly ICameraReelStorageService storageService;
 
-        private ScreencaptureShortcutsController shortcutsController;
         private SingleInstanceEntity? cameraInternal;
 
         private bool shortcutPanelIsOpen;
+
+        private CancellationTokenSource ctx;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Overlay;
         private SingleInstanceEntity? camera => cameraInternal ??= world.CacheCamera();
@@ -44,6 +49,9 @@ namespace DCL.InWorldCamera.UI
             this.storageService = storageService;
             this.sidebarButton = sidebarButton;
 
+            ctx = new CancellationTokenSource();
+
+            storageService.ScreenshotUploaded += OnScreenshotUploaded;
             sidebarButton.onClick.AddListener(ToggleInWorldCamera);
         }
 
@@ -53,9 +61,6 @@ namespace DCL.InWorldCamera.UI
             viewInstance.TakeScreenshotButton.onClick.AddListener(RequestTakeScreenshot);
             viewInstance.CameraReelButton.onClick.AddListener(OpenCameraReelGallery);
             viewInstance.ShortcutsInfoButton.onClick.AddListener(ToggleShortcutsInfo);
-
-            shortcutsController = new ScreencaptureShortcutsController(() => viewInstance.ShortcutsInfoPanel);
-            mvcManager.RegisterController(shortcutsController);
         }
 
         public override void Dispose()
@@ -65,9 +70,20 @@ namespace DCL.InWorldCamera.UI
             viewInstance.CameraReelButton.onClick.RemoveListener(OpenCameraReelGallery);
             viewInstance.ShortcutsInfoButton.onClick.RemoveListener(ToggleShortcutsInfo);
 
+            storageService.ScreenshotUploaded += OnScreenshotUploaded;
             sidebarButton.onClick.RemoveListener(ToggleInWorldCamera);
 
             base.Dispose();
+        }
+
+        public void ToggleVisibility()
+        {
+            ctx = ctx.SafeRestart();
+
+            if (viewInstance!.isActiveAndEnabled)
+                viewInstance?.HideAsync(ctx.Token).Forget();
+            else
+                viewInstance?.ShowAsync(ctx.Token).Forget();
         }
 
         public void Show()
@@ -75,13 +91,19 @@ namespace DCL.InWorldCamera.UI
             sidebarButton.OnSelect(null);
             mvcManager.ShowAsync(IssueCommand(new ControllerNoData()));
 
-            bool hasSpace = storageService.StorageStatus.HasFreeSpace;
+            AdjustToStorageSpace(storageService.StorageStatus.HasFreeSpace);
+        }
+
+        private void AdjustToStorageSpace(bool hasSpace)
+        {
             viewInstance?.TakeScreenshotButton.gameObject.SetActive(hasSpace);
             viewInstance?.NoStorageNotification.gameObject.SetActive(!hasSpace);
         }
 
         public void Hide(bool isInstant = false)
         {
+            ToggleShortcutsInfo(toOpen: false);
+
             sidebarButton.OnDeselect(null);
             viewInstance?.HideAsync(default(CancellationToken), isInstant).Forget();
         }
@@ -108,7 +130,7 @@ namespace DCL.InWorldCamera.UI
         private void RequestTakeScreenshot()
         {
             if (!world.Has<TakeScreenshotRequest>(camera!.Value))
-                world.Add(camera!.Value, new TakeScreenshotRequest { Source = "UI" });
+                world.Add(camera!.Value, new TakeScreenshotRequest { Source = SOURCE_BUTTON });
         }
 
         private void RequestDisableInWorldCamera()
@@ -120,7 +142,7 @@ namespace DCL.InWorldCamera.UI
         private void ToggleInWorldCamera()
         {
             if (!world.Has<ToggleInWorldCameraRequest>(camera!.Value))
-                world.Add(camera!.Value, new ToggleInWorldCameraRequest { IsEnable = !world.Has<InWorldCameraComponent>(camera!.Value) });
+                world.Add(camera!.Value, new ToggleInWorldCameraRequest { IsEnable = !world.Has<InWorldCameraComponent>(camera!.Value), Source = SOURCE_BUTTON });
         }
 
         private void ToggleShortcutsInfo() =>
@@ -130,19 +152,20 @@ namespace DCL.InWorldCamera.UI
         {
             if (toOpen)
             {
-                shortcutsController.LaunchViewLifeCycleAsync(new CanvasOrdering(shortcutsController.Layer, 0), new ControllerNoData(), default(CancellationToken))
-                                   .Forget();
-
+                viewInstance?.ShortcutsInfoPanel.ShowAsync(CancellationToken.None).Forget();
                 viewInstance?.ShortcutsInfoButton.OnSelect(null);
                 shortcutPanelIsOpen = true;
             }
             else
             {
-                shortcutsController.HideAsync(CancellationToken.None).Forget();
+                viewInstance?.ShortcutsInfoPanel.HideAsync(CancellationToken.None).Forget();
                 viewInstance?.ShortcutsInfoButton.OnDeselect(null);
                 shortcutPanelIsOpen = false;
             }
         }
+
+        private void OnScreenshotUploaded(CameraReelResponse _, CameraReelStorageStatus storage, string __) =>
+            AdjustToStorageSpace(storage.HasFreeSpace);
 
         [Conditional("DEBUG")]
         public void DebugCapture(Texture2D screenshot, ScreenshotMetadata metadata)
