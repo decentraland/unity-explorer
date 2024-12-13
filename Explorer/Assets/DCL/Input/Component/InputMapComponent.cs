@@ -9,6 +9,15 @@ namespace DCL.Input.Component
     {
         public static readonly IReadOnlyList<Kind> VALUES = EnumUtils.Values<Kind>();
 
+        public static readonly Kind[] BLOCK_USER_INPUT =
+        {
+            Kind.IN_WORLD_CAMERA,
+            Kind.CAMERA,
+            Kind.SHORTCUTS,
+            Kind.PLAYER
+        };
+
+
         [Flags]
         public enum Kind
         {
