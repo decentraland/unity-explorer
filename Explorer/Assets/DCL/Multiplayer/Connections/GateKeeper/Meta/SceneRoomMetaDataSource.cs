@@ -36,7 +36,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
         public MetaData.Input GetMetadataInput() =>
             realmData.ScenesAreFixed
                 ? new MetaData.Input(realmData.RealmName, Vector2Int.zero)
-                : new MetaData.Input(realmData.RealmName, characterTransform.Position.ToParcel());
+                : new MetaData.Input(realmData.RealmName, new Vector2Int(20, 4));
 
         public async UniTask<MetaData> MetaDataAsync(MetaData.Input input, CancellationToken token)
         {
@@ -52,7 +52,8 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
             // TODO: instead of making a new request, Room Change request should be initiated when the scene definition is loaded by ECS,
             // currently these processes are completely separated
             var promise = AssetPromise<SceneDefinitions, GetSceneDefinitionList>.Create(world,
-                new GetSceneDefinitionList(entityDefinitionList, pointersList, new CommonLoadingArguments(realmData.Ipfs.EntitiesActiveEndpoint)),
+                new GetSceneDefinitionList(entityDefinitionList, pointersList,
+                    new CommonLoadingArguments(realmData.Ipfs.AssetBundleRegistry)),
                 PartitionComponent.TOP_PRIORITY);
 
             promise = await promise.ToUniTaskAsync(world, cancellationToken: token);
