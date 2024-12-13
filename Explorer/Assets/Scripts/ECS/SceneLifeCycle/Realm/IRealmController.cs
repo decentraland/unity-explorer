@@ -35,8 +35,11 @@ namespace ECS.SceneLifeCycle.Realm
     {
         public static bool IsGenesis(this IRealmController realmController) =>
             realmController.Type is RealmType.GenesisCity;
-        
+
         public static bool IsLocalScene(this IRealmController realmController) =>
             realmController.Type is RealmType.LocalScene;
+
+        public static bool IsWorld(this IRealmController realmController) =>
+            realmController.Type is RealmType.World;
     }
 }
