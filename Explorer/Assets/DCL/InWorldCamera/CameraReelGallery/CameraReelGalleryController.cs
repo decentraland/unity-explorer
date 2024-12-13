@@ -533,6 +533,10 @@ namespace DCL.InWorldCamera.CameraReelGallery
             loadNextPageCts.SafeCancelAndDispose();
             setPublicCts.SafeCancelAndDispose();
             deleteScreenshotCts.SafeCancelAndDispose();
+
+            HideDeleteModal();
+            if (contextMenuController is not null)
+                contextMenuController.Hide();
         }
 
         public void Dispose()
