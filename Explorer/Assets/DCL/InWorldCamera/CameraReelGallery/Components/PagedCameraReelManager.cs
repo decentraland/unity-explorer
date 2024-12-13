@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.InWorldCamera.CameraReelStorageService.Schemas;
+using DCL.InWorldCamera.ReelActions;
 using DCL.Optimization.Pools;
 using System;
 using System.Collections.Generic;
@@ -12,6 +13,7 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
     public class PagedCameraReelManager
     {
         public bool AllImagesLoaded { get; private set; }
+        public List<CameraReelResponseCompact> AllOrderedResponses { get; private set; } = new (32);
 
         private readonly ICameraReelStorageService cameraReelStorageService;
         private readonly string walletAddress;
@@ -43,11 +45,12 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
 
             currentLoadedImages += response.images.Count;
             AllImagesLoaded = currentLoadedImages == totalImages;
+            AllOrderedResponses.AddRange(response.images);
 
             Dictionary<DateTime, List<CameraReelResponseCompact>> elements = DictionaryPool<DateTime, List<CameraReelResponseCompact>>.Get();
             for (int i = 0; i < response.images.Count; i++)
             {
-                DateTime imageBucket = GetImageDateTime(response.images[i]);
+                DateTime imageBucket = ReelUtility.GetImageDateTime(response.images[i]);
 
                 if (!elements.ContainsKey(imageBucket))
                     elements[imageBucket] = listPool.Get();
@@ -56,15 +59,6 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
             }
 
             return elements;
-        }
-
-        public static DateTime GetImageDateTime(CameraReelResponseCompact image) =>
-            GetDateTimeFromString(image.dateTime);
-
-        public static DateTime GetDateTimeFromString(string epochString)
-        {
-            DateTime actualDateTime = !long.TryParse(epochString, out long unixTimestamp) ? new DateTime() : DateTimeOffset.FromUnixTimeSeconds(unixTimestamp).ToLocalTime().DateTime;
-            return new DateTime(actualDateTime.Year, actualDateTime.Month, 1, 0, 0, 0, 0);
         }
     }
 

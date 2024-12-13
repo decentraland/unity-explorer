@@ -6,6 +6,7 @@ using Segment.Analytics;
 using Segment.Serialization;
 using System;
 using System.Collections.Generic;
+using UnityEngine.Device;
 using UnityEngine.Pool;
 
 namespace Plugins.RustSegment.SegmentServerWrap
@@ -23,9 +24,13 @@ namespace Plugins.RustSegment.SegmentServerWrap
         }
 
         private const string EMPTY_JSON = "{}";
-        private volatile string cachedUserId = string.Empty;
+
+        private readonly string anonId;
+        private volatile string? cachedUserId;
+
         private readonly Dictionary<ulong, (Operation, List<MarshaledString>)> afterClean = new ();
         private readonly IContextSource contextSource = new ContextSource();
+
         private static volatile RustSegmentAnalyticsService? current;
 
         public RustSegmentAnalyticsService(string writerKey)
@@ -35,6 +40,8 @@ namespace Plugins.RustSegment.SegmentServerWrap
 
             if (current != null)
                 throw new Exception("Rust Segment previous instance is not disposed");
+
+            this.anonId = SystemInfo.deviceUniqueIdentifier!;
 
             using var mWriterKey = new MarshaledString(writerKey);
             bool result = NativeMethods.SegmentServerInitialize(mWriterKey.Ptr, Callback);
@@ -55,7 +62,7 @@ namespace Plugins.RustSegment.SegmentServerWrap
                 throw new Exception("Rust Segment dispose failed");
         }
 
-        public void Identify(string userId, JsonObject? traits = null)
+        public void Identify(string? userId, JsonObject? traits = null)
         {
             lock (afterClean)
             {
@@ -63,11 +70,12 @@ namespace Plugins.RustSegment.SegmentServerWrap
 
                 var list = ListPool<MarshaledString>.Get()!;
 
-                var mUserId = new MarshaledString(userId);
+                var mUserId = new MarshaledString(cachedUserId);
+                var mAnonId = new MarshaledString(anonId);
                 var mTraits = new MarshaledString(traits?.ToString() ?? EMPTY_JSON);
                 var mContext = new MarshaledString(contextSource.ContextJson());
 
-                ulong operationId = NativeMethods.SegmentServerIdentify(mUserId.Ptr, mTraits.Ptr, mContext.Ptr);
+                ulong operationId = NativeMethods.SegmentServerIdentify(mUserId.Ptr, mAnonId.Ptr, mTraits.Ptr, mContext.Ptr);
                 AlertIfInvalid(operationId);
 
                 list.Add(mUserId);
@@ -82,7 +90,6 @@ namespace Plugins.RustSegment.SegmentServerWrap
         {
             lock (afterClean)
             {
-
 #if UNITY_EDITOR || DEBUG
                 ReportIfIdentityWasNotCalled();
 #endif
@@ -90,11 +97,12 @@ namespace Plugins.RustSegment.SegmentServerWrap
                 var list = ListPool<MarshaledString>.Get()!;
 
                 var mUserId = new MarshaledString(cachedUserId);
+                var mAnonId = new MarshaledString(anonId);
                 var mEventName = new MarshaledString(eventName);
                 var mProperties = new MarshaledString(properties?.ToString() ?? EMPTY_JSON);
                 var mContext = new MarshaledString(contextSource.ContextJson());
 
-                ulong operationId = NativeMethods.SegmentServerTrack(mUserId.Ptr, mEventName.Ptr, mProperties.Ptr, mContext.Ptr);
+                ulong operationId = NativeMethods.SegmentServerTrack(mUserId.Ptr, mAnonId.Ptr, mEventName.Ptr, mProperties.Ptr, mContext.Ptr);
                 AlertIfInvalid(operationId);
 
                 list.Add(mUserId);
@@ -150,7 +158,7 @@ namespace Plugins.RustSegment.SegmentServerWrap
             ListPool<MarshaledString>.Release(list.Item2);
         }
 
-        private void AlertIfInvalid(ulong operationId)
+        private static void AlertIfInvalid(ulong operationId)
         {
             if (operationId == 0)
                 ReportHub.LogError(
@@ -161,7 +169,7 @@ namespace Plugins.RustSegment.SegmentServerWrap
 
         private void ReportIfIdentityWasNotCalled()
         {
-            if (string.IsNullOrWhiteSpace(cachedUserId))
+            if (string.IsNullOrWhiteSpace(cachedUserId!) && string.IsNullOrWhiteSpace(anonId!))
                 ReportHub.LogError(
                     ReportCategory.ANALYTICS,
                     $"Segment to track an event, you must call Identify first"
