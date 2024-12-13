@@ -30,6 +30,7 @@ MonoBehaviour:
       - rid: 5242998342527483909
       - rid: 5242998342527483910
       - rid: 4025150703584149506
+      - rid: 4025150703584149508
   <SoundSectionConfig>k__BackingField:
     <SettingsGroups>k__BackingField:
     - <GroupTitle>k__BackingField: Volume
@@ -84,7 +85,7 @@ MonoBehaviour:
       data:
         <View>k__BackingField: {fileID: 4706452128062998708, guid: 27c8bedb89b5739458399a3bd3d255ac, type: 3}
         <Config>k__BackingField:
-          <ModuleName>k__BackingField: Skybox Time Of Day
+          <ModuleName>k__BackingField: Time Of Day
           <Description>k__BackingField: 
           <IsEnabled>k__BackingField: 1
           sliderType: 0
@@ -93,6 +94,16 @@ MonoBehaviour:
           wholeNumbers: 1
           defaultValue: 0
         <Feature>k__BackingField: 9
+    - rid: 4025150703584149508
+      type: {class: ToggleModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
+      data:
+        <View>k__BackingField: {fileID: 1404863613082391807, guid: 39458b71e0ed84549b1b280c4fb1f105, type: 3}
+        <Config>k__BackingField:
+          <ModuleName>k__BackingField: Auto Time Of Day
+          <Description>k__BackingField: 
+          <IsEnabled>k__BackingField: 1
+          defaultIsOn: 1
+        <Feature>k__BackingField: 2
     - rid: 4916151837425664002
       type: {class: ToggleModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:

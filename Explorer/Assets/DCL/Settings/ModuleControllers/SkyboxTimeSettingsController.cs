@@ -6,20 +6,20 @@ namespace DCL.Settings.ModuleControllers
     public class SkyboxTimeSettingsController : SettingsFeatureController
     {
         private readonly SettingsSliderModuleView view;
-        private readonly StylizedSkyboxSettingsAsset skyboxPlugin;
+        private readonly StylizedSkyboxSettingsAsset skyboxSettingsAsset;
 
-        public SkyboxTimeSettingsController(SettingsSliderModuleView view, StylizedSkyboxSettingsAsset skyboxPlugin)
+        public SkyboxTimeSettingsController(SettingsSliderModuleView view, StylizedSkyboxSettingsAsset skyboxSettingsAsset)
         {
             this.view = view;
-            this.skyboxPlugin = skyboxPlugin;
+            this.skyboxSettingsAsset = skyboxSettingsAsset;
 
-            view.SliderView.Slider.value = skyboxPlugin.TimeOfDay;
+            view.SliderView.Slider.value = skyboxSettingsAsset.TimeOfDay;
             view.SliderView.Slider.onValueChanged.AddListener(SetSkyboxTimeOfDay);
         }
 
         private void SetSkyboxTimeOfDay(float hour)
         {
-           skyboxPlugin.TimeOfDay = (int)hour;
+           skyboxSettingsAsset.TimeOfDay = (int)hour;
         }
 
         public override void Dispose()

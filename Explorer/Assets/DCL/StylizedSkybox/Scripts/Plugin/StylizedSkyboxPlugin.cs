@@ -23,6 +23,8 @@ namespace DCL.StylizedSkybox.Scripts.Plugin
         private readonly ElementBinding<int> timeOfDay;
         private readonly FeatureFlagsCache featureFlagsCache;
 
+        private StylizedSkyboxSettingsAsset? settingsAsset;
+
         public StylizedSkyboxPlugin(
             IAssetsProvisioner assetsProvisioner,
             Light directionalLight,
@@ -43,21 +45,36 @@ namespace DCL.StylizedSkybox.Scripts.Plugin
 
         public async UniTask InitializeAsync(StylizedSkyboxSettings settings, CancellationToken ct)
         {
-            var settingsAsset = settings.SettingsAsset;
+            settingsAsset = settings.SettingsAsset;
 
             skyboxController = Object.Instantiate((await assetsProvisioner.ProvideMainAssetAsync(settingsAsset.StylizedSkyboxPrefab, ct: ct)).Value.GetComponent<SkyboxController>());
             AnimationClip skyboxAnimation = (await assetsProvisioner.ProvideMainAssetAsync(settingsAsset.SkyboxAnimationCycle, ct: ct)).Value;
 
-            settingsAsset.TimeOfDay = (int)(skyboxController!.NaturalTime / (skyboxController!.SecondsInDay / 24f));
-            settingsAsset.TimeOfDayChanged += OnTimeOfDayChanged;
-
             skyboxController.Initialize(settingsAsset.SkyboxMaterial, directionalLight, skyboxAnimation, featureFlagsCache);
 
+            settingsAsset.TimeOfDay = (int)(skyboxController!.NaturalTime / (skyboxController!.SecondsInDay / 24f));
+            settingsAsset.Speed = StylizedSkyboxSettingsAsset.TimeProgression.Default;
+            settingsAsset.TimeOfDayChanged += OnTimeOfDayChanged;
+            settingsAsset.SpeedChanged += OnSpeedChanged;
+
             debugContainerBuilder.TryAddWidget("Skybox")
-                                 ?.AddSingleButton("Play", () => skyboxController.Play())
-                                 .AddSingleButton("Pause", () => skyboxController.Pause())
+                                ?.AddSingleButton("Play", () => skyboxController.Paused = false)
+                                 .AddSingleButton("Pause", () => skyboxController.Paused = true)
                                  .AddIntSliderField("Time", timeOfDay, 0, skyboxController.SecondsInDay)
                                  .AddSingleButton("SetTime", () => skyboxController.SetTime(timeOfDay.Value)); //TODO: replace this by a system to update the value
+        }
+
+        private void OnSpeedChanged(StylizedSkyboxSettingsAsset.TimeProgression speed)
+        {
+            skyboxController!.Speed =
+                speed switch
+                {
+                    StylizedSkyboxSettingsAsset.TimeProgression.Paused => 0,
+                    StylizedSkyboxSettingsAsset.TimeProgression.Default => skyboxController.DefaultSpeed,
+                    StylizedSkyboxSettingsAsset.TimeProgression.Fast => 600,
+                    StylizedSkyboxSettingsAsset.TimeProgression.VeryFast => 3600,
+                    _ => throw new ArgumentOutOfRangeException(nameof(speed), speed, null),
+                };
         }
 
         private void OnTimeOfDayChanged(int hour)
@@ -65,7 +82,6 @@ namespace DCL.StylizedSkybox.Scripts.Plugin
             int seconds = skyboxController!.SecondsInDay / 24 * hour;
 
             timeOfDay.Value = seconds;
-            skyboxController.Pause();
             skyboxController.SetTime(seconds);
         }
 
