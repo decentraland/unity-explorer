@@ -11,14 +11,9 @@ namespace Global.Dynamic.TeleportOperations
     {
         private readonly IRealmController realmController;
         private readonly IRealmMisc realmMisc;
-        private readonly IAnalyticsController analyticsController;
 
-        public ChangeRealmTeleportOperation(
-            IRealmController realmController,
-            IAnalyticsController analyticsController,
-            IRealmMisc realmMisc)
+        public ChangeRealmTeleportOperation(IRealmController realmController, IRealmMisc realmMisc)
         {
-            this.analyticsController = analyticsController;
             this.realmMisc = realmMisc;
             this.realmController = realmController;
         }
@@ -29,7 +24,6 @@ namespace Global.Dynamic.TeleportOperations
                 teleportParams.LoadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.RealmChanging);
 
             await realmController.SetRealmAsync(teleportParams.CurrentDestinationRealm, ct);
-            analyticsController.Flush();
             realmMisc.SwitchTo(realmController.Type);
             teleportParams.ParentReport.SetProgress(finalizationProgress);
         }
