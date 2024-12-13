@@ -1,5 +1,4 @@
 using DCL.InWorldCamera.CameraReelStorageService;
-using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using UnityEngine;
 using UnityEngine.Pool;
 using UnityEngine.UI;
