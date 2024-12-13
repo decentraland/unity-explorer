@@ -43,6 +43,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
 
         public event Action<List<CameraReelResponseCompact>, int, Action<CameraReelResponseCompact>>? ThumbnailClicked;
         public event Action<CameraReelStorageStatus>? StorageUpdated;
+        public event Action ScreenshotDeleted;
 
         private const int THUMBNAIL_POOL_DEFAULT_CAPACITY = 100;
         private const int THUMBNAIL_POOL_MAX_SIZE = 10000;
@@ -258,6 +259,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
                     ReleaseGridView(monthGridView);
                 }
 
+                ScreenshotDeleted?.Invoke();
                 StorageUpdated?.Invoke(response);
 
                 if (view.successNotificationView is null) return;
@@ -537,6 +539,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
             view.Disable -= OnDisable;
             ThumbnailClicked = null;
             StorageUpdated = null;
+            ScreenshotDeleted = null;
             view.cancelDeleteIntentButton?.onClick.RemoveAllListeners();
             view.cancelDeleteIntentBackgroundButton?.onClick.RemoveAllListeners();
             explorePanelEscapeAction?.RemoveEscapeAction(HideDeleteModal);

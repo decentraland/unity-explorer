@@ -21,12 +21,14 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
             navmapController.FloatingPanelController.OnJumpIn += OnJumpIn;
             cameraReelController.Activated += TrackCameraReelOpen;
+            cameraReelController.ScreenshotDeleted += TrackScreenshotDeleted;
         }
 
         public void Dispose()
         {
             navmapController.FloatingPanelController.OnJumpIn -= OnJumpIn;
             cameraReelController.Activated -= TrackCameraReelOpen;
+            cameraReelController.ScreenshotDeleted -= TrackScreenshotDeleted;
         }
 
         private void OnJumpIn(Vector2Int parcel)
@@ -39,5 +41,8 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
         private void TrackCameraReelOpen() =>
             analytics.Track(AnalyticsEvents.CameraReel.CAMERA_REEL_OPEN);
+
+        private void TrackScreenshotDeleted() =>
+            analytics.Track(AnalyticsEvents.CameraReel.DELETE_PHOTO);
     }
 }

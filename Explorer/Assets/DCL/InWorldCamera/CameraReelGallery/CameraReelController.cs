@@ -17,6 +17,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
     public class CameraReelController : ISection, IDisposable
     {
         public event Action Activated;
+        public event Action ScreenshotDeleted;
 
         private readonly CameraReelView view;
         private readonly RectTransform rectTransform;
@@ -48,6 +49,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
             this.cameraReelGalleryController.ThumbnailClicked += ThumbnailClicked;
             this.cameraReelGalleryController.StorageUpdated += SetStorageStatus;
             this.view.goToCameraButton.onClick.AddListener(OnGoToCameraButtonClicked);
+            this.cameraReelGalleryController.ScreenshotDeleted += () => ScreenshotDeleted?.Invoke();
 
             view.storageProgressBar.SetLabelString(storageProgressBarLabelText);
         }
@@ -129,6 +131,8 @@ namespace DCL.InWorldCamera.CameraReelGallery
             view.MouseExit -= StorageFullIconExit;
             cameraReelGalleryController.Dispose();
             view.goToCameraButton.onClick.RemoveAllListeners();
+            Activated = null;
+            ScreenshotDeleted = null;
         }
     }
 }
