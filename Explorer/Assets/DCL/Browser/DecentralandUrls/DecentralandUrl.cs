@@ -44,5 +44,7 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         CameraReelUsers,
         CameraReelImages,
         CameraReelLink,
+        AssetBundleRegistry
+
     }
 }

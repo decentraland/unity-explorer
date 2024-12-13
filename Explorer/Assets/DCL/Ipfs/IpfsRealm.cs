@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using UnityEngine;
 
 namespace DCL.Ipfs
@@ -25,12 +26,15 @@ namespace DCL.Ipfs
         public URLDomain ContentBaseUrl { get; }
         public URLDomain LambdasBaseUrl { get; }
         public URLDomain EntitiesActiveEndpoint { get; }
+        public URLDomain AssetBundleRegistry { get; }
 
         public IReadOnlyList<string> SceneUrns => sceneUrns;
 
         public IpfsRealm(IWeb3IdentityCache web3IdentityCache,
             IWebRequestController webRequestController,
-            URLDomain realmName, ServerAbout? serverAbout = null)
+            URLDomain realmName,
+            IDecentralandUrlsSource urlsSources,
+            ServerAbout? serverAbout = null)
         {
             this.web3IdentityCache = web3IdentityCache;
             this.webRequestController = webRequestController;
@@ -48,6 +52,11 @@ namespace DCL.Ipfs
                 //Note: Content url requires the subdirectory content, but the actives endpoint requires the base one.
                 EntitiesActiveEndpoint = URLBuilder.Combine(ContentBaseUrl, URLSubdirectory.FromString("entities/active"));
                 ContentBaseUrl = URLBuilder.Combine(ContentBaseUrl, URLSubdirectory.FromString("contents/"));
+
+                AssetBundleRegistry =
+                    URLBuilder.Combine(URLDomain.FromString(urlsSources.Url(DecentralandUrl.AssetBundleRegistry)),
+                        URLSubdirectory.FromString("entities/active"));
+                ;
             }
             else
             {

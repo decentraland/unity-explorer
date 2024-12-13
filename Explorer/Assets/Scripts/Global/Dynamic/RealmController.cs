@@ -22,7 +22,9 @@ using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using DCL.Browser.DecentralandUrls;
 using DCL.DebugUtilities;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using ECS.SceneLifeCycle.Realm;
 using Unity.Mathematics;
 
@@ -49,6 +51,7 @@ namespace Global.Dynamic
         private readonly SceneAssetLock sceneAssetLock;
         private readonly IComponentPool<PartitionComponent> partitionComponentPool;
         private readonly bool isLocalSceneDevelopment;
+        private readonly IDecentralandUrlsSource urlsSource;
 
         private GlobalWorld? globalWorld;
         private Entity realmEntity;
@@ -95,8 +98,8 @@ namespace Global.Dynamic
             SceneAssetLock sceneAssetLock,
             IDebugContainerBuilder debugContainerBuilder,
             IComponentPool<PartitionComponent> partitionComponentPool,
-            bool isLocalSceneDevelopment
-        )
+            bool isLocalSceneDevelopment,
+            IDecentralandUrlsSource urlsSource)
         {
             this.web3IdentityCache = web3IdentityCache;
             this.webRequestController = webRequestController;
@@ -110,6 +113,7 @@ namespace Global.Dynamic
             this.sceneAssetLock = sceneAssetLock;
             this.partitionComponentPool = partitionComponentPool;
             this.isLocalSceneDevelopment = isLocalSceneDevelopment;
+            this.urlsSource = urlsSource;
             realmNavigatorDebugView = new RealmNavigatorDebugView(debugContainerBuilder);
         }
 
@@ -130,7 +134,7 @@ namespace Global.Dynamic
             string hostname = ResolveHostname(realm, result);
 
             realmData.Reconfigure(
-                new IpfsRealm(web3IdentityCache, webRequestController, realm, result),
+                new IpfsRealm(web3IdentityCache, webRequestController, realm, urlsSource, result),
                 result.configurations.realmName.EnsureNotNull("Realm name not found"),
                 result.configurations.networkId,
                 result.comms?.adapter ?? result.comms?.fixedAdapter ?? "offline:offline", //"offline property like in previous implementation"
@@ -185,7 +189,7 @@ namespace Global.Dynamic
 
             var promise = AssetPromise<SceneDefinitions, GetSceneDefinitionList>.Create(GlobalWorld.EcsWorld,
                 new GetSceneDefinitionList(new List<SceneEntityDefinition>(staticLoadPositions.Count), staticLoadPositions,
-                    new CommonLoadingArguments(RealmData.Ipfs.EntitiesActiveEndpoint)), PartitionComponent.TOP_PRIORITY);
+                    new CommonLoadingArguments(RealmData.Ipfs.AssetBundleRegistry)), PartitionComponent.TOP_PRIORITY);
 
             promise = await promise.ToUniTaskAsync(GlobalWorld.EcsWorld, cancellationToken: ct);
 

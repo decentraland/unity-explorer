@@ -17,6 +17,7 @@ using DCL.Utilities.Extensions;
 using ECS.LifeCycle.Components;
 using SceneRunner.Scene;
 using System.Linq;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 
 namespace PortableExperiences.Controller
 {
@@ -28,6 +29,7 @@ namespace PortableExperiences.Controller
         private readonly World globalWorld;
         private readonly List<IPortableExperiencesController.SpawnResponse> spawnResponsesList = new ();
         private readonly FeatureFlagsCache featureFlagsCache;
+        private readonly IDecentralandUrlsSource urlsSources;
         public Dictionary<ENS, Entity> PortableExperienceEntities { get; } = new ();
 
 
@@ -36,13 +38,15 @@ namespace PortableExperiences.Controller
             IWeb3IdentityCache web3IdentityCache,
             IWebRequestController webRequestController,
             IScenesCache scenesCache,
-            FeatureFlagsCache featureFlagsCache)
+            FeatureFlagsCache featureFlagsCache,
+            IDecentralandUrlsSource urlsSources)
         {
             this.globalWorld = globalWorld;
             this.web3IdentityCache = web3IdentityCache;
             this.webRequestController = webRequestController;
             this.scenesCache = scenesCache;
             this.featureFlagsCache = featureFlagsCache;
+            this.urlsSources = urlsSources;
         }
 
         public async UniTask<IPortableExperiencesController.SpawnResponse> CreatePortableExperienceByEnsAsync(ENS ens, CancellationToken ct, bool isGlobalPortableExperience = false, bool force = false)
@@ -84,7 +88,7 @@ namespace PortableExperiences.Controller
 
             var realmData = new RealmData();
             realmData.Reconfigure(
-                new IpfsRealm(web3IdentityCache, webRequestController, portableExperiencePath, result),
+                new IpfsRealm(web3IdentityCache, webRequestController, portableExperiencePath, urlsSources, result),
                 result.configurations.realmName.EnsureNotNull("Realm name not found"),
                 result.configurations.networkId,
                 result.comms?.adapter ?? string.Empty,
