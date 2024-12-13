@@ -7,6 +7,10 @@ namespace DCL.InWorldCamera.PhotoDetail
 {
     public static class PhotoDetailUtility
     {
+        /// <summary>
+        ///     Extracts the marketplace link from a wearable.
+        ///     Taken from the old renderer.
+        /// </summary>
         public static string GetMarketplaceLink(this IWearable wearable, IDecentralandUrlsSource decentralandUrlsSource)
         {
             var marketplace = $"{decentralandUrlsSource.Url(DecentralandUrl.Market)}/contracts/{{0}}/items/{{1}}";

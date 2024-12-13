@@ -57,7 +57,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
         private readonly IExplorePanelEscapeAction? explorePanelEscapeAction;
         private readonly ReelGalleryPoolManager reelGalleryPoolManager;
         private readonly Dictionary<DateTime, MonthGridController> monthViews = new ();
-        private readonly Dictionary<CameraReelResponseCompact, Sprite> reelThumbnailCache = new ();
+        private readonly Dictionary<CameraReelResponseCompact, Texture> reelThumbnailCache = new ();
         private readonly OptionButtonController optionButtonController;
         private readonly ContextMenuController contextMenuController;
         private readonly Rect elementMaskRect;
@@ -445,14 +445,14 @@ namespace DCL.InWorldCamera.CameraReelGallery
 
         private void DisableThumbnailImage(ReelThumbnailController thumbnailController)
         {
-            thumbnailController.view.thumbnailImage.sprite = null;
+            thumbnailController.view.thumbnailImage.texture = null;
             thumbnailController.view.thumbnailImage.enabled = false;
         }
 
         private void EnableThumbnailImage(ReelThumbnailController thumbnailController)
         {
-            if (reelThumbnailCache.TryGetValue(thumbnailController.CameraReelResponse, out Sprite sprite))
-                thumbnailController.view.thumbnailImage.sprite = sprite;
+            if (reelThumbnailCache.TryGetValue(thumbnailController.CameraReelResponse, out Texture sprite))
+                thumbnailController.view.thumbnailImage.texture = sprite;
             thumbnailController.view.thumbnailImage.enabled = true;
         }
 
@@ -496,7 +496,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
                     DisableThumbnailImage(thumbnailImages[i]);
         }
 
-        private bool ViewIntersectsImage(Image image)
+        private bool ViewIntersectsImage(RawImage image)
         {
             var img = image.rectTransform.GetWorldRect();
 

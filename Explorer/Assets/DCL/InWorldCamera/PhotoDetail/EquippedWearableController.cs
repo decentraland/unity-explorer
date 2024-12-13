@@ -10,6 +10,10 @@ using System.Threading;
 
 namespace DCL.InWorldCamera.PhotoDetail
 {
+    /// <summary>
+    ///     Handles the logic for the equipped wearable item in the photo detail view.
+    ///     It is the main child of the visible person item which holds the wearable data.
+    /// </summary>
     public class EquippedWearableController : IDisposable
     {
         internal readonly EquippedWearableView view;
@@ -62,11 +66,6 @@ namespace DCL.InWorldCamera.PhotoDetail
             }
 
             AnimateAndAwaitAsync().Forget();
-        }
-
-        public void Release()
-        {
-            //TODO (Lorenzo): remove if not needed
         }
 
         public void Dispose()

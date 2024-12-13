@@ -13,6 +13,9 @@ using UnityEngine.Pool;
 
 namespace DCL.InWorldCamera.PhotoDetail
 {
+    /// <summary>
+    ///     Manager for the pools of the photo detail objects such as visible persons and equipped wearables.
+    /// </summary>
     public class PhotoDetailPoolManager
     {
         private readonly IObjectPool<VisiblePersonController> visiblePersonPool;
@@ -22,7 +25,7 @@ namespace DCL.InWorldCamera.PhotoDetail
             VisiblePersonView visiblePersonPrefab,
             EquippedWearableView equippedWearablePrefab,
             Sprite emptyProfileImage,
-            GameObject unusedVisiblePersonPoolObjectParent,
+            RectTransform visiblePersonParent,
             GameObject unusedEquippedWearablePoolObjectParent,
             IWebRequestController webRequestController,
             IProfileRepository profileRepository,
@@ -43,9 +46,9 @@ namespace DCL.InWorldCamera.PhotoDetail
             int equippedWearableMaxSize)
         {
             visiblePersonPool = new ObjectPool<VisiblePersonController>(
-                createFunc: () => CreateVisiblePerson(visiblePersonPrefab, webRequestController, profileRepository, mvcManager, wearableStorage, wearablesProvider, chatEntryConfiguration, passportBridge),
+                createFunc: () => CreateVisiblePerson(visiblePersonPrefab, visiblePersonParent, webRequestController, profileRepository, mvcManager, wearableStorage, wearablesProvider, chatEntryConfiguration, passportBridge),
                 actionOnGet: visiblePerson => visiblePerson.view.gameObject.SetActive(true),
-                actionOnRelease: visiblePerson => VisiblePersonRelease(visiblePerson, unusedVisiblePersonPoolObjectParent, emptyProfileImage),
+                actionOnRelease: visiblePerson => VisiblePersonRelease(visiblePerson, emptyProfileImage),
                 actionOnDestroy: visiblePerson => GameObject.Destroy(visiblePerson.view.gameObject),
                 collectionCheck: true,
                 visiblePersonDefaultCapacity,
@@ -59,6 +62,19 @@ namespace DCL.InWorldCamera.PhotoDetail
                 collectionCheck: true,
                 equippedWearableDefaultCapacity,
                 equippedWearableMaxSize);
+
+            //Prewarm pools
+            VisiblePersonController[] visiblePersonControllers = new VisiblePersonController[visiblePersonDefaultCapacity];
+            for (int i = 0; i < visiblePersonDefaultCapacity; i++)
+                visiblePersonControllers[i] = visiblePersonPool.Get();
+            for (int i = 0; i < visiblePersonDefaultCapacity; i++)
+                visiblePersonPool.Release(visiblePersonControllers[i]);
+
+            EquippedWearableController[] equippedWearableControllers = new EquippedWearableController[equippedWearableDefaultCapacity];
+            for (int i = 0; i < equippedWearableDefaultCapacity; i++)
+                equippedWearableControllers[i] = equippedWearablePool.Get();
+            for (int i = 0; i < equippedWearableDefaultCapacity; i++)
+                equippedWearablePool.Release(equippedWearableControllers[i]);
         }
 
         private void EquippedWearableRelease(EquippedWearableController equippedWearable, GameObject unusedEquippedWearablePoolObjectParent)
@@ -80,15 +96,15 @@ namespace DCL.InWorldCamera.PhotoDetail
             return new EquippedWearableController(view, webBrowser, decentralandUrlsSource, thumbnailProvider, rarityBackgrounds, rarityColors, categoryIcons);
         }
 
-        private void VisiblePersonRelease(VisiblePersonController visiblePerson, GameObject unusedVisiblePersonPoolObjectParent, Sprite emptyProfileImage)
+        private void VisiblePersonRelease(VisiblePersonController visiblePerson, Sprite emptyProfileImage)
         {
-            visiblePerson.view.transform.SetParent(unusedVisiblePersonPoolObjectParent.transform, false);
             visiblePerson.view.profileImage.SetImage(emptyProfileImage);
             visiblePerson.view.gameObject.SetActive(false);
         }
 
         private VisiblePersonController CreateVisiblePerson(
             VisiblePersonView visiblePersonPrefab,
+            RectTransform visiblePersonParent,
             IWebRequestController webRequestController,
             IProfileRepository profileRepository,
             IMVCManager mvcManager,
@@ -97,16 +113,12 @@ namespace DCL.InWorldCamera.PhotoDetail
             ChatEntryConfigurationSO chatEntryConfiguration,
             IPassportBridge passportBridge)
         {
-            VisiblePersonView view = GameObject.Instantiate(visiblePersonPrefab);
+            VisiblePersonView view = GameObject.Instantiate(visiblePersonPrefab, visiblePersonParent);
             return new VisiblePersonController(view, webRequestController, profileRepository, mvcManager, wearableStorage, wearablesProvider, passportBridge, this, chatEntryConfiguration);
         }
 
-        public VisiblePersonController GetVisiblePerson(RectTransform parent)
-        {
-            VisiblePersonController controller = visiblePersonPool.Get();
-            controller.view.transform.SetParent(parent, false);
-            return controller;
-        }
+        public VisiblePersonController GetVisiblePerson() =>
+            visiblePersonPool.Get();
 
         public void ReleaseVisiblePerson(VisiblePersonController controller) =>
             visiblePersonPool.Release(controller);

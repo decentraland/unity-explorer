@@ -14,6 +14,10 @@ namespace DCL.InWorldCamera.ReelActions
     {
         private const string DECENTRALAND_REELS_HOME_FOLDER = "decentraland/reels";
 
+        /// <summary>
+        ///     Opens a browser tab on x.com with a tweet ready to be posted containing the reel url.
+        ///     Also copies the url to the clipboard.
+        /// </summary>
         public static void ShareReelToX(string shareToXMessage, string reelId, IDecentralandUrlsSource decentralandUrlsSource, ISystemClipboard systemClipboard, IWebBrowser webBrowser)
         {
             string description = shareToXMessage.Replace(" ", "%20");
@@ -24,11 +28,18 @@ namespace DCL.InWorldCamera.ReelActions
             webBrowser.OpenUrl(xUrl);
         }
 
+        /// <summary>
+        ///     Copies the reel url to the clipboard.
+        /// </summary>
         public static void CopyReelLink(string reelId, IDecentralandUrlsSource decentralandUrlsSource, ISystemClipboard systemClipboard)
         {
             systemClipboard.Set($"{decentralandUrlsSource.Url(DecentralandUrl.CameraReelLink)}/{reelId}");
         }
 
+        /// <summary>
+        ///     Downloads a reel image to local storage in {home_directory}/{DECENTRALAND_REELS_HOME_FOLDER}/{reelId}
+        ///     and opens the default file browser at that location
+        /// </summary>
         public static async UniTask DownloadReelToFileAsync(string reelUrl, CancellationToken ct)
         {
             using (UnityWebRequest webRequest = UnityWebRequestTexture.GetTexture(reelUrl))

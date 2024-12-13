@@ -672,7 +672,7 @@ MonoBehaviour:
         <TransitionSettings>k__BackingField: {fileID: 11400000, guid: 230436585dd166a4e98f1c0953e3a5f6, type: 2}
         <MovementSettings>k__BackingField: {fileID: 11400000, guid: 9c104547ad3a8454baeb79e1bb45ce4c, type: 2}
         <PhotoDetailPrefab>k__BackingField:
-          m_AssetGUID: 183d02953ce77467786739e7cfb2d766
+          m_AssetGUID: 26a5616becdfd49b4abfbee07ba3cbf2
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0

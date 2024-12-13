@@ -10,14 +10,17 @@ using DG.Tweening;
 using MVC;
 using System;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.UI;
 using Utility;
 
 namespace DCL.InWorldCamera.PhotoDetail
 {
+    /// <summary>
+    ///     Handles the logic for the photo detail view and his macro-actions.
+    /// </summary>
     public class PhotoDetailController : ControllerBase<PhotoDetailView, PhotoDetailParameter>
     {
         private const int ANIMATION_DELAY = 300;
@@ -29,6 +32,7 @@ namespace DCL.InWorldCamera.PhotoDetail
         private readonly IWebBrowser webBrowser;
         private readonly string shareToXMessage;
 
+        private AspectRatioFitter aspectRatioFitter;
         private MetadataSidePanelAnimator metadataSidePanelAnimator;
         private CancellationTokenSource showReelCts = new ();
         private CancellationTokenSource downloadScreenshotCts = new ();
@@ -117,6 +121,7 @@ namespace DCL.InWorldCamera.PhotoDetail
         protected override void OnViewInstantiated()
         {
             metadataSidePanelAnimator = new MetadataSidePanelAnimator(viewInstance!.rootContainer, viewInstance.infoButtonImageRectTransform);
+            aspectRatioFitter = viewInstance.mainImage.GetComponent<AspectRatioFitter>();
         }
 
         protected override void OnViewClose()
@@ -193,7 +198,8 @@ namespace DCL.InWorldCamera.PhotoDetail
 
             UniTask detailInfoTask = photoDetailInfoController.ShowPhotoDetailInfoAsync(reel.id, ct);
             Texture2D reelTexture = await cameraReelScreenshotsStorage.GetScreenshotImageAsync(reel.url, ct);
-            viewInstance!.mainImage.sprite = Sprite.Create(reelTexture, new Rect(0, 0, reelTexture.width, reelTexture.height), Vector2.zero);
+            viewInstance!.mainImage.texture = reelTexture;
+            aspectRatioFitter.aspectRatio = reelTexture.width * 1f / reelTexture.height;
 
             viewInstance!.mainImageLoadingSpinner.gameObject.SetActive(false);
             viewInstance.mainImageCanvasGroup.DOFade(1, viewInstance.imageFadeInDuration);
