@@ -228,14 +228,12 @@ namespace DCL.InWorldCamera.Systems
             switch (to)
             {
                 case Kind.IN_WORLD_CAMERA:
-                    inputMapComponent.UnblockInput(Kind.IN_WORLD_CAMERA);
                     inputMapComponent.BlockInput(Kind.PLAYER);
                     inputMapComponent.BlockInput(Kind.SHORTCUTS);
                     break;
                 case Kind.PLAYER:
                     inputMapComponent.UnblockInput(Kind.PLAYER);
                     inputMapComponent.UnblockInput(Kind.SHORTCUTS);
-                    inputMapComponent.BlockInput(Kind.IN_WORLD_CAMERA);
                     break;
             }
         }
