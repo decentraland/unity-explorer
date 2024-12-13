@@ -271,23 +271,6 @@ namespace Global.Dynamic
             container.wearablesProvider = new ApplicationParametersWearablesProvider(appArgs,
                 new ECSWearablesProvider(identityCache, globalWorld));
 
-            container.SceneRoomMetaDataSource = new SceneRoomMetaDataSource(staticContainer.RealmData, staticContainer.CharacterContainer.Transform, globalWorld, dynamicWorldParams.IsolateScenesCommunication);
-
-            var metaDataSource = new SceneRoomLogMetaDataSource(container.SceneRoomMetaDataSource);
-
-            IGateKeeperSceneRoom gateKeeperSceneRoom = new GateKeeperSceneRoom(staticContainer.WebRequestsContainer.WebRequestController, metaDataSource, bootstrapContainer.DecentralandUrlsSource, staticContainer.ScenesCache)
-               .AsActivatable();
-
-            var currentAdapterAddress = ICurrentAdapterAddress.NewDefault(staticContainer.RealmData);
-
-            var archipelagoIslandRoom = IArchipelagoIslandRoom.NewDefault(
-                identityCache,
-                MultiPoolFactory(),
-                staticContainer.CharacterContainer.CharacterObject,
-                currentAdapterAddress,
-                staticContainer.WebRequestsContainer.WebRequestController
-            );
-
             bool localSceneDevelopment = !string.IsNullOrEmpty(dynamicWorldParams.LocalSceneDevelopmentRealm);
 
             container.RealmController = new RealmController(
@@ -304,7 +287,25 @@ namespace Global.Dynamic
                 debugBuilder,
                 staticContainer.ComponentsContainer.ComponentPoolsRegistry
                                .GetReferenceTypePool<PartitionComponent>(),
-                localSceneDevelopment);
+                localSceneDevelopment
+            );
+
+            container.SceneRoomMetaDataSource = new SceneRoomMetaDataSource(container.RealmController, staticContainer.CharacterContainer.Transform, globalWorld, dynamicWorldParams.IsolateScenesCommunication);
+
+            var metaDataSource = new SceneRoomLogMetaDataSource(container.SceneRoomMetaDataSource);
+
+            IGateKeeperSceneRoom gateKeeperSceneRoom = new GateKeeperSceneRoom(staticContainer.WebRequestsContainer.WebRequestController, metaDataSource, bootstrapContainer.DecentralandUrlsSource, staticContainer.ScenesCache)
+               .AsActivatable();
+
+            var currentAdapterAddress = ICurrentAdapterAddress.NewDefault(staticContainer.RealmData);
+
+            var archipelagoIslandRoom = IArchipelagoIslandRoom.NewDefault(
+                identityCache,
+                MultiPoolFactory(),
+                staticContainer.CharacterContainer.CharacterObject,
+                currentAdapterAddress,
+                staticContainer.WebRequestsContainer.WebRequestController
+            );
 
             container.reloadSceneController = new ECSReloadScene(staticContainer.ScenesCache, globalWorld, playerEntity, localSceneDevelopment);
 
