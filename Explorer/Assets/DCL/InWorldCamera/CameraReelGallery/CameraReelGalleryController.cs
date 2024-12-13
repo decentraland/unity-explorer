@@ -44,6 +44,8 @@ namespace DCL.InWorldCamera.CameraReelGallery
         public event Action<List<CameraReelResponseCompact>, int, Action<CameraReelResponseCompact>>? ThumbnailClicked;
         public event Action<CameraReelStorageStatus>? StorageUpdated;
         public event Action ScreenshotDeleted;
+        public event Action ScreenshotShared;
+        public event Action ScreenshotDownloaded;
 
         private const int THUMBNAIL_POOL_DEFAULT_CAPACITY = 100;
         private const int THUMBNAIL_POOL_MAX_SIZE = 10000;
@@ -156,6 +158,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
                 this.contextMenuController.ShareToXRequested += cameraReelResponse =>
                 {
                     ReelCommonActions.ShareReelToX(shareToXMessage!, cameraReelResponse.id, decentralandUrlsSource!, systemClipboard!, webBrowser!);
+                    ScreenshotShared?.Invoke();
                 };
 
                 this.contextMenuController.CopyPictureLinkRequested += cameraReelResponse =>
@@ -171,6 +174,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
                         try
                         {
                             await ReelCommonActions.DownloadReelToFileAsync(cameraReelResponse.url, ct);
+                            ScreenshotDownloaded?.Invoke();
                             ShowSuccessNotificationAsync(photoSuccessfullyDownloadedMessage).Forget();
                         }
                         catch (Exception e)
@@ -535,8 +539,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
             deleteScreenshotCts.SafeCancelAndDispose();
 
             HideDeleteModal();
-            if (contextMenuController is not null)
-                contextMenuController.Hide();
+            contextMenuController?.Hide();
         }
 
         public void Dispose()
@@ -551,8 +554,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
             explorePanelEscapeAction?.RemoveEscapeAction(HideDeleteModal);
             downloadScreenshotCts.SafeCancelAndDispose();
 
-            if (optionButtonController is not null)
-                optionButtonController.Dispose();
+            optionButtonController?.Dispose();
         }
     }
 }

@@ -12,24 +12,36 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         private readonly IAnalyticsController analytics;
         private readonly NavmapController navmapController;
         private readonly CameraReelController cameraReelController;
+        private readonly CameraReelGalleryController cameraReelGalleryController;
 
         public ExplorePanelAnalytics(IAnalyticsController analytics, ExplorePanelController controller)
         {
             this.analytics = analytics;
             this.navmapController = controller.NavmapController;
             this.cameraReelController = controller.CameraReelController;
+            this.cameraReelGalleryController = this.cameraReelController.CameraReelGalleryController;
 
             navmapController.FloatingPanelController.OnJumpIn += OnJumpIn;
             cameraReelController.Activated += TrackCameraReelOpen;
-            cameraReelController.ScreenshotDeleted += TrackScreenshotDeleted;
+            cameraReelGalleryController.ScreenshotDeleted += TrackScreenshotDeleted;
+            cameraReelGalleryController.ScreenshotDownloaded += TrackScreenshotDownloaded;
+            cameraReelGalleryController.ScreenshotShared += TrackScreenshotShared;
         }
 
         public void Dispose()
         {
             navmapController.FloatingPanelController.OnJumpIn -= OnJumpIn;
             cameraReelController.Activated -= TrackCameraReelOpen;
-            cameraReelController.ScreenshotDeleted -= TrackScreenshotDeleted;
+            cameraReelGalleryController.ScreenshotDeleted -= TrackScreenshotDeleted;
+            cameraReelGalleryController.ScreenshotDownloaded -= TrackScreenshotDownloaded;
+            cameraReelGalleryController.ScreenshotShared -= TrackScreenshotShared;
         }
+
+        private void TrackScreenshotDownloaded() =>
+            analytics.Track(AnalyticsEvents.CameraReel.DOWNLOAD_PHOTO);
+
+        private void TrackScreenshotShared() =>
+            analytics.Track(AnalyticsEvents.CameraReel.SHARE_PHOTO);
 
         private void OnJumpIn(Vector2Int parcel)
         {

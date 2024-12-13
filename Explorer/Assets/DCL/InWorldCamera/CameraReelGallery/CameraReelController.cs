@@ -17,13 +17,12 @@ namespace DCL.InWorldCamera.CameraReelGallery
     public class CameraReelController : ISection, IDisposable
     {
         public event Action Activated;
-        public event Action ScreenshotDeleted;
+        public readonly CameraReelGalleryController CameraReelGalleryController;
 
         private readonly CameraReelView view;
         private readonly RectTransform rectTransform;
         private readonly ICameraReelStorageService cameraReelStorageService;
         private readonly IWeb3IdentityCache web3IdentityCache;
-        private readonly CameraReelGalleryController cameraReelGalleryController;
         private readonly IMVCManager mvcManager;
 
         private CancellationTokenSource showCancellationTokenSource;
@@ -39,17 +38,16 @@ namespace DCL.InWorldCamera.CameraReelGallery
             this.view = view;
             this.cameraReelStorageService = cameraReelStorageService;
             this.web3IdentityCache = web3IdentityCache;
-            this.cameraReelGalleryController = cameraReelGalleryController;
+            this.CameraReelGalleryController = cameraReelGalleryController;
             this.mvcManager = mvcManager;
 
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
 
             this.view.MouseEnter += StorageFullIconEnter;
             this.view.MouseExit += StorageFullIconExit;
-            this.cameraReelGalleryController.ThumbnailClicked += ThumbnailClicked;
-            this.cameraReelGalleryController.StorageUpdated += SetStorageStatus;
+            this.CameraReelGalleryController.ThumbnailClicked += ThumbnailClicked;
+            this.CameraReelGalleryController.StorageUpdated += SetStorageStatus;
             this.view.goToCameraButton.onClick.AddListener(OnGoToCameraButtonClicked);
-            this.cameraReelGalleryController.ScreenshotDeleted += () => ScreenshotDeleted?.Invoke();
 
             view.storageProgressBar.SetLabelString(storageProgressBarLabelText);
         }
@@ -79,7 +77,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
             if (storageStatus.ScreenshotsAmount == 0)
                 return;
 
-            await cameraReelGalleryController.ShowWalletGalleryAsync(web3IdentityCache.Identity.Address, ct, storageStatus);
+            await CameraReelGalleryController.ShowWalletGalleryAsync(web3IdentityCache.Identity.Address, ct, storageStatus);
         }
 
         private void SetStorageStatus(CameraReelStorageStatus storageStatus)
@@ -129,10 +127,9 @@ namespace DCL.InWorldCamera.CameraReelGallery
         {
             view.MouseEnter -= StorageFullIconEnter;
             view.MouseExit -= StorageFullIconExit;
-            cameraReelGalleryController.Dispose();
+            CameraReelGalleryController.Dispose();
             view.goToCameraButton.onClick.RemoveAllListeners();
             Activated = null;
-            ScreenshotDeleted = null;
         }
     }
 }

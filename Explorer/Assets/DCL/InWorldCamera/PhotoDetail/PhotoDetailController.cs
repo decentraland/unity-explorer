@@ -27,6 +27,8 @@ namespace DCL.InWorldCamera.PhotoDetail
 
         public event Action Activated;
         public event Action JumpToPhotoPlace;
+        public event Action ScreenshotShared;
+        public event Action ScreenshotDownloaded;
 
         public readonly PhotoDetailInfoController PhotoDetailInfoController;
         private readonly ICameraReelScreenshotsStorage cameraReelScreenshotsStorage;
@@ -163,6 +165,7 @@ namespace DCL.InWorldCamera.PhotoDetail
                 try
                 {
                     await ReelCommonActions.DownloadReelToFileAsync(inputData.AllReels[currentReelIndex].url, ct);
+                    ScreenshotDownloaded?.Invoke();
                 }
                 catch (Exception e)
                 {
@@ -176,8 +179,11 @@ namespace DCL.InWorldCamera.PhotoDetail
         private void CopyReelLinkClicked() =>
             ReelCommonActions.CopyReelLink(inputData.AllReels[currentReelIndex].id, decentralandUrlsSource, systemClipboard);
 
-        private void ShareReelClicked() =>
+        private void ShareReelClicked()
+        {
             ReelCommonActions.ShareReelToX(shareToXMessage, inputData.AllReels[currentReelIndex].id, decentralandUrlsSource, systemClipboard, webBrowser);
+            ScreenshotShared?.Invoke();
+        }
 
         private void ShowPreviousReel()
         {

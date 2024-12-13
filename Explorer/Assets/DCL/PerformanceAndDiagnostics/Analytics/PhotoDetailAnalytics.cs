@@ -18,6 +18,8 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             photoDetailController.Activated += TrackPhotoDetailOpen;
             photoDetailController.JumpToPhotoPlace += TrackPhotoDetailJumpToPlace;
             photoDetailInfoController.WearableMarketClicked += TrackWearableMarketClicked;
+            photoDetailController.ScreenshotShared += TrackScreenshotShared;
+            photoDetailController.ScreenshotDownloaded += TrackScreenshotDownloaded;
         }
 
         public void Dispose()
@@ -25,7 +27,15 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             photoDetailController.Activated -= TrackPhotoDetailOpen;
             photoDetailController.JumpToPhotoPlace -= TrackPhotoDetailJumpToPlace;
             photoDetailInfoController.WearableMarketClicked -= TrackWearableMarketClicked;
+            photoDetailController.ScreenshotShared -= TrackScreenshotShared;
+            photoDetailController.ScreenshotDownloaded -= TrackScreenshotDownloaded;
         }
+
+        private void TrackScreenshotDownloaded() =>
+            analytics.Track(AnalyticsEvents.CameraReel.DOWNLOAD_PHOTO);
+
+        private void TrackScreenshotShared() =>
+            analytics.Track(AnalyticsEvents.CameraReel.SHARE_PHOTO);
 
         private void TrackWearableMarketClicked() =>
             analytics.Track(AnalyticsEvents.CameraReel.PHOTO_TO_MARKETPLACE);
