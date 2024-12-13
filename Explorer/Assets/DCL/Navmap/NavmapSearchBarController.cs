@@ -80,7 +80,6 @@ namespace DCL.Navmap
         public void SetInputFieldCategory(string? category)
         {
             view.clearSearchButton.gameObject.SetActive(!string.IsNullOrEmpty(category) || !string.IsNullOrEmpty(currentSearchText));
-            Interactable = !string.IsNullOrEmpty(category);
             view.inputFieldCategoryImage.gameObject.SetActive(!string.IsNullOrEmpty(category));
 
             if (string.IsNullOrEmpty(category))
@@ -104,6 +103,7 @@ namespace DCL.Navmap
             currentCategory = string.Empty;
             currentSearchText = string.Empty;
             TogglePanel?.Invoke(false);
+            Interactable = true;
             navmapBus.ClearFilter();
             navmapBus.ClearPlacesFromMap();
         }
