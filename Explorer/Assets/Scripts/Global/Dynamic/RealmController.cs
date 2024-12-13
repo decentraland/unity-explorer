@@ -23,6 +23,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using DCL.DebugUtilities;
+using ECS.SceneLifeCycle.Realm;
 using Unity.Mathematics;
 
 namespace Global.Dynamic
@@ -47,6 +48,7 @@ namespace Global.Dynamic
         private readonly IScenesCache scenesCache;
         private readonly SceneAssetLock sceneAssetLock;
         private readonly IComponentPool<PartitionComponent> partitionComponentPool;
+        private readonly bool isLocalSceneDevelopment;
 
         private GlobalWorld? globalWorld;
         private Entity realmEntity;
@@ -54,6 +56,19 @@ namespace Global.Dynamic
         public IRealmData RealmData => realmData;
 
         private readonly RealmNavigatorDebugView realmNavigatorDebugView;
+
+        public RealmType Type
+        {
+            get
+            {
+                if (isLocalSceneDevelopment)
+                    return RealmType.LocalScene;
+                if (realmData is { Configured: true, ScenesAreFixed: false })
+                    return RealmType.GenesisCity;
+                return RealmType.World;
+            }
+        }
+
         public URLDomain? CurrentDomain { get; private set; }
 
         public GlobalWorld GlobalWorld
@@ -79,7 +94,9 @@ namespace Global.Dynamic
             PartitionDataContainer partitionDataContainer,
             SceneAssetLock sceneAssetLock,
             IDebugContainerBuilder debugContainerBuilder,
-            IComponentPool<PartitionComponent> partitionComponentPool)
+            IComponentPool<PartitionComponent> partitionComponentPool,
+            bool isLocalSceneDevelopment
+        )
         {
             this.web3IdentityCache = web3IdentityCache;
             this.webRequestController = webRequestController;
@@ -92,6 +109,7 @@ namespace Global.Dynamic
             this.partitionDataContainer = partitionDataContainer;
             this.sceneAssetLock = sceneAssetLock;
             this.partitionComponentPool = partitionComponentPool;
+            this.isLocalSceneDevelopment = isLocalSceneDevelopment;
             realmNavigatorDebugView = new RealmNavigatorDebugView(debugContainerBuilder);
         }
 
@@ -135,6 +153,7 @@ namespace Global.Dynamic
             partitionDataContainer.Restart();
 
             CurrentDomain = realm;
+
             realmNavigatorDebugView.UpdateRealmName(CurrentDomain.Value.ToString(), result.lambdas.publicUrl,
                 result.content.publicUrl);
         }
@@ -183,6 +202,7 @@ namespace Global.Dynamic
             if (globalWorld != null)
             {
                 loadedScenes = FindLoadedScenesAndClearSceneCache(true);
+
                 // Destroy everything without awaiting as it's Application Quit
                 globalWorld.SafeDispose(ReportCategory.SCENE_LOADING);
             }
@@ -204,7 +224,7 @@ namespace Global.Dynamic
 
             // release pooled entities
             for (var i = 0; i < globalWorld.FinalizeWorldSystems.Count; i++)
-                    globalWorld.FinalizeWorldSystems[i].FinalizeComponents(world.Query(in CLEAR_QUERY));
+                globalWorld.FinalizeWorldSystems[i].FinalizeComponents(world.Query(in CLEAR_QUERY));
 
             // Clear the world from everything connected to the current realm
             world.Destroy(in CLEAR_QUERY);
@@ -268,5 +288,6 @@ namespace Global.Dynamic
 
             return hostname;
         }
+
     }
 }

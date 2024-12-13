@@ -6,7 +6,9 @@ namespace DCL.Chat.Commands
 {
     public interface IChatCommand
     {
+        Regex Regex { get; }
 
+        string Description { get; }
 
         UniTask<string> ExecuteAsync(Match match, CancellationToken ct);
     }

@@ -221,8 +221,6 @@ MonoBehaviour:
   <NoStorageNotification>k__BackingField: {fileID: 8266421467152206612}
   <ShortcutsInfoPanel>k__BackingField: {fileID: 6937741378551344804}
   <SFXScreenshotCapture>k__BackingField: {fileID: 11400000, guid: 7f53a7b2e8dca514c9c8f3114f3da727, type: 2}
-  <Open>k__BackingField: {fileID: 11400000, guid: 3b4a57ef60f3c694ca48ecce5855265b, type: 2}
-  <Close>k__BackingField: {fileID: 11400000, guid: a4718ba595a60c546b9d385f08dfc9a4, type: 2}
   <CameraReelButton>k__BackingField: {fileID: 16720570550590676}
   <TakeScreenshotButton>k__BackingField: {fileID: 1364361359160270331}
   <CloseButton>k__BackingField: {fileID: 2406123707887843909}
@@ -406,9 +404,9 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 8242718314121009149}
   - {fileID: 3137847304269106682}
   - {fileID: 4134189386364931285}
+  - {fileID: 8242718314121009149}
   m_Father: {fileID: 405257682719442040}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}

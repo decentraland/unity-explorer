@@ -2,6 +2,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.CharacterCamera;
+using DCL.FeatureFlags;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.Global;
@@ -33,6 +34,7 @@ namespace DCL.PluginSystem.World
         private MediaPlayer mediaPlayerPrefab;
         private MediaPlayerPluginWrapper mediaPlayerPluginWrapper;
         private ExposedCameraData exposedCameraData;
+        private FeatureFlagsCache featureFlagsCache;
 
         public MediaPlayerPlugin(
             ECSWorldSingletonSharedDependencies sharedDependencies,
@@ -42,7 +44,8 @@ namespace DCL.PluginSystem.World
             IWebRequestController webRequestController,
             CacheCleaner cacheCleaner,
             WorldVolumeMacBus worldVolumeMacBus,
-            ExposedCameraData exposedCameraData)
+            ExposedCameraData exposedCameraData,
+            FeatureFlagsCache featureFlagsCache)
         {
             this.frameTimeBudget = frameTimeBudget;
             this.sharedDependencies = sharedDependencies;
@@ -52,20 +55,21 @@ namespace DCL.PluginSystem.World
             this.cacheCleaner = cacheCleaner;
             this.worldVolumeMacBus = worldVolumeMacBus;
             this.exposedCameraData = exposedCameraData;
+            this.featureFlagsCache = featureFlagsCache;
         }
 
         public void Dispose() { }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities _, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
-            mediaPlayerPluginWrapper.InjectToWorld(ref builder, sharedDependencies.SceneData, sharedDependencies.SceneStateProvider, sharedDependencies.EcsToCRDTWriter, finalizeWorldSystems);
+            mediaPlayerPluginWrapper.InjectToWorld(ref builder, sharedDependencies.SceneData, sharedDependencies.SceneStateProvider, sharedDependencies.EcsToCRDTWriter, finalizeWorldSystems, featureFlagsCache);
         }
 
         public async UniTask InitializeAsync(MediaPlayerPluginSettings settings, CancellationToken ct)
         {
             VideoPrioritizationSettings videoPrioritizationSettings = (await assetsProvisioner.ProvideMainAssetAsync(settings.VideoPrioritizationSettings, ct: ct)).Value;
             mediaPlayerPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.MediaPlayerPrefab, ct: ct)).Value.GetComponent<MediaPlayer>();
-            mediaPlayerPluginWrapper = new MediaPlayerPluginWrapper(sharedDependencies.ComponentPoolsRegistry, webRequestController, cacheCleaner, videoTexturePool, frameTimeBudget, mediaPlayerPrefab, worldVolumeMacBus, exposedCameraData, videoPrioritizationSettings);
+            mediaPlayerPluginWrapper = new MediaPlayerPluginWrapper(sharedDependencies.ComponentPoolsRegistry, webRequestController, cacheCleaner, videoTexturePool, frameTimeBudget, mediaPlayerPrefab, worldVolumeMacBus, exposedCameraData, videoPrioritizationSettings, featureFlagsCache);
 
         }
 

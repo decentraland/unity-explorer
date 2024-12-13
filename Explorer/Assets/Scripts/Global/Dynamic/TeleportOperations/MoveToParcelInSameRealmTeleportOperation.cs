@@ -1,35 +1,25 @@
-using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using DCL.AsyncLoadReporting;
+using DCL.ParcelsService;
 using DCL.UserInAppInitializationFlow;
-using ECS.SceneLifeCycle.Realm;
-using Utility.Types;
 
 namespace Global.Dynamic.TeleportOperations
 {
     public class MoveToParcelInSameRealmTeleportOperation : TeleportOperationBase
     {
-        private readonly IRealmNavigator realmNavigator;
+        private readonly ITeleportController teleportController;
 
-        public MoveToParcelInSameRealmTeleportOperation(IRealmNavigator realmNavigator)
+        public MoveToParcelInSameRealmTeleportOperation(ITeleportController teleportController)
         {
-            this.realmNavigator = realmNavigator;
+            this.teleportController = teleportController;
         }
 
         protected override async UniTask InternalExecuteAsync(TeleportParams teleportParams, CancellationToken ct)
         {
-            float finalizationProgress =
-                teleportParams.LoadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.PlayerTeleporting);
-
-            AsyncLoadProcessReport teleportLoadReport
-                = teleportParams.ParentReport.CreateChildReport(finalizationProgress);
-
-            UniTask waitForSceneReadiness =
-                await realmNavigator.TeleportToParcelAsync(teleportParams.CurrentDestinationParcel,
-                    teleportLoadReport, ct);
-
-            await waitForSceneReadiness;
+            float finalizationProgress = teleportParams.LoadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.PlayerTeleporting);
+            AsyncLoadProcessReport teleportLoadReport = teleportParams.ParentReport.CreateChildReport(finalizationProgress);
+            await teleportController.TryTeleportToSceneSpawnPointAsync(teleportParams.CurrentDestinationParcel, teleportLoadReport, ct);
             teleportParams.ParentReport.SetProgress(finalizationProgress);
         }
     }

@@ -1,9 +1,16 @@
+using Arch.Core;
 using Cysharp.Threading.Tasks;
-using DCL.PlacesAPIService;
+using DCL.Ipfs;
 using ECS;
-using System;
+using ECS.Prioritization.Components;
+using ECS.SceneLifeCycle.SceneDefinition;
+using ECS.StreamableLoading.Common;
+using ECS.StreamableLoading.Common.Components;
+using System.Collections.Generic;
 using System.Threading;
+using Unity.Mathematics;
 using UnityEngine;
+using UnityEngine.Pool;
 using Utility;
 
 namespace DCL.Multiplayer.Connections.GateKeeper.Meta
@@ -12,15 +19,15 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
     {
         private readonly IRealmData realmData;
         private readonly IExposedTransform characterTransform;
-        private readonly IPlacesAPIService placesAPIService;
+        private readonly World world;
 
         private readonly bool forceSceneIsolation;
 
-        public SceneRoomMetaDataSource(IRealmData realmData, IExposedTransform characterTransform, IPlacesAPIService placesAPIService, bool forceSceneIsolation)
+        public SceneRoomMetaDataSource(IRealmData realmData, IExposedTransform characterTransform, World world, bool forceSceneIsolation)
         {
             this.realmData = realmData;
             this.characterTransform = characterTransform;
-            this.placesAPIService = placesAPIService;
+            this.world = world;
             this.forceSceneIsolation = forceSceneIsolation;
         }
 
@@ -37,16 +44,26 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
             if (realmData.ScenesAreFixed)
                 return new MetaData(input.RealmName, input);
 
-            string? id = await ParcelIdAsync(input, token);
-            return new MetaData(id, input);
+            using PooledObject<List<SceneEntityDefinition>> pooledEntityDefinitionList = ListPool<SceneEntityDefinition>.Get(out List<SceneEntityDefinition>? entityDefinitionList);
+            using PooledObject<List<int2>> pooledPointersList = ListPool<int2>.Get(out List<int2>? pointersList);
+
+            pointersList.Add(input.Parcel.ToInt2());
+
+            // TODO: instead of making a new request, Room Change request should be initiated when the scene definition is loaded by ECS,
+            // currently these processes are completely separated
+            var promise = AssetPromise<SceneDefinitions, GetSceneDefinitionList>.Create(world,
+                new GetSceneDefinitionList(entityDefinitionList, pointersList, new CommonLoadingArguments(realmData.Ipfs.EntitiesActiveEndpoint)),
+                PartitionComponent.TOP_PRIORITY);
+
+            promise = await promise.ToUniTaskAsync(world, cancellationToken: token);
+
+            StreamableLoadingResult<SceneDefinitions> result = promise.Result!.Value;
+
+            return result.Succeeded && entityDefinitionList.Count > 0
+                ? new MetaData(entityDefinitionList[0].id, input)
+                : new MetaData(null, input);
         }
 
         public bool MetadataIsDirty => !realmData.ScenesAreFixed && characterTransform.Position.IsDirty;
-
-        private async UniTask<string?> ParcelIdAsync(MetaData.Input input, CancellationToken token)
-        {
-            PlacesData.PlaceInfo? result = await placesAPIService.GetPlaceAsync(input.Parcel, token);
-            return result?.id;
-        }
     }
 }

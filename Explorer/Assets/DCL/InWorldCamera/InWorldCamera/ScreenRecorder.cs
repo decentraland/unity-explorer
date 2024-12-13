@@ -61,9 +61,6 @@ namespace DCL.InWorldCamera
             float targetRescale = CalculateScaleFactorToTargetSize(currentScreenFrame);
             int roundedUpscale = Mathf.CeilToInt(targetRescale);
 
-            // Hotfix for MacOS Desktop crashing on taking screenshot when Explore panel is open
-            // if (DataStore.i.exploreV2.isOpen.Get() && Application.platform == RuntimePlatform.OSXPlayer) roundedUpscale = 1;
-
             ScreenFrameData rescaledScreenFrame = CalculateRoundRescaledScreenFrame(currentScreenFrame, roundedUpscale);
 
             Texture2D screenshotTexture = ScreenCapture.CaptureScreenshotAsTexture(roundedUpscale); // upscaled Screen Frame resolution

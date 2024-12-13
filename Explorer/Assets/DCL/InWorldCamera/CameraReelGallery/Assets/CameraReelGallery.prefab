@@ -588,6 +588,7 @@ GameObject:
   - component: {fileID: 1537806001154034424}
   - component: {fileID: 8131780838110312948}
   - component: {fileID: 3898868716409051131}
+  - component: {fileID: 3342072612482453717}
   m_Layer: 5
   m_Name: DraggerHelper
   m_TagString: Untagged
@@ -652,6 +653,18 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &3342072612482453717
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5820854835004263176}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &5957530518143104025
 GameObject:
   m_ObjectHideFlags: 0
@@ -663,6 +676,7 @@ GameObject:
   - component: {fileID: 2207382435968079271}
   - component: {fileID: 9111658648430937670}
   - component: {fileID: 9062569423387249374}
+  - component: {fileID: 5190763689275770559}
   m_Layer: 5
   m_Name: Content
   m_TagString: Untagged
@@ -729,6 +743,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_HorizontalFit: 0
   m_VerticalFit: 2
+--- !u!114 &5190763689275770559
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5957530518143104025}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &6019970107626829907
 GameObject:
   m_ObjectHideFlags: 0
@@ -871,9 +897,11 @@ MonoBehaviour:
   loadMoreCounterThreshold: 12
   errorSuccessToastDuration: 3
   deleteModalAnimationDuration: 0.3
-  thumbnailViewPrefab: {fileID: 2729414431232023218, guid: be5951e4b569b41cab587d1d8047a817, type: 3}
+  thumbnailViewPrefab: {fileID: 2729414431232023218, guid: be5951e4b569b41cab587d1d8047a817,
+    type: 3}
   unusedThumbnailViewObject: {fileID: 7888472503356853142}
-  monthGridPrefab: {fileID: 1533018384698385197, guid: ba84ad730ed804baa8a38cd23f6cc11a, type: 3}
+  monthGridPrefab: {fileID: 1533018384698385197, guid: ba84ad730ed804baa8a38cd23f6cc11a,
+    type: 3}
   unusedGridViewObject: {fileID: 5730851560821884989}
 --- !u!1 &7693246168541586952
 GameObject:

@@ -17,10 +17,10 @@ namespace DCL.Chat.MessageBus
 
         public event Action<ChatMessage>? MessageAdded;
 
-        public CommandsHandleChatMessageBus(IChatMessagesBus origin, IReadOnlyDictionary<Regex, Func<IChatCommand>> commandsFactory)
+        public CommandsHandleChatMessageBus(IChatMessagesBus origin, IReadOnlyList<IChatCommand> commands)
         {
             this.origin = origin;
-            this.chatCommandsHandler = new ChatCommandsHandler(commandsFactory);
+            this.chatCommandsHandler = new ChatCommandsHandler(commands);
             origin.MessageAdded += OriginOnOnMessageAdded;
         }
 

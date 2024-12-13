@@ -9,26 +9,22 @@ namespace DCL.Chat
     {
         private const string CHAT_COMMAND_CHAR = "/";
 
-        private readonly Dictionary<Regex, IChatCommand> commandsCache = new ();
-        private readonly IReadOnlyDictionary<Regex, Func<IChatCommand>> commandsFactory;
+        private readonly IReadOnlyList<IChatCommand> commands;
 
-        public ChatCommandsHandler(IReadOnlyDictionary<Regex, Func<IChatCommand>> commandsFactory)
+        public ChatCommandsHandler(IReadOnlyList<IChatCommand> commands)
         {
-            this.commandsFactory = commandsFactory;
+            this.commands = commands;
         }
 
         public bool TryGetChatCommand(in string message, ref (IChatCommand command, Match match) commandTuple)
         {
-            foreach (Regex? commandRegex in commandsFactory.Keys)
+            foreach (IChatCommand cmd in commands)
             {
-                commandTuple.match = commandRegex.Match(message);
+                commandTuple.match = cmd.Regex.Match(message);
+
                 if (!commandTuple.match.Success) continue;
 
-                if (!commandsCache.TryGetValue(commandRegex, out commandTuple.command))
-                {
-                    commandTuple.command = commandsFactory[commandRegex]();
-                    commandsCache[commandRegex] = commandTuple.command;
-                }
+                commandTuple.command = cmd;
 
                 return true;
             }

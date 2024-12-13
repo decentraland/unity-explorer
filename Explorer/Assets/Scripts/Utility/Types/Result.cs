@@ -1,6 +1,4 @@
 using System;
-
-using System;
 using System.Threading;
 
 namespace Utility.Types
@@ -63,8 +61,20 @@ namespace Utility.Types
         public static EnumResult<TErrorEnum> SuccessResult() =>
             new (null);
 
-        public static EnumResult<TErrorEnum> ErrorResult(TErrorEnum state, string errorMessage) =>
+        public static EnumResult<TErrorEnum> ErrorResult(TErrorEnum state, string errorMessage = "") =>
             new ((state, errorMessage));
+
+        public static EnumResult<TErrorEnum> CancelledResult(TErrorEnum state) =>
+            ErrorResult(state, nameof(OperationCanceledException));
+
+        public Result AsResult()
+        {
+            if (Success)
+                return Result.SuccessResult();
+
+            var error = Error!.Value;
+            return Result.ErrorResult($"{error.State}: {error.Message}");
+        }
     }
 
     public readonly struct EnumResult<TValue, TErrorEnum>

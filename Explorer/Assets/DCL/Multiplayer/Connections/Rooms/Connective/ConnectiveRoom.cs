@@ -141,11 +141,11 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
                 catch (Exception e)
                 {
                     ReportHub.LogError(ReportCategory.LIVEKIT, $"{logPrefix} - {funcName} failed: {e}");
-                    connectionLoopHealth.Set(IConnectiveRoom.ConnectionLoopHealth.PrewarmFailed);
+                    connectionLoopHealth.Set(stateOnException);
                     await RecoveryDelayAsync(ct);
                 }
             }
-            while (!ct.IsCancellationRequested && connectionLoopHealth.Value() == IConnectiveRoom.ConnectionLoopHealth.PrewarmFailed);
+            while (!ct.IsCancellationRequested && connectionLoopHealth.Value() == stateOnException);
         }
 
         private UniTask RecoveryDelayAsync(CancellationToken ct) =>

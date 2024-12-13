@@ -18,7 +18,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.Services
             this.flushCount = flushCount;
         }
 
-        public void Identify(string userId, JsonObject? traits = null)
+        public void Identify(string? userId, JsonObject? traits = null)
         {
             lock (monitor)
             {

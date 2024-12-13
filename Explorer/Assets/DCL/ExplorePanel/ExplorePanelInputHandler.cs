@@ -55,7 +55,7 @@ namespace DCL.ExplorePanel
             dclInput.Shortcuts.Map.performed += OnMapHotkeyPressed;
             dclInput.Shortcuts.Settings.performed += OnSettingsHotkeyPressed;
             dclInput.Shortcuts.Backpack.performed += OnBackpackHotkeyPressed;
-            dclInput.Shortcuts.CameraReel.performed += OnCameraReelHotkeyPressed;
+            dclInput.InWorldCamera.CameraReel.performed += OnCameraReelHotkeyPressed;
         }
 
         private void UnregisterHotkeys()
@@ -64,7 +64,7 @@ namespace DCL.ExplorePanel
             dclInput.Shortcuts.Map.performed -= OnMapHotkeyPressed;
             dclInput.Shortcuts.Settings.performed -= OnSettingsHotkeyPressed;
             dclInput.Shortcuts.Backpack.performed -= OnBackpackHotkeyPressed;
-            dclInput.Shortcuts.CameraReel.performed -= OnCameraReelHotkeyPressed;
+            dclInput.InWorldCamera.CameraReel.performed -= OnCameraReelHotkeyPressed;
 
             foreach (var escapeAction in escapeActions)
                 dclInput.UI.Close.performed -= escapeAction;

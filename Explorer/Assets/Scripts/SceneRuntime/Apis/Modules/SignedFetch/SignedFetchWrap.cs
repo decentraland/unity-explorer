@@ -159,7 +159,17 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
 
                     return response;
                 }
-                catch (UnityWebRequestException e) { return new FlatFetchResponse(false, e.ResponseCode, e.ResponseCode.ToString(), e.Error, e.ResponseHeaders); }
+                catch (UnityWebRequestException e)
+                {
+                    if (e.ResponseHeaders.TryGetValue("Content-type", out var contentType) && contentType.Contains("application/json", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var flatFetchError = JsonConvert.DeserializeObject<FlatFetchError>(e.Text);
+                        return new FlatFetchResponse(false, e.ResponseCode, e.ResponseCode.ToString(), flatFetchError.error,
+                            e.ResponseHeaders);
+                    }
+                    return new FlatFetchResponse(false, e.ResponseCode, e.ResponseCode.ToString(), e.Error,
+                        e.ResponseHeaders);
+                }
                 catch (Exception e)
                 {
                     ReportHub.LogException(e, new ReportData(ReportCategory.SCENE_FETCH_REQUEST));

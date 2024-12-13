@@ -6,6 +6,7 @@ using DCL.ExplorePanel.Components;
 using DCL.InWorldCamera.CameraReelGallery.Components;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.InWorldCamera.CameraReelStorageService.Schemas;
+using DCL.InWorldCamera.ReelActions;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.Pools;
 using DG.Tweening;
@@ -40,7 +41,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
             }
         }
 
-        public event Action<CameraReelResponseCompact>? ThumbnailClicked;
+        public event Action<List<CameraReelResponseCompact>, int, Action<CameraReelResponseCompact>>? ThumbnailClicked;
         public event Action<CameraReelStorageStatus>? StorageUpdated;
 
         private const int THUMBNAIL_POOL_DEFAULT_CAPACITY = 100;
@@ -56,7 +57,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
         private readonly IExplorePanelEscapeAction explorePanelEscapeAction;
         private readonly ReelGalleryPoolManager reelGalleryPoolManager;
         private readonly Dictionary<DateTime, MonthGridController> monthViews = new ();
-        private readonly Dictionary<CameraReelResponseCompact, Sprite> reelThumbnailCache = new ();
+        private readonly Dictionary<CameraReelResponseCompact, Texture> reelThumbnailCache = new ();
         private readonly OptionButtonController optionButtonController;
         private readonly ContextMenuController contextMenuController;
         private readonly Rect elementMaskRect;
@@ -140,21 +141,16 @@ namespace DCL.InWorldCamera.CameraReelGallery
 
                 this.contextMenuController.ShareToXRequested += cameraReelResponse =>
                 {
-                    string description = shareToXMessage.Replace(" ", "%20");
-                    string url = $"{decentralandUrlsSource.Url(DecentralandUrl.CameraReelLink)}/{cameraReelResponse.id}";
-                    string xUrl = $"https://x.com/intent/post?text={description}&hashtags=DCLCamera&url={url}";
-
-                    systemClipboard.Set(xUrl);
-                    webBrowser.OpenUrl(xUrl);
+                    ReelCommonActions.ShareReelToX(shareToXMessage, cameraReelResponse.id, decentralandUrlsSource, systemClipboard, webBrowser);
                 };
 
                 this.contextMenuController.CopyPictureLinkRequested += cameraReelResponse =>
                 {
-                    systemClipboard.Set($"{decentralandUrlsSource.Url(DecentralandUrl.CameraReelLink)}/{cameraReelResponse.id}");
+                    ReelCommonActions.CopyReelLink(cameraReelResponse.id, decentralandUrlsSource, systemClipboard);
                     ShowSuccessNotificationAsync(linkCopiedMessage).Forget();
                 };
 
-                this.contextMenuController.DownloadRequested += cameraReelResponse => { webBrowser.OpenUrl(cameraReelResponse.url); };
+                this.contextMenuController.DownloadRequested += cameraReelResponse => { ReelCommonActions.DownloadReel(cameraReelResponse.url, webBrowser); };
 
                 this.contextMenuController.DeletePictureRequested += cameraReelResponse =>
                 {
@@ -213,7 +209,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
                 CameraReelStorageStatus response = await cameraReelStorageService.DeleteScreenshotAsync(reelToDeleteInfo.Id, ct);
 
                 int deletedIndex = -1;
-                for (int i = beginVisible; i < currentSize; i++)
+                for (int i = 0; i < currentSize; i++)
                     if (deletedIndex >= 0)
                         thumbnailImages[i - 1] = thumbnailImages[i];
                     else if (thumbnailImages[i].CameraReelResponse.id == reelToDeleteInfo.Id)
@@ -223,7 +219,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
                 currentSize--;
                 ResetThumbnailsVisibility();
 
-                MonthGridController monthGridView = GetMonthGrid(PagedCameraReelManager.GetDateTimeFromString(reelToDeleteInfo.Datetime));
+                MonthGridController monthGridView = GetMonthGrid(ReelUtility.GetMonthDateTimeFromString(reelToDeleteInfo.Datetime));
                 monthGridView.RemoveThumbnail(reelToDeleteInfo.Id);
 
                 if (monthGridView.GridIsEmpty())
@@ -326,7 +322,13 @@ namespace DCL.InWorldCamera.CameraReelGallery
 
                 IReadOnlyList<ReelThumbnailController> thumbnailViews = monthGridView.Setup(bucket.Key, bucket.Value, optionButtonController,
                     (cameraReelResponse, sprite) => reelThumbnailCache.Add(cameraReelResponse, sprite),
-                    cameraReelResponse => ThumbnailClicked?.Invoke(cameraReelResponse));
+                    cameraReelResponse =>
+                        ThumbnailClicked?.Invoke(pagedCameraReelManager.AllOrderedResponses, pagedCameraReelManager.AllOrderedResponses.IndexOf(cameraReelResponse), compact =>
+                        {
+                            reelToDelete = compact;
+                            DeleteScreenshot();
+                        })
+                    );
 
                 for (int i = 0; i < thumbnailViews.Count; i++)
                     thumbnailImages[currentSize + i] = thumbnailViews[i];
@@ -388,14 +390,14 @@ namespace DCL.InWorldCamera.CameraReelGallery
 
         private void DisableThumbnailImage(ReelThumbnailController thumbnailController)
         {
-            thumbnailController.view.thumbnailImage.sprite = null;
+            thumbnailController.view.thumbnailImage.texture = null;
             thumbnailController.view.thumbnailImage.enabled = false;
         }
 
         private void EnableThumbnailImage(ReelThumbnailController thumbnailController)
         {
-            if (reelThumbnailCache.TryGetValue(thumbnailController.CameraReelResponse, out Sprite sprite))
-                thumbnailController.view.thumbnailImage.sprite = sprite;
+            if (reelThumbnailCache.TryGetValue(thumbnailController.CameraReelResponse, out Texture sprite))
+                thumbnailController.view.thumbnailImage.texture = sprite;
             thumbnailController.view.thumbnailImage.enabled = true;
         }
 
@@ -437,7 +439,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
                     DisableThumbnailImage(thumbnailImages[i]);
         }
 
-        private bool ViewIntersectsImage(Image image)
+        private bool ViewIntersectsImage(RawImage image)
         {
             var img = image.rectTransform.GetWorldRect();
 

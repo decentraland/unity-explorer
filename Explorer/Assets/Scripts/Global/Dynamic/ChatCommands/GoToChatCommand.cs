@@ -15,10 +15,12 @@ namespace Global.Dynamic.ChatCommands
         private const string COMMAND_GOTO_LOCAL = "goto-local";
         private const string PARAMETER_RANDOM = "random";
 
-        public static readonly Regex REGEX =
+        public Regex Regex { get; } =
             new (
                 $@"^/({ChatCommandsUtils.COMMAND_GOTO}|{COMMAND_GOTO_LOCAL})\s+(?:(-?\d+)\s*,\s*(-?\d+)|{PARAMETER_RANDOM})$",
                 RegexOptions.Compiled);
+        public string Description => "<b>/goto <i><world | x,y | random></i></b> - Teleport to a specific location.";
+
         private readonly IRealmNavigator realmNavigator;
 
         private int x;
@@ -32,7 +34,20 @@ namespace Global.Dynamic.ChatCommands
         public async UniTask<string> ExecuteAsync(Match match, CancellationToken ct)
         {
             bool isLocal = match.Groups[1].Value == COMMAND_GOTO_LOCAL;
+            ParseOrRandom(match);
 
+            Result teleportResult = await realmNavigator.TeleportToParcelAsync(new Vector2Int(x, y), ct, isLocal);
+
+            if (ct.IsCancellationRequested)
+                return "🔴 Error. The operation was canceled!";
+
+            return teleportResult.Success
+                ? $"🟢 You teleported to {x},{y} in Genesis City"
+                : $"🔴 Teleport failed: {teleportResult.ErrorMessage}";
+        }
+
+        private void ParseOrRandom(Match match)
+        {
             if (match.Groups[2].Success && match.Groups[3].Success)
             {
                 x = int.Parse(match.Groups[2].Value);
@@ -43,16 +58,6 @@ namespace Global.Dynamic.ChatCommands
                 x = Random.Range(GenesisCityData.MIN_PARCEL.x, GenesisCityData.MAX_SQUARE_CITY_PARCEL.x);
                 y = Random.Range(GenesisCityData.MIN_PARCEL.y, GenesisCityData.MAX_SQUARE_CITY_PARCEL.y);
             }
-
-            Result teleportResult =
-                await realmNavigator.TryInitializeTeleportToParcelAsync(new Vector2Int(x, y), ct, isLocal);
-
-            if (ct.IsCancellationRequested)
-                return "🔴 Error. The operation was canceled!";
-
-            return teleportResult.Success
-                ? $"🟢 You teleported to {x},{y} in Genesis City"
-                : $"🔴 Teleport failed: {teleportResult.ErrorMessage}";
         }
     }
 }

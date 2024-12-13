@@ -17,7 +17,7 @@ namespace DCL.CharacterMotion.Components
             }
         }
 
-        public static readonly TimeSpan TIMEOUT = TimeSpan.FromSeconds(30);
+        public static readonly TimeSpan TIMEOUT = TimeSpan.FromMinutes(2);
 
         public readonly Vector2Int Parcel;
         public readonly Vector3 Position;

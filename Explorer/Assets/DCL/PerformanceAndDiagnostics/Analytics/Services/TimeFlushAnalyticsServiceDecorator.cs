@@ -19,7 +19,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.Services
             FlushLoopAsync(token).Forget();
         }
 
-        public void Identify(string userId, JsonObject? traits = null)
+        public void Identify(string? userId, JsonObject? traits = null)
         {
             origin.Identify(userId, traits);
         }

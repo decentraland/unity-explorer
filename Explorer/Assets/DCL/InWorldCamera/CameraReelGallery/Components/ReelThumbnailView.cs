@@ -9,7 +9,7 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
     public class ReelThumbnailView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IDisposable
     {
         [Header("References")]
-        [SerializeField] internal Image thumbnailImage;
+        [SerializeField] internal RawImage thumbnailImage;
         [SerializeField] internal LoadingBrightView loadingBrightView;
         [SerializeField] internal RectTransform optionButtonContainer;
         [SerializeField] internal Button button;

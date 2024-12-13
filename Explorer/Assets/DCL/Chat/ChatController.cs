@@ -136,6 +136,9 @@ namespace DCL.Chat
             viewInstance.ChatBubblesToggle.Toggle.SetIsOnWithoutNotify(nametagsData.showChatBubbles);
             OnToggleChatBubblesValueChanged(nametagsData.showChatBubbles);
             OnFocus();
+
+            // Intro message
+            chatHistory.AddMessage(ChatMessage.NewFromSystem("Type /help for available commands."));
         }
 
         protected override void OnViewShow()

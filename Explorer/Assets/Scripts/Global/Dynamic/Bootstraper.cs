@@ -76,7 +76,6 @@ namespace Global.Dynamic
             cursorRoot.EnsureNotNull();
 
             startingRealm = URLDomain.FromString(realmLaunchSettings.GetStartingRealm(decentralandUrlsSource));
-            startingParcel = realmLaunchSettings.TargetScene;
 
             // Hides the debug UI during the initial flow
             debugUiRoot.rootVisualElement.EnsureNotNull().style.display = DisplayStyle.None;
@@ -154,22 +153,19 @@ namespace Global.Dynamic
                 {
                     StaticLoadPositions = realmLaunchSettings.GetPredefinedParcels(),
                     Realms = settings.Realms,
-                    StartParcel = startingParcel,
+                    StartParcel = realmLaunchSettings.targetScene,
                     IsolateScenesCommunication = realmLaunchSettings.isolateSceneCommunication,
                     EnableLandscape = debugSettings.EnableLandscape,
                     EnableLOD = debugSettings.EnableLOD && !realmLaunchSettings.IsLocalSceneDevelopmentRealm,
                     EnableAnalytics = EnableAnalytics,
-                    HybridSceneParams = realmLaunchSettings.CreateHybridSceneParams(startingParcel),
+                    HybridSceneParams = realmLaunchSettings.CreateHybridSceneParams(),
                     LocalSceneDevelopmentRealm = realmLaunchSettings.GetLocalSceneDevelopmentRealm(decentralandUrlsSource) ?? string.Empty,
                     AppParameters = appArgs,
                 },
                 backgroundMusic,
-                staticContainer.PortableExperiencesController,
                 world,
                 playerEntity,
                 appArgs,
-                staticContainer.SceneRestrictionBusController,
-                staticContainer.LoadingStatus,
                 coroutineRunner,
                 ct);
         }
@@ -253,6 +249,11 @@ namespace Global.Dynamic
                 throw new InvalidOperationException("Starting realm is not set");
 
             await dynamicWorldContainer.RealmController.SetRealmAsync(startingRealm.Value, ct);
+        }
+
+        public void ApplyFeatureFlagConfigs(FeatureFlagsCache featureFlagsCache)
+        {
+            realmLaunchSettings.CheckStartParcelFeatureFlagOverride(appArgs, featureFlagsCache);
         }
 
         public async UniTask UserInitializationAsync(DynamicWorldContainer dynamicWorldContainer,
