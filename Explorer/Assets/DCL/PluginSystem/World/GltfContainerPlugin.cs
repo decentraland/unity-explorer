@@ -20,6 +20,7 @@ using System.Collections.Generic;
 using DCL.UserInAppInitializationFlow;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.GLTF;
+using UnityEngine;
 
 namespace DCL.PluginSystem.World
 {
@@ -38,6 +39,7 @@ namespace DCL.PluginSystem.World
         private readonly IWebRequestController webRequestController;
         private readonly ILoadingStatus loadingStatus;
         private readonly IComponentPool<SDKTransform> sdkTransformPool;
+        private readonly IComponentPool<Transform> transformPool;
 
         public GltfContainerPlugin(ECSWorldSingletonSharedDependencies globalDeps, CacheCleaner cacheCleaner, ISceneReadinessReportQueue sceneReadinessReportQueue, IComponentPoolsRegistry poolsRegistry, bool localSceneDevelopment, bool useRemoteAssetBundles, IWebRequestController webRequestController, ILoadingStatus loadingStatus)
         {
@@ -49,6 +51,7 @@ namespace DCL.PluginSystem.World
             this.loadingStatus = loadingStatus;
             assetsCache = new GltfContainerAssetsCache(poolsRegistry);
             sdkTransformPool = poolsRegistry.GetReferenceTypePool<SDKTransform>();
+            transformPool = poolsRegistry.GetReferenceTypePool<Transform>();
             cacheCleaner.Register(assetsCache);
         }
 
@@ -86,7 +89,7 @@ namespace DCL.PluginSystem.World
                 persistentEntities.SceneContainer);
 
             // GltfNode
-            finalizeWorldSystems.Add(GltfNodeSystem.InjectToWorld(ref builder, sharedDependencies.EntitiesMap, sharedDependencies.EcsToCRDTWriter, sdkTransformPool, sharedDependencies.SceneData));
+            finalizeWorldSystems.Add(GltfNodeSystem.InjectToWorld(ref builder, sharedDependencies.EntitiesMap, sharedDependencies.EcsToCRDTWriter, sdkTransformPool, transformPool, sharedDependencies.SceneData));
             // TODO: GltfNodeLoadingState
 
             ResetDirtyFlagSystem<PBGltfContainer>.InjectToWorld(ref builder);

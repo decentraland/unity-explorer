@@ -31,17 +31,19 @@ namespace DCL.SDKComponents.GltfNode.Systems
         private IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap;
         private readonly IECSToCRDTWriter ecsToCrdtWriter;
         private readonly IComponentPool<SDKTransform> sdkTransformPool;
+        private readonly IComponentPool<Transform> transformPool;
         private readonly ISceneData sceneData;
 
         Stopwatch stopWatch = new Stopwatch();
 
         public GltfNodeSystem(World world, IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap, IECSToCRDTWriter ecsToCrdtWriter,
-          IComponentPool<SDKTransform> sdkTransformPool, ISceneData sceneData) : base(world)
+          IComponentPool<SDKTransform> sdkTransformPool, IComponentPool<Transform> transformPool, ISceneData sceneData) : base(world)
         {
             this.entitiesMap = entitiesMap;
             this.ecsToCrdtWriter = ecsToCrdtWriter;
             this.sceneData = sceneData;
             this.sdkTransformPool = sdkTransformPool;
+            this.transformPool = transformPool;
         }
 
         protected override void Update(float t)
@@ -71,8 +73,14 @@ namespace DCL.SDKComponents.GltfNode.Systems
             // if ((nodeTransform = gltfEntityTransform.Transform.Find("Scene/Scene/"+pbComponent.NodePath)) == null)
 
             Transform? nodeTransform = null;
-            if ((nodeTransform = gltfEntityTransform.Transform.Find(GLTF_ROOT_GO_NAME+pbComponent.NodePath)) == null)
+
+            // Some meshes are loaded as 'Scene/{PATH}', others are randomly loaded as 'Scene/Scene/{PATH}'...
+            if ((nodeTransform = gltfEntityTransform.Transform.Find(GLTF_ROOT_GO_NAME + pbComponent.NodePath)) == null
+                && (nodeTransform = gltfEntityTransform.Transform.Find(GLTF_ROOT_GO_NAME + GLTF_ROOT_GO_NAME + pbComponent.NodePath)) == null)
+            {
+                Debug.Log($"PRAVS - NOT FOUND! {GLTF_ROOT_GO_NAME + GLTF_ROOT_GO_NAME + pbComponent.NodePath}", gltfEntityTransform.Transform);
                 return;
+            }
 
             // Duplicate node and hide the original one (to be able to reset the node)
             GameObject nodeClone = GameObject.Instantiate(nodeTransform.gameObject, nodeTransform.parent);
@@ -118,22 +126,22 @@ namespace DCL.SDKComponents.GltfNode.Systems
 
         [Query]
         [None(typeof(PBGltfNode), typeof(DeleteEntityIntention))]
-        private void HandleComponentRemoval(Entity entity, in GltfNodeComponent gltfNodeComponent, in TransformComponent transformComponent, ref SDKTransform sdkTransform) =>
-            Dispose(entity, in gltfNodeComponent, in transformComponent, ref sdkTransform);
+        private void HandleComponentRemoval(Entity entity, in GltfNodeComponent gltfNodeComponent, ref TransformComponent transformComponent, ref SDKTransform sdkTransform) =>
+            Dispose(entity, in gltfNodeComponent, ref transformComponent, ref sdkTransform);
 
         [Query]
         [All(typeof(DeleteEntityIntention))]
-        private void HandleEntityDeletion(Entity entity, in GltfNodeComponent gltfNodeComponent, in TransformComponent transformComponent, ref SDKTransform sdkTransform) =>
-            Dispose(entity, in gltfNodeComponent, in transformComponent, ref sdkTransform);
+        private void HandleEntityDeletion(Entity entity, in GltfNodeComponent gltfNodeComponent, ref TransformComponent transformComponent, ref SDKTransform sdkTransform) =>
+            Dispose(entity, in gltfNodeComponent, ref transformComponent, ref sdkTransform);
 
         [Query]
-        private void FinalizeComponents(Entity entity, in GltfNodeComponent gltfNodeComponent, in TransformComponent transformComponent, ref SDKTransform sdkTransform) =>
-            Dispose(entity, in gltfNodeComponent, in transformComponent, ref sdkTransform);
+        private void FinalizeComponents(Entity entity, in GltfNodeComponent gltfNodeComponent, ref TransformComponent transformComponent, ref SDKTransform sdkTransform) =>
+            Dispose(entity, in gltfNodeComponent, ref transformComponent, ref sdkTransform);
 
         public void FinalizeComponents(in Query query) =>
             FinalizeComponentsQuery(World);
 
-        private void Dispose(Entity entity, in GltfNodeComponent gltfNodeComponent, in TransformComponent transformComponent, ref SDKTransform sdkTransform)
+        private void Dispose(Entity entity, in GltfNodeComponent gltfNodeComponent, ref TransformComponent transformComponent, ref SDKTransform sdkTransform)
         {
             stopWatch.Restart();
 
@@ -153,7 +161,13 @@ namespace DCL.SDKComponents.GltfNode.Systems
                 // TODO: update every child entity transform parent to be the root scene ON CRDT AS WELL...
             }
 
-            GameObject.Destroy(gltfNodeComponent.clonedNodeTransform.gameObject);
+            // Replace duplicated transform by a dummy one
+            /*transformComponent.Transform = transformPool.Get();
+            transformComponent.UpdateCache();*/
+
+            // destroy duplicated node object
+            // GameObject.Destroy(gltfNodeComponent.clonedNodeTransform.gameObject);
+            GameObject.DestroyImmediate(gltfNodeComponent.clonedNodeTransform.gameObject); // to measure the real destruction cost
 
             // Reset original GO
             gltfNodeComponent.originalNodeGameObject.SetActive(true);
@@ -162,6 +176,7 @@ namespace DCL.SDKComponents.GltfNode.Systems
 
             sdkTransformPool.Release(sdkTransform);
             World.Remove<TransformComponent, SDKTransform, GltfNodeComponent>(entity);
+            // World.Remove<SDKTransform, GltfNodeComponent>(entity);
 
             stopWatch.Stop();
             Debug.Log($"PRAVS - Dispose() - milliseconds: {stopWatch.ElapsedMilliseconds}");
