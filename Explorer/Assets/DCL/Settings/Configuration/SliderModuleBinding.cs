@@ -5,6 +5,7 @@ using DCL.SDKComponents.MediaStream.Settings;
 using DCL.Settings.ModuleControllers;
 using DCL.Settings.ModuleViews;
 using DCL.Settings.Settings;
+using DCL.StylizedSkybox.Scripts.Plugin;
 using ECS.Prioritization;
 using System;
 using UnityEngine;
@@ -26,6 +27,7 @@ namespace DCL.Settings.Configuration
             MUSIC_VOLUME_FEATURE,
             UI_SOUNDS_VOLUME_FEATURE,
             AVATAR_SOUNDS_VOLUME_FEATURE,
+            SKYBOX_TIME_FEATURE,
             // add other features...
         }
 
@@ -38,10 +40,13 @@ namespace DCL.Settings.Configuration
             QualitySettingsAsset qualitySettingsAsset,
             ControlsSettingsAsset controlsSettingsAsset,
             ISystemMemoryCap systemMemoryCap,
+            StylizedSkyboxSettingsAsset skyboxSettingsAsset,
             WorldVolumeMacBus worldVolumeMacBus = null)
         {
             var viewInstance = UnityEngine.Object.Instantiate(View, parent);
             viewInstance.Configure(Config);
+
+
 
             SettingsFeatureController controller = Feature switch
                                                    {
@@ -54,6 +59,7 @@ namespace DCL.Settings.Configuration
                                                        SliderFeatures.MUSIC_VOLUME_FEATURE => new MusicVolumeSettingsController(viewInstance, generalAudioMixer),
                                                        SliderFeatures.UI_SOUNDS_VOLUME_FEATURE => new UISoundsVolumeSettingsController(viewInstance, generalAudioMixer),
                                                        SliderFeatures.AVATAR_SOUNDS_VOLUME_FEATURE => new AvatarSoundsVolumeSettingsController(viewInstance, generalAudioMixer),
+                                                       SliderFeatures.SKYBOX_TIME_FEATURE => new SkyboxTimeSettingsController(viewInstance, skyboxSettingsAsset),
                                                        // add other cases...
                                                        _ => throw new ArgumentOutOfRangeException(nameof(viewInstance))
                                                    };

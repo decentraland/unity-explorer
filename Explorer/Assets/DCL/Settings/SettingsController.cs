@@ -6,6 +6,7 @@ using DCL.SDKComponents.MediaStream.Settings;
 using DCL.Settings.Configuration;
 using DCL.Settings.ModuleControllers;
 using DCL.Settings.Settings;
+using DCL.StylizedSkybox.Scripts.Plugin;
 using DCL.UI;
 using ECS.Prioritization;
 using System;
@@ -26,6 +27,7 @@ namespace DCL.Settings
         private readonly LandscapeData landscapeData;
         private readonly QualitySettingsAsset qualitySettingsAsset;
         private readonly ISystemMemoryCap memoryCap;
+        private readonly StylizedSkyboxSettingsAsset skyboxSettingsAsset;
         private readonly WorldVolumeMacBus worldVolumeMacBus;
         private readonly ControlsSettingsAsset controlsSettingsAsset;
         private readonly RectTransform rectTransform;
@@ -41,6 +43,7 @@ namespace DCL.Settings
             QualitySettingsAsset qualitySettingsAsset,
             ControlsSettingsAsset controlsSettingsAsset,
             ISystemMemoryCap memoryCap,
+            StylizedSkyboxSettingsAsset skyboxSettingsAsset,
             WorldVolumeMacBus worldVolumeMacBus = null)
         {
             this.view = view;
@@ -50,6 +53,7 @@ namespace DCL.Settings
             this.landscapeData = landscapeData;
             this.qualitySettingsAsset = qualitySettingsAsset;
             this.memoryCap = memoryCap;
+            this.skyboxSettingsAsset = skyboxSettingsAsset;
             this.worldVolumeMacBus = worldVolumeMacBus;
             this.controlsSettingsAsset = controlsSettingsAsset;
             this.videoPrioritizationSettings = videoPrioritizationSettings;
@@ -118,7 +122,7 @@ namespace DCL.Settings
                 generalGroupView.GroupTitle.text = group.GroupTitle;
 
                 foreach (SettingsModuleBindingBase module in group.Modules)
-                    controllers.Add(module?.CreateModule(generalGroupView.ModulesContainer, realmPartitionSettingsAsset, videoPrioritizationSettings, landscapeData, generalAudioMixer, qualitySettingsAsset, controlsSettingsAsset, memoryCap, worldVolumeMacBus));
+                    controllers.Add(module?.CreateModule(generalGroupView.ModulesContainer, realmPartitionSettingsAsset, videoPrioritizationSettings, landscapeData, generalAudioMixer, qualitySettingsAsset, controlsSettingsAsset, memoryCap, skyboxSettingsAsset, worldVolumeMacBus));
             }
         }
 

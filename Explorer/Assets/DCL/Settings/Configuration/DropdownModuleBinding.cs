@@ -5,6 +5,7 @@ using DCL.SDKComponents.MediaStream.Settings;
 using DCL.Settings.ModuleControllers;
 using DCL.Settings.ModuleViews;
 using DCL.Settings.Settings;
+using DCL.StylizedSkybox.Scripts.Plugin;
 using ECS.Prioritization;
 using System;
 using UnityEngine;
@@ -36,6 +37,7 @@ namespace DCL.Settings.Configuration
             QualitySettingsAsset qualitySettingsAsset,
             ControlsSettingsAsset controlsSettingsAsset,
             ISystemMemoryCap systemMemoryCap,
+            StylizedSkyboxSettingsAsset skyboxSettingsAsset,
             WorldVolumeMacBus worldVolumeMacBus = null)
         {
             var viewInstance = UnityEngine.Object.Instantiate(View, parent);

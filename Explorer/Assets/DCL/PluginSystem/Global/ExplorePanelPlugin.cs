@@ -48,6 +48,7 @@ using DCL.Optimization.PerformanceBudgeting;
 using DCL.PluginSystem.World;
 using DCL.SDKComponents.MediaStream.Settings;
 using DCL.Settings.Settings;
+using DCL.StylizedSkybox.Scripts.Plugin;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Audio;
@@ -240,11 +241,24 @@ namespace DCL.PluginSystem.Global
             ProvidedAsset<AudioMixer> generalAudioMixer = await assetsProvisioner.ProvideMainAssetAsync(settings.GeneralAudioMixer, ct);
             ProvidedAsset<RealmPartitionSettingsAsset> realmPartitionSettings = await assetsProvisioner.ProvideMainAssetAsync(settings.RealmPartitionSettings, ct);
             ProvidedAsset<VideoPrioritizationSettings> videoPrioritizationSettings = await assetsProvisioner.ProvideMainAssetAsync(settings.VideoPrioritizationSettings, ct);
+            ProvidedAsset<StylizedSkyboxSettingsAsset> stylizedSkyboxSettings = await assetsProvisioner.ProvideMainAssetAsync(settings.StylizedSkyboxSettingsAsset, ct);
 
             ProvidedAsset<LandscapeData> landscapeData = await assetsProvisioner.ProvideMainAssetAsync(settings.LandscapeData, ct);
             ProvidedAsset<QualitySettingsAsset> qualitySettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.QualitySettingsAsset, ct);
             ProvidedAsset<ControlsSettingsAsset> controlsSettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.ControlsSettingsAsset, ct);
-            settingsController = new SettingsController(explorePanelView.GetComponentInChildren<SettingsView>(), settingsMenuConfiguration.Value, generalAudioMixer.Value, realmPartitionSettings.Value, videoPrioritizationSettings.Value, landscapeData.Value, qualitySettingsAsset.Value, controlsSettingsAsset.Value, systemMemoryCap, worldVolumeMacBus);
+            settingsController = new SettingsController(
+                explorePanelView.GetComponentInChildren<SettingsView>(),
+                settingsMenuConfiguration.Value,
+                generalAudioMixer.Value,
+                realmPartitionSettings.Value,
+                videoPrioritizationSettings.Value,
+                landscapeData.Value,
+                qualitySettingsAsset.Value,
+                controlsSettingsAsset.Value,
+                systemMemoryCap,
+                stylizedSkyboxSettings.Value,
+                worldVolumeMacBus);
+
             navmapController = new NavmapController(navmapView: explorePanelView.GetComponentInChildren<NavmapView>(),
                 mapRendererContainer.MapRenderer, placesAPIService, webRequestController, webBrowser, dclInput,
                 realmNavigator, realmData, mapPathEventBus, world, playerEntity, inputBlock, chatMessagesBus);
@@ -305,6 +319,9 @@ namespace DCL.PluginSystem.Global
 
             [field: SerializeField]
             public AssetReferenceT<ControlsSettingsAsset> ControlsSettingsAsset { get; private set; }
+
+            [field: SerializeField]
+            public AssetReferenceT<StylizedSkyboxSettingsAsset> StylizedSkyboxSettingsAsset { get; private set; }
 
             [field: Header("Camera Reel")]
             [field: SerializeField]

@@ -10,7 +10,6 @@ using DCL.PluginSystem.Global;
 using System;
 using System.Threading;
 using UnityEngine;
-using UnityEngine.AddressableAssets;
 using Object = UnityEngine.Object;
 
 namespace DCL.StylizedSkybox.Scripts.Plugin
@@ -44,10 +43,15 @@ namespace DCL.StylizedSkybox.Scripts.Plugin
 
         public async UniTask InitializeAsync(StylizedSkyboxSettings settings, CancellationToken ct)
         {
-            skyboxController = Object.Instantiate((await assetsProvisioner.ProvideMainAssetAsync(settings.StylizedSkyboxPrefab, ct: ct)).Value.GetComponent<SkyboxController>());
-            AnimationClip skyboxAnimation = (await assetsProvisioner.ProvideMainAssetAsync(settings.SkyboxAnimationCycle, ct: ct)).Value;
+            var settingsAsset = settings.SettingsAsset;
 
-            skyboxController.Initialize(settings.SkyboxMaterial, directionalLight, skyboxAnimation, featureFlagsCache);
+            skyboxController = Object.Instantiate((await assetsProvisioner.ProvideMainAssetAsync(settingsAsset.StylizedSkyboxPrefab, ct: ct)).Value.GetComponent<SkyboxController>());
+            AnimationClip skyboxAnimation = (await assetsProvisioner.ProvideMainAssetAsync(settingsAsset.SkyboxAnimationCycle, ct: ct)).Value;
+
+            settingsAsset.TimeOfDay = (int)(skyboxController!.NaturalTime / (skyboxController!.SecondsInDay / 24f));
+            settingsAsset.TimeOfDayChanged += OnTimeOfDayChanged;
+
+            skyboxController.Initialize(settingsAsset.SkyboxMaterial, directionalLight, skyboxAnimation, featureFlagsCache);
 
             debugContainerBuilder.TryAddWidget("Skybox")
                                  ?.AddSingleButton("Play", () => skyboxController.Play())
@@ -56,18 +60,19 @@ namespace DCL.StylizedSkybox.Scripts.Plugin
                                  .AddSingleButton("SetTime", () => skyboxController.SetTime(timeOfDay.Value)); //TODO: replace this by a system to update the value
         }
 
+        private void OnTimeOfDayChanged(int hour)
+        {
+            int seconds = skyboxController!.SecondsInDay / 24 * hour;
+
+            timeOfDay.Value = seconds;
+            skyboxController.Pause();
+            skyboxController.SetTime(seconds);
+        }
+
         [Serializable]
         public class StylizedSkyboxSettings : IDCLPluginSettings
         {
-            public StylizedSkyboxControllerRef StylizedSkyboxPrefab = null!;
-            public Material SkyboxMaterial = null!;
-            public AssetReferenceT<AnimationClip> SkyboxAnimationCycle = null!;
-
-            [Serializable]
-            public class StylizedSkyboxControllerRef : ComponentReference<SkyboxController>
-            {
-                public StylizedSkyboxControllerRef(string guid) : base(guid) { }
-            }
+            public StylizedSkyboxSettingsAsset SettingsAsset;
         }
     }
 }
