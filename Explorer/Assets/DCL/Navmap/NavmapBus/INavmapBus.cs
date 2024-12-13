@@ -48,8 +48,8 @@ namespace DCL.Navmap
         public event Action<bool>? OnZoomCamera;
         public event Action<Vector2Int, Vector2> OnLongHover;
 
-        UniTask SelectPlaceAsync(PlacesData.PlaceInfo place, CancellationToken ct);
-        UniTask SelectPlaceAsync(Vector2Int parcel, CancellationToken ct);
+        UniTask SelectPlaceAsync(PlacesData.PlaceInfo place, CancellationToken ct, bool isFromSearchResults = false);
+        UniTask SelectPlaceAsync(Vector2Int parcel, CancellationToken ct, bool isFromSearchResults = false);
 
         UniTask SelectEventAsync(EventDTO @event, CancellationToken ct, PlacesData.PlaceInfo? place = null);
 

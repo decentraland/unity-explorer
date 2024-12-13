@@ -44,7 +44,7 @@ namespace DCL.Navmap
             this.placesAPIService = placesAPIService;
         }
 
-        public async UniTask SelectPlaceAsync(PlacesData.PlaceInfo place, CancellationToken ct)
+        public async UniTask SelectPlaceAsync(PlacesData.PlaceInfo place, CancellationToken ct, bool isFromSearchResults = false)
         {
             INavmapCommand command = showPlaceInfoFactory.Invoke(place);
 
@@ -53,7 +53,7 @@ namespace DCL.Navmap
             AddCommand(command);
         }
 
-        public async UniTask SelectPlaceAsync(Vector2Int parcel, CancellationToken ct)
+        public async UniTask SelectPlaceAsync(Vector2Int parcel, CancellationToken ct, bool isFromSearchResults = false)
         {
             PlacesData.PlaceInfo? place = await placesAPIService.GetPlaceAsync(parcel, ct, true);
 

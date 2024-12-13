@@ -41,13 +41,13 @@ namespace DCL.Navmap
             obj.OnClearFilter += OnClearFilter;
         }
 
-        public async UniTask SelectPlaceAsync(PlacesData.PlaceInfo place, CancellationToken ct)
+        public async UniTask SelectPlaceAsync(PlacesData.PlaceInfo place, CancellationToken ct, bool isFromSearchResults = false)
         {
             if (source.Object == null) return;
             await source.Object.SelectPlaceAsync(place, ct);
         }
 
-        public async UniTask SelectPlaceAsync(Vector2Int parcel, CancellationToken ct)
+        public async UniTask SelectPlaceAsync(Vector2Int parcel, CancellationToken ct, bool isFromSearchResults = false)
         {
             if (source.Object == null) return;
             await source.Object.SelectPlaceAsync(parcel, ct);
