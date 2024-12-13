@@ -419,7 +419,9 @@ namespace Global.Dynamic
                 staticContainer.PortableExperiencesController,
                 container.RoomHub,
                 bootstrapContainer.Analytics.EnsureNotNull(),
-                bootstrapContainer.DiagnosticsContainer);
+                bootstrapContainer.DiagnosticsContainer,
+                URLDomain.FromString(dynamicWorldParams.DefaultStartingRealm)
+            );
 
             var realmNavigator = new MainScreenFallbackRealmNavigator(
                 baseRealmNavigator,

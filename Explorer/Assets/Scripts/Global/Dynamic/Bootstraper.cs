@@ -153,6 +153,7 @@ namespace Global.Dynamic
                 {
                     StaticLoadPositions = realmLaunchSettings.GetPredefinedParcels(),
                     Realms = settings.Realms,
+                    DefaultStartingRealm = realmLaunchSettings.GetStartingRealm(decentralandUrlsSource),
                     StartParcel = realmLaunchSettings.targetScene,
                     IsolateScenesCommunication = realmLaunchSettings.isolateSceneCommunication,
                     EnableLandscape = debugSettings.EnableLandscape,

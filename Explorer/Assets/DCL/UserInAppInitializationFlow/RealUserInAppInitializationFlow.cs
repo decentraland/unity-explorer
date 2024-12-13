@@ -66,7 +66,9 @@ namespace DCL.UserInAppInitializationFlow
             IPortableExperiencesController portableExperiencesController,
             IRoomHub roomHub,
             IAnalyticsController analyticsController,
-            DiagnosticsContainer diagnosticsContainer)
+            DiagnosticsContainer diagnosticsContainer,
+            URLDomain defaultStartingRealm
+        )
         {
             this.loadingStatus = loadingStatus;
             this.decentralandUrlsSource = decentralandUrlsSource;
@@ -83,7 +85,7 @@ namespace DCL.UserInAppInitializationFlow
             loadPlayerAvatarStartupOperation = new LoadPlayerAvatarStartupOperation(loadingStatus, selfProfile, mainPlayerAvatarBaseProxy);
             var loadLandscapeStartupOperation = new LoadLandscapeStartupOperation(loadingStatus, landscape);
             checkOnboardingStartupOperation = new CheckOnboardingStartupOperation(loadingStatus, selfProfile, featureFlagsCache, decentralandUrlsSource, appParameters, realmNavigator);
-            restartRealmStartupOperation = new RestartRealmStartupOperation(loadingStatus, realmController);
+            restartRealmStartupOperation = new RestartRealmStartupOperation(loadingStatus, realmController, defaultStartingRealm);
             var teleportStartupOperation = new TeleportStartupOperation(loadingStatus, realmNavigator, startParcel);
             var loadGlobalPxOperation = new LoadGlobalPortableExperiencesStartupOperation(loadingStatus, selfProfile, featureFlagsCache, debugSettings, portableExperiencesController);
             var sentryDiagnostics = new SentryDiagnosticStartupOperation(realmController, diagnosticsContainer);
