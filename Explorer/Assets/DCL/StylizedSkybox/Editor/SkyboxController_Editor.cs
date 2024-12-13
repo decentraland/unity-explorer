@@ -38,11 +38,11 @@ public class SkyboxControllerEditor : Editor
         GUILayout.BeginHorizontal();
         if (GUILayout.Button("\u25B6 Play"))
         {
-            skyboxController.Play();
+            skyboxController.Paused = false;
         }
         if (GUILayout.Button("\u25AE\u25AE Pause"))
         {
-            skyboxController.Pause();
+            skyboxController.Paused = true;
         }
         GUILayout.EndHorizontal();
 

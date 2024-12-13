@@ -56,9 +56,12 @@ public class SkyboxController : MonoBehaviour
 
     [Header("UI")]
     public TextMeshProUGUI textUI;
+
+    public bool Paused { get; set; }
+    public float DefaultSpeed { get; private set; }
+
     private bool isInitialized;
     private Animation lightAnimator;
-    private bool pause;
     private float sinceLastRefresh = 5;
 
     private void Update()
@@ -67,7 +70,7 @@ public class SkyboxController : MonoBehaviour
             return;
 
         //update natural and relative time
-        if (!pause)
+        if (!Paused)
         {
             float deltaTime = Time.deltaTime * Speed;
             NaturalTime += deltaTime;
@@ -145,11 +148,12 @@ public class SkyboxController : MonoBehaviour
         if (useRemoteSkyboxSettings &&
             featureFlagsCache.Configuration.TryGetJsonPayload(FeatureFlagsStrings.SKYBOX_SETTINGS, FeatureFlagsStrings.SKYBOX_SETTINGS_VARIANT, out SkyboxSettings skyboxSettings))
         {
-            Speed = skyboxSettings.speed;
+            DefaultSpeed = Speed = skyboxSettings.speed;
             ApplySkyboxState(skyboxSettings.time);
             return;
         }
 
+        DefaultSpeed = Speed;
         int defaultTime = SecondsInDay / 2;
         ApplySkyboxState(defaultTime);
     }
@@ -157,26 +161,9 @@ public class SkyboxController : MonoBehaviour
     private void ApplySkyboxState(float time)
     {
         SetTime(time);
-        if (PlayOnStart) Play();
-        else Pause();
+
+        Paused = !PlayOnStart;
         isInitialized = true;
-    }
-
-
-    /// <summary>
-    ///     Auxiliary method for the Inspector to Pause the cycle
-    /// </summary>
-    public void Pause()
-    {
-        pause = true;
-    }
-
-    /// <summary>
-    ///     Auxiliary method for the Inspector to Play the cycle
-    /// </summary>
-    public void Play()
-    {
-        pause = false;
     }
 
     /// <summary>
