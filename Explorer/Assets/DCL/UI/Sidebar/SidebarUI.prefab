@@ -330,6 +330,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: UpperLayout
       objectReference: {fileID: 0}
+    - target: {fileID: 753630656185560868, guid: a78bfe36c05846b438aaf25abbe523cc, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 1134998193861742370, guid: a78bfe36c05846b438aaf25abbe523cc, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -542,6 +546,10 @@ PrefabInstance:
       propertyPath: m_SortingLayer
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 7490815415717683088, guid: a78bfe36c05846b438aaf25abbe523cc, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 7953449017702476265, guid: a78bfe36c05846b438aaf25abbe523cc, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -749,9 +757,21 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 2749113458305455736, guid: 58646341e04d9404dbdad22f4c50cf14, type: 3}
+      propertyPath: m_ConstrainProportionsScale
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 2940364398902199929, guid: 58646341e04d9404dbdad22f4c50cf14, type: 3}
       propertyPath: m_Name
       value: BottomLayout
+      objectReference: {fileID: 0}
+    - target: {fileID: 2940364398902199929, guid: 58646341e04d9404dbdad22f4c50cf14, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3976426553183566224, guid: 58646341e04d9404dbdad22f4c50cf14, type: 3}
+      propertyPath: m_ConstrainProportionsScale
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8560551636243942814, guid: 58646341e04d9404dbdad22f4c50cf14, type: 3}
       propertyPath: m_Pivot.x
