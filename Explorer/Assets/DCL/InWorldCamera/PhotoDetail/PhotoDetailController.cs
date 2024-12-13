@@ -25,6 +25,9 @@ namespace DCL.InWorldCamera.PhotoDetail
     {
         private const int ANIMATION_DELAY = 300;
 
+        public event Action Activated;
+        public event Action JumpToPhotoPlace;
+
         private readonly PhotoDetailInfoController photoDetailInfoController;
         private readonly ICameraReelScreenshotsStorage cameraReelScreenshotsStorage;
         private readonly ISystemClipboard systemClipboard;
@@ -85,8 +88,11 @@ namespace DCL.InWorldCamera.PhotoDetail
                 HideDeleteModal();
         }
 
-        private void JumpInClicked() =>
+        private void JumpInClicked()
+        {
             isClosing = true;
+            JumpToPhotoPlace?.Invoke();
+        }
 
         private void ToggleInfoSidePanel()
         {
@@ -106,6 +112,8 @@ namespace DCL.InWorldCamera.PhotoDetail
             viewInstance!.cancelDeleteIntentButton?.onClick.AddListener(() => DeletionModalCancelClick());
             viewInstance!.cancelDeleteIntentBackgroundButton?.onClick.AddListener(() => DeletionModalCancelClick(false));
             viewInstance!.deleteReelButton?.onClick.AddListener(DeleteScreenshot);
+
+            Activated?.Invoke();
 
             ShowReel(inputData.CurrentReelIndex);
         }
