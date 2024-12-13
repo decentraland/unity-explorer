@@ -1,5 +1,5 @@
 using DCL.Settings.ModuleViews;
-using DCL.StylizedSkybox.Scripts.Plugin;
+using DCL.StylizedSkybox.Scripts;
 using System;
 using System.Linq;
 using TMPro;

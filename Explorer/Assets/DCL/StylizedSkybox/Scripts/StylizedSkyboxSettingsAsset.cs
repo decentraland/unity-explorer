@@ -3,7 +3,7 @@ using System;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 
-namespace DCL.StylizedSkybox.Scripts.Plugin
+namespace DCL.StylizedSkybox.Scripts
 {
     [CreateAssetMenu(menuName = "Create Stylized Skybox Settings", fileName = "StylizedSkyboxSettings", order = 0)]
     public class StylizedSkyboxSettingsAsset : ScriptableObject

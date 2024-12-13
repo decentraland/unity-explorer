@@ -6,7 +6,7 @@ using DCL.SDKComponents.MediaStream.Settings;
 using DCL.Settings.Configuration;
 using DCL.Settings.ModuleControllers;
 using DCL.Settings.Settings;
-using DCL.StylizedSkybox.Scripts.Plugin;
+using DCL.StylizedSkybox.Scripts;
 using DCL.UI;
 using ECS.Prioritization;
 using System;

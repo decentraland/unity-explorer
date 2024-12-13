@@ -128,7 +128,7 @@ QualitySettings:
     useLegacyDetailDistribution: 1
     vSyncCount: 0
     realtimeGICPUUsage: 25
-    lodBias: 1
+    lodBias: 1.25
     maximumLODLevel: 0
     enableLODCrossFade: 1
     streamingMipmapsActive: 1
@@ -145,9 +145,9 @@ QualitySettings:
     customRenderPipeline: {fileID: 11400000, guid: c65640f7136a25549af0035669ea476c, type: 2}
     terrainQualityOverrides: 0
     terrainPixelError: 1
-    terrainDetailDensityScale: 0.7
+    terrainDetailDensityScale: 1
     terrainBasemapDistance: 1000
-    terrainDetailDistance: 150
+    terrainDetailDistance: 300
     terrainTreeDistance: 5000
     terrainBillboardStart: 50
     terrainFadeLength: 5

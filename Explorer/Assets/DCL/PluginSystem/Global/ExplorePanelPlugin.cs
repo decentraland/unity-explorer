@@ -48,6 +48,7 @@ using DCL.Optimization.PerformanceBudgeting;
 using DCL.PluginSystem.World;
 using DCL.SDKComponents.MediaStream.Settings;
 using DCL.Settings.Settings;
+using DCL.StylizedSkybox.Scripts;
 using DCL.StylizedSkybox.Scripts.Plugin;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
