@@ -4,6 +4,7 @@ using DCL.Clipboard;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using System;
 using System.IO;
+using System.Text;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -51,10 +52,16 @@ namespace DCL.InWorldCamera.ReelActions
                     throw new Exception($"Error while downloading reel: {webRequest.error}");
 
                 Texture2D texture = DownloadHandlerTexture.GetContent(webRequest);
+                StringBuilder absolutePathBuilder = new StringBuilder();
                 byte[] imageBytes = texture.EncodeToPNG();
-                string pathToReelsFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), DECENTRALAND_REELS_HOME_FOLDER);
-                string absolutePath = Path.Combine(pathToReelsFolder, Path.GetFileName(uri.LocalPath));
 
+                absolutePathBuilder.Append(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile))
+                                   .Append("/")
+                                   .Append(DECENTRALAND_REELS_HOME_FOLDER)
+                                   .Append("/")
+                                   .Append(Path.GetFileName(uri.LocalPath));
+
+                string absolutePath = absolutePathBuilder.ToString();
                 string directoryPath = Path.GetDirectoryName(absolutePath);
 
                 if (!string.IsNullOrEmpty(directoryPath) && !Directory.Exists(directoryPath))

@@ -78,5 +78,48 @@ namespace DCL.Passport
 
         [field: SerializeField]
         public SoftMask ViewportSoftMask { get; private set; }
+
+        public void OpenPhotosSection()
+        {
+            OverviewSectionButton.SetSelected(false);
+            BadgesSectionButton.SetSelected(false);
+            PhotosSectionButton.SetSelected(true);
+
+            OverviewSectionPanel.SetActive(false);
+            PhotosSectionPanel.SetActive(true);
+            BadgesSectionPanel.SetActive(false);
+            BadgeInfoModuleView.gameObject.SetActive(false);
+            ViewportSoftMask.enabled = false;
+            MainScroll.content = PhotosSectionPanel.transform as RectTransform;
+            MainScroll.verticalNormalizedPosition = 1;
+        }
+
+        public void OpenBadgesSection()
+        {
+            OverviewSectionButton.SetSelected(false);
+            BadgesSectionButton.SetSelected(true);
+            PhotosSectionButton.SetSelected(false);
+            OverviewSectionPanel.SetActive(false);
+            BadgesSectionPanel.SetActive(true);
+            PhotosSectionPanel.SetActive(false);
+            ViewportSoftMask.enabled = true;
+            MainScroll.content = BadgesSectionPanel.transform as RectTransform;
+            MainScroll.verticalNormalizedPosition = 1;
+            CharacterPreviewView.gameObject.SetActive(false);
+        }
+
+        public void OpenOverviewSection()
+        {
+            OverviewSectionButton.SetSelected(true);
+            BadgesSectionButton.SetSelected(false);
+            PhotosSectionButton.SetSelected(false);
+            OverviewSectionPanel.SetActive(true);
+            BadgesSectionPanel.SetActive(false);
+            PhotosSectionPanel.SetActive(false);
+            ViewportSoftMask.enabled = true;
+            MainScroll.content = OverviewSectionPanel.transform as RectTransform;
+            MainScroll.verticalNormalizedPosition = 1;
+            CharacterPreviewView.gameObject.SetActive(true);
+        }
     }
 }

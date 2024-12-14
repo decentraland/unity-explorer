@@ -58,13 +58,16 @@ namespace DCL.InWorldCamera.CameraReelGallery
         private readonly CameraReelGalleryView view;
         private readonly ICameraReelStorageService cameraReelStorageService;
         private readonly IExplorePanelEscapeAction? explorePanelEscapeAction;
+        private readonly IDecentralandUrlsSource? decentralandUrlsSource;
+        private readonly ISystemClipboard? systemClipboard;
+        private readonly IWebBrowser? webBrowser;
         private readonly ReelGalleryPoolManager reelGalleryPoolManager;
         private readonly Dictionary<DateTime, MonthGridController> monthViews = new ();
         private readonly Dictionary<CameraReelResponseCompact, Texture> reelThumbnailCache = new ();
-        private readonly OptionButtonController optionButtonController;
-        private readonly ContextMenuController contextMenuController;
+        private readonly OptionButtonController? optionButtonController;
+        private readonly ContextMenuController? contextMenuController;
         private readonly Rect elementMaskRect;
-        private readonly string? photoSuccessfullyDeletedMessage;
+        private readonly ReelGalleryStringMessages? reelGalleryStringMessages;
         private readonly bool useSignedRequest;
 
         private bool isLoading;
@@ -86,10 +89,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
         public CameraReelGalleryController(CameraReelGalleryView view,
             ICameraReelStorageService cameraReelStorageService,
             ICameraReelScreenshotsStorage cameraReelScreenshotsStorage,
-            int gridLayoutFixedColumnCount,
-            int thumbnailHeight,
-            int thumbnailWidth,
-            bool gridShowMonth,
+            ReelGalleryConfigParams reelGalleryConfigParams,
             bool useSignedRequest,
             OptionButtonView? optionButtonView = null,
             ContextMenuView? contextMenuView = null,
@@ -97,16 +97,12 @@ namespace DCL.InWorldCamera.CameraReelGallery
             IDecentralandUrlsSource? decentralandUrlsSource = null,
             IExplorePanelEscapeAction? explorePanelEscapeAction = null,
             ISystemClipboard? systemClipboard = null,
-            string? shareToXMessage = null,
-            string? photoSuccessfullyDeletedMessage = null,
-            string? photoSuccessfullyUpdatedMessage = null,
-            string? photoSuccessfullyDownloadedMessage = null,
-            string? linkCopiedMessage = null)
+            ReelGalleryStringMessages? reelGalleryStringMessages = null)
         {
             this.view = view;
             this.cameraReelStorageService = cameraReelStorageService;
             this.explorePanelEscapeAction = explorePanelEscapeAction;
-            this.photoSuccessfullyDeletedMessage = photoSuccessfullyDeletedMessage;
+            this.reelGalleryStringMessages = reelGalleryStringMessages;
             this.view.Disable += OnDisable;
             this.view.scrollRectDragHandler.BeginDrag += ScrollBeginDrag;
             this.view.scrollRectDragHandler.EndDrag += ScrollEndDrag;
@@ -114,6 +110,9 @@ namespace DCL.InWorldCamera.CameraReelGallery
             this.view.scrollBarDragHandler.EndDrag += ScrollEndDrag;
             this.elementMaskRect = this.view.elementMask.GetWorldRect();
             this.useSignedRequest = useSignedRequest;
+            this.decentralandUrlsSource = decentralandUrlsSource;
+            this.systemClipboard = systemClipboard;
+            this.webBrowser = webBrowser;
 
             if (optionButtonView is not null && contextMenuView is not null)
             {
@@ -123,10 +122,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
 
             reelGalleryPoolManager = new ReelGalleryPoolManager(view.thumbnailViewPrefab, view.monthGridPrefab, view.unusedThumbnailViewObject,
                 view.unusedGridViewObject, cameraReelScreenshotsStorage,
-                gridLayoutFixedColumnCount,
-                thumbnailHeight,
-                thumbnailWidth,
-                gridShowMonth,
+                reelGalleryConfigParams,
                 THUMBNAIL_POOL_DEFAULT_CAPACITY, THUMBNAIL_POOL_MAX_SIZE, GRID_POOL_DEFAULT_CAPACITY, GRID_POOL_MAX_SIZE);
 
             view.cancelDeleteIntentButton?.onClick.AddListener(() => OnDeletionModalCancelClick());
@@ -135,64 +131,70 @@ namespace DCL.InWorldCamera.CameraReelGallery
 
             if (this.contextMenuController != null)
             {
-                this.contextMenuController.SetPublicRequested += (cameraReelRes, publicFlag) =>
-                {
-                    async UniTaskVoid SetPublicFlagAsync(CancellationToken ct)
-                    {
-                        try
-                        {
-                            await this.cameraReelStorageService.UpdateScreenshotVisibilityAsync(cameraReelRes.id, publicFlag, ct);
-                            cameraReelRes.isPublic = publicFlag;
-                            await ShowSuccessNotificationAsync(photoSuccessfullyUpdatedMessage!);
-                        }
-                        catch (UnityWebRequestException e)
-                        {
-                            ReportHub.LogException(e, new ReportData(ReportCategory.CAMERA_REEL));
-                            await ShowFailureNotificationAsync();
-                        }
-                    }
-
-                    SetPublicFlagAsync(setPublicCts.Token).Forget();
-                };
-
-                this.contextMenuController.ShareToXRequested += cameraReelResponse =>
-                {
-                    ReelCommonActions.ShareReelToX(shareToXMessage!, cameraReelResponse.id, decentralandUrlsSource!, systemClipboard!, webBrowser!);
-                    ScreenshotShared?.Invoke();
-                };
-
-                this.contextMenuController.CopyPictureLinkRequested += cameraReelResponse =>
-                {
-                    ReelCommonActions.CopyReelLink(cameraReelResponse.id, decentralandUrlsSource!, systemClipboard!);
-                    ShowSuccessNotificationAsync(linkCopiedMessage!).Forget();
-                };
-
-                this.contextMenuController.DownloadRequested += cameraReelResponse =>
-                {
-                    async UniTaskVoid DownloadAndOpenAsync(CancellationToken ct)
-                    {
-                        try
-                        {
-                            await ReelCommonActions.DownloadReelToFileAsync(cameraReelResponse.url, ct);
-                            ScreenshotDownloaded?.Invoke();
-                            ShowSuccessNotificationAsync(photoSuccessfullyDownloadedMessage).Forget();
-                        }
-                        catch (Exception e)
-                        {
-                            ReportHub.LogException(e, new ReportData(ReportCategory.CAMERA_REEL));
-                            ShowFailureNotificationAsync().Forget();
-                        }
-                    }
-
-                    DownloadAndOpenAsync(downloadScreenshotCts.Token).Forget();
-                };
-
-                this.contextMenuController.DeletePictureRequested += cameraReelResponse =>
-                {
-                    ShowDeleteModal();
-                    reelToDelete = cameraReelResponse;
-                };
+                this.contextMenuController.SetPublicRequested += SetReelPublic;
+                this.contextMenuController.ShareToXRequested += ShareToX;
+                this.contextMenuController.CopyPictureLinkRequested += CopyPictureLink;
+                this.contextMenuController.DownloadRequested += DownloadReelLocally;
+                this.contextMenuController.DeletePictureRequested += DeleteReel;
             }
+        }
+
+        private void DeleteReel(CameraReelResponseCompact response)
+        {
+            ShowDeleteModal();
+            reelToDelete = response;
+        }
+
+        private void DownloadReelLocally(CameraReelResponseCompact response)
+        {
+            async UniTaskVoid DownloadAndOpenAsync(CancellationToken ct)
+            {
+                try
+                {
+                    await ReelCommonActions.DownloadReelToFileAsync(response.url, ct);
+                    ScreenshotDownloaded?.Invoke();
+                    ShowSuccessNotificationAsync(reelGalleryStringMessages?.PhotoSuccessfullyDownloadedMessage).Forget();
+                }
+                catch (Exception e)
+                {
+                    ReportHub.LogException(e, new ReportData(ReportCategory.CAMERA_REEL));
+                    ShowFailureNotificationAsync().Forget();
+                }
+            }
+
+            DownloadAndOpenAsync(downloadScreenshotCts.Token).Forget();
+        }
+
+        private void CopyPictureLink(CameraReelResponseCompact response)
+        {
+            ReelCommonActions.CopyReelLink(response.id, decentralandUrlsSource!, systemClipboard!);
+            ShowSuccessNotificationAsync(reelGalleryStringMessages?.LinkCopiedMessage).Forget();
+        }
+
+        private void ShareToX(CameraReelResponseCompact response)
+        {
+            ReelCommonActions.ShareReelToX(reelGalleryStringMessages?.ShareToXMessage, response.id, decentralandUrlsSource!, systemClipboard!, webBrowser!);
+            ScreenshotShared?.Invoke();
+        }
+
+        private void SetReelPublic(CameraReelResponseCompact response, bool isPublic)
+        {
+            async UniTaskVoid SetPublicFlagAsync(CancellationToken ct)
+            {
+                try
+                {
+                    await this.cameraReelStorageService.UpdateScreenshotVisibilityAsync(response.id, isPublic, ct);
+                    response.isPublic = isPublic;
+                    await ShowSuccessNotificationAsync(reelGalleryStringMessages?.PhotoSuccessfullyUpdatedMessage);
+                }
+                catch (UnityWebRequestException e)
+                {
+                    ReportHub.LogException(e, new ReportData(ReportCategory.CAMERA_REEL));
+                    await ShowFailureNotificationAsync();
+                }
+            }
+
+            SetPublicFlagAsync(setPublicCts.Token).Forget();
         }
 
         private void ShowDeleteModal()
@@ -270,7 +272,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
 
                 if (view.successNotificationView is null) return;
 
-                await ShowSuccessNotificationAsync(photoSuccessfullyDeletedMessage);
+                await ShowSuccessNotificationAsync(reelGalleryStringMessages?.PhotoSuccessfullyDeletedMessage);
             }
             catch (UnityWebRequestException e)
             {
@@ -555,6 +557,48 @@ namespace DCL.InWorldCamera.CameraReelGallery
             downloadScreenshotCts.SafeCancelAndDispose();
 
             optionButtonController?.Dispose();
+
+            if (this.contextMenuController != null)
+            {
+                this.contextMenuController.SetPublicRequested -= SetReelPublic;
+                this.contextMenuController.ShareToXRequested -= ShareToX;
+                this.contextMenuController.CopyPictureLinkRequested -= CopyPictureLink;
+                this.contextMenuController.DownloadRequested -= DownloadReelLocally;
+                this.contextMenuController.DeletePictureRequested -= DeleteReel;
+            }
+        }
+    }
+
+    public struct ReelGalleryStringMessages
+    {
+        public readonly string? ShareToXMessage;
+        public readonly string? PhotoSuccessfullyDeletedMessage;
+        public readonly string? PhotoSuccessfullyUpdatedMessage;
+        public readonly string? PhotoSuccessfullyDownloadedMessage;
+        public readonly string? LinkCopiedMessage;
+
+        public ReelGalleryStringMessages(string? shareToXMessage, string? photoSuccessfullyDeletedMessage, string? photoSuccessfullyUpdatedMessage, string? photoSuccessfullyDownloadedMessage, string? linkCopiedMessage)
+        {
+            ShareToXMessage = shareToXMessage;
+            PhotoSuccessfullyDeletedMessage = photoSuccessfullyDeletedMessage;
+            PhotoSuccessfullyUpdatedMessage = photoSuccessfullyUpdatedMessage;
+            PhotoSuccessfullyDownloadedMessage = photoSuccessfullyDownloadedMessage;
+            LinkCopiedMessage = linkCopiedMessage;
+        }
+    }
+    public struct ReelGalleryConfigParams
+    {
+        public readonly int GridLayoutFixedColumnCount;
+        public readonly int ThumbnailHeight;
+        public readonly int ThumbnailWidth;
+        public readonly bool GridShowMonth;
+
+        public ReelGalleryConfigParams(int gridLayoutFixedColumnCount, int thumbnailHeight, int thumbnailWidth, bool gridShowMonth)
+        {
+            GridLayoutFixedColumnCount = gridLayoutFixedColumnCount;
+            ThumbnailHeight = thumbnailHeight;
+            ThumbnailWidth = thumbnailWidth;
+            GridShowMonth = gridShowMonth;
         }
     }
 }

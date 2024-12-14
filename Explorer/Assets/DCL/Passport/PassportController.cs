@@ -161,7 +161,7 @@ namespace DCL.Passport
             overviewPassportModules.Add(new BadgesOverview_PassportModuleController(viewInstance.BadgesOverviewModuleView, badgesAPIClient, passportErrorsController, webRequestController));
 
             badgesDetailsPassportModuleController = new BadgesDetails_PassportModuleController(viewInstance.BadgesDetailsModuleView, viewInstance.BadgeInfoModuleView, badgesAPIClient, passportErrorsController, webRequestController, selfProfile);
-            cameraReelGalleryController = new CameraReelGalleryController(viewInstance.CameraReelGalleryModuleView, cameraReelStorageService,cameraReelScreenshotsStorage, gridLayoutFixedColumnCount, thumbnailHeight, thumbnailWidth, true, false);
+            cameraReelGalleryController = new CameraReelGalleryController(viewInstance.CameraReelGalleryModuleView, cameraReelStorageService,cameraReelScreenshotsStorage, new ReelGalleryConfigParams(gridLayoutFixedColumnCount, thumbnailHeight, thumbnailWidth, true), false);
             cameraReelGalleryController.ThumbnailClicked += ThumbnailClicked;
             badgesPassportModules.Add(badgesDetailsPassportModuleController);
 
@@ -314,17 +314,7 @@ namespace DCL.Passport
 
             photoLoadingCts = photoLoadingCts.SafeRestart();
 
-            viewInstance!.OverviewSectionButton.SetSelected(false);
-            viewInstance.BadgesSectionButton.SetSelected(false);
-            viewInstance.PhotosSectionButton.SetSelected(true);
-
-            viewInstance.OverviewSectionPanel.SetActive(false);
-            viewInstance.PhotosSectionPanel.SetActive(true);
-            viewInstance.BadgesSectionPanel.SetActive(false);
-            viewInstance.BadgeInfoModuleView.gameObject.SetActive(false);
-            viewInstance.ViewportSoftMask.enabled = false;
-            viewInstance.MainScroll.content = viewInstance.PhotosSectionPanel.transform as RectTransform;
-            viewInstance.MainScroll.verticalNormalizedPosition = 1;
+            viewInstance!.OpenPhotosSection();
 
             cameraReelGalleryController.ShowWalletGalleryAsync(currentUserId, photoLoadingCts.Token).Forget();
 
@@ -342,16 +332,7 @@ namespace DCL.Passport
             if (currentSection == PassportSection.OVERVIEW)
                 return;
 
-            viewInstance!.OverviewSectionButton.SetSelected(true);
-            viewInstance.BadgesSectionButton.SetSelected(false);
-            viewInstance.PhotosSectionButton.SetSelected(false);
-            viewInstance.OverviewSectionPanel.SetActive(true);
-            viewInstance.BadgesSectionPanel.SetActive(false);
-            viewInstance.PhotosSectionPanel.SetActive(false);
-            viewInstance.ViewportSoftMask.enabled = true;
-            viewInstance.MainScroll.content = viewInstance.OverviewSectionPanel.transform as RectTransform;
-            viewInstance.MainScroll.verticalNormalizedPosition = 1;
-            viewInstance.CharacterPreviewView.gameObject.SetActive(true);
+            viewInstance!.OpenOverviewSection();
 
             characterPreviewLoadingCts = characterPreviewLoadingCts.SafeRestart();
             LoadPassportSectionAsync(currentUserId, PassportSection.OVERVIEW, characterPreviewLoadingCts.Token).Forget();
@@ -365,16 +346,7 @@ namespace DCL.Passport
             if (currentSection == PassportSection.BADGES)
                 return;
 
-            viewInstance!.OverviewSectionButton.SetSelected(false);
-            viewInstance.BadgesSectionButton.SetSelected(true);
-            viewInstance.PhotosSectionButton.SetSelected(false);
-            viewInstance.OverviewSectionPanel.SetActive(false);
-            viewInstance.BadgesSectionPanel.SetActive(true);
-            viewInstance.PhotosSectionPanel.SetActive(false);
-            viewInstance.ViewportSoftMask.enabled = true;
-            viewInstance.MainScroll.content = viewInstance.BadgesSectionPanel.transform as RectTransform;
-            viewInstance.MainScroll.verticalNormalizedPosition = 1;
-            viewInstance.CharacterPreviewView.gameObject.SetActive(false);
+            viewInstance!.OpenBadgesSection();
 
             characterPreviewLoadingCts = characterPreviewLoadingCts.SafeRestart();
             LoadPassportSectionAsync(currentUserId, PassportSection.BADGES, characterPreviewLoadingCts.Token, badgeIdSelected).Forget();

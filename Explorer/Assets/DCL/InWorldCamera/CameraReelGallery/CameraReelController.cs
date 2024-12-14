@@ -129,7 +129,6 @@ namespace DCL.InWorldCamera.CameraReelGallery
             view.MouseExit -= StorageFullIconExit;
             CameraReelGalleryController.Dispose();
             view.goToCameraButton.onClick.RemoveAllListeners();
-            Activated = null;
         }
     }
 }
