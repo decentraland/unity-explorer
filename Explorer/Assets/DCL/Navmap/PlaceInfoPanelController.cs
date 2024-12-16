@@ -86,6 +86,7 @@ namespace DCL.Navmap
             {
                 this.cameraReelGalleryController = new CameraReelGalleryController(view.CameraReelGalleryView, cameraReelStorageService!, cameraReelScreenshotsStorage!, reelGalleryConfigParams!.Value, reelUseSignedRequest!.Value);
                 this.cameraReelGalleryController.ThumbnailClicked += ThumbnailClicked;
+                this.cameraReelGalleryController.MaxThumbnailsUpdated += UpdatePhotosTabText;
             }
 
             mapPathEventBus.OnSetDestination += SetDestination;
@@ -180,6 +181,12 @@ namespace DCL.Navmap
 
         public void Toggle(Section section)
         {
+            if (section != Section.PHOTOS)
+            {
+                showPlaceGalleryCancellationToken?.SafeCancelAndDispose();
+                view.SetPhotoTabText(-1);
+            }
+
             view.EventsTabContainer.SetActive(section == Section.EVENTS);
             view.EventsTabSelected.SetActive(section == Section.EVENTS);
             view.OverviewTabContainer.SetActive(section == Section.OVERVIEW);
@@ -192,17 +199,6 @@ namespace DCL.Navmap
 
             foreach (GameObject container in view.OverviewElementsThatShouldBeDisabled)
                 container.SetActive(section != Section.OVERVIEW);
-
-            if (section == Section.PHOTOS)
-            {
-                showPlaceGalleryCancellationToken = showPlaceGalleryCancellationToken.SafeRestart();
-                cameraReelGalleryController.MaxThumbnailsUpdated += UpdatePhotosTabText;
-            }
-            else
-            {
-                cameraReelGalleryController.MaxThumbnailsUpdated -= UpdatePhotosTabText;
-                view.SetPhotoTabText(-1);
-            }
         }
 
         private void SetCategories(PlacesData.PlaceInfo place)
@@ -413,8 +409,11 @@ namespace DCL.Navmap
             eventElements.Clear();
         }
 
-        private void FetchPhotos() =>
+        private void FetchPhotos()
+        {
+            showPlaceGalleryCancellationToken = showPlaceGalleryCancellationToken.SafeRestart();
             cameraReelGalleryController?.ShowPlaceGalleryAsync(place?.id, showPlaceGalleryCancellationToken!.Token).Forget();
+        }
 
         public enum Section
         {
@@ -423,7 +422,10 @@ namespace DCL.Navmap
             EVENTS,
         }
 
-        public void Dispose() =>
-            this.cameraReelGalleryController.ThumbnailClicked -= ThumbnailClicked;
+        public void Dispose()
+        {
+            cameraReelGalleryController.ThumbnailClicked -= ThumbnailClicked;
+            cameraReelGalleryController.MaxThumbnailsUpdated -= UpdatePhotosTabText;
+        }
     }
 }
