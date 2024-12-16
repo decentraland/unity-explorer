@@ -1,4 +1,5 @@
-﻿using DCL.MapRenderer.CoordsUtils;
+﻿using DCL.Audio;
+using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.MapCameraController;
 using DCL.MapRenderer.MapLayers;
 using DCL.MapRenderer.MapLayers.ParcelHighlight;
@@ -45,7 +46,7 @@ namespace DCL.MapRenderer.Tests.MapCameraController
                            return true;
                        });
 
-            controller = new MapCameraInteractivityController(null, camera, pool, coordUtils, new List<IMapLayerController>(), Substitute.For<INavmapBus>());
+            controller = new MapCameraInteractivityController(null, camera, pool, coordUtils, new List<IMapLayerController>(), Substitute.For<INavmapBus>(), ScriptableObject.CreateInstance<AudioClipConfig>(), ScriptableObject.CreateInstance<AudioClipConfig>());
         }
 
         [Test]

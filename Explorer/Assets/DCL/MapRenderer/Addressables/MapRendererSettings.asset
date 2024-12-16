@@ -69,11 +69,6 @@ MonoBehaviour:
     m_EditorAssetChanged: 0
   <CategoryIconMappings>k__BackingField: {fileID: 11400000, guid: fdd9de2cf51974e4f9be30ab72d8eabd, type: 2}
   <CategoryLayerIconMappings>k__BackingField: {fileID: 11400000, guid: 73e736ffedc4d4e1c9acc6461c55248b, type: 2}
-  <FavoriteMarker>k__BackingField:
-    m_AssetGUID: 5f2c1af519efc4b82b87b887f93077fc
-    m_SubObjectName: 
-    m_SubObjectType: 
-    m_EditorAssetChanged: 0
   <UserMarker>k__BackingField:
     m_AssetGUID: 53b70d09c4a814878a30c68582ad4523
     m_SubObjectName: 
@@ -89,3 +84,5 @@ MonoBehaviour:
     m_SubObjectName: 
     m_SubObjectType: 
     m_EditorAssetChanged: 0
+  <ClickAudio>k__BackingField: {fileID: 11400000, guid: 7b6fe3a7507b38b4cb27bf406f7d6d23, type: 2}
+  <HoverAudio>k__BackingField: {fileID: 11400000, guid: 60845438e94f40140920775f272f9ca3, type: 2}
