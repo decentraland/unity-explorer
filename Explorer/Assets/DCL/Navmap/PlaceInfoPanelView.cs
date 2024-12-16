@@ -1,4 +1,5 @@
 using DCL.AssetsProvision;
+using DCL.InWorldCamera.CameraReelGallery;
 using DCL.UI;
 using System;
 using TMPro;
@@ -103,6 +104,9 @@ namespace DCL.Navmap
 
         [field: SerializeField]
         public GameObject PhotosTabSelected { get; private set; }
+
+        [field: SerializeField]
+        public CameraReelGalleryView CameraReelGalleryView { get; private set; }
 
         [field: Header("Events Tab")]
         [field: SerializeField]

@@ -255,6 +255,9 @@ MonoBehaviour:
         <GridLayoutFixedColumnCount>k__BackingField: 6
         <ThumbnailHeight>k__BackingField: 230
         <ThumbnailWidth>k__BackingField: 306
+        <PlaceGridLayoutFixedColumnCount>k__BackingField: 1
+        <PlaceThumbnailHeight>k__BackingField: 320
+        <PlaceThumbnailWidth>k__BackingField: 404
     - rid: 1841402216112979969
       type: {class: CharacterContainer/Settings, ns: DCL.Character.Plugin, asm: DCL.Plugins}
       data:

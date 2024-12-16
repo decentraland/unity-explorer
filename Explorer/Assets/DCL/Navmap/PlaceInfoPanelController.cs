@@ -3,6 +3,8 @@ using DCL.Browser;
 using DCL.Chat.Commands;
 using DCL.Chat.MessageBus;
 using DCL.EventsApi;
+using DCL.InWorldCamera.CameraReelGallery;
+using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.MapRenderer;
 using DCL.MapRenderer.MapLayers.Pins;
 using DCL.PlacesAPIService;
@@ -35,12 +37,14 @@ namespace DCL.Navmap
         private readonly MultiStateButtonController likeButton;
         private readonly MultiStateButtonController favoriteButton;
         private readonly List<EventElementView> eventElements = new ();
+        private readonly CameraReelGalleryController cameraReelGalleryController;
         private PlacesData.PlaceInfo? place;
         private CancellationTokenSource? favoriteCancellationToken;
         private CancellationTokenSource? rateCancellationToken;
         private CancellationTokenSource? fetchEventsCancellationToken;
         private CancellationTokenSource? attendEventCancellationToken;
         private CancellationTokenSource? openEventDetailsCancellationToken;
+        private CancellationTokenSource? showPlaceGalleryCancellationToken;
         private Vector2Int? currentBaseParcel;
         private Vector2Int? destination;
 
@@ -53,7 +57,11 @@ namespace DCL.Navmap
             IEventsApiService eventsApiService,
             ObjectPool<EventElementView> eventElementPool,
             SharePlacesAndEventsContextMenuController shareContextMenu,
-            IWebBrowser webBrowser)
+            IWebBrowser webBrowser,
+            ICameraReelStorageService? cameraReelStorageService = null,
+            ICameraReelScreenshotsStorage? cameraReelScreenshotsStorage = null,
+            ReelGalleryConfigParams? reelGalleryConfigParams = null,
+            bool? reelUseSignedRequest = null)
         {
             this.view = view;
             this.webRequestController = webRequestController;
@@ -65,7 +73,11 @@ namespace DCL.Navmap
             this.eventElementPool = eventElementPool;
             this.shareContextMenu = shareContextMenu;
             this.webBrowser = webBrowser;
+
             thumbnailImage = new ImageController(view.Thumbnail, webRequestController);
+
+            if (view.CameraReelGalleryView != null)
+                this.cameraReelGalleryController = new CameraReelGalleryController(view.CameraReelGalleryView, cameraReelStorageService!, cameraReelScreenshotsStorage!, reelGalleryConfigParams!.Value, reelUseSignedRequest!.Value);
 
             mapPathEventBus.OnSetDestination += SetDestination;
             mapPathEventBus.OnRemovedDestination += RemoveDestination;
@@ -165,6 +177,9 @@ namespace DCL.Navmap
 
             foreach (GameObject container in view.OverviewElementsThatShouldBeDisabled)
                 container.SetActive(section != Section.OVERVIEW);
+
+            if (section == Section.PHOTOS)
+                showPlaceGalleryCancellationToken = showPlaceGalleryCancellationToken.SafeRestart();
         }
 
         private void SetCategories(PlacesData.PlaceInfo place)
@@ -375,10 +390,8 @@ namespace DCL.Navmap
             eventElements.Clear();
         }
 
-        private void FetchPhotos()
-        {
-            // TODO
-        }
+        private void FetchPhotos() =>
+            cameraReelGalleryController?.ShowPlaceGalleryAsync(place?.id, showPlaceGalleryCancellationToken!.Token).Forget();
 
         public enum Section
         {

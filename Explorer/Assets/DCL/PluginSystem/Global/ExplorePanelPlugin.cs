@@ -309,7 +309,8 @@ namespace DCL.PluginSystem.Global
 
             placeInfoPanelController = new PlaceInfoPanelController(navmapView.PlacesAndEventsPanelView.PlaceInfoPanelView,
                 webRequestController, placesAPIService, mapPathEventBus, navmapBus, chatMessagesBus, eventsApiService,
-                eventElementsPool, shareContextMenu, webBrowser);
+                eventElementsPool, shareContextMenu, webBrowser, cameraReelStorageService, cameraReelScreenshotsStorage,
+                new ReelGalleryConfigParams(settings.PlaceGridLayoutFixedColumnCount, settings.PlaceThumbnailHeight, settings.PlaceThumbnailWidth, false), false);
 
             eventInfoPanelController = new EventInfoPanelController(navmapView.PlacesAndEventsPanelView.EventInfoPanelView,
                 webRequestController, navmapBus, chatMessagesBus, eventsApiService, eventScheduleElementsPool,
@@ -512,6 +513,17 @@ namespace DCL.PluginSystem.Global
             public int ThumbnailHeight { get; private set; }
             [field: SerializeField]
             public int ThumbnailWidth { get; private set; }
+
+            [field: Header("Place Reel")]
+
+            [field: SerializeField]
+            public int PlaceGridLayoutFixedColumnCount { get; private set; }
+
+            [field: SerializeField]
+            public int PlaceThumbnailHeight { get; private set; }
+
+            [field: SerializeField]
+            public int PlaceThumbnailWidth { get; private set; }
 
             public IReadOnlyCollection<URN> EmbeddedEmotesAsURN() =>
                 EmbeddedEmotes.Select(s => new URN(s)).ToArray();
