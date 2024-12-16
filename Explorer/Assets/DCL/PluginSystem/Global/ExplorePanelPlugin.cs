@@ -227,6 +227,7 @@ namespace DCL.PluginSystem.Global
             settingsController?.Dispose();
             backpackSubPlugin?.Dispose();
             inputHandler?.Dispose();
+            placeInfoPanelController?.Dispose();
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
@@ -309,7 +310,8 @@ namespace DCL.PluginSystem.Global
 
             placeInfoPanelController = new PlaceInfoPanelController(navmapView.PlacesAndEventsPanelView.PlaceInfoPanelView,
                 webRequestController, placesAPIService, mapPathEventBus, navmapBus, chatMessagesBus, eventsApiService,
-                eventElementsPool, shareContextMenu, webBrowser);
+                eventElementsPool, shareContextMenu, webBrowser, mvcManager, cameraReelStorageService, cameraReelScreenshotsStorage,
+                new ReelGalleryConfigParams(settings.PlaceGridLayoutFixedColumnCount, settings.PlaceThumbnailHeight, settings.PlaceThumbnailWidth, false), false);
 
             eventInfoPanelController = new EventInfoPanelController(navmapView.PlacesAndEventsPanelView.EventInfoPanelView,
                 webRequestController, navmapBus, chatMessagesBus, eventsApiService, eventScheduleElementsPool,
@@ -327,7 +329,7 @@ namespace DCL.PluginSystem.Global
             PlaceInfoToastController placeToastController = new (navmapView.PlaceToastView,
                 new PlaceInfoPanelController(navmapView.PlaceToastView.PlacePanelView,
                     webRequestController, placesAPIService, mapPathEventBus, navmapBus, chatMessagesBus, eventsApiService,
-                    eventElementsPool, shareContextMenu, webBrowser),
+                    eventElementsPool, shareContextMenu, webBrowser, mvcManager),
                 placesAPIService, eventsApiService, navmapBus);
 
             settingsController = new SettingsController(explorePanelView.GetComponentInChildren<SettingsView>(), settingsMenuConfiguration.Value, generalAudioMixer.Value, realmPartitionSettings.Value, videoPrioritizationSettings.Value, landscapeData.Value, qualitySettingsAsset.Value, controlsSettingsAsset.Value, systemMemoryCap, worldVolumeMacBus);
@@ -497,6 +499,17 @@ namespace DCL.PluginSystem.Global
             public int ThumbnailHeight { get; private set; }
             [field: SerializeField]
             public int ThumbnailWidth { get; private set; }
+
+            [field: Header("Place Reel")]
+
+            [field: SerializeField]
+            public int PlaceGridLayoutFixedColumnCount { get; private set; }
+
+            [field: SerializeField]
+            public int PlaceThumbnailHeight { get; private set; }
+
+            [field: SerializeField]
+            public int PlaceThumbnailWidth { get; private set; }
 
             public IReadOnlyCollection<URN> EmbeddedEmotesAsURN() =>
                 EmbeddedEmotes.Select(s => new URN(s)).ToArray();

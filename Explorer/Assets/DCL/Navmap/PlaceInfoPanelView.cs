@@ -1,4 +1,5 @@
 using DCL.AssetsProvision;
+using DCL.InWorldCamera.CameraReelGallery;
 using DCL.UI;
 using System;
 using TMPro;
@@ -9,6 +10,8 @@ namespace DCL.Navmap
 {
     public class PlaceInfoPanelView : MonoBehaviour
     {
+        private const string PHOTO_TAB_TEXT = "PHOTOS";
+
         [field: SerializeField]
         public ImageView Thumbnail { get; private set; }
 
@@ -99,10 +102,16 @@ namespace DCL.Navmap
         public Button PhotosTabButton { get; private set; }
 
         [field: SerializeField]
+        public TMP_Text PhotosTabButtonText { get; private set; }
+
+        [field: SerializeField]
         public GameObject PhotosTabContainer { get; private set; }
 
         [field: SerializeField]
         public GameObject PhotosTabSelected { get; private set; }
+
+        [field: SerializeField]
+        public CameraReelGalleryView CameraReelGalleryView { get; private set; }
 
         [field: Header("Events Tab")]
         [field: SerializeField]
@@ -116,6 +125,20 @@ namespace DCL.Navmap
 
         [field: SerializeField]
         public GameObject EmptyEventsContainer { get; private set; }
+
+        /// <summary>
+        ///     Sets the button text in the format: "PHOTOS (count)" if count > 0, otherwise just "PHOTOS"
+        /// </summary>
+        public void SetPhotoTabText(int count)
+        {
+            if (count < 0)
+            {
+                PhotosTabButtonText.SetText(PHOTO_TAB_TEXT);
+                return;
+            }
+
+            PhotosTabButtonText.SetText($"{PHOTO_TAB_TEXT} ({count})");
+        }
 
         [Serializable]
         public struct AppearsOnCategory
