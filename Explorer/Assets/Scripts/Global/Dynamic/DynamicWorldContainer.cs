@@ -341,12 +341,11 @@ namespace Global.Dynamic
                 staticContainer.EntityCollidersGlobalCache
             );
 
-            var minimapPlugin = MinimapPlugin.NewInstance(container.MvcManager, container.MapRendererContainer, placesAPIService,
-                container.RealmController, container.ChatMessagesBus, staticContainer.ScenesCache,
-                mainUIView, mapPathEventBus, staticContainer.SceneRestrictionBusController,
-                $"{dynamicWorldParams.StartParcel.x},{dynamicWorldParams.StartParcel.y}",
-                out var minimap
-            );
+            var minimapPlugin =
+                new MinimapPlugin(container.MvcManager, container.MapRendererContainer, placesAPIService,
+                    container.RealmController, container.ChatMessagesBus, staticContainer.ScenesCache,
+                    mainUIView, mapPathEventBus, staticContainer.SceneRestrictionBusController,
+                    $"{dynamicWorldParams.StartParcel.x},{dynamicWorldParams.StartParcel.y}");                
 
             ILandscape landscape = new Landscape(
                 container.RealmController,
@@ -360,7 +359,7 @@ namespace Global.Dynamic
                 container.MapRendererContainer.MapRenderer,
                 container.LODContainer.RoadAssetsPool,
                 satelliteView,
-                minimap
+                minimapPlugin.minimapController
             );
 
             IRealmNavigator baseRealmNavigator = new RealmNavigator(
