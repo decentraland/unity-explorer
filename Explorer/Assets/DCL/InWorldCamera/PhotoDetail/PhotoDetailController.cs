@@ -211,7 +211,7 @@ namespace DCL.InWorldCamera.PhotoDetail
             CameraReelResponseCompact reel = inputData.AllReels[reelIndex];
 
             UniTask detailInfoTask = PhotoDetailInfoController.ShowPhotoDetailInfoAsync(reel.id, ct);
-            Texture2D reelTexture = await cameraReelScreenshotsStorage.GetScreenshotImageAsync(reel.url, ct);
+            Texture2D reelTexture = await cameraReelScreenshotsStorage.GetScreenshotImageAsync(reel.url, false, ct);
             viewInstance!.mainImage.texture = reelTexture;
             aspectRatioFitter.aspectRatio = reelTexture.width * 1f / reelTexture.height;
 
