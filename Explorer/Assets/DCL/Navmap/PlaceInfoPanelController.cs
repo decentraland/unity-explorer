@@ -112,6 +112,9 @@ namespace DCL.Navmap
             view.StopNavigationButton.onClick.AddListener(StopNavigation);
         }
 
+        private void UpdatePhotosTabText(int count) =>
+            view.SetPhotoTabText(count);
+
         public void Show()
         {
             view.gameObject.SetActive(true);
@@ -179,7 +182,15 @@ namespace DCL.Navmap
                 container.SetActive(section != Section.OVERVIEW);
 
             if (section == Section.PHOTOS)
+            {
                 showPlaceGalleryCancellationToken = showPlaceGalleryCancellationToken.SafeRestart();
+                cameraReelGalleryController.MaxThumbnailsUpdated += UpdatePhotosTabText;
+            }
+            else
+            {
+                cameraReelGalleryController.MaxThumbnailsUpdated -= UpdatePhotosTabText;
+                view.SetPhotoTabText(-1);
+            }
         }
 
         private void SetCategories(PlacesData.PlaceInfo place)

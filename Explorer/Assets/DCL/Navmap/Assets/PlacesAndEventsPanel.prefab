@@ -20226,6 +20226,7 @@ MonoBehaviour:
   <OverviewElementsThatShouldBeDisabled>k__BackingField:
   - {fileID: 4399583041851318185}
   <PhotosTabButton>k__BackingField: {fileID: 8489475166372520332}
+  <PhotosTabButtonText>k__BackingField: {fileID: 3168665827349429595}
   <PhotosTabContainer>k__BackingField: {fileID: 8035667016663885416}
   <PhotosTabSelected>k__BackingField: {fileID: 5227586704766605664}
   <CameraReelGalleryView>k__BackingField: {fileID: 2048196813802253358}
