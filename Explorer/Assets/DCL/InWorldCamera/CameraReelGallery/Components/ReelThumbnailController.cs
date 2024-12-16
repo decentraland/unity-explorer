@@ -17,6 +17,7 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
 
         private OptionButtonController? optionButton;
         private CancellationTokenSource loadImageCts;
+        private bool imageLoaded;
 
         public event Action<CameraReelResponseCompact, Texture>? ThumbnailLoaded;
         public event Action<CameraReelResponseCompact>? ThumbnailClicked;
@@ -37,6 +38,7 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
         {
             this.CameraReelResponse = cameraReelData;
             this.optionButton = optionsButton;
+            imageLoaded = false;
 
             if (this.optionButton is not null)
                 this.optionButton.Hide += ToNormalAnimation;
@@ -63,6 +65,7 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
 
             ThumbnailLoaded?.Invoke(CameraReelResponse, view.thumbnailImage.texture);
             view.button.onClick.AddListener( () => ThumbnailClicked?.Invoke(CameraReelResponse));
+            imageLoaded = true;
         }
 
         public void Dispose()
@@ -108,6 +111,8 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
 
         private void PointerEnter()
         {
+            if (!imageLoaded) return;
+
             view.transform.DOScale(Vector3.one * view.scaleFactorOnHover, view.scaleAnimationDuration);
             optionButton?.Show(CameraReelResponse, view.optionButtonContainer.transform, view.optionButtonOffset);
             view.outline.SetActive(true);
@@ -115,6 +120,8 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
 
         private void PointerExit()
         {
+            if (!imageLoaded) return;
+
             if (optionButton != null)
             {
                 if (optionButton.IsContextMenuOpen()) return;
