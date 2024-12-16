@@ -1,8 +1,10 @@
 ﻿using Cysharp.Threading.Tasks;
+using DCL.Audio;
 using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.MapLayers;
 using DCL.MapRenderer.MapLayers.ParcelHighlight;
 using DCL.Navmap;
+using DCL.UI;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -18,6 +20,8 @@ namespace DCL.MapRenderer.MapCameraController
         private readonly IObjectPool<IParcelHighlightMarker> markersPool;
         private readonly ICoordsUtils coordsUtils;
         private readonly INavmapBus navmapBus;
+        private readonly AudioClipConfig clickAudio;
+        private readonly AudioClipConfig hoverAudio;
         private readonly Camera camera;
         private readonly List<IMapLayerController> interactableLayers = new ();
 
@@ -36,12 +40,16 @@ namespace DCL.MapRenderer.MapCameraController
             IObjectPool<IParcelHighlightMarker> markersPool,
             ICoordsUtils coordsUtils,
             List<IMapLayerController> interactableLayers,
-            INavmapBus navmapBus)
+            INavmapBus navmapBus,
+            AudioClipConfig clickAudio,
+            AudioClipConfig hoverAudio)
         {
             this.cameraParent = cameraParent;
             this.markersPool = markersPool;
             this.coordsUtils = coordsUtils;
             this.navmapBus = navmapBus;
+            this.clickAudio = clickAudio;
+            this.hoverAudio = hoverAudio;
             this.camera = camera;
             this.interactableLayers.AddRange(interactableLayers);
         }
@@ -54,6 +62,7 @@ namespace DCL.MapRenderer.MapCameraController
             // make position discrete
             var localPosition = coordsUtils.CoordsToPosition(parcel, marker);
 
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(hoverAudio);
             marker.Activate();
             marker.SetCoordinates(parcel, localPosition);
         }
@@ -114,6 +123,7 @@ namespace DCL.MapRenderer.MapCameraController
             GameObject? hitObject = null;
             RaycastHit2D raycast = Physics2D.Raycast(GetLocalPosition(normalizedCoordinates), Vector2.zero, 10);
             navmapBus.MoveCameraTo(parcel);
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(clickAudio);
 
             if (raycast.collider != null)
             {

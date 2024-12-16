@@ -1,4 +1,5 @@
 using DCL.AssetsProvision;
+using DCL.Audio;
 using DCL.MapRenderer.ComponentsFactory;
 using DCL.MapRenderer.MapCameraController;
 using DCL.MapRenderer.MapLayers.Categories;
@@ -53,6 +54,10 @@ namespace DCL.MapRenderer
         DottedLineRef DestinationPathLine { get; }
 
         PinMarkerRef PathDestinationPin { get; }
+
+        AudioClipConfig ClickAudio { get; }
+
+        AudioClipConfig HoverAudio { get; }
 
         [Serializable]
         public class SpriteRendererRef : ComponentReference<SpriteRenderer>

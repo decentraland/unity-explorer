@@ -1,5 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.Audio;
 using DCL.EventsApi;
 using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.Culling;
@@ -159,16 +160,13 @@ namespace DCL.MapRenderer.ComponentsFactory
             IMapCameraControllerInternal CameraControllerBuilder(List<IMapLayerController> interactableLayers)
             {
                 MapCameraObject instance = Object.Instantiate(mapCameraObjectPrefab, configuration.MapCamerasRoot);
-                var interactivityController = new MapCameraInteractivityController(configuration.MapCamerasRoot, instance.mapCamera, highlightMarkersPool, coordsUtils, interactableLayers, navmapBus);
+                var interactivityController = new MapCameraInteractivityController(configuration.MapCamerasRoot, instance.mapCamera, highlightMarkersPool, coordsUtils, interactableLayers, navmapBus, mapSettings.ClickAudio, mapSettings.HoverAudio);
                 return new MapCameraController.MapCameraController(interactivityController, instance, coordsUtils, cullingController);
             }
         }
 
         private async UniTask<CategoryMarkerObject> GetCategoryMarkerPrefabAsync(CancellationToken cancellationToken) =>
             (await assetsProvisioner.ProvideMainAssetAsync(mapSettings.CategoryMarker, cancellationToken)).Value;
-
-        private static IClusterMarker CreateClusterMarker(IObjectPool<ClusterMarkerObject> objectsPool, IMapCullingController cullingController, ICoordsUtils coordsUtils) =>
-            new ClusterMarker(objectsPool, cullingController, coordsUtils);
 
         private static ClusterMarkerObject CreateClusterPoolMethod(MapRendererConfiguration configuration, ClusterMarkerObject prefab, ICoordsUtils coordsUtils)
         {
@@ -196,7 +194,6 @@ namespace DCL.MapRenderer.ComponentsFactory
 
         private async UniTask<ClusterMarkerObject> GetClusterPrefabAsync(CancellationToken cancellationToken) =>
             (await assetsProvisioner.ProvideMainAssetAsync(mapSettings.ClusterMarker, cancellationToken)).Value;
-
 
         private async UniTask<ClusterMarkerObject> GetCategoryClusterPrefabAsync(CancellationToken cancellationToken) =>
             (await assetsProvisioner.ProvideMainAssetAsync(mapSettings.SearchResultsClusterMarker, cancellationToken)).Value;

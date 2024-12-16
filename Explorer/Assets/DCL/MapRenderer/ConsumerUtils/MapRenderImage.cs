@@ -191,13 +191,9 @@ namespace DCL.MapRenderer.ConsumerUtils
                     previousParcel = parcel;
 
                     if (hitObject == null)
-                    {
                         interactivityController!.HighlightParcel(parcel);
-                    }
                     else
-                    {
                         interactivityController!.RemoveHighlight();
-                    }
 
                     HoveredParcel?.Invoke(parcel);
                 }

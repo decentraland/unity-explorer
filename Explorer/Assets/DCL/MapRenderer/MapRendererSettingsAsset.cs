@@ -1,4 +1,5 @@
-﻿using DCL.MapRenderer.MapLayers.Categories;
+﻿using DCL.Audio;
+using DCL.MapRenderer.MapLayers.Categories;
 using UnityEngine;
 
 namespace DCL.MapRenderer
@@ -53,5 +54,11 @@ namespace DCL.MapRenderer
 
         [field: SerializeField]
         public IMapRendererSettings.PinMarkerRef PathDestinationPin { get; private set; }
+
+        [field: SerializeField]
+        public AudioClipConfig ClickAudio { get; private set; }
+
+        [field: SerializeField]
+        public AudioClipConfig HoverAudio { get; private set; }
     }
 }
