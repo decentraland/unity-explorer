@@ -153,7 +153,6 @@ namespace DCL.MapRenderer.MapLayers.Cluster
             if (clusterVisibleMarkers.TryGetValue(gameObject, out IClusterMarker marker))
             {
                 navmapBus.ZoomCamera(true);
-                navmapBus.MoveCameraTo(gameObject.transform.position);
                 return true;
             }
 

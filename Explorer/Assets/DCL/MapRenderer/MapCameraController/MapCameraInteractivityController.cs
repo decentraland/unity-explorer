@@ -60,7 +60,7 @@ namespace DCL.MapRenderer.MapCameraController
 
         public GameObject? ProcessMousePosition(Vector2 normalizedCoordinates, Vector2 screenPosition)
         {
-            GameObject? hitObject = null;
+            GameObject? hitObject;
             RaycastHit2D raycast = Physics2D.Raycast(GetLocalPosition(normalizedCoordinates), Vector2.zero, 10);
 
             if (raycast.collider != null)
@@ -83,12 +83,7 @@ namespace DCL.MapRenderer.MapCameraController
                 foreach (IMapLayerController mapLayerController in interactableLayers)
                 {
                     if (mapLayerController.HighlightObject(raycast.collider.gameObject, out IMapRendererMarker? mapRenderMarker))
-                    {
-                        /* TEMPORARLY DISABLED
-                            longHoverCt = longHoverCt.SafeRestart();
-                            WaitAndShowPlaceInfoAsync(mapRenderMarker.ParcelCoords, screenPosition, longHoverCt.Token).Forget();*/
                         return hitObject;
-                    }
                 }
             }
             else
@@ -104,27 +99,12 @@ namespace DCL.MapRenderer.MapCameraController
                 }
 
                 TryGetParcel(normalizedCoordinates, out Vector2Int parcel);
-
-                /* TEMPORARLY DISABLED
-                if (parcel != previousParcel)
-                {
-                    previousParcel = parcel;
-                    longHoverCt = longHoverCt.SafeRestart();
-                    WaitAndShowPlaceInfoAsync(parcel, screenPosition, longHoverCt.Token).Forget();
-                }*/
             }
 
             return hitObject;
         }
 
-        private async UniTaskVoid WaitAndShowPlaceInfoAsync(Vector2Int parcel, Vector2 screenPosition, CancellationToken ct)
-        {
-            await UniTask.Delay(1000, cancellationToken: ct);
-            if (ct.IsCancellationRequested) return;
-            navmapBus.SendLongHover(parcel, screenPosition);
-        }
-
-        public GameObject? ProcessMouseClick(Vector2 normalizedCoordinates)
+        public GameObject? ProcessMouseClick(Vector2 normalizedCoordinates, Vector2Int parcel)
         {
             clickCt = clickCt.SafeRestart();
 
@@ -133,6 +113,7 @@ namespace DCL.MapRenderer.MapCameraController
 
             GameObject? hitObject = null;
             RaycastHit2D raycast = Physics2D.Raycast(GetLocalPosition(normalizedCoordinates), Vector2.zero, 10);
+            navmapBus.MoveCameraTo(parcel);
 
             if (raycast.collider != null)
             {
