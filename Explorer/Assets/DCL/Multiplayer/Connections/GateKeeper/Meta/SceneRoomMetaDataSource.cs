@@ -53,15 +53,15 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
             // currently these processes are completely separated
             var promise = AssetPromise<SceneDefinitions, GetSceneDefinitionList>.Create(world,
                 new GetSceneDefinitionList(entityDefinitionList, pointersList,
-                    new CommonLoadingArguments(realmData.Ipfs.AssetBundleRegistry)),
+                    realmData.Ipfs),
                 PartitionComponent.TOP_PRIORITY);
 
             promise = await promise.ToUniTaskAsync(world, cancellationToken: token);
 
             StreamableLoadingResult<SceneDefinitions> result = promise.Result!.Value;
 
-            return result.Succeeded && entityDefinitionList.Count > 0
-                ? new MetaData(entityDefinitionList[0].id, input)
+            return result.Succeeded && promise.Result.Value.Asset.Value.Count > 0
+                ? new MetaData(promise.Result.Value.Asset.Value[0].id, input)
                 : new MetaData(null, input);
         }
 

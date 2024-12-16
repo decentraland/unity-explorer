@@ -44,7 +44,7 @@ namespace DCL.ParcelsService
 
             var promise = AssetPromise<SceneDefinitions, GetSceneDefinitionList>.Create(World,
                 new GetSceneDefinitionList(targetCollection.Value, pointersList.Value,
-                    new CommonLoadingArguments(realmIpfs.AssetBundleRegistry)),
+                    realmIpfs),
                 PartitionComponent.TOP_PRIORITY);
 
             promise = await promise.ToUniTaskAsync(World, cancellationToken: ct);

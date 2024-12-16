@@ -16,7 +16,8 @@ namespace DCL.Ipfs
         public List<string> requiredPermissions;
         public List<SpawnPoint>? spawnPoints;
         public bool isPortableExperience;
-
+        public bool areAssetBundlesAvailable;
+        
         [Serializable]
         public struct SpawnPoint
         {

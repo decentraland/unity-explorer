@@ -14,6 +14,7 @@ using Ipfs;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading;
+using CommunicationData.URLHelpers;
 using Unity.Mathematics;
 
 namespace ECS.SceneLifeCycle.SceneDefinition
@@ -30,22 +31,49 @@ namespace ECS.SceneLifeCycle.SceneDefinition
         // cache
         private readonly StringBuilder bodyBuilder = new ();
 
+        private readonly List<SceneEntityDefinition> catalystCollection;
+        private readonly List<SceneEntityDefinition> assetBundleRegistryCollections;
+
+
         // There is no cache for the list but a cache per entity that is stored in ECS itself
         internal LoadSceneDefinitionListSystem(World world, IWebRequestController webRequestController,
             IStreamableCache<SceneDefinitions, GetSceneDefinitionList> cache)
             : base(world, cache)
         {
             this.webRequestController = webRequestController;
+            catalystCollection = new List<SceneEntityDefinition>();
+            assetBundleRegistryCollections = new List<SceneEntityDefinition>();
         }
 
         protected override async UniTask<StreamableLoadingResult<SceneDefinitions>> FlowInternalAsync(GetSceneDefinitionList intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
+        {
+            catalystCollection.Clear();
+            assetBundleRegistryCollections.Clear();
+
+            await GetSceneDefinitionFromCustomURL(catalystCollection, intention,
+                intention.RealmData.EntitiesActiveEndpoint, ct);
+            await GetSceneDefinitionFromCustomURL(assetBundleRegistryCollections, intention,
+                intention.RealmData.AssetBundleRegistry, ct);
+
+            foreach (var sceneEntityDefinition in catalystCollection)
+            {
+                
+            }
+
+            return new StreamableLoadingResult<SceneDefinitions>(new SceneDefinitions(catalystCollection));
+        }
+
+
+        private async UniTask<List<SceneEntityDefinition>> GetSceneDefinitionFromCustomURL(
+            List<SceneEntityDefinition> destinationCollection, GetSceneDefinitionList intention, URLAddress address,
+            CancellationToken ct)
         {
             bodyBuilder.Clear();
             bodyBuilder.Append("{\"pointers\":[");
 
             for (var i = 0; i < intention.Pointers.Count; ++i)
             {
-                int2 pointer = intention.Pointers[i];
+                var pointer = intention.Pointers[i];
 
                 // String Builder has overloads for int to prevent allocations
                 bodyBuilder.Append('\"');
@@ -60,11 +88,13 @@ namespace ECS.SceneLifeCycle.SceneDefinition
 
             bodyBuilder.Append("]}");
 
-            List<SceneEntityDefinition> targetList = await
-                webRequestController.PostAsync(intention.CommonArguments, GenericPostArguments.CreateJson(bodyBuilder.ToString()), ct, GetReportData())
-                                    .OverwriteFromJsonAsync(intention.TargetCollection, WRJsonParser.Newtonsoft, WRThreadFlags.SwitchToThreadPool);
+            intention.CommonArguments = new CommonLoadingArguments(address);
 
-            return new StreamableLoadingResult<SceneDefinitions>(new SceneDefinitions(targetList));
+            return await
+                webRequestController.PostAsync(intention.CommonArguments,
+                        GenericPostArguments.CreateJson(bodyBuilder.ToString()), ct, GetReportData())
+                    .OverwriteFromJsonAsync(destinationCollection, WRJsonParser.Newtonsoft,
+                        WRThreadFlags.SwitchToThreadPool);
         }
     }
 }

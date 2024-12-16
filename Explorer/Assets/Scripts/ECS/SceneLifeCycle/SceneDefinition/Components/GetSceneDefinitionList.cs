@@ -19,6 +19,8 @@ namespace ECS.SceneLifeCycle.SceneDefinition
 
         public readonly IReadOnlyList<int2> Pointers;
 
+        public readonly IIpfsRealm RealmData;
+
         /// <summary>
         ///     Reusable collection the results are placed in
         /// </summary>
@@ -26,16 +28,18 @@ namespace ECS.SceneLifeCycle.SceneDefinition
 
         public GetSceneDefinitionList(List<SceneEntityDefinition> targetCollection,
             IReadOnlyList<int2> pointers,
-            CommonLoadingArguments commonArguments)
+            IIpfsRealm realmData)
         {
             TargetCollection = targetCollection;
-            CommonArguments = commonArguments;
             Pointers = pointers;
+            RealmData = realmData;
+            CommonArguments = new CommonLoadingArguments(realmData.EntitiesActiveEndpoint);
         }
 
         public bool Equals(GetSceneDefinitionList other) =>
 
             // fake implementation, not needed, never equal or cached
             false;
+
     }
 }

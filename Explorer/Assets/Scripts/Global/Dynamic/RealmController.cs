@@ -189,7 +189,7 @@ namespace Global.Dynamic
 
             var promise = AssetPromise<SceneDefinitions, GetSceneDefinitionList>.Create(GlobalWorld.EcsWorld,
                 new GetSceneDefinitionList(new List<SceneEntityDefinition>(staticLoadPositions.Count), staticLoadPositions,
-                    new CommonLoadingArguments(RealmData.Ipfs.AssetBundleRegistry)), PartitionComponent.TOP_PRIORITY);
+                    RealmData.Ipfs), PartitionComponent.TOP_PRIORITY);
 
             promise = await promise.ToUniTaskAsync(GlobalWorld.EcsWorld, cancellationToken: ct);
 
