@@ -128,7 +128,7 @@ namespace DCL.UserInAppInitializationFlow
                 {
                     // If we are coming from a logout, we teleport the user to Genesis Plaza and force realm change to reset the scene properly
                     var url = URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.Genesis));
-                    var changeRealmResult = await realmNavigator.TryChangeRealmAsync(url, ct, ignoreSameRealm:true);
+                    var changeRealmResult = await realmNavigator.TryChangeRealmAsync(url, ct, ignoreRealmChecks:true);
 
                     if (changeRealmResult.Success == false)
                         ReportHub.LogError(ReportCategory.AUTHENTICATION, changeRealmResult.AsResult().ErrorMessage!);
