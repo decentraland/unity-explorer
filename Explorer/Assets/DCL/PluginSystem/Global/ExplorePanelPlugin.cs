@@ -330,21 +330,6 @@ namespace DCL.PluginSystem.Global
                     eventElementsPool, shareContextMenu, webBrowser),
                 placesAPIService, eventsApiService, navmapBus);
 
-            navmapController = new NavmapController(navmapView,
-                mapRenderer,
-                realmData,
-                mapPathEventBus,
-                world,
-                playerEntity,
-                navmapBus,
-                UIAudioEventsBus.Instance,
-                placesAndEventsPanelController,
-                searchBarController,
-                zoomController,
-                satelliteController,
-                placeToastController,
-                placesAPIService);
-
             settingsController = new SettingsController(explorePanelView.GetComponentInChildren<SettingsView>(), settingsMenuConfiguration.Value, generalAudioMixer.Value, realmPartitionSettings.Value, videoPrioritizationSettings.Value, landscapeData.Value, qualitySettingsAsset.Value, controlsSettingsAsset.Value, systemMemoryCap, worldVolumeMacBus);
             navmapController = new NavmapController(
                 navmapView: explorePanelView.GetComponentInChildren<NavmapView>(),

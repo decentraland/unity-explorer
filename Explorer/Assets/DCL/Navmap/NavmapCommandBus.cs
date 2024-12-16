@@ -51,6 +51,7 @@ namespace DCL.Navmap
             if (!isFromSearchResults)
                 ClearPlacesFromMap();
 
+            MoveCameraTo(place.Positions[0]);
             await command.ExecuteAsync(new AdditionalParams(isFromSearchResults), ct);
 
             AddCommand(command);
