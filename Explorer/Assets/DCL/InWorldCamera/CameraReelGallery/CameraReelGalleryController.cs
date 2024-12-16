@@ -287,6 +287,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
         private void PrepareShowGallery(CancellationToken ct)
         {
             view.loadingSpinner.SetActive(true);
+            view.emptyState.SetActive(false);
             loadNextPageCts = loadNextPageCts.SafeRestartLinked(ct);
             setPublicCts = setPublicCts.SafeRestart();
             deleteScreenshotCts = deleteScreenshotCts.SafeRestart();
@@ -306,6 +307,14 @@ namespace DCL.InWorldCamera.CameraReelGallery
             PrepareShowGallery(ct);
 
             storageStatus ??= await cameraReelStorageService.GetUserGalleryStorageInfoAsync(walletAddress, ct);
+
+            if (storageStatus.Value.ScreenshotsAmount == 0)
+            {
+                view.emptyState.SetActive(true);
+                FinishShowGallery();
+                return;
+            }
+
             pagedCameraReelManager = new PagedCameraReelManager(cameraReelStorageService, new PagedCameraReelManagerParameters(walletAddress, useSignedRequest), storageStatus.Value.ScreenshotsAmount, view.paginationLimit);
             thumbnailImages = new ReelThumbnailController[storageStatus.Value.MaxScreenshots];
 

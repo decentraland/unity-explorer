@@ -16,6 +16,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
         [SerializeField] internal ScrollDragHandler scrollBarDragHandler;
         [SerializeField] internal Scrollbar verticalScrollbar;
         [SerializeField] internal GameObject loadingSpinner;
+        [SerializeField] internal GameObject emptyState;
 
         [Header("Nullable references")]
         [SerializeField] internal Button deleteReelButton;

@@ -68,14 +68,10 @@ namespace DCL.InWorldCamera.CameraReelGallery
 
         private async UniTask ShowAsync(CancellationToken ct)
         {
-            view.emptyState.SetActive(false);
             view.cameraReelGalleryView.gameObject.SetActive(false);
 
             CameraReelStorageStatus storageStatus = await cameraReelStorageService.GetUserGalleryStorageInfoAsync(web3IdentityCache.Identity.Address, ct);
             SetStorageStatus(storageStatus);
-
-            if (storageStatus.ScreenshotsAmount == 0)
-                return;
 
             await CameraReelGalleryController.ShowWalletGalleryAsync(web3IdentityCache.Identity.Address, ct, storageStatus);
         }
