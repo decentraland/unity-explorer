@@ -1,6 +1,8 @@
 using Cysharp.Threading.Tasks;
 using DCL.Input;
 using DCL.Input.Component;
+using DCL.MapRenderer.MapLayers.Categories;
+using DCL.Navmap.ScriptableObjects;
 using DCL.UI;
 using System;
 using System.Threading;
@@ -10,21 +12,22 @@ namespace DCL.Navmap
 {
     public class NavmapSearchBarController : IDisposable
     {
-        private const int INPUT_DEBOUNCE_DELAY_MS = 1000;
+        public event Action<bool>? TogglePanel;
 
         private readonly SearchBarView view;
         private readonly HistoryRecordPanelView historyRecordPanelView;
         private readonly SearchFiltersView searchFiltersView;
         private readonly IInputBlock inputBlock;
-        private readonly ISearchHistory searchHistory;
         private readonly INavmapBus navmapBus;
+        private readonly CategoryMappingSO categoryMappingSO;
 
         private CancellationTokenSource? searchCancellationToken;
         private CancellationTokenSource? backCancellationToken;
         private bool isAlreadySelected;
         private NavmapSearchPlaceFilter currentPlaceFilter = NavmapSearchPlaceFilter.All;
         private NavmapSearchPlaceSorting currentPlaceSorting = NavmapSearchPlaceSorting.MostActive;
-        private string currentSearchText = "";
+        private string? currentCategory;
+        private string currentSearchText = string.Empty;
 
         public bool Interactable
         {
@@ -38,37 +41,31 @@ namespace DCL.Navmap
             SearchFiltersView searchFiltersView,
             IInputBlock inputBlock,
             ISearchHistory searchHistory,
-            INavmapBus navmapBus)
+            INavmapBus navmapBus,
+            CategoryMappingSO categoryMappingSO)
         {
             this.view = view;
             this.historyRecordPanelView = historyRecordPanelView;
             this.searchFiltersView = searchFiltersView;
             this.inputBlock = inputBlock;
-            this.searchHistory = searchHistory;
             this.navmapBus = navmapBus;
-
-            historyRecordPanelView.OnClickedHistoryRecord += ClickedHistoryResult;
+            this.categoryMappingSO = categoryMappingSO;
 
             navmapBus.OnJumpIn += _ => ClearInput();
             navmapBus.OnFilterByCategory += SearchByCategory;
             view.inputField.onSelect.AddListener(_ => OnSearchBarSelected(true));
             view.inputField.onDeselect.AddListener(_ => OnSearchBarSelected(false));
             view.inputField.onValueChanged.AddListener(OnInputValueChanged);
-            view.inputField.onSubmit.AddListener(OnInputValueChanged);
+            view.inputField.onSubmit.AddListener(OnSubmitSearch);
             view.clearSearchButton.onClick.AddListener(ClearInput);
             view.BackButton.onClick.AddListener(OnBackClicked);
             view.clearSearchButton.gameObject.SetActive(false);
-            ShowPreviousSearches();
             historyRecordPanelView.gameObject.SetActive(false);
-            searchFiltersView.AllButton.onClick.AddListener(() => Search(NavmapSearchPlaceFilter.All));
-            searchFiltersView.FavoritesButton.onClick.AddListener(() => Search(NavmapSearchPlaceFilter.Favorites));
-            searchFiltersView.VisitedButton.onClick.AddListener(() => Search(NavmapSearchPlaceFilter.Visited));
             searchFiltersView.NewestButton.onClick.AddListener(() => Search(NavmapSearchPlaceSorting.Newest));
             searchFiltersView.BestRatedButton.onClick.AddListener(() => Search(NavmapSearchPlaceSorting.BestRated));
             searchFiltersView.MostActiveButton.onClick.AddListener(() => Search(NavmapSearchPlaceSorting.MostActive));
             searchFiltersView.Toggle(currentPlaceSorting);
             searchFiltersView.Toggle(currentPlaceFilter);
-            searchFiltersView.SetSortingActiveStatus(currentPlaceFilter == NavmapSearchPlaceFilter.All);
         }
 
         public void Dispose()
@@ -80,68 +77,60 @@ namespace DCL.Navmap
             view.clearSearchButton.onClick.RemoveAllListeners();
         }
 
-        public async UniTask DoDefaultSearch(CancellationToken ct)
+        public void SetInputFieldCategory(string? category)
         {
-            currentSearchText = string.Empty;
-            UpdateFilterAndSorting(NavmapSearchPlaceFilter.All, NavmapSearchPlaceSorting.None);
-            view.inputField.SetTextWithoutNotify(currentSearchText);
+            view.clearSearchButton.gameObject.SetActive(!string.IsNullOrEmpty(category) || !string.IsNullOrEmpty(currentSearchText));
+            view.inputFieldCategoryImage.gameObject.SetActive(!string.IsNullOrEmpty(category));
 
-            await navmapBus.SearchForPlaceAsync(INavmapBus.SearchPlaceParams.CreateWithDefaultParams(
-                page: 0,
-                filter: currentPlaceFilter,
-                sorting: currentPlaceSorting), ct);
+            if (string.IsNullOrEmpty(category))
+                return;
+
+            if(Enum.TryParse(category, true, out CategoriesEnum categoryEnum))
+                view.inputFieldCategoryImage.sprite = categoryMappingSO.GetCategoryImage(categoryEnum);
         }
 
-        public void SetInputText(string text) =>
+        public void SetInputText(string text)
+        {
             view.inputField.SetTextWithoutNotify(text);
+        }
 
         public void ClearInput()
         {
             view.inputField.SetTextWithoutNotify(string.Empty);
-
+            view.inputFieldCategoryImage.gameObject.SetActive(false);
             view.clearSearchButton.gameObject.SetActive(false);
 
-            searchCancellationToken = searchCancellationToken.SafeRestart();
-            DoDefaultSearch(searchCancellationToken.Token).Forget();
+            currentCategory = string.Empty;
+            currentSearchText = string.Empty;
+            TogglePanel?.Invoke(false);
+            Interactable = true;
+            navmapBus.ClearFilter();
+            navmapBus.ClearPlacesFromMap();
         }
 
         public void EnableBack()
         {
+            view.inputFieldCategoryImage.gameObject.SetActive(false);
             view.BackButton.gameObject.SetActive(true);
             view.SearchIcon.SetActive(false);
         }
 
         public void DisableBack()
         {
+            view.inputFieldCategoryImage.gameObject.SetActive(false);
             view.BackButton.gameObject.SetActive(false);
             view.SearchIcon.SetActive(true);
         }
 
-        public void HideHistoryResults() =>
-            historyRecordPanelView.gameObject.SetActive(false);
-
         public void UpdateFilterAndSorting(NavmapSearchPlaceFilter filter, NavmapSearchPlaceSorting sorting)
         {
+            navmapBus.ClearPlacesFromMap();
             currentPlaceFilter = filter;
             searchFiltersView.Toggle(currentPlaceFilter);
-            searchFiltersView.SetSortingActiveStatus(filter == NavmapSearchPlaceFilter.All);
-
-            bool isGlobalSearch = filter == NavmapSearchPlaceFilter.All;
-
-            // Enable sorting only for filter: All
-            if (!isGlobalSearch)
-                sorting = NavmapSearchPlaceSorting.None;
 
             currentPlaceSorting = sorting;
             searchFiltersView.Toggle(currentPlaceSorting);
-
-            searchFiltersView.NewestButton.interactable = isGlobalSearch;
-            searchFiltersView.MostActiveButton.interactable = isGlobalSearch;
-            searchFiltersView.BestRatedButton.interactable = isGlobalSearch;
         }
-
-        public void SetFilterActiveStatus(bool isActive) =>
-            searchFiltersView.FilterSection.SetActive(isActive);
 
         private void OnBackClicked()
         {
@@ -149,42 +138,24 @@ namespace DCL.Navmap
             navmapBus.GoBackAsync(backCancellationToken.Token).Forget();
         }
 
-        private void ClickedHistoryResult(string historyText)
-        {
-            view.inputField.SetTextWithoutNotify(historyText);
-            OnInputValueChanged(historyText);
-            HideHistoryResults();
-        }
-
         private void OnInputValueChanged(string searchText)
         {
+            currentCategory = string.Empty;
             view.clearSearchButton.gameObject.SetActive(!string.IsNullOrEmpty(searchText));
-            searchCancellationToken = searchCancellationToken.SafeRestart();
-
-            if (string.IsNullOrEmpty(searchText))
-            {
-                historyRecordPanelView.gameObject.SetActive(true);
-                DoDefaultSearch(searchCancellationToken.Token).Forget();
-                return;
-            }
-
-            HideHistoryResults();
-
             currentSearchText = searchText;
+        }
 
+        private void OnSubmitSearch(string searchText)
+        {
+            searchCancellationToken = searchCancellationToken.SafeRestart();
             SearchAsync(searchCancellationToken.Token)
                .Forget();
 
-            return;
-
             async UniTaskVoid SearchAsync(CancellationToken ct)
             {
-                await UniTask.Delay(INPUT_DEBOUNCE_DELAY_MS, cancellationToken: ct).SuppressCancellationThrow();
-
                 UpdateFilterAndSorting(NavmapSearchPlaceFilter.All, currentPlaceSorting);
 
-                searchHistory.Add(searchText);
-
+                TogglePanel?.Invoke(!string.IsNullOrEmpty(searchText));
                 await navmapBus.SearchForPlaceAsync(INavmapBus.SearchPlaceParams.CreateWithDefaultParams(
                                     page: 0,
                                     filter: currentPlaceFilter,
@@ -203,47 +174,12 @@ namespace DCL.Navmap
 
             if (isSelected)
             {
-                ShowPreviousSearches();
                 inputBlock.Disable(InputMapComponent.Kind.SHORTCUTS);
             }
             else
             {
                 inputBlock.Enable(InputMapComponent.Kind.SHORTCUTS);
-
-                WaitForClickThenHideHistoryResultsAsync(default).Forget();
             }
-
-            return;
-
-            async UniTaskVoid WaitForClickThenHideHistoryResultsAsync(CancellationToken ct)
-            {
-                await UniTask.DelayFrame(5, cancellationToken: ct);
-                HideHistoryResults();
-            }
-        }
-
-        private void ShowPreviousSearches()
-        {
-            searchCancellationToken = searchCancellationToken.SafeRestart();
-            string[] previousSearches = searchHistory.Get();
-            if (previousSearches.Length <= 0) return;
-
-            historyRecordPanelView.gameObject.SetActive(true);
-            historyRecordPanelView.SetHistoryRecords(previousSearches);
-        }
-
-        private void Search(NavmapSearchPlaceFilter filter)
-        {
-            UpdateFilterAndSorting(filter, currentPlaceSorting);
-
-            searchCancellationToken = searchCancellationToken.SafeRestart();
-
-            navmapBus.SearchForPlaceAsync(INavmapBus.SearchPlaceParams.CreateWithDefaultParams(
-                          page: 0,
-                          text: currentSearchText,
-                          filter: filter,
-                          sorting: currentPlaceSorting), searchCancellationToken.Token)
-                     .Forget();
         }
 
         private void Search(NavmapSearchPlaceSorting sorting)
@@ -256,14 +192,24 @@ namespace DCL.Navmap
                           page: 0,
                           text: currentSearchText,
                           filter: currentPlaceFilter,
-                          sorting: sorting), searchCancellationToken.Token)
+                          sorting: sorting,
+                          category: currentCategory), searchCancellationToken.Token)
                      .Forget();
         }
 
         private void SearchByCategory(string? category)
         {
-            UpdateFilterAndSorting(NavmapSearchPlaceFilter.All, NavmapSearchPlaceSorting.None);
+            UpdateFilterAndSorting(category is "Favorites" ? NavmapSearchPlaceFilter.Favorites : NavmapSearchPlaceFilter.All, currentPlaceSorting);
+
+            if (string.IsNullOrEmpty(category))
+            {
+                ClearInput();
+                return;
+            }
+
+            TogglePanel?.Invoke(true);
             currentSearchText = string.Empty;
+            currentCategory = category;
             searchCancellationToken = searchCancellationToken.SafeRestart();
             navmapBus.SearchForPlaceAsync(INavmapBus.SearchPlaceParams.CreateWithDefaultParams(
                           page: 0,

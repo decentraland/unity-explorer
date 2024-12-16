@@ -46,7 +46,6 @@ namespace DCL.Navmap
             searchBarController.SetInputText(@event.name);
             searchBarController.Interactable = false;
             searchBarController.EnableBack();
-            searchBarController.HideHistoryResults();
         }
 
         public void Undo()

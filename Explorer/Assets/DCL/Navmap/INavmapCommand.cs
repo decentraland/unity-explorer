@@ -10,4 +10,19 @@ namespace DCL.Navmap
 
         void Undo();
     }
+
+    public interface INavmapCommand<TParam> : INavmapCommand
+    {
+        UniTask ExecuteAsync(AdditionalParams? param, CancellationToken ct);
+    }
+
+    public struct AdditionalParams
+    {
+        public bool IsFromSearchResults;
+
+        public AdditionalParams(bool isFromSearchResults)
+        {
+            this.IsFromSearchResults = isFromSearchResults;
+        }
+    }
 }

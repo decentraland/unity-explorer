@@ -42,13 +42,6 @@ namespace DCL.Navmap
         [field: SerializeField]
         public TMP_Text NewestText { get; private set; }
 
-        [field: SerializeField]
-        public GameObject SortsSection { get; private set; }
-
-        [field: SerializeField]
-        public GameObject FilterSection { get; private set; }
-
-
         [SerializeField] private Color activeSortingBackgroundColor;
         [SerializeField] private Color activeSortingTextColor;
         [SerializeField] private Color inactiveSortingBackgroundColor;
@@ -60,9 +53,6 @@ namespace DCL.Navmap
             FavoritesSelectedMarker.SetActive(filter == NavmapSearchPlaceFilter.Favorites);
             VisitedSelectedMarker.SetActive(filter == NavmapSearchPlaceFilter.Visited);
         }
-
-        public void SetSortingActiveStatus(bool isActive) =>
-            SortsSection.SetActive(isActive);
 
         public void Toggle(NavmapSearchPlaceSorting sorting)
         {

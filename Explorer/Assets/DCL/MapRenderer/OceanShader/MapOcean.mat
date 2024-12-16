@@ -65,7 +65,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _GroundHeightMap:
-        m_Texture: {fileID: 2800000, guid: 6b74c8fe1b96f74448ef6b72825f136c, type: 3}
+        m_Texture: {fileID: 2800000, guid: 1d2e370d42067334fbf876335556c45f, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MainTex:
@@ -81,12 +81,12 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _OceanGround:
-        m_Texture: {fileID: 2800000, guid: acc24e0d52ccbb343b32e781429d2718, type: 3}
+        m_Texture: {fileID: 2800000, guid: b0199fe7d57251c40905420a616f6860, type: 3}
         m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
+        m_Offset: {x: 1, y: 1}
     - _OceanNoise:
         m_Texture: {fileID: 2800000, guid: 9ce5537a8d55647be899c85f69302dee, type: 3}
-        m_Scale: {x: 1, y: 1}
+        m_Scale: {x: 25, y: 25}
         m_Offset: {x: 0, y: 0}
     - _OceanShapes:
         m_Texture: {fileID: 2800000, guid: 321345dcdea0f4747907506fc409be12, type: 3}
@@ -123,8 +123,8 @@ Material:
     - _ClearCoatSmoothness: 0
     - _Cull: 2
     - _Cutoff: 0.5
-    - _DeepWaterFadeDepth: 1.31
-    - _DeepWaterFadeDepthMultiplier: 1.15
+    - _DeepWaterFadeDepth: 1
+    - _DeepWaterFadeDepthMultiplier: 1.02
     - _DetailAlbedoMapScale: 1
     - _DetailNormalMapScale: 1
     - _DstBlend: 0
@@ -133,7 +133,7 @@ Material:
     - _GlossMapScale: 0
     - _Glossiness: 0
     - _GlossyReflections: 0
-    - _HeightUVMultiplier: 30
+    - _HeightUVMultiplier: 17.2
     - _Metallic: 0
     - _OcclusionStrength: 1
     - _Parallax: 0.005
@@ -145,12 +145,12 @@ Material:
     - _SrcBlend: 1
     - _SrcBlendAlpha: 1
     - _Surface: 0
-    - _WaterLevel: 0.72
+    - _WaterLevel: 1.31
     - _WaterLevelDefault: 0.94
-    - _WaterLevelMultiplier: 1
+    - _WaterLevelMultiplier: 0.73
     - _WorkflowMode: 1
     - _ZWrite: 1
-    - _coast2water_fadedepth: 0.054
+    - _coast2water_fadedepth: 0.672
     - _heightAddition: 0
     - _heightClamp: 10
     - _heightMultiplier: 1
@@ -161,13 +161,13 @@ Material:
     - _iSampleRate: 0
     - _iTime: 0
     - _iTimeDelta: 0
-    - _large_waveheight: 1
-    - _large_wavesize: 10
-    - _particle_amount: 100
-    - _small_waveheight: 0.202
-    - _small_wavesize: 1
-    - _water_glossylight_fact: 150
-    - _water_softlight_fact: 14.7
+    - _large_waveheight: 0.982
+    - _large_wavesize: 3.44
+    - _particle_amount: 68.8
+    - _small_waveheight: 0.037
+    - _small_wavesize: 0.497
+    - _water_glossylight_fact: 103
+    - _water_softlight_fact: 14.3
     m_Colors:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
@@ -178,9 +178,9 @@ Material:
     - _iDate: {r: 1024, g: 1024, b: 0, a: 0}
     - _iMouse: {r: 402.65, g: 48.3, b: 0, a: 0}
     - _iResolution: {r: 1024, g: 1024, b: 0, a: 0}
-    - _intensity: {r: 0, g: 0, b: 0, a: 1}
+    - _intensity: {r: 0.7509433, g: 0.691698, b: 0.5369953, a: 1}
     - _terrainColourAddition: {r: 0, g: 0, b: 0, a: 1}
-    - _water_specularcolor: {r: 0.6603774, g: 0.6603774, b: 0.4516732, a: 1}
-    - _watercolor: {r: 0.70073867, g: 0.73812073, b: 0.8207547, a: 1}
-    - _watercolor2: {r: 0.35638496, g: 0.28617838, b: 0.5566038, a: 1}
+    - _water_specularcolor: {r: 0.74831605, g: 0.84731823, b: 0.85660374, a: 1}
+    - _watercolor: {r: 0.23985049, g: 0.39756644, b: 0.7433963, a: 1}
+    - _watercolor2: {r: 0.16470586, g: 0.7058824, b: 0.50797063, a: 1}
   m_BuildTextureStacks: []

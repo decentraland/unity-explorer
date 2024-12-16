@@ -12,7 +12,7 @@ namespace DCL.Navmap
         private readonly List<CategoryToggleView> categoryToggles;
         private readonly IMapRenderer mapRenderer;
         private readonly INavmapBus navmapBus;
-        private CategoryToggleView currentActiveToggle;
+        private CategoryToggleView? currentActiveToggle;
 
         public CategoryFilterController(List<CategoryToggleView> categoryToggles, IMapRenderer mapRenderer, INavmapBus navmapBus)
         {
@@ -25,24 +25,26 @@ namespace DCL.Navmap
                 categoryToggleView.ToggleChanged += OnCategoryToggleChanged;
             }
 
-            navmapBus.OnPlaceSearched += OnPlaceSearched;
+            navmapBus.OnClearFilter += OnClearFilter;
         }
 
-        private void OnPlaceSearched(INavmapBus.SearchPlaceParams searchparams, IReadOnlyList<PlacesData.PlaceInfo> places, int totalresultcount)
+        private void OnClearFilter()
         {
-            if (string.IsNullOrEmpty(searchparams.category) && currentActiveToggle != null)
+            if (currentActiveToggle != null)
             {
-                currentActiveToggle.SetVisualStatus(false);
                 currentActiveToggle.Toggle.SetIsOnWithoutNotify(false);
+                currentActiveToggle.SetVisualStatus(false);
+                currentActiveToggle = null;
             }
         }
 
-        private void OnCategoryToggleChanged(CategoriesEnum mapLayer, bool isOn, CategoryToggleView toggleView)
+        private void OnCategoryToggleChanged(CategoriesEnum mapLayer, bool isOn, CategoryToggleView? toggleView)
         {
             if (isOn)
                 currentActiveToggle = toggleView;
 
             navmapBus.FilterByCategory(isOn ? mapLayer.ToString() : null);
+            if (mapLayer is CategoriesEnum.All or CategoriesEnum.Favorites) return;
             mapRenderer.SetSharedLayer(MapLayer.Category, isOn);
         }
 

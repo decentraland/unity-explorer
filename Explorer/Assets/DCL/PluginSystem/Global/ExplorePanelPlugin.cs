@@ -42,6 +42,7 @@ using System.Threading;
 using DCL.Chat.MessageBus;
 using DCL.Clipboard;
 using DCL.EventsApi;
+using DCL.Navmap.ScriptableObjects;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Settings.Settings;
 using DCL.Utilities;
@@ -246,6 +247,7 @@ namespace DCL.PluginSystem.Global
             ProvidedAsset<LandscapeData> landscapeData = await assetsProvisioner.ProvideMainAssetAsync(settings.LandscapeData, ct);
             ProvidedAsset<QualitySettingsAsset> qualitySettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.QualitySettingsAsset, ct);
             ProvidedAsset<ControlsSettingsAsset> controlsSettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.ControlsSettingsAsset, ct);
+            ProvidedAsset<CategoryMappingSO> categoryMappingSO = await assetsProvisioner.ProvideMainAssetAsync(settings.CategoryMappingSO, ct);
             settingsController = new SettingsController(explorePanelView.GetComponentInChildren<SettingsView>(), settingsMenuConfiguration.Value, generalAudioMixer.Value, realmPartitionSettings.Value, landscapeData.Value, qualitySettingsAsset.Value, controlsSettingsAsset.Value, systemMemoryCap, worldVolumeMacBus);
 
             navmapView = explorePanelView.GetComponentInChildren<NavmapView>();
@@ -264,7 +266,7 @@ namespace DCL.PluginSystem.Global
 
             searchBarController = new NavmapSearchBarController(navmapView.SearchBarView,
                 navmapView.HistoryRecordPanelView, navmapView.PlacesAndEventsPanelView.SearchFiltersView,
-                inputBlock, searchHistory, navmapBus);
+                inputBlock, searchHistory, navmapBus, categoryMappingSO.Value);
 
             SharePlacesAndEventsContextMenuController shareContextMenu = new (navmapView.ShareContextMenuView,
                 navmapView.WorldsWarningNotificationView, clipboard, webBrowser);
@@ -378,7 +380,7 @@ namespace DCL.PluginSystem.Global
                 searchResultPanelController!, searchBarController!, callback,
                 @params);
 
-        private INavmapCommand CreateShowPlaceCommand(PlacesData.PlaceInfo placeInfo) =>
+        private INavmapCommand<AdditionalParams> CreateShowPlaceCommand(PlacesData.PlaceInfo placeInfo) =>
             new ShowPlaceInfoCommand(placeInfo, navmapView!, placeInfoPanelController!, placesAndEventsPanelController!, eventsApiService,
                 searchBarController!);
 
@@ -416,6 +418,9 @@ namespace DCL.PluginSystem.Global
 
             [field: SerializeField]
             public AssetReferenceT<ControlsSettingsAsset> ControlsSettingsAsset { get; private set; }
+
+            [field: SerializeField]
+            public AssetReferenceT<CategoryMappingSO> CategoryMappingSO { get; private set; }
 
             public IReadOnlyCollection<URN> EmbeddedEmotesAsURN() =>
                 EmbeddedEmotes.Select(s => new URN(s)).ToArray();

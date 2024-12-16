@@ -44,10 +44,10 @@ namespace DCL.Navmap
             placesAndEventsPanelController.Toggle(PlacesAndEventsPanelController.Section.SEARCH);
             searchResultPanelController.ClearResults();
             searchResultPanelController.SetLoadingState();
-            searchBarController.SetInputText(@params.text ?? @params.category ?? string.Empty);
+            searchBarController.SetInputText((string.IsNullOrEmpty(@params.text) ? @params.category : @params.text) ?? string.Empty);
+            searchBarController.SetInputFieldCategory(@params.category);
             searchBarController.UpdateFilterAndSorting(@params.filter, @params.sorting);
-            searchBarController.SetFilterActiveStatus(string.IsNullOrEmpty(@params.category));
-            searchBarController.Interactable = true;
+            searchBarController.Interactable = string.IsNullOrEmpty(@params.category);
 
             await ProcessPlacesAsync(ct);
             await ProcessLiveEventsAsync(ct);
@@ -112,7 +112,7 @@ namespace DCL.Navmap
                     using PlacesData.IPlacesAPIResponse response = await placesAPIService.SearchPlacesAsync(@params.page, @params.pageSize, ct,
                         searchText: @params.text,
                         sortBy: sort, sortDirection: sortDirection,
-                        category: @params.category);
+                        category: @params.category is "All" or "Favorites" ? string.Empty : @params.category);
                     places.AddRange(response.Data);
                     totalResultCount = response.Total;
                 }

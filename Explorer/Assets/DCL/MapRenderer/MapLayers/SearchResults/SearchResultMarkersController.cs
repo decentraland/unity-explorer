@@ -231,7 +231,7 @@ namespace DCL.MapRenderer.MapLayers.SearchResults
             if (visibleMarkers.TryGetValue(gameObject, out ISearchResultMarker marker))
             {
                 marker.ToggleSelection(true);
-                navmapBus.SelectPlaceAsync(marker.PlaceInfo, cts.Token).Forget();
+                navmapBus.SelectPlaceAsync(marker.PlaceInfo, cts.Token, true).Forget();
                 mapRendererMarker = marker;
                 return true;
             }

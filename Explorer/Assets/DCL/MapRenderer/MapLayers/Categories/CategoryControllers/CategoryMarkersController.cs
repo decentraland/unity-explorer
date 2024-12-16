@@ -65,6 +65,12 @@ namespace DCL.MapRenderer.MapLayers.Categories
             this.navmapBus = navmapBus;
             this.navmapBus.OnPlaceSearched += OnPlaceSearched;
             this.navmapBus.OnFilterByCategory += OnFilterByCategory;
+            this.navmapBus.OnClearPlacesFromMap += OnClearPlacesFromMap;
+        }
+
+        private void OnClearPlacesFromMap()
+        {
+            ReleaseMarkers();
         }
 
         private void OnFilterByCategory(string? category)
@@ -253,7 +259,7 @@ namespace DCL.MapRenderer.MapLayers.Categories
             if (visibleMarkers.TryGetValue(gameObject, out ICategoryMarker marker))
             {
                 marker.ToggleSelection(true);
-                navmapBus.SelectPlaceAsync(marker.PlaceInfo, cts.Token).Forget();
+                navmapBus.SelectPlaceAsync(marker.PlaceInfo, cts.Token, true).Forget();
                 mapRenderMarker = marker;
                 return true;
             }

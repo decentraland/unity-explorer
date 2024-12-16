@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
+using System;
 using System.Threading;
 using UnityEngine;
 using Utility;
@@ -18,6 +19,8 @@ namespace DCL.Navmap
         private CancellationTokenSource? searchPlacesCancellationToken;
         private CancellationTokenSource? collapseExpandCancellationToken;
 
+        private bool isExpanded = false;
+
         public PlacesAndEventsPanelController(
             PlacesAndEventsPanelView view,
             NavmapSearchBarController searchBarController,
@@ -35,22 +38,36 @@ namespace DCL.Navmap
 
             view.CollapseButton.gameObject.SetActive(true);
             view.ExpandButton.gameObject.SetActive(false);
-            view.CollapseButton.onClick.AddListener(Collapse);
+            view.CollapseButton.onClick.AddListener(() => Collapse());
             view.ExpandButton.onClick.AddListener(Expand);
 
             view.PointerEnter += DisableMapZoom;
             view.PointerExit += EnableMapZoom;
+            searchBarController.TogglePanel += OnTogglePanel;
+            Collapse(true);
+        }
+
+        private void OnTogglePanel(bool active)
+        {
+            switch (active)
+            {
+                case true when !isExpanded:
+                    Expand();
+                    break;
+                case false when isExpanded:
+                    Collapse(true);
+                    break;
+                case false:
+                    view.CollapseButton.gameObject.SetActive(false);
+                    view.ExpandButton.gameObject.SetActive(false);
+                    break;
+            }
         }
 
         public void Show()
         {
             view.gameObject.SetActive(true);
             searchResultController.Show();
-
-            searchPlacesCancellationToken = searchPlacesCancellationToken.SafeRestart();
-
-            searchBarController.DoDefaultSearch(searchPlacesCancellationToken.Token)
-                               .Forget();
         }
 
         public void Toggle(Section section)
@@ -77,10 +94,12 @@ namespace DCL.Navmap
 
         public void Expand()
         {
+            isExpanded = true;
             view.CollapseButton.gameObject.SetActive(true);
             view.ExpandButton.gameObject.SetActive(false);
+            view.CollapseSection.gameObject.SetActive(true);
 
-            RectTransform transform = (RectTransform)view.transform;
+            RectTransform transform = (RectTransform)view.CollapseSection;
 
             collapseExpandCancellationToken = collapseExpandCancellationToken.SafeRestart();
 
@@ -89,16 +108,25 @@ namespace DCL.Navmap
                      .Forget();
         }
 
-        private void Collapse()
+        private void Collapse(bool disableOnEnd = false)
         {
+            isExpanded = false;
             view.CollapseButton.gameObject.SetActive(false);
             view.ExpandButton.gameObject.SetActive(true);
 
-            RectTransform transform = (RectTransform)view.transform;
+            RectTransform transform = (RectTransform)view.CollapseSection;
 
             collapseExpandCancellationToken = collapseExpandCancellationToken.SafeRestart();
 
             transform.DOAnchorPosX(transform.rect.width, 1f)
+                     .OnComplete(() =>
+                      {
+                          if (disableOnEnd)
+                          {
+                              view.CollapseButton.gameObject.SetActive(false);
+                              view.ExpandButton.gameObject.SetActive(false);
+                          }
+                      })
                      .ToUniTask(cancellationToken: collapseExpandCancellationToken.Token)
                      .Forget();
         }

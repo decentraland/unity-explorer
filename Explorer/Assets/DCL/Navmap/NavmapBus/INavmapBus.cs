@@ -21,7 +21,7 @@ namespace DCL.Navmap
 
             public static SearchPlaceParams CreateWithDefaultParams(int page = 0, int pageSize = 50, string? text = null,
                 NavmapSearchPlaceFilter filter = NavmapSearchPlaceFilter.All,
-                NavmapSearchPlaceSorting sorting = NavmapSearchPlaceSorting.None,
+                NavmapSearchPlaceSorting sorting = NavmapSearchPlaceSorting.MostActive,
                 string? category = null) =>
                 new()
                 {
@@ -42,13 +42,14 @@ namespace DCL.Navmap
         event Action<PlacesData.PlaceInfo>? OnDestinationSelected;
         event SearchPlaceResultDelegate? OnPlaceSearched;
         event Action<string?>? OnFilterByCategory;
+        event Action? OnClearFilter;
         event Action? OnClearPlacesFromMap;
         event Action<Vector2> OnMoveCameraTo;
         public event Action<bool>? OnZoomCamera;
         public event Action<Vector2Int, Vector2> OnLongHover;
 
-        UniTask SelectPlaceAsync(PlacesData.PlaceInfo place, CancellationToken ct);
-        UniTask SelectPlaceAsync(Vector2Int parcel, CancellationToken ct);
+        UniTask SelectPlaceAsync(PlacesData.PlaceInfo place, CancellationToken ct, bool isFromSearchResults = false);
+        UniTask SelectPlaceAsync(Vector2Int parcel, CancellationToken ct, bool isFromSearchResults = false);
 
         UniTask SelectEventAsync(EventDTO @event, CancellationToken ct, PlacesData.PlaceInfo? place = null);
 
@@ -71,5 +72,7 @@ namespace DCL.Navmap
         void ZoomCamera(bool zoomIn);
 
         void SendLongHover(Vector2Int parcel, Vector2 screenPosition);
+
+        void ClearFilter();
     }
 }

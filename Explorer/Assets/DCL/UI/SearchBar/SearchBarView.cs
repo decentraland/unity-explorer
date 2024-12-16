@@ -11,6 +11,9 @@ namespace DCL.UI
         public TMP_InputField inputField;
 
         [field: SerializeField]
+        public Image inputFieldCategoryImage;
+
+        [field: SerializeField]
         public Button clearSearchButton;
 
         [field: SerializeField]

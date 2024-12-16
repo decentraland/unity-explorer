@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.EventsApi;
 using DCL.PlacesAPIService;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -8,7 +9,7 @@ using Utility;
 
 namespace DCL.Navmap
 {
-    public class ShowPlaceInfoCommand : INavmapCommand
+    public class ShowPlaceInfoCommand : INavmapCommand<AdditionalParams>
     {
         private readonly PlacesData.PlaceInfo placeInfo;
         private readonly NavmapView navmapView;
@@ -38,7 +39,7 @@ namespace DCL.Navmap
         {
         }
 
-        public async UniTask ExecuteAsync(CancellationToken ct)
+        public async UniTask ExecuteAsync(AdditionalParams? additionalParams, CancellationToken ct)
         {
             placesAndEventsPanelController.Toggle(PlacesAndEventsPanelController.Section.PLACE);
             placesAndEventsPanelController.Expand();
@@ -48,8 +49,11 @@ namespace DCL.Navmap
             placeInfoPanelController.HideLiveEvent();
             searchBarController.SetInputText(placeInfo.title);
             searchBarController.Interactable = false;
-            searchBarController.EnableBack();
-            searchBarController.HideHistoryResults();
+
+            if(additionalParams is { IsFromSearchResults: true })
+                searchBarController.EnableBack();
+            else
+                searchBarController.DisableBack();
 
             events ??= await eventsApiService.GetEventsByParcelAsync(placeInfo.Positions, ct, true);
 
@@ -57,9 +61,11 @@ namespace DCL.Navmap
                 placeInfoPanelController.SetLiveEvent(events[0]);
         }
 
+        public UniTask ExecuteAsync(CancellationToken ct) =>
+            ExecuteAsync(null, ct);
+
         public void Undo()
         {
-            searchBarController.ClearInput();
             searchBarController.Interactable = true;
             searchBarController.DisableBack();
         }

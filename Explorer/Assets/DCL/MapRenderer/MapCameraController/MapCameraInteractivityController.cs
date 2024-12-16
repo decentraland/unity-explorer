@@ -66,6 +66,7 @@ namespace DCL.MapRenderer.MapCameraController
             if (raycast.collider != null)
             {
                 hitObject = raycast.collider.gameObject;
+
                 if (raycast.collider.gameObject == previouslyRaycastedObject)
                     return hitObject;
 
@@ -83,8 +84,9 @@ namespace DCL.MapRenderer.MapCameraController
                 {
                     if (mapLayerController.HighlightObject(raycast.collider.gameObject, out IMapRendererMarker? mapRenderMarker))
                     {
-                        longHoverCt = longHoverCt.SafeRestart();
-                        WaitAndShowPlaceInfoAsync(mapRenderMarker.ParcelCoords, screenPosition, longHoverCt.Token).Forget();
+                        /* TEMPORARLY DISABLED
+                            longHoverCt = longHoverCt.SafeRestart();
+                            WaitAndShowPlaceInfoAsync(mapRenderMarker.ParcelCoords, screenPosition, longHoverCt.Token).Forget();*/
                         return hitObject;
                     }
                 }
@@ -92,6 +94,7 @@ namespace DCL.MapRenderer.MapCameraController
             else
             {
                 hitObject = null;
+
                 if (previouslyRaycastedObject != null)
                 {
                     foreach (IMapLayerController mapLayerController in interactableLayers)
@@ -102,13 +105,15 @@ namespace DCL.MapRenderer.MapCameraController
 
                 TryGetParcel(normalizedCoordinates, out Vector2Int parcel);
 
+                /* TEMPORARLY DISABLED
                 if (parcel != previousParcel)
                 {
                     previousParcel = parcel;
                     longHoverCt = longHoverCt.SafeRestart();
                     WaitAndShowPlaceInfoAsync(parcel, screenPosition, longHoverCt.Token).Forget();
-                }
+                }*/
             }
+
             return hitObject;
         }
 
@@ -131,7 +136,7 @@ namespace DCL.MapRenderer.MapCameraController
 
             if (raycast.collider != null)
             {
-                if(raycast.collider.gameObject == hitObject)
+                if (raycast.collider.gameObject == hitObject)
                     return hitObject;
 
                 hitObject = raycast.collider.gameObject;
@@ -143,10 +148,8 @@ namespace DCL.MapRenderer.MapCameraController
                         return hitObject;
                     }
             }
-            else
-            {
-                hitObject = null;
-            }
+            else { hitObject = null; }
+
             return hitObject;
         }
 
@@ -196,10 +199,7 @@ namespace DCL.MapRenderer.MapCameraController
             return localPosition;
         }
 
-        public void Dispose()
-        {
-
-        }
+        public void Dispose() { }
 
         public void Release()
         {
