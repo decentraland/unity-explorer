@@ -34,7 +34,7 @@ namespace DCL.ResourcesUnloading.Tests
         // Caches
         private WearableStorage wearableStorage;
         private AttachmentsAssetsCache attachmentsAssetsCache;
-        private TexturesCache texturesCache;
+        private TexturesCache<GetTextureIntention> texturesCache;
         private AudioClipsCache audioClipsCache;
         private GltfContainerAssetsCache gltfContainerAssetsCache;
         private LODCache lodAssets;
@@ -56,7 +56,7 @@ namespace DCL.ResourcesUnloading.Tests
             releasablePerformanceBudget = Substitute.For<IReleasablePerformanceBudget>();
             poolsRegistry = Substitute.For<IComponentPoolsRegistry>();
 
-            texturesCache = new TexturesCache();
+            texturesCache = new TexturesCache<GetTextureIntention>();
             audioClipsCache = new AudioClipsCache();
             assetBundleCache = new AssetBundleCache();
             gltfContainerAssetsCache = new GltfContainerAssetsCache(poolsRegistry);
@@ -70,7 +70,7 @@ namespace DCL.ResourcesUnloading.Tests
             profileIntentionCache = new ProfileIntentionCache();
             jsSourcesCache = new MemoryJsSourcesCache();
 
-            cacheCleaner = new CacheCleaner(releasablePerformanceBudget);
+            cacheCleaner = new CacheCleaner(releasablePerformanceBudget, null);
             cacheCleaner.Register(texturesCache);
             cacheCleaner.Register(audioClipsCache);
             cacheCleaner.Register(gltfContainerAssetsCache);

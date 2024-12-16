@@ -46,6 +46,7 @@ MonoBehaviour:
   - rid: 3601422469352914947
   - rid: 2799748226177040387
   - rid: 2799748311381442562
+  - rid: 6849204606292983808
   references:
     version: 2
     RefIds:
@@ -75,6 +76,7 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
+        <BuildData>k__BackingField: {fileID: 11400000, guid: b5fb13ac5db3bbb49a6e6aa3d2df0309, type: 2}
     - rid: 1268264176566403074
       type: {class: GlobalInteractionPlugin/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -218,6 +220,11 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
+        <VideoPrioritizationSettings>k__BackingField:
+          m_AssetGUID: 12f48d0297bd3f746b92a97878478086
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
         <LandscapeData>k__BackingField:
           m_AssetGUID: 32f2b877400526d4cbf648ba5c5064b4
           m_SubObjectName: 
@@ -238,6 +245,16 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
+        <CameraReelGalleryShareToXMessage>k__BackingField: Check out what I'm doing
+          in Decentraland right now and join me!
+        <PhotoSuccessfullyUpdatedMessage>k__BackingField: Photo successfully updated
+        <PhotoSuccessfullyDeletedMessage>k__BackingField: Photo successfully deleted
+        <PhotoSuccessfullyDownloadedMessage>k__BackingField: Photo successfully downloaded
+        <LinkCopiedMessage>k__BackingField: Link copied!
+        <StorageProgressBarText>k__BackingField: Storage {0}/{1} photos taken
+        <GridLayoutFixedColumnCount>k__BackingField: 6
+        <ThumbnailHeight>k__BackingField: 230
+        <ThumbnailWidth>k__BackingField: 306
     - rid: 1841402216112979969
       type: {class: CharacterContainer/Settings, ns: DCL.Character.Plugin, asm: DCL.Plugins}
       data:
@@ -257,6 +274,11 @@ MonoBehaviour:
         <QualitySettings>k__BackingField: {fileID: 11400000, guid: 58ab8549017bacb42b310dbb452a2f6e, type: 2}
         <RealmPartitionSettings>k__BackingField:
           m_AssetGUID: 7899019423f09d049a8463a0751037a5
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        <VideoPrioritizationSettings>k__BackingField:
+          m_AssetGUID: 12f48d0297bd3f746b92a97878478086
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
@@ -288,6 +310,7 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
+        <BuildData>k__BackingField: {fileID: 11400000, guid: b5fb13ac5db3bbb49a6e6aa3d2df0309, type: 2}
     - rid: 2799748226177040387
       type: {class: ConnectionStatusPanelPlugin/ConnectionStatusPanelSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data: 
@@ -327,6 +350,9 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
+        <GridLayoutFixedColumnCount>k__BackingField: 4
+        <ThumbnailHeight>k__BackingField: 201
+        <ThumbnailWidth>k__BackingField: 272
     - rid: 2872862648882692099
       type: {class: MultiplayerPlugin/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -640,6 +666,40 @@ MonoBehaviour:
       data:
         <controllerSettings>k__BackingField:
           m_AssetGUID: df2e68b45160aee4eaaf2475e21525e4
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+    - rid: 6849204606292983808
+      type: {class: InWorldCameraPlugin/InWorldCameraSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        <ScreencaptureHud>k__BackingField: {fileID: 405257682719442044, guid: 73f988cecacd42e48920937e996e446d, type: 3}
+        <FollowTarget>k__BackingField: {fileID: 9209778991738672599, guid: ace53bd2bc5e2b8439785bb3122b12e3, type: 3}
+        <TransitionSettings>k__BackingField: {fileID: 11400000, guid: 230436585dd166a4e98f1c0953e3a5f6, type: 2}
+        <MovementSettings>k__BackingField: {fileID: 11400000, guid: 9c104547ad3a8454baeb79e1bb45ce4c, type: 2}
+        <PhotoDetailPrefab>k__BackingField:
+          m_AssetGUID: 26a5616becdfd49b4abfbee07ba3cbf2
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        <ShareToXMessage>k__BackingField: Check out what I'm doing in Decentraland
+          right now and join me!
+        <CategoryIconsMapping>k__BackingField:
+          m_AssetGUID: 4a2a7b610414b45c1b576946ce094877
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        <RarityBackgroundsMapping>k__BackingField:
+          m_AssetGUID: 04a7ffcd277754f7c91237894604f522
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        <RarityColorMappings>k__BackingField:
+          m_AssetGUID: 7491e2fb7fd484d2b8aed984dfc7c6ab
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        <ChatEntryConfiguration>k__BackingField:
+          m_AssetGUID: 6afb31861b85441b6ab2b988819bb96a
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0

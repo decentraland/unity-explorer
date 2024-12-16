@@ -43,9 +43,15 @@ using DCL.Chat.MessageBus;
 using DCL.Clipboard;
 using DCL.EventsApi;
 using DCL.Navmap.ScriptableObjects;
+using DCL.InWorldCamera.CameraReelGallery;
+using DCL.InWorldCamera.CameraReelStorageService;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.PerformanceBudgeting;
+using DCL.PluginSystem.World;
+using DCL.SDKComponents.MediaStream.Settings;
 using DCL.Settings.Settings;
 using DCL.Utilities;
+using ECS.SceneLifeCycle.Realm;
 using System;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -69,10 +75,15 @@ namespace DCL.PluginSystem.Global
         private readonly IEquippedEmotes equippedEmotes;
         private readonly IWeb3Authenticator web3Authenticator;
         private readonly IWeb3IdentityCache web3IdentityCache;
+        private readonly ICameraReelStorageService cameraReelStorageService;
+        private readonly ICameraReelScreenshotsStorage cameraReelScreenshotsStorage;
+        private readonly ISystemClipboard systemClipboard;
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly IWearableStorage wearableStorage;
         private readonly ICharacterPreviewFactory characterPreviewFactory;
         private readonly IWebBrowser webBrowser;
         private readonly IEmoteStorage emoteStorage;
+        private readonly IRealmNavigator realmNavigator;
         private readonly DCLInput dclInput;
         private readonly IWebRequestController webRequestController;
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
@@ -100,6 +111,8 @@ namespace DCL.PluginSystem.Global
         private readonly ISystemClipboard clipboard;
         private readonly ObjectProxy<INavmapBus> explorePanelNavmapBus;
 
+        private readonly bool includeCameraReel;
+
         private NavmapController? navmapController;
         private SettingsController? settingsController;
         private BackpackSubPlugin? backpackSubPlugin;
@@ -118,6 +131,10 @@ namespace DCL.PluginSystem.Global
             IPlacesAPIService placesAPIService,
             IWebRequestController webRequestController,
             IWeb3IdentityCache web3IdentityCache,
+            ICameraReelStorageService cameraReelStorageService,
+            ICameraReelScreenshotsStorage cameraReelScreenshotsStorage,
+            ISystemClipboard systemClipboard,
+            IDecentralandUrlsSource decentralandUrlsSource,
             IWearableStorage wearableStorage,
             ICharacterPreviewFactory characterPreviewFactory,
             IProfileRepository profileRepository,
@@ -128,6 +145,7 @@ namespace DCL.PluginSystem.Global
             IEquippedEmotes equippedEmotes,
             IWebBrowser webBrowser,
             IEmoteStorage emoteStorage,
+            IRealmNavigator realmNavigator,
             ICollection<string> forceRender,
             DCLInput dclInput,
             IRealmData realmData,
@@ -151,7 +169,8 @@ namespace DCL.PluginSystem.Global
             IEventsApiService eventsApiService,
             IUserCalendar userCalendar,
             ISystemClipboard clipboard,
-            ObjectProxy<INavmapBus> explorePanelNavmapBus)
+            ObjectProxy<INavmapBus> explorePanelNavmapBus,
+            bool includeCameraReel)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -159,6 +178,10 @@ namespace DCL.PluginSystem.Global
             this.placesAPIService = placesAPIService;
             this.webRequestController = webRequestController;
             this.web3IdentityCache = web3IdentityCache;
+            this.cameraReelStorageService = cameraReelStorageService;
+            this.cameraReelScreenshotsStorage = cameraReelScreenshotsStorage;
+            this.systemClipboard = systemClipboard;
+            this.decentralandUrlsSource = decentralandUrlsSource;
             this.wearableStorage = wearableStorage;
             this.characterPreviewFactory = characterPreviewFactory;
             this.profileRepository = profileRepository;
@@ -174,6 +197,7 @@ namespace DCL.PluginSystem.Global
             this.assetBundleURL = assetBundleURL;
             this.notificationsBusController = notificationsBusController;
             this.emoteStorage = emoteStorage;
+            this.realmNavigator = realmNavigator;
             this.dclInput = dclInput;
             this.characterPreviewEventBus = characterPreviewEventBus;
             this.mapPathEventBus = mapPathEventBus;
@@ -193,6 +217,7 @@ namespace DCL.PluginSystem.Global
             this.userCalendar = userCalendar;
             this.clipboard = clipboard;
             this.explorePanelNavmapBus = explorePanelNavmapBus;
+            this.includeCameraReel = includeCameraReel;
         }
 
         public void Dispose()
@@ -243,12 +268,23 @@ namespace DCL.PluginSystem.Global
             ProvidedAsset<SettingsMenuConfiguration> settingsMenuConfiguration = await assetsProvisioner.ProvideMainAssetAsync(settings.SettingsMenuConfiguration, ct);
             ProvidedAsset<AudioMixer> generalAudioMixer = await assetsProvisioner.ProvideMainAssetAsync(settings.GeneralAudioMixer, ct);
             ProvidedAsset<RealmPartitionSettingsAsset> realmPartitionSettings = await assetsProvisioner.ProvideMainAssetAsync(settings.RealmPartitionSettings, ct);
+            ProvidedAsset<VideoPrioritizationSettings> videoPrioritizationSettings = await assetsProvisioner.ProvideMainAssetAsync(settings.VideoPrioritizationSettings, ct);
 
             ProvidedAsset<LandscapeData> landscapeData = await assetsProvisioner.ProvideMainAssetAsync(settings.LandscapeData, ct);
             ProvidedAsset<QualitySettingsAsset> qualitySettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.QualitySettingsAsset, ct);
             ProvidedAsset<ControlsSettingsAsset> controlsSettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.ControlsSettingsAsset, ct);
             ProvidedAsset<CategoryMappingSO> categoryMappingSO = await assetsProvisioner.ProvideMainAssetAsync(settings.CategoryMappingSO, ct);
-            settingsController = new SettingsController(explorePanelView.GetComponentInChildren<SettingsView>(), settingsMenuConfiguration.Value, generalAudioMixer.Value, realmPartitionSettings.Value, landscapeData.Value, qualitySettingsAsset.Value, controlsSettingsAsset.Value, systemMemoryCap, worldVolumeMacBus);
+            settingsController = new SettingsController(
+                explorePanelView.GetComponentInChildren<SettingsView>(),
+                settingsMenuConfiguration.Value,
+                generalAudioMixer.Value,
+                realmPartitionSettings.Value,
+                videoPrioritizationSettings.Value,
+                landscapeData.Value,
+                qualitySettingsAsset.Value,
+                controlsSettingsAsset.Value,
+                systemMemoryCap,
+                worldVolumeMacBus);
 
             navmapView = explorePanelView.GetComponentInChildren<NavmapView>();
             categoryFilterController = new CategoryFilterController(navmapView.categoryToggles, mapRendererContainer.MapRenderer, navmapBus);
@@ -309,15 +345,45 @@ namespace DCL.PluginSystem.Global
                 placeToastController,
                 placesAPIService);
 
+            settingsController = new SettingsController(explorePanelView.GetComponentInChildren<SettingsView>(), settingsMenuConfiguration.Value, generalAudioMixer.Value, realmPartitionSettings.Value, videoPrioritizationSettings.Value, landscapeData.Value, qualitySettingsAsset.Value, controlsSettingsAsset.Value, systemMemoryCap, worldVolumeMacBus);
+            navmapController = new NavmapController(
+                navmapView: explorePanelView.GetComponentInChildren<NavmapView>(),
+                mapRendererContainer.MapRenderer,
+                realmData,
+                mapPathEventBus,
+                world,
+                playerEntity,
+                navmapBus,
+                UIAudioEventsBus.Instance,
+                placesAndEventsPanelController,
+                searchBarController,
+                zoomController,
+                satelliteController,
+                placeToastController,
+                placesAPIService);
+
             await backpackSubPlugin.InitializeAsync(settings.BackpackSettings, explorePanelView.GetComponentInChildren<BackpackView>(), ct);
 
+            inputHandler = new ExplorePanelInputHandler(dclInput, mvcManager, includeCameraReel);
+
+            CameraReelView cameraReelView = explorePanelView.GetComponentInChildren<CameraReelView>();
+            var cameraReelController = new CameraReelController(cameraReelView,
+                new CameraReelGalleryController(cameraReelView.cameraReelGalleryView, this.cameraReelStorageService,
+                    cameraReelScreenshotsStorage,
+                    new ReelGalleryConfigParams(settings.GridLayoutFixedColumnCount, settings.ThumbnailHeight, settings.ThumbnailWidth, true), true,
+                    cameraReelView.optionsButton, cameraReelView.contextMenu,
+                    webBrowser, decentralandUrlsSource, inputHandler, systemClipboard,
+                    new ReelGalleryStringMessages(settings.CameraReelGalleryShareToXMessage, settings.PhotoSuccessfullyDeletedMessage, settings.PhotoSuccessfullyUpdatedMessage, settings.PhotoSuccessfullyDownloadedMessage, settings.LinkCopiedMessage)),
+                cameraReelStorageService,
+                web3IdentityCache,
+                mvcManager,
+                settings.StorageProgressBarText);
+
             mvcManager.RegisterController(new
-                ExplorePanelController(viewFactoryMethod, navmapController, settingsController, backpackSubPlugin.backpackController!,
+                ExplorePanelController(viewFactoryMethod, navmapController, settingsController, backpackSubPlugin.backpackController!, cameraReelController,
                     new ProfileWidgetController(() => explorePanelView.ProfileWidget, web3IdentityCache, profileRepository, webRequestController),
                     new ProfileMenuController(() => explorePanelView.ProfileMenuView, web3IdentityCache, profileRepository, webRequestController, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, mvcManager, chatEntryConfiguration),
-                    dclInput, notificationsBusController, mvcManager, inputBlock));
-
-            inputHandler = new ExplorePanelInputHandler(dclInput, mvcManager);
+                    dclInput, inputHandler, notificationsBusController, mvcManager, inputBlock, includeCameraReel));
         }
 
         private async UniTask<ObjectPool<PlaceElementView>> InitializePlaceElementsPoolAsync(SearchResultPanelView view, CancellationToken ct)
@@ -411,6 +477,9 @@ namespace DCL.PluginSystem.Global
             public StaticSettings.RealmPartitionSettingsRef RealmPartitionSettings { get; private set; }
 
             [field: SerializeField]
+            public StaticSettings.VideoPrioritizationSettingsRef VideoPrioritizationSettings { get; private set; }
+
+            [field: SerializeField]
             public LandscapeSettings.LandscapeDataRef LandscapeData { get; private set; }
 
             [field: SerializeField]
@@ -421,6 +490,28 @@ namespace DCL.PluginSystem.Global
 
             [field: SerializeField]
             public AssetReferenceT<CategoryMappingSO> CategoryMappingSO { get; private set; }
+
+            [field: Header("Camera Reel")]
+            [field: SerializeField]
+            [field: Tooltip("Spaces will be HTTP sanitized, care for special characters")]
+            public string CameraReelGalleryShareToXMessage { get; private set; }
+            [field: SerializeField]
+            public string PhotoSuccessfullyUpdatedMessage { get; private set; }
+            [field: SerializeField]
+            public string PhotoSuccessfullyDeletedMessage { get; private set; }
+            [field: SerializeField]
+            public string PhotoSuccessfullyDownloadedMessage { get; private set; }
+            [field: SerializeField]
+            public string LinkCopiedMessage { get; private set; }
+            [field: SerializeField]
+            public string StorageProgressBarText { get; private set; }
+
+            [field: SerializeField]
+            public int GridLayoutFixedColumnCount { get; private set; }
+            [field: SerializeField]
+            public int ThumbnailHeight { get; private set; }
+            [field: SerializeField]
+            public int ThumbnailWidth { get; private set; }
 
             public IReadOnlyCollection<URN> EmbeddedEmotesAsURN() =>
                 EmbeddedEmotes.Select(s => new URN(s)).ToArray();

@@ -61,7 +61,6 @@ namespace Global.Dynamic
 
                 await mapRenderer.InitializeAsync(ct);
                 c.MapRenderer = mapRenderer;
-
             });
 
             return mapRendererContainer;

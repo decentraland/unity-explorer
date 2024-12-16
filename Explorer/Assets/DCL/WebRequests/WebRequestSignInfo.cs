@@ -25,7 +25,7 @@ namespace DCL.WebRequests
         public static WebRequestSignInfo? NewFromRaw(string rawToSign, string url, ulong unixTimestamp, string method)
         {
             string path = new Uri(url).AbsolutePath;
-            string payload = $"{method}:{path}:{unixTimestamp}:{rawToSign}".ToLower();
+            string payload = $"{method}:{path}:{unixTimestamp}:{(string.IsNullOrEmpty(rawToSign) ? "{}" : rawToSign)}".ToLower();
             return new WebRequestSignInfo(payload);
         }
 

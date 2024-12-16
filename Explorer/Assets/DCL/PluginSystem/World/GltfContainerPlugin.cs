@@ -36,7 +36,7 @@ namespace DCL.PluginSystem.World
         private readonly IWebRequestController webRequestController;
         private readonly ILoadingStatus loadingStatus;
 
-        public GltfContainerPlugin(ECSWorldSingletonSharedDependencies globalDeps, CacheCleaner cacheCleaner, ISceneReadinessReportQueue sceneReadinessReportQueue, IComponentPoolsRegistry poolsRegistry, bool localSceneDevelopment, bool useRemoteAssetBundles, WebRequests.IWebRequestController webRequestController, ILoadingStatus loadingStatus)
+        public GltfContainerPlugin(ECSWorldSingletonSharedDependencies globalDeps, CacheCleaner cacheCleaner, ISceneReadinessReportQueue sceneReadinessReportQueue, IComponentPoolsRegistry poolsRegistry, bool localSceneDevelopment, bool useRemoteAssetBundles, IWebRequestController webRequestController, ILoadingStatus loadingStatus)
         {
             this.globalDeps = globalDeps;
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
@@ -79,7 +79,8 @@ namespace DCL.PluginSystem.World
             GltfContainerVisibilitySystem.InjectToWorld(ref builder, buffer);
 
             GatherGltfAssetsSystem.InjectToWorld(ref builder, sceneReadinessReportQueue, sharedDependencies.SceneData,
-                buffer, sharedDependencies.SceneStateProvider, globalDeps.MemoryBudget, loadingStatus);
+                buffer, sharedDependencies.SceneStateProvider, globalDeps.MemoryBudget, loadingStatus,
+                persistentEntities.SceneContainer);
 
             ResetDirtyFlagSystem<PBGltfContainer>.InjectToWorld(ref builder);
 

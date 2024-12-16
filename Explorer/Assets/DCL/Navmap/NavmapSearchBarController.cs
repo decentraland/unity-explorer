@@ -176,10 +176,7 @@ namespace DCL.Navmap
             {
                 inputBlock.Disable(InputMapComponent.Kind.SHORTCUTS);
             }
-            else
-            {
-                inputBlock.Enable(InputMapComponent.Kind.SHORTCUTS);
-            }
+            else { inputBlock.Enable(InputMapComponent.Kind.SHORTCUTS); }
         }
 
         private void Search(NavmapSearchPlaceSorting sorting)

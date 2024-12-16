@@ -8,6 +8,14 @@ using Utility.Types;
 
 namespace ECS.SceneLifeCycle.Realm
 {
+    public enum ChangeRealmError
+    {
+        MessageError,
+        ChangeCancelled,
+        SameRealm,
+        NotReachable,
+    }
+
     public interface IRealmNavigator
     {
         public const string WORLDS_DOMAIN = "https://worlds-content-server.decentraland.org/world";
@@ -20,28 +28,20 @@ namespace ECS.SceneLifeCycle.Realm
         public const string SDK_TEST_SCENES_URL = "https://sdk-team-cdn.decentraland.org/ipfs/sdk7-test-scenes-main-latest";
         public const string TEST_SCENES_URL = "https://sdk-test-scenes.decentraland.zone";
 
-        UniTask<Result> TryChangeRealmAsync(URLDomain realm, CancellationToken ct,
-            Vector2Int parcelToTeleport = default);
+        event Action<RealmType> RealmChanged;
 
-        bool CheckIsNewRealm(URLDomain realm);
+        UniTask<EnumResult<ChangeRealmError>> TryChangeRealmAsync(
+            URLDomain realm,
+            CancellationToken ct,
+            Vector2Int parcelToTeleport = default
+        );
 
-        UniTask<bool> CheckRealmIsReacheableAsync(URLDomain realm, CancellationToken ct);
+        UniTask<Result> TeleportToParcelAsync(Vector2Int parcel, CancellationToken ct, bool isLocal);
 
-        UniTask<Result> TryInitializeTeleportToParcelAsync(Vector2Int parcel, CancellationToken ct,
-            bool isLocal = false);
+        UniTask InitializeTeleportToSpawnPointAsync(AsyncLoadProcessReport teleportLoadReport, CancellationToken ct, Vector2Int parcelToTeleport);
 
-        UniTask InitializeTeleportToSpawnPointAsync(AsyncLoadProcessReport teleportLoadReport, CancellationToken ct, Vector2Int parcelToTeleport = default);
-
-        UniTask LoadTerrainAsync(AsyncLoadProcessReport loadReport, CancellationToken ct);
-
-        UniTask SwitchMiscVisibilityAsync();
+        void SwitchMiscVisibilityAsync();
 
         UniTask ChangeRealmAsync(URLDomain realm, CancellationToken ct);
-
-        UniTask<UniTask> TeleportToParcelAsync(Vector2Int parcel, AsyncLoadProcessReport processReport,
-            CancellationToken ct);
-
-        // True if changed to GenesisCity, False - when changed to any other realm
-        event Action<bool> RealmChanged;
     }
 }

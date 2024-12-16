@@ -1,4 +1,6 @@
+using Cysharp.Threading.Tasks;
 using DG.Tweening;
+using System.Threading;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -20,17 +22,20 @@ namespace DCL.UI
                 Hide();
             });
 
-        public void Show()
+        public void SetText(string text) =>
+            Text.text = text;
+
+        public void Show(CancellationToken ct = default)
         {
-            CanvasGroup.DOFade(1, 0.3f);
+            CanvasGroup.DOFade(1, 0.3f).ToUniTask(cancellationToken: ct);
             CanvasGroup.interactable = true;
             CanvasGroup.blocksRaycasts = true;
         }
 
-        public void Hide(bool instant = false)
+        public void Hide(bool instant = false, CancellationToken ct = default)
         {
             if (!instant)
-                CanvasGroup.DOFade(0, 0.3f);
+                CanvasGroup.DOFade(0, 0.3f).ToUniTask(cancellationToken: ct);
             else
                 CanvasGroup.alpha = 0;
 

@@ -1,14 +1,15 @@
-﻿using CommunicationData.URLHelpers;
+﻿using System;
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.MapRenderer.ComponentsFactory;
 using DCL.WebRequests;
 using DG.Tweening;
+using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using System.Threading;
 using UnityEngine;
 using Utility;
 using UnityEngine.AddressableAssets;
-using UnityEngine.ResourceManagement.AsyncOperations;
 
 namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
 {
@@ -25,12 +26,18 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
         private readonly IWebRequestController webRequestController;
         private readonly AtlasChunk atlasChunk;
 
-        private CancellationTokenSource internalCts;
-        private CancellationTokenSource linkedCts;
-        private int webRequestAttempts;
+        private CancellationTokenSource? internalCts;
+        private CancellationTokenSource? linkedCts;
         private static readonly int SATURATION = Shader.PropertyToID("_Saturation");
 
-        public SatelliteChunkController(SpriteRenderer prefab, IWebRequestController webRequestController, MapRendererTextureContainer textureContainer, Vector3 chunkLocalPosition, Vector2Int coordsCenter,
+        private IOwnedTexture2D? currentOwnedTexture;
+
+        public SatelliteChunkController(
+            SpriteRenderer prefab,
+            IWebRequestController webRequestController,
+            MapRendererTextureContainer textureContainer,
+            Vector3 chunkLocalPosition,
+            Vector2Int coordsCenter,
             int drawOrder)
         {
             this.webRequestController = webRequestController;
@@ -58,31 +65,42 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
             internalCts?.Dispose();
             internalCts = null;
 
+            currentOwnedTexture?.Dispose();
+            currentOwnedTexture = null;
+
             if (atlasChunk)
                 UnityObjectUtils.SafeDestroy(atlasChunk.gameObject);
         }
 
         public async UniTask LoadImageAsync(Vector2Int chunkId, float chunkWorldSize, CancellationToken ct)
         {
-            webRequestAttempts = 0;
             linkedCts = CancellationTokenSource.CreateLinkedTokenSource(internalCts.Token, ct);
             atlasChunk.MainSpriteRenderer.enabled = false;
             atlasChunk.MainSpriteRenderer.color = INITIAL_COLOR;
             var url = $"{CHUNKS_API}{chunkId.x}%2C{chunkId.y}.jpg";
 
             var textureTask = webRequestController.GetTextureAsync(
-                new CommonArguments(URLAddress.FromString(url), attemptsCount: 1, timeout: 5),
-                new GetTextureArguments(false), GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp, FilterMode.Trilinear),
-                linkedCts.Token, ReportCategory.UI);
+                new CommonArguments(URLAddress.FromString(url), attemptsCount: 1),
+                new GetTextureArguments(TextureType.Albedo),
+                GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp, FilterMode.Trilinear),
+                linkedCts.Token,
+                ReportCategory.UI
+            );
 
             Texture2D texture;
 
+            currentOwnedTexture?.Dispose();
+            currentOwnedTexture = null;
+
             try
             {
-                texture = await textureTask;
+                currentOwnedTexture = await textureTask!;
+                await UniTask.SwitchToMainThread();
+                texture = currentOwnedTexture.Texture;
             }
-            catch
+            catch (Exception e)
             {
+                ReportHub.LogException(e, ReportCategory.UI);
                 texture = await Addressables.LoadAssetAsync<Texture2D>($"{chunkId.x},{chunkId.y}").Task;
             }
 

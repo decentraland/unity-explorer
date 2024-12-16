@@ -9,7 +9,13 @@ on:
 jobs:
   check-latest-release:
     runs-on: ubuntu-latest
+    container:
+      image: amazon/aws-cli:latest
     steps:
+      - name: Install jq and curl
+        run: |
+          yum update -y
+          yum install -y jq curl
       - name: Check if current release is the latest release
         id: check_latest
         run: |
