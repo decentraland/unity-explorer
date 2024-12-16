@@ -5,11 +5,14 @@ using DCL.Chat.MessageBus;
 using DCL.EventsApi;
 using DCL.InWorldCamera.CameraReelGallery;
 using DCL.InWorldCamera.CameraReelStorageService;
+using DCL.InWorldCamera.CameraReelStorageService.Schemas;
+using DCL.InWorldCamera.PhotoDetail;
 using DCL.MapRenderer;
 using DCL.MapRenderer.MapLayers.Pins;
 using DCL.PlacesAPIService;
 using DCL.UI;
 using DCL.WebRequests;
+using MVC;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -20,7 +23,7 @@ using Utility;
 
 namespace DCL.Navmap
 {
-    public class PlaceInfoPanelController
+    public class PlaceInfoPanelController : IDisposable
     {
         private readonly PlaceInfoPanelView view;
         private readonly IWebRequestController webRequestController;
@@ -32,6 +35,7 @@ namespace DCL.Navmap
         private readonly ObjectPool<EventElementView> eventElementPool ;
         private readonly SharePlacesAndEventsContextMenuController shareContextMenu;
         private readonly IWebBrowser webBrowser;
+        private readonly IMVCManager mvcManager;
         private readonly ImageController thumbnailImage;
         private readonly MultiStateButtonController dislikeButton;
         private readonly MultiStateButtonController likeButton;
@@ -58,6 +62,7 @@ namespace DCL.Navmap
             ObjectPool<EventElementView> eventElementPool,
             SharePlacesAndEventsContextMenuController shareContextMenu,
             IWebBrowser webBrowser,
+            IMVCManager mvcManager,
             ICameraReelStorageService? cameraReelStorageService = null,
             ICameraReelScreenshotsStorage? cameraReelScreenshotsStorage = null,
             ReelGalleryConfigParams? reelGalleryConfigParams = null,
@@ -73,11 +78,15 @@ namespace DCL.Navmap
             this.eventElementPool = eventElementPool;
             this.shareContextMenu = shareContextMenu;
             this.webBrowser = webBrowser;
+            this.mvcManager = mvcManager;
 
             thumbnailImage = new ImageController(view.Thumbnail, webRequestController);
 
             if (view.CameraReelGalleryView != null)
+            {
                 this.cameraReelGalleryController = new CameraReelGalleryController(view.CameraReelGalleryView, cameraReelStorageService!, cameraReelScreenshotsStorage!, reelGalleryConfigParams!.Value, reelUseSignedRequest!.Value);
+                this.cameraReelGalleryController.ThumbnailClicked += ThumbnailClicked;
+            }
 
             mapPathEventBus.OnSetDestination += SetDestination;
             mapPathEventBus.OnRemovedDestination += RemoveDestination;
@@ -111,6 +120,9 @@ namespace DCL.Navmap
             view.StartNavigationButton.onClick.AddListener(StartNavigation);
             view.StopNavigationButton.onClick.AddListener(StopNavigation);
         }
+
+        private void ThumbnailClicked(List<CameraReelResponseCompact> reels, int index, Action<CameraReelResponseCompact> reelDeleteIntention) =>
+            mvcManager.ShowAsync(PhotoDetailController.IssueCommand(new PhotoDetailParameter(reels, index, false, reelDeleteIntention)));
 
         private void UpdatePhotosTabText(int count) =>
             view.SetPhotoTabText(count);
@@ -410,5 +422,8 @@ namespace DCL.Navmap
             PHOTOS,
             EVENTS,
         }
+
+        public void Dispose() =>
+            this.cameraReelGalleryController.ThumbnailClicked -= ThumbnailClicked;
     }
 }
