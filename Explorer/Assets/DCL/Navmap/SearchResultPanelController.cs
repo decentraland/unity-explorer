@@ -85,6 +85,7 @@ namespace DCL.Navmap
 
                 PlaceElementView placeElementView = resultsPool.Get();
                 usedPoolElements.Add(placeInfo.base_position, placeElementView);
+                placeElementView.transform.SetAsLastSibling();
                 placeElementView.placeName.text = placeInfo.title;
                 placeElementView.placeCreator.gameObject.SetActive(
                     !string.IsNullOrEmpty(placeInfo.contact_name) && placeInfo.contact_name != "Unknown");

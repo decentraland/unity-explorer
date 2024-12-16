@@ -56,6 +56,10 @@ namespace DCL.Navmap
 
         public void Toggle(NavmapSearchPlaceSorting sorting)
         {
+            MostActiveButton.interactable = sorting != NavmapSearchPlaceSorting.MostActive;
+            NewestButton.interactable = sorting != NavmapSearchPlaceSorting.Newest;
+            BestRatedButton.interactable = sorting != NavmapSearchPlaceSorting.BestRated;
+
             MostActiveButton.targetGraphic.color = sorting == NavmapSearchPlaceSorting.MostActive
                 ? activeSortingBackgroundColor
                 : inactiveSortingBackgroundColor;
