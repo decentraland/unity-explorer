@@ -10,6 +10,7 @@ using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.Chat;
 using DCL.Input;
+using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Profiles.Poses;
 using DCL.NotificationsBusController.NotificationsBus;
@@ -44,8 +45,11 @@ namespace DCL.PluginSystem.Global
         private readonly IInputBlock inputBlock;
         private readonly IRemoteMetadata remoteMetadata;
         private readonly INotificationsBusController notificationsBusController;
+        private readonly ICameraReelStorageService cameraReelStorageService;
+        private readonly ICameraReelScreenshotsStorage cameraReelScreenshotsStorage;
         private readonly Arch.Core.World world;
         private readonly Entity playerEntity;
+        private readonly bool enableCameraReel;
 
         private PassportController? passportController;
 
@@ -67,8 +71,11 @@ namespace DCL.PluginSystem.Global
             INotificationsBusController notificationsBusController,
             IInputBlock inputBlock,
             IRemoteMetadata remoteMetadata,
+            ICameraReelStorageService cameraReelStorageService,
+            ICameraReelScreenshotsStorage cameraReelScreenshotsStorage,
             Arch.Core.World world,
-            Entity playerEntity
+            Entity playerEntity,
+            bool enableCameraReel
         )
         {
             this.assetsProvisioner = assetsProvisioner;
@@ -90,6 +97,9 @@ namespace DCL.PluginSystem.Global
             this.notificationsBusController = notificationsBusController;
             this.world = world;
             this.playerEntity = playerEntity;
+            this.cameraReelStorageService = cameraReelStorageService;
+            this.cameraReelScreenshotsStorage = cameraReelScreenshotsStorage;
+            this.enableCameraReel = enableCameraReel;
         }
 
         public void Dispose()
@@ -132,7 +142,13 @@ namespace DCL.PluginSystem.Global
                 webRequestController,
                 inputBlock,
                 notificationsBusController,
-                remoteMetadata
+                remoteMetadata,
+                cameraReelStorageService,
+                cameraReelScreenshotsStorage,
+                passportSettings.GridLayoutFixedColumnCount,
+                passportSettings.ThumbnailHeight,
+                passportSettings.ThumbnailWidth,
+                enableCameraReel
             );
 
             mvcManager.RegisterController(passportController);
@@ -156,6 +172,15 @@ namespace DCL.PluginSystem.Global
 
             [field: SerializeField]
             public AssetReferenceT<NftTypeIconSO> RarityInfoPanelBackgroundsMapping { get; set; }
+
+            [field: SerializeField]
+            public int GridLayoutFixedColumnCount { get; private set; }
+
+            [field: SerializeField]
+            public int ThumbnailHeight { get; private set; }
+
+            [field: SerializeField]
+            public int ThumbnailWidth { get; private set; }
         }
     }
 }

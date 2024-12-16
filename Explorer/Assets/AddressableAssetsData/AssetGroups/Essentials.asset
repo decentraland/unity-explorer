@@ -47,11 +47,6 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 183d02953ce77467786739e7cfb2d766
-    m_Address: Assets/DCL/InWorldCamera/PhotoDetail/Assets/PhotoDetailUI.prefab
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 19373184c73f36042a55739551bb8298
     m_Address: Avatar_CelShading
     m_ReadOnly: 0
@@ -74,6 +69,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 26489687fb2f3419886df8e49f34b006
     m_Address: Assets/DCL/Settings/Settings/ControlsSettings.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 26a5616becdfd49b4abfbee07ba3cbf2
+    m_Address: Assets/DCL/InWorldCamera/PhotoDetail/Prefabs/PhotoDetailUI.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

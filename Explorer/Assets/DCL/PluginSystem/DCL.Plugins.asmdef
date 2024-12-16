@@ -142,7 +142,9 @@
         "GUID:b97826ed91484ac1af953a8afc03316e",
         "GUID:f82471a6db95848d88faad2ceb31c9c9",
         "GUID:b5762faee0fa644b38047f2b625378a1",
-        "PhotoDetail"
+        "PhotoDetail",
+        "GUID:0f5ab34acaa8744d8a22d7dc4c45a487",
+        "GUID:134508e23dba8457db8766637d1d33ec"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

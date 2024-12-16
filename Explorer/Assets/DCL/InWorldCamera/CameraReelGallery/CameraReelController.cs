@@ -17,12 +17,12 @@ namespace DCL.InWorldCamera.CameraReelGallery
     public class CameraReelController : ISection, IDisposable
     {
         public event Action Activated;
+        public readonly CameraReelGalleryController CameraReelGalleryController;
 
         private readonly CameraReelView view;
         private readonly RectTransform rectTransform;
         private readonly ICameraReelStorageService cameraReelStorageService;
         private readonly IWeb3IdentityCache web3IdentityCache;
-        private readonly CameraReelGalleryController cameraReelGalleryController;
         private readonly IMVCManager mvcManager;
 
         private CancellationTokenSource showCancellationTokenSource;
@@ -38,15 +38,15 @@ namespace DCL.InWorldCamera.CameraReelGallery
             this.view = view;
             this.cameraReelStorageService = cameraReelStorageService;
             this.web3IdentityCache = web3IdentityCache;
-            this.cameraReelGalleryController = cameraReelGalleryController;
+            this.CameraReelGalleryController = cameraReelGalleryController;
             this.mvcManager = mvcManager;
 
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
 
             this.view.MouseEnter += StorageFullIconEnter;
             this.view.MouseExit += StorageFullIconExit;
-            this.cameraReelGalleryController.ThumbnailClicked += ThumbnailClicked;
-            this.cameraReelGalleryController.StorageUpdated += SetStorageStatus;
+            this.CameraReelGalleryController.ThumbnailClicked += ThumbnailClicked;
+            this.CameraReelGalleryController.StorageUpdated += SetStorageStatus;
             this.view.goToCameraButton.onClick.AddListener(OnGoToCameraButtonClicked);
 
             view.storageProgressBar.SetLabelString(storageProgressBarLabelText);
@@ -69,7 +69,6 @@ namespace DCL.InWorldCamera.CameraReelGallery
         private async UniTask ShowAsync(CancellationToken ct)
         {
             view.emptyState.SetActive(false);
-            view.loadingSpinner.SetActive(true);
             view.cameraReelGalleryView.gameObject.SetActive(false);
 
             CameraReelStorageStatus storageStatus = await cameraReelStorageService.GetUserGalleryStorageInfoAsync(web3IdentityCache.Identity.Address, ct);
@@ -78,9 +77,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
             if (storageStatus.ScreenshotsAmount == 0)
                 return;
 
-            await cameraReelGalleryController.ShowWalletGalleryAsync(web3IdentityCache.Identity.Address, ct, storageStatus);
-
-            view.loadingSpinner.SetActive(false);
+            await CameraReelGalleryController.ShowWalletGalleryAsync(web3IdentityCache.Identity.Address, ct, storageStatus);
         }
 
         private void SetStorageStatus(CameraReelStorageStatus storageStatus)
@@ -89,10 +86,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
             view.storageFullIcon.SetActive(!storageStatus.HasFreeSpace);
 
             if (storageStatus.ScreenshotsAmount == 0)
-            {
-                view.loadingSpinner.SetActive(false);
                 view.emptyState.SetActive(true);
-            }
 
             view.cameraReelGalleryView.gameObject.SetActive(storageStatus.ScreenshotsAmount > 0);
         }
@@ -133,7 +127,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
         {
             view.MouseEnter -= StorageFullIconEnter;
             view.MouseExit -= StorageFullIconExit;
-            cameraReelGalleryController.Dispose();
+            CameraReelGalleryController.Dispose();
             view.goToCameraButton.onClick.RemoveAllListeners();
         }
     }

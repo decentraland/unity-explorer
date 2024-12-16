@@ -1,11 +1,20 @@
+using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.Clipboard;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using System;
+using System.IO;
+using System.Text;
+using System.Threading;
+using UnityEngine;
+using UnityEngine.Networking;
 
 namespace DCL.InWorldCamera.ReelActions
 {
     public static class ReelCommonActions
     {
+        private const string DECENTRALAND_REELS_HOME_FOLDER = "decentraland/reels";
+
         /// <summary>
         ///     Opens a browser tab on x.com with a tweet ready to be posted containing the reel url.
         ///     Also copies the url to the clipboard.
@@ -29,11 +38,50 @@ namespace DCL.InWorldCamera.ReelActions
         }
 
         /// <summary>
-        ///     Opens a browser tab to the full resolution reel url
+        ///     Downloads a reel image to local storage in {home_directory}/{DECENTRALAND_REELS_HOME_FOLDER}/{reelId}
+        ///     and opens the default file browser at that location
         /// </summary>
-        public static void DownloadReel(string reelUrl, IWebBrowser webBrowser)
+        public static async UniTask DownloadReelToFileAsync(string reelUrl, CancellationToken ct)
         {
-            webBrowser.OpenUrl(reelUrl);
+            using (UnityWebRequest webRequest = UnityWebRequestTexture.GetTexture(reelUrl))
+            {
+                Uri uri = new Uri(reelUrl);
+                await webRequest.SendWebRequest().ToUniTask(cancellationToken: ct);
+
+                if (webRequest.result != UnityWebRequest.Result.Success)
+                    throw new Exception($"Error while downloading reel: {webRequest.error}");
+
+                Texture2D texture = DownloadHandlerTexture.GetContent(webRequest);
+                StringBuilder absolutePathBuilder = new StringBuilder();
+                byte[] imageBytes = texture.EncodeToPNG();
+
+                absolutePathBuilder.Append(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile))
+                                   .Append("/")
+                                   .Append(DECENTRALAND_REELS_HOME_FOLDER)
+                                   .Append("/")
+                                   .Append(Path.GetFileName(uri.LocalPath))
+                                   .Replace(" ", "\\ ");
+
+                string absolutePath = absolutePathBuilder.ToString();
+                string directoryPath = Path.GetDirectoryName(absolutePath);
+
+                if (!string.IsNullOrEmpty(directoryPath) && !Directory.Exists(directoryPath))
+                    Directory.CreateDirectory(directoryPath);
+
+                await File.WriteAllBytesAsync(absolutePath, imageBytes, ct);
+
+                OpenFolderExplorer(absolutePath);
+            }
+        }
+
+        private static void OpenFolderExplorer(string path)
+        {
+            if (Application.platform == RuntimePlatform.WindowsEditor || Application.platform == RuntimePlatform.WindowsPlayer)
+                System.Diagnostics.Process.Start("explorer.exe", "/select," + path);
+            else if (Application.platform == RuntimePlatform.OSXEditor || Application.platform == RuntimePlatform.OSXPlayer)
+                System.Diagnostics.Process.Start("open", "-R " + path);
+            else if (Application.platform == RuntimePlatform.LinuxPlayer)
+                System.Diagnostics.Process.Start("xdg-open", path);
         }
     }
 }
