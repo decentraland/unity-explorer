@@ -33,7 +33,8 @@ namespace ECS.SceneLifeCycle.Realm
         UniTask<EnumResult<ChangeRealmError>> TryChangeRealmAsync(
             URLDomain realm,
             CancellationToken ct,
-            Vector2Int parcelToTeleport = default
+            Vector2Int parcelToTeleport = default,
+            bool ignoreSameRealm = false
         );
 
         UniTask<Result> TeleportToParcelAsync(Vector2Int parcel, CancellationToken ct, bool isLocal);

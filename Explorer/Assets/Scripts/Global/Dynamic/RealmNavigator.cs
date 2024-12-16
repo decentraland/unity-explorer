@@ -128,13 +128,14 @@ namespace Global.Dynamic
         public async UniTask<EnumResult<ChangeRealmError>> TryChangeRealmAsync(
             URLDomain realm,
             CancellationToken ct,
-            Vector2Int parcelToTeleport = default
+            Vector2Int parcelToTeleport = default,
+            bool ignoreSameRealm = false
         )
         {
             if (ct.IsCancellationRequested)
                 return EnumResult<ChangeRealmError>.ErrorResult(ChangeRealmError.ChangeCancelled);
 
-            if (CheckIsNewRealm(realm) == false)
+            if (!ignoreSameRealm && CheckIsNewRealm(realm) == false)
                 return EnumResult<ChangeRealmError>.ErrorResult(ChangeRealmError.SameRealm);
 
             if (await realmController.IsReachableAsync(realm, ct) == false)
