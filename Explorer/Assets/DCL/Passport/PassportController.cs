@@ -70,6 +70,7 @@ namespace DCL.Passport
         private readonly int gridLayoutFixedColumnCount;
         private readonly int thumbnailHeight;
         private readonly int thumbnailWidth;
+        private readonly bool enableCameraReel;
 
         private CameraReelGalleryController cameraReelGalleryController;
         private Profile? ownProfile;
@@ -116,7 +117,8 @@ namespace DCL.Passport
             ICameraReelScreenshotsStorage cameraReelScreenshotsStorage,
             int gridLayoutFixedColumnCount,
             int thumbnailHeight,
-            int thumbnailWidth) : base(viewFactory)
+            int thumbnailWidth,
+            bool enableCameraReel) : base(viewFactory)
         {
             this.cursor = cursor;
             this.profileRepository = profileRepository;
@@ -141,6 +143,7 @@ namespace DCL.Passport
             this.gridLayoutFixedColumnCount = gridLayoutFixedColumnCount;
             this.thumbnailHeight = thumbnailHeight;
             this.thumbnailWidth = thumbnailWidth;
+            this.enableCameraReel = enableCameraReel;
 
             passportProfileInfoController = new PassportProfileInfoController(selfProfile, world, playerEntity);
             notificationBusController.SubscribeToNotificationTypeReceived(NotificationType.BADGE_GRANTED, OnBadgeNotificationReceived);
@@ -172,6 +175,8 @@ namespace DCL.Passport
             viewInstance.OverviewSectionButton.Button.onClick.AddListener(OpenOverviewSection);
             viewInstance.BadgesSectionButton.Button.onClick.AddListener(() => OpenBadgesSection());
             viewInstance.PhotosSectionButton.Button.onClick.AddListener(OpenPhotosSection);
+
+            viewInstance.PhotosSectionButton.gameObject.SetActive(enableCameraReel);
         }
 
         private void OnPublishError()

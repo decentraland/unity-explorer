@@ -59,7 +59,8 @@ namespace DCL.InWorldCamera.ReelActions
                                    .Append("/")
                                    .Append(DECENTRALAND_REELS_HOME_FOLDER)
                                    .Append("/")
-                                   .Append(Path.GetFileName(uri.LocalPath));
+                                   .Append(Path.GetFileName(uri.LocalPath))
+                                   .Replace(" ", "\\ ");
 
                 string absolutePath = absolutePathBuilder.ToString();
                 string directoryPath = Path.GetDirectoryName(absolutePath);
@@ -75,13 +76,12 @@ namespace DCL.InWorldCamera.ReelActions
 
         private static void OpenFolderExplorer(string path)
         {
-            string sanitizedPath = path.Replace(" ", "\\ ");
             if (Application.platform == RuntimePlatform.WindowsEditor || Application.platform == RuntimePlatform.WindowsPlayer)
-                System.Diagnostics.Process.Start("explorer.exe", "/select," + sanitizedPath);
+                System.Diagnostics.Process.Start("explorer.exe", "/select," + path);
             else if (Application.platform == RuntimePlatform.OSXEditor || Application.platform == RuntimePlatform.OSXPlayer)
-                System.Diagnostics.Process.Start("open", "-R " + sanitizedPath);
+                System.Diagnostics.Process.Start("open", "-R " + path);
             else if (Application.platform == RuntimePlatform.LinuxPlayer)
-                System.Diagnostics.Process.Start("xdg-open", sanitizedPath);
+                System.Diagnostics.Process.Start("xdg-open", path);
         }
     }
 }

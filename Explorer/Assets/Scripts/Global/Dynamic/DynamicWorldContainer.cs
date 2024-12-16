@@ -663,7 +663,8 @@ namespace Global.Dynamic
                     cameraReelStorageService,
                     cameraReelStorageService,
                     globalWorld,
-                    playerEntity
+                    playerEntity,
+                    includeCameraReel
                 ),
             };
 

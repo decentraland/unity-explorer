@@ -49,6 +49,7 @@ namespace DCL.PluginSystem.Global
         private readonly ICameraReelScreenshotsStorage cameraReelScreenshotsStorage;
         private readonly Arch.Core.World world;
         private readonly Entity playerEntity;
+        private readonly bool enableCameraReel;
 
         private PassportController? passportController;
 
@@ -73,7 +74,8 @@ namespace DCL.PluginSystem.Global
             ICameraReelStorageService cameraReelStorageService,
             ICameraReelScreenshotsStorage cameraReelScreenshotsStorage,
             Arch.Core.World world,
-            Entity playerEntity
+            Entity playerEntity,
+            bool enableCameraReel
         )
         {
             this.assetsProvisioner = assetsProvisioner;
@@ -97,6 +99,7 @@ namespace DCL.PluginSystem.Global
             this.playerEntity = playerEntity;
             this.cameraReelStorageService = cameraReelStorageService;
             this.cameraReelScreenshotsStorage = cameraReelScreenshotsStorage;
+            this.enableCameraReel = enableCameraReel;
         }
 
         public void Dispose()
@@ -144,7 +147,8 @@ namespace DCL.PluginSystem.Global
                 cameraReelScreenshotsStorage,
                 passportSettings.GridLayoutFixedColumnCount,
                 passportSettings.ThumbnailHeight,
-                passportSettings.ThumbnailWidth
+                passportSettings.ThumbnailWidth,
+                enableCameraReel
             );
 
             mvcManager.RegisterController(passportController);
