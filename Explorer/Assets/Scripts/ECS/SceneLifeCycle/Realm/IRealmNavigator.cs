@@ -34,7 +34,7 @@ namespace ECS.SceneLifeCycle.Realm
             URLDomain realm,
             CancellationToken ct,
             Vector2Int parcelToTeleport = default,
-            bool ignoreSameRealm = false
+            bool ignoreRealmChecks = false
         );
 
         UniTask<Result> TeleportToParcelAsync(Vector2Int parcel, CancellationToken ct, bool isLocal);
