@@ -266,7 +266,6 @@ namespace Global.Dynamic
                 {
                     ShowAuthentication = debugSettings.ShowAuthentication,
                     ShowLoading = debugSettings.ShowLoading,
-                    ReloadRealm = false,
                     FromLogout = false,
                     World = globalWorld.EcsWorld,
                     PlayerEntity = playerEntity,
