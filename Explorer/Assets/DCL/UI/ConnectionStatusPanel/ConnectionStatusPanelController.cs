@@ -125,7 +125,6 @@ namespace DCL.UI.ConnectionStatusPanel
                 {
                     ShowAuthentication = true,
                     ShowLoading = true,
-                    ReloadRealm = true,
                     FromLogout = false,
                     World = world,
                     PlayerEntity = playerEntity,

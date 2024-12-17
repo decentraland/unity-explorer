@@ -1,5 +1,6 @@
 using System;
 using System.Threading;
+using System.Threading.Tasks;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
@@ -38,7 +39,6 @@ namespace DCL.UserInAppInitializationFlow
         private readonly ILoadingScreen loadingScreen;
         private readonly LoadPlayerAvatarStartupOperation loadPlayerAvatarStartupOperation;
         private readonly CheckOnboardingStartupOperation checkOnboardingStartupOperation;
-        private readonly RestartRealmStartupOperation restartRealmStartupOperation;
         private readonly IStartupOperation startupOperation;
         private readonly IStartupOperation reloginOperation;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
@@ -136,10 +136,8 @@ namespace DCL.UserInAppInitializationFlow
                     loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.AuthenticationScreenShowing);
                     if (parameters.FromLogout)
                     {
-                        portableExperiencesController.UnloadAllPortableExperiences();
-                        realmNavigator.RemoveCameraSamplingData();
-                        chatHistory.Clear();
-                        await roomHub.StopAsync().Timeout(TimeSpan.FromSeconds(10));
+                        await DoLogoutOperations();
+                        //Restart the realm and show the authentications screen simultaneously to avoid the "empty space" flicker
                         await UniTask.WhenAll(ShowAuthenticationScreenAsync(ct),
                             realmController.SetRealmAsync(
                                 URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.Genesis)), ct));
@@ -178,6 +176,14 @@ namespace DCL.UserInAppInitializationFlow
 
             await checkOnboardingStartupOperation.MarkOnboardingAsDoneAsync(parameters.World, parameters.PlayerEntity, ct);
             loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.Completed);
+        }
+
+        private async UniTask DoLogoutOperations()
+        {
+            portableExperiencesController.UnloadAllPortableExperiences();
+            realmNavigator.RemoveCameraSamplingData();
+            chatHistory.Clear();
+            await roomHub.StopAsync().Timeout(TimeSpan.FromSeconds(10));
         }
 
         private static void ApplyErrorIfLoadingScreenError(ref Result result, Result showResult)
