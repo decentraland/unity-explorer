@@ -51,6 +51,9 @@ namespace DCL.CharacterMotion.Systems
 
                 switch (status.TaskStatus)
                 {
+                    case UniTaskStatus.Pending:
+                        controller.transform.position = new Vector3(15000, 0, 15000);
+                        return;
                     case UniTaskStatus.Succeeded:
                         ResolveAsSuccess(entity, in teleportIntent, controller, ref platformComponent);
                         return;

@@ -1,5 +1,3 @@
-using CommunicationData.URLHelpers;
-using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
@@ -8,7 +6,6 @@ using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
 using DCL.Multiplayer.Connections.DecentralandUrls;
-using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.HealthChecks;
 using DCL.Profiles.Self;
 using DCL.SceneLoadingScreens.LoadingScreen;
@@ -31,16 +28,16 @@ namespace DCL.UserInAppInitializationFlow
         private static readonly ILoadingScreen.EmptyLoadingScreen EMPTY_LOADING_SCREEN = new ();
 
         private readonly ILoadingStatus loadingStatus;
-        private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly IMVCManager mvcManager;
         private readonly AudioClipConfig backgroundMusic;
         private readonly IRealmNavigator realmNavigator;
         private readonly ILoadingScreen loadingScreen;
-        private readonly IRoomHub roomHub;
         private readonly LoadPlayerAvatarStartupOperation loadPlayerAvatarStartupOperation;
         private readonly CheckOnboardingStartupOperation checkOnboardingStartupOperation;
         private readonly RestartRealmStartupOperation restartRealmStartupOperation;
         private readonly IStartupOperation startupOperation;
+        private readonly IStartupOperation reloginOperation;
+
 
         private readonly IRealmController realmController;
 
@@ -63,17 +60,14 @@ namespace DCL.UserInAppInitializationFlow
             IAppArgs appParameters,
             IDebugSettings debugSettings,
             IPortableExperiencesController portableExperiencesController,
-            IRoomHub roomHub,
             DiagnosticsContainer diagnosticsContainer)
         {
             this.loadingStatus = loadingStatus;
-            this.decentralandUrlsSource = decentralandUrlsSource;
             this.mvcManager = mvcManager;
             this.backgroundMusic = backgroundMusic;
             this.realmNavigator = realmNavigator;
             this.loadingScreen = loadingScreen;
             this.realmController = realmController;
-            this.roomHub = roomHub;
 
             var ensureLivekitConnectionStartupOperation = new EnsureLivekitConnectionStartupOperation(loadingStatus, livekitHealthCheck);
             var initializeFeatureFlagsStartupOperation = new InitializeFeatureFlagsStartupOperation(loadingStatus, featureFlagsProvider, web3IdentityCache, decentralandUrlsSource, appParameters);
@@ -101,6 +95,18 @@ namespace DCL.UserInAppInitializationFlow
                 loadGlobalPxOperation,
                 sentryDiagnostics
             );
+
+            reloginOperation = new SequentialStartupOperation(
+                loadingStatus,
+                preloadProfileStartupOperation,
+                switchRealmMiscVisibilityStartupOperation,
+                loadPlayerAvatarStartupOperation,
+                loadLandscapeStartupOperation,
+                checkOnboardingStartupOperation,
+                restartRealmStartupOperation,
+                teleportStartupOperation,
+                loadGlobalPxOperation,
+                sentryDiagnostics);
         }
 
         public async UniTask ExecuteAsync(UserInAppInitializationFlowParameters parameters, CancellationToken ct)
@@ -130,11 +136,13 @@ namespace DCL.UserInAppInitializationFlow
                     }
                 }
 
+                var flowToRun = parameters.FromLogout ? reloginOperation : startupOperation;
+
                 var loadingResult = await LoadingScreen(parameters.ShowLoading)
                     .ShowWhileExecuteTaskAsync(
                         async (parentLoadReport, ct) =>
                         {
-                            result = await startupOperation.ExecuteAsync(parentLoadReport, ct);
+                            result = await flowToRun.ExecuteAsync(parentLoadReport, ct);
 
                             if (result.Success)
                                 parentLoadReport.SetProgress(
