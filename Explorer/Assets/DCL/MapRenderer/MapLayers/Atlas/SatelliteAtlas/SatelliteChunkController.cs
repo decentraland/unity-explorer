@@ -17,8 +17,7 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
     {
         private const float SATURATION_VALUE = 1f;
         //private const string CHUNKS_API = "https://media.githubusercontent.com/media/genesis-city/genesis.city/master/map/latest/3/";
-        private const string CHUNKS_API = "https://media.githubusercontent.com/media/genesis-city/genesis.city/master/map/new-client/3/";
-        //private const string CHUNKS_API = "https://deploy-preview-341--pedantic-goodall-cbe35e.netlify.app/map/latest/3/";
+        private const string CHUNKS_API = "https://media.githubusercontent.com/media/genesis-city/parcels/new-client-images/maps/lod-0/3/";
         private static readonly Color FINAL_COLOR = Color.white;
         private static readonly Color INITIAL_COLOR = new (0, 0, 0, 0);
         private readonly MapRendererTextureContainer textureContainer;
