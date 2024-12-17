@@ -1,6 +1,7 @@
 using DCL.AssetsProvision;
 using System;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace DCL.Navmap
 {
@@ -18,21 +19,18 @@ namespace DCL.Navmap
         [field: SerializeField]
         public CanvasGroup CanvasGroup { get; private set; }
 
+        [field: Header("Pagination")]
         [field: SerializeField]
-        public Animator panelAnimator;
+        public GameObject PaginationContainer { get; private set; }
 
-        private void OnEnable()
-        {
-            panelAnimator.enabled = true;
-        }
+        [field: SerializeField]
+        public Button NextPageButton { get; private set; }
 
-        private void OnDisable()
-        {
-            panelAnimator.enabled = false;
-        }
+        [field: SerializeField]
+        public Button PreviousPageButton { get; private set; }
 
         [Serializable]
-        public class ResultAssetReference : ComponentReference<FullSearchResultsView>
+        public class ResultAssetReference : ComponentReference<PlaceElementView>
         {
             public ResultAssetReference(string guid) : base(guid) { }
         }

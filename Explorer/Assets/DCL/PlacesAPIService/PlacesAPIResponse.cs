@@ -55,8 +55,8 @@ namespace DCL.PlacesAPIService
             public int user_count;
             public int user_visits;
             public Realm[] realms_detail;
-
             public string like_rate;
+
             [SerializeField] private string[] positions;
 
             [JsonIgnore]
@@ -148,5 +148,12 @@ namespace DCL.PlacesAPIService
             public bool ok;
             public PlaceInfo data;
         }
+    }
+
+    [Serializable]
+    public class OptimizedPlaceInMapResponse
+    {
+        public Vector2Int base_position;
+        public string name;
     }
 }

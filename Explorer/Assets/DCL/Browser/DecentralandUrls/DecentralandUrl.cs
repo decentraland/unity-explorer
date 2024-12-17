@@ -13,9 +13,14 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         PrivacyPolicy,
         TermsOfUse,
 
+        ApiChunks,
+
         ApiPlaces,
         POI,
+        Map,
         ContentModerationReport,
+
+        ApiEvents,
 
         ApiAuth,
         AuthSignature,
@@ -25,6 +30,7 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         OpenSea,
 
         PeerAbout,
+        RemotePeers,
 
         DAO,
 

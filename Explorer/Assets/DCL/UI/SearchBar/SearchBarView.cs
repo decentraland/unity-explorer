@@ -1,5 +1,4 @@
 using DCL.Audio;
-using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -12,7 +11,16 @@ namespace DCL.UI
         public TMP_InputField inputField;
 
         [field: SerializeField]
+        public Image inputFieldCategoryImage;
+
+        [field: SerializeField]
         public Button clearSearchButton;
+
+        [field: SerializeField]
+        public Button BackButton { get; private set; }
+
+        [field: SerializeField]
+        public GameObject SearchIcon { get; private set; }
 
         [field: Header("Audio")]
         [field: SerializeField]

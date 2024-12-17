@@ -77,7 +77,7 @@ namespace DCL.Notifications
                                                commonArguments,
                                                ct,
                                                ReportCategory.UI,
-                                               signInfo: WebRequestSignInfo.NewFromRaw(string.Empty, commonArguments.URL, unixTimestamp, "get"),
+                                               signInfo: WebRequestSignInfo.NewFromUrl(commonArguments.URL, unixTimestamp, "get"),
                                                headersInfo: new WebRequestHeadersInfo().WithSign(string.Empty, unixTimestamp))
                                           .CreateFromNewtonsoftJsonAsync<List<INotification>>(serializerSettings: SERIALIZER_SETTINGS);
 
@@ -108,7 +108,7 @@ namespace DCL.Notifications
                                                    commonArguments,
                                                    ct,
                                                    ReportCategory.UI,
-                                                   signInfo: WebRequestSignInfo.NewFromRaw(string.Empty, commonArguments.URL, unixTimestamp, "get"),
+                                                   signInfo: WebRequestSignInfo.NewFromUrl(commonArguments.URL, unixTimestamp, "get"),
                                                    headersInfo: new WebRequestHeadersInfo().WithSign(string.Empty, unixTimestamp))
                                               .CreateFromNewtonsoftJsonAsync<List<INotification>>(serializerSettings: SERIALIZER_SETTINGS);
 
@@ -141,7 +141,7 @@ namespace DCL.Notifications
                                            GenericPutArguments.CreateJson(bodyBuilder.ToString()),
                                            ct,
                                            ReportCategory.UI,
-                                           signInfo: WebRequestSignInfo.NewFromRaw(string.Empty, commonArgumentsForSetRead.URL, unixTimestamp, "put"),
+                                           signInfo: WebRequestSignInfo.NewFromUrl(commonArgumentsForSetRead.URL, unixTimestamp, "put"),
                                            headersInfo: new WebRequestHeadersInfo().WithSign(string.Empty, unixTimestamp))
                                       .WithNoOpAsync();
         }

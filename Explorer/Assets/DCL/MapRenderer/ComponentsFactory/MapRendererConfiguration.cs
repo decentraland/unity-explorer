@@ -8,6 +8,9 @@ namespace DCL.MapRenderer.ComponentsFactory
     public class MapRendererConfiguration : MonoBehaviour
     {
         [field: SerializeField]
+        public Transform AtlasRoot { get; private set; }
+
+        [field: SerializeField]
         public Transform SatelliteAtlasRoot { get; private set; }
 
         [field: SerializeField]
@@ -17,10 +20,19 @@ namespace DCL.MapRenderer.ComponentsFactory
         public Transform HotUserMarkersRoot { get; private set; }
 
         [field: SerializeField]
+        public Transform LiveEventsMarkersRoot { get; private set; }
+
+        [field: SerializeField]
         public Transform FriendUserMarkersRoot { get; private set; }
 
         [field: SerializeField]
         public Transform ScenesOfInterestMarkersRoot { get; private set; }
+
+        [field: SerializeField]
+        public Transform CategoriesMarkersRoot { get; private set; }
+
+        [field: SerializeField]
+        public Transform SearchResultsMarkersRoot { get; private set; }
 
         [field: SerializeField]
         public Transform FavoritesMarkersRoot { get; private set; }

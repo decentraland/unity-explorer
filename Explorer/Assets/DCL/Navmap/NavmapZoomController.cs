@@ -16,6 +16,7 @@ namespace DCL.Navmap
 
         private readonly NavmapZoomView view;
         private readonly DCLInput dclInput;
+        private readonly INavmapBus navmapBus;
 
         private AnimationCurve normalizedCurve;
         private int zoomSteps;
@@ -31,13 +32,19 @@ namespace DCL.Navmap
         private IMapCameraController cameraController;
         private bool blockZoom;
 
-        public NavmapZoomController(NavmapZoomView view, DCLInput dclInput)
+        public NavmapZoomController(
+            NavmapZoomView view,
+            DCLInput dclInput,
+            INavmapBus navmapBus)
         {
             this.view = view;
             this.dclInput = dclInput;
+            this.navmapBus = navmapBus;
 
             normalizedCurve = view.normalizedZoomCurve;
             zoomSteps = normalizedCurve.length;
+
+            this.navmapBus.OnZoomCamera += Zoom;
 
             CurveClamp01();
         }
@@ -158,8 +165,9 @@ namespace DCL.Navmap
                 return;
 
             UIAudioEventsBus.Instance.SendPlayAudioEvent(zoomIn? view.ZoomInAudio : view.ZoomOutAudio);
-            SetZoomLevel(currentZoomLevel + (zoomIn ? 1 : -1));
-            ScaleOverTimeAsync(cameraController.Zoom, targetNormalizedZoom, cts.Token).Forget();
+            int zoomLevel = currentZoomLevel + (zoomIn ? 1 : -1);
+            SetZoomLevel(zoomLevel);
+            ScaleOverTimeAsync(cameraController.Zoom, targetNormalizedZoom, zoomLevel, cts.Token).Forget();
 
             SetUiButtonsInteractivity();
         }
@@ -170,7 +178,7 @@ namespace DCL.Navmap
             view.ZoomOut.SetUiInteractable(isInteractable: currentZoomLevel > 0);
         }
 
-        private async UniTaskVoid ScaleOverTimeAsync(float from, float to, CancellationToken ct)
+        private async UniTaskVoid ScaleOverTimeAsync(float from, float to, int zoomLevel, CancellationToken ct)
         {
             isScaling = true;
             float scaleDuration = view.scaleDuration;
@@ -180,7 +188,7 @@ namespace DCL.Navmap
                 if (ct.IsCancellationRequested)
                     break;
 
-                cameraController.SetZoom(Mathf.Lerp(from, to, timer / scaleDuration));
+                cameraController.SetZoom(Mathf.Lerp(from, to, timer / scaleDuration), zoomLevel);
 
                 // omit CT, handle cancellation gracefully
                 await UniTask.NextFrame();

@@ -11,7 +11,7 @@ namespace DCL.MapRenderer.MapCameraController
     /// </summary>
     internal interface IMapCameraControllerInternal : IMapCameraController, IDisposable
     {
-        event Action<float, float> ZoomChanged;
+        event Action<float, float, int> ZoomChanged;
 
         event Action<IMapActivityOwner, IMapCameraControllerInternal> OnReleasing;
 

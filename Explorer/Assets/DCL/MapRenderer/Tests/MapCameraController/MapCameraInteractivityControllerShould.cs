@@ -1,10 +1,13 @@
-﻿using DCL.MapRenderer.CoordsUtils;
+﻿using DCL.Audio;
+using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.MapCameraController;
 using DCL.MapRenderer.MapLayers;
 using DCL.MapRenderer.MapLayers.ParcelHighlight;
 using DCL.MapRenderer.MapLayers.Pins;
+using DCL.Navmap;
 using NSubstitute;
 using NUnit.Framework;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Pool;
 
@@ -43,7 +46,7 @@ namespace DCL.MapRenderer.Tests.MapCameraController
                            return true;
                        });
 
-            controller = new MapCameraInteractivityController(null, camera, pool, coordUtils, null);
+            controller = new MapCameraInteractivityController(null, camera, pool, coordUtils, new List<IMapLayerController>(), Substitute.For<INavmapBus>(), ScriptableObject.CreateInstance<AudioClipConfig>(), ScriptableObject.CreateInstance<AudioClipConfig>());
         }
 
         [Test]
@@ -83,7 +86,7 @@ namespace DCL.MapRenderer.Tests.MapCameraController
 
             controller.Initialize(MapLayer.ParcelHoverHighlight);
 
-            Assert.IsTrue(controller.TryGetParcel(norm, out var parcel, out IPinMarker pinMarker));
+            Assert.IsTrue(controller.TryGetParcel(norm, out var parcel));
             Assert.AreEqual(expected, new Vector3(parcel.x, parcel.y, 0));
 
             controller.HighlightParcel(parcel);

@@ -51,5 +51,6 @@ namespace DCL.MapRenderer.MapLayers.Pins
         void Show(Action? onFinish);
 
         void Hide(Action? onFinish);
+        GameObject? GetGameObject();
     }
 }

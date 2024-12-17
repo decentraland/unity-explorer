@@ -29,6 +29,8 @@ using Global.Dynamic.TeleportOperations;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Assertions;
+using Utility;
+using Utility.TeleportBus;
 using Utility.Types;
 
 namespace Global.Dynamic
@@ -47,6 +49,8 @@ namespace Global.Dynamic
         private readonly SatelliteFloor satelliteFloor;
         private readonly ObjectProxy<Entity> cameraEntity;
         private readonly CameraSamplingData cameraSamplingData;
+        private readonly bool isLocalSceneDevelopment;
+        private readonly ITeleportBusController teleportBusController;
 
         private Vector2Int currentParcel;
 
@@ -73,6 +77,7 @@ namespace Global.Dynamic
             ILoadingStatus loadingStatus,
             ICacheCleaner cacheCleaner,
             IMemoryUsageProvider memoryUsageProvider,
+            ITeleportBusController teleportBusController,
             ILandscape landscape)
         {
             this.loadingScreen = loadingScreen;
@@ -85,6 +90,7 @@ namespace Global.Dynamic
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.globalWorld = globalWorld;
             this.loadingStatus = loadingStatus;
+            this.teleportBusController = teleportBusController;
             this.landscape = landscape;
             this.roadAssetsPool = roadAssetsPool;
             var livekitTimeout = TimeSpan.FromSeconds(10f);

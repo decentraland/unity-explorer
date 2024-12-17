@@ -10,6 +10,7 @@ namespace DCL.MapRenderer.MapLayers.PlayerMarker
         private readonly float baseScale;
 
         public Vector2 Pivot => markerObject.pivot;
+        public Vector2Int ParcelCoords => Vector2Int.zero;
 
         public PlayerMarker(PlayerMarkerObject markerObject)
         {
@@ -17,6 +18,8 @@ namespace DCL.MapRenderer.MapLayers.PlayerMarker
             baseScale = markerObject.transform.localScale.x;
             SetActive(false);
         }
+
+        public void ToggleSelection(bool isSelected) { }
 
         public void Dispose()
         {

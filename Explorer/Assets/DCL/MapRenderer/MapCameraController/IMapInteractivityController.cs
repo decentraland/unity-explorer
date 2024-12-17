@@ -14,13 +14,17 @@ namespace DCL.MapRenderer.MapCameraController
 
         void RemoveHighlight();
 
+        void ExitRenderImage();
+
         /// <summary>
         /// Returns Parcel corresponding to the given (cursor) position within UI `RawImage`
         /// </summary>
-        bool TryGetParcel(Vector2 normalizedCoordinates, out Vector2Int parcel, out IPinMarker pinMarker);
-
-        IPinMarker? GetPinMarkerOnParcel(Vector2Int parcel);
+        bool TryGetParcel(Vector2 normalizedCoordinates, out Vector2Int parcel);
 
         Vector2 GetNormalizedPosition(Vector2Int parcel);
+
+        GameObject? ProcessMousePosition(Vector2 worldPosition, Vector2 screenPosition);
+
+        GameObject? ProcessMouseClick(Vector2 worldPosition, Vector2Int parcel);
     }
 }

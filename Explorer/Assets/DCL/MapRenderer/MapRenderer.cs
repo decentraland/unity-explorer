@@ -61,6 +61,8 @@ namespace DCL.MapRenderer
                 }
 
                 layers[MapLayer.SatelliteAtlas].SharedActive = true;
+                layers[MapLayer.SearchResults].SharedActive = true;
+                layers[MapLayer.Category].SharedActive = false;
             }
             catch (OperationCanceledException)
             {
@@ -103,10 +105,10 @@ namespace DCL.MapRenderer
             mapCameraPool.Release(mapCameraController);
         }
 
-        private void OnCameraZoomChanged(float baseZoom, float newZoom)
+        private void OnCameraZoomChanged(float baseZoom, float newZoom, int zoomLevel)
         {
             foreach (IZoomScalingLayer layer in zoomScalingLayers)
-                layer.ApplyCameraZoom(baseZoom, newZoom);
+                layer.ApplyCameraZoom(baseZoom, newZoom, zoomLevel);
         }
 
         public void SetSharedLayer(MapLayer mask, bool active)

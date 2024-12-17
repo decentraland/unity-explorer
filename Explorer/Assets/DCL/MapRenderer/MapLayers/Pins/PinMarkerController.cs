@@ -4,15 +4,18 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.ECSComponents;
+using DCL.MapPins.Components;
 using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.Culling;
-using DCL.MapPins.Components;
+using DCL.Navmap;
 using ECS.LifeCycle.Components;
 using MVC;
+using NBitcoin;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Pool;
+using Utility;
 
 namespace DCL.MapRenderer.MapLayers.Pins
 {
@@ -25,12 +28,16 @@ namespace DCL.MapRenderer.MapLayers.Pins
         public readonly Dictionary<Entity, IPinMarker> markers = new ();
 
         private readonly IObjectPool<PinMarkerObject> objectsPool;
+        private readonly Dictionary<GameObject, IPinMarker> visibleMarkers = new ();
         private readonly PinMarkerBuilder builder;
         private readonly IMapPathEventBus mapPathEventBus;
+        private readonly INavmapBus navmapBus;
 
-        private MapPinBridgeSystem system;
-
+        private MapPinBridgeSystem? system;
         private bool isEnabled;
+        private CancellationTokenSource highlightCt = new ();
+        private CancellationTokenSource deHighlightCt = new ();
+        private IPinMarker? previousMarker;
 
         public PinMarkerController(
             IObjectPool<PinMarkerObject> objectsPool,
@@ -38,14 +45,19 @@ namespace DCL.MapRenderer.MapLayers.Pins
             Transform instantiationParent,
             ICoordsUtils coordsUtils,
             IMapCullingController cullingController,
-            IMapPathEventBus mapPathEventBus)
+            IMapPathEventBus mapPathEventBus,
+            INavmapBus navmapBus)
             : base(instantiationParent, coordsUtils, cullingController)
         {
             this.objectsPool = objectsPool;
             this.builder = builder;
             this.mapPathEventBus = mapPathEventBus;
+            this.navmapBus = navmapBus;
             this.mapPathEventBus.OnRemovedDestination += OnRemovedDestination;
         }
+
+        public UniTask InitializeAsync(CancellationToken cancellationToken) =>
+            UniTask.CompletedTask;
 
         public void CreateSystems(ref ArchSystemsWorldBuilder<World> builder)
         {
@@ -131,14 +143,23 @@ namespace DCL.MapRenderer.MapLayers.Pins
         public void OnMapObjectBecameVisible(IPinMarker marker)
         {
             marker.OnBecameVisible();
+            GameObject? gameObject = marker.GetGameObject();
+
+            if (gameObject != null)
+                visibleMarkers.AddOrReplace(gameObject, marker);
         }
 
         public void OnMapObjectCulled(IPinMarker marker)
         {
+            GameObject? gameObject = marker.GetGameObject();
+
+            if (gameObject != null)
+                visibleMarkers.Remove(gameObject);
+
             marker.OnBecameInvisible();
         }
 
-        public void ApplyCameraZoom(float baseZoom, float zoom)
+        public void ApplyCameraZoom(float baseZoom, float zoom, int zoomLevel)
         {
             foreach (IPinMarker marker in markers.Values)
                 marker.SetZoom(coordsUtils.ParcelSize, baseZoom, zoom);
@@ -171,6 +192,49 @@ namespace DCL.MapRenderer.MapLayers.Pins
             isEnabled = true;
 
             return UniTask.CompletedTask;
+        }
+
+        public bool HighlightObject(GameObject gameObject, out IMapRendererMarker? mapMarker)
+        {
+            mapMarker = null;
+            if (visibleMarkers.TryGetValue(gameObject, out IPinMarker marker))
+            {
+                mapMarker = marker;
+                highlightCt = highlightCt.SafeRestart();
+                previousMarker?.AnimateSelectionAsync(deHighlightCt.Token);
+                marker.AnimateSelectionAsync(highlightCt.Token);
+                previousMarker = marker;
+                return true;
+            }
+
+            return false;
+        }
+
+        public bool DeHighlightObject(GameObject gameObject)
+        {
+            previousMarker = null;
+
+            if (visibleMarkers.TryGetValue(gameObject, out IPinMarker marker))
+            {
+                deHighlightCt = deHighlightCt.SafeRestart();
+                marker.AnimateDeselectionAsync(deHighlightCt.Token);
+                return true;
+            }
+
+            return false;
+        }
+
+        public bool ClickObject(GameObject gameObject, CancellationTokenSource cts, out IMapRendererMarker? mapRendererMarker)
+        {
+            mapRendererMarker = null;
+            if (visibleMarkers.TryGetValue(gameObject, out IPinMarker marker))
+            {
+                navmapBus.SelectPlaceAsync(marker.ParcelPosition, cts.Token).Forget();
+                mapRendererMarker = marker;
+                return true;
+            }
+
+            return false;
         }
     }
 

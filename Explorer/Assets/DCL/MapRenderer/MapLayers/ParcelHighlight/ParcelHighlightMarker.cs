@@ -8,12 +8,15 @@ namespace DCL.MapRenderer.MapLayers.ParcelHighlight
         private readonly ParcelHighlightMarkerObject obj;
 
         public Vector2 Pivot => obj.pivot;
+        public Vector2Int ParcelCoords => Vector2Int.zero;
 
         public ParcelHighlightMarker(ParcelHighlightMarkerObject obj)
         {
             this.obj = obj;
             Deactivate();
         }
+
+        public void ToggleSelection(bool isSelected) { }
 
         public void Dispose()
         {

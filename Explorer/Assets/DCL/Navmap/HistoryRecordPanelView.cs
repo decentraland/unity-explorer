@@ -5,7 +5,7 @@ namespace DCL.Navmap
 {
     public class HistoryRecordPanelView : MonoBehaviour
     {
-        public event Action<string> OnClickedHistoryRecord;
+        public event Action<string>? OnClickedHistoryRecord;
 
         [field: SerializeField]
         public HistoryRecordView[] HistoryRecordView { get; private set; }
