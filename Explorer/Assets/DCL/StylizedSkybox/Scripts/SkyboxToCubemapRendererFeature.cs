@@ -11,10 +11,14 @@ namespace DCL.StylizedSkybox.Scripts
         public SkyBoxToCubemapSettings settings = new ();
 
         private RenderTextureDescriptor desc;
+        private RenderTextureDescriptor descScratch;
         private SkyboxToCubemapRenderPass renderPass;
         private Material skyBoxMaterial;
+        private Material cubeCopyMaterial;
+        private Material cubeBlurMaterial;
 
         private RTHandle skyBoxCubeMapRTHandle;
+        private RTHandle skyBoxCubeMapRTHandle_Scratch;
 
         public override void Create()
         {
@@ -27,11 +31,26 @@ namespace DCL.StylizedSkybox.Scripts
             CoreUtils.Destroy(skyBoxMaterial); // destroy previously created material
             skyBoxMaterial = new Material(settings.skyBoxShader);
 
+            CoreUtils.Destroy(cubeCopyMaterial); // destroy previously created material
+            cubeCopyMaterial = new Material(Shader.Find("DCL/CubeCopy"));
+
+            CoreUtils.Destroy(cubeBlurMaterial); // destroy previously created material
+            cubeBlurMaterial = new Material(Shader.Find("DCL/CubeBlur"));
+
             // If render texture was created but no longer should be executed in the editor release it
-            if (SkipInEditorMode() && skyBoxCubeMapRTHandle != null)
+            if (SkipInEditorMode())
             {
-                skyBoxCubeMapRTHandle.Release();
-                skyBoxCubeMapRTHandle = null;
+                if (skyBoxCubeMapRTHandle != null)
+                {
+                    skyBoxCubeMapRTHandle.Release();
+                    skyBoxCubeMapRTHandle = null;
+                }
+
+                if (skyBoxCubeMapRTHandle_Scratch != null)
+                {
+                    skyBoxCubeMapRTHandle_Scratch.Release();
+                    skyBoxCubeMapRTHandle_Scratch = null;
+                }
             }
 
             if (SkipInEditorMode())
@@ -40,7 +59,7 @@ namespace DCL.StylizedSkybox.Scripts
             // Create renderTexture cubeMap
 
             desc = new RenderTextureDescriptor();
-            desc.autoGenerateMips = true;
+            desc.autoGenerateMips = false;
             desc.bindMS = false;
             desc.colorFormat = RenderTextureFormat.ARGB32;
             desc.depthBufferBits = 0;
@@ -51,7 +70,7 @@ namespace DCL.StylizedSkybox.Scripts
             desc.height = settings.dimensions;
             desc.width = settings.dimensions;
             desc.memoryless = RenderTextureMemoryless.None;
-            desc.mipCount = 0;
+            // desc.mipCount = 0;
             desc.msaaSamples = 1;
             desc.shadowSamplingMode = ShadowSamplingMode.None;
             desc.sRGB = false;
@@ -61,7 +80,29 @@ namespace DCL.StylizedSkybox.Scripts
             desc.volumeDepth = 0;
             desc.vrUsage = VRTextureUsage.None;
 
-            renderPass = new SkyboxToCubemapRenderPass(skyBoxMaterial, settings.originalMaterial);
+            descScratch = new RenderTextureDescriptor();
+            descScratch.autoGenerateMips = false;
+            descScratch.bindMS = false;
+            descScratch.colorFormat = RenderTextureFormat.ARGB32;
+            descScratch.depthBufferBits = 0;
+            descScratch.depthStencilFormat = GraphicsFormat.None;
+            descScratch.dimension = TextureDimension.Cube;
+            descScratch.enableRandomWrite = false;
+            descScratch.graphicsFormat = GraphicsFormat.R8G8B8A8_UNorm;
+            descScratch.height = settings.dimensions;
+            descScratch.width = settings.dimensions;
+            descScratch.memoryless = RenderTextureMemoryless.None;
+            // descScratch.mipCount = 0;
+            descScratch.msaaSamples = 1;
+            descScratch.shadowSamplingMode = ShadowSamplingMode.None;
+            descScratch.sRGB = false;
+            descScratch.stencilFormat = GraphicsFormat.None;
+            descScratch.useDynamicScale = false;
+            descScratch.useMipMap = true;
+            descScratch.volumeDepth = 0;
+            descScratch.vrUsage = VRTextureUsage.None;
+
+            renderPass = new SkyboxToCubemapRenderPass(skyBoxMaterial, settings.originalMaterial, cubeCopyMaterial, cubeBlurMaterial);
         }
 
         public override void SetupRenderPasses(ScriptableRenderer renderer, in RenderingData renderingData)
@@ -69,17 +110,32 @@ namespace DCL.StylizedSkybox.Scripts
             if (SkipInEditorMode())
                 return;
 
-            if (RenderingUtils.ReAllocateIfNeeded(ref skyBoxCubeMapRTHandle, desc, FilterMode.Bilinear, TextureWrapMode.Clamp,
-                    isShadowMap: false, anisoLevel: 1, mipMapBias: 0F, name: "_SkyBoxCubeMapTex"))
+            bool bAllocatedSkyBoxCubeMapRT = RenderingUtils.ReAllocateIfNeeded(ref skyBoxCubeMapRTHandle, desc, FilterMode.Bilinear, TextureWrapMode.Clamp,
+                isShadowMap: false, anisoLevel: 1, mipMapBias: 0F, name: "_SkyBoxCubeMapTex");
+
+            if (bAllocatedSkyBoxCubeMapRT)
             {
                 if (settings.assignAsReflectionProbe)
                 {
                     RenderSettings.defaultReflectionMode = DefaultReflectionMode.Custom;
                     RenderSettings.customReflectionTexture = skyBoxCubeMapRTHandle;
                 }
-
-                renderPass.Setup(skyBoxCubeMapRTHandle);
             }
+
+            bool bAllocatedSkyBoxCubeMapRT_Scratch = RenderingUtils.ReAllocateIfNeeded(ref skyBoxCubeMapRTHandle_Scratch, descScratch, FilterMode.Bilinear, TextureWrapMode.Clamp,
+                isShadowMap: false, anisoLevel: 1, mipMapBias: 0F, name: "_SkyBoxCubeMapTex_Scratch");
+
+            if (bAllocatedSkyBoxCubeMapRT_Scratch)
+            {
+                if (settings.assignAsReflectionProbe)
+                {
+                    RenderSettings.defaultReflectionMode = DefaultReflectionMode.Custom;
+                    RenderSettings.customReflectionTexture = skyBoxCubeMapRTHandle;
+                }
+            }
+
+            if (bAllocatedSkyBoxCubeMapRT)
+                renderPass.Setup(skyBoxCubeMapRTHandle, skyBoxCubeMapRTHandle_Scratch);
         }
 
         protected override void Dispose(bool disposing)
@@ -87,8 +143,17 @@ namespace DCL.StylizedSkybox.Scripts
             skyBoxCubeMapRTHandle?.Release();
             skyBoxCubeMapRTHandle = null;
 
+            skyBoxCubeMapRTHandle_Scratch?.Release();
+            skyBoxCubeMapRTHandle_Scratch = null;
+
             CoreUtils.Destroy(skyBoxMaterial);
             skyBoxMaterial = null;
+
+            CoreUtils.Destroy(cubeCopyMaterial);
+            cubeCopyMaterial = null;
+
+            CoreUtils.Destroy(cubeBlurMaterial);
+            cubeBlurMaterial = null;
         }
 
         private bool SkipInEditorMode() =>
@@ -104,6 +169,12 @@ namespace DCL.StylizedSkybox.Scripts
                 return;
 
             if (!skyBoxMaterial)
+                return;
+
+            if (!cubeCopyMaterial)
+                return;
+
+            if (!cubeBlurMaterial)
                 return;
 
             renderer.EnqueuePass(renderPass);
