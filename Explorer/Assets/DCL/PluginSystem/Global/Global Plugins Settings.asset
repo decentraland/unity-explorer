@@ -241,7 +241,7 @@ MonoBehaviour:
           m_SubObjectType: 
           m_EditorAssetChanged: 0
         <CameraReelGalleryShareToXMessage>k__BackingField: Check out what I'm doing
-          in Decentraland right now and join me!
+          in @decentraland right now and join me!
         <PhotoSuccessfullyUpdatedMessage>k__BackingField: Photo successfully updated
         <PhotoSuccessfullyDeletedMessage>k__BackingField: Photo successfully deleted
         <PhotoSuccessfullyDownloadedMessage>k__BackingField: Photo successfully downloaded
@@ -676,7 +676,7 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
-        <ShareToXMessage>k__BackingField: Check out what I'm doing in Decentraland
+        <ShareToXMessage>k__BackingField: Check out what I'm doing in @decentraland
           right now and join me!
         <PhotoSuccessfullyDownloadedMessage>k__BackingField: Photo successfully downloaded
         <LinkCopiedMessage>k__BackingField: Link copied!
