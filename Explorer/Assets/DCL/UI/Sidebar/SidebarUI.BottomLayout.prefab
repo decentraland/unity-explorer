@@ -630,6 +630,42 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 8560551636243942814}
     m_Modifications:
+    - target: {fileID: 390101922605384222, guid: ed95d7ae6af4148bd97a95ff2813e297, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 390101922605384222, guid: ed95d7ae6af4148bd97a95ff2813e297, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 390101922605384222, guid: ed95d7ae6af4148bd97a95ff2813e297, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 390101922605384222, guid: ed95d7ae6af4148bd97a95ff2813e297, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: -23.955
+      objectReference: {fileID: 0}
+    - target: {fileID: 390101922605384222, guid: ed95d7ae6af4148bd97a95ff2813e297, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: -16.05
+      objectReference: {fileID: 0}
+    - target: {fileID: 390101922605384222, guid: ed95d7ae6af4148bd97a95ff2813e297, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1021098124478703787, guid: ed95d7ae6af4148bd97a95ff2813e297, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 49.085
+      objectReference: {fileID: 0}
+    - target: {fileID: 2466096054595352060, guid: ed95d7ae6af4148bd97a95ff2813e297, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: 6a3d0ab5bff6b464f92fe4dd4004d24c, type: 3}
+    - target: {fileID: 3439494225543242357, guid: ed95d7ae6af4148bd97a95ff2813e297, type: 3}
+      propertyPath: m_Controller
+      value: 
+      objectReference: {fileID: 9100000, guid: 6611bd2b9331443e09f0d4f0d52998b3, type: 2}
     - target: {fileID: 3540929396504927598, guid: ed95d7ae6af4148bd97a95ff2813e297, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -710,10 +746,34 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 5644612303611509152, guid: ed95d7ae6af4148bd97a95ff2813e297, type: 3}
+      propertyPath: m_SortingLayer
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5772195767219203587, guid: ed95d7ae6af4148bd97a95ff2813e297, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: b032f63b49a074aa98e2b2de479a32dd, type: 3}
+    - target: {fileID: 6471281759738087567, guid: ed95d7ae6af4148bd97a95ff2813e297, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6530051305687938265, guid: ed95d7ae6af4148bd97a95ff2813e297, type: 3}
+      propertyPath: m_text
+      value: Sky
+      objectReference: {fileID: 0}
+    - target: {fileID: 7110058270174963677, guid: ed95d7ae6af4148bd97a95ff2813e297, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: b032f63b49a074aa98e2b2de479a32dd, type: 3}
     - target: {fileID: 8808912871982244420, guid: ed95d7ae6af4148bd97a95ff2813e297, type: 3}
       propertyPath: m_Name
       value: SkyboxWidget
       objectReference: {fileID: 0}
+    - target: {fileID: 8824497897969315705, guid: ed95d7ae6af4148bd97a95ff2813e297, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: 6a3d0ab5bff6b464f92fe4dd4004d24c, type: 3}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
