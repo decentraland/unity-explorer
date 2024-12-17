@@ -18,7 +18,7 @@ namespace DCL.Browser.DecentralandUrls
         private readonly Dictionary<DecentralandUrl, string> cache = new ();
         private readonly string environmentDomainLowerCase;
         private readonly bool isLocalSceneDevelopment;
-        
+
 
         public string DecentralandDomain => environmentDomainLowerCase;
 
@@ -26,7 +26,7 @@ namespace DCL.Browser.DecentralandUrls
         {
             environmentDomainLowerCase = environment.ToString()!.ToLower();
             this.isLocalSceneDevelopment = isLocalSceneDevelopment;
-            
+
             switch (environment)
             {
                 case DecentralandEnvironment.Org:
@@ -100,6 +100,7 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.Badges => $"https://badges.decentraland.{ENV}",
                 DecentralandUrl.CameraReelUsers =>  $"https://camera-reel-service.decentraland.{ENV}/api/users",
                 DecentralandUrl.CameraReelImages => $"https://camera-reel-service.decentraland.{ENV}/api/images",
+                DecentralandUrl.CameraReelPlaces => $"https://camera-reel-service.decentraland.{ENV}/api/places",
                 DecentralandUrl.CameraReelLink => $"https://reels.decentraland.{ENV}",
                 DecentralandUrl.AssetBundleRegistry => $"https://asset-bundle-registry.decentraland.{ENV}",
                 _ => throw new ArgumentOutOfRangeException(nameof(decentralandUrl), decentralandUrl, null!)

@@ -13,9 +13,12 @@ namespace DCL.InWorldCamera.CameraReelStorageService
         event Action<CameraReelResponse, CameraReelStorageStatus, string>? ScreenshotUploaded;
 
         UniTask<CameraReelStorageStatus> GetUserGalleryStorageInfoAsync(string userAddress, CancellationToken ct = default);
+        UniTask<CameraReelStorageStatus> GetPlaceGalleryStorageInfoAsync(string userAddress, CancellationToken ct = default);
 
         UniTask<CameraReelResponses> GetScreenshotGalleryAsync(string userAddress, int limit, int offset, CancellationToken ct = default);
         UniTask<CameraReelResponsesCompact> GetCompactScreenshotGalleryAsync(string userAddress, int limit, int offset, CancellationToken ct = default);
+        UniTask<CameraReelResponsesCompact> GetCompactPlaceScreenshotGalleryAsync(string placeId, int limit, int offset, CancellationToken ct = default);
+        UniTask<CameraReelResponsesCompact> UnsignedGetCompactScreenshotGalleryAsync(string userAddress, int limit, int offset, CancellationToken ct = default);
 
         UniTask<CameraReelStorageStatus> DeleteScreenshotAsync(string uuid, CancellationToken ct = default);
 

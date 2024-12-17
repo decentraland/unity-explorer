@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.Clipboard;
+using DCL.Diagnostics;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using DCL.InWorldCamera.ReelActions;
@@ -24,7 +25,12 @@ namespace DCL.InWorldCamera.PhotoDetail
     {
         private const int ANIMATION_DELAY = 300;
 
-        private readonly PhotoDetailInfoController photoDetailInfoController;
+        public event Action Activated;
+        public event Action JumpToPhotoPlace;
+        public event Action ScreenshotShared;
+        public event Action ScreenshotDownloaded;
+
+        public readonly PhotoDetailInfoController PhotoDetailInfoController;
         private readonly ICameraReelScreenshotsStorage cameraReelScreenshotsStorage;
         private readonly ISystemClipboard systemClipboard;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
@@ -34,6 +40,7 @@ namespace DCL.InWorldCamera.PhotoDetail
         private AspectRatioFitter aspectRatioFitter;
         private MetadataSidePanelAnimator metadataSidePanelAnimator;
         private CancellationTokenSource showReelCts = new ();
+        private CancellationTokenSource downloadScreenshotCts = new ();
 
         private bool metadataPanelIsOpen = true;
         private bool isClosing;
@@ -50,14 +57,14 @@ namespace DCL.InWorldCamera.PhotoDetail
             string shareToXMessage)
             : base(viewFactory)
         {
-            this.photoDetailInfoController = photoDetailInfoController;
+            this.PhotoDetailInfoController = photoDetailInfoController;
             this.cameraReelScreenshotsStorage = cameraReelScreenshotsStorage;
             this.systemClipboard = systemClipboard;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.webBrowser = webBrowser;
             this.shareToXMessage = shareToXMessage;
 
-            this.photoDetailInfoController.JumpIn += JumpInClicked;
+            this.PhotoDetailInfoController.JumpIn += JumpInClicked;
         }
 
         private void ShowDeleteModal()
@@ -83,8 +90,11 @@ namespace DCL.InWorldCamera.PhotoDetail
                 HideDeleteModal();
         }
 
-        private void JumpInClicked() =>
+        private void JumpInClicked()
+        {
             isClosing = true;
+            JumpToPhotoPlace?.Invoke();
+        }
 
         private void ToggleInfoSidePanel()
         {
@@ -104,6 +114,8 @@ namespace DCL.InWorldCamera.PhotoDetail
             viewInstance!.cancelDeleteIntentButton?.onClick.AddListener(() => DeletionModalCancelClick());
             viewInstance!.cancelDeleteIntentBackgroundButton?.onClick.AddListener(() => DeletionModalCancelClick(false));
             viewInstance!.deleteReelButton?.onClick.AddListener(DeleteScreenshot);
+
+            Activated?.Invoke();
 
             ShowReel(inputData.CurrentReelIndex);
         }
@@ -134,7 +146,7 @@ namespace DCL.InWorldCamera.PhotoDetail
             HideDeleteModal();
 
             viewInstance.mainImageCanvasGroup.alpha = 0;
-            photoDetailInfoController.Release();
+            PhotoDetailInfoController.Release();
         }
 
         protected override void OnBeforeViewShow()
@@ -146,14 +158,32 @@ namespace DCL.InWorldCamera.PhotoDetail
             isClosing = false;
         }
 
-        private void DownloadReelClicked() =>
-            ReelCommonActions.DownloadReel(inputData.AllReels[currentReelIndex].url, webBrowser);
+        private void DownloadReelClicked()
+        {
+            async UniTaskVoid DownloadAndOpenAsync(CancellationToken ct)
+            {
+                try
+                {
+                    await ReelCommonActions.DownloadReelToFileAsync(inputData.AllReels[currentReelIndex].url, ct);
+                    ScreenshotDownloaded?.Invoke();
+                }
+                catch (Exception e)
+                {
+                    ReportHub.LogException(e, new ReportData(ReportCategory.CAMERA_REEL));
+                }
+            }
+
+            DownloadAndOpenAsync(downloadScreenshotCts.Token).Forget();
+        }
 
         private void CopyReelLinkClicked() =>
             ReelCommonActions.CopyReelLink(inputData.AllReels[currentReelIndex].id, decentralandUrlsSource, systemClipboard);
 
-        private void ShareReelClicked() =>
+        private void ShareReelClicked()
+        {
             ReelCommonActions.ShareReelToX(shareToXMessage, inputData.AllReels[currentReelIndex].id, decentralandUrlsSource, systemClipboard, webBrowser);
+            ScreenshotShared?.Invoke();
+        }
 
         private void ShowPreviousReel()
         {
@@ -180,7 +210,7 @@ namespace DCL.InWorldCamera.PhotoDetail
             viewInstance!.mainImageLoadingSpinner.gameObject.SetActive(true);
             CameraReelResponseCompact reel = inputData.AllReels[reelIndex];
 
-            UniTask detailInfoTask = photoDetailInfoController.ShowPhotoDetailInfoAsync(reel.id, ct);
+            UniTask detailInfoTask = PhotoDetailInfoController.ShowPhotoDetailInfoAsync(reel.id, ct);
             Texture2D reelTexture = await cameraReelScreenshotsStorage.GetScreenshotImageAsync(reel.url, ct);
             viewInstance!.mainImage.texture = reelTexture;
             aspectRatioFitter.aspectRatio = reelTexture.width * 1f / reelTexture.height;
