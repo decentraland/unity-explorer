@@ -36,7 +36,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
         public MetaData.Input GetMetadataInput() =>
             realmData.ScenesAreFixed
                 ? new MetaData.Input(realmData.RealmName, Vector2Int.zero)
-                : new MetaData.Input(realmData.RealmName, new Vector2Int(20, 4));
+                : new MetaData.Input(realmData.RealmName, characterTransform.Position.ToParcel());
 
         public async UniTask<MetaData> MetaDataAsync(MetaData.Input input, CancellationToken token)
         {

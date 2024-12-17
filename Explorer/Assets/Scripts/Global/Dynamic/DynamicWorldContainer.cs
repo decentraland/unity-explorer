@@ -373,8 +373,7 @@ namespace Global.Dynamic
                     new MultipleURLHealthCheck(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource,
                         DecentralandUrl.ArchipelagoStatus,
                         DecentralandUrl.GatekeeperStatus
-                    ),
-                    new StartLiveKitRooms(container.RoomHub)
+                    )
                 );
 
             livekitHealthCheck = dynamicWorldParams.EnableAnalytics
