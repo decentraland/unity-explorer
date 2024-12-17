@@ -69,6 +69,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
         private readonly ContextMenuController? contextMenuController;
         private readonly Rect elementMaskRect;
         private readonly ReelGalleryStringMessages? reelGalleryStringMessages;
+        private readonly ReelGalleryConfigParams reelGalleryConfigParams;
         private readonly bool useSignedRequest;
 
         private bool isLoading;
@@ -103,6 +104,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
             this.view = view;
             this.cameraReelStorageService = cameraReelStorageService;
             this.explorePanelEscapeAction = explorePanelEscapeAction;
+            this.reelGalleryConfigParams = reelGalleryConfigParams;
             this.reelGalleryStringMessages = reelGalleryStringMessages;
             this.view.Disable += OnDisable;
             this.view.scrollRectDragHandler.BeginDrag += ScrollBeginDrag;
@@ -377,8 +379,12 @@ namespace DCL.InWorldCamera.CameraReelGallery
 
         private MonthGridController GetMonthGrid(DateTime dateTime)
         {
-            MonthGridController monthGridView;
-            if (monthViews.TryGetValue(dateTime, out MonthGridController monthView))
+            MonthGridController monthGridView = null;
+
+            if (!reelGalleryConfigParams.GroupByMonth && monthViews.Count == 1)
+                foreach (MonthGridController controller in monthViews.Values)
+                    monthGridView = controller;
+            else if (monthViews.TryGetValue(dateTime, out MonthGridController monthView))
                 monthGridView = monthView;
             else
             {
@@ -605,13 +611,15 @@ namespace DCL.InWorldCamera.CameraReelGallery
         public readonly int ThumbnailHeight;
         public readonly int ThumbnailWidth;
         public readonly bool GridShowMonth;
+        public readonly bool GroupByMonth;
 
-        public ReelGalleryConfigParams(int gridLayoutFixedColumnCount, int thumbnailHeight, int thumbnailWidth, bool gridShowMonth)
+        public ReelGalleryConfigParams(int gridLayoutFixedColumnCount, int thumbnailHeight, int thumbnailWidth, bool gridShowMonth, bool groupByMonth)
         {
             GridLayoutFixedColumnCount = gridLayoutFixedColumnCount;
             ThumbnailHeight = thumbnailHeight;
             ThumbnailWidth = thumbnailWidth;
             GridShowMonth = gridShowMonth;
+            GroupByMonth = groupByMonth;
         }
     }
 }
