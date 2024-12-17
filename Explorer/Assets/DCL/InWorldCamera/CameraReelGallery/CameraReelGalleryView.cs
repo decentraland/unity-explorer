@@ -1,5 +1,5 @@
 using DCL.InWorldCamera.CameraReelGallery.Components;
-using DCL.UI;
+using DCL.InWorldCamera.CameraReelToast;
 using System;
 using UnityEngine;
 using UnityEngine.UI;

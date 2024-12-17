@@ -5,7 +5,7 @@ using System.Threading;
 using UnityEngine;
 using Utility;
 
-namespace DCL.InWorldCamera.CameraReelGallery.Components
+namespace DCL.InWorldCamera.CameraReelToast
 {
     public enum CameraReelToastMessageType
     {
