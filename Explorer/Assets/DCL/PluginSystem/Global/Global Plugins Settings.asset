@@ -240,11 +240,6 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
-        <StylizedSkyboxSettingsAsset>k__BackingField:
-          m_AssetGUID: 50aa9483411844942bd409d4b4612221
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_EditorAssetChanged: 0
         <CameraReelGalleryShareToXMessage>k__BackingField: Check out what I'm doing
           in Decentraland right now and join me!
         <PhotoSuccessfullyUpdatedMessage>k__BackingField: Photo successfully updated
@@ -438,6 +433,11 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
         <RarityColorMappings>k__BackingField:
           m_AssetGUID: 04a7ffcd277754f7c91237894604f522
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        <SkyboxSettingsAsset>k__BackingField:
+          m_AssetGUID: 50aa9483411844942bd409d4b4612221
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0

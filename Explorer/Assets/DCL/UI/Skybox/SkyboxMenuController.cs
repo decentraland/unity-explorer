@@ -8,6 +8,8 @@ namespace DCL.UI.Skybox
 {
     public class SkyboxMenuController : ControllerBase<SkyboxMenuView>
     {
+        private const int SECONDS_IN_DAY = 86400;
+
         private readonly StylizedSkyboxSettingsAsset skyboxSettings;
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
@@ -55,12 +57,25 @@ namespace DCL.UI.Skybox
         private void OnNormalizedTimeChanged(float time)
         {
             viewInstance!.TimeSlider.SetValueWithoutNotify(time);
+            viewInstance.TimeText.text = GetFormatedTime(time);
         }
 
         private void OnTimeSliderValueChanged(float time)
         {
             skyboxSettings.UseDynamicTime = false;
             skyboxSettings.NormalizedTime = time;
+        }
+
+        /// <summary>
+        ///     Auxiliary function to returnt the normalized time in HH:MM:SS
+        /// </summary>
+        public string GetFormatedTime(float time)
+        {
+            var totalSec = (int)(time * SECONDS_IN_DAY);
+
+            int hours = totalSec / 3600;
+            int minutes = totalSec % 3600 / 60;
+            return $"{hours:00}:{minutes:00}";
         }
 
         private void OnClose()

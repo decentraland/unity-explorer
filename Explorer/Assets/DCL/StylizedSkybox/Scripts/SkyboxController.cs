@@ -2,7 +2,6 @@ using DCL.Diagnostics;
 using DCL.FeatureFlags;
 using System;
 using UnityEngine;
-using TMPro;
 using UnityEngine.Rendering;
 
 public class SkyboxController : MonoBehaviour
@@ -24,55 +23,53 @@ public class SkyboxController : MonoBehaviour
     private static readonly int SUN_RADIANCE_INTENSITY = Shader.PropertyToID("_Sun_Radiance_Intensity");
     private static readonly int MOON_MASK_SIZE = Shader.PropertyToID("_Moon_Mask_Size");
 
+    [SerializeField] private Material skyboxMaterial;
+
+    [Header("Refresh Time")]
+    [SerializeField] private float refreshTime = 5;
+
+    [Header("Directional Light")]
+    [SerializeField] private Light directionalLight;
+    [SerializeField] private AnimationClip lightAnimation;
+
+    [GradientUsage(true)]
+    [SerializeField] private Gradient directionalColorRamp;
+
+    [GradientUsage(true)]
+    [SerializeField] private Gradient sunColorRamp;
+
+    [SerializeField] private AnimationCurve sunRadiance;
+    [SerializeField] private AnimationCurve sunRadianceIntensity;
+    [SerializeField] private AnimationCurve moonMaskSize;
+
+    [Header("Skybox Color")]
+    [GradientUsage(true)] [SerializeField] private Gradient skyZenitColorRamp;
+    [GradientUsage(true)] [SerializeField] private Gradient skyHorizonColorRamp;
+    [GradientUsage(true)] [SerializeField] private Gradient skyNadirColorRamp;
+
+    [InspectorName("Rim Light Color")]
+    [GradientUsage(true)] [SerializeField] private Gradient rimColorRamp;
+
+    [Header("Indirect Lighting")]
+    [InspectorName("Enabled")] [SerializeField] private bool indirectLight = true;
+    [GradientUsage(true)] [SerializeField] private Gradient indirectSkyRamp;
+    [GradientUsage(true)] [SerializeField] private Gradient indirectEquatorRamp;
+    [GradientUsage(true)] [SerializeField] private Gradient groundEquatorRamp;
+
+    [Header("Clouds")]
+    [GradientUsage(true)] [SerializeField] private Gradient cloudsColorRamp;
+    [SerializeField] private AnimationCurve cloudsHighlightsIntensity;
+
+    [Header("Fog")]
+    [InspectorName("Enabled")] [SerializeField] private bool fog = true;
+    [GradientUsage(true)] [SerializeField] private Gradient fogColorRamp;
+
     public float SpeedMultiplier { get; set; } = DEFAULT_SPEED;
     public bool UseDynamicTime { get; set; } = true;
     public float DynamicTimeNormalized { get; private set; }
     public float CurrentTimeNormalized { get; private set; }
 
     public event Action OnSkyboxUpdated;
-
-    [SerializeField] private Material skyboxMaterial;
-
-    [Header("Refresh Time")]
-    public float RefreshTime = 5;
-
-    [Header("Directional Light")]
-    public Light DirectionalLight;
-    public AnimationClip LightAnimation;
-
-    [GradientUsage(true)]
-    public Gradient DirectionalColorRamp;
-    [GradientUsage(true)]
-    public Gradient SunColorRamp;
-
-    public AnimationCurve sunRadiance;
-    public AnimationCurve sunRadianceIntensity;
-    public AnimationCurve moonMaskSize;
-
-    [Header("Skybox Color")]
-    [GradientUsage(true)] public Gradient SkyZenitColorRamp;
-    [GradientUsage(true)] public Gradient SkyHorizonColorRamp;
-    [GradientUsage(true)] public Gradient SkyNadirColorRamp;
-
-    [InspectorName("Rim Light Color")]
-    [GradientUsage(true)] public Gradient RimColorRamp;
-
-    [Header("Indirect Lighting")]
-    [InspectorName("Enabled")] public bool IndirectLight = true;
-    [GradientUsage(true)] public Gradient IndirectSkyRamp;
-    [GradientUsage(true)] public Gradient IndirectEquatorRamp;
-    [GradientUsage(true)] public Gradient GroundEquatorRamp;
-
-    [Header("Clouds")]
-    [GradientUsage(true)] public Gradient CloudsColorRamp;
-    public AnimationCurve CloudsHighlightsIntensity;
-
-    [Header("Fog")]
-    [InspectorName("Enabled")] public bool Fog = true;
-    [GradientUsage(true)] public Gradient FogColorRamp;
-
-    [Header("UI")]
-    public TextMeshProUGUI textUI;
 
     private bool isInitialized;
     private Animation lightAnimator;
@@ -84,7 +81,7 @@ public class SkyboxController : MonoBehaviour
             return;
 
         // We always track dynamic time so we can switch back to using it
-        DynamicTimeNormalized += (Time.deltaTime * SpeedMultiplier) / SECONDS_IN_DAY;
+        DynamicTimeNormalized += Time.deltaTime * SpeedMultiplier / SECONDS_IN_DAY;
 
         // Loop around at EOD
         if (DynamicTimeNormalized >= 1f) { DynamicTimeNormalized = 0f; }
@@ -94,16 +91,13 @@ public class SkyboxController : MonoBehaviour
         {
             sinceLastRefresh += Time.deltaTime;
 
-            if (sinceLastRefresh >= RefreshTime)
+            if (sinceLastRefresh >= refreshTime)
             {
                 CurrentTimeNormalized = DynamicTimeNormalized;
                 UpdateSkybox();
                 sinceLastRefresh = 0;
             }
         }
-
-        // Always update UI
-        UpdateTimeUI();
     }
 
     public void Initialize(Material skyboxMat, Light dirLight, AnimationClip skyboxAnimationClip, FeatureFlagsCache featureFlagsCache)
@@ -120,10 +114,10 @@ public class SkyboxController : MonoBehaviour
         }
 
         if (dirLight != null)
-            DirectionalLight = dirLight;
+            directionalLight = dirLight;
 
         if (skyboxAnimationClip != null)
-            LightAnimation = skyboxAnimationClip;
+            lightAnimation = skyboxAnimationClip;
 
         //setup skybox material
         if (!skyboxMaterial) { ReportHub.LogWarning(ReportCategory.LANDSCAPE, "Skybox Controller: No skybox material assigned"); }
@@ -134,25 +128,25 @@ public class SkyboxController : MonoBehaviour
         }
 
         //setup directional light
-        if (DirectionalLight == null) { ReportHub.LogWarning(ReportCategory.LANDSCAPE, "Skybox Controller: Directional Light has not been assigned"); }
+        if (directionalLight == null) { ReportHub.LogWarning(ReportCategory.LANDSCAPE, "Skybox Controller: Directional Light has not been assigned"); }
         else
         {
             //assign light to render settings
-            RenderSettings.sun = DirectionalLight;
+            RenderSettings.sun = directionalLight;
 
             //create animation component in runtime and assign animation clip
-            if (DirectionalLight.gameObject.GetComponent<Animation>() == null) { lightAnimator = DirectionalLight.gameObject.AddComponent<Animation>(); }
-            else { lightAnimator = DirectionalLight.gameObject.GetComponent<Animation>(); }
+            if (directionalLight.gameObject.GetComponent<Animation>() == null) { lightAnimator = directionalLight.gameObject.AddComponent<Animation>(); }
+            else { lightAnimator = directionalLight.gameObject.GetComponent<Animation>(); }
 
-            if (LightAnimation == null) { ReportHub.LogWarning(ReportCategory.LANDSCAPE, "Skybox Controller: Directional Light animation has not been assigned"); }
-            else { lightAnimator.AddClip(LightAnimation, LightAnimation.name); }
+            if (lightAnimation == null) { ReportHub.LogWarning(ReportCategory.LANDSCAPE, "Skybox Controller: Directional Light animation has not been assigned"); }
+            else { lightAnimator.AddClip(lightAnimation, lightAnimation.name); }
         }
 
         //setup indirect light
-        if (IndirectLight) { RenderSettings.ambientMode = AmbientMode.Trilight; }
+        if (indirectLight) { RenderSettings.ambientMode = AmbientMode.Trilight; }
 
         //setup fog
-        if (Fog) { RenderSettings.fog = true; }
+        if (fog) { RenderSettings.fog = true; }
 
         bool useRemoteSkyboxSettings = featureFlagsCache != null && featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.SKYBOX_SETTINGS);
 
@@ -162,10 +156,7 @@ public class SkyboxController : MonoBehaviour
             SpeedMultiplier = skyboxSettings.speed;
             DynamicTimeNormalized = (float)skyboxSettings.time / SECONDS_IN_DAY;
         }
-        else
-        {
-            DynamicTimeNormalized = DEFAULT_TIME;
-        }
+        else { DynamicTimeNormalized = DEFAULT_TIME; }
 
         isInitialized = true;
     }
@@ -178,19 +169,6 @@ public class SkyboxController : MonoBehaviour
         UseDynamicTime = false;
         CurrentTimeNormalized = time;
         UpdateSkybox();
-    }
-
-    /// <summary>
-    ///     Auxiliary function to returnt the normalized time in HH:MM:SS
-    /// </summary>
-    public string GetFormatedTime()
-    {
-        var totalSec = (int)(CurrentTimeNormalized * SECONDS_IN_DAY);
-
-        int hours = totalSec / 3600;
-        int minutes = totalSec % 3600 / 60;
-        int seconds = totalSec % 60;
-        return $"{hours:00}:{minutes:00}:{seconds:00} - {CurrentTimeNormalized:0.000}";
     }
 
     /// <summary>
@@ -212,13 +190,13 @@ public class SkyboxController : MonoBehaviour
     /// </summary>
     private void UpdateSkyboxColor()
     {
-        RenderSettings.skybox.SetColor(ZENIT_COLOR, SkyZenitColorRamp.Evaluate(CurrentTimeNormalized));
-        RenderSettings.skybox.SetColor(HORIZON_COLOR, SkyHorizonColorRamp.Evaluate(CurrentTimeNormalized));
-        RenderSettings.skybox.SetColor(NADIR_COLOR, SkyNadirColorRamp.Evaluate(CurrentTimeNormalized));
-        RenderSettings.skybox.SetColor(SUN_COLOR, SunColorRamp.Evaluate(CurrentTimeNormalized));
-        RenderSettings.skybox.SetColor(RIM_COLOR, RimColorRamp.Evaluate(CurrentTimeNormalized));
-        RenderSettings.skybox.SetColor(CLOUDS_COLOR, CloudsColorRamp.Evaluate(CurrentTimeNormalized));
-        RenderSettings.skybox.SetFloat(CLOUD_HIGHLIGHTS, CloudsHighlightsIntensity.Evaluate(CurrentTimeNormalized));
+        RenderSettings.skybox.SetColor(ZENIT_COLOR, skyZenitColorRamp.Evaluate(CurrentTimeNormalized));
+        RenderSettings.skybox.SetColor(HORIZON_COLOR, skyHorizonColorRamp.Evaluate(CurrentTimeNormalized));
+        RenderSettings.skybox.SetColor(NADIR_COLOR, skyNadirColorRamp.Evaluate(CurrentTimeNormalized));
+        RenderSettings.skybox.SetColor(SUN_COLOR, sunColorRamp.Evaluate(CurrentTimeNormalized));
+        RenderSettings.skybox.SetColor(RIM_COLOR, rimColorRamp.Evaluate(CurrentTimeNormalized));
+        RenderSettings.skybox.SetColor(CLOUDS_COLOR, cloudsColorRamp.Evaluate(CurrentTimeNormalized));
+        RenderSettings.skybox.SetFloat(CLOUD_HIGHLIGHTS, cloudsHighlightsIntensity.Evaluate(CurrentTimeNormalized));
     }
 
     /// <summary>
@@ -227,11 +205,11 @@ public class SkyboxController : MonoBehaviour
     /// </summary>
     private void UpdateIndirectLight()
     {
-        if (IndirectLight)
+        if (indirectLight)
         {
-            RenderSettings.ambientSkyColor = IndirectSkyRamp.Evaluate(CurrentTimeNormalized);
-            RenderSettings.ambientEquatorColor = IndirectEquatorRamp.Evaluate(CurrentTimeNormalized);
-            RenderSettings.ambientGroundColor = GroundEquatorRamp.Evaluate(CurrentTimeNormalized);
+            RenderSettings.ambientSkyColor = indirectSkyRamp.Evaluate(CurrentTimeNormalized);
+            RenderSettings.ambientEquatorColor = indirectEquatorRamp.Evaluate(CurrentTimeNormalized);
+            RenderSettings.ambientGroundColor = groundEquatorRamp.Evaluate(CurrentTimeNormalized);
         }
     }
 
@@ -241,22 +219,22 @@ public class SkyboxController : MonoBehaviour
     /// </summary>
     private void UpdateDirectionalLight()
     {
-        if (!DirectionalLight) return;
+        if (!directionalLight) return;
 
         //change the color of the light based on the color ramp
-        DirectionalLight.color = DirectionalColorRamp.Evaluate(CurrentTimeNormalized);
+        directionalLight.color = directionalColorRamp.Evaluate(CurrentTimeNormalized);
 
         //sample the right frame of the animation
-        if (LightAnimation)
+        if (lightAnimation)
         {
-            lightAnimator[LightAnimation.name].time = CurrentTimeNormalized * lightAnimator[LightAnimation.name].length;
-            lightAnimator.Play(LightAnimation.name);
+            lightAnimator[lightAnimation.name].time = CurrentTimeNormalized * lightAnimator[lightAnimation.name].length;
+            lightAnimator.Play(lightAnimation.name);
             lightAnimator.Sample();
             lightAnimator.Stop();
         }
 
-        RenderSettings.skybox.SetFloat(SUN_SIZE, DirectionalLight.gameObject.transform.localScale.x);
-        RenderSettings.skybox.SetFloat(SUN_OPACITY, DirectionalLight.gameObject.transform.localScale.y);
+        RenderSettings.skybox.SetFloat(SUN_SIZE, directionalLight.gameObject.transform.localScale.x);
+        RenderSettings.skybox.SetFloat(SUN_OPACITY, directionalLight.gameObject.transform.localScale.y);
 
         //sampling sun randiance and intensity curves
         RenderSettings.skybox.SetFloat(SUN_RADIANCE, sunRadiance.Evaluate(CurrentTimeNormalized));
@@ -271,15 +249,7 @@ public class SkyboxController : MonoBehaviour
     /// </summary>
     private void UpdateFog()
     {
-        if (Fog) { RenderSettings.fogColor = FogColorRamp.Evaluate(CurrentTimeNormalized); }
-    }
-
-    /// <summary>
-    ///     Auxiliary function to render the time in the UI
-    /// </summary>
-    private void UpdateTimeUI()
-    {
-        if (textUI) { textUI.text = GetFormatedTime(); }
+        if (fog) { RenderSettings.fogColor = fogColorRamp.Evaluate(CurrentTimeNormalized); }
     }
 
 #if UNITY_EDITOR
