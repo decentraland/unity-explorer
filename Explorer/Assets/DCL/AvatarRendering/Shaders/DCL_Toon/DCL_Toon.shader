@@ -10,6 +10,7 @@ Shader "DCL/DCL_Toon"
         [HideInInspector] [PerRendererData] _1st_ShadeMapArr_ID ("1st Shade Map Array ID", Integer) = -1
         [HideInInspector] [PerRendererData] _2nd_ShadeMapArr_ID ("2nd Shader Map Array ID", Integer) = -1
         [HideInInspector] [PerRendererData] _NormalMapArr_ID ("Normal Map Array ID", Integer) = -1
+        
         [HideInInspector] [PerRendererData] _Set_1st_ShadePositionArr_ID ("Set 1st Shade Position Array ID", Integer) = -1
         [HideInInspector] [PerRendererData] _Set_2nd_ShadePositionArr_ID ("Set 2nd Shade Position Array ID", Integer) = -1
         [HideInInspector] [PerRendererData] _ShadingGradeMapArr_ID ("Shading Grade Map Array ID", Integer) = -1
@@ -41,6 +42,7 @@ Shader "DCL/DCL_Toon"
         [HideInInspector] _MainTexArr ("Main Texture Array", 2DArray) = "white" {}
         [HideInInspector] _NormalMapArr ("Normal Texture Array", 2DArray) = "bump" {}
         [HideInInspector] _Emissive_TexArr ("Emissive Texture Array", 2DArray) = "black" {}
+        [HideInInspector] _MetallicGlossMapArr ("Metallic Gloss Texture Array", 2DArray) = "black" {}
         
         [HideInInspector] _simpleUI ("SimpleUI", Int ) = 0
         [HideInInspector][Enum(OFF, 0, ON, 1)] _isUnityToonshader("Material is touched by Unity Toon Shader", Int) = 1
@@ -633,7 +635,7 @@ Shader "DCL/DCL_Toon"
             #pragma target 5.0
             #pragma vertex vert
             #pragma fragment frag
-            //#pragma enable_d3d11_debug_symbols
+            #pragma enable_d3d11_debug_symbols
             
             // -------------------------------------
             // Lightweight Pipeline keywords

@@ -23,7 +23,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests.Instantiate
 
             var defaultTextures = new Dictionary<TextureArrayKey, Texture>
             {
-                [new TextureArrayKey(TextureArrayConstants.MAINTEX_ARR_TEX_SHADER, TEST_RESOLUTION)] = texture_BC7,
+                [new TextureArrayKey(TextureArrayConstants.MAINTEX_TEX_ARR, TEST_RESOLUTION)] = texture_BC7,
                 [new TextureArrayKey(TextureArrayConstants.NORMAL_MAP_TEX_ARR, TEST_RESOLUTION)] = texture_BC5,
                 [new TextureArrayKey(TextureArrayConstants.EMISSIVE_MAP_TEX_ARR, TEST_RESOLUTION)] = texture_BC7
             };
