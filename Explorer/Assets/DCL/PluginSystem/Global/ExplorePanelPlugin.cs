@@ -256,7 +256,7 @@ namespace DCL.PluginSystem.Global
 
             CameraReelView cameraReelView = explorePanelView.GetComponentInChildren<CameraReelView>();
             var cameraReelController = new CameraReelController(cameraReelView,
-                new CameraReelGalleryController(cameraReelView.cameraReelGalleryView, this.cameraReelStorageService,
+                new CameraReelGalleryController(cameraReelView.CameraReelGalleryView, this.cameraReelStorageService,
                     cameraReelScreenshotsStorage,
                     new ReelGalleryConfigParams(settings.GridLayoutFixedColumnCount, settings.ThumbnailHeight, settings.ThumbnailWidth, true, true), true,
                     cameraReelView.optionsButton, cameraReelView.contextMenu,

@@ -318,7 +318,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
                 return;
             }
 
-            pagedCameraReelManager = new PagedCameraReelManager(cameraReelStorageService, new PagedCameraReelManagerParameters(walletAddress, useSignedRequest), storageStatus.Value.ScreenshotsAmount, view.paginationLimit);
+            pagedCameraReelManager = new PagedCameraReelManager(cameraReelStorageService, new PagedCameraReelManagerParameters(walletAddress, useSignedRequest), storageStatus.Value.ScreenshotsAmount, view.PaginationLimit);
             thumbnailImages = new ReelThumbnailController[storageStatus.Value.MaxScreenshots];
 
             await LoadMorePageAsync(ct);
@@ -331,7 +331,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
             PrepareShowGallery(ct);
 
             CameraReelStorageStatus storageStatus = await cameraReelStorageService.GetPlaceGalleryStorageInfoAsync(placeId, ct);
-            pagedCameraReelManager = new PagedCameraReelManager(cameraReelStorageService, new PagedCameraReelManagerParameters(placeId), storageStatus.ScreenshotsAmount, view.paginationLimit);
+            pagedCameraReelManager = new PagedCameraReelManager(cameraReelStorageService, new PagedCameraReelManagerParameters(placeId), storageStatus.ScreenshotsAmount, view.PaginationLimit);
             thumbnailImages = new ReelThumbnailController[storageStatus.MaxScreenshots];
 
             await LoadMorePageAsync(ct);

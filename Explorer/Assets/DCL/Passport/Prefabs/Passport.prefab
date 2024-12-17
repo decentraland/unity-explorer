@@ -4922,6 +4922,14 @@ PrefabInstance:
       propertyPath: elementMask
       value: 
       objectReference: {fileID: 7743660985573477490}
+    - target: {fileID: 4110944459725859003, guid: ade6e83ad45fc4c7e81daa5a6e0f7bab, type: 3}
+      propertyPath: <emptyState>k__BackingField
+      value: 
+      objectReference: {fileID: 3234734262568898358}
+    - target: {fileID: 4110944459725859003, guid: ade6e83ad45fc4c7e81daa5a6e0f7bab, type: 3}
+      propertyPath: <elementMask>k__BackingField
+      value: 
+      objectReference: {fileID: 2699698443393570032}
     - target: {fileID: 5218057066178112453, guid: ade6e83ad45fc4c7e81daa5a6e0f7bab, type: 3}
       propertyPath: m_AnchorMax.x
       value: 1

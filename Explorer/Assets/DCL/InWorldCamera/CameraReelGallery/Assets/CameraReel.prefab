@@ -1114,17 +1114,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 402b79e539d14fdc9a522515a8cc9fb9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  goToCameraButton: {fileID: 5816618635533444340}
-  storageProgressBar: {fileID: 6485039005606233660}
-  storageFullIcon: {fileID: 3460514733688467599}
-  emptyState: {fileID: 8905698767790674638}
-  storageFullToast: {fileID: 3007147660590048626}
-  cameraReelGalleryView: {fileID: 6326828515697139143}
-  storageFullToastFadeTime: 0.3
-  optionsButton: {fileID: 3243249746742492487}
-  contextMenu: {fileID: 2907236184025088760}
-  panelAnimator: {fileID: 3847227160490674318}
-  headerAnimator: {fileID: 4907642448593202628}
+  <goToCameraButton>k__BackingField: {fileID: 5816618635533444340}
+  <storageProgressBar>k__BackingField: {fileID: 6485039005606233660}
+  <storageFullIcon>k__BackingField: {fileID: 3460514733688467599}
+  <emptyState>k__BackingField: {fileID: 8905698767790674638}
+  <storageFullToast>k__BackingField: {fileID: 3007147660590048626}
+  <CameraReelGalleryView>k__BackingField: {fileID: 6326828515697139143}
+  <storageFullToastFadeTime>k__BackingField: 0.3
+  <optionsButton>k__BackingField: {fileID: 3243249746742492487}
+  <contextMenu>k__BackingField: {fileID: 2907236184025088760}
+  <panelAnimator>k__BackingField: {fileID: 3847227160490674318}
+  <headerAnimator>k__BackingField: {fileID: 4907642448593202628}
 --- !u!225 &2374670453255527950
 CanvasGroup:
   m_ObjectHideFlags: 0
@@ -2062,6 +2062,18 @@ PrefabInstance:
       propertyPath: successNotificationView
       value: 
       objectReference: {fileID: 2752032496125254721}
+    - target: {fileID: 4110944459725859003, guid: ade6e83ad45fc4c7e81daa5a6e0f7bab, type: 3}
+      propertyPath: <emptyState>k__BackingField
+      value: 
+      objectReference: {fileID: 8905698767790674638}
+    - target: {fileID: 4110944459725859003, guid: ade6e83ad45fc4c7e81daa5a6e0f7bab, type: 3}
+      propertyPath: <elementMask>k__BackingField
+      value: 
+      objectReference: {fileID: 2288520811973442059}
+    - target: {fileID: 4110944459725859003, guid: ade6e83ad45fc4c7e81daa5a6e0f7bab, type: 3}
+      propertyPath: <cameraReelToastMessage>k__BackingField
+      value: 
+      objectReference: {fileID: 3784594265100022905}
     - target: {fileID: 5218057066178112453, guid: ade6e83ad45fc4c7e81daa5a6e0f7bab, type: 3}
       propertyPath: m_AnchorMax.x
       value: 0

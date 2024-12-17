@@ -68,7 +68,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
 
         private async UniTask ShowAsync(CancellationToken ct)
         {
-            view.cameraReelGalleryView.gameObject.SetActive(false);
+            view.CameraReelGalleryView.gameObject.SetActive(false);
 
             CameraReelStorageStatus storageStatus = await cameraReelStorageService.GetUserGalleryStorageInfoAsync(web3IdentityCache.Identity.Address, ct);
             SetStorageStatus(storageStatus);
@@ -84,7 +84,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
             if (storageStatus.ScreenshotsAmount == 0)
                 view.emptyState.SetActive(true);
 
-            view.cameraReelGalleryView.gameObject.SetActive(storageStatus.ScreenshotsAmount > 0);
+            view.CameraReelGalleryView.gameObject.SetActive(storageStatus.ScreenshotsAmount > 0);
         }
 
         public void Activate()
