@@ -11,20 +11,24 @@ namespace DCL.CharacterTriggerArea.Components
     public struct CharacterTriggerAreaComponent : IDirtyMarker
     {
         private static readonly IReadOnlyCollection<Transform> EMPTY_COLLECTION = Array.Empty<Transform>();
-        internal CharacterTriggerArea? monoBehaviour;
+        public CharacterTriggerArea? monoBehaviour { get; private set; }
+
         private readonly bool targetOnlyMainPlayer;
+        private bool hasMonoBehaviour;
+
         public Vector3 AreaSize { get; private set; }
+        public bool IsDirty { get; set; }
 
-        public readonly IReadOnlyCollection<Transform> EnteredAvatarsToBeProcessed => monoBehaviour != null
-            ? monoBehaviour.EnteredAvatarsToBeProcessed
+        public readonly IReadOnlyCollection<Transform> EnteredAvatarsToBeProcessed => hasMonoBehaviour
+            ? monoBehaviour!.EnteredAvatarsToBeProcessed
             : EMPTY_COLLECTION;
 
-        public readonly IReadOnlyCollection<Transform> ExitedAvatarsToBeProcessed => monoBehaviour != null
-            ? monoBehaviour.ExitedAvatarsToBeProcessed
+        public readonly IReadOnlyCollection<Transform> ExitedAvatarsToBeProcessed => hasMonoBehaviour
+            ? monoBehaviour!.ExitedAvatarsToBeProcessed
             : EMPTY_COLLECTION;
 
-        public readonly IReadOnlyCollection<Transform> CurrentAvatarsInside => monoBehaviour != null
-            ? monoBehaviour.CurrentAvatarsInside
+        public readonly IReadOnlyCollection<Transform> CurrentAvatarsInside => hasMonoBehaviour
+            ? monoBehaviour!.CurrentAvatarsInside
             : EMPTY_COLLECTION;
 
         public CharacterTriggerAreaComponent(Vector3 areaSize, bool targetOnlyMainPlayer = false, CharacterTriggerArea? monoBehaviour = null)
@@ -33,25 +37,34 @@ namespace DCL.CharacterTriggerArea.Components
             this.targetOnlyMainPlayer = targetOnlyMainPlayer;
 
             this.monoBehaviour = monoBehaviour;
+            hasMonoBehaviour = monoBehaviour != null;
 
             IsDirty = true;
         }
 
-        public void TryAssignArea(IComponentPool<CharacterTriggerArea> pool, Transform mainPlayerTransform)
+        public void TryAssignArea(IComponentPool<CharacterTriggerArea> pool, Transform mainPlayerTransform, TransformComponent transformComponent)
         {
-            if (IsDirty == false) return;
+            if (hasMonoBehaviour && !monoBehaviour!.BoxCollider.enabled)
+                monoBehaviour.BoxCollider.enabled = true;
 
+            if (IsDirty == false) return;
             IsDirty = false;
 
-            if (monoBehaviour == null)
+            if (!hasMonoBehaviour)
             {
-                monoBehaviour = pool.Get();
+                SetMonoBehaviour(pool.Get());
 
                 if (targetOnlyMainPlayer)
-                    monoBehaviour!.TargetTransform = mainPlayerTransform;
+                    monoBehaviour.TargetTransform = mainPlayerTransform;
+
+                Transform triggerAreaTransform = monoBehaviour.transform;
+                triggerAreaTransform.SetParent(transformComponent.Transform);
+                triggerAreaTransform.localPosition = Vector3.zero;
+                triggerAreaTransform.localRotation = Quaternion.identity;
             }
 
             monoBehaviour!.BoxCollider.size = AreaSize;
+            monoBehaviour.BoxCollider.enabled = true;
         }
 
         public void UpdateAreaSize(Vector3 size)
@@ -60,30 +73,13 @@ namespace DCL.CharacterTriggerArea.Components
             IsDirty = true;
         }
 
-        public readonly void TryUpdateTransform(ref TransformComponent transformComponent)
-        {
-            if (monoBehaviour == null)
-                return;
-
-            Transform triggerAreaTransform = monoBehaviour.transform;
-
-            if (transformComponent.Cached.WorldPosition != triggerAreaTransform.position)
-                triggerAreaTransform.position = transformComponent.Cached.WorldPosition;
-
-            if (transformComponent.Cached.WorldRotation != triggerAreaTransform.rotation)
-                triggerAreaTransform.rotation = transformComponent.Cached.WorldRotation;
-
-            if (!monoBehaviour.BoxCollider.enabled)
-                monoBehaviour.BoxCollider.enabled = true;
-        }
-
         public void TryRelease(IComponentPool<CharacterTriggerArea> pool)
         {
-            if (monoBehaviour != null)
-            {
-                pool.Release(monoBehaviour);
-                monoBehaviour = null;
-            }
+            if (!hasMonoBehaviour) return;
+
+            pool.Release(monoBehaviour!);
+            monoBehaviour = null;
+            hasMonoBehaviour = false;
         }
 
         public void TryClear() => monoBehaviour?.Clear();
@@ -96,15 +92,19 @@ namespace DCL.CharacterTriggerArea.Components
 
         public bool TryDispose(ISceneStateProvider sceneStateProvider)
         {
-            if (!sceneStateProvider.IsCurrent && monoBehaviour != null)
+            if (!sceneStateProvider.IsCurrent && hasMonoBehaviour)
             {
-                monoBehaviour.Dispose();
+                monoBehaviour!.Dispose();
                 return true;
             }
 
             return false;
         }
 
-        public bool IsDirty { get; set; }
+        internal void SetMonoBehaviour(CharacterTriggerArea newMonoBehaviour)
+        {
+            monoBehaviour = newMonoBehaviour;
+            hasMonoBehaviour = newMonoBehaviour != null;
+        }
     }
 }

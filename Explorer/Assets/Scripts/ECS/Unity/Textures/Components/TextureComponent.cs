@@ -1,3 +1,4 @@
+using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using System;
 using UnityEngine;
 
@@ -8,6 +9,7 @@ namespace ECS.Unity.Textures.Components
         public readonly string Src;
         public readonly TextureWrapMode WrapMode;
         public readonly FilterMode FilterMode;
+        public readonly TextureType TextureType;
         public readonly bool IsVideoTexture;
         public readonly int VideoPlayerEntity;
         public readonly Vector2 TextureOffset;
@@ -21,15 +23,17 @@ namespace ECS.Unity.Textures.Components
             string fileHash,
             TextureWrapMode wrapMode = TextureWrapMode.Clamp,
             FilterMode filterMode = FilterMode.Bilinear,
-            bool isVideoTexture = false,
-            int videoPlayerEntity = 0,
+            TextureType textureType = TextureType.Albedo,
             Vector2 textureOffset = default,
-            Vector2 textureTiling = default)
+            Vector2 textureTiling = default,
+            bool isVideoTexture = false,
+            int videoPlayerEntity = 0)
         {
             Src = src;
             FileHash = fileHash;
             WrapMode = wrapMode;
             FilterMode = filterMode;
+            TextureType = textureType;
             IsVideoTexture = isVideoTexture;
             VideoPlayerEntity = videoPlayerEntity;
             TextureOffset = textureOffset;
@@ -50,5 +54,8 @@ namespace ECS.Unity.Textures.Components
 
         public override int GetHashCode() =>
             HashCode.Combine(cacheKey, (int)WrapMode, (int)FilterMode, IsVideoTexture, VideoPlayerEntity, TextureOffset, TextureTiling);
+
+        public TextureComponent WithTextureType(TextureType textureType) =>
+            new (Src, FileHash, WrapMode, FilterMode, textureType, isVideoTexture: IsVideoTexture, videoPlayerEntity: VideoPlayerEntity);
     }
 }

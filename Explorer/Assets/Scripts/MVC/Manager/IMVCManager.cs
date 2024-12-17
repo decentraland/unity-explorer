@@ -24,5 +24,7 @@ namespace MVC
         void RegisterController<TView, TInputData>(IController<TView, TInputData> controller) where TView: IView;
 
         void SetAllViewsCanvasActive(bool isActive);
+
+        void SetAllViewsCanvasActive(IController except, bool isActive);
     }
 }

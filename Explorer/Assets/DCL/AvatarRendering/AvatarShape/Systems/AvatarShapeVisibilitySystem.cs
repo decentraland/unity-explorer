@@ -5,6 +5,7 @@ using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Character.Components;
 using DCL.CharacterCamera;
+using DCL.ECSComponents;
 using ECS.Abstract;
 using System.Runtime.CompilerServices;
 using UnityEngine;
@@ -45,7 +46,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
         [Query]
         [All(typeof(AvatarShapeComponent))]
-        [None(typeof(AvatarCachedVisibilityComponent), typeof(PlayerComponent))]
+        [None(typeof(AvatarCachedVisibilityComponent), typeof(PlayerComponent), typeof(PBAvatarShape))]
         private void AddOthersCachedVisibilityComponent(in Entity entity, ref AvatarShapeComponent avatarShape)
         {
             bool shouldBeHidden = avatarShape.HiddenByModifierArea;
@@ -67,14 +68,13 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         }
 
         [Query]
-        [None(typeof(PlayerComponent))]
         private void UpdateAvatarsVisibilityState(ref AvatarShapeComponent avatarShape, ref AvatarCachedVisibilityComponent avatarCachedVisibility)
         {
             bool shouldBeHidden = avatarShape.HiddenByModifierArea;
             UpdateVisibilityState(ref avatarShape, ref avatarCachedVisibility, shouldBeHidden);
         }
 
-        private void UpdateVisibilityState( ref AvatarShapeComponent avatarShape, ref AvatarCachedVisibilityComponent avatarCachedVisibility, bool shouldBeHidden)
+        private void UpdateVisibilityState(ref AvatarShapeComponent avatarShape, ref AvatarCachedVisibilityComponent avatarCachedVisibility, bool shouldBeHidden)
         {
             if (avatarCachedVisibility.IsVisible == shouldBeHidden)
                 return;

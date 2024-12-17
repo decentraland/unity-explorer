@@ -1,7 +1,9 @@
 using Cysharp.Threading.Tasks;
 using DCL.Backpack;
+using DCL.ExplorePanel.Components;
 using DCL.Input;
 using DCL.Input.Component;
+using DCL.InWorldCamera.CameraReelGallery;
 using DCL.Navmap;
 using DCL.NotificationsBusController.NotificationsBus;
 using DCL.NotificationsBusController.NotificationTypes;
@@ -24,8 +26,10 @@ namespace DCL.ExplorePanel
         private readonly ProfileWidgetController profileWidgetController;
         private readonly ProfileMenuController profileMenuController;
         private readonly DCLInput dclInput;
+        private readonly IExplorePanelEscapeAction explorePanelEscapeAction;
         private readonly IMVCManager mvcManager;
         private readonly IInputBlock inputBlock;
+        private readonly bool includeCameraReel;
 
         private Dictionary<ExploreSections, TabSelectorView> tabsBySections;
         private Dictionary<ExploreSections, ISection> exploreSections;
@@ -40,6 +44,7 @@ namespace DCL.ExplorePanel
         private bool isControlClosing;
 
         public NavmapController NavmapController { get; }
+        public CameraReelController CameraReelController { get; }
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Fullscreen;
 
@@ -47,23 +52,29 @@ namespace DCL.ExplorePanel
             NavmapController navmapController,
             SettingsController settingsController,
             BackpackController backpackController,
+            CameraReelController cameraReelController,
             ProfileWidgetController profileWidgetController,
             ProfileMenuController profileMenuController,
             DCLInput dclInput,
+            IExplorePanelEscapeAction explorePanelEscapeAction,
             INotificationsBusController notificationBusController,
             IMVCManager mvcManager,
-            IInputBlock inputBlock)
+            IInputBlock inputBlock,
+            bool includeCameraReel)
             : base(viewFactory)
         {
             NavmapController = navmapController;
             this.settingsController = settingsController;
             this.backpackController = backpackController;
+            CameraReelController = cameraReelController;
             this.profileWidgetController = profileWidgetController;
             this.dclInput = dclInput;
+            this.explorePanelEscapeAction = explorePanelEscapeAction;
             this.mvcManager = mvcManager;
             this.profileMenuController = profileMenuController;
             notificationBusController.SubscribeToNotificationTypeClick(NotificationType.REWARD_ASSIGNMENT, OnRewardAssigned);
             this.inputBlock = inputBlock;
+            this.includeCameraReel = includeCameraReel;
         }
 
         private void OnRewardAssigned(object[] parameters)
@@ -88,6 +99,7 @@ namespace DCL.ExplorePanel
                 { ExploreSections.Navmap, NavmapController },
                 { ExploreSections.Settings, settingsController },
                 { ExploreSections.Backpack, backpackController },
+                { ExploreSections.CameraReel, CameraReelController },
             };
 
             sectionSelectorController = new SectionSelectorController<ExploreSections>(exploreSections, ExploreSections.Navmap);
@@ -102,6 +114,12 @@ namespace DCL.ExplorePanel
             foreach ((ExploreSections section, TabSelectorView? tabSelector) in tabsBySections)
             {
                 tabSelector.TabSelectorToggle.onValueChanged.RemoveAllListeners();
+
+                if (section == ExploreSections.CameraReel && !includeCameraReel)
+                {
+                    tabSelector.gameObject.SetActive(false);
+                    continue;
+                }
 
                 tabSelector.TabSelectorToggle.onValueChanged.AddListener(
                     isOn => { ToggleSection(isOn, tabSelector, section, true); }
@@ -159,10 +177,24 @@ namespace DCL.ExplorePanel
         private void RegisterHotkeys()
         {
             dclInput.Shortcuts.MainMenu.performed += OnCloseMainMenu;
-            dclInput.UI.Close.performed += OnCloseMainMenu;
+            explorePanelEscapeAction.RegisterEscapeAction(OnCloseMainMenu);
             dclInput.Shortcuts.Map.performed += OnMapHotkeyPressed;
             dclInput.Shortcuts.Settings.performed += OnSettingsHotkeyPressed;
             dclInput.Shortcuts.Backpack.performed += OnBackpackHotkeyPressed;
+            dclInput.InWorldCamera.CameraReel.performed += OnCameraReelHotkeyPressed;
+        }
+
+        private void OnCameraReelHotkeyPressed(InputAction.CallbackContext ctx)
+        {
+            if (!includeCameraReel) return;
+
+            if (lastShownSection != ExploreSections.CameraReel)
+            {
+                sectionSelectorController.SetAnimationState(false, tabsBySections[lastShownSection]);
+                ShowSection(ExploreSections.CameraReel);
+            }
+            else
+                isControlClosing = true;
         }
 
         private void OnCloseMainMenu(InputAction.CallbackContext obj)
@@ -227,10 +259,11 @@ namespace DCL.ExplorePanel
         private void UnRegisterHotkeys()
         {
             dclInput.Shortcuts.MainMenu.performed -= OnCloseMainMenu;
-            dclInput.UI.Close.performed -= OnCloseMainMenu;
+            explorePanelEscapeAction.RemoveEscapeAction(OnCloseMainMenu);
             dclInput.Shortcuts.Map.performed -= OnMapHotkeyPressed;
             dclInput.Shortcuts.Settings.performed -= OnSettingsHotkeyPressed;
             dclInput.Shortcuts.Backpack.performed -= OnBackpackHotkeyPressed;
+            dclInput.InWorldCamera.CameraReel.performed -= OnCameraReelHotkeyPressed;
         }
 
         private void BlockUnwantedInputs()
