@@ -158,7 +158,7 @@ namespace DCL.Navmap
             {
                 PlacesData.PlaceInfo? place = await placesAPIService.GetPlaceAsync(clickedParcel.Parcel, ct, true);
 
-                if (place == null) return;
+                if (place == null) place = new PlacesData.PlaceInfo(clickedParcel.Parcel);
 
                 NavmapBus.SelectPlaceAsync(place, fetchPlaceAndShowCancellationToken.Token).Forget();
             }

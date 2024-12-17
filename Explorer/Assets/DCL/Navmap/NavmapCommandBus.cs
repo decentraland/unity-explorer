@@ -62,7 +62,7 @@ namespace DCL.Navmap
             PlacesData.PlaceInfo? place = await placesAPIService.GetPlaceAsync(parcel, ct, true);
 
             // TODO: show empty parcel
-            if (place == null) return;
+            if (place == null) place = new PlacesData.PlaceInfo(parcel);
 
             await SelectPlaceAsync(place, ct, isFromSearchResults);
         }

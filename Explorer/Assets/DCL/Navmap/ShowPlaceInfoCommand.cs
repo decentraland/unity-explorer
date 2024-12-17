@@ -47,6 +47,7 @@ namespace DCL.Navmap
             placeInfoPanelController.Set(placeInfo);
             placeInfoPanelController.Toggle(PlaceInfoPanelController.Section.OVERVIEW);
             placeInfoPanelController.HideLiveEvent();
+            searchBarController.ToggleClearButton(true);
             searchBarController.SetInputText(placeInfo.title);
             searchBarController.Interactable = false;
 

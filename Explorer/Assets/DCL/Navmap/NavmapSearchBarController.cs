@@ -77,6 +77,11 @@ namespace DCL.Navmap
             view.clearSearchButton.onClick.RemoveAllListeners();
         }
 
+        public void ToggleClearButton(bool isActive)
+        {
+            view.clearSearchButton.gameObject.SetActive(isActive);
+        }
+
         public void SetInputFieldCategory(string? category)
         {
             view.clearSearchButton.gameObject.SetActive(!string.IsNullOrEmpty(category) || !string.IsNullOrEmpty(currentSearchText));

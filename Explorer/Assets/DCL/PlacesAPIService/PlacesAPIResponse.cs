@@ -4,6 +4,7 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Text;
 using UnityEngine;
 using UnityEngine.Pool;
 
@@ -11,7 +12,7 @@ namespace DCL.PlacesAPIService
 {
     public static class PlacesData
     {
-        public static readonly ObjectPool<PlaceInfo> PLACE_INFO_POOL = new (() => new PlaceInfo(), defaultCapacity: 10, maxSize: 1000);
+        public static readonly ObjectPool<PlaceInfo> PLACE_INFO_POOL = new (() => new PlaceInfo(Vector2Int.zero), defaultCapacity: 10, maxSize: 1000);
         internal static readonly ListObjectPool<PlaceInfo> PLACE_INFO_LIST_POOL = new (listInstanceDefaultCapacity: 100, defaultCapacity: 4);
 
         // Preallocate the list so it will be reused every time it's parsed into
@@ -58,6 +59,55 @@ namespace DCL.PlacesAPIService
             public string like_rate;
 
             [SerializeField] private string[] positions;
+
+            public PlaceInfo(Vector2Int position)
+            {
+                id = "fake_id";
+                title = "Empty place";
+                description = "No description.";
+                image = "";
+                owner = "no owner";
+                tags = Array.Empty<string>();
+                world_name = "";
+                Positions = new[] { position };
+                base_position = new StringBuilder().Append(position.x).Append(",").Append(position.y).ToString();
+                contact_name = string.Empty;
+                contact_email = string.Empty;
+                content_rating = "E";
+                disabled = false;
+                disabled_at = string.Empty;
+                created_at = DateTime.UtcNow.ToString("o");
+                updated_at = DateTime.UtcNow.ToString("o");
+                deployed_at = DateTime.UtcNow.ToString("o");
+                favorites = 0;
+                likes = 0;
+                dislikes = 0;
+                categories = Array.Empty<string>();
+                highlighted = false;
+                highlighted_image = null;
+                featured = false;
+                featured_image = null;
+                user_favorite = false;
+                user_like = false;
+                user_dislike = false;
+                user_count = 0;
+                user_visits = 0;
+
+                realms_detail = new[]
+                {
+                    new Realm
+                    {
+                        serverName = "FakeServer",
+                        layer = "FakeLayer",
+                        url = "https://fake.url",
+                        usersCount = 0,
+                        maxUsers = 100,
+                        userParcels = new[] { new Vector2Int(0, 0) }
+                    }
+                };
+
+                like_rate = "0.0";
+            }
 
             [JsonIgnore]
             public float? like_rate_as_float
@@ -148,6 +198,7 @@ namespace DCL.PlacesAPIService
             public bool ok;
             public PlaceInfo data;
         }
+
     }
 
     [Serializable]
