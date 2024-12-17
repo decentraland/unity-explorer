@@ -40,8 +40,11 @@ namespace ECS.SceneLifeCycle.Realm
 
         UniTask InitializeTeleportToSpawnPointAsync(AsyncLoadProcessReport teleportLoadReport, CancellationToken ct, Vector2Int parcelToTeleport);
 
+        void RemoveCameraSamplingData();
+        
         void SwitchMiscVisibilityAsync();
 
         UniTask ChangeRealmAsync(URLDomain realm, CancellationToken ct);
+        
     }
 }

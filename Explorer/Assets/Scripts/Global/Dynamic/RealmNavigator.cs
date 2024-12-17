@@ -247,6 +247,12 @@ namespace Global.Dynamic
             };
         }
 
+        public void RemoveCameraSamplingData()
+        {
+            if (globalWorld.Has<CameraSamplingData>(cameraEntity.Object))
+                globalWorld.Remove<CameraSamplingData>(cameraEntity.Object);
+        }
+
         public async UniTask InitializeTeleportToSpawnPointAsync(
             AsyncLoadProcessReport teleportLoadReport,
             CancellationToken ct,

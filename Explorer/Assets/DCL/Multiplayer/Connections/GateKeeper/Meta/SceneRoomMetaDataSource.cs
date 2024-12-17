@@ -64,6 +64,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
                 : new MetaData(null, input);
         }
 
-        public bool MetadataIsDirty => !realmData.ScenesAreFixed && characterTransform.Position.IsDirty;
+        public bool MetadataIsDirty => realmData is { Configured: true, ScenesAreFixed: false } &&
+                                       characterTransform.Position.IsDirty;
     }
 }

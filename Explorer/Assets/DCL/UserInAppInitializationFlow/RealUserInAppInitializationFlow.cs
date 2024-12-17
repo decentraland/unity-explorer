@@ -42,6 +42,8 @@ namespace DCL.UserInAppInitializationFlow
         private readonly RestartRealmStartupOperation restartRealmStartupOperation;
         private readonly IStartupOperation startupOperation;
 
+        private readonly IRealmController realmController;
+
         public RealUserInAppInitializationFlow(
             ILoadingStatus loadingStatus,
             IHealthCheck livekitHealthCheck,
@@ -70,6 +72,7 @@ namespace DCL.UserInAppInitializationFlow
             this.backgroundMusic = backgroundMusic;
             this.realmNavigator = realmNavigator;
             this.loadingScreen = loadingScreen;
+            this.realmController = realmController;
             this.roomHub = roomHub;
 
             var ensureLivekitConnectionStartupOperation = new EnsureLivekitConnectionStartupOperation(loadingStatus, livekitHealthCheck);
@@ -113,51 +116,36 @@ namespace DCL.UserInAppInitializationFlow
 
             do
             {
-                if (parameters.FromLogout)
-
-                    // Disconnect current livekit connection on logout so the avatar is removed from other peers
-                    await roomHub.StopAsync().Timeout(TimeSpan.FromSeconds(10));
-
                 if (parameters.ShowAuthentication)
                 {
                     loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.AuthenticationScreenShowing);
-                    await ShowAuthenticationScreenAsync(ct);
+                    if (parameters.FromLogout)
+                    {
+                        realmNavigator.RemoveCameraSamplingData();
+                        await UniTask.WhenAll(ShowAuthenticationScreenAsync(ct), realmController.RestartRealmAsync(ct));
+                    }
+                    else
+                    {
+                        await ShowAuthenticationScreenAsync(ct);
+                    }
                 }
 
-                if (parameters.FromLogout)
-                {
-                    // If we are coming from a logout, we teleport the user to Genesis Plaza and force realm change to reset the scene properly
-                    var url = URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.Genesis));
-                    var changeRealmResult = await realmNavigator.TryChangeRealmAsync(url, ct);
+                var loadingResult = await LoadingScreen(parameters.ShowLoading)
+                    .ShowWhileExecuteTaskAsync(
+                        async (parentLoadReport, ct) =>
+                        {
+                            result = await startupOperation.ExecuteAsync(parentLoadReport, ct);
 
-                    if (changeRealmResult.Success == false)
-                        ReportHub.LogError(ReportCategory.AUTHENTICATION, changeRealmResult.AsResult().ErrorMessage!);
+                            if (result.Success)
+                                parentLoadReport.SetProgress(
+                                    loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.Completed));
 
-                    // Restart livekit connection
-                    await roomHub.StartAsync().Timeout(TimeSpan.FromSeconds(10));
-                    result = changeRealmResult.AsResult();
+                            return result;
+                        },
+                        ct
+                    );
 
-                    // We need to flag the process as completed, otherwise the multiplayer systems will not run
-                    loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.Completed);
-                }
-                else
-                {
-                    Result loadingResult = await LoadingScreen(parameters.ShowLoading)
-                       .ShowWhileExecuteTaskAsync(
-                            async (parentLoadReport, ct) =>
-                            {
-                                result = await startupOperation.ExecuteAsync(parentLoadReport, ct);
-
-                                if (result.Success)
-                                    parentLoadReport.SetProgress(loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.Completed));
-
-                                return result;
-                            },
-                            ct
-                        );
-
-                    ApplyErrorIfLoadingScreenError(ref result, loadingResult);
-                }
+                ApplyErrorIfLoadingScreenError(ref result, loadingResult);
 
                 if (result.Success == false)
                     ReportHub.LogError(ReportCategory.DEBUG, result.ErrorMessage!);
