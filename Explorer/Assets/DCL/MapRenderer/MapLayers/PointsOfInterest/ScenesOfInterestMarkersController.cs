@@ -172,7 +172,7 @@ namespace DCL.MapRenderer.MapLayers.PointsOfInterest
             return UniTask.CompletedTask;
         }
 
-        public UniTask Enable(CancellationToken cancellationToken)
+        public UniTask EnableAsync(CancellationToken cancellationToken)
         {
             foreach (ISceneOfInterestMarker marker in markers.Values)
                 mapCullingController.StartTracking(marker, this);

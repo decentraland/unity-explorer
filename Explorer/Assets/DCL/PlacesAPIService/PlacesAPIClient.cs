@@ -183,7 +183,7 @@ namespace DCL.PlacesAPIService
             return response.data;
         }
 
-        public async UniTask<IReadOnlyList<OptimizedPlaceInMapResponse>> GetOptimizedPlacesFromTheMap(string category, CancellationToken ct)
+        public async UniTask<IReadOnlyList<OptimizedPlaceInMapResponse>> GetOptimizedPlacesFromTheMapAsync(string category, CancellationToken ct)
         {
             var url = $"{mapApiUrl}?categories={category}";
 

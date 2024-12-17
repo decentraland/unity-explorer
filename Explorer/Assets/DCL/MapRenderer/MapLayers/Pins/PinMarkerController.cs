@@ -184,7 +184,7 @@ namespace DCL.MapRenderer.MapLayers.Pins
             return UniTask.CompletedTask;
         }
 
-        public UniTask Enable(CancellationToken cancellationToken)
+        public UniTask EnableAsync(CancellationToken cancellationToken)
         {
             foreach (IPinMarker marker in markers.Values)
                 mapCullingController.StartTracking(marker, this);

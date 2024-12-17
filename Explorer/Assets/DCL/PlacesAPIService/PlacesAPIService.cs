@@ -119,8 +119,8 @@ namespace DCL.PlacesAPIService
             return rentedPlaces;
         }
 
-        public async UniTask<IReadOnlyList<OptimizedPlaceInMapResponse>> GetOptimizedPlacesFromTheMap(string category, CancellationToken ct) =>
-            await client.GetOptimizedPlacesFromTheMap(category, ct);
+        public async UniTask<IReadOnlyList<OptimizedPlaceInMapResponse>> GetOptimizedPlacesFromTheMapAsync(string category, CancellationToken ct) =>
+            await client.GetOptimizedPlacesFromTheMapAsync(category, ct);
 
         public async UniTask<PlacesData.IPlacesAPIResponse> GetFavoritesAsync(CancellationToken ct,
             int pageNumber = -1, int pageSize = -1,

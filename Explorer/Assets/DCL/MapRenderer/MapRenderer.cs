@@ -124,7 +124,7 @@ namespace DCL.MapRenderer
                 ResetCancellationSource(mapLayerStatus);
 
                 if (active)
-                    mapLayerStatus.MapLayerController.Enable(mapLayerStatus.CTS.Token).SuppressCancellationThrow().Forget();
+                    mapLayerStatus.MapLayerController.EnableAsync(mapLayerStatus.CTS.Token).SuppressCancellationThrow().Forget();
                 else
                     mapLayerStatus.MapLayerController.Disable(mapLayerStatus.CTS.Token).SuppressCancellationThrow().Forget();
             }
@@ -148,7 +148,7 @@ namespace DCL.MapRenderer
                 {
                     // Cancel deactivation flow
                     ResetCancellationSource(mapLayerStatus);
-                    mapLayerStatus.MapLayerController.Enable(mapLayerStatus.CTS.Token).SuppressCancellationThrow().Forget();
+                    mapLayerStatus.MapLayerController.EnableAsync(mapLayerStatus.CTS.Token).SuppressCancellationThrow().Forget();
                 }
 
                 mapLayerStatus.ActivityOwners.Add(owner);

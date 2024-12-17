@@ -61,7 +61,7 @@ namespace DCL.MapRenderer.MapLayers.Users
         private void OnTeleport(Vector2Int destinationcoordinates)
         {
             cancellationToken = cancellationToken.SafeRestart();
-            ProcessRemoteUsers(cancellationToken.Token).Forget();
+            ProcessRemoteUsersAsync(cancellationToken.Token).Forget();
         }
 
         protected override void DisposeImpl()
@@ -120,9 +120,9 @@ namespace DCL.MapRenderer.MapLayers.Users
             }
         }
 
-        private async UniTask ProcessRemoteUsers(CancellationToken ct)
+        private async UniTask ProcessRemoteUsersAsync(CancellationToken ct)
         {
-            List<RemotePlayerData> remotePlayersData = await remoteUsersRequestController.RequestUsers(ct);
+            List<RemotePlayerData> remotePlayersData = await remoteUsersRequestController.RequestUsersAsync(ct);
 
             //Reset the markers bound to remote users by releasing them
             foreach (string remoteUser in remoteUsers)
@@ -153,11 +153,11 @@ namespace DCL.MapRenderer.MapLayers.Users
             }
         }
 
-        public async UniTask Enable(CancellationToken cancellationToken)
+        public async UniTask EnableAsync(CancellationToken cancellationToken)
         {
             isEnabled = true;
 
-            await ProcessRemoteUsers(cancellationToken);
+            await ProcessRemoteUsersAsync(cancellationToken);
         }
 
         public UniTask Disable(CancellationToken cancellationToken)

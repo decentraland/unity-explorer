@@ -33,6 +33,6 @@ namespace DCL.PlacesAPIService
         /// <summary>
         /// Removes the excess of data from the places/map api, so it can be represented in the map with the minimal information
         /// </summary>
-        UniTask<IReadOnlyList<OptimizedPlaceInMapResponse>> GetOptimizedPlacesFromTheMap(string category, CancellationToken ct);
+        UniTask<IReadOnlyList<OptimizedPlaceInMapResponse>> GetOptimizedPlacesFromTheMapAsync(string category, CancellationToken ct);
     }
 }

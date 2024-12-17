@@ -82,7 +82,7 @@ namespace DCL.MapRenderer.MapLayers.Atlas
             ClearCurrentChunks();
         }
 
-        UniTask IMapLayerController.Enable(CancellationToken cancellationToken)
+        UniTask IMapLayerController.EnableAsync(CancellationToken cancellationToken)
         {
             instantiationParent.gameObject.SetActive(true);
             return UniTask.CompletedTask;

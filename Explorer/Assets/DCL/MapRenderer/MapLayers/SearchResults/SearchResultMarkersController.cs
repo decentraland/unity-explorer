@@ -137,7 +137,7 @@ namespace DCL.MapRenderer.MapLayers.SearchResults
             return UniTask.CompletedTask;
         }
 
-        public async UniTask Enable(CancellationToken cancellationToken)
+        public async UniTask EnableAsync(CancellationToken cancellationToken)
         {
             foreach (ISearchResultMarker marker in markers.Values)
                 mapCullingController.StartTracking(marker, this);

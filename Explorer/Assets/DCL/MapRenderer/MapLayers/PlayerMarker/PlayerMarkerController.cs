@@ -68,7 +68,7 @@ namespace DCL.MapRenderer.MapLayers.PlayerMarker
             SetRotation(transformComponent.Transform.rotation);
         }
 
-        public UniTask Enable(CancellationToken cancellationToken)
+        public UniTask EnableAsync(CancellationToken cancellationToken)
         {
             playerMarker.SetActive(true);
             return UniTask.CompletedTask;

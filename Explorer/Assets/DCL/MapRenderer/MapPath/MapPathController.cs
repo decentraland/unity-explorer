@@ -161,7 +161,7 @@ namespace DCL.MapRenderer
         public UniTask InitializeAsync(CancellationToken cancellationToken) =>
             UniTask.CompletedTask;
 
-        public UniTask Enable(CancellationToken cancellationToken)
+        public UniTask EnableAsync(CancellationToken cancellationToken)
         {
             if (destinationSet)
             {

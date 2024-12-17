@@ -167,7 +167,7 @@ namespace DCL.MapRenderer.MapLayers.Categories
             return UniTask.CompletedTask;
         }
 
-        public async UniTask Enable(CancellationToken cancellationToken)
+        public async UniTask EnableAsync(CancellationToken cancellationToken)
         {
             foreach (ICategoryMarker marker in markers.Values)
                 mapCullingController.StartTracking(marker, this);

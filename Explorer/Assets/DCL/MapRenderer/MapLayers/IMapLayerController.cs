@@ -25,7 +25,7 @@ namespace DCL.MapRenderer.MapLayers
         /// Enable layer
         /// </summary>
         /// <param name="cancellationToken">Cancellation Token is bound to both `Abort` (changing to the `Disabled` state) and `Dispose`</param>
-        UniTask Enable(CancellationToken cancellationToken);
+        UniTask EnableAsync(CancellationToken cancellationToken);
 
         /// <summary>
         /// Disable layer
