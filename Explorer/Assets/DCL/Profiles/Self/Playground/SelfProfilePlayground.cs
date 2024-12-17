@@ -41,7 +41,7 @@ namespace DCL.Profiles.Self.Playground
                                     web3IdentityCache,
                                     IWebRequestController.DEFAULT,
                                     URLDomain.FromString(url),
-                                    new DecentralandUrlsSource(DecentralandEnvironment.Org),
+                                    URLDomain.EMPTY,
                                     new ServerAbout(
                                         lambdas: new ContentEndpoint(url)
                                     )

@@ -22,8 +22,8 @@ using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using DCL.Browser.DecentralandUrls;
 using DCL.DebugUtilities;
+using DCL.FeatureFlags;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using ECS.SceneLifeCycle.Realm;
 using Unity.Mathematics;
@@ -59,6 +59,7 @@ namespace Global.Dynamic
         public IRealmData RealmData => realmData;
 
         private readonly RealmNavigatorDebugView realmNavigatorDebugView;
+        private readonly FeatureFlagsCache featureFlagsCache;
 
         public RealmType Type
         {
@@ -99,7 +100,8 @@ namespace Global.Dynamic
             IDebugContainerBuilder debugContainerBuilder,
             IComponentPool<PartitionComponent> partitionComponentPool,
             bool isLocalSceneDevelopment,
-            IDecentralandUrlsSource urlsSource)
+            IDecentralandUrlsSource urlsSource,
+            FeatureFlagsCache featureFlagsCache)
         {
             this.web3IdentityCache = web3IdentityCache;
             this.webRequestController = webRequestController;
@@ -114,6 +116,7 @@ namespace Global.Dynamic
             this.partitionComponentPool = partitionComponentPool;
             this.isLocalSceneDevelopment = isLocalSceneDevelopment;
             this.urlsSource = urlsSource;
+            this.featureFlagsCache = featureFlagsCache;
             realmNavigatorDebugView = new RealmNavigatorDebugView(debugContainerBuilder);
         }
 
@@ -133,8 +136,15 @@ namespace Global.Dynamic
 
             string hostname = ResolveHostname(realm, result);
 
+
+            var assetBundleRegistry =
+                featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.ASSET_BUNDLE_FALLBACK)
+                    ? URLBuilder.Combine(URLDomain.FromString(urlsSource.Url(DecentralandUrl.AssetBundleRegistry)),
+                        URLSubdirectory.FromString("entities/active"))
+                    : URLDomain.EMPTY;
+
             realmData.Reconfigure(
-                new IpfsRealm(web3IdentityCache, webRequestController, realm, urlsSource, result),
+                new IpfsRealm(web3IdentityCache, webRequestController, realm, assetBundleRegistry, result),
                 result.configurations.realmName.EnsureNotNull("Realm name not found"),
                 result.configurations.networkId,
                 result.comms?.adapter ?? result.comms?.fixedAdapter ?? "offline:offline", //"offline property like in previous implementation"

@@ -8,7 +8,6 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading;
-using DCL.Multiplayer.Connections.DecentralandUrls;
 using UnityEngine;
 
 namespace DCL.Ipfs
@@ -33,7 +32,7 @@ namespace DCL.Ipfs
         public IpfsRealm(IWeb3IdentityCache web3IdentityCache,
             IWebRequestController webRequestController,
             URLDomain realmName,
-            IDecentralandUrlsSource urlsSources,
+            URLDomain assetBundleRegistry,
             ServerAbout? serverAbout = null)
         {
             this.web3IdentityCache = web3IdentityCache;
@@ -53,10 +52,7 @@ namespace DCL.Ipfs
                 EntitiesActiveEndpoint = URLBuilder.Combine(ContentBaseUrl, URLSubdirectory.FromString("entities/active"));
                 ContentBaseUrl = URLBuilder.Combine(ContentBaseUrl, URLSubdirectory.FromString("contents/"));
 
-                AssetBundleRegistry =
-                    URLBuilder.Combine(URLDomain.FromString(urlsSources.Url(DecentralandUrl.AssetBundleRegistry)),
-                        URLSubdirectory.FromString("entities/active"));
-                ;
+                AssetBundleRegistry = assetBundleRegistry.IsEmpty ? EntitiesActiveEndpoint : assetBundleRegistry;
             }
             else
             {
@@ -64,6 +60,7 @@ namespace DCL.Ipfs
                 entitiesBaseUrl = URLBuilder.Combine(CatalystBaseUrl, URLSubdirectory.FromString("content/entities/"));
                 ContentBaseUrl = URLBuilder.Combine(CatalystBaseUrl, URLSubdirectory.FromString("content/contents/"));
                 EntitiesActiveEndpoint = URLBuilder.Combine(CatalystBaseUrl, URLSubdirectory.FromString("content/entities/active"));
+                AssetBundleRegistry = assetBundleRegistry.IsEmpty ? EntitiesActiveEndpoint : assetBundleRegistry;
             }
         }
 
