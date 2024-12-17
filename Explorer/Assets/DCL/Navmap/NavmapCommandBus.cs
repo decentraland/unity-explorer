@@ -28,7 +28,7 @@ namespace DCL.Navmap
         public event INavmapBus.SearchPlaceResultDelegate? OnPlaceSearched;
         public event Action<string?>? OnFilterByCategory;
         public event Action? OnClearPlacesFromMap;
-        public event Action<Vector2>? OnMoveCameraTo;
+        public event Action<Vector2, float>? OnMoveCameraTo;
         public event Action<bool>? OnZoomCamera;
         public event Action<Vector2Int, Vector2> OnLongHover;
         public event Action OnClearFilter;
@@ -116,8 +116,8 @@ namespace DCL.Navmap
         public void ClearPlacesFromMap() =>
             OnClearPlacesFromMap?.Invoke();
 
-        public void MoveCameraTo(Vector2 position) =>
-            OnMoveCameraTo?.Invoke(position);
+        public void MoveCameraTo(Vector2 position, float speed = 0f) =>
+            OnMoveCameraTo?.Invoke(position, speed);
 
         public void ZoomCamera(bool zoomIn) =>
             OnZoomCamera?.Invoke(zoomIn);

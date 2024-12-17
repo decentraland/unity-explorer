@@ -147,7 +147,6 @@ namespace DCL.Navmap
             if (parcel.Equals(lastParcelHovered)) return;
             navmapView.MapPinTooltip.Hide();
             lastParcelHovered = parcel;
-            audioEventsBus.SendPlayAudioEvent(navmapView.HoverAudio);
         }
 
         private void OnParcelClicked(MapRenderImage.ParcelClickData clickedParcel)

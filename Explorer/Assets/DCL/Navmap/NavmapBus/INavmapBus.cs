@@ -44,7 +44,7 @@ namespace DCL.Navmap
         event Action<string?>? OnFilterByCategory;
         event Action? OnClearFilter;
         event Action? OnClearPlacesFromMap;
-        event Action<Vector2> OnMoveCameraTo;
+        event Action<Vector2, float> OnMoveCameraTo;
         public event Action<bool>? OnZoomCamera;
         public event Action<Vector2Int, Vector2> OnLongHover;
 
@@ -67,7 +67,7 @@ namespace DCL.Navmap
 
         void ClearPlacesFromMap();
 
-        void MoveCameraTo(Vector2 position);
+        void MoveCameraTo(Vector2 position, float speed = 0f);
 
         void ZoomCamera(bool zoomIn);
 

@@ -37,9 +37,9 @@ namespace DCL.Navmap
             navmapBus.OnMoveCameraTo += MoveCameraTo;
         }
 
-        private void MoveCameraTo(Vector2 destination)
+        private void MoveCameraTo(Vector2 destination, float speed = 0)
         {
-            cameraController.TranslateTo(destination, TRANSITION_TIME);
+            cameraController.TranslateTo(destination, speed == 0 ? TRANSITION_TIME : speed);
         }
 
         private void ToggleFilterPanel()

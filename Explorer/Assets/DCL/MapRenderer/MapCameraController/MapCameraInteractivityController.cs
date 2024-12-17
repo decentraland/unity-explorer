@@ -62,7 +62,6 @@ namespace DCL.MapRenderer.MapCameraController
             // make position discrete
             var localPosition = coordsUtils.CoordsToPosition(parcel, marker);
 
-            UIAudioEventsBus.Instance.SendPlayAudioEvent(hoverAudio);
             marker.Activate();
             marker.SetCoordinates(parcel, localPosition);
         }
@@ -79,6 +78,7 @@ namespace DCL.MapRenderer.MapCameraController
                 if (raycast.collider.gameObject == previouslyRaycastedObject)
                     return hitObject;
 
+                UIAudioEventsBus.Instance.SendPlayAudioEvent(hoverAudio);
                 if (previouslyRaycastedObject != null)
                 {
                     foreach (IMapLayerController mapLayerController in interactableLayers)
@@ -122,7 +122,7 @@ namespace DCL.MapRenderer.MapCameraController
 
             GameObject? hitObject = null;
             RaycastHit2D raycast = Physics2D.Raycast(GetLocalPosition(normalizedCoordinates), Vector2.zero, 10);
-            navmapBus.MoveCameraTo(parcel);
+            navmapBus.MoveCameraTo(parcel, 1f);
             UIAudioEventsBus.Instance.SendPlayAudioEvent(clickAudio);
 
             if (raycast.collider != null)
