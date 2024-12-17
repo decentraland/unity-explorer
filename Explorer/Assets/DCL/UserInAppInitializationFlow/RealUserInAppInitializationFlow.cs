@@ -1,8 +1,10 @@
 using System.Threading;
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.AuthenticationScreenFlow;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
+using DCL.Chat.History;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -37,7 +39,8 @@ namespace DCL.UserInAppInitializationFlow
         private readonly RestartRealmStartupOperation restartRealmStartupOperation;
         private readonly IStartupOperation startupOperation;
         private readonly IStartupOperation reloginOperation;
-
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
+        private readonly IChatHistory chatHistory;
 
         private readonly IRealmController realmController;
 
@@ -60,14 +63,16 @@ namespace DCL.UserInAppInitializationFlow
             IAppArgs appParameters,
             IDebugSettings debugSettings,
             IPortableExperiencesController portableExperiencesController,
-            DiagnosticsContainer diagnosticsContainer)
+            DiagnosticsContainer diagnosticsContainer, IChatHistory chatHistory)
         {
             this.loadingStatus = loadingStatus;
+            this.decentralandUrlsSource = decentralandUrlsSource;
             this.mvcManager = mvcManager;
             this.backgroundMusic = backgroundMusic;
             this.realmNavigator = realmNavigator;
             this.loadingScreen = loadingScreen;
             this.realmController = realmController;
+            this.chatHistory = chatHistory;
 
             var ensureLivekitConnectionStartupOperation = new EnsureLivekitConnectionStartupOperation(loadingStatus, livekitHealthCheck);
             var initializeFeatureFlagsStartupOperation = new InitializeFeatureFlagsStartupOperation(loadingStatus, featureFlagsProvider, web3IdentityCache, decentralandUrlsSource, appParameters);
@@ -128,7 +133,10 @@ namespace DCL.UserInAppInitializationFlow
                     if (parameters.FromLogout)
                     {
                         realmNavigator.RemoveCameraSamplingData();
-                        await UniTask.WhenAll(ShowAuthenticationScreenAsync(ct), realmController.RestartRealmAsync(ct));
+                        chatHistory.Clear();
+                        await UniTask.WhenAll(ShowAuthenticationScreenAsync(ct),
+                            realmController.SetRealmAsync(
+                                URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.Genesis)), ct));
                     }
                     else
                     {

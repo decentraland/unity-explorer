@@ -381,6 +381,8 @@ namespace Global.Dynamic
 
             livekitHealthCheck.WithRetries();
 
+            var chatHistory = new ChatHistory();
+
             container.UserInAppInAppInitializationFlow = new RealUserInAppInitializationFlow(
                 staticContainer.LoadingStatus,
                 livekitHealthCheck,
@@ -400,7 +402,8 @@ namespace Global.Dynamic
                 dynamicWorldParams.AppParameters,
                 bootstrapContainer.DebugSettings,
                 staticContainer.PortableExperiencesController,
-                bootstrapContainer.DiagnosticsContainer);
+                bootstrapContainer.DiagnosticsContainer,
+                chatHistory);
 
             var worldInfoHub = new LocationBasedWorldInfoHub(
                 new WorldInfoHub(staticContainer.SingletonSharedDependencies.SceneMapping),
@@ -410,8 +413,6 @@ namespace Global.Dynamic
             dynamicWorldDependencies.WorldInfoTool.Initialize(worldInfoHub);
 
             container.CharacterDataPropagationUtility = new CharacterDataPropagationUtility(staticContainer.ComponentsContainer.ComponentPoolsRegistry.AddComponentPool<SDKProfile>());
-
-            var chatHistory = new ChatHistory();
 
             var currentSceneInfo = new CurrentSceneInfo();
             var connectionStatusPanelPlugin = new ConnectionStatusPanelPlugin(container.UserInAppInAppInitializationFlow, container.MvcManager, mainUIView, roomsStatus, currentSceneInfo, container.reloadSceneController, globalWorld, playerEntity, debugBuilder);
