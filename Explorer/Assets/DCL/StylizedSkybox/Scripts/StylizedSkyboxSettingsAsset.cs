@@ -12,46 +12,37 @@ namespace DCL.StylizedSkybox.Scripts
         public Material SkyboxMaterial = null!;
         public AssetReferenceT<AnimationClip> SkyboxAnimationCycle = null!;
 
-        public event Action<int> TimeOfDayChanged;
-        public event Action<TimeProgression> SpeedChanged;
+        public event Action<float> NormalizedTimeChanged;
+        public event Action<bool> UseDynamicTimeChanged;
 
-        private int timeOfDay;
+        private float normalizedTime;
 
-        public int TimeOfDay
+        public float NormalizedTime
         {
-            get => timeOfDay;
+            get => normalizedTime;
 
             set
             {
-                if (timeOfDay == value) return;
+                if (normalizedTime == value) return;
 
-                Speed = TimeProgression.Paused;
-                timeOfDay = value;
-                TimeOfDayChanged?.Invoke(value);
+                normalizedTime = value;
+                NormalizedTimeChanged?.Invoke(value);
             }
         }
 
-        private TimeProgression speed = TimeProgression.Default;
+        private bool useDynamicTime = true;
 
-        public TimeProgression Speed
+        public bool UseDynamicTime
         {
-            get => speed;
+            get => useDynamicTime;
 
             set
             {
-                if (speed == value) return;
+                if (useDynamicTime == value) return;
 
-                speed = value;
-                SpeedChanged?.Invoke(value);
+                useDynamicTime = value;
+                UseDynamicTimeChanged?.Invoke(value);
             }
-        }
-
-        public enum TimeProgression
-        {
-            Paused = 0,
-            Default = 1,
-            Fast = 2,
-            VeryFast = 3,
         }
 
         [Serializable]

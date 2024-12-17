@@ -1,19 +1,36 @@
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
+using System;
 using UnityEngine;
 using TMPro;
 using UnityEngine.Rendering;
 
 public class SkyboxController : MonoBehaviour
 {
-    [HideInInspector]
-    public int SecondsInDay = 86400;
-    public bool PlayOnStart;
-    public bool StopRefresh = false;
-    public float Speed = 1 * 60;
+    private const int SECONDS_IN_DAY = 86400;
+    private const float DEFAULT_TIME = 0.5f; // Midday
+    private const float DEFAULT_SPEED = 1 * 60f; // 1 minute per second
 
-    [HideInInspector] public float NaturalTime;
-    [HideInInspector] public float NormalizedTime;
+    private static readonly int ZENIT_COLOR = Shader.PropertyToID("_ZenitColor");
+    private static readonly int HORIZON_COLOR = Shader.PropertyToID("_HorizonColor");
+    private static readonly int NADIR_COLOR = Shader.PropertyToID("_NadirColor");
+    private static readonly int SUN_COLOR = Shader.PropertyToID("_SunColor");
+    private static readonly int RIM_COLOR = Shader.PropertyToID("_RimColor");
+    private static readonly int CLOUDS_COLOR = Shader.PropertyToID("_CloudsColor");
+    private static readonly int CLOUD_HIGHLIGHTS = Shader.PropertyToID("_Cloud_Highlights");
+    private static readonly int SUN_SIZE = Shader.PropertyToID("_SunSize");
+    private static readonly int SUN_OPACITY = Shader.PropertyToID("_SunOpacity");
+    private static readonly int SUN_RADIANCE = Shader.PropertyToID("_Sun_Radiance");
+    private static readonly int SUN_RADIANCE_INTENSITY = Shader.PropertyToID("_Sun_Radiance_Intensity");
+    private static readonly int MOON_MASK_SIZE = Shader.PropertyToID("_Moon_Mask_Size");
+
+    public float SpeedMultiplier { get; set; } = DEFAULT_SPEED;
+    public bool UseDynamicTime { get; set; } = true;
+    public float DynamicTimeNormalized { get; private set; }
+    public float CurrentTimeNormalized { get; private set; }
+
+    public event Action OnSkyboxUpdated;
+
     [SerializeField] private Material skyboxMaterial;
 
     [Header("Refresh Time")]
@@ -57,9 +74,6 @@ public class SkyboxController : MonoBehaviour
     [Header("UI")]
     public TextMeshProUGUI textUI;
 
-    public bool Paused { get; set; }
-    public float DefaultSpeed { get; private set; }
-
     private bool isInitialized;
     private Animation lightAnimator;
     private float sinceLastRefresh = 5;
@@ -69,26 +83,26 @@ public class SkyboxController : MonoBehaviour
         if (!isInitialized)
             return;
 
-        //update natural and relative time
-        if (!Paused)
+        // We always track dynamic time so we can switch back to using it
+        DynamicTimeNormalized += (Time.deltaTime * SpeedMultiplier) / SECONDS_IN_DAY;
+
+        // Loop around at EOD
+        if (DynamicTimeNormalized >= 1f) { DynamicTimeNormalized = 0f; }
+
+        // Auto refresh the skybox when using dynamic time
+        if (UseDynamicTime)
         {
-            float deltaTime = Time.deltaTime * Speed;
-            NaturalTime += deltaTime;
-            NormalizedTime += deltaTime / SecondsInDay;
+            sinceLastRefresh += Time.deltaTime;
+
+            if (sinceLastRefresh >= RefreshTime)
+            {
+                CurrentTimeNormalized = DynamicTimeNormalized;
+                UpdateSkybox();
+                sinceLastRefresh = 0;
+            }
         }
 
-        //loops time at the end of the cycle
-        if (NaturalTime >= SecondsInDay) { NaturalTime = NormalizedTime = 0; }
-
-        //update skybox only after certain time
-        sinceLastRefresh += Time.deltaTime;
-
-        if (sinceLastRefresh >= RefreshTime)
-        {
-            UpdateSkybox();
-            sinceLastRefresh = 0;
-        }
-
+        // Always update UI
         UpdateTimeUI();
     }
 
@@ -138,62 +152,32 @@ public class SkyboxController : MonoBehaviour
         if (IndirectLight) { RenderSettings.ambientMode = AmbientMode.Trilight; }
 
         //setup fog
-        if (Fog)
-        {
-            RenderSettings.fog = true;
-        }
+        if (Fog) { RenderSettings.fog = true; }
 
         bool useRemoteSkyboxSettings = featureFlagsCache != null && featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.SKYBOX_SETTINGS);
 
         if (useRemoteSkyboxSettings &&
             featureFlagsCache.Configuration.TryGetJsonPayload(FeatureFlagsStrings.SKYBOX_SETTINGS, FeatureFlagsStrings.SKYBOX_SETTINGS_VARIANT, out SkyboxSettings skyboxSettings))
         {
-            DefaultSpeed = Speed = skyboxSettings.speed;
-            ApplySkyboxState(skyboxSettings.time);
-            return;
+            SpeedMultiplier = skyboxSettings.speed;
+            DynamicTimeNormalized = (float)skyboxSettings.time / SECONDS_IN_DAY;
+        }
+        else
+        {
+            DynamicTimeNormalized = DEFAULT_TIME;
         }
 
-        DefaultSpeed = Speed;
-        int defaultTime = SecondsInDay / 2;
-        ApplySkyboxState(defaultTime);
-    }
-
-    private void ApplySkyboxState(float time)
-    {
-        SetTime(time);
-
-        Paused = !PlayOnStart;
         isInitialized = true;
     }
 
     /// <summary>
-    ///     Set the material of the skybox and modify the Render Settings
+    ///     Sets the time of the skybox to an specific amount (normalized).
     /// </summary>
-    /// <param name="skyboxMaterial"></param>
-    public void SetSkyboxMaterial(Material skyboxMaterial)
+    public void SetTimeOverride(float time)
     {
-        this.skyboxMaterial = skyboxMaterial;
-        RenderSettings.skybox = this.skyboxMaterial;
-    }
-
-    /// <summary>
-    ///     Sets the time of the skybox to an specific second
-    /// </summary>
-    /// <param name="seconds"></param>
-    public void SetTime(float seconds)
-    {
-        NaturalTime = seconds;
-        NormalizedTime = NaturalTime / SecondsInDay;
-    }
-
-    /// <summary>
-    ///     Sets the time of the skybox to an specific second
-    /// </summary>
-    /// <param name="seconds"></param>
-    public void SetTimeNormalized(float normalizedTime)
-    {
-        NormalizedTime = normalizedTime;
-        NaturalTime = normalizedTime * SecondsInDay;
+        UseDynamicTime = false;
+        CurrentTimeNormalized = time;
+        UpdateSkybox();
     }
 
     /// <summary>
@@ -201,12 +185,12 @@ public class SkyboxController : MonoBehaviour
     /// </summary>
     public string GetFormatedTime()
     {
-        var totalSec = (int)NaturalTime;
+        var totalSec = (int)(CurrentTimeNormalized * SECONDS_IN_DAY);
 
         int hours = totalSec / 3600;
         int minutes = totalSec % 3600 / 60;
         int seconds = totalSec % 60;
-        return string.Format("{0:00}:{1:00}:{2:00} - {3}", hours, minutes, seconds, NormalizedTime.ToString("0.000"));
+        return $"{hours:00}:{minutes:00}:{seconds:00} - {CurrentTimeNormalized:0.000}";
     }
 
     /// <summary>
@@ -214,13 +198,12 @@ public class SkyboxController : MonoBehaviour
     /// </summary>
     private void UpdateSkybox()
     {
-        if(!StopRefresh)
-        {
-            UpdateIndirectLight();
-            UpdateDirectionaLight();
-            UpdateSkyboxColor();
-            UpdateFog();
-        }
+        UpdateIndirectLight();
+        UpdateDirectionalLight();
+        UpdateSkyboxColor();
+        UpdateFog();
+
+        OnSkyboxUpdated?.Invoke();
     }
 
     /// <summary>
@@ -229,13 +212,13 @@ public class SkyboxController : MonoBehaviour
     /// </summary>
     private void UpdateSkyboxColor()
     {
-        RenderSettings.skybox.SetColor("_ZenitColor", SkyZenitColorRamp.Evaluate(NormalizedTime));
-        RenderSettings.skybox.SetColor("_HorizonColor", SkyHorizonColorRamp.Evaluate(NormalizedTime));
-        RenderSettings.skybox.SetColor("_NadirColor", SkyNadirColorRamp.Evaluate(NormalizedTime));
-        RenderSettings.skybox.SetColor("_SunColor", SunColorRamp.Evaluate(NormalizedTime));
-        RenderSettings.skybox.SetColor("_RimColor", RimColorRamp.Evaluate(NormalizedTime));
-        RenderSettings.skybox.SetColor("_CloudsColor", CloudsColorRamp.Evaluate(NormalizedTime));
-        RenderSettings.skybox.SetFloat("_Cloud_Highlights", CloudsHighlightsIntensity.Evaluate(NormalizedTime));
+        RenderSettings.skybox.SetColor(ZENIT_COLOR, SkyZenitColorRamp.Evaluate(CurrentTimeNormalized));
+        RenderSettings.skybox.SetColor(HORIZON_COLOR, SkyHorizonColorRamp.Evaluate(CurrentTimeNormalized));
+        RenderSettings.skybox.SetColor(NADIR_COLOR, SkyNadirColorRamp.Evaluate(CurrentTimeNormalized));
+        RenderSettings.skybox.SetColor(SUN_COLOR, SunColorRamp.Evaluate(CurrentTimeNormalized));
+        RenderSettings.skybox.SetColor(RIM_COLOR, RimColorRamp.Evaluate(CurrentTimeNormalized));
+        RenderSettings.skybox.SetColor(CLOUDS_COLOR, CloudsColorRamp.Evaluate(CurrentTimeNormalized));
+        RenderSettings.skybox.SetFloat(CLOUD_HIGHLIGHTS, CloudsHighlightsIntensity.Evaluate(CurrentTimeNormalized));
     }
 
     /// <summary>
@@ -246,9 +229,9 @@ public class SkyboxController : MonoBehaviour
     {
         if (IndirectLight)
         {
-            RenderSettings.ambientSkyColor = IndirectSkyRamp.Evaluate(NormalizedTime);
-            RenderSettings.ambientEquatorColor = IndirectEquatorRamp.Evaluate(NormalizedTime);
-            RenderSettings.ambientGroundColor = GroundEquatorRamp.Evaluate(NormalizedTime);
+            RenderSettings.ambientSkyColor = IndirectSkyRamp.Evaluate(CurrentTimeNormalized);
+            RenderSettings.ambientEquatorColor = IndirectEquatorRamp.Evaluate(CurrentTimeNormalized);
+            RenderSettings.ambientGroundColor = GroundEquatorRamp.Evaluate(CurrentTimeNormalized);
         }
     }
 
@@ -256,31 +239,31 @@ public class SkyboxController : MonoBehaviour
     ///     Updates the directional light color by sampling the colors
     ///     from the defined gradient an plays the correspoding animation frame
     /// </summary>
-    private void UpdateDirectionaLight()
+    private void UpdateDirectionalLight()
     {
         if (!DirectionalLight) return;
 
         //change the color of the light based on the color ramp
-        DirectionalLight.color = DirectionalColorRamp.Evaluate(NormalizedTime);
+        DirectionalLight.color = DirectionalColorRamp.Evaluate(CurrentTimeNormalized);
 
         //sample the right frame of the animation
         if (LightAnimation)
         {
-            lightAnimator[LightAnimation.name].time = NormalizedTime * lightAnimator[LightAnimation.name].length;
+            lightAnimator[LightAnimation.name].time = CurrentTimeNormalized * lightAnimator[LightAnimation.name].length;
             lightAnimator.Play(LightAnimation.name);
             lightAnimator.Sample();
             lightAnimator.Stop();
         }
 
-        RenderSettings.skybox.SetFloat("_SunSize", DirectionalLight.gameObject.transform.localScale.x);
-        RenderSettings.skybox.SetFloat("_SunOpacity", DirectionalLight.gameObject.transform.localScale.y);
+        RenderSettings.skybox.SetFloat(SUN_SIZE, DirectionalLight.gameObject.transform.localScale.x);
+        RenderSettings.skybox.SetFloat(SUN_OPACITY, DirectionalLight.gameObject.transform.localScale.y);
 
         //sampling sun randiance and intensity curves
-        RenderSettings.skybox.SetFloat("_Sun_Radiance", sunRadiance.Evaluate(NormalizedTime));
-        RenderSettings.skybox.SetFloat("_Sun_Radiance_Intensity", sunRadianceIntensity.Evaluate(NormalizedTime));
+        RenderSettings.skybox.SetFloat(SUN_RADIANCE, sunRadiance.Evaluate(CurrentTimeNormalized));
+        RenderSettings.skybox.SetFloat(SUN_RADIANCE_INTENSITY, sunRadianceIntensity.Evaluate(CurrentTimeNormalized));
 
         //change size of moon mask
-        RenderSettings.skybox.SetFloat("_Moon_Mask_Size", moonMaskSize.Evaluate(NormalizedTime));
+        RenderSettings.skybox.SetFloat(MOON_MASK_SIZE, moonMaskSize.Evaluate(CurrentTimeNormalized));
     }
 
     /// <summary>
@@ -288,10 +271,7 @@ public class SkyboxController : MonoBehaviour
     /// </summary>
     private void UpdateFog()
     {
-        if (Fog)
-        {
-            RenderSettings.fogColor = FogColorRamp.Evaluate(NormalizedTime);
-        }
+        if (Fog) { RenderSettings.fogColor = FogColorRamp.Evaluate(CurrentTimeNormalized); }
     }
 
     /// <summary>
@@ -321,5 +301,3 @@ public class SkyboxController : MonoBehaviour
         public int speed;
     }
 }
-
-

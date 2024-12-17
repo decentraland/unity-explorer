@@ -10,9 +10,12 @@ using DCL.Notifications.NotificationsMenu;
 using DCL.NotificationsBusController.NotificationsBus;
 using DCL.Profiles;
 using DCL.SidebarBus;
+using DCL.StylizedSkybox.Scripts;
+using DCL.StylizedSkybox.Scripts.Plugin;
 using DCL.UI.MainUI;
 using DCL.UI.ProfileElements;
 using DCL.UI.Sidebar;
+using DCL.UI.Skybox;
 using DCL.UserInAppInitializationFlow;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
@@ -90,6 +93,7 @@ namespace DCL.PluginSystem.Global
         {
             NotificationIconTypes notificationIconTypes = (await assetsProvisioner.ProvideMainAssetAsync(settings.NotificationIconTypesSO, ct: ct)).Value;
             NftTypeIconSO rarityBackgroundMapping = await assetsProvisioner.ProvideMainAssetValueAsync(settings.RarityColorMappings, ct);
+            var skyboxSettings = await assetsProvisioner.ProvideMainAssetValueAsync(settings.SkyboxSettingsAsset, ct);
 
             mvcManager.RegisterController(new SidebarController(() =>
                 {
@@ -102,6 +106,7 @@ namespace DCL.PluginSystem.Global
                 new NotificationsMenuController(mainUIView.SidebarView.NotificationsMenuView, notificationsRequestController, notificationsBusController, notificationIconTypes, webRequestController, sidebarBus, rarityBackgroundMapping, web3IdentityCache),
                 new ProfileWidgetController(() => mainUIView.SidebarView.ProfileWidget, web3IdentityCache, profileRepository, webRequestController),
                 new ProfileMenuController(() => mainUIView.SidebarView.ProfileMenuView, web3IdentityCache, profileRepository, webRequestController, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, mvcManager, chatEntryConfigurationSo),
+                new SkyboxMenuController(() => mainUIView.SidebarView.SkyboxMenuView, skyboxSettings),
                 sidebarBus,
                 chatEntryConfigurationSo,
                 web3IdentityCache,
@@ -118,6 +123,9 @@ namespace DCL.PluginSystem.Global
 
             [field: SerializeField]
             public AssetReferenceT<NftTypeIconSO> RarityColorMappings { get; private set; }
+
+            [field: SerializeField]
+            public AssetReferenceT<StylizedSkyboxSettingsAsset> SkyboxSettingsAsset { get; private set; }
         }
     }
 }

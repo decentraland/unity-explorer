@@ -52,37 +52,45 @@ namespace DCL.StylizedSkybox.Scripts.Plugin
 
             skyboxController.Initialize(settingsAsset.SkyboxMaterial, directionalLight, skyboxAnimation, featureFlagsCache);
 
-            settingsAsset.TimeOfDay = (int)(skyboxController!.NaturalTime / (skyboxController!.SecondsInDay / 24f));
-            settingsAsset.Speed = StylizedSkyboxSettingsAsset.TimeProgression.Default;
-            settingsAsset.TimeOfDayChanged += OnTimeOfDayChanged;
-            settingsAsset.SpeedChanged += OnSpeedChanged;
+            settingsAsset.NormalizedTime = skyboxController!.DynamicTimeNormalized;
+            settingsAsset.NormalizedTimeChanged += OnNormalizedTimeChanged;
+            settingsAsset.UseDynamicTime = skyboxController.UseDynamicTime;
+            settingsAsset.UseDynamicTimeChanged += OnUseDynamicTimeChanged;
+
+            skyboxController.OnSkyboxUpdated += OnSkyboxUpdated;
 
             debugContainerBuilder.TryAddWidget("Skybox")
-                                ?.AddSingleButton("Play", () => skyboxController.Paused = false)
-                                 .AddSingleButton("Pause", () => skyboxController.Paused = true)
-                                 .AddIntSliderField("Time", timeOfDay, 0, skyboxController.SecondsInDay)
-                                 .AddSingleButton("SetTime", () => skyboxController.SetTime(timeOfDay.Value)); //TODO: replace this by a system to update the value
+                                ?.AddSingleButton("Play", () => skyboxController.UseDynamicTime = true)
+                                 .AddSingleButton("Pause", () => skyboxController.UseDynamicTime = false)
+                                 .AddIntSliderField("Time", timeOfDay, 0, 1)
+                                 .AddSingleButton("SetTime", () => skyboxController.SetTimeOverride(timeOfDay.Value)); //TODO: replace this by a system to update the value
         }
 
-        private void OnSpeedChanged(StylizedSkyboxSettingsAsset.TimeProgression speed)
+        private void OnSkyboxUpdated()
         {
-            skyboxController!.Speed =
-                speed switch
-                {
-                    StylizedSkyboxSettingsAsset.TimeProgression.Paused => 0,
-                    StylizedSkyboxSettingsAsset.TimeProgression.Default => skyboxController.DefaultSpeed,
-                    StylizedSkyboxSettingsAsset.TimeProgression.Fast => 600,
-                    StylizedSkyboxSettingsAsset.TimeProgression.VeryFast => 3600,
-                    _ => throw new ArgumentOutOfRangeException(nameof(speed), speed, null),
-                };
+            // When skybox gets dynamically updated we refresh the
+            // settings value so it reflects the current state
+
+            if (skyboxController!.UseDynamicTime)
+            {
+                settingsAsset!.NormalizedTime = skyboxController.DynamicTimeNormalized;
+            }
         }
 
-        private void OnTimeOfDayChanged(int hour)
+        private void OnUseDynamicTimeChanged(bool dynamic)
         {
-            int seconds = skyboxController!.SecondsInDay / 24 * hour;
+            skyboxController!.UseDynamicTime = dynamic;
 
-            timeOfDay.Value = seconds;
-            skyboxController.SetTime(seconds);
+            if (dynamic)
+                settingsAsset!.NormalizedTime = skyboxController!.DynamicTimeNormalized;
+        }
+
+        private void OnNormalizedTimeChanged(float tod)
+        {
+            if (!skyboxController!.UseDynamicTime) // Ignore updates to the value when they come from the skybox
+            {
+                skyboxController!.SetTimeOverride(tod);
+            }
         }
 
         [Serializable]
