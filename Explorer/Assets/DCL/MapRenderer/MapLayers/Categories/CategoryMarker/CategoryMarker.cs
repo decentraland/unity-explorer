@@ -42,6 +42,8 @@ namespace DCL.MapRenderer.MapLayers.Categories
 
         internal EventDTO eventDTO { get; private set; }
 
+        private bool isSelectedPin;
+
         public CategoryMarker(IObjectPool<CategoryMarkerObject> objectsPool, IMapCullingController cullingController, ICoordsUtils coordsUtils)
         {
             poolableBehavior = new MapMarkerPoolableBehavior<CategoryMarkerObject>(objectsPool);
@@ -76,13 +78,16 @@ namespace DCL.MapRenderer.MapLayers.Categories
             MarkerHelper.SetAlpha(poolableBehavior.OnBecameVisible().renderers, poolableBehavior.OnBecameVisible().textRenderers, 0);
             MarkerHelper.FadeToAsync(poolableBehavior.OnBecameVisible().renderers, poolableBehavior.OnBecameVisible().textRenderers, 1, 0.5f, Ease.OutBack, CancellationToken.None).Forget();
 
-            if(currentBaseScale != 0)
+            if (currentBaseScale != 0)
+            {
                 poolableBehavior.instance.SetScale(currentBaseScale, currentNewScale);
+                ToggleSelection(isSelectedPin);
+            }
         }
 
         public void OnBecameInvisible()
         {
-            ToggleSelection(false);
+            SetIsSelected(false);
             poolableBehavior.OnBecameInvisible();
         }
 
@@ -117,6 +122,12 @@ namespace DCL.MapRenderer.MapLayers.Categories
 
         public GameObject? GetGameObject() =>
             poolableBehavior.instance != null ? poolableBehavior.instance.gameObject : null;
+
+        public void SetIsSelected(bool isSelected)
+        {
+            isSelectedPin = isSelected;
+            ToggleSelection(isSelected);
+        }
 
         public void ToggleSelection(bool isSelected)
         {

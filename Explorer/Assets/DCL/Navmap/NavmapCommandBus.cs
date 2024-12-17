@@ -32,6 +32,7 @@ namespace DCL.Navmap
         public event Action<bool>? OnZoomCamera;
         public event Action<Vector2Int, Vector2> OnLongHover;
         public event Action OnClearFilter;
+        public event Action<Vector2Int, bool, bool> OnSelectPlaceFromResultsPanel;
 
         public NavmapCommandBus(SearchPlaceFactory searchPlaceFactory,
             ShowPlaceInfoFactory showPlaceInfoFactory,
@@ -131,6 +132,9 @@ namespace DCL.Navmap
         private void OnSearchPlacePerformed(INavmapBus.SearchPlaceParams @params,
             IReadOnlyList<PlacesData.PlaceInfo> places, int totalResultCount) =>
             OnPlaceSearched?.Invoke(@params, places, totalResultCount);
+
+        public void SelectPlaceFromResultsPanel(Vector2Int coordinates, bool isHover, bool isClicked) =>
+            OnSelectPlaceFromResultsPanel?.Invoke(coordinates, isHover, isClicked);
 
         private void AddCommand(INavmapCommand command)
         {

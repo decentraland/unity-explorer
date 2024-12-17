@@ -57,6 +57,13 @@ namespace DCL.MapRenderer.MapLayers.SearchResults
 
             navmapBus.OnPlaceSearched += OnPlaceSearched;
             navmapBus.OnClearPlacesFromMap += OnClearPlacesFromMap;
+            this.navmapBus.OnSelectPlaceFromResultsPanel += OnSelectPlaceFromResultsPanel;
+        }
+
+        private void OnSelectPlaceFromResultsPanel(Vector2Int coordinates, bool isHovered, bool isClicked)
+        {
+            if (markers.TryGetValue(coordinates, out IClusterableMarker marker))
+                marker.SetIsSelected(isClicked);
         }
 
         private void OnClearPlacesFromMap()
@@ -76,7 +83,7 @@ namespace DCL.MapRenderer.MapLayers.SearchResults
 
             foreach (PlacesData.PlaceInfo placeInfo in places)
             {
-                if (markers.ContainsKey(MapLayerUtils.GetParcelsCenter(placeInfo)))
+                if (markers.ContainsKey(placeInfo.base_position_processed))
                     continue;
 
                 if (IsEmptyParcel(placeInfo))
@@ -87,7 +94,7 @@ namespace DCL.MapRenderer.MapLayers.SearchResults
                 var position = coordsUtils.CoordsToPosition(centerParcel);
 
                 marker.SetData(placeInfo.title, position, placeInfo);
-                markers.Add(MapLayerUtils.GetParcelsCenter(placeInfo), marker);
+                markers.Add(placeInfo.base_position_processed, marker);
                 marker.SetZoom(coordsUtils.ParcelSize, baseZoom, zoom);
 
                 if(isEnabled)

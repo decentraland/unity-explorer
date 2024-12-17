@@ -47,6 +47,7 @@ namespace DCL.Navmap
         event Action<Vector2, float> OnMoveCameraTo;
         public event Action<bool>? OnZoomCamera;
         public event Action<Vector2Int, Vector2> OnLongHover;
+        public event Action<Vector2Int, bool, bool> OnSelectPlaceFromResultsPanel;
 
         UniTask SelectPlaceAsync(PlacesData.PlaceInfo place, CancellationToken ct, bool isFromSearchResults = false);
         UniTask SelectPlaceAsync(Vector2Int parcel, CancellationToken ct, bool isFromSearchResults = false);
@@ -74,5 +75,7 @@ namespace DCL.Navmap
         void SendLongHover(Vector2Int parcel, Vector2 screenPosition);
 
         void ClearFilter();
+
+        void SelectPlaceFromResultsPanel(Vector2Int coordinates, bool isHover, bool isClicked);
     }
 }

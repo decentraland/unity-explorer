@@ -104,6 +104,7 @@ namespace DCL.Navmap
             view.inputField.SetTextWithoutNotify(string.Empty);
             view.inputFieldCategoryImage.gameObject.SetActive(false);
             view.clearSearchButton.gameObject.SetActive(false);
+            view.BackButton.gameObject.SetActive(false);
 
             currentCategory = string.Empty;
             currentSearchText = string.Empty;

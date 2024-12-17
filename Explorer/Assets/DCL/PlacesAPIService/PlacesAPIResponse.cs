@@ -34,6 +34,7 @@ namespace DCL.PlacesAPIService
             public Vector2Int[] Positions;
 
             public string base_position;
+            public Vector2Int base_position_processed;
             public string contact_name;
             public string contact_email;
             public string content_rating;
@@ -150,6 +151,8 @@ namespace DCL.PlacesAPIService
                     string[] split = positions[i].Split(',');
                     Positions[i] = new Vector2Int(int.Parse(split[0]), int.Parse(split[1]));
                 }
+                string[] splitBasePosition = base_position.Split(',');
+                base_position_processed = new Vector2Int(int.Parse(splitBasePosition[0]), int.Parse(splitBasePosition[1]));
             }
 
             [Serializable]

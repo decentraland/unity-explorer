@@ -2,7 +2,7 @@ using DCL.MapRenderer.Culling;
 
 namespace DCL.MapRenderer.MapLayers.Cluster
 {
-    public interface IClusterableMarker : IMapPositionProvider
+    public interface IClusterableMarker : IMapPositionProvider, IMapRendererMarker
     {
         void OnBecameInvisible();
 

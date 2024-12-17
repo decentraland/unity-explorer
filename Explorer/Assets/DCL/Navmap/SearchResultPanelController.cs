@@ -97,6 +97,7 @@ namespace DCL.Navmap
                 placeElementView.resultButton.onClick.AddListener(() =>
                 {
                     showPlaceInfoCancellationToken = showPlaceInfoCancellationToken.SafeRestart();
+                    navmapBus.SelectPlaceFromResultsPanel(placeInfo.base_position_processed, false, true);
                     navmapBus.SelectPlaceAsync(placeInfo, showPlaceInfoCancellationToken.Token, true).Forget();
                 });
                 placeElementView.LiveContainer.SetActive(false);

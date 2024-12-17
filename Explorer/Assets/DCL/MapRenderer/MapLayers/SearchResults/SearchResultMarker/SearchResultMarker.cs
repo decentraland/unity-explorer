@@ -32,6 +32,7 @@ namespace DCL.MapRenderer.MapLayers.SearchResults
 
         internal string title { get; private set; }
         internal PlacesData.PlaceInfo? placeInfo { get; private set; }
+        private bool isSelectedPin;
 
         public SearchResultMarker(IObjectPool<SearchResultMarkerObject> objectsPool, IMapCullingController cullingController, ICoordsUtils coordsUtils)
         {
@@ -61,13 +62,16 @@ namespace DCL.MapRenderer.MapLayers.SearchResults
             MarkerHelper.FadeToAsync(poolableBehavior.OnBecameVisible().renderers, poolableBehavior.OnBecameVisible().textRenderers, 1, 0.5f, Ease.OutBack, CancellationToken.None).Forget();
             AnimateDeSelectionAsync(default).Forget();
 
-            if(currentBaseScale != 0)
+            if (currentBaseScale != 0)
+            {
                 poolableBehavior.instance.SetScale(currentBaseScale, currentNewScale);
+                ToggleSelection(isSelectedPin);
+            }
         }
 
         public void OnBecameInvisible()
         {
-            ToggleSelection(false);
+            SetIsSelected(false);
             poolableBehavior.OnBecameInvisible();
         }
 
@@ -102,6 +106,12 @@ namespace DCL.MapRenderer.MapLayers.SearchResults
 
         public GameObject? GetGameObject() =>
             poolableBehavior.instance != null ? poolableBehavior.instance.gameObject : null;
+
+        public void SetIsSelected(bool isSelected)
+        {
+            isSelectedPin = isSelected;
+            ToggleSelection(isSelected);
+        }
 
         public void ToggleSelection(bool isSelected)
         {
