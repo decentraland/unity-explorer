@@ -128,16 +128,21 @@ namespace Global.Dynamic
         public async UniTask<EnumResult<ChangeRealmError>> TryChangeRealmAsync(
             URLDomain realm,
             CancellationToken ct,
-            Vector2Int parcelToTeleport = default
+            Vector2Int parcelToTeleport = default,
+            bool ignoreRealmChecks = false
         )
         {
             if (ct.IsCancellationRequested)
                 return EnumResult<ChangeRealmError>.ErrorResult(ChangeRealmError.ChangeCancelled);
 
-            if (CheckIsNewRealm(realm) == false)
+            //if the ignoreRealmChecks flag is set, we are coming from the logout screen, which means we dont care if we are
+            //in the same realm and also we know the realm was reacheable. This last part was added because this async check of the realm
+            //causes visual issues (login screen closes and GP is visible during some seconds while the request to check if the realm
+            //is reachable happen). This is a temporal fix.
+            if (!ignoreRealmChecks && CheckIsNewRealm(realm) == false)
                 return EnumResult<ChangeRealmError>.ErrorResult(ChangeRealmError.SameRealm);
 
-            if (await realmController.IsReachableAsync(realm, ct) == false)
+            if (!ignoreRealmChecks && await realmController.IsReachableAsync(realm, ct) == false)
                 return EnumResult<ChangeRealmError>.ErrorResult(ChangeRealmError.NotReachable);
 
             var operation = DoChangeRealmAsync(realm, realmController.CurrentDomain, parcelToTeleport);
