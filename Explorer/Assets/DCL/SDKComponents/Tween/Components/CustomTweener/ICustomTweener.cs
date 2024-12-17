@@ -1,7 +1,5 @@
-﻿using CrdtEcsBridge.Components.Transform;
-using DCL.ECSComponents;
+﻿using DCL.ECSComponents;
 using DG.Tweening;
-using UnityEngine;
 
 namespace DCL.SDKComponents.Tween.Components
 {
@@ -22,11 +20,10 @@ namespace DCL.SDKComponents.Tween.Components
         bool IsFinished();
 
         bool IsActive();
+    }
 
-        void UpdateSDKTransform(ref SDKTransform sdkTransform);
-
-        void UpdateTransform(Transform transform);
-
-        void UpdateMaterial(SDKTweenTextureComponent textureComponent, Material material);
+    public interface ICustomTweener<T> : ICustomTweener
+    {
+        public T CurrentValue { get; set; }
     }
 }

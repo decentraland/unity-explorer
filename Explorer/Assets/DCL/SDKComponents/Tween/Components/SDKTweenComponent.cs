@@ -4,6 +4,7 @@ namespace DCL.SDKComponents.Tween.Components
 {
     public struct SDKTweenComponent
     {
+        public PBTween.ModeOneofCase TweenMode { get; set; }
         public bool IsDirty { get; set; }
         public TweenStateStatus TweenStateStatus { get; set; }
         public ICustomTweener CustomTweener { get; set; }

@@ -1,20 +1,25 @@
-﻿using CrdtEcsBridge.Components.Transform;
-using DCL.ECSComponents;
+﻿using DCL.ECSComponents;
 using DG.Tweening;
 using DG.Tweening.Core;
 using DG.Tweening.Plugins.Options;
-using UnityEngine;
 
 namespace DCL.SDKComponents.Tween.Components
 {
-    public abstract class CustomTweener<T, TU> : ICustomTweener
+    public abstract class CustomTweener<T, TU> : ICustomTweener<T>
         where T: struct
         where TU: struct, IPlugOptions
     {
-        protected T currentValue;
+        private T currentValue;
         private bool finished;
         private TweenerCore<T, T, TU> core;
-        private ICustomTweener customTweenerImplementation;
+        private ICustomTweener<T> customTweenerImplementation;
+
+        public T CurrentValue
+        {
+            get => currentValue;
+
+            set => currentValue = value;
+        }
 
         public void Initialize(PBTween pbTween, float durationInSeconds)
         {
@@ -28,12 +33,6 @@ namespace DCL.SDKComponents.Tween.Components
         protected abstract TweenerCore<T, T, TU> CreateTweener(T start, T end, float duration);
 
         protected abstract (T, T) GetTweenValues(PBTween pbTween);
-
-        public virtual void UpdateSDKTransform(ref SDKTransform sdkTransform) { }
-
-        public virtual void UpdateTransform(Transform transform) { }
-
-        public virtual void UpdateMaterial(SDKTweenTextureComponent textureComponent, Material material) { }
 
         public void Play() =>
             core.Play();

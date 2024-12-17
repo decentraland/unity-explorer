@@ -16,15 +16,16 @@ namespace DCL.SDKComponents.Tween.Helpers
                 static (component, tweenStateStatus) => component.State = tweenStateStatus, sdkEntity, tweenStateStatus);
         }
 
-        public static void UpdateTweenResult(ref SDKTransform sdkTransform, ref TransformComponent transformComponent, ICustomTweener tweener, bool shouldUpdateTransform)
+        public static void UpdateTweenResult(ref SDKTransform sdkTransform, ref TransformComponent transformComponent, SDKTweenComponent sdkTweenComponent, bool shouldUpdateTransform)
         {
-            tweener.UpdateSDKTransform(ref sdkTransform);
+            sdkTweenComponent.CustomTweener.UpdateSDKTransform(ref sdkTransform, sdkTweenComponent.TweenMode);
 
             //we only set the SDK transform to dirty here if we didn't already update the transform, but if the sdkTransform was already dirty,
             //we dont change it, as it might have pending updates to be done from the scene side.
             if (shouldUpdateTransform)
             {
-                tweener.UpdateTransform(transformComponent.Transform);
+                sdkTweenComponent.CustomTweener.UpdateTransform(transformComponent.Transform, sdkTweenComponent.TweenMode);
+
                 transformComponent.UpdateCache();
             }
             else
