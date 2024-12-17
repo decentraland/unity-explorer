@@ -403,7 +403,8 @@ namespace Global.Dynamic
                 bootstrapContainer.DebugSettings,
                 staticContainer.PortableExperiencesController,
                 bootstrapContainer.DiagnosticsContainer,
-                chatHistory);
+                chatHistory,
+                container.RoomHub);
 
             var worldInfoHub = new LocationBasedWorldInfoHub(
                 new WorldInfoHub(staticContainer.SingletonSharedDependencies.SceneMapping),

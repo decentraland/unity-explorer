@@ -1,3 +1,4 @@
+using System;
 using System.Threading;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
@@ -8,6 +9,7 @@ using DCL.Chat.History;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.HealthChecks;
 using DCL.Profiles.Self;
 using DCL.SceneLoadingScreens.LoadingScreen;
@@ -43,6 +45,8 @@ namespace DCL.UserInAppInitializationFlow
         private readonly IChatHistory chatHistory;
 
         private readonly IRealmController realmController;
+        private readonly IRoomHub roomHub;
+        private readonly IPortableExperiencesController portableExperiencesController;
 
         public RealUserInAppInitializationFlow(
             ILoadingStatus loadingStatus,
@@ -63,7 +67,7 @@ namespace DCL.UserInAppInitializationFlow
             IAppArgs appParameters,
             IDebugSettings debugSettings,
             IPortableExperiencesController portableExperiencesController,
-            DiagnosticsContainer diagnosticsContainer, IChatHistory chatHistory)
+            DiagnosticsContainer diagnosticsContainer, IChatHistory chatHistory, IRoomHub roomHub)
         {
             this.loadingStatus = loadingStatus;
             this.decentralandUrlsSource = decentralandUrlsSource;
@@ -72,7 +76,9 @@ namespace DCL.UserInAppInitializationFlow
             this.realmNavigator = realmNavigator;
             this.loadingScreen = loadingScreen;
             this.realmController = realmController;
+            this.portableExperiencesController = portableExperiencesController;
             this.chatHistory = chatHistory;
+            this.roomHub = roomHub;
 
             var ensureLivekitConnectionStartupOperation = new EnsureLivekitConnectionStartupOperation(loadingStatus, livekitHealthCheck);
             var initializeFeatureFlagsStartupOperation = new InitializeFeatureFlagsStartupOperation(loadingStatus, featureFlagsProvider, web3IdentityCache, decentralandUrlsSource, appParameters);
@@ -81,7 +87,6 @@ namespace DCL.UserInAppInitializationFlow
             loadPlayerAvatarStartupOperation = new LoadPlayerAvatarStartupOperation(loadingStatus, selfProfile, mainPlayerAvatarBaseProxy);
             var loadLandscapeStartupOperation = new LoadLandscapeStartupOperation(loadingStatus, landscape);
             checkOnboardingStartupOperation = new CheckOnboardingStartupOperation(loadingStatus, selfProfile, featureFlagsCache, decentralandUrlsSource, appParameters, realmNavigator);
-            restartRealmStartupOperation = new RestartRealmStartupOperation(loadingStatus, realmController);
             var teleportStartupOperation = new TeleportStartupOperation(loadingStatus, realmNavigator, startParcel);
             var loadGlobalPxOperation = new LoadGlobalPortableExperiencesStartupOperation(loadingStatus, selfProfile, featureFlagsCache, debugSettings, portableExperiencesController);
             var sentryDiagnostics = new SentryDiagnosticStartupOperation(realmController, diagnosticsContainer);
@@ -95,7 +100,6 @@ namespace DCL.UserInAppInitializationFlow
                 loadPlayerAvatarStartupOperation,
                 loadLandscapeStartupOperation,
                 checkOnboardingStartupOperation,
-                restartRealmStartupOperation,
                 teleportStartupOperation,
                 loadGlobalPxOperation,
                 sentryDiagnostics
@@ -103,16 +107,17 @@ namespace DCL.UserInAppInitializationFlow
 
             reloginOperation = new SequentialStartupOperation(
                 loadingStatus,
+                ensureLivekitConnectionStartupOperation,
                 preloadProfileStartupOperation,
                 switchRealmMiscVisibilityStartupOperation,
                 loadPlayerAvatarStartupOperation,
                 loadLandscapeStartupOperation,
                 checkOnboardingStartupOperation,
-                restartRealmStartupOperation,
                 teleportStartupOperation,
                 loadGlobalPxOperation,
                 sentryDiagnostics);
         }
+
 
         public async UniTask ExecuteAsync(UserInAppInitializationFlowParameters parameters, CancellationToken ct)
         {
@@ -121,7 +126,6 @@ namespace DCL.UserInAppInitializationFlow
             Result result = default;
 
             loadPlayerAvatarStartupOperation.AssignWorld(parameters.World, parameters.PlayerEntity);
-            restartRealmStartupOperation.EnableReload(parameters.ReloadRealm);
 
             using UIAudioEventsBus.PlayAudioScope playAudioScope = UIAudioEventsBus.Instance.NewPlayAudioScope(backgroundMusic);
 
@@ -132,8 +136,10 @@ namespace DCL.UserInAppInitializationFlow
                     loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.AuthenticationScreenShowing);
                     if (parameters.FromLogout)
                     {
+                        portableExperiencesController.UnloadAllPortableExperiences();
                         realmNavigator.RemoveCameraSamplingData();
                         chatHistory.Clear();
+                        await roomHub.StopAsync().Timeout(TimeSpan.FromSeconds(10));
                         await UniTask.WhenAll(ShowAuthenticationScreenAsync(ct),
                             realmController.SetRealmAsync(
                                 URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.Genesis)), ct));

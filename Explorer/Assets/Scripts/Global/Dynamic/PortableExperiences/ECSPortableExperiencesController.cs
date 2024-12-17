@@ -140,6 +140,12 @@ namespace PortableExperiences.Controller
             return spawnResponsesList;
         }
 
+        public void UnloadAllPortableExperiences()
+        {
+            foreach (var spawnResponse in GetAllPortableExperiences())
+                UnloadPortableExperienceByEns(new ENS(spawnResponse.ens));
+        }
+
         public IPortableExperiencesController.ExitResponse UnloadPortableExperienceByEns(ENS ens)
         {
             if (!ens.IsValid) throw new ArgumentException($"The provided ens {ens.ToString()} is invalid");
