@@ -159,12 +159,12 @@ namespace DCL.InWorldCamera.CameraReelGallery
                 {
                     await ReelCommonActions.DownloadReelToFileAsync(response.url, ct);
                     ScreenshotDownloaded?.Invoke();
-                    ShowSuccessNotificationAsync(reelGalleryStringMessages?.PhotoSuccessfullyDownloadedMessage).Forget();
+                    view.cameraReelToastMessage?.ShowToastMessage(CameraReelToastMessageType.SUCCESS, reelGalleryStringMessages?.PhotoSuccessfullyDownloadedMessage);
                 }
                 catch (Exception e)
                 {
                     ReportHub.LogException(e, new ReportData(ReportCategory.CAMERA_REEL));
-                    ShowFailureNotificationAsync().Forget();
+                    view.cameraReelToastMessage?.ShowToastMessage(CameraReelToastMessageType.FAILURE);
                 }
             }
 
@@ -174,7 +174,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
         private void CopyPictureLink(CameraReelResponseCompact response)
         {
             ReelCommonActions.CopyReelLink(response.id, decentralandUrlsSource!, systemClipboard!);
-            ShowSuccessNotificationAsync(reelGalleryStringMessages?.LinkCopiedMessage).Forget();
+            view.cameraReelToastMessage?.ShowToastMessage(CameraReelToastMessageType.SUCCESS, reelGalleryStringMessages?.LinkCopiedMessage);
         }
 
         private void ShareToX(CameraReelResponseCompact response)
@@ -191,12 +191,12 @@ namespace DCL.InWorldCamera.CameraReelGallery
                 {
                     await this.cameraReelStorageService.UpdateScreenshotVisibilityAsync(response.id, isPublic, ct);
                     response.isPublic = isPublic;
-                    await ShowSuccessNotificationAsync(reelGalleryStringMessages?.PhotoSuccessfullyUpdatedMessage);
+                    view.cameraReelToastMessage?.ShowToastMessage(CameraReelToastMessageType.SUCCESS, reelGalleryStringMessages?.PhotoSuccessfullyUpdatedMessage);
                 }
                 catch (UnityWebRequestException e)
                 {
                     ReportHub.LogException(e, new ReportData(ReportCategory.CAMERA_REEL));
-                    await ShowFailureNotificationAsync();
+                    view.cameraReelToastMessage?.ShowToastMessage(CameraReelToastMessageType.FAILURE);
                 }
             }
 
@@ -276,17 +276,13 @@ namespace DCL.InWorldCamera.CameraReelGallery
                 ScreenshotDeleted?.Invoke();
                 StorageUpdated?.Invoke(response);
 
-                if (view.successNotificationView is null) return;
-
-                await ShowSuccessNotificationAsync(reelGalleryStringMessages?.PhotoSuccessfullyDeletedMessage);
+                view.cameraReelToastMessage?.ShowToastMessage(CameraReelToastMessageType.SUCCESS, reelGalleryStringMessages?.PhotoSuccessfullyDeletedMessage);
             }
             catch (UnityWebRequestException e)
             {
                 ReportHub.LogException(e, new ReportData(ReportCategory.CAMERA_REEL));
 
-                if (view.errorNotificationView is null) return;
-
-                await ShowFailureNotificationAsync();
+                view.cameraReelToastMessage?.ShowToastMessage(CameraReelToastMessageType.FAILURE);
             }
         }
 
@@ -340,41 +336,6 @@ namespace DCL.InWorldCamera.CameraReelGallery
             await LoadMorePageAsync(ct);
 
             FinishShowGallery();
-        }
-
-        private void HideSuccessNotification()
-        {
-            showSuccessCts = showSuccessCts.SafeRestart();
-            view.successNotificationView.CanvasGroup.DOKill();
-            view.successNotificationView.CanvasGroup.alpha = 0f;
-        }
-
-        private void HideFailureNotification()
-        {
-            showFailureCts = showFailureCts.SafeRestart();
-            view.errorNotificationView.CanvasGroup.DOKill();
-            view.errorNotificationView.CanvasGroup.alpha = 0f;
-        }
-
-        private async UniTask ShowSuccessNotificationAsync(string message)
-        {
-            HideSuccessNotification();
-            HideFailureNotification();
-
-            view.successNotificationView.SetText(message);
-            view.successNotificationView.Show(showSuccessCts.Token);
-            await UniTask.Delay((int) view.errorSuccessToastDuration * 1000, cancellationToken: showSuccessCts.Token);
-            view.successNotificationView.Hide(false, showSuccessCts.Token);
-        }
-
-        private async UniTask ShowFailureNotificationAsync()
-        {
-            HideSuccessNotification();
-            HideSuccessNotification();
-
-            view.errorNotificationView.Show(showFailureCts.Token);
-            await UniTask.Delay((int) view.errorSuccessToastDuration * 1000, cancellationToken: showFailureCts.Token);
-            view.errorNotificationView.Hide(false, showFailureCts.Token);
         }
 
         private MonthGridController GetMonthGrid(DateTime dateTime)

@@ -22,14 +22,12 @@ namespace DCL.InWorldCamera.CameraReelGallery
         [SerializeField] internal Button deleteReelButton;
         [SerializeField] internal Button cancelDeleteIntentButton;
         [SerializeField] internal Button cancelDeleteIntentBackgroundButton;
-        [SerializeField] internal WarningNotificationView errorNotificationView;
-        [SerializeField] internal WarningNotificationView successNotificationView;
+        [SerializeField] internal CameraReelToastMessage cameraReelToastMessage;
         [SerializeField] internal CanvasGroup deleteReelModal;
 
         [Header("Configuration")]
         public int paginationLimit = 100;
         [SerializeField] internal int loadMoreCounterThreshold = 12;
-        [SerializeField] internal float errorSuccessToastDuration = 3f;
         [SerializeField] internal float deleteModalAnimationDuration = 0.3f;
 
         [Header("Thumbnail objects")]
