@@ -41,37 +41,26 @@ namespace DCL.InWorldCamera.CameraReelToast
 
         public void ShowToastMessage(CameraReelToastMessageType type, string? message = null)
         {
+            HideSuccessNotification();
+            HideFailureNotification();
+
             switch (type)
             {
                 case CameraReelToastMessageType.SUCCESS:
-                    ShowSuccessNotificationAsync(message).Forget();
+                    ShowNotificationAsync(message, SuccessToastDefaultMessage, SuccessToastView, SuccessToastDuration, showSuccessCts.Token).Forget();
                     break;
                 case CameraReelToastMessageType.FAILURE:
-                    ShowFailureNotificationAsync(message).Forget();
+                    ShowNotificationAsync(message, FailureToastDefaultMessage, FailureToastView, FailureToastDuration, showFailureCts.Token).Forget();
                     break;
             }
         }
 
-        private async UniTask ShowSuccessNotificationAsync(string message)
+        private async UniTask ShowNotificationAsync(string? message, string defaultMessage, WarningNotificationView notificationView, float duration, CancellationToken ct)
         {
-            HideSuccessNotification();
-            HideFailureNotification();
-
-            SuccessToastView.SetText(message ?? SuccessToastDefaultMessage);
-            SuccessToastView.Show(showSuccessCts.Token);
-            await UniTask.Delay((int) SuccessToastDuration * 1000, cancellationToken: showSuccessCts.Token);
-            SuccessToastView.Hide(false, showSuccessCts.Token);
-        }
-
-        private async UniTask ShowFailureNotificationAsync(string message)
-        {
-            HideSuccessNotification();
-            HideSuccessNotification();
-
-            FailureToastView.SetText(message ?? FailureToastDefaultMessage);
-            FailureToastView.Show(showFailureCts.Token);
-            await UniTask.Delay((int) FailureToastDuration * 1000, cancellationToken: showFailureCts.Token);
-            FailureToastView.Hide(false, showFailureCts.Token);
+            notificationView.SetText(message ?? defaultMessage);
+            notificationView.Show(ct);
+            await UniTask.Delay((int) duration * 1000, cancellationToken: ct);
+            notificationView.Hide(false, ct);
         }
 
         private void OnDisable()
