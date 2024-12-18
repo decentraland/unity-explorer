@@ -20,7 +20,8 @@
         "GUID:3640f3c0b42946b0b8794a1ed8e06ca5",
         "ReelActions",
         "GUID:45f6fff651a0a514f8edfdaf9cce45af",
-        "GUID:c6e727f7851314e679212856f4ce3e53"
+        "GUID:c6e727f7851314e679212856f4ce3e53",
+        "CameraReelToast"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
