@@ -136,7 +136,7 @@ namespace DCL.UserInAppInitializationFlow
                     loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.AuthenticationScreenShowing);
                     if (parameters.FromLogout)
                     {
-                        await DoLogoutOperations();
+                        await DoLogoutOperationsAsync();
                         //Restart the realm and show the authentications screen simultaneously to avoid the "empty space" flicker
                         await UniTask.WhenAll(ShowAuthenticationScreenAsync(ct),
                             realmController.SetRealmAsync(
@@ -178,7 +178,7 @@ namespace DCL.UserInAppInitializationFlow
             loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.Completed);
         }
 
-        private async UniTask DoLogoutOperations()
+        private async UniTask DoLogoutOperationsAsync()
         {
             portableExperiencesController.UnloadAllPortableExperiences();
             realmNavigator.RemoveCameraSamplingData();
