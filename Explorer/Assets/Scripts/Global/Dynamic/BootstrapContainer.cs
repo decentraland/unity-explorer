@@ -15,10 +15,12 @@ using DCL.Web3.Abstract;
 using DCL.Web3.Accounts.Factory;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
+using DCL.WebRequests;
 using ECS.SceneLifeCycle.Realm;
 using Global.AppArgs;
 using Plugins.RustSegment.SegmentServerWrap;
 using Global.Dynamic.DebugSettings;
+using Global.Dynamic.RealmUrl;
 using Plugins.TexturesFuse.TexturesServerWrap.CompressShaders;
 using Segment.Analytics;
 using Sentry;
@@ -68,16 +70,16 @@ namespace Global.Dynamic
         public static async UniTask<BootstrapContainer> CreateAsync(
             DebugSettings.DebugSettings debugSettings,
             DynamicSceneLoaderSettings sceneLoaderSettings,
+            IDecentralandUrlsSource decentralandUrlsSource,
             IPluginSettingsContainer settingsContainer,
             RealmLaunchSettings realmLaunchSettings,
             IAppArgs applicationParametersParser,
             ISplashScreen splashScreen,
             ICompressShaders compressShaders,
+            IRealmUrls realmUrls,
             World world,
             CancellationToken ct)
         {
-            var decentralandUrlsSource = new DecentralandUrlsSource(sceneLoaderSettings.DecentralandEnvironment,
-                realmLaunchSettings.IsLocalSceneDevelopmentRealm);
             var browser = new UnityAppWebBrowser(decentralandUrlsSource);
             var web3AccountFactory = new Web3AccountFactory();
 
@@ -98,13 +100,11 @@ namespace Global.Dynamic
             await bootstrapContainer.InitializeContainerAsync<BootstrapContainer, BootstrapSettings>(settingsContainer, ct, async container =>
             {
                 container.reportHandlingSettings = await ProvideReportHandlingSettingsAsync(container.AssetsProvisioner!, container.settings, ct);
-                (container.Bootstrap, container.Analytics) = await CreateBootstrapperAsync(debugSettings, applicationParametersParser, splashScreen, compressShaders, container, container.settings, realmLaunchSettings, world, container.settings.BuildData, ct);
+                (container.Bootstrap, container.Analytics) = await CreateBootstrapperAsync(debugSettings, applicationParametersParser, splashScreen, compressShaders, realmUrls, container, container.settings, realmLaunchSettings, world, container.settings.BuildData, ct);
                 (container.IdentityCache, container.VerifiedEthereumApi, container.Web3Authenticator) = CreateWeb3Dependencies(sceneLoaderSettings, web3AccountFactory, browser, container, decentralandUrlsSource);
 
                 if (container.enableAnalytics)
-                {
                     container.Analytics!.Initialize(container.IdentityCache.Identity);
-                }
 
                 bool enableSceneDebugConsole = realmLaunchSettings.IsLocalSceneDevelopmentRealm || applicationParametersParser.HasFlag(AppArgsFlags.SCENE_CONSOLE);
                 container.DiagnosticsContainer = DiagnosticsContainer.Create(container.ReportHandlingSettings, enableSceneDebugConsole);
@@ -124,6 +124,7 @@ namespace Global.Dynamic
             IAppArgs appArgs,
             ISplashScreen splashScreen,
             ICompressShaders compressShaders,
+            IRealmUrls realmUrls,
             BootstrapContainer container,
             BootstrapSettings bootstrapSettings,
             RealmLaunchSettings realmLaunchSettings,
@@ -134,7 +135,7 @@ namespace Global.Dynamic
             AnalyticsConfiguration analyticsConfig = (await container.AssetsProvisioner.ProvideMainAssetAsync(bootstrapSettings.AnalyticsConfigRef, ct)).Value;
             container.enableAnalytics = analyticsConfig.Mode != AnalyticsMode.DISABLED;
 
-            var coreBootstrap = new Bootstrap(debugSettings, appArgs, splashScreen, compressShaders, container.DecentralandUrlsSource, realmLaunchSettings, world)
+            var coreBootstrap = new Bootstrap(debugSettings, appArgs, splashScreen, compressShaders, realmUrls, realmLaunchSettings, world)
             {
                 EnableAnalytics = container.enableAnalytics,
             };
@@ -249,7 +250,6 @@ namespace Global.Dynamic
         [field: SerializeField] public ReportHandlingSettingsRef ReportHandlingSettingsDevelopment { get; private set; }
         [field: SerializeField] public ReportHandlingSettingsRef ReportHandlingSettingsProduction { get; private set; }
         [field: SerializeField] public BuildData BuildData { get; private set; }
-
 
         [Serializable]
         public class ReportHandlingSettingsRef : AssetReferenceT<ReportsHandlingSettings>
