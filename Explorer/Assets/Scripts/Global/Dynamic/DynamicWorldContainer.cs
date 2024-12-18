@@ -310,23 +310,6 @@ namespace Global.Dynamic
             var wearablesProvider = new ApplicationParametersWearablesProvider(appArgs,
                 new ECSWearablesProvider(identityCache, globalWorld));
 
-            var sceneRoomMetaDataSource = new SceneRoomMetaDataSource(staticContainer.RealmData, staticContainer.CharacterContainer.Transform, globalWorld, dynamicWorldParams.IsolateScenesCommunication);
-
-            var metaDataSource = new SceneRoomLogMetaDataSource(sceneRoomMetaDataSource);
-
-            IGateKeeperSceneRoom gateKeeperSceneRoom = new GateKeeperSceneRoom(staticContainer.WebRequestsContainer.WebRequestController, metaDataSource, bootstrapContainer.DecentralandUrlsSource, staticContainer.ScenesCache)
-               .AsActivatable();
-
-            var currentAdapterAddress = ICurrentAdapterAddress.NewDefault(staticContainer.RealmData);
-
-            var archipelagoIslandRoom = IArchipelagoIslandRoom.NewDefault(
-                identityCache,
-                MultiPoolFactory(),
-                staticContainer.CharacterContainer.CharacterObject,
-                currentAdapterAddress,
-                staticContainer.WebRequestsContainer.WebRequestController
-            );
-
             bool localSceneDevelopment = !string.IsNullOrEmpty(dynamicWorldParams.LocalSceneDevelopmentRealm);
 
             var realmController = new RealmController(
@@ -346,9 +329,9 @@ namespace Global.Dynamic
                 localSceneDevelopment
             );
 
-            container.SceneRoomMetaDataSource = new SceneRoomMetaDataSource(container.RealmController, staticContainer.CharacterContainer.Transform, globalWorld, dynamicWorldParams.IsolateScenesCommunication);
+            var sceneRoomMetaDataSource = new SceneRoomMetaDataSource(realmController, staticContainer.CharacterContainer.Transform, globalWorld, dynamicWorldParams.IsolateScenesCommunication);
 
-            var metaDataSource = new SceneRoomLogMetaDataSource(container.SceneRoomMetaDataSource);
+            var metaDataSource = new SceneRoomLogMetaDataSource(sceneRoomMetaDataSource);
 
             IGateKeeperSceneRoom gateKeeperSceneRoom = new GateKeeperSceneRoom(staticContainer.WebRequestsContainer.WebRequestController, metaDataSource, bootstrapContainer.DecentralandUrlsSource, staticContainer.ScenesCache)
                .AsActivatable();
@@ -405,8 +388,8 @@ namespace Global.Dynamic
             );
 
             var realmMisc = new RealmMisc(
-                container.MapRendererContainer.MapRenderer,
-                container.LODContainer.RoadAssetsPool,
+                mapRendererContainer.MapRenderer,
+                lodContainer.RoadAssetsPool,
                 satelliteView
             );
 
@@ -518,10 +501,10 @@ namespace Global.Dynamic
 
             var minimap = new MinimapController(
                 mainUIView.MinimapView.EnsureNotNull(),
-                container.MapRendererContainer.MapRenderer,
-                container.MvcManager,
+                mapRendererContainer.MapRenderer,
+                mvcManager,
                 placesAPIService,
-                container.RealmController,
+                realmController,
                 chatMessagesBus,
                 staticContainer.ScenesCache,
                 mapPathEventBus,
@@ -531,8 +514,6 @@ namespace Global.Dynamic
 
             // This is a lazy reference to avoid circular dependencies in DynamicWorldContainer, evil hack should be redesigned
             realmMisc.Inject(minimap);
-
-            var minimapPlugin = new MinimapPlugin(container.MvcManager, minimap);
 
             var coreBackpackEventBus = new BackpackEventBus();
 
@@ -640,10 +621,7 @@ namespace Global.Dynamic
                     globalWorld, playerEntity, includeCameraReel),
                 new ErrorPopupPlugin(mvcManager, assetsProvisioner),
                 connectionStatusPanelPlugin,
-                new MinimapPlugin(mvcManager, mapRendererContainer, placesAPIService,
-                    realmController, chatMessagesBus, realmNavigator, staticContainer.ScenesCache,
-                    mainUIView, mapPathEventBus, staticContainer.SceneRestrictionBusController,
-                    $"{dynamicWorldParams.StartParcel.x},{dynamicWorldParams.StartParcel.y}"),
+                new MinimapPlugin(mvcManager, minimap),
                 new ChatPlugin(assetsProvisioner, mvcManager, chatMessagesBus, chatHistory, entityParticipantTable, nametagsData, dclInput, unityEventSystem, mainUIView, staticContainer.InputBlock, globalWorld, playerEntity),
                 new ExplorePanelPlugin(
                     assetsProvisioner,
