@@ -20,7 +20,7 @@ namespace DCL.StylizedSkybox.Scripts.Plugin
         private readonly Light directionalLight;
         private readonly IDebugContainerBuilder debugContainerBuilder;
         private SkyboxController? skyboxController;
-        private readonly ElementBinding<int> timeOfDay;
+        private readonly ElementBinding<float> timeOfDay;
         private readonly FeatureFlagsCache featureFlagsCache;
 
         private StylizedSkyboxSettingsAsset? settingsAsset;
@@ -32,7 +32,7 @@ namespace DCL.StylizedSkybox.Scripts.Plugin
             FeatureFlagsCache featureFlagsCache
         )
         {
-            timeOfDay = new ElementBinding<int>(0);
+            timeOfDay = new ElementBinding<float>(0);
             this.assetsProvisioner = assetsProvisioner;
             this.directionalLight = directionalLight;
             this.debugContainerBuilder = debugContainerBuilder;
@@ -62,7 +62,7 @@ namespace DCL.StylizedSkybox.Scripts.Plugin
             debugContainerBuilder.TryAddWidget("Skybox")
                                 ?.AddSingleButton("Play", () => skyboxController.UseDynamicTime = true)
                                  .AddSingleButton("Pause", () => skyboxController.UseDynamicTime = false)
-                                 .AddIntSliderField("Time", timeOfDay, 0, 1)
+                                 .AddFloatSliderField("Time", timeOfDay, 0, 1)
                                  .AddSingleButton("SetTime", () => skyboxController.SetTimeOverride(timeOfDay.Value)); //TODO: replace this by a system to update the value
         }
 
@@ -79,6 +79,7 @@ namespace DCL.StylizedSkybox.Scripts.Plugin
 
         private void OnUseDynamicTimeChanged(bool dynamic)
         {
+            Debug.Log($"PACO UseDynamicTimeChanged: {dynamic}");
             skyboxController!.UseDynamicTime = dynamic;
 
             if (dynamic)
@@ -87,6 +88,7 @@ namespace DCL.StylizedSkybox.Scripts.Plugin
 
         private void OnNormalizedTimeChanged(float tod)
         {
+            Debug.Log($"PACO NormalizedTimeChanged: {tod}, UseDynamic:{skyboxController!.UseDynamicTime}");
             if (!skyboxController!.UseDynamicTime) // Ignore updates to the value when they come from the skybox
             {
                 skyboxController!.SetTimeOverride(tod);

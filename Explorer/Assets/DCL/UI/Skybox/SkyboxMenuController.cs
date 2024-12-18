@@ -36,6 +36,8 @@ namespace DCL.UI.Skybox
             viewInstance.DynamicToggle.isOn = skyboxSettings.UseDynamicTime;
             skyboxSettings.UseDynamicTimeChanged += OnUseDynamicTimeChanged;
             viewInstance.DynamicToggle.onValueChanged.AddListener(OnDynamicToggleValueChanged);
+
+            viewInstance.SliderGroup.enabled = skyboxSettings.UseDynamicTime;
         }
 
         protected override void OnBeforeViewShow()
@@ -46,6 +48,7 @@ namespace DCL.UI.Skybox
 
         private void OnUseDynamicTimeChanged(bool dynamic)
         {
+            viewInstance!.SliderGroup.enabled = dynamic;
             viewInstance!.DynamicToggle.isOn = dynamic;
         }
 

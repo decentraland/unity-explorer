@@ -436,11 +436,7 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
-        <SkyboxSettingsAsset>k__BackingField:
-          m_AssetGUID: 50aa9483411844942bd409d4b4612221
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_EditorAssetChanged: 0
+        <SkyboxSettingsAsset>k__BackingField: {fileID: 11400000, guid: 50aa9483411844942bd409d4b4612221, type: 2}
     - rid: 3836309668583964676
       type: {class: NftPromptPlugin/NftPromptSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
