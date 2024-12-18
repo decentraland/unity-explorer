@@ -28,9 +28,10 @@ namespace ECS.SceneLifeCycle.Systems
     [UpdateBefore(typeof(ResolveStaticPointersSystem))]
     public partial class PartitionSceneEntitiesSystem : BaseUnityLoopSystem
     {
-        private const int DEPLOYED_SCENES_LIMIT = 90000; // 300x300 scenes (without empty)
+        public const int DEPLOYED_SCENES_LIMIT = 90000; // 300x300 scenes (without empty)
 
         private readonly IComponentPool<PartitionComponent> partitionComponentPool;
+        private readonly IComponentPool<InternalJobIndexComponent> internalJobIndexPool;
         private readonly IReadOnlyCameraSamplingData readOnlyCameraSamplingData;
         private readonly IRealmPartitionSettings realmPartitionSettings;
 
@@ -41,12 +42,14 @@ namespace ECS.SceneLifeCycle.Systems
 
         internal PartitionSceneEntitiesSystem(World world,
             IComponentPool<PartitionComponent> partitionComponentPool,
+            IComponentPool<InternalJobIndexComponent> internalJobIndexPool,
             IPartitionSettings partitionSettings,
             IReadOnlyCameraSamplingData readOnlyCameraSamplingData,
             PartitionDataContainer partitionDataContainer,
             IRealmPartitionSettings realmPartitionSettings) : base(world)
         {
             this.partitionComponentPool = partitionComponentPool;
+            this.internalJobIndexPool = internalJobIndexPool;
             this.readOnlyCameraSamplingData = readOnlyCameraSamplingData;
             this.partitionDataContainer = partitionDataContainer;
             this.realmPartitionSettings = realmPartitionSettings;
@@ -77,6 +80,7 @@ namespace ECS.SceneLifeCycle.Systems
 
             if (!isRunningJob)
             {
+                PartitionScheduledDefinitionQuery(World);
                 PartitionNewEntityQuery(World);
             }
 
@@ -92,7 +96,7 @@ namespace ECS.SceneLifeCycle.Systems
         }
 
         [Query]
-        [None(typeof(PartitionComponent))]
+        [None(typeof(PartitionComponent), typeof(InternalJobIndexComponent))]
         private void PartitionNewEntity(in Entity entity, ref SceneDefinitionComponent definition)
         {
             if (definition.IsPortableExperience)
@@ -107,30 +111,38 @@ namespace ECS.SceneLifeCycle.Systems
                 return;
             }
 
-            if (definition.InternalJobIndex < 0)
-            {
-                ScheduleSceneDefinition(ref definition);
-            }
-            else
-            {
-                PartitionComponent partitionComponent = partitionComponentPool.Get();
-                partitionDataContainer.SetPartitionComponentData(definition.InternalJobIndex, ref partitionComponent);
-                World.Add(entity, partitionComponent);
-            }
+            ScheduleSceneDefinition(ref definition, out InternalJobIndexComponent internalJobIndex);
+            World.Add(entity, internalJobIndex);
         }
 
-        protected void ScheduleSceneDefinition(ref SceneDefinitionComponent definition)
+        [Query]
+        [All(typeof(InternalJobIndexComponent))]
+        [None(typeof(PartitionComponent))]
+        private void PartitionScheduledDefinition(in Entity entity, InternalJobIndexComponent internalJobIndex)
         {
-            AddCorners(ref definition);
+            PartitionComponent partitionComponent = partitionComponentPool.Get();
+
+            partitionDataContainer.SetPartitionComponentData(internalJobIndex.InternalJobIndex,
+                ref partitionComponent);
+
+            World.Add(entity, partitionComponent);
+        }
+
+        private void ScheduleSceneDefinition(ref SceneDefinitionComponent definition,
+            out InternalJobIndexComponent internalJobIndex)
+        {
+            AddCorners(ref definition, out internalJobIndex);
 
             var partitionData = new PartitionData
             {
-                IsDirty = readOnlyCameraSamplingData.IsDirty, RawSqrDistance = -1
+                IsDirty = readOnlyCameraSamplingData.IsDirty, RawSqrDistance = -1,
             };
+
             partitionDataContainer.SetPartitionData(partitionData);
         }
 
-        protected void AddCorners(ref SceneDefinitionComponent definition)
+        private void AddCorners(ref SceneDefinitionComponent definition,
+            out InternalJobIndexComponent internalJobIndex)
         {
             var corners = new NativeArray<ParcelCorners>(definition.ParcelsCorners.Count, Allocator.Persistent);
 
@@ -138,16 +150,20 @@ namespace ECS.SceneLifeCycle.Systems
                 corners[i] = definition.ParcelsCorners[i];
 
             partitionDataContainer.AddCorners(new ParcelCornersData(in corners));
-            definition.InternalJobIndex = partitionDataContainer.CurrentPartitionIndex;
+            internalJobIndex = internalJobIndexPool.Get();
+
+            if (internalJobIndex.InternalJobIndex < 0)
+                internalJobIndex.InternalJobIndex = partitionDataContainer.CurrentPartitionIndex;
         }
 
         [Query]
+        [All(typeof(SceneDefinitionComponent))]
         [None(typeof(PortableExperienceComponent))]
-        private void PartitionExistingEntity(ref SceneDefinitionComponent definition, ref PartitionComponent partitionComponent)
+        private void PartitionExistingEntity(PartitionComponent partitionComponent,
+            InternalJobIndexComponent internalJobIndex)
         {
-            if (definition.InternalJobIndex < 0) return;
-            partitionDataContainer.SetPartitionComponentData(definition.InternalJobIndex, ref partitionComponent);
+            partitionDataContainer.SetPartitionComponentData(internalJobIndex.InternalJobIndex,
+                ref partitionComponent);
         }
-
     }
 }
