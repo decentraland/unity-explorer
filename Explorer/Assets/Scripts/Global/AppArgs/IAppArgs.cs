@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace Global.AppArgs
 {
@@ -14,6 +15,6 @@ namespace Global.AppArgs
     public static class AppArgsExtensions
     {
         public static bool HasDebugFlag(this IAppArgs args) =>
-            args.HasFlag(AppArgsFlags.DEBUG);
+            Debug.isDebugBuild || args.HasFlag(AppArgsFlags.DEBUG);
     }
 }
