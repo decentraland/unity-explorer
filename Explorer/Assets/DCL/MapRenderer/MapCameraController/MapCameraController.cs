@@ -201,19 +201,28 @@ namespace DCL.MapRenderer.MapCameraController
             var cameraYSize = mapCameraObject.mapCamera.orthographicSize;
             var cameraXSize = cameraYSize * mapCameraObject.mapCamera.aspect;
 
-            float xMin = worldBounds.xMin + cameraXSize;
-            float xMax = worldBounds.xMax - cameraXSize;
+            // Add 20% padding to the camera size
+            var extraPaddingX = cameraXSize * -0.3f;
+            var extraPaddingY = cameraYSize * -0.3f;
 
-            float yMin = worldBounds.yMin + cameraYSize;
-            float yMax = worldBounds.yMax - cameraYSize;
+            float xMin = worldBounds.xMin + cameraXSize + extraPaddingX;
+            float xMax = worldBounds.xMax - cameraXSize - extraPaddingX;
 
-            // If the map's width is smaller than the camera's width, disable X-drag
+            float yMin = worldBounds.yMin + cameraYSize + extraPaddingY;
+            float yMax = worldBounds.yMax - cameraYSize - extraPaddingY;
+
             if (worldBounds.xMax - worldBounds.xMin < 2 * cameraXSize)
-                xMin = xMax = 0;
+            {
+                xMin = extraPaddingX;
+                xMax = -extraPaddingX;
+            }
 
-            // If the map's height is smaller than the camera's height, disable Y-drag
+            // If the map's height is smaller than the camera's height, add extra padding
             if (worldBounds.yMax - worldBounds.yMin < 2 * cameraYSize)
-                yMin = yMax = 0;
+            {
+                yMin = extraPaddingY;
+                yMax = -extraPaddingY;
+            }
 
             cameraPositionBounds = Rect.MinMaxRect(xMin, yMin, xMax, yMax);
         }
