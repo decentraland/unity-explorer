@@ -143,7 +143,11 @@ namespace DCL.Multiplayer.Connections.Archipelago.SignFlow
                 while (token.IsCancellationRequested == false)
                 {
                     if (connection.IsConnected == false)
-                        throw new InvalidOperationException("Connection is not established");
+                    {
+                        ReportHub.LogError(ReportCategory.LIVEKIT, "Connection is not established");
+                        await UniTask.Delay(TimeSpan.FromSeconds(1), cancellationToken: token);
+                        return;
+                    }
 
                     var result = await connection.ReceiveAsync(token);
 

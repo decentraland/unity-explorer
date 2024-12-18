@@ -10,8 +10,10 @@ using DCL.FeatureFlags;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.HealthChecks;
+using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Profiles.Self;
 using DCL.SceneLoadingScreens.LoadingScreen;
+using DCL.UI.ErrorPopup;
 using DCL.UserInAppInitializationFlow.StartupOperations;
 using DCL.UserInAppInitializationFlow.StartupOperations.Struct;
 using DCL.Utilities;
@@ -57,12 +59,16 @@ namespace DCL.UserInAppInitializationFlow
             FeatureFlagsCache featureFlagsCache,
             IWeb3IdentityCache web3IdentityCache,
             IRealmController realmController,
+            IRealmMisc realmMisc,
             ILandscape landscape,
             IAppArgs appParameters,
             IDebugSettings debugSettings,
             IPortableExperiencesController portableExperiencesController,
             IRoomHub roomHub,
-            DiagnosticsContainer diagnosticsContainer)
+            IAnalyticsController analyticsController,
+            DiagnosticsContainer diagnosticsContainer,
+            URLDomain defaultStartingRealm
+        )
         {
             this.loadingStatus = loadingStatus;
             this.decentralandUrlsSource = decentralandUrlsSource;
@@ -75,11 +81,11 @@ namespace DCL.UserInAppInitializationFlow
             var ensureLivekitConnectionStartupOperation = new EnsureLivekitConnectionStartupOperation(loadingStatus, livekitHealthCheck);
             var initializeFeatureFlagsStartupOperation = new InitializeFeatureFlagsStartupOperation(loadingStatus, featureFlagsProvider, web3IdentityCache, decentralandUrlsSource, appParameters);
             var preloadProfileStartupOperation = new PreloadProfileStartupOperation(loadingStatus, selfProfile);
-            var switchRealmMiscVisibilityStartupOperation = new SwitchRealmMiscVisibilityStartupOperation(loadingStatus, realmNavigator);
+            var switchRealmMiscVisibilityStartupOperation = new SwitchRealmMiscVisibilityStartupOperation(loadingStatus, realmController, realmMisc);
             loadPlayerAvatarStartupOperation = new LoadPlayerAvatarStartupOperation(loadingStatus, selfProfile, mainPlayerAvatarBaseProxy);
             var loadLandscapeStartupOperation = new LoadLandscapeStartupOperation(loadingStatus, landscape);
             checkOnboardingStartupOperation = new CheckOnboardingStartupOperation(loadingStatus, selfProfile, featureFlagsCache, decentralandUrlsSource, appParameters, realmNavigator);
-            restartRealmStartupOperation = new RestartRealmStartupOperation(loadingStatus, realmController);
+            restartRealmStartupOperation = new RestartRealmStartupOperation(loadingStatus, realmController, defaultStartingRealm);
             var teleportStartupOperation = new TeleportStartupOperation(loadingStatus, realmNavigator, startParcel);
             var loadGlobalPxOperation = new LoadGlobalPortableExperiencesStartupOperation(loadingStatus, selfProfile, featureFlagsCache, debugSettings, portableExperiencesController);
             var sentryDiagnostics = new SentryDiagnosticStartupOperation(realmController, diagnosticsContainer);
@@ -97,14 +103,14 @@ namespace DCL.UserInAppInitializationFlow
                 teleportStartupOperation,
                 loadGlobalPxOperation,
                 sentryDiagnostics
-            );
+            ).WithAnalytics(analyticsController);
         }
 
         public async UniTask ExecuteAsync(UserInAppInitializationFlowParameters parameters, CancellationToken ct)
         {
             loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.Init);
 
-            Result result = default;
+            EnumResult<TaskError> result = parameters.RecoveryError;
 
             loadPlayerAvatarStartupOperation.AssignWorld(parameters.World, parameters.PlayerEntity);
             restartRealmStartupOperation.EnableReload(parameters.ReloadRealm);
@@ -113,7 +119,7 @@ namespace DCL.UserInAppInitializationFlow
 
             do
             {
-                if (parameters.FromLogout)
+                if (parameters.LoadSource is not IUserInAppInitializationFlow.LoadSource.StartUp)
 
                     // Disconnect current livekit connection on logout so the avatar is removed from other peers
                     await roomHub.StopAsync().Timeout(TimeSpan.FromSeconds(10));
@@ -121,10 +127,14 @@ namespace DCL.UserInAppInitializationFlow
                 if (parameters.ShowAuthentication)
                 {
                     loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.AuthenticationScreenShowing);
-                    await ShowAuthenticationScreenAsync(ct);
+
+                    await UniTask.WhenAll(
+                        ShowAuthenticationScreenAsync(ct),
+                        ShowErrorPopupIfRequired(result, ct)
+                    );
                 }
 
-                if (parameters.FromLogout)
+                if (parameters.LoadSource is IUserInAppInitializationFlow.LoadSource.Logout)
                 {
                     // If we are coming from a logout, we teleport the user to Genesis Plaza and force realm change to reset the scene properly
                     var url = URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.Genesis));
@@ -135,34 +145,33 @@ namespace DCL.UserInAppInitializationFlow
 
                     // Restart livekit connection
                     await roomHub.StartAsync().Timeout(TimeSpan.FromSeconds(10));
-                    result = changeRealmResult.AsResult();
+
+                    result = changeRealmResult.As(ChangeRealmErrors.AsTaskError);
 
                     // We need to flag the process as completed, otherwise the multiplayer systems will not run
                     loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.Completed);
                 }
                 else
                 {
-                    Result loadingResult = await LoadingScreen(parameters.ShowLoading)
+                    EnumResult<TaskError> loadingResult = await LoadingScreen(parameters.ShowLoading)
                        .ShowWhileExecuteTaskAsync(
                             async (parentLoadReport, ct) =>
                             {
-                                result = await startupOperation.ExecuteAsync(parentLoadReport, ct);
-
-                                if (result.Success)
-                                    parentLoadReport.SetProgress(loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.Completed));
-
-                                return result;
+                                var operationResult = await startupOperation.ExecuteAsync(parentLoadReport, ct);
+                                if (operationResult.Success) parentLoadReport.SetProgress(loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.Completed));
+                                return operationResult;
                             },
                             ct
                         );
 
-                    ApplyErrorIfLoadingScreenError(ref result, loadingResult);
+                    result = loadingResult;
                 }
 
                 if (result.Success == false)
-                    ReportHub.LogError(ReportCategory.DEBUG, result.ErrorMessage!);
-
-                //TODO notification popup on failure
+                {
+                    string message = result.Error.AsMessage();
+                    ReportHub.LogError(ReportCategory.AUTHENTICATION, message);
+                }
             }
             while (result.Success == false && parameters.ShowAuthentication);
 
@@ -170,15 +179,38 @@ namespace DCL.UserInAppInitializationFlow
             loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.Completed);
         }
 
-        private static void ApplyErrorIfLoadingScreenError(ref Result result, Result showResult)
-        {
-            if (!showResult.Success)
-                result = showResult;
-        }
-
         private async UniTask ShowAuthenticationScreenAsync(CancellationToken ct)
         {
             await mvcManager.ShowAsync(AuthenticationScreenController.IssueCommand(), ct);
+        }
+
+        private UniTask ShowErrorPopupIfRequired(EnumResult<TaskError> result, CancellationToken ct)
+        {
+            if (result.Success)
+                return UniTask.CompletedTask;
+
+            var message = $"{ToMessage(result)}\nPlease try again";
+            return mvcManager.ShowAsync(new ShowCommand<ErrorPopupView, ErrorPopupData>(ErrorPopupData.FromDescription(message)), ct);
+        }
+
+        private string ToMessage(EnumResult<TaskError> result)
+        {
+            if (result.Success)
+            {
+                ReportHub.LogError(ReportCategory.AUTHENTICATION, "Incorrect use case of error to message");
+                return "Incorrect error state";
+            }
+
+            var error = result.Error!.Value;
+
+            return error.State switch
+                   {
+                       TaskError.MessageError => $"Error: {error.Message}",
+                       TaskError.Timeout => "Load timeout",
+                       TaskError.Cancelled => "Operation cancelled",
+                       TaskError.UnexpectedException => "Critical error occured",
+                       _ => throw new ArgumentOutOfRangeException()
+                   };
         }
 
         private ILoadingScreen LoadingScreen(bool withUI) =>
