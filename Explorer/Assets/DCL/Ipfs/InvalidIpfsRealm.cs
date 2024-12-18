@@ -23,6 +23,7 @@ namespace DCL.Ipfs
         public URLDomain LambdasBaseUrl => URLDomain.EMPTY;
         public IReadOnlyList<string> SceneUrns { get; } = new List<string>();
         public URLDomain EntitiesActiveEndpoint => URLDomain.EMPTY;
+        public URLDomain AssetBundleRegistry => URLDomain.EMPTY;
 
         public UniTask PublishAsync<T>(EntityDefinitionGeneric<T> entity, CancellationToken ct, IReadOnlyDictionary<string, byte[]>? contentFiles = null) =>
             throw new NotSupportedException();

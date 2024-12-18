@@ -303,7 +303,9 @@ namespace Global.Dynamic
                 debugBuilder,
                 staticContainer.ComponentsContainer.ComponentPoolsRegistry
                                .GetReferenceTypePool<PartitionComponent>(),
-                localSceneDevelopment);
+                localSceneDevelopment,
+                bootstrapContainer.DecentralandUrlsSource,
+                staticContainer.FeatureFlagsCache);
 
             container.reloadSceneController = new ECSReloadScene(staticContainer.ScenesCache, globalWorld, playerEntity, localSceneDevelopment);
 
