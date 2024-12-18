@@ -14,6 +14,7 @@ using DCL.WebRequests.Analytics;
 using DCL.WebRequests.RequestsHub;
 using ECS;
 using ECS.SceneLifeCycle;
+using ECS.SceneLifeCycle.Realm;
 using LiveKit.Internal.FFIClients;
 using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using UnityEngine;
@@ -44,7 +45,7 @@ namespace DCL.Multiplayer.Connections.Demo
 
             new GateKeeperSceneRoom(
                 webRequests,
-                new SceneRoomLogMetaDataSource(new SceneRoomMetaDataSource(realmData, character, world, false)),
+                new SceneRoomLogMetaDataSource(new SceneRoomMetaDataSource(new IRealmController.Fake(), character, world, false)),
                 urlsSource,
                 new ScenesCache()
             ).StartAsync();

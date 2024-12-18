@@ -1,6 +1,7 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Chat.Commands;
 using ECS.SceneLifeCycle.Realm;
+using System;
 using System.Text.RegularExpressions;
 using System.Threading;
 using UnityEngine;
@@ -36,14 +37,21 @@ namespace Global.Dynamic.ChatCommands
             bool isLocal = match.Groups[1].Value == COMMAND_GOTO_LOCAL;
             ParseOrRandom(match);
 
-            Result teleportResult = await realmNavigator.TeleportToParcelAsync(new Vector2Int(x, y), ct, isLocal);
+            var teleportResult = await realmNavigator.TeleportToParcelAsync(new Vector2Int(x, y), ct, isLocal);
 
-            if (ct.IsCancellationRequested)
-                return "🔴 Error. The operation was canceled!";
+            if (teleportResult.Success)
+                return $"🟢 You teleported to {x},{y} in Genesis City";
 
-            return teleportResult.Success
-                ? $"🟢 You teleported to {x},{y} in Genesis City"
-                : $"🔴 Teleport failed: {teleportResult.ErrorMessage}";
+            var error = teleportResult.Error.Value;
+
+            return error.State switch
+                   {
+                       TaskError.MessageError => $"🔴 Error. Teleport failed: {error.Message}",
+                       TaskError.Timeout => $"🔴 Error. Timeout",
+                       TaskError.Cancelled => "🔴 Error. The operation was canceled!",
+                       TaskError.UnexpectedException => $"🔴 Error. Teleport failed: {error.Message}",
+                       _ => throw new ArgumentOutOfRangeException()
+                   };
         }
 
         private void ParseOrRandom(Match match)

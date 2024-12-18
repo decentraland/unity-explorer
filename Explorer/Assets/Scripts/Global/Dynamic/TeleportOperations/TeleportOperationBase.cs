@@ -9,14 +9,14 @@ namespace Global.Dynamic.TeleportOperations
 {
     public abstract class TeleportOperationBase : ITeleportOperation
     {
-        private readonly Func<Exception, Result> createError;
+        private readonly Func<Exception, EnumResult<TaskError>> createError;
 
         protected TeleportOperationBase()
         {
-            createError = e => Result.ErrorResult($"Exception in {GetType().Name}:\n{e}");
+            createError = e => EnumResult<TaskError>.ErrorResult(TaskError.UnexpectedException, $"Exception in {GetType().Name}:\n{e}");
         }
 
-        public UniTask<Result> ExecuteAsync(TeleportParams teleportParams, CancellationToken ct) =>
+        public UniTask<EnumResult<TaskError>> ExecuteAsync(TeleportParams teleportParams, CancellationToken ct) =>
             InternalExecuteAsync(teleportParams, ct).SuppressToResultAsync(ReportCategory.SCENE_LOADING, createError);
 
         /// <summary>

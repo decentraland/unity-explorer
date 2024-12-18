@@ -46,7 +46,7 @@ namespace DCL.ParcelsService
             var binding = new PersistentElementBinding<Vector2Int>(PersistentSetting.CreateVector2Int("teleportCoordinates"));
 
             var timeout = new ElementBinding<float>((float)loadingScreenTimeout.Value.TotalSeconds,
-                evt => loadingScreenTimeout.Value = TimeSpan.FromSeconds(Mathf.Max(evt.newValue, 0)));
+                evt => loadingScreenTimeout.Set(seconds: evt.newValue));
 
             debugContainerBuilder
                .TryAddWidget("Teleport")

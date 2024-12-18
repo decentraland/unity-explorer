@@ -25,6 +25,7 @@ using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.Landscape;
 using DCL.LOD.Systems;
 using DCL.MapRenderer;
+using DCL.Minimap;
 using DCL.Multiplayer.Connections.Archipelago.AdapterAddress.Current;
 using DCL.Multiplayer.Connections.Archipelago.Rooms;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -74,6 +75,7 @@ using ECS.SceneLifeCycle.Realm;
 using Global.AppArgs;
 using Global.Dynamic.ChatCommands;
 using Global.Dynamic.Landscapes;
+using Global.Dynamic.Misc;
 using LiveKit.Internal.FFIClients.Pools;
 using LiveKit.Internal.FFIClients.Pools.Memory;
 using LiveKit.Proto;
@@ -341,7 +343,25 @@ namespace Global.Dynamic
                 debugBuilder,
                 staticContainer.ComponentsContainer.ComponentPoolsRegistry
                                .GetReferenceTypePool<PartitionComponent>(),
-                localSceneDevelopment);
+                localSceneDevelopment
+            );
+
+            container.SceneRoomMetaDataSource = new SceneRoomMetaDataSource(container.RealmController, staticContainer.CharacterContainer.Transform, globalWorld, dynamicWorldParams.IsolateScenesCommunication);
+
+            var metaDataSource = new SceneRoomLogMetaDataSource(container.SceneRoomMetaDataSource);
+
+            IGateKeeperSceneRoom gateKeeperSceneRoom = new GateKeeperSceneRoom(staticContainer.WebRequestsContainer.WebRequestController, metaDataSource, bootstrapContainer.DecentralandUrlsSource, staticContainer.ScenesCache)
+               .AsActivatable();
+
+            var currentAdapterAddress = ICurrentAdapterAddress.NewDefault(staticContainer.RealmData);
+
+            var archipelagoIslandRoom = IArchipelagoIslandRoom.NewDefault(
+                identityCache,
+                MultiPoolFactory(),
+                staticContainer.CharacterContainer.CharacterObject,
+                currentAdapterAddress,
+                staticContainer.WebRequestsContainer.WebRequestController
+            );
 
             var reloadSceneController = new ECSReloadScene(staticContainer.ScenesCache, globalWorld, playerEntity, localSceneDevelopment);
 
@@ -384,9 +404,14 @@ namespace Global.Dynamic
                 localSceneDevelopment
             );
 
-            IRealmNavigator realmNavigator = new RealmNavigator(
+            var realmMisc = new RealmMisc(
+                container.MapRendererContainer.MapRenderer,
+                container.LODContainer.RoadAssetsPool,
+                satelliteView
+            );
+
+            IRealmNavigator baseRealmNavigator = new RealmNavigator(
                 loadingScreen,
-                mapRendererContainer.MapRenderer,
                 realmController,
                 parcelServiceContainer.TeleportController,
                 roomHub,
@@ -394,13 +419,15 @@ namespace Global.Dynamic
                 bootstrapContainer.DecentralandUrlsSource,
                 globalWorld,
                 lodContainer.RoadAssetsPool,
-                satelliteView,
                 staticContainer.ExposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy,
                 exposedGlobalDataContainer.CameraSamplingData,
                 staticContainer.LoadingStatus,
                 staticContainer.CacheCleaner,
                 staticContainer.SingletonSharedDependencies.MemoryBudget,
-                landscape);
+                bootstrapContainer.Analytics!,
+                landscape,
+                realmMisc
+            );
 
             IHealthCheck livekitHealthCheck = bootstrapContainer.DebugSettings.EnableEmulateNoLivekitConnection
                 ? new IHealthCheck.AlwaysFails("Livekit connection is in debug, always fail mode")
@@ -427,18 +454,29 @@ namespace Global.Dynamic
                 dynamicWorldParams.StartParcel,
                 staticContainer.MainPlayerAvatarBaseProxy,
                 backgroundMusic,
-                realmNavigator,
+                baseRealmNavigator,
                 loadingScreen,
                 staticContainer.FeatureFlagsProvider,
                 staticContainer.FeatureFlagsCache,
                 identityCache,
                 realmController,
+                realmMisc,
                 landscape,
                 dynamicWorldParams.AppParameters,
                 bootstrapContainer.DebugSettings,
                 staticContainer.PortableExperiencesController,
                 roomHub,
-                bootstrapContainer.DiagnosticsContainer);
+                bootstrapContainer.Analytics.EnsureNotNull(),
+                bootstrapContainer.DiagnosticsContainer,
+                URLDomain.FromString(dynamicWorldParams.DefaultStartingRealm)
+            );
+
+            var realmNavigator = new MainScreenFallbackRealmNavigator(
+                baseRealmNavigator,
+                userInAppInAppInitializationFlow,
+                playerEntity,
+                globalWorld
+            );
 
             var worldInfoHub = new LocationBasedWorldInfoHub(
                 new WorldInfoHub(staticContainer.SingletonSharedDependencies.SceneMapping),
@@ -474,9 +512,27 @@ namespace Global.Dynamic
                                                  .WithCommands(chatCommands)
                                                  .WithDebugPanel(debugBuilder);
 
-            var chatMessagesBus = dynamicWorldParams.EnableAnalytics
+            IChatMessagesBus chatMessagesBus = dynamicWorldParams.EnableAnalytics
                 ? new ChatMessagesBusAnalyticsDecorator(coreChatMessageBus, bootstrapContainer.Analytics!)
                 : coreChatMessageBus;
+
+            var minimap = new MinimapController(
+                mainUIView.MinimapView.EnsureNotNull(),
+                container.MapRendererContainer.MapRenderer,
+                container.MvcManager,
+                placesAPIService,
+                container.RealmController,
+                chatMessagesBus,
+                staticContainer.ScenesCache,
+                mapPathEventBus,
+                staticContainer.SceneRestrictionBusController,
+                $"{dynamicWorldParams.StartParcel.x},{dynamicWorldParams.StartParcel.y}"
+            );
+
+            // This is a lazy reference to avoid circular dependencies in DynamicWorldContainer, evil hack should be redesigned
+            realmMisc.Inject(minimap);
+
+            var minimapPlugin = new MinimapPlugin(container.MvcManager, minimap);
 
             var coreBackpackEventBus = new BackpackEventBus();
 
@@ -738,7 +794,6 @@ namespace Global.Dynamic
                 globalPlugins.Add(new AnalyticsPlugin(
                         bootstrapContainer.Analytics!,
                         staticContainer.Profiler,
-                        realmNavigator,
                         staticContainer.RealmData,
                         staticContainer.ScenesCache,
                         staticContainer.MainPlayerAvatarBaseProxy,
