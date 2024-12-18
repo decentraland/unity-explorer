@@ -19,10 +19,13 @@ namespace DCL.PluginSystem
         // ReSharper disable once CollectionNeverUpdated.Global
         [SerializeReference] [PluginSettingsTitle] internal List<IDCLPluginSettings> settings = new ();
 
-        public T GetSettings<T>() where T: IDCLPluginSettings
+        public object GetSettings(Type type)
         {
-            try { return (T)settings.Find(x => x.GetType() == typeof(T)).EnsureNotNull(); }
-            catch (Exception e) { throw new NullReferenceException($"Settings not found for type {typeof(T).Name} at {this.GetType().FullName}", e); }
+            if (type == typeof(NoExposedPluginSettings))
+                return NoExposedPluginSettings.Instance;
+
+            try { return settings.Find(x => x.GetType() == type).EnsureNotNull(); }
+            catch (Exception e) { throw new NullReferenceException($"Settings not found for type {type.Name} at {this.GetType().FullName}", e); }
         }
 
         public async UniTask EnsureValidAsync()

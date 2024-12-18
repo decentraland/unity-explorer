@@ -1,10 +1,7 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
-using Cysharp.Threading.Tasks;
 using DCL.DebugUtilities;
-using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
-using System.Threading;
 
 namespace DCL.WebRequests.Analytics
 {
@@ -18,9 +15,6 @@ namespace DCL.WebRequests.Analytics
             this.analyticsContainer = analyticsContainer;
             this.debugContainerBuilder = debugContainerBuilder;
         }
-
-        public UniTask Initialize(IPluginSettingsContainer container, CancellationToken ct) =>
-            UniTask.CompletedTask;
 
         public void Dispose() { }
 
