@@ -39,7 +39,9 @@ namespace DCL.Navmap
 
         private ImageController imageController;
 
-        public event Action<bool> OnMouseHover;
+        public Vector2Int coords;
+
+        public event Action<bool, Vector2Int> OnMouseHover;
 
         public void ConfigurePlaceImageController(IWebRequestController webRequestController) =>
             imageController = new ImageController(placeImage, webRequestController);
@@ -49,13 +51,13 @@ namespace DCL.Navmap
 
         public void OnPointerEnter(PointerEventData eventData)
         {
-            OnMouseHover?.Invoke(true);
+            OnMouseHover?.Invoke(true, coords);
             arrowImage.gameObject.SetActive(true);
         }
 
         public void OnPointerExit(PointerEventData eventData)
         {
-            OnMouseHover?.Invoke(false);
+            OnMouseHover?.Invoke(false, coords);
             arrowImage.gameObject.SetActive(false);
         }
 

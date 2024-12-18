@@ -9,6 +9,8 @@ namespace DCL.Navmap
 {
     public class PlacesAndEventsPanelController
     {
+        private const float ANIMATION_DURATION = 0.5f;
+
         private readonly PlacesAndEventsPanelView view;
         private readonly NavmapSearchBarController searchBarController;
         private readonly SearchResultPanelController searchResultController;
@@ -103,7 +105,7 @@ namespace DCL.Navmap
 
             collapseExpandCancellationToken = collapseExpandCancellationToken.SafeRestart();
 
-            transform.DOAnchorPosX(0f, 1f)
+            transform.DOAnchorPosX(0f, ANIMATION_DURATION)
                      .ToUniTask(cancellationToken: collapseExpandCancellationToken.Token)
                      .Forget();
         }
@@ -118,7 +120,7 @@ namespace DCL.Navmap
 
             collapseExpandCancellationToken = collapseExpandCancellationToken.SafeRestart();
 
-            transform.DOAnchorPosX(transform.rect.width, 1f)
+            transform.DOAnchorPosX(transform.rect.width, ANIMATION_DURATION)
                      .OnComplete(() =>
                       {
                           if (disableOnEnd)

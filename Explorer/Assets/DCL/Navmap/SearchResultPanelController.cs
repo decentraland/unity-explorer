@@ -3,6 +3,7 @@ using DCL.PlacesAPIService;
 using DCL.UI;
 using System.Collections.Generic;
 using System.Threading;
+using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
 
@@ -87,6 +88,7 @@ namespace DCL.Navmap
                 usedPoolElements.Add(placeInfo.base_position, placeElementView);
                 placeElementView.transform.SetAsLastSibling();
                 placeElementView.placeName.text = placeInfo.title;
+                placeElementView.coords = placeInfo.base_position_processed;
                 placeElementView.placeCreator.gameObject.SetActive(
                     !string.IsNullOrEmpty(placeInfo.contact_name) && placeInfo.contact_name != "Unknown");
                 placeElementView.placeCreator.text = $"created by <b>{placeInfo.contact_name}</b>";
@@ -94,17 +96,25 @@ namespace DCL.Navmap
                 placeElementView.playersCount.text = placeInfo.user_count.ToString();
                 placeElementView.resultAnimator.SetTrigger(UIAnimationHashes.LOADED);
                 placeElementView.SetPlaceImage(placeInfo.image);
+                placeElementView.resultButton.onClick.RemoveAllListeners();
                 placeElementView.resultButton.onClick.AddListener(() =>
                 {
                     showPlaceInfoCancellationToken = showPlaceInfoCancellationToken.SafeRestart();
                     navmapBus.SelectPlaceFromResultsPanel(placeInfo.base_position_processed, false, true);
                     navmapBus.SelectPlaceAsync(placeInfo, showPlaceInfoCancellationToken.Token, true).Forget();
                 });
-                placeElementView.OnMouseHover += isHovered => { navmapBus.SelectPlaceFromResultsPanel(placeInfo.base_position_processed, isHovered, false); };
+
+                placeElementView.OnMouseHover -= OnPlaceElementViewOnOnMouseHover;
+                placeElementView.OnMouseHover += OnPlaceElementViewOnOnMouseHover;
                 placeElementView.LiveContainer.SetActive(false);
             }
 
             view.PaginationContainer.transform.SetAsLastSibling();
+        }
+
+        private void OnPlaceElementViewOnOnMouseHover(bool isHovered, Vector2Int coords)
+        {
+            navmapBus.SelectPlaceFromResultsPanel(coords, isHovered, false);
         }
 
         public void SetLiveEvents(HashSet<string> parcels)
