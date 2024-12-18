@@ -2,6 +2,8 @@
 using DCL.AuthenticationScreenFlow;
 using DCL.Chat;
 using DCL.ExplorePanel;
+using DCL.InWorldCamera.CameraReelGallery;
+using DCL.InWorldCamera.PhotoDetail;
 using DCL.Passport;
 using DCL.UI.Sidebar;
 using MVC;
@@ -32,6 +34,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             {
                 { typeof(ChatController), CreateAnalytics<ChatController>(c => new ChatEventsAnalytics(analytics, c)) },
                 { typeof(ExplorePanelController), CreateAnalytics<ExplorePanelController>(c => new ExplorePanelAnalytics(analytics, c)) },
+                { typeof(PhotoDetailController), CreateAnalytics<PhotoDetailController>(c => new PhotoDetailAnalytics(analytics, c)) },
                 { typeof(PassportController), CreateAnalytics<PassportController>(c => new PassportAnalytics(analytics, c)) },
                 { typeof(AuthenticationScreenController), CreateAnalytics<AuthenticationScreenController>(c => new AuthenticationScreenAnalytics(analytics, c)) },
                 { typeof(SidebarController), CreateAnalytics<SidebarController>(c => new SupportAnalytics(analytics, c)) },

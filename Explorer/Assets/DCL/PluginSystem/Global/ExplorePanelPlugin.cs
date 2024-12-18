@@ -256,10 +256,12 @@ namespace DCL.PluginSystem.Global
 
             CameraReelView cameraReelView = explorePanelView.GetComponentInChildren<CameraReelView>();
             var cameraReelController = new CameraReelController(cameraReelView,
-                new CameraReelGalleryController(cameraReelView.cameraReelGalleryView, this.cameraReelStorageService,
-                    cameraReelScreenshotsStorage, webBrowser, decentralandUrlsSource, inputHandler, systemClipboard,
-                    settings.CameraReelGalleryShareToXMessage, settings.PhotoSuccessfullyDeletedMessage, settings.PhotoSuccessfullyUpdatedMessage, settings.LinkCopiedMessage,
-                   cameraReelView.optionsButton, cameraReelView.contextMenu),
+                new CameraReelGalleryController(cameraReelView.CameraReelGalleryView, this.cameraReelStorageService,
+                    cameraReelScreenshotsStorage,
+                    new ReelGalleryConfigParams(settings.GridLayoutFixedColumnCount, settings.ThumbnailHeight, settings.ThumbnailWidth, true, true), true,
+                    cameraReelView.optionsButton, cameraReelView.contextMenu,
+                    webBrowser, decentralandUrlsSource, inputHandler, systemClipboard,
+                    new ReelGalleryStringMessages(settings.CameraReelGalleryShareToXMessage, settings.PhotoSuccessfullyDeletedMessage, settings.PhotoSuccessfullyUpdatedMessage, settings.PhotoSuccessfullyDownloadedMessage, settings.LinkCopiedMessage)),
                 cameraReelStorageService,
                 web3IdentityCache,
                 mvcManager,
@@ -315,9 +317,18 @@ namespace DCL.PluginSystem.Global
             [field: SerializeField]
             public string PhotoSuccessfullyDeletedMessage { get; private set; }
             [field: SerializeField]
+            public string PhotoSuccessfullyDownloadedMessage { get; private set; }
+            [field: SerializeField]
             public string LinkCopiedMessage { get; private set; }
             [field: SerializeField]
             public string StorageProgressBarText { get; private set; }
+
+            [field: SerializeField]
+            public int GridLayoutFixedColumnCount { get; private set; }
+            [field: SerializeField]
+            public int ThumbnailHeight { get; private set; }
+            [field: SerializeField]
+            public int ThumbnailWidth { get; private set; }
 
             public IReadOnlyCollection<URN> EmbeddedEmotesAsURN() =>
                 EmbeddedEmotes.Select(s => new URN(s)).ToArray();

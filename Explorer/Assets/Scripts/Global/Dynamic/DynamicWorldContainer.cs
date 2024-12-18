@@ -685,8 +685,11 @@ namespace Global.Dynamic
                     notificationsBusController,
                     staticContainer.InputBlock,
                     container.RemoteMetadata,
+                    cameraReelStorageService,
+                    cameraReelStorageService,
                     globalWorld,
-                    playerEntity
+                    playerEntity,
+                    includeCameraReel
                 ),
             };
 

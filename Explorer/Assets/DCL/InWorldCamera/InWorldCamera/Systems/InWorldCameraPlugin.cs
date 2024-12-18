@@ -14,6 +14,7 @@ using DCL.Clipboard;
 using DCL.Input;
 using DCL.InWorldCamera;
 using DCL.InWorldCamera.CameraReelStorageService;
+using DCL.InWorldCamera.PassportBridgeOpener;
 using DCL.InWorldCamera.PhotoDetail;
 using DCL.InWorldCamera.Settings;
 using DCL.InWorldCamera.Systems;
@@ -152,6 +153,7 @@ namespace DCL.PluginSystem.Global
                     wearablesProvider,
                     decentralandUrlsSource,
                     new ECSThumbnailProvider(realmData, globalWorld, assetBundleURL, webRequestController),
+                    new PassportBridgeOpener(),
                     rarityBackgroundsMapping,
                     rarityColorMappings,
                     categoryIconsMapping,
@@ -160,7 +162,7 @@ namespace DCL.PluginSystem.Global
                 systemClipboard,
                 decentralandUrlsSource,
                 webBrowser,
-                settings.ShareToXMessage));
+                new PhotoDetailStringMessages(settings.ShareToXMessage, settings.PhotoSuccessfullyDownloadedMessage, settings.LinkCopiedMessage)));
 
 
             inWorldCameraController = new InWorldCameraController(() => hud.GetComponent<InWorldCameraView>(), sidebarButton, globalWorld, mvcManager, cameraReelStorageService);
@@ -191,6 +193,8 @@ namespace DCL.PluginSystem.Global
             [field: Header("Photo detail")]
             [field: SerializeField] internal AssetReferenceGameObject PhotoDetailPrefab { get; private set; }
             [field: SerializeField, Tooltip("Spaces will be HTTP sanitized, care for special characters")] internal string ShareToXMessage { get; private set; }
+            [field: SerializeField] internal string PhotoSuccessfullyDownloadedMessage { get; private set; }
+            [field: SerializeField] internal string LinkCopiedMessage { get; private set; }
             [field: SerializeField] internal AssetReferenceT<NftTypeIconSO> CategoryIconsMapping { get; private set; }
 
             [field: SerializeField] internal AssetReferenceT<NftTypeIconSO> RarityBackgroundsMapping { get; private set; }
