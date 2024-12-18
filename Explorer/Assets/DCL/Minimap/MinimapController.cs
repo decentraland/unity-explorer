@@ -62,7 +62,7 @@ namespace DCL.Minimap
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
 
         public MinimapController(
-            ViewFactoryMethod viewFactory,
+            MinimapView minimapView,
             IMapRenderer mapRenderer,
             IMVCManager mvcManager,
             IPlacesAPIService placesAPIService,
@@ -72,7 +72,11 @@ namespace DCL.Minimap
             IMapPathEventBus mapPathEventBus,
             ISceneRestrictionBusController sceneRestrictionBusController,
             string startParcelInGenesis
-        ) : base(viewFactory)
+        ) : base(() =>
+        {
+            minimapView.gameObject.SetActive(true);
+            return minimapView;
+        })
         {
             this.mapRenderer = mapRenderer;
             this.mvcManager = mvcManager;
@@ -101,8 +105,10 @@ namespace DCL.Minimap
             viewInstance.collapseMinimapButton.onClick.AddListener(CollapseMinimap);
             viewInstance.minimapRendererButton.Button.onClick.AddListener(() => mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Navmap))).Forget());
             viewInstance.sideMenuButton.onClick.AddListener(OpenSideMenu);
+
             viewInstance.goToGenesisCityButton.onClick.AddListener(() =>
                 chatMessagesBus.Send($"/{ChatCommandsUtils.COMMAND_GOTO} {startParcelInGenesis}", ORIGIN));
+
             viewInstance.SideMenuCanvasGroup.alpha = 0;
             viewInstance.SideMenuCanvasGroup.gameObject.SetActive(false);
             new SideMenuController(viewInstance.sideMenuView);
@@ -157,7 +163,6 @@ namespace DCL.Minimap
         {
             viewInstance!.destinationPinMarker.HidePin();
         }
-
 
         [Query]
         [All(typeof(PlayerComponent))]
@@ -254,7 +259,7 @@ namespace DCL.Minimap
             foreach (GameObject go in viewInstance.objectsToActivateForWorlds)
                 go.SetActive(!isGenesisModeActivated);
 
-            viewInstance.minimapAnimator.runtimeAnimatorController = isGenesisModeActivated ?  viewInstance.genesisCityAnimatorController : viewInstance.worldsAnimatorController;
+            viewInstance.minimapAnimator.runtimeAnimatorController = isGenesisModeActivated ? viewInstance.genesisCityAnimatorController : viewInstance.worldsAnimatorController;
         }
 
         public override void Dispose()
