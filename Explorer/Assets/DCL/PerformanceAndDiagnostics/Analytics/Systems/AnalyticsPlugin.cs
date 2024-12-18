@@ -1,10 +1,8 @@
 ﻿using Arch.SystemGroups;
-using Cysharp.Threading.Tasks;
 using DCL.Analytics.Systems;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.DebugUtilities;
 using DCL.InWorldCamera.CameraReelStorageService;
-using DCL.InWorldCamera.Systems;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Profiling;
 using DCL.Utilities;
@@ -12,7 +10,6 @@ using DCL.Web3.Identities;
 using ECS;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Realm;
-using System.Threading;
 using Utility.Json;
 using ScreencaptureAnalyticsSystem = DCL.Analytics.Systems.ScreencaptureAnalyticsSystem;
 
@@ -65,13 +62,9 @@ namespace DCL.PluginSystem.Global
         {
             walkedDistanceAnalytics.Dispose();
             this.realmNavigator.RealmChanged -= OnRealmChanged;
-
         }
 
         private void OnRealmChanged(RealmType _) =>
             analytics.Flush();
-
-        public UniTask Initialize(IPluginSettingsContainer container, CancellationToken ct) =>
-            UniTask.CompletedTask;
     }
 }
