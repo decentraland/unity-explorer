@@ -59,7 +59,7 @@ namespace ECS.SceneLifeCycle.Systems
         {
             sceneFacade.DisposeAsync().Forget();
             scenesCache.RemovePortableExperienceFacade(definitionComponent.IpfsPath.EntityId);
-            World.Remove<ISceneFacade, SceneDefinitionComponent>(entity);
+            World.Destroy(entity);
         }
 
         [Query]

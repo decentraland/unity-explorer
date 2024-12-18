@@ -60,5 +60,7 @@ namespace ECS.SceneLifeCycle.Realm
         UniTask<EnumResult<TaskError>> TeleportToParcelAsync(Vector2Int parcel, CancellationToken ct, bool isLocal);
 
         UniTask InitializeTeleportToSpawnPointAsync(AsyncLoadProcessReport teleportLoadReport, CancellationToken ct, Vector2Int parcelToTeleport);
+        
+        void RemoveCameraSamplingData();
     }
 }
