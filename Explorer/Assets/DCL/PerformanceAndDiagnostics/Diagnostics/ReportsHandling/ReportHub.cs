@@ -162,6 +162,13 @@ namespace DCL.Diagnostics
             {
                 ReportHub.Log(reportData, message);
             }
+
+            [HideInCallstack]
+            [Conditional("UNITY_EDITOR")] [Conditional("VERBOSE_LOGS")] // don't remove conditionals, otherwise strings will be allocated in production builds
+            public void LogError(object message)
+            {
+                ReportHub.LogError(reportData, message);
+            }
         }
     }
 }

@@ -61,7 +61,8 @@ namespace DCL.UI.SystemMenu
             logoutCts.SafeCancelAndDispose();
         }
 
-        protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) => UniTask.Never(ct);
+        protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
+            UniTask.Never(ct);
 
         protected override void OnViewInstantiated()
         {
@@ -121,14 +122,15 @@ namespace DCL.UI.SystemMenu
                 profileCache.Remove(address);
 
                 await userInAppInitializationFlow.ExecuteAsync(
-                    new UserInAppInitializationFlowParameters
-                    {
-                        ShowAuthentication = true,
-                        ShowLoading = true,
-                        FromLogout = true,
-                        World = world,
-                        PlayerEntity = playerEntity,
-                    }, ct);
+                    new UserInAppInitializationFlowParameters(
+                        showAuthentication: true,
+                        showLoading: true,
+                        loadSource: IUserInAppInitializationFlow.LoadSource.Logout,
+                        world: world,
+                        playerEntity: playerEntity
+                    ),
+                    ct
+                );
             }
 
             logoutCts = logoutCts.SafeRestart();

@@ -12,8 +12,10 @@ using DCL.FeatureFlags;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.HealthChecks;
+using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Profiles.Self;
 using DCL.SceneLoadingScreens.LoadingScreen;
+using DCL.UI.ErrorPopup;
 using DCL.UserInAppInitializationFlow.StartupOperations;
 using DCL.UserInAppInitializationFlow.StartupOperations.Struct;
 using DCL.Utilities;
@@ -63,11 +65,16 @@ namespace DCL.UserInAppInitializationFlow
             FeatureFlagsCache featureFlagsCache,
             IWeb3IdentityCache web3IdentityCache,
             IRealmController realmController,
+            IRealmMisc realmMisc,
             ILandscape landscape,
             IAppArgs appParameters,
             IDebugSettings debugSettings,
             IPortableExperiencesController portableExperiencesController,
-            DiagnosticsContainer diagnosticsContainer, IChatHistory chatHistory, IRoomHub roomHub)
+            IRoomHub roomHub,
+            IAnalyticsController analyticsController,
+            DiagnosticsContainer diagnosticsContainer,
+            ChatHistory chatHistory
+        )
         {
             this.loadingStatus = loadingStatus;
             this.decentralandUrlsSource = decentralandUrlsSource;
@@ -83,7 +90,7 @@ namespace DCL.UserInAppInitializationFlow
             var ensureLivekitConnectionStartupOperation = new EnsureLivekitConnectionStartupOperation(loadingStatus, livekitHealthCheck);
             var initializeFeatureFlagsStartupOperation = new InitializeFeatureFlagsStartupOperation(loadingStatus, featureFlagsProvider, web3IdentityCache, decentralandUrlsSource, appParameters);
             var preloadProfileStartupOperation = new PreloadProfileStartupOperation(loadingStatus, selfProfile);
-            var switchRealmMiscVisibilityStartupOperation = new SwitchRealmMiscVisibilityStartupOperation(loadingStatus, realmNavigator);
+            var switchRealmMiscVisibilityStartupOperation = new SwitchRealmMiscVisibilityStartupOperation(loadingStatus, realmController, realmMisc);
             loadPlayerAvatarStartupOperation = new LoadPlayerAvatarStartupOperation(loadingStatus, selfProfile, mainPlayerAvatarBaseProxy);
             var loadLandscapeStartupOperation = new LoadLandscapeStartupOperation(loadingStatus, landscape);
             checkOnboardingStartupOperation = new CheckOnboardingStartupOperation(loadingStatus, selfProfile, featureFlagsCache, decentralandUrlsSource, appParameters, realmNavigator);
@@ -103,8 +110,9 @@ namespace DCL.UserInAppInitializationFlow
                 teleportStartupOperation,
                 loadGlobalPxOperation,
                 sentryDiagnostics
-            );
+            ).WithAnalytics(analyticsController);
 
+            
             reloginOperation = new SequentialStartupOperation(
                 loadingStatus,
                 ensureLivekitConnectionStartupOperation,
@@ -115,7 +123,9 @@ namespace DCL.UserInAppInitializationFlow
                 checkOnboardingStartupOperation,
                 teleportStartupOperation,
                 loadGlobalPxOperation,
-                sentryDiagnostics);
+                sentryDiagnostics).WithAnalytics(analyticsController);
+            ;
+            ;
         }
 
 
@@ -123,7 +133,7 @@ namespace DCL.UserInAppInitializationFlow
         {
             loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.Init);
 
-            Result result = default;
+            EnumResult<TaskError> result = parameters.RecoveryError;
 
             loadPlayerAvatarStartupOperation.AssignWorld(parameters.World, parameters.PlayerEntity);
 
@@ -134,43 +144,47 @@ namespace DCL.UserInAppInitializationFlow
                 if (parameters.ShowAuthentication)
                 {
                     loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.AuthenticationScreenShowing);
-                    if (parameters.FromLogout)
+                    if (parameters.LoadSource is IUserInAppInitializationFlow.LoadSource.Logout)
                     {
                         await DoLogoutOperationsAsync();
                         //Restart the realm and show the authentications screen simultaneously to avoid the "empty space" flicker
+                        //No error should be possible at this point
                         await UniTask.WhenAll(ShowAuthenticationScreenAsync(ct),
                             realmController.SetRealmAsync(
                                 URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.Genesis)), ct));
                     }
                     else
                     {
-                        await ShowAuthenticationScreenAsync(ct);
+                        await UniTask.WhenAll(
+                            ShowAuthenticationScreenAsync(ct),
+                            ShowErrorPopupIfRequired(result, ct)
+                        );
                     }
                 }
 
-                var flowToRun = parameters.FromLogout ? reloginOperation : startupOperation;
-
+                var flowToRun = parameters.LoadSource is IUserInAppInitializationFlow.LoadSource.Logout
+                    ? reloginOperation
+                    : startupOperation;
                 var loadingResult = await LoadingScreen(parameters.ShowLoading)
                     .ShowWhileExecuteTaskAsync(
                         async (parentLoadReport, ct) =>
                         {
-                            result = await flowToRun.ExecuteAsync(parentLoadReport, ct);
-
-                            if (result.Success)
+                            var operationResult = await flowToRun.ExecuteAsync(parentLoadReport, ct);
+                            if (operationResult.Success)
                                 parentLoadReport.SetProgress(
                                     loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.Completed));
-
-                            return result;
+                            return operationResult;
                         },
                         ct
                     );
 
-                ApplyErrorIfLoadingScreenError(ref result, loadingResult);
+                result = loadingResult;
 
                 if (result.Success == false)
-                    ReportHub.LogError(ReportCategory.DEBUG, result.ErrorMessage!);
-
-                //TODO notification popup on failure
+                {
+                    string message = result.Error.AsMessage();
+                    ReportHub.LogError(ReportCategory.AUTHENTICATION, message);
+                }
             }
             while (result.Success == false && parameters.ShowAuthentication);
 
@@ -186,15 +200,38 @@ namespace DCL.UserInAppInitializationFlow
             await roomHub.StopAsync().Timeout(TimeSpan.FromSeconds(10));
         }
 
-        private static void ApplyErrorIfLoadingScreenError(ref Result result, Result showResult)
-        {
-            if (!showResult.Success)
-                result = showResult;
-        }
-
         private async UniTask ShowAuthenticationScreenAsync(CancellationToken ct)
         {
             await mvcManager.ShowAsync(AuthenticationScreenController.IssueCommand(), ct);
+        }
+
+        private UniTask ShowErrorPopupIfRequired(EnumResult<TaskError> result, CancellationToken ct)
+        {
+            if (result.Success)
+                return UniTask.CompletedTask;
+
+            var message = $"{ToMessage(result)}\nPlease try again";
+            return mvcManager.ShowAsync(new ShowCommand<ErrorPopupView, ErrorPopupData>(ErrorPopupData.FromDescription(message)), ct);
+        }
+
+        private string ToMessage(EnumResult<TaskError> result)
+        {
+            if (result.Success)
+            {
+                ReportHub.LogError(ReportCategory.AUTHENTICATION, "Incorrect use case of error to message");
+                return "Incorrect error state";
+            }
+
+            var error = result.Error!.Value;
+
+            return error.State switch
+                   {
+                       TaskError.MessageError => $"Error: {error.Message}",
+                       TaskError.Timeout => "Load timeout",
+                       TaskError.Cancelled => "Operation cancelled",
+                       TaskError.UnexpectedException => "Critical error occured",
+                       _ => throw new ArgumentOutOfRangeException()
+                   };
         }
 
         private ILoadingScreen LoadingScreen(bool withUI) =>

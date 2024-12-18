@@ -7,10 +7,10 @@ namespace Global.Dynamic.TeleportOperations
 {
     public class CompleteLoadingStatus : ITeleportOperation
     {
-        public UniTask<Result> ExecuteAsync(TeleportParams teleportParams, CancellationToken ct)
+        public UniTask<EnumResult<TaskError>> ExecuteAsync(TeleportParams teleportParams, CancellationToken ct)
         {
             teleportParams.ParentReport.SetProgress(teleportParams.LoadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.Completed));
-            return UniTask.FromResult(Result.SuccessResult());
+            return UniTask.FromResult(EnumResult<TaskError>.SuccessResult());
         }
     }
 }

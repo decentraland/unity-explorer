@@ -12,9 +12,9 @@ namespace Global.Dynamic.ChatCommands
         public Regex Regex { get; } = new ("^/(help).*", RegexOptions.Compiled);
         public string Description => "<b>/help</b> - Shows this help message";
 
-        private readonly List<IChatCommand> commands;
+        private readonly IReadOnlyCollection<IChatCommand> commands;
 
-        public HelpChatCommand(List<IChatCommand> commands)
+        public HelpChatCommand(IReadOnlyCollection<IChatCommand> commands)
         {
             this.commands = commands;
         }
