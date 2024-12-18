@@ -13,8 +13,8 @@ namespace DCL.MapRenderer.MapCameraController
     internal partial class MapCameraController : IMapCameraControllerInternal
     {
         private const float CAMERA_HEIGHT = 0;
-
         private const int MAX_TEXTURE_SIZE = 4096;
+        private const float EXTRA_MAP_MOVEMENT_PADDING = -0.3f;
 
         public event Action<IMapActivityOwner, IMapCameraControllerInternal>? OnReleasing;
         public event Action<float, float, int>? ZoomChanged;
@@ -201,9 +201,8 @@ namespace DCL.MapRenderer.MapCameraController
             var cameraYSize = mapCameraObject.mapCamera.orthographicSize;
             var cameraXSize = cameraYSize * mapCameraObject.mapCamera.aspect;
 
-            // Add 20% padding to the camera size
-            var extraPaddingX = cameraXSize * -0.3f;
-            var extraPaddingY = cameraYSize * -0.3f;
+            var extraPaddingX = cameraXSize * EXTRA_MAP_MOVEMENT_PADDING;
+            var extraPaddingY = cameraYSize * EXTRA_MAP_MOVEMENT_PADDING;
 
             float xMin = worldBounds.xMin + cameraXSize + extraPaddingX;
             float xMax = worldBounds.xMax - cameraXSize - extraPaddingX;
