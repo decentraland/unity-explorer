@@ -100,6 +100,7 @@ namespace DCL.Navmap
                     navmapBus.SelectPlaceFromResultsPanel(placeInfo.base_position_processed, false, true);
                     navmapBus.SelectPlaceAsync(placeInfo, showPlaceInfoCancellationToken.Token, true).Forget();
                 });
+                placeElementView.OnMouseHover += isHovered => { navmapBus.SelectPlaceFromResultsPanel(placeInfo.base_position_processed, isHovered, false); };
                 placeElementView.LiveContainer.SetActive(false);
             }
 

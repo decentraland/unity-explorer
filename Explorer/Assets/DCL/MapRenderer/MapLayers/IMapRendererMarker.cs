@@ -1,4 +1,6 @@
-﻿using UnityEngine;
+﻿using Cysharp.Threading.Tasks;
+using System.Threading;
+using UnityEngine;
 
 namespace DCL.MapRenderer.MapLayers
 {
@@ -11,5 +13,10 @@ namespace DCL.MapRenderer.MapLayers
 
         void SetIsSelected(bool isSelected) { }
 
+        UniTaskVoid AnimateSelectionAsync(CancellationToken ct) =>
+            new ();
+
+        UniTaskVoid AnimateDeSelectionAsync(CancellationToken ct) =>
+            new ();
     }
 }

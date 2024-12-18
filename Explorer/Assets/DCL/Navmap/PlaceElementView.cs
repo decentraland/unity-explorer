@@ -1,5 +1,6 @@
 using DCL.UI;
 using DCL.WebRequests;
+using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -38,6 +39,8 @@ namespace DCL.Navmap
 
         private ImageController imageController;
 
+        public event Action<bool> OnMouseHover;
+
         public void ConfigurePlaceImageController(IWebRequestController webRequestController) =>
             imageController = new ImageController(placeImage, webRequestController);
 
@@ -46,11 +49,13 @@ namespace DCL.Navmap
 
         public void OnPointerEnter(PointerEventData eventData)
         {
+            OnMouseHover?.Invoke(true);
             arrowImage.gameObject.SetActive(true);
         }
 
         public void OnPointerExit(PointerEventData eventData)
         {
+            OnMouseHover?.Invoke(false);
             arrowImage.gameObject.SetActive(false);
         }
 

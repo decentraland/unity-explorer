@@ -63,7 +63,13 @@ namespace DCL.MapRenderer.MapLayers.SearchResults
         private void OnSelectPlaceFromResultsPanel(Vector2Int coordinates, bool isHovered, bool isClicked)
         {
             if (markers.TryGetValue(coordinates, out IClusterableMarker marker))
+            {
                 marker.SetIsSelected(isClicked);
+                if(isHovered)
+                    marker.AnimateSelectionAsync(highlightCt.Token);
+                else
+                    marker.AnimateDeSelectionAsync(deHighlightCt.Token);
+            }
         }
 
         private void OnClearPlacesFromMap()

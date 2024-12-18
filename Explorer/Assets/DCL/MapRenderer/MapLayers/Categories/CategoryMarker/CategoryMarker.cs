@@ -116,7 +116,7 @@ namespace DCL.MapRenderer.MapLayers.Categories
 
         public async UniTaskVoid AnimateDeSelectionAsync(CancellationToken ct)
         {
-            if (poolableBehavior.instance != null)
+            if (poolableBehavior.instance != null && poolableBehavior.instance.scalingParent.transform.localScale != Vector3.one)
                 await MarkerHelper.ScaleToAsync(poolableBehavior.instance.scalingParent, Vector2.one, 0.5f, Ease.OutBack, ct, Vector3.one);
         }
 
