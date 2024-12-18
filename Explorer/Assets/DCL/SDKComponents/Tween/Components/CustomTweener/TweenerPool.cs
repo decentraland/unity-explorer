@@ -1,6 +1,4 @@
-﻿using CrdtEcsBridge.Components.Transform;
-using DCL.ECSComponents;
-using UnityEngine;
+﻿using DCL.ECSComponents;
 using UnityEngine.Pool;
 
 namespace DCL.SDKComponents.Tween.Components
@@ -10,12 +8,14 @@ namespace DCL.SDKComponents.Tween.Components
         private readonly IObjectPool<RotationTweener> rotationTweenersPool;
         private readonly IObjectPool<PositionTweener> positionTweenersPool;
         private readonly IObjectPool<ScaleTweener> scaleTweenersPool;
+        private readonly IObjectPool<TextureMoveTweener> textureMoveTweenersPool;
 
         public TweenerPool()
         {
             rotationTweenersPool = new ObjectPool<RotationTweener>(() => new RotationTweener());
             positionTweenersPool = new ObjectPool<PositionTweener>(() => new PositionTweener());
             scaleTweenersPool = new ObjectPool<ScaleTweener>(() => new ScaleTweener());
+            textureMoveTweenersPool = new ObjectPool<TextureMoveTweener>(() => new TextureMoveTweener());
         }
 
         public ICustomTweener GetTweener(PBTween pbTween, float durationInSeconds)
@@ -31,6 +31,9 @@ namespace DCL.SDKComponents.Tween.Components
                     break;
                 case PBTween.ModeOneofCase.Scale:
                     tweener = scaleTweenersPool.Get();
+                    break;
+                case PBTween.ModeOneofCase.TextureMove:
+                    tweener = textureMoveTweenersPool.Get();
                     break;
             }
 
@@ -53,6 +56,9 @@ namespace DCL.SDKComponents.Tween.Components
                     break;
                 case ScaleTweener scaleTweener:
                     scaleTweenersPool.Release(scaleTweener);
+                    break;
+                case TextureMoveTweener textureMoveTweener:
+                    textureMoveTweenersPool.Release(textureMoveTweener);
                     break;
             }
         }
