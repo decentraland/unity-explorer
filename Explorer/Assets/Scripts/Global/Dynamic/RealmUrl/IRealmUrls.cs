@@ -9,4 +9,13 @@ namespace Global.Dynamic.RealmUrl
 
         UniTask<string?> LocalSceneDevelopmentRealmAsync(CancellationToken ct);
     }
+
+    public static class RealmUrlsExtensions
+    {
+        public static string StartingRealmBlocking(this IRealmUrls realmUrls, CancellationToken ct = default) =>
+            realmUrls.StartingRealmAsync(ct).GetAwaiter().GetResult()!;
+
+        public static string? LocalSceneDevelopmentRealmBlocking(this IRealmUrls realmUrls, CancellationToken ct = default) =>
+            realmUrls.LocalSceneDevelopmentRealmAsync(ct).GetAwaiter().GetResult();
+    }
 }

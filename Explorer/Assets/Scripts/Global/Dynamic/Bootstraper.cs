@@ -17,6 +17,7 @@ using DCL.UI.MainUI;
 using DCL.UserInAppInitializationFlow;
 using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
+using DCL.WebRequests.Analytics;
 using Global.AppArgs;
 using Global.Dynamic.DebugSettings;
 using Global.Dynamic.RealmUrl;
@@ -42,6 +43,7 @@ namespace Global.Dynamic
         private readonly ISplashScreen splashScreen;
         private readonly ICompressShaders compressShaders;
         private readonly RealmLaunchSettings realmLaunchSettings;
+        private readonly WebRequestsContainer webRequestsContainer;
         private readonly World world;
 
         private URLDomain? startingRealm;
@@ -50,12 +52,14 @@ namespace Global.Dynamic
 
         public bool EnableAnalytics { private get; init; }
 
-        public Bootstrap(IDebugSettings debugSettings,
+        public Bootstrap(
+            IDebugSettings debugSettings,
             IAppArgs appArgs,
             ISplashScreen splashScreen,
             ICompressShaders compressShaders,
             IRealmUrls realmUrls,
             RealmLaunchSettings realmLaunchSettings,
+            WebRequestsContainer webRequestsContainer,
             World world)
         {
             this.debugSettings = debugSettings;
@@ -64,6 +68,7 @@ namespace Global.Dynamic
             this.splashScreen = splashScreen;
             this.compressShaders = compressShaders;
             this.realmLaunchSettings = realmLaunchSettings;
+            this.webRequestsContainer = webRequestsContainer;
             this.world = world;
         }
 
@@ -90,7 +95,7 @@ namespace Global.Dynamic
         public async UniTask<(StaticContainer?, bool)> LoadStaticContainerAsync(
             BootstrapContainer bootstrapContainer,
             PluginSettingsContainer globalPluginSettingsContainer,
-            DebugViewsCatalog debugViewsCatalog,
+            IDebugContainerBuilder debugContainerBuilder,
             Entity playerEntity,
             ITexturesFuse texturesFuse,
             ISystemMemoryCap memoryCap,
@@ -100,9 +105,9 @@ namespace Global.Dynamic
                 bootstrapContainer.DecentralandUrlsSource,
                 bootstrapContainer.AssetsProvisioner,
                 bootstrapContainer.ReportHandlingSettings,
-                appArgs,
+                debugContainerBuilder,
+                webRequestsContainer,
                 texturesFuse,
-                debugViewsCatalog,
                 globalPluginSettingsContainer,
                 bootstrapContainer.DiagnosticsContainer,
                 bootstrapContainer.IdentityCache,
