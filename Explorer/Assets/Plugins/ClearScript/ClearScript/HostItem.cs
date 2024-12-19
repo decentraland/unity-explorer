@@ -1866,6 +1866,12 @@ namespace Microsoft.ClearScript
         {
             if ((Target is HostObject) || (Target is IHostVariable) || (Target is IByRefArg))
             {
+                // If block added by Decentraland. Scenes will fail to load without it because
+                // ScriptableByteArray depends on it. Remove when we figure out how to skip this entire
+                // code path.
+                if (Target.InvokeTarget is IScriptableEnumerator scriptableEnumerator)
+                    return scriptableEnumerator;
+                
                 if ((Target.InvokeTarget != null) && Target.Type.IsAssignableToGenericType(typeof(IEnumerable<>), out var typeArgs))
                 {
                     var helpersHostItem = Wrap(Engine, typeof(ScriptableEnumerableHelpers<>).MakeGenericType(typeArgs).InvokeMember("HostType", BindingFlags.Public | BindingFlags.Static | BindingFlags.GetField, null, null, null), HostItemFlags.PrivateAccess);
