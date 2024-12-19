@@ -1,10 +1,12 @@
-using CommunicationData.URLHelpers;
 using System;
 using System.Threading;
+using System.Threading.Tasks;
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.AuthenticationScreenFlow;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
+using DCL.Chat.History;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -33,16 +35,20 @@ namespace DCL.UserInAppInitializationFlow
         private static readonly ILoadingScreen.EmptyLoadingScreen EMPTY_LOADING_SCREEN = new ();
 
         private readonly ILoadingStatus loadingStatus;
-        private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly IMVCManager mvcManager;
         private readonly AudioClipConfig backgroundMusic;
         private readonly IRealmNavigator realmNavigator;
         private readonly ILoadingScreen loadingScreen;
-        private readonly IRoomHub roomHub;
         private readonly LoadPlayerAvatarStartupOperation loadPlayerAvatarStartupOperation;
         private readonly CheckOnboardingStartupOperation checkOnboardingStartupOperation;
-        private readonly RestartRealmStartupOperation restartRealmStartupOperation;
         private readonly IStartupOperation startupOperation;
+        private readonly IStartupOperation reloginOperation;
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
+        private readonly IChatHistory chatHistory;
+
+        private readonly IRealmController realmController;
+        private readonly IRoomHub roomHub;
+        private readonly IPortableExperiencesController portableExperiencesController;
 
         public RealUserInAppInitializationFlow(
             ILoadingStatus loadingStatus,
@@ -67,7 +73,7 @@ namespace DCL.UserInAppInitializationFlow
             IRoomHub roomHub,
             IAnalyticsController analyticsController,
             DiagnosticsContainer diagnosticsContainer,
-            URLDomain defaultStartingRealm
+            ChatHistory chatHistory
         )
         {
             this.loadingStatus = loadingStatus;
@@ -76,6 +82,9 @@ namespace DCL.UserInAppInitializationFlow
             this.backgroundMusic = backgroundMusic;
             this.realmNavigator = realmNavigator;
             this.loadingScreen = loadingScreen;
+            this.realmController = realmController;
+            this.portableExperiencesController = portableExperiencesController;
+            this.chatHistory = chatHistory;
             this.roomHub = roomHub;
 
             var ensureLivekitConnectionStartupOperation = new EnsureLivekitConnectionStartupOperation(loadingStatus, livekitHealthCheck);
@@ -85,7 +94,6 @@ namespace DCL.UserInAppInitializationFlow
             loadPlayerAvatarStartupOperation = new LoadPlayerAvatarStartupOperation(loadingStatus, selfProfile, mainPlayerAvatarBaseProxy);
             var loadLandscapeStartupOperation = new LoadLandscapeStartupOperation(loadingStatus, landscape);
             checkOnboardingStartupOperation = new CheckOnboardingStartupOperation(loadingStatus, selfProfile, featureFlagsCache, decentralandUrlsSource, appParameters, realmNavigator);
-            restartRealmStartupOperation = new RestartRealmStartupOperation(loadingStatus, realmController, defaultStartingRealm);
             var teleportStartupOperation = new TeleportStartupOperation(loadingStatus, realmNavigator, startParcel);
             var loadGlobalPxOperation = new LoadGlobalPortableExperiencesStartupOperation(loadingStatus, selfProfile, featureFlagsCache, debugSettings, portableExperiencesController);
             var sentryDiagnostics = new SentryDiagnosticStartupOperation(realmController, diagnosticsContainer);
@@ -99,12 +107,27 @@ namespace DCL.UserInAppInitializationFlow
                 loadPlayerAvatarStartupOperation,
                 loadLandscapeStartupOperation,
                 checkOnboardingStartupOperation,
-                restartRealmStartupOperation,
                 teleportStartupOperation,
                 loadGlobalPxOperation,
                 sentryDiagnostics
             ).WithAnalytics(analyticsController);
+
+            
+            reloginOperation = new SequentialStartupOperation(
+                loadingStatus,
+                ensureLivekitConnectionStartupOperation,
+                preloadProfileStartupOperation,
+                switchRealmMiscVisibilityStartupOperation,
+                loadPlayerAvatarStartupOperation,
+                loadLandscapeStartupOperation,
+                checkOnboardingStartupOperation,
+                teleportStartupOperation,
+                loadGlobalPxOperation,
+                sentryDiagnostics).WithAnalytics(analyticsController);
+            ;
+            ;
         }
+
 
         public async UniTask ExecuteAsync(UserInAppInitializationFlowParameters parameters, CancellationToken ct)
         {
@@ -113,59 +136,49 @@ namespace DCL.UserInAppInitializationFlow
             EnumResult<TaskError> result = parameters.RecoveryError;
 
             loadPlayerAvatarStartupOperation.AssignWorld(parameters.World, parameters.PlayerEntity);
-            restartRealmStartupOperation.EnableReload(parameters.ReloadRealm);
 
             using UIAudioEventsBus.PlayAudioScope playAudioScope = UIAudioEventsBus.Instance.NewPlayAudioScope(backgroundMusic);
 
             do
             {
-                if (parameters.LoadSource is not IUserInAppInitializationFlow.LoadSource.StartUp)
-
-                    // Disconnect current livekit connection on logout so the avatar is removed from other peers
-                    await roomHub.StopAsync().Timeout(TimeSpan.FromSeconds(10));
-
                 if (parameters.ShowAuthentication)
                 {
                     loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.AuthenticationScreenShowing);
-
-                    await UniTask.WhenAll(
-                        ShowAuthenticationScreenAsync(ct),
-                        ShowErrorPopupIfRequired(result, ct)
-                    );
-                }
-
-                if (parameters.LoadSource is IUserInAppInitializationFlow.LoadSource.Logout)
-                {
-                    // If we are coming from a logout, we teleport the user to Genesis Plaza and force realm change to reset the scene properly
-                    var url = URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.Genesis));
-                    var changeRealmResult = await realmNavigator.TryChangeRealmAsync(url, ct);
-
-                    if (changeRealmResult.Success == false)
-                        ReportHub.LogError(ReportCategory.AUTHENTICATION, changeRealmResult.AsResult().ErrorMessage!);
-
-                    // Restart livekit connection
-                    await roomHub.StartAsync().Timeout(TimeSpan.FromSeconds(10));
-
-                    result = changeRealmResult.As(ChangeRealmErrors.AsTaskError);
-
-                    // We need to flag the process as completed, otherwise the multiplayer systems will not run
-                    loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.Completed);
-                }
-                else
-                {
-                    EnumResult<TaskError> loadingResult = await LoadingScreen(parameters.ShowLoading)
-                       .ShowWhileExecuteTaskAsync(
-                            async (parentLoadReport, ct) =>
-                            {
-                                var operationResult = await startupOperation.ExecuteAsync(parentLoadReport, ct);
-                                if (operationResult.Success) parentLoadReport.SetProgress(loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.Completed));
-                                return operationResult;
-                            },
-                            ct
+                    if (parameters.LoadSource is IUserInAppInitializationFlow.LoadSource.Logout)
+                    {
+                        await DoLogoutOperationsAsync();
+                        //Restart the realm and show the authentications screen simultaneously to avoid the "empty space" flicker
+                        //No error should be possible at this point
+                        await UniTask.WhenAll(ShowAuthenticationScreenAsync(ct),
+                            realmController.SetRealmAsync(
+                                URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.Genesis)), ct));
+                    }
+                    else
+                    {
+                        await UniTask.WhenAll(
+                            ShowAuthenticationScreenAsync(ct),
+                            ShowErrorPopupIfRequired(result, ct)
                         );
-
-                    result = loadingResult;
+                    }
                 }
+
+                var flowToRun = parameters.LoadSource is IUserInAppInitializationFlow.LoadSource.Logout
+                    ? reloginOperation
+                    : startupOperation;
+                var loadingResult = await LoadingScreen(parameters.ShowLoading)
+                    .ShowWhileExecuteTaskAsync(
+                        async (parentLoadReport, ct) =>
+                        {
+                            var operationResult = await flowToRun.ExecuteAsync(parentLoadReport, ct);
+                            if (operationResult.Success)
+                                parentLoadReport.SetProgress(
+                                    loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.Completed));
+                            return operationResult;
+                        },
+                        ct
+                    );
+
+                result = loadingResult;
 
                 if (result.Success == false)
                 {
@@ -177,6 +190,14 @@ namespace DCL.UserInAppInitializationFlow
 
             await checkOnboardingStartupOperation.MarkOnboardingAsDoneAsync(parameters.World, parameters.PlayerEntity, ct);
             loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.Completed);
+        }
+
+        private async UniTask DoLogoutOperationsAsync()
+        {
+            portableExperiencesController.UnloadAllPortableExperiences();
+            realmNavigator.RemoveCameraSamplingData();
+            chatHistory.Clear();
+            await roomHub.StopAsync().Timeout(TimeSpan.FromSeconds(10));
         }
 
         private async UniTask ShowAuthenticationScreenAsync(CancellationToken ct)
