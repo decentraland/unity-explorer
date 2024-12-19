@@ -37,7 +37,7 @@ namespace DCL.UI.Skybox
             skyboxSettings.UseDynamicTimeChanged += OnUseDynamicTimeChanged;
             viewInstance.DynamicToggle.onValueChanged.AddListener(OnDynamicToggleValueChanged);
 
-            viewInstance.SliderGroup.enabled = skyboxSettings.UseDynamicTime;
+            SetTimeEnabled(!skyboxSettings.UseDynamicTime);
         }
 
         protected override void OnBeforeViewShow()
@@ -48,7 +48,7 @@ namespace DCL.UI.Skybox
 
         private void OnUseDynamicTimeChanged(bool dynamic)
         {
-            viewInstance!.SliderGroup.enabled = dynamic;
+            SetTimeEnabled(!dynamic);
             viewInstance!.DynamicToggle.isOn = dynamic;
         }
 
@@ -69,10 +69,13 @@ namespace DCL.UI.Skybox
             skyboxSettings.NormalizedTime = time;
         }
 
-        /// <summary>
-        ///     Auxiliary function to returnt the normalized time in HH:MM:SS
-        /// </summary>
-        public string GetFormatedTime(float time)
+        private void SetTimeEnabled(bool enabled)
+        {
+            viewInstance!.TopSliderGroup.enabled = !enabled;
+            viewInstance!.TextSliderGroup.enabled = !enabled;
+        }
+
+        private string GetFormatedTime(float time)
         {
             var totalSec = (int)(time * SECONDS_IN_DAY);
 

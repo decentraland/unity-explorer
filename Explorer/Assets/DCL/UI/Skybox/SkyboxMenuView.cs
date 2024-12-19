@@ -11,7 +11,9 @@ namespace DCL.UI.Skybox
         [field: SerializeField] public Slider TimeSlider { get; private set; } = null!;
         [field: SerializeField] public TMP_Text TimeText { get; private set; } = null!;
         [field: SerializeField] public Button CloseButton { get; private set; } = null!;
-        [field: SerializeField] public CanvasGroup SliderGroup { get; private set; } = null!;
+
+        [field: SerializeField] public CanvasGroup TopSliderGroup { get; private set; } = null!;
+        [field: SerializeField] public CanvasGroup TextSliderGroup { get; private set; } = null!;
 
     }
 }
