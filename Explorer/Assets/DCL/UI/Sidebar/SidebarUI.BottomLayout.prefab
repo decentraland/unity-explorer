@@ -630,6 +630,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 8560551636243942814}
     m_Modifications:
+    - target: {fileID: 2108044856580900239, guid: ed95d7ae6af4148bd97a95ff2813e297, type: 3}
+      propertyPath: m_Colors.m_FadeDuration
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 3540929396504927598, guid: ed95d7ae6af4148bd97a95ff2813e297, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5

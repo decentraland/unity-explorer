@@ -79,7 +79,6 @@ namespace DCL.StylizedSkybox.Scripts.Plugin
 
         private void OnUseDynamicTimeChanged(bool dynamic)
         {
-            Debug.Log($"PACO UseDynamicTimeChanged: {dynamic}");
             skyboxController!.UseDynamicTime = dynamic;
 
             if (dynamic)
@@ -88,7 +87,6 @@ namespace DCL.StylizedSkybox.Scripts.Plugin
 
         private void OnNormalizedTimeChanged(float tod)
         {
-            Debug.Log($"PACO NormalizedTimeChanged: {tod}, UseDynamic:{skyboxController!.UseDynamicTime}");
             if (!skyboxController!.UseDynamicTime) // Ignore updates to the value when they come from the skybox
             {
                 skyboxController!.SetTimeOverride(tod);

@@ -14,6 +14,7 @@ using DCL.Web3.Identities;
 using MVC;
 using System;
 using System.Threading;
+using UnityEngine;
 using Utility;
 
 namespace DCL.UI.Sidebar
@@ -97,7 +98,8 @@ namespace DCL.UI.Sidebar
             notificationsBusController.SubscribeToNotificationTypeReceived(NotificationType.REWARD_ASSIGNMENT, OnRewardNotificationReceived);
             notificationsBusController.SubscribeToNotificationTypeClick(NotificationType.REWARD_ASSIGNMENT, OnRewardNotificationClicked);
             viewInstance.sidebarSettingsWidget.OnViewHidden += OnSidebarSettingsClosed;
-            viewInstance.skyboxButton.onClick.AddListener(OpenSkyboxSettings);
+            viewInstance.skyboxButton.Button.onClick.AddListener(OpenSkyboxSettings);
+            viewInstance.SkyboxMenuView.OnViewHidden += OnSkyboxSettingsClosed;
 
             if (includeCameraReel)
                 viewInstance.cameraReelButton.onClick.AddListener(() => OpenExplorePanelInSection(ExploreSections.CameraReel));
@@ -192,18 +194,18 @@ namespace DCL.UI.Sidebar
 
         private void OpenSkyboxSettings()
         {
-            if (skyboxMenuController.State is ControllerState.ViewFocused or ControllerState.ViewBlurred)
-            {
-                // Skybox is already open
-                return;
-            }
-
             CloseAllWidgets();
             sidebarBus.BlockSidebar();
 
             systemMenuCts = systemMenuCts.SafeRestart();
-            viewInstance!.SkyboxMenuView.gameObject.SetActive(true);
+            viewInstance!.skyboxButton.SetSelected(true);
             skyboxMenuController.LaunchViewLifeCycleAsync(new CanvasOrdering(CanvasOrdering.SortingLayer.Overlay, 0), new ControllerNoData(), systemMenuCts.Token).Forget();
+        }
+
+        private void OnSkyboxSettingsClosed()
+        {
+            sidebarBus.UnblockSidebar();
+            viewInstance!.skyboxButton.SetSelected(false);
         }
 
         private void OpenNotificationsPanel()

@@ -83,12 +83,7 @@ namespace DCL.UI.Skybox
 
         private void OnClose()
         {
-            CloseAsync().Forget();
-        }
-
-        private async UniTaskVoid CloseAsync()
-        {
-            await HideViewAsync(skyboxMenuCts.Token);
+            HideViewAsync(skyboxMenuCts.Token).Forget();
         }
 
         public override void Dispose()
