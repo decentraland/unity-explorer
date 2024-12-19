@@ -141,7 +141,7 @@ namespace Global.Dynamic
 
             if (container.enableAnalytics)
             {
-                IAnalyticsService service = CreateAnalyticsService(analyticsConfig, ct);
+                IAnalyticsService service = CreateAnalyticsService(analyticsConfig, container.ApplicationParametersParser, ct);
 
                 appArgs.TryGetValue(AppArgsFlags.Analytics.LAUNCHER_ID, out string? launcherAnonymousId);
                 appArgs.TryGetValue(AppArgsFlags.Analytics.SESSION_ID, out string? sessionId);
@@ -161,10 +161,10 @@ namespace Global.Dynamic
             return (coreBootstrap, IAnalyticsController.Null);
         }
 
-        private static IAnalyticsService CreateAnalyticsService(AnalyticsConfiguration analyticsConfig, CancellationToken token)
+        private static IAnalyticsService CreateAnalyticsService(AnalyticsConfiguration analyticsConfig, IAppArgs args, CancellationToken token)
         {
             // Force segment in release
-            if (!Debug.isDebugBuild)
+            if (!args.HasDebugFlag())
                 return CreateSegmentAnalyticsOrFallbackToDebug(analyticsConfig, token);
 
             return analyticsConfig.Mode switch
