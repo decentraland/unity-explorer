@@ -1,13 +1,8 @@
 using Arch.SystemGroups;
-using Cysharp.Threading.Tasks;
-using DCL.Multiplayer.SDK.Components;
 using DCL.Multiplayer.SDK.Systems.SceneWorld;
 using DCL.PluginSystem.World.Dependencies;
-using DCL.Profiles;
 using ECS.LifeCycle;
-using ECS.LifeCycle.Systems;
 using System.Collections.Generic;
-using System.Threading;
 using WriteAvatarEmoteCommandSystem = DCL.Multiplayer.SDK.Systems.SceneWorld.WriteAvatarEmoteCommandSystem;
 using WriteAvatarEquippedDataSystem = DCL.Multiplayer.SDK.Systems.SceneWorld.WriteAvatarEquippedDataSystem;
 using WritePlayerIdentityDataSystem = DCL.Multiplayer.SDK.Systems.SceneWorld.WritePlayerIdentityDataSystem;
@@ -17,9 +12,6 @@ namespace DCL.PluginSystem.World
 {
     public class MultiplayerPlugin : IDCLWorldPluginWithoutSettings
     {
-        public UniTask Initialize(IPluginSettingsContainer container, CancellationToken ct) =>
-            UniTask.CompletedTask;
-
         public void Dispose()
         {
             //ignore
