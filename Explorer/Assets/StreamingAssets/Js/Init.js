@@ -57,7 +57,20 @@ const performance = {
 }
 
 // Same issue as above 
-const __VERSION__ = "0.0.1"
+
+// These 2 work the same
+// const __VERSION__ = "0.0.1"
+// globalThis.__VERSION__ = "0.0.1"
+
+//V3
+globalThis = new Proxy(globalThis, {
+    get(target, property) {
+        return target.hasOwnProperty(property) ? target[property] : undefined;
+    },
+    has(target, property) {
+        return true;
+    }
+});
 
 // timeout handler
 globalThis.setImmediate = (fn) => Promise.resolve().then(fn)
