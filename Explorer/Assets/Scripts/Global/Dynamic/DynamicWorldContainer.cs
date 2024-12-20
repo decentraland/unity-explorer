@@ -428,6 +428,8 @@ namespace Global.Dynamic
 
             livekitHealthCheck.WithRetries();
 
+            var chatHistory = new ChatHistory();
+
             var userInAppInAppInitializationFlow = new RealUserInAppInitializationFlow(
                 staticContainer.LoadingStatus,
                 livekitHealthCheck,
@@ -451,7 +453,7 @@ namespace Global.Dynamic
                 roomHub,
                 bootstrapContainer.Analytics.EnsureNotNull(),
                 bootstrapContainer.DiagnosticsContainer,
-                URLDomain.FromString(dynamicWorldParams.DefaultStartingRealm)
+                chatHistory
             );
 
             var realmNavigator = new MainScreenFallbackRealmNavigator(
@@ -470,10 +472,8 @@ namespace Global.Dynamic
 
             var characterDataPropagationUtility = new CharacterDataPropagationUtility(staticContainer.ComponentsContainer.ComponentPoolsRegistry.AddComponentPool<SDKProfile>());
 
-            var chatHistory = new ChatHistory();
-
             var currentSceneInfo = new CurrentSceneInfo();
-            var connectionStatusPanelPlugin = new ConnectionStatusPanelPlugin(userInAppInAppInitializationFlow, mvcManager, mainUIView, roomsStatus, currentSceneInfo, reloadSceneController, globalWorld, playerEntity, debugBuilder);
+            var connectionStatusPanelPlugin = new ConnectionStatusPanelPlugin(container.UserInAppInAppInitializationFlow, container.MvcManager, mainUIView, roomsStatus, currentSceneInfo, container.reloadSceneController, globalWorld, playerEntity, debugBuilder);
 
             var chatCommands = new List<IChatCommand>
             {

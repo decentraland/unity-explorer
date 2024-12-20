@@ -57,12 +57,16 @@ namespace Global.Dynamic
             }
         }
 
+        public void RemoveCameraSamplingData()
+        {
+            origin.RemoveCameraSamplingData();
+        }
+
         private void DispatchFallbackToMainScreen(EnumResult<TaskError> recoveryError, CancellationToken ct)
         {
             ReportHub.LogError(ReportCategory.DEBUG, "Error during loading. Fallback to main screen");
 
             var parameters = new UserInAppInitializationFlowParameters(
-                true,
                 true,
                 true,
                 IUserInAppInitializationFlow.LoadSource.Recover,
