@@ -23,8 +23,8 @@ namespace DCL.SDKComponents.SceneUI.Systems.UICanvasInformation
         private BorderRect interactableArea;
         private int lastViewportResolutionWidth = -1;
         private int lastScreenRealResolutionWidth = -1;
-        private const int TOTAL_ATTEMPTS = 3;
-        private int currentAttempts = 0;
+        private const int TOTAL_DELAY = 3;
+        private int delay = 0;
 
         public override void Initialize()
         {
@@ -38,7 +38,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UICanvasInformation
         {
             this.sceneStateProvider = sceneStateProvider;
             this.ecsToCRDTWriter = ecsToCRDTWriter;
-            currentAttempts = 0;
+            delay = 0;
         }
 
         protected override void Update(float t)
@@ -55,13 +55,15 @@ namespace DCL.SDKComponents.SceneUI.Systems.UICanvasInformation
 
         private void UpdateUICanvasInformationComponent()
         {
-            if (lastViewportResolutionWidth == Screen.width && lastScreenRealResolutionWidth == Screen.mainWindowDisplayInfo.width)
+            //We add this logic because in the first frames the message gets lost and we wont send the size of the canvas
+            //to the scene, causing breaking UIs, so we delay this.
+            if (delay < TOTAL_DELAY)
             {
-                //We add this logic because in the first frames the message might get lost and we wont send correctly the size of the screen
-                //to the scene, causing breaking UIs
-                if (currentAttempts > TOTAL_ATTEMPTS) { return; }
-                currentAttempts++;
+                delay++;
+                return;
             }
+            
+            if (lastViewportResolutionWidth == Screen.width && lastScreenRealResolutionWidth == Screen.mainWindowDisplayInfo.width) return;
 
             lastScreenRealResolutionWidth = Screen.mainWindowDisplayInfo.width;
             lastViewportResolutionWidth = Screen.width;
