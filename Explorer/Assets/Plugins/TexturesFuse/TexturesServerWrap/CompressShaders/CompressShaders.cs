@@ -55,7 +55,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.CompressShaders
 
             foreach (TextureType textureType in EnumUtils.Values<TextureType>())
             {
-                var result = await texturesFuse.TextureFromBytesAsync(EMPTY_PNG, textureType, token);
+                var result = await texturesFuse.TextureFromBytesAsync(EMPTY_PNG, textureType, token, "warm-up");
 
                 if (result.Success)
                     result.Value.Dispose();

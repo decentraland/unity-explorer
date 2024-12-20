@@ -46,7 +46,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Playground
             public async UniTaskVoid ApplyAsync(byte[] imageData, bool debugOutputFromNative, CancellationToken token)
             {
                 fuse = new Unzips.TexturesFuse(options.InitOptions, options, debugOutputFromNative);
-                var result = await fuse.TextureFromBytesAsync(imageData, TextureType.Albedo, token);
+                var result = await fuse.TextureFromBytesAsync(imageData, TextureType.Albedo, token, "playground");
                 display.Display(result.Unwrap().Texture);
             }
         }

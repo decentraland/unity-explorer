@@ -45,7 +45,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Playground
             byte[] buffer = await File.ReadAllBytesAsync(path, destroyCancellationToken)! ?? Array.Empty<byte>();
             byte[] normalBuffer = await File.ReadAllBytesAsync(normalMapPath, destroyCancellationToken)! ?? Array.Empty<byte>();
 
-            var texture1 = (await unzip.TextureFromBytesAsync(buffer, TextureType.Albedo, destroyCancellationToken)).Unwrap();
+            var texture1 = (await unzip.TextureFromBytesAsync(buffer, TextureType.Albedo, destroyCancellationToken, "playground")).Unwrap();
 
             currentTexture = texture1.Texture;
 
@@ -55,7 +55,8 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Playground
                                           LoadMode.WithTextureFuseEncoding => (await unzip.TextureFromBytesAsync(
                                                                                   normalBuffer,
                                                                                   TextureType.NormalMap,
-                                                                                  destroyCancellationToken
+                                                                                  destroyCancellationToken,
+                                                                                  "playground"
                                                                               ))
                                                                              .Unwrap()
                                                                              .Texture,

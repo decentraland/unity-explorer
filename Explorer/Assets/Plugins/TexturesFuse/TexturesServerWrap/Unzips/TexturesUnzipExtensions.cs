@@ -29,11 +29,13 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
             this ITexturesFuse fuse,
             byte[] bytes,
             TextureType type,
-            CancellationToken token
+            CancellationToken token,
+            string? tag
         )
         {
             using var pinned = new HandleScope(bytes);
-            var result = await fuse.TextureFromBytesAsync(pinned.Addr, bytes.Length, type, token);
+            var imageData = new ITexturesFuse.ImageData(pinned.Addr, bytes.Length, type, tag);
+            var result = await fuse.TextureFromBytesAsync(imageData, token);
             return result;
         }
 

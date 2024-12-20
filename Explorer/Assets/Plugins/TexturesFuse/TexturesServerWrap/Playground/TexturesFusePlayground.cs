@@ -59,7 +59,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Playground
         private async UniTask<IOwnedTexture2D> FetchedAndOverrideTextureAsync()
         {
             texture?.Dispose();
-            texture = (await fuse.TextureFromBytesAsync(buffer, textureType, destroyCancellationToken)).Unwrap();
+            texture = (await fuse.TextureFromBytesAsync(buffer, textureType, destroyCancellationToken, "playground")).Unwrap();
             print($"Compressed size: {texture.Texture.GetRawTextureData()!.Length} bytes");
             return texture;
         }

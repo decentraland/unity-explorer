@@ -99,7 +99,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
             StopProcess();
         }
 
-        public async UniTask<EnumResult<IOwnedTexture2D, NativeMethods.ImageResult>> TextureFromBytesAsync(IntPtr bytes, int bytesLength, TextureType type, CancellationToken token)
+        public async UniTask<EnumResult<IOwnedTexture2D, NativeMethods.ImageResult>> TextureFromBytesAsync(ITexturesFuse.ImageData imageData, CancellationToken token)
         {
             await SEMAPHORE_SLIM.WaitAsync(token);
             await UniTask.SwitchToThreadPool();
@@ -108,12 +108,12 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
 
             await EnsureProcessLaunchedAsync(token);
 
-            WriteToInputStream(bytes, bytesLength);
+            WriteToInputStream(imageData.bytes, imageData.bytesLength);
             await inputFileStream.FlushAsync(token)!;
 
             var args = inputArgs;
-            args.bytesLength = bytesLength;
-            args.format = type.AsBC_Format();
+            args.bytesLength = imageData.bytesLength;
+            args.format = imageData.type.AsBC_Format();
 
             var writeResult = Write(pipeWriter!, args);
 
@@ -129,7 +129,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
 
             var t = await ManagedOwnedTexture2D.NewTextureFromStreamAsync(
                 outputFileStream,
-                type.AsBC_TextureFormat(),
+                imageData.type.AsBC_TextureFormat(),
                 outputResult.outputLength,
                 (int)outputResult.width,
                 (int)outputResult.height,

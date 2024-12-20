@@ -76,12 +76,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
             GC.SuppressFinalize(this);
         }
 
-        public async UniTask<Result> TextureFromBytesAsync(
-            IntPtr bytes,
-            int bytesLength,
-            TextureType type,
-            CancellationToken token
-        )
+        public async UniTask<Result> TextureFromBytesAsync(ITexturesFuse.ImageData imageData, CancellationToken token)
         {
             if (Result.TryErrorIfCancelled(token, out var errorResult))
                 return errorResult;
@@ -92,7 +87,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
                 return errorResult;
 
             Profiler.BeginThreadProfiling("TexturesFuse", "TextureFromBytes");
-            ProcessImage(bytes, bytesLength, type, out var handle, out var pointer, out int outputLength, out NativeMethods.ImageResult result, out uint width, out uint height, out bool linear, out TextureFormat format);
+            ProcessImage(imageData.bytes, imageData.bytesLength, imageData.type, out var handle, out var pointer, out int outputLength, out NativeMethods.ImageResult result, out uint width, out uint height, out bool linear, out TextureFormat format);
             Profiler.EndThreadProfiling();
 
             await UniTask.SwitchToMainThread();

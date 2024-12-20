@@ -36,7 +36,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Playground
 
         private async UniTaskVoid AcquireAndDisposeAsync(byte[] buffer, ITexturesFuse fuse)
         {
-            var result = await fuse.TextureFromBytesAsync(buffer, textureType, destroyCancellationToken);
+            var result = await fuse.TextureFromBytesAsync(buffer, textureType, destroyCancellationToken, "playground");
 
             if (result.Success)
                 result.Value.Dispose();

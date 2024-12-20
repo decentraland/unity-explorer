@@ -25,10 +25,10 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
             workers = new ConcurrentQueue<ITexturesFuse>(uniqueUnzips);
         }
 
-        public async UniTask<EnumResult<IOwnedTexture2D, NativeMethods.ImageResult>> TextureFromBytesAsync(IntPtr bytes, int bytesLength, TextureType type, CancellationToken token)
+        public async UniTask<EnumResult<IOwnedTexture2D, NativeMethods.ImageResult>> TextureFromBytesAsync(ITexturesFuse.ImageData imageData, CancellationToken token)
         {
             using var workerScope = await WorkerScope.NewWorkerScopeAsync(workers, timeout, token);
-            return await workerScope.Worker.TextureFromBytesAsync(bytes, bytesLength, type, token);
+            return await workerScope.Worker.TextureFromBytesAsync(imageData, token);
         }
 
         public void Dispose()

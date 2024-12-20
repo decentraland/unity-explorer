@@ -16,16 +16,31 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
     /// </summary>
     public interface ITexturesFuse : IDisposable
     {
+        //TODO update param xml
         /// <param name="bytes">Pointer to the array of encoded data, client guarantees the pointer will be valid for the whole duration of Task.</param>
         /// <param name="bytesLength">Length of encoded data.</param>
         /// <param name="type">Desired type that result will be consumed.</param>
         /// <param name="token">Cancellation Token to cancel operation.</param>
         UniTask<EnumResult<IOwnedTexture2D, NativeMethods.ImageResult>> TextureFromBytesAsync(
-            IntPtr bytes,
-            int bytesLength,
-            TextureType type,
+            ImageData imageData,
             CancellationToken token
         );
+
+        public readonly struct ImageData
+        {
+            internal readonly IntPtr bytes;
+            internal readonly int bytesLength;
+            internal readonly TextureType type;
+            internal readonly string? tag;
+
+            public ImageData(IntPtr bytes, int bytesLength, TextureType type, string? tag)
+            {
+                this.bytes = bytes;
+                this.bytesLength = bytesLength;
+                this.type = type;
+                this.tag = tag;
+            }
+        }
 
         interface IOptions
         {

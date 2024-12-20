@@ -1,6 +1,5 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using System;
 using System.Threading;
 using Utility.Types;
 
@@ -23,13 +22,13 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
             origin.Dispose();
         }
 
-        public async UniTask<EnumResult<IOwnedTexture2D, NativeMethods.ImageResult>> TextureFromBytesAsync(IntPtr bytes, int bytesLength, TextureType type, CancellationToken token)
+        public async UniTask<EnumResult<IOwnedTexture2D, NativeMethods.ImageResult>> TextureFromBytesAsync(ITexturesFuse.ImageData imageData, CancellationToken token)
         {
             EnumResult<IOwnedTexture2D, NativeMethods.ImageResult> result = default;
 
             for (var i = 0; i < attempts; i++)
             {
-                result = await origin.TextureFromBytesAsync(bytes, bytesLength, type, token);
+                result = await origin.TextureFromBytesAsync(imageData, token);
 
                 if (result.Success)
                     break;

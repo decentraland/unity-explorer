@@ -61,13 +61,8 @@ namespace DCL.WebRequests
                 if (data == null)
                     throw new Exception("Texture content is empty");
 
-                var result = await webRequest.texturesFuse
-                                             .TextureFromBytesAsync(
-                                                  AsPointer(data.Value),
-                                                  data.Value.Length,
-                                                  webRequest.textureType,
-                                                  ct
-                                              );
+                var imageData = new ITexturesFuse.ImageData(AsPointer(data.Value), data.Value.Length, webRequest.textureType, webRequest.url);
+                var result = await webRequest.texturesFuse.TextureFromBytesAsync(imageData, ct);
 
                 if (result.Success == false)
                     throw new Exception($"CreateTextureOp: Error loading texture url: {webRequest.url} - {result}");

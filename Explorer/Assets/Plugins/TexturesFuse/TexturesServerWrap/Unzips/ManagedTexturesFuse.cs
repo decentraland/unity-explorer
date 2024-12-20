@@ -1,5 +1,4 @@
 using Cysharp.Threading.Tasks;
-using System;
 using System.Runtime.InteropServices;
 using System.Threading;
 using UnityEngine;
@@ -17,11 +16,11 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
             //ignore
         }
 
-        public async UniTask<EnumResult<IOwnedTexture2D, NativeMethods.ImageResult>> TextureFromBytesAsync(IntPtr bytes, int bytesLength, TextureType type, CancellationToken token)
+        public async UniTask<EnumResult<IOwnedTexture2D, NativeMethods.ImageResult>> TextureFromBytesAsync(ITexturesFuse.ImageData imageData, CancellationToken token)
         {
             var texture = new Texture2D(1, 1);
-            var array = new byte[bytesLength];
-            Marshal.Copy(bytes, array, 0, bytesLength);
+            var array = new byte[imageData.bytesLength];
+            Marshal.Copy(imageData.bytes, array, 0, imageData.bytesLength);
 
             return texture.LoadImage(array)
                 ? EnumResult<IOwnedTexture2D, NativeMethods.ImageResult>.SuccessResult(new IOwnedTexture2D.Const(texture))

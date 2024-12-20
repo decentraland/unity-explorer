@@ -47,7 +47,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Playground.NodeProcess
             texturesFuse ??= new NodeTexturesFuse(inputArgs);
 
             byte[] data = await File.ReadAllBytesAsync(pathOrUri, token)!;
-            var result = await texturesFuse.TextureFromBytesAsync(data, TextureType.Albedo, token);
+            var result = await texturesFuse.TextureFromBytesAsync(data, TextureType.Albedo, token, "playground");
 
             if (result.Success)
             {
