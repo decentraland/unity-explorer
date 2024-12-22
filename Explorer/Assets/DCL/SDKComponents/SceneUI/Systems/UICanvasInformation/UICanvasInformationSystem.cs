@@ -18,13 +18,14 @@ namespace DCL.SDKComponents.SceneUI.Systems.UICanvasInformation
     [LogCategory(ReportCategory.SCENE_UI)]
     public partial class UICanvasInformationSystem : BaseUnityLoopSystem
     {
+        private const int TOTAL_ATTEMPTS = 3;
+
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
         private BorderRect interactableArea;
         private int lastViewportResolutionWidth = -1;
         private int lastScreenRealResolutionWidth = -1;
-        private const int TOTAL_ATTEMPTS = 3;
-        private int currentAttempts = 0;
+        private int currentAttempts;
 
         public override void Initialize()
         {
@@ -60,6 +61,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UICanvasInformation
                 //We add this logic because in the first frames the message might get lost and we wont send correctly the size of the screen
                 //to the scene, causing breaking UIs
                 if (currentAttempts > TOTAL_ATTEMPTS) { return; }
+
                 currentAttempts++;
             }
 
