@@ -276,7 +276,6 @@ namespace Global.Dynamic
                 (
                     showAuthentication: debugSettings.ShowAuthentication,
                     showLoading: debugSettings.ShowLoading,
-                    reloadRealm: false,
                     IUserInAppInitializationFlow.LoadSource.StartUp,
                     world: globalWorld.EcsWorld,
                     playerEntity: playerEntity

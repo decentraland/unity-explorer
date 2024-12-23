@@ -34,14 +34,9 @@ namespace DCL.PluginSystem.World
             LoadGlobalTextureSystem.InjectToWorld(ref builder, texturesCache, webRequestController);
         }
 
-#region Interface Ambiguity
-        UniTask IDCLPlugin.Initialize(IPluginSettingsContainer container, CancellationToken ct) =>
-            UniTask.CompletedTask;
-
         UniTask IDCLPlugin<NoExposedPluginSettings>.InitializeAsync(NoExposedPluginSettings settings, CancellationToken ct) =>
             UniTask.CompletedTask;
 
         void IDisposable.Dispose() { }
-#endregion
     }
 }

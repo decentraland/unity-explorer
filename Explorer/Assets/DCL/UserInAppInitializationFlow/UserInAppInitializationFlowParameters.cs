@@ -7,7 +7,6 @@ namespace DCL.UserInAppInitializationFlow
     {
         public bool ShowAuthentication { get; }
         public bool ShowLoading { get; }
-        public bool ReloadRealm { get; }
         public IUserInAppInitializationFlow.LoadSource LoadSource { get; }
         public EnumResult<TaskError> RecoveryError { get; }
         public World World { get; }
@@ -16,7 +15,6 @@ namespace DCL.UserInAppInitializationFlow
         public UserInAppInitializationFlowParameters(
             bool showAuthentication,
             bool showLoading,
-            bool reloadRealm,
             IUserInAppInitializationFlow.LoadSource loadSource,
             World world,
             Entity playerEntity,
@@ -25,7 +23,6 @@ namespace DCL.UserInAppInitializationFlow
         {
             ShowAuthentication = showAuthentication;
             ShowLoading = showLoading;
-            ReloadRealm = reloadRealm;
             LoadSource = loadSource;
             World = world;
             PlayerEntity = playerEntity;
