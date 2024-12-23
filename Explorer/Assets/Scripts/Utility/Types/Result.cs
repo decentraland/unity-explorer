@@ -108,7 +108,7 @@ namespace Utility.Types
         public static EnumResult<TValue, TErrorEnum> SuccessResult(TValue value) =>
             new (value, null);
 
-        public static EnumResult<TValue, TErrorEnum> ErrorResult(TErrorEnum state, string errorMessage) =>
+        public static EnumResult<TValue, TErrorEnum> ErrorResult(TErrorEnum state, string errorMessage = "") =>
             new (default(TValue)!, (state, errorMessage));
 
         public static bool TryErrorIfCancelled(CancellationToken token, out EnumResult<TValue, TErrorEnum> result)
