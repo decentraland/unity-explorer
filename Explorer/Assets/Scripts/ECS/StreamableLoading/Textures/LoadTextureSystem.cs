@@ -1,6 +1,7 @@
 using Arch.Core;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
+using DCL.Caches.Disk;
 using DCL.WebRequests;
 using DCL.Diagnostics;
 using DCL.Optimization.PerformanceBudgeting;
@@ -21,7 +22,7 @@ namespace ECS.StreamableLoading.Textures
     {
         private readonly IWebRequestController webRequestController;
 
-        internal LoadTextureSystem(World world, IStreamableCache<Texture2DData, GetTextureIntention> cache, IWebRequestController webRequestController) : base(world, cache)
+        internal LoadTextureSystem(World world, IStreamableCache<Texture2DData, GetTextureIntention> cache, IWebRequestController webRequestController, IDiskCache diskCache) : base(world, cache, new DiskCache<Texture2DData>(diskCache, new TextureDiskSerializer()))
         {
             this.webRequestController = webRequestController;
         }

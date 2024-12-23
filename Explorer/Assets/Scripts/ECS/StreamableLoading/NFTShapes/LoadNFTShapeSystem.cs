@@ -2,6 +2,7 @@
 using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.Caches.Disk;
 using DCL.Diagnostics;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.WebRequests;
@@ -23,7 +24,7 @@ namespace ECS.StreamableLoading.NFTShapes
     {
         private readonly IWebRequestController webRequestController;
 
-        public LoadNFTShapeSystem(World world, IStreamableCache<Texture2DData, GetNFTShapeIntention> cache, IWebRequestController webRequestController) : base(world, cache)
+        public LoadNFTShapeSystem(World world, IStreamableCache<Texture2DData, GetNFTShapeIntention> cache, IWebRequestController webRequestController, IDiskCache diskCache) : base(world, cache, new DiskCache<Texture2DData>(diskCache, new TextureDiskSerializer()))
         {
             this.webRequestController = webRequestController;
         }

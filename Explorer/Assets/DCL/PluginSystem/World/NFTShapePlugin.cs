@@ -1,6 +1,7 @@
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.Caches.Disk;
 using DCL.ECSComponents;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.PerformanceBudgeting;
@@ -38,6 +39,7 @@ namespace DCL.PluginSystem.World
         private readonly IWebRequestController webRequestController;
         private readonly IFramePrefabs framePrefabs;
         private readonly ILazyMaxSize lazyMaxSize;
+        private readonly IDiskCache diskCache;
         private readonly ISizedStreamableCache<Texture2DData, GetNFTShapeIntention> cache = new NftShapeCache();
 
         static NFTShapePlugin()
@@ -51,7 +53,8 @@ namespace DCL.PluginSystem.World
             IPerformanceBudget instantiationFrameTimeBudgetProvider,
             IComponentPoolsRegistry componentPoolsRegistry,
             IWebRequestController webRequestController,
-            CacheCleaner cacheCleaner
+            CacheCleaner cacheCleaner,
+            IDiskCache diskCache
         ) : this(
             decentralandUrlsSource,
             instantiationFrameTimeBudgetProvider,
@@ -61,7 +64,8 @@ namespace DCL.PluginSystem.World
             webRequestController,
             cacheCleaner,
             new IWebContentSizes.Default(LazyMaxSize(out var lazyMaxSize)),
-            lazyMaxSize
+            lazyMaxSize,
+            diskCache
         ) { }
 
         public NFTShapePlugin(
@@ -73,7 +77,8 @@ namespace DCL.PluginSystem.World
             IWebRequestController webRequestController,
             CacheCleaner cacheCleaner,
             IWebContentSizes webContentSizes,
-            ILazyMaxSize lazyMaxSize
+            ILazyMaxSize lazyMaxSize,
+            IDiskCache diskCache
         ) : this(
             decentralandUrlsSource,
             new PoolNFTShapeRendererFactory(componentPoolsRegistry, framesPool),
@@ -82,7 +87,8 @@ namespace DCL.PluginSystem.World
             webRequestController,
             cacheCleaner,
             framePrefabs,
-            lazyMaxSize
+            lazyMaxSize,
+            diskCache
         ) { }
 
         public NFTShapePlugin(
@@ -93,7 +99,8 @@ namespace DCL.PluginSystem.World
             IWebRequestController webRequestController,
             CacheCleaner cacheCleaner,
             IFramePrefabs framePrefabs,
-            ILazyMaxSize lazyMaxSize
+            ILazyMaxSize lazyMaxSize,
+            IDiskCache diskCache
         )
         {
             this.decentralandUrlsSource = decentralandUrlsSource;
@@ -103,6 +110,7 @@ namespace DCL.PluginSystem.World
             this.webRequestController = webRequestController;
             this.framePrefabs = framePrefabs;
             this.lazyMaxSize = lazyMaxSize;
+            this.diskCache = diskCache;
             cacheCleaner.Register(cache);
         }
 
@@ -126,7 +134,7 @@ namespace DCL.PluginSystem.World
         {
             var buffer = sharedDependencies.EntityEventsBuilder.Rent<NftShapeRendererComponent>();
 
-            LoadNFTShapeSystem.InjectToWorld(ref builder, cache, webRequestController);
+            LoadNFTShapeSystem.InjectToWorld(ref builder, cache, webRequestController, diskCache);
             LoadCycleNftShapeSystem.InjectToWorld(ref builder, new BasedURNSource(decentralandUrlsSource));
             InstantiateNftShapeSystem.InjectToWorld(ref builder, nftShapeRendererFactory, instantiationFrameTimeBudgetProvider, framePrefabs, buffer);
             VisibilityNftShapeSystem.InjectToWorld(ref builder, buffer);

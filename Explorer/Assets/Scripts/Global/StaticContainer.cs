@@ -3,6 +3,7 @@ using CrdtEcsBridge.Components;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
+using DCL.Caches.Disk;
 using DCL.Character;
 using DCL.Character.Plugin;
 using DCL.DebugUtilities;
@@ -43,6 +44,7 @@ using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.UserInAppInitializationFlow;
 using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using PortableExperiences.Controller;
+using System.IO;
 using UnityEngine;
 using Utility;
 using MultiplayerPlugin = DCL.PluginSystem.World.MultiplayerPlugin;
@@ -201,6 +203,8 @@ namespace Global
                 staticSettings.WebRequestsBudget
             );
 
+            var diskCache = new DiskCache("DiskCache");
+
             container.PhysicsTickProvider = new PhysicsTickProvider();
             container.FeatureFlagsCache = new FeatureFlagsCache();
             container.PortableExperiencesController = new ECSPortableExperiencesController(globalWorld, web3IdentityProvider, container.WebRequestsContainer.WebRequestController, container.ScenesCache, container.FeatureFlagsCache);
@@ -209,7 +213,7 @@ namespace Global
                 container.FeatureFlagsCache);
 
             var assetBundlePlugin = new AssetBundlesPlugin(reportHandlingSettings, container.CacheCleaner, container.WebRequestsContainer.WebRequestController);
-            var textureResolvePlugin = new TexturesLoadingPlugin(container.WebRequestsContainer.WebRequestController, container.CacheCleaner);
+            var textureResolvePlugin = new TexturesLoadingPlugin(container.WebRequestsContainer.WebRequestController, container.CacheCleaner, diskCache);
 
             ExtendedObjectPool<Texture2D> videoTexturePool = VideoTextureFactory.CreateVideoTexturesPool();
 
@@ -225,7 +229,7 @@ namespace Global
             {
                 new TransformsPlugin(sharedDependencies, exposedPlayerTransform, exposedGlobalDataContainer.ExposedCameraData),
                 new BillboardPlugin(exposedGlobalDataContainer.ExposedCameraData),
-                new NFTShapePlugin(decentralandUrlsSource, container.assetsProvisioner, sharedDependencies.FrameTimeBudget, componentsContainer.ComponentPoolsRegistry, container.WebRequestsContainer.WebRequestController, container.CacheCleaner),
+                new NFTShapePlugin(decentralandUrlsSource, container.assetsProvisioner, sharedDependencies.FrameTimeBudget, componentsContainer.ComponentPoolsRegistry, container.WebRequestsContainer.WebRequestController, container.CacheCleaner, diskCache),
                 new TextShapePlugin(sharedDependencies.FrameTimeBudget, container.CacheCleaner, componentsContainer.ComponentPoolsRegistry),
                 new MaterialsPlugin(sharedDependencies, videoTexturePool),
                 textureResolvePlugin,

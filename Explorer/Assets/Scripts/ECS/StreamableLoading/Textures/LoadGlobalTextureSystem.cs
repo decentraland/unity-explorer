@@ -1,6 +1,7 @@
 using Arch.Core;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
+using DCL.Caches.Disk;
 using DCL.Diagnostics;
 using DCL.WebRequests;
 using ECS.StreamableLoading.Cache;
@@ -14,8 +15,8 @@ namespace ECS.StreamableLoading.Textures
     [LogCategory(ReportCategory.TEXTURES)]
     public partial class LoadGlobalTextureSystem : LoadTextureSystem
     {
-        internal LoadGlobalTextureSystem(World world, IStreamableCache<Texture2DData, GetTextureIntention> cache, IWebRequestController webRequestController) : base(
-            world, cache, webRequestController
+        internal LoadGlobalTextureSystem(World world, IStreamableCache<Texture2DData, GetTextureIntention> cache, IWebRequestController webRequestController, IDiskCache diskCache) : base(
+            world, cache, webRequestController, diskCache
         ) { }
     }
 }

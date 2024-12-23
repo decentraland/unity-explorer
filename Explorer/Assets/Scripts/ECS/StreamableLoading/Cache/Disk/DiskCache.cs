@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using System;
 using System.IO;
 using System.Threading;
@@ -13,6 +14,12 @@ namespace DCL.Caches.Disk
         public DiskCache(string dirPath)
         {
             this.dirPath = dirPath;
+            if (Directory.Exists(dirPath) == false) Directory.CreateDirectory(this.dirPath);
+
+            ReportHub.Log(
+                ReportCategory.DEBUG,
+                $"DiskCache: use directory at {Path.Combine(Environment.CurrentDirectory, dirPath)}"
+            );
         }
 
         public async UniTask<EnumResult<TaskError>> PutAsync(string key, string extension, ReadOnlyMemory<byte> data, CancellationToken token)
