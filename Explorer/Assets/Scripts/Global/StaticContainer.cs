@@ -194,15 +194,7 @@ namespace Global
             container.Profiler = profilingProvider;
             container.EntityCollidersGlobalCache = new EntityCollidersGlobalCache();
             container.ExposedGlobalDataContainer = exposedGlobalDataContainer;
-
             container.WebRequestsContainer = webRequestsContainer;
-            // container.WebRequestsContainer = WebRequestsContainer.Create(
-            //     web3IdentityProvider,
-            //     texturesFuse,
-            //     container.DebugContainerBuilder,
-            //     staticSettings.WebRequestsBudget
-            // );
-
             container.PhysicsTickProvider = new PhysicsTickProvider();
             container.FeatureFlagsCache = new FeatureFlagsCache();
             container.PortableExperiencesController = new ECSPortableExperiencesController(globalWorld, web3IdentityProvider, container.WebRequestsContainer.WebRequestController, container.ScenesCache, container.FeatureFlagsCache);
