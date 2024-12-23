@@ -6,6 +6,7 @@ using DCL.Character.CharacterCamera.Systems;
 using DCL.CharacterCamera;
 using DCL.CharacterCamera.Components;
 using DCL.CharacterCamera.Systems;
+using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.Input;
 using DCL.Input.Component;
@@ -14,7 +15,6 @@ using DCL.InWorldCamera.UI;
 using ECS.Abstract;
 using MVC;
 using UnityEngine;
-using UnityEngine.InputSystem;
 using static DCL.Input.Component.InputMapComponent;
 
 namespace DCL.InWorldCamera.Systems
@@ -31,28 +31,34 @@ namespace DCL.InWorldCamera.Systems
         private readonly InWorldCameraController hudController;
         private readonly GameObject hud;
         private readonly CharacterController followTarget;
+        private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly ICursor cursor;
         private readonly IMVCManager mvcManager;
+        private readonly DCLInput.InWorldCameraActions inputSchema;
 
         private SingleInstanceEntity camera;
         private SingleInstanceEntity inputMap;
 
         private ICinemachinePreset cinemachinePreset;
         private CinemachineVirtualCamera inWorldVirtualCamera;
+        private bool wasDebugVisible;
 
         public ToggleInWorldCameraActivitySystem(
             World world,
             InWorldCameraTransitionSettings settings,
             InWorldCameraController hudController,
             CharacterController followTarget,
+            IDebugContainerBuilder debugContainerBuilder,
             ICursor cursor,
-            IMVCManager mvcManager) : base(world)
+            IMVCManager mvcManager, DCLInput.InWorldCameraActions inputSchema) : base(world)
         {
             this.settings = settings;
             this.hudController = hudController;
             this.followTarget = followTarget;
+            this.debugContainerBuilder = debugContainerBuilder;
             this.cursor = cursor;
             this.mvcManager = mvcManager;
+            this.inputSchema = inputSchema;
 
             behindUpOffset = Vector3.up * settings.BehindUpOffset;
         }
@@ -70,17 +76,17 @@ namespace DCL.InWorldCamera.Systems
 
         protected override void Update(float t)
         {
-            if (World.Has<InWorldCameraComponent>(camera) && BlendingHasFinished())
-                SetFollowTarget();
-
-            if (World.TryGet(camera, out ToggleInWorldCameraRequest request))
+            if (World.Has<InWorldCameraComponent>(camera) && !cinemachinePreset.Brain.IsBlending)
             {
-                ToggleCamera(request.IsEnable);
-                World.Remove<ToggleInWorldCameraRequest>(camera);
+                if (!followTarget.enabled)
+                    SetFollowTarget();
+
+                if (inputSchema.ShowHide.triggered)
+                    hudController.ToggleVisibility();
             }
 
-            bool BlendingHasFinished() =>
-                !followTarget.enabled && !cinemachinePreset.Brain.IsBlending;
+            if (World.TryGet(camera, out ToggleInWorldCameraRequest request))
+                ToggleCamera(request.IsEnable);
         }
 
         private void ToggleCamera(bool enable)
@@ -112,29 +118,38 @@ namespace DCL.InWorldCamera.Systems
 
         private void DisableCamera()
         {
+            if (debugContainerBuilder?.Container != null)
+                debugContainerBuilder.IsVisible = wasDebugVisible;
+
             hudController.Hide();
-            mvcManager.SetAllViewsCanvasActiveExcept<InWorldCameraController>(true);
+            mvcManager.SetAllViewsCanvasActive(except: hudController, true);
 
             SwitchToThirdPersonCamera();
 
             cursor.Unlock();
-            ref var cursorComponent = ref World.Get<CursorComponent>(camera);
+            ref CursorComponent cursorComponent = ref World.Get<CursorComponent>(camera);
             cursorComponent.CursorState = CursorState.Free;
 
             SwitchCameraInput(to: Kind.PLAYER);
 
-            World.Remove<InWorldCameraComponent, CameraTarget, CameraDampedFOV, CameraDampedAim, InWorldCameraInput>(camera);
+            World.Remove<InWorldCameraComponent, CameraTarget, CameraDampedFOV, CameraDampedTilt, CameraDampedAim, InWorldCameraInput>(camera);
         }
 
         private void EnableCamera()
         {
+            if (debugContainerBuilder?.Container != null)
+            {
+                wasDebugVisible = debugContainerBuilder.IsVisible;
+                debugContainerBuilder.IsVisible = false;
+            }
+
             hudController.Show();
-            mvcManager.SetAllViewsCanvasActiveExcept<InWorldCameraController>(false);
+            mvcManager.SetAllViewsCanvasActive(except: hudController, false);
 
             SwitchToInWorldCamera();
 
             cursor.Lock();
-            ref var cursorComponent = ref World.Get<CursorComponent>(camera);
+            ref CursorComponent cursorComponent = ref World.Get<CursorComponent>(camera);
             cursorComponent.CursorState = CursorState.Locked;
 
             SwitchCameraInput(to: Kind.IN_WORLD_CAMERA);
@@ -143,6 +158,7 @@ namespace DCL.InWorldCamera.Systems
                 new InWorldCameraComponent(),
                 new CameraTarget { Value = followTarget },
                 new CameraDampedFOV { Current = inWorldVirtualCamera.m_Lens.FieldOfView, Velocity = 0f, Target = inWorldVirtualCamera.m_Lens.FieldOfView },
+                new CameraDampedTilt { Current = 0f, Target = 0f, Velocity = 0f },
                 new CameraDampedAim { Current = Vector2.up, Velocity = Vector2.up },
                 new InWorldCameraInput());
         }
@@ -212,12 +228,12 @@ namespace DCL.InWorldCamera.Systems
             switch (to)
             {
                 case Kind.IN_WORLD_CAMERA:
-                    inputMapComponent.UnblockInput(Kind.IN_WORLD_CAMERA);
                     inputMapComponent.BlockInput(Kind.PLAYER);
+                    inputMapComponent.BlockInput(Kind.SHORTCUTS);
                     break;
                 case Kind.PLAYER:
                     inputMapComponent.UnblockInput(Kind.PLAYER);
-                    inputMapComponent.BlockInput(Kind.IN_WORLD_CAMERA);
+                    inputMapComponent.UnblockInput(Kind.SHORTCUTS);
                     break;
             }
         }

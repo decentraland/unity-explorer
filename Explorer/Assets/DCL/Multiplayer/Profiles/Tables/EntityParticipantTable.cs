@@ -45,15 +45,13 @@ namespace DCL.Multiplayer.Profiles.Tables
         public void AddRoomSource(string walletId, RoomSource fromRoom)
         {
             IReadOnlyEntityParticipantTable.Entry entry = walletIdToEntity[walletId];
-            entry.ConnectedTo |= fromRoom;
-            walletIdToEntity[walletId] = entry;
+            walletIdToEntity[walletId] = entry.WithRoomSource(fromRoom);
         }
 
         public bool Release(string walletId, RoomSource fromRoom)
         {
             IReadOnlyEntityParticipantTable.Entry entry = walletIdToEntity[walletId];
-
-            entry.ConnectedTo.RemoveFlag(fromRoom);
+            entry = entry.WithoutRoomSource(fromRoom);
 
             if (entry.ConnectedTo == RoomSource.NONE)
             {

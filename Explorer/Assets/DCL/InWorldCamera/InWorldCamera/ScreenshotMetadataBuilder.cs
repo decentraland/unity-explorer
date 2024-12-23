@@ -14,6 +14,10 @@ namespace DCL.InWorldCamera
 {
     public class ScreenshotMetadataBuilder
     {
+        private const string UNKNOWN_USER = "Unknown";
+        private const string UNKNOWN_PLACE = "Unknown place";
+        private const string WORLD_PLACE_ID = "not applicable";
+
         private readonly SelfProfile selfProfile;
         private readonly CharacterController characterObjectController;
         private readonly RealmData realmData;
@@ -59,8 +63,8 @@ namespace DCL.InWorldCamera
             {
                 visiblePeople.Add(new VisiblePerson
                 {
-                    userName = profile?.Name ?? "Unknown",
-                    userAddress = profile?.UserId ?? "Unknown",
+                    userName = profile?.Name ?? UNKNOWN_USER,
+                    userAddress = profile?.UserId ?? UNKNOWN_USER,
                     isGuest = false,
                     wearables = FilterNonBaseWearables(profile?.Avatar.Wearables ?? Array.Empty<URN>()),
                 });
@@ -69,21 +73,21 @@ namespace DCL.InWorldCamera
 
         public async UniTask BuildAsync(CancellationToken ct)
         {
-            string? sceneName = await GetSceneNameAsync(sceneParcel, ct);
+            (string sceneName, string placeId) = await GetSceneInfoAsync(sceneParcel, ct);
 
-            FillMetadata(selfProfile.OwnProfile, realmData, sceneParcel, sceneName, visiblePeople.ToArray());
+            FillMetadata(selfProfile.OwnProfile, realmData, sceneParcel, sceneName, placeId, visiblePeople.ToArray());
 
             MetadataIsReady = true;
         }
 
-        private async UniTask<string> GetSceneNameAsync(Vector2Int at, CancellationToken ct)
+        private async UniTask<(string, string)> GetSceneInfoAsync(Vector2Int at, CancellationToken ct)
         {
             if (realmData.ScenesAreFixed)
-                return realmData.RealmName.Replace(".dcl.eth", string.Empty);
+                return (realmData.RealmName.Replace(".dcl.eth", string.Empty), WORLD_PLACE_ID);
 
             PlacesData.PlaceInfo? placeInfo = await placesAPIService.GetPlaceAsync(at, ct);
 
-            return placeInfo?.title ?? "Unknown place";
+            return placeInfo == null ? (UNKNOWN_PLACE, UNKNOWN_PLACE) : (placeInfo.title, placeInfo.id);
         }
 
         private static string[] FilterNonBaseWearables(IReadOnlyCollection<URN> avatarWearables)
@@ -97,7 +101,8 @@ namespace DCL.InWorldCamera
             return wearables.ToArray();
         }
 
-        internal void FillMetadata(Profile profile, RealmData realm, Vector2Int playerPosition, string sceneName, VisiblePerson[] visiblePeople)
+        internal void FillMetadata(Profile profile, RealmData realm, Vector2Int playerPosition,
+            string sceneName, string placeId, VisiblePerson[] visiblePeople)
         {
             if (metadata == null)
                 metadata = new ScreenshotMetadata
@@ -106,6 +111,7 @@ namespace DCL.InWorldCamera
                     userAddress = profile.UserId,
                     dateTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(),
                     realm = realm?.RealmName,
+                    placeId = placeId,
                     scene = new Scene
                     {
                         name = sceneName,
@@ -119,6 +125,7 @@ namespace DCL.InWorldCamera
                 metadata.userAddress = profile.UserId;
                 metadata.dateTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString();
                 metadata.realm = realm?.RealmName;
+                metadata.placeId = placeId;
                 metadata.scene.name = sceneName;
                 metadata.scene.location = new Location(playerPosition);
                 metadata.visiblePeople = visiblePeople;

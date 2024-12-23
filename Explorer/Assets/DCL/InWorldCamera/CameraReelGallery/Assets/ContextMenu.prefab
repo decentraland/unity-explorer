@@ -320,14 +320,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 58b1fc19b24a44a6b396c5e2bc396814, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  backgroundCloseButton: {fileID: 6270000119972004024}
-  controlsParent: {fileID: 241600355069304941}
-  setAsPublic: {fileID: 4285643018510730201}
-  shareOnX: {fileID: 8569663302546971867}
-  copyLink: {fileID: 9172762623700419208}
-  download: {fileID: 8912886943391370634}
-  delete: {fileID: 6705755724379186506}
-  offsetFromTarget: {x: 14, y: 18, z: 0}
+  <backgroundCloseButton>k__BackingField: {fileID: 6270000119972004024}
+  <controlsParent>k__BackingField: {fileID: 241600355069304941}
+  <setAsPublic>k__BackingField: {fileID: 4285643018510730201}
+  <shareOnX>k__BackingField: {fileID: 8569663302546971867}
+  <copyLink>k__BackingField: {fileID: 9172762623700419208}
+  <download>k__BackingField: {fileID: 8912886943391370634}
+  <delete>k__BackingField: {fileID: 6705755724379186506}
+  <offsetFromTarget>k__BackingField: {x: 14, y: 18, z: 0}
 --- !u!1 &1106820289145627350
 GameObject:
   m_ObjectHideFlags: 0

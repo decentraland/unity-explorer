@@ -33,7 +33,7 @@ namespace Global.Dynamic
         // TODO it can be dangerous to clear the realm, instead we may destroy it fully and reconstruct but we will need to
         // TODO construct player/camera entities again and allocate more memory. Evaluate
         // Realms + Promises
-        private static readonly QueryDescription CLEAR_QUERY = new QueryDescription().WithAny<RealmComponent, GetSceneDefinition, GetSceneDefinitionList, SceneDefinitionComponent, SceneLODInfo, EmptySceneComponent>();
+        private static readonly QueryDescription CLEAR_QUERY = new QueryDescription().WithAny<RealmComponent, GetSceneDefinition, GetSceneDefinitionList, SceneDefinitionComponent, SceneLODInfo, EmptySceneComponent>().WithNone<PortableExperienceComponent>();
 
         private readonly List<ISceneFacade> allScenes = new (PoolConstants.SCENES_COUNT);
         private readonly ServerAbout serverAbout = new ();
@@ -57,7 +57,17 @@ namespace Global.Dynamic
 
         private readonly RealmNavigatorDebugView realmNavigatorDebugView;
 
-        public RealmType Type => IsGenesisRealm() ? RealmType.GenesisCity : RealmType.World;
+        public RealmType Type
+        {
+            get
+            {
+                if (isLocalSceneDevelopment)
+                    return RealmType.LocalScene;
+                if (realmData is { Configured: true, ScenesAreFixed: false })
+                    return RealmType.GenesisCity;
+                return RealmType.World;
+            }
+        }
 
         public URLDomain? CurrentDomain { get; private set; }
 
@@ -279,7 +289,5 @@ namespace Global.Dynamic
             return hostname;
         }
 
-        private bool IsGenesisRealm() =>
-            !isLocalSceneDevelopment && realmData is { Configured: true, ScenesAreFixed: false };
     }
 }

@@ -1,18 +1,21 @@
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.UserInAppInitializationFlow;
 using ECS.SceneLifeCycle.Realm;
-
+using Global.Dynamic.Misc;
 
 namespace Global.Dynamic.TeleportOperations
 {
     public class ChangeRealmTeleportOperation : TeleportOperationBase
     {
-        private readonly IRealmNavigator realmNavigator;
+        private readonly IRealmController realmController;
+        private readonly IRealmMisc realmMisc;
 
-        public ChangeRealmTeleportOperation(IRealmNavigator realmNavigator)
+        public ChangeRealmTeleportOperation(IRealmController realmController, IRealmMisc realmMisc)
         {
-            this.realmNavigator = realmNavigator;
+            this.realmMisc = realmMisc;
+            this.realmController = realmController;
         }
 
         protected override async UniTask InternalExecuteAsync(TeleportParams teleportParams, CancellationToken ct)
@@ -20,7 +23,8 @@ namespace Global.Dynamic.TeleportOperations
             float finalizationProgress =
                 teleportParams.LoadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.RealmChanging);
 
-            await realmNavigator.ChangeRealmAsync(teleportParams.CurrentDestinationRealm, ct);
+            await realmController.SetRealmAsync(teleportParams.CurrentDestinationRealm, ct);
+            realmMisc.SwitchTo(realmController.Type);
             teleportParams.ParentReport.SetProgress(finalizationProgress);
         }
     }

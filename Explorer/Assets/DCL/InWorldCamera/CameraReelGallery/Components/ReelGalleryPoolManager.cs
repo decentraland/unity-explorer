@@ -1,5 +1,4 @@
 using DCL.InWorldCamera.CameraReelStorageService;
-using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using UnityEngine;
 using UnityEngine.Pool;
 using UnityEngine.UI;
@@ -10,12 +9,14 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
     {
         private readonly IObjectPool<ReelThumbnailController> reelThumbnailPool;
         private readonly IObjectPool<MonthGridController> reelGridPool;
+
         public ReelGalleryPoolManager(
             ReelThumbnailView reelThumbnailPrefab,
             MonthGridView monthViewPrefab,
             GameObject unusedThumbnailPoolObjectParent,
             GameObject unusedGridPoolObjectParent,
             ICameraReelScreenshotsStorage cameraReelScreenshotsStorageService,
+            ReelGalleryConfigParams reelGalleryConfigParams,
             int thumbnailDefaultCapacity,
             int thumbnailMaxSize,
             int gridDefaultCapacity,
@@ -46,7 +47,13 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
                     MonthGridView view = GameObject.Instantiate(monthViewPrefab);
                     return new MonthGridController(view, this);
                 },
-                grid => grid.view.gameObject.SetActive(true),
+                grid =>
+                {
+                    grid.view.gridLayoutGroup.constraintCount = reelGalleryConfigParams.GridLayoutFixedColumnCount;
+                    grid.view.gridLayoutGroup.cellSize = new Vector2(reelGalleryConfigParams.ThumbnailWidth, reelGalleryConfigParams.ThumbnailHeight);
+                    grid.view.monthText.gameObject.SetActive(reelGalleryConfigParams.GridShowMonth);
+                    grid.view.gameObject.SetActive(true);
+                },
                 grid =>
                 {
                     grid.view.transform.SetParent(unusedGridPoolObjectParent.transform, false);
