@@ -2,12 +2,14 @@
 using DCL.AuthenticationScreenFlow;
 using DCL.Chat;
 using DCL.ExplorePanel;
+using DCL.InWorldCamera.PhotoDetail;
 using DCL.Passport;
 using DCL.UI.Sidebar;
 using MVC;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using UnityEngine;
 
 namespace DCL.PerformanceAndDiagnostics.Analytics
 {
@@ -30,7 +32,8 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             controllerAnalyticsFactory = new Dictionary<Type, Func<IController, IDisposable>>
             {
                 { typeof(ChatController), CreateAnalytics<ChatController>(c => new ChatEventsAnalytics(analytics, c)) },
-                { typeof(ExplorePanelController), CreateAnalytics<ExplorePanelController>(c => new MapEventsAnalytics(analytics, c.NavmapController)) },
+                { typeof(ExplorePanelController), CreateAnalytics<ExplorePanelController>(c => new ExplorePanelAnalytics(analytics, c)) },
+                { typeof(PhotoDetailController), CreateAnalytics<PhotoDetailController>(c => new PhotoDetailAnalytics(analytics, c)) },
                 { typeof(PassportController), CreateAnalytics<PassportController>(c => new PassportAnalytics(analytics, c)) },
                 { typeof(AuthenticationScreenController), CreateAnalytics<AuthenticationScreenController>(c => new AuthenticationScreenAnalytics(analytics, c)) },
                 { typeof(SidebarController), CreateAnalytics<SidebarController>(c => new SupportAnalytics(analytics, c)) },
@@ -64,7 +67,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         public void SetAllViewsCanvasActive(bool isActive) =>
             core.SetAllViewsCanvasActive(isActive);
 
-        public void SetAllViewsCanvasActiveExcept<T>(bool isActive) where T : IController =>
-            core.SetAllViewsCanvasActiveExcept<T>(isActive);
+        public void SetAllViewsCanvasActive(IController except, bool isActive) =>
+            core.SetAllViewsCanvasActive(except, isActive);
     }
 }

@@ -1,7 +1,7 @@
 using System.Text.RegularExpressions;
 using UnityEngine;
 
-namespace Global.Dynamic
+namespace DCL.UserInAppInitializationFlow.StartupOperations
 {
     public static class RealmHelper
     {
@@ -11,7 +11,7 @@ namespace Global.Dynamic
 
             if (string.IsNullOrEmpty(positionString)) return false;
 
-            MatchCollection matches = new Regex(@"-*\d+").Matches(positionString);
+            var matches = new Regex(@"-*\d+").Matches(positionString);
 
             if (matches.Count > 1)
             {
@@ -22,6 +22,5 @@ namespace Global.Dynamic
 
             return false;
         }
-
     }
 }

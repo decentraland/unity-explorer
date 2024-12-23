@@ -17,12 +17,15 @@ namespace DCL.Browser.DecentralandUrls
 
         private readonly Dictionary<DecentralandUrl, string> cache = new ();
         private readonly string environmentDomainLowerCase;
+        private readonly bool isLocalSceneDevelopment;
+
 
         public string DecentralandDomain => environmentDomainLowerCase;
 
-        public DecentralandUrlsSource(DecentralandEnvironment environment)
+        public DecentralandUrlsSource(DecentralandEnvironment environment, bool isLocalSceneDevelopment = false)
         {
             environmentDomainLowerCase = environment.ToString()!.ToLower();
+            this.isLocalSceneDevelopment = isLocalSceneDevelopment;
 
             switch (environment)
             {
@@ -57,6 +60,16 @@ namespace DCL.Browser.DecentralandUrls
             return url!;
         }
 
+        public string GetHostnameForFeatureFlag()
+        {
+            if (isLocalSceneDevelopment)
+            {
+                return "localhost";
+            }
+
+            return Url(DecentralandUrl.Host);
+        }
+
         private static string RawUrl(DecentralandUrl decentralandUrl) =>
             decentralandUrl switch
             {
@@ -87,6 +100,7 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.Badges => $"https://badges.decentraland.{ENV}",
                 DecentralandUrl.CameraReelUsers =>  $"https://camera-reel-service.decentraland.{ENV}/api/users",
                 DecentralandUrl.CameraReelImages => $"https://camera-reel-service.decentraland.{ENV}/api/images",
+                DecentralandUrl.CameraReelPlaces => $"https://camera-reel-service.decentraland.{ENV}/api/places",
                 DecentralandUrl.CameraReelLink => $"https://reels.decentraland.{ENV}",
                 _ => throw new ArgumentOutOfRangeException(nameof(decentralandUrl), decentralandUrl, null!)
             };

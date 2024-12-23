@@ -11,6 +11,7 @@ using DCL.InWorldCamera.UI;
 using DCL.Multiplayer.Profiles.Entities;
 using DCL.Profiles;
 using ECS.Abstract;
+using System;
 using System.Threading;
 using UnityEngine;
 using Utility;
@@ -38,6 +39,7 @@ namespace DCL.InWorldCamera.Systems
         private SingleInstanceEntity camera;
         private Texture2D? screenshot;
         private ScreenshotMetadata? metadata;
+        private string currentSource;
 
         public CaptureScreenshotSystem(
             World world,
@@ -71,7 +73,7 @@ namespace DCL.InWorldCamera.Systems
 
         protected override void Update(float t)
         {
-            if (recorder.State == RecordingState.CAPTURING)
+            if (recorder.State == RecordingState.CAPTURING || hudController.IsVfxInProgress)
                 return;
 
             if (recorder.State == RecordingState.SCREENSHOT_READY && metadataBuilder.MetadataIsReady)
@@ -80,7 +82,7 @@ namespace DCL.InWorldCamera.Systems
                 return;
             }
 
-            if (ScreenshotIsRequested())
+            if (ScreenshotIsRequested() && cameraReelStorageService.StorageStatus.HasFreeSpace)
             {
                 hudController.Hide(isInstant: true);
                 coroutineRunner.StartCoroutine(recorder.CaptureScreenshot());
@@ -93,19 +95,26 @@ namespace DCL.InWorldCamera.Systems
             screenshot = recorder.GetScreenshotAndReset();
             metadata = metadataBuilder.GetMetadataAndReset();
 
-            cameraReelStorageService.UploadScreenshotAsync(screenshot, metadata, ctx.Token).Forget();
+            try
+            {
+                cameraReelStorageService.UploadScreenshotAsync(screenshot, metadata, currentSource, ctx.Token).Forget();
 
-            hudController.Show();
-            hudController.PlayScreenshotFX(screenshot, SPLASH_FX_DURATION, MIDDLE_PAUSE_FX_DURATION, IMAGE_TRANSITION_FX_DURATION);
-            hudController.DebugCapture(screenshot, metadata);
+                hudController.Show();
+                hudController.PlayScreenshotFX(screenshot, SPLASH_FX_DURATION, MIDDLE_PAUSE_FX_DURATION, IMAGE_TRANSITION_FX_DURATION);
+                hudController.DebugCapture(screenshot, metadata);
+            }
+            catch (OperationCanceledException) { }
+            catch (ScreenshotLimitReachedException) { hudController.Show(); }
+            catch (Exception e) { ReportHub.LogException(e, ReportCategory.CAMERA_REEL); }
         }
 
         private bool ScreenshotIsRequested()
         {
             if (recorder.State != RecordingState.IDLE) return false;
 
-            if (World.Has<TakeScreenshotRequest>(camera))
+            if (World.TryGet(camera, out TakeScreenshotRequest request))
             {
+                currentSource = request.Source;
                 World.Remove<TakeScreenshotRequest>(camera);
                 return true;
             }

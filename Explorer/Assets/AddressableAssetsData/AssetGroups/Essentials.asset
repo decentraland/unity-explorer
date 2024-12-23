@@ -72,6 +72,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 26a5616becdfd49b4abfbee07ba3cbf2
+    m_Address: Assets/DCL/InWorldCamera/PhotoDetail/Prefabs/PhotoDetailUI.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 2a58c49334237a24781cae8b1e3fa351
     m_Address: EmbeddedEmotes
     m_ReadOnly: 0

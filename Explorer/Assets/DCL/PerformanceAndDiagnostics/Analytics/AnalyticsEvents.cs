@@ -13,6 +13,7 @@
             public const string INITIAL_LOADING = "initial_loading";
             public const string PERFORMANCE_REPORT = "performance_report";
             public const string ERROR = "error";
+            public const string LOADING_ERROR = "loading_error";
         }
 
         public static class World
@@ -50,6 +51,21 @@
         {
             public const string WALKED_DISTANCE = "walked_distance";
             public const string HEIGHT_REACHED = "vertical_height_reached";
+        }
+
+        public static class CameraReel
+        {
+            public const string CAMERA_OPEN = "open_camera";
+            public const string TAKE_PHOTO = "take_photo";
+
+            public const string CAMERA_REEL_OPEN = "open_camera_reel";
+
+            public const string OPEN_PHOTO = "open_photo";
+            public const string SHARE_PHOTO = "share_photo";
+            public const string DOWNLOAD_PHOTO = "download_photo";
+            public const string DELETE_PHOTO = "delete_photo";
+            public const string PHOTO_TO_MARKETPLACE = "photo_to_marketplace";
+            public const string PHOTO_JUMP_TO = "photo_jump_to";
         }
 
         public static class Livekit

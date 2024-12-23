@@ -76,7 +76,7 @@ namespace DCL.AuthenticationScreenFlow
         private StringVariable? profileNameLabel;
         private float originalWorldAudioVolume;
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Overlay;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Fullscreen;
 
         public ReactiveProperty<AuthenticationStatus> CurrentState { get; } = new (AuthenticationStatus.Init);
 

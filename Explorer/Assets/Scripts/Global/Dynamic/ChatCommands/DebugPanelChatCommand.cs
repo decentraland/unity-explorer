@@ -3,7 +3,6 @@ using DCL.Chat.Commands;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.Views;
 using DCL.PluginSystem.Global;
-using System;
 using System.Text.RegularExpressions;
 using System.Threading;
 
@@ -11,7 +10,8 @@ namespace Global.Dynamic.ChatCommands
 {
     public class DebugPanelChatCommand : IChatCommand
     {
-        public static readonly Regex REGEX = new (@"^/debug(?:\s+(\w+))?$", RegexOptions.Compiled);
+        public Regex Regex { get; } = new (@"^/debug(?:\s+(\w+))?$", RegexOptions.Compiled);
+        public string Description => "<b>/debug</b> - Toggle debug panel";
 
         private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly ConnectionStatusPanelPlugin connectionStatusPanelPlugin;

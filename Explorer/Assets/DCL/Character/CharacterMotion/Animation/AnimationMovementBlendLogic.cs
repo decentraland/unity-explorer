@@ -6,6 +6,7 @@ using DCL.CharacterMotion.Utils;
 using DCL.Utilities.Extensions;
 using System.Runtime.CompilerServices;
 using UnityEngine;
+using Utility.Animations;
 
 namespace DCL.CharacterMotion.Animation
 {

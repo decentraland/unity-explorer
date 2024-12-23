@@ -11,18 +11,21 @@ namespace DCL.Utilities.Extensions
         /// <summary>
         ///     Suppresses all exceptions, reports them and converts them to <see cref="Result" />
         /// </summary>
-        public static async UniTask<Result> SuppressToResultAsync(this UniTask coreOp, ReportData? reportData = null, Func<Exception, Result>? exceptionToResult = null)
+        public static async UniTask<EnumResult<TaskError>> SuppressToResultAsync(this UniTask coreOp, ReportData? reportData = null, Func<Exception, EnumResult<TaskError>>? exceptionToResult = null)
         {
             try
             {
                 await coreOp;
-                return Result.SuccessResult();
+                return EnumResult<TaskError>.SuccessResult();
             }
-            catch (OperationCanceledException) { return Result.CancelledResult(); }
+            catch (OperationCanceledException)
+            {
+                return EnumResult<TaskError>.CancelledResult(TaskError.Cancelled);
+            }
             catch (Exception e)
             {
                 ReportException(e);
-                return exceptionToResult?.Invoke(e) ?? Result.ErrorResult(e.Message);
+                return exceptionToResult?.Invoke(e) ?? EnumResult<TaskError>.ErrorResult(TaskError.UnexpectedException, e.Message);
             }
 
             void ReportException(Exception e)

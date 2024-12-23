@@ -4,7 +4,10 @@ use std::sync::{
     Arc,
 };
 
-use segment::{message::BatchMessage, AutoBatcher, Batcher, HttpClient};
+use segment::{
+    message::{BatchMessage, User},
+    AutoBatcher, Batcher, HttpClient,
+};
 use tokio::sync::Mutex;
 
 use crate::{operations, FfiCallbackFn, OperationHandleId, Response};
@@ -127,23 +130,23 @@ impl SegmentServer {
     pub async fn enqueue_track(
         instance: Arc<Self>,
         id: OperationHandleId,
-        used_id: &str,
+        user: User,
         event_name: &str,
         properties_json: &str,
         context_json: &str,
     ) {
-        let msg = operations::new_track(used_id, event_name, properties_json, context_json);
+        let msg = operations::new_track(user, event_name, properties_json, context_json);
         instance.enqueue_if_ok(id, msg).await;
     }
 
     pub async fn enqueue_identify(
         instance: Arc<Self>,
         id: OperationHandleId,
-        used_id: &str,
+        user: User,
         traits_json: &str,
         context_json: &str,
     ) {
-        let msg = operations::new_identify(used_id, traits_json, context_json);
+        let msg = operations::new_identify(user, traits_json, context_json);
         instance.enqueue_if_ok(id, msg).await;
     }
 

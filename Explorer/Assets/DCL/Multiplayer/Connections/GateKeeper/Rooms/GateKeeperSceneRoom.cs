@@ -84,7 +84,12 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
 
             try
             {
-                meta = await metaDataSource.MetaDataAsync(metaDataSource.GetMetadataInput(), token);
+                var result = await metaDataSource.MetaDataAsync(metaDataSource.GetMetadataInput(), token);
+
+                if (result.Success == false)
+                    return;
+
+                meta = result.Value;
 
                 UniTask waitForReconnectionRequiredTask;
 
@@ -141,6 +146,9 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
             {
                 // if we don't catch an exception, any failure leads to the loop being stopped
                 ReportHub.Log(ReportCategory.COMMS_SCENE_HANDLER, $"Exception occured in {nameof(CycleStepAsync)} when {meta} was being processed: {e}");
+
+                // The upper layer has a recovery loop on its own so notify it
+                throw;
             }
         }
 

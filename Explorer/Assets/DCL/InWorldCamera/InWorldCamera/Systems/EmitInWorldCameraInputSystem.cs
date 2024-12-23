@@ -4,7 +4,6 @@ using DCL.CharacterCamera;
 using DCL.Diagnostics;
 using ECS.Abstract;
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 namespace DCL.InWorldCamera.Systems
 {
@@ -13,15 +12,15 @@ namespace DCL.InWorldCamera.Systems
     [LogCategory(ReportCategory.IN_WORLD_CAMERA)]
     public partial class EmitInWorldCameraInputSystem : BaseUnityLoopSystem
     {
+        public const string SOURCE_SHORTCUT = "Shortcut";
+
         private readonly DCLInput.InWorldCameraActions inputSchema;
-        private readonly InputAction toggleInWorldCameraShortcut;
 
         private SingleInstanceEntity camera;
 
-        public EmitInWorldCameraInputSystem(World world, DCLInput.InWorldCameraActions inputSchema, InputAction toggleInWorldCameraShortcut) : base(world)
+        public EmitInWorldCameraInputSystem(World world, DCLInput.InWorldCameraActions inputSchema) : base(world)
         {
             this.inputSchema = inputSchema;
-            this.toggleInWorldCameraShortcut = toggleInWorldCameraShortcut;
         }
 
         public override void Initialize()
@@ -31,8 +30,11 @@ namespace DCL.InWorldCamera.Systems
 
         protected override void Update(float t)
         {
-            if (toggleInWorldCameraShortcut.triggered)
-                World.Add(camera, new ToggleInWorldCameraRequest { IsEnable = !World.Has<InWorldCameraComponent>(camera) });
+            if (inputSchema.ToggleInWorldCamera.triggered)
+                World.Add(camera, new ToggleInWorldCameraRequest { IsEnable = !World.Has<InWorldCameraComponent>(camera), Source = SOURCE_SHORTCUT });
+
+            if (inputSchema.CameraReel.triggered || inputSchema.Close.triggered)
+                World.Add(camera, new ToggleInWorldCameraRequest { IsEnable = false });
 
             ref InWorldCameraInput input = ref World.TryGetRef<InWorldCameraInput>(camera, out bool exists);
 
@@ -40,6 +42,7 @@ namespace DCL.InWorldCamera.Systems
             {
                 input.Translation = inputSchema.Translation.ReadValue<Vector2>();
                 input.Panning = inputSchema.Panning.ReadValue<float>();
+                input.Tilting = inputSchema.Tilting.ReadValue<float>();
                 input.IsRunning = inputSchema.Run.IsPressed();
 
                 input.Aim = inputSchema.Rotation.ReadValue<Vector2>();
@@ -47,7 +50,7 @@ namespace DCL.InWorldCamera.Systems
                 input.Zoom = inputSchema.Zoom.ReadValue<float>();
 
                 if (inputSchema.Screenshot.triggered && !World.Has<TakeScreenshotRequest>(camera))
-                    World.Add(camera, new TakeScreenshotRequest { Source = "Shortcut" });
+                    World.Add(camera, new TakeScreenshotRequest { Source = SOURCE_SHORTCUT});
             }
         }
     }
