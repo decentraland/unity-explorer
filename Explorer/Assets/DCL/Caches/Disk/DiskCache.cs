@@ -50,6 +50,17 @@ namespace DCL.Caches.Disk
             catch (Exception e) { return EnumResult<byte[]?, TaskError>.ErrorResult(TaskError.UnexpectedException, e.Message ?? string.Empty); }
         }
 
+        public UniTask<EnumResult<TaskError>> RemoveAsync(string key, string extension, CancellationToken token)
+        {
+            try
+            {
+                string path = PathFrom(key, extension);
+                if (File.Exists(path)) File.Delete(path);
+                return UniTask.FromResult(EnumResult<TaskError>.SuccessResult());
+            }
+            catch (Exception e) { return UniTask.FromResult(EnumResult<TaskError>.ErrorResult(TaskError.UnexpectedException, e.Message ?? string.Empty)); }
+        }
+
         private string PathFrom(string key, string extension)
         {
             string path = HashNamings.HashNameFrom(key, extension);

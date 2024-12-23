@@ -30,5 +30,13 @@ namespace DCL.Caches.Playgrounds
 
             print($"Content equals: {testData.AsSpan().SequenceEqual(contentResult.Value!.AsSpan())}");
         }
+
+        [ContextMenu(nameof(RemoveAsync))]
+        public async UniTaskVoid RemoveAsync()
+        {
+            IDiskCache diskCache = new DiskCache(cacheDirectory);
+            var result = await diskCache.RemoveAsync(testFile, Path.GetExtension(testFile), destroyCancellationToken);
+            print($"Remove result: success {result.Success} and error {result.Error?.Message}");
+        }
     }
 }

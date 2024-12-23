@@ -10,5 +10,7 @@ namespace DCL.Caches.Disk
         UniTask<EnumResult<TaskError>> PutAsync(string key, string extension, ReadOnlyMemory<byte> data, CancellationToken token);
 
         UniTask<EnumResult<byte[]?, TaskError>> ContentAsync(string key, string extension, CancellationToken token);
+
+        UniTask<EnumResult<TaskError>> RemoveAsync(string key, string extension, CancellationToken token);
     }
 }
