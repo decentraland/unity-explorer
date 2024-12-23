@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Caches.Disk;
+using System;
 using System.IO;
 using UnityEngine;
 
@@ -20,9 +21,14 @@ namespace DCL.Caches.Playgrounds
             byte[] testData = await File.ReadAllBytesAsync(testFile, destroyCancellationToken)!;
             string testExtension = Path.GetExtension(testFile);
 
-            var diskCache = new DiskCache(cacheDirectory);
-            var result = await diskCache.PutAsync("test", testExtension, testData, destroyCancellationToken);
-            print($"Put result: success {result.AsResult().Success} and error {result.AsResult().ErrorMessage}");
+            IDiskCache diskCache = new DiskCache(cacheDirectory);
+            var result = await diskCache.PutAsync(testFile, testExtension, testData, destroyCancellationToken);
+            print($"Put result: success {result.Success} and error {result.Error?.Message}");
+
+            var contentResult = await diskCache.ContentAsync(testFile, testExtension, destroyCancellationToken);
+            print($"Content result: success {contentResult.Success} and error {contentResult.Error?.Message}");
+
+            print($"Content equals: {testData.AsSpan().SequenceEqual(contentResult.Value!.AsSpan())}");
         }
     }
 }
