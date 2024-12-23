@@ -68,4 +68,41 @@ namespace DCL.Caches.Disk
             return path;
         }
     }
+
+    public class DiskCache<T> : IDiskCache<T> where T: class
+    {
+        private readonly IDiskCache diskCache;
+        private readonly IDiskSerializer<T> serializer;
+
+        public DiskCache(IDiskCache diskCache, IDiskSerializer<T> serializer)
+        {
+            this.diskCache = diskCache;
+            this.serializer = serializer;
+        }
+
+        public async UniTask<EnumResult<TaskError>> PutAsync(string key, string extension, T data, CancellationToken token)
+        {
+            byte[] serializedData = await serializer.Serialize(data, token);
+            return await diskCache.PutAsync(key, extension, serializedData, token);
+        }
+
+        public async UniTask<EnumResult<T?, TaskError>> ContentAsync(string key, string extension, CancellationToken token)
+        {
+            var result = await diskCache.ContentAsync(key, extension, token);
+
+            if (result.Success == false)
+                return EnumResult<T?, TaskError>.ErrorResult(result.Error!.Value.State, result.Error.Value.Message!);
+
+            byte[]? data = result.Value;
+
+            if (data == null)
+                return EnumResult<T?, TaskError>.SuccessResult(null);
+
+            T? deserializedValue = await serializer.Deserialize(data, token);
+            return EnumResult<T?, TaskError>.SuccessResult(deserializedValue);
+        }
+
+        public UniTask<EnumResult<TaskError>> RemoveAsync(string key, string extension, CancellationToken token) =>
+            diskCache.RemoveAsync(key, extension, token);
+    }
 }
