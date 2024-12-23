@@ -18,7 +18,7 @@ namespace DCL.WebRequests
                 )
             ),
             new RequestHub(
-                ITexturesFuse.NewDefault()
+                ITexturesFuse.NewManagedInstance()
             )
         );
 

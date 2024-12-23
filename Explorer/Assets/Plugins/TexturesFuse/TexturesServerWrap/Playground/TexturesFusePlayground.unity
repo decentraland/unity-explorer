@@ -255,7 +255,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   display: {fileID: 1454420715}
   textureType: 0
-  overrideDefaultUnzip: 1
+  overrideDefaultUnzip: 0
   options:
     maxSide: 512
     adjustments:
@@ -263,12 +263,13 @@ MonoBehaviour:
       brightness: 0
       contrast: 0
       gamma: 0
-    mode: 7
+    mode: 0
     initOptions:
       ASTCProfile: 0
       blockZ: 1
       quality: 60
       flags: 0
+      pluginsPath: 
     swizzle:
       r: 0
       g: 1
@@ -279,7 +280,7 @@ MonoBehaviour:
     disableMultithreading: 0
     dwnumThreads: 0
     cmpComputeTypeEncode: 1
-  pathOrUri: https://assets-cdn.decentraland.org/dclcitizen/3d/hrm.png
+  pathOrUri: /Users/nickkhalow/Downloads/CacheTest/44-7B-29-36-95-AD-E9-27-8A-D0-97-83-A2-43-E0-A8-39-96-2F-7B-A6-FE-2C-37-A1-66-FC-E4-83-5B-E4-ED-82-EF-18-8C-54-F1-4A-09-E7-AB-D1-6A-89-4C-EB-9E-18-2E-A2-94-F8-DD-C6-03-65-BC-DE-F3-53-03-D2-E9.png
   debugOutputFromNative: 1
   outputPath: Assets/Plugins/TexturesFuse/TexturesServerWrap/Playground/ASTCTexturesCompatability/test_output.astc
 --- !u!1 &1203531619

@@ -232,11 +232,11 @@ ImageResult texturesfuse_processed_image_from_memory(
     }
 
     // TODO test only, remove
-    result = WithAlphaImage(image, &image);
-    if (result != Success)
-    {
-        return result;
-    }
+    // result = WithAlphaImage(image, &image);
+    // if (result != Success)
+    // {
+    //     return result;
+    // }
 
     BYTE *bits = FreeImage_GetBits(image);
     if (!bits)
@@ -245,12 +245,10 @@ ImageResult texturesfuse_processed_image_from_memory(
         return ErrorCannotGetBits;
     }
 
-    FREE_IMAGE_COLOR_TYPE imageColorType = FreeImage_GetColorType(image);
-
     *width = FreeImage_GetWidth(image);
     *height = FreeImage_GetHeight(image);
     *bitsPerPixel = FreeImage_GetBPP(image);
-    *colorType = imageColorType;
+    *colorType = FreeImage_GetColorType(image);
 
     unsigned int size = *width * *height * *bitsPerPixel;
     BYTE *output = new BYTE[size];
@@ -259,7 +257,7 @@ ImageResult texturesfuse_processed_image_from_memory(
     *outputBytes = output;
     *releaseHandle = context->handles.registerHandle(output);
 
-    LogImageInfo(image, "Prepared image without ASTC: ");
+    LogImageInfo(image, "Prepared image without compression: ");
 
     FreeImage_Unload(image);
 

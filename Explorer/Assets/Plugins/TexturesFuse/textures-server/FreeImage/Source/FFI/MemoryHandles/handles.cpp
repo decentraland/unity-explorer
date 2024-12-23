@@ -1,9 +1,11 @@
 #include "handles.h"
+#include <mutex>
 
 MemoryHandles::MemoryHandles() {}
 
 FfiHandle MemoryHandles::registerHandle(const BYTE* ownedMemory)
 {
+    std::lock_guard<std::mutex> lock(this->mtx);
     this->handlesCount++;
     FfiHandle currentHandle = this->handlesCount;
     this->handles[currentHandle] = ownedMemory;
@@ -12,6 +14,7 @@ FfiHandle MemoryHandles::registerHandle(const BYTE* ownedMemory)
 
 bool MemoryHandles::tryReleaseHandle(const FfiHandle handle)
 {
+    std::lock_guard<std::mutex> lock(this->mtx);
     if (this->handles.find(handle) == this->handles.end())
     {
         return false;
@@ -26,5 +29,6 @@ bool MemoryHandles::tryReleaseHandle(const FfiHandle handle)
 
 bool MemoryHandles::empty() const
 {
+    std::lock_guard<std::mutex> lock(this->mtx);
     return this->handles.empty();
 }

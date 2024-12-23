@@ -91,9 +91,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
 
             if (options == null)
             {
-                var mode = IPlatform.DEFAULT.Is(IPlatform.Kind.Windows)
-                    ? Mode.BC7
-                    : Mode.ASTC_6x6;
+                var mode = /*Mode.ASTC_6x6; //*/ Mode.RGB;
 
                 options = new IOptions.Const(
                     mode,

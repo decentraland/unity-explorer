@@ -24,6 +24,8 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Playground
         [FormerlySerializedAs("path")] [SerializeField] private string pathOrUri = "Assets/Plugins/TexturesFuse/textures-server/FreeImage/Source/FFI/image.jpg";
         [SerializeField] private bool debugOutputFromNative;
         [Space]
+        [SerializeField] private bool usePrewarm;
+        [Space]
         [SerializeField] private string outputPath = "Assets/Plugins/TexturesFuse/TexturesServerWrap/Playground/ASTCTexturesCompatability/test_output.astc";
 
         private ITexturesFuse fuse = null!;
@@ -40,7 +42,9 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Playground
         {
             display.EnsureNotNull();
 
-            await new CompressShaders.CompressShaders(NewTextureFuse, IPlatform.DEFAULT).WarmUpIfRequiredAsync(destroyCancellationToken);
+            if (usePrewarm)
+                await new CompressShaders.CompressShaders(NewTextureFuse, IPlatform.DEFAULT)
+                   .WarmUpIfRequiredAsync(destroyCancellationToken);
 
             fuse = NewTextureFuse();
 
@@ -48,6 +52,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Playground
             print($"Original size: {buffer.Length} bytes");
 
             var result = await FetchedAndOverrideTextureAsync();
+            texture = null;
             display.Display(result.Texture);
         }
 
@@ -59,6 +64,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Playground
         private async UniTask<IOwnedTexture2D> FetchedAndOverrideTextureAsync()
         {
             texture?.Dispose();
+            texture = null;
             texture = (await fuse.TextureFromBytesAsync(buffer, textureType, destroyCancellationToken, "playground")).Unwrap();
             print($"Compressed size: {texture.Texture.GetRawTextureData()!.Length} bytes");
             return texture;
@@ -67,6 +73,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Playground
         private void OnDestroy()
         {
             texture?.Dispose();
+            texture = null;
             fuse.Dispose();
         }
 

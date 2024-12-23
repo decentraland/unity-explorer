@@ -2,6 +2,9 @@ using Cysharp.Threading.Tasks;
 using DCL.Profiling;
 using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using System;
+using System.IO;
+using System.Security.Cryptography;
+using System.Text;
 using System.Threading;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
@@ -53,16 +56,46 @@ namespace DCL.WebRequests
                 this.filterMode = filterMode;
             }
 
+            private const string CACHE_LOCATION = "/Users/nickkhalow/Downloads/CacheTest";
+            private static readonly StreamWriter MAPPING = new (Path.Combine(CACHE_LOCATION, "mapping.txt"), true);
+
+            static CreateTextureOp()
+            {
+                MAPPING.AutoFlush = true;
+            }
+
             public async UniTask<IOwnedTexture2D?> ExecuteAsync(GetTextureWebRequest webRequest, CancellationToken ct)
             {
+                var sha512 = SHA512.Create()!;
+                byte[] inputHashData = Encoding.UTF8.GetBytes(webRequest.url);
+                byte[] hashBytes = sha512.ComputeHash(inputHashData);
+                var hash = BitConverter.ToString(hashBytes);
+
                 using var request = webRequest.UnityWebRequest;
-                var data = request.downloadHandler?.nativeData;
+
+                string path = Path.Combine(CACHE_LOCATION, hash);
+
+                if (webRequest.url.EndsWith(".png", StringComparison.Ordinal))
+                    path = Path.ChangeExtension(path, ".png");
+                else if (webRequest.url.EndsWith(".jpg", StringComparison.Ordinal))
+                    path = Path.ChangeExtension(path, ".jpg");
+
+                byte[] data = Array.Empty<byte>();
+
+                if (File.Exists(path))
+                    data = await File.ReadAllBytesAsync(path, ct)!;
+                else
+                {
+                    data = request.downloadHandler!.data!;
+                    await File.WriteAllBytesAsync(path, data, ct)!;
+                    await MAPPING.WriteLineAsync($"{webRequest.url} -> {path}")!;
+                }
 
                 if (data == null)
                     throw new Exception("Texture content is empty");
 
-                var imageData = new ITexturesFuse.ImageData(AsPointer(data.Value), data.Value.Length, webRequest.textureType, webRequest.url);
-                var result = await webRequest.texturesFuse.TextureFromBytesAsync(imageData, ct);
+                // var imageData = new ITexturesFuse.ImageData(data, webRequest.textureType, webRequest.url);
+                var result = await webRequest.texturesFuse.TextureFromBytesAsync(data, webRequest.textureType, ct, webRequest.url);
 
                 if (result.Success == false)
                     throw new Exception($"CreateTextureOp: Error loading texture url: {webRequest.url} - {result}");
