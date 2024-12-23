@@ -14,11 +14,11 @@ namespace DCL.Caches.Disk
         UniTask<EnumResult<TaskError>> RemoveAsync(string key, string extension, CancellationToken token);
     }
 
-    public interface IDiskCache<T> where T: class
+    public interface IDiskCache<T>
     {
         UniTask<EnumResult<TaskError>> PutAsync(string key, string extension, T data, CancellationToken token);
 
-        UniTask<EnumResult<T?, TaskError>> ContentAsync(string key, string extension, CancellationToken token);
+        UniTask<EnumResult<Option<T>, TaskError>> ContentAsync(string key, string extension, CancellationToken token);
 
         UniTask<EnumResult<TaskError>> RemoveAsync(string key, string extension, CancellationToken token);
     }
@@ -27,6 +27,6 @@ namespace DCL.Caches.Disk
     {
         UniTask<byte[]> Serialize(T data, CancellationToken token);
 
-        UniTask<T?> Deserialize(byte[] data, CancellationToken token);
+        UniTask<T> Deserialize(byte[] data, CancellationToken token);
     }
 }

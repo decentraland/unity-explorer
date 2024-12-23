@@ -134,6 +134,26 @@ namespace Utility.Types
             $"EnumResult<{typeof(TValue).Name}, {typeof(TErrorEnum).Name}>: {(Success ? "Success" : $"Error: {Error!.Value.State} - {Error.Value.Message}")}";
     }
 
+    /// <summary>
+    /// Used for cases when none is expected to be returned, difference from Nullable that it can handle both struct and class
+    /// </summary>
+    public readonly struct Option<T>
+    {
+        public readonly T Value;
+        public readonly bool Has;
+
+        public static Option<T> None => new ();
+
+        public static Option<T> Some(T value) =>
+            new (value, true);
+
+        private Option(T value, bool has)
+        {
+            this.Value = value;
+            this.Has = has;
+        }
+    }
+
     public enum TaskError
     {
         MessageError,

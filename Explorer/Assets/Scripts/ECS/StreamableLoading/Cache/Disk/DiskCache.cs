@@ -86,20 +86,20 @@ namespace DCL.Caches.Disk
             return await diskCache.PutAsync(key, extension, serializedData, token);
         }
 
-        public async UniTask<EnumResult<T?, TaskError>> ContentAsync(string key, string extension, CancellationToken token)
+        public async UniTask<EnumResult<Option<T>, TaskError>> ContentAsync(string key, string extension, CancellationToken token)
         {
             var result = await diskCache.ContentAsync(key, extension, token);
 
             if (result.Success == false)
-                return EnumResult<T?, TaskError>.ErrorResult(result.Error!.Value.State, result.Error.Value.Message!);
+                return EnumResult<Option<T>, TaskError>.ErrorResult(result.Error!.Value.State, result.Error.Value.Message!);
 
             byte[]? data = result.Value;
 
             if (data == null)
-                return EnumResult<T?, TaskError>.SuccessResult(null);
+                return EnumResult<Option<T>, TaskError>.SuccessResult(Option<T>.None);
 
-            T? deserializedValue = await serializer.Deserialize(data, token);
-            return EnumResult<T?, TaskError>.SuccessResult(deserializedValue);
+            T deserializedValue = await serializer.Deserialize(data, token);
+            return EnumResult<Option<T>, TaskError>.SuccessResult(Option<T>.Some(deserializedValue));
         }
 
         public UniTask<EnumResult<TaskError>> RemoveAsync(string key, string extension, CancellationToken token) =>

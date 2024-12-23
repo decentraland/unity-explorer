@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using AssetManagement;
 using Cysharp.Threading.Tasks;
+using DCL.Caches.Disk;
 using DCL.Diagnostics;
 using DCL.Optimization.PerformanceBudgeting;
 using ECS.Abstract;
@@ -26,7 +27,14 @@ namespace ECS.StreamableLoading.Common.Systems
                                                                      .WithAll<TIntention, IPartitionComponent, StreamableLoadingState>()
                                                                      .WithNone<StreamableLoadingResult<TAsset>>();
 
+        private const string DISK_CACHE_EXTENSION = "dat";
+
         protected readonly IStreamableCache<TAsset, TIntention> cache;
+
+        /// <summary>
+        /// If the disk cache is not provided, it mean the disk cache is not supported for this particular asset type
+        /// </summary>
+        private readonly IDiskCache<TAsset>? diskCache;
 
         private readonly AssetsLoadingUtility.InternalFlowDelegate<TAsset, TIntention> cachedInternalFlowDelegate;
         private readonly Query query;
@@ -34,9 +42,10 @@ namespace ECS.StreamableLoading.Common.Systems
 
         private bool systemIsDisposed;
 
-        protected LoadSystemBase(World world, IStreamableCache<TAsset, TIntention> cache) : base(world)
+        protected LoadSystemBase(World world, IStreamableCache<TAsset, TIntention> cache, IDiskCache<TAsset>? diskCache = null) : base(world)
         {
             this.cache = cache;
+            this.diskCache = diskCache;
             query = World!.Query(in CREATE_WEB_REQUEST);
             cachedInternalFlowDelegate = FlowInternalAsync;
             cancellationTokenSource = new CancellationTokenSource();
@@ -136,6 +145,28 @@ namespace ECS.StreamableLoading.Common.Systems
                 {
                     result = new StreamableLoadingResult<TAsset>(asset);
                     return;
+                }
+
+                if (diskCache != null)
+                {
+                    var diskContent = await diskCache.ContentAsync(intention.CommonArguments.URL.Value, DISK_CACHE_EXTENSION, disposalCt);
+
+                    if (diskContent.Success)
+                    {
+                        var option = diskContent.Value;
+
+                        if (option.Has)
+                        {
+                            cache.Add(intention, option.Value);
+                            result = new StreamableLoadingResult<TAsset>(option.Value);
+                            return;
+                        }
+                    }
+                    else
+                        ReportHub.LogError(
+                            GetReportCategory(),
+                            $"Error getting cache content for '{intention.CommonArguments.GetCacheableURL()}' - {diskContent.Error!.Value.State} {diskContent.Error!.Value.Message}"
+                        );
                 }
 
                 // Try load from cache first
@@ -261,7 +292,12 @@ namespace ECS.StreamableLoading.Common.Systems
                 // before firing the continuation of the ongoing request
                 // Add result to the cache
                 if (result is { Succeeded: true })
+                {
                     cache.Add(in intention, result.Value.Asset!);
+
+                    if (diskCache != null)
+                        await diskCache.PutAsync(intention.CommonArguments.URL.Value, DISK_CACHE_EXTENSION, result.Value.Asset!, ct);
+                }
 
                 // Set result for the reusable source
                 // Remove from the ongoing requests immediately because finally will be called later than
