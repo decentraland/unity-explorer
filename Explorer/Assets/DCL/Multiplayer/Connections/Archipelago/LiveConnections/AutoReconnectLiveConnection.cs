@@ -89,7 +89,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
 
             var result = Result.ErrorResult("Not Started");
 
-            while (!result.Success)
+            while (!origin.IsConnected)
             {
                 if (token.IsCancellationRequested)
                     return Result.CancelledResult();
@@ -112,7 +112,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
                 lastRecoveryAttempt = DateTime.Now;
             }
 
-            return Result.SuccessResult();
+            return result;
 
             UniTask DelayRecoveryAsync(CancellationToken ct)
             {
