@@ -89,7 +89,8 @@ namespace DCL.Interaction.PlayerOriginated.Systems
 
                 RaycastHit raycastHit = raycastHitPool.Get()!;
                 raycastHit.FillSDKRaycastHit(scenePosition, intent, sdkEntity);
-                //Note: If the event is a Hover, the scenes are expecting an input action of type IaPointer
+
+                //Note: If the event is a Hover, the scenes are expecting an input action of type IaPointer.
                 //This logic is extracted from previous renderer in ECSPointerInputSystem.
                 InputAction inputAction = entry.EventType is PointerEventType.PetHoverEnter or PointerEventType.PetHoverLeave ? InputAction.IaPointer : info.Button;
                 AppendMessage(sdkEntity, raycastHit, inputAction, entry.EventType);
