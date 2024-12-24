@@ -295,8 +295,11 @@ namespace ECS.StreamableLoading.Common.Systems
                 {
                     cache.Add(in intention, result.Value.Asset!);
 
-                    if (diskCache != null)
-                        await diskCache.PutAsync(intention.CommonArguments.URL.Value, DISK_CACHE_EXTENSION, result.Value.Asset!, ct);
+                    diskCache?.PutAsync(intention.CommonArguments.URL.Value, DISK_CACHE_EXTENSION, result.Value.Asset!, ct)
+                              .Forget(
+                                   static e =>
+                                       ReportHub.LogError(ReportCategory.STREAMABLE_LOADING, $"Error putting cache content: {e.Message}")
+                               );
                 }
 
                 // Set result for the reusable source
