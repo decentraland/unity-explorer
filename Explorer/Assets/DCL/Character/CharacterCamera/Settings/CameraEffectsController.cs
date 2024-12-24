@@ -26,11 +26,6 @@ public class CameraEffectsController : MonoBehaviour
 
     [Header("Depth of Field")]
     public bool enableDOF = false;
-    // [Range(0f, 500f)] public float dofStart = 10f;
-    // [Range(0f, 500f)] public float dofEnd = 30f;
-    // [Range(0.5f, 1.5f)] public float maxRadius = 1f;
-    // public bool highQualitySampling = false;  // Steps of 1, typical values are 4,6,8
-
     [Range(0.1f, 50f)] public float focusDistance = 10f;
     [Range(1f, 300f)] public float focalLength = 50f;  // Changed range to be more camera-like
     [Range(1f, 32f)] public float aperture = 5.6f;     // F-stops like in real cameras
@@ -46,14 +41,14 @@ public class CameraEffectsController : MonoBehaviour
     [Range(0.01f, 0.3f)] public float autofocusAreaSize = 0.1f;  // Size of focus sampling area
 
     public Camera mainCamera;
-    private float autofocusTimer;
     private float targetFocusDistance;
+
+    private float autofocusTimer;
     private bool hasValidFocusTarget;
 
     void Start()
     {
         mainCamera = Camera.main;
-
         targetFocusDistance = focusDistance;
     }
 
@@ -73,7 +68,7 @@ public class CameraEffectsController : MonoBehaviour
                 globalVolume.profile = profile;
 
                 // Setup Color Adjustments with all parameters
-                colorAdjustments = profile.Add<ColorAdjustments>(false);
+                colorAdjustments = profile.Add<ColorAdjustments>();
                 colorAdjustments.postExposure.Override(0f);
                 colorAdjustments.contrast.Override(0f);
                 colorAdjustments.saturation.Override(0f);
@@ -81,17 +76,11 @@ public class CameraEffectsController : MonoBehaviour
                 colorAdjustments.colorFilter.Override(Color.white);
 
                 // Setup Depth of Field
-                depthOfField = profile.Add<DepthOfField>(false);
+                depthOfField = profile.Add<DepthOfField>();
                 depthOfField.mode.Override(DepthOfFieldMode.Bokeh);
                 depthOfField.focusDistance.Override(10f);
                 depthOfField.focalLength.Override(50f);
                 depthOfField.aperture.Override(5.6f);
-
-                // depthOfField.mode.Override(DepthOfFieldMode.Gaussian);
-                // depthOfField.gaussianStart.Override(dofStart);
-                // depthOfField.gaussianEnd.Override(dofEnd);
-                // depthOfField.gaussianMaxRadius.Override(maxRadius);
-                // depthOfField.highQualitySampling.Override(highQualitySampling);
 
                 globalVolume.isGlobal = true;
                 return;
@@ -101,6 +90,16 @@ public class CameraEffectsController : MonoBehaviour
         globalVolume.profile.TryGet(out colorAdjustments);
         globalVolume.profile.TryGet(out depthOfField);
     }
+
+    void OnDisable()
+    {
+        if (globalVolume != null && globalVolume.gameObject.name == AUTO_VOLUME_NAME)
+        {
+            DestroyImmediate(globalVolume.profile);
+            DestroyImmediate(globalVolume.gameObject);
+        }
+    }
+
 
     void Update()
     {
@@ -143,88 +142,8 @@ public class CameraEffectsController : MonoBehaviour
                     depthOfField.focusDistance.value = focusDistance;
                     depthOfField.focalLength.value = focalLength;
                     depthOfField.aperture.value = aperture;
-                    // // Quality settings for bokeh
-                    // depthOfField.bladeCount.value = 5;  // Pentagon bokeh shape
-                    // depthOfField.bladeCurvature.value = 1f;
-                    // depthOfField.bladeRotation.value = 0f;
-
-                // depthOfField.mode.Override(DepthOfFieldMode.Gaussian);
-                // depthOfField.gaussianStart.value = dofStart;
-                // depthOfField.gaussianEnd.value = dofEnd;
-                // depthOfField.gaussianMaxRadius.value = maxRadius;
-                // depthOfField.highQualitySampling.value = highQualitySampling;
             }
         }
-    }
-
-    // void UpdateAutofocus()
-    // {
-    //     if (!enableAutofocus || !enableDOF || depthOfField == null) return;
-    //
-    //     autofocusTimer += Time.deltaTime;
-    //
-    //     // Check for new focus target based on update rate
-    //     if (autofocusTimer >= 1f / autofocusUpdateRate)
-    //     {
-    //         autofocusTimer = 0f;
-    //         hasValidFocusTarget = false;
-    //         float closestHit = autofocusMaxDistance;
-    //
-    //         // Cast multiple rays in a small grid pattern for more stable focusing
-    //         for (float x = -autofocusAreaSize; x <= autofocusAreaSize; x += autofocusAreaSize)
-    //         {
-    //             for (float y = -autofocusAreaSize; y <= autofocusAreaSize; y += autofocusAreaSize)
-    //             {
-    //                 Vector3 viewportPoint = new Vector3(0.5f + x, 0.5f + y, 0f);
-    //                 Ray ray = mainCamera.ViewportPointToRay(viewportPoint);
-    //
-    //                 if (Physics.Raycast(ray, out RaycastHit hit, autofocusMaxDistance, autofocusLayers))
-    //                 {
-    //                     if (hit.distance < closestHit)
-    //                     {
-    //                         closestHit = hit.distance;
-    //                         hasValidFocusTarget = true;
-    //                     }
-    //                 }
-    //             }
-    //         }
-    //
-    //         // If no target found, focus at a default distance
-    //         targetFocusDistance = hasValidFocusTarget ? closestHit : Mathf.Min(autofocusMaxDistance, 10f);
-    //     }
-    //
-    //     // Smoothly blend current focus distance to target
-    //     if (Mathf.Abs(focusDistance - targetFocusDistance) > 0.01f)
-    //     {
-    //         // Update both our script value and the DOF effect
-    //         focusDistance = Mathf.Lerp(focusDistance, targetFocusDistance, Time.deltaTime * autofocusBlendSpeed);
-    //         depthOfField.focusDistance.value = focusDistance;
-    //     }
-    // }
-
-    void OnDrawGizmosSelected()
-    {
-        if (!enableAutofocus || !enableDOF || !mainCamera) return;
-
-        Matrix4x4 oldMatrix = Gizmos.matrix;
-        Gizmos.matrix = transform.localToWorldMatrix;
-
-        // Draw the autofocus sampling area
-        Vector3 center = Vector3.forward * targetFocusDistance;
-        float size = autofocusAreaSize * targetFocusDistance * 2f; // Scale area with distance
-        Gizmos.color = hasValidFocusTarget ? Color.green : Color.yellow;
-        Gizmos.DrawWireCube(center, new Vector3(size, size, 0.1f));
-
-        // Draw focus distance
-        Gizmos.DrawLine(Vector3.zero, center);
-
-        // Draw the focus plane
-        Vector3 up = Vector3.up * size;
-        Vector3 right = Vector3.right * size;
-        Gizmos.DrawLine(center - up, center + up);
-        Gizmos.DrawLine(center - right, center + right);
-
-        Gizmos.matrix = oldMatrix;
     }
 
     void UpdateAutofocus()
@@ -252,31 +171,28 @@ public class CameraEffectsController : MonoBehaviour
         }
     }
 
-    // void OnDrawGizmosSelected()
-    // {
-    //     if (enableAutofocus && enableDOF)
-    //     {
-    //         Gizmos.color = Color.yellow;
-    //         Vector3 rayStart = transform.position;
-    //         Vector3 rayEnd = transform.position + transform.forward * autofocusRayDistance;
-    //         Gizmos.DrawLine(rayStart, rayEnd);
-    //
-    //         // Draw focus plane
-    //         Vector3 focusPoint = transform.position + transform.forward * focusDistance;
-    //         Vector3 planeUp = transform.up * 2f;
-    //         Vector3 planeRight = transform.right * 2f;
-    //         Gizmos.color = Color.green;
-    //         Gizmos.DrawLine(focusPoint - planeUp, focusPoint + planeUp);
-    //         Gizmos.DrawLine(focusPoint - planeRight, focusPoint + planeRight);
-    //     }
-    // }
-
-    void OnDisable()
+    void OnDrawGizmosSelected()
     {
-        if (globalVolume != null && globalVolume.gameObject.name == AUTO_VOLUME_NAME)
-        {
-            DestroyImmediate(globalVolume.profile);
-            DestroyImmediate(globalVolume.gameObject);
-        }
+        if (!enableAutofocus || !enableDOF || !mainCamera) return;
+
+        Matrix4x4 oldMatrix = Gizmos.matrix;
+        Gizmos.matrix = transform.localToWorldMatrix;
+
+        // Draw the autofocus sampling area
+        Vector3 center = Vector3.forward * targetFocusDistance;
+        float size = autofocusAreaSize * targetFocusDistance * 2f; // Scale area with distance
+        Gizmos.color = hasValidFocusTarget ? Color.green : Color.yellow;
+        Gizmos.DrawWireCube(center, new Vector3(size, size, 0.1f));
+
+        // Draw focus distance
+        Gizmos.DrawLine(Vector3.zero, center);
+
+        // Draw the focus plane
+        Vector3 up = Vector3.up * size;
+        Vector3 right = Vector3.right * size;
+        Gizmos.DrawLine(center - up, center + up);
+        Gizmos.DrawLine(center - right, center + right);
+
+        Gizmos.matrix = oldMatrix;
     }
 }
