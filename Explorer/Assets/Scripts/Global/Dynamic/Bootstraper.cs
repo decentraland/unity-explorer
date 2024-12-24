@@ -17,12 +17,14 @@ using DCL.UI.MainUI;
 using DCL.UserInAppInitializationFlow;
 using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
+using ECS.StreamableLoading.Cache.Disk;
 using Global.AppArgs;
 using Global.Dynamic.DebugSettings;
 using MVC;
 using Plugins.TexturesFuse.TexturesServerWrap.CompressShaders;
 using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using SceneRunner.Debugging;
+using SceneRuntime.Factory.JsSource;
 using SceneRuntime.Factory.WebSceneSource;
 using SceneRuntime.Factory.WebSceneSource.Cache;
 using System;
@@ -41,6 +43,7 @@ namespace Global.Dynamic
         private readonly ISplashScreen splashScreen;
         private readonly ICompressShaders compressShaders;
         private readonly RealmLaunchSettings realmLaunchSettings;
+        private readonly IDiskCache diskCache;
         private readonly World world;
 
         private URLDomain? startingRealm;
@@ -55,6 +58,7 @@ namespace Global.Dynamic
             ICompressShaders compressShaders,
             IDecentralandUrlsSource decentralandUrlsSource,
             RealmLaunchSettings realmLaunchSettings,
+            IDiskCache diskCache,
             World world)
         {
             this.debugSettings = debugSettings;
@@ -63,6 +67,7 @@ namespace Global.Dynamic
             this.splashScreen = splashScreen;
             this.compressShaders = compressShaders;
             this.realmLaunchSettings = realmLaunchSettings;
+            this.diskCache = diskCache;
             this.world = world;
         }
 
@@ -113,6 +118,7 @@ namespace Global.Dynamic
                 bootstrapContainer.WorldVolumeMacBus,
                 EnableAnalytics,
                 bootstrapContainer.Analytics,
+                diskCache,
                 ct
             );
 
@@ -210,7 +216,7 @@ namespace Global.Dynamic
             {
                 MemoryJsSourcesCache cache = new ();
                 staticContainer.CacheCleaner.Register(cache);
-                webJsSources = new CachedWebJsSources(webJsSources, cache);
+                webJsSources = new CachedWebJsSources(webJsSources, cache, new DiskCache<string>(diskCache, new StringDiskSerializer()));
             }
 
             SceneSharedContainer sceneSharedContainer = SceneSharedContainer.Create(

@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using System;
 using System.Buffers;
+using System.Collections.Concurrent;
 using System.Threading;
 using Utility.Types;
 
@@ -10,7 +11,7 @@ namespace ECS.StreamableLoading.Cache.Disk
     {
         UniTask<EnumResult<TaskError>> PutAsync(string key, string extension, ReadOnlyMemory<byte> data, CancellationToken token);
 
-        UniTask<EnumResult<IMemoryOwner<byte>?, TaskError>> ContentAsync(string key, string extension, CancellationToken token);
+        UniTask<EnumResult<SlicedOwnedMemory<byte>?, TaskError>> ContentAsync(string key, string extension, CancellationToken token);
 
         UniTask<EnumResult<TaskError>> RemoveAsync(string key, string extension, CancellationToken token);
 
@@ -19,11 +20,47 @@ namespace ECS.StreamableLoading.Cache.Disk
             public UniTask<EnumResult<TaskError>> PutAsync(string key, string extension, ReadOnlyMemory<byte> data, CancellationToken token) =>
                 UniTask.FromResult(EnumResult<TaskError>.ErrorResult(TaskError.MessageError, "It's fake"));
 
-            public UniTask<EnumResult<IMemoryOwner<byte>?, TaskError>> ContentAsync(string key, string extension, CancellationToken token) =>
-                UniTask.FromResult(EnumResult<IMemoryOwner<byte>?, TaskError>.SuccessResult(null));
+            public UniTask<EnumResult<SlicedOwnedMemory<byte>?, TaskError>> ContentAsync(string key, string extension, CancellationToken token) =>
+                UniTask.FromResult(EnumResult<SlicedOwnedMemory<byte>?, TaskError>.SuccessResult(null));
 
             public UniTask<EnumResult<TaskError>> RemoveAsync(string key, string extension, CancellationToken token) =>
                 UniTask.FromResult(EnumResult<TaskError>.SuccessResult());
+        }
+
+        /// <summary>
+        /// Test only
+        /// </summary>
+        class InMemory : IDiskCache
+        {
+            private readonly ConcurrentDictionary<string, byte[]> cache = new ();
+
+            public UniTask<EnumResult<TaskError>> PutAsync(string key, string extension, ReadOnlyMemory<byte> data, CancellationToken token)
+            {
+                string k = key + extension;
+                cache[k] = data.ToArray();
+                return UniTask.FromResult(EnumResult<TaskError>.SuccessResult());
+            }
+
+            public UniTask<EnumResult<SlicedOwnedMemory<byte>?, TaskError>> ContentAsync(string key, string extension, CancellationToken token)
+            {
+                string k = key + extension;
+
+                if (cache.TryGetValue(k, out byte[]? data))
+                {
+                    var memory = new SlicedOwnedMemory<byte>(MemoryPool<byte>.Shared!.Rent(data!.Length)!, data.Length);
+                    data.CopyTo(memory!.Memory);
+                    return UniTask.FromResult(EnumResult<SlicedOwnedMemory<byte>?, TaskError>.SuccessResult(memory));
+                }
+
+                return UniTask.FromResult(EnumResult<SlicedOwnedMemory<byte>?, TaskError>.SuccessResult(null));
+            }
+
+            public UniTask<EnumResult<TaskError>> RemoveAsync(string key, string extension, CancellationToken token)
+            {
+                string k = key + extension;
+                cache.TryRemove(k, out _);
+                return UniTask.FromResult(EnumResult<TaskError>.SuccessResult());
+            }
         }
     }
 
@@ -38,9 +75,31 @@ namespace ECS.StreamableLoading.Cache.Disk
 
     public interface IDiskSerializer<T>
     {
-        UniTask<IMemoryOwner<byte>> Serialize(T data, CancellationToken token);
+        UniTask<SlicedOwnedMemory<byte>> Serialize(T data, CancellationToken token);
 
-        /// <param name="data">Takes ownership of MemoryOwner</param>
-        UniTask<T> Deserialize(IMemoryOwner<byte> data, CancellationToken token);
+        /// <param name="data">Takes ownership of Memory and is responsible for its disposal</param>
+        UniTask<T> Deserialize(SlicedOwnedMemory<byte> data, CancellationToken token);
+    }
+
+    /// <summary>
+    /// Required because MemoryOwner does not guarantee that the memory is the exact size
+    /// </summary>
+    public readonly struct SlicedOwnedMemory<T> : IDisposable
+    {
+        private readonly IMemoryOwner<T> owner;
+        private readonly int length;
+
+        public Memory<T> Memory => owner.Memory.Slice(0, length);
+
+        public SlicedOwnedMemory(IMemoryOwner<T> owner, int length)
+        {
+            this.owner = owner;
+            this.length = length;
+        }
+
+        public void Dispose()
+        {
+            owner.Dispose();
+        }
     }
 }

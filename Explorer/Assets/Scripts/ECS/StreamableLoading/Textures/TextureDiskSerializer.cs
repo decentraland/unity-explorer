@@ -12,14 +12,14 @@ namespace ECS.StreamableLoading.Textures
 {
     public class TextureDiskSerializer : IDiskSerializer<Texture2DData>
     {
-        public async UniTask<IMemoryOwner<byte>> Serialize(Texture2DData data, CancellationToken token)
+        public async UniTask<SlicedOwnedMemory<byte>> Serialize(Texture2DData data, CancellationToken token)
         {
             //TODO must be optimised to avoid extra allocations
             await UniTask.SwitchToMainThread();
             return ToArray(data);
         }
 
-        public UniTask<Texture2DData> Deserialize(IMemoryOwner<byte> data, CancellationToken token)
+        public UniTask<Texture2DData> Deserialize(SlicedOwnedMemory<byte> data, CancellationToken token)
         {
             var meta = Meta.FromSpan(data.Memory.Span);
             var texture = new Texture2D(meta.width, meta.height, meta.format, meta.mipCount, meta.linear, true);
@@ -32,7 +32,7 @@ namespace ECS.StreamableLoading.Textures
             return UniTask.FromResult(new Texture2DData(new MemoryOwnedTexture2D(data, texture)));
         }
 
-        private static IMemoryOwner<byte> ToArray(Texture2DData data)
+        private static SlicedOwnedMemory<byte> ToArray(Texture2DData data)
         {
             var textureData = data.Asset.GetRawTextureData<byte>()!;
 
@@ -40,7 +40,8 @@ namespace ECS.StreamableLoading.Textures
             Span<byte> metaData = stackalloc byte[meta.ArrayLength];
             meta.ToSpan(metaData);
 
-            var memoryOwner = MemoryPool<byte>.Shared!.Rent(metaData.Length + textureData.Length)!;
+            int targetSize = metaData.Length + textureData.Length;
+            var memoryOwner = new SlicedOwnedMemory<byte>(MemoryPool<byte>.Shared!.Rent(targetSize)!, targetSize);
             var memory = memoryOwner.Memory;
 
             metaData.CopyTo(memory.Span);
@@ -98,11 +99,11 @@ namespace ECS.StreamableLoading.Textures
 
         private class MemoryOwnedTexture2D : IOwnedTexture2D
         {
-            private readonly IMemoryOwner<byte> memoryOwner;
+            private readonly SlicedOwnedMemory<byte> memoryOwner;
 
             public Texture2D Texture { get; }
 
-            public MemoryOwnedTexture2D(IMemoryOwner<byte> memoryOwner, Texture2D texture)
+            public MemoryOwnedTexture2D(SlicedOwnedMemory<byte> memoryOwner, Texture2D texture)
             {
                 this.memoryOwner = memoryOwner;
                 Texture = texture;

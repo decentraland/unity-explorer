@@ -27,7 +27,7 @@ namespace ECS.StreamableLoading.Cache.Disk.Playgrounds
             var contentResult = await diskCache.ContentAsync(testFile, testExtension, destroyCancellationToken);
             print($"Content result: success {contentResult.Success} and error {contentResult.Error?.Message}");
 
-            print($"Content equals: {testData.AsSpan().SequenceEqual(contentResult.Value!.Memory.Span)}");
+            print($"Content equals: {testData.AsSpan().SequenceEqual(contentResult.Value!.Value.Memory.Span)}");
         }
 
         [ContextMenu(nameof(RemoveAsync))]

@@ -143,6 +143,7 @@ namespace Global
             WorldVolumeMacBus worldVolumeMacBus,
             bool enableAnalytics,
             IAnalyticsController analyticsController,
+            IDiskCache diskCache,
             CancellationToken ct)
         {
             ProfilingCounters.CleanAllCounters();
@@ -202,8 +203,6 @@ namespace Global
                 container.DebugContainerBuilder,
                 staticSettings.WebRequestsBudget
             );
-
-            var diskCache = new DiskCache("DiskCache");
 
             container.PhysicsTickProvider = new PhysicsTickProvider();
             container.FeatureFlagsCache = new FeatureFlagsCache();

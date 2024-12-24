@@ -15,6 +15,7 @@ using DCL.PluginSystem.Global;
 using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
+using ECS.StreamableLoading.Cache.Disk;
 using Global.AppArgs;
 using MVC;
 using Plugins.TexturesFuse.TexturesServerWrap.CompressShaders;
@@ -127,6 +128,7 @@ namespace Global.Dynamic
             World world = World.Create();
 
             var splashScreen = new SplashScreen(splashScreenAnimation, splashRoot, debugSettings.ShowSplash, splashScreenText);
+            var diskCache = new DiskCache("DiskCache");
 
             bootstrapContainer = await BootstrapContainer.CreateAsync(
                 debugSettings,
@@ -138,6 +140,7 @@ namespace Global.Dynamic
                 compressShaders
                    .WithSplashScreen(splashScreen, hideOnFinish: false)
                    .WithLog("Load Guard"),
+                diskCache,
                 world,
                 destroyCancellationToken
             );
@@ -159,8 +162,10 @@ namespace Global.Dynamic
                 }
 
                 bootstrap.InitializePlayerEntity(staticContainer!, playerEntity);
+
                 await bootstrap.InitializeFeatureFlagsAsync(bootstrapContainer.IdentityCache!.Identity,
                     bootstrapContainer.DecentralandUrlsSource, staticContainer!, ct);
+
                 bootstrap.ApplyFeatureFlagConfigs(staticContainer!.FeatureFlagsCache);
 
                 (dynamicWorldContainer, isLoaded) = await bootstrap.LoadDynamicWorldContainerAsync(bootstrapContainer, staticContainer!, scenePluginSettingsContainer, settings,
@@ -263,7 +268,6 @@ namespace Global.Dynamic
             // We restore all inputs except EmoteWheel and FreeCamera as they should be disabled by default
             staticContainer!.InputBlock.EnableAll(InputMapComponent.Kind.FREE_CAMERA,
                 InputMapComponent.Kind.EMOTE_WHEEL);
-            
         }
 
         [ContextMenu(nameof(ValidateSettingsAsync))]

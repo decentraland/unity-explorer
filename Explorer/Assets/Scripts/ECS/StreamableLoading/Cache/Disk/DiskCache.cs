@@ -38,24 +38,24 @@ namespace ECS.StreamableLoading.Cache.Disk
             return EnumResult<TaskError>.SuccessResult();
         }
 
-        public async UniTask<EnumResult<IMemoryOwner<byte>?, TaskError>> ContentAsync(string key, string extension, CancellationToken token)
+        public async UniTask<EnumResult<SlicedOwnedMemory<byte>?, TaskError>> ContentAsync(string key, string extension, CancellationToken token)
         {
             try
             {
                 string path = PathFrom(key, extension);
 
                 if (File.Exists(path) == false)
-                    return EnumResult<IMemoryOwner<byte>?, TaskError>.SuccessResult(null);
+                    return EnumResult<SlicedOwnedMemory<byte>?, TaskError>.SuccessResult(null);
 
                 await using var stream = new FileStream(path, FileMode.Open, FileAccess.Read);
-                var data = MemoryPool<byte>.Shared!.Rent((int)stream.Length)!;
+                var data = new SlicedOwnedMemory<byte>(MemoryPool<byte>.Shared!.Rent((int)stream.Length)!, (int)stream.Length);
 
                 int _ = await stream.ReadAsync(data.Memory, token);
-                return EnumResult<IMemoryOwner<byte>?, TaskError>.SuccessResult(data);
+                return EnumResult<SlicedOwnedMemory<byte>?, TaskError>.SuccessResult(data);
             }
-            catch (TimeoutException) { return EnumResult<IMemoryOwner<byte>?, TaskError>.ErrorResult(TaskError.Timeout); }
-            catch (OperationCanceledException) { return EnumResult<IMemoryOwner<byte>?, TaskError>.ErrorResult(TaskError.Cancelled); }
-            catch (Exception e) { return EnumResult<IMemoryOwner<byte>?, TaskError>.ErrorResult(TaskError.UnexpectedException, e.Message ?? string.Empty); }
+            catch (TimeoutException) { return EnumResult<SlicedOwnedMemory<byte>?, TaskError>.ErrorResult(TaskError.Timeout); }
+            catch (OperationCanceledException) { return EnumResult<SlicedOwnedMemory<byte>?, TaskError>.ErrorResult(TaskError.Cancelled); }
+            catch (Exception e) { return EnumResult<SlicedOwnedMemory<byte>?, TaskError>.ErrorResult(TaskError.UnexpectedException, e.Message ?? string.Empty); }
         }
 
         public UniTask<EnumResult<TaskError>> RemoveAsync(string key, string extension, CancellationToken token)
@@ -90,7 +90,7 @@ namespace ECS.StreamableLoading.Cache.Disk
 
         public async UniTask<EnumResult<TaskError>> PutAsync(string key, string extension, T data, CancellationToken token)
         {
-            using IMemoryOwner<byte> serializedData = await serializer.Serialize(data, token);
+            using SlicedOwnedMemory<byte> serializedData = await serializer.Serialize(data, token);
             return await diskCache.PutAsync(key, extension, serializedData.Memory, token);
         }
 
@@ -101,12 +101,12 @@ namespace ECS.StreamableLoading.Cache.Disk
             if (result.Success == false)
                 return EnumResult<Option<T>, TaskError>.ErrorResult(result.Error!.Value.State, result.Error.Value.Message!);
 
-            IMemoryOwner<byte>? data = result.Value;
+            SlicedOwnedMemory<byte>? data = result.Value;
 
             if (data == null)
                 return EnumResult<Option<T>, TaskError>.SuccessResult(Option<T>.None);
 
-            T deserializedValue = await serializer.Deserialize(data, token);
+            T deserializedValue = await serializer.Deserialize(data.Value, token);
             return EnumResult<Option<T>, TaskError>.SuccessResult(Option<T>.Some(deserializedValue));
         }
 
