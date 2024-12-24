@@ -1,7 +1,5 @@
 using Cysharp.Threading.Tasks;
 using DCL.Chat.Commands;
-using DCL.Multiplayer.Connections.DecentralandUrls;
-using DCL.WebRequests;
 using System.Threading;
 
 namespace Global.Dynamic.ChatCommands
@@ -18,8 +16,6 @@ namespace Global.Dynamic.ChatCommands
         public string Description => "<b>/goto-local <i><x,y></i></b>\n  Teleport inside of the current realm";
 
         private readonly ChatTeleporter chatTeleporter;
-        private readonly IWebRequestController webRequestController;
-        private readonly IDecentralandUrlsSource urlsSource;
 
         public GoToLocalChatCommand(ChatTeleporter chatTeleporter)
         {
@@ -30,6 +26,6 @@ namespace Global.Dynamic.ChatCommands
             parameters.Length == 1 && ChatParamUtils.IsPositionParameter(parameters[0], false);
 
         public UniTask<string> ExecuteCommand(string[] parameters, CancellationToken ct) =>
-            chatTeleporter.TeleportToParcel(ChatParamUtils.ParseRawPosition(parameters[3]), true, ct);
+            chatTeleporter.TeleportToParcel(ChatParamUtils.ParseRawPosition(parameters[0]), true, ct);
     }
 }
