@@ -1,4 +1,4 @@
-﻿using DCL.Caches.Disk;
+﻿using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Tests;
 using ECS.TestSuite;

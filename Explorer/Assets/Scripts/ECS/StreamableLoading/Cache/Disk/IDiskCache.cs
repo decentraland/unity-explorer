@@ -1,15 +1,16 @@
 using Cysharp.Threading.Tasks;
 using System;
+using System.Buffers;
 using System.Threading;
 using Utility.Types;
 
-namespace DCL.Caches.Disk
+namespace ECS.StreamableLoading.Cache.Disk
 {
     public interface IDiskCache
     {
         UniTask<EnumResult<TaskError>> PutAsync(string key, string extension, ReadOnlyMemory<byte> data, CancellationToken token);
 
-        UniTask<EnumResult<byte[]?, TaskError>> ContentAsync(string key, string extension, CancellationToken token);
+        UniTask<EnumResult<IMemoryOwner<byte>?, TaskError>> ContentAsync(string key, string extension, CancellationToken token);
 
         UniTask<EnumResult<TaskError>> RemoveAsync(string key, string extension, CancellationToken token);
 
@@ -18,8 +19,8 @@ namespace DCL.Caches.Disk
             public UniTask<EnumResult<TaskError>> PutAsync(string key, string extension, ReadOnlyMemory<byte> data, CancellationToken token) =>
                 UniTask.FromResult(EnumResult<TaskError>.ErrorResult(TaskError.MessageError, "It's fake"));
 
-            public UniTask<EnumResult<byte[]?, TaskError>> ContentAsync(string key, string extension, CancellationToken token) =>
-                UniTask.FromResult(EnumResult<byte[]?, TaskError>.SuccessResult(null));
+            public UniTask<EnumResult<IMemoryOwner<byte>?, TaskError>> ContentAsync(string key, string extension, CancellationToken token) =>
+                UniTask.FromResult(EnumResult<IMemoryOwner<byte>?, TaskError>.SuccessResult(null));
 
             public UniTask<EnumResult<TaskError>> RemoveAsync(string key, string extension, CancellationToken token) =>
                 UniTask.FromResult(EnumResult<TaskError>.SuccessResult());
@@ -37,8 +38,9 @@ namespace DCL.Caches.Disk
 
     public interface IDiskSerializer<T>
     {
-        UniTask<byte[]> Serialize(T data, CancellationToken token);
+        UniTask<IMemoryOwner<byte>> Serialize(T data, CancellationToken token);
 
-        UniTask<T> Deserialize(byte[] data, CancellationToken token);
+        /// <param name="data">Takes ownership of MemoryOwner</param>
+        UniTask<T> Deserialize(IMemoryOwner<byte> data, CancellationToken token);
     }
 }

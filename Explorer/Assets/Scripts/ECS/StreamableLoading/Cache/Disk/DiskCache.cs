@@ -1,11 +1,12 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using System;
+using System.Buffers;
 using System.IO;
 using System.Threading;
 using Utility.Types;
 
-namespace DCL.Caches.Disk
+namespace ECS.StreamableLoading.Cache.Disk
 {
     public class DiskCache : IDiskCache
     {
@@ -37,24 +38,24 @@ namespace DCL.Caches.Disk
             return EnumResult<TaskError>.SuccessResult();
         }
 
-        public async UniTask<EnumResult<byte[]?, TaskError>> ContentAsync(string key, string extension, CancellationToken token)
+        public async UniTask<EnumResult<IMemoryOwner<byte>?, TaskError>> ContentAsync(string key, string extension, CancellationToken token)
         {
             try
             {
                 string path = PathFrom(key, extension);
 
                 if (File.Exists(path) == false)
-                    return EnumResult<byte[]?, TaskError>.SuccessResult(null);
+                    return EnumResult<IMemoryOwner<byte>?, TaskError>.SuccessResult(null);
 
                 await using var stream = new FileStream(path, FileMode.Open, FileAccess.Read);
-                var data = new byte[stream.Length];
+                var data = MemoryPool<byte>.Shared!.Rent((int)stream.Length)!;
 
-                int _ = await stream.ReadAsync(data, token);
-                return EnumResult<byte[]?, TaskError>.SuccessResult(data);
+                int _ = await stream.ReadAsync(data.Memory, token);
+                return EnumResult<IMemoryOwner<byte>?, TaskError>.SuccessResult(data);
             }
-            catch (TimeoutException) { return EnumResult<byte[]?, TaskError>.ErrorResult(TaskError.Timeout); }
-            catch (OperationCanceledException) { return EnumResult<byte[]?, TaskError>.ErrorResult(TaskError.Cancelled); }
-            catch (Exception e) { return EnumResult<byte[]?, TaskError>.ErrorResult(TaskError.UnexpectedException, e.Message ?? string.Empty); }
+            catch (TimeoutException) { return EnumResult<IMemoryOwner<byte>?, TaskError>.ErrorResult(TaskError.Timeout); }
+            catch (OperationCanceledException) { return EnumResult<IMemoryOwner<byte>?, TaskError>.ErrorResult(TaskError.Cancelled); }
+            catch (Exception e) { return EnumResult<IMemoryOwner<byte>?, TaskError>.ErrorResult(TaskError.UnexpectedException, e.Message ?? string.Empty); }
         }
 
         public UniTask<EnumResult<TaskError>> RemoveAsync(string key, string extension, CancellationToken token)
@@ -89,8 +90,8 @@ namespace DCL.Caches.Disk
 
         public async UniTask<EnumResult<TaskError>> PutAsync(string key, string extension, T data, CancellationToken token)
         {
-            byte[] serializedData = await serializer.Serialize(data, token);
-            return await diskCache.PutAsync(key, extension, serializedData, token);
+            using IMemoryOwner<byte> serializedData = await serializer.Serialize(data, token);
+            return await diskCache.PutAsync(key, extension, serializedData.Memory, token);
         }
 
         public async UniTask<EnumResult<Option<T>, TaskError>> ContentAsync(string key, string extension, CancellationToken token)
@@ -100,7 +101,7 @@ namespace DCL.Caches.Disk
             if (result.Success == false)
                 return EnumResult<Option<T>, TaskError>.ErrorResult(result.Error!.Value.State, result.Error.Value.Message!);
 
-            byte[]? data = result.Value;
+            IMemoryOwner<byte>? data = result.Value;
 
             if (data == null)
                 return EnumResult<Option<T>, TaskError>.SuccessResult(Option<T>.None);

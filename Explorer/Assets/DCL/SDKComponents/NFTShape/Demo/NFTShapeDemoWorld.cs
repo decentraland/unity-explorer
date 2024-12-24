@@ -1,6 +1,5 @@
 using Arch.Core;
 using DCL.Browser.DecentralandUrls;
-using DCL.Caches.Disk;
 using DCL.DemoWorlds;
 using DCL.ECSComponents;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -12,15 +11,14 @@ using DCL.SDKComponents.NFTShape.Frames.Pool;
 using DCL.SDKComponents.NFTShape.Renderer.Factory;
 using DCL.SDKComponents.NFTShape.System;
 using DCL.Utilities.Extensions;
-using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
+using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.DeferredLoading;
 using ECS.StreamableLoading.NFTShapes;
 using ECS.StreamableLoading.NFTShapes.URNs;
 using ECS.Unity.Transforms.Components;
-using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using System.Collections.Generic;
 using UnityEngine;
 

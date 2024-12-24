@@ -1,11 +1,11 @@
 ﻿using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
-using DCL.Caches.Disk;
 using DCL.PluginSystem.Global;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.ResourcesUnloading;
 using DCL.WebRequests;
 using ECS.LifeCycle;
+using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Textures;
 using System;
 using System.Collections.Generic;

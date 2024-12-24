@@ -7,7 +7,7 @@ using System.IO;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace DCL.Caches.Disk
+namespace ECS.StreamableLoading.Cache.Disk
 {
     public static class HashNamings
     {

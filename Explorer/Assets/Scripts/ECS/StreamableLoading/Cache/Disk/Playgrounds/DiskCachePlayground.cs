@@ -1,10 +1,9 @@
 using Cysharp.Threading.Tasks;
-using DCL.Caches.Disk;
 using System;
 using System.IO;
 using UnityEngine;
 
-namespace DCL.Caches.Playgrounds
+namespace ECS.StreamableLoading.Cache.Disk.Playgrounds
 {
     public class DiskCachePlayground : MonoBehaviour
     {
@@ -28,7 +27,7 @@ namespace DCL.Caches.Playgrounds
             var contentResult = await diskCache.ContentAsync(testFile, testExtension, destroyCancellationToken);
             print($"Content result: success {contentResult.Success} and error {contentResult.Error?.Message}");
 
-            print($"Content equals: {testData.AsSpan().SequenceEqual(contentResult.Value!.AsSpan())}");
+            print($"Content equals: {testData.AsSpan().SequenceEqual(contentResult.Value!.Memory.Span)}");
         }
 
         [ContextMenu(nameof(RemoveAsync))]
