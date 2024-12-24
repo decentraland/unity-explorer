@@ -1,7 +1,8 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Utilities.Extensions;
+using DCL.WebRequests;
 using LiveKit.Internal.FFIClients.Pools.Memory;
-using Org.BouncyCastle.Utilities;
 using System;
 using System.Threading;
 using Utility.Types;
@@ -21,6 +22,8 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
         private string? cachedAdapterUrl;
 
         private DateTime lastRecoveryAttempt = DateTime.MinValue;
+
+        private readonly SemaphoreSlim semaphore = new (1, 1);
 
         public bool IsConnected => origin.IsConnected;
 
@@ -46,73 +49,83 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
 
         public async UniTask<EnumResult<IArchipelagoLiveConnection.ResponseError>> SendAsync(MemoryWrap data, CancellationToken token)
         {
-            EnumResult<IArchipelagoLiveConnection.ResponseError> result = await origin.SendAsync(data, token);
-
-            if (result.Error?.State is IArchipelagoLiveConnection.ResponseError.ConnectionClosed)
+            while (true)
             {
-                ReportHub.Log(ReportCategory.COMMS_SCENE_HANDLER, "Connection error on sending, ensure to reconnect...");
+                EnumResult<IArchipelagoLiveConnection.ResponseError> result = await origin.SendAsync(data, token);
+
+                if (result.Error?.State is not IArchipelagoLiveConnection.ResponseError.ConnectionClosed)
+                    return result;
+
+                ReportHub.LogWarning(ReportCategory.COMMS_SCENE_HANDLER, "Connection error on sending, ensure to reconnect...\n" + result.Error.Value.Message);
                 Result connectionResult = await EnsureConnectionAsync(token);
 
                 if (!connectionResult.Success)
                     return EnumResult<IArchipelagoLiveConnection.ResponseError>.ErrorResult(IArchipelagoLiveConnection.ResponseError.ConnectionClosed, connectionResult.ErrorMessage!);
-
-                return await SendAsync(data, token);
             }
-
-            return result;
         }
 
         public async UniTask<EnumResult<MemoryWrap, IArchipelagoLiveConnection.ResponseError>> ReceiveAsync(CancellationToken token)
         {
-            EnumResult<MemoryWrap, IArchipelagoLiveConnection.ResponseError> result = await origin.ReceiveAsync(token);
-
-            if (result.Error?.State is IArchipelagoLiveConnection.ResponseError.ConnectionClosed)
+            while (true)
             {
-                ReportHub.Log(ReportCategory.COMMS_SCENE_HANDLER, "Connection error on receiving, ensure to reconnect...");
+                EnumResult<MemoryWrap, IArchipelagoLiveConnection.ResponseError> result = await origin.ReceiveAsync(token);
+
+                if (result.Error?.State is not IArchipelagoLiveConnection.ResponseError.ConnectionClosed)
+                    return result;
+
+                ReportHub.LogWarning(ReportCategory.COMMS_SCENE_HANDLER, "Connection error on receiving, ensure to reconnect...\n" + result.Error.Value.Message);
 
                 Result connectionResult = await EnsureConnectionAsync(token);
 
                 if (!connectionResult.Success)
                     return EnumResult<MemoryWrap, IArchipelagoLiveConnection.ResponseError>.ErrorResult(IArchipelagoLiveConnection.ResponseError.ConnectionClosed, connectionResult.ErrorMessage!);
-
-                return await ReceiveAsync(token);
             }
-
-            return result;
         }
 
         private async UniTask<Result> EnsureConnectionAsync(CancellationToken token)
         {
-            var attemptNumber = 1;
+            // Thus function must be entered only once, other calls should be waiting
+            // Otherwise there is a race condition
+            Result result = (await semaphore.WaitAsync(token).SuppressToResultAsync()).AsResult();
 
-            if (origin.IsConnected) return Result.SuccessResult();
+            if (!result.Success)
+                return result;
 
-            var result = Result.ErrorResult("Not Started");
-
-            while (!origin.IsConnected)
+            try
             {
-                if (token.IsCancellationRequested)
-                    return Result.CancelledResult();
+                var attemptNumber = 1;
 
-                if (cachedAdapterUrl == null)
+                if (origin.IsConnected) return Result.SuccessResult();
+
+                result = Result.ErrorResult("Not Started");
+
+                while (!origin.IsConnected)
                 {
-                    // Wait for the adapter URL to be set
-                    await UniTask.Yield();
-                    continue;
+                    if (token.IsCancellationRequested)
+                        return Result.CancelledResult();
+
+                    if (cachedAdapterUrl == null)
+                    {
+                        // Wait for the adapter URL to be set
+                        await UniTask.Yield();
+                        continue;
+                    }
+
+                    await DelayRecoveryAsync(token);
+
+                    string adapter = cachedAdapterUrl!;
+                    result = await origin.ConnectAsync(adapter, token);
+
+                    if (!result.Success)
+                        ReportHub.LogWarning(ReportCategory.COMMS_SCENE_HANDLER, $"Cannot ensure connection to {adapter} after {attemptNumber} attempts: {result.ErrorMessage}");
+
+                    attemptNumber++;
+                    lastRecoveryAttempt = DateTime.Now;
                 }
 
-                await DelayRecoveryAsync(token);
-
-                string adapter = cachedAdapterUrl!;
-                result = await origin.ConnectAsync(adapter, token);
-
-                if (!result.Success) { ReportHub.LogWarning(ReportCategory.COMMS_SCENE_HANDLER, $"Cannot ensure connection to {adapter} after {attemptNumber} attempts: {result.ErrorMessage}"); }
-
-                attemptNumber++;
-                lastRecoveryAttempt = DateTime.Now;
+                return result;
             }
-
-            return result;
+            finally { semaphore.Release(); }
 
             UniTask DelayRecoveryAsync(CancellationToken ct)
             {
