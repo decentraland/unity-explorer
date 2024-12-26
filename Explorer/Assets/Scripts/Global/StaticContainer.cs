@@ -184,7 +184,7 @@ namespace Global
                 new SceneMapping()
             );
 
-            var cacheWidget = container.DebugContainerBuilder.TryAddWidget("Cache Textures");
+            DebugWidgetBuilder? cacheWidget = container.DebugContainerBuilder.TryAddWidget("Cache Textures");
 
             container.QualityContainer = await QualityContainer.CreateAsync(settingsContainer, container.assetsProvisioner);
             container.CacheCleaner = new CacheCleaner(sharedDependencies.FrameTimeBudget, cacheWidget);

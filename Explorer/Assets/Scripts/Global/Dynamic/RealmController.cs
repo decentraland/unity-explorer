@@ -63,8 +63,10 @@ namespace Global.Dynamic
             {
                 if (isLocalSceneDevelopment)
                     return RealmType.LocalScene;
+
                 if (realmData is { Configured: true, ScenesAreFixed: false })
                     return RealmType.GenesisCity;
+
                 return RealmType.World;
             }
         }
@@ -190,7 +192,7 @@ namespace Global.Dynamic
 
             promise = await promise.ToUniTaskAsync(GlobalWorld.EcsWorld, cancellationToken: ct);
 
-            if (promise.TryGetResult(GlobalWorld.EcsWorld, out var result) && result.Succeeded)
+            if (promise.TryGetResult(GlobalWorld.EcsWorld, out StreamableLoadingResult<SceneDefinitions> result) && result.Succeeded)
                 return result.Asset;
 
             return null;
@@ -289,6 +291,5 @@ namespace Global.Dynamic
 
             return hostname;
         }
-
     }
 }

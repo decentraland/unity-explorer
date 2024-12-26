@@ -14,11 +14,11 @@ namespace ECS
         private bool scenesAreFixed;
 
         public string RealmName { get; private set; }
-        public int NetworkId{ get; private set; }
+        public int NetworkId { get; private set; }
         public string CommsAdapter { get; private set; }
         public string Protocol { get; private set; }
         public string Hostname { get; private set; }
-        public bool IsLocalSceneDevelopment { get; private set;}
+        public bool IsLocalSceneDevelopment { get; private set; }
         public bool Configured { get; private set; }
 
         public IIpfsRealm Ipfs
@@ -55,7 +55,8 @@ namespace ECS
             Reconfigure(ipfsRealm, string.Empty, DEFAULT_NETWORK_ID, string.Empty, string.Empty, string.Empty, false);
         }
 
-        public void Reconfigure(IIpfsRealm ipfsRealm, string realmName, int networkId, string commsAdapter, string protocol, string hostname, bool isLocalSceneDevelopment)
+        public void Reconfigure(IIpfsRealm ipfsRealm, string realmName, int networkId, string commsAdapter, string protocol,
+            string hostname, bool isLocalSceneDevelopment)
         {
             IsDirty = true;
             Configured = true;

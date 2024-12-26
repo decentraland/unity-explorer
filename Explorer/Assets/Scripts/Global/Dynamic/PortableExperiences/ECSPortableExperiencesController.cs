@@ -31,7 +31,6 @@ namespace PortableExperiences.Controller
         private readonly bool isLocalSceneDevelopment;
         public Dictionary<ENS, Entity> PortableExperienceEntities { get; } = new ();
 
-
         public ECSPortableExperiencesController(
             World globalWorld,
             IWeb3IdentityCache web3IdentityCache,
@@ -51,23 +50,23 @@ namespace PortableExperiences.Controller
         public async UniTask<IPortableExperiencesController.SpawnResponse> CreatePortableExperienceByEnsAsync(ENS ens, CancellationToken ct, bool isGlobalPortableExperience = false, bool force = false)
         {
             if (!force)
-            {
                 switch (isGlobalPortableExperience)
                 {
                     //If it's not a Global PX and common PXs are disabled
                     case false when !featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.PORTABLE_EXPERIENCE):
                         throw new Exception("Portable Experiences are disabled");
+
                     //If it IS a Global PX but Global PXs are disabled
                     case true when !featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.GLOBAL_PORTABLE_EXPERIENCE):
                         throw new Exception("Global Portable Experiences are disabled");
                 }
-            }
 
             if (PortableExperienceEntities.ContainsKey(ens)) throw new Exception($"ENS {ens} is already loaded");
 
             string worldUrl = string.Empty;
 
-            if (ens.IsValid) { worldUrl = ens.ConvertEnsToWorldUrl(); }
+            if (ens.IsValid)
+                worldUrl = ens.ConvertEnsToWorldUrl();
 
             if (!worldUrl.IsValidUrl()) throw new ArgumentException($"Invalid Spawn params. Provide a valid ENS name {ens}");
 
@@ -76,16 +75,16 @@ namespace PortableExperiences.Controller
 
             GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> genericGetRequest = webRequestController.GetAsync(new CommonArguments(url), ct, ReportCategory.REALM);
 
-            ServerAbout serverAbout = new ServerAbout();
+            var serverAbout = new ServerAbout();
             ServerAbout result = await genericGetRequest.OverwriteFromJsonAsync(serverAbout, WRJsonParser.Unity);
 
             if (result.configurations.scenesUrn.Count == 0)
-            {
+
                 //The loaded realm does not have any fixed scene, so it cannot be loaded as a Portable Experience
                 throw new Exception($"Scene not Available in provided Portable Experience with ens: {ens}");
-            }
 
             var realmData = new RealmData();
+
             realmData.Reconfigure(
                 new IpfsRealm(web3IdentityCache, webRequestController, portableExperiencePath, result),
                 result.configurations.realmName.EnsureNotNull("Realm name not found"),
@@ -95,7 +94,6 @@ namespace PortableExperiences.Controller
                 portableExperiencePath.Value,
                 isLocalSceneDevelopment
             );
-
 
             ISceneFacade parentScene = scenesCache.Scenes.FirstOrDefault(s => s.SceneStateProvider.IsCurrent);
             string parentSceneName = parentScene != null ? parentScene.Info.Name : "main";
@@ -130,15 +128,17 @@ namespace PortableExperiences.Controller
         {
             spawnResponsesList.Clear();
 
-            foreach (var portableExperience in PortableExperienceEntities)
+            foreach (KeyValuePair<ENS, Entity> portableExperience in PortableExperienceEntities)
             {
                 PortableExperienceRealmComponent pxRealmComponent = globalWorld.Get<PortableExperienceRealmComponent>(portableExperience.Value);
 
-                spawnResponsesList.Add(new IPortableExperiencesController.SpawnResponse {
-                        name = pxRealmComponent.RealmData.RealmName,
-                        ens = portableExperience.Key.ToString(),
-                        parent_cid = pxRealmComponent.ParentSceneId,
-                        pid = portableExperience.Value.Id.ToString() });
+                spawnResponsesList.Add(new IPortableExperiencesController.SpawnResponse
+                {
+                    name = pxRealmComponent.RealmData.RealmName,
+                    ens = portableExperience.Key.ToString(),
+                    parent_cid = pxRealmComponent.ParentSceneId,
+                    pid = portableExperience.Value.Id.ToString(),
+                });
             }
 
             return spawnResponsesList;
@@ -146,7 +146,7 @@ namespace PortableExperiences.Controller
 
         public void UnloadAllPortableExperiences()
         {
-            foreach (var spawnResponse in GetAllPortableExperiences())
+            foreach (IPortableExperiencesController.SpawnResponse spawnResponse in GetAllPortableExperiences())
                 UnloadPortableExperienceByEns(new ENS(spawnResponse.ens));
         }
 
