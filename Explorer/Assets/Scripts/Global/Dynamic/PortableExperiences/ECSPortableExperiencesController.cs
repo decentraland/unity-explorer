@@ -28,6 +28,7 @@ namespace PortableExperiences.Controller
         private readonly World globalWorld;
         private readonly List<IPortableExperiencesController.SpawnResponse> spawnResponsesList = new ();
         private readonly FeatureFlagsCache featureFlagsCache;
+        private readonly bool isLocalSceneDevelopment;
         public Dictionary<ENS, Entity> PortableExperienceEntities { get; } = new ();
 
 
@@ -36,13 +37,15 @@ namespace PortableExperiences.Controller
             IWeb3IdentityCache web3IdentityCache,
             IWebRequestController webRequestController,
             IScenesCache scenesCache,
-            FeatureFlagsCache featureFlagsCache)
+            FeatureFlagsCache featureFlagsCache,
+            bool isLocalSceneDevelopment)
         {
             this.globalWorld = globalWorld;
             this.web3IdentityCache = web3IdentityCache;
             this.webRequestController = webRequestController;
             this.scenesCache = scenesCache;
             this.featureFlagsCache = featureFlagsCache;
+            this.isLocalSceneDevelopment = isLocalSceneDevelopment;
         }
 
         public async UniTask<IPortableExperiencesController.SpawnResponse> CreatePortableExperienceByEnsAsync(ENS ens, CancellationToken ct, bool isGlobalPortableExperience = false, bool force = false)
@@ -89,7 +92,8 @@ namespace PortableExperiences.Controller
                 result.configurations.networkId,
                 result.comms?.adapter ?? string.Empty,
                 result.comms?.protocol ?? string.Empty,
-                portableExperiencePath.Value
+                portableExperiencePath.Value,
+                isLocalSceneDevelopment
             );
 
 

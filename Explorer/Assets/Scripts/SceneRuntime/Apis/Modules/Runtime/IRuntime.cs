@@ -56,11 +56,11 @@ namespace SceneRuntime.Apis.Modules.Runtime
         {
             private const bool IS_PREVIEW_DEFAULT_VALUE = false;
 
-            public string domain;
+            public string baseUrl;
             public string realmName;
             public int networkId;
             public string commsAdapter;
-            public bool isPreview;
+            public bool preview;
             public string protocol;
 
             public RealmInfo(IRealmData realmData) : this(
@@ -68,17 +68,17 @@ namespace SceneRuntime.Apis.Modules.Runtime
                 realmData.RealmName,
                 realmData.NetworkId,
                 realmData.CommsAdapter,
-                IS_PREVIEW_DEFAULT_VALUE,
+                realmData.IsLocalSceneDevelopment,
                 realmData.Protocol
             ) { }
 
-            public RealmInfo(string domain, string realmName, int networkId, string commsAdapter, bool isPreview, string protocol)
+            public RealmInfo(string baseUrl, string realmName, int networkId, string commsAdapter, bool isPreview, string protocol)
             {
-                this.domain = domain;
+                this.baseUrl = baseUrl;
                 this.realmName = realmName;
                 this.networkId = networkId;
                 this.commsAdapter = commsAdapter;
-                this.isPreview = isPreview;
+                this.preview = isPreview;
                 this.protocol = protocol;
             }
         }

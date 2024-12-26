@@ -18,6 +18,7 @@ namespace ECS
         public string CommsAdapter { get; private set; }
         public string Protocol { get; private set; }
         public string Hostname { get; private set; }
+        public bool IsLocalSceneDevelopment { get; private set;}
         public bool Configured { get; private set; }
 
         public IIpfsRealm Ipfs
@@ -51,10 +52,10 @@ namespace ECS
 
         public RealmData(IIpfsRealm ipfsRealm)
         {
-            Reconfigure(ipfsRealm, string.Empty, DEFAULT_NETWORK_ID, string.Empty, string.Empty, string.Empty);
+            Reconfigure(ipfsRealm, string.Empty, DEFAULT_NETWORK_ID, string.Empty, string.Empty, string.Empty, false);
         }
 
-        public void Reconfigure(IIpfsRealm ipfsRealm, string realmName, int networkId, string commsAdapter, string protocol, string hostname)
+        public void Reconfigure(IIpfsRealm ipfsRealm, string realmName, int networkId, string commsAdapter, string protocol, string hostname, bool isLocalSceneDevelopment)
         {
             IsDirty = true;
             Configured = true;
@@ -65,6 +66,7 @@ namespace ECS
             Protocol = protocol;
             NetworkId = networkId;
             Hostname = hostname;
+            IsLocalSceneDevelopment = isLocalSceneDevelopment;
         }
 
         /// <summary>

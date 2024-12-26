@@ -135,7 +135,8 @@ namespace Global.Dynamic
                 result.configurations.networkId,
                 result.comms?.adapter ?? result.comms?.fixedAdapter ?? "offline:offline", //"offline property like in previous implementation"
                 result.comms?.protocol ?? "v3",
-                hostname
+                hostname,
+                isLocalSceneDevelopment
             );
 
             // Add the realm component
