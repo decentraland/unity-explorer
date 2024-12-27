@@ -55,7 +55,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UICanvasInformation
             lastScreenRealResolutionWidth = Screen.mainWindowDisplayInfo.width;
             lastViewportResolutionWidth = Screen.width;
 
-            ecsToCRDTWriter.PutMessage<PBUiCanvasInformation, UICanvasInformationSystem>((component, system) =>
+            ecsToCRDTWriter.PutMessage<PBUiCanvasInformation, UICanvasInformationSystem>(static (component, system) =>
             {
                 component.InteractableArea = system.interactableArea;
                 component.Width = Screen.width;
