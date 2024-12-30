@@ -27,7 +27,7 @@ namespace DCL.PluginSystem.World
                 sharedDependencies.SceneData.SceneEntityDefinition.metadata.isPortableExperience)
             {
                 ResetDirtyFlagSystem<PBMapPin>.InjectToWorld(ref builder);
-                MapPinLoaderSystem.InjectToWorld(ref builder, sharedDependencies.SceneData, globalWorld, sharedDependencies.ScenePartition, featureFlagsCache);
+                finalizeWorldSystems.Add(MapPinLoaderSystem.InjectToWorld(ref builder, sharedDependencies.SceneData, globalWorld, sharedDependencies.ScenePartition, featureFlagsCache));
             }
         }
     }

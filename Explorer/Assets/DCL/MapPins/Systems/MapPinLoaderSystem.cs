@@ -6,6 +6,7 @@ using DCL.FeatureFlags;
 using DCL.MapPins.Components;
 using DCL.SDKComponents.Utils;
 using ECS.Abstract;
+using ECS.LifeCycle;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
@@ -15,6 +16,7 @@ using ECS.Unity.Groups;
 using ECS.Unity.Textures.Components;
 using ECS.Unity.Textures.Components.Extensions;
 using SceneRunner.Scene;
+using System;
 using UnityEngine;
 using Entity = Arch.Core.Entity;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.Texture2DData, ECS.StreamableLoading.Textures.GetTextureIntention>;
@@ -22,7 +24,7 @@ using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.
 namespace DCL.SDKComponents.MapPins.Systems
 {
     [UpdateInGroup(typeof(ComponentInstantiationGroup))]
-    public partial class MapPinLoaderSystem : BaseUnityLoopSystem
+    public partial class MapPinLoaderSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
         private const int ATTEMPTS_COUNT = 6;
 
@@ -146,6 +148,15 @@ namespace DCL.SDKComponents.MapPins.Systems
             World.Remove<MapPinHolderComponent, PBMapPin>(entity);
         }
 
+        [Query]
+        private void CleanupOnFinalize(ref MapPinHolderComponent mapPinHolderComponent)
+        {
+            ref MapPinComponent mapPinComponent = ref globalWorld.Get<MapPinComponent>(mapPinHolderComponent.GlobalWorldEntity);
+            DereferenceTexture(ref mapPinComponent.TexturePromise);
+            globalWorld.Add(mapPinHolderComponent.GlobalWorldEntity, new DeleteEntityIntention());
+        }
+
+
         private void DereferenceTexture(ref Promise? promise)
         {
             if (promise == null)
@@ -181,6 +192,11 @@ namespace DCL.SDKComponents.MapPins.Systems
             );
 
             return true;
+        }
+
+        public void FinalizeComponents(in Query query)
+        {
+            CleanupOnFinalizeQuery(World);
         }
     }
 }
