@@ -34,6 +34,14 @@ namespace PortableExperiences.Controller
 
         public Dictionary<ENS, Entity> PortableExperienceEntities { get; } = new ();
 
+        public GlobalWorld GlobalWorld
+        {
+            get => globalWorld.EnsureNotNull("GlobalWorld in RealmController is null");
+
+            set => globalWorld = value;
+        }
+
+        private World world => globalWorld.EcsWorld;
 
         public ECSPortableExperiencesController(
             IWeb3IdentityCache web3IdentityCache,
@@ -47,14 +55,6 @@ namespace PortableExperiences.Controller
             this.featureFlagsCache = featureFlagsCache;
         }
 
-        public GlobalWorld GlobalWorld
-        {
-            get => globalWorld.EnsureNotNull("GlobalWorld in RealmController is null");
-
-            set => globalWorld = value;
-        }
-
-
         public async UniTask<IPortableExperiencesController.SpawnResponse> CreatePortableExperienceByEnsAsync(ENS ens, CancellationToken ct, bool isGlobalPortableExperience = false, bool force = false)
         {
             if (!force)
@@ -64,6 +64,7 @@ namespace PortableExperiences.Controller
                     //If it's not a Global PX and common PXs are disabled
                     case false when !featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.PORTABLE_EXPERIENCE):
                         throw new Exception("Portable Experiences are disabled");
+
                     //If it IS a Global PX but Global PXs are disabled
                     case true when !featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.GLOBAL_PORTABLE_EXPERIENCE):
                         throw new Exception("Global Portable Experiences are disabled");
@@ -83,7 +84,7 @@ namespace PortableExperiences.Controller
 
             GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> genericGetRequest = webRequestController.GetAsync(new CommonArguments(url), ct, ReportCategory.REALM);
 
-            ServerAbout serverAbout = new ServerAbout();
+            var serverAbout = new ServerAbout();
             ServerAbout result = await genericGetRequest.OverwriteFromJsonAsync(serverAbout, WRJsonParser.Unity);
 
             if (result.configurations.scenesUrn.Count == 0)
@@ -93,6 +94,7 @@ namespace PortableExperiences.Controller
             }
 
             var realmData = new RealmData();
+
             realmData.Reconfigure(
                 new IpfsRealm(web3IdentityCache, webRequestController, portableExperiencePath, result),
                 result.configurations.realmName.EnsureNotNull("Realm name not found"),
@@ -101,9 +103,6 @@ namespace PortableExperiences.Controller
                 result.comms?.protocol ?? string.Empty,
                 portableExperiencePath.Value
             );
-
-            World world = globalWorld!.EcsWorld;
-
 
             ISceneFacade parentScene = scenesCache.Scenes.FirstOrDefault(s => s.SceneStateProvider.IsCurrent);
             string parentSceneName = parentScene != null ? parentScene.Info.Name : "main";
@@ -124,7 +123,7 @@ namespace PortableExperiences.Controller
 
             if (PortableExperienceEntities.TryGetValue(ens, out Entity portableExperienceEntity))
             {
-                PortableExperienceRealmComponent portableExperienceRealmComponent = globalWorld!.EcsWorld.Get<PortableExperienceRealmComponent>(portableExperienceEntity);
+                PortableExperienceRealmComponent portableExperienceRealmComponent = world.Get<PortableExperienceRealmComponent>(portableExperienceEntity);
 
                 if (portableExperienceRealmComponent.IsGlobalPortableExperience) return false;
 
@@ -138,15 +137,17 @@ namespace PortableExperiences.Controller
         {
             spawnResponsesList.Clear();
 
-            foreach (var portableExperience in PortableExperienceEntities)
+            foreach (KeyValuePair<ENS, Entity> portableExperience in PortableExperienceEntities)
             {
-                PortableExperienceRealmComponent pxRealmComponent = globalWorld!.EcsWorld.Get<PortableExperienceRealmComponent>(portableExperience.Value);
+                PortableExperienceRealmComponent pxRealmComponent = world.Get<PortableExperienceRealmComponent>(portableExperience.Value);
 
-                spawnResponsesList.Add(new IPortableExperiencesController.SpawnResponse {
-                        name = pxRealmComponent.RealmData.RealmName,
-                        ens = portableExperience.Key.ToString(),
-                        parent_cid = pxRealmComponent.ParentSceneId,
-                        pid = portableExperience.Value.Id.ToString() });
+                spawnResponsesList.Add(new IPortableExperiencesController.SpawnResponse
+                {
+                    name = pxRealmComponent.RealmData.RealmName,
+                    ens = portableExperience.Key.ToString(),
+                    parent_cid = pxRealmComponent.ParentSceneId,
+                    pid = portableExperience.Value.Id.ToString(),
+                });
             }
 
             return spawnResponsesList;
@@ -154,7 +155,7 @@ namespace PortableExperiences.Controller
 
         public void UnloadAllPortableExperiences()
         {
-            foreach (var spawnResponse in GetAllPortableExperiences())
+            foreach (IPortableExperiencesController.SpawnResponse spawnResponse in GetAllPortableExperiences())
                 UnloadPortableExperienceByEns(new ENS(spawnResponse.ens));
         }
 
@@ -164,10 +165,10 @@ namespace PortableExperiences.Controller
 
             if (PortableExperienceEntities.TryGetValue(ens, out Entity portableExperienceEntity))
             {
-                globalWorld!.EcsWorld.Add<DeleteEntityIntention>(portableExperienceEntity);
+                world.Add<DeleteEntityIntention>(portableExperienceEntity);
 
                 for (var i = 0; i < globalWorld.FinalizeWorldSystems.Count; i++)
-                    globalWorld.FinalizeWorldSystems[i].FinalizeComponents(globalWorld!.EcsWorld.Query(in CLEAR_QUERY));
+                    globalWorld.FinalizeWorldSystems[i].FinalizeComponents(world.Query(in CLEAR_QUERY));
 
                 PortableExperienceEntities.Remove(ens);
 
