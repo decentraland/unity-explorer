@@ -72,11 +72,7 @@ namespace DCL.Minimap
             IMapPathEventBus mapPathEventBus,
             ISceneRestrictionBusController sceneRestrictionBusController,
             string startParcelInGenesis
-        ) : base(() =>
-        {
-            minimapView.gameObject.SetActive(true);
-            return minimapView;
-        })
+        ) : base(() => minimapView)
         {
             this.mapRenderer = mapRenderer;
             this.mvcManager = mvcManager;
@@ -88,6 +84,7 @@ namespace DCL.Minimap
             this.mapPathEventBus = mapPathEventBus;
             this.sceneRestrictionBusController = sceneRestrictionBusController;
             this.startParcelInGenesis = startParcelInGenesis;
+            minimapView.SetCanvasActive(false);
         }
 
         public void HookPlayerPositionTrackingSystem(TrackPlayerPositionSystem system) =>
@@ -185,6 +182,7 @@ namespace DCL.Minimap
                 mapRendererTrackPlayerPosition = new MapRendererTrackPlayerPosition(mapCameraController);
                 viewInstance.mapRendererTargetImage.texture = mapCameraController.GetRenderTexture();
                 viewInstance.pixelPerfectMapRendererTextureProvider.Activate(mapCameraController);
+                viewInstance.SetCanvasActive(true);
                 GetPlaceInfoAsync(position);
             }
             else
