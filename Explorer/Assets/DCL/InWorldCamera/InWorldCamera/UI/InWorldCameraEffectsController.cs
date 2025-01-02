@@ -1,53 +1,31 @@
-﻿using Arch.Core;
-using DCL.Utilities;
+﻿using DCL.Utilities;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
-using Utility;
 
 namespace DCL.InWorldCamera.UI
 {
-
     public class InWorldCameraEffectsController : IDisposable
     {
-        private const string AUTO_VOLUME_NAME = "InWorldCamera.GlobalVolume";
-
         private readonly InWorldCameraEffectsView view;
-
-        // private readonly Camera camera;
-
         private readonly Volume globalVolume;
-        private ColorAdjustments colorAdjustments;
-        private DepthOfField depthOfField;
-
-        private float targetFocusDistance;
         private readonly List<IDisposable> disposableEvents = new (10);
 
-        public InWorldCameraEffectsController()
+        public InWorldCameraEffectsController(Volume effectsVolume, ColorAdjustments colorAdjustments, DepthOfField dof, InWorldCameraEffectsView effectsView)
         {
-            var volume = new GameObject(AUTO_VOLUME_NAME);
-            view = volume.AddComponent<InWorldCameraEffectsView>();
-            targetFocusDistance = view.FocusDistance;
+            view = effectsView;
+            globalVolume = effectsVolume;
 
-            globalVolume = volume.AddComponent<Volume>();
-            globalVolume.isGlobal = true;
-            globalVolume.priority = 100f;
-
-            VolumeProfile profile = ScriptableObject.CreateInstance<VolumeProfile>();
-            globalVolume.profile = profile;
-
-            SetupColorAdjustments(profile);
-            SetupDepthOfField(profile);
+            SetupColorAdjustments(colorAdjustments);
+            SetupDepthOfField(dof);
 
             Disable();
         }
 
-        private void SetupColorAdjustments(VolumeProfile profile)
+        private void SetupColorAdjustments(ColorAdjustments colorAdjustments)
         {
-            colorAdjustments = profile.Add<ColorAdjustments>();
-
             colorAdjustments.postExposure.Override(view.PostExposure);
             colorAdjustments.contrast.Override(view.Contrast);
             colorAdjustments.saturation.Override(view.Saturation);
@@ -64,10 +42,8 @@ namespace DCL.InWorldCamera.UI
             });
         }
 
-        private void SetupDepthOfField(VolumeProfile profile)
+        private void SetupDepthOfField(DepthOfField depthOfField)
         {
-            depthOfField = profile.Add<DepthOfField>();
-
             depthOfField.mode.Override(DepthOfFieldMode.Bokeh);
             depthOfField.active = view.EnabledDof.Value;
             depthOfField.focusDistance.Override(view.FocusDistance.Value);
@@ -85,14 +61,9 @@ namespace DCL.InWorldCamera.UI
 
         public void Dispose()
         {
-            globalVolume.profile.SelfDestroy();
-            globalVolume.gameObject.SelfDestroy();
-
             foreach (IDisposable @event in disposableEvents)
                 @event.Dispose();
         }
-
-        // UpdateAutofocus();
 
         public void Enable()
         {

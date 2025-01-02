@@ -42,7 +42,6 @@ public class CameraEffectsController : MonoBehaviour
 
     public Camera mainCamera;
     private float targetFocusDistance;
-
     private float autofocusTimer;
     private bool hasValidFocusTarget;
 
@@ -101,51 +100,6 @@ public class CameraEffectsController : MonoBehaviour
     }
 
     void Update()
-    {
-        UpdateColorEffects();
-        UpdateDepthOfField();
-        UpdateAutofocus();
-    }
-
-    void UpdateColorEffects()
-    {
-        if (colorAdjustments != null)
-        {
-            colorAdjustments.postExposure.value = postExposure;
-            colorAdjustments.contrast.value = contrast;
-            colorAdjustments.saturation.value = saturation;
-            colorAdjustments.hueShift.value = hueShift;
-
-            // Convert HSV to RGB for the color filter
-            filterColor = Color.HSVToRGB(
-                filterHue / 360f,           // Hue is in 0-360 range, needs to be 0-1
-                filterSaturation / 100f,    // Saturation is in 0-100 range, needs to be 0-1
-                filterValue / 100f          // Value is in 0-100 range, needs to be 0-1
-            );
-
-            // Apply intensity by lerping between white (no effect) and the target color
-            Color finalFilterColor = Color.Lerp(Color.white, filterColor, filterIntensity / 100f);
-            colorAdjustments.colorFilter.value = finalFilterColor;
-        }
-    }
-
-    void UpdateDepthOfField()
-    {
-        if (depthOfField != null)
-        {
-            depthOfField.active = enableDOF;
-
-            if (enableDOF)
-            {
-                    depthOfField.mode.Override(DepthOfFieldMode.Bokeh);
-                    depthOfField.focusDistance.value = focusDistance;
-                    depthOfField.focalLength.value = focalLength;
-                    depthOfField.aperture.value = aperture;
-            }
-        }
-    }
-
-    void UpdateAutofocus()
     {
         if (!enableAutofocus || !enableDOF) return;
 

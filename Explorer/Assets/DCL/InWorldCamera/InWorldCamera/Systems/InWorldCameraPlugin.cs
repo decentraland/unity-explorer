@@ -32,6 +32,8 @@ using System.Threading;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.AddressableAssets;
+using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
 using Utility;
 using static DCL.PluginSystem.Global.InWorldCameraPlugin;
 using CaptureScreenshotSystem = DCL.InWorldCamera.Systems.CaptureScreenshotSystem;
@@ -134,6 +136,12 @@ namespace DCL.PluginSystem.Global
             recorder = new ScreenRecorder(hud.GetComponent<RectTransform>());
             metadataBuilder = new ScreenshotMetadataBuilder(selfProfile, characterObject.Controller, realmData, placesAPIService);
 
+            inWorldCameraController = new InWorldCameraController(() => hud.GetComponent<InWorldCameraView>(), sidebarButton, globalWorld, mvcManager, cameraReelStorageService);
+            mvcManager.RegisterController(inWorldCameraController);
+
+            (Volume volume, ColorAdjustments colorEffect, DepthOfField focusEffect) = factory.CreatePostProcessing();
+            cameraEffectsController = new InWorldCameraEffectsController(volume, colorEffect, focusEffect, volume.gameObject.AddComponent<InWorldCameraEffectsView>());
+
             PhotoDetailView photoDetailViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.PhotoDetailPrefab, ct: ct)).GetComponent<PhotoDetailView>();
             ControllerBase<PhotoDetailView, PhotoDetailParameter>.ViewFactoryMethod viewFactoryMethod = PhotoDetailController.Preallocate(photoDetailViewAsset, null, out PhotoDetailView explorePanelView);
 
@@ -165,10 +173,6 @@ namespace DCL.PluginSystem.Global
                 decentralandUrlsSource,
                 webBrowser,
                 new PhotoDetailStringMessages(settings.ShareToXMessage, settings.PhotoSuccessfullyDownloadedMessage, settings.LinkCopiedMessage)));
-
-            inWorldCameraController = new InWorldCameraController(() => hud.GetComponent<InWorldCameraView>(), sidebarButton, globalWorld, mvcManager, cameraReelStorageService);
-            cameraEffectsController = new InWorldCameraEffectsController();
-            mvcManager.RegisterController(inWorldCameraController);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)

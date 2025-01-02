@@ -25,13 +25,12 @@ namespace DCL.InWorldCamera.UI
         [SerializeField, Range(1, 300f)] private float focalLength = 50f;
         [SerializeField, Range(1, 32f)] private float aperture = 5.6f;
 
-        // [Header("Autofocus")]
-        // [field: SerializeField] public bool EnableAutofocus = false;
-        // [field: SerializeField] public LayerMask AutofocusLayers = -1;  // All layers by default
-        // [field: SerializeField, Range(1, 60f)] public float AutofocusUpdateRate = 4;    // Updates per second
-        // [field: SerializeField, Range(0.1f, 20f)] public float AutofocusBlendSpeed = 5f;  // How smooth the focus transition is
-        // [field: SerializeField, Range(0.1f, 100f)] public float AutofocusMaxDistance = 50f;
-        // [field: SerializeField, Range(0.01f, 0.3f)] public float AutofocusAreaSize = 0.1f;  // Size of focus sampling area
+        [Header("Autofocus")]
+        [SerializeField] private bool enableAutofocus;
+        [SerializeField] private LayerMask autofocusLayers = -1;  // All layers by default
+        [SerializeField, Range(1, 60f)] private float autofocusUpdateRate = 4;    // Updates per second
+        [SerializeField, Range(0.1f, 20f)] private float autofocusBlendSpeed = 5f;  // How smooth the focus transition is
+        [SerializeField, Range(0.1f, 100f)] private float autofocusMaxDistance = 50f;
 
         private DefaultCameraEffects defaults;
 
@@ -45,6 +44,8 @@ namespace DCL.InWorldCamera.UI
         public ReactiveProperty<float> FocusDistance { get; private set; }
         public ReactiveProperty<float> FocalLength { get; private set; }
         public ReactiveProperty<float> Aperture { get; private set; }
+
+        public ReactiveProperty<bool> EnableAutoFocus { get; private set; }
 
         private void Awake()
         {
@@ -127,6 +128,32 @@ namespace DCL.InWorldCamera.UI
             focusDistance = defaults.FocusDistance;
             focalLength = defaults.FocalLength;
             aperture = defaults.Aperture;
+        }
+
+        private void DrawFocusGizmo(float targetFocusDistance, bool hasValidFocusTarget)
+        {
+            if (!enableAutofocus || !enableDOF || !Camera.main) return;
+
+            Matrix4x4 oldMatrix = Gizmos.matrix;
+            Gizmos.matrix = transform.localToWorldMatrix;
+
+            // Draw the autofocus sampling area
+            Vector3 center = Vector3.forward * targetFocusDistance;
+            var autofocusAreaSize = 0.1f;
+            float size = autofocusAreaSize * targetFocusDistance * 2f; // Scale area with distance
+            Gizmos.color = hasValidFocusTarget ? Color.green : Color.yellow;
+            Gizmos.DrawWireCube(center, new Vector3(size, size, 0.1f));
+
+            // Draw focus distance
+            Gizmos.DrawLine(Vector3.zero, center);
+
+            // Draw the focus plane
+            Vector3 up = Vector3.up * size;
+            Vector3 right = Vector3.right * size;
+            Gizmos.DrawLine(center - up, center + up);
+            Gizmos.DrawLine(center - right, center + right);
+
+            Gizmos.matrix = oldMatrix;
         }
 
         private struct DefaultCameraEffects
