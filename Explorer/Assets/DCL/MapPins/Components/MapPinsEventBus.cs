@@ -6,7 +6,7 @@ namespace DCL.MapPins.Bus
 {
     public class MapPinsEventBus : IMapPinsEventBus
     {
-        public event Action<Entity, Vector2Int, string, string> OnUpdateMapPin;
+        public event IMapPinsEventBus.MapPinUpdateHandler OnUpdateMapPin;
         public event Action<Entity> OnRemoveMapPin;
         public event Action<Entity, Texture2D> OnUpdateMapPinThumbnail;
 
@@ -28,7 +28,10 @@ namespace DCL.MapPins.Bus
 
     public interface IMapPinsEventBus
     {
-        public event Action<Entity, Vector2Int, string, string> OnUpdateMapPin;
+        public delegate void MapPinUpdateHandler(Entity entity, Vector2Int position,
+            string title, string description);
+
+        public event MapPinUpdateHandler OnUpdateMapPin;
         public event Action<Entity> OnRemoveMapPin;
         public event Action<Entity, Texture2D> OnUpdateMapPinThumbnail;
 
