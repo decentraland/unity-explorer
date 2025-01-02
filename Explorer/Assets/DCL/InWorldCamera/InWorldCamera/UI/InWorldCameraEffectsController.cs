@@ -13,6 +13,13 @@ namespace DCL.InWorldCamera.UI
         private readonly Volume globalVolume;
         private readonly List<IDisposable> disposableEvents = new (10);
 
+        public bool DofEnabled => view.EnabledDof.Value;
+        public bool AutoFocusEnabled => view.EnableAutoFocus.Value;
+        public float FocusDistance => view.FocusDistance.Value;
+
+        public void SetAutoFocus(float distance, float targetFocusDistance) =>
+            view.SetAutoFocus(distance, targetFocusDistance);
+
         public InWorldCameraEffectsController(Volume effectsVolume, ColorAdjustments colorAdjustments, DepthOfField dof, InWorldCameraEffectsView effectsView)
         {
             view = effectsView;
@@ -22,6 +29,12 @@ namespace DCL.InWorldCamera.UI
             SetupDepthOfField(dof);
 
             Disable();
+        }
+
+        public void Dispose()
+        {
+            foreach (IDisposable @event in disposableEvents)
+                @event.Dispose();
         }
 
         private void SetupColorAdjustments(ColorAdjustments colorAdjustments)
@@ -53,16 +66,14 @@ namespace DCL.InWorldCamera.UI
             disposableEvents.AddRange(new[]
             {
                 view.EnabledDof.Subscribe(value => depthOfField.active = value),
-                view.FocusDistance.Subscribe(value => depthOfField.focusDistance.value = value),
+                view.FocusDistance.Subscribe(value =>
+                {
+                    if (DofEnabled)
+                        depthOfField.focusDistance.value = value;
+                }),
                 view.FocalLength.Subscribe(value => depthOfField.focalLength.value = value),
                 view.Aperture.Subscribe(value => depthOfField.aperture.value = value),
             });
-        }
-
-        public void Dispose()
-        {
-            foreach (IDisposable @event in disposableEvents)
-                @event.Dispose();
         }
 
         public void Enable()

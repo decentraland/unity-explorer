@@ -1,5 +1,6 @@
 ﻿using DCL.Utilities;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace DCL.InWorldCamera.UI
 {
@@ -25,14 +26,16 @@ namespace DCL.InWorldCamera.UI
         [SerializeField, Range(1, 300f)] private float focalLength = 50f;
         [SerializeField, Range(1, 32f)] private float aperture = 5.6f;
 
+        [FormerlySerializedAs("enableAutofocus")]
         [Header("Autofocus")]
-        [SerializeField] private bool enableAutofocus;
+        [SerializeField] private bool enableAutoFocus;
         [SerializeField] private LayerMask autofocusLayers = -1;  // All layers by default
         [SerializeField, Range(1, 60f)] private float autofocusUpdateRate = 4;    // Updates per second
         [SerializeField, Range(0.1f, 20f)] private float autofocusBlendSpeed = 5f;  // How smooth the focus transition is
         [SerializeField, Range(0.1f, 100f)] private float autofocusMaxDistance = 50f;
 
         private DefaultCameraEffects defaults;
+        private float targetFocusDistance;
 
         public ReactiveProperty<float> PostExposure { get; private set; }
         public ReactiveProperty<float> Contrast { get; private set; }
@@ -73,6 +76,8 @@ namespace DCL.InWorldCamera.UI
             FocusDistance = new ReactiveProperty<float>(focusDistance);
             FocalLength = new ReactiveProperty<float>(focalLength);
             Aperture = new ReactiveProperty<float>(aperture);
+
+            EnableAutoFocus = new ReactiveProperty<bool>(false);
         }
 
         private void Update()
@@ -88,6 +93,7 @@ namespace DCL.InWorldCamera.UI
             EnabledDof.Value = enableDOF;
             if (enableDOF)
             {
+                EnableAutoFocus.Value = enableAutoFocus;
                 FocusDistance.Value = focusDistance;
                 FocalLength.Value = focalLength;
                 Aperture.Value = aperture;
@@ -106,6 +112,8 @@ namespace DCL.InWorldCamera.UI
             FocusDistance.Dispose();
             FocalLength.Dispose();
             Aperture.Dispose();
+
+            EnableAutoFocus.Dispose();
         }
 
         public void Show()
@@ -128,11 +136,19 @@ namespace DCL.InWorldCamera.UI
             focusDistance = defaults.FocusDistance;
             focalLength = defaults.FocalLength;
             aperture = defaults.Aperture;
+
+            enableAutoFocus = false;
         }
 
-        private void DrawFocusGizmo(float targetFocusDistance, bool hasValidFocusTarget)
+        public void SetAutoFocus(float distance, float targetFocusDistance)
         {
-            if (!enableAutofocus || !enableDOF || !Camera.main) return;
+            focusDistance = distance;
+            this.targetFocusDistance = targetFocusDistance;
+        }
+
+        private void OnDrawGizmosSelected()
+        {
+            if (!enableAutoFocus || !enableDOF || !Camera.main) return;
 
             Matrix4x4 oldMatrix = Gizmos.matrix;
             Gizmos.matrix = transform.localToWorldMatrix;
@@ -141,7 +157,7 @@ namespace DCL.InWorldCamera.UI
             Vector3 center = Vector3.forward * targetFocusDistance;
             var autofocusAreaSize = 0.1f;
             float size = autofocusAreaSize * targetFocusDistance * 2f; // Scale area with distance
-            Gizmos.color = hasValidFocusTarget ? Color.green : Color.yellow;
+            Gizmos.color = Color.yellow;
             Gizmos.DrawWireCube(center, new Vector3(size, size, 0.1f));
 
             // Draw focus distance
