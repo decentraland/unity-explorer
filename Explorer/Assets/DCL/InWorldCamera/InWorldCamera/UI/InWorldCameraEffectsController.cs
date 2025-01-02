@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using DCL.Utilities;
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
@@ -18,10 +19,11 @@ namespace DCL.InWorldCamera.UI
         // private readonly Camera camera;
 
         private readonly Volume globalVolume;
-        private readonly ColorAdjustments colorAdjustments;
-        private readonly DepthOfField depthOfField;
+        private ColorAdjustments colorAdjustments;
+        private DepthOfField depthOfField;
 
         private float targetFocusDistance;
+        private readonly List<IDisposable> disposableEvents = new (10);
 
         public InWorldCameraEffectsController()
         {
@@ -36,6 +38,14 @@ namespace DCL.InWorldCamera.UI
             VolumeProfile profile = ScriptableObject.CreateInstance<VolumeProfile>();
             globalVolume.profile = profile;
 
+            SetupColorAdjustments(profile);
+            SetupDepthOfField(profile);
+
+            Disable();
+        }
+
+        private void SetupColorAdjustments(VolumeProfile profile)
+        {
             colorAdjustments = profile.Add<ColorAdjustments>();
 
             colorAdjustments.postExposure.Override(view.PostExposure);
@@ -44,20 +54,33 @@ namespace DCL.InWorldCamera.UI
             colorAdjustments.hueShift.Override(view.HueShift);
             colorAdjustments.colorFilter.Override(view.FilterColor);
 
-            view.PostExposure.Subscribe(value => colorAdjustments.postExposure.value = value);
-            view.Contrast.Subscribe(value => colorAdjustments.contrast.value = value);
-            view.Saturation.Subscribe(value => colorAdjustments.saturation.value = value);
-            view.HueShift.Subscribe(value => colorAdjustments.hueShift.value = value);
-            view.FilterColor.Subscribe(value => colorAdjustments.colorFilter.value = Color.Lerp(Color.white, value, view.FilterIntensity / 100f));
+            disposableEvents.AddRange(new[]
+            {
+                view.PostExposure.Subscribe(value => colorAdjustments.postExposure.value = value),
+                view.Contrast.Subscribe(value => colorAdjustments.contrast.value = value),
+                view.Saturation.Subscribe(value => colorAdjustments.saturation.value = value),
+                view.HueShift.Subscribe(value => colorAdjustments.hueShift.value = value),
+                view.FilterColor.Subscribe(value => colorAdjustments.colorFilter.value = Color.Lerp(Color.white, value, view.FilterIntensity / 100f)),
+            });
+        }
 
-            // // Setup Depth of Field
-            // depthOfField = profile.Add<DepthOfField>();
-            // depthOfField.mode.Override(DepthOfFieldMode.Bokeh);
-            // depthOfField.focusDistance.Override(10f);
-            // depthOfField.focalLength.Override(50f);
-            // depthOfField.aperture.Override(5.6f);
+        private void SetupDepthOfField(VolumeProfile profile)
+        {
+            depthOfField = profile.Add<DepthOfField>();
 
-            Disable();
+            depthOfField.mode.Override(DepthOfFieldMode.Bokeh);
+            depthOfField.active = view.EnabledDof.Value;
+            depthOfField.focusDistance.Override(view.FocusDistance.Value);
+            depthOfField.focalLength.Override(view.FocalLength.Value);
+            depthOfField.aperture.Override(view.Aperture.Value);
+
+            disposableEvents.AddRange(new[]
+            {
+                view.EnabledDof.Subscribe(value => depthOfField.active = value),
+                view.FocusDistance.Subscribe(value => depthOfField.focusDistance.value = value),
+                view.FocalLength.Subscribe(value => depthOfField.focalLength.value = value),
+                view.Aperture.Subscribe(value => depthOfField.aperture.value = value),
+            });
         }
 
         public void Dispose()
@@ -65,30 +88,10 @@ namespace DCL.InWorldCamera.UI
             globalVolume.profile.SelfDestroy();
             globalVolume.gameObject.SelfDestroy();
 
-            view.PostExposure.Unsubscribe(value => colorAdjustments.postExposure.value = value);
-            view.Contrast.Unsubscribe(value => colorAdjustments.contrast.value = value);
-            view.Saturation.Unsubscribe(value => colorAdjustments.saturation.value = value);
-            view.HueShift.Unsubscribe(value => colorAdjustments.hueShift.value = value);
-            view.FilterColor.Unsubscribe(value => colorAdjustments.colorFilter.value = Color.Lerp(Color.white, value, view.FilterIntensity / 100f));
+            foreach (IDisposable @event in disposableEvents)
+                @event.Dispose();
         }
 
-        // void UpdateDepthOfField()
-        // {
-        //     if (depthOfField != null)
-        //     {
-        //         depthOfField.active = enableDOF;
-        //
-        //         if (enableDOF)
-        //         {
-        //             depthOfField.mode.Override(DepthOfFieldMode.Bokeh);
-        //             depthOfField.focusDistance.value = focusDistance;
-        //             depthOfField.focalLength.value = focalLength;
-        //             depthOfField.aperture.value = aperture;
-        //         }
-        //     }
-        // }
-
-        // UpdateDepthOfField();
         // UpdateAutofocus();
 
         public void Enable()

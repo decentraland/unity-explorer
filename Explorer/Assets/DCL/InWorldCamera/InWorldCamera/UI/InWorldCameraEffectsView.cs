@@ -5,40 +5,25 @@ namespace DCL.InWorldCamera.UI
 {
     public class InWorldCameraEffectsView : MonoBehaviour
     {
-        private struct DefaultCameraEffects
-        {
-            public float PostExposure;
-            public float Contrast;
-            public float Saturation;
-            public float HueShift;
-            public Color FilterColor;
-        }
-
-        [field: Header("Basic Color Adjustments")]
-        [field: SerializeField, Range(-5f, 5f)] private float postExposure;
-        [field: SerializeField, Range(-100f, 100f)] private float contrast;
-        [field: SerializeField, Range(-100f, 100f)] private float saturation;
-        [field: SerializeField, Range(-100f, 100f)] private float hueShift;
+        [Header("Basic Color Adjustments")]
+        [SerializeField, Range(-5f, 5f)] private float postExposure;
+        [SerializeField, Range(-100f, 100f)] private float contrast;
+        [SerializeField, Range(-100f, 100f)] private float saturation;
+        [SerializeField, Range(-100f, 100f)] private float hueShift;
 
         [Header("Color Filter")]
-        [field: SerializeField, Range(0, 360f)] private float filterHue;
-        [field: SerializeField, Range(0, 360f)] private float filterSaturation;
-        [field: SerializeField, Range(0, 100f)] private float filterValue = 100f;
-        [field: SerializeField, Range(0, 360f)] public float FilterIntensity { get; private set; }
+        [SerializeField, Range(0, 360f)] private float filterHue;
+        [SerializeField, Range(0, 100f)] private float filterSaturation;
+        [SerializeField, Range(0, 100f)] private float filterValue = 100f;
+        [field: SerializeField] [field: Range(0, 100f)] public float FilterIntensity { get; private set; }
 
         private Color filterColor = Color.white;
 
-        public ReactiveProperty<float> PostExposure { get; private set; }
-        public ReactiveProperty<float> Contrast { get; private set;}
-        public ReactiveProperty<float> Saturation { get; private set; }
-        public ReactiveProperty<float> HueShift { get; private set; }
-        public ReactiveProperty<Color> FilterColor { get; private set; }
-
         [Header("Depth of Field")]
-        [field: SerializeField] public bool EnableDOF = false;
-        [field: SerializeField, Range(0, 50f)] public float FocusDistance = 10f;
-        [field: SerializeField, Range(1, 300f)] public float FocalLength = 50f;  // Changed range to be more camera-like
-        [field: SerializeField, Range(1, 32f)] public float Aperture = 5.6f;     // F-stops like in real cameras
+        [SerializeField] private bool enableDOF;
+        [SerializeField, Range(0, 150f)] private float focusDistance = 10f;
+        [SerializeField, Range(1, 300f)] private float focalLength = 50f;
+        [SerializeField, Range(1, 32f)] private float aperture = 5.6f;
 
         // [Header("Autofocus")]
         // [field: SerializeField] public bool EnableAutofocus = false;
@@ -50,6 +35,17 @@ namespace DCL.InWorldCamera.UI
 
         private DefaultCameraEffects defaults;
 
+        public ReactiveProperty<float> PostExposure { get; private set; }
+        public ReactiveProperty<float> Contrast { get; private set; }
+        public ReactiveProperty<float> Saturation { get; private set; }
+        public ReactiveProperty<float> HueShift { get; private set; }
+        public ReactiveProperty<Color> FilterColor { get; private set; }
+
+        public ReactiveProperty<bool> EnabledDof { get; private set; }
+        public ReactiveProperty<float> FocusDistance { get; private set; }
+        public ReactiveProperty<float> FocalLength { get; private set; }
+        public ReactiveProperty<float> Aperture { get; private set; }
+
         private void Awake()
         {
             defaults = new DefaultCameraEffects
@@ -58,7 +54,12 @@ namespace DCL.InWorldCamera.UI
                 Contrast = 0f,
                 Saturation = 0f,
                 HueShift = 0f,
-                FilterColor = Color.white
+                FilterColor = Color.white,
+
+                EnabledDof = false,
+                FocusDistance = 10f,
+                FocalLength = 50f,
+                Aperture = 5.6f,
             };
 
             PostExposure = new ReactiveProperty<float>(postExposure);
@@ -66,6 +67,11 @@ namespace DCL.InWorldCamera.UI
             Saturation = new ReactiveProperty<float>(saturation);
             HueShift = new ReactiveProperty<float>(hueShift);
             FilterColor = new ReactiveProperty<Color>(filterColor);
+
+            EnabledDof = new ReactiveProperty<bool>(enableDOF);
+            FocusDistance = new ReactiveProperty<float>(focusDistance);
+            FocalLength = new ReactiveProperty<float>(focalLength);
+            Aperture = new ReactiveProperty<float>(aperture);
         }
 
         private void Update()
@@ -77,6 +83,28 @@ namespace DCL.InWorldCamera.UI
 
             filterColor = Color.HSVToRGB(filterHue / 360f, filterSaturation / 100f, filterValue / 100f); // ranges are 0-1 in RGB
             FilterColor.Value = filterColor;
+
+            EnabledDof.Value = enableDOF;
+            if (enableDOF)
+            {
+                FocusDistance.Value = focusDistance;
+                FocalLength.Value = focalLength;
+                Aperture.Value = aperture;
+            }
+        }
+
+        private void OnDestroy()
+        {
+            PostExposure.Dispose();
+            Contrast.Dispose();
+            Saturation.Dispose();
+            HueShift.Dispose();
+            FilterColor.Dispose();
+
+            EnabledDof.Dispose();
+            FocusDistance.Dispose();
+            FocalLength.Dispose();
+            Aperture.Dispose();
         }
 
         public void Show()
@@ -93,6 +121,26 @@ namespace DCL.InWorldCamera.UI
             saturation = defaults.Saturation;
             hueShift = defaults.HueShift;
             filterColor = defaults.FilterColor;
+
+            enableDOF = defaults.EnabledDof;
+
+            focusDistance = defaults.FocusDistance;
+            focalLength = defaults.FocalLength;
+            aperture = defaults.Aperture;
+        }
+
+        private struct DefaultCameraEffects
+        {
+            public float PostExposure;
+            public float Contrast;
+            public float Saturation;
+            public float HueShift;
+            public Color FilterColor;
+
+            public bool EnabledDof;
+            public float FocusDistance;
+            public float FocalLength;
+            public float Aperture;
         }
     }
 }
