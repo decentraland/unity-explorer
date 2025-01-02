@@ -4,6 +4,7 @@ using DCL.AvatarRendering.Loading.Assets;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.Diagnostics;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -20,7 +21,14 @@ namespace DCL.AvatarRendering.AvatarShape.Helpers
             Transform parent)
         {
             var originalAssets = resultWearable.WearableAssetResults[avatarShapeComponent.BodyShape].Results;
-            var mainAsset = originalAssets[WearablePolymorphicBehaviour.MAIN_ASSET_INDEX]!.Value.Asset!;
+
+            if (originalAssets?[WearablePolymorphicBehaviour.MAIN_ASSET_INDEX]?.Asset == null)
+            {
+                ReportHub.LogError(ReportCategory.WEARABLE, $"Cannot find the asset for wearable with ID {resultWearable.DTO.id} name {resultWearable.DTO.Metadata.name} and body shape {avatarShapeComponent.BodyShape.Value}");
+                return null;
+            }
+
+            var mainAsset = originalAssets[WearablePolymorphicBehaviour.MAIN_ASSET_INDEX].Value.Asset!;
 
             string category = resultWearable.GetCategory();
 

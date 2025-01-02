@@ -70,7 +70,8 @@ namespace DCL.Multiplayer.Connections.Demo
             );
             var realFlowLoadingStatus = new LoadingStatus();
             realFlowLoadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.Completed);
-            system = new ConnectionRoomsSystem(world, archipelagoIslandRoom, new IGateKeeperSceneRoom.Fake(), realFlowLoadingStatus);
+
+            await archipelagoIslandRoom.StartAsync();
 
             while (this)
             {

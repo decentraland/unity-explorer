@@ -29,7 +29,7 @@ namespace DCL.Profiles.Self.Playground
         {
             var web3IdentityCache = new IWeb3IdentityCache.Default();
 
-            var profiles = new SelfProfile(
+            SelfProfile selfProfile = new SelfProfile(
                 new LogProfileRepository(
                     new RealmProfileRepository(
                         IWebRequestController.DEFAULT,
@@ -57,9 +57,9 @@ namespace DCL.Profiles.Self.Playground
                 null
             );
 
-            var profile = await profiles.ProfileAsync(ct);
+            var profile = await selfProfile.ProfileAsync(ct);
             ReportHub.Log(ReportData.UNSPECIFIED, $"Profile is found {profile != null}");
-            await profiles.PublishAsync(ct);
+            await selfProfile.PublishAsync(ct);
             ReportHub.Log(ReportData.UNSPECIFIED, $"Profile is published successfully");
         }
     }

@@ -12,18 +12,18 @@ namespace DCL.UI.ErrorPopup
         [SerializeField] private TMP_Text description = null!;
         [SerializeField] private Button okButton = null!;
 
+        [Header("Defaults")]
+        [SerializeField] private string defaultTitle = "Error";
+        [SerializeField] private string defaultDescription = "An unknown error occurred";
+        [SerializeField] private Sprite defaultIcon = null!;
+
         public Button OkButton => okButton;
 
         public void Apply(ErrorPopupData data)
         {
-            if (data.Icon != null)
-                icon.sprite = data.Icon;
-
-            if (data.Title != null)
-                title.text = data.Title;
-
-            if (data.Description != null)
-                description.text = data.Description;
+            icon.Apply(data.Icon, defaultIcon);
+            title.Apply(data.Title, defaultTitle);
+            description.Apply(data.Description, defaultDescription);
         }
     }
 }

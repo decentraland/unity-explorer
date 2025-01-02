@@ -33,5 +33,7 @@ namespace PortableExperiences.Controller
         {
             public bool status;
         }
+
+        void UnloadAllPortableExperiences();
     }
 }

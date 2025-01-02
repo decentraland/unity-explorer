@@ -23,6 +23,8 @@ MonoBehaviour:
       isEnabled: 1
     - eventName: error
       isEnabled: 1
+    - eventName: loading_error
+      isEnabled: 1
   - groupName: Map
     events:
     - eventName: map_jump_in
@@ -45,6 +47,8 @@ MonoBehaviour:
       isEnabled: 1
     - eventName: chat_bubble_switched
       isEnabled: 1
+    - eventName: open_support
+      isEnabled: 1
   - groupName: Wearables
     events:
     - eventName: used_emote
@@ -62,6 +66,36 @@ MonoBehaviour:
     - eventName: badges_tab_opened
       isEnabled: 1
     - eventName: badge_ui_click
+      isEnabled: 1
+  - groupName: CameraReel
+    events:
+    - eventName: photo_jump_to
+      isEnabled: 1
+    - eventName: photo_to_marketplace
+      isEnabled: 1
+    - eventName: open_camera
+      isEnabled: 1
+    - eventName: take_photo
+      isEnabled: 1
+    - eventName: open_camera_reel
+      isEnabled: 1
+    - eventName: open_photo
+      isEnabled: 1
+    - eventName: share_photo
+      isEnabled: 1
+    - eventName: download_photo
+      isEnabled: 1
+    - eventName: delete_photo
+      isEnabled: 1
+  - groupName: Authentication
+    events:
+    - eventName: logged_in_cached
+      isEnabled: 1
+    - eventName: logged_in
+      isEnabled: 1
+    - eventName: login_requested
+      isEnabled: 1
+    - eventName: verification_requested
       isEnabled: 1
   useLocalEnvVariableFallback: 0
   flushSize: 20

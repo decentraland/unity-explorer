@@ -24,5 +24,15 @@ namespace MVC
         void RegisterController<TView, TInputData>(IController<TView, TInputData> controller) where TView: IView;
 
         void SetAllViewsCanvasActive(bool isActive);
+
+        void SetAllViewsCanvasActive(IController except, bool isActive);
+    }
+
+    public static class ManagerExtensions
+    {
+        public static void ShowAndForget<TView, TInputData>(this IMVCManager mvcManager, ShowCommand<TView, TInputData> command, CancellationToken ct = default) where TView: IView
+        {
+            mvcManager.ShowAsync(command, ct).Forget();
+        }
     }
 }

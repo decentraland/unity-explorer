@@ -37,34 +37,20 @@ namespace DCL.AvatarRendering.Emotes
                     return;
 
                 foreach (RemoteEmoteIntention remoteEmoteIntention in emoteIntentions.Collection())
-                {
-                    Entity entity = EntityOrNull(remoteEmoteIntention.WalletId);
-
-                    // The entity was not created yet, so we wait until its created to be able to consume the intent
-                    if (entity == Entity.Null)
+                { // The entity was not created yet, so we wait until its created to be able to consume the intent
+                    if (!entityParticipantTable.TryGet(remoteEmoteIntention.WalletId, out IReadOnlyEntityParticipantTable.Entry entry))
                     {
                         savedIntentions!.Add(remoteEmoteIntention);
                         continue;
                     }
 
-                    ref CharacterEmoteIntent intention = ref World!.AddOrGet<CharacterEmoteIntent>(entity);
+                    ref CharacterEmoteIntent intention = ref World!.AddOrGet<CharacterEmoteIntent>(entry.Entity);
                     intention.UpdateRemoteId(remoteEmoteIntention.EmoteId);
                 }
             }
 
             foreach (RemoteEmoteIntention savedIntention in savedIntentions!)
                 emotesMessageBus.SaveForRetry(savedIntention);
-        }
-
-        private Entity EntityOrNull(string walletId)
-        {
-            if (identityCache.Identity!.Address.Equals(walletId))
-                return playerEntity;
-
-            if (entityParticipantTable.Has(walletId))
-                return entityParticipantTable.Entity(walletId);
-
-            return Entity.Null;
         }
     }
 }

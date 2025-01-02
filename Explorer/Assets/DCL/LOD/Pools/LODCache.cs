@@ -64,13 +64,5 @@ namespace DCL.LOD
             }
         }
 
-        public void UnloadImmediate()
-        {
-            while (unloadQueue.TryDequeue(out var key) && lodCache.Remove(key, out var asset))
-            {
-                lodsGroupsPool.Release(asset.LodGroup);
-                asset.Dispose();
-            }
-        }
     }
 }

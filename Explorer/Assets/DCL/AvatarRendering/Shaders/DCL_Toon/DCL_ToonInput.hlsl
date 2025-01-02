@@ -169,6 +169,9 @@ UNITY_DEFINE_INSTANCED_PROP(int, _lastWearableVertCount)
 UNITY_DEFINE_INSTANCED_PROP(int, _lastAvatarVertCount)
 UNITY_DEFINE_INSTANCED_PROP(float4, _HighlightObjectOffset)
 UNITY_DEFINE_INSTANCED_PROP(float4, _HighlightColour)
+UNITY_DEFINE_INSTANCED_PROP(float, _EndFadeDistance)
+UNITY_DEFINE_INSTANCED_PROP(float, _StartFadeDistance)
+UNITY_DEFINE_INSTANCED_PROP(float, _FadeDistance)
 UNITY_INSTANCING_BUFFER_END(UnityPerMaterial)
 
 #define _utsTechnique                       UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _utsTechnique)
@@ -334,6 +337,9 @@ UNITY_INSTANCING_BUFFER_END(UnityPerMaterial)
 #define _lastAvatarVertCount                UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _lastAvatarVertCount)
 #define _HighlightObjectOffset              UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _HighlightObjectOffset)
 #define _HighlightColour                    UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _HighlightColour)
+#define _EndFadeDistance                    UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _EndFadeDistance)
+#define _StartFadeDistance                  UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _StartFadeDistance)
+#define _FadeDistance                       UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _FadeDistance)
 
 #ifdef _DCL_TEXTURE_ARRAYS
     #define DCL_DECLARE_TEX2DARRAY(tex) Texture2DArray tex; SamplerState sampler##tex
@@ -559,4 +565,4 @@ inline void InitializeStandardLitSurfaceData(float2 uv, out SurfaceData outSurfa
     outSurfaceData.emission = SampleEmission(uv, _EmissionColor.rgb);
 }
 
-#endif // UNIVERSAL_INPUT_SURFACE_PBR_INCLUDED
+#endif // DCL_TOON_INPUT_INCLUDED

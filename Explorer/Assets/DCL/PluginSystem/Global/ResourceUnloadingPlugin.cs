@@ -8,11 +8,11 @@ namespace DCL.PluginSystem.Global
 {
     public class ResourceUnloadingPlugin : IDCLGlobalPluginWithoutSettings
     {
-        private readonly MemoryBudget memoryBudget;
+        private readonly IMemoryUsageProvider memoryBudget;
         private readonly UnloadStrategyHandler unloadStrategyHandler;
 
 
-        public ResourceUnloadingPlugin(MemoryBudget memoryBudget, CacheCleaner cacheCleaner,
+        public ResourceUnloadingPlugin(IMemoryUsageProvider memoryBudget, CacheCleaner cacheCleaner,
             IRealmPartitionSettings realmPartitionSettings)
         {
             this.memoryBudget = memoryBudget;

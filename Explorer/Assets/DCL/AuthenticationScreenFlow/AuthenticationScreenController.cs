@@ -6,6 +6,7 @@ using DCL.CharacterPreview;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.SceneLoadingScreens.SplashScreen;
@@ -61,6 +62,7 @@ namespace DCL.AuthenticationScreenFlow
         private readonly ICharacterPreviewFactory characterPreviewFactory;
         private readonly ISplashScreen splashScreenAnimator;
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
+        private readonly BuildData buildData;
 #if !UNITY_EDITOR
         private readonly FeatureFlagsCache featureFlagsCache;
 #endif
@@ -74,9 +76,10 @@ namespace DCL.AuthenticationScreenFlow
         private StringVariable? profileNameLabel;
         private float originalWorldAudioVolume;
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Overlay;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Fullscreen;
 
         public ReactiveProperty<AuthenticationStatus> CurrentState { get; } = new (AuthenticationStatus.Init);
+        public string CurrentRequestID { get; private set; } = string.Empty;
 
         public AuthenticationScreenController(
             ViewFactoryMethod viewFactory,
@@ -89,6 +92,7 @@ namespace DCL.AuthenticationScreenFlow
             ISplashScreen splashScreenAnimator,
             CharacterPreviewEventBus characterPreviewEventBus,
             AudioMixerVolumesController audioMixerVolumesController,
+            BuildData buildData,
             World world)
             : base(viewFactory)
         {
@@ -103,6 +107,7 @@ namespace DCL.AuthenticationScreenFlow
             this.splashScreenAnimator = splashScreenAnimator;
             this.characterPreviewEventBus = characterPreviewEventBus;
             this.audioMixerVolumesController = audioMixerVolumesController;
+            this.buildData = buildData;
             this.world = world;
         }
 
@@ -132,11 +137,12 @@ namespace DCL.AuthenticationScreenFlow
             viewInstance.VerificationCodeHintButton.onClick.AddListener(OpenOrCloseVerificationCodeHint);
             viewInstance.DiscordButton.onClick.AddListener(OpenDiscord);
             viewInstance.RequestAlphaAccessButton.onClick.AddListener(RequestAlphaAccess);
-            viewInstance.VersionText.text = Application.version;
-#if UNITY_EDITOR
-            viewInstance.VersionText.text = "editor-version";
-#endif
 
+#if UNITY_EDITOR
+            viewInstance.VersionText.text = $"editor-version - {buildData.InstallSource}";
+#else
+            viewInstance.VersionText.text = $"{Application.version} - {buildData.InstallSource}";
+#endif
             characterPreviewController = new AuthenticationScreenCharacterPreviewController(viewInstance.CharacterPreviewView, characterPreviewFactory, world, characterPreviewEventBus);
         }
 
@@ -246,6 +252,8 @@ namespace DCL.AuthenticationScreenFlow
             {
                 try
                 {
+                    CurrentRequestID = string.Empty;
+
                     viewInstance!.ConnectingToServerContainer.SetActive(true);
                     viewInstance.LoginButton.interactable = false;
 
@@ -284,9 +292,10 @@ namespace DCL.AuthenticationScreenFlow
             StartLoginFlowUntilEndAsync(loginCancellationToken.Token).Forget();
         }
 
-        private void ShowVerification(int code, DateTime expiration)
+        private void ShowVerification(int code, DateTime expiration, string requestID)
         {
             viewInstance!.VerificationCodeLabel.text = code.ToString();
+            CurrentRequestID = requestID;
 
             CancelVerificationCountdown();
             verificationCountdownCancellationToken = new CancellationTokenSource();

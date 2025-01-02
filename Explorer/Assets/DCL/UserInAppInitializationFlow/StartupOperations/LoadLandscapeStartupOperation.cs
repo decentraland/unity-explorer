@@ -6,24 +6,23 @@ using Utility.Types;
 
 namespace DCL.UserInAppInitializationFlow.StartupOperations
 {
-    public class LoadLandscapeStartupOperation : IStartupOperation
+    public class LoadLandscapeStartupOperation : StartUpOperationBase
     {
         private readonly ILoadingStatus loadingStatus;
-        private readonly IRealmNavigator realmNavigator;
+        private readonly ILandscape landscape;
 
-        public LoadLandscapeStartupOperation(ILoadingStatus loadingStatus, IRealmNavigator realmNavigator)
+        public LoadLandscapeStartupOperation(ILoadingStatus loadingStatus, ILandscape landscape)
         {
             this.loadingStatus = loadingStatus;
-            this.realmNavigator = realmNavigator;
+            this.landscape = landscape;
         }
 
-        public async UniTask<Result> ExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct)
+        protected override async UniTask InternalExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct)
         {
             float finalizationProgress = loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.LandscapeLoading);
             AsyncLoadProcessReport landscapeLoadReport = report.CreateChildReport(finalizationProgress);
-            await realmNavigator.LoadTerrainAsync(landscapeLoadReport, ct);
+            await landscape.LoadTerrainAsync(landscapeLoadReport, ct);
             report.SetProgress(finalizationProgress);
-            return Result.SuccessResult();
         }
     }
 }

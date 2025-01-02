@@ -17,17 +17,15 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
             this.healthCheck = healthCheck;
         }
 
-        public async UniTask<Result> ExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct)
+        public async UniTask<EnumResult<TaskError>> ExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct)
         {
             float finalizationProgress = loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.LiveKitConnectionEnsuring);
-            (bool success, string? errorMessage) result = await healthCheck.IsRemoteAvailableAsync(ct);
+            Result result = await healthCheck.IsRemoteAvailableAsync(ct);
 
-            if (result.success)
+            if (result.Success)
                 report.SetProgress(finalizationProgress);
 
-            return result.success
-                ? Result.SuccessResult()
-                : Result.ErrorResult(result.errorMessage!);
+            return result.AsEnumResult(TaskError.MessageError);
         }
     }
 }

@@ -136,6 +136,9 @@ namespace DCL.Chat
             viewInstance.ChatBubblesToggle.Toggle.SetIsOnWithoutNotify(nametagsData.showChatBubbles);
             OnToggleChatBubblesValueChanged(nametagsData.showChatBubbles);
             OnFocus();
+
+            // Intro message
+            chatHistory.AddMessage(ChatMessage.NewFromSystem("Type /help for available commands."));
         }
 
         protected override void OnViewShow()
@@ -265,13 +268,13 @@ namespace DCL.Chat
         private void DisableUnwantedInputs()
         {
             world.AddOrGet(cameraEntity, new CameraBlockerComponent());
-            inputBlock.Disable(InputMapComponent.Kind.CAMERA , InputMapComponent.Kind.SHORTCUTS , InputMapComponent.Kind.PLAYER);
+            inputBlock.Disable(InputMapComponent.BLOCK_USER_INPUT);
         }
 
         private void EnableUnwantedInputs()
         {
             world.TryRemove<CameraBlockerComponent>(cameraEntity);
-            inputBlock.Enable(InputMapComponent.Kind.CAMERA , InputMapComponent.Kind.SHORTCUTS , InputMapComponent.Kind.PLAYER);
+            inputBlock.Enable(InputMapComponent.BLOCK_USER_INPUT);
         }
 
         private void OnSubmitAction(InputAction.CallbackContext obj)
@@ -458,9 +461,9 @@ namespace DCL.Chat
 
         private void CreateChatEntry(ChatMessage chatMessage)
         {
-            if (chatMessage.SentByOwnUser == false && entityParticipantTable.Has(chatMessage.WalletAddress))
+            if (chatMessage.SentByOwnUser == false && entityParticipantTable.TryGet(chatMessage.WalletAddress, out IReadOnlyEntityParticipantTable.Entry entry))
             {
-                Entity entity = entityParticipantTable.Entity(chatMessage.WalletAddress);
+                Entity entity = entry.Entity;
                 GenerateChatBubbleComponent(entity, chatMessage);
                 UIAudioEventsBus.Instance.SendPlayAudioEvent(viewInstance!.ChatReceiveMessageAudio);
             }

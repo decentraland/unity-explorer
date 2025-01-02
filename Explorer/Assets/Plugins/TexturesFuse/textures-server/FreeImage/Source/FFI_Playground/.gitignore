@@ -1,0 +1,7 @@
+CMakeFiles/
+library_build/
+astc-encoder-build/
+Makefile
+CMakeCache.txt
+cmake_install.cmake
+compile_commands.json

@@ -27,6 +27,8 @@ namespace DCL.SDKComponents.SceneUI.Components
 
         internal EventCallback<PointerDownEvent> currentOnPointerDownCallback;
         internal EventCallback<PointerUpEvent> currentOnPointerUpCallback;
+        internal EventCallback<PointerEnterEvent> currentOnPointerEnterCallback;
+        internal EventCallback<PointerLeaveEvent> currentOnPointerLeaveCallback;
 
 
         private VisualElement rootTransform;

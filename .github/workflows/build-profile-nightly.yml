@@ -11,8 +11,8 @@ jobs:
     timeout-minutes: 5
     outputs:
       latest_version: ${{ steps.get_version.outputs.latest_version }}
-      full_version: ${{ steps.get_version.outputs.next_full_version }}
-      tag_version: ${{ steps.get_version.outputs.next_tag_version }}
+      full_version: ${{ steps.get_version.outputs.short_version }}
+      tag_version: ${{ steps.get_version.outputs.tag_version }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -34,5 +34,6 @@ jobs:
       version: ${{ needs.get-info.outputs.full_version }}
       sentry_enabled: true
       is_release_build: false
+      install_source: launcher
       tag_version: ${{ needs.get-info.outputs.tag_version }}
     secrets: inherit

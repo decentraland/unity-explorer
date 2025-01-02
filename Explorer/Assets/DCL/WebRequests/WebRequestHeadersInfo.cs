@@ -42,7 +42,8 @@ namespace DCL.WebRequests
         public WebRequestHeadersInfo WithSign(string jsonMetaData, ulong unixTimestamp)
         {
             Add("x-identity-timestamp", unixTimestamp.ToString()!);
-            Add("x-identity-metadata", jsonMetaData);
+            Add("x-identity-metadata", string.IsNullOrEmpty(jsonMetaData) ? "{}" : jsonMetaData);
+
             return this;
         }
 

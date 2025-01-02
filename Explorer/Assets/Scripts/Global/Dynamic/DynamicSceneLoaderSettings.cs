@@ -9,15 +9,13 @@ namespace Global.Dynamic
     [CreateAssetMenu(fileName = "DynamicSceneLoaderSettings", menuName = "SO/DynamicSceneLoaderSettings")]
     public class DynamicSceneLoaderSettings : ScriptableObject
     {
-        private const string ENV_PARAM = "dclenv";
-
         [field: SerializeField] public DecentralandEnvironment DecentralandEnvironment { get; private set; }
         [field: SerializeField] public List<string> Realms { get; private set; }
         [field: SerializeField] public List<string> Web3WhitelistMethods { get; private set; }
 
         public void ApplyConfig(IAppArgs applicationParametersParser)
         {
-            if (applicationParametersParser.TryGetValue(ENV_PARAM, out string? environment))
+            if (applicationParametersParser.TryGetValue(AppArgsFlags.ENVIRONMENT, out string? environment))
                 ParseEnvironment(environment!);
         }
 
