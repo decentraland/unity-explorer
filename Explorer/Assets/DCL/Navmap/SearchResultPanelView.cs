@@ -2,11 +2,13 @@ using DCL.AssetsProvision;
 using System;
 using UnityEngine;
 using UnityEngine.UI;
+using Button = UnityEngine.UI.Button;
 
 namespace DCL.Navmap
 {
     public class SearchResultPanelView : MonoBehaviour
     {
+
         [field: SerializeField]
         public GameObject NoResultsContainer { get; private set; }
 
@@ -15,6 +17,9 @@ namespace DCL.Navmap
 
         [field: SerializeField]
         public RectTransform searchResultsContainer;
+
+        [field: SerializeField]
+        public ScrollRect scrollView;
 
         [field: SerializeField]
         public CanvasGroup CanvasGroup { get; private set; }

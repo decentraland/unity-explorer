@@ -70,12 +70,12 @@ namespace DCL.Navmap
                 PlaceElementView placeElementView = resultsPool.Get();
                 usedPoolElements.Add(key, placeElementView);
             }
+            view.scrollView.verticalNormalizedPosition = 1;
         }
 
         public void SetResults(IReadOnlyList<PlacesData.PlaceInfo> places)
         {
             ClearResults();
-
             view.NoResultsContainer.gameObject.SetActive(places.Count == 0);
             view.PaginationContainer.SetActive(places.Count > 0);
 
