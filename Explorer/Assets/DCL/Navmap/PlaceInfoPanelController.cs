@@ -157,6 +157,8 @@ namespace DCL.Navmap
             view.CoordinatesLabel.text = place.base_position;
             view.ParcelCountLabel.text = place.Positions.Length.ToString();
             view.AppearsOnContainer.SetActive(place.categories.Length > 0);
+            view.StartNavigationButton.gameObject.SetActive(true);
+            view.StopNavigationButton.gameObject.SetActive(false);
 
             likeButton.SetButtonState(place.user_like);
             dislikeButton.SetButtonState(place.user_dislike);
@@ -164,7 +166,6 @@ namespace DCL.Navmap
 
             SetCategories(place);
 
-            UpdateDestinationStatus();
             ClearEventElements();
         }
 
@@ -228,31 +229,26 @@ namespace DCL.Navmap
         private void StartNavigation()
         {
             if (place == null) return;
+            view.StopNavigationButton.gameObject.SetActive(true);
+            view.StartNavigationButton.gameObject.SetActive(false);
             navmapBus.SelectDestination(place);
         }
 
         private void StopNavigation()
         {
             mapPathEventBus.RemoveDestination();
+            view.StopNavigationButton.gameObject.SetActive(false);
+            view.StartNavigationButton.gameObject.SetActive(true);
         }
 
         private void RemoveDestination()
         {
             destination = null;
-            UpdateDestinationStatus();
         }
 
         private void SetDestination(Vector2Int parcel, IPinMarker? arg2)
         {
             destination = parcel;
-            UpdateDestinationStatus();
-        }
-
-        private void UpdateDestinationStatus()
-        {
-            bool isDestinationThisPlace = destination == currentBaseParcel;
-            view.StartNavigationButton.gameObject.SetActive(!isDestinationThisPlace);
-            view.StopNavigationButton.gameObject.SetActive(isDestinationThisPlace);
         }
 
         private void SetAsHome()
