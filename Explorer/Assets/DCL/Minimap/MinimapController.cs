@@ -182,6 +182,8 @@ namespace DCL.Minimap
                 mapRendererTrackPlayerPosition = new MapRendererTrackPlayerPosition(mapCameraController);
                 viewInstance.mapRendererTargetImage.texture = mapCameraController.GetRenderTexture();
                 viewInstance.pixelPerfectMapRendererTextureProvider.Activate(mapCameraController);
+
+                //Once the render target image is ready to be shown, we enable the minimap
                 viewInstance.SetCanvasActive(true);
                 GetPlaceInfoAsync(position);
             }
