@@ -17,7 +17,7 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations.Struct
             this.operations = operations;
         }
 
-        public async UniTask<Result> ExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct)
+        public async UniTask<EnumResult<TaskError>> ExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct)
         {
             foreach (IStartupOperation startupOperation in operations)
             {
@@ -31,7 +31,7 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations.Struct
                 }
             }
 
-            return Result.SuccessResult();
+            return EnumResult<TaskError>.SuccessResult();
         }
     }
 }

@@ -43,7 +43,6 @@ namespace DCL.Minimap
         private readonly IPlacesAPIService placesAPIService;
         private readonly IRealmData realmData;
         private readonly IChatMessagesBus chatMessagesBus;
-        private readonly IRealmNavigator realmNavigator;
         private readonly IScenesCache scenesCache;
         private readonly IMapPathEventBus mapPathEventBus;
         private readonly ISceneRestrictionBusController sceneRestrictionBusController;
@@ -63,18 +62,21 @@ namespace DCL.Minimap
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
 
         public MinimapController(
-            ViewFactoryMethod viewFactory,
+            MinimapView minimapView,
             IMapRenderer mapRenderer,
             IMVCManager mvcManager,
             IPlacesAPIService placesAPIService,
             IRealmController realmController,
             IChatMessagesBus chatMessagesBus,
-            IRealmNavigator realmNavigator,
             IScenesCache scenesCache,
             IMapPathEventBus mapPathEventBus,
             ISceneRestrictionBusController sceneRestrictionBusController,
             string startParcelInGenesis
-        ) : base(viewFactory)
+        ) : base(() =>
+        {
+            minimapView.gameObject.SetActive(true);
+            return minimapView;
+        })
         {
             this.mapRenderer = mapRenderer;
             this.mvcManager = mvcManager;
@@ -82,7 +84,6 @@ namespace DCL.Minimap
             this.realmController = realmController;
             realmData = realmController.RealmData;
             this.chatMessagesBus = chatMessagesBus;
-            this.realmNavigator = realmNavigator;
             this.scenesCache = scenesCache;
             this.mapPathEventBus = mapPathEventBus;
             this.sceneRestrictionBusController = sceneRestrictionBusController;
@@ -92,7 +93,7 @@ namespace DCL.Minimap
         public void HookPlayerPositionTrackingSystem(TrackPlayerPositionSystem system) =>
             AddModule(new BridgeSystemBinding<TrackPlayerPositionSystem>(this, QueryPlayerPositionQuery, system));
 
-        private void OnRealmChanged(RealmType realmType)
+        public void OnRealmChanged(RealmType realmType)
         {
             SetGenesisMode(realmType is RealmType.GenesisCity);
             previousParcelPosition = new Vector2Int(int.MaxValue, int.MaxValue);
@@ -104,14 +105,15 @@ namespace DCL.Minimap
             viewInstance.collapseMinimapButton.onClick.AddListener(CollapseMinimap);
             viewInstance.minimapRendererButton.Button.onClick.AddListener(() => mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Navmap))).Forget());
             viewInstance.sideMenuButton.onClick.AddListener(OpenSideMenu);
+
             viewInstance.goToGenesisCityButton.onClick.AddListener(() =>
                 chatMessagesBus.Send($"/{ChatCommandsUtils.COMMAND_GOTO} {startParcelInGenesis}", ORIGIN));
+
             viewInstance.SideMenuCanvasGroup.alpha = 0;
             viewInstance.SideMenuCanvasGroup.gameObject.SetActive(false);
             new SideMenuController(viewInstance.sideMenuView);
             sceneRestrictionsController = new SceneRestrictionsController(viewInstance.sceneRestrictionsView, sceneRestrictionBusController);
             SetGenesisMode(realmController.IsGenesis());
-            realmNavigator.RealmChanged += OnRealmChanged;
             mapPathEventBus.OnShowPinInMinimapEdge += ShowPinInMinimapEdge;
             mapPathEventBus.OnHidePinInMinimapEdge += HidePinInMinimapEdge;
             mapPathEventBus.OnRemovedDestination += HidePinInMinimapEdge;
@@ -161,7 +163,6 @@ namespace DCL.Minimap
         {
             viewInstance!.destinationPinMarker.HidePin();
         }
-
 
         [Query]
         [All(typeof(PlayerComponent))]
@@ -251,19 +252,21 @@ namespace DCL.Minimap
 
         private void SetGenesisMode(bool isGenesisModeActivated)
         {
+            if (viewInstance == null)
+                return;
+
             foreach (GameObject go in viewInstance!.objectsToActivateForGenesis)
                 go.SetActive(isGenesisModeActivated);
 
             foreach (GameObject go in viewInstance.objectsToActivateForWorlds)
                 go.SetActive(!isGenesisModeActivated);
 
-            viewInstance.minimapAnimator.runtimeAnimatorController = isGenesisModeActivated ?  viewInstance.genesisCityAnimatorController : viewInstance.worldsAnimatorController;
+            viewInstance.minimapAnimator.runtimeAnimatorController = isGenesisModeActivated ? viewInstance.genesisCityAnimatorController : viewInstance.worldsAnimatorController;
         }
 
         public override void Dispose()
         {
             cts.SafeCancelAndDispose();
-            realmNavigator.RealmChanged -= OnRealmChanged;
             mapPathEventBus.OnShowPinInMinimapEdge -= ShowPinInMinimapEdge;
             mapPathEventBus.OnHidePinInMinimapEdge -= HidePinInMinimapEdge;
             sceneRestrictionsController?.Dispose();

@@ -7,7 +7,11 @@ namespace DCL.PluginSystem
 {
     public static class PluginContainerExtensions
     {
-        public static async UniTask<(TPlugin plugin, bool success)> InitializePluginAsync<TPlugin>(this IPluginSettingsContainer pluginSettingsContainer, TPlugin plugin, CancellationToken ct) where TPlugin: class, IDCLPlugin
+        public static async UniTask<(TPlugin plugin, bool success)> InitializePluginAsync<TPlugin>(
+            this IPluginSettingsContainer pluginSettingsContainer,
+            TPlugin plugin,
+            CancellationToken ct
+        ) where TPlugin: class, IDCLPlugin
         {
             try { await plugin.Initialize(pluginSettingsContainer, ct); }
             catch (Exception e) when (e is not OperationCanceledException)

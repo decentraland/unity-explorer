@@ -8,18 +8,18 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
 {
     public class ReelThumbnailView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IDisposable
     {
-        [Header("References")]
-        [SerializeField] internal RawImage thumbnailImage;
-        [SerializeField] internal LoadingBrightView loadingBrightView;
-        [SerializeField] internal RectTransform optionButtonContainer;
-        [SerializeField] internal Button button;
-        [SerializeField] internal GameObject outline;
+        [field: Header("References")]
+        [field: SerializeField] internal RawImage thumbnailImage { get; private set; }
+        [field: SerializeField] internal LoadingBrightView loadingBrightView { get; private set; }
+        [field: SerializeField] internal RectTransform optionButtonContainer { get; private set; }
+        [field: SerializeField] internal Button button { get; private set; }
+        [field: SerializeField] internal GameObject outline { get; private set; }
 
-        [Header("Configuration")]
-        [SerializeField] internal Vector3 optionButtonOffset = new (-11f, -23f, 0);
-        [SerializeField] internal float scaleFactorOnHover = 1.03f;
-        [SerializeField] internal float scaleAnimationDuration = 0.3f;
-        [SerializeField] internal float thumbnailLoadedAnimationDuration = 0.3f;
+        [field: Header("Configuration")]
+        [field: SerializeField] internal Vector3 optionButtonOffset { get; private set; } = new (-11f, -23f, 0);
+        [field: SerializeField] internal float scaleFactorOnHover { get; private set; } = 1.03f;
+        [field: SerializeField] internal float scaleAnimationDuration { get; private set; } = 0.3f;
+        [field: SerializeField] internal float thumbnailLoadedAnimationDuration { get; private set; } = 0.3f;
 
         internal event Action? PointerEnter;
         internal event Action? PointerExit;

@@ -1,5 +1,5 @@
 using DCL.InWorldCamera.CameraReelGallery.Components;
-using DCL.UI;
+using DCL.InWorldCamera.CameraReelToast;
 using System;
 using UnityEngine;
 using UnityEngine.UI;
@@ -8,36 +8,34 @@ namespace DCL.InWorldCamera.CameraReelGallery
 {
     public class CameraReelGalleryView : MonoBehaviour
     {
-        [Header("References")]
-        [SerializeField] internal RectTransform scrollContentRect;
-        [SerializeField] internal ScrollRect scrollRect;
-        [SerializeField] internal RectTransform elementMask;
-        [SerializeField] internal ScrollDragHandler scrollRectDragHandler;
-        [SerializeField] internal ScrollDragHandler scrollBarDragHandler;
-        [SerializeField] internal Scrollbar verticalScrollbar;
-        [SerializeField] internal GameObject loadingSpinner;
+        [field: Header("References")]
+        [field: SerializeField] internal RectTransform scrollContentRect { get; private set; }
+        [field: SerializeField] internal ScrollRect scrollRect { get; private set; }
+        [field: SerializeField] internal RectTransform elementMask { get; private set; }
+        [field: SerializeField] internal ScrollDragHandler scrollRectDragHandler { get; private set; }
+        [field: SerializeField] internal ScrollDragHandler scrollBarDragHandler { get; private set; }
+        [field: SerializeField] internal GameObject loadingSpinner { get; private set; }
+        [field: SerializeField] internal GameObject emptyState { get; private set; }
 
-        [Header("Nullable references")]
-        [SerializeField] internal Button deleteReelButton;
-        [SerializeField] internal Button cancelDeleteIntentButton;
-        [SerializeField] internal Button cancelDeleteIntentBackgroundButton;
-        [SerializeField] internal WarningNotificationView errorNotificationView;
-        [SerializeField] internal WarningNotificationView successNotificationView;
-        [SerializeField] internal CanvasGroup deleteReelModal;
+        [field: Header("Nullable references")]
+        [field: SerializeField] internal Button deleteReelButton { get; private set; }
+        [field: SerializeField] internal Button cancelDeleteIntentButton { get; private set; }
+        [field: SerializeField] internal Button cancelDeleteIntentBackgroundButton { get; private set; }
+        [field: SerializeField] internal CameraReelToastMessage cameraReelToastMessage { get; private set; }
+        [field: SerializeField] internal CanvasGroup deleteReelModal { get; private set; }
 
-        [Header("Configuration")]
-        public int paginationLimit = 100;
-        [SerializeField] internal int loadMoreCounterThreshold = 12;
-        [SerializeField] internal float errorSuccessToastDuration = 3f;
-        [SerializeField] internal float deleteModalAnimationDuration = 0.3f;
+        [field: Header("Configuration")]
+        [field: SerializeField] public int PaginationLimit { get; private set; } = 100;
+        [field: SerializeField] internal int loadMoreCounterThreshold { get; private set; } = 12;
+        [field: SerializeField] internal float deleteModalAnimationDuration { get; private set; } = 0.3f;
 
-        [Header("Thumbnail objects")]
-        [SerializeField] internal ReelThumbnailView thumbnailViewPrefab;
-        [SerializeField] internal GameObject unusedThumbnailViewObject;
+        [field: Header("Thumbnail objects")]
+        [field: SerializeField] internal ReelThumbnailView thumbnailViewPrefab { get; private set; }
+        [field: SerializeField] internal GameObject unusedThumbnailViewObject { get; private set; }
 
-        [Header("Grid objects")]
-        [SerializeField] internal MonthGridView monthGridPrefab;
-        [SerializeField] internal GameObject unusedGridViewObject;
+        [field: Header("Grid objects")]
+        [field: SerializeField] internal MonthGridView monthGridPrefab { get; private set; }
+        [field: SerializeField] internal GameObject unusedGridViewObject { get; private set; }
 
         internal event Action? Disable;
 

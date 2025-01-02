@@ -14,7 +14,7 @@ namespace DCL.InWorldCamera.CameraReelStorageService
 
         public event Action<CameraReelResponse, CameraReelStorageStatus, string>? ScreenshotUploaded;
 
-        public CameraReelRemoteStorageService(ICameraReelImagesMetadataDatabase imagesMetadataDatabase, ICameraReelScreenshotsStorage screenshotsStorage, string userAddress)
+        public CameraReelRemoteStorageService(ICameraReelImagesMetadataDatabase imagesMetadataDatabase, ICameraReelScreenshotsStorage screenshotsStorage, string? userAddress)
         {
             this.imagesMetadataDatabase = imagesMetadataDatabase;
             this.screenshotsStorage = screenshotsStorage;
@@ -76,8 +76,8 @@ namespace DCL.InWorldCamera.CameraReelStorageService
             return StorageStatus;
         }
 
-        public UniTask<Texture2D> GetScreenshotImageAsync(string url, CancellationToken ct = default) =>
-            screenshotsStorage.GetScreenshotImageAsync(url, ct);
+        public UniTask<Texture2D> GetScreenshotImageAsync(string url, bool compressed, CancellationToken ct = default) =>
+            screenshotsStorage.GetScreenshotImageAsync(url, compressed, ct);
 
         public UniTask<Texture2D> GetScreenshotThumbnailAsync(string url, CancellationToken ct = default) =>
             screenshotsStorage.GetScreenshotThumbnailAsync(url, ct);

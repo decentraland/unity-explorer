@@ -16,6 +16,29 @@ namespace ECS.SceneLifeCycle.Realm
         NotReachable,
     }
 
+    public static class ChangeRealmErrors
+    {
+        public static TaskError AsTaskError(this ChangeRealmError e) =>
+            e switch
+            {
+                ChangeRealmError.MessageError => TaskError.MessageError,
+                ChangeRealmError.ChangeCancelled => TaskError.Cancelled,
+                ChangeRealmError.SameRealm => TaskError.MessageError,
+                ChangeRealmError.NotReachable => TaskError.MessageError,
+                _ => throw new ArgumentOutOfRangeException(nameof(e), e, null)
+            };
+
+        public static ChangeRealmError AsChangeRealmError(this TaskError e) =>
+            e switch
+            {
+                TaskError.MessageError => ChangeRealmError.MessageError,
+                TaskError.Timeout => ChangeRealmError.MessageError,
+                TaskError.Cancelled => ChangeRealmError.ChangeCancelled,
+                TaskError.UnexpectedException => ChangeRealmError.MessageError,
+                _ => throw new ArgumentOutOfRangeException(nameof(e), e, null)
+            };
+    }
+
     public interface IRealmNavigator
     {
         public const string WORLDS_DOMAIN = "https://worlds-content-server.decentraland.org/world";
@@ -28,20 +51,16 @@ namespace ECS.SceneLifeCycle.Realm
         public const string SDK_TEST_SCENES_URL = "https://sdk-team-cdn.decentraland.org/ipfs/sdk7-test-scenes-main-latest";
         public const string TEST_SCENES_URL = "https://sdk-test-scenes.decentraland.zone";
 
-        event Action<RealmType> RealmChanged;
-
         UniTask<EnumResult<ChangeRealmError>> TryChangeRealmAsync(
             URLDomain realm,
             CancellationToken ct,
             Vector2Int parcelToTeleport = default
         );
 
-        UniTask<Result> TeleportToParcelAsync(Vector2Int parcel, CancellationToken ct, bool isLocal);
+        UniTask<EnumResult<TaskError>> TeleportToParcelAsync(Vector2Int parcel, CancellationToken ct, bool isLocal);
 
         UniTask InitializeTeleportToSpawnPointAsync(AsyncLoadProcessReport teleportLoadReport, CancellationToken ct, Vector2Int parcelToTeleport);
-
-        void SwitchMiscVisibilityAsync();
-
-        UniTask ChangeRealmAsync(URLDomain realm, CancellationToken ct);
+        
+        void RemoveCameraSamplingData();
     }
 }

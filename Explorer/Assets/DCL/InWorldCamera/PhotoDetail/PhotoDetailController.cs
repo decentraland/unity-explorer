@@ -4,6 +4,7 @@ using DCL.Clipboard;
 using DCL.Diagnostics;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.InWorldCamera.CameraReelStorageService.Schemas;
+using DCL.InWorldCamera.CameraReelToast;
 using DCL.InWorldCamera.ReelActions;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DG.Tweening;
@@ -35,7 +36,7 @@ namespace DCL.InWorldCamera.PhotoDetail
         private readonly ISystemClipboard systemClipboard;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly IWebBrowser webBrowser;
-        private readonly string shareToXMessage;
+        private readonly PhotoDetailStringMessages photoDetailStringMessages;
 
         private AspectRatioFitter aspectRatioFitter;
         private MetadataSidePanelAnimator metadataSidePanelAnimator;
@@ -54,7 +55,7 @@ namespace DCL.InWorldCamera.PhotoDetail
             ISystemClipboard systemClipboard,
             IDecentralandUrlsSource decentralandUrlsSource,
             IWebBrowser webBrowser,
-            string shareToXMessage)
+            PhotoDetailStringMessages photoDetailStringMessages)
             : base(viewFactory)
         {
             this.PhotoDetailInfoController = photoDetailInfoController;
@@ -62,7 +63,7 @@ namespace DCL.InWorldCamera.PhotoDetail
             this.systemClipboard = systemClipboard;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.webBrowser = webBrowser;
-            this.shareToXMessage = shareToXMessage;
+            this.photoDetailStringMessages = photoDetailStringMessages;
 
             this.PhotoDetailInfoController.JumpIn += JumpInClicked;
         }
@@ -166,22 +167,27 @@ namespace DCL.InWorldCamera.PhotoDetail
                 {
                     await ReelCommonActions.DownloadReelToFileAsync(inputData.AllReels[currentReelIndex].url, ct);
                     ScreenshotDownloaded?.Invoke();
+                    viewInstance!.cameraReelToastMessage?.ShowToastMessage(CameraReelToastMessageType.SUCCESS, photoDetailStringMessages.PhotoSuccessfullyDownloadedMessage);
                 }
                 catch (Exception e)
                 {
                     ReportHub.LogException(e, new ReportData(ReportCategory.CAMERA_REEL));
+                    viewInstance!.cameraReelToastMessage?.ShowToastMessage(CameraReelToastMessageType.FAILURE);
                 }
             }
 
             DownloadAndOpenAsync(downloadScreenshotCts.Token).Forget();
         }
 
-        private void CopyReelLinkClicked() =>
+        private void CopyReelLinkClicked()
+        {
             ReelCommonActions.CopyReelLink(inputData.AllReels[currentReelIndex].id, decentralandUrlsSource, systemClipboard);
+            viewInstance!.cameraReelToastMessage?.ShowToastMessage(CameraReelToastMessageType.SUCCESS, photoDetailStringMessages.LinkCopiedMessage);
+        }
 
         private void ShareReelClicked()
         {
-            ReelCommonActions.ShareReelToX(shareToXMessage, inputData.AllReels[currentReelIndex].id, decentralandUrlsSource, systemClipboard, webBrowser);
+            ReelCommonActions.ShareReelToX(photoDetailStringMessages.ShareToXMessage, inputData.AllReels[currentReelIndex].id, decentralandUrlsSource, systemClipboard, webBrowser);
             ScreenshotShared?.Invoke();
         }
 
@@ -211,7 +217,7 @@ namespace DCL.InWorldCamera.PhotoDetail
             CameraReelResponseCompact reel = inputData.AllReels[reelIndex];
 
             UniTask detailInfoTask = PhotoDetailInfoController.ShowPhotoDetailInfoAsync(reel.id, ct);
-            Texture2D reelTexture = await cameraReelScreenshotsStorage.GetScreenshotImageAsync(reel.url, ct);
+            Texture2D reelTexture = await cameraReelScreenshotsStorage.GetScreenshotImageAsync(reel.url, false, ct);
             viewInstance!.mainImage.texture = reelTexture;
             aspectRatioFitter.aspectRatio = reelTexture.width * 1f / reelTexture.height;
 
@@ -229,5 +235,19 @@ namespace DCL.InWorldCamera.PhotoDetail
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
             UniTask.WhenAny(viewInstance.closeButton.OnClickAsync(ct),UniTask.WaitUntil(() => isClosing, cancellationToken: ct));
+    }
+
+    public struct PhotoDetailStringMessages
+    {
+        public readonly string ShareToXMessage;
+        public readonly string PhotoSuccessfullyDownloadedMessage;
+        public readonly string LinkCopiedMessage;
+
+        public PhotoDetailStringMessages(string shareToXMessage, string photoSuccessfullyDownloadedMessage, string linkCopiedMessage)
+        {
+            ShareToXMessage = shareToXMessage;
+            PhotoSuccessfullyDownloadedMessage = photoSuccessfullyDownloadedMessage;
+            LinkCopiedMessage = linkCopiedMessage;
+        }
     }
 }

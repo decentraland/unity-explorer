@@ -5,6 +5,6 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
 {
     public class OptionButtonView : MonoBehaviour
     {
-        [SerializeField] internal Button optionButton;
+        [field: SerializeField] internal Button optionButton { get; private set; }
     }
 }
