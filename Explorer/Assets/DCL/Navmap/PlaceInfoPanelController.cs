@@ -152,7 +152,7 @@ namespace DCL.Navmap
             view.CreatorNameLabel.text = $"created by <b>{place.contact_name}</b>";
             view.LikeRateLabel.text = $"{(place.like_rate_as_float ?? 0) * 100:F0}%";
             view.PlayerCountLabel.text = place.user_count.ToString();
-            view.DescriptionLabel.text = place.description;
+            view.DescriptionLabel.text = string.IsNullOrEmpty(place.description) ? "No description" : place.description;
             view.DescriptionLabel.ConvertUrlsToClickeableLinks(OpenUrl);
             view.CoordinatesLabel.text = place.base_position;
             view.ParcelCountLabel.text = place.Positions.Length.ToString();

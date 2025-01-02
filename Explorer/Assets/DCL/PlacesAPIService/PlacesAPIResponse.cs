@@ -65,7 +65,7 @@ namespace DCL.PlacesAPIService
             {
                 id = "fake_id";
                 title = "Empty place";
-                description = "No description.";
+                description = "No description";
                 image = "";
                 owner = "no owner";
                 tags = Array.Empty<string>();
