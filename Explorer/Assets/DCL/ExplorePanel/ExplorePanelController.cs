@@ -31,9 +31,9 @@ namespace DCL.ExplorePanel
         private readonly IInputBlock inputBlock;
         private readonly bool includeCameraReel;
 
-        private Dictionary<ExploreSections, TabSelectorView>? tabsBySections;
-        private Dictionary<ExploreSections, ISection>? exploreSections;
-        private SectionSelectorController<ExploreSections>? sectionSelectorController;
+        private Dictionary<ExploreSections, TabSelectorView> tabsBySections;
+        private Dictionary<ExploreSections, ISection> exploreSections;
+        private SectionSelectorController<ExploreSections> sectionSelectorController;
         private CancellationTokenSource? animationCts;
         private CancellationTokenSource? profileWidgetCts;
         private CancellationTokenSource? profileMenuCts;

@@ -23,7 +23,6 @@ namespace DCL.MapRenderer.MapLayers.PointsOfInterest
         private float currentNewScale;
 
         public Vector3 CurrentPosition => poolableBehavior.currentPosition;
-        public Vector2Int ParcelCoords => coordsUtils.PositionToCoords(CurrentPosition);
 
         public bool IsVisible => poolableBehavior.isVisible;
 

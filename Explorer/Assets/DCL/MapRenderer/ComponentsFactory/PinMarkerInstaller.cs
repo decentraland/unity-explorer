@@ -14,8 +14,6 @@ namespace DCL.MapRenderer.ComponentsFactory
 {
     internal struct PinMarkerInstaller
     {
-        private const int PREWARM_COUNT = 60;
-
         private IAssetsProvisioner assetsProvisioner;
         private IMapRendererSettings mapSettings;
 
@@ -37,7 +35,6 @@ namespace DCL.MapRenderer.ComponentsFactory
 
             var objectsPool = new ObjectPool<PinMarkerObject>(
                 () => CreatePoolMethod(configuration, prefab, coordsUtils),
-                defaultCapacity: PREWARM_COUNT,
                 actionOnGet: obj => obj.gameObject.SetActive(true),
                 actionOnRelease: obj => obj.gameObject.SetActive(false));
 

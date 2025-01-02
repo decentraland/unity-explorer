@@ -16,8 +16,6 @@ namespace DCL.MapRenderer.ComponentsFactory
 {
     internal struct SceneOfInterestsMarkersInstaller
     {
-        private const int PREWARM_COUNT = 60;
-
         private IAssetsProvisioner assetsProvisioner;
         private IMapRendererSettings mapSettings;
         private IPlacesAPIService placesAPIService;
@@ -43,7 +41,6 @@ namespace DCL.MapRenderer.ComponentsFactory
 
             var objectsPool = new ObjectPool<SceneOfInterestMarkerObject>(
                 () => CreatePoolMethod(configuration, prefab, coordsUtils),
-                defaultCapacity: PREWARM_COUNT,
                 actionOnGet: obj => obj.gameObject.SetActive(true),
                 actionOnRelease: obj => obj.gameObject.SetActive(false));
 

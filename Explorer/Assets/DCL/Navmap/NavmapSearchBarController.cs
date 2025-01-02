@@ -40,7 +40,6 @@ namespace DCL.Navmap
             HistoryRecordPanelView historyRecordPanelView,
             SearchFiltersView searchFiltersView,
             IInputBlock inputBlock,
-            ISearchHistory searchHistory,
             INavmapBus navmapBus,
             CategoryMappingSO categoryMappingSO)
         {

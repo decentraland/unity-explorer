@@ -17,8 +17,6 @@ namespace DCL.MapRenderer.ComponentsFactory
 {
     internal struct SearchResultsMarkersInstaller
     {
-        private const int PREWARM_COUNT = 60;
-
         private Dictionary<MapLayer, IMapLayerController> writer;
         private IAssetsProvisioner assetsProvisioner;
         private IMapRendererSettings mapSettings;
@@ -43,7 +41,6 @@ namespace DCL.MapRenderer.ComponentsFactory
 
             var objectsPool = new ObjectPool<SearchResultMarkerObject>(
                 () => CreatePoolMethod(configuration, prefab, coordsUtils),
-                defaultCapacity: PREWARM_COUNT,
                 actionOnGet: obj => obj.gameObject.SetActive(true),
                 actionOnRelease: obj => obj.gameObject.SetActive(false));
 

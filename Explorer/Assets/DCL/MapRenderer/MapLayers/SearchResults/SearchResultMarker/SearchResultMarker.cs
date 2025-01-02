@@ -26,7 +26,6 @@ namespace DCL.MapRenderer.MapLayers.SearchResults
         public Vector3 CurrentPosition => poolableBehavior.currentPosition;
 
         public bool IsVisible => poolableBehavior.isVisible;
-        public Vector2Int ParcelCoords => coordsUtils.PositionToCoords(CurrentPosition);
 
         public Vector2 Pivot => new (0.5f, 0.5f);
 

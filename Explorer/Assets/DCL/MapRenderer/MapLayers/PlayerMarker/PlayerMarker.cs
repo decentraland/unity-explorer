@@ -10,7 +10,6 @@ namespace DCL.MapRenderer.MapLayers.PlayerMarker
         private readonly float baseScale;
 
         public Vector2 Pivot => markerObject.pivot;
-        public Vector2Int ParcelCoords => Vector2Int.zero;
 
         public PlayerMarker(PlayerMarkerObject markerObject)
         {

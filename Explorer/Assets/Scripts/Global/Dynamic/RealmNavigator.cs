@@ -45,7 +45,6 @@ namespace Global.Dynamic
         private readonly World globalWorld;
         private readonly ObjectProxy<Entity> cameraEntity;
         private readonly CameraSamplingData cameraSamplingData;
-        private readonly bool isLocalSceneDevelopment;
         private readonly ITeleportBusController teleportBusController;
 
         private Vector2Int currentParcel;

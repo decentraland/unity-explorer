@@ -31,7 +31,6 @@ namespace DCL.MapRenderer.ComponentsFactory
 {
     public class MapRendererChunkComponentsFactory : IMapRendererComponentsFactory
     {
-        private const int PREWARM_COUNT = 60;
         private readonly IAssetsProvisioner assetsProvisioner;
 
         private readonly IWebRequestController webRequestController;
@@ -105,13 +104,11 @@ namespace DCL.MapRenderer.ComponentsFactory
             ClusterMarkerObject? categoryMarkersClusterPrefab = await GetCategoryClusterPrefabAsync(cancellationToken);
             var clusterObjectsPool = new ObjectPool<ClusterMarkerObject>(
                 () => CreateClusterPoolMethod(configuration, clusterPrefab, coordsUtils),
-                defaultCapacity: PREWARM_COUNT,
                 actionOnGet: obj => obj.gameObject.SetActive(true),
                 actionOnRelease: obj => obj.gameObject.SetActive(false));
 
             var searchResultsClusterObjectsPool = new ObjectPool<ClusterMarkerObject>(
                 () => CreateSearchResultsClusterPoolMethod(configuration, categoryMarkersClusterPrefab, coordsUtils),
-                defaultCapacity: PREWARM_COUNT,
                 actionOnGet: obj => obj.gameObject.SetActive(true),
                 actionOnRelease: obj => obj.gameObject.SetActive(false));
 

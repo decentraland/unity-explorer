@@ -118,7 +118,6 @@ namespace DCL.PluginSystem.Global
         private BackpackSubPlugin? backpackSubPlugin;
         private CategoryFilterController? categoryFilterController;
         private SearchResultPanelController? searchResultPanelController;
-        private ISearchHistory? searchHistory;
         private PlacesAndEventsPanelController? placesAndEventsPanelController;
         private NavmapView? navmapView;
         private PlaceInfoPanelController? placeInfoPanelController;
@@ -290,8 +289,6 @@ namespace DCL.PluginSystem.Global
             navmapView = explorePanelView.GetComponentInChildren<NavmapView>();
             categoryFilterController = new CategoryFilterController(navmapView.categoryToggles, mapRendererContainer.MapRenderer, navmapBus);
 
-            searchHistory = new PlayerPrefsSearchHistory();
-
             NavmapZoomController zoomController = new (navmapView.zoomView, dclInput, navmapBus);
 
             ObjectPool<PlaceElementView> placeElementsPool = await InitializePlaceElementsPoolAsync(navmapView.SearchBarResultPanel, ct);
@@ -303,7 +300,7 @@ namespace DCL.PluginSystem.Global
 
             searchBarController = new NavmapSearchBarController(navmapView.SearchBarView,
                 navmapView.HistoryRecordPanelView, navmapView.PlacesAndEventsPanelView.SearchFiltersView,
-                inputBlock, searchHistory, navmapBus, categoryMappingSO.Value);
+                inputBlock, navmapBus, categoryMappingSO.Value);
 
             SharePlacesAndEventsContextMenuController shareContextMenu = new (navmapView.ShareContextMenuView,
                 navmapView.WorldsWarningNotificationView, clipboard, webBrowser);
