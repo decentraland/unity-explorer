@@ -402,7 +402,7 @@ namespace DCL.PluginSystem.Global
 
             EventElementView CreatePoolElements(EventElementView asset)
             {
-                EventElementView placeElementView = Object.Instantiate(asset, view.EventsTabContainer.transform);
+                EventElementView placeElementView = Object.Instantiate(asset, view.EventsContentContainer.transform);
                 return placeElementView;
             }
         }

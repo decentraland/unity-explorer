@@ -156,7 +156,6 @@ namespace DCL.Navmap
             view.DescriptionLabel.ConvertUrlsToClickeableLinks(OpenUrl);
             view.CoordinatesLabel.text = place.base_position;
             view.ParcelCountLabel.text = place.Positions.Length.ToString();
-            view.AppearsOnContainer.SetActive(place.categories.Length > 0);
             view.StartNavigationButton.gameObject.SetActive(true);
             view.StopNavigationButton.gameObject.SetActive(false);
 
@@ -194,12 +193,6 @@ namespace DCL.Navmap
             view.OverviewTabSelected.SetActive(section == Section.OVERVIEW);
             view.PhotosTabContainer.SetActive(section == Section.PHOTOS);
             view.PhotosTabSelected.SetActive(section == Section.PHOTOS);
-
-            foreach (GameObject container in view.OverviewElementsThatShouldBeEnabled)
-                container.SetActive(section == Section.OVERVIEW);
-
-            foreach (GameObject container in view.OverviewElementsThatShouldBeDisabled)
-                container.SetActive(section != Section.OVERVIEW);
         }
 
         private void SetCategories(PlacesData.PlaceInfo place)
@@ -207,10 +200,17 @@ namespace DCL.Navmap
             foreach (PlaceInfoPanelView.AppearsOnCategory appearsOnCategory in view.AppearsOnCategories)
                 appearsOnCategory.container.SetActive(false);
 
+            var anyCategoryIsShown = false;
+
             foreach (string category in place.categories)
             foreach (PlaceInfoPanelView.AppearsOnCategory appearsOnCategory in view.AppearsOnCategories)
                 if (appearsOnCategory.category.Equals(category, StringComparison.OrdinalIgnoreCase))
+                {
                     appearsOnCategory.container.SetActive(true);
+                    anyCategoryIsShown = true;
+                }
+
+            view.AppearsOnContainer.SetActive(anyCategoryIsShown);
         }
 
         private void SetAsFavorite(bool isFavorite)

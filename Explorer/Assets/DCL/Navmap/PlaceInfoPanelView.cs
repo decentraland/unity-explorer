@@ -91,12 +91,6 @@ namespace DCL.Navmap
         [field: SerializeField]
         public AppearsOnCategory[] AppearsOnCategories { get; private set; }
 
-        [field: SerializeField]
-        public GameObject[] OverviewElementsThatShouldBeEnabled { get; private set; }
-
-        [field: SerializeField]
-        public GameObject[] OverviewElementsThatShouldBeDisabled { get; private set; }
-
         [field: Header("Photos Tab")]
         [field: SerializeField]
         public Button PhotosTabButton { get; private set; }
@@ -119,6 +113,9 @@ namespace DCL.Navmap
 
         [field: SerializeField]
         public GameObject EventsTabContainer { get; private set; }
+
+        [field: SerializeField]
+        public GameObject EventsContentContainer { get; private set; }
 
         [field: SerializeField]
         public GameObject EventsTabSelected { get; private set; }
