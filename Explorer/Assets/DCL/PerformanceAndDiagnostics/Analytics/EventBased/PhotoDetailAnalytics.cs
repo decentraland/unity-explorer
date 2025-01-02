@@ -1,7 +1,7 @@
 using DCL.InWorldCamera.PhotoDetail;
 using System;
 
-namespace DCL.PerformanceAndDiagnostics.Analytics
+namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
 {
     public class PhotoDetailAnalytics : IDisposable
     {
