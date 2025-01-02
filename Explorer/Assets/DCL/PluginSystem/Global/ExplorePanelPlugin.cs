@@ -311,7 +311,7 @@ namespace DCL.PluginSystem.Global
             placeInfoPanelController = new PlaceInfoPanelController(navmapView.PlacesAndEventsPanelView.PlaceInfoPanelView,
                 webRequestController, placesAPIService, mapPathEventBus, navmapBus, chatMessagesBus, eventsApiService,
                 eventElementsPool, shareContextMenu, webBrowser, mvcManager, cameraReelStorageService, cameraReelScreenshotsStorage,
-                new ReelGalleryConfigParams(settings.PlaceGridLayoutFixedColumnCount, settings.PlaceThumbnailHeight, settings.PlaceThumbnailWidth, false), false);
+                new ReelGalleryConfigParams(settings.PlaceGridLayoutFixedColumnCount, settings.PlaceThumbnailHeight, settings.PlaceThumbnailWidth, false, false), false);
 
             eventInfoPanelController = new EventInfoPanelController(navmapView.PlacesAndEventsPanelView.EventInfoPanelView,
                 webRequestController, navmapBus, chatMessagesBus, eventsApiService, eventScheduleElementsPool,

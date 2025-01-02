@@ -63,8 +63,8 @@ using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.SceneLoadingScreens.LoadingScreen;
 using DCL.SidebarBus;
-using DCL.StylizedSkybox.Scripts.Plugin;
 using DCL.UI.MainUI;
+using DCL.StylizedSkybox.Scripts.Plugin;
 using DCL.UserInAppInitializationFlow;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
@@ -187,9 +187,9 @@ namespace Global.Dynamic
             IThirdPartyNftProviderSource thirdPartyNftProviderSource = new RealmThirdPartyNftProviderSource(staticContainer.WebRequestsContainer.WebRequestController,
                 staticContainer.RealmData);
 
+            var placesAPIService = new PlacesAPIService(new PlacesAPIClient(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource));
             IEventsApiService eventsApiService = new HttpEventsApiService(staticContainer.WebRequestsContainer.WebRequestController,
                 URLDomain.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.ApiEvents)));
-            var placesAPIService = new PlacesAPIService(new PlacesAPIClient(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource));
             var mapPathEventBus = new MapPathEventBus();
             INotificationsBusController notificationsBusController = new NotificationsBusController();
 
@@ -200,10 +200,6 @@ namespace Global.Dynamic
             async UniTask InitializeContainersAsync(IPluginSettingsContainer settingsContainer, CancellationToken ct)
             {
                 // Init other containers
-                container.DefaultTexturesContainer = await DefaultTexturesContainer.CreateAsync(settingsContainer, assetsProvisioner, ct).ThrowOnFail();
-                container.LODContainer = await LODContainer.CreateAsync(assetsProvisioner, bootstrapContainer.DecentralandUrlsSource, staticContainer, settingsContainer, staticContainer.RealmData, container.DefaultTexturesContainer.TextureArrayContainerFactory, debugBuilder, dynamicWorldParams.EnableLOD, ct).ThrowOnFail();
-                container.MapRendererContainer = await MapRendererContainer.CreateAsync(settingsContainer, staticContainer, bootstrapContainer.DecentralandUrlsSource, assetsProvisioner, placesAPIService, eventsApiService, mapPathEventBus, notificationsBusController, teleportBusController, sharedNavmapCommandBus, ct);
-
                 defaultTexturesContainer =
                     await DefaultTexturesContainer
                          .CreateAsync(
@@ -236,8 +232,11 @@ namespace Global.Dynamic
                             bootstrapContainer.DecentralandUrlsSource,
                             assetsProvisioner,
                             placesAPIService,
+                            eventsApiService,
                             mapPathEventBus,
                             notificationsBusController,
+                            teleportBusController,
+                            sharedNavmapCommandBus,
                             ct
                         );
             }
@@ -559,13 +558,13 @@ namespace Global.Dynamic
 
             var badgesAPIClient = new BadgesAPIClient(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
 
-            IUserCalendar userCalendar = new GoogleUserCalendar(webBrowser);
-            ISystemClipboard clipboard = new UnityClipboard();
-
             ICameraReelImagesMetadataDatabase cameraReelImagesMetadataDatabase = new CameraReelImagesMetadataRemoteDatabase(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
             ICameraReelScreenshotsStorage cameraReelScreenshotsStorage = new CameraReelS3BucketScreenshotsStorage(staticContainer.WebRequestsContainer.WebRequestController);
 
             CameraReelRemoteStorageService cameraReelStorageService = new CameraReelRemoteStorageService(cameraReelImagesMetadataDatabase, cameraReelScreenshotsStorage, identityCache.Identity?.Address);
+
+            IUserCalendar userCalendar = new GoogleUserCalendar(webBrowser);
+            ISystemClipboard clipboard = new UnityClipboard();
 
             bool includeCameraReel = staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.CAMERA_REEL) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.CAMERA_REEL)) || Application.isEditor;
 
