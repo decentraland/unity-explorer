@@ -41,7 +41,7 @@ namespace ECS
             public string CommsAdapter { get; }
             public string Protocol { get; }
             public string Hostname { get; }
-            public bool IsLocalSceneDevelopment { get; } = false;
+            public bool IsLocalSceneDevelopment { get; }
             public bool Configured { get; }
             public bool IsDirty { get; internal set; }
 
