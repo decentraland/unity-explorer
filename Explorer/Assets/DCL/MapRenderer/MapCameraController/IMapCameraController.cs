@@ -30,7 +30,8 @@ namespace DCL.MapRenderer.MapCameraController
         Vector2 CoordsPosition { get; }
 
         /// <summary>
-        /// Zoom level normalized between 0 and 1
+        /// Zoom corresponds to the zoom level normalized between 0 and 1
+        /// Zoom level holds the actual step in the zoom scale
         /// </summary>
         /// <param name="value"></param>
         void SetZoom(float value, int zoomLevel);

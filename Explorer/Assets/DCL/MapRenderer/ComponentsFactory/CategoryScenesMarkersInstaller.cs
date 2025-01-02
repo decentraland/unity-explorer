@@ -48,7 +48,7 @@ namespace DCL.MapRenderer.ComponentsFactory
                 coordsUtils,
                 cullingController,
                 mapSettings.CategoryLayerIconMappings,
-                new ClusterController(cullingController, clusterObjectsPool, CreateClusterMarker, coordsUtils, navmapBus),
+                new ClusterController(cullingController, clusterObjectsPool, ClusterHelper.CreateClusterMarker, coordsUtils, navmapBus),
                 navmapBus
             );
 
@@ -78,8 +78,5 @@ namespace DCL.MapRenderer.ComponentsFactory
 
         private static ICategoryMarker CreateMarker(IObjectPool<CategoryMarkerObject> objectsPool, IMapCullingController cullingController, ICoordsUtils coordsUtils) =>
             new CategoryMarker(objectsPool, cullingController, coordsUtils);
-
-        private static IClusterMarker CreateClusterMarker(IObjectPool<ClusterMarkerObject> objectsPool, IMapCullingController cullingController, ICoordsUtils coordsUtils) =>
-            new ClusterMarker(objectsPool, cullingController, coordsUtils);
     }
 }

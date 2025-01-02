@@ -119,9 +119,9 @@ namespace DCL.MapRenderer.Tests.MapCameraController
         {
             new object[] { new Vector2(10, 10), new Vector2(10, 10), new Vector2Int(10, 20), 0f},
             new object[] { new Vector2(-500, -300), new Vector2(-500, -300), new Vector2Int(10, 20), 0.5f},
-            new object[] { new Vector2(-1000, 1200), new Vector2(-900, 900), new Vector2Int(10, 20), 1f},
-            new object[] { new Vector2(-1000, 1200), new Vector2(-800, 800), new Vector2Int(10, 20), 0f},
-            new object[] { new Vector2(4000, -8000), new Vector2(600, -600), new Vector2Int(30, 50), 0.5f},
+            new object[] { new Vector2(-1000, 1200), new Vector2(-930, 930), new Vector2Int(10, 20), 1f},
+            new object[] { new Vector2(-1000, 1200), new Vector2(-860, 860), new Vector2Int(10, 20), 0f},
+            new object[] { new Vector2(4000, -8000), new Vector2(720, -720), new Vector2Int(30, 50), 0.5f},
         };
 
         [TestCase(true)]

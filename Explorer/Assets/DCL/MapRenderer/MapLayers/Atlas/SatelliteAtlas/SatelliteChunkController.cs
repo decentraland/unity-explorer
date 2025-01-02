@@ -16,7 +16,6 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
     public class SatelliteChunkController : IChunkController
     {
         private const float SATURATION_VALUE = 1f;
-        //private const string CHUNKS_API = "https://media.githubusercontent.com/media/genesis-city/genesis.city/master/map/latest/3/";
         private const string CHUNKS_API = "https://media.githubusercontent.com/media/genesis-city/parcels/new-client-images/maps/lod-0/3/";
         private static readonly Color FINAL_COLOR = Color.white;
         private static readonly Color INITIAL_COLOR = new (0, 0, 0, 0);

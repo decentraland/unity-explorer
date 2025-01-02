@@ -13,6 +13,10 @@ namespace DCL.EventsApi
 {
     public class HttpEventsApiService : IEventsApiService
     {
+        private const string LIVE_PARAMETER_VALUE = "live";
+        private const string LIST_PARAMETER = "list";
+        private const string POSITION_PARAMETER = "position";
+        private const string POSITIONS_PARAMETER = "positions[]";
         private readonly IWebRequestController webRequestController;
         private readonly URLDomain baseUrl;
         private readonly URLBuilder urlBuilder = new ();
@@ -30,7 +34,7 @@ namespace DCL.EventsApi
             urlBuilder.AppendDomain(baseUrl);
 
             if (onlyLiveEvents)
-                urlBuilder.AppendParameter(new URLParameter("list", "live"));
+                urlBuilder.AppendParameter(new URLParameter(LIST_PARAMETER, LIVE_PARAMETER_VALUE));
 
             return await FetchEventListAsync(urlBuilder.Build(), ct);
         }
@@ -41,10 +45,10 @@ namespace DCL.EventsApi
             urlBuilder.AppendDomain(baseUrl);
 
             foreach (Vector2Int parcel in parcels)
-                urlBuilder.AppendParameter(new URLParameter("positions[]", $"{parcel.x},{parcel.y}"));
+                urlBuilder.AppendParameter(new URLParameter(POSITIONS_PARAMETER, $"{parcel.x},{parcel.y}"));
 
             if (onlyLiveEvents)
-                urlBuilder.AppendParameter(new URLParameter("list", "live"));
+                urlBuilder.AppendParameter(new URLParameter(LIST_PARAMETER, LIVE_PARAMETER_VALUE));
 
             return await FetchEventListAsync(urlBuilder.Build(), ct);
         }
@@ -56,10 +60,10 @@ namespace DCL.EventsApi
             urlBuilder.AppendDomain(baseUrl);
 
             foreach (string parcel in parcels)
-                urlBuilder.AppendParameter(new URLParameter("positions[]", parcel));
+                urlBuilder.AppendParameter(new URLParameter(POSITIONS_PARAMETER, parcel));
 
             if (onlyLiveEvents)
-                urlBuilder.AppendParameter(new URLParameter("list", "live"));
+                urlBuilder.AppendParameter(new URLParameter(LIST_PARAMETER, LIVE_PARAMETER_VALUE));
 
             return await FetchEventListAsync(urlBuilder.Build(), ct);
         }
@@ -69,10 +73,10 @@ namespace DCL.EventsApi
         {
             urlBuilder.Clear();
             urlBuilder.AppendDomain(baseUrl);
-            urlBuilder.AppendParameter(new URLParameter("position", parcel));
+            urlBuilder.AppendParameter(new URLParameter(POSITION_PARAMETER, parcel));
 
             if (onlyLiveEvents)
-                urlBuilder.AppendParameter(new URLParameter("list", "live"));
+                urlBuilder.AppendParameter(new URLParameter(LIST_PARAMETER, LIVE_PARAMETER_VALUE));
 
             return await FetchEventListAsync(urlBuilder.Build(), ct);
         }

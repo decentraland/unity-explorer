@@ -47,7 +47,7 @@ namespace DCL.MapRenderer.ComponentsFactory
                 actionOnGet: obj => obj.gameObject.SetActive(true),
                 actionOnRelease: obj => obj.gameObject.SetActive(false));
 
-            var clusterController = new ClusterController(cullingController, clusterObjectsPool, CreateClusterMarker, coordsUtils, navmapBus);
+            var clusterController = new ClusterController(cullingController, clusterObjectsPool, ClusterHelper.CreateClusterMarker, coordsUtils, navmapBus);
             clusterController.SetClusterIcon(mapSettings.CategoryIconMappings.GetCategoryImage(MapLayer.SearchResults));
 
             var controller = new SearchResultMarkersController(
@@ -80,9 +80,6 @@ namespace DCL.MapRenderer.ComponentsFactory
 
         private static ISearchResultMarker CreateMarker(IObjectPool<SearchResultMarkerObject> objectsPool, IMapCullingController cullingController, ICoordsUtils coordsUtils) =>
             new SearchResultMarker(objectsPool, cullingController, coordsUtils);
-
-        private static IClusterMarker CreateClusterMarker(IObjectPool<ClusterMarkerObject> objectsPool, IMapCullingController cullingController, ICoordsUtils coordsUtils) =>
-            new ClusterMarker(objectsPool, cullingController, coordsUtils);
 
         private async UniTask<SearchResultMarkerObject> GetPrefabAsync(CancellationToken cancellationToken) =>
             (await assetsProvisioner.ProvideMainAssetAsync(mapSettings.SearchResultMarker, cancellationToken)).Value;

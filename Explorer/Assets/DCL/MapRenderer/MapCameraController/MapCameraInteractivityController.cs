@@ -127,9 +127,6 @@ namespace DCL.MapRenderer.MapCameraController
 
             if (raycast.collider != null)
             {
-                if (raycast.collider.gameObject == hitObject)
-                    return hitObject;
-
                 hitObject = raycast.collider.gameObject;
 
                 foreach (IMapLayerController mapLayerController in interactableLayers)
