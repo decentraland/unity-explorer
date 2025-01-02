@@ -54,12 +54,12 @@ namespace DCL.SDKComponents.MapPins.Systems
             HandleComponentRemovalQuery(World);
             HandleEntityDestructionQuery(World);
 
-            if (useCustomMapPinIcons) { ResolvePromiseQuery(World); }
+            if (useCustomMapPinIcons) { ResolveTexturePromiseQuery(World); }
         }
 
         [Query]
-        [None(typeof(MapPinComponent))]
-        private void LoadMapPin(in Entity entity, PBMapPin pbMapPin)
+        [None(typeof(MapPinComponent))] [All(typeof(PBMapPin))]
+        private void LoadMapPin(in Entity entity)
         {
             var mapPinComponent = new MapPinComponent();
             World.Add(entity, mapPinComponent);
@@ -80,7 +80,7 @@ namespace DCL.SDKComponents.MapPins.Systems
             if (useCustomMapPinIcons)
             {
                 TextureComponent? mapPinTexture = pbMapPin.Texture.CreateTextureComponent(sceneData);
-                mapPinComponent.HasTexturePromise = TryCreateGetTexturePromise(in mapPinTexture, ref mapPinComponent.TexturePromise);
+                TryCreateGetTexturePromise(in mapPinTexture, ref mapPinComponent.TexturePromise);
             }
 
             pbMapPin.IsDirty = false;
@@ -88,21 +88,14 @@ namespace DCL.SDKComponents.MapPins.Systems
             mapPinsEventBus.UpdateMapPin(entity, mapPinComponent.Position, pbMapPin.Title, pbMapPin.Description);
         }
 
-        //This query is required because in the global world otherwise we cannot resolve easily
-        //the promise of the texture, as it is bound to the entity in the scene world
         [Query]
-        private void ResolvePromise(in Entity entity, ref MapPinComponent mapPinComponent)
+        private void ResolveTexturePromise(in Entity entity, ref MapPinComponent mapPinComponent)
         {
-            if (!mapPinComponent.HasTexturePromise)
-                return;
-
             if (mapPinComponent.TexturePromise is null || mapPinComponent.TexturePromise.Value.IsConsumed) return;
 
             if (mapPinComponent.TexturePromise.Value.TryConsume(World, out StreamableLoadingResult<Texture2DData> texture))
             {
                 mapPinComponent.TexturePromise = null;
-                mapPinComponent.HasTexturePromise = false;
-
                 mapPinsEventBus.UpdateMapPinThumbnail(entity, texture.Asset);
             }
         }

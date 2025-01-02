@@ -6,7 +6,6 @@ namespace DCL.MapPins.Components
     public struct MapPinComponent
     {
         public Promise? TexturePromise;
-        public bool HasTexturePromise { get; set; }
         public Vector2Int Position { get; set; }
     }
 }

@@ -23,7 +23,10 @@ namespace PortableExperiences.Controller
 {
     public class ECSPortableExperiencesController : IPortableExperiencesController
     {
-        private static readonly QueryDescription CLEAR_QUERY = new QueryDescription().WithAny<RealmComponent, GetSceneDefinition, GetSceneDefinitionList, SceneDefinitionComponent, EmptySceneComponent>().WithAll<PortableExperienceComponent, DeleteEntityIntention>();
+        private static readonly QueryDescription CLEAR_QUERY = new QueryDescription().
+                                                               WithAny<RealmComponent, GetSceneDefinition, GetSceneDefinitionList,
+                                                                   SceneDefinitionComponent, EmptySceneComponent>()
+                                                              .WithAll<PortableExperienceComponent, DeleteEntityIntention>();
 
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IWebRequestController webRequestController;
