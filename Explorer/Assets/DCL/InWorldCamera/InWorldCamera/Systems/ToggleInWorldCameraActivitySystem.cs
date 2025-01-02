@@ -29,6 +29,7 @@ namespace DCL.InWorldCamera.Systems
 
         private readonly InWorldCameraTransitionSettings settings;
         private readonly InWorldCameraController hudController;
+        private readonly InWorldCameraEffectsController effectsController;
         private readonly GameObject hud;
         private readonly CharacterController followTarget;
         private readonly IDebugContainerBuilder debugContainerBuilder;
@@ -47,6 +48,7 @@ namespace DCL.InWorldCamera.Systems
             World world,
             InWorldCameraTransitionSettings settings,
             InWorldCameraController hudController,
+            InWorldCameraEffectsController effectsController,
             CharacterController followTarget,
             IDebugContainerBuilder debugContainerBuilder,
             ICursor cursor,
@@ -54,6 +56,7 @@ namespace DCL.InWorldCamera.Systems
         {
             this.settings = settings;
             this.hudController = hudController;
+            this.effectsController = effectsController;
             this.followTarget = followTarget;
             this.debugContainerBuilder = debugContainerBuilder;
             this.cursor = cursor;
@@ -122,6 +125,7 @@ namespace DCL.InWorldCamera.Systems
                 debugContainerBuilder.IsVisible = wasDebugVisible;
 
             hudController.Hide();
+            effectsController.Disable();
             mvcManager.SetAllViewsCanvasActive(except: hudController, true);
 
             SwitchToThirdPersonCamera();
@@ -144,6 +148,7 @@ namespace DCL.InWorldCamera.Systems
             }
 
             hudController.Show();
+            effectsController.Enable();
             mvcManager.SetAllViewsCanvasActive(except: hudController, false);
 
             SwitchToInWorldCamera();

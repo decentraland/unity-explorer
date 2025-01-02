@@ -30,17 +30,17 @@ namespace DCL.InWorldCamera.UI
         private readonly IMVCManager mvcManager;
         private readonly ICameraReelStorageService storageService;
 
-        private SingleInstanceEntity? cameraInternal;
 
         private bool shortcutPanelIsOpen;
 
         private CancellationTokenSource ctx;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Overlay;
+
+        private SingleInstanceEntity? cameraInternal;
         private SingleInstanceEntity? camera => cameraInternal ??= world.CacheCamera();
 
         public bool IsVfxInProgress => viewInstance != null && viewInstance.IsVfxInProgress;
-
 
         public InWorldCameraController(ViewFactoryMethod viewFactory, Button sidebarButton, World world, IMVCManager mvcManager, ICameraReelStorageService storageService) : base(viewFactory)
         {

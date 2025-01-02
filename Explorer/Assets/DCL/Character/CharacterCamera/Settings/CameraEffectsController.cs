@@ -100,7 +100,6 @@ public class CameraEffectsController : MonoBehaviour
         }
     }
 
-
     void Update()
     {
         UpdateColorEffects();
