@@ -47,6 +47,7 @@ MonoBehaviour:
   - rid: 2799748226177040387
   - rid: 2799748311381442562
   - rid: 6849204606292983808
+  - rid: 4782308287844188162
   references:
     version: 2
     RefIds:
@@ -529,6 +530,14 @@ MonoBehaviour:
         SkyboxMaterial: {fileID: 2100000, guid: caf6cf56d95066b45bc1ca92d6516b48, type: 2}
         SkyboxAnimationCycle:
           m_AssetGUID: 3b17a8a5ab9ee104899eb22c70935c38
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+    - rid: 4782308287844188162
+      type: {class: GenericContextMenuPlugin/GenericContextMenuSettings, ns: DCL.PluginSystem, asm: DCL.Plugins}
+      data:
+        GenericContextMenuPrefab:
+          m_AssetGUID: 5ef9c85ff80df42e88f2946a299f1102
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0

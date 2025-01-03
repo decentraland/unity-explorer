@@ -737,6 +737,7 @@ namespace Global.Dynamic
                     playerEntity,
                     includeCameraReel
                 ),
+                new GenericContextMenuPlugin(assetsProvisioner, mvcManager),
             };
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);
