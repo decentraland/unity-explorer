@@ -1,10 +1,10 @@
 using Arch.Core;
-using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.ECSComponents;
 using DCL.MapPins.Components;
+using DCL.MapPins.Bus;
 using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.Culling;
 using DCL.Navmap;
@@ -19,7 +19,7 @@ using Utility;
 
 namespace DCL.MapRenderer.MapLayers.Pins
 {
-    internal partial class PinMarkerController : MapLayerControllerBase, IMapCullingListener<IPinMarker>, IMapLayerController, IZoomScalingLayer
+    internal class PinMarkerController : MapLayerControllerBase, IMapCullingListener<IPinMarker>, IMapLayerController, IZoomScalingLayer
     {
         internal delegate IPinMarker PinMarkerBuilder(
             IObjectPool<PinMarkerObject> objectsPool,
@@ -31,9 +31,9 @@ namespace DCL.MapRenderer.MapLayers.Pins
         private readonly Dictionary<GameObject, IPinMarker> visibleMarkers = new ();
         private readonly PinMarkerBuilder builder;
         private readonly IMapPathEventBus mapPathEventBus;
+        private readonly IMapPinsEventBus mapPinsEventBus;
         private readonly INavmapBus navmapBus;
 
-        private MapPinBridgeSystem? system;
         private bool isEnabled;
         private CancellationTokenSource highlightCt = new ();
         private CancellationTokenSource deHighlightCt = new ();
@@ -46,12 +46,17 @@ namespace DCL.MapRenderer.MapLayers.Pins
             ICoordsUtils coordsUtils,
             IMapCullingController cullingController,
             IMapPathEventBus mapPathEventBus,
+            IMapPinsEventBus mapPinsEventBus,
             INavmapBus navmapBus)
             : base(instantiationParent, coordsUtils, cullingController)
         {
             this.objectsPool = objectsPool;
             this.builder = builder;
             this.mapPathEventBus = mapPathEventBus;
+            this.mapPinsEventBus = mapPinsEventBus;
+            this.mapPinsEventBus.OnUpdateMapPin += SetOrUpdateMapPinPlacement;
+            this.mapPinsEventBus.OnRemoveMapPin += RemoveMapPin;
+            this.mapPinsEventBus.OnUpdateMapPinThumbnail += SetOrUpdateMapPinThumbnail;
             this.navmapBus = navmapBus;
             this.mapPathEventBus.OnRemovedDestination += OnRemovedDestination;
         }
@@ -59,13 +64,7 @@ namespace DCL.MapRenderer.MapLayers.Pins
         public UniTask InitializeAsync(CancellationToken cancellationToken) =>
             UniTask.CompletedTask;
 
-        public void CreateSystems(ref ArchSystemsWorldBuilder<World> builder)
-        {
-            system = MapPinBridgeSystem.InjectToWorld(ref builder);
-
-            system.SetQueryMethod((ControllerECSBridgeSystem.QueryMethod)SetMapPinPlacementQuery + HandleEntityDestructionQuery);
-            system.Activate();
-        }
+        public void CreateSystems(ref ArchSystemsWorldBuilder<World> builder) { }
 
         private void OnRemovedDestination()
         {
@@ -79,55 +78,46 @@ namespace DCL.MapRenderer.MapLayers.Pins
             }
         }
 
-        [Query]
-        private void SetMapPinPlacement(in Entity e, ref MapPinComponent mapPinComponent, ref PBMapPin pbMapPin)
+        private void SetOrUpdateMapPinPlacement(Entity entity, Vector2Int position, string title, string description)
         {
-            if (mapPinComponent.IsDirty)
+            IPinMarker marker;
+
+            if (!markers.TryGetValue(entity, out IPinMarker pinMarker))
             {
-                IPinMarker marker;
-
-                if (!markers.TryGetValue(e, out IPinMarker pinMarker))
-                {
-                    marker = builder(objectsPool, mapCullingController);
-                    markers.Add(e, marker);
-                }
-                else { marker = pinMarker; }
-
-                marker.SetPosition(coordsUtils.CoordsToPositionWithOffset(mapPinComponent.Position), mapPinComponent.Position);
-                marker.SetData(pbMapPin.Title, pbMapPin.Description);
-
-                if (isEnabled)
-                    mapCullingController.StartTracking(marker, this);
-
-                mapPinComponent.IsDirty = false;
+                marker = builder(objectsPool, mapCullingController);
+                markers.Add(entity, marker);
             }
+            else { marker = pinMarker; }
 
-            if (mapPinComponent.ThumbnailIsDirty)
-            {
-                IPinMarker marker;
+            marker.SetPosition(coordsUtils.CoordsToPositionWithOffset(position), position);
+            marker.SetData(title, description);
 
-                if (!markers.TryGetValue(e, out IPinMarker pinMarker))
-                {
-                    marker = builder(objectsPool, mapCullingController);
-                    markers.Add(e, marker);
-                }
-                else { marker = pinMarker; }
-
-                marker.SetTexture(mapPinComponent.Thumbnail);
-                mapPinComponent.ThumbnailIsDirty = false;
-            }
+            if (isEnabled)
+                mapCullingController.StartTracking(marker, this);
         }
 
-        [All(typeof(DeleteEntityIntention), typeof(PBMapPin))]
-        [Query]
-        private void HandleEntityDestruction(in Entity e)
+        private void RemoveMapPin(Entity entity)
         {
-            if (markers.TryGetValue(e, out IPinMarker marker))
+            if (markers.TryGetValue(entity, out IPinMarker marker))
             {
                 mapCullingController.StopTracking(marker);
                 marker.OnBecameInvisible();
-                markers.Remove(e);
+                markers.Remove(entity);
             }
+        }
+
+        private void SetOrUpdateMapPinThumbnail(Entity entity, Texture2D thumbnail)
+        {
+            IPinMarker marker;
+
+            if (!markers.TryGetValue(entity, out IPinMarker pinMarker))
+            {
+                marker = builder(objectsPool, mapCullingController);
+                markers.Add(entity, marker);
+            }
+            else marker = pinMarker;
+
+            marker.SetTexture(thumbnail);
         }
 
         protected override void DisposeImpl()
@@ -138,6 +128,11 @@ namespace DCL.MapRenderer.MapLayers.Pins
                 marker.Dispose();
 
             markers.Clear();
+
+            mapPinsEventBus.OnUpdateMapPin -= SetOrUpdateMapPinPlacement;
+            mapPinsEventBus.OnRemoveMapPin -= RemoveMapPin;
+            mapPinsEventBus.OnUpdateMapPinThumbnail -= SetOrUpdateMapPinThumbnail;
+            mapPathEventBus.OnRemovedDestination -= OnRemovedDestination;
         }
 
         public void OnMapObjectBecameVisible(IPinMarker marker)

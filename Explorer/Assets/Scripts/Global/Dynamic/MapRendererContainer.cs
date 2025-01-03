@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.MapPins.Bus;
 using DCL.MapRenderer;
 using DCL.MapRenderer.ComponentsFactory;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -19,9 +20,9 @@ namespace Global.Dynamic
     public class MapRendererContainer : DCLWorldContainer<MapRendererContainer.Settings>
     {
         private readonly IAssetsProvisioner assetsProvisioner;
+        private ProvidedAsset<MapRendererSettingsAsset> mapRendererSettings;
         public MapRendererTextureContainer TextureContainer { get; }
         public IMapRenderer MapRenderer { get; private set; } = null!;
-        private ProvidedAsset<MapRendererSettingsAsset> mapRendererSettings;
 
         private MapRendererContainer(IAssetsProvisioner assetsProvisioner, MapRendererTextureContainer textureContainer)
         {
@@ -37,6 +38,7 @@ namespace Global.Dynamic
             IPlacesAPIService placesAPIService,
             IEventsApiService eventsAPIService,
             IMapPathEventBus mapPathEventBus,
+            IMapPinsEventBus mapPinsEventBus,
             INotificationsBusController notificationsBusController,
             ITeleportBusController teleportBusController,
             INavmapBus navmapBus,
@@ -55,6 +57,7 @@ namespace Global.Dynamic
                     placesAPIService,
                     eventsAPIService,
                     mapPathEventBus,
+                    mapPinsEventBus,
                     teleportBusController,
                     notificationsBusController,
                     navmapBus));

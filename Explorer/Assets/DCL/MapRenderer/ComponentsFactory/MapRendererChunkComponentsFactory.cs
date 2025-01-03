@@ -1,5 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.MapPins.Bus;
 using DCL.Audio;
 using DCL.EventsApi;
 using DCL.MapRenderer.CoordsUtils;
@@ -40,6 +41,7 @@ namespace DCL.MapRenderer.ComponentsFactory
         private readonly IEventsApiService eventsApiService;
         private readonly IMapRendererSettings mapSettings;
         private readonly IMapPathEventBus mapPathEventBus;
+        private readonly IMapPinsEventBus mapPinsEventBus;
         private readonly ITeleportBusController teleportBusController;
         private readonly INotificationsBusController notificationsBusController;
         private readonly INavmapBus navmapBus;
@@ -61,8 +63,9 @@ namespace DCL.MapRenderer.ComponentsFactory
             IPlacesAPIService placesAPIService,
             IEventsApiService eventsApiService,
             IMapPathEventBus mapPathEventBus,
-            ITeleportBusController teleportBusController,
+            IMapPinsEventBus mapPinsEventBus,
             INotificationsBusController notificationsBusController,
+            ITeleportBusController teleportBusController,
             INavmapBus navmapBus)
         {
             this.assetsProvisioner = assetsProvisioner;
@@ -75,6 +78,7 @@ namespace DCL.MapRenderer.ComponentsFactory
             this.mapPathEventBus = mapPathEventBus;
             this.teleportBusController = teleportBusController;
             this.notificationsBusController = notificationsBusController;
+            this.mapPinsEventBus = mapPinsEventBus;
             this.navmapBus = navmapBus;
         }
 
@@ -97,7 +101,7 @@ namespace DCL.MapRenderer.ComponentsFactory
             );
 
             MapCameraObject mapCameraObjectPrefab = (await assetsProvisioner.ProvideMainAssetAsync(mapSettings.MapCameraObject, ct: cancellationToken)).Value;
-            PinMarkerController pinMarkerController = await pinMarkerInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, mapSettings, assetsProvisioner, mapPathEventBus, navmapBus, cancellationToken);
+            PinMarkerController pinMarkerController = await pinMarkerInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, mapSettings, assetsProvisioner, mapPathEventBus, mapPinsEventBus, navmapBus, cancellationToken);
             RemoteUsersRequestController remoteUsersRequestController = new RemoteUsersRequestController(webRequestController, decentralandUrlsSource);
 
             ClusterMarkerObject? clusterPrefab = await GetClusterPrefabAsync(cancellationToken);
