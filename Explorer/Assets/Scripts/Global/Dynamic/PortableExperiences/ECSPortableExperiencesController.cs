@@ -23,10 +23,9 @@ namespace PortableExperiences.Controller
 {
     public class ECSPortableExperiencesController : IPortableExperiencesController
     {
-        private static readonly QueryDescription CLEAR_QUERY = new QueryDescription().
-                                                               WithAny<RealmComponent, GetSceneDefinition, GetSceneDefinitionList,
-                                                                   SceneDefinitionComponent, EmptySceneComponent>()
-                                                              .WithAll<PortableExperienceComponent, DeleteEntityIntention>();
+        private static readonly QueryDescription CLEAR_QUERY = new QueryDescription().WithAny<RealmComponent, GetSceneDefinition, GetSceneDefinitionList,
+                                                                                          SceneDefinitionComponent, EmptySceneComponent>()
+                                                                                     .WithAll<PortableExperienceComponent, DeleteEntityIntention>();
 
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IWebRequestController webRequestController;
@@ -34,10 +33,11 @@ namespace PortableExperiences.Controller
         private readonly List<IPortableExperiencesController.SpawnResponse> spawnResponsesList = new ();
         private readonly FeatureFlagsCache featureFlagsCache;
         private readonly bool isLocalSceneDevelopment;
+        private GlobalWorld globalWorld;
 
         public Dictionary<ENS, Entity> PortableExperienceEntities { get; } = new ();
 
-        private GlobalWorld globalWorld
+        public GlobalWorld GlobalWorld
         {
             get => globalWorld.EnsureNotNull("GlobalWorld in RealmController is null");
 
