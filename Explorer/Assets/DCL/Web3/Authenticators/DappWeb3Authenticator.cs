@@ -126,7 +126,7 @@ namespace DCL.Web3.Authenticators
 
                 await UniTask.SwitchToMainThread(ct);
 
-                loginVerificationCallback?.Invoke(authenticationResponse.code, signatureExpiration);
+                loginVerificationCallback?.Invoke(authenticationResponse.code, signatureExpiration, authenticationResponse.requestId);
 
                 LoginResponse response = await RequestWalletConfirmationAsync<LoginResponse>(authenticationResponse.requestId,
                     signatureExpiration, ct);
