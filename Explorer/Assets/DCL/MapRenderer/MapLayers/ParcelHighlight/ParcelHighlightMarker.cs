@@ -15,8 +15,6 @@ namespace DCL.MapRenderer.MapLayers.ParcelHighlight
             Deactivate();
         }
 
-        public void ToggleSelection(bool isSelected) { }
-
         public void Dispose()
         {
             UnityObjectUtils.SafeDestroy(obj.gameObject);

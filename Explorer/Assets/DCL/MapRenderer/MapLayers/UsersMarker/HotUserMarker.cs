@@ -25,8 +25,6 @@ namespace DCL.MapRenderer.MapLayers.Users
             poolableBehavior = new MapMarkerPoolableBehavior<HotUserMarkerObject>(pool);
         }
 
-        public void ToggleSelection(bool isSelected) { }
-
         public void UpdateMarkerPosition(string playerId, Vector3 position)
         {
             var gridPosition = ParcelMathHelper.WorldToGridPositionUnclamped(position);

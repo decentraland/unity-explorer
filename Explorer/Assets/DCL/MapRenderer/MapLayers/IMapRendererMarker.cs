@@ -8,7 +8,7 @@ namespace DCL.MapRenderer.MapLayers
     {
         Vector2 Pivot { get; }
 
-        void ToggleSelection(bool isSelected);
+        void ToggleSelection(bool isSelected) { }
 
         void SetIsSelected(bool isSelected) { }
 

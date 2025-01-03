@@ -14,6 +14,8 @@ namespace DCL.MapRenderer.MapLayers.PointsOfInterest
     internal class SceneOfInterestMarker : ISceneOfInterestMarker
     {
         internal const int MAX_TITLE_LENGTH = 29;
+        private static readonly Vector2 TARGET_SCALE = new (1.2f, 1.2f);
+        private static readonly float ANIMATION_DURATION = 0.5f;
 
         private readonly IMapCullingController cullingController;
         private readonly ICoordsUtils coordsUtils;
@@ -91,13 +93,13 @@ namespace DCL.MapRenderer.MapLayers.PointsOfInterest
         public async UniTaskVoid AnimateSelectionAsync(CancellationToken ct)
         {
             if (poolableBehavior.instance != null)
-                await MarkerHelper.ScaleToAsync(poolableBehavior.instance.scalingParent, new Vector2 (1.2f, 1.2f), 0.5f, Ease.OutBack, ct);
+                await MarkerHelper.ScaleToAsync(poolableBehavior.instance.scalingParent, TARGET_SCALE, ANIMATION_DURATION, Ease.OutBack, ct);
         }
 
         public async UniTaskVoid AnimateDeSelectionAsync(CancellationToken ct)
         {
             if (poolableBehavior.instance != null)
-                await MarkerHelper.ScaleToAsync(poolableBehavior.instance.scalingParent, Vector2.one, 0.5f, Ease.OutBack, ct, Vector3.one);
+                await MarkerHelper.ScaleToAsync(poolableBehavior.instance.scalingParent, Vector2.one, ANIMATION_DURATION, Ease.OutBack, ct, Vector3.one);
         }
 
         public GameObject? GetGameObject() =>

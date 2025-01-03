@@ -29,14 +29,14 @@ namespace DCL.MapRenderer.MapLayers.UsersMarker
             {
                 existingValue.Add(new RemotePlayerData()
                 {
-                    position = ConvertStringToVector3(rootObjectPeer.position[0], rootObjectPeer.position[2]),
+                    position = ToVector3(rootObjectPeer.position[0], rootObjectPeer.position[2]),
                     avatarId = rootObjectPeer.address
                 });
             }
             return existingValue;
         }
 
-        private static Vector3 ConvertStringToVector3(float x, float z) =>
+        private static Vector3 ToVector3(float x, float z) =>
             new (Convert.ToInt32(x), 0, Convert.ToInt32(z));
 
         private class RootObject

@@ -49,10 +49,10 @@ namespace DCL.MapRenderer.MapLayers.Cluster
 
         public List<IClusterableMarker> UpdateClusters(int zoomLevel, float baseZoom, float zoom, Dictionary<Vector2Int, IClusterableMarker> markers)
         {
-            visibleMarkers.Clear();
             if (previousZoomLevel == zoomLevel)
                 return visibleMarkers;
 
+            visibleMarkers.Clear();
             previousZoomLevel = zoomLevel;
             float clusterCellSize = ClusterUtilities.CalculateCellSize(zoomLevel);
             foreach (IClusterMarker clusteredMarker in clusteredMarkers)
