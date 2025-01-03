@@ -175,13 +175,13 @@ namespace DCL.MapRenderer.MapCameraController
                                 });
         }
 
-        private void SetCameraSize(float zoom, int zoomLevel)
+        private void SetCameraSize(float zoomCameraValue, int zoomStepLevel)
         {
-            zoom = Mathf.Clamp01(zoom);
-            mapCameraObject.mapCamera.orthographicSize = Mathf.Lerp(zoomValues.y, zoomValues.x, zoom);
+            zoomCameraValue = Mathf.Clamp01(zoomCameraValue);
+            mapCameraObject.mapCamera.orthographicSize = Mathf.Lerp(zoomValues.y, zoomValues.x, zoomCameraValue);
 
             interactivityBehavior.ApplyCameraZoom(zoomValues.x, mapCameraObject.mapCamera.orthographicSize);
-            ZoomChanged?.Invoke(zoomValues.x, mapCameraObject.mapCamera.orthographicSize, zoomLevel);
+            ZoomChanged?.Invoke(zoomValues.x, mapCameraObject.mapCamera.orthographicSize, zoomStepLevel);
 
             CalculateCameraPositionBounds();
         }
