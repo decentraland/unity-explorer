@@ -138,7 +138,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
                     connectionLoopHealth.Set(enterState);
                     await func(ct);
                 }
-                catch (Exception e)
+                catch (Exception e) when (e is not OperationCanceledException)
                 {
                     ReportHub.LogError(ReportCategory.LIVEKIT, $"{logPrefix} - {funcName} failed: {e}");
                     connectionLoopHealth.Set(stateOnException);

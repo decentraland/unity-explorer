@@ -2,6 +2,7 @@
 using DCL.Multiplayer.Connections.Archipelago.LiveConnections;
 using DCL.Multiplayer.Connections.Archipelago.SignFlow;
 using DCL.Multiplayer.Connections.Pools;
+using DCL.Web3.Identities;
 using Decentraland.Kernel.Comms.V3;
 using Google.Protobuf;
 using LiveKit.Internal.FFIClients.Pools.Memory;
@@ -25,7 +26,9 @@ namespace DCL.Multiplayer.Connections.Archipelago.Tests
         public void Setup()
         {
             connectionMock = Substitute.For<IArchipelagoLiveConnection>();
-            signFlow = new LiveConnectionArchipelagoSignFlow(new AutoReconnectLiveConnection(connectionMock), memoryPool = new ArrayMemoryPool(), new DCLMultiPool());
+            memoryPool = new ArrayMemoryPool();
+            var dclMultiPool = new DCLMultiPool();
+            signFlow = new LiveConnectionArchipelagoSignFlow(new ArchipelagoSignedConnection(connectionMock, dclMultiPool, memoryPool, new IWeb3IdentityCache.Fake()), memoryPool, dclMultiPool);
         }
 
         [Test]

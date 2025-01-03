@@ -1,6 +1,8 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.Archipelago.LiveConnections;
 using DCL.Multiplayer.Connections.Archipelago.Rooms;
+using DCL.Multiplayer.Connections.Pools;
+using DCL.Web3.Identities;
 using LiveKit.Internal.FFIClients.Pools.Memory;
 using NSubstitute;
 using NUnit.Framework;
@@ -15,13 +17,13 @@ namespace DCL.Multiplayer.Connections.Archipelago.Tests
     public class AutoReconnectLiveConnectionShould
     {
         private IArchipelagoLiveConnection origin;
-        private AutoReconnectLiveConnection autoReconnect;
+        private ArchipelagoSignedConnection autoReconnect;
 
         [SetUp]
         public void Setup()
         {
             origin = Substitute.For<IArchipelagoLiveConnection>();
-            autoReconnect = new AutoReconnectLiveConnection(origin, TimeSpan.Zero); // UniTask.Delay is unpredictable in tests
+            autoReconnect = new ArchipelagoSignedConnection(origin, TimeSpan.Zero, new DCLMultiPool(), new ArrayMemoryPool(), new IWeb3IdentityCache.Fake()); // UniTask.Delay is unpredictable in tests
         }
 
         [Test]

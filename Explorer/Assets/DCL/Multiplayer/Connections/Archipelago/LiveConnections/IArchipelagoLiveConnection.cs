@@ -31,9 +31,6 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
 
     public static class ArchipelagoLiveConnectionExtensions
     {
-        public static AutoReconnectLiveConnection WithAutoReconnect(this IArchipelagoLiveConnection connection) =>
-            new (connection);
-
         public static LogArchipelagoLiveConnection WithLog(this IArchipelagoLiveConnection connection) =>
             new (connection);
 

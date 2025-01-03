@@ -12,6 +12,9 @@ using Utility.Types;
 
 namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
 {
+    /// <summary>
+    ///     Pure transport implementation: doesn't contain recovery logic
+    /// </summary>
     public class WebSocketArchipelagoLiveConnection : IArchipelagoLiveConnection
     {
         private const int BUFFER_SIZE = 1024 * 1024; //1MB
@@ -53,7 +56,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
 
         public async UniTask<EnumResult<IArchipelagoLiveConnection.ResponseError>> SendAsync(MemoryWrap data, CancellationToken token)
         {
-            await WaitWhileConnecting(token);
+            await WaitWhileConnectingAsync(token);
 
             if (IsWebSocketInvalid())
                 return EnumResult<IArchipelagoLiveConnection.ResponseError>
@@ -81,7 +84,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
 
         public async UniTask<EnumResult<MemoryWrap, IArchipelagoLiveConnection.ResponseError>> ReceiveAsync(CancellationToken token)
         {
-            await WaitWhileConnecting(token);
+            await WaitWhileConnectingAsync(token);
 
             if (IsWebSocketInvalid())
                 return EnumResult<MemoryWrap, IArchipelagoLiveConnection.ResponseError>.ErrorResult(
@@ -142,7 +145,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
         /// <summary>
         ///     <see cref="ClientWebSocket" /> throws <see cref="NullReferenceException" /> if the state is <see cref="WebSocketState.Connecting" />
         /// </summary>
-        private async UniTask WaitWhileConnecting(CancellationToken ct)
+        private async UniTask WaitWhileConnectingAsync(CancellationToken ct)
         {
             while (current?.WebSocket.State is WebSocketState.Connecting)
                 await UniTask.Yield(ct);

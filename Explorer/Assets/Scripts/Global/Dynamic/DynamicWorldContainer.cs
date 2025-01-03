@@ -341,6 +341,7 @@ namespace Global.Dynamic
             var archipelagoIslandRoom = IArchipelagoIslandRoom.NewDefault(
                 identityCache,
                 MultiPoolFactory(),
+                new ArrayMemoryPool(),
                 staticContainer.CharacterContainer.CharacterObject,
                 currentAdapterAddress,
                 staticContainer.WebRequestsContainer.WebRequestController

@@ -49,20 +49,13 @@ namespace DCL.Multiplayer.Connections.Demo
                 Debug.Log
             );
 
-            IArchipelagoSignFlow signFlow = new LiveConnectionArchipelagoSignFlow(
-                new LogArchipelagoLiveConnection(
-                    new WebSocketArchipelagoLiveConnection(memoryPool)
-                ).WithLog().WithAutoReconnect(),
-                memoryPool,
-                multiPool
-            ).WithLog();
-
             IWeb3IdentityCache? identityCache = await ArchipelagoFakeIdentityCache.NewAsync(new DecentralandUrlsSource(DecentralandEnvironment.Zone), new Web3AccountFactory());
 
             var archipelagoIslandRoom = new ArchipelagoIslandRoom(
-                identityCache,
-                signFlow,
                 loonCharacterObject,
+                identityCache,
+                multiPool,
+                memoryPool,
                 ICurrentAdapterAddress.NewDefault(new IRealmData.Fake())
             );
             var realFlowLoadingStatus = new LoadingStatus();

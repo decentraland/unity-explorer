@@ -24,16 +24,4 @@ namespace DCL.Multiplayer.Connections.Typing
                 ? $"Result is success: {Result}"
                 : "Result is failure";
     }
-
-    public static class LightResultExtensions
-    {
-        public static LightResult<T> AsSuccess<T>(this T result) =>
-            new (result);
-
-        public static void EnsureSuccess<T>(this LightResult<T> result, string errorMessage)
-        {
-            if (result.Success == false)
-                throw new Exception($"Result is failure: {errorMessage}");
-        }
-    }
 }

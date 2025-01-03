@@ -57,6 +57,9 @@ namespace Utility.Types
             Assert.IsFalse(result.Success);
             return ErrorResult(result.ErrorMessage!);
         }
+
+        public static implicit operator Result(Result<T> result) =>
+            result.Success ? Result.SuccessResult() : Result.ErrorResult(result.ErrorMessage!);
     }
 
     public readonly struct EnumResult<TErrorEnum>
@@ -158,6 +161,12 @@ namespace Utility.Types
 
             (TErrorEnum state, string message) = error!.Value;
             return $"{state}: {message}";
+        }
+
+        public static void EnsureSuccess(this Result result, string errorMessage)
+        {
+            if (result.Success == false)
+                throw new Exception($"Result is failure: {errorMessage}");
         }
     }
 }
