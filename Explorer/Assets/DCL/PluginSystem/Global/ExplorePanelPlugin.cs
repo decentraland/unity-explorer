@@ -274,17 +274,6 @@ namespace DCL.PluginSystem.Global
             ProvidedAsset<QualitySettingsAsset> qualitySettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.QualitySettingsAsset, ct);
             ProvidedAsset<ControlsSettingsAsset> controlsSettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.ControlsSettingsAsset, ct);
             ProvidedAsset<CategoryMappingSO> categoryMappingSO = await assetsProvisioner.ProvideMainAssetAsync(settings.CategoryMappingSO, ct);
-            settingsController = new SettingsController(
-                explorePanelView.GetComponentInChildren<SettingsView>(),
-                settingsMenuConfiguration.Value,
-                generalAudioMixer.Value,
-                realmPartitionSettings.Value,
-                videoPrioritizationSettings.Value,
-                landscapeData.Value,
-                qualitySettingsAsset.Value,
-                controlsSettingsAsset.Value,
-                systemMemoryCap,
-                worldVolumeMacBus);
 
             navmapView = explorePanelView.GetComponentInChildren<NavmapView>();
             categoryFilterController = new CategoryFilterController(navmapView.categoryToggles, mapRendererContainer.MapRenderer, navmapBus);
