@@ -44,7 +44,6 @@ namespace DCL.Navmap
                 currentActiveToggle = toggleView;
 
             navmapBus.FilterByCategory(isOn ? mapLayer.ToString() : null);
-            if (mapLayer is CategoriesEnum.All or CategoriesEnum.Favorites) return;
             mapRenderer.SetSharedLayer(MapLayer.Category, isOn);
         }
 
