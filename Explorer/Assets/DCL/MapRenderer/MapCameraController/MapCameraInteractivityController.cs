@@ -82,7 +82,7 @@ namespace DCL.MapRenderer.MapCameraController
                 if (previouslyRaycastedObject != null)
                 {
                     foreach (IMapLayerController mapLayerController in interactableLayers)
-                        mapLayerController.DeHighlightObject(previouslyRaycastedObject);
+                        mapLayerController.TryDeHighlightObject(previouslyRaycastedObject);
 
                     previouslyRaycastedObject = null;
                 }
@@ -91,7 +91,7 @@ namespace DCL.MapRenderer.MapCameraController
 
                 foreach (IMapLayerController mapLayerController in interactableLayers)
                 {
-                    if (mapLayerController.HighlightObject(raycast.collider.gameObject, out IMapRendererMarker? mapRenderMarker))
+                    if (mapLayerController.TryHighlightObject(raycast.collider.gameObject, out IMapRendererMarker? mapRenderMarker))
                         return hitObject;
                 }
             }
@@ -102,7 +102,7 @@ namespace DCL.MapRenderer.MapCameraController
                 if (previouslyRaycastedObject != null)
                 {
                     foreach (IMapLayerController mapLayerController in interactableLayers)
-                        mapLayerController.DeHighlightObject(previouslyRaycastedObject);
+                        mapLayerController.TryDeHighlightObject(previouslyRaycastedObject);
 
                     previouslyRaycastedObject = null;
                 }
@@ -130,7 +130,7 @@ namespace DCL.MapRenderer.MapCameraController
                 hitObject = raycast.collider.gameObject;
 
                 foreach (IMapLayerController mapLayerController in interactableLayers)
-                    if (mapLayerController.ClickObject(hitObject, clickCt, out IMapRendererMarker? clickedMarker))
+                    if (mapLayerController.TryClickObject(hitObject, clickCt, out IMapRendererMarker? clickedMarker))
                     {
                         previouslyClickedMarker = clickedMarker;
                         return hitObject;

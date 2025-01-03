@@ -194,7 +194,7 @@ namespace DCL.MapRenderer.MapLayers.Pins
             return UniTask.CompletedTask;
         }
 
-        public bool HighlightObject(GameObject gameObject, out IMapRendererMarker? mapMarker)
+        public bool TryHighlightObject(GameObject gameObject, out IMapRendererMarker? mapMarker)
         {
             mapMarker = null;
             if (visibleMarkers.TryGetValue(gameObject, out IPinMarker marker))
@@ -210,7 +210,7 @@ namespace DCL.MapRenderer.MapLayers.Pins
             return false;
         }
 
-        public bool DeHighlightObject(GameObject gameObject)
+        public bool TryDeHighlightObject(GameObject gameObject)
         {
             previousMarker = null;
 
@@ -224,7 +224,7 @@ namespace DCL.MapRenderer.MapLayers.Pins
             return false;
         }
 
-        public bool ClickObject(GameObject gameObject, CancellationTokenSource cts, out IMapRendererMarker? mapRendererMarker)
+        public bool TryClickObject(GameObject gameObject, CancellationTokenSource cts, out IMapRendererMarker? mapRendererMarker)
         {
             mapRendererMarker = null;
             if (visibleMarkers.TryGetValue(gameObject, out IPinMarker marker))

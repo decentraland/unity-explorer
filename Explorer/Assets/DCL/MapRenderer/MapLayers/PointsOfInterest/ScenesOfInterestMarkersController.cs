@@ -183,7 +183,7 @@ namespace DCL.MapRenderer.MapLayers.PointsOfInterest
             return UniTask.CompletedTask;
         }
 
-        public bool HighlightObject(GameObject gameObject, out IMapRendererMarker? mapMarker)
+        public bool TryHighlightObject(GameObject gameObject, out IMapRendererMarker? mapMarker)
         {
             mapMarker = null;
             if (clusterController.HighlightObject(gameObject))
@@ -202,7 +202,7 @@ namespace DCL.MapRenderer.MapLayers.PointsOfInterest
             return false;
         }
 
-        public bool DeHighlightObject(GameObject gameObject)
+        public bool TryDeHighlightObject(GameObject gameObject)
         {
             if (clusterController.DeHighlightObject(gameObject))
                 return true;
@@ -219,7 +219,7 @@ namespace DCL.MapRenderer.MapLayers.PointsOfInterest
             return false;
         }
 
-        public bool ClickObject(GameObject gameObject, CancellationTokenSource cts, out IMapRendererMarker? mapRenderMarker)
+        public bool TryClickObject(GameObject gameObject, CancellationTokenSource cts, out IMapRendererMarker? mapRenderMarker)
         {
             mapRenderMarker = null;
 

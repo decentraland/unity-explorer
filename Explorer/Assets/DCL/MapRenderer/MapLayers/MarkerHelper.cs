@@ -125,7 +125,6 @@ namespace DCL.MapRenderer.MapLayers
             }
             catch (OperationCanceledException)
             {
-                Debug.Log("Fade cancelled");
                 for (int i = 0; i < spriteRenderers.Length; i++)
                 {
                     var sr = spriteRenderers[i];

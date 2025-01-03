@@ -199,7 +199,7 @@ namespace DCL.MapRenderer.MapLayers.SearchResults
             clusterController.Disable();
         }
 
-        public bool HighlightObject(GameObject gameObject, out IMapRendererMarker? mapMarker)
+        public bool TryHighlightObject(GameObject gameObject, out IMapRendererMarker? mapMarker)
         {
             mapMarker = null;
             if (clusterController.HighlightObject(gameObject))
@@ -218,7 +218,7 @@ namespace DCL.MapRenderer.MapLayers.SearchResults
             return false;
         }
 
-        public bool DeHighlightObject(GameObject gameObject)
+        public bool TryDeHighlightObject(GameObject gameObject)
         {
             if (clusterController.DeHighlightObject(gameObject))
                 return true;
@@ -235,7 +235,7 @@ namespace DCL.MapRenderer.MapLayers.SearchResults
             return false;
         }
 
-        public bool ClickObject(GameObject gameObject, CancellationTokenSource cts, out IMapRendererMarker? mapRendererMarker)
+        public bool TryClickObject(GameObject gameObject, CancellationTokenSource cts, out IMapRendererMarker? mapRendererMarker)
         {
             mapRendererMarker = null;
             if (clusterController.ClickObject(gameObject))
