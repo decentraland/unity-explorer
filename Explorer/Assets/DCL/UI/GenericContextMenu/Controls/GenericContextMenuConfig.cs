@@ -8,33 +8,49 @@ namespace DCL.UI.GenericContextMenu.Controls
     [Serializable]
     public class GenericContextMenuConfig : ScriptableObject
     {
-        public List<ContextMenuControlSettings> ContextMenuSettings { get; private set; } = new ();
-        public Vector2 OffsetFromTarget { get; private set; } = Vector2.zero;
-        public float Width { get; private set; } = 170;
+        [SerializeField] private List<ContextMenuControlSettings> contextMenuSettings = new ();
+        [SerializeField] private Vector2 offsetFromTarget = Vector2.zero;
+        [SerializeField] private float width = 170;
+
+        public List<ContextMenuControlSettings> ContextMenuSettings => contextMenuSettings;
+        public Vector2 OffsetFromTarget => offsetFromTarget;
+        public float Width => width;
     }
 
     [Serializable]
     public class ContextMenuControlSettings : ScriptableObject
     {
-        public ContextMenuControlTypes ControlTypeType { get; private set; }
+        [SerializeField] private ContextMenuControlTypes controlTypeType;
+
+        public ContextMenuControlTypes ControlTypeType => controlTypeType;
     }
 
+    [CreateAssetMenu(fileName = "GenericContextMenuSettings", menuName = "SO/ContextMenu/Components/ButtonContextMenuControlSettings")]
     [Serializable]
     public class ButtonContextMenuControlSettings : ContextMenuControlSettings
     {
-        public string ButtonText { get; private set; }
-        public Sprite ButtonIcon { get; private set; }
+        [SerializeField] private string buttonText;
+        [SerializeField] private Sprite buttonIcon;
+
+        public string ButtonText => buttonText;
+        public Sprite ButtonIcon => buttonIcon;
     }
 
+    [CreateAssetMenu(fileName = "GenericContextMenuSettings", menuName = "SO/ContextMenu/Components/ToggleContextMenuControlSettings")]
     [Serializable]
     public class ToggleContextMenuControlSettings : ContextMenuControlSettings
     {
-        public string ToggleText { get; private set; }
+        [SerializeField] private string toggleText;
+
+        public string ToggleText => toggleText;
     }
 
+    [CreateAssetMenu(fileName = "GenericContextMenuSettings", menuName = "SO/ContextMenu/Components/SeparatorContextMenuControlSettings")]
     [Serializable]
     public class SeparatorContextMenuControlSettings : ContextMenuControlSettings
     {
-        public int Height { get; private set; }
+        [SerializeField] private int height;
+
+        public int Height => height;
     }
 }

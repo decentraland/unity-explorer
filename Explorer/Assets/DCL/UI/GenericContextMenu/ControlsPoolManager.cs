@@ -62,10 +62,8 @@ namespace DCL.UI.GenericContextMenu
             return toggleView;
         }
 
-        public void Dispose()
-        {
-
-        }
+        public void Dispose() =>
+            ReleaseAllCurrentControls();
 
         public void ReleaseAllCurrentControls()
         {
@@ -86,6 +84,8 @@ namespace DCL.UI.GenericContextMenu
                         break;
                 }
             }
+
+            currentControls.Clear();
         }
     }
 }

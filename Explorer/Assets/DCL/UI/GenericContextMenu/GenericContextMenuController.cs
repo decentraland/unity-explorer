@@ -2,10 +2,8 @@ using Cysharp.Threading.Tasks;
 using DCL.UI.GenericContextMenu.Controls;
 using MVC;
 using System;
-using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace DCL.UI.GenericContextMenu
 {
@@ -30,6 +28,13 @@ namespace DCL.UI.GenericContextMenu
             ControlsPoolManager controlsPoolManager) : base(viewFactory)
         {
             this.controlsPoolManager = controlsPoolManager;
+        }
+
+        public override void Dispose()
+        {
+            base.Dispose();
+
+            controlsPoolManager.Dispose();
         }
 
         protected override void OnViewInstantiated()
