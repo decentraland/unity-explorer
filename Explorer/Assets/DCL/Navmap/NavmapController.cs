@@ -6,7 +6,6 @@ using DCL.MapRenderer.CommonBehavior;
 using DCL.MapRenderer.ConsumerUtils;
 using DCL.MapRenderer.MapCameraController;
 using DCL.MapRenderer.MapLayers;
-using DCL.MapRenderer.MapLayers.Pins;
 using DCL.MapRenderer.MapLayers.PlayerMarker;
 using DCL.Navmap.FilterPanel;
 using DCL.PlacesAPIService;
@@ -17,7 +16,6 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading;
 using UnityEngine;
-using UnityEngine.InputSystem;
 using Utility;
 
 namespace DCL.Navmap
@@ -44,6 +42,7 @@ namespace DCL.Navmap
         private readonly PlacesAndEventsPanelController placesAndEventsPanelController;
         private readonly StringBuilder parcelTitleStringBuilder = new ();
         private readonly NavmapLocationController navmapLocationController;
+        private readonly INavmapBus navmapBus;
         private CancellationTokenSource? fetchPlaceAndShowCancellationToken = new ();
 
         private CancellationTokenSource? animationCts;
@@ -55,9 +54,6 @@ namespace DCL.Navmap
 
         public IReadOnlyDictionary<MapLayer, IMapLayerParameter> LayersParameters { get; } = new Dictionary<MapLayer, IMapLayerParameter>
             { { MapLayer.PlayerMarker, new PlayerMarkerParameter { BackgroundIsActive = true } } };
-
-        // TODO: we need this property for the MVCManagerAnalyticsDecorator only.. something is not right in the design
-        public INavmapBus NavmapBus { get; }
 
         public NavmapController(
             NavmapView navmapView,
@@ -81,7 +77,7 @@ namespace DCL.Navmap
             this.mapPathEventBus = mapPathEventBus;
             this.audioEventsBus = audioEventsBus;
             this.placesAndEventsPanelController = placesAndEventsPanelController;
-            this.NavmapBus = navmapBus;
+            this.navmapBus = navmapBus;
 
             rectTransform = this.navmapView.transform.parent.GetComponent<RectTransform>();
 
@@ -160,7 +156,7 @@ namespace DCL.Navmap
 
                 if (place == null) place = new PlacesData.PlaceInfo(clickedParcel.Parcel);
 
-                NavmapBus.SelectPlaceAsync(place, fetchPlaceAndShowCancellationToken.Token).Forget();
+                navmapBus.SelectPlaceAsync(place, fetchPlaceAndShowCancellationToken.Token).Forget();
             }
 
             fetchPlaceAndShowCancellationToken = fetchPlaceAndShowCancellationToken.SafeRestart();
@@ -207,7 +203,7 @@ namespace DCL.Navmap
             mapRenderer.SetSharedLayer(MapLayer.ScenesOfInterest, false);
             zoomController.Deactivate();
             cameraController?.Release(this);
-            NavmapBus.ClearHistory();
+            navmapBus.ClearHistory();
         }
 
         public void Animate(int triggerId)
