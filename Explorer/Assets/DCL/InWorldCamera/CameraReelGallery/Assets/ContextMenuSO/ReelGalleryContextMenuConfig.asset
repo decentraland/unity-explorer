@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7f94b35778914b3085d26ae60acea3be, type: 3}
+  m_Name: ReelGalleryContextMenuConfig
+  m_EditorClassIdentifier: 
+  contextMenuSettings:
+  - {fileID: 11400000, guid: 63b9ee24ad69145e9becb7da653bdb4a, type: 2}
+  - {fileID: 11400000, guid: 333b53545538440bca1cb75185892b64, type: 2}
+  - {fileID: 11400000, guid: 5c0c78cadc79d4af0815be75aa67b027, type: 2}
+  - {fileID: 11400000, guid: db49cac2faca44598a924e1c56690e0c, type: 2}
+  - {fileID: 11400000, guid: 3ad489cd996154c1cad21a0856ed86bc, type: 2}
+  - {fileID: 11400000, guid: a1abe3dafbc2143d8949b174e3c6c235, type: 2}
+  offsetFromTarget: {x: 14, y: 18}
+  width: 186

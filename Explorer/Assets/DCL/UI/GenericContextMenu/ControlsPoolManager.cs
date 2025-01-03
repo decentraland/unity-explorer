@@ -38,25 +38,29 @@ namespace DCL.UI.GenericContextMenu
                 actionOnDestroy: toggleView => GameObject.Destroy(toggleView.gameObject));
         }
 
-        public GenericContextMenuSeparatorView GetSeparator(SeparatorContextMenuControlSettings settings)
+        public GenericContextMenuSeparatorView GetSeparator(SeparatorContextMenuControlSettings settings, int index)
         {
             GenericContextMenuSeparatorView separatorView = separatorPool.Get();
+            separatorView.transform.SetSiblingIndex(index);
             separatorView.Configure(settings);
             currentControls.Add(separatorView);
             return separatorView;
         }
 
-        public GenericContextMenuButtonWithTextView GetButton(ButtonContextMenuControlSettings settings)
+        public GenericContextMenuButtonWithTextView GetButton(ButtonContextMenuControlSettings settings, int index)
         {
             GenericContextMenuButtonWithTextView buttonView = buttonPool.Get();
+            buttonView.transform.SetSiblingIndex(index);
             buttonView.Configure(settings);
             currentControls.Add(buttonView);
             return buttonView;
         }
 
-        public GenericContextMenuToggleView GetToggle(ToggleContextMenuControlSettings settings)
+        public GenericContextMenuToggleView GetToggle(ToggleContextMenuControlSettings settings, int index)
         {
+            //TODO: initial value
             GenericContextMenuToggleView toggleView = togglePool.Get();
+            toggleView.transform.SetSiblingIndex(index);
             toggleView.Configure(settings);
             currentControls.Add(toggleView);
             return toggleView;

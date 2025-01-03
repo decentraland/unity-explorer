@@ -10,7 +10,9 @@ using DCL.InWorldCamera.CameraReelToast;
 using DCL.InWorldCamera.ReelActions;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.Pools;
+using DCL.UI.GenericContextMenu.Controls;
 using DG.Tweening;
+using MVC;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -100,7 +102,9 @@ namespace DCL.InWorldCamera.CameraReelGallery
             IDecentralandUrlsSource? decentralandUrlsSource = null,
             IExplorePanelEscapeAction? explorePanelEscapeAction = null,
             ISystemClipboard? systemClipboard = null,
-            ReelGalleryStringMessages? reelGalleryStringMessages = null)
+            ReelGalleryStringMessages? reelGalleryStringMessages = null,
+            IMVCManager? mvcManager = null,
+            GenericContextMenuConfig? contextMenuConfig = null)
         {
             this.view = view;
             this.cameraReelStorageService = cameraReelStorageService;
@@ -124,7 +128,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
             if (optionButtonView is not null && contextMenuView is not null)
             {
                 this.contextMenuController = new ContextMenuController(contextMenuView);
-                this.optionButtonController = new OptionButtonController(optionButtonView, contextMenuController);
+                this.optionButtonController = new OptionButtonController(optionButtonView, contextMenuController, mvcManager!, contextMenuConfig!);
             }
 
             reelGalleryPoolManager = new ReelGalleryPoolManager(view.thumbnailViewPrefab, view.monthGridPrefab, view.unusedThumbnailViewObject,

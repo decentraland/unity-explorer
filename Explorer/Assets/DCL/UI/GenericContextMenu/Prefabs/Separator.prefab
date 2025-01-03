@@ -60,6 +60,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   <LayoutElementComponent>k__BackingField: {fileID: 8471297342254466779}
+  <RectTransformComponent>k__BackingField: {fileID: 8849643100579995022}
 --- !u!114 &8471297342254466779
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -74,7 +75,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_IgnoreLayout: 0
   m_MinWidth: -1
-  m_MinHeight: -1
+  m_MinHeight: 1
   m_PreferredWidth: -1
   m_PreferredHeight: 1
   m_FlexibleWidth: -1

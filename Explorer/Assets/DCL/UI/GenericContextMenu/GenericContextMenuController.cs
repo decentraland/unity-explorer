@@ -4,6 +4,7 @@ using MVC;
 using System;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.Events;
 
 namespace DCL.UI.GenericContextMenu
 {
@@ -62,16 +63,16 @@ namespace DCL.UI.GenericContextMenu
                 switch (config.ControlTypeType)
                 {
                     case ContextMenuControlTypes.SEPARATOR:
-                        controlsPoolManager.GetSeparator(config as SeparatorContextMenuControlSettings);
+                        controlsPoolManager.GetSeparator(config as SeparatorContextMenuControlSettings, i);
                         break;
                     case ContextMenuControlTypes.BUTTON_WITH_TEXT_AND_ICON:
-                        GenericContextMenuButtonWithTextView button = controlsPoolManager.GetButton(config as ButtonContextMenuControlSettings);
-                        button.ButtonComponent.onClick.AddListener(inputData.ControlsActions[i] as UnityEngine.Events.UnityAction);
+                        GenericContextMenuButtonWithTextView button = controlsPoolManager.GetButton(config as ButtonContextMenuControlSettings, i);
+                        button.ButtonComponent.onClick.AddListener(new UnityAction((Action)inputData.ControlsActions[i]));
                         button.ButtonComponent.onClick.AddListener(TriggerContextMenuClose);
                         break;
                     case ContextMenuControlTypes.TOGGLE_WITH_TEXT:
-                        GenericContextMenuToggleView toggle = controlsPoolManager.GetToggle(config as ToggleContextMenuControlSettings);
-                        toggle.ToggleComponent.onValueChanged.AddListener(inputData.ControlsActions[i] as UnityEngine.Events.UnityAction<bool>);
+                        GenericContextMenuToggleView toggle = controlsPoolManager.GetToggle(config as ToggleContextMenuControlSettings, i);
+                        toggle.ToggleComponent.onValueChanged.AddListener(new UnityAction<bool>((Action<bool>)inputData.ControlsActions[i]));
                         toggle.ToggleComponent.onValueChanged.AddListener(toggleValue => TriggerContextMenuClose());
                         break;
                 }

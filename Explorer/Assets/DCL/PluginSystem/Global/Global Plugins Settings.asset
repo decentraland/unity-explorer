@@ -251,6 +251,11 @@ MonoBehaviour:
         <GridLayoutFixedColumnCount>k__BackingField: 6
         <ThumbnailHeight>k__BackingField: 230
         <ThumbnailWidth>k__BackingField: 306
+        <ContextMenuConfig>k__BackingField:
+          m_AssetGUID: 43daf6965002847a19f241e71b28fd9b
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
     - rid: 1841402216112979969
       type: {class: CharacterContainer/Settings, ns: DCL.Character.Plugin, asm: DCL.Plugins}
       data:

@@ -48,6 +48,7 @@ using DCL.Optimization.PerformanceBudgeting;
 using DCL.PluginSystem.World;
 using DCL.SDKComponents.MediaStream.Settings;
 using DCL.Settings.Settings;
+using DCL.UI.GenericContextMenu.Controls;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Audio;
@@ -249,6 +250,8 @@ namespace DCL.PluginSystem.Global
                 mapRendererContainer.MapRenderer, placesAPIService, webRequestController, webBrowser, dclInput,
                 realmNavigator, realmData, mapPathEventBus, world, playerEntity, inputBlock, chatMessagesBus);
 
+            GenericContextMenuConfig contextMenuConfig = await assetsProvisioner.ProvideMainAssetValueAsync(settings.ContextMenuConfig, ct);
+
             await navmapController.InitializeAssetsAsync(assetsProvisioner, ct);
             await backpackSubPlugin.InitializeAsync(settings.BackpackSettings, explorePanelView.GetComponentInChildren<BackpackView>(), ct);
 
@@ -261,7 +264,9 @@ namespace DCL.PluginSystem.Global
                     new ReelGalleryConfigParams(settings.GridLayoutFixedColumnCount, settings.ThumbnailHeight, settings.ThumbnailWidth, true, true), true,
                     cameraReelView.optionsButton, cameraReelView.contextMenu,
                     webBrowser, decentralandUrlsSource, inputHandler, systemClipboard,
-                    new ReelGalleryStringMessages(settings.CameraReelGalleryShareToXMessage, settings.PhotoSuccessfullyDeletedMessage, settings.PhotoSuccessfullyUpdatedMessage, settings.PhotoSuccessfullyDownloadedMessage, settings.LinkCopiedMessage)),
+                    new ReelGalleryStringMessages(settings.CameraReelGalleryShareToXMessage, settings.PhotoSuccessfullyDeletedMessage, settings.PhotoSuccessfullyUpdatedMessage, settings.PhotoSuccessfullyDownloadedMessage, settings.LinkCopiedMessage),
+                    mvcManager,
+                    contextMenuConfig),
                 cameraReelStorageService,
                 web3IdentityCache,
                 mvcManager,
@@ -329,6 +334,8 @@ namespace DCL.PluginSystem.Global
             public int ThumbnailHeight { get; private set; }
             [field: SerializeField]
             public int ThumbnailWidth { get; private set; }
+
+            [field: SerializeField] internal AssetReferenceT<GenericContextMenuConfig> ContextMenuConfig { get; private set; }
 
             public IReadOnlyCollection<URN> EmbeddedEmotesAsURN() =>
                 EmbeddedEmotes.Select(s => new URN(s)).ToArray();
