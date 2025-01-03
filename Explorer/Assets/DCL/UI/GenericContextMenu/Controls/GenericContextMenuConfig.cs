@@ -8,14 +8,32 @@ namespace DCL.UI.GenericContextMenu.Controls
     [Serializable]
     public class GenericContextMenuConfig : ScriptableObject
     {
-        [SerializeField] private List<ContextMenuControlSettings> contextMenuSettings = new ();
+        public List<ContextMenuControlSettings> ContextMenuSettings { get; private set; } = new ();
+        public Vector2 OffsetFromTarget { get; private set; } = Vector2.zero;
     }
 
     [Serializable]
-    public class ContextMenuControlSettings
+    public class ContextMenuControlSettings : ScriptableObject
     {
         public ContextMenuControlTypes controlTypeType;
-        public string text;
-        public Sprite icon;
+    }
+
+    [Serializable]
+    public class ButtonContextMenuControlSettings : ContextMenuControlSettings
+    {
+        public string buttonText;
+        public Sprite buttonIcon;
+    }
+
+    [Serializable]
+    public class ToggleContextMenuControlSettings : ContextMenuControlSettings
+    {
+        public string buttonText;
+        public Sprite buttonIcon;
+    }
+
+    [Serializable]
+    public class SeparatorContextMenuControlSettings : ContextMenuControlSettings
+    {
     }
 }
