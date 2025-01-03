@@ -40,7 +40,7 @@ namespace DCL.WebRequests
 
         internal static GetTextureWebRequest Initialize(in CommonArguments commonArguments, GetTextureArguments textureArguments, ITexturesFuse texturesFuse, bool isTextureCompressionEnabled)
         {
-            UnityWebRequest wr = UnityWebRequest.Get(commonArguments.URL)!;
+            UnityWebRequest wr = isTextureCompressionEnabled ? UnityWebRequest.Get(commonArguments.URL)! : UnityWebRequestTexture.GetTexture(commonArguments.URL, false);
             return new GetTextureWebRequest(wr, texturesFuse, commonArguments.URL, textureArguments.TextureType, isTextureCompressionEnabled);
         }
 
