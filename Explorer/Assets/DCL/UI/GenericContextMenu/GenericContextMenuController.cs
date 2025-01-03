@@ -53,6 +53,8 @@ namespace DCL.UI.GenericContextMenu
 
         private void ConfigureContextMenu()
         {
+            viewInstance!.ControlsContainer.sizeDelta = new Vector2(inputData.Config.Width, viewInstance!.ControlsContainer.sizeDelta.y);
+
             for (var i = 0; i < inputData.Config.ContextMenuSettings.Count; i++)
             {
                 ContextMenuControlSettings config = inputData.Config.ContextMenuSettings[i];

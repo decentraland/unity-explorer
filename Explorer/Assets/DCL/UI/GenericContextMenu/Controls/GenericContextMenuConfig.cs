@@ -20,7 +20,7 @@ namespace DCL.UI.GenericContextMenu.Controls
     [Serializable]
     public class ContextMenuControlSettings : ScriptableObject
     {
-        [SerializeField] private ContextMenuControlTypes controlTypeType;
+        [SerializeField] protected ContextMenuControlTypes controlTypeType;
 
         public ContextMenuControlTypes ControlTypeType => controlTypeType;
     }
@@ -34,6 +34,9 @@ namespace DCL.UI.GenericContextMenu.Controls
 
         public string ButtonText => buttonText;
         public Sprite ButtonIcon => buttonIcon;
+
+        private void OnEnable() =>
+            controlTypeType = ContextMenuControlTypes.BUTTON_WITH_TEXT_AND_ICON;
     }
 
     [CreateAssetMenu(fileName = "GenericContextMenuSettings", menuName = "SO/ContextMenu/Components/ToggleContextMenuControlSettings")]
@@ -43,6 +46,9 @@ namespace DCL.UI.GenericContextMenu.Controls
         [SerializeField] private string toggleText;
 
         public string ToggleText => toggleText;
+
+        private void OnEnable() =>
+            controlTypeType = ContextMenuControlTypes.TOGGLE_WITH_TEXT;
     }
 
     [CreateAssetMenu(fileName = "GenericContextMenuSettings", menuName = "SO/ContextMenu/Components/SeparatorContextMenuControlSettings")]
@@ -52,5 +58,8 @@ namespace DCL.UI.GenericContextMenu.Controls
         [SerializeField] private int height;
 
         public int Height => height;
+
+        private void OnEnable() =>
+            controlTypeType = ContextMenuControlTypes.SEPARATOR;
     }
 }
