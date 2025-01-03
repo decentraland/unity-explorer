@@ -91,6 +91,7 @@ namespace Global.Dynamic
             DebugViewsCatalog debugViewsCatalog,
             Entity playerEntity,
             ITexturesFuse texturesFuse,
+            bool isTextureCompressionEnabled,
             ISystemMemoryCap memoryCap,
             CancellationToken ct
         ) =>
@@ -113,6 +114,7 @@ namespace Global.Dynamic
                 bootstrapContainer.WorldVolumeMacBus,
                 EnableAnalytics,
                 bootstrapContainer.Analytics,
+                isTextureCompressionEnabled,
                 ct
             );
 

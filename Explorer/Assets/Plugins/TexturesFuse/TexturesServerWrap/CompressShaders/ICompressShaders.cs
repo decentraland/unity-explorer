@@ -5,6 +5,7 @@ using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using System;
 using System.IO;
 using System.Threading;
+using UnityEditor;
 using UnityEngine;
 
 namespace Plugins.TexturesFuse.TexturesServerWrap.CompressShaders
@@ -45,6 +46,19 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.CompressShaders
                 ),
                 platformInfo
             );
+
+        static ICompressShaders NewEmpty() =>
+            new EmptyCompressShaders();
+
+    }
+
+    public class EmptyCompressShaders : ICompressShaders
+    {
+        public bool AreReady() =>
+            true;
+
+        public UniTask WarmUpAsync(CancellationToken token) =>
+            UniTask.CompletedTask;
     }
 
     public static class CompressShadersExtensions

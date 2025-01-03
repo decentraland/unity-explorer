@@ -141,6 +141,7 @@ namespace Global
             WorldVolumeMacBus worldVolumeMacBus,
             bool enableAnalytics,
             IAnalyticsController analyticsController,
+            bool isTextureCompressionEnabled,
             CancellationToken ct)
         {
             ProfilingCounters.CleanAllCounters();
@@ -198,7 +199,8 @@ namespace Global
                 web3IdentityProvider,
                 texturesFuse,
                 container.DebugContainerBuilder,
-                staticSettings.WebRequestsBudget
+                staticSettings.WebRequestsBudget,
+                isTextureCompressionEnabled
             );
 
             container.PhysicsTickProvider = new PhysicsTickProvider();
