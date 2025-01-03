@@ -1,13 +1,10 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
-using DCL.Browser.DecentralandUrls;
 using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.Culling;
 using DCL.MapRenderer.MapLayers;
 using DCL.MapRenderer.MapLayers.Users;
 using DCL.MapRenderer.MapLayers.UsersMarker;
-using DCL.Multiplayer.Connections.DecentralandUrls;
-using DCL.WebRequests;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -18,8 +15,6 @@ namespace DCL.MapRenderer.ComponentsFactory
 {
     internal struct HotUsersMarkersInstaller
     {
-        private const int HOT_USER_MARKERS_PREWARM_COUNT = 30;
-
         private IAssetsProvisioner assetsProvisioner;
         private IMapRendererSettings mapSettings;
 
@@ -41,13 +36,12 @@ namespace DCL.MapRenderer.ComponentsFactory
             var objectsPool = new ObjectPool<HotUserMarkerObject>(
                 () => CreatePoolMethod(configuration, prefab, coordsUtils),
                 actionOnGet: obj => obj.gameObject.SetActive(true),
-                actionOnRelease: obj => obj.gameObject.SetActive(false),
-                defaultCapacity: HOT_USER_MARKERS_PREWARM_COUNT);
+                actionOnRelease: obj => obj.gameObject.SetActive(false));
 
             IHotUserMarker CreateWrap() =>
                 new HotUserMarker(objectsPool, coordsUtils);
 
-            var wrapsPool = new ObjectPool<IHotUserMarker>(CreateWrap, actionOnRelease: m => m.Dispose(), defaultCapacity: HOT_USER_MARKERS_PREWARM_COUNT);
+            var wrapsPool = new ObjectPool<IHotUserMarker>(CreateWrap, actionOnRelease: m => m.Dispose());
 
             var controller = new UsersMarkersHotAreaController(objectsPool, wrapsPool, configuration.HotUserMarkersRoot, coordsUtils, cullingController, teleportBusController, remoteUsersRequestController);
             await controller.InitializeAsync(cancellationToken);
