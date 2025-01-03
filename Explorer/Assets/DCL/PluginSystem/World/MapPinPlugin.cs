@@ -1,6 +1,7 @@
 using Arch.SystemGroups;
 using DCL.ECSComponents;
 using DCL.FeatureFlags;
+using DCL.MapPins.Bus;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.SDKComponents.MapPins.Systems;
 using ECS.LifeCycle;
@@ -13,11 +14,13 @@ namespace DCL.PluginSystem.World
     {
         private readonly Arch.Core.World globalWorld;
         private readonly FeatureFlagsCache featureFlagsCache;
+        private readonly IMapPinsEventBus mapPinsEventBus;
 
-        public MapPinPlugin(Arch.Core.World globalWorld, FeatureFlagsCache featureFlagsCache)
+        public MapPinPlugin(Arch.Core.World globalWorld, FeatureFlagsCache featureFlagsCache, IMapPinsEventBus mapPinsEventBus)
         {
             this.globalWorld = globalWorld;
             this.featureFlagsCache = featureFlagsCache;
+            this.mapPinsEventBus = mapPinsEventBus;
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
@@ -27,7 +30,7 @@ namespace DCL.PluginSystem.World
                 sharedDependencies.SceneData.SceneEntityDefinition.metadata.isPortableExperience)
             {
                 ResetDirtyFlagSystem<PBMapPin>.InjectToWorld(ref builder);
-                MapPinLoaderSystem.InjectToWorld(ref builder, sharedDependencies.SceneData, globalWorld, sharedDependencies.ScenePartition, featureFlagsCache);
+                finalizeWorldSystems.Add(MapPinLoaderSystem.InjectToWorld(ref builder, sharedDependencies.SceneData, globalWorld, sharedDependencies.ScenePartition, featureFlagsCache, mapPinsEventBus));
             }
         }
     }
