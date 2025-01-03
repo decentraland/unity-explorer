@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 891560713975722788}
   - component: {fileID: 4905401340599041321}
   - component: {fileID: 2548270455446298190}
+  - component: {fileID: 7162056934107790529}
   m_Layer: 5
   m_Name: ToggleWithText
   m_TagString: Untagged
@@ -77,6 +78,20 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 3
+--- !u!114 &7162056934107790529
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 582679870921041373}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e8f35c553d944f99854691517619b0e3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  <ToggleComponent>k__BackingField: {fileID: 6294227615655975748}
+  <TextComponent>k__BackingField: {fileID: 7042733739484598958}
 --- !u!1 &4204936758877281454
 GameObject:
   m_ObjectHideFlags: 0
@@ -328,6 +343,17 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 6a387e1548b1545319b57f5a417160aa, type: 3}
+--- !u!114 &6294227615655975748 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 7625753975028379600, guid: 6a387e1548b1545319b57f5a417160aa, type: 3}
+  m_PrefabInstance: {fileID: 4507408873941251220}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9085046f02f69544eb97fd06b6048fe2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!224 &7210190615658038846 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 6521834947971461802, guid: 6a387e1548b1545319b57f5a417160aa, type: 3}

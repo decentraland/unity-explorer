@@ -26,9 +26,10 @@ namespace DCL.UI.GenericContextMenu
         private RectTransform viewRectTransform;
         private bool isClosing;
 
-        public GenericContextMenuController(ViewFactoryMethod viewFactory) : base(viewFactory)
+        public GenericContextMenuController(ViewFactoryMethod viewFactory,
+            ControlsPoolManager controlsPoolManager) : base(viewFactory)
         {
-            controlsPoolManager = new ControlsPoolManager();
+            this.controlsPoolManager = controlsPoolManager;
         }
 
         protected override void OnViewInstantiated()
@@ -51,25 +52,25 @@ namespace DCL.UI.GenericContextMenu
             {
                 ContextMenuControlSettings config = inputData.Config.ContextMenuSettings[i];
 
-                switch (config.controlTypeType)
+                switch (config.ControlTypeType)
                 {
                     case ContextMenuControlTypes.SEPARATOR:
-                        controlsPoolManager.GetSeparator();
+                        controlsPoolManager.GetSeparator(config as SeparatorContextMenuControlSettings);
                         break;
                     case ContextMenuControlTypes.BUTTON_WITH_TEXT_AND_ICON:
-                        Button button = controlsPoolManager.GetButton(config as ButtonContextMenuControlSettings);
-                        button.onClick.AddListener(inputData.ControlsActions[i] as UnityEngine.Events.UnityAction);
-                        button.onClick.AddListener(TriggerContextMenuClose);
+                        GenericContextMenuButtonWithTextView button = controlsPoolManager.GetButton(config as ButtonContextMenuControlSettings);
+                        button.ButtonComponent.onClick.AddListener(inputData.ControlsActions[i] as UnityEngine.Events.UnityAction);
+                        button.ButtonComponent.onClick.AddListener(TriggerContextMenuClose);
                         break;
                     case ContextMenuControlTypes.TOGGLE_WITH_TEXT:
-                        Toggle toggle = controlsPoolManager.GetToggle(config as ToggleContextMenuControlSettings);
-                        toggle.onValueChanged.AddListener(inputData.ControlsActions[i] as UnityEngine.Events.UnityAction<bool>);
-                        toggle.onValueChanged.AddListener((toggleValue) => TriggerContextMenuClose());
+                        GenericContextMenuToggleView toggle = controlsPoolManager.GetToggle(config as ToggleContextMenuControlSettings);
+                        toggle.ToggleComponent.onValueChanged.AddListener(inputData.ControlsActions[i] as UnityEngine.Events.UnityAction<bool>);
+                        toggle.ToggleComponent.onValueChanged.AddListener(toggleValue => TriggerContextMenuClose());
                         break;
                 }
             }
 
-            viewInstance!.ControlsContainer.localPosition = GetControlsPosition(inputData.AnchorPosition, inputData.Config.OffsetFromTarget);
+            viewInstance!.ControlsContainer.localPosition = GetControlsPosition(inputData.AnchorPosition, inputData.Config.OffsetFromTarget, inputData.OverlapRect);
         }
 
         private Vector2 GetOffsetByDirection(ContextMenuOpenDirection direction, Vector2 offsetFromTarget)
@@ -84,7 +85,7 @@ namespace DCL.UI.GenericContextMenu
             };
         }
 
-        private Vector3 GetControlsPosition(Vector2 anchorPosition, Vector2 offsetFromTarget)
+        private Vector3 GetControlsPosition(Vector2 anchorPosition, Vector2 offsetFromTarget, Rect? overlapRect)
         {
             Vector3 position = viewRectTransform.InverseTransformPoint(anchorPosition);
             position.x += viewInstance!.ControlsContainer.rect.width / 2;
@@ -96,7 +97,7 @@ namespace DCL.UI.GenericContextMenu
             {
                 Vector2 offsetByDirection = GetOffsetByDirection(enumVal, offsetFromTarget);
                 Vector3 currentPosition = position + new Vector3(offsetByDirection.x, offsetByDirection.y, 0);
-                float nonOverlappingArea = CalculateNonOverlappingArea(viewRectTransform.rect, GetProjectedRect(currentPosition));
+                float nonOverlappingArea = CalculateNonOverlappingArea(overlapRect ?? viewRectTransform.rect, GetProjectedRect(currentPosition));
                 if (nonOverlappingArea < minNonOverlappingArea)
                 {
                     newPosition = currentPosition;

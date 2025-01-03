@@ -223,6 +223,7 @@ GameObject:
   - component: {fileID: 3577948846086194394}
   - component: {fileID: 4151572650133112880}
   - component: {fileID: 4754064954679370281}
+  - component: {fileID: 2380315831848862698}
   m_Layer: 5
   m_Name: ButtonWithTextAndIcon
   m_TagString: Untagged
@@ -333,3 +334,18 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &2380315831848862698
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6449720775875921457}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0cb01ddb93349c98fd84395a98b77f9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  <ButtonComponent>k__BackingField: {fileID: 4754064954679370281}
+  <TextComponent>k__BackingField: {fileID: 8655627310085805794}
+  <ImageComponent>k__BackingField: {fileID: 6260016763612421407}

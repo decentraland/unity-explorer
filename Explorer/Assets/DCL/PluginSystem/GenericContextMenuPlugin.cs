@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.PluginSystem.Global;
 using DCL.UI.GenericContextMenu;
+using DCL.UI.GenericContextMenu.Controls;
 using MVC;
 using System.Threading;
 using UnityEngine;
@@ -40,7 +41,12 @@ namespace DCL.PluginSystem
             GenericContextMenuView panelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.GenericContextMenuPrefab, ct: ct)).GetComponent<GenericContextMenuView>();
             ControllerBase<GenericContextMenuView, GenericContextMenuParameter>.ViewFactoryMethod viewFactoryMethod = GenericContextMenuController.Preallocate(panelViewAsset, null, out GenericContextMenuView panelView);
 
-            genericContextMenuController = new GenericContextMenuController(viewFactoryMethod);
+            GenericContextMenuSeparatorView separatorPrefab = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.GenericContextMenuSeparatorPrefab, ct)).GetComponent<GenericContextMenuSeparatorView>();
+            GenericContextMenuButtonWithTextView buttonPrefab = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.GenericContextMenuButtonPrefab, ct)).GetComponent<GenericContextMenuButtonWithTextView>();
+            GenericContextMenuToggleView togglePrefab = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.GenericContextMenuTogglePrefab, ct)).GetComponent<GenericContextMenuToggleView>();
+
+            genericContextMenuController = new GenericContextMenuController(viewFactoryMethod,
+                new ControlsPoolManager(panelView.ControlsContainer, separatorPrefab, buttonPrefab, togglePrefab));
             mvcManager.RegisterController(genericContextMenuController);
         }
 
@@ -50,6 +56,15 @@ namespace DCL.PluginSystem
             [field: Space]
             [field: SerializeField]
             public AssetReferenceGameObject GenericContextMenuPrefab;
+
+            [field: Header("Controls prefabs")]
+            [field: Space]
+            [field: SerializeField]
+            public AssetReferenceGameObject GenericContextMenuSeparatorPrefab;
+            [field: SerializeField]
+            public AssetReferenceGameObject GenericContextMenuButtonPrefab;
+            [field: SerializeField]
+            public AssetReferenceGameObject GenericContextMenuTogglePrefab;
         }
     }
 }
