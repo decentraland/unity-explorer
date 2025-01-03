@@ -309,7 +309,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
         {
             PrepareShowGallery(ct);
 
-            storageStatus ??= await cameraReelStorageService.GetUserGalleryStorageInfoAsync(walletAddress, ct);
+            storageStatus ??= await cameraReelStorageService.UnsignedGetUserGalleryStorageInfoAsync(walletAddress, ct);
 
             if (storageStatus.Value.ScreenshotsAmount == 0)
             {
