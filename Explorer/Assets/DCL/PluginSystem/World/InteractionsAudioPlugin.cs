@@ -19,7 +19,7 @@ namespace DCL.PluginSystem.Global
     {
         private readonly IAssetsProvisioner assetsProvisioner;
 
-        private ProvidedAsset<InteractionsAudioConfigs> interactionsAudioConfigs;
+        private ProvidedAsset<PointerInputAudioConfigs> interactionsAudioConfigs;
 
         public InteractionsAudioPlugin(IAssetsProvisioner assetsProvisioner)
         {
@@ -30,7 +30,7 @@ namespace DCL.PluginSystem.Global
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
-            InteractionsAudioSystem.InjectToWorld(ref builder, interactionsAudioConfigs.Value);
+            PointerInputAudioSystem.InjectToWorld(ref builder, interactionsAudioConfigs.Value);
         }
 
         public async UniTask InitializeAsync(PluginSettings settings, CancellationToken ct)
@@ -40,11 +40,11 @@ namespace DCL.PluginSystem.Global
 
         public class PluginSettings : IDCLPluginSettings
         {
-            [field: SerializeField] public InteractionsAudioConfigsReference InteractionsAudioConfigsReference { get; private set; }
+            [field: SerializeField] public InteractionsAudioConfigsReference InteractionsAudioConfigsReference { get; }
         }
 
         [Serializable]
-        public class InteractionsAudioConfigsReference : AssetReferenceT<InteractionsAudioConfigs>
+        public class InteractionsAudioConfigsReference : AssetReferenceT<PointerInputAudioConfigs>
         {
             public InteractionsAudioConfigsReference(string guid) : base(guid) { }
         }
