@@ -506,7 +506,8 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         {
             try
             {
-                V8ProxyHelpers.GetHostObject<Action>(pAction)();
+                var method = V8ProxyHelpers.GetHostObject<Action>(pAction);
+                method();
             }
             catch (Exception exception)
             {
@@ -518,7 +519,8 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         {
             try
             {
-                V8ProxyHelpers.GetHostObject<Action<IntPtr>>(pAction)(pData);
+                var method = V8ProxyHelpers.GetHostObject<Action<IntPtr>>(pAction);
+                method(pData);
             }
             catch (Exception exception)
             {
@@ -530,7 +532,8 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         {
             try
             {
-                V8ProxyHelpers.GetHostObject<Action<V8CpuProfile.Ptr>>(pAction)(pProfile);
+                var method = V8ProxyHelpers.GetHostObject<Action<V8CpuProfile.Ptr>>(pAction);
+                method(pProfile);
             }
             catch (Exception exception)
             {
@@ -545,12 +548,16 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
         private static void CacheV8Object(IntPtr pCache, IntPtr pObject, IntPtr pV8Object)
         {
-            V8ProxyHelpers.GetHostObject<Dictionary<object, IntPtr>>(pCache).Add(V8ProxyHelpers.GetHostObject(pObject), pV8Object);
+            var cache = V8ProxyHelpers.GetHostObject<Dictionary<object, IntPtr>>(pCache);
+            object key = V8ProxyHelpers.GetHostObject(pObject);
+            cache.Add(key, pV8Object);
         }
 
         private static IntPtr GetCachedV8Object(IntPtr pCache, IntPtr pObject)
         {
-            return V8ProxyHelpers.GetHostObject<Dictionary<object, IntPtr>>(pCache).TryGetValue(V8ProxyHelpers.GetHostObject(pObject), out IntPtr pV8Object) ? pV8Object : IntPtr.Zero;
+            var cache = V8ProxyHelpers.GetHostObject<Dictionary<object, IntPtr>>(pCache);
+            object key = V8ProxyHelpers.GetHostObject(pObject);
+            return cache.TryGetValue(key, out IntPtr pV8Object) ? pV8Object : IntPtr.Zero;
         }
 
         private static void GetAllCachedV8Objects(IntPtr pCache, StdPtrArray.Ptr pV8ObjectPtrs)
@@ -561,7 +568,9 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
         private static bool RemoveV8ObjectCacheEntry(IntPtr pCache, IntPtr pObject)
         {
-            return V8ProxyHelpers.GetHostObject<Dictionary<object, IntPtr>>(pCache).Remove(V8ProxyHelpers.GetHostObject(pObject));
+            var cache = V8ProxyHelpers.GetHostObject<Dictionary<object, IntPtr>>(pCache);
+            object key = V8ProxyHelpers.GetHostObject(pObject);
+            return cache.Remove(key);
         }
 
         private static IntPtr CreateDebugAgent(StdString.Ptr pName, StdString.Ptr pVersion, int port, bool remote, V8DebugCallback.Handle hCallback)
@@ -592,19 +601,23 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
         private static IntPtr AddRefHostObject(IntPtr pObject)
         {
-            return V8ProxyHelpers.AddRefHostObject(pObject);
+            object obj = V8ProxyHelpers.GetHostObject(pObject);
+            return V8ProxyHelpers.AddRefHostObject(obj);
         }
 
         private static void ReleaseHostObject(IntPtr pObject)
         {
-            V8ProxyHelpers.ReleaseHostObject(pObject);
+            GCHandle handle = GCHandle.FromIntPtr(pObject);
+            handle.Free();
         }
 
         private static Invocability GetHostObjectInvocability(IntPtr pObject)
         {
             try
             {
-                return V8ProxyHelpers.GetHostObjectInvocability(pObject);
+                object obj = V8ProxyHelpers.GetHostObject(pObject);
+                return obj is InvokeHostObject
+                    ? Invocability.Delegate : V8ProxyHelpers.GetHostObjectInvocability(obj);
             }
             catch (Exception exception)
             {
@@ -617,7 +630,19 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         {
             try
             {
-                V8Value.Set(pValue, V8ProxyHelpers.GetHostObjectProperty(pObject, StdString.GetValue(pName)));
+                object obj = V8ProxyHelpers.GetHostObject(pObject);
+
+                if (obj is IV8HostObject hostObject)
+                {
+                    var name = new StdString(pName);
+                    var value = new V8Value(pValue);
+                    hostObject.GetNamedProperty(name, value, out _);
+                }
+                else
+                {
+                    string name = StdString.GetValue(pName);
+                    V8Value.Set(pValue, V8ProxyHelpers.GetHostObjectProperty(obj, name));
+                }
             }
             catch (Exception exception)
             {
@@ -629,7 +654,19 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         {
             try
             {
-                V8Value.Set(pValue, V8ProxyHelpers.GetHostObjectProperty(pObject, StdString.GetValue(pName), out isCacheable));
+                object obj = V8ProxyHelpers.GetHostObject(pObject);
+
+                if (obj is IV8HostObject hostObject)
+                {
+                    var name = new StdString(pName);
+                    var value = new V8Value(pValue);
+                    hostObject.GetNamedProperty(name, value, out isCacheable);
+                }
+                else
+                {
+                    string name = StdString.GetValue(pName);
+                    V8Value.Set(pValue, V8ProxyHelpers.GetHostObjectProperty(obj, name, out isCacheable));
+                }
             }
             catch (Exception exception)
             {
@@ -642,7 +679,21 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         {
             try
             {
-                V8ProxyHelpers.SetHostObjectProperty(pObject, StdString.GetValue(pName), V8Value.Decoded.Get(pValue, 0));
+                object obj = V8ProxyHelpers.GetHostObject(pObject);
+
+                if (obj is IV8HostObject hostObject)
+                {
+                    var name = new StdString(pName);
+                    V8Value.Decoded value;
+                    unsafe { value = *(V8Value.Decoded*)(IntPtr)pValue; }
+                    hostObject.SetNamedProperty(name, value);
+                }
+                else
+                {
+                    string name = StdString.GetValue(pName);
+                    object value = V8Value.Decoded.Get(pValue, 0);
+                    V8ProxyHelpers.SetHostObjectProperty(obj, name, value);
+                }
             }
             catch (Exception exception)
             {
@@ -654,7 +705,18 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         {
             try
             {
-                return V8ProxyHelpers.DeleteHostObjectProperty(pObject, StdString.GetValue(pName));
+                object obj = V8ProxyHelpers.GetHostObject(pObject);
+
+                if (obj is IV8HostObject hostObject)
+                {
+                    var name = new StdString(pName);
+                    return hostObject.DeleteNamedProperty(name);
+                }
+                else
+                {
+                    string name = StdString.GetValue(pName);
+                    return V8ProxyHelpers.DeleteHostObjectProperty(obj, name);
+                }
             }
             catch (Exception exception)
             {
@@ -665,25 +727,43 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
         private static void GetHostObjectPropertyNames(IntPtr pObject, StdStringArray.Ptr pNames)
         {
-            string[] names;
             try
             {
-                names = V8ProxyHelpers.GetHostObjectPropertyNames(pObject);
+                object obj = V8ProxyHelpers.GetHostObject(pObject);
+
+                if (obj is IV8HostObject hostObject)
+                {
+                    var names = new StdStringArray(pNames);
+                    hostObject.GetNamedPropertyNames(names);
+                }
+                else
+                {
+                    string[] names = V8ProxyHelpers.GetHostObjectPropertyNames(obj);
+                    StdStringArray.CopyFromArray(pNames, names);
+                }
             }
             catch (Exception exception)
             {
                 ScheduleHostException(pObject, exception);
-                return;
             }
-
-            StdStringArray.CopyFromArray(pNames, names);
         }
 
         private static void GetHostObjectIndexedProperty(IntPtr pObject, int index, V8Value.Ptr pValue)
         {
             try
             {
-                V8Value.Set(pValue, V8ProxyHelpers.GetHostObjectProperty(pObject, index));
+                object obj = V8ProxyHelpers.GetHostObject(pObject);
+
+                if (obj is IV8HostObject hostObject)
+                {
+                    var value = new V8Value(pValue);
+                    hostObject.GetIndexedProperty(index, value);
+                }
+                else
+                {
+                    object value = V8ProxyHelpers.GetHostObjectProperty(obj, index);
+                    V8Value.Set(pValue, value);
+                }
             }
             catch (Exception exception)
             {
@@ -695,7 +775,19 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         {
             try
             {
-                V8ProxyHelpers.SetHostObjectProperty(pObject, index, V8Value.Decoded.Get(pValue, 0));
+                object obj = V8ProxyHelpers.GetHostObject(pObject);
+
+                if (obj is IV8HostObject hostObject)
+                {
+                    V8Value.Decoded value;
+                    unsafe { value = *(V8Value.Decoded*)(IntPtr)pValue; }
+                    hostObject.SetIndexedProperty(index, value);
+                }
+                else
+                {
+                    object value = V8Value.Decoded.Get(pValue, 0);
+                    V8ProxyHelpers.SetHostObjectProperty(obj, index, value);
+                }
             }
             catch (Exception exception)
             {
@@ -707,7 +799,16 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         {
             try
             {
-                return V8ProxyHelpers.DeleteHostObjectProperty(pObject, index);
+                object obj = V8ProxyHelpers.GetHostObject(pObject);
+
+                if (obj is IV8HostObject hostObject)
+                {
+                    return hostObject.DeleteIndexedProperty(index);
+                }
+                else
+                {
+                    return V8ProxyHelpers.DeleteHostObjectProperty(obj, index);
+                }
             }
             catch (Exception exception)
             {
@@ -718,32 +819,48 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
         private static void GetHostObjectPropertyIndices(IntPtr pObject, StdInt32Array.Ptr pIndices)
         {
-            int[] indices;
             try
             {
-                indices = V8ProxyHelpers.GetHostObjectPropertyIndices(pObject);
+                object obj = V8ProxyHelpers.GetHostObject(pObject);
+
+                if (obj is IV8HostObject hostObject)
+                {
+                    var indices = new StdInt32Array(pIndices);
+                    hostObject.GetIndexedPropertyIndices(indices);
+                }
+                else
+                {
+                    int[] indices = V8ProxyHelpers.GetHostObjectPropertyIndices(obj);
+                    StdInt32Array.CopyFromArray(pIndices, indices);
+                }
             }
             catch (Exception exception)
             {
                 ScheduleHostException(pObject, exception);
-                return;
             }
-
-            StdInt32Array.CopyFromArray(pIndices, indices);
         }
 
         private static void InvokeHostObject(IntPtr pObject, bool asConstructor, int argCount, V8Value.Decoded.Ptr pArgs, V8Value.Ptr pResult)
         {
             try
             {
-                V8Value.Set(pResult, V8ProxyHelpers.InvokeHostObject(pObject, asConstructor, V8Value.Decoded.ToArray(argCount, pArgs)));
+                object obj = V8ProxyHelpers.GetHostObject(pObject);
 
-                V8SplitProxyNative.InvokeNoThrow(instance =>
+                if (obj is InvokeHostObject method)
                 {
-                    instance.V8Value_Decode(pResult, out V8Value.Decoded decoded);
-                    static void noop() { }
-                    noop();
-                });
+                    unsafe
+                    {
+                        var args = new ReadOnlySpan<V8Value.Decoded>((V8Value.Decoded*)(IntPtr)pArgs, argCount);
+                        var result = new V8Value(pResult);
+                        method(args, result);
+                    }
+                }
+                else
+                {
+                    object[] args = V8Value.Decoded.ToArray(argCount, pArgs);
+                    object result = V8ProxyHelpers.InvokeHostObject(obj, asConstructor, args);
+                    V8Value.Set(pResult, result);
+                }
             }
             catch (Exception exception)
             {
@@ -755,7 +872,25 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         {
             try
             {
-                V8Value.Set(pResult, V8ProxyHelpers.InvokeHostObjectMethod(pObject, StdString.GetValue(pName), V8Value.Decoded.ToArray(argCount, pArgs)));
+                object obj = V8ProxyHelpers.GetHostObject(pObject);
+
+                if (obj is IV8HostObject hostObject)
+                {
+                    unsafe
+                    {
+                        var name = new StdString(pName);
+                        var args = new ReadOnlySpan<V8Value.Decoded>((V8Value.Decoded*)(IntPtr)pArgs, argCount);
+                        var result = new V8Value(pResult);
+                        hostObject.InvokeMethod(name, args, result);
+                    }
+                }
+                else
+                {
+                    string name = StdString.GetValue(pName);
+                    object[] args = V8Value.Decoded.ToArray(argCount, pArgs);
+                    object result = V8ProxyHelpers.InvokeHostObjectMethod(obj, name, args);
+                    V8Value.Set(pResult, result);
+                }
             }
             catch (Exception exception)
             {
@@ -767,7 +902,18 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         {
             try
             {
-                V8Value.Set(pResult, V8ProxyHelpers.GetHostObjectEnumerator(pObject));
+                object obj = V8ProxyHelpers.GetHostObject(pObject);
+
+                if (obj is IV8HostObject hostObject)
+                {
+                    var result = new V8Value(pResult);
+                    hostObject.GetEnumerator(result);
+                }
+                else
+                {
+                    object result = V8ProxyHelpers.GetHostObjectEnumerator(obj);
+                    V8Value.Set(pResult, result);
+                }
             }
             catch (Exception exception)
             {
@@ -779,7 +925,18 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         {
             try
             {
-                V8Value.Set(pResult, V8ProxyHelpers.GetHostObjectAsyncEnumerator(pObject));
+                object obj = V8ProxyHelpers.GetHostObject(pObject);
+
+                if (obj is IV8HostObject hostObject)
+                {
+                    var result = new V8Value(pResult);
+                    hostObject.GetAsyncEnumerator(result);
+                }
+                else
+                {
+                    object result = V8ProxyHelpers.GetHostObjectAsyncEnumerator(obj);
+                    V8Value.Set(pResult, result);
+                }
             }
             catch (Exception exception)
             {
@@ -865,9 +1022,12 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         {
             try
             {
-                var bytes = new byte[count];
-                Marshal.Copy(pBytes, bytes, 0, count);
-                V8ProxyHelpers.GetHostObject<Stream>(pStream).Write(bytes, 0, count);
+                unsafe
+                {
+                    var bytes = new ReadOnlySpan<byte>((byte*)pBytes, count);
+                    Stream stream = V8ProxyHelpers.GetHostObject<Stream>(pStream);
+                    stream.Write(bytes);
+                }
             }
             catch (Exception exception)
             {

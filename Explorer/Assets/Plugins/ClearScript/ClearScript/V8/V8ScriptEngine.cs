@@ -12,6 +12,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.ClearScript.JavaScript;
 using Microsoft.ClearScript.Util;
+using Microsoft.ClearScript.V8.SplitProxy;
 using Newtonsoft.Json;
 
 namespace Microsoft.ClearScript.V8
@@ -1486,10 +1487,19 @@ namespace Microsoft.ClearScript.V8
 
             ScriptInvoke(() =>
             {
-                var marshaledItem = MarshalToScript(item, flags);
-                if (!(marshaledItem is HostItem))
+                object marshaledItem;
+
+                if (item is IV8HostObject)
                 {
-                    throw new InvalidOperationException("Invalid host item");
+                    marshaledItem = item;
+                }
+                else
+                {
+                    marshaledItem = MarshalToScript(item, flags);
+                    if (!(marshaledItem is HostItem))
+                    {
+                        throw new InvalidOperationException("Invalid host item");
+                    }
                 }
 
                 proxy.AddGlobalItem(itemName, marshaledItem, globalMembers);

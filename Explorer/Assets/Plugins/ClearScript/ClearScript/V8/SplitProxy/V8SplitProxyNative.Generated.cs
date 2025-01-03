@@ -131,6 +131,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 var pValue = StdString_GetValue(pString, out var length);
                 return Marshal.PtrToStringUni(pValue, length);
             }
+            
+            void IV8SplitProxyNative.StdString_GetValue(StdString.Ptr pString, out IntPtr value, out int length)
+            {
+                value = StdString_GetValue(pString, out length);
+            }
 
             void IV8SplitProxyNative.StdString_SetValue(StdString.Ptr pString, string value)
             {
@@ -2265,6 +2270,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 return Marshal.PtrToStringUni(pValue, length);
             }
 
+            void IV8SplitProxyNative.StdString_GetValue(StdString.Ptr pString, out IntPtr value, out int length)
+            {
+                value = StdString_GetValue(pString, out length);
+            }
+
             void IV8SplitProxyNative.StdString_SetValue(StdString.Ptr pString, string value)
             {
                 StdString_SetValue(pString, value, value.Length);
@@ -4396,6 +4406,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             {
                 var pValue = StdString_GetValue(pString, out var length);
                 return Marshal.PtrToStringUni(pValue, length);
+            }
+            
+            void IV8SplitProxyNative.StdString_GetValue(StdString.Ptr pString, out IntPtr value, out int length)
+            {
+                value = StdString_GetValue(pString, out length);
             }
 
             void IV8SplitProxyNative.StdString_SetValue(StdString.Ptr pString, string value)
@@ -6530,6 +6545,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 var pValue = StdString_GetValue(pString, out var length);
                 return Marshal.PtrToStringUni(pValue, length);
             }
+            
+            void IV8SplitProxyNative.StdString_GetValue(StdString.Ptr pString, out IntPtr value, out int length)
+            {
+                value = StdString_GetValue(pString, out length);
+            }
 
             void IV8SplitProxyNative.StdString_SetValue(StdString.Ptr pString, string value)
             {
@@ -8662,6 +8682,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             {
                 var pValue = StdString_GetValue(pString, out var length);
                 return Marshal.PtrToStringUni(pValue, length);
+            }
+            
+            void IV8SplitProxyNative.StdString_GetValue(StdString.Ptr pString, out IntPtr value, out int length)
+            {
+                value = StdString_GetValue(pString, out length);
             }
 
             void IV8SplitProxyNative.StdString_SetValue(StdString.Ptr pString, string value)
@@ -10796,6 +10821,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 var pValue = StdString_GetValue(pString, out var length);
                 return Marshal.PtrToStringUni(pValue, length);
             }
+            
+            void IV8SplitProxyNative.StdString_GetValue(StdString.Ptr pString, out IntPtr value, out int length)
+            {
+                value = StdString_GetValue(pString, out length);
+            }
 
             void IV8SplitProxyNative.StdString_SetValue(StdString.Ptr pString, string value)
             {
@@ -12929,6 +12959,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                 var pValue = StdString_GetValue(pString, out var length);
                 return Marshal.PtrToStringUni(pValue, length);
             }
+            
+            void IV8SplitProxyNative.StdString_GetValue(StdString.Ptr pString, out IntPtr value, out int length)
+            {
+                value = StdString_GetValue(pString, out length);
+            }
 
             void IV8SplitProxyNative.StdString_SetValue(StdString.Ptr pString, string value)
             {
@@ -15061,6 +15096,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             {
                 var pValue = StdString_GetValue(pString, out var length);
                 return Marshal.PtrToStringUni(pValue, length);
+            }
+            
+            void IV8SplitProxyNative.StdString_GetValue(StdString.Ptr pString, out IntPtr value, out int length)
+            {
+                value = StdString_GetValue(pString, out length);
             }
 
             void IV8SplitProxyNative.StdString_SetValue(StdString.Ptr pString, string value)
