@@ -5,7 +5,6 @@ using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using System;
 using System.IO;
 using System.Threading;
-using UnityEditor;
 using UnityEngine;
 
 namespace Plugins.TexturesFuse.TexturesServerWrap.CompressShaders

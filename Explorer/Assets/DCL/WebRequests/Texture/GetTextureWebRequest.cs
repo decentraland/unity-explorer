@@ -58,12 +58,12 @@ namespace DCL.WebRequests
             public UniTask<IOwnedTexture2D?> ExecuteAsync(GetTextureWebRequest webRequest, CancellationToken ct)
             {
                 if (webRequest.isTextureCompressionEnabled)
-                    return ExecuteAsyncWithCompression(webRequest, ct);
+                    return ExecuteWithCompressionAsync(webRequest, ct);
 
-                return ExecuteAsyncNoCompression(webRequest, ct)!;
+                return ExecuteNoCompressionAsync(webRequest, ct)!;
             }
 
-            private UniTask<IOwnedTexture2D> ExecuteAsyncNoCompression(GetTextureWebRequest webRequest, CancellationToken ct)
+            private UniTask<IOwnedTexture2D> ExecuteNoCompressionAsync(GetTextureWebRequest webRequest, CancellationToken ct)
             {
                 Texture2D? texture = DownloadHandlerTexture.GetContent(webRequest.UnityWebRequest);
                 texture.wrapMode = wrapMode;
@@ -73,7 +73,7 @@ namespace DCL.WebRequests
                 return UniTask.FromResult((IOwnedTexture2D)new IOwnedTexture2D.Const(texture));
             }
 
-            private async UniTask<IOwnedTexture2D?> ExecuteAsyncWithCompression(GetTextureWebRequest webRequest, CancellationToken ct)
+            private async UniTask<IOwnedTexture2D?> ExecuteWithCompressionAsync(GetTextureWebRequest webRequest, CancellationToken ct)
             {
                 using var request = webRequest.UnityWebRequest;
                 var data = request.downloadHandler?.nativeData;
