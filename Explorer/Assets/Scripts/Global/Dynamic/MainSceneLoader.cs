@@ -103,7 +103,7 @@ namespace Global.Dynamic
 #endif
             );
 
-            bool compressionEnabled = IPlatform.DEFAULT.IsNot(IPlatform.Kind.Windows) || !applicationParametersParser.HasFlag(AppArgsFlags.FORCE_NO_TEXTURE_COMPRESSION);
+            bool compressionEnabled = IPlatform.DEFAULT.IsNot(IPlatform.Kind.Windows) || applicationParametersParser.HasFlag(AppArgsFlags.FORCE_TEXTURE_COMPRESSION);
 
             ITexturesFuse TextureFuseFactory() =>
                 ITexturesFuse.NewDefault();
