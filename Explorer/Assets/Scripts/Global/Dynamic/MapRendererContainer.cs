@@ -58,8 +58,8 @@ namespace Global.Dynamic
                     eventsAPIService,
                     mapPathEventBus,
                     mapPinsEventBus,
-                    teleportBusController,
                     notificationsBusController,
+                    teleportBusController,
                     navmapBus));
 
                 await mapRenderer.InitializeAsync(ct);
