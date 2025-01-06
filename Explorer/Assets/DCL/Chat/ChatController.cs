@@ -53,7 +53,6 @@ namespace DCL.Chat
         private readonly Entity playerEntity;
         private readonly Mouse device;
         private readonly DCLInput dclInput;
-        private readonly ChatCommandsHandler commandsHandler;
         private readonly IInputBlock inputBlock;
 
         private CancellationTokenSource cts;
