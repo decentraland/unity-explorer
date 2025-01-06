@@ -91,6 +91,7 @@ namespace Global.Dynamic
             DebugViewsCatalog debugViewsCatalog,
             Entity playerEntity,
             ITexturesFuse texturesFuse,
+            bool isTextureCompressionEnabled,
             ISystemMemoryCap memoryCap,
             CancellationToken ct
         ) =>
@@ -113,6 +114,7 @@ namespace Global.Dynamic
                 bootstrapContainer.WorldVolumeMacBus,
                 EnableAnalytics,
                 bootstrapContainer.Analytics,
+                isTextureCompressionEnabled,
                 ct
             );
 
@@ -231,6 +233,7 @@ namespace Global.Dynamic
                 sceneSharedContainer.V8ActiveEngines, playerEntity);
 
             dynamicWorldContainer.RealmController.GlobalWorld = globalWorld;
+            staticContainer.PortableExperiencesController.GlobalWorld = globalWorld;
 
             staticContainer.DebugContainerBuilder.BuildWithFlex(debugUiRoot);
             staticContainer.DebugContainerBuilder.IsVisible = appArgs.HasDebugFlag();
