@@ -19,5 +19,5 @@ MonoBehaviour:
   - {fileID: 11400000, guid: db49cac2faca44598a924e1c56690e0c, type: 2}
   - {fileID: 11400000, guid: 3ad489cd996154c1cad21a0856ed86bc, type: 2}
   - {fileID: 11400000, guid: a1abe3dafbc2143d8949b174e3c6c235, type: 2}
-  offsetFromTarget: {x: 14, y: 18}
+  offsetFromTarget: {x: 0, y: 0}
   width: 186

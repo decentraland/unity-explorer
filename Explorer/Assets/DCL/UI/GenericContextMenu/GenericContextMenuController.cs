@@ -5,6 +5,7 @@ using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.UI;
 
 namespace DCL.UI.GenericContextMenu
 {
@@ -52,6 +53,12 @@ namespace DCL.UI.GenericContextMenu
             ConfigureContextMenu();
         }
 
+        protected override void OnViewShow()
+        {
+            base.OnViewShow();
+            inputData.ActionOnShow?.Invoke();
+        }
+
         private void ConfigureContextMenu()
         {
             viewInstance!.ControlsContainer.sizeDelta = new Vector2(inputData.Config.Width, viewInstance!.ControlsContainer.sizeDelta.y);
@@ -72,12 +79,15 @@ namespace DCL.UI.GenericContextMenu
                         break;
                     case ContextMenuControlTypes.TOGGLE_WITH_TEXT:
                         GenericContextMenuToggleView toggle = controlsPoolManager.GetToggle(config as ToggleContextMenuControlSettings, i);
+                        if (inputData.InitialValues != null && inputData.InitialValues.TryGetValue(i, out object initialValue))
+                            toggle.ToggleComponent.isOn = (bool)initialValue;
                         toggle.ToggleComponent.onValueChanged.AddListener(new UnityAction<bool>((Action<bool>)inputData.ControlsActions[i]));
                         toggle.ToggleComponent.onValueChanged.AddListener(toggleValue => TriggerContextMenuClose());
                         break;
                 }
             }
-
+            Canvas.ForceUpdateCanvases();
+            LayoutRebuilder.ForceRebuildLayoutImmediate(viewInstance!.ControlsContainer);
             viewInstance!.ControlsContainer.localPosition = GetControlsPosition(inputData.AnchorPosition, inputData.Config.OffsetFromTarget, inputData.OverlapRect);
         }
 
@@ -156,12 +166,15 @@ namespace DCL.UI.GenericContextMenu
             return new Rect(min, size);
         }
 
-        protected override void OnViewClose() =>
+        protected override void OnViewClose()
+        {
             controlsPoolManager.ReleaseAllCurrentControls();
+            inputData.ActionOnHide?.Invoke();
+        }
 
         private void TriggerContextMenuClose() => isClosing = true;
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
-            UniTask.WhenAny(UniTask.WaitUntil(() => isClosing, cancellationToken: ct));
+            inputData.CloseTask != null ? UniTask.WhenAny(UniTask.WaitUntil(() => isClosing, cancellationToken: ct), inputData.CloseTask.Value) : UniTask.WaitUntil(() => isClosing, cancellationToken: ct);
     }
 }
