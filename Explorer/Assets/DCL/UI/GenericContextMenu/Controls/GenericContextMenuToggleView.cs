@@ -7,6 +7,7 @@ namespace DCL.UI.GenericContextMenu.Controls
 {
     public class GenericContextMenuToggleView : MonoBehaviour, IGenericContextMenuComponent
     {
+        [field: SerializeField] public RectTransform RectTransformComponent { get; private set; }
         [field: SerializeField] public ToggleView ToggleComponent { get; private set; }
         [field: SerializeField] public TMP_Text TextComponent { get; private set; }
 

@@ -90,6 +90,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e8f35c553d944f99854691517619b0e3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  <RectTransformComponent>k__BackingField: {fileID: 891560713975722788}
   <ToggleComponent>k__BackingField: {fileID: 3675667337910807093}
   <TextComponent>k__BackingField: {fileID: 7042733739484598958}
 --- !u!1 &4204936758877281454

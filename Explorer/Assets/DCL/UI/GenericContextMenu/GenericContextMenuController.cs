@@ -64,7 +64,7 @@ namespace DCL.UI.GenericContextMenu
 
         private void ConfigureContextMenu()
         {
-            viewInstance!.ControlsContainer.sizeDelta = new Vector2(inputData.Config.Width, viewInstance!.ControlsContainer.sizeDelta.y);
+            float totalHeight = 0;
 
             for (var i = 0; i < inputData.Config.ContextMenuSettings.Count; i++)
             {
@@ -75,22 +75,30 @@ namespace DCL.UI.GenericContextMenu
                 switch (config.ControlTypeType)
                 {
                     case ContextMenuControlTypes.SEPARATOR:
-                        controlsPoolManager.GetSeparator(config as SeparatorContextMenuControlSettings, i);
+                        GenericContextMenuSeparatorView separatorView = controlsPoolManager.GetSeparator(config as SeparatorContextMenuControlSettings, i);
+                        totalHeight += separatorView.RectTransformComponent.rect.height;
                         break;
                     case ContextMenuControlTypes.BUTTON_WITH_TEXT_AND_ICON:
                         GenericContextMenuButtonWithTextView button = controlsPoolManager.GetButton(config as ButtonContextMenuControlSettings, i);
                         button.ButtonComponent.onClick.AddListener(new UnityAction((Action)inputData.ControlsActions[i]));
                         button.ButtonComponent.onClick.AddListener(TriggerContextMenuClose);
+                        totalHeight += button.RectTransformComponent.rect.height;
                         break;
                     case ContextMenuControlTypes.TOGGLE_WITH_TEXT:
                         GenericContextMenuToggleView toggle = controlsPoolManager.GetToggle(config as ToggleContextMenuControlSettings, controlInitialValue != null && (bool)controlInitialValue , i);
                         toggle.ToggleComponent.Toggle.onValueChanged.AddListener(new UnityAction<bool>((Action<bool>)inputData.ControlsActions[i]));
                         toggle.ToggleComponent.Toggle.onValueChanged.AddListener(toggleValue => TriggerContextMenuClose());
+                        totalHeight += toggle.RectTransformComponent.rect.height;
                         break;
                 }
             }
-            Canvas.ForceUpdateCanvases();
-            LayoutRebuilder.ForceRebuildLayoutImmediate(viewInstance!.ControlsContainer);
+
+            viewInstance!.ControlsContainer.sizeDelta = new Vector2(inputData.Config.Width,
+                totalHeight
+                + viewInstance!.ControlsLayoutGroup.padding.bottom
+                + viewInstance!.ControlsLayoutGroup.padding.top
+                + (viewInstance!.ControlsLayoutGroup.spacing * (inputData.Config.ContextMenuSettings.Count - 1)));
+
             viewInstance!.ControlsContainer.localPosition = GetControlsPosition(inputData.AnchorPosition, inputData.Config.OffsetFromTarget, inputData.OverlapRect);
         }
 

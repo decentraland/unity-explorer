@@ -119,6 +119,7 @@ MonoBehaviour:
   <canvas>k__BackingField: {fileID: 6591100080399325240}
   <raycaster>k__BackingField: {fileID: 8522526520946479007}
   <ControlsContainer>k__BackingField: {fileID: 2932465032679087180}
+  <ControlsLayoutGroup>k__BackingField: {fileID: 5384044999603412779}
   <BackgroundCloseButton>k__BackingField: {fileID: 3243245791156245727}
 --- !u!1 &7170495978923432429
 GameObject:
