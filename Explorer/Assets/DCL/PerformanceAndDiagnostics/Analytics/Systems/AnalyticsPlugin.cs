@@ -4,6 +4,7 @@ using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.DebugUtilities;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.PerformanceAndDiagnostics.Analytics;
+using DCL.PerformanceAndDiagnostics.Analytics.EventBased;
 using DCL.Profiling;
 using DCL.Utilities;
 using DCL.Web3.Identities;
