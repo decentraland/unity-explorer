@@ -6,6 +6,7 @@ using DCL.ExplorePanel.Components;
 using DCL.InWorldCamera.CameraReelGallery.Components;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.InWorldCamera.CameraReelStorageService.Schemas;
+using DCL.InWorldCamera.CameraReelToast;
 using DCL.InWorldCamera.ReelActions;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.Pools;
@@ -52,6 +53,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
         private const int GRID_POOL_DEFAULT_CAPACITY = 10;
         private const int GRID_POOL_MAX_SIZE = 500;
         private const int ANIMATION_DELAY = 300;
+        private const int MACOS_SCROLL_SENSITIVITY_SCALE_FACTOR = 5;
 
         private static readonly ListObjectPool<CameraReelResponseCompact> CAMERA_REEL_RESPONSES_POOL = new ();
 
@@ -68,6 +70,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
         private readonly ContextMenuController? contextMenuController;
         private readonly Rect elementMaskRect;
         private readonly ReelGalleryStringMessages? reelGalleryStringMessages;
+        private readonly ReelGalleryConfigParams reelGalleryConfigParams;
         private readonly bool useSignedRequest;
 
         private bool isLoading;
@@ -102,6 +105,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
             this.view = view;
             this.cameraReelStorageService = cameraReelStorageService;
             this.explorePanelEscapeAction = explorePanelEscapeAction;
+            this.reelGalleryConfigParams = reelGalleryConfigParams;
             this.reelGalleryStringMessages = reelGalleryStringMessages;
             this.view.Disable += OnDisable;
             this.view.scrollRectDragHandler.BeginDrag += ScrollBeginDrag;
@@ -113,6 +117,9 @@ namespace DCL.InWorldCamera.CameraReelGallery
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.systemClipboard = systemClipboard;
             this.webBrowser = webBrowser;
+
+            if (Application.platform == RuntimePlatform.OSXEditor || Application.platform == RuntimePlatform.OSXPlayer)
+                this.view.scrollRect.scrollSensitivity *= MACOS_SCROLL_SENSITIVITY_SCALE_FACTOR;
 
             if (optionButtonView is not null && contextMenuView is not null)
             {
@@ -153,12 +160,12 @@ namespace DCL.InWorldCamera.CameraReelGallery
                 {
                     await ReelCommonActions.DownloadReelToFileAsync(response.url, ct);
                     ScreenshotDownloaded?.Invoke();
-                    ShowSuccessNotificationAsync(reelGalleryStringMessages?.PhotoSuccessfullyDownloadedMessage).Forget();
+                    view.cameraReelToastMessage?.ShowToastMessage(CameraReelToastMessageType.SUCCESS, reelGalleryStringMessages?.PhotoSuccessfullyDownloadedMessage);
                 }
                 catch (Exception e)
                 {
                     ReportHub.LogException(e, new ReportData(ReportCategory.CAMERA_REEL));
-                    ShowFailureNotificationAsync().Forget();
+                    view.cameraReelToastMessage?.ShowToastMessage(CameraReelToastMessageType.FAILURE);
                 }
             }
 
@@ -168,7 +175,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
         private void CopyPictureLink(CameraReelResponseCompact response)
         {
             ReelCommonActions.CopyReelLink(response.id, decentralandUrlsSource!, systemClipboard!);
-            ShowSuccessNotificationAsync(reelGalleryStringMessages?.LinkCopiedMessage).Forget();
+            view.cameraReelToastMessage?.ShowToastMessage(CameraReelToastMessageType.SUCCESS, reelGalleryStringMessages?.LinkCopiedMessage);
         }
 
         private void ShareToX(CameraReelResponseCompact response)
@@ -185,12 +192,12 @@ namespace DCL.InWorldCamera.CameraReelGallery
                 {
                     await this.cameraReelStorageService.UpdateScreenshotVisibilityAsync(response.id, isPublic, ct);
                     response.isPublic = isPublic;
-                    await ShowSuccessNotificationAsync(reelGalleryStringMessages?.PhotoSuccessfullyUpdatedMessage);
+                    view.cameraReelToastMessage?.ShowToastMessage(CameraReelToastMessageType.SUCCESS, reelGalleryStringMessages?.PhotoSuccessfullyUpdatedMessage);
                 }
                 catch (UnityWebRequestException e)
                 {
                     ReportHub.LogException(e, new ReportData(ReportCategory.CAMERA_REEL));
-                    await ShowFailureNotificationAsync();
+                    view.cameraReelToastMessage?.ShowToastMessage(CameraReelToastMessageType.FAILURE);
                 }
             }
 
@@ -270,23 +277,20 @@ namespace DCL.InWorldCamera.CameraReelGallery
                 ScreenshotDeleted?.Invoke();
                 StorageUpdated?.Invoke(response);
 
-                if (view.successNotificationView is null) return;
-
-                await ShowSuccessNotificationAsync(reelGalleryStringMessages?.PhotoSuccessfullyDeletedMessage);
+                view.cameraReelToastMessage?.ShowToastMessage(CameraReelToastMessageType.SUCCESS, reelGalleryStringMessages?.PhotoSuccessfullyDeletedMessage);
             }
             catch (UnityWebRequestException e)
             {
                 ReportHub.LogException(e, new ReportData(ReportCategory.CAMERA_REEL));
 
-                if (view.errorNotificationView is null) return;
-
-                await ShowFailureNotificationAsync();
+                view.cameraReelToastMessage?.ShowToastMessage(CameraReelToastMessageType.FAILURE);
             }
         }
 
         private void PrepareShowGallery(CancellationToken ct)
         {
             view.loadingSpinner.SetActive(true);
+            view.emptyState.SetActive(false);
             loadNextPageCts = loadNextPageCts.SafeRestartLinked(ct);
             setPublicCts = setPublicCts.SafeRestart();
             deleteScreenshotCts = deleteScreenshotCts.SafeRestart();
@@ -305,8 +309,16 @@ namespace DCL.InWorldCamera.CameraReelGallery
         {
             PrepareShowGallery(ct);
 
-            storageStatus ??= await cameraReelStorageService.GetUserGalleryStorageInfoAsync(walletAddress, ct);
-            pagedCameraReelManager = new PagedCameraReelManager(cameraReelStorageService, new PagedCameraReelManagerParameters(walletAddress, useSignedRequest), storageStatus.Value.ScreenshotsAmount, view.paginationLimit);
+            storageStatus ??= await cameraReelStorageService.UnsignedGetUserGalleryStorageInfoAsync(walletAddress, ct);
+
+            if (storageStatus.Value.ScreenshotsAmount == 0)
+            {
+                view.emptyState.SetActive(true);
+                FinishShowGallery();
+                return;
+            }
+
+            pagedCameraReelManager = new PagedCameraReelManager(cameraReelStorageService, new PagedCameraReelManagerParameters(walletAddress, useSignedRequest), storageStatus.Value.ScreenshotsAmount, view.PaginationLimit);
             thumbnailImages = new ReelThumbnailController[storageStatus.Value.MaxScreenshots];
 
             await LoadMorePageAsync(ct);
@@ -319,7 +331,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
             PrepareShowGallery(ct);
 
             CameraReelStorageStatus storageStatus = await cameraReelStorageService.GetPlaceGalleryStorageInfoAsync(placeId, ct);
-            pagedCameraReelManager = new PagedCameraReelManager(cameraReelStorageService, new PagedCameraReelManagerParameters(placeId), storageStatus.ScreenshotsAmount, view.paginationLimit);
+            pagedCameraReelManager = new PagedCameraReelManager(cameraReelStorageService, new PagedCameraReelManagerParameters(placeId), storageStatus.ScreenshotsAmount, view.PaginationLimit);
             thumbnailImages = new ReelThumbnailController[storageStatus.MaxScreenshots];
 
             await LoadMorePageAsync(ct);
@@ -327,45 +339,14 @@ namespace DCL.InWorldCamera.CameraReelGallery
             FinishShowGallery();
         }
 
-        private void HideSuccessNotification()
-        {
-            showSuccessCts = showSuccessCts.SafeRestart();
-            view.successNotificationView.CanvasGroup.DOKill();
-            view.successNotificationView.CanvasGroup.alpha = 0f;
-        }
-
-        private void HideFailureNotification()
-        {
-            showFailureCts = showFailureCts.SafeRestart();
-            view.errorNotificationView.CanvasGroup.DOKill();
-            view.errorNotificationView.CanvasGroup.alpha = 0f;
-        }
-
-        private async UniTask ShowSuccessNotificationAsync(string message)
-        {
-            HideSuccessNotification();
-            HideFailureNotification();
-
-            view.successNotificationView.SetText(message);
-            view.successNotificationView.Show(showSuccessCts.Token);
-            await UniTask.Delay((int) view.errorSuccessToastDuration * 1000, cancellationToken: showSuccessCts.Token);
-            view.successNotificationView.Hide(false, showSuccessCts.Token);
-        }
-
-        private async UniTask ShowFailureNotificationAsync()
-        {
-            HideSuccessNotification();
-            HideSuccessNotification();
-
-            view.errorNotificationView.Show(showFailureCts.Token);
-            await UniTask.Delay((int) view.errorSuccessToastDuration * 1000, cancellationToken: showFailureCts.Token);
-            view.errorNotificationView.Hide(false, showFailureCts.Token);
-        }
-
         private MonthGridController GetMonthGrid(DateTime dateTime)
         {
-            MonthGridController monthGridView;
-            if (monthViews.TryGetValue(dateTime, out MonthGridController monthView))
+            MonthGridController monthGridView = null;
+
+            if (!reelGalleryConfigParams.GroupByMonth && monthViews.Count == 1)
+                foreach (MonthGridController controller in monthViews.Values)
+                    monthGridView = controller;
+            else if (monthViews.TryGetValue(dateTime, out MonthGridController monthView))
                 monthGridView = monthView;
             else
             {
@@ -445,6 +426,10 @@ namespace DCL.InWorldCamera.CameraReelGallery
                     endVisible = i;
                 } else
                     DisableThumbnailImage(thumbnailImages[i]);
+
+            //If no image is visible (achieved while scrolling against the scroll limit), set beginVisible to 0
+            if (beginVisible < 0)
+                beginVisible = 0;
         }
 
         private void CheckNeedsToLoadMore()
@@ -592,13 +577,15 @@ namespace DCL.InWorldCamera.CameraReelGallery
         public readonly int ThumbnailHeight;
         public readonly int ThumbnailWidth;
         public readonly bool GridShowMonth;
+        public readonly bool GroupByMonth;
 
-        public ReelGalleryConfigParams(int gridLayoutFixedColumnCount, int thumbnailHeight, int thumbnailWidth, bool gridShowMonth)
+        public ReelGalleryConfigParams(int gridLayoutFixedColumnCount, int thumbnailHeight, int thumbnailWidth, bool gridShowMonth, bool groupByMonth)
         {
             GridLayoutFixedColumnCount = gridLayoutFixedColumnCount;
             ThumbnailHeight = thumbnailHeight;
             ThumbnailWidth = thumbnailWidth;
             GridShowMonth = gridShowMonth;
+            GroupByMonth = groupByMonth;
         }
     }
 }

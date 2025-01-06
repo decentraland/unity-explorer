@@ -2,9 +2,9 @@
 using DCL.AuthenticationScreenFlow;
 using DCL.Chat;
 using DCL.ExplorePanel;
-using DCL.InWorldCamera.CameraReelGallery;
 using DCL.InWorldCamera.PhotoDetail;
 using DCL.Passport;
+using DCL.PerformanceAndDiagnostics.Analytics.EventBased;
 using DCL.UI.Sidebar;
 using MVC;
 using System;

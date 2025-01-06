@@ -134,14 +134,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2503b311c9574d93a0efcf72d2939bbf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  contextMenu: {fileID: 0}
-  backgroundCloseButton: {fileID: 0}
-  optionButton: {fileID: 6943278575139157012}
-  setAsPublic: {fileID: 0}
-  shareOnX: {fileID: 0}
-  copyLink: {fileID: 0}
-  download: {fileID: 0}
-  delete: {fileID: 0}
+  <optionButton>k__BackingField: {fileID: 6943278575139157012}
 --- !u!1 &4238458680548828747
 GameObject:
   m_ObjectHideFlags: 0

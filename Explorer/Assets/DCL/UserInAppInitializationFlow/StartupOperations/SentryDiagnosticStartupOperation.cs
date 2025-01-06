@@ -20,7 +20,7 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
             this.diagnosticsContainer = diagnosticsContainer;
         }
 
-        public async UniTask<Result> ExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct)
+        public async UniTask<EnumResult<TaskError>> ExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct)
         {
             diagnosticsContainer.AddSentryScopeConfigurator((scope) =>
             {
@@ -29,7 +29,7 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
                     realmController.RealmData.Ipfs.ContentBaseUrl.Value,
                     realmController.RealmData.Ipfs.LambdasBaseUrl.Value);
             });
-            return Result.SuccessResult();
+            return EnumResult<TaskError>.SuccessResult();
         }
     }
 }

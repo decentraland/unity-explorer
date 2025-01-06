@@ -10,7 +10,7 @@ namespace Global.Dynamic.TeleportOperations
 {
     public interface ITeleportOperation
     {
-        UniTask<Result> ExecuteAsync(TeleportParams teleportParams, CancellationToken ct);
+        UniTask<EnumResult<TaskError>> ExecuteAsync(TeleportParams teleportParams, CancellationToken ct);
     }
 
     public struct TeleportParams

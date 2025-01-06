@@ -1,13 +1,9 @@
 ﻿using System.Collections.Generic;
-using System.Threading;
 using Arch.Core;
 using Arch.SystemGroups;
-using Cysharp.Threading.Tasks;
 using DCL.LOD;
 using DCL.Optimization.PerformanceBudgeting;
-using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
-using DCL.ResourcesUnloading;
 using DCL.Roads.Settings;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Reporting;
@@ -36,9 +32,6 @@ namespace DCL.Roads.Systems
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
             this.roadAssetPool = roadAssetPool;
         }
-
-        public UniTask Initialize(IPluginSettingsContainer container, CancellationToken ct) =>
-            UniTask.CompletedTask;
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in GlobalPluginArguments arguments)
         {

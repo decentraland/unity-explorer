@@ -1,5 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.MapPins.Bus;
 using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.Culling;
 using DCL.MapRenderer.MapCameraController;
@@ -32,6 +33,7 @@ namespace DCL.MapRenderer.ComponentsFactory
         private readonly IPlacesAPIService placesAPIService;
         private readonly IMapRendererSettings mapSettings;
         private readonly IMapPathEventBus mapPathEventBus;
+        private readonly IMapPinsEventBus mapPinsEventBus;
         private readonly INotificationsBusController notificationsBusController;
         private PlayerMarkerInstaller playerMarkerInstaller { get; }
         private SceneOfInterestsMarkersInstaller sceneOfInterestMarkerInstaller { get; }
@@ -48,6 +50,7 @@ namespace DCL.MapRenderer.ComponentsFactory
             MapRendererTextureContainer textureContainer,
             IPlacesAPIService placesAPIService,
             IMapPathEventBus mapPathEventBus,
+            IMapPinsEventBus mapPinsEventBus,
             INotificationsBusController notificationsBusController)
         {
             this.assetsProvisioner = assetsProvisioner;
@@ -58,6 +61,7 @@ namespace DCL.MapRenderer.ComponentsFactory
             this.placesAPIService = placesAPIService;
             this.mapPathEventBus = mapPathEventBus;
             this.notificationsBusController = notificationsBusController;
+            this.mapPinsEventBus = mapPinsEventBus;
         }
 
         async UniTask<MapRendererComponents> IMapRendererComponentsFactory.CreateAsync(CancellationToken cancellationToken)
@@ -79,7 +83,7 @@ namespace DCL.MapRenderer.ComponentsFactory
             );
 
             MapCameraObject mapCameraObjectPrefab = (await assetsProvisioner.ProvideMainAssetAsync(mapSettings.MapCameraObject, ct: cancellationToken)).Value;
-            PinMarkerController pinMarkerController = await pinMarkerInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, mapSettings, assetsProvisioner, mapPathEventBus, cancellationToken);
+            PinMarkerController pinMarkerController = await pinMarkerInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, mapSettings, assetsProvisioner, mapPathEventBus, mapPinsEventBus, cancellationToken);
 
             IObjectPool<IMapCameraControllerInternal> cameraControllersPool = new ObjectPool<IMapCameraControllerInternal>(
                 CameraControllerBuilder,
