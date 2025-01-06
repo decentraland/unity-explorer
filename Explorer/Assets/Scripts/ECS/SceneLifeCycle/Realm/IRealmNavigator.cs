@@ -37,6 +37,9 @@ namespace ECS.SceneLifeCycle.Realm
                 TaskError.UnexpectedException => ChangeRealmError.MessageError,
                 _ => throw new ArgumentOutOfRangeException(nameof(e), e, null)
             };
+
+        public static bool IsRecoverable(this ChangeRealmError error) =>
+            error is ChangeRealmError.SameRealm or ChangeRealmError.NotReachable;
     }
 
     public interface IRealmNavigator
@@ -60,7 +63,7 @@ namespace ECS.SceneLifeCycle.Realm
         UniTask<EnumResult<TaskError>> TeleportToParcelAsync(Vector2Int parcel, CancellationToken ct, bool isLocal);
 
         UniTask InitializeTeleportToSpawnPointAsync(AsyncLoadProcessReport teleportLoadReport, CancellationToken ct, Vector2Int parcelToTeleport);
-        
+
         void RemoveCameraSamplingData();
     }
 }
