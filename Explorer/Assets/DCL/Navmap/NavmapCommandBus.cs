@@ -10,6 +10,7 @@ namespace DCL.Navmap
 {
     public class NavmapCommandBus : INavmapBus
     {
+        private const float CAMERA_MOVE_SPEED = 1;
         public delegate INavmapCommand SearchPlaceFactory(
             INavmapBus.SearchPlaceResultDelegate callback,
             INavmapBus.SearchPlaceParams @params);
@@ -52,7 +53,7 @@ namespace DCL.Navmap
             if (!isFromSearchResults)
                 ClearPlacesFromMap();
 
-            MoveCameraTo(place.Positions[0]);
+            MoveCameraTo(place.Positions[0], CAMERA_MOVE_SPEED);
             await command.ExecuteAsync(new AdditionalParams(isFromSearchResults), ct);
 
             AddCommand(command);

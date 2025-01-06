@@ -16,6 +16,8 @@ namespace DCL.MapRenderer.MapCameraController
 {
     internal class MapCameraInteractivityController : IMapInteractivityControllerInternal
     {
+        private const float CAMERA_MOVE_SPEED = 1;
+
         private readonly Transform cameraParent;
         private readonly IObjectPool<IParcelHighlightMarker> markersPool;
         private readonly ICoordsUtils coordsUtils;
@@ -122,7 +124,6 @@ namespace DCL.MapRenderer.MapCameraController
 
             GameObject? hitObject = null;
             RaycastHit2D raycast = Physics2D.Raycast(GetLocalPosition(normalizedCoordinates), Vector2.zero, 10);
-            navmapBus.MoveCameraTo(parcel, 1f);
             UIAudioEventsBus.Instance.SendPlayAudioEvent(clickAudio);
 
             if (raycast.collider != null)
@@ -136,7 +137,11 @@ namespace DCL.MapRenderer.MapCameraController
                         return hitObject;
                     }
             }
-            else { hitObject = null; }
+            else
+            {
+                navmapBus.MoveCameraTo(parcel, CAMERA_MOVE_SPEED);
+                hitObject = null;
+            }
 
             return hitObject;
         }
