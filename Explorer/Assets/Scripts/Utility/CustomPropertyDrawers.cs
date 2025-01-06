@@ -31,5 +31,5 @@ namespace Utility
     }
 
     [AttributeUsage(AttributeTargets.Field)]
-    public class ReadOnlyAttribute : PropertyAttribute { }
+    public class ShowOnlyAttribute : PropertyAttribute { }
 }
