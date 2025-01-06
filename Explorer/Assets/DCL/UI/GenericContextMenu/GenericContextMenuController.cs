@@ -25,6 +25,7 @@ namespace DCL.UI.GenericContextMenu
         private readonly ControlsPoolManager controlsPoolManager;
 
         private RectTransform viewRectTransform;
+        private Rect backgroundWorldRect;
         private bool isClosing;
 
         public GenericContextMenuController(ViewFactoryMethod viewFactory,
@@ -43,6 +44,7 @@ namespace DCL.UI.GenericContextMenu
         protected override void OnViewInstantiated()
         {
             viewRectTransform = viewInstance!.GetComponent<RectTransform>();
+            backgroundWorldRect = GetWorldRect(viewInstance!.BackgroundCloseButton.GetComponent<RectTransform>());
 
             viewInstance!.BackgroundCloseButtonClicked += TriggerContextMenuClose;
         }
@@ -116,7 +118,7 @@ namespace DCL.UI.GenericContextMenu
             {
                 Vector2 offsetByDirection = GetOffsetByDirection(enumVal, offsetFromTarget);
                 Vector3 currentPosition = position + new Vector3(offsetByDirection.x, offsetByDirection.y, 0);
-                float nonOverlappingArea = CalculateNonOverlappingArea(overlapRect ?? viewRectTransform.rect, GetProjectedRect(currentPosition));
+                float nonOverlappingArea = CalculateNonOverlappingArea(overlapRect ?? backgroundWorldRect, GetProjectedRect(currentPosition));
                 if (nonOverlappingArea < minNonOverlappingArea)
                 {
                     newPosition = currentPosition;
