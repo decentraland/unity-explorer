@@ -4,12 +4,11 @@ using UnityEngine.UI;
 
 namespace DCL.UI.GenericContextMenu.Controls
 {
-    public class GenericContextMenuSeparatorView : MonoBehaviour, IGenericContextMenuComponent
+    public class GenericContextMenuSeparatorView : GenericContextMenuComponent
     {
         [field: SerializeField] public LayoutElement LayoutElementComponent { get; private set; }
-        [field: SerializeField] public RectTransform RectTransformComponent { get; private set; }
 
-        public void Configure(ContextMenuControlSettings settings)
+        public override void Configure(ContextMenuControlSettings settings)
         {
             SeparatorContextMenuControlSettings separatorSettings = settings as SeparatorContextMenuControlSettings;
             LayoutElementComponent.preferredHeight = separatorSettings!.Height;
@@ -17,6 +16,6 @@ namespace DCL.UI.GenericContextMenu.Controls
             RectTransformComponent.sizeDelta = new Vector2(RectTransformComponent.sizeDelta.x, separatorSettings.Height);
         }
 
-        public void UnregisterListeners(){}
+        public override void UnregisterListeners(){}
     }
 }

@@ -72,25 +72,14 @@ namespace DCL.UI.GenericContextMenu
                 object controlInitialValue = null;
                 inputData.InitialValues?.TryGetValue(i, out controlInitialValue);
 
-                switch (config.ControlTypeType)
-                {
-                    case ContextMenuControlTypes.SEPARATOR:
-                        GenericContextMenuSeparatorView separatorView = controlsPoolManager.GetSeparator(config as SeparatorContextMenuControlSettings, i);
-                        totalHeight += separatorView.RectTransformComponent.rect.height;
-                        break;
-                    case ContextMenuControlTypes.BUTTON_WITH_TEXT_AND_ICON:
-                        GenericContextMenuButtonWithTextView button = controlsPoolManager.GetButton(config as ButtonContextMenuControlSettings, i);
-                        button.ButtonComponent.onClick.AddListener(new UnityAction((Action)inputData.ControlsActions[i]));
-                        button.ButtonComponent.onClick.AddListener(TriggerContextMenuClose);
-                        totalHeight += button.RectTransformComponent.rect.height;
-                        break;
-                    case ContextMenuControlTypes.TOGGLE_WITH_TEXT:
-                        GenericContextMenuToggleView toggle = controlsPoolManager.GetToggle(config as ToggleContextMenuControlSettings, controlInitialValue != null && (bool)controlInitialValue , i);
-                        toggle.ToggleComponent.Toggle.onValueChanged.AddListener(new UnityAction<bool>((Action<bool>)inputData.ControlsActions[i]));
-                        toggle.ToggleComponent.Toggle.onValueChanged.AddListener(toggleValue => TriggerContextMenuClose());
-                        totalHeight += toggle.RectTransformComponent.rect.height;
-                        break;
-                }
+                GenericContextMenuComponent component = config.ControlTypeType switch {
+                    ContextMenuControlTypes.SEPARATOR => controlsPoolManager.GetSeparator(config as SeparatorContextMenuControlSettings, i),
+                    ContextMenuControlTypes.BUTTON_WITH_TEXT_AND_ICON => HandleButton(config as ButtonContextMenuControlSettings, i),
+                    ContextMenuControlTypes.TOGGLE_WITH_TEXT => HandleToggle(config as ToggleContextMenuControlSettings, controlInitialValue != null && (bool)controlInitialValue, i),
+                    _ => throw new NotImplementedException($"Control of type {config.ControlTypeType} is not implemented")
+                };
+
+                totalHeight += component!.RectTransformComponent.rect.height;
             }
 
             viewInstance!.ControlsContainer.sizeDelta = new Vector2(inputData.Config.Width,
@@ -100,6 +89,22 @@ namespace DCL.UI.GenericContextMenu
                 + (viewInstance!.ControlsLayoutGroup.spacing * (inputData.Config.ContextMenuSettings.Count - 1)));
 
             viewInstance!.ControlsContainer.localPosition = GetControlsPosition(inputData.AnchorPosition, inputData.Config.OffsetFromTarget, inputData.OverlapRect);
+        }
+
+        private GenericContextMenuComponent HandleButton(ButtonContextMenuControlSettings config, int index)
+        {
+            GenericContextMenuButtonWithTextView button = controlsPoolManager.GetButton(config, index);
+            button.ButtonComponent.onClick.AddListener(new UnityAction((Action)inputData.ControlsActions[index]));
+            button.ButtonComponent.onClick.AddListener(TriggerContextMenuClose);
+            return button;
+        }
+
+        private GenericContextMenuComponent HandleToggle(ToggleContextMenuControlSettings config, bool initialValue, int index)
+        {
+            GenericContextMenuToggleView toggle = controlsPoolManager.GetToggle(config, initialValue, index);
+            toggle.ToggleComponent.Toggle.onValueChanged.AddListener(new UnityAction<bool>((Action<bool>)inputData.ControlsActions[index]));
+            toggle.ToggleComponent.Toggle.onValueChanged.AddListener(toggleValue => TriggerContextMenuClose());
+            return toggle;
         }
 
         private Vector2 GetOffsetByDirection(ContextMenuOpenDirection direction, Vector2 offsetFromTarget)
