@@ -8,6 +8,8 @@ import zipfile
 import requests
 import datetime
 import argparse
+from urllib3.util.retry import Retry
+from requests.adapters import HTTPAdapter
 # Local
 import utils
 
@@ -312,12 +314,29 @@ def poll_build(id):
             return False
             
 def download_artifact(id):
-    response = requests.get(f'{URL}/buildtargets/{os.getenv("TARGET")}/builds/{id}', headers=HEADERS)
+    session = requests.Session()
+    retries = Retry(
+        total=5,              # Retry up to 5 times
+        backoff_factor=2,     # Exponential backoff: 2s, 4s, 8s, etc.
+        status_forcelist=[502, 503, 504],  # Retry on these HTTP errors
+        allowed_methods=["GET"]
+    )
+    session.mount('https://', HTTPAdapter(max_retries=retries))
+    try:
+        response = session.get(
+            f'{URL}/buildtargets/{os.getenv("TARGET")}/builds/{id}',
+            headers=HEADERS, timeout=60
+        )
+        response.raise_for_status()  # Raise an HTTPError for bad status codes (4xx/5xx)
+    except requests.exceptions.RequestException as e:
+        print(f'Error: Failed to get build artifacts with ID {id}. Exception: {e}')
+        sys.exit(1)
 
     if response.status_code != 200:
-        print(f'Failed to get build artifacts with ID {id} with status code: {response.status_code}')
-        print("Response body:", response.text)
+        print(f'Error: Failed to get build artifacts with ID {id} with status code: {response.status_code}')
+        print("Response body:", response.text[:500])
         sys.exit(1)
+    print('Build artifacts successfully retrieved!')
 
     response_json = response.json()
     try:
