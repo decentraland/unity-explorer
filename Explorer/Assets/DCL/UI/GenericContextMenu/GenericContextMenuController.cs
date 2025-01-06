@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.UI.GenericContextMenu.Controls;
+using DCL.UI.GenericContextMenu.Controls.Configs;
 using MVC;
 using System;
 using System.Threading;

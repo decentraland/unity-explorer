@@ -9,7 +9,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 0}
+  m_Script: {fileID: 11500000, guid: f16a3a2eede14641b93b511007b15f12, type: 3}
   m_Name: SetAsPublicConfig
   m_EditorClassIdentifier: GenericContextMenu:DCL.UI.GenericContextMenu.Controls:ToggleContextMenuControlSettings
   controlTypeType: 1

@@ -11,6 +11,7 @@ using DCL.InWorldCamera.ReelActions;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.Pools;
 using DCL.UI.GenericContextMenu.Controls;
+using DCL.UI.GenericContextMenu.Controls.Configs;
 using DG.Tweening;
 using MVC;
 using System;

@@ -9,7 +9,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 0}
+  m_Script: {fileID: 11500000, guid: 14514d4875b74c0c9569ec576fdc85c0, type: 3}
   m_Name: DeleteConfig
   m_EditorClassIdentifier: GenericContextMenu:DCL.UI.GenericContextMenu.Controls:ButtonContextMenuControlSettings
   controlTypeType: 0

@@ -1,3 +1,5 @@
+using DCL.UI.GenericContextMenu.Controls.Configs;
+
 namespace DCL.UI.GenericContextMenu.Controls
 {
     public interface IGenericContextMenuComponent

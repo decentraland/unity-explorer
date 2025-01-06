@@ -49,6 +49,7 @@ using DCL.PluginSystem.World;
 using DCL.SDKComponents.MediaStream.Settings;
 using DCL.Settings.Settings;
 using DCL.UI.GenericContextMenu.Controls;
+using DCL.UI.GenericContextMenu.Controls.Configs;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Audio;
