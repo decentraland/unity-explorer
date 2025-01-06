@@ -3,15 +3,14 @@ using Utility.Types;
 
 namespace Global.Dynamic.ChatCommands
 {
-    public class EnvironmentValidator
+    public class ChatEnvironmentValidator
     {
         private readonly DecentralandEnvironment dclEnvironment;
 
         private readonly string zoneDescription;
         private readonly string orgDescription;
 
-
-        public EnvironmentValidator(DecentralandEnvironment dclEnvironment)
+        public ChatEnvironmentValidator(DecentralandEnvironment dclEnvironment)
         {
             this.dclEnvironment = dclEnvironment;
             zoneDescription = DecentralandEnvironment.Zone.ToString().ToLower();

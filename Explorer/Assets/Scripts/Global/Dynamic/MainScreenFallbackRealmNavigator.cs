@@ -31,7 +31,7 @@ namespace Global.Dynamic
         {
             var result = await origin.TryChangeRealmAsync(realm, ct, parcelToTeleport);
 
-            if (result.Success == false)
+            if (result.Success == false && !result.Error!.Value.State.IsRecoverable())
                 DispatchFallbackToMainScreen(result.As(ChangeRealmErrors.AsTaskError), ct);
 
             return result;
