@@ -12,7 +12,6 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
     public class OptionButtonController : IDisposable
     {
         private readonly OptionButtonView view;
-        private readonly ContextMenuController contextMenuController;
         private readonly RectTransform buttonRectTransform;
         private readonly IMVCManager mvcManager;
         private readonly GenericContextMenuConfig contextMenuConfig;
@@ -29,9 +28,9 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
 
         private bool isContextMenuOpen;
         private CameraReelResponseCompact currentReelData;
+        private UniTaskCompletionSource closeContextMenuTask;
 
         public OptionButtonController(OptionButtonView view,
-            ContextMenuController contextMenuController,
             IMVCManager mvcManager,
             GenericContextMenuConfig contextMenuConfig)
         {
@@ -41,7 +40,6 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
             this.buttonRectTransform = view.GetComponent<RectTransform>();
 
             this.view.optionButton.onClick.AddListener(OnOptionClicked);
-            this.contextMenuController = contextMenuController;
 
             controlsActions = new ()
             {
@@ -62,13 +60,13 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
             view.gameObject.SetActive(true);
             currentReelData = cameraReelResponse;
             initialValues[(int)CameraReelGalleryController.ContextMenuControls.PUBLIC_CONTROL_INDEX] = cameraReelResponse.isPublic;
+            closeContextMenuTask = new UniTaskCompletionSource();
         }
 
-        //TODO: transform context menu close action to task and pass it to closeTask
         public void HideControl()
         {
             view.transform.localScale = Vector3.one;
-            contextMenuController.Hide();
+            closeContextMenuTask?.TrySetResult();
             Hide?.Invoke();
             view.gameObject.SetActive(false);
         }
@@ -79,14 +77,13 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
                 new GenericContextMenuParameter(contextMenuConfig, controlsActions, buttonRectTransform.position,
                     actionOnShow: () => isContextMenuOpen = true,
                     actionOnHide: () => isContextMenuOpen = false,
-                    closeTask: view.optionButton.OnClickAsync(),
+                    closeTask: closeContextMenuTask?.Task,
                     initialValues: initialValues)));
         }
 
         public void Dispose()
         {
             view.optionButton.onClick.RemoveAllListeners();
-            contextMenuController.Dispose();
             Hide = null;
         }
     }
