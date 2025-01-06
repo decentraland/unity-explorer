@@ -169,7 +169,7 @@ namespace DCL.MapRenderer.MapCameraController
             translationSequence.Join(mapCameraObject.transform.DOLocalMove(targetPosition, duration).SetEase(Ease.OutQuart)!)
                                .OnComplete(() =>
                                 {
-                                    //CalculateCameraPositionBounds();
+                                    CalculateCameraPositionBounds();
                                     cullingController.SetCameraDirty(this);
                                     onComplete?.Invoke();
                                 });
