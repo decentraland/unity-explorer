@@ -1,7 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using DCL.UI.GenericContextMenu;
-using DCL.UI.GenericContextMenu.Controls;
 using DCL.UI.GenericContextMenu.Controls.Configs;
 using MVC;
 using System;
@@ -12,30 +11,24 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
 {
     public class OptionButtonController : IDisposable
     {
-        private const int PUBLIC_CONTROL_INDEX = 0;
-        private const int SHARE_CONTROL_INDEX = 2;
-        private const int COPY_CONTROL_INDEX = 3;
-        private const int DOWNLOAD_CONTROL_INDEX = 4;
-        private const int DELETE_CONTROL_INDEX = 5;
-
         private readonly OptionButtonView view;
         private readonly ContextMenuController contextMenuController;
         private readonly RectTransform buttonRectTransform;
         private readonly IMVCManager mvcManager;
         private readonly GenericContextMenuConfig contextMenuConfig;
-        private readonly Dictionary<int, Delegate> controlsActions = new ()
-        {
-            { PUBLIC_CONTROL_INDEX, new Action<bool>(toggleValue => Debug.Log($"Toggle clicked: {toggleValue}")) },
-            { SHARE_CONTROL_INDEX, new Action(() => Debug.Log("Share on X clicked")) },
-            { COPY_CONTROL_INDEX, new Action(() => Debug.Log("Copy Link clicked")) },
-            { DOWNLOAD_CONTROL_INDEX, new Action(() => Debug.Log("Download clicked")) },
-            { DELETE_CONTROL_INDEX, new Action(() => Debug.Log("Delete clicked")) },
-        };
+        private readonly Dictionary<int, Delegate> controlsActions;
         private readonly Dictionary<int, object> initialValues = new ();
 
         public event Action? Hide;
 
+        public event Action<CameraReelResponseCompact, bool>? SetPublicRequested;
+        public event Action<CameraReelResponseCompact>? ShareToXRequested;
+        public event Action<CameraReelResponseCompact>? CopyPictureLinkRequested;
+        public event Action<CameraReelResponseCompact>? DownloadRequested;
+        public event Action<CameraReelResponseCompact>? DeletePictureRequested;
+
         private bool isContextMenuOpen;
+        private CameraReelResponseCompact currentReelData;
 
         public OptionButtonController(OptionButtonView view,
             ContextMenuController contextMenuController,
@@ -50,7 +43,14 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
             this.view.optionButton.onClick.AddListener(OnOptionClicked);
             this.contextMenuController = contextMenuController;
 
-            this.contextMenuController.AnyControlClicked += HideControl;
+            controlsActions = new ()
+            {
+                { (int)CameraReelGalleryController.ContextMenuControls.PUBLIC_CONTROL_INDEX, new Action<bool>(toggleValue => SetPublicRequested?.Invoke(currentReelData, toggleValue)) },
+                { (int)CameraReelGalleryController.ContextMenuControls.SHARE_CONTROL_INDEX, new Action(() => ShareToXRequested?.Invoke(currentReelData)) },
+                { (int)CameraReelGalleryController.ContextMenuControls.COPY_CONTROL_INDEX, new Action(() => CopyPictureLinkRequested?.Invoke(currentReelData)) },
+                { (int)CameraReelGalleryController.ContextMenuControls.DOWNLOAD_CONTROL_INDEX, new Action(() => DownloadRequested?.Invoke(currentReelData)) },
+                { (int)CameraReelGalleryController.ContextMenuControls.DELETE_CONTROL_INDEX, new Action(() => DeletePictureRequested?.Invoke(currentReelData)) },
+            };
         }
 
         public bool IsContextMenuOpen() => isContextMenuOpen;
@@ -60,10 +60,11 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
             view.transform.SetParent(parent);
             view.transform.localPosition = offsetPosition;
             view.gameObject.SetActive(true);
-            contextMenuController.SetImageData(cameraReelResponse);
-            initialValues[PUBLIC_CONTROL_INDEX] = cameraReelResponse.isPublic;
+            currentReelData = cameraReelResponse;
+            initialValues[(int)CameraReelGalleryController.ContextMenuControls.PUBLIC_CONTROL_INDEX] = cameraReelResponse.isPublic;
         }
 
+        //TODO: transform context menu close action to task and pass it to closeTask
         public void HideControl()
         {
             view.transform.localScale = Vector3.one;
@@ -74,10 +75,6 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
 
         private void OnOptionClicked()
         {
-            // if (!contextMenuController.IsOpen())
-            //     contextMenuController.Show(buttonRectTransform.position);
-            // else
-            //     contextMenuController.Hide();
             mvcManager.ShowAsync(GenericContextMenuController.IssueCommand(
                 new GenericContextMenuParameter(contextMenuConfig, controlsActions, buttonRectTransform.position,
                     actionOnShow: () => isContextMenuOpen = true,

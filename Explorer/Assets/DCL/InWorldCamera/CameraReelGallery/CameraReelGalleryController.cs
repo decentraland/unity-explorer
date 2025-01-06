@@ -33,6 +33,15 @@ namespace DCL.InWorldCamera.CameraReelGallery
             DOWN
         }
 
+        public enum ContextMenuControls
+        {
+            PUBLIC_CONTROL_INDEX = 0,
+            SHARE_CONTROL_INDEX = 2,
+            COPY_CONTROL_INDEX = 3,
+            DOWNLOAD_CONTROL_INDEX = 4,
+            DELETE_CONTROL_INDEX = 5,
+        }
+
         private struct ReelToDeleteInfo
         {
             public readonly string Id;
@@ -143,11 +152,11 @@ namespace DCL.InWorldCamera.CameraReelGallery
 
             if (this.contextMenuController != null)
             {
-                this.contextMenuController.SetPublicRequested += SetReelPublic;
-                this.contextMenuController.ShareToXRequested += ShareToX;
-                this.contextMenuController.CopyPictureLinkRequested += CopyPictureLink;
-                this.contextMenuController.DownloadRequested += DownloadReelLocally;
-                this.contextMenuController.DeletePictureRequested += DeleteReel;
+                this.optionButtonController.SetPublicRequested += SetReelPublic;
+                this.optionButtonController.ShareToXRequested += ShareToX;
+                this.optionButtonController.CopyPictureLinkRequested += CopyPictureLink;
+                this.optionButtonController.DownloadRequested += DownloadReelLocally;
+                this.optionButtonController.DeletePictureRequested += DeleteReel;
             }
         }
 
