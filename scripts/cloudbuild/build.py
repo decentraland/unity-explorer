@@ -374,6 +374,9 @@ def download_artifact(id):
         print(f"ERROR: Build folder not found at expected location: {os.path.join(os.getcwd(), download_dir)}")
 
 def download_log(id):
+    with open('unity_cloud_log.log', 'w') as f:
+        f.write('Initialize the log file before making the request\n')
+
     try:
         response = requests.get(
             f'{URL}/buildtargets/{os.getenv("TARGET")}/builds/{id}/log',
@@ -386,11 +389,22 @@ def download_log(id):
 
     if response.status_code != 200:
         print(f'Warning: Failed to get build log with ID {id} with status code: {response.status_code}')
-        print("Response body:", response.text)
+        print("Response body (partial):", response.text[:500])
         return  # Gracefully exit without failing the job
 
-    with open('unity_cloud_log.log', 'w') as f:
-        f.write(response.text)
+    try:
+        with open('unity_cloud_log.log', 'a') as f:
+            for chunk in response.iter_content(chunk_size=1024):
+                if chunk:
+                    f.write(chunk.decode('utf-8'))
+    except requests.exceptions.ChunkedEncodingError as e:
+        print(f'Warning: ChunkedEncodingError while writing build log: {e}')
+        print('Continuing without completing the build log download.')
+    except Exception as e:
+        print(f'Warning: Unexpected error while writing build log: {e}')
+        print('Continuing without completing the build log download.')
+    finally:
+        response.close()
 
     print('Build log ready!')
 
