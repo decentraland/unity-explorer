@@ -23,16 +23,16 @@ namespace PortableExperiences.Controller
 {
     public class ECSPortableExperiencesController : IPortableExperiencesController
     {
-        private static readonly QueryDescription CLEAR_QUERY = new QueryDescription().
-                                                               WithAny<RealmComponent, GetSceneDefinition, GetSceneDefinitionList,
-                                                                   SceneDefinitionComponent, EmptySceneComponent>()
-                                                              .WithAll<PortableExperienceComponent, DeleteEntityIntention>();
+        private static readonly QueryDescription CLEAR_QUERY = new QueryDescription().WithAny<RealmComponent, GetSceneDefinition, GetSceneDefinitionList,
+                                                                                          SceneDefinitionComponent, EmptySceneComponent>()
+                                                                                     .WithAll<PortableExperienceComponent, DeleteEntityIntention>();
 
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IWebRequestController webRequestController;
         private readonly IScenesCache scenesCache;
         private readonly List<IPortableExperiencesController.SpawnResponse> spawnResponsesList = new ();
         private readonly FeatureFlagsCache featureFlagsCache;
+        private readonly bool isLocalSceneDevelopment;
         private GlobalWorld globalWorld;
 
         public Dictionary<ENS, Entity> PortableExperienceEntities { get; } = new ();
@@ -50,18 +50,19 @@ namespace PortableExperiences.Controller
             IWeb3IdentityCache web3IdentityCache,
             IWebRequestController webRequestController,
             IScenesCache scenesCache,
-            FeatureFlagsCache featureFlagsCache)
+            FeatureFlagsCache featureFlagsCache,
+            bool isLocalSceneDevelopment)
         {
             this.web3IdentityCache = web3IdentityCache;
             this.webRequestController = webRequestController;
             this.scenesCache = scenesCache;
             this.featureFlagsCache = featureFlagsCache;
+            this.isLocalSceneDevelopment = isLocalSceneDevelopment;
         }
 
         public async UniTask<IPortableExperiencesController.SpawnResponse> CreatePortableExperienceByEnsAsync(ENS ens, CancellationToken ct, bool isGlobalPortableExperience = false, bool force = false)
         {
             if (!force)
-            {
                 switch (isGlobalPortableExperience)
                 {
                     //If it's not a Global PX and common PXs are disabled
@@ -72,13 +73,13 @@ namespace PortableExperiences.Controller
                     case true when !featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.GLOBAL_PORTABLE_EXPERIENCE):
                         throw new Exception("Global Portable Experiences are disabled");
                 }
-            }
 
             if (PortableExperienceEntities.ContainsKey(ens)) throw new Exception($"ENS {ens} is already loaded");
 
             string worldUrl = string.Empty;
 
-            if (ens.IsValid) { worldUrl = ens.ConvertEnsToWorldUrl(); }
+            if (ens.IsValid)
+                worldUrl = ens.ConvertEnsToWorldUrl();
 
             if (!worldUrl.IsValidUrl()) throw new ArgumentException($"Invalid Spawn params. Provide a valid ENS name {ens}");
 
@@ -91,10 +92,9 @@ namespace PortableExperiences.Controller
             ServerAbout result = await genericGetRequest.OverwriteFromJsonAsync(serverAbout, WRJsonParser.Unity);
 
             if (result.configurations.scenesUrn.Count == 0)
-            {
+
                 //The loaded realm does not have any fixed scene, so it cannot be loaded as a Portable Experience
                 throw new Exception($"Scene not Available in provided Portable Experience with ens: {ens}");
-            }
 
             var realmData = new RealmData();
 
@@ -104,7 +104,8 @@ namespace PortableExperiences.Controller
                 result.configurations.networkId,
                 result.comms?.adapter ?? string.Empty,
                 result.comms?.protocol ?? string.Empty,
-                portableExperiencePath.Value
+                portableExperiencePath.Value,
+                isLocalSceneDevelopment
             );
 
             ISceneFacade parentScene = scenesCache.Scenes.FirstOrDefault(s => s.SceneStateProvider.IsCurrent);
