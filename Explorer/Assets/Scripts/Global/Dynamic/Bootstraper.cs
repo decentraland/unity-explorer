@@ -241,6 +241,7 @@ namespace Global.Dynamic
                 sceneSharedContainer.V8ActiveEngines, playerEntity);
 
             dynamicWorldContainer.RealmController.GlobalWorld = globalWorld;
+            staticContainer.PortableExperiencesController.GlobalWorld = globalWorld;
 
             staticContainer.DebugContainerBuilder.BuildWithFlex(debugUiRoot);
             staticContainer.DebugContainerBuilder.IsVisible = appArgs.HasDebugFlag();
