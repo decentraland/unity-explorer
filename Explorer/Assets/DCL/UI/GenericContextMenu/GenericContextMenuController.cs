@@ -79,11 +79,12 @@ namespace DCL.UI.GenericContextMenu
                         button.ButtonComponent.onClick.AddListener(TriggerContextMenuClose);
                         break;
                     case ContextMenuControlTypes.TOGGLE_WITH_TEXT:
-                        GenericContextMenuToggleView toggle = controlsPoolManager.GetToggle(config as ToggleContextMenuControlSettings, i);
-                        if (inputData.InitialValues != null && inputData.InitialValues.TryGetValue(i, out object initialValue))
-                            toggle.ToggleComponent.isOn = (bool)initialValue;
-                        toggle.ToggleComponent.onValueChanged.AddListener(new UnityAction<bool>((Action<bool>)inputData.ControlsActions[i]));
-                        toggle.ToggleComponent.onValueChanged.AddListener(toggleValue => TriggerContextMenuClose());
+                        bool initialValue = false;
+                        if (inputData.InitialValues != null && inputData.InitialValues.TryGetValue(i, out object initVal))
+                            initialValue = (bool)initVal;
+                        GenericContextMenuToggleView toggle = controlsPoolManager.GetToggle(config as ToggleContextMenuControlSettings, initialValue, i);
+                        toggle.ToggleComponent.Toggle.onValueChanged.AddListener(new UnityAction<bool>((Action<bool>)inputData.ControlsActions[i]));
+                        toggle.ToggleComponent.Toggle.onValueChanged.AddListener(toggleValue => TriggerContextMenuClose());
                         break;
                 }
             }

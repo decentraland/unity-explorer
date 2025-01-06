@@ -7,7 +7,7 @@ namespace DCL.UI.GenericContextMenu.Controls
 {
     public class GenericContextMenuToggleView : MonoBehaviour, IGenericContextMenuComponent
     {
-        [field: SerializeField] public Toggle ToggleComponent { get; private set; }
+        [field: SerializeField] public ToggleView ToggleComponent { get; private set; }
         [field: SerializeField] public TMP_Text TextComponent { get; private set; }
 
         public void Configure(ContextMenuControlSettings settings)
@@ -17,6 +17,6 @@ namespace DCL.UI.GenericContextMenu.Controls
         }
 
         public void UnregisterListeners() =>
-            ToggleComponent.onValueChanged.RemoveAllListeners();
+            ToggleComponent.Toggle.onValueChanged.RemoveAllListeners();
     }
 }

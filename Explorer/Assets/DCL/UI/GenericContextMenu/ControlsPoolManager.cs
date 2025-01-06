@@ -57,12 +57,13 @@ namespace DCL.UI.GenericContextMenu
             return buttonView;
         }
 
-        public GenericContextMenuToggleView GetToggle(ToggleContextMenuControlSettings settings, int index)
+        public GenericContextMenuToggleView GetToggle(ToggleContextMenuControlSettings settings, bool initialValue, int index)
         {
-            //TODO: initial value
             GenericContextMenuToggleView toggleView = togglePool.Get();
             toggleView.transform.SetSiblingIndex(index);
             toggleView.Configure(settings);
+            toggleView.ToggleComponent.Toggle.isOn = initialValue;
+            toggleView.ToggleComponent.SetToggleGraphics(initialValue);
             currentControls.Add(toggleView);
             return toggleView;
         }
