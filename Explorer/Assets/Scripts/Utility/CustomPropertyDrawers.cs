@@ -29,4 +29,7 @@ namespace Utility
             FieldName = fieldName;
         }
     }
+
+    [AttributeUsage(AttributeTargets.Field)]
+    public class ReadOnlyAttribute : PropertyAttribute { }
 }
