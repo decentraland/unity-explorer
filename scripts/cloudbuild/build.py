@@ -374,12 +374,20 @@ def download_artifact(id):
         print(f"ERROR: Build folder not found at expected location: {os.path.join(os.getcwd(), download_dir)}")
 
 def download_log(id):
-    response = requests.get(f'{URL}/buildtargets/{os.getenv('TARGET')}/builds/{id}/log', headers=HEADERS)
+    try:
+        response = requests.get(
+            f'{URL}/buildtargets/{os.getenv("TARGET")}/builds/{id}/log',
+            headers=HEADERS, timeout=120, stream=True
+        )
+    except requests.exceptions.RequestException as e:
+        print(f'Warning: Failed to download build log with ID {id}. Exception: {e}')
+        print('Continuing without the build log.')
+        return  # Gracefully exit without failing the job
 
     if response.status_code != 200:
-        print(f'Failed to get build log with ID {id} with status code: {response.status_code}')
+        print(f'Warning: Failed to get build log with ID {id} with status code: {response.status_code}')
         print("Response body:", response.text)
-        sys.exit(1)
+        return  # Gracefully exit without failing the job
 
     with open('unity_cloud_log.log', 'w') as f:
         f.write(response.text)
