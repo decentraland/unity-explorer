@@ -27,7 +27,7 @@ namespace Global.Dynamic.ChatCommands
         public bool ValidateParameters(string[] parameters) =>
             parameters.Length == 2 && int.TryParse(parameters[1], out _);
 
-        public UniTask<string> ExecuteCommand(string[] parameters, CancellationToken ct) =>
+        public UniTask<string> ExecuteCommandAsync(string[] parameters, CancellationToken ct) =>
             UniTask.FromResult(Execute(parameters));
 
         private string Execute(string[] parameters)

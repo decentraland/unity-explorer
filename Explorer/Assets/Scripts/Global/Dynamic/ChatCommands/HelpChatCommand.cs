@@ -29,7 +29,7 @@ namespace Global.Dynamic.ChatCommands
             this.commands = commands;
         }
 
-        public UniTask<string> ExecuteCommand(string[] parameters, CancellationToken ct)
+        public UniTask<string> ExecuteCommandAsync(string[] parameters, CancellationToken ct)
         {
             var sb = new StringBuilder();
 

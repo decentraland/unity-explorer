@@ -35,14 +35,14 @@ namespace DCL.Chat.MessageBus
         {
             if (message[0] == '/') // User tried running a command
             {
-                HandleChatCommand(message).Forget();
+                HandleChatCommandAsync(message).Forget();
                 return;
             }
 
             this.origin.Send(message, origin);
         }
 
-        private async UniTaskVoid HandleChatCommand(string message)
+        private async UniTaskVoid HandleChatCommandAsync(string message)
         {
             string[] split = message.Split(' ');
             string userCommand = split[0][1..];
@@ -57,7 +57,7 @@ namespace DCL.Chat.MessageBus
 
                     try
                     {
-                        string response = await command.ExecuteCommand(parameters, commandCts.Token);
+                        string response = await command.ExecuteCommandAsync(parameters, commandCts.Token);
                         SendFromSystem(response);
                     }
                     catch (Exception) { SendFromSystem("🔴 Error running command."); }

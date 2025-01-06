@@ -25,7 +25,7 @@ namespace Global.Dynamic.ChatCommands
         public bool ValidateParameters(string[] parameters) =>
             parameters.Length == 1 && ChatParamUtils.IsPositionParameter(parameters[0], false);
 
-        public UniTask<string> ExecuteCommand(string[] parameters, CancellationToken ct) =>
-            chatTeleporter.TeleportToParcel(ChatParamUtils.ParseRawPosition(parameters[0]), true, ct);
+        public UniTask<string> ExecuteCommandAsync(string[] parameters, CancellationToken ct) =>
+            chatTeleporter.TeleportToParcelAsync(ChatParamUtils.ParseRawPosition(parameters[0]), true, ct);
     }
 }

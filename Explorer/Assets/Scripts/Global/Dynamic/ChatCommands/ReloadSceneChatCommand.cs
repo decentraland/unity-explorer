@@ -23,7 +23,7 @@ namespace Global.Dynamic.ChatCommands
             this.reloadScene = reloadScene;
         }
 
-        public async UniTask<string> ExecuteCommand(string[] parameters, CancellationToken ct)
+        public async UniTask<string> ExecuteCommandAsync(string[] parameters, CancellationToken ct)
         {
             if (await reloadScene.TryReloadSceneAsync(ct))
                 return "🟢 Current scene has been reloaded";

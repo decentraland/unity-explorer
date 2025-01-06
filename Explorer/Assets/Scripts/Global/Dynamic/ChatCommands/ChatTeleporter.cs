@@ -41,7 +41,7 @@ namespace Global.Dynamic.ChatCommands
         /// <summary>
         /// Parses the realm and teleports the player to it, with an optional target position.
         /// </summary>
-        public async UniTask<string> TeleportToRealm(string realm, Vector2Int? targetPosition, CancellationToken ct)
+        public async UniTask<string> TeleportToRealmAsync(string realm, Vector2Int? targetPosition, CancellationToken ct)
         {
             string realmAddress;
 
@@ -82,7 +82,7 @@ namespace Global.Dynamic.ChatCommands
         /// <summary>
         /// Teleports the player to a parcel.
         /// </summary>
-        public async UniTask<string> TeleportToParcel(Vector2Int targetPosition, bool local, CancellationToken ct)
+        public async UniTask<string> TeleportToParcelAsync(Vector2Int targetPosition, bool local, CancellationToken ct)
         {
             var result = await realmNavigator.TeleportToParcelAsync(targetPosition, ct, local);
 

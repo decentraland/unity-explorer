@@ -27,16 +27,13 @@ namespace Global.Dynamic.ChatCommands
             parameters.Length == 1 || // Case: /world <world>
             (parameters.Length == 2 && ChatParamUtils.IsPositionParameter(parameters[1], false)); // Case: /world <world> <x,y>
 
-        public UniTask<string> ExecuteCommand(string[] parameters, CancellationToken ct)
-        {
-            if (parameters.Length == 1)
-            {
-                // Case: /world <world>
-                return chatTeleporter.TeleportToRealm(parameters[0], null, ct);
-            }
+        public UniTask<string> ExecuteCommandAsync(string[] parameters, CancellationToken ct) =>
+            parameters.Length == 1
 
-            // Case: /world <world> <x,y>
-            return chatTeleporter.TeleportToRealm(parameters[0], ChatParamUtils.ParseRawPosition(parameters[1]), ct);
-        }
+                // Case: /world <world>
+                ? chatTeleporter.TeleportToRealmAsync(parameters[0], null, ct)
+
+                // Case: /world <world> <x,y>
+                : chatTeleporter.TeleportToRealmAsync(parameters[0], ChatParamUtils.ParseRawPosition(parameters[1]), ct);
     }
 }

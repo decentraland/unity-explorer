@@ -23,7 +23,7 @@ namespace Global.Dynamic.ChatCommands
             this.chatHistory = chatHistory;
         }
 
-        public UniTask<string> ExecuteCommand(string[] parameters, CancellationToken ct)
+        public UniTask<string> ExecuteCommandAsync(string[] parameters, CancellationToken ct)
         {
             chatHistory.Clear();
             return UniTask.FromResult(string.Empty);

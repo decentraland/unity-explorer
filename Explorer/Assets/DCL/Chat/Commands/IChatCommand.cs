@@ -15,7 +15,7 @@ namespace DCL.Chat.Commands
         bool ValidateParameters(string[] parameters) =>
             parameters.Length == 0;
 
-        UniTask<string> ExecuteCommand(string[] parameters, CancellationToken ct);
+        UniTask<string> ExecuteCommandAsync(string[] parameters, CancellationToken ct);
     }
 
     public static class ChatCommandsUtils

@@ -43,7 +43,7 @@ namespace Global.Dynamic.ChatCommands
         public bool ValidateParameters(string[] parameters) =>
             parameters.Length == 1;
 
-        public async UniTask<string> ExecuteCommand(string[] parameters, CancellationToken ct)
+        public async UniTask<string> ExecuteCommandAsync(string[] parameters, CancellationToken ct)
         {
             if (!featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.PORTABLE_EXPERIENCE_CHAT_COMMANDS))
                 return "🔴 Error. Portable Experiences Chat Commands are disabled";

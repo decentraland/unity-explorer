@@ -39,22 +39,22 @@ namespace Global.Dynamic.ChatCommands
             parameters.Length == 1 || // /goto <realm> OR /goto <x,y | random | crowd>
             (parameters.Length == 2 && ChatParamUtils.IsPositionParameter(parameters[1], false)); // /goto <realm> <x,y>
 
-        public async UniTask<string> ExecuteCommand(string[] parameters, CancellationToken ct)
+        public async UniTask<string> ExecuteCommandAsync(string[] parameters, CancellationToken ct)
         {
             if (parameters.Length == 1)
             {
                 if (ChatParamUtils.IsPositionParameter(parameters[0], true))
                 {
                     // Case: /goto <x,y | random | crowd>
-                    return await chatTeleporter.TeleportToParcel(await GetPositionAsync(parameters[0], ct), false, ct);
+                    return await chatTeleporter.TeleportToParcelAsync(await GetPositionAsync(parameters[0], ct), false, ct);
                 }
 
                 // LEGACY Case: /goto <realm>
-                return await chatTeleporter.TeleportToRealm(parameters[0], null, ct);
+                return await chatTeleporter.TeleportToRealmAsync(parameters[0], null, ct);
             }
 
             // LEGACY Case: /goto <realm> <x,y>
-            return await chatTeleporter.TeleportToRealm(parameters[0], await GetPositionAsync(parameters[1], ct), ct);
+            return await chatTeleporter.TeleportToRealmAsync(parameters[0], await GetPositionAsync(parameters[1], ct), ct);
         }
 
         private UniTask<Vector2Int> GetPositionAsync(string positionParameter, CancellationToken ct)
