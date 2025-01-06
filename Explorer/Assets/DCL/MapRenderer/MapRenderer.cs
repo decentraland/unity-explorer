@@ -62,6 +62,7 @@ namespace DCL.MapRenderer
 
                 layers[MapLayer.SatelliteAtlas].SharedActive = true;
                 layers[MapLayer.SearchResults].SharedActive = true;
+                layers[MapLayer.LiveEvents].SharedActive = false;
                 layers[MapLayer.Category].SharedActive = false;
             }
             catch (OperationCanceledException)

@@ -178,6 +178,7 @@ namespace DCL.Navmap
                 ));
 
             mapRenderer.SetSharedLayer(MapLayer.ScenesOfInterest, true);
+            mapRenderer.SetSharedLayer(MapLayer.LiveEvents, true);
             satelliteController.InjectCameraController(cameraController);
             navmapLocationController.InjectCameraController(cameraController);
             satelliteController.Activate();
