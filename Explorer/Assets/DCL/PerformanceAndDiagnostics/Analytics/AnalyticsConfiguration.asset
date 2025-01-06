@@ -23,6 +23,8 @@ MonoBehaviour:
       isEnabled: 1
     - eventName: error
       isEnabled: 1
+    - eventName: loading_error
+      isEnabled: 1
   - groupName: Map
     events:
     - eventName: map_jump_in
@@ -84,6 +86,16 @@ MonoBehaviour:
     - eventName: download_photo
       isEnabled: 1
     - eventName: delete_photo
+      isEnabled: 1
+  - groupName: Authentication
+    events:
+    - eventName: logged_in_cached
+      isEnabled: 1
+    - eventName: logged_in
+      isEnabled: 1
+    - eventName: login_requested
+      isEnabled: 1
+    - eventName: verification_requested
       isEnabled: 1
   useLocalEnvVariableFallback: 0
   flushSize: 20
