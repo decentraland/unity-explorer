@@ -82,6 +82,8 @@ namespace DCL.MapRenderer.MapLayers.Categories
                     marker.OnBecameInvisible();
                 }
                 markers.Clear();
+                clusterController.Disable();
+
                 IReadOnlyList<EventDTO> events = await eventsApiService.GetEventsAsync(ct, onlyLiveEvents: true);
                 foreach (EventDTO eventDto in events)
                 {
