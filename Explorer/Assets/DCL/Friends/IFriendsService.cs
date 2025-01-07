@@ -7,13 +7,13 @@ namespace DCL.Friends
 {
     public interface IFriendsService
     {
-        UniTask<GetPaginatedFriendsResult> GetFriendsAsync(int pageNum, int pageSize, CancellationToken ct);
+        UniTask<PaginatedFriendsResult> GetFriendsAsync(int pageNum, int pageSize, CancellationToken ct);
 
         UniTask<bool> IsFriendAsync(string friendId, CancellationToken ct);
 
-        UniTask<GetPaginatedFriendRequestsResult> GetReceivedFriendRequestsAsync(int pageNum, int pageSize, CancellationToken ct);
+        UniTask<PaginatedFriendRequestsResult> GetReceivedFriendRequestsAsync(int pageNum, int pageSize, CancellationToken ct);
 
-        UniTask<GetPaginatedFriendRequestsResult> GetSentFriendRequestsAsync(int pageNum, int pageSize, CancellationToken ct);
+        UniTask<PaginatedFriendRequestsResult> GetSentFriendRequestsAsync(int pageNum, int pageSize, CancellationToken ct);
 
         UniTask RejectFriendshipAsync(string friendId, CancellationToken cancellationToken = default);
 
@@ -28,13 +28,13 @@ namespace DCL.Friends
         UniTask RemoveFriendAsync(string friendId, CancellationToken ct);
     }
 
-    public struct GetPaginatedFriendsResult
+    public struct PaginatedFriendsResult
     {
         public IReadOnlyList<Profile> Friends;
         public int TotalAmount;
     }
 
-    public struct GetPaginatedFriendRequestsResult
+    public struct PaginatedFriendRequestsResult
     {
         public IReadOnlyList<FriendRequest> Requests;
         public int TotalAmount;

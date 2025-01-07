@@ -22,7 +22,7 @@ namespace DCL.Friends
             this.eventBus = eventBus;
         }
 
-        public async UniTask<GetPaginatedFriendsResult> GetFriendsAsync(int pageNum, int pageSize, CancellationToken ct) =>
+        public async UniTask<PaginatedFriendsResult> GetFriendsAsync(int pageNum, int pageSize, CancellationToken ct) =>
             // TODO
             new()
             {
@@ -33,7 +33,7 @@ namespace DCL.Friends
         public UniTask<bool> IsFriendAsync(string friendId, CancellationToken ct) =>
             throw new NotImplementedException();
 
-        public async UniTask<GetPaginatedFriendRequestsResult> GetReceivedFriendRequestsAsync(int pageNum, int pageSize, CancellationToken ct) =>
+        public async UniTask<PaginatedFriendRequestsResult> GetReceivedFriendRequestsAsync(int pageNum, int pageSize, CancellationToken ct) =>
             // TODO
             new()
             {
@@ -41,7 +41,7 @@ namespace DCL.Friends
                 TotalAmount = 0,
             };
 
-        public async UniTask<GetPaginatedFriendRequestsResult> GetSentFriendRequestsAsync(int pageNum, int pageSize, CancellationToken ct) =>
+        public async UniTask<PaginatedFriendRequestsResult> GetSentFriendRequestsAsync(int pageNum, int pageSize, CancellationToken ct) =>
             // TODO
             new()
             {
