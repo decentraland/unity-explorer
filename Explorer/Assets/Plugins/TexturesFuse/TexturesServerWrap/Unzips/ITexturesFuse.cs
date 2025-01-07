@@ -98,7 +98,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
 
             ITexturesFuse NewWorker() =>
                 IPlatform.DEFAULT.Is(IPlatform.Kind.Windows)
-                    ? new AttemptsTexturesFuse(new NodeTexturesFuse())
+                    ? new ManagedTexturesFuse() //new AttemptsTexturesFuse(new NodeTexturesFuse())
                     : new TexturesFuse(init, options, true);
 
             return new PooledTexturesFuse(

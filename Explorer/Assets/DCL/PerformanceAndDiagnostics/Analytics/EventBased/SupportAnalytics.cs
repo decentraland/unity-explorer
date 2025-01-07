@@ -1,7 +1,7 @@
 ﻿using DCL.UI.Sidebar;
 using System;
 
-namespace DCL.PerformanceAndDiagnostics.Analytics
+namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
 {
     public class SupportAnalytics : IDisposable
     {

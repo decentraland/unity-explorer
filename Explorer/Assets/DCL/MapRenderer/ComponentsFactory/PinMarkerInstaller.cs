@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.MapPins.Bus;
 using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.Culling;
 using DCL.MapRenderer.MapLayers;
@@ -27,6 +28,7 @@ namespace DCL.MapRenderer.ComponentsFactory
             IMapRendererSettings settings,
             IAssetsProvisioner assetProv,
             IMapPathEventBus mapPathEventBus,
+            IMapPinsEventBus mapPinsEventBus,
             CancellationToken cancellationToken)
         {
             mapSettings = settings;
@@ -45,7 +47,8 @@ namespace DCL.MapRenderer.ComponentsFactory
                 configuration.PinMarkerRoot,
                 coordsUtils,
                 cullingController,
-                mapPathEventBus
+                mapPathEventBus,
+                mapPinsEventBus
             );
 
             writer.Add(MapLayer.Pins, controller);

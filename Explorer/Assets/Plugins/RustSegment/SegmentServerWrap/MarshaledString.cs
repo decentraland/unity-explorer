@@ -5,14 +5,20 @@ namespace Plugins.RustSegment.SegmentServerWrap
 {
     public readonly struct MarshaledString : IDisposable
     {
+        /// <summary>
+        /// Ptr can be NULL
+        /// </summary>
         public readonly IntPtr Ptr;
 
-        public MarshaledString(string str)
+        public MarshaledString(string? str)
         {
-            Ptr = Marshal.StringToHGlobalAnsi(str);
+            Ptr = str == null ? IntPtr.Zero : Marshal.StringToHGlobalAnsi(str);
         }
 
-        public void Dispose() =>
-            Marshal.FreeHGlobal(Ptr);
+        public void Dispose()
+        {
+            if (Ptr != IntPtr.Zero)
+                Marshal.FreeHGlobal(Ptr);
+        }
     }
 }

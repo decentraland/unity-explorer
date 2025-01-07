@@ -20,14 +20,14 @@ namespace Global.Dynamic.TeleportOperations
             this.memoryUsageProvider = memoryUsageProvider;
         }
 
-        public UniTask<Result> ExecuteAsync(TeleportParams teleportParams, CancellationToken ct)
+        public UniTask<EnumResult<TaskError>> ExecuteAsync(TeleportParams teleportParams, CancellationToken ct)
         {
             teleportParams.LoadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.UnloadCacheChecking);
             //Only unload if the memory usage is normal. If its different, the regular `ReleaseMemorySystem` will take care of it.
             //if (memoryUsageProvider.GetMemoryUsageStatus() == MemoryUsageStatus.NORMAL)
             //    cacheCleaner.UnloadCache(false);
             Resources.UnloadUnusedAssets();
-            return UniTask.FromResult(Result.SuccessResult());
+            return UniTask.FromResult(EnumResult<TaskError>.SuccessResult());
         }
     }
 }

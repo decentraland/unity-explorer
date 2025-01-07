@@ -6,6 +6,8 @@ use lazy_static::lazy_static;
 
 pub type OperationHandleId = u64;
 
+pub const INVALID_OPERATION_HANDLE_ID: OperationHandleId = 0;
+
 #[repr(u8)]
 #[derive(Debug)]
 pub enum Response {

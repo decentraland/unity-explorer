@@ -23,7 +23,6 @@ namespace DCL.ExplorePanel
     {
         private readonly SettingsController settingsController;
         private readonly BackpackController backpackController;
-        private readonly CameraReelController cameraReelController;
         private readonly ProfileWidgetController profileWidgetController;
         private readonly ProfileMenuController profileMenuController;
         private readonly DCLInput dclInput;
@@ -45,6 +44,7 @@ namespace DCL.ExplorePanel
         private bool isControlClosing;
 
         public NavmapController NavmapController { get; }
+        public CameraReelController CameraReelController { get; }
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Fullscreen;
 
@@ -66,7 +66,7 @@ namespace DCL.ExplorePanel
             NavmapController = navmapController;
             this.settingsController = settingsController;
             this.backpackController = backpackController;
-            this.cameraReelController = cameraReelController;
+            CameraReelController = cameraReelController;
             this.profileWidgetController = profileWidgetController;
             this.dclInput = dclInput;
             this.explorePanelEscapeAction = explorePanelEscapeAction;
@@ -99,7 +99,7 @@ namespace DCL.ExplorePanel
                 { ExploreSections.Navmap, NavmapController },
                 { ExploreSections.Settings, settingsController },
                 { ExploreSections.Backpack, backpackController },
-                { ExploreSections.CameraReel, cameraReelController },
+                { ExploreSections.CameraReel, CameraReelController },
             };
 
             sectionSelectorController = new SectionSelectorController<ExploreSections>(exploreSections, ExploreSections.Navmap);

@@ -2,6 +2,7 @@ using DCL.Diagnostics;
 using System;
 using System.Threading;
 using System.Collections.Generic;
+using System.Diagnostics;
 using Unity.Profiling;
 using UnityEngine.Profiling;
 
@@ -198,6 +199,14 @@ namespace Utility.Multithreading
                 try
                 {
                     wasCancelled = false;
+
+                    // Don't time-out if we are debugging (there is no better way to detect if we are actually in a breakpoint)
+                    if (Debugger.IsAttached)
+                    {
+                        eventSlim.Wait(ct);
+                        return true;
+                    }
+
                     return eventSlim.Wait(timeout, ct);
                 }
                 catch (OperationCanceledException)

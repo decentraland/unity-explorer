@@ -3,9 +3,11 @@ using Arch.System;
 using Arch.SystemGroups;
 using DCL.ECSComponents;
 using DCL.FeatureFlags;
+using DCL.MapPins.Bus;
 using DCL.MapPins.Components;
 using DCL.SDKComponents.Utils;
 using ECS.Abstract;
+using ECS.LifeCycle;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
@@ -22,23 +24,26 @@ using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.
 namespace DCL.SDKComponents.MapPins.Systems
 {
     [UpdateInGroup(typeof(ComponentInstantiationGroup))]
-    public partial class MapPinLoaderSystem : BaseUnityLoopSystem
+    public partial class MapPinLoaderSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
         private const int ATTEMPTS_COUNT = 6;
 
         private readonly World globalWorld;
         private readonly IPartitionComponent partitionComponent;
         private readonly ISceneData sceneData;
+        private readonly IMapPinsEventBus mapPinsEventBus;
         private readonly bool useCustomMapPinIcons;
 
         private int xRounded;
         private int yRounded;
 
-        public MapPinLoaderSystem(World world, ISceneData sceneData, World globalWorld, IPartitionComponent partitionComponent, FeatureFlagsCache featureFlagsCache) : base(world)
+        public MapPinLoaderSystem(World world, ISceneData sceneData, World globalWorld, IPartitionComponent partitionComponent, FeatureFlagsCache featureFlagsCache,
+            IMapPinsEventBus mapPinsEventBus) : base(world)
         {
             this.sceneData = sceneData;
             this.globalWorld = globalWorld;
             this.partitionComponent = partitionComponent;
+            this.mapPinsEventBus = mapPinsEventBus;
             useCustomMapPinIcons = featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.CUSTOM_MAP_PINS_ICONS);
         }
 
@@ -49,101 +54,77 @@ namespace DCL.SDKComponents.MapPins.Systems
             HandleComponentRemovalQuery(World);
             HandleEntityDestructionQuery(World);
 
-            if (useCustomMapPinIcons) { ResolvePromiseQuery(World); }
+            if (useCustomMapPinIcons) { ResolveTexturePromiseQuery(World); }
         }
 
         [Query]
-        [None(typeof(MapPinHolderComponent))]
-        private void LoadMapPin(in Entity entity, ref PBMapPin pbMapPin)
+        [None(typeof(MapPinComponent))] [All(typeof(PBMapPin))]
+        private void LoadMapPin(in Entity entity)
         {
-            MapPinComponent mapPinComponent = new MapPinComponent
-            {
-                IsDirty = true,
-                Position = new Vector2Int((int)pbMapPin.Position.X, (int)pbMapPin.Position.Y)
-            };
-
-            pbMapPin.IsDirty = false;
-
-            bool hasTexturePromise = useCustomMapPinIcons;
-
-            if (useCustomMapPinIcons)
-            {
-                TextureComponent? mapPinTexture = pbMapPin.Texture.CreateTextureComponent(sceneData);
-                hasTexturePromise = TryCreateGetTexturePromise(in mapPinTexture, ref mapPinComponent.TexturePromise);
-            }
-
-            World.Add(entity, new MapPinHolderComponent(globalWorld.Create(pbMapPin, mapPinComponent), hasTexturePromise));
-        }
-
-        //This query is required because in the global world otherwise we cannot resolve easily
-        //the promise of the texture, as it is bound to the entity in the scene world
-        [Query]
-        private void ResolvePromise(ref MapPinHolderComponent mapPinHolderComponent)
-        {
-            if (!mapPinHolderComponent.HasTexturePromise)
-                return;
-
-            ref MapPinComponent mapPinComponent = ref globalWorld.Get<MapPinComponent>(mapPinHolderComponent.GlobalWorldEntity);
-
-            if (mapPinComponent.TexturePromise is not null && !mapPinComponent.TexturePromise.Value.IsConsumed)
-            {
-                if (mapPinComponent.TexturePromise.Value.TryConsume(World, out StreamableLoadingResult<Texture2DData> texture))
-                {
-                    mapPinComponent.ThumbnailIsDirty = true;
-                    mapPinComponent.Thumbnail = texture.Asset;
-                    mapPinComponent.TexturePromise = null;
-                    mapPinHolderComponent.HasTexturePromise = false;
-                }
-            }
+            var mapPinComponent = new MapPinComponent();
+            World.Add(entity, mapPinComponent);
         }
 
         [Query]
-        private void UpdateMapPin(ref PBMapPin pbMapPin, ref MapPinHolderComponent mapPinHolderComponent)
+        private void UpdateMapPin(in Entity entity, ref PBMapPin pbMapPin, ref MapPinComponent mapPinComponent)
         {
             if (!pbMapPin.IsDirty)
                 return;
 
-            MapPinComponent mapPinComponent = globalWorld.Get<MapPinComponent>(mapPinHolderComponent.GlobalWorldEntity);
-
             xRounded = Mathf.RoundToInt(pbMapPin.Position.X);
             yRounded = Mathf.RoundToInt(pbMapPin.Position.Y);
 
-            if (mapPinComponent.Position.x == xRounded && mapPinComponent.Position.y == yRounded)
+            if (mapPinComponent.Position.x != xRounded || mapPinComponent.Position.y != yRounded)
                 mapPinComponent.Position = new Vector2Int(xRounded, yRounded);
-
-            mapPinComponent.IsDirty = true;
 
             if (useCustomMapPinIcons)
             {
                 TextureComponent? mapPinTexture = pbMapPin.Texture.CreateTextureComponent(sceneData);
-                mapPinHolderComponent.HasTexturePromise = TryCreateGetTexturePromise(in mapPinTexture, ref mapPinComponent.TexturePromise);
+                TryCreateGetTexturePromise(in mapPinTexture, ref mapPinComponent.TexturePromise);
             }
 
             pbMapPin.IsDirty = false;
 
-            globalWorld.Set(mapPinHolderComponent.GlobalWorldEntity, mapPinComponent, pbMapPin);
+            mapPinsEventBus.UpdateMapPin(entity, mapPinComponent.Position, pbMapPin.Title, pbMapPin.Description);
+        }
+
+        [Query]
+        private void ResolveTexturePromise(in Entity entity, ref MapPinComponent mapPinComponent)
+        {
+            if (mapPinComponent.TexturePromise is null || mapPinComponent.TexturePromise.Value.IsConsumed) return;
+
+            if (mapPinComponent.TexturePromise.Value.TryConsume(World, out StreamableLoadingResult<Texture2DData> texture))
+            {
+                mapPinComponent.TexturePromise = null;
+                mapPinsEventBus.UpdateMapPinThumbnail(entity, texture.Asset);
+            }
         }
 
         [Query]
         [None(typeof(PBMapPin), typeof(DeleteEntityIntention))]
-        private void HandleComponentRemoval(in Entity entity, ref MapPinHolderComponent mapPinHolderComponent)
+        private void HandleComponentRemoval(in Entity entity, ref MapPinComponent mapPinComponent)
         {
-            ref MapPinComponent mapPinComponent = ref globalWorld.Get<MapPinComponent>(mapPinHolderComponent.GlobalWorldEntity);
             DereferenceTexture(ref mapPinComponent.TexturePromise);
+            World.Remove<MapPinComponent>(entity);
 
-            globalWorld.Add(mapPinHolderComponent.GlobalWorldEntity, new DeleteEntityIntention());
-            World.Remove<MapPinHolderComponent>(entity);
+            mapPinsEventBus.RemoveMapPin(entity);
         }
 
         [Query]
         [All(typeof(DeleteEntityIntention))]
-        private void HandleEntityDestruction(in Entity entity, ref MapPinHolderComponent mapPinHolderComponent)
+        private void HandleEntityDestruction(in Entity entity, ref MapPinComponent mapPinComponent)
         {
-            ref MapPinComponent mapPinComponent = ref globalWorld.Get<MapPinComponent>(mapPinHolderComponent.GlobalWorldEntity);
             DereferenceTexture(ref mapPinComponent.TexturePromise);
 
-            globalWorld.Add(mapPinHolderComponent.GlobalWorldEntity, new DeleteEntityIntention());
-            World.Remove<MapPinHolderComponent, PBMapPin>(entity);
+            mapPinsEventBus.RemoveMapPin(entity);
+        }
+
+        [Query]
+        private void CleanupOnFinalize(in Entity entity, ref MapPinComponent mapPinComponent)
+        {
+            DereferenceTexture(ref mapPinComponent.TexturePromise);
+
+            mapPinsEventBus.RemoveMapPin(entity);
         }
 
         private void DereferenceTexture(ref Promise? promise)
@@ -181,6 +162,11 @@ namespace DCL.SDKComponents.MapPins.Systems
             );
 
             return true;
+        }
+
+        public void FinalizeComponents(in Query query)
+        {
+            CleanupOnFinalizeQuery(World);
         }
     }
 }

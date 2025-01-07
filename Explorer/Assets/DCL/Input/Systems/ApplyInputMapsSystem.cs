@@ -61,6 +61,9 @@ namespace DCL.Input.Systems
                         case InputMapComponent.Kind.SHORTCUTS:
                             SetActionMapEnabled(isActive, dclInput.Shortcuts);
                             break;
+                        case InputMapComponent.Kind.IN_WORLD_CAMERA:
+                            SetActionMapEnabled(isActive, dclInput.InWorldCamera);
+                            break;
                     }
                 }
             }

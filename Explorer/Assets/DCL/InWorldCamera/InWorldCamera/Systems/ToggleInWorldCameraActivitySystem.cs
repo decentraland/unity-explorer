@@ -14,8 +14,8 @@ using DCL.InWorldCamera.Settings;
 using DCL.InWorldCamera.UI;
 using ECS.Abstract;
 using MVC;
-using System;
 using UnityEngine;
+using UnityEngine.UIElements;
 using static DCL.Input.Component.InputMapComponent;
 
 namespace DCL.InWorldCamera.Systems
@@ -36,6 +36,7 @@ namespace DCL.InWorldCamera.Systems
         private readonly ICursor cursor;
         private readonly IMVCManager mvcManager;
         private readonly DCLInput.InWorldCameraActions inputSchema;
+        private readonly UIDocument sceneUIRoot;
 
         private SingleInstanceEntity camera;
         private SingleInstanceEntity inputMap;
@@ -51,7 +52,9 @@ namespace DCL.InWorldCamera.Systems
             CharacterController followTarget,
             IDebugContainerBuilder debugContainerBuilder,
             ICursor cursor,
-            IMVCManager mvcManager, DCLInput.InWorldCameraActions inputSchema) : base(world)
+            IMVCManager mvcManager,
+            DCLInput.InWorldCameraActions inputSchema,
+            UIDocument sceneUIRoot) : base(world)
         {
             this.settings = settings;
             this.hudController = hudController;
@@ -60,6 +63,7 @@ namespace DCL.InWorldCamera.Systems
             this.cursor = cursor;
             this.mvcManager = mvcManager;
             this.inputSchema = inputSchema;
+            this.sceneUIRoot = sceneUIRoot;
 
             behindUpOffset = Vector3.up * settings.BehindUpOffset;
         }
@@ -87,10 +91,7 @@ namespace DCL.InWorldCamera.Systems
             }
 
             if (World.TryGet(camera, out ToggleInWorldCameraRequest request))
-            {
                 ToggleCamera(request.IsEnable);
-                World.Remove<ToggleInWorldCameraRequest>(camera);
-            }
         }
 
         private void ToggleCamera(bool enable)
@@ -127,6 +128,7 @@ namespace DCL.InWorldCamera.Systems
 
             hudController.Hide();
             mvcManager.SetAllViewsCanvasActive(except: hudController, true);
+            sceneUIRoot.rootVisualElement.parent.style.display = DisplayStyle.Flex;
 
             SwitchToThirdPersonCamera();
 
@@ -136,7 +138,7 @@ namespace DCL.InWorldCamera.Systems
 
             SwitchCameraInput(to: Kind.PLAYER);
 
-            World.Remove<InWorldCameraComponent, CameraTarget, CameraDampedFOV, CameraDampedAim, InWorldCameraInput>(camera);
+            World.Remove<InWorldCameraComponent, CameraTarget, CameraDampedFOV, CameraDampedTilt, CameraDampedAim, InWorldCameraInput>(camera);
         }
 
         private void EnableCamera()
@@ -149,6 +151,7 @@ namespace DCL.InWorldCamera.Systems
 
             hudController.Show();
             mvcManager.SetAllViewsCanvasActive(except: hudController, false);
+            sceneUIRoot.rootVisualElement.parent.style.display = DisplayStyle.None;
 
             SwitchToInWorldCamera();
 
@@ -162,6 +165,7 @@ namespace DCL.InWorldCamera.Systems
                 new InWorldCameraComponent(),
                 new CameraTarget { Value = followTarget },
                 new CameraDampedFOV { Current = inWorldVirtualCamera.m_Lens.FieldOfView, Velocity = 0f, Target = inWorldVirtualCamera.m_Lens.FieldOfView },
+                new CameraDampedTilt { Current = 0f, Target = 0f, Velocity = 0f },
                 new CameraDampedAim { Current = Vector2.up, Velocity = Vector2.up },
                 new InWorldCameraInput());
         }
@@ -231,14 +235,12 @@ namespace DCL.InWorldCamera.Systems
             switch (to)
             {
                 case Kind.IN_WORLD_CAMERA:
-                    inputMapComponent.UnblockInput(Kind.IN_WORLD_CAMERA);
                     inputMapComponent.BlockInput(Kind.PLAYER);
                     inputMapComponent.BlockInput(Kind.SHORTCUTS);
                     break;
                 case Kind.PLAYER:
                     inputMapComponent.UnblockInput(Kind.PLAYER);
                     inputMapComponent.UnblockInput(Kind.SHORTCUTS);
-                    inputMapComponent.BlockInput(Kind.IN_WORLD_CAMERA);
                     break;
             }
         }

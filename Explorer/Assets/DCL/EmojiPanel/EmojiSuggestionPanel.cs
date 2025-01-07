@@ -1,10 +1,8 @@
 using System;
 using System.Collections.Generic;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.Pool;
-using UnityEngine.UI;
 using Object = UnityEngine.Object;
 
 namespace DCL.Emoji

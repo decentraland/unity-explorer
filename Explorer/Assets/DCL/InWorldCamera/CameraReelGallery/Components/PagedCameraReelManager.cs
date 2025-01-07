@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.InWorldCamera.CameraReelStorageService.Schemas;
+using DCL.InWorldCamera.ReelActions;
 using DCL.Optimization.Pools;
 using System;
 using System.Collections.Generic;
@@ -12,9 +13,10 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
     public class PagedCameraReelManager
     {
         public bool AllImagesLoaded { get; private set; }
+        public List<CameraReelResponseCompact> AllOrderedResponses { get; private set; } = new (32);
 
         private readonly ICameraReelStorageService cameraReelStorageService;
-        private readonly string walletAddress;
+        private readonly PagedCameraReelManagerParameters parameters;
         private readonly int pageSize;
         private readonly int totalImages;
 
@@ -23,31 +25,48 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
 
         public PagedCameraReelManager(
             ICameraReelStorageService cameraReelStorageService,
-            string wallet,
+            PagedCameraReelManagerParameters parameters,
             int totalImages,
             int pageSize)
         {
             this.cameraReelStorageService = cameraReelStorageService;
-            this.walletAddress = wallet;
+            this.parameters = parameters;
             this.totalImages = totalImages;
             this.pageSize = pageSize;
         }
-
 
         public async UniTask<Dictionary<DateTime, List<CameraReelResponseCompact>>> FetchNextPageAsync(
             ListObjectPool<CameraReelResponseCompact> listPool,
             CancellationToken ct)
         {
-            CameraReelResponsesCompact response = await cameraReelStorageService.GetCompactScreenshotGalleryAsync(walletAddress, pageSize, currentOffset, ct);
+            CameraReelResponsesCompact response = await FetchResponseAsync(ct);
+
+            return ProcessResponse(response, listPool);
+        }
+
+        private async UniTask<CameraReelResponsesCompact> FetchResponseAsync(CancellationToken ct)
+        {
+            if (parameters.PlaceId != null)
+                return await cameraReelStorageService.GetCompactPlaceScreenshotGalleryAsync(parameters.PlaceId, pageSize, currentOffset, ct);
+
+            if (parameters.UseSignedRequest.HasValue && parameters.UseSignedRequest.Value)
+                return await cameraReelStorageService.GetCompactScreenshotGalleryAsync(parameters.WalletAddress, pageSize, currentOffset, ct);
+
+            return await cameraReelStorageService.UnsignedGetCompactScreenshotGalleryAsync(parameters.WalletAddress, pageSize, currentOffset, ct);
+        }
+
+        private Dictionary<DateTime, List<CameraReelResponseCompact>> ProcessResponse(CameraReelResponsesCompact response, ListObjectPool<CameraReelResponseCompact> listPool)
+        {
             currentOffset += pageSize;
 
             currentLoadedImages += response.images.Count;
             AllImagesLoaded = currentLoadedImages == totalImages;
+            AllOrderedResponses.AddRange(response.images);
 
             Dictionary<DateTime, List<CameraReelResponseCompact>> elements = DictionaryPool<DateTime, List<CameraReelResponseCompact>>.Get();
             for (int i = 0; i < response.images.Count; i++)
             {
-                DateTime imageBucket = GetImageDateTime(response.images[i]);
+                DateTime imageBucket = ReelUtility.GetImageDateTime(response.images[i]);
 
                 if (!elements.ContainsKey(imageBucket))
                     elements[imageBucket] = listPool.Get();
@@ -58,14 +77,35 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
             return elements;
         }
 
-        public static DateTime GetImageDateTime(CameraReelResponseCompact image) =>
-            GetDateTimeFromString(image.dateTime);
-
-        public static DateTime GetDateTimeFromString(string epochString)
+        public void RemoveReelId(string reelId)
         {
-            DateTime actualDateTime = !long.TryParse(epochString, out long unixTimestamp) ? new DateTime() : DateTimeOffset.FromUnixTimeSeconds(unixTimestamp).ToLocalTime().DateTime;
-            return new DateTime(actualDateTime.Year, actualDateTime.Month, 1, 0, 0, 0, 0);
+            for (int i = 0; i < AllOrderedResponses.Count; i++)
+                if (AllOrderedResponses[i].id == reelId)
+                {
+                    AllOrderedResponses.RemoveAt(i);
+                    break;
+                }
         }
     }
 
+    public struct PagedCameraReelManagerParameters
+    {
+        public readonly string? WalletAddress;
+        public readonly bool? UseSignedRequest;
+        public readonly string? PlaceId;
+
+        public PagedCameraReelManagerParameters(string walletAddress, bool useSignedRequest)
+        {
+            this.WalletAddress = walletAddress;
+            this.UseSignedRequest = useSignedRequest;
+            this.PlaceId = null;
+        }
+
+        public PagedCameraReelManagerParameters(string placeId)
+        {
+            this.WalletAddress = null;
+            this.UseSignedRequest = null;
+            this.PlaceId = placeId;
+        }
+    }
 }

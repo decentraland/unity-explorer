@@ -11,7 +11,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
     /// </summary>
     public interface IAnalyticsService
     {
-        void Identify(string userId, JsonObject? traits = null);
+        void Identify(string? userId, JsonObject? traits = null);
 
         /// <summary>
         ///     To track an event you have to call identify first

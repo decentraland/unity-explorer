@@ -1,4 +1,6 @@
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Components;
 using System;
 using System.Collections.Generic;
@@ -13,6 +15,10 @@ namespace DCL.AvatarRendering.Wearables
             string? category = null, CollectionType collectionType = CollectionType.All,
             string? name = null,
             List<IWearable>? results = null);
+
+        UniTask<IReadOnlyCollection<IWearable>?> RequestPointersAsync(IReadOnlyCollection<URN> pointers,
+            BodyShape bodyShape,
+            CancellationToken ct);
 
         public enum SortingField
         {

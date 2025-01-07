@@ -1,14 +1,20 @@
 using Cysharp.Threading.Tasks;
 using DCL.Chat.Commands;
 using DCL.Chat.History;
-using System.Text.RegularExpressions;
 using System.Threading;
 
 namespace Global.Dynamic.ChatCommands
 {
+    /// <summary>
+    /// Clears the chat.
+    ///
+    /// Usage:
+    ///    /clear
+    /// </summary>
     public class ClearChatCommand : IChatCommand
     {
-        public static readonly Regex REGEX = new ($@"^/(clear).*", RegexOptions.Compiled);
+        public string Command => "clear";
+        public string Description => "<b>/clear</b>\n    Clear the chat";
 
         private readonly IChatHistory chatHistory;
 
@@ -17,7 +23,7 @@ namespace Global.Dynamic.ChatCommands
             this.chatHistory = chatHistory;
         }
 
-        public UniTask<string> ExecuteAsync(Match match, CancellationToken ct)
+        public UniTask<string> ExecuteCommandAsync(string[] parameters, CancellationToken ct)
         {
             chatHistory.Clear();
             return UniTask.FromResult(string.Empty);

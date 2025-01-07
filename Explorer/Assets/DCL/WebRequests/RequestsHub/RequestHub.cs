@@ -34,7 +34,7 @@ namespace DCL.WebRequests.RequestsHub
 
         private readonly IReadOnlyDictionary<Key, object> map;
 
-        public RequestHub(ITexturesFuse texturesFuse)
+        public RequestHub(ITexturesFuse texturesFuse, bool isTextureCompressionEnabled)
         {
             var mutableMap = new Dictionary<Key, object>();
             map = mutableMap;
@@ -47,7 +47,7 @@ namespace DCL.WebRequests.RequestsHub
             Add<GenericHeadArguments, GenericHeadRequest>(mutableMap, GenericHeadRequest.Initialize);
             Add<GetAudioClipArguments, GetAudioClipWebRequest>(mutableMap, GetAudioClipWebRequest.Initialize);
             Add<GetAssetBundleArguments, GetAssetBundleWebRequest>(mutableMap, GetAssetBundleWebRequest.Initialize);
-            Add(mutableMap, (in CommonArguments arguments, GetTextureArguments specificArguments) => GetTextureWebRequest.Initialize(arguments, specificArguments, texturesFuse));
+            Add(mutableMap, (in CommonArguments arguments, GetTextureArguments specificArguments) => GetTextureWebRequest.Initialize(arguments, specificArguments, texturesFuse, isTextureCompressionEnabled));
         }
 
         private static void Add<T, TWebRequest>(IDictionary<Key, object> map, InitializeRequest<T, TWebRequest> requestDelegate)

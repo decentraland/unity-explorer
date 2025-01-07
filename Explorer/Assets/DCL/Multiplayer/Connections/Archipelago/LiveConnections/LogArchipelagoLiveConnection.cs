@@ -49,15 +49,17 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
             return result;
         }
 
-        public async UniTask DisconnectAsync(CancellationToken token)
+        public async UniTask<Result> DisconnectAsync(CancellationToken token)
         {
             ReportHub
                .WithReport(ReportCategory.COMMS_SCENE_HANDLER)
                 .Log("ArchipelagoLiveConnection DisconnectAsync start");
-            await origin.DisconnectAsync(token);
+            var res = await origin.DisconnectAsync(token);
             ReportHub
                .WithReport(ReportCategory.COMMS_SCENE_HANDLER)
                 .Log("ArchipelagoLiveConnection DisconnectAsync finished");
+
+            return res;
         }
 
         public async UniTask<EnumResult<IArchipelagoLiveConnection.ResponseError>> SendAsync(MemoryWrap data, CancellationToken token)

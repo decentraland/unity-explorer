@@ -13,6 +13,15 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.Editor
         private readonly Dictionary<string, bool> foldoutStates = new ();
         private readonly Dictionary<string, bool> groupEnabledStates = new ();
 
+        private void Awake() =>
+            RefreshEvents((AnalyticsConfiguration)target);
+
+        private void OnEnable() =>
+            RefreshEvents((AnalyticsConfiguration)target);
+
+        private void OnValidate() =>
+            RefreshEvents((AnalyticsConfiguration)target);
+
         public override void OnInspectorGUI()
         {
             var config = (AnalyticsConfiguration)target;

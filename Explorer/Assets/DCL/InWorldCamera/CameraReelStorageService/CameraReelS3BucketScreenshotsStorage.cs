@@ -3,8 +3,10 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.WebRequests;
 using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
+using System;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.Networking;
 
 namespace DCL.InWorldCamera.CameraReelStorageService
 {
@@ -17,8 +19,8 @@ namespace DCL.InWorldCamera.CameraReelStorageService
             this.webRequestController = webRequestController;
         }
 
-        public async UniTask<Texture2D> GetScreenshotImageAsync(string url, CancellationToken ct = default) =>
-            await GetImageAsync(url, ct);
+        public async UniTask<Texture2D> GetScreenshotImageAsync(string url, bool compressed = false, CancellationToken ct = default) =>
+            compressed ? await GetImageAsync(url, ct) : await GetUncompressedImageAsync(url, ct);
 
         public async UniTask<Texture2D> GetScreenshotThumbnailAsync(string url, CancellationToken ct = default) =>
             await GetImageAsync(url, ct);
@@ -32,6 +34,19 @@ namespace DCL.InWorldCamera.CameraReelStorageService
                 GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp), ct, ReportCategory.CAMERA_REEL);
 
             return texture.Texture;
+        }
+
+        private async UniTask<Texture2D> GetUncompressedImageAsync(string reelUrl, CancellationToken ct)
+        {
+            using (UnityWebRequest webRequest = UnityWebRequestTexture.GetTexture(reelUrl))
+            {
+                await webRequest.SendWebRequest().ToUniTask(cancellationToken: ct);
+
+                if (webRequest.result != UnityWebRequest.Result.Success)
+                    throw new Exception($"Error while downloading reel: {webRequest.error}");
+
+                return DownloadHandlerTexture.GetContent(webRequest);
+            }
         }
     }
 }

@@ -76,9 +76,10 @@ namespace DCL.AuthenticationScreenFlow
         private StringVariable? profileNameLabel;
         private float originalWorldAudioVolume;
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Overlay;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Fullscreen;
 
         public ReactiveProperty<AuthenticationStatus> CurrentState { get; } = new (AuthenticationStatus.Init);
+        public string CurrentRequestID { get; private set; } = string.Empty;
 
         public AuthenticationScreenController(
             ViewFactoryMethod viewFactory,
@@ -251,6 +252,8 @@ namespace DCL.AuthenticationScreenFlow
             {
                 try
                 {
+                    CurrentRequestID = string.Empty;
+
                     viewInstance!.ConnectingToServerContainer.SetActive(true);
                     viewInstance.LoginButton.interactable = false;
 
@@ -289,9 +292,10 @@ namespace DCL.AuthenticationScreenFlow
             StartLoginFlowUntilEndAsync(loginCancellationToken.Token).Forget();
         }
 
-        private void ShowVerification(int code, DateTime expiration)
+        private void ShowVerification(int code, DateTime expiration, string requestID)
         {
             viewInstance!.VerificationCodeLabel.text = code.ToString();
+            CurrentRequestID = requestID;
 
             CancelVerificationCountdown();
             verificationCountdownCancellationToken = new CancellationTokenSource();

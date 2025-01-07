@@ -2967,6 +2967,15 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""initialStateCheck"": true
                 },
                 {
+                    ""name"": ""Tilting"",
+                    ""type"": ""Value"",
+                    ""id"": ""1c2141cf-b126-466c-b977-4d05d6f8e1ba"",
+                    ""expectedControlType"": ""Axis"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": true
+                },
+                {
                     ""name"": ""Zoom"",
                     ""type"": ""Value"",
                     ""id"": ""95af3eff-4816-4d1d-b9e9-88a3ca0a78d5"",
@@ -3028,6 +3037,15 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Close"",
+                    ""type"": ""Button"",
+                    ""id"": ""61065672-eecb-43b6-afd7-d1b548bd2a52"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -3078,7 +3096,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                 {
                     ""name"": ""positive"",
                     ""id"": ""4eb68057-c898-4eb2-a5c2-4da0d39e63cd"",
-                    ""path"": ""<Gamepad>/dpad/up"",
+                    ""path"": ""<Gamepad>/rightShoulder"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
@@ -3089,13 +3107,24 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                 {
                     ""name"": ""negative"",
                     ""id"": ""34afde17-2fbe-402a-bb37-b9126d64f2fe"",
-                    ""path"": ""<Gamepad>/dpad/down"",
+                    ""path"": ""<Gamepad>/leftShoulder"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
                     ""action"": ""Panning"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""78c63425-10e2-45af-a3d6-180e434ad317"",
+                    ""path"": ""<Gamepad>/dpad/y"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Panning"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 },
                 {
                     ""name"": """",
@@ -3111,7 +3140,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                 {
                     ""name"": """",
                     ""id"": ""ff886156-4733-4a09-be56-75927b0718ea"",
-                    ""path"": ""<Gamepad>/rightTrigger"",
+                    ""path"": ""<Gamepad>/leftStickPress"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
@@ -3121,8 +3150,8 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                 },
                 {
                     ""name"": """",
-                    ""id"": ""eb3ab56f-4e70-4dc1-8bec-c16a25b2ff65"",
-                    ""path"": ""<XInputController>/rightTrigger"",
+                    ""id"": ""d0d8f720-2abc-4299-b218-e3afc217c272"",
+                    ""path"": ""<Gamepad>/buttonNorth"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
@@ -3143,34 +3172,12 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                 },
                 {
                     ""name"": """",
-                    ""id"": ""c44d5782-2fdc-4f52-b6a3-044fb2f8621a"",
-                    ""path"": ""<XInputController>/rightStick"",
-                    ""interactions"": """",
-                    ""processors"": ""ScaleVector2(x=2,y=2)"",
-                    ""groups"": """",
-                    ""action"": ""Rotation"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
                     ""id"": ""e160e2e0-b473-420a-a250-cadb003fc50e"",
                     ""path"": ""<Gamepad>/rightStick"",
                     ""interactions"": """",
-                    ""processors"": """",
+                    ""processors"": ""ScaleVector2(x=10,y=10)"",
                     ""groups"": """",
                     ""action"": ""Rotation"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""1abe970b-78ce-4c2c-b841-f7d80a22589e"",
-                    ""path"": ""<Keyboard>/space"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""Screenshot"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 },
@@ -3297,17 +3304,6 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                 },
                 {
                     ""name"": """",
-                    ""id"": ""5007c67a-2f32-425e-bb1f-43f48695d05e"",
-                    ""path"": ""<XInputController>/leftStick"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""Translation"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
                     ""id"": ""0e5d2aa9-586f-45ea-8752-812bad7b0faf"",
                     ""path"": ""<Mouse>/scroll/y"",
                     ""interactions"": """",
@@ -3358,6 +3354,149 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""groups"": """",
                     ""action"": ""ShowHide"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""ead048b8-bc7b-451b-94b8-1504e46d3535"",
+                    ""path"": ""<Keyboard>/escape"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Close"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""1abe970b-78ce-4c2c-b841-f7d80a22589e"",
+                    ""path"": ""<Keyboard>/space"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Screenshot"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""1518ad2f-5ef0-4aff-9ee6-f49fc0232a1b"",
+                    ""path"": ""<Gamepad>/buttonSouth"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Screenshot"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": ""1D Axis"",
+                    ""id"": ""1798a66b-cd9a-4e1f-8cc8-651b57c12df6"",
+                    ""path"": ""1DAxis"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Zoom"",
+                    ""isComposite"": true,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": ""positive"",
+                    ""id"": ""000e8da7-e7e9-4758-8165-a10030b47589"",
+                    ""path"": ""<Gamepad>/rightTrigger"",
+                    ""interactions"": """",
+                    ""processors"": ""Scale(factor=10)"",
+                    ""groups"": """",
+                    ""action"": ""Zoom"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""negative"",
+                    ""id"": ""2d369c86-8acf-49ac-9da4-cfd086eea84e"",
+                    ""path"": ""<Gamepad>/leftTrigger"",
+                    ""interactions"": """",
+                    ""processors"": ""Scale(factor=10)"",
+                    ""groups"": """",
+                    ""action"": ""Zoom"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""c04ba384-3dbb-4be1-a6e2-145b47d488a4"",
+                    ""path"": ""<Gamepad>/buttonWest"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""ShowHide"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""b38e05f2-736c-41d7-af8c-831e94b656cd"",
+                    ""path"": ""<Gamepad>/buttonEast"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""ToggleInWorldCamera"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": ""1D Axis"",
+                    ""id"": ""ca86f8f2-253f-4627-ac67-dac115e6fa49"",
+                    ""path"": ""1DAxis"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Tilting"",
+                    ""isComposite"": true,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": ""negative"",
+                    ""id"": ""0b0b504d-d8d8-484c-97dc-8b177fbed41a"",
+                    ""path"": ""<Keyboard>/q"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Tilting"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""positive"",
+                    ""id"": ""e919bff7-1886-4b39-b7e8-f219f9518b2c"",
+                    ""path"": ""<Keyboard>/e"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Tilting"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""331f3147-d915-4749-ac2b-291207fb5b07"",
+                    ""path"": ""<Gamepad>/dpad/x"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Tilting"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""0a3cedf1-fd5e-4339-b02a-88cffd0f35c6"",
+                    ""path"": ""<Gamepad>/rightStickPress"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Screenshot"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -3470,6 +3609,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         m_InWorldCamera_Translation = m_InWorldCamera.FindAction("Translation", throwIfNotFound: true);
         m_InWorldCamera_Rotation = m_InWorldCamera.FindAction("Rotation", throwIfNotFound: true);
         m_InWorldCamera_Panning = m_InWorldCamera.FindAction("Panning", throwIfNotFound: true);
+        m_InWorldCamera_Tilting = m_InWorldCamera.FindAction("Tilting", throwIfNotFound: true);
         m_InWorldCamera_Zoom = m_InWorldCamera.FindAction("Zoom", throwIfNotFound: true);
         m_InWorldCamera_MouseDrag = m_InWorldCamera.FindAction("MouseDrag", throwIfNotFound: true);
         m_InWorldCamera_Run = m_InWorldCamera.FindAction("Run", throwIfNotFound: true);
@@ -3477,6 +3617,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         m_InWorldCamera_ToggleInWorldCamera = m_InWorldCamera.FindAction("ToggleInWorldCamera", throwIfNotFound: true);
         m_InWorldCamera_CameraReel = m_InWorldCamera.FindAction("CameraReel", throwIfNotFound: true);
         m_InWorldCamera_ShowHide = m_InWorldCamera.FindAction("ShowHide", throwIfNotFound: true);
+        m_InWorldCamera_Close = m_InWorldCamera.FindAction("Close", throwIfNotFound: true);
     }
 
     public void Dispose()
@@ -4439,6 +4580,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
     private readonly InputAction m_InWorldCamera_Translation;
     private readonly InputAction m_InWorldCamera_Rotation;
     private readonly InputAction m_InWorldCamera_Panning;
+    private readonly InputAction m_InWorldCamera_Tilting;
     private readonly InputAction m_InWorldCamera_Zoom;
     private readonly InputAction m_InWorldCamera_MouseDrag;
     private readonly InputAction m_InWorldCamera_Run;
@@ -4446,6 +4588,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
     private readonly InputAction m_InWorldCamera_ToggleInWorldCamera;
     private readonly InputAction m_InWorldCamera_CameraReel;
     private readonly InputAction m_InWorldCamera_ShowHide;
+    private readonly InputAction m_InWorldCamera_Close;
     public struct InWorldCameraActions
     {
         private @DCLInput m_Wrapper;
@@ -4453,6 +4596,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         public InputAction @Translation => m_Wrapper.m_InWorldCamera_Translation;
         public InputAction @Rotation => m_Wrapper.m_InWorldCamera_Rotation;
         public InputAction @Panning => m_Wrapper.m_InWorldCamera_Panning;
+        public InputAction @Tilting => m_Wrapper.m_InWorldCamera_Tilting;
         public InputAction @Zoom => m_Wrapper.m_InWorldCamera_Zoom;
         public InputAction @MouseDrag => m_Wrapper.m_InWorldCamera_MouseDrag;
         public InputAction @Run => m_Wrapper.m_InWorldCamera_Run;
@@ -4460,6 +4604,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         public InputAction @ToggleInWorldCamera => m_Wrapper.m_InWorldCamera_ToggleInWorldCamera;
         public InputAction @CameraReel => m_Wrapper.m_InWorldCamera_CameraReel;
         public InputAction @ShowHide => m_Wrapper.m_InWorldCamera_ShowHide;
+        public InputAction @Close => m_Wrapper.m_InWorldCamera_Close;
         public InputActionMap Get() { return m_Wrapper.m_InWorldCamera; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -4478,6 +4623,9 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @Panning.started += instance.OnPanning;
             @Panning.performed += instance.OnPanning;
             @Panning.canceled += instance.OnPanning;
+            @Tilting.started += instance.OnTilting;
+            @Tilting.performed += instance.OnTilting;
+            @Tilting.canceled += instance.OnTilting;
             @Zoom.started += instance.OnZoom;
             @Zoom.performed += instance.OnZoom;
             @Zoom.canceled += instance.OnZoom;
@@ -4499,6 +4647,9 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @ShowHide.started += instance.OnShowHide;
             @ShowHide.performed += instance.OnShowHide;
             @ShowHide.canceled += instance.OnShowHide;
+            @Close.started += instance.OnClose;
+            @Close.performed += instance.OnClose;
+            @Close.canceled += instance.OnClose;
         }
 
         private void UnregisterCallbacks(IInWorldCameraActions instance)
@@ -4512,6 +4663,9 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @Panning.started -= instance.OnPanning;
             @Panning.performed -= instance.OnPanning;
             @Panning.canceled -= instance.OnPanning;
+            @Tilting.started -= instance.OnTilting;
+            @Tilting.performed -= instance.OnTilting;
+            @Tilting.canceled -= instance.OnTilting;
             @Zoom.started -= instance.OnZoom;
             @Zoom.performed -= instance.OnZoom;
             @Zoom.canceled -= instance.OnZoom;
@@ -4533,6 +4687,9 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @ShowHide.started -= instance.OnShowHide;
             @ShowHide.performed -= instance.OnShowHide;
             @ShowHide.canceled -= instance.OnShowHide;
+            @Close.started -= instance.OnClose;
+            @Close.performed -= instance.OnClose;
+            @Close.canceled -= instance.OnClose;
         }
 
         public void RemoveCallbacks(IInWorldCameraActions instance)
@@ -4664,6 +4821,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         void OnTranslation(InputAction.CallbackContext context);
         void OnRotation(InputAction.CallbackContext context);
         void OnPanning(InputAction.CallbackContext context);
+        void OnTilting(InputAction.CallbackContext context);
         void OnZoom(InputAction.CallbackContext context);
         void OnMouseDrag(InputAction.CallbackContext context);
         void OnRun(InputAction.CallbackContext context);
@@ -4671,5 +4829,6 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         void OnToggleInWorldCamera(InputAction.CallbackContext context);
         void OnCameraReel(InputAction.CallbackContext context);
         void OnShowHide(InputAction.CallbackContext context);
+        void OnClose(InputAction.CallbackContext context);
     }
 }
