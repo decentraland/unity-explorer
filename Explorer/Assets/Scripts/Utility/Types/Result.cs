@@ -1,4 +1,5 @@
 using System;
+using UnityEngine.Assertions;
 using System.Threading;
 
 namespace Utility.Types
@@ -50,6 +51,15 @@ namespace Utility.Types
 
         public static Result<T> CancelledResult() =>
             new (default(T)!, nameof(OperationCanceledException));
+
+        public static implicit operator Result<T>(Result result)
+        {
+            Assert.IsFalse(result.Success);
+            return ErrorResult(result.ErrorMessage!);
+        }
+
+        public static implicit operator Result(Result<T> result) =>
+            result.Success ? Result.SuccessResult() : Result.ErrorResult(result.ErrorMessage!);
     }
 
     public readonly struct EnumResult<TErrorEnum>
@@ -151,6 +161,12 @@ namespace Utility.Types
 
             (TErrorEnum state, string message) = error!.Value;
             return $"{state}: {message}";
+        }
+
+        public static void EnsureSuccess(this Result result, string errorMessage)
+        {
+            if (result.Success == false)
+                throw new Exception($"Result is failure: {errorMessage}");
         }
     }
 }
