@@ -1019,7 +1019,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7395465704156109746}
   m_Layer: 5
-  m_Name: CameraReelSection
+  m_Name: GallerySection
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -3970,7 +3970,7 @@ PrefabInstance:
       objectReference: {fileID: 21300000, guid: d9c6f1a768af74beda15ba3c1d781a1d, type: 3}
     - target: {fileID: 1392556527029171851, guid: 1936c8ca610b0472baddc2c56969a641, type: 3}
       propertyPath: m_Name
-      value: CameraReelTab
+      value: GalleryTab
       objectReference: {fileID: 0}
     - target: {fileID: 1392556527029171851, guid: 1936c8ca610b0472baddc2c56969a641, type: 3}
       propertyPath: m_IsActive
@@ -4138,7 +4138,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5288072022237423886, guid: 1936c8ca610b0472baddc2c56969a641, type: 3}
       propertyPath: m_text
-      value: CAMERA REEL <color=#524E5B>[K]</color>
+      value: GALLERY <color=#524E5B>[K]</color>
       objectReference: {fileID: 0}
     - target: {fileID: 5288072022237423886, guid: 1936c8ca610b0472baddc2c56969a641, type: 3}
       propertyPath: m_VerticalAlignment
@@ -4158,7 +4158,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6425377980552986654, guid: 1936c8ca610b0472baddc2c56969a641, type: 3}
       propertyPath: m_text
-      value: CAMERA REEL <color=#A09BA8ff>[K]</color>
+      value: GALLERY <color=#A09BA8ff>[K]</color>
       objectReference: {fileID: 0}
     - target: {fileID: 6425377980552986654, guid: 1936c8ca610b0472baddc2c56969a641, type: 3}
       propertyPath: m_sharedMaterial
@@ -8033,6 +8033,10 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3164635324619011045, guid: 56d4550f784694f7a89e739437f9ca7a, type: 3}
+      propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 3217932277266608916, guid: 56d4550f784694f7a89e739437f9ca7a, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -9043,7 +9047,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8968749121595387193, guid: 56d4550f784694f7a89e739437f9ca7a, type: 3}
       propertyPath: m_Size
-      value: 1
+      value: 0.9999999
       objectReference: {fileID: 0}
     - target: {fileID: 9095025335429269016, guid: 56d4550f784694f7a89e739437f9ca7a, type: 3}
       propertyPath: m_AnchorMax.y

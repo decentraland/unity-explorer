@@ -34,8 +34,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: -90}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -276, y: 0}
-  m_SizeDelta: {x: 14, y: 11}
+  m_AnchoredPosition: {x: -202, y: 0}
+  m_SizeDelta: {x: 12, y: 10}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &5776055301735259706
 CanvasRenderer:
@@ -185,7 +185,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 817.5, y: -50.7}
+  m_AnchoredPosition: {x: 722, y: -46.50005}
   m_SizeDelta: {x: 541, y: 62}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!225 &3007147660590048626
@@ -236,7 +236,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 20, y: -12}
-  m_SizeDelta: {x: 220.54, y: 44}
+  m_SizeDelta: {x: 125.8386, y: 44}
   m_Pivot: {x: 0, y: 1}
 --- !u!222 &7245679080813614058
 CanvasRenderer:
@@ -266,7 +266,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Camera Reel
+  m_text: Gallery
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 96ae0a2159a39234f858ea23bdcc74ad, type: 2}
   m_sharedMaterial: {fileID: 735423033564544980, guid: 96ae0a2159a39234f858ea23bdcc74ad, type: 2}
@@ -527,8 +527,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0.5}
   m_AnchorMax: {x: 0, y: 0.5}
-  m_AnchoredPosition: {x: 270.5, y: 0}
-  m_SizeDelta: {x: 541, y: 62}
+  m_AnchoredPosition: {x: 197.02173, y: 0}
+  m_SizeDelta: {x: 394.0435, y: 62}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &8655726506790397489
 CanvasRenderer:
@@ -642,7 +642,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 524, y: -48.19993}
+  m_AnchoredPosition: {x: 423, y: -44}
   m_SizeDelta: {x: 18, y: 18}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &517935272464867011
@@ -1377,8 +1377,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 511, y: 34}
+  m_AnchoredPosition: {x: -73.47827, y: 0}
+  m_SizeDelta: {x: 364.0435, y: 34}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &5432148912929566170
 CanvasRenderer:
@@ -1408,8 +1408,8 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: You can't take more photos because you have reached the storage limit.
-    To make room we recommend you to download and then delete some items.
+  m_text: 'Your Gallery is full: 500/500. Please download/delete some photos to restore
+    Camera access.'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 96ae0a2159a39234f858ea23bdcc74ad, type: 2}
   m_sharedMaterial: {fileID: 735423033564544980, guid: 96ae0a2159a39234f858ea23bdcc74ad, type: 2}
@@ -2428,7 +2428,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5877137106279555878, guid: 68b03dc4c47f84e90acebbf0ff5eea2f, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 386
+      value: 285
       objectReference: {fileID: 0}
     - target: {fileID: 5877137106279555878, guid: 68b03dc4c47f84e90acebbf0ff5eea2f, type: 3}
       propertyPath: m_AnchoredPosition.y
