@@ -1,4 +1,5 @@
 using DCL.UI.GenericContextMenu.Controls.Configs;
+using System;
 using UnityEngine;
 
 namespace DCL.UI.GenericContextMenu.Controls
@@ -11,5 +12,9 @@ namespace DCL.UI.GenericContextMenu.Controls
         public abstract void Configure(ContextMenuControlSettings settings);
 
         public abstract void UnregisterListeners();
+
+        public abstract void RegisterListener(Delegate listener);
+
+        public abstract void RegisterCloseListener(Action listener);
     }
 }

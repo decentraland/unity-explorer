@@ -1,4 +1,5 @@
 using DCL.UI.GenericContextMenu.Controls.Configs;
+using System;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -16,6 +17,10 @@ namespace DCL.UI.GenericContextMenu.Controls
             RectTransformComponent.sizeDelta = new Vector2(RectTransformComponent.sizeDelta.x, separatorSettings.Height);
         }
 
-        public override void UnregisterListeners(){}
+        public override void UnregisterListeners() { }
+
+        public override void RegisterListener(Delegate listener) { }
+
+        public override void RegisterCloseListener(Action listener) { }
     }
 }

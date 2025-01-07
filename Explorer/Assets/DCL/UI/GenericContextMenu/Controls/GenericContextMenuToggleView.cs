@@ -1,6 +1,8 @@
 using DCL.UI.GenericContextMenu.Controls.Configs;
+using System;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Events;
 
 namespace DCL.UI.GenericContextMenu.Controls
 {
@@ -17,5 +19,11 @@ namespace DCL.UI.GenericContextMenu.Controls
 
         public override void UnregisterListeners() =>
             ToggleComponent.Toggle.onValueChanged.RemoveAllListeners();
+
+        public override void RegisterListener(Delegate listener) =>
+            ToggleComponent.Toggle.onValueChanged.AddListener(new UnityAction<bool>((Action<bool>)listener));
+
+        public override void RegisterCloseListener(Action listener) =>
+            ToggleComponent.Toggle.onValueChanged.AddListener(_ => listener());
     }
 }

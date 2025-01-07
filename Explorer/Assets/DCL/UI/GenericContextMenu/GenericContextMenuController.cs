@@ -5,8 +5,6 @@ using MVC;
 using System;
 using System.Threading;
 using UnityEngine;
-using UnityEngine.Events;
-using UnityEngine.UI;
 
 namespace DCL.UI.GenericContextMenu
 {
@@ -74,10 +72,16 @@ namespace DCL.UI.GenericContextMenu
 
                 GenericContextMenuComponent component = config.ControlTypeType switch {
                     ContextMenuControlTypes.SEPARATOR => controlsPoolManager.GetSeparator(config as SeparatorContextMenuControlSettings, i),
-                    ContextMenuControlTypes.BUTTON_WITH_TEXT_AND_ICON => HandleButton(config as ButtonContextMenuControlSettings, i),
-                    ContextMenuControlTypes.TOGGLE_WITH_TEXT => HandleToggle(config as ToggleContextMenuControlSettings, controlInitialValue != null && (bool)controlInitialValue, i),
+                    ContextMenuControlTypes.BUTTON_WITH_TEXT_AND_ICON => controlsPoolManager.GetButton(config as ButtonContextMenuControlSettings, i),
+                    ContextMenuControlTypes.TOGGLE_WITH_TEXT => controlsPoolManager.GetToggle(config as ToggleContextMenuControlSettings, controlInitialValue != null && (bool)controlInitialValue, i),
                     _ => throw new NotImplementedException($"Control of type {config.ControlTypeType} is not implemented")
                 };
+
+                if (inputData.ControlsActions.TryGetValue(i, out Delegate action))
+                {
+                    component.RegisterListener(action);
+                    component.RegisterCloseListener(TriggerContextMenuClose);
+                }
 
                 totalHeight += component!.RectTransformComponent.rect.height;
             }
@@ -89,22 +93,6 @@ namespace DCL.UI.GenericContextMenu
                 + (viewInstance!.ControlsLayoutGroup.spacing * (inputData.Config.ContextMenuSettings.Count - 1)));
 
             viewInstance!.ControlsContainer.localPosition = GetControlsPosition(inputData.AnchorPosition, inputData.Config.OffsetFromTarget, inputData.OverlapRect);
-        }
-
-        private GenericContextMenuComponent HandleButton(ButtonContextMenuControlSettings config, int index)
-        {
-            GenericContextMenuButtonWithTextView button = controlsPoolManager.GetButton(config, index);
-            button.ButtonComponent.onClick.AddListener(new UnityAction((Action)inputData.ControlsActions[index]));
-            button.ButtonComponent.onClick.AddListener(TriggerContextMenuClose);
-            return button;
-        }
-
-        private GenericContextMenuComponent HandleToggle(ToggleContextMenuControlSettings config, bool initialValue, int index)
-        {
-            GenericContextMenuToggleView toggle = controlsPoolManager.GetToggle(config, initialValue, index);
-            toggle.ToggleComponent.Toggle.onValueChanged.AddListener(new UnityAction<bool>((Action<bool>)inputData.ControlsActions[index]));
-            toggle.ToggleComponent.Toggle.onValueChanged.AddListener(toggleValue => TriggerContextMenuClose());
-            return toggle;
         }
 
         private Vector2 GetOffsetByDirection(ContextMenuOpenDirection direction, Vector2 offsetFromTarget)

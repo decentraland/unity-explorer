@@ -1,4 +1,5 @@
 using DCL.UI.GenericContextMenu.Controls.Configs;
+using System;
 
 namespace DCL.UI.GenericContextMenu.Controls
 {
@@ -6,5 +7,7 @@ namespace DCL.UI.GenericContextMenu.Controls
     {
         void Configure(ContextMenuControlSettings settings);
         void UnregisterListeners();
+        void RegisterListener(Delegate listener);
+        void RegisterCloseListener(Action listener);
     }
 }
