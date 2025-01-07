@@ -14,6 +14,8 @@ namespace DCL.UI.GenericContextMenu.Controls
             SeparatorContextMenuControlSettings separatorSettings = settings as SeparatorContextMenuControlSettings;
             LayoutElementComponent.preferredHeight = separatorSettings!.Height;
             LayoutElementComponent.minHeight = separatorSettings.Height;
+            HorizontalLayoutComponent.padding.left = separatorSettings.LeftPadding;
+            HorizontalLayoutComponent.padding.right = separatorSettings.RightPadding;
             RectTransformComponent.sizeDelta = new Vector2(RectTransformComponent.sizeDelta.x, separatorSettings.Height);
         }
 

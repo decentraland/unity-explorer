@@ -15,7 +15,11 @@ namespace DCL.UI.GenericContextMenu.Controls
         {
             ToggleContextMenuControlSettings toggleSettings = settings as ToggleContextMenuControlSettings;
             TextComponent.SetText(toggleSettings!.ToggleText);
+            HorizontalLayoutComponent.padding = toggleSettings.HorizontalLayoutPadding;
+            HorizontalLayoutComponent.spacing = toggleSettings.HorizontalLayoutSpacing;
+            HorizontalLayoutComponent.reverseArrangement = toggleSettings.HorizontalLayoutReverseArrangement;
             ToggleComponent.Toggle.isOn = initialValue != null && (bool)initialValue;
+            ToggleComponent.SetToggleGraphics(ToggleComponent.Toggle.isOn);
         }
 
         public override void UnregisterListeners() =>

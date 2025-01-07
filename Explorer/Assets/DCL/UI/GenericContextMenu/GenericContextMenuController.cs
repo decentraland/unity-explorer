@@ -82,6 +82,7 @@ namespace DCL.UI.GenericContextMenu
             }
 
             viewInstance!.ControlsLayoutGroup.spacing = inputData.Config.ElementsSpacing;
+            viewInstance!.ControlsLayoutGroup.padding = inputData.Config.VerticalLayoutPadding;
             viewInstance.ControlsContainer.sizeDelta = new Vector2(inputData.Config.Width,
                 totalHeight
                 + viewInstance!.ControlsLayoutGroup.padding.bottom

@@ -18,6 +18,9 @@ namespace DCL.UI.GenericContextMenu.Controls
             ButtonContextMenuControlSettings buttonSettings = settings as ButtonContextMenuControlSettings;
             TextComponent.SetText(buttonSettings!.ButtonText);
             ImageComponent.sprite = buttonSettings.ButtonIcon;
+            HorizontalLayoutComponent.padding = buttonSettings.HorizontalLayoutPadding;
+            HorizontalLayoutComponent.spacing = buttonSettings.HorizontalLayoutSpacing;
+            HorizontalLayoutComponent.reverseArrangement = buttonSettings.HorizontalLayoutReverseArrangement;
         }
 
         public override void UnregisterListeners() =>

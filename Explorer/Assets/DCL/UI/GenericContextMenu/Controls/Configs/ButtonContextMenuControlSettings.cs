@@ -9,9 +9,15 @@ namespace DCL.UI.GenericContextMenu.Controls.Configs
     {
         [SerializeField] private string buttonText;
         [SerializeField] private Sprite buttonIcon;
+        [SerializeField] private RectOffset horizontalLayoutPadding;
+        [SerializeField] private int horizontalLayoutSpacing;
+        [SerializeField] private bool horizontalLayoutReverseArrangement;
 
         public string ButtonText => buttonText;
         public Sprite ButtonIcon => buttonIcon;
+        public RectOffset HorizontalLayoutPadding => horizontalLayoutPadding;
+        public bool HorizontalLayoutReverseArrangement => horizontalLayoutReverseArrangement;
+        public int HorizontalLayoutSpacing => horizontalLayoutSpacing;
 
         private void OnEnable() =>
             controlTypeType = ContextMenuControlTypes.BUTTON_WITH_TEXT_AND_ICON;
