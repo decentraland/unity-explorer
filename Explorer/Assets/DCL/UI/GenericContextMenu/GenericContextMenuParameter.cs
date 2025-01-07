@@ -10,22 +10,22 @@ namespace DCL.UI.GenericContextMenu
     public struct GenericContextMenuParameter
     {
         public readonly GenericContextMenuConfig Config;
-        public readonly Dictionary<int, Delegate> ControlsActions;
+        public readonly Dictionary<ContextMenuControlSettings, Delegate> ControlsActions;
         public readonly Vector2 AnchorPosition;
         public readonly Rect? OverlapRect;
         public readonly Action? ActionOnShow;
         public readonly Action? ActionOnHide;
         public readonly UniTask? CloseTask;
-        public readonly Dictionary<int, object>? InitialValues;
+        public readonly Dictionary<ContextMenuControlSettings, object>? InitialValues;
 
         public GenericContextMenuParameter(GenericContextMenuConfig config,
-            Dictionary<int, Delegate> controlsActions,
+            Dictionary<ContextMenuControlSettings, Delegate> controlsActions,
             Vector2 anchorPosition,
             Rect? overlapRect = null,
             Action? actionOnShow = null,
             Action? actionOnHide = null,
             UniTask? closeTask = null,
-            Dictionary<int, object>? initialValues = null)
+            Dictionary<ContextMenuControlSettings, object>? initialValues = null)
         {
             this.Config = config;
             this.ControlsActions = controlsActions;

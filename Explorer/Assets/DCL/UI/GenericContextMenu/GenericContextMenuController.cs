@@ -68,7 +68,7 @@ namespace DCL.UI.GenericContextMenu
             {
                 ContextMenuControlSettings config = inputData.Config.ContextMenuSettings[i];
                 object controlInitialValue = null;
-                inputData.InitialValues?.TryGetValue(i, out controlInitialValue);
+                inputData.InitialValues?.TryGetValue(config, out controlInitialValue);
 
                 GenericContextMenuComponent component = config.ControlTypeType switch {
                     ContextMenuControlTypes.SEPARATOR => controlsPoolManager.GetSeparator(config as SeparatorContextMenuControlSettings, i),
@@ -77,7 +77,7 @@ namespace DCL.UI.GenericContextMenu
                     _ => throw new NotImplementedException($"Control of type {config.ControlTypeType} is not implemented")
                 };
 
-                if (inputData.ControlsActions.TryGetValue(i, out Delegate action))
+                if (inputData.ControlsActions.TryGetValue(config, out Delegate action))
                 {
                     component.RegisterListener(action);
                     component.RegisterCloseListener(TriggerContextMenuClose);
