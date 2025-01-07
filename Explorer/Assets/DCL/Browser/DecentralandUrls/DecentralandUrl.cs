@@ -45,5 +45,7 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         CameraReelImages,
         CameraReelPlaces,
         CameraReelLink,
+
+        ApiFriends,
     }
 }
