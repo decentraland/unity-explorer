@@ -82,7 +82,11 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
             mvcManager.ShowAsync(GenericContextMenuController.IssueCommand(
                 new GenericContextMenuParameter(contextMenuConfig, controlsActions, buttonRectTransform.position,
                     actionOnShow: () => isContextMenuOpen = true,
-                    actionOnHide: () => isContextMenuOpen = false,
+                    actionOnHide: () =>
+                    {
+                        isContextMenuOpen = false;
+                        HideControl();
+                    },
                     closeTask: closeContextMenuTask?.Task,
                     initialValues: initialValues)));
         }
