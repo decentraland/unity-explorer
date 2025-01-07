@@ -1,11 +1,12 @@
 using Cysharp.Threading.Tasks;
 using DCL.Profiles;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 
 namespace DCL.Friends
 {
-    public interface IFriendsService
+    public interface IFriendsService : IDisposable
     {
         UniTask<PaginatedFriendsResult> GetFriendsAsync(int pageNum, int pageSize, CancellationToken ct);
 
@@ -23,7 +24,7 @@ namespace DCL.Friends
 
         UniTask DeleteFriendshipAsync(string friendId, CancellationToken cancellationToken = default);
 
-        UniTask<FriendRequest> AddFriendshipAsync(string friendId, string messageBody, CancellationToken cancellationToken = default);
+        UniTask<FriendRequest> RequestFriendshipAsync(string friendId, string messageBody, CancellationToken cancellationToken = default);
 
         UniTask RemoveFriendAsync(string friendId, CancellationToken ct);
     }
