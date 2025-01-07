@@ -15,12 +15,12 @@ using System.Net.WebSockets;
 using System.Threading;
 using UnityEngine;
 using Utility.Multithreading;
+using Utility.Types;
 
 namespace DCL.Multiplayer.Connections.Archipelago.Rooms
 {
     public class ArchipelagoIslandRoom : ConnectiveRoom
     {
-        private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IArchipelagoSignFlow signFlow;
         private readonly ICharacterObject characterObject;
 
@@ -28,16 +28,17 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
 
         private string? newConnectionString;
 
-        public ArchipelagoIslandRoom(ICharacterObject characterObject, IWeb3IdentityCache web3IdentityCache, IMultiPool multiPool, ICurrentAdapterAddress currentAdapterAddress) : this(
-            web3IdentityCache,
+        public ArchipelagoIslandRoom(ICharacterObject characterObject, IWeb3IdentityCache web3IdentityCache,
+            IMultiPool multiPool, IMemoryPool memoryPool, ICurrentAdapterAddress currentAdapterAddress) : this(
+
+            // TODO Validate the following assumption
             // We cannot use ArrayPool<byte>.Shared since some operations might not be thread safe (like the handshake)
             // producing unexpected errors when sending the data through the websocket
             new LiveConnectionArchipelagoSignFlow(
-                new WebSocketArchipelagoLiveConnection(
-                    () => new ClientWebSocket(),
-                    new ArrayMemoryPool(ArrayPool<byte>.Create())
-                ).WithLog(),
-                new ArrayMemoryPool(ArrayPool<byte>.Create()),
+                new ArchipelagoSignedConnection(new WebSocketArchipelagoLiveConnection(memoryPool),
+                        multiPool, memoryPool, web3IdentityCache)
+                   .WithLog(),
+                memoryPool,
                 multiPool
             ).WithLog(),
             characterObject,
@@ -45,13 +46,11 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
         ) { }
 
         public ArchipelagoIslandRoom(
-            IWeb3IdentityCache web3IdentityCache,
             IArchipelagoSignFlow signFlow,
             ICharacterObject characterObject,
             ICurrentAdapterAddress currentAdapterAddress
         )
         {
-            this.web3IdentityCache = web3IdentityCache;
             this.signFlow = signFlow;
             this.characterObject = characterObject;
             this.currentAdapterAddress = currentAdapterAddress;
@@ -91,37 +90,8 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
         private async UniTask ConnectToArchipelagoAsync(CancellationToken token)
         {
             string adapterUrl = currentAdapterAddress.AdapterUrl();
-            LightResult<string> welcomePeerId = await WelcomePeerIdAsync(adapterUrl, token);
+            Result welcomePeerId = await signFlow.ConnectAsync(adapterUrl, token);
             welcomePeerId.EnsureSuccess("Cannot authorize with current address and signature, peer id is invalid");
-        }
-
-        private async UniTask<LightResult<string>> WelcomePeerIdAsync(string adapterUrl, CancellationToken token)
-        {
-            await using ExecuteOnThreadPoolScope _ = await ExecuteOnThreadPoolScope.NewScopeWithReturnOnMainThreadAsync();
-            IWeb3Identity identity = web3IdentityCache.EnsuredIdentity();
-            await signFlow.EnsureConnectedAsync(adapterUrl, token);
-            string ethereumAddress = identity.Address;
-            var messageForSignResult = await signFlow.MessageForSignAsync(ethereumAddress, token);
-
-            if (messageForSignResult.Success == false ||
-                !HandshakePayloadIsValid(messageForSignResult.Result))
-            {
-                ReportHub.LogError(ReportCategory.COMMS_SCENE_HANDLER, "Cannot obtain a message to sign a welcome peer");
-                return LightResult<string>.FAILURE;
-            }
-
-            string signedMessage = identity.Sign(messageForSignResult.Result).ToJson();
-            ReportHub.Log(ReportCategory.COMMS_SCENE_HANDLER, $"Signed message: {signedMessage}");
-            return await signFlow.WelcomePeerIdAsync(signedMessage, token);
-        }
-
-        private bool HandshakePayloadIsValid(string payload)
-        {
-            if (!payload.StartsWith("dcl-"))
-                return false;
-
-            ReadOnlySpan<char> span = payload.AsSpan(4);
-            return span.IndexOf(':') == -1;
         }
     }
 }
