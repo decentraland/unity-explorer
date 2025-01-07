@@ -70,8 +70,7 @@ namespace DCL.Multiplayer.Profiles.Systems
             if (!realmData.Configured)
                 return;
 
-            remoteMetadata.BroadcastSelfMetadata();
-            remoteMetadata.BroadcastSelfParcel(characterObject);
+            remoteMetadata.BroadcastMetadata(characterObject);
             remoteProfiles.Download(remoteAnnouncements);
             remoteEntities.TryCreate(remoteProfiles, World!);
             remoteEntities.Remove(removeIntentions, World!);

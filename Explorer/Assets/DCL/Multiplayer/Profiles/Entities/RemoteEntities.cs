@@ -6,6 +6,7 @@ using DCL.Interaction.Utility;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Connections.Rooms;
 using DCL.Multiplayer.Movement;
+using DCL.Multiplayer.Profiles.Poses;
 using DCL.Multiplayer.Profiles.RemoteProfiles;
 using DCL.Multiplayer.Profiles.RemoveIntentions;
 using DCL.Multiplayer.Profiles.Tables;
@@ -26,7 +27,6 @@ namespace DCL.Multiplayer.Profiles.Entities
 {
     public class RemoteEntities : IRemoteEntities
     {
-        private readonly IRoomHub roomHub;
         private readonly IEntityParticipantTable entityParticipantTable;
         private readonly IObjectPool<SimplePriorityQueue<NetworkMovementMessage>> queuePool;
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
@@ -34,21 +34,23 @@ namespace DCL.Multiplayer.Profiles.Entities
         private readonly IEntityCollidersGlobalCache collidersGlobalCache;
         private readonly Dictionary<string, RemoteAvatarCollider> collidersByWalletId = new ();
         private readonly Transform? remoteEntitiesParent = null;
+        private readonly IRemoteMetadata remoteMetadata;
+
         private IComponentPool<RemoteAvatarCollider> remoteAvatarColliderPool = null!;
         private IComponentPool<Transform> transformPool = null!;
 
         public RemoteEntities(
-            IRoomHub roomHub,
+            IRemoteMetadata remoteMetadata,
             IEntityParticipantTable entityParticipantTable,
             IComponentPoolsRegistry componentPoolsRegistry,
             IObjectPool<SimplePriorityQueue<NetworkMovementMessage>> queuePool,
             IEntityCollidersGlobalCache collidersGlobalCache)
         {
-            this.roomHub = roomHub;
             this.entityParticipantTable = entityParticipantTable;
             this.componentPoolsRegistry = componentPoolsRegistry;
             this.queuePool = queuePool;
             this.collidersGlobalCache = collidersGlobalCache;
+            this.remoteMetadata = remoteMetadata;
 #if UNITY_EDITOR
             remoteEntitiesParent = new GameObject("REMOTE_ENTITIES").transform;
 #endif
@@ -99,6 +101,8 @@ namespace DCL.Multiplayer.Profiles.Entities
 
             if (!entityParticipantTable.Release(walletId, roomSource))
                 return;
+
+            remoteMetadata.Remove(walletId);
 
             if (collidersByWalletId.TryGetValue(walletId, out RemoteAvatarCollider remoteAvatarCollider))
             {

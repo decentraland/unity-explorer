@@ -8,13 +8,9 @@ namespace DCL.Multiplayer.Profiles.Poses
     {
         IReadOnlyDictionary<string, ParticipantMetadata> Metadata { get; }
 
-        void BroadcastSelfParcel(Vector2Int pose);
+        void Remove(string walletId);
 
-        /// <summary>
-        ///     Work-around for the bug
-        ///     OnConnected will be called while the room is not assigned, so the callback is missed so we need to asign the room right now
-        /// </summary>
-        void BroadcastSelfMetadata();
+        void BroadcastMetadata(Vector2Int pose);
 
         readonly struct ParticipantMetadata
         {

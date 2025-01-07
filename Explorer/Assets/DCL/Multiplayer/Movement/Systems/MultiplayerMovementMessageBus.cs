@@ -240,7 +240,7 @@ namespace DCL.Multiplayer.Movement.Systems
                 message = UncompressedMovementMessage(messageWrap.Payload);
             }
 
-            Inbox(message, @for: RemotePlayerMovementComponent.TEST_ID);
+            Inbox(message, @for: RemotePlayerMovementComponent.SELF_REPLICA_ID);
         }
     }
 }
