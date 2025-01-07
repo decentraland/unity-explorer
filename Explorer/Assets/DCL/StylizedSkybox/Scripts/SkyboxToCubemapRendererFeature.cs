@@ -61,12 +61,12 @@ namespace DCL.StylizedSkybox.Scripts
             desc = new RenderTextureDescriptor();
             desc.autoGenerateMips = false;
             desc.bindMS = false;
-            desc.colorFormat = RenderTextureFormat.ARGB32;
+            desc.colorFormat = RenderTextureFormat.RGB111110Float;
             desc.depthBufferBits = 0;
             desc.depthStencilFormat = GraphicsFormat.None;
             desc.dimension = TextureDimension.Cube;
             desc.enableRandomWrite = false;
-            desc.graphicsFormat = GraphicsFormat.R8G8B8A8_UNorm;
+            desc.graphicsFormat = GraphicsFormat.B10G11R11_UFloatPack32;
             desc.height = settings.dimensions;
             desc.width = settings.dimensions;
             desc.memoryless = RenderTextureMemoryless.None;
@@ -83,12 +83,12 @@ namespace DCL.StylizedSkybox.Scripts
             descScratch = new RenderTextureDescriptor();
             descScratch.autoGenerateMips = false;
             descScratch.bindMS = false;
-            descScratch.colorFormat = RenderTextureFormat.ARGB32;
+            descScratch.colorFormat = RenderTextureFormat.RGB111110Float;
             descScratch.depthBufferBits = 0;
             descScratch.depthStencilFormat = GraphicsFormat.None;
             descScratch.dimension = TextureDimension.Cube;
             descScratch.enableRandomWrite = false;
-            descScratch.graphicsFormat = GraphicsFormat.R8G8B8A8_UNorm;
+            descScratch.graphicsFormat = GraphicsFormat.B10G11R11_UFloatPack32;
             descScratch.height = settings.dimensions;
             descScratch.width = settings.dimensions;
             descScratch.memoryless = RenderTextureMemoryless.None;
@@ -110,8 +110,8 @@ namespace DCL.StylizedSkybox.Scripts
             if (SkipInEditorMode())
                 return;
 
-            bool bAllocatedSkyBoxCubeMapRT = RenderingUtils.ReAllocateIfNeeded(ref skyBoxCubeMapRTHandle, desc, FilterMode.Bilinear, TextureWrapMode.Clamp,
-                isShadowMap: false, anisoLevel: 1, mipMapBias: 0F, name: "_SkyBoxCubeMapTex");
+            bool bAllocatedSkyBoxCubeMapRT = RenderingUtils.ReAllocateIfNeeded(ref skyBoxCubeMapRTHandle, desc, FilterMode.Trilinear, TextureWrapMode.Clamp,
+                isShadowMap: false, anisoLevel: 16, mipMapBias: 0F, name: "_SkyBoxCubeMapTex");
 
             if (bAllocatedSkyBoxCubeMapRT)
             {
@@ -122,8 +122,8 @@ namespace DCL.StylizedSkybox.Scripts
                 }
             }
 
-            bool bAllocatedSkyBoxCubeMapRT_Scratch = RenderingUtils.ReAllocateIfNeeded(ref skyBoxCubeMapRTHandle_Scratch, descScratch, FilterMode.Bilinear, TextureWrapMode.Clamp,
-                isShadowMap: false, anisoLevel: 1, mipMapBias: 0F, name: "_SkyBoxCubeMapTex_Scratch");
+            bool bAllocatedSkyBoxCubeMapRT_Scratch = RenderingUtils.ReAllocateIfNeeded(ref skyBoxCubeMapRTHandle_Scratch, descScratch, FilterMode.Trilinear, TextureWrapMode.Clamp,
+                isShadowMap: false, anisoLevel: 16, mipMapBias: 0F, name: "_SkyBoxCubeMapTex_Scratch");
 
             if (bAllocatedSkyBoxCubeMapRT_Scratch)
             {

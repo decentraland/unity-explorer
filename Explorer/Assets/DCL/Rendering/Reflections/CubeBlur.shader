@@ -18,9 +18,9 @@
     {
         Tags
         {
-//            "Queue"="Background"
-//            "RenderType"="Background"
-//            "PreviewType"="Skybox"
+            // "Queue"="Background"
+            // "RenderType"="Background"
+            // "PreviewType"="Skybox"
         }
         
         Pass
@@ -177,7 +177,7 @@
                     half3 st;
 
                     //half4 pos = IN.;
-                    half3 uvw = IN.direction;
+                    half3 uvw = normalize(IN.direction);
                     
                     half3 face = lerp(zero, uvw.xyz, abs(uvw.xyz)==one);
                     half3 u = face.zxy*_TexelSize;
@@ -440,8 +440,8 @@
 
                 half4 frag(v2f  i) : SV_Target
                 {
-                    return half4(i.direction, 1.0);
-                    return frag_default(i);
+                    //return half4(i.direction, 1.0);
+                    //return frag_default(i);
                     return frag_loop(i);
                     //return half4(1.0, 0.0, 0.0, 1.0);
                     #if (SHADER_TARGET < 30 || defined(SHADER_API_GLES))
