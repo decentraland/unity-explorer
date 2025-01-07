@@ -81,7 +81,8 @@ namespace DCL.UI.GenericContextMenu
                 totalHeight += component!.RectTransformComponent.rect.height;
             }
 
-            viewInstance!.ControlsContainer.sizeDelta = new Vector2(inputData.Config.Width,
+            viewInstance!.ControlsLayoutGroup.spacing = inputData.Config.ElementsSpacing;
+            viewInstance.ControlsContainer.sizeDelta = new Vector2(inputData.Config.Width,
                 totalHeight
                 + viewInstance!.ControlsLayoutGroup.padding.bottom
                 + viewInstance!.ControlsLayoutGroup.padding.top
