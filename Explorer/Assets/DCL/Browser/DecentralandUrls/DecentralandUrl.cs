@@ -7,6 +7,7 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
 
         ArchipelagoStatus,
         GatekeeperStatus,
+        ArchipelagoHotScenes,
 
         DiscordLink,
 
