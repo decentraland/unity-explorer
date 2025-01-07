@@ -70,12 +70,7 @@ namespace DCL.UI.GenericContextMenu
                 object controlInitialValue = null;
                 inputData.InitialValues?.TryGetValue(config, out controlInitialValue);
 
-                GenericContextMenuComponent component = config.ControlTypeType switch {
-                    ContextMenuControlTypes.SEPARATOR => controlsPoolManager.GetSeparator(config as SeparatorContextMenuControlSettings, i),
-                    ContextMenuControlTypes.BUTTON_WITH_TEXT_AND_ICON => controlsPoolManager.GetButton(config as ButtonContextMenuControlSettings, i),
-                    ContextMenuControlTypes.TOGGLE_WITH_TEXT => controlsPoolManager.GetToggle(config as ToggleContextMenuControlSettings, controlInitialValue != null && (bool)controlInitialValue, i),
-                    _ => throw new NotImplementedException($"Control of type {config.ControlTypeType} is not implemented")
-                };
+                GenericContextMenuComponent component = controlsPoolManager.GetContextMenuComponent(config, controlInitialValue, i);
 
                 if (inputData.ControlsActions.TryGetValue(config, out Delegate action))
                 {

@@ -9,7 +9,7 @@ namespace DCL.UI.GenericContextMenu.Controls
     {
         [field: SerializeField] public LayoutElement LayoutElementComponent { get; private set; }
 
-        public override void Configure(ContextMenuControlSettings settings)
+        public override void Configure(ContextMenuControlSettings settings, object initialValue)
         {
             SeparatorContextMenuControlSettings separatorSettings = settings as SeparatorContextMenuControlSettings;
             LayoutElementComponent.preferredHeight = separatorSettings!.Height;

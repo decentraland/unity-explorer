@@ -13,7 +13,7 @@ namespace DCL.UI.GenericContextMenu.Controls
         [field: SerializeField] public TMP_Text TextComponent { get; private set; }
         [field: SerializeField] public Image ImageComponent { get; private set; }
 
-        public override void Configure(ContextMenuControlSettings settings)
+        public override void Configure(ContextMenuControlSettings settings, object initialValue)
         {
             ButtonContextMenuControlSettings buttonSettings = settings as ButtonContextMenuControlSettings;
             TextComponent.SetText(buttonSettings!.ButtonText);

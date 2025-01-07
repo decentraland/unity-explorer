@@ -39,33 +39,20 @@ namespace DCL.UI.GenericContextMenu
                 actionOnDestroy: toggleView => GameObject.Destroy(toggleView.gameObject));
         }
 
-        public GenericContextMenuSeparatorView GetSeparator(SeparatorContextMenuControlSettings settings, int index)
+        public GenericContextMenuComponent GetContextMenuComponent<T>(T settings, object initialValue, int index) where T : ContextMenuControlSettings
         {
-            GenericContextMenuSeparatorView separatorView = separatorPool.Get();
-            separatorView.transform.SetSiblingIndex(index);
-            separatorView.Configure(settings);
-            currentControls.Add(separatorView);
-            return separatorView;
-        }
+            GenericContextMenuComponent component = settings switch
+                                                    {
+                                                        SeparatorContextMenuControlSettings => separatorPool.Get(),
+                                                        ButtonContextMenuControlSettings => buttonPool.Get(),
+                                                        ToggleContextMenuControlSettings => togglePool.Get(),
+                                                        _ => throw new ArgumentOutOfRangeException()
+                                                    };
+            component.transform.SetSiblingIndex(index);
+            component.Configure(settings, initialValue);
+            currentControls.Add(component);
 
-        public GenericContextMenuButtonWithTextView GetButton(ButtonContextMenuControlSettings settings, int index)
-        {
-            GenericContextMenuButtonWithTextView buttonView = buttonPool.Get();
-            buttonView.transform.SetSiblingIndex(index);
-            buttonView.Configure(settings);
-            currentControls.Add(buttonView);
-            return buttonView;
-        }
-
-        public GenericContextMenuToggleView GetToggle(ToggleContextMenuControlSettings settings, bool initialValue, int index)
-        {
-            GenericContextMenuToggleView toggleView = togglePool.Get();
-            toggleView.transform.SetSiblingIndex(index);
-            toggleView.Configure(settings);
-            toggleView.ToggleComponent.Toggle.isOn = initialValue;
-            toggleView.ToggleComponent.SetToggleGraphics(initialValue);
-            currentControls.Add(toggleView);
-            return toggleView;
+            return component;
         }
 
         public void Dispose() =>

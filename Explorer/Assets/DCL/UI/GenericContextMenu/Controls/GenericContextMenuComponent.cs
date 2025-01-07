@@ -9,7 +9,7 @@ namespace DCL.UI.GenericContextMenu.Controls
     {
         [field: SerializeField] public RectTransform RectTransformComponent { get; private set; }
 
-        public abstract void Configure(ContextMenuControlSettings settings);
+        public abstract void Configure(ContextMenuControlSettings settings, object initialValue);
 
         public abstract void UnregisterListeners();
 

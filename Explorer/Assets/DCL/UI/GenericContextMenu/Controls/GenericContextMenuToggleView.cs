@@ -11,10 +11,11 @@ namespace DCL.UI.GenericContextMenu.Controls
         [field: SerializeField] public ToggleView ToggleComponent { get; private set; }
         [field: SerializeField] public TMP_Text TextComponent { get; private set; }
 
-        public override void Configure(ContextMenuControlSettings settings)
+        public override void Configure(ContextMenuControlSettings settings, object initialValue)
         {
             ToggleContextMenuControlSettings toggleSettings = settings as ToggleContextMenuControlSettings;
             TextComponent.SetText(toggleSettings!.ToggleText);
+            ToggleComponent.Toggle.isOn = initialValue != null && (bool)initialValue;
         }
 
         public override void UnregisterListeners() =>
