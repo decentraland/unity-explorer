@@ -1,14 +1,15 @@
 using CommunicationData.URLHelpers;
 using CrdtEcsBridge.PoolsProviders;
 using Cysharp.Threading.Tasks;
+using DCL.AssetsProvision.CodeResolver;
 using ECS.TestSuite;
 using DCL.Diagnostics;
 using ECS;
 using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.Scene.ExceptionsHandling;
-using SceneRuntime.Apis.Modules;
 using SceneRuntime.Apis.Modules.EngineApi;
+using SceneRuntime.Factory.WebSceneSource;
 using System.Collections;
 using System.Threading;
 using UnityEngine;
@@ -22,12 +23,14 @@ namespace SceneRuntime.Factory.Tests
 
         private V8EngineFactory engineFactory;
         private V8ActiveEngines activeEngines;
+        private IWebJsSources webJsSources;
 
         [SetUp]
         public void SetUp()
         {
             activeEngines = new V8ActiveEngines();
             engineFactory = new V8EngineFactory(activeEngines);
+            webJsSources = new WebJsSources(new JsCodeResolver(TestWebRequestController.INSTANCE));
         }
 
         [TearDown]
@@ -41,7 +44,8 @@ namespace SceneRuntime.Factory.Tests
             UniTask.ToCoroutine(async () =>
             {
                 // Arrange
-                var factory = new SceneRuntimeFactory(TestWebRequestController.INSTANCE, new IRealmData.Fake(), engineFactory, activeEngines);
+                var factory = new SceneRuntimeFactory(TestWebRequestController.INSTANCE,
+                    new IRealmData.Fake(), engineFactory, activeEngines, webJsSources);
 
                 var sourceCode = @"
                 const engineApi = require('~system/EngineApi')
@@ -74,7 +78,8 @@ namespace SceneRuntime.Factory.Tests
             UniTask.ToCoroutine(async () =>
             {
                 // Arrange
-                var factory = new SceneRuntimeFactory(TestWebRequestController.INSTANCE, new IRealmData.Fake(), engineFactory, activeEngines);
+                var factory = new SceneRuntimeFactory(TestWebRequestController.INSTANCE,
+                    new IRealmData.Fake(), engineFactory, activeEngines, webJsSources);
                 var path = URLAddress.FromString($"file://{Application.dataPath + "/../TestResources/Scenes/Cube/cube.js"}");
 
                 // Act
@@ -97,7 +102,8 @@ namespace SceneRuntime.Factory.Tests
         public void WrapInModuleCommonJs()
         {
             // Arrange
-            var factory = new SceneRuntimeFactory(TestWebRequestController.INSTANCE, new IRealmData.Fake(), engineFactory, activeEngines);
+            var factory = new SceneRuntimeFactory(TestWebRequestController.INSTANCE,
+                new IRealmData.Fake(), engineFactory, activeEngines, webJsSources);
             var sourceCode = "console.log('Hello, world!');";
 
             // Act

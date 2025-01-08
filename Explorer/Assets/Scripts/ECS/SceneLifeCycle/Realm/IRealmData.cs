@@ -24,6 +24,7 @@ namespace ECS
         string CommsAdapter { get; }
         string Protocol { get; }
         string Hostname { get; }
+        bool IsLocalSceneDevelopment { get; }
 
         /// <summary>
         ///     Whether the data was set at least once
@@ -40,6 +41,7 @@ namespace ECS
             public string CommsAdapter { get; }
             public string Protocol { get; }
             public string Hostname { get; }
+            public bool IsLocalSceneDevelopment { get; }
             public bool Configured { get; }
             public bool IsDirty { get; internal set; }
 

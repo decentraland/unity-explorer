@@ -15,6 +15,7 @@ namespace DCL.LOD.Tests
 {
     public class ResolveVisualSceneStateSystemShould : UnitySystemTestBase<ResolveVisualSceneStateSystem>
     {
+        
         private static readonly Vector2Int ROAD_BASE_PARCEL = new (1, 1);
         private static readonly Vector2Int REGULAR_PARCEL = new (0, 0);
 
@@ -126,12 +127,13 @@ namespace DCL.LOD.Tests
             SceneDefinitionComponent sceneDefinitionComponent = SceneDefinitionComponentFactory.CreateFromDefinition(sceneEntityDefinition, new IpfsPath());
             Entity entity = world.Create(partitionComponent, sceneDefinitionComponent);
 
-            system.Update(0);
+            system.Update(10);
 
             VisualSceneState visualSceneState = world.Get<VisualSceneState>(entity);
 
             Assert.IsFalse(visualSceneState.IsDirty);
             Assert.IsTrue(visualSceneState.CurrentVisualSceneState == expectedVisualSceneState);
         }
+        
     }
 }

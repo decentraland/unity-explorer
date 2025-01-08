@@ -8,6 +8,7 @@ using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Platforms;
 using DCL.CharacterMotion.Settings;
 using DCL.Diagnostics;
+using DCL.ECSComponents;
 using ECS.Abstract;
 using ECS.Unity.Transforms.Components;
 using UnityEngine;
@@ -20,7 +21,7 @@ namespace DCL.CharacterMotion.Systems
     [LogCategory(ReportCategory.MOTION)]
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     [UpdateAfter(typeof(CameraGroup))]
-    [UpdateAfter(typeof(InterpolateCharacterSystem))]
+    [UpdateAfter(typeof(ChangeCharacterPositionGroup))]
     public partial class RotateCharacterSystem : BaseUnityLoopSystem
     {
         private RotateCharacterSystem(World world) : base(world) { }
@@ -32,7 +33,7 @@ namespace DCL.CharacterMotion.Systems
         }
 
         [Query]
-        [None(typeof(PlayerLookAtIntent))]
+        [None(typeof(PlayerLookAtIntent), typeof(PBAvatarShape))]
         private void LerpRotation(
             [Data] float dt,
             ref ICharacterControllerSettings settings,
@@ -55,6 +56,7 @@ namespace DCL.CharacterMotion.Systems
         }
 
         [Query]
+        [None(typeof(PBAvatarShape))]
         private void ForceLookAt(in Entity entity, ref CharacterRigidTransform rigidTransform, ref CharacterTransform transform, in PlayerLookAtIntent lookAtIntent)
         {
             // Rotate player to look at camera target

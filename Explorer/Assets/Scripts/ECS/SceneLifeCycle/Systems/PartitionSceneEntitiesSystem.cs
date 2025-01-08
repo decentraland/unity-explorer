@@ -34,8 +34,6 @@ namespace ECS.SceneLifeCycle.Systems
         private readonly IReadOnlyCameraSamplingData readOnlyCameraSamplingData;
         private readonly IRealmPartitionSettings realmPartitionSettings;
 
-        private readonly byte emptyScenePartition;
-
         internal readonly PartitionDataContainer partitionDataContainer;
 
         private JobHandle partitionJobHandle;
@@ -53,11 +51,7 @@ namespace ECS.SceneLifeCycle.Systems
             this.partitionDataContainer = partitionDataContainer;
             this.realmPartitionSettings = realmPartitionSettings;
 
-
             partitionDataContainer.Initialize(DEPLOYED_SCENES_LIMIT, partitionSettings.SqrDistanceBuckets, partitionSettings);
-            emptyScenePartition = (byte)(partitionSettings.SqrDistanceBuckets.Count - 1);
-
-
         }
 
         protected override void OnDispose()
@@ -101,16 +95,6 @@ namespace ECS.SceneLifeCycle.Systems
         [None(typeof(PartitionComponent))]
         private void PartitionNewEntity(in Entity entity, ref SceneDefinitionComponent definition)
         {
-            // If we partition empty scene then their number can grow infinitely as we don't have boundaries
-            if (definition.IsEmpty)
-            {
-                PartitionComponent partitionComponent = partitionComponentPool.Get();
-                // some default values to not break other systems
-                partitionComponent.Bucket = emptyScenePartition;
-                World.Add(entity, partitionComponent);
-                return;
-            }
-
             if (definition.IsPortableExperience)
             {
                 PartitionComponent partitionComponent = partitionComponentPool.Get();

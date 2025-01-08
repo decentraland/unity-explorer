@@ -12,6 +12,11 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
 {
     public abstract class CommunicationsControllerAPIImplementationBase : ICommunicationsControllerAPI
     {
+        /// <summary>
+        ///     Special signal to receive CRDT State from a peer
+        /// </summary>
+        private const byte REQ_CRDT_STATE = 2;
+
         protected readonly List<IMemoryOwner<byte>> eventsToProcess = new ();
         private readonly CancellationTokenSource cancellationTokenSource = new ();
         private readonly ISceneCommunicationPipe sceneCommunicationPipe;
@@ -52,7 +57,14 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
         {
             foreach (PoolableByteArray poolable in data)
                 if (poolable.Length > 0)
-                    EncodeAndSendMessage(ISceneCommunicationPipe.MsgType.Uint8Array, poolable.Memory.Span);
+                {
+                    ISceneCommunicationPipe.ConnectivityAssertiveness assertiveness = poolable.Span[0] == REQ_CRDT_STATE
+                        ? ISceneCommunicationPipe.ConnectivityAssertiveness.DELIVERY_ASSERTED
+                        : ISceneCommunicationPipe.ConnectivityAssertiveness.DROP_IF_NOT_CONNECTED;
+
+                    EncodeAndSendMessage(ISceneCommunicationPipe.MsgType.Uint8Array, poolable.Memory.Span, assertiveness);
+                }
+
 
             lock (eventsToProcess)
             {
@@ -71,12 +83,13 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
             eventsToProcess.Clear();
         }
 
-        protected void EncodeAndSendMessage(ISceneCommunicationPipe.MsgType msgType, ReadOnlySpan<byte> message)
+        protected void EncodeAndSendMessage(ISceneCommunicationPipe.MsgType msgType, ReadOnlySpan<byte> message, ISceneCommunicationPipe.ConnectivityAssertiveness assertiveness)
         {
             Span<byte> encodedMessage = stackalloc byte[message.Length + 1];
             encodedMessage[0] = (byte)msgType;
             message.CopyTo(encodedMessage[1..]);
-            sceneCommunicationPipe.SendMessage(encodedMessage, sceneId, cancellationTokenSource.Token);
+
+            sceneCommunicationPipe.SendMessage(encodedMessage, sceneId, assertiveness, cancellationTokenSource.Token);
         }
 
         protected abstract void OnMessageReceived(ISceneCommunicationPipe.DecodedMessage decodedMessage);

@@ -1,5 +1,7 @@
 ﻿using DCL.Landscape.Settings;
+using DCL.Optimization.PerformanceBudgeting;
 using DCL.Quality;
+using DCL.SDKComponents.MediaStream.Settings;
 using DCL.Settings.ModuleControllers;
 using DCL.Settings.ModuleViews;
 using DCL.Settings.Settings;
@@ -19,10 +21,13 @@ namespace DCL.Settings.Configuration
         public abstract SettingsFeatureController CreateModule(
             Transform parent,
             RealmPartitionSettingsAsset realmPartitionSettingsAsset,
+            VideoPrioritizationSettings videoPrioritizationSettings,
             LandscapeData landscapeData,
             AudioMixer generalAudioMixer,
             QualitySettingsAsset qualitySettingsAsset,
-            ControlsSettingsAsset controlsSettingsAsset);
+            ControlsSettingsAsset controlsSettingsAsset,
+            ISystemMemoryCap systemMemoryCap,
+            WorldVolumeMacBus worldVolumeMacBus = null);
     }
 
     [Serializable]

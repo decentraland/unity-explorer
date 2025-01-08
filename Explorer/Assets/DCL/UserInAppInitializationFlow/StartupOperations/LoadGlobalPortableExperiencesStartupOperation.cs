@@ -1,35 +1,28 @@
-using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AsyncLoadReporting;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
-using DCL.Multiplayer.Connections.DecentralandUrls;
-using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.Utilities.Extensions;
-using ECS.SceneLifeCycle.Realm;
-using Global.AppArgs;
-using Global.Dynamic;
 using Global.Dynamic.DebugSettings;
 using PortableExperiences.Controller;
-using System;
 using System.Collections.Generic;
 using System.Threading;
 using Utility.Types;
 
 namespace DCL.UserInAppInitializationFlow.StartupOperations
 {
-    public class LoadGlobalPortableExperiencesStartupOperation : IStartupOperation
+    public class LoadGlobalPortableExperiencesStartupOperation : StartUpOperationBase
     {
-        private readonly RealFlowLoadingStatus loadingStatus;
+        private readonly ILoadingStatus loadingStatus;
         private readonly ISelfProfile selfProfile;
         private readonly FeatureFlagsCache featureFlagsCache;
         private readonly IDebugSettings debugSettings;
         private readonly IPortableExperiencesController portableExperiencesController;
 
         public LoadGlobalPortableExperiencesStartupOperation(
-            RealFlowLoadingStatus loadingStatus,
+            ILoadingStatus loadingStatus,
             ISelfProfile selfProfile,
             FeatureFlagsCache featureFlagsCache,
             IDebugSettings debugSettings,
@@ -42,24 +35,13 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
             this.portableExperiencesController = portableExperiencesController;
         }
 
-        public async UniTask<Result> ExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct)
+        protected override UniTask InternalExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct)
         {
-            await CheckGlobalPxLoadingConditionsAsync(ct);
-
-            report.SetProgress(loadingStatus.SetStage(RealFlowLoadingStatus.Stage.GlobalPXsLoaded));
-            return Result.SuccessResult();
-        }
-
-        private async UniTask CheckGlobalPxLoadingConditionsAsync(CancellationToken ct)
-        {
-            var ownProfile = await selfProfile.ProfileAsync(ct);
-
-            //If we havent completed the tutorial, we won't load the GlobalPX as it will interfere with the onboarding.
-            if (ownProfile is not { TutorialStep: > 0 })
-                return;
-
+            float finalizationProgress = loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.GlobalPXsLoading);
             LoadDebugPortableExperiences(ct);
             LoadRemotePortableExperiences(ct);
+            report.SetProgress(finalizationProgress);
+            return UniTask.CompletedTask;
         }
 
         private void LoadRemotePortableExperiences(CancellationToken ct)

@@ -8,6 +8,7 @@ namespace ECS.StreamableLoading.Common.Components
     public struct CommonLoadingArguments
     {
         public URLAddress URL;
+        public URLAddress? CacheableURL;
         public int Attempts;
         public int Timeout;
 
@@ -43,6 +44,7 @@ namespace ECS.StreamableLoading.Common.Components
             Attempts = attempts;
             PermittedSources = permittedSources;
             CurrentSource = currentSource;
+            CacheableURL = null;
             CancellationTokenSource = cancellationTokenSource ?? new CancellationTokenSource();
         }
 
@@ -61,5 +63,13 @@ namespace ECS.StreamableLoading.Common.Components
         // Always override attempts count for streamable assets as repetitions are handled in LoadSystemBase
         public static implicit operator CommonArguments(in CommonLoadingArguments commonLoadingArguments) =>
             new (commonLoadingArguments.URL, attemptsCount: 1, timeout: commonLoadingArguments.Timeout);
+
+        public string GetCacheableURL()
+        {
+            //Needed to handle the different versioning and entityIDs of the ABs
+            if(CacheableURL.HasValue)
+                return CacheableURL.Value.Value;
+            return URL;
+        }
     }
 }

@@ -3,7 +3,6 @@ using DCL.AvatarRendering.Loading.DTO;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
 using SceneRunner.Scene;
-using System.Linq;
 
 namespace DCL.AvatarRendering.Loading.Components
 {
@@ -108,14 +107,21 @@ namespace DCL.AvatarRendering.Loading.Components
         {
             AvatarAttachmentDTO dto = avatarAttachment.DTO;
 
+            if (dto.Metadata?.AbstractData?.representations == null)
+            {
+                hash = null;
+                return false;
+            }
+
             // The length of arrays is small, so O(N) complexity is fine
             // Avoid iterator allocations with "for" loop
             for (var i = 0; i < dto.Metadata.AbstractData.representations.Length; i++)
             {
                 var representation = dto.Metadata.AbstractData.representations[i];
 
-                if (representation.bodyShapes.Contains(bodyShape))
-                    return avatarAttachment.TryGetContentHashByKey(representation.mainFile, out hash);
+                for (var id = 0; id < representation.bodyShapes.Length; id++)
+                    if (Equals(representation.bodyShapes[id], (string)bodyShape))
+                        return avatarAttachment.TryGetContentHashByKey(representation.mainFile, out hash);
             }
 
             hash = null;

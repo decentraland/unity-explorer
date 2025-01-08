@@ -3,9 +3,11 @@ using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using Cysharp.Threading.Tasks;
+using DCL.AvatarRendering.AvatarShape;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.Character.Components;
 using DCL.CharacterPreview.Components;
+using DCL.ECSComponents;
 using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.Culling;
 using DCL.MapRenderer.MapLayers.UsersMarker;
@@ -58,7 +60,7 @@ namespace DCL.MapRenderer.MapLayers.Users
         }
 
         [Query]
-        [None(typeof(PlayerComponent), typeof(CharacterPreviewComponent), typeof(DeleteEntityIntention))]
+        [None(typeof(PlayerComponent), typeof(CharacterPreviewComponent), typeof(PBAvatarShape), typeof(DeleteEntityIntention))]
         private void SetPlayerMarker(in CharacterTransform transformComponent, in AvatarShapeComponent avatarShape)
         {
             if (!isEnabled)
@@ -111,12 +113,14 @@ namespace DCL.MapRenderer.MapLayers.Users
         }
     }
 
+    [UpdateAfter(typeof(AvatarGroup))]
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     public partial class TrackPlayersPositionSystem : ControllerECSBridgeSystem
     {
         internal TrackPlayersPositionSystem(World world) : base(world) { }
     }
 
+    [UpdateAfter(typeof(AvatarGroup))]
     [UpdateAfter(typeof(TrackPlayersPositionSystem))]
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     public partial class RemovedTrackedPlayersPositionSystem : ControllerECSBridgeSystem

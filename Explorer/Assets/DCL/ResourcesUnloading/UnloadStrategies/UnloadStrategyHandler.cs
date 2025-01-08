@@ -5,57 +5,40 @@ namespace DCL.ResourcesUnloading.UnloadStrategies
 {
     public class UnloadStrategyHandler
     {
-        internal IUnloadStrategy[] unloadStrategies;
-        internal int currentUnloadStrategy;
+        internal UnloadStrategyBase[] unloadStrategies;
         private readonly ICacheCleaner cacheCleaner;
 
-        //Determines how many frames we need to fail to increase the aggressiveness tier
-        private int consecutiveFailedFrames;
-        private readonly int failuresFrameThreshold;
+        private readonly int DEFAULT_FRAME_FAILURE_THRESHOLD = 250;
 
-
-        public UnloadStrategyHandler(IRealmPartitionSettings realmPartitionSettings, int failuresFrameThreshold,
+        public UnloadStrategyHandler(IRealmPartitionSettings realmPartitionSettings,
             ICacheCleaner cacheCleaner)
         {
             this.cacheCleaner = cacheCleaner;
-            this.failuresFrameThreshold = failuresFrameThreshold;
-            currentUnloadStrategy = 0;
 
-            //Higher the index, more aggressive the strategy
-            unloadStrategies = new IUnloadStrategy[]
+            //The base strategy at 0 will always run
+            //On top of that, we adds logic that run only if the previous one fails in an additive manner
+            unloadStrategies = new UnloadStrategyBase[]
             {
-                new StandardUnloadStrategy(),
-                new AggressiveUnloadStrategy(realmPartitionSettings)
+                new StandardUnloadStrategy(DEFAULT_FRAME_FAILURE_THRESHOLD, cacheCleaner),
+                new ReduceLoadingRadiusUnloadStrategy(DEFAULT_FRAME_FAILURE_THRESHOLD, realmPartitionSettings),
+                new UnloadUnusedAssetUnloadStrategy(DEFAULT_FRAME_FAILURE_THRESHOLD)
             };
         }
 
         public void TryUnload()
         {
-            if (IsRunning())
-                return;
-
-            consecutiveFailedFrames++;
-            if (consecutiveFailedFrames > failuresFrameThreshold)
-                IncreaseAggresivenessTier();
-
-            unloadStrategies[currentUnloadStrategy].TryUnload(cacheCleaner);
-        }
-
-        private bool IsRunning()
-        {
-            return unloadStrategies[currentUnloadStrategy].IsRunning;
+            for (var i = unloadStrategies.Length - 1; i >= 0; i--)
+            {
+                if (i == 0 || unloadStrategies[i - 1].FaillingOverThreshold())
+                    unloadStrategies[i].TryUnload();
+            }
         }
 
         public void ResetToNormal()
         {
-            currentUnloadStrategy = 0;
-            consecutiveFailedFrames = 0;
+            for (var i = 0; i < unloadStrategies.Length; i++)
+                unloadStrategies[i].ResetStrategy();
         }
 
-        private void IncreaseAggresivenessTier()
-        {
-            currentUnloadStrategy = Math.Clamp(currentUnloadStrategy + 1, 0, unloadStrategies.Length - 1);
-            consecutiveFailedFrames = 0;
-        }
     }
 }

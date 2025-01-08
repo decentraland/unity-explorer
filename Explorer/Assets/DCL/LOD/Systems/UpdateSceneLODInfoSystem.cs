@@ -5,8 +5,6 @@ using AssetManagement;
 using DCL.Diagnostics;
 using DCL.LOD.Components;
 using DCL.Multiplayer.Connections.DecentralandUrls;
-using DCL.Optimization.PerformanceBudgeting;
-using DCL.PluginSystem.Global;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
@@ -73,7 +71,9 @@ namespace DCL.LOD.Systems
                 platformLODKey,
                 permittedSources: AssetSource.ALL,
                 customEmbeddedSubDirectory: LODUtils.LOD_EMBEDDED_SUBDIRECTORIES,
-                manifest: manifest);
+                manifest: manifest,
+                lookForShaderAsset: true
+                );
 
             sceneLODInfo.CurrentLODPromise = Promise.Create(World, assetBundleIntention, partitionComponent);
             sceneLODInfo.CurrentLODLevelPromise = level;

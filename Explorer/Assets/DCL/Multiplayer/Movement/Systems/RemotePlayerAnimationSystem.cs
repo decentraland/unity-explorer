@@ -3,7 +3,6 @@ using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
-using DCL.Character.CharacterMotion.Components;
 using DCL.Character.Components;
 using DCL.CharacterMotion.Animation;
 using DCL.CharacterMotion.Components;
@@ -13,6 +12,7 @@ using DCL.Utilities.Extensions;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using UnityEngine;
+using Utility.Animations;
 using static DCL.CharacterMotion.Animation.AnimationMovementBlendLogic;
 
 namespace DCL.Multiplayer.Movement.Systems
@@ -29,11 +29,13 @@ namespace DCL.Multiplayer.Movement.Systems
         private const float RUN_SPEED_THRESHOLD = 9.5f;
         private const float JOG_SPEED_THRESHOLD = 4f;
 
-        private readonly RemotePlayerExtrapolationSettings settings;
+        private readonly RemotePlayerExtrapolationSettings extrapolationSettings;
+        private readonly IMultiplayerMovementSettings movementSettings;
 
-        public RemotePlayerAnimationSystem(World world, RemotePlayerExtrapolationSettings settings) : base(world)
+        public RemotePlayerAnimationSystem(World world, RemotePlayerExtrapolationSettings extrapolationSettings, IMultiplayerMovementSettings movementSettings) : base(world)
         {
-            this.settings = settings;
+            this.extrapolationSettings = extrapolationSettings;
+            this.movementSettings = movementSettings;
         }
 
         protected override void Update(float t)
@@ -56,7 +58,15 @@ namespace DCL.Multiplayer.Movement.Systems
             if (intComp.Enabled)
                 InterpolateAnimations(view, ref anim, intComp);
             else if (extComp.Enabled)
-                ExtrapolateAnimations(view, ref anim, extComp.Time, extComp.TotalMoveDuration, settings.LinearTime);
+                ExtrapolateAnimations(view, ref anim, extComp.Time, extComp.TotalMoveDuration, extrapolationSettings.LinearTime);
+            else
+            {
+                anim.States.MovementBlendValue -= movementSettings.IdleSlowDownSpeed * UnityEngine.Time.deltaTime;
+                anim.States.SlideBlendValue -= movementSettings.IdleSlowDownSpeed * UnityEngine.Time.deltaTime;
+
+                view.SetAnimatorFloat(AnimationHashes.MOVEMENT_BLEND, anim.States.MovementBlendValue.ClampSmallValuesToZero(BLEND_EPSILON));
+                view.SetAnimatorFloat(AnimationHashes.SLIDE_BLEND, anim.States.SlideBlendValue.ClampSmallValuesToZero(BLEND_EPSILON));
+            }
         }
 
         private static void UpdateAnimations(IAvatarView view, ref CharacterAnimationComponent animationComponent, ref NetworkMovementMessage message)

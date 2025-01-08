@@ -1,9 +1,5 @@
 fileFormatVersion: 2
-<<<<<<<< HEAD:Explorer/Assets/DCL/Time.meta
 guid: 0898d0f04feeb924296fabc33927a844
-========
-guid: 88f1b183fd4d48b4db9caf28d593eafd
->>>>>>>> main:Explorer/Assets/DCL/PerformanceAndDiagnostics.meta
 folderAsset: yes
 DefaultImporter:
   externalObjects: {}

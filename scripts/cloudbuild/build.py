@@ -8,6 +8,8 @@ import zipfile
 import requests
 import datetime
 import argparse
+from urllib3.util.retry import Retry
+from requests.adapters import HTTPAdapter
 # Local
 import utils
 
@@ -76,13 +78,25 @@ def clone_current_target(use_cache):
         # Remove cache for new targets
         if 'buildTargetCopyCache' in body['settings']:
             del body['settings']['buildTargetCopyCache']
-
+        
+        # Remove buildtargetid for new targets (unity bug)
+        if 'buildtargetid' in body:
+            del body['buildtargetid']
+        
         return body
 
     # Set target name based on branch, without commit SHA
     base_target_name  = f'{re.sub(r'^t_', '', os.getenv('TARGET'))}-{re.sub('[^A-Za-z0-9]+', '-', os.getenv('BRANCH_NAME'))}'.lower()
 
+    # Get the install source from the environment variable
+    install_source = os.getenv('PARAM_INSTALL_SOURCE', 'launcher')
+
+    # Include install_source in the target name only if it's not 'launcher'
+    if install_source and install_source != 'launcher':
+        base_target_name = f"{base_target_name}-{install_source}"
+
     print(f"Start clone_current_target for {base_target_name}")
+
     if is_release_workflow:
          # Use the tag version in the target name if it's a release workflow
         tag_version = os.getenv('TAG_VERSION', 'unknown-version')
@@ -91,6 +105,8 @@ def clone_current_target(use_cache):
         new_target_name = f"{base_target_name}-{sanitized_tag_version}"
     else:
         new_target_name = base_target_name
+
+    print(f"Updated name for target: {new_target_name}")
 
     template_target = os.getenv('TARGET')
 
@@ -254,14 +270,18 @@ def poll_build(id):
     if id == -1:
         print('Error: No build ID known (-1)')
         sys.exit(1)
-
     retries = 0
     max_retries = 5
     wait_time = 2
     while retries < max_retries:
         try:
             response = requests.get(f'{URL}/buildtargets/{os.getenv('TARGET')}/builds/{id}', headers=HEADERS)
-            break
+            if response.status_code == 200:
+                break
+            else:
+                print(f'Failed to poll build with ID {id} with status code: {response.status_code}')
+                print('Response body:', response.text)
+                raise Exception(f"HTTP error {response.status_code}")
         except Exception as e:
             print(f'Request failed: {e}')
             retries += 1
@@ -270,16 +290,11 @@ def poll_build(id):
                 time.sleep(wait_time)
                 wait_time *= 2  # Increase wait time exponentially for each retry
             else:
-                raise Exception(f'Failed after {max_retries} retries')
-
-    if response.status_code != 200:
-        print(f'Failed to poll build with ID {id} with status code: {response.status_code}')
-        print('Response body:', response.text)
-        sys.exit(1)
-
+                print(f'Failed after {max_retries} retries')
+                sys.exit(1)
+    
     global build_healthy
     response_json = response.json()
-
     # { created , queued , sentToBuilder , started , restarted , success , failure , canceled , unknown }
     status = response_json['buildStatus']
     match status:
@@ -299,12 +314,29 @@ def poll_build(id):
             return False
             
 def download_artifact(id):
-    response = requests.get(f'{URL}/buildtargets/{os.getenv("TARGET")}/builds/{id}', headers=HEADERS)
+    session = requests.Session()
+    retries = Retry(
+        total=5,              # Retry up to 5 times
+        backoff_factor=2,     # Exponential backoff: 2s, 4s, 8s, etc.
+        status_forcelist=[502, 503, 504],  # Retry on these HTTP errors
+        allowed_methods=["GET"]
+    )
+    session.mount('https://', HTTPAdapter(max_retries=retries))
+    try:
+        response = session.get(
+            f'{URL}/buildtargets/{os.getenv("TARGET")}/builds/{id}',
+            headers=HEADERS, timeout=60
+        )
+        response.raise_for_status()  # Raise an HTTPError for bad status codes (4xx/5xx)
+    except requests.exceptions.RequestException as e:
+        print(f'Error: Failed to get build artifacts with ID {id}. Exception: {e}')
+        sys.exit(1)
 
     if response.status_code != 200:
-        print(f'Failed to get build artifacts with ID {id} with status code: {response.status_code}')
-        print("Response body:", response.text)
+        print(f'Error: Failed to get build artifacts with ID {id} with status code: {response.status_code}')
+        print("Response body:", response.text[:500])
         sys.exit(1)
+    print('Build artifacts successfully retrieved!')
 
     response_json = response.json()
     try:
@@ -361,15 +393,37 @@ def download_artifact(id):
         print(f"ERROR: Build folder not found at expected location: {os.path.join(os.getcwd(), download_dir)}")
 
 def download_log(id):
-    response = requests.get(f'{URL}/buildtargets/{os.getenv('TARGET')}/builds/{id}/log', headers=HEADERS)
+    with open('unity_cloud_log.log', 'w') as f:
+        f.write('Initialize the log file before making the request\n')
+
+    try:
+        response = requests.get(
+            f'{URL}/buildtargets/{os.getenv("TARGET")}/builds/{id}/log',
+            headers=HEADERS, timeout=120, stream=True
+        )
+    except requests.exceptions.RequestException as e:
+        print(f'Warning: Failed to download build log with ID {id}. Exception: {e}')
+        print('Continuing without the build log.')
+        return  # Gracefully exit without failing the job
 
     if response.status_code != 200:
-        print(f'Failed to get build log with ID {id} with status code: {response.status_code}')
-        print("Response body:", response.text)
-        sys.exit(1)
+        print(f'Warning: Failed to get build log with ID {id} with status code: {response.status_code}')
+        print("Response body (partial):", response.text[:500])
+        return  # Gracefully exit without failing the job
 
-    with open('unity_cloud_log.log', 'w') as f:
-        f.write(response.text)
+    try:
+        with open('unity_cloud_log.log', 'a') as f:
+            for chunk in response.iter_content(chunk_size=1024):
+                if chunk:
+                    f.write(chunk.decode('utf-8'))
+    except requests.exceptions.ChunkedEncodingError as e:
+        print(f'Warning: ChunkedEncodingError while writing build log: {e}')
+        print('Continuing without completing the build log download.')
+    except Exception as e:
+        print(f'Warning: Unexpected error while writing build log: {e}')
+        print('Continuing without completing the build log download.')
+    finally:
+        response.close()
 
     print('Build log ready!')
 

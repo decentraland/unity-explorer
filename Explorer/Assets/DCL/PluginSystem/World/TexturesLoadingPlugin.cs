@@ -9,7 +9,6 @@ using ECS.StreamableLoading.Textures;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using Utility.Multithreading;
 
 namespace DCL.PluginSystem.World
 {
@@ -17,7 +16,7 @@ namespace DCL.PluginSystem.World
     {
         private readonly IWebRequestController webRequestController;
 
-        private readonly TexturesCache texturesCache = new ();
+        private readonly TexturesCache<GetTextureIntention> texturesCache = new ();
 
         public TexturesLoadingPlugin(IWebRequestController webRequestController, CacheCleaner cacheCleaner)
         {
@@ -35,16 +34,9 @@ namespace DCL.PluginSystem.World
             LoadGlobalTextureSystem.InjectToWorld(ref builder, texturesCache, webRequestController);
         }
 
-#region Interface Ambiguity
-        UniTask IDCLPlugin.Initialize(IPluginSettingsContainer container, CancellationToken ct) =>
-            UniTask.CompletedTask;
-
         UniTask IDCLPlugin<NoExposedPluginSettings>.InitializeAsync(NoExposedPluginSettings settings, CancellationToken ct) =>
             UniTask.CompletedTask;
 
-        void IDisposable.Dispose()
-        {
-        }
-#endregion
+        void IDisposable.Dispose() { }
     }
 }

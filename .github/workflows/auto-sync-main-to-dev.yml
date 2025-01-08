@@ -1,0 +1,30 @@
+name: Create PR for syncing main to dev
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  create-pr:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v4
+
+      - name: Create or update branch
+        run: |
+          git checkout -B chore/sync
+          git push --force --set-upstream origin chore/sync
+
+      - name: Create pull request using GitHub CLI
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr create \
+            --base dev \
+            --head chore/sync \
+            --title "chore: sync main to dev" \
+            --body ":crown: *An automated PR*" \
+            --label auto-pr \

@@ -1,6 +1,7 @@
 using CrdtEcsBridge.Components;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Multiplayer.Connections.Rooms;
 using DCL.Multiplayer.Connections.Typing;
 using DCL.Utilities.Extensions;
 using Decentraland.Kernel.Comms.Rfc4;
@@ -24,13 +25,14 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
         private readonly IMemoryPool memoryPool;
         private readonly MessageParser<Packet> messageParser;
         private readonly uint supportedVersion;
+        private readonly RoomSource roomId;
         private readonly CancellationTokenSource cts;
 
         private readonly Dictionary<Packet.MessageOneofCase, List<Action<(Packet, Participant)>>> subscribers = new ();
 
         private bool isDisposed;
 
-        public MessagePipe(IDataPipe dataPipe, IMultiPool sendingMultiPool, IMultiPool receivingMultiPool, IMemoryPool memoryPool) : this(
+        public MessagePipe(IDataPipe dataPipe, IMultiPool sendingMultiPool, IMultiPool receivingMultiPool, IMemoryPool memoryPool, RoomSource roomId) : this(
             dataPipe,
             sendingMultiPool,
             memoryPool,
@@ -40,16 +42,17 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
                 packet.ClearProtobufComponent();
                 return packet;
             }),
-            100
-        ) { }
+            100, roomId) { }
 
-        public MessagePipe(IDataPipe dataPipe, IMultiPool sendingMultiPool, IMemoryPool memoryPool, MessageParser<Packet> messageParser, uint supportedVersion)
+        public MessagePipe(IDataPipe dataPipe, IMultiPool sendingMultiPool, IMemoryPool memoryPool, MessageParser<Packet> messageParser, uint supportedVersion,
+            RoomSource roomId)
         {
             this.dataPipe = dataPipe;
             this.sendingMultiPool = sendingMultiPool;
             this.memoryPool = memoryPool;
             this.messageParser = messageParser;
             this.supportedVersion = supportedVersion;
+            this.roomId = roomId;
 
             cts = new CancellationTokenSource();
             dataPipe.DataReceived += OnDataReceived;
@@ -145,7 +148,8 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
                             payload,
                             packet,
                             participant.Identity,
-                            sendingMultiPool
+                            sendingMultiPool,
+                            roomId
                         );
 
                         onMessageReceived(receivedMessage);

@@ -1,16 +1,36 @@
 using Cysharp.Threading.Tasks;
 using LiveKit.Rooms;
+using System;
 
 namespace DCL.Multiplayer.Connections.Rooms.Connective
 {
-    public interface IConnectiveRoom
+    /// <summary>
+    ///     Represent the core of the connection to a room
+    /// </summary>
+    public interface IConnectiveRoom : IDisposable
     {
         enum State
         {
             Stopped,
             Starting,
             Running,
-            Stopping
+            Stopping,
+        }
+
+        public enum ConnectionLoopHealth
+        {
+            Prewarming,
+
+            PrewarmFailed,
+
+            Running,
+
+            /// <summary>
+            ///     Gracefully stopped
+            /// </summary>
+            Stopped,
+
+            CycleFailed,
         }
 
         UniTask<bool> StartAsync();
@@ -19,12 +39,14 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
 
         State CurrentState();
 
+        ConnectionLoopHealth CurrentConnectionLoopHealth { get; }
+
         IRoom Room();
 
-        class Fake : IConnectiveRoom
+        class Null : IConnectiveRoom
         {
             public UniTask<bool> StartAsync() =>
-                UniTask.FromResult(false);
+                UniTask.FromResult(true);
 
             public UniTask StopAsync() =>
                 UniTask.CompletedTask;
@@ -32,8 +54,12 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
             public State CurrentState() =>
                 State.Stopped;
 
+            public ConnectionLoopHealth CurrentConnectionLoopHealth => ConnectionLoopHealth.Stopped;
+
             public IRoom Room() =>
                 NullRoom.INSTANCE;
+
+            public void Dispose() { }
         }
     }
 

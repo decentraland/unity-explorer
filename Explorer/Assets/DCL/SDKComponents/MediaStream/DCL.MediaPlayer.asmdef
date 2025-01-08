@@ -1,5 +1,5 @@
 {
-    "name": "DCL.AudioStream.PluginWrapper",
+    "name": "DCL.MediaPlayer",
     "rootNamespace": "",
     "references": [
         "GUID:275e22790c04e9b47a5085d7b0c4432a",
@@ -20,7 +20,11 @@
         "GUID:8322ea9340a544c59ddc56d4793eac74",
         "GUID:4a12c0b1b77ec6b418a8d7bd5c925be3",
         "GUID:f51ebe6a0ceec4240a699833d6309b23",
-        "GUID:fa7b3fdbb04d67549916da7bd2af58ab"
+        "GUID:fa7b3fdbb04d67549916da7bd2af58ab",
+        "GUID:1d75b3d8691c845b1a51082e81433dfc",
+        "GUID:4307f53044263cf4b835bd812fc161a4",
+        "GUID:fc37ca6521833154cab08ec51af097d9",
+        "GUID:ace653ac543d483ba8abee112a3ba2a6"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

@@ -2,7 +2,6 @@
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
-using CommunicationData.URLHelpers;
 using CRDT;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
@@ -17,6 +16,7 @@ using ECS.Unity.Materials.Components.Defaults;
 using ECS.Unity.Textures.Components;
 using ECS.Unity.Textures.Components.Extensions;
 using ECS.Unity.Textures.Utils;
+using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using SceneRunner.Scene;
 using System.Collections.Generic;
 using UnityEngine;
@@ -70,29 +70,29 @@ namespace ECS.Unity.Materials.Systems
             if (MaterialDataEqualityComparer.Equals(in materialComponent.Data, in materialData))
                 return;
 
-            InvalidatePrbInequality(ref materialComponent, ref materialData);
+            InvalidatePrbInequality(entity, ref materialComponent, ref materialData);
 
             MaterialData.TexturesData prevTextureData = materialComponent.Data.Textures;
             materialComponent.Data = materialData;
             materialComponent.Status = StreamableLoading.LifeCycle.LoadingInProgress;
 
-            World.Set(entity, StartNewMaterialLoad(materialComponent, in prevTextureData, partitionComponent));
+            World.Set(entity, StartNewMaterialLoad(entity, materialComponent, in prevTextureData, partitionComponent));
             World.AddOrGet(entity, new ShouldInstanceMaterialComponent());
         }
 
-        private void InvalidatePrbInequality(ref MaterialComponent materialComponent, ref MaterialData materialData)
+        private void InvalidatePrbInequality(Entity entity, ref MaterialComponent materialComponent, ref MaterialData materialData)
         {
             // If isPbr is the same right the same material is reused
             if (materialComponent.Data.IsPbrMaterial != materialData.IsPbrMaterial)
             {
-                ReleaseMaterial.Execute(World!, ref materialComponent, destroyMaterial);
+                ReleaseMaterial.Execute(entity, World!, ref materialComponent, destroyMaterial);
                 materialComponent.Result = null;
             }
         }
 
-        private MaterialComponent StartNewMaterialLoad(MaterialComponent materialComponent, in MaterialData.TexturesData prevTexturesData, PartitionComponent partitionComponent)
+        private MaterialComponent StartNewMaterialLoad(Entity entity, MaterialComponent materialComponent, in MaterialData.TexturesData prevTexturesData, PartitionComponent partitionComponent)
         {
-            CreateGetTexturePromises(ref materialComponent, prevTexturesData, partitionComponent);
+            CreateGetTexturePromises(entity, ref materialComponent, prevTexturesData, partitionComponent);
             return materialComponent;
         }
 
@@ -105,7 +105,7 @@ namespace ECS.Unity.Materials.Systems
                 return;
 
             var materialComponent = new MaterialComponent(CreateMaterialData(in material));
-            CreateGetTexturePromises(ref materialComponent, null, partitionComponent);
+            CreateGetTexturePromises(entity, ref materialComponent, null, partitionComponent);
             materialComponent.Status = StreamableLoading.LifeCycle.LoadingInProgress;
 
             World.Add(entity, materialComponent);
@@ -115,12 +115,12 @@ namespace ECS.Unity.Materials.Systems
         private MaterialData CreateMaterialData(in PBMaterial material)
         {
             if (material.Unlit != null)
-                return CreateBasicMaterialData(material, albedoTexture: material.Unlit.Texture.CreateTextureComponent(sceneData));
+                return CreateBasicMaterialData(material, albedoTexture: material.Unlit.Texture.CreateTextureComponent(sceneData), material.Unlit.AlphaTexture.CreateTextureComponent(sceneData));
 
             TextureComponent? albedoTexture = material.Pbr.Texture.CreateTextureComponent(sceneData);
             TextureComponent? alphaTexture = material.Pbr.AlphaTexture.CreateTextureComponent(sceneData);
             TextureComponent? emissiveTexture = material.Pbr.EmissiveTexture.CreateTextureComponent(sceneData);
-            TextureComponent? bumpTexture = material.Pbr.BumpTexture.CreateTextureComponent(sceneData);
+            TextureComponent? bumpTexture = material.Pbr.BumpTexture.CreateTextureComponent(sceneData)?.WithTextureType(TextureType.NormalMap);
 
             return CreatePBRMaterialData(material, albedoTexture, alphaTexture, emissiveTexture, bumpTexture);
         }
@@ -148,31 +148,36 @@ namespace ECS.Unity.Materials.Systems
                 pbMaterial.GetEmissiveIntensity(),
                 pbMaterial.GetDirectIntensity());
 
-        private void CreateGetTexturePromises(ref MaterialComponent materialComponent,
+        private void CreateGetTexturePromises(Entity entity, ref MaterialComponent materialComponent,
             in MaterialData.TexturesData? oldTexturesData,
             PartitionComponent partitionComponent)
         {
-            TryCreateGetTexturePromise(in materialComponent.Data.Textures.AlbedoTexture, oldTexturesData?.AlbedoTexture, ref materialComponent.AlbedoTexPromise, partitionComponent);
+            TryCreateGetTexturePromise(entity, in materialComponent.Data.Textures.AlbedoTexture, oldTexturesData?.AlbedoTexture, ref materialComponent.AlbedoTexPromise, partitionComponent);
 
             if (materialComponent.Data.IsPbrMaterial)
             {
-                TryCreateGetTexturePromise(in materialComponent.Data.Textures.AlphaTexture, oldTexturesData?.AlphaTexture, ref materialComponent.AlphaTexPromise, partitionComponent);
-                TryCreateGetTexturePromise(in materialComponent.Data.Textures.EmissiveTexture, oldTexturesData?.EmissiveTexture, ref materialComponent.EmissiveTexPromise, partitionComponent);
-                TryCreateGetTexturePromise(in materialComponent.Data.Textures.BumpTexture, oldTexturesData?.BumpTexture, ref materialComponent.BumpTexPromise, partitionComponent);
+                TryCreateGetTexturePromise(entity, in materialComponent.Data.Textures.AlphaTexture, oldTexturesData?.AlphaTexture, ref materialComponent.AlphaTexPromise, partitionComponent);
+                TryCreateGetTexturePromise(entity, in materialComponent.Data.Textures.EmissiveTexture, oldTexturesData?.EmissiveTexture, ref materialComponent.EmissiveTexPromise, partitionComponent);
+                TryCreateGetTexturePromise(entity, in materialComponent.Data.Textures.BumpTexture, oldTexturesData?.BumpTexture, ref materialComponent.BumpTexPromise, partitionComponent);
             }
+            else { TryCreateGetTexturePromise(entity, in materialComponent.Data.Textures.AlphaTexture, oldTexturesData?.AlphaTexture, ref materialComponent.AlphaTexPromise, partitionComponent); }
         }
 
-        private static MaterialData CreateBasicMaterialData(in PBMaterial pbMaterial, in TextureComponent? albedoTexture) =>
-            MaterialData.CreateBasicMaterial(albedoTexture, pbMaterial.GetAlphaTest(), pbMaterial.GetDiffuseColor(), pbMaterial.GetCastShadows());
+        private static MaterialData CreateBasicMaterialData(in PBMaterial pbMaterial, in TextureComponent? albedoTexture, in TextureComponent? alphaTexture) =>
+            MaterialData.CreateBasicMaterial(albedoTexture, alphaTexture, pbMaterial.GetAlphaTest(), pbMaterial.GetDiffuseColor(), pbMaterial.GetCastShadows());
 
-        private bool TryCreateGetTexturePromise(in TextureComponent? textureComponent,
+        private bool TryCreateGetTexturePromise(
+            Entity entity,
+            in TextureComponent? textureComponent,
             in TextureComponent? oldTextureComponent,
-            ref Promise? promise, PartitionComponent partitionComponent)
+            ref Promise? promise,
+            PartitionComponent partitionComponent
+        )
         {
             if (textureComponent == null)
             {
                 // If component is being reused forget the previous promise
-                ReleaseMaterial.ReleaseIntention(World, ref promise, true);
+                ReleaseMaterial.ReleaseIntention(entity, World, ref promise, true);
                 return false;
             }
 
@@ -184,7 +189,7 @@ namespace ECS.Unity.Materials.Systems
                 return false;
 
             // If component is being reused forget the previous promise
-            ReleaseMaterial.ReleaseIntention(World, ref promise, true);
+            ReleaseMaterial.ReleaseIntention(entity, World, ref promise, true);
 
             // TODO this code must be unified to be able to load video textures in a common way
             if (textureComponentValue.IsVideoTexture)
@@ -192,12 +197,23 @@ namespace ECS.Unity.Materials.Systems
                 var intention = new GetTextureIntention(textureComponentValue.VideoPlayerEntity);
 
                 promise = Promise.CreateFinalized(intention,
-                    textureComponentValue.TryAddConsumer(entitiesMap, videoTexturesPool, World, out Texture2DData? tex)
+                    textureComponentValue.TryAddConsumer(entity, entitiesMap, videoTexturesPool, World, out Texture2DData? tex)
                         ? new StreamableLoadingResult<Texture2DData>(tex!)
                         : new StreamableLoadingResult<Texture2DData>(GetReportCategory(), CreateException(new EcsEntityNotFoundException(textureComponentValue.VideoPlayerEntity, $"Entity {textureComponentValue.VideoPlayerEntity} not found!. VideoTexture will not be created."))));
             }
             else
-                promise = Promise.Create(World!, new GetTextureIntention(textureComponentValue.Src, textureComponentValue.WrapMode, textureComponentValue.FilterMode, attemptsCount: attemptsCount), partitionComponent);
+                promise = Promise.Create(
+                    World!,
+                    new GetTextureIntention(
+                        textureComponentValue.Src,
+                        textureComponentValue.FileHash,
+                        textureComponentValue.WrapMode,
+                        textureComponentValue.FilterMode,
+                        textureComponentValue.TextureType,
+                        attemptsCount: attemptsCount
+                    ),
+                    partitionComponent
+                );
 
             return true;
         }

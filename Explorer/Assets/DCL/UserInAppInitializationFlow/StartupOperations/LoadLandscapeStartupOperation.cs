@@ -6,25 +6,23 @@ using Utility.Types;
 
 namespace DCL.UserInAppInitializationFlow.StartupOperations
 {
-    public class LoadLandscapeStartupOperation : IStartupOperation
+    public class LoadLandscapeStartupOperation : StartUpOperationBase
     {
-        private readonly RealFlowLoadingStatus loadingStatus;
-        private readonly IRealmNavigator realmNavigator;
+        private readonly ILoadingStatus loadingStatus;
+        private readonly ILandscape landscape;
 
-        public LoadLandscapeStartupOperation(RealFlowLoadingStatus loadingStatus, IRealmNavigator realmNavigator)
+        public LoadLandscapeStartupOperation(ILoadingStatus loadingStatus, ILandscape landscape)
         {
             this.loadingStatus = loadingStatus;
-            this.realmNavigator = realmNavigator;
+            this.landscape = landscape;
         }
 
-        public async UniTask<Result> ExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct)
+        protected override async UniTask InternalExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct)
         {
-            AsyncLoadProcessReport landscapeLoadReport
-                = report.CreateChildReport(RealFlowLoadingStatus.PROGRESS[RealFlowLoadingStatus.Stage.LandscapeLoaded]);
-
-            await realmNavigator.LoadTerrainAsync(landscapeLoadReport, ct);
-            report.SetProgress(loadingStatus.SetStage(RealFlowLoadingStatus.Stage.LandscapeLoaded));
-            return Result.SuccessResult();
+            float finalizationProgress = loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.LandscapeLoading);
+            AsyncLoadProcessReport landscapeLoadReport = report.CreateChildReport(finalizationProgress);
+            await landscape.LoadTerrainAsync(landscapeLoadReport, ct);
+            report.SetProgress(finalizationProgress);
         }
     }
 }

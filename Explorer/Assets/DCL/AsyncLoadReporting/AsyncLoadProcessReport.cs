@@ -1,4 +1,7 @@
 ﻿using Cysharp.Threading.Tasks;
+using System;
+using System.Threading;
+using Utility.Types;
 
 namespace DCL.AsyncLoadReporting
 {
@@ -14,26 +17,41 @@ namespace DCL.AsyncLoadReporting
 
         private readonly IAsyncReactiveProperty<float> progressCounter;
 
-        public UniTaskCompletionSource CompletionSource { get; }
+        private readonly UniTaskCompletionSource completionSource;
+        private readonly CancellationToken cancellationToken;
+
+        private Exception? exception;
+
         public IReadOnlyAsyncReactiveProperty<float> ProgressCounter => progressCounter;
 
-        private AsyncLoadProcessReport(UniTaskCompletionSource completionSource,
-            IAsyncReactiveProperty<float> progressCounter)
+        private AsyncLoadProcessReport(AsyncLoadProcessReport? parent, float offset, float until, CancellationToken ct)
         {
-            CompletionSource = completionSource;
-            this.progressCounter = progressCounter;
-            offset = 0;
-            until = 1;
-        }
-
-        private AsyncLoadProcessReport(AsyncLoadProcessReport parent, float offset, float until)
-        {
-            CompletionSource = new UniTaskCompletionSource();
+            completionSource = new UniTaskCompletionSource();
             progressCounter = new AsyncReactiveProperty<float>(0f);
+
             this.parent = parent;
             this.offset = offset;
             this.until = until;
+
+            cancellationToken = ct;
+
+            ct.RegisterWithoutCaptureExecutionContext(SetCancelled);
         }
+
+        /// <summary>
+        ///     Translates internals that can throw exceptions into a result free from exceptions
+        /// </summary>
+        /// <returns></returns>
+        public async UniTask<Status> WaitUntilFinishedAsync()
+        {
+            try { await completionSource.Task; }
+            catch (Exception e) { return new Status(e, completionSource.UnsafeGetStatus()); }
+
+            return new Status(null, completionSource.UnsafeGetStatus());
+        }
+
+        public Status GetStatus() =>
+            new (exception, completionSource.UnsafeGetStatus());
 
         public void SetProgress(float progress)
         {
@@ -42,13 +60,53 @@ namespace DCL.AsyncLoadReporting
             parent?.SetProgress(offset + (progressCounter.Value * (until - offset)));
 
             if (progressCounter.Value >= 1f)
-                CompletionSource.TrySetResult();
+                completionSource.TrySetResult();
+        }
+
+        public void SetException(Exception e)
+        {
+            exception = e;
+
+            completionSource.TrySetException(e);
+            parent?.SetException(e);
+        }
+
+        public void SetCancelled()
+        {
+            completionSource.TrySetCanceled();
+            parent?.SetCancelled();
+        }
+
+
+        // if the operation has fully succeeded:
+        // 1. Set the progress to 1.0f
+        // 2. Cancel the loading screen
+
+        // if the internal operation didn't modify the loading report on its own, finalize it
+        public void SetResult(Result result)
+        {
+            if (result.Success)
+                SetProgress(1.0f);
+            else
+                SetException(new Exception(result.ErrorMessage!));
         }
 
         public AsyncLoadProcessReport CreateChildReport(float until) =>
-            new (this, ProgressCounter.Value, until);
+            new (this, ProgressCounter.Value, until, cancellationToken);
 
-        public static AsyncLoadProcessReport Create() =>
-            new (new UniTaskCompletionSource(), new AsyncReactiveProperty<float>(0f));
+        public static AsyncLoadProcessReport Create(CancellationToken ct) =>
+            new (null, 0, 1, ct);
+
+        public readonly struct Status
+        {
+            public readonly Exception? Exception;
+            public readonly UniTaskStatus TaskStatus;
+
+            public Status(Exception? exception, UniTaskStatus taskStatus)
+            {
+                Exception = exception;
+                TaskStatus = taskStatus;
+            }
+        }
     }
 }

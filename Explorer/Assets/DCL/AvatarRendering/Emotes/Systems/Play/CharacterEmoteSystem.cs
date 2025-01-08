@@ -8,7 +8,6 @@ using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.AvatarRendering.Loading.Assets;
 using DCL.AvatarRendering.Loading.Components;
-using DCL.Character.CharacterMotion.Components;
 using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Systems;
@@ -19,11 +18,16 @@ using DCL.Profiles;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle.Components;
+using ECS.Prioritization.Components;
 using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.Common.Components;
 using System;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using UnityEngine;
+using Utility.Animations;
+using EmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution,
+    DCL.AvatarRendering.Emotes.GetEmotesByPointersIntention>;
 
 namespace DCL.AvatarRendering.Emotes.Play
 {
@@ -31,7 +35,7 @@ namespace DCL.AvatarRendering.Emotes.Play
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     [UpdateAfter(typeof(AvatarGroup))]
     [UpdateAfter(typeof(RemoteEmotesSystem))]
-    [UpdateBefore(typeof(InterpolateCharacterSystem))]
+    [UpdateBefore(typeof(ChangeCharacterPositionGroup))]
     [UpdateBefore(typeof(CleanUpGroup))]
     public partial class CharacterEmoteSystem : BaseUnityLoopSystem
     {
@@ -41,6 +45,7 @@ namespace DCL.AvatarRendering.Emotes.Play
         private readonly IEmoteStorage emoteStorage;
         private readonly EmotePlayer emotePlayer;
         private readonly IEmotesMessageBus messageBus;
+        private readonly URN[] loadEmoteBuffer = new URN[1];
 
         public CharacterEmoteSystem(World world, IEmoteStorage emoteStorage, IEmotesMessageBus messageBus, AudioSource audioSource, IDebugContainerBuilder debugContainerBuilder) : base(world)
         {
@@ -150,7 +155,7 @@ namespace DCL.AvatarRendering.Emotes.Play
         [Query]
         [None(typeof(DeleteEntityIntention))]
         private void ConsumeEmoteIntent(Entity entity, ref CharacterEmoteComponent emoteComponent, in CharacterEmoteIntent emoteIntent,
-            in IAvatarView avatarView, in AvatarShapeComponent avatarShapeComponent)
+            in IAvatarView avatarView, ref AvatarShapeComponent avatarShapeComponent)
         {
             URN emoteId = emoteIntent.EmoteId;
 
@@ -200,6 +205,9 @@ namespace DCL.AvatarRendering.Emotes.Play
                     emoteComponent.EmoteUrn = emoteId;
                     World.Remove<CharacterEmoteIntent>(entity);
                 }
+                else
+                    // Request the emote when not it cache. It will eventually endup in the emoteStorage so it can be played by this query
+                    LoadEmote(emoteId, avatarShapeComponent.BodyShape);
             }
             catch (Exception e) { ReportHub.LogException(e, GetReportData()); }
         }
@@ -225,6 +233,29 @@ namespace DCL.AvatarRendering.Emotes.Play
         {
             if (!deleteEntityIntention.DeferDeletion)
                 messageBus.OnPlayerRemoved(profile.UserId);
+        }
+
+        private void LoadEmote(URN emoteId, BodyShape bodyShape)
+        {
+            var isLoadingThisEmote = false;
+
+            World.Query(in new QueryDescription().WithAll<EmotePromise>(), (Entity entity, ref EmotePromise promise) =>
+            {
+                if (!promise.IsConsumed && promise.LoadingIntention.Pointers.Contains(emoteId))
+                    isLoadingThisEmote = true;
+            });
+
+            if (isLoadingThisEmote) return;
+
+            World.Create(CreateEmotePromise(emoteId, bodyShape));
+        }
+
+        private EmotePromise CreateEmotePromise(URN urn, BodyShape bodyShape)
+        {
+            loadEmoteBuffer[0] = urn;
+
+            return EmotePromise.Create(World, EmoteComponentsUtils.CreateGetEmotesByPointersIntention(bodyShape, loadEmoteBuffer),
+                PartitionComponent.TOP_PRIORITY);
         }
     }
 }

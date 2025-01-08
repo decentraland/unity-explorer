@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.MapPins.Bus;
 using DCL.MapRenderer;
 using DCL.MapRenderer.ComponentsFactory;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -16,9 +17,9 @@ namespace Global.Dynamic
     public class MapRendererContainer : DCLWorldContainer<MapRendererContainer.Settings>
     {
         private readonly IAssetsProvisioner assetsProvisioner;
+        private ProvidedAsset<MapRendererSettingsAsset> mapRendererSettings;
         public MapRendererTextureContainer TextureContainer { get; }
         public IMapRenderer MapRenderer { get; private set; } = null!;
-        private ProvidedAsset<MapRendererSettingsAsset> mapRendererSettings;
 
         private MapRendererContainer(IAssetsProvisioner assetsProvisioner, MapRendererTextureContainer textureContainer)
         {
@@ -33,6 +34,7 @@ namespace Global.Dynamic
             IAssetsProvisioner assetsProvisioner,
             IPlacesAPIService placesAPIService,
             IMapPathEventBus mapPathEventBus,
+            IMapPinsEventBus mapPinsEventBus,
             INotificationsBusController notificationsBusController,
             CancellationToken ct)
         {
@@ -48,11 +50,11 @@ namespace Global.Dynamic
                     c.TextureContainer,
                     placesAPIService,
                     mapPathEventBus,
+                    mapPinsEventBus,
                     notificationsBusController));
 
                 await mapRenderer.InitializeAsync(ct);
                 c.MapRenderer = mapRenderer;
-
             });
 
             return mapRendererContainer;

@@ -12,14 +12,18 @@ using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
+using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common;
+using ECS.StreamableLoading.Common.Components;
 using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using DCL.DebugUtilities;
+using ECS.SceneLifeCycle.Realm;
 using Unity.Mathematics;
 
 namespace Global.Dynamic
@@ -29,7 +33,7 @@ namespace Global.Dynamic
         // TODO it can be dangerous to clear the realm, instead we may destroy it fully and reconstruct but we will need to
         // TODO construct player/camera entities again and allocate more memory. Evaluate
         // Realms + Promises
-        private static readonly QueryDescription CLEAR_QUERY = new QueryDescription().WithAny<RealmComponent, GetSceneDefinition, GetSceneDefinitionList, SceneDefinitionComponent, SceneLODInfo>();
+        private static readonly QueryDescription CLEAR_QUERY = new QueryDescription().WithAny<RealmComponent, GetSceneDefinition, GetSceneDefinitionList, SceneDefinitionComponent, SceneLODInfo, EmptySceneComponent>().WithNone<PortableExperienceComponent>();
 
         private readonly List<ISceneFacade> allScenes = new (PoolConstants.SCENES_COUNT);
         private readonly ServerAbout serverAbout = new ();
@@ -43,12 +47,31 @@ namespace Global.Dynamic
         private readonly PartitionDataContainer partitionDataContainer;
         private readonly IScenesCache scenesCache;
         private readonly SceneAssetLock sceneAssetLock;
+        private readonly IComponentPool<PartitionComponent> partitionComponentPool;
+        private readonly bool isLocalSceneDevelopment;
 
         private GlobalWorld? globalWorld;
         private Entity realmEntity;
-        private URLDomain? currentDomain;
 
         public IRealmData RealmData => realmData;
+
+        private readonly RealmNavigatorDebugView realmNavigatorDebugView;
+
+        public RealmType Type
+        {
+            get
+            {
+                if (isLocalSceneDevelopment)
+                    return RealmType.LocalScene;
+
+                if (realmData is { Configured: true, ScenesAreFixed: false })
+                    return RealmType.GenesisCity;
+
+                return RealmType.World;
+            }
+        }
+
+        public URLDomain? CurrentDomain { get; private set; }
 
         public GlobalWorld GlobalWorld
         {
@@ -71,7 +94,11 @@ namespace Global.Dynamic
             RealmData realmData,
             IScenesCache scenesCache,
             PartitionDataContainer partitionDataContainer,
-            SceneAssetLock sceneAssetLock)
+            SceneAssetLock sceneAssetLock,
+            IDebugContainerBuilder debugContainerBuilder,
+            IComponentPool<PartitionComponent> partitionComponentPool,
+            bool isLocalSceneDevelopment
+        )
         {
             this.web3IdentityCache = web3IdentityCache;
             this.webRequestController = webRequestController;
@@ -83,6 +110,9 @@ namespace Global.Dynamic
             this.scenesCache = scenesCache;
             this.partitionDataContainer = partitionDataContainer;
             this.sceneAssetLock = sceneAssetLock;
+            this.partitionComponentPool = partitionComponentPool;
+            this.isLocalSceneDevelopment = isLocalSceneDevelopment;
+            realmNavigatorDebugView = new RealmNavigatorDebugView(debugContainerBuilder);
         }
 
         public async UniTask SetRealmAsync(URLDomain realm, CancellationToken ct)
@@ -105,9 +135,10 @@ namespace Global.Dynamic
                 new IpfsRealm(web3IdentityCache, webRequestController, realm, result),
                 result.configurations.realmName.EnsureNotNull("Realm name not found"),
                 result.configurations.networkId,
-                result.comms?.adapter ?? result.comms?.fixedAdapter ?? "offline", //"offline property like in previous implementation"
+                result.comms?.adapter ?? result.comms?.fixedAdapter ?? "offline:offline", //"offline property like in previous implementation"
                 result.comms?.protocol ?? "v3",
-                hostname
+                hostname,
+                isLocalSceneDevelopment
             );
 
             // Add the realm component
@@ -124,19 +155,22 @@ namespace Global.Dynamic
             teleportController.SceneProviderStrategy = sceneProviderStrategy;
             partitionDataContainer.Restart();
 
-            currentDomain = realm;
+            CurrentDomain = realm;
+
+            realmNavigatorDebugView.UpdateRealmName(CurrentDomain.Value.ToString(), result.lambdas.publicUrl,
+                result.content.publicUrl);
         }
 
         public async UniTask RestartRealmAsync(CancellationToken ct)
         {
-            if (!currentDomain.HasValue)
+            if (!CurrentDomain.HasValue)
                 throw new Exception("Cannot restart realm, no valid domain set. First call SetRealmAsync(domain)");
 
-            await SetRealmAsync(currentDomain.Value, ct);
+            await SetRealmAsync(CurrentDomain.Value, ct);
         }
 
         public async UniTask<bool> IsReachableAsync(URLDomain realm, CancellationToken ct) =>
-            await webRequestController.IsReachableAsync(ReportCategory.REALM, realm.Append(new URLPath("/about")), ct);
+            await webRequestController.IsHeadReachableAsync(ReportCategory.REALM, realm.Append(new URLPath("/about")), ct);
 
         public async UniTask<AssetPromise<SceneEntityDefinition, GetSceneDefinition>[]> WaitForFixedScenePromisesAsync(CancellationToken ct)
         {
@@ -148,6 +182,22 @@ namespace Global.Dynamic
             return fixedScenePointers.Promises!;
         }
 
+        public async UniTask<SceneDefinitions?> WaitForStaticScenesEntityDefinitionsAsync(CancellationToken ct)
+        {
+            if (staticLoadPositions.Count == 0) return null;
+
+            var promise = AssetPromise<SceneDefinitions, GetSceneDefinitionList>.Create(GlobalWorld.EcsWorld,
+                new GetSceneDefinitionList(new List<SceneEntityDefinition>(staticLoadPositions.Count), staticLoadPositions,
+                    new CommonLoadingArguments(RealmData.Ipfs.EntitiesActiveEndpoint)), PartitionComponent.TOP_PRIORITY);
+
+            promise = await promise.ToUniTaskAsync(GlobalWorld.EcsWorld, cancellationToken: ct);
+
+            if (promise.TryGetResult(GlobalWorld.EcsWorld, out StreamableLoadingResult<SceneDefinitions> result) && result.Succeeded)
+                return result.Asset;
+
+            return null;
+        }
+
         public void DisposeGlobalWorld()
         {
             List<ISceneFacade> loadedScenes = allScenes;
@@ -155,6 +205,7 @@ namespace Global.Dynamic
             if (globalWorld != null)
             {
                 loadedScenes = FindLoadedScenesAndClearSceneCache(true);
+
                 // Destroy everything without awaiting as it's Application Quit
                 globalWorld.SafeDispose(ReportCategory.SCENE_LOADING);
             }
@@ -176,8 +227,7 @@ namespace Global.Dynamic
 
             // release pooled entities
             for (var i = 0; i < globalWorld.FinalizeWorldSystems.Count; i++)
-                    globalWorld.FinalizeWorldSystems[i].FinalizeComponents(world.Query(in CLEAR_QUERY));
-
+                globalWorld.FinalizeWorldSystems[i].FinalizeComponents(world.Query(in CLEAR_QUERY));
 
             // Clear the world from everything connected to the current realm
             world.Destroy(in CLEAR_QUERY);
@@ -190,7 +240,7 @@ namespace Global.Dynamic
             await UniTask.WhenAll(loadedScenes.Select(s => s.DisposeAsync()));
             sceneAssetLock.Reset();
 
-            currentDomain = null;
+            CurrentDomain = null;
 
             // Collect garbage, good moment to do it
             GC.Collect();
@@ -198,7 +248,7 @@ namespace Global.Dynamic
 
         private void ComplimentWithVolatilePointers(World world, Entity realmEntity)
         {
-            world.Add(realmEntity, VolatileScenePointers.Create());
+            world.Add(realmEntity, VolatileScenePointers.Create(partitionComponentPool.Get()));
         }
 
         private bool ComplimentWithStaticPointers(World world, Entity realmEntity)

@@ -1,3 +1,4 @@
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Ipfs;
 using ECS.SceneLifeCycle.Realm;
@@ -12,5 +13,6 @@ namespace Global.Dynamic
         GlobalWorld GlobalWorld { get; set; }
 
         UniTask<AssetPromise<SceneEntityDefinition, GetSceneDefinition>[]> WaitForFixedScenePromisesAsync(CancellationToken ct);
+        UniTask<SceneDefinitions?> WaitForStaticScenesEntityDefinitionsAsync(CancellationToken ct);
     }
 }

@@ -1,6 +1,8 @@
 ﻿using DCL.Settings.ModuleViews;
 using DCL.Settings.Utils;
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using TMPro;
 using UnityEngine;
 
@@ -49,15 +51,21 @@ namespace DCL.Settings.ModuleControllers
 
                 // Exclude all resolutions that are not 16:9 or 16:10
                 if (!ResolutionUtils.IsResolutionCompatibleWithAspectRatio(resolution.width, resolution.height, 16, 9) &&
-                    !ResolutionUtils.IsResolutionCompatibleWithAspectRatio(resolution.width, resolution.height, 16, 10))
+                    !ResolutionUtils.IsResolutionCompatibleWithAspectRatio(resolution.width, resolution.height, 16, 10) &&
+                    //Check for vertical monitors as well
+                    !ResolutionUtils.IsResolutionCompatibleWithAspectRatio(resolution.width, resolution.height, 9, 16) &&
+                    !ResolutionUtils.IsResolutionCompatibleWithAspectRatio(resolution.width, resolution.height, 10, 16))
                     continue;
 
-                // Exclude all resolutions width less than 1024
-                if (resolution.width <= 1024)
+                // Exclude all resolutions width less than 1024 (same for height in case of vertical monitors)
+                if (Mathf.Min(resolution.width, resolution.height) <= 1024)
                     continue;
 
                 // Exclude possible duplicates
-                if (possibleResolutions.Contains(resolution))
+                // Equals is not defined in Resolution class. LINQ used only in constructor to mimic a custom Equals
+                if (possibleResolutions.Any(res => res.height == resolution.height
+                                                   && res.width == resolution.width
+                                                   && ((int) Math.Round(res.refreshRateRatio.value)).Equals((int) Math.Round(resolution.refreshRateRatio.value))))
                     continue;
 
                 AddResolution(resolution);

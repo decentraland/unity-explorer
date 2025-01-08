@@ -65,9 +65,9 @@ namespace DCL.Diagnostics
         public const string JAVASCRIPT = nameof(JAVASCRIPT);
 
         /// <summary>
-        ///     Archipelago requests
+        ///     Archipelago and gatekeeper requests
         /// </summary>
-        public const string ARCHIPELAGO_REQUEST = nameof(ARCHIPELAGO_REQUEST);
+        public const string COMMS_SCENE_HANDLER = nameof(COMMS_SCENE_HANDLER);
 
         /// <summary>
         ///     Unspecified ECS World Exceptions
@@ -248,6 +248,8 @@ namespace DCL.Diagnostics
         /// </summary>
         public const string UI = nameof(UI);
 
+        public const string CAMERA_REEL = nameof(CAMERA_REEL);
+
         /// <summary>
         ///     Fetch requests initiated from the Scene side through the fetch API
         /// </summary>
@@ -291,5 +293,7 @@ namespace DCL.Diagnostics
         public const string VERSION_CONTROL= nameof(VERSION_CONTROL);
 
         public const string ONBOARDING = nameof(ONBOARDING);
+
+        public const string IN_WORLD_CAMERA = nameof(IN_WORLD_CAMERA);
     }
 }

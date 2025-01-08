@@ -59,6 +59,9 @@ namespace DCL.SDKComponents.TextShape.System
             // IF there is a visibility component, it will set it invisible in the visibility system
             textMeshPro.enabled = true;
             changedTextMeshes.Add(entity, component);
+
+            // It is necessary to store the first valid bounding box of the TMP in order to calculate its visibility later
+            component.LastValidBoundingBoxSize = textMeshPro.renderer.bounds.size; // Note: Using Renderer because the bounds of the TMP does not return what we need
         }
     }
 }

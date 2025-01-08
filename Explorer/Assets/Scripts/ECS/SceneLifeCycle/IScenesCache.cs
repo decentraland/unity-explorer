@@ -15,6 +15,8 @@ namespace ECS.SceneLifeCycle
 
         void AddNonRealScene(IReadOnlyList<Vector2Int> parcels);
 
+        void AddNonRealScene(Vector2Int parcel);
+
         void AddPortableExperienceScene(ISceneFacade sceneFacade, string sceneUrn);
 
         void RemoveNonRealScene(IReadOnlyList<Vector2Int> parcels);
@@ -24,6 +26,8 @@ namespace ECS.SceneLifeCycle
         bool Contains(Vector2Int parcel);
 
         bool TryGetByParcel(Vector2Int parcel, out ISceneFacade sceneFacade);
+
+        bool TryGetBySceneId(string sceneId, out ISceneFacade? sceneFacade);
 
         bool TryGetPortableExperienceBySceneUrn(string sceneUrn, out ISceneFacade sceneFacade);
 
@@ -60,6 +64,11 @@ namespace ECS.SceneLifeCycle
                 nonRealSceneByParcel.Add(parcel);
         }
 
+        public void AddNonRealScene(Vector2Int parcel)
+        {
+            nonRealSceneByParcel.Add(parcel);
+        }
+
         public void RemoveNonRealScene(IReadOnlyList<Vector2Int> parcels)
         {
             foreach (Vector2Int parcel in parcels)
@@ -88,6 +97,21 @@ namespace ECS.SceneLifeCycle
 
         public bool TryGetByParcel(Vector2Int parcel, out ISceneFacade sceneFacade) =>
             scenesByParcels.TryGetValue(parcel, out sceneFacade);
+
+        public bool TryGetBySceneId(string sceneId, out ISceneFacade? sceneFacade)
+        {
+            sceneFacade = null;
+            foreach (ISceneFacade facade in scenes)
+            {
+                if (facade.SceneData.SceneEntityDefinition.id!.Equals(sceneId))
+                {
+                    sceneFacade = facade;
+                    return true;
+                }
+            }
+
+            return false;
+        }
 
         public bool TryGetPortableExperienceBySceneUrn(string urn, out ISceneFacade sceneFacade) =>
             portableExperienceScenesByUrn.TryGetValue(urn, out sceneFacade);

@@ -1,9 +1,5 @@
 fileFormatVersion: 2
-<<<<<<<< HEAD:Explorer/Assets/Scripts/CRDT/Memory/Tests/MemoryAllocatorShould.cs.meta
 guid: 9b8cf2c5d0778cb4abde86c032ff1d0b
-========
-guid: bbf8a5dc58d46ac468405be083041a92
->>>>>>>> f7f039a (First version of flying cubes):Explorer/Assets/TestScene.cs.meta
 MonoImporter:
   externalObjects: {}
   serializedVersion: 2

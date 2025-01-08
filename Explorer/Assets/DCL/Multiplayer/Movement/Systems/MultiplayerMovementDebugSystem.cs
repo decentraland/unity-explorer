@@ -4,6 +4,7 @@ using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.Character.Components;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
+using DCL.Multiplayer.Connections.Rooms;
 using DCL.Multiplayer.Movement.Settings;
 using DCL.Multiplayer.Profiles.Entities;
 using DCL.Multiplayer.Profiles.Poses;
@@ -124,9 +125,9 @@ namespace DCL.Multiplayer.Movement.Systems
         {
             if (!realmData.Configured) return;
             if (!widgetVisibility.IsConnectedAndExpanded) return;
-            if (!entityParticipantTable.Has(debugProfileId)) return;
+            if (!entityParticipantTable.TryGet(debugProfileId, out IReadOnlyEntityParticipantTable.Entry entry)) return;
 
-            Entity entity = entityParticipantTable.Entity(debugProfileId);
+            Entity entity = entry.Entity;
 
             entityId.Value = entity.Id.ToString();
 
@@ -190,7 +191,7 @@ namespace DCL.Multiplayer.Movement.Systems
             {
                 Profile playerProfiler = world.Get<Profile>(playerEntity);
                 var profile = Profile.NewProfileWithAvatar(RemotePlayerMovementComponent.TEST_ID, playerProfiler.Avatar);
-                var remoteProfile = new RemoteProfile(profile, RemotePlayerMovementComponent.TEST_ID);
+                var remoteProfile = new RemoteProfile(profile, RemotePlayerMovementComponent.TEST_ID, RoomSource.ISLAND);
                 selfReplicaEntity = remoteEntities.TryCreateOrUpdateRemoteEntity(remoteProfile, world);
 
                 if (world.TryGet(selfReplicaEntity.Value, out CharacterTransform transformComp))
@@ -217,7 +218,7 @@ namespace DCL.Multiplayer.Movement.Systems
             debugSettings.SelfSending = false;
 
             if (remoteEntities == null) return;
-            remoteEntities.TryRemove(RemotePlayerMovementComponent.TEST_ID, world);
+            remoteEntities.TryRemove(RemotePlayerMovementComponent.TEST_ID, RoomSource.ISLAND, world);
 
             selfReplicaEntity = null;
         }

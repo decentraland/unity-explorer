@@ -17,6 +17,8 @@ namespace DCL.Passport.Modules.Badges
     {
         private const string ALL_FILTER = "All";
 
+        public event Action<string> OnBadgeSelected;
+
         private readonly BadgesDetails_PassportModuleView view;
         private readonly BadgesAPIClient badgesAPIClient;
         private readonly PassportErrorsController passportErrorsController;
@@ -50,7 +52,13 @@ namespace DCL.Passport.Modules.Badges
             badgeInfoController = new BadgeInfo_PassportModuleSubController(badgeInfoModuleView, webRequestController, badgesAPIClient, passportErrorsController);
             badgeDetailsCardsController = new BadgeDetailsCards_PassportModuleSubController(view, webRequestController, badgesCategoriesController, badgeInfoController);
 
+            badgeDetailsCardsController.OnBadgeSelected += BadgeSelected;
             badgesCategoriesController.OnBadgesFilterButtonClicked += OnBadgesCategoryButtonClicked;
+        }
+
+        private void BadgeSelected(string badgeId)
+        {
+            OnBadgeSelected?.Invoke(badgeId);
         }
 
         public void SetBadgeByDefault(string badgeId) =>
@@ -164,6 +172,7 @@ namespace DCL.Passport.Modules.Badges
         {
             var numberOfActiveSeparators = 0;
             badgesCategoriesController.InstantiatedBadgesFilterButtons[0].gameObject.SetActive(true);
+
             foreach (var badgesCategorySeparator in badgesCategoriesController.InstantiatedBadgesCategorySeparators)
             {
                 if (!badgeDetailsCardsController.InstantiatedBadgeDetailCards.TryGetValue(badgesCategorySeparator.CategoryText.text.ToLower(), out List<BadgeDetailCard_PassportFieldView> badgeDetailCards))
@@ -201,9 +210,7 @@ namespace DCL.Passport.Modules.Badges
                 badgesCategorySeparator.gameObject.SetActive(category == ALL_FILTER && badgeDetailsCardsController.InstantiatedBadgeDetailCards.ContainsKey(badgesCategorySeparator.CategoryText.text.ToLower()));
 
             foreach (var badgesCategoryContainer in badgesCategoriesController.InstantiatedBadgesCategoryContainers)
-                badgesCategoryContainer.gameObject.SetActive(category == ALL_FILTER ?
-                    badgeDetailsCardsController.InstantiatedBadgeDetailCards.ContainsKey(badgesCategoryContainer.Category.ToLower()) :
-                    badgesCategoryContainer.Category.Equals(category, StringComparison.OrdinalIgnoreCase));
+                badgesCategoryContainer.gameObject.SetActive(category == ALL_FILTER ? badgeDetailsCardsController.InstantiatedBadgeDetailCards.ContainsKey(badgesCategoryContainer.Category.ToLower()) : badgesCategoryContainer.Category.Equals(category, StringComparison.OrdinalIgnoreCase));
 
             if (string.IsNullOrEmpty(currentDefaultBadgeId))
                 SelectFirstBadge();
@@ -215,6 +222,7 @@ namespace DCL.Passport.Modules.Badges
         {
             var firstElementSelected = false;
             BadgeDetailCard_PassportFieldView? cardToSelect = null;
+
             foreach (string? category in badgeCategories)
             {
                 if (badgesCategoriesController.CurrentFilter != ALL_FILTER && !string.Equals(category, badgesCategoriesController.CurrentFilter, StringComparison.OrdinalIgnoreCase))
@@ -229,6 +237,7 @@ namespace DCL.Passport.Modules.Badges
                 foreach (var badgeDetailCard in badgeDetailCards)
                 {
                     badgeDetailCard.SetAsSelected(false);
+
                     if (!firstElementSelected)
                         cardToSelect = badgeDetailCard;
 
@@ -249,6 +258,7 @@ namespace DCL.Passport.Modules.Badges
             }
 
             BadgeDetailCard_PassportFieldView? cardToSelect = null;
+
             foreach (var badgeDetailCard in badgeDetailsCardsController.InstantiatedBadgeDetailCards)
             {
                 foreach (var badgeCard in badgeDetailCard.Value)

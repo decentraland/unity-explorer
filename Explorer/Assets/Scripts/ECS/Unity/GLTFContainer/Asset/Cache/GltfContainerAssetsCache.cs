@@ -1,5 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Optimization.PerformanceBudgeting;
+using DCL.Optimization.Pools;
 using DCL.Profiling;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
@@ -28,9 +29,11 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
 
         private bool isDisposed { get; set; }
 
-        public GltfContainerAssetsCache()
+        public GltfContainerAssetsCache(IComponentPoolsRegistry poolsRegistry)
         {
+            var poolParent = poolsRegistry.RootContainerTransform();
             parentContainer = new GameObject($"POOL_CONTAINER_{nameof(GltfContainerAsset)}").transform;
+            parentContainer.transform.parent = poolParent;
             parentContainer.gameObject.SetActive(false);
 
             cache = new Dictionary<string, List<GltfContainerAsset>>(this);

@@ -18,6 +18,9 @@ namespace DCL.Settings.ModuleViews
 
         [field: SerializeField] public DropdownView DropdownView { get; private set; }
 
+        public override void SetInteractable(bool interactable) =>
+            DropdownView.Dropdown.interactable = interactable;
+
         protected override void Configure(Config configuration)
         {
             DropdownView.Dropdown.interactable = configuration.IsEnabled;

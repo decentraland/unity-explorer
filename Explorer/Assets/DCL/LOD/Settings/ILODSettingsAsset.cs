@@ -11,7 +11,7 @@ namespace DCL.LOD
         int[] LodPartitionBucketThresholds { get;  }
         int SDK7LodThreshold { get; set;  }
 
-
+        int UnloadTolerance { get; set; }
         //Texture array settings. Default resolutions and their default sizes
         TextureArrayResolutionDescriptor[] DefaultTextureArrayResolutionDescriptors { get;  }
         int ArraySizeForMissingResolutions { get; }

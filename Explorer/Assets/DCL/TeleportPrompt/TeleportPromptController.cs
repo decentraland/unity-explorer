@@ -1,4 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
+using DCL.Chat.Commands;
 using DCL.Diagnostics;
 using DCL.Input;
 using DCL.PlacesAPIService;
@@ -15,6 +16,7 @@ namespace DCL.TeleportPrompt
 {
     public partial class TeleportPromptController : ControllerBase<TeleportPromptView, TeleportPromptController.Params>
     {
+        private const string ORIGIN = "teleport prompt";
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
         private readonly ICursor cursor;
@@ -29,7 +31,9 @@ namespace DCL.TeleportPrompt
             ViewFactoryMethod viewFactory,
             ICursor cursor,
             IWebRequestController webRequestController,
-            IPlacesAPIService placesAPIService, IChatMessagesBus chatMessagesBus) : base(viewFactory)
+            IPlacesAPIService placesAPIService,
+            IChatMessagesBus chatMessagesBus
+        ) : base(viewFactory)
         {
             this.cursor = cursor;
             this.webRequestController = webRequestController;
@@ -44,7 +48,6 @@ namespace DCL.TeleportPrompt
             viewInstance.continueButton.onClick.AddListener(Approve);
         }
 
-
         protected override void OnViewShow()
         {
             cursor.Unlock();
@@ -53,7 +56,8 @@ namespace DCL.TeleportPrompt
             {
                 if (result != TeleportPromptResultType.Approved)
                     return;
-                chatMessagesBus.Send($"/goto {inputData.Coords.x},{inputData.Coords.y}");
+
+                chatMessagesBus.Send($"/{ChatCommandsUtils.COMMAND_GOTO} {inputData.Coords.x},{inputData.Coords.y}", ORIGIN);
             });
         }
 

@@ -3,8 +3,12 @@ using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.Character.Components;
+using DCL.CharacterMotion.Animation;
+using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Settings;
+using DCL.CharacterMotion.Utils;
 using DCL.Diagnostics;
+using DCL.ECSComponents;
 using DCL.Multiplayer.Movement.Settings;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
@@ -44,7 +48,7 @@ namespace DCL.Multiplayer.Movement.Systems
         }
 
         [Query]
-        [None(typeof(PlayerComponent), typeof(DeleteEntityIntention))]
+        [None(typeof(PlayerComponent), typeof(PBAvatarShape), typeof(DeleteEntityIntention))]
         private void UpdateRemotePlayersMovement([Data] float deltaTime, ref CharacterTransform transComp,
             ref RemotePlayerMovementComponent remotePlayerMovement, ref InterpolationComponent intComp, ref ExtrapolationComponent extComp)
         {
@@ -186,15 +190,16 @@ namespace DCL.Multiplayer.Movement.Systems
             RemotePlayerInterpolationSettings? intSettings = settings.InterpolationSettings;
 
             bool useLinear = remotePlayerMovement.PastMessage.velocitySqrMagnitude < ZERO_VELOCITY_SQR_THRESHOLD || remote.velocitySqrMagnitude < ZERO_VELOCITY_SQR_THRESHOLD ||
-                             remotePlayerMovement.PastMessage.animState.IsGrounded != remote.animState.IsGrounded || remotePlayerMovement.PastMessage.animState.IsJumping != remote.animState.IsJumping;
+                             remotePlayerMovement.PastMessage.animState.IsGrounded != remote.animState.IsGrounded || remotePlayerMovement.PastMessage.animState.IsJumping != remote.animState.IsJumping
+                             || remotePlayerMovement.PastMessage.movementKind == MovementKind.IDLE || remote.movementKind == MovementKind.IDLE;
 
             // Interpolate linearly to/from zero velocities to avoid position overshooting
             InterpolationType spline = intSettings.UseBlend ? intSettings.BlendType :
                 useLinear ? InterpolationType.Linear :
                 intSettings.InterpolationType;
 
-
             intComp.Restart(remotePlayerMovement.PastMessage, remote, spline, characterControllerSettings);
+            AccelerateVerySlowTransition(ref intComp);
 
             if (intSettings.UseBlend && isBlend)
                 SlowDownBlend(ref intComp, intSettings.MaxBlendSpeed);
@@ -238,6 +243,28 @@ namespace DCL.Multiplayer.Movement.Systems
                 float correctionTime = inboxMessages * UnityEngine.Time.smoothDeltaTime;
                 intComp.TotalDuration = Mathf.Max(intComp.TotalDuration - correctionTime, intComp.TotalDuration / settings.InterpolationSettings.MaxSpeedUpTimeDivider);
             }
+        }
+
+        private void AccelerateVerySlowTransition(ref InterpolationComponent intComp)
+        {
+            if (intComp.TotalDuration < settings.AccelerationTimeThreshold) return;
+            float distance = Vector3.Distance(intComp.Start.position, intComp.End.position);
+
+            MovementKind movementKind = MovementKind.RUN;
+            if (distance < settings.MoveKindByDistance[MovementKind.WALK])
+                movementKind = MovementKind.WALK;
+            else if (distance < settings.MoveKindByDistance[MovementKind.JOG])
+                movementKind = MovementKind.JOG;
+
+            float speed = SpeedLimit.Get(characterControllerSettings, movementKind);
+
+            intComp.TotalDuration = Vector3.Distance(intComp.Start.position, intComp.End.position) / speed;
+            intComp.UseMessageRotation = false;
+
+            intComp.Start.movementKind = movementKind;
+            intComp.Start.animState.MovementBlendValue = (int)movementKind;
+            intComp.End.animState.MovementBlendValue = AnimationMovementBlendLogic.CalculateBlendValue( intComp.TotalDuration,  intComp.Start.animState.MovementBlendValue,
+                intComp.End.movementKind, intComp.End.velocitySqrMagnitude, characterControllerSettings);
         }
     }
 }

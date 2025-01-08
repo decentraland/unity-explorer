@@ -11,15 +11,16 @@ using Utility.Types;
 
 namespace DCL.UserInAppInitializationFlow.StartupOperations
 {
-    public class InitializeFeatureFlagsStartupOperation : IStartupOperation
+    public class InitializeFeatureFlagsStartupOperation : StartUpOperationBase
     {
-        private readonly RealFlowLoadingStatus loadingStatus;
+        private readonly ILoadingStatus loadingStatus;
         private readonly IFeatureFlagsProvider featureFlagsProvider;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly IAppArgs appParameters;
 
-        public InitializeFeatureFlagsStartupOperation(RealFlowLoadingStatus loadingStatus, IFeatureFlagsProvider featureFlagsProvider, IWeb3IdentityCache web3IdentityCache, IDecentralandUrlsSource decentralandUrlsSource, IAppArgs appParameters)
+        public InitializeFeatureFlagsStartupOperation(ILoadingStatus loadingStatus, IFeatureFlagsProvider featureFlagsProvider,
+            IWeb3IdentityCache web3IdentityCache, IDecentralandUrlsSource decentralandUrlsSource, IAppArgs appParameters) : base(ReportCategory.FEATURE_FLAGS)
         {
             this.loadingStatus = loadingStatus;
             this.featureFlagsProvider = featureFlagsProvider;
@@ -28,15 +29,11 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
             this.appParameters = appParameters;
         }
 
-        public async UniTask<Result> ExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct)
+        protected override async UniTask InternalExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct)
         {
+            loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.FeatureFlagInitializing);
             // Re-initialize feature flags since the user might have changed thus the data to be resolved
-            try { await featureFlagsProvider.InitializeAsync(decentralandUrlsSource, web3IdentityCache.Identity?.Address, appParameters, ct); }
-            catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogException(e, new ReportData(ReportCategory.FEATURE_FLAGS)); }
-
-            report.SetProgress(loadingStatus.SetStage(RealFlowLoadingStatus.Stage.FeatureFlagInitialized));
-
-            return Result.SuccessResult();
+            await featureFlagsProvider.InitializeAsync(decentralandUrlsSource, web3IdentityCache.Identity?.Address, appParameters, ct);
         }
     }
 }

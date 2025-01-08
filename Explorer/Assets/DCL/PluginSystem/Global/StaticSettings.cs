@@ -5,6 +5,8 @@ using System;
 using System.Collections.Generic;
 using DCL.Roads.Settings;
 using DCL.AvatarRendering;
+using DCL.PluginSystem.World;
+using DCL.SDKComponents.MediaStream.Settings;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Profiling;
@@ -37,26 +39,16 @@ namespace DCL.PluginSystem.Global
             }
         }
 
-        [field: Space]
-        [field: SerializeField]
-        public int ScenesLoadingBudget { get; private set; } = 100;
-
-        [field: SerializeField]
-        public int AssetsLoadingBudget { get; private set; } = 50;
-
-        [field: SerializeField] public int WebRequestsBudget { get; private set; } = 20;
-
         public Dictionary<MemoryUsageStatus, float> MemoryThresholds { get; private set; } = new ()
         {
             { MemoryUsageStatus.WARNING, 0.65f },
             { MemoryUsageStatus.FULL, 0.75f }
         };
 
-        public Dictionary<MemoryUsageStatus, float> MemoryThresholdsEditor { get; private set; } = new()
-        {
-            { MemoryUsageStatus.WARNING, 0.8f },
-            { MemoryUsageStatus.FULL, 0.95f }
-        };
+        [field: Space]
+        [field: SerializeField] public int ScenesLoadingBudget { get; private set; } = 100;
+        [field: SerializeField] public int AssetsLoadingBudget { get; private set; } = 50;
+        [field: SerializeField] public int WebRequestsBudget { get; private set; } = 20;
 
         [Serializable]
         public class PartitionSettingsRef : AssetReferenceT<PartitionSettingsAsset>
@@ -68,6 +60,12 @@ namespace DCL.PluginSystem.Global
         public class RealmPartitionSettingsRef : AssetReferenceT<RealmPartitionSettingsAsset>
         {
             public RealmPartitionSettingsRef(string guid) : base(guid) { }
+        }
+
+        [Serializable]
+        public class VideoPrioritizationSettingsRef : AssetReferenceT<VideoPrioritizationSettings>
+        {
+            public VideoPrioritizationSettingsRef(string guid) : base(guid) { }
         }
 
         [Serializable]

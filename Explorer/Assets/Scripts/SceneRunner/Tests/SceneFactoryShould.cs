@@ -5,6 +5,7 @@ using CrdtEcsBridge.Components;
 using CrdtEcsBridge.JsModulesImplementation.Communications;
 using CrdtEcsBridge.PoolsProviders;
 using Cysharp.Threading.Tasks;
+using DCL.AssetsProvision.CodeResolver;
 using DCL.Interaction.Utility;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.RoomHubs;
@@ -25,6 +26,7 @@ using SceneRunner.Scene;
 using SceneRunner.Tests.TestUtils;
 using SceneRuntime;
 using SceneRuntime.Factory;
+using SceneRuntime.Factory.WebSceneSource;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -43,7 +45,9 @@ namespace SceneRunner.Tests
 
             ECSWorldFacade ecsWorldFacade = TestSystemsWorld.Create();
 
-            sceneRuntimeFactory = new SceneRuntimeFactory(TestWebRequestController.INSTANCE, new IRealmData.Fake(), engineFactory, activeEngines);
+            sceneRuntimeFactory = new SceneRuntimeFactory(TestWebRequestController.INSTANCE,
+                new IRealmData.Fake(), engineFactory, activeEngines,
+                new WebJsSources(new JsCodeResolver(TestWebRequestController.INSTANCE)));
 
             ecsWorldFactory = Substitute.For<IECSWorldFactory>();
             ecsWorldFactory.CreateWorld(in Arg.Any<ECSWorldFactoryArgs>()).Returns(ecsWorldFacade);

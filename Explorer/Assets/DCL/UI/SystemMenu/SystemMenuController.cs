@@ -61,7 +61,8 @@ namespace DCL.UI.SystemMenu
             logoutCts.SafeCancelAndDispose();
         }
 
-        protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) => UniTask.Never(ct);
+        protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
+            UniTask.Never(ct);
 
         protected override void OnViewInstantiated()
         {
@@ -85,13 +86,6 @@ namespace DCL.UI.SystemMenu
             OnClosed?.Invoke();
         }
 
-
-        protected override void OnViewClose()
-        {
-            logoutCts.SafeCancelAndDispose();
-            base.OnViewClose();
-        }
-
         private void ShowTermsOfService() =>
             webBrowser.OpenUrl(DecentralandUrl.TermsOfUse);
 
@@ -105,7 +99,7 @@ namespace DCL.UI.SystemMenu
             if (string.IsNullOrEmpty(userId))
                 return;
 
-            mvcManager.ShowAsync(PassportController.IssueCommand(new PassportController.Params(userId))).Forget();
+            mvcManager.ShowAsync(PassportController.IssueCommand(new PassportController.Params(userId, isOwnProfile: true))).Forget();
         }
 
         private void ExitApp()
@@ -127,13 +121,16 @@ namespace DCL.UI.SystemMenu
 
                 profileCache.Remove(address);
 
-                await userInAppInitializationFlow.ExecuteAsync(true, true,
-
-                    // We have to reload the realm so the scenes are recreated when coming back to the world
-                    // The realm fetches the scene entity definitions again and creates the components in ecs
-                    // so the SceneFacade can be later attached into the entity
-                    true,
-                    world, playerEntity, ct);
+                await userInAppInitializationFlow.ExecuteAsync(
+                    new UserInAppInitializationFlowParameters(
+                        showAuthentication: true,
+                        showLoading: true,
+                        loadSource: IUserInAppInitializationFlow.LoadSource.Logout,
+                        world: world,
+                        playerEntity: playerEntity
+                    ),
+                    ct
+                );
             }
 
             logoutCts = logoutCts.SafeRestart();

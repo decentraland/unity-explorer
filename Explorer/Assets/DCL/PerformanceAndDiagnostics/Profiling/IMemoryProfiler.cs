@@ -4,5 +4,6 @@
     {
         long SystemUsedMemoryInBytes { get; }
         long GcUsedMemoryInBytes { get; }
+        float TotalGcAlloc { get; }
     }
 }

@@ -4,7 +4,6 @@ using DCL.Profiles;
 using DCL.Web3.Identities;
 using System;
 using System.Collections.Generic;
-using System.Text.RegularExpressions;
 using Utility;
 
 namespace DCL.Chat.MessageBus
@@ -12,7 +11,7 @@ namespace DCL.Chat.MessageBus
     public interface IChatMessagesBus : IDisposable
     {
         public event Action<ChatMessage> MessageAdded;
-        public void Send(string message);
+        public void Send(string message, string origin);
     }
 
     public static class ChatMessageBusExtensions
@@ -24,7 +23,7 @@ namespace DCL.Chat.MessageBus
         {
             void CreateTestChatEntry()
             {
-                messagesBus.Send(StringUtils.GenerateRandomString(UnityEngine.Random.Range(1, 250)));
+                messagesBus.Send(StringUtils.GenerateRandomString(UnityEngine.Random.Range(1, 250)), "debug panel");
             }
 
             debugContainerBuilder.TryAddWidget("Chat")?.AddControl(new DebugButtonDef("Create chat message", CreateTestChatEntry), null!);
@@ -32,8 +31,8 @@ namespace DCL.Chat.MessageBus
             return messagesBus;
         }
 
-        public static IChatMessagesBus WithCommands(this IChatMessagesBus messagesBus, IReadOnlyDictionary<Regex, Func<IChatCommand>> commandsFactory) =>
-            new CommandsHandleChatMessageBus(messagesBus, commandsFactory);
+        public static IChatMessagesBus WithCommands(this IChatMessagesBus messagesBus, IReadOnlyList<IChatCommand> commands) =>
+            new CommandsHandleChatMessageBus(messagesBus, commands);
 
         public static IChatMessagesBus WithIgnoreSymbols(this IChatMessagesBus messagesBus) =>
             new IgnoreWithSymbolsChatMessageBus(messagesBus);

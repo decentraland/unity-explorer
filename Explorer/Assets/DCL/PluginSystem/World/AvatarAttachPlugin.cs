@@ -1,5 +1,4 @@
 using Arch.SystemGroups;
-using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
@@ -9,7 +8,6 @@ using DCL.Utilities;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Systems;
 using System.Collections.Generic;
-using System.Threading;
 using UnityEngine;
 
 namespace DCL.PluginSystem.World
@@ -25,9 +23,6 @@ namespace DCL.PluginSystem.World
             this.componentPoolsRegistry = componentPoolsRegistry;
         }
 
-        public UniTask Initialize(IPluginSettingsContainer container, CancellationToken ct) =>
-            UniTask.CompletedTask;
-
         public void Dispose()
         {
             //ignore
@@ -40,6 +35,8 @@ namespace DCL.PluginSystem.World
             ResetDirtyFlagSystem<PBAvatarAttach>.InjectToWorld(ref builder);
             var avatarShapeHandlerSystem = AvatarAttachHandlerSystem.InjectToWorld(ref builder, mainPlayerAvatarBaseProxy, sharedDependencies.SceneStateProvider);
             finalizeWorldSystems.Add(avatarShapeHandlerSystem);
+
+            AvatarAttachHandlerSetupSystem.InjectToWorld(ref builder, mainPlayerAvatarBaseProxy, sharedDependencies.SceneStateProvider);
         }
     }
 }

@@ -18,7 +18,6 @@ namespace DCL.SDKComponents.SceneUI.Systems.UICanvasInformation
     [LogCategory(ReportCategory.SCENE_UI)]
     public partial class UICanvasInformationSystem : BaseUnityLoopSystem
     {
-        private readonly ISceneStateProvider sceneStateProvider;
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
         private BorderRect interactableArea;
         private int lastViewportResolutionWidth = -1;
@@ -29,12 +28,10 @@ namespace DCL.SDKComponents.SceneUI.Systems.UICanvasInformation
             base.Initialize();
 
             interactableArea = new BorderRect { Bottom = 0, Left = 0, Right = 0, Top = 0 };
-            UpdateUICanvasInformationComponent();
         }
 
-        private UICanvasInformationSystem(World world, ISceneStateProvider sceneStateProvider, IECSToCRDTWriter ecsToCRDTWriter) : base(world)
+        private UICanvasInformationSystem(World world, IECSToCRDTWriter ecsToCRDTWriter) : base(world)
         {
-            this.sceneStateProvider = sceneStateProvider;
             this.ecsToCRDTWriter = ecsToCRDTWriter;
         }
 

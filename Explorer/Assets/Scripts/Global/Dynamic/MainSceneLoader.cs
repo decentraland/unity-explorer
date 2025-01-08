@@ -8,6 +8,8 @@ using DCL.AuthenticationScreenFlow;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.Input.Component;
+using DCL.Optimization.PerformanceBudgeting;
+using DCL.Platforms;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.SceneLoadingScreens.SplashScreen;
@@ -15,16 +17,20 @@ using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using Global.AppArgs;
 using MVC;
+using Plugins.TexturesFuse.TexturesServerWrap.CompressShaders;
+using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using SceneRunner.Debugging;
 using System;
 using System.Linq;
 using System.Threading;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UIElements;
+using Utility;
 
 namespace Global.Dynamic
 {
-    public class MainSceneLoader : MonoBehaviour
+    public class MainSceneLoader : MonoBehaviour, ICoroutineRunner
     {
         [Header("Startup Config")] [SerializeField]
         private RealmLaunchSettings launchSettings = null!;
@@ -44,6 +50,7 @@ namespace Global.Dynamic
         [SerializeField] private DynamicSceneLoaderSettings settings = null!;
         [SerializeField] private DynamicSettings dynamicSettings = null!;
         [SerializeField] private GameObject splashRoot = null!;
+        [SerializeField] private TMP_Text splashScreenText = null!;
         [SerializeField] private Animator splashScreenAnimation = null!;
         [SerializeField] private Animator logoAnimation = null!;
         [SerializeField] private AudioClipConfig backgroundMusic = null!;
@@ -88,29 +95,60 @@ namespace Global.Dynamic
 
         private async UniTask InitializeFlowAsync(CancellationToken ct)
         {
-            var applicationParametersParser = new ApplicationParametersParser(Environment.GetCommandLineArgs());
+            IAppArgs applicationParametersParser = new ApplicationParametersParser(
+#if UNITY_EDITOR
+                debugSettings.AppParameters
+#else
+                Environment.GetCommandLineArgs()
+#endif
+            );
+
+            bool compressionEnabled = IPlatform.DEFAULT.IsNot(IPlatform.Kind.Windows) || applicationParametersParser.HasFlag(AppArgsFlags.FORCE_TEXTURE_COMPRESSION);
+
+            ITexturesFuse TextureFuseFactory() =>
+                ITexturesFuse.NewDefault();
+
+            ICompressShaders compressShaders = compressionEnabled ? ICompressShaders.NewDefault(TextureFuseFactory, IPlatform.DEFAULT) : ICompressShaders.NewEmpty();
+
+            if (applicationParametersParser.HasFlag(ICompressShaders.CMD_ARGS))
+            {
+                await compressShaders.WarmUpIfRequiredAsync(ct);
+                IPlatform.DEFAULT.Quit();
+                return;
+            }
+
+            ISystemMemoryCap memoryCap = new SystemMemoryCap(MemoryCapMode.MAX_SYSTEM_MEMORY); // we use max memory on the loading screen
 
             settings.ApplyConfig(applicationParametersParser);
             launchSettings.ApplyConfig(applicationParametersParser);
 
             World world = World.Create();
 
-            bootstrapContainer = await BootstrapContainer.CreateAsync(debugSettings, sceneLoaderSettings: settings,
-                globalPluginSettingsContainer, launchSettings,
+            var splashScreen = new SplashScreen(splashScreenAnimation, splashRoot, debugSettings.ShowSplash, splashScreenText);
+
+            bootstrapContainer = await BootstrapContainer.CreateAsync(
+                debugSettings,
+                sceneLoaderSettings: settings,
+                globalPluginSettingsContainer,
+                launchSettings,
                 applicationParametersParser,
+                splashScreen,
+                compressShaders
+                   .WithSplashScreen(splashScreen, hideOnFinish: false)
+                   .WithLog("Load Guard"),
                 world,
-                destroyCancellationToken);
+                destroyCancellationToken
+            );
 
             IBootstrap bootstrap = bootstrapContainer!.Bootstrap!;
 
             try
             {
-                var splashScreen = new SplashScreen(splashScreenAnimation, splashRoot, debugSettings.ShowSplash);
-                bootstrap.PreInitializeSetup(cursorRoot, debugUiRoot, splashScreen, destroyCancellationToken);
+                await bootstrap.PreInitializeSetupAsync(cursorRoot, debugUiRoot, destroyCancellationToken);
 
                 bool isLoaded;
                 Entity playerEntity = world.Create(new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY));
-                (staticContainer, isLoaded) = await bootstrap.LoadStaticContainerAsync(bootstrapContainer, globalPluginSettingsContainer, debugViewsCatalog, playerEntity, ct);
+                (staticContainer, isLoaded) = await bootstrap.LoadStaticContainerAsync(bootstrapContainer, globalPluginSettingsContainer, debugViewsCatalog, playerEntity, TextureFuseFactory(), compressionEnabled, memoryCap, ct);
 
                 if (!isLoaded)
                 {
@@ -119,10 +157,14 @@ namespace Global.Dynamic
                 }
 
                 bootstrap.InitializePlayerEntity(staticContainer!, playerEntity);
+                await bootstrap.InitializeFeatureFlagsAsync(bootstrapContainer.IdentityCache!.Identity,
+                    bootstrapContainer.DecentralandUrlsSource, staticContainer!, ct);
+                bootstrap.ApplyFeatureFlagConfigs(staticContainer!.FeatureFlagsCache);
 
                 (dynamicWorldContainer, isLoaded) = await bootstrap.LoadDynamicWorldContainerAsync(bootstrapContainer, staticContainer!, scenePluginSettingsContainer, settings,
-                    dynamicSettings, uiToolkitRoot, cursorRoot, splashScreen, backgroundMusic, worldInfoTool.EnsureNotNull(), playerEntity,
+                    dynamicSettings, uiToolkitRoot, cursorRoot, backgroundMusic, worldInfoTool.EnsureNotNull(), playerEntity,
                     applicationParametersParser,
+                    coroutineRunner: this,
                     destroyCancellationToken);
 
                 if (!isLoaded)
@@ -130,8 +172,6 @@ namespace Global.Dynamic
                     GameReports.PrintIsDead();
                     return;
                 }
-
-                await bootstrap.InitializeFeatureFlagsAsync(bootstrapContainer.IdentityCache!.Identity, bootstrapContainer.DecentralandUrlsSource, staticContainer!, ct);
 
                 if (await DoesApplicationRequireVersionUpdateAsync(applicationParametersParser, splashScreen, ct))
                     return; // stop bootstrapping;
@@ -148,12 +188,14 @@ namespace Global.Dynamic
 
                 await bootstrap.LoadStartingRealmAsync(dynamicWorldContainer!, ct);
 
-                await bootstrap.UserInitializationAsync(dynamicWorldContainer!, globalWorld, playerEntity, splashScreen, ct);
+                await bootstrap.UserInitializationAsync(dynamicWorldContainer!, globalWorld, playerEntity, ct);
 
                 //This is done in order to release the memory usage of the splash screen logo animation sprites
                 //The logo is used only at first launch, so we can safely release it after the game is loaded
                 logoAnimation.StopPlayback();
                 logoAnimation.runtimeAnimatorController = null;
+
+                memoryCap.Mode = MemoryCapMode.FROM_SETTINGS;
                 RestoreInputs();
             }
             catch (OperationCanceledException)
@@ -168,15 +210,15 @@ namespace Global.Dynamic
             }
         }
 
-        private async UniTask<bool> DoesApplicationRequireVersionUpdateAsync(ApplicationParametersParser applicationParametersParser, SplashScreen splashScreen, CancellationToken ct)
+        private async UniTask<bool> DoesApplicationRequireVersionUpdateAsync(IAppArgs applicationParametersParser, SplashScreen splashScreen, CancellationToken ct)
         {
-            applicationParametersParser.TryGetValue(ApplicationVersionGuard.SIMULATE_VERSION_CLI_ARG, out string? version);
+            applicationParametersParser.TryGetValue(AppArgsFlags.SIMULATE_VERSION, out string? version);
             string? currentVersion = version ?? Application.version;
 
             bool runVersionControl = debugSettings.EnableVersionUpdateGuard;
 
             if (applicationParametersParser.HasDebugFlag() && !Application.isEditor)
-                runVersionControl = applicationParametersParser.TryGetValue(ApplicationVersionGuard.ENABLE_VERSION_CONTROL_CLI_ARG, out string? enforceDebugMode) && enforceDebugMode == "true";
+                runVersionControl = applicationParametersParser.TryGetValue(AppArgsFlags.ENABLE_VERSION_CONTROL, out string? enforceDebugMode) && enforceDebugMode == "true";
 
             if (!runVersionControl)
                 return false;
@@ -217,7 +259,9 @@ namespace Global.Dynamic
         {
             // We enable Inputs through the inputBlock so the block counters can be properly updated and the component Active flags are up-to-date as well
             // We restore all inputs except EmoteWheel and FreeCamera as they should be disabled by default
-            staticContainer!.InputBlock.Enable(InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.PLAYER, InputMapComponent.Kind.EMOTES, InputMapComponent.Kind.CAMERA);
+            staticContainer!.InputBlock.EnableAll(InputMapComponent.Kind.FREE_CAMERA,
+                InputMapComponent.Kind.EMOTE_WHEEL);
+
         }
 
         [ContextMenu(nameof(ValidateSettingsAsync))]

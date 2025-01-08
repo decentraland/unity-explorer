@@ -27,6 +27,7 @@ using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.CurrentScene;
 using ECS.SceneLifeCycle.IncreasingRadius;
+using ECS.SceneLifeCycle.Reporting;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.SceneLifeCycle.Systems;
 using ECS.StreamableLoading.Cache;
@@ -64,7 +65,9 @@ namespace Global.Dynamic
         private readonly IEmotesMessageBus emotesMessageBus;
         private readonly World world;
         private readonly CurrentSceneInfo currentSceneInfo;
+        private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
         private readonly HybridSceneParams hybridSceneParams;
+        private readonly bool localSceneDevelopment;
 
         public GlobalWorldFactory(in StaticContainer staticContainer,
             CameraSamplingData cameraSamplingData, RealmSamplingData realmSamplingData,
@@ -74,7 +77,9 @@ namespace Global.Dynamic
             CurrentSceneInfo currentSceneInfo,
             ILODCache lodCache,
             IEmotesMessageBus emotesMessageBus,
-            World world)
+            World world,
+            ISceneReadinessReportQueue sceneReadinessReportQueue,
+            bool localSceneDevelopment)
         {
             partitionedWorldsAggregateFactory = staticContainer.SingletonSharedDependencies.AggregateFactory;
             componentPoolsRegistry = staticContainer.ComponentsContainer.ComponentPoolsRegistry;
@@ -95,6 +100,8 @@ namespace Global.Dynamic
             this.currentSceneInfo = currentSceneInfo;
             this.lodCache = lodCache;
             this.emotesMessageBus = emotesMessageBus;
+            this.localSceneDevelopment = localSceneDevelopment;
+            this.sceneReadinessReportQueue = sceneReadinessReportQueue;
             this.world = world;
 
             memoryBudget = staticContainer.SingletonSharedDependencies.MemoryBudget;
@@ -128,7 +135,6 @@ namespace Global.Dynamic
 
             LoadSceneSystem.InjectToWorld(ref builder,
                 loadSceneSystemLogic,
-                new LoadEmptySceneSystemLogic(),
                 sceneFactory, NoCache<ISceneFacade, GetSceneFacadeIntention>.INSTANCE);
 
             GlobalDeferredLoadingSystem.InjectToWorld(ref builder, sceneBudget, memoryBudget, staticContainer.SingletonSharedDependencies.SceneAssetLock);
@@ -142,20 +148,21 @@ namespace Global.Dynamic
             StartSplittingByRingsSystem.InjectToWorld(ref builder, realmPartitionSettings, jobsMathHelper);
 
             LoadPointersByIncreasingRadiusSystem.InjectToWorld(ref builder, jobsMathHelper, realmPartitionSettings,
-                partitionSettings);
+                partitionSettings, sceneReadinessReportQueue, scenesCache);
 
             ResolveSceneStateByIncreasingRadiusSystem.InjectToWorld(ref builder, realmPartitionSettings);
             //Removed, since we now have landscape surrounding the world
             //CreateEmptyPointersInFixedRealmSystem.InjectToWorld(ref builder, jobsMathHelper, realmPartitionSettings);
 
             ResolveStaticPointersSystem.InjectToWorld(ref builder);
-            ControlSceneUpdateLoopSystem.InjectToWorld(ref builder, realmPartitionSettings, destroyCancellationSource.Token, scenesCache);
+            ControlSceneUpdateLoopSystem.InjectToWorld(ref builder, realmPartitionSettings, destroyCancellationSource.Token, scenesCache, sceneReadinessReportQueue);
 
             IComponentPool<PartitionComponent> partitionComponentPool = componentPoolsRegistry.GetReferenceTypePool<PartitionComponent>();
             PartitionSceneEntitiesSystem.InjectToWorld(ref builder, partitionComponentPool, partitionSettings, cameraSamplingData, staticContainer.PartitionDataContainer, staticContainer.RealmPartitionSettings);
             PartitionGlobalAssetEntitiesSystem.InjectToWorld(ref builder, partitionComponentPool, partitionSettings, cameraSamplingData);
 
             CheckCameraQualifiedForRepartitioningSystem.InjectToWorld(ref builder, partitionSettings, realmData, cameraSamplingData);
+            ResetCameraSamplingDataDirty.InjectToWorld(ref builder, realmData, cameraSamplingData);
             SortWorldsAggregateSystem.InjectToWorld(ref builder, partitionedWorldsAggregateFactory, realmPartitionSettings);
 
             DestroyEntitiesSystem.InjectToWorld(ref builder);
@@ -176,7 +183,7 @@ namespace Global.Dynamic
 
             var finalizeWorldSystems = new IFinalizeWorldSystem[]
             {
-                UnloadSceneSystem.InjectToWorld(ref builder, scenesCache, staticContainer.SingletonSharedDependencies.SceneAssetLock), UnloadSceneLODSystem.InjectToWorld(ref builder, scenesCache, lodCache),
+                UnloadSceneSystem.InjectToWorld(ref builder, scenesCache, staticContainer.SingletonSharedDependencies.SceneAssetLock, localSceneDevelopment), UnloadSceneLODSystem.InjectToWorld(ref builder, scenesCache, lodCache),
                 new ReleaseRealmPooledComponentSystem(componentPoolsRegistry),
             };
 

@@ -110,7 +110,8 @@ namespace DCL.PluginSystem.Global
             FinalizeEmoteLoadingSystem.InjectToWorld(ref builder, emoteStorage);
 
             LoadEmotesByPointersSystem.InjectToWorld(ref builder, webRequestController,
-                new NoCache<EmotesDTOList, GetEmotesByPointersFromRealmIntention>(false, false));
+                new NoCache<EmotesDTOList, GetEmotesByPointersFromRealmIntention>(false, false),
+                emoteStorage, realmData, customStreamingSubdirectory);
 
             LoadOwnedEmotesSystem.InjectToWorld(ref builder, realmData, webRequestController,
                 new NoCache<EmotesResolution, GetOwnedEmotesFromRealmIntention>(false, false),
@@ -122,7 +123,7 @@ namespace DCL.PluginSystem.Global
 
             RemoteEmotesSystem.InjectToWorld(ref builder, web3IdentityCache, entityParticipantTable, messageBus, arguments.PlayerEntity);
 
-            LoadSceneEmotesSystem.InjectToWorld(ref builder, emoteStorage, realmData, customStreamingSubdirectory);
+            LoadSceneEmotesSystem.InjectToWorld(ref builder, emoteStorage, customStreamingSubdirectory);
         }
 
         public async UniTask InitializeAsync(EmoteSettings settings, CancellationToken ct)

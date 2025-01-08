@@ -44,7 +44,19 @@ namespace DCL.PluginSystem.World
             basicMatPool = new ObjectPool<Material>(() => new Material(settings.basicMaterial), actionOnDestroy: UnityObjectUtils.SafeDestroy, defaultCapacity: settings.PoolInitialCapacity, maxSize: settings.PoolMaxSize);
             pbrMatPool = new ObjectPool<Material>(() => new Material(settings.pbrMaterial), actionOnDestroy: UnityObjectUtils.SafeDestroy, defaultCapacity: settings.PoolInitialCapacity, maxSize: settings.PoolMaxSize);
 
-            destroyMaterial = (in MaterialData data, Material material) => { (data.IsPbrMaterial ? pbrMatPool : basicMatPool).Release(material); };
+            destroyMaterial = (in MaterialData data, Material material) =>
+            {
+                if (data.IsPbrMaterial)
+                {
+                    material.CopyPropertiesFromMaterial(settings.pbrMaterial);
+                    pbrMatPool.Release(material);
+                }
+                else
+                {
+                    material.CopyPropertiesFromMaterial(settings.basicMaterial);
+                    basicMatPool.Release(material);
+                }
+            };
 
             loadingAttemptsCount = settings.LoadingAttemptsCount;
             return UniTask.CompletedTask;

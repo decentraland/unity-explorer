@@ -114,7 +114,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
 
             public void RemoveSceneMessageHandler(string sceneId, ISceneCommunicationPipe.MsgType msgType, ISceneCommunicationPipe.SceneMessageHandler onSceneMessage) { }
 
-            public void SendMessage(ReadOnlySpan<byte> message, string sceneId, CancellationToken ct)
+            public void SendMessage(ReadOnlySpan<byte> message, string sceneId, ISceneCommunicationPipe.ConnectivityAssertiveness assertiveness, CancellationToken ct)
             {
                 sendMessageCalls.Add(message.ToArray());
             }

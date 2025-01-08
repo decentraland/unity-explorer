@@ -8,16 +8,16 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations.Struct
 {
     public class SequentialStartupOperation : IStartupOperation
     {
-        private readonly RealFlowLoadingStatus loadingStatus;
+        private readonly ILoadingStatus loadingStatus;
         private readonly IReadOnlyList<IStartupOperation> operations;
 
-        public SequentialStartupOperation(RealFlowLoadingStatus loadingStatus, params IStartupOperation[] operations)
+        public SequentialStartupOperation(ILoadingStatus loadingStatus, params IStartupOperation[] operations)
         {
             this.loadingStatus = loadingStatus;
             this.operations = operations;
         }
 
-        public async UniTask<Result> ExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct)
+        public async UniTask<EnumResult<TaskError>> ExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct)
         {
             foreach (IStartupOperation startupOperation in operations)
             {
@@ -25,13 +25,13 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations.Struct
 
                 if (result.Success == false)
                 {
-                    report.SetProgress(loadingStatus.SetStage(RealFlowLoadingStatus.Stage.Completed));
+                    report.SetProgress(loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.Completed));
                     report.SetProgress(1);
                     return result;
                 }
             }
 
-            return Result.SuccessResult();
+            return EnumResult<TaskError>.SuccessResult();
         }
     }
 }

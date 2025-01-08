@@ -38,9 +38,9 @@ namespace DCL.Chat.MessageBus
             MessageAdded?.Invoke(obj);
         }
 
-        public void Send(string message)
+        public void Send(string message, string origin)
         {
-            origin.Send(message);
+            this.origin.Send(message, origin);
             SendSelfAsync(message).Forget();
         }
 
@@ -50,7 +50,7 @@ namespace DCL.Chat.MessageBus
 
             if (identity == null)
             {
-                ReportHub.LogWarning(ReportCategory.ARCHIPELAGO_REQUEST, "SelfResendChatMessageBus.Send: Identity is null, can't send message");
+                ReportHub.LogWarning(ReportCategory.COMMS_SCENE_HANDLER, "SelfResendChatMessageBus.Send: Identity is null, can't send message");
                 return;
             }
 

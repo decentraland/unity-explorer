@@ -6,12 +6,10 @@ using DCL.Character.Components;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
 using DCL.Profiles;
-using Decentraland.Kernel.Apis;
 using ECS.Abstract;
 using ECS.Prioritization;
 using ECS.Prioritization.Components;
 using ECS.Unity.Systems;
-using ECS.Unity.Transforms.Components;
 using UnityEngine;
 
 // ReSharper disable once CheckNamespace (Code generation issues)

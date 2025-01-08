@@ -10,6 +10,20 @@ namespace DCL.ResourcesUnloading.Tests
 {
     public class ReleaseMemorySystemShould : UnitySystemTestBase<ReleaseMemorySystem>
     {
+        public class MockUnloadStrategy : UnloadStrategyBase
+        {
+            public int strategyRunCount;
+
+            public override void RunStrategy()
+            {
+                strategyRunCount++;
+            }
+
+            public MockUnloadStrategy(int failureThreshold) : base(failureThreshold)
+            {
+            }
+        }
+        
         
         private ReleaseMemorySystem releaseMemorySystem;
 
@@ -17,11 +31,10 @@ namespace DCL.ResourcesUnloading.Tests
         private IMemoryUsageProvider memoryBudgetProvider;
         private ICacheCleaner cacheCleaner;
 
-        private IUnloadStrategy[] unloadStrategies;
-        private int frameFailThreshold;
+        private UnloadStrategyBase[] unloadStrategies;
 
-        private IUnloadStrategy standardStrategy;
-        private IUnloadStrategy aggresiveStrategy;
+        private MockUnloadStrategy standardStrategy;
+        private MockUnloadStrategy aggresiveStrategy;
 
         private UnloadStrategyHandler unloadStrategyHandler;
 
@@ -30,18 +43,19 @@ namespace DCL.ResourcesUnloading.Tests
         {
             memoryBudgetProvider = Substitute.For<IMemoryUsageProvider>();
             cacheCleaner = Substitute.For<ICacheCleaner>();
+            standardStrategy = new MockUnloadStrategy(1);
+            aggresiveStrategy = new MockUnloadStrategy(1);
 
             unloadStrategies = new[]
             {
-                standardStrategy = Substitute.For<IUnloadStrategy>(),
-                aggresiveStrategy = Substitute.For<IUnloadStrategy>()
+                standardStrategy,
+                aggresiveStrategy
             };
 
-            frameFailThreshold = 2;
 
             var partitionSettings = Substitute.For<IRealmPartitionSettings>();
 
-            unloadStrategyHandler = new UnloadStrategyHandler(partitionSettings, frameFailThreshold, cacheCleaner);
+            unloadStrategyHandler = new UnloadStrategyHandler(partitionSettings, cacheCleaner);
             unloadStrategyHandler.unloadStrategies = unloadStrategies;
 
             releaseMemorySystem = new ReleaseMemorySystem(world, memoryBudgetProvider, unloadStrategyHandler);
@@ -52,14 +66,12 @@ namespace DCL.ResourcesUnloading.Tests
         [TestCase(MemoryUsageStatus.FULL, 1)]
         public void UnloadCacheWhenMemoryUsageIsNotNormal(MemoryUsageStatus memoryUsageStatus, int callsAmount)
         {
-            // Arrange
-            memoryBudgetProvider.GetMemoryUsageStatus().Returns(memoryUsageStatus);
-
             // Act
+            memoryBudgetProvider.GetMemoryUsageStatus().Returns(memoryUsageStatus);
             releaseMemorySystem.Update(0);
 
             // Assert
-            standardStrategy.Received(callsAmount).TryUnload(cacheCleaner);
+            Assert.AreEqual(callsAmount, standardStrategy.strategyRunCount);
         }
 
         [Test]
@@ -69,44 +81,67 @@ namespace DCL.ResourcesUnloading.Tests
             memoryBudgetProvider.GetMemoryUsageStatus().Returns(MemoryUsageStatus.WARNING);
 
             // Act
-            for (var i = 0; i < frameFailThreshold + 1; i++)
-                releaseMemorySystem.Update(0);
+            releaseMemorySystem.Update(0);
 
             // Assert
-            Assert.AreEqual(unloadStrategyHandler.currentUnloadStrategy, 1);
+            Assert.AreEqual(1, standardStrategy.strategyRunCount);
+            
+            // Act
+            releaseMemorySystem.Update(0);
+            
+            // Assert
+            Assert.AreEqual(2, standardStrategy.strategyRunCount);
+            Assert.AreEqual(1, aggresiveStrategy.strategyRunCount);
+
 
             // Act
             memoryBudgetProvider.GetMemoryUsageStatus().Returns(MemoryUsageStatus.NORMAL);
             releaseMemorySystem.Update(0);
 
             // Assert
-            Assert.AreEqual(unloadStrategyHandler.currentUnloadStrategy, 0);
-
-            standardStrategy.Received(frameFailThreshold).TryUnload(cacheCleaner);
-            aggresiveStrategy.Received(1).TryUnload(cacheCleaner);
+            Assert.AreEqual(0, standardStrategy.currentFailureCount);
+            Assert.AreEqual(0, aggresiveStrategy.currentFailureCount);
+            Assert.IsFalse(standardStrategy.FaillingOverThreshold());
         }
-
+        
         [Test]
-        public void UnloadDoesntGetCalledAgainIfRunningInStrategy()
+        public void IncreaseTierAggresiveness()
         {
             // Arrange
             memoryBudgetProvider.GetMemoryUsageStatus().Returns(MemoryUsageStatus.WARNING);
+            // Act
+            releaseMemorySystem.Update(0);
+
+            // Assert
+            Assert.AreEqual(1, standardStrategy.strategyRunCount);
 
             // Act
-            //Run until the fail and one more
-            for (var i = 0; i < frameFailThreshold + 1; i++)
-                releaseMemorySystem.Update(0);
-
-            //Simulate that it started running
-            aggresiveStrategy.IsRunning.Returns(true);
-
-            for (var i = 0; i < frameFailThreshold + 5; i++)
-                releaseMemorySystem.Update(0);
-
-            standardStrategy.Received(frameFailThreshold).TryUnload(cacheCleaner);
-            aggresiveStrategy.Received(1).TryUnload(cacheCleaner);
+            releaseMemorySystem.Update(0);
+            
+            // Assert
+            Assert.AreEqual(2, standardStrategy.strategyRunCount);
+            Assert.AreEqual(1, aggresiveStrategy.strategyRunCount);
         }
-    
+
+        [Test]
+        public void SkipAggressiveStrategyIfPreviousDidNotFail()
+        {
+            // Arrange
+            memoryBudgetProvider.GetMemoryUsageStatus().Returns(MemoryUsageStatus.WARNING);
+            standardStrategy.failureThreshold = 5;
+
+            // Act
+
+            for (var i = 0; i < 5; i++)
+                releaseMemorySystem.Update(0);
+
+
+            // Assert
+            Assert.AreEqual(5, standardStrategy.strategyRunCount);
+            Assert.AreEqual(0, aggresiveStrategy.strategyRunCount);
+        }
+
+        
     }
-    
+
 }

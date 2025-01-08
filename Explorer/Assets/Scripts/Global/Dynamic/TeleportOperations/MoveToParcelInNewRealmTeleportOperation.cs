@@ -1,15 +1,12 @@
-using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using DCL.AsyncLoadReporting;
 using DCL.UserInAppInitializationFlow;
 using ECS.SceneLifeCycle.Realm;
-using Utility.Types;
-using static DCL.UserInAppInitializationFlow.RealFlowLoadingStatus.Stage;
-
 
 namespace Global.Dynamic.TeleportOperations
 {
-    public class MoveToParcelInNewRealmTeleportOperation : ITeleportOperation
+    public class MoveToParcelInNewRealmTeleportOperation : TeleportOperationBase
     {
         private readonly IRealmNavigator realmNavigator;
 
@@ -18,22 +15,17 @@ namespace Global.Dynamic.TeleportOperations
             this.realmNavigator = realmNavigator;
         }
 
-        public async UniTask<Result> ExecuteAsync(TeleportParams teleportParams, CancellationToken ct)
+        protected override async UniTask InternalExecuteAsync(TeleportParams teleportParams, CancellationToken ct)
         {
-            try
-            {
-                var teleportLoadReport
-                    = teleportParams.ParentReport.CreateChildReport(RealFlowLoadingStatus.PROGRESS[PlayerTeleported]);
+            float finalizationProgress = teleportParams.LoadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.PlayerTeleporting);
 
-                await realmNavigator.InitializeTeleportToSpawnPointAsync(teleportLoadReport, ct,
-                    teleportParams.CurrentDestinationParcel);
-                teleportParams.ParentReport.SetProgress(RealFlowLoadingStatus.PROGRESS[PlayerTeleported]);
-                return Result.SuccessResult();
-            }
-            catch (Exception e)
-            {
-                return Result.ErrorResult("Error while moving to parcel");
-            }
+            AsyncLoadProcessReport teleportLoadReport
+                = teleportParams.ParentReport.CreateChildReport(finalizationProgress);
+
+            await realmNavigator.InitializeTeleportToSpawnPointAsync(teleportLoadReport, ct,
+                teleportParams.CurrentDestinationParcel);
+
+            teleportParams.ParentReport.SetProgress(finalizationProgress);
         }
     }
 }

@@ -9,6 +9,10 @@ using DCL.Chat;
 using DCL.Diagnostics;
 using DCL.Input;
 using DCL.Input.Component;
+using DCL.InWorldCamera.CameraReelGallery;
+using DCL.InWorldCamera.CameraReelStorageService;
+using DCL.InWorldCamera.CameraReelStorageService.Schemas;
+using DCL.InWorldCamera.PhotoDetail;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Profiles.Poses;
 using DCL.NotificationsBusController.NotificationsBus;
@@ -30,6 +34,13 @@ namespace DCL.Passport
 {
     public partial class PassportController : ControllerBase<PassportView, PassportController.Params>
     {
+        private enum OpenBadgeSectionOrigin
+        {
+            Button,
+            Notification
+        }
+
+
         private static readonly int BG_SHADER_COLOR_1 = Shader.PropertyToID("_Color1");
 
         private readonly ICursor cursor;
@@ -54,19 +65,31 @@ namespace DCL.Passport
         private readonly List<IPassportModuleController> badgesPassportModules = new ();
         private readonly IInputBlock inputBlock;
         private readonly IRemoteMetadata remoteMetadata;
+        private readonly ICameraReelStorageService cameraReelStorageService;
+        private readonly ICameraReelScreenshotsStorage cameraReelScreenshotsStorage;
+        private readonly int gridLayoutFixedColumnCount;
+        private readonly int thumbnailHeight;
+        private readonly int thumbnailWidth;
+        private readonly bool enableCameraReel;
 
+        private CameraReelGalleryController cameraReelGalleryController;
         private Profile? ownProfile;
+        private bool isOwnProfile;
         private string currentUserId;
         private CancellationTokenSource? openPassportFromBadgeNotificationCts;
         private CancellationTokenSource? characterPreviewLoadingCts;
+        private CancellationTokenSource? photoLoadingCts;
         private PassportErrorsController? passportErrorsController;
         private PassportCharacterPreviewController? characterPreviewController;
         private PassportSection currentSection;
         private PassportSection alreadyLoadedSections;
+        private BadgesDetails_PassportModuleController badgesDetailsPassportModuleController;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
-        public event Action<string>? PassportOpened;
+        public event Action<string, bool>? PassportOpened;
+        public event Action<string, bool, string>? BadgesSectionOpened;
+        public event Action<string, bool>? BadgeSelected;
 
         public PassportController(
             ViewFactoryMethod viewFactory,
@@ -89,7 +112,13 @@ namespace DCL.Passport
             IWebRequestController webRequestController,
             IInputBlock inputBlock,
             INotificationsBusController notificationBusController,
-            IRemoteMetadata remoteMetadata) : base(viewFactory)
+            IRemoteMetadata remoteMetadata,
+            ICameraReelStorageService cameraReelStorageService,
+            ICameraReelScreenshotsStorage cameraReelScreenshotsStorage,
+            int gridLayoutFixedColumnCount,
+            int thumbnailHeight,
+            int thumbnailWidth,
+            bool enableCameraReel) : base(viewFactory)
         {
             this.cursor = cursor;
             this.profileRepository = profileRepository;
@@ -109,11 +138,20 @@ namespace DCL.Passport
             this.webRequestController = webRequestController;
             this.inputBlock = inputBlock;
             this.remoteMetadata = remoteMetadata;
+            this.cameraReelStorageService = cameraReelStorageService;
+            this.cameraReelScreenshotsStorage = cameraReelScreenshotsStorage;
+            this.gridLayoutFixedColumnCount = gridLayoutFixedColumnCount;
+            this.thumbnailHeight = thumbnailHeight;
+            this.thumbnailWidth = thumbnailWidth;
+            this.enableCameraReel = enableCameraReel;
 
             passportProfileInfoController = new PassportProfileInfoController(selfProfile, world, playerEntity);
             notificationBusController.SubscribeToNotificationTypeReceived(NotificationType.BADGE_GRANTED, OnBadgeNotificationReceived);
             notificationBusController.SubscribeToNotificationTypeClick(NotificationType.BADGE_GRANTED, OnBadgeNotificationClicked);
         }
+
+        private void ThumbnailClicked(List<CameraReelResponseCompact> reels, int index, Action<CameraReelResponseCompact> reelDeleteIntention) =>
+            mvcManager.ShowAsync(PhotoDetailController.IssueCommand(new PhotoDetailParameter(reels, index, false, reelDeleteIntention)));
 
         protected override void OnViewInstantiated()
         {
@@ -124,13 +162,21 @@ namespace DCL.Passport
             overviewPassportModules.Add(new UserDetailedInfo_PassportModuleController(viewInstance.UserDetailedInfoModuleView, mvcManager, selfProfile, viewInstance.AddLinkModal, passportErrorsController, passportProfileInfoController));
             overviewPassportModules.Add(new EquippedItems_PassportModuleController(viewInstance.EquippedItemsModuleView, world, rarityBackgrounds, rarityColors, categoryIcons, thumbnailProvider, webBrowser, decentralandUrlsSource, passportErrorsController));
             overviewPassportModules.Add(new BadgesOverview_PassportModuleController(viewInstance.BadgesOverviewModuleView, badgesAPIClient, passportErrorsController, webRequestController));
-            badgesPassportModules.Add(new BadgesDetails_PassportModuleController(viewInstance.BadgesDetailsModuleView, viewInstance.BadgeInfoModuleView, badgesAPIClient, passportErrorsController, webRequestController, selfProfile));
+
+            badgesDetailsPassportModuleController = new BadgesDetails_PassportModuleController(viewInstance.BadgesDetailsModuleView, viewInstance.BadgeInfoModuleView, badgesAPIClient, passportErrorsController, webRequestController, selfProfile);
+            cameraReelGalleryController = new CameraReelGalleryController(viewInstance.CameraReelGalleryModuleView, cameraReelStorageService,cameraReelScreenshotsStorage, new ReelGalleryConfigParams(gridLayoutFixedColumnCount, thumbnailHeight, thumbnailWidth, false, false), false);
+            cameraReelGalleryController.ThumbnailClicked += ThumbnailClicked;
+            badgesPassportModules.Add(badgesDetailsPassportModuleController);
 
             passportProfileInfoController.PublishError += OnPublishError;
             passportProfileInfoController.OnProfilePublished += OnProfilePublished;
+            badgesDetailsPassportModuleController.OnBadgeSelected += OnBadgeSelected;
 
             viewInstance.OverviewSectionButton.Button.onClick.AddListener(OpenOverviewSection);
             viewInstance.BadgesSectionButton.Button.onClick.AddListener(() => OpenBadgesSection());
+            viewInstance.PhotosSectionButton.Button.onClick.AddListener(OpenPhotosSection);
+
+            viewInstance.PhotosSectionButton.gameObject.SetActive(enableCameraReel);
         }
 
         private void OnPublishError()
@@ -141,6 +187,7 @@ namespace DCL.Passport
         protected override void OnViewShow()
         {
             currentUserId = inputData.UserId;
+            isOwnProfile = inputData.IsOwnProfile;
             alreadyLoadedSections = PassportSection.NONE;
             cursor.Unlock();
 
@@ -149,17 +196,18 @@ namespace DCL.Passport
             else
                 OpenBadgesSection(inputData.BadgeIdSelected);
 
-            inputBlock.Disable(InputMapComponent.Kind.SHORTCUTS , InputMapComponent.Kind.CAMERA , InputMapComponent.Kind.PLAYER);
+            inputBlock.Disable(InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.CAMERA, InputMapComponent.Kind.PLAYER);
 
             viewInstance!.ErrorNotification.Hide(true);
-            PassportOpened?.Invoke(currentUserId);
+
+            PassportOpened?.Invoke(currentUserId, isOwnProfile);
         }
 
         protected override void OnViewClose()
         {
             passportErrorsController!.Hide(true);
 
-            inputBlock.Enable(InputMapComponent.Kind.SHORTCUTS , InputMapComponent.Kind.CAMERA , InputMapComponent.Kind.PLAYER);
+            inputBlock.Enable(InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.CAMERA, InputMapComponent.Kind.PLAYER);
 
             characterPreviewController!.OnHide();
 
@@ -188,6 +236,7 @@ namespace DCL.Passport
             openPassportFromBadgeNotificationCts.SafeCancelAndDispose();
             characterPreviewLoadingCts.SafeCancelAndDispose();
             characterPreviewController?.Dispose();
+            photoLoadingCts.SafeCancelAndDispose();
 
             passportProfileInfoController.OnProfilePublished -= OnProfilePublished;
             passportProfileInfoController.PublishError -= OnPublishError;
@@ -249,11 +298,13 @@ namespace DCL.Passport
                 module.Setup(profile);
 
             List<IPassportModuleController> passportModulesToSetup = passportSection == PassportSection.OVERVIEW ? overviewPassportModules : badgesPassportModules;
+
             foreach (IPassportModuleController module in passportModulesToSetup)
             {
                 if (module is BadgesDetails_PassportModuleController badgesDetailsController && !string.IsNullOrEmpty(badgeIdSelected))
+                {
                     badgesDetailsController.SetBadgeByDefault(badgeIdSelected);
-
+                }
                 module.Setup(profile);
             }
         }
@@ -261,23 +312,38 @@ namespace DCL.Passport
         private void OnProfilePublished(Profile profile) =>
             SetupPassportModules(profile, PassportSection.OVERVIEW);
 
+        private void OpenPhotosSection()
+        {
+            if (currentSection == PassportSection.PHOTOS)
+                return;
+
+            photoLoadingCts = photoLoadingCts.SafeRestart();
+
+            viewInstance!.OpenPhotosSection();
+
+            cameraReelGalleryController.ShowWalletGalleryAsync(currentUserId, photoLoadingCts.Token).Forget();
+
+            currentSection = PassportSection.PHOTOS;
+
+            if (!viewInstance.CharacterPreviewView.gameObject.activeSelf)
+            {
+                viewInstance.CharacterPreviewView.gameObject.SetActive(true);
+                characterPreviewController?.OnShow();
+            }
+        }
+
         private void OpenOverviewSection()
         {
             if (currentSection == PassportSection.OVERVIEW)
                 return;
 
-            viewInstance!.OverviewSectionButton.SetSelected(true);
-            viewInstance.BadgesSectionButton.SetSelected(false);
-            viewInstance.OverviewSectionPanel.SetActive(true);
-            viewInstance.BadgesSectionPanel.SetActive(false);
-            viewInstance.MainScroll.content = viewInstance.OverviewSectionPanel.transform as RectTransform;
-            viewInstance.MainScroll.verticalNormalizedPosition = 1;
-            viewInstance.CharacterPreviewView.gameObject.SetActive(true);
+            viewInstance!.OpenOverviewSection();
 
             characterPreviewLoadingCts = characterPreviewLoadingCts.SafeRestart();
             LoadPassportSectionAsync(currentUserId, PassportSection.OVERVIEW, characterPreviewLoadingCts.Token).Forget();
             currentSection = PassportSection.OVERVIEW;
             viewInstance.BadgeInfoModuleView.gameObject.SetActive(false);
+            characterPreviewController?.OnShow();
         }
 
         private void OpenBadgesSection(string? badgeIdSelected = null)
@@ -285,18 +351,15 @@ namespace DCL.Passport
             if (currentSection == PassportSection.BADGES)
                 return;
 
-            viewInstance!.OverviewSectionButton.SetSelected(false);
-            viewInstance.BadgesSectionButton.SetSelected(true);
-            viewInstance.OverviewSectionPanel.SetActive(false);
-            viewInstance.BadgesSectionPanel.SetActive(true);
-            viewInstance.MainScroll.content = viewInstance.BadgesSectionPanel.transform as RectTransform;
-            viewInstance.MainScroll.verticalNormalizedPosition = 1;
-            viewInstance.CharacterPreviewView.gameObject.SetActive(false);
+            viewInstance!.OpenBadgesSection();
 
             characterPreviewLoadingCts = characterPreviewLoadingCts.SafeRestart();
             LoadPassportSectionAsync(currentUserId, PassportSection.BADGES, characterPreviewLoadingCts.Token, badgeIdSelected).Forget();
             currentSection = PassportSection.BADGES;
             viewInstance.BadgeInfoModuleView.gameObject.SetActive(true);
+            characterPreviewController?.OnHide(triggerOnHideBusEvent: false);
+            bool isOwnPassport = ownProfile?.UserId == currentUserId;
+            BadgesSectionOpened?.Invoke(currentUserId, isOwnPassport, OpenBadgeSectionOrigin.Button.ToString());
         }
 
         private void OnBadgeNotificationReceived(INotification notification) =>
@@ -320,7 +383,10 @@ namespace DCL.Passport
                 ownProfile ??= await selfProfile.ProfileAsync(ct);
 
                 if (ownProfile != null)
-                    mvcManager.ShowAsync(IssueCommand(new Params(ownProfile.UserId, badgeIdToOpen)), ct).Forget();
+                {
+                    BadgesSectionOpened?.Invoke(ownProfile.UserId, true, OpenBadgeSectionOrigin.Notification.ToString());
+                    mvcManager.ShowAsync(IssueCommand(new Params(ownProfile.UserId, badgeIdToOpen, isOwnProfile: true)), ct).Forget();
+                }
             }
             catch (OperationCanceledException) { }
             catch (Exception e)
@@ -329,6 +395,12 @@ namespace DCL.Passport
                 passportErrorsController!.Show(ERROR_MESSAGE);
                 ReportHub.LogError(ReportCategory.PROFILE, $"{ERROR_MESSAGE} ERROR: {e.Message}");
             }
+        }
+
+        private void OnBadgeSelected(string badgeId)
+        {
+            bool isOwnPassport = ownProfile?.UserId == currentUserId;
+            BadgeSelected?.Invoke(badgeId, isOwnPassport);
         }
     }
 }

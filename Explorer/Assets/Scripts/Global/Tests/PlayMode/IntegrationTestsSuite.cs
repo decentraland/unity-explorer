@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.AssetsProvision.CodeResolver;
 using DCL.Browser.DecentralandUrls;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
@@ -8,8 +9,10 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Poses;
+using DCL.Optimization.PerformanceBudgeting;
 using DCL.PluginSystem;
 using DCL.Profiles;
+using DCL.Settings;
 using DCL.Web3;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
@@ -20,6 +23,9 @@ using MVC.PopupsController.PopupCloser;
 using NSubstitute;
 using System;
 using System.Threading;
+using DCL.PerformanceAndDiagnostics.Analytics;
+using SceneRuntime.Factory.WebSceneSource;
+using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using UnityEngine.AddressableAssets;
 
 namespace Global.Tests.PlayMode
@@ -38,15 +44,23 @@ namespace Global.Tests.PlayMode
 
             IWeb3IdentityCache identityCache = new MemoryWeb3IdentityCache();
 
+            IWebJsSources webJsSources = new WebJsSources(
+                new JsCodeResolver(
+                    IWebRequestController.DEFAULT
+                )
+            );
+
             IReportsHandlingSettings? reportSettings = Substitute.For<IReportsHandlingSettings>();
             reportSettings.IsEnabled(ReportHandler.DebugLog).Returns(true);
 
             var diagnosticsContainer = DiagnosticsContainer.Create(reportSettings);
 
-            (StaticContainer? staticContainer, bool success) = await StaticContainer.CreateAsync(dclUrls,
+            (StaticContainer? staticContainer, bool success) = await StaticContainer.CreateAsync(
+                dclUrls,
                 assetProvisioner,
                 Substitute.For<IReportsHandlingSettings>(),
                 Substitute.For<IAppArgs>(),
+                ITexturesFuse.NewTestInstance(),
                 new DebugViewsCatalog(),
                 globalSettingsContainer,
                 diagnosticsContainer,
@@ -56,6 +70,11 @@ namespace Global.Tests.PlayMode
                 false,
                 World.Create(),
                 new Entity(),
+                new SystemMemoryCap(MemoryCapMode.MAX_SYSTEM_MEMORY),
+                new WorldVolumeMacBus(),
+                false,
+                Substitute.For<IAnalyticsController>(),
+                false,
                 ct);
 
             if (!success)
@@ -77,7 +96,8 @@ namespace Global.Tests.PlayMode
                     Substitute.For<IPopupCloserView>()
                 ),
                 new IMessagePipesHub.Fake(),
-                Substitute.For<IRemoteMetadata>()
+                Substitute.For<IRemoteMetadata>(),
+                webJsSources
             );
 
             return (staticContainer, sceneSharedContainer);

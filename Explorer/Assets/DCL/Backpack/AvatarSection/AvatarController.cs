@@ -40,6 +40,7 @@ namespace DCL.Backpack
         {
             slotsController?.Dispose();
             backpackInfoPanelController?.Dispose();
+            backpackGridController?.Dispose();
         }
 
         public void RequestInitialWearablesPage() =>

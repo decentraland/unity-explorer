@@ -13,15 +13,15 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
     /// <summary>
     ///     Resolves Player profile and waits for the avatar to be loaded
     /// </summary>
-    public class LoadPlayerAvatarStartupOperation : IStartupOperation
+    public class LoadPlayerAvatarStartupOperation : StartUpOperationBase
     {
-        private readonly RealFlowLoadingStatus loadingStatus;
+        private readonly ILoadingStatus loadingStatus;
         private readonly ISelfProfile selfProfile;
         private readonly ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy;
         private World world = null!;
         private Entity playerEntity;
 
-        public LoadPlayerAvatarStartupOperation(RealFlowLoadingStatus loadingStatus, ISelfProfile selfProfile, ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy)
+        public LoadPlayerAvatarStartupOperation(ILoadingStatus loadingStatus, ISelfProfile selfProfile, ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy)
         {
             this.loadingStatus = loadingStatus;
             this.selfProfile = selfProfile;
@@ -34,8 +34,9 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
             playerEntity = newPlayerEntity;
         }
 
-        public async UniTask<Result> ExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct)
+        protected override async UniTask InternalExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct)
         {
+            float finalizationProgress = loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.PlayerAvatarLoading);
             var profile = await selfProfile.ProfileOrPublishIfNotAsync(ct);
 
             // Add the profile into the player entity so it will create the avatar in world
@@ -48,9 +49,7 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
             // Eventually it will lead to the Avatar Resolution or the entity destruction
             // if the avatar is already downloaded by the authentication screen it will be resolved immediately
             await UniTask.WaitWhile(() => !mainPlayerAvatarBaseProxy.Configured && world.IsAlive(playerEntity), PlayerLoopTiming.LastPostLateUpdate, ct);
-
-            report.SetProgress(loadingStatus.SetStage(RealFlowLoadingStatus.Stage.PlayerAvatarLoaded));
-            return Result.SuccessResult();
+            report.SetProgress(finalizationProgress);
         }
     }
 }

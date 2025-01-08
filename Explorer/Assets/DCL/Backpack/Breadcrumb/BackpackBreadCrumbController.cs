@@ -6,9 +6,10 @@ using UnityEngine;
 
 namespace DCL.Backpack.Breadcrumb
 {
-    public class BackpackBreadCrumbController
+    public class BackpackBreadCrumbController : IDisposable
     {
         private readonly BackpackBreadCrumbView view;
+        private readonly IBackpackEventBus eventBus;
         private readonly IBackpackCommandBus commandBus;
         private readonly NftTypeIconSO categoryIcons;
         private readonly ColorPickerController colorPickerController;
@@ -16,6 +17,7 @@ namespace DCL.Backpack.Breadcrumb
         public BackpackBreadCrumbController(BackpackBreadCrumbView view, IBackpackEventBus eventBus, IBackpackCommandBus commandBus, NftTypeIconSO categoryIcons, ColorToggleView colorToggle, ColorPresetsSO hairColors, ColorPresetsSO eyesColors, ColorPresetsSO bodyshapeColors)
         {
             this.view = view;
+            this.eventBus = eventBus;
             this.commandBus = commandBus;
             this.categoryIcons = categoryIcons;
             colorPickerController = new ColorPickerController(view.ColorPickerView, colorToggle, hairColors, eyesColors, bodyshapeColors);
@@ -27,6 +29,19 @@ namespace DCL.Backpack.Breadcrumb
             view.SearchButton.ExitButton.onClick.AddListener(OnExitSearch);
             view.FilterButton.ExitButton.onClick.AddListener(OnExitFilter);
             view.AllButton.NavigateButton.onClick.AddListener(OnAllFilter);
+        }
+
+        public void Dispose()
+        {
+            colorPickerController.Dispose();
+
+            view.SearchButton.ExitButton.onClick.RemoveAllListeners();
+            view.FilterButton.ExitButton.onClick.RemoveAllListeners();
+            view.AllButton.NavigateButton.onClick.RemoveAllListeners();
+
+            eventBus.FilterCategoryEvent -= OnFilterCategory;
+            eventBus.SearchEvent -= OnSearch;
+            eventBus.ChangeColorEvent -= UpdateColorPickerColors;
         }
 
         private void UpdateColorPickerColors(Color newColor, string category)

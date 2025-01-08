@@ -9,7 +9,7 @@ on:
       - ready_for_review
       - labeled
   merge_group: {}
-  push: { branches: [main] }
+  push: { branches: [dev] }
 
 env:
   UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}

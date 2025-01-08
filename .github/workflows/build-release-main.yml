@@ -1,0 +1,44 @@
+name: Unity Cloud Build Release
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  get-info:
+    name: Get Info
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      version: ${{ steps.get_version.outputs.next_short_version }}
+      tag_version: ${{ steps.get_version.outputs.next_tag_version }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get version
+        id: get_version
+        uses: ./.github/actions/version
+
+  # Run a clean build (no cache)
+  build:
+    name: Build Unity Cloud
+    needs: get-info
+    strategy:
+      matrix:
+        install_source: ['launcher', 'epic']
+    uses: ./.github/workflows/build-unitycloud.yml
+    with:
+      profile: none
+      clean_build: true
+      cache_strategy: none
+      version: ${{ needs.get-info.outputs.version }}
+      sentry_enabled: true
+      is_release_build: true
+      install_source: ${{ matrix.install_source }}
+      tag_version: ${{ needs.get-info.outputs.tag_version }}
+    secrets: inherit

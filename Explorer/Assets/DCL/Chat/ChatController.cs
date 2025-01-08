@@ -32,6 +32,7 @@ namespace DCL.Chat
         private const string EMOJI_SUGGESTION_PATTERN = @":\w+";
         private const string EMOJI_TAG = "[emoji]";
         private const string HASH_CHARACTER = "#";
+        private const string ORIGIN = "chat";
         private static readonly Regex EMOJI_PATTERN_REGEX = new (EMOJI_SUGGESTION_PATTERN, RegexOptions.Compiled);
 
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
@@ -52,7 +53,6 @@ namespace DCL.Chat
         private readonly Entity playerEntity;
         private readonly Mouse device;
         private readonly DCLInput dclInput;
-        private readonly ChatCommandsHandler commandsHandler;
         private readonly IInputBlock inputBlock;
 
         private CancellationTokenSource cts;
@@ -102,15 +102,18 @@ namespace DCL.Chat
             this.eventSystem = eventSystem;
             this.inputBlock = inputBlock;
 
-            chatMessagesBus.MessageAdded += OnMessageAdded;
-            chatHistory.OnMessageAdded += CreateChatEntry;
-            chatHistory.OnCleared += ChatHistoryOnOnCleared;
             device = InputSystem.GetDevice<Mouse>();
         }
 
         protected override void OnViewInstantiated()
         {
             cameraEntity = world.CacheCamera();
+
+            //We start processing messages once the view is ready
+            chatMessagesBus.MessageAdded += OnMessageAdded;
+            chatHistory.OnMessageAdded += CreateChatEntry;
+            chatHistory.OnCleared += ChatHistoryOnOnCleared;
+
             viewInstance!.OnChatViewPointerEnter += OnChatViewPointerEnter;
             viewInstance.OnChatViewPointerExit += OnChatViewPointerExit;
             viewInstance.CharacterCounter.SetMaximumLength(viewInstance.InputField.characterLimit);
@@ -120,7 +123,7 @@ namespace DCL.Chat
             viewInstance.InputField.onDeselect.AddListener(OnInputDeselected);
             viewInstance.CloseChatButton.onClick.AddListener(CloseChat);
             viewInstance.LoopList.InitListView(0, OnGetItemByIndex);
-            emojiPanelController = new EmojiPanelController(viewInstance.EmojiPanel, emojiPanelConfiguration, emojiMappingJson, emojiSectionViewPrefab, emojiButtonPrefab, inputBlock);
+            emojiPanelController = new EmojiPanelController(viewInstance.EmojiPanel, emojiPanelConfiguration, emojiMappingJson, emojiSectionViewPrefab, emojiButtonPrefab);
             emojiPanelController.OnEmojiSelected += AddEmojiToInput;
 
             emojiSuggestionPanelController = new EmojiSuggestionPanel(viewInstance.EmojiSuggestionPanel, emojiSuggestionViewPrefab, dclInput);
@@ -132,6 +135,9 @@ namespace DCL.Chat
             viewInstance.ChatBubblesToggle.Toggle.SetIsOnWithoutNotify(nametagsData.showChatBubbles);
             OnToggleChatBubblesValueChanged(nametagsData.showChatBubbles);
             OnFocus();
+
+            // Intro message
+            chatHistory.AddMessage(ChatMessage.NewFromSystem("Type /help for available commands."));
         }
 
         protected override void OnViewShow()
@@ -261,13 +267,13 @@ namespace DCL.Chat
         private void DisableUnwantedInputs()
         {
             world.AddOrGet(cameraEntity, new CameraBlockerComponent());
-            inputBlock.Disable(InputMapComponent.Kind.CAMERA , InputMapComponent.Kind.SHORTCUTS , InputMapComponent.Kind.PLAYER);
+            inputBlock.Disable(InputMapComponent.BLOCK_USER_INPUT);
         }
 
         private void EnableUnwantedInputs()
         {
             world.TryRemove<CameraBlockerComponent>(cameraEntity);
-            inputBlock.Enable(InputMapComponent.Kind.CAMERA , InputMapComponent.Kind.SHORTCUTS , InputMapComponent.Kind.PLAYER);
+            inputBlock.Enable(InputMapComponent.BLOCK_USER_INPUT);
         }
 
         private void OnSubmitAction(InputAction.CallbackContext obj)
@@ -306,7 +312,7 @@ namespace DCL.Chat
             viewInstance.InputField.text = string.Empty;
             viewInstance.InputField.ActivateInputField();
 
-            chatMessagesBus.Send(messageToSend);
+            chatMessagesBus.Send(messageToSend, ORIGIN);
         }
 
         private LoopListViewItem2? OnGetItemByIndex(LoopListView2 listView, int index)
@@ -454,9 +460,9 @@ namespace DCL.Chat
 
         private void CreateChatEntry(ChatMessage chatMessage)
         {
-            if (chatMessage.SentByOwnUser == false && entityParticipantTable.Has(chatMessage.WalletAddress))
+            if (chatMessage.SentByOwnUser == false && entityParticipantTable.TryGet(chatMessage.WalletAddress, out IReadOnlyEntityParticipantTable.Entry entry))
             {
-                Entity entity = entityParticipantTable.Entity(chatMessage.WalletAddress);
+                Entity entity = entry.Entity;
                 GenerateChatBubbleComponent(entity, chatMessage);
                 UIAudioEventsBus.Instance.SendPlayAudioEvent(viewInstance!.ChatReceiveMessageAudio);
             }

@@ -1,6 +1,8 @@
 using DCL.Diagnostics;
 using DCL.Landscape.Settings;
+using DCL.Optimization.PerformanceBudgeting;
 using DCL.Quality;
+using DCL.SDKComponents.MediaStream.Settings;
 using DCL.Settings.Configuration;
 using DCL.Settings.ModuleControllers;
 using DCL.Settings.Settings;
@@ -20,8 +22,11 @@ namespace DCL.Settings
         private readonly SettingsMenuConfiguration settingsMenuConfiguration;
         private readonly AudioMixer generalAudioMixer;
         private readonly RealmPartitionSettingsAsset realmPartitionSettingsAsset;
+        private readonly VideoPrioritizationSettings videoPrioritizationSettings;
         private readonly LandscapeData landscapeData;
         private readonly QualitySettingsAsset qualitySettingsAsset;
+        private readonly ISystemMemoryCap memoryCap;
+        private readonly WorldVolumeMacBus worldVolumeMacBus;
         private readonly ControlsSettingsAsset controlsSettingsAsset;
         private readonly RectTransform rectTransform;
         private readonly List<SettingsFeatureController> controllers = new ();
@@ -31,9 +36,12 @@ namespace DCL.Settings
             SettingsMenuConfiguration settingsMenuConfiguration,
             AudioMixer generalAudioMixer,
             RealmPartitionSettingsAsset realmPartitionSettingsAsset,
+            VideoPrioritizationSettings videoPrioritizationSettings,
             LandscapeData landscapeData,
             QualitySettingsAsset qualitySettingsAsset,
-            ControlsSettingsAsset controlsSettingsAsset)
+            ControlsSettingsAsset controlsSettingsAsset,
+            ISystemMemoryCap memoryCap,
+            WorldVolumeMacBus worldVolumeMacBus = null)
         {
             this.view = view;
             this.settingsMenuConfiguration = settingsMenuConfiguration;
@@ -41,7 +49,10 @@ namespace DCL.Settings
             this.realmPartitionSettingsAsset = realmPartitionSettingsAsset;
             this.landscapeData = landscapeData;
             this.qualitySettingsAsset = qualitySettingsAsset;
+            this.memoryCap = memoryCap;
+            this.worldVolumeMacBus = worldVolumeMacBus;
             this.controlsSettingsAsset = controlsSettingsAsset;
+            this.videoPrioritizationSettings = videoPrioritizationSettings;
 
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
 
@@ -93,6 +104,9 @@ namespace DCL.Settings
             GenerateSettingsSection(settingsMenuConfiguration.SoundSectionConfig, view.SoundSectionContainer);
             GenerateSettingsSection(settingsMenuConfiguration.ControlsSectionConfig, view.ControlsSectionContainer);
 
+            foreach (var controller in controllers)
+                controller.OnAllControllersInstantiated(controllers);
+
             SetInitialSectionsVisibility();
         }
 
@@ -104,7 +118,7 @@ namespace DCL.Settings
                 generalGroupView.GroupTitle.text = group.GroupTitle;
 
                 foreach (SettingsModuleBindingBase module in group.Modules)
-                    controllers.Add(module?.CreateModule(generalGroupView.ModulesContainer, realmPartitionSettingsAsset, landscapeData, generalAudioMixer, qualitySettingsAsset, controlsSettingsAsset));
+                    controllers.Add(module?.CreateModule(generalGroupView.ModulesContainer, realmPartitionSettingsAsset, videoPrioritizationSettings, landscapeData, generalAudioMixer, qualitySettingsAsset, controlsSettingsAsset, memoryCap, worldVolumeMacBus));
             }
         }
 

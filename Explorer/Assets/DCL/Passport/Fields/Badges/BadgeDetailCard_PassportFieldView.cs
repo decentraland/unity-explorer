@@ -117,6 +117,7 @@ namespace DCL.Passport.Fields.Badges
         {
             string completedAtToLoad = !string.IsNullOrEmpty(badgeInfo.data.progress.lastCompletedTierAt) ? badgeInfo.data.progress.lastCompletedTierAt : badgeInfo.data.completedAt;
             BadgeDateText.text = !string.IsNullOrEmpty(completedAtToLoad) ? BadgesUtils.FormatTimestampDate(completedAtToLoad) : "—";
+
             BadgeDateText.gameObject.SetActive(
                 !ShouldShowBadgeProgressBar(badgeInfo, isOwnProfile) &&
                 ((!badgeInfo.isLocked && !string.IsNullOrEmpty(badgeInfo.data.completedAt)) ||
@@ -141,12 +142,12 @@ namespace DCL.Passport.Fields.Badges
             if (badgeInfo.data.isTier)
             {
                 int progressPercentage = badgeInfo.GetProgressPercentage();
-                ProgressBarFill.sizeDelta = new Vector2((!badgeInfo.isLocked ? progressPercentage : 0) * (ProgressBar.sizeDelta.x / 100), ProgressBarFill.sizeDelta.y);
+                ProgressBarFill.sizeDelta = new Vector2(Mathf.Clamp(progressPercentage, 0, 100) * (ProgressBar.sizeDelta.x / 100), ProgressBarFill.sizeDelta.y);
             }
             else
             {
                 int simpleBadgeProgressPercentage = badgeInfo.data.progress.stepsDone * 100 / badgeInfo.data.progress.totalStepsTarget;
-                ProgressBarFill.sizeDelta = new Vector2(simpleBadgeProgressPercentage * (ProgressBar.sizeDelta.x / 100), ProgressBarFill.sizeDelta.y);
+                ProgressBarFill.sizeDelta = new Vector2(Mathf.Clamp(simpleBadgeProgressPercentage, 0, 100) * (ProgressBar.sizeDelta.x / 100), ProgressBarFill.sizeDelta.y);
             }
         }
 
@@ -154,6 +155,7 @@ namespace DCL.Passport.Fields.Badges
         {
             BadgeImage.SetColor(badgeInfo.isLocked ? LockedBadgeImageColor : NonLockedBadgeImageColor);
             imageController?.SetImage(DefaultBadgeSprite);
+
             string imageToLoad = !string.IsNullOrEmpty(badgeInfo.data.progress.lastCompletedTierImage) ?
                 badgeInfo.data.progress.lastCompletedTierImage :
                 badgeInfo.data.assets is { textures2d: not null } ? badgeInfo.data.assets.textures2d.normal : "";

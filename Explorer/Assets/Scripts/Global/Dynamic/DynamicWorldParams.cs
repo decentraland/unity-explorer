@@ -72,14 +72,13 @@ namespace Global.Dynamic
         public HybridSceneParams HybridSceneParams { get; init; }
         public string LocalSceneDevelopmentRealm { get; init; }
         public IAppArgs AppParameters { get; init; }
+        public string DefaultStartingRealm { get; set; }
     }
 
     public struct HybridSceneParams
     {
         public bool EnableHybridScene { get; set; }
         public HybridSceneContentServer HybridSceneContentServer { get; set; }
-        public Vector2Int StartParcel { get; init; }
-
         public string World { get; init; }
     }
 }

@@ -23,11 +23,13 @@ using MVC;
 using PortableExperiences.Controller;
 using SceneRunner.ECSWorld;
 using SceneRunner.Scene;
+using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime;
 using SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents;
 using SceneRuntime.Factory;
 using System;
 using System.Threading;
+using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Networking;
 using Utility;
@@ -125,7 +127,7 @@ namespace SceneRunner
         {
             const string SCENE_JSON_FILE_NAME = "scene.json";
 
-            var fullPath = URLDomain.FromString($"file://{Application.streamingAssetsPath}/Scenes/{directoryName}/");
+            var fullPath = URLDomain.FromString($"file://{Application.dataPath}/Scenes/TestJsScenes/{directoryName}/");
 
             string rawSceneJsonPath = fullPath.Value + SCENE_JSON_FILE_NAME;
 
@@ -160,13 +162,7 @@ namespace SceneRunner
             try { sceneRuntime = await sceneRuntimeFactory.CreateByPathAsync(deps.SceneCodeUrl, deps.PoolsProvider, sceneData.SceneShortInfo, ct, SceneRuntimeFactory.InstantiationBehavior.SwitchToThreadPool); }
             catch (Exception e)
             {
-                // ScriptEngineException.ErrorDetails is ignored through the logging process which is vital in the reporting information
-                if (e is ScriptEngineException scriptEngineException)
-                    deps.ExceptionsHandler.OnJavaScriptException(new ScriptEngineException(scriptEngineException.ErrorDetails));
-
-                await UniTask.SwitchToMainThread(PlayerLoopTiming.Initialization);
-                deps.Dispose();
-
+                await ReportExceptionAsync(e, deps, deps.ExceptionsHandler);
                 throw;
             }
 
@@ -243,7 +239,12 @@ namespace SceneRunner
                 );
             }
 
-            sceneRuntime.ExecuteSceneJson();
+            try { sceneRuntime.ExecuteSceneJson(); }
+            catch (Exception e)
+            {
+                await ReportExceptionAsync(e, runtimeDeps, deps.ExceptionsHandler);
+                throw;
+            }
 
             if (sceneData.IsPortableExperience())
             {
@@ -257,6 +258,16 @@ namespace SceneRunner
                 sceneData,
                 runtimeDeps
             );
+        }
+
+        private static async Task ReportExceptionAsync<T>(Exception e, T deps, ISceneExceptionsHandler exceptionsHandler) where T : IDisposable
+        {
+            // ScriptEngineException.ErrorDetails is ignored through the logging process which is vital in the reporting information
+            if (e is ScriptEngineException scriptEngineException)
+                exceptionsHandler.OnJavaScriptException(new ScriptEngineException(scriptEngineException.ErrorDetails));
+
+            await UniTask.SwitchToMainThread(PlayerLoopTiming.Initialization);
+            deps.Dispose();
         }
     }
 }

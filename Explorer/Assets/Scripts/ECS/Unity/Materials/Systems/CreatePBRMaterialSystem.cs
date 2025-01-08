@@ -55,7 +55,6 @@ namespace ECS.Unity.Materials.Systems
 
             if (TryGetTextureResult(ref materialComponent.AlbedoTexPromise, out StreamableLoadingResult<Texture2DData> albedoResult)
                 && TryGetTextureResult(ref materialComponent.EmissiveTexPromise, out StreamableLoadingResult<Texture2DData> emissiveResult)
-                && TryGetTextureResult(ref materialComponent.AlphaTexPromise, out StreamableLoadingResult<Texture2DData> alphaResult)
                 && TryGetTextureResult(ref materialComponent.BumpTexPromise, out StreamableLoadingResult<Texture2DData> bumpResult))
             {
                 materialComponent.Status = StreamableLoading.LifeCycle.LoadingFinished;
@@ -64,11 +63,10 @@ namespace ECS.Unity.Materials.Systems
 
                 SetUpColors(materialComponent.Result, materialComponent.Data.AlbedoColor, materialComponent.Data.EmissiveColor, materialComponent.Data.ReflectivityColor, materialComponent.Data.EmissiveIntensity);
                 SetUpProps(materialComponent.Result, materialComponent.Data.Metallic, materialComponent.Data.Roughness, materialComponent.Data.SpecularIntensity, materialComponent.Data.DirectIntensity);
-                SetUpTransparency(materialComponent.Result, materialComponent.Data.TransparencyMode, in materialComponent.Data.Textures.AlphaTexture, materialComponent.Data.AlbedoColor, materialComponent.Data.AlphaTest);
+                SetUpTransparency(materialComponent.Result, materialComponent.Data.TransparencyMode, materialComponent.Data.AlbedoColor, materialComponent.Data.AlphaTest);
 
                 TrySetTexture(materialComponent.Result, ref albedoResult, ShaderUtils.BaseMap, in materialComponent.Data.Textures.AlbedoTexture);
                 TrySetTexture(materialComponent.Result, ref emissiveResult, ShaderUtils.EmissionMap, in materialComponent.Data.Textures.EmissiveTexture);
-                TrySetTexture(materialComponent.Result, ref alphaResult, ShaderUtils.AlphaTexture, in materialComponent.Data.Textures.AlphaTexture);
                 TrySetTexture(materialComponent.Result, ref bumpResult, ShaderUtils.BumpMap, in materialComponent.Data.Textures.BumpTexture);
 
                 DestroyEntityReferencesForPromises(ref materialComponent);
@@ -98,10 +96,9 @@ namespace ECS.Unity.Materials.Systems
             material.SetFloat(ShaderUtils.SpecularHighlights, specularIntensity * directIntensity);
         }
 
-        public static void SetUpTransparency(Material material, MaterialTransparencyMode transparencyMode,
-            in TextureComponent? alphaTexture, Color albedoColor, float alphaTest)
+        public static void SetUpTransparency(Material material, MaterialTransparencyMode transparencyMode, Color albedoColor, float alphaTest)
         {
-            transparencyMode.ResolveAutoMode(alphaTexture, albedoColor);
+            transparencyMode.ResolveAutoMode(null, albedoColor);
 
             // ReSharper disable once SwitchStatementMissingSomeEnumCasesNoDefault
             switch (transparencyMode)

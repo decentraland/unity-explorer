@@ -64,8 +64,12 @@ namespace DCL.SDKComponents.TextShape
                 materialPropertyBlock.SetColor(ID_OUTLINE_COLOR, textShape.OutlineColor?.ToUnityColor() ?? Color.white);
                 materialPropertyBlock.SetFloat(ID_OUTLINE_WIDTH, textShape.OutlineWidth);
             }
-            else if (tmpText.fontMaterial.IsKeywordEnabled(OUTLINE_ON_KEYWORD))
+            else
+            {
                 tmpText.fontMaterial.DisableKeyword(OUTLINE_ON_KEYWORD);
+                materialPropertyBlock.SetColor(ID_OUTLINE_COLOR, Color.clear);
+                materialPropertyBlock.SetFloat(ID_OUTLINE_WIDTH, 0.0f);
+            }
 
             if (textShape.ShadowOffsetX != 0 || textShape.ShadowOffsetY != 0)
             {
@@ -75,8 +79,15 @@ namespace DCL.SDKComponents.TextShape
                 materialPropertyBlock.SetFloat(ID_UNDERLAY_OFFSET_X, textShape.ShadowOffsetX);
                 materialPropertyBlock.SetFloat(ID_UNDERLAY_OFFSET_Y, textShape.ShadowOffsetY);
             }
-            else if (tmpText.fontMaterial.IsKeywordEnabled(UNDERLAY_ON_KEYWORD))
+            else
+            {
                 tmpText.fontMaterial.DisableKeyword(UNDERLAY_ON_KEYWORD);
+                materialPropertyBlock.SetColor(ID_UNDERLAY_COLOR, Color.clear);
+                materialPropertyBlock.SetFloat(ID_UNDERLAY_SOFTNESS, 0.0f);
+                materialPropertyBlock.SetFloat(ID_UNDERLAY_OFFSET_X, 0.0f);
+                materialPropertyBlock.SetFloat(ID_UNDERLAY_OFFSET_Y, 0.0f);
+            }
+
 
             tmpText.renderer.SetPropertyBlock(materialPropertyBlock);
         }

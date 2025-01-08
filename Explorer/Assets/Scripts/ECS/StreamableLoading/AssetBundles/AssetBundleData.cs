@@ -4,6 +4,7 @@ using System;
 using Unity.Profiling;
 using UnityEngine;
 using UnityEngine.Assertions;
+using Utility;
 using Object = UnityEngine.Object;
 
 namespace ECS.StreamableLoading.AssetBundles
@@ -16,14 +17,16 @@ namespace ECS.StreamableLoading.AssetBundles
         private readonly Object? mainAsset;
         private readonly Type? assetType;
 
-        public AssetBundle AssetBundle => Asset;
+        internal AssetBundle AssetBundle => Asset;
 
         public readonly AssetBundleData[] Dependencies;
 
         public readonly AssetBundleMetrics? Metrics;
 
-        private readonly string version;
-        private readonly string source;
+        private readonly string description;
+
+
+        private bool unloaded;
 
         public AssetBundleData(AssetBundle assetBundle, AssetBundleMetrics? metrics, Object mainAsset, Type assetType, AssetBundleData[] dependencies, string version = "", string source = "")
             : base(assetBundle, ReportCategory.ASSET_BUNDLES)
@@ -33,12 +36,14 @@ namespace ECS.StreamableLoading.AssetBundles
             this.mainAsset = mainAsset;
             Dependencies = dependencies;
             this.assetType = assetType;
-            this.version = version;
-            this.source = source;
+            
+            description = $"AB:{AssetBundle?.name}_{version}_{source}";
+            UnloadAB();
         }
 
         public AssetBundleData(AssetBundle assetBundle, AssetBundleMetrics? metrics, AssetBundleData[] dependencies) : base(assetBundle, ReportCategory.ASSET_BUNDLES)
         {
+            //Dependencies cant be unloaded, since we dont know who will need them =(
             Metrics = metrics;
 
             this.mainAsset = null;
@@ -55,15 +60,29 @@ namespace ECS.StreamableLoading.AssetBundles
 
         protected override ref ProfilerCounterValue<int> referencedCount => ref ProfilingCounters.ABReferencedAmount;
 
+        
+        private void UnloadAB()
+        {
+            //We immediately unload the asset bundle, as we don't need it anymore.
+            //Very hacky, because the asset will remain in cache as AssetBundle == null
+            //When DestroyObject is invoked, it will do nothing.
+            //When cache in cleaned, the AssetBundleData will be removed from the list. Its there doing nothing
+            if (unloaded)
+                return;
+            unloaded = true;
+            AssetBundle?.UnloadAsync(false);
+        }
+        
         protected override void DestroyObject()
         {
-            if (AssetBundle != null)
-            {
-                foreach (AssetBundleData child in Dependencies)
-                    child.Dereference();
+            foreach (AssetBundleData child in Dependencies)
+                child.Dereference();
+            
+            if(mainAsset!=null)
+                Object.DestroyImmediate(mainAsset, true);
 
+            if (!unloaded)
                 AssetBundle.UnloadAsync(unloadAllLoadedObjects: true);
-            }
         }
 
         public T GetMainAsset<T>() where T : Object
@@ -72,11 +91,10 @@ namespace ECS.StreamableLoading.AssetBundles
 
             if (assetType != typeof(T))
                 throw new ArgumentException("Asset type mismatch: " + typeof(T) + " != " + assetType);
-
             return (T)mainAsset!;
         }
 
-        public string GetInstanceName() =>
-            $"AB:{AssetBundle.name}_{version}_{source}";
+        public string GetInstanceName() => description;
+            
     }
 }

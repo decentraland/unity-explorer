@@ -1,4 +1,6 @@
+#nullable enable
 using DCL.Optimization.PerformanceBudgeting;
+using DCL.Optimization.Pools;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -36,9 +38,13 @@ namespace DCL.LOD
 
         private readonly Dictionary<string, IObjectPool<Transform>> roadAssetPoolDictionary;
 
-        public RoadAssetsPool(IReadOnlyList<GameObject> roadPrefabs)
+        public RoadAssetsPool(IReadOnlyList<GameObject> roadPrefabs, IComponentPoolsRegistry? componentPoolsRegistry = null)
         {
-            roadAssetParent = new GameObject("ROAD_ASSET_POOL").transform;
+
+            var poolRoot = componentPoolsRegistry?.RootContainerTransform();
+            roadAssetParent = new GameObject("POOL_CONTAINER_Road_Assets").transform;
+            roadAssetParent.parent = poolRoot;
+
             roadAssetPoolDictionary = new Dictionary<string, IObjectPool<Transform>>();
 
             foreach (GameObject gameObject in roadPrefabs)
@@ -59,7 +65,8 @@ namespace DCL.LOD
 
         public void Dispose()
         {
-            UnloadImmediate();
+            Unload(new NullPerformanceBudget(), int.MaxValue);
+            UnityObjectUtils.SafeDestroyGameObject(roadAssetParent);
         }
 
         /// <summary>
@@ -117,15 +124,6 @@ namespace DCL.LOD
                 roadAssetPool.Release(asset);
             else
                 roadAssetPoolDictionary[DEFAULT_ROAD_KEY].Release(asset);
-        }
-
-        /// <summary>
-        /// Destroys all road asset instances in all pools. Instances must be released before they can be destroyed using this method.
-        /// </summary>
-        public void UnloadImmediate()
-        {
-            foreach (KeyValuePair<string, IObjectPool<Transform>> keyValuePair in roadAssetPoolDictionary)
-                keyValuePair.Value.Clear();
         }
 
         // Called by the CacheCleaner
