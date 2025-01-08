@@ -75,6 +75,7 @@ namespace Global.Tests.PlayMode
                 new WorldVolumeMacBus(),
                 false,
                 Substitute.For<IAnalyticsController>(),
+                false,
                 ct);
 
             if (!success)
