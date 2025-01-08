@@ -14,6 +14,7 @@ using DCL.WebRequests.Analytics;
 using DCL.WebRequests.RequestsHub;
 using ECS;
 using ECS.SceneLifeCycle;
+using ECS.SceneLifeCycle.Realm;
 using LiveKit.Internal.FFIClients;
 using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using UnityEngine;
@@ -39,12 +40,12 @@ namespace DCL.Multiplayer.Connections.Demo
 
             IWeb3IdentityCache? identityCache = await ArchipelagoFakeIdentityCache.NewAsync(urlsSource, new Web3AccountFactory());
             var character = new ExposedTransform();
-            var webRequests = new LogWebRequestController(new WebRequestController(new WebRequestsAnalyticsContainer(), identityCache, new RequestHub(ITexturesFuse.NewDefault())));
+            var webRequests = new LogWebRequestController(new WebRequestController(new WebRequestsAnalyticsContainer(), identityCache, new RequestHub(ITexturesFuse.NewDefault(), false)));
             var realmData = new IRealmData.Fake();
 
             new GateKeeperSceneRoom(
                 webRequests,
-                new SceneRoomLogMetaDataSource(new SceneRoomMetaDataSource(realmData, character, world, false)),
+                new SceneRoomLogMetaDataSource(new SceneRoomMetaDataSource(new IRealmController.Fake(), character, world, false)),
                 urlsSource,
                 new ScenesCache()
             ).StartAsync();

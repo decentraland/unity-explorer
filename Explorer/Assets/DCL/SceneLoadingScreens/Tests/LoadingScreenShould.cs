@@ -14,21 +14,20 @@ namespace DCL.SceneLoadingScreens.Tests
 {
     public class LoadingScreenShould
     {
-        private static readonly LoadingScreenTimeout TIMEOUT = new()
-            { Value = TimeSpan.FromSeconds(60) };
+        private static readonly LoadingScreenTimeout TIMEOUT = new (TimeSpan.FromSeconds(60));
 
         /// <summary>
         ///     Happy path
         /// </summary>
         [Test]
         [TestCaseSource(nameof(PossibleResults))]
-        public async Task ReportResultOfOperationAsync(Result result)
+        public async Task ReportResultOfOperationAsync(EnumResult<TaskError> result)
         {
             var loadingScreen = new LoadingScreen.LoadingScreen(CreateMVCManagerNeverFails(), TIMEOUT);
 
-            Result finalRes = await loadingScreen.ShowWhileExecuteTaskAsync(CreateOp, CancellationToken.None);
+            var finalRes = await loadingScreen.ShowWhileExecuteTaskAsync(CreateOp, CancellationToken.None);
 
-            async UniTask<Result> CreateOp(AsyncLoadProcessReport report, CancellationToken ct)
+            async UniTask<EnumResult<TaskError>> CreateOp(AsyncLoadProcessReport report, CancellationToken ct)
             {
                 await UniTask.DelayFrame(10);
 
@@ -36,7 +35,7 @@ namespace DCL.SceneLoadingScreens.Tests
                 if (result.Success)
                     report.SetProgress(1.0f);
                 else
-                    report.SetException(new Exception(result.ErrorMessage));
+                    report.SetException(new Exception(result.AsResult().ErrorMessage));
 
                 return result;
             }
@@ -46,14 +45,14 @@ namespace DCL.SceneLoadingScreens.Tests
 
         [Test]
         [TestCaseSource(nameof(PossibleResults))]
-        public async Task FixUpLoadingReportAsync(Result result)
+        public async Task FixUpLoadingReportAsync(EnumResult<TaskError> result)
         {
             var loadingScreen = new LoadingScreen.LoadingScreen(CreateMVCManagerNeverFails(), TIMEOUT);
             AsyncLoadProcessReport outerReport = null;
 
-            Result finalRes = await loadingScreen.ShowWhileExecuteTaskAsync(CreateOp, CancellationToken.None);
+            var finalRes = await loadingScreen.ShowWhileExecuteTaskAsync(CreateOp, CancellationToken.None);
 
-            async UniTask<Result> CreateOp(AsyncLoadProcessReport report, CancellationToken ct)
+            async UniTask<EnumResult<TaskError>> CreateOp(AsyncLoadProcessReport report, CancellationToken ct)
             {
                 outerReport = report;
                 await UniTask.DelayFrame(10);
@@ -74,16 +73,16 @@ namespace DCL.SceneLoadingScreens.Tests
             var loadingScreen = new LoadingScreen.LoadingScreen(CreateMVCManagerThrowsException(), TIMEOUT);
             AsyncLoadProcessReport outerReport = null;
 
-            Result finalRes = await loadingScreen.ShowWhileExecuteTaskAsync(CreateOp, CancellationToken.None);
+            var finalRes = await loadingScreen.ShowWhileExecuteTaskAsync(CreateOp, CancellationToken.None);
 
-            async UniTask<Result> CreateOp(AsyncLoadProcessReport report, CancellationToken ct)
+            async UniTask<EnumResult<TaskError>> CreateOp(AsyncLoadProcessReport report, CancellationToken ct)
             {
                 outerReport = report;
                 await UniTask.DelayFrame(10);
-                return Result.SuccessResult();
+                return EnumResult<TaskError>.SuccessResult();
             }
 
-            Assert.That(finalRes, Is.EqualTo(Result.SuccessResult()));
+            Assert.That(finalRes, Is.EqualTo(EnumResult<TaskError>.SuccessResult()));
         }
 
         [Test]
@@ -109,17 +108,17 @@ namespace DCL.SceneLoadingScreens.Tests
                     mvcFinished = true;
                 });
 
-            async UniTask<Result> CreateOp(AsyncLoadProcessReport report, CancellationToken ct)
+            async UniTask<EnumResult<TaskError>> CreateOp(AsyncLoadProcessReport report, CancellationToken ct)
             {
                 outerReport = report;
                 opCancellation = ct;
                 await UniTask.Never(ct).SuppressCancellationThrow();
                 opFinished = true;
-                return Result.CancelledResult();
+                return EnumResult<TaskError>.CancelledResult(TaskError.Cancelled);
             }
 
-            var loadingScreen = new LoadingScreen.LoadingScreen(mvc, new LoadingScreenTimeout { Value = TimeSpan.FromMilliseconds(200) });
-            Result result = await loadingScreen.ShowWhileExecuteTaskAsync(CreateOp, CancellationToken.None);
+            var loadingScreen = new LoadingScreen.LoadingScreen(mvc, new LoadingScreenTimeout(TimeSpan.FromMilliseconds(200)));
+            var result = await loadingScreen.ShowWhileExecuteTaskAsync(CreateOp, CancellationToken.None);
 
             // let internal operations spin to the end
             await UniTask.Yield();
@@ -129,7 +128,7 @@ namespace DCL.SceneLoadingScreens.Tests
             Assert.IsTrue(mvcCancellation.IsCancellationRequested);
             Assert.IsTrue(opCancellation.IsCancellationRequested);
 
-            Assert.That(result.ErrorMessage, Is.EqualTo("Load Timeout!"));
+            Assert.That(result.Error!.Value.State, Is.EqualTo(TaskError.Timeout));
             Assert.That(outerReport!.GetStatus().TaskStatus, Is.EqualTo(UniTaskStatus.Faulted));
         }
 
@@ -145,6 +144,7 @@ namespace DCL.SceneLoadingScreens.Tests
                     mvcCancellation = info.Arg<ShowCommand<SceneLoadingScreenView, SceneLoadingScreenController.Params>>()
                                           .InputData.AsyncLoadProcessReport.WaitUntilFinishedAsync()
                                           .ToCancellationToken();
+
                     await UniTask.Never(mvcCancellation).SuppressCancellationThrow();
                 });
 
@@ -152,13 +152,13 @@ namespace DCL.SceneLoadingScreens.Tests
 
             await loadingScreen.ShowWhileExecuteTaskAsync(CreateOp, CancellationToken.None);
 
-            async UniTask<Result> CreateOp(AsyncLoadProcessReport report, CancellationToken ct)
+            async UniTask<EnumResult<TaskError>> CreateOp(AsyncLoadProcessReport report, CancellationToken ct)
             {
                 await UniTask.DelayFrame(10);
 
                 // if the internal operation didn't modify the loading report on its own, finalize it
                 report.SetProgress(1.0f);
-                return Result.SuccessResult();
+                return EnumResult<TaskError>.SuccessResult();
             }
 
             await UniTask.Yield();
@@ -190,12 +190,12 @@ namespace DCL.SceneLoadingScreens.Tests
             return sub;
         }
 
-        private static Result[] PossibleResults() =>
+        private static EnumResult<TaskError>[] PossibleResults() =>
             new[]
             {
-                Result.SuccessResult(),
-                Result.ErrorResult("TEST ERROR"),
-                Result.CancelledResult(),
+                EnumResult<TaskError>.SuccessResult(),
+                EnumResult<TaskError>.ErrorResult(TaskError.MessageError, "TEST ERROR"),
+                EnumResult<TaskError>.CancelledResult(TaskError.Cancelled),
             };
     }
 }

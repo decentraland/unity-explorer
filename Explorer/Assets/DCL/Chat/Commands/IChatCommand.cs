@@ -1,16 +1,21 @@
 ﻿using Cysharp.Threading.Tasks;
-using System.Text.RegularExpressions;
+using NUnit.Framework.Constraints;
 using System.Threading;
 
 namespace DCL.Chat.Commands
 {
     public interface IChatCommand
     {
-        Regex Regex { get; }
+        string Command { get; }
 
         string Description { get; }
 
-        UniTask<string> ExecuteAsync(Match match, CancellationToken ct);
+        bool DebugOnly => false;
+
+        bool ValidateParameters(string[] parameters) =>
+            parameters.Length == 0;
+
+        UniTask<string> ExecuteCommandAsync(string[] parameters, CancellationToken ct);
     }
 
     public static class ChatCommandsUtils

@@ -27,6 +27,14 @@ $totalVariants = 0
 $localCacheHits = 0
 $remoteCacheHits = 0
 
+# Check if InputLog file exists and is not empty
+if (-not (Test-Path $InputLog) -or (Get-Content $InputLog).Length -eq 0) {
+    $reportContent += "No shader compilation data available to process.`n"
+    $reportContent | Out-File -FilePath $OutputReport
+    Write-Host $reportContent
+    exit 0
+}
+
 Get-Content $InputLog | ForEach-Object {
     if ($_ -match '\[(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z).+Compiling shader "(.+)" pass "(.+)" \((.+)\)') {
         if ($currentShader) {
@@ -84,7 +92,7 @@ $reportContent += "`nTotal Compilation Time: $totalReadableTime`n`n"
 $summaryContent = "Summary:`n"
 $summaryContent += "--------`n"
 $totalShaders = $shaderData.Count
-$averageDuration = $totalDuration / $totalShaders
+$averageDuration = if ($totalShaders -gt 0) { $totalDuration / $totalShaders } else { 0 }
 $top5Slowest = $shaderData | Sort-Object Duration -Descending | Select-Object -First 5
 
 $summaryContent += "Total Shaders Compiled: $totalShaders`n"

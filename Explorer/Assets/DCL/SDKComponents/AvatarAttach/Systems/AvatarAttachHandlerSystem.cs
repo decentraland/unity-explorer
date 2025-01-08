@@ -12,8 +12,6 @@ using ECS.LifeCycle;
 using ECS.LifeCycle.Components;
 using ECS.Unity.Transforms.Components;
 using SceneRunner.Scene;
-using System;
-using UnityEngine;
 
 namespace DCL.SDKComponents.AvatarAttach.Systems
 {
@@ -21,11 +19,6 @@ namespace DCL.SDKComponents.AvatarAttach.Systems
     [LogCategory(ReportCategory.AVATAR_ATTACH)]
     public partial class AvatarAttachHandlerSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
-        /// <summary>
-        ///     Integrated from the previous implementation
-        /// </summary>
-        private static readonly Vector3 MORDOR = Vector3.one * 8000;
-
         private static readonly QueryDescription ENTITY_DESTRUCTION_QUERY = new QueryDescription().WithAll<DeleteEntityIntention, AvatarAttachComponent>();
         private static readonly QueryDescription COMPONENT_REMOVAL_QUERY = new QueryDescription().WithAll<AvatarAttachComponent>().WithNone<DeleteEntityIntention, PBAvatarAttach>();
         private readonly ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy;
@@ -54,7 +47,7 @@ namespace DCL.SDKComponents.AvatarAttach.Systems
         private void HideDetached(ref TransformComponent transformComponent)
         {
             if (!sceneStateProvider.IsCurrent) return;
-            transformComponent.Apply(MORDOR);
+            transformComponent.Apply(MordorConstants.AVATAR_ATTACH_MORDOR_POSITION);
         }
 
         [Query]
