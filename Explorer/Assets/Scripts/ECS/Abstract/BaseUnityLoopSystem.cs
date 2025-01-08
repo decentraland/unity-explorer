@@ -69,10 +69,7 @@ namespace ECS.Abstract
         public sealed override void Dispose()
         {
             if (isDisposed)
-            {
-                ReportHub.LogError(ReportCategory.ENGINE, $"Attempt to dispose already disposed system: {this.GetType().Name}");
                 return;
-            }
 
             isDisposed = true;
             OnDispose();
