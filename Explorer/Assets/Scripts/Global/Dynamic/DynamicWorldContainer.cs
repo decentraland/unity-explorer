@@ -343,6 +343,7 @@ namespace Global.Dynamic
             var archipelagoIslandRoom = IArchipelagoIslandRoom.NewDefault(
                 identityCache,
                 MultiPoolFactory(),
+                new ArrayMemoryPool(),
                 staticContainer.CharacterContainer.CharacterObject,
                 currentAdapterAddress,
                 staticContainer.WebRequestsContainer.WebRequestController
@@ -476,20 +477,22 @@ namespace Global.Dynamic
 
             var currentSceneInfo = new CurrentSceneInfo();
             var connectionStatusPanelPlugin = new ConnectionStatusPanelPlugin(userInAppInAppInitializationFlow, mvcManager, mainUIView, roomsStatus, currentSceneInfo, reloadSceneController, globalWorld, playerEntity, debugBuilder);
+            var chatTeleporter = new ChatTeleporter(realmNavigator, new ChatEnvironmentValidator(bootstrapContainer.Environment), bootstrapContainer.DecentralandUrlsSource);
 
             var chatCommands = new List<IChatCommand>
             {
-                new GoToChatCommand(realmNavigator),
-                new ChangeRealmChatCommand(realmNavigator, bootstrapContainer.DecentralandUrlsSource, new EnvironmentValidator(bootstrapContainer.Environment)),
+                new GoToChatCommand(chatTeleporter, staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource),
+                new GoToLocalChatCommand(chatTeleporter),
+                new WorldChatCommand(chatTeleporter),
                 new DebugPanelChatCommand(debugBuilder, connectionStatusPanelPlugin),
-                new ShowEntityInfoChatCommand(worldInfoHub),
+                new ShowEntityChatCommand(worldInfoHub),
                 new ClearChatCommand(chatHistory),
                 new ReloadSceneChatCommand(reloadSceneController),
                 new LoadPortableExperienceChatCommand(staticContainer.PortableExperiencesController, staticContainer.FeatureFlagsCache),
                 new KillPortableExperienceChatCommand(staticContainer.PortableExperiencesController, staticContainer.FeatureFlagsCache),
             };
 
-            chatCommands.Add(new HelpChatCommand(chatCommands));
+            chatCommands.Add(new HelpChatCommand(chatCommands, appArgs));
 
             IChatMessagesBus coreChatMessageBus = new MultiplayerChatMessagesBus(messagePipesHub, profileRepository, new MessageDeduplication<double>())
                                                  .WithSelfResend(identityCache, profileRepository)
@@ -740,6 +743,7 @@ namespace Global.Dynamic
                     includeCameraReel
                 ),
                 new GenericContextMenuPlugin(assetsProvisioner, mvcManager),
+                new FriendsPlugin(bootstrapContainer.DecentralandUrlsSource)
             };
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);
@@ -768,6 +772,7 @@ namespace Global.Dynamic
                     assetBundlesURL,
                     dclCursor,
                     mainUIView.SidebarView.EnsureNotNull().InWorldCameraButton,
+                    dynamicWorldDependencies.RootUIDocument,
                     globalWorld,
                     debugBuilder));
 

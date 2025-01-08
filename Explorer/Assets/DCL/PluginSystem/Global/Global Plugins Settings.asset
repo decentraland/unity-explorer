@@ -48,6 +48,7 @@ MonoBehaviour:
   - rid: 2799748311381442562
   - rid: 6849204606292983808
   - rid: 4782308287844188162
+  - rid: 2168772563850493955
   references:
     version: 2
     RefIds:
@@ -268,6 +269,9 @@ MonoBehaviour:
         <sceneBucketPropagationLimit>k__BackingField: 3
     - rid: 2152807656697888768
       type: {class: MinimapPlugin/MinimapSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data: 
+    - rid: 2168772563850493955
+      type: {class: FriendsPluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data: 
     - rid: 2174542042650378245
       type: {class: QualityContainer/Settings, ns: DCL.Quality, asm: DCL.Plugins}
