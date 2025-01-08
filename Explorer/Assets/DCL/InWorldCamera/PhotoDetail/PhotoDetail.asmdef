@@ -16,13 +16,15 @@
         "GUID:4a12c0b1b77ec6b418a8d7bd5c925be3",
         "GUID:e56a0d6a94c144c784012e63b6043100",
         "GUID:8322ea9340a544c59ddc56d4793eac74",
-        "GUID:ae249ee11a6e0ea4aa01cefc0246a151",
         "GUID:5eabe9a3d4dd19d42a16208ea5411062",
         "GUID:543b8f091a5947a3880b7f2bca2358bd",
         "GUID:f95dba842fdbb470fb6d1dced822ba04",
         "GUID:e5a23cdae0ef4d86aafc237a73280975",
         "GUID:75469ad4d38634e559750d17036d5f7c",
-        "GUID:e0eedfa2deb9406daf86fd8368728e39"
+        "GUID:e0eedfa2deb9406daf86fd8368728e39",
+        "GUID:134508e23dba8457db8766637d1d33ec",
+        "GUID:3640f3c0b42946b0b8794a1ed8e06ca5",
+        "CameraReelToast"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

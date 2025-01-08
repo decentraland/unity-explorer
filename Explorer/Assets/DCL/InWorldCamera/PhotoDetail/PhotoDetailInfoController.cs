@@ -8,7 +8,7 @@ using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using DCL.InWorldCamera.ReelActions;
 using DCL.Multiplayer.Connections.DecentralandUrls;
-using DCL.Passport;
+using DCL.InWorldCamera.PassportBridge;
 using DCL.Profiles;
 using DCL.WebRequests;
 using ECS.SceneLifeCycle.Realm;
@@ -27,6 +27,8 @@ namespace DCL.InWorldCamera.PhotoDetail
     /// </summary>
     public class PhotoDetailInfoController : IDisposable
     {
+        public event Action WearableMarketClicked;
+
         private const int VISIBLE_PERSON_DEFAULT_POOL_SIZE = 20;
         private const int EQUIPPED_WEARABLE_DEFAULT_POOL_SIZE = 20;
         private const int VISIBLE_PERSON_MAX_POOL_CAPACITY = 10000;
@@ -36,6 +38,7 @@ namespace DCL.InWorldCamera.PhotoDetail
         private readonly ICameraReelStorageService cameraReelStorageService;
         private readonly IRealmNavigator realmNavigator;
         private readonly IMVCManager mvcManager;
+        private readonly IPassportBridge passportBridge;
         private readonly PhotoDetailPoolManager photoDetailPoolManager;
         private readonly List<VisiblePersonController> visiblePersonControllers = new ();
 
@@ -56,6 +59,7 @@ namespace DCL.InWorldCamera.PhotoDetail
             IWearablesProvider wearablesProvider,
             IDecentralandUrlsSource decentralandUrlsSource,
             IThumbnailProvider thumbnailProvider,
+            IPassportBridge passportBridge,
             NftTypeIconSO rarityBackgrounds,
             NFTColorsSO rarityColors,
             NftTypeIconSO categoryIcons,
@@ -65,6 +69,7 @@ namespace DCL.InWorldCamera.PhotoDetail
             this.cameraReelStorageService = cameraReelStorageService;
             this.realmNavigator = realmNavigator;
             this.mvcManager = mvcManager;
+            this.passportBridge = passportBridge;
 
             this.photoDetailPoolManager = new PhotoDetailPoolManager(view.visiblePersonViewPrefab,
                 view.equippedWearablePrefab,
@@ -79,6 +84,7 @@ namespace DCL.InWorldCamera.PhotoDetail
                 wearablesProvider,
                 decentralandUrlsSource,
                 thumbnailProvider,
+                passportBridge,
                 rarityBackgrounds,
                 rarityColors,
                 categoryIcons,
@@ -86,7 +92,8 @@ namespace DCL.InWorldCamera.PhotoDetail
                 VISIBLE_PERSON_DEFAULT_POOL_SIZE,
                 VISIBLE_PERSON_MAX_POOL_CAPACITY,
                 EQUIPPED_WEARABLE_DEFAULT_POOL_SIZE,
-                EQUIPPED_WEARABLE_MAX_POOL_CAPACITY);
+                EQUIPPED_WEARABLE_MAX_POOL_CAPACITY,
+                () => WearableMarketClicked?.Invoke());
 
             this.view.jumpInButton.onClick.AddListener(JumpInClicked);
             this.view.ownerProfileButton.onClick.AddListener(ShowOwnerPassportClicked);
@@ -97,6 +104,7 @@ namespace DCL.InWorldCamera.PhotoDetail
             view.jumpInButton.onClick.RemoveListener(JumpInClicked);
             view.ownerProfileButton.onClick.RemoveListener(ShowOwnerPassportClicked);
             JumpIn = null;
+            WearableMarketClicked = null;
             teleportCts.SafeCancelAndDispose();
         }
 
@@ -104,7 +112,7 @@ namespace DCL.InWorldCamera.PhotoDetail
         {
             if (string.IsNullOrEmpty(reelOwnerAddress)) return;
 
-            mvcManager.ShowAsync(PassportController.IssueCommand(new PassportController.Params(reelOwnerAddress))).Forget();
+            passportBridge.OpenPassport(mvcManager, reelOwnerAddress);
         }
 
         public async UniTask ShowPhotoDetailInfoAsync(string reelId, CancellationToken ct)

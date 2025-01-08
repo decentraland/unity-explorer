@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using Global.Dynamic;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading;
@@ -18,6 +19,7 @@ namespace PortableExperiences.Controller
         ExitResponse UnloadPortableExperienceByEns(ENS ens);
 
         List<SpawnResponse> GetAllPortableExperiences();
+        GlobalWorld GlobalWorld { get; set; }
 
         [SuppressMessage("ReSharper", "InconsistentNaming")]
         public struct SpawnResponse
@@ -33,5 +35,7 @@ namespace PortableExperiences.Controller
         {
             public bool status;
         }
+
+        void UnloadAllPortableExperiences();
     }
 }

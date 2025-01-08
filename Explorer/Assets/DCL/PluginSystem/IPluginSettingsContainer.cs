@@ -1,3 +1,5 @@
+using System;
+
 namespace DCL.PluginSystem
 {
     /// <summary>
@@ -8,6 +10,9 @@ namespace DCL.PluginSystem
         /// <summary>
         ///     Get a typed settings object or throw an exception if it doesn't exist
         /// </summary>
-        T GetSettings<T>() where T: IDCLPluginSettings;
+        T GetSettings<T>() where T: IDCLPluginSettings =>
+            (T)GetSettings(typeof(T));
+
+        object GetSettings(Type type);
     }
 }

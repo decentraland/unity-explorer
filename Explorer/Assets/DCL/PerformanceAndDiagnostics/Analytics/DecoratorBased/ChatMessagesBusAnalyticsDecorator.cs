@@ -34,7 +34,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
             analytics.Track(AnalyticsEvents.UI.MESSAGE_SENT, new JsonObject
             {
-                { "is_command", ChatCommandsHandler.StartsLikeCommand(message) },
+                { "is_command", message[0] == '/' },
                 { "origin", origin },
 
                 // { "emoji_count", emoji_count },

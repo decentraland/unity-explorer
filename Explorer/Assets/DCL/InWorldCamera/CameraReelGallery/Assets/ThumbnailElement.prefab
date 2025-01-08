@@ -309,15 +309,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d412409676af495fb7ce0c04a8f468c0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  thumbnailImage: {fileID: 1873652860557502151}
-  loadingBrightView: {fileID: 4151190356611495272}
-  optionButtonContainer: {fileID: 3651668776247032185}
-  button: {fileID: 7425802945127696628}
-  outline: {fileID: 4693459573345756047}
-  optionButtonOffset: {x: -11, y: -23, z: 0}
-  scaleFactorOnHover: 1.01
-  scaleAnimationDuration: 0.3
-  thumbnailLoadedAnimationDuration: 0.3
+  <thumbnailImage>k__BackingField: {fileID: 1873652860557502151}
+  <loadingBrightView>k__BackingField: {fileID: 4151190356611495272}
+  <optionButtonContainer>k__BackingField: {fileID: 3651668776247032185}
+  <button>k__BackingField: {fileID: 7425802945127696628}
+  <outline>k__BackingField: {fileID: 4693459573345756047}
+  <optionButtonOffset>k__BackingField: {x: -11, y: -23, z: 0}
+  <scaleFactorOnHover>k__BackingField: 1.01
+  <scaleAnimationDuration>k__BackingField: 0.3
+  <thumbnailLoadedAnimationDuration>k__BackingField: 0.3
 --- !u!1001 &686625780324777799
 PrefabInstance:
   m_ObjectHideFlags: 0

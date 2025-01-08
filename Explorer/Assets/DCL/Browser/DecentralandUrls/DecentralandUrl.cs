@@ -7,6 +7,7 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
 
         ArchipelagoStatus,
         GatekeeperStatus,
+        ArchipelagoHotScenes,
 
         DiscordLink,
 
@@ -43,6 +44,7 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
 
         CameraReelUsers,
         CameraReelImages,
+        CameraReelPlaces,
         CameraReelLink,
     }
 }

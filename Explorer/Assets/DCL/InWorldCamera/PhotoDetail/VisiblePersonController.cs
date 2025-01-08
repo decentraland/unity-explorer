@@ -6,7 +6,6 @@ using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Chat;
 using DCL.InWorldCamera.CameraReelStorageService.Schemas;
-using DCL.Passport;
 using DCL.Profiles;
 using DCL.UI;
 using DCL.WebRequests;
@@ -18,6 +17,7 @@ using System.Threading;
 using UnityEngine;
 using UnityEngine.Pool;
 using UnityEngine.UI;
+using DCL.InWorldCamera.PassportBridge;
 using Utility;
 
 namespace DCL.InWorldCamera.PhotoDetail
@@ -34,6 +34,7 @@ namespace DCL.InWorldCamera.PhotoDetail
         private readonly IMVCManager mvcManager;
         private readonly IWearableStorage wearableStorage;
         private readonly IWearablesProvider wearablesProvider;
+        private readonly IPassportBridge passportBridge;
         private readonly List<EquippedWearableController> wearableControllers = new();
         private readonly PhotoDetailPoolManager photoDetailPoolManager;
         private readonly ChatEntryConfigurationSO chatEntryConfiguration;
@@ -49,6 +50,7 @@ namespace DCL.InWorldCamera.PhotoDetail
             IMVCManager mvcManager,
             IWearableStorage wearableStorage,
             IWearablesProvider wearablesProvider,
+            IPassportBridge passportBridge,
             PhotoDetailPoolManager photoDetailPoolManager,
             ChatEntryConfigurationSO chatEntryConfiguration)
         {
@@ -57,6 +59,7 @@ namespace DCL.InWorldCamera.PhotoDetail
             this.mvcManager = mvcManager;
             this.wearableStorage = wearableStorage;
             this.wearablesProvider = wearablesProvider;
+            this.passportBridge = passportBridge;
             this.photoDetailPoolManager = photoDetailPoolManager;
             this.chatEntryConfiguration = chatEntryConfiguration;
 
@@ -108,7 +111,7 @@ namespace DCL.InWorldCamera.PhotoDetail
         {
             if (visiblePerson is null) return;
 
-            mvcManager.ShowAsync(PassportController.IssueCommand(new PassportController.Params(visiblePerson.userAddress))).Forget();
+            passportBridge.OpenPassport(mvcManager, visiblePerson.userAddress);
         }
 
         private void WearableListButtonClicked()
