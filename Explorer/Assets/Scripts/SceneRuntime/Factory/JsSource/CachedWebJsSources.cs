@@ -1,8 +1,9 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
-using DCL.Diagnostics;
-using DCL.Optimization;
+using DCL.Utilities.Extensions;
 using ECS.StreamableLoading.Cache.Disk;
+using ECS.StreamableLoading.Cache.Generic;
+using ECS.StreamableLoading.Cache.InMemory;
 using SceneRuntime.Factory.WebSceneSource;
 using System.Threading;
 
@@ -11,45 +12,23 @@ namespace SceneRuntime.Factory.JsSource
     public class CachedWebJsSources : IWebJsSources
     {
         private readonly IWebJsSources origin;
-        private readonly IJsSourcesCache cache;
-        private readonly IDiskCache<string> diskCache;
+        private readonly IGenericCache<string, string> cache;
         private const string EXTENSION = "js";
 
-        public CachedWebJsSources(IWebJsSources origin, IJsSourcesCache cache, IDiskCache<string> diskCache)
+        public CachedWebJsSources(IWebJsSources origin, IMemoryCache<string, string> cache, IDiskCache<string> diskCache)
         {
             this.origin = origin;
-            this.cache = cache;
-            this.diskCache = diskCache;
+            this.cache = new GenericCache<string, string>(cache, diskCache, EXTENSION);
         }
 
         public async UniTask<string> SceneSourceCodeAsync(URLAddress path, CancellationToken ct)
         {
-            if (cache.TryGet(path, out string? result))
-                return result!;
-
-            var diskResult = await diskCache.ContentAsync(path.Value, EXTENSION, ct);
-
-            if (diskResult.Success)
-            {
-                var option = diskResult.Value;
-
-                if (option.Has)
-                {
-                    cache.Cache(path, option.Value);
-                    return option.Value;
-                }
-            }
-            else
-                ReportHub.LogError(
-                    ReportCategory.SCENE_LOADING,
-                    $"Error getting js disk cache content for '{path}' - {diskResult.Error!.Value.State} {diskResult.Error!.Value.Message}"
-                );
-
-            string sourceCode = await origin.SceneSourceCodeAsync(path, ct);
-            cache.Cache(path, sourceCode);
-            diskCache.PutAsync(path.Value, EXTENSION, sourceCode, ct).Forget();
-
-            return sourceCode;
+            string key = path.Value;
+            var result = await cache.ContentAsync(key, origin, static v => SceneSourceCodeAsync(v), ct);
+            return result.Unwrap().Value.EnsureNotNull();
         }
+
+        private static UniTask<string> SceneSourceCodeAsync((string key, IWebJsSources ctx, CancellationToken token) value) =>
+            value.ctx!.SceneSourceCodeAsync(URLAddress.FromString(value.key!), value.token);
     }
 }

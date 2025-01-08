@@ -18,6 +18,7 @@ using DCL.UserInAppInitializationFlow;
 using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
 using ECS.StreamableLoading.Cache.Disk;
+using ECS.StreamableLoading.Cache.InMemory;
 using Global.AppArgs;
 using Global.Dynamic.DebugSettings;
 using MVC;
@@ -26,7 +27,6 @@ using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using SceneRunner.Debugging;
 using SceneRuntime.Factory.JsSource;
 using SceneRuntime.Factory.WebSceneSource;
-using SceneRuntime.Factory.WebSceneSource.Cache;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -214,9 +214,9 @@ namespace Global.Dynamic
 
             if (!realmLaunchSettings.IsLocalSceneDevelopmentRealm)
             {
-                MemoryJsSourcesCache cache = new ();
-                staticContainer.CacheCleaner.Register(cache);
-                webJsSources = new CachedWebJsSources(webJsSources, cache, new DiskCache<string>(diskCache, new StringDiskSerializer()));
+                var memoryCache = new MemoryCache<string, string>();
+                staticContainer.CacheCleaner.Register(memoryCache);
+                webJsSources = new CachedWebJsSources(webJsSources, memoryCache, new DiskCache<string>(diskCache, new StringDiskSerializer()));
             }
 
             SceneSharedContainer sceneSharedContainer = SceneSharedContainer.Create(
