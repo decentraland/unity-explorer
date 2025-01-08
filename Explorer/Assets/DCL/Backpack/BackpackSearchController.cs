@@ -37,14 +37,12 @@ namespace DCL.Backpack
 
         private void RestoreInput(string text)
         {
-            inputBlock.Enable(InputMapComponent.Kind.SHORTCUTS);
-            inputBlock.Enable(InputMapComponent.Kind.IN_WORLD_CAMERA);
+            inputBlock.Enable(InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.IN_WORLD_CAMERA);
         }
 
         private void DisableShortcutsInput(string text)
         {
-            inputBlock.Disable(InputMapComponent.Kind.SHORTCUTS);
-            inputBlock.Disable(InputMapComponent.Kind.IN_WORLD_CAMERA);
+            inputBlock.Disable(InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.IN_WORLD_CAMERA);
         }
 
         private void OnSearchEvent(string searchString)

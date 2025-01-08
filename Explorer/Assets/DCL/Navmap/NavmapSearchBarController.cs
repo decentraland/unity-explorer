@@ -116,13 +116,11 @@ namespace DCL.Navmap
             if (isSelected)
             {
                 GetAndShowPreviousSearches();
-                inputBlock.Disable(InputMapComponent.Kind.SHORTCUTS);
-                inputBlock.Disable(InputMapComponent.Kind.IN_WORLD_CAMERA);
+                inputBlock.Disable(InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.IN_WORLD_CAMERA);
             }
             else
             {
-                inputBlock.Enable(InputMapComponent.Kind.SHORTCUTS);
-                inputBlock.Enable(InputMapComponent.Kind.IN_WORLD_CAMERA);
+                inputBlock.Enable(InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.IN_WORLD_CAMERA);
             }
         }
 
