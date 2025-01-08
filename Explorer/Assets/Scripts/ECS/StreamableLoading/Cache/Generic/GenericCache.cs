@@ -12,26 +12,31 @@ namespace ECS.StreamableLoading.Cache.Generic
     {
         private readonly IMemoryCache<T, TKey> memoryCache;
         private readonly IDiskCache<T> diskCache;
+        private readonly Func<TKey, string> stringifyFunc;
         private readonly string extension;
 
-        public GenericCache(IMemoryCache<T, TKey> memoryCache, IDiskCache<T> diskCache, string extension)
+        public GenericCache(IMemoryCache<T, TKey> memoryCache, IDiskCache<T> diskCache, Func<TKey, string> stringifyFunc, string extension)
         {
             this.memoryCache = memoryCache;
             this.diskCache = diskCache;
+            this.stringifyFunc = stringifyFunc;
             this.extension = extension;
         }
 
-        public async UniTask<EnumResult<Option<T>, TaskError>> ContentAsync<TCtx>(
-            TKey key,
-            TCtx ctx,
-            Func<(TKey key, TCtx ctx, CancellationToken token), UniTask<T>> fetchIfNotExists,
-            CancellationToken token
-        )
+        public UniTask<EnumResult<TaskError>> PutAsync(TKey key, T value, CancellationToken token)
+        {
+            memoryCache.Put(key, value);
+            return diskCache.PutAsync(stringifyFunc(key)!, extension, value, token);
+        }
+
+        public async UniTask<EnumResult<Option<T>, TaskError>> ContentAsync(TKey key, CancellationToken token)
         {
             if (memoryCache.TryGet(key, out T result))
                 return EnumResult<Option<T>, TaskError>.SuccessResult(Option<T>.Some(result));
 
-            var diskResult = await diskCache.ContentAsync(key!.ToString()!, extension, token);
+            string stringKey = stringifyFunc(key)!;
+
+            var diskResult = await diskCache.ContentAsync(stringKey, extension, token);
 
             if (diskResult.Success)
             {
@@ -49,16 +54,7 @@ namespace ECS.StreamableLoading.Cache.Generic
                     $"Error getting disk cache content for '{key}' - {diskResult.Error!.Value.State} {diskResult.Error!.Value.Message}"
                 );
 
-            try
-            {
-                var loadedContent = await fetchIfNotExists((key, ctx, token));
-
-                memoryCache.Put(key, loadedContent);
-                diskCache.PutAsync(key.ToString()!, extension, loadedContent, token).Forget();
-
-                return EnumResult<Option<T>, TaskError>.SuccessResult(Option<T>.Some(loadedContent));
-            }
-            catch (Exception e) { return EnumResult<Option<T>, TaskError>.ErrorResult(TaskError.UnexpectedException, e.Message ?? string.Empty); }
+            return EnumResult<Option<T>, TaskError>.SuccessResult(Option<T>.None);
         }
     }
 }

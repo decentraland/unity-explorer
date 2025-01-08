@@ -71,6 +71,18 @@ namespace ECS.StreamableLoading.Cache.Disk
         UniTask<EnumResult<Option<T>, TaskError>> ContentAsync(string key, string extension, CancellationToken token);
 
         UniTask<EnumResult<TaskError>> RemoveAsync(string key, string extension, CancellationToken token);
+
+        class Null : IDiskCache<T>
+        {
+            public UniTask<EnumResult<TaskError>> PutAsync(string key, string extension, T data, CancellationToken token) =>
+                UniTask.FromResult(EnumResult<TaskError>.ErrorResult(TaskError.MessageError, "It's null"));
+
+            public UniTask<EnumResult<Option<T>, TaskError>> ContentAsync(string key, string extension, CancellationToken token) =>
+                UniTask.FromResult(EnumResult<Option<T>, TaskError>.SuccessResult(Option<T>.None));
+
+            public UniTask<EnumResult<TaskError>> RemoveAsync(string key, string extension, CancellationToken token) =>
+                UniTask.FromResult(EnumResult<TaskError>.SuccessResult());
+        }
     }
 
     public interface IDiskSerializer<T>

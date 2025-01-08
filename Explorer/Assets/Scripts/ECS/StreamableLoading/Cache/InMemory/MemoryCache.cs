@@ -5,9 +5,12 @@ namespace ECS.StreamableLoading.Cache.InMemory
 {
     public class MemoryCache<T, TKey> : IMemoryCache<T, TKey> where T: class
     {
-        private readonly Dictionary<TKey, T> cache = new ();
+        private readonly Dictionary<TKey, T> cache;
 
-        public int Count => cache.Count;
+        public MemoryCache(Dictionary<TKey, T>? cache = null)
+        {
+            this.cache = cache ?? new Dictionary<TKey, T>();
+        }
 
         public void Put(TKey key, T value)
         {

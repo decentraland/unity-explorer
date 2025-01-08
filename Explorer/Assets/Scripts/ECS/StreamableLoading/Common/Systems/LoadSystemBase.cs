@@ -7,6 +7,8 @@ using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Cache.Disk;
+using ECS.StreamableLoading.Cache.Generic;
+using ECS.StreamableLoading.Cache.InMemory;
 using ECS.StreamableLoading.Common.Components;
 using System;
 using System.Runtime.CompilerServices;
@@ -29,12 +31,12 @@ namespace ECS.StreamableLoading.Common.Systems
 
         private const string DISK_CACHE_EXTENSION = "dat";
 
-        protected readonly IStreamableCache<TAsset, TIntention> cache;
+        private readonly IStreamableCache<TAsset, TIntention> cache;
 
         /// <summary>
         /// If the disk cache is not provided, it mean the disk cache is not supported for this particular asset type
         /// </summary>
-        private readonly IDiskCache<TAsset>? diskCache;
+        private readonly IGenericCache<TAsset, TIntention> genericCache;
 
         private readonly AssetsLoadingUtility.InternalFlowDelegate<TAsset, TIntention> cachedInternalFlowDelegate;
         private readonly Query query;
@@ -45,7 +47,14 @@ namespace ECS.StreamableLoading.Common.Systems
         protected LoadSystemBase(World world, IStreamableCache<TAsset, TIntention> cache, IDiskCache<TAsset>? diskCache = null) : base(world)
         {
             this.cache = cache;
-            this.diskCache = diskCache;
+
+            genericCache = new GenericCache<TAsset, TIntention>(
+                new StreamableWrapMemoryCache<TAsset, TIntention>(cache),
+                diskCache ?? new IDiskCache<TAsset>.Null(),
+                static intention => intention.CommonArguments.URL.Value,
+                DISK_CACHE_EXTENSION
+            );
+
             query = World!.Query(in CREATE_WEB_REQUEST);
             cachedInternalFlowDelegate = FlowInternalAsync;
             cancellationTokenSource = new CancellationTokenSource();
@@ -84,7 +93,7 @@ namespace ECS.StreamableLoading.Common.Systems
         {
             AssetSource currentSource = intention.CommonArguments.CurrentSource;
 
-            EntityReference entityReference = World.Reference(entity);
+            EntityReference entityReference = World!.Reference(entity);
 
             if (state.Value != StreamableLoadingState.Status.Allowed)
             {
@@ -141,32 +150,17 @@ namespace ECS.StreamableLoading.Common.Systems
                     }
                 }
 
-                if (cache.TryGet(intention, out TAsset asset))
-                {
-                    result = new StreamableLoadingResult<TAsset>(asset);
-                    return;
-                }
+                var cachedContent = await genericCache.ContentAsync(intention, disposalCt);
 
-                if (diskCache != null)
+                if (cachedContent.Success)
                 {
-                    var diskContent = await diskCache.ContentAsync(intention.CommonArguments.URL.Value, DISK_CACHE_EXTENSION, disposalCt);
+                    var option = cachedContent.Value;
 
-                    if (diskContent.Success)
+                    if (option.Has)
                     {
-                        var option = diskContent.Value;
-
-                        if (option.Has)
-                        {
-                            cache.Add(intention, option.Value);
-                            result = new StreamableLoadingResult<TAsset>(option.Value);
-                            return;
-                        }
+                        result = new StreamableLoadingResult<TAsset>(option.Value);
+                        return;
                     }
-                    else
-                        ReportHub.LogError(
-                            GetReportCategory(),
-                            $"Error getting cache content for '{intention.CommonArguments.GetCacheableURL()}' - {diskContent.Error!.Value.State} {diskContent.Error!.Value.Message}"
-                        );
                 }
 
                 // Try load from cache first
@@ -292,15 +286,12 @@ namespace ECS.StreamableLoading.Common.Systems
                 // before firing the continuation of the ongoing request
                 // Add result to the cache
                 if (result is { Succeeded: true })
-                {
-                    cache.Add(in intention, result.Value.Asset!);
-
-                    diskCache?.PutAsync(intention.CommonArguments.URL.Value, DISK_CACHE_EXTENSION, result.Value.Asset!, ct)
-                              .Forget(
-                                   static e =>
-                                       ReportHub.LogError(ReportCategory.STREAMABLE_LOADING, $"Error putting cache content: {e.Message}")
-                               );
-                }
+                    genericCache
+                       .PutAsync(intention, result.Value.Asset!, ct)
+                       .Forget(
+                            static e =>
+                                ReportHub.LogError(ReportCategory.STREAMABLE_LOADING, $"Error putting cache content: {e.Message}")
+                        );
 
                 // Set result for the reusable source
                 // Remove from the ongoing requests immediately because finally will be called later than

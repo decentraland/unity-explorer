@@ -18,13 +18,13 @@ namespace SceneRuntime.Factory.JsSource
         public CachedWebJsSources(IWebJsSources origin, IMemoryCache<string, string> cache, IDiskCache<string> diskCache)
         {
             this.origin = origin;
-            this.cache = new GenericCache<string, string>(cache, diskCache, EXTENSION);
+            this.cache = new GenericCache<string, string>(cache, diskCache, static s => s, EXTENSION);
         }
 
         public async UniTask<string> SceneSourceCodeAsync(URLAddress path, CancellationToken ct)
         {
             string key = path.Value;
-            var result = await cache.ContentAsync(key, origin, static v => SceneSourceCodeAsync(v), ct);
+            var result = await cache.ContentOrFetchAsync(key, origin, static v => SceneSourceCodeAsync(v), ct);
             return result.Unwrap().Value.EnsureNotNull();
         }
 
