@@ -3,7 +3,7 @@ using Utility;
 
 namespace DCL.Backpack
 {
-    [CreateAssetMenu(fileName = "NFTColors", menuName = "SO/NFTColors")]
+    [CreateAssetMenu(fileName = "NFTColors", menuName = "DCL/Backpack/NFT Colors")]
     public class NFTColorsSO : ScriptableObject
     {
         [SerializeField] private SerializableKeyValuePair<string, Color>[] nftColors;
@@ -11,7 +11,7 @@ namespace DCL.Backpack
 
         public Color GetColor(string rarity)
         {
-            foreach (var color in nftColors)
+            foreach (SerializableKeyValuePair<string, Color> color in nftColors)
             {
                 if (color.key == rarity)
                     return color.value;
@@ -22,7 +22,7 @@ namespace DCL.Backpack
 
         public bool DoesRarityExist(string rarity)
         {
-            foreach (var color in nftColors)
+            foreach (SerializableKeyValuePair<string, Color> color in nftColors)
             {
                 if (color.key == rarity)
                     return true;
