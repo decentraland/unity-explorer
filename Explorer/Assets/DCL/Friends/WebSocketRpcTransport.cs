@@ -12,7 +12,9 @@ namespace DCL.Friends
         private readonly Uri uri;
         private readonly ClientWebSocket webSocket;
         private readonly CancellationTokenSource lifeCycleCancellationToken = new ();
-        private readonly byte[] receiveBuffer = new byte[4096];
+        private readonly byte[] receiveBuffer;
+
+        private bool isConnected => webSocket.State == WebSocketState.Open;
 
         public event Action? OnCloseEvent;
         public event Action<string>? OnErrorEvent;
@@ -21,10 +23,12 @@ namespace DCL.Friends
 
         public WebSocketState State => webSocket.State;
 
-        public WebSocketRpcTransport(Uri uri)
+        public WebSocketRpcTransport(Uri uri,
+            int bufferSize = 4096)
         {
             this.uri = uri;
             webSocket = new ClientWebSocket();
+            receiveBuffer = new byte[bufferSize];
         }
 
         public void Dispose()
@@ -35,28 +39,52 @@ namespace DCL.Friends
 
         public async UniTask ConnectAsync(CancellationToken ct)
         {
+            if (webSocket.State is WebSocketState.Open)
+                throw new Exception("Web socket already connected");
+
             await webSocket.ConnectAsync(uri, ct);
             OnConnectEvent?.Invoke();
         }
 
         public void ListenForIncomingData()
         {
-            async UniTaskVoid StartReceivingAsync(CancellationToken ct)
+            if (!isConnected)
+                throw new Exception("Web socket not connected");
+
+            ListenAndProcessIncomingDataAsync(lifeCycleCancellationToken.Token).Forget();
+            return;
+
+            async UniTaskVoid ListenAndProcessIncomingDataAsync(CancellationToken ct)
             {
-                while (!ct.IsCancellationRequested && webSocket.State == WebSocketState.Open)
+                while (!ct.IsCancellationRequested)
                 {
+                    if (!isConnected)
+                        break;
+
                     try
                     {
-                        var result = await webSocket.ReceiveAsync(receiveBuffer, ct);
+                        WebSocketReceiveResult result = await webSocket.ReceiveAsync(receiveBuffer, ct);
 
-                        // TODO: use count, length ?
-                        OnMessageEvent?.Invoke(receiveBuffer);
+                        if (result.MessageType is WebSocketMessageType.Text or WebSocketMessageType.Binary)
+                        {
+                            var data = new byte[result.Count];
+                            receiveBuffer.AsSpan(0, result.Count).CopyTo(data);
+                            // Buffer.BlockCopy(receiveBuffer, 0, data, 0, result.Count);
+                            OnMessageEvent?.Invoke(data);
+                        }
+
+                        if (result.MessageType == WebSocketMessageType.Close)
+                        {
+                            await CloseAsync(ct);
+                            break;
+                        }
                     }
-                    catch (Exception e) { OnErrorEvent?.Invoke(e.Message); }
+                    catch (WebSocketException e)
+                    {
+                        OnErrorEvent?.Invoke(e.Message);
+                    }
                 }
             }
-
-            StartReceivingAsync(lifeCycleCancellationToken.Token).Forget();
         }
 
         public void SendMessage(byte[] data)
@@ -64,21 +92,19 @@ namespace DCL.Friends
             async UniTaskVoid SendMessageAsync(CancellationToken ct)
             {
                 try { await webSocket.SendAsync(data, WebSocketMessageType.Binary, true, ct); }
-                catch (Exception e) { OnErrorEvent?.Invoke(e.Message); }
+                catch (WebSocketException e) { OnErrorEvent?.Invoke(e.Message); }
             }
 
             SendMessageAsync(lifeCycleCancellationToken.Token).Forget();
         }
 
-        public void Close()
-        {
-            async UniTaskVoid CloseAsync(CancellationToken ct)
-            {
-                await webSocket.CloseAsync(WebSocketCloseStatus.Empty, "", ct);
-                OnCloseEvent?.Invoke();
-            }
-
+        public void Close() =>
             CloseAsync(lifeCycleCancellationToken.Token).Forget();
+
+        private async UniTask CloseAsync(CancellationToken ct)
+        {
+            await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "", ct);
+            OnCloseEvent?.Invoke();
         }
     }
 }

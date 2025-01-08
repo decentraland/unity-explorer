@@ -4,6 +4,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Friends;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Profiles;
+using DCL.Web3.Identities;
 using System.Threading;
 
 namespace DCL.PluginSystem.Global
@@ -12,13 +13,16 @@ namespace DCL.PluginSystem.Global
     {
         private readonly IDecentralandUrlsSource dclUrlSource;
         private readonly IProfileRepository profileRepository;
+        private readonly IWeb3IdentityCache identityCache;
         private IFriendsService? friendsService;
 
         public FriendsPlugin(IDecentralandUrlsSource dclUrlSource,
-            IProfileRepository profileRepository)
+            IProfileRepository profileRepository,
+            IWeb3IdentityCache identityCache)
         {
             this.dclUrlSource = dclUrlSource;
             this.profileRepository = profileRepository;
+            this.identityCache = identityCache;
         }
 
         public void Dispose()
@@ -35,9 +39,7 @@ namespace DCL.PluginSystem.Global
             IFriendsEventBus friendEventBus = new DefaultFriendsEventBus();
 
             friendsService = new RPCFriendsService(URLAddress.FromString(dclUrlSource.Url(DecentralandUrl.ApiFriends)),
-                friendEventBus, profileRepository);
-
-            PaginatedFriendsResult friendsResult = await friendsService.GetFriendsAsync(1, 10, ct);
+                friendEventBus, profileRepository, identityCache);
 
             // TODO: add the rest of the ui
         }
