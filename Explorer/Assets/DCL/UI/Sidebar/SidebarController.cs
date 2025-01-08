@@ -30,6 +30,7 @@ namespace DCL.UI.Sidebar
         private readonly IWeb3IdentityCache identityCache;
         private readonly IWebBrowser webBrowser;
         private readonly bool includeCameraReel;
+        private readonly bool includeFriends;
 
         private CancellationTokenSource profileWidgetCts = new ();
         private CancellationTokenSource systemMenuCts = new ();
@@ -50,7 +51,8 @@ namespace DCL.UI.Sidebar
             IWeb3IdentityCache identityCache,
             IProfileRepository profileRepository,
             IWebBrowser webBrowser,
-            bool includeCameraReel)
+            bool includeCameraReel,
+            bool includeFriends)
             : base(viewFactory)
         {
             this.mvcManager = mvcManager;
@@ -64,6 +66,7 @@ namespace DCL.UI.Sidebar
             this.profileRepository = profileRepository;
             this.webBrowser = webBrowser;
             this.includeCameraReel = includeCameraReel;
+            this.includeFriends = includeFriends;
         }
 
         public override void Dispose()
@@ -101,6 +104,11 @@ namespace DCL.UI.Sidebar
                 viewInstance.cameraReelButton.gameObject.SetActive(false);
                 viewInstance.InWorldCameraButton.gameObject.SetActive(false);
             }
+            
+            if (includeFriends)
+                viewInstance.friendsButton.onClick.AddListener(OpenFriendsPanel);
+            else
+                viewInstance.friendsButton.gameObject.SetActive(false);
         }
 
         private void OnHelpButtonClicked()
@@ -189,6 +197,13 @@ namespace DCL.UI.Sidebar
             CloseAllWidgets();
             sidebarBus.BlockSidebar();
             notificationsMenuController.ToggleNotificationsPanel(false);
+        }
+
+        private void OpenFriendsPanel()
+        {
+            CloseAllWidgets();
+            sidebarBus.BlockSidebar();
+            // notificationsMenuController.ToggleNotificationsPanel(false);
         }
 
         private void OpenExplorePanelInSection(ExploreSections section, BackpackSections backpackSection = BackpackSections.Avatar)

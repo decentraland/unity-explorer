@@ -558,6 +558,7 @@ namespace Global.Dynamic
             ISystemClipboard clipboard = new UnityClipboard();
 
             bool includeCameraReel = staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.CAMERA_REEL) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.CAMERA_REEL)) || Application.isEditor;
+            bool includeFriends = staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.FRIENDS) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.FRIENDS)) || Application.isEditor;
 
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
@@ -623,7 +624,7 @@ namespace Global.Dynamic
                     dynamicWorldDependencies.Web3Authenticator,
                     userInAppInAppInitializationFlow,
                     profileCache, sidebarBus, chatEntryConfiguration,
-                    globalWorld, playerEntity, includeCameraReel),
+                    globalWorld, playerEntity, includeCameraReel, includeFriends),
                 new ErrorPopupPlugin(mvcManager, assetsProvisioner),
                 connectionStatusPanelPlugin,
                 new MinimapPlugin(mvcManager, minimap),
@@ -742,7 +743,6 @@ namespace Global.Dynamic
                     playerEntity,
                     includeCameraReel
                 ),
-                new FriendsPlugin(bootstrapContainer.DecentralandUrlsSource)
             };
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);
@@ -774,6 +774,9 @@ namespace Global.Dynamic
                     dynamicWorldDependencies.RootUIDocument,
                     globalWorld,
                     debugBuilder));
+
+            if (includeFriends)
+                globalPlugins.Add(new FriendsPlugin(bootstrapContainer.DecentralandUrlsSource));
 
             if (dynamicWorldParams.EnableAnalytics)
                 globalPlugins.Add(new AnalyticsPlugin(

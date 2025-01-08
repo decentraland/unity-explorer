@@ -29,6 +29,7 @@ namespace DCL.UI.Sidebar
         [field: SerializeField] internal Button backpackButton { get; private set; }
         [field: SerializeField] internal Button cameraReelButton { get; private set; }
         [field: SerializeField] internal Button settingsButton { get; private set; }
+        [field: SerializeField] internal Button friendsButton { get; private set; }
 
 
         [field: Header("Sidebar Settings")]

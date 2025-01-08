@@ -20,6 +20,7 @@
         public const string SELF_PREVIEW_WEARABLES = "self-preview-wearables";
 
         public const string CAMERA_REEL = "camera-reel";
+        public const string FRIENDS = "friends";
 
         public const string FORCE_TEXTURE_COMPRESSION = "force-texture-compression";
 

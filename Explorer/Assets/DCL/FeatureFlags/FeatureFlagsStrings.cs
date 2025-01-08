@@ -22,5 +22,6 @@
         public const string VIDEO_PRIORITIZATION = "alfa-video-prioritization";
 
         public const string CAMERA_REEL = "alpha-camera-reel";
+        public const string FRIENDS = "alpha-friends";
     }
 }
