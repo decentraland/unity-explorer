@@ -14,3 +14,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: GenericContextMenu:DCL.UI.GenericContextMenu.Controls:ToggleContextMenuControlSettings
   controlTypeType: 1
   toggleText: Set as Public
+  horizontalLayoutPadding:
+    m_Left: 8
+    m_Right: 8
+    m_Top: 0
+    m_Bottom: 0
+  horizontalLayoutSpacing: 30
+  horizontalLayoutReverseArrangement: 0

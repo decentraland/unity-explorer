@@ -24,7 +24,6 @@ namespace DCL.InWorldCamera.CameraReelGallery
 
         [field: Header("Context menu")]
         [field: SerializeField] public OptionButtonView optionsButton { get; private set; }
-        [field: SerializeField] public ContextMenuView contextMenu { get; private set; }
 
         [field: Header("Animators")]
         [field: SerializeField] internal Animator panelAnimator { get; private set; }

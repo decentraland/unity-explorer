@@ -15,3 +15,10 @@ MonoBehaviour:
   controlTypeType: 0
   buttonText: Share on X
   buttonIcon: {fileID: 21300000, guid: 4c97cd3c67403471d8fe75c5fc348e58, type: 3}
+  horizontalLayoutPadding:
+    m_Left: 8
+    m_Right: 8
+    m_Top: 0
+    m_Bottom: 0
+  horizontalLayoutSpacing: 10
+  horizontalLayoutReverseArrangement: 0

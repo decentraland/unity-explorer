@@ -15,3 +15,10 @@ MonoBehaviour:
   controlTypeType: 0
   buttonText: Download
   buttonIcon: {fileID: 21300000, guid: 7c1ba996ae79c4993b1c434f833c4084, type: 3}
+  horizontalLayoutPadding:
+    m_Left: 8
+    m_Right: 8
+    m_Top: 0
+    m_Bottom: 0
+  horizontalLayoutSpacing: 10
+  horizontalLayoutReverseArrangement: 0

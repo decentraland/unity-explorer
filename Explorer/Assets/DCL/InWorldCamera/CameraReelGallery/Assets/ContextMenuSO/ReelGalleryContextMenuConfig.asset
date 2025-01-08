@@ -21,3 +21,9 @@ MonoBehaviour:
   - {fileID: 11400000, guid: a1abe3dafbc2143d8949b174e3c6c235, type: 2}
   offsetFromTarget: {x: 11, y: 18}
   width: 186
+  verticalLayoutPadding:
+    m_Left: 8
+    m_Right: 8
+    m_Top: 4
+    m_Bottom: 12
+  elementsSpacing: 1

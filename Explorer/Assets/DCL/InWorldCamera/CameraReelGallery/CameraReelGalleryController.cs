@@ -96,7 +96,6 @@ namespace DCL.InWorldCamera.CameraReelGallery
             ReelGalleryConfigParams reelGalleryConfigParams,
             bool useSignedRequest,
             OptionButtonView? optionButtonView = null,
-            ContextMenuView? contextMenuView = null,
             IWebBrowser? webBrowser = null,
             IDecentralandUrlsSource? decentralandUrlsSource = null,
             IExplorePanelEscapeAction? explorePanelEscapeAction = null,
@@ -124,7 +123,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
             if (Application.platform == RuntimePlatform.OSXEditor || Application.platform == RuntimePlatform.OSXPlayer)
                 this.view.scrollRect.scrollSensitivity *= MACOS_SCROLL_SENSITIVITY_SCALE_FACTOR;
 
-            if (optionButtonView is not null && contextMenuView is not null)
+            if (optionButtonView is not null)
             {
                 this.optionButtonController = new OptionButtonController(optionButtonView, mvcManager!, contextMenuConfig!);
             }
