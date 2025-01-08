@@ -16,7 +16,7 @@ namespace DCL.WebRequests.CustomDownloadHandlers
             return STRING_BUILDER.ToString();
         }
 
-        public static bool TryGetFullSize(string input, out long result)
+        public static bool TryGetFullSize(string input, out int result)
         {
             result = 0;
 
@@ -26,7 +26,7 @@ namespace DCL.WebRequests.CustomDownloadHandlers
             if (separatorIndex == -1 || separatorIndex == input.Length - 1) return false;
 
             string secondPart = input.Substring(separatorIndex + 1);
-            return long.TryParse(secondPart, out result);
+            return int.TryParse(secondPart, out result);
         }
     }
 }

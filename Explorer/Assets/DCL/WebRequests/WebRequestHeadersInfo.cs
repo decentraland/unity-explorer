@@ -8,6 +8,7 @@ namespace DCL.WebRequests
 {
     public struct WebRequestHeadersInfo : IDisposable
     {
+        private const string RANGE_HEADER = "Range";
         private const string EMPTY_HEADER = "";
 
         private static readonly IReadOnlyDictionary<string, string> EMPTY_HEADERS = new Dictionary<string, string>();
@@ -44,6 +45,12 @@ namespace DCL.WebRequests
             Add("x-identity-timestamp", unixTimestamp.ToString()!);
             Add("x-identity-metadata", string.IsNullOrEmpty(jsonMetaData) ? "{}" : jsonMetaData);
 
+            return this;
+        }
+
+        public WebRequestHeadersInfo WithRange(long start, long end)
+        {
+            Add(RANGE_HEADER, WebRequestUtils.GetContentRangeHeaderValue(start, end));
             return this;
         }
 

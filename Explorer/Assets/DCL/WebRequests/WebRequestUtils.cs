@@ -3,6 +3,7 @@ using DCL.Diagnostics;
 using DCL.Utilities.Extensions;
 using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using System;
+using System.Text;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -16,6 +17,7 @@ namespace DCL.WebRequests
         public const int BAD_REQUEST = 400;
         public const int FORBIDDEN_ACCESS = 403;
         public const int NOT_FOUND = 404;
+        private static readonly StringBuilder STRING_BUILDER = new ();
 
         public static SuppressExceptionWithFallback<TCoreOp, TWebRequest, TResult> SuppressExceptionsWithFallback<TCoreOp, TWebRequest, TResult>(this TCoreOp coreOp, TResult fallbackValue, SuppressExceptionWithFallback.Behaviour behaviour = SuppressExceptionWithFallback.Behaviour.Default, ReportData? reportContext = null) where TWebRequest: struct, ITypedWebRequest where TCoreOp: IWebRequestOp<TWebRequest, TResult> =>
             new (coreOp, fallbackValue, behaviour, reportContext);
@@ -69,6 +71,16 @@ namespace DCL.WebRequests
         {
             public UniTask<NoResult> ExecuteAsync(TWebRequest webRequest, CancellationToken ct) =>
                 UniTask.FromResult(new NoResult());
+        }
+
+        public static string GetContentRangeHeaderValue(long start, long end)
+        {
+            STRING_BUILDER.Clear();
+            STRING_BUILDER.Append("bytes=");
+            STRING_BUILDER.Append(start);
+            STRING_BUILDER.Append("-");
+            STRING_BUILDER.Append(end);
+            return STRING_BUILDER.ToString();
         }
 
         public readonly struct NoResult { }
