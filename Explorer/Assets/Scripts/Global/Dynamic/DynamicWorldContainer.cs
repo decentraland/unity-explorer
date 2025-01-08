@@ -343,6 +343,7 @@ namespace Global.Dynamic
             var archipelagoIslandRoom = IArchipelagoIslandRoom.NewDefault(
                 identityCache,
                 MultiPoolFactory(),
+                new ArrayMemoryPool(),
                 staticContainer.CharacterContainer.CharacterObject,
                 currentAdapterAddress,
                 staticContainer.WebRequestsContainer.WebRequestController
@@ -741,6 +742,7 @@ namespace Global.Dynamic
                     playerEntity,
                     includeCameraReel
                 ),
+                new FriendsPlugin(bootstrapContainer.DecentralandUrlsSource)
             };
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);
