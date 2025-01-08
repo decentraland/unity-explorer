@@ -20,8 +20,9 @@ namespace DCL.PartialDownloading.Systems
     [LogCategory(ReportCategory.PARTIAL_LOADING)]
     public partial class PartialLoadSystem : LoadSystemBase<FullDownloadedData, GetPartialIntention>
     {
-        private readonly IWebRequestController webRequestController;
         private const int CHUNK_SIZE = 1024 * 1024;
+
+        private readonly IWebRequestController webRequestController;
         private readonly ArrayPool<byte> arrayPool;
 
         internal PartialLoadSystem(
@@ -41,7 +42,12 @@ namespace DCL.PartialDownloading.Systems
             PartialDownloadingData partialDownloadingData = new PartialDownloadingData(partialDownloadBuffer, 0, CHUNK_SIZE);
 
             //If not then perform the first request
-            await webRequestController.GetPartialAsync(intention.CommonArguments, ct, reportData: ReportCategory.PARTIAL_LOADING, partialDownloadingData);
+            await webRequestController.GetPartialAsync(
+                intention.CommonArguments,
+                ct,
+                reportData: ReportCategory.PARTIAL_LOADING,
+                partialDownloadingData,
+                headersInfo: new WebRequestHeadersInfo().WithRange(partialDownloadingData.RangeStart, partialDownloadingData.RangeEnd));
 
             //Allocate the full data buffer based on full file size
             byte[] fullDataBuffer = arrayPool.Rent(partialDownloadingData.FullFileSize);
@@ -55,7 +61,12 @@ namespace DCL.PartialDownloading.Systems
                 partialDownloadingData.RangeStart += CHUNK_SIZE;
                 partialDownloadingData.RangeEnd =  partialDownloadingData.RangeStart + CHUNK_SIZE;
 
-                await webRequestController.GetPartialAsync(intention.CommonArguments, ct, reportData: ReportCategory.PARTIAL_LOADING, partialDownloadingData);
+                await webRequestController.GetPartialAsync(
+                    intention.CommonArguments,
+                    ct,
+                    reportData: ReportCategory.PARTIAL_LOADING,
+                    partialDownloadingData,
+                    headersInfo: new WebRequestHeadersInfo().WithRange(partialDownloadingData.RangeStart, partialDownloadingData.RangeEnd));
 
                 int finalBytesCount = partialDownloadingData.DataBuffer.Length;
                 if (partialDownloadingData.RangeEnd > partialDownloadingData.FullFileSize)
