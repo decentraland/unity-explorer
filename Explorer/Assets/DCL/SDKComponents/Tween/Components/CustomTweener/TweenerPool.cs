@@ -1,5 +1,6 @@
 ﻿using CrdtEcsBridge.Components.Conversion;
 using DCL.ECSComponents;
+using System;
 using UnityEngine.Pool;
 using UnityEngine;
 
@@ -20,7 +21,7 @@ namespace DCL.SDKComponents.Tween.Components
 
         public ITweener GetTweener(PBTween pbTween, float durationInSeconds)
         {
-            ITweener tweener = null;
+            ITweener tweener;
 
             switch (pbTween.ModeCase)
             {
@@ -45,6 +46,9 @@ namespace DCL.SDKComponents.Tween.Components
                     tweener = vector2TweenerPool.Get();
                     ((ICustomTweener<Vector2>)tweener).Initialize(pbTween.TextureMove.Start, pbTween.TextureMove.End, durationInSeconds);
                     break;
+                case PBTween.ModeOneofCase.None:
+                default:
+                    throw new ArgumentException($"No Tweener defined for tween mode: {pbTween.ModeCase}");
             }
 
             return tweener;
