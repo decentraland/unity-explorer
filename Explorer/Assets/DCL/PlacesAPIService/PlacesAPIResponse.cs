@@ -66,7 +66,7 @@ namespace DCL.PlacesAPIService
                 id = "fake_id";
                 title = "Empty place";
                 description = "No description";
-                image = "";
+                image = "https://peer.decentraland.org/content/contents/bafkreidj26s7aenyxfthfdibnqonzqm5ptc4iamml744gmcyuokewkr76y";
                 owner = "no owner";
                 tags = Array.Empty<string>();
                 world_name = "";
