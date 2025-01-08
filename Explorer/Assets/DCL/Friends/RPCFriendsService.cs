@@ -1,5 +1,6 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.Profiles;
 using DCL.Web3.Identities;
 using Decentraland.Social.Friendships;
@@ -44,6 +45,56 @@ namespace DCL.Friends
             client.Dispose();
         }
 
+        public async UniTask SubscribeToIncomingFriendshipEvents(CancellationToken ct)
+        {
+            await EnsureRpcConnectionAsync(ct);
+
+            IUniTaskAsyncEnumerable<SubscribeFriendshipEventsUpdatesResponse> stream = service!
+               .SubscribeFriendshipEventsUpdates(new Payload
+                {
+                    // TODO
+                    SynapseToken = "",
+                });
+
+            await foreach (var response in stream.WithCancellation(ct))
+            {
+                ct.ThrowIfCancellationRequested();
+
+                switch (response.ResponseCase)
+                {
+                    case SubscribeFriendshipEventsUpdatesResponse.ResponseOneofCase.InternalServerError:
+                        ReportHub.LogError(new ReportData(ReportCategory.FRIENDS),
+                            $"Friend event subscription {response.ResponseCase}: {response.InternalServerError.Message}");
+
+                        break;
+
+                    case SubscribeFriendshipEventsUpdatesResponse.ResponseOneofCase.UnauthorizedError:
+                        ReportHub.LogError(new ReportData(ReportCategory.FRIENDS),
+                            $"Friend event subscription {response.ResponseCase}: {response.UnauthorizedError.Message}");
+
+                        break;
+
+                    case SubscribeFriendshipEventsUpdatesResponse.ResponseOneofCase.ForbiddenError:
+                        ReportHub.LogError(new ReportData(ReportCategory.FRIENDS),
+                            $"Friend event subscription {response.ResponseCase}: {response.ForbiddenError.Message}");
+
+                        break;
+
+                    case SubscribeFriendshipEventsUpdatesResponse.ResponseOneofCase.TooManyRequestsError:
+                        ReportHub.LogError(new ReportData(ReportCategory.FRIENDS),
+                            $"Friend event subscription {response.ResponseCase}: {response.TooManyRequestsError.Message}");
+
+                        break;
+
+                    case SubscribeFriendshipEventsUpdatesResponse.ResponseOneofCase.Events:
+                        try { ProcessIncomingFriendshipEvent(response.Events); }
+                        catch (Exception e) { ReportHub.LogException(e, new ReportData(ReportCategory.FRIENDS)); }
+
+                        break;
+                }
+            }
+        }
+
         public async UniTask<PaginatedFriendsResult> GetFriendsAsync(int pageNum, int pageSize, CancellationToken ct)
         {
             await EnsureEssentialDataToBeInitialized(ct);
@@ -76,10 +127,11 @@ namespace DCL.Friends
             friendRequestsBuffer.Clear();
 
             var response = await service!.GetRequestEvents(new Payload
-            {
-                // TODO
-                SynapseToken = "",
-            }).AttachExternalCancellation(ct);
+                                          {
+                                              // TODO
+                                              SynapseToken = "",
+                                          })
+                                         .AttachExternalCancellation(ct);
 
             switch (response.ResponseCase)
             {
@@ -93,6 +145,7 @@ namespace DCL.Friends
                             identityCache.Identity!.Address,
                             friendRequest.Message));
                     }
+
                     break;
                 default:
                     throw new Exception($"Cannot fetch sent friend requests {response.ResponseCase}");
@@ -111,10 +164,11 @@ namespace DCL.Friends
             friendRequestsBuffer.Clear();
 
             var response = await service!.GetRequestEvents(new Payload
-            {
-                // TODO
-                SynapseToken = "",
-            }).AttachExternalCancellation(ct);
+                                          {
+                                              // TODO
+                                              SynapseToken = "",
+                                          })
+                                         .AttachExternalCancellation(ct);
 
             switch (response.ResponseCase)
             {
@@ -128,6 +182,7 @@ namespace DCL.Friends
                             friendRequest.User.Address,
                             friendRequest.Message));
                     }
+
                     break;
                 default:
                     throw new Exception($"Cannot fetch sent friend requests {response.ResponseCase}");
@@ -355,5 +410,46 @@ namespace DCL.Friends
         /// </summary>
         private static string GetFriendRequestId(string userId, long createdAt) =>
             $"{userId}-{createdAt}";
+
+        private void ProcessIncomingFriendshipEvent(FriendshipEventResponses response)
+        {
+            foreach (var @event in response.Responses)
+                ProcessIncomingFriendshipEvent(@event);
+        }
+
+        private void ProcessIncomingFriendshipEvent(FriendshipEventResponse @event)
+        {
+            switch (@event.BodyCase)
+            {
+                case FriendshipEventResponse.BodyOneofCase.Request:
+                    var response = @event.Request;
+
+                    var request = new FriendRequest(
+                        GetFriendRequestId(response.User.Address, response.CreatedAt),
+                        DateTimeOffset.FromUnixTimeSeconds(response.CreatedAt).DateTime,
+                        response.User.Address,
+                        identityCache.Identity!.Address,
+                        response.Message);
+
+                    eventBus.BroadcastFriendRequestReceived(request);
+                    break;
+                case FriendshipEventResponse.BodyOneofCase.Accept:
+                    eventBus.BroadcastFriendRequestAccepted(@event.Accept.User.Address);
+                    break;
+                case FriendshipEventResponse.BodyOneofCase.Reject:
+                    eventBus.BroadcastFriendRequestRejected(@event.Reject.User.Address);
+                    break;
+                case FriendshipEventResponse.BodyOneofCase.Delete:
+                    eventBus.BroadcastFriendRequestRemoved(@event.Delete.User.Address);
+                    break;
+                case FriendshipEventResponse.BodyOneofCase.Cancel:
+                    eventBus.BroadcastFriendRequestCanceled(@event.Delete.User.Address);
+                    break;
+                case FriendshipEventResponse.BodyOneofCase.None: break;
+                default:
+                    ReportHub.LogWarning(new ReportData(ReportCategory.FRIENDS), "Cannot process unknown incoming friendship event");
+                    break;
+            }
+        }
     }
 }

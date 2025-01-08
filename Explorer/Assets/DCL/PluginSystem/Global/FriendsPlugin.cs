@@ -14,7 +14,7 @@ namespace DCL.PluginSystem.Global
         private readonly IDecentralandUrlsSource dclUrlSource;
         private readonly IProfileRepository profileRepository;
         private readonly IWeb3IdentityCache identityCache;
-        private IFriendsService? friendsService;
+        private RPCFriendsService? friendsService;
 
         public FriendsPlugin(IDecentralandUrlsSource dclUrlSource,
             IProfileRepository profileRepository,
@@ -40,6 +40,10 @@ namespace DCL.PluginSystem.Global
 
             friendsService = new RPCFriendsService(URLAddress.FromString(dclUrlSource.Url(DecentralandUrl.ApiFriends)),
                 friendEventBus, profileRepository, identityCache);
+
+            await friendsService.SubscribeToIncomingFriendshipEvents(ct);
+
+            // using PaginatedFriendsResult result = await friendsService.GetFriendsAsync(1, 1000, ct);
 
             // TODO: add the rest of the ui
         }
