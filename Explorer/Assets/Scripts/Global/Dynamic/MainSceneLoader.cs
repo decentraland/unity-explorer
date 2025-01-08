@@ -140,7 +140,7 @@ namespace Global.Dynamic
             var identityCache = new IWeb3IdentityCache.Default(web3AccountFactory);
             var debugContainerBuilder = DebugUtilitiesContainer.Create(debugViewsCatalog, applicationParametersParser.HasDebugFlag()).Builder;
             var staticSettings = (globalPluginSettingsContainer as IPluginSettingsContainer).GetSettings<StaticSettings>();
-            var webRequestsContainer = WebRequestsContainer.Create(identityCache, texturesFuse, debugContainerBuilder, staticSettings.WebRequestsBudget);
+            var webRequestsContainer = WebRequestsContainer.Create(identityCache, texturesFuse, debugContainerBuilder, staticSettings.WebRequestsBudget, compressionEnabled);
             var realmUrls = new RealmUrls(launchSettings, new RealmNamesMap(webRequestsContainer.WebRequestController), decentralandUrlsSource);
 
             bootstrapContainer = await BootstrapContainer.CreateAsync(
@@ -169,8 +169,7 @@ namespace Global.Dynamic
 
                 bool isLoaded;
                 Entity playerEntity = world.Create(new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY));
-                (staticContainer, isLoaded) = await bootstrap.LoadStaticContainerAsync(bootstrapContainer, globalPluginSettingsContainer, debugViewsCatalog, playerEntity, TextureFuseFactory(), compressionEnabled, memoryCap, ct);
-               // TODO (staticContainer, isLoaded) = await bootstrap.LoadStaticContainerAsync(bootstrapContainer, globalPluginSettingsContainer, debugContainerBuilder, playerEntity, texturesFuse, memoryCap, ct);
+                (staticContainer, isLoaded) = await bootstrap.LoadStaticContainerAsync(bootstrapContainer, globalPluginSettingsContainer, debugContainerBuilder, playerEntity, TextureFuseFactory(), memoryCap, ct);
 
                 if (!isLoaded)
                 {

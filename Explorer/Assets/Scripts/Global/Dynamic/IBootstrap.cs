@@ -28,7 +28,6 @@ namespace Global.Dynamic
             Entity playerEntity,
             ITexturesFuse texturesFuse,
             ISystemMemoryCap memoryCap,
-            bool isTextureCompressionEnabled,
             CancellationToken ct
         );
 

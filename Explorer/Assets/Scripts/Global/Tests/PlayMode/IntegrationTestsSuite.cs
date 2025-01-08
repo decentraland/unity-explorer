@@ -61,7 +61,7 @@ namespace Global.Tests.PlayMode
                 assetProvisioner,
                 Substitute.For<IReportsHandlingSettings>(),
                 Substitute.For<IDebugContainerBuilder>(),
-                WebRequestsContainer.Create(new IWeb3IdentityCache.Default(), ITexturesFuse.NewTestInstance(), Substitute.For<IDebugContainerBuilder>(), 1000),
+                WebRequestsContainer.Create(new IWeb3IdentityCache.Default(), ITexturesFuse.NewTestInstance(), Substitute.For<IDebugContainerBuilder>(), 1000, false),
                 ITexturesFuse.NewTestInstance(),
                 globalSettingsContainer,
                 diagnosticsContainer,
@@ -75,8 +75,8 @@ namespace Global.Tests.PlayMode
                 new WorldVolumeMacBus(),
                 false,
                 Substitute.For<IAnalyticsController>(),
-                false,
-                ct);
+                ct
+            );
 
             if (!success)
                 throw new Exception("Cannot create the static container");
