@@ -37,6 +37,16 @@ namespace ECS.StreamableLoading.Common.Components
             ///     StreamableLoadingResult is ready
             /// </summary>
             Finished,
+
+            /// <summary>
+            ///     StreamableLoadingResult is partially downloaded
+            /// </summary>
+            Partial,
+
+            /// <summary>
+            ///     StreamableLoadingResult is fully downloaded
+            /// </summary>
+            FullyDownloaded,
         }
 
         public Status Value { get; private set; }
@@ -76,6 +86,27 @@ namespace ECS.StreamableLoading.Common.Components
 #endif
             Value = Status.InProgress;
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void StartPartialProgress()
+        {
+#if UNITY_EDITOR
+            if (Value is not Status.Allowed)
+                throw new InvalidOperationException($"Unexpected transition from \"{Value}\" to \"InProgress\"");
+#endif
+            Value = Status.Partial;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void FinishPartial()
+        {
+#if UNITY_EDITOR
+            if (Value is not Status.Partial)
+                throw new InvalidOperationException($"Unexpected transition from \"{Value}\" to \"FullyDownloaded\"");
+#endif
+            Value = Status.FullyDownloaded;
+        }
+
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Finish()

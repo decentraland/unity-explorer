@@ -140,7 +140,7 @@ namespace ECS.StreamableLoading.AssetBundles
             // if the type was not specified don't load any assets
             if (expectedObjType == null)
                 return new StreamableLoadingResult<AssetBundleData>(new AssetBundleData(assetBundle, metrics, dependencies));
-            
+
             if (lookForShaderAssets && expectedObjType == typeof(GameObject))
             {
                 //If there are no dependencies, it means that this gameobject asset bundle has the shader in it.

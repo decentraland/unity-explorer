@@ -77,11 +77,16 @@ namespace ECS.StreamableLoading.Common.Systems
 
             EntityReference entityReference = World.Reference(entity);
 
+
             if (state.Value != StreamableLoadingState.Status.Allowed)
             {
                 // If state is in progress the flow was already launched and it will call FinalizeLoading on its own
                 // If state is finished the asset is already resolved and cancellation can be ignored
-                if (state.Value != StreamableLoadingState.Status.InProgress && state.Value != StreamableLoadingState.Status.Finished && intention.CancellationTokenSource.IsCancellationRequested)
+                if (state.Value != StreamableLoadingState.Status.InProgress &&
+                    state.Value != StreamableLoadingState.Status.Finished &&
+                    state.Value != StreamableLoadingState.Status.Partial &&
+                    state.Value != StreamableLoadingState.Status.FullyDownloaded &&
+                    intention.CancellationTokenSource.IsCancellationRequested)
 
                     // If we don't finalize promises preemptively they are being stacked in DeferredLoadingSystem
                     // if it's unable to keep up with their number
@@ -94,10 +99,16 @@ namespace ECS.StreamableLoading.Common.Systems
             // it indicates that the current source was used
             intention.RemoveCurrentSource();
 
-            // Indicate that loading has started
-            state.StartProgress();
-
-            FlowAsync(entityReference, currentSource, intention, state.AcquiredBudget!, partitionComponent, cancellationTokenSource.Token).Forget();
+            if (intention.CommonArguments.PartialLoading)
+            {
+                state.StartPartialProgress();
+            }
+            else
+            {
+                // Indicate that loading has started
+                state.StartProgress();
+                FlowAsync(entityReference, currentSource, intention, state.AcquiredBudget!, partitionComponent, cancellationTokenSource.Token).Forget();
+            }
         }
 
         private async UniTask FlowAsync(

@@ -18,7 +18,7 @@ namespace DCL.PartialDownloading.Systems
 {
     [UpdateInGroup(typeof(StreamableLoadingGroup))]
     [LogCategory(ReportCategory.PARTIAL_LOADING)]
-    public partial class PartialLoadSystem : LoadSystemBase<FullDownloadedData, GetPartialIntention>
+    public partial class PartialLoadSystem<TIntention> : LoadSystemBase<FullDownloadedData, TIntention> where TIntention : struct, ILoadingIntention
     {
         private const int CHUNK_SIZE = 1024 * 1024;
 
@@ -27,14 +27,14 @@ namespace DCL.PartialDownloading.Systems
 
         internal PartialLoadSystem(
             World world,
-            IStreamableCache<FullDownloadedData, GetPartialIntention> cache,
+            IStreamableCache<FullDownloadedData, TIntention> cache,
             IWebRequestController webRequestController, ArrayPool<byte> arrayPool) : base(world, cache)
         {
             this.webRequestController = webRequestController;
             this.arrayPool = arrayPool;
         }
 
-        protected override async UniTask<StreamableLoadingResult<FullDownloadedData>> FlowInternalAsync(GetPartialIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
+        protected override async UniTask<StreamableLoadingResult<FullDownloadedData>> FlowInternalAsync(TIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
             byte[] partialDownloadBuffer = arrayPool.Rent(CHUNK_SIZE);
 
@@ -75,11 +75,12 @@ namespace DCL.PartialDownloading.Systems
                 Buffer.BlockCopy(partialDownloadingData.DataBuffer, 0, fullDataBuffer, partialDownloadingData.RangeStart, finalBytesCount);
             }
 
-            //Create full downloaded data
-            FullDownloadedData fullDownloadedData = new FullDownloadedData(fullDataBuffer);
             arrayPool.Return(partialDownloadBuffer, true);
 
+            //Create full downloaded data
+            FullDownloadedData fullDownloadedData = new FullDownloadedData(fullDataBuffer);
             return new StreamableLoadingResult<FullDownloadedData>(fullDownloadedData);
         }
+
     }
 }

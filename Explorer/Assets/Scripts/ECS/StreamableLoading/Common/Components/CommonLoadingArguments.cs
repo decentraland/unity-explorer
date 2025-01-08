@@ -11,6 +11,7 @@ namespace ECS.StreamableLoading.Common.Components
         public URLAddress? CacheableURL;
         public int Attempts;
         public int Timeout;
+        public bool PartialLoading;
 
         /// <summary>
         ///     When the system fails to load from the current source it removes the source from the flags
@@ -36,7 +37,8 @@ namespace ECS.StreamableLoading.Common.Components
             int attempts = StreamableLoadingDefaults.ATTEMPTS_COUNT,
             AssetSource permittedSources = AssetSource.WEB,
             AssetSource currentSource = AssetSource.WEB,
-            CancellationTokenSource? cancellationTokenSource = null)
+            CancellationTokenSource? cancellationTokenSource = null,
+            bool partialLoading = false)
         {
             URL = url;
             CustomEmbeddedSubDirectory = customEmbeddedSubDirectory;
@@ -46,6 +48,7 @@ namespace ECS.StreamableLoading.Common.Components
             CurrentSource = currentSource;
             CacheableURL = null;
             CancellationTokenSource = cancellationTokenSource ?? new CancellationTokenSource();
+            PartialLoading = partialLoading;
         }
 
         /// <summary>
@@ -57,8 +60,9 @@ namespace ECS.StreamableLoading.Common.Components
             int attempts = StreamableLoadingDefaults.ATTEMPTS_COUNT,
             AssetSource permittedSources = AssetSource.WEB,
             AssetSource currentSource = AssetSource.WEB,
-            CancellationTokenSource cancellationTokenSource = null) :
-            this(URLAddress.FromString(url), customEmbeddedSubDirectory, timeout, attempts, permittedSources, currentSource, cancellationTokenSource) { }
+            CancellationTokenSource cancellationTokenSource = null,
+            bool partialLoading = false) :
+            this(URLAddress.FromString(url), customEmbeddedSubDirectory, timeout, attempts, permittedSources, currentSource, cancellationTokenSource, partialLoading) { }
 
         // Always override attempts count for streamable assets as repetitions are handled in LoadSystemBase
         public static implicit operator CommonArguments(in CommonLoadingArguments commonLoadingArguments) =>
