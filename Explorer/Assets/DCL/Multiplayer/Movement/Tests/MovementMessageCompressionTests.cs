@@ -57,7 +57,7 @@ namespace DCL.Multiplayer.Movement.Tests
             };
 
             // ACT
-            NetworkMovementMessage decompressedMessage = encoder.Decompress(encoder.Compress(originalMessage));
+            NetworkMovementMessage decompressedMessage = encoder.Decompress(encoder.Compress(originalMessage), Vector2Int.zero);
 
             // ASSERT
             Assert.That(decompressedMessage.animState.MovementBlendValue, Is.EqualTo(0f));
@@ -88,7 +88,7 @@ namespace DCL.Multiplayer.Movement.Tests
             };
 
             // ACT
-            NetworkMovementMessage decompressedMessage = encoder.Decompress(encoder.Compress(originalMessage));
+            NetworkMovementMessage decompressedMessage = encoder.Decompress(encoder.Compress(originalMessage), Vector2Int.zero);
 
             // ASSERT
             Assert.AreEqual(originalMessage.isStunned, decompressedMessage.isStunned);
@@ -134,7 +134,7 @@ namespace DCL.Multiplayer.Movement.Tests
             var originalMessage = new NetworkMovementMessage { position = new Vector3(x, 0f, z) };
 
             // Act
-            NetworkMovementMessage decompressedMessage = encoder.Decompress(encoder.Compress(originalMessage));
+            NetworkMovementMessage decompressedMessage = encoder.Decompress(encoder.Compress(originalMessage), originalMessage.position.ToParcel());
 
             // Assert
             Assert.AreEqual(originalMessage.position.x, decompressedMessage.position.x, quantizationError);
@@ -174,7 +174,7 @@ namespace DCL.Multiplayer.Movement.Tests
             };
 
             // Act
-            NetworkMovementMessage decompressedMessage = encoder.Decompress(encoder.Compress(originalMessage));
+            NetworkMovementMessage decompressedMessage = encoder.Decompress(encoder.Compress(originalMessage), originalMessage.position.ToParcel());
 
             // Assert
             Assert.That(decompressedMessage.position.y, Is.GreaterThanOrEqualTo(0));
@@ -213,7 +213,7 @@ namespace DCL.Multiplayer.Movement.Tests
                 quantizationError += 0.015f; // there is velocity deviation at zero (< 0.015f)
 
             // Act
-            NetworkMovementMessage decompressedMessage = encoder.Decompress(encoder.Compress(originalMessage));
+            NetworkMovementMessage decompressedMessage = encoder.Decompress(encoder.Compress(originalMessage), originalMessage.position.ToParcel());
 
             // Assert
             Assert.AreEqual(originalMessage.velocity.x, decompressedMessage.velocity.x, quantizationError);
@@ -240,7 +240,7 @@ namespace DCL.Multiplayer.Movement.Tests
             var timestampEncoder = new TimestampEncoder(Settings);
 
             // Act
-            NetworkMovementMessage decompressedMessage = encoder.Decompress(encoder.Compress(originalMessage));
+            NetworkMovementMessage decompressedMessage = encoder.Decompress(encoder.Compress(originalMessage), Vector2Int.zero);
 
             // Assert
             Assert.AreEqual(t % timestampEncoder.BufferSize, decompressedMessage.timestamp, Settings.TIMESTAMP_QUANTUM);

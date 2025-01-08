@@ -6,11 +6,13 @@ using DCL.Multiplayer.Connections.Messaging;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.Messaging.Pipe;
 using DCL.Multiplayer.Movement.Settings;
+using DCL.Multiplayer.Profiles.Poses;
 using DCL.Multiplayer.Profiles.Tables;
 using Decentraland.Kernel.Comms.Rfc4;
 using System;
 using System.Threading;
 using UnityEngine;
+using Utility;
 
 namespace DCL.Multiplayer.Movement.Systems
 {
@@ -26,6 +28,8 @@ namespace DCL.Multiplayer.Movement.Systems
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
         private readonly CancellationTokenSource cancellationTokenSource = new ();
 
+        private readonly IRemoteMetadata remoteMetadata;
+
         private readonly World globalWorld;
 
         private NetworkMessageEncoder messageEncoder;
@@ -33,11 +37,12 @@ namespace DCL.Multiplayer.Movement.Systems
         private bool isDisposed;
         private IMultiplayerMovementSettings settingsValue;
 
-        public MultiplayerMovementMessageBus(IMessagePipesHub messagePipesHub, IReadOnlyEntityParticipantTable entityParticipantTable, World globalWorld)
+        public MultiplayerMovementMessageBus(IMessagePipesHub messagePipesHub, IReadOnlyEntityParticipantTable entityParticipantTable, IRemoteMetadata remoteMetadata, World globalWorld)
         {
             this.messagePipesHub = messagePipesHub;
             this.entityParticipantTable = entityParticipantTable;
             this.globalWorld = globalWorld;
+            this.remoteMetadata = remoteMetadata;
 
             this.messagePipesHub.IslandPipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Movement>(Packet.MessageOneofCase.Movement, OnOldSchemaMessageReceived);
             this.messagePipesHub.ScenePipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Movement>(Packet.MessageOneofCase.Movement, OnOldSchemaMessageReceived);
@@ -90,13 +95,16 @@ namespace DCL.Multiplayer.Movement.Systems
                 if (cancellationTokenSource.Token.IsCancellationRequested)
                     return;
 
+                if (!remoteMetadata.Metadata.TryGetValue(receivedMessage.FromWalletId, out IRemoteMetadata.ParticipantMetadata metadata))
+                    return;
+
                 CompressedNetworkMovementMessage message = new ()
                 {
                     temporalData = receivedMessage.Payload.TemporalData,
                     movementData = receivedMessage.Payload.MovementData,
                 };
 
-                Inbox(messageEncoder.Decompress(message), receivedMessage.FromWalletId);
+                Inbox(messageEncoder.Decompress(message, metadata.Parcel), receivedMessage.FromWalletId);
             }
         }
 
@@ -231,7 +239,7 @@ namespace DCL.Multiplayer.Movement.Systems
                     movementData = messageWrap.Payload.MovementData,
                 };
 
-                message = messageEncoder.Decompress(compressedMessage);
+                message = messageEncoder.Decompress(compressedMessage, message.position.ToParcel());
             }
             else
             {

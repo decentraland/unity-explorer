@@ -109,7 +109,9 @@ namespace DCL.Multiplayer.Movement.Systems
             playerMovement.MessagesSentInSec++;
 
             // We use this calculation instead of Character.velocity because, Character.velocity is 0 in some cases (moving platform)
-            float dist = (playerMovement.Character.transform.position - playerMovement.LastSentMessage.position).magnitude;
+            Vector3 playerPosition = playerMovement.Character.transform.position;
+
+            float dist = (playerPosition - playerMovement.LastSentMessage.position).magnitude;
             float speed = dist / (UnityEngine.Time.unscaledTime - playerMovement.LastSentMessage.timestamp);
 
             byte velocityTier = VelocityTierFromSpeed(speed);
@@ -117,7 +119,7 @@ namespace DCL.Multiplayer.Movement.Systems
             playerMovement.LastSentMessage = new NetworkMovementMessage
             {
                 timestamp = UnityEngine.Time.unscaledTime,
-                position = playerMovement.Character.transform.position,
+                position = playerPosition,
                 velocity = playerMovement.Character.velocity,
                 velocitySqrMagnitude = playerMovement.Character.velocity.sqrMagnitude,
 
