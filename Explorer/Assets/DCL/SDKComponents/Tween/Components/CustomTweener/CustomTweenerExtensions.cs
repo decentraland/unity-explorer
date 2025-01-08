@@ -7,9 +7,9 @@ namespace DCL.SDKComponents.Tween.Components
 {
     public static class CustomTweenerExtensions
     {
-        public static void UpdateMaterial(this ICustomTweener self, SDKTweenTextureComponent textureComponent, Material material)
+        public static void UpdateMaterial(this ITweener self, Material material, TextureMovementType movementType)
         {
-            switch (textureComponent.TextureMoveMovementType)
+            switch (movementType)
             {
                 case TextureMovementType.TmtOffset:
                     material.SetTextureOffset(TextureArrayConstants.BASE_MAP_ORIGINAL_TEXTURE, ((ICustomTweener<Vector2>)self).CurrentValue);
@@ -20,7 +20,7 @@ namespace DCL.SDKComponents.Tween.Components
             }
         }
 
-        public static void UpdateTransform(this ICustomTweener self, Transform transform, PBTween.ModeOneofCase updateType)
+        public static void UpdateTransform(this ITweener self, Transform transform, PBTween.ModeOneofCase updateType)
         {
             switch (updateType)
             {
@@ -36,7 +36,7 @@ namespace DCL.SDKComponents.Tween.Components
             }
         }
 
-        public static void UpdateSDKTransform(this ICustomTweener self, ref SDKTransform sdkTransform, PBTween.ModeOneofCase updateType)
+        public static void UpdateSDKTransform(this ITweener self, ref SDKTransform sdkTransform, PBTween.ModeOneofCase updateType)
         {
             switch (updateType)
             {

@@ -92,47 +92,6 @@ namespace DCL.SDKComponents.Tween.Systems
         }
 
         [Query]
-        [All(typeof(SDKTweenTextureComponent))]
-        private void UpdateTweenTextureSequence(CRDTEntity sdkEntity, in PBTween pbTween, ref SDKTweenComponent sdkTweenComponent, ref MaterialComponent materialComponent, SDKTweenTextureComponent textureComponent)
-        {
-            if (sdkTweenComponent.IsDirty)
-            {
-                SetupTween(ref sdkTweenComponent, in pbTween);
-                UpdateTweenTextureStateAndMaterial(sdkEntity, sdkTweenComponent, ref materialComponent, textureComponent);
-            }
-            else
-                UpdateTweenTextureState(sdkEntity, ref sdkTweenComponent, ref materialComponent, textureComponent);
-        }
-
-        private void UpdateTweenTextureState(CRDTEntity sdkEntity, ref SDKTweenComponent sdkTweenComponent, ref MaterialComponent materialComponent, SDKTweenTextureComponent textureComponent)
-        {
-            TweenStateStatus newState = GetCurrentTweenState(sdkTweenComponent);
-
-            if (newState != sdkTweenComponent.TweenStateStatus)
-            {
-                sdkTweenComponent.TweenStateStatus = newState;
-                UpdateTweenTextureStateAndMaterial(sdkEntity, sdkTweenComponent, ref materialComponent, textureComponent);
-            }
-            else if (newState == TweenStateStatus.TsActive) { UpdateTweenMaterial(sdkTweenComponent, ref materialComponent, textureComponent, sceneStateProvider.IsCurrent); }
-        }
-
-        private void UpdateTweenTextureStateAndMaterial(CRDTEntity sdkEntity, SDKTweenComponent sdkTweenComponent, ref MaterialComponent materialComponent, SDKTweenTextureComponent textureComponent)
-        {
-            UpdateTweenMaterial(sdkTweenComponent, ref materialComponent, textureComponent, sceneStateProvider.IsCurrent);
-            TweenSDKComponentHelper.WriteTweenStateInCRDT(ecsToCRDTWriter, sdkEntity, sdkTweenComponent.TweenStateStatus);
-        }
-
-        private void UpdateTweenMaterial(SDKTweenComponent sdkTweenComponent,
-            ref MaterialComponent materialComponent,
-            SDKTweenTextureComponent textureComponent,
-            bool isInCurrentScene)
-        {
-            if (materialComponent.Result)
-                TweenSDKComponentHelper.UpdateTweenResult(sdkTweenComponent.CustomTweener, ref materialComponent, textureComponent, isInCurrentScene);
-        }
-
-        [Query]
-        [None(typeof(SDKTweenTextureComponent))]
         private void UpdateTweenTransformSequence(ref SDKTweenComponent sdkTweenComponent, ref SDKTransform sdkTransform, in PBTween pbTween, CRDTEntity sdkEntity, TransformComponent transformComponent)
         {
             if (sdkTweenComponent.IsDirty)
@@ -143,6 +102,42 @@ namespace DCL.SDKComponents.Tween.Systems
             }
             else
                 UpdateTweenState(ref sdkTweenComponent, ref sdkTransform, sdkEntity, transformComponent);
+        }
+
+        [Query]
+        private void UpdateTweenTextureSequence(CRDTEntity sdkEntity, in PBTween pbTween, ref SDKTweenComponent sdkTweenComponent, ref MaterialComponent materialComponent)
+        {
+            if (sdkTweenComponent.IsDirty)
+            {
+                SetupTween(ref sdkTweenComponent, in pbTween);
+                UpdateTweenTextureStateAndMaterial(sdkEntity, sdkTweenComponent, ref materialComponent, pbTween.TextureMove.MovementType);
+            }
+            else
+                UpdateTweenTextureState(sdkEntity, ref sdkTweenComponent, ref materialComponent, pbTween.TextureMove.MovementType);
+        }
+
+        private void UpdateTweenTextureState(CRDTEntity sdkEntity, ref SDKTweenComponent sdkTweenComponent, ref MaterialComponent materialComponent, TextureMovementType movementType)
+        {
+            TweenStateStatus newState = GetCurrentTweenState(sdkTweenComponent);
+
+            if (newState != sdkTweenComponent.TweenStateStatus)
+            {
+                sdkTweenComponent.TweenStateStatus = newState;
+                UpdateTweenTextureStateAndMaterial(sdkEntity, sdkTweenComponent, ref materialComponent, movementType);
+            }
+            else if (newState == TweenStateStatus.TsActive) { UpdateTweenMaterial(sdkTweenComponent, ref materialComponent, movementType, sceneStateProvider.IsCurrent); }
+        }
+
+        private void UpdateTweenTextureStateAndMaterial(CRDTEntity sdkEntity, SDKTweenComponent sdkTweenComponent, ref MaterialComponent materialComponent, TextureMovementType movementType)
+        {
+            UpdateTweenMaterial(sdkTweenComponent, ref materialComponent, movementType, sceneStateProvider.IsCurrent);
+            TweenSDKComponentHelper.WriteTweenStateInCRDT(ecsToCRDTWriter, sdkEntity, sdkTweenComponent.TweenStateStatus);
+        }
+
+        private void UpdateTweenMaterial(SDKTweenComponent sdkTweenComponent, ref MaterialComponent materialComponent, TextureMovementType movementType, bool isInCurrentScene)
+        {
+            if (materialComponent.Result)
+                TweenSDKComponentHelper.UpdateTweenResult(sdkTweenComponent, ref materialComponent, movementType, isInCurrentScene);
         }
 
         private void SetupTween(ref SDKTweenComponent sdkTweenComponent, in PBTween pbTween)

@@ -1,38 +1,28 @@
-﻿using DCL.ECSComponents;
-using DG.Tweening;
+﻿using DG.Tweening;
 using DG.Tweening.Core;
 using DG.Tweening.Plugins.Options;
+using System;
 
 namespace DCL.SDKComponents.Tween.Components
 {
     public abstract class CustomTweener<T, TU> : ICustomTweener<T>
-        where T: struct
+        where T: struct, IEquatable<T>, IFormattable
         where TU: struct, IPlugOptions
     {
-        private T currentValue;
         private bool finished;
         private TweenerCore<T, T, TU> core;
         private ICustomTweener<T> customTweenerImplementation;
 
-        public T CurrentValue
-        {
-            get => currentValue;
+        public T CurrentValue { get; set; }
 
-            set => currentValue = value;
-        }
-
-        public void Initialize(PBTween pbTween, float durationInSeconds)
+        public void Initialize(T startValue, T endValue, float durationInSeconds)
         {
             core?.Kill();
             finished = false;
-
-            (T, T) tweenValues = GetTweenValues(pbTween);
-            core = CreateTweener(tweenValues.Item1, tweenValues.Item2, durationInSeconds);
+            core = CreateTweener(startValue, endValue, durationInSeconds);
         }
 
         protected abstract TweenerCore<T, T, TU> CreateTweener(T start, T end, float duration);
-
-        protected abstract (T, T) GetTweenValues(PBTween pbTween);
 
         public void Play() =>
             core.Play();

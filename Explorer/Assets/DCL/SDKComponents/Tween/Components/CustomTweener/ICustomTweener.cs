@@ -1,12 +1,9 @@
-﻿using DCL.ECSComponents;
-using DG.Tweening;
+﻿using DG.Tweening;
 
 namespace DCL.SDKComponents.Tween.Components
 {
-    public interface ICustomTweener
+    public interface ITweener
     {
-        void Initialize(PBTween pbTween, float durationInSeconds);
-
         void DoTween(Ease ease, float tweenModelCurrentTime, bool isPlaying);
 
         void Play();
@@ -22,8 +19,10 @@ namespace DCL.SDKComponents.Tween.Components
         bool IsActive();
     }
 
-    public interface ICustomTweener<T> : ICustomTweener
+    public interface ICustomTweener<T> : ITweener
     {
         public T CurrentValue { get; set; }
+
+        void Initialize(T startValue, T endValue, float durationInSeconds);
     }
 }

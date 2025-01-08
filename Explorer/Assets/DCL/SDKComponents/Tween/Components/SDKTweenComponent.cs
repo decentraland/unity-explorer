@@ -7,7 +7,7 @@ namespace DCL.SDKComponents.Tween.Components
         public PBTween.ModeOneofCase TweenMode { get; set; }
         public bool IsDirty { get; set; }
         public TweenStateStatus TweenStateStatus { get; set; }
-        public ICustomTweener CustomTweener { get; set; }
+        public ITweener CustomTweener { get; set; }
 
         public bool IsActive() =>
             CustomTweener != null && CustomTweener.IsActive();

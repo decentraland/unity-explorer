@@ -32,10 +32,10 @@ namespace DCL.SDKComponents.Tween.Helpers
                 sdkTransform.IsDirty = true;
         }
 
-        public static void UpdateTweenResult(ICustomTweener tweener, ref MaterialComponent materialComponent, SDKTweenTextureComponent textureComponent, bool shouldUpdateMaterial)
+        public static void UpdateTweenResult(SDKTweenComponent sdkTweenComponent, ref MaterialComponent materialComponent, TextureMovementType movementType, bool shouldUpdateMaterial)
         {
             if (shouldUpdateMaterial)
-                tweener.UpdateMaterial(textureComponent, materialComponent.Result!);
+                sdkTweenComponent.CustomTweener.UpdateMaterial(materialComponent.Result!, movementType);
         }
 
         public static void WriteSDKTransformUpdateInCRDT(SDKTransform sdkTransform, IECSToCRDTWriter ecsToCrdtWriter, CRDTEntity sdkEntity)

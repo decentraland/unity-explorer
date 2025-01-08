@@ -33,13 +33,7 @@ namespace DCL.SDKComponents.Tween.Systems
                 IsDirty = true,
             };
 
-            if (pbTween.ModeCase == PBTween.ModeOneofCase.TextureMove)
-            {
-                var sdkTweenTextureComponent = new SDKTweenTextureComponent(pbTween.TextureMove.MovementType);
-
-                World.Add(entity, sdkTweenComponent, sdkTweenTextureComponent);
-            }
-            else { World.Add(entity, sdkTweenComponent); }
+            World.Add(entity, sdkTweenComponent);
         }
     }
 }
