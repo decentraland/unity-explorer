@@ -762,7 +762,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1824573665106462179, guid: 5ce777e34d84eb142859de493e4eae33, type: 3}
       propertyPath: m_text
-      value: Click and Drag to Rotate
+      value: Click and Drag to Move
       objectReference: {fileID: 0}
     - target: {fileID: 5034288600341624970, guid: 5ce777e34d84eb142859de493e4eae33, type: 3}
       propertyPath: m_Pivot.x
