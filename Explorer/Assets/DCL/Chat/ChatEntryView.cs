@@ -2,15 +2,17 @@ using DG.Tweening;
 using System;
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace DCL.Chat
 {
-    public class ChatEntryView : MonoBehaviour
+    public class ChatEntryView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {
         private const float BACKGROUND_HEIGHT_OFFSET = 56;
         private const float BACKGROUND_WIDTH_OFFSET = 56;
         private const float MAX_ENTRY_WIDTH = 246;
+        private const float VERIFIED_BADGE_WIDTH = 15;
 
         [field: SerializeField]
         internal RectTransform backgroundRectTransform { get; private set; }
@@ -48,7 +50,13 @@ namespace DCL.Chat
         [field: SerializeField]
         internal CanvasGroup chatEntryCanvasGroup { get; private set; }
 
+        [field: SerializeField]
+        internal Button? optionsButton { get; private set; }
+
         private Vector2 backgroundSize;
+
+        public Action PointerEnter;
+        public Action PointerExit;
 
         public void SetUsername(string username, string walletId)
         {
@@ -97,7 +105,7 @@ namespace DCL.Chat
         private float CalculatePreferredWidth(string messageContent)
         {
             if (playerName.text.Length + walletIdText.text.Length > (GetEmojisCount(messageContent) > 0 ? entryText.GetParsedText().Length + GetEmojisCount(messageContent) : entryText.GetParsedText().Length))
-                return playerName.preferredWidth + walletIdText.preferredWidth + BACKGROUND_WIDTH_OFFSET;
+                return playerName.preferredWidth + Math.Max(walletIdText.preferredWidth, VERIFIED_BADGE_WIDTH) + BACKGROUND_WIDTH_OFFSET;
 
             if(entryText.GetPreferredValues(messageContent, MAX_ENTRY_WIDTH, 0).x < MAX_ENTRY_WIDTH - BACKGROUND_WIDTH_OFFSET)
                 return entryText.GetPreferredValues(messageContent, MAX_ENTRY_WIDTH, 0).x + BACKGROUND_WIDTH_OFFSET;
@@ -107,5 +115,17 @@ namespace DCL.Chat
 
         private int GetEmojisCount(string message) =>
             message.Split("\\U0").Length - 1;
+
+        public void OnPointerEnter(PointerEventData eventData)
+        {
+            optionsButton?.gameObject.SetActive(true);
+            PointerEnter?.Invoke();
+        }
+
+        public void OnPointerExit(PointerEventData eventData)
+        {
+            optionsButton?.gameObject.SetActive(false);
+            PointerExit?.Invoke();
+        }
     }
 }

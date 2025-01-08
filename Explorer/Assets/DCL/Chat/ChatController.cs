@@ -140,6 +140,16 @@ namespace DCL.Chat
             chatHistory.AddMessage(ChatMessage.NewFromSystem("Type /help for available commands."));
         }
 
+        private void OnPointerEnter()
+        {
+
+        }
+
+        private void OnPointerExit()
+        {
+
+        }
+
         protected override void OnViewShow()
         {
             base.OnViewShow();

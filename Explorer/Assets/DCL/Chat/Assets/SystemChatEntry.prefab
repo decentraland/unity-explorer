@@ -514,13 +514,14 @@ GameObject:
   - component: {fileID: 5134452323717697246}
   - component: {fileID: 6985445914565398511}
   - component: {fileID: 1424972135909640059}
+  - component: {fileID: -2437447992601612802}
   m_Layer: 5
   m_Name: SystemChatEntry
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &4800516901492795510
 RectTransform:
   m_ObjectHideFlags: 0
@@ -541,7 +542,7 @@ RectTransform:
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 148.79999}
   m_SizeDelta: {x: 1.7210072, y: 74}
-  m_Pivot: {x: 0, y: 1}
+  m_Pivot: {x: 0, y: 0}
 --- !u!222 &5134452323717697246
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -574,6 +575,7 @@ MonoBehaviour:
   <ProfileBackground>k__BackingField: {fileID: 0}
   <ProfileOutline>k__BackingField: {fileID: 0}
   <chatEntryCanvasGroup>k__BackingField: {fileID: 1424972135909640059}
+  <optionsButton>k__BackingField: {fileID: 0}
 --- !u!225 &1424972135909640059
 CanvasGroup:
   m_ObjectHideFlags: 0
@@ -586,6 +588,18 @@ CanvasGroup:
   m_Interactable: 1
   m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 0
+--- !u!114 &-2437447992601612802
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4868610521581754763}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bbcbd7952202d4d44a555aea5af2a351, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &4898129314729653796
 GameObject:
   m_ObjectHideFlags: 0
