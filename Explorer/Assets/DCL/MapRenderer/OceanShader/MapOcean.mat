@@ -83,7 +83,7 @@ Material:
     - _OceanGround:
         m_Texture: {fileID: 2800000, guid: b0199fe7d57251c40905420a616f6860, type: 3}
         m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _OceanNoise:
         m_Texture: {fileID: 2800000, guid: 9ce5537a8d55647be899c85f69302dee, type: 3}
         m_Scale: {x: 25, y: 25}
@@ -174,6 +174,7 @@ Material:
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _LightDir: {r: 0.5, g: 0.5, b: 3, a: 1}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
+    - _groundSizeOffset: {r: 2, g: 2, b: 0.51, a: 0.49}
     - _iChannelTime: {r: 1024, g: 1024, b: 0, a: 0}
     - _iDate: {r: 1024, g: 1024, b: 0, a: 0}
     - _iMouse: {r: 402.65, g: 48.3, b: 0, a: 0}

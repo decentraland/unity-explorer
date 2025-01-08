@@ -28,6 +28,7 @@ Shader "Unlit/MapOcean"
         _heightMultiplier ("Height Multiplier", Float) = 2.0
         _heightClamp ("Height Clamp", Float) = 10.0
         _intensity ("Intensity", Color) = (0.2126, 0.7152, 0.0722)
+        _groundSizeOffset("Ground Texture Size and Offset", Vector) = (1.0, 1.0, 0.0, 0.0)
     }
     SubShader
     {
@@ -65,6 +66,7 @@ Shader "Unlit/MapOcean"
             float4 _OceanGround_ST;
             float4 _OceanNoise_ST;
             float4 _GlobalTexture_ST;
+            float4 _groundSizeOffset;
 
             float _WaterLevelMultiplier;
             float _WaterLevel;
@@ -127,7 +129,11 @@ Shader "Unlit/MapOcean"
             float height_map( float2 uv )
             {
                 #if USETEXTUREHEIGHT
-                    float f = _heightAddition + (tex2Dlod(_GroundHeightMap, float4(uv, 0.0f, 0.0f)).r * _heightMultiplier);
+                    float f = 0.0f;
+                    uv *= _groundSizeOffset.xy;
+                    uv -= _groundSizeOffset.zw;
+                    if (uv.x > 0.0f && uv.x < 1.0f && uv.y > 0.0f && uv.y < 1.0f)
+                        f = _heightAddition + (tex2Dlod(_GroundHeightMap, float4(uv, 0.0f, 0.0f)).r * _heightMultiplier);
                 #else
                     float2x2 m = float2x2( 0.9563f*1.4f,  -0.2924f*1.4f,  0.2924f*1.4f,  0.9563f*1.4f );
                     p = p*6.0f;
@@ -154,6 +160,9 @@ Shader "Unlit/MapOcean"
             
             float3 terrain_map( float2 uv )
             {
+                uv *= _groundSizeOffset.xy;
+                uv -= _groundSizeOffset.zw;
+                clamp(uv, float2(0.0f, 0.0f), float2(1.0f, 1.0f));
                 return _terrainColourAddition+tex2D(_OceanGround, uv).rgb; // test-terrain is simply 'sandstone'
             }
 
@@ -296,7 +305,7 @@ Shader "Unlit/MapOcean"
                     float3 normwater = normalize(float3(h3-h4, h1-h2, 0.125f)); // norm-vector of the 'bumpy' water-plane
                     i.uv += normwater.xy*0.002f*(level-height); 
                     
-                    col = CalcTerrain(i.uv, height);
+                    col = CalcTerrain(i.uv_gnd, height);
 
                     float coastfade = clamp((level-height)/_coast2water_fadedepth, 0.0f, 1.0f);
                     float coastfade2= clamp((level-height)/deepwater_fadedepth, 0.0f, 1.0f);
