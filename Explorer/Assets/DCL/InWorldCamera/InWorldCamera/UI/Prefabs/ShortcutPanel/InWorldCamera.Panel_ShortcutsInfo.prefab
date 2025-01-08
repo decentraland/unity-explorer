@@ -445,7 +445,7 @@ PrefabInstance:
     - target: {fileID: 6417646924112038336, guid: 5ce777e34d84eb142859de493e4eae33, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 21300000, guid: 5ad8969eda1d3452aa2f6b78242c1a3e, type: 3}
+      objectReference: {fileID: 21300000, guid: e3400718ec10a4efb9135f812d108954, type: 3}
     - target: {fileID: 7995160920644543220, guid: 5ce777e34d84eb142859de493e4eae33, type: 3}
       propertyPath: m_Name
       value: Zoom in/out
@@ -863,7 +863,7 @@ PrefabInstance:
     - target: {fileID: 6417646924112038336, guid: 5ce777e34d84eb142859de493e4eae33, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 21300000, guid: 76a3a85579ac743469885bc1ae9bbb62, type: 3}
+      objectReference: {fileID: 21300000, guid: b0301db58b8d64df1b813cb8174e78e2, type: 3}
     - target: {fileID: 7995160920644543220, guid: 5ce777e34d84eb142859de493e4eae33, type: 3}
       propertyPath: m_Name
       value: Rotate
