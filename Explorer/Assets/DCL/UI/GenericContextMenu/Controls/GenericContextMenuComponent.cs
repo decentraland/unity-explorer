@@ -6,6 +6,7 @@ using UnityEngine.UI;
 namespace DCL.UI.GenericContextMenu.Controls
 {
     [RequireComponent(typeof(RectTransform))]
+    [RequireComponent(typeof(HorizontalLayoutGroup))]
     public abstract class GenericContextMenuComponent : MonoBehaviour, IGenericContextMenuComponent
     {
         [field: SerializeField] public RectTransform RectTransformComponent { get; private set; }
