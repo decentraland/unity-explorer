@@ -12,27 +12,23 @@ using Utility.Types;
 
 namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
 {
+    /// <summary>
+    ///     Pure transport implementation: doesn't contain recovery logic
+    /// </summary>
     public class WebSocketArchipelagoLiveConnection : IArchipelagoLiveConnection
     {
         private const int BUFFER_SIZE = 1024 * 1024; //1MB
 
-        private readonly Func<ClientWebSocket> webSocketFactory;
         private readonly IMemoryPool memoryPool;
 
         private Current? current;
 
-        public bool IsConnected => current?.WebSocket.State is WebSocketState.Open;
+        public bool IsConnected => current?.WebSocket.State is WebSocketState.Open or WebSocketState.Connecting;
 
-        public WebSocketArchipelagoLiveConnection() : this(
-            () => new ClientWebSocket(),
-            new ArrayMemoryPool(ArrayPool<byte>.Shared!)
-        ) { }
-
-        public WebSocketArchipelagoLiveConnection(Func<ClientWebSocket> webSocketFactory, IMemoryPool memoryPool)
+        public WebSocketArchipelagoLiveConnection(IMemoryPool memoryPool)
         {
-            this.webSocketFactory = webSocketFactory;
             this.memoryPool = memoryPool;
-            current = Current.New(webSocketFactory);
+            current = Current.New();
         }
 
         public async UniTask<Result> ConnectAsync(string adapterUrl, CancellationToken token)
@@ -47,18 +43,25 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
             catch (Exception e) { return Result.ErrorResult($"Cannot connect to adapter url: {adapterUrl}, {e.Message}"); }
         }
 
-        public UniTask DisconnectAsync(CancellationToken token)
+        public async UniTask<Result> DisconnectAsync(CancellationToken token)
         {
-            TryUpdateWebSocket();
-            return current!.Value.WebSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, token)!.AsUniTask();
+            try
+            {
+                TryUpdateWebSocket();
+                await current!.Value.WebSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, token)!.AsUniTask();
+                return Result.SuccessResult();
+            }
+            catch (Exception e) { return Result.ErrorResult($"Cannot disconnect: {e}"); }
         }
 
         public async UniTask<EnumResult<IArchipelagoLiveConnection.ResponseError>> SendAsync(MemoryWrap data, CancellationToken token)
         {
+            await WaitWhileConnectingAsync(token);
+
             if (IsWebSocketInvalid())
                 return EnumResult<IArchipelagoLiveConnection.ResponseError>
                    .ErrorResult(
-                        IArchipelagoLiveConnection.ResponseError.MessageError,
+                        IArchipelagoLiveConnection.ResponseError.ConnectionClosed,
                         $"Cannot send data, ensure that connection is correct, the connection is invalid: {current?.WebSocket.State}"
                     );
 
@@ -81,9 +84,11 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
 
         public async UniTask<EnumResult<MemoryWrap, IArchipelagoLiveConnection.ResponseError>> ReceiveAsync(CancellationToken token)
         {
+            await WaitWhileConnectingAsync(token);
+
             if (IsWebSocketInvalid())
                 return EnumResult<MemoryWrap, IArchipelagoLiveConnection.ResponseError>.ErrorResult(
-                    IArchipelagoLiveConnection.ResponseError.MessageError,
+                    IArchipelagoLiveConnection.ResponseError.ConnectionClosed,
                     $"Cannot receive data, ensure that connection is correct, the connection is invalid: {current?.WebSocket.State}"
                 );
 
@@ -114,7 +119,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
             {
                 return EnumResult<MemoryWrap, IArchipelagoLiveConnection.ResponseError>.ErrorResult(
                     IArchipelagoLiveConnection.ResponseError.MessageError,
-                    $"Cannot receive data, {e.Message}"
+                    $"Cannot receive data, {e}"
                 );
             }
         }
@@ -137,12 +142,21 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
             return memory;
         }
 
+        /// <summary>
+        ///     <see cref="ClientWebSocket" /> throws <see cref="NullReferenceException" /> if the state is <see cref="WebSocketState.Connecting" />
+        /// </summary>
+        private async UniTask WaitWhileConnectingAsync(CancellationToken ct)
+        {
+            while (current?.WebSocket.State is WebSocketState.Connecting)
+                await UniTask.Yield(ct);
+        }
+
         private void TryUpdateWebSocket()
         {
-            if (IsWebSocketInvalid())
+            if (!IsConnected) // if connection is being established such socket is considered as valid
             {
                 current?.Dispose();
-                current = Current.New(webSocketFactory);
+                current = Current.New();
             }
         }
 
@@ -156,12 +170,12 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
 
             private Current(ClientWebSocket webSocket, Atomic<bool> isSomeoneReceiving)
             {
-                this.WebSocket = webSocket;
-                this.IsSomeoneReceiving = isSomeoneReceiving;
+                WebSocket = webSocket;
+                IsSomeoneReceiving = isSomeoneReceiving;
             }
 
-            public static Current New(Func<ClientWebSocket> factory) =>
-                new (factory()!, new Atomic<bool>(false));
+            public static Current New() =>
+                new (new ClientWebSocket(), new Atomic<bool>(false));
 
             public void Dispose()
             {

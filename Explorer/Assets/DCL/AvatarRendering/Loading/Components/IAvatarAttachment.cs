@@ -107,6 +107,12 @@ namespace DCL.AvatarRendering.Loading.Components
         {
             AvatarAttachmentDTO dto = avatarAttachment.DTO;
 
+            if (dto.Metadata?.AbstractData?.representations == null)
+            {
+                hash = null;
+                return false;
+            }
+
             // The length of arrays is small, so O(N) complexity is fine
             // Avoid iterator allocations with "for" loop
             for (var i = 0; i < dto.Metadata.AbstractData.representations.Length; i++)

@@ -103,14 +103,12 @@ namespace Global.Dynamic
 #endif
             );
 
-            ITexturesFuse TextureFuseFactory()
-            {
-                return applicationParametersParser.HasFlag(AppArgsFlags.FORCE_NO_TEXTURE_COMPRESSION)
-                    ? ITexturesFuse.NewManagedInstance()
-                    : ITexturesFuse.NewDefault();
-            }
+            bool compressionEnabled = IPlatform.DEFAULT.IsNot(IPlatform.Kind.Windows) || applicationParametersParser.HasFlag(AppArgsFlags.FORCE_TEXTURE_COMPRESSION);
 
-            ICompressShaders compressShaders = ICompressShaders.NewDefault(TextureFuseFactory, IPlatform.DEFAULT);
+            ITexturesFuse TextureFuseFactory() =>
+                ITexturesFuse.NewDefault();
+
+            ICompressShaders compressShaders = compressionEnabled ? ICompressShaders.NewDefault(TextureFuseFactory, IPlatform.DEFAULT) : ICompressShaders.NewEmpty();
 
             if (applicationParametersParser.HasFlag(ICompressShaders.CMD_ARGS))
             {
@@ -150,7 +148,7 @@ namespace Global.Dynamic
 
                 bool isLoaded;
                 Entity playerEntity = world.Create(new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY));
-                (staticContainer, isLoaded) = await bootstrap.LoadStaticContainerAsync(bootstrapContainer, globalPluginSettingsContainer, debugViewsCatalog, playerEntity, TextureFuseFactory(), memoryCap, ct);
+                (staticContainer, isLoaded) = await bootstrap.LoadStaticContainerAsync(bootstrapContainer, globalPluginSettingsContainer, debugViewsCatalog, playerEntity, TextureFuseFactory(), compressionEnabled, memoryCap, ct);
 
                 if (!isLoaded)
                 {
@@ -261,7 +259,9 @@ namespace Global.Dynamic
         {
             // We enable Inputs through the inputBlock so the block counters can be properly updated and the component Active flags are up-to-date as well
             // We restore all inputs except EmoteWheel and FreeCamera as they should be disabled by default
-            staticContainer!.InputBlock.Enable(InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.PLAYER, InputMapComponent.Kind.EMOTES, InputMapComponent.Kind.CAMERA);
+            staticContainer!.InputBlock.EnableAll(InputMapComponent.Kind.FREE_CAMERA,
+                InputMapComponent.Kind.EMOTE_WHEEL);
+
         }
 
         [ContextMenu(nameof(ValidateSettingsAsync))]

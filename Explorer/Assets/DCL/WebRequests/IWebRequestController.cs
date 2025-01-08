@@ -18,7 +18,8 @@ namespace DCL.WebRequests
                 )
             ),
             new RequestHub(
-                ITexturesFuse.NewDefault()
+                ITexturesFuse.NewDefault(),
+                false
             )
         );
 

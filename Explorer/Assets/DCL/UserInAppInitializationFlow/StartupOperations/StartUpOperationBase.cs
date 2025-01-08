@@ -10,16 +10,16 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
 {
     public abstract class StartUpOperationBase : IStartupOperation
     {
-        private readonly Func<Exception, Result> createError;
+        private readonly Func<Exception, EnumResult<TaskError>> createError;
         private readonly string reportCategory;
 
         protected StartUpOperationBase(string reportCategory = ReportCategory.SCENE_LOADING)
         {
-            createError = e => Result.ErrorResult($"Exception in {GetType().Name}:\n{e}");
+            createError = e => EnumResult<TaskError>.ErrorResult(TaskError.UnexpectedException, $"Exception in {GetType().Name}:\n{e}");
             this.reportCategory = reportCategory;
         }
 
-        public UniTask<Result> ExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct) =>
+        public UniTask<EnumResult<TaskError>> ExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct) =>
             InternalExecuteAsync(report, ct).SuppressToResultAsync(reportCategory, createError);
 
         /// <summary>

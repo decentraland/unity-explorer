@@ -8,7 +8,7 @@ using System.Threading;
 using UnityEngine;
 using Utility;
 
-namespace DCL.PerformanceAndDiagnostics.Analytics
+namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
 {
     public class WalkedDistanceAnalytics : IDisposable
     {

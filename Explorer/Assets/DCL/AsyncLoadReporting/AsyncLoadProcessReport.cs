@@ -1,6 +1,7 @@
 ﻿using Cysharp.Threading.Tasks;
 using System;
 using System.Threading;
+using Utility.Types;
 
 namespace DCL.AsyncLoadReporting
 {
@@ -74,6 +75,20 @@ namespace DCL.AsyncLoadReporting
         {
             completionSource.TrySetCanceled();
             parent?.SetCancelled();
+        }
+
+
+        // if the operation has fully succeeded:
+        // 1. Set the progress to 1.0f
+        // 2. Cancel the loading screen
+
+        // if the internal operation didn't modify the loading report on its own, finalize it
+        public void SetResult(Result result)
+        {
+            if (result.Success)
+                SetProgress(1.0f);
+            else
+                SetException(new Exception(result.ErrorMessage!));
         }
 
         public AsyncLoadProcessReport CreateChildReport(float until) =>

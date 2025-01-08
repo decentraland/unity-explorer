@@ -14,6 +14,7 @@ using DCL.Clipboard;
 using DCL.Input;
 using DCL.InWorldCamera;
 using DCL.InWorldCamera.CameraReelStorageService;
+using DCL.InWorldCamera.PassportBridgeOpener;
 using DCL.InWorldCamera.PhotoDetail;
 using DCL.InWorldCamera.Settings;
 using DCL.InWorldCamera.Systems;
@@ -29,10 +30,11 @@ using MVC;
 using System;
 using System.Threading;
 using UnityEngine;
-using UnityEngine.UI;
 using UnityEngine.AddressableAssets;
+using UnityEngine.UIElements;
 using Utility;
 using static DCL.PluginSystem.Global.InWorldCameraPlugin;
+using Button = UnityEngine.UI.Button;
 using CaptureScreenshotSystem = DCL.InWorldCamera.Systems.CaptureScreenshotSystem;
 using EmitInWorldCameraInputSystem = DCL.InWorldCamera.Systems.EmitInWorldCameraInputSystem;
 using MoveInWorldCameraSystem = DCL.InWorldCamera.Systems.MoveInWorldCameraSystem;
@@ -65,6 +67,7 @@ namespace DCL.PluginSystem.Global
         private readonly URLDomain assetBundleURL;
         private readonly ICursor cursor;
         private readonly Button sidebarButton;
+        private readonly UIDocument rootUIDocument;
         private readonly Arch.Core.World globalWorld;
         private readonly IDebugContainerBuilder debugContainerBuilder;
 
@@ -76,17 +79,19 @@ namespace DCL.PluginSystem.Global
         private CharacterController followTarget;
 
         public InWorldCameraPlugin(DCLInput input, SelfProfile selfProfile,
-            RealmData realmData, Entity playerEntity, IPlacesAPIService placesAPIService, ICharacterObject characterObject, ICoroutineRunner coroutineRunner,
+            RealmData realmData, Entity playerEntity, IPlacesAPIService placesAPIService,
+            ICharacterObject characterObject, ICoroutineRunner coroutineRunner,
             ICameraReelStorageService cameraReelStorageService, ICameraReelScreenshotsStorage cameraReelScreenshotsStorage, IMVCManager mvcManager,
             ISystemClipboard systemClipboard, IDecentralandUrlsSource decentralandUrlsSource, IWebBrowser webBrowser, IWebRequestController webRequestController,
-            IProfileRepository profileRepository, IRealmNavigator realmNavigator, IAssetsProvisioner assetsProvisioner,
+            IProfileRepository profileRepository,
+            IRealmNavigator realmNavigator, IAssetsProvisioner assetsProvisioner,
             IWearableStorage wearableStorage, IWearablesProvider wearablesProvider,
             URLDomain assetBundleURL,
             ICursor cursor,
             Button sidebarButton,
+            UIDocument rootUIDocument,
             Arch.Core.World globalWorld,
-            IDebugContainerBuilder debugContainerBuilder
-       )
+            IDebugContainerBuilder debugContainerBuilder)
         {
             this.input = input;
             this.selfProfile = selfProfile;
@@ -110,6 +115,7 @@ namespace DCL.PluginSystem.Global
             this.assetBundleURL = assetBundleURL;
             this.cursor = cursor;
             this.sidebarButton = sidebarButton;
+            this.rootUIDocument = rootUIDocument;
             this.globalWorld = globalWorld;
             this.debugContainerBuilder = debugContainerBuilder;
 
@@ -152,6 +158,7 @@ namespace DCL.PluginSystem.Global
                     wearablesProvider,
                     decentralandUrlsSource,
                     new ECSThumbnailProvider(realmData, globalWorld, assetBundleURL, webRequestController),
+                    new PassportBridgeOpener(),
                     rarityBackgroundsMapping,
                     rarityColorMappings,
                     categoryIconsMapping,
@@ -160,7 +167,7 @@ namespace DCL.PluginSystem.Global
                 systemClipboard,
                 decentralandUrlsSource,
                 webBrowser,
-                settings.ShareToXMessage));
+                new PhotoDetailStringMessages(settings.ShareToXMessage, settings.PhotoSuccessfullyDownloadedMessage, settings.LinkCopiedMessage)));
 
 
             inWorldCameraController = new InWorldCameraController(() => hud.GetComponent<InWorldCameraView>(), sidebarButton, globalWorld, mvcManager, cameraReelStorageService);
@@ -169,7 +176,7 @@ namespace DCL.PluginSystem.Global
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
-            ToggleInWorldCameraActivitySystem.InjectToWorld(ref builder, settings.TransitionSettings, inWorldCameraController, followTarget, debugContainerBuilder, cursor, mvcManager, input.InWorldCamera);
+            ToggleInWorldCameraActivitySystem.InjectToWorld(ref builder, settings.TransitionSettings, inWorldCameraController, followTarget, debugContainerBuilder, cursor, mvcManager, input.InWorldCamera, rootUIDocument);
             EmitInWorldCameraInputSystem.InjectToWorld(ref builder, input.InWorldCamera);
             MoveInWorldCameraSystem.InjectToWorld(ref builder, settings.MovementSettings, characterObject.Controller.transform, cursor);
             CaptureScreenshotSystem.InjectToWorld(ref builder, recorder, playerEntity, metadataBuilder, coroutineRunner, cameraReelStorageService, inWorldCameraController);
@@ -191,6 +198,8 @@ namespace DCL.PluginSystem.Global
             [field: Header("Photo detail")]
             [field: SerializeField] internal AssetReferenceGameObject PhotoDetailPrefab { get; private set; }
             [field: SerializeField, Tooltip("Spaces will be HTTP sanitized, care for special characters")] internal string ShareToXMessage { get; private set; }
+            [field: SerializeField] internal string PhotoSuccessfullyDownloadedMessage { get; private set; }
+            [field: SerializeField] internal string LinkCopiedMessage { get; private set; }
             [field: SerializeField] internal AssetReferenceT<NftTypeIconSO> CategoryIconsMapping { get; private set; }
 
             [field: SerializeField] internal AssetReferenceT<NftTypeIconSO> RarityBackgroundsMapping { get; private set; }

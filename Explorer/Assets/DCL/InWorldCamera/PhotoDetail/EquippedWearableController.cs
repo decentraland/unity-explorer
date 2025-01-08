@@ -16,6 +16,7 @@ namespace DCL.InWorldCamera.PhotoDetail
     /// </summary>
     public class EquippedWearableController : IDisposable
     {
+        internal event Action MarketClicked;
         internal readonly EquippedWearableView view;
         private readonly IWebBrowser webBrowser;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
@@ -63,6 +64,7 @@ namespace DCL.InWorldCamera.PhotoDetail
             {
                 await UniTask.Delay((int)(view.buyButtonAnimationDuration * 1000));
                 webBrowser.OpenUrl(currentWearable.GetMarketplaceLink(decentralandUrlsSource));
+                MarketClicked?.Invoke();
             }
 
             AnimateAndAwaitAsync().Forget();
@@ -71,6 +73,7 @@ namespace DCL.InWorldCamera.PhotoDetail
         public void Dispose()
         {
             view.wearableBuyButton.onClick.RemoveAllListeners();
+            MarketClicked = null;
         }
     }
 }

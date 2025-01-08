@@ -1,15 +1,20 @@
-﻿using System.Text.RegularExpressions;
-using System.Threading;
+﻿using System.Threading;
 using Cysharp.Threading.Tasks;
 using DCL.Chat.Commands;
 using ECS.SceneLifeCycle;
 
 namespace Global.Dynamic.ChatCommands
 {
+    /// <summary>
+    /// Reloads the current scene.
+    ///
+    /// Usage:
+    ///     /reload
+    /// </summary>
     public class ReloadSceneChatCommand : IChatCommand
     {
-        public Regex Regex { get; } = new (@"^/reload(?:\s+(\w+))?$", RegexOptions.Compiled);
-        public string Description => "<b>/reload</b> - Reload the current scene";
+        public string Command => "reload";
+        public string Description => "<b>/reload </b>\n  Reload the current scene";
 
         private readonly ECSReloadScene reloadScene;
 
@@ -18,7 +23,7 @@ namespace Global.Dynamic.ChatCommands
             this.reloadScene = reloadScene;
         }
 
-        public async UniTask<string> ExecuteAsync(Match match, CancellationToken ct)
+        public async UniTask<string> ExecuteCommandAsync(string[] parameters, CancellationToken ct)
         {
             if (await reloadScene.TryReloadSceneAsync(ct))
                 return "🟢 Current scene has been reloaded";

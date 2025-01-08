@@ -1,3 +1,4 @@
+using DCL.InWorldCamera.CameraReelToast;
 using MVC;
 using UnityEngine;
 using UnityEngine.UI;
@@ -12,6 +13,7 @@ namespace DCL.InWorldCamera.PhotoDetail
         [field: SerializeField] internal RawImage mainImage { get; private set; }
         [field: SerializeField] internal CanvasGroup mainImageCanvasGroup { get; private set; }
         [field: SerializeField] internal GameObject mainImageLoadingSpinner { get; private set; }
+        [field: SerializeField] internal CameraReelToastMessage cameraReelToastMessage { get; private set; }
 
         [field: Header("Navigation buttons")]
         [field: SerializeField] internal Button closeButton { get; private set; }

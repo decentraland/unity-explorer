@@ -8,5 +8,6 @@ namespace DCL.Passport
         NONE,
         OVERVIEW = 1,
         BADGES = 1 << 1,
+        PHOTOS = 2 << 1,
     }
 }

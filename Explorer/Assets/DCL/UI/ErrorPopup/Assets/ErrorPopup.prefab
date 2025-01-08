@@ -1151,6 +1151,9 @@ MonoBehaviour:
   title: {fileID: 7738071729217313937}
   description: {fileID: 1078285716576811696}
   okButton: {fileID: 8145575438935498454}
+  defaultTitle: Error
+  defaultDescription: An unknown error occurred
+  defaultIcon: {fileID: 21300000, guid: 66188f3b6d3dccc45bf836b7232d0ebb, type: 3}
 --- !u!223 &5846655602745955872
 Canvas:
   m_ObjectHideFlags: 0

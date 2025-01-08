@@ -25,7 +25,14 @@ namespace ECS.Unity.Textures.Utils
 
                 if (!exists)
                 {
-                    world.Add(videoPlayerEntity, new VideoTextureConsumer(videoTexturesPool.Get()));
+                    var texture2D = videoTexturesPool.Get();
+                    //This allows to clear the existing data on the texture,
+                    //to avoid "ghost" images in the textures before they are loaded with new data,
+                    //particularly when dealing with streaming textures from videos
+                    texture2D.Reinitialize(1, 1);
+                    texture2D.SetPixel(0,0, Color.clear);
+                    texture2D.Apply();
+                    world.Add(videoPlayerEntity, new VideoTextureConsumer(texture2D));
                     consumer = ref world.Get<VideoTextureConsumer>(videoPlayerEntity);
                 }
 

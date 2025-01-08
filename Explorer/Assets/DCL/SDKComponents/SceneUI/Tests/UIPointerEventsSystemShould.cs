@@ -35,6 +35,8 @@ namespace DCL.SDKComponents.SceneUI.Tests
         [Test]
         [TestCase(PointerEventType.PetDown)]
         [TestCase(PointerEventType.PetUp)]
+        [TestCase(PointerEventType.PetHoverEnter)]
+        [TestCase(PointerEventType.PetHoverLeave)]
         public void TriggerPointerEvents(PointerEventType eventType)
         {
             // Arrange
@@ -47,6 +49,16 @@ namespace DCL.SDKComponents.SceneUI.Tests
             input.PointerEvents.Add(new PBPointerEvents.Types.Entry
             {
                 EventType = PointerEventType.PetUp,
+                EventInfo = new PBPointerEvents.Types.Info(),
+            });
+            input.PointerEvents.Add(new PBPointerEvents.Types.Entry
+            {
+                EventType = PointerEventType.PetHoverEnter,
+                EventInfo = new PBPointerEvents.Types.Info(),
+            });
+            input.PointerEvents.Add(new PBPointerEvents.Types.Entry
+            {
+                EventType = PointerEventType.PetHoverLeave,
                 EventInfo = new PBPointerEvents.Types.Info(),
             });
 

@@ -256,12 +256,12 @@ namespace DCL.SceneLoadingScreens
 
         private void BlockUnwantedInputs()
         {
-            inputBlock.Disable(InputMapComponent.Kind.CAMERA, InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.PLAYER);
+            inputBlock.Disable(InputMapComponent.BLOCK_USER_INPUT);
         }
 
         private void UnblockUnwantedInputs()
         {
-            inputBlock.Enable(InputMapComponent.Kind.CAMERA, InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.PLAYER);
+            inputBlock.Enable(InputMapComponent.BLOCK_USER_INPUT);
         }
     }
 }

@@ -1,7 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using System;
 using System.Threading;
+using Utility.Types;
 
 namespace DCL.Multiplayer.Connections.GateKeeper.Meta
 {
@@ -25,11 +25,16 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
             return result;
         }
 
-        public async UniTask<MetaData> MetaDataAsync(MetaData.Input input, CancellationToken token)
+        public async UniTask<Result<MetaData>> MetaDataAsync(MetaData.Input input, CancellationToken token)
         {
             ReportHub.WithReport(ReportCategory.LIVEKIT).Log($"{PREFIX} {nameof(MetaDataAsync)} start: {input}");
-            MetaData result = await origin.MetaDataAsync(input, token);
-            ReportHub.WithReport(ReportCategory.LIVEKIT).Log($"{PREFIX} {nameof(MetaDataAsync)} finish {result.realmName} {result.sceneId}");
+            Result<MetaData> result = await origin.MetaDataAsync(input, token);
+
+            if (result.Success)
+                ReportHub.WithReport(ReportCategory.LIVEKIT).Log($"{PREFIX} {nameof(MetaDataAsync)} finish {result.Value.realmName} {result.Value.sceneId}");
+            else
+                ReportHub.WithReport(ReportCategory.LIVEKIT).LogError($"{PREFIX} {nameof(MetaDataAsync)} error {result.ErrorMessage}");
+
             return result;
         }
 

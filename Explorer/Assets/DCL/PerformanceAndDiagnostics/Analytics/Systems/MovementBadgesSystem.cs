@@ -6,6 +6,7 @@ using DCL.CharacterMotion.Components;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using DCL.PerformanceAndDiagnostics.Analytics;
+using DCL.PerformanceAndDiagnostics.Analytics.EventBased;
 using DCL.Web3.Identities;
 using ECS;
 using ECS.Abstract;
