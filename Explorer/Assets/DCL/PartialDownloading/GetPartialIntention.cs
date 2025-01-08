@@ -9,13 +9,10 @@ namespace DCL.PartialDownloading
     {
         public CancellationTokenSource CancellationTokenSource => CommonArguments.CancellationTokenSource;
         public CommonLoadingArguments CommonArguments { get; set; }
-        private GetPartialIntention(
-            bool lookForShaderAssets = false,
-            CancellationTokenSource cancellationTokenSource = null)
+        private GetPartialIntention(CancellationTokenSource cancellationTokenSource = null)
         {
             CommonArguments = new CommonLoadingArguments(URLAddress.EMPTY, cancellationTokenSource: cancellationTokenSource);
         }
-
 
         public bool Equals(GetPartialIntention other) =>
             throw new NotImplementedException();
