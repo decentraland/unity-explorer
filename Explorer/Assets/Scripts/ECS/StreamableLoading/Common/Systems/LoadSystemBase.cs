@@ -50,7 +50,7 @@ namespace ECS.StreamableLoading.Common.Systems
 
             genericCache = new GenericCache<TAsset, TIntention>(
                 new StreamableWrapMemoryCache<TAsset, TIntention>(cache),
-                diskCache ?? new IDiskCache<TAsset>.Null(),
+                diskCache ?? IDiskCache<TAsset>.Null.INSTANCE,
                 static intention => intention.CommonArguments.URL.Value,
                 DISK_CACHE_EXTENSION
             );

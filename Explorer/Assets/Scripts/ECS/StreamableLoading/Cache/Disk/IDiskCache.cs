@@ -74,6 +74,10 @@ namespace ECS.StreamableLoading.Cache.Disk
 
         class Null : IDiskCache<T>
         {
+            public static readonly Null INSTANCE = new ();
+
+            private Null() { }
+
             public UniTask<EnumResult<TaskError>> PutAsync(string key, string extension, T data, CancellationToken token) =>
                 UniTask.FromResult(EnumResult<TaskError>.ErrorResult(TaskError.MessageError, "It's null"));
 
