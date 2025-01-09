@@ -32,15 +32,15 @@ namespace ECS.Unity.Materials.Systems
 
         [Query]
         [All(typeof(DeleteEntityIntention))]
-        private void TryRelease(ref MaterialComponent materialComponent)
+        private void TryRelease(Entity entity, ref MaterialComponent materialComponent)
         {
-            ReleaseMaterial.Execute(World, ref materialComponent, destroyMaterial);
+            ReleaseMaterial.Execute(entity, World, ref materialComponent, destroyMaterial);
         }
 
         [Query]
-        private void ReleaseUnconditionally(ref MaterialComponent materialComponent)
+        private void ReleaseUnconditionally(Entity entity, ref MaterialComponent materialComponent)
         {
-            ReleaseMaterial.Execute(World, ref materialComponent, destroyMaterial);
+            ReleaseMaterial.Execute(entity, World, ref materialComponent, destroyMaterial);
         }
 
         public void FinalizeComponents(in Query query)

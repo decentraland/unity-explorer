@@ -1,6 +1,8 @@
-﻿using DCL.ECSComponents;
+﻿using DCL.Diagnostics;
+using DCL.ECSComponents;
 using ECS.Unity.Materials.Components.Defaults;
 using ECS.Unity.Textures.Components;
+using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using System;
 using UnityEngine;
 
@@ -24,6 +26,12 @@ namespace ECS.Unity.Materials.Components
                 AlphaTexture = alphaTexture;
                 EmissiveTexture = emissiveTexture;
                 BumpTexture = bumpTexture;
+
+                if (BumpTexture.HasValue && BumpTexture.Value.TextureType != TextureType.NormalMap)
+                    ReportHub.LogError(
+                        ReportCategory.TEXTURES,
+                        $"Provided wrong format for bump texture: {bumpTexture!.Value.Src}"
+                    );
             }
 
             public bool Equals(TexturesData other) =>
@@ -82,11 +90,11 @@ namespace ECS.Unity.Materials.Components
             DirectIntensity = directIntensity;
         }
 
-        internal static MaterialData CreateBasicMaterial(TextureComponent? albedoTexture, float alphaTest, Color diffuseColor, bool castShadows)
+        internal static MaterialData CreateBasicMaterial(TextureComponent? albedoTexture, TextureComponent? alphaTexture, float alphaTest, Color diffuseColor, bool castShadows)
         {
             Color defaultColor = Color.white;
 
-            return new MaterialData(false, albedoTexture, null, null, null,
+            return new MaterialData(false, albedoTexture, alphaTexture, null, null,
                 alphaTest, castShadows, defaultColor, diffuseColor, defaultColor, defaultColor, MaterialTransparencyMode.Auto,
                 0, 0, 0, 0, 0);
         }

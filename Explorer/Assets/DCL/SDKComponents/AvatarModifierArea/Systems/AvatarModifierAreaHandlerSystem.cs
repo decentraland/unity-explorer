@@ -3,12 +3,15 @@ using Arch.System;
 using Arch.SystemGroups;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
+using DCL.SceneRestrictionBusController.SceneRestrictionBus;
 using DCL.CharacterTriggerArea.Components;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Multiplayer.Connections.Typing;
 using DCL.Profiles;
+using DCL.SceneRestrictionBusController.SceneRestriction;
 using DCL.SDKComponents.AvatarModifierArea.Components;
+using DCL.Web3.Identities;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle;
@@ -23,14 +26,18 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
     [LogCategory(ReportCategory.CHARACTER_TRIGGER_AREA)]
     public partial class AvatarModifierAreaHandlerSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
-        private static readonly QueryDescription AVATAR_BASE_QUERY = new QueryDescription().WithAll<AvatarBase>();
         private readonly World globalWorld;
         private readonly FindAvatarQuery findAvatarQuery;
+        private readonly ISceneRestrictionBusController sceneRestrictionBusController;
+        private readonly IWeb3IdentityCache web3IdentityCache;
+        private Transform? localAvatarTransform;
 
-        public AvatarModifierAreaHandlerSystem(World world, World globalWorld) : base(world)
+        public AvatarModifierAreaHandlerSystem(World world, World globalWorld, ISceneRestrictionBusController sceneRestrictionBusController, IWeb3IdentityCache web3IdentityCache) : base(world)
         {
             this.globalWorld = globalWorld;
             findAvatarQuery = new FindAvatarQuery(globalWorld);
+            this.sceneRestrictionBusController = sceneRestrictionBusController;
+            this.web3IdentityCache = web3IdentityCache;
         }
 
         protected override void Update(float t)
@@ -106,7 +113,7 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
 
         [Query]
         [None(typeof(DeleteEntityIntention), typeof(PBAvatarModifierArea))]
-        private void HandleComponentRemoval(Entity e, ref CharacterTriggerAreaComponent triggerAreaComponent, ref AvatarModifierAreaComponent modifierComponent)
+        private void HandleComponentRemoval(in Entity entity, ref CharacterTriggerAreaComponent triggerAreaComponent, ref AvatarModifierAreaComponent modifierComponent)
         {
             // Reset state of affected entities
             foreach (Transform avatarTransform in triggerAreaComponent.CurrentAvatarsInside)
@@ -114,7 +121,7 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
 
             modifierComponent.Dispose();
 
-            World!.Remove<AvatarModifierAreaComponent>(e);
+            World!.Remove<AvatarModifierAreaComponent>(entity);
         }
 
         private void ShowAvatar(Transform avatarTransform)
@@ -128,6 +135,11 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
             if (!hasAvatarShape) return;
 
             avatarShape.HiddenByModifierArea = false;
+            if (avatarTransform == localAvatarTransform)
+            {
+                localAvatarTransform = null;
+                sceneRestrictionBusController.PushSceneRestriction(SceneRestriction.CreateAvatarHidden(SceneRestrictionsAction.REMOVED));
+            }
         }
 
         private void HideAvatar(Transform avatarTransform, HashSet<string> excludedIds)
@@ -144,14 +156,22 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
 
             bool shouldHide = !excludedIds.Contains(profile!.UserId);
             avatarShape.HiddenByModifierArea = shouldHide;
+
+            if (shouldHide && profile.UserId == web3IdentityCache.Identity?.Address)
+            {
+                localAvatarTransform = avatarTransform;
+                sceneRestrictionBusController.PushSceneRestriction(SceneRestriction.CreateAvatarHidden(SceneRestrictionsAction.APPLIED));
+            }
         }
 
         private class FindAvatarQuery
         {
+            private static readonly QueryDescription AVATAR_BASE_QUERY = new QueryDescription().WithAll<AvatarBase>();
+
             private readonly World globalWorld;
             private readonly ForEach cachedFindEntity;
 
-            private Entity foundedEntityOrNull = Entity.Null;
+            private Entity foundEntityOrNull = Entity.Null;
             private Transform? requiredTransform;
 
             public FindAvatarQuery(World globalWorld)
@@ -162,20 +182,20 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
 
             public LightResult<Entity> AvatarWithTransform(Transform avatarTransform)
             {
-                foundedEntityOrNull = Entity.Null;
+                foundEntityOrNull = Entity.Null;
                 requiredTransform = avatarTransform;
                 globalWorld.Query(in AVATAR_BASE_QUERY, cachedFindEntity);
 
-                return foundedEntityOrNull == Entity.Null
+                return foundEntityOrNull == Entity.Null
                     ? LightResult<Entity>.FAILURE
-                    : new LightResult<Entity>(foundedEntityOrNull);
+                    : new LightResult<Entity>(foundEntityOrNull);
             }
 
             private void FindEntity(Entity entity)
             {
-                if (foundedEntityOrNull != Entity.Null) return;
+                if (foundEntityOrNull != Entity.Null) return;
                 if (globalWorld.Get<AvatarBase>(entity).transform.parent != requiredTransform) return;
-                foundedEntityOrNull = entity;
+                foundEntityOrNull = entity;
             }
         }
     }

@@ -6,6 +6,7 @@ using DCL.CharacterCamera;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.ResourcesUnloading;
+using DCL.SceneRestrictionBusController.SceneRestrictionBus;
 using DCL.SDKComponents.CameraControl.MainCamera.Systems;
 using ECS.LifeCycle;
 using System;
@@ -34,12 +35,14 @@ namespace DCL.PluginSystem.World
         private readonly IExposedCameraData cameraData;
         private readonly Arch.Core.World globalWorld;
         private IComponentPool<CinemachineFreeLook>? virtualCameraPoolRegistry;
+        private readonly ISceneRestrictionBusController sceneRestrictionBusController;
 
         public MainCameraPlugin(
             IComponentPoolsRegistry poolsRegistry,
             IAssetsProvisioner assetsProvisioner,
             CacheCleaner cacheCleaner,
             IExposedCameraData cameraData,
+            ISceneRestrictionBusController sceneRestrictionBusController,
             Arch.Core.World globalWorld)
         {
             this.assetsProvisioner = assetsProvisioner;
@@ -47,6 +50,7 @@ namespace DCL.PluginSystem.World
             this.cacheCleaner = cacheCleaner;
             this.cameraData = cameraData;
             this.globalWorld = globalWorld;
+            this.sceneRestrictionBusController = sceneRestrictionBusController;
         }
 
         public async UniTask InitializeAsync(Settings settings, CancellationToken ct)
@@ -79,6 +83,7 @@ namespace DCL.PluginSystem.World
                 sharedDependencies.EntitiesMap,
                 sharedDependencies.SceneStateProvider,
                 cameraData,
+                sceneRestrictionBusController,
                 globalWorld));
         }
 

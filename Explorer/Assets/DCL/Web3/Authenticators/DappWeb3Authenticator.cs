@@ -126,7 +126,7 @@ namespace DCL.Web3.Authenticators
 
                 await UniTask.SwitchToMainThread(ct);
 
-                loginVerificationCallback?.Invoke(authenticationResponse.code, signatureExpiration);
+                loginVerificationCallback?.Invoke(authenticationResponse.code, signatureExpiration, authenticationResponse.requestId);
 
                 LoginResponse response = await RequestWalletConfirmationAsync<LoginResponse>(authenticationResponse.requestId,
                     signatureExpiration, ct);
@@ -209,7 +209,7 @@ namespace DCL.Web3.Authenticators
         }
 
         private string CreateEphemeralMessage(IWeb3Account ephemeralAccount, DateTime expiration) =>
-            $"Decentraland Login\nEphemeral address: {ephemeralAccount.Address}\nExpiration: {expiration:yyyy-MM-ddTHH:mm:ss.fffZ}";
+            $"Decentraland Login\nEphemeral address: {ephemeralAccount.Address.OriginalFormat}\nExpiration: {expiration:yyyy-MM-ddTHH:mm:ss.fffZ}";
 
         private async UniTask ConnectToServerAsync()
         {

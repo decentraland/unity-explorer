@@ -11,7 +11,7 @@ namespace DCL.LOD
         public static void DisposeSceneLODAndRemoveFromCache(this SceneLODInfo sceneLODInfo,
                                                                 IScenesCache scenesCache,
                                                                 IReadOnlyList<Vector2Int> parcels,
-            ILODCache lodCache,
+                                                                ILODCache lodCache,
                                                                 World world)
         {
             //Only try to release SceneLODInfo that has been initialized

@@ -6,6 +6,8 @@ using Cinemachine;
 using CRDT;
 using DCL.CharacterCamera;
 using DCL.ECSComponents;
+using DCL.SceneRestrictionBusController.SceneRestriction;
+using DCL.SceneRestrictionBusController.SceneRestrictionBus;
 using DCL.SDKComponents.CameraControl.MainCamera.Components;
 using DCL.SDKComponents.CameraModeArea.Systems;
 using ECS.Abstract;
@@ -26,6 +28,7 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
         private readonly Entity cameraEntity;
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly IExposedCameraData cameraData;
+        private readonly ISceneRestrictionBusController sceneRestrictionBusController;
         private readonly World globalWorld;
         private CameraMode lastNonSDKCameraMode;
 
@@ -35,6 +38,7 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
             Dictionary<CRDTEntity,Entity> entitiesMap,
             ISceneStateProvider sceneStateProvider,
             IExposedCameraData cameraData,
+            ISceneRestrictionBusController sceneRestrictionBusController,
             World globalWorld) : base(world)
         {
             this.cameraEntity = cameraEntity;
@@ -42,6 +46,7 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
             this.sceneStateProvider = sceneStateProvider;
             this.cameraData = cameraData;
             this.globalWorld = globalWorld;
+            this.sceneRestrictionBusController = sceneRestrictionBusController;
         }
 
         protected override void Update(float t)
@@ -84,6 +89,7 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
                     virtualCameraCRDTEntity.Value,
                     hasPreviousVirtualCamera ? previousVirtualCamera!.transform.position : cinemachineCurrentActiveCamPos
                 );
+                sceneRestrictionBusController.PushSceneRestriction(SceneRestriction.CreateCameraLocked(SceneRestrictionsAction.APPLIED));
             }
             else
             {
@@ -91,7 +97,10 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
             }
 
             if (hasPreviousVirtualCamera)
+            {
                 previousVirtualCamera!.enabled = false;
+                sceneRestrictionBusController.PushSceneRestriction(SceneRestriction.CreateCameraLocked(SceneRestrictionsAction.REMOVED));
+            }
 
             UpdateGlobalWorldCameraMode(mainCameraComponent.virtualCameraInstance != null);
         }
@@ -147,6 +156,7 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
         private void FinalizeMainCameraComponent(in MainCameraComponent mainCameraComponent)
         {
             DisableActiveVirtualCamera(mainCameraComponent);
+            sceneRestrictionBusController.PushSceneRestriction(SceneRestriction.CreateCameraLocked(SceneRestrictionsAction.REMOVED));
         }
 
         public void FinalizeComponents(in Query query)

@@ -1,64 +1,75 @@
+using Arch.Core;
 using Cysharp.Threading.Tasks;
-using DCL.PlacesAPIService;
-using ECS;
-using System;
+using DCL.Ipfs;
+using ECS.Prioritization.Components;
+using ECS.SceneLifeCycle.Realm;
+using ECS.SceneLifeCycle.SceneDefinition;
+using ECS.StreamableLoading.Common;
+using ECS.StreamableLoading.Common.Components;
+using System.Collections.Generic;
 using System.Threading;
+using Unity.Mathematics;
 using UnityEngine;
+using UnityEngine.Pool;
 using Utility;
+using Utility.Types;
 
 namespace DCL.Multiplayer.Connections.GateKeeper.Meta
 {
     public class SceneRoomMetaDataSource : ISceneRoomMetaDataSource
     {
-        private readonly IRealmData realmData;
+        private readonly IRealmController realmController;
         private readonly IExposedTransform characterTransform;
-        private readonly IPlacesAPIService placesAPIService;
-
-        private readonly Func<bool> waitForGenesisCity;
-        private readonly Func<bool> waitForPlayerPositionChange;
+        private readonly World world;
 
         private readonly bool forceSceneIsolation;
 
-        public SceneRoomMetaDataSource(IRealmData realmData, IExposedTransform characterTransform, IPlacesAPIService placesAPIService, bool forceSceneIsolation)
+        public SceneRoomMetaDataSource(IRealmController realmController, IExposedTransform characterTransform, World world, bool forceSceneIsolation)
         {
-            this.realmData = realmData;
+            this.realmController = realmController;
             this.characterTransform = characterTransform;
-            this.placesAPIService = placesAPIService;
+            this.world = world;
             this.forceSceneIsolation = forceSceneIsolation;
-
-            waitForGenesisCity = () => !realmData.ScenesAreFixed;
-            waitForPlayerPositionChange = () => this.characterTransform.Position.IsDirty;
         }
 
-        public bool ScenesCommunicationIsIsolated => forceSceneIsolation || !realmData.ScenesAreFixed;
+        public bool ScenesCommunicationIsIsolated => forceSceneIsolation || !realmController.RealmData.ScenesAreFixed;
 
-        public async UniTask<MetaData> MetaDataAsync(CancellationToken token)
+        public MetaData.Input GetMetadataInput() =>
+            new (
+                realmController.RealmData.RealmName,
+                realmController.IsWorld()
+                    ? Vector2Int.zero
+                    : characterTransform.Position.ToParcel()
+            );
+
+        public async UniTask<Result<MetaData>> MetaDataAsync(MetaData.Input input, CancellationToken token)
         {
             // Places API is relevant for Genesis City only
-            if (realmData.ScenesAreFixed)
-                return new MetaData(realmData.RealmName, realmData.RealmName, Vector2Int.zero);
+            if (realmController.IsWorld())
+                return Result<MetaData>.SuccessResult(new MetaData(input.RealmName, input));
 
-            (string? id, Vector2Int parcel) tuple = await ParcelIdAsync(token);
-            return new MetaData(realmData.RealmName, tuple.id, tuple.parcel);
+            using PooledObject<List<SceneEntityDefinition>> pooledEntityDefinitionList = ListPool<SceneEntityDefinition>.Get(out List<SceneEntityDefinition>? entityDefinitionList);
+            using PooledObject<List<int2>> pooledPointersList = ListPool<int2>.Get(out List<int2>? pointersList);
+
+            pointersList.Add(input.Parcel.ToInt2());
+
+            // TODO: instead of making a new request, Room Change request should be initiated when the scene definition is loaded by ECS,
+            // currently these processes are completely separated
+            var promise = AssetPromise<SceneDefinitions, GetSceneDefinitionList>.Create(world,
+                new GetSceneDefinitionList(entityDefinitionList, pointersList, new CommonLoadingArguments(realmController.RealmData.Ipfs.EntitiesActiveEndpoint)),
+                PartitionComponent.TOP_PRIORITY);
+
+            promise = await promise.ToUniTaskAsync(world, cancellationToken: token);
+
+            StreamableLoadingResult<SceneDefinitions> result = promise.Result!.Value;
+
+            return Result<MetaData>.SuccessResult(
+                result.Succeeded && entityDefinitionList.Count > 0
+                    ? new MetaData(entityDefinitionList[0].id, input)
+                    : new MetaData(null, input)
+            );
         }
 
-        public UniTask WaitForMetaDataIsDirtyAsync(CancellationToken token)
-        {
-            if (realmData.ScenesAreFixed)
-
-                // Wait for realm change
-                return UniTask.WaitUntil(waitForGenesisCity, cancellationToken: token);
-
-            // Wait for player position change (ideally for parcel change)
-            return UniTask.WaitUntil(waitForPlayerPositionChange, cancellationToken: token);
-        }
-
-        private async UniTask<(string? id, Vector2Int parcel)> ParcelIdAsync(CancellationToken token)
-        {
-            Vector3 position = characterTransform.Position;
-            Vector2Int parcel = position.ToParcel();
-            PlacesData.PlaceInfo? result = await placesAPIService.GetPlaceAsync(parcel, token);
-            return (result?.id, parcel);
-        }
+        public bool MetadataIsDirty => !realmController.RealmData.ScenesAreFixed && characterTransform.Position.IsDirty;
     }
 }

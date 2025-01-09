@@ -18,7 +18,6 @@ MonoBehaviour:
   - rid: 4753057106328551425
   - rid: 4555433133200637954
   - rid: 758312634468794373
-  - rid: 758312881421549570
   - rid: 857448817791336450
   - rid: 278567035285012480
   - rid: 892605786557251584
@@ -34,19 +33,16 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
+        VideoPrioritizationSettings:
+          m_AssetGUID: 12f48d0297bd3f746b92a97878478086
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
     - rid: 758312634468794373
       type: {class: AudioSourcesPlugin/AudioSourcesPluginSettings, ns: DCL.PluginSystem.World, asm: DCL.Plugins}
       data:
         GeneralAudioMixer:
           m_AssetGUID: e38b0fb061d7ffa47b54d89ecd483bd2
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_EditorAssetChanged: 0
-    - rid: 758312881421549570
-      type: {class: InteractionsAudioPlugin/PluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
-      data:
-        <InteractionsAudioConfigsReference>k__BackingField:
-          m_AssetGUID: cbb820cf51b7a714e88a7c873eb5de9c
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0

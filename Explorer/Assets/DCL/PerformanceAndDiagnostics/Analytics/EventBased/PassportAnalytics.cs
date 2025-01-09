@@ -2,7 +2,7 @@
 using Segment.Serialization;
 using System;
 
-namespace DCL.PerformanceAndDiagnostics.Analytics
+namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
 {
     public class PassportAnalytics : IDisposable
     {

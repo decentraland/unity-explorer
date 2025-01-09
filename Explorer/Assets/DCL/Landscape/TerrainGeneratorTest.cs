@@ -76,7 +76,7 @@ namespace DCL.Landscape
             {
                 IMemoryProfiler memoryProfiler = new Profiler();
                 gen = new TerrainGenerator(memoryProfiler, true, clearCache);
-                gen.Initialize(genData, ref emptyParcels, ref ownedParcels, "");
+                gen.Initialize(genData, ref emptyParcels, ref ownedParcels, "", false);
                 await gen.GenerateTerrainAndShowAsync(worldSeed, digHoles, hideTrees, hideDetails);
             }
 

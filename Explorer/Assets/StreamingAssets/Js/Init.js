@@ -56,6 +56,9 @@ const performance = {
 	now: function() { return Date.now(); }
 }
 
+// Same issue as above 
+const __VERSION__ = "0.0.1"
+
 // timeout handler
 globalThis.setImmediate = (fn) => Promise.resolve().then(fn)
 

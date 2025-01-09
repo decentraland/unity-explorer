@@ -2,32 +2,34 @@ using Cysharp.Threading.Tasks;
 using DCL.AsyncLoadReporting;
 using System;
 using System.Threading;
-using UnityEngine.Serialization;
 using Utility.Types;
 
 namespace DCL.SceneLoadingScreens.LoadingScreen
 {
     public interface ILoadingScreen
     {
-        UniTask<Result> ShowWhileExecuteTaskAsync(Func<AsyncLoadProcessReport, UniTask<Result>> operation,
-            CancellationToken ct);
+        UniTask<EnumResult<TaskError>> ShowWhileExecuteTaskAsync(
+            Func<AsyncLoadProcessReport, CancellationToken, UniTask<EnumResult<TaskError>>> operation,
+            CancellationToken ct
+        );
 
         class EmptyLoadingScreen : ILoadingScreen
         {
-            public async UniTask<Result> ShowWhileExecuteTaskAsync(
-                Func<AsyncLoadProcessReport, UniTask<Result>> operation,
+            public async UniTask<EnumResult<TaskError>> ShowWhileExecuteTaskAsync(
+                Func<AsyncLoadProcessReport, CancellationToken, UniTask<EnumResult<TaskError>>> operation,
                 CancellationToken ct)
             {
-                var loadReport = AsyncLoadProcessReport.Create();
+                var loadReport = AsyncLoadProcessReport.Create(ct);
+
                 try
                 {
-                    await operation(loadReport);
-                    return Result.SuccessResult();
+                    await operation(loadReport, ct);
+                    return EnumResult<TaskError>.SuccessResult();
                 }
                 catch (Exception e)
                 {
                     loadReport.SetProgress(1f);
-                    return Result.ErrorResult(e.Message);
+                    return EnumResult<TaskError>.ErrorResult(TaskError.UnexpectedException, e.Message);
                 }
             }
         }

@@ -9,13 +9,20 @@ namespace DCL.PluginSystem.World
     {
         public readonly Entity Player;
         public readonly Entity Camera;
+
+        //Root of the scene. Can be modified by the creator
         public readonly Entity SceneRoot;
 
-        public PersistentEntities(Entity player, Entity camera, Entity sceneRoot)
+        //Container of the root of the scene. Can only be modified by us
+        public readonly Entity SceneContainer;
+
+
+        public PersistentEntities(Entity player, Entity camera, Entity sceneRoot, Entity sceneContainer)
         {
             Player = player;
             Camera = camera;
             SceneRoot = sceneRoot;
+            SceneContainer = sceneContainer;
         }
     }
 }

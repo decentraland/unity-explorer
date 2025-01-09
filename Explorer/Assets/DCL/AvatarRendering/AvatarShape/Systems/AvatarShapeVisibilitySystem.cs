@@ -2,8 +2,10 @@
 using Arch.System;
 using Arch.SystemGroups;
 using DCL.AvatarRendering.AvatarShape.Components;
+using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Character.Components;
 using DCL.CharacterCamera;
+using DCL.ECSComponents;
 using ECS.Abstract;
 using System.Runtime.CompilerServices;
 using UnityEngine;
@@ -27,7 +29,8 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             AddPlayerCachedVisibilityComponentQuery(World, camera.GetCameraComponent(World));
             AddOthersCachedVisibilityComponentQuery(World);
 
-            UpdateMainPlayerAvatarVisibilityOnFirstPersonQuery(World, camera.GetCameraComponent(World));
+            UpdateMainPlayerAvatarVisibilityOnCameraDistanceQuery(World);
+            UpdateNonPlayerAvatarVisibilityOnCameraDistanceQuery(World);
             UpdateAvatarsVisibilityStateQuery(World);
         }
 
@@ -43,7 +46,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
         [Query]
         [All(typeof(AvatarShapeComponent))]
-        [None(typeof(AvatarCachedVisibilityComponent), typeof(PlayerComponent))]
+        [None(typeof(AvatarCachedVisibilityComponent), typeof(PlayerComponent), typeof(PBAvatarShape))]
         private void AddOthersCachedVisibilityComponent(in Entity entity, ref AvatarShapeComponent avatarShape)
         {
             bool shouldBeHidden = avatarShape.HiddenByModifierArea;
@@ -52,22 +55,26 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         }
 
         [Query]
-        [All(typeof(PlayerComponent))]
-        private void UpdateMainPlayerAvatarVisibilityOnFirstPerson([Data] in CameraComponent camera, ref AvatarShapeComponent avatarShape, ref AvatarCachedVisibilityComponent avatarCachedVisibility)
+        private void UpdateMainPlayerAvatarVisibilityOnCameraDistance(in AvatarCustomSkinningComponent skinningComponent, in PlayerComponent playerComponent)
         {
-            bool shouldBeHidden = avatarShape.HiddenByModifierArea || camera.Mode == CameraMode.FirstPerson;
-            UpdateVisibilityState(ref avatarShape, ref avatarCachedVisibility, shouldBeHidden);
+            skinningComponent.SetFadingDistance((playerComponent.CameraFocus.position - camera.GetCameraComponent(World).Camera.gameObject.transform.position).magnitude);
         }
 
         [Query]
         [None(typeof(PlayerComponent))]
+        private void UpdateNonPlayerAvatarVisibilityOnCameraDistance(in AvatarCustomSkinningComponent skinningComponent, in AvatarBase avatarBase)
+        {
+            skinningComponent.SetFadingDistance((avatarBase.HeadAnchorPoint.position - camera.GetCameraComponent(World).Camera.gameObject.transform.position).magnitude);
+        }
+
+        [Query]
         private void UpdateAvatarsVisibilityState(ref AvatarShapeComponent avatarShape, ref AvatarCachedVisibilityComponent avatarCachedVisibility)
         {
             bool shouldBeHidden = avatarShape.HiddenByModifierArea;
             UpdateVisibilityState(ref avatarShape, ref avatarCachedVisibility, shouldBeHidden);
         }
 
-        private void UpdateVisibilityState( ref AvatarShapeComponent avatarShape, ref AvatarCachedVisibilityComponent avatarCachedVisibility, bool shouldBeHidden)
+        private void UpdateVisibilityState(ref AvatarShapeComponent avatarShape, ref AvatarCachedVisibilityComponent avatarCachedVisibility, bool shouldBeHidden)
         {
             if (avatarCachedVisibility.IsVisible == shouldBeHidden)
                 return;

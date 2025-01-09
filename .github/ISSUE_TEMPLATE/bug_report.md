@@ -1,17 +1,17 @@
 ---
 name: Bug report
 about: Create a report to help us improve
-title: '[QA] Title' 
-labels: 'bug' 
+title: '[QA] Section | Title' 
+labels: 'bug, new'
 assignees: ''
 
 
 ---
 
-### **Explorer Alpha build versions:**
+### 🛠️ **Build version:**
 
 
-### **Issue Description:**
+### 📔 **Issue Description:**
 <!-- Short description of the observed issue -->
 
 ### **STR:** 
@@ -20,15 +20,16 @@ assignees: ''
   2.
   3.
 
-### **Expected behaviour:**
+### ✔️ **Expected Result:**
+
+### ❌ **Actual Result with evidence:**
 
 
-### **Current behaviour:**
+### ➗ **Repro Index:**
+<!-- Starting on 0/10 attempts -->
 
 
-#### **Evidence:**
-
-#### **Additional Notes:**
+### 🖥️ **Operative system and additional Notes:**
 <!-- If the test is made on Mac, specify if the chip is M1 or Intel -->
 
 

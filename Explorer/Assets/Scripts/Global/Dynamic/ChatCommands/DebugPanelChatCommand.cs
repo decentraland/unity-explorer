@@ -2,36 +2,49 @@
 using DCL.Chat.Commands;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.Views;
-using System;
-using System.Text.RegularExpressions;
+using DCL.PluginSystem.Global;
 using System.Threading;
 
 namespace Global.Dynamic.ChatCommands
 {
+    /// <summary>
+    /// Toggles the debug panel, shows a list of available widgets or toggles a specific widget.
+    ///
+    /// Usage:
+    ///     /debug
+    ///     /debug help
+    ///     /debug *widget*
+    /// </summary>
     public class DebugPanelChatCommand : IChatCommand
     {
-        public static readonly Regex REGEX = new (@"^/debug(?:\s+(\w+))?$", RegexOptions.Compiled);
+        public string Command => "debug";
+        public string Description => "<b>/debug <i><widget | help></i></b>\n  Toggle debug panel or specific widget";
+        public bool DebugOnly => true;
 
         private readonly IDebugContainerBuilder debugContainerBuilder;
+        private readonly ConnectionStatusPanelPlugin connectionStatusPanelPlugin;
 
-        private string? param;
-
-        public DebugPanelChatCommand(IDebugContainerBuilder debugContainerBuilder)
+        public DebugPanelChatCommand(IDebugContainerBuilder debugContainerBuilder, ConnectionStatusPanelPlugin connectionStatusPanelPlugin)
         {
             this.debugContainerBuilder = debugContainerBuilder;
+            this.connectionStatusPanelPlugin = connectionStatusPanelPlugin;
         }
 
-        public UniTask<string> ExecuteAsync(Match match, CancellationToken _)
-        {
-            param = match.Groups[1].Value;
+        public bool ValidateParameters(string[] parameters) =>
+            parameters.Length is 0 or 1;
 
-            if (string.IsNullOrEmpty(param))
+        public UniTask<string> ExecuteCommandAsync(string[] parameters, CancellationToken ct)
+        {
+            if (parameters.Length == 0)
             {
                 bool visible = !debugContainerBuilder.IsVisible;
                 debugContainerBuilder.IsVisible = visible;
+                connectionStatusPanelPlugin.SetVisibility(visible);
 
                 return UniTask.FromResult(string.Empty);
             }
+
+            string param = parameters[0];
 
             if (param == "help")
             {
@@ -48,6 +61,7 @@ namespace Global.Dynamic.ChatCommands
                 widget.visible = !widget.visible;
 
                 var hasOpenWidget = false;
+
                 foreach (var otherWidget in debugContainerBuilder.Widgets.Values)
                     if (otherWidget.visible)
                     {

@@ -2,19 +2,18 @@ using UnityEngine;
 
 namespace DCL.ResourcesUnloading.UnloadStrategies
 {
-    public class UnloadUnusedAssetUnloadStrategy : UnloadStrategy
+    public class UnloadUnusedAssetUnloadStrategy : UnloadStrategyBase
     {
-
-        private int FRAMES_UNTIL_UNLOAD_IS_INVOKED = 1000;
+        private readonly int FRAMES_UNTIL_UNLOAD_IS_INVOKED = 5_000;
         private int currentFrameCountForUnloadAssets;
-        
-        public UnloadUnusedAssetUnloadStrategy()
+
+        public UnloadUnusedAssetUnloadStrategy(int failureThreshold) : base(failureThreshold)
         {
             //We equalize it so its invoked on first invocation of TryUnload
             currentFrameCountForUnloadAssets = FRAMES_UNTIL_UNLOAD_IS_INVOKED;
         }
 
-        public override void TryUnload(ICacheCleaner cacheCleaner)
+        public override void RunStrategy()
         {
             currentFrameCountForUnloadAssets++;
             if (currentFrameCountForUnloadAssets > FRAMES_UNTIL_UNLOAD_IS_INVOKED)
@@ -22,14 +21,14 @@ namespace DCL.ResourcesUnloading.UnloadStrategies
                 Resources.UnloadUnusedAssets();
                 currentFrameCountForUnloadAssets = 0;
             }
-            base.TryUnload(cacheCleaner);
         }
-        
+
         public override void ResetStrategy()
         {
             base.ResetStrategy();
             currentFrameCountForUnloadAssets = FRAMES_UNTIL_UNLOAD_IS_INVOKED;
         }
 
+        
     }
 }

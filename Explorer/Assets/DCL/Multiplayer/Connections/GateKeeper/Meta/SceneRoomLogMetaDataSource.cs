@@ -1,7 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using System;
 using System.Threading;
+using Utility.Types;
 
 namespace DCL.Multiplayer.Connections.GateKeeper.Meta
 {
@@ -10,7 +10,6 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
         private const string PREFIX = "MetaDataSource:";
 
         private readonly ISceneRoomMetaDataSource origin;
-        private readonly Action<string> log;
 
         public SceneRoomLogMetaDataSource(ISceneRoomMetaDataSource origin)
         {
@@ -19,19 +18,26 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
 
         public bool ScenesCommunicationIsIsolated => origin.ScenesCommunicationIsIsolated;
 
-        public async UniTask<MetaData> MetaDataAsync(CancellationToken token)
+        public MetaData.Input GetMetadataInput()
         {
-            ReportHub.WithReport(ReportCategory.LIVEKIT).Log($"{PREFIX} MetaDataAsync start");
-            MetaData result = await origin.MetaDataAsync(token);
-            ReportHub.WithReport(ReportCategory.LIVEKIT).Log($"{PREFIX} MetaDataAsync finish {result.realmName} {result.sceneId}");
+            ReportHub.WithReport(ReportCategory.LIVEKIT).Log($"{PREFIX} {nameof(GetMetadataInput)}");
+            MetaData.Input result = origin.GetMetadataInput();
             return result;
         }
 
-        public async UniTask WaitForMetaDataIsDirtyAsync(CancellationToken token)
+        public async UniTask<Result<MetaData>> MetaDataAsync(MetaData.Input input, CancellationToken token)
         {
-            ReportHub.WithReport(ReportCategory.LIVEKIT).Log($"{PREFIX} WaitForMetaDataIsDirtyAsync start");
-            await origin.WaitForMetaDataIsDirtyAsync(token);
-            ReportHub.WithReport(ReportCategory.LIVEKIT).Log($"{PREFIX} WaitForMetaDataIsDirtyAsync finish");
+            ReportHub.WithReport(ReportCategory.LIVEKIT).Log($"{PREFIX} {nameof(MetaDataAsync)} start: {input}");
+            Result<MetaData> result = await origin.MetaDataAsync(input, token);
+
+            if (result.Success)
+                ReportHub.WithReport(ReportCategory.LIVEKIT).Log($"{PREFIX} {nameof(MetaDataAsync)} finish {result.Value.realmName} {result.Value.sceneId}");
+            else
+                ReportHub.WithReport(ReportCategory.LIVEKIT).LogError($"{PREFIX} {nameof(MetaDataAsync)} error {result.ErrorMessage}");
+
+            return result;
         }
+
+        public bool MetadataIsDirty => origin.MetadataIsDirty;
     }
 }

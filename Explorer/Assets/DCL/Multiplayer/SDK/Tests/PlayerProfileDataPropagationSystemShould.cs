@@ -63,7 +63,8 @@ namespace DCL.Multiplayer.SDK.Tests
             profile.IsDirty = false;
             world.Add(entity, profile);
 
-            scene.PersistentEntities.Returns(new PersistentEntities(scenePlayerEntity, Entity.Null, Entity.Null));
+            scene.PersistentEntities.Returns(new PersistentEntities(scenePlayerEntity, Entity.Null, Entity.Null,
+                Entity.Null));
             scene.EcsExecutor.Returns(new SceneEcsExecutor(sceneWorld));
 
             characterDataPropagationUtility.PropagateGlobalPlayerToScenePlayer(world, entity, scene);

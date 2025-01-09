@@ -1,5 +1,7 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.WebRequests.GenericDelete;
+using DCL.WebRequests.RequestsHub;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -8,7 +10,6 @@ using System.Threading;
 using UnityEngine;
 using UnityEngine.Networking;
 using Utility;
-using Utility.Times;
 using static DCL.WebRequests.WebRequestControllerExtensions;
 
 namespace DCL.WebRequests
@@ -20,31 +21,9 @@ namespace DCL.WebRequests
     {
         public delegate Exception CreateExceptionOnParseFail(Exception exception, string text);
 
-        public static Adapter<GenericPostRequest, GenericPostArguments> SignedFetchPostAsync(
-            this IWebRequestController controller,
-            CommonArguments commonArguments,
-            string jsonMetaData,
-            CancellationToken ct
-        )
-        {
-            ulong unixTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
-
-            return new Adapter<GenericPostRequest, GenericPostArguments>(
-                controller,
-                commonArguments,
-                GenericPostArguments.Empty,
-                ct,
-                ReportCategory.GENERIC_WEB_REQUEST,
-                new WebRequestHeadersInfo().WithSign(jsonMetaData, unixTimestamp),
-                WebRequestSignInfo.NewFromRaw(jsonMetaData, commonArguments.URL, unixTimestamp, "post"),
-                null,
-                POST_GENERIC
-            );
-        }
-
         public static Adapter<GenericGetRequest, GenericGetArguments> GetAsync(this IWebRequestController controller, CommonArguments commonArguments, CancellationToken ct, ReportData reportData, WebRequestHeadersInfo? headersInfo = null,
             WebRequestSignInfo? signInfo = null, ISet<long>? ignoreErrorCodes = null) =>
-            new (controller, commonArguments, default(GenericGetArguments), ct, reportData, headersInfo, signInfo, ignoreErrorCodes, GET_GENERIC);
+            new (controller, commonArguments, default(GenericGetArguments), ct, reportData, headersInfo, signInfo, ignoreErrorCodes);
 
         public static Adapter<GenericPostRequest, GenericPostArguments> PostAsync(
             this IWebRequestController controller,
@@ -54,7 +33,7 @@ namespace DCL.WebRequests
             ReportData reportData,
             WebRequestHeadersInfo? headersInfo = null,
             WebRequestSignInfo? signInfo = null) =>
-            new (controller, commonArguments, arguments, ct, reportData, headersInfo, signInfo, null, POST_GENERIC);
+            new (controller, commonArguments, arguments, ct, reportData, headersInfo, signInfo, null);
 
         public static Adapter<GenericPutRequest, GenericPutArguments> PutAsync(
             this IWebRequestController controller,
@@ -64,7 +43,7 @@ namespace DCL.WebRequests
             ReportData reportData,
             WebRequestHeadersInfo? headersInfo = null,
             WebRequestSignInfo? signInfo = null) =>
-            new (controller, commonArguments, arguments, ct, reportData, headersInfo, signInfo, null, PUT_GENERIC);
+            new (controller, commonArguments, arguments, ct, reportData, headersInfo, signInfo, null);
 
         public static Adapter<GenericPatchRequest, GenericPatchArguments> PatchAsync(
             this IWebRequestController controller,
@@ -74,7 +53,7 @@ namespace DCL.WebRequests
             ReportData reportData,
             WebRequestHeadersInfo? headersInfo = null,
             WebRequestSignInfo? signInfo = null) =>
-            new (controller, commonArguments, arguments, ct, reportData, headersInfo, signInfo, null, PATCH_GENERIC);
+            new (controller, commonArguments, arguments, ct, reportData, headersInfo, signInfo, null);
 
         public static Adapter<GenericHeadRequest, GenericHeadArguments> HeadAsync(
             this IWebRequestController controller,
@@ -83,7 +62,7 @@ namespace DCL.WebRequests
             ReportData reportData,
             WebRequestHeadersInfo? headersInfo = null,
             WebRequestSignInfo? signInfo = null) =>
-            new (controller, commonArguments, default(GenericHeadArguments), ct, reportData, headersInfo, signInfo, null, HEAD_GENERIC);
+            new (controller, commonArguments, default(GenericHeadArguments), ct, reportData, headersInfo, signInfo, null);
 
         private static async UniTask SwitchToMainThreadAsync(WRThreadFlags flags)
         {
@@ -111,12 +90,19 @@ namespace DCL.WebRequests
             private readonly CancellationToken ct;
             private readonly WebRequestHeadersInfo? headersInfo;
             private readonly ISet<long>? ignoreErrorCodes;
-            private readonly InitializeRequest<TWebRequestArgs, TRequest> initializeRequest;
             private readonly ReportData reportData;
             private readonly WebRequestSignInfo? signInfo;
 
-            public Adapter(IWebRequestController controller, CommonArguments commonArguments, TWebRequestArgs args, CancellationToken ct, ReportData reportData,
-                WebRequestHeadersInfo? headersInfo, WebRequestSignInfo? signInfo, ISet<long>? ignoreErrorCodes, InitializeRequest<TWebRequestArgs, TRequest> initializeRequest)
+            public Adapter(
+                IWebRequestController controller,
+                CommonArguments commonArguments,
+                TWebRequestArgs args,
+                CancellationToken ct,
+                ReportData reportData,
+                WebRequestHeadersInfo? headersInfo,
+                WebRequestSignInfo? signInfo,
+                ISet<long>? ignoreErrorCodes
+            )
             {
                 this.commonArguments = commonArguments;
                 this.args = args;
@@ -125,12 +111,11 @@ namespace DCL.WebRequests
                 this.headersInfo = headersInfo;
                 this.signInfo = signInfo;
                 this.ignoreErrorCodes = ignoreErrorCodes;
-                this.initializeRequest = initializeRequest;
                 this.controller = controller;
             }
 
             internal UniTask<TResult> SendAsync<TOp, TResult>(TOp op) where TOp: struct, IWebRequestOp<TRequest, TResult> =>
-                controller.SendAsync<TRequest, TWebRequestArgs, TOp, TResult>(initializeRequest, commonArguments, args, op, ct, reportData, headersInfo, signInfo, ignoreErrorCodes);
+                controller.SendAsync<TRequest, TWebRequestArgs, TOp, TResult>(commonArguments, args, op, ct, reportData, headersInfo, signInfo, ignoreErrorCodes);
 
             public UniTask WithNoOpAsync() =>
                 SendAsync<WebRequestUtils.NoOp<TRequest>, WebRequestUtils.NoResult>(new WebRequestUtils.NoOp<TRequest>());

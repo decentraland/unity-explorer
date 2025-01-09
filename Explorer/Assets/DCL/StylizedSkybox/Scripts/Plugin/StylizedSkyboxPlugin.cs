@@ -4,6 +4,7 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
+using DCL.FeatureFlags;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using System;
@@ -21,17 +22,20 @@ namespace DCL.StylizedSkybox.Scripts.Plugin
         private readonly IDebugContainerBuilder debugContainerBuilder;
         private SkyboxController? skyboxController;
         private readonly ElementBinding<int> timeOfDay;
+        private readonly FeatureFlagsCache featureFlagsCache;
 
         public StylizedSkyboxPlugin(
             IAssetsProvisioner assetsProvisioner,
             Light directionalLight,
-            IDebugContainerBuilder debugContainerBuilder
+            IDebugContainerBuilder debugContainerBuilder,
+            FeatureFlagsCache featureFlagsCache
         )
         {
             timeOfDay = new ElementBinding<int>(0);
             this.assetsProvisioner = assetsProvisioner;
             this.directionalLight = directionalLight;
             this.debugContainerBuilder = debugContainerBuilder;
+            this.featureFlagsCache = featureFlagsCache;
         }
 
         public void Dispose() { }
@@ -43,7 +47,7 @@ namespace DCL.StylizedSkybox.Scripts.Plugin
             skyboxController = Object.Instantiate((await assetsProvisioner.ProvideMainAssetAsync(settings.StylizedSkyboxPrefab, ct: ct)).Value.GetComponent<SkyboxController>());
             AnimationClip skyboxAnimation = (await assetsProvisioner.ProvideMainAssetAsync(settings.SkyboxAnimationCycle, ct: ct)).Value;
 
-            skyboxController.Initialize(settings.SkyboxMaterial, directionalLight, skyboxAnimation);
+            skyboxController.Initialize(settings.SkyboxMaterial, directionalLight, skyboxAnimation, featureFlagsCache);
 
             debugContainerBuilder.TryAddWidget("Skybox")
                                  ?.AddSingleButton("Play", () => skyboxController.Play())

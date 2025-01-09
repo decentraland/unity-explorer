@@ -12,6 +12,11 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
 {
     public abstract class CommunicationsControllerAPIImplementationBase : ICommunicationsControllerAPI
     {
+        /// <summary>
+        ///     Special signal to receive CRDT State from a peer
+        /// </summary>
+        private const byte REQ_CRDT_STATE = 2;
+
         protected readonly List<IMemoryOwner<byte>> eventsToProcess = new ();
         private readonly CancellationTokenSource cancellationTokenSource = new ();
         private readonly ISceneCommunicationPipe sceneCommunicationPipe;
@@ -48,10 +53,18 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
             cancellationTokenSource.SafeCancelAndDispose();
         }
 
-        public void SendBinary(IReadOnlyList<PoolableByteArray> broadcastData, string? recipient = null)
+        public void SendBinary(IReadOnlyList<PoolableByteArray> data)
         {
-            foreach (PoolableByteArray poolable in broadcastData)
+            foreach (PoolableByteArray poolable in data)
                 if (poolable.Length > 0)
+                {
+                    ISceneCommunicationPipe.ConnectivityAssertiveness assertiveness = poolable.Span[0] == REQ_CRDT_STATE
+                        ? ISceneCommunicationPipe.ConnectivityAssertiveness.DELIVERY_ASSERTED
+                        : ISceneCommunicationPipe.ConnectivityAssertiveness.DROP_IF_NOT_CONNECTED;
+
+                    EncodeAndSendMessage(ISceneCommunicationPipe.MsgType.Uint8Array, poolable.Memory.Span, assertiveness);
+                }
+
                     EncodeAndSendMessage(ISceneCommunicationPipe.MsgType.Uint8Array, poolable.Memory.Span, recipient);
         }
 
@@ -74,7 +87,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
             eventsToProcess.Clear();
         }
 
-        protected void EncodeAndSendMessage(ISceneCommunicationPipe.MsgType msgType, ReadOnlySpan<byte> message, string? recipient = null)
+        protected void EncodeAndSendMessage(ISceneCommunicationPipe.MsgType msgType, ReadOnlySpan<byte> message, ISceneCommunicationPipe.ConnectivityAssertiveness assertivenes, string? recipient = null)
         {
             Span<byte> encodedMessage = stackalloc byte[message.Length + 1];
             encodedMessage[0] = (byte)msgType;

@@ -1,5 +1,4 @@
 using Arch.SystemGroups;
-using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.SDKComponents.RealmInfo;
@@ -7,7 +6,6 @@ using DCL.Utilities;
 using ECS;
 using ECS.LifeCycle;
 using System.Collections.Generic;
-using System.Threading;
 
 namespace DCL.PluginSystem.World
 {
@@ -21,9 +19,6 @@ namespace DCL.PluginSystem.World
             this.realmData = realmData;
             this.roomHubProxy = roomHubProxy;
         }
-
-        public UniTask Initialize(IPluginSettingsContainer container, CancellationToken ct) =>
-            UniTask.CompletedTask;
 
         public void Dispose()
         {

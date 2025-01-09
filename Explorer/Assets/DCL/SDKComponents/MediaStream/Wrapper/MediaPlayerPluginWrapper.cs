@@ -1,17 +1,19 @@
-﻿using Arch.Core;
+using Arch.Core;
 using Arch.SystemGroups;
 using CrdtEcsBridge.ECSToCRDTWriter;
+using DCL.CharacterCamera;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.ResourcesUnloading;
 using DCL.WebRequests;
-using ECS.ComponentsPooling.Systems;
 using ECS.LifeCycle;
 using SceneRunner.Scene;
 using System.Collections.Generic;
 using UnityEngine;
 using RenderHeads.Media.AVProVideo;
 using DCL.ECSComponents;
+using DCL.FeatureFlags;
+using DCL.SDKComponents.MediaStream.Settings;
 using DCL.Settings;
 
 namespace DCL.SDKComponents.MediaStream.Wrapper
@@ -24,6 +26,8 @@ namespace DCL.SDKComponents.MediaStream.Wrapper
         private readonly IPerformanceBudget frameTimeBudget;
         private readonly GameObjectPool<MediaPlayer> mediaPlayerPool;
         private readonly WorldVolumeMacBus worldVolumeMacBus;
+        private readonly IExposedCameraData exposedCameraData;
+        private readonly VideoPrioritizationSettings videoPrioritizationSettings;
 
         public MediaPlayerPluginWrapper(
             IComponentPoolsRegistry componentPoolsRegistry,
@@ -32,8 +36,14 @@ namespace DCL.SDKComponents.MediaStream.Wrapper
             IExtendedObjectPool<Texture2D> videoTexturePool,
             IPerformanceBudget frameTimeBudget,
             MediaPlayer mediaPlayerPrefab,
-            WorldVolumeMacBus worldVolumeMacBus)
+            WorldVolumeMacBus worldVolumeMacBus,
+            IExposedCameraData exposedCameraData,
+            VideoPrioritizationSettings videoPrioritizationSettings,
+            FeatureFlagsCache featureFlagsCache)
         {
+            this.exposedCameraData = exposedCameraData;
+            this.videoPrioritizationSettings = videoPrioritizationSettings;
+
 #if AV_PRO_PRESENT && !UNITY_EDITOR_LINUX && !UNITY_STANDALONE_LINUX
             this.componentPoolsRegistry = componentPoolsRegistry;
             this.webRequestController = webRequestController;
@@ -67,13 +77,17 @@ namespace DCL.SDKComponents.MediaStream.Wrapper
 #endif
         }
 
-        public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, ISceneData sceneData, ISceneStateProvider sceneStateProvider, IECSToCRDTWriter ecsToCrdtWriter, List<IFinalizeWorldSystem> finalizeWorldSystems)
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, ISceneData sceneData, ISceneStateProvider sceneStateProvider, IECSToCRDTWriter ecsToCrdtWriter, List<IFinalizeWorldSystem> finalizeWorldSystems, FeatureFlagsCache featureFlagsCache)
         {
 #if AV_PRO_PRESENT && !UNITY_EDITOR_LINUX && !UNITY_STANDALONE_LINUX
 
             CreateMediaPlayerSystem.InjectToWorld(ref builder, webRequestController, sceneData, mediaPlayerPool, sceneStateProvider, frameTimeBudget);
             UpdateMediaPlayerSystem.InjectToWorld(ref builder, webRequestController, sceneData, sceneStateProvider, frameTimeBudget, worldVolumeMacBus);
-            VideoEventsSystem.InjectToWorld(ref builder, ecsToCrdtWriter, sceneStateProvider, componentPoolsRegistry.GetReferenceTypePool<PBVideoEvent>(), frameTimeBudget);
+
+            if(featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.VIDEO_PRIORITIZATION))
+                UpdateMediaPlayerPrioritizationSystem.InjectToWorld(ref builder, exposedCameraData, videoPrioritizationSettings);
+
+            VideoEventsSystem.InjectToWorld(ref builder, ecsToCrdtWriter, sceneStateProvider, frameTimeBudget);
 
             finalizeWorldSystems.Add(CleanUpMediaPlayerSystem.InjectToWorld(ref builder, mediaPlayerPool, videoTexturePool));
 #endif

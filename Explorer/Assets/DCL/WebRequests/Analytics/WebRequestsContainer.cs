@@ -1,9 +1,10 @@
 using Cysharp.Threading.Tasks;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
-using DCL.Optimization.PerformanceBudgeting;
 using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics.Metrics;
+using DCL.WebRequests.RequestsHub;
+using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using Utility.Multithreading;
 using Utility.Storage;
 
@@ -15,15 +16,22 @@ namespace DCL.WebRequests.Analytics
 
         public IWebRequestsAnalyticsContainer AnalyticsContainer { get; }
 
-        private WebRequestsContainer(IWebRequestController webRequestController,
-            IWebRequestsAnalyticsContainer analyticsContainer)
+        private WebRequestsContainer(
+            IWebRequestController webRequestController,
+            IWebRequestsAnalyticsContainer analyticsContainer
+        )
         {
             WebRequestController = webRequestController;
             AnalyticsContainer = analyticsContainer;
         }
 
-        public static WebRequestsContainer Create(IWeb3IdentityCache web3IdentityProvider,
-            IDebugContainerBuilder debugContainerBuilder, int totalBudget)
+        public static WebRequestsContainer Create(
+            IWeb3IdentityCache web3IdentityProvider,
+            ITexturesFuse texturesFuse,
+            IDebugContainerBuilder debugContainerBuilder,
+            int totalBudget,
+            bool isTextureCompressionEnabled
+        )
         {
             var analyticsContainer = new WebRequestsAnalyticsContainer()
                 .AddTrackedMetric<ActiveCounter>()
@@ -36,11 +44,11 @@ namespace DCL.WebRequests.Analytics
             var requestCompleteDebugMetric = new ElementBinding<ulong>(0);
             var cannotConnectToHostExceptionDebugMetric = new ElementBinding<ulong>(0);
 
-            var webRequestController = new WebRequestController(analyticsContainer, web3IdentityProvider)
-                .WithDebugMetrics(cannotConnectToHostExceptionDebugMetric, requestCompleteDebugMetric)
-                .WithLog()
-                .WithArtificialDelay(options)
-                .WithBudget(totalBudget);
+            var webRequestController = new WebRequestController(analyticsContainer, web3IdentityProvider, new RequestHub(texturesFuse, isTextureCompressionEnabled))
+                                      .WithDebugMetrics(cannotConnectToHostExceptionDebugMetric, requestCompleteDebugMetric)
+                                      .WithLog()
+                                      .WithArtificialDelay(options)
+                                      .WithBudget(totalBudget);
 
             CreateStressTestUtility();
             CreateWebRequestDelayUtility();

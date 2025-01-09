@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace DCL.Settings.Configuration
 {
-    [CreateAssetMenu(menuName = "Settings Menu/Create Settings Menu Configuration", fileName = "Settings Menu Configuration", order = 0)]
+    [CreateAssetMenu(fileName = "Settings Menu Configuration", menuName = "DCL/Settings/Settings Menu Configuration")]
     public class SettingsMenuConfiguration : ScriptableObject
     {
         [field: SerializeField] internal SettingsGroupView SettingsGroupPrefab { get; set; }
@@ -25,6 +25,6 @@ namespace DCL.Settings.Configuration
     {
         [field: SerializeField] internal string GroupTitle { get; set; }
 
-        [field: SerializeReference, SubclassSelector] internal List<SettingsModuleBindingBase> Modules { get; set; }
+        [field: SerializeReference] [field: SubclassSelector] internal List<SettingsModuleBindingBase> Modules { get; set; }
     }
 }

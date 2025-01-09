@@ -80,11 +80,15 @@ namespace DCL.Landscape.Utils
 
     public class LandscapeParcelService
     {
-        private const string MANIFEST_URL = "https://places-dcf8abb.s3.amazonaws.com/WorldManifest.json";
-        private readonly IWebRequestController webRequestController;
+        private const string ORG_MANIFEST_URL = "https://places-dcf8abb.s3.amazonaws.com/WorldManifest.json";
+        private const string ZONE_MANIFEST_URL = "https://places-e22845c.s3.us-east-1.amazonaws.com/WorldManifest.json";
 
-        public LandscapeParcelService(IWebRequestController webRequestController)
+        private readonly IWebRequestController webRequestController;
+        private readonly string currentManifestURL;
+
+        public LandscapeParcelService(IWebRequestController webRequestController, bool isZone)
         {
+            currentManifestURL = isZone ? ZONE_MANIFEST_URL : ORG_MANIFEST_URL;
             this.webRequestController = webRequestController;
         }
 
@@ -92,7 +96,9 @@ namespace DCL.Landscape.Utils
         {
             try
             {
-                string? result = await webRequestController.GetAsync(new CommonArguments(URLAddress.FromString(MANIFEST_URL)), ct, ReportCategory.LANDSCAPE)
+                var result = await webRequestController
+                    .GetAsync(new CommonArguments(URLAddress.FromString(currentManifestURL)), ct,
+                        ReportCategory.LANDSCAPE)
                                                            .StoreTextAsync();
 
                 if (result != null)

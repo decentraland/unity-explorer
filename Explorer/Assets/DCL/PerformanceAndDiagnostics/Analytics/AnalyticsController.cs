@@ -1,4 +1,5 @@
-﻿using DCL.Web3.Identities;
+﻿using DCL.Diagnostics;
+using DCL.Web3.Identities;
 using ECS;
 using Global.AppArgs;
 using Segment.Serialization;
@@ -11,15 +12,29 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
     public class AnalyticsController : IAnalyticsController
     {
         private readonly IAnalyticsService analytics;
+
         public AnalyticsConfiguration Configuration { get; }
 
-        public AnalyticsController(IAnalyticsService analyticsService, IAppArgs appArgs, AnalyticsConfiguration configuration, LauncherTraits launcherTraits)
+        public AnalyticsController(
+            IAnalyticsService analyticsService,
+            IAppArgs appArgs,
+            AnalyticsConfiguration configuration,
+            LauncherTraits launcherTraits,
+            BuildData buildData)
         {
             analytics = analyticsService;
             Configuration = configuration;
 
-            analytics.AddPlugin(new StaticCommonTraitsPlugin(appArgs, launcherTraits));
-            analytics.Identify(SystemInfo.deviceUniqueIdentifier!);
+            Configuration.Initialize();
+            analytics.AddPlugin(new StaticCommonTraitsPlugin(appArgs, launcherTraits, buildData));
+        }
+
+        public void Initialize(IWeb3Identity? web3Identity)
+        {
+            if (web3Identity != null && web3Identity.Address != null)
+                analytics.Identify(web3Identity?.Address);
+
+            TrackSystemInfo();
             analytics.Flush();
         }
 
@@ -42,6 +57,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             if (identity != null)
             {
                 analytics.Flush();
+
                 analytics.Identify(identity.Address, new JsonObject
                     {
                         ["dcl_eth_address"] = identity.Address != null ? identity.Address.ToString() : UNDEFINED,
@@ -49,14 +65,13 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
                     }
                 );
 
-                TrackSystemInfo();
                 analytics.Flush();
             }
         }
 
         private void TrackSystemInfo()
         {
-            analytics.Track(AnalyticsEvents.General.SYSTEM_INFO_REPORT, new JsonObject
+            Track(AnalyticsEvents.General.SYSTEM_INFO_REPORT, new JsonObject
             {
                 ["device_model"] = SystemInfo.deviceModel, // "XPS 17 9720 (Dell Inc.)"
                 ["operating_system"] = SystemInfo.operatingSystem, // "Windows 11  (10.0.22631) 64bit"

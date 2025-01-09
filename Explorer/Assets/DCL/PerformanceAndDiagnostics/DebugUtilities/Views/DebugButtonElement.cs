@@ -7,7 +7,7 @@ namespace DCL.DebugUtilities.Views
         protected override void ConnectBindings()
         {
             Button button = this.Q<Button>();
-            button.text = definition.Text;
+            definition.Text.Connect(button);
             button.clicked += definition.OnClick;
         }
 

@@ -72,6 +72,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 26a5616becdfd49b4abfbee07ba3cbf2
+    m_Address: Assets/DCL/InWorldCamera/PhotoDetail/Prefabs/PhotoDetailUI.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 2a58c49334237a24781cae8b1e3fa351
     m_Address: EmbeddedEmotes
     m_ReadOnly: 0
@@ -269,6 +274,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: a1d5d4f99234041159f0c215eef3eff3
     m_Address: NewNotificationPanel
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a39f0a305be6be143aabcbf7ebb59d62
+    m_Address: RoomIndicator
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

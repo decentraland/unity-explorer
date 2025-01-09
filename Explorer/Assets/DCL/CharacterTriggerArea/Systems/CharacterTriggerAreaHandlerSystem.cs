@@ -45,8 +45,7 @@ namespace DCL.CharacterTriggerArea.Systems
             if (triggerAreaComponent.TryDispose(sceneStateProvider))
                 return;
 
-            triggerAreaComponent.TryAssignArea(poolRegistry, mainPlayerTransform);
-            triggerAreaComponent.TryUpdateTransform(ref transformComponent);
+            triggerAreaComponent.TryAssignArea(poolRegistry, mainPlayerTransform, transformComponent);
         }
     }
 }

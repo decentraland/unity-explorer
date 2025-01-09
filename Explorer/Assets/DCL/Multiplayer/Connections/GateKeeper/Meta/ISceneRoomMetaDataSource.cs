@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using System.Threading;
+using Utility.Types;
 
 namespace DCL.Multiplayer.Connections.GateKeeper.Meta
 {
@@ -10,8 +11,10 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
         /// </summary>
         bool ScenesCommunicationIsIsolated { get; }
 
-        UniTask<MetaData> MetaDataAsync(CancellationToken token);
+        MetaData.Input GetMetadataInput();
 
-        UniTask WaitForMetaDataIsDirtyAsync(CancellationToken token);
+        UniTask<Result<MetaData>> MetaDataAsync(MetaData.Input input, CancellationToken token);
+
+        bool MetadataIsDirty { get; }
     }
 }

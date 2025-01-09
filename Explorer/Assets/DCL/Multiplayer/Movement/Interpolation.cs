@@ -40,15 +40,11 @@ namespace DCL.Multiplayer.Movement
         private static void LookAt(float dt, ref CharacterTransform transComp, Vector3 lookDirection, float rotationSpeed, float yRotation,
             bool instant, bool useMessageRotation)
         {
-            Quaternion lookRotation;
+            lookDirection.y = 0; // Flattened to have ground plane direction only (XZ)
 
-            if (lookDirection != Vector3.zero)
-            {
-                lookDirection.y = 0; // Flattened to have ground plane direction only (XZ)
-                lookRotation = Quaternion.LookRotation(lookDirection, Vector3.up);
-            }
-            else
-                lookRotation = transComp.Transform.rotation;
+            Quaternion lookRotation = lookDirection != Vector3.zero
+                ? Quaternion.LookRotation(lookDirection, Vector3.up)
+                : transComp.Transform.rotation;
 
             if (useMessageRotation)
                 lookRotation.eulerAngles = new Vector3(lookRotation.eulerAngles.x, yRotation, lookRotation.eulerAngles.z);

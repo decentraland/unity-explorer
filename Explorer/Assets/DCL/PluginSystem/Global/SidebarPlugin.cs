@@ -42,6 +42,7 @@ namespace DCL.PluginSystem.Global
         private readonly ChatEntryConfigurationSO chatEntryConfigurationSo;
         private readonly Arch.Core.World world;
         private readonly Entity playerEntity;
+        private readonly bool includeCameraReel;
 
         public SidebarPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -59,7 +60,8 @@ namespace DCL.PluginSystem.Global
             ISidebarBus sidebarBus,
             ChatEntryConfigurationSO chatEntryConfigurationSo,
             Arch.Core.World world,
-            Entity playerEntity)
+            Entity playerEntity,
+            bool includeCameraReel)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -77,6 +79,7 @@ namespace DCL.PluginSystem.Global
             this.chatEntryConfigurationSo = chatEntryConfigurationSo;
             this.world = world;
             this.playerEntity = playerEntity;
+            this.includeCameraReel = includeCameraReel;
         }
 
         public void Dispose() { }
@@ -103,7 +106,8 @@ namespace DCL.PluginSystem.Global
                 chatEntryConfigurationSo,
                 web3IdentityCache,
                 profileRepository,
-                webBrowser
+                webBrowser,
+                includeCameraReel
             ));
         }
 

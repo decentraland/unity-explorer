@@ -2,27 +2,28 @@ using Cysharp.Threading.Tasks;
 using DCL.AsyncLoadReporting;
 using ECS.SceneLifeCycle.Realm;
 using System.Threading;
-using Utility.Types;
 
 namespace DCL.UserInAppInitializationFlow.StartupOperations
 {
-    public class SwitchRealmMiscVisibilityStartupOperation : IStartupOperation
+    public class SwitchRealmMiscVisibilityStartupOperation : StartUpOperationBase
     {
         private readonly ILoadingStatus loadingStatus;
-        private readonly IRealmNavigator realmNavigator;
+        private readonly IRealmController realmController;
+        private readonly IRealmMisc realmMisc;
 
-        public SwitchRealmMiscVisibilityStartupOperation(ILoadingStatus loadingStatus, IRealmNavigator realmNavigator)
+        public SwitchRealmMiscVisibilityStartupOperation(ILoadingStatus loadingStatus, IRealmController realmController, IRealmMisc realmMisc)
         {
             this.loadingStatus = loadingStatus;
-            this.realmNavigator = realmNavigator;
+            this.realmController = realmController;
+            this.realmMisc = realmMisc;
         }
 
-        public async UniTask<Result> ExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct)
+        protected override UniTask InternalExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct)
         {
             float finalizationProgress = loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.EnvironmentMiscSetting);
-            await realmNavigator.SwitchMiscVisibilityAsync();
+            realmMisc.SwitchTo(realmController.Type);
             report.SetProgress(finalizationProgress);
-            return Result.SuccessResult();
+            return UniTask.CompletedTask;
         }
     }
 }
