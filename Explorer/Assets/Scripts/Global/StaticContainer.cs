@@ -146,6 +146,7 @@ namespace Global
             bool enableAnalytics,
             IAnalyticsController analyticsController,
             IDiskCache diskCache,
+            bool isTextureCompressionEnabled,
             CancellationToken ct)
         {
             ProfilingCounters.CleanAllCounters();

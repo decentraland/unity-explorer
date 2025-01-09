@@ -76,6 +76,7 @@ namespace Global.Tests.PlayMode
                 false,
                 Substitute.For<IAnalyticsController>(),
                 new IDiskCache.Fake(),
+                false,
                 ct);
 
             if (!success)
