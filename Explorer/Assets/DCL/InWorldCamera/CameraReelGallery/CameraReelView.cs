@@ -23,7 +23,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
         [field: SerializeField] internal float storageFullToastFadeTime { get; private set; } = 0.3f;
 
         [field: Header("Context menu")]
-        [field: SerializeField] public OptionButtonView optionsButton { get; private set; }
+        [field: SerializeField] public CameraReelOptionButtonView CameraReelOptionsButton { get; private set; }
 
         [field: Header("Animators")]
         [field: SerializeField] internal Animator panelAnimator { get; private set; }

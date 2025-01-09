@@ -68,7 +68,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
         private readonly ReelGalleryPoolManager reelGalleryPoolManager;
         private readonly Dictionary<DateTime, MonthGridController> monthViews = new ();
         private readonly Dictionary<CameraReelResponseCompact, Texture> reelThumbnailCache = new ();
-        private readonly OptionButtonController? optionButtonController;
+        private readonly CameraReelOptionButtonController? optionButtonController;
         private readonly Rect elementMaskRect;
         private readonly ReelGalleryStringMessages? reelGalleryStringMessages;
         private readonly ReelGalleryConfigParams reelGalleryConfigParams;
@@ -95,7 +95,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
             ICameraReelScreenshotsStorage cameraReelScreenshotsStorage,
             ReelGalleryConfigParams reelGalleryConfigParams,
             bool useSignedRequest,
-            OptionButtonView? optionButtonView = null,
+            CameraReelOptionButtonView? optionButtonView = null,
             IWebBrowser? webBrowser = null,
             IDecentralandUrlsSource? decentralandUrlsSource = null,
             IExplorePanelEscapeAction? explorePanelEscapeAction = null,
@@ -125,7 +125,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
 
             if (optionButtonView is not null)
             {
-                this.optionButtonController = new OptionButtonController(optionButtonView, mvcManager!, contextMenuConfig!);
+                this.optionButtonController = new CameraReelOptionButtonController(optionButtonView, mvcManager!, contextMenuConfig!);
             }
 
             reelGalleryPoolManager = new ReelGalleryPoolManager(view.thumbnailViewPrefab, view.monthGridPrefab, view.unusedThumbnailViewObject,

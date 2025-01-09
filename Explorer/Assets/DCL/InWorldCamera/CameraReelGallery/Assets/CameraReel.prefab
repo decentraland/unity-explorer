@@ -1120,8 +1120,7 @@ MonoBehaviour:
   <storageFullToast>k__BackingField: {fileID: 3007147660590048626}
   <CameraReelGalleryView>k__BackingField: {fileID: 6326828515697139143}
   <storageFullToastFadeTime>k__BackingField: 0.3
-  <optionsButton>k__BackingField: {fileID: 3243249746742492487}
-  <contextMenu>k__BackingField: {fileID: 0}
+  <CameraReelOptionsButton>k__BackingField: {fileID: 3243249746742492487}
   <panelAnimator>k__BackingField: {fileID: 3847227160490674318}
   <headerAnimator>k__BackingField: {fileID: 4907642448593202628}
 --- !u!225 &2374670453255527950

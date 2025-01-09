@@ -9,7 +9,7 @@ using UnityEngine;
 
 namespace DCL.InWorldCamera.CameraReelGallery.Components
 {
-    public class OptionButtonController : IDisposable
+    public class CameraReelOptionButtonController : IDisposable
     {
         private const int PUBLIC_CONTROL_INDEX = 0;
         private const int SHARE_CONTROL_INDEX = 2;
@@ -17,7 +17,7 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
         private const int DOWNLOAD_CONTROL_INDEX = 4;
         private const int DELETE_CONTROL_INDEX = 5;
 
-        private readonly OptionButtonView view;
+        private readonly CameraReelOptionButtonView view;
         private readonly RectTransform buttonRectTransform;
         private readonly IMVCManager mvcManager;
         private readonly GenericContextMenuConfig contextMenuConfig;
@@ -36,7 +36,7 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
         private CameraReelResponseCompact currentReelData;
         private UniTaskCompletionSource closeContextMenuTask;
 
-        public OptionButtonController(OptionButtonView view,
+        public CameraReelOptionButtonController(CameraReelOptionButtonView view,
             IMVCManager mvcManager,
             GenericContextMenuConfig contextMenuConfig)
         {

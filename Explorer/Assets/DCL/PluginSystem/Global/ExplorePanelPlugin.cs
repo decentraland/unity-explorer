@@ -263,7 +263,7 @@ namespace DCL.PluginSystem.Global
                 new CameraReelGalleryController(cameraReelView.CameraReelGalleryView, this.cameraReelStorageService,
                     cameraReelScreenshotsStorage,
                     new ReelGalleryConfigParams(settings.GridLayoutFixedColumnCount, settings.ThumbnailHeight, settings.ThumbnailWidth, true, true), true,
-                    cameraReelView.optionsButton,
+                    cameraReelView.CameraReelOptionsButton,
                     webBrowser, decentralandUrlsSource, inputHandler, systemClipboard,
                     new ReelGalleryStringMessages(settings.CameraReelGalleryShareToXMessage, settings.PhotoSuccessfullyDeletedMessage, settings.PhotoSuccessfullyUpdatedMessage, settings.PhotoSuccessfullyDownloadedMessage, settings.LinkCopiedMessage),
                     mvcManager,
