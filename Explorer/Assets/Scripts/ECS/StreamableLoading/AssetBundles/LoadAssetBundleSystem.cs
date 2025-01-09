@@ -24,7 +24,7 @@ namespace ECS.StreamableLoading.AssetBundles
 {
     [UpdateInGroup(typeof(StreamableLoadingGroup))]
     [LogCategory(ReportCategory.ASSET_BUNDLES)]
-    public partial class LoadAssetBundleSystem : LoadSystemBase<AssetBundleData, GetAssetBundleIntention>
+    public partial class LoadAssetBundleSystem : LoadSystemBase<AssetBundleData, LoadingIntentionFromPartialData<GetAssetBundleIntention>>
     {
         private const string METADATA_FILENAME = "metadata.json";
         private const string METRICS_FILENAME = "metrics.json";
@@ -56,12 +56,15 @@ namespace ECS.StreamableLoading.AssetBundles
             return await UniTask.WhenAll(assetBundleMetadata.dependencies.Select(hash => WaitForDependencyAsync(manifest, hash, customEmbeddedSubdirectory, partition, ct)));
         }
 
-        protected override async UniTask<StreamableLoadingResult<AssetBundleData>> FlowInternalAsync(GetAssetBundleIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
+        protected override async UniTask<StreamableLoadingResult<AssetBundleData>> FlowInternalAsync(LoadingIntentionFromPartialData<GetAssetBundleIntention> intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
-            AssetBundleLoadingResult assetBundleResult = await webRequestController
-               .GetAssetBundleAsync(intention.CommonArguments, new GetAssetBundleArguments(loadingMutex, intention.cacheHash), ct, GetReportCategory(),
+            /*AssetBundleLoadingResult assetBundleResult = await webRequestController
+               .GetAssetBundleAsync(intention.CommonArguments, new GetAssetBundleArguments(loadingMutex, intention.Intention.cacheHash), ct, GetReportCategory(),
                     suppressErrors: true); // Suppress errors because here we have our own error handling
+                    */
 
+            //
+            //AssetBundle.LoadFromStream(intention.PartialData)
             AssetBundle? assetBundle = assetBundleResult.AssetBundle;
 
             // Release budget now to not hold it until dependencies are resolved to prevent a deadlock
@@ -69,7 +72,7 @@ namespace ECS.StreamableLoading.AssetBundles
 
             // if GetContent prints an error, null will be thrown
             if (assetBundle == null)
-                throw new NullReferenceException($"{intention.Hash} Asset Bundle is null: {assetBundleResult.DataProcessingError}");
+                throw new NullReferenceException($"{ intention.Intention.Hash} Asset Bundle is null: {assetBundleResult.DataProcessingError}");
 
             try
             {
@@ -100,18 +103,18 @@ namespace ECS.StreamableLoading.AssetBundles
                     // Parse metadata
                     JsonUtility.FromJsonOverwrite(metadataJSON, reusableMetadata.Value);
                     mainAsset = reusableMetadata.Value.mainAsset;
-                    dependencies = await LoadDependenciesAsync(intention, partition, reusableMetadata.Value, ct);
+                    dependencies = await LoadDependenciesAsync( intention.Intention, partition, reusableMetadata.Value, ct);
                 }
                 else
                     dependencies = Array.Empty<AssetBundleData>();
 
                 ct.ThrowIfCancellationRequested();
 
-                string version = intention.Manifest != null ? intention.Manifest.GetVersion() : string.Empty;
+                string version =  intention.Intention.Manifest != null ?  intention.Intention.Manifest.GetVersion() : string.Empty;
                 string source = intention.CommonArguments.CurrentSource.ToStringNonAlloc();
 
                 // if the type was not specified don't load any assets
-                return await CreateAssetBundleDataAsync(assetBundle, metrics, intention.ExpectedObjectType, mainAsset, loadingMutex, dependencies, GetReportData(), version, source, intention.LookForShaderAssets, ct);
+                return await CreateAssetBundleDataAsync(assetBundle, metrics,  intention.Intention.ExpectedObjectType, mainAsset, loadingMutex, dependencies, GetReportData(), version, source, intention.LookForShaderAssets, ct);
             }
             catch (Exception e)
             {

@@ -36,6 +36,10 @@ namespace DCL.PartialDownloading.Systems
 
         protected override async UniTask<StreamableLoadingResult<FullDownloadedData>> FlowInternalAsync(TIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
+
+
+
+
             byte[] partialDownloadBuffer = arrayPool.Rent(CHUNK_SIZE);
 
             //Create the new partial downloading data

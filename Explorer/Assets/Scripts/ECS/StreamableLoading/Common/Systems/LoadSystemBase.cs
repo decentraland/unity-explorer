@@ -3,6 +3,7 @@ using AssetManagement;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Optimization.PerformanceBudgeting;
+using DCL.WebRequests.PartialDownload;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
@@ -14,6 +15,23 @@ using Utility;
 
 namespace ECS.StreamableLoading.Common.Systems
 {
+    public struct LoadingIntentionFromPartialData<TIntention> : ILoadingIntention where TIntention : struct, ILoadingIntention
+    {
+        public TIntention Intention;
+
+        public FullDownloadedData FullData;
+
+        public CancellationTokenSource CancellationTokenSource => Intention.CancellationTokenSource;
+
+        public CommonLoadingArguments CommonArguments
+        {
+            get => Intention.CommonArguments;
+
+            set => Intention.CommonArguments = value;
+        }
+    }
+
+
     /// <summary>
     ///     All-in-one system that handles the live cycle of Unity web requests and Caching.
     ///     It was created for the sake of simplicity
@@ -52,6 +70,8 @@ namespace ECS.StreamableLoading.Common.Systems
 
         protected override void Update(float t)
         {
+            //partial query here
+
             foreach (ref Chunk chunk in query.GetChunkIterator())
             {
                 ref Entity entityFirstElement = ref chunk.Entity(0);
@@ -77,15 +97,12 @@ namespace ECS.StreamableLoading.Common.Systems
 
             EntityReference entityReference = World.Reference(entity);
 
-
             if (state.Value != StreamableLoadingState.Status.Allowed)
             {
                 // If state is in progress the flow was already launched and it will call FinalizeLoading on its own
                 // If state is finished the asset is already resolved and cancellation can be ignored
                 if (state.Value != StreamableLoadingState.Status.InProgress &&
                     state.Value != StreamableLoadingState.Status.Finished &&
-                    state.Value != StreamableLoadingState.Status.Partial &&
-                    state.Value != StreamableLoadingState.Status.FullyDownloaded &&
                     intention.CancellationTokenSource.IsCancellationRequested)
 
                     // If we don't finalize promises preemptively they are being stacked in DeferredLoadingSystem
@@ -99,16 +116,10 @@ namespace ECS.StreamableLoading.Common.Systems
             // it indicates that the current source was used
             intention.RemoveCurrentSource();
 
-            if (intention.CommonArguments.PartialLoading)
-            {
-                state.StartPartialProgress();
-            }
-            else
-            {
-                // Indicate that loading has started
-                state.StartProgress();
-                FlowAsync(entityReference, currentSource, intention, state.AcquiredBudget!, partitionComponent, cancellationTokenSource.Token).Forget();
-            }
+               // Indicate that loading has started
+            state.StartProgress();
+            FlowAsync(entityReference, currentSource, intention, state.AcquiredBudget!, partitionComponent, cancellationTokenSource.Token).Forget();
+
         }
 
         private async UniTask FlowAsync(
