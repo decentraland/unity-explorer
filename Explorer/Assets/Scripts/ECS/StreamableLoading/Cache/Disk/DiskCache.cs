@@ -4,6 +4,7 @@ using System;
 using System.Buffers;
 using System.IO;
 using System.Threading;
+using UnityEngine;
 using Utility.Types;
 
 namespace ECS.StreamableLoading.Cache.Disk
@@ -14,13 +15,10 @@ namespace ECS.StreamableLoading.Cache.Disk
 
         public DiskCache(string dirPath)
         {
+            dirPath = Path.Combine(Application.persistentDataPath!, dirPath);
             this.dirPath = dirPath;
-            if (Directory.Exists(dirPath) == false) Directory.CreateDirectory(this.dirPath);
-
-            ReportHub.Log(
-                ReportCategory.DEBUG,
-                $"DiskCache: use directory at {Path.Combine(Environment.CurrentDirectory, dirPath)}"
-            );
+            if (Directory.Exists(dirPath) == false) Directory.CreateDirectory(dirPath);
+            ReportHub.Log(ReportCategory.DEBUG, $"DiskCache: use directory at {dirPath}");
         }
 
         public async UniTask<EnumResult<TaskError>> PutAsync(string key, string extension, ReadOnlyMemory<byte> data, CancellationToken token)
