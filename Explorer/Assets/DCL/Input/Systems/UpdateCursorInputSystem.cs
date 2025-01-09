@@ -57,6 +57,8 @@ namespace DCL.Input.Systems
 
         public override void Initialize()
         {
+            shortcuts.OpenChat.performed += OnShortcutUnlock;
+            shortcuts.OpenChatCommandLine.performed += OnShortcutUnlock;
             shortcuts.Backpack.performed += OnShortcutUnlock;
             shortcuts.Map.performed += OnShortcutUnlock;
             shortcuts.Settings.performed += OnShortcutUnlock;
@@ -65,6 +67,8 @@ namespace DCL.Input.Systems
 
         public override void Dispose()
         {
+            shortcuts.OpenChat.performed -= OnShortcutUnlock;
+            shortcuts.OpenChatCommandLine.performed -= OnShortcutUnlock;
             shortcuts.Backpack.performed -= OnShortcutUnlock;
             shortcuts.Map.performed -= OnShortcutUnlock;
             shortcuts.Settings.performed -= OnShortcutUnlock;
