@@ -68,14 +68,14 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
             sceneMessageHandlers.Remove(key);
         }
 
-        public void SendMessage(ReadOnlySpan<byte> message, string sceneId, ISceneCommunicationPipe.ConnectivityAssertiveness assertiveness, CancellationToken ct, string? recipient = null)
+        public void SendMessage(ReadOnlySpan<byte> message, string sceneId, ISceneCommunicationPipe.ConnectivityAssertiveness assertiveness, CancellationToken ct, string? specialRecipient = null)
         {
             if (!sceneRoom.IsSceneConnected(sceneId)) return;
 
             MessageWrap<Scene> sceneMessage = messagePipe.NewMessage<Scene>();
 
-            if (!string.IsNullOrEmpty(recipient))
-                sceneMessage.AddSpecialRecipient(recipient);
+            if (!string.IsNullOrEmpty(specialRecipient))
+                sceneMessage.AddSpecialRecipient(specialRecipient);
 
             sceneMessage.Payload.Data = ByteString.CopyFrom(message);
             sceneMessage.Payload.SceneId = sceneId;
