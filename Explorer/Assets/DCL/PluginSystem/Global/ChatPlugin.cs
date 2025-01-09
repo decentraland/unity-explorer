@@ -5,6 +5,7 @@ using DCL.AssetsProvision;
 using DCL.Chat;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
+using DCL.Clipboard;
 using DCL.Emoji;
 using DCL.Input;
 using DCL.Multiplayer.Profiles.Tables;
@@ -32,6 +33,7 @@ namespace DCL.PluginSystem.Global
         private readonly Entity playerEntity;
         private readonly IEventSystem eventSystem;
         private readonly MainUIView mainUIView;
+        private readonly ISystemClipboard systemClipboard;
 
         private ChatController chatController;
 
@@ -46,6 +48,7 @@ namespace DCL.PluginSystem.Global
             IEventSystem eventSystem,
             MainUIView mainUIView,
             IInputBlock inputBlock,
+            ISystemClipboard systemClipboard,
             Arch.Core.World world,
             Entity playerEntity
         )
@@ -63,6 +66,7 @@ namespace DCL.PluginSystem.Global
             this.eventSystem = eventSystem;
             this.mainUIView = mainUIView;
             this.inputBlock = inputBlock;
+            this.systemClipboard = systemClipboard;
         }
 
         public void Dispose() { }
@@ -98,7 +102,8 @@ namespace DCL.PluginSystem.Global
                 playerEntity,
                 dclInput,
                 eventSystem,
-                inputBlock
+                inputBlock,
+                systemClipboard
             );
 
             mvcManager.RegisterController(chatController);

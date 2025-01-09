@@ -5,6 +5,7 @@ using DCL.CharacterCamera;
 using DCL.Chat.Commands;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
+using DCL.Clipboard;
 using DCL.Emoji;
 using DCL.Input;
 using DCL.Input.Component;
@@ -54,6 +55,7 @@ namespace DCL.Chat
         private readonly Mouse device;
         private readonly DCLInput dclInput;
         private readonly IInputBlock inputBlock;
+        private readonly ISystemClipboard systemClipboard;
 
         private CancellationTokenSource cts;
         private CancellationTokenSource emojiPanelCts;
@@ -83,7 +85,8 @@ namespace DCL.Chat
             Entity playerEntity,
             DCLInput dclInput,
             IEventSystem eventSystem,
-            IInputBlock inputBlock
+            IInputBlock inputBlock,
+            ISystemClipboard systemClipboard
         ) : base(viewFactory)
         {
             this.chatEntryConfiguration = chatEntryConfiguration;
@@ -101,6 +104,7 @@ namespace DCL.Chat
             this.dclInput = dclInput;
             this.eventSystem = eventSystem;
             this.inputBlock = inputBlock;
+            this.systemClipboard = systemClipboard;
 
             device = InputSystem.GetDevice<Mouse>();
         }
@@ -138,16 +142,6 @@ namespace DCL.Chat
 
             // Intro message
             chatHistory.AddMessage(ChatMessage.NewFromSystem("Type /help for available commands."));
-        }
-
-        private void OnPointerEnter()
-        {
-
-        }
-
-        private void OnPointerExit()
-        {
-
         }
 
         protected override void OnViewShow()
@@ -340,6 +334,8 @@ namespace DCL.Chat
                 item = listView.NewListViewItem(itemData.SystemMessage ? listView.ItemPrefabDataList[3].mItemPrefab.name : itemData.SentByOwnUser ? listView.ItemPrefabDataList[1].mItemPrefab.name : listView.ItemPrefabDataList[0].mItemPrefab.name);
                 ChatEntryView itemScript = item!.GetComponent<ChatEntryView>()!;
                 SetItemData(index, itemData, itemScript);
+                itemScript.optionsButton?.onClick.RemoveAllListeners();
+                itemScript.optionsButton?.onClick.AddListener( () => OnChatMessageOptionsButtonClicked(itemScript.entryText.text));
             }
 
             return item;
@@ -389,6 +385,13 @@ namespace DCL.Chat
             EnableUnwantedInputs();
         }
 
+        private void OnChatMessageOptionsButtonClicked(string messageText)
+        {
+            //Display context menu with copy option
+            //for now we will just copy the text
+            systemClipboard.Set(messageText);
+        }
+
         private void OnInputSelected(string inputText)
         {
             if (isChatClosed)
@@ -399,6 +402,11 @@ namespace DCL.Chat
             }
 
             UIAudioEventsBus.Instance.SendPlayAudioEvent(viewInstance!.EnterInputAudio);
+
+            if (systemClipboard.HasValue())
+            {
+                //SHOW TOOLTIP SAYING PASTE! See conditions!
+            }
 
             if (isInputSelected) return;
 

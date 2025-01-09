@@ -55,9 +55,6 @@ namespace DCL.Chat
 
         private Vector2 backgroundSize;
 
-        public Action PointerEnter;
-        public Action PointerExit;
-
         public void SetUsername(string username, string walletId)
         {
             if (string.IsNullOrEmpty(walletId))
@@ -119,13 +116,11 @@ namespace DCL.Chat
         public void OnPointerEnter(PointerEventData eventData)
         {
             optionsButton?.gameObject.SetActive(true);
-            PointerEnter?.Invoke();
         }
 
         public void OnPointerExit(PointerEventData eventData)
         {
             optionsButton?.gameObject.SetActive(false);
-            PointerExit?.Invoke();
         }
     }
 }
