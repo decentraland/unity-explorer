@@ -24,6 +24,7 @@ using DCL.Input;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.Landscape;
 using DCL.LOD.Systems;
+using DCL.MapPins.Components;
 using DCL.MapRenderer;
 using DCL.Minimap;
 using DCL.Multiplayer.Connections.Archipelago.AdapterAddress.Current;
@@ -224,6 +225,7 @@ namespace Global.Dynamic
                             assetsProvisioner,
                             placesAPIService,
                             mapPathEventBus,
+                            staticContainer.MapPinsEventBus,
                             notificationsBusController,
                             ct
                         );
@@ -341,6 +343,7 @@ namespace Global.Dynamic
             var archipelagoIslandRoom = IArchipelagoIslandRoom.NewDefault(
                 identityCache,
                 MultiPoolFactory(),
+                new ArrayMemoryPool(),
                 staticContainer.CharacterContainer.CharacterObject,
                 currentAdapterAddress,
                 staticContainer.WebRequestsContainer.WebRequestController
@@ -348,7 +351,7 @@ namespace Global.Dynamic
 
             var reloadSceneController = new ECSReloadScene(staticContainer.ScenesCache, globalWorld, playerEntity, localSceneDevelopment);
 
-            var localSceneDevelopmentController = localSceneDevelopment ? new LocalSceneDevelopmentController(reloadSceneController, dynamicWorldParams.LocalSceneDevelopmentRealm) : null;
+            LocalSceneDevelopmentController? localSceneDevelopmentController = localSceneDevelopment ? new LocalSceneDevelopmentController(reloadSceneController, dynamicWorldParams.LocalSceneDevelopmentRealm) : null;
 
             IRoomHub roomHub = localSceneDevelopment ? NullRoomHub.INSTANCE : new RoomHub(archipelagoIslandRoom, gateKeeperSceneRoom);
             var messagePipesHub = new MessagePipesHub(roomHub, MultiPoolFactory(), MultiPoolFactory(), memoryPool);
@@ -474,20 +477,22 @@ namespace Global.Dynamic
 
             var currentSceneInfo = new CurrentSceneInfo();
             var connectionStatusPanelPlugin = new ConnectionStatusPanelPlugin(userInAppInAppInitializationFlow, mvcManager, mainUIView, roomsStatus, currentSceneInfo, reloadSceneController, globalWorld, playerEntity, debugBuilder);
+            var chatTeleporter = new ChatTeleporter(realmNavigator, new ChatEnvironmentValidator(bootstrapContainer.Environment), bootstrapContainer.DecentralandUrlsSource);
 
             var chatCommands = new List<IChatCommand>
             {
-                new GoToChatCommand(realmNavigator),
-                new ChangeRealmChatCommand(realmNavigator, bootstrapContainer.DecentralandUrlsSource, new EnvironmentValidator(bootstrapContainer.Environment)),
+                new GoToChatCommand(chatTeleporter, staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource),
+                new GoToLocalChatCommand(chatTeleporter),
+                new WorldChatCommand(chatTeleporter),
                 new DebugPanelChatCommand(debugBuilder, connectionStatusPanelPlugin),
-                new ShowEntityInfoChatCommand(worldInfoHub),
+                new ShowEntityChatCommand(worldInfoHub),
                 new ClearChatCommand(chatHistory),
                 new ReloadSceneChatCommand(reloadSceneController),
                 new LoadPortableExperienceChatCommand(staticContainer.PortableExperiencesController, staticContainer.FeatureFlagsCache),
                 new KillPortableExperienceChatCommand(staticContainer.PortableExperiencesController, staticContainer.FeatureFlagsCache),
             };
 
-            chatCommands.Add(new HelpChatCommand(chatCommands));
+            chatCommands.Add(new HelpChatCommand(chatCommands, appArgs));
 
             IChatMessagesBus coreChatMessageBus = new MultiplayerChatMessagesBus(messagePipesHub, profileRepository, new MessageDeduplication<double>())
                                                  .WithSelfResend(identityCache, profileRepository)
@@ -548,7 +553,7 @@ namespace Global.Dynamic
             ICameraReelImagesMetadataDatabase cameraReelImagesMetadataDatabase = new CameraReelImagesMetadataRemoteDatabase(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
             ICameraReelScreenshotsStorage cameraReelScreenshotsStorage = new CameraReelS3BucketScreenshotsStorage(staticContainer.WebRequestsContainer.WebRequestController);
 
-            CameraReelRemoteStorageService cameraReelStorageService = new CameraReelRemoteStorageService(cameraReelImagesMetadataDatabase, cameraReelScreenshotsStorage, identityCache.Identity?.Address);
+            var cameraReelStorageService = new CameraReelRemoteStorageService(cameraReelImagesMetadataDatabase, cameraReelScreenshotsStorage, identityCache.Identity?.Address);
 
             ISystemClipboard clipboard = new UnityClipboard();
 
@@ -737,6 +742,7 @@ namespace Global.Dynamic
                     playerEntity,
                     includeCameraReel
                 ),
+                new FriendsPlugin(bootstrapContainer.DecentralandUrlsSource)
             };
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);
@@ -765,6 +771,7 @@ namespace Global.Dynamic
                     assetBundlesURL,
                     dclCursor,
                     mainUIView.SidebarView.EnsureNotNull().InWorldCameraButton,
+                    dynamicWorldDependencies.RootUIDocument,
                     globalWorld,
                     debugBuilder));
 

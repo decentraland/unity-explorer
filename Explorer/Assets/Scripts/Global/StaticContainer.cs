@@ -11,6 +11,7 @@ using DCL.FeatureFlags;
 using DCL.Gizmos.Plugin;
 using DCL.Input;
 using DCL.Interaction.Utility;
+using DCL.MapPins.Bus;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Optimization.PerformanceBudgeting;
@@ -58,12 +59,12 @@ namespace Global
     /// </summary>
     public class StaticContainer : IDCLPlugin<StaticSettings>
     {
-        public Entity PlayerEntity { get; set; }
         public readonly ObjectProxy<DCLInput> InputProxy = new ();
         public readonly ObjectProxy<AvatarBase> MainPlayerAvatarBaseProxy = new ();
         public readonly ObjectProxy<IRoomHub> RoomHubProxy = new ();
         public readonly RealmData RealmData = new ();
         public readonly PartitionDataContainer PartitionDataContainer = new ();
+        public readonly IMapPinsEventBus MapPinsEventBus = new MapPinsEventBus();
 
         private ProvidedInstance<CharacterObject> characterObject;
         private ProvidedAsset<PartitionSettingsAsset> partitionSettings;
@@ -71,6 +72,7 @@ namespace Global
 
         private IAssetsProvisioner assetsProvisioner;
         private ITexturesFuse texturesFuse;
+        public Entity PlayerEntity { get; set; }
 
         public ComponentsContainer ComponentsContainer { get; private set; }
         public CharacterContainer CharacterContainer { get; private set; }
@@ -187,7 +189,7 @@ namespace Global
                 new SceneMapping()
             );
 
-            var cacheWidget = container.DebugContainerBuilder.TryAddWidget("Cache Textures");
+            DebugWidgetBuilder? cacheWidget = container.DebugContainerBuilder.TryAddWidget("Cache Textures");
 
             container.QualityContainer = await QualityContainer.CreateAsync(settingsContainer, container.assetsProvisioner);
             container.CacheCleaner = new CacheCleaner(sharedDependencies.FrameTimeBudget, cacheWidget);
@@ -201,12 +203,15 @@ namespace Global
                 web3IdentityProvider,
                 texturesFuse,
                 container.DebugContainerBuilder,
-                staticSettings.WebRequestsBudget
+                staticSettings.WebRequestsBudget,
+                isTextureCompressionEnabled
             );
 
             container.PhysicsTickProvider = new PhysicsTickProvider();
             container.FeatureFlagsCache = new FeatureFlagsCache();
-            container.PortableExperiencesController = new ECSPortableExperiencesController(globalWorld, web3IdentityProvider, container.WebRequestsContainer.WebRequestController, container.ScenesCache, container.FeatureFlagsCache);
+
+            container.PortableExperiencesController = new ECSPortableExperiencesController(web3IdentityProvider, container.WebRequestsContainer.WebRequestController, container.ScenesCache, container.FeatureFlagsCache, localSceneDevelopment);
+
 
             container.FeatureFlagsProvider = new HttpFeatureFlagsProvider(container.WebRequestsContainer.WebRequestController,
                 container.FeatureFlagsCache);
@@ -247,8 +252,8 @@ namespace Global
                 new TweenPlugin(),
                 new MediaPlayerPlugin(sharedDependencies, videoTexturePool, sharedDependencies.FrameTimeBudget, container.assetsProvisioner, container.WebRequestsContainer.WebRequestController, container.CacheCleaner, worldVolumeMacBus, exposedGlobalDataContainer.ExposedCameraData, container.FeatureFlagsCache),
                 new CharacterTriggerAreaPlugin(globalWorld, container.MainPlayerAvatarBaseProxy, exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy, container.CharacterContainer.CharacterObject, componentsContainer.ComponentPoolsRegistry, container.assetsProvisioner, container.CacheCleaner, exposedGlobalDataContainer.ExposedCameraData, container.SceneRestrictionBusController, web3IdentityProvider),
-                new InteractionsAudioPlugin(container.assetsProvisioner),
-                new MapPinPlugin(globalWorld, container.FeatureFlagsCache),
+                new PointerInputAudioPlugin(container.assetsProvisioner),
+                new MapPinPlugin(globalWorld, container.FeatureFlagsCache, container.MapPinsEventBus),
                 new MultiplayerPlugin(),
                 new RealmInfoPlugin(container.RealmData, container.RoomHubProxy),
                 new InputModifierPlugin(globalWorld, container.PlayerEntity, container.SceneRestrictionBusController),

@@ -3,7 +3,7 @@ using System;
 
 namespace CommunicationData.URLHelpers
 {
-    public readonly struct ENS
+    public readonly struct ENS : IEquatable<ENS>
     {
         private readonly string ens;
 
@@ -14,11 +14,16 @@ namespace CommunicationData.URLHelpers
 
         public bool IsValid => !string.IsNullOrEmpty(ens) && ens.IsEns();
 
-        public bool Equals (ENS other) => Equals(other.ens);
+        public bool Equals(ENS other) =>
+            Equals(other.ens);
 
         public bool Equals(string other) =>
             string.Equals(ens, other, StringComparison.OrdinalIgnoreCase);
 
-        public override string ToString() => ens;
+        public override string ToString() =>
+            ens;
+
+        public override int GetHashCode() =>
+            ens.GetHashCode();
     }
 }

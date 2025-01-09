@@ -25,25 +25,10 @@ namespace DCL.Multiplayer.Connections.Archipelago.SignFlow
             this.log = log;
         }
 
-        public async UniTask EnsureConnectedAsync(string adapterUrl, CancellationToken token)
-        {
-            log($"{PREFIX} Connect start for {adapterUrl}");
-            await origin.EnsureConnectedAsync(adapterUrl, token);
-            log($"{PREFIX} Connect finish for {adapterUrl}");
-        }
-
-        public async UniTask<LightResult<string>> MessageForSignAsync(string ethereumAddress, CancellationToken token)
-        {
-            log($"{PREFIX} MessageForSignAsync start for address {ethereumAddress}");
-            var result = await origin.MessageForSignAsync(ethereumAddress, token);
-            log($"{PREFIX} MessageForSignAsync finish for address {ethereumAddress} with result success: {result.Success}");
-            return result;
-        }
-
-        public async UniTask<LightResult<string>> WelcomePeerIdAsync(string signedMessageAuthChainJson, CancellationToken token)
+        public async UniTask<Result> ConnectAsync(string signedMessageAuthChainJson, CancellationToken token)
         {
             log($"{PREFIX} WelcomePeerIdAsync start for json {signedMessageAuthChainJson}");
-            LightResult<string> result = await origin.WelcomePeerIdAsync(signedMessageAuthChainJson, token);
+            Result result = await origin.ConnectAsync(signedMessageAuthChainJson, token);
             log($"{PREFIX} WelcomePeerIdAsync finish for json {result} with result {result}");
             return result;
         }
