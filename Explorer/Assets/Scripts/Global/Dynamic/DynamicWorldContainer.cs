@@ -627,7 +627,7 @@ namespace Global.Dynamic
                 new ErrorPopupPlugin(mvcManager, assetsProvisioner),
                 connectionStatusPanelPlugin,
                 new MinimapPlugin(mvcManager, minimap),
-                new ChatPlugin(assetsProvisioner, mvcManager, chatMessagesBus, chatHistory, entityParticipantTable, nametagsData, dclInput, unityEventSystem, mainUIView, staticContainer.InputBlock, globalWorld, playerEntity),
+                new ChatPlugin(assetsProvisioner, mvcManager, chatMessagesBus, chatHistory, entityParticipantTable, nametagsData, dclInput, unityEventSystem, mainUIView, staticContainer.InputBlock, clipboard, globalWorld, playerEntity),
                 new ExplorePanelPlugin(
                     assetsProvisioner,
                     mvcManager,
@@ -742,7 +742,8 @@ namespace Global.Dynamic
                     playerEntity,
                     includeCameraReel
                 ),
-                new FriendsPlugin(bootstrapContainer.DecentralandUrlsSource)
+                new FriendsPlugin(bootstrapContainer.DecentralandUrlsSource),
+                new GenericPopupsPlugin(assetsProvisioner, mvcManager, clipboard),
             };
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);
