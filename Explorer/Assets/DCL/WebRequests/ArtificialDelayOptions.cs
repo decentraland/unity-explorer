@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace DCL.WebRequests
 {
-    [CreateAssetMenu(fileName = "Web Artificial Delay", menuName = "Web Artificial Delay", order = 0)]
+    [CreateAssetMenu(fileName = "Web Artificial Delay", menuName = "DCL/Various/Web Artificial Delay")]
     public class ArtificialDelayOptions : ScriptableObject
     {
         [SerializeField] private bool use;

@@ -6,7 +6,7 @@ using Utility;
 
 namespace DCL.Emoji
 {
-    [CreateAssetMenu(fileName = "EmojiPanelConfig", menuName = "DCL/SO/EmojiPanelConfig")]
+    [CreateAssetMenu(fileName = "EmojiPanelConfig", menuName = "DCL/Chat/Emoji Panel Config")]
     public class EmojiPanelConfigurationSO : ScriptableObject
     {
         [SerializeField] public List<EmojiSection> EmojiSections;
@@ -30,6 +30,6 @@ namespace DCL.Emoji
         TRAVEL_AND_PLACES,
         OBJECTS,
         SYMBOLS_AND_SIGNS,
-        FLAGS
+        FLAGS,
     }
 }
