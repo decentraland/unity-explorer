@@ -299,6 +299,7 @@ GameObject:
   - component: {fileID: 8176267053820454526}
   - component: {fileID: 2400081649025363240}
   - component: {fileID: 5176729932911858396}
+  - component: {fileID: 4256803560463002667}
   m_Layer: 5
   m_Name: ToastOuter
   m_TagString: Untagged
@@ -364,57 +365,13 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 3
---- !u!1 &9159321541963361297
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 6281399907979109223}
-  - component: {fileID: 7112539978140402351}
-  - component: {fileID: 2726626839160799862}
-  - component: {fileID: 6590594429485177375}
-  - component: {fileID: 794936495393782871}
-  - component: {fileID: 8637912918877643679}
-  - component: {fileID: 4824684368180019669}
-  - component: {fileID: 8829555385145333076}
-  - component: {fileID: 8057328184463739460}
-  m_Layer: 0
-  m_Name: PastePopupToastView
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!224 &6281399907979109223
-RectTransform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 9159321541963361297}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 0}
-  m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 3921238631991251244}
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 19.4, y: 40.9}
-  m_SizeDelta: {x: 69, y: 43}
-  m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &7112539978140402351
+--- !u!114 &4256803560463002667
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 9159321541963361297}
+  m_GameObject: {fileID: 8558226332446126134}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
@@ -452,6 +409,49 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!1 &9159321541963361297
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6281399907979109223}
+  - component: {fileID: 2726626839160799862}
+  - component: {fileID: 794936495393782871}
+  - component: {fileID: 8637912918877643679}
+  - component: {fileID: 4824684368180019669}
+  - component: {fileID: 8829555385145333076}
+  - component: {fileID: 8057328184463739460}
+  - component: {fileID: 9104206161594051692}
+  m_Layer: 0
+  m_Name: PastePopupToastView
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &6281399907979109223
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9159321541963361297}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 0}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 3921238631991251244}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 19.4, y: 40.9}
+  m_SizeDelta: {x: 69, y: 43}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!225 &2726626839160799862
 CanvasGroup:
   m_ObjectHideFlags: 0
@@ -464,21 +464,6 @@ CanvasGroup:
   m_Interactable: 1
   m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 0
---- !u!114 &6590594429485177375
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 9159321541963361297}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1cdc6c1a43024e58bcd05d3e69a19db4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  <Button>k__BackingField: {fileID: 7112539978140402351}
-  <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
-  <ButtonHoverAudio>k__BackingField: {fileID: 11400000, guid: 59da234351971c0498a566fb811b0c36, type: 2}
 --- !u!114 &794936495393782871
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -494,7 +479,7 @@ MonoBehaviour:
   <canvas>k__BackingField: {fileID: 4824684368180019669}
   <raycaster>k__BackingField: {fileID: 8057328184463739460}
   <viewAnimationElement>k__BackingField: {fileID: 8637912918877643679}
-  <PasteButton>k__BackingField: {fileID: 7112539978140402351}
+  <PasteButton>k__BackingField: {fileID: 4256803560463002667}
   <PasteToastPosition>k__BackingField: {fileID: 3921238631991251244}
 --- !u!114 &8637912918877643679
 MonoBehaviour:
@@ -573,3 +558,18 @@ MonoBehaviour:
   m_BlockingMask:
     serializedVersion: 2
     m_Bits: 4294967295
+--- !u!114 &9104206161594051692
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9159321541963361297}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1cdc6c1a43024e58bcd05d3e69a19db4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  <Button>k__BackingField: {fileID: 4256803560463002667}
+  <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
+  <ButtonHoverAudio>k__BackingField: {fileID: 11400000, guid: 59da234351971c0498a566fb811b0c36, type: 2}

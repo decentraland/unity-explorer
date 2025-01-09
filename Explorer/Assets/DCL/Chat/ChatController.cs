@@ -404,22 +404,20 @@ namespace DCL.Chat
 
         private void PasteClipboardText(string pastedText)
         {
-            if (isInputSelected)
-            {
-                int caretPosition = viewInstance!.InputField.stringPosition;
-                viewInstance.InputField.text = viewInstance.InputField.text.Insert(caretPosition, pastedText + " ");
-                viewInstance.InputField.stringPosition += pastedText.Length + 1;
-                viewInstance.InputField.ActivateInputField();
-            }
+            int caretPosition = viewInstance!.InputField.stringPosition;
+            viewInstance.InputField.text = viewInstance.InputField.text.Insert(caretPosition, pastedText + " ");
+            viewInstance.InputField.stringPosition += pastedText.Length + 1;
+            viewInstance.InputField.ActivateInputField();
         }
 
         private void OnRightClickRegistered()
         {
             if (isInputSelected && systemClipboard.HasValue())
             {
+                closePastePopupTask = new UniTaskCompletionSource();
                 var data = new PastePopupToastData(
                     PasteClipboardText,
-                    viewInstance!.PastePopupPosition.anchoredPosition,
+                    viewInstance!.PastePopupPosition.position,
                     closePastePopupTask.Task);
                 mvcManager.ShowAsync(PastePopupToastController.IssueCommand(data)).Forget();
             }

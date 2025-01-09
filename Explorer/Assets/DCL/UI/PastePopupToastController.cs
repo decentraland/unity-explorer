@@ -24,8 +24,8 @@ namespace DCL.UI
 
         protected override void OnBeforeViewShow()
         {
+            viewInstance!.PasteToastPosition.position = inputData.Position;
             base.OnBeforeViewShow();
-            viewInstance!.PasteToastPosition.anchoredPosition = inputData.Position;
         }
 
         private void OnPasteButtonClicked()
