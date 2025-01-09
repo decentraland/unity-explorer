@@ -6,6 +6,13 @@ namespace DCL.Friends.UI
 {
     public class FriendsPanelController : ControllerBase<FriendsPanelView, FriendsPanelParameter>
     {
+        private enum FriendsPanelTab
+        {
+            FRIENDS,
+            REQUESTS,
+            BLOCKED
+        }
+
         private readonly IFriendsService friendsService;
         private readonly IFriendsEventBus friendEventBus;
 
@@ -19,14 +26,31 @@ namespace DCL.Friends.UI
             this.friendEventBus = friendEventBus;
         }
 
-        protected override void OnViewInstantiated()
-        {
-            base.OnViewInstantiated();
-        }
-
         public override void Dispose()
         {
             base.Dispose();
+
+            viewInstance!.FriendsTabButton.onClick.RemoveAllListeners();
+            viewInstance.RequestsTabButton.onClick.RemoveAllListeners();
+            viewInstance.BlockedTabButton.onClick.RemoveAllListeners();
+        }
+
+        protected override void OnViewInstantiated()
+        {
+            base.OnViewInstantiated();
+
+            viewInstance!.FriendsTabButton.onClick.AddListener(() => ToggleTabs(FriendsPanelTab.FRIENDS));
+            viewInstance.RequestsTabButton.onClick.AddListener(() => ToggleTabs(FriendsPanelTab.REQUESTS));
+            viewInstance.BlockedTabButton.onClick.AddListener(() => ToggleTabs(FriendsPanelTab.BLOCKED));
+
+            ToggleTabs(FriendsPanelTab.FRIENDS);
+        }
+
+        private void ToggleTabs(FriendsPanelTab tab)
+        {
+            viewInstance!.FriendsTabSelected.SetActive(tab == FriendsPanelTab.FRIENDS);
+            viewInstance.RequestsTabSelected.SetActive(tab == FriendsPanelTab.REQUESTS);
+            viewInstance.BlockedTabSelected.SetActive(tab == FriendsPanelTab.BLOCKED);
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
