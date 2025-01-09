@@ -776,7 +776,7 @@ namespace Global.Dynamic
                     debugBuilder));
 
             if (includeFriends)
-                globalPlugins.Add(new FriendsPlugin(bootstrapContainer.DecentralandUrlsSource));
+                globalPlugins.Add(new FriendsPlugin(mainUIView, bootstrapContainer.DecentralandUrlsSource, mvcManager));
 
             if (dynamicWorldParams.EnableAnalytics)
                 globalPlugins.Add(new AnalyticsPlugin(

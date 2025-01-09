@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.Chat;
 using DCL.ExplorePanel;
+using DCL.Friends.UI;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Notifications.NotificationsMenu;
 using DCL.NotificationsBusController.NotificationsBus;
@@ -104,7 +105,7 @@ namespace DCL.UI.Sidebar
                 viewInstance.cameraReelButton.gameObject.SetActive(false);
                 viewInstance.InWorldCameraButton.gameObject.SetActive(false);
             }
-            
+
             if (includeFriends)
                 viewInstance.friendsButton.onClick.AddListener(OpenFriendsPanel);
             else
@@ -203,7 +204,8 @@ namespace DCL.UI.Sidebar
         {
             CloseAllWidgets();
             sidebarBus.BlockSidebar();
-            // notificationsMenuController.ToggleNotificationsPanel(false);
+
+            mvcManager.ShowAsync(FriendsPanelController.IssueCommand(new FriendsPanelParameter())).Forget();
         }
 
         private void OpenExplorePanelInSection(ExploreSections section, BackpackSections backpackSection = BackpackSections.Avatar)

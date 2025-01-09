@@ -1,4 +1,5 @@
 ﻿using DCL.EmotesWheel;
+using DCL.Friends.UI;
 using DCL.Notifications.NotificationsMenu;
 using DCL.UI.ProfileElements;
 using MVC;
@@ -29,8 +30,10 @@ namespace DCL.UI.Sidebar
         [field: SerializeField] internal Button backpackButton { get; private set; }
         [field: SerializeField] internal Button cameraReelButton { get; private set; }
         [field: SerializeField] internal Button settingsButton { get; private set; }
-        [field: SerializeField] internal Button friendsButton { get; private set; }
 
+        [field: Header("Friends")]
+        [field: SerializeField] internal Button friendsButton { get; private set; }
+        [field: SerializeField] public FriendsPanelView FriendsPanelView { get; private set; }
 
         [field: Header("Sidebar Settings")]
         [field: SerializeField] internal Button sidebarSettingsButton { get; private set; }
