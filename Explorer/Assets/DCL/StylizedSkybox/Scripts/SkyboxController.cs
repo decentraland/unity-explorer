@@ -1,5 +1,6 @@
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
+using DCL.StylizedSkybox.Scripts;
 using System;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -69,8 +70,7 @@ public class SkyboxController : MonoBehaviour
     public float DynamicTimeNormalized { get; private set; }
     public float CurrentTimeNormalized { get; private set; }
 
-    public event Action OnSkyboxUpdated;
-
+    private StylizedSkyboxSettingsAsset settingsAsset;
     private bool isInitialized;
     private Animation lightAnimator;
     private float sinceLastRefresh = 5;
@@ -100,8 +100,10 @@ public class SkyboxController : MonoBehaviour
         }
     }
 
-    public void Initialize(Material skyboxMat, Light dirLight, AnimationClip skyboxAnimationClip, FeatureFlagsCache featureFlagsCache)
+    public void Initialize(Material skyboxMat, Light dirLight, AnimationClip skyboxAnimationClip, FeatureFlagsCache featureFlagsCache, StylizedSkyboxSettingsAsset settingsAsset)
     {
+        this.settingsAsset = settingsAsset;
+
         if (skyboxMat != null)
         {
 #if UNITY_EDITOR
@@ -158,7 +160,39 @@ public class SkyboxController : MonoBehaviour
         }
         else { DynamicTimeNormalized = DEFAULT_TIME; }
 
+        settingsAsset.NormalizedTime =DynamicTimeNormalized;
+        settingsAsset.NormalizedTimeChanged += OnNormalizedTimeChanged;
+        settingsAsset.UseDynamicTime = UseDynamicTime;
+        settingsAsset.UseDynamicTimeChanged += OnUseDynamicTimeChanged;
+
         isInitialized = true;
+    }
+
+    private void OnSkyboxUpdated()
+    {
+        // When skybox gets dynamically updated we refresh the
+        // settings value so it reflects the current state
+
+        if (UseDynamicTime)
+        {
+            settingsAsset!.NormalizedTime = DynamicTimeNormalized;
+        }
+    }
+
+    private void OnUseDynamicTimeChanged(bool dynamic)
+    {
+        UseDynamicTime = dynamic;
+
+        if (dynamic)
+            settingsAsset!.NormalizedTime = DynamicTimeNormalized;
+    }
+
+    private void OnNormalizedTimeChanged(float tod)
+    {
+        if (!UseDynamicTime) // Ignore updates to the value when they come from the skybox
+        {
+            SetTimeOverride(tod);
+        }
     }
 
     /// <summary>
@@ -181,7 +215,7 @@ public class SkyboxController : MonoBehaviour
         UpdateSkyboxColor();
         UpdateFog();
 
-        OnSkyboxUpdated?.Invoke();
+        OnSkyboxUpdated();
     }
 
     /// <summary>
@@ -261,7 +295,7 @@ public class SkyboxController : MonoBehaviour
         //Added the flag to allow editing of the prefab in a separate scene
         //that doesn't have the regular plugin init flow
         if (editMode)
-            Initialize(null, null, null, null);
+            Initialize(null, null, null, null, null);
     }
 #endif
 
