@@ -5,6 +5,7 @@ using System.Buffers;
 using System.IO;
 using System.Threading;
 using UnityEngine;
+using Utility.Multithreading;
 using Utility.Types;
 
 namespace ECS.StreamableLoading.Cache.Disk
@@ -23,6 +24,8 @@ namespace ECS.StreamableLoading.Cache.Disk
 
         public async UniTask<EnumResult<TaskError>> PutAsync(string key, string extension, ReadOnlyMemory<byte> data, CancellationToken token)
         {
+            await using var scope = await ExecuteOnThreadPoolScope.NewScopeAsync();
+
             try
             {
                 string path = PathFrom(key, extension);
@@ -38,6 +41,8 @@ namespace ECS.StreamableLoading.Cache.Disk
 
         public async UniTask<EnumResult<SlicedOwnedMemory<byte>?, TaskError>> ContentAsync(string key, string extension, CancellationToken token)
         {
+            await using var scope = await ExecuteOnThreadPoolScope.NewScopeAsync();
+
             try
             {
                 string path = PathFrom(key, extension);
@@ -56,15 +61,17 @@ namespace ECS.StreamableLoading.Cache.Disk
             catch (Exception e) { return EnumResult<SlicedOwnedMemory<byte>?, TaskError>.ErrorResult(TaskError.UnexpectedException, e.Message ?? string.Empty); }
         }
 
-        public UniTask<EnumResult<TaskError>> RemoveAsync(string key, string extension, CancellationToken token)
+        public async UniTask<EnumResult<TaskError>> RemoveAsync(string key, string extension, CancellationToken token)
         {
+            await using var scope = await ExecuteOnThreadPoolScope.NewScopeAsync();
+
             try
             {
                 string path = PathFrom(key, extension);
                 if (File.Exists(path)) File.Delete(path);
-                return UniTask.FromResult(EnumResult<TaskError>.SuccessResult());
+                return EnumResult<TaskError>.SuccessResult();
             }
-            catch (Exception e) { return UniTask.FromResult(EnumResult<TaskError>.ErrorResult(TaskError.UnexpectedException, e.Message ?? string.Empty)); }
+            catch (Exception e) { return EnumResult<TaskError>.ErrorResult(TaskError.UnexpectedException, e.Message ?? string.Empty); }
         }
 
         private string PathFrom(string key, string extension)
