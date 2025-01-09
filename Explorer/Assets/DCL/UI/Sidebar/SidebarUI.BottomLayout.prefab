@@ -820,6 +820,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: InWorldCamera.SIdebarButton
       objectReference: {fileID: 0}
+    - target: {fileID: 5557610074570603611, guid: a04b1390c1d67044daee0000800dff26, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 34
+      objectReference: {fileID: 0}
     - target: {fileID: 7795073894138444853, guid: a04b1390c1d67044daee0000800dff26, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5

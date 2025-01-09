@@ -138,7 +138,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
                     connectionLoopHealth.Set(enterState);
                     await func(ct);
                 }
-                catch (Exception e)
+                catch (Exception e) when (e is not OperationCanceledException)
                 {
                     ReportHub.LogError(ReportCategory.LIVEKIT, $"{logPrefix} - {funcName} failed: {e}");
                     connectionLoopHealth.Set(stateOnException);
@@ -236,6 +236,12 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
             await room.SwapRoomsAsync(roomSelection, previous, newRoom, roomsPool, ct);
 
             return (connectResult, roomSelection);
+        }
+
+        public void Dispose()
+        {
+            cancellationTokenSource.SafeCancelAndDispose();
+            cancellationTokenSource = null;
         }
     }
 }

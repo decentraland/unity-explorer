@@ -4,7 +4,7 @@ using UnityEngine.Serialization;
 
 namespace DCL.Nametags
 {
-    [CreateAssetMenu(fileName = "ChatBubbleConfiguration", menuName = "SO/ChatBubbleConfiguration")]
+    [CreateAssetMenu(fileName = "ChatBubbleConfiguration", menuName = "DCL/Chat/Chat Bubble Configuration")]
     public class ChatBubbleConfigurationSO : ScriptableObject
     {
         public float nametagMarginOffsetWidth;
