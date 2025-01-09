@@ -3,6 +3,7 @@ using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
@@ -85,24 +86,16 @@ namespace DCL.LOD
                     int extraInstances = Mathf.Clamp((roadAssetPool as ObjectPool<Transform>).CountAll / 2, POOLS_MIN_NEW_INSTANCES, POOLS_MAX_NEW_INSTANCES);
                     Transform[] precachedInstances = new Transform[extraInstances];
 
-                    for (int i = 0; i < extraInstances; ++i)
-                    {
+                    for (var i = 0; i < extraInstances; ++i)
                         precachedInstances[i] = roadAssetPool.Get();
-                    }
 
-                    for (int i = 0; i < extraInstances; ++i)
-                    {
+                    for (var i = 0; i < extraInstances; ++i)
                         roadAssetPool.Release(precachedInstances[i]);
-                    }
                 }
 
-                // Debug: Uncomment this to know the content of the pools
-                //string log = "RoadAssetPoolDictionary\nTAKING: " + key + "\n";
-                //foreach (KeyValuePair<string,IObjectPool<Transform>> keyValuePair in roadAssetPoolDictionary)
-                //{
-                //    log += keyValuePair.Key + ": " + (keyValuePair.Value as ObjectPool<Transform>).CountAll + " (" + (keyValuePair.Value as ObjectPool<Transform>).CountActive + ")\n";
-                //}
-                //Debug.Log(log);
+                //  // Debug: Uncomment this to know the content of the pools
+                // string log = "RoadAssetPoolDictionary\nTAKING: " + key + "\n";
+                // Debug.Log(roadAssetPoolDictionary.Aggregate(log, (Current, keyValuePair) => Current + (keyValuePair.Key + ": " + (keyValuePair.Value as ObjectPool<Transform>).CountAll + " (" + (keyValuePair.Value as ObjectPool<Transform>).CountActive + ")\n")));
 
                 roadAsset = roadAssetPool.Get();
 
