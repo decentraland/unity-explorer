@@ -405,8 +405,8 @@ namespace DCL.Chat
         private void PasteClipboardText(string pastedText)
         {
             int caretPosition = viewInstance!.InputField.stringPosition;
-            viewInstance.InputField.text = viewInstance.InputField.text.Insert(caretPosition, pastedText + " ");
-            viewInstance.InputField.stringPosition += pastedText.Length + 1;
+            viewInstance.InputField.text = viewInstance.InputField.text.Insert(caretPosition, pastedText);
+            viewInstance.InputField.stringPosition += pastedText.Length;
             viewInstance.InputField.ActivateInputField();
         }
 
@@ -420,6 +420,7 @@ namespace DCL.Chat
                     viewInstance!.PastePopupPosition.position,
                     closePastePopupTask.Task);
                 mvcManager.ShowAsync(PastePopupToastController.IssueCommand(data)).Forget();
+                viewInstance.InputField.ActivateInputField();
             }
         }
 
