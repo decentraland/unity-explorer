@@ -12,6 +12,7 @@ using DCL.Input.Component;
 using DCL.Input.Systems;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
+using DCL.UI;
 using ECS.Abstract;
 using MVC;
 using SuperScrollView;
@@ -56,6 +57,7 @@ namespace DCL.Chat
         private readonly DCLInput dclInput;
         private readonly IInputBlock inputBlock;
         private readonly ISystemClipboard systemClipboard;
+        private readonly IMVCManager mvcManager;
 
         private CancellationTokenSource cts;
         private CancellationTokenSource emojiPanelCts;
@@ -64,6 +66,7 @@ namespace DCL.Chat
         private bool isChatClosed;
         private bool isInputSelected;
         private IReadOnlyList<RaycastResult> raycastResults;
+        private UniTaskCompletionSource closePastePopupTask;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
 
@@ -86,7 +89,8 @@ namespace DCL.Chat
             DCLInput dclInput,
             IEventSystem eventSystem,
             IInputBlock inputBlock,
-            ISystemClipboard systemClipboard
+            ISystemClipboard systemClipboard,
+            IMVCManager mvcManager
         ) : base(viewFactory)
         {
             this.chatEntryConfiguration = chatEntryConfiguration;
@@ -105,6 +109,7 @@ namespace DCL.Chat
             this.eventSystem = eventSystem;
             this.inputBlock = inputBlock;
             this.systemClipboard = systemClipboard;
+            this.mvcManager = mvcManager;
 
             device = InputSystem.GetDevice<Mouse>();
         }
@@ -137,6 +142,10 @@ namespace DCL.Chat
 
             viewInstance.ChatBubblesToggle.Toggle.onValueChanged.AddListener(OnToggleChatBubblesValueChanged);
             viewInstance.ChatBubblesToggle.Toggle.SetIsOnWithoutNotify(nametagsData.showChatBubbles);
+
+            dclInput.UI.RightClick.performed += b=> OnRightClickRegistered();
+            closePastePopupTask = new UniTaskCompletionSource();
+
             OnToggleChatBubblesValueChanged(nametagsData.showChatBubbles);
             OnFocus();
 
@@ -154,6 +163,7 @@ namespace DCL.Chat
         protected override void OnViewClose()
         {
             base.OnViewClose();
+            closePastePopupTask.TrySetResult();
             dclInput.UI.Click.performed -= OnClick;
             dclInput.Shortcuts.ToggleNametags.performed -= ToggleNametagsFromShortcut;
         }
@@ -392,6 +402,29 @@ namespace DCL.Chat
             systemClipboard.Set(messageText);
         }
 
+        private void PasteClipboardText(string pastedText)
+        {
+            if (isInputSelected)
+            {
+                int caretPosition = viewInstance!.InputField.stringPosition;
+                viewInstance.InputField.text = viewInstance.InputField.text.Insert(caretPosition, pastedText + " ");
+                viewInstance.InputField.stringPosition += pastedText.Length + 1;
+                viewInstance.InputField.ActivateInputField();
+            }
+        }
+
+        private void OnRightClickRegistered()
+        {
+            if (isInputSelected && systemClipboard.HasValue())
+            {
+                var data = new PastePopupToastData(
+                    PasteClipboardText,
+                    viewInstance!.PastePopupPosition.anchoredPosition,
+                    closePastePopupTask.Task);
+                mvcManager.ShowAsync(PastePopupToastController.IssueCommand(data)).Forget();
+            }
+        }
+
         private void OnInputSelected(string inputText)
         {
             if (isChatClosed)
@@ -402,11 +435,6 @@ namespace DCL.Chat
             }
 
             UIAudioEventsBus.Instance.SendPlayAudioEvent(viewInstance!.EnterInputAudio);
-
-            if (systemClipboard.HasValue())
-            {
-                //SHOW TOOLTIP SAYING PASTE! See conditions!
-            }
 
             if (isInputSelected) return;
 
@@ -421,7 +449,7 @@ namespace DCL.Chat
         {
             HandleEmojiSearch(inputText);
             UIAudioEventsBus.Instance.SendPlayAudioEvent(viewInstance!.ChatInputTextAudio);
-
+            closePastePopupTask.TrySetResult();
             viewInstance.CharacterCounter.SetCharacterCount(inputText.Length);
             viewInstance.StopChatEntriesFadeout();
         }

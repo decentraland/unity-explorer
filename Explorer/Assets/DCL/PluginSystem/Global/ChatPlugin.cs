@@ -103,7 +103,8 @@ namespace DCL.PluginSystem.Global
                 dclInput,
                 eventSystem,
                 inputBlock,
-                systemClipboard
+                systemClipboard,
+                mvcManager
             );
 
             mvcManager.RegisterController(chatController);

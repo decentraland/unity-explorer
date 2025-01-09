@@ -1,18 +1,17 @@
-using System;
 using UnityEngine;
 
 namespace DCL.Clipboard
 {
     public class UnityClipboard : ISystemClipboard
     {
-        private bool hasValue;
-
         public void Set(string text)
         {
             GUIUtility.systemCopyBuffer = text;
-            hasValue = true;
         }
 
-        public bool HasValue() => hasValue;
+        public string Get() =>
+            GUIUtility.systemCopyBuffer;
+
+        public bool HasValue() => GUIUtility.systemCopyBuffer?.Length > 0;
     }
 }

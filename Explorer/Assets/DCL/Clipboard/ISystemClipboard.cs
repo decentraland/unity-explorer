@@ -4,5 +4,6 @@ namespace DCL.Clipboard
     {
         void Set(string text);
         bool HasValue();
+        string Get();
     }
 }
