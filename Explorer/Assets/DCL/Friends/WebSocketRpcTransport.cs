@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using rpc_csharp.transport;
 using System;
 using System.Net.WebSockets;
+using System.Text;
 using System.Threading;
 using Utility;
 
@@ -43,6 +44,7 @@ namespace DCL.Friends
                 throw new Exception("Web socket already connected");
 
             await webSocket.ConnectAsync(uri, ct);
+
             OnConnectEvent?.Invoke();
         }
 
@@ -92,6 +94,17 @@ namespace DCL.Friends
             async UniTaskVoid SendMessageAsync(CancellationToken ct)
             {
                 try { await webSocket.SendAsync(data, WebSocketMessageType.Binary, true, ct); }
+                catch (WebSocketException e) { OnErrorEvent?.Invoke(e.Message); }
+            }
+
+            SendMessageAsync(lifeCycleCancellationToken.Token).Forget();
+        }
+
+        public void SendMessage(string data)
+        {
+            async UniTaskVoid SendMessageAsync(CancellationToken ct)
+            {
+                try { await webSocket.SendAsync(Encoding.UTF8.GetBytes(data), WebSocketMessageType.Text, true, ct); }
                 catch (WebSocketException e) { OnErrorEvent?.Invoke(e.Message); }
             }
 
