@@ -24,7 +24,7 @@ namespace ECS.StreamableLoading.NFTShapes
     {
         private readonly IWebRequestController webRequestController;
 
-        public LoadNFTShapeSystem(World world, IStreamableCache<Texture2DData, GetNFTShapeIntention> cache, IWebRequestController webRequestController, IDiskCache diskCache) : base(world, cache, new DiskCache<Texture2DData>(diskCache, new TextureDiskSerializer()))
+        public LoadNFTShapeSystem(World world, IStreamableCache<Texture2DData, GetNFTShapeIntention> cache, IWebRequestController webRequestController, IDiskCache<Texture2DData> diskCache) : base(world, cache, diskCache)
         {
             this.webRequestController = webRequestController;
         }

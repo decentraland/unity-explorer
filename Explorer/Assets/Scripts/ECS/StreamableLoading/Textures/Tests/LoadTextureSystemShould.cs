@@ -25,7 +25,7 @@ namespace ECS.StreamableLoading.Textures.Tests
             new () { CommonArguments = new CommonLoadingArguments(wrongTypePath) };
 
         protected override LoadTextureSystem CreateSystem() =>
-            new (world, cache, TestWebRequestController.INSTANCE, new IDiskCache.Fake());
+            new (world, cache, TestWebRequestController.INSTANCE, IDiskCache<Texture2DData>.Null.INSTANCE);
 
         protected override void AssertSuccess(Texture2DData data)
         {

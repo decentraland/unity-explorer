@@ -22,7 +22,7 @@ namespace ECS.StreamableLoading.Textures
     {
         private readonly IWebRequestController webRequestController;
 
-        internal LoadTextureSystem(World world, IStreamableCache<Texture2DData, GetTextureIntention> cache, IWebRequestController webRequestController, IDiskCache diskCache) : base(world, cache, new DiskCache<Texture2DData>(diskCache, new TextureDiskSerializer()))
+        internal LoadTextureSystem(World world, IStreamableCache<Texture2DData, GetTextureIntention> cache, IWebRequestController webRequestController, IDiskCache<Texture2DData> diskCache) : base(world, cache, diskCache)
         {
             this.webRequestController = webRequestController;
         }

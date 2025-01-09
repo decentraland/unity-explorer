@@ -39,7 +39,7 @@ namespace DCL.PluginSystem.World
         private readonly IWebRequestController webRequestController;
         private readonly IFramePrefabs framePrefabs;
         private readonly ILazyMaxSize lazyMaxSize;
-        private readonly IDiskCache diskCache;
+        private readonly IDiskCache<Texture2DData> diskCache;
         private readonly ISizedStreamableCache<Texture2DData, GetNFTShapeIntention> cache = new NftShapeCache();
 
         static NFTShapePlugin()
@@ -54,7 +54,7 @@ namespace DCL.PluginSystem.World
             IComponentPoolsRegistry componentPoolsRegistry,
             IWebRequestController webRequestController,
             CacheCleaner cacheCleaner,
-            IDiskCache diskCache
+            IDiskCache<Texture2DData> diskCache
         ) : this(
             decentralandUrlsSource,
             instantiationFrameTimeBudgetProvider,
@@ -78,7 +78,7 @@ namespace DCL.PluginSystem.World
             CacheCleaner cacheCleaner,
             IWebContentSizes webContentSizes,
             ILazyMaxSize lazyMaxSize,
-            IDiskCache diskCache
+            IDiskCache<Texture2DData> diskCache
         ) : this(
             decentralandUrlsSource,
             new PoolNFTShapeRendererFactory(componentPoolsRegistry, framesPool),
@@ -100,7 +100,7 @@ namespace DCL.PluginSystem.World
             CacheCleaner cacheCleaner,
             IFramePrefabs framePrefabs,
             ILazyMaxSize lazyMaxSize,
-            IDiskCache diskCache
+            IDiskCache<Texture2DData> diskCache
         )
         {
             this.decentralandUrlsSource = decentralandUrlsSource;

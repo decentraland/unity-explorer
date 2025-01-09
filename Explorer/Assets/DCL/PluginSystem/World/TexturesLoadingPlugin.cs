@@ -16,11 +16,11 @@ namespace DCL.PluginSystem.World
     public class TexturesLoadingPlugin : IDCLWorldPluginWithoutSettings, IDCLGlobalPluginWithoutSettings
     {
         private readonly IWebRequestController webRequestController;
-        private readonly IDiskCache diskCache;
+        private readonly IDiskCache<Texture2DData> diskCache;
 
         private readonly TexturesCache<GetTextureIntention> texturesCache = new ();
 
-        public TexturesLoadingPlugin(IWebRequestController webRequestController, CacheCleaner cacheCleaner, IDiskCache diskCache)
+        public TexturesLoadingPlugin(IWebRequestController webRequestController, CacheCleaner cacheCleaner, IDiskCache<Texture2DData> diskCache)
         {
             this.webRequestController = webRequestController;
             this.diskCache = diskCache;
