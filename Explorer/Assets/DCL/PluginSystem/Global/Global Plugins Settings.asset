@@ -48,6 +48,7 @@ MonoBehaviour:
   - rid: 2799748311381442562
   - rid: 6849204606292983808
   - rid: 2168772563850493955
+  - rid: 5734404164266491906
   references:
     version: 2
     RefIds:
@@ -576,6 +577,14 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
         defaultEmptyWearable:
           m_AssetGUID: 2d002c6a594460f4cb42100b50e7e53a
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+    - rid: 5734404164266491906
+      type: {class: GenericPopupsPlugin/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        PastePopupToastPrefab:
+          m_AssetGUID: d67c9347412c7d04aa84f48952e986fc
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
