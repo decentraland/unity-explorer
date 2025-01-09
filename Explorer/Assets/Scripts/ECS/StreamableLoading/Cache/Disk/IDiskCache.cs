@@ -26,42 +26,6 @@ namespace ECS.StreamableLoading.Cache.Disk
             public UniTask<EnumResult<TaskError>> RemoveAsync(string key, string extension, CancellationToken token) =>
                 UniTask.FromResult(EnumResult<TaskError>.SuccessResult());
         }
-
-        /// <summary>
-        /// Test only
-        /// </summary>
-        class InMemory : IDiskCache
-        {
-            private readonly ConcurrentDictionary<string, byte[]> cache = new ();
-
-            public UniTask<EnumResult<TaskError>> PutAsync(string key, string extension, ReadOnlyMemory<byte> data, CancellationToken token)
-            {
-                string k = key + extension;
-                cache[k] = data.ToArray();
-                return UniTask.FromResult(EnumResult<TaskError>.SuccessResult());
-            }
-
-            public UniTask<EnumResult<SlicedOwnedMemory<byte>?, TaskError>> ContentAsync(string key, string extension, CancellationToken token)
-            {
-                string k = key + extension;
-
-                if (cache.TryGetValue(k, out byte[]? data))
-                {
-                    var memory = new SlicedOwnedMemory<byte>(MemoryPool<byte>.Shared!.Rent(data!.Length)!, data.Length);
-                    data.CopyTo(memory!.Memory);
-                    return UniTask.FromResult(EnumResult<SlicedOwnedMemory<byte>?, TaskError>.SuccessResult(memory));
-                }
-
-                return UniTask.FromResult(EnumResult<SlicedOwnedMemory<byte>?, TaskError>.SuccessResult(null));
-            }
-
-            public UniTask<EnumResult<TaskError>> RemoveAsync(string key, string extension, CancellationToken token)
-            {
-                string k = key + extension;
-                cache.TryRemove(k, out _);
-                return UniTask.FromResult(EnumResult<TaskError>.SuccessResult());
-            }
-        }
     }
 
     public interface IDiskCache<T>
