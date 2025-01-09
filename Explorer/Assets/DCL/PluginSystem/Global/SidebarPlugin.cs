@@ -10,9 +10,11 @@ using DCL.Notifications.NotificationsMenu;
 using DCL.NotificationsBusController.NotificationsBus;
 using DCL.Profiles;
 using DCL.SidebarBus;
+using DCL.StylizedSkybox.Scripts;
 using DCL.UI.MainUI;
 using DCL.UI.ProfileElements;
 using DCL.UI.Sidebar;
+using DCL.UI.Skybox;
 using DCL.UserInAppInitializationFlow;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
@@ -102,6 +104,7 @@ namespace DCL.PluginSystem.Global
                 new NotificationsMenuController(mainUIView.SidebarView.NotificationsMenuView, notificationsRequestController, notificationsBusController, notificationIconTypes, webRequestController, sidebarBus, rarityBackgroundMapping, web3IdentityCache),
                 new ProfileWidgetController(() => mainUIView.SidebarView.ProfileWidget, web3IdentityCache, profileRepository, webRequestController),
                 new ProfileMenuController(() => mainUIView.SidebarView.ProfileMenuView, web3IdentityCache, profileRepository, webRequestController, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, mvcManager, chatEntryConfigurationSo),
+                new SkyboxMenuController(() => mainUIView.SidebarView.SkyboxMenuView, settings.SkyboxSettingsAsset),
                 sidebarBus,
                 chatEntryConfigurationSo,
                 web3IdentityCache,
@@ -118,6 +121,9 @@ namespace DCL.PluginSystem.Global
 
             [field: SerializeField]
             public AssetReferenceT<NftTypeIconSO> RarityColorMappings { get; private set; }
+
+            [field: SerializeField]
+            public StylizedSkyboxSettingsAsset SkyboxSettingsAsset { get; private set; }
         }
     }
 }

@@ -3,7 +3,7 @@ using Utility;
 
 namespace DCL.Backpack
 {
-    [CreateAssetMenu(fileName = "NftTypeIcons", menuName = "SO/NftTypeIcons")]
+    [CreateAssetMenu(fileName = "NftTypeIcons", menuName = "DCL/Backpack/NFT Type Icons")]
     public class NftTypeIconSO : ScriptableObject
     {
         [SerializeField] public SerializableKeyValuePair<string, Sprite>[] nftIcons;
@@ -13,7 +13,7 @@ namespace DCL.Backpack
         {
             if (string.IsNullOrEmpty(nftType)) return defaultIcon;
 
-            foreach (var icon in nftIcons)
+            foreach (SerializableKeyValuePair<string, Sprite> icon in nftIcons)
                 if (icon.key == nftType)
                     return icon.value;
 

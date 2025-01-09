@@ -48,7 +48,6 @@ MonoBehaviour:
   - rid: 2799748311381442562
   - rid: 6849204606292983808
   - rid: 2168772563850493955
-  - rid: 5734404155847999490
   references:
     version: 2
     RefIds:
@@ -441,6 +440,7 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
+        <SkyboxSettingsAsset>k__BackingField: {fileID: 11400000, guid: 50aa9483411844942bd409d4b4612221, type: 2}
     - rid: 3836309668583964676
       type: {class: NftPromptPlugin/NftPromptSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -526,17 +526,7 @@ MonoBehaviour:
     - rid: 4340256782807990272
       type: {class: StylizedSkyboxPlugin/StylizedSkyboxSettings, ns: DCL.StylizedSkybox.Scripts.Plugin, asm: DCL.Plugins}
       data:
-        StylizedSkyboxPrefab:
-          m_AssetGUID: 5c36aa92efab46341b9b02fd6a38a4e7
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_EditorAssetChanged: 0
-        SkyboxMaterial: {fileID: 2100000, guid: caf6cf56d95066b45bc1ca92d6516b48, type: 2}
-        SkyboxAnimationCycle:
-          m_AssetGUID: 3b17a8a5ab9ee104899eb22c70935c38
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_EditorAssetChanged: 0
+        SettingsAsset: {fileID: 11400000, guid: 50aa9483411844942bd409d4b4612221, type: 2}
     - rid: 5215741520409264128
       type: {class: AvatarPlugin/AvatarShapeSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -586,14 +576,6 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
         defaultEmptyWearable:
           m_AssetGUID: 2d002c6a594460f4cb42100b50e7e53a
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_EditorAssetChanged: 0
-    - rid: 5734404155847999490
-      type: {class: GenericPopupsPlugin/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
-      data:
-        PastePopupToastPrefab:
-          m_AssetGUID: d67c9347412c7d04aa84f48952e986fc
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
