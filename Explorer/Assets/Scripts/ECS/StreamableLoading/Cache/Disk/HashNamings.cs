@@ -47,8 +47,12 @@ namespace ECS.StreamableLoading.Cache.Disk
             foreach (byte b in hash)
                 sb.Append(CACHED_SYMBOLS[b]!);
 
-            var hashStr = sb.ToString();
-            string path = Path.ChangeExtension(hashStr, extension);
+            if (extension.StartsWith('.') == false)
+                sb.Append('.');
+
+            sb.Append(extension);
+
+            var path = sb.ToString();
             return path;
         }
 
