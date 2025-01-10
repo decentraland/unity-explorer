@@ -83,11 +83,10 @@ public class PrefabInstancingData : MonoBehaviour
         };
 
         prefab.RecalculateBounds();
-
         LOD[] lods = prefab.GetLODs();
-
         CollectLODData(lods, instanceData);
         CollectSizeAndBounds(prefab, lods, instanceData);
+
         CollectInstanceMatrices(instances, instanceData);
 
         return instanceData;

@@ -5,25 +5,32 @@ namespace DCL.Roads.Playground
     public class RoadsGPUInstancingPlayground : MonoBehaviour
     {
         public PrefabInstancingData prefab;
-        private RenderParams _rp;
-
-        private LODInstanceData instanceData;
 
         public int id;
 
-        public void Start()
-        {
-            // GameObject.Instantiate(prefab);
-        }
+        private LODInstanceData instanceData;
+        private RenderParams rp;
 
         public void Update()
         {
-            var instanceData = prefab.InstancesData[id];
+            if (id >= 0)
+                DrawInstanced(id);
+            else
+                DrawAll();
+        }
 
-            // Graphics.DrawMeshInstanced(instanceData.MeshLOD[0], 0, instanceData.Material, instanceData.Matrices.ToArray());
+        private void DrawAll()
+        {
+            for (var i = 0; i < prefab.InstancesData.Length; i++)
+                DrawInstanced(i);
+        }
 
-            _rp = new RenderParams(instanceData.Material);
-            Graphics.RenderMeshInstanced(_rp, instanceData.MeshLOD[0], 0, instanceData.Matrices.ToArray());
+        private void DrawInstanced(int id)
+        {
+            LODInstanceData instanceData = prefab.InstancesData[id];
+
+            rp = new RenderParams(instanceData.Material);
+            Graphics.RenderMeshInstanced(rp, instanceData.MeshLOD[0], 0, instanceData.Matrices.ToArray());
         }
     }
 }
