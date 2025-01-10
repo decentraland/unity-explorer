@@ -57,7 +57,7 @@ namespace DCL.Friends.UI
         protected override void OnViewClose()
         {
             base.OnViewClose();
-            
+
             if (chatWasVisible)
                 chatView.ToggleChat(true);
         }
@@ -78,8 +78,11 @@ namespace DCL.Friends.UI
         private void ToggleTabs(FriendsPanelTab tab)
         {
             viewInstance!.FriendsTabSelected.SetActive(tab == FriendsPanelTab.FRIENDS);
+            viewInstance!.FriendsPanel.SetActive(tab == FriendsPanelTab.FRIENDS);
             viewInstance.RequestsTabSelected.SetActive(tab == FriendsPanelTab.REQUESTS);
+            viewInstance.RequestsPanel.SetActive(tab == FriendsPanelTab.REQUESTS);
             viewInstance.BlockedTabSelected.SetActive(tab == FriendsPanelTab.BLOCKED);
+            viewInstance.BlockedPanel.SetActive(tab == FriendsPanelTab.BLOCKED);
         }
 
         private void Close() =>
