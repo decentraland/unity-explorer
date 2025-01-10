@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -80,15 +81,18 @@ public class PrefabInstancingData : MonoBehaviour
 
     private void ProcessPrefabsData(Dictionary<string, (LODGroup prefab, List<Transform> instances)> prefabDataMap)
     {
-        InstancesData = new LODInstanceData[prefabDataMap.Count];
-        int index = 0;
+        var instancesDataTmp = new List<LODInstanceData>();
 
         foreach (var kvp in prefabDataMap)
         {
             var (prefab, instances) = kvp.Value;
-            InstancesData[index] = CreateInstanceData(prefab, instances);
-            index++;
+            var instanceData = CreateInstanceData(prefab, instances);
+
+            if (instanceData.Material != null && instanceData.MeshLOD[0] != null)
+                instancesDataTmp.Add(instanceData);
         }
+
+        InstancesData = instancesDataTmp.ToArray();
     }
 
     private LODInstanceData CreateInstanceData(LODGroup prefab, List<Transform> instances)

@@ -73,6 +73,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3479927675673800510}
+  - component: {fileID: 8250875958315670678}
   m_Layer: 0
   m_Name: OpenFork2CornersDiagonal_A
   m_TagString: Untagged
@@ -96,6 +97,64 @@ Transform:
   - {fileID: 747550898630281936}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8250875958315670678
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6772374743669894871}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 59af8d3aac2949de94cd8f8f57cb37fb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  InstancesData:
+  - OriginalPrefab: {fileID: 4798200095235504026, guid: efd69e8bb26c58a4fb7db9eac87e66e2, type: 3}
+    Material: {fileID: 2100000, guid: 080ee30e4f4ff5c4fae19015bec5167c, type: 2}
+    ObjectSize: 1
+    LODBounds:
+      m_Center: {x: -0.5, y: 0.049999975, z: 0.5}
+      m_Extent: {x: 0.5, y: 0.049999975, z: 0.5}
+    MeshLOD:
+    - {fileID: 5755458239639996712, guid: 14c353cd19b5ed543b9bb8851997011b, type: 3}
+    - {fileID: -3740609248378964520, guid: 14c353cd19b5ed543b9bb8851997011b, type: 3}
+    DistLOD:
+    - 0.008696001
+    - 0.0017579735
+    Matrices:
+    - e00: 0.00070410955
+      e01: 0
+      e02: -0.99999964
+      e03: 7.999999
+      e10: 0
+      e11: 1
+      e12: 0
+      e13: 0
+      e20: 0.99999964
+      e21: 0
+      e22: 0.00070410955
+      e23: 7.999999
+      e30: 0
+      e31: 0
+      e32: 0
+      e33: 1
+    - e00: -0.00069832796
+      e01: 0
+      e02: 0.99999964
+      e03: -7.999999
+      e10: 0
+      e11: 1
+      e12: 0
+      e13: 0
+      e20: -0.99999964
+      e21: 0
+      e22: -0.00069832796
+      e23: -7.999999
+      e30: 0
+      e31: 0
+      e32: 0
+      e33: 1
 --- !u!1001 &2000135057208014671
 PrefabInstance:
   m_ObjectHideFlags: 0

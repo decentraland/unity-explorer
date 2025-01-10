@@ -41,6 +41,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4510835287947887023}
+  - component: {fileID: 7402110616454750081}
   m_Layer: 0
   m_Name: Corner_C
   m_TagString: Untagged
@@ -64,6 +65,217 @@ Transform:
   - {fileID: 3315466359099605778}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &7402110616454750081
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8254747105106238315}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 59af8d3aac2949de94cd8f8f57cb37fb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  InstancesData:
+  - OriginalPrefab: {fileID: 5782733793051882949, guid: e966e5563b8317a4593b978a9a45ba0d, type: 3}
+    Material: {fileID: 2100000, guid: 080ee30e4f4ff5c4fae19015bec5167c, type: 2}
+    ObjectSize: 16.000002
+    LODBounds:
+      m_Center: {x: -0.0000009536743, y: 0.049999915, z: 0}
+      m_Extent: {x: 8, y: 0.05000008, z: 8.000001}
+    MeshLOD:
+    - {fileID: 9031037228045548633, guid: 84eb849725a65eb419ecf049b3119757, type: 3}
+    - {fileID: -6359036865849020546, guid: 84eb849725a65eb419ecf049b3119757, type: 3}
+    DistLOD:
+    - 0.13763738
+    - 0.027252605
+    Matrices:
+    - e00: -0.9999999
+      e01: 0
+      e02: 0.000005900858
+      e03: 0
+      e10: 0
+      e11: 1
+      e12: 0
+      e13: 0
+      e20: -0.000005900858
+      e21: 0
+      e22: -0.9999999
+      e23: 0
+      e30: 0
+      e31: 0
+      e32: 0
+      e33: 1
+  - OriginalPrefab: {fileID: 4798200095235504026, guid: efd69e8bb26c58a4fb7db9eac87e66e2, type: 3}
+    Material: {fileID: 2100000, guid: 080ee30e4f4ff5c4fae19015bec5167c, type: 2}
+    ObjectSize: 1
+    LODBounds:
+      m_Center: {x: -0.5, y: 0.049999975, z: 0.5}
+      m_Extent: {x: 0.5, y: 0.049999975, z: 0.5}
+    MeshLOD:
+    - {fileID: 5755458239639996712, guid: 14c353cd19b5ed543b9bb8851997011b, type: 3}
+    - {fileID: -3740609248378964520, guid: 14c353cd19b5ed543b9bb8851997011b, type: 3}
+    DistLOD:
+    - 0.008696001
+    - 0.0017579735
+    Matrices:
+    - e00: -0.9999999
+      e01: 0
+      e02: 0.0000059306603
+      e03: -7.999999
+      e10: 0
+      e11: 1
+      e12: 0
+      e13: 0
+      e20: -0.0000059306603
+      e21: 0
+      e22: -0.9999999
+      e23: 7.999999
+      e30: 0
+      e31: 0
+      e32: 0
+      e33: 1
+  - OriginalPrefab: {fileID: 3900521971472242239, guid: 7356bee182ee68e4aa0dfe84603a00d4, type: 3}
+    Material: {fileID: 2100000, guid: 080ee30e4f4ff5c4fae19015bec5167c, type: 2}
+    ObjectSize: 4.366378
+    LODBounds:
+      m_Center: {x: -0.00000047683716, y: 0.1825516, z: 7.5}
+      m_Extent: {x: 2.183189, y: 0.18491152, z: 0.32837415}
+    MeshLOD:
+    - {fileID: 4166020912628018431, guid: 455bd1c33ae1c814e80059a9aaddc441, type: 3}
+    - {fileID: -2665897731168356493, guid: 455bd1c33ae1c814e80059a9aaddc441, type: 3}
+    - {fileID: -4788003504506777672, guid: 455bd1c33ae1c814e80059a9aaddc441, type: 3}
+    DistLOD:
+    - 0.037784006
+    - 0.018612256
+    - 0.007446293
+    Matrices:
+    - e00: 0.00007909535
+      e01: 0
+      e02: 0.99999994
+      e03: 0
+      e10: 0
+      e11: 1
+      e12: 0
+      e13: 0
+      e20: -0.99999994
+      e21: 0
+      e22: 0.00007909535
+      e23: 0
+      e30: 0
+      e31: 0
+      e32: 0
+      e33: 1
+    - e00: -0.9999999
+      e01: 0
+      e02: 0.0001184344
+      e03: 0
+      e10: 0
+      e11: 1
+      e12: 0
+      e13: 0
+      e20: -0.0001184344
+      e21: 0
+      e22: -0.9999999
+      e23: 0
+      e30: 0
+      e31: 0
+      e32: 0
+      e33: 1
+  - OriginalPrefab: {fileID: 4742473837712756890, guid: 7a6c9e87b01b5f94bb28e74c58d938f9, type: 3}
+    Material: {fileID: 2100000, guid: 4b09b64dee8b53b4a9bc1155c05102aa, type: 2}
+    ObjectSize: 3.2996411
+    LODBounds:
+      m_Center: {x: 0.008878112, y: 0.9752246, z: -0.019763172}
+      m_Extent: {x: 1.4010118, y: 1.3552278, z: 1.4115233}
+    MeshLOD:
+    - {fileID: 6452406434197112212, guid: 7a6c9e87b01b5f94bb28e74c58d938f9, type: 3}
+    - {fileID: -5805549381320072616, guid: 7a6c9e87b01b5f94bb28e74c58d938f9, type: 3}
+    - {fileID: -2628765915206297012, guid: 7a6c9e87b01b5f94bb28e74c58d938f9, type: 3}
+    DistLOD:
+    - 0.25
+    - 0.125
+    - 0.01
+    Matrices:
+    - e00: 1.2999997
+      e01: 0
+      e02: 0
+      e03: 5.0000005
+      e10: 0
+      e11: 1.3
+      e12: 0
+      e13: 0.25
+      e20: 0
+      e21: 0
+      e22: 1.2999997
+      e23: -5.0000005
+      e30: 0
+      e31: 0
+      e32: 0
+      e33: 1
+  - OriginalPrefab: {fileID: 7550104094755157916, guid: 382ba1e1f6d8b634ebb74e13bfe0d045, type: 3}
+    Material: {fileID: 2100000, guid: fcd067b2a5f3ade45846eef4205a2cb8, type: 2}
+    ObjectSize: 3.3840914
+    LODBounds:
+      m_Center: {x: 0, y: 0.47190782, z: 0}
+      m_Extent: {x: 1.6827765, y: 0.43172345, z: 1.6920456}
+    MeshLOD:
+    - {fileID: 5054886108376055829, guid: 072903bcfed699f499960c32e1302b0f, type: 3}
+    - {fileID: -3441998875801778676, guid: 072903bcfed699f499960c32e1302b0f, type: 3}
+    - {fileID: -2339752442410856566, guid: 072903bcfed699f499960c32e1302b0f, type: 3}
+    DistLOD:
+    - 0.029014042
+    - 0.01931875
+    - 0.005944445
+    Matrices:
+    - e00: 0.9999999
+      e01: 0
+      e02: 0
+      e03: 5.0000005
+      e10: 0
+      e11: 1
+      e12: 0
+      e13: 0
+      e20: 0
+      e21: 0
+      e22: 0.9999999
+      e23: -5.0000005
+      e30: 0
+      e31: 0
+      e32: 0
+      e33: 1
+  - OriginalPrefab: {fileID: 6578349561275120063, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+    Material: {fileID: 2100000, guid: 228e96616bb1ef14da15352b4fcec919, type: 2}
+    ObjectSize: 2.7376769
+    LODBounds:
+      m_Center: {x: -0.009297788, y: 0.60999084, z: 0}
+      m_Extent: {x: 0.595226, y: 0.6101726, z: 1.3688384}
+    MeshLOD:
+    - {fileID: 8020616577449614874, guid: a8db31bfddc59a545864b23eff2057a8, type: 3}
+    - {fileID: 5005996464823043455, guid: a8db31bfddc59a545864b23eff2057a8, type: 3}
+    - {fileID: -3836542332788760596, guid: a8db31bfddc59a545864b23eff2057a8, type: 3}
+    DistLOD:
+    - 0.15454863
+    - 0.022414275
+    - 0.0046898406
+    Matrices:
+    - e00: -0.9999999
+      e01: 0
+      e02: -0.0000059306603
+      e03: 5.9999995
+      e10: 0
+      e11: 1
+      e12: 0
+      e13: 0
+      e20: 0.0000059306603
+      e21: 0
+      e22: -0.9999999
+      e23: 3.9999998
+      e30: 0
+      e31: 0
+      e32: 0
+      e33: 1
 --- !u!1 &9082414149019158573
 GameObject:
   m_ObjectHideFlags: 0

@@ -550,6 +550,14 @@ PrefabInstance:
       value: Fountain
       objectReference: {fileID: 0}
     - target: {fileID: 4742473837712756890, guid: 2afff092fdd28f64f98e318d5f618ce2, type: 3}
+      propertyPath: m_Size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4742473837712756890, guid: 2afff092fdd28f64f98e318d5f618ce2, type: 3}
+      propertyPath: m_LocalReferencePoint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4742473837712756890, guid: 2afff092fdd28f64f98e318d5f618ce2, type: 3}
       propertyPath: m_LODs.Array.data[0].renderers.Array.data[0].renderer
       value: 
       objectReference: {fileID: 0}
