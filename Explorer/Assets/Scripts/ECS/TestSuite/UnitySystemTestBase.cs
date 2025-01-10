@@ -33,10 +33,13 @@ namespace ECS.TestSuite
         [TearDown]
         public void DestroyWorld()
         {
+            OnTearDown();
             system?.Dispose();
             cachedWorld?.Dispose();
             cachedWorld = null;
         }
+
+        protected virtual void OnTearDown() { }
 
         protected TransformComponent AddTransformToEntity(in Entity entity, bool isDirty = false, World world = null) =>
             EcsTestsUtils.AddTransformToEntity(world ?? this.world, entity, isDirty);
@@ -47,7 +50,7 @@ namespace ECS.TestSuite
         protected UITransformComponent AddUITransformToEntity(in Entity entity, bool isDirty = false)
         {
             var uiTransformComponent = new UITransformComponent();
-            uiTransformComponent.Transform = new VisualElement { name = $"{entity.Id}" };
+            uiTransformComponent.Transform = new VisualElement { name = $"{entity.Id}"  };
 
             world.Add(entity, uiTransformComponent, new PBUiTransform { IsDirty = isDirty });
             return uiTransformComponent;

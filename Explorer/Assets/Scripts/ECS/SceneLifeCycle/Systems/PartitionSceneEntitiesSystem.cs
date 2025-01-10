@@ -54,7 +54,7 @@ namespace ECS.SceneLifeCycle.Systems
             partitionDataContainer.Initialize(DEPLOYED_SCENES_LIMIT, partitionSettings.SqrDistanceBuckets, partitionSettings);
         }
 
-        public override void Dispose()
+        protected override void OnDispose()
         {
             partitionJobHandle.Complete();
             partitionDataContainer.Dispose();
