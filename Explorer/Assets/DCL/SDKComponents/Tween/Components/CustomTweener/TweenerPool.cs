@@ -1,40 +1,56 @@
-﻿using CrdtEcsBridge.Components.Transform;
+﻿using CrdtEcsBridge.Components.Conversion;
 using DCL.ECSComponents;
-using UnityEngine;
+using System;
 using UnityEngine.Pool;
+using UnityEngine;
 
 namespace DCL.SDKComponents.Tween.Components
 {
     public class TweenerPool
     {
-        private readonly IObjectPool<RotationTweener> rotationTweenersPool;
-        private readonly IObjectPool<PositionTweener> positionTweenersPool;
-        private readonly IObjectPool<ScaleTweener> scaleTweenersPool;
+        private readonly IObjectPool<Vector3Tweener> vector3TweenerPool;
+        private readonly IObjectPool<QuaternionTweener> quaternionTweenerPool;
+        private readonly IObjectPool<Vector2Tweener> vector2TweenerPool;
 
         public TweenerPool()
         {
-            rotationTweenersPool = new ObjectPool<RotationTweener>(() => new RotationTweener());
-            positionTweenersPool = new ObjectPool<PositionTweener>(() => new PositionTweener());
-            scaleTweenersPool = new ObjectPool<ScaleTweener>(() => new ScaleTweener());
+            vector3TweenerPool = new ObjectPool<Vector3Tweener>(() => new Vector3Tweener());
+            quaternionTweenerPool = new ObjectPool<QuaternionTweener>(() => new QuaternionTweener());
+            vector2TweenerPool = new ObjectPool<Vector2Tweener>(() => new Vector2Tweener());
         }
 
-        public ICustomTweener GetTweener(PBTween pbTween, float durationInSeconds)
+        public ITweener GetTweener(PBTween pbTween, float durationInSeconds)
         {
-            ICustomTweener tweener = null;
+            ITweener tweener;
+
             switch (pbTween.ModeCase)
             {
                 case PBTween.ModeOneofCase.Move:
-                    tweener = positionTweenersPool.Get();
+                    tweener = vector3TweenerPool.Get();
+                    ((ICustomTweener<Vector3>)tweener).Initialize(pbTween.Move.Start, pbTween.Move.End, durationInSeconds);
                     break;
                 case PBTween.ModeOneofCase.Rotate:
-                    tweener = rotationTweenersPool.Get();
+                    tweener = quaternionTweenerPool.Get();
+
+                    // These conversions are needed because the Decentraland.Common.Quaternion type from the protobuf file
+                    // is not directly compatible with the UnityEngine.Quaternion
+                    Quaternion start = PrimitivesConversionExtensions.PBQuaternionToUnityQuaternion(pbTween.Rotate.Start);
+                    Quaternion end = PrimitivesConversionExtensions.PBQuaternionToUnityQuaternion(pbTween.Rotate.End);
+                    ((ICustomTweener<Quaternion>)tweener).Initialize(start, end, durationInSeconds);
                     break;
                 case PBTween.ModeOneofCase.Scale:
-                    tweener = scaleTweenersPool.Get();
+                    tweener = vector3TweenerPool.Get();
+                    ((ICustomTweener<Vector3>)tweener).Initialize(pbTween.Scale.Start, pbTween.Scale.End, durationInSeconds);
                     break;
+                case PBTween.ModeOneofCase.TextureMove:
+                    tweener = vector2TweenerPool.Get();
+                    ((ICustomTweener<Vector2>)tweener).Initialize(pbTween.TextureMove.Start, pbTween.TextureMove.End, durationInSeconds);
+                    break;
+                case PBTween.ModeOneofCase.None:
+                default:
+                    throw new ArgumentException($"No Tweener defined for tween mode: {pbTween.ModeCase}");
             }
 
-            tweener!.Initialize(pbTween, durationInSeconds);
             return tweener;
         }
 
@@ -45,14 +61,14 @@ namespace DCL.SDKComponents.Tween.Components
 
             switch (sdkTweenComponent.CustomTweener)
             {
-                case PositionTweener positionTweener:
-                    positionTweenersPool.Release(positionTweener);
+                case Vector2Tweener vector2Tweener:
+                    vector2TweenerPool.Release(vector2Tweener);
                     break;
-                case RotationTweener rotationTweener:
-                    rotationTweenersPool.Release(rotationTweener);
+                case Vector3Tweener vector3Tweener:
+                    vector3TweenerPool.Release(vector3Tweener);
                     break;
-                case ScaleTweener scaleTweener:
-                    scaleTweenersPool.Release(scaleTweener);
+                case QuaternionTweener quaternionTweener:
+                    quaternionTweenerPool.Release(quaternionTweener);
                     break;
             }
         }
