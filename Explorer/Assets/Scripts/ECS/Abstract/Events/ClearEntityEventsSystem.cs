@@ -15,7 +15,7 @@ namespace ECS.Abstract
             eventBuffers = builder.Build();
         }
 
-        public override void Dispose()
+        protected override void OnDispose()
         {
             for (var index = 0; index < eventBuffers.Count; index++)
             {
