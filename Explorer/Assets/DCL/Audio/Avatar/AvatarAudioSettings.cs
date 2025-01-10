@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace DCL.Audio.Avatar
 {
-    [CreateAssetMenu(fileName = "AvatarAudioSettings", menuName = "SO/Audio/AvatarAudioSettings")]
+    [CreateAssetMenu(fileName = "AvatarAudioSettings", menuName = "DCL/Audio/Avatar Audio Settings")]
     public class AvatarAudioSettings : AudioCategorySettings, ISerializationCallbackReceiver
     {
         public enum AvatarAudioClipType

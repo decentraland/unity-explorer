@@ -10,7 +10,6 @@ using DCL.PluginSystem.Global;
 using System;
 using System.Threading;
 using UnityEngine;
-using UnityEngine.AddressableAssets;
 using Object = UnityEngine.Object;
 
 namespace DCL.StylizedSkybox.Scripts.Plugin
@@ -21,8 +20,10 @@ namespace DCL.StylizedSkybox.Scripts.Plugin
         private readonly Light directionalLight;
         private readonly IDebugContainerBuilder debugContainerBuilder;
         private SkyboxController? skyboxController;
-        private readonly ElementBinding<int> timeOfDay;
+        private readonly ElementBinding<float> timeOfDay;
         private readonly FeatureFlagsCache featureFlagsCache;
+
+        private StylizedSkyboxSettingsAsset? settingsAsset;
 
         public StylizedSkyboxPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -31,7 +32,7 @@ namespace DCL.StylizedSkybox.Scripts.Plugin
             FeatureFlagsCache featureFlagsCache
         )
         {
-            timeOfDay = new ElementBinding<int>(0);
+            timeOfDay = new ElementBinding<float>(0);
             this.assetsProvisioner = assetsProvisioner;
             this.directionalLight = directionalLight;
             this.debugContainerBuilder = debugContainerBuilder;
@@ -44,30 +45,24 @@ namespace DCL.StylizedSkybox.Scripts.Plugin
 
         public async UniTask InitializeAsync(StylizedSkyboxSettings settings, CancellationToken ct)
         {
-            skyboxController = Object.Instantiate((await assetsProvisioner.ProvideMainAssetAsync(settings.StylizedSkyboxPrefab, ct: ct)).Value.GetComponent<SkyboxController>());
-            AnimationClip skyboxAnimation = (await assetsProvisioner.ProvideMainAssetAsync(settings.SkyboxAnimationCycle, ct: ct)).Value;
+            settingsAsset = settings.SettingsAsset;
 
-            skyboxController.Initialize(settings.SkyboxMaterial, directionalLight, skyboxAnimation, featureFlagsCache);
+            skyboxController = Object.Instantiate((await assetsProvisioner.ProvideMainAssetAsync(settingsAsset.StylizedSkyboxPrefab, ct: ct)).Value.GetComponent<SkyboxController>());
+            AnimationClip skyboxAnimation = (await assetsProvisioner.ProvideMainAssetAsync(settingsAsset.SkyboxAnimationCycle, ct: ct)).Value;
+
+            skyboxController.Initialize(settingsAsset.SkyboxMaterial, directionalLight, skyboxAnimation, featureFlagsCache, settingsAsset);
 
             debugContainerBuilder.TryAddWidget("Skybox")
-                                 ?.AddSingleButton("Play", () => skyboxController.Play())
-                                 .AddSingleButton("Pause", () => skyboxController.Pause())
-                                 .AddIntSliderField("Time", timeOfDay, 0, skyboxController.SecondsInDay)
-                                 .AddSingleButton("SetTime", () => skyboxController.SetTime(timeOfDay.Value)); //TODO: replace this by a system to update the value
+                                ?.AddSingleButton("Play", () => skyboxController.UseDynamicTime = true)
+                                 .AddSingleButton("Pause", () => skyboxController.UseDynamicTime = false)
+                                 .AddFloatSliderField("Time", timeOfDay, 0, 1)
+                                 .AddSingleButton("SetTime", () => skyboxController.SetTimeOverride(timeOfDay.Value)); //TODO: replace this by a system to update the value
         }
 
         [Serializable]
         public class StylizedSkyboxSettings : IDCLPluginSettings
         {
-            public StylizedSkyboxControllerRef StylizedSkyboxPrefab = null!;
-            public Material SkyboxMaterial = null!;
-            public AssetReferenceT<AnimationClip> SkyboxAnimationCycle = null!;
-
-            [Serializable]
-            public class StylizedSkyboxControllerRef : ComponentReference<SkyboxController>
-            {
-                public StylizedSkyboxControllerRef(string guid) : base(guid) { }
-            }
+            public StylizedSkyboxSettingsAsset SettingsAsset;
         }
     }
 }

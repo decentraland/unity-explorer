@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace DCL.Diagnostics.Sentry
 {
-    [CreateAssetMenu(fileName = "SentryRuntimeConfiguration.asset", menuName = "Sentry/SentryRuntimeConfiguration", order = 999)]
+    [CreateAssetMenu(fileName = "SentryRuntimeConfiguration.asset", menuName = "DCL/Diagnostics/Sentry Runtime Configuration")]
     public class SentryRuntimeConfiguration : SentryRuntimeOptionsConfiguration
     {
         // This file should be never committed since it may contain secrets

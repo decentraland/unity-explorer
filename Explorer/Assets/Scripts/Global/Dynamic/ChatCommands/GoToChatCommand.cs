@@ -1,71 +1,90 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Chat.Commands;
-using ECS.SceneLifeCycle.Realm;
-using System;
-using System.Text.RegularExpressions;
+using DCL.Diagnostics;
+using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.WebRequests;
 using System.Threading;
 using UnityEngine;
 using Utility;
-using Utility.Types;
 using Random = UnityEngine.Random;
 
 namespace Global.Dynamic.ChatCommands
 {
+    /// <summary>
+    /// Teleports the player within Genesis to a specific, random, or crowded position,
+    /// or to a different realm and position.
+    ///
+    /// Usage:
+    ///     /goto *realm*
+    ///     /goto *realm* *x,y*
+    ///     /goto *x,y | random | crowd*
+    /// </summary>
     public class GoToChatCommand : IChatCommand
     {
-        private const string COMMAND_GOTO_LOCAL = "goto-local";
-        private const string PARAMETER_RANDOM = "random";
+        public string Command => "goto";
+        public string Description => "<b>/goto <i><x,y | random | crowd></i></b>\n  Teleport inside of Genesis";
 
-        public Regex Regex { get; } =
-            new (
-                $@"^/({ChatCommandsUtils.COMMAND_GOTO}|{COMMAND_GOTO_LOCAL})\s+(?:(-?\d+)\s*,\s*(-?\d+)|{PARAMETER_RANDOM})$",
-                RegexOptions.Compiled);
-        public string Description => "<b>/goto <i><world | x,y | random></i></b> - Teleport to a specific location.";
+        private readonly ChatTeleporter chatTeleporter;
+        private readonly IWebRequestController webRequestController;
+        private readonly IDecentralandUrlsSource urlsSource;
 
-        private readonly IRealmNavigator realmNavigator;
-
-        private int x;
-        private int y;
-
-        public GoToChatCommand(IRealmNavigator realmNavigator)
+        public GoToChatCommand(ChatTeleporter chatTeleporter, IWebRequestController webRequestController, IDecentralandUrlsSource urlsSource)
         {
-            this.realmNavigator = realmNavigator;
+            this.chatTeleporter = chatTeleporter;
+            this.webRequestController = webRequestController;
+            this.urlsSource = urlsSource;
         }
 
-        public async UniTask<string> ExecuteAsync(Match match, CancellationToken ct)
+        public bool ValidateParameters(string[] parameters) =>
+            parameters.Length == 1 || // /goto <realm> OR /goto <x,y | random | crowd>
+            (parameters.Length == 2 && ChatParamUtils.IsPositionParameter(parameters[1], false)); // /goto <realm> <x,y>
+
+        public async UniTask<string> ExecuteCommandAsync(string[] parameters, CancellationToken ct)
         {
-            bool isLocal = match.Groups[1].Value == COMMAND_GOTO_LOCAL;
-            ParseOrRandom(match);
+            if (parameters.Length == 1)
+            {
+                if (ChatParamUtils.IsPositionParameter(parameters[0], true))
+                {
+                    // Case: /goto <x,y | random | crowd>
+                    return await chatTeleporter.TeleportToParcelAsync(await GetPositionAsync(parameters[0], ct), false, ct);
+                }
 
-            var teleportResult = await realmNavigator.TeleportToParcelAsync(new Vector2Int(x, y), ct, isLocal);
+                // LEGACY Case: /goto <realm>
+                return await chatTeleporter.TeleportToRealmAsync(parameters[0], null, ct);
+            }
 
-            if (teleportResult.Success)
-                return $"🟢 You teleported to {x},{y} in Genesis City";
+            // LEGACY Case: /goto <realm> <x,y>
+            return await chatTeleporter.TeleportToRealmAsync(parameters[0], await GetPositionAsync(parameters[1], ct), ct);
+        }
 
-            var error = teleportResult.Error.Value;
-
-            return error.State switch
+        private UniTask<Vector2Int> GetPositionAsync(string positionParameter, CancellationToken ct)
+        {
+            return positionParameter switch
                    {
-                       TaskError.MessageError => $"🔴 Error. Teleport failed: {error.Message}",
-                       TaskError.Timeout => $"🔴 Error. Timeout",
-                       TaskError.Cancelled => "🔴 Error. The operation was canceled!",
-                       TaskError.UnexpectedException => $"🔴 Error. Teleport failed: {error.Message}",
-                       _ => throw new ArgumentOutOfRangeException()
+                       ChatParamUtils.PARAMETER_RANDOM => UniTask.FromResult(new Vector2Int(
+                           Random.Range(GenesisCityData.MIN_PARCEL.x, GenesisCityData.MAX_SQUARE_CITY_PARCEL.x),
+                           Random.Range(GenesisCityData.MIN_PARCEL.y, GenesisCityData.MAX_SQUARE_CITY_PARCEL.y))
+                       ),
+                       ChatParamUtils.PARAMETER_CROWD => FindCrowdAsync(ct),
+                       _ => UniTask.FromResult(ChatParamUtils.ParseRawPosition(positionParameter))
                    };
         }
 
-        private void ParseOrRandom(Match match)
+        private async UniTask<Vector2Int> FindCrowdAsync(CancellationToken ct)
         {
-            if (match.Groups[2].Success && match.Groups[3].Success)
-            {
-                x = int.Parse(match.Groups[2].Value);
-                y = int.Parse(match.Groups[3].Value);
-            }
-            else // means it's equal "random"
-            {
-                x = Random.Range(GenesisCityData.MIN_PARCEL.x, GenesisCityData.MAX_SQUARE_CITY_PARCEL.x);
-                y = Random.Range(GenesisCityData.MIN_PARCEL.y, GenesisCityData.MAX_SQUARE_CITY_PARCEL.y);
-            }
+            HotScene[] hotScenes = await webRequestController
+                                        .GetAsync(urlsSource.Url(DecentralandUrl.ArchipelagoHotScenes), ct, ReportCategory.BADGES)
+                                        .CreateFromNewtonsoftJsonAsync<HotScene[]>();
+
+            var topScene = hotScenes[0];
+
+            return new Vector2Int(topScene.baseCoords[0], topScene.baseCoords[1]);
+        }
+
+        private struct HotScene
+        {
+            public string name;
+            public int[] baseCoords;
         }
     }
 }

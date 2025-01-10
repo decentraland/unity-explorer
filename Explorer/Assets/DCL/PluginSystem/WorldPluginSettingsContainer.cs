@@ -2,8 +2,6 @@ using UnityEngine;
 
 namespace DCL.PluginSystem
 {
-    [CreateAssetMenu(menuName = "Create World Plugins Container", fileName = "Plugins Container", order = 0)]
-    public class WorldPluginSettingsContainer : PluginSettingsContainer
-    {
-    }
+    [CreateAssetMenu(fileName = "World Plugins Container", menuName = "DCL/Plugins/World Plugins Container")]
+    public class WorldPluginSettingsContainer : PluginSettingsContainer { }
 }

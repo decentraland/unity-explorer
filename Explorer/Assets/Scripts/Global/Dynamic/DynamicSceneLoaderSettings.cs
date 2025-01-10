@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace Global.Dynamic
 {
-    [CreateAssetMenu(fileName = "DynamicSceneLoaderSettings", menuName = "SO/DynamicSceneLoaderSettings")]
+    [CreateAssetMenu(fileName = "DynamicSceneLoaderSettings", menuName = "DCL/Various/Dynamic Scene LoaderSettings")]
     public class DynamicSceneLoaderSettings : ScriptableObject
     {
         [field: SerializeField] public DecentralandEnvironment DecentralandEnvironment { get; private set; }

@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace DCL.Settings.Settings
 {
-    [CreateAssetMenu(menuName = "Create Controls Settings", fileName = "ControlsSettings", order = 0)]
+    [CreateAssetMenu(fileName = "ControlsSettings", menuName = "DCL/Settings/Controls Settings")]
     public class ControlsSettingsAsset : ScriptableObject
     {
         [Header("Mouse")]

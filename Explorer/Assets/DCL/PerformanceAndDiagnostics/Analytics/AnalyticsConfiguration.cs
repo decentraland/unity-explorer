@@ -13,7 +13,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         DISABLED,
     }
 
-    [CreateAssetMenu(fileName = "AnalyticsConfiguration", menuName = "DCL/AnalyticsConfiguration", order = 0)]
+    [CreateAssetMenu(fileName = "AnalyticsConfiguration", menuName = "DCL/Diagnostics/Analytics Configuration")]
     public class AnalyticsConfiguration : ScriptableObject
     {
         private const string SEGMENT_WRITE_KEY = "SEGMENT_WRITE_KEY";
@@ -37,16 +37,16 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         [SerializeField] [HideInInspector]
         private string segmentWriteKey;
 
-        private Configuration segmentConfiguration;
-
-        private Dictionary<string, AnalyticsEventToggle> eventToggles;
-
         [field: SerializeField]
         [Tooltip("This parameter sets the interval (in seconds) at which the performance report is tracked to the analytics.")]
         public float PerformanceReportInterval { get; private set; } = 1.0f;
 
         [field: SerializeField]
         public AnalyticsMode Mode { get; private set; } = AnalyticsMode.SEGMENT;
+
+        private Dictionary<string, AnalyticsEventToggle> eventToggles;
+
+        private Configuration segmentConfiguration;
 
         public int FlushSize => flushSize;
 
@@ -108,9 +108,9 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
                 eventToggles = new Dictionary<string, AnalyticsEventToggle>();
 
             foreach (AnalyticsGroup group in groups)
-                foreach (AnalyticsEventToggle eventToggle in group.events)
-                    if (eventToggles.TryAdd(eventToggle.eventName, eventToggle))
-                        eventToggles[eventToggle.eventName].isEnabled = true;
+            foreach (AnalyticsEventToggle eventToggle in group.events)
+                if (eventToggles.TryAdd(eventToggle.eventName, eventToggle))
+                    eventToggles[eventToggle.eventName].isEnabled = true;
         }
 
         public bool EventIsEnabled(string eventName) =>

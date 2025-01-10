@@ -66,7 +66,7 @@ namespace DCL.InWorldCamera.Systems
             camera = World.CacheCamera();
         }
 
-        public override void Dispose()
+        protected override void OnDispose()
         {
             ctx.SafeCancelAndDispose();
         }

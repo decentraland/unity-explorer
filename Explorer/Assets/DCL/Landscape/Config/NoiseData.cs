@@ -5,7 +5,7 @@ using Random = Unity.Mathematics.Random;
 
 namespace DCL.Landscape.Config
 {
-    [CreateAssetMenu(menuName = "Landscape/Noise Data", fileName = "NoiseData", order = 1)]
+    [CreateAssetMenu(fileName = "NoiseData", menuName = "DCL/Landscape/Noise Data")]
     public class NoiseData : NoiseDataBase
     {
         public NoiseSettings settings = new ()
@@ -17,7 +17,6 @@ namespace DCL.Landscape.Config
 
         public override INoiseGenerator GetGenerator(uint baseSeed, uint variantSeed, NoiseGeneratorCache cache) =>
             new NoiseGenerator(this, variantSeed, baseSeed);
-
     }
 
     [Serializable]

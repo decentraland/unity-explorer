@@ -2,6 +2,10 @@ using System;
 
 namespace DCL.Multiplayer.Connections.Typing
 {
+    /// <summary>
+    ///     If you create a <see cref="LightResult{T}" /> you must log an exception as the error is not preserved here
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
     public readonly struct LightResult<T>
     {
         public static readonly LightResult<T> FAILURE = new ();
@@ -19,17 +23,5 @@ namespace DCL.Multiplayer.Connections.Typing
             Success
                 ? $"Result is success: {Result}"
                 : "Result is failure";
-    }
-
-    public static class LightResultExtensions
-    {
-        public static LightResult<T> AsSuccess<T>(this T result) =>
-            new (result);
-
-        public static void EnsureSuccess<T>(this LightResult<T> result, string errorMessage)
-        {
-            if (result.Success == false)
-                throw new Exception($"Result is failure: {errorMessage}");
-        }
     }
 }

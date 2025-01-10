@@ -8,7 +8,7 @@ using UnityEngine.Rendering.Universal;
 
 namespace DCL.Quality
 {
-    [CreateAssetMenu(menuName = "Quality/Create Quality Settings", fileName = "Quality Settings", order = 0)]
+    [CreateAssetMenu(fileName = "Quality Settings", menuName = "DCL/Various/Quality Settings")]
     public class QualitySettingsAsset : ScriptableObject
     {
         // Draw quality tab from the settings

@@ -4,6 +4,7 @@ using DCL.Chat;
 using DCL.ExplorePanel;
 using DCL.InWorldCamera.PhotoDetail;
 using DCL.Passport;
+using DCL.PerformanceAndDiagnostics.Analytics.EventBased;
 using DCL.UI.Sidebar;
 using MVC;
 using System;

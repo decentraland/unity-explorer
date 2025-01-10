@@ -107,13 +107,13 @@ namespace DCL.SDKComponents.SceneUI.Utils
             EventCallback<FocusInEvent> newOnFocusInCallback = evt =>
             {
                 evt.StopPropagation();
-                inputBlock.Disable(InputMapComponent.Kind.CAMERA , InputMapComponent.Kind.SHORTCUTS , InputMapComponent.Kind.PLAYER);
+                inputBlock.Disable(InputMapComponent.Kind.CAMERA , InputMapComponent.Kind.SHORTCUTS , InputMapComponent.Kind.PLAYER, InputMapComponent.Kind.IN_WORLD_CAMERA);
             };
 
             EventCallback<FocusOutEvent> newOnFocusOutCallback = evt =>
             {
                 evt.StopPropagation();
-                inputBlock.Enable(InputMapComponent.Kind.CAMERA , InputMapComponent.Kind.SHORTCUTS , InputMapComponent.Kind.PLAYER);
+                inputBlock.Enable(InputMapComponent.Kind.CAMERA , InputMapComponent.Kind.SHORTCUTS , InputMapComponent.Kind.PLAYER, InputMapComponent.Kind.IN_WORLD_CAMERA);
             };
 
             uiInputComponent.UnregisterInputCallbacks();

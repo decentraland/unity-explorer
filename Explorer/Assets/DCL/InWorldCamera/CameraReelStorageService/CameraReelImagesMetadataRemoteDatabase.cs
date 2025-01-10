@@ -44,6 +44,21 @@ namespace DCL.InWorldCamera.CameraReelStorageService
             return responseData;
         }
 
+        public async UniTask<CameraReelStorageResponse> UnsignedGetStorageInfoAsync(string userAddress, CancellationToken ct)
+        {
+            URLAddress url = urlBuilder.AppendDomain(userDomain)
+                                       .AppendSubDirectory(URLSubdirectory.FromString(userAddress))
+                                       .Build();
+
+            urlBuilder.Clear();
+
+            CameraReelStorageResponse responseData = await webRequestController
+                                                          .GetAsync(url, ct, ReportCategory.CAMERA_REEL)
+                                                          .CreateFromJson<CameraReelStorageResponse>(WRJsonParser.Unity);
+
+            return responseData;
+        }
+
         public async UniTask<CameraReelResponse> GetScreenshotsMetadataAsync(string uuid, CancellationToken ct)
         {
             URLAddress url = urlBuilder.AppendDomain(imageDomain)

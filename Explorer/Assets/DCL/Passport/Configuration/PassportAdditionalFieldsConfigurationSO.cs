@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace DCL.Passport.Configuration
 {
-    [CreateAssetMenu(fileName = "PassportAdditionalFieldsConfiguration", menuName = "SO/PassportAdditionalFieldsConfiguration")]
+    [CreateAssetMenu(fileName = "PassportAdditionalFieldsConfiguration", menuName = "DCL/Passport/Passport Additional Fields Configuration")]
     public class PassportAdditionalFieldsConfigurationSO : ScriptableObject
     {
         public AdditionalField_PassportFieldView additionalInfoFieldPrefab;

@@ -301,12 +301,11 @@ namespace DCL.SDKComponents.MediaStream
         }
 
         // Called when the scene is unloaded
-        public override void Dispose()
+        protected override void OnDispose()
         {
 #if DEBUG_VIDEO_PRIORITIES
             DestroyAllDebuggingSignsQuery(World);
 #endif
-            base.Dispose();
         }
 
         [Query]

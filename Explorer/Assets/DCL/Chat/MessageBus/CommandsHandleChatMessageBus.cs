@@ -2,7 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Chat.Commands;
 using System;
 using System.Collections.Generic;
-using System.Text.RegularExpressions;
+using System.Linq;
 using System.Threading;
 using Utility;
 
@@ -11,16 +11,15 @@ namespace DCL.Chat.MessageBus
     public class CommandsHandleChatMessageBus : IChatMessagesBus
     {
         private readonly IChatMessagesBus origin;
-        private readonly ChatCommandsHandler chatCommandsHandler;
+        private readonly Dictionary<string, IChatCommand> commands;
         private CancellationTokenSource commandCts = new ();
-        private (IChatCommand command, Match param) commandTuple;
 
         public event Action<ChatMessage>? MessageAdded;
 
         public CommandsHandleChatMessageBus(IChatMessagesBus origin, IReadOnlyList<IChatCommand> commands)
         {
             this.origin = origin;
-            this.chatCommandsHandler = new ChatCommandsHandler(commands);
+            this.commands = commands.ToDictionary(cmd => cmd.Command);
             origin.MessageAdded += OriginOnOnMessageAdded;
         }
 
@@ -34,34 +33,50 @@ namespace DCL.Chat.MessageBus
 
         public void Send(string message, string origin)
         {
-            //If the message doesn't start as a command (with "/"), we just forward it to the chat
-            if (!ChatCommandsHandler.StartsLikeCommand(message))
+            if (message[0] == '/') // User tried running a command
             {
-                this.origin.Send(message, origin);
+                HandleChatCommandAsync(message).Forget();
                 return;
             }
 
-            if (chatCommandsHandler.TryGetChatCommand(message, ref commandTuple))
-            {
-                ExecuteChatCommandAsync(commandTuple.command, commandTuple.param).Forget();
-                return;
-            }
-
-            SendFromSystem($"🔴 Command not found: '{message}'");
+            this.origin.Send(message, origin);
         }
 
-        private async UniTask ExecuteChatCommandAsync(IChatCommand command, Match param)
+        private async UniTaskVoid HandleChatCommandAsync(string message)
         {
-            commandCts = commandCts.SafeRestart();
+            string[] split = message.Split(' ');
+            string userCommand = split[0][1..];
+            string[] parameters = new ArraySegment<string>(split, 1, split.Length - 1).ToArray()!;
 
-            string? response = await command.ExecuteAsync(param, commandCts.Token);
+            if (commands.TryGetValue(userCommand, out IChatCommand? command))
+            {
+                if (command.ValidateParameters(parameters))
+                {
+                    // Command found and parameters validated, run it
+                    commandCts = commandCts.SafeRestart();
 
-            if (!string.IsNullOrEmpty(response))
-                SendFromSystem(response);
+                    try
+                    {
+                        string response = await command.ExecuteCommandAsync(parameters, commandCts.Token);
+                        SendFromSystem(response);
+                    }
+                    catch (Exception) { SendFromSystem("🔴 Error running command."); }
+
+                    return;
+                }
+
+                SendFromSystem($"🔴 Invalid parameters, usage:\n{command.Description}");
+                return;
+            }
+
+            // Command not found
+            SendFromSystem("🔴 Command not found.");
         }
 
         private void SendFromSystem(string message)
         {
+            if (string.IsNullOrEmpty(message)) return;
+
             MessageAdded?.Invoke(ChatMessage.NewFromSystem(message));
         }
 

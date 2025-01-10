@@ -6,7 +6,7 @@ using Font = DCL.ECSComponents.Font;
 
 namespace DCL.SDKComponents.TextShape.Fonts.Settings
 {
-    [CreateAssetMenu(fileName = "Font List", menuName = "SDKComponents/Font/List", order = 0)]
+    [CreateAssetMenu(fileName = "Font List", menuName = "DCL/SDKComponents/Font List")]
     public class SoFontList : ScriptableObject, IFontsStorage
     {
         [SerializeField]

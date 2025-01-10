@@ -7,6 +7,7 @@ namespace DCL.InWorldCamera.CameraReelStorageService
     public interface ICameraReelImagesMetadataDatabase
     {
         UniTask<CameraReelStorageResponse> GetStorageInfoAsync(string userAddress, CancellationToken ct);
+        UniTask<CameraReelStorageResponse> UnsignedGetStorageInfoAsync(string userAddress, CancellationToken ct);
 
         UniTask<CameraReelResponses> GetScreenshotsAsync(string userAddress, int limit, int offset, CancellationToken ct);
         UniTask<CameraReelResponse> GetScreenshotsMetadataAsync(string uuid, CancellationToken ct);

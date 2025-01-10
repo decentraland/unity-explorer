@@ -4,7 +4,7 @@ using UnityEngine.Audio;
 
 namespace DCL.Audio
 {
-    [CreateAssetMenu(fileName = "AudioCategorySettings", menuName = "SO/Audio/AudioCategorySettings")]
+    [CreateAssetMenu(fileName = "AudioCategorySettings", menuName = "DCL/Audio/Audio Category Settings")]
     [Serializable]
     public class AudioCategorySettings : ScriptableObject
     {

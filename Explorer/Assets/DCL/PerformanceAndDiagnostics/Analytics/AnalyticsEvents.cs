@@ -72,5 +72,13 @@
         {
             public const string LIVEKIT_HEALTH_CHECK_FAILED = "livekit_health_check_failed"; // 🔴 - needs testing
         }
+
+        public static class Authentication
+        {
+            public const string LOGGED_IN_CACHED = "logged_in_cached";
+            public const string LOGGED_IN = "logged_in";
+            public const string LOGIN_REQUESTED = "login_requested";
+            public const string VERIFICATION_REQUESTED = "verification_requested";
+        }
     }
 }

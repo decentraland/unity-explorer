@@ -1,7 +1,4 @@
-using System;
-using System.Threading;
 using Arch.SystemGroups;
-using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
 using DCL.DebugUtilities;
 using DCL.LOD;
@@ -39,7 +36,6 @@ namespace DCL.PluginSystem.Global
         private TextureArrayContainer lodTextureArrayContainer;
         private readonly CacheCleaner cacheCleaner;
 
-
         private readonly ILODCache lodCache;
         private readonly IComponentPool<LODGroup> lodGroupPool;
 
@@ -51,7 +47,8 @@ namespace DCL.PluginSystem.Global
             IPerformanceBudget frameCapBudget, IScenesCache scenesCache, IDebugContainerBuilder debugBuilder,
             ISceneReadinessReportQueue sceneReadinessReportQueue, VisualSceneStateResolver visualSceneStateResolver, TextureArrayContainerFactory textureArrayContainerFactory,
             ILODSettingsAsset lodSettingsAsset, SceneAssetLock sceneAssetLock, IRealmPartitionSettings partitionSettings,
-            ILODCache lodCache, IComponentPool<LODGroup> lodGroupPool, IDecentralandUrlsSource decentralandUrlsSource,Transform lodCacheParent, bool lodEnabled, int lodLevels)
+            ILODCache lodCache, IComponentPool<LODGroup> lodGroupPool, IDecentralandUrlsSource decentralandUrlsSource, Transform lodCacheParent, bool lodEnabled,
+            int lodLevels)
         {
             this.realmData = realmData;
             this.decentralandUrlsSource = decentralandUrlsSource;
@@ -72,37 +69,29 @@ namespace DCL.PluginSystem.Global
             this.lodLevels = lodLevels;
         }
 
-        public UniTask Initialize(IPluginSettingsContainer container, CancellationToken ct)
-        {
-            return UniTask.CompletedTask;
-        }
-
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
             lodTextureArrayContainer = textureArrayContainerFactory.CreateSceneLOD(SCENE_TEX_ARRAY_SHADER, lodSettingsAsset.DefaultTextureArrayResolutionDescriptors,
                 TextureFormat.BC7, lodSettingsAsset.ArraySizeForMissingResolutions, lodSettingsAsset.CapacityForMissingResolutions);
 
-
-            
             ResolveVisualSceneStateSystem.InjectToWorld(ref builder, lodSettingsAsset, visualSceneStateResolver, realmData);
             UpdateVisualSceneStateSystem.InjectToWorld(ref builder, realmData, scenesCache, lodCache, lodSettingsAsset, visualSceneStateResolver, sceneAssetLock);
-            
+
             if (lodEnabled)
             {
                 CalculateLODBiasSystem.InjectToWorld(ref builder);
                 RecalculateLODDistanceSystem.InjectToWorld(ref builder, partitionSettings);
+
                 InitializeSceneLODInfoSystem.InjectToWorld(ref builder, lodCache, lodLevels, lodGroupPool,
                     lodCacheParent, sceneReadinessReportQueue, scenesCache);
+
                 UpdateSceneLODInfoSystem.InjectToWorld(ref builder, lodSettingsAsset, scenesCache, sceneReadinessReportQueue, decentralandUrlsSource);
                 InstantiateSceneLODInfoSystem.InjectToWorld(ref builder, frameCapBudget, memoryBudget, scenesCache, sceneReadinessReportQueue, lodTextureArrayContainer, partitionSettings);
                 LODDebugToolsSystem.InjectToWorld(ref builder, debugBuilder, lodSettingsAsset, lodLevels);
             }
             else
-            {
                 UpdateSceneLODInfoMockSystem.InjectToWorld(ref builder, sceneReadinessReportQueue, scenesCache);
-            }
         }
-        
 
         public void Dispose()
         {

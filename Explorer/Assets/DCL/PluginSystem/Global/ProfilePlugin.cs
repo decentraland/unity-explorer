@@ -5,7 +5,6 @@ using DCL.ResourcesUnloading;
 using ECS.LifeCycle.Systems;
 using ECS.StreamableLoading.Cache;
 using System.Threading;
-using Utility.Multithreading;
 
 namespace DCL.PluginSystem.Global
 {

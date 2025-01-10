@@ -309,7 +309,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
         {
             PrepareShowGallery(ct);
 
-            storageStatus ??= await cameraReelStorageService.GetUserGalleryStorageInfoAsync(walletAddress, ct);
+            storageStatus ??= await cameraReelStorageService.UnsignedGetUserGalleryStorageInfoAsync(walletAddress, ct);
 
             if (storageStatus.Value.ScreenshotsAmount == 0)
             {
@@ -426,6 +426,10 @@ namespace DCL.InWorldCamera.CameraReelGallery
                     endVisible = i;
                 } else
                     DisableThumbnailImage(thumbnailImages[i]);
+
+            //If no image is visible (achieved while scrolling against the scroll limit), set beginVisible to 0
+            if (beginVisible < 0)
+                beginVisible = 0;
         }
 
         private void CheckNeedsToLoadMore()

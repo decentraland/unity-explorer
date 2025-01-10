@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace DCL.CharacterPreview
 {
-    [CreateAssetMenu(fileName = "CharacterPreviewSettings", menuName = "SO/CharacterPreviewSettings")]
+    [CreateAssetMenu(fileName = "CharacterPreviewSettings", menuName = "DCL/Character/Character Preview Settings")]
     public class CharacterPreviewSettingsSO : ScriptableObject
     {
         [field: Header("Camera Settings")]

@@ -1,13 +1,10 @@
 using Arch.SystemGroups;
-using Cysharp.Threading.Tasks;
 using DCL.ECSComponents;
 using DCL.PluginSystem.World.Dependencies;
-using DCL.Utilities;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Systems;
 using ECS.Unity.AvatarShape.Systems;
 using System.Collections.Generic;
-using System.Threading;
 
 namespace DCL.PluginSystem.World
 {
@@ -19,9 +16,6 @@ namespace DCL.PluginSystem.World
         {
             this.globalWorld = globalWorld;
         }
-
-        public UniTask Initialize(IPluginSettingsContainer container, CancellationToken ct) =>
-            UniTask.CompletedTask;
 
         public void Dispose()
         {

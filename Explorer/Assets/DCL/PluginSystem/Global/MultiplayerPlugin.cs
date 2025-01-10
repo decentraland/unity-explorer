@@ -105,7 +105,11 @@ namespace DCL.PluginSystem.Global
             this.poolsRegistry = poolsRegistry;
         }
 
-        public void Dispose() { }
+        public void Dispose()
+        {
+            archipelagoIslandRoom.Dispose();
+            gateKeeperSceneRoom.Dispose();
+        }
 
         public async UniTask InitializeAsync(Settings settings, CancellationToken ct)
         {

@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace DCL.PerformanceAndDiagnostics.Diagnostics.ReportsHandling.Sentry.Editor
 {
-    [CreateAssetMenu(fileName = "SentryBuildTimeConfiguration.asset", menuName = "Sentry/SentryBuildTimeConfiguration", order = 999)]
+    [CreateAssetMenu(fileName = "SentryBuildTimeConfiguration.asset", menuName = "DCL/Diagnostics/Sentry Build Time Configuration")]
     public class SentryBuildTimeConfiguration : SentryBuildTimeOptionsConfiguration
     {
         private const string SENTRY_ASSET_PATH = "Assets/Resources/Sentry/SentryOptions.asset";

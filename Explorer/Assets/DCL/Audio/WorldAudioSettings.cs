@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace DCL.Audio
 {
-    [CreateAssetMenu(fileName = "WorldAudioSettings", menuName = "SO/Audio/WorldAudioSettings")]
+    [CreateAssetMenu(fileName = "WorldAudioSettings", menuName = "DCL/Audio/World Audio Settings")]
     public class WorldAudioSettings : AudioCategorySettings, ISerializationCallbackReceiver
     {
         [SerializeField] private List<AudioClipTypeAndConfigKeyValuePair> audioClipConfigsList = new ();

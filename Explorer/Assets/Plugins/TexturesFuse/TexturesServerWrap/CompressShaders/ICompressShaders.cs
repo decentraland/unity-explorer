@@ -45,6 +45,19 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.CompressShaders
                 ),
                 platformInfo
             );
+
+        static ICompressShaders NewEmpty() =>
+            new EmptyCompressShaders();
+
+    }
+
+    public class EmptyCompressShaders : ICompressShaders
+    {
+        public bool AreReady() =>
+            true;
+
+        public UniTask WarmUpAsync(CancellationToken token) =>
+            UniTask.CompletedTask;
     }
 
     public static class CompressShadersExtensions

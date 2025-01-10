@@ -5,7 +5,7 @@ using Segment.Serialization;
 using System;
 using UnityEngine;
 
-namespace DCL.PerformanceAndDiagnostics.Analytics
+namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
 {
     public class ExplorePanelAnalytics : IDisposable
     {

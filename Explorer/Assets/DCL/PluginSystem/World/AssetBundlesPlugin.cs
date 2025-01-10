@@ -12,7 +12,6 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
-using Utility.Multithreading;
 
 namespace DCL.PluginSystem.World
 {
@@ -61,12 +60,6 @@ namespace DCL.PluginSystem.World
             LoadGlobalAssetBundleSystem.InjectToWorld(ref builder, assetBundleCache, webRequestController, assetBundleLoadingMutex);
         }
 
-#region Interface Ambiguity
-        UniTask IDCLPlugin.Initialize(IPluginSettingsContainer container, CancellationToken ct) =>
-
-            // Don't even try to retrieve empty settings
-            UniTask.CompletedTask;
-
         UniTask IDCLPlugin<NoExposedPluginSettings>.InitializeAsync(NoExposedPluginSettings settings, CancellationToken ct) =>
             UniTask.CompletedTask;
 
@@ -74,6 +67,5 @@ namespace DCL.PluginSystem.World
         {
             assetBundleCache.Dispose();
         }
-#endregion
     }
 }

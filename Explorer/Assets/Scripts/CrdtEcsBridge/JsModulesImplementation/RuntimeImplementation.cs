@@ -9,7 +9,6 @@ using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
 using Microsoft.ClearScript.JavaScript;
-using Newtonsoft.Json;
 using SceneRunner.Scene;
 using SceneRuntime;
 using SceneRuntime.Apis.Modules.Runtime;

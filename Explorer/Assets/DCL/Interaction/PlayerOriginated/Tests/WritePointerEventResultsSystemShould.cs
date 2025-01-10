@@ -144,7 +144,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
                 PBPointerEvents.Types.Entry entry = sdkEvents.PointerEvents[originalIndex];
                 PBPointerEventsResult r = results[(int)counter];
 
-                Assert.That(r.Button, Is.EqualTo(entry.EventInfo.Button));
+                Assert.That(r.Button, Is.EqualTo(entry.EventType is PointerEventType.PetHoverEnter or PointerEventType.PetHoverLeave ? InputAction.IaPointer : entry.EventInfo.Button));
                 Assert.That(r.State, Is.EqualTo(entry.EventType));
                 Assert.That(r.TickNumber, Is.EqualTo(123u));
                 Assert.That(r.Timestamp, Is.EqualTo(123u));

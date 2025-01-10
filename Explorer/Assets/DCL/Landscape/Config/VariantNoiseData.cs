@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace DCL.Landscape.Config
 {
-    [CreateAssetMenu(menuName = "Landscape/Variant Noise Data", fileName = "VariantNoiseData", order = 0)]
+    [CreateAssetMenu(fileName = "VariantNoiseData", menuName = "DCL/Landscape/Variant Noise Data")]
     public class VariantNoiseData : NoiseDataBase
     {
         public uint seed;

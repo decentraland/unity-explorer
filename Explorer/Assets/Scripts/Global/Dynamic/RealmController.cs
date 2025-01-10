@@ -33,7 +33,7 @@ namespace Global.Dynamic
         // TODO it can be dangerous to clear the realm, instead we may destroy it fully and reconstruct but we will need to
         // TODO construct player/camera entities again and allocate more memory. Evaluate
         // Realms + Promises
-        private static readonly QueryDescription CLEAR_QUERY = new QueryDescription().WithAny<RealmComponent, GetSceneDefinition, GetSceneDefinitionList, SceneDefinitionComponent, SceneLODInfo, EmptySceneComponent>();
+        private static readonly QueryDescription CLEAR_QUERY = new QueryDescription().WithAny<RealmComponent, GetSceneDefinition, GetSceneDefinitionList, SceneDefinitionComponent, SceneLODInfo, EmptySceneComponent>().WithNone<PortableExperienceComponent>();
 
         private readonly List<ISceneFacade> allScenes = new (PoolConstants.SCENES_COUNT);
         private readonly ServerAbout serverAbout = new ();
@@ -63,8 +63,10 @@ namespace Global.Dynamic
             {
                 if (isLocalSceneDevelopment)
                     return RealmType.LocalScene;
+
                 if (realmData is { Configured: true, ScenesAreFixed: false })
                     return RealmType.GenesisCity;
+
                 return RealmType.World;
             }
         }
@@ -135,7 +137,8 @@ namespace Global.Dynamic
                 result.configurations.networkId,
                 result.comms?.adapter ?? result.comms?.fixedAdapter ?? "offline:offline", //"offline property like in previous implementation"
                 result.comms?.protocol ?? "v3",
-                hostname
+                hostname,
+                isLocalSceneDevelopment
             );
 
             // Add the realm component
@@ -189,7 +192,7 @@ namespace Global.Dynamic
 
             promise = await promise.ToUniTaskAsync(GlobalWorld.EcsWorld, cancellationToken: ct);
 
-            if (promise.TryGetResult(GlobalWorld.EcsWorld, out var result) && result.Succeeded)
+            if (promise.TryGetResult(GlobalWorld.EcsWorld, out StreamableLoadingResult<SceneDefinitions> result) && result.Succeeded)
                 return result.Asset;
 
             return null;
@@ -288,6 +291,5 @@ namespace Global.Dynamic
 
             return hostname;
         }
-
     }
 }

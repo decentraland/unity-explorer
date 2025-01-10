@@ -15,6 +15,7 @@ using DCL.InWorldCamera.UI;
 using ECS.Abstract;
 using MVC;
 using UnityEngine;
+using UnityEngine.UIElements;
 using static DCL.Input.Component.InputMapComponent;
 
 namespace DCL.InWorldCamera.Systems
@@ -35,6 +36,7 @@ namespace DCL.InWorldCamera.Systems
         private readonly ICursor cursor;
         private readonly IMVCManager mvcManager;
         private readonly DCLInput.InWorldCameraActions inputSchema;
+        private readonly UIDocument sceneUIRoot;
 
         private SingleInstanceEntity camera;
         private SingleInstanceEntity inputMap;
@@ -50,7 +52,9 @@ namespace DCL.InWorldCamera.Systems
             CharacterController followTarget,
             IDebugContainerBuilder debugContainerBuilder,
             ICursor cursor,
-            IMVCManager mvcManager, DCLInput.InWorldCameraActions inputSchema) : base(world)
+            IMVCManager mvcManager,
+            DCLInput.InWorldCameraActions inputSchema,
+            UIDocument sceneUIRoot) : base(world)
         {
             this.settings = settings;
             this.hudController = hudController;
@@ -59,6 +63,7 @@ namespace DCL.InWorldCamera.Systems
             this.cursor = cursor;
             this.mvcManager = mvcManager;
             this.inputSchema = inputSchema;
+            this.sceneUIRoot = sceneUIRoot;
 
             behindUpOffset = Vector3.up * settings.BehindUpOffset;
         }
@@ -123,6 +128,7 @@ namespace DCL.InWorldCamera.Systems
 
             hudController.Hide();
             mvcManager.SetAllViewsCanvasActive(except: hudController, true);
+            sceneUIRoot.rootVisualElement.parent.style.display = DisplayStyle.Flex;
 
             SwitchToThirdPersonCamera();
 
@@ -145,6 +151,7 @@ namespace DCL.InWorldCamera.Systems
 
             hudController.Show();
             mvcManager.SetAllViewsCanvasActive(except: hudController, false);
+            sceneUIRoot.rootVisualElement.parent.style.display = DisplayStyle.None;
 
             SwitchToInWorldCamera();
 

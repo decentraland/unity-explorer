@@ -202,10 +202,8 @@ namespace DCL.SDKComponents.MediaStream
             component.SetState(isValidStreamUrl || isValidLocalPath || string.IsNullOrEmpty(url) ? VideoState.VsNone : VideoState.VsError);
         }
 
-        public override void Dispose()
+        protected override void OnDispose()
         {
-            base.Dispose();
-
 #if UNITY_EDITOR_OSX || UNITY_STANDALONE_OSX
             worldVolumeMacBus.OnWorldVolumeChanged -= OnWorldVolumeChanged;
             worldVolumeMacBus.OnMasterVolumeChanged -= OnMasterVolumeChanged;

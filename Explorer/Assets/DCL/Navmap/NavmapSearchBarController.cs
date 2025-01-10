@@ -116,9 +116,12 @@ namespace DCL.Navmap
             if (isSelected)
             {
                 GetAndShowPreviousSearches();
-                inputBlock.Disable(InputMapComponent.Kind.SHORTCUTS);
+                inputBlock.Disable(InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.IN_WORLD_CAMERA);
             }
-            else { inputBlock.Enable(InputMapComponent.Kind.SHORTCUTS); }
+            else
+            {
+                inputBlock.Enable(InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.IN_WORLD_CAMERA);
+            }
         }
 
         private async UniTask SearchAndShowAsync(string searchText)

@@ -70,7 +70,7 @@ crashlytics-build.properties
 .sentryconfig.json
 
 # Addressables
-Assets/AddressableAssetData/OSX/
-Assets/AddressableAssetData/OSX/.meta
-Assets/AddressableAssetData/Windows/
-Assets/AddressableAssetData/Windows.meta
+Assets/AddressableAssetsData/OSX/
+Assets/AddressableAssetsData/OSX.meta
+Assets/AddressableAssetsData/Windows/
+Assets/AddressableAssetsData/Windows.meta

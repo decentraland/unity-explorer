@@ -9,7 +9,7 @@ using UnityEngine;
 
 namespace DCL.SDKComponents.NFTShape.Frames.Pool
 {
-    [CreateAssetMenu(fileName = "NftShape Settings", menuName = "SDKComponents/NftShape/Settings", order = 0)]
+    [CreateAssetMenu(fileName = "NftShape Settings", menuName = "DCL/SDKComponents/NFT Shape Settings")]
     public class NFTShapeSettings : ScriptableObject
     {
         [SerializeField] private List<Pair> pairs = new ();
@@ -20,20 +20,19 @@ namespace DCL.SDKComponents.NFTShape.Frames.Pool
             return pairs.ToDictionary(e => e.nftFrameType, e => e.prefab.EnsureNotNull());
         }
 
-        public FrameRef DefaultFrame()
-        {
-            return defaultFrame;
-        }
+        public FrameRef DefaultFrame() =>
+            defaultFrame;
 
         [ContextMenu(nameof(Ensure))]
         public void Ensure()
         {
-            var map = FramePrefabs();
+            IReadOnlyDictionary<NftFrameType, FrameRef> map = FramePrefabs();
             string[] names = Enum.GetNames(typeof(NftFrameType));
 
             if (map.Count != names.Length)
             {
                 var missing = string.Join(", ", names.Except(map.Keys.Select(e => e.ToString())));
+
                 throw new Exception(
                     $"Missing frame prefabs for {missing}"
                 );
@@ -41,6 +40,7 @@ namespace DCL.SDKComponents.NFTShape.Frames.Pool
 
             var prefabs = map.Values.ToList();
             var distinct = prefabs.Distinct().ToList();
+
             if (prefabs.Count != distinct.Count)
             {
                 prefabs.RemoveAll(e => distinct.Remove(e));

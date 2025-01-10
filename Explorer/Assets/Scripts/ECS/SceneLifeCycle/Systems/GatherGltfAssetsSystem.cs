@@ -66,7 +66,7 @@ namespace ECS.SceneLifeCycle.Systems
             startTime = Time.time;
         }
 
-        public override void Dispose()
+        protected override void OnDispose()
         {
             if (entitiesUnderObservation != null)
             {
