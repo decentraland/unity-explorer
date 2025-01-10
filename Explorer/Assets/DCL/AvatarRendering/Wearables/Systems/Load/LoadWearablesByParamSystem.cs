@@ -43,9 +43,19 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
             IReadOnlyList<(string, string)> urlEncodedParams = intention.Params;
             urlBuilder.Clear();
 
-            urlBuilder.AppendDomainWithReplacedPath(realmData.Ipfs.LambdasBaseUrl, lambdaSubdirectory)
-                      .AppendSubDirectory(URLSubdirectory.FromString(userID))
-                      .AppendSubDirectory(wearablesSubdirectory);
+            if (intention.CommonArguments.URL == URLAddress.EMPTY)
+            {
+                urlBuilder.AppendDomainWithReplacedPath(realmData.Ipfs.LambdasBaseUrl, lambdaSubdirectory)
+                          .AppendSubDirectory(URLSubdirectory.FromString(userID))
+                          .AppendSubDirectory(wearablesSubdirectory);
+            }
+            else
+            {
+                // urlBuilder.AppendDomainWithReplacedPath(URLDomain.FromString(intention.CommonArguments.URL), URLSubdirectory.EMPTY);
+
+                // ONLY FOR DEBUGGING
+                urlBuilder.AppendDomainWithReplacedPath(URLDomain.FromString(intention.CommonArguments.URL), URLSubdirectory.FromString("/items"));
+            }
 
             for (var i = 0; i < urlEncodedParams.Count; i++)
                 urlBuilder.AppendParameter(urlEncodedParams[i]);

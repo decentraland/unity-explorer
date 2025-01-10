@@ -29,14 +29,25 @@ namespace DCL.AvatarRendering.Wearables
             string? category = null,
             IWearablesProvider.CollectionType collectionType = IWearablesProvider.CollectionType.All,
             string? name = null,
-            List<IWearable>? results = null)
+            List<IWearable>? results = null,
+            string? intentionUrl = null)
         {
             if (!appArgs.TryGetValue(AppArgsFlags.SELF_PREVIEW_WEARABLES, out string? wearablesCsv))
+                // Regular flow when no "self preview wearables" are provided:
                 return await source.GetAsync(pageSize, pageNumber, ct, sortingField, orderBy, category, collectionType, name, results);
 
             URN[] pointers = wearablesCsv!.Split(',', StringSplitOptions.RemoveEmptyEntries)
                                           .Select(s => new URN(s))
                                           .ToArray();
+
+            if (appArgs.TryGetValue(AppArgsFlags.SELF_PREVIEW_SOURCE_URL, out string? downloadSourceUrl))
+            {
+                // TODO: support many
+                downloadSourceUrl += $"/collections/{pointers[0]}/items";
+
+                return await source.GetAsync(pageSize, pageNumber, ct, sortingField, orderBy, category, collectionType, name, results,
+                    intentionUrl: downloadSourceUrl);
+            }
 
             (IReadOnlyCollection<IWearable>? maleWearables, IReadOnlyCollection<IWearable>? femaleWearables) =
                 await UniTask.WhenAll(RequestPointersAsync(pointers, BodyShape.MALE, ct),
@@ -63,6 +74,7 @@ namespace DCL.AvatarRendering.Wearables
         public async UniTask<IReadOnlyCollection<IWearable>?> RequestPointersAsync(IReadOnlyCollection<URN> pointers,
             BodyShape bodyShape,
             CancellationToken ct) =>
+                // pass "pointers source" here? from 'self-preview-source-url'... supposedly the Intention should have the CommonArguments
                 await source.RequestPointersAsync(pointers, bodyShape, ct);
 
     }

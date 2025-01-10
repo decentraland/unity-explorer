@@ -14,7 +14,8 @@ namespace DCL.AvatarRendering.Wearables
             SortingField sortingField = SortingField.Date, OrderBy orderBy = OrderBy.Descending,
             string? category = null, CollectionType collectionType = CollectionType.All,
             string? name = null,
-            List<IWearable>? results = null);
+            List<IWearable>? results = null,
+            string? intentionUrl = null);
 
         UniTask<IReadOnlyCollection<IWearable>?> RequestPointersAsync(IReadOnlyCollection<URN> pointers,
             BodyShape bodyShape,
