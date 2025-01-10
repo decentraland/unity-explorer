@@ -65,7 +65,7 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
             Assert.That(intent.CommonArguments.URL, Is.EqualTo($"http://www.fakepath.com/{version}/abcd"));
             Assert.That(intent.cacheHash, Is.Not.Null);
         }
-        
+
         [Test]
         public void LoadFromWebWithNewPath()
         {
@@ -102,7 +102,7 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
             Assert.That(result.Asset, Is.Null);
             Assert.That(result.Exception, Is.TypeOf<ArgumentException>().Or.InnerException.TypeOf<ArgumentException>());
         }
-        
+
         [Test]
         public void FailIfAbsentInManifestNewHash()
         {
@@ -119,6 +119,55 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
             Assert.That(result.Succeeded, Is.False);
             Assert.That(result.Asset, Is.Null);
             Assert.That(result.Exception, Is.TypeOf<ArgumentException>().Or.InnerException.TypeOf<ArgumentException>());
+        }
+
+        [Test]
+        public void ReturnDifferentCacheValuesForDifferentVersions()
+        {
+            //First, we simulate creation of a scene and the resolving of one asset budnle
+            string version = "v" + SceneAssetBundleManifest.ASSET_BUNDLE_VERSION_REQUIRES_HASH;
+            sceneData.AssetBundleManifest.Returns(new SceneAssetBundleManifest(FAKE_AB_PATH, version, new[] { "abcd" }, "scene_hash_1", "04_10_2024"));
+            var intent = GetAssetBundleIntention.FromHash(typeof(GameObject), "abcd", permittedSources: AssetSource.WEB);
+            Entity entity1 = world.Create(intent, new StreamableLoadingState());
+            system.Update(0);
+            intent = world.Get<GetAssetBundleIntention>(entity1);
+            string firstCacheableHash = intent.CommonArguments.GetCacheableURL();
+            world.Destroy(entity1);
+
+            //Now, we simulate another scene, that may have a different version of asset bundle conversion
+            version = "v" + (SceneAssetBundleManifest.ASSET_BUNDLE_VERSION_REQUIRES_HASH + 1);
+            sceneData.AssetBundleManifest.Returns(new SceneAssetBundleManifest(FAKE_AB_PATH, version, new[] { "abcd" }, "scene_hash_1", "04_10_2024"));
+            intent = GetAssetBundleIntention.FromHash(typeof(GameObject), "abcd", permittedSources: AssetSource.WEB);
+            Entity entity2 = world.Create(intent, new StreamableLoadingState());
+            system.Update(0);
+            intent = world.Get<GetAssetBundleIntention>(entity2);
+            string secondCacheableHash = intent.CommonArguments.GetCacheableURL();
+
+            Assert.AreNotEqual(firstCacheableHash, secondCacheableHash);
+        }
+
+        [Test]
+        public void ReturnSameCacheValuesForScenes()
+        {
+            //First, we simulate creation of a scene and the resolving of one asset budnle
+            string version = "v" + SceneAssetBundleManifest.ASSET_BUNDLE_VERSION_REQUIRES_HASH;
+            sceneData.AssetBundleManifest.Returns(new SceneAssetBundleManifest(FAKE_AB_PATH, version, new[] { "abcd" }, "scene_hash_1", "04_10_2024"));
+            var intent = GetAssetBundleIntention.FromHash(typeof(GameObject), "abcd", permittedSources: AssetSource.WEB);
+            Entity entity1 = world.Create(intent, new StreamableLoadingState());
+            system.Update(0);
+            intent = world.Get<GetAssetBundleIntention>(entity1);
+            string firstCacheableHash = intent.CommonArguments.GetCacheableURL();
+            world.Destroy(entity1);
+
+            //Now, we simulate another scene, that may have a different version of asset bundle conversion
+            sceneData.AssetBundleManifest.Returns(new SceneAssetBundleManifest(FAKE_AB_PATH, version, new[] { "abcd" }, "scene_hash_2", "04_10_2024"));
+            intent = GetAssetBundleIntention.FromHash(typeof(GameObject), "abcd", permittedSources: AssetSource.WEB);
+            Entity entity2 = world.Create(intent, new StreamableLoadingState());
+            system.Update(0);
+            intent = world.Get<GetAssetBundleIntention>(entity2);
+            string secondCacheableHash = intent.CommonArguments.GetCacheableURL();
+
+            Assert.AreEqual(firstCacheableHash, secondCacheableHash);
         }
     }
 }
