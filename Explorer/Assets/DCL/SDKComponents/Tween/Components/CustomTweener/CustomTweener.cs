@@ -1,12 +1,11 @@
 ﻿using DG.Tweening;
 using DG.Tweening.Core;
 using DG.Tweening.Plugins.Options;
-using System;
 
 namespace DCL.SDKComponents.Tween.Components
 {
     public abstract class CustomTweener<T, TU> : ICustomTweener<T>
-        where T: struct, IEquatable<T>, IFormattable
+        where T: struct
         where TU: struct, IPlugOptions
     {
         private bool finished;
