@@ -70,7 +70,7 @@ namespace DCL.UI.GenericContextMenu
                 object controlInitialValue = null;
                 inputData.InitialValues?.TryGetValue(config, out controlInitialValue);
 
-                GenericContextMenuComponent component = controlsPoolManager.GetContextMenuComponent(config, controlInitialValue, i);
+                GenericContextMenuComponentBase component = controlsPoolManager.GetContextMenuComponent(config, controlInitialValue, i);
 
                 if (inputData.ControlsActions.TryGetValue(config, out Delegate action))
                 {

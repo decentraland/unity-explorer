@@ -7,20 +7,19 @@ using UnityEngine.UI;
 
 namespace DCL.UI.GenericContextMenu.Controls
 {
-    public class GenericContextMenuButtonWithTextView : GenericContextMenuComponent
+    public class GenericContextMenuButtonWithTextView : GenericContextMenuComponent<ButtonContextMenuControlSettings>
     {
         [field: SerializeField] public Button ButtonComponent { get; private set; }
         [field: SerializeField] public TMP_Text TextComponent { get; private set; }
         [field: SerializeField] public Image ImageComponent { get; private set; }
 
-        public override void Configure(ContextMenuControlSettings settings, object initialValue)
+        public override void Configure(ButtonContextMenuControlSettings settings, object initialValue)
         {
-            ButtonContextMenuControlSettings buttonSettings = settings as ButtonContextMenuControlSettings;
-            TextComponent.SetText(buttonSettings!.ButtonText);
-            ImageComponent.sprite = buttonSettings.ButtonIcon;
-            HorizontalLayoutComponent.padding = buttonSettings.HorizontalLayoutPadding;
-            HorizontalLayoutComponent.spacing = buttonSettings.HorizontalLayoutSpacing;
-            HorizontalLayoutComponent.reverseArrangement = buttonSettings.HorizontalLayoutReverseArrangement;
+            TextComponent.SetText(settings!.ButtonText);
+            ImageComponent.sprite = settings.ButtonIcon;
+            HorizontalLayoutComponent.padding = settings.HorizontalLayoutPadding;
+            HorizontalLayoutComponent.spacing = settings.HorizontalLayoutSpacing;
+            HorizontalLayoutComponent.reverseArrangement = settings.HorizontalLayoutReverseArrangement;
         }
 
         public override void UnregisterListeners() =>

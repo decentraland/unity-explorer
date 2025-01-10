@@ -5,18 +5,17 @@ using UnityEngine.UI;
 
 namespace DCL.UI.GenericContextMenu.Controls
 {
-    public class GenericContextMenuSeparatorView : GenericContextMenuComponent
+    public class GenericContextMenuSeparatorView : GenericContextMenuComponent<SeparatorContextMenuControlSettings>
     {
         [field: SerializeField] public LayoutElement LayoutElementComponent { get; private set; }
 
-        public override void Configure(ContextMenuControlSettings settings, object initialValue)
+        public override void Configure(SeparatorContextMenuControlSettings settings, object initialValue)
         {
-            SeparatorContextMenuControlSettings separatorSettings = settings as SeparatorContextMenuControlSettings;
-            LayoutElementComponent.preferredHeight = separatorSettings!.Height;
-            LayoutElementComponent.minHeight = separatorSettings.Height;
-            HorizontalLayoutComponent.padding.left = separatorSettings.LeftPadding;
-            HorizontalLayoutComponent.padding.right = separatorSettings.RightPadding;
-            RectTransformComponent.sizeDelta = new Vector2(RectTransformComponent.sizeDelta.x, separatorSettings.Height);
+            LayoutElementComponent.preferredHeight = settings!.Height;
+            LayoutElementComponent.minHeight = settings.Height;
+            HorizontalLayoutComponent.padding.left = settings.LeftPadding;
+            HorizontalLayoutComponent.padding.right = settings.RightPadding;
+            RectTransformComponent.sizeDelta = new Vector2(RectTransformComponent.sizeDelta.x, settings.Height);
         }
 
         public override void UnregisterListeners() { }

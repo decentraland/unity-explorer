@@ -12,7 +12,7 @@ namespace DCL.UI.GenericContextMenu
         private readonly IObjectPool<GenericContextMenuSeparatorView> separatorPool;
         private readonly IObjectPool<GenericContextMenuButtonWithTextView> buttonPool;
         private readonly IObjectPool<GenericContextMenuToggleView> togglePool;
-        private readonly List<IGenericContextMenuComponent> currentControls = new ();
+        private readonly List<GenericContextMenuComponentBase> currentControls = new ();
 
         public ControlsPoolManager(
             Transform controlsParent,
@@ -39,20 +39,43 @@ namespace DCL.UI.GenericContextMenu
                 actionOnDestroy: toggleView => GameObject.Destroy(toggleView.gameObject));
         }
 
-        public GenericContextMenuComponent GetContextMenuComponent<T>(T settings, object initialValue, int index) where T : ContextMenuControlSettings
+        public GenericContextMenuComponentBase GetContextMenuComponent<T>(T settings, object initialValue, int index) where T : ContextMenuControlSettings
         {
-            GenericContextMenuComponent component = settings switch
-                                                    {
-                                                        SeparatorContextMenuControlSettings => separatorPool.Get(),
-                                                        ButtonContextMenuControlSettings => buttonPool.Get(),
-                                                        ToggleContextMenuControlSettings => togglePool.Get(),
-                                                        _ => throw new ArgumentOutOfRangeException()
-                                                    };
-            component.transform.SetSiblingIndex(index);
-            component.Configure(settings, initialValue);
+            GenericContextMenuComponentBase component = settings switch
+                                                        {
+                                                            SeparatorContextMenuControlSettings separatorSettings => GetSeparator(separatorSettings, initialValue),
+                                                            ButtonContextMenuControlSettings buttonSettings => GetButton(buttonSettings, initialValue),
+                                                            ToggleContextMenuControlSettings toggleSettings => GetToggle(toggleSettings, initialValue),
+                                                            _ => throw new ArgumentOutOfRangeException()
+                                                        };
+            component!.transform.SetSiblingIndex(index);
             currentControls.Add(component);
 
             return component;
+        }
+
+        private GenericContextMenuComponentBase GetSeparator(SeparatorContextMenuControlSettings settings, object initialValue)
+        {
+            GenericContextMenuSeparatorView separatorView = separatorPool.Get();
+            separatorView.Configure(settings, initialValue);
+
+            return separatorView;
+        }
+
+        private GenericContextMenuComponentBase GetButton(ButtonContextMenuControlSettings settings, object initialValue)
+        {
+            GenericContextMenuButtonWithTextView separatorView = buttonPool.Get();
+            separatorView.Configure(settings, initialValue);
+
+            return separatorView;
+        }
+
+        private GenericContextMenuComponentBase GetToggle(ToggleContextMenuControlSettings settings, object initialValue)
+        {
+            GenericContextMenuToggleView separatorView = togglePool.Get();
+            separatorView.Configure(settings, initialValue);
+
+            return separatorView;
         }
 
         public void Dispose() =>
@@ -60,7 +83,7 @@ namespace DCL.UI.GenericContextMenu
 
         public void ReleaseAllCurrentControls()
         {
-            foreach (IGenericContextMenuComponent control in currentControls)
+            foreach (GenericContextMenuComponentBase control in currentControls)
             {
                 control.UnregisterListeners();
 
