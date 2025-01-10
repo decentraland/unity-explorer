@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace DCL.SceneLoadingScreens
 {
-    [CreateAssetMenu(menuName = "DCL/Tips/Configuration", fileName = "SceneTipsConfiguration")]
+    [CreateAssetMenu(fileName = "Scene Tips Configuration", menuName = "DCL/Various/SceneTipsConfiguration")]
     public class SceneTipsConfigurationSO : ScriptableObject
     {
         [SerializeField] private Color[] backgroundColors = null!;

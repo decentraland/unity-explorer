@@ -2,7 +2,7 @@
 
 namespace DCL.CharacterMotion.Settings
 {
-    [CreateAssetMenu(menuName = "Create Character Controller Settings", fileName = "CharacterControllerSettings", order = 0)]
+    [CreateAssetMenu(fileName = "CharacterControllerSettings", menuName = "DCL/Character/Character Controller Settings")]
     public class CharacterControllerSettings : ScriptableObject, ICharacterControllerSettings
     {
         [field: SerializeField] [field: Header("General config")] public float WalkSpeed { get; set; } = 1;
@@ -13,13 +13,13 @@ namespace DCL.CharacterMotion.Settings
         [field: SerializeField] public float RunJumpHeight { get; set; } = 5f;
         [field: SerializeField] public float CharacterControllerRadius { get; private set; } = 0.5f;
 
-        [field: SerializeField, Header("Impulse Specifics")] public float GroundDrag { get; private set; } = 0.5f;
+        [field: SerializeField] [field: Header("Impulse Specifics")] public float GroundDrag { get; private set; } = 0.5f;
         [field: SerializeField] public float AirDrag { get; set; } = 0.25f;
         [field: SerializeField] public float MinImpulse { get; private set; } = 1f;
 
-        [field: SerializeField, Header("Velocity Drag")] public float JumpVelocityDrag { get; private set; } = 3f;
+        [field: SerializeField] [field: Header("Velocity Drag")] public float JumpVelocityDrag { get; private set; } = 3f;
 
-        [field: SerializeField, Header("Smooth acceleration")] public AnimationCurve AccelerationCurve { get; private set; }
+        [field: SerializeField] [field: Header("Smooth acceleration")] public AnimationCurve AccelerationCurve { get; private set; }
         [field: SerializeField] public float Acceleration { get; private set; } = 5;
         [field: SerializeField] public float MaxAcceleration { get; private set; } = 25f;
         [field: SerializeField] public float AccelerationTime { get; private set; } = 0.5f;
@@ -31,11 +31,11 @@ namespace DCL.CharacterMotion.Settings
         [field: SerializeField] [field: Header("Long Jump")] public float LongJumpTime { get; set; } = 0.5f;
         [field: SerializeField] public float LongJumpGravityScale { get; set; } = 0.5f;
 
-        [field: SerializeField, Header("Faster Jumps")] public float JumpGravityFactor { get; private set; } = 2;
+        [field: SerializeField] [field: Header("Faster Jumps")] public float JumpGravityFactor { get; private set; } = 2;
 
-        [field: SerializeField, Header("Coyote timer")] public float JumpGraceTime { get; private set; } = 0.15f;
+        [field: SerializeField] [field: Header("Coyote timer")] public float JumpGraceTime { get; private set; } = 0.15f;
 
-        [field: SerializeField, Header("Hard fall stun")] public float JumpHeightStun { get; private set; } = 10f;
+        [field: SerializeField] [field: Header("Hard fall stun")] public float JumpHeightStun { get; private set; } = 10f;
         [field: SerializeField] public float LongFallStunTime { get; private set; } = 0.75f;
 
         [field: SerializeField] [field: Header("Edges and Slopes")] public float NoSlipDistance { get; private set; } = 0.1f;
@@ -53,7 +53,7 @@ namespace DCL.CharacterMotion.Settings
         [field: SerializeField] public float WallSlideDetectionDistance { get; private set; } = 0.5f;
         [field: SerializeField] public float WallSlideMaxMoveSpeedMultiplier { get; private set; }
         [field: SerializeField] public float StepOffset { get; set; } = 0.35f;
-        [field: SerializeField, Header("Animation")] public float RotationSpeed { get; private set; } = 360f;
+        [field: SerializeField] [field: Header("Animation")] public float RotationSpeed { get; private set; } = 360f;
         [field: SerializeField] public float MovAnimBlendSpeed { get; private set; } = 3f;
         [field: SerializeField] public float AnimationFallSpeed { get; private set; } = -5f;
         [field: SerializeField] public float AnimationLongFallSpeed { get; private set; } = -12f;
@@ -87,7 +87,7 @@ namespace DCL.CharacterMotion.Settings
         [field: SerializeField] public float HeadIKHorizontalAngleReset { get; set; } = 70;
         [field: SerializeField] public float HeadIKRotationSpeed { get; set; } = 45;
 
-        [field: SerializeField, Header("Cheat/Debug/Misc")] public float JumpPadForce { get; private set; } = 50f;
+        [field: SerializeField] [field: Header("Cheat/Debug/Misc")] public float JumpPadForce { get; private set; } = 50f;
         [field: SerializeField] public float AnimationSpeed { get; private set; } = 1;
     }
 }

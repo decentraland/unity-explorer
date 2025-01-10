@@ -3,7 +3,6 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Audio;
 using DCL.Audio.Systems;
-using DCL.Landscape;
 using DCL.PluginSystem.World;
 using DCL.PluginSystem.World.Dependencies;
 using ECS.LifeCycle;
@@ -15,13 +14,13 @@ using UnityEngine.AddressableAssets;
 
 namespace DCL.PluginSystem.Global
 {
-    public class InteractionsAudioPlugin : IDCLWorldPlugin<InteractionsAudioPlugin.PluginSettings>
+    public class PointerInputAudioPlugin : IDCLWorldPlugin<PointerInputAudioPlugin.Settings>
     {
         private readonly IAssetsProvisioner assetsProvisioner;
 
-        private ProvidedAsset<InteractionsAudioConfigs> interactionsAudioConfigs;
+        private ProvidedAsset<PointerInputAudioConfigs> interactionsAudioConfigs;
 
-        public InteractionsAudioPlugin(IAssetsProvisioner assetsProvisioner)
+        public PointerInputAudioPlugin(IAssetsProvisioner assetsProvisioner)
         {
             this.assetsProvisioner = assetsProvisioner;
         }
@@ -30,21 +29,21 @@ namespace DCL.PluginSystem.Global
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
-            InteractionsAudioSystem.InjectToWorld(ref builder, interactionsAudioConfigs.Value);
+            PointerInputAudioSystem.InjectToWorld(ref builder, interactionsAudioConfigs.Value);
         }
 
-        public async UniTask InitializeAsync(PluginSettings settings, CancellationToken ct)
+        public async UniTask InitializeAsync(Settings settings, CancellationToken ct)
         {
             interactionsAudioConfigs = await assetsProvisioner.ProvideMainAssetAsync(settings.InteractionsAudioConfigsReference, ct: ct);
         }
 
-        public class PluginSettings : IDCLPluginSettings
+        public class Settings : IDCLPluginSettings
         {
             [field: SerializeField] public InteractionsAudioConfigsReference InteractionsAudioConfigsReference { get; private set; }
         }
 
         [Serializable]
-        public class InteractionsAudioConfigsReference : AssetReferenceT<InteractionsAudioConfigs>
+        public class InteractionsAudioConfigsReference : AssetReferenceT<PointerInputAudioConfigs>
         {
             public InteractionsAudioConfigsReference(string guid) : base(guid) { }
         }

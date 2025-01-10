@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace DCL.Diagnostics
 {
-    [CreateAssetMenu(menuName = "Create Reports Handling Settings", fileName = "ReportsHandlingSettings", order = 0)]
+    [CreateAssetMenu(fileName = "ReportsHandlingSettings", menuName = "DCL/Diagnostics/Reports Handling Settings")]
     public class ReportsHandlingSettings : ScriptableObject, IReportsHandlingSettings
     {
         [SerializeField] private CategorySeverityMatrix debugLogMatrix;

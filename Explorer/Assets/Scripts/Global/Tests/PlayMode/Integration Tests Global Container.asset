@@ -19,6 +19,7 @@ MonoBehaviour:
   - rid: 1268264197252972544
   - rid: 1841402216112979968
   - rid: 2174542042650378246
+  - rid: 5734404089553354752
   references:
     version: 2
     RefIds:
@@ -63,6 +64,14 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
         <LandscapeData>k__BackingField:
           m_AssetGUID: 32f2b877400526d4cbf648ba5c5064b4
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+    - rid: 5734404089553354752
+      type: {class: PointerInputAudioPlugin/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        <InteractionsAudioConfigsReference>k__BackingField:
+          m_AssetGUID: cbb820cf51b7a714e88a7c873eb5de9c
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0

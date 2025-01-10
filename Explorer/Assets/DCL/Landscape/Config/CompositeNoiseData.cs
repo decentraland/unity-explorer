@@ -22,7 +22,7 @@ namespace DCL.Landscape.Config
         public bool disable;
     }
 
-    [CreateAssetMenu(menuName = "Landscape/Composite Noise Data", fileName = "CompositeNoiseData", order = 0)]
+    [CreateAssetMenu(fileName = "CompositeNoiseData", menuName = "DCL/Landscape/Composite Noise Data")]
     public class CompositeNoiseData : NoiseData
     {
         public List<CompositeOperation> operations;
