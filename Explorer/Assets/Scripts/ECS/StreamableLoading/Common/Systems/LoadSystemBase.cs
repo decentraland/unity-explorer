@@ -42,7 +42,7 @@ namespace ECS.StreamableLoading.Common.Systems
             cancellationTokenSource = new CancellationTokenSource();
         }
 
-        public override void Dispose()
+        protected override void OnDispose()
         {
             systemIsDisposed = true;
 

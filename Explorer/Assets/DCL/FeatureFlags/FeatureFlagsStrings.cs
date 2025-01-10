@@ -21,7 +21,7 @@
         public const string SKYBOX_SETTINGS_VARIANT = "settings";
         public const string VIDEO_PRIORITIZATION = "alfa-video-prioritization";
 
-        public const string CAMERA_REEL = "alpha-camera-reel";
-        public const string FRIENDS = "alpha-friends";
+        public const string CAMERA_REEL = "alfa-camera-reel";
+        public const string FRIENDS = "alfa-friends";
     }
 }

@@ -1,11 +1,10 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 namespace DCL.AvatarRendering
 {
-    [CreateAssetMenu(menuName = "Create Avatar Randomizer Settings", fileName = "Avatar Randomizer", order = 0)]
+    [CreateAssetMenu(fileName = "AvatarRandomizer", menuName = "DCL/Avatar/Avatar Randomizer Settings")]
     public class AvatarRandomizerAsset : ScriptableObject
     {
         [field: SerializeField] public bool RandomOrder { get; set; }
@@ -18,4 +17,3 @@ namespace DCL.AvatarRendering
         public List<string> pointers;
     }
 }
-

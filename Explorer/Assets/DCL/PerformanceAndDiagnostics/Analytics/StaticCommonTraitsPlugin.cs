@@ -39,7 +39,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             if (appArgs.HasFlag(AppArgsFlags.DCL_EDITOR))
                 return AppArgsFlags.DCL_EDITOR;
 
-            if (Debug.isDebugBuild || appArgs.HasDebugFlag())
+            if (appArgs.HasDebugFlag())
                 return DEBUG;
 
             return RELEASE;

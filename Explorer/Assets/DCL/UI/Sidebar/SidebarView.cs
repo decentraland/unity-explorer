@@ -1,7 +1,9 @@
 ﻿using DCL.EmotesWheel;
 using DCL.Friends.UI;
 using DCL.Notifications.NotificationsMenu;
+using DCL.UI.Buttons;
 using DCL.UI.ProfileElements;
+using DCL.UI.Skybox;
 using MVC;
 using UnityEngine;
 using UnityEngine.UI;
@@ -34,6 +36,10 @@ namespace DCL.UI.Sidebar
         [field: Header("Friends")]
         [field: SerializeField] internal Button friendsButton { get; private set; }
         [field: SerializeField] public FriendsPanelView FriendsPanelView { get; private set; }
+
+        [field: Header("Skybox")]
+        [field: SerializeField] internal SimpleHoverableButton skyboxButton { get; private set; }
+        [field: SerializeField] public SkyboxMenuView SkyboxMenuView { get; private set; }
 
         [field: Header("Sidebar Settings")]
         [field: SerializeField] internal Button sidebarSettingsButton { get; private set; }

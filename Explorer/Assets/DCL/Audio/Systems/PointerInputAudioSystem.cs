@@ -13,13 +13,13 @@ namespace DCL.Audio.Systems
     [LogCategory(ReportCategory.AUDIO)]
     [UpdateInGroup(typeof(SyncedPreRenderingSystemGroup))]
     [UpdateBefore(typeof(WritePointerEventResultsSystem))]
-    public partial class InteractionsAudioSystem : BaseUnityLoopSystem
+    public partial class PointerInputAudioSystem : BaseUnityLoopSystem
     {
-        private readonly IInteractionsAudioConfigs interactionsAudioConfigs;
+        private readonly IPointerInputAudioConfigs pointerInputAudioConfigs;
 
-        private InteractionsAudioSystem(World world, IInteractionsAudioConfigs interactionsAudioConfigs) : base(world)
+        private PointerInputAudioSystem(World world, IPointerInputAudioConfigs pointerInputAudioConfigs) : base(world)
         {
-            this.interactionsAudioConfigs = interactionsAudioConfigs;
+            this.pointerInputAudioConfigs = pointerInputAudioConfigs;
         }
 
         protected override void Update(float t)
@@ -46,13 +46,13 @@ namespace DCL.Audio.Systems
                     switch (info.Button)
                     {
                         case InputAction.IaPointer:
-                            UIAudioEventsBus.Instance.SendPlayAudioEvent(interactionsAudioConfigs.PointerAudio);
+                            UIAudioEventsBus.Instance.SendPlayAudioEvent(pointerInputAudioConfigs.PointerAudio);
                             break;
                         case InputAction.IaPrimary:
-                            UIAudioEventsBus.Instance.SendPlayAudioEvent(interactionsAudioConfigs.PrimaryAudio);
+                            UIAudioEventsBus.Instance.SendPlayAudioEvent(pointerInputAudioConfigs.PrimaryAudio);
                             break;
                         case InputAction.IaSecondary:
-                            UIAudioEventsBus.Instance.SendPlayAudioEvent(interactionsAudioConfigs.SecondaryAudio);
+                            UIAudioEventsBus.Instance.SendPlayAudioEvent(pointerInputAudioConfigs.SecondaryAudio);
                             break;
                     }
                 }

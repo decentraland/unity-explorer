@@ -2,15 +2,15 @@
 
 namespace DCL.Audio
 {
-    public interface IInteractionsAudioConfigs
+    public interface IPointerInputAudioConfigs
     {
         AudioClipConfig PointerAudio { get; }
         AudioClipConfig PrimaryAudio { get; }
         AudioClipConfig SecondaryAudio { get; }
     }
 
-    [CreateAssetMenu(fileName = "InteractionsAudioConfigs", menuName = "SO/Audio/InteractionsAudioConfigs")]
-    public class InteractionsAudioConfigs : ScriptableObject, IInteractionsAudioConfigs
+    [CreateAssetMenu(fileName = "PointerInputAudioConfigs", menuName = "DCL/Audio/Pointer Input Audio Configs")]
+    public class PointerInputAudioConfigs : ScriptableObject, IPointerInputAudioConfigs
     {
         [SerializeField] private AudioClipConfig primaryAudio;
         [SerializeField] private AudioClipConfig pointerAudio;
