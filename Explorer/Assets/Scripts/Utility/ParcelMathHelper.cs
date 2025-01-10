@@ -128,6 +128,9 @@ namespace Utility
         public static Vector2 WorldToGridPositionUnclamped(Vector3 worldPosition) =>
             new (worldPosition.x / PARCEL_SIZE, worldPosition.z / PARCEL_SIZE);
 
+        public static Vector3 ParcelToPositionFlat(this Vector2Int parcel) =>
+            new (parcel.x * PARCEL_SIZE, 0, parcel.y * PARCEL_SIZE);
+
         public static Vector2Int ToParcel(this Vector3 position) =>
             new (Mathf.FloorToInt(position.x / PARCEL_SIZE), Mathf.FloorToInt(position.z / PARCEL_SIZE));
 

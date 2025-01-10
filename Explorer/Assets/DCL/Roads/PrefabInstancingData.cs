@@ -19,6 +19,22 @@ public class LODInstanceData
 
     [Header("INSTANCES")]
     public List<Matrix4x4> Matrices = new ();    // Transform matrices for each instance
+
+    public LODInstanceData Copy(LODInstanceData lodInstanceData)
+    {
+        var copy = new LODInstanceData
+        {
+            OriginalPrefab = lodInstanceData.OriginalPrefab,
+            Material = lodInstanceData.Material,
+            ObjectSize = lodInstanceData.ObjectSize,
+            LODBounds = lodInstanceData.LODBounds,
+            MeshLOD = lodInstanceData.MeshLOD,
+            DistLOD = lodInstanceData.DistLOD,
+            Matrices = lodInstanceData.Matrices,
+        };
+
+        return copy;
+    }
 }
 
 public class PrefabInstancingData : MonoBehaviour

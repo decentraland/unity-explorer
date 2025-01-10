@@ -1,36 +1,38 @@
-﻿using UnityEngine;
+﻿using DCL.Roads.Settings;
+using System.Collections.Generic;
+using System.Linq;
+using UnityEngine;
+using Utility;
 
 namespace DCL.Roads.Playground
 {
     public class RoadsGPUInstancingPlayground : MonoBehaviour
     {
-        public PrefabInstancingData prefab;
-
-        public int id;
+        public PrefabInstancingData originalPrefab;
+        public RoadDescription roadDescription;
 
         private LODInstanceData instanceData;
-        private RenderParams rp;
 
         public void Update()
         {
-            if (id >= 0)
-                DrawInstanced(id);
-            else
-                DrawAll();
+            DrawAll(originalPrefab.InstancesData);
         }
 
-        private void DrawAll()
+        private void DrawAll(LODInstanceData[] prefabMeshes)
         {
-            for (var i = 0; i < prefab.InstancesData.Length; i++)
-                DrawInstanced(i);
+            foreach (var mesh in prefabMeshes)
+                DrawInstanced(mesh);
         }
 
-        private void DrawInstanced(int id)
+        private void DrawInstanced(LODInstanceData instanceData)
         {
-            LODInstanceData instanceData = prefab.InstancesData[id];
+            Matrix4x4 rootTransform = Matrix4x4.TRS(roadDescription.RoadCoordinate.ParcelToPositionFlat(), roadDescription.Rotation, Vector3.one);
 
-            rp = new RenderParams(instanceData.Material);
-            Graphics.RenderMeshInstanced(rp, instanceData.MeshLOD[0], 0, instanceData.Matrices.ToArray());
+            List<Matrix4x4> adjustedMatrices = new List<Matrix4x4>();
+            foreach (Matrix4x4 m in instanceData.Matrices)
+                adjustedMatrices.Add(rootTransform * m);
+
+            Graphics.RenderMeshInstanced(new RenderParams(instanceData.Material), instanceData.MeshLOD[0], 0, adjustedMatrices.ToArray());
         }
     }
 }

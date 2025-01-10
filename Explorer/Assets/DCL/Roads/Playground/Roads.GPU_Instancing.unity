@@ -258,8 +258,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b8ce4b66b4364ce09c781944ba498938, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  prefab: {fileID: 4382098379069999140, guid: 2d6ac3b70dd761a428bae0e655a93ebc, type: 3}
-  id: 0
+  originalPrefab: {fileID: 4382098379069999140, guid: 2d6ac3b70dd761a428bae0e655a93ebc, type: 3}
+  roadDescription:
+    RoadCoordinate: {x: 0, y: 0}
+    Rotation: {x: 0, y: 1, z: 0, w: -0.00000004371139}
+    RoadModel: 
 --- !u!1 &1888803523
 GameObject:
   m_ObjectHideFlags: 0
