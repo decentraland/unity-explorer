@@ -52,7 +52,7 @@ namespace ECS.StreamableLoading.DeferredLoading
                         ref IPartitionComponent partition = ref Unsafe.Add(ref partitionFirstElement, entityIndex)!;
 
                         // Process only not evaluated and explicitly forbidden entities
-                        if (state.Value is not (Status.NotStarted or Status.Forbidden or Status.ChunkCompleted))
+                        if (state.Value is not (Status.NotStarted or Status.Forbidden))
                             continue;
 
                         var intentionData = new IntentionData

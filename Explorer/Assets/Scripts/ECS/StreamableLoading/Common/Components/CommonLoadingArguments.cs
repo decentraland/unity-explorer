@@ -7,7 +7,7 @@ namespace ECS.StreamableLoading.Common.Components
 {
     public struct CommonLoadingArguments
     {
-        public bool IsChunkable;
+        public bool HasChunkDownloadStarted;
         public URLAddress URL;
         public URLAddress? CacheableURL;
         public int Attempts;
@@ -37,10 +37,10 @@ namespace ECS.StreamableLoading.Common.Components
             AssetSource permittedSources = AssetSource.WEB,
             AssetSource currentSource = AssetSource.WEB,
             CancellationTokenSource? cancellationTokenSource = null,
-            bool isChunkable = false)
+            bool hasChunkDownloadStarted = false)
         {
             URL = url;
-            IsChunkable = isChunkable;
+            HasChunkDownloadStarted = hasChunkDownloadStarted;
             CustomEmbeddedSubDirectory = customEmbeddedSubDirectory;
             Timeout = timeout;
             Attempts = attempts;
@@ -59,8 +59,8 @@ namespace ECS.StreamableLoading.Common.Components
             AssetSource permittedSources = AssetSource.WEB,
             AssetSource currentSource = AssetSource.WEB,
             CancellationTokenSource cancellationTokenSource = null,
-            bool isChunkable = false) :
-            this(URLAddress.FromString(url),customEmbeddedSubDirectory, timeout, attempts, permittedSources, currentSource, cancellationTokenSource,  isChunkable) { }
+            bool hasChunkDownloadStarted = false) :
+            this(URLAddress.FromString(url),customEmbeddedSubDirectory, timeout, attempts, permittedSources, currentSource, cancellationTokenSource,  hasChunkDownloadStarted) { }
 
         // Always override attempts count for streamable assets as repetitions are handled in LoadSystemBase
         public static implicit operator CommonArguments(in CommonLoadingArguments commonLoadingArguments) =>

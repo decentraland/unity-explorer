@@ -25,9 +25,13 @@ namespace ECS.StreamableLoading.Textures
     public partial class LoadTextureSystem : LoadSystemBase<Texture2DData, GetTextureIntention>
     {
         private const int CHUNK_SIZE = 1024 * 1024;
-        private readonly ArrayPool<byte> arrayPool;
+        //private readonly ArrayPool<byte> arrayPool = ArrayPool<byte>.Create();
         private readonly IWebRequestController webRequestController;
+
+        //Create proper structure to handle the chunk count, the structure can hold the chunk count, progress, full file size, time to live, etc
         private readonly Dictionary<GetTextureIntention, int> currentRequests = new Dictionary<GetTextureIntention, int>();
+
+        //Another system might be fed with the dictionary to handle the chunk expiry and other additional logic
 
         internal LoadTextureSystem(World world, IStreamableCache<Texture2DData, GetTextureIntention> cache, IWebRequestController webRequestController) : base(world, cache)
         {
@@ -36,12 +40,15 @@ namespace ECS.StreamableLoading.Textures
 
         protected override async UniTask<StreamableLoadingResult<Texture2DData>> FlowInternalAsync(GetTextureIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct, EntityReference entity)
         {
-            byte[] partialDownloadBuffer = arrayPool.Rent(CHUNK_SIZE);
+            //TODO: use proper pool
+            byte[] partialDownloadBuffer = new byte[CHUNK_SIZE];//arrayPool.Rent(CHUNK_SIZE);
 
             //Create the new partial downloading data
             PartialDownloadingData partialDownloadingData = new PartialDownloadingData(partialDownloadBuffer, 0, CHUNK_SIZE);
 
-            //If not then perform the first request
+            /*TODO add the proper flow to do the first request, handle the partial result if supports partial download and
+             handle direct result creation if partial is not supported or file is smaller than chunk*/
+
             await webRequestController.GetPartialAsync(
                 intention.CommonArguments,
                 ct,
@@ -49,9 +56,16 @@ namespace ECS.StreamableLoading.Textures
                 partialDownloadingData,
                 headersInfo: new WebRequestHeadersInfo().WithRange(partialDownloadingData.RangeStart, partialDownloadingData.RangeEnd));
 
+            //Add proper handling of the chunk count
             currentRequests.Add(intention, 1);
+
+            var arguments = intention.CommonArguments;
+            arguments.HasChunkDownloadStarted = true;
+            UpdateState(entity, arguments);
+
             //Allocate the full data buffer based on full file size
-            byte[] fullDataBuffer = arrayPool.Rent(partialDownloadingData.FullFileSize);
+            //Temporary solution atm, will change to a Memory or Stream
+            byte[] fullDataBuffer = new byte[partialDownloadingData.FullFileSize];//arrayPool.Rent(partialDownloadingData.FullFileSize);
 
             //Copy the first chunk of data to the full data buffer
             Buffer.BlockCopy(partialDownloadingData.DataBuffer, 0, fullDataBuffer, 0, partialDownloadingData.DataBuffer.Length);
@@ -76,18 +90,32 @@ namespace ECS.StreamableLoading.Textures
                 Buffer.BlockCopy(partialDownloadingData.DataBuffer, 0, fullDataBuffer, partialDownloadingData.RangeStart, finalBytesCount);
 
                 currentRequests[intention]++;
-                StreamableLoadingState state = World!.Get<StreamableLoadingState>(entity);
-                state.AcquiredBudget.Release();
-                state.SetChunkCompleted();
-                await UniTask.WaitUntil(() => state.Value == StreamableLoadingState.Status.ProcessNextChunk);
+                StreamableLoadingState state = ReleaseBudget(entity);
+                await UniTask.WaitUntil(() => state.Value == StreamableLoadingState.Status.Allowed);
             }
 
-            arrayPool.Return(partialDownloadBuffer, true);
+            //arrayPool.Return(partialDownloadBuffer, true);
 
+            //Verify if this is the proper flow
             var texture = new Texture2D(1, 1);
             texture.LoadImage(fullDataBuffer);
             return new StreamableLoadingResult<Texture2DData>(new Texture2DData(texture));
 
+        }
+
+        //The following 2 functions are workarounds to allow refs in an async context, would be interesting to see if there is a better way to handle this
+        private void UpdateState(EntityReference entity, CommonLoadingArguments arguments)
+        {
+            ref GetTextureIntention getIntention = ref World.TryGetRef<GetTextureIntention>(entity, out _);
+            getIntention.CommonArguments = arguments;
+        }
+
+        private StreamableLoadingState ReleaseBudget(EntityReference entity)
+        {
+            ref StreamableLoadingState state = ref World!.TryGetRef<StreamableLoadingState>(entity, out _);
+            state.AcquiredBudget.Release();
+            state.SetChunkCompleted();
+            return state;
         }
     }
 }

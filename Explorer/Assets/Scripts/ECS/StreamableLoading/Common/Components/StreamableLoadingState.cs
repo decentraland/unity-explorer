@@ -37,10 +37,6 @@ namespace ECS.StreamableLoading.Common.Components
             ///     StreamableLoadingResult is ready
             /// </summary>
             Finished,
-
-            ChunkCompleted,
-
-            ProcessNextChunk
         }
 
         public Status Value { get; private set; }
@@ -111,7 +107,7 @@ namespace ECS.StreamableLoading.Common.Components
                     if (Value is not Status.InProgress)
                         throw new InvalidOperationException($"Unexpected transition from \"{Value}\" to \"NotStarted\"");
         #endif
-                    Value = Status.ChunkCompleted;
+                    Value = Status.NotStarted;
                 }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -77,11 +77,12 @@ namespace ECS.StreamableLoading.Common.Systems
 
             EntityReference entityReference = World.Reference(entity);
 
-            if (state.Value != StreamableLoadingState.Status.Allowed && state.Value != StreamableLoadingState.Status.ProcessNextChunk)
+            //If a chunk is already loading, don't start another one, this also applies to partial loading requests that are not yet finished
+            if (state.Value != StreamableLoadingState.Status.Allowed || intention.CommonArguments.HasChunkDownloadStarted)
             {
                 // If state is in progress the flow was already launched and it will call FinalizeLoading on its own
                 // If state is finished the asset is already resolved and cancellation can be ignored
-                if (state.Value != StreamableLoadingState.Status.InProgress && state.Value != StreamableLoadingState.Status.Finished && state.Value != StreamableLoadingState.Status.ChunkCompleted && intention.CancellationTokenSource.IsCancellationRequested)
+                if (state.Value != StreamableLoadingState.Status.InProgress && state.Value != StreamableLoadingState.Status.Finished && intention.CancellationTokenSource.IsCancellationRequested)
 
                     // If we don't finalize promises preemptively they are being stacked in DeferredLoadingSystem
                     // if it's unable to keep up with their number
