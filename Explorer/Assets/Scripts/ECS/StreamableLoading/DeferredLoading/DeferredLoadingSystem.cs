@@ -52,7 +52,7 @@ namespace ECS.StreamableLoading.DeferredLoading
                         ref IPartitionComponent partition = ref Unsafe.Add(ref partitionFirstElement, entityIndex)!;
 
                         // Process only not evaluated and explicitly forbidden entities
-                        if (state.Value is not (Status.NotStarted or Status.Forbidden))
+                        if (state.Value is not (Status.NotStarted or Status.Forbidden or Status.ChunkCompleted))
                             continue;
 
                         var intentionData = new IntentionData
@@ -82,7 +82,7 @@ namespace ECS.StreamableLoading.DeferredLoading
                 if (!releasablePerformanceLoadingBudget.TrySpendBudget(out IAcquiredBudget acquiredBudget)) break;
 
                 ref StreamableLoadingState state = ref loadingIntentions[i].StatePointer.Value;
-                state.SetAllowed(acquiredBudget!);
+                state.SetAllowed(acquiredBudget);
             }
 
             // Set the rest to forbidden

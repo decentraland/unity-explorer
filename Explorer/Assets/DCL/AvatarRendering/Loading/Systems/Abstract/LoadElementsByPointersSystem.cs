@@ -35,7 +35,7 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
 
         protected sealed override async UniTask<StreamableLoadingResult<TAsset>> FlowInternalAsync(
             TIntention intention, IAcquiredBudget acquiredBudget,
-            IPartitionComponent partition, CancellationToken ct)
+            IPartitionComponent partition, CancellationToken ct, EntityReference entity)
         {
             var finalTargetList = RepoolableList<TDTO>.NewList();
 

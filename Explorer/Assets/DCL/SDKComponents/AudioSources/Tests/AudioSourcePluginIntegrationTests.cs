@@ -65,7 +65,7 @@ namespace DCL.SDKComponents.AudioSources.Tests
             startLoadingSystem.Update(0);
 
             world.TryGet(entity, out AudioSourceComponent audioSourceComponent);
-            world.Get<StreamableLoadingState>(audioSourceComponent.ClipPromise.Entity).SetAllowed(Substitute.For<IAcquiredBudget>());
+            world.Get<StreamableLoadingState>(audioSourceComponent.ClipPromise.Entity).SetAllowed(false, Substitute.For<IAcquiredBudget>());
 
             loadAudioClipSystem.Update(1);
             await UniTask.WaitUntil(() => audioSourceComponent.ClipPromise.TryGetResult(world, out _));

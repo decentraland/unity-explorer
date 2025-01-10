@@ -56,7 +56,7 @@ namespace ECS.StreamableLoading.AssetBundles
             return await UniTask.WhenAll(assetBundleMetadata.dependencies.Select(hash => WaitForDependencyAsync(manifest, hash, customEmbeddedSubdirectory, partition, ct)));
         }
 
-        protected override async UniTask<StreamableLoadingResult<AssetBundleData>> FlowInternalAsync(GetAssetBundleIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
+        protected override async UniTask<StreamableLoadingResult<AssetBundleData>> FlowInternalAsync(GetAssetBundleIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct, EntityReference entity)
         {
             AssetBundleLoadingResult assetBundleResult = await webRequestController
                .GetAssetBundleAsync(intention.CommonArguments, new GetAssetBundleArguments(loadingMutex, intention.cacheHash), ct, GetReportCategory(),
@@ -140,7 +140,7 @@ namespace ECS.StreamableLoading.AssetBundles
             // if the type was not specified don't load any assets
             if (expectedObjType == null)
                 return new StreamableLoadingResult<AssetBundleData>(new AssetBundleData(assetBundle, metrics, dependencies));
-            
+
             if (lookForShaderAssets && expectedObjType == typeof(GameObject))
             {
                 //If there are no dependencies, it means that this gameobject asset bundle has the shader in it.

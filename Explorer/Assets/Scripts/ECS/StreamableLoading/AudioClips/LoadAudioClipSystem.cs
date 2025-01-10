@@ -24,7 +24,7 @@ namespace ECS.StreamableLoading.AudioClips
             this.webRequestController = webRequestController;
         }
 
-        protected override async UniTask<StreamableLoadingResult<AudioClipData>> FlowInternalAsync(GetAudioClipIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
+        protected override async UniTask<StreamableLoadingResult<AudioClipData>> FlowInternalAsync(GetAudioClipIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct, EntityReference entity)
         {
             // Attempts should be always 1 as there is a repeat loop in `LoadSystemBase`
             AudioClip? result = await webRequestController.GetAudioClipAsync(

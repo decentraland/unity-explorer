@@ -6,6 +6,8 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using DCL.DebugUtilities.UIBindings;
+using DCL.WebRequests.CustomDownloadHandlers;
+using DCL.WebRequests.PartialDownload;
 using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -14,6 +16,9 @@ namespace DCL.WebRequests
 {
     public static class WebRequestControllerExtensions
     {
+        private const string CONTENT_RANGE_HEADER = "Content-Range";
+        private static readonly byte[] PARTIAL_DOWNLOAD_BUFFER = new byte[1024 * 1024];
+
         public static UniTask<TResult> SendAsync<TWebRequest, TWebRequestArgs, TWebRequestOp, TResult>(
             this IWebRequestController controller,
             CommonArguments commonArguments,
@@ -24,7 +29,8 @@ namespace DCL.WebRequests
             WebRequestHeadersInfo? headersInfo = null,
             WebRequestSignInfo? signInfo = null,
             ISet<long>? ignoreErrorCodes = null,
-            bool suppressErrors = false
+            bool suppressErrors = false,
+            DownloadHandler? downloadHandler = null
         )
             where TWebRequestArgs: struct
             where TWebRequest: struct, ITypedWebRequest
@@ -39,7 +45,8 @@ namespace DCL.WebRequests
                     headersInfo ?? WebRequestHeadersInfo.NewEmpty(),
                     signInfo,
                     ignoreErrorCodes,
-                    suppressErrors
+                    suppressErrors,
+                    downloadHandler
                 ), op
             )!;
 
@@ -57,7 +64,41 @@ namespace DCL.WebRequests
             ISet<long>? ignoreErrorCodes = null
         ) where TOp: struct, IWebRequestOp<GenericGetRequest, TResult> =>
             controller.SendAsync<GenericGetRequest, GenericGetArguments, TOp, TResult>(commonArguments, default(GenericGetArguments), webRequestOp, ct, reportData, headersInfo, signInfo, ignoreErrorCodes);
+        public static UniTask<PartialDownloadingData> GetPartialAsync(
+            this IWebRequestController controller,
+            CommonArguments commonArguments,
+            CancellationToken ct,
+            ReportData reportData,
+            PartialDownloadingData partialData,
+            WebRequestHeadersInfo? headersInfo = null,
+            WebRequestSignInfo? signInfo = null,
+            ISet<long>? ignoreErrorCodes = null
+        )
+        {
+            PartialDownloadHandler handler = new PartialDownloadHandler(ref partialData, PARTIAL_DOWNLOAD_BUFFER);
+            return controller.SendAsync<GenericGetRequest, GenericGetArguments, PartialDownloadOp, PartialDownloadingData>(commonArguments, default(GenericGetArguments), new PartialDownloadOp(partialData), ct, reportData, headersInfo, signInfo, ignoreErrorCodes, downloadHandler: handler);
+        }
 
+        public struct PartialDownloadOp : IWebRequestOp<GenericGetRequest, PartialDownloadingData>
+        {
+            private PartialDownloadingData data;
+
+            public PartialDownloadOp(PartialDownloadingData data)
+            {
+                this.data = data;
+            }
+
+            public async UniTask<PartialDownloadingData> ExecuteAsync(GenericGetRequest webRequest, CancellationToken ct)
+            {
+                if (data.FullFileSize == 0)
+                {
+                    DownloadHandlersUtils.TryGetFullSize(webRequest.UnityWebRequest.GetResponseHeader(CONTENT_RANGE_HEADER), out int fullSize);
+                    data.FullFileSize = fullSize;
+                }
+
+                return this.data;
+            }
+        }
         public static UniTask<TResult> PostAsync<TOp, TResult>(
             this IWebRequestController controller,
             CommonArguments commonArguments,

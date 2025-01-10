@@ -29,7 +29,7 @@ namespace ECS.SceneLifeCycle.SceneDefinition
             this.webRequestController = webRequestController;
         }
 
-        protected override async UniTask<StreamableLoadingResult<SceneEntityDefinition>> FlowInternalAsync(GetSceneDefinition intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
+        protected override async UniTask<StreamableLoadingResult<SceneEntityDefinition>> FlowInternalAsync(GetSceneDefinition intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct, EntityReference entity)
         {
             SceneEntityDefinition sceneEntityDefinition = await
                 webRequestController.GetAsync(intention.CommonArguments, ct, GetReportData())

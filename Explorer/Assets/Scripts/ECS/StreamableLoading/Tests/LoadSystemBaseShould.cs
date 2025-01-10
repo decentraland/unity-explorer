@@ -53,7 +53,7 @@ namespace ECS.StreamableLoading.Tests
 
         private void ForceAllowed()
         {
-            world.Get<StreamableLoadingState>(promise.Entity).SetAllowed(budget);
+            world.Get<StreamableLoadingState>(promise.Entity).SetAllowed(false, budget);
         }
 
         [Test]

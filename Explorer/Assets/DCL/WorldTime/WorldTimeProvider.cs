@@ -1,4 +1,5 @@
-﻿using Cysharp.Threading.Tasks;
+﻿using Arch.Core;
+using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.PerformanceBudgeting;
@@ -46,7 +47,7 @@ namespace DCL.Time
             if (timeDifference.TotalMilliseconds > TIME_BETWEEN_UPDATES)
             {
                 var intent = new SubIntention(new CommonLoadingArguments(TIME_SERVER_URL));
-                string serverDate = (await intent.RepeatLoopAsync(NoAcquiredBudget.INSTANCE, PartitionComponent.TOP_PRIORITY, GetTimeFromServerAsync, ReportCategory.ENGINE, ct)).UnwrapAndRethrow();
+                string serverDate = (await intent.RepeatLoopAsync(NoAcquiredBudget.INSTANCE, PartitionComponent.TOP_PRIORITY, GetTimeFromServerAsync, ReportCategory.ENGINE, ct, new EntityReference())).UnwrapAndRethrow();
                 cachedServerTime = ObtainDateTimeFromServerTime(serverDate);
                 currentTime = cachedServerTime;
                 cachedSystemTime = DateTime.Now;
@@ -73,7 +74,7 @@ namespace DCL.Time
             return cycleHour > 0? cycleHour : STARTING_CYCLE_HOUR;
         }
 
-        private async UniTask<StreamableLoadingResult<string>> GetTimeFromServerAsync(SubIntention intention, IAcquiredBudget budget, IPartitionComponent partition, CancellationToken ct)
+        private async UniTask<StreamableLoadingResult<string>> GetTimeFromServerAsync(SubIntention intention, IAcquiredBudget budget, IPartitionComponent partition, CancellationToken ct, EntityReference entity)
         {
             string date = await webRequestController.GetAsync(TIME_SERVER_URL, ct, ReportCategory.JAVASCRIPT)
                                                     .GetResponseHeaderAsync("date");

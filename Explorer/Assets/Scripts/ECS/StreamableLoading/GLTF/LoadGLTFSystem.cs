@@ -33,7 +33,7 @@ namespace ECS.StreamableLoading.GLTF
             this.webRequestController = webRequestController;
         }
 
-        protected override async UniTask<StreamableLoadingResult<GLTFData>> FlowInternalAsync(GetGLTFIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
+        protected override async UniTask<StreamableLoadingResult<GLTFData>> FlowInternalAsync(GetGLTFIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct, EntityReference entity)
         {
             var reportData = new ReportData(GetReportCategory());
 

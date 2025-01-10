@@ -1,3 +1,4 @@
+using Arch.Core;
 using AssetManagement;
 using Cysharp.Threading.Tasks;
 using DCL.WebRequests;
@@ -12,7 +13,7 @@ namespace ECS.StreamableLoading.Common.Systems
 {
     public static class AssetsLoadingUtility
     {
-        public delegate UniTask<StreamableLoadingResult<TAsset>> InternalFlowDelegate<TAsset, in TIntention>(TIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
+        public delegate UniTask<StreamableLoadingResult<TAsset>> InternalFlowDelegate<TAsset, in TIntention>(TIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct, EntityReference entity)
             where TIntention: struct, ILoadingIntention;
 
         /// <summary>
@@ -24,7 +25,7 @@ namespace ECS.StreamableLoading.Common.Systems
         public static async UniTask<StreamableLoadingResult<TAsset>?> RepeatLoopAsync<TIntention, TAsset>(this TIntention intention,
             IAcquiredBudget acquiredBudget,
             IPartitionComponent partition,
-            InternalFlowDelegate<TAsset, TIntention> flow, ReportData reportData, CancellationToken ct)
+            InternalFlowDelegate<TAsset, TIntention> flow, ReportData reportData, CancellationToken ct, EntityReference entity)
             where TIntention: struct, ILoadingIntention
         {
             int attemptCount = intention.CommonArguments.Attempts;
@@ -33,7 +34,7 @@ namespace ECS.StreamableLoading.Common.Systems
             {
                 ReportHub.Log(reportData, $"Starting loading {intention}\n{partition}, attempts left: {attemptCount}");
 
-                try { return await flow(intention, acquiredBudget, partition, ct); }
+                try { return await flow(intention, acquiredBudget, partition, ct, entity); }
                 catch (UnityWebRequestException unityWebRequestException)
                 {
                     // we can't access web request here as it is disposed already

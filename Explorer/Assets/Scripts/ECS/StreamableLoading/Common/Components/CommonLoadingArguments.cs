@@ -7,6 +7,7 @@ namespace ECS.StreamableLoading.Common.Components
 {
     public struct CommonLoadingArguments
     {
+        public bool IsChunkable;
         public URLAddress URL;
         public URLAddress? CacheableURL;
         public int Attempts;
@@ -30,15 +31,16 @@ namespace ECS.StreamableLoading.Common.Components
 
         public readonly CancellationTokenSource CancellationTokenSource;
 
-        public CommonLoadingArguments(URLAddress url,
-            URLSubdirectory customEmbeddedSubDirectory = default,
+        public CommonLoadingArguments(URLAddress url, URLSubdirectory customEmbeddedSubDirectory = default,
             int timeout = StreamableLoadingDefaults.TIMEOUT,
             int attempts = StreamableLoadingDefaults.ATTEMPTS_COUNT,
             AssetSource permittedSources = AssetSource.WEB,
             AssetSource currentSource = AssetSource.WEB,
-            CancellationTokenSource? cancellationTokenSource = null)
+            CancellationTokenSource? cancellationTokenSource = null,
+            bool isChunkable = false)
         {
             URL = url;
+            IsChunkable = isChunkable;
             CustomEmbeddedSubDirectory = customEmbeddedSubDirectory;
             Timeout = timeout;
             Attempts = attempts;
@@ -51,14 +53,14 @@ namespace ECS.StreamableLoading.Common.Components
         /// <summary>
         ///     Use URLAddress instead of string
         /// </summary>
-        public CommonLoadingArguments(string url,
-            URLSubdirectory customEmbeddedSubDirectory = default,
+        public CommonLoadingArguments(string url, URLSubdirectory customEmbeddedSubDirectory = default,
             int timeout = StreamableLoadingDefaults.TIMEOUT,
             int attempts = StreamableLoadingDefaults.ATTEMPTS_COUNT,
             AssetSource permittedSources = AssetSource.WEB,
             AssetSource currentSource = AssetSource.WEB,
-            CancellationTokenSource cancellationTokenSource = null) :
-            this(URLAddress.FromString(url), customEmbeddedSubDirectory, timeout, attempts, permittedSources, currentSource, cancellationTokenSource) { }
+            CancellationTokenSource cancellationTokenSource = null,
+            bool isChunkable = false) :
+            this(URLAddress.FromString(url),customEmbeddedSubDirectory, timeout, attempts, permittedSources, currentSource, cancellationTokenSource,  isChunkable) { }
 
         // Always override attempts count for streamable assets as repetitions are handled in LoadSystemBase
         public static implicit operator CommonArguments(in CommonLoadingArguments commonLoadingArguments) =>
