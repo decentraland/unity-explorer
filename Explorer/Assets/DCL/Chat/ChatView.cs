@@ -87,6 +87,9 @@ namespace DCL.Chat
             LoopList.gameObject.SetActive(isOn);
         }
 
+        public bool IsChatVisible() =>
+            PanelBackgroundCanvasGroup.gameObject.activeSelf;
+
         public void OnPointerEnter(PointerEventData eventData)
         {
             OnChatViewPointerEnter?.Invoke();

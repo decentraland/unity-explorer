@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Chat;
 using MVC;
 using System.Threading;
 using Utility;
@@ -16,15 +17,19 @@ namespace DCL.Friends.UI
 
         private readonly IFriendsService friendsService;
         private readonly IFriendsEventBus friendEventBus;
+        private readonly ChatView chatView;
 
         private CancellationTokenSource friendsPanelCts = new ();
+        private bool chatWasVisible;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
         public FriendsPanelController(ViewFactoryMethod viewFactory,
+            ChatView chatView,
             IFriendsService friendsService,
             IFriendsEventBus friendEventBus) : base(viewFactory)
         {
+            this.chatView = chatView;
             this.friendsService = friendsService;
             this.friendEventBus = friendEventBus;
         }
@@ -43,6 +48,18 @@ namespace DCL.Friends.UI
         {
             base.OnBeforeViewShow();
             friendsPanelCts = friendsPanelCts.SafeRestart();
+
+            chatWasVisible = chatView.IsChatVisible();
+            if (chatWasVisible)
+                chatView.ToggleChat(false);
+        }
+
+        protected override void OnViewClose()
+        {
+            base.OnViewClose();
+            
+            if (chatWasVisible)
+                chatView.ToggleChat(true);
         }
 
         protected override void OnViewInstantiated()
