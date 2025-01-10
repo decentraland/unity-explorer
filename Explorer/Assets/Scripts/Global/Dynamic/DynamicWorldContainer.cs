@@ -20,6 +20,7 @@ using DCL.Chat.MessageBus;
 using DCL.Clipboard;
 using DCL.DebugUtilities;
 using DCL.FeatureFlags;
+using DCL.Friends;
 using DCL.Input;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.Landscape;
@@ -560,6 +561,10 @@ namespace Global.Dynamic
             bool includeCameraReel = staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.CAMERA_REEL) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.CAMERA_REEL)) || Application.isEditor;
             bool includeFriends = staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.FRIENDS) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.FRIENDS)) || Application.isEditor;
 
+            IFriendsEventBus friendEventBus = new DefaultFriendsEventBus();
+            IFriendsService friendsService = new RPCFriendsService(URLAddress.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.ApiFriends)),
+                friendEventBus);
+
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
                 new MultiplayerPlugin(
@@ -623,7 +628,9 @@ namespace Global.Dynamic
                     webBrowser,
                     dynamicWorldDependencies.Web3Authenticator,
                     userInAppInAppInitializationFlow,
-                    profileCache, sidebarBus, chatEntryConfiguration,
+                    profileCache, sidebarBus,
+                    friendsService, friendEventBus,
+                    chatEntryConfiguration,
                     globalWorld, playerEntity, includeCameraReel, includeFriends),
                 new ErrorPopupPlugin(mvcManager, assetsProvisioner),
                 connectionStatusPanelPlugin,

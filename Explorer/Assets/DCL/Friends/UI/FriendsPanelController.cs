@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using MVC;
 using System.Threading;
+using Utility;
 
 namespace DCL.Friends.UI
 {
@@ -16,7 +17,9 @@ namespace DCL.Friends.UI
         private readonly IFriendsService friendsService;
         private readonly IFriendsEventBus friendEventBus;
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Overlay;
+        private CancellationTokenSource friendsPanelCts = new ();
+
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
         public FriendsPanelController(ViewFactoryMethod viewFactory,
             IFriendsService friendsService,
@@ -33,6 +36,13 @@ namespace DCL.Friends.UI
             viewInstance!.FriendsTabButton.onClick.RemoveAllListeners();
             viewInstance.RequestsTabButton.onClick.RemoveAllListeners();
             viewInstance.BlockedTabButton.onClick.RemoveAllListeners();
+            friendsPanelCts.SafeCancelAndDispose();
+        }
+
+        protected override void OnBeforeViewShow()
+        {
+            base.OnBeforeViewShow();
+            friendsPanelCts = friendsPanelCts.SafeRestart();
         }
 
         protected override void OnViewInstantiated()
@@ -42,6 +52,8 @@ namespace DCL.Friends.UI
             viewInstance!.FriendsTabButton.onClick.AddListener(() => ToggleTabs(FriendsPanelTab.FRIENDS));
             viewInstance.RequestsTabButton.onClick.AddListener(() => ToggleTabs(FriendsPanelTab.REQUESTS));
             viewInstance.BlockedTabButton.onClick.AddListener(() => ToggleTabs(FriendsPanelTab.BLOCKED));
+            viewInstance.CloseButton.onClick.AddListener(Close);
+            viewInstance.BackgroundCloseButton.onClick.AddListener(Close);
 
             ToggleTabs(FriendsPanelTab.FRIENDS);
         }
@@ -53,7 +65,10 @@ namespace DCL.Friends.UI
             viewInstance.BlockedTabSelected.SetActive(tab == FriendsPanelTab.BLOCKED);
         }
 
+        private void Close() =>
+            HideViewAsync(friendsPanelCts.Token).Forget();
+
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
-            viewInstance!.CloseButton.OnClickAsync(ct);
+            UniTask.Never(ct);
     }
 }

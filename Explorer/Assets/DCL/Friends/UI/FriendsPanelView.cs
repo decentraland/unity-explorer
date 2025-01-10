@@ -7,6 +7,7 @@ namespace DCL.Friends.UI
     public class FriendsPanelView: ViewBaseWithAnimationElement, IView
     {
         [field: SerializeField] public Button CloseButton { get; private set; }
+        [field: SerializeField] public Button BackgroundCloseButton { get; private set; }
         [field: SerializeField] public NotificationIndicatorView NotificationIndicator { get; private set; }
         [field: SerializeField] public NotificationIndicatorView TabNotificationIndicator { get; private set; }
 

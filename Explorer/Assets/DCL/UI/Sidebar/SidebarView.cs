@@ -34,7 +34,7 @@ namespace DCL.UI.Sidebar
         [field: SerializeField] internal Button settingsButton { get; private set; }
 
         [field: Header("Friends")]
-        [field: SerializeField] internal Button friendsButton { get; private set; }
+        [field: SerializeField] internal SimpleHoverableButton friendsButton { get; private set; }
         [field: SerializeField] public FriendsPanelView FriendsPanelView { get; private set; }
 
         [field: Header("Skybox")]

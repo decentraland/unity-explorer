@@ -41,7 +41,6 @@ namespace DCL.PluginSystem.Global
             IFriendsService friendsService = new RPCFriendsService(URLAddress.FromString(dclUrlSource.Url(DecentralandUrl.ApiFriends)),
                 friendEventBus);
 
-            mvcManager.RegisterController(new FriendsPanelController(() => mainUIView.SidebarView.FriendsPanelView, friendsService, friendEventBus));
         }
     }
 
