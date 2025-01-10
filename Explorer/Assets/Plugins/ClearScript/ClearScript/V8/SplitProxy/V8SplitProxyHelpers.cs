@@ -14,7 +14,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
     public readonly ref struct StdString
     {
-        private readonly Ptr ptr;
+        internal readonly Ptr ptr;
         private readonly bool owns;
 
         public StdString(string value)
@@ -74,7 +74,12 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
             return true;
         }
-        
+
+        public override string ToString()
+        {
+            return GetValue(ptr);
+        }
+
         internal static IScope<Ptr> CreateScope(string value = null)
         {
             return Scope.Create(() => V8SplitProxyNative.Instance.StdString_New(value ?? string.Empty), V8SplitProxyNative.Instance.StdString_Delete);
@@ -807,11 +812,40 @@ namespace Microsoft.ClearScript.V8.SplitProxy
 
     public readonly ref struct V8Value
     {
-        private readonly Ptr ptr;
+        internal readonly Ptr ptr;
+        private readonly bool owns;
 
-        internal V8Value(Ptr pValue)
+        public static V8Value New()
+        {
+            Ptr ptr = V8SplitProxyNative.InvokeNoThrow(instance => instance.V8Value_New());
+            return new V8Value(ptr, true);
+        }
+        
+        internal V8Value(Ptr pValue) : this(pValue, false) { }
+
+        private V8Value(Ptr pValue, bool owns)
         {
             ptr = pValue;
+            this.owns = owns;
+        }
+        
+        public void Dispose()
+        {
+            if (owns)
+            {
+                Ptr ptr = this.ptr;
+                V8SplitProxyNative.InvokeNoThrow(instance => instance.V8Value_Delete(ptr));
+            }
+        }
+
+        public Decoded Decode()
+        {
+            Ptr ptr = this.ptr;
+            return V8SplitProxyNative.InvokeNoThrow(instance =>
+            {
+                instance.V8Value_Decode(ptr, out Decoded decoded);
+                return decoded;
+            });
         }
 
         public object GetHostObject()
@@ -819,14 +853,34 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             return V8ProxyHelpers.GetHostObject((IntPtr)ptr);
         }
 
+        public void SetBoolean(bool value)
+        {
+            SetBoolean(ptr, value);
+        }
+
         public void SetHostObject(object value)
         {
             SetHostObject(ptr, value);
         }
 
+        public void SetInt32(int value)
+        {
+            SetNumeric(ptr, value);
+        }
+
         public void SetNonexistent()
         {
             SetNonexistent(ptr);
+        }
+
+        public void SetNull()
+        {
+            SetNull(ptr);
+        }
+
+        public void SetString(string value)
+        {
+            SetString(ptr, value);
         }
         
         internal const int Size = 16;
@@ -1209,7 +1263,68 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             [FieldOffset(8)] public double DoubleValue;
             [FieldOffset(8)] public IntPtr PtrOrHandle;
 
-            internal object Get()
+            public readonly bool GetBoolean()
+            {
+                if (Type != Type.Boolean)
+                    throw new InvalidCastException($"Tried to get a Boolean out of a {GetTypeName()}");
+                
+                return Int32Value != 0;
+            }
+
+            public readonly decimal GetDecimal()
+            {
+                if (Type != Type.HostObject)
+                    throw new InvalidCastException($"Tried to get a Decimal out of a {GetTypeName()}");
+
+                var hostObject = GetHostObject();
+                return (decimal)((HostObject)hostObject).Target;
+            }
+            
+            public readonly double GetDouble()
+            {
+                if (Type != Type.Number)
+                    throw new InvalidCastException($"Tried to get a Double out of a {GetTypeName()}");
+                
+                return DoubleValue;
+            }
+            
+            public readonly object GetHostObject()
+            {
+                if (Type != Type.HostObject)
+                    throw new InvalidCastException($"Tried to get a host object out of a {GetTypeName()}");
+                
+                return V8ProxyHelpers.GetHostObject(PtrOrHandle);
+            }
+
+            public readonly int GetInt32()
+            {
+                if (Type != Type.Int32)
+                    throw new InvalidCastException($"Tried to get an Int32 out of a {GetTypeName()}");
+                
+                return Int32Value;
+            }
+            
+            public readonly string GetString()
+            {
+                if (Type != Type.String)
+                    throw new InvalidCastException($"Tried to get a String out of a {GetTypeName()}");
+                
+                return Marshal.PtrToStringUni(PtrOrHandle, Length);
+            }
+
+            public readonly Uint8Array GetUint8Array()
+            {
+                if (Type != Type.V8Object || Subtype != Subtype.Uint8Array)
+                    throw new InvalidCastException(
+                        $"Tried to get a Uint8Array out of a {GetTypeName()}");
+                
+                return new Uint8Array((V8Object.Handle)PtrOrHandle);
+            }
+
+            public readonly string GetTypeName() =>
+                Type != Type.V8Object || Subtype == Subtype.None ? Type.ToString() : Subtype.ToString();
+
+            internal readonly object Get()
             {
                 switch (Type)
                 {

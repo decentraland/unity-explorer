@@ -1,5 +1,6 @@
 ﻿using CrdtEcsBridge.PoolsProviders;
 using JetBrains.Annotations;
+using Microsoft.ClearScript.V8.SplitProxy;
 using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime.Apis.Modules.CommunicationsControllerApi.SDKMessageBus;
 using SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents.Events;
@@ -12,10 +13,25 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
         private readonly ISDKObservableEventsEngineApi engineApi;
         private readonly ISDKMessageBusCommsControllerAPI commsApi;
 
+        private readonly InvokeHostObject subscribeToSDKObservableEvent;
+        private readonly InvokeHostObject unsubscribeFromSDKObservableEvent;
+
         public SDKObservableEventsEngineApiWrapper(ISDKObservableEventsEngineApi api, ISDKMessageBusCommsControllerAPI commsApi, IInstancePoolsProvider instancePoolsProvider, ISceneExceptionsHandler exceptionsHandler) : base(api, instancePoolsProvider, exceptionsHandler)
         {
             engineApi = api;
             this.commsApi = commsApi;
+
+            subscribeToSDKObservableEvent = (args, result) =>
+            {
+                string eventId = args[0].GetString();
+                SubscribeToSDKObservableEvent(eventId);
+            };
+
+            unsubscribeFromSDKObservableEvent = (args, result) =>
+            {
+                string eventId = args[0].GetString();
+                UnsubscribeFromSDKObservableEvent(eventId);
+            };
         }
 
         // Used for SDK Observables + SDK Comms MessageBus
@@ -70,6 +86,18 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
         public void UnsubscribeFromSDKObservableEvent(string eventId)
         {
             engineApi.RemoveSubscriptionIfExists(eventId);
+        }
+
+        protected override void GetNamedProperty(StdString name, V8Value value, out bool isConst)
+        {
+            isConst = true;
+
+            if (name.Equals(nameof(SubscribeToSDKObservableEvent)))
+                value.SetHostObject(subscribeToSDKObservableEvent);
+            else if (name.Equals(nameof(UnsubscribeFromSDKObservableEvent)))
+                value.SetHostObject(unsubscribeFromSDKObservableEvent);
+            else
+                base.GetNamedProperty(name, value, out isConst);
         }
     }
 }

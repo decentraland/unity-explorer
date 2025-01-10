@@ -200,17 +200,20 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         #region V8 object methods
 
         object V8Object_GetNamedProperty(V8Object.Handle hObject, string name);
+        void V8Object_GetNamedProperty(V8Object.Handle hObject, string name, V8Value.Ptr pValue);
         bool V8Object_TryGetNamedProperty(V8Object.Handle hObject, string name, out object value);
         void V8Object_SetNamedProperty(V8Object.Handle hObject, string name, object value);
         bool V8Object_DeleteNamedProperty(V8Object.Handle hObject, string name);
         string[] V8Object_GetPropertyNames(V8Object.Handle hObject, bool includeIndices);
         object V8Object_GetIndexedProperty(V8Object.Handle hObject, int index);
+        void V8Object_GetIndexedProperty(V8Object.Handle hObject, int index, V8Value.Ptr pValue);
         void V8Object_SetIndexedProperty(V8Object.Handle hObject, int index, object value);
         bool V8Object_DeleteIndexedProperty(V8Object.Handle hObject, int index);
         int[] V8Object_GetPropertyIndices(V8Object.Handle hObject);
         object V8Object_Invoke(V8Object.Handle hObject, bool asConstructor, object[] args);
         object V8Object_InvokeMethod(V8Object.Handle hObject, string name, object[] args);
         void V8Object_GetArrayBufferOrViewInfo(V8Object.Handle hObject, out IV8Object arrayBuffer, out ulong offset, out ulong size, out ulong length);
+        void V8Object_GetArrayBufferOrViewInfo(V8Object.Handle hObject, V8Value.Ptr pArrayBuffer, out ulong offset, out ulong size, out ulong length);
         void V8Object_InvokeWithArrayBufferOrViewData(V8Object.Handle hObject, IntPtr pAction);
 
         #endregion

@@ -7,7 +7,7 @@ using UnityEngine.Profiling;
 
 namespace DCL
 {
-    public static class ClearScriptTests
+    public static class ClearScriptDemo
     {
         [MenuItem("Demo/The Bomb")]
         private static void TheBomb()
@@ -51,12 +51,5 @@ namespace DCL
                 isConst = true;
             }
         }
-
-        public void SetNamedProperty(StdString name, V8Value.Decoded value) { }
-
-        public void GetIndexedProperty(int index, V8Value value) =>
-            value.SetNonexistent();
-
-        public void SetIndexedProperty(int index, V8Value.Decoded value) { }
     }
 }

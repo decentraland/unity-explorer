@@ -541,8 +541,12 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             }
         }
 
+        private static StreamWriter cacheLog;
+
         private static IntPtr CreateV8ObjectCache()
         {
+            cacheLog = new StreamWriter(@"C:\Users\Ansis\Desktop\cacheLog.txt");
+            
             return V8ProxyHelpers.AddRefHostObject(new Dictionary<object, IntPtr>());
         }
 
@@ -550,14 +554,25 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         {
             var cache = V8ProxyHelpers.GetHostObject<Dictionary<object, IntPtr>>(pCache);
             object key = V8ProxyHelpers.GetHostObject(pObject);
+            
+            cacheLog.WriteLine($"Cached 0x{pObject.ToString("x")}\t{key.GetType().FullName}\t{key}");
+            
             cache.Add(key, pV8Object);
         }
 
         private static IntPtr GetCachedV8Object(IntPtr pCache, IntPtr pObject)
         {
-            var cache = V8ProxyHelpers.GetHostObject<Dictionary<object, IntPtr>>(pCache);
-            object key = V8ProxyHelpers.GetHostObject(pObject);
-            return cache.TryGetValue(key, out IntPtr pV8Object) ? pV8Object : IntPtr.Zero;
+            try
+            {
+                var cache = V8ProxyHelpers.GetHostObject<Dictionary<object, IntPtr>>(pCache);
+                object key = V8ProxyHelpers.GetHostObject(pObject);
+                return cache.TryGetValue(key, out IntPtr pV8Object) ? pV8Object : IntPtr.Zero;
+            }
+            catch (ArgumentNullException)
+            {
+                cacheLog.Flush();
+                throw;
+            }
         }
 
         private static void GetAllCachedV8Objects(IntPtr pCache, StdPtrArray.Ptr pV8ObjectPtrs)
@@ -570,6 +585,9 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         {
             var cache = V8ProxyHelpers.GetHostObject<Dictionary<object, IntPtr>>(pCache);
             object key = V8ProxyHelpers.GetHostObject(pObject);
+            
+            cacheLog.WriteLine($"Removed 0x{pObject.ToString("x")}\t{key.GetType().FullName}\t{key}");
+            
             return cache.Remove(key);
         }
 
