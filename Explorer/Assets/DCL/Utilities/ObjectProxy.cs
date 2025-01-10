@@ -4,6 +4,8 @@ namespace DCL.Utilities
 {
     public class ObjectProxy<T>
     {
+        public event Action<T> OnObjectSet;
+
         /// <summary>
         ///     Returns the object if it's configured, otherwise throws an exception
         /// </summary>
@@ -26,6 +28,7 @@ namespace DCL.Utilities
         {
             Object = targetObject;
             Configured = true;
+            OnObjectSet?.Invoke(Object);
         }
 
         public void ReleaseObject()

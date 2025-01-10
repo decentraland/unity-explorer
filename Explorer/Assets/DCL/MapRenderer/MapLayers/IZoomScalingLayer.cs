@@ -2,7 +2,7 @@
 {
     public interface IZoomScalingLayer
     {
-        void ApplyCameraZoom(float baseZoom, float newZoom);
+        void ApplyCameraZoom(float baseZoom, float newZoom, int zoomLevel);
 
         void ResetToBaseScale();
     }

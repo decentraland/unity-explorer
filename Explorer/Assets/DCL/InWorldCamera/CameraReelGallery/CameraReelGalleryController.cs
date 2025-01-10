@@ -47,6 +47,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
         public event Action ScreenshotDeleted;
         public event Action ScreenshotShared;
         public event Action ScreenshotDownloaded;
+        public event Action<int> MaxThumbnailsUpdated;
 
         private const int THUMBNAIL_POOL_DEFAULT_CAPACITY = 100;
         private const int THUMBNAIL_POOL_MAX_SIZE = 10000;
@@ -382,6 +383,9 @@ namespace DCL.InWorldCamera.CameraReelGallery
                 currentSize += thumbnailViews.Count;
                 CAMERA_REEL_RESPONSES_POOL.Release(bucket.Value);
             }
+
+            MaxThumbnailsUpdated?.Invoke(currentSize);
+
             DictionaryPool<DateTime, List<CameraReelResponseCompact>>.Release(result);
             endVisible = currentSize - 1;
 

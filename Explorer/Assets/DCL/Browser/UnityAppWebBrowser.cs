@@ -1,4 +1,5 @@
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using System;
 using UnityEngine;
 
 namespace DCL.Browser
@@ -14,7 +15,7 @@ namespace DCL.Browser
 
         public void OpenUrl(string url)
         {
-            Application.OpenURL(url);
+            Application.OpenURL(Uri.EscapeUriString(url));
         }
 
         public void OpenUrl(DecentralandUrl url)

@@ -9,13 +9,12 @@ using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Pool;
+using Utility.TeleportBus;
 
 namespace DCL.MapRenderer.ComponentsFactory
 {
     internal struct HotUsersMarkersInstaller
     {
-        private const int HOT_USER_MARKERS_PREWARM_COUNT = 30;
-
         private IAssetsProvisioner assetsProvisioner;
         private IMapRendererSettings mapSettings;
 
@@ -26,6 +25,8 @@ namespace DCL.MapRenderer.ComponentsFactory
             IMapCullingController cullingController,
             IAssetsProvisioner assetsProv,
             IMapRendererSettings settings,
+            ITeleportBusController teleportBusController,
+            RemoteUsersRequestController remoteUsersRequestController,
             CancellationToken cancellationToken)
         {
             assetsProvisioner = assetsProv;
@@ -35,16 +36,15 @@ namespace DCL.MapRenderer.ComponentsFactory
             var objectsPool = new ObjectPool<HotUserMarkerObject>(
                 () => CreatePoolMethod(configuration, prefab, coordsUtils),
                 actionOnGet: obj => obj.gameObject.SetActive(true),
-                actionOnRelease: obj => obj.gameObject.SetActive(false),
-                defaultCapacity: HOT_USER_MARKERS_PREWARM_COUNT);
+                actionOnRelease: obj => obj.gameObject.SetActive(false));
 
             IHotUserMarker CreateWrap() =>
                 new HotUserMarker(objectsPool, coordsUtils);
 
-            var wrapsPool = new ObjectPool<IHotUserMarker>(CreateWrap, actionOnRelease: m => m.Dispose(), defaultCapacity: HOT_USER_MARKERS_PREWARM_COUNT);
+            var wrapsPool = new ObjectPool<IHotUserMarker>(CreateWrap, actionOnRelease: m => m.Dispose());
 
-            var controller = new UsersMarkersHotAreaController(objectsPool, wrapsPool, configuration.HotUserMarkersRoot, coordsUtils, cullingController);
-
+            var controller = new UsersMarkersHotAreaController(objectsPool, wrapsPool, configuration.HotUserMarkersRoot, coordsUtils, cullingController, teleportBusController, remoteUsersRequestController);
+            await controller.InitializeAsync(cancellationToken);
             writer.Add(MapLayer.HotUsersMarkers, controller);
         }
 

@@ -1,7 +1,13 @@
-﻿using DCL.MapRenderer.CoordsUtils;
+﻿using Cysharp.Threading.Tasks;
+using DCL.Audio;
+using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.MapLayers;
 using DCL.MapRenderer.MapLayers.ParcelHighlight;
-using DCL.MapRenderer.MapLayers.Pins;
+using DCL.Navmap;
+using DCL.UI;
+using System;
+using System.Collections.Generic;
+using System.Threading;
 using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
@@ -10,13 +16,23 @@ namespace DCL.MapRenderer.MapCameraController
 {
     internal class MapCameraInteractivityController : IMapInteractivityControllerInternal
     {
+        private const float CAMERA_MOVE_SPEED = 1;
+
         private readonly Transform cameraParent;
         private readonly IObjectPool<IParcelHighlightMarker> markersPool;
         private readonly ICoordsUtils coordsUtils;
-        private readonly PinMarkerController markerController;
+        private readonly INavmapBus navmapBus;
+        private readonly AudioClipConfig clickAudio;
+        private readonly AudioClipConfig hoverAudio;
         private readonly Camera camera;
+        private readonly List<IMapLayerController> interactableLayers = new ();
 
         private IParcelHighlightMarker? marker;
+        private GameObject? previouslyRaycastedObject;
+        private CancellationTokenSource clickCt = new ();
+        private IMapRendererMarker? previouslyClickedMarker = null;
+        private CancellationTokenSource longHoverCt = new ();
+        private Vector2Int previousParcel = Vector2Int.zero;
 
         public bool HighlightEnabled { get; private set; }
 
@@ -25,13 +41,19 @@ namespace DCL.MapRenderer.MapCameraController
             Camera camera,
             IObjectPool<IParcelHighlightMarker> markersPool,
             ICoordsUtils coordsUtils,
-            PinMarkerController markerController)
+            List<IMapLayerController> interactableLayers,
+            INavmapBus navmapBus,
+            AudioClipConfig clickAudio,
+            AudioClipConfig hoverAudio)
         {
             this.cameraParent = cameraParent;
             this.markersPool = markersPool;
             this.coordsUtils = coordsUtils;
-            this.markerController = markerController;
+            this.navmapBus = navmapBus;
+            this.clickAudio = clickAudio;
+            this.hoverAudio = hoverAudio;
             this.camera = camera;
+            this.interactableLayers.AddRange(interactableLayers);
         }
 
         public void HighlightParcel(Vector2Int parcel)
@@ -44,6 +66,84 @@ namespace DCL.MapRenderer.MapCameraController
 
             marker.Activate();
             marker.SetCoordinates(parcel, localPosition);
+        }
+
+        public GameObject? ProcessMousePosition(Vector2 normalizedCoordinates, Vector2 screenPosition)
+        {
+            GameObject? hitObject;
+            RaycastHit2D raycast = Physics2D.Raycast(GetLocalPosition(normalizedCoordinates), Vector2.zero, 10);
+
+            if (raycast.collider != null)
+            {
+                hitObject = raycast.collider.gameObject;
+
+                if (raycast.collider.gameObject == previouslyRaycastedObject)
+                    return hitObject;
+
+                UIAudioEventsBus.Instance.SendPlayAudioEvent(hoverAudio);
+                if (previouslyRaycastedObject != null)
+                {
+                    foreach (IMapLayerController mapLayerController in interactableLayers)
+                        mapLayerController.TryDeHighlightObject(previouslyRaycastedObject);
+
+                    previouslyRaycastedObject = null;
+                }
+
+                previouslyRaycastedObject = raycast.collider.gameObject;
+
+                foreach (IMapLayerController mapLayerController in interactableLayers)
+                {
+                    if (mapLayerController.TryHighlightObject(raycast.collider.gameObject, out IMapRendererMarker? mapRenderMarker))
+                        return hitObject;
+                }
+            }
+            else
+            {
+                hitObject = null;
+
+                if (previouslyRaycastedObject != null)
+                {
+                    foreach (IMapLayerController mapLayerController in interactableLayers)
+                        mapLayerController.TryDeHighlightObject(previouslyRaycastedObject);
+
+                    previouslyRaycastedObject = null;
+                }
+
+                TryGetParcel(normalizedCoordinates, out Vector2Int parcel);
+            }
+
+            return hitObject;
+        }
+
+        public GameObject? ProcessMouseClick(Vector2 normalizedCoordinates, Vector2Int parcel)
+        {
+            clickCt = clickCt.SafeRestart();
+
+            previouslyClickedMarker?.ToggleSelection(false);
+            previouslyClickedMarker = null;
+
+            GameObject? hitObject = null;
+            RaycastHit2D raycast = Physics2D.Raycast(GetLocalPosition(normalizedCoordinates), Vector2.zero, 10);
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(clickAudio);
+
+            if (raycast.collider != null)
+            {
+                hitObject = raycast.collider.gameObject;
+
+                foreach (IMapLayerController mapLayerController in interactableLayers)
+                    if (mapLayerController.TryClickObject(hitObject, clickCt, out IMapRendererMarker? clickedMarker))
+                    {
+                        previouslyClickedMarker = clickedMarker;
+                        return hitObject;
+                    }
+            }
+            else
+            {
+                navmapBus.MoveCameraTo(parcel, CAMERA_MOVE_SPEED);
+                hitObject = null;
+            }
+
+            return hitObject;
         }
 
         public void Initialize(MapLayer layers)
@@ -59,22 +159,16 @@ namespace DCL.MapRenderer.MapCameraController
             marker?.Deactivate();
         }
 
-        public bool TryGetParcel(Vector2 normalizedCoordinates, out Vector2Int parcel, out IPinMarker? mark)
+        public void ExitRenderImage()
         {
-            bool parcelExists = coordsUtils.TryGetCoordsWithinInteractableBounds(GetLocalPosition(normalizedCoordinates), out parcel);
-            mark = null;
-            if (parcelExists) { mark = GetPinMarkerOnParcel(parcel); }
-            return parcelExists;
+            RemoveHighlight();
+            longHoverCt = longHoverCt.SafeRestart();
         }
 
-        public IPinMarker? GetPinMarkerOnParcel(Vector2Int parcel)
+        public bool TryGetParcel(Vector2 normalizedCoordinates, out Vector2Int parcel)
         {
-            if (markerController != null) //This check is only needed for tests -_-
-            {
-                foreach (IPinMarker mark in markerController.markers.Values)
-                    if (mark.ParcelPosition == parcel) { return mark; }
-            }
-            return null;
+            bool parcelExists = coordsUtils.TryGetCoordsWithinInteractableBounds(GetLocalPosition(normalizedCoordinates), out parcel);
+            return parcelExists;
         }
 
         public Vector2 GetNormalizedPosition(Vector2Int parcel)
@@ -98,10 +192,7 @@ namespace DCL.MapRenderer.MapCameraController
             return localPosition;
         }
 
-        public void Dispose()
-        {
-
-        }
+        public void Dispose() { }
 
         public void Release()
         {
