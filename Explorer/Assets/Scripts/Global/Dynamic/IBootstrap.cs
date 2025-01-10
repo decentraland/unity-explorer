@@ -21,8 +21,15 @@ namespace Global.Dynamic
     {
         UniTask PreInitializeSetupAsync(UIDocument cursorRoot, UIDocument debugUiRoot, CancellationToken ct);
 
-        UniTask<(StaticContainer?, bool)> LoadStaticContainerAsync(BootstrapContainer bootstrapContainer, PluginSettingsContainer globalPluginSettingsContainer, DebugViewsCatalog debugViewsCatalog, Entity playerEntity, ITexturesFuse texturesFuse,
-            bool isTextureCompressionEnabled, ISystemMemoryCap memoryCap, CancellationToken ct);
+        UniTask<(StaticContainer?, bool)> LoadStaticContainerAsync(
+            BootstrapContainer bootstrapContainer,
+            PluginSettingsContainer globalPluginSettingsContainer,
+            IDebugContainerBuilder debugContainerBuilder,
+            Entity playerEntity,
+            ITexturesFuse texturesFuse,
+            ISystemMemoryCap memoryCap,
+            CancellationToken ct
+        );
 
         UniTask<(DynamicWorldContainer?, bool)> LoadDynamicWorldContainerAsync(BootstrapContainer bootstrapContainer, StaticContainer staticContainer, PluginSettingsContainer scenePluginSettingsContainer, DynamicSceneLoaderSettings settings, DynamicSettings dynamicSettings,
             UIDocument uiToolkitRoot, UIDocument cursorRoot, AudioClipConfig backgroundMusic,
