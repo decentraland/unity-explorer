@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace DCL.MapRenderer
 {
-    [CreateAssetMenu(menuName = "Create MapRendererSettingsAsset", fileName = "MapRendererSettings", order = 0)]
+    [CreateAssetMenu(fileName = "MapRendererSettings", menuName = "DCL/Map/Map Renderer Settings Asset")]
     public class MapRendererSettingsAsset : ScriptableObject, IMapRendererSettings
     {
         [field: SerializeField]

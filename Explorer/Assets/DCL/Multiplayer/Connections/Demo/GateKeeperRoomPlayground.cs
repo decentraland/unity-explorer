@@ -40,7 +40,7 @@ namespace DCL.Multiplayer.Connections.Demo
 
             IWeb3IdentityCache? identityCache = await ArchipelagoFakeIdentityCache.NewAsync(urlsSource, new Web3AccountFactory());
             var character = new ExposedTransform();
-            var webRequests = new LogWebRequestController(new WebRequestController(new WebRequestsAnalyticsContainer(), identityCache, new RequestHub(ITexturesFuse.NewDefault())));
+            var webRequests = new LogWebRequestController(new WebRequestController(new WebRequestsAnalyticsContainer(), identityCache, new RequestHub(ITexturesFuse.NewDefault(), false)));
             var realmData = new IRealmData.Fake();
 
             new GateKeeperSceneRoom(

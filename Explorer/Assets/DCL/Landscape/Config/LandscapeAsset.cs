@@ -2,7 +2,7 @@
 
 namespace DCL.Landscape.Config
 {
-    [CreateAssetMenu(menuName = "Landscape/Landscape Asset", fileName = "LandscapeAsset", order = 0)]
+    [CreateAssetMenu(fileName = "LandscapeAsset", menuName = "DCL/Landscape/Landscape Asset")]
     public class LandscapeAsset : ScriptableObject
     {
         public GameObject asset;

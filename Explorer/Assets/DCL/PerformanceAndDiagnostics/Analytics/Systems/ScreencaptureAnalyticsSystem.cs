@@ -40,10 +40,9 @@ namespace DCL.Analytics.Systems
             camera = World.CacheCamera();
         }
 
-        public override void Dispose()
+        protected override void OnDispose()
         {
             storage.ScreenshotUploaded -= OnScreenshotUploaded;
-            base.Dispose();
         }
 
         private void OnScreenshotUploaded(CameraReelResponse response, CameraReelStorageStatus _, string source)
