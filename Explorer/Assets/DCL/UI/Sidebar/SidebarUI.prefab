@@ -810,6 +810,10 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 1980420650442876771, guid: 58646341e04d9404dbdad22f4c50cf14, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 2316985108408266739, guid: 58646341e04d9404dbdad22f4c50cf14, type: 3}
       propertyPath: m_SizeDelta.x
       value: 81.31
@@ -820,19 +824,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2543468681691954291, guid: 58646341e04d9404dbdad22f4c50cf14, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 2543468681691954291, guid: 58646341e04d9404dbdad22f4c50cf14, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 2543468681691954291, guid: 58646341e04d9404dbdad22f4c50cf14, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 0
+      value: 23
       objectReference: {fileID: 0}
     - target: {fileID: 2543468681691954291, guid: 58646341e04d9404dbdad22f4c50cf14, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 0
+      value: -389
       objectReference: {fileID: 0}
     - target: {fileID: 2749113458305455736, guid: 58646341e04d9404dbdad22f4c50cf14, type: 3}
       propertyPath: m_ConstrainProportionsScale
@@ -852,18 +856,22 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5793807278663194697, guid: 58646341e04d9404dbdad22f4c50cf14, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5793807278663194697, guid: 58646341e04d9404dbdad22f4c50cf14, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5793807278663194697, guid: 58646341e04d9404dbdad22f4c50cf14, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 0
+      value: 23
       objectReference: {fileID: 0}
     - target: {fileID: 5793807278663194697, guid: 58646341e04d9404dbdad22f4c50cf14, type: 3}
       propertyPath: m_AnchoredPosition.y
+      value: -365
+      objectReference: {fileID: 0}
+    - target: {fileID: 7113266948723442373, guid: 58646341e04d9404dbdad22f4c50cf14, type: 3}
+      propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8560551636243942814, guid: 58646341e04d9404dbdad22f4c50cf14, type: 3}
