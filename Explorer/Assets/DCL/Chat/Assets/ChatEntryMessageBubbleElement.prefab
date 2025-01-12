@@ -109,11 +109,11 @@ RectTransform:
   - {fileID: 4475657341368364052}
   m_Father: {fileID: 6709421707846502462}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 246, y: 74}
-  m_Pivot: {x: 0, y: 1}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &3883248921538884498
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -204,7 +204,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   <usernameElement>k__BackingField: {fileID: 7863012580743549792}
-  <backgroundRectTransform>k__BackingField: {fileID: 8321184058515427286}
+  <backgroundRectTransform>k__BackingField: {fileID: 6709421707846502462}
   <messageOptionsButton>k__BackingField: {fileID: 6789486922077095390}
   <messageContentElement>k__BackingField: {fileID: 7075669071389611758}
 --- !u!1001 &387010180821283073
