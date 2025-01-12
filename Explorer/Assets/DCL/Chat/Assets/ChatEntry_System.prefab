@@ -172,6 +172,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: ChatEntry_System
       objectReference: {fileID: 0}
+    - target: {fileID: 7324587687337436852, guid: f1fd648453d9bf442949ea1b0d1844c7, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 7065016187778374248, guid: f1fd648453d9bf442949ea1b0d1844c7, type: 3}
     - {fileID: 1740895546992391036, guid: f1fd648453d9bf442949ea1b0d1844c7, type: 3}
