@@ -705,11 +705,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   mItemPrefabDataList:
-  - mItemPrefab: {fileID: 315238571471859014, guid: 52e1c4c3ef9524f3a9d48c3c2216036d, type: 3}
+  - mItemPrefab: {fileID: 315238571471859014, guid: d845292f5e8993041befc3df2e68e96e, type: 3}
     mPadding: 4
     mInitCreateCount: 3
     mStartPosOffset: 0
-  - mItemPrefab: {fileID: 8150196112421136534, guid: e3a4405d489824695b3e3fb7b8a2e4a7, type: 3}
+  - mItemPrefab: {fileID: 315238571471859014, guid: 52e1c4c3ef9524f3a9d48c3c2216036d, type: 3}
     mPadding: 4
     mInitCreateCount: 3
     mStartPosOffset: 0
@@ -717,7 +717,7 @@ MonoBehaviour:
     mPadding: 4
     mInitCreateCount: 2
     mStartPosOffset: 0
-  - mItemPrefab: {fileID: 4868610521581754763, guid: 1cdca82f0db4d494388f804c62642ba2, type: 3}
+  - mItemPrefab: {fileID: 315238571471859014, guid: efdc5e8175a88de4eaaf5800a0e3bea8, type: 3}
     mPadding: 4
     mInitCreateCount: 2
     mStartPosOffset: 0
@@ -828,7 +828,7 @@ RectTransform:
   m_GameObject: {fileID: 9152785347356188261}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 0, y: 0, z: 0}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 6252910912605816960}
@@ -905,6 +905,7 @@ MonoBehaviour:
   <LoopList>k__BackingField: {fileID: 6671003195211882300}
   <EmojiPanelButton>k__BackingField: {fileID: 5796404896790943328}
   <CloseChatButton>k__BackingField: {fileID: 1104092725699042680}
+  <PastePopupPosition>k__BackingField: {fileID: 0}
   <AddEmojiAudio>k__BackingField: {fileID: 11400000, guid: ab59a5b2a814f02419850961fc490805, type: 2}
   <OpenEmojiPanelAudio>k__BackingField: {fileID: 11400000, guid: abc438e2962540549b414d54fbc89eed, type: 2}
   <ChatSendMessageAudio>k__BackingField: {fileID: 11400000, guid: efe341aa011f4c8428d3246fa65ef5b0, type: 2}
