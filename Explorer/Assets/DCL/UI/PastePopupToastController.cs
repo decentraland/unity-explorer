@@ -20,6 +20,7 @@ namespace DCL.UI
         {
             base.OnViewInstantiated();
             viewInstance!.PasteButton.onClick.AddListener(OnPasteButtonClicked);
+            viewInstance.CanvasGroup.alpha = 0;
         }
 
         protected override void OnBeforeViewShow()

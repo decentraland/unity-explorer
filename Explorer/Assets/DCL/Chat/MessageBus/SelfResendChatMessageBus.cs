@@ -25,7 +25,7 @@ namespace DCL.Chat.MessageBus
 
         ~SelfResendChatMessageBus()
         {
-            this.origin.MessageAdded -= OriginOnOnMessageAdded;
+            origin.MessageAdded -= OriginOnOnMessageAdded;
         }
 
         public void Dispose()
@@ -46,7 +46,7 @@ namespace DCL.Chat.MessageBus
 
         private async UniTaskVoid SendSelfAsync(string message)
         {
-            var identity = web3IdentityCache.Identity;
+            IWeb3Identity? identity = web3IdentityCache.Identity;
 
             if (identity == null)
             {
@@ -59,10 +59,11 @@ namespace DCL.Chat.MessageBus
             MessageAdded?.Invoke(
                 new ChatMessage(
                     message,
-                    profile?.DisplayName ?? string.Empty,
+                    profile?.ValidatedName ?? string.Empty,
                     identity.Address,
                     true,
-                    true
+                    true,
+                    profile?.WalletId ?? null
                 )
             );
         }

@@ -18,6 +18,8 @@ namespace DCL.Chat.MessageBus
         private readonly IMessageDeduplication<double> messageDeduplication;
         private readonly CancellationTokenSource cancellationTokenSource = new ();
 
+        public event Action<ChatMessage>? MessageAdded;
+
         public MultiplayerChatMessagesBus(IMessagePipesHub messagePipesHub, IProfileRepository profileRepository, IMessageDeduplication<double> messageDeduplication)
         {
             this.messagePipesHub = messagePipesHub;
@@ -26,6 +28,12 @@ namespace DCL.Chat.MessageBus
 
             messagePipesHub.IslandPipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Chat>(Packet.MessageOneofCase.Chat, OnMessageReceived);
             messagePipesHub.ScenePipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Chat>(Packet.MessageOneofCase.Chat, OnMessageReceived);
+        }
+
+        public void Dispose()
+        {
+            cancellationTokenSource.Cancel();
+            cancellationTokenSource.Dispose();
         }
 
         private void OnMessageReceived(ReceivedMessage<Decentraland.Kernel.Comms.Rfc4.Chat> receivedMessage)
@@ -45,16 +53,15 @@ namespace DCL.Chat.MessageBus
                 MessageAdded?.Invoke(
                     new ChatMessage(
                         receivedMessage.Payload.Message!,
-                        profile?.DisplayName ?? string.Empty,
+                        profile?.ValidatedName ?? string.Empty,
                         receivedMessage.FromWalletId,
                         false,
-                        true
+                        true,
+                        profile?.WalletId ?? null
                     )
                 );
             }
         }
-
-        public event Action<ChatMessage>? MessageAdded;
 
         public void Send(string message, string origin)
         {
@@ -68,16 +75,10 @@ namespace DCL.Chat.MessageBus
 
         private void SendTo(string message, double timestamp, IMessagePipe messagePipe)
         {
-            var chat = messagePipe.NewMessage<Decentraland.Kernel.Comms.Rfc4.Chat>();
+            MessageWrap<Decentraland.Kernel.Comms.Rfc4.Chat> chat = messagePipe.NewMessage<Decentraland.Kernel.Comms.Rfc4.Chat>();
             chat.Payload.Message = message;
             chat.Payload.Timestamp = timestamp;
             chat.SendAndDisposeAsync(cancellationTokenSource.Token, DataPacketKind.KindReliable).Forget();
-        }
-
-        public void Dispose()
-        {
-            cancellationTokenSource.Cancel();
-            cancellationTokenSource.Dispose();
         }
     }
 }

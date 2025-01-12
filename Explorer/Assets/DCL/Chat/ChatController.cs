@@ -20,9 +20,11 @@ using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading;
+using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
+using UnityEngine.UI;
 using Utility;
 using Utility.Arch;
 
@@ -40,8 +42,6 @@ namespace DCL.Chat
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
         private readonly ChatEntryConfigurationSO chatEntryConfiguration;
         private readonly IChatMessagesBus chatMessagesBus;
-        private EmojiPanelController? emojiPanelController;
-        private EmojiSuggestionPanel? emojiSuggestionPanelController;
         private readonly NametagsData nametagsData;
         private readonly EmojiPanelConfigurationSO emojiPanelConfiguration;
         private readonly TextAsset emojiMappingJson;
@@ -58,6 +58,8 @@ namespace DCL.Chat
         private readonly IInputBlock inputBlock;
         private readonly ISystemClipboard systemClipboard;
         private readonly IMVCManager mvcManager;
+        private EmojiPanelController? emojiPanelController;
+        private EmojiSuggestionPanel? emojiSuggestionPanelController;
 
         private CancellationTokenSource cts;
         private CancellationTokenSource emojiPanelCts;
@@ -143,7 +145,7 @@ namespace DCL.Chat
             viewInstance.ChatBubblesToggle.Toggle.onValueChanged.AddListener(OnToggleChatBubblesValueChanged);
             viewInstance.ChatBubblesToggle.Toggle.SetIsOnWithoutNotify(nametagsData.showChatBubbles);
 
-            dclInput.UI.RightClick.performed += b=> OnRightClickRegistered();
+            dclInput.UI.RightClick.performed += b => OnRightClickRegistered();
             closePastePopupTask = new UniTaskCompletionSource();
 
             OnToggleChatBubblesValueChanged(nametagsData.showChatBubbles);
@@ -219,7 +221,7 @@ namespace DCL.Chat
         {
             if (viewInstance!.gameObject.activeInHierarchy && viewInstance.InputField.isFocused == false)
             {
-                var inputField = viewInstance.InputField;
+                TMP_InputField inputField = viewInstance.InputField;
                 inputField.text = text;
                 inputField.ActivateInputField();
                 inputField.caretPosition = inputField.text.Length;
@@ -373,8 +375,11 @@ namespace DCL.Chat
 
                 ChatEntryView itemScript = item!.GetComponent<ChatEntryView>()!;
                 SetItemData(index, itemData, itemScript);
-                itemScript.optionsButton?.onClick.RemoveAllListeners();
-                itemScript.optionsButton?.onClick.AddListener( () => OnChatMessageOptionsButtonClicked(itemScript.entryText.text));
+
+                var messageOptionsButton = itemScript.messageBubbleElement.messageOptionsButton;
+                messageOptionsButton?.onClick.RemoveAllListeners();
+                messageOptionsButton?.onClick.AddListener(() =>
+                    OnChatMessageOptionsButtonClicked(itemScript.messageBubbleElement.messageContentElement.messageContentText.text));
             }
 
             return item;
@@ -384,19 +389,17 @@ namespace DCL.Chat
         {
             //temporary approach to extract the username without the walledId, will be refactored
             //once we have the proper integration of the profile retrieval
-            Color playerNameColor = chatEntryConfiguration.GetNameColor(itemData.Sender.Contains(HASH_CHARACTER)
-                ? $"{itemData.Sender.Substring(0, itemData.Sender.IndexOf(HASH_CHARACTER, StringComparison.Ordinal))}"
-                : itemData.Sender);
+            Color playerNameColor = chatEntryConfiguration.GetNameColor(itemData.SenderValidatedName);
 
-            itemScript.playerName.color = playerNameColor;
+            itemScript.usernameElement.userName.color = playerNameColor;
 
             if (!itemData.SystemMessage)
             {
-                itemScript.ProfileBackground.color = playerNameColor;
+                itemScript.ProfileBackground!.color = playerNameColor;
                 playerNameColor.r += 0.3f;
                 playerNameColor.g += 0.3f;
                 playerNameColor.b += 0.3f;
-                itemScript.ProfileOutline.color = playerNameColor;
+                itemScript.ProfileOutline!.color = playerNameColor;
             }
 
             itemScript.SetItemData(itemData);
@@ -405,7 +408,7 @@ namespace DCL.Chat
             if (itemData.HasToAnimate)
             {
                 itemScript.AnimateChatEntry();
-                chatHistory.ForceUpdateMessage(index, new ChatMessage(itemData.Message, itemData.Sender, itemData.WalletAddress, itemData.SentByOwnUser, false));
+                chatHistory.ForceUpdateMessage(index, new ChatMessage(itemData.Message, itemData.SenderValidatedName, itemData.WalletAddress, itemData.SentByOwnUser, false, itemData.SenderWalletId));
             }
         }
 
@@ -444,10 +447,12 @@ namespace DCL.Chat
             if (isInputSelected && systemClipboard.HasValue())
             {
                 closePastePopupTask = new UniTaskCompletionSource();
+
                 var data = new PastePopupToastData(
                     PasteClipboardText,
                     viewInstance!.PastePopupPosition.position,
                     closePastePopupTask.Task);
+
                 mvcManager.ShowAsync(PastePopupToastController.IssueCommand(data)).Forget();
                 viewInstance.InputField.ActivateInputField();
             }
@@ -552,7 +557,7 @@ namespace DCL.Chat
         private void GenerateChatBubbleComponent(Entity e, ChatMessage chatMessage)
         {
             if (nametagsData is { showChatBubbles: true, showNameTags: true })
-                world.AddOrGet(e, new ChatBubbleComponent(chatMessage.Message, chatMessage.Sender, chatMessage.WalletAddress));
+                world.AddOrGet(e, new ChatBubbleComponent(chatMessage.Message, chatMessage.SenderValidatedName, chatMessage.WalletAddress));
         }
 
         private void ChatHistoryOnOnCleared()
