@@ -481,6 +481,7 @@ MonoBehaviour:
   <viewAnimationElement>k__BackingField: {fileID: 8637912918877643679}
   <PasteButton>k__BackingField: {fileID: 4256803560463002667}
   <PasteToastPosition>k__BackingField: {fileID: 3921238631991251244}
+  <CanvasGroup>k__BackingField: {fileID: 2726626839160799862}
 --- !u!114 &8637912918877643679
 MonoBehaviour:
   m_ObjectHideFlags: 0
