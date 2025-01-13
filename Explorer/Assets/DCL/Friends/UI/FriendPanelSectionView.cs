@@ -4,10 +4,9 @@ using UnityEngine;
 
 namespace DCL.Friends.UI
 {
-    public class BlockedUsersView : MonoBehaviour
+    public class FriendPanelSectionView : MonoBehaviour
     {
         [field: SerializeField] public LoopListView2 LoopList { get; private set; }
-        [field: SerializeField] public GameObject EmptyState { get; private set; }
 
         public event Action Enable;
         public event Action Disable;

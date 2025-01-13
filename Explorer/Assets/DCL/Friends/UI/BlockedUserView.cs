@@ -1,40 +1,35 @@
+using System;
+using TMPro;
 using UnityEngine;
-using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace DCL.Friends.UI
 {
-    public class BlockedUserView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
+    public class BlockedUserView : FriendPanelUserView
     {
         [field: SerializeField] public Button UnblockButton { get; private set; }
         [field: SerializeField] public Button ContextMenuButton { get; private set; }
-        [field: SerializeField] public Image Background { get; private set; }
-        [field: SerializeField] public Color NormalColor { get; private set; }
-        [field: SerializeField] public Color HoveredColor { get; private set; }
+        [field: SerializeField] public TMP_Text BlockedDateText { get; private set; }
 
-        public string UserWalletAddress { get; set; }
+        public DateTime BlockedDate { get; private set; }
 
         private void Start()
         {
-            Background.color = NormalColor;
+            buttons = new[] { UnblockButton, ContextMenuButton };
         }
 
-        private void ToggleButtonView(bool isActive)
+        public void Configure(string userWalletAddress, DateTime blockedDate)
         {
-            UnblockButton.gameObject.SetActive(isActive);
-            ContextMenuButton.gameObject.SetActive(isActive);
+            UserWalletAddress = userWalletAddress;
+            BlockedDate = blockedDate;
+
+            BlockedDateText.SetText($"{blockedDate:MM/dd}");
         }
 
-        public void OnPointerEnter(PointerEventData eventData)
+        protected override void ToggleButtonView(bool isActive)
         {
-            ToggleButtonView(true);
-            Background.color = HoveredColor;
-        }
-
-        public void OnPointerExit(PointerEventData eventData)
-        {
-            ToggleButtonView(false);
-            Background.color = NormalColor;
+            base.ToggleButtonView(isActive);
+            BlockedDateText.gameObject.SetActive(!isActive);
         }
     }
 }

@@ -18,8 +18,10 @@ namespace DCL.Friends.UI
         private readonly IFriendsService friendsService;
         private readonly IFriendsEventBus friendEventBus;
         private readonly ChatView chatView;
+        private readonly IMVCManager mvcManager;
 
-        private BlockedUsersController blockedUsersController;
+        private BlockedSectionController blockedSectionController;
+        private FriendsSectionController friendsSectionController;
         private CancellationTokenSource friendsPanelCts = new ();
         private bool chatWasVisible;
 
@@ -28,11 +30,13 @@ namespace DCL.Friends.UI
         public FriendsPanelController(ViewFactoryMethod viewFactory,
             ChatView chatView,
             IFriendsService friendsService,
-            IFriendsEventBus friendEventBus) : base(viewFactory)
+            IFriendsEventBus friendEventBus,
+            IMVCManager mvcManager) : base(viewFactory)
         {
             this.chatView = chatView;
             this.friendsService = friendsService;
             this.friendEventBus = friendEventBus;
+            this.mvcManager = mvcManager;
         }
 
         public override void Dispose()
@@ -44,7 +48,7 @@ namespace DCL.Friends.UI
             viewInstance.BlockedTabButton.onClick.RemoveAllListeners();
             friendsPanelCts.SafeCancelAndDispose();
 
-            blockedUsersController.Dispose();
+            blockedSectionController.Dispose();
         }
 
         protected override void OnBeforeViewShow()
@@ -69,7 +73,8 @@ namespace DCL.Friends.UI
         {
             base.OnViewInstantiated();
 
-            blockedUsersController = new BlockedUsersController(viewInstance!.BlockedPanel);
+            blockedSectionController = new BlockedSectionController(viewInstance!.BlockedSection, mvcManager);
+            friendsSectionController = new FriendsSectionController(viewInstance!.FriendsSection);
 
             viewInstance!.FriendsTabButton.onClick.AddListener(() => ToggleTabs(FriendsPanelTab.FRIENDS));
             viewInstance.RequestsTabButton.onClick.AddListener(() => ToggleTabs(FriendsPanelTab.REQUESTS));
@@ -83,11 +88,11 @@ namespace DCL.Friends.UI
         private void ToggleTabs(FriendsPanelTab tab)
         {
             viewInstance!.FriendsTabSelected.SetActive(tab == FriendsPanelTab.FRIENDS);
-            viewInstance!.FriendsPanel.SetActive(tab == FriendsPanelTab.FRIENDS);
+            viewInstance!.FriendsSection.SetActive(tab == FriendsPanelTab.FRIENDS);
             viewInstance.RequestsTabSelected.SetActive(tab == FriendsPanelTab.REQUESTS);
             viewInstance.RequestsPanel.SetActive(tab == FriendsPanelTab.REQUESTS);
             viewInstance.BlockedTabSelected.SetActive(tab == FriendsPanelTab.BLOCKED);
-            viewInstance.BlockedPanel.SetActive(tab == FriendsPanelTab.BLOCKED);
+            viewInstance.BlockedSection.SetActive(tab == FriendsPanelTab.BLOCKED);
         }
 
         private void Close() =>
