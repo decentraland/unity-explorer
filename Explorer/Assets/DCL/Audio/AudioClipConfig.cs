@@ -4,7 +4,7 @@ using UnityEngine;
 namespace DCL.Audio
 {
     [Serializable]
-    [CreateAssetMenu(fileName = "AudioClipConfig", menuName = "SO/Audio/AudioClipConfig")]
+    [CreateAssetMenu(fileName = "AudioClipConfig", menuName = "DCL/Audio/Audio Clip Config")]
     public class AudioClipConfig : ScriptableObject
     {
         [SerializeField] private AudioClip[] audioClips = Array.Empty<AudioClip>();
