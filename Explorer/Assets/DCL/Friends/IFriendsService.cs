@@ -11,7 +11,7 @@ namespace DCL.Friends
     {
         UniTask<PaginatedFriendsResult> GetFriendsAsync(int pageNum, int pageSize, CancellationToken ct);
 
-        UniTask<bool> IsFriendAsync(string friendId, CancellationToken ct);
+        UniTask<FriendshipStatus> GetFriendshipStatus(string userId, CancellationToken ct);
 
         UniTask<PaginatedFriendRequestsResult> GetReceivedFriendRequestsAsync(int pageNum, int pageSize, CancellationToken ct);
 

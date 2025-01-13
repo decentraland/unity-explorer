@@ -117,15 +117,50 @@ namespace DCL.Friends
             return new PaginatedFriendsResult(profiles!, allFriendsBuffer.Count);
         }
 
-        public async UniTask<bool> IsFriendAsync(string friendId, CancellationToken ct)
+        public async UniTask<FriendshipStatus> GetFriendshipStatus(string userId, CancellationToken ct)
         {
+            // TODO: add support to this query at server side instead of fetching all the data separately
             await EnsureRpcConnectionAsync(ct);
 
             allFriendsBuffer.Clear();
-            // TODO: add support to this query at server side instead of fetching all the friends
+
             await FetchAllFriendIdsAsync(allFriendsBuffer, ct);
 
-            return allFriendsBuffer.Contains(friendId);
+            if (allFriendsBuffer.Contains(userId))
+                return FriendshipStatus.FRIEND;
+
+            if (await IsFriendRequestAsync(GET_SENT_FRIEND_REQUESTS_PROCEDURE_NAME))
+                return FriendshipStatus.REQUEST_SENT;
+
+            if (await IsFriendRequestAsync(GET_RECEIVED_FRIEND_REQUESTS_PROCEDURE_NAME))
+                return FriendshipStatus.REQUEST_RECEIVED;
+
+            Profile? selfProfile = await profileRepository.GetAsync(identityCache.EnsuredIdentity().Address, ct);
+
+            if (selfProfile is { Blocked: not null } && selfProfile.Blocked.Contains(userId))
+                return FriendshipStatus.BLOCKED;
+
+            return FriendshipStatus.NONE;
+
+            async UniTask<bool> IsFriendRequestAsync(string procedureName)
+            {
+                FriendshipRequestsResponse response = await module!.CallUnaryProcedure<FriendshipRequestsResponse>(procedureName, new Empty())
+                                                                   .AttachExternalCancellation(ct)
+                                                                   .Timeout(TimeSpan.FromSeconds(TIMEOUT_SECONDS));
+
+                switch (response.ResponseCase)
+                {
+                    case FriendshipRequestsResponse.ResponseOneofCase.Requests:
+                        foreach (RequestResponse rr in response.Requests.Requests_)
+                            if (rr.User.Address == userId)
+                                return true;
+                        break;
+                    case FriendshipRequestsResponse.ResponseOneofCase.InternalServerError:
+                        throw new Exception($"Cannot fetch friend requests {response.ResponseCase}");
+                }
+
+                return false;
+            }
         }
 
         public async UniTask<PaginatedFriendRequestsResult> GetReceivedFriendRequestsAsync(int pageNum, int pageSize, CancellationToken ct) =>
@@ -313,7 +348,7 @@ namespace DCL.Friends
                 case FriendshipRequestsResponse.ResponseOneofCase.None:
                 case FriendshipRequestsResponse.ResponseOneofCase.InternalServerError:
                 default:
-                    throw new Exception($"Cannot fetch sent friend requests {response.ResponseCase}");
+                    throw new Exception($"Cannot fetch friend requests {procedureName} {response.ResponseCase}");
             }
 
             IEnumerable<FriendRequest> requests = friendRequestsBuffer.Skip((pageNum - 1) * pageSize)
