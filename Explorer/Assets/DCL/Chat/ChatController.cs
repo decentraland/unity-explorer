@@ -35,7 +35,6 @@ namespace DCL.Chat
         private const int MAX_MESSAGE_LENGTH = 250;
         private const string EMOJI_SUGGESTION_PATTERN = @":\w+";
         private const string EMOJI_TAG = "[emoji]";
-        private const string HASH_CHARACTER = "#";
         private const string ORIGIN = "chat";
         private static readonly Regex EMOJI_PATTERN_REGEX = new (EMOJI_SUGGESTION_PATTERN, RegexOptions.Compiled);
 
