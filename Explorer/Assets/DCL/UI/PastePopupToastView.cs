@@ -9,6 +9,11 @@ namespace DCL.UI
     {
         [field: SerializeField] internal Button PasteButton { get; private set;}
         [field: SerializeField] internal RectTransform PasteToastPosition { get; private set;}
-        [field: SerializeField] internal CanvasGroup CanvasGroup { get; private set;}
+        [field: SerializeField] private CanvasGroup canvasGroup;
+
+        private void Awake()
+        {
+            canvasGroup.alpha = 0;
+        }
     }
 }

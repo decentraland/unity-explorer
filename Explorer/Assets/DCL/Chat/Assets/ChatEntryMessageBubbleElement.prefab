@@ -106,7 +106,6 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1080025758476438759}
-  - {fileID: 4475657341368364052}
   m_Father: {fileID: 6709421707846502462}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -182,6 +181,8 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 8321184058515427286}
+  - {fileID: 6766592991432594522}
+  - {fileID: 4475657341368364052}
   - {fileID: 6815094952191305205}
   - {fileID: 8593424098243432139}
   m_Father: {fileID: 0}
@@ -189,7 +190,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 32, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_SizeDelta: {x: 300, y: 72}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &5588404432702966431
 MonoBehaviour:
@@ -208,13 +209,49 @@ MonoBehaviour:
   <messageOptionsButton>k__BackingField: {fileID: 6789486922077095390}
   <messageContentElement>k__BackingField: {fileID: 7075669071389611758}
   <configurationSo>k__BackingField: {fileID: 11400000, guid: 6afb31861b85441b6ab2b988819bb96a, type: 2}
+  <popupPosition>k__BackingField: {fileID: 6766592991432594522}
+--- !u!1 &8793144509521958599
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6766592991432594522}
+  m_Layer: 5
+  m_Name: PopupPositionMarker
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &6766592991432594522
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8793144509521958599}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 6709421707846502462}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 1, y: 1}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 4, y: 0}
+  m_SizeDelta: {x: 1, y: 1}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1001 &387010180821283073
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 8321184058515427286}
+    m_TransformParent: {fileID: 6709421707846502462}
     m_Modifications:
     - target: {fileID: 4270068949962366229, guid: 71bc459f54ff8c0429ce56bfd7f1b180, type: 3}
       propertyPath: m_Pivot.x

@@ -19,6 +19,7 @@ namespace DCL.PluginSystem.Global
         private readonly ISystemClipboard systemClipboard;
 
         private PastePopupToastController? pasteToastButtonController;
+        private ChatEntryMenuPopupController chatEntryMenuPopupController;
 
         public GenericPopupsPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -43,10 +44,16 @@ namespace DCL.PluginSystem.Global
         public async UniTask InitializeAsync(Settings settings, CancellationToken ct)
         {
             PastePopupToastView panelViewAsset = (await assetsProvisioner.ProvideMainAssetAsync(settings.PastePopupToastPrefab, ct)).Value;
-            ControllerBase<PastePopupToastView, PastePopupToastData>.ViewFactoryMethod viewFactoryMethod = PastePopupToastController.Preallocate(panelViewAsset, null, out PastePopupToastView panelView);
-
-            pasteToastButtonController = new PastePopupToastController(viewFactoryMethod, systemClipboard);
+            ControllerBase<PastePopupToastView, PastePopupToastData>.ViewFactoryMethod pasteViewFactoryMethod =
+                PastePopupToastController.Preallocate(panelViewAsset, null, out PastePopupToastView panelView);
+            pasteToastButtonController = new PastePopupToastController(pasteViewFactoryMethod, systemClipboard);
             mvcManager.RegisterController(pasteToastButtonController);
+
+            ChatEntryMenuPopupView chatMenuPopupView = (await assetsProvisioner.ProvideMainAssetAsync(settings.ChatEntryMenuPopupPrefab, ct)).Value;
+            ControllerBase<ChatEntryMenuPopupView, ChatEntryMenuPopupData>.ViewFactoryMethod viewFactoryMethod =
+                ChatEntryMenuPopupController.Preallocate(chatMenuPopupView, null, out ChatEntryMenuPopupView popupView);
+            chatEntryMenuPopupController = new ChatEntryMenuPopupController(viewFactoryMethod, systemClipboard);
+            mvcManager.RegisterController(chatEntryMenuPopupController);
         }
 
         public class Settings : IDCLPluginSettings
@@ -57,8 +64,15 @@ namespace DCL.PluginSystem.Global
                 public PastePopupToastRef(string guid) : base(guid) { }
             }
 
-            [field: SerializeField]
-            public PastePopupToastRef PastePopupToastPrefab;
+            [Serializable]
+            public class ChatEntryMenuPopupRef : ComponentReference<ChatEntryMenuPopupView>
+            {
+                public ChatEntryMenuPopupRef(string guid) : base(guid) { }
+            }
+
+
+            [field: SerializeField] public PastePopupToastRef PastePopupToastPrefab;
+            [field: SerializeField] public ChatEntryMenuPopupRef ChatEntryMenuPopupPrefab;
         }
 
     }

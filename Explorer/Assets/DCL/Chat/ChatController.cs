@@ -66,7 +66,7 @@ namespace DCL.Chat
         private bool isChatClosed;
         private bool isInputSelected;
         private IReadOnlyList<RaycastResult> raycastResults;
-        private UniTaskCompletionSource closePastePopupTask;
+        private UniTaskCompletionSource closePopupTask;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
 
@@ -144,7 +144,7 @@ namespace DCL.Chat
             viewInstance.ChatBubblesToggle.Toggle.SetIsOnWithoutNotify(nametagsData.showChatBubbles);
 
             dclInput.UI.RightClick.performed += b => OnRightClickRegistered();
-            closePastePopupTask = new UniTaskCompletionSource();
+            closePopupTask = new UniTaskCompletionSource();
 
             OnToggleChatBubblesValueChanged(nametagsData.showChatBubbles);
             OnFocus();
@@ -165,7 +165,7 @@ namespace DCL.Chat
         protected override void OnViewClose()
         {
             base.OnViewClose();
-            closePastePopupTask.TrySetResult();
+            closePopupTask.TrySetResult();
             dclInput.UI.Click.performed -= OnClick;
             dclInput.Shortcuts.ToggleNametags.performed -= ToggleNametagsFromShortcut;
             dclInput.Shortcuts.OpenChat.performed -= OnOpenChat;
@@ -378,7 +378,7 @@ namespace DCL.Chat
                 messageOptionsButton?.onClick.RemoveAllListeners();
 
                 messageOptionsButton?.onClick.AddListener(() =>
-                    OnChatMessageOptionsButtonClicked(itemScript.messageBubbleElement.messageContentElement.messageContentText.text));
+                    OnChatMessageOptionsButtonClicked(itemData.Message, itemScript));
             }
 
             return item;
@@ -426,10 +426,23 @@ namespace DCL.Chat
             EnableUnwantedInputs();
         }
 
-        private void OnChatMessageOptionsButtonClicked(string messageText)
+        private void OnChatMessageOptionsButtonClicked(string messageText, ChatEntryView chatEntryView)
         {
             //Display context menu with copy option
             //for now we will just copy the text
+
+            closePopupTask = new UniTaskCompletionSource();
+
+            var data = new ChatEntryMenuPopupData(
+                (f)=> CopyMessageText(messageText),
+                chatEntryView.messageBubbleElement.popupPosition.position,
+                closePopupTask.Task);
+
+            mvcManager.ShowAsync(ChatEntryMenuPopupController.IssueCommand(data)).Forget();
+        }
+
+        private void CopyMessageText(string messageText)
+        {
             systemClipboard.Set(messageText);
         }
 
@@ -454,12 +467,12 @@ namespace DCL.Chat
         {
             if (isInputSelected && systemClipboard.HasValue())
             {
-                closePastePopupTask = new UniTaskCompletionSource();
+                closePopupTask = new UniTaskCompletionSource();
 
                 var data = new PastePopupToastData(
                     PasteClipboardText,
                     viewInstance!.PastePopupPosition.position,
-                    closePastePopupTask.Task);
+                    closePopupTask.Task);
 
                 mvcManager.ShowAsync(PastePopupToastController.IssueCommand(data)).Forget();
                 viewInstance.InputField.ActivateInputField();
@@ -490,7 +503,7 @@ namespace DCL.Chat
         {
             HandleEmojiSearch(inputText);
             UIAudioEventsBus.Instance.SendPlayAudioEvent(viewInstance!.ChatInputTextAudio);
-            closePastePopupTask.TrySetResult();
+            closePopupTask.TrySetResult();
             viewInstance.CharacterCounter.SetCharacterCount(inputText.Length);
             viewInstance.StopChatEntriesFadeout();
         }

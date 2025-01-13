@@ -588,6 +588,11 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
+        ChatEntryMenuPopupPrefab:
+          m_AssetGUID: f74fa2421d947f4439553458ae5fbd93
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
     - rid: 6156380652633325570
       type: {class: MultiplayerCommunicationSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:

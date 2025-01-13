@@ -13,6 +13,7 @@ namespace DCL.Chat
         [field: SerializeField] internal Button? messageOptionsButton { get; private set; }
         [field: SerializeField] internal ChatEntryMessageContentElement messageContentElement { get; private set; }
         [field: SerializeField] internal ChatEntryConfigurationSO configurationSo { get; private set; }
+        [field: SerializeField] internal RectTransform popupPosition { get; private set; }
 
         private float backgroundHeightOffset => configurationSo.BackgroundHeightOffset;
         private float backgroundWidthOffset => configurationSo.BackgroundWidthOffset;

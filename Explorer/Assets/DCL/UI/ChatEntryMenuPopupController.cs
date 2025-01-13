@@ -7,11 +7,11 @@ using UnityEngine;
 
 namespace DCL.UI
 {
-    public class PastePopupToastController : ControllerBase<PastePopupToastView,PastePopupToastData>
+    public class ChatEntryMenuPopupController : ControllerBase<ChatEntryMenuPopupView, ChatEntryMenuPopupData>
     {
         private readonly ISystemClipboard systemClipboard;
 
-        public PastePopupToastController(ViewFactoryMethod viewFactory, ISystemClipboard systemClipboard) : base(viewFactory)
+        public ChatEntryMenuPopupController(ViewFactoryMethod viewFactory, ISystemClipboard systemClipboard) : base(viewFactory)
         {
             this.systemClipboard = systemClipboard;
         }
@@ -19,18 +19,18 @@ namespace DCL.UI
         protected override void OnViewInstantiated()
         {
             base.OnViewInstantiated();
-            viewInstance!.PasteButton.onClick.AddListener(OnPasteButtonClicked);
+            viewInstance!.CopyButton.onClick.AddListener(OnCopyButtonClicked);
         }
 
         protected override void OnBeforeViewShow()
         {
-            viewInstance!.PasteToastPosition.position = inputData.Position;
+            viewInstance!.MenuPosition.position = inputData.Position;
             base.OnBeforeViewShow();
         }
 
-        private void OnPasteButtonClicked()
+        private void OnCopyButtonClicked()
         {
-            inputData.Paste.Invoke(systemClipboard.Get());
+            inputData.Copy.Invoke(systemClipboard.Get());
         }
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
@@ -40,17 +40,18 @@ namespace DCL.UI
     }
 
 
-    public struct PastePopupToastData
+    public struct ChatEntryMenuPopupData
     {
-        public readonly Action<string> Paste;
+        public readonly Action<string> Copy;
         public readonly UniTask? CloseTask;
         public readonly Vector2 Position;
 
-        public PastePopupToastData(Action<string> paste, Vector2 position, UniTask? closeTask = null)
+        public ChatEntryMenuPopupData(Action<string> copy, Vector2 position, UniTask? closeTask = null)
         {
-            Paste = paste;
+            Copy = copy;
             Position = position;
             CloseTask = closeTask;
         }
     }
 }
+
