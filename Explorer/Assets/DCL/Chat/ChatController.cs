@@ -428,9 +428,7 @@ namespace DCL.Chat
 
         private void OnChatMessageOptionsButtonClicked(string messageText, ChatEntryView chatEntryView)
         {
-            //Display context menu with copy option
-            //for now we will just copy the text
-
+            closePopupTask.TrySetResult();
             closePopupTask = new UniTaskCompletionSource();
 
             var data = new ChatEntryMenuPopupData(
@@ -467,6 +465,7 @@ namespace DCL.Chat
         {
             if (isInputSelected && systemClipboard.HasValue())
             {
+                closePopupTask.TrySetResult();
                 closePopupTask = new UniTaskCompletionSource();
 
                 var data = new PastePopupToastData(
