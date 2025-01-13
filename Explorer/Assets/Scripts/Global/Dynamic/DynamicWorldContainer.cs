@@ -742,7 +742,7 @@ namespace Global.Dynamic
                     playerEntity,
                     includeCameraReel
                 ),
-                new FriendsPlugin(bootstrapContainer.DecentralandUrlsSource, profileRepository, identityCache),
+                new FriendsPlugin(bootstrapContainer.DecentralandUrlsSource, profileRepository, identityCache, staticContainer.FeatureFlagsCache),
             };
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);

@@ -5,14 +5,13 @@ using DCL.Web3.Chains;
 using DCL.Web3.Identities;
 using Decentraland.SocialServiceV2;
 using Google.Protobuf.WellKnownTypes;
+using Newtonsoft.Json;
 using rpc_csharp;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.WebSockets;
 using System.Threading;
-using User = Decentraland.Social.Friendships.User;
-using UsersResponse = Decentraland.Social.Friendships.UsersResponse;
 
 namespace DCL.Friends
 {
@@ -30,7 +29,9 @@ namespace DCL.Friends
         private readonly RpcClient client;
         private readonly List<UniTask<Profile?>> fetchProfileTasks = new ();
         private readonly List<FriendRequest> friendRequestsBuffer = new ();
-        private HashSet<string>? allFriendIds;
+        private readonly Dictionary<string, string> authChainBuffer = new ();
+        private readonly HashSet<string> allFriendsBuffer = new ();
+
         private RpcClientModule? module;
 
         public RPCFriendsService(URLAddress apiUrl,
@@ -60,8 +61,6 @@ namespace DCL.Friends
 
             await foreach (var response in stream.WithCancellation(ct))
             {
-                ct.ThrowIfCancellationRequested();
-
                 switch (response.UpdateCase)
                 {
                     case FriendshipUpdate.UpdateOneofCase.Accept:
@@ -98,10 +97,14 @@ namespace DCL.Friends
 
         public async UniTask<PaginatedFriendsResult> GetFriendsAsync(int pageNum, int pageSize, CancellationToken ct)
         {
-            await EnsureEssentialDataToBeInitialized(ct);
+            await EnsureRpcConnectionAsync(ct);
 
-            var ids = allFriendIds!.Skip((pageNum - 1) * pageSize)
-                                   .Take(pageSize);
+            allFriendsBuffer.Clear();
+            // TODO: add support to pagination at server side
+            await FetchAllFriendIdsAsync(allFriendsBuffer, ct);
+
+            var ids = allFriendsBuffer.Skip((pageNum - 1) * pageSize)
+                                       .Take(pageSize);
 
             fetchProfileTasks.Clear();
 
@@ -111,14 +114,18 @@ namespace DCL.Friends
             var profiles = (await UniTask.WhenAll(fetchProfileTasks))
                .Where(profile => profile != null);
 
-            return new PaginatedFriendsResult(profiles!, allFriendIds!.Count);
+            return new PaginatedFriendsResult(profiles!, allFriendsBuffer.Count);
         }
 
         public async UniTask<bool> IsFriendAsync(string friendId, CancellationToken ct)
         {
-            await EnsureEssentialDataToBeInitialized(ct);
+            await EnsureRpcConnectionAsync(ct);
 
-            return allFriendIds!.Contains(friendId);
+            allFriendsBuffer.Clear();
+            // TODO: add support to this query at server side instead of fetching all the friends
+            await FetchAllFriendIdsAsync(allFriendsBuffer, ct);
+
+            return allFriendsBuffer.Contains(friendId);
         }
 
         public async UniTask<PaginatedFriendRequestsResult> GetReceivedFriendRequestsAsync(int pageNum, int pageSize, CancellationToken ct) =>
@@ -129,13 +136,13 @@ namespace DCL.Friends
 
         public async UniTask RejectFriendshipAsync(string friendId, CancellationToken ct)
         {
-            await EnsureEssentialDataToBeInitialized(ct);
+            await EnsureRpcConnectionAsync(ct);
 
             await this.UpdateFriendship(new UpsertFriendshipPayload
             {
                 Request = new RequestPayload
                 {
-                    User = new Decentraland.SocialServiceV2.User
+                    User = new User
                     {
                         Address = friendId,
                     },
@@ -145,13 +152,13 @@ namespace DCL.Friends
 
         public async UniTask CancelFriendshipAsync(string friendId, CancellationToken ct)
         {
-            await EnsureEssentialDataToBeInitialized(ct);
+            await EnsureRpcConnectionAsync(ct);
 
             await this.UpdateFriendship(new UpsertFriendshipPayload
             {
                 Cancel = new CancelPayload
                 {
-                    User = new Decentraland.SocialServiceV2.User
+                    User = new User
                     {
                         Address = friendId,
                     },
@@ -161,43 +168,39 @@ namespace DCL.Friends
 
         public async UniTask AcceptFriendshipAsync(string friendId, CancellationToken ct)
         {
-            await EnsureEssentialDataToBeInitialized(ct);
+            await EnsureRpcConnectionAsync(ct);
 
             await this.UpdateFriendship(new UpsertFriendshipPayload
             {
                 Accept = new AcceptPayload
                 {
-                    User = new Decentraland.SocialServiceV2.User
+                    User = new User
                     {
                         Address = friendId,
                     },
                 },
             }, ct);
-
-            allFriendIds!.Add(friendId);
         }
 
         public async UniTask DeleteFriendshipAsync(string friendId, CancellationToken ct)
         {
-            await EnsureEssentialDataToBeInitialized(ct);
+            await EnsureRpcConnectionAsync(ct);
 
             await this.UpdateFriendship(new UpsertFriendshipPayload
             {
                 Delete = new DeletePayload
                 {
-                    User = new Decentraland.SocialServiceV2.User
+                    User = new User
                     {
                         Address = friendId,
                     },
                 },
             }, ct);
-
-            allFriendIds!.Remove(friendId);
         }
 
         public async UniTask<FriendRequest> RequestFriendshipAsync(string friendId, string messageBody, CancellationToken ct)
         {
-            await EnsureEssentialDataToBeInitialized(ct);
+            await EnsureRpcConnectionAsync(ct);
 
             // TODO: ideally the server should return the request information when it is created so we dont have to request it later
             await UpdateFriendship(new UpsertFriendshipPayload
@@ -205,7 +208,7 @@ namespace DCL.Friends
                 Request = new RequestPayload
                 {
                     Message = messageBody,
-                    User = new Decentraland.SocialServiceV2.User
+                    User = new User
                     {
                         Address = friendId,
                     },
@@ -218,17 +221,6 @@ namespace DCL.Friends
                 throw new Exception("Inconsistent friend request. Created but not found.");
 
             return fr;
-        }
-
-        private async UniTask EnsureEssentialDataToBeInitialized(CancellationToken ct)
-        {
-            await EnsureRpcConnectionAsync(ct);
-
-            if (allFriendIds == null)
-            {
-                allFriendIds = new HashSet<string>();
-                await FetchAllFriendIdsAsync(allFriendIds, ct);
-            }
         }
 
         private async UniTask EnsureRpcConnectionAsync(CancellationToken ct)
@@ -244,8 +236,8 @@ namespace DCL.Friends
                     await transport.ConnectAsync(ct);
                     transport.ListenForIncomingData();
 
-                    // The service expects the auth-chain in json format within the 30 seconds threshold after connection
-                    transport.SendMessage(BuildAuthChain());
+                    // The service expects the auth-chain in json format within a 30 seconds threshold after connection
+                    await transport.SendMessageAsync(BuildAuthChain(), ct);
                     break;
             }
 
@@ -259,10 +251,22 @@ namespace DCL.Friends
 
             string BuildAuthChain()
             {
+                authChainBuffer.Clear();
+
                 long timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-                using AuthChain authChain = identityCache.EnsuredIdentity().Sign($"get:/{timestamp}:{{}}");
-                var json = authChain.ToString();
-                return json;
+                using AuthChain authChain = identityCache.EnsuredIdentity().Sign($"get:/:{timestamp}:{{}}");
+                var authChainIndex = 0;
+
+                foreach (AuthLink link in authChain)
+                {
+                    authChainBuffer[$"x-identity-auth-chain-{authChainIndex}"] = link.ToJson();
+                    authChainIndex++;
+                }
+
+                authChainBuffer["x-identity-timestamp"] = timestamp.ToString();
+                authChainBuffer["x-identity-metadata"] = "{}";
+
+                return JsonConvert.SerializeObject(authChainBuffer);
             }
         }
 
@@ -272,31 +276,17 @@ namespace DCL.Friends
 
             await foreach (var response in stream.WithCancellation(ct))
             {
-                switch (response.ResponseCase)
-                {
-                    case UsersResponse.ResponseOneofCase.Users:
-                        if (response.Users != null)
-                            foreach (User friend in response.Users.Users_)
-                                results.Add(friend.Address);
+                if (response.Users == null) continue;
 
-                        break;
-
-                    case UsersResponse.ResponseOneofCase.None:
-                    case UsersResponse.ResponseOneofCase.InternalServerError:
-                    case UsersResponse.ResponseOneofCase.UnauthorizedError:
-                    case UsersResponse.ResponseOneofCase.ForbiddenError:
-                    case UsersResponse.ResponseOneofCase.TooManyRequestsError:
-                    case UsersResponse.ResponseOneofCase.BadRequestError:
-                    default:
-                        throw new Exception($"Cannot fetch friend list {response.ResponseCase}");
-                }
+                foreach (var friend in response.Users)
+                    results.Add(friend.Address);
             }
         }
 
         private async UniTask<PaginatedFriendRequestsResult> GetFriendRequests(int pageNum, int pageSize, string procedureName,
             CancellationToken ct)
         {
-            await EnsureEssentialDataToBeInitialized(ct);
+            await EnsureRpcConnectionAsync(ct);
 
             friendRequestsBuffer.Clear();
 
