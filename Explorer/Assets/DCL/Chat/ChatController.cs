@@ -32,7 +32,6 @@ namespace DCL.Chat
 {
     public class ChatController : ControllerBase<ChatView>
     {
-        private const int MAX_MESSAGE_LENGTH = 250;
         private const string EMOJI_SUGGESTION_PATTERN = @":\w+";
         private const string EMOJI_TAG = "[emoji]";
         private const string ORIGIN = "chat";
@@ -235,7 +234,7 @@ namespace DCL.Chat
 
         private void AddEmojiFromSuggestion(string emojiCode, bool shouldClose)
         {
-            if (viewInstance!.InputField.text.Length >= MAX_MESSAGE_LENGTH)
+            if (viewInstance!.InputField.text.Length >= viewInstance.InputField.characterLimit)
                 return;
 
             UIAudioEventsBus.Instance.SendPlayAudioEvent(viewInstance.AddEmojiAudio);
@@ -279,7 +278,7 @@ namespace DCL.Chat
         {
             UIAudioEventsBus.Instance.SendPlayAudioEvent(viewInstance!.AddEmojiAudio);
 
-            if (viewInstance.InputField.text.Length >= MAX_MESSAGE_LENGTH)
+            if (viewInstance.InputField.text.Length >= viewInstance.InputField.characterLimit)
                 return;
 
             int caretPosition = viewInstance.InputField.stringPosition;
@@ -375,8 +374,9 @@ namespace DCL.Chat
                 ChatEntryView itemScript = item!.GetComponent<ChatEntryView>()!;
                 SetItemData(index, itemData, itemScript);
 
-                var messageOptionsButton = itemScript.messageBubbleElement.messageOptionsButton;
+                Button? messageOptionsButton = itemScript.messageBubbleElement.messageOptionsButton;
                 messageOptionsButton?.onClick.RemoveAllListeners();
+
                 messageOptionsButton?.onClick.AddListener(() =>
                     OnChatMessageOptionsButtonClicked(itemScript.messageBubbleElement.messageContentElement.messageContentText.text));
             }
@@ -435,10 +435,19 @@ namespace DCL.Chat
 
         private void PasteClipboardText(string pastedText)
         {
-            int caretPosition = viewInstance!.InputField.stringPosition;
-            viewInstance.InputField.text = viewInstance.InputField.text.Insert(caretPosition, pastedText);
-            viewInstance.InputField.stringPosition += pastedText.Length;
-            viewInstance.InputField.ActivateInputField();
+            TMP_InputField inputField = viewInstance!.InputField;
+            int remainingSpace = inputField.characterLimit - inputField.text.Length;
+
+            if (remainingSpace <= 0) return;
+
+            int caretPosition = inputField.stringPosition;
+            string textToInsert = pastedText.Length > remainingSpace ? pastedText[..remainingSpace] : pastedText;
+
+            inputField.text = inputField.text.Insert(caretPosition, textToInsert);
+            inputField.stringPosition += textToInsert.Length;
+            inputField.ActivateInputField();
+            viewInstance.CharacterCounter.SetCharacterCount(inputField.text.Length);
+            viewInstance.StopChatEntriesFadeout();
         }
 
         private void OnRightClickRegistered()
