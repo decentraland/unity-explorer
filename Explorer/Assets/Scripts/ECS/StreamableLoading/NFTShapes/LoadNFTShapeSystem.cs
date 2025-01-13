@@ -28,7 +28,7 @@ namespace ECS.StreamableLoading.NFTShapes
             this.webRequestController = webRequestController;
         }
 
-        protected override async UniTask<StreamableLoadingResult<Texture2DData>> FlowInternalAsync(GetNFTShapeIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct, EntityReference entity)
+        protected override async UniTask<StreamableLoadingResult<Texture2DData>> FlowInternalAsync(GetNFTShapeIntention intention, StreamableLoadingState state, IPartitionComponent partition, CancellationToken ct)
         {
             string imageUrl = await ImageUrlAsync(intention.CommonArguments, ct);
 

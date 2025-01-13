@@ -28,7 +28,7 @@ namespace ECS.StreamableLoading.Common.Systems
 
         protected readonly IStreamableCache<TAsset, TIntention> cache;
 
-        private readonly AssetsLoadingUtility.InternalFlowDelegate<TAsset, TIntention> cachedInternalFlowDelegate;
+        private readonly AssetsLoadingUtility.InternalFlowDelegate<TAsset, StreamableLoadingState, TIntention> cachedInternalFlowDelegate;
         private readonly Query query;
         private readonly CancellationTokenSource cancellationTokenSource;
 
@@ -77,8 +77,8 @@ namespace ECS.StreamableLoading.Common.Systems
 
             EntityReference entityReference = World.Reference(entity);
 
-            //If a chunk is already loading, don't start another one, this also applies to partial loading requests that are not yet finished
-            if (state.Value != StreamableLoadingState.Status.Allowed || intention.CommonArguments.HasChunkDownloadStarted)
+            //If a chunk is already loading, don't start another one, if it is a partial request it will resume from the point it was stopped
+            if (state.Value != StreamableLoadingState.Status.Allowed)
             {
                 // If state is in progress the flow was already launched and it will call FinalizeLoading on its own
                 // If state is finished the asset is already resolved and cancellation can be ignored
@@ -86,26 +86,22 @@ namespace ECS.StreamableLoading.Common.Systems
 
                     // If we don't finalize promises preemptively they are being stacked in DeferredLoadingSystem
                     // if it's unable to keep up with their number
-                    FinalizeLoading(entityReference, intention, null, currentSource, state.AcquiredBudget);
+                    FinalizeLoading(entityReference, intention, null, currentSource, state);
 
                 return;
             }
 
-            // Remove current source flag from the permitted sources
-            // it indicates that the current source was used
-            intention.RemoveCurrentSource();
-
             // Indicate that loading has started
             state.StartProgress();
 
-            FlowAsync(entityReference, currentSource, intention, state.AcquiredBudget!, partitionComponent, cancellationTokenSource.Token).Forget();
+            FlowAsync(entityReference, currentSource, intention, state, partitionComponent, cancellationTokenSource.Token).Forget();
         }
 
         private async UniTask FlowAsync(
             EntityReference entity,
             AssetSource source,
             TIntention intention,
-            IAcquiredBudget acquiredBudget,
+            StreamableLoadingState state,
             IPartitionComponent partition,
             CancellationToken disposalCt
         )
@@ -121,14 +117,14 @@ namespace ECS.StreamableLoading.Common.Systems
                 if (cache.OngoingRequests.SyncTryGetValue(intention.CommonArguments.GetCacheableURL(), out var cachedSource))
                 {
                     // Release budget immediately, if we don't do it and load a lot of bundles with dependencies sequentially, it will be a deadlock
-                    acquiredBudget.Release();
+                    state.AcquiredBudget!.Release();
 
                     // if the cached request is cancelled it does not mean failure for the new intent
                     (requestIsNotFulfilled, result) = await cachedSource.Task.SuppressCancellationThrow();
 
                     if (requestIsNotFulfilled)
                     {
-                        await FlowAsync(entity, source, intention, acquiredBudget, partition, disposalCt);
+                        await FlowAsync(entity, source, intention, state, partition, disposalCt);
                         return;
                     }
                 }
@@ -150,7 +146,7 @@ namespace ECS.StreamableLoading.Common.Systems
 
                 // if this request must be cancelled by `intention.CommonArguments.CancellationToken` it will be cancelled after `if (!requestIsNotFulfilled)`
                 if (requestIsNotFulfilled)
-                    result = await CacheableFlowAsync(intention, acquiredBudget, partition, CancellationTokenSource.CreateLinkedTokenSource(intention.CommonArguments.CancellationToken, disposalCt).Token, entity);
+                    result = await CacheableFlowAsync(intention, state, partition, CancellationTokenSource.CreateLinkedTokenSource(intention.CommonArguments.CancellationToken, disposalCt).Token);
 
                 if (!result.HasValue)
 
@@ -164,33 +160,31 @@ namespace ECS.StreamableLoading.Common.Systems
                 // If we don't set an exception it will spin forever
                 result = new StreamableLoadingResult<TAsset>(GetReportCategory(), e);
             }
-            finally { FinalizeLoading(entity, intention, result, source, acquiredBudget); }
+            finally { FinalizeLoading(entity, intention, result, source, state); }
         }
 
         protected virtual void DisposeAbandonedResult(TAsset asset) { }
 
         private void FinalizeLoading(EntityReference entity, TIntention intention,
             StreamableLoadingResult<TAsset>? result, AssetSource source,
-            IAcquiredBudget? acquiredBudget)
+            StreamableLoadingState state)
         {
-            if (IsWorldInvalid(entity, acquiredBudget))
+            if (IsWorldInvalid(entity, state.AcquiredBudget))
                 return;
-
-            ref StreamableLoadingState state = ref World!.TryGetRef<StreamableLoadingState>(entity, out bool exists);
-
-            if (!exists)
-            {
-                ReportHub.LogError(GetReportData(), $"Leak detected on loading {intention.ToString()} from {source}");
-
-                // it could be already disposed of, but it's safe to call it again
-                acquiredBudget?.Dispose();
-                return;
-            }
 
             state.DisposeBudgetIfExists();
 
+            // Special path for partial downloading
+            if (state.PartialDownloadingData is { FullyDownloaded: false })
+                return;
+
+            // Remove current source flag from the permitted sources
+            // it indicates that the current source was used
+            // don't do it for partial requests
+            intention.RemoveCurrentSource();
+
             if (result.HasValue)
-                ApplyLoadedResult(entity, ref state, intention, result, source);
+                ApplyLoadedResult(entity, state, intention, result, source);
             else if (intention.IsCancelled())
             {
                 if (World.IsAlive(entity))
@@ -200,7 +194,7 @@ namespace ECS.StreamableLoading.Common.Systems
                 state.RequestReevaluate();
         }
 
-        private void ApplyLoadedResult(Entity entity, ref StreamableLoadingState state, TIntention intention, StreamableLoadingResult<TAsset>? result, AssetSource source)
+        private void ApplyLoadedResult(Entity entity, StreamableLoadingState state, TIntention intention, StreamableLoadingResult<TAsset>? result, AssetSource source)
         {
             state.Finish();
 
@@ -236,12 +230,12 @@ namespace ECS.StreamableLoading.Common.Systems
         /// <summary>
         ///     All exceptions are handled by the upper functions, just do pure work
         /// </summary>
-        protected abstract UniTask<StreamableLoadingResult<TAsset>> FlowInternalAsync(TIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct, EntityReference entity);
+        protected abstract UniTask<StreamableLoadingResult<TAsset>> FlowInternalAsync(TIntention intention, StreamableLoadingState state, IPartitionComponent partition, CancellationToken ct);
 
         /// <summary>
         ///     Part of the flow that can be reused by multiple intentions
         /// </summary>
-        private async UniTask<StreamableLoadingResult<TAsset>?> CacheableFlowAsync(TIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct, EntityReference entity)
+        private async UniTask<StreamableLoadingResult<TAsset>?> CacheableFlowAsync(TIntention intention, StreamableLoadingState state, IPartitionComponent partition, CancellationToken ct)
         {
             var source = new UniTaskCompletionSource<StreamableLoadingResult<TAsset>?>(); //AutoResetUniTaskCompletionSource<StreamableLoadingResult<TAsset>?>.Create();
 
@@ -254,7 +248,7 @@ namespace ECS.StreamableLoading.Common.Systems
 
             try
             {
-                result = await RepeatLoopAsync(intention, acquiredBudget, partition, ct, entity);
+                result = await RepeatLoopAsync(intention, state, partition, ct);
 
                 // Ensure that we returned to the main thread
                 await UniTask.SwitchToMainThread(ct);
@@ -306,9 +300,9 @@ namespace ECS.StreamableLoading.Common.Systems
             }
         }
 
-        private async UniTask<StreamableLoadingResult<TAsset>?> RepeatLoopAsync(TIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct, EntityReference entity)
+        private async UniTask<StreamableLoadingResult<TAsset>?> RepeatLoopAsync(TIntention intention, StreamableLoadingState state, IPartitionComponent partition, CancellationToken ct)
         {
-            StreamableLoadingResult<TAsset>? result = await intention.RepeatLoopAsync(acquiredBudget, partition, cachedInternalFlowDelegate, GetReportData(), ct, entity);
+            StreamableLoadingResult<TAsset>? result = await intention.RepeatLoopAsync(state, partition, cachedInternalFlowDelegate, GetReportData(), ct);
             return result is { Succeeded: false } ? SetIrrecoverableFailure(intention, result.Value) : result;
         }
 

@@ -38,7 +38,7 @@ namespace ECS.SceneLifeCycle.SceneDefinition
             this.webRequestController = webRequestController;
         }
 
-        protected override async UniTask<StreamableLoadingResult<SceneDefinitions>> FlowInternalAsync(GetSceneDefinitionList intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct, EntityReference entity)
+        protected override async UniTask<StreamableLoadingResult<SceneDefinitions>> FlowInternalAsync(GetSceneDefinitionList intention, StreamableLoadingState state, IPartitionComponent partition, CancellationToken ct)
         {
             bodyBuilder.Clear();
             bodyBuilder.Append("{\"pointers\":[");

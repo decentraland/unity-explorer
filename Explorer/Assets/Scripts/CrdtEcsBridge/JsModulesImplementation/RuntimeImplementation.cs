@@ -50,7 +50,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
 
             await UniTask.SwitchToMainThread();
 
-            async UniTask<StreamableLoadingResult<ITypedArray<byte>>> CreateFileRequestAsync(SubIntention intention, IAcquiredBudget budget, IPartitionComponent partition, CancellationToken ct, EntityReference entity)
+            async UniTask<StreamableLoadingResult<ITypedArray<byte>>> CreateFileRequestAsync(SubIntention intention, IAcquiredBudget budget, IPartitionComponent partition, CancellationToken ct)
             {
                 using DownloadHandler? downloadHandler = await webRequestController.GetAsync(intention.CommonArguments.URL, ct, ReportCategory.JAVASCRIPT).ExposeDownloadHandlerAsync();
                 NativeArray<byte>.ReadOnly nativeBytes = downloadHandler.nativeData;
@@ -66,7 +66,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
             }
 
             var intent = new SubIntention(new CommonLoadingArguments(url));
-            ITypedArray<byte> content = (await intent.RepeatLoopAsync(NoAcquiredBudget.INSTANCE, PartitionComponent.TOP_PRIORITY, CreateFileRequestAsync, ReportCategory.JAVASCRIPT, ct, new EntityReference())).UnwrapAndRethrow();
+            ITypedArray<byte> content = (await intent.RepeatLoopAsync(NoAcquiredBudget.INSTANCE, PartitionComponent.TOP_PRIORITY, CreateFileRequestAsync, ReportCategory.JAVASCRIPT, ct)).UnwrapAndRethrow();
 
             return new IRuntime.ReadFileResponse
             {

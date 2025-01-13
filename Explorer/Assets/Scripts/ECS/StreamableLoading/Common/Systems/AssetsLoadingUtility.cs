@@ -13,8 +13,9 @@ namespace ECS.StreamableLoading.Common.Systems
 {
     public static class AssetsLoadingUtility
     {
-        public delegate UniTask<StreamableLoadingResult<TAsset>> InternalFlowDelegate<TAsset, in TIntention>(TIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct, EntityReference entity)
-            where TIntention: struct, ILoadingIntention;
+        public delegate UniTask<StreamableLoadingResult<TAsset>> InternalFlowDelegate<TAsset, in TState, in TIntention>(TIntention intention, TState state, IPartitionComponent partition, CancellationToken ct)
+            where TIntention: struct, ILoadingIntention
+            where TState: class;
 
         /// <summary>
         ///     Repeat the internal flow until attempts do not exceed or an irrecoverable error occurs
@@ -22,11 +23,11 @@ namespace ECS.StreamableLoading.Common.Systems
         /// <returns>
         ///     <para>Null - if PermittedSources have value</para>
         /// </returns>
-        public static async UniTask<StreamableLoadingResult<TAsset>?> RepeatLoopAsync<TIntention, TAsset>(this TIntention intention,
-            IAcquiredBudget acquiredBudget,
+        public static async UniTask<StreamableLoadingResult<TAsset>?> RepeatLoopAsync<TIntention, TState, TAsset>(this TIntention intention,
+            TState state,
             IPartitionComponent partition,
-            InternalFlowDelegate<TAsset, TIntention> flow, ReportData reportData, CancellationToken ct, EntityReference entity)
-            where TIntention: struct, ILoadingIntention
+            InternalFlowDelegate<TAsset, TState, TIntention> flow, ReportData reportData, CancellationToken ct)
+            where TIntention: struct, ILoadingIntention where TState: class
         {
             int attemptCount = intention.CommonArguments.Attempts;
 
@@ -34,7 +35,7 @@ namespace ECS.StreamableLoading.Common.Systems
             {
                 ReportHub.Log(reportData, $"Starting loading {intention}\n{partition}, attempts left: {attemptCount}");
 
-                try { return await flow(intention, acquiredBudget, partition, ct, entity); }
+                try { return await flow(intention, state, partition, ct); }
                 catch (UnityWebRequestException unityWebRequestException)
                 {
                     // we can't access web request here as it is disposed already

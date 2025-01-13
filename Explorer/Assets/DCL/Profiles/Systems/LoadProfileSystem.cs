@@ -38,7 +38,7 @@ namespace DCL.Profiles
         }
 
         protected override async UniTask<StreamableLoadingResult<ProfileData>> FlowInternalAsync(GetProfileIntention intention,
-            IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct, EntityReference entity)
+            StreamableLoadingState state, IPartitionComponent partition, CancellationToken ct)
         {
             Profile? profile = await profileRepository.GetAsync(intention.ProfileId, intention.Version, ct);
 

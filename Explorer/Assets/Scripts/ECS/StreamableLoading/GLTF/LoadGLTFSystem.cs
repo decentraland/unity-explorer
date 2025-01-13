@@ -33,7 +33,7 @@ namespace ECS.StreamableLoading.GLTF
             this.webRequestController = webRequestController;
         }
 
-        protected override async UniTask<StreamableLoadingResult<GLTFData>> FlowInternalAsync(GetGLTFIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct, EntityReference entity)
+        protected override async UniTask<StreamableLoadingResult<GLTFData>> FlowInternalAsync(GetGLTFIntention intention, StreamableLoadingState state, IPartitionComponent partition, CancellationToken ct)
         {
             var reportData = new ReportData(GetReportCategory());
 
@@ -43,7 +43,7 @@ namespace ECS.StreamableLoading.GLTF
                     new Exception("The content to download couldn't be found"));
 
             // Acquired budget is released inside GLTFastDownloadedProvider once the GLTF has been fetched
-            GltFastDownloadProvider gltfDownloadProvider = new GltFastDownloadProvider(World, sceneData, partition, intention.Name!, reportData, webRequestController, acquiredBudget);
+            var gltfDownloadProvider = new GltFastDownloadProvider(World, sceneData, partition, intention.Name!, reportData, webRequestController, state.AcquiredBudget!);
             var gltfImport = new GltfImport(
                 downloadProvider: gltfDownloadProvider,
                 logger: gltfConsoleLogger,
