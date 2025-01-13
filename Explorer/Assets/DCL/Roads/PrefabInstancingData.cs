@@ -1,13 +1,12 @@
 ﻿using UnityEngine;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
 
 [Serializable]
-public class LODInstanceData
+public class LODInstanceData : IEquatable<LODInstanceData>
 {
     public LODGroup OriginalPrefab;     // Reference to the original prefab LODGroup
     public Material Material;            // Shared material for all LODs
@@ -35,6 +34,27 @@ public class LODInstanceData
         };
 
         return copy;
+    }
+
+    public bool Equals(LODInstanceData other)
+    {
+        if (ReferenceEquals(null, other)) return false;
+        if (ReferenceEquals(this, other)) return true;
+
+        return MeshLOD[0] == other.MeshLOD[0] &&
+               Material == other.Material;
+    }
+
+    public override bool Equals(object obj) =>
+        Equals(obj as LODInstanceData);
+
+    public override int GetHashCode()
+    {
+        unchecked
+        {
+            return ((MeshLOD?[0] != null ? MeshLOD[0].GetHashCode() : 0) * 397) ^
+                   (Material != null ? Material.GetHashCode() : 0);
+        }
     }
 }
 

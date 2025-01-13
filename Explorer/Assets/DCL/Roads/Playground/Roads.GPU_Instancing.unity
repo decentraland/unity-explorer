@@ -304,6 +304,33 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   originalPrefabs:
+  - {fileID: 4382098379069999140, guid: 2d6ac3b70dd761a428bae0e655a93ebc, type: 3}
+  - {fileID: -8640369166845269582, guid: 1cc7fa7a97a53834ca685e98204017f0, type: 3}
+  - {fileID: -9027612341654859761, guid: 2ec12611ae979d842a0da486452aee81, type: 3}
+  - {fileID: 7402110616454750081, guid: b1111217e52b900449b9e717f0c0959c, type: 3}
+  - {fileID: -8304097161120728362, guid: 3e3fab16f70f44a499223a11cc7321cc, type: 3}
+  - {fileID: -3919172825855787106, guid: 8656fee7f6c6a234eac9ff6886c06a44, type: 3}
+  - {fileID: 8922985672547965852, guid: a409448912535d644afca060d485b59c, type: 3}
+  - {fileID: -9047160571378595856, guid: 54b5d6841e4a266459c580ddc5340e49, type: 3}
+  - {fileID: 340263122143908002, guid: 235c07e9ecefb4747bc3582357e678e2, type: 3}
+  - {fileID: 4317941261086432336, guid: c6fa6bf89b77c614ba05887a523db006, type: 3}
+  - {fileID: 895368681779416512, guid: 034505001d7fc99419a8eefba5c708c7, type: 3}
+  - {fileID: -5228388137932794236, guid: ecd3b5e941b880d4382093688c559bd6, type: 3}
+  - {fileID: 521019326883989059, guid: e551a7c901b71d741aa802fad61848c6, type: 3}
+  - {fileID: 7492038374712591971, guid: 185efa3be2bbba34fb934c80626f562f, type: 3}
+  - {fileID: 6410776664379278641, guid: d19aabb5dfdafa14b98585f5cf96d9cd, type: 3}
+  - {fileID: -8153807478372193899, guid: 8c356871960f60544b93de30ed5af26b, type: 3}
+  - {fileID: -2559578628227742797, guid: b9bcbc0468eb6d34291dc19dc757cbdb, type: 3}
+  - {fileID: 8204759422610459671, guid: 7c45d7279c9840b40bf9cf08795bcb8f, type: 3}
+  - {fileID: 7571437376188184681, guid: 40d2a9f466cd185478b0581a9b3311ab, type: 3}
+  - {fileID: 6602896306147660618, guid: 327b853b79746cf48ab308998970d8ae, type: 3}
+  - {fileID: 352914971683756758, guid: e72feb04f15ad354cb1fe3dac88f1fdd, type: 3}
+  - {fileID: 6147459082801953183, guid: b799fdcb884fb4844bddb2f29e7dae29, type: 3}
+  - {fileID: 4079067521229167629, guid: 6b94be89c1c36d64090eddebd1541fc7, type: 3}
+  - {fileID: 4828469077576984779, guid: c592ea722133eda4e888b85108194228, type: 3}
+  - {fileID: 3788636174446600790, guid: 239163e03a3740d4996a2d35587b2ff6, type: 3}
+  - {fileID: -8922903544356463509, guid: a5b2de4cf20688c4e8cab8a40bf859dd, type: 3}
+  - {fileID: 2107280119984120140, guid: 22fb05afac49d134bb9638a78264d8b0, type: 3}
   - {fileID: 8250875958315670678, guid: b3a61057749718b4f9cb3689252c3d78, type: 3}
   - {fileID: 3504699585204863118, guid: a6ccf6a6da422044f9ef236fb69e66bb, type: 3}
   - {fileID: -6660006648186310017, guid: 95ab8260763c08d4f9282352181b5eb0, type: 3}
@@ -321,9 +348,22 @@ MonoBehaviour:
   - {fileID: 5572635528160353185, guid: 88b307ae361d8aa41adff65ae5c76f12, type: 3}
   - {fileID: 3712975820857720378, guid: 2dc7da2b01ec6374bb864c6ffa3479b7, type: 3}
   - {fileID: -1787899371270463255, guid: bae53e49e94b0cb4a8879657830367a6, type: 3}
+  - {fileID: -678292788183215047, guid: 1222a2b612e63da4b8c5ce523c0241c8, type: 3}
+  - {fileID: -6791257510481687802, guid: 5a7dc66251f083147baf3907dc2782e4, type: 3}
+  - {fileID: 1520026627274169146, guid: f7a326b227aaab3429d13aa1cbe8d32d, type: 3}
+  - {fileID: -103668623619506572, guid: 14d01fab2fcc2a440a8bccf12e0ff49f, type: 3}
+  - {fileID: 1499666723599074220, guid: df4f8eb553c06214c947c079ff3f6a71, type: 3}
+  - {fileID: 8185022715731871988, guid: e582d006d62bf01449a4264cca988b36, type: 3}
+  - {fileID: 1214344496613775998, guid: 40ba78f34c5ad424eb2093388750895c, type: 3}
+  - {fileID: 8477043608996600833, guid: a89af142ec7d41a40902a3d993e0c758, type: 3}
+  - {fileID: -1418507290115595635, guid: c5fd6869b2cebd74f892a9e390734b5a, type: 3}
+  - {fileID: -9110375622061944546, guid: 74cec7b5359025447b3f7dcb7923a0e1, type: 3}
+  - {fileID: -6929500169475890152, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
   roadsConfig: {fileID: 11400000, guid: d7baa85a7da60ef4b8b5252d78fa1b3d, type: 2}
-  DebugZero: 0
-  DebugMeshId: 0
+  DebugZero: 1
+  DebugMeshId: -1
+  Props: []
+  InstancesAmount: 0
 --- !u!1 &1888803523
 GameObject:
   m_ObjectHideFlags: 0
@@ -446,6 +486,6 @@ MonoBehaviour:
 SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
+  - {fileID: 1701440523}
   - {fileID: 627331709}
   - {fileID: 1888803525}
-  - {fileID: 1701440523}

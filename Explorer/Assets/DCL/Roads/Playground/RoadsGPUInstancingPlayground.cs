@@ -8,8 +8,6 @@ namespace DCL.Roads.Playground
 {
     public class RoadsGPUInstancingPlayground : MonoBehaviour
     {
-        private readonly HashSet<int> processedRoads = new ();
-        private readonly Dictionary<LODInstanceData, List<Matrix4x4>> propMatrices = new ();
         private readonly List<(LODInstanceData, Matrix4x4[])> propFastMatrices = new ();
 
         public PrefabInstancingData[] originalPrefabs;
@@ -22,8 +20,18 @@ namespace DCL.Roads.Playground
         public Mesh[] Props;
         public int InstancesAmount;
 
+        private GameObject root;
+
         public void Awake()
         {
+            root = new GameObject("RoadsRoot");
+            root.SetActive(false);
+            // var roadAssetPool = new RoadAssetsPool(c.roadAssetsPrefabList, staticContainer.ComponentsContainer.ComponentPoolsRegistry);
+
+            // TODO: move precalculation in the RoadSettingsAsset
+            Dictionary<LODInstanceData, List<Matrix4x4>> propMatrices = new ();
+
+            HashSet<int> processedRoads = new ();
             foreach (RoadDescription roadDescription in roadsConfig.RoadDescriptions)
             {
                 if (!processedRoads.Add(roadDescription.GetHashCode())) continue;
@@ -38,6 +46,9 @@ namespace DCL.Roads.Playground
                     else
                         propMatrices.Add(mesh, AdjustedMatrices(roadDescription, mesh));
                 }
+
+                var go = Instantiate(prefab, roadDescription.RoadCoordinate.ParcelToPositionFlat() + ParcelMathHelper.RoadPivotDeviation, roadDescription.Rotation);
+                go.transform.parent = root.transform;
             }
 
             List<Mesh> props = new List<Mesh>();
