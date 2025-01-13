@@ -211,6 +211,9 @@ namespace DCL.WebRequests
 
                 await SwitchToThreadAsync(threadFlags);
 
+                if (text.Contains("6de5361f-"))
+                    Debug.Log($"PRAVS - JSON Response: {text}");
+
                 try
                 {
                     switch (jsonParser)

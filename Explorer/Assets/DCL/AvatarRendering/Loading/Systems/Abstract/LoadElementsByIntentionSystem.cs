@@ -15,7 +15,6 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using Utility.Multithreading;
-using Utility.Times;
 
 namespace DCL.AvatarRendering.Loading.Systems.Abstract
 {
@@ -46,82 +45,68 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
         {
             await realmData.WaitConfiguredAsync();
 
-            string reportCategory = GetReportCategory();
             URLAddress url = BuildUrlFromIntention(in intention);
-            WebRequestSignInfo? signInfo = null;
-            WebRequestHeadersInfo? headersInfo = null;
 
             if (intention.CommonArguments.NeedsBuilderAPISigning)
             {
-                /*signInfo = WebRequestSignInfo.NewFromRaw(
-                    string.Empty,
-                    intention.CommonArguments.URL,
-                    // signUrl!,
-                    // "https://builder-api.decentraland.org/v1",
-                    // "https://builder-api.decentraland.org/v1/collections/3062136a-065d-4d94-b28c-f57d6ef04860/items/",
-                    DateTime.UtcNow.UnixTimeAsMilliseconds(),
-                    "get"
-                )*/
-
-                // signInfo = new WebRequestSignInfo(intention.CommonArguments.URL);
-                // signInfo = new WebRequestSignInfo("get:/v1/collections/3062136a-065d-4d94-b28c-f57d6ef04860/items::");
-
-                // sign URL patch copied from unity-renderer
-                string headersGenerationUrl = url.Value;
+                // headers generation URL patch copied from unity-renderer
+                /*string headersGenerationUrl = url.Value;
                 int index = headersGenerationUrl.IndexOf("?", StringComparison.Ordinal);
                 if (index >= 0)
-                    headersGenerationUrl = headersGenerationUrl.Substring(0, index);
+                    headersGenerationUrl = headersGenerationUrl.Substring(0, index);*/
 
+                var lambdaResponse =
+                    await ParsedBuilderResponseAsync(
+                        webRequestController.SignedFetchGetAsync(
+                            new CommonArguments(
+                                url,
+                                attemptsCount: intention.CommonArguments.Attempts
+                            ),
+                            string.Empty,
+                            ct
+                        )
+                    );
 
-                // THIS REQUEST ALSO NEEDS TO BE SIGNED...
-                var signingHeaderGenerationResponse = await webRequestController.GetAsync(
-                    new CommonArguments(
-                        URLAddress.FromString(headersGenerationUrl),
-                        attemptsCount: intention.CommonArguments.Attempts
-                    ),
-                    ct,
-                    reportCategory
-                ).CreateFromJson<BuilderAPISigningHeadersResponse>(WRJsonParser.Newtonsoft);
-
-                headersInfo = new WebRequestHeadersInfo()
-                    .Add("x-identity-auth-chain-0", signingHeaderGenerationResponse.headers[0].ToString()) // {"type":"SIGNER","payload":"0x51777c0b8dba8b4dfe8a1c3d0a1edaa5b139b4e0","signature":""}
-                    .Add("x-identity-auth-chain-1", signingHeaderGenerationResponse.headers[1].ToString()) // {"type":"ECDSA_EPHEMERAL","payload":"Decentraland Login\nEphemeral address: 0x3A6040397234DADaaC6CB3F131c509d0b71DD200\nExpiration: 2025-02-09T14:36:33.371Z","signature":"0x81030b247bede0ddd5d97e1baa450156d7ed440a28a5318b118212e6468ade7317cd38544fad26010c3acf01da5aa56cfe8a87673dc7848e9855379b303cc0741b"}
-                    .Add("x-identity-auth-chain-2", signingHeaderGenerationResponse.headers[2].ToString()) // {"type":"ECDSA_SIGNED_ENTITY","payload":"get:/v1/collections/3062136a-065d-4d94-b28c-f57d6ef04860/items:1736532810934:{}","signature":"0x7c916694de5a6ace92959202a8f9552dfb47dc4c33b7744080b866ba0e86c97a39bab44d7847d9f4a052534267c0f54dc4ac2fdc868f3ef940c6208361b79c511b"}
-                    .WithSign(string.Empty, DateTime.UtcNow.UnixTimeAsMilliseconds());
+                UnityEngine.Debug.Log($"PRAVS - builder lambda response DATA is NULL? {lambdaResponse.data[0]?.data == null}");
+                // await using (await ExecuteOnThreadPoolScope.NewScopeWithReturnOnMainThreadAsync())
+                //     Load(ref intention, lambdaResponse);
             }
+            else
+            {
+                var lambdaResponse =
+                    await ParsedResponseAsync(
+                        webRequestController.GetAsync(
+                            new CommonArguments(
+                                url,
+                                attemptsCount: intention.CommonArguments.Attempts
+                            ),
+                            ct,
+                            GetReportCategory()
+                        )
+                    );
 
-            var lambdaResponse =
-                await ParsedResponseAsync(
-                    webRequestController.GetAsync(
-                        new CommonArguments(
-                            url,
-                            attemptsCount: intention.CommonArguments.Attempts
-                        ),
-                        ct,
-                        reportCategory,
-                        signInfo: signInfo,
-                        headersInfo: headersInfo
-                    )
-                );
-
-            await using (await ExecuteOnThreadPoolScope.NewScopeWithReturnOnMainThreadAsync())
-                Load(ref intention, lambdaResponse);
+                await using (await ExecuteOnThreadPoolScope.NewScopeWithReturnOnMainThreadAsync())
+                    Load(ref intention, lambdaResponse);
+            }
 
             return new StreamableLoadingResult<TAsset>(AssetFromPreparedIntention(in intention));
         }
-        [Serializable]
-        public class BuilderAPISigningHeadersResponse
-        {
-            /*[Serializable]
-            public class Header
-            {
-                public string type;
-                public string payload;
-                public string signature;
-            }*/
 
-            // public List<Header> headers;
-            public List<string> headers;
+        // TODO: Move somewhere else...
+        [Serializable]
+        public class BuilderLambdaResponse
+        {
+            [Serializable]
+            public class Data
+            {
+                public string id;
+                public string name;
+                public string description;
+                public AvatarAttachmentDTO.DataBase data;
+            }
+
+            public bool ok;
+            public List<Data> data;
         }
 
         private void Load<TResponseElement>(ref TIntention intention, IAttachmentLambdaResponse<TResponseElement> lambdaResponse) where TResponseElement: ILambdaResponseElement<TAvatarElementDTO>
@@ -158,6 +143,7 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
         }
 
         protected abstract UniTask<IAttachmentLambdaResponse<ILambdaResponseElement<TAvatarElementDTO>>> ParsedResponseAsync(GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> adapter);
+        protected abstract UniTask<BuilderLambdaResponse> ParsedBuilderResponseAsync(GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> adapter);
 
         protected abstract TAsset AssetFromPreparedIntention(in TIntention intention);
 
