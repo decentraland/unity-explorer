@@ -1,5 +1,6 @@
 ﻿using Arch.Core;
 using CrdtEcsBridge.Components.Transform;
+using ECS.Unity.Materials.Components;
 using ECS.Unity.Transforms.Components;
 using UnityEngine;
 using Utility;
@@ -24,6 +25,24 @@ namespace ECS.TestSuite
 
             world.Add(entity, transformComponent, new SDKTransform { IsDirty = isDirty, Position = new CanBeDirty<Vector3>(Vector3.zero), Rotation = new CanBeDirty<Quaternion>(Quaternion.identity), Scale = Vector3.one });
             return transformComponent;
+        }
+
+        /// <summary>
+        ///     Adds MaterialComponent and creates a new GO with the entity Id as name
+        /// </summary>
+        public static MaterialComponent AddMaterialToEntity(World world, in Entity entity)
+        {
+            var go = new GameObject($"{entity.Id}");
+            Transform t = go.transform;
+
+            t.localPosition = Vector3.zero;
+            t.localRotation = Quaternion.identity;
+            t.localScale = Vector3.one;
+
+            var materialComponent = new MaterialComponent();
+            materialComponent.Result = new Material(Shader.Find("DCL/Universal Render Pipeline/Lit"));
+            world.Add(entity, materialComponent);
+            return materialComponent;
         }
     }
 }

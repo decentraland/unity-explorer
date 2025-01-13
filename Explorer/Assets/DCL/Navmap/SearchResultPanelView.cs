@@ -1,11 +1,14 @@
 using DCL.AssetsProvision;
 using System;
 using UnityEngine;
+using UnityEngine.UI;
+using Button = UnityEngine.UI.Button;
 
 namespace DCL.Navmap
 {
     public class SearchResultPanelView : MonoBehaviour
     {
+
         [field: SerializeField]
         public GameObject NoResultsContainer { get; private set; }
 
@@ -16,23 +19,23 @@ namespace DCL.Navmap
         public RectTransform searchResultsContainer;
 
         [field: SerializeField]
-        public CanvasGroup CanvasGroup { get; private set; }
+        public ScrollRect scrollView;
 
         [field: SerializeField]
-        public Animator panelAnimator;
+        public CanvasGroup CanvasGroup { get; private set; }
 
-        private void OnEnable()
-        {
-            panelAnimator.enabled = true;
-        }
+        [field: Header("Pagination")]
+        [field: SerializeField]
+        public GameObject PaginationContainer { get; private set; }
 
-        private void OnDisable()
-        {
-            panelAnimator.enabled = false;
-        }
+        [field: SerializeField]
+        public Button NextPageButton { get; private set; }
+
+        [field: SerializeField]
+        public Button PreviousPageButton { get; private set; }
 
         [Serializable]
-        public class ResultAssetReference : ComponentReference<FullSearchResultsView>
+        public class ResultAssetReference : ComponentReference<PlaceElementView>
         {
             public ResultAssetReference(string guid) : base(guid) { }
         }
