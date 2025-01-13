@@ -49,7 +49,7 @@ namespace DCL.PluginSystem.Global
             if (featureFlagsCache.Configuration.IsEnabled("alpha-friends-enabled"))
 
                 // Fire and forget as this task will never finish
-                friendsService.SubscribeToIncomingFriendshipEvents(
+                friendsService.SubscribeToIncomingFriendshipEventsAsync(
                                    CancellationTokenSource.CreateLinkedTokenSource(lifeCycleCancellationToken.Token, ct).Token)
                               .Forget();
 

@@ -52,7 +52,7 @@ namespace DCL.Friends
             client.Dispose();
         }
 
-        public async UniTask SubscribeToIncomingFriendshipEvents(CancellationToken ct)
+        public async UniTask SubscribeToIncomingFriendshipEventsAsync(CancellationToken ct)
         {
             await EnsureRpcConnectionAsync(ct);
 
@@ -129,16 +129,16 @@ namespace DCL.Friends
         }
 
         public async UniTask<PaginatedFriendRequestsResult> GetReceivedFriendRequestsAsync(int pageNum, int pageSize, CancellationToken ct) =>
-            await GetFriendRequests(pageNum, pageSize, GET_RECEIVED_FRIEND_REQUESTS_PROCEDURE_NAME, ct);
+            await GetFriendRequestsAsync(pageNum, pageSize, GET_RECEIVED_FRIEND_REQUESTS_PROCEDURE_NAME, ct);
 
         public async UniTask<PaginatedFriendRequestsResult> GetSentFriendRequestsAsync(int pageNum, int pageSize, CancellationToken ct) =>
-            await GetFriendRequests(pageNum, pageSize, GET_SENT_FRIEND_REQUESTS_PROCEDURE_NAME, ct);
+            await GetFriendRequestsAsync(pageNum, pageSize, GET_SENT_FRIEND_REQUESTS_PROCEDURE_NAME, ct);
 
         public async UniTask RejectFriendshipAsync(string friendId, CancellationToken ct)
         {
             await EnsureRpcConnectionAsync(ct);
 
-            await this.UpdateFriendship(new UpsertFriendshipPayload
+            await this.UpdateFriendshipAsync(new UpsertFriendshipPayload
             {
                 Request = new RequestPayload
                 {
@@ -154,7 +154,7 @@ namespace DCL.Friends
         {
             await EnsureRpcConnectionAsync(ct);
 
-            await this.UpdateFriendship(new UpsertFriendshipPayload
+            await this.UpdateFriendshipAsync(new UpsertFriendshipPayload
             {
                 Cancel = new CancelPayload
                 {
@@ -170,7 +170,7 @@ namespace DCL.Friends
         {
             await EnsureRpcConnectionAsync(ct);
 
-            await this.UpdateFriendship(new UpsertFriendshipPayload
+            await this.UpdateFriendshipAsync(new UpsertFriendshipPayload
             {
                 Accept = new AcceptPayload
                 {
@@ -186,7 +186,7 @@ namespace DCL.Friends
         {
             await EnsureRpcConnectionAsync(ct);
 
-            await this.UpdateFriendship(new UpsertFriendshipPayload
+            await this.UpdateFriendshipAsync(new UpsertFriendshipPayload
             {
                 Delete = new DeletePayload
                 {
@@ -203,7 +203,7 @@ namespace DCL.Friends
             await EnsureRpcConnectionAsync(ct);
 
             // TODO: ideally the server should return the request information when it is created so we dont have to request it later
-            await UpdateFriendship(new UpsertFriendshipPayload
+            await UpdateFriendshipAsync(new UpsertFriendshipPayload
             {
                 Request = new RequestPayload
                 {
@@ -215,7 +215,7 @@ namespace DCL.Friends
                 },
             }, ct);
 
-            FriendRequest? fr = await GetSentFriendRequest(friendId, ct);
+            FriendRequest? fr = await GetSentFriendRequestAsync(friendId, ct);
 
             if (fr == null)
                 throw new Exception("Inconsistent friend request. Created but not found.");
@@ -283,7 +283,7 @@ namespace DCL.Friends
             }
         }
 
-        private async UniTask<PaginatedFriendRequestsResult> GetFriendRequests(int pageNum, int pageSize, string procedureName,
+        private async UniTask<PaginatedFriendRequestsResult> GetFriendRequestsAsync(int pageNum, int pageSize, string procedureName,
             CancellationToken ct)
         {
             await EnsureRpcConnectionAsync(ct);
@@ -322,7 +322,7 @@ namespace DCL.Friends
             return new PaginatedFriendRequestsResult(requests, friendRequestsBuffer.Count);
         }
 
-        private async UniTask<FriendRequest?> GetSentFriendRequest(string friendId, CancellationToken ct)
+        private async UniTask<FriendRequest?> GetSentFriendRequestAsync(string friendId, CancellationToken ct)
         {
             FriendshipRequestsResponse response = await module!.CallUnaryProcedure<FriendshipRequestsResponse>(GET_SENT_FRIEND_REQUESTS_PROCEDURE_NAME, new Empty())
                                                                .AttachExternalCancellation(ct)
@@ -353,7 +353,7 @@ namespace DCL.Friends
             return null;
         }
 
-        private async UniTask<UpsertFriendshipResponse.Types.Accepted> UpdateFriendship(
+        private async UniTask<UpsertFriendshipResponse.Types.Accepted> UpdateFriendshipAsync(
             UpsertFriendshipPayload payload,
             CancellationToken ct)
         {
