@@ -24,6 +24,6 @@ namespace DCL.Friends.UI
         [field: Header("Blocked tab")]
         [field: SerializeField] public Button BlockedTabButton { get; private set; }
         [field: SerializeField] public GameObject BlockedTabSelected { get; private set; }
-        [field: SerializeField] public GameObject BlockedPanel { get; private set; }
+        [field: SerializeField] public BlockedUsersView BlockedPanel { get; private set; }
     }
 }

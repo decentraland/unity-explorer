@@ -83,6 +83,7 @@ namespace DCL.UI.Sidebar
             base.Dispose();
 
             notificationsMenuController.Dispose();
+            friendsPanelController.Dispose();
         }
 
         protected override void OnViewInstantiated()

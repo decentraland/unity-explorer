@@ -19,6 +19,7 @@ namespace DCL.Friends.UI
         private readonly IFriendsEventBus friendEventBus;
         private readonly ChatView chatView;
 
+        private BlockedUsersController blockedUsersController;
         private CancellationTokenSource friendsPanelCts = new ();
         private bool chatWasVisible;
 
@@ -42,6 +43,8 @@ namespace DCL.Friends.UI
             viewInstance.RequestsTabButton.onClick.RemoveAllListeners();
             viewInstance.BlockedTabButton.onClick.RemoveAllListeners();
             friendsPanelCts.SafeCancelAndDispose();
+
+            blockedUsersController.Dispose();
         }
 
         protected override void OnBeforeViewShow()
@@ -65,6 +68,8 @@ namespace DCL.Friends.UI
         protected override void OnViewInstantiated()
         {
             base.OnViewInstantiated();
+
+            blockedUsersController = new BlockedUsersController(viewInstance!.BlockedPanel);
 
             viewInstance!.FriendsTabButton.onClick.AddListener(() => ToggleTabs(FriendsPanelTab.FRIENDS));
             viewInstance.RequestsTabButton.onClick.AddListener(() => ToggleTabs(FriendsPanelTab.REQUESTS));
