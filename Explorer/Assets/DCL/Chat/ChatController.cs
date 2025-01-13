@@ -442,6 +442,7 @@ namespace DCL.Chat
         private void CopyMessageText(string messageText)
         {
             systemClipboard.Set(messageText);
+            closePopupTask.TrySetResult();
         }
 
         private void PasteClipboardText(string pastedText)
