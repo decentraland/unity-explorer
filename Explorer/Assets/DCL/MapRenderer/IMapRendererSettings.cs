@@ -1,12 +1,14 @@
 using DCL.AssetsProvision;
+using DCL.Audio;
 using DCL.MapRenderer.ComponentsFactory;
 using DCL.MapRenderer.MapCameraController;
-using DCL.MapRenderer.MapLayers.Favorites;
+using DCL.MapRenderer.MapLayers.Categories;
+using DCL.MapRenderer.MapLayers.Cluster;
 using DCL.MapRenderer.MapLayers.ParcelHighlight;
 using DCL.MapRenderer.MapLayers.Pins;
 using DCL.MapRenderer.MapLayers.PlayerMarker;
 using DCL.MapRenderer.MapLayers.PointsOfInterest;
-using DCL.MapRenderer.MapLayers.Users;
+using DCL.MapRenderer.MapLayers.SearchResults;
 using DCL.MapRenderer.MapLayers.UsersMarker;
 using System;
 using UnityEngine;
@@ -35,13 +37,27 @@ namespace DCL.MapRenderer
 
         SceneOfInterestMarkerObjectRef SceneOfInterestMarker { get; }
 
-        FavoriteMarkerObjectRef FavoriteMarker { get; }
+        CategoryMarkerObjectRef CategoryMarker { get; }
+
+        SearchResultMarkerObjectRef SearchResultMarker { get; }
+
+        ClusterMarkerObjectRef ClusterMarker { get; }
+
+        ClusterMarkerObjectRef SearchResultsClusterMarker { get; }
+
+        CategoryIconMappingsSO CategoryIconMappings { get; }
+
+        CategoryLayerIconMappingsSO CategoryLayerIconMappings { get; }
 
         HotUserMarkerRef UserMarker { get; }
 
         DottedLineRef DestinationPathLine { get; }
 
         PinMarkerRef PathDestinationPin { get; }
+
+        AudioClipConfig ClickAudio { get; }
+
+        AudioClipConfig HoverAudio { get; }
 
         [Serializable]
         public class SpriteRendererRef : ComponentReference<SpriteRenderer>
@@ -68,12 +84,6 @@ namespace DCL.MapRenderer
         }
 
         [Serializable]
-        public class FavoriteMarkerObjectRef : ComponentReference<FavoriteMarkerObject>
-        {
-            public FavoriteMarkerObjectRef(string guid) : base(guid) { }
-        }
-
-        [Serializable]
         public class PlayerMarkerObjectRef : ComponentReference<PlayerMarkerObject>
         {
             public PlayerMarkerObjectRef(string guid) : base(guid) { }
@@ -89,6 +99,24 @@ namespace DCL.MapRenderer
         public class SceneOfInterestMarkerObjectRef : ComponentReference<SceneOfInterestMarkerObject>
         {
             public SceneOfInterestMarkerObjectRef(string guid) : base(guid) { }
+        }
+
+        [Serializable]
+        public class ClusterMarkerObjectRef : ComponentReference<ClusterMarkerObject>
+        {
+            public ClusterMarkerObjectRef(string guid) : base(guid) { }
+        }
+
+        [Serializable]
+        public class SearchResultMarkerObjectRef : ComponentReference<SearchResultMarkerObject>
+        {
+            public SearchResultMarkerObjectRef(string guid) : base(guid) { }
+        }
+
+        [Serializable]
+        public class CategoryMarkerObjectRef : ComponentReference<CategoryMarkerObject>
+        {
+            public CategoryMarkerObjectRef(string guid) : base(guid) { }
         }
 
         [Serializable]
