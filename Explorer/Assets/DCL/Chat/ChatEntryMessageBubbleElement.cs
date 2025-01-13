@@ -4,17 +4,20 @@ using UnityEngine.UI;
 
 namespace DCL.Chat
 {
+
+
     public class ChatEntryMessageBubbleElement : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {
-        private const float BACKGROUND_HEIGHT_OFFSET = 56;
-        private const float BACKGROUND_WIDTH_OFFSET = 56;
-        private const float MAX_ENTRY_WIDTH = 246;
-
         [field: SerializeField] internal ChatEntryUsernameElement usernameElement { get; private set; }
         [field: SerializeField] internal RectTransform backgroundRectTransform { get; private set; }
         [field: SerializeField] internal Button? messageOptionsButton { get; private set; }
         [field: SerializeField] internal ChatEntryMessageContentElement messageContentElement { get; private set; }
+        [field: SerializeField] internal ChatEntryConfigurationSO configurationSo { get; private set; }
 
+        private float backgroundHeightOffset => configurationSo.BackgroundHeightOffset;
+        private float backgroundWidthOffset => configurationSo.BackgroundWidthOffset;
+        private float maxEntryWidth => configurationSo.MaxEntryWidth;
+        private float verifiedBadgeWidth => configurationSo.VerifiedBadgeWidth;
 
         private Vector2 backgroundSize;
 
@@ -34,7 +37,7 @@ namespace DCL.Chat
             messageContentElement.SetMessageContent(data.Message);
 
             backgroundSize = backgroundRectTransform.sizeDelta;
-            backgroundSize.y = Mathf.Max(messageContentElement.messageContentRectTransform.sizeDelta.y + BACKGROUND_HEIGHT_OFFSET);
+            backgroundSize.y = Mathf.Max(messageContentElement.messageContentRectTransform.sizeDelta.y + backgroundHeightOffset);
             backgroundSize.x = CalculatePreferredWidth(data);
             backgroundRectTransform.sizeDelta = backgroundSize;
         }
@@ -46,12 +49,13 @@ namespace DCL.Chat
 
             var messageContentText = messageContentElement.messageContentText;
 
-            if (nameLenght > (emojisCount > 0 ? messageContentText.GetParsedText().Length + emojisCount : messageContentText.GetParsedText().Length)) { return usernameElement.GetUserNamePreferredWidth(BACKGROUND_WIDTH_OFFSET); }
+            if (nameLenght > (emojisCount > 0 ? messageContentText.GetParsedText().Length + emojisCount : messageContentText.GetParsedText().Length))
+                return usernameElement.GetUserNamePreferredWidth(backgroundWidthOffset, verifiedBadgeWidth);
 
-            if (messageContentText.GetPreferredValues(message.Message, MAX_ENTRY_WIDTH, 0).x < MAX_ENTRY_WIDTH - BACKGROUND_WIDTH_OFFSET)
-                return messageContentText.GetPreferredValues(message.Message, MAX_ENTRY_WIDTH, 0).x + BACKGROUND_WIDTH_OFFSET;
+            if (messageContentText.GetPreferredValues(message.Message, maxEntryWidth, 0).x < maxEntryWidth - backgroundWidthOffset)
+                return messageContentText.GetPreferredValues(message.Message, maxEntryWidth, 0).x + backgroundWidthOffset;
 
-            return MAX_ENTRY_WIDTH;
+            return maxEntryWidth;
         }
 
         private int GetEmojisCount(string message) =>

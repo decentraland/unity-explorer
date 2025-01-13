@@ -10,6 +10,10 @@ namespace DCL.Chat
     {
         [SerializeField] public List<Color> nameColors;
         private byte[] asciiValues;
+        [field: SerializeField] public float BackgroundHeightOffset { private set; get; } = 56;
+        [field: SerializeField] public float BackgroundWidthOffset { private set; get; }= 56;
+        [field: SerializeField] public float MaxEntryWidth { private set; get; }= 246;
+        [field: SerializeField] public float VerifiedBadgeWidth { private set; get; }= 15;
 
         private int seed;
 

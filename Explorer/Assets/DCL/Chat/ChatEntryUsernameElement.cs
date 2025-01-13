@@ -7,8 +7,6 @@ namespace DCL.Chat
 {
     public class ChatEntryUsernameElement : MonoBehaviour
     {
-        private const float VERIFIED_BADGE_WIDTH = 15;
-
         [field: SerializeField] internal TMP_Text userName { get; private set; }
         [field: SerializeField] internal TMP_Text walletIdText { get; private set; }
         [field: SerializeField] internal Image? verifiedIcon { get; private set; }
@@ -24,7 +22,7 @@ namespace DCL.Chat
             verifiedIcon?.gameObject.SetActive(!hasWalletId);
         }
 
-        public float GetUserNamePreferredWidth(float backgroundWidthOffset) =>
-            userName.preferredWidth + Math.Max(walletIdText.preferredWidth, VERIFIED_BADGE_WIDTH) + backgroundWidthOffset;
+        public float GetUserNamePreferredWidth(float backgroundWidthOffset, float verifiedBadgeWidth) =>
+            userName.preferredWidth + Math.Max(walletIdText.preferredWidth, verifiedBadgeWidth) + backgroundWidthOffset;
     }
 }
