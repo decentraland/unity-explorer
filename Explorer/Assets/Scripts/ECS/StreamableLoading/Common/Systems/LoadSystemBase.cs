@@ -270,7 +270,7 @@ namespace ECS.StreamableLoading.Common.Systems
             var source = new UniTaskCompletionSource<StreamableLoadingResult<TAsset>?>(); //AutoResetUniTaskCompletionSource<StreamableLoadingResult<TAsset>?>.Create();
 
             // ReportHub.Log(GetReportCategory(), $"OngoingRequests.SyncAdd {intention.CommonArguments.URL}");
-            cache.OngoingRequests.SyncAdd(intention.CommonArguments.GetCacheableURL(), source);
+            cache.OngoingRequests.SyncTryAdd(intention.CommonArguments.GetCacheableURL(), source);
 
             var ongoingRequestRemoved = false;
 
