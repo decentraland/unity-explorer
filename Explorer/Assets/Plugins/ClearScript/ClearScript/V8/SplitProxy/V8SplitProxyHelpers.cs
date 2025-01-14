@@ -704,29 +704,53 @@ namespace Microsoft.ClearScript.V8.SplitProxy
         #endregion
     }
 
-    internal static class StdV8ValueArray
+    public readonly ref struct StdV8ValueArray
     {
-        public static IScope<Ptr> CreateScope(int elementCount = 0)
+        internal readonly Ptr ptr;
+        private readonly bool owns;
+
+        public StdV8ValueArray(int elementCount)
+        {
+            ptr = V8SplitProxyNative.InvokeNoThrow(instance => instance.StdV8ValueArray_New(elementCount));
+            owns = true;
+        }
+
+        internal StdV8ValueArray(Ptr pArray)
+        {
+            ptr = pArray;
+            owns = false;
+        }
+
+        public void Dispose()
+        {
+            if (owns)
+            {
+                Ptr ptr = this.ptr;
+                V8SplitProxyNative.InvokeNoThrow(instance => instance.StdV8ValueArray_Delete(ptr));
+            }
+        }
+        
+        internal static IScope<Ptr> CreateScope(int elementCount = 0)
         {
             return V8SplitProxyNative.InvokeNoThrow(instance => Scope.Create(() => instance.StdV8ValueArray_New(elementCount), instance.StdV8ValueArray_Delete));
         }
 
-        public static IScope<Ptr> CreateScope(object[] array)
+        internal static IScope<Ptr> CreateScope(object[] array)
         {
             return V8SplitProxyNative.InvokeNoThrow(instance => Scope.Create(() => NewFromArray(instance, array), instance.StdV8ValueArray_Delete));
         }
 
-        public static int GetElementCount(Ptr pArray)
+        internal static int GetElementCount(Ptr pArray)
         {
             return V8SplitProxyNative.InvokeNoThrow(instance => instance.StdV8ValueArray_GetElementCount(pArray));
         }
 
-        public static void SetElementCount(Ptr pArray, int elementCount)
+        internal static void SetElementCount(Ptr pArray, int elementCount)
         {
             V8SplitProxyNative.InvokeNoThrow(instance => instance.StdV8ValueArray_SetElementCount(pArray, elementCount));
         }
 
-        public static object[] ToArray(Ptr pArray)
+        internal static object[] ToArray(Ptr pArray)
         {
             return V8SplitProxyNative.InvokeNoThrow(instance =>
             {
@@ -746,7 +770,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             });
         }
 
-        public static void CopyFromArray(Ptr pArray, object[] array)
+        internal static void CopyFromArray(Ptr pArray, object[] array)
         {
             V8SplitProxyNative.InvokeNoThrow(instance =>
             {
@@ -764,7 +788,7 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             });
         }
 
-        private static Ptr NewFromArray(IV8SplitProxyNative instance, object[] array)
+        internal static Ptr NewFromArray(IV8SplitProxyNative instance, object[] array)
         {
             var elementCount = array?.Length ?? 0;
             var pArray = instance.StdV8ValueArray_New(elementCount);
@@ -778,14 +802,14 @@ namespace Microsoft.ClearScript.V8.SplitProxy
             return pArray;
         }
 
-        public static V8Value.Ptr GetElementPtr(V8Value.Ptr pV8Value, int index)
+        internal static V8Value.Ptr GetElementPtr(V8Value.Ptr pV8Value, int index)
         {
             return (V8Value.Ptr)((IntPtr)pV8Value + index * V8Value.Size);
         }
 
         #region Nested type: Ptr
 
-        public readonly struct Ptr
+        internal readonly struct Ptr
         {
             private readonly IntPtr bits;
 

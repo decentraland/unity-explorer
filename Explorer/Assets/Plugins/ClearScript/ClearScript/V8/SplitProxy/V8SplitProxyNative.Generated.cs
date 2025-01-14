@@ -1085,6 +1085,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                     }
                 }
             }
+            
+            void IV8SplitProxyNative.V8Object_Invoke(V8Object.Handle hObject, bool asConstructor, StdV8ValueArray.Ptr pArgs, V8Value.Ptr pResult)
+            {
+                V8Object_Invoke(hObject, asConstructor, pArgs, pResult);
+            }
 
             object IV8SplitProxyNative.V8Object_InvokeMethod(V8Object.Handle hObject, string name, object[] args)
             {
@@ -3238,6 +3243,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                         return V8Value.Get(resultScope.Value);
                     }
                 }
+            }
+            
+            void IV8SplitProxyNative.V8Object_Invoke(V8Object.Handle hObject, bool asConstructor, StdV8ValueArray.Ptr pArgs, V8Value.Ptr pResult)
+            {
+                V8Object_Invoke(hObject, asConstructor, pArgs, pResult);
             }
 
             object IV8SplitProxyNative.V8Object_InvokeMethod(V8Object.Handle hObject, string name, object[] args)
@@ -5393,6 +5403,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                     }
                 }
             }
+            
+            void IV8SplitProxyNative.V8Object_Invoke(V8Object.Handle hObject, bool asConstructor, StdV8ValueArray.Ptr pArgs, V8Value.Ptr pResult)
+            {
+                V8Object_Invoke(hObject, asConstructor, pArgs, pResult);
+            }
 
             object IV8SplitProxyNative.V8Object_InvokeMethod(V8Object.Handle hObject, string name, object[] args)
             {
@@ -7546,6 +7561,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                         return V8Value.Get(resultScope.Value);
                     }
                 }
+            }
+            
+            void IV8SplitProxyNative.V8Object_Invoke(V8Object.Handle hObject, bool asConstructor, StdV8ValueArray.Ptr pArgs, V8Value.Ptr pResult)
+            {
+                V8Object_Invoke(hObject, asConstructor, pArgs, pResult);
             }
 
             object IV8SplitProxyNative.V8Object_InvokeMethod(V8Object.Handle hObject, string name, object[] args)
@@ -9701,6 +9721,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                     }
                 }
             }
+            
+            void IV8SplitProxyNative.V8Object_Invoke(V8Object.Handle hObject, bool asConstructor, StdV8ValueArray.Ptr pArgs, V8Value.Ptr pResult)
+            {
+                V8Object_Invoke(hObject, asConstructor, pArgs, pResult);
+            }
 
             object IV8SplitProxyNative.V8Object_InvokeMethod(V8Object.Handle hObject, string name, object[] args)
             {
@@ -11854,6 +11879,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                         return V8Value.Get(resultScope.Value);
                     }
                 }
+            }
+            
+            void IV8SplitProxyNative.V8Object_Invoke(V8Object.Handle hObject, bool asConstructor, StdV8ValueArray.Ptr pArgs, V8Value.Ptr pResult)
+            {
+                V8Object_Invoke(hObject, asConstructor, pArgs, pResult);
             }
 
             object IV8SplitProxyNative.V8Object_InvokeMethod(V8Object.Handle hObject, string name, object[] args)
@@ -14009,6 +14039,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                     }
                 }
             }
+            
+            void IV8SplitProxyNative.V8Object_Invoke(V8Object.Handle hObject, bool asConstructor, StdV8ValueArray.Ptr pArgs, V8Value.Ptr pResult)
+            {
+                V8Object_Invoke(hObject, asConstructor, pArgs, pResult);
+            }
 
             object IV8SplitProxyNative.V8Object_InvokeMethod(V8Object.Handle hObject, string name, object[] args)
             {
@@ -16162,6 +16197,11 @@ namespace Microsoft.ClearScript.V8.SplitProxy
                         return V8Value.Get(resultScope.Value);
                     }
                 }
+            }
+            
+            void IV8SplitProxyNative.V8Object_Invoke(V8Object.Handle hObject, bool asConstructor, StdV8ValueArray.Ptr pArgs, V8Value.Ptr pResult)
+            {
+                V8Object_Invoke(hObject, asConstructor, pArgs, pResult);
             }
 
             object IV8SplitProxyNative.V8Object_InvokeMethod(V8Object.Handle hObject, string name, object[] args)
