@@ -110,7 +110,7 @@ namespace ECS.StreamableLoading.Common.Components
         public void Finish()
         {
 #if UNITY_EDITOR
-            if (Value is not Status.InProgress)
+            if (Value is not Status.InProgress && Value is not Status.NotStarted)
                 throw new InvalidOperationException($"Unexpected transition from \"{Value}\" to \"Finished\"");
 #endif
             Value = Status.Finished;

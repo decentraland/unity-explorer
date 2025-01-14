@@ -17,6 +17,7 @@ namespace DCL.WebRequests
     public static class WebRequestControllerExtensions
     {
         private const string CONTENT_RANGE_HEADER = "Content-Range";
+        private const string CONTENT_LENGTH_HEADER = "Content-Length";
         private static readonly byte[] PARTIAL_DOWNLOAD_BUFFER = new byte[1024 * 1024];
 
         public static UniTask<TResult> SendAsync<TWebRequest, TWebRequestArgs, TWebRequestOp, TResult>(
@@ -92,8 +93,18 @@ namespace DCL.WebRequests
             {
                 if (data.FullFileSize == 0)
                 {
-                    DownloadHandlersUtils.TryGetFullSize(webRequest.UnityWebRequest.GetResponseHeader(CONTENT_RANGE_HEADER), out int fullSize);
-                    data.FullFileSize = fullSize;
+                    if (DownloadHandlersUtils.TryGetFullSize(webRequest.UnityWebRequest.GetResponseHeader(CONTENT_RANGE_HEADER), out int fullSize))
+                    {
+                        data.FullFileSize = fullSize;
+                    }
+                    else if (int.TryParse(webRequest.UnityWebRequest.GetResponseHeader(CONTENT_LENGTH_HEADER), out int contentSize))
+                    {
+                        data.FullFileSize = contentSize;
+                    }
+                    else
+                    {
+                        data.FullFileSize = Convert.ToInt32(webRequest.UnityWebRequest.downloadedBytes);
+                    }
                 }
 
                 return this.data;

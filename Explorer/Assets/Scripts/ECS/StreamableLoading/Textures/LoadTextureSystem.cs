@@ -9,6 +9,7 @@ using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
 using System;
+using System.Buffers;
 using System.Threading;
 using UnityEngine;
 
@@ -18,7 +19,6 @@ namespace ECS.StreamableLoading.Textures
     [LogCategory(ReportCategory.TEXTURES)]
     public partial class LoadTextureSystem : LoadSystemBase<Texture2DData, GetTextureIntention>
     {
-        //private readonly ArrayPool<byte> arrayPool = ArrayPool<byte>.Create();
         private readonly IWebRequestController webRequestController;
 
         internal LoadTextureSystem(World world, IStreamableCache<Texture2DData, GetTextureIntention> cache, IWebRequestController webRequestController) : base(world, cache)
@@ -31,8 +31,7 @@ namespace ECS.StreamableLoading.Textures
             PartialLoadingState partialState = default;
             PartialDownloadingData chunkData;
 
-            // TODO pooling
-            var partialDownloadBuffer = new byte[PartialDownloadingData.CHUNK_SIZE];
+            byte[] partialDownloadBuffer = ArrayPool<byte>.Shared!.Rent(PartialDownloadingData.CHUNK_SIZE)!;
 
             // If the downloading has not started yet
             if (state.PartialDownloadingData == null) { chunkData = new PartialDownloadingData(partialDownloadBuffer, 0, PartialDownloadingData.CHUNK_SIZE); }
@@ -43,10 +42,6 @@ namespace ECS.StreamableLoading.Textures
                 // Continue downloading
                 chunkData = new PartialDownloadingData(partialDownloadBuffer, partialState.NextRangeStart, Mathf.Min(partialState.FullFileSize - 1, partialState.NextRangeStart + PartialDownloadingData.CHUNK_SIZE));
             }
-
-
-            /*TODO add the proper flow to do the first request, handle the partial result if supports partial download and
-             handle direct result creation if partial is not supported or file is smaller than chunk*/
 
             // Execute a single chunk
             // it should return another structure for clarity
@@ -77,6 +72,7 @@ namespace ECS.StreamableLoading.Textures
             partialState.NextRangeStart = chunkData.RangeEnd + 1;
 
             state.SetChunkCompleted(partialState);
+            ArrayPool<byte>.Shared!.Return(partialDownloadBuffer);
 
             // If the file is fully loaded produce the result
             if (partialState.FullyDownloaded)
@@ -86,7 +82,7 @@ namespace ECS.StreamableLoading.Textures
                 return new StreamableLoadingResult<Texture2DData>(new Texture2DData(texture));
             }
 
-            // Spin
+            // Spin so that the request can continue running untill FullyDownloaded
             return default(StreamableLoadingResult<Texture2DData>);
         }
     }
