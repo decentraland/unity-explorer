@@ -4,6 +4,7 @@ on:
   pull_request:
     branches:
       - dev # Only run for PRs targeting the dev branch
+      - feat/update-approval-logic-workflow # temporary test
     types: [submitted, review_requested, ready_for_review]
 
 jobs:
