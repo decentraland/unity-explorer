@@ -4,6 +4,8 @@ namespace DCL.WebRequests.PartialDownload
 {
     public struct PartialDownloadingData
     {
+        public const int CHUNK_SIZE = 1024 * 1024; // 1MB
+
         public readonly byte[] DataBuffer;
 
         public int RangeStart;

@@ -17,7 +17,6 @@ using System.Threading;
 using AssetManagement;
 using DCL.WebRequests;
 using UnityEngine;
-using UnityEngine.Networking;
 using Object = UnityEngine.Object;
 
 namespace ECS.StreamableLoading.AssetBundles
@@ -56,7 +55,7 @@ namespace ECS.StreamableLoading.AssetBundles
             return await UniTask.WhenAll(assetBundleMetadata.dependencies.Select(hash => WaitForDependencyAsync(manifest, hash, customEmbeddedSubdirectory, partition, ct)));
         }
 
-        protected override async UniTask<StreamableLoadingResult<AssetBundleData>> FlowInternalAsync(GetAssetBundleIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct, EntityReference entity)
+        protected override async UniTask<StreamableLoadingResult<AssetBundleData>> FlowInternalAsync(GetAssetBundleIntention intention, StreamableLoadingState state, IPartitionComponent partition, CancellationToken ct)
         {
             AssetBundleLoadingResult assetBundleResult = await webRequestController
                .GetAssetBundleAsync(intention.CommonArguments, new GetAssetBundleArguments(loadingMutex, intention.cacheHash), ct, GetReportCategory(),
@@ -65,7 +64,7 @@ namespace ECS.StreamableLoading.AssetBundles
             AssetBundle? assetBundle = assetBundleResult.AssetBundle;
 
             // Release budget now to not hold it until dependencies are resolved to prevent a deadlock
-            acquiredBudget.Release();
+            state.AcquiredBudget!.Release();
 
             // if GetContent prints an error, null will be thrown
             if (assetBundle == null)
