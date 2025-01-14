@@ -1,0 +1,60 @@
+name: Enforce QA and DEV Approvals
+
+on:
+  pull_request:
+    branches:
+      - dev # Only run for PRs targeting the dev branch
+    types: [submitted, review_requested, ready_for_review]
+
+jobs:
+  enforce-approvals:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Validate Group Approvals
+        uses: actions/github-script@v6
+        with:
+          script: |
+            // Define the team slugs
+            const QA_TEAM = 'qa';
+            const DEV_TEAM = 'explorer-devs';
+
+            // Fetch team members dynamically
+            const fetchTeamMembers = async (teamSlug) => {
+              const { data: teamMembers } = await github.rest.teams.listMembersInOrg({
+                org: context.repo.owner,
+                team_slug: teamSlug,
+              });
+              return teamMembers.map(member => member.login);
+            };
+
+            // Fetch team members
+            const qaMembers = await fetchTeamMembers(QA_TEAM);
+            const devMembers = await fetchTeamMembers(DEV_TEAM);
+
+            // Fetch reviews for the PR
+            const { data: reviews } = await github.rest.pulls.listReviews({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.payload.pull_request.number,
+            });
+
+            // Filter unique APPROVED reviews
+            const uniqueApprovals = reviews.filter((review, index, self) =>
+              self.findIndex(r => r.user.login === review.user.login && r.state === 'APPROVED') === index
+            );
+
+            // Check if there's at least 1 QA approval
+            const hasQaApproval = uniqueApprovals.some(review =>
+              qaMembers.includes(review.user.login)
+            );
+
+            // Check if there's at least 1 approval from DEV
+            const hasDevApproval = uniqueApprovals.some(review =>
+              devMembers.includes(review.user.login)
+            );
+
+            // Fail if criteria are not met
+            if (!hasQaApproval || !hasDevApproval) {
+              core.setFailed('PR must have at least 1 QA approval and 1 DEV approval.');
+            }
