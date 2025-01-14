@@ -1,4 +1,3 @@
-using DCL.AvatarRendering.Loading.DTO;
 using System.Collections.Generic;
 
 namespace DCL.AvatarRendering.Loading
