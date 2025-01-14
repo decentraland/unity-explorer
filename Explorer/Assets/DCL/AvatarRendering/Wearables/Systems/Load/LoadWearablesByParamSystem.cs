@@ -43,18 +43,25 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
             IReadOnlyList<(string, string)> urlEncodedParams = intention.Params;
             urlBuilder.Clear();
 
-            if (intention.CommonArguments.URL == URLAddress.EMPTY)
-            {
-                urlBuilder.AppendDomainWithReplacedPath(realmData.Ipfs.LambdasBaseUrl, lambdaSubdirectory)
-                          .AppendSubDirectory(URLSubdirectory.FromString(userID))
-                          .AppendSubDirectory(wearablesSubdirectory);
-            }
-            else
+            if (intention.CommonArguments.URL != URLAddress.EMPTY && intention.CommonArguments.URL.Value.Contains("builder-api.decentraland"))
             {
                 // urlBuilder.AppendDomainWithReplacedPath(URLDomain.FromString(intention.CommonArguments.URL), URLSubdirectory.EMPTY);
 
                 // ONLY FOR DEBUGGING
                 urlBuilder.AppendDomainWithReplacedPath(URLDomain.FromString(intention.CommonArguments.URL), URLSubdirectory.FromString("/items"));
+
+                // TODO: figure out final solution
+                /*var subDirectoryIndex = intention.CommonArguments.URL.Value.IndexOf('/');
+                var subDirectory = intention.CommonArguments.URL.Value.Substring(subDirectoryIndex);
+                var domain = intention.CommonArguments.URL.Value.Substring(0, subDirectoryIndex);
+                // https: // breaks it...
+                urlBuilder.AppendDomainWithReplacedPath(URLDomain.FromString(domain), URLSubdirectory.FromString(subDirectory));*/
+            }
+            else
+            {
+                urlBuilder.AppendDomainWithReplacedPath(realmData.Ipfs.LambdasBaseUrl, lambdaSubdirectory)
+                          .AppendSubDirectory(URLSubdirectory.FromString(userID))
+                          .AppendSubDirectory(wearablesSubdirectory);
             }
 
             for (var i = 0; i < urlEncodedParams.Count; i++)
