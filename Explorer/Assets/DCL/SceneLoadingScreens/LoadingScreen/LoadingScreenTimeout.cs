@@ -7,7 +7,7 @@ namespace DCL.SceneLoadingScreens.LoadingScreen
     {
         public TimeSpan Value { get; private set; }
 
-        public LoadingScreenTimeout() : this(TimeSpan.FromMinutes(2)) { }
+        public LoadingScreenTimeout() : this(TimeSpan.MaxValue) { }
 
         public LoadingScreenTimeout(TimeSpan timeout)
         {
