@@ -132,12 +132,15 @@ namespace DCL.AvatarRendering.Loading.Components
         {
             AvatarAttachmentDTO wearableDTO = avatarAttachment.DTO;
 
-            for (var i = 0; i < wearableDTO.content.Length; i++)
-                if (wearableDTO.content[i].file == key)
-                {
-                    hash = wearableDTO.content[i].hash;
-                    return true;
-                }
+            if (wearableDTO.content != null)
+            {
+                for (var i = 0; i < wearableDTO.content.Length; i++)
+                    if (wearableDTO.content[i].file == key)
+                    {
+                        hash = wearableDTO.content[i].hash;
+                        return true;
+                    }
+            }
 
             hash = null;
             return false;

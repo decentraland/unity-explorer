@@ -107,6 +107,8 @@ namespace DCL.SDKComponents.Tween.Systems
         [Query]
         private void UpdateTweenTextureSequence(CRDTEntity sdkEntity, in PBTween pbTween, ref SDKTweenComponent sdkTweenComponent, ref MaterialComponent materialComponent)
         {
+            if (pbTween.TextureMove == null) return;
+
             if (sdkTweenComponent.IsDirty)
             {
                 SetupTween(ref sdkTweenComponent, in pbTween);
