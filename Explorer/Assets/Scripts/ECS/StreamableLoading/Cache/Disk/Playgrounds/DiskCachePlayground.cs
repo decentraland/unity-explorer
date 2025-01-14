@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using ECS.StreamableLoading.Cache.Disk.CleanUp;
 using System;
 using System.IO;
 using UnityEngine;
@@ -15,12 +16,15 @@ namespace ECS.StreamableLoading.Cache.Disk.Playgrounds
             StartAsync().Forget();
         }
 
+        private IDiskCache NewDiskCache() =>
+            new DiskCache(CacheDirectory.New(cacheDirectory), IDiskCleanUp.None.INSTANCE);
+
         private async UniTaskVoid StartAsync()
         {
             byte[] testData = await File.ReadAllBytesAsync(testFile, destroyCancellationToken)!;
             string testExtension = Path.GetExtension(testFile);
 
-            IDiskCache diskCache = new DiskCache(cacheDirectory);
+            IDiskCache diskCache = NewDiskCache();
             var result = await diskCache.PutAsync(testFile, testExtension, testData, destroyCancellationToken);
             print($"Put result: success {result.Success} and error {result.Error?.Message}");
 
@@ -33,7 +37,7 @@ namespace ECS.StreamableLoading.Cache.Disk.Playgrounds
         [ContextMenu(nameof(RemoveAsync))]
         public async UniTaskVoid RemoveAsync()
         {
-            IDiskCache diskCache = new DiskCache(cacheDirectory);
+            IDiskCache diskCache = NewDiskCache();
             var result = await diskCache.RemoveAsync(testFile, Path.GetExtension(testFile), destroyCancellationToken);
             print($"Remove result: success {result.Success} and error {result.Error?.Message}");
         }

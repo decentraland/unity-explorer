@@ -1,10 +1,9 @@
 using Cysharp.Threading.Tasks;
-using DCL.Diagnostics;
+using ECS.StreamableLoading.Cache.Disk.CleanUp;
 using System;
 using System.Buffers;
 using System.IO;
 using System.Threading;
-using UnityEngine;
 using Utility.Multithreading;
 using Utility.Types;
 
@@ -12,14 +11,13 @@ namespace ECS.StreamableLoading.Cache.Disk
 {
     public class DiskCache : IDiskCache
     {
-        private readonly string dirPath;
+        private readonly CacheDirectory directory;
+        private readonly IDiskCleanUp diskCleanUp;
 
-        public DiskCache(string dirPath)
+        public DiskCache(CacheDirectory directory, IDiskCleanUp diskCleanUp)
         {
-            dirPath = Path.Combine(Application.persistentDataPath!, dirPath);
-            this.dirPath = dirPath;
-            if (Directory.Exists(dirPath) == false) Directory.CreateDirectory(dirPath);
-            ReportHub.Log(ReportCategory.DEBUG, $"DiskCache: use directory at {dirPath}");
+            this.directory = directory;
+            this.diskCleanUp = diskCleanUp;
         }
 
         public async UniTask<EnumResult<TaskError>> PutAsync(string key, string extension, ReadOnlyMemory<byte> data, CancellationToken token)
@@ -31,6 +29,7 @@ namespace ECS.StreamableLoading.Cache.Disk
                 string path = PathFrom(key, extension);
                 await using var stream = new FileStream(path, FileMode.Create, FileAccess.Write);
                 await stream.WriteAsync(data, token);
+                diskCleanUp.CleanUpIfNeeded();
             }
             catch (TimeoutException) { return EnumResult<TaskError>.ErrorResult(TaskError.Timeout); }
             catch (OperationCanceledException) { return EnumResult<TaskError>.ErrorResult(TaskError.Cancelled); }
@@ -45,7 +44,8 @@ namespace ECS.StreamableLoading.Cache.Disk
 
             try
             {
-                string path = PathFrom(key, extension);
+                string fileName = HashNamings.HashNameFrom(key, extension);
+                string path = PathFrom(fileName);
 
                 if (File.Exists(path) == false)
                     return EnumResult<SlicedOwnedMemory<byte>?, TaskError>.SuccessResult(null);
@@ -54,6 +54,7 @@ namespace ECS.StreamableLoading.Cache.Disk
                 var data = new SlicedOwnedMemory<byte>(MemoryPool<byte>.Shared!.Rent((int)stream.Length)!, (int)stream.Length);
 
                 int _ = await stream.ReadAsync(data.Memory, token);
+                diskCleanUp.NotifyUsed(fileName);
                 return EnumResult<SlicedOwnedMemory<byte>?, TaskError>.SuccessResult(data);
             }
             catch (TimeoutException) { return EnumResult<SlicedOwnedMemory<byte>?, TaskError>.ErrorResult(TaskError.Timeout); }
@@ -76,9 +77,14 @@ namespace ECS.StreamableLoading.Cache.Disk
 
         private string PathFrom(string key, string extension)
         {
-            string path = HashNamings.HashNameFrom(key, extension);
-            path = Path.Combine(dirPath, path);
-            return path;
+            string hashName = HashNamings.HashNameFrom(key, extension);
+            return PathFrom(hashName);
+        }
+
+        private string PathFrom(string fileName)
+        {
+            string fullPath = Path.Combine(directory.Path, fileName);
+            return fullPath;
         }
     }
 

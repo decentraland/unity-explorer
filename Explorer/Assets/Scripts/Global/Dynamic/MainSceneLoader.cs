@@ -16,6 +16,7 @@ using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using ECS.StreamableLoading.Cache.Disk;
+using ECS.StreamableLoading.Cache.Disk.CleanUp;
 using Global.AppArgs;
 using MVC;
 using Plugins.TexturesFuse.TexturesServerWrap.CompressShaders;
@@ -126,7 +127,10 @@ namespace Global.Dynamic
             World world = World.Create();
 
             var splashScreen = new SplashScreen(splashScreenAnimation, splashRoot, debugSettings.ShowSplash, splashScreenText);
-            var diskCache = new DiskCache("DiskCache");
+
+            var cacheDirectory = CacheDirectory.NewDefault();
+            var diskCleanUp = new LRUDiskCleanUp(cacheDirectory);
+            var diskCache = new DiskCache(cacheDirectory, diskCleanUp);
 
             bootstrapContainer = await BootstrapContainer.CreateAsync(
                 debugSettings,
