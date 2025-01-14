@@ -125,12 +125,13 @@ namespace Global
                 );
         }
 
-        public static async UniTask<(StaticContainer? container, bool success)> CreateAsync(IDecentralandUrlsSource decentralandUrlsSource,
+        public static async UniTask<(StaticContainer? container, bool success)> CreateAsync(
+            IDecentralandUrlsSource decentralandUrlsSource,
             IAssetsProvisioner assetsProvisioner,
             IReportsHandlingSettings reportHandlingSettings,
-            IAppArgs appArgs,
+            IDebugContainerBuilder debugContainerBuilder,
+            WebRequestsContainer webRequestsContainer,
             ITexturesFuse texturesFuse,
-            DebugViewsCatalog debugViewsCatalog,
             IPluginSettingsContainer settingsContainer,
             DiagnosticsContainer diagnosticsContainer,
             IWeb3IdentityCache web3IdentityProvider,
@@ -143,7 +144,6 @@ namespace Global
             WorldVolumeMacBus worldVolumeMacBus,
             bool enableAnalytics,
             IAnalyticsController analyticsController,
-            bool isTextureCompressionEnabled,
             CancellationToken ct)
         {
             ProfilingCounters.CleanAllCounters();
@@ -154,7 +154,7 @@ namespace Global
 
             var container = new StaticContainer();
             container.PlayerEntity = playerEntity;
-            container.DebugContainerBuilder = DebugUtilitiesContainer.Create(debugViewsCatalog, appArgs.HasDebugFlag()).Builder;
+            container.DebugContainerBuilder = debugContainerBuilder;
             container.EthereumApi = ethereumApi;
             container.ScenesCache = new ScenesCache();
             container.SceneReadinessReportQueue = new SceneReadinessReportQueue(container.ScenesCache);
@@ -196,15 +196,7 @@ namespace Global
             container.Profiler = profilingProvider;
             container.EntityCollidersGlobalCache = new EntityCollidersGlobalCache();
             container.ExposedGlobalDataContainer = exposedGlobalDataContainer;
-
-            container.WebRequestsContainer = WebRequestsContainer.Create(
-                web3IdentityProvider,
-                texturesFuse,
-                container.DebugContainerBuilder,
-                staticSettings.WebRequestsBudget,
-                isTextureCompressionEnabled
-            );
-
+            container.WebRequestsContainer = webRequestsContainer;
             container.PhysicsTickProvider = new PhysicsTickProvider();
             container.FeatureFlagsCache = new FeatureFlagsCache();
 

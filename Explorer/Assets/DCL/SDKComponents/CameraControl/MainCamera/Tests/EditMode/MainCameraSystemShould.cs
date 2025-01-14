@@ -96,8 +96,7 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Tests
             system = new MainCameraSystem(world, mainCameraEntity, entitiesMap, sceneStateProvider, cameraData, Substitute.For<ISceneRestrictionBusController>(), globalWorld);
         }
 
-        [TearDown]
-        public void Teardown()
+        protected override void OnTearDown()
         {
             entitiesMap.Clear();
             world.Dispose();

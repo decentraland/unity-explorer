@@ -5,6 +5,7 @@ using DCL.MapRenderer.MapLayers;
 using DCL.MapRenderer.MapLayers.Pins;
 using DCL.NotificationsBusController.NotificationsBus;
 using DCL.NotificationsBusController.NotificationTypes;
+using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Pool;
@@ -157,7 +158,10 @@ namespace DCL.MapRenderer
             internalPinMarker.OnBecameInvisible();
         }
 
-        public UniTask Enable(CancellationToken cancellationToken)
+        public UniTask InitializeAsync(CancellationToken cancellationToken) =>
+            UniTask.CompletedTask;
+
+        public UniTask EnableAsync(CancellationToken cancellationToken)
         {
             if (destinationSet)
             {
@@ -174,7 +178,7 @@ namespace DCL.MapRenderer
             return UniTask.CompletedTask;
         }
 
-        public void ApplyCameraZoom(float baseZoom, float newZoom)
+        public void ApplyCameraZoom(float baseZoom, float newZoom, int zoomLevel)
         {
             internalPinMarker.SetZoom(coordsUtils.ParcelSize, baseZoom, newZoom);
             mapPathRenderer.SetZoom(baseZoom, newZoom);

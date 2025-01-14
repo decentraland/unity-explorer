@@ -22,7 +22,7 @@ namespace DCL.PluginSystem.World
         {
             ResetDirtyFlagSystem<PBTween>.InjectToWorld(ref builder);
             TweenLoaderSystem.InjectToWorld(ref builder);
-            var tweenUpdaterSystem = TweenUpdaterSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter, tweenerPool, sharedDependencies.EcsSystemsGate, sharedDependencies.SceneStateProvider);
+            var tweenUpdaterSystem = TweenUpdaterSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter, tweenerPool, sharedDependencies.SceneStateProvider);
             finalizeWorldSystems.Add(tweenUpdaterSystem);
         }
     }

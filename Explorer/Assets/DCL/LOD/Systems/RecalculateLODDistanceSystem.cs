@@ -31,9 +31,8 @@ namespace DCL.LOD.Systems
             defaultLodBias = QualitySettings.lodBias;
         }
 
-        public override void Dispose()
+        protected override void OnDispose()
         {
-            base.Dispose();
             realmPartitionSettingsAsset.OnMaxLoadingDistanceInParcelsChanged -= RecalculateLODDistance;
         }
 
@@ -53,9 +52,6 @@ namespace DCL.LOD.Systems
                 sceneLODInfo.RecalculateLODDistances(defaultFOV, defaultLodBias, realmPartitionSettingsAsset.MaxLoadingDistanceInParcels, sceneDefinition.Parcels.Count);
         }
 
-
-        protected override void Update(float t)
-        {
-        }
+        protected override void Update(float t) { }
     }
 }
