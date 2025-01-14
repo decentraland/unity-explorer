@@ -19,9 +19,11 @@ namespace ECS.StreamableLoading.Textures
             return ToArray(data);
         }
 
-        public UniTask<Texture2DData> Deserialize(SlicedOwnedMemory<byte> data, CancellationToken token)
+        public async UniTask<Texture2DData> Deserialize(SlicedOwnedMemory<byte> data, CancellationToken token)
         {
             var meta = Meta.FromSpan(data.Memory.Span);
+
+            await UniTask.SwitchToMainThread();
             var texture = new Texture2D(meta.width, meta.height, meta.format, meta.mipCount, meta.linear, true);
 
             using var handle = data.Memory.Pin();
@@ -29,7 +31,7 @@ namespace ECS.StreamableLoading.Textures
             unsafe { texture.LoadRawTextureData((IntPtr)handle.Pointer + meta.ArrayLength, data.Memory.Length - meta.ArrayLength); }
 
             texture.Apply();
-            return UniTask.FromResult(new Texture2DData(new MemoryOwnedTexture2D(data, texture)));
+            return new Texture2DData(new MemoryOwnedTexture2D(data, texture));
         }
 
         private static SlicedOwnedMemory<byte> ToArray(Texture2DData data)
