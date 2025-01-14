@@ -19,6 +19,7 @@ namespace DCL.Multiplayer.Connections.Systems
         private readonly BufferBinding scene;
         private readonly bool buffersInitialized;
         private readonly float stepSeconds;
+        private readonly DebugWidgetVisibilityBinding infoVisibilityBinding;
         private float current;
 
         public DebugThroughputRoomsSystem(
@@ -38,6 +39,9 @@ namespace DCL.Multiplayer.Connections.Systems
                 return;
             }
 
+            infoVisibilityBinding = new DebugWidgetVisibilityBinding(true);
+            infoWidget.SetVisibilityBinding(infoVisibilityBinding);
+
             this.island = BufferBinding.CreateAndAttach(infoWidget, islandBufferBunch, "island");
             this.scene = BufferBinding.CreateAndAttach(infoWidget, sceneBufferBunch, "scene");
             buffersInitialized = true;
@@ -53,8 +57,17 @@ namespace DCL.Multiplayer.Connections.Systems
             if (current >= stepSeconds)
             {
                 current = 0;
-                island.CollectAndDraw();
-                scene.CollectAndDraw();
+
+                if (infoVisibilityBinding.IsConnectedAndExpanded)
+                {
+                    island.CollectAndDraw();
+                    scene.CollectAndDraw();
+                }
+                else
+                {
+                    island.Reset();
+                    scene.Reset();
+                }
             }
         }
 
@@ -84,6 +97,12 @@ namespace DCL.Multiplayer.Connections.Systems
             {
                 CollectAndDraw(bufferBunch.Incoming, incoming);
                 CollectAndDraw(bufferBunch.Outgoing, outgoing);
+            }
+
+            public void Reset()
+            {
+                bufferBunch.Incoming.Clear();
+                bufferBunch.Outgoing.Clear();
             }
 
             private static void CollectAndDraw(IThroughputBuffer buffer, ElementBinding<ulong> binding)
