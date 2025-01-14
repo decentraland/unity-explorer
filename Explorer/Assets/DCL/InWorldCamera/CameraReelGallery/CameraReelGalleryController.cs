@@ -101,8 +101,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
             IExplorePanelEscapeAction? explorePanelEscapeAction = null,
             ISystemClipboard? systemClipboard = null,
             ReelGalleryStringMessages? reelGalleryStringMessages = null,
-            IMVCManager? mvcManager = null,
-            GenericContextMenuConfig? contextMenuConfig = null)
+            IMVCManager? mvcManager = null)
         {
             this.view = view;
             this.cameraReelStorageService = cameraReelStorageService;
@@ -125,7 +124,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
 
             if (optionButtonView is not null)
             {
-                this.optionButtonController = new CameraReelOptionButtonController(optionButtonView, mvcManager!, contextMenuConfig!);
+                this.optionButtonController = new CameraReelOptionButtonController(optionButtonView, mvcManager!);
             }
 
             reelGalleryPoolManager = new ReelGalleryPoolManager(view.thumbnailViewPrefab, view.monthGridPrefab, view.unusedThumbnailViewObject,

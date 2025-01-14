@@ -251,8 +251,6 @@ namespace DCL.PluginSystem.Global
                 mapRendererContainer.MapRenderer, placesAPIService, webRequestController, webBrowser, dclInput,
                 realmNavigator, realmData, mapPathEventBus, world, playerEntity, inputBlock, chatMessagesBus);
 
-            GenericContextMenuConfig contextMenuConfig = await assetsProvisioner.ProvideMainAssetValueAsync(settings.ContextMenuConfig, ct);
-
             await navmapController.InitializeAssetsAsync(assetsProvisioner, ct);
             await backpackSubPlugin.InitializeAsync(settings.BackpackSettings, explorePanelView.GetComponentInChildren<BackpackView>(), ct);
 
@@ -266,8 +264,7 @@ namespace DCL.PluginSystem.Global
                     cameraReelView.CameraReelOptionsButton,
                     webBrowser, decentralandUrlsSource, inputHandler, systemClipboard,
                     new ReelGalleryStringMessages(settings.CameraReelGalleryShareToXMessage, settings.PhotoSuccessfullyDeletedMessage, settings.PhotoSuccessfullyUpdatedMessage, settings.PhotoSuccessfullyDownloadedMessage, settings.LinkCopiedMessage),
-                    mvcManager,
-                    contextMenuConfig),
+                    mvcManager),
                 cameraReelStorageService,
                 web3IdentityCache,
                 mvcManager,
@@ -335,8 +332,6 @@ namespace DCL.PluginSystem.Global
             public int ThumbnailHeight { get; private set; }
             [field: SerializeField]
             public int ThumbnailWidth { get; private set; }
-
-            [field: SerializeField] internal AssetReferenceT<GenericContextMenuConfig> ContextMenuConfig { get; private set; }
 
             public IReadOnlyCollection<URN> EmbeddedEmotesAsURN() =>
                 EmbeddedEmotes.Select(s => new URN(s)).ToArray();

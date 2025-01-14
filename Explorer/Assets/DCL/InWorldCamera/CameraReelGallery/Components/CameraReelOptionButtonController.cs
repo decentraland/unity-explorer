@@ -14,9 +14,9 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
         private readonly CameraReelOptionButtonView view;
         private readonly RectTransform buttonRectTransform;
         private readonly IMVCManager mvcManager;
-        private readonly GenericContextMenuConfig contextMenuConfig;
-        private readonly Dictionary<ContextMenuControlSettings, Delegate> controlsActions;
+        private readonly GenericContextMenu contextMenu;
         private readonly Dictionary<ContextMenuControlSettings, object> initialValues = new ();
+        private readonly ToggleContextMenuControlSettings publicToggleSettings;
 
         public event Action? Hide;
 
@@ -31,24 +31,21 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
         private UniTaskCompletionSource closeContextMenuTask;
 
         public CameraReelOptionButtonController(CameraReelOptionButtonView view,
-            IMVCManager mvcManager,
-            GenericContextMenuConfig contextMenuConfig)
+            IMVCManager mvcManager)
         {
             this.view = view;
             this.mvcManager = mvcManager;
-            this.contextMenuConfig = contextMenuConfig;
             this.buttonRectTransform = view.GetComponent<RectTransform>();
 
             this.view.optionButton.onClick.AddListener(OnOptionClicked);
 
-            controlsActions = new ()
-            {
-                { this.view.publicControl, new Action<bool>(toggleValue => SetPublicRequested?.Invoke(currentReelData, toggleValue)) },
-                { this.view.shareControl, new Action(() => ShareToXRequested?.Invoke(currentReelData)) },
-                { this.view.copyControl, new Action(() => CopyPictureLinkRequested?.Invoke(currentReelData)) },
-                { this.view.downloadControl, new Action(() => DownloadRequested?.Invoke(currentReelData)) },
-                { this.view.deleteControl, new Action(() => DeletePictureRequested?.Invoke(currentReelData)) },
-            };
+            contextMenu = new GenericContextMenu()
+               .AddControl(publicToggleSettings = new ToggleContextMenuControlSettings(view.publicToggleText, toggleValue => SetPublicRequested?.Invoke(currentReelData, toggleValue)))
+               .AddControl(new SeparatorContextMenuControlSettings())
+               .AddControl(new ButtonContextMenuControlSettings(view.shareButtonText, view.shareButtonSprite, () => ShareToXRequested?.Invoke(currentReelData)))
+               .AddControl(new ButtonContextMenuControlSettings(view.copyButtonText, view.copyButtonSprite, () => CopyPictureLinkRequested?.Invoke(currentReelData)))
+               .AddControl(new ButtonContextMenuControlSettings(view.downloadButtonText, view.downloadButtonSprite, () => DownloadRequested?.Invoke(currentReelData)))
+               .AddControl(new ButtonContextMenuControlSettings(view.deleteButtonText, view.deleteButtonSprite, () => DeletePictureRequested?.Invoke(currentReelData)));
         }
 
         public bool IsContextMenuOpen() => isContextMenuOpen;
@@ -59,7 +56,7 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
             view.transform.localPosition = offsetPosition;
             view.gameObject.SetActive(true);
             currentReelData = cameraReelResponse;
-            initialValues[view.publicControl] = cameraReelResponse.isPublic;
+            initialValues[publicToggleSettings] = cameraReelResponse.isPublic;
             closeContextMenuTask = new UniTaskCompletionSource();
         }
 
@@ -74,7 +71,7 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
         private void OnOptionClicked()
         {
             mvcManager.ShowAsync(GenericContextMenuController.IssueCommand(
-                new GenericContextMenuParameter(contextMenuConfig, controlsActions, buttonRectTransform.position,
+                new GenericContextMenuParameter(contextMenu, buttonRectTransform.position,
                     actionOnShow: () => isContextMenuOpen = true,
                     actionOnHide: () =>
                     {

@@ -3,23 +3,26 @@ using UnityEngine;
 
 namespace DCL.UI.GenericContextMenu.Controls.Configs
 {
-    [CreateAssetMenu(fileName = "GenericContextMenuSettings", menuName = "SO/ContextMenu/Components/ButtonContextMenuControlSettings")]
-    [Serializable]
     public class ButtonContextMenuControlSettings : ContextMenuControlSettings
     {
-        [SerializeField] private string buttonText;
-        [SerializeField] private Sprite buttonIcon;
-        [SerializeField] private RectOffset horizontalLayoutPadding;
-        [SerializeField] private int horizontalLayoutSpacing;
-        [SerializeField] private bool horizontalLayoutReverseArrangement;
+        internal readonly string buttonText;
+        internal readonly Sprite buttonIcon;
+        internal readonly RectOffset horizontalLayoutPadding;
+        internal readonly int horizontalLayoutSpacing;
+        internal readonly bool horizontalLayoutReverseArrangement;
 
-        public string ButtonText => buttonText;
-        public Sprite ButtonIcon => buttonIcon;
-        public RectOffset HorizontalLayoutPadding => horizontalLayoutPadding;
-        public bool HorizontalLayoutReverseArrangement => horizontalLayoutReverseArrangement;
-        public int HorizontalLayoutSpacing => horizontalLayoutSpacing;
-
-        private void OnEnable() =>
-            controlTypeType = ContextMenuControlTypes.BUTTON_WITH_TEXT_AND_ICON;
+        /// <summary>
+        ///     Button component settings for the context menu.
+        ///     horizontalLayoutPadding has the default value of (8, 8, 0, 0).
+        /// </summary>
+        public ButtonContextMenuControlSettings(string buttonText, Sprite buttonIcon, Action clickAction, RectOffset horizontalLayoutPadding = null, int horizontalLayoutSpacing = 10, bool horizontalLayoutReverseArrangement = false)
+        {
+            this.buttonText = buttonText;
+            this.buttonIcon = buttonIcon;
+            this.horizontalLayoutPadding = horizontalLayoutPadding ?? new RectOffset(8, 8, 0, 0);
+            this.horizontalLayoutSpacing = horizontalLayoutSpacing;
+            this.horizontalLayoutReverseArrangement = horizontalLayoutReverseArrangement;
+            this.callback = clickAction;
+        }
     }
 }

@@ -64,32 +64,28 @@ namespace DCL.UI.GenericContextMenu
         {
             float totalHeight = 0;
 
-            for (var i = 0; i < inputData.Config.ContextMenuSettings.Count; i++)
+            for (var i = 0; i < inputData.Config.contextMenuSettings.Count; i++)
             {
-                ContextMenuControlSettings config = inputData.Config.ContextMenuSettings[i];
+                ContextMenuControlSettings config = inputData.Config.contextMenuSettings[i];
                 object controlInitialValue = null;
                 inputData.InitialValues?.TryGetValue(config, out controlInitialValue);
 
                 GenericContextMenuComponentBase component = controlsPoolManager.GetContextMenuComponent(config, controlInitialValue, i);
 
-                if (inputData.ControlsActions.TryGetValue(config, out Delegate action))
-                {
-                    component.RegisterListener(action);
-                    component.RegisterCloseListener(TriggerContextMenuClose);
-                }
+                component.RegisterCloseListener(TriggerContextMenuClose);
 
                 totalHeight += component!.RectTransformComponent.rect.height;
             }
 
-            viewInstance!.ControlsLayoutGroup.spacing = inputData.Config.ElementsSpacing;
-            viewInstance!.ControlsLayoutGroup.padding = inputData.Config.VerticalLayoutPadding;
-            viewInstance.ControlsContainer.sizeDelta = new Vector2(inputData.Config.Width,
+            viewInstance!.ControlsLayoutGroup.spacing = inputData.Config.elementsSpacing;
+            viewInstance!.ControlsLayoutGroup.padding = inputData.Config.verticalLayoutPadding;
+            viewInstance.ControlsContainer.sizeDelta = new Vector2(inputData.Config.width,
                 totalHeight
                 + viewInstance!.ControlsLayoutGroup.padding.bottom
                 + viewInstance!.ControlsLayoutGroup.padding.top
-                + (viewInstance!.ControlsLayoutGroup.spacing * (inputData.Config.ContextMenuSettings.Count - 1)));
+                + (viewInstance!.ControlsLayoutGroup.spacing * (inputData.Config.contextMenuSettings.Count - 1)));
 
-            viewInstance!.ControlsContainer.localPosition = GetControlsPosition(inputData.AnchorPosition, inputData.Config.OffsetFromTarget, inputData.OverlapRect);
+            viewInstance!.ControlsContainer.localPosition = GetControlsPosition(inputData.AnchorPosition, inputData.Config.offsetFromTarget, inputData.OverlapRect);
         }
 
         private Vector2 GetOffsetByDirection(ContextMenuOpenDirection direction, Vector2 offsetFromTarget)

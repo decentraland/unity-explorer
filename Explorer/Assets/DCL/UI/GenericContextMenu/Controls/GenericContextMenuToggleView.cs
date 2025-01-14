@@ -13,12 +13,13 @@ namespace DCL.UI.GenericContextMenu.Controls
 
         public override void Configure(ToggleContextMenuControlSettings settings, object initialValue)
         {
-            TextComponent.SetText(settings!.ToggleText);
-            HorizontalLayoutComponent.padding = settings.HorizontalLayoutPadding;
-            HorizontalLayoutComponent.spacing = settings.HorizontalLayoutSpacing;
-            HorizontalLayoutComponent.reverseArrangement = settings.HorizontalLayoutReverseArrangement;
+            TextComponent.SetText(settings!.toggleText);
+            HorizontalLayoutComponent.padding = settings.horizontalLayoutPadding;
+            HorizontalLayoutComponent.spacing = settings.horizontalLayoutSpacing;
+            HorizontalLayoutComponent.reverseArrangement = settings.horizontalLayoutReverseArrangement;
             ToggleComponent.Toggle.isOn = initialValue != null && (bool)initialValue;
             ToggleComponent.SetToggleGraphics(ToggleComponent.Toggle.isOn);
+            RegisterListener(settings.callback);
         }
 
         public override void UnregisterListeners() =>

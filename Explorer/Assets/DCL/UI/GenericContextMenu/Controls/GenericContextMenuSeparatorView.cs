@@ -11,11 +11,11 @@ namespace DCL.UI.GenericContextMenu.Controls
 
         public override void Configure(SeparatorContextMenuControlSettings settings, object initialValue)
         {
-            LayoutElementComponent.preferredHeight = settings!.Height;
-            LayoutElementComponent.minHeight = settings.Height;
-            HorizontalLayoutComponent.padding.left = settings.LeftPadding;
-            HorizontalLayoutComponent.padding.right = settings.RightPadding;
-            RectTransformComponent.sizeDelta = new Vector2(RectTransformComponent.sizeDelta.x, settings.Height);
+            LayoutElementComponent.preferredHeight = settings!.height;
+            LayoutElementComponent.minHeight = settings.height;
+            HorizontalLayoutComponent.padding.left = settings.leftPadding;
+            HorizontalLayoutComponent.padding.right = settings.rightPadding;
+            RectTransformComponent.sizeDelta = new Vector2(RectTransformComponent.sizeDelta.x, settings.height);
         }
 
         public override void UnregisterListeners() { }

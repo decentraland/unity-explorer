@@ -1490,10 +1490,6 @@ PrefabInstance:
       propertyPath: m_Name
       value: OptionButton
       objectReference: {fileID: 0}
-    - target: {fileID: 4051113445585127458, guid: 4995a4307ab5b445c8a0c9123af8e343, type: 3}
-      propertyPath: m_IsActive
-      value: 0
-      objectReference: {fileID: 0}
     - target: {fileID: 4704582517862536994, guid: 4995a4307ab5b445c8a0c9123af8e343, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -1574,26 +1570,6 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 7979901938051434274, guid: 4995a4307ab5b445c8a0c9123af8e343, type: 3}
-      propertyPath: <copyControl>k__BackingField
-      value: 
-      objectReference: {fileID: 11400000, guid: db49cac2faca44598a924e1c56690e0c, type: 2}
-    - target: {fileID: 7979901938051434274, guid: 4995a4307ab5b445c8a0c9123af8e343, type: 3}
-      propertyPath: <shareControl>k__BackingField
-      value: 
-      objectReference: {fileID: 11400000, guid: 5c0c78cadc79d4af0815be75aa67b027, type: 2}
-    - target: {fileID: 7979901938051434274, guid: 4995a4307ab5b445c8a0c9123af8e343, type: 3}
-      propertyPath: <deleteControl>k__BackingField
-      value: 
-      objectReference: {fileID: 11400000, guid: a1abe3dafbc2143d8949b174e3c6c235, type: 2}
-    - target: {fileID: 7979901938051434274, guid: 4995a4307ab5b445c8a0c9123af8e343, type: 3}
-      propertyPath: <publicControl>k__BackingField
-      value: 
-      objectReference: {fileID: 11400000, guid: 63b9ee24ad69145e9becb7da653bdb4a, type: 2}
-    - target: {fileID: 7979901938051434274, guid: 4995a4307ab5b445c8a0c9123af8e343, type: 3}
-      propertyPath: <downloadControl>k__BackingField
-      value: 
-      objectReference: {fileID: 11400000, guid: 3ad489cd996154c1cad21a0856ed86bc, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

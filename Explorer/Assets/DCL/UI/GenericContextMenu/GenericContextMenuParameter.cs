@@ -1,5 +1,4 @@
 using Cysharp.Threading.Tasks;
-using DCL.UI.GenericContextMenu.Controls;
 using DCL.UI.GenericContextMenu.Controls.Configs;
 using System;
 using System.Collections.Generic;
@@ -9,8 +8,7 @@ namespace DCL.UI.GenericContextMenu
 {
     public struct GenericContextMenuParameter
     {
-        public readonly GenericContextMenuConfig Config;
-        public readonly Dictionary<ContextMenuControlSettings, Delegate> ControlsActions;
+        public readonly Controls.Configs.GenericContextMenu Config;
         public readonly Vector2 AnchorPosition;
         public readonly Rect? OverlapRect;
         public readonly Action? ActionOnShow;
@@ -18,8 +16,7 @@ namespace DCL.UI.GenericContextMenu
         public readonly UniTask? CloseTask;
         public readonly Dictionary<ContextMenuControlSettings, object>? InitialValues;
 
-        public GenericContextMenuParameter(GenericContextMenuConfig config,
-            Dictionary<ContextMenuControlSettings, Delegate> controlsActions,
+        public GenericContextMenuParameter(Controls.Configs.GenericContextMenu config,
             Vector2 anchorPosition,
             Rect? overlapRect = null,
             Action? actionOnShow = null,
@@ -28,7 +25,6 @@ namespace DCL.UI.GenericContextMenu
             Dictionary<ContextMenuControlSettings, object>? initialValues = null)
         {
             this.Config = config;
-            this.ControlsActions = controlsActions;
             this.AnchorPosition = anchorPosition;
             this.OverlapRect = overlapRect;
             this.ActionOnShow = actionOnShow;

@@ -15,11 +15,12 @@ namespace DCL.UI.GenericContextMenu.Controls
 
         public override void Configure(ButtonContextMenuControlSettings settings, object initialValue)
         {
-            TextComponent.SetText(settings!.ButtonText);
-            ImageComponent.sprite = settings.ButtonIcon;
-            HorizontalLayoutComponent.padding = settings.HorizontalLayoutPadding;
-            HorizontalLayoutComponent.spacing = settings.HorizontalLayoutSpacing;
-            HorizontalLayoutComponent.reverseArrangement = settings.HorizontalLayoutReverseArrangement;
+            TextComponent.SetText(settings!.buttonText);
+            ImageComponent.sprite = settings.buttonIcon;
+            HorizontalLayoutComponent.padding = settings.horizontalLayoutPadding;
+            HorizontalLayoutComponent.spacing = settings.horizontalLayoutSpacing;
+            HorizontalLayoutComponent.reverseArrangement = settings.horizontalLayoutReverseArrangement;
+            RegisterListener(settings.callback);
         }
 
         public override void UnregisterListeners() =>

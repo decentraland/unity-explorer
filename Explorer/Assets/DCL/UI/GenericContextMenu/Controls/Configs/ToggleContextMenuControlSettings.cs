@@ -3,21 +3,24 @@ using UnityEngine;
 
 namespace DCL.UI.GenericContextMenu.Controls.Configs
 {
-    [CreateAssetMenu(fileName = "GenericContextMenuSettings", menuName = "SO/ContextMenu/Components/ToggleContextMenuControlSettings")]
-    [Serializable]
     public class ToggleContextMenuControlSettings : ContextMenuControlSettings
     {
-        [SerializeField] private string toggleText;
-        [SerializeField] private RectOffset horizontalLayoutPadding;
-        [SerializeField] private int horizontalLayoutSpacing;
-        [SerializeField] private bool horizontalLayoutReverseArrangement;
+        internal readonly string toggleText;
+        internal readonly RectOffset horizontalLayoutPadding;
+        internal readonly int horizontalLayoutSpacing;
+        internal readonly bool horizontalLayoutReverseArrangement;
 
-        public string ToggleText => toggleText;
-        public RectOffset HorizontalLayoutPadding => horizontalLayoutPadding;
-        public bool HorizontalLayoutReverseArrangement => horizontalLayoutReverseArrangement;
-        public int HorizontalLayoutSpacing => horizontalLayoutSpacing;
-
-        private void OnEnable() =>
-            controlTypeType = ContextMenuControlTypes.TOGGLE_WITH_TEXT;
+        /// <summary>
+        ///     Toggle component settings for the context menu.
+        ///     horizontalLayoutPadding has the default value of (8, 8, 0, 0).
+        /// </summary>
+        public ToggleContextMenuControlSettings(string toggleText, Action<bool> toggleAction, RectOffset horizontalLayoutPadding = null, int horizontalLayoutSpacing = 30, bool horizontalLayoutReverseArrangement = false)
+        {
+            this.toggleText = toggleText;
+            this.horizontalLayoutPadding = horizontalLayoutPadding ?? new RectOffset(8, 8, 0, 0);
+            this.horizontalLayoutSpacing = horizontalLayoutSpacing;
+            this.horizontalLayoutReverseArrangement = horizontalLayoutReverseArrangement;
+            this.callback = toggleAction;
+        }
     }
 }
