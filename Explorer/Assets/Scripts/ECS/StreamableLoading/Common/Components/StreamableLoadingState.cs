@@ -40,7 +40,20 @@ namespace ECS.StreamableLoading.Common.Components
             Finished,
         }
 
-        private static readonly ObjectPool<StreamableLoadingState> POOL = new (() => new StreamableLoadingState(), collectionCheck: PoolConstants.CHECK_COLLECTIONS,
+        private static readonly ObjectPool<StreamableLoadingState> POOL = new (() => new StreamableLoadingState(),
+            actionOnGet: state =>
+            {
+                state.disposed = false;
+                state.Value = Status.NotStarted;
+            },
+            actionOnRelease: state =>
+            {
+                state.DisposeBudgetIfExists();
+
+                state.PartialDownloadingData?.Dispose();
+                state.PartialDownloadingData = null;
+            },
+            collectionCheck: PoolConstants.CHECK_COLLECTIONS,
             defaultCapacity: PoolConstants.ASSET_PROMISES_PER_SCENE_COUNT / 2, maxSize: PoolConstants.ASSET_PROMISES_PER_SCENE_COUNT);
 
         public static StreamableLoadingState Create() =>
@@ -140,11 +153,6 @@ namespace ECS.StreamableLoading.Common.Components
             if (disposed) return;
 
             disposed = true;
-
-            DisposeBudgetIfExists();
-
-            PartialDownloadingData?.Dispose();
-            PartialDownloadingData = null;
 
             POOL.Release(this);
         }

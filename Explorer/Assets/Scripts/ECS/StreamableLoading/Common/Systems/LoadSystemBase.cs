@@ -183,6 +183,8 @@ namespace ECS.StreamableLoading.Common.Systems
             // don't do it for partial requests
             intention.RemoveCurrentSource();
 
+            World.Set(entity, intention);
+
             if (result.HasValue)
                 ApplyLoadedResult(entity, state, intention, result, source);
             else if (intention.IsCancelled())
