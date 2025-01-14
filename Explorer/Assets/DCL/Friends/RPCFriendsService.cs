@@ -117,7 +117,7 @@ namespace DCL.Friends
             return new PaginatedFriendsResult(profiles!, allFriendsBuffer.Count);
         }
 
-        public async UniTask<FriendshipStatus> GetFriendshipStatus(string userId, CancellationToken ct)
+        public async UniTask<FriendshipStatus> GetFriendshipStatusAsync(string userId, CancellationToken ct)
         {
             // TODO: add support to this query at server side instead of fetching all the data separately
             await EnsureRpcConnectionAsync(ct);
