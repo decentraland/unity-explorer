@@ -5,6 +5,7 @@ using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.Culling;
 using DCL.MapRenderer.MapLayers;
 using DCL.MapRenderer.MapLayers.Pins;
+using DCL.Navmap;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -14,8 +15,6 @@ namespace DCL.MapRenderer.ComponentsFactory
 {
     internal struct PinMarkerInstaller
     {
-        private const int PREWARM_COUNT = 60;
-
         private IAssetsProvisioner assetsProvisioner;
         private IMapRendererSettings mapSettings;
 
@@ -29,6 +28,7 @@ namespace DCL.MapRenderer.ComponentsFactory
             IAssetsProvisioner assetProv,
             IMapPathEventBus mapPathEventBus,
             IMapPinsEventBus mapPinsEventBus,
+            INavmapBus navmapBus,
             CancellationToken cancellationToken)
         {
             mapSettings = settings;
@@ -37,7 +37,6 @@ namespace DCL.MapRenderer.ComponentsFactory
 
             var objectsPool = new ObjectPool<PinMarkerObject>(
                 () => CreatePoolMethod(configuration, prefab, coordsUtils),
-                defaultCapacity: PREWARM_COUNT,
                 actionOnGet: obj => obj.gameObject.SetActive(true),
                 actionOnRelease: obj => obj.gameObject.SetActive(false));
 
@@ -48,7 +47,8 @@ namespace DCL.MapRenderer.ComponentsFactory
                 coordsUtils,
                 cullingController,
                 mapPathEventBus,
-                mapPinsEventBus
+                mapPinsEventBus,
+                navmapBus
             );
 
             writer.Add(MapLayer.Pins, controller);

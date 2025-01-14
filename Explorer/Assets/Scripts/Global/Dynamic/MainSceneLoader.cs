@@ -5,6 +5,7 @@ using Cysharp.Threading.Tasks;
 using DCL.ApplicationVersionGuard;
 using DCL.Audio;
 using DCL.AuthenticationScreenFlow;
+using DCL.Browser.DecentralandUrls;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.Input.Component;
@@ -15,7 +16,13 @@ using DCL.PluginSystem.Global;
 using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
+using DCL.Web3.Accounts.Factory;
+using DCL.Web3.Identities;
+using DCL.WebRequests;
+using DCL.WebRequests.Analytics;
 using Global.AppArgs;
+using Global.Dynamic.RealmUrl;
+using Global.Dynamic.RealmUrl.Names;
 using MVC;
 using Plugins.TexturesFuse.TexturesServerWrap.CompressShaders;
 using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
@@ -125,10 +132,23 @@ namespace Global.Dynamic
             World world = World.Create();
 
             var splashScreen = new SplashScreen(splashScreenAnimation, splashRoot, debugSettings.ShowSplash, splashScreenText);
+            var decentralandUrlsSource = new DecentralandUrlsSource(settings.DecentralandEnvironment, launchSettings.IsLocalSceneDevelopmentRealm);
+
+            var texturesFuse = TextureFuseFactory();
+
+            var web3AccountFactory = new Web3AccountFactory();
+            var identityCache = new IWeb3IdentityCache.Default(web3AccountFactory);
+            var debugContainerBuilder = DebugUtilitiesContainer.Create(debugViewsCatalog, applicationParametersParser.HasDebugFlag()).Builder;
+            var staticSettings = (globalPluginSettingsContainer as IPluginSettingsContainer).GetSettings<StaticSettings>();
+            var webRequestsContainer = WebRequestsContainer.Create(identityCache, texturesFuse, debugContainerBuilder, staticSettings.WebRequestsBudget, compressionEnabled);
+            var realmUrls = new RealmUrls(launchSettings, new RealmNamesMap(webRequestsContainer.WebRequestController), decentralandUrlsSource);
 
             bootstrapContainer = await BootstrapContainer.CreateAsync(
                 debugSettings,
                 sceneLoaderSettings: settings,
+                decentralandUrlsSource,
+                webRequestsContainer,
+                identityCache,
                 globalPluginSettingsContainer,
                 launchSettings,
                 applicationParametersParser,
@@ -136,6 +156,7 @@ namespace Global.Dynamic
                 compressShaders
                    .WithSplashScreen(splashScreen, hideOnFinish: false)
                    .WithLog("Load Guard"),
+                realmUrls,
                 world,
                 destroyCancellationToken
             );
@@ -148,7 +169,7 @@ namespace Global.Dynamic
 
                 bool isLoaded;
                 Entity playerEntity = world.Create(new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY));
-                (staticContainer, isLoaded) = await bootstrap.LoadStaticContainerAsync(bootstrapContainer, globalPluginSettingsContainer, debugViewsCatalog, playerEntity, TextureFuseFactory(), compressionEnabled, memoryCap, ct);
+                (staticContainer, isLoaded) = await bootstrap.LoadStaticContainerAsync(bootstrapContainer, globalPluginSettingsContainer, debugContainerBuilder, playerEntity, TextureFuseFactory(), memoryCap, ct);
 
                 if (!isLoaded)
                 {
@@ -157,8 +178,10 @@ namespace Global.Dynamic
                 }
 
                 bootstrap.InitializePlayerEntity(staticContainer!, playerEntity);
+
                 await bootstrap.InitializeFeatureFlagsAsync(bootstrapContainer.IdentityCache!.Identity,
                     bootstrapContainer.DecentralandUrlsSource, staticContainer!, ct);
+
                 bootstrap.ApplyFeatureFlagConfigs(staticContainer!.FeatureFlagsCache);
 
                 (dynamicWorldContainer, isLoaded) = await bootstrap.LoadDynamicWorldContainerAsync(bootstrapContainer, staticContainer!, scenePluginSettingsContainer, settings,
@@ -261,7 +284,6 @@ namespace Global.Dynamic
             // We restore all inputs except EmoteWheel and FreeCamera as they should be disabled by default
             staticContainer!.InputBlock.EnableAll(InputMapComponent.Kind.FREE_CAMERA,
                 InputMapComponent.Kind.EMOTE_WHEEL);
-
         }
 
         [ContextMenu(nameof(ValidateSettingsAsync))]

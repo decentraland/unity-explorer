@@ -88,7 +88,7 @@ namespace ECS.StreamableLoading.DeferredLoading
                 loadingIntentions[i].State.Forbid();
         }
 
-        public override void Dispose()
+        protected override void OnDispose()
         {
             ListPool<IntentionData>.Release(loadingIntentions);
         }

@@ -43,12 +43,6 @@ namespace DCL.SDKComponents.AudioSources.Tests
             return new StartAudioSourceLoadingSystem(world, sceneData, concurrentBudgetProvider);
         }
 
-        [TearDown]
-        public void TearDown()
-        {
-            system.Dispose();
-        }
-
         [Test]
         public void CreateAudioSourceComponentForPBAudioSource()
         {
