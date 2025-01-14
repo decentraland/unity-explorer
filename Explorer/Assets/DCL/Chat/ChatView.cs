@@ -75,6 +75,28 @@ namespace DCL.Chat
 
         private CancellationTokenSource cts;
 
+        /// <summary>
+        /// Gets whether the scroll view is showing the bottom of the content, and it can't scroll down anymore.
+        /// </summary>
+        public bool IsScrollAtBottom
+        {
+            get
+            {
+                return LoopList.ScrollRect.normalizedPosition.y <= 0.0f;
+            }
+        }
+
+        /// <summary>
+        /// Gets whether the scroll view is showing the top of the content, and it can't scroll up anymore.
+        /// </summary>
+        public bool IsScrollAtTop
+        {
+            get
+            {
+                return LoopList.ScrollRect.normalizedPosition.y >= 1.0f;
+            }
+        }
+
         private void Start()
         {
             PanelBackgroundCanvasGroup.alpha = 0;

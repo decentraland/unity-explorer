@@ -677,7 +677,7 @@ MonoBehaviour:
   m_Content: {fileID: 6334738306198345799}
   m_Horizontal: 0
   m_Vertical: 1
-  m_MovementType: 1
+  m_MovementType: 2
   m_Elasticity: 0.1
   m_Inertia: 1
   m_DecelerationRate: 0.135
@@ -721,9 +721,13 @@ MonoBehaviour:
     mPadding: 4
     mInitCreateCount: 2
     mStartPosOffset: 0
+  - mItemPrefab: {fileID: 3037775903470383268, guid: 1e231bb5ba7d5954c9d0a90ec3f8fe86, type: 3}
+    mPadding: 4
+    mInitCreateCount: 2
+    mStartPosOffset: 0
   mArrangeType: 1
   mSupportScrollBar: 1
-  mItemSnapEnable: 1
+  mItemSnapEnable: 0
   mViewPortSnapPivot: {x: 0, y: 0}
   mItemSnapPivot: {x: 0, y: 0}
 --- !u!1 &8242090098976053527
@@ -829,7 +833,7 @@ RectTransform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
+  m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 6252910912605816960}
   - {fileID: 6423328223121998152}

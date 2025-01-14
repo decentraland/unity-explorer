@@ -351,11 +351,8 @@ namespace DCL.Chat
             LoopListViewItem2 item;
 
             if (itemData.IsPaddingElement)
-                item = listView.NewListViewItem(listView.ItemPrefabDataList[2].mItemPrefab.name);
             else
             {
-                item = listView.NewListViewItem(itemData.SystemMessage ? listView.ItemPrefabDataList[3].mItemPrefab.name :
-                    itemData.SentByOwnUser ? listView.ItemPrefabDataList[1].mItemPrefab.name : listView.ItemPrefabDataList[0].mItemPrefab.name);
 
                 ChatEntryView itemScript = item!.GetComponent<ChatEntryView>()!;
                 SetItemData(index, itemData, itemScript);
@@ -501,7 +498,23 @@ namespace DCL.Chat
             viewInstance!.ResetChatEntriesFadeout();
 
             viewInstance.LoopList.SetListItemCount(chatHistory.Messages.Count, false);
-            viewInstance.LoopList.MovePanelToItemIndex(0, 0);
+
+            if (viewInstance.IsScrollAtBottom)
+            {
+                viewInstance.LoopList.MovePanelToItemIndex(0, 0);
+            }
+            else
+            {
+                viewInstance.LoopList.RefreshAllShownItem();
+
+                // When the scroll view is not at the bottom, chat messages should not move if a new message is added
+                // An offset has to be applied to the scroll view in order to prevent messages from moving
+                LoopListViewItem2 addedItem = viewInstance.LoopList.GetShownItemByIndex(1);
+                float offsetToPreventScrollViewMovement = -addedItem.ItemSize - addedItem.Padding;
+                viewInstance.LoopList.MovePanelByOffset(offsetToPreventScrollViewMovement);
+
+                // Known issue: When the scroll view is at the top, the scroll view moves a bit downwards
+            }
         }
 
         private void GenerateChatBubbleComponent(Entity e, ChatMessage chatMessage)
@@ -519,7 +532,7 @@ namespace DCL.Chat
 
         public override void Dispose()
         {
-            chatMessagesBus.MessageAdded -= CreateChatEntry;
+            chatMessagesBus.MessageAdded -= OnMessageAdded;
             chatHistory.OnMessageAdded -= CreateChatEntry;
             chatHistory.OnCleared -= ChatHistoryOnOnCleared;
 
