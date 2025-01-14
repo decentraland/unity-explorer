@@ -1,3 +1,4 @@
+using DCL.AvatarRendering.Loading.DTO;
 using System.Collections.Generic;
 
 namespace DCL.AvatarRendering.Loading
@@ -21,4 +22,6 @@ namespace DCL.AvatarRendering.Loading
 
         IReadOnlyList<ElementIndividualDataDto> IndividualData { get; }
     }
+
+    public interface IBuilderLambdaResponse { }
 }

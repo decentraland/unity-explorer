@@ -67,7 +67,7 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
                         )
                     );
 
-                UnityEngine.Debug.Log($"PRAVS - builder lambda response DATA is NULL? {lambdaResponse.data[0]?.data == null}");
+                // UnityEngine.Debug.Log($"PRAVS - builder lambda response DATA is NULL? {lambdaResponse.data[0]?.data == null}");
                 // await using (await ExecuteOnThreadPoolScope.NewScopeWithReturnOnMainThreadAsync())
                 //     Load(ref intention, lambdaResponse);
             }
@@ -90,23 +90,6 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
             }
 
             return new StreamableLoadingResult<TAsset>(AssetFromPreparedIntention(in intention));
-        }
-
-        // TODO: Move somewhere else...
-        [Serializable]
-        public class BuilderLambdaResponse
-        {
-            [Serializable]
-            public class Data
-            {
-                public string id;
-                public string name;
-                public string description;
-                public AvatarAttachmentDTO.DataBase data;
-            }
-
-            public bool ok;
-            public List<Data> data;
         }
 
         private void Load<TResponseElement>(ref TIntention intention, IAttachmentLambdaResponse<TResponseElement> lambdaResponse) where TResponseElement: ILambdaResponseElement<TAvatarElementDTO>
@@ -143,7 +126,10 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
         }
 
         protected abstract UniTask<IAttachmentLambdaResponse<ILambdaResponseElement<TAvatarElementDTO>>> ParsedResponseAsync(GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> adapter);
-        protected abstract UniTask<BuilderLambdaResponse> ParsedBuilderResponseAsync(GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> adapter);
+
+        // protected abstract UniTask<WearableDTO.BuilderLambdaResponse> ParsedBuilderResponseAsync(GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> adapter);
+        // protected abstract UniTask<IBuilderLambdaResponse<IBuilderLambdaResponse<IBuilderLambdaResponseElement>>> ParsedBuilderResponseAsync(GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> adapter);
+        protected abstract UniTask<IBuilderLambdaResponse> ParsedBuilderResponseAsync(GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> adapter);
 
         protected abstract TAsset AssetFromPreparedIntention(in TIntention intention);
 

@@ -50,5 +50,30 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             [JsonIgnore]
             public IReadOnlyList<ElementIndividualDataDto> IndividualData => individualData;
         }
+
+        [Serializable]
+        public class BuilderLambdaResponse : IBuilderLambdaResponse
+        {
+            /*[Serializable]
+            public class Data
+            {
+                public string id;
+                public string name;
+                public string description;
+                public DataBase data;
+            }
+            public bool ok;
+            public List<Data> data;*/
+
+            public bool ok;
+            // public List<BuilderLambdaResponseElementDto> data;
+            public List<BuilderWearableMetadataDto> data;
+        }
+
+        [Serializable]
+        public class BuilderWearableMetadataDto : WearableMetadataDto
+        {
+            public Dictionary<string, string> content;
+        }
     }
 }

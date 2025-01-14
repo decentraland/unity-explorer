@@ -5,6 +5,7 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Loading;
 using DCL.AvatarRendering.Loading.Systems.Abstract;
+using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
 using DCL.WebRequests;
 using ECS;
@@ -27,8 +28,8 @@ namespace DCL.AvatarRendering.Emotes.Load
         protected override async UniTask<IAttachmentLambdaResponse<ILambdaResponseElement<EmoteDTO>>> ParsedResponseAsync(GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> adapter) =>
             await adapter.CreateFromJson<LambdaOwnedEmoteElementList>(WRJsonParser.Unity);
 
-        protected override async UniTask<BuilderLambdaResponse> ParsedBuilderResponseAsync(GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> adapter) =>
-            await adapter.CreateFromJson<BuilderLambdaResponse>(WRJsonParser.Unity);
+        protected override async UniTask<IBuilderLambdaResponse> ParsedBuilderResponseAsync(GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> adapter) =>
+            await adapter.CreateFromJson<WearableDTO.BuilderLambdaResponse>(WRJsonParser.Unity);
 
         protected override EmotesResolution AssetFromPreparedIntention(in GetOwnedEmotesFromRealmIntention intention) =>
             new (intention.Result, intention.TotalAmount);
