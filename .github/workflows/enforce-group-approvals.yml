@@ -16,7 +16,7 @@ jobs:
         with:
           script: |
             // Define the team slugs
-            const QA_TEAM = 'qa';
+            const QA_TEAM = 'QA';
             const DEV_TEAM = 'explorer-devs';
 
             // Fetch team members dynamically
