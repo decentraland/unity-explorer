@@ -14,12 +14,14 @@ namespace DCL.AvatarRendering.Loading.Assets
         public readonly AttachmentRegularAsset OriginalAsset;
         public readonly GameObject Instance;
         public readonly List<Renderer> Renderers;
+        public readonly bool bOutlineCompatible;
 
-        public CachedAttachment(AttachmentRegularAsset originalAsset, GameObject instance)
+        public CachedAttachment(AttachmentRegularAsset originalAsset, GameObject instance, bool _bOutlineCompatible)
         {
             OriginalAsset = originalAsset;
             Instance = instance;
             Renderers = new List<Renderer>();
+            bOutlineCompatible = _bOutlineCompatible;
 
             ProfilingCounters.CachedWearablesAmount.Value++;
         }

@@ -6,6 +6,7 @@ using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Character.Components;
 using DCL.CharacterCamera;
 using DCL.ECSComponents;
+using DCL.Rendering.Avatar;
 using ECS.Abstract;
 using System.Runtime.CompilerServices;
 using UnityEngine;
@@ -32,6 +33,38 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             UpdateMainPlayerAvatarVisibilityOnCameraDistanceQuery(World);
             UpdateNonPlayerAvatarVisibilityOnCameraDistanceQuery(World);
             UpdateAvatarsVisibilityStateQuery(World);
+            GetAvatarsVisibleWithOutlineQuery(World);
+        }
+
+        public bool IsVisibleInCamera(Camera camera, Renderer renderer)
+        {
+            Plane[] planes = GeometryUtility.CalculateFrustumPlanes(camera);
+            return GeometryUtility.TestPlanesAABB(planes, renderer.bounds);
+        }
+
+        public bool IsWithinCameraDistance(Camera camera, Transform objectTransform, float maxDistance)
+        {
+            float distance = Vector3.Distance(camera.transform.position, objectTransform.position);
+            return distance <= maxDistance;
+        }
+
+        [Query]
+        private void GetAvatarsVisibleWithOutline(in AvatarBase avatarBase, ref AvatarShapeComponent avatarShape, ref AvatarCachedVisibilityComponent avatarCachedVisibility)
+        {
+            if (IsWithinCameraDistance(camera.GetCameraComponent(World).Camera, avatarBase.HeadAnchorPoint, 8.0f))
+            {
+                foreach (var avs in avatarShape.InstantiatedWearables)
+                {
+                    if (avs.bOutlineCompatible)
+                    {
+                        foreach (var rend in avs.Renderers)
+                        {
+                            if (IsVisibleInCamera(camera.GetCameraComponent(World).Camera, rend))
+                                OutlineRendererFeature.m_OutlineRenderers.Add(rend);
+                        }
+                    }
+                }
+            }
         }
 
         [Query]
