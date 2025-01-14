@@ -12,12 +12,11 @@ namespace SceneRuntime.Factory
 
         public IEnumerator<string> GetEnumerator()
         {
-            return Directory
-                  .GetFiles(
-                       Path.Join(Application.streamingAssetsPath, "/Js/Modules/")!
-                   )
-                  .Select(Path.GetFileName)
-                  .Where(e => Path.GetExtension(e) == REQUIRED_EXTENSION)
+            string moduleDirectory = $"{Application.streamingAssetsPath}/Js/Modules";
+            string[] modules = Directory.GetFiles(moduleDirectory, $"*{REQUIRED_EXTENSION}");
+
+            return modules
+                  .Select(i => Path.GetFileName(i))
                   .GetEnumerator();
         }
 
