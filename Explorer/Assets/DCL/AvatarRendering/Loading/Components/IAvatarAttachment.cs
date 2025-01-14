@@ -1,5 +1,6 @@
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Loading.DTO;
+using DCL.Diagnostics;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
 using SceneRunner.Scene;
@@ -141,6 +142,8 @@ namespace DCL.AvatarRendering.Loading.Components
                         return true;
                     }
             }
+            else
+                ReportHub.LogError(ReportCategory.WEARABLE, $"No content found in DTO for wearable with ID: {avatarAttachment.DTO.Metadata.id}");
 
             hash = null;
             return false;

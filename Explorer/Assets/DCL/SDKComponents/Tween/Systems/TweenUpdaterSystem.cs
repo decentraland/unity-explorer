@@ -109,7 +109,7 @@ namespace DCL.SDKComponents.Tween.Systems
         [Query]
         private void UpdateTweenTextureSequence(CRDTEntity sdkEntity, in PBTween pbTween, ref SDKTweenComponent sdkTweenComponent, ref MaterialComponent materialComponent)
         {
-            if (pbTween.TextureMove == null) return;
+            if (pbTween.ModeCase != PBTween.ModeOneofCase.TextureMove) return;
 
             if (sdkTweenComponent.IsDirty)
             {
