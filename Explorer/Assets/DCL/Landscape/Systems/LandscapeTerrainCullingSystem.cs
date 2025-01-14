@@ -58,9 +58,8 @@ namespace DCL.Landscape.Systems
             drawDetail = landscapeData.drawTerrainDetails;
         }
 
-        public override void Dispose()
+        protected override void OnDispose()
         {
-            base.Dispose();
             jobHandle.Complete();
             nativeFrustumPlanes.Dispose();
             terrainVisibilities.Dispose();

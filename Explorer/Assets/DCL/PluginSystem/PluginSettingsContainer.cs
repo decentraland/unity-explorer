@@ -12,7 +12,7 @@ namespace DCL.PluginSystem
     /// <summary>
     ///     Stores settings for plugins in a scriptable object
     /// </summary>
-    [CreateAssetMenu(menuName = "Create Plugins Container", fileName = "Plugins Container", order = 0)]
+    [CreateAssetMenu(fileName = "Plugins Container", menuName = "DCL/Plugins/Plugins Container")]
     public class PluginSettingsContainer : ScriptableObject, IPluginSettingsContainer
     {
         // We should initialize this by a custom inspector
@@ -25,7 +25,7 @@ namespace DCL.PluginSystem
                 return NoExposedPluginSettings.Instance;
 
             try { return settings.Find(x => x.GetType() == type).EnsureNotNull(); }
-            catch (Exception e) { throw new NullReferenceException($"Settings not found for type {type.Name} at {this.GetType().FullName}", e); }
+            catch (Exception e) { throw new NullReferenceException($"Settings not found for type {type.Name} at {GetType().FullName}", e); }
         }
 
         public async UniTask EnsureValidAsync()
@@ -36,7 +36,7 @@ namespace DCL.PluginSystem
             async UniTask CheckAsync(IValidatableAsset dclPluginSettings)
             {
                 ReportHub.Log(ReportData.UNSPECIFIED, $"Start check for {dclPluginSettings.GetType().FullName}");
-                var exception = await dclPluginSettings.InvalidValuesAsync();
+                AggregateException? exception = await dclPluginSettings.InvalidValuesAsync();
                 checkedCount++;
                 ReportHub.Log(ReportData.UNSPECIFIED, $"Finish check {checkedCount}/{settings.Count} {dclPluginSettings.GetType().FullName}");
 

@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: Map_Hover_On_Map
   m_EditorClassIdentifier: 
   audioClips:
-  - {fileID: 0}
-  relativeVolume: 0.108
+  - {fileID: 8300000, guid: 1ad8cf9c6af76414eb0117dd9833ac0b, type: 3}
+  relativeVolume: 1
   audioCategory: 0
   pitchVariation: 0
   clipSelectionMode: 0
