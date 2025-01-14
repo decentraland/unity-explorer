@@ -62,6 +62,8 @@ namespace DCL.Roads.Playground
 
         public void Update()
         {
+            RenderParams rp = new RenderParams();
+
             if (!DebugZero)
             {
                 foreach ((LODInstanceData mesh, Matrix4x4[] matrices) prop in propFastMatrices)

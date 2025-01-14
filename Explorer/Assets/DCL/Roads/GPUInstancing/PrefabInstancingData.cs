@@ -5,6 +5,8 @@ using System.Collections.Generic;
 using UnityEditor;
 #endif
 
+
+
 [Serializable]
 public class LODInstanceData : IEquatable<LODInstanceData>
 {
