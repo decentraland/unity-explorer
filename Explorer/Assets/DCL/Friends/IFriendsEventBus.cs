@@ -9,18 +9,18 @@ namespace DCL.Friends
         event Action<string> OnFriendRequestAccepted;
         event Action<string> OnFriendRequestRejected;
         event Action<string> OnFriendRequestCanceled;
-        event Action<string> OnFriendRemoved;
+        event Action<string> OnFriendRequestRemoved;
 
         void BroadcastFriendRequestReceived(FriendRequest request);
 
         void BroadcastFriendRequestSent(FriendRequest request);
 
-        void BroadcastFriendRequestAccepted(string friendRequestId);
+        void BroadcastFriendRequestAccepted(string friendId);
 
-        void BroadcastFriendRequestRejected(string friendRequestId);
+        void BroadcastFriendRequestRejected(string friendId);
 
-        void BroadcastFriendRequestCanceled(string friendRequestId);
+        void BroadcastFriendRequestCanceled(string friendId);
 
-        void BroadcastFriendRemoved(string friendId);
+        void BroadcastFriendRequestRemoved(string friendId);
     }
 }
