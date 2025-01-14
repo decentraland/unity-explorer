@@ -234,10 +234,9 @@ namespace DCL.Chat
 
         private void AddEmojiFromSuggestion(string emojiCode, bool shouldClose)
         {
-            if (viewInstance!.InputField.text.Length >= viewInstance.InputField.characterLimit)
-                return;
+            if (!IsWithinCharacterLimit()) return;
 
-            UIAudioEventsBus.Instance.SendPlayAudioEvent(viewInstance.AddEmojiAudio);
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(viewInstance!.AddEmojiAudio);
             viewInstance.InputField.SetTextWithoutNotify(viewInstance.InputField.text.Replace(EMOJI_PATTERN_REGEX.Match(viewInstance.InputField.text).Value, emojiCode));
             viewInstance.InputField.stringPosition += emojiCode.Length;
             viewInstance.InputField.ActivateInputField();
@@ -278,8 +277,7 @@ namespace DCL.Chat
         {
             UIAudioEventsBus.Instance.SendPlayAudioEvent(viewInstance!.AddEmojiAudio);
 
-            if (viewInstance.InputField.text.Length >= viewInstance.InputField.characterLimit)
-                return;
+            if (!IsWithinCharacterLimit()) return;
 
             int caretPosition = viewInstance.InputField.stringPosition;
             viewInstance.InputField.text = viewInstance.InputField.text.Insert(caretPosition, EMOJI_TAG);
@@ -288,6 +286,9 @@ namespace DCL.Chat
 
             viewInstance.InputField.ActivateInputField();
         }
+
+        private bool IsWithinCharacterLimit() =>
+            viewInstance!.InputField.text.Length < viewInstance.InputField.characterLimit;
 
         private void ToggleEmojiPanel()
         {
@@ -474,7 +475,9 @@ namespace DCL.Chat
                     viewInstance!.PastePopupPosition.position,
                     closePopupTask.Task);
 
-                mvcManager.ShowAsync(PastePopupToastController.IssueCommand(data)).Forget();
+
+
+                mvcManager.ShowAndForget(PastePopupToastController.IssueCommand(data));
                 viewInstance.InputField.ActivateInputField();
             }
         }
