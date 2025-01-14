@@ -1,3 +1,4 @@
+using DCL.Profiles;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -8,9 +9,10 @@ namespace DCL.Friends.UI.Sections.Friends
         [field: SerializeField] public Button ContextMenuButton { get; private set; }
         [field: SerializeField] public Button JumpInButton { get; private set; }
 
-        private void Start()
+        public override void Configure(Profile profile)
         {
             buttons = new[] { JumpInButton, ContextMenuButton };
+            base.Configure(profile);
         }
     }
 }

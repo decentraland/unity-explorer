@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Chat;
 using DCL.Friends.UI.Sections.Blocked;
 using DCL.Friends.UI.Sections.Friends;
+using DCL.Web3.Identities;
 using MVC;
 using System.Threading;
 using Utility;
@@ -21,6 +22,7 @@ namespace DCL.Friends.UI
         private readonly IFriendsEventBus friendEventBus;
         private readonly ChatView chatView;
         private readonly IMVCManager mvcManager;
+        private readonly IWeb3IdentityCache web3IdentityCache;
 
         private BlockedSectionController blockedSectionController;
         private FriendsSectionController friendsSectionController;
@@ -33,12 +35,14 @@ namespace DCL.Friends.UI
             ChatView chatView,
             IFriendsService friendsService,
             IFriendsEventBus friendEventBus,
-            IMVCManager mvcManager) : base(viewFactory)
+            IMVCManager mvcManager,
+            IWeb3IdentityCache web3IdentityCache) : base(viewFactory)
         {
             this.chatView = chatView;
             this.friendsService = friendsService;
             this.friendEventBus = friendEventBus;
             this.mvcManager = mvcManager;
+            this.web3IdentityCache = web3IdentityCache;
         }
 
         public override void Dispose()
@@ -76,7 +80,7 @@ namespace DCL.Friends.UI
             base.OnViewInstantiated();
 
             blockedSectionController = new BlockedSectionController(viewInstance!.BlockedSection, mvcManager);
-            friendsSectionController = new FriendsSectionController(viewInstance!.FriendsSection, friendsService, friendEventBus);
+            friendsSectionController = new FriendsSectionController(viewInstance!.FriendsSection, friendsService, friendEventBus, web3IdentityCache);
 
             viewInstance!.FriendsTabButton.onClick.AddListener(() => ToggleTabs(FriendsPanelTab.FRIENDS));
             viewInstance.RequestsTabButton.onClick.AddListener(() => ToggleTabs(FriendsPanelTab.REQUESTS));

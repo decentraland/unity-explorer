@@ -11,19 +11,21 @@ namespace DCL.Friends.UI.Sections.Blocked
         [field: SerializeField] public Button ContextMenuButton { get; private set; }
         [field: SerializeField] public TMP_Text BlockedDateText { get; private set; }
 
-        public DateTime BlockedDate { get; private set; }
+        private DateTime blockedDate;
+        public DateTime BlockedDate
+        {
+            get => blockedDate;
+
+            set
+            {
+                blockedDate = value;
+                BlockedDateText.SetText($"{blockedDate:MM/dd}");
+            }
+        }
 
         private void Start()
         {
             buttons = new[] { UnblockButton, ContextMenuButton };
-        }
-
-        public void Configure(string userWalletAddress, DateTime blockedDate)
-        {
-            UserWalletAddress = userWalletAddress;
-            BlockedDate = blockedDate;
-
-            BlockedDateText.SetText($"{blockedDate:MM/dd}");
         }
 
         protected override void ToggleButtonView(bool isActive)

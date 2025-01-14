@@ -1,3 +1,5 @@
+using DCL.Profiles;
+using System;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -11,11 +13,17 @@ namespace DCL.Friends.UI.Sections
         [field: SerializeField] public Color NormalColor { get; private set; }
         [field: SerializeField] public Color HoveredColor { get; private set; }
 
-        public string UserWalletAddress { get; protected set; }
+        public Profile UserProfile { get; protected set; }
 
         private void Start()
         {
             Background.color = NormalColor;
+        }
+
+        public virtual void Configure(Profile profile)
+        {
+            UnHover();
+            UserProfile = profile;
         }
 
         protected virtual void ToggleButtonView(bool isActive)
@@ -24,16 +32,22 @@ namespace DCL.Friends.UI.Sections
                 buttons[i].gameObject.SetActive(isActive);
         }
 
-        public void OnPointerEnter(PointerEventData eventData)
+        protected void UnHover()
+        {
+            ToggleButtonView(false);
+            Background.color = NormalColor;
+        }
+
+        protected void Hover()
         {
             ToggleButtonView(true);
             Background.color = HoveredColor;
         }
 
-        public void OnPointerExit(PointerEventData eventData)
-        {
-            ToggleButtonView(false);
-            Background.color = NormalColor;
-        }
+        public void OnPointerEnter(PointerEventData eventData) =>
+            Hover();
+
+        public void OnPointerExit(PointerEventData eventData) =>
+            UnHover();
     }
 }
