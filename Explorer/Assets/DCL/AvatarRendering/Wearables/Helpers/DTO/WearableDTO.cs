@@ -52,16 +52,22 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         }
 
         [Serializable]
-        public struct BuilderLambdaResponse : IBuilderLambdaResponse
+        public struct BuilderLambdaResponse : IBuilderLambdaResponse<BuilderWearableMetadataDto>
         {
-            [Serializable]
-            public class BuilderWearableMetadataDto : WearableMetadataDto
-            {
-                public Dictionary<string, string> contents;
-            }
-
             public bool ok;
             public List<BuilderWearableMetadataDto> data;
+
+            [JsonIgnore]
+            public IReadOnlyList<BuilderWearableMetadataDto> IndividualData => data;
+        }
+
+        [Serializable]
+        public class BuilderWearableMetadataDto : WearableMetadataDto, IBuilderLambdaResponseElement
+        {
+            public Dictionary<string, string> contents;
+
+            [JsonIgnore]
+            public IReadOnlyDictionary<string, string> Contents => contents;
         }
     }
 }

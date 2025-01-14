@@ -1,6 +1,7 @@
 ﻿#nullable disable
 
 using System;
+using System.Collections.Generic;
 
 namespace DCL.AvatarRendering.Loading.DTO
 {
@@ -49,6 +50,9 @@ namespace DCL.AvatarRendering.Loading.DTO
         public abstract class MetadataBase
         {
             public abstract DataBase AbstractData { get; }
+
+            // Needed for builder-fetched assets
+            // public Dictionary<string, string> contents;
 
             //urn
             public string id;

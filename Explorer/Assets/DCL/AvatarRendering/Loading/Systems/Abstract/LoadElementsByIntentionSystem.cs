@@ -12,7 +12,6 @@ using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
 using System;
-using System.Collections.Generic;
 using System.Threading;
 using Utility.Multithreading;
 
@@ -49,12 +48,6 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
 
             if (intention.CommonArguments.NeedsBuilderAPISigning)
             {
-                // headers generation URL patch copied from unity-renderer
-                /*string headersGenerationUrl = url.Value;
-                int index = headersGenerationUrl.IndexOf("?", StringComparison.Ordinal);
-                if (index >= 0)
-                    headersGenerationUrl = headersGenerationUrl.Substring(0, index);*/
-
                 var lambdaResponse =
                     await ParsedBuilderResponseAsync(
                         webRequestController.SignedFetchGetAsync(
@@ -67,9 +60,8 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
                         )
                     );
 
-                // UnityEngine.Debug.Log($"PRAVS - builder lambda response DATA is NULL? {lambdaResponse.data[0]?.data == null}");
-                // await using (await ExecuteOnThreadPoolScope.NewScopeWithReturnOnMainThreadAsync())
-                //     Load(ref intention, lambdaResponse);
+                await using (await ExecuteOnThreadPoolScope.NewScopeWithReturnOnMainThreadAsync())
+                    LoadBuilderItem(ref intention, lambdaResponse);
             }
             else
             {
@@ -125,11 +117,50 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
             }
         }
 
+        // private void LoadBuilderItem<TResponseElement>(ref TIntention intention, IAttachmentLambdaResponse<TResponseElement> lambdaResponse) where TResponseElement: ILambdaResponseElement<TAvatarElementDTO>
+        private void LoadBuilderItem(ref TIntention intention, IBuilderLambdaResponse<IBuilderLambdaResponseElement> lambdaResponse)
+        {
+            // intention.SetTotal(lambdaResponse.TotalAmount);
+
+            /*foreach (IBuilderLambdaResponseElement element in lambdaResponse.IndividualData)
+            {
+                // Manually build WearableDTO from the data read from the builder response...
+                var elementDTO = element.Entity;
+                var wearable = avatarElementStorage.GetOrAddByDTO(elementDTO);
+            }*/
+
+            /*foreach (var element in lambdaResponse.Page)
+            {
+                var elementDTO = element.Entity;
+
+                var wearable = avatarElementStorage.GetOrAddByDTO(elementDTO);
+
+                foreach (var individualData in element.IndividualData)
+                {
+                    // Probably a base wearable, wrongly return individual data. Skip it
+                    if (elementDTO.Metadata.id == individualData.id) continue;
+
+                    long.TryParse(individualData.transferredAt, out long transferredAt);
+                    decimal.TryParse(individualData.price, out decimal price);
+
+                    avatarElementStorage.SetOwnedNft(
+                        elementDTO.Metadata.id,
+                        new NftBlockchainOperationEntry(
+                            individualData.id,
+                            individualData.tokenId,
+                            DateTimeOffset.FromUnixTimeSeconds(transferredAt).DateTime,
+                            price
+                        )
+                    );
+                }
+
+                intention.AppendToResult(wearable);
+            }*/
+        }
+
         protected abstract UniTask<IAttachmentLambdaResponse<ILambdaResponseElement<TAvatarElementDTO>>> ParsedResponseAsync(GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> adapter);
 
-        // protected abstract UniTask<WearableDTO.BuilderLambdaResponse> ParsedBuilderResponseAsync(GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> adapter);
-        // protected abstract UniTask<IBuilderLambdaResponse<IBuilderLambdaResponse<IBuilderLambdaResponseElement>>> ParsedBuilderResponseAsync(GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> adapter);
-        protected abstract UniTask<IBuilderLambdaResponse> ParsedBuilderResponseAsync(GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> adapter);
+        protected abstract UniTask<IBuilderLambdaResponse<IBuilderLambdaResponseElement>> ParsedBuilderResponseAsync(GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> adapter);
 
         protected abstract TAsset AssetFromPreparedIntention(in TIntention intention);
 

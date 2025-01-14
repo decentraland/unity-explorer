@@ -28,7 +28,7 @@ namespace DCL.AvatarRendering.Emotes.Load
         protected override async UniTask<IAttachmentLambdaResponse<ILambdaResponseElement<EmoteDTO>>> ParsedResponseAsync(GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> adapter) =>
             await adapter.CreateFromJson<LambdaOwnedEmoteElementList>(WRJsonParser.Unity);
 
-        protected override async UniTask<IBuilderLambdaResponse> ParsedBuilderResponseAsync(GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> adapter) =>
+        protected override async UniTask<IBuilderLambdaResponse<IBuilderLambdaResponseElement>> ParsedBuilderResponseAsync(GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> adapter) =>
             await adapter.CreateFromJson<WearableDTO.BuilderLambdaResponse>(WRJsonParser.Newtonsoft);
 
         protected override EmotesResolution AssetFromPreparedIntention(in GetOwnedEmotesFromRealmIntention intention) =>
