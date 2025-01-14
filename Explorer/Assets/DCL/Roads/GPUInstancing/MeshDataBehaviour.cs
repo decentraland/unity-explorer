@@ -1,5 +1,6 @@
 ﻿using System;
 using UnityEngine;
+using UnityEngine.Rendering;
 using UnityEngine.Serialization;
 
 namespace DCL.Roads.GPUInstancing
@@ -7,10 +8,17 @@ namespace DCL.Roads.GPUInstancing
     [Serializable]
     public class MeshData// : IEquatable<LODInstanceData>
     {
-        public Transform Transform;
-
         public Mesh Mesh;
+
+        // RenderParams that differs foreach material
         public Material[] Materials;
+
+        // RenderParams that same foreach material
+        public bool ReceiveShadows;
+        public ShadowCastingMode ShadowCastingMode;
+
+        // converted into Matrix4x4 to be included in Matrix4x4[] instances array
+        public Transform Transform;
     }
 
     public class MeshDataBehaviour : MonoBehaviour
@@ -26,6 +34,10 @@ namespace DCL.Roads.GPUInstancing
                 Mesh = GetComponent<MeshFilter>().sharedMesh,
                 Materials = GetComponent<MeshRenderer>().sharedMaterials,
             };
+
+            var meshRenderer = GetComponent<MeshRenderer>();
+            meshData.ReceiveShadows = meshRenderer.receiveShadows;
+            meshData.ShadowCastingMode = meshRenderer.shadowCastingMode;
         }
     }
 }

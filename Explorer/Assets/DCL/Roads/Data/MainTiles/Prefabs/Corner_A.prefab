@@ -76,6 +76,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5136586154982074077}
   - component: {fileID: -8640369166845269582}
+  - component: {fileID: 9160926152198319795}
   m_Layer: 0
   m_Name: Corner_A
   m_TagString: Untagged
@@ -310,6 +311,21 @@ MonoBehaviour:
       e31: 0
       e32: 0
       e33: 1
+--- !u!114 &9160926152198319795
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4164420976981478098}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2a93533cfb4b48c5866cdd42852bb92c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  PrefabInstance:
+    Meshes: []
+    LODGroups: []
 --- !u!1001 &4166536358434357706
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -318,18 +334,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 4776834489885187977}
     m_Modifications:
-    - target: {fileID: 2523021031970210244, guid: c3f0925194868a5478e507bcc2cc31ba, type: 3}
-      propertyPath: m_LocalScale.x
-      value: 0.0009999999
-      objectReference: {fileID: 0}
-    - target: {fileID: 2523021031970210244, guid: c3f0925194868a5478e507bcc2cc31ba, type: 3}
-      propertyPath: m_LocalScale.y
-      value: 0.001
-      objectReference: {fileID: 0}
-    - target: {fileID: 2523021031970210244, guid: c3f0925194868a5478e507bcc2cc31ba, type: 3}
-      propertyPath: m_LocalScale.z
-      value: 0.0009999999
-      objectReference: {fileID: 0}
     - target: {fileID: 2523021031970210244, guid: c3f0925194868a5478e507bcc2cc31ba, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0.005000001
@@ -481,18 +485,6 @@ PrefabInstance:
     - target: {fileID: 1610935267799635060, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
       propertyPath: m_Name
       value: Bench01
-      objectReference: {fileID: 0}
-    - target: {fileID: 2094422023557664462, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
-      propertyPath: m_LocalScale.x
-      value: 0.0009999999
-      objectReference: {fileID: 0}
-    - target: {fileID: 2094422023557664462, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
-      propertyPath: m_LocalScale.y
-      value: 0.001
-      objectReference: {fileID: 0}
-    - target: {fileID: 2094422023557664462, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
-      propertyPath: m_LocalScale.z
-      value: 0.0009999999
       objectReference: {fileID: 0}
     - target: {fileID: 2094422023557664462, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
       propertyPath: m_LocalPosition.x

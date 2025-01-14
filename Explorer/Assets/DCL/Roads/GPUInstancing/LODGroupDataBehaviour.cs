@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace DCL.Roads.GPUInstancing
 {
@@ -20,7 +21,7 @@ namespace DCL.Roads.GPUInstancing
     public class LODEntryMeshData // : IEquatable<LODInstanceData>
     {
         public float Distance;
-        public MeshData[] MeshData;
+        public MeshData[] Meshes;
     }
 
     public class LODGroupDataBehaviour : MonoBehaviour
@@ -47,7 +48,7 @@ namespace DCL.Roads.GPUInstancing
         {
             return lods.Select(lod => new LODEntryMeshData
             {
-                MeshData = CollectLODMeshData(lod).ToArray(),
+                Meshes = CollectLODMeshData(lod).ToArray(),
                 Distance = lod.screenRelativeTransitionHeight,
             }).ToArray();
         }
@@ -69,7 +70,7 @@ namespace DCL.Roads.GPUInstancing
             var isInitialized = false;
 
             foreach (LODEntryMeshData mid in lodGroup.LODs)
-            foreach (var data in mid.MeshData)
+            foreach (var data in mid.Meshes)
             {
                 if (!isInitialized)
                 {
