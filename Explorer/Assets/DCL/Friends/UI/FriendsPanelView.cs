@@ -1,3 +1,5 @@
+using DCL.Friends.UI.Sections.Blocked;
+using DCL.Friends.UI.Sections.Friends;
 using MVC;
 using UnityEngine;
 using UnityEngine.UI;

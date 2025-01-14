@@ -1,5 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Chat;
+using DCL.Friends.UI.Sections.Blocked;
+using DCL.Friends.UI.Sections.Friends;
 using MVC;
 using System.Threading;
 using Utility;
@@ -74,7 +76,7 @@ namespace DCL.Friends.UI
             base.OnViewInstantiated();
 
             blockedSectionController = new BlockedSectionController(viewInstance!.BlockedSection, mvcManager);
-            friendsSectionController = new FriendsSectionController(viewInstance!.FriendsSection);
+            friendsSectionController = new FriendsSectionController(viewInstance!.FriendsSection, friendsService, friendEventBus);
 
             viewInstance!.FriendsTabButton.onClick.AddListener(() => ToggleTabs(FriendsPanelTab.FRIENDS));
             viewInstance.RequestsTabButton.onClick.AddListener(() => ToggleTabs(FriendsPanelTab.REQUESTS));

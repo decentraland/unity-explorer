@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-namespace DCL.Friends.UI
+namespace DCL.Friends.UI.Sections
 {
     public class FriendPanelUserView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {

@@ -1,7 +1,7 @@
 using MVC;
 using System;
 
-namespace DCL.Friends.UI
+namespace DCL.Friends.UI.Sections.Blocked
 {
     public class BlockedSectionController : IDisposable
     {
@@ -14,8 +14,8 @@ namespace DCL.Friends.UI
             this.view = view;
             this.mvcManager = mvcManager;
 
-            // this.view.Enable += Enable;
-            // this.view.Disable += Disable;
+            this.view.Enable += Enable;
+            this.view.Disable += Disable;
         }
 
         public void Dispose()

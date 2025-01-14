@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace DCL.Friends.UI
+namespace DCL.Friends.UI.Sections.Friends
 {
     public class FriendListUserView : FriendPanelUserView
     {

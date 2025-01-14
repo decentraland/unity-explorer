@@ -3,7 +3,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace DCL.Friends.UI
+namespace DCL.Friends.UI.Sections.Blocked
 {
     public class BlockedUserView : FriendPanelUserView
     {
