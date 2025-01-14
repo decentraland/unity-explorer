@@ -25,6 +25,8 @@ namespace DCL.AvatarRendering.Loading
 
     public interface IBuilderLambdaResponse<out TElementDTO>
     {
+        // TElementDTO Entity { get; }
+
         IReadOnlyList<TElementDTO> IndividualData { get; }
     }
 

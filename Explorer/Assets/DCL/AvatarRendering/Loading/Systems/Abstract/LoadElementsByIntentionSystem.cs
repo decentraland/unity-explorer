@@ -49,7 +49,7 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
             if (intention.CommonArguments.NeedsBuilderAPISigning)
             {
                 var lambdaResponse =
-                    await ParsedBuilderResponseAsync(
+                    await ParseBuilderResponseAsync(
                         webRequestController.SignedFetchGetAsync(
                             new CommonArguments(
                                 url,
@@ -66,7 +66,7 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
             else
             {
                 var lambdaResponse =
-                    await ParsedResponseAsync(
+                    await ParseResponseAsync(
                         webRequestController.GetAsync(
                             new CommonArguments(
                                 url,
@@ -120,14 +120,16 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
         // private void LoadBuilderItem<TResponseElement>(ref TIntention intention, IAttachmentLambdaResponse<TResponseElement> lambdaResponse) where TResponseElement: ILambdaResponseElement<TAvatarElementDTO>
         private void LoadBuilderItem(ref TIntention intention, IBuilderLambdaResponse<IBuilderLambdaResponseElement> lambdaResponse)
         {
-            // intention.SetTotal(lambdaResponse.TotalAmount);
+            intention.SetTotal(lambdaResponse.IndividualData.Count);
 
-            /*foreach (IBuilderLambdaResponseElement element in lambdaResponse.IndividualData)
+            foreach (var element in lambdaResponse.IndividualData)
             {
+                // element.buil
+
                 // Manually build WearableDTO from the data read from the builder response...
-                var elementDTO = element.Entity;
-                var wearable = avatarElementStorage.GetOrAddByDTO(elementDTO);
-            }*/
+                /*var elementDTO = element.Entity;
+                var wearable = avatarElementStorage.GetOrAddByDTO(elementDTO);*/
+            }
 
             /*foreach (var element in lambdaResponse.Page)
             {
@@ -158,9 +160,9 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
             }*/
         }
 
-        protected abstract UniTask<IAttachmentLambdaResponse<ILambdaResponseElement<TAvatarElementDTO>>> ParsedResponseAsync(GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> adapter);
+        protected abstract UniTask<IAttachmentLambdaResponse<ILambdaResponseElement<TAvatarElementDTO>>> ParseResponseAsync(GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> adapter);
 
-        protected abstract UniTask<IBuilderLambdaResponse<IBuilderLambdaResponseElement>> ParsedBuilderResponseAsync(GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> adapter);
+        protected abstract UniTask<IBuilderLambdaResponse<IBuilderLambdaResponseElement>> ParseBuilderResponseAsync(GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> adapter);
 
         protected abstract TAsset AssetFromPreparedIntention(in TIntention intention);
 
