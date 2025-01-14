@@ -13,7 +13,7 @@ namespace DCL.Roads.GPUInstancing
         public Material[] Materials;
     }
 
-    public class MeshInstanceDataBehaviour : MonoBehaviour
+    public class MeshDataBehaviour : MonoBehaviour
     {
         [FormerlySerializedAs("MeshInstanceData")] public MeshData meshData;
 
