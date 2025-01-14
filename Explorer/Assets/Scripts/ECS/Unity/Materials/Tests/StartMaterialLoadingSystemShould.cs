@@ -24,6 +24,7 @@ using Entity = Arch.Core.Entity;
 using MaterialTransparencyMode = DCL.ECSComponents.MaterialTransparencyMode;
 using Texture = Decentraland.Common.Texture;
 using TextureWrapMode = Decentraland.Common.TextureWrapMode;
+using Vector2 = Decentraland.Common.Vector2;
 
 namespace ECS.Unity.Materials.Tests
 {
@@ -256,6 +257,8 @@ namespace ECS.Unity.Materials.Tests
                             Src = tex1,
                             WrapMode = TextureWrapMode.TwmMirror,
                             FilterMode = TextureFilterMode.TfmPoint,
+                            Offset = new Vector2 { X = 0, Y = 0 },
+                            Tiling = new Vector2 { X = 1, Y = 1 },
                         },
                     },
                     BumpTexture = new TextureUnion
@@ -265,6 +268,8 @@ namespace ECS.Unity.Materials.Tests
                             Src = tex2,
                             WrapMode = TextureWrapMode.TwmClamp,
                             FilterMode = TextureFilterMode.TfmBilinear,
+                            Offset = new Vector2 { X = 0, Y = 0 },
+                            Tiling = new Vector2 { X = 1, Y = 1 },
                         },
                     },
                     AlphaTexture = new TextureUnion
@@ -274,6 +279,8 @@ namespace ECS.Unity.Materials.Tests
                             Src = tex3,
                             WrapMode = TextureWrapMode.TwmRepeat,
                             FilterMode = TextureFilterMode.TfmTrilinear,
+                            Offset = new Vector2 { X = 0, Y = 0 },
+                            Tiling = new Vector2 { X = 1, Y = 1 },
                         },
                     },
                     EmissiveTexture = new TextureUnion
@@ -283,6 +290,8 @@ namespace ECS.Unity.Materials.Tests
                             Src = tex1,
                             WrapMode = TextureWrapMode.TwmMirror,
                             FilterMode = TextureFilterMode.TfmBilinear,
+                            Offset = new Vector2 { X = 0, Y = 0 },
+                            Tiling = new Vector2 { X = 1, Y = 1 },
                         },
                     },
                     AlphaTest = 0.5f,
@@ -352,6 +361,8 @@ namespace ECS.Unity.Materials.Tests
                             Src = tex2,
                             WrapMode = TextureWrapMode.TwmMirror,
                             FilterMode = TextureFilterMode.TfmBilinear,
+                            Offset = new Vector2 { X = 0, Y = 0 },
+                            Tiling = new Vector2 { X = 1, Y = 1 },
                         },
                     },
                     AlphaTest = 0.6f,

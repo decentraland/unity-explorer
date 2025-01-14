@@ -242,6 +242,11 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
+        <CategoryMappingSO>k__BackingField:
+          m_AssetGUID: bda7566751d4243fb842e1a272cb9f83
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
         <CameraReelGalleryShareToXMessage>k__BackingField: Check out what I'm doing
           in @decentraland right now and join me!
         <PhotoSuccessfullyUpdatedMessage>k__BackingField: Photo successfully updated
@@ -252,11 +257,9 @@ MonoBehaviour:
         <GridLayoutFixedColumnCount>k__BackingField: 6
         <ThumbnailHeight>k__BackingField: 230
         <ThumbnailWidth>k__BackingField: 306
-        <ContextMenuConfig>k__BackingField:
-          m_AssetGUID: 43daf6965002847a19f241e71b28fd9b
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_EditorAssetChanged: 0
+        <PlaceGridLayoutFixedColumnCount>k__BackingField: 1
+        <PlaceThumbnailHeight>k__BackingField: 320
+        <PlaceThumbnailWidth>k__BackingField: 404
     - rid: 1841402216112979969
       type: {class: CharacterContainer/Settings, ns: DCL.Character.Plugin, asm: DCL.Plugins}
       data:

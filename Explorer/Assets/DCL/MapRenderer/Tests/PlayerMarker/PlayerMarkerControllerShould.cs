@@ -47,7 +47,7 @@ namespace DCL.MapRenderer.Tests.PlayerMarker
         [Test]
         public async Task SetActiveOnEnable()
         {
-            await controller.Enable(CancellationToken.None);
+            await controller.EnableAsync(CancellationToken.None);
             marker.Received(1).SetActive(true);
         }
 
@@ -61,7 +61,7 @@ namespace DCL.MapRenderer.Tests.PlayerMarker
         [Test]
         public async Task DeactivateOnDisable()
         {
-            await controller.Enable(CancellationToken.None);
+            await controller.EnableAsync(CancellationToken.None);
             await controller.Disable(CancellationToken.None);
 
             marker.Received().SetActive(false);

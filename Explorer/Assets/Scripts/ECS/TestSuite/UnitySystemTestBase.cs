@@ -3,6 +3,7 @@ using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.SDKComponents.SceneUI.Components;
 using ECS.Abstract;
+using ECS.Unity.Materials.Components;
 using ECS.Unity.Transforms.Components;
 using NUnit.Framework;
 using UnityEngine;
@@ -43,10 +44,13 @@ namespace ECS.TestSuite
         protected TransformComponent AddTransformToEntity(in Entity entity, bool isDirty = false, World world = null) =>
             EcsTestsUtils.AddTransformToEntity(world ?? this.world, entity, isDirty);
 
+        protected MaterialComponent AddMaterialToEntity(in Entity entity, bool isDirty = false, World world = null) =>
+            EcsTestsUtils.AddMaterialToEntity(world ?? this.world, entity);
+
         protected UITransformComponent AddUITransformToEntity(in Entity entity, bool isDirty = false)
         {
             var uiTransformComponent = new UITransformComponent();
-            uiTransformComponent.Transform = new VisualElement { name = $"{entity.Id}", };
+            uiTransformComponent.Transform = new VisualElement { name = $"{entity.Id}"  };
 
             world.Add(entity, uiTransformComponent, new PBUiTransform { IsDirty = isDirty });
             return uiTransformComponent;
