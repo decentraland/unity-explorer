@@ -341,7 +341,8 @@ namespace Global.Dynamic
                 staticContainer.ComponentsContainer.ComponentPoolsRegistry
                                .GetReferenceTypePool<PartitionComponent>(),
                 localSceneDevelopment,
-                bootstrapContainer.DecentralandUrlsSource
+                bootstrapContainer.DecentralandUrlsSource,
+                staticContainer.FeatureFlagsCache
             );
 
             var sceneRoomMetaDataSource = new SceneRoomMetaDataSource(realmController, staticContainer.CharacterContainer.Transform, globalWorld, dynamicWorldParams.IsolateScenesCommunication);
