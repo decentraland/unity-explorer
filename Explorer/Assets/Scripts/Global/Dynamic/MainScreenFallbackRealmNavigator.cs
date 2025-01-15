@@ -47,16 +47,6 @@ namespace Global.Dynamic
             return result;
         }
 
-        public async UniTask InitializeTeleportToSpawnPointAsync(AsyncLoadProcessReport teleportLoadReport, CancellationToken ct, Vector2Int parcelToTeleport)
-        {
-            try { await origin.InitializeTeleportToSpawnPointAsync(teleportLoadReport, ct, parcelToTeleport); }
-            catch (Exception e)
-            {
-                ReportHub.LogException(e, ReportCategory.DEBUG);
-                DispatchFallbackToMainScreen(EnumResult<TaskError>.ErrorResult(TaskError.UnexpectedException), ct);
-            }
-        }
-
         public void RemoveCameraSamplingData()
         {
             origin.RemoveCameraSamplingData();

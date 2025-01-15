@@ -9,7 +9,7 @@ namespace Global.Dynamic
         private readonly ElementBinding<string> currentCatalystLambdas;
         private readonly ElementBinding<string> currentCatalystContent;
 
-        public readonly DebugWidgetBuilder DebugWidgetBuilder;
+        public readonly DebugWidgetBuilder? DebugWidgetBuilder;
 
         public RealmNavigatorDebugView(IDebugContainerBuilder debugContainerBuilder)
         {

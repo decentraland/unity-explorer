@@ -7,6 +7,7 @@ using DCL.Character.Components;
 using DCL.CharacterCamera;
 using DCL.CharacterMotion.Components;
 using DCL.Ipfs;
+using DCL.RealmNavigation;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Reporting;
 using System;

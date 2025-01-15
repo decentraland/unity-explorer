@@ -19,12 +19,12 @@ namespace DCL.RealmNavigation.LoadingOperation
             this.reportCategory = reportCategory;
         }
 
-        public UniTask<EnumResult<TaskError>> ExecuteAsync(TParams report, CancellationToken ct) =>
-            InternalExecuteAsync(report, ct).SuppressToResultAsync(reportCategory, createError);
+        public UniTask<EnumResult<TaskError>> ExecuteAsync(TParams args, CancellationToken ct) =>
+            InternalExecuteAsync(args, ct).SuppressToResultAsync(reportCategory, createError);
 
         /// <summary>
         ///     This function is free to throw exceptions
         /// </summary>
-        protected abstract UniTask InternalExecuteAsync(TParams report, CancellationToken ct);
+        protected abstract UniTask InternalExecuteAsync(TParams args, CancellationToken ct);
     }
 }

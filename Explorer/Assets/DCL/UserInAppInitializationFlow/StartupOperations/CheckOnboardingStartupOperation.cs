@@ -47,11 +47,11 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
             this.realmNavigator = realmNavigator;
         }
 
-        protected override async UniTask InternalExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct)
+        protected override async UniTask InternalExecuteAsync(IStartupOperation.Params @params, CancellationToken ct)
         {
             float finalizationProgress = loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.OnboardingChecking);
             await CheckOnboardingAsync(ct);
-            report.SetProgress(finalizationProgress);
+            @params.Report.SetProgress(finalizationProgress);
         }
 
         private async UniTask CheckOnboardingAsync(CancellationToken ct)

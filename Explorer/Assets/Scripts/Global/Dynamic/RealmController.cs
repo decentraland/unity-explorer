@@ -23,6 +23,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using DCL.DebugUtilities;
+using DCL.RealmNavigation;
 using ECS.SceneLifeCycle.Realm;
 using Unity.Mathematics;
 

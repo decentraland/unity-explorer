@@ -6,9 +6,12 @@ namespace DCL.RealmNavigation.LoadingOperation
 {
     public static class LoadingOperationDebugWidgetExtensions
     {
-        public static void Add<TParams>(this SequentialLoadingOperation<TParams> operation, DebugWidgetBuilder builder, string label)
+        public static void AddDebugControl<TParams>(this SequentialLoadingOperation<TParams> operation, DebugWidgetBuilder? builder, string label)
             where TParams: ILoadingOperationParams
         {
+            if (builder == null)
+                return;
+
             builder.AddControl(new DebugConstLabelDef($"Interrupt {label}:"), null);
 
             // Add dropdown

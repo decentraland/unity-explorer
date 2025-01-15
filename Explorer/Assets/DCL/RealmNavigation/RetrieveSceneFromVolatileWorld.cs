@@ -2,6 +2,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Ipfs;
 using DCL.Optimization.Pools;
+using DCL.RealmNavigation;
 using ECS;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.SceneDefinition;

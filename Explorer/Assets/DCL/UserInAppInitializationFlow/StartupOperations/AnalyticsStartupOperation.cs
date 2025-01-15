@@ -18,7 +18,7 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
             this.analyticsController = analyticsController;
         }
 
-        public async UniTask<EnumResult<TaskError>> ExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct)
+        public async UniTask<EnumResult<TaskError>> ExecuteAsync(IStartupOperation.Params report, CancellationToken ct)
         {
             var result = await origin.ExecuteAsync(report, ct);
 

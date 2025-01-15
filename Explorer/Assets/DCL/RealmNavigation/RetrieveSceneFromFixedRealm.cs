@@ -2,6 +2,7 @@
 using Arch.System;
 using Cysharp.Threading.Tasks;
 using DCL.Ipfs;
+using DCL.RealmNavigation;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common;

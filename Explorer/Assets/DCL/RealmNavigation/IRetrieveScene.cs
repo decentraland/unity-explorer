@@ -1,11 +1,10 @@
 ﻿using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Ipfs;
-using Ipfs;
 using System.Threading;
 using UnityEngine;
 
-namespace DCL.ParcelsService
+namespace DCL.RealmNavigation
 {
     public interface IRetrieveScene
     {

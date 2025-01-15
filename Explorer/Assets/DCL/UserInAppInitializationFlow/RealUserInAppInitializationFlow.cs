@@ -125,8 +125,6 @@ namespace DCL.UserInAppInitializationFlow
                 teleportStartupOperation,
                 loadGlobalPxOperation,
                 sentryDiagnostics).WithAnalytics(analyticsController);
-            ;
-            ;
         }
 
 

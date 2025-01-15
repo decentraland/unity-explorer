@@ -7,6 +7,7 @@ using DCL.ParcelsService;
 using DCL.RealmNavigation.LoadingOperation;
 using DCL.RealmNavigation.TeleportOperations;
 using DCL.SceneLoadingScreens.LoadingScreen;
+using DCL.UserInAppInitializationFlow;
 using ECS.SceneLifeCycle.Realm;
 using Global;
 using Global.Dynamic;
@@ -18,7 +19,17 @@ namespace DCL.RealmNavigation
     {
         private static readonly TimeSpan LIVEKIT_TIMEOUT = TimeSpan.FromSeconds(10f);
 
-        public IRealmNavigator RealmNavigator { get; private set; }
+        private MainScreenFallbackRealmNavigator? mainScreenFallbackRealmNavigator;
+
+        /// <summary>
+        ///     Realm Navigator without main-screen fallback functionality
+        /// </summary>
+        public IRealmNavigator RealmNavigator { get; private init; }
+
+        public IRealmNavigator WithMainScreenFallback(IUserInAppInitializationFlow userInAppInitializationFlow, Entity playerEntity, World globalWorld)
+        {
+            return mainScreenFallbackRealmNavigator ??= new MainScreenFallbackRealmNavigator(RealmNavigator, userInAppInitializationFlow, playerEntity, globalWorld);
+        }
 
         public static RealmNavigationContainer Create(
             StaticContainer staticContainer,
@@ -33,8 +44,6 @@ namespace DCL.RealmNavigation
             ExposedGlobalDataContainer exposedGlobalDataContainer,
             ILoadingScreen loadingScreen)
         {
-            // TODO build operations debug widget
-
             var realmChangeOperations = new SequentialLoadingOperation<TeleportParams>(staticContainer.LoadingStatus, new ITeleportOperation[]
             {
                 new RestartLoadingStatus(),
@@ -58,6 +67,9 @@ namespace DCL.RealmNavigation
                     new UnloadCacheImmediateTeleportOperation(staticContainer.CacheCleaner, staticContainer.SingletonSharedDependencies.MemoryBudget),
                     new MoveToParcelInSameRealmTeleportOperation(realmContainer.TeleportController),
                 }, ReportCategory.SCENE_LOADING);
+
+            realmChangeOperations.AddDebugControl(realmContainer.DebugView.DebugWidgetBuilder, "Realm Change");
+            teleportInSameRealmOperation.AddDebugControl(realmContainer.DebugView.DebugWidgetBuilder, "Teleport In Same Realm");
 
             return new RealmNavigationContainer
             {

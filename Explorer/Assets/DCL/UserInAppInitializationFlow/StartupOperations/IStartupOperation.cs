@@ -1,9 +1,6 @@
-using Cysharp.Threading.Tasks;
 using DCL.AsyncLoadReporting;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.RealmNavigation.LoadingOperation;
-using System.Threading;
-using Utility.Types;
 
 namespace DCL.UserInAppInitializationFlow.StartupOperations
 {
@@ -17,9 +14,10 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
             }
 
             public AsyncLoadProcessReport Report { get; }
-        }
 
-        UniTask<EnumResult<TaskError>> ExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct);
+            public static implicit operator Params(AsyncLoadProcessReport report) =>
+                new (report);
+        }
     }
 
     public static class StartupOperation

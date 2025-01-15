@@ -25,7 +25,6 @@ using DCL.Input;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.Landscape;
 using DCL.LOD.Systems;
-using DCL.MapPins.Components;
 using DCL.MapRenderer;
 using DCL.Minimap;
 using DCL.Multiplayer.Connections.Archipelago.AdapterAddress.Current;
@@ -55,7 +54,6 @@ using DCL.NftInfoAPIService;
 using DCL.Notifications;
 using DCL.NotificationsBusController.NotificationsBus;
 using DCL.Optimization.Pools;
-using DCL.ParcelsService;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PlacesAPIService;
 using DCL.PluginSystem;
@@ -63,7 +61,6 @@ using DCL.PluginSystem.Global;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.RealmNavigation;
-using DCL.RealmNavigation.TeleportBus;
 using DCL.SceneLoadingScreens.LoadingScreen;
 using DCL.SidebarBus;
 using DCL.UI.MainUI;
@@ -445,11 +442,19 @@ namespace Global.Dynamic
                 chatHistory
             );
 
-            var realmNavigator = new MainScreenFallbackRealmNavigator(
-                baseRealmNavigator,
-                userInAppInAppInitializationFlow,
-                playerEntity,
-                globalWorld
+            IRealmNavigator realmNavigator = realmNavigatorContainer.WithMainScreenFallback(userInAppInAppInitializationFlow, playerEntity, globalWorld);
+
+            var minimap = new MinimapController(
+                mainUIView.MinimapView.EnsureNotNull(),
+                mapRendererContainer.MapRenderer,
+                mvcManager,
+                placesAPIService,
+                realmContainer.RealmController,
+                realmNavigator,
+                staticContainer.ScenesCache,
+                mapPathEventBus,
+                staticContainer.SceneRestrictionBusController,
+                dynamicWorldParams.StartParcel
             );
 
             var worldInfoHub = new LocationBasedWorldInfoHub(
@@ -489,19 +494,6 @@ namespace Global.Dynamic
             IChatMessagesBus chatMessagesBus = dynamicWorldParams.EnableAnalytics
                 ? new ChatMessagesBusAnalyticsDecorator(coreChatMessageBus, bootstrapContainer.Analytics!)
                 : coreChatMessageBus;
-
-            var minimap = new MinimapController(
-                mainUIView.MinimapView.EnsureNotNull(),
-                mapRendererContainer.MapRenderer,
-                mvcManager,
-                placesAPIService,
-                realmController,
-                chatMessagesBus,
-                staticContainer.ScenesCache,
-                mapPathEventBus,
-                staticContainer.SceneRestrictionBusController,
-                $"{dynamicWorldParams.StartParcel.x},{dynamicWorldParams.StartParcel.y}"
-            );
 
             // This is a lazy reference to avoid circular dependencies in DynamicWorldContainer, evil hack should be redesigned
             realmMisc.Inject(minimap);
@@ -802,7 +794,7 @@ namespace Global.Dynamic
             var container = new DynamicWorldContainer(
                 localSceneDevelopmentController,
                 mvcManager,
-                realmController,
+                realmContainer.RealmController,
                 globalWorldFactory,
                 globalPlugins,
                 profileRepository,

@@ -42,19 +42,19 @@ namespace DCL.Minimap
         private readonly IMVCManager mvcManager;
         private readonly IPlacesAPIService placesAPIService;
         private readonly IRealmData realmData;
-        private readonly IChatMessagesBus chatMessagesBus;
+        private readonly IRealmNavigator realmNavigator;
         private readonly IScenesCache scenesCache;
         private readonly IMapPathEventBus mapPathEventBus;
         private readonly ISceneRestrictionBusController sceneRestrictionBusController;
         private readonly IRealmController realmController;
+        private readonly Vector2Int startParcelInGenesis;
+        private readonly CancellationTokenSource disposeCts;
 
-        private CancellationTokenSource cts;
+        private CancellationTokenSource? placesApiCts;
         private MapRendererTrackPlayerPosition mapRendererTrackPlayerPosition;
         private IMapCameraController? mapCameraController;
         private Vector2Int previousParcelPosition;
         private SceneRestrictionsController? sceneRestrictionsController;
-
-        private readonly string startParcelInGenesis;
 
         public IReadOnlyDictionary<MapLayer, IMapLayerParameter> LayersParameters { get; } = new Dictionary<MapLayer, IMapLayerParameter>
             { { MapLayer.PlayerMarker, new PlayerMarkerParameter { BackgroundIsActive = false } } };
@@ -67,11 +67,11 @@ namespace DCL.Minimap
             IMVCManager mvcManager,
             IPlacesAPIService placesAPIService,
             IRealmController realmController,
-            IChatMessagesBus chatMessagesBus,
+            IRealmNavigator realmNavigator,
             IScenesCache scenesCache,
             IMapPathEventBus mapPathEventBus,
             ISceneRestrictionBusController sceneRestrictionBusController,
-            string startParcelInGenesis
+            Vector2Int startParcelInGenesis
         ) : base(() => minimapView)
         {
             this.mapRenderer = mapRenderer;
@@ -79,12 +79,13 @@ namespace DCL.Minimap
             this.placesAPIService = placesAPIService;
             this.realmController = realmController;
             realmData = realmController.RealmData;
-            this.chatMessagesBus = chatMessagesBus;
+            this.realmNavigator = realmNavigator;
             this.scenesCache = scenesCache;
             this.mapPathEventBus = mapPathEventBus;
             this.sceneRestrictionBusController = sceneRestrictionBusController;
             this.startParcelInGenesis = startParcelInGenesis;
             minimapView.SetCanvasActive(false);
+            disposeCts = new CancellationTokenSource();
         }
 
         public void HookPlayerPositionTrackingSystem(TrackPlayerPositionSystem system) =>
@@ -104,7 +105,7 @@ namespace DCL.Minimap
             viewInstance.sideMenuButton.onClick.AddListener(OpenSideMenu);
 
             viewInstance.goToGenesisCityButton.onClick.AddListener(() =>
-                chatMessagesBus.Send($"/{ChatCommandsUtils.COMMAND_GOTO} {startParcelInGenesis}", ORIGIN));
+                realmNavigator.TeleportToParcelAsync(startParcelInGenesis, disposeCts.Token, true).Forget());
 
             viewInstance.SideMenuCanvasGroup.alpha = 0;
             viewInstance.SideMenuCanvasGroup.gameObject.SetActive(false);
@@ -216,8 +217,8 @@ namespace DCL.Minimap
                 return;
 
             previousParcelPosition = playerParcelPosition;
-            cts.SafeCancelAndDispose();
-            cts = new CancellationTokenSource();
+            placesApiCts.SafeCancelAndDispose();
+            placesApiCts = new CancellationTokenSource();
             RetrieveParcelInfoAsync(playerParcelPosition).Forget();
 
             bool isNotEmptyParcel = scenesCache.Contains(playerParcelPosition);
@@ -236,7 +237,7 @@ namespace DCL.Minimap
                         viewInstance!.placeNameText.text = realmData.RealmName.Replace(".dcl.eth", string.Empty);
                     else
                     {
-                        PlacesData.PlaceInfo? placeInfo = await placesAPIService.GetPlaceAsync(playerParcelPosition, cts.Token);
+                        PlacesData.PlaceInfo? placeInfo = await placesAPIService.GetPlaceAsync(playerParcelPosition, placesApiCts.Token);
                         viewInstance!.placeNameText.text = placeInfo?.title ?? "Unknown place";
                     }
                 }
@@ -266,7 +267,8 @@ namespace DCL.Minimap
 
         public override void Dispose()
         {
-            cts.SafeCancelAndDispose();
+            placesApiCts.SafeCancelAndDispose();
+            disposeCts.Cancel();
             mapPathEventBus.OnShowPinInMinimapEdge -= ShowPinInMinimapEdge;
             mapPathEventBus.OnHidePinInMinimapEdge -= HidePinInMinimapEdge;
             sceneRestrictionsController?.Dispose();
