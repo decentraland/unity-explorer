@@ -7,111 +7,102 @@ on:
     types: [submitted, review_requested, ready_for_review]
 
 jobs:
-  enforce-approvals:
+  setup-context:
     runs-on: ubuntu-latest
+    outputs:
+      pr_number: ${{ steps.set-vars.outputs.pr_number }}
+      repo_owner: ${{ steps.set-vars.outputs.repo_owner }}
+      repo_name: ${{ steps.set-vars.outputs.repo_name }}
 
     steps:
+      - name: Set PR number and repo details
+        id: set-vars
+        run: |
+          echo "Fetching context details..."
+          PR_NUMBER=${{ github.event.pull_request.number }}
+          if [ -z "$PR_NUMBER" ]; then
+            echo "::error::PR number is missing from the event context."
+            exit 1
+          fi
+
+          REPO_OWNER=${{ github.repository_owner }}
+          REPO_NAME=$(echo ${{ github.repository }} | cut -d'/' -f2)
+
+          echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+          echo "repo_owner=$REPO_OWNER" >> $GITHUB_OUTPUT
+          echo "repo_name=$REPO_NAME" >> $GITHUB_OUTPUT
+
+  enforce-approvals:
+    needs: setup-context
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.ORG_ACCESS_TOKEN }}
+      PR_NUMBER: ${{ needs.setup-context.outputs.pr_number }}
+      REPO_OWNER: ${{ needs.setup-context.outputs.repo_owner }}
+      REPO_NAME: ${{ needs.setup-context.outputs.repo_name }}
+
+    steps:
+      - name: Check for excluding labels
+        run: |
+          # Check if the label "auto-pr" is set
+          LABELS=$(gh api \
+            "/repos/$REPO_OWNER/$REPO_NAME/issues/$PR_NUMBER/labels" --jq '.[].name')
+
+          if echo "$LABELS" | grep -q "auto-pr"; then
+            echo "SKIP=true" >> $GITHUB_ENV
+            echo ">>> Skipping approval validation as 'auto-pr' label is set."
+            exit 0
+          fi
+
       - name: Validate Group Approvals
-        uses: actions/github-script@v6
-        with:
-          script: |
-            const fetchTeamMembers = async (teamSlug, token) => {
-              const url = `https://api.github.com/orgs/${context.repo.owner}/teams/${teamSlug}/members`;
-              console.log(`Fetching team members for team: ${teamSlug}`);
+        if: env.SKIP != 'true'
+        run: |
+          # Define the teams
+          QA_TEAM="qa"
+          DEV_TEAM="explorer-devs"
 
-              try {
-                const response = await fetch(url, {
-                  method: "GET",
-                  headers: {
-                    authorization: `Bearer ${token}`,
-                    accept: "application/vnd.github.v3+json",
-                  },
-                });
+          # Fetch team members
+          fetch_team_members() {
+            local team_slug=$1
+            echo "Fetching team members for team: $team_slug"
+            gh api \
+              "/orgs/$REPO_OWNER/teams/$team_slug/members" --jq '.[].login'
+          }
 
-                console.log("Response Status:", response.status, response.statusText);
+          QA_MEMBERS=$(fetch_team_members "$QA_TEAM")
+          DEV_MEMBERS=$(fetch_team_members "$DEV_TEAM")
 
-                const data = await response.json();
-                if (!response.ok) {
-                  console.error("Response Headers:", JSON.stringify([...response.headers], null, 2));
-                  throw new Error(`HTTP ${response.status} - ${data.message}`);
-                }
+          echo ">>> QA Team Members: $QA_MEMBERS"
+          echo ">>> DEV Team Members: $DEV_MEMBERS"
 
-                console.log(`Fetched Members for ${teamSlug}:`, data.map(member => member.login));
-                return data.map(member => member.login);
-              } catch (error) {
-                console.error(`Error fetching team members for ${teamSlug}:`, error.message);
-                throw error;
-              }
-            };
+          # Fetch PR reviews
+          echo ">>> Fetching PR reviews for PR #$PR_NUMBER"
+          PR_REVIEWS=$(gh api \
+            "/repos/$REPO_OWNER/$REPO_NAME/pulls/$PR_NUMBER/reviews" --jq '.[] | select(.state == "APPROVED") | .user.login')
 
-            const fetchPullRequestReviews = async (token) => {
-              if (!context.payload.pull_request) {
-                throw new Error("This workflow must be triggered by a pull_request event.");
-              }
+          echo "Approved Reviews: $PR_REVIEWS"
 
-              const url = `https://api.github.com/repos/${context.repo.owner}/${context.repo.repo}/pulls/${context.payload.pull_request.number}/reviews`;
-              console.log("Fetching PR reviews...");
+          # Validate approvals
+          HAS_QA_APPROVAL=false
+          HAS_DEV_APPROVAL=false
 
-              try {
-                const response = await fetch(url, {
-                  method: "GET",
-                  headers: {
-                    authorization: `Bearer ${token}`,
-                    accept: "application/vnd.github.v3+json",
-                  },
-                });
+          for reviewer in $PR_REVIEWS; do
+            if echo "$QA_MEMBERS" | grep -q "^$reviewer$"; then
+              HAS_QA_APPROVAL=true
+            fi
 
-                console.log("Response Status:", response.status, response.statusText);
+            if echo "$DEV_MEMBERS" | grep -q "^$reviewer$"; then
+              HAS_DEV_APPROVAL=true
+            fi
+          done
 
-                const data = await response.json();
-                if (!response.ok) {
-                  console.error("Response Headers:", JSON.stringify([...response.headers], null, 2));
-                  throw new Error(`HTTP ${response.status} - ${data.message}`);
-                }
+          if [ "$HAS_QA_APPROVAL" != true ] || [ "$HAS_DEV_APPROVAL" != true ]; then
+            MISSING=()
+            [ "$HAS_QA_APPROVAL" != true ] && MISSING+=("QA approval")
+            [ "$HAS_DEV_APPROVAL" != true ] && MISSING+=("DEV approval")
+            MISSING_MSG=$(IFS=", "; echo "${MISSING[*]}")
+            echo "::error::PR must have at least 1: $MISSING_MSG."
+            exit 1
+          fi
 
-                console.log("Fetched PR Reviews:", data);
-                return data;
-              } catch (error) {
-                console.error("Error fetching PR reviews:", error.message);
-                throw error;
-              }
-            };
-
-            const token = process.env.ORG_ACCESS_TOKEN;
-            const QA_TEAM = "qa";
-            const DEV_TEAM = "explorer-devs";
-
-            // Fetch team members
-            const qaMembers = await fetchTeamMembers(QA_TEAM, token);
-            const devMembers = await fetchTeamMembers(DEV_TEAM, token);
-
-            // Fetch PR reviews
-            const reviews = await fetchPullRequestReviews(token);
-
-            // Filter unique APPROVED reviews
-            const uniqueApprovals = reviews.filter(
-              (review, index, self) =>
-                review.state === "APPROVED" &&
-                self.findIndex(r => r.user.login === review.user.login) === index
-            );
-
-            console.log("Unique Approvals:", uniqueApprovals.map(approval => approval.user.login));
-
-            // Validate approvals
-            const hasQaApproval = uniqueApprovals.some(review => qaMembers.includes(review.user.login));
-            const hasDevApproval = uniqueApprovals.some(review => devMembers.includes(review.user.login));
-
-            if (!hasQaApproval || !hasDevApproval) {
-              const missing = [
-                !hasQaApproval ? "QA approval" : null,
-                !hasDevApproval ? "DEV approval" : null,
-              ]
-                .filter(Boolean)
-                .join(" and ");
-
-              throw new Error(`PR must have at least 1 ${missing}.`);
-            }
-
-            console.log("PR has the required approvals.");
-        env:
-          ORG_ACCESS_TOKEN: ${{ secrets.ORG_ACCESS_TOKEN }}
+          echo ">>> PR has the required approvals."
