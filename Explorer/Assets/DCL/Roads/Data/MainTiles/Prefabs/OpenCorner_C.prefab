@@ -42,6 +42,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2545086715042723560}
   - component: {fileID: 2107280119984120140}
+  - component: {fileID: 5707865887784996305}
   m_Layer: 0
   m_Name: OpenCorner_C
   m_TagString: Untagged
@@ -247,6 +248,211 @@ MonoBehaviour:
       e31: 0
       e32: 0
       e33: 1
+--- !u!114 &5707865887784996305
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3040578718095357415}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2a93533cfb4b48c5866cdd42852bb92c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  PrefabInstance:
+    Meshes:
+    - Mesh: {fileID: 6549383457765728042, guid: 84366f692ac68a74fa0b72a63c361aff, type: 3}
+      Materials:
+      - {fileID: 2100000, guid: 3500af5aa51050d45955b1dd3385ab04, type: 2}
+      ReceiveShadows: 1
+      ShadowCastingMode: 1
+      Transform: {fileID: 6526147822728383782}
+    LODGroups:
+    - Transform: {fileID: 199327152728098005}
+      ObjectSize: 16.000002
+      LODBounds:
+        m_Center: {x: -0.0000009536743, y: 0.049999915, z: 0}
+        m_Extent: {x: 8, y: 0.05000008, z: 8.000001}
+      LODs:
+      - Distance: 0.13763738
+        Meshes:
+        - Mesh: {fileID: 9031037228045548633, guid: 84eb849725a65eb419ecf049b3119757, type: 3}
+          Materials:
+          - {fileID: 2100000, guid: 080ee30e4f4ff5c4fae19015bec5167c, type: 2}
+          ReceiveShadows: 1
+          ShadowCastingMode: 1
+          Transform: {fileID: 0}
+      - Distance: 0.027252605
+        Meshes:
+        - Mesh: {fileID: -6359036865849020546, guid: 84eb849725a65eb419ecf049b3119757, type: 3}
+          Materials:
+          - {fileID: 2100000, guid: 080ee30e4f4ff5c4fae19015bec5167c, type: 2}
+          ReceiveShadows: 1
+          ShadowCastingMode: 1
+          Transform: {fileID: 0}
+    - Transform: {fileID: 383825929997374237}
+      ObjectSize: 4.366378
+      LODBounds:
+        m_Center: {x: -0.00000047683716, y: 0.1825516, z: 7.5}
+        m_Extent: {x: 2.183189, y: 0.18491152, z: 0.3287468}
+      LODs:
+      - Distance: 0.037784006
+        Meshes:
+        - Mesh: {fileID: 4166020912628018431, guid: 455bd1c33ae1c814e80059a9aaddc441, type: 3}
+          Materials:
+          - {fileID: 2100000, guid: 080ee30e4f4ff5c4fae19015bec5167c, type: 2}
+          - {fileID: 2100000, guid: fcd067b2a5f3ade45846eef4205a2cb8, type: 2}
+          ReceiveShadows: 1
+          ShadowCastingMode: 1
+          Transform: {fileID: 0}
+      - Distance: 0.018612256
+        Meshes:
+        - Mesh: {fileID: -2665897731168356493, guid: 455bd1c33ae1c814e80059a9aaddc441, type: 3}
+          Materials:
+          - {fileID: 2100000, guid: 080ee30e4f4ff5c4fae19015bec5167c, type: 2}
+          - {fileID: 2100000, guid: fcd067b2a5f3ade45846eef4205a2cb8, type: 2}
+          ReceiveShadows: 1
+          ShadowCastingMode: 1
+          Transform: {fileID: 0}
+      - Distance: 0.007446293
+        Meshes:
+        - Mesh: {fileID: -4788003504506777672, guid: 455bd1c33ae1c814e80059a9aaddc441, type: 3}
+          Materials:
+          - {fileID: 2100000, guid: 080ee30e4f4ff5c4fae19015bec5167c, type: 2}
+          - {fileID: 2100000, guid: fcd067b2a5f3ade45846eef4205a2cb8, type: 2}
+          ReceiveShadows: 1
+          ShadowCastingMode: 1
+          Transform: {fileID: 0}
+    - Transform: {fileID: 2857293924442944901}
+      ObjectSize: 4.366378
+      LODBounds:
+        m_Center: {x: -0.00000047683716, y: 0.1825516, z: 7.5}
+        m_Extent: {x: 2.183189, y: 0.18491152, z: 0.3287468}
+      LODs:
+      - Distance: 0.037784006
+        Meshes:
+        - Mesh: {fileID: 4166020912628018431, guid: 455bd1c33ae1c814e80059a9aaddc441, type: 3}
+          Materials:
+          - {fileID: 2100000, guid: 080ee30e4f4ff5c4fae19015bec5167c, type: 2}
+          - {fileID: 2100000, guid: fcd067b2a5f3ade45846eef4205a2cb8, type: 2}
+          ReceiveShadows: 1
+          ShadowCastingMode: 1
+          Transform: {fileID: 0}
+      - Distance: 0.018612256
+        Meshes:
+        - Mesh: {fileID: -2665897731168356493, guid: 455bd1c33ae1c814e80059a9aaddc441, type: 3}
+          Materials:
+          - {fileID: 2100000, guid: 080ee30e4f4ff5c4fae19015bec5167c, type: 2}
+          - {fileID: 2100000, guid: fcd067b2a5f3ade45846eef4205a2cb8, type: 2}
+          ReceiveShadows: 1
+          ShadowCastingMode: 1
+          Transform: {fileID: 0}
+      - Distance: 0.007446293
+        Meshes:
+        - Mesh: {fileID: -4788003504506777672, guid: 455bd1c33ae1c814e80059a9aaddc441, type: 3}
+          Materials:
+          - {fileID: 2100000, guid: 080ee30e4f4ff5c4fae19015bec5167c, type: 2}
+          - {fileID: 2100000, guid: fcd067b2a5f3ade45846eef4205a2cb8, type: 2}
+          ReceiveShadows: 1
+          ShadowCastingMode: 1
+          Transform: {fileID: 0}
+    - Transform: {fileID: 2617998528273526283}
+      ObjectSize: 3.2996411
+      LODBounds:
+        m_Center: {x: -0.024924517, y: 0.94335246, z: 0.062199593}
+        m_Extent: {x: 1.5768149, y: 1.5226192, z: 1.6498206}
+      LODs:
+      - Distance: 0.028259004
+        Meshes:
+        - Mesh: {fileID: 6452406434197112212, guid: 7a6c9e87b01b5f94bb28e74c58d938f9, type: 3}
+          Materials:
+          - {fileID: 2100000, guid: 4b09b64dee8b53b4a9bc1155c05102aa, type: 2}
+          ReceiveShadows: 1
+          ShadowCastingMode: 1
+          Transform: {fileID: 1023632367542614580}
+      - Distance: 0.018698368
+        Meshes:
+        - Mesh: {fileID: -5805549381320072616, guid: 7a6c9e87b01b5f94bb28e74c58d938f9, type: 3}
+          Materials:
+          - {fileID: 2100000, guid: 4b09b64dee8b53b4a9bc1155c05102aa, type: 2}
+          ReceiveShadows: 1
+          ShadowCastingMode: 1
+          Transform: {fileID: 7064634222629477093}
+      - Distance: 0.005794622
+        Meshes:
+        - Mesh: {fileID: -2628765915206297012, guid: 7a6c9e87b01b5f94bb28e74c58d938f9, type: 3}
+          Materials:
+          - {fileID: 2100000, guid: 4b09b64dee8b53b4a9bc1155c05102aa, type: 2}
+          ReceiveShadows: 1
+          ShadowCastingMode: 1
+          Transform: {fileID: 641168746377820387}
+    - Transform: {fileID: 2210380576156590327}
+      ObjectSize: 3.3840914
+      LODBounds:
+        m_Center: {x: 0, y: 0.47190782, z: 0.00000011920929}
+        m_Extent: {x: 1.6827765, y: 0.43172345, z: 1.6920457}
+      LODs:
+      - Distance: 0.029014042
+        Meshes:
+        - Mesh: {fileID: 5054886108376055829, guid: 072903bcfed699f499960c32e1302b0f, type: 3}
+          Materials:
+          - {fileID: 2100000, guid: fcd067b2a5f3ade45846eef4205a2cb8, type: 2}
+          - {fileID: 2100000, guid: 080ee30e4f4ff5c4fae19015bec5167c, type: 2}
+          - {fileID: 2100000, guid: 5721e1ca88803ff48b9d8efefee458ca, type: 2}
+          ReceiveShadows: 1
+          ShadowCastingMode: 1
+          Transform: {fileID: 9085400665212568033}
+      - Distance: 0.01931875
+        Meshes:
+        - Mesh: {fileID: -3441998875801778676, guid: 072903bcfed699f499960c32e1302b0f, type: 3}
+          Materials:
+          - {fileID: 2100000, guid: fcd067b2a5f3ade45846eef4205a2cb8, type: 2}
+          - {fileID: 2100000, guid: 080ee30e4f4ff5c4fae19015bec5167c, type: 2}
+          - {fileID: 2100000, guid: 5721e1ca88803ff48b9d8efefee458ca, type: 2}
+          ReceiveShadows: 1
+          ShadowCastingMode: 1
+          Transform: {fileID: 7309429370437944154}
+      - Distance: 0.005944445
+        Meshes:
+        - Mesh: {fileID: -2339752442410856566, guid: 072903bcfed699f499960c32e1302b0f, type: 3}
+          Materials:
+          - {fileID: 2100000, guid: fcd067b2a5f3ade45846eef4205a2cb8, type: 2}
+          - {fileID: 2100000, guid: 080ee30e4f4ff5c4fae19015bec5167c, type: 2}
+          - {fileID: 2100000, guid: 5721e1ca88803ff48b9d8efefee458ca, type: 2}
+          ReceiveShadows: 1
+          ShadowCastingMode: 1
+          Transform: {fileID: 7580424346101106199}
+    - Transform: {fileID: 9057047623097062160}
+      ObjectSize: 2.7376783
+      LODBounds:
+        m_Center: {x: -0.009297788, y: 0.60999084, z: 0}
+        m_Extent: {x: 0.595226, y: 0.6101726, z: 1.3688384}
+      LODs:
+      - Distance: 0.15454863
+        Meshes:
+        - Mesh: {fileID: 8020616577449614874, guid: a8db31bfddc59a545864b23eff2057a8, type: 3}
+          Materials:
+          - {fileID: 2100000, guid: 228e96616bb1ef14da15352b4fcec919, type: 2}
+          ReceiveShadows: 1
+          ShadowCastingMode: 1
+          Transform: {fileID: 4409225947337897568}
+      - Distance: 0.022414275
+        Meshes:
+        - Mesh: {fileID: 5005996464823043455, guid: a8db31bfddc59a545864b23eff2057a8, type: 3}
+          Materials:
+          - {fileID: 2100000, guid: 228e96616bb1ef14da15352b4fcec919, type: 2}
+          ReceiveShadows: 1
+          ShadowCastingMode: 1
+          Transform: {fileID: 4150944342823473399}
+      - Distance: 0.0046898406
+        Meshes:
+        - Mesh: {fileID: -3836542332788760596, guid: a8db31bfddc59a545864b23eff2057a8, type: 3}
+          Materials:
+          - {fileID: 2100000, guid: 228e96616bb1ef14da15352b4fcec919, type: 2}
+          ReceiveShadows: 1
+          ShadowCastingMode: 1
+          Transform: {fileID: 4718737670391906255}
 --- !u!1 &9046393924846440403
 GameObject:
   m_ObjectHideFlags: 0
@@ -350,6 +556,21 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 25767ecd8e6958f4fac61668cc9f75c9, type: 3}
+--- !u!4 &199327152728098005 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 2718405342906412600, guid: 25767ecd8e6958f4fac61668cc9f75c9, type: 3}
+  m_PrefabInstance: {fileID: 2845590780352342765}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &383825929997374237 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 2462921553769462256, guid: 25767ecd8e6958f4fac61668cc9f75c9, type: 3}
+  m_PrefabInstance: {fileID: 2845590780352342765}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &2857293924442944901 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 61559540739121000, guid: 25767ecd8e6958f4fac61668cc9f75c9, type: 3}
+  m_PrefabInstance: {fileID: 2845590780352342765}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &6526147822728383782 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 9073655261472565195, guid: 25767ecd8e6958f4fac61668cc9f75c9, type: 3}
@@ -440,9 +661,49 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: c3f0925194868a5478e507bcc2cc31ba, type: 3}
+--- !u!4 &641168746377820387 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 5907972153593346300, guid: c3f0925194868a5478e507bcc2cc31ba, type: 3}
+  m_PrefabInstance: {fileID: 6420082259817791519}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &1023632367542614580 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 6281425241902299691, guid: c3f0925194868a5478e507bcc2cc31ba, type: 3}
+  m_PrefabInstance: {fileID: 6420082259817791519}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &2210380576156590327 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 5166877408053600488, guid: c3f0925194868a5478e507bcc2cc31ba, type: 3}
+  m_PrefabInstance: {fileID: 6420082259817791519}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &2617998528273526283 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 9028671646059671060, guid: c3f0925194868a5478e507bcc2cc31ba, type: 3}
+  m_PrefabInstance: {fileID: 6420082259817791519}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &7064634222629477093 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 4256510407518182138, guid: c3f0925194868a5478e507bcc2cc31ba, type: 3}
+  m_PrefabInstance: {fileID: 6420082259817791519}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &7309429370437944154 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 4353003393019069253, guid: c3f0925194868a5478e507bcc2cc31ba, type: 3}
+  m_PrefabInstance: {fileID: 6420082259817791519}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &7580424346101106199 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 3471049406381180424, guid: c3f0925194868a5478e507bcc2cc31ba, type: 3}
+  m_PrefabInstance: {fileID: 6420082259817791519}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &8798666489542902235 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 2523021031970210244, guid: c3f0925194868a5478e507bcc2cc31ba, type: 3}
+  m_PrefabInstance: {fileID: 6420082259817791519}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &9085400665212568033 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 2814016428840960510, guid: c3f0925194868a5478e507bcc2cc31ba, type: 3}
   m_PrefabInstance: {fileID: 6420082259817791519}
   m_PrefabAsset: {fileID: 0}
 --- !u!1001 &6963120725634309598
@@ -514,6 +775,21 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+--- !u!4 &4150944342823473399 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 6429702705823796521, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+  m_PrefabInstance: {fileID: 6963120725634309598}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &4409225947337897568 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 6742256751843044286, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+  m_PrefabInstance: {fileID: 6963120725634309598}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &4718737670391906255 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 2440295145327911441, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+  m_PrefabInstance: {fileID: 6963120725634309598}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &9057047623097062160 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 2094422023557664462, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}

@@ -243,11 +243,13 @@ MonoBehaviour:
       m_Extent: {x: 2.283406, y: 0.23958248, z: 2.283116}
     LODs:
     - Distance: 0.017675804
-      MeshData:
-      - Transform: {fileID: 41818396047588020}
-        Mesh: {fileID: -7102246966984757729, guid: 126e82a39f474984ba36916ed957f643, type: 3}
+      Meshes:
+      - Mesh: {fileID: -7102246966984757729, guid: 126e82a39f474984ba36916ed957f643, type: 3}
         Materials:
         - {fileID: 2100000, guid: e2e8ac46569cb794caf16e0ae43fe3c9, type: 2}
+        ReceiveShadows: 1
+        ShadowCastingMode: 1
+        Transform: {fileID: 41818396047588020}
 --- !u!23 &1215898510166180315 stripped
 MeshRenderer:
   m_CorrespondingSourceObject: {fileID: -7511558181221131132, guid: 126e82a39f474984ba36916ed957f643, type: 3}
@@ -358,26 +360,32 @@ MonoBehaviour:
       m_Extent: {x: 0.48528793, y: 0.17919111, z: 0.487961}
     LODs:
     - Distance: 0.04057707
-      MeshData:
-      - Transform: {fileID: 4400662822698035817}
-        Mesh: {fileID: 3230255980353401951, guid: d459e2182d212e145a1287ac468138df, type: 3}
+      Meshes:
+      - Mesh: {fileID: 3230255980353401951, guid: d459e2182d212e145a1287ac468138df, type: 3}
         Materials:
         - {fileID: 2100000, guid: 080ee30e4f4ff5c4fae19015bec5167c, type: 2}
         - {fileID: 2100000, guid: fcd067b2a5f3ade45846eef4205a2cb8, type: 2}
+        ReceiveShadows: 1
+        ShadowCastingMode: 1
+        Transform: {fileID: 4400662822698035817}
     - Distance: 0.008109688
-      MeshData:
-      - Transform: {fileID: 931766102888444305}
-        Mesh: {fileID: -4418603439172018236, guid: d459e2182d212e145a1287ac468138df, type: 3}
+      Meshes:
+      - Mesh: {fileID: -4418603439172018236, guid: d459e2182d212e145a1287ac468138df, type: 3}
         Materials:
         - {fileID: 2100000, guid: 080ee30e4f4ff5c4fae19015bec5167c, type: 2}
         - {fileID: 2100000, guid: fcd067b2a5f3ade45846eef4205a2cb8, type: 2}
+        ReceiveShadows: 1
+        ShadowCastingMode: 1
+        Transform: {fileID: 931766102888444305}
     - Distance: 0.0017103205
-      MeshData:
-      - Transform: {fileID: 3003561559981672706}
-        Mesh: {fileID: 5413619203901244716, guid: d459e2182d212e145a1287ac468138df, type: 3}
+      Meshes:
+      - Mesh: {fileID: 5413619203901244716, guid: d459e2182d212e145a1287ac468138df, type: 3}
         Materials:
         - {fileID: 2100000, guid: fcd067b2a5f3ade45846eef4205a2cb8, type: 2}
         - {fileID: 2100000, guid: 080ee30e4f4ff5c4fae19015bec5167c, type: 2}
+        ReceiveShadows: 1
+        ShadowCastingMode: 1
+        Transform: {fileID: 3003561559981672706}
 --- !u!4 &931766102888444305 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 382086270401418935, guid: d459e2182d212e145a1287ac468138df, type: 3}
@@ -509,23 +517,29 @@ MonoBehaviour:
       m_Extent: {x: 2.7177525, y: 0.80339324, z: 2.747221}
     LODs:
     - Distance: 0.09254839
-      MeshData:
-      - Transform: {fileID: 7675063297843364192}
-        Mesh: {fileID: -5104982840985170182, guid: 9bd4a572eff9d834f9249e2d5dbe14f5, type: 3}
+      Meshes:
+      - Mesh: {fileID: -5104982840985170182, guid: 9bd4a572eff9d834f9249e2d5dbe14f5, type: 3}
         Materials:
         - {fileID: 2100000, guid: 4b09b64dee8b53b4a9bc1155c05102aa, type: 2}
+        ReceiveShadows: 1
+        ShadowCastingMode: 1
+        Transform: {fileID: 7675063297843364192}
     - Distance: 0.031415623
-      MeshData:
-      - Transform: {fileID: 6602727485122772719}
-        Mesh: {fileID: -125143913249960303, guid: 9bd4a572eff9d834f9249e2d5dbe14f5, type: 3}
+      Meshes:
+      - Mesh: {fileID: -125143913249960303, guid: 9bd4a572eff9d834f9249e2d5dbe14f5, type: 3}
         Materials:
         - {fileID: 2100000, guid: 4b09b64dee8b53b4a9bc1155c05102aa, type: 2}
+        ReceiveShadows: 1
+        ShadowCastingMode: 1
+        Transform: {fileID: 6602727485122772719}
     - Distance: 0.009445742
-      MeshData:
-      - Transform: {fileID: 1783549478214455512}
-        Mesh: {fileID: 1159320462330604892, guid: 9bd4a572eff9d834f9249e2d5dbe14f5, type: 3}
+      Meshes:
+      - Mesh: {fileID: 1159320462330604892, guid: 9bd4a572eff9d834f9249e2d5dbe14f5, type: 3}
         Materials:
         - {fileID: 2100000, guid: 4b09b64dee8b53b4a9bc1155c05102aa, type: 2}
+        ReceiveShadows: 1
+        ShadowCastingMode: 1
+        Transform: {fileID: 1783549478214455512}
 --- !u!4 &6602727485122772719 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -3669226101189273509, guid: 9bd4a572eff9d834f9249e2d5dbe14f5, type: 3}

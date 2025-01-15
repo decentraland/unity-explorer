@@ -134,29 +134,35 @@ MonoBehaviour:
       m_Extent: {x: 1.6827765, y: 0.43172345, z: 1.6920457}
     LODs:
     - Distance: 0.029014042
-      MeshData:
-      - Transform: {fileID: 5630711941925151227}
-        Mesh: {fileID: 5054886108376055829, guid: 072903bcfed699f499960c32e1302b0f, type: 3}
+      Meshes:
+      - Mesh: {fileID: 5054886108376055829, guid: 072903bcfed699f499960c32e1302b0f, type: 3}
         Materials:
         - {fileID: 2100000, guid: fcd067b2a5f3ade45846eef4205a2cb8, type: 2}
         - {fileID: 2100000, guid: 080ee30e4f4ff5c4fae19015bec5167c, type: 2}
         - {fileID: 2100000, guid: 5721e1ca88803ff48b9d8efefee458ca, type: 2}
+        ReceiveShadows: 1
+        ShadowCastingMode: 1
+        Transform: {fileID: 5630711941925151227}
     - Distance: 0.01931875
-      MeshData:
-      - Transform: {fileID: 6143422402013078336}
-        Mesh: {fileID: -3441998875801778676, guid: 072903bcfed699f499960c32e1302b0f, type: 3}
+      Meshes:
+      - Mesh: {fileID: -3441998875801778676, guid: 072903bcfed699f499960c32e1302b0f, type: 3}
         Materials:
         - {fileID: 2100000, guid: fcd067b2a5f3ade45846eef4205a2cb8, type: 2}
         - {fileID: 2100000, guid: 080ee30e4f4ff5c4fae19015bec5167c, type: 2}
         - {fileID: 2100000, guid: 5721e1ca88803ff48b9d8efefee458ca, type: 2}
+        ReceiveShadows: 1
+        ShadowCastingMode: 1
+        Transform: {fileID: 6143422402013078336}
     - Distance: 0.005944445
-      MeshData:
-      - Transform: {fileID: 6413845700441548301}
-        Mesh: {fileID: -2339752442410856566, guid: 072903bcfed699f499960c32e1302b0f, type: 3}
+      Meshes:
+      - Mesh: {fileID: -2339752442410856566, guid: 072903bcfed699f499960c32e1302b0f, type: 3}
         Materials:
         - {fileID: 2100000, guid: fcd067b2a5f3ade45846eef4205a2cb8, type: 2}
         - {fileID: 2100000, guid: 080ee30e4f4ff5c4fae19015bec5167c, type: 2}
         - {fileID: 2100000, guid: 5721e1ca88803ff48b9d8efefee458ca, type: 2}
+        ReceiveShadows: 1
+        ShadowCastingMode: 1
+        Transform: {fileID: 6413845700441548301}
 --- !u!4 &3358915686743458029 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 072903bcfed699f499960c32e1302b0f, type: 3}

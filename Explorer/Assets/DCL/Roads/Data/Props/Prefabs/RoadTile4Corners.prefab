@@ -297,10 +297,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   meshData:
-    Transform: {fileID: 6927135464531419166}
     Mesh: {fileID: 6549383457765728042, guid: 84366f692ac68a74fa0b72a63c361aff, type: 3}
     Materials:
     - {fileID: 2100000, guid: 3225c1d052d5ea74fa743920c6453f98, type: 2}
+    ReceiveShadows: 1
+    ShadowCastingMode: 1
+    Transform: {fileID: 6927135464531419166}
 --- !u!1001 &8030101054314334316
 PrefabInstance:
   m_ObjectHideFlags: 0

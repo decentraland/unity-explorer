@@ -71,7 +71,15 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: f01b3ef9777b42844a62fc08a509aeca, type: 3}
       insertIndex: -1
       addedObject: {fileID: 3863245849888377779}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: f01b3ef9777b42844a62fc08a509aeca, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: -341338529756587428}
   m_SourcePrefab: {fileID: 100100000, guid: f01b3ef9777b42844a62fc08a509aeca, type: 3}
+--- !u!4 &314159670873597576 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -7014261510083481143, guid: f01b3ef9777b42844a62fc08a509aeca, type: 3}
+  m_PrefabInstance: {fileID: 1942257465020897089}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1600221588171975184 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: f01b3ef9777b42844a62fc08a509aeca, type: 3}
@@ -99,3 +107,48 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 2733271812582392383, guid: f01b3ef9777b42844a62fc08a509aeca, type: 3}
+--- !u!114 &-341338529756587428
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1600221588171975184}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ac67e1e2bc614da198586d2271101a40, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  LODGroupData:
+    Transform: {fileID: 2125401755580018858}
+    ObjectSize: 16.000002
+    LODBounds:
+      m_Center: {x: 0, y: 0.049999997, z: 0}
+      m_Extent: {x: 8.000001, y: 0.049999997, z: 8.000001}
+    LODs:
+    - Distance: 0.13763738
+      Meshes:
+      - Mesh: {fileID: -718606379187550208, guid: f01b3ef9777b42844a62fc08a509aeca, type: 3}
+        Materials:
+        - {fileID: 2100000, guid: 080ee30e4f4ff5c4fae19015bec5167c, type: 2}
+        ReceiveShadows: 1
+        ShadowCastingMode: 1
+        Transform: {fileID: 8441948388678069460}
+    - Distance: 0.027252605
+      Meshes:
+      - Mesh: {fileID: 677870909994156282, guid: f01b3ef9777b42844a62fc08a509aeca, type: 3}
+        Materials:
+        - {fileID: 2100000, guid: 080ee30e4f4ff5c4fae19015bec5167c, type: 2}
+        ReceiveShadows: 1
+        ShadowCastingMode: 1
+        Transform: {fileID: 314159670873597576}
+--- !u!4 &2125401755580018858 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: f01b3ef9777b42844a62fc08a509aeca, type: 3}
+  m_PrefabInstance: {fileID: 1942257465020897089}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &8441948388678069460 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -1165416858334151787, guid: f01b3ef9777b42844a62fc08a509aeca, type: 3}
+  m_PrefabInstance: {fileID: 1942257465020897089}
+  m_PrefabAsset: {fileID: 0}

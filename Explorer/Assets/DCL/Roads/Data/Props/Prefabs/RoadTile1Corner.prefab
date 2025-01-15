@@ -71,8 +71,20 @@ PrefabInstance:
     m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 84366f692ac68a74fa0b72a63c361aff, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 0.001
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 84366f692ac68a74fa0b72a63c361aff, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0.001
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 84366f692ac68a74fa0b72a63c361aff, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 0.001
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 84366f692ac68a74fa0b72a63c361aff, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -0
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 84366f692ac68a74fa0b72a63c361aff, type: 3}
       propertyPath: m_LocalPosition.y
@@ -88,7 +100,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 84366f692ac68a74fa0b72a63c361aff, type: 3}
       propertyPath: m_LocalRotation.x
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 84366f692ac68a74fa0b72a63c361aff, type: 3}
       propertyPath: m_LocalRotation.y
@@ -116,7 +128,7 @@ PrefabInstance:
       objectReference: {fileID: 2100000, guid: 9ada01858a3601d4c94c92f1e5e2e0bc, type: 2}
     - target: {fileID: 919132149155446097, guid: 84366f692ac68a74fa0b72a63c361aff, type: 3}
       propertyPath: m_Name
-      value: RoadTileOneCorner
+      value: RoadTile1Corner
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -124,10 +136,37 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: 84366f692ac68a74fa0b72a63c361aff, type: 3}
       insertIndex: -1
       addedObject: {fileID: 4229878521390009649}
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 84366f692ac68a74fa0b72a63c361aff, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1405723013838445051}
   m_SourcePrefab: {fileID: 100100000, guid: 84366f692ac68a74fa0b72a63c361aff, type: 3}
 --- !u!4 &5010023361516469758 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 84366f692ac68a74fa0b72a63c361aff, type: 3}
   m_PrefabInstance: {fileID: 4759623995918490133}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &5678191541423220548 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 84366f692ac68a74fa0b72a63c361aff, type: 3}
+  m_PrefabInstance: {fileID: 4759623995918490133}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1405723013838445051
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5678191541423220548}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c2aee77b365549ca8171eb8eba7864b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  meshData:
+    Mesh: {fileID: 6549383457765728042, guid: 84366f692ac68a74fa0b72a63c361aff, type: 3}
+    Materials:
+    - {fileID: 2100000, guid: 9ada01858a3601d4c94c92f1e5e2e0bc, type: 2}
+    ReceiveShadows: 1
+    ShadowCastingMode: 1
+    Transform: {fileID: 5010023361516469758}

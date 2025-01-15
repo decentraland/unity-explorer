@@ -91,21 +91,6 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: 3628818515489699193}
   m_SourcePrefab: {fileID: 100100000, guid: 455bd1c33ae1c814e80059a9aaddc441, type: 3}
---- !u!4 &755315088431094088 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: -177120503638794259, guid: 455bd1c33ae1c814e80059a9aaddc441, type: 3}
-  m_PrefabInstance: {fileID: 8642925301787412133}
-  m_PrefabAsset: {fileID: 0}
---- !u!4 &3004483642271213158 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 6792491677719879875, guid: 455bd1c33ae1c814e80059a9aaddc441, type: 3}
-  m_PrefabInstance: {fileID: 8642925301787412133}
-  m_PrefabAsset: {fileID: 0}
---- !u!4 &5642533741213661209 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: -5062159987322356036, guid: 455bd1c33ae1c814e80059a9aaddc441, type: 3}
-  m_PrefabInstance: {fileID: 8642925301787412133}
-  m_PrefabAsset: {fileID: 0}
 --- !u!4 &8105194792326734158 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 455bd1c33ae1c814e80059a9aaddc441, type: 3}
@@ -158,23 +143,29 @@ MonoBehaviour:
       m_Extent: {x: 2.183189, y: 0.18491152, z: 0.3287468}
     LODs:
     - Distance: 0.037784006
-      MeshData:
-      - Transform: {fileID: 5642533741213661209}
-        Mesh: {fileID: 4166020912628018431, guid: 455bd1c33ae1c814e80059a9aaddc441, type: 3}
+      Meshes:
+      - Mesh: {fileID: 4166020912628018431, guid: 455bd1c33ae1c814e80059a9aaddc441, type: 3}
         Materials:
         - {fileID: 2100000, guid: 080ee30e4f4ff5c4fae19015bec5167c, type: 2}
         - {fileID: 2100000, guid: fcd067b2a5f3ade45846eef4205a2cb8, type: 2}
+        ReceiveShadows: 1
+        ShadowCastingMode: 1
+        Transform: {fileID: 0}
     - Distance: 0.018612256
-      MeshData:
-      - Transform: {fileID: 755315088431094088}
-        Mesh: {fileID: -2665897731168356493, guid: 455bd1c33ae1c814e80059a9aaddc441, type: 3}
+      Meshes:
+      - Mesh: {fileID: -2665897731168356493, guid: 455bd1c33ae1c814e80059a9aaddc441, type: 3}
         Materials:
         - {fileID: 2100000, guid: 080ee30e4f4ff5c4fae19015bec5167c, type: 2}
         - {fileID: 2100000, guid: fcd067b2a5f3ade45846eef4205a2cb8, type: 2}
+        ReceiveShadows: 1
+        ShadowCastingMode: 1
+        Transform: {fileID: 0}
     - Distance: 0.007446293
-      MeshData:
-      - Transform: {fileID: 3004483642271213158}
-        Mesh: {fileID: -4788003504506777672, guid: 455bd1c33ae1c814e80059a9aaddc441, type: 3}
+      Meshes:
+      - Mesh: {fileID: -4788003504506777672, guid: 455bd1c33ae1c814e80059a9aaddc441, type: 3}
         Materials:
         - {fileID: 2100000, guid: 080ee30e4f4ff5c4fae19015bec5167c, type: 2}
         - {fileID: 2100000, guid: fcd067b2a5f3ade45846eef4205a2cb8, type: 2}
+        ReceiveShadows: 1
+        ShadowCastingMode: 1
+        Transform: {fileID: 0}

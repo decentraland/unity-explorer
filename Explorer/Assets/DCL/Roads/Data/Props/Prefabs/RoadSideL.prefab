@@ -127,24 +127,18 @@ MonoBehaviour:
       m_Extent: {x: 8, y: 0.05000008, z: 8.000001}
     LODs:
     - Distance: 0.13763738
-      MeshData:
-      - Transform: {fileID: 5829136343021086488}
-        Mesh: {fileID: 9031037228045548633, guid: 84eb849725a65eb419ecf049b3119757, type: 3}
+      Meshes:
+      - Mesh: {fileID: 9031037228045548633, guid: 84eb849725a65eb419ecf049b3119757, type: 3}
         Materials:
         - {fileID: 2100000, guid: 080ee30e4f4ff5c4fae19015bec5167c, type: 2}
+        ReceiveShadows: 1
+        ShadowCastingMode: 1
+        Transform: {fileID: 0}
     - Distance: 0.027252605
-      MeshData:
-      - Transform: {fileID: 3877847331421506423}
-        Mesh: {fileID: -6359036865849020546, guid: 84eb849725a65eb419ecf049b3119757, type: 3}
+      Meshes:
+      - Mesh: {fileID: -6359036865849020546, guid: 84eb849725a65eb419ecf049b3119757, type: 3}
         Materials:
         - {fileID: 2100000, guid: 080ee30e4f4ff5c4fae19015bec5167c, type: 2}
---- !u!4 &3877847331421506423 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 2612126202665741864, guid: 84eb849725a65eb419ecf049b3119757, type: 3}
-  m_PrefabInstance: {fileID: 1265726360575468895}
-  m_PrefabAsset: {fileID: 0}
---- !u!4 &5829136343021086488 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: -4506550761510567353, guid: 84eb849725a65eb419ecf049b3119757, type: 3}
-  m_PrefabInstance: {fileID: 1265726360575468895}
-  m_PrefabAsset: {fileID: 0}
+        ReceiveShadows: 1
+        ShadowCastingMode: 1
+        Transform: {fileID: 0}

@@ -31,7 +31,7 @@ namespace DCL.Roads.GPUInstancing
         [ContextMenu(nameof(CollectSelfData))]
         private void CollectSelfData()
         {
-            var lodGroup  = GetComponent<LODGroup>();
+            LODGroup lodGroup = GetComponent<LODGroup>();
             lodGroup.RecalculateBounds();
 
             LODGroupData = new LODGroupData
@@ -47,22 +47,25 @@ namespace DCL.Roads.GPUInstancing
         private static LODEntryMeshData[] CollectLODData(UnityEngine.LOD[] lods)
         {
             return lods.Select(lod => new LODEntryMeshData
-            {
-                Meshes = CollectLODMeshData(lod).ToArray(),
-                Distance = lod.screenRelativeTransitionHeight,
-            }).ToArray();
+                        {
+                            Meshes = CollectLODMeshData(lod).ToArray(),
+                            Distance = lod.screenRelativeTransitionHeight,
+                        })
+                       .ToArray();
         }
 
         private static List<MeshData> CollectLODMeshData(UnityEngine.LOD lod) =>
             (from renderer in lod.renderers
                 let meshRenderer = renderer as MeshRenderer
                 let meshFilter = renderer.GetComponent<MeshFilter>()
-                where renderer != null && meshFilter != null
+                where meshRenderer != null && meshFilter != null
                 select new MeshData
                 {
                     Transform = renderer.transform,
                     Mesh = meshFilter.sharedMesh,
                     Materials = meshRenderer.sharedMaterials,
+                    ReceiveShadows = meshRenderer.receiveShadows,
+                    ShadowCastingMode = meshRenderer.shadowCastingMode,
                 }).ToList();
 
         private static void CalculateGroupBounds(LODGroupData lodGroup)
@@ -70,7 +73,7 @@ namespace DCL.Roads.GPUInstancing
             var isInitialized = false;
 
             foreach (LODEntryMeshData mid in lodGroup.LODs)
-            foreach (var data in mid.Meshes)
+            foreach (MeshData data in mid.Meshes)
             {
                 if (!isInitialized)
                 {
@@ -84,7 +87,7 @@ namespace DCL.Roads.GPUInstancing
 
         private void CollectInstanceMatrices(List<Transform> instances, LODInstanceData instanceData)
         {
-            foreach (var instance in instances)
+            foreach (Transform instance in instances)
                 instanceData.Matrices.Add(instance.localToWorldMatrix);
         }
     }
