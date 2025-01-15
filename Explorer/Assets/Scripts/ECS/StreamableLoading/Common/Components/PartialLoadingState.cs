@@ -1,8 +1,10 @@
-﻿namespace ECS.StreamableLoading.Common.Components
+﻿using System;
+
+namespace ECS.StreamableLoading.Common.Components
 {
     public struct PartialLoadingState
     {
-        public readonly byte[] FullData;
+        public Memory<byte> FullData { get; }
         public readonly int FullFileSize;
 
         // TODO assign properly
@@ -12,7 +14,7 @@
 
         public bool FullyDownloaded => NextRangeStart >= FullFileSize;
 
-        public PartialLoadingState(byte[] fullData, int fullFileSize)
+        public PartialLoadingState(Memory<byte> fullData, int fullFileSize)
         {
             FullData = fullData;
             FullFileSize = fullFileSize;

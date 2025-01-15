@@ -1,16 +1,11 @@
 using Arch.Core;
 using Arch.SystemGroups;
-using Cysharp.Threading.Tasks;
 using DCL.WebRequests;
 using DCL.Diagnostics;
-using DCL.WebRequests.PartialDownload;
-using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
-using System;
 using System.Buffers;
-using System.Threading;
 using UnityEngine;
 
 namespace ECS.StreamableLoading.Textures
@@ -19,8 +14,12 @@ namespace ECS.StreamableLoading.Textures
     [LogCategory(ReportCategory.TEXTURES)]
     public partial class LoadTextureSystem : PartialDownloadSystemBase<Texture2DData, GetTextureIntention>
     {
-        public LoadTextureSystem(World world, IStreamableCache<Texture2DData, GetTextureIntention> cache, IWebRequestController webRequestController)
-            : base(world, cache, webRequestController)
+        public LoadTextureSystem(
+            World world,
+            IStreamableCache<Texture2DData, GetTextureIntention> cache,
+            IWebRequestController webRequestController,
+            ArrayPool<byte> buffersPool)
+            : base(world, cache, webRequestController, buffersPool)
         {
         }
 

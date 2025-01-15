@@ -7,6 +7,7 @@ using DCL.WebRequests;
 using ECS.LifeCycle;
 using ECS.StreamableLoading.Textures;
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Threading;
 
@@ -17,6 +18,7 @@ namespace DCL.PluginSystem.World
         private readonly IWebRequestController webRequestController;
 
         private readonly TexturesCache<GetTextureIntention> texturesCache = new ();
+        private readonly ArrayPool<byte> buffersPool = ArrayPool<byte>.Create(1024 * 1024, 100);
 
         public TexturesLoadingPlugin(IWebRequestController webRequestController, CacheCleaner cacheCleaner)
         {
@@ -26,12 +28,12 @@ namespace DCL.PluginSystem.World
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
-            LoadTextureSystem.InjectToWorld(ref builder, texturesCache, webRequestController);
+            LoadTextureSystem.InjectToWorld(ref builder, texturesCache, webRequestController, buffersPool);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
-            LoadGlobalTextureSystem.InjectToWorld(ref builder, texturesCache, webRequestController);
+            LoadGlobalTextureSystem.InjectToWorld(ref builder, texturesCache, webRequestController, buffersPool);
         }
 
         UniTask IDCLPlugin<NoExposedPluginSettings>.InitializeAsync(NoExposedPluginSettings settings, CancellationToken ct) =>

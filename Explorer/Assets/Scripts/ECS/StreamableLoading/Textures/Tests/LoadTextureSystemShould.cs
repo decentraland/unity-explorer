@@ -3,6 +3,7 @@ using ECS.StreamableLoading.Tests;
 using ECS.TestSuite;
 using NUnit.Framework;
 using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
+using System.Buffers;
 using UnityEngine;
 
 namespace ECS.StreamableLoading.Textures.Tests
@@ -10,6 +11,7 @@ namespace ECS.StreamableLoading.Textures.Tests
     [TestFixture]
     public class LoadTextureSystemShould : LoadSystemBaseShould<LoadTextureSystem, Texture2DData, GetTextureIntention>
     {
+        private readonly ArrayPool<byte> buffersPool = ArrayPool<byte>.Create(1024 * 1024, 100);
         private string successPath => $"file://{Application.dataPath + "/../TestResources/Images/alphaTexture.png"}";
         private string failPath => $"file://{Application.dataPath + "/../TestResources/Images/non_existing.png"}";
         private string wrongTypePath => $"file://{Application.dataPath + "/../TestResources/CRDT/arraybuffer.test"}";
@@ -24,7 +26,7 @@ namespace ECS.StreamableLoading.Textures.Tests
             new () { CommonArguments = new CommonLoadingArguments(wrongTypePath) };
 
         protected override LoadTextureSystem CreateSystem() =>
-            new (world, cache, TestWebRequestController.INSTANCE);
+            new (world, cache, TestWebRequestController.INSTANCE, buffersPool);
 
         protected override void AssertSuccess(Texture2DData data)
         {

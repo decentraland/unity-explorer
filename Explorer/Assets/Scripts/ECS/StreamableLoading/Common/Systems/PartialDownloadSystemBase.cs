@@ -17,11 +17,17 @@ namespace ECS.StreamableLoading.Common.Systems
         where TIntention: struct, ILoadingIntention
     {
         private readonly IWebRequestController webRequestController;
+        private readonly ArrayPool<byte> buffersPool;
 
-        protected PartialDownloadSystemBase(World world, IStreamableCache<TData, TIntention> cache, IWebRequestController webRequestController)
+        protected PartialDownloadSystemBase(
+            World world,
+            IStreamableCache<TData, TIntention> cache,
+            IWebRequestController webRequestController,
+            ArrayPool<byte> buffersPool)
             : base(world, cache)
         {
             this.webRequestController = webRequestController;
+            this.buffersPool = buffersPool;
         }
 
         protected override async UniTask<StreamableLoadingResult<TData>> FlowInternalAsync(TIntention intention, StreamableLoadingState state, IPartitionComponent partition, CancellationToken ct)
@@ -29,12 +35,15 @@ namespace ECS.StreamableLoading.Common.Systems
             PartialLoadingState partialState = default;
             PartialDownloadingData chunkData;
 
-            byte[] partialDownloadBuffer = ArrayPool<byte>.Shared!.Rent(PartialDownloadingData.CHUNK_SIZE)!;
+            byte[] partialDownloadBuffer = buffersPool.Rent(PartialDownloadingData.CHUNK_SIZE)!;
 
             try
             {
                 // If the downloading has not started yet
-                if (state.PartialDownloadingData == null) { chunkData = new PartialDownloadingData(partialDownloadBuffer, 0, PartialDownloadingData.CHUNK_SIZE); }
+                if (state.PartialDownloadingData == null)
+                {
+                    chunkData = new PartialDownloadingData(partialDownloadBuffer, 0, PartialDownloadingData.CHUNK_SIZE);
+                }
                 else
                 {
                     partialState = state.PartialDownloadingData.Value;
@@ -52,8 +61,8 @@ namespace ECS.StreamableLoading.Common.Systems
 
                 if (state.PartialDownloadingData == null)
                 {
-                    var fullDataBuffer = new byte[chunkData.FullFileSize];
-                    partialState = new PartialLoadingState(fullDataBuffer, chunkData.FullFileSize);
+                    var fullDataMemory = new Memory<byte>(new byte[chunkData.FullFileSize]);
+                    partialState = new PartialLoadingState(fullDataMemory, chunkData.FullFileSize);
                 }
 
                 int finalBytesCount = chunkData.DataBuffer.Length;
@@ -61,16 +70,17 @@ namespace ECS.StreamableLoading.Common.Systems
                 if (chunkData.RangeEnd > chunkData.FullFileSize)
                     finalBytesCount = chunkData.FullFileSize - chunkData.RangeStart;
 
-                Buffer.BlockCopy(chunkData.DataBuffer, 0, partialState.FullData!, chunkData.RangeStart, finalBytesCount);
+                chunkData.DataBuffer.AsMemory(0, finalBytesCount).CopyTo(partialState.FullData.Slice(chunkData.RangeStart, finalBytesCount));
                 partialState.NextRangeStart = chunkData.RangeEnd + 1;
 
                 state.SetChunkCompleted(partialState);
 
-                if (partialState.FullyDownloaded) { return ProcessCompletedData(partialState.FullData!); }
+                if (partialState.FullyDownloaded)
+                    return ProcessCompletedData(partialState.FullData.ToArray());
 
                 return default;
             }
-            finally { ArrayPool<byte>.Shared!.Return(partialDownloadBuffer); }
+            finally { buffersPool.Return(partialDownloadBuffer); }
         }
 
         protected abstract StreamableLoadingResult<TData> ProcessCompletedData(byte[] completeData);
