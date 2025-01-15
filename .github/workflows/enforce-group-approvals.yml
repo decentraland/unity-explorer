@@ -2,19 +2,19 @@ name: Enforce QA and DEV Approvals
 
 on:
   pull_request:
-    branches:
-      - dev # Only run for PRs targeting the dev branch
     types:
-      - submitted
       - opened
       - reopened
       - synchronize
       - review_requested
       - ready_for_review
       - labeled
+      - unlabeled
+  pull_request_review:
 
 jobs:
   setup-context:
+    if: github.event.pull_request.base.ref == 'dev'
     runs-on: ubuntu-latest
     outputs:
       pr_number: ${{ steps.set-vars.outputs.pr_number }}
@@ -40,6 +40,7 @@ jobs:
           echo "repo_name=$REPO_NAME" >> $GITHUB_OUTPUT
 
   enforce-approvals:
+    if: github.event.pull_request.base.ref == 'dev'
     needs: setup-context
     runs-on: ubuntu-latest
     env:
