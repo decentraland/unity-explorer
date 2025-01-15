@@ -32,6 +32,7 @@ namespace DCL.AvatarRendering.Wearables
         private static readonly URLSubdirectory WEARABLES_COMPLEMENT_URL = URLSubdirectory.FromString("/wearables/");
         private static readonly URLSubdirectory WEARABLES_EMBEDDED_SUBDIRECTORY = URLSubdirectory.FromString("/Wearables/");
         private readonly URLDomain assetBundleURL;
+        private readonly URLDomain builderContentURL;
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IWebRequestController webRequestController;
 
@@ -41,13 +42,14 @@ namespace DCL.AvatarRendering.Wearables
         private WearablesDTOList defaultWearablesDTOs;
         private GameObject defaultEmptyWearableAsset;
 
-        public WearablePlugin(IAssetsProvisioner assetsProvisioner, IWebRequestController webRequestController, IRealmData realmData, URLDomain assetBundleURL, CacheCleaner cacheCleaner, IWearableStorage wearableStorage)
+        public WearablePlugin(IAssetsProvisioner assetsProvisioner, IWebRequestController webRequestController, IRealmData realmData, URLDomain assetBundleURL, CacheCleaner cacheCleaner, IWearableStorage wearableStorage, URLDomain builderContentURL)
         {
             this.wearableStorage = wearableStorage;
             this.assetsProvisioner = assetsProvisioner;
             this.webRequestController = webRequestController;
             this.realmData = realmData;
             this.assetBundleURL = assetBundleURL;
+            this.builderContentURL = builderContentURL;
 
             cacheCleaner.Register(this.wearableStorage);
         }

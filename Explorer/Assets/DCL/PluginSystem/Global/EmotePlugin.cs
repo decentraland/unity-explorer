@@ -49,6 +49,7 @@ namespace DCL.PluginSystem.Global
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
         private readonly AudioClipsCache audioClipsCache;
         private readonly URLDomain assetBundleURL;
+        private readonly URLDomain builderContentURL;
         private readonly MainUIView mainUIView;
         private readonly ICursor cursor;
         private readonly IInputBlock inputBlock;
@@ -74,7 +75,8 @@ namespace DCL.PluginSystem.Global
             ICursor cursor,
             IInputBlock inputBlock,
             Arch.Core.World world,
-            Entity playerEntity)
+            Entity playerEntity,
+            URLDomain builderContentURL)
         {
             this.messageBus = messageBus;
             this.debugBuilder = debugBuilder;
@@ -85,6 +87,7 @@ namespace DCL.PluginSystem.Global
             this.web3IdentityCache = web3IdentityCache;
             this.entityParticipantTable = entityParticipantTable;
             this.assetBundleURL = assetBundleURL;
+            this.builderContentURL = builderContentURL;
             this.webRequestController = webRequestController;
             this.emoteStorage = emoteStorage;
             this.realmData = realmData;

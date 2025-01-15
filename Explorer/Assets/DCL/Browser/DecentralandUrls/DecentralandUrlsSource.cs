@@ -10,9 +10,11 @@ namespace DCL.Browser.DecentralandUrls
         private const string ENV = "{ENV}";
         private static string ASSET_BUNDLE_URL;
         private static string GENESIS_URL;
+        private static string BUILDER_CONTENT_URL;
 
         private const string ASSET_BUNDLE_URL_TEMPLATE = "https://ab-cdn.decentraland.{0}";
         private const string GENESIS_URL_TEMPLATE = "https://realm-provider-ea.decentraland.{0}/main";
+        private const string BUILDER_CONTENT_URL_TEMPLATE = "https://builder-api.decentraland.{0}/v1/storage/contents";
 
 
         private readonly Dictionary<DecentralandUrl, string> cache = new ();
@@ -33,6 +35,7 @@ namespace DCL.Browser.DecentralandUrls
                 case DecentralandEnvironment.Zone:
                     ASSET_BUNDLE_URL = string.Format(ASSET_BUNDLE_URL_TEMPLATE, environmentDomainLowerCase);
                     GENESIS_URL = string.Format(GENESIS_URL_TEMPLATE, environmentDomainLowerCase);
+                    BUILDER_CONTENT_URL = string.Format(BUILDER_CONTENT_URL_TEMPLATE, environmentDomainLowerCase);
                     break;
                 case DecentralandEnvironment.Today:
 
@@ -104,6 +107,7 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.CameraReelPlaces => $"https://camera-reel-service.decentraland.{ENV}/api/places",
                 DecentralandUrl.CameraReelLink => $"https://reels.decentraland.{ENV}",
                 DecentralandUrl.ApiFriends => $"wss://rpc-social-service.decentraland.{ENV}",
+                DecentralandUrl.BuilderApiContent => BUILDER_CONTENT_URL,
                 _ => throw new ArgumentOutOfRangeException(nameof(decentralandUrl), decentralandUrl, null!)
             };
     }
