@@ -43,6 +43,8 @@ namespace DCL.Friends.UI.Sections.Friends
             view.Disable -= Disable;
             friendListPagedRequestManager.Dispose();
             friendListInitCts.SafeCancelAndDispose();
+            friendListPagedRequestManager.OnlineFolderClicked -= FolderClicked;
+            friendListPagedRequestManager.OfflineFolderClicked -= FolderClicked;
         }
 
         private LoopListViewItem2 OnGetItemByIndex(LoopListView2 loopListView, int index) =>
@@ -74,7 +76,17 @@ namespace DCL.Friends.UI.Sections.Friends
             view.SetScrollView(friendListPagedRequestManager.HasFriends);
 
             if (friendListPagedRequestManager.HasFriends)
+            {
                 view.LoopList.SetListItemCount(friendListPagedRequestManager.GetElementsNumber(), false);
+                friendListPagedRequestManager.OnlineFolderClicked += FolderClicked;
+                friendListPagedRequestManager.OfflineFolderClicked += FolderClicked;
+            }
+        }
+
+        private void FolderClicked()
+        {
+            view.LoopList.SetListItemCount(friendListPagedRequestManager.GetElementsNumber(), false);
+            view.LoopList.RefreshAllShownItem();
         }
 
         private void Disable()

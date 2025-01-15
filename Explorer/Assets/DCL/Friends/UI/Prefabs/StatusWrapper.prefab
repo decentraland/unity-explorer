@@ -249,8 +249,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   <FolderButton>k__BackingField: {fileID: 6977618842099812658}
-  <FolderButtonGraphics>k__BackingField: {fileID: 738342930177563466}
+  <FolderButtonGraphics>k__BackingField: {fileID: 3733259976562098061}
   <StatusText>k__BackingField: {fileID: 4680874752882355061}
+  <FoldingAnimationDuration>k__BackingField: 0.3
 --- !u!1 &5655083260233009416
 GameObject:
   m_ObjectHideFlags: 0
@@ -527,7 +528,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 9879272c733ec44189c11c901f5b3500, type: 3}
+  m_Sprite: {fileID: 21300000, guid: e0a2bc75af20840e79cb10bba9987431, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
