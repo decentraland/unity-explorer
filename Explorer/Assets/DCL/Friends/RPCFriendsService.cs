@@ -321,7 +321,7 @@ namespace DCL.Friends
             switch (transport.State)
             {
                 case WebSocketState.Open:
-                    return;
+                    break;
                 case WebSocketState.Connecting:
                     await UniTask.WaitWhile(() => transport.State == WebSocketState.Connecting, cancellationToken: ct);
                     break;
