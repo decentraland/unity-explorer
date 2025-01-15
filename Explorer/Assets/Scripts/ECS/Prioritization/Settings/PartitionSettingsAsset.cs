@@ -4,19 +4,12 @@ using UnityEngine;
 
 namespace ECS.Prioritization
 {
-    [CreateAssetMenu(menuName = "Create Partition Settings", fileName = "PartitionSettings", order = 0)]
+    [CreateAssetMenu(fileName = "PartitionSettings", menuName = "DCL/Prioritization/Partition Settings")]
     public class PartitionSettingsAsset : ScriptableObject, IPartitionSettings
     {
         [SerializeField] private float positionTolerance = 0.1f;
         [SerializeField] private int[] distanceBuckets = { 16, 32, 48, 96, 256, 512, 2048 };
         [SerializeField] private int fastPathDistance = 256;
-
-        [field: SerializeField]
-        public float AngleTolerance { get; private set; } = 1f;
-
-        public float PositionSqrTolerance { get; private set; }
-        public IReadOnlyList<int> SqrDistanceBuckets { get; private set; }
-        public int FastPathSqrDistance { get; private set; }
 
         private void OnEnable()
         {
@@ -27,6 +20,13 @@ namespace ECS.Prioritization
         {
             CacheValues();
         }
+
+        [field: SerializeField]
+        public float AngleTolerance { get; private set; } = 1f;
+
+        public float PositionSqrTolerance { get; private set; }
+        public IReadOnlyList<int> SqrDistanceBuckets { get; private set; }
+        public int FastPathSqrDistance { get; private set; }
 
         private void CacheValues()
         {

@@ -1,8 +1,10 @@
-﻿using UnityEngine;
+﻿using DCL.Audio;
+using DCL.MapRenderer.MapLayers.Categories;
+using UnityEngine;
 
 namespace DCL.MapRenderer
 {
-    [CreateAssetMenu(menuName = "Create MapRendererSettingsAsset", fileName = "MapRendererSettings", order = 0)]
+    [CreateAssetMenu(fileName = "MapRendererSettings", menuName = "DCL/Map/Map Renderer Settings Asset")]
     public class MapRendererSettingsAsset : ScriptableObject, IMapRendererSettings
     {
         [field: SerializeField]
@@ -27,7 +29,22 @@ namespace DCL.MapRenderer
         public IMapRendererSettings.SceneOfInterestMarkerObjectRef SceneOfInterestMarker { get; private set; }
 
         [field: SerializeField]
-        public IMapRendererSettings.FavoriteMarkerObjectRef FavoriteMarker { get; private set; }
+        public IMapRendererSettings.SearchResultMarkerObjectRef SearchResultMarker { get; private set; }
+
+        [field: SerializeField]
+        public IMapRendererSettings.CategoryMarkerObjectRef CategoryMarker { get; private set; }
+
+        [field: SerializeField]
+        public IMapRendererSettings.ClusterMarkerObjectRef ClusterMarker { get; private set; }
+
+        [field: SerializeField]
+        public IMapRendererSettings.ClusterMarkerObjectRef SearchResultsClusterMarker { get; private set; }
+
+        [field: SerializeField]
+        public CategoryIconMappingsSO CategoryIconMappings { get; private set; }
+
+        [field: SerializeField]
+        public CategoryLayerIconMappingsSO CategoryLayerIconMappings { get; private set; }
 
         [field: SerializeField]
         public IMapRendererSettings.HotUserMarkerRef UserMarker { get; private set; }
@@ -37,5 +54,11 @@ namespace DCL.MapRenderer
 
         [field: SerializeField]
         public IMapRendererSettings.PinMarkerRef PathDestinationPin { get; private set; }
+
+        [field: SerializeField]
+        public AudioClipConfig ClickAudio { get; private set; }
+
+        [field: SerializeField]
+        public AudioClipConfig HoverAudio { get; private set; }
     }
 }

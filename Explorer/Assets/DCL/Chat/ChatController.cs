@@ -145,6 +145,8 @@ namespace DCL.Chat
             base.OnViewShow();
             dclInput.UI.Click.performed += OnClick;
             dclInput.Shortcuts.ToggleNametags.performed += ToggleNametagsFromShortcut;
+            dclInput.Shortcuts.OpenChat.performed += OnOpenChat;
+            dclInput.Shortcuts.OpenChatCommandLine.performed += OnOpenChatCommand;
         }
 
         protected override void OnViewClose()
@@ -152,6 +154,8 @@ namespace DCL.Chat
             base.OnViewClose();
             dclInput.UI.Click.performed -= OnClick;
             dclInput.Shortcuts.ToggleNametags.performed -= ToggleNametagsFromShortcut;
+            dclInput.Shortcuts.OpenChat.performed -= OnOpenChat;
+            dclInput.Shortcuts.OpenChatCommandLine.performed -= OnOpenChatCommand;
         }
 
         private void OnClick(InputAction.CallbackContext obj)
@@ -160,8 +164,8 @@ namespace DCL.Chat
 
             void CheckIfClickedOnEmojiPanel()
             {
-                if (! (viewInstance!.EmojiPanel.gameObject.activeInHierarchy ||
-                       viewInstance.EmojiSuggestionPanel.gameObject.activeInHierarchy)) return;
+                if (!(viewInstance!.EmojiPanel.gameObject.activeInHierarchy ||
+                      viewInstance.EmojiSuggestionPanel.gameObject.activeInHierarchy)) return;
 
                 raycastResults = eventSystem.RaycastAll(device.position.value);
                 var clickedOnPanel = false;
@@ -181,8 +185,30 @@ namespace DCL.Chat
                         viewInstance.EmojiPanel.gameObject.SetActive(false);
                         EnableUnwantedInputs();
                     }
+
                     emojiSuggestionPanelController!.SetPanelVisibility(false);
                 }
+            }
+        }
+
+        private void OnOpenChat(InputAction.CallbackContext obj)
+        {
+            TryFocusInputFieldWithText(string.Empty);
+        }
+
+        private void OnOpenChatCommand(InputAction.CallbackContext obj)
+        {
+            TryFocusInputFieldWithText("/");
+        }
+
+        private void TryFocusInputFieldWithText(string text)
+        {
+            if (viewInstance!.gameObject.activeInHierarchy && viewInstance.InputField.isFocused == false)
+            {
+                var inputField = viewInstance.InputField;
+                inputField.text = text;
+                inputField.ActivateInputField();
+                inputField.caretPosition = inputField.text.Length;
             }
         }
 
@@ -260,6 +286,7 @@ namespace DCL.Chat
             emojiSuggestionPanelController!.SetPanelVisibility(false);
             viewInstance.EmojiPanel.EmojiContainer.gameObject.SetActive(toggle);
             viewInstance.InputField.ActivateInputField();
+
             if (toggle) DisableUnwantedInputs();
             else EnableUnwantedInputs();
         }
@@ -327,7 +354,9 @@ namespace DCL.Chat
                 item = listView.NewListViewItem(listView.ItemPrefabDataList[2].mItemPrefab.name);
             else
             {
-                item = listView.NewListViewItem(itemData.SystemMessage ? listView.ItemPrefabDataList[3].mItemPrefab.name : itemData.SentByOwnUser ? listView.ItemPrefabDataList[1].mItemPrefab.name : listView.ItemPrefabDataList[0].mItemPrefab.name);
+                item = listView.NewListViewItem(itemData.SystemMessage ? listView.ItemPrefabDataList[3].mItemPrefab.name :
+                    itemData.SentByOwnUser ? listView.ItemPrefabDataList[1].mItemPrefab.name : listView.ItemPrefabDataList[0].mItemPrefab.name);
+
                 ChatEntryView itemScript = item!.GetComponent<ChatEntryView>()!;
                 SetItemData(index, itemData, itemScript);
             }
@@ -466,7 +495,7 @@ namespace DCL.Chat
                 GenerateChatBubbleComponent(entity, chatMessage);
                 UIAudioEventsBus.Instance.SendPlayAudioEvent(viewInstance!.ChatReceiveMessageAudio);
             }
-            else if (chatMessage is {SystemMessage: false, SentByOwnUser: true })
+            else if (chatMessage is { SystemMessage: false, SentByOwnUser: true })
                 GenerateChatBubbleComponent(playerEntity, chatMessage);
 
             viewInstance!.ResetChatEntriesFadeout();
@@ -477,7 +506,7 @@ namespace DCL.Chat
 
         private void GenerateChatBubbleComponent(Entity e, ChatMessage chatMessage)
         {
-            if(nametagsData is {showChatBubbles: true, showNameTags: true })
+            if (nametagsData is { showChatBubbles: true, showNameTags: true })
                 world.AddOrGet(e, new ChatBubbleComponent(chatMessage.Message, chatMessage.Sender, chatMessage.WalletAddress));
         }
 

@@ -1760,7 +1760,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 556587912230755051, guid: 571c63ddcf1523b45a64fabd71cb6dd5, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 120
+      value: 86
       objectReference: {fileID: 0}
     - target: {fileID: 791050805523401173, guid: 571c63ddcf1523b45a64fabd71cb6dd5, type: 3}
       propertyPath: m_SizeDelta.x
@@ -1780,7 +1780,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 935382261191405662, guid: 571c63ddcf1523b45a64fabd71cb6dd5, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 106.18
+      value: 71.82
       objectReference: {fileID: 0}
     - target: {fileID: 935382261191405662, guid: 571c63ddcf1523b45a64fabd71cb6dd5, type: 3}
       propertyPath: m_SizeDelta.y
@@ -1788,7 +1788,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 935382261191405662, guid: 571c63ddcf1523b45a64fabd71cb6dd5, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 60
+      value: 43
       objectReference: {fileID: 0}
     - target: {fileID: 1095953891227981704, guid: 571c63ddcf1523b45a64fabd71cb6dd5, type: 3}
       propertyPath: m_SizeDelta.x
@@ -1960,7 +1960,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5984625867669522073, guid: 571c63ddcf1523b45a64fabd71cb6dd5, type: 3}
       propertyPath: m_text
-      value: Camera reel <color=#716B7C>[K]</color>
+      value: Gallery <color=#716B7C>[K]</color>
       objectReference: {fileID: 0}
     - target: {fileID: 5984625867669522073, guid: 571c63ddcf1523b45a64fabd71cb6dd5, type: 3}
       propertyPath: m_HorizontalAlignment
