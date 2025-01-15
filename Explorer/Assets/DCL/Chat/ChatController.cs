@@ -54,11 +54,11 @@ namespace DCL.Chat
         private readonly Mouse device;
         private readonly DCLInput dclInput;
         private readonly IInputBlock inputBlock;
-        private readonly ISystemClipboard systemClipboard;
         private readonly IMVCManager mvcManager;
+        private readonly IClipboardManager clipboardManager;
+
         private EmojiPanelController? emojiPanelController;
         private EmojiSuggestionPanel? emojiSuggestionPanelController;
-
         private CancellationTokenSource cts;
         private CancellationTokenSource emojiPanelCts;
         private SingleInstanceEntity cameraEntity;
@@ -89,9 +89,8 @@ namespace DCL.Chat
             DCLInput dclInput,
             IEventSystem eventSystem,
             IInputBlock inputBlock,
-            ISystemClipboard systemClipboard,
-            IMVCManager mvcManager
-        ) : base(viewFactory)
+            IMVCManager mvcManager,
+            IClipboardManager clipboardManager) : base(viewFactory)
         {
             this.chatEntryConfiguration = chatEntryConfiguration;
             this.chatMessagesBus = chatMessagesBus;
@@ -108,8 +107,8 @@ namespace DCL.Chat
             this.dclInput = dclInput;
             this.eventSystem = eventSystem;
             this.inputBlock = inputBlock;
-            this.systemClipboard = systemClipboard;
             this.mvcManager = mvcManager;
+            this.clipboardManager = clipboardManager;
 
             device = InputSystem.GetDevice<Mouse>();
         }
@@ -185,11 +184,10 @@ namespace DCL.Chat
                 var clickedOnPanel = false;
 
                 foreach (RaycastResult result in raycastResults)
-                {
                     if (result.gameObject == viewInstance!.EmojiPanel.gameObject ||
                         result.gameObject == viewInstance.EmojiSuggestionPanel.ScrollView.gameObject ||
-                        result.gameObject == viewInstance.EmojiPanelButton.gameObject) { clickedOnPanel = true; }
-                }
+                        result.gameObject == viewInstance.EmojiPanelButton.gameObject)
+                        clickedOnPanel = true;
 
                 if (!clickedOnPanel)
                 {
@@ -433,22 +431,18 @@ namespace DCL.Chat
             closePopupTask = new UniTaskCompletionSource();
 
             var data = new ChatEntryMenuPopupData(
-                (f)=> CopyMessageText(messageText),
                 chatEntryView.messageBubbleElement.popupPosition.position,
+                messageText,
                 closePopupTask.Task);
 
             mvcManager.ShowAsync(ChatEntryMenuPopupController.IssueCommand(data)).Forget();
         }
 
-        private void CopyMessageText(string messageText)
-        {
-            systemClipboard.Set(messageText);
-            closePopupTask.TrySetResult();
-        }
-
-        private void PasteClipboardText(string pastedText)
+        private void PasteClipboardText(object sender, string pastedText)
         {
             TMP_InputField inputField = viewInstance!.InputField;
+            if (!inputField.isActiveAndEnabled) return;
+
             int remainingSpace = inputField.characterLimit - inputField.text.Length;
 
             if (remainingSpace <= 0) return;
@@ -465,17 +459,16 @@ namespace DCL.Chat
 
         private void OnRightClickRegistered()
         {
-            if (isInputSelected && systemClipboard.HasValue())
+            if (isInputSelected && clipboardManager.HasValue())
             {
+                clipboardManager.OnPaste -= PasteClipboardText;
+                clipboardManager.OnPaste += PasteClipboardText;
                 closePopupTask.TrySetResult();
                 closePopupTask = new UniTaskCompletionSource();
 
                 var data = new PastePopupToastData(
-                    PasteClipboardText,
                     viewInstance!.PastePopupPosition.position,
                     closePopupTask.Task);
-
-
 
                 mvcManager.ShowAndForget(PastePopupToastController.IssueCommand(data));
                 viewInstance.InputField.ActivateInputField();
@@ -513,6 +506,7 @@ namespace DCL.Chat
 
         protected override void OnBlur()
         {
+            clipboardManager.OnPaste -= PasteClipboardText;
             viewInstance!.InputField.onSubmit.RemoveAllListeners();
             dclInput.UI.Submit.performed -= OnSubmitAction;
             viewInstance.InputField.DeactivateInputField();

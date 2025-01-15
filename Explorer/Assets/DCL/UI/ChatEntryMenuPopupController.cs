@@ -1,7 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Clipboard;
 using MVC;
-using System;
 using System.Threading;
 using UnityEngine;
 
@@ -9,11 +8,11 @@ namespace DCL.UI
 {
     public class ChatEntryMenuPopupController : ControllerBase<ChatEntryMenuPopupView, ChatEntryMenuPopupData>
     {
-        private readonly ISystemClipboard systemClipboard;
+        private readonly IClipboardManager clipboardManager;
 
-        public ChatEntryMenuPopupController(ViewFactoryMethod viewFactory, ISystemClipboard systemClipboard) : base(viewFactory)
+        public ChatEntryMenuPopupController(ViewFactoryMethod viewFactory, IClipboardManager clipboardManager) : base(viewFactory)
         {
-            this.systemClipboard = systemClipboard;
+            this.clipboardManager = clipboardManager;
         }
 
         protected override void OnViewInstantiated()
@@ -30,28 +29,27 @@ namespace DCL.UI
 
         private void OnCopyButtonClicked()
         {
-            inputData.Copy.Invoke(systemClipboard.Get());
+            clipboardManager.Copy(this, inputData.CopiedText);
         }
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
-            inputData.CloseTask != null ? UniTask.WhenAll(inputData.CloseTask.Value) : UniTask.Never(ct);
+            UniTask.WhenAny(inputData.CloseTask ?? UniTask.Never(ct),
+                viewInstance!.CopyButton.OnClickAsync(ct));
     }
-
 
     public struct ChatEntryMenuPopupData
     {
-        public readonly Action<string> Copy;
+        public readonly string CopiedText;
         public readonly UniTask? CloseTask;
         public readonly Vector2 Position;
 
-        public ChatEntryMenuPopupData(Action<string> copy, Vector2 position, UniTask? closeTask = null)
+        public ChatEntryMenuPopupData(Vector2 position, string copiedText, UniTask? closeTask = null)
         {
-            Copy = copy;
             Position = position;
+            CopiedText = copiedText;
             CloseTask = closeTask;
         }
     }
 }
-

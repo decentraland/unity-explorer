@@ -7,13 +7,13 @@ using UnityEngine;
 
 namespace DCL.UI
 {
-    public class PastePopupToastController : ControllerBase<PastePopupToastView,PastePopupToastData>
+    public class PastePopupToastController : ControllerBase<PastePopupToastView, PastePopupToastData>
     {
-        private readonly ISystemClipboard systemClipboard;
+        private readonly IClipboardManager clipboardManager;
 
-        public PastePopupToastController(ViewFactoryMethod viewFactory, ISystemClipboard systemClipboard) : base(viewFactory)
+        public PastePopupToastController(ViewFactoryMethod viewFactory, IClipboardManager clipboardManager) : base(viewFactory)
         {
-            this.systemClipboard = systemClipboard;
+            this.clipboardManager = clipboardManager;
         }
 
         protected override void OnViewInstantiated()
@@ -30,25 +30,23 @@ namespace DCL.UI
 
         private void OnPasteButtonClicked()
         {
-            inputData.Paste.Invoke(systemClipboard.Get());
+            clipboardManager.Paste(this);
         }
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
-            inputData.CloseTask != null ? UniTask.WhenAll(inputData.CloseTask.Value) : UniTask.Never(ct);
+            UniTask.WhenAny(inputData.CloseTask ?? UniTask.Never(ct),
+                viewInstance!.PasteButton.OnClickAsync(ct));
     }
-
 
     public struct PastePopupToastData
     {
-        public readonly Action<string> Paste;
         public readonly UniTask? CloseTask;
         public readonly Vector2 Position;
 
-        public PastePopupToastData(Action<string> paste, Vector2 position, UniTask? closeTask = null)
+        public PastePopupToastData(Vector2 position, UniTask? closeTask = null)
         {
-            Paste = paste;
             Position = position;
             CloseTask = closeTask;
         }

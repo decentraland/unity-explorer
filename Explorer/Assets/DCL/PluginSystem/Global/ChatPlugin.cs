@@ -10,6 +10,7 @@ using DCL.Emoji;
 using DCL.Input;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
+using DCL.UI;
 using DCL.UI.MainUI;
 using MVC;
 using System;
@@ -33,7 +34,7 @@ namespace DCL.PluginSystem.Global
         private readonly Entity playerEntity;
         private readonly IEventSystem eventSystem;
         private readonly MainUIView mainUIView;
-        private readonly ISystemClipboard systemClipboard;
+        private readonly IClipboardManager clipboardManager;
 
         private ChatController chatController;
 
@@ -48,10 +49,8 @@ namespace DCL.PluginSystem.Global
             IEventSystem eventSystem,
             MainUIView mainUIView,
             IInputBlock inputBlock,
-            ISystemClipboard systemClipboard,
             Arch.Core.World world,
-            Entity playerEntity
-        )
+            Entity playerEntity, IClipboardManager clipboardManager)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -63,10 +62,10 @@ namespace DCL.PluginSystem.Global
             this.inputBlock = inputBlock;
             this.world = world;
             this.playerEntity = playerEntity;
+            this.clipboardManager = clipboardManager;
             this.eventSystem = eventSystem;
             this.mainUIView = mainUIView;
             this.inputBlock = inputBlock;
-            this.systemClipboard = systemClipboard;
         }
 
         public void Dispose() { }
@@ -84,7 +83,7 @@ namespace DCL.PluginSystem.Global
             chatController = new ChatController(
                 () =>
                 {
-                    var view = mainUIView.ChatView;
+                    ChatView? view = mainUIView.ChatView;
                     view.gameObject.SetActive(true);
                     return view;
                 },
@@ -103,8 +102,8 @@ namespace DCL.PluginSystem.Global
                 dclInput,
                 eventSystem,
                 inputBlock,
-                systemClipboard,
-                mvcManager
+                mvcManager,
+                clipboardManager
             );
 
             mvcManager.RegisterController(chatController);

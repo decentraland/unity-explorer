@@ -16,7 +16,7 @@ namespace DCL.PluginSystem.Global
     {
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IMVCManager mvcManager;
-        private readonly ISystemClipboard systemClipboard;
+        private readonly IClipboardManager clipboardManager;
 
         private PastePopupToastController? pasteToastButtonController;
         private ChatEntryMenuPopupController chatEntryMenuPopupController;
@@ -24,11 +24,11 @@ namespace DCL.PluginSystem.Global
         public GenericPopupsPlugin(
             IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
-            ISystemClipboard systemClipboard)
+            IClipboardManager clipboardManager)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
-            this.systemClipboard = systemClipboard;
+            this.clipboardManager = clipboardManager;
         }
 
         public void Dispose()
@@ -44,15 +44,19 @@ namespace DCL.PluginSystem.Global
         public async UniTask InitializeAsync(Settings settings, CancellationToken ct)
         {
             PastePopupToastView panelViewAsset = (await assetsProvisioner.ProvideMainAssetAsync(settings.PastePopupToastPrefab, ct)).Value;
+
             ControllerBase<PastePopupToastView, PastePopupToastData>.ViewFactoryMethod pasteViewFactoryMethod =
                 PastePopupToastController.Preallocate(panelViewAsset, null, out PastePopupToastView panelView);
-            pasteToastButtonController = new PastePopupToastController(pasteViewFactoryMethod, systemClipboard);
+
+            pasteToastButtonController = new PastePopupToastController(pasteViewFactoryMethod, clipboardManager);
             mvcManager.RegisterController(pasteToastButtonController);
 
             ChatEntryMenuPopupView chatMenuPopupView = (await assetsProvisioner.ProvideMainAssetAsync(settings.ChatEntryMenuPopupPrefab, ct)).Value;
+
             ControllerBase<ChatEntryMenuPopupView, ChatEntryMenuPopupData>.ViewFactoryMethod viewFactoryMethod =
                 ChatEntryMenuPopupController.Preallocate(chatMenuPopupView, null, out ChatEntryMenuPopupView popupView);
-            chatEntryMenuPopupController = new ChatEntryMenuPopupController(viewFactoryMethod, systemClipboard);
+
+            chatEntryMenuPopupController = new ChatEntryMenuPopupController(viewFactoryMethod, clipboardManager);
             mvcManager.RegisterController(chatEntryMenuPopupController);
         }
 
@@ -70,10 +74,8 @@ namespace DCL.PluginSystem.Global
                 public ChatEntryMenuPopupRef(string guid) : base(guid) { }
             }
 
-
             [field: SerializeField] public PastePopupToastRef PastePopupToastPrefab;
             [field: SerializeField] public ChatEntryMenuPopupRef ChatEntryMenuPopupPrefab;
         }
-
     }
 }
