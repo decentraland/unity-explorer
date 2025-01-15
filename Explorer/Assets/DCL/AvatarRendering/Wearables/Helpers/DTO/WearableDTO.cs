@@ -58,11 +58,11 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             public List<BuilderWearableMetadataDto> data;
 
             [JsonIgnore]
-            public IReadOnlyList<BuilderWearableMetadataDto> IndividualData => data;
+            public IReadOnlyList<BuilderWearableMetadataDto> WearablesCollection => data;
         }
 
         [Serializable]
-        public class BuilderWearableMetadataDto : WearableMetadataDto, IBuilderLambdaResponseElement
+        public class BuilderWearableMetadataDto : WearableMetadataDto, IBuilderLambdaResponseElement<WearableDTO>
         {
             public Dictionary<string, string> contents;
             public string type;
@@ -80,7 +80,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                     i++;
                 }
 
-                // TODO: Modify WearableDTO to include download URL???
+                // TODO: Modify WearableDTO to include files download URL???
                 return new WearableDTO()
                 {
                     metadata = this,

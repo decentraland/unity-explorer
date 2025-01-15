@@ -117,52 +117,21 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
             }
         }
 
-        // private void LoadBuilderItem<TResponseElement>(ref TIntention intention, IAttachmentLambdaResponse<TResponseElement> lambdaResponse) where TResponseElement: ILambdaResponseElement<TAvatarElementDTO>
-        private void LoadBuilderItem(ref TIntention intention, IBuilderLambdaResponse<IBuilderLambdaResponseElement> lambdaResponse)
+        // private void LoadBuilderItem<TResponseElement>(ref TIntention intention, IBuilderLambdaResponse<TResponseElement> lambdaResponse) where TResponseElement : IBuilderLambdaResponseElement<TAvatarElementDTO>
+        private void LoadBuilderItem(ref TIntention intention, IBuilderLambdaResponse<IBuilderLambdaResponseElement<TAvatarElementDTO>> lambdaResponse)
         {
-            intention.SetTotal(lambdaResponse.IndividualData.Count);
+            intention.SetTotal(lambdaResponse.WearablesCollection.Count);
 
-            foreach (var element in lambdaResponse.IndividualData)
+            foreach (var element in lambdaResponse.WearablesCollection)
             {
-                // element.buil
-
-                // Manually build WearableDTO from the data read from the builder response...
-                /*var elementDTO = element.Entity;
-                var wearable = avatarElementStorage.GetOrAddByDTO(elementDTO);*/
-            }
-
-            /*foreach (var element in lambdaResponse.Page)
-            {
-                var elementDTO = element.Entity;
-
-                var wearable = avatarElementStorage.GetOrAddByDTO(elementDTO);
-
-                foreach (var individualData in element.IndividualData)
-                {
-                    // Probably a base wearable, wrongly return individual data. Skip it
-                    if (elementDTO.Metadata.id == individualData.id) continue;
-
-                    long.TryParse(individualData.transferredAt, out long transferredAt);
-                    decimal.TryParse(individualData.price, out decimal price);
-
-                    avatarElementStorage.SetOwnedNft(
-                        elementDTO.Metadata.id,
-                        new NftBlockchainOperationEntry(
-                            individualData.id,
-                            individualData.tokenId,
-                            DateTimeOffset.FromUnixTimeSeconds(transferredAt).DateTime,
-                            price
-                        )
-                    );
-                }
-
+                var wearable = avatarElementStorage.GetOrAddByDTO(element.BuildWearableDTO());
                 intention.AppendToResult(wearable);
-            }*/
+            }
         }
 
         protected abstract UniTask<IAttachmentLambdaResponse<ILambdaResponseElement<TAvatarElementDTO>>> ParseResponseAsync(GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> adapter);
 
-        protected abstract UniTask<IBuilderLambdaResponse<IBuilderLambdaResponseElement>> ParseBuilderResponseAsync(GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> adapter);
+        protected abstract UniTask<IBuilderLambdaResponse<IBuilderLambdaResponseElement<TAvatarElementDTO>>> ParseBuilderResponseAsync(GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> adapter);
 
         protected abstract TAsset AssetFromPreparedIntention(in TIntention intention);
 

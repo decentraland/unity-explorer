@@ -23,15 +23,15 @@ namespace DCL.AvatarRendering.Loading
         IReadOnlyList<ElementIndividualDataDto> IndividualData { get; }
     }
 
-    public interface IBuilderLambdaResponse<out TElementDTO>
+    public interface IBuilderLambdaResponse<out TBuilderLambdaResponseElement>
     {
-        // TElementDTO Entity { get; }
-
-        IReadOnlyList<TElementDTO> IndividualData { get; }
+        IReadOnlyList<TBuilderLambdaResponseElement> WearablesCollection { get; }
     }
 
-    public interface IBuilderLambdaResponseElement
+    public interface IBuilderLambdaResponseElement<out TElementDTO>
     {
         IReadOnlyDictionary<string, string> Contents { get; }
+
+        TElementDTO BuildWearableDTO();
     }
 }
