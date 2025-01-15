@@ -5,7 +5,7 @@ using Segment.Serialization;
 using System;
 using UnityEngine;
 
-namespace DCL.PerformanceAndDiagnostics.Analytics
+namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
 {
     public class ExplorePanelAnalytics : IDisposable
     {
@@ -21,7 +21,6 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             this.cameraReelController = controller.CameraReelController;
             this.cameraReelGalleryController = this.cameraReelController.CameraReelGalleryController;
 
-            navmapController.FloatingPanelController.OnJumpIn += OnJumpIn;
             cameraReelController.Activated += TrackCameraReelOpen;
             cameraReelGalleryController.ScreenshotDeleted += TrackScreenshotDeleted;
             cameraReelGalleryController.ScreenshotDownloaded += TrackScreenshotDownloaded;
@@ -30,7 +29,6 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
         public void Dispose()
         {
-            navmapController.FloatingPanelController.OnJumpIn -= OnJumpIn;
             cameraReelController.Activated -= TrackCameraReelOpen;
             cameraReelGalleryController.ScreenshotDeleted -= TrackScreenshotDeleted;
             cameraReelGalleryController.ScreenshotDownloaded -= TrackScreenshotDownloaded;

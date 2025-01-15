@@ -22,6 +22,6 @@
         public const string VIDEO_PRIORITIZATION = "alfa-video-prioritization";
         public const string ASSET_BUNDLE_FALLBACK = "alfa-asset-bundle-fallback";
 
-        public const string CAMERA_REEL = "alpha-camera-reel";
+        public const string CAMERA_REEL = "alfa-camera-reel";
     }
 }

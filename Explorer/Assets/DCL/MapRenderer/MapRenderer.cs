@@ -61,6 +61,9 @@ namespace DCL.MapRenderer
                 }
 
                 layers[MapLayer.SatelliteAtlas].SharedActive = true;
+                layers[MapLayer.SearchResults].SharedActive = true;
+                layers[MapLayer.LiveEvents].SharedActive = false;
+                layers[MapLayer.Category].SharedActive = false;
             }
             catch (OperationCanceledException)
             {
@@ -103,10 +106,10 @@ namespace DCL.MapRenderer
             mapCameraPool.Release(mapCameraController);
         }
 
-        private void OnCameraZoomChanged(float baseZoom, float newZoom)
+        private void OnCameraZoomChanged(float baseZoom, float newZoom, int zoomLevel)
         {
             foreach (IZoomScalingLayer layer in zoomScalingLayers)
-                layer.ApplyCameraZoom(baseZoom, newZoom);
+                layer.ApplyCameraZoom(baseZoom, newZoom, zoomLevel);
         }
 
         public void SetSharedLayer(MapLayer mask, bool active)
@@ -122,7 +125,7 @@ namespace DCL.MapRenderer
                 ResetCancellationSource(mapLayerStatus);
 
                 if (active)
-                    mapLayerStatus.MapLayerController.Enable(mapLayerStatus.CTS.Token).SuppressCancellationThrow().Forget();
+                    mapLayerStatus.MapLayerController.EnableAsync(mapLayerStatus.CTS.Token).SuppressCancellationThrow().Forget();
                 else
                     mapLayerStatus.MapLayerController.Disable(mapLayerStatus.CTS.Token).SuppressCancellationThrow().Forget();
             }
@@ -146,7 +149,7 @@ namespace DCL.MapRenderer
                 {
                     // Cancel deactivation flow
                     ResetCancellationSource(mapLayerStatus);
-                    mapLayerStatus.MapLayerController.Enable(mapLayerStatus.CTS.Token).SuppressCancellationThrow().Forget();
+                    mapLayerStatus.MapLayerController.EnableAsync(mapLayerStatus.CTS.Token).SuppressCancellationThrow().Forget();
                 }
 
                 mapLayerStatus.ActivityOwners.Add(owner);

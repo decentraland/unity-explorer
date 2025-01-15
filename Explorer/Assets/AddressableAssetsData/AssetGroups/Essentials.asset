@@ -52,6 +52,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1b149c5240fcd49309285605ce2e8067
+    m_Address: CategoryMarkerObject
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 1d026bc5d9fd448798b32a455c0f3978
     m_Address: Nametag
     m_ReadOnly: 0
@@ -87,6 +92,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2eac55a1aa3034858a71ab0e06baf5de
+    m_Address: ClusterMarkerObject
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 35aa85d68d15435418848a03a2db81ec
     m_Address: Assets/TextMesh Pro/Fonts & Materials/Inter-Regular SDF.asset
     m_ReadOnly: 0
@@ -99,6 +109,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 3b17a8a5ab9ee104899eb22c70935c38
     m_Address: Assets/DCL/StylizedSkybox/Animations/DirectionalLightCycle.anim
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3d761805ce62940dbafaa7bb64be222c
+    m_Address: ClusterMarkerObjectForSearchResults
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -147,6 +162,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 58f16fd4b3584431d87e11f043b40408
+    m_Address: Assets/DCL/Navmap/Assets/EventScheduleElement.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 5c36aa92efab46341b9b02fd6a38a4e7
     m_Address: StylizedSkyboxController
     m_ReadOnly: 0
@@ -167,8 +187,18 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 624d527621f514c5999533539668c4d3
+    m_Address: Assets/DCL/Navmap/Assets/EventEntry.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 62f68ba25f6c905428b36a081b072566
     m_Address: EmoteAudioSource
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 65104014709704f75838386ed5173c45
+    m_Address: Assets/DCL/MapRenderer/Addressables/SearchResultMarkerObject.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -199,6 +229,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 729a904161871414d913b07a246ed27d
     m_Address: Assets/TextMesh Pro/Fonts & Materials/LiberationSans SDF - Fallback.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 73e736ffedc4d4e1c9acc6461c55248b
+    m_Address: MapLayerCategoryIconMapping
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -302,6 +337,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: bda7566751d4243fb842e1a272cb9f83
+    m_Address: MapCategoryIconMapping
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: beceeda1295384ef4921493b30d5cf45
     m_Address: EditorImg
     m_ReadOnly: 0
@@ -359,6 +399,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: f80a8f4fcad2b4246b66c94221314244
     m_Address: AtlasChunk
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: fdd9de2cf51974e4f9be30ab72d8eabd
+    m_Address: MapLayerIconMapping
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

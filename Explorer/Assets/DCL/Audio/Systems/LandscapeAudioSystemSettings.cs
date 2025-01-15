@@ -12,7 +12,7 @@ namespace DCL.Audio
         int OceanDistanceThreshold { get; }
     }
 
-    [CreateAssetMenu(fileName = "LandscapeAudioSystemSettings", menuName = "SO/Audio/LandscapeAudioSystemSettings")]
+    [CreateAssetMenu(fileName = "LandscapeAudioSystemSettings", menuName = "DCL/Audio/Landscape Audio System Settings")]
     public class LandscapeAudioSystemSettings : ScriptableObject, ILandscapeAudioSystemSettings
     {
         [SerializeField] private float distanceThreshold = 10f;

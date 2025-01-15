@@ -6,5 +6,12 @@ namespace DCL.UserInAppInitializationFlow
     public interface IUserInAppInitializationFlow
     {
         UniTask ExecuteAsync(UserInAppInitializationFlowParameters parameters, CancellationToken ct);
+
+        enum LoadSource
+        {
+            StartUp,
+            Logout,
+            Recover,
+        }
     }
 }

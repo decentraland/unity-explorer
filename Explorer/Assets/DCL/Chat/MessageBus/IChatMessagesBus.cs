@@ -4,7 +4,6 @@ using DCL.Profiles;
 using DCL.Web3.Identities;
 using System;
 using System.Collections.Generic;
-using System.Text.RegularExpressions;
 using Utility;
 
 namespace DCL.Chat.MessageBus

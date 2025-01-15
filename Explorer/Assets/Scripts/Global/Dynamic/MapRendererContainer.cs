@@ -1,8 +1,10 @@
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.MapPins.Bus;
 using DCL.MapRenderer;
 using DCL.MapRenderer.ComponentsFactory;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Navmap;
 using DCL.NotificationsBusController.NotificationsBus;
 using DCL.PlacesAPIService;
 using DCL.PluginSystem;
@@ -10,15 +12,17 @@ using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+using Utility.TeleportBus;
+using DCL.EventsApi;
 
 namespace Global.Dynamic
 {
     public class MapRendererContainer : DCLWorldContainer<MapRendererContainer.Settings>
     {
         private readonly IAssetsProvisioner assetsProvisioner;
+        private ProvidedAsset<MapRendererSettingsAsset> mapRendererSettings;
         public MapRendererTextureContainer TextureContainer { get; }
         public IMapRenderer MapRenderer { get; private set; } = null!;
-        private ProvidedAsset<MapRendererSettingsAsset> mapRendererSettings;
 
         private MapRendererContainer(IAssetsProvisioner assetsProvisioner, MapRendererTextureContainer textureContainer)
         {
@@ -32,8 +36,12 @@ namespace Global.Dynamic
             IDecentralandUrlsSource decentralandUrlsSource,
             IAssetsProvisioner assetsProvisioner,
             IPlacesAPIService placesAPIService,
+            IEventsApiService eventsAPIService,
             IMapPathEventBus mapPathEventBus,
+            IMapPinsEventBus mapPinsEventBus,
             INotificationsBusController notificationsBusController,
+            ITeleportBusController teleportBusController,
+            INavmapBus navmapBus,
             CancellationToken ct)
         {
             var mapRendererContainer = new MapRendererContainer(assetsProvisioner, new MapRendererTextureContainer());
@@ -47,8 +55,12 @@ namespace Global.Dynamic
                     decentralandUrlsSource,
                     c.TextureContainer,
                     placesAPIService,
+                    eventsAPIService,
                     mapPathEventBus,
-                    notificationsBusController));
+                    mapPinsEventBus,
+                    notificationsBusController,
+                    teleportBusController,
+                    navmapBus));
 
                 await mapRenderer.InitializeAsync(ct);
                 c.MapRenderer = mapRenderer;

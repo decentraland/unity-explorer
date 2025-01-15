@@ -15,6 +15,7 @@ using System.Collections.Generic;
 using System.Threading;
 using DCL.Utilities.Extensions;
 using ECS.LifeCycle.Components;
+using Global.Dynamic;
 using SceneRunner.Scene;
 using System.Linq;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -23,52 +24,66 @@ namespace PortableExperiences.Controller
 {
     public class ECSPortableExperiencesController : IPortableExperiencesController
     {
+        private static readonly QueryDescription CLEAR_QUERY = new QueryDescription().WithAny<RealmComponent, GetSceneDefinition, GetSceneDefinitionList,
+                                                                                          SceneDefinitionComponent, EmptySceneComponent>()
+                                                                                     .WithAll<PortableExperienceComponent, DeleteEntityIntention>();
+
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IWebRequestController webRequestController;
         private readonly IScenesCache scenesCache;
-        private readonly World globalWorld;
         private readonly List<IPortableExperiencesController.SpawnResponse> spawnResponsesList = new ();
         private readonly FeatureFlagsCache featureFlagsCache;
         private readonly IDecentralandUrlsSource urlsSources;
+        private readonly bool isLocalSceneDevelopment;
+        private GlobalWorld globalWorld;
+
         public Dictionary<ENS, Entity> PortableExperienceEntities { get; } = new ();
 
+        public GlobalWorld GlobalWorld
+        {
+            get => globalWorld.EnsureNotNull("GlobalWorld in RealmController is null");
+
+            set => globalWorld = value;
+        }
+
+        private World world => globalWorld.EcsWorld;
 
         public ECSPortableExperiencesController(
-            World globalWorld,
             IWeb3IdentityCache web3IdentityCache,
             IWebRequestController webRequestController,
             IScenesCache scenesCache,
             FeatureFlagsCache featureFlagsCache,
+            bool isLocalSceneDevelopment,
             IDecentralandUrlsSource urlsSources)
         {
-            this.globalWorld = globalWorld;
             this.web3IdentityCache = web3IdentityCache;
             this.webRequestController = webRequestController;
             this.scenesCache = scenesCache;
             this.featureFlagsCache = featureFlagsCache;
             this.urlsSources = urlsSources;
+            this.isLocalSceneDevelopment = isLocalSceneDevelopment;
         }
 
         public async UniTask<IPortableExperiencesController.SpawnResponse> CreatePortableExperienceByEnsAsync(ENS ens, CancellationToken ct, bool isGlobalPortableExperience = false, bool force = false)
         {
             if (!force)
-            {
                 switch (isGlobalPortableExperience)
                 {
                     //If it's not a Global PX and common PXs are disabled
                     case false when !featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.PORTABLE_EXPERIENCE):
                         throw new Exception("Portable Experiences are disabled");
+
                     //If it IS a Global PX but Global PXs are disabled
                     case true when !featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.GLOBAL_PORTABLE_EXPERIENCE):
                         throw new Exception("Global Portable Experiences are disabled");
                 }
-            }
 
             if (PortableExperienceEntities.ContainsKey(ens)) throw new Exception($"ENS {ens} is already loaded");
 
             string worldUrl = string.Empty;
 
-            if (ens.IsValid) { worldUrl = ens.ConvertEnsToWorldUrl(); }
+            if (ens.IsValid)
+                worldUrl = ens.ConvertEnsToWorldUrl();
 
             if (!worldUrl.IsValidUrl()) throw new ArgumentException($"Invalid Spawn params. Provide a valid ENS name {ens}");
 
@@ -77,14 +92,13 @@ namespace PortableExperiences.Controller
 
             GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> genericGetRequest = webRequestController.GetAsync(new CommonArguments(url), ct, ReportCategory.REALM);
 
-            ServerAbout serverAbout = new ServerAbout();
+            var serverAbout = new ServerAbout();
             ServerAbout result = await genericGetRequest.OverwriteFromJsonAsync(serverAbout, WRJsonParser.Unity);
 
             if (result.configurations.scenesUrn.Count == 0)
-            {
+
                 //The loaded realm does not have any fixed scene, so it cannot be loaded as a Portable Experience
                 throw new Exception($"Scene not Available in provided Portable Experience with ens: {ens}");
-            }
 
             var assetBundleRegistry =
                 featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.ASSET_BUNDLE_FALLBACK)
@@ -93,6 +107,7 @@ namespace PortableExperiences.Controller
                     : URLDomain.EMPTY;
 
             var realmData = new RealmData();
+
             realmData.Reconfigure(
                 new IpfsRealm(web3IdentityCache, webRequestController, portableExperiencePath, assetBundleRegistry,
                     result),
@@ -100,13 +115,13 @@ namespace PortableExperiences.Controller
                 result.configurations.networkId,
                 result.comms?.adapter ?? string.Empty,
                 result.comms?.protocol ?? string.Empty,
-                portableExperiencePath.Value
+                portableExperiencePath.Value,
+                isLocalSceneDevelopment
             );
-
 
             ISceneFacade parentScene = scenesCache.Scenes.FirstOrDefault(s => s.SceneStateProvider.IsCurrent);
             string parentSceneName = parentScene != null ? parentScene.Info.Name : "main";
-            Entity portableExperienceEntity = globalWorld.Create(new PortableExperienceRealmComponent(realmData, parentSceneName, isGlobalPortableExperience), new PortableExperienceComponent(ens));
+            Entity portableExperienceEntity = world.Create(new PortableExperienceRealmComponent(realmData, parentSceneName, isGlobalPortableExperience), new PortableExperienceComponent(ens));
 
             PortableExperienceEntities.Add(ens, portableExperienceEntity);
 
@@ -123,7 +138,7 @@ namespace PortableExperiences.Controller
 
             if (PortableExperienceEntities.TryGetValue(ens, out Entity portableExperienceEntity))
             {
-                PortableExperienceRealmComponent portableExperienceRealmComponent = globalWorld.Get<PortableExperienceRealmComponent>(portableExperienceEntity);
+                PortableExperienceRealmComponent portableExperienceRealmComponent = world.Get<PortableExperienceRealmComponent>(portableExperienceEntity);
 
                 if (portableExperienceRealmComponent.IsGlobalPortableExperience) return false;
 
@@ -137,18 +152,26 @@ namespace PortableExperiences.Controller
         {
             spawnResponsesList.Clear();
 
-            foreach (var portableExperience in PortableExperienceEntities)
+            foreach (KeyValuePair<ENS, Entity> portableExperience in PortableExperienceEntities)
             {
-                PortableExperienceRealmComponent pxRealmComponent = globalWorld.Get<PortableExperienceRealmComponent>(portableExperience.Value);
+                PortableExperienceRealmComponent pxRealmComponent = world.Get<PortableExperienceRealmComponent>(portableExperience.Value);
 
-                spawnResponsesList.Add(new IPortableExperiencesController.SpawnResponse {
-                        name = pxRealmComponent.RealmData.RealmName,
-                        ens = portableExperience.Key.ToString(),
-                        parent_cid = pxRealmComponent.ParentSceneId,
-                        pid = portableExperience.Value.Id.ToString() });
+                spawnResponsesList.Add(new IPortableExperiencesController.SpawnResponse
+                {
+                    name = pxRealmComponent.RealmData.RealmName,
+                    ens = portableExperience.Key.ToString(),
+                    parent_cid = pxRealmComponent.ParentSceneId,
+                    pid = portableExperience.Value.Id.ToString(),
+                });
             }
 
             return spawnResponsesList;
+        }
+
+        public void UnloadAllPortableExperiences()
+        {
+            foreach (IPortableExperiencesController.SpawnResponse spawnResponse in GetAllPortableExperiences())
+                UnloadPortableExperienceByEns(new ENS(spawnResponse.ens));
         }
 
         public IPortableExperiencesController.ExitResponse UnloadPortableExperienceByEns(ENS ens)
@@ -157,7 +180,10 @@ namespace PortableExperiences.Controller
 
             if (PortableExperienceEntities.TryGetValue(ens, out Entity portableExperienceEntity))
             {
-                globalWorld.Add<DeleteEntityIntention>(portableExperienceEntity);
+                world.Add<DeleteEntityIntention>(portableExperienceEntity);
+
+                for (var i = 0; i < globalWorld.FinalizeWorldSystems.Count; i++)
+                    globalWorld.FinalizeWorldSystems[i].FinalizeComponents(world.Query(in CLEAR_QUERY));
 
                 PortableExperienceEntities.Remove(ens);
 

@@ -2,12 +2,17 @@ using DCL.Audio;
 using DCL.MapRenderer.ConsumerUtils;
 using DCL.UI;
 using System;
+using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace DCL.Navmap
 {
     public class NavmapView : MonoBehaviour
     {
+        [field: SerializeField]
+        public List<CategoryToggleView> categoryToggles;
+
         [field: SerializeField]
         public SearchBarView SearchBarView;
 
@@ -15,13 +20,16 @@ namespace DCL.Navmap
         public SearchResultPanelView SearchBarResultPanel;
 
         [field: SerializeField]
+        public PlacesAndEventsPanelView PlacesAndEventsPanelView { get; private set; }
+
+        [field: SerializeField]
+        public PlaceInfoToastView PlaceToastView { get; private set; }
+
+        [field: SerializeField]
+        public SharePlacesAndEventsContextMenuView ShareContextMenuView { get; private set; }
+
+        [field: SerializeField]
         public HistoryRecordPanelView HistoryRecordPanelView;
-
-        [field: SerializeField]
-        public FloatingPanelView floatingPanelView;
-
-        [field: SerializeField]
-        public NavmapFilterView filterView;
 
         [field: SerializeField]
         public NavmapZoomView zoomView;
@@ -48,9 +56,6 @@ namespace DCL.Navmap
         public Animator PanelAnimator { get; private set; }
 
         [field: SerializeField]
-        public Animator HeaderAnimator { get; private set; }
-
-        [field: SerializeField]
         public WarningNotificationView WorldsWarningNotificationView { get; private set; }
 
         [field: SerializeField]
@@ -59,8 +64,6 @@ namespace DCL.Navmap
         [field: Header("Audio")]
         [field: SerializeField]
         public AudioClipConfig ClickAudio { get; private set; }
-        [field: SerializeField]
-        public AudioClipConfig HoverAudio { get; private set; }
     }
 
     [Serializable]

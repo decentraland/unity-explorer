@@ -5,6 +5,7 @@ using DCL.Multiplayer.Connections.Rooms.Connective;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using LiveKit.Internal.FFIClients.Pools;
+using LiveKit.Internal.FFIClients.Pools.Memory;
 
 namespace DCL.Multiplayer.Connections.Archipelago.Rooms
 {
@@ -13,6 +14,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
         public static IArchipelagoIslandRoom NewDefault(
             IWeb3IdentityCache identityCache,
             IMultiPool multiPool,
+            IMemoryPool memoryPool,
             ICharacterObject characterObject,
             ICurrentAdapterAddress currentAdapterAddress,
             IWebRequestController webRequestController
@@ -23,6 +25,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
                     characterObject,
                     identityCache,
                     multiPool,
+                    memoryPool,
                     currentAdapterAddress
                 ),
                 () => new FixedConnectiveRoom(
