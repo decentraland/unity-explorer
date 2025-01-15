@@ -1,6 +1,7 @@
 ﻿using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Tests;
 using ECS.TestSuite;
+using NSubstitute;
 using NUnit.Framework;
 using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using System.Buffers;
@@ -26,7 +27,7 @@ namespace ECS.StreamableLoading.Textures.Tests
             new () { CommonArguments = new CommonLoadingArguments(wrongTypePath) };
 
         protected override LoadTextureSystem CreateSystem() =>
-            new (world, cache, TestWebRequestController.INSTANCE, buffersPool);
+            new (world, cache, TestWebRequestController.INSTANCE, buffersPool, Substitute.For<ITexturesFuse>());
 
         protected override void AssertSuccess(Texture2DData data)
         {

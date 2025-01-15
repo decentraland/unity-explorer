@@ -6,9 +6,11 @@ using DCL.WebRequests.PartialDownload;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
+using ECS.StreamableLoading.Textures;
 using System;
 using System.Buffers;
 using System.Threading;
+using System.Threading.Tasks;
 using UnityEngine;
 
 namespace ECS.StreamableLoading.Common.Systems
@@ -76,13 +78,16 @@ namespace ECS.StreamableLoading.Common.Systems
                 state.SetChunkCompleted(partialState);
 
                 if (partialState.FullyDownloaded)
-                    return ProcessCompletedData(partialState.FullData.ToArray());
+                {
+                    StreamableLoadingResult<TData> loadedResult = await ProcessCompletedData(partialState.FullData.ToArray(), ct);
+                    return loadedResult;
+                }
 
                 return default;
             }
             finally { buffersPool.Return(partialDownloadBuffer); }
         }
 
-        protected abstract StreamableLoadingResult<TData> ProcessCompletedData(byte[] completeData);
+        protected abstract UniTask<StreamableLoadingResult<TData>> ProcessCompletedData(byte[] completeData, CancellationToken ct);
     }
 }
