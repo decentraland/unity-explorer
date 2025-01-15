@@ -1,5 +1,6 @@
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Loading.DTO;
+using DCL.Diagnostics;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
 using SceneRunner.Scene;
@@ -132,12 +133,17 @@ namespace DCL.AvatarRendering.Loading.Components
         {
             AvatarAttachmentDTO wearableDTO = avatarAttachment.DTO;
 
-            for (var i = 0; i < wearableDTO.content.Length; i++)
-                if (wearableDTO.content[i].file == key)
-                {
-                    hash = wearableDTO.content[i].hash;
-                    return true;
-                }
+            if (wearableDTO.content != null)
+            {
+                for (var i = 0; i < wearableDTO.content.Length; i++)
+                    if (wearableDTO.content[i].file == key)
+                    {
+                        hash = wearableDTO.content[i].hash;
+                        return true;
+                    }
+            }
+            else
+                ReportHub.LogError(ReportCategory.WEARABLE, $"No content found in DTO for wearable with ID: {avatarAttachment.DTO.Metadata.id}");
 
             hash = null;
             return false;
