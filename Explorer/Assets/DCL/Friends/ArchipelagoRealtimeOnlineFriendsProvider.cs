@@ -10,6 +10,7 @@ namespace DCL.Friends
 {
     public class ArchipelagoRealtimeOnlineFriendsProvider : IOnlineUsersProvider
     {
+        private readonly IRoomHub roomHub;
         private readonly IFriendsEventBus friendsEventBus;
         private readonly FriendsCache friendsCache;
         private readonly HashSet<OnlineUserData> onlineFriends = new ();
@@ -18,9 +19,13 @@ namespace DCL.Friends
             IFriendsEventBus friendsEventBus,
             FriendsCache friendsCache)
         {
+            this.roomHub = roomHub;
             this.friendsEventBus = friendsEventBus;
             this.friendsCache = friendsCache;
+        }
 
+        public void SubscribeToRoomEvents()
+        {
             roomHub.IslandRoom().Participants.UpdatesFromParticipant += ProcessFriendConnectivityStatus;
             roomHub.SceneRoom().Room().Participants.UpdatesFromParticipant += ProcessFriendConnectivityStatus;
         }
