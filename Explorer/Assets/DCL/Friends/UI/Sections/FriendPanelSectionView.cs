@@ -23,12 +23,12 @@ namespace DCL.Friends.UI.Sections
             Disable?.Invoke();
 
         public void SetLoadingState(bool isLoading) =>
-            LoadingObject.SetActive(isLoading);
+            LoadingObject?.SetActive(isLoading);
 
         public void SetEmptyState(bool isEmpty) =>
-            EmptyState.SetActive(isEmpty);
+            EmptyState?.SetActive(isEmpty);
 
         public void SetScrollView(bool active) =>
-            LoopList.gameObject.SetActive(active);
+            LoopList?.gameObject.SetActive(active);
     }
 }

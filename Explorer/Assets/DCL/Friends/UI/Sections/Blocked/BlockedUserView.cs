@@ -1,3 +1,4 @@
+using DCL.Profiles;
 using System;
 using TMPro;
 using UnityEngine;
@@ -23,9 +24,10 @@ namespace DCL.Friends.UI.Sections.Blocked
             }
         }
 
-        private void Start()
+        public override void Configure(Profile profile)
         {
             buttons = new[] { UnblockButton, ContextMenuButton };
+            base.Configure(profile);
         }
 
         protected override void ToggleButtonView(bool isActive)

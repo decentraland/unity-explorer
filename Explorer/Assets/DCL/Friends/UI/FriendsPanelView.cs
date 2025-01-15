@@ -1,5 +1,6 @@
 using DCL.Friends.UI.Sections.Blocked;
 using DCL.Friends.UI.Sections.Friends;
+using DCL.Friends.UI.Sections.Requests;
 using MVC;
 using UnityEngine;
 using UnityEngine.UI;
@@ -21,7 +22,7 @@ namespace DCL.Friends.UI
         [field: Header("Requests tab")]
         [field: SerializeField] public Button RequestsTabButton { get; private set; }
         [field: SerializeField] public GameObject RequestsTabSelected { get; private set; }
-        [field: SerializeField] public GameObject RequestsPanel { get; private set; }
+        [field: SerializeField] public RequestsSectionView RequestsSection { get; private set; }
 
         [field: Header("Blocked tab")]
         [field: SerializeField] public Button BlockedTabButton { get; private set; }

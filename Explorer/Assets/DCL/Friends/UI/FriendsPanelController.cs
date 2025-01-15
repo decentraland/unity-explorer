@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Chat;
 using DCL.Friends.UI.Sections.Blocked;
 using DCL.Friends.UI.Sections.Friends;
+using DCL.Friends.UI.Sections.Requests;
 using DCL.Web3.Identities;
 using MVC;
 using System.Threading;
@@ -26,6 +27,7 @@ namespace DCL.Friends.UI
 
         private BlockedSectionController blockedSectionController;
         private FriendsSectionController friendsSectionController;
+        private RequestsSectionController requestsSectionController;
         private CancellationTokenSource friendsPanelCts = new ();
         private bool chatWasVisible;
 
@@ -55,6 +57,8 @@ namespace DCL.Friends.UI
             friendsPanelCts.SafeCancelAndDispose();
 
             blockedSectionController.Dispose();
+            friendsSectionController.Dispose();
+            requestsSectionController.Dispose();
         }
 
         protected override void OnBeforeViewShow()
@@ -81,6 +85,7 @@ namespace DCL.Friends.UI
 
             blockedSectionController = new BlockedSectionController(viewInstance!.BlockedSection, mvcManager);
             friendsSectionController = new FriendsSectionController(viewInstance!.FriendsSection, friendsService, friendEventBus, web3IdentityCache, mvcManager);
+            requestsSectionController = new RequestsSectionController(viewInstance!.RequestsSection, friendsService, friendEventBus, web3IdentityCache, mvcManager);
 
             viewInstance!.FriendsTabButton.onClick.AddListener(() => ToggleTabs(FriendsPanelTab.FRIENDS));
             viewInstance.RequestsTabButton.onClick.AddListener(() => ToggleTabs(FriendsPanelTab.REQUESTS));
@@ -96,7 +101,7 @@ namespace DCL.Friends.UI
             viewInstance!.FriendsTabSelected.SetActive(tab == FriendsPanelTab.FRIENDS);
             viewInstance!.FriendsSection.SetActive(tab == FriendsPanelTab.FRIENDS);
             viewInstance.RequestsTabSelected.SetActive(tab == FriendsPanelTab.REQUESTS);
-            viewInstance.RequestsPanel.SetActive(tab == FriendsPanelTab.REQUESTS);
+            viewInstance.RequestsSection.SetActive(tab == FriendsPanelTab.REQUESTS);
             viewInstance.BlockedTabSelected.SetActive(tab == FriendsPanelTab.BLOCKED);
             viewInstance.BlockedSection.SetActive(tab == FriendsPanelTab.BLOCKED);
         }
