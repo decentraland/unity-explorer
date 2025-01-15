@@ -58,6 +58,8 @@ namespace DCL.Friends.UI.Sections.Friends
             {
                 previousWeb3Identity = web3IdentityCache.Identity?.Address;
                 friendListPagedRequestManager.Reset();
+                friendListPagedRequestManager.OnlineFolderClicked -= FolderClicked;
+                friendListPagedRequestManager.OfflineFolderClicked -= FolderClicked;
             }
 
             if (!friendListPagedRequestManager.WasInitialised)
@@ -78,6 +80,7 @@ namespace DCL.Friends.UI.Sections.Friends
             if (friendListPagedRequestManager.HasFriends)
             {
                 view.LoopList.SetListItemCount(friendListPagedRequestManager.GetElementsNumber(), false);
+                view.LoopList.RefreshAllShownItem();
                 friendListPagedRequestManager.OnlineFolderClicked += FolderClicked;
                 friendListPagedRequestManager.OfflineFolderClicked += FolderClicked;
             }
