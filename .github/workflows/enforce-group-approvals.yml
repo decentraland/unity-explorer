@@ -1,0 +1,117 @@
+name: Enforce QA and DEV Approvals
+
+on:
+  pull_request:
+    branches:
+      - dev # Only run for PRs targeting the dev branch
+    types: [submitted, review_requested, ready_for_review]
+
+jobs:
+  enforce-approvals:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Validate Group Approvals
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fetchTeamMembers = async (teamSlug, token) => {
+              const url = `https://api.github.com/orgs/${context.repo.owner}/teams/${teamSlug}/members`;
+              console.log(`Fetching team members for team: ${teamSlug}`);
+
+              try {
+                const response = await fetch(url, {
+                  method: "GET",
+                  headers: {
+                    authorization: `Bearer ${token}`,
+                    accept: "application/vnd.github.v3+json",
+                  },
+                });
+
+                console.log("Response Status:", response.status, response.statusText);
+
+                const data = await response.json();
+                if (!response.ok) {
+                  console.error("Response Headers:", JSON.stringify([...response.headers], null, 2));
+                  throw new Error(`HTTP ${response.status} - ${data.message}`);
+                }
+
+                console.log(`Fetched Members for ${teamSlug}:`, data.map(member => member.login));
+                return data.map(member => member.login);
+              } catch (error) {
+                console.error(`Error fetching team members for ${teamSlug}:`, error.message);
+                throw error;
+              }
+            };
+
+            const fetchPullRequestReviews = async (token) => {
+              if (!context.payload.pull_request) {
+                throw new Error("This workflow must be triggered by a pull_request event.");
+              }
+
+              const url = `https://api.github.com/repos/${context.repo.owner}/${context.repo.repo}/pulls/${context.payload.pull_request.number}/reviews`;
+              console.log("Fetching PR reviews...");
+
+              try {
+                const response = await fetch(url, {
+                  method: "GET",
+                  headers: {
+                    authorization: `Bearer ${token}`,
+                    accept: "application/vnd.github.v3+json",
+                  },
+                });
+
+                console.log("Response Status:", response.status, response.statusText);
+
+                const data = await response.json();
+                if (!response.ok) {
+                  console.error("Response Headers:", JSON.stringify([...response.headers], null, 2));
+                  throw new Error(`HTTP ${response.status} - ${data.message}`);
+                }
+
+                console.log("Fetched PR Reviews:", data);
+                return data;
+              } catch (error) {
+                console.error("Error fetching PR reviews:", error.message);
+                throw error;
+              }
+            };
+
+            const token = process.env.ORG_ACCESS_TOKEN;
+            const QA_TEAM = "qa";
+            const DEV_TEAM = "explorer-devs";
+
+            // Fetch team members
+            const qaMembers = await fetchTeamMembers(QA_TEAM, token);
+            const devMembers = await fetchTeamMembers(DEV_TEAM, token);
+
+            // Fetch PR reviews
+            const reviews = await fetchPullRequestReviews(token);
+
+            // Filter unique APPROVED reviews
+            const uniqueApprovals = reviews.filter(
+              (review, index, self) =>
+                review.state === "APPROVED" &&
+                self.findIndex(r => r.user.login === review.user.login) === index
+            );
+
+            console.log("Unique Approvals:", uniqueApprovals.map(approval => approval.user.login));
+
+            // Validate approvals
+            const hasQaApproval = uniqueApprovals.some(review => qaMembers.includes(review.user.login));
+            const hasDevApproval = uniqueApprovals.some(review => devMembers.includes(review.user.login));
+
+            if (!hasQaApproval || !hasDevApproval) {
+              const missing = [
+                !hasQaApproval ? "QA approval" : null,
+                !hasDevApproval ? "DEV approval" : null,
+              ]
+                .filter(Boolean)
+                .join(" and ");
+
+              throw new Error(`PR must have at least 1 ${missing}.`);
+            }
+
+            console.log("PR has the required approvals.");
+        env:
+          ORG_ACCESS_TOKEN: ${{ secrets.ORG_ACCESS_TOKEN }}
