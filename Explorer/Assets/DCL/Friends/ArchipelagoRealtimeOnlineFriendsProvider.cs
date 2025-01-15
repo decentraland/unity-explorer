@@ -42,16 +42,23 @@ namespace DCL.Friends
             switch (update)
             {
                 case UpdateFromParticipant.Disconnected:
+                    onlineFriends.Remove(new OnlineUserData
+                    {
+                        position = Vector3.zero,
+                        avatarId = userId,
+                    });
+
                     friendsEventBus.BroadcastFriendDisconnected(userId);
                     break;
-                case UpdateFromParticipant.Connected:
-                    friendsEventBus.BroadcastFriendConnected(userId);
 
+                case UpdateFromParticipant.Connected:
                     onlineFriends.Add(new OnlineUserData
                     {
                         position = Vector3.zero,
                         avatarId = userId,
                     });
+
+                    friendsEventBus.BroadcastFriendConnected(userId);
                     break;
             }
         }
