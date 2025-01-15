@@ -28,7 +28,7 @@ namespace DCL.FeatureFlags
             if(appParameters.TryGetValue(AppArgsFlags.FeatureFlags.HOSTNAME, out string hostName))
                 options.Hostname = hostName;
 
-            //NOTE: This only works for already logged in users. There was a time before PR where the feature flags where re-initialized again after a fresh login.
+            //NOTE: This only works for already logged in users. There was a time before PR 3142 (https://github.com/decentraland/unity-explorer/pull/3142) where the feature flags where re-initialized again after a fresh login.
             //The problem is that systems were initialized in the bootstrapper, way before the login. So that may generate inconsistencies
             //Its not a feature we have ever used, so its fine to leave it like this. If you ever need it, please check the PR on how to readd it and remove the inconsistencies.
             options.UserId = userAddress;
