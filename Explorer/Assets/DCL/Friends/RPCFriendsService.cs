@@ -110,6 +110,7 @@ namespace DCL.Friends
         {
             await EnsureRpcConnectionAsync(ct);
 
+            // TODO: add support to get online friends to the rpc server
             var allFriends = await GetAllFriendIdsAsync(ct);
 
             var allConnectedUsers = await onlineUsersProvider.GetAsync(ct);
@@ -137,6 +138,7 @@ namespace DCL.Friends
         {
             await EnsureRpcConnectionAsync(ct);
 
+            // TODO: add support to get offline friends to the rpc server
             var allFriends = await GetAllFriendIdsAsync(ct);
 
             var allConnectedUsers = await onlineUsersProvider.GetAsync(ct);
