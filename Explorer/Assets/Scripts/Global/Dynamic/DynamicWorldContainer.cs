@@ -62,6 +62,8 @@ using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.Profiles;
 using DCL.Profiles.Self;
+using DCL.RealmNavigation;
+using DCL.RealmNavigation.TeleportBus;
 using DCL.SceneLoadingScreens.LoadingScreen;
 using DCL.SidebarBus;
 using DCL.UI.MainUI;
@@ -98,7 +100,6 @@ using UnityEngine.Pool;
 using Utility;
 using Utility.Ownership;
 using Utility.PriorityQueue;
-using Utility.TeleportBus;
 using Object = UnityEngine.Object;
 
 namespace Global.Dynamic
@@ -179,7 +180,6 @@ namespace Global.Dynamic
             IWeb3IdentityCache identityCache = dynamicWorldDependencies.Web3IdentityCache;
             IAssetsProvisioner assetsProvisioner = dynamicWorldDependencies.AssetsProvisioner;
             IDebugContainerBuilder debugBuilder = dynamicWorldDependencies.DebugContainerBuilder;
-            ITeleportBusController teleportBusController = new TeleportBusController();
             ObjectProxy<INavmapBus> explorePanelNavmapBus = new ObjectProxy<INavmapBus>();
             INavmapBus sharedNavmapCommandBus = new SharedNavmapBus(explorePanelNavmapBus);
 
@@ -274,8 +274,6 @@ namespace Global.Dynamic
             var loadingScreenTimeout = new LoadingScreenTimeout();
             ILoadingScreen loadingScreen = new LoadingScreen(mvcManager, loadingScreenTimeout);
 
-            var parcelServiceContainer = ParcelServiceContainer.Create(staticContainer.RealmData, staticContainer.SceneReadinessReportQueue, debugBuilder, loadingScreenTimeout, loadingScreen, staticContainer.SingletonSharedDependencies.SceneAssetLock);
-
             var nftInfoAPIClient = new OpenSeaAPIClient(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
             var wearableCatalog = new WearableStorage();
             var characterPreviewFactory = new CharacterPreviewFactory(staticContainer.ComponentsContainer.ComponentPoolsRegistry);
@@ -326,24 +324,16 @@ namespace Global.Dynamic
 
             bool localSceneDevelopment = !string.IsNullOrEmpty(dynamicWorldParams.LocalSceneDevelopmentRealm);
 
-            var realmController = new RealmController(
+            var realmContainer = RealmContainer.Create(
+                staticContainer,
                 identityCache,
-                staticContainer.WebRequestsContainer.WebRequestController,
-                parcelServiceContainer.TeleportController,
-                parcelServiceContainer.RetrieveSceneFromFixedRealm,
-                parcelServiceContainer.RetrieveSceneFromVolatileWorld,
                 dynamicWorldParams.StaticLoadPositions,
-                staticContainer.RealmData,
-                staticContainer.ScenesCache,
-                staticContainer.PartitionDataContainer,
-                staticContainer.SingletonSharedDependencies.SceneAssetLock,
                 debugBuilder,
-                staticContainer.ComponentsContainer.ComponentPoolsRegistry
-                               .GetReferenceTypePool<PartitionComponent>(),
-                localSceneDevelopment
-            );
+                loadingScreenTimeout,
+                loadingScreen,
+                localSceneDevelopment);
 
-            var sceneRoomMetaDataSource = new SceneRoomMetaDataSource(realmController, staticContainer.CharacterContainer.Transform, globalWorld, dynamicWorldParams.IsolateScenesCommunication);
+            var sceneRoomMetaDataSource = new SceneRoomMetaDataSource(realmContainer.RealmController, staticContainer.CharacterContainer.Transform, globalWorld, dynamicWorldParams.IsolateScenesCommunication);
 
             var metaDataSource = new SceneRoomLogMetaDataSource(sceneRoomMetaDataSource);
 
@@ -395,7 +385,7 @@ namespace Global.Dynamic
             );
 
             ILandscape landscape = new Landscape(
-                realmController,
+                realmContainer.RealmController,
                 genesisTerrain,
                 worldsTerrain,
                 dynamicWorldParams.EnableLandscape,
@@ -408,25 +398,8 @@ namespace Global.Dynamic
                 satelliteView
             );
 
-            IRealmNavigator baseRealmNavigator = new RealmNavigator(
-                loadingScreen,
-                realmController,
-                parcelServiceContainer.TeleportController,
-                roomHub,
-                remoteEntities,
-                bootstrapContainer.DecentralandUrlsSource,
-                globalWorld,
-                lodContainer.RoadAssetsPool,
-                staticContainer.ExposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy,
-                exposedGlobalDataContainer.CameraSamplingData,
-                staticContainer.LoadingStatus,
-                staticContainer.CacheCleaner,
-                staticContainer.SingletonSharedDependencies.MemoryBudget,
-                teleportBusController,
-                landscape,
-                bootstrapContainer.Analytics!,
-                realmMisc
-            );
+            var realmNavigatorContainer = RealmNavigationContainer.Create
+                (staticContainer, bootstrapContainer, lodContainer, realmContainer, remoteEntities, globalWorld, roomHub, realmMisc, landscape, exposedGlobalDataContainer, loadingScreen);
 
             IHealthCheck livekitHealthCheck = bootstrapContainer.DebugSettings.EnableEmulateNoLivekitConnection
                 ? new IHealthCheck.AlwaysFails("Livekit connection is in debug, always fail mode")
@@ -455,12 +428,12 @@ namespace Global.Dynamic
                 dynamicWorldParams.StartParcel,
                 staticContainer.MainPlayerAvatarBaseProxy,
                 backgroundMusic,
-                baseRealmNavigator,
+                realmNavigatorContainer.RealmNavigator,
                 loadingScreen,
                 staticContainer.FeatureFlagsProvider,
                 staticContainer.FeatureFlagsCache,
                 identityCache,
-                realmController,
+                realmContainer.RealmController,
                 realmMisc,
                 landscape,
                 dynamicWorldParams.AppParameters,

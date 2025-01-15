@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.AsyncLoadReporting;
+using DCL.RealmNavigation;
 using ECS.SceneLifeCycle.Realm;
 using System.Threading;
 using UnityEngine;

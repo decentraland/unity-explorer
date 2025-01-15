@@ -1,7 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.MapPins.Bus;
-using DCL.Audio;
 using DCL.EventsApi;
 using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.Culling;
@@ -20,12 +19,12 @@ using DCL.Navmap;
 using DCL.NotificationsBusController.NotificationsBus;
 using DCL.PlacesAPIService;
 using DCL.WebRequests;
+using ECS.SceneLifeCycle.Realm;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Pool;
-using Utility.TeleportBus;
 using Object = UnityEngine.Object;
 
 namespace DCL.MapRenderer.ComponentsFactory
@@ -42,7 +41,7 @@ namespace DCL.MapRenderer.ComponentsFactory
         private readonly IMapRendererSettings mapSettings;
         private readonly IMapPathEventBus mapPathEventBus;
         private readonly IMapPinsEventBus mapPinsEventBus;
-        private readonly ITeleportBusController teleportBusController;
+        private readonly IRealmNavigator realmNavigator;
         private readonly INotificationsBusController notificationsBusController;
         private readonly INavmapBus navmapBus;
         private PlayerMarkerInstaller playerMarkerInstaller { get; }
@@ -65,7 +64,7 @@ namespace DCL.MapRenderer.ComponentsFactory
             IMapPathEventBus mapPathEventBus,
             IMapPinsEventBus mapPinsEventBus,
             INotificationsBusController notificationsBusController,
-            ITeleportBusController teleportBusController,
+            IRealmNavigator realmNavigator,
             INavmapBus navmapBus)
         {
             this.assetsProvisioner = assetsProvisioner;
@@ -76,7 +75,7 @@ namespace DCL.MapRenderer.ComponentsFactory
             this.placesAPIService = placesAPIService;
             this.eventsApiService = eventsApiService;
             this.mapPathEventBus = mapPathEventBus;
-            this.teleportBusController = teleportBusController;
+            this.realmNavigator = realmNavigator;
             this.notificationsBusController = notificationsBusController;
             this.mapPinsEventBus = mapPinsEventBus;
             this.navmapBus = navmapBus;
@@ -126,7 +125,7 @@ namespace DCL.MapRenderer.ComponentsFactory
                 CreateParcelAtlasAsync(layers, configuration, coordsUtils, cullingController, cancellationToken),
                 CreateSatelliteAtlasAsync(layers, configuration, coordsUtils, cullingController, cancellationToken),
                 playerMarkerInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, mapSettings, assetsProvisioner, mapPathEventBus, cancellationToken),
-                hotUsersMarkersInstaller.InstallAsync(layers, configuration, coordsUtils, cullingController, assetsProvisioner, mapSettings, teleportBusController, remoteUsersRequestController, cancellationToken),
+                hotUsersMarkersInstaller.InstallAsync(layers, configuration, coordsUtils, cullingController, assetsProvisioner, mapSettings, realmNavigator, remoteUsersRequestController, cancellationToken),
                 mapPathInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, mapSettings, assetsProvisioner, mapPathEventBus, notificationsBusController, cancellationToken)
                 /* List of other creators that can be executed in parallel */);
 

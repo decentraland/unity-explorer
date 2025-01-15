@@ -7,6 +7,7 @@ using DCL.FeatureFlags;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Profiles;
 using DCL.Profiles.Self;
+using DCL.RealmNavigation;
 using ECS.SceneLifeCycle.Realm;
 using Global.AppArgs;
 using System;

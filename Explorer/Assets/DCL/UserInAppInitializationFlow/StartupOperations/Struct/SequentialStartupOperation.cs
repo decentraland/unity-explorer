@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.AsyncLoadReporting;
+using DCL.RealmNavigation;
 using System.Collections.Generic;
 using System.Threading;
 using Utility.Types;

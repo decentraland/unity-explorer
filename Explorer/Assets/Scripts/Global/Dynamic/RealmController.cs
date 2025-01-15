@@ -95,7 +95,6 @@ namespace Global.Dynamic
             IScenesCache scenesCache,
             PartitionDataContainer partitionDataContainer,
             SceneAssetLock sceneAssetLock,
-            IDebugContainerBuilder debugContainerBuilder,
             IComponentPool<PartitionComponent> partitionComponentPool,
             bool isLocalSceneDevelopment
         )
@@ -112,7 +111,6 @@ namespace Global.Dynamic
             this.sceneAssetLock = sceneAssetLock;
             this.partitionComponentPool = partitionComponentPool;
             this.isLocalSceneDevelopment = isLocalSceneDevelopment;
-            realmNavigatorDebugView = new RealmNavigatorDebugView(debugContainerBuilder);
         }
 
         public async UniTask SetRealmAsync(URLDomain realm, CancellationToken ct)

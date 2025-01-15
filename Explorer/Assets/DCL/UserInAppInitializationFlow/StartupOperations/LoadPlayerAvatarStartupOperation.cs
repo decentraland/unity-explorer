@@ -4,6 +4,7 @@ using DCL.AsyncLoadReporting;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Profiles;
 using DCL.Profiles.Self;
+using DCL.RealmNavigation;
 using DCL.Utilities;
 using System.Threading;
 using Utility.Types;

@@ -7,15 +7,11 @@ namespace DCL.DebugUtilities
     {
         public readonly List<string> Choices;
 
-        /// <summary>
-        ///     Ideally it should be an index binding but `DropdownField` implements `INotifyValueChanged`string`
-        ///     instead of `INotifyValueChanged`int`
-        /// </summary>
-        public readonly ElementBinding<string> Binding;
+        public readonly IndexedElementBinding Binding;
 
         public readonly string Label;
 
-        public DebugDropdownDef(List<string> choices, ElementBinding<string> binding, string label)
+        public DebugDropdownDef(List<string> choices, IndexedElementBinding binding, string label)
         {
             Binding = binding;
             Label = label;

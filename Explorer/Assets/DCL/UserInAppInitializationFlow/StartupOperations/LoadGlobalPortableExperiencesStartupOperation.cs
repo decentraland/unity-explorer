@@ -4,6 +4,7 @@ using DCL.AsyncLoadReporting;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
 using DCL.Profiles.Self;
+using DCL.RealmNavigation;
 using DCL.Utilities.Extensions;
 using Global.Dynamic.DebugSettings;
 using PortableExperiences.Controller;

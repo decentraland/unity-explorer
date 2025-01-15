@@ -14,6 +14,7 @@ using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.HealthChecks;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Profiles.Self;
+using DCL.RealmNavigation;
 using DCL.SceneLoadingScreens.LoadingScreen;
 using DCL.UI.ErrorPopup;
 using DCL.UserInAppInitializationFlow.StartupOperations;
@@ -112,7 +113,7 @@ namespace DCL.UserInAppInitializationFlow
                 sentryDiagnostics
             ).WithAnalytics(analyticsController);
 
-            
+
             reloginOperation = new SequentialStartupOperation(
                 loadingStatus,
                 ensureLivekitConnectionStartupOperation,

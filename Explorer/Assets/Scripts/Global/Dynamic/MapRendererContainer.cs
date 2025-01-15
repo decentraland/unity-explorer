@@ -12,8 +12,9 @@ using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
-using Utility.TeleportBus;
 using DCL.EventsApi;
+using DCL.RealmNavigation.TeleportBus;
+using ECS.SceneLifeCycle.Realm;
 
 namespace Global.Dynamic
 {
@@ -40,7 +41,7 @@ namespace Global.Dynamic
             IMapPathEventBus mapPathEventBus,
             IMapPinsEventBus mapPinsEventBus,
             INotificationsBusController notificationsBusController,
-            ITeleportBusController teleportBusController,
+            IRealmNavigator teleportBusController,
             INavmapBus navmapBus,
             CancellationToken ct)
         {

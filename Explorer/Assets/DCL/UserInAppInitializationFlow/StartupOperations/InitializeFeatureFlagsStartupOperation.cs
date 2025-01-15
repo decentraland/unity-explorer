@@ -3,6 +3,7 @@ using DCL.AsyncLoadReporting;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.RealmNavigation;
 using DCL.Web3.Identities;
 using Global.AppArgs;
 using System;
