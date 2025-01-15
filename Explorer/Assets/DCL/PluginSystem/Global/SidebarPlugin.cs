@@ -11,6 +11,7 @@ using DCL.NotificationsBusController.NotificationsBus;
 using DCL.Profiles;
 using DCL.SidebarBus;
 using DCL.StylizedSkybox.Scripts;
+using DCL.UI.Controls;
 using DCL.UI.MainUI;
 using DCL.UI.ProfileElements;
 using DCL.UI.Sidebar;
@@ -93,6 +94,12 @@ namespace DCL.PluginSystem.Global
             NotificationIconTypes notificationIconTypes = (await assetsProvisioner.ProvideMainAssetAsync(settings.NotificationIconTypesSO, ct: ct)).Value;
             NftTypeIconSO rarityBackgroundMapping = await assetsProvisioner.ProvideMainAssetValueAsync(settings.RarityColorMappings, ct);
 
+            ControlsPanelView panelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.ControlsePanelPrefab, ct: ct)).GetComponent<ControlsPanelView>();
+            ControllerBase<ControlsPanelView>.ViewFactoryMethod viewFactoryMethod = ControlsPanelController.Preallocate(panelViewAsset, null!, out ControlsPanelView controlsPanelView);
+
+
+
+
             mvcManager.RegisterController(new SidebarController(() =>
                 {
                     SidebarView view = mainUIView.SidebarView;
@@ -105,6 +112,7 @@ namespace DCL.PluginSystem.Global
                 new ProfileWidgetController(() => mainUIView.SidebarView.ProfileWidget, web3IdentityCache, profileRepository, webRequestController),
                 new ProfileMenuController(() => mainUIView.SidebarView.ProfileMenuView, web3IdentityCache, profileRepository, webRequestController, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, mvcManager, chatEntryConfigurationSo),
                 new SkyboxMenuController(() => mainUIView.SidebarView.SkyboxMenuView, settings.SkyboxSettingsAsset),
+                new ControlsPanelController(() => controlsPanelView),
                 sidebarBus,
                 chatEntryConfigurationSo,
                 web3IdentityCache,
@@ -124,6 +132,9 @@ namespace DCL.PluginSystem.Global
 
             [field: SerializeField]
             public StylizedSkyboxSettingsAsset SkyboxSettingsAsset { get; private set; }
+
+            [field: SerializeField]
+            public AssetReferenceGameObject ControlsePanelPrefab;
         }
     }
 }
