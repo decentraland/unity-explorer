@@ -80,7 +80,7 @@ namespace DCL.Friends.UI
             base.OnViewInstantiated();
 
             blockedSectionController = new BlockedSectionController(viewInstance!.BlockedSection, mvcManager);
-            friendsSectionController = new FriendsSectionController(viewInstance!.FriendsSection, friendsService, friendEventBus, web3IdentityCache);
+            friendsSectionController = new FriendsSectionController(viewInstance!.FriendsSection, friendsService, friendEventBus, web3IdentityCache, mvcManager);
 
             viewInstance!.FriendsTabButton.onClick.AddListener(() => ToggleTabs(FriendsPanelTab.FRIENDS));
             viewInstance.RequestsTabButton.onClick.AddListener(() => ToggleTabs(FriendsPanelTab.REQUESTS));

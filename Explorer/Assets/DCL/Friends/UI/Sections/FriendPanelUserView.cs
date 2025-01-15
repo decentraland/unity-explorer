@@ -14,6 +14,7 @@ namespace DCL.Friends.UI.Sections
         [field: SerializeField] public Image Background { get; private set; }
         [field: SerializeField] public Color NormalColor { get; private set; }
         [field: SerializeField] public Color HoveredColor { get; private set; }
+        [field: SerializeField] public Button MainButton { get; private set; }
 
         [field: Header("User")]
         [field: SerializeField] public ChatEntryConfigurationSO ChatEntryConfiguration { get; private set; }
@@ -23,10 +24,17 @@ namespace DCL.Friends.UI.Sections
         [field: SerializeField] public Image FaceRim { get; private set; }
 
         public Profile UserProfile { get; protected set; }
+        public event Action<Profile>? MainButtonClicked;
 
         private void Start()
         {
             Background.color = NormalColor;
+            MainButton.onClick.AddListener(() => MainButtonClicked?.Invoke(UserProfile));
+        }
+
+        public void RemoveMainButtonClickListeners()
+        {
+            MainButtonClicked = null;
         }
 
         public virtual void Configure(Profile profile)

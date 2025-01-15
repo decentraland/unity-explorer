@@ -656,6 +656,7 @@ MonoBehaviour:
   <Background>k__BackingField: {fileID: 5335534940711038273}
   <NormalColor>k__BackingField: {r: 1, g: 1, b: 1, a: 0}
   <HoveredColor>k__BackingField: {r: 1, g: 1, b: 1, a: 0.05490196}
+  <MainButton>k__BackingField: {fileID: 9066948971086502196}
   <ChatEntryConfiguration>k__BackingField: {fileID: 11400000, guid: 6afb31861b85441b6ab2b988819bb96a, type: 2}
   <UserName>k__BackingField: {fileID: 880053671944594964}
   <UserNameTag>k__BackingField: {fileID: 5189747532995577403}
@@ -679,6 +680,17 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 5181799103937588522, guid: 5dd1047f77ec242c3bb28f7edc2af796, type: 3}
   m_PrefabInstance: {fileID: 2910193944685869512}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &9066948971086502196 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 6176497728483893500, guid: 5dd1047f77ec242c3bb28f7edc2af796, type: 3}
+  m_PrefabInstance: {fileID: 2910193944685869512}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6286258087015589788}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &6650385505371883589
 PrefabInstance:
   m_ObjectHideFlags: 0

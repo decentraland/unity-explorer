@@ -28,6 +28,7 @@ namespace DCL.Friends.UI.Sections.Friends
         public bool WasInitialised { get; private set; }
         public event Action? OnlineFolderClicked;
         public event Action? OfflineFolderClicked;
+        public event Action<Profile>? FriendClicked;
 
         public FriendListPagedRequestManager(IFriendsService friendsService,
             IFriendsEventBus friendEventBus,
@@ -68,6 +69,8 @@ namespace DCL.Friends.UI.Sections.Friends
                     listItem = loopListView.NewListViewItem(loopListView.ItemPrefabDataList[USER_ELEMENT_INDEX].mItemPrefab.name);
                     FriendListUserView friendListUserView = listItem.GetComponent<FriendListUserView>();
                     friendListUserView.Configure(onlineFriends[index - 1]);
+                    friendListUserView.RemoveMainButtonClickListeners();
+                    friendListUserView.MainButtonClicked += profile => FriendClicked?.Invoke(profile);
                 }
             }
             else if (index == onlineFriendMarker + 1)
@@ -87,6 +90,8 @@ namespace DCL.Friends.UI.Sections.Friends
                     listItem = loopListView.NewListViewItem(loopListView.ItemPrefabDataList[USER_ELEMENT_INDEX].mItemPrefab.name);
                     FriendListUserView friendListUserView = listItem.GetComponent<FriendListUserView>();
                     friendListUserView.Configure(offlineFriends[index - onlineFriendMarker - 2]);
+                    friendListUserView.RemoveMainButtonClickListeners();
+                    friendListUserView.MainButtonClicked += profile => FriendClicked?.Invoke(profile);
                 }
             }
 

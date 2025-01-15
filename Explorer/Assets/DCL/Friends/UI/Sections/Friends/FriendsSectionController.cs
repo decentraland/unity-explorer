@@ -1,6 +1,9 @@
 using Cysharp.Threading.Tasks;
+using DCL.Passport;
+using DCL.Profiles;
 using DCL.Web3;
 using DCL.Web3.Identities;
+using MVC;
 using SuperScrollView;
 using System;
 using System.Threading;
@@ -16,6 +19,7 @@ namespace DCL.Friends.UI.Sections.Friends
         private readonly IFriendsService friendsService;
         private readonly IFriendsEventBus friendEventBus;
         private readonly IWeb3IdentityCache web3IdentityCache;
+        private readonly IMVCManager mvcManager;
         private readonly FriendListPagedRequestManager friendListPagedRequestManager;
 
         private CancellationTokenSource friendListInitCts = new ();
@@ -24,17 +28,20 @@ namespace DCL.Friends.UI.Sections.Friends
         public FriendsSectionController(FriendsSectionView view,
             IFriendsService friendsService,
             IFriendsEventBus friendEventBus,
-            IWeb3IdentityCache web3IdentityCache)
+            IWeb3IdentityCache web3IdentityCache,
+            IMVCManager mvcManager)
         {
             this.view = view;
             this.friendsService = friendsService;
             this.friendEventBus = friendEventBus;
             this.web3IdentityCache = web3IdentityCache;
+            this.mvcManager = mvcManager;
 
             this.view.Enable += Enable;
             this.view.Disable += Disable;
             friendListPagedRequestManager = new FriendListPagedRequestManager(friendsService, friendEventBus, FRIENDS_PAGE_SIZE);
             this.view.LoopList.InitListView(0, OnGetItemByIndex);
+            friendListPagedRequestManager.FriendClicked += FriendClicked;
         }
 
         public void Dispose()
@@ -90,6 +97,11 @@ namespace DCL.Friends.UI.Sections.Friends
         {
             view.LoopList.SetListItemCount(friendListPagedRequestManager.GetElementsNumber(), false);
             view.LoopList.RefreshAllShownItem();
+        }
+
+        private void FriendClicked(Profile profile)
+        {
+            mvcManager.ShowAsync(PassportController.IssueCommand(new PassportController.Params(profile.UserId))).Forget();
         }
 
         private void Disable()
