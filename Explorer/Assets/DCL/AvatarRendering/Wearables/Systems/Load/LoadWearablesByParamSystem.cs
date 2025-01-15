@@ -43,9 +43,26 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
             IReadOnlyList<(string, string)> urlEncodedParams = intention.Params;
             urlBuilder.Clear();
 
-            urlBuilder.AppendDomainWithReplacedPath(realmData.Ipfs.LambdasBaseUrl, lambdaSubdirectory)
-                      .AppendSubDirectory(URLSubdirectory.FromString(userID))
-                      .AppendSubDirectory(wearablesSubdirectory);
+            if (intention.CommonArguments.URL != URLAddress.EMPTY && intention.CommonArguments.URL.Value.Contains("builder-api.decentraland"))
+            {
+                // urlBuilder.AppendDomainWithReplacedPath(URLDomain.FromString(intention.CommonArguments.URL), URLSubdirectory.EMPTY);
+
+                // ONLY FOR DEBUGGING
+                urlBuilder.AppendDomainWithReplacedPath(URLDomain.FromString(intention.CommonArguments.URL), URLSubdirectory.FromString("/items"));
+
+                // TODO: figure out final solution
+                /*var subDirectoryIndex = intention.CommonArguments.URL.Value.IndexOf('/');
+                var subDirectory = intention.CommonArguments.URL.Value.Substring(subDirectoryIndex);
+                var domain = intention.CommonArguments.URL.Value.Substring(0, subDirectoryIndex);
+                // https: // breaks it...
+                urlBuilder.AppendDomainWithReplacedPath(URLDomain.FromString(domain), URLSubdirectory.FromString(subDirectory));*/
+            }
+            else
+            {
+                urlBuilder.AppendDomainWithReplacedPath(realmData.Ipfs.LambdasBaseUrl, lambdaSubdirectory)
+                          .AppendSubDirectory(URLSubdirectory.FromString(userID))
+                          .AppendSubDirectory(wearablesSubdirectory);
+            }
 
             for (var i = 0; i < urlEncodedParams.Count; i++)
                 urlBuilder.AppendParameter(urlEncodedParams[i]);
@@ -56,7 +73,13 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
         protected override WearablesResponse AssetFromPreparedIntention(in GetWearableByParamIntention intention) =>
             new (intention.Results, intention.TotalAmount);
 
-        protected override async UniTask<IAttachmentLambdaResponse<ILambdaResponseElement<WearableDTO>>> ParsedResponseAsync(GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> adapter) =>
+        protected override async UniTask<IAttachmentLambdaResponse<ILambdaResponseElement<WearableDTO>>> ParseResponseAsync(GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> adapter) =>
             await adapter.CreateFromJson<WearableDTO.LambdaResponse>(WRJsonParser.Unity);
+
+        protected override async UniTask<IBuilderLambdaResponse<IBuilderLambdaResponseElement<WearableDTO>>> ParseBuilderResponseAsync(GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> adapter)
+        {
+            var result = await adapter.CreateFromJson<WearableDTO.BuilderLambdaResponse>(WRJsonParser.Newtonsoft);
+            return result;
+        }
     }
 }

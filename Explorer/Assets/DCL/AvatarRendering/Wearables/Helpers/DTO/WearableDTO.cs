@@ -50,5 +50,48 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             [JsonIgnore]
             public IReadOnlyList<ElementIndividualDataDto> IndividualData => individualData;
         }
+
+        [Serializable]
+        public struct BuilderLambdaResponse : IBuilderLambdaResponse<BuilderWearableMetadataDto>
+        {
+            public bool ok;
+            public List<BuilderWearableMetadataDto> data;
+
+            [JsonIgnore]
+            public IReadOnlyList<BuilderWearableMetadataDto> WearablesCollection => data;
+        }
+
+        [Serializable]
+        public class BuilderWearableMetadataDto : WearableMetadataDto, IBuilderLambdaResponseElement<WearableDTO>
+        {
+            public Dictionary<string, string> contents;
+            public string type;
+
+            [JsonIgnore]
+            public IReadOnlyDictionary<string, string> Contents => contents;
+
+            public WearableDTO BuildWearableDTO()
+            {
+                Content[] parsedContent = new Content[contents.Count];
+                int i = 0;
+                foreach ((string key, string value) in contents)
+                {
+                    parsedContent[i] = new Content() { file = key, hash = value};
+                    i++;
+                }
+
+                // TODO: Modify WearableDTO to include files download URL???
+                return new WearableDTO()
+                {
+                    metadata = this,
+                    id = this.id,
+                    type = this.type,
+                    content = parsedContent
+                    // string[] pointers;
+                    // long timestamp;
+                    // string version;
+                };
+            }
+        }
     }
 }

@@ -44,20 +44,42 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
         {
             await realmData.WaitConfiguredAsync();
 
-            var lambdaResponse =
-                await ParsedResponseAsync(
-                    webRequestController.GetAsync(
-                        new CommonArguments(
-                            BuildUrlFromIntention(in intention),
-                            attemptsCount: intention.CommonArguments.Attempts
-                        ),
-                        ct,
-                        GetReportCategory()
-                    )
-                );
+            URLAddress url = BuildUrlFromIntention(in intention);
 
-            await using (await ExecuteOnThreadPoolScope.NewScopeWithReturnOnMainThreadAsync())
-                Load(ref intention, lambdaResponse);
+            if (intention.CommonArguments.NeedsBuilderAPISigning)
+            {
+                var lambdaResponse =
+                    await ParseBuilderResponseAsync(
+                        webRequestController.SignedFetchGetAsync(
+                            new CommonArguments(
+                                url,
+                                attemptsCount: intention.CommonArguments.Attempts
+                            ),
+                            string.Empty,
+                            ct
+                        )
+                    );
+
+                await using (await ExecuteOnThreadPoolScope.NewScopeWithReturnOnMainThreadAsync())
+                    LoadBuilderItem(ref intention, lambdaResponse);
+            }
+            else
+            {
+                var lambdaResponse =
+                    await ParseResponseAsync(
+                        webRequestController.GetAsync(
+                            new CommonArguments(
+                                url,
+                                attemptsCount: intention.CommonArguments.Attempts
+                            ),
+                            ct,
+                            GetReportCategory()
+                        )
+                    );
+
+                await using (await ExecuteOnThreadPoolScope.NewScopeWithReturnOnMainThreadAsync())
+                    Load(ref intention, lambdaResponse);
+            }
 
             return new StreamableLoadingResult<TAsset>(AssetFromPreparedIntention(in intention));
         }
@@ -95,7 +117,21 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
             }
         }
 
-        protected abstract UniTask<IAttachmentLambdaResponse<ILambdaResponseElement<TAvatarElementDTO>>> ParsedResponseAsync(GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> adapter);
+        // private void LoadBuilderItem<TResponseElement>(ref TIntention intention, IBuilderLambdaResponse<TResponseElement> lambdaResponse) where TResponseElement : IBuilderLambdaResponseElement<TAvatarElementDTO>
+        private void LoadBuilderItem(ref TIntention intention, IBuilderLambdaResponse<IBuilderLambdaResponseElement<TAvatarElementDTO>> lambdaResponse)
+        {
+            intention.SetTotal(lambdaResponse.WearablesCollection.Count);
+
+            foreach (var element in lambdaResponse.WearablesCollection)
+            {
+                var wearable = avatarElementStorage.GetOrAddByDTO(element.BuildWearableDTO());
+                intention.AppendToResult(wearable);
+            }
+        }
+
+        protected abstract UniTask<IAttachmentLambdaResponse<ILambdaResponseElement<TAvatarElementDTO>>> ParseResponseAsync(GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> adapter);
+
+        protected abstract UniTask<IBuilderLambdaResponse<IBuilderLambdaResponseElement<TAvatarElementDTO>>> ParseBuilderResponseAsync(GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> adapter);
 
         protected abstract TAsset AssetFromPreparedIntention(in TIntention intention);
 

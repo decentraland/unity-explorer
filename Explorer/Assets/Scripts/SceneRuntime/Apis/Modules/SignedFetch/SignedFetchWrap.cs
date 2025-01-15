@@ -73,7 +73,7 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
                 Byte[] result = hash.ComputeHash(enc.GetBytes(value));
 
                 foreach (Byte b in result)
-                Sb.Append(b.ToString("x2"));
+                    Sb.Append(b.ToString("x2"));
             }
 
             return Sb.ToString();
