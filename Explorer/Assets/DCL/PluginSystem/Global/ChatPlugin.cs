@@ -75,10 +75,6 @@ namespace DCL.PluginSystem.Global
         public async UniTask InitializeAsync(ChatSettings settings, CancellationToken ct)
         {
             ChatEntryConfigurationSO chatEntryConfiguration = (await assetsProvisioner.ProvideMainAssetAsync(settings.ChatEntryConfiguration, ct)).Value;
-            EmojiPanelConfigurationSO emojiPanelConfig = (await assetsProvisioner.ProvideMainAssetAsync(settings.EmojiPanelConfiguration, ct)).Value;
-            EmojiSectionView emojiSectionPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.EmojiSectionPrefab, ct)).Value;
-            EmojiButton emojiButtonPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.EmojiButtonPrefab, ct)).Value;
-            EmojiSuggestionView emojiSuggestionPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.EmojiSuggestionPrefab, ct)).Value;
 
             chatController = new ChatController(
                 () =>
@@ -92,11 +88,6 @@ namespace DCL.PluginSystem.Global
                 chatHistory,
                 entityParticipantTable,
                 nametagsData,
-                emojiPanelConfig,
-                settings.EmojiMappingJson,
-                emojiSectionPrefab,
-                emojiButtonPrefab,
-                emojiSuggestionPrefab,
                 world,
                 playerEntity,
                 dclInput,
@@ -114,22 +105,7 @@ namespace DCL.PluginSystem.Global
             [field: Header(nameof(ChatPlugin) + "." + nameof(ChatSettings))]
             [field: Space]
             [field: SerializeField]
-            public EmojiButtonRef EmojiButtonPrefab { get; private set; }
-
-            [field: SerializeField]
-            public EmojiSectionRef EmojiSectionPrefab { get; private set; }
-
-            [field: SerializeField]
-            public EmojiSuggestionRef EmojiSuggestionPrefab { get; private set; }
-
-            [field: SerializeField]
             public AssetReferenceT<ChatEntryConfigurationSO> ChatEntryConfiguration { get; private set; }
-
-            [field: SerializeField]
-            public AssetReferenceT<EmojiPanelConfigurationSO> EmojiPanelConfiguration { get; private set; }
-
-            [field: SerializeField]
-            public TextAsset EmojiMappingJson { get; private set; }
 
             [Serializable]
             public class EmojiSuggestionPanelRef : ComponentReference<EmojiSuggestionPanelView>

@@ -53,12 +53,6 @@ namespace DCL.Chat
             IChatHistory chatHistory,
             IReadOnlyEntityParticipantTable entityParticipantTable,
             NametagsData nametagsData,
-            // TODO: Remove these unused parameters
-            EmojiPanelConfigurationSO emojiPanelConfiguration,
-            TextAsset emojiMappingJson,
-            EmojiSectionView emojiSectionViewPrefab,
-            EmojiButton emojiButtonPrefab,
-            EmojiSuggestionView emojiSuggestionViewPrefab,
             World world,
             Entity playerEntity,
             DCLInput dclInput,
