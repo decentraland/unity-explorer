@@ -4,15 +4,24 @@ namespace ECS.SceneLifeCycle.CurrentScene
 {
     public interface ICurrentSceneInfo
     {
-        enum Status
+        enum RunningStatus
         {
             Good,
             Crashed,
         }
 
+        enum AssetBundleStatus
+        {
+            COMPLETE,
+            FALLBACK
+        }
+
         bool IsPlayerStandingOnScene { get; }
 
         /// <returns>it's null in a case the player is not standing on any scene</returns>
-        IReadonlyReactiveProperty<Status?> SceneStatus { get; }
+        IReadonlyReactiveProperty<RunningStatus?> SceneStatus { get; }
+
+        /// <returns>it's null in a case the player is not standing on any scene</returns>
+        IReadonlyReactiveProperty<AssetBundleStatus?> SceneAssetBundleStatus { get; }
     }
 }

@@ -58,9 +58,22 @@ namespace DCL.UI.ConnectionStatusPanel
         protected override void OnViewInstantiated()
         {
             currentSceneInfo.SceneStatus.OnUpdate += SceneStatusOnUpdate;
+            currentSceneInfo.SceneAssetBundleStatus.OnUpdate += AssetBundleSceneStatusOnUpdate;
             SceneStatusOnUpdate(currentSceneInfo.SceneStatus.Value);
+            AssetBundleSceneStatusOnUpdate(currentSceneInfo.SceneAssetBundleStatus.Value);
             Bind(roomsStatus.ConnectionQualityScene, viewInstance.SceneRoom);
             Bind(roomsStatus.ConnectionQualityIsland, viewInstance.GlobalRoom);
+        }
+
+        private void AssetBundleSceneStatusOnUpdate(ICurrentSceneInfo.AssetBundleStatus? obj)
+        {
+            if (obj == null)
+            {
+                viewInstance!.AssetBundle.HideStatus();
+                return;
+            }
+
+            viewInstance!.AssetBundle.ShowStatus(obj.Value);
         }
 
         protected override void OnViewShow() =>
@@ -69,7 +82,7 @@ namespace DCL.UI.ConnectionStatusPanel
         public void SetVisibility(bool isVisible) =>
             viewInstance?.gameObject.SetActive(isVisible);
 
-        private void SceneStatusOnUpdate(ICurrentSceneInfo.Status? obj)
+        private void SceneStatusOnUpdate(ICurrentSceneInfo.RunningStatus? obj)
         {
             const float DELAY = 5f;
 
@@ -90,7 +103,7 @@ namespace DCL.UI.ConnectionStatusPanel
 
             viewInstance.Scene.ShowStatus(status);
 
-            if (status is ICurrentSceneInfo.Status.Crashed)
+            if (status is ICurrentSceneInfo.RunningStatus.Crashed)
                 ShowButtonAsync(cancellationTokenSource.Token).Forget();
         }
 

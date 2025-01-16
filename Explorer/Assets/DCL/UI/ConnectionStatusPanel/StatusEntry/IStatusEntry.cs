@@ -31,10 +31,14 @@ namespace DCL.UI.ConnectionStatusPanel.StatusEntry
             [IStatusEntry.Status.Excellent] = "Excellent",
         };
 
-        private static readonly IReadOnlyDictionary<ICurrentSceneInfo.Status, string> CACHE_SCENE_STATUS = new Dictionary<ICurrentSceneInfo.Status, string>
+        private static readonly IReadOnlyDictionary<ICurrentSceneInfo.RunningStatus, string> CACHE_SCENE_STATUS = new Dictionary<ICurrentSceneInfo.RunningStatus, string>
         {
-            [ICurrentSceneInfo.Status.Good] = "Good",
-            [ICurrentSceneInfo.Status.Crashed] = "Crashed",
+            [ICurrentSceneInfo.RunningStatus.Good] = "Good", [ICurrentSceneInfo.RunningStatus.Crashed] = "Crashed"
+        };
+
+        private static readonly IReadOnlyDictionary<ICurrentSceneInfo.AssetBundleStatus, string> CACHE_LATEST_VERSION_STATUS = new Dictionary<ICurrentSceneInfo.AssetBundleStatus, string>
+        {
+            [ICurrentSceneInfo.AssetBundleStatus.COMPLETE] = "Complete", [ICurrentSceneInfo.AssetBundleStatus.FALLBACK] = "Fallback"
         };
 
         public static void ShowStatus(this IStatusEntry statusEntry, IStatusEntry.Status status)
@@ -42,9 +46,14 @@ namespace DCL.UI.ConnectionStatusPanel.StatusEntry
             statusEntry.ShowStatus(CACHE_ROOM_STATUS[status]!);
         }
 
-        public static void ShowStatus(this IStatusEntry statusEntry, ICurrentSceneInfo.Status status)
+        public static void ShowStatus(this IStatusEntry statusEntry, ICurrentSceneInfo.RunningStatus runningStatus)
         {
-            statusEntry.ShowStatus(CACHE_SCENE_STATUS[status]!);
+            statusEntry.ShowStatus(CACHE_SCENE_STATUS[runningStatus]!);
+        }
+
+        public static void ShowStatus(this IStatusEntry statusEntry, ICurrentSceneInfo.AssetBundleStatus runningStatus)
+        {
+            statusEntry.ShowStatus(CACHE_LATEST_VERSION_STATUS[runningStatus]!);
         }
     }
 }
