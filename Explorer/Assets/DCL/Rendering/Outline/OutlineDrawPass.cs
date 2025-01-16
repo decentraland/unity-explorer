@@ -1,5 +1,4 @@
 ﻿using DCL.Diagnostics;
-using NSubstitute.ClearExtensions;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
