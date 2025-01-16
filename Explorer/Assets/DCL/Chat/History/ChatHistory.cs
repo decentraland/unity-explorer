@@ -5,8 +5,8 @@ namespace DCL.Chat.History
 {
     public class ChatHistory : IChatHistory
     {
-        public event Action? OnCleared;
-        public event Action<ChatMessage>? OnMessageAdded;
+        public event Action? Cleared;
+        public event Action<ChatMessage>? MessageAdded;
 
         private readonly List<ChatMessage> messages = new ();
 
@@ -28,7 +28,7 @@ namespace DCL.Chat.History
             messages.Add(new ChatMessage(true));
             messages.Reverse();
 
-            OnMessageAdded?.Invoke(message);
+            MessageAdded?.Invoke(message);
         }
 
         public void ForceUpdateMessage(int inIndex, ChatMessage message)
@@ -39,7 +39,7 @@ namespace DCL.Chat.History
         public void Clear()
         {
             messages.Clear();
-            OnCleared?.Invoke();
+            Cleared?.Invoke();
         }
     }
 }

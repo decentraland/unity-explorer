@@ -17,15 +17,15 @@ namespace DCL.ScenesDebug.ScenesConsistency.Conditions
         {
             var ready = false;
 
-            void OnSubmit(string _)
+            void OnSubmit(string _, string __)
             {
                 ready = true;
             }
 
             ChatView resource = await chatViewResource.ResourceAsync();
-            resource.InputField.onSubmit!.AddListener(OnSubmit);
+            resource.InputSubmitted += OnSubmit;
             await UniTask.WaitUntil(() => ready);
-            resource.InputField.onSubmit.RemoveListener(OnSubmit);
+            resource.InputSubmitted -= OnSubmit;
         }
     }
 }
