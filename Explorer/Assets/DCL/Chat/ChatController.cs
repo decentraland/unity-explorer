@@ -4,6 +4,7 @@ using DCL.CharacterCamera;
 using DCL.Chat.Commands;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
+using DCL.Clipboard;
 using DCL.Emoji;
 using DCL.Input;
 using DCL.Input.Component;
@@ -34,7 +35,9 @@ namespace DCL.Chat
         private readonly World world;
         private readonly Entity playerEntity;
 
-        private IInputBlock inputBlock;
+        private readonly IInputBlock inputBlock;
+        private readonly IMVCManager mvcManager;
+        private readonly IClipboardManager clipboardManager;
 
         private SingleInstanceEntity cameraEntity;
         private (IChatCommand command, Match param) chatCommand;
@@ -42,7 +45,6 @@ namespace DCL.Chat
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
 
         public event Action<bool>? ChatBubbleVisibilityChanged;
-        private const string HASH_CHARACTER = "#";
 
         public ChatController(
             ViewFactoryMethod viewFactory,
@@ -61,7 +63,9 @@ namespace DCL.Chat
             Entity playerEntity,
             DCLInput dclInput,
             IEventSystem eventSystem,
-            IInputBlock inputBlock
+            IInputBlock inputBlock,
+            IMVCManager mvcManager,
+            IClipboardManager clipboardManager
         ) : base(viewFactory)
         {
             this.chatEntryConfiguration = chatEntryConfiguration;
@@ -74,6 +78,8 @@ namespace DCL.Chat
             this.dclInput = dclInput;
             this.eventSystem = eventSystem;
             this.inputBlock = inputBlock;
+            this.mvcManager = mvcManager;
+            this.clipboardManager = clipboardManager;
         }
 
         protected override void OnViewInstantiated()
@@ -85,7 +91,7 @@ namespace DCL.Chat
             chatHistory.MessageAdded += CreateChatEntry;
             chatHistory.Cleared += OnChatHistoryCleared;
 
-            viewInstance!.Initialize(chatHistory.Messages, eventSystem, dclInput, nametagsData.showChatBubbles);
+            viewInstance!.Initialize(chatHistory.Messages, eventSystem, dclInput, mvcManager, clipboardManager, nametagsData.showChatBubbles);
 
             viewInstance.PointerEnter += OnChatViewPointerEnter;
             viewInstance.PointerExit += OnChatViewPointerExit;
@@ -178,17 +184,13 @@ namespace DCL.Chat
             viewInstance!.RefreshMessages();
         }
 
-        private Color CalculateUsernameColor(ChatMessage chatMessage)
-        {
-            return chatEntryConfiguration.GetNameColor(chatMessage.Sender.Contains(HASH_CHARACTER)
-                ? $"{chatMessage.Sender.Substring(0, chatMessage.Sender.IndexOf(HASH_CHARACTER, StringComparison.Ordinal))}"
-                : chatMessage.Sender);
-        }
+        private Color CalculateUsernameColor(ChatMessage chatMessage) =>
+            chatEntryConfiguration.GetNameColor(chatMessage.SenderValidatedName);
 
         private void GenerateChatBubbleComponent(Entity e, ChatMessage chatMessage)
         {
             if (nametagsData is { showChatBubbles: true, showNameTags: true })
-                world.AddOrGet(e, new ChatBubbleComponent(chatMessage.Message, chatMessage.Sender, chatMessage.WalletAddress));
+                world.AddOrGet(e, new ChatBubbleComponent(chatMessage.Message, chatMessage.SenderValidatedName, chatMessage.WalletAddress));
         }
 
         private void DisableUnwantedInputs()
@@ -208,7 +210,7 @@ namespace DCL.Chat
             ChatMessage itemData = chatHistory.Messages[itemindex];
 
             if (!itemData.IsPaddingElement && itemData.HasToAnimate)
-                chatHistory.ForceUpdateMessage(itemindex, new ChatMessage(itemData.Message, itemData.Sender, itemData.WalletAddress, itemData.SentByOwnUser, false));
+                chatHistory.ForceUpdateMessage(itemindex, new ChatMessage(itemData.Message, itemData.SenderValidatedName, itemData.WalletAddress, itemData.SentByOwnUser, false, itemData.SenderWalletId));
         }
 
         private void OnViewChatBubbleVisibilityChanged(bool isVisible)

@@ -5,10 +5,12 @@ using DCL.AssetsProvision;
 using DCL.Chat;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
+using DCL.Clipboard;
 using DCL.Emoji;
 using DCL.Input;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
+using DCL.UI;
 using DCL.UI.MainUI;
 using MVC;
 using System;
@@ -32,6 +34,7 @@ namespace DCL.PluginSystem.Global
         private readonly Entity playerEntity;
         private readonly IEventSystem eventSystem;
         private readonly MainUIView mainUIView;
+        private readonly IClipboardManager clipboardManager;
 
         private ChatController chatController;
 
@@ -47,8 +50,7 @@ namespace DCL.PluginSystem.Global
             MainUIView mainUIView,
             IInputBlock inputBlock,
             Arch.Core.World world,
-            Entity playerEntity
-        )
+            Entity playerEntity, IClipboardManager clipboardManager)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -60,6 +62,7 @@ namespace DCL.PluginSystem.Global
             this.inputBlock = inputBlock;
             this.world = world;
             this.playerEntity = playerEntity;
+            this.clipboardManager = clipboardManager;
             this.eventSystem = eventSystem;
             this.mainUIView = mainUIView;
             this.inputBlock = inputBlock;
@@ -80,7 +83,7 @@ namespace DCL.PluginSystem.Global
             chatController = new ChatController(
                 () =>
                 {
-                    var view = mainUIView.ChatView;
+                    ChatView? view = mainUIView.ChatView;
                     view.gameObject.SetActive(true);
                     return view;
                 },
@@ -98,7 +101,9 @@ namespace DCL.PluginSystem.Global
                 playerEntity,
                 dclInput,
                 eventSystem,
-                inputBlock
+                inputBlock,
+                mvcManager,
+                clipboardManager
             );
 
             mvcManager.RegisterController(chatController);

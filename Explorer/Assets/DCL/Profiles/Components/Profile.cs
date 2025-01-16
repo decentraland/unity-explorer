@@ -33,7 +33,7 @@ namespace DCL.Profiles
             internal set
             {
                 userId = value;
-                DisplayName = GenerateDisplayName();
+                GenerateAndValidateName();
             }
         }
 
@@ -44,9 +44,16 @@ namespace DCL.Profiles
             internal set
             {
                 name = value;
-                DisplayName = GenerateDisplayName();
+                GenerateAndValidateName();
             }
         }
+
+        //The name of the user after passing character validation, without the # part
+        //For users with claimed names would be the same as DisplayName
+        public string ValidatedName { get; private set; }
+
+        //The # part of the name for users without claimed name, otherwise null, includes the #
+        public string? WalletId { get; private set; }
 
         public string DisplayName { get; private set; }
         public string UnclaimedName { get; internal set; }
@@ -58,7 +65,7 @@ namespace DCL.Profiles
             internal set
             {
                 hasClaimedName = value;
-                DisplayName = GenerateDisplayName();
+                GenerateAndValidateName();
             }
         }
 
@@ -87,10 +94,26 @@ namespace DCL.Profiles
 
         public IReadOnlyCollection<string>? Blocked => blocked;
         public IReadOnlyCollection<string>? Interests => interests;
+
         public List<LinkJsonDto>? Links
         {
             get => links;
             set => links = value;
+        }
+
+        internal Profile() { }
+
+        internal Profile(string userId, string name, Avatar avatar)
+        {
+            UserId = userId;
+            Name = name;
+            Avatar = avatar;
+        }
+
+        public void Dispose()
+        {
+            ProfilePicture.TryDereference();
+            POOL.Release(this);
         }
 
         public static Profile Create() =>
@@ -105,39 +128,30 @@ namespace DCL.Profiles
             return profile;
         }
 
-        internal Profile() { }
-
-        internal Profile(string userId, string name, Avatar avatar)
-        {
-            UserId = userId;
-            Name = name;
-            Avatar = avatar;
-        }
-
         public void Clear()
         {
-            this.blocked?.Clear();
-            this.interests?.Clear();
-            this.links?.Clear();
-            this.Birthdate = null;
-            this.Avatar.Clear();
-            this.Country = default(string?);
-            this.Email = default(string?);
-            this.Gender = default(string?);
-            this.Description = default(string?);
-            this.Hobbies = default(string?);
-            this.Language = default(string?);
-            this.Profession = default(string?);
-            this.Pronouns = default(string?);
-            this.Version = default(int);
-            this.HasClaimedName = default(bool);
-            this.EmploymentStatus = default(string?);
-            this.UserId = "";
-            this.Name = "";
-            this.TutorialStep = default(int);
-            this.HasConnectedWeb3 = default(bool);
+            blocked?.Clear();
+            interests?.Clear();
+            links?.Clear();
+            Birthdate = null;
+            Avatar.Clear();
+            Country = default(string?);
+            Email = default(string?);
+            Gender = default(string?);
+            Description = default(string?);
+            Hobbies = default(string?);
+            Language = default(string?);
+            Profession = default(string?);
+            Pronouns = default(string?);
+            Version = default(int);
+            HasClaimedName = default(bool);
+            EmploymentStatus = default(string?);
+            UserId = "";
+            Name = "";
+            TutorialStep = default(int);
+            HasConnectedWeb3 = default(bool);
             ProfilePicture = null;
-            this.IsDirty = false;
+            IsDirty = false;
         }
 
         public static Profile NewRandomProfile(string? userId) =>
@@ -160,15 +174,13 @@ namespace DCL.Profiles
                 avatar
             );
 
-        public void Dispose()
+        private void GenerateAndValidateName()
         {
-            ProfilePicture.TryDereference();
-            POOL.Release(this);
-        }
+            ValidatedName = "";
+            DisplayName = "";
+            WalletId = null;
 
-        private string GenerateDisplayName()
-        {
-            if (string.IsNullOrEmpty(Name)) return "";
+            if (string.IsNullOrEmpty(Name)) return;
 
             var result = "";
             MatchCollection matches = VALID_NAME_CHARACTERS.Matches(Name);
@@ -176,10 +188,16 @@ namespace DCL.Profiles
             foreach (Match match in matches)
                 result += match.Value;
 
-            if (HasClaimedName)
-                return result;
+            ValidatedName = result;
+            DisplayName = result;
 
-            return string.IsNullOrEmpty(UserId) || UserId.Length < 4 ? result : $"{result}#{UserId[^4..]}";
+            if (HasClaimedName) return;
+
+            if (!string.IsNullOrEmpty(UserId) && UserId.Length > 4)
+            {
+                WalletId = $"#{UserId[^4..]}";
+                DisplayName = $"{result}{WalletId}";
+            }
         }
 
         public void ClearLinks()

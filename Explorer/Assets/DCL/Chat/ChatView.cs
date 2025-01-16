@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
+using DCL.Clipboard;
 using DCL.Emoji;
 using DCL.Input;
 using DCL.UI;
@@ -118,6 +119,9 @@ namespace DCL.Chat
         [SerializeField]
         private EmojiSuggestionView emojiSuggestionViewPrefab;
 
+        [SerializeField]
+        private RectTransform pastePopupPosition;
+
         [Header("Audio")]
         [SerializeField]
         private AudioClipConfig addEmojiAudio;
@@ -185,6 +189,8 @@ namespace DCL.Chat
         // Dependencies
         private DCLInput dclInput;
         private IEventSystem eventSystem;
+        private IMVCManager mvcManager;
+        private IClipboardManager clipboardManager;
 
         private EmojiPanelController? emojiPanelController;
         private EmojiSuggestionPanel? emojiSuggestionPanelController;
@@ -193,6 +199,7 @@ namespace DCL.Chat
         private CancellationTokenSource emojiSearchCts;
         private CancellationTokenSource emojiPanelCts;
         private CancellationTokenSource fadeoutCts;
+        private UniTaskCompletionSource closePopupTask;
 
         private Mouse device;
 
@@ -242,10 +249,13 @@ namespace DCL.Chat
             }
         }
 
-        public void Initialize(IReadOnlyList<ChatMessage> chatMessages, IEventSystem eventSystem, DCLInput dclInput, bool areChatBubblesVisible)
+        public void Initialize(IReadOnlyList<ChatMessage> chatMessages, IEventSystem eventSystem, DCLInput dclInput,
+            IMVCManager mvcManager, IClipboardManager clipboardManager, bool areChatBubblesVisible)
         {
             this.eventSystem = eventSystem;
             this.dclInput = dclInput;
+            this.mvcManager = mvcManager;
+            this.clipboardManager = clipboardManager;
             device = InputSystem.GetDevice<Mouse>();
 
             characterCounter.SetMaximumLength(inputField.characterLimit);
@@ -263,6 +273,9 @@ namespace DCL.Chat
             chatBubblesToggle.IsSoundEnabled = true;
 
             InitializeEmojiController();
+
+            dclInput.UI.RightClick.performed += _ => OnRightClickRegistered();
+            closePopupTask = new UniTaskCompletionSource();
 
             SetMessages(chatMessages);
         }
@@ -292,6 +305,7 @@ namespace DCL.Chat
         /// </summary>
         public void DisableInputBoxSubmissions()
         {
+            clipboardManager.OnPaste -= PasteClipboardText;
             inputField.onSubmit.RemoveAllListeners();
             inputField.DeactivateInputField();
         }
@@ -388,14 +402,13 @@ namespace DCL.Chat
                       emojiSuggestionPanel.gameObject.activeInHierarchy)) return;
 
                 IReadOnlyList<RaycastResult> raycastResults = eventSystem.RaycastAll(device.position.value);
-                var clickedOnPanel = false;
+                bool clickedOnPanel = false;
 
                 foreach (RaycastResult result in raycastResults)
-                {
                     if (result.gameObject == emojiPanel.gameObject ||
                         result.gameObject == emojiSuggestionPanel.ScrollView.gameObject ||
-                        result.gameObject == emojiPanelButton.gameObject) { clickedOnPanel = true; }
-                }
+                        result.gameObject == emojiPanelButton.gameObject)
+                        clickedOnPanel = true;
 
                 if (!clickedOnPanel)
                 {
@@ -477,6 +490,12 @@ namespace DCL.Chat
 
                 ChatEntryView itemScript = item!.GetComponent<ChatEntryView>()!;
                 SetItemData(index, itemData, itemScript);
+
+                Button? messageOptionsButton = itemScript.messageBubbleElement.messageOptionsButton;
+                messageOptionsButton?.onClick.RemoveAllListeners();
+
+                messageOptionsButton?.onClick.AddListener(() =>
+                    OnChatMessageOptionsButtonClicked(itemData.Message, itemScript));
             }
 
             ChatMessageCreated?.Invoke(index);
@@ -488,17 +507,17 @@ namespace DCL.Chat
         {
             //temporary approach to extract the username without the walledId, will be refactored
             //once we have the proper integration of the profile retrieval
-            Color playerNameColor = CalculateUsernameColor(itemData);;
+            Color playerNameColor = CalculateUsernameColor(itemData);
 
-            itemView.playerName.color = playerNameColor;
+            itemView.usernameElement.userName.color = playerNameColor;
 
             if (!itemData.SystemMessage)
             {
-                itemView.ProfileBackground.color = playerNameColor;
+                itemView.ProfileBackground!.color = playerNameColor;
                 playerNameColor.r += 0.3f;
                 playerNameColor.g += 0.3f;
                 playerNameColor.b += 0.3f;
-                itemView.ProfileOutline.color = playerNameColor;
+                itemView.ProfileOutline!.color = playerNameColor;
             }
 
             itemView.SetItemData(itemData);
@@ -560,6 +579,30 @@ namespace DCL.Chat
             EmojiSelectionVisibilityChanged?.Invoke(toggle);
         }
 
+        private void PasteClipboardText(object sender, string pastedText)
+        {
+            if (!inputField.isActiveAndEnabled) return;
+
+            int remainingSpace = inputField.characterLimit - inputField.text.Length;
+
+            if (remainingSpace <= 0) return;
+
+            int caretPosition = inputField.stringPosition;
+            string textToInsert = pastedText.Length > remainingSpace ? pastedText[..remainingSpace] : pastedText;
+
+            inputField.text = inputField.text.Insert(caretPosition, textToInsert);
+            inputField.stringPosition += textToInsert.Length;
+            inputField.ActivateInputField();
+            characterCounter.SetCharacterCount(inputField.text.Length);
+            StopChatEntriesFadeout();
+        }
+
+        public override UniTask HideAsync(CancellationToken ct, bool isInstant = false)
+        {
+            closePopupTask.TrySetResult();
+            return base.HideAsync(ct, isInstant);
+        }
+
         private void OnInputDeselected(string inputText)
         {
             isInputSelected = false;
@@ -593,7 +636,7 @@ namespace DCL.Chat
         {
             HandleEmojiSearch(inputText);
             UIAudioEventsBus.Instance.SendPlayAudioEvent(chatInputTextAudio);
-
+            closePopupTask.TrySetResult();
             characterCounter.SetCharacterCount(inputText.Length);
             StopChatEntriesFadeout();
         }
@@ -634,6 +677,40 @@ namespace DCL.Chat
             ChatBubbleVisibilityChanged?.Invoke(isToggled);
         }
 
+        private void OnRightClickRegistered()
+        {
+            if (isInputSelected && clipboardManager.HasValue())
+            {
+                clipboardManager.OnPaste -= PasteClipboardText;
+                clipboardManager.OnPaste += PasteClipboardText;
+                closePopupTask.TrySetResult();
+                closePopupTask = new UniTaskCompletionSource();
+
+                var data = new PastePopupToastData(
+                    pastePopupPosition.position,
+                    closePopupTask.Task);
+
+                mvcManager.ShowAndForget(PastePopupToastController.IssueCommand(data));
+                inputField.ActivateInputField();
+            }
+        }
+
+        private void OnChatMessageOptionsButtonClicked(string messageText, ChatEntryView chatEntryView)
+        {
+            closePopupTask.TrySetResult();
+            closePopupTask = new UniTaskCompletionSource();
+
+            ChatEntryMenuPopupData data = new ChatEntryMenuPopupData(
+                chatEntryView.messageBubbleElement.popupPosition.position,
+                messageText,
+                closePopupTask.Task);
+
+            mvcManager.ShowAsync(ChatEntryMenuPopupController.IssueCommand(data)).Forget();
+        }
+
+        private bool IsWithinCharacterLimit() =>
+            inputField.text.Length < inputField.characterLimit;
+
         #region Emojis
 
         private void InitializeEmojiController()
@@ -649,8 +726,7 @@ namespace DCL.Chat
 
         private void AddEmojiFromSuggestion(string emojiCode, bool shouldClose)
         {
-            if (inputField.text.Length >= MaxMessageLength)
-                return;
+            if (!IsWithinCharacterLimit()) return;
 
             UIAudioEventsBus.Instance.SendPlayAudioEvent(addEmojiAudio);
             inputField.SetTextWithoutNotify(inputField.text.Replace(EMOJI_PATTERN_REGEX.Match(inputField.text).Value, emojiCode));
@@ -665,8 +741,7 @@ namespace DCL.Chat
         {
             UIAudioEventsBus.Instance.SendPlayAudioEvent(addEmojiAudio);
 
-            if (inputField.text.Length >= MaxMessageLength)
-                return;
+            if (!IsWithinCharacterLimit()) return;
 
             int caretPosition = inputField.stringPosition;
             inputField.text = inputField.text.Insert(caretPosition, EMOJI_TAG);
