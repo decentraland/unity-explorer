@@ -17,7 +17,7 @@ using System;
 using System.Threading;
 using UnityEngine;
 using Utility;
-using Promise = ECS.StreamableLoading.Common.AssetPromise<UnityEngine.Texture2D, ECS.StreamableLoading.Textures.GetTextureIntention>;
+using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.Texture2DData, ECS.StreamableLoading.Textures.GetTextureIntention>;
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
 
 namespace DCL.AvatarRendering.Thumbnails.Utils
@@ -78,7 +78,8 @@ namespace DCL.AvatarRendering.Thumbnails.Utils
             using var urlBuilderScope = URL_BUILDER_POOL.AutoScope();
             var urlBuilder = urlBuilderScope.Value;
             urlBuilder.Clear();
-            urlBuilder.AppendDomain(realmData.Ipfs.ContentBaseUrl).AppendPath(thumbnailPath);
+            urlBuilder.AppendDomain(attachment.DTO.FilesDownloadUrl != null ? URLDomain.FromString(attachment.DTO.FilesDownloadUrl) : realmData.Ipfs.ContentBaseUrl)
+                      .AppendPath(thumbnailPath);
 
             var promise = Promise.Create(world,
                 new GetTextureIntention

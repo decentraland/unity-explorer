@@ -80,9 +80,9 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                     i++;
                 }
 
-                // TODO: Modify WearableDTO to include files download URL???
                 return new WearableDTO()
                 {
+                    FilesDownloadUrl = "https://builder-api.decentraland.org/v1/storage/contents/",
                     metadata = this,
                     id = this.id,
                     type = this.type,

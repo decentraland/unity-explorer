@@ -1,6 +1,4 @@
-﻿#nullable disable
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 
 namespace DCL.AvatarRendering.Loading.DTO
@@ -23,6 +21,7 @@ namespace DCL.AvatarRendering.Loading.DTO
         public long timestamp;
         public string version;
         public Content[] content;
+        public string? FilesDownloadUrl;
 
         public abstract MetadataBase Metadata { get; }
 
