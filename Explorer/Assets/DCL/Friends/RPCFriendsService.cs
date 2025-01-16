@@ -117,7 +117,7 @@ namespace DCL.Friends
 
             allFriends.RemoveWhere(IsOffline);
 
-            return await PaginateAndFetchProfiles(allFriends, pageNum, pageSize, ct);
+            return await PaginateAndFetchProfilesAsync(allFriends, pageNum, pageSize, ct);
 
             bool IsOffline(string friendId)
             {
@@ -145,7 +145,7 @@ namespace DCL.Friends
 
             allFriends.RemoveWhere(IsOnline);
 
-            return await PaginateAndFetchProfiles(allFriends, pageNum, pageSize, ct);
+            return await PaginateAndFetchProfilesAsync(allFriends, pageNum, pageSize, ct);
 
             bool IsOnline(string friendId)
             {
@@ -169,7 +169,7 @@ namespace DCL.Friends
             // TODO: add support to pagination at server side
             var allFriends = await GetAllFriendIdsAsync(ct);
 
-            return await PaginateAndFetchProfiles(allFriends, pageNum, pageSize, ct);
+            return await PaginateAndFetchProfilesAsync(allFriends, pageNum, pageSize, ct);
         }
 
         public async UniTask<FriendshipStatus> GetFriendshipStatusAsync(string userId, CancellationToken ct)
@@ -399,7 +399,7 @@ namespace DCL.Friends
             return allFriendsBuffer;
         }
 
-        private async UniTask<PaginatedFriendsResult> PaginateAndFetchProfiles(HashSet<string> friendIds, int pageNum, int pageSize,
+        private async UniTask<PaginatedFriendsResult> PaginateAndFetchProfilesAsync(HashSet<string> friendIds, int pageNum, int pageSize,
             CancellationToken ct)
         {
             var ids = friendIds.Skip((pageNum - 1) * pageSize)
