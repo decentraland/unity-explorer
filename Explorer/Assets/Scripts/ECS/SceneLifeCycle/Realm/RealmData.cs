@@ -76,7 +76,7 @@ namespace ECS
 
             if (isLocalSceneDevelopment)
                 realmType.Value = RealmKind.LocalScene;
-            else if (scenesAreFixed)
+            else if (!scenesAreFixed)
                 realmType.Value = RealmKind.GenesisCity;
             else
                 realmType.Value = RealmKind.World;

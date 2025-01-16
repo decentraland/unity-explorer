@@ -50,13 +50,12 @@ namespace Global.Dynamic
         private readonly SceneAssetLock sceneAssetLock;
         private readonly IComponentPool<PartitionComponent> partitionComponentPool;
         private readonly bool isLocalSceneDevelopment;
+        private readonly RealmNavigatorDebugView realmNavigatorDebugView;
 
         private GlobalWorld? globalWorld;
         private Entity realmEntity;
 
         public IRealmData RealmData => realmData;
-
-        private readonly RealmNavigatorDebugView realmNavigatorDebugView;
 
         public URLDomain? CurrentDomain { get; private set; }
 
@@ -83,8 +82,8 @@ namespace Global.Dynamic
             PartitionDataContainer partitionDataContainer,
             SceneAssetLock sceneAssetLock,
             IComponentPool<PartitionComponent> partitionComponentPool,
-            bool isLocalSceneDevelopment
-        )
+            RealmNavigatorDebugView realmNavigatorDebugView,
+            bool isLocalSceneDevelopment)
         {
             this.web3IdentityCache = web3IdentityCache;
             this.webRequestController = webRequestController;
@@ -98,6 +97,7 @@ namespace Global.Dynamic
             this.sceneAssetLock = sceneAssetLock;
             this.partitionComponentPool = partitionComponentPool;
             this.isLocalSceneDevelopment = isLocalSceneDevelopment;
+            this.realmNavigatorDebugView = realmNavigatorDebugView;
         }
 
         public async UniTask SetRealmAsync(URLDomain realm, CancellationToken ct)

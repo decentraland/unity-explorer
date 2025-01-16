@@ -12,7 +12,7 @@ namespace DCL.RealmNavigation.LoadingOperation
             if (builder == null)
                 return;
 
-            builder.AddControl(new DebugConstLabelDef($"Interrupt {label}:"), null);
+            var hint = new DebugHintDef(label);
 
             // Add dropdown
 
@@ -23,9 +23,13 @@ namespace DCL.RealmNavigation.LoadingOperation
                                    .ToList();
 
             var binding = new IndexedElementBinding(choices, NONE, evt
-                => operation.InterruptOnOp = operation.Operations.ElementAtOrDefault(evt.index));
+                => operation.InterruptOnOp = operation.Operations.ElementAtOrDefault(evt.index - 1));
 
-            builder.AddControl(new DebugDropdownDef(choices, binding, "Select"), null);
+            var labelBinding = new ElementBinding<string>("None");
+            operation.CurrentOp.OnUpdate += op => labelBinding.Value = op?.GetType().Name ?? "None";
+
+            builder.AddControl(new DebugConstLabelDef("Current Op:"), new DebugSetOnlyLabelDef(labelBinding), hint);
+            builder.AddControl(new DebugDropdownDef(choices, binding, "Interrupt On"), null);
         }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.UserInAppInitializationFlow;
+using DCL.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -14,9 +15,7 @@ namespace DCL.RealmNavigation.LoadingOperation
         private readonly ILoadingStatus loadingStatus;
         private readonly ReportData reportData;
 
-        public IReadOnlyList<ILoadingOperation<TParams>> Operations { get; }
-
-        public ILoadingOperation<TParams>? InterruptOnOp { get; set; }
+        private readonly ReactiveProperty<ILoadingOperation<TParams>?> currentOp = new (null);
 
         public SequentialLoadingOperation(ILoadingStatus loadingStatus, IReadOnlyList<ILoadingOperation<TParams>> operations, ReportData reportData)
         {
@@ -24,6 +23,12 @@ namespace DCL.RealmNavigation.LoadingOperation
             this.reportData = reportData;
             Operations = operations;
         }
+
+        public IReadonlyReactiveProperty<ILoadingOperation<TParams>?> CurrentOp => currentOp;
+
+        public IReadOnlyList<ILoadingOperation<TParams>> Operations { get; }
+
+        public ILoadingOperation<TParams>? InterruptOnOp { get; set; }
 
         /// <summary>
         ///     Tries to restart the whole flow for <paramref name="attemptsCount" /> times <br />
@@ -40,6 +45,8 @@ namespace DCL.RealmNavigation.LoadingOperation
             {
                 foreach (ILoadingOperation<TParams> loadingOp in Operations)
                 {
+                    currentOp.Value = loadingOp;
+
                     try
                     {
                         if (loadingOp == InterruptOnOp)
@@ -75,8 +82,8 @@ namespace DCL.RealmNavigation.LoadingOperation
                 }
             }
 
-            // The final progress should be always "1"
-            args.Report.SetProgress(loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.Completed));
+            if (lastOpResult.Success)
+                args.Report.SetProgress(loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.Completed));
 
             return lastOpResult;
         }

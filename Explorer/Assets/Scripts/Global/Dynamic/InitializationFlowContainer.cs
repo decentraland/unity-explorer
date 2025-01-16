@@ -1,6 +1,5 @@
 ﻿using DCL.Audio;
 using DCL.Chat.History;
-using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.HealthChecks;
@@ -14,7 +13,6 @@ using DCL.Web3.Identities;
 using Global;
 using Global.AppArgs;
 using Global.Dynamic;
-using Global.Dynamic.DebugSettings;
 using MVC;
 
 namespace DCL.UserInAppInitializationFlow
@@ -86,7 +84,7 @@ namespace DCL.UserInAppInitializationFlow
                     sentryDiagnostics,
                 }, ReportCategory.STARTUP);
 
-            startUpOps.AddDebugControl(realmContainer.DebugView.DebugWidgetBuilder, "Re-Login Flow");
+            reLoginOps.AddDebugControl(realmContainer.DebugView.DebugWidgetBuilder, "Re-Login Flow");
 
             return new InitializationFlowContainer
             {

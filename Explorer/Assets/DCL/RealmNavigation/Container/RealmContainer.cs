@@ -38,6 +38,8 @@ namespace DCL.RealmNavigation
             var retrieveSceneFromFixedRealm = new RetrieveSceneFromFixedRealm();
             var retrieveSceneFromVolatileWorld = new RetrieveSceneFromVolatileWorld(staticContainer.RealmData);
 
+            var realmNavigatorDebugView = new RealmNavigatorDebugView(debugContainerBuilder);
+
             var realmController = new RealmController(
                 identityCache,
                 staticContainer.WebRequestsContainer.WebRequestController,
@@ -51,6 +53,7 @@ namespace DCL.RealmNavigation
                 staticContainer.SingletonSharedDependencies.SceneAssetLock,
                 staticContainer.ComponentsContainer.ComponentPoolsRegistry
                                .GetReferenceTypePool<PartitionComponent>(),
+                realmNavigatorDebugView,
                 localSceneDevelopment
             );
 
@@ -59,7 +62,7 @@ namespace DCL.RealmNavigation
             return new RealmContainer
             {
                 RealmController = realmController,
-                DebugView = new RealmNavigatorDebugView(debugContainerBuilder),
+                DebugView = realmNavigatorDebugView,
                 TeleportController = teleportController,
             };
         }
