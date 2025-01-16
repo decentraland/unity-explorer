@@ -3,6 +3,7 @@ using DCL.Chat;
 using DCL.Friends.UI.Sections.Blocked;
 using DCL.Friends.UI.Sections.Friends;
 using DCL.Friends.UI.Sections.Requests;
+using DCL.Profiles;
 using DCL.Web3.Identities;
 using MVC;
 using System.Threading;
@@ -19,11 +20,14 @@ namespace DCL.Friends.UI
             BLOCKED
         }
 
+        private const int FRIENDS_PAGE_SIZE = 20;
+
         private readonly IFriendsService friendsService;
         private readonly IFriendsEventBus friendEventBus;
         private readonly ChatView chatView;
         private readonly IMVCManager mvcManager;
         private readonly IWeb3IdentityCache web3IdentityCache;
+        private readonly IProfileCache profileCache;
 
         private BlockedSectionController blockedSectionController;
         private FriendsSectionController friendsSectionController;
@@ -38,13 +42,15 @@ namespace DCL.Friends.UI
             IFriendsService friendsService,
             IFriendsEventBus friendEventBus,
             IMVCManager mvcManager,
-            IWeb3IdentityCache web3IdentityCache) : base(viewFactory)
+            IWeb3IdentityCache web3IdentityCache,
+            IProfileCache profileCache) : base(viewFactory)
         {
             this.chatView = chatView;
             this.friendsService = friendsService;
             this.friendEventBus = friendEventBus;
             this.mvcManager = mvcManager;
             this.web3IdentityCache = web3IdentityCache;
+            this.profileCache = profileCache;
         }
 
         public override void Dispose()
@@ -84,8 +90,18 @@ namespace DCL.Friends.UI
             base.OnViewInstantiated();
 
             blockedSectionController = new BlockedSectionController(viewInstance!.BlockedSection, mvcManager);
-            friendsSectionController = new FriendsSectionController(viewInstance!.FriendsSection, friendsService, friendEventBus, web3IdentityCache, mvcManager);
-            requestsSectionController = new RequestsSectionController(viewInstance!.RequestsSection, friendsService, friendEventBus, web3IdentityCache, mvcManager);
+            friendsSectionController = new FriendsSectionController(viewInstance!.FriendsSection,
+                friendsService,
+                friendEventBus,
+                web3IdentityCache,
+                mvcManager,
+                new FriendListPagedRequestManager(friendsService, friendEventBus, FRIENDS_PAGE_SIZE));
+            requestsSectionController = new RequestsSectionController(viewInstance!.RequestsSection,
+                friendsService,
+                friendEventBus,
+                web3IdentityCache,
+                mvcManager,
+                new RequestsRequestManager(friendsService, friendEventBus, FRIENDS_PAGE_SIZE, profileCache));
 
             viewInstance!.FriendsTabButton.onClick.AddListener(() => ToggleTabs(FriendsPanelTab.FRIENDS));
             viewInstance.RequestsTabButton.onClick.AddListener(() => ToggleTabs(FriendsPanelTab.REQUESTS));

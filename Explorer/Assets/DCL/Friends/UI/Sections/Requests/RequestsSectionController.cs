@@ -1,57 +1,59 @@
+using Cysharp.Threading.Tasks;
+using DCL.Profiles;
 using DCL.Web3.Identities;
 using MVC;
-using SuperScrollView;
 using System;
+using System.Threading;
+using UnityEngine;
+using Utility;
 
 namespace DCL.Friends.UI.Sections.Requests
 {
-    public class RequestsSectionController : IDisposable
+    public class RequestsSectionController : FriendPanelSectionController<RequestsSectionView, RequestsRequestManager, RequestUserView>
     {
-        private const int REQUESTS_PAGE_SIZE = 20;
-
-        private readonly RequestsSectionView view;
-        private readonly IFriendsService friendsService;
-        private readonly IFriendsEventBus friendEventBus;
-        private readonly IWeb3IdentityCache web3IdentityCache;
-        private readonly IMVCManager mvcManager;
-        private readonly RequestsRequestManager requestsRequestManager;
-
         public RequestsSectionController(RequestsSectionView view,
             IFriendsService friendsService,
             IFriendsEventBus friendEventBus,
             IWeb3IdentityCache web3IdentityCache,
-            IMVCManager mvcManager)
+            IMVCManager mvcManager,
+            RequestsRequestManager friendListPagedRequestManager)
+            : base(view, friendsService, friendEventBus, web3IdentityCache, mvcManager, friendListPagedRequestManager)
         {
-            this.view = view;
-            this.friendsService = friendsService;
-            this.friendEventBus = friendEventBus;
-            this.web3IdentityCache = web3IdentityCache;
-            this.mvcManager = mvcManager;
-
-            this.view.Enable += Enable;
-            this.view.Disable += Disable;
-            this.requestsRequestManager = new RequestsRequestManager(friendsService, friendEventBus, REQUESTS_PAGE_SIZE);
-            this.view.LoopList.InitListView(0, OnGetItemByIndex);
+            friendListPagedRequestManager.ContextMenuClicked += ContextMenuClicked;
         }
 
-        public void Dispose()
+        public override void Dispose()
         {
-            view.Enable -= Enable;
-            view.Disable -= Disable;
-            requestsRequestManager.Dispose();
+            base.Dispose();
+            friendListPagedRequestManager.ContextMenuClicked -= ContextMenuClicked;
         }
 
-        private LoopListViewItem2 OnGetItemByIndex(LoopListView2 loopListView, int index) =>
-            requestsRequestManager.GetLoopListItemByIndex(loopListView, index);
+        private void ContextMenuClicked(Profile profile)
+        {
+            Debug.Log($"ContextMenuClicked on {profile.UserId}");
+        }
 
-        private void Enable()
+        protected override async UniTaskVoid Init(CancellationToken ct)
+        {
+            view.SetLoadingState(true);
+
+            friendListInitCts = friendListInitCts.SafeRestart();
+            await friendListPagedRequestManager.Init(ct);
+
+            view.SetEmptyState(!friendListPagedRequestManager.HasElements);
+            view.SetLoadingState(false);
+            view.SetScrollView(friendListPagedRequestManager.HasElements);
+
+            view.LoopList.SetListItemCount(friendListPagedRequestManager.GetElementsNumber(), false);
+            view.LoopList.RefreshAllShownItem();
+            friendListPagedRequestManager.FirstFolderClicked += FolderClicked;
+            friendListPagedRequestManager.SecondFolderClicked += FolderClicked;
+        }
+
+        protected override void FriendElementClicked(Profile profile)
         {
 
         }
 
-        private void Disable()
-        {
-
-        }
     }
 }

@@ -8,7 +8,7 @@ namespace DCL.Friends.UI.Sections
     {
         [field: SerializeField] public LoopListView2 LoopList { get; private set; }
         [field: SerializeField] public GameObject LoadingObject { get; private set; }
-        [field: SerializeField] public GameObject EmptyState { get; private set; }
+        [field: SerializeField] public GameObject? EmptyState { get; private set; }
 
         public event Action Enable;
         public event Action Disable;
