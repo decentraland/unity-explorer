@@ -61,9 +61,7 @@ namespace DCL.UserInAppInitializationFlow
             AudioClipConfig backgroundMusic,
             IRealmNavigator realmNavigator,
             ILoadingScreen loadingScreen,
-            IFeatureFlagsProvider featureFlagsProvider,
             FeatureFlagsCache featureFlagsCache,
-            IWeb3IdentityCache web3IdentityCache,
             IRealmController realmController,
             IRealmMisc realmMisc,
             ILandscape landscape,
@@ -88,7 +86,6 @@ namespace DCL.UserInAppInitializationFlow
             this.roomHub = roomHub;
 
             var ensureLivekitConnectionStartupOperation = new EnsureLivekitConnectionStartupOperation(loadingStatus, livekitHealthCheck);
-            var initializeFeatureFlagsStartupOperation = new InitializeFeatureFlagsStartupOperation(loadingStatus, featureFlagsProvider, web3IdentityCache, decentralandUrlsSource, appParameters);
             var preloadProfileStartupOperation = new PreloadProfileStartupOperation(loadingStatus, selfProfile);
             var switchRealmMiscVisibilityStartupOperation = new SwitchRealmMiscVisibilityStartupOperation(loadingStatus, realmController, realmMisc);
             loadPlayerAvatarStartupOperation = new LoadPlayerAvatarStartupOperation(loadingStatus, selfProfile, mainPlayerAvatarBaseProxy);
@@ -101,7 +98,6 @@ namespace DCL.UserInAppInitializationFlow
             startupOperation = new SequentialStartupOperation(
                 loadingStatus,
                 ensureLivekitConnectionStartupOperation,
-                initializeFeatureFlagsStartupOperation,
                 preloadProfileStartupOperation,
                 switchRealmMiscVisibilityStartupOperation,
                 loadPlayerAvatarStartupOperation,
