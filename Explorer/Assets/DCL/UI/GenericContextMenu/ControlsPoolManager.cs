@@ -43,9 +43,9 @@ namespace DCL.UI.GenericContextMenu
         {
             GenericContextMenuComponentBase component = settings switch
                                                         {
-                                                            SeparatorContextMenuControlSettings separatorSettings => GetSeparator(separatorSettings, initialValue),
-                                                            ButtonContextMenuControlSettings buttonSettings => GetButton(buttonSettings, initialValue),
-                                                            ToggleContextMenuControlSettings toggleSettings => GetToggle(toggleSettings, initialValue),
+                                                            SeparatorContextMenuControlSettings separatorSettings => GetSeparator(separatorSettings),
+                                                            ButtonContextMenuControlSettings buttonSettings => GetButton(buttonSettings),
+                                                            ToggleContextMenuControlSettings toggleSettings => GetToggle(toggleSettings, (bool)initialValue),
                                                             _ => throw new ArgumentOutOfRangeException()
                                                         };
             component!.transform.SetSiblingIndex(index);
@@ -54,23 +54,23 @@ namespace DCL.UI.GenericContextMenu
             return component;
         }
 
-        private GenericContextMenuComponentBase GetSeparator(SeparatorContextMenuControlSettings settings, object initialValue)
+        private GenericContextMenuComponentBase GetSeparator(SeparatorContextMenuControlSettings settings)
         {
             GenericContextMenuSeparatorView separatorView = separatorPool.Get();
-            separatorView.Configure(settings, initialValue);
+            separatorView.Configure(settings);
 
             return separatorView;
         }
 
-        private GenericContextMenuComponentBase GetButton(ButtonContextMenuControlSettings settings, object initialValue)
+        private GenericContextMenuComponentBase GetButton(ButtonContextMenuControlSettings settings)
         {
             GenericContextMenuButtonWithTextView separatorView = buttonPool.Get();
-            separatorView.Configure(settings, initialValue);
+            separatorView.Configure(settings);
 
             return separatorView;
         }
 
-        private GenericContextMenuComponentBase GetToggle(ToggleContextMenuControlSettings settings, object initialValue)
+        private GenericContextMenuComponentBase GetToggle(ToggleContextMenuControlSettings settings, bool initialValue)
         {
             GenericContextMenuToggleView separatorView = togglePool.Get();
             separatorView.Configure(settings, initialValue);

@@ -7,13 +7,13 @@ using UnityEngine.UI;
 
 namespace DCL.UI.GenericContextMenu.Controls
 {
-    public class GenericContextMenuButtonWithTextView : GenericContextMenuComponent<ButtonContextMenuControlSettings>
+    public class GenericContextMenuButtonWithTextView : GenericContextMenuComponentBase
     {
         [field: SerializeField] public Button ButtonComponent { get; private set; }
         [field: SerializeField] public TMP_Text TextComponent { get; private set; }
         [field: SerializeField] public Image ImageComponent { get; private set; }
 
-        public override void Configure(ButtonContextMenuControlSettings settings, object initialValue)
+        public void Configure(ButtonContextMenuControlSettings settings)
         {
             TextComponent.SetText(settings!.buttonText);
             ImageComponent.sprite = settings.buttonIcon;

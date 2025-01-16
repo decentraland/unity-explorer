@@ -5,11 +5,11 @@ using UnityEngine.UI;
 
 namespace DCL.UI.GenericContextMenu.Controls
 {
-    public class GenericContextMenuSeparatorView : GenericContextMenuComponent<SeparatorContextMenuControlSettings>
+    public class GenericContextMenuSeparatorView : GenericContextMenuComponentBase
     {
         [field: SerializeField] public LayoutElement LayoutElementComponent { get; private set; }
 
-        public override void Configure(SeparatorContextMenuControlSettings settings, object initialValue)
+        public void Configure(SeparatorContextMenuControlSettings settings)
         {
             LayoutElementComponent.preferredHeight = settings!.height;
             LayoutElementComponent.minHeight = settings.height;

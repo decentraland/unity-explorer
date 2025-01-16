@@ -28,7 +28,7 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
 
         private bool isContextMenuOpen;
         private CameraReelResponseCompact currentReelData;
-        private UniTaskCompletionSource closeContextMenuTask;
+        private UniTaskCompletionSource? closeContextMenuTask;
 
         public CameraReelOptionButtonController(CameraReelOptionButtonView view,
             IMVCManager mvcManager)
@@ -63,7 +63,7 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
         public void HideControl()
         {
             view.transform.localScale = Vector3.one;
-            closeContextMenuTask.TrySetResult();
+            closeContextMenuTask?.TrySetResult();
             Hide?.Invoke();
             view.gameObject.SetActive(false);
         }
@@ -78,7 +78,7 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
                         isContextMenuOpen = false;
                         HideControl();
                     },
-                    closeTask: closeContextMenuTask.Task,
+                    closeTask: closeContextMenuTask?.Task,
                     initialValues: initialValues)));
         }
 
