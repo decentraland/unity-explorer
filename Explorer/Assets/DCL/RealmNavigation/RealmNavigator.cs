@@ -9,6 +9,7 @@ using DCL.RealmNavigation.LoadingOperation;
 using DCL.RealmNavigation.TeleportOperations;
 using DCL.SceneLoadingScreens.LoadingScreen;
 using DCL.Utilities;
+using ECS;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Realm;
 using Segment.Serialization;
@@ -193,7 +194,7 @@ namespace DCL.RealmNavigation
             if (!parcelCheckResult.Success)
                 return parcelCheckResult.AsEnumResult(TaskError.MessageError);
 
-            if (!isLocal && !realmController.IsGenesis())
+            if (!isLocal && !realmController.RealmData.IsGenesis())
             {
                 var enumResult = await TryChangeToGenesisAsync(parcel, ct);
                 return enumResult.As(ChangeRealmErrors.AsTaskError);
@@ -233,7 +234,6 @@ namespace DCL.RealmNavigation
                 );
 
                 EnumResult<TaskError> result = await ExecuteTeleportOperationsAsync(teleportParams, teleportInSameRealmOperation, LOG_NAME, 1, ct);
-                parentLoadReport.SetProgress(1);
                 return result;
             };
     }

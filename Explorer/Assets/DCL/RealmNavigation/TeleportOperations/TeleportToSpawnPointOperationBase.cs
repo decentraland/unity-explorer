@@ -7,6 +7,7 @@ using DCL.ParcelsService;
 using DCL.RealmNavigation.LoadingOperation;
 using DCL.UserInAppInitializationFlow;
 using DCL.Utilities;
+using ECS;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Realm;
 using ECS.SceneLifeCycle.Reporting;
@@ -52,7 +53,7 @@ namespace DCL.RealmNavigation.TeleportOperations
             Vector2Int parcelToTeleport
         )
         {
-            bool isWorld = realmController.Type is RealmType.World;
+            bool isWorld = realmController.RealmData.IsWorld();
             WaitForSceneReadiness? waitForSceneReadiness;
 
             if (isWorld)

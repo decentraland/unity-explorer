@@ -1,10 +1,8 @@
 using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
-using DCL.AsyncLoadReporting;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
-using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.RealmNavigation;
@@ -16,15 +14,15 @@ using Utility.Types;
 
 namespace DCL.UserInAppInitializationFlow.StartupOperations
 {
-    public class CheckOnboardingStartupOperation : StartUpOperationBase
+    public class CheckOnboardingStartupOperation : IStartupOperation
     {
         private const int TUTORIAL_STEP_DONE_MARK = 256;
-
 
         private readonly ILoadingStatus loadingStatus;
         private readonly ISelfProfile selfProfile;
         private readonly FeatureFlagsCache featureFlagsCache;
-        private readonly IDecentralandUrlsSource decentralandUrlsSource;
+
+        // private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly IAppArgs appParameters;
         private readonly IRealmNavigator realmNavigator;
 
@@ -35,60 +33,79 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
             ILoadingStatus loadingStatus,
             ISelfProfile selfProfile,
             FeatureFlagsCache featureFlagsCache,
-            IDecentralandUrlsSource decentralandUrlsSource,
+
+            // IDecentralandUrlsSource decentralandUrlsSource,
             IAppArgs appParameters,
             IRealmNavigator realmNavigator)
         {
             this.loadingStatus = loadingStatus;
             this.selfProfile = selfProfile;
             this.featureFlagsCache = featureFlagsCache;
-            this.decentralandUrlsSource = decentralandUrlsSource;
+
+            // this.decentralandUrlsSource = decentralandUrlsSource;
             this.appParameters = appParameters;
             this.realmNavigator = realmNavigator;
         }
 
-        protected override async UniTask InternalExecuteAsync(IStartupOperation.Params @params, CancellationToken ct)
+        public async UniTask<EnumResult<TaskError>> ExecuteAsync(IStartupOperation.Params args, CancellationToken ct)
         {
             float finalizationProgress = loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.OnboardingChecking);
-            await CheckOnboardingAsync(ct);
-            @params.Report.SetProgress(finalizationProgress);
+            EnumResult<TaskError> res = await CheckOnboardingAsync(ct);
+
+            if (!res.Success)
+                return res;
+
+            args.Report.SetProgress(finalizationProgress);
+            return res;
         }
 
-        private async UniTask CheckOnboardingAsync(CancellationToken ct)
+        private async UniTask<EnumResult<TaskError>> CheckOnboardingAsync(CancellationToken ct)
         {
             // It the app is open from any external way, we will ignore the onboarding flow
             if (appParameters.HasFlag(AppArgsFlags.REALM) || appParameters.HasFlag(AppArgsFlags.POSITION) || appParameters.HasFlag(AppArgsFlags.LOCAL_SCENE))
-                return;
+                return EnumResult<TaskError>.SuccessResult();
 
             isProfilePendingToBeUpdated = false;
             ownProfile = await selfProfile.ProfileAsync(ct);
 
             // If the user has already completed the tutorial, we don't need to check the onboarding realm
-            if (ownProfile is { TutorialStep: > 0 } )
-                return;
+            if (ownProfile is { TutorialStep: > 0 })
+                return EnumResult<TaskError>.SuccessResult();
 
             // If the onboarding feature flag is enabled, we set the realm to the onboarding realm
             if (featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.ONBOARDING, FeatureFlagsStrings.ONBOARDING_ENABLED_VARIANT))
             {
                 if (!featureFlagsCache.Configuration.TryGetTextPayload(FeatureFlagsStrings.ONBOARDING, FeatureFlagsStrings.ONBOARDING_ENABLED_VARIANT, out string? realm))
-                    return;
+                    return EnumResult<TaskError>.SuccessResult();
 
                 if (string.IsNullOrEmpty(realm))
-                    return;
+                    return EnumResult<TaskError>.SuccessResult();
 
-                try
-                {
-                    URLDomain realmURL = URLDomain.FromString($"{IRealmNavigator.WORLDS_DOMAIN}/{realm}");
-                    await realmNavigator.TryChangeRealmAsync(realmURL, ct);
-                    isProfilePendingToBeUpdated = true;
-                }
-                catch (Exception)
-                {
-                    // We redirect to Genesis City if the onboarding realm is not found
-                    ReportHub.LogError(ReportCategory.ONBOARDING, $"Error trying to set '{realm}' realm for onboarding. Redirecting to Genesis City.");
-                    await realmNavigator.TryChangeRealmAsync(URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.Genesis)), ct);
-                }
+                // TODO the following flow is suspicious: realmNavigator itself is wrapped in the loading screen, and this operation is a part of the loading screen,
+                // TODO So operations will be called from the operation. Re-consideration required
+                //try
+                //{
+                var realmURL = URLDomain.FromString($"{IRealmNavigator.WORLDS_DOMAIN}/{realm}");
+                EnumResult<ChangeRealmError> result = await realmNavigator.TryChangeRealmAsync(realmURL, ct);
+                isProfilePendingToBeUpdated = true;
+
+                if (result.Success)
+                    return EnumResult<TaskError>.SuccessResult();
+
+                if (result.Error!.Value.State is ChangeRealmError.MessageError or ChangeRealmError.NotReachable)
+                    return EnumResult<TaskError>.ErrorResult(TaskError.MessageError, result.Error.Value.Message);
+
+                //}
+                // RealmNavigator already contains fallback logic to the previously loaded realm
+                // catch (Exception)
+                // {
+                //     // We redirect to Genesis City if the onboarding realm is not found
+                //     ReportHub.LogError(ReportCategory.ONBOARDING, $"Error trying to set '{realm}' realm for onboarding. Redirecting to Genesis City.");
+                //     await realmNavigator.TryChangeRealmAsync(URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.Genesis)), ct);
+                // }
             }
+
+            return EnumResult<TaskError>.SuccessResult();
         }
 
         public async UniTask MarkOnboardingAsDoneAsync(World world, Entity playerEntity, CancellationToken ct)
@@ -100,7 +117,7 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
             {
                 // Update profile data
                 ownProfile.TutorialStep = TUTORIAL_STEP_DONE_MARK;
-                var profile = await selfProfile.ForcePublishWithoutModificationsAsync(ct);
+                Profile? profile = await selfProfile.ForcePublishWithoutModificationsAsync(ct);
 
                 if (profile != null)
                 {
@@ -111,8 +128,7 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
 
                 isProfilePendingToBeUpdated = false;
             }
-            catch (OperationCanceledException) { }
-            catch (Exception e)
+            catch (Exception e) when (e is not OperationCanceledException)
             {
                 ReportHub.LogError(ReportCategory.ONBOARDING, $"There was an error while trying to update TutorialStep into your profile. ERROR: {e.Message}");
             }

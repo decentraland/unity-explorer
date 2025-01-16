@@ -3,8 +3,8 @@ using DCL.RealmNavigation.LoadingOperation;
 
 namespace DCL.UserInAppInitializationFlow.StartupOperations
 {
-    public abstract class StartUpOperationBase : LoadingOperationBase<IStartupOperation.Params>
+    public abstract class StartUpOperationBase : LoadingOperationBase<IStartupOperation.Params>, IStartupOperation
     {
-        protected StartUpOperationBase(string reportCategory = ReportCategory.SCENE_LOADING) : base(reportCategory) { }
+        protected StartUpOperationBase(string reportCategory = ReportCategory.STARTUP) : base(reportCategory) { }
     }
 }

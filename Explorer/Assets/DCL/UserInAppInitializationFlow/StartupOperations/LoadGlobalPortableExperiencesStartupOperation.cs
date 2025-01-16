@@ -36,12 +36,12 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
             this.portableExperiencesController = portableExperiencesController;
         }
 
-        protected override UniTask InternalExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct)
+        protected override UniTask InternalExecuteAsync(IStartupOperation.Params args, CancellationToken ct)
         {
             float finalizationProgress = loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.GlobalPXsLoading);
             LoadDebugPortableExperiences(ct);
             LoadRemotePortableExperiences(ct);
-            report.SetProgress(finalizationProgress);
+            args.Report.SetProgress(finalizationProgress);
             return UniTask.CompletedTask;
         }
 

@@ -30,7 +30,7 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
             this.appParameters = appParameters;
         }
 
-        protected override async UniTask InternalExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct)
+        protected override async UniTask InternalExecuteAsync(IStartupOperation.Params args, CancellationToken ct)
         {
             loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.FeatureFlagInitializing);
             // Re-initialize feature flags since the user might have changed thus the data to be resolved

@@ -25,7 +25,12 @@ namespace DCL.RealmNavigation.LoadingOperation
             Operations = operations;
         }
 
-        public async UniTask<EnumResult<TaskError>> ExecuteAsync(string processName, int attemptsCount, TParams args, CancellationToken ct)
+        /// <summary>
+        ///     Tries to restart the whole flow for <paramref name="attemptsCount" /> times <br />
+        ///     Protects from unexpected exceptions from the inner operations <br />
+        ///     Always finalizes the process with <see cref="LoadingStatus.LoadingStage.Completed" />
+        /// </summary>
+        public virtual async UniTask<EnumResult<TaskError>> ExecuteAsync(string processName, int attemptsCount, TParams args, CancellationToken ct)
         {
             var lastOpResult = EnumResult<TaskError>.SuccessResult();
 

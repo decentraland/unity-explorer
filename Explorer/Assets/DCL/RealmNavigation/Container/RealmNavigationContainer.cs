@@ -39,7 +39,6 @@ namespace DCL.RealmNavigation
             RemoteEntities remoteEntities,
             World globalWorld,
             IRoomHub roomHub,
-            IRealmMisc realmMisc,
             ILandscape landscape,
             ExposedGlobalDataContainer exposedGlobalDataContainer,
             ILoadingScreen loadingScreen)
@@ -51,7 +50,7 @@ namespace DCL.RealmNavigation
                 new StopRoomAsyncTeleportOperation(roomHub, LIVEKIT_TIMEOUT),
                 new RemoveCameraSamplingDataTeleportOperation(globalWorld, exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy),
                 new DestroyAllRoadAssetsTeleportOperation(globalWorld, lodContainer.RoadAssetsPool),
-                new ChangeRealmTeleportOperation(realmContainer.RealmController, realmMisc),
+                new ChangeRealmTeleportOperation(realmContainer.RealmController),
                 new AnalyticsFlushTeleportOperation(bootstrapContainer.Analytics),
                 new LoadLandscapeTeleportOperation(landscape),
                 new PrewarmRoadAssetPoolsTeleportOperation(realmContainer.RealmController, lodContainer.RoadAssetsPool),

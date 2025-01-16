@@ -8,11 +8,9 @@ namespace DCL.RealmNavigation.TeleportOperations
     public class ChangeRealmTeleportOperation : TeleportOperationBase
     {
         private readonly IRealmController realmController;
-        private readonly IRealmMisc realmMisc;
 
-        public ChangeRealmTeleportOperation(IRealmController realmController, IRealmMisc realmMisc)
+        public ChangeRealmTeleportOperation(IRealmController realmController)
         {
-            this.realmMisc = realmMisc;
             this.realmController = realmController;
         }
 
@@ -22,7 +20,6 @@ namespace DCL.RealmNavigation.TeleportOperations
                 teleportParams.LoadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.RealmChanging);
 
             await realmController.SetRealmAsync(teleportParams.CurrentDestinationRealm, ct);
-            realmMisc.SwitchTo(realmController.Type);
             teleportParams.Report.SetProgress(finalizationProgress);
         }
     }

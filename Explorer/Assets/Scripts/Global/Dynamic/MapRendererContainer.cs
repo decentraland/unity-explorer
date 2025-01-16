@@ -13,7 +13,8 @@ using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using DCL.EventsApi;
-using DCL.RealmNavigation.TeleportBus;
+using DCL.MapRenderer.MapLayers;
+using ECS;
 using ECS.SceneLifeCycle.Realm;
 
 namespace Global.Dynamic
@@ -42,6 +43,7 @@ namespace Global.Dynamic
             IMapPinsEventBus mapPinsEventBus,
             INotificationsBusController notificationsBusController,
             IRealmNavigator teleportBusController,
+            IRealmData realmData,
             INavmapBus navmapBus,
             CancellationToken ct)
         {
@@ -67,17 +69,14 @@ namespace Global.Dynamic
                 c.MapRenderer = mapRenderer;
             });
 
+            realmData.RealmType.OnUpdate += kind => mapRendererContainer.MapRenderer.SetSharedLayer(MapLayer.PlayerMarker, kind is RealmKind.GenesisCity);
+
             return mapRendererContainer;
         }
 
         protected override async UniTask InitializeInternalAsync(Settings settings, CancellationToken ct)
         {
             mapRendererSettings = await assetsProvisioner.ProvideMainAssetAsync(settings.MapRendererSettings, ct, nameof(settings.MapRendererSettings));
-        }
-
-        public override void Dispose()
-        {
-            base.Dispose();
         }
 
         public class Settings : IDCLPluginSettings

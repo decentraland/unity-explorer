@@ -15,7 +15,6 @@ namespace DCL.UserInAppInitializationFlow
             FeatureFlagInitializing,
             UnloadCacheChecking,
             ProfileLoading,
-            EnvironmentMiscSetting,
             PlayerAvatarLoading,
             LandscapeLoading,
             OnboardingChecking,
@@ -39,7 +38,6 @@ namespace DCL.UserInAppInitializationFlow
             [LoadingStage.FeatureFlagInitializing] = 0.15f,
             [LoadingStage.RealmChanging] = 0.25f, //Used in Teleport Flow
             [LoadingStage.ProfileLoading] = 0.2f,
-            [LoadingStage.EnvironmentMiscSetting] = 0.25f,
             [LoadingStage.PlayerAvatarLoading] = 0.4f,
             [LoadingStage.LandscapeLoading] = 0.7f,
             [LoadingStage.OnboardingChecking] = 0.80f,

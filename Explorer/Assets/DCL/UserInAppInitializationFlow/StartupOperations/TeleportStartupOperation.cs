@@ -12,7 +12,7 @@ using UnityEngine;
 
 namespace DCL.UserInAppInitializationFlow.StartupOperations
 {
-    public class TeleportStartupOperation : TeleportToSpawnPointOperationBase<IStartupOperation.Params>
+    public class TeleportStartupOperation : TeleportToSpawnPointOperationBase<IStartupOperation.Params>, IStartupOperation
     {
         private readonly Vector2Int startParcel;
 
@@ -30,6 +30,4 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
         protected override UniTask InternalExecuteAsync(IStartupOperation.Params report, CancellationToken ct) =>
             InternalExecuteAsync(report, startParcel, ct);
     }
-}
-
 }

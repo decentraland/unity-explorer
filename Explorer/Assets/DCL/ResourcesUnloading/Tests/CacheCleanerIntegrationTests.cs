@@ -17,10 +17,12 @@ using System;
 using System.Collections.Generic;
 using DCL.LOD;
 using DCL.Profiles;
+using ECS;
 using ECS.StreamableLoading.NFTShapes;
 using SceneRuntime.Factory.WebSceneSource.Cache;
 using Unity.PerformanceTesting;
 using UnityEngine;
+using UnityEngine.Profiling;
 using static Utility.Tests.TestsCategories;
 
 namespace DCL.ResourcesUnloading.Tests
@@ -63,7 +65,7 @@ namespace DCL.ResourcesUnloading.Tests
             attachmentsAssetsCache = new AttachmentsAssetsCache(100, poolsRegistry);
             wearableStorage = new WearableStorage();
             lodAssets = new LODCache(new GameObjectPool<LODGroup>(new GameObject().transform));
-            roadAssets = new RoadAssetsPool(new List<GameObject>());
+            roadAssets = new RoadAssetsPool(new IRealmData.Fake(), new List<GameObject>());
             nftShapeCache = new NftShapeCache();
             emoteStorage = new MemoryEmotesStorage();
             profileCache = new DefaultProfileCache();
@@ -140,9 +142,9 @@ namespace DCL.ResourcesUnloading.Tests
             SampleGroup totalAllocatedMemory = new SampleGroup("TotalAllocatedMemory", SampleUnit.Kilobyte, increaseIsBetter: false);
 
             // Act
-            long memoryBefore = UnityEngine.Profiling.Profiler.GetTotalAllocatedMemoryLong();
+            long memoryBefore = Profiler.GetTotalAllocatedMemoryLong();
             cacheCleaner.UnloadCache();
-            long memoryAfter = UnityEngine.Profiling.Profiler.GetTotalAllocatedMemoryLong();
+            long memoryAfter = Profiler.GetTotalAllocatedMemoryLong();
 
             Measure.Custom(totalAllocatedMemory, (memoryAfter - memoryBefore) / 1024f);
         }

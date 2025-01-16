@@ -8,21 +8,15 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
     {
         public readonly struct Params : ILoadingOperationParams
         {
-            public Params(AsyncLoadProcessReport report)
+            public Params(AsyncLoadProcessReport report, UserInAppInitializationFlowParameters flowParameters)
             {
                 Report = report;
+                FlowParameters = flowParameters;
             }
 
             public AsyncLoadProcessReport Report { get; }
 
-            public static implicit operator Params(AsyncLoadProcessReport report) =>
-                new (report);
+            public UserInAppInitializationFlowParameters FlowParameters { get; }
         }
-    }
-
-    public static class StartupOperation
-    {
-        public static AnalyticsStartupOperation WithAnalytics(this IStartupOperation operation, IAnalyticsController analyticsController) =>
-            new (operation, analyticsController);
     }
 }
