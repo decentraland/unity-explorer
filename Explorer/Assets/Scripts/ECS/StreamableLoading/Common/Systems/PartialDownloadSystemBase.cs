@@ -6,11 +6,9 @@ using DCL.WebRequests.PartialDownload;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
-using ECS.StreamableLoading.Textures;
 using System;
 using System.Buffers;
 using System.Threading;
-using System.Threading.Tasks;
 using UnityEngine;
 
 namespace ECS.StreamableLoading.Common.Systems
@@ -75,14 +73,14 @@ namespace ECS.StreamableLoading.Common.Systems
                 chunkData.DataBuffer.AsMemory(0, finalBytesCount).CopyTo(partialState.FullData.Slice(chunkData.RangeStart, finalBytesCount));
                 partialState.NextRangeStart = chunkData.RangeEnd + 1;
 
-                state.SetChunkCompleted(partialState);
-
                 if (partialState.FullyDownloaded)
                 {
                     StreamableLoadingResult<TData> loadedResult = await ProcessCompletedData(partialState.FullData.ToArray(), ct);
+                    state.SetChunkCompleted(partialState);
                     return loadedResult;
                 }
 
+                state.SetChunkCompleted(partialState);
                 return default;
             }
             finally { buffersPool.Return(partialDownloadBuffer); }
