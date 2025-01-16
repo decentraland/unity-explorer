@@ -61,7 +61,7 @@ namespace DCL.UI.ConnectionStatusPanel
             currentSceneInfo.SceneAssetBundleStatus.OnUpdate += AssetBundleSceneStatusOnUpdate;
             SceneStatusOnUpdate(currentSceneInfo.SceneStatus.Value);
             AssetBundleSceneStatusOnUpdate(currentSceneInfo.SceneAssetBundleStatus.Value);
-            Bind(roomsStatus.ConnectionQualityScene, viewInstance.SceneRoom);
+            Bind(roomsStatus.ConnectionQualityScene, viewInstance!.SceneRoom);
             Bind(roomsStatus.ConnectionQualityIsland, viewInstance.GlobalRoom);
         }
 
@@ -95,13 +95,13 @@ namespace DCL.UI.ConnectionStatusPanel
 
             if (obj == null)
             {
-                viewInstance.Scene.HideStatus();
+                viewInstance!.Scene.HideStatus();
                 return;
             }
 
             var status = obj.Value;
 
-            viewInstance.Scene.ShowStatus(status);
+            viewInstance!.Scene.ShowStatus(status);
 
             if (status is ICurrentSceneInfo.RunningStatus.Crashed)
                 ShowButtonAsync(cancellationTokenSource.Token).Forget();
