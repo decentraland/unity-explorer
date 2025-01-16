@@ -2,9 +2,9 @@ using Cysharp.Threading.Tasks;
 using DCL.UI.GenericContextMenu.Controls;
 using DCL.UI.GenericContextMenu.Controls.Configs;
 using MVC;
-using System;
 using System.Threading;
 using UnityEngine;
+using Utility;
 
 namespace DCL.UI.GenericContextMenu
 {
@@ -21,10 +21,12 @@ namespace DCL.UI.GenericContextMenu
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
         private readonly ControlsPoolManager controlsPoolManager;
+        private readonly Vector3[] worldRectCorners = new Vector3[4];
+        private readonly ContextMenuOpenDirection[] openDirections = EnumUtils.Values<ContextMenuOpenDirection>();
 
         private RectTransform viewRectTransform;
         private Rect backgroundWorldRect;
-        private bool isClosing;
+        private UniTaskCompletionSource internalCloseTask;
 
         public GenericContextMenuController(ViewFactoryMethod viewFactory,
             ControlsPoolManager controlsPoolManager) : base(viewFactory)
@@ -49,7 +51,7 @@ namespace DCL.UI.GenericContextMenu
 
         protected override void OnBeforeViewShow()
         {
-            isClosing = false;
+            internalCloseTask = new UniTaskCompletionSource();
 
             ConfigureContextMenu();
         }
@@ -108,9 +110,9 @@ namespace DCL.UI.GenericContextMenu
 
             Vector3 newPosition = Vector3.zero;
             float minNonOverlappingArea = float.MaxValue;
-            foreach (ContextMenuOpenDirection enumVal in Enum.GetValues(typeof(ContextMenuOpenDirection)))
+            foreach (ContextMenuOpenDirection openDirection in openDirections)
             {
-                Vector2 offsetByDirection = GetOffsetByDirection(enumVal, offsetFromTarget);
+                Vector2 offsetByDirection = GetOffsetByDirection(openDirection, offsetFromTarget);
                 Vector3 currentPosition = position + new Vector3(offsetByDirection.x, offsetByDirection.y, 0);
                 float nonOverlappingArea = CalculateNonOverlappingArea(overlapRect ?? backgroundWorldRect, GetProjectedRect(currentPosition));
                 if (nonOverlappingArea < minNonOverlappingArea)
@@ -153,12 +155,11 @@ namespace DCL.UI.GenericContextMenu
             return rect;
         }
 
-        private static Rect GetWorldRect(RectTransform rectTransform)
+        private Rect GetWorldRect(RectTransform rectTransform)
         {
-            var corners = new Vector3[4];
-            rectTransform.GetWorldCorners(corners);
-            Vector2 min = corners[0];
-            Vector2 max = corners[2];
+            rectTransform.GetWorldCorners(worldRectCorners);
+            Vector2 min = worldRectCorners[0];
+            Vector2 max = worldRectCorners[2];
             Vector2 size = max - min;
             return new Rect(min, size);
         }
@@ -169,9 +170,12 @@ namespace DCL.UI.GenericContextMenu
             inputData.ActionOnHide?.Invoke();
         }
 
-        private void TriggerContextMenuClose() => isClosing = true;
+        private void TriggerContextMenuClose() => internalCloseTask.TrySetResult();
 
-        protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
-            inputData.CloseTask != null ? UniTask.WhenAny(UniTask.WaitUntil(() => isClosing, cancellationToken: ct), inputData.CloseTask.Value) : UniTask.WaitUntil(() => isClosing, cancellationToken: ct);
+        protected override UniTask WaitForCloseIntentAsync(CancellationToken ct)
+        {
+            UniTask inputCloseTask = inputData.CloseTask ?? UniTask.Never(ct);
+            return UniTask.WhenAny(internalCloseTask.Task, inputCloseTask);
+        }
     }
 }
