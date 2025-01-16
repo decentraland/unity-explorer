@@ -138,11 +138,9 @@ namespace Global.Dynamic
 
             string hostname = ResolveHostname(realm, result);
 
-
             var assetBundleRegistry =
                 featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.ASSET_BUNDLE_FALLBACK)
-                    ? URLBuilder.Combine(URLDomain.FromString(urlsSource.Url(DecentralandUrl.AssetBundleRegistry)),
-                        URLSubdirectory.FromString("entities/active"))
+                    ? URLDomain.FromString(urlsSource.Url(DecentralandUrl.AssetBundleRegistry))
                     : URLDomain.EMPTY;
 
             realmData.Reconfigure(
