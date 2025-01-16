@@ -11,16 +11,7 @@ namespace DCL.UI.GenericContextMenu
         [field: SerializeField] public VerticalLayoutGroup ControlsLayoutGroup { get; private set; }
         [field: SerializeField] public Button BackgroundCloseButton { get; private set; }
 
-        public event Action BackgroundCloseButtonClicked;
-
-        private void Awake()
-        {
-            BackgroundCloseButton?.onClick.AddListener(() => BackgroundCloseButtonClicked?.Invoke());
-        }
-
-        public void Dispose()
-        {
+        public void Dispose() =>
             BackgroundCloseButton?.onClick.RemoveAllListeners();
-        }
     }
 }

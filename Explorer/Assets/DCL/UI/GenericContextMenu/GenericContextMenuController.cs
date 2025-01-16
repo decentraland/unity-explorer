@@ -45,8 +45,6 @@ namespace DCL.UI.GenericContextMenu
         {
             viewRectTransform = viewInstance!.GetComponent<RectTransform>();
             backgroundWorldRect = GetWorldRect(viewInstance!.BackgroundCloseButton.GetComponent<RectTransform>());
-
-            viewInstance!.BackgroundCloseButtonClicked += TriggerContextMenuClose;
         }
 
         protected override void OnBeforeViewShow()
@@ -175,7 +173,7 @@ namespace DCL.UI.GenericContextMenu
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct)
         {
             UniTask inputCloseTask = inputData.CloseTask ?? UniTask.Never(ct);
-            return UniTask.WhenAny(internalCloseTask.Task, inputCloseTask);
+            return UniTask.WhenAny(internalCloseTask.Task, inputCloseTask, viewInstance!.BackgroundCloseButton.OnClickAsync(ct));
         }
     }
 }
