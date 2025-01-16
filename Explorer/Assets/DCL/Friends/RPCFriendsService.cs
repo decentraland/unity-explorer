@@ -1,10 +1,9 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
-using DCL.Multiplayer.Connectivity;
 using DCL.Profiles;
 using DCL.Web3.Chains;
 using DCL.Web3.Identities;
-using Decentraland.SocialServiceV2;
+using Decentraland.SocialService.V3;
 using Google.Protobuf.WellKnownTypes;
 using Newtonsoft.Json;
 using rpc_csharp;
@@ -20,14 +19,16 @@ namespace DCL.Friends
     {
         private const int TIMEOUT_SECONDS = 30;
         private const string RPC_SERVICE_NAME = "SocialService";
+        private const string GET_FRIENDS_PROCEDURE_NAME = "GetFriends";
         private const string GET_SENT_FRIEND_REQUESTS_PROCEDURE_NAME = "GetSentFriendshipRequests";
         private const string GET_RECEIVED_FRIEND_REQUESTS_PROCEDURE_NAME = "GetPendingFriendshipRequests";
-        private const int FETCH_ALL_FRIENDS_MINUTES_THRESHOLD = 1;
+        private const string GET_FRIENDSHIP_STATUS_PROCEDURE_NAME = "GetFriendshipStatus";
+        private const string UPDATE_FRIENDSHIP_PROCEDURE_NAME = "UpsertFriendship";
+        private const string SUBSCRIBE_FRIENDSHIP_UPDATES_PROCEDURE_NAME = "SubscribeToFriendshipUpdates";
 
         private readonly IFriendsEventBus eventBus;
         private readonly IProfileRepository profileRepository;
         private readonly IWeb3IdentityCache identityCache;
-        private readonly IOnlineUsersProvider onlineUsersProvider;
         private readonly FriendsCache friendsCache;
         private readonly WebSocketRpcTransport transport;
         private readonly RpcClient client;
@@ -35,7 +36,6 @@ namespace DCL.Friends
         private readonly List<FriendRequest> friendRequestsBuffer = new ();
         private readonly Dictionary<string, string> authChainBuffer = new ();
         private readonly HashSet<string> allFriendsBuffer = new ();
-        private DateTime? allFriendsRequestedTimestamp;
 
         private RpcClientModule? module;
 
@@ -43,13 +43,11 @@ namespace DCL.Friends
             IFriendsEventBus eventBus,
             IProfileRepository profileRepository,
             IWeb3IdentityCache identityCache,
-            IOnlineUsersProvider onlineUsersProvider,
             FriendsCache friendsCache)
         {
             this.eventBus = eventBus;
             this.profileRepository = profileRepository;
             this.identityCache = identityCache;
-            this.onlineUsersProvider = onlineUsersProvider;
             this.friendsCache = friendsCache;
             transport = new WebSocketRpcTransport(new Uri(apiUrl));
             client = new RpcClient(transport);
@@ -66,7 +64,7 @@ namespace DCL.Friends
             await EnsureRpcConnectionAsync(ct);
 
             IUniTaskAsyncEnumerable<FriendshipUpdate> stream =
-                module!.CallServerStream<FriendshipUpdate>("SubscribeToFriendshipUpdates", new Empty());
+                module!.CallServerStream<FriendshipUpdate>(SUBSCRIBE_FRIENDSHIP_UPDATES_PROCEDURE_NAME, new Empty());
 
             await foreach (var response in stream.WithCancellation(ct))
             {
@@ -106,115 +104,52 @@ namespace DCL.Friends
             }
         }
 
-        public async UniTask<PaginatedFriendsResult> GetOnlineFriendsAsync(int pageNum, int pageSize, CancellationToken ct)
-        {
-            await EnsureRpcConnectionAsync(ct);
+        public async UniTask<PaginatedFriendsResult> GetOnlineFriendsAsync(int pageNum, int pageSize, CancellationToken ct) =>
+            await GetFriendsAsync(pageNum, pageSize, ConnectivityStatus.Online, ct);
 
-            // TODO: add support to get online friends to the rpc server
-            var allFriends = await GetAllFriendIdsAsync(ct);
+        public async UniTask<PaginatedFriendsResult> GetOfflineFriendsAsync(int pageNum, int pageSize, CancellationToken ct) =>
+            await GetFriendsAsync(pageNum, pageSize, ConnectivityStatus.Offline, ct);
 
-            var allConnectedUsers = await onlineUsersProvider.GetAsync(ct);
-
-            allFriends.RemoveWhere(IsOffline);
-
-            return await PaginateAndFetchProfilesAsync(allFriends, pageNum, pageSize, ct);
-
-            bool IsOffline(string friendId)
-            {
-                var exists = false;
-
-                foreach (OnlineUserData connectedUser in allConnectedUsers)
-                {
-                    if (connectedUser.avatarId != friendId) continue;
-                    exists = true;
-                    break;
-                }
-
-                return !exists;
-            }
-        }
-
-        public async UniTask<PaginatedFriendsResult> GetOfflineFriendsAsync(int pageNum, int pageSize, CancellationToken ct)
-        {
-            await EnsureRpcConnectionAsync(ct);
-
-            // TODO: add support to get offline friends to the rpc server
-            var allFriends = await GetAllFriendIdsAsync(ct);
-
-            var allConnectedUsers = await onlineUsersProvider.GetAsync(ct);
-
-            allFriends.RemoveWhere(IsOnline);
-
-            return await PaginateAndFetchProfilesAsync(allFriends, pageNum, pageSize, ct);
-
-            bool IsOnline(string friendId)
-            {
-                var exists = false;
-
-                foreach (OnlineUserData connectedUser in allConnectedUsers)
-                {
-                    if (connectedUser.avatarId != friendId) continue;
-                    exists = true;
-                    break;
-                }
-
-                return exists;
-            }
-        }
-
-        public async UniTask<PaginatedFriendsResult> GetFriendsAsync(int pageNum, int pageSize, CancellationToken ct)
-        {
-            await EnsureRpcConnectionAsync(ct);
-
-            // TODO: add support to pagination at server side
-            var allFriends = await GetAllFriendIdsAsync(ct);
-
-            return await PaginateAndFetchProfilesAsync(allFriends, pageNum, pageSize, ct);
-        }
+        public async UniTask<PaginatedFriendsResult> GetFriendsAsync(int pageNum, int pageSize, CancellationToken ct) =>
+            await GetFriendsAsync(pageNum, pageSize, null, ct);
 
         public async UniTask<FriendshipStatus> GetFriendshipStatusAsync(string userId, CancellationToken ct)
         {
-            // TODO: add support to this query at server side instead of fetching all the data separately
             await EnsureRpcConnectionAsync(ct);
 
-            var allFriends = await GetAllFriendIdsAsync(ct);
+            var payload = new GetFriendshipStatusPayload
+            {
+                User = new User
+                {
+                    Address = userId,
+                },
+            };
 
-            if (allFriends.Contains(userId))
-                return FriendshipStatus.FRIEND;
+            GetFriendshipStatusResponse response = await module!.CallUnaryProcedure<GetFriendshipStatusResponse>(GET_FRIENDSHIP_STATUS_PROCEDURE_NAME, payload)
+                                                                .AttachExternalCancellation(ct)
+                                                                .Timeout(TimeSpan.FromSeconds(TIMEOUT_SECONDS));
 
-            if (await IsFriendRequestAsync(GET_SENT_FRIEND_REQUESTS_PROCEDURE_NAME))
-                return FriendshipStatus.REQUEST_SENT;
+            switch (response.ResponseCase)
+            {
+                case GetFriendshipStatusResponse.ResponseOneofCase.InternalServerError:
+                    throw new Exception($"Cannot fetch friendship status {response.ResponseCase}");
+                case GetFriendshipStatusResponse.ResponseOneofCase.Accepted:
+                    switch (response.Accepted.Status)
+                    {
+                        case Decentraland.SocialService.V3.FriendshipStatus.Accepted:
+                            return FriendshipStatus.FRIEND;
+                        case Decentraland.SocialService.V3.FriendshipStatus.Blocked:
+                            return FriendshipStatus.BLOCKED;
+                        case Decentraland.SocialService.V3.FriendshipStatus.RequestReceived:
+                            return FriendshipStatus.REQUEST_RECEIVED;
+                        case Decentraland.SocialService.V3.FriendshipStatus.RequestSent:
+                            return FriendshipStatus.REQUEST_SENT;
+                    }
 
-            if (await IsFriendRequestAsync(GET_RECEIVED_FRIEND_REQUESTS_PROCEDURE_NAME))
-                return FriendshipStatus.REQUEST_RECEIVED;
-
-            Profile? selfProfile = await profileRepository.GetAsync(identityCache.EnsuredIdentity().Address, ct);
-
-            if (selfProfile is { Blocked: not null } && selfProfile.Blocked.Contains(userId))
-                return FriendshipStatus.BLOCKED;
+                    break;
+            }
 
             return FriendshipStatus.NONE;
-
-            async UniTask<bool> IsFriendRequestAsync(string procedureName)
-            {
-                FriendshipRequestsResponse response = await module!.CallUnaryProcedure<FriendshipRequestsResponse>(procedureName, new Empty())
-                                                                   .AttachExternalCancellation(ct)
-                                                                   .Timeout(TimeSpan.FromSeconds(TIMEOUT_SECONDS));
-
-                switch (response.ResponseCase)
-                {
-                    case FriendshipRequestsResponse.ResponseOneofCase.Requests:
-                        foreach (RequestResponse rr in response.Requests.Requests_)
-                            if (rr.User.Address == userId)
-                                return true;
-
-                        break;
-                    case FriendshipRequestsResponse.ResponseOneofCase.InternalServerError:
-                        throw new Exception($"Cannot fetch friend requests {response.ResponseCase}");
-                }
-
-                return false;
-            }
         }
 
         public async UniTask<PaginatedFriendRequestsResult> GetReceivedFriendRequestsAsync(int pageNum, int pageSize, CancellationToken ct) =>
@@ -229,7 +164,7 @@ namespace DCL.Friends
 
             await this.UpdateFriendshipAsync(new UpsertFriendshipPayload
             {
-                Request = new RequestPayload
+                Request = new UpsertFriendshipPayload.Types.RequestPayload
                 {
                     User = new User
                     {
@@ -245,7 +180,7 @@ namespace DCL.Friends
 
             await this.UpdateFriendshipAsync(new UpsertFriendshipPayload
             {
-                Cancel = new CancelPayload
+                Cancel = new UpsertFriendshipPayload.Types.CancelPayload
                 {
                     User = new User
                     {
@@ -261,7 +196,7 @@ namespace DCL.Friends
 
             await this.UpdateFriendshipAsync(new UpsertFriendshipPayload
             {
-                Accept = new AcceptPayload
+                Accept = new UpsertFriendshipPayload.Types.AcceptPayload
                 {
                     User = new User
                     {
@@ -279,7 +214,7 @@ namespace DCL.Friends
 
             await this.UpdateFriendshipAsync(new UpsertFriendshipPayload
             {
-                Delete = new DeletePayload
+                Delete = new UpsertFriendshipPayload.Types.DeletePayload
                 {
                     User = new User
                     {
@@ -295,10 +230,9 @@ namespace DCL.Friends
         {
             await EnsureRpcConnectionAsync(ct);
 
-            // TODO: ideally the server should return the request information when it is created so we dont have to request it later
-            await UpdateFriendshipAsync(new UpsertFriendshipPayload
+            UpsertFriendshipResponse.Types.Accepted response = await UpdateFriendshipAsync(new UpsertFriendshipPayload
             {
-                Request = new RequestPayload
+                Request = new UpsertFriendshipPayload.Types.RequestPayload
                 {
                     Message = messageBody,
                     User = new User
@@ -308,12 +242,11 @@ namespace DCL.Friends
                 },
             }, ct);
 
-            FriendRequest? fr = await GetSentFriendRequestAsync(friendId, ct);
-
-            if (fr == null)
-                throw new Exception("Inconsistent friend request. Created but not found.");
-
-            return fr;
+            return new FriendRequest(GetFriendRequestId(friendId, response.CreatedAt),
+                DateTimeOffset.FromUnixTimeSeconds(response.CreatedAt).DateTime,
+                identityCache.EnsuredIdentity().Address,
+                friendId,
+                messageBody);
         }
 
         private async UniTask EnsureRpcConnectionAsync(CancellationToken ct)
@@ -363,57 +296,47 @@ namespace DCL.Friends
             }
         }
 
-        private async UniTask<HashSet<string>> GetAllFriendIdsAsync(CancellationToken ct)
+        private async UniTask<PaginatedFriendsResult> GetFriendsAsync(int pageNum, int pageSize, ConnectivityStatus? connectivityStatus, CancellationToken ct)
         {
+            await EnsureRpcConnectionAsync(ct);
+
+            var payload = new GetFriendsPayload
+            {
+                Pagination = new Pagination
+                {
+                    Offset = pageNum * pageSize,
+                    Limit = pageSize,
+                },
+            };
+
+            if (connectivityStatus != null)
+                payload.Status = connectivityStatus.Value;
+
+            PaginatedUsersResponse response = await module!.CallUnaryProcedure<PaginatedUsersResponse>(GET_FRIENDS_PROCEDURE_NAME, payload)
+                                                           .AttachExternalCancellation(ct);
+
             allFriendsBuffer.Clear();
 
-            // Get friend list from cache if they were requested in between the time threshold
-            if (allFriendsRequestedTimestamp != null)
+            foreach (var user in response.Users)
             {
-                if (DateTime.UtcNow - allFriendsRequestedTimestamp.Value < TimeSpan.FromMinutes(FETCH_ALL_FRIENDS_MINUTES_THRESHOLD))
-                {
-                    foreach (string userId in friendsCache)
-                        allFriendsBuffer.Add(userId);
-
-                    return allFriendsBuffer;
-                }
+                allFriendsBuffer.Add(user.Address);
+                friendsCache.Add(user.Address);
             }
 
-            allFriendsRequestedTimestamp = DateTime.UtcNow;
+            IEnumerable<Profile> profiles = await FetchProfiles(allFriendsBuffer, ct);
 
-            IUniTaskAsyncEnumerable<UsersResponse> stream = module!.CallServerStream<UsersResponse>("GetFriends", new Empty());
-
-            friendsCache.Clear();
-
-            await foreach (var response in stream.WithCancellation(ct))
-            {
-                if (response.Users == null) continue;
-
-                foreach (var friend in response.Users)
-                {
-                    allFriendsBuffer.Add(friend.Address);
-                    friendsCache.Add(friend.Address);
-                }
-            }
-
-            return allFriendsBuffer;
+            return new PaginatedFriendsResult(profiles, response.PaginationData.Total);
         }
 
-        private async UniTask<PaginatedFriendsResult> PaginateAndFetchProfilesAsync(HashSet<string> friendIds, int pageNum, int pageSize,
-            CancellationToken ct)
+        private async UniTask<IEnumerable<Profile>> FetchProfiles(IEnumerable<string> ids, CancellationToken ct)
         {
-            var ids = friendIds.Skip((pageNum - 1) * pageSize)
-                               .Take(pageSize);
-
             fetchProfileTasks.Clear();
 
             foreach (string userId in ids)
                 fetchProfileTasks.Add(profileRepository.GetAsync(userId, ct));
 
-            var profiles = (await UniTask.WhenAll(fetchProfileTasks))
-               .Where(profile => profile != null);
-
-            return new PaginatedFriendsResult(profiles!, friendIds.Count);
+            return (await UniTask.WhenAll(fetchProfileTasks))
+               .Where(profile => profile != null)!;
         }
 
         private async UniTask<PaginatedFriendRequestsResult> GetFriendRequestsAsync(int pageNum, int pageSize, string procedureName,
@@ -423,14 +346,23 @@ namespace DCL.Friends
 
             friendRequestsBuffer.Clear();
 
-            FriendshipRequestsResponse response = await module!.CallUnaryProcedure<FriendshipRequestsResponse>(procedureName, new Empty())
-                                                               .AttachExternalCancellation(ct)
-                                                               .Timeout(TimeSpan.FromSeconds(TIMEOUT_SECONDS));
+            var payload = new GetFriendshipRequestsPayload
+            {
+                Pagination = new Pagination
+                {
+                    Offset = (pageNum - 1) * pageSize,
+                    Limit = pageSize,
+                },
+            };
+
+            PaginatedFriendshipRequestsResponse response = await module!.CallUnaryProcedure<PaginatedFriendshipRequestsResponse>(procedureName, payload)
+                                                                        .AttachExternalCancellation(ct)
+                                                                        .Timeout(TimeSpan.FromSeconds(TIMEOUT_SECONDS));
 
             switch (response.ResponseCase)
             {
-                case FriendshipRequestsResponse.ResponseOneofCase.Requests:
-                    foreach (RequestResponse rr in response.Requests.Requests_)
+                case PaginatedFriendshipRequestsResponse.ResponseOneofCase.Requests:
+                    foreach (var rr in response.Requests.Requests)
                     {
                         var fr = new FriendRequest(
                             GetFriendRequestId(rr.User.Address, rr.CreatedAt),
@@ -443,54 +375,19 @@ namespace DCL.Friends
                     }
 
                     break;
-                case FriendshipRequestsResponse.ResponseOneofCase.None:
-                case FriendshipRequestsResponse.ResponseOneofCase.InternalServerError:
+                case PaginatedFriendshipRequestsResponse.ResponseOneofCase.InternalServerError:
                 default:
                     throw new Exception($"Cannot fetch friend requests {procedureName} {response.ResponseCase}");
             }
 
-            IEnumerable<FriendRequest> requests = friendRequestsBuffer.Skip((pageNum - 1) * pageSize)
-                                                                      .Take(pageSize);
-
-            return new PaginatedFriendRequestsResult(requests, friendRequestsBuffer.Count);
-        }
-
-        private async UniTask<FriendRequest?> GetSentFriendRequestAsync(string friendId, CancellationToken ct)
-        {
-            FriendshipRequestsResponse response = await module!.CallUnaryProcedure<FriendshipRequestsResponse>(GET_SENT_FRIEND_REQUESTS_PROCEDURE_NAME, new Empty())
-                                                               .AttachExternalCancellation(ct)
-                                                               .Timeout(TimeSpan.FromSeconds(TIMEOUT_SECONDS));
-
-            switch (response.ResponseCase)
-            {
-                case FriendshipRequestsResponse.ResponseOneofCase.Requests:
-                    foreach (RequestResponse rr in response.Requests.Requests_)
-                    {
-                        if (rr.User.Address != friendId) continue;
-
-                        return new FriendRequest(
-                            GetFriendRequestId(rr.User.Address, rr.CreatedAt),
-                            DateTimeOffset.FromUnixTimeSeconds(rr.CreatedAt).DateTime,
-                            rr.User.Address,
-                            identityCache.EnsuredIdentity().Address,
-                            rr.Message);
-                    }
-
-                    break;
-                case FriendshipRequestsResponse.ResponseOneofCase.None:
-                case FriendshipRequestsResponse.ResponseOneofCase.InternalServerError:
-                default:
-                    throw new Exception($"Cannot fetch sent friend requests {response.ResponseCase}");
-            }
-
-            return null;
+            return new PaginatedFriendRequestsResult(friendRequestsBuffer, response.PaginationData.Total);
         }
 
         private async UniTask<UpsertFriendshipResponse.Types.Accepted> UpdateFriendshipAsync(
             UpsertFriendshipPayload payload,
             CancellationToken ct)
         {
-            UpsertFriendshipResponse response = await module!.CallUnaryProcedure<UpsertFriendshipResponse>("UpsertFriendship", payload)
+            UpsertFriendshipResponse response = await module!.CallUnaryProcedure<UpsertFriendshipResponse>(UPDATE_FRIENDSHIP_PROCEDURE_NAME, payload)
                                                              .AttachExternalCancellation(ct)
                                                              .Timeout(TimeSpan.FromSeconds(TIMEOUT_SECONDS));
 
@@ -501,9 +398,7 @@ namespace DCL.Friends
                    };
         }
 
-        /// <summary>
-        /// The service does not respond with the friend request id so we need to generate one at the fly
-        /// </summary>
+        // TODO: this method should be removed as the service has to return the request id
         private static string GetFriendRequestId(string userId, long createdAt) =>
             $"{userId}-{createdAt}";
     }
