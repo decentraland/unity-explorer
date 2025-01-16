@@ -2,18 +2,17 @@ namespace DCL.Clipboard
 {
     public interface IClipboardManager
     {
-        public delegate void ClipboardCopyEventHandler(object sender, string copiedText);
-        public delegate void ClipboardPasteEventHandler(object sender, string pastedText);
+        public delegate void CopyEventHandler(object sender, string copiedText);
+        public delegate void PasteEventHandler(object sender, string pastedText);
 
-
-        event ClipboardCopyEventHandler? OnCopy;
-        event ClipboardPasteEventHandler? OnPaste;
+        event CopyEventHandler? OnCopy;
+        event PasteEventHandler? OnPaste;
 
         void Copy(object sender, string text);
 
         void Paste(object sender);
 
-        public bool HasValue();
+        bool HasValue();
     }
 
     public class ClipboardManager : IClipboardManager
@@ -25,8 +24,8 @@ namespace DCL.Clipboard
             this.systemClipboard = systemClipboard;
         }
 
-        public event IClipboardManager.ClipboardCopyEventHandler? OnCopy;
-        public event IClipboardManager.ClipboardPasteEventHandler? OnPaste;
+        public event IClipboardManager.CopyEventHandler? OnCopy;
+        public event IClipboardManager.PasteEventHandler? OnPaste;
 
         public bool HasValue() =>
             systemClipboard.HasValue();

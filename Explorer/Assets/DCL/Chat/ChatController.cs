@@ -142,7 +142,7 @@ namespace DCL.Chat
             viewInstance.ChatBubblesToggle.Toggle.onValueChanged.AddListener(OnToggleChatBubblesValueChanged);
             viewInstance.ChatBubblesToggle.Toggle.SetIsOnWithoutNotify(nametagsData.showChatBubbles);
 
-            dclInput.UI.RightClick.performed += b => OnRightClickRegistered();
+            dclInput.UI.RightClick.performed += _ => OnRightClickRegistered();
             closePopupTask = new UniTaskCompletionSource();
 
             OnToggleChatBubblesValueChanged(nametagsData.showChatBubbles);
