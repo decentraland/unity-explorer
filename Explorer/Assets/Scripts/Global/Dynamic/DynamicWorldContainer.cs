@@ -766,7 +766,8 @@ namespace Global.Dynamic
                     playerEntity,
                     includeCameraReel
                 ),
-                new FriendsPlugin(bootstrapContainer.DecentralandUrlsSource, profileRepository, identityCache, staticContainer.FeatureFlagsCache),
+                new GenericContextMenuPlugin(assetsProvisioner, mvcManager),
+                new FriendsPlugin(bootstrapContainer.DecentralandUrlsSource, profileRepository, identityCache, staticContainer.FeatureFlagsCache)
             };
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);

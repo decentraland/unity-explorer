@@ -15,7 +15,7 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
         private readonly ICameraReelScreenshotsStorage cameraReelScreenshotsStorage;
         private readonly RectTransform rectTransform;
 
-        private OptionButtonController? optionButton;
+        private CameraReelOptionButtonController? optionButton;
         private CancellationTokenSource loadImageCts;
         private bool imageLoaded;
 
@@ -34,7 +34,7 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
             this.view.PointerExit += PointerExit;
         }
 
-        public void Setup(CameraReelResponseCompact cameraReelData, OptionButtonController? optionsButton)
+        public void Setup(CameraReelResponseCompact cameraReelData, CameraReelOptionButtonController? optionsButton)
         {
             this.CameraReelResponse = cameraReelData;
             this.optionButton = optionsButton;

@@ -40,17 +40,20 @@ namespace DCL.UI
             Toggle.onValueChanged.RemoveListener(OnToggle);
         }
 
+        public void SetToggleGraphics(bool toggle)
+        {
+            OnImage.SetActive(toggle);
+            OffImage.SetActive(!toggle);
+            OnBackgroundImage.gameObject.SetActive(toggle);
+            OffBackgroundImage.gameObject.SetActive(!toggle);
+        }
+
         private void OnToggle(bool toggle)
         {
             UIAudioEventsBus.Instance.SendPlayAudioEvent(toggle ? ToggleOnAudio : ToggleOffAudio);
 
             if (autoToggleImagesOnToggle)
-            {
-                OnImage.SetActive(toggle);
-                OffImage.SetActive(!toggle);
-                OnBackgroundImage.gameObject.SetActive(toggle);
-                OffBackgroundImage.gameObject.SetActive(!toggle);
-            }
+                SetToggleGraphics(toggle);
         }
     }
 }
