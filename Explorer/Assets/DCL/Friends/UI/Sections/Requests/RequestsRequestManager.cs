@@ -28,6 +28,8 @@ namespace DCL.Friends.UI.Sections.Requests
             {
                 requestUserView.ContextMenuButton.onClick.RemoveAllListeners();
                 requestUserView.ContextMenuButton.onClick.AddListener(() => ContextMenuClicked?.Invoke(requestUserView.UserProfile));
+                //TODO (Lorenzo): set the request date
+                // requestUserView.RequestDate = ???
             });
         }
 

@@ -18,7 +18,7 @@ namespace DCL.Friends.UI.Sections
         protected readonly T view;
         protected readonly IFriendsService friendsService;
         protected readonly IFriendsEventBus friendEventBus;
-        protected readonly IWeb3IdentityCache web3IdentityCache;
+        private readonly IWeb3IdentityCache web3IdentityCache;
         protected readonly IMVCManager mvcManager;
         protected readonly U friendListPagedRequestManager;
 
