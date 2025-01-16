@@ -64,6 +64,7 @@ using DCL.SceneLoadingScreens.LoadingScreen;
 using DCL.SidebarBus;
 using DCL.UI.MainUI;
 using DCL.StylizedSkybox.Scripts.Plugin;
+using DCL.UI;
 using DCL.UserInAppInitializationFlow;
 using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
@@ -250,8 +251,8 @@ namespace Global.Dynamic
 
             ExposedGlobalDataContainer exposedGlobalDataContainer = staticContainer.ExposedGlobalDataContainer;
 
-            PopupCloserView popupCloserView = Object.Instantiate((await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.PopupCloserView, ct: CancellationToken.None)).Value.GetComponent<PopupCloserView>()).EnsureNotNull();
-            MainUIView mainUIView = Object.Instantiate((await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.MainUIView, ct: CancellationToken.None)).Value.GetComponent<MainUIView>()).EnsureNotNull();
+            PopupCloserView popupCloserView = Object.Instantiate((await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.PopupCloserView, CancellationToken.None)).Value.GetComponent<PopupCloserView>()).EnsureNotNull();
+            MainUIView mainUIView = Object.Instantiate((await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.MainUIView, CancellationToken.None)).Value.GetComponent<MainUIView>()).EnsureNotNull();
 
             var coreMvcManager = new MVCManager(new WindowStackManager(), new CancellationTokenSource(), popupCloserView);
 
@@ -556,6 +557,7 @@ namespace Global.Dynamic
             var cameraReelStorageService = new CameraReelRemoteStorageService(cameraReelImagesMetadataDatabase, cameraReelScreenshotsStorage, identityCache.Identity?.Address);
 
             ISystemClipboard clipboard = new UnityClipboard();
+            IClipboardManager clipboardManager = new ClipboardManager(clipboard);
 
             bool includeCameraReel = staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.CAMERA_REEL) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.CAMERA_REEL)) || Application.isEditor;
 
@@ -627,7 +629,19 @@ namespace Global.Dynamic
                 new ErrorPopupPlugin(mvcManager, assetsProvisioner),
                 connectionStatusPanelPlugin,
                 new MinimapPlugin(mvcManager, minimap),
-                new ChatPlugin(assetsProvisioner, mvcManager, chatMessagesBus, chatHistory, entityParticipantTable, nametagsData, dclInput, unityEventSystem, mainUIView, staticContainer.InputBlock, globalWorld, playerEntity),
+                new ChatPlugin(assetsProvisioner,
+                    mvcManager,
+                    chatMessagesBus,
+                    chatHistory,
+                    entityParticipantTable,
+                    nametagsData,
+                    dclInput,
+                    unityEventSystem,
+                    mainUIView,
+                    staticContainer.InputBlock,
+                    globalWorld,
+                    playerEntity,
+                    clipboardManager),
                 new ExplorePanelPlugin(
                     assetsProvisioner,
                     mvcManager,
@@ -742,7 +756,8 @@ namespace Global.Dynamic
                     playerEntity,
                     includeCameraReel
                 ),
-                new FriendsPlugin(bootstrapContainer.DecentralandUrlsSource)
+                new FriendsPlugin(bootstrapContainer.DecentralandUrlsSource),
+                new GenericPopupsPlugin(assetsProvisioner, mvcManager, clipboardManager),
             };
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);

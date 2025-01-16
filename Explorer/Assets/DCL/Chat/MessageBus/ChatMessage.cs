@@ -1,31 +1,43 @@
+using System;
+
 namespace DCL.Chat
 {
-    public struct ChatMessage
+    public readonly struct ChatMessage : IEquatable<ChatMessage>
     {
         public readonly bool IsPaddingElement;
         public readonly string Message;
-        public readonly string Sender;
+        public readonly string SenderValidatedName;
+        public readonly string SenderWalletId;
         public readonly string WalletAddress;
         public readonly bool SentByOwnUser;
         public readonly bool SystemMessage;
-        public bool HasToAnimate;
+        public readonly bool HasToAnimate;
 
-        public ChatMessage(string message, string sender, string walletAddress, bool sentByOwnUser, bool hasToAnimate, bool systemMessage = false)
+        public ChatMessage(
+            string message,
+            string senderValidatedName,
+            string walletAddress,
+            bool sentByOwnUser,
+            bool hasToAnimate,
+            string senderWalletId,
+            bool systemMessage = false)
         {
             Message = message;
-            Sender = sender;
+            SenderValidatedName = senderValidatedName;
             WalletAddress = walletAddress;
             SentByOwnUser = sentByOwnUser;
             IsPaddingElement = false;
             HasToAnimate = hasToAnimate;
+            SenderWalletId = senderWalletId;
             SystemMessage = systemMessage;
         }
 
         public ChatMessage(bool isPaddingElement)
         {
             IsPaddingElement = isPaddingElement;
+            SenderWalletId = string.Empty;
             Message = string.Empty;
-            Sender = string.Empty;
+            SenderValidatedName = string.Empty;
             WalletAddress = string.Empty;
             SentByOwnUser = false;
             HasToAnimate = true;
@@ -33,6 +45,24 @@ namespace DCL.Chat
         }
 
         public static ChatMessage NewFromSystem(string message) =>
-            new (message, "DCL System", string.Empty, true, false, true);
+            new (message, "DCL System", string.Empty, true,
+                false, null, true);
+
+        public bool Equals(ChatMessage other) =>
+            IsPaddingElement == other.IsPaddingElement &&
+            Message == other.Message &&
+            SenderValidatedName == other.SenderValidatedName &&
+            SenderWalletId == other.SenderWalletId &&
+            WalletAddress == other.WalletAddress &&
+            SentByOwnUser == other.SentByOwnUser &&
+            SystemMessage == other.SystemMessage &&
+            HasToAnimate == other.HasToAnimate;
+
+        public override bool Equals(object? obj) =>
+            obj is ChatMessage other && Equals(other);
+
+        public override int GetHashCode() =>
+            HashCode.Combine(IsPaddingElement, Message, SenderValidatedName, SenderWalletId,
+                WalletAddress, SentByOwnUser, SystemMessage, HasToAnimate);
     }
 }

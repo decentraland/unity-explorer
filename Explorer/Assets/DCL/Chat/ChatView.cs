@@ -57,6 +57,9 @@ namespace DCL.Chat
         [field: SerializeField]
         public Button CloseChatButton { get; private set; }
 
+        [field: SerializeField]
+        public RectTransform PastePopupPosition { get; private set; }
+
 
         [field: Header("Audio")]
         [field: SerializeField]
