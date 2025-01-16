@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 5118336956721699336}
   - component: {fileID: 2681651048344826938}
   - component: {fileID: 7487901908219479282}
+  - component: {fileID: 4339069658011086922}
   m_Layer: 5
   m_Name: ChatEntryMessageContentElement
   m_TagString: Untagged
@@ -27,7 +28,7 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5238833002639546345}
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -133,7 +134,7 @@ MonoBehaviour:
   m_ActiveFontFeatures: 6e72656b
   m_enableExtraPadding: 0
   checkPaddingRequired: 0
-  m_isRichText: 0
+  m_isRichText: 1
   m_EmojiFallbackSupport: 1
   m_parseCtrlCharacters: 1
   m_isOrthographic: 1
@@ -167,3 +168,16 @@ MonoBehaviour:
   <messageContentRectTransform>k__BackingField: {fileID: 8258041763941702871}
   <messageContentSizeFitter>k__BackingField: {fileID: 5118336956721699336}
   <messageContentText>k__BackingField: {fileID: 2681651048344826938}
+--- !u!114 &4339069658011086922
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5238833002639546345}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 71db578cd89a48d0903a2e608024fcd5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  textComponent: {fileID: 2681651048344826938}
