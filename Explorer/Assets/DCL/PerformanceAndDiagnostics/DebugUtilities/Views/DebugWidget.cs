@@ -13,12 +13,12 @@ namespace DCL.DebugUtilities.Views
 
         internal bool isExpanded => foldout.value;
 
-        internal void Initialize(string title)
+        internal void Initialize(string title, string? foldKey = null)
         {
             foldout = this.Q<Foldout>();
             foldout.text = title;
 
-            prefsKey = ConstructPrefsKey(title);
+            prefsKey = ConstructPrefsKey(foldKey ?? title);
             foldout.value = PlayerPrefs.GetInt(prefsKey, 0) == 1;
 
             foldout.RegisterValueChangedCallback(evt => PlayerPrefs.SetInt(prefsKey, evt.newValue ? 1 : 0));
