@@ -10,6 +10,8 @@ namespace DCL.Friends
         public event Action<string>? OnFriendRequestRejected;
         public event Action<string>? OnFriendRequestCanceled;
         public event Action<string>? OnFriendRequestRemoved;
+        public event Action<string>? OnFriendConnected;
+        public event Action<string>? OnFriendDisconnected;
 
         public void BroadcastFriendRequestReceived(FriendRequest request) =>
             OnFriendRequestReceived?.Invoke(request);
@@ -28,5 +30,11 @@ namespace DCL.Friends
 
         public void BroadcastFriendRequestRemoved(string friendId) =>
             OnFriendRequestRemoved?.Invoke(friendId);
+
+        public void BroadcastFriendConnected(string friendId) =>
+            OnFriendConnected?.Invoke(friendId);
+
+        public void BroadcastFriendDisconnected(string friendId) =>
+            OnFriendDisconnected?.Invoke(friendId);
     }
 }
