@@ -71,12 +71,6 @@ namespace DCL.Rendering.Avatar
                         if (!renderer.enabled || renderer.forceRenderingOff)
                             continue;
 
-                        GameObject gameObject = renderer.gameObject;
-
-                        // Ignore disabled or culled by camera avatars
-                        if (!gameObject.activeSelf || (renderingData.cameraData.camera.cullingMask & (1 << gameObject.layer)) == 0)
-                            continue;
-
                         if (renderer.sharedMaterial == null)
                             continue;
 
