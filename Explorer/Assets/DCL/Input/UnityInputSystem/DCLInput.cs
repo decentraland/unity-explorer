@@ -2129,6 +2129,15 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Controls"",
+                    ""type"": ""Button"",
+                    ""id"": ""ff9cdfbe-b880-4633-aaae-c5b3849d7f08"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -2294,6 +2303,17 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""groups"": """",
                     ""action"": ""OpenChatCommandLine"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""a2b44e8b-33bb-4468-9439-8836ae0a5796"",
+                    ""path"": ""<Keyboard>/#(H)"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Controls"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -3620,6 +3640,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         m_Shortcuts_ToggleSceneDebugConsoleLarger = m_Shortcuts.FindAction("ToggleSceneDebugConsoleLarger", throwIfNotFound: true);
         m_Shortcuts_OpenChat = m_Shortcuts.FindAction("OpenChat", throwIfNotFound: true);
         m_Shortcuts_OpenChatCommandLine = m_Shortcuts.FindAction("OpenChatCommandLine", throwIfNotFound: true);
+        m_Shortcuts_Controls = m_Shortcuts.FindAction("Controls", throwIfNotFound: true);
         // Emotes
         m_Emotes = asset.FindActionMap("Emotes", throwIfNotFound: true);
         m_Emotes_Slot1 = m_Emotes.FindAction("Slot 1", throwIfNotFound: true);
@@ -4254,6 +4275,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
     private readonly InputAction m_Shortcuts_ToggleSceneDebugConsoleLarger;
     private readonly InputAction m_Shortcuts_OpenChat;
     private readonly InputAction m_Shortcuts_OpenChatCommandLine;
+    private readonly InputAction m_Shortcuts_Controls;
     public struct ShortcutsActions
     {
         private @DCLInput m_Wrapper;
@@ -4271,6 +4293,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         public InputAction @ToggleSceneDebugConsoleLarger => m_Wrapper.m_Shortcuts_ToggleSceneDebugConsoleLarger;
         public InputAction @OpenChat => m_Wrapper.m_Shortcuts_OpenChat;
         public InputAction @OpenChatCommandLine => m_Wrapper.m_Shortcuts_OpenChatCommandLine;
+        public InputAction @Controls => m_Wrapper.m_Shortcuts_Controls;
         public InputActionMap Get() { return m_Wrapper.m_Shortcuts; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -4319,6 +4342,9 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @OpenChatCommandLine.started += instance.OnOpenChatCommandLine;
             @OpenChatCommandLine.performed += instance.OnOpenChatCommandLine;
             @OpenChatCommandLine.canceled += instance.OnOpenChatCommandLine;
+            @Controls.started += instance.OnControls;
+            @Controls.performed += instance.OnControls;
+            @Controls.canceled += instance.OnControls;
         }
 
         private void UnregisterCallbacks(IShortcutsActions instance)
@@ -4362,6 +4388,9 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @OpenChatCommandLine.started -= instance.OnOpenChatCommandLine;
             @OpenChatCommandLine.performed -= instance.OnOpenChatCommandLine;
             @OpenChatCommandLine.canceled -= instance.OnOpenChatCommandLine;
+            @Controls.started -= instance.OnControls;
+            @Controls.performed -= instance.OnControls;
+            @Controls.canceled -= instance.OnControls;
         }
 
         public void RemoveCallbacks(IShortcutsActions instance)
@@ -4847,6 +4876,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         void OnToggleSceneDebugConsoleLarger(InputAction.CallbackContext context);
         void OnOpenChat(InputAction.CallbackContext context);
         void OnOpenChatCommandLine(InputAction.CallbackContext context);
+        void OnControls(InputAction.CallbackContext context);
     }
     public interface IEmotesActions
     {

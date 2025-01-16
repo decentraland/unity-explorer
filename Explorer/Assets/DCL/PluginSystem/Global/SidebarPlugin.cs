@@ -42,6 +42,7 @@ namespace DCL.PluginSystem.Global
         private readonly IUserInAppInitializationFlow userInAppInitializationFlow;
         private readonly IProfileCache profileCache;
         private readonly ISidebarBus sidebarBus;
+        private readonly DCLInput input;
         private readonly ChatEntryConfigurationSO chatEntryConfigurationSo;
         private readonly Arch.Core.World world;
         private readonly Entity playerEntity;
@@ -61,6 +62,7 @@ namespace DCL.PluginSystem.Global
             IUserInAppInitializationFlow userInAppInitializationFlow,
             IProfileCache profileCache,
             ISidebarBus sidebarBus,
+            DCLInput input,
             ChatEntryConfigurationSO chatEntryConfigurationSo,
             Arch.Core.World world,
             Entity playerEntity,
@@ -79,6 +81,7 @@ namespace DCL.PluginSystem.Global
             this.userInAppInitializationFlow = userInAppInitializationFlow;
             this.profileCache = profileCache;
             this.sidebarBus = sidebarBus;
+            this.input = input;
             this.chatEntryConfigurationSo = chatEntryConfigurationSo;
             this.world = world;
             this.playerEntity = playerEntity;
@@ -95,10 +98,7 @@ namespace DCL.PluginSystem.Global
             NftTypeIconSO rarityBackgroundMapping = await assetsProvisioner.ProvideMainAssetValueAsync(settings.RarityColorMappings, ct);
 
             ControlsPanelView panelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.ControlsePanelPrefab, ct: ct)).GetComponent<ControlsPanelView>();
-            ControllerBase<ControlsPanelView>.ViewFactoryMethod viewFactoryMethod = ControlsPanelController.Preallocate(panelViewAsset, null!, out ControlsPanelView controlsPanelView);
-
-
-
+            ControlsPanelController.Preallocate(panelViewAsset, null!, out ControlsPanelView controlsPanelView);
 
             mvcManager.RegisterController(new SidebarController(() =>
                 {
@@ -112,7 +112,7 @@ namespace DCL.PluginSystem.Global
                 new ProfileWidgetController(() => mainUIView.SidebarView.ProfileWidget, web3IdentityCache, profileRepository, webRequestController),
                 new ProfileMenuController(() => mainUIView.SidebarView.ProfileMenuView, web3IdentityCache, profileRepository, webRequestController, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, mvcManager, chatEntryConfigurationSo),
                 new SkyboxMenuController(() => mainUIView.SidebarView.SkyboxMenuView, settings.SkyboxSettingsAsset),
-                new ControlsPanelController(() => controlsPanelView),
+                new ControlsPanelController(() => controlsPanelView, mvcManager, input),
                 sidebarBus,
                 chatEntryConfigurationSo,
                 web3IdentityCache,

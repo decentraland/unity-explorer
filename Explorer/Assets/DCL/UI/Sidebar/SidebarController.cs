@@ -126,7 +126,6 @@ namespace DCL.UI.Sidebar
 
         private void OnControlsButtonClicked()
         {
-            Debug.Log("PACO: OnControlsButtonClicked");
             mvcManager.ShowAsync(ControlsPanelController.IssueCommand()).Forget();
         }
 

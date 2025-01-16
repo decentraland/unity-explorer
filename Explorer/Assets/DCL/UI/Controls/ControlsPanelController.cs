@@ -1,21 +1,38 @@
 using Cysharp.Threading.Tasks;
 using MVC;
-using System;
 using System.Threading;
+using UnityEngine.InputSystem;
 
 namespace DCL.UI.Controls
 {
-    public class ControlsPanelController: ControllerBase<ControlsPanelView>
+    public class ControlsPanelController : ControllerBase<ControlsPanelView>
     {
-        public ControlsPanelController(ViewFactoryMethod viewFactory) : base(viewFactory)
-        {
-        }
-
+        private readonly IMVCManager mvcManager;
+        private readonly DCLInput input;
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Fullscreen;
 
-        protected override UniTask WaitForCloseIntentAsync(CancellationToken ct)
+        public ControlsPanelController(ViewFactoryMethod viewFactory, IMVCManager mvcManager, DCLInput input) : base(viewFactory)
         {
-            return UniTask.WhenAny(viewInstance!.closeButton.OnClickAsync(ct));
+            this.mvcManager = mvcManager;
+            this.input = input;
+
+            input.Shortcuts.Controls.performed += OnShortcutPressed;
+        }
+
+        private void OnShortcutPressed(InputAction.CallbackContext ctx)
+        {
+            mvcManager.ShowAsync(IssueCommand()).Forget();
+        }
+
+        protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
+            UniTask.WhenAny(
+                viewInstance!.closeButton.OnClickAsync(ct),
+                UniTask.WaitUntil(() => input.UI.Close.WasPerformedThisFrame(), cancellationToken: ct)
+            );
+
+        public override void Dispose()
+        {
+            input.Shortcuts.Controls.performed -= OnShortcutPressed;
         }
     }
 }
