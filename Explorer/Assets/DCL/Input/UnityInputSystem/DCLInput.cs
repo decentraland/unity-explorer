@@ -2309,7 +2309,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                 {
                     ""name"": """",
                     ""id"": ""a2b44e8b-33bb-4468-9439-8836ae0a5796"",
-                    ""path"": ""<Keyboard>/#(H)"",
+                    ""path"": ""<Keyboard>/h"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
