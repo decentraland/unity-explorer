@@ -13,6 +13,7 @@ using DCL.Input.Systems;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
 using DCL.UI;
+using DCL.UI.HyperlinkHandler;
 using ECS.Abstract;
 using MVC;
 using SuperScrollView;
@@ -67,6 +68,7 @@ namespace DCL.Chat
         private bool isInputSelected;
         private IReadOnlyList<RaycastResult> raycastResults;
         private UniTaskCompletionSource closePopupTask;
+        private HyperlinkHandlerSettings hyperlinkHandlerSettings;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
 
@@ -150,6 +152,8 @@ namespace DCL.Chat
 
             // Intro message
             chatHistory.AddMessage(ChatMessage.NewFromSystem("Type /help for available commands."));
+
+            hyperlinkHandlerSettings = new HyperlinkHandlerSettings(mvcManager);
         }
 
         protected override void OnViewShow()
@@ -372,6 +376,8 @@ namespace DCL.Chat
 
                 ChatEntryView itemScript = item!.GetComponent<ChatEntryView>()!;
                 SetItemData(index, itemData, itemScript);
+
+                itemScript.messageBubbleElement.SetupHyperlinkHandlerSettings(hyperlinkHandlerSettings);
 
                 Button? messageOptionsButton = itemScript.messageBubbleElement.messageOptionsButton;
                 messageOptionsButton?.onClick.RemoveAllListeners();

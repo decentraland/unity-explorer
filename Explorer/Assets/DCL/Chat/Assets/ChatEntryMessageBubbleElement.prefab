@@ -406,6 +406,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 6709421707846502462}
     m_Modifications:
+    - target: {fileID: 2681651048344826938, guid: 66cddfcb263aafe499942012249d5b00, type: 3}
+      propertyPath: m_isRichText
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 5238833002639546345, guid: 66cddfcb263aafe499942012249d5b00, type: 3}
       propertyPath: m_Name
       value: MessageContentElement

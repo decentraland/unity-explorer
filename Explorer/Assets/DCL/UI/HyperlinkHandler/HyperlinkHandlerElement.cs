@@ -1,23 +1,14 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.ExternalUrlPrompt;
-using MVC;
 using System;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
-namespace DCL.UI
+namespace DCL.UI.HyperlinkHandler
 {
-    public struct HyperlinkHandlerSettings
-    {
-        public readonly IMVCManager mvcManager;
-
-    }
-
-
-
     public class HyperlinkHandlerElement : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler
     {
         [SerializeField] private TMP_Text textComponent;
@@ -25,21 +16,22 @@ namespace DCL.UI
         private readonly Dictionary<string, Action<string>> linkHandlers = new ();
 
         private HyperlinkHandlerSettings settings;
-
-
-        public void Setup(HyperlinkHandlerSettings settings)
+        private bool initialized = false;
+        public void Initialize(HyperlinkHandlerSettings settings)
         {
             this.settings = settings;
-
+            initialized = true;
         }
 
         private void Awake()
         {
-            InitializeLinkHandlers();
+            AddLinkHandlers();
         }
 
         public void OnPointerClick(PointerEventData eventData)
         {
+            if (!initialized) return;
+
             int linkIndex = TMP_TextUtilities.FindIntersectingLink(textComponent, eventData.position, null);
 
             if (linkIndex != -1)
@@ -50,7 +42,7 @@ namespace DCL.UI
             }
         }
 
-        private void InitializeLinkHandlers()
+        private void AddLinkHandlers()
         {
             linkHandlers.Add("url", HandleURLLink);
             linkHandlers.Add("world", HandleWorldLink);
@@ -82,18 +74,16 @@ namespace DCL.UI
         }
 
         private async UniTask OpenUrlAsync(string url) =>
-            await settings.mvcManager.ShowAsync(ExternalUrlPromptController.IssueCommand(new ExternalUrlPromptController.Params(url)));
-
+            await settings.MvcManager.ShowAsync(ExternalUrlPromptController.IssueCommand(new ExternalUrlPromptController.Params(url)));
 
         private void HandleWorldLink(string sceneName)
         {
-            // Implement scene loading logic
-            Debug.Log($"Loading scene: {sceneName}");
+            Debug.Log($"Loading World: {sceneName}");
         }
 
         private void HandleSceneLink(string itemId)
         {
-            Debug.Log($"Opening item details for: {itemId}");
+            Debug.Log($"Loading Scene: {itemId}");
         }
 
         public void OnPointerEnter(PointerEventData eventData)
