@@ -73,11 +73,11 @@ namespace DCL.PluginSystem.Global
 
         private readonly DefaultFaceFeaturesHandler defaultFaceFeaturesHandler;
         private readonly TextureArrayContainerFactory textureArrayContainerFactory;
-        private readonly RemoteEntities remoteEntities;
-        private readonly ExposedTransform playerTransform;
         private readonly IWearableStorage wearableStorage;
 
         private readonly AvatarTransformMatrixJobWrapper avatarTransformMatrixJobWrapper;
+
+        private float avatarStartDitherDistance;
 
         public AvatarPlugin(
             IComponentPoolsRegistry poolsRegistry,
@@ -92,9 +92,7 @@ namespace DCL.PluginSystem.Global
             DefaultFaceFeaturesHandler defaultFaceFeaturesHandler,
             NametagsData nametagsData,
             TextureArrayContainerFactory textureArrayContainerFactory,
-            IWearableStorage wearableStorage,
-            RemoteEntities remoteEntities,
-            ExposedTransform playerTransform
+            IWearableStorage wearableStorage
         )
         {
             this.assetsProvisioner = assetsProvisioner;
@@ -108,8 +106,6 @@ namespace DCL.PluginSystem.Global
             this.memoryBudget = memoryBudget;
             this.nametagsData = nametagsData;
             this.textureArrayContainerFactory = textureArrayContainerFactory;
-            this.remoteEntities = remoteEntities;
-            this.playerTransform = playerTransform;
             this.wearableStorage = wearableStorage;
             componentPoolsRegistry = poolsRegistry;
             avatarTransformMatrixJobWrapper = new AvatarTransformMatrixJobWrapper();
@@ -166,7 +162,7 @@ namespace DCL.PluginSystem.Global
             FinishAvatarMatricesCalculationSystem.InjectToWorld(ref builder, skinningStrategy,
                 avatarTransformMatrixJobWrapper);
 
-            AvatarShapeVisibilitySystem.InjectToWorld(ref builder);
+            AvatarShapeVisibilitySystem.InjectToWorld(ref builder, avatarStartDitherDistance);
             AvatarCleanUpSystem.InjectToWorld(ref builder, frameTimeCapBudget, vertOutBuffer, avatarMaterialPoolHandler,
                 avatarPoolRegistry, computeShaderPool, attachmentsAssetsCache, mainPlayerAvatarBaseProxy,
                 avatarTransformMatrixJobWrapper);
@@ -212,6 +208,11 @@ namespace DCL.PluginSystem.Global
         {
             ProvidedAsset<Material> toonMaterial = await assetsProvisioner.ProvideMainAssetAsync(settings.CelShadingMaterial, ct: ct);
             ProvidedAsset<Material> faceFeatureMaterial = await assetsProvisioner.ProvideMainAssetAsync(settings.FaceFeatureMaterial, ct: ct);
+
+            avatarStartDitherDistance = settings.StartFadeDitherDistance;
+
+            toonMaterial.Value.SetFloat("_StartFadeDistance", settings.StartFadeDitherDistance);
+            faceFeatureMaterial.Value.SetFloat("_StartFadeDistance", settings.StartFadeDitherDistance);
 
             avatarMaterialPoolHandler = new AvatarMaterialPoolHandler(new List<Material>
             {
@@ -260,6 +261,9 @@ namespace DCL.PluginSystem.Global
 
             [field: SerializeField]
             public StaticSettings.AvatarRandomizerSettingsRef AvatarRandomizerSettingsRef { get; set; }
+
+            [field: SerializeField]
+            public float StartFadeDitherDistance { get; set; } = 2;
 
             public AssetReferenceGameObject AvatarBase => avatarBase.EnsureNotNull();
 

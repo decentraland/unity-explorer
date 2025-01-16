@@ -8,6 +8,7 @@ using DCL.CharacterCamera;
 using DCL.ECSComponents;
 using ECS.Abstract;
 using System.Runtime.CompilerServices;
+using DCL.InWorldCamera;
 using UnityEngine;
 
 namespace DCL.AvatarRendering.AvatarShape.Systems
@@ -17,7 +18,13 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
     {
         private SingleInstanceEntity camera;
 
-        public AvatarShapeVisibilitySystem(World world) : base(world) { }
+        //Minimum dither distance. We use it to ensure that the avatar wont dither when the InGameCamera is on
+        private readonly float startFadeDitherDistance;
+
+        public AvatarShapeVisibilitySystem(World world, float startFadeDitherDistance) : base(world)
+        {
+            this.startFadeDitherDistance = startFadeDitherDistance;
+        }
 
         public override void Initialize()
         {
@@ -57,14 +64,20 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         [Query]
         private void UpdateMainPlayerAvatarVisibilityOnCameraDistance(in AvatarCustomSkinningComponent skinningComponent, in PlayerComponent playerComponent)
         {
-            skinningComponent.SetFadingDistance((playerComponent.CameraFocus.position - camera.GetCameraComponent(World).Camera.gameObject.transform.position).magnitude);
+            if (World.Has<InWorldCameraComponent>(camera))
+                skinningComponent.SetFadingDistance(startFadeDitherDistance);
+            else
+                skinningComponent.SetFadingDistance((playerComponent.CameraFocus.position - camera.GetCameraComponent(World).Camera.gameObject.transform.position).magnitude);
         }
 
         [Query]
         [None(typeof(PlayerComponent))]
         private void UpdateNonPlayerAvatarVisibilityOnCameraDistance(in AvatarCustomSkinningComponent skinningComponent, in AvatarBase avatarBase)
         {
-            skinningComponent.SetFadingDistance((avatarBase.HeadAnchorPoint.position - camera.GetCameraComponent(World).Camera.gameObject.transform.position).magnitude);
+            if (World.Has<InWorldCameraComponent>(camera))
+                skinningComponent.SetFadingDistance(startFadeDitherDistance);
+            else
+                skinningComponent.SetFadingDistance((avatarBase.HeadAnchorPoint.position - camera.GetCameraComponent(World).Camera.gameObject.transform.position).magnitude);
         }
 
         [Query]
