@@ -76,7 +76,8 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
                     actionOnHide: () =>
                     {
                         isContextMenuOpen = false;
-                        HideControl();
+                        if (view.gameObject.activeSelf)
+                            HideControl();
                     },
                     closeTask: closeContextMenuTask?.Task,
                     initialValues: initialValues)));
