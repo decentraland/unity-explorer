@@ -25,6 +25,7 @@ namespace DCL.Friends
         private const string GET_FRIENDSHIP_STATUS_PROCEDURE_NAME = "GetFriendshipStatus";
         private const string UPDATE_FRIENDSHIP_PROCEDURE_NAME = "UpsertFriendship";
         private const string SUBSCRIBE_FRIENDSHIP_UPDATES_PROCEDURE_NAME = "SubscribeToFriendshipUpdates";
+        private const string GET_MUTUAL_FRIENDS_PROCEDURE_NAME = "GetMutualFriends";
 
         private readonly IFriendsEventBus eventBus;
         private readonly IProfileRepository profileRepository;
@@ -112,6 +113,36 @@ namespace DCL.Friends
 
         public async UniTask<PaginatedFriendsResult> GetFriendsAsync(int pageNum, int pageSize, CancellationToken ct) =>
             await GetFriendsAsync(pageNum, pageSize, null, ct);
+
+        public async UniTask<PaginatedFriendsResult> GetMutualFriendsAsync(string userId, int pageNum, int pageSize, CancellationToken ct)
+        {
+            await EnsureRpcConnectionAsync(ct);
+
+            var payload = new GetMutualFriendsPayload
+            {
+                Pagination = new Pagination
+                {
+                    Offset = pageNum * pageSize,
+                    Limit = pageSize,
+                },
+                User = new User
+                {
+                    Address = userId,
+                },
+            };
+
+            PaginatedUsersResponse response = await module!.CallUnaryProcedure<PaginatedUsersResponse>(GET_MUTUAL_FRIENDS_PROCEDURE_NAME, payload)
+                                                           .AttachExternalCancellation(ct);
+
+            allFriendsBuffer.Clear();
+
+            foreach (var user in response.Users)
+                allFriendsBuffer.Add(user.Address);
+
+            IEnumerable<Profile> profiles = await FetchProfiles(allFriendsBuffer, ct);
+
+            return new PaginatedFriendsResult(profiles, response.PaginationData.Total);
+        }
 
         public async UniTask<FriendshipStatus> GetFriendshipStatusAsync(string userId, CancellationToken ct)
         {
