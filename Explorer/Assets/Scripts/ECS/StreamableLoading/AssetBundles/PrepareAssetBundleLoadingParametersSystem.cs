@@ -37,6 +37,6 @@ namespace ECS.StreamableLoading.AssetBundles
             assetBundleIntention.Manifest = sceneData.AssetBundleManifest;
             base.PrepareCommonArguments(in entity, ref assetBundleIntention, ref state);
         }
-       
+
     }
 }

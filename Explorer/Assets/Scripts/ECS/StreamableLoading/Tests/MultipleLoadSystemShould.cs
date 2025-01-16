@@ -2,8 +2,10 @@
 using DCL.WebRequests;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Textures;
+using NSubstitute;
 using NUnit.Framework;
 using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
+using System.Buffers;
 using System.Collections.Generic;
 using UnityEngine;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<UnityEngine.Texture2D, ECS.StreamableLoading.Textures.GetTextureIntention>;
@@ -13,6 +15,7 @@ namespace ECS.StreamableLoading.Tests
     [TestFixture]
     public class MultipleLoadSystemShould
     {
+        private readonly ArrayPool<byte> buffersPool = ArrayPool<byte>.Create(1024 * 1024, 100);
         private string successPath => $"file://{Application.dataPath + "/../TestResources/Images/alphaTexture.png"}";
 
         private const int REQUESTS_COUNT = 1000;
@@ -22,7 +25,7 @@ namespace ECS.StreamableLoading.Tests
         {
             // set-up
             var world = World.Create();
-            var loadSystem = new LoadTextureSystem(world, new TexturesCache<GetTextureIntention>(), IWebRequestController.DEFAULT);
+            var loadSystem = new LoadTextureSystem(world, new TexturesCache<GetTextureIntention>(), IWebRequestController.DEFAULT, buffersPool, Substitute.For<ITexturesFuse>());
             var promises = new List<Promise>(REQUESTS_COUNT);
             for (var i = 0; i < REQUESTS_COUNT; i++) promises.Add(NewPromise(world));
 

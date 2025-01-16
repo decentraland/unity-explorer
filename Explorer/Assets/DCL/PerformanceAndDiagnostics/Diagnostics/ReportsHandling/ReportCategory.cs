@@ -80,6 +80,11 @@ namespace DCL.Diagnostics
         public const string GENERIC_WEB_REQUEST = nameof(GENERIC_WEB_REQUEST);
 
         /// <summary>
+        ///     Partial Loading requests
+        /// </summary>
+        public const string PARTIAL_LOADING = nameof(PARTIAL_LOADING);
+
+        /// <summary>
         ///     Texture related web request
         /// </summary>
         public const string TEXTURE_WEB_REQUEST = nameof(TEXTURE_WEB_REQUEST);

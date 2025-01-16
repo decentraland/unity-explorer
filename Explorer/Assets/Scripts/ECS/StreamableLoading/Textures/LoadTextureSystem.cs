@@ -3,43 +3,38 @@ using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.WebRequests;
 using DCL.Diagnostics;
-using DCL.Optimization.PerformanceBudgeting;
-using DCL.Utilities.Extensions;
-using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
-using ECS.Unity.Textures.Utils;
-using System;
+using Plugins.TexturesFuse.TexturesServerWrap;
+using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
+using System.Buffers;
 using System.Threading;
+using Utility.Types;
 
 namespace ECS.StreamableLoading.Textures
 {
     [UpdateInGroup(typeof(StreamableLoadingGroup))]
     [LogCategory(ReportCategory.TEXTURES)]
-    public partial class LoadTextureSystem : LoadSystemBase<Texture2DData, GetTextureIntention>
+    public partial class LoadTextureSystem : PartialDownloadSystemBase<Texture2DData, GetTextureIntention>
     {
-        private readonly IWebRequestController webRequestController;
+        private readonly ITexturesFuse texturesFuse;
 
-        internal LoadTextureSystem(World world, IStreamableCache<Texture2DData, GetTextureIntention> cache, IWebRequestController webRequestController) : base(world, cache)
+        public LoadTextureSystem(
+            World world,
+            IStreamableCache<Texture2DData, GetTextureIntention> cache,
+            IWebRequestController webRequestController,
+            ArrayPool<byte> buffersPool,
+            ITexturesFuse texturesFuse
+            ) : base(world, cache, webRequestController, buffersPool)
         {
-            this.webRequestController = webRequestController;
+            this.texturesFuse = texturesFuse;
         }
 
-        protected override async UniTask<StreamableLoadingResult<Texture2DData>> FlowInternalAsync(GetTextureIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
+        protected override async UniTask<StreamableLoadingResult<Texture2DData>> ProcessCompletedData(byte[] completeData, CancellationToken ct)
         {
-            if (intention.IsVideoTexture) throw new NotSupportedException($"{nameof(LoadTextureSystem)} does not support video textures. They should be handled by {nameof(VideoTextureUtils)}");
-
-            // Attempts should be always 1 as there is a repeat loop in `LoadSystemBase`
-            var result = await webRequestController.GetTextureAsync(
-                intention.CommonArguments,
-                new GetTextureArguments(intention.TextureType),
-                GetTextureWebRequest.CreateTexture(intention.WrapMode, intention.FilterMode),
-                ct,
-                GetReportData()
-            );
-
-            return new StreamableLoadingResult<Texture2DData>(new Texture2DData(result.EnsureNotNull()));
+            EnumResult<IOwnedTexture2D,NativeMethods.ImageResult> textureFromBytesAsync = await texturesFuse.TextureFromBytesAsync(completeData, TextureType.Albedo, ct);
+            return new StreamableLoadingResult<Texture2DData>(new Texture2DData(textureFromBytesAsync.Value));
         }
     }
 }

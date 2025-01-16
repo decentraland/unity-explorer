@@ -1,15 +1,16 @@
 using DCL.Optimization.PerformanceBudgeting;
+using DCL.Optimization.Pools;
+using DCL.WebRequests.PartialDownload;
 using System;
-using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using Utility;
+using UnityEngine.Pool;
 
 namespace ECS.StreamableLoading.Common.Components
 {
     /// <summary>
     ///     Common state for all streamable types
     /// </summary>
-    public struct StreamableLoadingState
+    public class StreamableLoadingState
     {
         public enum Status : byte
         {
@@ -39,12 +40,40 @@ namespace ECS.StreamableLoading.Common.Components
             Finished,
         }
 
+        private static readonly ObjectPool<StreamableLoadingState> POOL = new (() => new StreamableLoadingState(),
+            actionOnGet: state =>
+            {
+                state.disposed = false;
+                state.Value = Status.NotStarted;
+            },
+            actionOnRelease: state =>
+            {
+                state.DisposeBudgetIfExists();
+
+                state.PartialDownloadingData?.Dispose();
+                state.PartialDownloadingData = null;
+            },
+            collectionCheck: PoolConstants.CHECK_COLLECTIONS,
+            defaultCapacity: PoolConstants.ASSET_PROMISES_PER_SCENE_COUNT / 2, maxSize: PoolConstants.ASSET_PROMISES_PER_SCENE_COUNT);
+
+        public static StreamableLoadingState Create() =>
+            POOL.Get();
+
+        private bool disposed;
+
+        internal StreamableLoadingState() { }
+
         public Status Value { get; private set; }
 
         /// <summary>
         ///     Budget is not null if Status is Allowed or InProgress
         /// </summary>
         public IAcquiredBudget? AcquiredBudget { get; private set; }
+
+        /// <summary>
+        ///     Is set when the partial downloading is supported for the given type of asset promise and has started
+        /// </summary>
+        public PartialLoadingState? PartialDownloadingData { get; private set; }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SetAllowed(IAcquiredBudget budget)
@@ -81,7 +110,7 @@ namespace ECS.StreamableLoading.Common.Components
         public void Finish()
         {
 #if UNITY_EDITOR
-            if (Value is not Status.InProgress)
+            if (Value is not Status.InProgress && Value is not Status.NotStarted)
                 throw new InvalidOperationException($"Unexpected transition from \"{Value}\" to \"Finished\"");
 #endif
             Value = Status.Finished;
@@ -101,10 +130,31 @@ namespace ECS.StreamableLoading.Common.Components
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void SetChunkCompleted(PartialLoadingState partialDownloadingData)
+        {
+#if UNITY_EDITOR
+            if (Value is not Status.InProgress)
+                throw new InvalidOperationException($"Unexpected transition from \"{Value}\" to \"NotStarted\"");
+#endif
+            PartialDownloadingData = partialDownloadingData;
+            Value = Status.NotStarted;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void DisposeBudgetIfExists()
         {
             AcquiredBudget?.Dispose();
             AcquiredBudget = null;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Dispose()
+        {
+            if (disposed) return;
+
+            disposed = true;
+
+            POOL.Release(this);
         }
     }
 }

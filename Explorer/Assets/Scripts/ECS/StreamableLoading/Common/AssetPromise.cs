@@ -39,7 +39,7 @@ namespace ECS.StreamableLoading.Common
             new ()
             {
                 LoadingIntention = loadingIntention,
-                Entity = world.Reference(world.Create(loadingIntention, partition, new StreamableLoadingState())),
+                Entity = world.Reference(world.Create(loadingIntention, partition, StreamableLoadingState.Create())),
             };
 
         public static AssetPromise<TAsset, TLoadingIntention> CreateFinalized(TLoadingIntention loadingIntention, StreamableLoadingResult<TAsset>? result) =>
@@ -132,6 +132,8 @@ namespace ECS.StreamableLoading.Common
 
         private void DestroyEntity(World world)
         {
+            world.Get<StreamableLoadingState>(Entity).Dispose();
+
             world.Destroy(Entity);
             Entity = EntityReference.Null;
         }
