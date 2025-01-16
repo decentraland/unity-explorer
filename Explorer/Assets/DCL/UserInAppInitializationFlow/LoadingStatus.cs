@@ -18,7 +18,6 @@ namespace DCL.UserInAppInitializationFlow
             [LoadingStage.UnloadCacheChecking] = 0.05f, 
             [LoadingStage.LiveKitConnectionEnsuring] = 0.1f, //Used in initialization Flow
             [LoadingStage.LivekitStopping] = 0.1f, //Used in Teleport Flow
-            [LoadingStage.FeatureFlagInitializing] = 0.15f,
             [LoadingStage.RealmChanging] = 0.25f, //Used in Teleport Flow
             [LoadingStage.ProfileLoading] = 0.2f, 
             [LoadingStage.EnvironmentMiscSetting] = 0.25f, 
@@ -38,7 +37,6 @@ namespace DCL.UserInAppInitializationFlow
             Init,
             AuthenticationScreenShowing,
             LiveKitConnectionEnsuring,
-            FeatureFlagInitializing,
             UnloadCacheChecking,
             ProfileLoading,
             EnvironmentMiscSetting,
