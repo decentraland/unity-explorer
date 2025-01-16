@@ -5,9 +5,9 @@ namespace DCL.Chat.History
 {
     public interface IChatHistory
     {
-        event Action OnCleared;
+        event Action Cleared;
 
-        event Action<ChatMessage> OnMessageAdded;
+        event Action<ChatMessage> MessageAdded;
 
         IReadOnlyList<ChatMessage> Messages { get; }
 

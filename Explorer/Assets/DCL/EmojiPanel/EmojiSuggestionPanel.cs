@@ -9,7 +9,7 @@ namespace DCL.Emoji
 {
     public class EmojiSuggestionPanel
     {
-        public event Action<string, bool> OnEmojiSelected;
+        public event Action<string, bool> EmojiSelected;
 
         public bool IsActive { get; private set; }
 
@@ -47,7 +47,7 @@ namespace DCL.Emoji
         private void OnSubmit(InputAction.CallbackContext obj)
         {
             if (previouslySelected != null && IsActive)
-                OnEmojiSelected?.Invoke(previouslySelected.Emoji.text, false);
+                EmojiSelected?.Invoke(previouslySelected.Emoji.text, false);
         }
 
         private void OnArrowUp(InputAction.CallbackContext obj)
@@ -69,7 +69,7 @@ namespace DCL.Emoji
         private EmojiSuggestionView CreatePoolElement(EmojiSuggestionPanelView view, EmojiSuggestionView emojiSuggestion)
         {
             EmojiSuggestionView emojiSuggestionView = Object.Instantiate(emojiSuggestion, view.EmojiSuggestionContainer);
-            emojiSuggestionView.OnEmojiSelected += (emojiData) => OnEmojiSelected?.Invoke(emojiData, true);
+            emojiSuggestionView.OnEmojiSelected += (emojiData) => EmojiSelected?.Invoke(emojiData, true);
             return emojiSuggestionView;
         }
 

@@ -721,10 +721,6 @@ MonoBehaviour:
     mPadding: 4
     mInitCreateCount: 2
     mStartPosOffset: 0
-  - mItemPrefab: {fileID: 3037775903470383268, guid: 1e231bb5ba7d5954c9d0a90ec3f8fe86, type: 3}
-    mPadding: 4
-    mInitCreateCount: 2
-    mStartPosOffset: 0
   mArrangeType: 1
   mSupportScrollBar: 1
   mItemSnapEnable: 0
@@ -898,23 +894,32 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   <canvas>k__BackingField: {fileID: 6099333271793956856}
   <raycaster>k__BackingField: {fileID: 2110952359374055602}
-  <ChatBubblesToggle>k__BackingField: {fileID: 4830781885806626314}
-  <EmojiPanel>k__BackingField: {fileID: 8642591472055175998}
-  <EmojiSuggestionPanel>k__BackingField: {fileID: 5472059768468074674}
-  <InputField>k__BackingField: {fileID: 5622104160664987093}
-  <CharacterCounter>k__BackingField: {fileID: 5274648269416443391}
-  <PanelBackgroundCanvasGroup>k__BackingField: {fileID: 4742269820946521976}
-  <ScrollbarCanvasGroup>k__BackingField: {fileID: 3440437672233669333}
-  <ChatEntriesCanvasGroup>k__BackingField: {fileID: 4191034874546973006}
-  <LoopList>k__BackingField: {fileID: 6671003195211882300}
-  <EmojiPanelButton>k__BackingField: {fileID: 5796404896790943328}
-  <CloseChatButton>k__BackingField: {fileID: 1104092725699042680}
-  <AddEmojiAudio>k__BackingField: {fileID: 11400000, guid: ab59a5b2a814f02419850961fc490805, type: 2}
-  <OpenEmojiPanelAudio>k__BackingField: {fileID: 11400000, guid: abc438e2962540549b414d54fbc89eed, type: 2}
-  <ChatSendMessageAudio>k__BackingField: {fileID: 11400000, guid: efe341aa011f4c8428d3246fa65ef5b0, type: 2}
-  <ChatReceiveMessageAudio>k__BackingField: {fileID: 11400000, guid: 1c179628ffe816f4c9be1ba12630f97f, type: 2}
-  <ChatInputTextAudio>k__BackingField: {fileID: 11400000, guid: d6b0660efe9c3954c937d083f8aa9c98, type: 2}
-  <EnterInputAudio>k__BackingField: {fileID: 11400000, guid: 8703731941d082441b7bc7c6e9720b34, type: 2}
+  BackgroundFadeTime: 0.2
+  ChatEntriesFadeTime: 3
+  ChatEntriesWaitBeforeFading: 10000
+  MaxMessageLength: 250
+  chatBubblesToggle: {fileID: 4830781885806626314}
+  emojiPanel: {fileID: 8642591472055175998}
+  emojiSuggestionPanel: {fileID: 5472059768468074674}
+  inputField: {fileID: 5622104160664987093}
+  characterCounter: {fileID: 5274648269416443391}
+  panelBackgroundCanvasGroup: {fileID: 4742269820946521976}
+  scrollbarCanvasGroup: {fileID: 3440437672233669333}
+  chatEntriesCanvasGroup: {fileID: 4191034874546973006}
+  loopList: {fileID: 6671003195211882300}
+  emojiPanelButton: {fileID: 5796404896790943328}
+  closeChatButton: {fileID: 1104092725699042680}
+  emojiPanelConfiguration: {fileID: 11400000, guid: 51646f2adc3264ba7bf9b4f90febbd22, type: 2}
+  emojiMappingJson: {fileID: 4900000, guid: 7355ae17e96e64b9592813524510dc45, type: 3}
+  emojiSectionViewPrefab: {fileID: 7843218067654608663, guid: d4552d3a2432742f58c63ba71bdfb50e, type: 3}
+  emojiButtonPrefab: {fileID: 8273076807335735701, guid: 7d0a647adf3334ee1a142e7bf69f128d, type: 3}
+  emojiSuggestionViewPrefab: {fileID: -5260165294436727257, guid: 5bc332aa8fd2147cab980e20e64bec03, type: 3}
+  addEmojiAudio: {fileID: 11400000, guid: ab59a5b2a814f02419850961fc490805, type: 2}
+  openEmojiPanelAudio: {fileID: 11400000, guid: abc438e2962540549b414d54fbc89eed, type: 2}
+  chatSendMessageAudio: {fileID: 11400000, guid: efe341aa011f4c8428d3246fa65ef5b0, type: 2}
+  chatReceiveMessageAudio: {fileID: 11400000, guid: 1c179628ffe816f4c9be1ba12630f97f, type: 2}
+  chatInputTextAudio: {fileID: 11400000, guid: d6b0660efe9c3954c937d083f8aa9c98, type: 2}
+  enterInputAudio: {fileID: 11400000, guid: 8703731941d082441b7bc7c6e9720b34, type: 2}
 --- !u!1001 &1890474067062928347
 PrefabInstance:
   m_ObjectHideFlags: 0
