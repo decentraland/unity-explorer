@@ -93,4 +93,9 @@ namespace ECS.SceneLifeCycle.Components
             parcelCorners.Add(parcelCornersData);
         }
     }
+
+    public sealed class InternalJobIndexComponent
+    {
+        public int InternalJobIndex;
+    }
 }

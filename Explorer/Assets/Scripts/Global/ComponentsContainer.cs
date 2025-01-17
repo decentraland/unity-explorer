@@ -5,11 +5,12 @@ using DCL.ECS7;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
 using ECS.Prioritization.Components;
+using ECS.SceneLifeCycle.Components;
+using ECS.SceneLifeCycle.Systems;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using UnityEngine.Pool;
 using RaycastHit = DCL.ECSComponents.RaycastHit;
 
 namespace Global
@@ -157,6 +158,11 @@ namespace Global
             yield return (typeof(PartitionComponent),
                 new ComponentPool.WithDefaultCtor<PartitionComponent>(
                     component => component.Clear()));
+
+            // Internal Job Index Component
+            yield return (typeof(InternalJobIndexComponent),
+                new ComponentPool.WithDefaultCtor<InternalJobIndexComponent>(
+                    maxSize: PartitionSceneEntitiesSystem.DEPLOYED_SCENES_LIMIT));
         }
     }
 }
