@@ -32,7 +32,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
 
         void RemoveSceneMessageHandler(string sceneId, MsgType msgType, SceneMessageHandler onSceneMessage);
 
-        void SendMessage(ReadOnlySpan<byte> message, string sceneId, ConnectivityAssertiveness assertiveness, CancellationToken ct);
+        void SendMessage(ReadOnlySpan<byte> message, string sceneId, ConnectivityAssertiveness assertiveness, CancellationToken ct, string? specialRecipient = null);
 
         readonly ref struct DecodedMessage
         {

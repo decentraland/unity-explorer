@@ -6,6 +6,8 @@ namespace SceneRuntime.Apis.Modules.CommunicationsControllerApi
 {
     public interface ICommunicationsControllerAPI : IDisposable
     {
-        object SendBinary(IReadOnlyList<PoolableByteArray> data);
+        void SendBinary(IReadOnlyList<PoolableByteArray> broadcastData, string? recipient = null);
+
+        object GetResult();
     }
 }
