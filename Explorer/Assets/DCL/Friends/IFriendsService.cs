@@ -9,6 +9,10 @@ namespace DCL.Friends
 {
     public interface IFriendsService : IDisposable
     {
+        UniTask<PaginatedFriendsResult> GetOnlineFriendsAsync(int pageNum, int pageSize, CancellationToken ct);
+
+        UniTask<PaginatedFriendsResult> GetOfflineFriendsAsync(int pageNum, int pageSize, CancellationToken ct);
+
         UniTask<PaginatedFriendsResult> GetFriendsAsync(int pageNum, int pageSize, CancellationToken ct);
 
         UniTask<FriendshipStatus> GetFriendshipStatusAsync(string userId, CancellationToken ct);
