@@ -1,6 +1,7 @@
 ﻿using DCL.EmotesWheel;
 using DCL.Notifications.NotificationsMenu;
 using DCL.UI.Buttons;
+using DCL.UI.Controls;
 using DCL.UI.ProfileElements;
 using DCL.UI.Skybox;
 using MVC;
@@ -44,6 +45,9 @@ namespace DCL.UI.Sidebar
 
         [field: Header("Help")]
         [field: SerializeField] internal Button helpButton { get; private set; }
+
+        [field: Header("Controls")]
+        [field: SerializeField] internal Button controlsButton { get; private set; }
 
     }
 }
