@@ -833,7 +833,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3674828378924604944, guid: 537c962f37fd942398c6df318798c105, type: 3}
       propertyPath: m_text
-      value: Latest
+      value: Scene Version
       objectReference: {fileID: 0}
     - target: {fileID: 3674828378924604944, guid: 537c962f37fd942398c6df318798c105, type: 3}
       propertyPath: m_fontAsset
@@ -853,11 +853,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3802612311819591289, guid: 537c962f37fd942398c6df318798c105, type: 3}
       propertyPath: statusValues.Array.data[0].statusText
-      value: Complete
+      value: Latest
       objectReference: {fileID: 0}
     - target: {fileID: 3802612311819591289, guid: 537c962f37fd942398c6df318798c105, type: 3}
       propertyPath: statusValues.Array.data[1].statusText
-      value: Fallback
+      value: Updating
       objectReference: {fileID: 0}
     - target: {fileID: 3802612311819591289, guid: 537c962f37fd942398c6df318798c105, type: 3}
       propertyPath: statusValues.Array.data[2].statusText
@@ -881,11 +881,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3802612311819591289, guid: 537c962f37fd942398c6df318798c105, type: 3}
       propertyPath: statusValues.Array.data[1].textColor.b
-      value: 0.21960783
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3802612311819591289, guid: 537c962f37fd942398c6df318798c105, type: 3}
       propertyPath: statusValues.Array.data[1].textColor.g
-      value: 0.28124678
+      value: 0.72156864
       objectReference: {fileID: 0}
     - target: {fileID: 3802612311819591289, guid: 537c962f37fd942398c6df318798c105, type: 3}
       propertyPath: statusValues.Array.data[1].textColor.r
@@ -945,11 +945,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3802612311819591289, guid: 537c962f37fd942398c6df318798c105, type: 3}
       propertyPath: statusValues.Array.data[1].backgroundColor.b
-      value: 0.26274514
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3802612311819591289, guid: 537c962f37fd942398c6df318798c105, type: 3}
       propertyPath: statusValues.Array.data[1].backgroundColor.g
-      value: 0.26941553
+      value: 0.72156864
       objectReference: {fileID: 0}
     - target: {fileID: 3802612311819591289, guid: 537c962f37fd942398c6df318798c105, type: 3}
       propertyPath: statusValues.Array.data[1].backgroundColor.r
@@ -997,7 +997,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8964693357646325981, guid: 537c962f37fd942398c6df318798c105, type: 3}
       propertyPath: m_text
-      value: You are seeing the latest deployed version
+      value: 
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

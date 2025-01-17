@@ -29,8 +29,8 @@ namespace ECS.SceneLifeCycle.CurrentScene
                 return null;
 
             return !string.IsNullOrEmpty(sceneFacade.SceneData.SceneEntityDefinition.status) && sceneFacade.SceneData.SceneEntityDefinition.status == "complete"
-                ? ICurrentSceneInfo.AssetBundleStatus.COMPLETE
-                : ICurrentSceneInfo.AssetBundleStatus.FALLBACK;
+                ? ICurrentSceneInfo.AssetBundleStatus.LATEST
+                : ICurrentSceneInfo.AssetBundleStatus.UPDATING;
         }
 
         private static ICurrentSceneInfo.RunningStatus? StatusFrom(ISceneFacade? sceneFacade)

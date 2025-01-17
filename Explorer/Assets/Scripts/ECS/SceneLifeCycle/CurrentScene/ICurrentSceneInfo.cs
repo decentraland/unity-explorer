@@ -12,8 +12,8 @@ namespace ECS.SceneLifeCycle.CurrentScene
 
         enum AssetBundleStatus
         {
-            COMPLETE,
-            FALLBACK
+            LATEST,
+            UPDATING
         }
 
         bool IsPlayerStandingOnScene { get; }

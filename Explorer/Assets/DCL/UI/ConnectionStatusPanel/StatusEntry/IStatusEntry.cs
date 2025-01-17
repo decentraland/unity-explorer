@@ -38,7 +38,7 @@ namespace DCL.UI.ConnectionStatusPanel.StatusEntry
 
         private static readonly IReadOnlyDictionary<ICurrentSceneInfo.AssetBundleStatus, string> CACHE_LATEST_VERSION_STATUS = new Dictionary<ICurrentSceneInfo.AssetBundleStatus, string>
         {
-            [ICurrentSceneInfo.AssetBundleStatus.COMPLETE] = "Complete", [ICurrentSceneInfo.AssetBundleStatus.FALLBACK] = "Fallback"
+            [ICurrentSceneInfo.AssetBundleStatus.LATEST] = "Latest", [ICurrentSceneInfo.AssetBundleStatus.UPDATING] = "Updating"
         };
 
         public static void ShowStatus(this IStatusEntry statusEntry, IStatusEntry.Status status)
