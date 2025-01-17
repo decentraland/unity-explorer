@@ -123,7 +123,7 @@ namespace DCL.Friends
             {
                 Pagination = new Pagination
                 {
-                    Offset = pageNum * pageSize,
+                    Offset = (pageNum - 1) * pageSize,
                     Limit = pageSize,
                 },
                 User = new User
@@ -133,7 +133,8 @@ namespace DCL.Friends
             };
 
             PaginatedUsersResponse response = await module!.CallUnaryProcedure<PaginatedUsersResponse>(GET_MUTUAL_FRIENDS_PROCEDURE_NAME, payload)
-                                                           .AttachExternalCancellation(ct);
+                                                           .AttachExternalCancellation(ct)
+                                                           .Timeout(TimeSpan.FromSeconds(TIMEOUT_SECONDS));
 
             allFriendsBuffer.Clear();
 
@@ -336,7 +337,7 @@ namespace DCL.Friends
             {
                 Pagination = new Pagination
                 {
-                    Offset = pageNum * pageSize,
+                    Offset = (pageNum - 1) * pageSize,
                     Limit = pageSize,
                 },
             };
@@ -345,7 +346,8 @@ namespace DCL.Friends
                 payload.Status = connectivityStatus.Value;
 
             PaginatedUsersResponse response = await module!.CallUnaryProcedure<PaginatedUsersResponse>(GET_FRIENDS_PROCEDURE_NAME, payload)
-                                                           .AttachExternalCancellation(ct);
+                                                           .AttachExternalCancellation(ct)
+                                                           .Timeout(TimeSpan.FromSeconds(TIMEOUT_SECONDS));
 
             allFriendsBuffer.Clear();
 
