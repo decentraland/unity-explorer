@@ -133,7 +133,7 @@ namespace DCL.PluginSystem.Global
 
             DebugRoomsSystem.InjectToWorld(ref builder, roomsStatus, archipelagoIslandRoom, gateKeeperSceneRoom, entityParticipantTable, remoteMetadata, debugContainerBuilder,
                 debugRoomIndicatorPool);
-            DebugThroughputRoomsSystem.InjectToWorld(ref builder, debugContainerBuilder, islandThroughputBufferBunch, sceneThroughputBufferBunch);
+            DebugThroughputRoomsSystem.InjectToWorld(ref builder, roomHub, debugContainerBuilder, islandThroughputBufferBunch, sceneThroughputBufferBunch);
 
             MultiplayerProfilesSystem.InjectToWorld(ref builder,
                 new RemoteAnnouncements(messagePipesHub),

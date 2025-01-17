@@ -3,6 +3,7 @@ using DCL.DebugUtilities.Views;
 using DCL.Optimization.Pools;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine.UIElements;
 using Utility.UIToolkit;
 
@@ -10,11 +11,11 @@ namespace DCL.DebugUtilities
 {
     public class DebugWidgetBuilder
     {
-        private static readonly ListObjectPool<ElementPlacement> DEF_POOL = new ();
+        private static readonly ListObjectPool<Placement> DEF_POOL = new ();
 
         internal readonly string name;
 
-        private List<ElementPlacement>? placements;
+        private List<Placement>? placements;
         private DebugWidgetVisibilityBinding? visibilityBinding;
 
         public DebugWidgetBuilder(string name)
@@ -33,7 +34,21 @@ namespace DCL.DebugUtilities
         public DebugWidgetBuilder AddControl(IDebugElementDef? left, IDebugElementDef? right, DebugHintDef? debugHintDef = null)
         {
             placements ??= DEF_POOL.Get();
-            placements!.Add(new ElementPlacement(left, right, debugHintDef));
+            placements!.Add(new Placement.ElementPlacement(left, right, debugHintDef));
+            return this;
+        }
+
+        public DebugWidgetBuilder AddGroup(string groupName, params (IDebugElementDef? left, IDebugElementDef? right)[] elements)
+        {
+            placements ??= DEF_POOL.Get();
+            placements!.Add(new Placement.GroupPlacement(groupName, elements.Select(e => new Placement.ElementPlacement(e.left, e.right, null)).ToList()));
+            return this;
+        }
+
+        public DebugWidgetBuilder AddList(string listName, IElementBinding<IReadOnlyList<(string name, string value)>> list)
+        {
+            placements ??= DEF_POOL.Get();
+            placements!.Add(new Placement.ListPlacement(listName, list));
             return this;
         }
 
@@ -59,11 +74,11 @@ namespace DCL.DebugUtilities
             Func<DebugControl> controlFactoryMethod,
             IReadOnlyDictionary<Type, IDebugElementFactory> factories)
         {
-            DebugWidget widget = widgetFactoryMethod();
+            DebugWidget widget = widgetFactoryMethod()!;
             widget.Initialize(name);
 
             // Add every element under the widget control
-            foreach (ElementPlacement def in placements)
+            foreach (Placement def in placements!)
             {
                 void CreateHint(DebugHintDef hintDef)
                 {
@@ -71,15 +86,44 @@ namespace DCL.DebugUtilities
                     widget.AddElement(hint);
                 }
 
-                // Create a hint if it is Before
-                if (def.HintDef is { HintPosition: DebugHintDef.Position.Before })
-                    CreateHint(def.HintDef);
+                switch (def)
+                {
+                    case Placement.ElementPlacement elementDef:
 
-                widget.AddElement(CreateControl(controlFactoryMethod, factories, def.Left, def.Right));
+                        // Create a hint if it is Before
+                        if (elementDef.HintDef is { HintPosition: DebugHintDef.Position.Before })
+                            CreateHint(elementDef.HintDef);
 
-                // Create a hint if it is After
-                if (def.HintDef is { HintPosition: DebugHintDef.Position.After })
-                    CreateHint(def.HintDef);
+                        widget.AddElement(CreateControl(controlFactoryMethod, factories, elementDef.Left, elementDef.Right));
+
+                        // Create a hint if it is After
+                        if (elementDef.HintDef is { HintPosition: DebugHintDef.Position.After })
+                            CreateHint(elementDef.HintDef);
+
+                        break;
+                    case Placement.GroupPlacement groupDef:
+                        DebugWidget innerWidget = widgetFactoryMethod()!;
+                        innerWidget.Initialize(groupDef.GroupName, name + groupDef.GroupName);
+
+                        foreach (Placement.ElementPlacement element in groupDef.Elements)
+                            innerWidget.AddElement(CreateControl(controlFactoryMethod, factories, element.Left, element.Right));
+
+                        widget.AddElement(innerWidget);
+
+                        break;
+                    case Placement.ListPlacement listDef:
+                        var debugList = DebugList.NewDebugList(
+                            widgetFactoryMethod,
+                            controlFactoryMethod,
+                            factories,
+                            listDef.ListName,
+                            listDef.Elements,
+                            name + listDef.ListName
+                        );
+
+                        widget.AddElement(debugList.Widget);
+                        break;
+                }
             }
 
             // Set activity binding
@@ -90,7 +134,7 @@ namespace DCL.DebugUtilities
             return widget;
         }
 
-        private static DebugControl CreateControl(
+        internal static DebugControl CreateControl(
             Func<DebugControl> controlFactoryMethod,
             IReadOnlyDictionary<Type, IDebugElementFactory> factories,
             IDebugElementDef? left,
@@ -118,17 +162,44 @@ namespace DCL.DebugUtilities
             return debugControl;
         }
 
-        internal readonly struct ElementPlacement
+        internal abstract record Placement
         {
-            public readonly IDebugElementDef? Left;
-            public readonly IDebugElementDef? Right;
-            public readonly DebugHintDef? HintDef;
-
-            public ElementPlacement(IDebugElementDef left, IDebugElementDef right, DebugHintDef? hintDef)
+            internal record ElementPlacement : Placement
             {
-                Left = left;
-                Right = right;
-                HintDef = hintDef;
+                public readonly IDebugElementDef? Left;
+                public readonly IDebugElementDef? Right;
+                public readonly DebugHintDef? HintDef;
+
+                public ElementPlacement(IDebugElementDef? left, IDebugElementDef? right, DebugHintDef? hintDef)
+                {
+                    Left = left;
+                    Right = right;
+                    HintDef = hintDef;
+                }
+            }
+
+            internal record GroupPlacement : Placement
+            {
+                public readonly string GroupName;
+                public readonly IReadOnlyList<ElementPlacement> Elements;
+
+                public GroupPlacement(string groupName, IReadOnlyList<ElementPlacement> elements)
+                {
+                    GroupName = groupName;
+                    Elements = elements;
+                }
+            }
+
+            internal record ListPlacement : Placement
+            {
+                public readonly string ListName;
+                public readonly IElementBinding<IReadOnlyList<(string name, string value)>> Elements;
+
+                public ListPlacement(string listName, IElementBinding<IReadOnlyList<(string name, string value)>> elements)
+                {
+                    ListName = listName;
+                    Elements = elements;
+                }
             }
         }
     }
