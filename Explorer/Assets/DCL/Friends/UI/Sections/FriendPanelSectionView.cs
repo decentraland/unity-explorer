@@ -28,7 +28,7 @@ namespace DCL.Friends.UI.Sections
         public void SetEmptyState(bool isEmpty) =>
             EmptyState?.SetActive(isEmpty);
 
-        public void SetScrollView(bool active) =>
+        public void SetScrollViewState(bool active) =>
             LoopList?.gameObject.SetActive(active);
     }
 }

@@ -28,6 +28,7 @@ namespace DCL.Friends.UI
         private readonly IMVCManager mvcManager;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IProfileCache profileCache;
+        private readonly IProfileRepository profileRepository;
 
         private BlockedSectionController blockedSectionController;
         private FriendsSectionController friendsSectionController;
@@ -43,7 +44,8 @@ namespace DCL.Friends.UI
             IFriendsEventBus friendEventBus,
             IMVCManager mvcManager,
             IWeb3IdentityCache web3IdentityCache,
-            IProfileCache profileCache) : base(viewFactory)
+            IProfileCache profileCache,
+            IProfileRepository profileRepository) : base(viewFactory)
         {
             this.chatView = chatView;
             this.friendsService = friendsService;
@@ -51,6 +53,7 @@ namespace DCL.Friends.UI
             this.mvcManager = mvcManager;
             this.web3IdentityCache = web3IdentityCache;
             this.profileCache = profileCache;
+            this.profileRepository = profileRepository;
         }
 
         public override void Dispose()
@@ -102,7 +105,7 @@ namespace DCL.Friends.UI
                 web3IdentityCache,
                 mvcManager,
                 new RequestsRequestManager(friendsService, friendEventBus, FRIENDS_PAGE_SIZE, profileCache));
-            blockedSectionController = new BlockedSectionController(viewInstance!.BlockedSection, mvcManager);
+            blockedSectionController = new BlockedSectionController(viewInstance!.BlockedSection, mvcManager, profileRepository, profileCache, web3IdentityCache);
 
             requestsSectionController.ReceivedRequestsCountChanged += FriendRequestCountChanged;
             viewInstance!.FriendsTabButton.onClick.AddListener(() => ToggleTabs(FriendsPanelTab.FRIENDS));

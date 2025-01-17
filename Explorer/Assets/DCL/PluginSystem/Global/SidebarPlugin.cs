@@ -116,7 +116,7 @@ namespace DCL.PluginSystem.Global
                 new ProfileWidgetController(() => mainUIView.SidebarView.ProfileWidget, web3IdentityCache, profileRepository, webRequestController),
                 new ProfileMenuController(() => mainUIView.SidebarView.ProfileMenuView, web3IdentityCache, profileRepository, webRequestController, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, mvcManager, chatEntryConfigurationSo),
                 new SkyboxMenuController(() => mainUIView.SidebarView.SkyboxMenuView, settings.SkyboxSettingsAsset),
-                new FriendsPanelController(() => mainUIView.SidebarView.FriendsPanelView, mainUIView.ChatView, friendsService, friendEventBus, mvcManager, web3IdentityCache, profileCache),
+                new FriendsPanelController(() => mainUIView.SidebarView.FriendsPanelView, mainUIView.ChatView, friendsService, friendEventBus, mvcManager, web3IdentityCache, profileCache, profileRepository),
                 sidebarBus,
                 chatEntryConfigurationSo,
                 web3IdentityCache,

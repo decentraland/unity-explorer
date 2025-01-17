@@ -12,4 +12,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6b3be250445c46feb68af2caf5e5ec25, type: 3}
   m_Name: FriendPanelOnlineStatusSettings
   m_EditorClassIdentifier: 
-  onlineStatusConfigurations: []
+  onlineStatusConfigurations:
+  - Status: 0
+    Configuration:
+      StatusColor: {r: 0.34117648, g: 0.8745098, b: 0.25490198, a: 1}
+      StatusText: Online
+  - Status: 1
+    Configuration:
+      StatusColor: {r: 1, g: 0.63529414, b: 0.3529412, a: 1}
+      StatusText: Away
+  - Status: 2
+    Configuration:
+      StatusColor: {r: 0.627451, g: 0.60784316, b: 0.65882355, a: 1}
+      StatusText: Offline

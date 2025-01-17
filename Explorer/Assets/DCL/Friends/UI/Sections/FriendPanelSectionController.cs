@@ -85,13 +85,15 @@ namespace DCL.Friends.UI.Sections
         protected virtual async UniTaskVoid Init(CancellationToken ct)
         {
             view.SetLoadingState(true);
+            view.SetEmptyState(false);
+            view.SetScrollViewState(false);
 
             friendListInitCts = friendListInitCts.SafeRestart();
             await requestManager.Init(ct);
 
-            view.SetEmptyState(!requestManager.HasElements);
             view.SetLoadingState(false);
-            view.SetScrollView(requestManager.HasElements);
+            view.SetEmptyState(!requestManager.HasElements);
+            view.SetScrollViewState(requestManager.HasElements);
 
             if (requestManager.HasElements)
             {
