@@ -1,4 +1,5 @@
 ﻿using DCL.Ipfs;
+using DCL.Utilities;
 using System;
 
 namespace ECS
@@ -10,6 +11,8 @@ namespace ECS
     {
         private const int DEFAULT_NETWORK_ID = 1;
 
+        private readonly ReactiveProperty<RealmKind> realmType = new (RealmKind.Uninitialized);
+
         private IIpfsRealm ipfs = InvalidIpfsRealm.Instance;
         private bool scenesAreFixed;
 
@@ -20,6 +23,8 @@ namespace ECS
         public string Hostname { get; private set; }
         public bool IsLocalSceneDevelopment { get; private set; }
         public bool Configured { get; private set; }
+
+        public IReadonlyReactiveProperty<RealmKind> RealmType => realmType;
 
         public IIpfsRealm Ipfs
         {
@@ -68,6 +73,13 @@ namespace ECS
             NetworkId = networkId;
             Hostname = hostname;
             IsLocalSceneDevelopment = isLocalSceneDevelopment;
+
+            if (isLocalSceneDevelopment)
+                realmType.Value = RealmKind.LocalScene;
+            else if (!scenesAreFixed)
+                realmType.Value = RealmKind.GenesisCity;
+            else
+                realmType.Value = RealmKind.World;
         }
 
         /// <summary>
@@ -77,6 +89,7 @@ namespace ECS
         {
             Configured = false;
             ipfs = InvalidIpfsRealm.Instance;
+            realmType.Value = RealmKind.Uninitialized;
         }
 
         private void Validate()

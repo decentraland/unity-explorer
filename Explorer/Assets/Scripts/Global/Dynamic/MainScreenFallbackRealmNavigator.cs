@@ -1,7 +1,6 @@
 using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
-using DCL.AsyncLoadReporting;
 using DCL.Diagnostics;
 using DCL.UserInAppInitializationFlow;
 using ECS.SceneLifeCycle.Realm;
@@ -19,6 +18,12 @@ namespace Global.Dynamic
         private readonly Entity playerEntity;
         private readonly World world;
 
+        public event Action<Vector2Int>? NavigationExecuted
+        {
+            add => origin.NavigationExecuted += value;
+            remove => origin.NavigationExecuted -= value;
+        }
+
         public MainScreenFallbackRealmNavigator(IRealmNavigator origin, IUserInAppInitializationFlow userInAppInitializationFlow, Entity playerEntity, World world)
         {
             this.origin = origin;
@@ -29,7 +34,7 @@ namespace Global.Dynamic
 
         public async UniTask<EnumResult<ChangeRealmError>> TryChangeRealmAsync(URLDomain realm, CancellationToken ct, Vector2Int parcelToTeleport = default)
         {
-            var result = await origin.TryChangeRealmAsync(realm, ct, parcelToTeleport);
+            EnumResult<ChangeRealmError> result = await origin.TryChangeRealmAsync(realm, ct, parcelToTeleport);
 
             if (result.Success == false && !result.Error!.Value.State.IsRecoverable())
                 DispatchFallbackToMainScreen(result.As(ChangeRealmErrors.AsTaskError), ct);
@@ -39,22 +44,12 @@ namespace Global.Dynamic
 
         public async UniTask<EnumResult<TaskError>> TeleportToParcelAsync(Vector2Int parcel, CancellationToken ct, bool isLocal)
         {
-            var result = await origin.TeleportToParcelAsync(parcel, ct, isLocal);
+            EnumResult<TaskError> result = await origin.TeleportToParcelAsync(parcel, ct, isLocal);
 
             if (result.Success == false)
                 DispatchFallbackToMainScreen(result, ct);
 
             return result;
-        }
-
-        public async UniTask InitializeTeleportToSpawnPointAsync(AsyncLoadProcessReport teleportLoadReport, CancellationToken ct, Vector2Int parcelToTeleport)
-        {
-            try { await origin.InitializeTeleportToSpawnPointAsync(teleportLoadReport, ct, parcelToTeleport); }
-            catch (Exception e)
-            {
-                ReportHub.LogException(e, ReportCategory.DEBUG);
-                DispatchFallbackToMainScreen(EnumResult<TaskError>.ErrorResult(TaskError.UnexpectedException), ct);
-            }
         }
 
         public void RemoveCameraSamplingData()

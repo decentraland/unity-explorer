@@ -13,13 +13,13 @@ using DCL.MapRenderer.Culling;
 using DCL.MapRenderer.MapLayers.UsersMarker;
 using DCL.Multiplayer.Connectivity;
 using ECS.LifeCycle.Components;
+using ECS.SceneLifeCycle.Realm;
 using MVC;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
-using Utility.TeleportBus;
 
 namespace DCL.MapRenderer.MapLayers.Users
 {
@@ -27,7 +27,7 @@ namespace DCL.MapRenderer.MapLayers.Users
     {
         private readonly IObjectPool<HotUserMarkerObject> objectsPool;
         private readonly IObjectPool<IHotUserMarker> wrapsPool;
-        private readonly ITeleportBusController teleportBusController;
+        private readonly IRealmNavigator realmNavigator;
         private readonly IOnlineUsersProvider onlineUsersProvider;
         private TrackPlayersPositionSystem trackSystem;
         private RemovedTrackedPlayersPositionSystem untrackSystem;
@@ -44,32 +44,33 @@ namespace DCL.MapRenderer.MapLayers.Users
             Transform parent,
             ICoordsUtils coordsUtils,
             IMapCullingController cullingController,
-            ITeleportBusController teleportBusController,
+            IRealmNavigator realmNavigator,
             IOnlineUsersProvider onlineUsersProvider)
             : base(parent, coordsUtils, cullingController)
         {
             this.objectsPool = objectsPool;
             this.wrapsPool = wrapsPool;
-            this.teleportBusController = teleportBusController;
+            this.realmNavigator = realmNavigator;
             this.onlineUsersProvider = onlineUsersProvider;
-            this.teleportBusController.SubscribeToTeleportOperation(OnTeleport);
+            this.realmNavigator.NavigationExecuted += OnTeleport;
             cancellationToken = new CancellationTokenSource();
-        }
-
-        private void OnTeleport(Vector2Int destinationcoordinates)
-        {
-            cancellationToken = cancellationToken.SafeRestart();
-            ProcessRemoteUsersAsync(cancellationToken.Token).Forget();
         }
 
         protected override void DisposeImpl()
         {
             objectsPool.Clear();
             wrapsPool.Clear();
+            realmNavigator.NavigationExecuted -= OnTeleport;
         }
 
         public UniTask InitializeAsync(CancellationToken cancellationToken) =>
             UniTask.CompletedTask;
+
+        private void OnTeleport(Vector2Int destinationCoordinates)
+        {
+            cancellationToken = cancellationToken.SafeRestart();
+            ProcessRemoteUsersAsync(cancellationToken.Token).Forget();
+        }
 
         public void CreateSystems(ref ArchSystemsWorldBuilder<World> builder)
         {

@@ -2,6 +2,7 @@
 using DCL.MapRenderer.ComponentsFactory;
 using Cysharp.Threading.Tasks;
 using Cysharp.Threading.Tasks.Triggers;
+using ECS;
 using UnityEngine;
 using Utility;
 
@@ -9,7 +10,7 @@ namespace DCL.Landscape
 {
     public class SatelliteFloor
     {
-        private const int PARCEL_SIZE = (int)ParcelMathHelper.PARCEL_SIZE;
+        private const int PARCEL_SIZE = ParcelMathHelper.PARCEL_SIZE;
 
         private const int CHUNK_SIZE = 40;
         private const int GENESIS_HALF_PARCEL_WIDTH = 150;
@@ -17,6 +18,8 @@ namespace DCL.Landscape
         private const float Z_FIGHT_THRESHOLD = 0.005f;
 
         private static readonly int BASE_MAP = Shader.PropertyToID("_BaseMap");
+
+        private readonly IRealmData realmData;
 
         private Renderer[] satelliteRenderers;
 
@@ -28,8 +31,10 @@ namespace DCL.Landscape
         private bool currentlyInGenesis;
         private bool debugSettingEnabled;
 
-        public void Initialize(LandscapeData config)
+        public SatelliteFloor(IRealmData realmData, LandscapeData config)
         {
+            this.realmData = realmData;
+
             landscapeData = config;
 
             landscapeParentObject = new GameObject("Satellite View").transform;
@@ -38,6 +43,9 @@ namespace DCL.Landscape
             satelliteRenderers = new Renderer[SATELLITE_MAP_RESOLUTION * SATELLITE_MAP_RESOLUTION];
 
             debugSettingEnabled = landscapeData.showSatelliteView;
+
+            SetCurrentlyInGenesis(realmData.RealmType.Value);
+            realmData.RealmType.OnUpdate += SetCurrentlyInGenesis;
         }
 
         public void Create(MapRendererTextureContainer textureContainer)
@@ -75,9 +83,9 @@ namespace DCL.Landscape
             SwitchVisibility();
         }
 
-        public void SetCurrentlyInGenesis(bool isGenesis)
+        private void SetCurrentlyInGenesis(RealmKind realmKind)
         {
-            currentlyInGenesis = isGenesis;
+            currentlyInGenesis = realmKind is RealmKind.GenesisCity;
             SwitchVisibility();
         }
 
@@ -90,7 +98,7 @@ namespace DCL.Landscape
         private void SwitchVisibility()
         {
             var newVisibilityState = debugSettingEnabled && currentlyInGenesis;
-    
+
             if (!initialized)
                 return;
 

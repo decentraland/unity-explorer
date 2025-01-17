@@ -10,7 +10,5 @@ namespace DCL.LOD
         void Release(string key, Transform asset);
 
         void Unload(IPerformanceBudget frameTimeBudgetProvider, int maxUnloadAmount);
-
-        void SwitchVisibility(bool isVisible);
     }
 }

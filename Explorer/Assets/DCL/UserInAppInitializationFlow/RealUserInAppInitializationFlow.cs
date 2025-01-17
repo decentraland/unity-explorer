@@ -5,27 +5,18 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.AuthenticationScreenFlow;
-using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Chat.History;
 using DCL.Diagnostics;
-using DCL.FeatureFlags;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.RoomHubs;
-using DCL.Multiplayer.HealthChecks;
-using DCL.PerformanceAndDiagnostics.Analytics;
-using DCL.Profiles.Self;
+using DCL.RealmNavigation;
+using DCL.RealmNavigation.LoadingOperation;
 using DCL.SceneLoadingScreens.LoadingScreen;
 using DCL.UI.ErrorPopup;
 using DCL.UserInAppInitializationFlow.StartupOperations;
-using DCL.UserInAppInitializationFlow.StartupOperations.Struct;
-using DCL.Utilities;
-using DCL.Web3.Identities;
 using ECS.SceneLifeCycle.Realm;
-using Global.AppArgs;
-using Global.Dynamic.DebugSettings;
 using MVC;
 using PortableExperiences.Controller;
-using UnityEngine;
 using Utility.Types;
 
 namespace DCL.UserInAppInitializationFlow
@@ -39,41 +30,35 @@ namespace DCL.UserInAppInitializationFlow
         private readonly AudioClipConfig backgroundMusic;
         private readonly IRealmNavigator realmNavigator;
         private readonly ILoadingScreen loadingScreen;
-        private readonly LoadPlayerAvatarStartupOperation loadPlayerAvatarStartupOperation;
-        private readonly CheckOnboardingStartupOperation checkOnboardingStartupOperation;
-        private readonly IStartupOperation startupOperation;
-        private readonly IStartupOperation reloginOperation;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly IChatHistory chatHistory;
+        private readonly SequentialLoadingOperation<IStartupOperation.Params> initOps;
+        private readonly SequentialLoadingOperation<IStartupOperation.Params> reloginOps;
 
         private readonly IRealmController realmController;
         private readonly IRoomHub roomHub;
         private readonly IPortableExperiencesController portableExperiencesController;
+        private readonly CheckOnboardingStartupOperation checkOnboardingStartupOperation;
 
         public RealUserInAppInitializationFlow(
             ILoadingStatus loadingStatus,
-            IHealthCheck livekitHealthCheck,
             IDecentralandUrlsSource decentralandUrlsSource,
             IMVCManager mvcManager,
-            ISelfProfile selfProfile,
-            Vector2Int startParcel,
-            ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy,
             AudioClipConfig backgroundMusic,
             IRealmNavigator realmNavigator,
             ILoadingScreen loadingScreen,
-            FeatureFlagsCache featureFlagsCache,
             IRealmController realmController,
-            IRealmMisc realmMisc,
-            ILandscape landscape,
-            IAppArgs appParameters,
-            IDebugSettings debugSettings,
             IPortableExperiencesController portableExperiencesController,
             IRoomHub roomHub,
-            IAnalyticsController analyticsController,
-            DiagnosticsContainer diagnosticsContainer,
-            ChatHistory chatHistory
-        )
+            IChatHistory chatHistory,
+            SequentialLoadingOperation<IStartupOperation.Params> initOps,
+            SequentialLoadingOperation<IStartupOperation.Params> reloginOps,
+            CheckOnboardingStartupOperation checkOnboardingStartupOperation)
         {
+            this.initOps = initOps;
+            this.reloginOps = reloginOps;
+            this.checkOnboardingStartupOperation = checkOnboardingStartupOperation;
+
             this.loadingStatus = loadingStatus;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.mvcManager = mvcManager;
@@ -84,44 +69,6 @@ namespace DCL.UserInAppInitializationFlow
             this.portableExperiencesController = portableExperiencesController;
             this.chatHistory = chatHistory;
             this.roomHub = roomHub;
-
-            var ensureLivekitConnectionStartupOperation = new EnsureLivekitConnectionStartupOperation(loadingStatus, livekitHealthCheck);
-            var preloadProfileStartupOperation = new PreloadProfileStartupOperation(loadingStatus, selfProfile);
-            var switchRealmMiscVisibilityStartupOperation = new SwitchRealmMiscVisibilityStartupOperation(loadingStatus, realmController, realmMisc);
-            loadPlayerAvatarStartupOperation = new LoadPlayerAvatarStartupOperation(loadingStatus, selfProfile, mainPlayerAvatarBaseProxy);
-            var loadLandscapeStartupOperation = new LoadLandscapeStartupOperation(loadingStatus, landscape);
-            checkOnboardingStartupOperation = new CheckOnboardingStartupOperation(loadingStatus, selfProfile, featureFlagsCache, decentralandUrlsSource, appParameters, realmNavigator);
-            var teleportStartupOperation = new TeleportStartupOperation(loadingStatus, realmNavigator, startParcel);
-            var loadGlobalPxOperation = new LoadGlobalPortableExperiencesStartupOperation(loadingStatus, selfProfile, featureFlagsCache, debugSettings, portableExperiencesController);
-            var sentryDiagnostics = new SentryDiagnosticStartupOperation(realmController, diagnosticsContainer);
-
-            startupOperation = new SequentialStartupOperation(
-                loadingStatus,
-                ensureLivekitConnectionStartupOperation,
-                preloadProfileStartupOperation,
-                switchRealmMiscVisibilityStartupOperation,
-                loadPlayerAvatarStartupOperation,
-                loadLandscapeStartupOperation,
-                checkOnboardingStartupOperation,
-                teleportStartupOperation,
-                loadGlobalPxOperation,
-                sentryDiagnostics
-            ).WithAnalytics(analyticsController);
-
-            
-            reloginOperation = new SequentialStartupOperation(
-                loadingStatus,
-                ensureLivekitConnectionStartupOperation,
-                preloadProfileStartupOperation,
-                switchRealmMiscVisibilityStartupOperation,
-                loadPlayerAvatarStartupOperation,
-                loadLandscapeStartupOperation,
-                checkOnboardingStartupOperation,
-                teleportStartupOperation,
-                loadGlobalPxOperation,
-                sentryDiagnostics).WithAnalytics(analyticsController);
-            ;
-            ;
         }
 
 
@@ -130,8 +77,6 @@ namespace DCL.UserInAppInitializationFlow
             loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.Init);
 
             EnumResult<TaskError> result = parameters.RecoveryError;
-
-            loadPlayerAvatarStartupOperation.AssignWorld(parameters.World, parameters.PlayerEntity);
 
             using UIAudioEventsBus.PlayAudioScope playAudioScope = UIAudioEventsBus.Instance.NewPlayAudioScope(backgroundMusic);
 
@@ -145,6 +90,7 @@ namespace DCL.UserInAppInitializationFlow
                         await DoLogoutOperationsAsync();
                         //Restart the realm and show the authentications screen simultaneously to avoid the "empty space" flicker
                         //No error should be possible at this point
+                        // TODO move SetRealmAsync to an operation
                         await UniTask.WhenAll(ShowAuthenticationScreenAsync(ct),
                             realmController.SetRealmAsync(
                                 URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.Genesis)), ct));
@@ -159,13 +105,14 @@ namespace DCL.UserInAppInitializationFlow
                 }
 
                 var flowToRun = parameters.LoadSource is IUserInAppInitializationFlow.LoadSource.Logout
-                    ? reloginOperation
-                    : startupOperation;
+                    ? reloginOps
+                    : initOps;
+
                 var loadingResult = await LoadingScreen(parameters.ShowLoading)
                     .ShowWhileExecuteTaskAsync(
                         async (parentLoadReport, ct) =>
                         {
-                            var operationResult = await flowToRun.ExecuteAsync(parentLoadReport, ct);
+                            EnumResult<TaskError> operationResult = await flowToRun.ExecuteAsync(parameters.LoadSource.ToString(), 1, new IStartupOperation.Params(parentLoadReport, parameters), ct);
                             if (operationResult.Success)
                                 parentLoadReport.SetProgress(
                                     loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.Completed));
@@ -188,6 +135,7 @@ namespace DCL.UserInAppInitializationFlow
             loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.Completed);
         }
 
+        // TODO should be an operation
         private async UniTask DoLogoutOperationsAsync()
         {
             portableExperiencesController.UnloadAllPortableExperiences();

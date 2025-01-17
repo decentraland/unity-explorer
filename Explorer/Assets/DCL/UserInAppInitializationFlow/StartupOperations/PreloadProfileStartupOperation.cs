@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.AsyncLoadReporting;
 using DCL.Profiles.Self;
+using DCL.RealmNavigation;
 using System.Threading;
 using Utility.Types;
 
@@ -17,11 +18,11 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
             this.selfProfile = selfProfile;
         }
 
-        protected override async UniTask InternalExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct)
+        protected override async UniTask InternalExecuteAsync(IStartupOperation.Params args, CancellationToken ct)
         {
             float finalizationProgress = loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.ProfileLoading);
             await selfProfile.ProfileOrPublishIfNotAsync(ct);
-            report.SetProgress(finalizationProgress);
+            args.Report.SetProgress(finalizationProgress);
         }
     }
 }

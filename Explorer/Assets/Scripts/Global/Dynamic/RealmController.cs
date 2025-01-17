@@ -6,7 +6,6 @@ using DCL.Diagnostics;
 using DCL.Ipfs;
 using DCL.LOD.Components;
 using DCL.Optimization.Pools;
-using DCL.ParcelsService;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
@@ -23,6 +22,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using DCL.DebugUtilities;
+using DCL.RealmNavigation;
 using ECS.SceneLifeCycle.Realm;
 using Unity.Mathematics;
 
@@ -49,27 +49,12 @@ namespace Global.Dynamic
         private readonly SceneAssetLock sceneAssetLock;
         private readonly IComponentPool<PartitionComponent> partitionComponentPool;
         private readonly bool isLocalSceneDevelopment;
+        private readonly RealmNavigatorDebugView realmNavigatorDebugView;
 
         private GlobalWorld? globalWorld;
         private Entity realmEntity;
 
         public IRealmData RealmData => realmData;
-
-        private readonly RealmNavigatorDebugView realmNavigatorDebugView;
-
-        public RealmType Type
-        {
-            get
-            {
-                if (isLocalSceneDevelopment)
-                    return RealmType.LocalScene;
-
-                if (realmData is { Configured: true, ScenesAreFixed: false })
-                    return RealmType.GenesisCity;
-
-                return RealmType.World;
-            }
-        }
 
         public URLDomain? CurrentDomain { get; private set; }
 
@@ -95,10 +80,9 @@ namespace Global.Dynamic
             IScenesCache scenesCache,
             PartitionDataContainer partitionDataContainer,
             SceneAssetLock sceneAssetLock,
-            IDebugContainerBuilder debugContainerBuilder,
             IComponentPool<PartitionComponent> partitionComponentPool,
-            bool isLocalSceneDevelopment
-        )
+            RealmNavigatorDebugView realmNavigatorDebugView,
+            bool isLocalSceneDevelopment)
         {
             this.web3IdentityCache = web3IdentityCache;
             this.webRequestController = webRequestController;
@@ -112,7 +96,7 @@ namespace Global.Dynamic
             this.sceneAssetLock = sceneAssetLock;
             this.partitionComponentPool = partitionComponentPool;
             this.isLocalSceneDevelopment = isLocalSceneDevelopment;
-            realmNavigatorDebugView = new RealmNavigatorDebugView(debugContainerBuilder);
+            this.realmNavigatorDebugView = realmNavigatorDebugView;
         }
 
         public async UniTask SetRealmAsync(URLDomain realm, CancellationToken ct)

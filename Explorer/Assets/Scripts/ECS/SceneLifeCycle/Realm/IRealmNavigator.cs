@@ -54,6 +54,8 @@ namespace ECS.SceneLifeCycle.Realm
         public const string SDK_TEST_SCENES_URL = "https://sdk-team-cdn.decentraland.org/ipfs/sdk7-test-scenes-main-latest";
         public const string TEST_SCENES_URL = "https://sdk-test-scenes.decentraland.zone";
 
+        event Action<Vector2Int> NavigationExecuted;
+
         UniTask<EnumResult<ChangeRealmError>> TryChangeRealmAsync(
             URLDomain realm,
             CancellationToken ct,
@@ -61,8 +63,6 @@ namespace ECS.SceneLifeCycle.Realm
         );
 
         UniTask<EnumResult<TaskError>> TeleportToParcelAsync(Vector2Int parcel, CancellationToken ct, bool isLocal);
-
-        UniTask InitializeTeleportToSpawnPointAsync(AsyncLoadProcessReport teleportLoadReport, CancellationToken ct, Vector2Int parcelToTeleport);
 
         void RemoveCameraSamplingData();
     }

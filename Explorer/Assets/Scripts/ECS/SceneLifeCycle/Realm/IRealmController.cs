@@ -5,17 +5,8 @@ using System.Threading;
 
 namespace ECS.SceneLifeCycle.Realm
 {
-    public enum RealmType
-    {
-        GenesisCity,
-        World,
-        LocalScene
-    }
-
     public interface IRealmController
     {
-        RealmType Type { get; }
-
         URLDomain? CurrentDomain { get; }
 
         IRealmData RealmData { get; }
@@ -33,7 +24,7 @@ namespace ECS.SceneLifeCycle.Realm
 
         class Fake : IRealmController
         {
-            public RealmType Type => RealmType.World;
+            public RealmKind Kind => RealmKind.World;
             public URLDomain? CurrentDomain => URLDomain.EMPTY;
             public IRealmData RealmData => new IRealmData.Fake();
 
@@ -55,17 +46,5 @@ namespace ECS.SceneLifeCycle.Realm
                 //ignore
             }
         }
-    }
-
-    public static class RealmControllerExtensions
-    {
-        public static bool IsGenesis(this IRealmController realmController) =>
-            realmController.Type is RealmType.GenesisCity;
-
-        public static bool IsLocalScene(this IRealmController realmController) =>
-            realmController.Type is RealmType.LocalScene;
-
-        public static bool IsWorld(this IRealmController realmController) =>
-            realmController.Type is RealmType.World;
     }
 }

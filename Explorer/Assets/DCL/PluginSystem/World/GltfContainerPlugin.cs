@@ -2,6 +2,7 @@ using Arch.SystemGroups;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.World.Dependencies;
+using DCL.RealmNavigation;
 using DCL.ResourcesUnloading;
 using DCL.WebRequests;
 using ECS.Abstract;

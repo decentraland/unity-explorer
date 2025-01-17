@@ -45,7 +45,7 @@ namespace DCL.Multiplayer.Connections.Demo
 
             new GateKeeperSceneRoom(
                 webRequests,
-                new SceneRoomLogMetaDataSource(new SceneRoomMetaDataSource(new IRealmController.Fake(), character, world, false)),
+                new SceneRoomLogMetaDataSource(new SceneRoomMetaDataSource(new IRealmData.Fake(), character, world, false)),
                 urlsSource,
                 new ScenesCache()
             ).StartAsync();

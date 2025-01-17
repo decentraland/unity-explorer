@@ -6,11 +6,11 @@ using DCL.MapRenderer.MapLayers;
 using DCL.MapRenderer.MapLayers.Users;
 using DCL.MapRenderer.MapLayers.UsersMarker;
 using DCL.Multiplayer.Connectivity;
+using ECS.SceneLifeCycle.Realm;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Pool;
-using Utility.TeleportBus;
 
 namespace DCL.MapRenderer.ComponentsFactory
 {
@@ -26,8 +26,8 @@ namespace DCL.MapRenderer.ComponentsFactory
             IMapCullingController cullingController,
             IAssetsProvisioner assetsProv,
             IMapRendererSettings settings,
-            ITeleportBusController teleportBusController,
             IOnlineUsersProvider onlineUsersProvider,
+            IRealmNavigator realmNavigator,
             CancellationToken cancellationToken)
         {
             assetsProvisioner = assetsProv;
@@ -44,7 +44,7 @@ namespace DCL.MapRenderer.ComponentsFactory
 
             var wrapsPool = new ObjectPool<IHotUserMarker>(CreateWrap, actionOnRelease: m => m.Dispose());
 
-            var controller = new UsersMarkersHotAreaController(objectsPool, wrapsPool, configuration.HotUserMarkersRoot, coordsUtils, cullingController, teleportBusController, onlineUsersProvider);
+            var controller = new UsersMarkersHotAreaController(objectsPool, wrapsPool, configuration.HotUserMarkersRoot, coordsUtils, cullingController, realmNavigator, onlineUsersProvider);
             await controller.InitializeAsync(cancellationToken);
             writer.Add(MapLayer.HotUsersMarkers, controller);
         }

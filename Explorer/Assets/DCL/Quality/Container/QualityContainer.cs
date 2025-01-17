@@ -77,8 +77,7 @@ namespace DCL.Quality
             // changing quality presets at runtime won't be reflected
             string[] presets = QualitySettings.names;
 
-            var binding = new ElementBinding<string>(presets[QualitySettings.GetQualityLevel()],
-                evt => QualitySettings.SetQualityLevel(Array.IndexOf(presets, evt.newValue)));
+            var binding = new IndexedElementBinding(presets, presets[QualitySettings.GetQualityLevel()], evt => QualitySettings.SetQualityLevel(evt.index));
 
             QualitySettings.activeQualityLevelChanged += (_, to) => binding.Value = presets[to];
 

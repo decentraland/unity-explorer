@@ -2,7 +2,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Input;
-using DCL.ParcelsService;
 using DCL.PlacesAPIService;
 using DCL.TeleportPrompt;
 using DCL.WebRequests;
