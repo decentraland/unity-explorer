@@ -6,7 +6,6 @@ using DCL.DebugUtilities.UIBindings;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.Archipelago.Rooms;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms;
-using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Connections.Rooms.Status;
 using DCL.Multiplayer.Connections.Systems.Debug;
 using DCL.Multiplayer.Profiles.Poses;

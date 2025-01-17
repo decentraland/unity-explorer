@@ -5,6 +5,7 @@ using DCL.MapRenderer.Culling;
 using DCL.MapRenderer.MapLayers;
 using DCL.MapRenderer.MapLayers.Users;
 using DCL.MapRenderer.MapLayers.UsersMarker;
+using DCL.Multiplayer.Connectivity;
 using ECS.SceneLifeCycle.Realm;
 using System.Collections.Generic;
 using System.Threading;
@@ -25,6 +26,7 @@ namespace DCL.MapRenderer.ComponentsFactory
             IMapCullingController cullingController,
             IAssetsProvisioner assetsProv,
             IMapRendererSettings settings,
+            IOnlineUsersProvider onlineUsersProvider,
             IRealmNavigator realmNavigator,
             RemoteUsersRequestController remoteUsersRequestController,
             CancellationToken cancellationToken)
@@ -43,7 +45,7 @@ namespace DCL.MapRenderer.ComponentsFactory
 
             var wrapsPool = new ObjectPool<IHotUserMarker>(CreateWrap, actionOnRelease: m => m.Dispose());
 
-            var controller = new UsersMarkersHotAreaController(objectsPool, wrapsPool, configuration.HotUserMarkersRoot, coordsUtils, cullingController, realmNavigator, remoteUsersRequestController);
+            var controller = new UsersMarkersHotAreaController(objectsPool, wrapsPool, configuration.HotUserMarkersRoot, coordsUtils, cullingController, realmNavigator, onlineUsersProvider);
             await controller.InitializeAsync(cancellationToken);
             writer.Add(MapLayer.HotUsersMarkers, controller);
         }

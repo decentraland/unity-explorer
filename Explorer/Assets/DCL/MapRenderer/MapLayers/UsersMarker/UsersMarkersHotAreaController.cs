@@ -11,6 +11,7 @@ using DCL.ECSComponents;
 using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.Culling;
 using DCL.MapRenderer.MapLayers.UsersMarker;
+using DCL.Multiplayer.Connectivity;
 using ECS.LifeCycle.Components;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
@@ -27,7 +28,7 @@ namespace DCL.MapRenderer.MapLayers.Users
         private readonly IObjectPool<HotUserMarkerObject> objectsPool;
         private readonly IObjectPool<IHotUserMarker> wrapsPool;
         private readonly IRealmNavigator realmNavigator;
-        private readonly RemoteUsersRequestController remoteUsersRequestController;
+        private readonly IOnlineUsersProvider onlineUsersProvider;
         private TrackPlayersPositionSystem trackSystem;
         private RemovedTrackedPlayersPositionSystem untrackSystem;
 
@@ -44,13 +45,13 @@ namespace DCL.MapRenderer.MapLayers.Users
             ICoordsUtils coordsUtils,
             IMapCullingController cullingController,
             IRealmNavigator realmNavigator,
-            RemoteUsersRequestController remoteUsersRequestController)
+            IOnlineUsersProvider onlineUsersProvider)
             : base(parent, coordsUtils, cullingController)
         {
             this.objectsPool = objectsPool;
             this.wrapsPool = wrapsPool;
             this.realmNavigator = realmNavigator;
-            this.remoteUsersRequestController = remoteUsersRequestController;
+            this.onlineUsersProvider = onlineUsersProvider;
             this.realmNavigator.NavigationExecuted += OnTeleport;
             cancellationToken = new CancellationTokenSource();
         }
@@ -120,7 +121,7 @@ namespace DCL.MapRenderer.MapLayers.Users
 
         private async UniTask ProcessRemoteUsersAsync(CancellationToken ct)
         {
-            List<RemotePlayerData> remotePlayersData = await remoteUsersRequestController.RequestUsersAsync(ct);
+            var remotePlayersData = await onlineUsersProvider.GetAsync(ct);
 
             //Reset the markers bound to remote users by releasing them
             foreach (string remoteUser in remoteUsers)
@@ -135,7 +136,7 @@ namespace DCL.MapRenderer.MapLayers.Users
             }
             remoteUsers.Clear();
 
-            foreach (RemotePlayerData remotePlayerData in remotePlayersData)
+            foreach (OnlineUserData remotePlayerData in remotePlayersData)
             {
                 if (closebyUsers.Contains(remotePlayerData.avatarId))
                     continue;

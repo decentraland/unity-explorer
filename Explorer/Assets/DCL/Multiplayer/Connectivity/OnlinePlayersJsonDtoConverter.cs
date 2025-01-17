@@ -4,11 +4,11 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace DCL.MapRenderer.MapLayers.UsersMarker
+namespace DCL.Multiplayer.Connectivity
 {
-    public class RemotePlayersJsonDtoConverter : JsonConverter<List<RemotePlayerData>>
+    public class OnlinePlayersJsonDtoConverter : JsonConverter<List<OnlineUserData>>
     {
-        public override void WriteJson(JsonWriter writer, List<RemotePlayerData>? value, JsonSerializer serializer)
+        public override void WriteJson(JsonWriter writer, List<OnlineUserData>? value, JsonSerializer serializer)
         {
             writer.WriteStartArray();
             foreach (var item in value)
@@ -17,17 +17,17 @@ namespace DCL.MapRenderer.MapLayers.UsersMarker
             writer.WriteEndArray();
         }
 
-        public override List<RemotePlayerData> ReadJson(JsonReader reader, Type objectType, List<RemotePlayerData> existingValue, bool hasExistingValue, JsonSerializer serializer)
+        public override List<OnlineUserData> ReadJson(JsonReader reader, Type objectType, List<OnlineUserData> existingValue, bool hasExistingValue, JsonSerializer serializer)
         {
             if (reader.TokenType == JsonToken.Null)
                 return null;
 
-            existingValue ??= new List<RemotePlayerData>();
+            existingValue ??= new List<OnlineUserData>();
 
             var rootObject = JObject.Load(reader).ToObject<RootObject>();
             foreach (DataObject rootObjectPeer in rootObject.peers)
             {
-                existingValue.Add(new RemotePlayerData()
+                existingValue.Add(new OnlineUserData()
                 {
                     position = ToVector3(rootObjectPeer.position[0], rootObjectPeer.position[2]),
                     avatarId = rootObjectPeer.address

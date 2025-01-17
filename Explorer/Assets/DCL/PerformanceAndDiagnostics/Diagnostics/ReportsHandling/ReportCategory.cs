@@ -297,5 +297,7 @@ namespace DCL.Diagnostics
         public const string EVENTS = nameof(EVENTS);
 
         public const string IN_WORLD_CAMERA = nameof(IN_WORLD_CAMERA);
+
+        public const string FRIENDS = nameof(FRIENDS);
     }
 }
