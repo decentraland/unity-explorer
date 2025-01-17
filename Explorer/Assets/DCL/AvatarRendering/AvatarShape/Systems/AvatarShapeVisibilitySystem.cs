@@ -36,10 +36,10 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             GetAvatarsVisibleWithOutlineQuery(World);
         }
 
-        public bool IsVisibleInCamera(Camera camera, Renderer renderer)
+        public bool IsVisibleInCamera(Camera camera, Bounds bounds)
         {
             Plane[] planes = GeometryUtility.CalculateFrustumPlanes(camera);
-            return GeometryUtility.TestPlanesAABB(planes, renderer.bounds);
+            return GeometryUtility.TestPlanesAABB(planes, bounds);
         }
 
         public bool IsWithinCameraDistance(Camera camera, Transform objectTransform, float maxDistance)
@@ -51,16 +51,15 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         [Query]
         private void GetAvatarsVisibleWithOutline(in AvatarBase avatarBase, ref AvatarShapeComponent avatarShape, ref AvatarCachedVisibilityComponent avatarCachedVisibility)
         {
-            if (IsWithinCameraDistance(camera.GetCameraComponent(World).Camera, avatarBase.HeadAnchorPoint, 8.0f))
+            if (IsWithinCameraDistance(camera.GetCameraComponent(World).Camera, avatarBase.HeadAnchorPoint, 8.0f) && IsVisibleInCamera(camera.GetCameraComponent(World).Camera, avatarBase.AvatarSkinnedMeshRenderer.bounds))
             {
                 foreach (var avs in avatarShape.InstantiatedWearables)
                 {
-                    if (avs.bOutlineCompatible)
+                    if (avs.OutlineCompatible)
                     {
                         foreach (var rend in avs.Renderers)
                         {
-                            if (IsVisibleInCamera(camera.GetCameraComponent(World).Camera, rend))
-                                OutlineRendererFeature.m_OutlineRenderers.Add(rend);
+                            OutlineRendererFeature.m_OutlineRenderers.Add(rend);
                         }
                     }
                 }
