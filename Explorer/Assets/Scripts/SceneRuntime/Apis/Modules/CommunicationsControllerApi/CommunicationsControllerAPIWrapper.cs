@@ -72,32 +72,40 @@ namespace SceneRuntime.Apis.Modules.CommunicationsControllerApi
         }
 
         [UsedImplicitly]
-        public object SendBinary(IList<object> broadcastData)
-        {
-            SendBinary(broadcastData, null);
-            return api.GetResult();
-        }
+        public object SendBinary(IList<object> broadcastData) =>
+            SendBinary(broadcastData, (IList<object>?)null);
 
         [UsedImplicitly]
-        public object SendBinary(IList<object> broadcastData, object? perRecipientData)
+        public object SendBinary(IList<object> broadcastData, IList<object>? peerData)
         {
-            SendBinary(broadcastData, null);
+            SendBinary(broadcastData, (string?)null);
 
-            if (perRecipientData is IList<object> perRecipientDataList)
-            {
-                for (var i = 0; i < perRecipientDataList.Count; i++)
+            if (peerData != null)
+                for (var i = 0; i < peerData.Count; i++)
                 {
-                    object? obj = perRecipientDataList[i];
+                    object? obj = peerData[i];
 
                     if (obj is IScriptObject perRecipientStruct)
                     {
-                        var recipient = (string)perRecipientStruct.GetProperty("address");
-                        var data = (IList<object>)perRecipientStruct.GetProperty("data");
+                        var recipient = (IList<object>)perRecipientStruct.GetProperty("address")!;
+                        var data = (IList<object>)perRecipientStruct.GetProperty("data")!;
 
-                        SendBinary(data, recipient);
+                        if (data.Count is 0)
+                            continue;
+
+                        if (recipient.Count is 0)
+                            SendBinary(broadcastData, (string?)null);
+
+                        foreach (object? address in recipient)
+                            if (address != null)
+                            {
+                                var stringAddress = (string)address;
+
+                                if (!string.IsNullOrEmpty(stringAddress))
+                                    SendBinary(data, stringAddress);
+                            }
                     }
                 }
-            }
 
             return api.GetResult();
         }
