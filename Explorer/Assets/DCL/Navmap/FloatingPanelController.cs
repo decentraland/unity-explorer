@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
+using DCL.Chat.Commands;
 using DCL.MapRenderer;
 using DCL.MapRenderer.MapLayers.Pins;
 using DCL.PlacesAPIService;
@@ -9,7 +10,6 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Threading;
-using DCL.Chat.Commands;
 using DCL.Chat.MessageBus;
 using UnityEngine;
 
@@ -27,6 +27,7 @@ namespace DCL.Navmap
         private readonly ImageController placeImageController;
         private readonly ImageController mapPinPlaceImageController;
         private readonly IMapPathEventBus mapPathEventBus;
+        private readonly IChatMessagesBus chatMessagesBus;
 
         private MultiStateButtonController likeButtonController;
         private MultiStateButtonController dislikeButtonController;
@@ -35,11 +36,10 @@ namespace DCL.Navmap
         private Vector2Int destination = DEFAULT_DESTINATION_PARCEL;
         private PlacesData.PlaceInfo currentParcelPlaceInfo;
 
-        private NavmapZoomController zoomController;
+        private readonly NavmapZoomController zoomController;
 
         public event Action<Vector2Int> OnJumpIn;
         public event Action<PlacesData.PlaceInfo?> OnSetAsDestination;
-        private readonly IChatMessagesBus chatMessagesBus;
 
         public FloatingPanelController(
             FloatingPanelView view,
@@ -75,12 +75,6 @@ namespace DCL.Navmap
             view.onPointerExitAction += NavmapUnblockZoom;
         }
 
-        private void NavmapBlockZoom() =>
-            zoomController.SetBlockZoom(true);
-
-        private void NavmapUnblockZoom() =>
-            zoomController.SetBlockZoom(false);
-
         public void Dispose()
         {
             likeButtonController.OnButtonClicked -= OnLike;
@@ -90,6 +84,12 @@ namespace DCL.Navmap
             view.onPointerEnterAction -= NavmapBlockZoom;
             view.onPointerExitAction -= NavmapUnblockZoom;
         }
+
+        private void NavmapBlockZoom() =>
+            zoomController.SetBlockZoom(true);
+
+        private void NavmapUnblockZoom() =>
+            zoomController.SetBlockZoom(false);
 
         private void InitButtons()
         {

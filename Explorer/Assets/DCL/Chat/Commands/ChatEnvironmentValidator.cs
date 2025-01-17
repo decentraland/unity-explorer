@@ -1,7 +1,8 @@
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using UnityEngine.Networking;
 using Utility.Types;
 
-namespace Global.Dynamic.ChatCommands
+namespace DCL.Chat.Commands
 {
     public class ChatEnvironmentValidator
     {

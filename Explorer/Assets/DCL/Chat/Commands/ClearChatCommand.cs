@@ -1,9 +1,8 @@
 using Cysharp.Threading.Tasks;
-using DCL.Chat.Commands;
 using DCL.Chat.History;
 using System.Threading;
 
-namespace Global.Dynamic.ChatCommands
+namespace DCL.Chat.Commands
 {
     /// <summary>
     /// Clears the chat.

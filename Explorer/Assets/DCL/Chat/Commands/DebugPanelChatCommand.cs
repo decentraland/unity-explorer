@@ -1,11 +1,9 @@
 ﻿using Cysharp.Threading.Tasks;
-using DCL.Chat.Commands;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.Views;
-using DCL.PluginSystem.Global;
 using System.Threading;
 
-namespace Global.Dynamic.ChatCommands
+namespace DCL.Chat.Commands
 {
     /// <summary>
     /// Toggles the debug panel, shows a list of available widgets or toggles a specific widget.
@@ -22,12 +20,13 @@ namespace Global.Dynamic.ChatCommands
         public bool DebugOnly => true;
 
         private readonly IDebugContainerBuilder debugContainerBuilder;
-        private readonly ConnectionStatusPanelPlugin connectionStatusPanelPlugin;
+        //TODO FRAN -> FIX THIS REFERENCE
+        //private readonly ConnectionStatusPanelPlugin connectionStatusPanelPlugin;
 
-        public DebugPanelChatCommand(IDebugContainerBuilder debugContainerBuilder, ConnectionStatusPanelPlugin connectionStatusPanelPlugin)
+        public DebugPanelChatCommand(IDebugContainerBuilder debugContainerBuilder)//, ConnectionStatusPanelPlugin connectionStatusPanelPlugin)
         {
             this.debugContainerBuilder = debugContainerBuilder;
-            this.connectionStatusPanelPlugin = connectionStatusPanelPlugin;
+           // this.connectionStatusPanelPlugin = connectionStatusPanelPlugin;
         }
 
         public bool ValidateParameters(string[] parameters) =>
@@ -39,7 +38,7 @@ namespace Global.Dynamic.ChatCommands
             {
                 bool visible = !debugContainerBuilder.IsVisible;
                 debugContainerBuilder.IsVisible = visible;
-                connectionStatusPanelPlugin.SetVisibility(visible);
+               // connectionStatusPanelPlugin.SetVisibility(visible);
 
                 return UniTask.FromResult(string.Empty);
             }

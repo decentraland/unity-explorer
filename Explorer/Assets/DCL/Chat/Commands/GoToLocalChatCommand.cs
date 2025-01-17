@@ -1,8 +1,7 @@
 using Cysharp.Threading.Tasks;
-using DCL.Chat.Commands;
 using System.Threading;
 
-namespace Global.Dynamic.ChatCommands
+namespace DCL.Chat.Commands
 {
     /// <summary>
     /// Teleports the player to a specific position inside the current realm.

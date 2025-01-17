@@ -10,7 +10,6 @@ using DCL.Emoji;
 using DCL.Input;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
-using DCL.UI;
 using DCL.UI.MainUI;
 using MVC;
 using System;

@@ -1,6 +1,8 @@
 using Cysharp.Threading.Tasks;
+using DCL.ChangeRealmPrompt;
 using DCL.Diagnostics;
 using DCL.ExternalUrlPrompt;
+using DCL.TeleportPrompt;
 using System;
 using System.Collections.Generic;
 using TMPro;
@@ -14,14 +16,9 @@ namespace DCL.UI.HyperlinkHandler
         [SerializeField] private TMP_Text textComponent;
 
         private readonly Dictionary<string, Action<string>> linkHandlers = new ();
+        private bool initialized;
 
         private HyperlinkHandlerSettings settings;
-        private bool initialized = false;
-        public void Initialize(HyperlinkHandlerSettings settings)
-        {
-            this.settings = settings;
-            initialized = true;
-        }
 
         private void Awake()
         {
@@ -42,6 +39,29 @@ namespace DCL.UI.HyperlinkHandler
             }
         }
 
+        public void OnPointerEnter(PointerEventData eventData)
+        {
+            int linkIndex = TMP_TextUtilities.FindIntersectingLink(textComponent, eventData.position, null);
+
+            if (linkIndex != -1)
+            {
+                //change pointer to selection pointer and underline text
+            }
+
+            //restore pointer and text
+        }
+
+        public void OnPointerExit(PointerEventData eventData)
+        {
+            //restore pointer and text
+        }
+
+        public void Initialize(HyperlinkHandlerSettings settings)
+        {
+            this.settings = settings;
+            initialized = true;
+        }
+
         private void AddLinkHandlers()
         {
             linkHandlers.Add("url", HandleURLLink);
@@ -51,8 +71,8 @@ namespace DCL.UI.HyperlinkHandler
 
         private void ProcessLink(string linkID)
         {
-            // Expected format: "linkType:linkValue"
-            string[] linkParts = linkID.Split(':');
+            // Expected format: "linkType:linkValue", we force the count to 2 as URLs will come in format https://
+            string[] linkParts = linkID.Split(':', 2);
 
             if (linkParts.Length != 2)
             {
@@ -73,37 +93,31 @@ namespace DCL.UI.HyperlinkHandler
             OpenUrlAsync(url).Forget();
         }
 
-        private async UniTask OpenUrlAsync(string url) =>
-            await settings.MvcManager.ShowAsync(ExternalUrlPromptController.IssueCommand(new ExternalUrlPromptController.Params(url)));
-
         private void HandleWorldLink(string sceneName)
         {
-            Debug.Log($"Loading World: {sceneName}");
+            ChangeRealmAsync("", sceneName).Forget();
         }
 
         private void HandleSceneLink(string itemId)
         {
-            Debug.Log($"Loading Scene: {itemId}");
+            string[] splitCords = itemId.Split(':');
+            var coords = new Vector2Int(int.Parse(splitCords[0]), int.Parse(splitCords[1]));
+            TeleportAsync(coords).Forget();
         }
 
-        public void OnPointerEnter(PointerEventData eventData)
+        private async UniTask OpenUrlAsync(string url) =>
+            await settings.MvcManager.ShowAsync(ExternalUrlPromptController.IssueCommand(new ExternalUrlPromptController.Params(url)));
+
+        private async UniTask TeleportAsync(Vector2Int coords)
         {
-            int linkIndex = TMP_TextUtilities.FindIntersectingLink(textComponent, eventData.position, null);
-
-            if (linkIndex != -1)
-            {
-                //change pointer to selection pointer and underline text
-            }
-            else
-            {
-                //restore pointer and text
-            }
-
+            await UniTask.SwitchToMainThread();
+            await settings.MvcManager.ShowAsync(TeleportPromptController.IssueCommand(new TeleportPromptController.Params(coords)));
         }
 
-        public void OnPointerExit(PointerEventData eventData)
+        private async UniTask ChangeRealmAsync(string message, string realm)
         {
-            //restore pointer and text
+            await UniTask.SwitchToMainThread();
+            await settings.MvcManager.ShowAsync(ChangeRealmPromptController.IssueCommand(new ChangeRealmPromptController.Params(message, realm)));
         }
     }
 }

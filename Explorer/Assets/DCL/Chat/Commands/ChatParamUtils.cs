@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Global.Dynamic.ChatCommands
+namespace DCL.Chat.Commands
 {
     public static class ChatParamUtils
     {

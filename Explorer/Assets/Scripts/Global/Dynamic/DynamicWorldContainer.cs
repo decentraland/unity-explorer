@@ -75,7 +75,6 @@ using ECS.SceneLifeCycle.CurrentScene;
 using ECS.SceneLifeCycle.LocalSceneDevelopment;
 using ECS.SceneLifeCycle.Realm;
 using Global.AppArgs;
-using Global.Dynamic.ChatCommands;
 using Global.Dynamic.Landscapes;
 using Global.Dynamic.Misc;
 using LiveKit.Internal.FFIClients.Pools;
@@ -485,7 +484,7 @@ namespace Global.Dynamic
                 new GoToChatCommand(chatTeleporter, staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource),
                 new GoToLocalChatCommand(chatTeleporter),
                 new WorldChatCommand(chatTeleporter),
-                new DebugPanelChatCommand(debugBuilder, connectionStatusPanelPlugin),
+                new DebugPanelChatCommand(debugBuilder),// connectionStatusPanelPlugin),
                 new ShowEntityChatCommand(worldInfoHub),
                 new ClearChatCommand(chatHistory),
                 new ReloadSceneChatCommand(reloadSceneController),

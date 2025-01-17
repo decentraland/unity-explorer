@@ -2,7 +2,7 @@
 using DCL.Chat.Commands;
 using System.Threading;
 
-namespace Global.Dynamic.ChatCommands
+namespace DCL.Chat.Commands
 {
     /// <summary>
     /// Teleports the player to a different realm.

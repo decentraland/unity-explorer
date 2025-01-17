@@ -3,6 +3,7 @@ using DCL.Chat;
 using DCL.Chat.Commands;
 using DCL.ScenesDebug.ScenesConsistency.DelayedResources;
 using DCL.Utilities.Extensions;
+using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
@@ -22,7 +23,7 @@ namespace DCL.ScenesDebug.ScenesConsistency.ChatTeleports
 
         public void GoTo(Vector2Int coordinate)
         {
-            var field = chatViewResource.DangerousResource().EnsureNotNull().InputField;
+            TMP_InputField field = chatViewResource.DangerousResource().EnsureNotNull().InputField;
             field.text = $"/{ChatCommandsUtils.COMMAND_GOTO} {coordinate.x},{coordinate.y}";
             field.OnSubmit(new BaseEventData(null!));
         }

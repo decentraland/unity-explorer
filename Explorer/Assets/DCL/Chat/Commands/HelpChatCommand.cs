@@ -1,11 +1,10 @@
 using Cysharp.Threading.Tasks;
-using DCL.Chat.Commands;
 using Global.AppArgs;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading;
 
-namespace Global.Dynamic.ChatCommands
+namespace DCL.Chat.Commands
 {
     /// <summary>
     /// Prints a list of available chat commands and their descriptions.
