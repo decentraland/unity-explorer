@@ -176,7 +176,11 @@ namespace ECS.StreamableLoading.Common.Systems
 
             // Special path for partial downloading
             if (state.PartialDownloadingData is { FullyDownloaded: false })
+            {
+                // Return the promise for re-evaluation
+                state.RequestReevaluate();
                 return;
+            }
 
             // Remove current source flag from the permitted sources
             // it indicates that the current source was used

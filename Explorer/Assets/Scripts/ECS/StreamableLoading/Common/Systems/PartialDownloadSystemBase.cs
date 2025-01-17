@@ -76,11 +76,11 @@ namespace ECS.StreamableLoading.Common.Systems
                 if (partialState.FullyDownloaded)
                 {
                     StreamableLoadingResult<TData> loadedResult = await ProcessCompletedData(partialState.FullData.ToArray(), intention, partition, ct, state);
-                    state.SetChunkCompleted(partialState);
+                    state.SetChunkData(partialState);
                     return loadedResult;
                 }
 
-                state.SetChunkCompleted(partialState);
+                state.SetChunkData(partialState);
                 return default;
             }
             finally { buffersPool.Return(partialDownloadBuffer); }
