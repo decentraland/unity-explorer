@@ -27,7 +27,8 @@ namespace DCL.UI.Controls
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
             UniTask.WhenAny(
                 viewInstance!.closeButton.OnClickAsync(ct),
-                UniTask.WaitUntil(() => input.UI.Close.WasPerformedThisFrame(), cancellationToken: ct)
+                UniTask.WaitUntil(() => input.UI.Close.WasPerformedThisFrame(), cancellationToken: ct),
+                UniTask.NextFrame(ct).ContinueWith(() => UniTask.WaitUntil(() => input.Shortcuts.Controls.WasPerformedThisFrame(), cancellationToken: ct))
             );
 
         public override void Dispose()

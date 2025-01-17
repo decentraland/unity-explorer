@@ -97,7 +97,7 @@ namespace DCL.PluginSystem.Global
             NotificationIconTypes notificationIconTypes = (await assetsProvisioner.ProvideMainAssetAsync(settings.NotificationIconTypesSO, ct: ct)).Value;
             NftTypeIconSO rarityBackgroundMapping = await assetsProvisioner.ProvideMainAssetValueAsync(settings.RarityColorMappings, ct);
 
-            ControlsPanelView panelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.ControlsePanelPrefab, ct: ct)).GetComponent<ControlsPanelView>();
+            ControlsPanelView panelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.ControlsPanelPrefab, ct: ct)).GetComponent<ControlsPanelView>();
             ControlsPanelController.Preallocate(panelViewAsset, null!, out ControlsPanelView controlsPanelView);
 
             mvcManager.RegisterController(new SidebarController(() =>
@@ -134,7 +134,7 @@ namespace DCL.PluginSystem.Global
             public StylizedSkyboxSettingsAsset SkyboxSettingsAsset { get; private set; }
 
             [field: SerializeField]
-            public AssetReferenceGameObject ControlsePanelPrefab;
+            public AssetReferenceGameObject ControlsPanelPrefab;
         }
     }
 }

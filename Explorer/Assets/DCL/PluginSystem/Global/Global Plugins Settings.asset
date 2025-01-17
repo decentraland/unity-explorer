@@ -449,7 +449,7 @@ MonoBehaviour:
           m_SubObjectType: 
           m_EditorAssetChanged: 0
         <SkyboxSettingsAsset>k__BackingField: {fileID: 11400000, guid: 50aa9483411844942bd409d4b4612221, type: 2}
-        ControlsePanelPrefab:
+        ControlsPanelPrefab:
           m_AssetGUID: 542424588a68b46f688ef5c667aa0c68
           m_SubObjectName: 
           m_SubObjectType: 
