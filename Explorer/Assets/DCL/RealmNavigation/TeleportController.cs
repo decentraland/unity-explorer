@@ -5,7 +5,6 @@ using DCL.Character;
 using DCL.CharacterCamera;
 using DCL.CharacterMotion.Components;
 using DCL.Ipfs;
-using DCL.RealmNavigation;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Reporting;
 using System;
@@ -18,7 +17,7 @@ using Utility;
 using Random = System.Random;
 using SpawnPoint = DCL.Ipfs.SceneMetadata.SpawnPoint;
 
-namespace DCL.ParcelsService
+namespace DCL.RealmNavigation
 {
     public class TeleportController : ITeleportController
     {

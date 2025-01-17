@@ -1,6 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.UserInAppInitializationFlow;
 using DCL.Utilities;
 using System;
 using System.Collections.Generic;

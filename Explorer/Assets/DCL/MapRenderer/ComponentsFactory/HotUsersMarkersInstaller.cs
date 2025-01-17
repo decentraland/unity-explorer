@@ -28,7 +28,6 @@ namespace DCL.MapRenderer.ComponentsFactory
             IMapRendererSettings settings,
             IOnlineUsersProvider onlineUsersProvider,
             IRealmNavigator realmNavigator,
-            RemoteUsersRequestController remoteUsersRequestController,
             CancellationToken cancellationToken)
         {
             assetsProvisioner = assetsProv;

@@ -2,7 +2,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Ipfs;
 using DCL.Optimization.Pools;
-using DCL.RealmNavigation;
 using ECS;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
@@ -15,7 +14,7 @@ using Unity.Mathematics;
 using UnityEngine;
 using Utility;
 
-namespace DCL.ParcelsService
+namespace DCL.RealmNavigation
 {
     public class RetrieveSceneFromVolatileWorld : IRetrieveScene
     {

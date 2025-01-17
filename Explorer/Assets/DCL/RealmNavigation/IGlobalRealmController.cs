@@ -3,9 +3,10 @@ using DCL.Ipfs;
 using ECS.SceneLifeCycle.Realm;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common;
+using Global.Dynamic;
 using System.Threading;
 
-namespace Global.Dynamic
+namespace DCL.RealmNavigation
 {
     public interface IGlobalRealmController : IRealmController
     {

@@ -1,9 +1,8 @@
-﻿using DCL.RealmNavigation;
-using DCL.Utilities;
+﻿using DCL.Utilities;
 using System.Collections.Generic;
 using Utility;
 
-namespace DCL.UserInAppInitializationFlow
+namespace DCL.RealmNavigation
 {
     public class LoadingStatus : ILoadingStatus
     {

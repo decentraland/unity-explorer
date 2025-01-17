@@ -1,7 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.ResourcesUnloading;
-using DCL.UserInAppInitializationFlow;
 using System.Threading;
 using UnityEngine;
 using Utility.Types;

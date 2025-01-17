@@ -1,7 +1,5 @@
 using Cysharp.Threading.Tasks;
 using DCL.AsyncLoadReporting;
-using DCL.ParcelsService;
-using DCL.UserInAppInitializationFlow;
 using System.Threading;
 
 namespace DCL.RealmNavigation.TeleportOperations

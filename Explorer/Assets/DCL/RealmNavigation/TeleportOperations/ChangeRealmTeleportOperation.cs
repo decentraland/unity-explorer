@@ -1,5 +1,4 @@
 using Cysharp.Threading.Tasks;
-using DCL.UserInAppInitializationFlow;
 using ECS.SceneLifeCycle.Realm;
 using System.Threading;
 

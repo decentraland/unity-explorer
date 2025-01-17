@@ -2,14 +2,13 @@
 using Arch.System;
 using Cysharp.Threading.Tasks;
 using DCL.Ipfs;
-using DCL.RealmNavigation;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common;
 using System.Threading;
 using UnityEngine;
 
-namespace DCL.ParcelsService
+namespace DCL.RealmNavigation
 {
     public partial class RetrieveSceneFromFixedRealm : IRetrieveScene
     {

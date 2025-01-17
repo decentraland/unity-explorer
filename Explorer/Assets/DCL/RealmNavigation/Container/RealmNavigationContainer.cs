@@ -3,11 +3,12 @@ using DCL.Diagnostics;
 using DCL.LOD.Systems;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Entities;
-using DCL.ParcelsService;
+using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.RealmNavigation.LoadingOperation;
 using DCL.RealmNavigation.TeleportOperations;
 using DCL.SceneLoadingScreens.LoadingScreen;
 using DCL.UserInAppInitializationFlow;
+using DCL.Utilities.Extensions;
 using ECS.SceneLifeCycle.Realm;
 using Global;
 using Global.Dynamic;
@@ -24,7 +25,7 @@ namespace DCL.RealmNavigation
         /// <summary>
         ///     Realm Navigator without main-screen fallback functionality
         /// </summary>
-        public IRealmNavigator RealmNavigator { get; private init; }
+        public IRealmNavigator RealmNavigator { get; private init; } = null!;
 
         public IRealmNavigator WithMainScreenFallback(IUserInAppInitializationFlow userInAppInitializationFlow, Entity playerEntity, World globalWorld)
         {
@@ -43,7 +44,11 @@ namespace DCL.RealmNavigation
             ExposedGlobalDataContainer exposedGlobalDataContainer,
             ILoadingScreen loadingScreen)
         {
-            var realmChangeOperations = new SequentialLoadingOperation<TeleportParams>(staticContainer.LoadingStatus, new ITeleportOperation[]
+            const string ANALYTICS_OP_NAME = "teleportation";
+
+            IAnalyticsController analytics = bootstrapContainer.Analytics.EnsureNotNull();
+
+            var realmChangeOperations = new AnalyticsSequentialLoadingOperation<TeleportParams>(staticContainer.LoadingStatus, new ITeleportOperation[]
             {
                 new RestartLoadingStatus(),
                 new RemoveRemoteEntitiesTeleportOperation(remoteEntities, globalWorld),
@@ -51,21 +56,26 @@ namespace DCL.RealmNavigation
                 new RemoveCameraSamplingDataTeleportOperation(globalWorld, exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy),
                 new DestroyAllRoadAssetsTeleportOperation(globalWorld, lodContainer.RoadAssetsPool),
                 new ChangeRealmTeleportOperation(realmContainer.RealmController),
-                new AnalyticsFlushTeleportOperation(bootstrapContainer.Analytics),
+                new AnalyticsFlushTeleportOperation(analytics),
                 new LoadLandscapeTeleportOperation(landscape),
                 new PrewarmRoadAssetPoolsTeleportOperation(realmContainer.RealmController, lodContainer.RoadAssetsPool),
                 new UnloadCacheImmediateTeleportOperation(staticContainer.CacheCleaner, staticContainer.SingletonSharedDependencies.MemoryBudget),
                 new MoveToParcelInNewRealmTeleportOperation(staticContainer.LoadingStatus, realmContainer.RealmController, exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy, realmContainer.TeleportController, exposedGlobalDataContainer.CameraSamplingData),
                 new RestartRoomAsyncTeleportOperation(roomHub, LIVEKIT_TIMEOUT),
-            }, ReportCategory.SCENE_LOADING);
+            },
+            ReportCategory.SCENE_LOADING,
+            analytics,
+            ANALYTICS_OP_NAME);
 
-            var teleportInSameRealmOperation = new SequentialLoadingOperation<TeleportParams>(staticContainer.LoadingStatus,
+            var teleportInSameRealmOperation = new AnalyticsSequentialLoadingOperation<TeleportParams>(staticContainer.LoadingStatus,
                 new ITeleportOperation[]
                 {
                     new RestartLoadingStatus(),
                     new UnloadCacheImmediateTeleportOperation(staticContainer.CacheCleaner, staticContainer.SingletonSharedDependencies.MemoryBudget),
                     new MoveToParcelInSameRealmTeleportOperation(realmContainer.TeleportController),
-                }, ReportCategory.SCENE_LOADING);
+                }, ReportCategory.SCENE_LOADING,
+                analytics,
+                ANALYTICS_OP_NAME);
 
             realmChangeOperations.AddDebugControl(realmContainer.DebugView.DebugWidgetBuilder, "Realm Change");
             teleportInSameRealmOperation.AddDebugControl(realmContainer.DebugView.DebugWidgetBuilder, "Teleport In Same Realm");

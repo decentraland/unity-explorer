@@ -1,7 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
-using DCL.ParcelsService;
 using DCL.SceneLoadingScreens.LoadingScreen;
 using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;

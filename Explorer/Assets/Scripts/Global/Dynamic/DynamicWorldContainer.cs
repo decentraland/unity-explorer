@@ -397,7 +397,6 @@ namespace Global.Dynamic
                 selfProfile,
                 dynamicWorldParams,
                 appArgs,
-                identityCache,
                 backgroundMusic,
                 roomHub,
                 chatHistory);
@@ -419,6 +418,7 @@ namespace Global.Dynamic
                         realmNavigator,
                         staticContainer.RealmData,
                         sharedNavmapCommandBus,
+                        onlineUsersProvider,
                         ct
                     );
 

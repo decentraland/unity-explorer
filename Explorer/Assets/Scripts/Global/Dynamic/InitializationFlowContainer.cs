@@ -9,7 +9,6 @@ using DCL.RealmNavigation.LoadingOperation;
 using DCL.SceneLoadingScreens.LoadingScreen;
 using DCL.UserInAppInitializationFlow.StartupOperations;
 using DCL.Utilities.Extensions;
-using DCL.Web3.Identities;
 using Global;
 using Global.AppArgs;
 using Global.Dynamic;
@@ -33,7 +32,6 @@ namespace DCL.UserInAppInitializationFlow
             ISelfProfile selfProfile,
             DynamicWorldParams dynamicWorldParams,
             IAppArgs appArgs,
-            IWeb3IdentityCache identityCache,
             AudioClipConfig backgroundMusic,
             IRoomHub roomHub,
             IChatHistory chatHistory)
@@ -41,7 +39,6 @@ namespace DCL.UserInAppInitializationFlow
             ILoadingStatus? loadingStatus = staticContainer.LoadingStatus;
 
             var ensureLivekitConnectionStartupOperation = new EnsureLivekitConnectionStartupOperation(loadingStatus, liveKitHealthCheck);
-            var initializeFeatureFlagsStartupOperation = new InitializeFeatureFlagsStartupOperation(loadingStatus, staticContainer.FeatureFlagsProvider, identityCache, bootstrapContainer.DecentralandUrlsSource, appArgs);
             var preloadProfileStartupOperation = new PreloadProfileStartupOperation(loadingStatus, selfProfile);
             var loadPlayerAvatarStartupOperation = new LoadPlayerAvatarStartupOperation(loadingStatus, selfProfile, staticContainer.MainPlayerAvatarBaseProxy);
             var loadLandscapeStartupOperation = new LoadLandscapeStartupOperation(loadingStatus, terrainContainer.Landscape);
@@ -50,13 +47,11 @@ namespace DCL.UserInAppInitializationFlow
             var loadGlobalPxOperation = new LoadGlobalPortableExperiencesStartupOperation(loadingStatus, selfProfile, staticContainer.FeatureFlagsCache, bootstrapContainer.DebugSettings, staticContainer.PortableExperiencesController);
             var sentryDiagnostics = new SentryDiagnosticStartupOperation(realmContainer.RealmController, bootstrapContainer.DiagnosticsContainer);
 
-            var startUpOps = new AnalyticsStartupOperation(
-                bootstrapContainer.Analytics.EnsureNotNull(),
+            var startUpOps = new AnalyticsSequentialLoadingOperation<IStartupOperation.Params>(
                 loadingStatus,
                 new IStartupOperation[]
                 {
                     ensureLivekitConnectionStartupOperation,
-                    initializeFeatureFlagsStartupOperation,
                     preloadProfileStartupOperation,
                     loadPlayerAvatarStartupOperation,
                     loadLandscapeStartupOperation,
@@ -65,12 +60,13 @@ namespace DCL.UserInAppInitializationFlow
                     loadGlobalPxOperation,
                     sentryDiagnostics,
                 },
-                ReportCategory.STARTUP);
+                ReportCategory.STARTUP,
+                bootstrapContainer.Analytics.EnsureNotNull(),
+                "start-up");
 
             startUpOps.AddDebugControl(realmContainer.DebugView.DebugWidgetBuilder, "Initialization Flow");
 
-            var reLoginOps = new AnalyticsStartupOperation(
-                bootstrapContainer.Analytics.EnsureNotNull(),
+            var reLoginOps = new AnalyticsSequentialLoadingOperation<IStartupOperation.Params>(
                 loadingStatus,
                 new IStartupOperation[]
                 {
@@ -82,7 +78,10 @@ namespace DCL.UserInAppInitializationFlow
                     teleportStartupOperation,
                     loadGlobalPxOperation,
                     sentryDiagnostics,
-                }, ReportCategory.STARTUP);
+                },
+                ReportCategory.STARTUP,
+                bootstrapContainer.Analytics.EnsureNotNull(),
+                "re-login");
 
             reLoginOps.AddDebugControl(realmContainer.DebugView.DebugWidgetBuilder, "Re-Login Flow");
 

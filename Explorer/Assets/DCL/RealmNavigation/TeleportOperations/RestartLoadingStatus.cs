@@ -1,5 +1,4 @@
 ﻿using Cysharp.Threading.Tasks;
-using DCL.UserInAppInitializationFlow;
 using System.Threading;
 using Utility.Types;
 

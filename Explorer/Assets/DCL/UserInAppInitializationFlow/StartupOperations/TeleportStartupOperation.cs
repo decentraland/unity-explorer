@@ -1,7 +1,6 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.ParcelsService;
 using DCL.RealmNavigation;
 using DCL.RealmNavigation.TeleportOperations;
 using DCL.Utilities;

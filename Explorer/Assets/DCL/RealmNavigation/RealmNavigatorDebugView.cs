@@ -1,7 +1,7 @@
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 
-namespace Global.Dynamic
+namespace DCL.RealmNavigation
 {
     public class RealmNavigatorDebugView
     {

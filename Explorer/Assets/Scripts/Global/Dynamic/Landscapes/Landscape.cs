@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.AsyncLoadReporting;
 using DCL.Ipfs;
 using DCL.Landscape;
+using DCL.RealmNavigation;
 using ECS;
 using ECS.SceneLifeCycle.Realm;
 using ECS.SceneLifeCycle.SceneDefinition;

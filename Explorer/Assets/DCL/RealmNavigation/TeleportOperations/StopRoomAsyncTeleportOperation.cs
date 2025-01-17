@@ -1,6 +1,5 @@
 using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.RoomHubs;
-using DCL.UserInAppInitializationFlow;
 using System;
 using System.Threading;
 

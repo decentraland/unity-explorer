@@ -4,7 +4,7 @@ using ECS.SceneLifeCycle.Reporting;
 using System.Threading;
 using UnityEngine;
 
-namespace DCL.ParcelsService
+namespace DCL.RealmNavigation
 {
     public interface ITeleportController
     {

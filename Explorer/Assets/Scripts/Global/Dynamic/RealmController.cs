@@ -6,7 +6,6 @@ using DCL.Diagnostics;
 using DCL.Ipfs;
 using DCL.LOD.Components;
 using DCL.Optimization.Pools;
-using DCL.ParcelsService;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;

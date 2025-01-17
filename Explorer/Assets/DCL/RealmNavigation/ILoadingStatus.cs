@@ -1,4 +1,3 @@
-using DCL.UserInAppInitializationFlow;
 using DCL.Utilities;
 
 namespace DCL.RealmNavigation
