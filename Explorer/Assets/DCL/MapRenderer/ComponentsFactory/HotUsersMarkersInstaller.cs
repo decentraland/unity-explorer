@@ -5,6 +5,7 @@ using DCL.MapRenderer.Culling;
 using DCL.MapRenderer.MapLayers;
 using DCL.MapRenderer.MapLayers.Users;
 using DCL.MapRenderer.MapLayers.UsersMarker;
+using DCL.Multiplayer.Connectivity;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -26,7 +27,7 @@ namespace DCL.MapRenderer.ComponentsFactory
             IAssetsProvisioner assetsProv,
             IMapRendererSettings settings,
             ITeleportBusController teleportBusController,
-            RemoteUsersRequestController remoteUsersRequestController,
+            IOnlineUsersProvider onlineUsersProvider,
             CancellationToken cancellationToken)
         {
             assetsProvisioner = assetsProv;
@@ -43,7 +44,7 @@ namespace DCL.MapRenderer.ComponentsFactory
 
             var wrapsPool = new ObjectPool<IHotUserMarker>(CreateWrap, actionOnRelease: m => m.Dispose());
 
-            var controller = new UsersMarkersHotAreaController(objectsPool, wrapsPool, configuration.HotUserMarkersRoot, coordsUtils, cullingController, teleportBusController, remoteUsersRequestController);
+            var controller = new UsersMarkersHotAreaController(objectsPool, wrapsPool, configuration.HotUserMarkersRoot, coordsUtils, cullingController, teleportBusController, onlineUsersProvider);
             await controller.InitializeAsync(cancellationToken);
             writer.Add(MapLayer.HotUsersMarkers, controller);
         }
