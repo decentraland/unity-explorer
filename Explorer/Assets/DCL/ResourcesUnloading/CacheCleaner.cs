@@ -5,7 +5,6 @@ using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using DCL.LOD;
-using DCL.Optimization;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.Profiles;
@@ -13,6 +12,7 @@ using DCL.Profiling;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.Cache;
+using ECS.StreamableLoading.Cache.InMemory;
 using ECS.StreamableLoading.NFTShapes;
 using ECS.StreamableLoading.Textures;
 using ECS.Unity.GLTFContainer.Asset.Cache;
@@ -53,7 +53,7 @@ namespace DCL.ResourcesUnloading
         private IRoadAssetPool? roadCache;
 
         private IEmoteStorage? emoteCache;
-        private IJsSourcesCache? jsSourcesCache;
+        private IMemoryCache<string, string>? jsSourcesCache;
 
         private readonly IPerformanceBudget unlimitedFPSBudget;
 
@@ -150,14 +150,14 @@ namespace DCL.ResourcesUnloading
         public void Register(IEmoteStorage emoteStorage) =>
             this.emoteCache = emoteStorage;
 
-        public void Register(IJsSourcesCache jsSourcesCache) =>
+        public void Register(IMemoryCache<string, string> jsSourcesCache) =>
             this.jsSourcesCache = jsSourcesCache;
 
         public void UpdateProfilingCounters()
         {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             ProfilingCounters.WearablesAssetsInCatalogAmount.Value = ((WearableStorage)wearableStorage).WearableAssetsInCatalog;
-            ProfilingCounters.WearablesAssetsInCacheAmount.Value = wearableAssetsCache.AssetsCount;
+            ProfilingCounters.WearablesAssetsInCacheAmount.Value = wearableAssetsCache?.AssetsCount ?? 0;
 #endif
         }
 

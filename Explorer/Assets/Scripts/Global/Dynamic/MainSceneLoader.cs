@@ -20,6 +20,8 @@ using DCL.Web3.Accounts.Factory;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using DCL.WebRequests.Analytics;
+using ECS.StreamableLoading.Cache.Disk;
+using ECS.StreamableLoading.Cache.Disk.CleanUp;
 using Global.AppArgs;
 using Global.Dynamic.RealmUrl;
 using Global.Dynamic.RealmUrl.Names;
@@ -146,6 +148,10 @@ namespace Global.Dynamic
             var webRequestsContainer = WebRequestsContainer.Create(identityCache, texturesFuse, debugContainerBuilder, staticSettings.WebRequestsBudget, compressionEnabled);
             var realmUrls = new RealmUrls(launchSettings, new RealmNamesMap(webRequestsContainer.WebRequestController), decentralandUrlsSource);
 
+            var cacheDirectory = CacheDirectory.NewDefault();
+            var diskCleanUp = new LRUDiskCleanUp(cacheDirectory);
+            var diskCache = new DiskCache(cacheDirectory, diskCleanUp);
+
             bootstrapContainer = await BootstrapContainer.CreateAsync(
                 debugSettings,
                 sceneLoaderSettings: settings,
@@ -160,6 +166,7 @@ namespace Global.Dynamic
                    .WithSplashScreen(splashScreen, hideOnFinish: false)
                    .WithLog("Load Guard"),
                 realmUrls,
+                diskCache,
                 world,
                 destroyCancellationToken
             );

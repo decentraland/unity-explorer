@@ -74,3 +74,6 @@ Assets/AddressableAssetsData/OSX/
 Assets/AddressableAssetsData/OSX.meta
 Assets/AddressableAssetsData/Windows/
 Assets/AddressableAssetsData/Windows.meta
+
+# Disk Caching
+DiskCache/

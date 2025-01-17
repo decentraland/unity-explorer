@@ -7,6 +7,7 @@ using DCL.Optimization.PerformanceBudgeting;
 using DCL.WebRequests;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
+using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
 using ECS.StreamableLoading.NFTShapes.DTOs;
@@ -23,7 +24,7 @@ namespace ECS.StreamableLoading.NFTShapes
     {
         private readonly IWebRequestController webRequestController;
 
-        public LoadNFTShapeSystem(World world, IStreamableCache<Texture2DData, GetNFTShapeIntention> cache, IWebRequestController webRequestController) : base(world, cache)
+        public LoadNFTShapeSystem(World world, IStreamableCache<Texture2DData, GetNFTShapeIntention> cache, IWebRequestController webRequestController, IDiskCache<Texture2DData> diskCache) : base(world, cache, diskCache)
         {
             this.webRequestController = webRequestController;
         }
