@@ -96,7 +96,6 @@ namespace DCL.Friends.UI.Sections
             if (friendListPagedRequestManager.HasElements)
             {
                 view.LoopList.SetListItemCount(friendListPagedRequestManager.GetElementsNumber(), false);
-                view.LoopList.RefreshAllShownItem();
                 friendListPagedRequestManager.FirstFolderClicked += FolderClicked;
                 friendListPagedRequestManager.SecondFolderClicked += FolderClicked;
             }

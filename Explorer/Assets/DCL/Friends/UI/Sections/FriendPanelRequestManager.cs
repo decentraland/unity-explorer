@@ -18,9 +18,6 @@ namespace DCL.Friends.UI.Sections
         private readonly int emptyElementIndex;
         private readonly int userElementIndex;
 
-        private Action<T>? elementCustomizer;
-        private Func<int, Profile> firstCollectionAccessor;
-        private Func<int, Profile> secondCollectionAccessor;
         private int pageNumber = 0;
         private int totalFetched = 0;
 
@@ -53,19 +50,15 @@ namespace DCL.Friends.UI.Sections
             this.userElementIndex = userElementIndex;
         }
 
-        protected void SetElementCustomizer(Action<T> customizer) { elementCustomizer = customizer; }
-
-        protected void ConfigureAccessors(Func<int, Profile> firstAccessor,
-            Func<int, Profile> secondAccessor)
-        {
-            this.firstCollectionAccessor = firstAccessor;
-            this.secondCollectionAccessor = secondAccessor;
-        }
-
         public abstract void Dispose();
 
         protected abstract int GetFirstCollectionCount();
         protected abstract int GetSecondCollectionCount();
+
+        protected abstract Profile GetFirstCollectionElement(int index);
+        protected abstract Profile GetSecondCollectionElement(int index);
+
+        protected virtual void CustomiseElement(T element) { }
 
         public LoopListViewItem2 GetLoopListItemByIndex(LoopListView2 loopListView, int index)
         {
@@ -91,8 +84,8 @@ namespace DCL.Friends.UI.Sections
                 {
                     listItem = loopListView.NewListViewItem(loopListView.ItemPrefabDataList[userElementIndex].mItemPrefab.name);
                     T friendListUserView = listItem.GetComponent<T>();
-                    friendListUserView.Configure(firstCollectionAccessor(index - 1));
-                    elementCustomizer?.Invoke(friendListUserView);
+                    friendListUserView.Configure(GetFirstCollectionElement(index - 1));
+                    CustomiseElement(friendListUserView);
                     friendListUserView.RemoveMainButtonClickListeners();
                     friendListUserView.MainButtonClicked += profile => FriendElementClicked?.Invoke(profile);
                 }
@@ -113,8 +106,8 @@ namespace DCL.Friends.UI.Sections
                 {
                     listItem = loopListView.NewListViewItem(loopListView.ItemPrefabDataList[userElementIndex].mItemPrefab.name);
                     T friendListUserView = listItem.GetComponent<T>();
-                    friendListUserView.Configure(secondCollectionAccessor(index - onlineFriendMarker - 2));
-                    elementCustomizer?.Invoke(friendListUserView);
+                    friendListUserView.Configure(GetSecondCollectionElement(index - onlineFriendMarker - 2));
+                    CustomiseElement(friendListUserView);
                     friendListUserView.RemoveMainButtonClickListeners();
                     friendListUserView.MainButtonClicked += profile => FriendElementClicked?.Invoke(profile);
                 }

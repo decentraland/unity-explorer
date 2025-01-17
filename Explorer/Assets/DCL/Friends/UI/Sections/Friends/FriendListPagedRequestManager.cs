@@ -15,39 +15,40 @@ namespace DCL.Friends.UI.Sections.Friends
         private List<Profile> onlineFriends = new ();
         private List<Profile> offlineFriends = new ();
 
-        public event Action<Profile> JumpInClicked;
-        public event Action<Profile> ContextMenuClicked;
+        public event Action<Profile>? JumpInClicked;
+        public event Action<Profile>? ContextMenuClicked;
 
         public FriendListPagedRequestManager(IFriendsService friendsService,
             IFriendsEventBus friendEventBus,
             int pageSize) : base(friendsService, friendEventBus, pageSize, FriendPanelStatus.ONLINE, FriendPanelStatus.OFFLINE, STATUS_ELEMENT_INDEX, EMPTY_ELEMENT_INDEX, USER_ELEMENT_INDEX)
         {
-            ConfigureAccessors(GetOnlineProfile, GetOfflineProfile);
-            SetElementCustomizer(friendListUserView =>
-            {
-                friendListUserView.ContextMenuButton.onClick.RemoveAllListeners();
-                friendListUserView.ContextMenuButton.onClick.AddListener(() => ContextMenuClicked?.Invoke(friendListUserView.UserProfile));
-                friendListUserView.JumpInButton.onClick.RemoveAllListeners();
-                friendListUserView.JumpInButton.onClick.AddListener(() => JumpInClicked?.Invoke(friendListUserView.UserProfile));
-            });
+
         }
-
-        private Profile GetOnlineProfile(int index) =>
-            onlineFriends[index];
-
-        private Profile GetOfflineProfile(int index) =>
-            offlineFriends[index];
 
         public override void Dispose()
         {
 
         }
 
+        protected override Profile GetFirstCollectionElement(int index) =>
+            onlineFriends[index];
+
+        protected override Profile GetSecondCollectionElement(int index) =>
+            offlineFriends[index];
+
         protected override int GetFirstCollectionCount() =>
             onlineFriends.Count;
 
         protected override int GetSecondCollectionCount() =>
             offlineFriends.Count;
+
+        protected override void CustomiseElement(FriendListUserView element)
+        {
+            element.ContextMenuButton.onClick.RemoveAllListeners();
+            element.ContextMenuButton.onClick.AddListener(() => ContextMenuClicked?.Invoke(element.UserProfile));
+            element.JumpInButton.onClick.RemoveAllListeners();
+            element.JumpInButton.onClick.AddListener(() => JumpInClicked?.Invoke(element.UserProfile));
+        }
 
         protected async override UniTask FetchInitialData(CancellationToken ct)
         {

@@ -40,9 +40,7 @@ namespace DCL.Friends.UI.Sections.Requests
             friendListInitCts = friendListInitCts.SafeRestart();
             await friendListPagedRequestManager.Init(ct);
 
-            view.SetEmptyState(!friendListPagedRequestManager.HasElements);
             view.SetLoadingState(false);
-            view.SetScrollView(friendListPagedRequestManager.HasElements);
 
             view.LoopList.SetListItemCount(friendListPagedRequestManager.GetElementsNumber(), false);
             view.LoopList.RefreshAllShownItem();
