@@ -58,7 +58,7 @@ namespace DCL.Friends.UI.Sections
         protected abstract Profile GetFirstCollectionElement(int index);
         protected abstract Profile GetSecondCollectionElement(int index);
 
-        protected virtual void CustomiseElement(T element) { }
+        protected virtual void CustomiseElement(T elementView, int index, FriendPanelStatus section) { }
 
         public LoopListViewItem2 GetLoopListItemByIndex(LoopListView2 loopListView, int index)
         {
@@ -84,8 +84,9 @@ namespace DCL.Friends.UI.Sections
                 {
                     listItem = loopListView.NewListViewItem(loopListView.ItemPrefabDataList[userElementIndex].mItemPrefab.name);
                     T friendListUserView = listItem.GetComponent<T>();
-                    friendListUserView.Configure(GetFirstCollectionElement(index - 1));
-                    CustomiseElement(friendListUserView);
+                    int collectionIndex = index - 1;
+                    friendListUserView.Configure(GetFirstCollectionElement(collectionIndex));
+                    CustomiseElement(friendListUserView, collectionIndex, firstCollectionStatus);
                     friendListUserView.RemoveMainButtonClickListeners();
                     friendListUserView.MainButtonClicked += profile => ElementClicked?.Invoke(profile);
                 }
@@ -106,8 +107,9 @@ namespace DCL.Friends.UI.Sections
                 {
                     listItem = loopListView.NewListViewItem(loopListView.ItemPrefabDataList[userElementIndex].mItemPrefab.name);
                     T friendListUserView = listItem.GetComponent<T>();
-                    friendListUserView.Configure(GetSecondCollectionElement(index - onlineFriendMarker - 2));
-                    CustomiseElement(friendListUserView);
+                    int collectionIndex = index - onlineFriendMarker - 2;
+                    friendListUserView.Configure(GetSecondCollectionElement(collectionIndex));
+                    CustomiseElement(friendListUserView, collectionIndex, secondCollectionStatus);
                     friendListUserView.RemoveMainButtonClickListeners();
                     friendListUserView.MainButtonClicked += profile => ElementClicked?.Invoke(profile);
                 }

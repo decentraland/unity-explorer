@@ -109,8 +109,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 68.8, y: -32.03}
-  m_SizeDelta: {x: 35.86, y: 10}
+  m_AnchoredPosition: {x: 91.287186, y: -32.03}
+  m_SizeDelta: {x: 80.8346, y: 10}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &4505282767290136237
 CanvasRenderer:
@@ -664,6 +664,9 @@ MonoBehaviour:
   <FaceRim>k__BackingField: {fileID: 2832497847450356709}
   <ContextMenuButton>k__BackingField: {fileID: 7541025456679391709}
   <JumpInButton>k__BackingField: {fileID: 3539447002694376727}
+  <OnlineStatusText>k__BackingField: {fileID: 7747039600216781622}
+  <OnlineStatusColorIndicator>k__BackingField: {fileID: 2261045933952845536}
+  <OnlineStatusConfiguration>k__BackingField: {fileID: 11400000, guid: bbca3b81bc8c54e1fb00e0cc1fa3f195, type: 2}
 --- !u!114 &7162172119129587731 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 5406061596824009179, guid: 5dd1047f77ec242c3bb28f7edc2af796, type: 3}

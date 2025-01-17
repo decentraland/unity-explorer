@@ -42,12 +42,16 @@ namespace DCL.Friends.UI.Sections.Friends
         public override int GetSecondCollectionCount() =>
             offlineFriends.Count;
 
-        protected override void CustomiseElement(FriendListUserView element)
+        protected override void CustomiseElement(FriendListUserView elementView, int collectionIndex, FriendPanelStatus section)
         {
-            element.ContextMenuButton.onClick.RemoveAllListeners();
-            element.ContextMenuButton.onClick.AddListener(() => ContextMenuClicked?.Invoke(element.UserProfile));
-            element.JumpInButton.onClick.RemoveAllListeners();
-            element.JumpInButton.onClick.AddListener(() => JumpInClicked?.Invoke(element.UserProfile));
+            elementView.ContextMenuButton.onClick.RemoveAllListeners();
+            elementView.ContextMenuButton.onClick.AddListener(() => ContextMenuClicked?.Invoke(elementView.UserProfile));
+            elementView.JumpInButton.onClick.RemoveAllListeners();
+            elementView.JumpInButton.onClick.AddListener(() => JumpInClicked?.Invoke(elementView.UserProfile));
+            if (section == FriendPanelStatus.OFFLINE)
+                elementView.SetOnlineStatus(OnlineStatus.OFFLINE);
+            //TODO (Lorenzo): set online status
+            // elementView.OnlineStatus.SetText();
         }
 
         protected async override UniTask FetchInitialData(CancellationToken ct)

@@ -12,6 +12,8 @@ namespace DCL.Friends.UI.Sections.Requests
         private const int STATUS_ELEMENT_INDEX = 1;
         private const int EMPTY_ELEMENT_INDEX = 2;
 
+        private const int MAX_REQUEST_MESSAGE_PREVIEW_LENGTH = 40;
+
         private readonly IProfileCache profileCache;
 
         private List<FriendRequest> receivedRequests = new ();
@@ -42,12 +44,14 @@ namespace DCL.Friends.UI.Sections.Requests
         protected override Profile GetSecondCollectionElement(int index) =>
             profileCache.Get(sentRequests[index].To);
 
-        protected override void CustomiseElement(RequestUserView element)
+        protected override void CustomiseElement(RequestUserView elementView, int collectionIndex, FriendPanelStatus section)
         {
-            element.ContextMenuButton.onClick.RemoveAllListeners();
-            element.ContextMenuButton.onClick.AddListener(() => ContextMenuClicked?.Invoke(element.UserProfile));
-            //TODO (Lorenzo): set the request date
-            // requestUserView.RequestDate = ???
+            elementView.ContextMenuButton.onClick.RemoveAllListeners();
+            elementView.ContextMenuButton.onClick.AddListener(() => ContextMenuClicked?.Invoke(elementView.UserProfile));
+
+            FriendRequest request = section == FriendPanelStatus.RECEIVED ? receivedRequests[collectionIndex] : sentRequests[collectionIndex];
+            elementView.RequestDate = request.Timestamp;
+            elementView.MessagePreviewText.SetText(request.MessageBody.Length > MAX_REQUEST_MESSAGE_PREVIEW_LENGTH ? $"{request.MessageBody.Substring(0, MAX_REQUEST_MESSAGE_PREVIEW_LENGTH)}..." : request.MessageBody);
         }
 
         protected async override UniTask FetchInitialData(CancellationToken ct)
