@@ -105,7 +105,9 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.CameraReelImages => $"https://camera-reel-service.decentraland.{ENV}/api/images",
                 DecentralandUrl.CameraReelPlaces => $"https://camera-reel-service.decentraland.{ENV}/api/places",
                 DecentralandUrl.CameraReelLink => $"https://reels.decentraland.{ENV}",
-                DecentralandUrl.ApiFriends => $"wss://rpc-social-service.decentraland.{ENV}",
+                // TODO: use the environment once the service is deployed to prod
+                DecentralandUrl.ApiFriends => "wss://rpc-social-service-ea.decentraland.zone",
+                // DecentralandUrl.ApiFriends => $"wss://rpc-social-service-ea.decentraland.{ENV}",
                 _ => throw new ArgumentOutOfRangeException(nameof(decentralandUrl), decentralandUrl, null!)
             };
     }
