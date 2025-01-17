@@ -1,9 +1,6 @@
-﻿#nullable enable
-
-using DCL.CharacterMotion.Animation;
+﻿using DCL.CharacterMotion.Animation;
 using DCL.CharacterMotion.Settings;
 using System;
-using UnityEngine;
 using UnityEngine.Pool;
 using Utility.PriorityQueue;
 
@@ -11,7 +8,7 @@ namespace DCL.Multiplayer.Movement
 {
     public struct RemotePlayerMovementComponent : IDisposable
     {
-        public const string TEST_ID = "SelfReplica";
+        public const string SELF_REPLICA_ID = "SelfReplica";
         private const short MAX_MESSAGES = 10;
 
         private readonly IObjectPool<SimplePriorityQueue<NetworkMovementMessage>> queuePool;

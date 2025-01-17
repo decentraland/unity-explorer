@@ -84,7 +84,7 @@ namespace DCL.Multiplayer.Movement.Systems
 
             widget?.AddSingleButton("Instantiate Self-Replica", () => InstantiateSelfReplica(world))
                    .AddSingleButton("Remove Self-Replica", () => RemoveSelfReplica(world))
-                   .AddStringFieldWithConfirmation("SelfReplica", "Debug profile", DebugProfile)
+                   .AddStringFieldWithConfirmation(RemotePlayerMovementComponent.SELF_REPLICA_ID, "Debug profile", DebugProfile)
                    .AddToggleField("Use Compression", evt => this.mainSettings.UseCompression = evt.newValue, this.mainSettings.UseCompression)
                    .AddToggleField("Use Linear", evt => SelectInterpolationType(evt.newValue), useLinear)
                    .AddToggleField("Use speed-up", evt => this.mainSettings.InterpolationSettings.UseSpeedUp = evt.newValue, this.mainSettings.InterpolationSettings.UseSpeedUp)
@@ -190,15 +190,15 @@ namespace DCL.Multiplayer.Movement.Systems
             if (remoteEntities != null)
             {
                 Profile playerProfiler = world.Get<Profile>(playerEntity);
-                var profile = Profile.NewProfileWithAvatar(RemotePlayerMovementComponent.TEST_ID, playerProfiler.Avatar);
-                var remoteProfile = new RemoteProfile(profile, RemotePlayerMovementComponent.TEST_ID, RoomSource.ISLAND);
+                var profile = Profile.NewProfileWithAvatar(RemotePlayerMovementComponent.SELF_REPLICA_ID, playerProfiler.Avatar);
+                var remoteProfile = new RemoteProfile(profile, RemotePlayerMovementComponent.SELF_REPLICA_ID, RoomSource.ISLAND);
                 selfReplicaEntity = remoteEntities.TryCreateOrUpdateRemoteEntity(remoteProfile, world);
 
                 if (world.TryGet(selfReplicaEntity.Value, out CharacterTransform transformComp))
                 {
                     transformComp.Transform.position = playerTransform.Position;
                     transformComp.Transform.rotation = playerTransform.Rotation;
-                    transformComp.Transform.name = RemotePlayerMovementComponent.TEST_ID;
+                    transformComp.Transform.name = RemotePlayerMovementComponent.SELF_REPLICA_ID;
 
                     TrailRenderer trail = transformComp.Transform.gameObject.TryAddComponent<TrailRenderer>();
                     trail.time = TRAIL_LIFETIME;
@@ -218,7 +218,7 @@ namespace DCL.Multiplayer.Movement.Systems
             debugSettings.SelfSending = false;
 
             if (remoteEntities == null) return;
-            remoteEntities.TryRemove(RemotePlayerMovementComponent.TEST_ID, RoomSource.ISLAND, world);
+            remoteEntities.TryRemove(RemotePlayerMovementComponent.SELF_REPLICA_ID, RoomSource.ISLAND, world);
 
             selfReplicaEntity = null;
         }
