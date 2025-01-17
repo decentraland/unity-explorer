@@ -112,6 +112,9 @@ namespace Global.Dynamic
 
             bool compressionEnabled = IPlatform.DEFAULT.IsNot(IPlatform.Kind.Windows) || applicationParametersParser.HasFlag(AppArgsFlags.FORCE_TEXTURE_COMPRESSION);
 
+            if (IPlatform.DEFAULT.Is(IPlatform.Kind.Mac) && SystemInfo.processorType!.Contains("Intel", StringComparison.InvariantCultureIgnoreCase))
+                compressionEnabled = false;
+
             ITexturesFuse TextureFuseFactory() =>
                 ITexturesFuse.NewDefault();
 
