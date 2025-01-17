@@ -60,6 +60,7 @@ namespace DCL.Friends
             client.Dispose();
         }
 
+        // TODO: subscribe to friend's connectivity status of the rpc service whenever its available
         public async UniTask SubscribeToIncomingFriendshipEventsAsync(CancellationToken ct)
         {
             await EnsureRpcConnectionAsync(ct);
