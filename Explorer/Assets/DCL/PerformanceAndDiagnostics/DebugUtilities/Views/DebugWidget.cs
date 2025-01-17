@@ -29,6 +29,12 @@ namespace DCL.DebugUtilities.Views
             foldout.Add(element);
         }
 
+        internal void RemoveElementIfAttached(VisualElement element)
+        {
+            if (foldout.Contains(element))
+                foldout.Remove(element);
+        }
+
         private static string ConstructPrefsKey(string title) =>
             $"DebugWidget_Foldout_{title}";
 

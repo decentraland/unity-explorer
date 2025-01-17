@@ -65,9 +65,8 @@ namespace DCL.DebugUtilities.Views
 
             for (int i = 0; i < delta; i++)
             {
-                var item = VisualItem.NewVisualItem(controlFactoryMethod, factories);
+                var item = VisualItem.NewVisualItem(controlFactoryMethod, factories, Widget);
                 instantiatedVisualItems.Add(item);
-                Widget.AddElement(item.Control);
             }
         }
 
@@ -81,14 +80,16 @@ namespace DCL.DebugUtilities.Views
         {
             private readonly ElementBinding<string> nameBinding;
             private readonly ElementBinding<string> valueBinding;
+            private readonly DebugWidget parent;
 
             public DebugControl Control { get; }
 
-            public VisualItem(DebugControl control, ElementBinding<string> nameBinding, ElementBinding<string> valueBinding)
+            public VisualItem(DebugControl control, ElementBinding<string> nameBinding, ElementBinding<string> valueBinding, DebugWidget parent)
             {
                 this.Control = control;
                 this.nameBinding = nameBinding;
                 this.valueBinding = valueBinding;
+                this.parent = parent;
             }
 
             public void Show(string name, string value)
@@ -96,19 +97,21 @@ namespace DCL.DebugUtilities.Views
                 Control.visible = true;
                 nameBinding.Value = name;
                 valueBinding.Value = value;
+                parent.AddElement(Control);
             }
 
             public void Hide()
             {
                 Control.visible = false;
+                parent.RemoveElementIfAttached(Control);
             }
 
-            public static VisualItem NewVisualItem(Func<DebugControl> controlFactoryMethod, IReadOnlyDictionary<Type, IDebugElementFactory> factories)
+            public static VisualItem NewVisualItem(Func<DebugControl> controlFactoryMethod, IReadOnlyDictionary<Type, IDebugElementFactory> factories, DebugWidget parent)
             {
                 var nameBinding = new ElementBinding<string>(string.Empty);
                 var valueBinding = new ElementBinding<string>(string.Empty);
                 var control = DebugWidgetBuilder.CreateControl(controlFactoryMethod, factories, new DebugTextFieldDef(nameBinding), new DebugTextFieldDef(valueBinding));
-                return new VisualItem(control, nameBinding, valueBinding);
+                return new VisualItem(control, nameBinding, valueBinding, parent);
             }
         }
     }
