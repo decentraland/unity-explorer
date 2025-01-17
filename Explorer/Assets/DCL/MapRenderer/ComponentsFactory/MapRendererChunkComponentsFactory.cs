@@ -1,8 +1,7 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
-using DCL.MapPins.Bus;
-using DCL.Audio;
 using DCL.EventsApi;
+using DCL.MapPins.Bus;
 using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.Culling;
 using DCL.MapRenderer.MapCameraController;
@@ -14,8 +13,8 @@ using DCL.MapRenderer.MapLayers.Cluster;
 using DCL.MapRenderer.MapLayers.ParcelHighlight;
 using DCL.MapRenderer.MapLayers.Pins;
 using DCL.MapRenderer.MapLayers.SatelliteAtlas;
-using DCL.MapRenderer.MapLayers.UsersMarker;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Multiplayer.Connectivity;
 using DCL.Navmap;
 using DCL.NotificationsBusController.NotificationsBus;
 using DCL.PlacesAPIService;
@@ -45,6 +44,7 @@ namespace DCL.MapRenderer.ComponentsFactory
         private readonly ITeleportBusController teleportBusController;
         private readonly INotificationsBusController notificationsBusController;
         private readonly INavmapBus navmapBus;
+        private readonly IOnlineUsersProvider onlineUsersProvider;
         private PlayerMarkerInstaller playerMarkerInstaller { get; }
         private SceneOfInterestsMarkersInstaller sceneOfInterestMarkerInstaller { get; }
         private CategoryScenesMarkersInstaller categoriesMarkerInstaller { get; }
@@ -66,7 +66,8 @@ namespace DCL.MapRenderer.ComponentsFactory
             IMapPinsEventBus mapPinsEventBus,
             INotificationsBusController notificationsBusController,
             ITeleportBusController teleportBusController,
-            INavmapBus navmapBus)
+            INavmapBus navmapBus,
+            IOnlineUsersProvider onlineUsersProvider)
         {
             this.assetsProvisioner = assetsProvisioner;
             mapSettings = settings;
@@ -80,6 +81,7 @@ namespace DCL.MapRenderer.ComponentsFactory
             this.notificationsBusController = notificationsBusController;
             this.mapPinsEventBus = mapPinsEventBus;
             this.navmapBus = navmapBus;
+            this.onlineUsersProvider = onlineUsersProvider;
         }
 
         async UniTask<MapRendererComponents> IMapRendererComponentsFactory.CreateAsync(CancellationToken cancellationToken)
@@ -102,7 +104,6 @@ namespace DCL.MapRenderer.ComponentsFactory
 
             MapCameraObject mapCameraObjectPrefab = (await assetsProvisioner.ProvideMainAssetAsync(mapSettings.MapCameraObject, ct: cancellationToken)).Value;
             PinMarkerController pinMarkerController = await pinMarkerInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, mapSettings, assetsProvisioner, mapPathEventBus, mapPinsEventBus, navmapBus, cancellationToken);
-            RemoteUsersRequestController remoteUsersRequestController = new RemoteUsersRequestController(webRequestController, decentralandUrlsSource);
 
             ClusterMarkerObject? clusterPrefab = await GetClusterPrefabAsync(cancellationToken);
             ClusterMarkerObject? categoryMarkersClusterPrefab = await GetCategoryClusterPrefabAsync(cancellationToken);
@@ -126,7 +127,7 @@ namespace DCL.MapRenderer.ComponentsFactory
                 CreateParcelAtlasAsync(layers, configuration, coordsUtils, cullingController, cancellationToken),
                 CreateSatelliteAtlasAsync(layers, configuration, coordsUtils, cullingController, cancellationToken),
                 playerMarkerInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, mapSettings, assetsProvisioner, mapPathEventBus, cancellationToken),
-                hotUsersMarkersInstaller.InstallAsync(layers, configuration, coordsUtils, cullingController, assetsProvisioner, mapSettings, teleportBusController, remoteUsersRequestController, cancellationToken),
+                hotUsersMarkersInstaller.InstallAsync(layers, configuration, coordsUtils, cullingController, assetsProvisioner, mapSettings, teleportBusController, onlineUsersProvider, cancellationToken),
                 mapPathInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, mapSettings, assetsProvisioner, mapPathEventBus, notificationsBusController, cancellationToken)
                 /* List of other creators that can be executed in parallel */);
 
