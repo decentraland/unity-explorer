@@ -141,7 +141,7 @@ namespace DCL.Friends
             foreach (var user in response.Users)
                 allFriendsBuffer.Add(user.Address);
 
-            IEnumerable<Profile> profiles = await FetchProfiles(allFriendsBuffer, ct);
+            IEnumerable<Profile> profiles = await FetchProfilesAsync(allFriendsBuffer, ct);
 
             return new PaginatedFriendsResult(profiles, response.PaginationData.Total);
         }
@@ -357,12 +357,12 @@ namespace DCL.Friends
                 friendsCache.Add(user.Address);
             }
 
-            IEnumerable<Profile> profiles = await FetchProfiles(allFriendsBuffer, ct);
+            IEnumerable<Profile> profiles = await FetchProfilesAsync(allFriendsBuffer, ct);
 
             return new PaginatedFriendsResult(profiles, response.PaginationData.Total);
         }
 
-        private async UniTask<IEnumerable<Profile>> FetchProfiles(IEnumerable<string> ids, CancellationToken ct)
+        private async UniTask<IEnumerable<Profile>> FetchProfilesAsync(IEnumerable<string> ids, CancellationToken ct)
         {
             fetchProfileTasks.Clear();
 
