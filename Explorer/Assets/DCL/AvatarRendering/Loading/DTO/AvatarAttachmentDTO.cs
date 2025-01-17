@@ -70,6 +70,7 @@ namespace DCL.AvatarRendering.Loading.DTO
             public string[] replaces;
             public string[] hides;
             public string[] removesDefaultHiding;
+            public bool outlineCompatible = true;
         }
 
         [Serializable]

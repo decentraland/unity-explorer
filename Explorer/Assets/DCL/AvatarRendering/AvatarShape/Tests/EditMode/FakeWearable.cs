@@ -70,5 +70,8 @@ namespace DCL.AvatarRendering.AvatarShape.Tests.EditMode
 
         public bool HasSameModelsForAllGenders() =>
             false;
+
+        public bool IsOutlineCompatible() =>
+            Model.Asset!.metadata.data.outlineCompatible;
     }
 }

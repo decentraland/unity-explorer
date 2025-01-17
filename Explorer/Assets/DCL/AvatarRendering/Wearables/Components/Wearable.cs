@@ -60,6 +60,9 @@ namespace DCL.AvatarRendering.Wearables.Components
         public string GetCategory() =>
             Model.Asset!.metadata.data.category;
 
+        public bool IsOutlineCompatible() =>
+            Model.Asset!.metadata.data.outlineCompatible;
+
         public bool TryResolveDTO(StreamableLoadingResult<WearableDTO> result)
         {
             if (Model.IsInitialized)
