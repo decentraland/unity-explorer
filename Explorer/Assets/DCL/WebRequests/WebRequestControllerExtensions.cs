@@ -77,7 +77,7 @@ namespace DCL.WebRequests
         )
         {
             PartialDownloadHandler handler = new PartialDownloadHandler(ref partialData, PARTIAL_DOWNLOAD_BUFFER);
-            return controller.SendAsync<GenericGetRequest, GenericGetArguments, PartialDownloadOp, PartialDownloadingData>(commonArguments, default(GenericGetArguments), new PartialDownloadOp(partialData), ct, reportData, headersInfo, signInfo, ignoreErrorCodes, downloadHandler: handler);
+            return controller.SendAsync<GenericGetRequest, GenericGetArguments, PartialDownloadOp, PartialDownloadingData>(commonArguments, default(GenericGetArguments), new PartialDownloadOp(partialData), ct, reportData, headersInfo, signInfo, ignoreErrorCodes, downloadHandler: handler, suppressErrors: true);
         }
 
         public struct PartialDownloadOp : IWebRequestOp<GenericGetRequest, PartialDownloadingData>

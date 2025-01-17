@@ -486,6 +486,14 @@ MonoBehaviour:
       Severity: 2
     - Category: COMMS_SCENE_HANDLER
       Severity: 2
+    - Category: ASSET_BUNDLES
+      Severity: 3
+    - Category: ASSET_BUNDLES
+      Severity: 2
+    - Category: ASSET_BUNDLES
+      Severity: 0
+    - Category: ASSET_BUNDLES
+      Severity: 4
   sentryMatrix:
     entries: []
   debounceEnabled: 1

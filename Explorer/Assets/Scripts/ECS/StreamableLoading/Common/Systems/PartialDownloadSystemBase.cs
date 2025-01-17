@@ -75,7 +75,7 @@ namespace ECS.StreamableLoading.Common.Systems
 
                 if (partialState.FullyDownloaded)
                 {
-                    StreamableLoadingResult<TData> loadedResult = await ProcessCompletedData(partialState.FullData.ToArray(), intention, partition, ct);
+                    StreamableLoadingResult<TData> loadedResult = await ProcessCompletedData(partialState.FullData.ToArray(), intention, partition, ct, state);
                     state.SetChunkCompleted(partialState);
                     return loadedResult;
                 }
@@ -86,6 +86,6 @@ namespace ECS.StreamableLoading.Common.Systems
             finally { buffersPool.Return(partialDownloadBuffer); }
         }
 
-        protected abstract UniTask<StreamableLoadingResult<TData>> ProcessCompletedData(byte[] completeData, TIntention intention, IPartitionComponent partition, CancellationToken ct);
+        protected abstract UniTask<StreamableLoadingResult<TData>> ProcessCompletedData(byte[] completeData, TIntention intention, IPartitionComponent partition, CancellationToken ct, StreamableLoadingState state);
     }
 }

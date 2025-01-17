@@ -47,7 +47,7 @@ namespace ECS.StreamableLoading.NFTShapes
             return await base.FlowInternalAsync(intention, state, partition, ct);
         }
 
-        protected override async UniTask<StreamableLoadingResult<Texture2DData>> ProcessCompletedData(byte[] completeData, GetNFTShapeIntention intention, IPartitionComponent partition,  CancellationToken ct)
+        protected override async UniTask<StreamableLoadingResult<Texture2DData>> ProcessCompletedData(byte[] completeData, GetNFTShapeIntention intention, IPartitionComponent partition,  CancellationToken ct, StreamableLoadingState state)
         {
             EnumResult<IOwnedTexture2D,NativeMethods.ImageResult> textureFromBytesAsync = await texturesFuse.TextureFromBytesAsync(completeData, TextureType.Albedo, ct);
             return new StreamableLoadingResult<Texture2DData>(new Texture2DData(textureFromBytesAsync.Value));
