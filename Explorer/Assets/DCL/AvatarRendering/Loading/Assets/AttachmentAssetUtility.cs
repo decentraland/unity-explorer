@@ -15,7 +15,7 @@ namespace DCL.AvatarRendering.Loading.Assets
             instantiatedWearables.Clear();
         }
 
-        public static CachedAttachment InstantiateWearable(this IAttachmentsAssetsCache attachmentsAssetsCache, AttachmentRegularAsset originalAsset, Transform parent, bool _OutlineCompatible)
+        public static CachedAttachment InstantiateWearable(this IAttachmentsAssetsCache attachmentsAssetsCache, AttachmentRegularAsset originalAsset, Transform parent, bool outlineCompatible)
         {
             if (attachmentsAssetsCache.TryGet(originalAsset, out CachedAttachment cachedWearable))
                 cachedWearable.Instance.transform.SetParent(parent);
@@ -23,7 +23,7 @@ namespace DCL.AvatarRendering.Loading.Assets
             {
                 var instantiatedWearable = Object.Instantiate(originalAsset.MainAsset, parent);
                 instantiatedWearable.name = originalAsset.GetInstanceName();
-                cachedWearable = new CachedAttachment(originalAsset, instantiatedWearable, _OutlineCompatible);
+                cachedWearable = new CachedAttachment(originalAsset, instantiatedWearable, outlineCompatible);
             }
 
             cachedWearable.Instance.transform.ResetLocalTRS();
