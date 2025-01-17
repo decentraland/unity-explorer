@@ -44,17 +44,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d959f668c783f804ead053e44e583b01, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  SecondsInDay: 86400
-  PlayOnStart: 1
-  StopRefresh: 0
-  Speed: 30
-  NaturalTime: 43200
-  NormalizedTime: 0.5
   skyboxMaterial: {fileID: 2100000, guid: caf6cf56d95066b45bc1ca92d6516b48, type: 2}
-  RefreshTime: 0
-  DirectionalLight: {fileID: 0}
-  LightAnimation: {fileID: 7400000, guid: 3b17a8a5ab9ee104899eb22c70935c38, type: 2}
-  DirectionalColorRamp:
+  refreshTime: 0
+  directionalLight: {fileID: 0}
+  lightAnimation: {fileID: 7400000, guid: 3b17a8a5ab9ee104899eb22c70935c38, type: 2}
+  directionalColorRamp:
     serializedVersion: 2
     key0: {r: 0.5137255, g: 0.3882353, b: 1, a: 1}
     key1: {r: 1, g: 0.60188675, b: 0.6317452, a: 1}
@@ -84,7 +78,7 @@ MonoBehaviour:
     m_ColorSpace: 0
     m_NumColorKeys: 7
     m_NumAlphaKeys: 2
-  SunColorRamp:
+  sunColorRamp:
     serializedVersion: 2
     key0: {r: 2.1421235, g: 1.3647059, b: 2.9960785, a: 1}
     key1: {r: 0.34509805, g: 0.39506456, b: 0.7490196, a: 1}
@@ -321,7 +315,7 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  SkyZenitColorRamp:
+  skyZenitColorRamp:
     serializedVersion: 2
     key0: {r: 0.25872707, g: 0.19663256, b: 0.50710505, a: 1}
     key1: {r: 0.36896423, g: 0.39887056, b: 0.7917046, a: 1}
@@ -351,7 +345,7 @@ MonoBehaviour:
     m_ColorSpace: 0
     m_NumColorKeys: 6
     m_NumAlphaKeys: 2
-  SkyHorizonColorRamp:
+  skyHorizonColorRamp:
     serializedVersion: 2
     key0: {r: 0.29270092, g: 0, b: 0.44041583, a: 1}
     key1: {r: 0.4137574, g: 0.372373, b: 0.5891275, a: 1}
@@ -381,7 +375,7 @@ MonoBehaviour:
     m_ColorSpace: 0
     m_NumColorKeys: 8
     m_NumAlphaKeys: 2
-  SkyNadirColorRamp:
+  skyNadirColorRamp:
     serializedVersion: 2
     key0: {r: 0, g: 0, b: 0, a: 1}
     key1: {r: 0.8584906, g: 0.44206172, b: 0.43329477, a: 1}
@@ -411,7 +405,7 @@ MonoBehaviour:
     m_ColorSpace: 0
     m_NumColorKeys: 5
     m_NumAlphaKeys: 2
-  RimColorRamp:
+  rimColorRamp:
     serializedVersion: 2
     key0: {r: 0.011961541, g: 0.04163278, b: 0.1509434, a: 1}
     key1: {r: 0.04108385, g: 0.112637654, b: 0.29032618, a: 1}
@@ -441,8 +435,8 @@ MonoBehaviour:
     m_ColorSpace: 0
     m_NumColorKeys: 8
     m_NumAlphaKeys: 2
-  IndirectLight: 1
-  IndirectSkyRamp:
+  indirectLight: 1
+  indirectSkyRamp:
     serializedVersion: 2
     key0: {r: 0.3536315, g: 0, b: 1, a: 1}
     key1: {r: 1, g: 0.5967654, b: 0.5264151, a: 1}
@@ -472,7 +466,7 @@ MonoBehaviour:
     m_ColorSpace: 0
     m_NumColorKeys: 5
     m_NumAlphaKeys: 2
-  IndirectEquatorRamp:
+  indirectEquatorRamp:
     serializedVersion: 2
     key0: {r: 0.6171662, g: 0.6205496, b: 0.7660377, a: 1}
     key1: {r: 0.90188676, g: 0.52418566, b: 0.4747668, a: 1}
@@ -502,7 +496,7 @@ MonoBehaviour:
     m_ColorSpace: 0
     m_NumColorKeys: 5
     m_NumAlphaKeys: 2
-  GroundEquatorRamp:
+  groundEquatorRamp:
     serializedVersion: 2
     key0: {r: 0.42499506, g: 0.18426357, b: 0.20304249, a: 1}
     key1: {r: 0.5471698, g: 0.18325028, b: 0.18325028, a: 1}
@@ -532,7 +526,7 @@ MonoBehaviour:
     m_ColorSpace: 0
     m_NumColorKeys: 6
     m_NumAlphaKeys: 2
-  CloudsColorRamp:
+  cloudsColorRamp:
     serializedVersion: 2
     key0: {r: 0.33896223, g: 0.19420016, b: 1.0592737, a: 1}
     key1: {r: 0.2980392, g: 0.41575664, b: 1.1529412, a: 1}
@@ -562,7 +556,7 @@ MonoBehaviour:
     m_ColorSpace: 0
     m_NumColorKeys: 7
     m_NumAlphaKeys: 2
-  CloudsHighlightsIntensity:
+  cloudsHighlightsIntensity:
     serializedVersion: 2
     m_Curve:
     - serializedVersion: 3
@@ -631,8 +625,8 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  Fog: 1
-  FogColorRamp:
+  fog: 1
+  fogColorRamp:
     serializedVersion: 2
     key0: {r: 0.23921569, g: 0.08627451, b: 0.47058824, a: 1}
     key1: {r: 0.2869752, g: 0.2784314, b: 0.5137255, a: 1}
@@ -662,5 +656,4 @@ MonoBehaviour:
     m_ColorSpace: 0
     m_NumColorKeys: 7
     m_NumAlphaKeys: 2
-  textUI: {fileID: 0}
   editMode: 0

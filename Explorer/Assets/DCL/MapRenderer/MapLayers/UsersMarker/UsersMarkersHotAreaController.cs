@@ -11,13 +11,15 @@ using DCL.ECSComponents;
 using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.Culling;
 using DCL.MapRenderer.MapLayers.UsersMarker;
-using ECS.Groups;
+using DCL.Multiplayer.Connectivity;
 using ECS.LifeCycle.Components;
 using MVC;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Pool;
+using Utility;
+using Utility.TeleportBus;
 
 namespace DCL.MapRenderer.MapLayers.Users
 {
@@ -25,10 +27,15 @@ namespace DCL.MapRenderer.MapLayers.Users
     {
         private readonly IObjectPool<HotUserMarkerObject> objectsPool;
         private readonly IObjectPool<IHotUserMarker> wrapsPool;
+        private readonly ITeleportBusController teleportBusController;
+        private readonly IOnlineUsersProvider onlineUsersProvider;
         private TrackPlayersPositionSystem trackSystem;
         private RemovedTrackedPlayersPositionSystem untrackSystem;
 
         private readonly Dictionary<string, IHotUserMarker> markers = new ();
+        private readonly HashSet<string> remoteUsers = new ();
+        private readonly HashSet<string> closebyUsers = new ();
+        private CancellationTokenSource cancellationToken;
         private bool isEnabled;
 
         public UsersMarkersHotAreaController(
@@ -36,11 +43,23 @@ namespace DCL.MapRenderer.MapLayers.Users
             IObjectPool<IHotUserMarker> wrapsPool,
             Transform parent,
             ICoordsUtils coordsUtils,
-            IMapCullingController cullingController)
+            IMapCullingController cullingController,
+            ITeleportBusController teleportBusController,
+            IOnlineUsersProvider onlineUsersProvider)
             : base(parent, coordsUtils, cullingController)
         {
             this.objectsPool = objectsPool;
             this.wrapsPool = wrapsPool;
+            this.teleportBusController = teleportBusController;
+            this.onlineUsersProvider = onlineUsersProvider;
+            this.teleportBusController.SubscribeToTeleportOperation(OnTeleport);
+            cancellationToken = new CancellationTokenSource();
+        }
+
+        private void OnTeleport(Vector2Int destinationcoordinates)
+        {
+            cancellationToken = cancellationToken.SafeRestart();
+            ProcessRemoteUsersAsync(cancellationToken.Token).Forget();
         }
 
         protected override void DisposeImpl()
@@ -48,6 +67,9 @@ namespace DCL.MapRenderer.MapLayers.Users
             objectsPool.Clear();
             wrapsPool.Clear();
         }
+
+        public UniTask InitializeAsync(CancellationToken cancellationToken) =>
+            UniTask.CompletedTask;
 
         public void CreateSystems(ref ArchSystemsWorldBuilder<World> builder)
         {
@@ -66,6 +88,9 @@ namespace DCL.MapRenderer.MapLayers.Users
             if (!isEnabled)
                 return;
 
+            if (remoteUsers.Contains(avatarShape.ID))
+                remoteUsers.Remove(avatarShape.ID);
+
             if (markers.TryGetValue(avatarShape.ID, out var marker))
             {
                 marker.UpdateMarkerPosition(avatarShape.ID, transformComponent.Transform.position);
@@ -73,6 +98,7 @@ namespace DCL.MapRenderer.MapLayers.Users
             }
             else
             {
+                closebyUsers.Add(avatarShape.ID);
                 var wrap = wrapsPool.Get();
                 markers.Add(avatarShape.ID, wrap);
                 mapCullingController.StartTracking(wrap, wrap);
@@ -83,6 +109,7 @@ namespace DCL.MapRenderer.MapLayers.Users
         [All(typeof(DeleteEntityIntention))]
         private void RemoveMarker(in AvatarShapeComponent avatarShape)
         {
+            closebyUsers.Remove(avatarShape.ID);
             if (markers.TryGetValue(avatarShape.ID, out var marker))
             {
                 mapCullingController.StopTracking(marker);
@@ -91,10 +118,44 @@ namespace DCL.MapRenderer.MapLayers.Users
             }
         }
 
-        public UniTask Enable(CancellationToken cancellationToken)
+        private async UniTask ProcessRemoteUsersAsync(CancellationToken ct)
+        {
+            var remotePlayersData = await onlineUsersProvider.GetAsync(ct);
+
+            //Reset the markers bound to remote users by releasing them
+            foreach (string remoteUser in remoteUsers)
+            {
+                if(closebyUsers.Contains(remoteUser)) continue;
+
+                if (!markers.TryGetValue(remoteUser, out var marker)) continue;
+
+                mapCullingController.StopTracking(marker);
+                wrapsPool.Release(marker);
+                markers.Remove(remoteUser);
+            }
+            remoteUsers.Clear();
+
+            foreach (OnlineUserData remotePlayerData in remotePlayersData)
+            {
+                if (closebyUsers.Contains(remotePlayerData.avatarId))
+                    continue;
+
+                remoteUsers.Add(remotePlayerData.avatarId);
+
+                if (markers.TryGetValue(remotePlayerData.avatarId, out var marker)) continue;
+
+                var wrap = wrapsPool.Get();
+                markers.Add(remotePlayerData.avatarId, wrap);
+                wrap.UpdateMarkerPosition(remotePlayerData.avatarId, remotePlayerData.position);
+                mapCullingController.StartTracking(wrap, wrap);
+            }
+        }
+
+        public async UniTask EnableAsync(CancellationToken cancellationToken)
         {
             isEnabled = true;
-            return UniTask.CompletedTask;
+
+            await ProcessRemoteUsersAsync(cancellationToken);
         }
 
         public UniTask Disable(CancellationToken cancellationToken)

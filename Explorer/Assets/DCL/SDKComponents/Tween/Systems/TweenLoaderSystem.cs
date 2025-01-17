@@ -15,9 +15,7 @@ namespace DCL.SDKComponents.Tween.Systems
     [ThrottlingEnabled]
     public partial class TweenLoaderSystem : BaseUnityLoopSystem
     {
-        public TweenLoaderSystem(World world) : base(world)
-        {
-        }
+        public TweenLoaderSystem(World world) : base(world) { }
 
         protected override void Update(float t)
         {
@@ -30,14 +28,12 @@ namespace DCL.SDKComponents.Tween.Systems
         {
             if (pbTween.ModeCase == PBTween.ModeOneofCase.None) return;
 
-            SDKTweenComponent sdkTweenComponent = new SDKTweenComponent
+            var sdkTweenComponent = new SDKTweenComponent
             {
-                IsDirty = true
+                IsDirty = true,
             };
 
             World.Add(entity, sdkTweenComponent);
         }
-
-
     }
 }

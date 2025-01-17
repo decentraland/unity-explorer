@@ -65,7 +65,7 @@ namespace DCL.MapRenderer.Tests
             foreach (MapLayer mapLayer in EnumUtils.Values<MapLayer>())
             {
                 if (EnumUtils.HasFlag(mask, mapLayer))
-                    layers[mapLayer].Received(1).Enable(Arg.Any<CancellationToken>());
+                    layers[mapLayer].Received(1).EnableAsync(Arg.Any<CancellationToken>());
             }
         }
 
