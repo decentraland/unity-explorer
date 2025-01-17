@@ -60,6 +60,7 @@ namespace DCL.Friends.UI
             viewInstance!.FriendsTabButton.onClick.RemoveAllListeners();
             viewInstance.RequestsTabButton.onClick.RemoveAllListeners();
             viewInstance.BlockedTabButton.onClick.RemoveAllListeners();
+            requestsSectionController.ReceivedRequestsCountChanged -= FriendRequestCountChanged;
             friendsPanelCts.SafeCancelAndDispose();
 
             blockedSectionController.Dispose();
@@ -89,7 +90,6 @@ namespace DCL.Friends.UI
         {
             base.OnViewInstantiated();
 
-            blockedSectionController = new BlockedSectionController(viewInstance!.BlockedSection, mvcManager);
             friendsSectionController = new FriendsSectionController(viewInstance!.FriendsSection,
                 friendsService,
                 friendEventBus,
@@ -102,7 +102,9 @@ namespace DCL.Friends.UI
                 web3IdentityCache,
                 mvcManager,
                 new RequestsRequestManager(friendsService, friendEventBus, FRIENDS_PAGE_SIZE, profileCache));
+            blockedSectionController = new BlockedSectionController(viewInstance!.BlockedSection, mvcManager);
 
+            requestsSectionController.ReceivedRequestsCountChanged += FriendRequestCountChanged;
             viewInstance!.FriendsTabButton.onClick.AddListener(() => ToggleTabs(FriendsPanelTab.FRIENDS));
             viewInstance.RequestsTabButton.onClick.AddListener(() => ToggleTabs(FriendsPanelTab.REQUESTS));
             viewInstance.BlockedTabButton.onClick.AddListener(() => ToggleTabs(FriendsPanelTab.BLOCKED));
@@ -110,6 +112,12 @@ namespace DCL.Friends.UI
             viewInstance.BackgroundCloseButton.onClick.AddListener(Close);
 
             ToggleTabs(FriendsPanelTab.FRIENDS);
+        }
+
+        private void FriendRequestCountChanged(int count)
+        {
+            viewInstance!.NotificationIndicator.SetNotificationCount(count);
+            viewInstance.TabNotificationIndicator.SetNotificationCount(count);
         }
 
         private void ToggleTabs(FriendsPanelTab tab)

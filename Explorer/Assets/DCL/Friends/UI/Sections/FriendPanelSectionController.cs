@@ -20,7 +20,7 @@ namespace DCL.Friends.UI.Sections
         protected readonly IFriendsEventBus friendEventBus;
         private readonly IWeb3IdentityCache web3IdentityCache;
         protected readonly IMVCManager mvcManager;
-        protected readonly U friendListPagedRequestManager;
+        protected readonly U requestManager;
 
         protected CancellationTokenSource friendListInitCts = new ();
         private Web3Address? previousWeb3Identity;
@@ -30,29 +30,29 @@ namespace DCL.Friends.UI.Sections
             IFriendsEventBus friendEventBus,
             IWeb3IdentityCache web3IdentityCache,
             IMVCManager mvcManager,
-            U friendListPagedRequestManager)
+            U requestManager)
         {
             this.view = view;
             this.friendsService = friendsService;
             this.friendEventBus = friendEventBus;
             this.web3IdentityCache = web3IdentityCache;
             this.mvcManager = mvcManager;
-            this.friendListPagedRequestManager = friendListPagedRequestManager;
+            this.requestManager = requestManager;
 
             this.view.Enable += Enable;
             this.view.Disable += Disable;
             this.view.LoopList.InitListView(0, OnGetItemByIndex);
-            friendListPagedRequestManager.FriendElementClicked += FriendElementClicked;
+            requestManager.ElementClicked += ElementClicked;
         }
 
         public virtual void Dispose()
         {
             view.Enable -= Enable;
             view.Disable -= Disable;
-            friendListPagedRequestManager.Dispose();
+            requestManager.Dispose();
             friendListInitCts.SafeCancelAndDispose();
-            friendListPagedRequestManager.FirstFolderClicked -= FolderClicked;
-            friendListPagedRequestManager.SecondFolderClicked -= FolderClicked;
+            requestManager.FirstFolderClicked -= FolderClicked;
+            requestManager.SecondFolderClicked -= FolderClicked;
         }
 
         private void Enable()
@@ -62,12 +62,12 @@ namespace DCL.Friends.UI.Sections
             if (previousWeb3Identity != web3IdentityCache.Identity?.Address)
             {
                 previousWeb3Identity = web3IdentityCache.Identity?.Address;
-                friendListPagedRequestManager.Reset();
-                friendListPagedRequestManager.FirstFolderClicked -= FolderClicked;
-                friendListPagedRequestManager.SecondFolderClicked -= FolderClicked;
+                requestManager.Reset();
+                requestManager.FirstFolderClicked -= FolderClicked;
+                requestManager.SecondFolderClicked -= FolderClicked;
             }
 
-            if (!friendListPagedRequestManager.WasInitialised)
+            if (!requestManager.WasInitialised)
                 Init(friendListInitCts.Token).Forget();
         }
 
@@ -78,7 +78,7 @@ namespace DCL.Friends.UI.Sections
 
         protected void FolderClicked()
         {
-            view.LoopList.SetListItemCount(friendListPagedRequestManager.GetElementsNumber(), false);
+            view.LoopList.SetListItemCount(requestManager.GetElementsNumber(), false);
             view.LoopList.RefreshAllShownItem();
         }
 
@@ -87,23 +87,23 @@ namespace DCL.Friends.UI.Sections
             view.SetLoadingState(true);
 
             friendListInitCts = friendListInitCts.SafeRestart();
-            await friendListPagedRequestManager.Init(ct);
+            await requestManager.Init(ct);
 
-            view.SetEmptyState(!friendListPagedRequestManager.HasElements);
+            view.SetEmptyState(!requestManager.HasElements);
             view.SetLoadingState(false);
-            view.SetScrollView(friendListPagedRequestManager.HasElements);
+            view.SetScrollView(requestManager.HasElements);
 
-            if (friendListPagedRequestManager.HasElements)
+            if (requestManager.HasElements)
             {
-                view.LoopList.SetListItemCount(friendListPagedRequestManager.GetElementsNumber(), false);
-                friendListPagedRequestManager.FirstFolderClicked += FolderClicked;
-                friendListPagedRequestManager.SecondFolderClicked += FolderClicked;
+                view.LoopList.SetListItemCount(requestManager.GetElementsNumber(), false);
+                requestManager.FirstFolderClicked += FolderClicked;
+                requestManager.SecondFolderClicked += FolderClicked;
             }
         }
 
         private LoopListViewItem2 OnGetItemByIndex(LoopListView2 loopListView, int index) =>
-            friendListPagedRequestManager.GetLoopListItemByIndex(loopListView, index);
+            requestManager.GetLoopListItemByIndex(loopListView, index);
 
-        protected abstract void FriendElementClicked(Profile profile);
+        protected abstract void ElementClicked(Profile profile);
     }
 }

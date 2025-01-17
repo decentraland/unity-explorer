@@ -30,10 +30,10 @@ namespace DCL.Friends.UI.Sections.Requests
 
         }
 
-        protected override int GetFirstCollectionCount() =>
+        public override int GetFirstCollectionCount() =>
             receivedRequests.Count;
 
-        protected override int GetSecondCollectionCount() =>
+        public override int GetSecondCollectionCount() =>
             sentRequests.Count;
 
         protected override Profile GetFirstCollectionElement(int index) =>

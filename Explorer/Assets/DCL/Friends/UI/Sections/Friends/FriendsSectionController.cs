@@ -14,21 +14,21 @@ namespace DCL.Friends.UI.Sections.Friends
             IFriendsEventBus friendEventBus,
             IWeb3IdentityCache web3IdentityCache,
             IMVCManager mvcManager,
-            FriendListPagedRequestManager friendListPagedRequestManager)
-            : base(view, friendsService, friendEventBus, web3IdentityCache, mvcManager, friendListPagedRequestManager)
+            FriendListPagedRequestManager requestManager)
+            : base(view, friendsService, friendEventBus, web3IdentityCache, mvcManager, requestManager)
         {
-            friendListPagedRequestManager.JumpInClicked += JumpInClicked;
-            friendListPagedRequestManager.ContextMenuClicked += ContextMenuClicked;
+            requestManager.JumpInClicked += JumpInClicked;
+            requestManager.ContextMenuClicked += ContextMenuClicked;
         }
 
         public override void Dispose()
         {
             base.Dispose();
-            friendListPagedRequestManager.JumpInClicked -= JumpInClicked;
-            friendListPagedRequestManager.ContextMenuClicked -= ContextMenuClicked;
+            requestManager.JumpInClicked -= JumpInClicked;
+            requestManager.ContextMenuClicked -= ContextMenuClicked;
         }
 
-        protected override void FriendElementClicked(Profile profile)
+        protected override void ElementClicked(Profile profile)
         {
             mvcManager.ShowAsync(PassportController.IssueCommand(new PassportController.Params(profile.UserId))).Forget();
         }

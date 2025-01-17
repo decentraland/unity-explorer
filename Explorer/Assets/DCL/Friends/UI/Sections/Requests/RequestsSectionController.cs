@@ -11,22 +11,39 @@ namespace DCL.Friends.UI.Sections.Requests
 {
     public class RequestsSectionController : FriendPanelSectionController<RequestsSectionView, RequestsRequestManager, RequestUserView>
     {
+        public event Action<int>? ReceivedRequestsCountChanged;
+
         public RequestsSectionController(RequestsSectionView view,
             IFriendsService friendsService,
             IFriendsEventBus friendEventBus,
             IWeb3IdentityCache web3IdentityCache,
             IMVCManager mvcManager,
-            RequestsRequestManager friendListPagedRequestManager)
-            : base(view, friendsService, friendEventBus, web3IdentityCache, mvcManager, friendListPagedRequestManager)
+            RequestsRequestManager requestManager)
+            : base(view, friendsService, friendEventBus, web3IdentityCache, mvcManager, requestManager)
         {
-            friendListPagedRequestManager.ContextMenuClicked += ContextMenuClicked;
+            requestManager.ContextMenuClicked += ContextMenuClicked;
+            friendEventBus.OnFriendRequestReceived += PropagateRequestReceived;
+            friendEventBus.OnFriendRequestAccepted += PropagateRequestAcceptedRejected;
+            friendEventBus.OnFriendRequestRejected += PropagateRequestAcceptedRejected;
         }
 
         public override void Dispose()
         {
             base.Dispose();
-            friendListPagedRequestManager.ContextMenuClicked -= ContextMenuClicked;
+            requestManager.ContextMenuClicked -= ContextMenuClicked;
+            friendEventBus.OnFriendRequestReceived -= PropagateRequestReceived;
+            friendEventBus.OnFriendRequestAccepted -= PropagateRequestAcceptedRejected;
+            friendEventBus.OnFriendRequestRejected -= PropagateRequestAcceptedRejected;
         }
+
+        private void PropagateRequestReceived(FriendRequest request) =>
+            PropagateReceivedRequestsCountChanged();
+
+        private void PropagateRequestAcceptedRejected(string userId) =>
+            PropagateReceivedRequestsCountChanged();
+
+        private void PropagateReceivedRequestsCountChanged() =>
+            ReceivedRequestsCountChanged?.Invoke(requestManager.GetFirstCollectionCount());
 
         private void ContextMenuClicked(Profile profile)
         {
@@ -38,17 +55,17 @@ namespace DCL.Friends.UI.Sections.Requests
             view.SetLoadingState(true);
 
             friendListInitCts = friendListInitCts.SafeRestart();
-            await friendListPagedRequestManager.Init(ct);
+            await requestManager.Init(ct);
 
             view.SetLoadingState(false);
 
-            view.LoopList.SetListItemCount(friendListPagedRequestManager.GetElementsNumber(), false);
+            view.LoopList.SetListItemCount(requestManager.GetElementsNumber(), false);
             view.LoopList.RefreshAllShownItem();
-            friendListPagedRequestManager.FirstFolderClicked += FolderClicked;
-            friendListPagedRequestManager.SecondFolderClicked += FolderClicked;
+            requestManager.FirstFolderClicked += FolderClicked;
+            requestManager.SecondFolderClicked += FolderClicked;
         }
 
-        protected override void FriendElementClicked(Profile profile)
+        protected override void ElementClicked(Profile profile)
         {
 
         }

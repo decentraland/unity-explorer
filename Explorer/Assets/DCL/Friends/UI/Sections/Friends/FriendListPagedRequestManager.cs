@@ -36,10 +36,10 @@ namespace DCL.Friends.UI.Sections.Friends
         protected override Profile GetSecondCollectionElement(int index) =>
             offlineFriends[index];
 
-        protected override int GetFirstCollectionCount() =>
+        public override int GetFirstCollectionCount() =>
             onlineFriends.Count;
 
-        protected override int GetSecondCollectionCount() =>
+        public override int GetSecondCollectionCount() =>
             offlineFriends.Count;
 
         protected override void CustomiseElement(FriendListUserView element)

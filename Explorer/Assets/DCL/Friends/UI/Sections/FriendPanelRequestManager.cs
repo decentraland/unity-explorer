@@ -27,7 +27,7 @@ namespace DCL.Friends.UI.Sections
         public bool HasElements { get; private set; }
         public bool WasInitialised { get; private set; }
 
-        public event Action<Profile>? FriendElementClicked;
+        public event Action<Profile>? ElementClicked;
         public event Action? FirstFolderClicked;
         public event Action? SecondFolderClicked;
 
@@ -52,8 +52,8 @@ namespace DCL.Friends.UI.Sections
 
         public abstract void Dispose();
 
-        protected abstract int GetFirstCollectionCount();
-        protected abstract int GetSecondCollectionCount();
+        public abstract int GetFirstCollectionCount();
+        public abstract int GetSecondCollectionCount();
 
         protected abstract Profile GetFirstCollectionElement(int index);
         protected abstract Profile GetSecondCollectionElement(int index);
@@ -87,7 +87,7 @@ namespace DCL.Friends.UI.Sections
                     friendListUserView.Configure(GetFirstCollectionElement(index - 1));
                     CustomiseElement(friendListUserView);
                     friendListUserView.RemoveMainButtonClickListeners();
-                    friendListUserView.MainButtonClicked += profile => FriendElementClicked?.Invoke(profile);
+                    friendListUserView.MainButtonClicked += profile => ElementClicked?.Invoke(profile);
                 }
             }
             else if (index == onlineFriendMarker + 1)
@@ -109,7 +109,7 @@ namespace DCL.Friends.UI.Sections
                     friendListUserView.Configure(GetSecondCollectionElement(index - onlineFriendMarker - 2));
                     CustomiseElement(friendListUserView);
                     friendListUserView.RemoveMainButtonClickListeners();
-                    friendListUserView.MainButtonClicked += profile => FriendElementClicked?.Invoke(profile);
+                    friendListUserView.MainButtonClicked += profile => ElementClicked?.Invoke(profile);
                 }
             }
 
