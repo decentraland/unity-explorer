@@ -11,6 +11,7 @@ using ECS.SceneLifeCycle.SceneFacade;
 using ECS.StreamableLoading.Common;
 using SceneRunner.Scene;
 using System.Linq;
+using DCL.LOD.Components;
 using UnityEngine;
 using Utility;
 
@@ -46,7 +47,7 @@ namespace ECS.SceneLifeCycle.Systems
         }
 
         [Query]
-        [None(typeof(ISceneFacade), typeof(AssetPromise<ISceneFacade, GetSceneFacadeIntention>))]
+        [None(typeof(ISceneFacade), typeof(AssetPromise<ISceneFacade, GetSceneFacadeIntention>), typeof(SceneLODInfo))]
         private void StartSceneLoading([Data] IIpfsRealm realm, [Data] in StaticScenePointers staticScenePointers,
             in Entity entity, ref SceneDefinitionComponent definition, ref PartitionComponent partitionComponent)
         {

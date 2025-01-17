@@ -43,7 +43,8 @@ namespace DCL.ParcelsService
             pointersList.Value.Add(parcel.ToInt2());
 
             var promise = AssetPromise<SceneDefinitions, GetSceneDefinitionList>.Create(World,
-                new GetSceneDefinitionList(targetCollection.Value, pointersList.Value, new CommonLoadingArguments(realmIpfs.EntitiesActiveEndpoint)),
+                new GetSceneDefinitionList(targetCollection.Value, pointersList.Value,
+                    new CommonLoadingArguments(realmIpfs.AssetBundleRegistry)),
                 PartitionComponent.TOP_PRIORITY);
 
             promise = await promise.ToUniTaskAsync(World, cancellationToken: ct);

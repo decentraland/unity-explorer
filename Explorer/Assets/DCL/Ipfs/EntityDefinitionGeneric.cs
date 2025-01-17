@@ -17,6 +17,10 @@ namespace DCL.Ipfs
         public long timestamp;
         public string type;
 
+        //Asset bundle status
+        public string status;
+
+
         public EntityDefinitionGeneric() { }
 
         public EntityDefinitionGeneric(string id, T metadata)

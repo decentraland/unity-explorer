@@ -2,6 +2,7 @@ using DCL.UI.ConnectionStatusPanel.StatusEntry;
 using DCL.Utilities.Extensions;
 using MVC;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 namespace DCL.UI.ConnectionStatusPanel
@@ -15,10 +16,14 @@ namespace DCL.UI.ConnectionStatusPanel
         [SerializeField] private StatusEntryView? scene;
         [SerializeField] private StatusEntryView? sceneRoom;
         [SerializeField] private StatusEntryView? globalRoom;
+        [SerializeField] private StatusEntryView? assetBundleStatus;
+
 
         public IStatusEntry Scene => scene.EnsureNotNull();
         public IStatusEntry SceneRoom => sceneRoom.EnsureNotNull();
         public IStatusEntry GlobalRoom => globalRoom.EnsureNotNull();
+        public IStatusEntry AssetBundle => assetBundleStatus.EnsureNotNull();
+
 
         private void Awake()
         {
