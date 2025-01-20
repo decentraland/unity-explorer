@@ -1,5 +1,6 @@
 using DCL.WebRequests.PartialDownload;
 using System;
+using System.Buffers;
 using System.IO;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -9,11 +10,13 @@ namespace DCL.WebRequests.CustomDownloadHandlers
     public class PartialDownloadHandler : DownloadHandlerScript
     {
         private readonly PartialDownloadingData partialData;
+        private readonly ArrayPool<byte> buffersPool;
         private int bufferPointer = 0;
 
-        public PartialDownloadHandler(ref PartialDownloadingData partialData, byte[] preallocatedBuffer) : base(preallocatedBuffer)
+        public PartialDownloadHandler(ref PartialDownloadingData partialData, byte[] preallocatedBuffer, ArrayPool<byte> buffersPool) : base(preallocatedBuffer)
         {
             this.partialData = partialData;
+            this.buffersPool = buffersPool;
         }
 
         protected override void CompleteContent()
@@ -28,12 +31,13 @@ namespace DCL.WebRequests.CustomDownloadHandlers
 
             if (partialData.DataBuffer == null)
             {
-                partialData.DataBuffer = new byte[dataLength];
+                partialData.DataBuffer = buffersPool.Rent(dataLength);
             }
             else if(partialData.DataBuffer.Length < bufferPointer + dataLength)
             {
-                var newBuffer = new byte[partialData.DataBuffer.Length + dataLength];
+                var newBuffer = buffersPool.Rent(partialData.DataBuffer.Length + dataLength);
                 Array.Copy(partialData.DataBuffer, newBuffer, partialData.DataBuffer.Length);
+                buffersPool.Return(partialData.DataBuffer, true);
                 partialData.DataBuffer = newBuffer;
             }
 
@@ -44,6 +48,7 @@ namespace DCL.WebRequests.CustomDownloadHandlers
                     partialData.DataBuffer[bufferPointer] = receivedData[i];
                     bufferPointer++;
                 }
+                partialData.downloadedSize += dataLength;
                 return true;
             }
             catch (Exception ex)

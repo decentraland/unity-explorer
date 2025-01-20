@@ -9,6 +9,7 @@ using DCL.DebugUtilities.UIBindings;
 using DCL.WebRequests.CustomDownloadHandlers;
 using DCL.WebRequests.PartialDownload;
 using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
+using System.Buffers;
 using UnityEngine;
 using UnityEngine.Networking;
 
@@ -72,12 +73,13 @@ namespace DCL.WebRequests
             CancellationToken ct,
             ReportData reportData,
             ref PartialDownloadingData partialData,
+            ArrayPool<byte> buffersPool,
             WebRequestHeadersInfo? headersInfo = null,
             WebRequestSignInfo? signInfo = null,
             ISet<long>? ignoreErrorCodes = null
         )
         {
-            PartialDownloadHandler handler = new PartialDownloadHandler(ref partialData, PARTIAL_DOWNLOAD_BUFFER);
+            PartialDownloadHandler handler = new PartialDownloadHandler(ref partialData, PARTIAL_DOWNLOAD_BUFFER, buffersPool);
             return controller.SendAsync<GenericGetRequest, GenericGetArguments, PartialDownloadOp, PartialDownloadingData>(commonArguments, default(GenericGetArguments), new PartialDownloadOp(ref partialData), ct, reportData, headersInfo, signInfo, ignoreErrorCodes, downloadHandler: handler, suppressErrors: true);
         }
 

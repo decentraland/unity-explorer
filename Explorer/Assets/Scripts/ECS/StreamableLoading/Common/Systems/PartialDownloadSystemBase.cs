@@ -34,44 +34,45 @@ namespace ECS.StreamableLoading.Common.Systems
         {
             PartialLoadingState partialState = default;
             PartialDownloadingData chunkData;
+            byte[]? fullDataMemory = null;
 
-            byte[] partialDownloadBuffer = buffersPool.Rent(PartialDownloadingData.CHUNK_SIZE)!;
+            // If the downloading has not started yet
+            if (state.PartialDownloadingData == null)
+            {
+                chunkData = new PartialDownloadingData(0, PartialDownloadingData.CHUNK_SIZE);
+            }
+            else
+            {
+                partialState = state.PartialDownloadingData.Value;
+
+                chunkData = new PartialDownloadingData(partialState.NextRangeStart,
+                    Mathf.Min(partialState.FullFileSize - 1, partialState.NextRangeStart + PartialDownloadingData.CHUNK_SIZE));
+            }
 
             try
             {
-                // If the downloading has not started yet
-                if (state.PartialDownloadingData == null)
-                {
-                    chunkData = new PartialDownloadingData(0, PartialDownloadingData.CHUNK_SIZE);
-                }
-                else
-                {
-                    partialState = state.PartialDownloadingData.Value;
-
-                    chunkData = new PartialDownloadingData(partialState.NextRangeStart,
-                        Mathf.Min(partialState.FullFileSize - 1, partialState.NextRangeStart + PartialDownloadingData.CHUNK_SIZE));
-                }
-
                 chunkData = await webRequestController.GetPartialAsync(
                     intention.CommonArguments,
                     ct,
                     reportData: ReportCategory.PARTIAL_LOADING,
                     ref chunkData,
+                    buffersPool,
                     headersInfo: new WebRequestHeadersInfo().WithRange(chunkData.RangeStart, chunkData.RangeEnd));
 
                 if (state.PartialDownloadingData == null)
                 {
-                    byte[] fullDataMemory = new byte[chunkData.FullFileSize];
+                    fullDataMemory = buffersPool.Rent(chunkData.FullFileSize);
                     partialState = new PartialLoadingState(fullDataMemory, chunkData.FullFileSize);
                 }
 
-                int finalBytesCount = chunkData.DataBuffer.Length;
+                int finalBytesCount = chunkData.downloadedSize;
 
                 if (chunkData.RangeEnd > chunkData.FullFileSize)
                     finalBytesCount = chunkData.FullFileSize - chunkData.RangeStart;
 
                 Array.Copy(chunkData.DataBuffer, 0, partialState.FullData, chunkData.RangeStart, finalBytesCount);
-                if(chunkData.DataBuffer.Length == chunkData.FullFileSize)
+
+                if (chunkData.downloadedSize == chunkData.FullFileSize)
                     partialState.NextRangeStart = chunkData.FullFileSize;
                 else
                     partialState.NextRangeStart = chunkData.RangeEnd + 1;
@@ -86,7 +87,14 @@ namespace ECS.StreamableLoading.Common.Systems
                 state.SetChunkData(partialState);
                 return default;
             }
-            finally { buffersPool.Return(partialDownloadBuffer); }
+            finally
+            {
+                if(chunkData.DataBuffer != null)
+                    buffersPool.Return(chunkData.DataBuffer);
+
+                if(fullDataMemory != null)
+                    buffersPool.Return(fullDataMemory);
+            }
         }
 
         protected abstract UniTask<StreamableLoadingResult<TData>> ProcessCompletedData(byte[] completeData, TIntention intention, IPartitionComponent partition, CancellationToken ct, StreamableLoadingState state);

@@ -18,7 +18,7 @@ namespace DCL.PluginSystem.World
 {
     public class AssetBundlesPlugin : IDCLWorldPluginWithoutSettings, IDCLGlobalPluginWithoutSettings
     {
-        private readonly ArrayPool<byte> buffersPool = ArrayPool<byte>.Create(1024 * 1024, 100);
+        private readonly ArrayPool<byte> buffersPool = ArrayPool<byte>.Create(1024 * 1024 * 50, 50);
 
         public static readonly URLDomain STREAMING_ASSETS_URL =
             URLDomain.FromString(

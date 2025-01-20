@@ -33,7 +33,7 @@ namespace DCL.PluginSystem.World
 {
     public class NFTShapePlugin : IDCLWorldPlugin<NFTShapePluginSettings>
     {
-        private readonly ArrayPool<byte> buffersPool = ArrayPool<byte>.Create(1024 * 1024, 100);
+        private readonly ArrayPool<byte> buffersPool = ArrayPool<byte>.Create(1024 * 1024 * 50, 50);
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly INFTShapeRendererFactory nftShapeRendererFactory;
         private readonly IPerformanceBudget instantiationFrameTimeBudgetProvider;
