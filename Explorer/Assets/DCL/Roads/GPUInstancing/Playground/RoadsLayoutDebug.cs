@@ -52,9 +52,7 @@ namespace DCL.Roads.GPUInstancing.Playground
                 for (var i = 0; i < renderInstances.Key.RenderParams.Length; i++) // foreach submesh
                 {
                     if (InstanceId >= renderInstances.Value.Count) continue;
-
                     var instanceData = InstanceId < 0 ? renderInstances.Value : new List<Matrix4x4> { renderInstances.Value[InstanceId] };
-
                     Graphics.RenderMeshInstanced(in renderInstances.Key.RenderParams[i], renderInstances.Key.Mesh, i, instanceData);
 
                     Debug.Log($"{renderInstances.Key.Mesh.name} - {renderInstances.Key.RenderParams[i].material.name}");
@@ -139,9 +137,9 @@ namespace DCL.Roads.GPUInstancing.Playground
 
             AddMeshDataToInstancingMap(prefabData.PrefabInstance.Meshes, rootMatrix);
 
-            // foreach (LODGroupData lodGroup in prefabData.LODGroups)
-            // foreach (LODEntryMeshData lods in lodGroup.LODs)
-            //     AddMeshDataToInstancingMap(lods.Meshes);
+            foreach (LODGroupData lodGroup in prefabData.PrefabInstance.LODGroups)
+            foreach (LODEntryMeshData lods in lodGroup.LODs)
+                AddMeshDataToInstancingMap(lods.Meshes, rootMatrix);
         }
 
         private void AddMeshDataToInstancingMap(MeshData[] meshes, Matrix4x4 rootMatrix)
