@@ -94,7 +94,7 @@ namespace SceneRuntime.Apis.Modules.CommunicationsControllerApi
                             continue;
 
                         if (recipient.Count is 0)
-                            SendBinary(broadcastData, (string?)null);
+                            SendBinary(data, (string?)null);
 
                         foreach (object? address in recipient)
                             if (address != null)
