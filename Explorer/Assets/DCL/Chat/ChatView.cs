@@ -39,7 +39,6 @@ namespace DCL.Chat
         public delegate void InputBoxFocusChangedDelegate(bool hasFocus);
         public delegate void EmojiSelectionVisibilityChangedDelegate(bool isVisible);
         public delegate void InputSubmittedDelegate(string message, string origin);
-        public delegate void ChatMessageCreatedDelegate(int itemIndex);
 
         [Header("Settings")]
         [Tooltip("The time it takes, in seconds, for the background of the chat window to fade-in/out when hovering with the mouse.")]
@@ -167,11 +166,6 @@ namespace DCL.Chat
         public event InputSubmittedDelegate InputSubmitted;
 
         /// <summary>
-        /// Raised when a new UI element that displays a chat message is created.
-        /// </summary>
-        public event ChatMessageCreatedDelegate ChatMessageCreated;
-
-        /// <summary>
         /// Raised when the option to change the visibility of the chat bubbles over the avatar changes its value.
         /// </summary>
         public event Action<bool>? ChatBubbleVisibilityChanged;
@@ -206,6 +200,8 @@ namespace DCL.Chat
         private bool isChatClosed;
         private bool isInputSelected;
         private IReadOnlyList<ChatMessage> chatMessages;
+        // The latest amount of messages added to the chat that must be animated yet
+        private int entriesPendingToAnimate;
 
         /// <summary>
         /// Gets whether the scroll view is showing the bottom of the content, and it can't scroll down anymore.
@@ -286,7 +282,6 @@ namespace DCL.Chat
         /// <param name="messages">The new messages to display in the view.</param>
         public void SetMessages(IReadOnlyList<ChatMessage> messages)
         {
-            // TODO: In the near future, this will produce a complete rebuild of the message entries
             chatMessages = messages;
         }
 
@@ -298,6 +293,9 @@ namespace DCL.Chat
         {
             panelBackgroundCanvasGroup.gameObject.SetActive(show);
             loopList.gameObject.SetActive(show);
+
+            if (!show) // Note: This is necessary to avoid items animating when re-opening the chat window
+                entriesPendingToAnimate = 0;
         }
 
         /// <summary>
@@ -332,6 +330,12 @@ namespace DCL.Chat
         public void RefreshMessages()
         {
             ResetChatEntriesFadeout();
+
+            entriesPendingToAnimate = chatMessages.Count - loopList.ItemTotalCount;
+
+            if (entriesPendingToAnimate < 0)
+                entriesPendingToAnimate = 0;
+
             loopList.SetListItemCount(chatMessages.Count);
             ShowLastMessage();
 
@@ -498,8 +502,6 @@ namespace DCL.Chat
                     OnChatMessageOptionsButtonClicked(itemData.Message, itemScript));
             }
 
-            ChatMessageCreated?.Invoke(index);
-
             return item;
         }
 
@@ -522,12 +524,9 @@ namespace DCL.Chat
 
             itemView.SetItemData(itemData);
 
-            //Workaround needed to animate the chat entries due to infinite scroll plugin behaviour
-            if (itemData.HasToAnimate)
-            {
+            // Views that correspond to new added items have to be animated
+            if (index - 1 < entriesPendingToAnimate) // Note: -1 because the first real message starts at 1, which is the latest messaged added
                 itemView.AnimateChatEntry();
-                // Note: itemData.HasToAnimate is set to false by the controller later
-            }
         }
 
         private void StopChatEntriesFadeout()
