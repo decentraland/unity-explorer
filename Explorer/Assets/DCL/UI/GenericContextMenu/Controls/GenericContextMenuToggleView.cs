@@ -25,8 +25,8 @@ namespace DCL.UI.GenericContextMenu.Controls
         public override void UnregisterListeners() =>
             ToggleComponent.Toggle.onValueChanged.RemoveAllListeners();
 
-        public override void RegisterListener(Delegate listener) =>
-            ToggleComponent.Toggle.onValueChanged.AddListener(new UnityAction<bool>((Action<bool>)listener));
+        private void RegisterListener(Action<bool> listener) =>
+            ToggleComponent.Toggle.onValueChanged.AddListener(new UnityAction<bool>(listener));
 
         public override void RegisterCloseListener(Action listener) =>
             ToggleComponent.Toggle.onValueChanged.AddListener(_ => listener());

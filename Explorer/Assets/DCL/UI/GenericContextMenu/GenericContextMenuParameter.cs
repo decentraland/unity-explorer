@@ -14,15 +14,13 @@ namespace DCL.UI.GenericContextMenu
         public readonly Action? ActionOnShow;
         public readonly Action? ActionOnHide;
         public readonly UniTask? CloseTask;
-        public readonly Dictionary<ContextMenuControlSettings, object>? InitialValues;
 
         public GenericContextMenuParameter(Controls.Configs.GenericContextMenu config,
             Vector2 anchorPosition,
             Rect? overlapRect = null,
             Action? actionOnShow = null,
             Action? actionOnHide = null,
-            UniTask? closeTask = null,
-            Dictionary<ContextMenuControlSettings, object>? initialValues = null)
+            UniTask? closeTask = null)
         {
             this.Config = config;
             this.AnchorPosition = anchorPosition;
@@ -30,7 +28,6 @@ namespace DCL.UI.GenericContextMenu
             this.ActionOnShow = actionOnShow;
             this.ActionOnHide = actionOnHide;
             this.CloseTask = closeTask;
-            this.InitialValues = initialValues;
         }
     }
 }

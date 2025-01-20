@@ -1,7 +1,7 @@
 
 namespace DCL.UI.GenericContextMenu.Controls.Configs
 {
-    public class SeparatorContextMenuControlSettings : ContextMenuControlSettings
+    public class SeparatorContextMenuControlSettings : IContextMenuControlSettings
     {
         internal readonly int height;
         internal readonly int leftPadding;

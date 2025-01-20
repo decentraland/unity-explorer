@@ -39,13 +39,13 @@ namespace DCL.UI.GenericContextMenu
                 actionOnDestroy: toggleView => GameObject.Destroy(toggleView.gameObject));
         }
 
-        public GenericContextMenuComponentBase GetContextMenuComponent<T>(T settings, object initialValue, int index) where T : ContextMenuControlSettings
+        public GenericContextMenuComponentBase GetContextMenuComponent<T>(T settings, int index) where T : IContextMenuControlSettings
         {
             GenericContextMenuComponentBase component = settings switch
                                                         {
                                                             SeparatorContextMenuControlSettings separatorSettings => GetSeparator(separatorSettings),
                                                             ButtonContextMenuControlSettings buttonSettings => GetButton(buttonSettings),
-                                                            ToggleContextMenuControlSettings toggleSettings => GetToggle(toggleSettings, (bool)initialValue),
+                                                            ToggleContextMenuControlSettings toggleSettings => GetToggle(toggleSettings, toggleSettings.initialValue),
                                                             _ => throw new ArgumentOutOfRangeException()
                                                         };
             component!.transform.SetSiblingIndex(index);

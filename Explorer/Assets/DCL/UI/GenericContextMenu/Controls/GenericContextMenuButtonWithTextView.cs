@@ -26,8 +26,8 @@ namespace DCL.UI.GenericContextMenu.Controls
         public override void UnregisterListeners() =>
             ButtonComponent.onClick.RemoveAllListeners();
 
-        public override void RegisterListener(Delegate listener) =>
-            ButtonComponent.onClick.AddListener(new UnityAction((Action)listener));
+        private void RegisterListener(Action listener) =>
+            ButtonComponent.onClick.AddListener(new UnityAction(listener));
 
         public override void RegisterCloseListener(Action listener) =>
             RegisterListener(listener);

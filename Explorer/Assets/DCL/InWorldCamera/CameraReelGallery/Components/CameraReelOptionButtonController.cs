@@ -15,7 +15,6 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
         private readonly RectTransform buttonRectTransform;
         private readonly IMVCManager mvcManager;
         private readonly GenericContextMenu contextMenu;
-        private readonly Dictionary<ContextMenuControlSettings, object> initialValues = new ();
         private readonly ToggleContextMenuControlSettings publicToggleSettings;
 
         public event Action? Hide;
@@ -56,7 +55,7 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
             view.transform.localPosition = offsetPosition;
             view.gameObject.SetActive(true);
             currentReelData = cameraReelResponse;
-            initialValues[publicToggleSettings] = cameraReelResponse.isPublic;
+            publicToggleSettings.SetInitialValue(cameraReelResponse.isPublic);
             closeContextMenuTask = new UniTaskCompletionSource();
         }
 
@@ -79,8 +78,7 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
                         if (view.gameObject.activeSelf)
                             HideControl();
                     },
-                    closeTask: closeContextMenuTask?.Task,
-                    initialValues: initialValues)));
+                    closeTask: closeContextMenuTask?.Task)));
         }
 
         public void Dispose()

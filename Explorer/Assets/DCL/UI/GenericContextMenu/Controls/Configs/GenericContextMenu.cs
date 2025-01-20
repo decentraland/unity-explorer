@@ -8,7 +8,7 @@ namespace DCL.UI.GenericContextMenu.Controls.Configs
     /// </summary>
     public class GenericContextMenu
     {
-        internal readonly List<ContextMenuControlSettings> contextMenuSettings = new ();
+        internal readonly List<IContextMenuControlSettings> contextMenuSettings = new ();
         internal readonly Vector2 offsetFromTarget;
         internal readonly float width;
         internal readonly RectOffset verticalLayoutPadding;
@@ -27,7 +27,7 @@ namespace DCL.UI.GenericContextMenu.Controls.Configs
             this.elementsSpacing = elementsSpacing;
         }
 
-        public GenericContextMenu AddControl(ContextMenuControlSettings settings)
+        public GenericContextMenu AddControl(IContextMenuControlSettings settings)
         {
             contextMenuSettings.Add(settings);
             return this;

@@ -3,12 +3,14 @@ using UnityEngine;
 
 namespace DCL.UI.GenericContextMenu.Controls.Configs
 {
-    public class ToggleContextMenuControlSettings : ContextMenuControlSettings
+    public class ToggleContextMenuControlSettings : IContextMenuControlSettings
     {
         internal readonly string toggleText;
         internal readonly RectOffset horizontalLayoutPadding;
         internal readonly int horizontalLayoutSpacing;
         internal readonly bool horizontalLayoutReverseArrangement;
+        internal readonly Action<bool> callback;
+        internal bool initialValue;
 
         /// <summary>
         ///     Toggle component settings for the context menu.
@@ -22,5 +24,8 @@ namespace DCL.UI.GenericContextMenu.Controls.Configs
             this.horizontalLayoutReverseArrangement = horizontalLayoutReverseArrangement;
             this.callback = toggleAction;
         }
+
+        public void SetInitialValue(bool value) =>
+            initialValue = value;
     }
 }

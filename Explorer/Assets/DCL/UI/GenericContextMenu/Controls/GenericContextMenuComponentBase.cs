@@ -13,8 +13,6 @@ namespace DCL.UI.GenericContextMenu.Controls
 
         public abstract void UnregisterListeners();
 
-        public abstract void RegisterListener(Delegate listener);
-
         public abstract void RegisterCloseListener(Action listener);
     }
 }

@@ -3,13 +3,14 @@ using UnityEngine;
 
 namespace DCL.UI.GenericContextMenu.Controls.Configs
 {
-    public class ButtonContextMenuControlSettings : ContextMenuControlSettings
+    public class ButtonContextMenuControlSettings : IContextMenuControlSettings
     {
         internal readonly string buttonText;
         internal readonly Sprite buttonIcon;
         internal readonly RectOffset horizontalLayoutPadding;
         internal readonly int horizontalLayoutSpacing;
         internal readonly bool horizontalLayoutReverseArrangement;
+        internal readonly Action callback;
 
         /// <summary>
         ///     Button component settings for the context menu.

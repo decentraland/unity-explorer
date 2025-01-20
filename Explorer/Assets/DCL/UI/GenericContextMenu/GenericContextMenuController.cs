@@ -66,11 +66,9 @@ namespace DCL.UI.GenericContextMenu
 
             for (var i = 0; i < inputData.Config.contextMenuSettings.Count; i++)
             {
-                ContextMenuControlSettings config = inputData.Config.contextMenuSettings[i];
-                object controlInitialValue = null;
-                inputData.InitialValues?.TryGetValue(config, out controlInitialValue);
+                IContextMenuControlSettings config = inputData.Config.contextMenuSettings[i];
 
-                GenericContextMenuComponentBase component = controlsPoolManager.GetContextMenuComponent(config, controlInitialValue, i);
+                GenericContextMenuComponentBase component = controlsPoolManager.GetContextMenuComponent(config, i);
 
                 component.RegisterCloseListener(TriggerContextMenuClose);
 
