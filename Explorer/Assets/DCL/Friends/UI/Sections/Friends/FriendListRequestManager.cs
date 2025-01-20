@@ -1,0 +1,63 @@
+using Cysharp.Threading.Tasks;
+using DCL.Profiles;
+using System;
+using System.Collections.Generic;
+using System.Threading;
+
+namespace DCL.Friends.UI.Sections.Friends
+{
+    public class FriendListRequestManager : FriendPanelRequestManager<FriendListUserView>
+    {
+        private readonly IFriendsService friendsService;
+        private readonly IFriendsEventBus friendEventBus;
+
+        private List<Profile> friends = new ();
+
+        public event Action<Profile>? ContextMenuClicked;
+
+        public FriendListRequestManager(IFriendsService friendsService,
+            IFriendsEventBus friendEventBus,
+            int pageSize) : base(pageSize)
+        {
+            this.friendsService = friendsService;
+            this.friendEventBus = friendEventBus;
+        }
+
+        public override void Dispose()
+        {
+        }
+
+        public override int GetCollectionCount() =>
+            friends.Count;
+
+        protected override Profile GetCollectionElement(int index) =>
+            friends[index];
+
+        protected async override UniTask FetchInitialData(CancellationToken ct)
+        {
+            friends.Add(Profile.NewRandomProfile("0x05dE05303EAb867D51854E8b4fE03F7acb0624d9"));
+            friends.Add(Profile.NewRandomProfile("0x3a4401589ce5e65e0603df86b03c18c9fa8a05d1"));
+            friends.Add(Profile.NewRandomProfile("0x381fb40e076f54687febb6235c65e91b12c47efd"));
+            friends.Add(Profile.NewRandomProfile("0x76ce124714816aaf1d3548e5ee8b499bc4b31455"));
+            friends.Add(Profile.NewRandomProfile("0xcd110cd5dfc7f270fe137529ac17db8b81e28dd4"));
+            friends.Add(Profile.NewRandomProfile("0x3faacc4e4287b82ccc1ca40adab0fc49a380b7ab"));
+            friends.Add(Profile.NewRandomProfile("0x03d05ecbf55bcd0ee46b98e6a81d4baf91059a8b"));
+            friends.Add(Profile.NewRandomProfile("0x4f7fe261619141ffa63fefee35bba886581292f4"));
+            friends.Add(Profile.NewRandomProfile("0xd545b9e0a5f3638a5026d1914cc9b47ed16b5ae9"));
+            friends.Add(Profile.NewRandomProfile("0xba7352cff5681b719daf33fa05e93153af8146c8"));
+            friends.Add(Profile.NewRandomProfile("0x23e3d123f69fdd7f08a7c5685506bb344a12f1c4"));
+            friends.Add(Profile.NewRandomProfile("0x5d327dcd9b4dae70ebf9c4ebb0576a1de97da520"));
+            friends.Add(Profile.NewRandomProfile("0x97574fcd296f73fe34823973390ebe4b9b065300"));
+            friends.Add(Profile.NewRandomProfile("0x5d327dcd9b4dae70ebf9c4ebb0576a1de97da520"));
+            friends.Add(Profile.NewRandomProfile("0xb1d3f75bc57e744f7f6f8b014f1a0dc385649628"));
+        }
+
+        protected override void CustomiseElement(FriendListUserView elementView, int index)
+        {
+            elementView.ContextMenuButton.onClick.RemoveAllListeners();
+            elementView.ContextMenuButton.onClick.AddListener(() => ContextMenuClicked?.Invoke(elementView.UserProfile));
+
+            elementView.ToggleOnlineStatus(false);
+        }
+    }
+}

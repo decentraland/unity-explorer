@@ -27,5 +27,13 @@ namespace DCL.Friends.UI.Sections.Friends
             OnlineStatusText.SetText(configurationData.StatusText);
             OnlineStatusColorIndicator.color = configurationData.StatusColor;
         }
+
+        public void ToggleOnlineStatus(bool isActive)
+        {
+            OnlineStatusText.gameObject.SetActive(isActive);
+            OnlineStatusColorIndicator.gameObject.SetActive(isActive);
+            if (!isActive)
+                buttons = new[] { ContextMenuButton };
+        }
     }
 }

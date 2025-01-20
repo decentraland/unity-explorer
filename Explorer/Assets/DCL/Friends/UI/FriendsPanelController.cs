@@ -31,7 +31,7 @@ namespace DCL.Friends.UI
         private readonly IProfileRepository profileRepository;
 
         private BlockedSectionController blockedSectionController;
-        private FriendsSectionDoubleCollectionController friendsSectionDoubleCollectionController;
+        private FriendSectionController friendSectionController;
         private RequestsSectionController requestsSectionController;
         private CancellationTokenSource friendsPanelCts = new ();
         private bool chatWasVisible;
@@ -67,7 +67,7 @@ namespace DCL.Friends.UI
             friendsPanelCts.SafeCancelAndDispose();
 
             blockedSectionController.Dispose();
-            friendsSectionDoubleCollectionController.Dispose();
+            friendSectionController.Dispose();
             requestsSectionController.Dispose();
         }
 
@@ -95,12 +95,10 @@ namespace DCL.Friends.UI
         {
             base.OnViewInstantiated();
 
-            friendsSectionDoubleCollectionController = new FriendsSectionDoubleCollectionController(viewInstance!.FriendsSection,
-                friendsService,
-                friendEventBus,
+            friendSectionController = new FriendSectionController(viewInstance!.FriendsSection,
                 web3IdentityCache,
                 mvcManager,
-                new FriendListPagedDoubleCollectionRequestManager(friendsService, friendEventBus, FRIENDS_PAGE_SIZE));
+                new FriendListRequestManager(friendsService, friendEventBus, FRIENDS_PAGE_SIZE));
             requestsSectionController = new RequestsSectionController(viewInstance!.RequestsSection,
                 friendsService,
                 friendEventBus,
