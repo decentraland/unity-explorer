@@ -5,11 +5,14 @@ using DCL.AssetsProvision;
 using DCL.Friends;
 using DCL.Friends.UI;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Multiplayer.Connections.RoomHubs;
+using DCL.Multiplayer.Connectivity;
 using DCL.Profiles;
-using DCL.UI.MainUI;
 using DCL.Web3.Identities;
+using DCL.UI.MainUI;
 using MVC;
 using System.Threading;
+using Utility;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 
@@ -24,6 +27,11 @@ namespace DCL.PluginSystem.Global
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IProfileCache profileCache;
         private readonly IProfileRepository profileRepository;
+        private readonly IOnlineUsersProvider apiOnlineUsersProvider;
+        private readonly IRoomHub roomHub;
+        private readonly CancellationTokenSource lifeCycleCancellationToken = new ();
+
+        private RPCFriendsService? friendsService;
 
         private FriendsPanelController? friendsPanelController;
 
@@ -34,7 +42,9 @@ namespace DCL.PluginSystem.Global
             IAssetsProvisioner assetsProvisioner,
             IWeb3IdentityCache web3IdentityCache,
             IProfileCache profileCache,
-            IProfileRepository profileRepository)
+            IProfileRepository profileRepository,
+            IOnlineUsersProvider apiOnlineUsersProvider,
+            IRoomHub roomHub)
         {
             this.mainUIView = mainUIView;
             this.dclUrlSource = dclUrlSource;
@@ -43,23 +53,32 @@ namespace DCL.PluginSystem.Global
             this.web3IdentityCache = web3IdentityCache;
             this.profileCache = profileCache;
             this.profileRepository = profileRepository;
+            this.apiOnlineUsersProvider = apiOnlineUsersProvider;
+            this.roomHub = roomHub;
         }
 
         public void Dispose()
         {
             friendsPanelController?.Dispose();
+            lifeCycleCancellationToken.SafeCancelAndDispose();
+            friendsService?.Dispose();
         }
 
-        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
-        {
-        }
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
 
         public async UniTask InitializeAsync(FriendsPluginSettings settings, CancellationToken ct)
         {
             IFriendsEventBus friendEventBus = new DefaultFriendsEventBus();
 
-            IFriendsService friendsService = new RPCFriendsService(URLAddress.FromString(dclUrlSource.Url(DecentralandUrl.ApiFriends)),
-                friendEventBus);
+            var friendsCache = new FriendsCache();
+
+            var archipelagoRealtime = new ArchipelagoRealtimeOnlineFriendsProvider(roomHub, friendEventBus, friendsCache);
+            // Merge online users from archipelago api and the users provided by livekit
+            var onlineUsersProvider = new CompositeOnlineFriendsProvider(this.apiOnlineUsersProvider,
+                archipelagoRealtime);
+
+            friendsService = new RPCFriendsService(URLAddress.FromString(dclUrlSource.Url(DecentralandUrl.ApiFriends)),
+                friendEventBus, profileRepository, web3IdentityCache, onlineUsersProvider, friendsCache);
 
             var persistentFriendsOpenerController = new PersistentFriendPanelOpenerController(() => mainUIView.SidebarView.PersistentFriendsPanelOpener, mvcManager);
 

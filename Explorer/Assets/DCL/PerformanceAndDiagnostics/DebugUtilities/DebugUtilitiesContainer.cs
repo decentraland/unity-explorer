@@ -43,6 +43,7 @@ namespace DCL.DebugUtilities
                         {
                             IDebugContainerBuilder.Categories.ROOM_INFO,
                             IDebugContainerBuilder.Categories.ROOM_SCENE,
+                            IDebugContainerBuilder.Categories.ROOM_THROUGHPUT,
                             IDebugContainerBuilder.Categories.ROOM_ISLAND,
                             IDebugContainerBuilder.Categories.PERFORMANCE,
                             IDebugContainerBuilder.Categories.MEMORY,

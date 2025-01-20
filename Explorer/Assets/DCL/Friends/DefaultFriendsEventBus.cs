@@ -9,7 +9,9 @@ namespace DCL.Friends
         public event Action<string>? OnFriendRequestAccepted;
         public event Action<string>? OnFriendRequestRejected;
         public event Action<string>? OnFriendRequestCanceled;
-        public event Action<string>? OnFriendRemoved;
+        public event Action<string>? OnFriendRequestRemoved;
+        public event Action<string>? OnFriendConnected;
+        public event Action<string>? OnFriendDisconnected;
 
         public void BroadcastFriendRequestReceived(FriendRequest request) =>
             OnFriendRequestReceived?.Invoke(request);
@@ -17,16 +19,22 @@ namespace DCL.Friends
         public void BroadcastFriendRequestSent(FriendRequest request) =>
             OnFriendRequestSent?.Invoke(request);
 
-        public void BroadcastFriendRequestAccepted(string friendRequestId) =>
-            OnFriendRequestAccepted?.Invoke(friendRequestId);
+        public void BroadcastFriendRequestAccepted(string friendId) =>
+            OnFriendRequestAccepted?.Invoke(friendId);
 
-        public void BroadcastFriendRequestRejected(string friendRequestId) =>
-            OnFriendRequestRejected?.Invoke(friendRequestId);
+        public void BroadcastFriendRequestRejected(string friendId) =>
+            OnFriendRequestRejected?.Invoke(friendId);
 
-        public void BroadcastFriendRequestCanceled(string friendRequestId) =>
-            OnFriendRequestCanceled?.Invoke(friendRequestId);
+        public void BroadcastFriendRequestCanceled(string friendId) =>
+            OnFriendRequestCanceled?.Invoke(friendId);
 
-        public void BroadcastFriendRemoved(string friendId) =>
-            OnFriendRemoved?.Invoke(friendId);
+        public void BroadcastFriendRequestRemoved(string friendId) =>
+            OnFriendRequestRemoved?.Invoke(friendId);
+
+        public void BroadcastFriendConnected(string friendId) =>
+            OnFriendConnected?.Invoke(friendId);
+
+        public void BroadcastFriendDisconnected(string friendId) =>
+            OnFriendDisconnected?.Invoke(friendId);
     }
 }
