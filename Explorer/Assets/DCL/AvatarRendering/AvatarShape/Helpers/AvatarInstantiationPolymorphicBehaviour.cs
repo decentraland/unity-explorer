@@ -43,7 +43,7 @@ namespace DCL.AvatarRendering.AvatarShape.Helpers
                     var maskAssetRes = originalAssets[WearablePolymorphicBehaviour.MASK_ASSET_INDEX];
 
                     if (maskAssetRes is { Asset: not null })
-                        texturesSet[TextureArrayConstants.MASK_ORIGINAL_TEXTURE_ID] = ((AttachmentTextureAsset)maskAssetRes.Value.Asset!).Texture;
+                        texturesSet[TextureArrayConstants.MASK_ORIGINAL_TEXTURE] = ((AttachmentTextureAsset)maskAssetRes.Value.Asset!).Texture;
 
                     return null;
                 default:

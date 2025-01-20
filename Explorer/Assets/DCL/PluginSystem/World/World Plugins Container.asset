@@ -101,6 +101,16 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
+        <DefaultMetallicGloss256>k__BackingField:
+          m_AssetGUID: 6bdb4b9ae9bf04745acee14bf4c684e1
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        <DefaultMetallicGloss512>k__BackingField:
+          m_AssetGUID: f3fd7329d073f964aaec82eb9acc9ed3
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
         <DefaultMouthBrowMask256>k__BackingField:
           m_AssetGUID: 6bdb4b9ae9bf04745acee14bf4c684e1
           m_SubObjectName: 
