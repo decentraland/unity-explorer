@@ -14,6 +14,7 @@ using MVC;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using Utility;
 
@@ -196,8 +197,9 @@ namespace DCL.ExplorePanel
 
         private void OnCloseMainMenu(InputAction.CallbackContext obj)
         {
-            // We enable the shortcuts since they might have been disabled by an input field - #3075
-            inputBlock.Enable(InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.IN_WORLD_CAMERA);
+            // Search bar could be focused when closing the menu, so we need to remove the focus,
+            // which will also re-enable shortcuts
+            EventSystem.current.SetSelectedGameObject(null);
 
             profileMenuController.HideViewAsync(CancellationToken.None).Forget();
             isControlClosing = true;
