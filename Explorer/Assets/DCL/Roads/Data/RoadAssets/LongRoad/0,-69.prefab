@@ -4538,6 +4538,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2233336176444780422}
+  - component: {fileID: -9149421892758775191}
   m_Layer: 0
   m_Name: 0,-69
   m_TagString: LongRoad
@@ -4584,6 +4585,21 @@ Transform:
   - {fileID: 5742713050996148225}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &-9149421892758775191
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4509605600178590705}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2a93533cfb4b48c5866cdd42852bb92c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  PrefabInstance:
+    Meshes: []
+    LODGroups: []
 --- !u!1 &4592534744065174810
 GameObject:
   m_ObjectHideFlags: 0

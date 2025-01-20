@@ -41,6 +41,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6581700148817771512}
+  - component: {fileID: 6789490919386125816}
   m_Layer: 0
   m_Name: Crossroads_0
   m_TagString: Untagged
@@ -64,6 +65,21 @@ Transform:
   - {fileID: 2001548707764443314}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &6789490919386125816
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3484431227248238708}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2a93533cfb4b48c5866cdd42852bb92c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  PrefabInstance:
+    Meshes: []
+    LODGroups: []
 --- !u!1 &4505348893820414906
 GameObject:
   m_ObjectHideFlags: 0

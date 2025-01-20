@@ -76,6 +76,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6754613111225310428}
+  - component: {fileID: -558133804069075348}
   m_Layer: 0
   m_Name: OpenRoad_D
   m_TagString: Untagged
@@ -99,6 +100,21 @@ Transform:
   - {fileID: 2152626154367158711}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &-558133804069075348
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7823264834543567416}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2a93533cfb4b48c5866cdd42852bb92c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  PrefabInstance:
+    Meshes: []
+    LODGroups: []
 --- !u!1001 &3290788593735690167
 PrefabInstance:
   m_ObjectHideFlags: 0

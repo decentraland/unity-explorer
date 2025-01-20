@@ -77,6 +77,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6462727477412694801}
+  - component: {fileID: -508191165912973958}
   m_Layer: 0
   m_Name: DeadEnd_C
   m_TagString: Untagged
@@ -100,6 +101,21 @@ Transform:
   - {fileID: 5024027450065642368}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &-508191165912973958
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5453666885138851512}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2a93533cfb4b48c5866cdd42852bb92c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  PrefabInstance:
+    Meshes: []
+    LODGroups: []
 --- !u!1001 &3641974035382158614
 PrefabInstance:
   m_ObjectHideFlags: 0
