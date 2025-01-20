@@ -37,6 +37,7 @@ using DCL.Multiplayer.Connections.Pools;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Connections.Rooms.Status;
 using DCL.Multiplayer.Connections.Systems.Throughput;
+using DCL.Multiplayer.Connectivity;
 using DCL.Multiplayer.Deduplication;
 using DCL.Multiplayer.Emotes;
 using DCL.Multiplayer.HealthChecks;
@@ -200,6 +201,9 @@ namespace Global.Dynamic
             LODContainer lodContainer = null!;
             MapRendererContainer mapRendererContainer = null!;
 
+            IOnlineUsersProvider onlineUsersProvider = new ArchipelagoHttpOnlineUsersProvider(staticContainer.WebRequestsContainer.WebRequestController,
+                URLAddress.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.RemotePeers)));
+
             async UniTask InitializeContainersAsync(IPluginSettingsContainer settingsContainer, CancellationToken ct)
             {
                 // Init other containers
@@ -241,6 +245,7 @@ namespace Global.Dynamic
                             notificationsBusController,
                             teleportBusController,
                             sharedNavmapCommandBus,
+                            onlineUsersProvider,
                             ct
                         );
             }
@@ -767,7 +772,7 @@ namespace Global.Dynamic
                     includeCameraReel
                 ),
                 new GenericContextMenuPlugin(assetsProvisioner, mvcManager),
-                new FriendsPlugin(bootstrapContainer.DecentralandUrlsSource, profileRepository, identityCache, staticContainer.FeatureFlagsCache)
+                new FriendsPlugin(bootstrapContainer.DecentralandUrlsSource, profileRepository, identityCache, staticContainer.FeatureFlagsCache, onlineUsersProvider, roomHub)
             };
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);
