@@ -29,6 +29,11 @@ namespace DCL.UI.Controls
                 mvcManager.ShowAsync(IssueCommand()).Forget();
         }
 
+        protected override void OnViewClose()
+        {
+            closePanel = false;
+        }
+
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
             UniTask.WhenAny(
                 viewInstance!.closeButton.OnClickAsync(ct),
