@@ -14,14 +14,15 @@ namespace DCL.Roads.GPUInstancing.Playground
         [ContextMenu(nameof(CollectSelfData))]
         public void CollectSelfData()
         {
-            #if UNITY_EDITOR
-            var isPrefabAsset = PrefabUtility.IsPartOfPrefabAsset(gameObject);
+#if UNITY_EDITOR
+            bool isPrefabAsset = PrefabUtility.IsPartOfPrefabAsset(gameObject);
+
             if (isPrefabAsset)
             {
                 CollectDataFromPrefabAsset();
                 return;
             }
-            #endif
+#endif
 
             CollectDataFromInstance();
         }
@@ -34,50 +35,6 @@ namespace DCL.Roads.GPUInstancing.Playground
                 LODGroups = CollectLODGroupsData(),
             };
         }
-
-        #if UNITY_EDITOR
-        private void CollectDataFromPrefabAsset()
-        {
-            // Get all components regardless of their enabled state when working with prefab asset
-            var allRenderers = gameObject.GetComponentsInChildren<MeshRenderer>(true);
-            var allLODGroups = gameObject.GetComponentsInChildren<LODGroup>(true);
-
-            PrefabInstance = new PrefabInstanceData
-            {
-                Meshes = (from renderer in allRenderers
-                    where !(renderer is SkinnedMeshRenderer)
-                    where !HasLODGroupInPrefabHierarchy(renderer.transform)
-                    let meshFilter = renderer.GetComponent<MeshFilter>()
-                    where meshFilter != null && meshFilter.sharedMesh != null
-                    select new MeshData
-                    {
-                        Transform = renderer.transform,
-                        SharedMesh = meshFilter.sharedMesh,
-                        SharedMaterials = renderer.sharedMaterials,
-                        ReceiveShadows = renderer.receiveShadows,
-                        ShadowCastingMode = renderer.shadowCastingMode,
-                        Renderer = renderer,
-                    }).ToArray(),
-
-                LODGroups = (from lodGroup in allLODGroups
-                    select CollectLODGroupData(lodGroup)).ToArray()
-            };
-        }
-
-        private bool HasLODGroupInPrefabHierarchy(Transform transform)
-        {
-            var current = transform;
-            var root = this.transform;
-
-            while (current != root && current != null)
-            {
-                if (current.GetComponent<LODGroup>() != null)
-                    return true;
-                current = current.parent;
-            }
-            return false;
-        }
-        #endif
 
         private LODGroupData[] CollectLODGroupsData() =>
             (from lodGroup in GetComponentsInChildren<LODGroup>(includeInactive: false)
@@ -111,10 +68,11 @@ namespace DCL.Roads.GPUInstancing.Playground
                 ObjectSize = lodGroup.size,
                 LODBounds = new Bounds(),
                 LODs = lodGroup.GetLODs().Select(lod => new LODEntryMeshData
-                {
-                    Meshes = CollectLODMeshData(lod).ToArray(),
-                    Distance = lod.screenRelativeTransitionHeight,
-                }).ToArray()
+                                {
+                                    Meshes = CollectLODMeshData(lod).ToArray(),
+                                    Distance = lod.screenRelativeTransitionHeight,
+                                })
+                               .ToArray(),
             };
 
             CalculateGroupBounds(LODGroupData);
@@ -126,25 +84,25 @@ namespace DCL.Roads.GPUInstancing.Playground
         {
             var list = new List<MeshData>();
 
-            foreach (var renderer in lod.renderers)
+            foreach (Renderer renderer in lod.renderers)
             {
                 if (renderer is SkinnedMeshRenderer) continue;
 
                 var meshRenderer = renderer as MeshRenderer;
-                var meshFilter = renderer.GetComponent<MeshFilter>();
+                if (meshRenderer == null || meshRenderer.sharedMaterials.Length == 0) return list;
 
-                if (meshRenderer != null && meshFilter != null && meshFilter.sharedMesh != null && meshRenderer.sharedMaterials.Length > 0)
+                MeshFilter meshFilter = renderer.GetComponent<MeshFilter>();
+                if (meshFilter == null || meshFilter.sharedMesh == null) return list;
+
+                list.Add(new MeshData
                 {
-                    list.Add(new MeshData
-                    {
-                        Transform = meshRenderer.transform,
-                        SharedMesh = meshFilter.sharedMesh,
-                        SharedMaterials = meshRenderer.sharedMaterials,
-                        ReceiveShadows = meshRenderer.receiveShadows,
-                        ShadowCastingMode = meshRenderer.shadowCastingMode,
-                        Renderer = meshRenderer,
-                    });
-                }
+                    Transform = meshRenderer.transform,
+                    SharedMesh = meshFilter.sharedMesh,
+                    SharedMaterials = meshRenderer.sharedMaterials,
+                    ReceiveShadows = meshRenderer.receiveShadows,
+                    ShadowCastingMode = meshRenderer.shadowCastingMode,
+                    Renderer = meshRenderer,
+                });
             }
 
             return list;
@@ -172,9 +130,56 @@ namespace DCL.Roads.GPUInstancing.Playground
             {
                 if (transform.GetComponent<LODGroup>() != null)
                     return true;
+
                 transform = transform.parent;
             }
+
             return false;
         }
+
+#if UNITY_EDITOR
+        private void CollectDataFromPrefabAsset()
+        {
+            // Get all components regardless of their enabled state when working with prefab asset
+            MeshRenderer[] allRenderers = gameObject.GetComponentsInChildren<MeshRenderer>(true);
+            LODGroup[] allLODGroups = gameObject.GetComponentsInChildren<LODGroup>(true);
+
+            PrefabInstance = new PrefabInstanceData
+            {
+                Meshes = (from renderer in allRenderers
+                    where !HasLODGroupInPrefabHierarchy(renderer.transform)
+                    let meshFilter = renderer.GetComponent<MeshFilter>()
+                    where meshFilter != null && meshFilter.sharedMesh != null
+                    select new MeshData
+                    {
+                        Transform = renderer.transform,
+                        SharedMesh = meshFilter.sharedMesh,
+                        SharedMaterials = renderer.sharedMaterials,
+                        ReceiveShadows = renderer.receiveShadows,
+                        ShadowCastingMode = renderer.shadowCastingMode,
+                        Renderer = renderer,
+                    }).ToArray(),
+
+                LODGroups = (from lodGroup in allLODGroups
+                    select CollectLODGroupData(lodGroup)).ToArray(),
+            };
+        }
+
+        private bool HasLODGroupInPrefabHierarchy(Transform transform)
+        {
+            Transform current = transform;
+            Transform root = this.transform;
+
+            while (current != root && current != null)
+            {
+                if (current.GetComponent<LODGroup>() != null)
+                    return true;
+
+                current = current.parent;
+            }
+
+            return false;
+        }
+#endif
     }
 }

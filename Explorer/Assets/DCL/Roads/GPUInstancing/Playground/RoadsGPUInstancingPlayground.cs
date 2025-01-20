@@ -22,7 +22,7 @@ namespace DCL.Roads.Playground
         public RoadSettingsAsset RoadsConfig;
 
         public bool Debug;
-        [Range(0, 54)] public int DebugId;
+        [Range(0, 53)] public int DebugId;
         public bool RoadShift;
         public Vector2Int ComparisonShift;
         public bool Run;
