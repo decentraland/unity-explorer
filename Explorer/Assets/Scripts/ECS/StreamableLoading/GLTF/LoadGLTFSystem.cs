@@ -23,13 +23,15 @@ namespace ECS.StreamableLoading.GLTF
     {
         private static MaterialGenerator gltfMaterialGenerator = new DecentralandMaterialGenerator("DCL/Scene");
 
-        private ISceneData sceneData;
+        private readonly ISceneData? sceneData;
+        private readonly string? contentSourceUrl;
         private readonly IWebRequestController webRequestController;
-        private GltFastReportHubLogger gltfConsoleLogger = new GltFastReportHubLogger();
+        private readonly GltFastReportHubLogger gltfConsoleLogger = new GltFastReportHubLogger();
 
-        internal LoadGLTFSystem(World world, IStreamableCache<GLTFData, GetGLTFIntention> cache, ISceneData sceneData, IWebRequestController webRequestController) : base(world, cache)
+        internal LoadGLTFSystem(World world, IStreamableCache<GLTFData, GetGLTFIntention> cache, IWebRequestController webRequestController, ISceneData? sceneData = null, string? contentSourceUrl = null) : base(world, cache)
         {
             this.sceneData = sceneData;
+            this.contentSourceUrl = contentSourceUrl;
             this.webRequestController = webRequestController;
         }
 
@@ -37,15 +39,18 @@ namespace ECS.StreamableLoading.GLTF
         {
             var reportData = new ReportData(GetReportCategory());
 
-            if (!sceneData.SceneContent.TryGetContentUrl(intention.Name!, out _))
+            bool contentSourceUrlAvailable = !string.IsNullOrEmpty(contentSourceUrl);
+            if ((sceneData != null && !sceneData.SceneContent.TryGetContentUrl(intention.Name!, out _)) || !contentSourceUrlAvailable)
                 return new StreamableLoadingResult<GLTFData>(
                     reportData,
                     new Exception("The content to download couldn't be found"));
 
             // Acquired budget is released inside GLTFastDownloadedProvider once the GLTF has been fetched
-            GltFastDownloadProvider gltfDownloadProvider = new GltFastDownloadProvider(World, sceneData, partition, intention.Name!, reportData, webRequestController, acquiredBudget);
+            GltFastSceneDownloadProvider? gltfSceneDownloadProvider = sceneData != null ? new GltFastSceneDownloadProvider(World, sceneData, partition, intention.Name!, reportData, webRequestController, acquiredBudget) : null;
+            GltFastGlobalDownloadProvider? gltfGlobalDownloadProvider = contentSourceUrlAvailable ? new GltFastGlobalDownloadProvider(World, contentSourceUrl!, partition, reportData, webRequestController, acquiredBudget) : null;
+
             var gltfImport = new GltfImport(
-                downloadProvider: gltfDownloadProvider,
+                downloadProvider: contentSourceUrlAvailable ? gltfGlobalDownloadProvider : gltfSceneDownloadProvider,
                 logger: gltfConsoleLogger,
                 materialGenerator: gltfMaterialGenerator);
 
@@ -57,7 +62,8 @@ namespace ECS.StreamableLoading.GLTF
             };
 
             bool success = await gltfImport.Load(intention.Name, gltFastSettings, ct);
-            gltfDownloadProvider.Dispose();
+            gltfSceneDownloadProvider?.Dispose();
+            gltfGlobalDownloadProvider?.Dispose();
 
             if (success)
             {

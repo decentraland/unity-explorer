@@ -16,6 +16,7 @@ using DCL.ResourcesUnloading;
 using DCL.WebRequests;
 using ECS;
 using ECS.StreamableLoading.Cache;
+using ECS.StreamableLoading.GLTF;
 using Newtonsoft.Json;
 using SceneRunner.Scene;
 using System;
@@ -79,6 +80,8 @@ namespace DCL.AvatarRendering.Wearables
             LoadWearablesDTOByPointersSystem.InjectToWorld(ref builder, webRequestController, new NoCache<WearablesDTOList, GetWearableDTOByPointersIntention>(false, false));
             LoadWearableAssetBundleManifestSystem.InjectToWorld(ref builder, new NoCache<SceneAssetBundleManifest, GetWearableAssetBundleManifestIntention>(true, true), assetBundleURL, webRequestController);
             LoadDefaultWearablesSystem.InjectToWorld(ref builder, defaultWearablesDTOs, defaultEmptyWearableAsset, wearableStorage);
+
+            LoadGLTFSystem.InjectToWorld(ref builder, new NoCache<GLTFData, GetGLTFIntention>(false, false), webRequestController, contentSourceUrl: builderContentURL.Value);
 
             ResolveAvatarAttachmentThumbnailSystem.InjectToWorld(ref builder);
         }

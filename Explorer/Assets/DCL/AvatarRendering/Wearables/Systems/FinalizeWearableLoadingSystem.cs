@@ -26,6 +26,7 @@ using System.Runtime.CompilerServices;
 using Utility;
 using AssetBundleManifestPromise = ECS.StreamableLoading.Common.AssetPromise<SceneRunner.Scene.SceneAssetBundleManifest, DCL.AvatarRendering.Wearables.Components.GetWearableAssetBundleManifestIntention>;
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
+using RawGltfPromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.GLTF.GLTFData, ECS.StreamableLoading.GLTF.GetGLTFIntention>;
 using StreamableResult = ECS.StreamableLoading.Common.Components.StreamableLoadingResult<DCL.AvatarRendering.Wearables.Components.WearablesResolution>;
 
 namespace DCL.AvatarRendering.Wearables.Systems
@@ -67,6 +68,8 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 FinalizeWearableDTOQuery(World);
 
             ResolveWearablePromiseQuery(World, defaultWearablesResolved);
+
+            FinalizeRawGltfWearableLoadingQuery(World, defaultWearablesResolved);
 
             // Asset Bundles can be Resolved with Embedded Data
             FinalizeAssetBundleManifestLoadingQuery(World, defaultWearablesResolved);
@@ -152,7 +155,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                     IWearable visibleWearable = hideWearablesResolution.VisibleWearables[i];
 
                     if (visibleWearable.IsLoading) continue;
-                    if (CreateAssetBundlePromiseIfRequired(visibleWearable, wearablesByPointersIntention, partitionComponent)) continue;
+                    if (CreateAssetPromiseIfRequired(visibleWearable, wearablesByPointersIntention, partitionComponent)) continue;
                     if (!visibleWearable.HasEssentialAssetsResolved(wearablesByPointersIntention.BodyShape)) continue;
 
                     successfulResults++;
@@ -272,6 +275,37 @@ namespace DCL.AvatarRendering.Wearables.Systems
             }
         }
 
+        [Query]
+        private void FinalizeRawGltfWearableLoading(
+            [Data] bool defaultWearablesResolved,
+            Entity entity,
+            ref RawGltfPromise promise,
+            ref IWearable wearable,
+            in BodyShape bodyShape,
+            int index
+        )
+        {
+            /*if (promise.LoadingIntention.CancellationTokenSource.IsCancellationRequested)
+            {
+                ResetWearableResultOnCancellation(wearable, in bodyShape, index);
+                promise.ForgetLoading(World);
+                World.Destroy(entity);
+                return;
+            }
+
+            if (promise.SafeTryConsume(World, GetReportCategory(), out StreamableLoadingResult<AssetBundleData> result))
+            {
+                // every asset in the batch is mandatory => if at least one has already failed set the default wearables
+                if (result.Succeeded && !AnyAssetHasFailed(wearable, bodyShape))
+                    SetWearableResult(wearable, result, in bodyShape, index);
+                else
+                    SetDefaultWearables(defaultWearablesResolved, wearable, in bodyShape);
+
+                wearable.UpdateLoadingStatus(!AllAssetsAreLoaded(wearable, bodyShape));
+                World.Destroy(entity);
+            }*/
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool AllAssetsAreLoaded(IWearable wearable, BodyShape bodyShape)
         {
@@ -286,19 +320,30 @@ namespace DCL.AvatarRendering.Wearables.Systems
         private static bool AnyAssetHasFailed(IWearable wearable, BodyShape bodyShape) =>
             wearable.WearableAssetResults[bodyShape].ReplacedWithDefaults;
 
-        private bool CreateAssetBundlePromiseIfRequired(IWearable component, in GetWearablesByPointersIntention intention, IPartitionComponent partitionComponent)
+        private bool CreateAssetPromiseIfRequired(IWearable component, in GetWearablesByPointersIntention intention, IPartitionComponent partitionComponent)
         {
             // Do not repeat the promise if already failed once. Otherwise it will end up in an endless loading:true state
-            if (component.ManifestResult is { Succeeded: false }) return false;
+            // if (component.ManifestResult is { Succeeded: false }) return false;
 
-            // Manifest is required for Web loading only
-            if (component.ManifestResult == null && EnumUtils.HasFlag(intention.PermittedSources, AssetSource.WEB))
-                return component.CreateAssetBundleManifestPromise(World, intention.BodyShape, intention.CancellationTokenSource, partitionComponent);
-
-            if (component.TryCreateAssetBundlePromise(in intention, customStreamingSubdirectory, partitionComponent, World, GetReportCategory()))
+            if (component.ManifestResult is { Succeeded: true })
             {
-                component.UpdateLoadingStatus(true);
-                return true;
+                if (component.TryCreateAssetPromise(in intention, customStreamingSubdirectory, partitionComponent, World, GetReportCategory()))
+                {
+                    component.UpdateLoadingStatus(true);
+                    return true;
+                }
+            }
+            else if (EnumUtils.HasFlag(intention.PermittedSources, AssetSource.WEB)) // Manifest is required for Web loading only
+            {
+                if (string.IsNullOrEmpty(component.DTO.FilesDownloadUrl))
+                    return component.CreateAssetBundleManifestPromise(World, intention.BodyShape, intention.CancellationTokenSource, partitionComponent);
+
+                // TODO: CREATE RAW GLTF download promise HERE...
+                /*if (component.TryCreateAssetPromise(in intention, customStreamingSubdirectory, partitionComponent, World, GetReportCategory(), component.DTO.FilesDownloadUrl))
+                {
+                    component.UpdateLoadingStatus(true);
+                    return true;
+                }*/
             }
 
             return false;

@@ -18,7 +18,7 @@ using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.
 
 namespace ECS.StreamableLoading.GLTF
 {
-    internal class GltFastDownloadProvider : IDownloadProvider, IDisposable
+    internal class GltFastSceneDownloadProvider : IDownloadProvider, IDisposable
     {
         private const int ATTEMPTS_COUNT = 6;
 
@@ -30,7 +30,7 @@ namespace ECS.StreamableLoading.GLTF
         private readonly IWebRequestController webRequestController;
         private readonly ReportData reportData;
 
-        public GltFastDownloadProvider(World world, ISceneData sceneData, IPartitionComponent partitionComponent, string targetGltfOriginalPath, ReportData reportData,
+        public GltFastSceneDownloadProvider(World world, ISceneData sceneData, IPartitionComponent partitionComponent, string targetGltfOriginalPath, ReportData reportData,
             IWebRequestController webRequestController, IAcquiredBudget acquiredBudget)
         {
             this.world = world;
