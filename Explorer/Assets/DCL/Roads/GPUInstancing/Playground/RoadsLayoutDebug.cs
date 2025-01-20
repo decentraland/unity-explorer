@@ -77,6 +77,7 @@ namespace DCL.Roads.GPUInstancing.Playground
                 if (prefab != null)
                 {
                     PrefabInstanceDataBehaviour prefabBeh = prefab.GetComponent<PrefabInstanceDataBehaviour>();
+                    prefabBeh.CollectSelfData();
                     cachedPrefabs.Add(prefabBeh);
                 }
             }
@@ -137,9 +138,9 @@ namespace DCL.Roads.GPUInstancing.Playground
 
             AddMeshDataToInstancingMap(prefabData.PrefabInstance.Meshes, rootMatrix);
 
-            foreach (LODGroupData lodGroup in prefabData.PrefabInstance.LODGroups)
-            foreach (LODEntryMeshData lods in lodGroup.LODs)
-                AddMeshDataToInstancingMap(lods.Meshes, rootMatrix);
+            // foreach (LODGroupData lodGroup in prefabData.PrefabInstance.LODGroups)
+            // foreach (LODEntryMeshData lods in lodGroup.LODs)
+            //     AddMeshDataToInstancingMap(lods.Meshes, rootMatrix);
         }
 
         private void AddMeshDataToInstancingMap(MeshData[] meshes, Matrix4x4 rootMatrix)
