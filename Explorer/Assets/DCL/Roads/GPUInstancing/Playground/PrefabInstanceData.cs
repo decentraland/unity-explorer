@@ -67,6 +67,7 @@ namespace DCL.Roads.GPUInstancing.Playground
             {
                 receiveShadows = ReceiveShadows,
                 shadowCastingMode = ShadowCastingMode,
+                worldBounds = new Bounds(center: Vector3.zero, size: Vector3.one * 999999f),
             }).ToArray());
     }
 }

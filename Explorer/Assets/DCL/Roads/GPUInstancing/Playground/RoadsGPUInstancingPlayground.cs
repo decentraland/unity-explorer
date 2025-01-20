@@ -1,7 +1,5 @@
-﻿using DCL.Roads.GPUInstancing;
-using DCL.Roads.GPUInstancing.Playground;
+﻿using DCL.Roads.GPUInstancing.Playground;
 using DCL.Roads.Settings;
-using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using Utility;
@@ -13,37 +11,24 @@ namespace DCL.Roads.Playground
     {
         private static readonly int OBJECT_TO_WORLD = Shader.PropertyToID("_ObjectToWorld");
 
-        private readonly Dictionary<GPUInstancedRenderer, List<Matrix4x4>> gpuInstancingMap = new ();
-
         public PrefabInstanceDataBehaviour[] originalPrefabs;
 
-        [Space]
-        public RoadSettingsAsset RoadsConfig;
-
         [Header("DEBUG SETTINGS")]
-        public bool Debug;
         [Range(0, 53)] public int DebugId;
         public Vector2Int ComparisonShift;
 
-        [Space(5)]
+        [Header("ROADS SETTINGS")]
         public bool RoadShift;
         public RoadDescription[] Descriptions;
 
         [Space(5)]
+        [Header("RUN SETTINGS")]
         public bool UseIndirect;
         public bool Run;
-
-        [Header("DEBUG MESHES")]
-        public Mesh[] Props;
-        public Material[] Materials1;
-        public Vector2Int ParcelsMin;
-        public Vector2Int ParcelsMax;
 
         private int currentCommandIndex;
         private GraphicsBuffer commandBuffer;
         private GraphicsBuffer.IndirectDrawIndexedArgs[] commandData;
-
-        private Transform debugRoot;
 
         private GameObject originalInstance;
 
@@ -51,38 +36,24 @@ namespace DCL.Roads.Playground
         {
             if (!Run) return;
 
-            if (Debug)
+            PrefabInstanceData prefab = GetAndSpawnOriginalPrefab().PrefabInstance;
+
+            if (UseIndirect)
+                PrepareIndirectBuffer(prefab);
+
+            // Render Instanced/Indirect
             {
-                PrefabInstanceData prefab = GetAndSpawnOriginalPrefab().PrefabInstance;
+                RenderMesh(prefab.Meshes);
 
-                if (UseIndirect)
-                    PrepareIndirectBuffer(prefab);
-
-                // Render Instanced/Indirect
+                foreach (LODGroupData lodGroup in prefab.LODGroups)
                 {
-                    DebugRenderMesh(prefab.Meshes);
-
-                    foreach (LODGroupData lodGroup in prefab.LODGroups)
-                    {
-                        LODEntryMeshData lods = lodGroup.LODs[0];
-                        DebugRenderMesh(lods.Meshes);
-                    }
-                }
-
-                if (UseIndirect)
-                    commandBuffer.SetData(commandData);
-            }
-            else
-            {
-                foreach (KeyValuePair<GPUInstancedRenderer, List<Matrix4x4>> renderInstances in gpuInstancingMap)
-                {
-                    for (var i = 0; i < renderInstances.Key.RenderParams.Length; i++) // foreach submesh
-                    {
-                        // Graphics.RenderMeshIndirect()
-                        Graphics.RenderMeshInstanced(in renderInstances.Key.RenderParams[i], renderInstances.Key.Mesh, i, renderInstances.Value);
-                    }
+                    LODEntryMeshData lods = lodGroup.LODs[0];
+                    RenderMesh(lods.Meshes);
                 }
             }
+
+            if (UseIndirect)
+                commandBuffer.SetData(commandData);
         }
 
         private void PrepareIndirectBuffer(PrefabInstanceData prefab)
@@ -105,7 +76,7 @@ namespace DCL.Roads.Playground
             commandBuffer = null;
         }
 
-        private void DebugRenderMesh(MeshData[] meshes)
+        private void RenderMesh(MeshData[] meshes)
         {
             if (UseIndirect)
                 DebugRenderMeshesIndirect(meshes);
@@ -197,105 +168,11 @@ namespace DCL.Roads.Playground
             }
         }
 
-        [ContextMenu(nameof(Collect))]
-        public void Collect()
-        {
-            CreateDebugRoot();
-
-            gpuInstancingMap.Clear();
-            PrepareInstancesMap(RoadsConfig.RoadDescriptions);
-
-            CollectDebugInfo();
-        }
-
         [ContextMenu(nameof(PrefabsSelfCollect))]
         private void PrefabsSelfCollect()
         {
             foreach (PrefabInstanceDataBehaviour prefab in originalPrefabs)
                 prefab.CollectSelfData();
-        }
-
-        private void PrepareInstancesMap(IEnumerable<RoadDescription> from)
-        {
-            HashSet<int> processedRoads = new ();
-
-            foreach (RoadDescription roadDescription in from)
-            {
-                if (IsOutOfRange(roadDescription.RoadCoordinate)) continue;
-                if (!processedRoads.Add(roadDescription.GetHashCode())) continue;
-
-                var roadTransform = Matrix4x4.TRS(roadDescription.RoadCoordinate.ParcelToPositionFlat() + ParcelMathHelper.RoadPivotDeviation, roadDescription.Rotation.SelfOrIdentity(), Vector3.one);
-
-                PrefabInstanceDataBehaviour prefab = originalPrefabs.FirstOrDefault(op => op.name == roadDescription.RoadModel);
-                if (prefab != null)
-                {
-                    prefab.CollectSelfData();
-
-                    PrefabInstanceDataBehaviour roadAsset = Instantiate(prefab);
-
-                    roadAsset.transform.localPosition = roadDescription.RoadCoordinate.ParcelToPositionFlat() + ParcelMathHelper.RoadPivotDeviation;
-                    roadAsset.transform.localRotation = roadDescription.Rotation;
-                    roadAsset.gameObject.SetActive(true);
-
-                    roadAsset.transform.parent = debugRoot;
-
-                    roadAsset.CollectSelfData();
-                    AddPrefabDataToInstancingMap(roadAsset.PrefabInstance, roadTransform);
-                }
-            }
-        }
-
-        private bool IsOutOfRange(Vector2Int roadCoordinate) =>
-            roadCoordinate.x < ParcelsMin.x || roadCoordinate.x > ParcelsMax.x ||
-            roadCoordinate.y < ParcelsMin.y || roadCoordinate.y > ParcelsMax.y;
-
-        private void AddPrefabDataToInstancingMap(PrefabInstanceData prefabData, Matrix4x4 roadTransform)
-        {
-            AddMeshDataToInstancingMap(prefabData.Meshes, roadTransform);
-
-            foreach (LODGroupData lodGroup in prefabData.LODGroups)
-            foreach (LODEntryMeshData lods in lodGroup.LODs)
-                AddMeshDataToInstancingMap(lods.Meshes, roadTransform);
-        }
-
-        private void AddMeshDataToInstancingMap(MeshData[] meshes, Matrix4x4 roadTransform)
-        {
-            foreach (MeshData meshData in meshes)
-            {
-                // Matrix4x4 finalMatrix = roadTransform * meshData.Transform.localToWorldMatrix;
-                Matrix4x4 finalMatrix = meshData.Transform.localToWorldMatrix;
-
-                var instancedRenderer = meshData.ToGPUInstancedRenderer();
-
-                if (gpuInstancingMap.TryGetValue(instancedRenderer, out List<Matrix4x4> matrix))
-                    matrix.Add(finalMatrix);
-                else
-                    gpuInstancingMap.Add(instancedRenderer, new List<Matrix4x4> { finalMatrix });
-            }
-        }
-
-        private void CreateDebugRoot()
-        {
-            if (GameObject.Find("RoadsRoot"))
-                DestroyImmediate(GameObject.Find("RoadsRoot"));
-
-            debugRoot = new GameObject("RoadsRoot").transform;
-            debugRoot.gameObject.SetActive(false);
-        }
-
-        private void CollectDebugInfo()
-        {
-            var props = new List<Mesh>();
-            var materials = new List<Material>();
-
-            foreach (KeyValuePair<GPUInstancedRenderer, List<Matrix4x4>> propPair in gpuInstancingMap)
-            {
-                props.Add(propPair.Key.Mesh);
-                materials.Add(propPair.Key.RenderParams[0].material);
-            }
-
-            Materials1 = materials.ToArray();
-            Props = props.ToArray();
         }
     }
 }
