@@ -27,6 +27,21 @@ namespace DCL.Roads.GPUInstancing.Playground
             CollectDataFromInstance();
         }
 
+        public void HideVisuals()
+        {
+            foreach (MeshData mesh in PrefabInstance.Meshes)
+                mesh.Renderer.enabled = false;
+
+            foreach (LODGroupData lodGroup in PrefabInstance.LODGroups)
+            {
+                lodGroup.LODGroup.enabled = false;
+
+                foreach (LODEntryMeshData lod in lodGroup.LODs)
+                foreach (MeshData mesh in lod.Meshes)
+                    mesh.Renderer.enabled = false;
+            }
+        }
+
         private void CollectDataFromInstance()
         {
             PrefabInstance = new PrefabInstanceData
@@ -67,7 +82,8 @@ namespace DCL.Roads.GPUInstancing.Playground
                 Transform = lodGroup.transform,
                 ObjectSize = lodGroup.size,
                 LODBounds = new Bounds(),
-                LODs = lodGroup.GetLODs().Select(lod => new LODEntryMeshData
+                LODs = lodGroup.GetLODs()
+                               .Select(lod => new LODEntryMeshData
                                 {
                                     Meshes = CollectLODMeshData(lod).ToArray(),
                                     ScreenRelativeTransitionHeight = lod.screenRelativeTransitionHeight,
