@@ -5,8 +5,6 @@ using DCL.AssetsProvision;
 using DCL.Backpack;
 using DCL.Browser;
 using DCL.Chat;
-using DCL.Friends;
-using DCL.Friends.UI;
 using DCL.Notifications;
 using DCL.Notifications.NotificationsMenu;
 using DCL.NotificationsBusController.NotificationsBus;
@@ -43,8 +41,6 @@ namespace DCL.PluginSystem.Global
         private readonly IUserInAppInitializationFlow userInAppInitializationFlow;
         private readonly IProfileCache profileCache;
         private readonly ISidebarBus sidebarBus;
-        private readonly IFriendsService friendsService;
-        private readonly IFriendsEventBus friendEventBus;
         private readonly ChatEntryConfigurationSO chatEntryConfigurationSo;
         private readonly Arch.Core.World world;
         private readonly Entity playerEntity;
@@ -65,8 +61,6 @@ namespace DCL.PluginSystem.Global
             IUserInAppInitializationFlow userInAppInitializationFlow,
             IProfileCache profileCache,
             ISidebarBus sidebarBus,
-            IFriendsService friendsService,
-            IFriendsEventBus friendEventBus,
             ChatEntryConfigurationSO chatEntryConfigurationSo,
             Arch.Core.World world,
             Entity playerEntity,
@@ -86,8 +80,6 @@ namespace DCL.PluginSystem.Global
             this.userInAppInitializationFlow = userInAppInitializationFlow;
             this.profileCache = profileCache;
             this.sidebarBus = sidebarBus;
-            this.friendsService = friendsService;
-            this.friendEventBus = friendEventBus;
             this.chatEntryConfigurationSo = chatEntryConfigurationSo;
             this.world = world;
             this.playerEntity = playerEntity;
@@ -116,7 +108,6 @@ namespace DCL.PluginSystem.Global
                 new ProfileWidgetController(() => mainUIView.SidebarView.ProfileWidget, web3IdentityCache, profileRepository, webRequestController),
                 new ProfileMenuController(() => mainUIView.SidebarView.ProfileMenuView, web3IdentityCache, profileRepository, webRequestController, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, mvcManager, chatEntryConfigurationSo),
                 new SkyboxMenuController(() => mainUIView.SidebarView.SkyboxMenuView, settings.SkyboxSettingsAsset),
-                new FriendsPanelController(() => mainUIView.SidebarView.FriendsPanelView, mainUIView.ChatView, friendsService, friendEventBus, mvcManager, web3IdentityCache, profileCache, profileRepository),
                 sidebarBus,
                 chatEntryConfigurationSo,
                 web3IdentityCache,

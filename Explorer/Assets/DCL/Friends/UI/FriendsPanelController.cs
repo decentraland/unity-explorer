@@ -13,7 +13,7 @@ namespace DCL.Friends.UI
 {
     public class FriendsPanelController : ControllerBase<FriendsPanelView, FriendsPanelParameter>
     {
-        private enum FriendsPanelTab
+        public enum FriendsPanelTab
         {
             FRIENDS,
             REQUESTS,
@@ -79,6 +79,8 @@ namespace DCL.Friends.UI
             chatWasVisible = chatView.IsChatVisible();
             if (chatWasVisible)
                 chatView.ToggleChat(false);
+
+            ToggleTabs(inputData.TabToShow);
         }
 
         protected override void OnViewClose()
@@ -111,8 +113,6 @@ namespace DCL.Friends.UI
             viewInstance!.FriendsTabButton.onClick.AddListener(() => ToggleTabs(FriendsPanelTab.FRIENDS));
             viewInstance.RequestsTabButton.onClick.AddListener(() => ToggleTabs(FriendsPanelTab.REQUESTS));
             viewInstance.BlockedTabButton.onClick.AddListener(() => ToggleTabs(FriendsPanelTab.BLOCKED));
-            viewInstance.CloseButton.onClick.AddListener(Close);
-            viewInstance.BackgroundCloseButton.onClick.AddListener(Close);
 
             ToggleTabs(FriendsPanelTab.FRIENDS);
         }
@@ -133,10 +133,7 @@ namespace DCL.Friends.UI
             viewInstance.BlockedSection.SetActive(tab == FriendsPanelTab.BLOCKED);
         }
 
-        private void Close() =>
-            HideViewAsync(friendsPanelCts.Token).Forget();
-
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
-            UniTask.Never(ct);
+            UniTask.WhenAny(viewInstance!.CloseButton.OnClickAsync(ct), viewInstance.BackgroundCloseButton.OnClickAsync(ct));
     }
 }

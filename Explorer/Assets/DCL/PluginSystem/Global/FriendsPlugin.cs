@@ -1,12 +1,17 @@
 using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.AssetsProvision;
 using DCL.Friends;
 using DCL.Friends.UI;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Profiles;
 using DCL.UI.MainUI;
+using DCL.Web3.Identities;
 using MVC;
 using System.Threading;
+using UnityEngine;
+using UnityEngine.AddressableAssets;
 
 namespace DCL.PluginSystem.Global
 {
@@ -15,19 +20,34 @@ namespace DCL.PluginSystem.Global
         private readonly MainUIView mainUIView;
         private readonly IDecentralandUrlsSource dclUrlSource;
         private readonly IMVCManager mvcManager;
+        private readonly IAssetsProvisioner assetsProvisioner;
+        private readonly IWeb3IdentityCache web3IdentityCache;
+        private readonly IProfileCache profileCache;
+        private readonly IProfileRepository profileRepository;
+
+        private FriendsPanelController? friendsPanelController;
 
         public FriendsPlugin(
             MainUIView mainUIView,
             IDecentralandUrlsSource dclUrlSource,
-            IMVCManager mvcManager)
+            IMVCManager mvcManager,
+            IAssetsProvisioner assetsProvisioner,
+            IWeb3IdentityCache web3IdentityCache,
+            IProfileCache profileCache,
+            IProfileRepository profileRepository)
         {
             this.mainUIView = mainUIView;
             this.dclUrlSource = dclUrlSource;
             this.mvcManager = mvcManager;
+            this.assetsProvisioner = assetsProvisioner;
+            this.web3IdentityCache = web3IdentityCache;
+            this.profileCache = profileCache;
+            this.profileRepository = profileRepository;
         }
 
         public void Dispose()
         {
+            friendsPanelController?.Dispose();
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
@@ -41,10 +61,27 @@ namespace DCL.PluginSystem.Global
             IFriendsService friendsService = new RPCFriendsService(URLAddress.FromString(dclUrlSource.Url(DecentralandUrl.ApiFriends)),
                 friendEventBus);
 
+            var persistentFriendsOpenerController = new PersistentFriendPanelOpenerController(() => mainUIView.SidebarView.PersistentFriendsPanelOpener, mvcManager);
+
+            mvcManager.RegisterController(persistentFriendsOpenerController);
+
+            FriendsPanelView friendsPanelPrefab = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.FriendsPanelPrefab, ct)).GetComponent<FriendsPanelView>();
+
+            friendsPanelController = new FriendsPanelController(FriendsPanelController.CreateLazily(friendsPanelPrefab, null),
+                mainUIView.ChatView,
+                friendsService,
+                friendEventBus,
+                mvcManager,
+                web3IdentityCache,
+                profileCache,
+                profileRepository);
+
+            mvcManager.RegisterController(friendsPanelController);
         }
     }
 
     public class FriendsPluginSettings : IDCLPluginSettings
     {
+        [field: SerializeField] public AssetReferenceGameObject FriendsPanelPrefab { get; set; } = null!;
     }
 }

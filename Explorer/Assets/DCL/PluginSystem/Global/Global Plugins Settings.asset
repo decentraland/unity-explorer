@@ -266,7 +266,12 @@ MonoBehaviour:
       data: 
     - rid: 2168772563850493955
       type: {class: FriendsPluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
-      data: 
+      data:
+        <FriendsPanelPrefab>k__BackingField:
+          m_AssetGUID: 05e6ec17311e94dfbb4c3e08aaea0891
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
     - rid: 2174542042650378245
       type: {class: QualityContainer/Settings, ns: DCL.Quality, asm: DCL.Plugins}
       data:

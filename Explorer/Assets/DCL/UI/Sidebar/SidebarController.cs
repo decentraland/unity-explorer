@@ -2,7 +2,6 @@ using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.Chat;
 using DCL.ExplorePanel;
-using DCL.Friends.UI;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Notifications.NotificationsMenu;
 using DCL.NotificationsBusController.NotificationsBus;
@@ -15,7 +14,6 @@ using DCL.Web3.Identities;
 using MVC;
 using System;
 using System.Threading;
-using UnityEngine;
 using Utility;
 
 namespace DCL.UI.Sidebar
@@ -29,7 +27,6 @@ namespace DCL.UI.Sidebar
         private readonly NotificationsMenuController notificationsMenuController;
         private readonly ProfileMenuController profileMenuController;
         private readonly SkyboxMenuController skyboxMenuController;
-        private readonly FriendsPanelController friendsPanelController;
         private readonly ChatEntryConfigurationSO chatEntryConfiguration;
         private readonly IProfileRepository profileRepository;
         private readonly IWeb3IdentityCache identityCache;
@@ -52,7 +49,6 @@ namespace DCL.UI.Sidebar
             ProfileWidgetController profileIconWidgetController,
             ProfileMenuController profileMenuMenuWidgetController,
             SkyboxMenuController skyboxMenuController,
-            FriendsPanelController friendsPanelController,
             ISidebarBus sidebarBus,
             ChatEntryConfigurationSO chatEntryConfiguration,
             IWeb3IdentityCache identityCache,
@@ -69,7 +65,6 @@ namespace DCL.UI.Sidebar
             this.notificationsBusController = notificationsBusController;
             this.notificationsMenuController = notificationsMenuController;
             this.skyboxMenuController = skyboxMenuController;
-            this.friendsPanelController = friendsPanelController;
             this.chatEntryConfiguration = chatEntryConfiguration;
             this.identityCache = identityCache;
             this.profileRepository = profileRepository;
@@ -83,7 +78,6 @@ namespace DCL.UI.Sidebar
             base.Dispose();
 
             notificationsMenuController.Dispose();
-            friendsPanelController.Dispose();
         }
 
         protected override void OnViewInstantiated()
@@ -108,7 +102,6 @@ namespace DCL.UI.Sidebar
             viewInstance.sidebarSettingsWidget.OnViewHidden += OnSidebarSettingsClosed;
             viewInstance.skyboxButton.Button.onClick.AddListener(OpenSkyboxSettings);
             viewInstance.SkyboxMenuView.OnViewHidden += OnSkyboxSettingsClosed;
-            viewInstance.FriendsPanelView.OnViewHidden += OnFriendsPanelClosed;
 
             if (includeCameraReel)
                 viewInstance.cameraReelButton.onClick.AddListener(() => OpenExplorePanelInSection(ExploreSections.CameraReel));
@@ -118,10 +111,7 @@ namespace DCL.UI.Sidebar
                 viewInstance.InWorldCameraButton.gameObject.SetActive(false);
             }
 
-            if (includeFriends)
-                viewInstance.friendsButton.Button.onClick.AddListener(OpenFriendsPanel);
-            else
-                viewInstance.friendsButton.gameObject.SetActive(false);
+            viewInstance.PersistentFriendsPanelOpener.gameObject.SetActive(includeFriends);
         }
 
         private void OnHelpButtonClicked()
@@ -140,7 +130,6 @@ namespace DCL.UI.Sidebar
             systemMenuCts = systemMenuCts.SafeRestart();
             if (profileMenuController.State is ControllerState.ViewFocused or ControllerState.ViewBlurred) { profileMenuController.HideViewAsync(systemMenuCts.Token).Forget(); }
             if (skyboxMenuController.State is ControllerState.ViewFocused or ControllerState.ViewBlurred) { skyboxMenuController.HideViewAsync(systemMenuCts.Token).Forget(); }
-            if (friendsPanelController.State is ControllerState.ViewFocused or ControllerState.ViewBlurred) { friendsPanelController.HideViewAsync(systemMenuCts.Token).Forget(); }
             notificationsMenuController.ToggleNotificationsPanel(true);
             viewInstance!.sidebarSettingsWidget.CloseElement();
             sidebarBus.UnblockSidebar();
@@ -228,21 +217,6 @@ namespace DCL.UI.Sidebar
             CloseAllWidgets();
             sidebarBus.BlockSidebar();
             notificationsMenuController.ToggleNotificationsPanel(false);
-        }
-
-        private void OpenFriendsPanel()
-        {
-            CloseAllWidgets();
-            sidebarBus.BlockSidebar();
-            systemMenuCts = systemMenuCts.SafeRestart();
-
-            friendsPanelController.LaunchViewLifeCycleAsync(new CanvasOrdering(CanvasOrdering.SortingLayer.Overlay, 0), new FriendsPanelParameter(), systemMenuCts.Token).Forget();
-        }
-
-        private void OnFriendsPanelClosed()
-        {
-            sidebarBus.UnblockSidebar();
-            viewInstance!.friendsButton.SetSelected(false);
         }
 
         private void OpenExplorePanelInSection(ExploreSections section, BackpackSections backpackSection = BackpackSections.Avatar)

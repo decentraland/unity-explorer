@@ -561,10 +561,6 @@ namespace Global.Dynamic
             bool includeCameraReel = staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.CAMERA_REEL) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.CAMERA_REEL)) || Application.isEditor;
             bool includeFriends = staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.FRIENDS) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.FRIENDS)) || Application.isEditor;
 
-            IFriendsEventBus friendEventBus = new DefaultFriendsEventBus();
-            IFriendsService friendsService = new RPCFriendsService(URLAddress.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.ApiFriends)),
-                friendEventBus);
-
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
                 new MultiplayerPlugin(
@@ -629,7 +625,6 @@ namespace Global.Dynamic
                     dynamicWorldDependencies.Web3Authenticator,
                     userInAppInAppInitializationFlow,
                     profileCache, sidebarBus,
-                    friendsService, friendEventBus,
                     chatEntryConfiguration,
                     globalWorld, playerEntity, includeCameraReel, includeFriends),
                 new ErrorPopupPlugin(mvcManager, assetsProvisioner),
@@ -783,7 +778,7 @@ namespace Global.Dynamic
                     debugBuilder));
 
             if (includeFriends)
-                globalPlugins.Add(new FriendsPlugin(mainUIView, bootstrapContainer.DecentralandUrlsSource, mvcManager));
+                globalPlugins.Add(new FriendsPlugin(mainUIView, bootstrapContainer.DecentralandUrlsSource, mvcManager, assetsProvisioner, identityCache, profileCache, profileRepository));
 
             if (dynamicWorldParams.EnableAnalytics)
                 globalPlugins.Add(new AnalyticsPlugin(
