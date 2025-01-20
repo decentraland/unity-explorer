@@ -18,8 +18,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections
         private readonly int emptyElementIndex;
         private readonly int userElementIndex;
 
-        private int pageNumber = 0;
-        private int totalFetched = 0;
+        protected int pageNumber = 0;
+        protected int totalFetched = 0;
 
         private bool excludeFirstCollection = false;
         private bool excludeSecondCollection = false;

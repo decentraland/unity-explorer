@@ -10,8 +10,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections
     {
         protected readonly int pageSize;
 
-        private int pageNumber = 0;
-        private int totalFetched = 0;
+        protected int pageNumber = 0;
+        protected int totalFetched = 0;
 
         public bool HasElements { get; private set; }
         public bool WasInitialised { get; private set; }

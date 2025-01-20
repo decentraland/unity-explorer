@@ -20,7 +20,7 @@ namespace DCL.Friends.UI.FriendPanel
             BLOCKED
         }
 
-        private const int FRIENDS_PAGE_SIZE = 20;
+        private const int FRIENDS_PAGE_SIZE = 100;
 
         private readonly IFriendsService friendsService;
         private readonly IFriendsEventBus friendEventBus;
