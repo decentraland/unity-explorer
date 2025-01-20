@@ -2,6 +2,7 @@
 using DCL.Chat;
 using DCL.EmotesWheel;
 using DCL.Friends.UI;
+using DCL.Friends.UI.FriendPanel;
 using DCL.Minimap;
 using DCL.SidebarBus;
 using DCL.UI.ConnectionStatusPanel;

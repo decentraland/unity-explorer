@@ -1,5 +1,6 @@
 ﻿using DCL.EmotesWheel;
 using DCL.Friends.UI;
+using DCL.Friends.UI.FriendPanel;
 using DCL.Notifications.NotificationsMenu;
 using DCL.UI.Buttons;
 using DCL.UI.ProfileElements;
