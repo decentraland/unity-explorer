@@ -9,7 +9,7 @@ using Utility;
 
 namespace DCL.Friends.UI.Sections.Requests
 {
-    public class RequestsSectionController : FriendPanelSectionController<RequestsSectionView, RequestsRequestManager, RequestUserView>
+    public class RequestsSectionController : FriendPanelSectionDoubleCollectionController<RequestsSectionView, RequestsRequestManager, RequestUserView>
     {
         public event Action<int>? ReceivedRequestsCountChanged;
 

@@ -6,7 +6,7 @@ using System.Threading;
 
 namespace DCL.Friends.UI.Sections.Requests
 {
-    public class RequestsRequestManager : FriendPanelRequestManager<RequestUserView>
+    public class RequestsRequestManager : FriendPanelDoubleCollectionRequestManager<RequestUserView>
     {
         private const int USER_ELEMENT_INDEX = 0;
         private const int STATUS_ELEMENT_INDEX = 1;

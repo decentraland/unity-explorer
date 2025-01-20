@@ -31,7 +31,7 @@ namespace DCL.Friends.UI
         private readonly IProfileRepository profileRepository;
 
         private BlockedSectionController blockedSectionController;
-        private FriendsSectionController friendsSectionController;
+        private FriendsSectionDoubleCollectionController friendsSectionDoubleCollectionController;
         private RequestsSectionController requestsSectionController;
         private CancellationTokenSource friendsPanelCts = new ();
         private bool chatWasVisible;
@@ -67,7 +67,7 @@ namespace DCL.Friends.UI
             friendsPanelCts.SafeCancelAndDispose();
 
             blockedSectionController.Dispose();
-            friendsSectionController.Dispose();
+            friendsSectionDoubleCollectionController.Dispose();
             requestsSectionController.Dispose();
         }
 
@@ -95,19 +95,22 @@ namespace DCL.Friends.UI
         {
             base.OnViewInstantiated();
 
-            friendsSectionController = new FriendsSectionController(viewInstance!.FriendsSection,
+            friendsSectionDoubleCollectionController = new FriendsSectionDoubleCollectionController(viewInstance!.FriendsSection,
                 friendsService,
                 friendEventBus,
                 web3IdentityCache,
                 mvcManager,
-                new FriendListPagedRequestManager(friendsService, friendEventBus, FRIENDS_PAGE_SIZE));
+                new FriendListPagedDoubleCollectionRequestManager(friendsService, friendEventBus, FRIENDS_PAGE_SIZE));
             requestsSectionController = new RequestsSectionController(viewInstance!.RequestsSection,
                 friendsService,
                 friendEventBus,
                 web3IdentityCache,
                 mvcManager,
                 new RequestsRequestManager(friendsService, friendEventBus, FRIENDS_PAGE_SIZE, profileCache));
-            blockedSectionController = new BlockedSectionController(viewInstance!.BlockedSection, mvcManager, profileRepository, profileCache, web3IdentityCache);
+            blockedSectionController = new BlockedSectionController(viewInstance!.BlockedSection,
+                web3IdentityCache,
+                new BlockedRequestManager(profileRepository, profileCache, web3IdentityCache, FRIENDS_PAGE_SIZE),
+                mvcManager);
 
             requestsSectionController.ReceivedRequestsCountChanged += FriendRequestCountChanged;
             viewInstance!.FriendsTabButton.onClick.AddListener(() => ToggleTabs(FriendsPanelTab.FRIENDS));

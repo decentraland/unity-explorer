@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Profiles;
 using DCL.Web3;
 using DCL.Web3.Identities;
+using MVC;
 using SuperScrollView;
 using System;
 using System.Threading;
@@ -9,24 +10,33 @@ using Utility;
 
 namespace DCL.Friends.UI.Sections
 {
-    public abstract class FriendPanelSectionController<T, U, K> : IDisposable
+    public abstract class FriendPanelSectionDoubleCollectionController<T, U, K> : IDisposable
         where T : FriendPanelSectionView
         where K : FriendPanelUserView
-        where U : FriendPanelRequestManager<K>
+        where U : FriendPanelDoubleCollectionRequestManager<K>
     {
         protected readonly T view;
+        protected readonly IFriendsService friendsService;
+        protected readonly IFriendsEventBus friendEventBus;
         private readonly IWeb3IdentityCache web3IdentityCache;
+        protected readonly IMVCManager mvcManager;
         protected readonly U requestManager;
 
         protected CancellationTokenSource friendListInitCts = new ();
         private Web3Address? previousWeb3Identity;
 
-        public FriendPanelSectionController(T view,
+        public FriendPanelSectionDoubleCollectionController(T view,
+            IFriendsService friendsService,
+            IFriendsEventBus friendEventBus,
             IWeb3IdentityCache web3IdentityCache,
+            IMVCManager mvcManager,
             U requestManager)
         {
             this.view = view;
+            this.friendsService = friendsService;
+            this.friendEventBus = friendEventBus;
             this.web3IdentityCache = web3IdentityCache;
+            this.mvcManager = mvcManager;
             this.requestManager = requestManager;
 
             this.view.Enable += Enable;
@@ -41,12 +51,9 @@ namespace DCL.Friends.UI.Sections
             view.Disable -= Disable;
             requestManager.Dispose();
             friendListInitCts.SafeCancelAndDispose();
+            requestManager.FirstFolderClicked -= FolderClicked;
+            requestManager.SecondFolderClicked -= FolderClicked;
         }
-
-        private LoopListViewItem2 OnGetItemByIndex(LoopListView2 loopListView, int index) =>
-            requestManager.GetLoopListItemByIndex(loopListView, index);
-
-        protected abstract void ElementClicked(Profile profile);
 
         private void Enable()
         {
@@ -56,6 +63,8 @@ namespace DCL.Friends.UI.Sections
             {
                 previousWeb3Identity = web3IdentityCache.Identity?.Address;
                 requestManager.Reset();
+                requestManager.FirstFolderClicked -= FolderClicked;
+                requestManager.SecondFolderClicked -= FolderClicked;
             }
 
             if (!requestManager.WasInitialised)
@@ -65,6 +74,12 @@ namespace DCL.Friends.UI.Sections
         private void Disable()
         {
             friendListInitCts = friendListInitCts.SafeRestart();
+        }
+
+        protected void FolderClicked()
+        {
+            view.LoopList.SetListItemCount(requestManager.GetElementsNumber(), false);
+            view.LoopList.RefreshAllShownItem();
         }
 
         protected virtual async UniTaskVoid Init(CancellationToken ct)
@@ -81,7 +96,16 @@ namespace DCL.Friends.UI.Sections
             view.SetScrollViewState(requestManager.HasElements);
 
             if (requestManager.HasElements)
-                view.LoopList.SetListItemCount(requestManager.GetCollectionCount(), false);
+            {
+                view.LoopList.SetListItemCount(requestManager.GetElementsNumber(), false);
+                requestManager.FirstFolderClicked += FolderClicked;
+                requestManager.SecondFolderClicked += FolderClicked;
+            }
         }
+
+        private LoopListViewItem2 OnGetItemByIndex(LoopListView2 loopListView, int index) =>
+            requestManager.GetLoopListItemByIndex(loopListView, index);
+
+        protected abstract void ElementClicked(Profile profile);
     }
 }

@@ -1,14 +1,13 @@
 using Cysharp.Threading.Tasks;
 using DCL.Profiles;
 using DCL.Web3.Identities;
-using SuperScrollView;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 
 namespace DCL.Friends.UI.Sections.Blocked
 {
-    public class BlockedRequestManager : IDisposable
+    public class BlockedRequestManager : FriendPanelRequestManager<BlockedUserView>
     {
         private readonly IProfileRepository profileRepository;
         private readonly IProfileCache profileCache;
@@ -17,46 +16,40 @@ namespace DCL.Friends.UI.Sections.Blocked
         private Profile? userProfile;
         private List<Profile> blockedProfiles = new ();
 
-        public bool HasElements { get; private set; }
-        public bool WasInitialised { get; private set; }
-
-        public event Action<Profile>? ElementClicked;
         public event Action<Profile>? UnblockClicked;
         public event Action<Profile>? ContextMenuClicked;
 
         public BlockedRequestManager(IProfileRepository profileRepository,
             IProfileCache profileCache,
-            IWeb3IdentityCache web3IdentityCache)
+            IWeb3IdentityCache web3IdentityCache,
+            int pageSize) : base(pageSize)
         {
             this.profileRepository = profileRepository;
             this.profileCache = profileCache;
             this.web3IdentityCache = web3IdentityCache;
         }
 
-        public void Dispose()
+        public override void Dispose()
         {
 
         }
 
-        public LoopListViewItem2 GetLoopListItemByIndex(LoopListView2 loopListView, int index)
+        public override int GetCollectionCount() =>
+            blockedProfiles.Count;
+
+        protected override Profile GetCollectionElement(int index) =>
+            blockedProfiles[index];
+
+        protected override void CustomiseElement(BlockedUserView elementView, int index)
         {
-            LoopListViewItem2 listItem = loopListView.NewListViewItem(loopListView.ItemPrefabDataList[0].mItemPrefab.name);
-            BlockedUserView view = listItem.GetComponent<BlockedUserView>();
-            view.Configure(blockedProfiles[index]);
+            elementView.UnblockButton.onClick.RemoveAllListeners();
+            elementView.UnblockButton.onClick.AddListener(() => UnblockClicked?.Invoke(elementView.UserProfile));
 
-            view.RemoveMainButtonClickListeners();
-            view.MainButtonClicked += profile => ElementClicked?.Invoke(profile);
-
-            view.UnblockButton.onClick.RemoveAllListeners();
-            view.UnblockButton.onClick.AddListener(() => UnblockClicked?.Invoke(view.UserProfile));
-
-            view.ContextMenuButton.onClick.RemoveAllListeners();
-            view.ContextMenuButton.onClick.AddListener(() => ContextMenuClicked?.Invoke(view.UserProfile));
-
-            return listItem;
+            elementView.ContextMenuButton.onClick.RemoveAllListeners();
+            elementView.ContextMenuButton.onClick.AddListener(() => ContextMenuClicked?.Invoke(elementView.UserProfile));
         }
 
-        public async UniTask Init(CancellationToken ct)
+        protected override async UniTask FetchInitialData(CancellationToken ct)
         {
             userProfile = await GetProfile(web3IdentityCache.Identity?.Address, ct);
 
@@ -69,17 +62,13 @@ namespace DCL.Friends.UI.Sections.Blocked
                 if (blockedProfile != null)
                     blockedProfiles.Add(blockedProfile);
             }
-
-            HasElements = userProfile!.Blocked.Count > 0;
-            WasInitialised = true;
         }
 
         public int GetElementsNumber() => blockedProfiles.Count;
 
-        public void Reset()
+        public override void Reset()
         {
-            HasElements = false;
-            WasInitialised = false;
+            base.Reset();
             blockedProfiles.Clear();
         }
 

@@ -7,18 +7,18 @@ using UnityEngine;
 
 namespace DCL.Friends.UI.Sections.Friends
 {
-    public class FriendsSectionController : FriendPanelSectionController<FriendsSectionView, FriendListPagedRequestManager, FriendListUserView>
+    public class FriendsSectionDoubleCollectionController : FriendPanelSectionDoubleCollectionController<FriendsSectionView, FriendListPagedDoubleCollectionRequestManager, FriendListUserView>
     {
-        public FriendsSectionController(FriendsSectionView view,
+        public FriendsSectionDoubleCollectionController(FriendsSectionView view,
             IFriendsService friendsService,
             IFriendsEventBus friendEventBus,
             IWeb3IdentityCache web3IdentityCache,
             IMVCManager mvcManager,
-            FriendListPagedRequestManager requestManager)
-            : base(view, friendsService, friendEventBus, web3IdentityCache, mvcManager, requestManager)
+            FriendListPagedDoubleCollectionRequestManager doubleCollectionRequestManager)
+            : base(view, friendsService, friendEventBus, web3IdentityCache, mvcManager, doubleCollectionRequestManager)
         {
-            requestManager.JumpInClicked += JumpInClicked;
-            requestManager.ContextMenuClicked += ContextMenuClicked;
+            doubleCollectionRequestManager.JumpInClicked += JumpInClicked;
+            doubleCollectionRequestManager.ContextMenuClicked += ContextMenuClicked;
         }
 
         public override void Dispose()

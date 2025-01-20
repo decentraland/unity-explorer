@@ -807,7 +807,16 @@ namespace Global.Dynamic
                     debugBuilder));
 
             if (includeFriends)
-                globalPlugins.Add(new FriendsPlugin(mainUIView, bootstrapContainer.DecentralandUrlsSource, mvcManager, assetsProvisioner, identityCache, profileCache, profileRepository, onlineUsersProvider, roomHub));
+                globalPlugins.Add(new FriendsPlugin(
+                    mainUIView,
+                    bootstrapContainer.DecentralandUrlsSource,
+                    mvcManager,
+                    assetsProvisioner,
+                    identityCache,
+                    profileCache,
+                    profileRepository,
+                    onlineUsersProvider,
+                    roomHub));
 
             if (dynamicWorldParams.EnableAnalytics)
                 globalPlugins.Add(new AnalyticsPlugin(

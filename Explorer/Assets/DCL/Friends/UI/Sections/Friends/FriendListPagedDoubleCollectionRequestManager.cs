@@ -6,7 +6,7 @@ using System.Threading;
 
 namespace DCL.Friends.UI.Sections.Friends
 {
-    public class FriendListPagedRequestManager : FriendPanelRequestManager<FriendListUserView>
+    public class FriendListPagedDoubleCollectionRequestManager : FriendPanelDoubleCollectionRequestManager<FriendListUserView>
     {
         private const int USER_ELEMENT_INDEX = 0;
         private const int STATUS_ELEMENT_INDEX = 1;
@@ -18,7 +18,7 @@ namespace DCL.Friends.UI.Sections.Friends
         public event Action<Profile>? JumpInClicked;
         public event Action<Profile>? ContextMenuClicked;
 
-        public FriendListPagedRequestManager(IFriendsService friendsService,
+        public FriendListPagedDoubleCollectionRequestManager(IFriendsService friendsService,
             IFriendsEventBus friendEventBus,
             int pageSize) : base(friendsService, friendEventBus, pageSize, FriendPanelStatus.ONLINE, FriendPanelStatus.OFFLINE, STATUS_ELEMENT_INDEX, EMPTY_ELEMENT_INDEX, USER_ELEMENT_INDEX)
         {
