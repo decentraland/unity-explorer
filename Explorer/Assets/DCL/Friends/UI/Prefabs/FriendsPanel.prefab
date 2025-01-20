@@ -708,7 +708,6 @@ MonoBehaviour:
   <CloseButton>k__BackingField: {fileID: 7574615442871783476}
   <BackgroundCloseButton>k__BackingField: {fileID: 8068558347246313209}
   <NotificationIndicator>k__BackingField: {fileID: 0}
-  <TabNotificationIndicator>k__BackingField: {fileID: 8917639088263567752}
   <FriendsTabButton>k__BackingField: {fileID: 7787606427768405980}
   <FriendsTabSelected>k__BackingField: {fileID: 7393858782328466687}
   <FriendsSection>k__BackingField: {fileID: 8589710569225848205}
@@ -2702,6 +2701,7 @@ MonoBehaviour:
   <LoopList>k__BackingField: {fileID: 2911403579240297908}
   <LoadingObject>k__BackingField: {fileID: 7142713786379965369}
   <EmptyState>k__BackingField: {fileID: 5376825434192449184}
+  <TabNotificationIndicator>k__BackingField: {fileID: 8917639088263567752}
 --- !u!1 &8507033878163480090
 GameObject:
   m_ObjectHideFlags: 0

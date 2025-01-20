@@ -12,7 +12,7 @@ namespace DCL.Friends.UI
         [field: SerializeField] public Button CloseButton { get; private set; }
         [field: SerializeField] public Button BackgroundCloseButton { get; private set; }
         [field: SerializeField] public NotificationIndicatorView NotificationIndicator { get; private set; }
-        [field: SerializeField] public NotificationIndicatorView TabNotificationIndicator { get; private set; }
+
 
         [field: Header("Friends tab")]
         [field: SerializeField] public Button FriendsTabButton { get; private set; }

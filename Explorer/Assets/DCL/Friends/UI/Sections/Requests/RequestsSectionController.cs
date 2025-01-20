@@ -25,6 +25,8 @@ namespace DCL.Friends.UI.Sections.Requests
             friendEventBus.OnFriendRequestReceived += PropagateRequestReceived;
             friendEventBus.OnFriendRequestAccepted += PropagateRequestAcceptedRejected;
             friendEventBus.OnFriendRequestRejected += PropagateRequestAcceptedRejected;
+
+            ReceivedRequestsCountChanged += UpdateReceivedRequestsSectionCount;
         }
 
         public override void Dispose()
@@ -34,6 +36,8 @@ namespace DCL.Friends.UI.Sections.Requests
             friendEventBus.OnFriendRequestReceived -= PropagateRequestReceived;
             friendEventBus.OnFriendRequestAccepted -= PropagateRequestAcceptedRejected;
             friendEventBus.OnFriendRequestRejected -= PropagateRequestAcceptedRejected;
+
+            ReceivedRequestsCountChanged -= UpdateReceivedRequestsSectionCount;
         }
 
         private void PropagateRequestReceived(FriendRequest request) =>
@@ -44,6 +48,9 @@ namespace DCL.Friends.UI.Sections.Requests
 
         private void PropagateReceivedRequestsCountChanged() =>
             ReceivedRequestsCountChanged?.Invoke(requestManager.GetFirstCollectionCount());
+
+        private void UpdateReceivedRequestsSectionCount(int count) =>
+            view.TabNotificationIndicator.SetNotificationCount(count);
 
         private void ContextMenuClicked(Profile profile)
         {
