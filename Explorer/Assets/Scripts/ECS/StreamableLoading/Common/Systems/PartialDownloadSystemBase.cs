@@ -42,13 +42,13 @@ namespace ECS.StreamableLoading.Common.Systems
                 // If the downloading has not started yet
                 if (state.PartialDownloadingData == null)
                 {
-                    chunkData = new PartialDownloadingData(partialDownloadBuffer, 0, PartialDownloadingData.CHUNK_SIZE);
+                    chunkData = new PartialDownloadingData(0, PartialDownloadingData.CHUNK_SIZE);
                 }
                 else
                 {
                     partialState = state.PartialDownloadingData.Value;
 
-                    chunkData = new PartialDownloadingData(partialDownloadBuffer, partialState.NextRangeStart,
+                    chunkData = new PartialDownloadingData(partialState.NextRangeStart,
                         Mathf.Min(partialState.FullFileSize - 1, partialState.NextRangeStart + PartialDownloadingData.CHUNK_SIZE));
                 }
 
@@ -56,12 +56,12 @@ namespace ECS.StreamableLoading.Common.Systems
                     intention.CommonArguments,
                     ct,
                     reportData: ReportCategory.PARTIAL_LOADING,
-                    chunkData,
+                    ref chunkData,
                     headersInfo: new WebRequestHeadersInfo().WithRange(chunkData.RangeStart, chunkData.RangeEnd));
 
                 if (state.PartialDownloadingData == null)
                 {
-                    var fullDataMemory = new Memory<byte>(new byte[chunkData.FullFileSize]);
+                    byte[] fullDataMemory = new byte[chunkData.FullFileSize];
                     partialState = new PartialLoadingState(fullDataMemory, chunkData.FullFileSize);
                 }
 
@@ -70,12 +70,15 @@ namespace ECS.StreamableLoading.Common.Systems
                 if (chunkData.RangeEnd > chunkData.FullFileSize)
                     finalBytesCount = chunkData.FullFileSize - chunkData.RangeStart;
 
-                chunkData.DataBuffer.AsMemory(0, finalBytesCount).CopyTo(partialState.FullData.Slice(chunkData.RangeStart, finalBytesCount));
-                partialState.NextRangeStart = chunkData.RangeEnd + 1;
+                Array.Copy(chunkData.DataBuffer, 0, partialState.FullData, chunkData.RangeStart, finalBytesCount);
+                if(chunkData.DataBuffer.Length == chunkData.FullFileSize)
+                    partialState.NextRangeStart = chunkData.FullFileSize;
+                else
+                    partialState.NextRangeStart = chunkData.RangeEnd + 1;
 
                 if (partialState.FullyDownloaded)
                 {
-                    StreamableLoadingResult<TData> loadedResult = await ProcessCompletedData(partialState.FullData.ToArray(), intention, partition, ct, state);
+                    StreamableLoadingResult<TData> loadedResult = await ProcessCompletedData(partialState.FullData, intention, partition, ct, state);
                     state.SetChunkData(partialState);
                     return loadedResult;
                 }

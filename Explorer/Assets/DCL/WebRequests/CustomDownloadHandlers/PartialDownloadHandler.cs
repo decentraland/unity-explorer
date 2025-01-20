@@ -26,6 +26,17 @@ namespace DCL.WebRequests.CustomDownloadHandlers
             if (dataLength == 0)
                 return false; // No data received
 
+            if (partialData.DataBuffer == null)
+            {
+                partialData.DataBuffer = new byte[dataLength];
+            }
+            else if(partialData.DataBuffer.Length < bufferPointer + dataLength)
+            {
+                var newBuffer = new byte[partialData.DataBuffer.Length + dataLength];
+                Array.Copy(partialData.DataBuffer, newBuffer, partialData.DataBuffer.Length);
+                partialData.DataBuffer = newBuffer;
+            }
+
             try
             {
                 for(var i = 0; i < dataLength; i++)

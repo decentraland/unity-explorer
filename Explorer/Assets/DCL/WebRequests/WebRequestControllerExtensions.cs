@@ -65,26 +65,27 @@ namespace DCL.WebRequests
             ISet<long>? ignoreErrorCodes = null
         ) where TOp: struct, IWebRequestOp<GenericGetRequest, TResult> =>
             controller.SendAsync<GenericGetRequest, GenericGetArguments, TOp, TResult>(commonArguments, default(GenericGetArguments), webRequestOp, ct, reportData, headersInfo, signInfo, ignoreErrorCodes);
+
         public static UniTask<PartialDownloadingData> GetPartialAsync(
             this IWebRequestController controller,
             CommonArguments commonArguments,
             CancellationToken ct,
             ReportData reportData,
-            PartialDownloadingData partialData,
+            ref PartialDownloadingData partialData,
             WebRequestHeadersInfo? headersInfo = null,
             WebRequestSignInfo? signInfo = null,
             ISet<long>? ignoreErrorCodes = null
         )
         {
             PartialDownloadHandler handler = new PartialDownloadHandler(ref partialData, PARTIAL_DOWNLOAD_BUFFER);
-            return controller.SendAsync<GenericGetRequest, GenericGetArguments, PartialDownloadOp, PartialDownloadingData>(commonArguments, default(GenericGetArguments), new PartialDownloadOp(partialData), ct, reportData, headersInfo, signInfo, ignoreErrorCodes, downloadHandler: handler, suppressErrors: true);
+            return controller.SendAsync<GenericGetRequest, GenericGetArguments, PartialDownloadOp, PartialDownloadingData>(commonArguments, default(GenericGetArguments), new PartialDownloadOp(ref partialData), ct, reportData, headersInfo, signInfo, ignoreErrorCodes, downloadHandler: handler, suppressErrors: true);
         }
 
         public struct PartialDownloadOp : IWebRequestOp<GenericGetRequest, PartialDownloadingData>
         {
             private PartialDownloadingData data;
 
-            public PartialDownloadOp(PartialDownloadingData data)
+            public PartialDownloadOp(ref PartialDownloadingData data)
             {
                 this.data = data;
             }
