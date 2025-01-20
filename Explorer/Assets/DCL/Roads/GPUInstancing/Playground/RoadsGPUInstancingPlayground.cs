@@ -16,23 +16,28 @@ namespace DCL.Roads.Playground
         private readonly Dictionary<GPUInstancedRenderer, List<Matrix4x4>> gpuInstancingMap = new ();
 
         public PrefabInstanceDataBehaviour[] originalPrefabs;
-        public RoadDescription[] Descriptions;
 
         [Space]
         public RoadSettingsAsset RoadsConfig;
 
+        [Header("DEBUG SETTINGS")]
         public bool Debug;
         [Range(0, 53)] public int DebugId;
-        public bool RoadShift;
         public Vector2Int ComparisonShift;
+
+        [Space(5)]
+        public bool RoadShift;
+        public RoadDescription[] Descriptions;
+
+        [Space(5)]
+        public bool UseIndirect;
         public bool Run;
 
-        [Header("DEBUG")]
+        [Header("DEBUG MESHES")]
         public Mesh[] Props;
         public Material[] Materials1;
         public Vector2Int ParcelsMin;
         public Vector2Int ParcelsMax;
-        public bool UseIndirect;
 
         private int currentCommandIndex;
         private GraphicsBuffer commandBuffer;
@@ -139,13 +144,6 @@ namespace DCL.Roads.Playground
             commandData = new GraphicsBuffer.IndirectDrawIndexedArgs[commandCount];
         }
 
-        [ContextMenu(nameof(PrefabsSelfCollect))]
-        private void PrefabsSelfCollect()
-        {
-            foreach (PrefabInstanceDataBehaviour prefab in originalPrefabs)
-                prefab.CollectSelfData();
-        }
-
         private void DebugRenderMeshesIndirect(MeshData[] meshes)
         {
             // int totalCommandCount = meshes.SelectMany(mesh => mesh.SharedMaterials).Count();
@@ -204,11 +202,17 @@ namespace DCL.Roads.Playground
         {
             CreateDebugRoot();
 
-            originalPrefabs[0].CollectSelfData();
             gpuInstancingMap.Clear();
             PrepareInstancesMap(RoadsConfig.RoadDescriptions);
 
             CollectDebugInfo();
+        }
+
+        [ContextMenu(nameof(PrefabsSelfCollect))]
+        private void PrefabsSelfCollect()
+        {
+            foreach (PrefabInstanceDataBehaviour prefab in originalPrefabs)
+                prefab.CollectSelfData();
         }
 
         private void PrepareInstancesMap(IEnumerable<RoadDescription> from)
@@ -223,18 +227,21 @@ namespace DCL.Roads.Playground
                 var roadTransform = Matrix4x4.TRS(roadDescription.RoadCoordinate.ParcelToPositionFlat() + ParcelMathHelper.RoadPivotDeviation, roadDescription.Rotation.SelfOrIdentity(), Vector3.one);
 
                 PrefabInstanceDataBehaviour prefab = originalPrefabs.FirstOrDefault(op => op.name == roadDescription.RoadModel);
-                if (prefab == null) continue;
-                prefab.CollectSelfData();
+                if (prefab != null)
+                {
+                    prefab.CollectSelfData();
 
-                PrefabInstanceDataBehaviour roadAsset = Instantiate(prefab);
+                    PrefabInstanceDataBehaviour roadAsset = Instantiate(prefab);
 
-                roadAsset.transform.localPosition = roadDescription.RoadCoordinate.ParcelToPositionFlat() + ParcelMathHelper.RoadPivotDeviation;
-                roadAsset.transform.localRotation = roadDescription.Rotation;
-                roadAsset.gameObject.SetActive(true);
+                    roadAsset.transform.localPosition = roadDescription.RoadCoordinate.ParcelToPositionFlat() + ParcelMathHelper.RoadPivotDeviation;
+                    roadAsset.transform.localRotation = roadDescription.Rotation;
+                    roadAsset.gameObject.SetActive(true);
 
-                roadAsset.transform.parent = debugRoot;
+                    roadAsset.transform.parent = debugRoot;
 
-                AddPrefabDataToInstancingMap(roadAsset.PrefabInstance, roadTransform);
+                    roadAsset.CollectSelfData();
+                    AddPrefabDataToInstancingMap(roadAsset.PrefabInstance, roadTransform);
+                }
             }
         }
 

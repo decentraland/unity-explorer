@@ -70,7 +70,7 @@ namespace DCL.Roads.GPUInstancing.Playground
                 LODs = lodGroup.GetLODs().Select(lod => new LODEntryMeshData
                                 {
                                     Meshes = CollectLODMeshData(lod).ToArray(),
-                                    Distance = lod.screenRelativeTransitionHeight,
+                                    ScreenRelativeTransitionHeight = lod.screenRelativeTransitionHeight,
                                 })
                                .ToArray(),
             };

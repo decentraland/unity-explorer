@@ -45,7 +45,7 @@ namespace DCL.Roads.GPUInstancing.Playground
     [Serializable]
     public class LODEntryMeshData
     {
-        public float Distance;
+        public float ScreenRelativeTransitionHeight;
         public MeshData[] Meshes;
     }
 
