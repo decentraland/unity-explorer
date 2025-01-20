@@ -9,6 +9,13 @@ using Utility.Multithreading;
 
 namespace Utility
 {
+    public static class QuaternionExtensions
+    {
+        public static Quaternion SelfOrIdentity(this Quaternion quaternion) =>
+            quaternion is { x: 0, y: 0, z: 0, w: 0 } ? Quaternion.identity : quaternion;
+    }
+
+
     public static class UnityObjectExtensions
     {
         [Conditional("DEBUG")]
