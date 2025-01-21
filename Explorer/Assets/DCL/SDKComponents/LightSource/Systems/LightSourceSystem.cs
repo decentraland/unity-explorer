@@ -90,7 +90,7 @@ namespace DCL.SDKComponents.LightSource.Systems
         [Query]
         private void FinalizeLightSourceComponents(in LightSourceComponent lightSourceComponent)
         {
-            poolRegistry.Release(lightSourceComponent);
+            poolRegistry.Release(lightSourceComponent.lightSourceInstance);
         }
 
         public void FinalizeComponents(in Query query)
