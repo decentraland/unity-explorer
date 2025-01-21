@@ -47,6 +47,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3675d28be476ed544a0b350da26e2d70
+    m_Address: Assets/DCL/UI/Assets/LinksTextStyleSheet.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 37b740e9dd5ba324c91cd05632ea002c
     m_Address: TeleportPrompt
     m_ReadOnly: 0

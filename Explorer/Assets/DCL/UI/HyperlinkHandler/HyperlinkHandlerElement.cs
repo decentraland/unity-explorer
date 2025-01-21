@@ -15,11 +15,13 @@ namespace DCL.UI.HyperlinkHandler
     public class HyperlinkHandlerElement : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler, IPointerMoveHandler
     {
         [SerializeField] private TMP_Text textComponent;
+        [SerializeField] private TMP_StyleSheet styleSheet;
 
         private readonly Dictionary<string, Action<string>> linkHandlers = new ();
         private bool initialized;
         private bool isHovering;
         private bool isHighlighting;
+        private int lastHighlightedIndex;
 
         private HyperlinkHandlerDependencies dependencies;
 
@@ -36,6 +38,7 @@ namespace DCL.UI.HyperlinkHandler
 
         private void OnEnable()
         {
+            //LINKS SHOULD BE FORMATTED AND VALIDATED FROM WHEREVER THEY COME?
         }
 
         public void OnPointerClick(PointerEventData eventData)
@@ -70,11 +73,6 @@ namespace DCL.UI.HyperlinkHandler
             linkHandlers.Add("url", HandleURLLink);
             linkHandlers.Add("world", HandleWorldLink);
             linkHandlers.Add("scene", HandleSceneLink);
-        }
-
-        private void OnMouseOver()
-        {
-            throw new NotImplementedException();
         }
 
         private void ProcessLink(string linkID)
@@ -137,20 +135,25 @@ namespace DCL.UI.HyperlinkHandler
 
             if (linkIndex != -1)
             {
-                if (isHighlighting) return;
+                if (isHighlighting && lastHighlightedIndex == linkIndex) return;
 
+                lastHighlightedIndex = linkIndex;
                 isHighlighting = true;
-                var wordInfo = textComponent.textInfo.wordInfo[linkIndex];
                 dependencies.Cursor.SetStyle(CursorStyle.Interaction, true);
-
-                //apply TMPro style "LinkSelected" to the link text
+                var linkText = textComponent.textInfo.linkInfo[linkIndex].GetLinkText();
+                var newText = linkText.Insert(linkText.Length, styleSheet.GetStyle("LinkSelected").styleClosingDefinition).Insert(0, styleSheet.GetStyle("LinkSelected").styleOpeningDefinition);
+                textComponent.text = textComponent.text.Replace(linkText, newText) ;
                 return;
             }
 
-            isHighlighting = false;
-            dependencies.Cursor.SetStyle(CursorStyle.Normal);
-            //apply TMPro style "Link" to the link Text
+            if (isHighlighting)
+            {
+                lastHighlightedIndex = -1;
+                textComponent.text = textComponent.text.Replace(styleSheet.GetStyle("LinkSelected").styleOpeningDefinition, styleSheet.GetStyle("Link").styleOpeningDefinition).Replace(styleSheet.GetStyle("LinkSelected").styleClosingDefinition, styleSheet.GetStyle("Link").styleClosingDefinition);
+                dependencies.Cursor.SetStyle(CursorStyle.Normal);
+            }
 
+            isHighlighting = false;
         }
     }
 }
