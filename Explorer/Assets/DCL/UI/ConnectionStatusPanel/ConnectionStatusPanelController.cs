@@ -1,5 +1,6 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
+using DCL.Chat.Commands;
 using DCL.DebugUtilities;
 using DCL.Multiplayer.Connections.Rooms.Status;
 using DCL.UI.ConnectionStatusPanel.StatusEntry;
@@ -29,6 +30,7 @@ namespace DCL.UI.ConnectionStatusPanel
         private readonly IDebugContainerBuilder debugBuilder;
         private readonly CancellationTokenSource cancellationTokenSource = new ();
         private readonly List<IDisposable> subscriptions = new (2);
+        private readonly IChatCommandsBus chatCommandsBus;
         private bool isSceneReloading;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
@@ -42,7 +44,8 @@ namespace DCL.UI.ConnectionStatusPanel
             IRoomsStatus roomsStatus,
             World world,
             Entity playerEntity,
-            IDebugContainerBuilder debugBuilder
+            IDebugContainerBuilder debugBuilder,
+            IChatCommandsBus chatCommandsBus
         ) : base(viewFactory)
         {
             this.userInAppInitializationFlow = userInAppInitializationFlow;
@@ -53,11 +56,14 @@ namespace DCL.UI.ConnectionStatusPanel
             this.world = world;
             this.playerEntity = playerEntity;
             this.debugBuilder = debugBuilder;
+            this.chatCommandsBus = chatCommandsBus;
         }
 
         protected override void OnViewInstantiated()
         {
             currentSceneInfo.SceneStatus.OnUpdate += SceneStatusOnUpdate;
+            chatCommandsBus.OnSetConnectionStatusPanelVisibility += SetVisibility;
+
             SceneStatusOnUpdate(currentSceneInfo.SceneStatus.Value);
             Bind(roomsStatus.ConnectionQualityScene, viewInstance.SceneRoom);
             Bind(roomsStatus.ConnectionQualityIsland, viewInstance.GlobalRoom);
@@ -141,6 +147,7 @@ namespace DCL.UI.ConnectionStatusPanel
             subscriptions.Clear();
 
             currentSceneInfo.SceneStatus.OnUpdate -= SceneStatusOnUpdate;
+            chatCommandsBus.OnSetConnectionStatusPanelVisibility -= SetVisibility;
             base.Dispose();
 
             cancellationTokenSource.SafeCancelAndDispose();

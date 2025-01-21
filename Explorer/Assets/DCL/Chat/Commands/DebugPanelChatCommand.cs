@@ -20,13 +20,12 @@ namespace DCL.Chat.Commands
         public bool DebugOnly => true;
 
         private readonly IDebugContainerBuilder debugContainerBuilder;
-        //TODO FRAN -> FIX THIS REFERENCE
-        //private readonly ConnectionStatusPanelPlugin connectionStatusPanelPlugin;
+        private readonly IChatCommandsBus chatCommandsBus;
 
-        public DebugPanelChatCommand(IDebugContainerBuilder debugContainerBuilder)//, ConnectionStatusPanelPlugin connectionStatusPanelPlugin)
+        public DebugPanelChatCommand(IDebugContainerBuilder debugContainerBuilder, IChatCommandsBus chatCommandsBus)//, ConnectionStatusPanelPlugin connectionStatusPanelPlugin)
         {
             this.debugContainerBuilder = debugContainerBuilder;
-           // this.connectionStatusPanelPlugin = connectionStatusPanelPlugin;
+            this.chatCommandsBus = chatCommandsBus;
         }
 
         public bool ValidateParameters(string[] parameters) =>
@@ -38,8 +37,7 @@ namespace DCL.Chat.Commands
             {
                 bool visible = !debugContainerBuilder.IsVisible;
                 debugContainerBuilder.IsVisible = visible;
-               // connectionStatusPanelPlugin.SetVisibility(visible);
-
+                chatCommandsBus.SetConnectionStatusPanelVisibility(visible);
                 return UniTask.FromResult(string.Empty);
             }
 

@@ -473,10 +473,11 @@ namespace Global.Dynamic
 
             dynamicWorldDependencies.WorldInfoTool.Initialize(worldInfoHub);
 
+            var chatCommandsBus = new ChatCommandsBus();
             var characterDataPropagationUtility = new CharacterDataPropagationUtility(staticContainer.ComponentsContainer.ComponentPoolsRegistry.AddComponentPool<SDKProfile>());
 
             var currentSceneInfo = new CurrentSceneInfo();
-            var connectionStatusPanelPlugin = new ConnectionStatusPanelPlugin(userInAppInAppInitializationFlow, mvcManager, mainUIView, roomsStatus, currentSceneInfo, reloadSceneController, globalWorld, playerEntity, debugBuilder);
+            var connectionStatusPanelPlugin = new ConnectionStatusPanelPlugin(userInAppInAppInitializationFlow, mvcManager, mainUIView, roomsStatus, currentSceneInfo, reloadSceneController, globalWorld, playerEntity, debugBuilder, chatCommandsBus);
             var chatTeleporter = new ChatTeleporter(realmNavigator, new ChatEnvironmentValidator(bootstrapContainer.Environment), bootstrapContainer.DecentralandUrlsSource);
 
             var chatCommands = new List<IChatCommand>
@@ -484,7 +485,7 @@ namespace Global.Dynamic
                 new GoToChatCommand(chatTeleporter, staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource),
                 new GoToLocalChatCommand(chatTeleporter),
                 new WorldChatCommand(chatTeleporter),
-                new DebugPanelChatCommand(debugBuilder),// connectionStatusPanelPlugin),
+                new DebugPanelChatCommand(debugBuilder, chatCommandsBus),
                 new ShowEntityChatCommand(worldInfoHub),
                 new ClearChatCommand(chatHistory),
                 new ReloadSceneChatCommand(reloadSceneController),
