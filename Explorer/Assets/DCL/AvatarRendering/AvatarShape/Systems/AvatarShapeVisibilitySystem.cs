@@ -49,20 +49,11 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         }
 
         [Query]
-        private void GetAvatarsVisibleWithOutline(in AvatarBase avatarBase, ref AvatarShapeComponent avatarShape, ref AvatarCachedVisibilityComponent avatarCachedVisibility)
+        private void GetAvatarsVisibleWithOutline(in AvatarBase avatarBase, ref AvatarShapeComponent avatarShape)
         {
             if (IsWithinCameraDistance(camera.GetCameraComponent(World).Camera, avatarBase.HeadAnchorPoint, 8.0f) && IsVisibleInCamera(camera.GetCameraComponent(World).Camera, avatarBase.AvatarSkinnedMeshRenderer.bounds))
             {
-                foreach (var avs in avatarShape.InstantiatedWearables)
-                {
-                    if (avs.OutlineCompatible)
-                    {
-                        foreach (var rend in avs.Renderers)
-                        {
-                            OutlineRendererFeature.m_OutlineRenderers.Add(rend);
-                        }
-                    }
-                }
+                OutlineRendererFeature.m_OutlineRenderers.AddRange(avatarShape.OutlineCompatibleRenderers);
             }
         }
 
