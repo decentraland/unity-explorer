@@ -1,18 +1,13 @@
-using Cysharp.Threading.Tasks;
-using DCL.Chat;
-using DCL.UI.GenericContextMenu.Controls;
+using DCL.UI.GenericContextMenu.Controls.Configs;
 using System;
-using System.Threading;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using Utility;
 
-namespace DCL.Friends.ContextMenuComponent
+namespace DCL.UI.GenericContextMenu.Controls
 {
     public class GenericContextMenuUserProfileView : GenericContextMenuComponentBase
     {
-        [field: SerializeField] public ChatEntryConfigurationSO ChatEntryConfiguration { get; private set; }
         [field: SerializeField] public Image FaceFrame { get; private set; }
         [field: SerializeField] public Image FaceRim { get; private set; }
         [field: SerializeField] public TMP_Text UserName { get; private set; }
@@ -33,75 +28,60 @@ namespace DCL.Friends.ContextMenuComponent
         [field: SerializeField] public Sprite AlreadyFriendSprite { get; private set; }
         [field: SerializeField] public string AlreadyFriendText { get; private set; }
 
-        private CancellationTokenSource friendshipStatusCts = new ();
-
         public void Configure(UserProfileContextMenuControlSettings settings)
         {
             HorizontalLayoutComponent.padding = settings.horizontalLayoutPadding;
 
-            Color userColor = ChatEntryConfiguration.GetNameColor(settings.profile.Name);
-
             UserName.text = settings.profile.Name;
-            UserName.color = userColor;
+            UserName.color = settings.userColor;
             UserNameTag.text = $"#{settings.profile.UserId[^4..]}";
             UserAddress.text = $"{settings.profile.UserId[..5]}...{settings.profile.UserId[^5..]}";
 
             UserNameTag.gameObject.SetActive(!settings.profile.HasClaimedName);
             ClaimedNameBadge.gameObject.SetActive(settings.profile.HasClaimedName);
 
-            FaceFrame.color = userColor;
-            userColor.r += 0.3f;
-            userColor.g += 0.3f;
-            userColor.b += 0.3f;
-            FaceRim.color = userColor;
+            FaceFrame.color = settings.userColor;
+            settings.userColor.r += 0.3f;
+            settings.userColor.g += 0.3f;
+            settings.userColor.b += 0.3f;
+            FaceRim.color = settings.userColor;
 
-            SetFriendShipStatusAsync(settings, friendshipStatusCts.Token).Forget();
-
-            CopyNameButton.onClick.AddListener(() => settings.systemClipboard.Set(settings.profile.Name));
-            CopyAddressButton.onClick.AddListener(() => settings.systemClipboard.Set(settings.profile.UserId));
-        }
-
-        private async UniTaskVoid SetFriendShipStatusAsync(UserProfileContextMenuControlSettings settings, CancellationToken ct)
-        {
-            FriendshipStatus friendshipStatus = await settings.friendsService.GetFriendshipStatusAsync(settings.profile.UserId, ct);
-
-            switch (friendshipStatus)
+            switch (settings.friendshipStatus)
             {
-                case FriendshipStatus.NONE:
+                case UserProfileContextMenuControlSettings.FriendshipStatus.NONE:
                     AddFriendButton.gameObject.SetActive(true);
                     AddFriendButton.interactable = true;
                     AddFriendButtonImage.sprite = AddFriendSprite;
                     AddFriendButtonText.text = AddFriendText;
                     break;
-                case FriendshipStatus.FRIEND:
+                case UserProfileContextMenuControlSettings.FriendshipStatus.FRIEND:
                     AddFriendButton.gameObject.SetActive(true);
                     AddFriendButton.interactable = false;
                     AddFriendButtonImage.sprite = AlreadyFriendSprite;
                     AddFriendButtonText.text = AlreadyFriendText;
                     break;
-                case FriendshipStatus.BLOCKED:
+                case UserProfileContextMenuControlSettings.FriendshipStatus.BLOCKED:
                     AddFriendButton.gameObject.SetActive(false);
                     break;
-                case FriendshipStatus.REQUEST_RECEIVED:
-                case FriendshipStatus.REQUEST_SENT:
+                case UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_RECEIVED:
+                case UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_SENT:
                     AddFriendButton.gameObject.SetActive(true);
                     AddFriendButton.interactable = false;
                     AddFriendButtonImage.sprite = AddFriendSprite;
                     AddFriendButtonText.text = AddFriendText;
                     break;
             }
+
+            CopyNameButton.onClick.AddListener(() => settings.systemClipboard.Set(settings.profile.Name));
+            CopyAddressButton.onClick.AddListener(() => settings.systemClipboard.Set(settings.profile.UserId));
+            AddFriendButton.onClick.AddListener(() => settings.requestFriendshipAction(settings.profile));
         }
-
-        private void OnEnable() =>
-            friendshipStatusCts = friendshipStatusCts.SafeRestart();
-
-        private void OnDisable() =>
-            friendshipStatusCts.SafeCancelAndDispose();
 
         public override void UnregisterListeners()
         {
             CopyNameButton.onClick.RemoveAllListeners();
             CopyAddressButton.onClick.RemoveAllListeners();
+            AddFriendButton.onClick.RemoveAllListeners();
         }
 
         public override void RegisterCloseListener(Action listener)
