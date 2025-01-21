@@ -34,6 +34,8 @@ namespace DCL.Roads.GPUInstancing.Playground
 
             foreach (LODGroupData lodGroup in PrefabInstance.LODGroups)
             {
+                if (lodGroup.LODs.Length == 0) continue;
+
                 lodGroup.LODGroup.enabled = false;
 
                 foreach (LODEntryMeshData lod in lodGroup.LODs)
@@ -54,7 +56,9 @@ namespace DCL.Roads.GPUInstancing.Playground
         private LODGroupData[] CollectLODGroupsData() =>
             (from lodGroup in GetComponentsInChildren<LODGroup>(includeInactive: false)
                 where lodGroup.enabled && lodGroup.gameObject.activeInHierarchy
-                select CollectLODGroupData(lodGroup)).ToArray();
+                select CollectLODGroupData(lodGroup) into lodGroupData
+                where lodGroupData.LODs.Length != 0 && lodGroupData.LODs[0].Meshes.Length != 0
+                select lodGroupData).ToArray();
 
         private MeshData[] CollectMeshesNotIncludedInLOD() =>
             (from renderer in GetComponentsInChildren<MeshRenderer>(includeInactive: false)
@@ -176,8 +180,8 @@ namespace DCL.Roads.GPUInstancing.Playground
                         Renderer = renderer,
                     }).ToArray(),
 
-                LODGroups = (from lodGroup in allLODGroups
-                    select CollectLODGroupData(lodGroup)).ToArray(),
+                LODGroups = allLODGroups.Select(CollectLODGroupData)
+                                        .Where(lodGroupData => lodGroupData.LODs.Length != 0 && lodGroupData.LODs[0].Meshes.Length != 0).ToArray(),
             };
         }
 

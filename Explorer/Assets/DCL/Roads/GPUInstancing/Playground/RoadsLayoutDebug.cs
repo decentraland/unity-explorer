@@ -36,7 +36,8 @@ namespace DCL.Roads.GPUInstancing.Playground
 
         private void Awake()
         {
-            PrepareInstancesMap();
+            if (Application.isPlaying)
+                PrepareInstancesMap();
         }
 
         public void Update()
@@ -108,11 +109,12 @@ namespace DCL.Roads.GPUInstancing.Playground
         private void CollectDebugInfo()
         {
             MeshesDebug = gpuInstancingService.gpuInstancingMap.Select(propPair => new GPUMeshDebug
-            {
-                Mesh = propPair.Key.Mesh,
-                Material1 = propPair.Key.RenderParams[0].material,
-                InstancesCount = propPair.Value.Count,
-            }).ToArray();
+                                               {
+                                                   Mesh = propPair.Key.Mesh,
+                                                   Material1 = propPair.Key.RenderParams[0].material,
+                                                   InstancesCount = propPair.Value.Count,
+                                               })
+                                              .ToArray();
         }
 
         private bool IsOutOfRange(Vector2Int roadCoordinate) =>

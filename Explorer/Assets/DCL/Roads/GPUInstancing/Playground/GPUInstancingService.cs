@@ -41,7 +41,7 @@ namespace DCL.Roads.GPUInstancing.Playground
                 AddToInstancing(spawnedRoad.PrefabInstance);
         }
 
-        private void AddToInstancing(PrefabInstanceData prefabData)
+        public void AddToInstancing(PrefabInstanceData prefabData)
         {
             AddToInstancing(prefabData.Meshes);
 
