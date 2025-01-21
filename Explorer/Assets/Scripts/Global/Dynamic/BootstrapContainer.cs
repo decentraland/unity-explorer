@@ -108,7 +108,11 @@ namespace Global.Dynamic
                 (container.VerifiedEthereumApi, container.Web3Authenticator) = CreateWeb3Dependencies(sceneLoaderSettings, web3AccountFactory, identityCache, browser, container, decentralandUrlsSource);
 
                 if (container.enableAnalytics)
+                {
                     container.Analytics!.Initialize(container.IdentityCache.Identity);
+
+                    CrashDetector.Initialize(container.Analytics);
+                }
 
                 bool enableSceneDebugConsole = realmLaunchSettings.IsLocalSceneDevelopmentRealm || applicationParametersParser.HasFlag(AppArgsFlags.SCENE_CONSOLE);
                 container.DiagnosticsContainer = DiagnosticsContainer.Create(container.ReportHandlingSettings, enableSceneDebugConsole);
