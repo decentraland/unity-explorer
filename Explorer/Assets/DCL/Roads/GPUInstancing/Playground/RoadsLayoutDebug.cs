@@ -34,24 +34,29 @@ namespace DCL.Roads.GPUInstancing.Playground
         [HideInInspector]
         public Transform debugRoot;
 
-        private void Awake()
-        {
-            if (Application.isPlaying)
-                PrepareInstancesMap();
-        }
+        // private async void Awake()
+        // {
+        //     if (Application.isPlaying)
+        //         StartCoroutine(PrepareInstancesMapAsync());
+        // }
 
         public void Update()
         {
             if (Run) gpuInstancingService.RenderInstanced(InstanceId);
         }
 
-        [ContextMenu("DEBUG - Prepare Instances Table")]
-        private void PrepareInstancesMap()
-        {
-            gpuInstancingService.Clear();
-            gpuInstancingService.AddToInstancing(debugRoot.GetComponentsInChildren<PrefabInstanceDataBehaviour>());
-            CollectDebugInfo();
-        }
+        // private IEnumerator PrepareInstancesMapAsync()
+        // {
+        //     gpuInstancingService.Clear();
+        //
+        //     foreach (var prefabInstance in debugRoot.GetComponentsInChildren<PrefabInstanceDataBehaviour>())
+        //     {
+        //         gpuInstancingService.AddToInstancing(prefabInstance.PrefabInstance, debugRoot.transform);
+        //         yield return null;
+        //     }
+        //
+        //     CollectDebugInfo();
+        // }
 
         [ContextMenu("DEBUG - Cache Prefabs")]
         private void CachePrefabs()
@@ -84,6 +89,8 @@ namespace DCL.Roads.GPUInstancing.Playground
         [ContextMenu("DEBUG - Spawn Roads")]
         private void SpawnRoads()
         {
+            gpuInstancingService.Clear();
+
             debugRoot = new GameObject("RoadsRoot").transform;
             debugRoot.gameObject.SetActive(false);
 
@@ -93,17 +100,19 @@ namespace DCL.Roads.GPUInstancing.Playground
                 if (IsOutOfRange(roadDescription.RoadCoordinate)) continue;
                 PrefabInstanceDataBehaviour prefab = Prefabs.FirstOrDefault(op => op.name == roadDescription.RoadModel);
 
-                if (prefab != null)
-                {
-                    PrefabInstanceDataBehaviour roadAsset = Instantiate(prefab);
+                var roadRoot = Matrix4x4.TRS(roadDescription.RoadCoordinate.ParcelToPositionFlat() + ParcelMathHelper.RoadPivotDeviation, roadDescription.Rotation, Vector3.one);
+                gpuInstancingService.AddToInstancing(prefab.PrefabInstance, roadRoot);
 
-                    roadAsset.transform.localPosition = roadDescription.RoadCoordinate.ParcelToPositionFlat() + ParcelMathHelper.RoadPivotDeviation;
-                    roadAsset.transform.localRotation = roadDescription.Rotation;
-                    roadAsset.gameObject.SetActive(true);
+                Transform roadAsset =
+                    Instantiate(prefab, roadDescription.RoadCoordinate.ParcelToPositionFlat() + ParcelMathHelper.RoadPivotDeviation, roadDescription.Rotation, debugRoot)
+                       .transform;
 
-                    roadAsset.transform.parent = debugRoot;
-                }
+                // roadAsset.localPosition = roadDescription.RoadCoordinate.ParcelToPositionFlat() + ParcelMathHelper.RoadPivotDeviation;
+                // roadAsset.localRotation = roadDescription.Rotation;
+                roadAsset.gameObject.SetActive(true);
             }
+
+            CollectDebugInfo();
         }
 
         private void CollectDebugInfo()
@@ -111,15 +120,19 @@ namespace DCL.Roads.GPUInstancing.Playground
             MeshesDebug = gpuInstancingService.gpuInstancingMap.Select(propPair => new GPUMeshDebug
                                                {
                                                    Mesh = propPair.Key.Mesh,
-                                                   Material1 = propPair.Key.RenderParams[0].material,
+                                                   Material1 = propPair.Key.RenderParamsArray[0].material,
                                                    InstancesCount = propPair.Value.Count,
                                                })
                                               .ToArray();
         }
 
-        private bool IsOutOfRange(Vector2Int roadCoordinate) =>
-            roadCoordinate.x < ParcelsMin.x || roadCoordinate.x > ParcelsMax.x ||
-            roadCoordinate.y < ParcelsMin.y || roadCoordinate.y > ParcelsMax.y;
+        private bool IsOutOfRange(Vector2Int roadCoordinate)
+        {
+            Debug.Log(roadCoordinate.ToString());
+
+            return roadCoordinate.x < ParcelsMin.x || roadCoordinate.x > ParcelsMax.x ||
+                   roadCoordinate.y < ParcelsMin.y || roadCoordinate.y > ParcelsMax.y;
+        }
     }
 
     [Serializable]

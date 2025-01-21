@@ -54,6 +54,8 @@ namespace DCL.Roads.GPUInstancing.Playground
     {
         public MeshRenderer Renderer;
         public Transform Transform;
+        public Matrix4x4 localToWorldMatrix;
+        public Matrix4x4 LocalMatrixToRoot;
 
         public Mesh SharedMesh;
 

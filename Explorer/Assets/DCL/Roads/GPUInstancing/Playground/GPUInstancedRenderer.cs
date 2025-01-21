@@ -11,19 +11,19 @@ namespace DCL.Roads.Playground
     public struct GPUInstancedRenderer : IEquatable<GPUInstancedRenderer>
     {
         public readonly Mesh Mesh;
-        public readonly RenderParams[] RenderParams;
+        public readonly RenderParams[] RenderParamsArray;
 
-        public GPUInstancedRenderer(Mesh mesh, RenderParams[] renderParams)
+        public GPUInstancedRenderer(Mesh mesh, RenderParams[] renderParamsArray)
         {
             Mesh = mesh;
-            RenderParams = renderParams;
+            RenderParamsArray = renderParamsArray;
         }
 
         public bool Equals(GPUInstancedRenderer other) =>
             Equals(Mesh, other.Mesh) &&
-            RenderParams != null &&
-            other.RenderParams != null &&
-            RenderParams.SequenceEqual(other.RenderParams);
+            RenderParamsArray != null &&
+            other.RenderParamsArray != null &&
+            RenderParamsArray.SequenceEqual(other.RenderParamsArray);
 
         public override bool Equals(object obj) =>
             obj is GPUInstancedRenderer other && Equals(other);
@@ -35,9 +35,9 @@ namespace DCL.Roads.Playground
                 var hash = 17;
                 hash = (hash * 23) + (Mesh != null ? Mesh.GetHashCode() : 0);
 
-                if (RenderParams == null) return hash;
+                if (RenderParamsArray == null) return hash;
 
-                foreach (var param in RenderParams)
+                foreach (var param in RenderParamsArray)
                     hash = (hash * 23) + param.GetHashCode();
 
                 return hash;

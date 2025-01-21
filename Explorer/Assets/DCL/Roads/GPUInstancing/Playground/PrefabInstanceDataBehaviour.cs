@@ -14,6 +14,15 @@ namespace DCL.Roads.GPUInstancing.Playground
         [ContextMenu(nameof(CollectSelfData))]
         public void CollectSelfData()
         {
+            if (transform.position != Vector3.zero)
+                transform.position = Vector3.zero;
+
+            if (transform.rotation != Quaternion.identity)
+                transform.rotation = Quaternion.identity;
+
+            if (transform.localScale != Vector3.one)
+                transform.localScale = Vector3.one;
+
 #if UNITY_EDITOR
             bool isPrefabAsset = PrefabUtility.IsPartOfPrefabAsset(gameObject);
 
@@ -74,9 +83,14 @@ namespace DCL.Roads.GPUInstancing.Playground
                     ReceiveShadows = renderer.receiveShadows,
                     ShadowCastingMode = renderer.shadowCastingMode,
                     Renderer = renderer,
+                    localToWorldMatrix = renderer.transform.localToWorldMatrix,
+                    LocalMatrixToRoot = CalculateLocalMatrixToRoot(renderer.transform, this.transform),
                 }).ToArray();
 
-        private static LODGroupData CollectLODGroupData(LODGroup lodGroup)
+        private static Matrix4x4 CalculateLocalMatrixToRoot(Transform child, Transform root) =>
+            root.worldToLocalMatrix * child.localToWorldMatrix;
+
+        private LODGroupData CollectLODGroupData(LODGroup lodGroup)
         {
             lodGroup.RecalculateBounds();
 
@@ -100,7 +114,7 @@ namespace DCL.Roads.GPUInstancing.Playground
             return LODGroupData;
         }
 
-        private static List<MeshData> CollectLODMeshData(UnityEngine.LOD lod)
+        private List<MeshData> CollectLODMeshData(UnityEngine.LOD lod)
         {
             var list = new List<MeshData>();
 
@@ -122,6 +136,8 @@ namespace DCL.Roads.GPUInstancing.Playground
                     ReceiveShadows = meshRenderer.receiveShadows,
                     ShadowCastingMode = meshRenderer.shadowCastingMode,
                     Renderer = meshRenderer,
+                    localToWorldMatrix = renderer.transform.localToWorldMatrix,
+                    LocalMatrixToRoot = CalculateLocalMatrixToRoot(renderer.transform, this.transform),
                 });
             }
 
@@ -178,6 +194,8 @@ namespace DCL.Roads.GPUInstancing.Playground
                         ReceiveShadows = renderer.receiveShadows,
                         ShadowCastingMode = renderer.shadowCastingMode,
                         Renderer = renderer,
+                        localToWorldMatrix = renderer.transform.localToWorldMatrix,
+                        LocalMatrixToRoot = CalculateLocalMatrixToRoot(renderer.transform, this.transform),
                     }).ToArray(),
 
                 LODGroups = allLODGroups.Select(CollectLODGroupData)

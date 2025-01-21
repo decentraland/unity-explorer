@@ -15,57 +15,47 @@ namespace DCL.Roads.GPUInstancing.Playground
         {
             foreach (KeyValuePair<GPUInstancedRenderer, List<Matrix4x4>> renderInstances in gpuInstancingMap)
             {
-                // Debug.Log($"{renderInstances.Key.Mesh.name}");
-
-                for (var i = 0; i < renderInstances.Key.RenderParams.Length; i++) // foreach submesh
+                for (var i = 0; i < renderInstances.Key.RenderParamsArray.Length; i++) // foreach submesh
                 {
                     if (instanceId >= renderInstances.Value.Count) continue;
-                    var instanceData = instanceId < 0 ? renderInstances.Value : new List<Matrix4x4> { renderInstances.Value[instanceId] };
+                    List<Matrix4x4> instanceData = instanceId < 0 ? renderInstances.Value : new List<Matrix4x4> { renderInstances.Value[instanceId] };
 
                     for (var j = 0; j < instanceData.Count; j += BATCH_SIZE)
                     {
-                        var batch = renderInstances.Value.Skip(j).Take(BATCH_SIZE).ToArray();
-                        Graphics.RenderMeshInstanced(in renderInstances.Key.RenderParams[i], renderInstances.Key.Mesh, i, batch);
+                        Matrix4x4[] batch = renderInstances.Value.Skip(j).Take(BATCH_SIZE).ToArray();
+                        Graphics.RenderMeshInstanced(in renderInstances.Key.RenderParamsArray[i], renderInstances.Key.Mesh, i, batch);
                     }
-
-                    // Debug.Log($"{renderInstances.Key.Mesh.name} - {renderInstances.Key.RenderParams[i].material.name}");
-                    // foreach (Matrix4x4 value in renderInstances.Value)
-                    //     Debug.Log($"{value}");
                 }
             }
         }
 
-        public void AddToInstancing(PrefabInstanceDataBehaviour[] prefabInstanceData)
-        {
-            foreach (PrefabInstanceDataBehaviour spawnedRoad in prefabInstanceData)
-                AddToInstancing(spawnedRoad.PrefabInstance);
-        }
+        // public void AddToInstancing(PrefabInstanceDataBehaviour[] prefabInstanceData)
+        // {
+        //     foreach (PrefabInstanceDataBehaviour spawnedRoad in prefabInstanceData)
+        //         AddToInstancing(spawnedRoad.PrefabInstance);
+        // }
 
-        public void AddToInstancing(PrefabInstanceData prefabData)
+        public void AddToInstancing(PrefabInstanceData prefabData, Matrix4x4 roadRoot)
         {
-            AddToInstancing(prefabData.Meshes);
+            AddToInstancing(prefabData.Meshes, roadRoot);
 
             foreach (LODGroupData lodGroup in prefabData.LODGroups)
             foreach (LODEntryMeshData lods in lodGroup.LODs)
-                AddToInstancing(lods.Meshes);
+                AddToInstancing(lods.Meshes, roadRoot);
         }
 
-        private void AddToInstancing(MeshData[] meshes)
+        private void AddToInstancing(MeshData[] meshes, Matrix4x4 roadRoot)
         {
             foreach (MeshData meshData in meshes)
             {
-                Debug.Log($"-- Adding mesh {meshData.Transform.gameObject.name} from {meshData.Transform.position}");
-
-                Matrix4x4 localMatrix = meshData.Transform.localToWorldMatrix;
                 var instancedRenderer = meshData.ToGPUInstancedRenderer();
 
-                Debug.Log($"Adding Render datas of amount {meshData.Transform.localToWorldMatrix}");
-                Debug.Log($"Actual transform position: {meshData.Transform.position}");
+                Matrix4x4 localMatrix = meshData.LocalMatrixToRoot;
 
                 if (gpuInstancingMap.TryGetValue(instancedRenderer, out List<Matrix4x4> matrix))
-                    matrix.Add(localMatrix);
+                    matrix.Add(roadRoot * localMatrix);
                 else
-                    gpuInstancingMap.Add(instancedRenderer, new List<Matrix4x4> { localMatrix });
+                    gpuInstancingMap.Add(instancedRenderer, new List<Matrix4x4> { roadRoot * localMatrix });
             }
         }
 

@@ -130,7 +130,7 @@ namespace DCL.Roads.Playground
             {
                 var instancedRenderer = meshData.ToGPUInstancedRenderer();
 
-                for (var submeshIndex = 0; submeshIndex < instancedRenderer.RenderParams.Length; submeshIndex++)
+                for (var submeshIndex = 0; submeshIndex < instancedRenderer.RenderParamsArray.Length; submeshIndex++)
                 {
                     // Setup command data for this submesh
                     commandData[currentCommandIndex].startIndex = meshData.SharedMesh.GetIndexStart(submeshIndex);
@@ -139,7 +139,7 @@ namespace DCL.Roads.Playground
                     commandData[currentCommandIndex].startInstance = 0;
                     commandData[currentCommandIndex].instanceCount = 1; // Since we're only rendering one instance
 
-                    RenderParams rparams = instancedRenderer.RenderParams[submeshIndex];
+                    RenderParams rparams = instancedRenderer.RenderParamsArray[submeshIndex];
                     rparams.worldBounds = new Bounds(Vector3.zero, 10000 * Vector3.one); //meshData.SharedMesh.bounds; // Adjust bounds as needed, use tighter bounds for better FOV culling
                     rparams.matProps ??= new MaterialPropertyBlock();
                     rparams.matProps.SetMatrix(OBJECT_TO_WORLD, baseMatrix * meshData.Transform.localToWorldMatrix);
@@ -163,8 +163,8 @@ namespace DCL.Roads.Playground
             {
                 var instancedRenderer = meshData.ToGPUInstancedRenderer();
 
-                for (var i = 0; i < instancedRenderer.RenderParams.Length; i++)
-                    Graphics.RenderMeshInstanced(in instancedRenderer.RenderParams[i], meshData.SharedMesh, i, new[] { baseMatrix * meshData.Transform.localToWorldMatrix });
+                for (var i = 0; i < instancedRenderer.RenderParamsArray.Length; i++)
+                    Graphics.RenderMeshInstanced(in instancedRenderer.RenderParamsArray[i], meshData.SharedMesh, i, new[] { baseMatrix * meshData.Transform.localToWorldMatrix });
             }
         }
 
