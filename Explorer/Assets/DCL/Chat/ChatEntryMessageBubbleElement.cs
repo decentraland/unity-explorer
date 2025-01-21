@@ -32,9 +32,9 @@ namespace DCL.Chat
             messageOptionsButton?.gameObject.SetActive(false);
         }
 
-        public void SetupHyperlinkHandlerSettings(HyperlinkHandlerSettings settings)
+        public void SetupHyperlinkHandlerSettings(HyperlinkHandlerDependencies dependencies)
         {
-            messageContentElement.hyperlinkHandler.Initialize(settings);
+            messageContentElement.hyperlinkHandler.Initialize(dependencies);
         }
 
         public void SetMessageData(ChatMessage data)

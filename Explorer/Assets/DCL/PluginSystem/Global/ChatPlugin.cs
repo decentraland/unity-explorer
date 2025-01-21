@@ -10,6 +10,7 @@ using DCL.Emoji;
 using DCL.Input;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
+using DCL.UI.HyperlinkHandler;
 using DCL.UI.MainUI;
 using MVC;
 using System;
@@ -34,6 +35,7 @@ namespace DCL.PluginSystem.Global
         private readonly IEventSystem eventSystem;
         private readonly MainUIView mainUIView;
         private readonly IClipboardManager clipboardManager;
+        private readonly HyperlinkHandlerDependencies hyperlinkHandlerDependencies;
 
         private ChatController chatController;
 
@@ -49,7 +51,8 @@ namespace DCL.PluginSystem.Global
             MainUIView mainUIView,
             IInputBlock inputBlock,
             Arch.Core.World world,
-            Entity playerEntity, IClipboardManager clipboardManager)
+            Entity playerEntity, IClipboardManager clipboardManager,
+            HyperlinkHandlerDependencies hyperlinkHandlerDependencies)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -62,6 +65,7 @@ namespace DCL.PluginSystem.Global
             this.world = world;
             this.playerEntity = playerEntity;
             this.clipboardManager = clipboardManager;
+            this.hyperlinkHandlerDependencies = hyperlinkHandlerDependencies;
             this.eventSystem = eventSystem;
             this.mainUIView = mainUIView;
             this.inputBlock = inputBlock;
@@ -102,7 +106,8 @@ namespace DCL.PluginSystem.Global
                 eventSystem,
                 inputBlock,
                 mvcManager,
-                clipboardManager
+                clipboardManager,
+                hyperlinkHandlerDependencies
             );
 
             mvcManager.RegisterController(chatController);

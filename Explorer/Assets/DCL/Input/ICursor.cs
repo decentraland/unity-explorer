@@ -10,6 +10,8 @@ namespace DCL.Input
 
         void SetVisibility(bool visible);
 
-        void SetStyle(CursorStyle style);
+        void SetStyle(CursorStyle style, bool force = false);
+
+        bool IsForced();
     }
 }

@@ -68,7 +68,7 @@ namespace DCL.Chat
         private bool isInputSelected;
         private IReadOnlyList<RaycastResult> raycastResults;
         private UniTaskCompletionSource closePopupTask;
-        private HyperlinkHandlerSettings hyperlinkHandlerSettings;
+        private HyperlinkHandlerDependencies hyperlinkHandlerDependencies;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
 
@@ -92,7 +92,8 @@ namespace DCL.Chat
             IEventSystem eventSystem,
             IInputBlock inputBlock,
             IMVCManager mvcManager,
-            IClipboardManager clipboardManager) : base(viewFactory)
+            IClipboardManager clipboardManager,
+            HyperlinkHandlerDependencies hyperlinkHandlerDependencies) : base(viewFactory)
         {
             this.chatEntryConfiguration = chatEntryConfiguration;
             this.chatMessagesBus = chatMessagesBus;
@@ -111,6 +112,7 @@ namespace DCL.Chat
             this.inputBlock = inputBlock;
             this.mvcManager = mvcManager;
             this.clipboardManager = clipboardManager;
+            this.hyperlinkHandlerDependencies = hyperlinkHandlerDependencies;
 
             device = InputSystem.GetDevice<Mouse>();
         }
@@ -152,8 +154,6 @@ namespace DCL.Chat
 
             // Intro message
             chatHistory.AddMessage(ChatMessage.NewFromSystem("Type /help for available commands."));
-
-            hyperlinkHandlerSettings = new HyperlinkHandlerSettings(mvcManager);
         }
 
         protected override void OnViewShow()
@@ -377,7 +377,7 @@ namespace DCL.Chat
                 ChatEntryView itemScript = item!.GetComponent<ChatEntryView>()!;
                 SetItemData(index, itemData, itemScript);
 
-                itemScript.messageBubbleElement.SetupHyperlinkHandlerSettings(hyperlinkHandlerSettings);
+                itemScript.messageBubbleElement.SetupHyperlinkHandlerSettings(hyperlinkHandlerDependencies);
 
                 Button? messageOptionsButton = itemScript.messageBubbleElement.messageOptionsButton;
                 messageOptionsButton?.onClick.RemoveAllListeners();

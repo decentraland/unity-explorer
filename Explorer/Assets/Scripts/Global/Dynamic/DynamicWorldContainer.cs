@@ -65,6 +65,7 @@ using DCL.SidebarBus;
 using DCL.UI.MainUI;
 using DCL.StylizedSkybox.Scripts.Plugin;
 using DCL.UI;
+using DCL.UI.HyperlinkHandler;
 using DCL.UserInAppInitializationFlow;
 using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
@@ -541,6 +542,7 @@ namespace Global.Dynamic
             var multiplayerEmotesMessageBus = new MultiplayerEmotesMessageBus(messagePipesHub, multiplayerDebugSettings);
 
             var remoteMetadata = new DebounceRemoteMetadata(new RemoteMetadata(roomHub, staticContainer.RealmData));
+            var hyperlinkHandlerDependencies = new HyperlinkHandlerDependencies(mvcManager, dclCursor);
 
             var characterPreviewEventBus = new CharacterPreviewEventBus();
             var sidebarBus = new SidebarBus();
@@ -641,7 +643,8 @@ namespace Global.Dynamic
                     staticContainer.InputBlock,
                     globalWorld,
                     playerEntity,
-                    clipboardManager),
+                    clipboardManager,
+                    hyperlinkHandlerDependencies),
                 new ExplorePanelPlugin(
                     assetsProvisioner,
                     mvcManager,

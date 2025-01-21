@@ -122,6 +122,8 @@ namespace DCL.Input.Systems
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void UpdateCursorVisualState(ref CursorComponent cursorComponent, IReadOnlyList<RaycastResult> raycastResults)
         {
+            if (cursor.IsForced()) return;
+
             CursorStyle cursorStyle = CursorStyle.Normal;
 
             switch (cursorComponent.CursorState)
