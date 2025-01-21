@@ -33,7 +33,7 @@ namespace DCL.PluginSystem.World
 {
     public class NFTShapePlugin : IDCLWorldPlugin<NFTShapePluginSettings>
     {
-        private readonly ArrayPool<byte> buffersPool = ArrayPool<byte>.Create(1024 * 1024 * 50, 50);
+        private readonly ArrayPool<byte> buffersPool;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly INFTShapeRendererFactory nftShapeRendererFactory;
         private readonly IPerformanceBudget instantiationFrameTimeBudgetProvider;
@@ -56,7 +56,8 @@ namespace DCL.PluginSystem.World
             IComponentPoolsRegistry componentPoolsRegistry,
             IWebRequestController webRequestController,
             CacheCleaner cacheCleaner,
-            ITexturesFuse texturesFuse
+            ITexturesFuse texturesFuse,
+            ArrayPool<byte> buffersPool
         ) : this(
             decentralandUrlsSource,
             instantiationFrameTimeBudgetProvider,
@@ -67,7 +68,8 @@ namespace DCL.PluginSystem.World
             cacheCleaner,
             new IWebContentSizes.Default(LazyMaxSize(out var lazyMaxSize)),
             lazyMaxSize,
-            texturesFuse
+            texturesFuse,
+            buffersPool
         ) { }
 
         public NFTShapePlugin(
@@ -80,7 +82,8 @@ namespace DCL.PluginSystem.World
             CacheCleaner cacheCleaner,
             IWebContentSizes webContentSizes,
             ILazyMaxSize lazyMaxSize,
-            ITexturesFuse texturesFuse
+            ITexturesFuse texturesFuse,
+            ArrayPool<byte> buffersPool
         ) : this(
             decentralandUrlsSource,
             new PoolNFTShapeRendererFactory(componentPoolsRegistry, framesPool),
@@ -90,7 +93,8 @@ namespace DCL.PluginSystem.World
             cacheCleaner,
             framePrefabs,
             lazyMaxSize,
-            texturesFuse
+            texturesFuse,
+            buffersPool
         ) { }
 
         public NFTShapePlugin(
@@ -102,7 +106,8 @@ namespace DCL.PluginSystem.World
             CacheCleaner cacheCleaner,
             IFramePrefabs framePrefabs,
             ILazyMaxSize lazyMaxSize,
-            ITexturesFuse texturesFuse
+            ITexturesFuse texturesFuse,
+            ArrayPool<byte> buffersPool
         )
         {
             this.decentralandUrlsSource = decentralandUrlsSource;
@@ -113,6 +118,7 @@ namespace DCL.PluginSystem.World
             this.framePrefabs = framePrefabs;
             this.lazyMaxSize = lazyMaxSize;
             this.texturesFuse = texturesFuse;
+            this.buffersPool = buffersPool;
             cacheCleaner.Register(cache);
         }
 

@@ -18,8 +18,6 @@ namespace DCL.PluginSystem.World
 {
     public class AssetBundlesPlugin : IDCLWorldPluginWithoutSettings, IDCLGlobalPluginWithoutSettings
     {
-        private readonly ArrayPool<byte> buffersPool = ArrayPool<byte>.Create(1024 * 1024 * 50, 50);
-
         public static readonly URLDomain STREAMING_ASSETS_URL =
             URLDomain.FromString(
 #if UNITY_EDITOR || UNITY_STANDALONE
@@ -34,11 +32,13 @@ namespace DCL.PluginSystem.World
         private readonly AssetBundleCache assetBundleCache;
         private readonly AssetBundleLoadingMutex assetBundleLoadingMutex;
         private readonly IWebRequestController webRequestController;
+        private readonly ArrayPool<byte> buffersPool;
 
-        public AssetBundlesPlugin(IReportsHandlingSettings reportsHandlingSettings, CacheCleaner cacheCleaner, IWebRequestController webRequestController)
+        public AssetBundlesPlugin(IReportsHandlingSettings reportsHandlingSettings, CacheCleaner cacheCleaner, IWebRequestController webRequestController, ArrayPool<byte> buffersPool)
         {
             this.reportsHandlingSettings = reportsHandlingSettings;
             this.webRequestController = webRequestController;
+            this.buffersPool = buffersPool;
             assetBundleCache = new AssetBundleCache();
             assetBundleLoadingMutex = new AssetBundleLoadingMutex();
 

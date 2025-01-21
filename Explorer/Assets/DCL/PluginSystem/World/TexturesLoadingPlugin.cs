@@ -18,14 +18,15 @@ namespace DCL.PluginSystem.World
     {
         private readonly IWebRequestController webRequestController;
         private readonly ITexturesFuse texturesFuse;
+        private readonly ArrayPool<byte> buffersPool;
 
         private readonly TexturesCache<GetTextureIntention> texturesCache = new ();
-        private readonly ArrayPool<byte> buffersPool = ArrayPool<byte>.Create(1024 * 1024 * 50, 50);
 
-        public TexturesLoadingPlugin(IWebRequestController webRequestController, CacheCleaner cacheCleaner, ITexturesFuse texturesFuse)
+        public TexturesLoadingPlugin(IWebRequestController webRequestController, CacheCleaner cacheCleaner, ITexturesFuse texturesFuse, ArrayPool<byte> buffersPool)
         {
             this.webRequestController = webRequestController;
             this.texturesFuse = texturesFuse;
+            this.buffersPool = buffersPool;
             cacheCleaner.Register(texturesCache);
         }
 
