@@ -647,7 +647,7 @@ namespace Global.Dynamic
                     webBrowser,
                     dynamicWorldDependencies.Web3Authenticator,
                     userInAppInAppInitializationFlow,
-                    profileCache, sidebarBus, chatEntryConfiguration,
+                    profileCache, sidebarBus, dclInput, chatEntryConfiguration,
                     globalWorld, playerEntity, includeCameraReel),
                 new ErrorPopupPlugin(mvcManager, assetsProvisioner),
                 connectionStatusPanelPlugin,
@@ -771,7 +771,8 @@ namespace Global.Dynamic
                     playerEntity,
                     includeCameraReel
                 ),
-                new FriendsPlugin(bootstrapContainer.DecentralandUrlsSource, profileRepository, identityCache, staticContainer.FeatureFlagsCache, onlineUsersProvider, roomHub),
+                new GenericContextMenuPlugin(assetsProvisioner, mvcManager),
+                new FriendsPlugin(bootstrapContainer.DecentralandUrlsSource, profileRepository, identityCache, staticContainer.FeatureFlagsCache, onlineUsersProvider, roomHub)
             };
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);
