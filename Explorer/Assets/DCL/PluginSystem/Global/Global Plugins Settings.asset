@@ -47,6 +47,7 @@ MonoBehaviour:
   - rid: 2799748226177040387
   - rid: 2799748311381442562
   - rid: 6849204606292983808
+  - rid: 4782308287844188162
   - rid: 2168772563850493955
   references:
     version: 2
@@ -449,6 +450,11 @@ MonoBehaviour:
           m_SubObjectType: 
           m_EditorAssetChanged: 0
         <SkyboxSettingsAsset>k__BackingField: {fileID: 11400000, guid: 50aa9483411844942bd409d4b4612221, type: 2}
+        ControlsPanelPrefab:
+          m_AssetGUID: 542424588a68b46f688ef5c667aa0c68
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
     - rid: 3836309668583964676
       type: {class: NftPromptPlugin/NftPromptSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -535,6 +541,29 @@ MonoBehaviour:
       type: {class: StylizedSkyboxPlugin/StylizedSkyboxSettings, ns: DCL.StylizedSkybox.Scripts.Plugin, asm: DCL.Plugins}
       data:
         SettingsAsset: {fileID: 11400000, guid: 50aa9483411844942bd409d4b4612221, type: 2}
+    - rid: 4782308287844188162
+      type: {class: GenericContextMenuPlugin/GenericContextMenuSettings, ns: DCL.PluginSystem, asm: DCL.Plugins}
+      data:
+        GenericContextMenuPrefab:
+          m_AssetGUID: 5ef9c85ff80df42e88f2946a299f1102
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        GenericContextMenuSeparatorPrefab:
+          m_AssetGUID: 52bc5c5fe83f743cdba8dab60b247e96
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        GenericContextMenuButtonPrefab:
+          m_AssetGUID: 3c3c8d365c6ef4acfa3665168b5737a9
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        GenericContextMenuTogglePrefab:
+          m_AssetGUID: 60ec312971597448e978368a5382c0f1
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
     - rid: 5215741520409264128
       type: {class: AvatarPlugin/AvatarShapeSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
