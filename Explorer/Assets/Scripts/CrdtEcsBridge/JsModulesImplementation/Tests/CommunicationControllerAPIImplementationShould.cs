@@ -57,6 +57,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
                 outerArray[i] = new PoolableByteArray(GetRandomBytes(innerArraySize), innerArraySize, null);
 
             api.SendBinary(outerArray);
+            api.GetResult();
 
             var expectedCalls = outerArray.Select(o => o.Prepend((byte)ISceneCommunicationPipe.MsgType.Uint8Array).ToArray()).ToList();
 
