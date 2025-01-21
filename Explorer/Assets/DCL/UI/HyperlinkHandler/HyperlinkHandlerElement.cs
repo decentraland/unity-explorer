@@ -137,6 +137,9 @@ namespace DCL.UI.HyperlinkHandler
             {
                 if (isHighlighting && lastHighlightedIndex == linkIndex) return;
 
+                if (lastHighlightedIndex >= 0)
+                    textComponent.text = textComponent.text.Replace(styleSheet.GetStyle("LinkSelected").styleOpeningDefinition, styleSheet.GetStyle("Link").styleOpeningDefinition).Replace(styleSheet.GetStyle("LinkSelected").styleClosingDefinition, styleSheet.GetStyle("Link").styleClosingDefinition);
+
                 lastHighlightedIndex = linkIndex;
                 isHighlighting = true;
                 dependencies.Cursor.SetStyle(CursorStyle.Interaction, true);
