@@ -62,9 +62,6 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         {
             SceneAssetBundleManifest? manifest = !EnumUtils.HasFlag(intention.PermittedSources, AssetSource.WEB) ? null : wearable.ManifestResult?.Asset;
 
-            if (manifest == null && rawFilesDownloadUrl == null)
-                return false;
-
             BodyShape bodyShape = intention.BodyShape;
 
             switch (wearable.Type)
