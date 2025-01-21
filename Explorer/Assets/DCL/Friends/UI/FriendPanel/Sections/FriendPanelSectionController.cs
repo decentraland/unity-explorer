@@ -73,7 +73,6 @@ namespace DCL.Friends.UI.FriendPanel.Sections
             view.SetEmptyState(false);
             view.SetScrollViewState(false);
 
-            friendListInitCts = friendListInitCts.SafeRestart();
             await requestManager.Init(ct);
 
             view.SetLoadingState(false);
