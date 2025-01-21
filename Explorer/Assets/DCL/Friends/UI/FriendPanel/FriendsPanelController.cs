@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Chat;
+using DCL.Clipboard;
 using DCL.Friends.UI.FriendPanel.Sections.Blocked;
 using DCL.Friends.UI.FriendPanel.Sections.Friends;
 using DCL.Friends.UI.FriendPanel.Sections.Requests;
@@ -29,6 +30,7 @@ namespace DCL.Friends.UI.FriendPanel
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IProfileCache profileCache;
         private readonly IProfileRepository profileRepository;
+        private readonly ISystemClipboard systemClipboard;
 
         private BlockedSectionController blockedSectionController;
         private FriendSectionController friendSectionController;
@@ -45,7 +47,8 @@ namespace DCL.Friends.UI.FriendPanel
             IMVCManager mvcManager,
             IWeb3IdentityCache web3IdentityCache,
             IProfileCache profileCache,
-            IProfileRepository profileRepository) : base(viewFactory)
+            IProfileRepository profileRepository,
+            ISystemClipboard systemClipboard) : base(viewFactory)
         {
             this.chatView = chatView;
             this.friendsService = friendsService;
@@ -54,6 +57,7 @@ namespace DCL.Friends.UI.FriendPanel
             this.web3IdentityCache = web3IdentityCache;
             this.profileCache = profileCache;
             this.profileRepository = profileRepository;
+            this.systemClipboard = systemClipboard;
         }
 
         public override void Dispose()
@@ -98,6 +102,7 @@ namespace DCL.Friends.UI.FriendPanel
             friendSectionController = new FriendSectionController(viewInstance!.FriendsSection,
                 web3IdentityCache,
                 mvcManager,
+                systemClipboard,
                 new FriendListRequestManager(friendsService, friendEventBus, FRIENDS_PAGE_SIZE));
             requestsSectionController = new RequestsSectionController(viewInstance!.RequestsSection,
                 friendsService,

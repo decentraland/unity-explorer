@@ -3,6 +3,7 @@ using DCL.Profiles;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using UnityEngine;
 
 namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 {
@@ -13,7 +14,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 
         private List<Profile> friends = new ();
 
-        public event Action<Profile>? ContextMenuClicked;
+        public event Action<Profile, Vector2>? ContextMenuClicked;
 
         public FriendListRequestManager(IFriendsService friendsService,
             IFriendsEventBus friendEventBus,
@@ -55,7 +56,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         protected override void CustomiseElement(FriendListUserView elementView, int index)
         {
             elementView.ContextMenuButton.onClick.RemoveAllListeners();
-            elementView.ContextMenuButton.onClick.AddListener(() => ContextMenuClicked?.Invoke(elementView.UserProfile));
+            elementView.ContextMenuButton.onClick.AddListener(() => ContextMenuClicked?.Invoke(elementView.UserProfile, elementView.ContextMenuButton.transform.position));
 
             elementView.ToggleOnlineStatus(false);
         }

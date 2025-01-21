@@ -2,6 +2,7 @@ using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.Clipboard;
 using DCL.Friends;
 using DCL.Friends.UI;
 using DCL.Friends.UI.FriendPanel;
@@ -28,8 +29,7 @@ namespace DCL.PluginSystem.Global
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IProfileCache profileCache;
         private readonly IProfileRepository profileRepository;
-        private readonly IOnlineUsersProvider apiOnlineUsersProvider;
-        private readonly IRoomHub roomHub;
+        private readonly ISystemClipboard systemClipboard;
         private readonly CancellationTokenSource lifeCycleCancellationToken = new ();
 
         private RPCFriendsService? friendsService;
@@ -44,8 +44,7 @@ namespace DCL.PluginSystem.Global
             IWeb3IdentityCache web3IdentityCache,
             IProfileCache profileCache,
             IProfileRepository profileRepository,
-            IOnlineUsersProvider apiOnlineUsersProvider,
-            IRoomHub roomHub)
+            ISystemClipboard systemClipboard)
         {
             this.mainUIView = mainUIView;
             this.dclUrlSource = dclUrlSource;
@@ -54,8 +53,7 @@ namespace DCL.PluginSystem.Global
             this.web3IdentityCache = web3IdentityCache;
             this.profileCache = profileCache;
             this.profileRepository = profileRepository;
-            this.apiOnlineUsersProvider = apiOnlineUsersProvider;
-            this.roomHub = roomHub;
+            this.systemClipboard = systemClipboard;
         }
 
         public void Dispose()
@@ -94,7 +92,8 @@ namespace DCL.PluginSystem.Global
                 mvcManager,
                 web3IdentityCache,
                 profileCache,
-                profileRepository);
+                profileRepository,
+                systemClipboard);
 
             mvcManager.RegisterController(friendsPanelController);
         }

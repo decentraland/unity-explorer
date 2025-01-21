@@ -816,8 +816,7 @@ namespace Global.Dynamic
                     identityCache,
                     profileCache,
                     profileRepository,
-                    onlineUsersProvider,
-                    roomHub));
+                    clipboard));
 
             if (dynamicWorldParams.EnableAnalytics)
                 globalPlugins.Add(new AnalyticsPlugin(
