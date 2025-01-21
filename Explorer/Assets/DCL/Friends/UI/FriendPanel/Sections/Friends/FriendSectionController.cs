@@ -29,7 +29,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 
             contextMenu = new GenericContextMenu(view.ContextMenuWidth, verticalLayoutPadding: new RectOffset(15, 15, 20, 25), elementsSpacing: 5)
                .AddControl(userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings(systemClipboard, profile => Debug.Log($"Send friendship request to {profile.UserId}")))
-                .AddControl(new SeparatorContextMenuControlSettings(20))
+                .AddControl(new SeparatorContextMenuControlSettings(20, -15, -15))
                 .AddControl(new ButtonContextMenuControlSettings(view.ContextMenuViewProfileText, view.ContextMenuViewProfileSprite, () => OpenProfilePassport(currentProfile!)))
                 .AddControl(new ButtonContextMenuControlSettings(view.ContextMenuChatText, view.ContextMenuChatSprite, () => Debug.Log($"Chat with {currentProfile!.UserId}")))
                 .AddControl(new ButtonContextMenuControlSettings(view.ContextMenuJumpInText, view.ContextMenuJumpInSprite, () => Debug.Log($"Jump to {currentProfile!.UserId} location")))
