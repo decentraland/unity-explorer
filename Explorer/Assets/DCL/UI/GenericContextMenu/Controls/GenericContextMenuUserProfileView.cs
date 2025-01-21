@@ -2,6 +2,7 @@ using DCL.UI.GenericContextMenu.Controls.Configs;
 using System;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.UI;
 
 namespace DCL.UI.GenericContextMenu.Controls
@@ -14,8 +15,10 @@ namespace DCL.UI.GenericContextMenu.Controls
         [field: SerializeField] public TMP_Text UserNameTag { get; private set; }
         [field: SerializeField] public TMP_Text UserAddress { get; private set; }
         [field: SerializeField] public Image ClaimedNameBadge { get; private set; }
+        [field: SerializeField] public GameObject ClaimedNameBadgeSeparator { get; private set; }
         [field: SerializeField] public Button CopyNameButton { get; private set; }
         [field: SerializeField] public Button CopyAddressButton { get; private set; }
+        [field: SerializeField] public VerticalLayoutGroup ContentVerticalLayout { get; private set; }
 
         [field: Header("Friendship Button")]
         [field: SerializeField] public Button AddFriendButton { get; private set; }
@@ -28,6 +31,12 @@ namespace DCL.UI.GenericContextMenu.Controls
         [field: SerializeField] public Sprite AlreadyFriendSprite { get; private set; }
         [field: SerializeField] public string AlreadyFriendText { get; private set; }
 
+        [field: Header("Components cache")]
+        [field: SerializeField] private RectTransform userNameRectTransform;
+        [field: SerializeField] private RectTransform faceFrameRectTransform;
+        [field: SerializeField] private RectTransform userAddressRectTransform;
+        [field: SerializeField] private RectTransform addButtonRectTransform;
+
         public void Configure(UserProfileContextMenuControlSettings settings)
         {
             HorizontalLayoutComponent.padding = settings.horizontalLayoutPadding;
@@ -39,6 +48,7 @@ namespace DCL.UI.GenericContextMenu.Controls
 
             UserNameTag.gameObject.SetActive(!settings.profile.HasClaimedName);
             ClaimedNameBadge.gameObject.SetActive(settings.profile.HasClaimedName);
+            ClaimedNameBadgeSeparator.gameObject.SetActive(settings.profile.HasClaimedName);
 
             FaceFrame.color = settings.userColor;
             settings.userColor.r += 0.3f;
@@ -72,6 +82,17 @@ namespace DCL.UI.GenericContextMenu.Controls
                     break;
             }
 
+            float totalHeight = Math.Max(userNameRectTransform.rect.height, 20)
+                                + Math.Max(faceFrameRectTransform.rect.height, 60)
+                                + Math.Max(userAddressRectTransform.rect.height, 20)
+                                + HorizontalLayoutComponent.padding.bottom
+                                + HorizontalLayoutComponent.padding.top
+                                + (ContentVerticalLayout.spacing * 2);
+            if (AddFriendButton.gameObject.activeSelf)
+                totalHeight += Math.Max(addButtonRectTransform.rect.height, 40) + ContentVerticalLayout.spacing;
+
+            RectTransformComponent.sizeDelta = new Vector2(RectTransformComponent.sizeDelta.x, totalHeight);
+
             CopyNameButton.onClick.AddListener(() => settings.systemClipboard.Set(settings.profile.Name));
             CopyAddressButton.onClick.AddListener(() => settings.systemClipboard.Set(settings.profile.UserId));
             AddFriendButton.onClick.AddListener(() => settings.requestFriendshipAction(settings.profile));
@@ -86,6 +107,9 @@ namespace DCL.UI.GenericContextMenu.Controls
 
         public override void RegisterCloseListener(Action listener)
         {
+            CopyNameButton.onClick.AddListener(new UnityAction(listener));
+            CopyAddressButton.onClick.AddListener(new UnityAction(listener));
+            AddFriendButton.onClick.AddListener(new UnityAction(listener));
         }
     }
 }
