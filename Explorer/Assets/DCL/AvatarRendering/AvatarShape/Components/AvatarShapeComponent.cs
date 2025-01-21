@@ -46,15 +46,12 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         public void AddWearable(CachedAttachment wearableToAdd)
         {
             InstantiatedWearables.Add(wearableToAdd);
-            foreach (var wearable in InstantiatedWearables)
+            if (wearableToAdd.OutlineCompatible)
             {
-                if (wearable.OutlineCompatible)
+                foreach (var rend in wearableToAdd.Renderers)
                 {
-                    foreach (var rend in wearable.Renderers)
-                    {
-                        if (rend.sharedMaterial.renderQueue >= 2000 && rend.sharedMaterial.renderQueue < 3000)
-                            OutlineCompatibleRenderers.Add(rend);
-                    }
+                    if (rend.sharedMaterial.renderQueue >= 2000 && rend.sharedMaterial.renderQueue < 3000)
+                        OutlineCompatibleRenderers.Add(rend);
                 }
             }
         }
