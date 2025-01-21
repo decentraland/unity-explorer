@@ -28,6 +28,7 @@ MonoBehaviour:
   - rid: 634089542387236867
   - rid: 1970080267461197826
   - rid: 5734404086669770757
+  - rid: 3414977917307846658
   references:
     version: 2
     RefIds:
@@ -151,6 +152,14 @@ MonoBehaviour:
       data:
         VirtualCameraPrefab:
           m_AssetGUID: 4f24a591312ba473ab5ac65d6658cb94
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+    - rid: 3414977917307846658
+      type: {class: LightSourcePlugin/Settings, ns: DCL.PluginSystem.World, asm: DCL.Plugins}
+      data:
+        LightSourcePrefab:
+          m_AssetGUID: 7f09a2d0d9adc4e43b67879ab9cdf360
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
