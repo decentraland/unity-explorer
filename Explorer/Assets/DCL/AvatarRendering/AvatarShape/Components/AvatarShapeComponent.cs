@@ -43,15 +43,17 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             HiddenByModifierArea = false;
         }
 
-        public void AddWearable(CachedAttachment wearableToAdd)
+        public void CreateOutlineCompatibilityList()
         {
-            InstantiatedWearables.Add(wearableToAdd);
-            if (wearableToAdd.OutlineCompatible)
+            foreach (var wearable in InstantiatedWearables)
             {
-                foreach (var rend in wearableToAdd.Renderers)
+                if (wearable.OutlineCompatible)
                 {
-                    if (rend.sharedMaterial.renderQueue >= 2000 && rend.sharedMaterial.renderQueue < 3000)
-                        OutlineCompatibleRenderers.Add(rend);
+                    foreach (var rend in wearable.Renderers)
+                    {
+                        if (rend.sharedMaterial.renderQueue >= 2000 && rend.sharedMaterial.renderQueue < 3000)
+                            OutlineCompatibleRenderers.Add(rend);
+                    }
                 }
             }
         }

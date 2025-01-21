@@ -53,7 +53,7 @@ namespace DCL.AvatarRendering.AvatarShape.Helpers
                     var instantiatedWearable =
                         wearableAssetsCache.InstantiateWearable(regularAsset, parent, resultWearable.IsOutlineCompatible());
 
-                    avatarShapeComponent.AddWearable(instantiatedWearable);
+                    avatarShapeComponent.InstantiatedWearables.Add(instantiatedWearable);
 
                     if (!avatarShapeComponent.IsVisible)
                         foreach (Renderer renderer in instantiatedWearable.Renderers)
