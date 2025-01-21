@@ -8,6 +8,7 @@ using DCL.NotificationsBusController.NotificationsBus;
 using DCL.NotificationsBusController.NotificationTypes;
 using DCL.Profiles;
 using DCL.SidebarBus;
+using DCL.UI.Controls;
 using DCL.UI.ProfileElements;
 using DCL.UI.Skybox;
 using DCL.Web3.Identities;
@@ -27,6 +28,7 @@ namespace DCL.UI.Sidebar
         private readonly NotificationsMenuController notificationsMenuController;
         private readonly ProfileMenuController profileMenuController;
         private readonly SkyboxMenuController skyboxMenuController;
+        private readonly ControlsPanelController controlsPanelController;
         private readonly ChatEntryConfigurationSO chatEntryConfiguration;
         private readonly IProfileRepository profileRepository;
         private readonly IWeb3IdentityCache identityCache;
@@ -49,6 +51,7 @@ namespace DCL.UI.Sidebar
             ProfileWidgetController profileIconWidgetController,
             ProfileMenuController profileMenuMenuWidgetController,
             SkyboxMenuController skyboxMenuController,
+            ControlsPanelController controlsPanelController,
             ISidebarBus sidebarBus,
             ChatEntryConfigurationSO chatEntryConfiguration,
             IWeb3IdentityCache identityCache,
@@ -65,7 +68,9 @@ namespace DCL.UI.Sidebar
             this.notificationsBusController = notificationsBusController;
             this.notificationsMenuController = notificationsMenuController;
             this.skyboxMenuController = skyboxMenuController;
+            this.controlsPanelController = controlsPanelController;
             this.chatEntryConfiguration = chatEntryConfiguration;
+
             this.identityCache = identityCache;
             this.profileRepository = profileRepository;
             this.webBrowser = webBrowser;
@@ -82,6 +87,8 @@ namespace DCL.UI.Sidebar
 
         protected override void OnViewInstantiated()
         {
+            mvcManager.RegisterController(controlsPanelController);
+
             viewInstance!.backpackButton.onClick.AddListener(() =>
             {
                 viewInstance.backpackNotificationIndicator.SetActive(false);
@@ -102,6 +109,7 @@ namespace DCL.UI.Sidebar
             viewInstance.sidebarSettingsWidget.OnViewHidden += OnSidebarSettingsClosed;
             viewInstance.skyboxButton.Button.onClick.AddListener(OpenSkyboxSettings);
             viewInstance.SkyboxMenuView.OnViewHidden += OnSkyboxSettingsClosed;
+            viewInstance.controlsButton.onClick.AddListener(OnControlsButtonClicked);
 
             if (includeCameraReel)
                 viewInstance.cameraReelButton.onClick.AddListener(() => OpenExplorePanelInSection(ExploreSections.CameraReel));
@@ -118,6 +126,11 @@ namespace DCL.UI.Sidebar
         {
             webBrowser.OpenUrl(DecentralandUrl.Help);
             HelpOpened?.Invoke();
+        }
+
+        private void OnControlsButtonClicked()
+        {
+            mvcManager.ShowAsync(ControlsPanelController.IssueCommand()).Forget();
         }
 
         private void OnAutoHideToggleChanged(bool value)

@@ -117,6 +117,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3c3c8d365c6ef4acfa3665168b5737a9
+    m_Address: ButtonWithTextAndIcon
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 3d761805ce62940dbafaa7bb64be222c
     m_Address: ClusterMarkerObjectForSearchResults
     m_ReadOnly: 0
@@ -124,6 +129,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 3efe8a48fc3905f47a0648abd6859394
     m_Address: MapCameraObject
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 43daf6965002847a19f241e71b28fd9b
+    m_Address: Assets/DCL/InWorldCamera/CameraReelGallery/Assets/ContextMenuSO/ReelGalleryContextMenuConfig.asset
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -139,6 +149,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 4f24a591312ba473ab5ac65d6658cb94
     m_Address: SDKVirtualCamera
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 52bc5c5fe83f743cdba8dab60b247e96
+    m_Address: Separator
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -182,6 +197,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5ef9c85ff80df42e88f2946a299f1102
+    m_Address: GenericContextMenu
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 5f2c1af519efc4b82b87b887f93077fc
     m_Address: Assets/DCL/MapRenderer/Addressables/Favorite.prefab
     m_ReadOnly: 0
@@ -189,6 +209,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 605506dac7ec04ed09953980478e93d4
     m_Address: SceneLoadingScreen
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 60ec312971597448e978368a5382c0f1
+    m_Address: ToggleWithText
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

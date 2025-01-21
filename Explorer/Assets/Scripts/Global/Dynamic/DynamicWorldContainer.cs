@@ -649,7 +649,7 @@ namespace Global.Dynamic
                     webBrowser,
                     dynamicWorldDependencies.Web3Authenticator,
                     userInAppInAppInitializationFlow,
-                    profileCache, sidebarBus,
+                    profileCache, sidebarBus, dclInput,
                     chatEntryConfiguration,
                     globalWorld, playerEntity, includeCameraReel, includeFriends),
                 new ErrorPopupPlugin(mvcManager, assetsProvisioner),
@@ -774,6 +774,7 @@ namespace Global.Dynamic
                     playerEntity,
                     includeCameraReel
                 ),
+                new GenericContextMenuPlugin(assetsProvisioner, mvcManager),
             };
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);

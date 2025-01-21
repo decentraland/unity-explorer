@@ -73,13 +73,13 @@ namespace DCL.PluginSystem.Global
 
             var friendsCache = new FriendsCache();
 
-            var archipelagoRealtime = new ArchipelagoRealtimeOnlineFriendsProvider(roomHub, friendEventBus, friendsCache);
-            // Merge online users from archipelago api and the users provided by livekit
-            var onlineUsersProvider = new CompositeOnlineFriendsProvider(this.apiOnlineUsersProvider,
-                archipelagoRealtime);
-
             friendsService = new RPCFriendsService(URLAddress.FromString(dclUrlSource.Url(DecentralandUrl.ApiFriends)),
-                friendEventBus, profileRepository, web3IdentityCache, onlineUsersProvider, friendsCache);
+                friendEventBus, profileRepository, web3IdentityCache, friendsCache);
+
+            // Fire and forget as this task will never finish
+            friendsService.SubscribeToIncomingFriendshipEventsAsync(
+                               CancellationTokenSource.CreateLinkedTokenSource(lifeCycleCancellationToken.Token, ct).Token)
+                          .Forget();
 
             var persistentFriendsOpenerController = new PersistentFriendPanelOpenerController(() => mainUIView.SidebarView.PersistentFriendsPanelOpener, mvcManager);
 

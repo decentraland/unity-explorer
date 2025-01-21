@@ -23,7 +23,6 @@ namespace DCL.Navmap
 
         private CancellationTokenSource? searchCancellationToken;
         private CancellationTokenSource? backCancellationToken;
-        private bool isAlreadySelected;
         private NavmapSearchPlaceFilter currentPlaceFilter = NavmapSearchPlaceFilter.All;
         private NavmapSearchPlaceSorting currentPlaceSorting = NavmapSearchPlaceSorting.MostActive;
         private string? currentCategory;
@@ -172,11 +171,6 @@ namespace DCL.Navmap
 
         private void OnSearchBarSelected(bool isSelected)
         {
-            if (isSelected == isAlreadySelected)
-                return;
-
-            isAlreadySelected = isSelected;
-
             if (isSelected)
             {
                 inputBlock.Disable(InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.IN_WORLD_CAMERA);
