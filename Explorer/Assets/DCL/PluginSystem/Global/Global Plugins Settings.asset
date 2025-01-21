@@ -569,6 +569,11 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
+        GenericContextMenuUserProfilePrefab:
+          m_AssetGUID: fe90941e720314adfb13574446732ea7
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
     - rid: 5215741520409264128
       type: {class: AvatarPlugin/AvatarShapeSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
