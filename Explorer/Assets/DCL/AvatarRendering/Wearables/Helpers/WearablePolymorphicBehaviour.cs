@@ -12,7 +12,6 @@ using ECS.Prioritization.Components;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.GLTF;
-using ECS.Unity.GLTFContainer.Asset.Components;
 using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
@@ -238,21 +237,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             World world,
             string? rawFilesDownloadUrl = null) where T: IAvatarAttachment
         {
-            if (sceneAssetBundleManifest != null)
-            {
-                var promise = AssetBundlePromise.Create(world,
-                    GetAssetBundleIntention.FromHash(
-                        expectedObjectType,
-                        hash + PlatformUtils.GetCurrentPlatform(),
-                        permittedSources: intention.PermittedSources,
-                        customEmbeddedSubDirectory: customStreamingSubdirectory,
-                        manifest: sceneAssetBundleManifest, cancellationTokenSource: intention.CancellationTokenSource),
-                    partitionComponent);
-
-                world.Create(promise, wearable, intention.BodyShape, index); // Add an index to the promise so we know to which slot of the WearableAssets it belongs
-                wearable.UpdateLoadingStatus(true);
-            }
-            else if (rawFilesDownloadUrl != null)
+            if (rawFilesDownloadUrl != null)
             {
                 // Create RAW GLTF download promise HERE...
 
@@ -272,6 +257,20 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                 world.Create(promise, wearable, intention.BodyShape, index);
                 wearable.UpdateLoadingStatus(true);
             }
+            else
+            {
+                var promise = AssetBundlePromise.Create(world,
+                    GetAssetBundleIntention.FromHash(
+                        expectedObjectType,
+                        hash + PlatformUtils.GetCurrentPlatform(),
+                        permittedSources: intention.PermittedSources,
+                        customEmbeddedSubDirectory: customStreamingSubdirectory,
+                        manifest: sceneAssetBundleManifest, cancellationTokenSource: intention.CancellationTokenSource),
+                    partitionComponent);
+
+                world.Create(promise, wearable, intention.BodyShape, index); // Add an index to the promise so we know to which slot of the WearableAssets it belongs
+                wearable.UpdateLoadingStatus(true);
+            }
         }
 
         public static StreamableLoadingResult<AttachmentAssetBase> ToWearableAsset(this StreamableLoadingResult<AssetBundleData> result, IWearable wearable)
@@ -282,6 +281,20 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             {
                 case WearableType.FacialFeature:
                     return new StreamableLoadingResult<AttachmentAssetBase>(new AttachmentTextureAsset(result.Asset!.GetMainAsset<Texture>(), result.Asset));
+                default:
+                    return new StreamableLoadingResult<AttachmentAssetBase>(ToRegularAsset(result));
+            }
+        }
+
+        public static StreamableLoadingResult<AttachmentAssetBase> ToWearableAsset(this StreamableLoadingResult<GLTFData> result, IWearable wearable)
+        {
+            if (!result.Succeeded) return new StreamableLoadingResult<AttachmentAssetBase>(result.ReportData, result.Exception!);
+
+            switch (wearable.Type)
+            {
+                // TODO: Support FACIAL FEATURES!
+                /*case WearableType.FacialFeature:
+                    return new StreamableLoadingResult<AttachmentAssetBase>(new AttachmentTextureAsset(result.Asset!.GetMainAsset<Texture>(), result.Asset));*/
                 default:
                     return new StreamableLoadingResult<AttachmentAssetBase>(ToRegularAsset(result));
             }
@@ -300,6 +313,22 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                 rendererInfos.Add(new AttachmentRegularAsset.RendererInfo(skinnedMeshRenderer, skinnedMeshRenderer.sharedMaterial));
 
             return new AttachmentRegularAsset(go, rendererInfos, result.Asset);
+        }
+
+        public static AttachmentRegularAsset ToRegularAsset(this StreamableLoadingResult<GLTFData> result)
+        {
+            GameObject go = result.Asset!.containerGameObject;
+
+            // collect all renderers
+            List<AttachmentRegularAsset.RendererInfo> rendererInfos = AttachmentRegularAsset.RENDERER_INFO_POOL.Get();
+
+            using PoolExtensions.Scope<List<SkinnedMeshRenderer>> pooledList = go.GetComponentsInChildrenIntoPooledList<SkinnedMeshRenderer>();
+
+            foreach (SkinnedMeshRenderer skinnedMeshRenderer in pooledList.Value)
+                rendererInfos.Add(new AttachmentRegularAsset.RendererInfo(skinnedMeshRenderer, skinnedMeshRenderer.sharedMaterial));
+
+            // return new AttachmentRegularAsset(go, rendererInfos, result.Asset);
+            return new AttachmentRegularAsset(go, rendererInfos, null);
         }
 
         public static void AssignWearableAsset(this IWearable wearable, AttachmentRegularAsset attachmentRegularAsset, BodyShape bodyShape)

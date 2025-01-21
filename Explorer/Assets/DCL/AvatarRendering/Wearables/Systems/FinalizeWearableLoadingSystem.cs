@@ -19,6 +19,7 @@ using ECS.Prioritization.Components;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
+using ECS.StreamableLoading.GLTF;
 using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
@@ -292,8 +293,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 World.Destroy(entity);
                 return;
             }
-
-            if (promise.SafeTryConsume(World, GetReportCategory(), out StreamableLoadingResult<AssetBundleData> result))
+            if (promise.TryConsume(World, out StreamableLoadingResult<GLTFData> result))
             {
                 // every asset in the batch is mandatory => if at least one has already failed set the default wearables
                 if (result.Succeeded && !AnyAssetHasFailed(wearable, bodyShape))
@@ -322,28 +322,22 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
         private bool CreateAssetPromiseIfRequired(IWearable component, in GetWearablesByPointersIntention intention, IPartitionComponent partitionComponent)
         {
+            bool filesDownloadUrlAvailable = !string.IsNullOrEmpty(component.DTO.FilesDownloadUrl);
+            bool fromTheWeb = EnumUtils.HasFlag(intention.PermittedSources, AssetSource.WEB);
+
             // Do not repeat the promise if already failed once. Otherwise it will end up in an endless loading:true state
+            if (!filesDownloadUrlAvailable && component.ManifestResult is { Succeeded: false }) return false;
             // if (component.ManifestResult is { Succeeded: false }) return false;
 
-            if (component.ManifestResult is { Succeeded: true })
-            {
-                if (component.TryCreateAssetPromise(in intention, customStreamingSubdirectory, partitionComponent, World, GetReportCategory()))
-                {
-                    component.UpdateLoadingStatus(true);
-                    return true;
-                }
-            }
-            else if (EnumUtils.HasFlag(intention.PermittedSources, AssetSource.WEB)) // Manifest is required for Web loading only
-            {
-                if (string.IsNullOrEmpty(component.DTO.FilesDownloadUrl))
-                    return component.CreateAssetBundleManifestPromise(World, intention.BodyShape, intention.CancellationTokenSource, partitionComponent);
+            //if (component.ManifestResult == null && EnumUtils.HasFlag(intention.PermittedSources, AssetSource.WEB))
+            if (EnumUtils.HasFlag(intention.PermittedSources, AssetSource.WEB) // Manifest is required for Web loading only
+                && !filesDownloadUrlAvailable && component.ManifestResult == null)
+                return component.CreateAssetBundleManifestPromise(World, intention.BodyShape, intention.CancellationTokenSource, partitionComponent);
 
-                // TODO: CREATE RAW GLTF download promise HERE...
-                /*if (component.TryCreateAssetPromise(in intention, customStreamingSubdirectory, partitionComponent, World, GetReportCategory(), component.DTO.FilesDownloadUrl))
-                {
-                    component.UpdateLoadingStatus(true);
-                    return true;
-                }*/
+            if (component.TryCreateAssetPromise(in intention, customStreamingSubdirectory, partitionComponent, World, GetReportCategory()))
+            {
+                component.UpdateLoadingStatus(true);
+                return true;
             }
 
             return false;
@@ -460,5 +454,26 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 asset.Results[index] = wearableResult;
             }
         }
+
+        private static void SetWearableResult(IWearable wearable, StreamableLoadingResult<GLTFData> result, in BodyShape bodyShape, int index)
+        {
+            StreamableLoadingResult<AttachmentAssetBase> wearableResult = result.ToWearableAsset(wearable);
+
+            if (wearable.IsUnisex() && wearable.HasSameModelsForAllGenders())
+            {
+                SetByRef(BodyShape.MALE);
+                SetByRef(BodyShape.FEMALE);
+            }
+            else
+                SetByRef(bodyShape);
+
+            return;
+
+            void SetByRef(BodyShape bodyShape)
+            {
+                ref var asset = ref wearable.WearableAssetResults[bodyShape];
+                asset.Results[index] = wearableResult;
+        }
+            }
     }
 }
