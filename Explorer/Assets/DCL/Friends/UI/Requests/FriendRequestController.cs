@@ -123,6 +123,10 @@ namespace DCL.Friends.UI.Requests
             viewInstance!.send.Root.SetActive(state == ViewState.SEND_NEW);
             viewInstance.cancel.Root.SetActive(state == ViewState.CANCEL);
             viewInstance.received.Root.SetActive(state == ViewState.RECEIVED);
+            viewInstance.cancelledConfirmed.Root.SetActive(state == ViewState.CONFIRMED_CANCELLED);
+            viewInstance.acceptedConfirmed.Root.SetActive(state == ViewState.CONFIRMED_ACCEPTED);
+            viewInstance.rejectedConfirmed.Root.SetActive(state == ViewState.CONFIRMED_REJECTED);
+            viewInstance.sentConfirmed.Root.SetActive(state == ViewState.CONFIRMED_SENT);
         }
 
         private void SetUpAsNew()
@@ -247,7 +251,13 @@ namespace DCL.Friends.UI.Requests
                         viewInstance.send.MessageInput.text,
                         ct);
 
-                    // TODO: show animation
+                    Toggle(ViewState.CONFIRMED_SENT);
+
+                    await ShowOperationConfirmationAsync(viewInstance.sentConfirmed, inputData.DestinationUser!.Value,
+                        "Friend Request Sent To <color=#73D3D3>{0}</color>",
+                        ct);
+
+                    Close();
                 }
                 finally
                 {
@@ -266,6 +276,12 @@ namespace DCL.Friends.UI.Requests
             {
                 await friendsService.RejectFriendshipAsync(inputData.Request!.From, ct);
 
+                Toggle(ViewState.CONFIRMED_REJECTED);
+
+                await ShowOperationConfirmationAsync(viewInstance!.rejectedConfirmed, new Web3Address(inputData.Request.From),
+                    "Friend Request From <color=#FF8362>{0}</color> Rejected",
+                    ct);
+
                 Close();
             }
         }
@@ -280,6 +296,12 @@ namespace DCL.Friends.UI.Requests
             {
                 await friendsService.AcceptFriendshipAsync(inputData.Request!.From, ct);
 
+                Toggle(ViewState.CONFIRMED_ACCEPTED);
+
+                await ShowOperationConfirmationAsync(viewInstance!.rejectedConfirmed, new Web3Address(inputData.Request.From),
+                    "You And <color=#FF8362>{0}</color> Are Now Friends!",
+                    ct);
+
                 Close();
             }
         }
@@ -288,10 +310,17 @@ namespace DCL.Friends.UI.Requests
         {
             requestOperationCancellationToken = requestOperationCancellationToken.SafeRestart();
             CancelThenCloseAsync(requestOperationCancellationToken.Token).Forget();
+            return;
 
             async UniTaskVoid CancelThenCloseAsync(CancellationToken ct)
             {
                 await friendsService.CancelFriendshipAsync(inputData.Request!.To, ct);
+
+                Toggle(ViewState.CONFIRMED_CANCELLED);
+
+                await ShowOperationConfirmationAsync(viewInstance!.rejectedConfirmed, new Web3Address(inputData.Request.From),
+                    "Friend Request To <color=#73D3D3>{0}</color> Cancelled",
+                    ct);
 
                 Close();
             }
@@ -330,14 +359,31 @@ namespace DCL.Friends.UI.Requests
                 controller.RequestImage(profile.Avatar.FaceSnapshotUrl);
         }
 
-        private void BlockUnwantedInputs()
-        {
+        private void BlockUnwantedInputs() =>
             inputBlock.Disable(InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.CAMERA, InputMapComponent.Kind.PLAYER);
-        }
 
-        private void UnblockUnwantedInputs()
-        {
+        private void UnblockUnwantedInputs() =>
             inputBlock.Enable(InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.CAMERA, InputMapComponent.Kind.PLAYER);
+
+        private async UniTask ShowOperationConfirmationAsync(FriendRequestView.OperationConfirmedConfig config,
+            Web3Address userId, string textWithUserNameParam, CancellationToken ct)
+        {
+            Profile? profile = await profileRepository.GetAsync(userId, ct);
+            if (profile == null) return;
+
+            config.Label.text = string.Format(textWithUserNameParam, profile.Name);
+
+            LoadThumbnail(profile, config.FriendThumbnail, new ImageController(config.FriendThumbnail, webRequestController));
+
+            if (config.MyThumbnail != null)
+            {
+                Profile? myProfile = await profileRepository.GetAsync(identityCache.EnsuredIdentity().Address, ct);
+
+                if (myProfile != null)
+                    LoadThumbnail(myProfile, config.MyThumbnail, new ImageController(config.MyThumbnail, webRequestController));
+            }
+
+            await UniTask.WhenAny(config.CloseButton.OnClickAsync(ct), UniTask.Delay(5000, cancellationToken: ct));
         }
 
         private enum ViewState
@@ -345,6 +391,10 @@ namespace DCL.Friends.UI.Requests
             SEND_NEW,
             CANCEL,
             RECEIVED,
+            CONFIRMED_ACCEPTED,
+            CONFIRMED_CANCELLED,
+            CONFIRMED_REJECTED,
+            CONFIRMED_SENT,
         }
     }
 }

@@ -12,6 +12,10 @@ namespace DCL.Friends.UI.Requests
         public SendConfig send;
         public CancelConfig cancel;
         public ReceivedConfig received;
+        public OperationConfirmedConfig sentConfirmed;
+        public OperationConfirmedConfig cancelledConfirmed;
+        public OperationConfirmedConfig rejectedConfirmed;
+        public OperationConfirmedConfig acceptedConfirmed;
 
         [Serializable]
         public struct SendConfig
@@ -61,6 +65,16 @@ namespace DCL.Friends.UI.Requests
             public GameObject MutualContainer;
             public GameObject MutualThumbnailTemplate;
             public TMP_Text MutalCountText;
+        }
+
+        [Serializable]
+        public struct OperationConfirmedConfig
+        {
+            public GameObject Root;
+            public ImageView FriendThumbnail;
+            public ImageView? MyThumbnail;
+            public TMP_Text Label;
+            public Button CloseButton;
         }
     }
 }
