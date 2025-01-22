@@ -25,12 +25,12 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         {
             this.mvcManager = mvcManager;
 
-            contextMenu = new GenericContextMenu(view.ContextMenuWidth, verticalLayoutPadding: new RectOffset(15, 15, 20, 25), elementsSpacing: 5)
+            contextMenu = new GenericContextMenu(view.ContextMenuSettings.ContextMenuWidth, verticalLayoutPadding: new RectOffset(15, 15, 20, 25), elementsSpacing: 5)
                .AddControl(userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings(systemClipboard, profile => Debug.Log($"Send friendship request to {profile.UserId}")))
                 .AddControl(new SeparatorContextMenuControlSettings(20, -15, -15))
-                .AddControl(new ButtonContextMenuControlSettings(view.ContextMenuViewProfileText, view.ContextMenuViewProfileSprite, () => OpenProfilePassport(lastClickedProfile!)))
-                .AddControl(new ButtonContextMenuControlSettings(view.ContextMenuBlockText, view.ContextMenuBlockSprite, () => Debug.Log($"Block {lastClickedProfile!.UserId}")))
-                .AddControl(new ButtonContextMenuControlSettings(view.ContextMenuReportText, view.ContextMenuReportSprite, () => Debug.Log($"Report {lastClickedProfile!.UserId}")));
+                .AddControl(new ButtonContextMenuControlSettings(view.ContextMenuSettings.ViewProfileText, view.ContextMenuSettings.ViewProfileSprite, () => OpenProfilePassport(lastClickedProfile!)))
+                .AddControl(new ButtonContextMenuControlSettings(view.ContextMenuSettings.BlockText, view.ContextMenuSettings.BlockSprite, () => Debug.Log($"Block {lastClickedProfile!.UserId}")))
+                .AddControl(new ButtonContextMenuControlSettings(view.ContextMenuSettings.ReportText, view.ContextMenuSettings.ReportSprite, () => Debug.Log($"Report {lastClickedProfile!.UserId}")));
 
             requestManager.ContextMenuClicked += ContextMenuClicked;
         }

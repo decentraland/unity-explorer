@@ -2832,17 +2832,7 @@ MonoBehaviour:
   <LoadingObject>k__BackingField: {fileID: 2065136354690250333}
   <EmptyState>k__BackingField: {fileID: 7649171565629304203}
   <ChatEntryConfiguration>k__BackingField: {fileID: 11400000, guid: 6afb31861b85441b6ab2b988819bb96a, type: 2}
-  <ContextMenuWidth>k__BackingField: 250
-  <ContextMenuViewProfileSprite>k__BackingField: {fileID: 21300000, guid: c42ef609dd1154fa9a0e37d744af5614, type: 3}
-  <ContextMenuViewProfileText>k__BackingField: View Profile
-  <ContextMenuChatSprite>k__BackingField: {fileID: 21300000, guid: fb395579b9bab46d5bf9eb47377fb219, type: 3}
-  <ContextMenuChatText>k__BackingField: Chat
-  <ContextMenuJumpInSprite>k__BackingField: {fileID: 21300000, guid: c5f0f436601ac144a91a6d6d2e2a2677, type: 3}
-  <ContextMenuJumpInText>k__BackingField: Jump to Location
-  <ContextMenuBlockSprite>k__BackingField: {fileID: 21300000, guid: 493ac3c2397b64caea2decabee6048e8, type: 3}
-  <ContextMenuBlockText>k__BackingField: Block
-  <ContextMenuReportSprite>k__BackingField: {fileID: 21300000, guid: 3bfacc159ebe34861ad08dd502c313fc, type: 3}
-  <ContextMenuReportText>k__BackingField: Report
+  <ContextMenuSettings>k__BackingField: {fileID: 11400000, guid: 07e0683d80a294ef987133cec67f6d99, type: 2}
 --- !u!1 &8870999380030647451
 GameObject:
   m_ObjectHideFlags: 0
