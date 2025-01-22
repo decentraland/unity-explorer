@@ -11,15 +11,14 @@ namespace DCL.Friends.UI.Requests
     {
         public SendConfig send;
         public CancelConfig cancel;
-        public ReceiveWithMessageConfig receiveWithMessage;
-        public ReceiveWithoutMessageConfig receiveWithoutMessage;
+        public ReceivedConfig received;
 
         [Serializable]
         public struct SendConfig
         {
             public GameObject Root;
             public UserAndMutualFriendsConfig UserAndMutualFriendsConfig;
-            public InputField MessageInput;
+            public TMP_InputField MessageInput;
             public TMP_Text MessageCharacterCountText;
             public Button CancelButton;
             public Button SendButton;
@@ -30,25 +29,26 @@ namespace DCL.Friends.UI.Requests
         {
             public GameObject Root;
             public UserAndMutualFriendsConfig UserAndMutualFriendsConfig;
-            public InputField MessageInput;
-            public TMP_Text MessageCharacterCountText;
+            public TMP_InputField MessageInput;
+            public GameObject MessageInputContainer;
+            public Button PreCancelButton;
             public Button CancelButton;
             public Button BackButton;
+            public GameObject PreCancelToastContainer;
             public TMP_Text TimestampText;
         }
 
         [Serializable]
-        public struct ReceiveWithMessageConfig
-        {
-            public InputField MessageInput;
-            public ReceiveWithoutMessageConfig Config;
-        }
-
-        [Serializable]
-        public struct ReceiveWithoutMessageConfig
+        public struct ReceivedConfig
         {
             public GameObject Root;
             public UserAndMutualFriendsConfig UserAndMutualFriendsConfig;
+            public TMP_InputField MessageInput;
+            public GameObject MessageInputContainer;
+            public Button RejectButton;
+            public Button AcceptButton;
+            public Button BackButton;
+            public TMP_Text TimestampText;
         }
 
         [Serializable]
@@ -58,6 +58,7 @@ namespace DCL.Friends.UI.Requests
             public TMP_Text UserName;
             public TMP_Text UserNameHash;
             public GameObject UserNameVerification;
+            public GameObject MutualContainer;
             public GameObject MutualThumbnailTemplate;
             public TMP_Text MutalCountText;
         }
