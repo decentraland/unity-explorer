@@ -21,7 +21,10 @@ namespace DCL.AvatarRendering.AvatarShape.Helpers
             jobWrapper.ReleaseAvatar(ref avatarTransformMatrixComponent);
 
             if (avatarShapeComponent.WearablePromise.IsConsumed)
+            {
+                avatarShapeComponent.OutlineCompatibleRenderers.Clear();
                 wearableAssetsCache.ReleaseAssets(avatarShapeComponent.InstantiatedWearables);
+            }
             else
                 avatarShapeComponent.Dereference();
         }
