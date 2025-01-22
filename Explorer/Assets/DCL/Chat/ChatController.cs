@@ -85,7 +85,14 @@ namespace DCL.Chat
             chatHistory.MessageAdded += CreateChatEntry;
             chatHistory.Cleared += OnChatHistoryCleared;
 
-            viewInstance!.Initialize(chatHistory.Messages, eventSystem, dclInput, mvcManager, clipboardManager, nametagsData.showChatBubbles);
+            viewInstance!.InjectDependencies(new ViewDependencies()
+            {
+                ClipboardManager = clipboardManager,
+                MvcManager = mvcManager,
+                DclInput = dclInput,
+                EventSystem = eventSystem
+            });
+            viewInstance!.Initialize(chatHistory.Messages, nametagsData.showChatBubbles);
 
             viewInstance.PointerEnter += OnChatViewPointerEnter;
             viewInstance.PointerExit += OnChatViewPointerExit;
