@@ -778,7 +778,8 @@ namespace Global.Dynamic
                     staticContainer.FeatureFlagsCache,
                     assetsProvisioner,
                     staticContainer.WebRequestsContainer.WebRequestController,
-                    mvcManager),
+                    mvcManager,
+                    staticContainer.InputBlock),
             };
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);

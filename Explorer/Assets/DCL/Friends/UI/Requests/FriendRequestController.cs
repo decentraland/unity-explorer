@@ -1,4 +1,6 @@
 using Cysharp.Threading.Tasks;
+using DCL.Input;
+using DCL.Input.Component;
 using DCL.Profiles;
 using DCL.UI;
 using DCL.Web3;
@@ -20,6 +22,7 @@ namespace DCL.Friends.UI.Requests
         private readonly IFriendsService friendsService;
         private readonly IProfileRepository profileRepository;
         private readonly IWebRequestController webRequestController;
+        private readonly IInputBlock inputBlock;
         private readonly List<GameObject> mutualFriendThumbnailObjects = new ();
         private CancellationTokenSource? requestOperationCancellationToken;
         private CancellationTokenSource? fetchUserCancellationToken;
@@ -35,12 +38,14 @@ namespace DCL.Friends.UI.Requests
             IWeb3IdentityCache identityCache,
             IFriendsService friendsService,
             IProfileRepository profileRepository,
-            IWebRequestController webRequestController) : base(viewFactory)
+            IWebRequestController webRequestController,
+            IInputBlock inputBlock) : base(viewFactory)
         {
             this.identityCache = identityCache;
             this.friendsService = friendsService;
             this.profileRepository = profileRepository;
             this.webRequestController = webRequestController;
+            this.inputBlock = inputBlock;
         }
 
         protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
@@ -96,6 +101,8 @@ namespace DCL.Friends.UI.Requests
                     SetUpAsReceived();
                 }
             }
+
+            BlockUnwantedInputs();
         }
 
         protected override void OnViewClose()
@@ -103,6 +110,7 @@ namespace DCL.Friends.UI.Requests
             base.OnViewClose();
 
             requestOperationCancellationToken?.SafeCancelAndDispose();
+            UnblockUnwantedInputs();
         }
 
         private void Close()
@@ -155,11 +163,25 @@ namespace DCL.Friends.UI.Requests
             viewConfig.TimestampText.text = fr.Timestamp.ToString("M");
 
             fetchUserCancellationToken = fetchUserCancellationToken.SafeRestart();
-            FetchUserDataAsync(viewConfig.UserAndMutualFriendsConfig, new Web3Address(fr.From), userThumbnailReceived!, fetchUserCancellationToken.Token)
-               .Forget();
+            LoadUserAndUpdateMessageWithUserName(fetchUserCancellationToken.Token).Forget();
+            return;
+
+            async UniTaskVoid LoadUserAndUpdateMessageWithUserName(CancellationToken ct)
+            {
+                await FetchUserDataAsync(viewConfig.UserAndMutualFriendsConfig,
+                    new Web3Address(fr.From),
+                    userThumbnailReceived!,
+                    ct);
+
+                Profile? profile = await profileRepository.GetAsync(fr.From, ct);
+
+                if (profile == null) return;
+
+                viewConfig.MessageInput.text = $"<b>{profile.Name}:</b> {fr.MessageBody}";
+            }
         }
 
-        private async UniTaskVoid FetchUserDataAsync(FriendRequestView.UserAndMutualFriendsConfig config, Web3Address user,
+        private async UniTask FetchUserDataAsync(FriendRequestView.UserAndMutualFriendsConfig config, Web3Address user,
             ImageController thumbnailController, CancellationToken ct)
         {
             await UniTask.WhenAll(
@@ -171,6 +193,7 @@ namespace DCL.Friends.UI.Requests
             async UniTask LoadMutualFriendsAsync()
             {
                 config.MutualThumbnailTemplate.SetActive(false);
+                config.MutualContainer.SetActive(false);
 
                 PaginatedFriendsResult mutualFriendsResult = await friendsService.GetMutualFriendsAsync(user, 1, 3, ct);
 
@@ -305,6 +328,16 @@ namespace DCL.Friends.UI.Requests
             }
             else
                 controller.RequestImage(profile.Avatar.FaceSnapshotUrl);
+        }
+
+        private void BlockUnwantedInputs()
+        {
+            inputBlock.Disable(InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.CAMERA, InputMapComponent.Kind.PLAYER);
+        }
+
+        private void UnblockUnwantedInputs()
+        {
+            inputBlock.Enable(InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.CAMERA, InputMapComponent.Kind.PLAYER);
         }
 
         private enum ViewState

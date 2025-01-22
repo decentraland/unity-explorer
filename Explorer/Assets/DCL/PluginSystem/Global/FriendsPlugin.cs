@@ -5,6 +5,7 @@ using DCL.AssetsProvision;
 using DCL.FeatureFlags;
 using DCL.Friends;
 using DCL.Friends.UI.Requests;
+using DCL.Input;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Profiles;
 using DCL.Web3;
@@ -27,6 +28,7 @@ namespace DCL.PluginSystem.Global
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IWebRequestController webRequestController;
         private readonly IMVCManager mvcManager;
+        private readonly IInputBlock inputBlock;
         private readonly CancellationTokenSource lifeCycleCancellationToken = new ();
         private RPCFriendsService? friendsService;
 
@@ -36,7 +38,8 @@ namespace DCL.PluginSystem.Global
             FeatureFlagsCache featureFlagsCache,
             IAssetsProvisioner assetsProvisioner,
             IWebRequestController webRequestController,
-            IMVCManager mvcManager)
+            IMVCManager mvcManager,
+            IInputBlock inputBlock)
         {
             this.dclUrlSource = dclUrlSource;
             this.profileRepository = profileRepository;
@@ -45,6 +48,7 @@ namespace DCL.PluginSystem.Global
             this.assetsProvisioner = assetsProvisioner;
             this.webRequestController = webRequestController;
             this.mvcManager = mvcManager;
+            this.inputBlock = inputBlock;
         }
 
         public void Dispose()
@@ -76,7 +80,8 @@ namespace DCL.PluginSystem.Global
 
             var friendRequestController = new FriendRequestController(
                 FriendRequestController.CreateLazily(friendRequestPrefab, null),
-                identityCache, friendsService, profileRepository, webRequestController);
+                identityCache, friendsService, profileRepository, webRequestController,
+                inputBlock);
 
             mvcManager.RegisterController(friendRequestController);
 
@@ -89,6 +94,10 @@ namespace DCL.PluginSystem.Global
                 await mvcManager.ShowAsync(FriendRequestController.IssueCommand(new FriendRequestParams
                 {
                     DestinationUser = new Web3Address("0xc9c29ab98e6bc42015985165a11153f564e9f8c2"),
+                    // Request = new FriendRequest(Guid.NewGuid().ToString(), DateTime.UtcNow,
+                    //     identityCache.EnsuredIdentity().Address,
+                    //     "0xc9c29ab98e6bc42015985165a11153f564e9f8c2",
+                    //     "aowidjaiodjioawjdioajdoadwjio"),
                 }), ct);
             }
         }
