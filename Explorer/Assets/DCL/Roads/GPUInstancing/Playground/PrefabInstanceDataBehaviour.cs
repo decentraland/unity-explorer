@@ -59,17 +59,17 @@ namespace DCL.Roads.GPUInstancing.Playground
 
         private void CollectDataFromPrefabAsset()
         {
-            var tempMeshToMatrices = new Dictionary<MeshData, List<Matrix4x4>>();
+            var tempMeshToMatrices = new Dictionary<MeshData, HashSet<Matrix4x4>>();
 
             Meshes = CollectStandaloneMeshesData(tempMeshToMatrices);
             LODGroups = CollectLODGroupDatas(tempMeshToMatrices);
 
             meshInstances = new List<MeshInstanceData>(tempMeshToMatrices.Keys.Count);
             foreach (var kvp in tempMeshToMatrices)
-                meshInstances.Add(new MeshInstanceData { MeshData = kvp.Key, InstancesMatrices = kvp.Value });
+                meshInstances.Add(new MeshInstanceData { MeshData = kvp.Key, InstancesMatrices = kvp.Value.ToList() });
         }
 
-        private MeshData[] CollectStandaloneMeshesData(Dictionary<MeshData, List<Matrix4x4>> tempMeshToMatrices)
+        private MeshData[] CollectStandaloneMeshesData(Dictionary<MeshData, HashSet<Matrix4x4>> tempMeshToMatrices)
         {
             Renderer[] standaloneRenderers = gameObject.GetComponentsInChildren<Renderer>(true)
                                                        .Where(r => !AssignedToLODGroupInPrefabHierarchy(r.transform)).ToArray();
@@ -77,12 +77,12 @@ namespace DCL.Roads.GPUInstancing.Playground
             return CollectMeshData(standaloneRenderers, tempMeshToMatrices).ToArray();
         }
 
-        private LODGroupData[] CollectLODGroupDatas(Dictionary<MeshData, List<Matrix4x4>> tempMeshToMatrices) =>
+        private LODGroupData[] CollectLODGroupDatas(Dictionary<MeshData, HashSet<Matrix4x4>> tempMeshToMatrices) =>
             gameObject.GetComponentsInChildren<LODGroup>(true)
                       .Select(group => CollectLODGroupData(group, tempMeshToMatrices))
                       .Where(lodGroupData => lodGroupData.LODs.Length != 0 && lodGroupData.LODs[0].Meshes.Length != 0).ToArray();
 
-        private List<MeshData> CollectMeshData(Renderer[] renderers, Dictionary<MeshData, List<Matrix4x4>> tempMeshToMatrices)
+        private List<MeshData> CollectMeshData(Renderer[] renderers, Dictionary<MeshData, HashSet<Matrix4x4>> tempMeshToMatrices)
         {
             var list = new List<MeshData>();
 
@@ -110,7 +110,7 @@ namespace DCL.Roads.GPUInstancing.Playground
                 if (tempMeshToMatrices.TryGetValue(meshData, out var matrices))
                     matrices.Add(meshData.LocalToRootMatrix);
                 else
-                    tempMeshToMatrices[meshData] = new List<Matrix4x4> { meshData.LocalToRootMatrix };
+                    tempMeshToMatrices[meshData] = new HashSet<Matrix4x4> { meshData.LocalToRootMatrix };
             }
 
             return list;
@@ -132,7 +132,7 @@ namespace DCL.Roads.GPUInstancing.Playground
             return false;
         }
 
-        private LODGroupData CollectLODGroupData(LODGroup lodGroup, Dictionary<MeshData, List<Matrix4x4>> tempMeshToMatrices)
+        private LODGroupData CollectLODGroupData(LODGroup lodGroup, Dictionary<MeshData, HashSet<Matrix4x4>> tempMeshToMatrices)
         {
             lodGroup.RecalculateBounds();
 

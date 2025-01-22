@@ -1,4 +1,5 @@
 ﻿using DCL.Roads.Playground;
+using DCL.Roads.Settings;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -24,6 +25,16 @@ namespace DCL.Roads.GPUInstancing.Playground
             }
         }
 
+        public void AddToInstancingDirectCopy(List<MeshInstanceData> meshInstances)
+        {
+            foreach (MeshInstanceData prefabMeshInstance in meshInstances)
+            {
+                var instancedRenderer = prefabMeshInstance.MeshData.ToGPUInstancedRenderer();
+                if (!gpuInstancingMap.ContainsKey(instancedRenderer))
+                    gpuInstancingMap.Add(instancedRenderer, prefabMeshInstance.InstancesMatrices.ToHashSet());
+            }
+        }
+
         public void AddToInstancing(PrefabInstanceDataBehaviour[] prefabInstanceData, Matrix4x4 roadRoot)
         {
             foreach (PrefabInstanceDataBehaviour spawnedRoad in prefabInstanceData)
@@ -38,11 +49,11 @@ namespace DCL.Roads.GPUInstancing.Playground
 
                 if (!gpuInstancingMap.TryGetValue(instancedRenderer, out HashSet<Matrix4x4> matrix))
                 {
-                    matrix = new HashSet<Matrix4x4>(prefabMeshInstance.InstancesMatrices.Count);
+                    matrix = new HashSet<Matrix4x4>(prefabMeshInstance.InstancesMatrices.Count, Matrix4X4Comparer.DEFAULT);
                     gpuInstancingMap.Add(instancedRenderer, matrix);
                 }
 
-                foreach (var instanceMatrix in prefabMeshInstance.InstancesMatrices)
+                foreach (Matrix4x4 instanceMatrix in prefabMeshInstance.InstancesMatrices)
                     matrix.Add(roadRoot * instanceMatrix);
             }
         }
@@ -54,14 +65,15 @@ namespace DCL.Roads.GPUInstancing.Playground
                 var instancedRenderer = meshData.ToGPUInstancedRenderer();
 
                 Matrix4x4 localMatrix = meshData.LocalToRootMatrix;
+
                 if (gpuInstancingMap.TryGetValue(instancedRenderer, out HashSet<Matrix4x4> matrix))
                     matrix.Add(roadRoot * localMatrix);
                 else
-                    gpuInstancingMap.Add(instancedRenderer, new HashSet<Matrix4x4> { roadRoot * localMatrix });
+                    gpuInstancingMap.Add(instancedRenderer, new HashSet<Matrix4x4>(Matrix4X4Comparer.DEFAULT) { roadRoot * localMatrix });
             }
         }
 
-        public void AddToInstancing(PrefabInstanceDataBehaviour prefabData, Matrix4x4 roadRoot)
+        private void AddToInstancing(PrefabInstanceDataBehaviour prefabData, Matrix4x4 roadRoot)
         {
             AddToInstancing(prefabData.Meshes, roadRoot);
 

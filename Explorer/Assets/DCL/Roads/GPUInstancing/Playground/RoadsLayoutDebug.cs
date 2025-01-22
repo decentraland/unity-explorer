@@ -12,7 +12,7 @@ namespace DCL.Roads.GPUInstancing.Playground
     [ExecuteAlways]
     public class RoadsLayoutDebug : MonoBehaviour
     {
-        private readonly GPUInstancingService gpuInstancingService = new ();
+        private GPUInstancingService gpuInstancingService;
 
         [Space]
         public RoadSettingsAsset RoadsConfig;
@@ -34,11 +34,11 @@ namespace DCL.Roads.GPUInstancing.Playground
         [HideInInspector]
         public Transform debugRoot;
 
-        // private async void Awake()
-        // {
-        //     if (Application.isPlaying)
-        //         StartCoroutine(PrepareInstancesMapAsync());
-        // }
+        private void Awake()
+        {
+            if (Application.isPlaying)
+                TransferFromConfigToService();
+        }
 
         public void Update()
         {
@@ -86,10 +86,24 @@ namespace DCL.Roads.GPUInstancing.Playground
             Prefabs = cachedPrefabs.ToArray();
         }
 
+        [ContextMenu("DEBUG - Collect Instances on Roads Config")]
+        private void CollectAllMeshInstancesOnRoadsConfig()
+        {
+            RoadsConfig.CollectAllMeshInstances();
+        }
+
+        [ContextMenu("DEBUG - TransferFromConfigToService")]
+        private void TransferFromConfigToService()
+        {
+            gpuInstancingService = new GPUInstancingService();
+            gpuInstancingService.AddToInstancingDirectCopy(RoadsConfig.RoadsMeshesGPUInstances);
+            CollectDebugInfo();
+        }
+
         [ContextMenu("DEBUG - Spawn Roads")]
         private void SpawnRoads()
         {
-            gpuInstancingService.Clear();
+            // gpuInstancingService = new GPUInstancingService();
 
             debugRoot = new GameObject("RoadsRoot").transform;
             debugRoot.gameObject.SetActive(false);
@@ -106,8 +120,8 @@ namespace DCL.Roads.GPUInstancing.Playground
                     continue;
                 }
 
-                var roadRoot = Matrix4x4.TRS(roadDescription.RoadCoordinate.ParcelToPositionFlat() + ParcelMathHelper.RoadPivotDeviation, roadDescription.Rotation, Vector3.one);
-                gpuInstancingService.AddToInstancing(prefab.meshInstances, roadRoot);
+                // var roadRoot = Matrix4x4.TRS(roadDescription.RoadCoordinate.ParcelToPositionFlat() + ParcelMathHelper.RoadPivotDeviation, roadDescription.Rotation, Vector3.one);
+                // gpuInstancingService.AddToInstancing(prefab.meshInstances, roadRoot);
 
                 Transform roadAsset =
                     Instantiate(prefab, roadDescription.RoadCoordinate.ParcelToPositionFlat() + ParcelMathHelper.RoadPivotDeviation, roadDescription.Rotation, debugRoot)
@@ -116,7 +130,7 @@ namespace DCL.Roads.GPUInstancing.Playground
                 roadAsset.gameObject.SetActive(true);
             }
 
-            CollectDebugInfo();
+            // CollectDebugInfo();
         }
 
         private void CollectDebugInfo()
