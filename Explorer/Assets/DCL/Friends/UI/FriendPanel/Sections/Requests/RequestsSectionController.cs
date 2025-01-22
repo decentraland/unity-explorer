@@ -1,16 +1,24 @@
 using Cysharp.Threading.Tasks;
+using DCL.Clipboard;
+using DCL.Passport;
 using DCL.Profiles;
+using DCL.UI.GenericContextMenu;
+using DCL.UI.GenericContextMenu.Controls.Configs;
 using DCL.Web3.Identities;
 using MVC;
 using System;
 using System.Threading;
 using UnityEngine;
-using Utility;
 
 namespace DCL.Friends.UI.FriendPanel.Sections.Requests
 {
     public class RequestsSectionController : FriendPanelSectionDoubleCollectionController<RequestsSectionView, RequestsRequestManager, RequestUserView>
     {
+        private readonly GenericContextMenu contextMenu;
+        private readonly UserProfileContextMenuControlSettings userProfileContextMenuControlSettings;
+
+        private Profile? lastClickedProfileCtx;
+
         public event Action<int>? ReceivedRequestsCountChanged;
 
         public RequestsSectionController(RequestsSectionView view,
@@ -18,9 +26,17 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             IFriendsEventBus friendEventBus,
             IWeb3IdentityCache web3IdentityCache,
             IMVCManager mvcManager,
+            ISystemClipboard systemClipboard,
             RequestsRequestManager requestManager)
             : base(view, friendsService, friendEventBus, web3IdentityCache, mvcManager, requestManager)
         {
+            contextMenu = new GenericContextMenu(view.ContextMenuSettings.ContextMenuWidth, verticalLayoutPadding: new RectOffset(15, 15, 20, 25), elementsSpacing: 5)
+                         .AddControl(userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings(systemClipboard, profile => Debug.Log($"Send friendship request to {profile.UserId}")))
+                         .AddControl(new SeparatorContextMenuControlSettings(20, -15, -15))
+                         .AddControl(new ButtonContextMenuControlSettings(view.ContextMenuSettings.ViewProfileText, view.ContextMenuSettings.ViewProfileSprite, () => OpenProfilePassport(lastClickedProfileCtx!)))
+                         .AddControl(new ButtonContextMenuControlSettings(view.ContextMenuSettings.BlockText, view.ContextMenuSettings.BlockSprite, () => Debug.Log($"Block {lastClickedProfileCtx!.UserId}")))
+                         .AddControl(new ButtonContextMenuControlSettings(view.ContextMenuSettings.ReportText, view.ContextMenuSettings.ReportSprite, () => Debug.Log($"Report {lastClickedProfileCtx!.UserId}")));
+
             requestManager.DeleteRequestClicked += DeleteRequestClicked;
             requestManager.AcceptRequestClicked += AcceptRequestClicked;
             requestManager.ContextMenuClicked += ContextMenuClicked;
@@ -44,6 +60,9 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             ReceivedRequestsCountChanged -= UpdateReceivedRequestsSectionCount;
         }
 
+        private void OpenProfilePassport(Profile profile) =>
+            mvcManager.ShowAsync(PassportController.IssueCommand(new PassportController.Params(profile.UserId))).Forget();
+
         private void PropagateRequestReceived(FriendRequest request) =>
             PropagateReceivedRequestsCountChanged();
 
@@ -66,9 +85,12 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             Debug.Log($"AcceptRequestClicked on {request.FriendRequestId}");
         }
 
-        private void ContextMenuClicked(Profile profile)
+        private void ContextMenuClicked(Profile profile, Vector2 buttonPosition, RequestUserView elementView)
         {
-            Debug.Log($"ContextMenuClicked on {profile.UserId}");
+            lastClickedProfileCtx = profile;
+            userProfileContextMenuControlSettings.SetInitialData(profile, view.ChatEntryConfiguration.GetNameColor(profile.Name), UserProfileContextMenuControlSettings.FriendshipStatus.NONE);
+            elementView.CanUnHover = false;
+            mvcManager.ShowAsync(GenericContextMenuController.IssueCommand(new GenericContextMenuParameter(contextMenu, buttonPosition, actionOnHide: () => elementView.CanUnHover = true))).Forget();
         }
 
         protected override async UniTaskVoid Init(CancellationToken ct)

@@ -23,7 +23,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             set
             {
                 requestDate = value;
-                RequestDateText.SetText(requestDate.ToString("MMMM yyyy", CultureInfo.InvariantCulture));
+                RequestDateText.SetText(requestDate.ToString("MMM dd", CultureInfo.InvariantCulture).ToUpper());
             }
         }
 

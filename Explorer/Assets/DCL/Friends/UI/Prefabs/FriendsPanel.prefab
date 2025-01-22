@@ -2702,6 +2702,8 @@ MonoBehaviour:
   <LoadingObject>k__BackingField: {fileID: 7142713786379965369}
   <EmptyState>k__BackingField: {fileID: 5376825434192449184}
   <TabNotificationIndicator>k__BackingField: {fileID: 8917639088263567752}
+  <ChatEntryConfiguration>k__BackingField: {fileID: 11400000, guid: 6afb31861b85441b6ab2b988819bb96a, type: 2}
+  <ContextMenuSettings>k__BackingField: {fileID: 11400000, guid: 299c6c9d8edbc42f59268a946bf4b95b, type: 2}
 --- !u!1 &8507033878163480090
 GameObject:
   m_ObjectHideFlags: 0
