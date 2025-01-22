@@ -42,7 +42,8 @@ namespace DCL.Roads.GPUInstancing.Playground
 
         public void Update()
         {
-            if (Run) gpuInstancingService.RenderInstanced();
+            if (Run)
+                gpuInstancingService.RenderInstancedBatched();
         }
 
         // private IEnumerator PrepareInstancesMapAsync()
@@ -97,6 +98,7 @@ namespace DCL.Roads.GPUInstancing.Playground
         {
             gpuInstancingService = new GPUInstancingService();
             gpuInstancingService.AddToInstancingDirectCopy(RoadsConfig.RoadsMeshesGPUInstances);
+            gpuInstancingService.PrepareBatches();
             CollectDebugInfo();
         }
 
