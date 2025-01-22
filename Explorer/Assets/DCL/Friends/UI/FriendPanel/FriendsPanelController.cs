@@ -109,7 +109,7 @@ namespace DCL.Friends.UI.FriendPanel
                 friendEventBus,
                 web3IdentityCache,
                 mvcManager,
-                new RequestsRequestManager(friendsService, friendEventBus, FRIENDS_PAGE_SIZE, profileCache));
+                new RequestsRequestManager(friendsService, friendEventBus, FRIENDS_PAGE_SIZE, profileCache, profileRepository));
             blockedSectionController = new BlockedSectionController(viewInstance!.BlockedSection,
                 web3IdentityCache,
                 new BlockedRequestManager(profileRepository, profileCache, web3IdentityCache, FRIENDS_PAGE_SIZE),

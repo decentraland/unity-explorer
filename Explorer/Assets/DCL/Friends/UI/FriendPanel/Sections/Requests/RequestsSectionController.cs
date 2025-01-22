@@ -21,6 +21,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             RequestsRequestManager requestManager)
             : base(view, friendsService, friendEventBus, web3IdentityCache, mvcManager, requestManager)
         {
+            requestManager.DeleteRequestClicked += DeleteRequestClicked;
+            requestManager.AcceptRequestClicked += AcceptRequestClicked;
             requestManager.ContextMenuClicked += ContextMenuClicked;
             friendEventBus.OnFriendRequestReceived += PropagateRequestReceived;
             friendEventBus.OnFriendRequestAccepted += PropagateRequestAcceptedRejected;
@@ -32,6 +34,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
         public override void Dispose()
         {
             base.Dispose();
+            requestManager.DeleteRequestClicked -= DeleteRequestClicked;
+            requestManager.AcceptRequestClicked -= AcceptRequestClicked;
             requestManager.ContextMenuClicked -= ContextMenuClicked;
             friendEventBus.OnFriendRequestReceived -= PropagateRequestReceived;
             friendEventBus.OnFriendRequestAccepted -= PropagateRequestAcceptedRejected;
@@ -52,6 +56,16 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
         private void UpdateReceivedRequestsSectionCount(int count) =>
             view.TabNotificationIndicator.SetNotificationCount(count);
 
+        private void DeleteRequestClicked(FriendRequest request)
+        {
+            Debug.Log($"DeleteRequestClicked on {request.FriendRequestId}");
+        }
+
+        private void AcceptRequestClicked(FriendRequest request)
+        {
+            Debug.Log($"AcceptRequestClicked on {request.FriendRequestId}");
+        }
+
         private void ContextMenuClicked(Profile profile)
         {
             Debug.Log($"ContextMenuClicked on {profile.UserId}");
@@ -61,20 +75,18 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
         {
             view.SetLoadingState(true);
 
-            friendListInitCts = friendListInitCts.SafeRestart();
             await requestManager.Init(ct);
 
             view.SetLoadingState(false);
 
             view.LoopList.SetListItemCount(requestManager.GetElementsNumber(), false);
-            view.LoopList.RefreshAllShownItem();
             requestManager.FirstFolderClicked += FolderClicked;
             requestManager.SecondFolderClicked += FolderClicked;
         }
 
         protected override void ElementClicked(Profile profile)
         {
-
+            Debug.Log($"ElementClicked on {profile.UserId}");
         }
 
     }

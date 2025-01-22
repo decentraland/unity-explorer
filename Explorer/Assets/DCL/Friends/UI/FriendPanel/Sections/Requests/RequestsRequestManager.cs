@@ -12,19 +12,23 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
         private const int STATUS_ELEMENT_INDEX = 1;
         private const int EMPTY_ELEMENT_INDEX = 2;
 
-        private const int MAX_REQUEST_MESSAGE_PREVIEW_LENGTH = 40;
+        private const int MAX_REQUEST_MESSAGE_PREVIEW_LENGTH = 23;
 
         private readonly IProfileCache profileCache;
+        private readonly IProfileRepository profileRepository;
 
         private List<FriendRequest> receivedRequests = new ();
         private List<FriendRequest> sentRequests = new ();
 
+        public event Action<FriendRequest>? DeleteRequestClicked;
+        public event Action<FriendRequest>? AcceptRequestClicked;
         public event Action<Profile>? ContextMenuClicked;
 
-        public RequestsRequestManager(IFriendsService friendsService, IFriendsEventBus friendEventBus, int pageSize, IProfileCache profileCache)
+        public RequestsRequestManager(IFriendsService friendsService, IFriendsEventBus friendEventBus, int pageSize, IProfileCache profileCache, IProfileRepository profileRepository)
             : base(friendsService, friendEventBus, pageSize, FriendPanelStatus.RECEIVED, FriendPanelStatus.SENT, STATUS_ELEMENT_INDEX, EMPTY_ELEMENT_INDEX, USER_ELEMENT_INDEX)
         {
             this.profileCache = profileCache;
+            this.profileRepository = profileRepository;
         }
 
         public override void Dispose()
@@ -46,6 +50,17 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
 
         protected override void CustomiseElement(RequestUserView elementView, int collectionIndex, FriendPanelStatus section)
         {
+            if (section == FriendPanelStatus.SENT)
+                elementView.InhibitInteractionButtons();
+            else
+            {
+                elementView.DeleteButton.onClick.RemoveAllListeners();
+                elementView.DeleteButton.onClick.AddListener(() => DeleteRequestClicked?.Invoke(receivedRequests[collectionIndex]));
+
+                elementView.AcceptButton.onClick.RemoveAllListeners();
+                elementView.AcceptButton.onClick.AddListener(() => AcceptRequestClicked?.Invoke(receivedRequests[collectionIndex]));
+            }
+
             elementView.ContextMenuButton.onClick.RemoveAllListeners();
             elementView.ContextMenuButton.onClick.AddListener(() => ContextMenuClicked?.Invoke(elementView.UserProfile));
 
@@ -54,9 +69,29 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             elementView.MessagePreviewText.SetText(request.MessageBody.Length > MAX_REQUEST_MESSAGE_PREVIEW_LENGTH ? $"{request.MessageBody.Substring(0, MAX_REQUEST_MESSAGE_PREVIEW_LENGTH)}..." : request.MessageBody);
         }
 
-        protected async override UniTask FetchInitialData(CancellationToken ct)
+        protected override async UniTask FetchInitialData(CancellationToken ct)
         {
+            receivedRequests.Add(new FriendRequest(Guid.NewGuid().ToString(), DateTime.Now.AddDays(-2), "0xd545b9e0a5f3638a5026d1914cc9b47ed16b5ae9", "0x05dE05303EAb867D51854E8b4fE03F7acb0624d9", "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi gravida libero quis sapien dictum, a vehicula nisi gravida"));
+            receivedRequests.Add(new FriendRequest(Guid.NewGuid().ToString(), DateTime.Now.AddDays(-1), "0xba7352cff5681b719daf33fa05e93153af8146c8", "0x05dE05303EAb867D51854E8b4fE03F7acb0624d9", "In hac habitasse platea dictumst. Proin sodales, sapien at facilisis consectetur, elit erat luctus quam, vel finibus lacus nulla vel tellus. Aenean vehicula urna nisl. Donec in lacus nisi. Aenean facilisis sagittis turpis nec finibus. Sed eu lorem arcu"));
+            sentRequests.Add(new FriendRequest(Guid.NewGuid().ToString(), DateTime.Now.AddDays(-3), "0x05dE05303EAb867D51854E8b4fE03F7acb0624d9", "0x23e3d123f69fdd7f08a7c5685506bb344a12f1c4", "Aliquam consectetur euismod dui, vel iaculis ligula rhoncus eget. Maecenas faucibus consequat eros, nec pellentesque diam volutpat ac. Quisque aliquet dolor non tellus mattis, convallis lobortis mauris lobortis"));
 
+            await GetProfile("0xd545b9e0a5f3638a5026d1914cc9b47ed16b5ae9", ct);
+            await GetProfile("0xba7352cff5681b719daf33fa05e93153af8146c8", ct);
+            await GetProfile("0x23e3d123f69fdd7f08a7c5685506bb344a12f1c4", ct);
+        }
+
+        private async UniTask<Profile?> GetProfile(string userId, CancellationToken ct)
+        {
+            Profile? profile = profileCache.Get(userId);
+
+            if (profile == null)
+            {
+                profile = await profileRepository.GetAsync(userId, ct);
+                if (profile != null)
+                    profileCache.Set(userId, profile);
+            }
+
+            return profile;
         }
     }
 }
