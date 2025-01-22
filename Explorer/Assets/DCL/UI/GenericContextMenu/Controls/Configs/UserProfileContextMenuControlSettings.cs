@@ -7,6 +7,8 @@ namespace DCL.UI.GenericContextMenu.Controls.Configs
 {
     public class UserProfileContextMenuControlSettings : IContextMenuControlSettings
     {
+        private static readonly RectOffset DEFAULT_HORIZONTAL_LAYOUT_PADDING = new (8, 8, 0, 0);
+
         public enum FriendshipStatus
         {
             NONE,
@@ -27,7 +29,7 @@ namespace DCL.UI.GenericContextMenu.Controls.Configs
         {
             this.systemClipboard = systemClipboard;
             this.requestFriendshipAction = requestFriendshipAction;
-            this.horizontalLayoutPadding = horizontalLayoutPadding ?? new RectOffset(8, 8, 0, 0);
+            this.horizontalLayoutPadding = horizontalLayoutPadding ?? DEFAULT_HORIZONTAL_LAYOUT_PADDING;
         }
 
         public void SetInitialData(Profile profile, Color userColor, FriendshipStatus friendshipStatus)
