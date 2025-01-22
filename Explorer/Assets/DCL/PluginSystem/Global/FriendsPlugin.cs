@@ -84,22 +84,6 @@ namespace DCL.PluginSystem.Global
                 inputBlock);
 
             mvcManager.RegisterController(friendRequestController);
-
-            Bleh().Forget();
-
-            async UniTaskVoid Bleh()
-            {
-                await UniTask.Delay(30000, cancellationToken: ct);
-
-                await mvcManager.ShowAsync(FriendRequestController.IssueCommand(new FriendRequestParams
-                {
-                    DestinationUser = new Web3Address("0xc9c29ab98e6bc42015985165a11153f564e9f8c2"),
-                    // Request = new FriendRequest(Guid.NewGuid().ToString(), DateTime.UtcNow,
-                    //     identityCache.EnsuredIdentity().Address,
-                    //     "0xc9c29ab98e6bc42015985165a11153f564e9f8c2",
-                    //     "aowidjaiodjioawjdioajdoadwjio"),
-                }), ct);
-            }
         }
     }
 
