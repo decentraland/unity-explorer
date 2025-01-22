@@ -14,84 +14,85 @@ namespace DCL.Roads.Settings
     [CreateAssetMenu(fileName = "Road Settings", menuName = "DCL/Various/Road Settings")]
     public class RoadSettingsAsset : ScriptableObject, IRoadSettingsAsset
     {
+        [SerializeField] public List<MeshInstanceData> RoadsMeshesGPUInstances;
+
         [field: SerializeField] public List<RoadDescription> RoadDescriptions { get; set; }
         [field: SerializeField] public List<AssetReferenceGameObject> RoadAssetsReference { get; set; }
 
         IReadOnlyList<RoadDescription> IRoadSettingsAsset.RoadDescriptions => RoadDescriptions;
         IReadOnlyList<AssetReferenceGameObject> IRoadSettingsAsset.RoadAssetsReference => RoadAssetsReference;
 
-        [SerializeField] public List<MeshInstanceData> RoadsMeshesGPUInstances;
-
-
-    #if UNITY_EDITOR
-    public void CollectAllMeshInstances()
-    {
-        Dictionary<string, PrefabInstanceDataBehaviour> loadedPrefabs = LoadAllPrefabs();
-
-        var tempMeshToMatrices = CollectInstancesMap(loadedPrefabs);
-
-        RoadsMeshesGPUInstances = tempMeshToMatrices.Select(kvp => new MeshInstanceData { MeshData = kvp.Key, InstancesMatrices = kvp.Value.ToList() }).ToList();
-
-        EditorUtility.SetDirty(this);
-        AssetDatabase.SaveAssets();
-    }
-
-    private Dictionary<MeshData, HashSet<Matrix4x4>> CollectInstancesMap(Dictionary<string, PrefabInstanceDataBehaviour> loadedPrefabs)
-    {
-        var tempMeshToMatrices = new Dictionary<MeshData, HashSet<Matrix4x4>>();
-
-        foreach (RoadDescription roadDescription in RoadDescriptions)
+#if UNITY_EDITOR
+        public void CollectAllMeshInstances()
         {
-            if (!loadedPrefabs.TryGetValue(roadDescription.RoadModel, out var prefab))
-            {
-                Debug.LogWarning($"Can't find prefab {roadDescription.RoadModel}");
-                continue;
-            }
+            Dictionary<string, PrefabInstanceDataBehaviour> loadedPrefabs = LoadAllPrefabs();
 
-            var roadRoot = Matrix4x4.TRS(roadDescription.RoadCoordinate.ParcelToPositionFlat() + ParcelMathHelper.RoadPivotDeviation, roadDescription.Rotation.SelfOrIdentity(), Vector3.one);
-            foreach (MeshInstanceData meshInstance in prefab.meshInstances)
+            Dictionary<MeshData, HashSet<Matrix4x4>> tempMeshToMatrices = CollectInstancesMap(loadedPrefabs);
+
+            RoadsMeshesGPUInstances = tempMeshToMatrices.Select(kvp => new MeshInstanceData { MeshData = kvp.Key, InstancesMatrices = kvp.Value.ToList() }).ToList();
+
+            EditorUtility.SetDirty(this);
+            AssetDatabase.SaveAssets();
+        }
+
+        private Dictionary<MeshData, HashSet<Matrix4x4>> CollectInstancesMap(Dictionary<string, PrefabInstanceDataBehaviour> loadedPrefabs)
+        {
+            var tempMeshToMatrices = new Dictionary<MeshData, HashSet<Matrix4x4>>();
+
+            foreach (RoadDescription roadDescription in RoadDescriptions)
             {
-                if (!tempMeshToMatrices.TryGetValue(meshInstance.MeshData, out var matrices))
+                if (!loadedPrefabs.TryGetValue(roadDescription.RoadModel, out PrefabInstanceDataBehaviour prefab))
                 {
-                    matrices = new HashSet<Matrix4x4>(Matrix4X4Comparer.DEFAULT);
-                    tempMeshToMatrices.Add(meshInstance.MeshData, matrices);
+                    Debug.LogWarning($"Can't find prefab {roadDescription.RoadModel}");
+                    continue;
                 }
 
-                foreach (var localMatrix in meshInstance.InstancesMatrices)
-                    matrices.Add(roadRoot * localMatrix);
+                var roadRoot = Matrix4x4.TRS(roadDescription.RoadCoordinate.ParcelToPositionFlat() + ParcelMathHelper.RoadPivotDeviation, roadDescription.Rotation.SelfOrIdentity(), Vector3.one);
+
+                foreach (MeshInstanceData meshInstance in prefab.meshInstances)
+                {
+                    if (!tempMeshToMatrices.TryGetValue(meshInstance.MeshData, out HashSet<Matrix4x4> matrices))
+                    {
+                        matrices = new HashSet<Matrix4x4>(Matrix4X4Comparer.DEFAULT);
+                        tempMeshToMatrices.Add(meshInstance.MeshData, matrices);
+                    }
+
+                    foreach (Matrix4x4 localMatrix in meshInstance.InstancesMatrices)
+                        matrices.Add(roadRoot * localMatrix);
+                }
             }
+
+            return tempMeshToMatrices;
         }
 
-        return tempMeshToMatrices;
-    }
-
-    private Dictionary<string, PrefabInstanceDataBehaviour> LoadAllPrefabs()
-    {
-        var loadedPrefabs = new Dictionary<string, PrefabInstanceDataBehaviour>();
-
-        foreach (var assetRef in RoadAssetsReference)
+        private Dictionary<string, PrefabInstanceDataBehaviour> LoadAllPrefabs()
         {
-            string assetPath = AssetDatabase.GUIDToAssetPath(assetRef.AssetGUID);
-            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(assetPath);
+            var loadedPrefabs = new Dictionary<string, PrefabInstanceDataBehaviour>();
 
-            if (prefab == null)
+            foreach (AssetReferenceGameObject assetRef in RoadAssetsReference)
             {
-                Debug.LogError($"Failed to load prefab at path: {assetPath}");
-                continue;
+                string assetPath = AssetDatabase.GUIDToAssetPath(assetRef.AssetGUID);
+                GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(assetPath);
+
+                if (prefab == null)
+                {
+                    Debug.LogError($"Failed to load prefab at path: {assetPath}");
+                    continue;
+                }
+
+                PrefabInstanceDataBehaviour instanceBehaviour = prefab.GetComponent<PrefabInstanceDataBehaviour>();
+
+                if (instanceBehaviour == null)
+                {
+                    Debug.LogError($"Prefab {prefab.name} doesn't have PrefabInstanceDataBehaviour component");
+                    continue;
+                }
+
+                loadedPrefabs[prefab.name] = instanceBehaviour;
             }
 
-            var instanceBehaviour = prefab.GetComponent<PrefabInstanceDataBehaviour>();
-            if (instanceBehaviour == null)
-            {
-                Debug.LogError($"Prefab {prefab.name} doesn't have PrefabInstanceDataBehaviour component");
-                continue;
-            }
-
-            loadedPrefabs[prefab.name] = instanceBehaviour;
+            return loadedPrefabs;
         }
-
-        return loadedPrefabs;
-    }
 #endif
     }
 }

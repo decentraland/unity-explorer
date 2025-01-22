@@ -15,7 +15,6 @@ namespace Utility
             quaternion is { x: 0, y: 0, z: 0, w: 0 } ? Quaternion.identity : quaternion;
     }
 
-
     public static class UnityObjectExtensions
     {
         [Conditional("DEBUG")]
