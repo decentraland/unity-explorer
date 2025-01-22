@@ -36,7 +36,7 @@ namespace DCL.Roads.Playground
         {
             if (!Run) return;
 
-            PrefabInstanceData prefab = GetAndSpawnOriginalPrefab().PrefabInstance;
+            PrefabInstanceDataBehaviour prefab = GetAndSpawnOriginalPrefab();
 
             if (UseIndirect)
                 PrepareIndirectBuffer(prefab);
@@ -56,7 +56,7 @@ namespace DCL.Roads.Playground
                 commandBuffer.SetData(commandData);
         }
 
-        private void PrepareIndirectBuffer(PrefabInstanceData prefab)
+        private void PrepareIndirectBuffer(PrefabInstanceDataBehaviour prefab)
         {
             int totalCommands = prefab.Meshes.Sum(mesh => mesh.SharedMaterials.Length)
                                 + prefab.LODGroups

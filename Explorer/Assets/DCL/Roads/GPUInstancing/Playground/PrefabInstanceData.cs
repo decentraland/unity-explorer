@@ -3,16 +3,10 @@ using System;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.Serialization;
 
 namespace DCL.Roads.GPUInstancing.Playground
 {
-    [Serializable]
-    public class PrefabInstanceData
-    {
-        public MeshData[] Meshes;
-        public LODGroupData[] LODGroups;
-    }
-
     [Serializable]
     public class LODGroupData
     {
@@ -50,12 +44,11 @@ namespace DCL.Roads.GPUInstancing.Playground
     }
 
     [Serializable]
-    public class MeshData
+    public class MeshData : IEquatable<MeshData>
     {
         public MeshRenderer Renderer;
         public Transform Transform;
-        public Matrix4x4 localToWorldMatrix;
-        public Matrix4x4 LocalMatrixToRoot;
+        public Matrix4x4 LocalToRootMatrix;
 
         public Mesh SharedMesh;
 
@@ -69,7 +62,36 @@ namespace DCL.Roads.GPUInstancing.Playground
             {
                 receiveShadows = ReceiveShadows,
                 shadowCastingMode = ShadowCastingMode,
-                worldBounds = new Bounds(center: Vector3.zero, size: Vector3.one * 999999f),
+                // ?? worldBounds = new Bounds(center: Vector3.zero, size: Vector3.one * 999999f), ?? what value ??
             }).ToArray());
+
+        public bool Equals(MeshData other) =>
+            other != null &&
+            Equals(SharedMesh, other.SharedMesh) && // Mesh
+            ReceiveShadows == other.ReceiveShadows && ShadowCastingMode == other.ShadowCastingMode && // Shadows
+            SharedMaterials != null && other.SharedMaterials != null && SharedMaterials.SequenceEqual(other.SharedMaterials); // Materials
+
+        public override bool Equals(object obj) =>
+            obj is MeshData other && Equals(other);
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                var hash = 17;
+                hash = (hash * 23) + (SharedMesh != null ? SharedMesh.GetHashCode() : 0);
+                hash = (hash * 23) + ReceiveShadows.GetHashCode();
+                hash = (hash * 23) + ShadowCastingMode.GetHashCode();
+
+                if (SharedMaterials == null) return hash;
+
+                foreach (var material in SharedMaterials)
+                    hash = (hash * 23) + (material != null ? material.GetHashCode() : 0);
+
+                return hash;
+            }
+        }
+
+
     }
 }

@@ -7,13 +7,25 @@ using UnityEditor;
 
 namespace DCL.Roads.GPUInstancing.Playground
 {
+    [System.Serializable]
+    public class MeshInstanceData
+    {
+        public MeshData MeshData;
+        public List<Matrix4x4> InstancesMatrices;
+    }
+
     public class PrefabInstanceDataBehaviour : MonoBehaviour
     {
-        public PrefabInstanceData PrefabInstance;
+        [SerializeField]
+        public List<MeshInstanceData> meshInstances;
+
+        public MeshData[] Meshes;
+        public LODGroupData[] LODGroups;
 
         [ContextMenu(nameof(CollectSelfData))]
         public void CollectSelfData()
         {
+#if UNITY_EDITOR
             if (transform.position != Vector3.zero)
                 transform.position = Vector3.zero;
 
@@ -23,25 +35,17 @@ namespace DCL.Roads.GPUInstancing.Playground
             if (transform.localScale != Vector3.one)
                 transform.localScale = Vector3.one;
 
-#if UNITY_EDITOR
-            bool isPrefabAsset = PrefabUtility.IsPartOfPrefabAsset(gameObject);
-
-            if (isPrefabAsset)
-            {
+            if (PrefabUtility.IsPartOfPrefabAsset(gameObject))
                 CollectDataFromPrefabAsset();
-                return;
-            }
 #endif
-
-            CollectDataFromInstance();
         }
 
         public void HideVisuals()
         {
-            foreach (MeshData mesh in PrefabInstance.Meshes)
+            foreach (MeshData mesh in Meshes)
                 mesh.Renderer.enabled = false;
 
-            foreach (LODGroupData lodGroup in PrefabInstance.LODGroups)
+            foreach (LODGroupData lodGroup in LODGroups)
             {
                 if (lodGroup.LODs.Length == 0) continue;
 
@@ -53,44 +57,82 @@ namespace DCL.Roads.GPUInstancing.Playground
             }
         }
 
-        private void CollectDataFromInstance()
+        private void CollectDataFromPrefabAsset()
         {
-            PrefabInstance = new PrefabInstanceData
-            {
-                Meshes = CollectMeshesNotIncludedInLOD(),
-                LODGroups = CollectLODGroupsData(),
-            };
+            var tempMeshToMatrices = new Dictionary<MeshData, List<Matrix4x4>>();
+
+            Meshes = CollectStandaloneMeshesData(tempMeshToMatrices);
+            LODGroups = CollectLODGroupDatas(tempMeshToMatrices);
+
+            meshInstances = new List<MeshInstanceData>(tempMeshToMatrices.Keys.Count);
+            foreach (var kvp in tempMeshToMatrices)
+                meshInstances.Add(new MeshInstanceData { MeshData = kvp.Key, InstancesMatrices = kvp.Value });
         }
 
-        private LODGroupData[] CollectLODGroupsData() =>
-            (from lodGroup in GetComponentsInChildren<LODGroup>(includeInactive: false)
-                where lodGroup.enabled && lodGroup.gameObject.activeInHierarchy
-                select CollectLODGroupData(lodGroup) into lodGroupData
-                where lodGroupData.LODs.Length != 0 && lodGroupData.LODs[0].Meshes.Length != 0
-                select lodGroupData).ToArray();
+        private MeshData[] CollectStandaloneMeshesData(Dictionary<MeshData, List<Matrix4x4>> tempMeshToMatrices)
+        {
+            Renderer[] standaloneRenderers = gameObject.GetComponentsInChildren<Renderer>(true)
+                                                       .Where(r => !AssignedToLODGroupInPrefabHierarchy(r.transform)).ToArray();
 
-        private MeshData[] CollectMeshesNotIncludedInLOD() =>
-            (from renderer in GetComponentsInChildren<MeshRenderer>(includeInactive: false)
-                where renderer.enabled && renderer.gameObject.activeInHierarchy
-                where !HasLODGroupInHierarchy(renderer.transform)
-                let meshFilter = renderer.GetComponent<MeshFilter>()
-                where meshFilter != null && meshFilter.sharedMesh != null
-                select new MeshData
+            return CollectMeshData(standaloneRenderers, tempMeshToMatrices).ToArray();
+        }
+
+        private LODGroupData[] CollectLODGroupDatas(Dictionary<MeshData, List<Matrix4x4>> tempMeshToMatrices) =>
+            gameObject.GetComponentsInChildren<LODGroup>(true)
+                      .Select(group => CollectLODGroupData(group, tempMeshToMatrices))
+                      .Where(lodGroupData => lodGroupData.LODs.Length != 0 && lodGroupData.LODs[0].Meshes.Length != 0).ToArray();
+
+        private List<MeshData> CollectMeshData(Renderer[] renderers, Dictionary<MeshData, List<Matrix4x4>> tempMeshToMatrices)
+        {
+            var list = new List<MeshData>();
+
+            foreach (Renderer rndr in renderers)
+            {
+                var meshRenderer = rndr as MeshRenderer;
+                if (meshRenderer == null || meshRenderer.sharedMaterials.Length == 0) return list;
+
+                MeshFilter meshFilter = rndr.GetComponent<MeshFilter>();
+                if (meshFilter == null || meshFilter.sharedMesh == null) return list;
+
+                MeshData meshData = new MeshData
                 {
-                    Transform = renderer.transform,
+                    Transform = meshRenderer.transform,
                     SharedMesh = meshFilter.sharedMesh,
-                    SharedMaterials = renderer.sharedMaterials,
-                    ReceiveShadows = renderer.receiveShadows,
-                    ShadowCastingMode = renderer.shadowCastingMode,
-                    Renderer = renderer,
-                    localToWorldMatrix = renderer.transform.localToWorldMatrix,
-                    LocalMatrixToRoot = CalculateLocalMatrixToRoot(renderer.transform, this.transform),
-                }).ToArray();
+                    SharedMaterials = meshRenderer.sharedMaterials,
+                    ReceiveShadows = meshRenderer.receiveShadows,
+                    ShadowCastingMode = meshRenderer.shadowCastingMode,
+                    Renderer = meshRenderer,
+                    LocalToRootMatrix = transform.worldToLocalMatrix * rndr.transform.localToWorldMatrix, // root * child
+                };
 
-        private static Matrix4x4 CalculateLocalMatrixToRoot(Transform child, Transform root) =>
-            root.worldToLocalMatrix * child.localToWorldMatrix;
+                list.Add(meshData);
 
-        private LODGroupData CollectLODGroupData(LODGroup lodGroup)
+                if (tempMeshToMatrices.TryGetValue(meshData, out var matrices))
+                    matrices.Add(meshData.LocalToRootMatrix);
+                else
+                    tempMeshToMatrices[meshData] = new List<Matrix4x4> { meshData.LocalToRootMatrix };
+            }
+
+            return list;
+        }
+
+        private bool AssignedToLODGroupInPrefabHierarchy(Transform transform)
+        {
+            Transform current = transform;
+            Transform root = this.transform;
+
+            while (current != root && current != null)
+            {
+                if (current.GetComponent<LODGroup>() != null)
+                    return true;
+
+                current = current.parent;
+            }
+
+            return false;
+        }
+
+        private LODGroupData CollectLODGroupData(LODGroup lodGroup, Dictionary<MeshData, List<Matrix4x4>> tempMeshToMatrices)
         {
             lodGroup.RecalculateBounds();
 
@@ -103,7 +145,7 @@ namespace DCL.Roads.GPUInstancing.Playground
                 LODs = lodGroup.GetLODs()
                                .Select(lod => new LODEntryMeshData
                                 {
-                                    Meshes = CollectLODMeshData(lod).ToArray(),
+                                    Meshes = CollectMeshData(lod.renderers, tempMeshToMatrices).ToArray(),
                                     ScreenRelativeTransitionHeight = lod.screenRelativeTransitionHeight,
                                 })
                                .ToArray(),
@@ -112,36 +154,6 @@ namespace DCL.Roads.GPUInstancing.Playground
             CalculateGroupBounds(LODGroupData);
 
             return LODGroupData;
-        }
-
-        private List<MeshData> CollectLODMeshData(UnityEngine.LOD lod)
-        {
-            var list = new List<MeshData>();
-
-            foreach (Renderer renderer in lod.renderers)
-            {
-                if (renderer is SkinnedMeshRenderer) continue;
-
-                var meshRenderer = renderer as MeshRenderer;
-                if (meshRenderer == null || meshRenderer.sharedMaterials.Length == 0) return list;
-
-                MeshFilter meshFilter = renderer.GetComponent<MeshFilter>();
-                if (meshFilter == null || meshFilter.sharedMesh == null) return list;
-
-                list.Add(new MeshData
-                {
-                    Transform = meshRenderer.transform,
-                    SharedMesh = meshFilter.sharedMesh,
-                    SharedMaterials = meshRenderer.sharedMaterials,
-                    ReceiveShadows = meshRenderer.receiveShadows,
-                    ShadowCastingMode = meshRenderer.shadowCastingMode,
-                    Renderer = meshRenderer,
-                    localToWorldMatrix = renderer.transform.localToWorldMatrix,
-                    LocalMatrixToRoot = CalculateLocalMatrixToRoot(renderer.transform, this.transform),
-                });
-            }
-
-            return list;
         }
 
         private static void CalculateGroupBounds(LODGroupData lodGroup)
@@ -159,65 +171,5 @@ namespace DCL.Roads.GPUInstancing.Playground
                 else lodGroup.LODBounds.Encapsulate(data.SharedMesh.bounds);
             }
         }
-
-        private bool HasLODGroupInHierarchy(Transform transform)
-        {
-            while (transform != this.transform)
-            {
-                if (transform.GetComponent<LODGroup>() != null)
-                    return true;
-
-                transform = transform.parent;
-            }
-
-            return false;
-        }
-
-#if UNITY_EDITOR
-        private void CollectDataFromPrefabAsset()
-        {
-            // Get all components regardless of their enabled state when working with prefab asset
-            MeshRenderer[] allRenderers = gameObject.GetComponentsInChildren<MeshRenderer>(true);
-            LODGroup[] allLODGroups = gameObject.GetComponentsInChildren<LODGroup>(true);
-
-            PrefabInstance = new PrefabInstanceData
-            {
-                Meshes = (from renderer in allRenderers
-                    where !HasLODGroupInPrefabHierarchy(renderer.transform)
-                    let meshFilter = renderer.GetComponent<MeshFilter>()
-                    where meshFilter != null && meshFilter.sharedMesh != null
-                    select new MeshData
-                    {
-                        Transform = renderer.transform,
-                        SharedMesh = meshFilter.sharedMesh,
-                        SharedMaterials = renderer.sharedMaterials,
-                        ReceiveShadows = renderer.receiveShadows,
-                        ShadowCastingMode = renderer.shadowCastingMode,
-                        Renderer = renderer,
-                        localToWorldMatrix = renderer.transform.localToWorldMatrix,
-                        LocalMatrixToRoot = CalculateLocalMatrixToRoot(renderer.transform, this.transform),
-                    }).ToArray(),
-
-                LODGroups = allLODGroups.Select(CollectLODGroupData)
-                                        .Where(lodGroupData => lodGroupData.LODs.Length != 0 && lodGroupData.LODs[0].Meshes.Length != 0).ToArray(),
-            };
-        }
-
-        private bool HasLODGroupInPrefabHierarchy(Transform transform)
-        {
-            Transform current = transform;
-            Transform root = this.transform;
-
-            while (current != root && current != null)
-            {
-                if (current.GetComponent<LODGroup>() != null)
-                    return true;
-
-                current = current.parent;
-            }
-
-            return false;
-        }
-#endif
     }
 }

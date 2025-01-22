@@ -42,7 +42,7 @@ namespace DCL.Roads.GPUInstancing.Playground
 
         public void Update()
         {
-            if (Run) gpuInstancingService.RenderInstanced(InstanceId);
+            if (Run) gpuInstancingService.RenderInstanced();
         }
 
         // private IEnumerator PrepareInstancesMapAsync()
@@ -100,15 +100,19 @@ namespace DCL.Roads.GPUInstancing.Playground
                 if (IsOutOfRange(roadDescription.RoadCoordinate)) continue;
                 PrefabInstanceDataBehaviour prefab = Prefabs.FirstOrDefault(op => op.name == roadDescription.RoadModel);
 
+                if (prefab == null)
+                {
+                    Debug.LogWarning($"Can't find prefab {roadDescription.RoadModel}");
+                    continue;
+                }
+
                 var roadRoot = Matrix4x4.TRS(roadDescription.RoadCoordinate.ParcelToPositionFlat() + ParcelMathHelper.RoadPivotDeviation, roadDescription.Rotation, Vector3.one);
-                gpuInstancingService.AddToInstancing(prefab.PrefabInstance, roadRoot);
+                gpuInstancingService.AddToInstancing(prefab.meshInstances, roadRoot);
 
                 Transform roadAsset =
                     Instantiate(prefab, roadDescription.RoadCoordinate.ParcelToPositionFlat() + ParcelMathHelper.RoadPivotDeviation, roadDescription.Rotation, debugRoot)
                        .transform;
 
-                // roadAsset.localPosition = roadDescription.RoadCoordinate.ParcelToPositionFlat() + ParcelMathHelper.RoadPivotDeviation;
-                // roadAsset.localRotation = roadDescription.Rotation;
                 roadAsset.gameObject.SetActive(true);
             }
 

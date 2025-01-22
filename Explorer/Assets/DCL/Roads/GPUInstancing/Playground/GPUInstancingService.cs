@@ -9,39 +9,42 @@ namespace DCL.Roads.GPUInstancing.Playground
     {
         private const int BATCH_SIZE = 511;
 
-        internal readonly Dictionary<GPUInstancedRenderer, List<Matrix4x4>> gpuInstancingMap = new ();
+        internal readonly Dictionary<GPUInstancedRenderer, HashSet<Matrix4x4>> gpuInstancingMap = new ();
 
-        public void RenderInstanced(int instanceId = -1)
+        public void RenderInstanced()
         {
-            foreach (KeyValuePair<GPUInstancedRenderer, List<Matrix4x4>> renderInstances in gpuInstancingMap)
+            foreach (KeyValuePair<GPUInstancedRenderer, HashSet<Matrix4x4>> renderInstances in gpuInstancingMap)
             {
                 for (var i = 0; i < renderInstances.Key.RenderParamsArray.Length; i++) // foreach submesh
+                for (var j = 0; j < renderInstances.Value.Count; j += BATCH_SIZE)
                 {
-                    if (instanceId >= renderInstances.Value.Count) continue;
-                    List<Matrix4x4> instanceData = instanceId < 0 ? renderInstances.Value : new List<Matrix4x4> { renderInstances.Value[instanceId] };
-
-                    for (var j = 0; j < instanceData.Count; j += BATCH_SIZE)
-                    {
-                        Matrix4x4[] batch = renderInstances.Value.Skip(j).Take(BATCH_SIZE).ToArray();
-                        Graphics.RenderMeshInstanced(in renderInstances.Key.RenderParamsArray[i], renderInstances.Key.Mesh, i, batch);
-                    }
+                    Matrix4x4[] batch = renderInstances.Value.Skip(j).Take(BATCH_SIZE).ToArray();
+                    Graphics.RenderMeshInstanced(in renderInstances.Key.RenderParamsArray[i], renderInstances.Key.Mesh, i, batch);
                 }
             }
         }
 
-        // public void AddToInstancing(PrefabInstanceDataBehaviour[] prefabInstanceData)
-        // {
-        //     foreach (PrefabInstanceDataBehaviour spawnedRoad in prefabInstanceData)
-        //         AddToInstancing(spawnedRoad.PrefabInstance);
-        // }
-
-        public void AddToInstancing(PrefabInstanceData prefabData, Matrix4x4 roadRoot)
+        public void AddToInstancing(PrefabInstanceDataBehaviour[] prefabInstanceData, Matrix4x4 roadRoot)
         {
-            AddToInstancing(prefabData.Meshes, roadRoot);
+            foreach (PrefabInstanceDataBehaviour spawnedRoad in prefabInstanceData)
+                AddToInstancing(spawnedRoad, roadRoot);
+        }
 
-            foreach (LODGroupData lodGroup in prefabData.LODGroups)
-            foreach (LODEntryMeshData lods in lodGroup.LODs)
-                AddToInstancing(lods.Meshes, roadRoot);
+        public void AddToInstancing(List<MeshInstanceData> meshInstances, Matrix4x4 roadRoot)
+        {
+            foreach (MeshInstanceData prefabMeshInstance in meshInstances)
+            {
+                var instancedRenderer = prefabMeshInstance.MeshData.ToGPUInstancedRenderer();
+
+                if (!gpuInstancingMap.TryGetValue(instancedRenderer, out HashSet<Matrix4x4> matrix))
+                {
+                    matrix = new HashSet<Matrix4x4>(prefabMeshInstance.InstancesMatrices.Count);
+                    gpuInstancingMap.Add(instancedRenderer, matrix);
+                }
+
+                foreach (var instanceMatrix in prefabMeshInstance.InstancesMatrices)
+                    matrix.Add(roadRoot * instanceMatrix);
+            }
         }
 
         private void AddToInstancing(MeshData[] meshes, Matrix4x4 roadRoot)
@@ -50,13 +53,21 @@ namespace DCL.Roads.GPUInstancing.Playground
             {
                 var instancedRenderer = meshData.ToGPUInstancedRenderer();
 
-                Matrix4x4 localMatrix = meshData.LocalMatrixToRoot;
-
-                if (gpuInstancingMap.TryGetValue(instancedRenderer, out List<Matrix4x4> matrix))
+                Matrix4x4 localMatrix = meshData.LocalToRootMatrix;
+                if (gpuInstancingMap.TryGetValue(instancedRenderer, out HashSet<Matrix4x4> matrix))
                     matrix.Add(roadRoot * localMatrix);
                 else
-                    gpuInstancingMap.Add(instancedRenderer, new List<Matrix4x4> { roadRoot * localMatrix });
+                    gpuInstancingMap.Add(instancedRenderer, new HashSet<Matrix4x4> { roadRoot * localMatrix });
             }
+        }
+
+        public void AddToInstancing(PrefabInstanceDataBehaviour prefabData, Matrix4x4 roadRoot)
+        {
+            AddToInstancing(prefabData.Meshes, roadRoot);
+
+            foreach (LODGroupData lodGroup in prefabData.LODGroups)
+            foreach (LODEntryMeshData lods in lodGroup.LODs)
+                AddToInstancing(lods.Meshes, roadRoot);
         }
 
         public void Clear()
