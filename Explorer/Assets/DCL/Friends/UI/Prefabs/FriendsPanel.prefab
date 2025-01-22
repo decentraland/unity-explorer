@@ -672,7 +672,6 @@ MonoBehaviour:
   <viewAnimationElement>k__BackingField: {fileID: 3538348039145732992}
   <CloseButton>k__BackingField: {fileID: 7574615442871783476}
   <BackgroundCloseButton>k__BackingField: {fileID: 8068558347246313209}
-  <NotificationIndicator>k__BackingField: {fileID: 0}
   <FriendsTabButton>k__BackingField: {fileID: 7787606427768405980}
   <FriendsTabSelected>k__BackingField: {fileID: 7393858782328466687}
   <FriendsSection>k__BackingField: {fileID: 8589710569225848205}
@@ -3939,10 +3938,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 2745706466660118561}
     m_Modifications:
-    - target: {fileID: 1102071254115844928, guid: f84bd542057664f38a68a03603fd66c5, type: 3}
-      propertyPath: m_PreserveAspect
-      value: 0
-      objectReference: {fileID: 0}
     - target: {fileID: 5301629697619209875, guid: f84bd542057664f38a68a03603fd66c5, type: 3}
       propertyPath: m_Name
       value: SectionLoadingObject
