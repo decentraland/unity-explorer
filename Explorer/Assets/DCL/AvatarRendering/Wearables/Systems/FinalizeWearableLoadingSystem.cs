@@ -286,13 +286,14 @@ namespace DCL.AvatarRendering.Wearables.Systems
             int index
         )
         {
-            /*if (promise.LoadingIntention.CancellationTokenSource.IsCancellationRequested)
+            if (promise.LoadingIntention.CancellationTokenSource.IsCancellationRequested)
             {
                 ResetWearableResultOnCancellation(wearable, in bodyShape, index);
                 promise.ForgetLoading(World);
                 World.Destroy(entity);
                 return;
             }
+
             if (promise.TryConsume(World, out StreamableLoadingResult<GLTFData> result))
             {
                 // every asset in the batch is mandatory => if at least one has already failed set the default wearables
@@ -303,7 +304,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
                 wearable.UpdateLoadingStatus(!AllAssetsAreLoaded(wearable, bodyShape));
                 World.Destroy(entity);
-            }*/
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -323,18 +324,15 @@ namespace DCL.AvatarRendering.Wearables.Systems
         private bool CreateAssetPromiseIfRequired(IWearable component, in GetWearablesByPointersIntention intention, IPartitionComponent partitionComponent)
         {
             bool filesDownloadUrlAvailable = !string.IsNullOrEmpty(component.DTO.FilesDownloadUrl);
-            bool fromTheWeb = EnumUtils.HasFlag(intention.PermittedSources, AssetSource.WEB);
 
             // Do not repeat the promise if already failed once. Otherwise it will end up in an endless loading:true state
             if (!filesDownloadUrlAvailable && component.ManifestResult is { Succeeded: false }) return false;
-            // if (component.ManifestResult is { Succeeded: false }) return false;
 
-            //if (component.ManifestResult == null && EnumUtils.HasFlag(intention.PermittedSources, AssetSource.WEB))
             if (EnumUtils.HasFlag(intention.PermittedSources, AssetSource.WEB) // Manifest is required for Web loading only
                 && !filesDownloadUrlAvailable && component.ManifestResult == null)
                 return component.CreateAssetBundleManifestPromise(World, intention.BodyShape, intention.CancellationTokenSource, partitionComponent);
 
-            if (component.TryCreateAssetPromise(in intention, customStreamingSubdirectory, partitionComponent, World, GetReportCategory()))
+            if (component.TryCreateAssetPromise(in intention, customStreamingSubdirectory, partitionComponent, World, GetReportCategory(), component.DTO.FilesDownloadUrl))
             {
                 component.UpdateLoadingStatus(true);
                 return true;

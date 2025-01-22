@@ -11,6 +11,7 @@ using ECS.StreamableLoading.Textures;
 using GLTFast.Loading;
 using SceneRunner.Scene;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine.Networking;
@@ -28,9 +29,12 @@ namespace ECS.StreamableLoading.GLTF
         private readonly IPartitionComponent partitionComponent;
         private readonly IWebRequestController webRequestController;
         private readonly ReportData reportData;
+        private readonly IReadOnlyDictionary<string, string>? contentHashMap;
 
         public GltFastGlobalDownloadProvider(World world, string contentSourceUrl, IPartitionComponent partitionComponent, ReportData reportData,
-            IWebRequestController webRequestController, IAcquiredBudget acquiredBudget)
+            IWebRequestController webRequestController, IAcquiredBudget acquiredBudget
+          // , IReadOnlyDictionary<string, string>? contentHashMap = null
+            )
         {
             this.world = world;
             this.contentSourceUrl = contentSourceUrl;
@@ -38,6 +42,8 @@ namespace ECS.StreamableLoading.GLTF
             this.reportData = reportData;
             this.webRequestController = webRequestController;
             this.acquiredBudget = acquiredBudget;
+
+            this.contentHashMap = contentHashMap;
         }
 
         public void Dispose()
@@ -52,24 +58,16 @@ namespace ECS.StreamableLoading.GLTF
         // method's request of the base GLTF is finished, the propagated budget for assets loading must be released.
         public async Task<IDownload> RequestAsync(Uri uri)
         {
-            /*bool isBaseGltfFetch = uri.OriginalString.Equals(targetGltfOriginalPath);
-            string originalFilePath = GetFileOriginalPathFromUri(uri);
-
-            if (!sceneData.SceneContent.TryGetContentUrl(originalFilePath, out URLAddress tryGetContentUrlResult))
-            {
-                if (isBaseGltfFetch) acquiredBudget.Release();
-                throw new Exception($"Error on GLTF download ({targetGltfOriginalPath} - {originalFilePath}): NOT FOUND");
-            }
-
-            uri = new Uri(tryGetContentUrlResult);
-            var commonArguments = new CommonArguments(URLAddress.FromString(GetUrl(uri)));*/
+            // var downloadUri = new Uri(contentSourceUrl+"QmfTLR6kYxBf2akLLYaTm4x8tFNz245mxqmHs5FVcKMurk"); // DEBUGGING
+            var downloadUri = new Uri(contentSourceUrl+uri);
+            var commonArguments = new CommonArguments(URLAddress.FromString(GetUrl(downloadUri)));
 
             byte[] data = Array.Empty<byte>();
             string error = string.Empty;
             string text = string.Empty;
             bool success = false;
 
-            /*DownloadHandler? downloadHandler = null;
+            DownloadHandler? downloadHandler = null;
 
             try
             {
@@ -83,14 +81,15 @@ namespace ECS.StreamableLoading.GLTF
             }
             catch (UnityWebRequestException e)
             {
-                error = $"Error on GLTF download ({targetGltfOriginalPath} - {uri}): {e.Error} - {e.Message}";
+                error = $"Error on GLTF download ({downloadUri}): {e.Error} - {e.Message}";
             }
             finally
             {
-                if (isBaseGltfFetch) acquiredBudget.Release();
+                if(uri.OriginalString.Contains(".glb"))
+                    acquiredBudget.Release();
                 success = string.IsNullOrEmpty(error);
                 downloadHandler?.Dispose();
-            }*/
+            }
 
             return new GltfDownloadResult
             {
@@ -103,12 +102,10 @@ namespace ECS.StreamableLoading.GLTF
 
         public async Task<ITextureDownload> RequestTextureAsync(Uri uri, bool nonReadable, bool forceLinear)
         {
-            /*string textureOriginalPath = GetFileOriginalPathFromUri(uri);
-            sceneData.SceneContent.TryGetContentUrl(textureOriginalPath, out URLAddress tryGetContentUrlResult);
-
+            var downloadUri = new Uri(contentSourceUrl+uri);
             var texturePromise = Promise.Create(world, new GetTextureIntention
             {
-                CommonArguments = new CommonLoadingArguments(tryGetContentUrlResult, attempts: ATTEMPTS_COUNT),
+                CommonArguments = new CommonLoadingArguments(downloadUri.AbsoluteUri, attempts: ATTEMPTS_COUNT),
             }, partitionComponent);
 
             // The textures fetching need to finish before the GLTF loading can continue its flow...
@@ -121,16 +118,7 @@ namespace ECS.StreamableLoading.GLTF
             {
                 Error = promiseResult.Result?.Exception?.Message,
                 Success = (bool)promiseResult.Result?.Succeeded,
-            };*/
-            throw new Exception($"Error on GLTF Texture download: {uri.OriginalString}");
-        }
-
-        private string GetFileOriginalPathFromUri(Uri uri)
-        {
-            // On windows the URI may come with some invalid '\' in parts of the path
-            /*string patchedUri = uri.OriginalString.Replace('\\', '/');
-            return patchedUri.Replace(sceneData.SceneContent.ContentBaseUrl.Value, string.Empty);*/
-            return string.Empty;
+            };
         }
     }
 }
