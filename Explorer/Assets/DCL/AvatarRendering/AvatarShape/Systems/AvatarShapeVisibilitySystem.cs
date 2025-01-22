@@ -6,7 +6,9 @@ using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Character.Components;
 using DCL.CharacterCamera;
 using DCL.ECSComponents;
+using DCL.Quality;
 using DCL.Rendering.Avatar;
+using DCL.Utilities.Extensions;
 using ECS.Abstract;
 using System.Runtime.CompilerServices;
 using UnityEngine;
@@ -16,9 +18,13 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
     [UpdateInGroup(typeof(CameraGroup))]
     public partial class AvatarShapeVisibilitySystem : BaseUnityLoopSystem
     {
+        private readonly OutlineRendererFeature? outlineFeature;
         private SingleInstanceEntity camera;
 
-        public AvatarShapeVisibilitySystem(World world) : base(world) { }
+        public AvatarShapeVisibilitySystem(World world, IRendererFeaturesCache outlineFeature) : base(world)
+        {
+            this.outlineFeature = outlineFeature.GetRendererFeature<OutlineRendererFeature>();
+        }
 
         public override void Initialize()
         {
@@ -51,16 +57,15 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         [Query]
         private void GetAvatarsVisibleWithOutline(in AvatarBase avatarBase, ref AvatarShapeComponent avatarShape, ref AvatarCachedVisibilityComponent avatarCachedVisibility)
         {
+            bool isEnabled = outlineFeature?.isActive ?? false;
+
             if (IsWithinCameraDistance(camera.GetCameraComponent(World).Camera, avatarBase.HeadAnchorPoint, 8.0f) && IsVisibleInCamera(camera.GetCameraComponent(World).Camera, avatarBase.AvatarSkinnedMeshRenderer.bounds))
             {
                 foreach (var avs in avatarShape.InstantiatedWearables)
                 {
                     if (avs.OutlineCompatible)
                     {
-                        foreach (var rend in avs.Renderers)
-                        {
-                            OutlineRendererFeature.m_OutlineRenderers.Add(rend);
-                        }
+                        foreach (var rend in avs.Renderers) { OutlineRendererFeature.m_OutlineRenderers.Add(rend); }
                     }
                 }
             }
@@ -115,6 +120,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                 Hide(ref avatarShape);
             else
                 Show(ref avatarShape);
+
             avatarCachedVisibility.IsVisible = shouldBeHidden;
         }
 
