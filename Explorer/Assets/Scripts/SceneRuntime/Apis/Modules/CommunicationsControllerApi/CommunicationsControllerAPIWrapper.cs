@@ -31,7 +31,7 @@ namespace SceneRuntime.Apis.Modules.CommunicationsControllerApi
             lastInput.Clear();
         }
 
-        private void SendBinary(IList<object> dataList, string? recipient)
+        private void SendBinaryToParticipants(IList<object> dataList, string? recipient)
         {
             try
             {
@@ -73,12 +73,12 @@ namespace SceneRuntime.Apis.Modules.CommunicationsControllerApi
 
         [UsedImplicitly]
         public object SendBinary(IList<object> broadcastData) =>
-            SendBinary(broadcastData, (IList<object>?)null);
+            SendBinary(broadcastData, null);
 
         [UsedImplicitly]
         public object SendBinary(IList<object> broadcastData, IList<object>? peerData)
         {
-            SendBinary(broadcastData, (string?)null);
+            SendBinaryToParticipants(broadcastData, null);
 
             if (peerData != null)
                 for (var i = 0; i < peerData.Count; i++)
@@ -94,7 +94,7 @@ namespace SceneRuntime.Apis.Modules.CommunicationsControllerApi
                             continue;
 
                         if (recipient.Count is 0)
-                            SendBinary(data, (string?)null);
+                            SendBinaryToParticipants(data, null);
 
                         foreach (object? address in recipient)
                             if (address != null)
@@ -102,7 +102,7 @@ namespace SceneRuntime.Apis.Modules.CommunicationsControllerApi
                                 var stringAddress = (string)address;
 
                                 if (!string.IsNullOrEmpty(stringAddress))
-                                    SendBinary(data, stringAddress);
+                                    SendBinaryToParticipants(data, stringAddress);
                             }
                     }
                 }
