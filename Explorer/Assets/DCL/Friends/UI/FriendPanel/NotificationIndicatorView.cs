@@ -12,7 +12,7 @@ namespace DCL.Friends.UI.FriendPanel
         public void SetNotificationCount(int count)
         {
             NotificationText.SetText(count > MAX_NOTIFICATIONS_DISPLAYED ? $"+{MAX_NOTIFICATIONS_DISPLAYED}" : $"{count}");
-            NotificationText.gameObject.SetActive(count > 0);
+            gameObject.SetActive(count > 0);
         }
     }
 }

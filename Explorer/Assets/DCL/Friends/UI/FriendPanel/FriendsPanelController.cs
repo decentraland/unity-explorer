@@ -126,7 +126,7 @@ namespace DCL.Friends.UI.FriendPanel
 
         private void FriendRequestCountChanged(int count)
         {
-            viewInstance!.NotificationIndicator.SetNotificationCount(count);
+            viewInstance!.NotificationIndicator?.SetNotificationCount(count);
         }
 
         private void ToggleTabs(FriendsPanelTab tab)

@@ -40,6 +40,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             requestManager.DeleteRequestClicked += DeleteRequestClicked;
             requestManager.AcceptRequestClicked += AcceptRequestClicked;
             requestManager.ContextMenuClicked += ContextMenuClicked;
+
             friendEventBus.OnFriendRequestReceived += PropagateRequestReceived;
             friendEventBus.OnFriendRequestAccepted += PropagateRequestAcceptedRejected;
             friendEventBus.OnFriendRequestRejected += PropagateRequestAcceptedRejected;
@@ -104,6 +105,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             view.LoopList.SetListItemCount(requestManager.GetElementsNumber(), false);
             requestManager.FirstFolderClicked += FolderClicked;
             requestManager.SecondFolderClicked += FolderClicked;
+
+            PropagateReceivedRequestsCountChanged();
         }
 
         protected override void ElementClicked(Profile profile)
