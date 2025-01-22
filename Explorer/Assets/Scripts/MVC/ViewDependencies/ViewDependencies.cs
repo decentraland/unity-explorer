@@ -11,7 +11,7 @@ namespace MVC
     {
         public DCLInput DclInput;
         public IEventSystem EventSystem;
-        public IMVCManager MvcManager;
+        public MVCManagerMenusAccessFacade GlobalUIViews;
         public IClipboardManager ClipboardManager;
     }
 }

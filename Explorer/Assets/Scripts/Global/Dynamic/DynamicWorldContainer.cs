@@ -561,6 +561,14 @@ namespace Global.Dynamic
 
             bool includeCameraReel = staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.CAMERA_REEL) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.CAMERA_REEL)) || Application.isEditor;
 
+            ViewDependencies viewDependencies = new ViewDependencies()
+            {
+                ClipboardManager = clipboardManager,
+                EventSystem = unityEventSystem,
+                GlobalUIViews = new MVCManagerMenusAccessFacade(mvcManager),
+                DclInput = dclInput
+            };
+
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
                 new MultiplayerPlugin(
@@ -635,13 +643,11 @@ namespace Global.Dynamic
                     chatHistory,
                     entityParticipantTable,
                     nametagsData,
-                    dclInput,
-                    unityEventSystem,
                     mainUIView,
                     staticContainer.InputBlock,
                     globalWorld,
                     playerEntity,
-                    clipboardManager),
+                    viewDependencies),
                 new ExplorePanelPlugin(
                     assetsProvisioner,
                     mvcManager,

@@ -28,13 +28,11 @@ namespace DCL.PluginSystem.Global
         private readonly IChatMessagesBus chatMessagesBus;
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
         private readonly NametagsData nametagsData;
-        private readonly DCLInput dclInput;
         private readonly IInputBlock inputBlock;
         private readonly Arch.Core.World world;
         private readonly Entity playerEntity;
-        private readonly IEventSystem eventSystem;
         private readonly MainUIView mainUIView;
-        private readonly IClipboardManager clipboardManager;
+        private readonly ViewDependencies viewDependencies;
 
         private ChatController chatController;
 
@@ -45,12 +43,11 @@ namespace DCL.PluginSystem.Global
             IChatHistory chatHistory,
             IReadOnlyEntityParticipantTable entityParticipantTable,
             NametagsData nametagsData,
-            DCLInput dclInput,
-            IEventSystem eventSystem,
             MainUIView mainUIView,
             IInputBlock inputBlock,
             Arch.Core.World world,
-            Entity playerEntity, IClipboardManager clipboardManager)
+            Entity playerEntity,
+            ViewDependencies viewDependencies)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -58,12 +55,10 @@ namespace DCL.PluginSystem.Global
             this.chatMessagesBus = chatMessagesBus;
             this.entityParticipantTable = entityParticipantTable;
             this.nametagsData = nametagsData;
-            this.dclInput = dclInput;
             this.inputBlock = inputBlock;
             this.world = world;
             this.playerEntity = playerEntity;
-            this.clipboardManager = clipboardManager;
-            this.eventSystem = eventSystem;
+            this.viewDependencies = viewDependencies;
             this.mainUIView = mainUIView;
             this.inputBlock = inputBlock;
         }
@@ -90,11 +85,8 @@ namespace DCL.PluginSystem.Global
                 nametagsData,
                 world,
                 playerEntity,
-                dclInput,
-                eventSystem,
                 inputBlock,
-                mvcManager,
-                clipboardManager
+                viewDependencies
             );
 
             mvcManager.RegisterController(chatController);

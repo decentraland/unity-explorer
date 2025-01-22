@@ -10,7 +10,7 @@ using Object = UnityEngine.Object;
 
 namespace DCL.Emoji
 {
-    public class EmojiSuggestionPanel : IViewWithSystemDependencies
+    public class EmojiSuggestionPanel : IViewWithGlobalDependencies
     {
         public event Action<string, bool> EmojiSelected;
 

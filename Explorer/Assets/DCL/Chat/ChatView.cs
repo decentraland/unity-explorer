@@ -22,7 +22,7 @@ using Utility;
 namespace DCL.Chat
 {
     // Note: The view never changes any data (chatMessages), that's done by the controller
-    public class ChatView : ViewBase, IViewWithSystemDependencies, IPointerEnterHandler, IPointerExitHandler, IDisposable
+    public class ChatView : ViewBase, IViewWithGlobalDependencies, IPointerEnterHandler, IPointerExitHandler, IDisposable
     {
         /// <summary>
         /// The prefab to use when instantiating a new item.
@@ -688,7 +688,7 @@ namespace DCL.Chat
                     pastePopupPosition.position,
                     closePopupTask.Task);
 
-                viewDependencies.MvcManager.ShowAndForget(PastePopupToastController.IssueCommand(data));
+                viewDependencies.GlobalUIViews.ShowPastePopupToastAsync(data);
                 inputField.ActivateInputField();
             }
         }
@@ -703,7 +703,7 @@ namespace DCL.Chat
                 messageText,
                 closePopupTask.Task);
 
-            viewDependencies.MvcManager.ShowAsync(ChatEntryMenuPopupController.IssueCommand(data)).Forget();
+            viewDependencies.GlobalUIViews.ShowChatEntryMenuPopupAsync(data);
         }
 
         private bool IsWithinCharacterLimit() =>

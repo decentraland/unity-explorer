@@ -4,7 +4,7 @@ namespace MVC
     /// <summary>
     /// A view that needs to access some external systems without needing a controller.
     /// </summary>
-    public interface IViewWithSystemDependencies : IView
+    public interface IViewWithGlobalDependencies : IView
     {
         /// <summary>
         /// Sets the references to the systems the view may need.

@@ -4,8 +4,6 @@ using DCL.CharacterCamera;
 using DCL.Chat.Commands;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
-using DCL.Clipboard;
-using DCL.Emoji;
 using DCL.Input;
 using DCL.Input.Component;
 using DCL.Input.Systems;
@@ -27,8 +25,6 @@ namespace DCL.Chat
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
         private readonly ChatEntryConfigurationSO chatEntryConfiguration;
         private readonly IChatMessagesBus chatMessagesBus;
-        private readonly DCLInput dclInput;
-        private readonly IEventSystem eventSystem;
         private readonly NametagsData nametagsData;
 
         private readonly IChatHistory chatHistory;
@@ -36,8 +32,7 @@ namespace DCL.Chat
         private readonly Entity playerEntity;
 
         private readonly IInputBlock inputBlock;
-        private readonly IMVCManager mvcManager;
-        private readonly IClipboardManager clipboardManager;
+        private readonly ViewDependencies viewDependencies;
 
         private SingleInstanceEntity cameraEntity;
         private (IChatCommand command, Match param) chatCommand;
@@ -55,11 +50,8 @@ namespace DCL.Chat
             NametagsData nametagsData,
             World world,
             Entity playerEntity,
-            DCLInput dclInput,
-            IEventSystem eventSystem,
             IInputBlock inputBlock,
-            IMVCManager mvcManager,
-            IClipboardManager clipboardManager
+            ViewDependencies viewDependencies
         ) : base(viewFactory)
         {
             this.chatEntryConfiguration = chatEntryConfiguration;
@@ -69,11 +61,8 @@ namespace DCL.Chat
             this.nametagsData = nametagsData;
             this.world = world;
             this.playerEntity = playerEntity;
-            this.dclInput = dclInput;
-            this.eventSystem = eventSystem;
             this.inputBlock = inputBlock;
-            this.mvcManager = mvcManager;
-            this.clipboardManager = clipboardManager;
+            this.viewDependencies = viewDependencies;
         }
 
         protected override void OnViewInstantiated()
@@ -85,13 +74,7 @@ namespace DCL.Chat
             chatHistory.MessageAdded += CreateChatEntry;
             chatHistory.Cleared += OnChatHistoryCleared;
 
-            viewInstance!.InjectDependencies(new ViewDependencies()
-            {
-                ClipboardManager = clipboardManager,
-                MvcManager = mvcManager,
-                DclInput = dclInput,
-                EventSystem = eventSystem
-            });
+            viewInstance!.InjectDependencies(viewDependencies);
             viewInstance!.Initialize(chatHistory.Messages, nametagsData.showChatBubbles);
 
             viewInstance.PointerEnter += OnChatViewPointerEnter;
@@ -114,32 +97,32 @@ namespace DCL.Chat
 
         protected override void OnBlur()
         {
-            dclInput.UI.Submit.performed -= OnSubmitShorcutPerformed;
+            viewDependencies.DclInput.UI.Submit.performed -= OnSubmitShorcutPerformed;
             viewInstance!.DisableInputBoxSubmissions();
         }
 
         protected override void OnFocus()
         {
             viewInstance!.EnableInputBoxSubmissions();
-            dclInput.UI.Submit.performed += OnSubmitShorcutPerformed;
+            viewDependencies.DclInput.UI.Submit.performed += OnSubmitShorcutPerformed;
         }
 
         protected override void OnViewShow()
         {
             base.OnViewShow();
-            dclInput.UI.Click.performed += OnUIClickPerformed;
-            dclInput.Shortcuts.ToggleNametags.performed += OnToggleNametagsShortcutPerformed;
-            dclInput.Shortcuts.OpenChat.performed += OnOpenChatShortcutPerformed;
-            dclInput.Shortcuts.OpenChatCommandLine.performed += OnOpenChatCommandLineShortcutPerformed;
+            viewDependencies.DclInput.UI.Click.performed += OnUIClickPerformed;
+            viewDependencies.DclInput.Shortcuts.ToggleNametags.performed += OnToggleNametagsShortcutPerformed;
+            viewDependencies.DclInput.Shortcuts.OpenChat.performed += OnOpenChatShortcutPerformed;
+            viewDependencies.DclInput.Shortcuts.OpenChatCommandLine.performed += OnOpenChatCommandLineShortcutPerformed;
         }
 
         protected override void OnViewClose()
         {
             base.OnViewClose();
-            dclInput.UI.Click.performed -= OnUIClickPerformed;
-            dclInput.Shortcuts.ToggleNametags.performed -= OnToggleNametagsShortcutPerformed;
-            dclInput.Shortcuts.OpenChat.performed -= OnOpenChatShortcutPerformed;
-            dclInput.Shortcuts.OpenChatCommandLine.performed -= OnOpenChatCommandLineShortcutPerformed;
+            viewDependencies.DclInput.UI.Click.performed -= OnUIClickPerformed;
+            viewDependencies.DclInput.Shortcuts.ToggleNametags.performed -= OnToggleNametagsShortcutPerformed;
+            viewDependencies.DclInput.Shortcuts.OpenChat.performed -= OnOpenChatShortcutPerformed;
+            viewDependencies.DclInput.Shortcuts.OpenChatCommandLine.performed -= OnOpenChatCommandLineShortcutPerformed;
         }
 
         public override void Dispose()
@@ -157,11 +140,11 @@ namespace DCL.Chat
             viewInstance.InputSubmitted -= OnViewInputSubmitted;
             viewInstance.ChatMessageCreated -= OnViewChatMessageCreated;
 
-            dclInput.UI.Click.performed -= OnUIClickPerformed;
-            dclInput.Shortcuts.ToggleNametags.performed -= OnToggleNametagsShortcutPerformed;
-            dclInput.Shortcuts.OpenChat.performed -= OnOpenChatShortcutPerformed;
-            dclInput.Shortcuts.OpenChatCommandLine.performed -= OnOpenChatCommandLineShortcutPerformed;
-            dclInput.UI.Submit.performed -= OnSubmitShorcutPerformed;
+            viewDependencies.DclInput.UI.Click.performed -= OnUIClickPerformed;
+            viewDependencies.DclInput.Shortcuts.ToggleNametags.performed -= OnToggleNametagsShortcutPerformed;
+            viewDependencies.DclInput.Shortcuts.OpenChat.performed -= OnOpenChatShortcutPerformed;
+            viewDependencies.DclInput.Shortcuts.OpenChatCommandLine.performed -= OnOpenChatCommandLineShortcutPerformed;
+            viewDependencies.DclInput.UI.Submit.performed -= OnSubmitShorcutPerformed;
 
             viewInstance.Dispose();
         }
