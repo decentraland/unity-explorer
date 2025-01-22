@@ -9,6 +9,10 @@ namespace DCL.UI.GenericContextMenu.Controls
 {
     public class GenericContextMenuUserProfileView : GenericContextMenuComponentBase
     {
+        private const int USER_NAME_MIN_HEIGHT = 20;
+        private const int FACE_FRAME_MIN_HEIGHT = 60;
+        private const int FRIEND_BUTTON_MIN_HEIGHT = 40;
+
         [field: SerializeField] public Image FaceFrame { get; private set; }
         [field: SerializeField] public Image FaceRim { get; private set; }
         [field: SerializeField] public TMP_Text UserName { get; private set; }
@@ -41,22 +45,51 @@ namespace DCL.UI.GenericContextMenu.Controls
         {
             HorizontalLayoutComponent.padding = settings.horizontalLayoutPadding;
 
-            UserName.text = settings.profile.Name;
-            UserName.color = settings.userColor;
-            UserNameTag.text = $"#{settings.profile.UserId[^4..]}";
-            UserAddress.text = $"{settings.profile.UserId[..5]}...{settings.profile.UserId[^5..]}";
+            ConfigureUserNameAndTag(settings.profile.Name, settings.profile.UserId, settings.profile.HasClaimedName, settings.userColor);
+            ConfigureAddFriendButton(settings.friendshipStatus);
 
-            UserNameTag.gameObject.SetActive(!settings.profile.HasClaimedName);
-            ClaimedNameBadge.gameObject.SetActive(settings.profile.HasClaimedName);
-            ClaimedNameBadgeSeparator.gameObject.SetActive(settings.profile.HasClaimedName);
+            RectTransformComponent.sizeDelta = new Vector2(RectTransformComponent.sizeDelta.x, CalculateComponentHeight());
 
-            FaceFrame.color = settings.userColor;
-            settings.userColor.r += 0.3f;
-            settings.userColor.g += 0.3f;
-            settings.userColor.b += 0.3f;
-            FaceRim.color = settings.userColor;
+            CopyNameButton.onClick.AddListener(() => settings.systemClipboard.Set(settings.profile.Name));
+            CopyAddressButton.onClick.AddListener(() => settings.systemClipboard.Set(settings.profile.UserId));
+            AddFriendButton.onClick.AddListener(() => settings.requestFriendshipAction(settings.profile));
+        }
 
-            switch (settings.friendshipStatus)
+        private void ConfigureUserNameAndTag(string userName, string userAddress, bool hasClaimedName, Color userColor)
+        {
+            UserName.text = userName;
+            UserName.color = userColor;
+            UserNameTag.text = $"#{userAddress[^4..]}";
+            UserAddress.text = $"{userAddress[..5]}...{userAddress[^5..]}";
+
+            UserNameTag.gameObject.SetActive(!hasClaimedName);
+            ClaimedNameBadge.gameObject.SetActive(hasClaimedName);
+            ClaimedNameBadgeSeparator.gameObject.SetActive(hasClaimedName);
+
+            FaceFrame.color = userColor;
+            userColor.r += 0.3f;
+            userColor.g += 0.3f;
+            userColor.b += 0.3f;
+            FaceRim.color = userColor;
+        }
+
+        private float CalculateComponentHeight()
+        {
+            float totalHeight = Math.Max(userNameRectTransform.rect.height, USER_NAME_MIN_HEIGHT)
+                                + Math.Max(faceFrameRectTransform.rect.height, FACE_FRAME_MIN_HEIGHT)
+                                + Math.Max(userAddressRectTransform.rect.height, USER_NAME_MIN_HEIGHT)
+                                + HorizontalLayoutComponent.padding.bottom
+                                + HorizontalLayoutComponent.padding.top
+                                + (ContentVerticalLayout.spacing * 2);
+            if (AddFriendButton.gameObject.activeSelf)
+                totalHeight += Math.Max(addButtonRectTransform.rect.height, FRIEND_BUTTON_MIN_HEIGHT) + ContentVerticalLayout.spacing;
+
+            return totalHeight;
+        }
+
+        private void ConfigureAddFriendButton(UserProfileContextMenuControlSettings.FriendshipStatus friendshipStatus)
+        {
+            switch (friendshipStatus)
             {
                 case UserProfileContextMenuControlSettings.FriendshipStatus.NONE:
                     AddFriendButton.gameObject.SetActive(true);
@@ -81,21 +114,6 @@ namespace DCL.UI.GenericContextMenu.Controls
                     AddFriendButtonText.text = AddFriendText;
                     break;
             }
-
-            float totalHeight = Math.Max(userNameRectTransform.rect.height, 20)
-                                + Math.Max(faceFrameRectTransform.rect.height, 60)
-                                + Math.Max(userAddressRectTransform.rect.height, 20)
-                                + HorizontalLayoutComponent.padding.bottom
-                                + HorizontalLayoutComponent.padding.top
-                                + (ContentVerticalLayout.spacing * 2);
-            if (AddFriendButton.gameObject.activeSelf)
-                totalHeight += Math.Max(addButtonRectTransform.rect.height, 40) + ContentVerticalLayout.spacing;
-
-            RectTransformComponent.sizeDelta = new Vector2(RectTransformComponent.sizeDelta.x, totalHeight);
-
-            CopyNameButton.onClick.AddListener(() => settings.systemClipboard.Set(settings.profile.Name));
-            CopyAddressButton.onClick.AddListener(() => settings.systemClipboard.Set(settings.profile.UserId));
-            AddFriendButton.onClick.AddListener(() => settings.requestFriendshipAction(settings.profile));
         }
 
         public override void UnregisterListeners()
