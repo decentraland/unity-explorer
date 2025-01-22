@@ -37,6 +37,7 @@ namespace DCL.UI.Sidebar
 
         [field: Header("Friends")]
         [field: SerializeField] public PersistentFriendPanelOpenerView PersistentFriendsPanelOpener { get; private set; }
+        [field: SerializeField] public NotificationIndicatorView FriendRequestNotificationIndicator { get; private set; }
 
         [field: Header("Skybox")]
         [field: SerializeField] internal SimpleHoverableButton skyboxButton { get; private set; }

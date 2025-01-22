@@ -26,6 +26,7 @@ namespace DCL.Friends.UI.FriendPanel
         private readonly IFriendsService friendsService;
         private readonly IFriendsEventBus friendEventBus;
         private readonly ChatView chatView;
+        private readonly NotificationIndicatorView sidebarRequestNotificationIndicator;
         private readonly IMVCManager mvcManager;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IProfileCache profileCache;
@@ -42,6 +43,7 @@ namespace DCL.Friends.UI.FriendPanel
 
         public FriendsPanelController(ViewFactoryMethod viewFactory,
             ChatView chatView,
+            NotificationIndicatorView sidebarRequestNotificationIndicator,
             IFriendsService friendsService,
             IFriendsEventBus friendEventBus,
             IMVCManager mvcManager,
@@ -51,6 +53,7 @@ namespace DCL.Friends.UI.FriendPanel
             ISystemClipboard systemClipboard) : base(viewFactory)
         {
             this.chatView = chatView;
+            this.sidebarRequestNotificationIndicator = sidebarRequestNotificationIndicator;
             this.friendsService = friendsService;
             this.friendEventBus = friendEventBus;
             this.mvcManager = mvcManager;
@@ -126,7 +129,7 @@ namespace DCL.Friends.UI.FriendPanel
 
         private void FriendRequestCountChanged(int count)
         {
-            viewInstance!.NotificationIndicator?.SetNotificationCount(count);
+            sidebarRequestNotificationIndicator.SetNotificationCount(count);
         }
 
         private void ToggleTabs(FriendsPanelTab tab)

@@ -87,6 +87,7 @@ namespace DCL.PluginSystem.Global
 
             friendsPanelController = new FriendsPanelController(FriendsPanelController.CreateLazily(friendsPanelPrefab, null),
                 mainUIView.ChatView,
+                mainUIView.SidebarView.FriendRequestNotificationIndicator,
                 friendsService,
                 friendEventBus,
                 mvcManager,
