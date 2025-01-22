@@ -9,7 +9,6 @@ using DCL.ECSComponents;
 using Decentraland.Common;
 using ECS.Abstract;
 using ECS.Groups;
-using SceneRunner.Scene;
 using UnityEngine;
 
 namespace DCL.SDKComponents.SceneUI.Systems.UICanvasInformation
@@ -18,7 +17,6 @@ namespace DCL.SDKComponents.SceneUI.Systems.UICanvasInformation
     [LogCategory(ReportCategory.SCENE_UI)]
     public partial class UICanvasInformationSystem : BaseUnityLoopSystem
     {
-        private readonly ISceneStateProvider sceneStateProvider;
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
         private BorderRect interactableArea;
         private int lastViewportResolutionWidth = -1;
@@ -29,12 +27,12 @@ namespace DCL.SDKComponents.SceneUI.Systems.UICanvasInformation
             base.Initialize();
 
             interactableArea = new BorderRect { Bottom = 0, Left = 0, Right = 0, Top = 0 };
-            UpdateUICanvasInformationComponent();
+
+            WriteToCRDT();
         }
 
-        private UICanvasInformationSystem(World world, ISceneStateProvider sceneStateProvider, IECSToCRDTWriter ecsToCRDTWriter) : base(world)
+        private UICanvasInformationSystem(World world, IECSToCRDTWriter ecsToCRDTWriter) : base(world)
         {
-            this.sceneStateProvider = sceneStateProvider;
             this.ecsToCRDTWriter = ecsToCRDTWriter;
         }
 
@@ -58,12 +56,17 @@ namespace DCL.SDKComponents.SceneUI.Systems.UICanvasInformation
             lastScreenRealResolutionWidth = Screen.mainWindowDisplayInfo.width;
             lastViewportResolutionWidth = Screen.width;
 
+            WriteToCRDT();
+        }
+
+        private void WriteToCRDT()
+        {
             ecsToCRDTWriter.PutMessage<PBUiCanvasInformation, UICanvasInformationSystem>(static (component, system) =>
             {
                 component.InteractableArea = system.interactableArea;
                 component.Width = Screen.width;
                 component.Height = Screen.height;
-                component.DevicePixelRatio = system.lastScreenRealResolutionWidth / (float)system.lastViewportResolutionWidth;
+                component.DevicePixelRatio = Screen.mainWindowDisplayInfo.width / (float)Screen.width;
             }, SpecialEntitiesID.SCENE_ROOT_ENTITY, this);
         }
     }

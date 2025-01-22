@@ -1,4 +1,3 @@
-using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.CommunicationData.URLHelpers;
 using ECS.SceneLifeCycle.Realm;
 using Global.AppArgs;
@@ -40,6 +39,7 @@ namespace Global.Dynamic
 
         private bool isLocalSceneDevelopmentRealm;
         public bool IsLocalSceneDevelopmentRealm => isLocalSceneDevelopmentRealm
+
                                                     // This is for development purposes only,
                                                     // so we can easily start local development from the editor without application args
                                                     || initialRealm == InitialRealm.Localhost;
@@ -50,7 +50,7 @@ namespace Global.Dynamic
                 return predefinedScenes.parcels.Select(p => new int2(p.x, p.y)).ToList();
 
             return IsLocalSceneDevelopmentRealm
-                ? new List<int2> { new(targetScene.x, targetScene.y) }
+                ? new List<int2> { new (targetScene.x, targetScene.y) }
                 : Array.Empty<int2>();
         }
 
@@ -71,25 +71,6 @@ namespace Global.Dynamic
             return new HybridSceneParams();
         }
 
-        public string? GetLocalSceneDevelopmentRealm(IDecentralandUrlsSource decentralandUrlsSource) =>
-            IsLocalSceneDevelopmentRealm ? GetStartingRealm(decentralandUrlsSource) : null;
-
-        public string GetStartingRealm(IDecentralandUrlsSource decentralandUrlsSource)
-        {
-            return initialRealm switch
-                   {
-                       InitialRealm.GenesisCity => decentralandUrlsSource.Url(DecentralandUrl.Genesis),
-                       InitialRealm.SDK => IRealmNavigator.SDK_TEST_SCENES_URL,
-                       InitialRealm.Goerli => IRealmNavigator.GOERLI_URL,
-                       InitialRealm.StreamingWorld => IRealmNavigator.STREAM_WORLD_URL,
-                       InitialRealm.TestScenes => IRealmNavigator.TEST_SCENES_URL,
-                       InitialRealm.World => IRealmNavigator.WORLDS_DOMAIN + "/" + targetWorld,
-                       InitialRealm.Localhost => IRealmNavigator.LOCALHOST,
-                       InitialRealm.Custom => customRealm,
-                       _ => decentralandUrlsSource.Url(DecentralandUrl.Genesis),
-                   };
-        }
-
         public void ApplyConfig(IAppArgs applicationParameters)
         {
             if (applicationParameters.TryGetValue(AppArgsFlags.REALM, out string? realm))
@@ -104,8 +85,8 @@ namespace Global.Dynamic
             if (string.IsNullOrEmpty(realmParamValue)) return;
 
             bool isLocalSceneDevelopment = appParameters.TryGetValue(AppArgsFlags.LOCAL_SCENE, out string localSceneParamValue)
-                                    && ParseLocalSceneParameter(localSceneParamValue)
-                                    && IsRealmAValidUrl(realmParamValue);
+                                           && ParseLocalSceneParameter(localSceneParamValue)
+                                           && IsRealmAValidUrl(realmParamValue);
 
             if (isLocalSceneDevelopment)
                 SetLocalSceneDevelopmentRealm(realmParamValue);
@@ -174,6 +155,7 @@ namespace Global.Dynamic
             //Note: If you dont want the feature flag for the localhost hostname, remember to remove ir from the feature flag configuration
             // (https://features.decentraland.systems/#/features/strategies/explorer-alfa-genesis-spawn-parcel)
             string? parcelToTeleportOverride = null;
+
             //If not, we check the feature flag usage
             var featureFlagOverride =
                 featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.GENESIS_STARTING_PARCEL) &&

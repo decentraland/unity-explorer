@@ -135,6 +135,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   <optionButton>k__BackingField: {fileID: 6943278575139157012}
+  <publicToggleText>k__BackingField: Set as Public
+  <shareButtonText>k__BackingField: Share on X
+  <shareButtonSprite>k__BackingField: {fileID: 21300000, guid: 4c97cd3c67403471d8fe75c5fc348e58, type: 3}
+  <copyButtonText>k__BackingField: Copy Link
+  <copyButtonSprite>k__BackingField: {fileID: 21300000, guid: 3bffb1589fb814c70b23fbce43ba6736, type: 3}
+  <downloadButtonText>k__BackingField: Download
+  <downloadButtonSprite>k__BackingField: {fileID: 21300000, guid: 7c1ba996ae79c4993b1c434f833c4084, type: 3}
+  <deleteButtonText>k__BackingField: Delete
+  <deleteButtonSprite>k__BackingField: {fileID: 21300000, guid: ac4ebefc5fac7475ba19ac778feacfa8, type: 3}
 --- !u!1 &4238458680548828747
 GameObject:
   m_ObjectHideFlags: 0

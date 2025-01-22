@@ -24,6 +24,7 @@ using NSubstitute;
 using System;
 using System.Threading;
 using DCL.PerformanceAndDiagnostics.Analytics;
+using DCL.WebRequests.Analytics;
 using SceneRuntime.Factory.WebSceneSource;
 using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using UnityEngine.AddressableAssets;
@@ -59,9 +60,9 @@ namespace Global.Tests.PlayMode
                 dclUrls,
                 assetProvisioner,
                 Substitute.For<IReportsHandlingSettings>(),
-                Substitute.For<IAppArgs>(),
+                Substitute.For<IDebugContainerBuilder>(),
+                WebRequestsContainer.Create(new IWeb3IdentityCache.Default(), ITexturesFuse.NewTestInstance(), Substitute.For<IDebugContainerBuilder>(), 1000, false),
                 ITexturesFuse.NewTestInstance(),
-                new DebugViewsCatalog(),
                 globalSettingsContainer,
                 diagnosticsContainer,
                 identityCache,
@@ -74,8 +75,8 @@ namespace Global.Tests.PlayMode
                 new WorldVolumeMacBus(),
                 false,
                 Substitute.For<IAnalyticsController>(),
-                false,
-                ct);
+                ct
+            );
 
             if (!success)
                 throw new Exception("Cannot create the static container");

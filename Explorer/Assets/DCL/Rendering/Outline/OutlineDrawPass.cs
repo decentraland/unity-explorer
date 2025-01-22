@@ -1,4 +1,5 @@
 ﻿using DCL.Diagnostics;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
@@ -20,6 +21,12 @@ namespace DCL.Rendering.Avatar
             private ProfilingSampler m_Sampler = new (profilerTag);
 
             private FilteringSettings m_FilteringSettings;
+            private List<Renderer> m_OutlineRenderers;
+
+            public OutlineDrawPass(List<Renderer> _OutlineRenderers)
+            {
+                m_OutlineRenderers = _OutlineRenderers;
+            }
 
             public void Setup(  RTHandle _outlineRTHandle_Colour,
                                 RTHandle _outlineRTHandle_Depth,
@@ -48,15 +55,31 @@ namespace DCL.Rendering.Avatar
 
             public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
             {
+                if (m_OutlineRenderers is not { Count: > 0 })
+                    return;
+
                 CommandBuffer cmd = CommandBufferPool.Get("_OutlineDrawPass");
 
                 using (new ProfilingScope(cmd, m_Sampler))
                 {
-                    // Create the draw settings, which configures a new draw call to the GPU
-                    //CoreUtils.SetRenderTarget(cmd, renderingData.cameraData.renderer.cameraColorTargetHandle, renderingData.cameraData.renderer.cameraDepthTargetHandle, clearFlag: ClearFlag.None, clearColor: Color.black, miplevel: 0, cubemapFace: CubemapFace.Unknown, depthSlice: -1);
-                    DrawingSettings drawSettings = CreateDrawingSettings(m_ShaderTagId, ref renderingData, renderingData.cameraData.defaultOpaqueSortFlags);
-                    //m_FilteringSettings.renderQueueRange = new RenderQueueRange(0, 2000);
-                    context.DrawRenderers(renderingData.cullResults, ref drawSettings, ref m_FilteringSettings);
+                    foreach (Renderer renderer in m_OutlineRenderers)
+                    {
+                        if (renderer == null)
+                            continue;
+
+                        if (!renderer.enabled || renderer.forceRenderingOff)
+                            continue;
+
+                        if (renderer.sharedMaterial == null)
+                            continue;
+
+                        int originalMaterialOutlinerPass = renderer.sharedMaterial.FindPass("Outline");
+
+                        if (originalMaterialOutlinerPass != -1)
+                        {
+                            cmd.DrawRenderer(renderer, renderer.sharedMaterial, 0, originalMaterialOutlinerPass);
+                        }
+                    }
                 }
 
                 context.ExecuteCommandBuffer(cmd);
@@ -65,7 +88,7 @@ namespace DCL.Rendering.Avatar
 
             public override void FrameCleanup(CommandBuffer cmd)
             {
-
+                m_OutlineRenderers.Clear();
             }
 
             public void Dispose()

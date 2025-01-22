@@ -10,9 +10,12 @@ using DCL.Notifications.NotificationsMenu;
 using DCL.NotificationsBusController.NotificationsBus;
 using DCL.Profiles;
 using DCL.SidebarBus;
+using DCL.StylizedSkybox.Scripts;
+using DCL.UI.Controls;
 using DCL.UI.MainUI;
 using DCL.UI.ProfileElements;
 using DCL.UI.Sidebar;
+using DCL.UI.Skybox;
 using DCL.UserInAppInitializationFlow;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
@@ -39,6 +42,7 @@ namespace DCL.PluginSystem.Global
         private readonly IUserInAppInitializationFlow userInAppInitializationFlow;
         private readonly IProfileCache profileCache;
         private readonly ISidebarBus sidebarBus;
+        private readonly DCLInput input;
         private readonly ChatEntryConfigurationSO chatEntryConfigurationSo;
         private readonly Arch.Core.World world;
         private readonly Entity playerEntity;
@@ -58,6 +62,7 @@ namespace DCL.PluginSystem.Global
             IUserInAppInitializationFlow userInAppInitializationFlow,
             IProfileCache profileCache,
             ISidebarBus sidebarBus,
+            DCLInput input,
             ChatEntryConfigurationSO chatEntryConfigurationSo,
             Arch.Core.World world,
             Entity playerEntity,
@@ -76,6 +81,7 @@ namespace DCL.PluginSystem.Global
             this.userInAppInitializationFlow = userInAppInitializationFlow;
             this.profileCache = profileCache;
             this.sidebarBus = sidebarBus;
+            this.input = input;
             this.chatEntryConfigurationSo = chatEntryConfigurationSo;
             this.world = world;
             this.playerEntity = playerEntity;
@@ -91,6 +97,9 @@ namespace DCL.PluginSystem.Global
             NotificationIconTypes notificationIconTypes = (await assetsProvisioner.ProvideMainAssetAsync(settings.NotificationIconTypesSO, ct: ct)).Value;
             NftTypeIconSO rarityBackgroundMapping = await assetsProvisioner.ProvideMainAssetValueAsync(settings.RarityColorMappings, ct);
 
+            ControlsPanelView panelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.ControlsPanelPrefab, ct: ct)).GetComponent<ControlsPanelView>();
+            ControlsPanelController.Preallocate(panelViewAsset, null!, out ControlsPanelView controlsPanelView);
+
             mvcManager.RegisterController(new SidebarController(() =>
                 {
                     SidebarView view = mainUIView.SidebarView;
@@ -102,6 +111,8 @@ namespace DCL.PluginSystem.Global
                 new NotificationsMenuController(mainUIView.SidebarView.NotificationsMenuView, notificationsRequestController, notificationsBusController, notificationIconTypes, webRequestController, sidebarBus, rarityBackgroundMapping, web3IdentityCache),
                 new ProfileWidgetController(() => mainUIView.SidebarView.ProfileWidget, web3IdentityCache, profileRepository, webRequestController),
                 new ProfileMenuController(() => mainUIView.SidebarView.ProfileMenuView, web3IdentityCache, profileRepository, webRequestController, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, mvcManager, chatEntryConfigurationSo),
+                new SkyboxMenuController(() => mainUIView.SidebarView.SkyboxMenuView, settings.SkyboxSettingsAsset),
+                new ControlsPanelController(() => controlsPanelView, mvcManager, input),
                 sidebarBus,
                 chatEntryConfigurationSo,
                 web3IdentityCache,
@@ -118,6 +129,12 @@ namespace DCL.PluginSystem.Global
 
             [field: SerializeField]
             public AssetReferenceT<NftTypeIconSO> RarityColorMappings { get; private set; }
+
+            [field: SerializeField]
+            public StylizedSkyboxSettingsAsset SkyboxSettingsAsset { get; private set; }
+
+            [field: SerializeField]
+            public AssetReferenceGameObject ControlsPanelPrefab;
         }
     }
 }
