@@ -44,11 +44,11 @@ namespace DCL.Friends.UI.FriendPanel.Sections
             return listItem;
         }
 
-        protected abstract UniTask FetchInitialData(CancellationToken ct);
+        protected abstract UniTask FetchInitialDataAsync(CancellationToken ct);
 
-        public async UniTask Init(CancellationToken ct)
+        public async UniTask InitAsync(CancellationToken ct)
         {
-            await FetchInitialData(ct);
+            await FetchInitialDataAsync(ct);
 
             HasElements = GetCollectionCount() > 0;
             WasInitialised = true;

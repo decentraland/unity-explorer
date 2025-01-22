@@ -54,7 +54,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             // elementView.OnlineStatus.SetText();
         }
 
-        protected async override UniTask FetchInitialData(CancellationToken ct)
+        protected async override UniTask FetchInitialDataAsync(CancellationToken ct)
         {
             // PaginatedFriendsResult result = await friendsService.GetFriendsAsync(pageNumber, pageSize, ct);
             offlineFriends.Add(Profile.NewRandomProfile("0x05dE05303EAb867D51854E8b4fE03F7acb0624d9"));

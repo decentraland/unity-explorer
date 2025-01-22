@@ -70,7 +70,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             elementView.MessagePreviewText.SetText(request.MessageBody.Length > MAX_REQUEST_MESSAGE_PREVIEW_LENGTH ? $"{request.MessageBody.Substring(0, MAX_REQUEST_MESSAGE_PREVIEW_LENGTH)}..." : request.MessageBody);
         }
 
-        protected override async UniTask FetchInitialData(CancellationToken ct)
+        protected override async UniTask FetchInitialDataAsync(CancellationToken ct)
         {
             receivedRequests.Add(new FriendRequest(Guid.NewGuid().ToString(), DateTime.Now.AddDays(-2), "0xd545b9e0a5f3638a5026d1914cc9b47ed16b5ae9", "0x05dE05303EAb867D51854E8b4fE03F7acb0624d9", "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi gravida libero quis sapien dictum, a vehicula nisi gravida"));
             receivedRequests.Add(new FriendRequest(Guid.NewGuid().ToString(), DateTime.Now.AddDays(-1), "0xba7352cff5681b719daf33fa05e93153af8146c8", "0x05dE05303EAb867D51854E8b4fE03F7acb0624d9", "In hac habitasse platea dictumst. Proin sodales, sapien at facilisis consectetur, elit erat luctus quam, vel finibus lacus nulla vel tellus. Aenean vehicula urna nisl. Donec in lacus nisi. Aenean facilisis sagittis turpis nec finibus. Sed eu lorem arcu"));

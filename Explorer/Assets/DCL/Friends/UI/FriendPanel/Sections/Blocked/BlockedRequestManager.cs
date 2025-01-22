@@ -49,7 +49,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Blocked
             elementView.ContextMenuButton.onClick.AddListener(() => ContextMenuClicked?.Invoke(elementView.UserProfile));
         }
 
-        protected override async UniTask FetchInitialData(CancellationToken ct)
+        protected override async UniTask FetchInitialDataAsync(CancellationToken ct)
         {
             userProfile = await GetProfile(web3IdentityCache.Identity?.Address, ct);
 

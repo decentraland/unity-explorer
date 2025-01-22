@@ -145,11 +145,11 @@ namespace DCL.Friends.UI.FriendPanel.Sections
             totalFetched = 0;
         }
 
-        protected abstract UniTask FetchInitialData(CancellationToken ct);
+        protected abstract UniTask FetchInitialDataAsync(CancellationToken ct);
 
-        public async UniTask Init(CancellationToken ct)
+        public async UniTask InitAsync(CancellationToken ct)
         {
-            await FetchInitialData(ct);
+            await FetchInitialDataAsync(ct);
 
             HasElements = GetFirstCollectionCount() + GetSecondCollectionCount() > 0;
             WasInitialised = true;

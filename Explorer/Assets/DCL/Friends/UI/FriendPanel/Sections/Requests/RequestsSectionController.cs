@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Clipboard;
+using DCL.Diagnostics;
 using DCL.Passport;
 using DCL.Profiles;
 using DCL.UI.GenericContextMenu;
@@ -9,6 +10,7 @@ using MVC;
 using System;
 using System.Threading;
 using UnityEngine;
+using Utility;
 
 namespace DCL.Friends.UI.FriendPanel.Sections.Requests
 {
@@ -18,6 +20,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
         private readonly UserProfileContextMenuControlSettings userProfileContextMenuControlSettings;
 
         private Profile? lastClickedProfileCtx;
+        private CancellationTokenSource friendshipOperationCts = new ();
 
         public event Action<int>? ReceivedRequestsCountChanged;
 
@@ -59,6 +62,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             friendEventBus.OnFriendRequestRejected -= PropagateRequestAcceptedRejected;
 
             ReceivedRequestsCountChanged -= UpdateReceivedRequestsSectionCount;
+            friendshipOperationCts.SafeCancelAndDispose();
         }
 
         private void OpenProfilePassport(Profile profile) =>
@@ -79,11 +83,39 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
         private void DeleteRequestClicked(FriendRequest request)
         {
             Debug.Log($"DeleteRequestClicked on {request.FriendRequestId}");
+
+            async UniTaskVoid RejectFriendshipAsync(CancellationToken ct)
+            {
+                try
+                {
+                    await friendsService.RejectFriendshipAsync(request.From, ct);
+                }
+                catch(Exception e)
+                {
+                    ReportHub.LogException(e, new ReportData(ReportCategory.FRIENDS));
+                }
+            }
+
+            RejectFriendshipAsync(friendshipOperationCts.Token).Forget();
         }
 
         private void AcceptRequestClicked(FriendRequest request)
         {
             Debug.Log($"AcceptRequestClicked on {request.FriendRequestId}");
+
+            async UniTaskVoid RejectFriendshipAsync(CancellationToken ct)
+            {
+                try
+                {
+                    await friendsService.AcceptFriendshipAsync(request.From, ct);
+                }
+                catch(Exception e)
+                {
+                    ReportHub.LogException(e, new ReportData(ReportCategory.FRIENDS));
+                }
+            }
+
+            RejectFriendshipAsync(friendshipOperationCts.Token).Forget();
         }
 
         private void ContextMenuClicked(Profile profile, Vector2 buttonPosition, RequestUserView elementView)
@@ -94,11 +126,11 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             mvcManager.ShowAsync(GenericContextMenuController.IssueCommand(new GenericContextMenuParameter(contextMenu, buttonPosition, actionOnHide: () => elementView.CanUnHover = true))).Forget();
         }
 
-        protected override async UniTaskVoid Init(CancellationToken ct)
+        protected override async UniTaskVoid InitAsync(CancellationToken ct)
         {
             view.SetLoadingState(true);
 
-            await requestManager.Init(ct);
+            await requestManager.InitAsync(ct);
 
             view.SetLoadingState(false);
 

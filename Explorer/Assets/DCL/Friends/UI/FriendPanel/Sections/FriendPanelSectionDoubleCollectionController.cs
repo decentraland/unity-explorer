@@ -69,7 +69,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections
             }
 
             if (!requestManager.WasInitialised)
-                Init(friendListInitCts.Token).Forget();
+                InitAsync(friendListInitCts.Token).Forget();
         }
 
         private void Disable()
@@ -83,13 +83,13 @@ namespace DCL.Friends.UI.FriendPanel.Sections
             view.LoopList.RefreshAllShownItem();
         }
 
-        protected virtual async UniTaskVoid Init(CancellationToken ct)
+        protected virtual async UniTaskVoid InitAsync(CancellationToken ct)
         {
             view.SetLoadingState(true);
             view.SetEmptyState(false);
             view.SetScrollViewState(false);
 
-            await requestManager.Init(ct);
+            await requestManager.InitAsync(ct);
 
             view.SetLoadingState(false);
             view.SetEmptyState(!requestManager.HasElements);

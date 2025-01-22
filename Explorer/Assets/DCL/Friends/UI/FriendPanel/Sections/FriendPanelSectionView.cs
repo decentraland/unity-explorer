@@ -7,7 +7,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections
     public class FriendPanelSectionView : MonoBehaviour
     {
         [field: SerializeField] public LoopListView2 LoopList { get; private set; }
-        [field: SerializeField] public GameObject LoadingObject { get; private set; }
+        [field: SerializeField] public SectionLoadingView LoadingObject { get; private set; }
         [field: SerializeField] public GameObject? EmptyState { get; private set; }
 
         public event Action Enable;
@@ -22,8 +22,13 @@ namespace DCL.Friends.UI.FriendPanel.Sections
         private void OnDisable() =>
             Disable?.Invoke();
 
-        public void SetLoadingState(bool isLoading) =>
-            LoadingObject?.SetActive(isLoading);
+        public void SetLoadingState(bool isLoading)
+        {
+            if (isLoading)
+                LoadingObject?.Show();
+            else
+                LoadingObject?.Hide();
+        }
 
         public void SetEmptyState(bool isEmpty) =>
             EmptyState?.SetActive(isEmpty);

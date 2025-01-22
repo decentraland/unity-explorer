@@ -34,7 +34,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         protected override Profile GetCollectionElement(int index) =>
             friends[index];
 
-        protected override async UniTask FetchInitialData(CancellationToken ct)
+        protected override async UniTask FetchInitialDataAsync(CancellationToken ct)
         {
             // PaginatedFriendsResult result = await friendsService.GetFriendsAsync(1, 1000, ct);
             //
