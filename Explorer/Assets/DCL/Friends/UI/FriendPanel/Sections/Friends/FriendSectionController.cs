@@ -17,6 +17,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         private readonly GenericContextMenu contextMenu;
         private readonly UserProfileContextMenuControlSettings userProfileContextMenuControlSettings;
 
+        private Profile? lastClickedProfileCtx;
+
         public FriendSectionController(FriendsSectionView view,
             IWeb3IdentityCache web3IdentityCache,
             IMVCManager mvcManager,
@@ -28,9 +30,9 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             contextMenu = new GenericContextMenu(view.ContextMenuSettings.ContextMenuWidth, verticalLayoutPadding: new RectOffset(15, 15, 20, 25), elementsSpacing: 5)
                .AddControl(userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings(systemClipboard, profile => Debug.Log($"Send friendship request to {profile.UserId}")))
                 .AddControl(new SeparatorContextMenuControlSettings(20, -15, -15))
-                .AddControl(new ButtonContextMenuControlSettings(view.ContextMenuSettings.ViewProfileText, view.ContextMenuSettings.ViewProfileSprite, () => OpenProfilePassport(lastClickedProfile!)))
-                .AddControl(new ButtonContextMenuControlSettings(view.ContextMenuSettings.BlockText, view.ContextMenuSettings.BlockSprite, () => Debug.Log($"Block {lastClickedProfile!.UserId}")))
-                .AddControl(new ButtonContextMenuControlSettings(view.ContextMenuSettings.ReportText, view.ContextMenuSettings.ReportSprite, () => Debug.Log($"Report {lastClickedProfile!.UserId}")));
+                .AddControl(new ButtonContextMenuControlSettings(view.ContextMenuSettings.ViewProfileText, view.ContextMenuSettings.ViewProfileSprite, () => OpenProfilePassport(lastClickedProfileCtx!)))
+                .AddControl(new ButtonContextMenuControlSettings(view.ContextMenuSettings.BlockText, view.ContextMenuSettings.BlockSprite, () => Debug.Log($"Block {lastClickedProfileCtx!.UserId}")))
+                .AddControl(new ButtonContextMenuControlSettings(view.ContextMenuSettings.ReportText, view.ContextMenuSettings.ReportSprite, () => Debug.Log($"Report {lastClickedProfileCtx!.UserId}")));
 
             requestManager.ContextMenuClicked += ContextMenuClicked;
         }
@@ -41,10 +43,12 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             requestManager.ContextMenuClicked -= ContextMenuClicked;
         }
 
-        private void ContextMenuClicked(Profile profile, Vector2 buttonPosition)
+        private void ContextMenuClicked(Profile profile, Vector2 buttonPosition, FriendListUserView elementView)
         {
+            lastClickedProfileCtx = profile;
             userProfileContextMenuControlSettings.SetInitialData(profile, view.ChatEntryConfiguration.GetNameColor(profile.Name), UserProfileContextMenuControlSettings.FriendshipStatus.FRIEND);
-            mvcManager.ShowAsync(GenericContextMenuController.IssueCommand(new GenericContextMenuParameter(contextMenu, buttonPosition))).Forget();
+            elementView.CanUnHover = false;
+            mvcManager.ShowAsync(GenericContextMenuController.IssueCommand(new GenericContextMenuParameter(contextMenu, buttonPosition, actionOnHide: () => elementView.CanUnHover = true))).Forget();
         }
 
         private void OpenProfilePassport(Profile profile) =>

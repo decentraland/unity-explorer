@@ -26,6 +26,22 @@ namespace DCL.Friends.UI.FriendPanel.Sections
         public Profile UserProfile { get; protected set; }
         public event Action<Profile>? MainButtonClicked;
 
+        private bool canUnHover = true;
+
+        internal bool CanUnHover
+        {
+            get => canUnHover;
+            set
+            {
+                if (!canUnHover && value)
+                {
+                    canUnHover = value;
+                    UnHover();
+                }
+                canUnHover = value;
+            }
+        }
+
         private void Start()
         {
             Background.color = NormalColor;
@@ -76,7 +92,10 @@ namespace DCL.Friends.UI.FriendPanel.Sections
         public void OnPointerEnter(PointerEventData eventData) =>
             Hover();
 
-        public void OnPointerExit(PointerEventData eventData) =>
-            UnHover();
+        public void OnPointerExit(PointerEventData eventData)
+        {
+            if (canUnHover)
+                UnHover();
+        }
     }
 }

@@ -14,7 +14,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 
         private List<Profile> friends = new ();
 
-        public event Action<Profile, Vector2>? ContextMenuClicked;
+        public event Action<Profile, Vector2, FriendListUserView>? ContextMenuClicked;
 
         public FriendListRequestManager(IFriendsService friendsService,
             IFriendsEventBus friendEventBus,
@@ -60,7 +60,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         protected override void CustomiseElement(FriendListUserView elementView, int index)
         {
             elementView.ContextMenuButton.onClick.RemoveAllListeners();
-            elementView.ContextMenuButton.onClick.AddListener(() => ContextMenuClicked?.Invoke(elementView.UserProfile, elementView.ContextMenuButton.transform.position));
+            elementView.ContextMenuButton.onClick.AddListener(() => ContextMenuClicked?.Invoke(elementView.UserProfile, elementView.ContextMenuButton.transform.position, elementView));
 
             elementView.ToggleOnlineStatus(false);
         }

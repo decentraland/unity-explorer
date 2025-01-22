@@ -19,7 +19,6 @@ namespace DCL.Friends.UI.FriendPanel.Sections
         protected readonly U requestManager;
 
         protected CancellationTokenSource friendListInitCts = new ();
-        protected Profile? lastClickedProfile;
         private Web3Address? previousWeb3Identity;
 
         public FriendPanelSectionController(T view,
@@ -33,26 +32,20 @@ namespace DCL.Friends.UI.FriendPanel.Sections
             this.view.Enable += Enable;
             this.view.Disable += Disable;
             this.view.LoopList.InitListView(0, OnGetItemByIndex);
-            requestManager.ElementClicked += ElementClick;
+            requestManager.ElementClicked += ElementClicked;
         }
 
         public virtual void Dispose()
         {
             view.Enable -= Enable;
             view.Disable -= Disable;
-            requestManager.ElementClicked -= ElementClick;
+            requestManager.ElementClicked -= ElementClicked;
             requestManager.Dispose();
             friendListInitCts.SafeCancelAndDispose();
         }
 
         private LoopListViewItem2 OnGetItemByIndex(LoopListView2 loopListView, int index) =>
             requestManager.GetLoopListItemByIndex(loopListView, index);
-
-        private void ElementClick(Profile profile)
-        {
-            lastClickedProfile = profile;
-            ElementClicked(profile);
-        }
 
         protected abstract void ElementClicked(Profile profile);
 
