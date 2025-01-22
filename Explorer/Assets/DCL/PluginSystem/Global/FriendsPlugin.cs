@@ -53,25 +53,15 @@ namespace DCL.PluginSystem.Global
 
             var friendsCache = new FriendsCache();
 
-            var archipelagoRealtime = new ArchipelagoRealtimeOnlineFriendsProvider(roomHub, friendEventBus, friendsCache);
-            // Merge online users from archipelago api and the users provided by livekit
-            var onlineUsersProvider = new CompositeOnlineFriendsProvider(this.apiOnlineUsersProvider,
-                archipelagoRealtime);
-
             friendsService = new RPCFriendsService(URLAddress.FromString(dclUrlSource.Url(DecentralandUrl.ApiFriends)),
-                friendEventBus, profileRepository, identityCache, onlineUsersProvider, friendsCache);
+                friendEventBus, profileRepository, identityCache, friendsCache);
 
             if (featureFlagsCache.Configuration.IsEnabled("alpha-friends-enabled"))
             {
-                archipelagoRealtime.SubscribeToRoomEvents();
-
                 // Fire and forget as this task will never finish
                 friendsService.SubscribeToIncomingFriendshipEventsAsync(
                                    CancellationTokenSource.CreateLinkedTokenSource(lifeCycleCancellationToken.Token, ct).Token)
                               .Forget();
-
-                // It might be useful to fetch and fill the friends cache at start.
-                // Otherwise we will not get online/offline realtime events from friends until we fetch it for the first time
             }
 
             // TODO: add the rest of the ui
