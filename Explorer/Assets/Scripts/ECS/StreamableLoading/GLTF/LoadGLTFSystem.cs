@@ -38,12 +38,10 @@ namespace ECS.StreamableLoading.GLTF
         protected override async UniTask<StreamableLoadingResult<GLTFData>> FlowInternalAsync(GetGLTFIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
             var reportData = new ReportData(GetReportCategory());
-
             bool contentSourceUrlAvailable = !string.IsNullOrEmpty(contentSourceUrl);
-            if ((sceneData != null && !sceneData.SceneContent.TryGetContentUrl(intention.Name!, out _)) || !contentSourceUrlAvailable)
-                return new StreamableLoadingResult<GLTFData>(
-                    reportData,
-                    new Exception("The content to download couldn't be found"));
+
+            if (!contentSourceUrlAvailable && (sceneData == null || !sceneData.SceneContent.TryGetContentUrl(intention.Name!, out _)))
+                return new StreamableLoadingResult<GLTFData>(reportData, new Exception("The content to download couldn't be found"));
 
             // Acquired budget is released inside GLTFastDownloadedProvider once the GLTF has been fetched
             GltFastSceneDownloadProvider? gltfSceneDownloadProvider = sceneData != null ? new GltFastSceneDownloadProvider(World, sceneData, partition, intention.Name!, reportData, webRequestController, acquiredBudget) : null;
