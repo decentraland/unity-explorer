@@ -53,6 +53,8 @@ using DCL.Settings.Settings;
 using DCL.Utilities;
 using ECS.SceneLifeCycle.Realm;
 using System;
+using DCL.UI.GenericContextMenu.Controls;
+using DCL.UI.GenericContextMenu.Controls.Configs;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Audio;
@@ -344,9 +346,10 @@ namespace DCL.PluginSystem.Global
                 new CameraReelGalleryController(cameraReelView.CameraReelGalleryView, this.cameraReelStorageService,
                     cameraReelScreenshotsStorage,
                     new ReelGalleryConfigParams(settings.GridLayoutFixedColumnCount, settings.ThumbnailHeight, settings.ThumbnailWidth, true, true), true,
-                    cameraReelView.optionsButton, cameraReelView.contextMenu,
+                    cameraReelView.CameraReelOptionsButton,
                     webBrowser, decentralandUrlsSource, inputHandler, systemClipboard,
-                    new ReelGalleryStringMessages(settings.CameraReelGalleryShareToXMessage, settings.PhotoSuccessfullyDeletedMessage, settings.PhotoSuccessfullyUpdatedMessage, settings.PhotoSuccessfullyDownloadedMessage, settings.LinkCopiedMessage)),
+                    new ReelGalleryStringMessages(settings.CameraReelGalleryShareToXMessage, settings.PhotoSuccessfullyDeletedMessage, settings.PhotoSuccessfullyUpdatedMessage, settings.PhotoSuccessfullyDownloadedMessage, settings.LinkCopiedMessage),
+                    mvcManager),
                 cameraReelStorageService,
                 web3IdentityCache,
                 mvcManager,
