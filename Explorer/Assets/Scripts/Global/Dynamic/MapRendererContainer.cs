@@ -14,6 +14,7 @@ using UnityEngine;
 using UnityEngine.AddressableAssets;
 using Utility.TeleportBus;
 using DCL.EventsApi;
+using DCL.Multiplayer.Connectivity;
 
 namespace Global.Dynamic
 {
@@ -42,6 +43,7 @@ namespace Global.Dynamic
             INotificationsBusController notificationsBusController,
             ITeleportBusController teleportBusController,
             INavmapBus navmapBus,
+            IOnlineUsersProvider onlineUsersProvider,
             CancellationToken ct)
         {
             var mapRendererContainer = new MapRendererContainer(assetsProvisioner, new MapRendererTextureContainer());
@@ -60,7 +62,8 @@ namespace Global.Dynamic
                     mapPinsEventBus,
                     notificationsBusController,
                     teleportBusController,
-                    navmapBus));
+                    navmapBus,
+                    onlineUsersProvider));
 
                 await mapRenderer.InitializeAsync(ct);
                 c.MapRenderer = mapRenderer;
