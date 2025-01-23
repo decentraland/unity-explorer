@@ -561,13 +561,7 @@ namespace Global.Dynamic
 
             bool includeCameraReel = staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.CAMERA_REEL) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.CAMERA_REEL)) || Application.isEditor;
 
-            ViewDependencies viewDependencies = new ViewDependencies()
-            {
-                ClipboardManager = clipboardManager,
-                EventSystem = unityEventSystem,
-                GlobalUIViews = new MVCManagerMenusAccessFacade(mvcManager),
-                DclInput = dclInput
-            };
+            var viewDependencies = new ViewDependencies(dclInput, unityEventSystem, new MVCManagerMenusAccessFacade(mvcManager), clipboardManager);
 
             var globalPlugins = new List<IDCLGlobalPlugin>
             {

@@ -1,5 +1,4 @@
-﻿
-using DCL.Clipboard;
+﻿using DCL.Clipboard;
 using DCL.Input;
 
 namespace MVC
@@ -9,9 +8,17 @@ namespace MVC
     /// </summary>
     public class ViewDependencies
     {
-        public DCLInput DclInput;
-        public IEventSystem EventSystem;
-        public MVCManagerMenusAccessFacade GlobalUIViews;
-        public IClipboardManager ClipboardManager;
+        public readonly DCLInput DclInput;
+        public readonly IEventSystem EventSystem;
+        public readonly MVCManagerMenusAccessFacade GlobalUIViews;
+        public readonly IClipboardManager ClipboardManager;
+
+        public ViewDependencies(DCLInput dclInput, IEventSystem eventSystem, MVCManagerMenusAccessFacade globalUIViews, IClipboardManager clipboardManager)
+        {
+            DclInput = dclInput;
+            EventSystem = eventSystem;
+            GlobalUIViews = globalUIViews;
+            ClipboardManager = clipboardManager;
+        }
     }
 }
