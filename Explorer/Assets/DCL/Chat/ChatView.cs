@@ -249,9 +249,7 @@ namespace DCL.Chat
             viewDependencies = dependencies;
         }
 
-        public void Initialize(IReadOnlyDictionary<ChatChannel.ChannelId, ChatChannel> chatChannels, ChatChannel.ChannelId defaultChannelId,
-            IEventSystem eventSystem, DCLInput dclInput,
-            IMVCManager mvcManager, IClipboardManager clipboardManager, bool areChatBubblesVisible)
+        public void Initialize(IReadOnlyDictionary<ChatChannel.ChannelId, ChatChannel> chatChannels, ChatChannel.ChannelId defaultChannelId, bool areChatBubblesVisible)
         {
             device = InputSystem.GetDevice<Mouse>();
             this.channels = chatChannels;
