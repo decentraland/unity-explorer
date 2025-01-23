@@ -1,5 +1,7 @@
 using DCL.Chat;
 using DCL.Profiles;
+using DCL.UI;
+using DCL.WebRequests;
 using System;
 using TMPro;
 using UnityEngine;
@@ -22,11 +24,13 @@ namespace DCL.Friends.UI.FriendPanel.Sections
         [field: SerializeField] public TMP_Text UserNameTag { get; private set; }
         [field: SerializeField] public Image FaceFrame { get; private set; }
         [field: SerializeField] public Image FaceRim { get; private set; }
+        [field: SerializeField] public ImageView ProfileImageView { get; private set; }
+
+        private bool canUnHover = true;
+        private ImageController? imageController;
 
         public Profile UserProfile { get; protected set; }
         public event Action<Profile>? MainButtonClicked;
-
-        private bool canUnHover = true;
 
         internal bool CanUnHover
         {
@@ -53,8 +57,9 @@ namespace DCL.Friends.UI.FriendPanel.Sections
             MainButtonClicked = null;
         }
 
-        public virtual void Configure(Profile profile)
+        public virtual void Configure(Profile profile, IWebRequestController webRequestController)
         {
+            imageController ??= new ImageController(ProfileImageView, webRequestController);
             UnHover();
             UserProfile = profile;
 
@@ -69,6 +74,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections
             userColor.g += 0.3f;
             userColor.b += 0.3f;
             FaceRim.color = userColor;
+
+            imageController.RequestImage(profile.Avatar.FaceSnapshotUrl, removePrevious: true);
         }
 
         protected virtual void ToggleButtonView(bool isActive)

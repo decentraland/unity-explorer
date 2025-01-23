@@ -6,6 +6,7 @@ using DCL.Friends.UI.FriendPanel.Sections.Friends;
 using DCL.Friends.UI.FriendPanel.Sections.Requests;
 using DCL.Profiles;
 using DCL.Web3.Identities;
+using DCL.WebRequests;
 using MVC;
 using System.Threading;
 using Utility;
@@ -34,6 +35,7 @@ namespace DCL.Friends.UI.FriendPanel
         private readonly IProfileCache profileCache;
         private readonly IProfileRepository profileRepository;
         private readonly ISystemClipboard systemClipboard;
+        private readonly IWebRequestController webRequestController;
 
         private BlockedSectionController blockedSectionController;
         private FriendSectionController friendSectionController;
@@ -52,7 +54,8 @@ namespace DCL.Friends.UI.FriendPanel
             IWeb3IdentityCache web3IdentityCache,
             IProfileCache profileCache,
             IProfileRepository profileRepository,
-            ISystemClipboard systemClipboard) : base(viewFactory)
+            ISystemClipboard systemClipboard,
+            IWebRequestController webRequestController) : base(viewFactory)
         {
             this.chatView = chatView;
             this.sidebarRequestNotificationIndicator = sidebarRequestNotificationIndicator;
@@ -63,6 +66,7 @@ namespace DCL.Friends.UI.FriendPanel
             this.profileCache = profileCache;
             this.profileRepository = profileRepository;
             this.systemClipboard = systemClipboard;
+            this.webRequestController = webRequestController;
         }
 
         public override void Dispose()
@@ -108,17 +112,17 @@ namespace DCL.Friends.UI.FriendPanel
                 web3IdentityCache,
                 mvcManager,
                 systemClipboard,
-                new FriendListRequestManager(friendsService, friendEventBus, profileRepository, profileCache, viewInstance!.FriendsSection.LoopList, FRIENDS_PAGE_SIZE, FRIENDS_FETCH_ELEMENTS_THRESHOLD));
+                new FriendListRequestManager(friendsService, friendEventBus, profileRepository, profileCache, webRequestController, viewInstance!.FriendsSection.LoopList, FRIENDS_PAGE_SIZE, FRIENDS_FETCH_ELEMENTS_THRESHOLD));
             requestsSectionController = new RequestsSectionController(viewInstance!.RequestsSection,
                 friendsService,
                 friendEventBus,
                 web3IdentityCache,
                 mvcManager,
                 systemClipboard,
-                new RequestsRequestManager(friendsService, friendEventBus, FRIENDS_REQUEST_PAGE_SIZE, profileCache, profileRepository));
+                new RequestsRequestManager(friendsService, friendEventBus, webRequestController, FRIENDS_REQUEST_PAGE_SIZE, profileCache, profileRepository));
             blockedSectionController = new BlockedSectionController(viewInstance!.BlockedSection,
                 web3IdentityCache,
-                new BlockedRequestManager(profileRepository, profileCache, web3IdentityCache, FRIENDS_PAGE_SIZE, FRIENDS_FETCH_ELEMENTS_THRESHOLD),
+                new BlockedRequestManager(profileRepository, profileCache, web3IdentityCache, webRequestController, FRIENDS_PAGE_SIZE, FRIENDS_FETCH_ELEMENTS_THRESHOLD),
                 mvcManager);
 
             requestsSectionController.ReceivedRequestsCountChanged += FriendRequestCountChanged;

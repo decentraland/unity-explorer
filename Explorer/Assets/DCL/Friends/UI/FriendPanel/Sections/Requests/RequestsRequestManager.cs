@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Profiles;
+using DCL.WebRequests;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -25,8 +26,13 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
         public event Action<FriendRequest>? AcceptRequestClicked;
         public event Action<Profile, Vector2, RequestUserView>? ContextMenuClicked;
 
-        public RequestsRequestManager(IFriendsService friendsService, IFriendsEventBus friendEventBus, int pageSize, IProfileCache profileCache, IProfileRepository profileRepository)
-            : base(friendsService, friendEventBus, pageSize, FriendPanelStatus.RECEIVED, FriendPanelStatus.SENT, STATUS_ELEMENT_INDEX, EMPTY_ELEMENT_INDEX, USER_ELEMENT_INDEX)
+        public RequestsRequestManager(IFriendsService friendsService,
+            IFriendsEventBus friendEventBus,
+            IWebRequestController webRequestController,
+            int pageSize,
+            IProfileCache profileCache,
+            IProfileRepository profileRepository)
+            : base(friendsService, friendEventBus, webRequestController, pageSize, FriendPanelStatus.RECEIVED, FriendPanelStatus.SENT, STATUS_ELEMENT_INDEX, EMPTY_ELEMENT_INDEX, USER_ELEMENT_INDEX)
         {
             this.profileCache = profileCache;
             this.profileRepository = profileRepository;

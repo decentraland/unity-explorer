@@ -586,9 +586,21 @@ MonoBehaviour:
   <UserNameTag>k__BackingField: {fileID: 4439377754047818784}
   <FaceFrame>k__BackingField: {fileID: 1656019478465407496}
   <FaceRim>k__BackingField: {fileID: 5967679218760655358}
+  <ProfileImageView>k__BackingField: {fileID: 3708114937530408104}
   <UnblockButton>k__BackingField: {fileID: 5048879491243901675}
   <ContextMenuButton>k__BackingField: {fileID: 5471597906867111241}
   <BlockedDateText>k__BackingField: {fileID: 5742925771086787138}
+--- !u!114 &3708114937530408104 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 7964812150383071099, guid: 5dd1047f77ec242c3bb28f7edc2af796, type: 3}
+  m_PrefabInstance: {fileID: 6772688781097931731}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1e79e296834574c5d9138852d94c8998, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!114 &4439377754047818784 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 6946444103854276595, guid: 5dd1047f77ec242c3bb28f7edc2af796, type: 3}

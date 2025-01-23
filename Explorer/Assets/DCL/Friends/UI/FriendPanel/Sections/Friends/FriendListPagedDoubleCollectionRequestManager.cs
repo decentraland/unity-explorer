@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Profiles;
+using DCL.WebRequests;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -20,7 +21,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 
         public FriendListPagedDoubleCollectionRequestManager(IFriendsService friendsService,
             IFriendsEventBus friendEventBus,
-            int pageSize) : base(friendsService, friendEventBus, pageSize, FriendPanelStatus.ONLINE, FriendPanelStatus.OFFLINE, STATUS_ELEMENT_INDEX, EMPTY_ELEMENT_INDEX, USER_ELEMENT_INDEX)
+            IWebRequestController webRequestController,
+            int pageSize) : base(friendsService, friendEventBus, webRequestController, pageSize, FriendPanelStatus.ONLINE, FriendPanelStatus.OFFLINE, STATUS_ELEMENT_INDEX, EMPTY_ELEMENT_INDEX, USER_ELEMENT_INDEX)
         {
 
         }

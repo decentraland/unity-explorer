@@ -614,6 +614,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &5110362416587355827 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 7964812150383071099, guid: 5dd1047f77ec242c3bb28f7edc2af796, type: 3}
+  m_PrefabInstance: {fileID: 2910193944685869512}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1e79e296834574c5d9138852d94c8998, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!114 &5189747532995577403 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 6946444103854276595, guid: 5dd1047f77ec242c3bb28f7edc2af796, type: 3}
@@ -662,6 +673,7 @@ MonoBehaviour:
   <UserNameTag>k__BackingField: {fileID: 5189747532995577403}
   <FaceFrame>k__BackingField: {fileID: 7162172119129587731}
   <FaceRim>k__BackingField: {fileID: 2832497847450356709}
+  <ProfileImageView>k__BackingField: {fileID: 5110362416587355827}
   <ContextMenuButton>k__BackingField: {fileID: 7541025456679391709}
   <JumpInButton>k__BackingField: {fileID: 3539447002694376727}
   <OnlineStatusText>k__BackingField: {fileID: 7747039600216781622}

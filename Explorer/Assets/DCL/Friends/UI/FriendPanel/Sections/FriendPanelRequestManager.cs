@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Profiles;
+using DCL.WebRequests;
 using SuperScrollView;
 using System;
 using System.Threading;
@@ -11,6 +12,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections
     {
         private readonly int pageSize;
         private readonly int elementsMissingThreshold;
+        private IWebRequestController webRequestController;
 
         private CancellationTokenSource fetchNewDataCts = new ();
         private int pageNumber;
@@ -23,10 +25,11 @@ namespace DCL.Friends.UI.FriendPanel.Sections
 
         public event Action<Profile>? ElementClicked;
 
-        protected FriendPanelRequestManager(int pageSize, int elementsMissingThreshold)
+        protected FriendPanelRequestManager(int pageSize, int elementsMissingThreshold, IWebRequestController webRequestController)
         {
             this.pageSize = pageSize;
             this.elementsMissingThreshold = elementsMissingThreshold;
+            this.webRequestController = webRequestController;
         }
 
         public virtual void Dispose()
@@ -43,7 +46,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections
         {
             LoopListViewItem2 listItem = loopListView.NewListViewItem(loopListView.ItemPrefabDataList[0].mItemPrefab.name);
             T view = listItem.GetComponent<T>();
-            view.Configure(GetCollectionElement(index));
+            view.Configure(GetCollectionElement(index), webRequestController);
 
             view.RemoveMainButtonClickListeners();
             view.MainButtonClicked += profile => ElementClicked?.Invoke(profile);

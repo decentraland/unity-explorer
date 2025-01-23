@@ -12,6 +12,7 @@ using DCL.Multiplayer.Connectivity;
 using DCL.Profiles;
 using DCL.Web3.Identities;
 using DCL.UI.MainUI;
+using DCL.WebRequests;
 using MVC;
 using System.Threading;
 using Utility;
@@ -30,6 +31,7 @@ namespace DCL.PluginSystem.Global
         private readonly IProfileCache profileCache;
         private readonly IProfileRepository profileRepository;
         private readonly ISystemClipboard systemClipboard;
+        private readonly IWebRequestController webRequestController;
         private readonly CancellationTokenSource lifeCycleCancellationToken = new ();
 
         private RPCFriendsService? friendsService;
@@ -44,7 +46,8 @@ namespace DCL.PluginSystem.Global
             IWeb3IdentityCache web3IdentityCache,
             IProfileCache profileCache,
             IProfileRepository profileRepository,
-            ISystemClipboard systemClipboard)
+            ISystemClipboard systemClipboard,
+            IWebRequestController webRequestController)
         {
             this.mainUIView = mainUIView;
             this.dclUrlSource = dclUrlSource;
@@ -54,6 +57,7 @@ namespace DCL.PluginSystem.Global
             this.profileCache = profileCache;
             this.profileRepository = profileRepository;
             this.systemClipboard = systemClipboard;
+            this.webRequestController = webRequestController;
         }
 
         public void Dispose()
@@ -94,7 +98,8 @@ namespace DCL.PluginSystem.Global
                 web3IdentityCache,
                 profileCache,
                 profileRepository,
-                systemClipboard);
+                systemClipboard,
+                webRequestController);
 
             mvcManager.RegisterController(friendsPanelController);
         }

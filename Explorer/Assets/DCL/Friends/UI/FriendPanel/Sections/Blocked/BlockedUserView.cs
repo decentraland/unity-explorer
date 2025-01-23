@@ -1,4 +1,5 @@
 using DCL.Profiles;
+using DCL.WebRequests;
 using System;
 using TMPro;
 using UnityEngine;
@@ -24,10 +25,10 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Blocked
             }
         }
 
-        public override void Configure(Profile profile)
+        public override void Configure(Profile profile, IWebRequestController webRequestController)
         {
             buttons = new[] { UnblockButton, ContextMenuButton };
-            base.Configure(profile);
+            base.Configure(profile, webRequestController);
         }
 
         protected override void ToggleButtonView(bool isActive)
