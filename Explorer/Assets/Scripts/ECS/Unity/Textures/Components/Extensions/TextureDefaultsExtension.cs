@@ -4,6 +4,7 @@ using SceneRunner.Scene;
 using UnityEngine;
 using Texture = Decentraland.Common.Texture;
 using TextureWrapMode = UnityEngine.TextureWrapMode;
+using Vector2 = UnityEngine.Vector2;
 
 namespace ECS.Unity.Textures.Components.Extensions
 {
@@ -24,7 +25,7 @@ namespace ECS.Unity.Textures.Components.Extensions
             self.TryGetTextureFileHash(data, out string fileHash);
 
             return success
-                ? new TextureComponent(url, fileHash, self.GetWrapMode(), self.GetFilterMode())
+                ? new TextureComponent(url, fileHash, self.GetWrapMode(), self.GetFilterMode(), textureOffset: self.GetOffset(), textureTiling: self.GetTiling())
                 : null;
         }
 
@@ -63,7 +64,7 @@ namespace ECS.Unity.Textures.Components.Extensions
             switch (self.TexCase)
             {
                 case TextureUnion.TexOneofCase.VideoTexture:
-                    return (int) self.VideoTexture.VideoPlayerEntity;
+                    return (int)self.VideoTexture.VideoPlayerEntity;
                 default:
                     return 0;
             }
@@ -97,6 +98,32 @@ namespace ECS.Unity.Textures.Components.Extensions
                 case TextureUnion.TexOneofCase.Texture:
                 default:
                     return self.Texture.GetFilterMode();
+            }
+        }
+
+        public static Vector2 GetOffset(this TextureUnion self)
+        {
+            switch (self.TexCase)
+            {
+                case TextureUnion.TexOneofCase.AvatarTexture:
+                case TextureUnion.TexOneofCase.VideoTexture:
+                default:
+                    return Vector2.zero;
+                case TextureUnion.TexOneofCase.Texture:
+                    return self.Texture.Offset ?? Vector2.zero;
+            }
+        }
+
+        public static Vector2 GetTiling(this TextureUnion self)
+        {
+            switch (self.TexCase)
+            {
+                case TextureUnion.TexOneofCase.AvatarTexture:
+                case TextureUnion.TexOneofCase.VideoTexture:
+                default:
+                    return Vector2.one;
+                case TextureUnion.TexOneofCase.Texture:
+                    return self.Texture.Tiling ?? Vector2.one;
             }
         }
 

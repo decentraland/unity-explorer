@@ -11,8 +11,4 @@ namespace Global.Dynamic
         Localhost,
         Custom,
     }
-
-
-    
-    
 }

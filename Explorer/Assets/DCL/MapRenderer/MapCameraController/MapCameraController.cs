@@ -2,6 +2,7 @@
 using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.Culling;
 using DCL.MapRenderer.MapLayers;
+using DCL.Navmap;
 using DG.Tweening;
 using System;
 using UnityEngine;
@@ -12,11 +13,11 @@ namespace DCL.MapRenderer.MapCameraController
     internal partial class MapCameraController : IMapCameraControllerInternal
     {
         private const float CAMERA_HEIGHT = 0;
-
         private const int MAX_TEXTURE_SIZE = 4096;
+        private const float EXTRA_MAP_MOVEMENT_PADDING = -0.3f;
 
         public event Action<IMapActivityOwner, IMapCameraControllerInternal>? OnReleasing;
-        public event Action<float, float>? ZoomChanged;
+        public event Action<float, float, int>? ZoomChanged;
 
         public MapLayer EnabledLayers { get; private set; }
 
@@ -114,9 +115,9 @@ namespace DCL.MapRenderer.MapCameraController
         public IMapInteractivityController GetInteractivityController() =>
             interactivityBehavior;
 
-        public void SetZoom(float value)
+        public void SetZoom(float value, int zoomLevel)
         {
-            SetCameraSize(value);
+            SetCameraSize(value, zoomLevel);
             // Clamp local position as boundaries are dependent on zoom
             SetLocalPositionClamped(mapCameraObject.transform.localPosition);
             cullingController.SetCameraDirty(this);
@@ -151,7 +152,7 @@ namespace DCL.MapRenderer.MapCameraController
             translationSequence?.Kill();
             translationSequence = null;
 
-            SetCameraSize(zoom);
+            SetCameraSize(zoom, 3);
 
             Vector3 position = coordsUtils.CoordsToPositionUnclamped(coordinates);
             mapCameraObject.transform.localPosition = ClampLocalPosition(new Vector3(position.x, position.y, CAMERA_HEIGHT));
@@ -174,13 +175,13 @@ namespace DCL.MapRenderer.MapCameraController
                                 });
         }
 
-        private void SetCameraSize(float zoom)
+        private void SetCameraSize(float zoomCameraValue, int zoomStepLevel)
         {
-            zoom = Mathf.Clamp01(zoom);
-            mapCameraObject.mapCamera.orthographicSize = Mathf.Lerp(zoomValues.y, zoomValues.x, zoom);
+            zoomCameraValue = Mathf.Clamp01(zoomCameraValue);
+            mapCameraObject.mapCamera.orthographicSize = Mathf.Lerp(zoomValues.y, zoomValues.x, zoomCameraValue);
 
             interactivityBehavior.ApplyCameraZoom(zoomValues.x, mapCameraObject.mapCamera.orthographicSize);
-            ZoomChanged?.Invoke(zoomValues.x, mapCameraObject.mapCamera.orthographicSize);
+            ZoomChanged?.Invoke(zoomValues.x, mapCameraObject.mapCamera.orthographicSize, zoomStepLevel);
 
             CalculateCameraPositionBounds();
         }
@@ -200,19 +201,27 @@ namespace DCL.MapRenderer.MapCameraController
             var cameraYSize = mapCameraObject.mapCamera.orthographicSize;
             var cameraXSize = cameraYSize * mapCameraObject.mapCamera.aspect;
 
-            float xMin = worldBounds.xMin + cameraXSize;
-            float xMax = worldBounds.xMax - cameraXSize;
+            var extraPaddingX = cameraXSize * EXTRA_MAP_MOVEMENT_PADDING;
+            var extraPaddingY = cameraYSize * EXTRA_MAP_MOVEMENT_PADDING;
 
-            float yMin = worldBounds.yMin + cameraYSize;
-            float yMax = worldBounds.yMax - cameraYSize;
+            float xMin = worldBounds.xMin + cameraXSize + extraPaddingX;
+            float xMax = worldBounds.xMax - cameraXSize - extraPaddingX;
 
-            // If the map's width is smaller than the camera's width, disable X-drag
+            float yMin = worldBounds.yMin + cameraYSize + extraPaddingY;
+            float yMax = worldBounds.yMax - cameraYSize - extraPaddingY;
+
             if (worldBounds.xMax - worldBounds.xMin < 2 * cameraXSize)
-                xMin = xMax = 0;
+            {
+                xMin = extraPaddingX;
+                xMax = -extraPaddingX;
+            }
 
-            // If the map's height is smaller than the camera's height, disable Y-drag
+            // If the map's height is smaller than the camera's height, add extra padding
             if (worldBounds.yMax - worldBounds.yMin < 2 * cameraYSize)
-                yMin = yMax = 0;
+            {
+                yMin = extraPaddingY;
+                yMax = -extraPaddingY;
+            }
 
             cameraPositionBounds = Rect.MinMaxRect(xMin, yMin, xMax, yMax);
         }

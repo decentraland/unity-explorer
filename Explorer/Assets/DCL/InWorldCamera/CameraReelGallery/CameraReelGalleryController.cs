@@ -10,7 +10,9 @@ using DCL.InWorldCamera.CameraReelToast;
 using DCL.InWorldCamera.ReelActions;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.Pools;
+using DCL.UI.GenericContextMenu.Controls.Configs;
 using DG.Tweening;
+using MVC;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -47,6 +49,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
         public event Action ScreenshotDeleted;
         public event Action ScreenshotShared;
         public event Action ScreenshotDownloaded;
+        public event Action<int> MaxThumbnailsUpdated;
 
         private const int THUMBNAIL_POOL_DEFAULT_CAPACITY = 100;
         private const int THUMBNAIL_POOL_MAX_SIZE = 10000;
@@ -66,8 +69,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
         private readonly ReelGalleryPoolManager reelGalleryPoolManager;
         private readonly Dictionary<DateTime, MonthGridController> monthViews = new ();
         private readonly Dictionary<CameraReelResponseCompact, Texture> reelThumbnailCache = new ();
-        private readonly OptionButtonController? optionButtonController;
-        private readonly ContextMenuController? contextMenuController;
+        private readonly CameraReelOptionButtonController? optionButtonController;
         private readonly Rect elementMaskRect;
         private readonly ReelGalleryStringMessages? reelGalleryStringMessages;
         private readonly ReelGalleryConfigParams reelGalleryConfigParams;
@@ -94,13 +96,13 @@ namespace DCL.InWorldCamera.CameraReelGallery
             ICameraReelScreenshotsStorage cameraReelScreenshotsStorage,
             ReelGalleryConfigParams reelGalleryConfigParams,
             bool useSignedRequest,
-            OptionButtonView? optionButtonView = null,
-            ContextMenuView? contextMenuView = null,
+            CameraReelOptionButtonView? optionButtonView = null,
             IWebBrowser? webBrowser = null,
             IDecentralandUrlsSource? decentralandUrlsSource = null,
             IExplorePanelEscapeAction? explorePanelEscapeAction = null,
             ISystemClipboard? systemClipboard = null,
-            ReelGalleryStringMessages? reelGalleryStringMessages = null)
+            ReelGalleryStringMessages? reelGalleryStringMessages = null,
+            IMVCManager? mvcManager = null)
         {
             this.view = view;
             this.cameraReelStorageService = cameraReelStorageService;
@@ -121,10 +123,9 @@ namespace DCL.InWorldCamera.CameraReelGallery
             if (Application.platform == RuntimePlatform.OSXEditor || Application.platform == RuntimePlatform.OSXPlayer)
                 this.view.scrollRect.scrollSensitivity *= MACOS_SCROLL_SENSITIVITY_SCALE_FACTOR;
 
-            if (optionButtonView is not null && contextMenuView is not null)
+            if (optionButtonView is not null)
             {
-                this.contextMenuController = new ContextMenuController(contextMenuView);
-                this.optionButtonController = new OptionButtonController(optionButtonView, contextMenuController);
+                this.optionButtonController = new CameraReelOptionButtonController(optionButtonView, mvcManager!);
             }
 
             reelGalleryPoolManager = new ReelGalleryPoolManager(view.thumbnailViewPrefab, view.monthGridPrefab, view.unusedThumbnailViewObject,
@@ -136,13 +137,13 @@ namespace DCL.InWorldCamera.CameraReelGallery
             view.cancelDeleteIntentBackgroundButton?.onClick.AddListener(() => OnDeletionModalCancelClick(false));
             view.deleteReelButton?.onClick.AddListener(DeleteScreenshot);
 
-            if (this.contextMenuController != null)
+            if (this.optionButtonController != null)
             {
-                this.contextMenuController.SetPublicRequested += SetReelPublic;
-                this.contextMenuController.ShareToXRequested += ShareToX;
-                this.contextMenuController.CopyPictureLinkRequested += CopyPictureLink;
-                this.contextMenuController.DownloadRequested += DownloadReelLocally;
-                this.contextMenuController.DeletePictureRequested += DeleteReel;
+                this.optionButtonController.SetPublicRequested += SetReelPublic;
+                this.optionButtonController.ShareToXRequested += ShareToX;
+                this.optionButtonController.CopyPictureLinkRequested += CopyPictureLink;
+                this.optionButtonController.DownloadRequested += DownloadReelLocally;
+                this.optionButtonController.DeletePictureRequested += DeleteReel;
             }
         }
 
@@ -382,6 +383,9 @@ namespace DCL.InWorldCamera.CameraReelGallery
                 currentSize += thumbnailViews.Count;
                 CAMERA_REEL_RESPONSES_POOL.Release(bucket.Value);
             }
+
+            MaxThumbnailsUpdated?.Invoke(currentSize);
+
             DictionaryPool<DateTime, List<CameraReelResponseCompact>>.Release(result);
             endVisible = currentSize - 1;
 
@@ -526,7 +530,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
             deleteScreenshotCts.SafeCancelAndDispose();
 
             HideDeleteModal();
-            contextMenuController?.Hide();
+            optionButtonController?.HideControl();
         }
 
         public void Dispose()
@@ -543,13 +547,13 @@ namespace DCL.InWorldCamera.CameraReelGallery
 
             optionButtonController?.Dispose();
 
-            if (this.contextMenuController != null)
+            if (this.optionButtonController != null)
             {
-                this.contextMenuController.SetPublicRequested -= SetReelPublic;
-                this.contextMenuController.ShareToXRequested -= ShareToX;
-                this.contextMenuController.CopyPictureLinkRequested -= CopyPictureLink;
-                this.contextMenuController.DownloadRequested -= DownloadReelLocally;
-                this.contextMenuController.DeletePictureRequested -= DeleteReel;
+                this.optionButtonController.SetPublicRequested -= SetReelPublic;
+                this.optionButtonController.ShareToXRequested -= ShareToX;
+                this.optionButtonController.CopyPictureLinkRequested -= CopyPictureLink;
+                this.optionButtonController.DownloadRequested -= DownloadReelLocally;
+                this.optionButtonController.DeletePictureRequested -= DeleteReel;
             }
         }
     }

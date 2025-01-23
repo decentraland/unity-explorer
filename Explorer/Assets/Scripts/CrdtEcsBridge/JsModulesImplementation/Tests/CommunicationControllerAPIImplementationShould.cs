@@ -57,6 +57,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
                 outerArray[i] = new PoolableByteArray(GetRandomBytes(innerArraySize), innerArraySize, null);
 
             api.SendBinary(outerArray);
+            api.GetResult();
 
             var expectedCalls = outerArray.Select(o => o.Prepend((byte)ISceneCommunicationPipe.MsgType.Uint8Array).ToArray()).ToList();
 
@@ -114,7 +115,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
 
             public void RemoveSceneMessageHandler(string sceneId, ISceneCommunicationPipe.MsgType msgType, ISceneCommunicationPipe.SceneMessageHandler onSceneMessage) { }
 
-            public void SendMessage(ReadOnlySpan<byte> message, string sceneId, ISceneCommunicationPipe.ConnectivityAssertiveness assertiveness, CancellationToken ct)
+            public void SendMessage(ReadOnlySpan<byte> message, string sceneId, ISceneCommunicationPipe.ConnectivityAssertiveness assertiveness, CancellationToken ct, string specialRecipient = null)
             {
                 sendMessageCalls.Add(message.ToArray());
             }

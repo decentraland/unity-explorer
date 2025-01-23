@@ -28,6 +28,8 @@ using Segment.Serialization;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Assertions;
+using Utility;
+using Utility.TeleportBus;
 using Utility.Types;
 
 namespace Global.Dynamic
@@ -43,6 +45,7 @@ namespace Global.Dynamic
         private readonly World globalWorld;
         private readonly ObjectProxy<Entity> cameraEntity;
         private readonly CameraSamplingData cameraSamplingData;
+        private readonly ITeleportBusController teleportBusController;
 
         private Vector2Int currentParcel;
 
@@ -66,8 +69,9 @@ namespace Global.Dynamic
             ILoadingStatus loadingStatus,
             ICacheCleaner cacheCleaner,
             IMemoryUsageProvider memoryUsageProvider,
-            IAnalyticsController analyticsController,
+            ITeleportBusController teleportBusController,
             ILandscape landscape,
+            IAnalyticsController analyticsController,
             IRealmMisc realmMisc)
         {
             this.loadingScreen = loadingScreen;
@@ -78,6 +82,7 @@ namespace Global.Dynamic
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.globalWorld = globalWorld;
             this.loadingStatus = loadingStatus;
+            this.teleportBusController = teleportBusController;
             this.analyticsController = analyticsController;
             this.landscape = landscape;
             var livekitTimeout = TimeSpan.FromSeconds(10f);

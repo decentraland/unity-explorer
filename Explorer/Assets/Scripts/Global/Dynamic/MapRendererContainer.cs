@@ -4,6 +4,7 @@ using DCL.MapPins.Bus;
 using DCL.MapRenderer;
 using DCL.MapRenderer.ComponentsFactory;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Navmap;
 using DCL.NotificationsBusController.NotificationsBus;
 using DCL.PlacesAPIService;
 using DCL.PluginSystem;
@@ -11,6 +12,9 @@ using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+using Utility.TeleportBus;
+using DCL.EventsApi;
+using DCL.Multiplayer.Connectivity;
 
 namespace Global.Dynamic
 {
@@ -33,9 +37,13 @@ namespace Global.Dynamic
             IDecentralandUrlsSource decentralandUrlsSource,
             IAssetsProvisioner assetsProvisioner,
             IPlacesAPIService placesAPIService,
+            IEventsApiService eventsAPIService,
             IMapPathEventBus mapPathEventBus,
             IMapPinsEventBus mapPinsEventBus,
             INotificationsBusController notificationsBusController,
+            ITeleportBusController teleportBusController,
+            INavmapBus navmapBus,
+            IOnlineUsersProvider onlineUsersProvider,
             CancellationToken ct)
         {
             var mapRendererContainer = new MapRendererContainer(assetsProvisioner, new MapRendererTextureContainer());
@@ -49,9 +57,13 @@ namespace Global.Dynamic
                     decentralandUrlsSource,
                     c.TextureContainer,
                     placesAPIService,
+                    eventsAPIService,
                     mapPathEventBus,
                     mapPinsEventBus,
-                    notificationsBusController));
+                    notificationsBusController,
+                    teleportBusController,
+                    navmapBus,
+                    onlineUsersProvider));
 
                 await mapRenderer.InitializeAsync(ct);
                 c.MapRenderer = mapRenderer;
