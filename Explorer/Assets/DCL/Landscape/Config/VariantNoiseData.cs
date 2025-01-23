@@ -9,9 +9,9 @@ namespace DCL.Landscape.Config
         public uint seed;
         public NoiseDataBase other;
 
-        public override INoiseGenerator GetGenerator(uint baseSeed, uint variantSeed, NoiseGeneratorCache cache, NoiseNativeArrayProvider provider)
+        public override INoiseGenerator GetGenerator(uint baseSeed, uint variantSeed, NoiseGeneratorCache cache)
         {
-            return other.GetGenerator(baseSeed, seed, cache, provider);
+            return other.GetGenerator(baseSeed, seed, cache);
         }
     }
 }

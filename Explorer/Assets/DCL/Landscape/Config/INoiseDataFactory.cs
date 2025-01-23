@@ -4,6 +4,6 @@ namespace DCL.Landscape.Config
 {
     public interface INoiseDataFactory
     {
-        public INoiseGenerator GetGenerator(uint baseSeed, uint variantSeed, NoiseGeneratorCache cache, NoiseNativeArrayProvider noiseNativeArrayProvider);
+        public INoiseGenerator GetGenerator(uint baseSeed, uint variantSeed, NoiseGeneratorCache cache);
     }
 }

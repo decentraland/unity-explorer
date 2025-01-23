@@ -14,8 +14,8 @@ namespace DCL.Landscape.NoiseGeneration
         private readonly uint baseSeed;
         private NoiseGenerator mainJob;
 
-        public CompositeNoiseGenerator(CompositeNoiseData compositeNoiseData, uint baseSeed, uint variantSeed, NoiseGeneratorCache generatorCache, NoiseNativeArrayProvider provider) :
-            base(compositeNoiseData, variantSeed, baseSeed, provider)
+        public CompositeNoiseGenerator(CompositeNoiseData compositeNoiseData, uint baseSeed, uint variantSeed, NoiseGeneratorCache generatorCache) :
+            base(compositeNoiseData, variantSeed, baseSeed, generatorCache.noiseNativeArrayProvider)
         {
             this.compositeNoiseData = compositeNoiseData;
             this.baseSeed = baseSeed;
