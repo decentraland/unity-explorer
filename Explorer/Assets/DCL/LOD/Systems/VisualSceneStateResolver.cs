@@ -26,9 +26,6 @@ namespace DCL.LOD
             else if (roadCoordinates.Contains(sceneDefinitionComponent.Definition.metadata.scene.DecodedBase))
                 visualSceneState.CurrentVisualSceneState = VisualSceneStateEnum.ROAD;
 
-            //For SDK6 scenes, we just show lod0
-            else if (!sceneDefinitionComponent.IsSDK7)
-                visualSceneState.CurrentVisualSceneState = VisualSceneStateEnum.SHOWING_LOD;
             else
             {
                 var isSceneLoaded = visualSceneState.CurrentVisualSceneState == VisualSceneStateEnum.SHOWING_SCENE
