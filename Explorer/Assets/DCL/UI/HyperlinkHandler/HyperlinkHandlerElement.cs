@@ -6,6 +6,7 @@ using DCL.Input;
 using DCL.TeleportPrompt;
 using System;
 using System.Collections.Generic;
+using System.Text;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -21,13 +22,17 @@ namespace DCL.UI.HyperlinkHandler
         private bool initialized;
         private bool isHovering;
         private bool isHighlighting;
-        private int lastHighlightedIndex;
+        private int lastHighlightedIndex = -1;
+        private string originalText;
+        private TMP_Style selectedStyle;
+        private StringBuilder stringBuilder;
 
         private HyperlinkHandlerDependencies dependencies;
 
         private void Awake()
         {
             AddLinkHandlers();
+            selectedStyle = styleSheet.GetStyle("LinkSelected");
         }
 
         public void Initialize(HyperlinkHandlerDependencies dependencies)
@@ -137,26 +142,44 @@ namespace DCL.UI.HyperlinkHandler
             {
                 if (isHighlighting && lastHighlightedIndex == linkIndex) return;
 
-                if (lastHighlightedIndex >= 0)
-                    textComponent.text = textComponent.text.Replace(styleSheet.GetStyle("LinkSelected").styleOpeningDefinition, styleSheet.GetStyle("Link").styleOpeningDefinition).Replace(styleSheet.GetStyle("LinkSelected").styleClosingDefinition, styleSheet.GetStyle("Link").styleClosingDefinition);
-
-                lastHighlightedIndex = linkIndex;
-                isHighlighting = true;
-                dependencies.Cursor.SetStyle(CursorStyle.Interaction, true);
-                var linkText = textComponent.textInfo.linkInfo[linkIndex].GetLinkText();
-                var newText = linkText.Insert(linkText.Length, styleSheet.GetStyle("LinkSelected").styleClosingDefinition).Insert(0, styleSheet.GetStyle("LinkSelected").styleOpeningDefinition);
-                textComponent.text = textComponent.text.Replace(linkText, newText) ;
+                ResetPreviousHighlight();
+                HighlightCurrentLink(linkIndex);
                 return;
             }
 
             if (isHighlighting)
             {
-                lastHighlightedIndex = -1;
-                textComponent.text = textComponent.text.Replace(styleSheet.GetStyle("LinkSelected").styleOpeningDefinition, styleSheet.GetStyle("Link").styleOpeningDefinition).Replace(styleSheet.GetStyle("LinkSelected").styleClosingDefinition, styleSheet.GetStyle("Link").styleClosingDefinition);
-                dependencies.Cursor.SetStyle(CursorStyle.Normal);
+                ResetPreviousHighlight();
             }
-
-            isHighlighting = false;
         }
+
+        private void HighlightCurrentLink(int linkIndex)
+        {
+            lastHighlightedIndex = linkIndex;
+            isHighlighting = true;
+            dependencies.Cursor.SetStyle(CursorStyle.Interaction, true);
+
+            var linkInfo = textComponent.textInfo.linkInfo[linkIndex];
+
+            int startIndex = linkInfo.linkIdFirstCharacterIndex + linkInfo.linkIdLength + 2;
+            int endIndex = startIndex + linkInfo.linkTextLength;
+
+            originalText = textComponent.text;
+            stringBuilder.Clear();
+            stringBuilder.Append(originalText).Insert(endIndex, selectedStyle.styleClosingDefinition).Insert(startIndex,selectedStyle.styleOpeningDefinition);
+            textComponent.text = stringBuilder.ToString();
+        }
+
+        private void ResetPreviousHighlight()
+        {
+            if (lastHighlightedIndex >= 0)
+            {
+                textComponent.text = originalText;
+                dependencies.Cursor.SetStyle(CursorStyle.Normal);
+                lastHighlightedIndex = -1;
+                isHighlighting = false;
+            }
+        }
+
     }
 }
