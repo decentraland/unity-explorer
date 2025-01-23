@@ -46,19 +46,6 @@ namespace DCL.Roads.GPUInstancing.Playground
                 gpuInstancingService.RenderInstancedBatched();
         }
 
-        // private IEnumerator PrepareInstancesMapAsync()
-        // {
-        //     gpuInstancingService.Clear();
-        //
-        //     foreach (var prefabInstance in debugRoot.GetComponentsInChildren<PrefabInstanceDataBehaviour>())
-        //     {
-        //         gpuInstancingService.AddToInstancing(prefabInstance.PrefabInstance, debugRoot.transform);
-        //         yield return null;
-        //     }
-        //
-        //     CollectDebugInfo();
-        // }
-
         [ContextMenu("DEBUG - Cache Prefabs")]
         private void CachePrefabs()
         {
@@ -105,12 +92,9 @@ namespace DCL.Roads.GPUInstancing.Playground
         [ContextMenu("DEBUG - Spawn Roads")]
         private void SpawnRoads()
         {
-            // gpuInstancingService = new GPUInstancingService();
-
             debugRoot = new GameObject("RoadsRoot").transform;
             debugRoot.gameObject.SetActive(false);
 
-            // Spawn roadss
             foreach (RoadDescription roadDescription in RoadsConfig.RoadDescriptions)
             {
                 if (IsOutOfRange(roadDescription.RoadCoordinate)) continue;
@@ -122,17 +106,12 @@ namespace DCL.Roads.GPUInstancing.Playground
                     continue;
                 }
 
-                // var roadRoot = Matrix4x4.TRS(roadDescription.RoadCoordinate.ParcelToPositionFlat() + ParcelMathHelper.RoadPivotDeviation, roadDescription.Rotation, Vector3.one);
-                // gpuInstancingService.AddToInstancing(prefab.meshInstances, roadRoot);
-
                 Transform roadAsset =
                     Instantiate(prefab, roadDescription.RoadCoordinate.ParcelToPositionFlat() + ParcelMathHelper.RoadPivotDeviation, roadDescription.Rotation, debugRoot)
                        .transform;
 
                 roadAsset.gameObject.SetActive(true);
             }
-
-            // CollectDebugInfo();
         }
 
         private void CollectDebugInfo()
