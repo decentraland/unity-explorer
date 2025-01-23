@@ -1,5 +1,4 @@
 using DCL.RealmNavigation;
-using DCL.UserInAppInitializationFlow;
 using DCL.Utilities;
 using Segment.Serialization;
 

@@ -1,5 +1,5 @@
 {
-    "name": "DCL.WorldNavigation",
+    "name": "DCL.RealmNavigation",
     "rootNamespace": "",
     "references": [
         "GUID:166b65e6dfc848bb9fb075f53c293a38",

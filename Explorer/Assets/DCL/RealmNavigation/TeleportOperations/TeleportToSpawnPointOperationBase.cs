@@ -7,15 +7,13 @@ using DCL.RealmNavigation.LoadingOperation;
 using DCL.Utilities;
 using ECS;
 using ECS.Prioritization.Components;
-using ECS.SceneLifeCycle.Realm;
 using ECS.SceneLifeCycle.Reporting;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common;
-using Global.Dynamic;
-using NUnit.Framework;
 using System.Linq;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.Assertions;
 
 namespace DCL.RealmNavigation.TeleportOperations
 {
