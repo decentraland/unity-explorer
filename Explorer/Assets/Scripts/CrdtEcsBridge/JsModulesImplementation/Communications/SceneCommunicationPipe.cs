@@ -68,20 +68,15 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
             sceneMessageHandlers.Remove(key);
         }
 
-        public void SendMessage(ReadOnlySpan<byte> message, string sceneId, ISceneCommunicationPipe.ConnectivityAssertiveness assertiveness, CancellationToken ct)
+        public void SendMessage(ReadOnlySpan<byte> message, string sceneId, ISceneCommunicationPipe.ConnectivityAssertiveness assertiveness, CancellationToken ct, string? specialRecipient = null)
         {
-            if (!sceneRoom.IsSceneConnected(sceneId))
-            {
-                if (assertiveness == ISceneCommunicationPipe.ConnectivityAssertiveness.DELIVERY_ASSERTED)
-                    ReportHub.LogError(ReportCategory.COMMS_SCENE_HANDLER, $"Scene \"{sceneId}\" expected to deliver the message but {nameof(GateKeeperSceneRoom)} is connected to \"{sceneRoom.ConnectedScene?.SceneEntityDefinition.id}\"");
-
-                return;
-            }
-
-            if (assertiveness == ISceneCommunicationPipe.ConnectivityAssertiveness.DELIVERY_ASSERTED)
-                ReportHub.Log(ReportCategory.COMMS_SCENE_HANDLER, $"Sending scene message to {sceneRoom.Room().Participants.RemoteParticipantIdentities().Count} peers");
+            if (!sceneRoom.IsSceneConnected(sceneId)) return;
 
             MessageWrap<Scene> sceneMessage = messagePipe.NewMessage<Scene>();
+
+            if (!string.IsNullOrEmpty(specialRecipient))
+                sceneMessage.AddSpecialRecipient(specialRecipient);
+
             sceneMessage.Payload.Data = ByteString.CopyFrom(message);
             sceneMessage.Payload.SceneId = sceneId;
             sceneMessage.SendAndDisposeAsync(ct, DataPacketKind.KindReliable).Forget();
