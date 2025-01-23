@@ -1,4 +1,4 @@
-using DCL.UI.HyperlinkHandler;
+using MVC;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -32,9 +32,9 @@ namespace DCL.Chat
             messageOptionsButton?.gameObject.SetActive(false);
         }
 
-        public void SetupHyperlinkHandlerSettings(HyperlinkHandlerDependencies dependencies)
+        public void SetupHyperlinkHandlerDependencies(ViewDependencies dependencies)
         {
-            messageContentElement.hyperlinkHandler.Initialize(dependencies);
+            messageContentElement.hyperlinkHandler.InjectDependencies(dependencies);
         }
 
         public void SetMessageData(ChatMessage data)

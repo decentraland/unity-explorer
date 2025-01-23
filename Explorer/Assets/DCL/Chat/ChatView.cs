@@ -494,6 +494,7 @@ namespace DCL.Chat
                 SetItemData(index, itemData, itemScript);
 
                 Button? messageOptionsButton = itemScript.messageBubbleElement.messageOptionsButton;
+                itemScript.messageBubbleElement.SetupHyperlinkHandlerDependencies(viewDependencies);
                 messageOptionsButton?.onClick.RemoveAllListeners();
 
                 messageOptionsButton?.onClick.AddListener(() =>

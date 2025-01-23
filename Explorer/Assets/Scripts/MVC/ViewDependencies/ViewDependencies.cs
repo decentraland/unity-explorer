@@ -12,13 +12,15 @@ namespace MVC
         public readonly IEventSystem EventSystem;
         public readonly MVCManagerMenusAccessFacade GlobalUIViews;
         public readonly IClipboardManager ClipboardManager;
+        public readonly ICursor Cursor;
 
-        public ViewDependencies(DCLInput dclInput, IEventSystem eventSystem, MVCManagerMenusAccessFacade globalUIViews, IClipboardManager clipboardManager)
+        public ViewDependencies(DCLInput dclInput, IEventSystem eventSystem, MVCManagerMenusAccessFacade globalUIViews, IClipboardManager clipboardManager, ICursor cursor)
         {
             DclInput = dclInput;
             EventSystem = eventSystem;
             GlobalUIViews = globalUIViews;
             ClipboardManager = clipboardManager;
+            Cursor = cursor;
         }
     }
 }

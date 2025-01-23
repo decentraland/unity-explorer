@@ -9,14 +9,15 @@ using DCL.Input.Component;
 using DCL.Input.Systems;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
-using DCL.UI;
 using DCL.UI.HyperlinkHandler;
 using ECS.Abstract;
 using MVC;
 using System;
+using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using Utility.Arch;
 

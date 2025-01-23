@@ -1,9 +1,7 @@
 using Cysharp.Threading.Tasks;
-using DCL.ChangeRealmPrompt;
 using DCL.Diagnostics;
-using DCL.ExternalUrlPrompt;
 using DCL.Input;
-using DCL.TeleportPrompt;
+using MVC;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -13,7 +11,7 @@ using UnityEngine.EventSystems;
 
 namespace DCL.UI.HyperlinkHandler
 {
-    public class HyperlinkHandlerElement : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler, IPointerMoveHandler
+    public class HyperlinkHandlerElement : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler, IPointerMoveHandler, IViewWithGlobalDependencies
     {
         [SerializeField] private TMP_Text textComponent;
         [SerializeField] private TMP_StyleSheet styleSheet;
@@ -27,7 +25,9 @@ namespace DCL.UI.HyperlinkHandler
         private TMP_Style selectedStyle;
         private StringBuilder stringBuilder;
 
-        private HyperlinkHandlerDependencies dependencies;
+        private ViewDependencies dependencies;
+        private ICursor cursor;
+
 
         private void Awake()
         {
@@ -35,7 +35,7 @@ namespace DCL.UI.HyperlinkHandler
             selectedStyle = styleSheet.GetStyle("LinkSelected");
         }
 
-        public void Initialize(HyperlinkHandlerDependencies dependencies)
+        public void InjectDependencies(ViewDependencies dependencies)
         {
             this.dependencies = dependencies;
             initialized = true;
@@ -94,7 +94,7 @@ namespace DCL.UI.HyperlinkHandler
             string linkType = linkParts[0].ToLower();
             string linkValue = linkParts[1];
 
-            if (linkHandlers.TryGetValue(linkType, out Action<string>? linkHandler)) { linkHandler.Invoke(linkValue); }
+            if (linkHandlers.TryGetValue(linkType, out Action<string> linkHandler)) { linkHandler.Invoke(linkValue); }
             else
                 ReportHub.LogWarning(ReportCategory.UI, $"No handler found for link: {linkID}");
         }
@@ -118,18 +118,18 @@ namespace DCL.UI.HyperlinkHandler
         }
 
         private async UniTask OpenUrlAsync(string url) =>
-            await dependencies.MvcManager.ShowAsync(ExternalUrlPromptController.IssueCommand(new ExternalUrlPromptController.Params(url)));
+            await dependencies.GlobalUIViews.ShowExternalUrlPromptAsync(url);
 
         private async UniTask TeleportAsync(Vector2Int coords)
         {
             await UniTask.SwitchToMainThread();
-            await dependencies.MvcManager.ShowAsync(TeleportPromptController.IssueCommand(new TeleportPromptController.Params(coords)));
+            await dependencies.GlobalUIViews.ShowTeleporterPromptAsync(coords);
         }
 
         private async UniTask ChangeRealmAsync(string message, string realm)
         {
             await UniTask.SwitchToMainThread();
-            await dependencies.MvcManager.ShowAsync(ChangeRealmPromptController.IssueCommand(new ChangeRealmPromptController.Params(message, realm)));
+            await dependencies.GlobalUIViews.ShowChangeRealmPromptAsync(message, realm);
         }
 
         public void OnPointerMove(PointerEventData eventData)
@@ -180,6 +180,5 @@ namespace DCL.UI.HyperlinkHandler
                 isHighlighting = false;
             }
         }
-
     }
 }
