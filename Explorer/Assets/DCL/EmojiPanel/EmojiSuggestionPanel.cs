@@ -1,5 +1,8 @@
+using Cysharp.Threading.Tasks;
+using MVC;
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.Pool;
@@ -7,9 +10,9 @@ using Object = UnityEngine.Object;
 
 namespace DCL.Emoji
 {
-    public class EmojiSuggestionPanel
+    public class EmojiSuggestionPanel : IViewWithGlobalDependencies
     {
-        public event Action<string, bool> OnEmojiSelected;
+        public event Action<string, bool> EmojiSelected;
 
         public bool IsActive { get; private set; }
 
@@ -24,7 +27,9 @@ namespace DCL.Emoji
         private int currentIndex = 0;
         private EmojiSuggestionView previouslySelected;
 
-        public EmojiSuggestionPanel(EmojiSuggestionPanelView view, EmojiSuggestionView emojiSuggestion, DCLInput dclInput)
+        private ViewDependencies viewDependencies;
+
+        public EmojiSuggestionPanel(EmojiSuggestionPanelView view, EmojiSuggestionView emojiSuggestion)
         {
             this.view = view;
 
@@ -38,16 +43,12 @@ namespace DCL.Emoji
                     buttonView.SelectedBackground.SetActive(false);
                 }
             );
-
-            dclInput.Player.ActionForward.performed += OnArrowUp;
-            dclInput.Player.ActionBackward.performed += OnArrowDown;
-            dclInput.UI.Submit.performed += OnSubmit;
         }
 
         private void OnSubmit(InputAction.CallbackContext obj)
         {
             if (previouslySelected != null && IsActive)
-                OnEmojiSelected?.Invoke(previouslySelected.Emoji.text, false);
+                EmojiSelected?.Invoke(previouslySelected.Emoji.text, false);
         }
 
         private void OnArrowUp(InputAction.CallbackContext obj)
@@ -69,14 +70,8 @@ namespace DCL.Emoji
         private EmojiSuggestionView CreatePoolElement(EmojiSuggestionPanelView view, EmojiSuggestionView emojiSuggestion)
         {
             EmojiSuggestionView emojiSuggestionView = Object.Instantiate(emojiSuggestion, view.EmojiSuggestionContainer);
-            emojiSuggestionView.OnEmojiSelected += (emojiData) => OnEmojiSelected?.Invoke(emojiData, true);
+            emojiSuggestionView.OnEmojiSelected += (emojiData) => EmojiSelected?.Invoke(emojiData, true);
             return emojiSuggestionView;
-        }
-
-        public void SetPanelVisibility(bool isVisible)
-        {
-            IsActive = isVisible;
-            view.gameObject.SetActive(isVisible);
         }
 
         public void SetValues(List<EmojiData> foundEmojis)
@@ -137,6 +132,30 @@ namespace DCL.Emoji
             currentIndex = index;
             usedPoolItems[index].SelectedBackground.SetActive(true);
             previouslySelected = usedPoolItems[index];
+        }
+
+        public void SetPanelVisibility(bool isVisible)
+        {
+            if (isVisible)
+            {
+                viewDependencies.DclInput.Player.ActionForward.performed += OnArrowUp;
+                viewDependencies.DclInput.Player.ActionBackward.performed += OnArrowDown;
+                viewDependencies.DclInput.UI.Submit.performed += OnSubmit;
+            }
+            else
+            {
+                viewDependencies.DclInput.Player.ActionForward.performed -= OnArrowUp;
+                viewDependencies.DclInput.Player.ActionBackward.performed -= OnArrowDown;
+                viewDependencies.DclInput.UI.Submit.performed -= OnSubmit;
+            }
+
+            IsActive = isVisible;
+            view.gameObject.SetActive(isVisible);
+        }
+
+        public void InjectDependencies(ViewDependencies dependencies)
+        {
+            viewDependencies = dependencies;
         }
     }
 }

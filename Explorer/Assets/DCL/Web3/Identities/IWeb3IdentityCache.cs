@@ -1,3 +1,4 @@
+using DCL.Web3.Abstract;
 using DCL.Web3.Accounts.Factory;
 using System;
 
@@ -45,14 +46,14 @@ namespace DCL.Web3.Identities
         {
             private readonly IWeb3IdentityCache origin;
 
-            public Default()
+            public Default(IWeb3AccountFactory? web3AccountFactory = null)
             {
                 origin = new LogWeb3IdentityCache(
                     new ProxyIdentityCache(
                         new MemoryWeb3IdentityCache(),
                         new PlayerPrefsIdentityProvider(
                             new PlayerPrefsIdentityProvider.DecentralandIdentityWithNethereumAccountJsonSerializer(
-                                new Web3AccountFactory()
+                                web3AccountFactory ?? new Web3AccountFactory()
                             )
                         )
                     )

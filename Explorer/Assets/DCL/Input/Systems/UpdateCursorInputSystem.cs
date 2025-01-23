@@ -65,7 +65,7 @@ namespace DCL.Input.Systems
             shortcuts.MainMenu.performed += OnShortcutUnlock;
         }
 
-        public override void Dispose()
+        protected override void OnDispose()
         {
             shortcuts.OpenChat.performed -= OnShortcutUnlock;
             shortcuts.OpenChatCommandLine.performed -= OnShortcutUnlock;

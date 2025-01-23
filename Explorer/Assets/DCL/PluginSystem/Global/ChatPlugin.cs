@@ -28,14 +28,12 @@ namespace DCL.PluginSystem.Global
         private readonly IChatMessagesBus chatMessagesBus;
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
         private readonly NametagsData nametagsData;
-        private readonly DCLInput dclInput;
         private readonly IInputBlock inputBlock;
         private readonly Arch.Core.World world;
         private readonly Entity playerEntity;
-        private readonly IEventSystem eventSystem;
         private readonly MainUIView mainUIView;
-        private readonly IClipboardManager clipboardManager;
         private readonly HyperlinkHandlerDependencies hyperlinkHandlerDependencies;
+        private readonly ViewDependencies viewDependencies;
 
         private ChatController chatController;
 
@@ -46,13 +44,12 @@ namespace DCL.PluginSystem.Global
             IChatHistory chatHistory,
             IReadOnlyEntityParticipantTable entityParticipantTable,
             NametagsData nametagsData,
-            DCLInput dclInput,
-            IEventSystem eventSystem,
             MainUIView mainUIView,
             IInputBlock inputBlock,
             Arch.Core.World world,
-            Entity playerEntity, IClipboardManager clipboardManager,
-            HyperlinkHandlerDependencies hyperlinkHandlerDependencies)
+            Entity playerEntity,
+            HyperlinkHandlerDependencies hyperlinkHandlerDependencies,
+            ViewDependencies viewDependencies)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -60,13 +57,11 @@ namespace DCL.PluginSystem.Global
             this.chatMessagesBus = chatMessagesBus;
             this.entityParticipantTable = entityParticipantTable;
             this.nametagsData = nametagsData;
-            this.dclInput = dclInput;
             this.inputBlock = inputBlock;
             this.world = world;
             this.playerEntity = playerEntity;
-            this.clipboardManager = clipboardManager;
             this.hyperlinkHandlerDependencies = hyperlinkHandlerDependencies;
-            this.eventSystem = eventSystem;
+            this.viewDependencies = viewDependencies;
             this.mainUIView = mainUIView;
             this.inputBlock = inputBlock;
         }
@@ -78,10 +73,6 @@ namespace DCL.PluginSystem.Global
         public async UniTask InitializeAsync(ChatSettings settings, CancellationToken ct)
         {
             ChatEntryConfigurationSO chatEntryConfiguration = (await assetsProvisioner.ProvideMainAssetAsync(settings.ChatEntryConfiguration, ct)).Value;
-            EmojiPanelConfigurationSO emojiPanelConfig = (await assetsProvisioner.ProvideMainAssetAsync(settings.EmojiPanelConfiguration, ct)).Value;
-            EmojiSectionView emojiSectionPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.EmojiSectionPrefab, ct)).Value;
-            EmojiButton emojiButtonPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.EmojiButtonPrefab, ct)).Value;
-            EmojiSuggestionView emojiSuggestionPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.EmojiSuggestionPrefab, ct)).Value;
 
             chatController = new ChatController(
                 () =>
@@ -95,19 +86,11 @@ namespace DCL.PluginSystem.Global
                 chatHistory,
                 entityParticipantTable,
                 nametagsData,
-                emojiPanelConfig,
-                settings.EmojiMappingJson,
-                emojiSectionPrefab,
-                emojiButtonPrefab,
-                emojiSuggestionPrefab,
                 world,
                 playerEntity,
-                dclInput,
-                eventSystem,
                 inputBlock,
-                mvcManager,
-                clipboardManager,
-                hyperlinkHandlerDependencies
+                hyperlinkHandlerDependencies,
+                viewDependencies
             );
 
             mvcManager.RegisterController(chatController);
@@ -118,22 +101,7 @@ namespace DCL.PluginSystem.Global
             [field: Header(nameof(ChatPlugin) + "." + nameof(ChatSettings))]
             [field: Space]
             [field: SerializeField]
-            public EmojiButtonRef EmojiButtonPrefab { get; private set; }
-
-            [field: SerializeField]
-            public EmojiSectionRef EmojiSectionPrefab { get; private set; }
-
-            [field: SerializeField]
-            public EmojiSuggestionRef EmojiSuggestionPrefab { get; private set; }
-
-            [field: SerializeField]
             public AssetReferenceT<ChatEntryConfigurationSO> ChatEntryConfiguration { get; private set; }
-
-            [field: SerializeField]
-            public AssetReferenceT<EmojiPanelConfigurationSO> EmojiPanelConfiguration { get; private set; }
-
-            [field: SerializeField]
-            public TextAsset EmojiMappingJson { get; private set; }
 
             [Serializable]
             public class EmojiSuggestionPanelRef : ComponentReference<EmojiSuggestionPanelView>

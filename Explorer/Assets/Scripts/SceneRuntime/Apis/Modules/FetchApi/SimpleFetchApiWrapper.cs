@@ -35,8 +35,10 @@ namespace SceneRuntime.Apis.Modules.FetchApi
                 ISimpleFetchApi.Response response = await api.FetchAsync(requestMethod, url, headers, hasBody, body, redirect, timeout, webController, ct);
 
                 var headersToJs = new PropertyBag();
-                foreach (var header in response.Headers)
-                    headersToJs.Add(header.Key, header.Value);
+
+                if (response.Headers != null)
+                    foreach (var header in response.Headers)
+                        headersToJs.Add(header.Key, header.Value);
 
                 return new ResponseToJs
                 {

@@ -23,9 +23,9 @@ namespace DCL.ScenesDebug.ScenesConsistency.ChatTeleports
 
         public void GoTo(Vector2Int coordinate)
         {
-            TMP_InputField field = chatViewResource.DangerousResource().EnsureNotNull().InputField;
-            field.text = $"/{ChatCommandsUtils.COMMAND_GOTO} {coordinate.x},{coordinate.y}";
-            field.OnSubmit(new BaseEventData(null!));
+            ChatView view = chatViewResource.DangerousResource().EnsureNotNull();
+            view.InputBoxText = $"/{ChatCommandsUtils.COMMAND_GOTO} {coordinate.x},{coordinate.y}";
+            view.SubmitInput();
         }
     }
 }

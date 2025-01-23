@@ -1,6 +1,7 @@
 ﻿using DCL.MapRenderer.CommonBehavior;
 using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.MapLayers.UsersMarker;
+using System;
 using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
@@ -11,7 +12,6 @@ namespace DCL.MapRenderer.MapLayers.Users
     {
         private readonly ICoordsUtils coordsUtils;
 
-        public string CurrentPlayerId { get; private set; }
         public Vector3 CurrentPosition => poolableBehavior.currentPosition;
 
         public Vector2 Pivot { get; }
@@ -27,20 +27,13 @@ namespace DCL.MapRenderer.MapLayers.Users
 
         public void UpdateMarkerPosition(string playerId, Vector3 position)
         {
-            CurrentPlayerId = playerId;
             var gridPosition = ParcelMathHelper.WorldToGridPositionUnclamped(position);
             poolableBehavior.SetCurrentPosition(coordsUtils.PivotPosition(this, coordsUtils.CoordsToPositionUnclamped(gridPosition)));
-        }
-
-        private void ResetPlayer()
-        {
-            CurrentPlayerId = null;
         }
 
         public void Dispose()
         {
             OnMapObjectCulled(this);
-            ResetPlayer();
         }
 
         public void OnMapObjectBecameVisible(IHotUserMarker obj)
