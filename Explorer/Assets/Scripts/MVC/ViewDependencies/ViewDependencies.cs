@@ -1,0 +1,24 @@
+﻿using DCL.Clipboard;
+using DCL.Input;
+
+namespace MVC
+{
+    /// <summary>
+    /// A set of references to the only systems a view can use directly, without the need of a controller.
+    /// </summary>
+    public class ViewDependencies
+    {
+        public readonly DCLInput DclInput;
+        public readonly IEventSystem EventSystem;
+        public readonly MVCManagerMenusAccessFacade GlobalUIViews;
+        public readonly IClipboardManager ClipboardManager;
+
+        public ViewDependencies(DCLInput dclInput, IEventSystem eventSystem, MVCManagerMenusAccessFacade globalUIViews, IClipboardManager clipboardManager)
+        {
+            DclInput = dclInput;
+            EventSystem = eventSystem;
+            GlobalUIViews = globalUIViews;
+            ClipboardManager = clipboardManager;
+        }
+    }
+}

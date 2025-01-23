@@ -1,5 +1,4 @@
 using Cysharp.Threading.Tasks;
-using DCL.Input;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -13,7 +12,7 @@ namespace DCL.Emoji
 {
     public class EmojiPanelController
     {
-        public event Action<string> OnEmojiSelected;
+        public event Action<string> EmojiSelected;
 
         private readonly EmojiPanelView view;
         private readonly EmojiPanelConfigurationSO emojiPanelConfiguration;
@@ -45,8 +44,8 @@ namespace DCL.Emoji
             this.emojiSectionPrefab = emojiSectionPrefab;
             this.emojiButtonPrefab = emojiButtonPrefab;
             emojiSearchController = new EmojiSearchController(view.SearchPanelView, view.EmojiSearchedContent, emojiButtonPrefab);
-            emojiSearchController.OnSearchTextChanged += OnSearchTextChanged;
-            emojiSearchController.OnEmojiSelected += emoji => OnEmojiSelected?.Invoke(emoji);
+            emojiSearchController.SearchTextChanged += OnSearchTextChanged;
+            emojiSearchController.EmojiSelected += emoji => EmojiSelected?.Invoke(emoji);
             foreach (var emojiData in JsonConvert.DeserializeObject<Dictionary<string, string>>(emojiMappingJson.text))
             {
                 if(emojiPanelConfiguration.SpriteAsset.GetSpriteIndexFromName(emojiData.Value.ToUpper()) == -1)
@@ -56,9 +55,9 @@ namespace DCL.Emoji
                 emojiValueMapping.Add(int.Parse(emojiData.Value, System.Globalization.NumberStyles.HexNumber), emojiData.Key);
             }
 
-            view.OnEmojiFirstOpen += ConfigureEmojiSectionSizes;
+            view.EmojiFirstOpen += ConfigureEmojiSectionSizes;
             ConfigureEmojiSections();
-            view.OnSectionSelected += OnSectionSelected;
+            view.SectionSelected += OnSectionSelected;
         }
 
         private void OnSearchTextChanged(string searchText)
@@ -138,7 +137,7 @@ namespace DCL.Emoji
 
                 EmojiButton emojiButton = Object.Instantiate(emojiButtonPrefab, sectionView.EmojiContainer);
                 emojiButton.EmojiImage.text = $"\\U000{emojiCode:X}";
-                emojiButton.OnEmojiSelected += EmojiSelected;
+                emojiButton.EmojiSelected += OnEmojiSelected;
 
                 if (emojiValueMapping.TryGetValue(emojiCode, out string emojiValue))
                     emojiButton.TooltipText.text = emojiValue;
@@ -147,16 +146,16 @@ namespace DCL.Emoji
             }
         }
 
-        private void EmojiSelected(string code)
+        private void OnEmojiSelected(string code)
         {
-            OnEmojiSelected?.Invoke(code);
+            EmojiSelected?.Invoke(code);
         }
 
         public void Dispose()
         {
-            emojiSearchController.OnSearchTextChanged -= OnSearchTextChanged;
-            view.OnEmojiFirstOpen -= ConfigureEmojiSectionSizes;
-            view.OnSectionSelected -= OnSectionSelected;
+            emojiSearchController.SearchTextChanged -= OnSearchTextChanged;
+            view.EmojiFirstOpen -= ConfigureEmojiSectionSizes;
+            view.SectionSelected -= OnSectionSelected;
             emojiSearchController?.Dispose();
         }
     }
