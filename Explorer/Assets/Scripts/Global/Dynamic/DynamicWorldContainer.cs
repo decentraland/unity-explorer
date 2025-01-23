@@ -775,7 +775,11 @@ namespace Global.Dynamic
                 new FriendsPlugin(bootstrapContainer.DecentralandUrlsSource,
                     identityCache,
                     staticContainer.FeatureFlagsCache,
-                    selfProfile),
+                    selfProfile,
+                    assetsProvisioner,
+                    staticContainer.WebRequestsContainer.WebRequestController,
+                    mvcManager,
+                    staticContainer.InputBlock),
             };
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);
