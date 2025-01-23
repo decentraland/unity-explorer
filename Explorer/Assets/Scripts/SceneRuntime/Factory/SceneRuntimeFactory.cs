@@ -107,17 +107,9 @@ namespace SceneRuntime.Factory
             CancellationToken ct,
             InstantiationBehavior instantiationBehavior = InstantiationBehavior.StayOnMainThread)
         {
-            AssertCalledOnTheMainThread();
-
+            await EnsureCalledOnMainThreadAsync();
             string sourceCode = await webJsSources.SceneSourceCodeAsync(path, ct);
-
             return await CreateBySourceCodeAsync(sourceCode, instancePoolsProvider, sceneShortInfo, ct, instantiationBehavior);
-        }
-
-        private static void AssertCalledOnTheMainThread()
-        {
-            if (!PlayerLoopHelper.IsMainThread)
-                throw new ThreadStateException($"{nameof(CreateByPathAsync)} must be called on the main thread");
         }
 
         private static async UniTask EnsureCalledOnMainThreadAsync()
