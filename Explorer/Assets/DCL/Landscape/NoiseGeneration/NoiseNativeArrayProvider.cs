@@ -4,56 +4,66 @@ using Unity.Collections;
 
 namespace DCL.Landscape.NoiseGeneration
 {
-    public class NoiseNativeArrayProvider : IDisposable
+    internal class NoiseNativeArray : IDisposable
     {
-        private readonly Dictionary<int, Queue<NativeArray<float>>> noiseNativeArrayDictionary = new();
-        private readonly List<NativeArray<float>> allNativeArrays = new();
+        private int currentIndexUsed;
+        private readonly List<NativeArray<float>> nativeArrays = new ();
+        private readonly int size;
+
+        public NoiseNativeArray(int size)
+        {
+            this.size = size;
+        }
+
+        public NativeArray<float> GetNativeArray()
+        {
+            if (currentIndexUsed >= nativeArrays.Count)
+                nativeArrays.Add(new NativeArray<float>(size * size, Allocator.Persistent));
+            return nativeArrays[currentIndexUsed++];
+        }
 
         public void Reset()
         {
-            foreach (var nativeArray in allNativeArrays)
-            {
-                int size = (int)Math.Sqrt(nativeArray.Length);
-                if (!noiseNativeArrayDictionary.ContainsKey(size))
-                    noiseNativeArrayDictionary[size] = new Queue<NativeArray<float>>();
-                noiseNativeArrayDictionary[size].Enqueue(nativeArray);
-            }
-
-            allNativeArrays.Clear();
-        }
-
-        public NativeArray<float> GetNoiseNativeArray(int key)
-        {
-            // Check if there's a reusable array in the queue for the key
-            if (noiseNativeArrayDictionary.TryGetValue(key, out var queue) && queue.Count > 0)
-                return queue.Dequeue();
-
-            // If no reusable array, create a new one
-            var newArray = new NativeArray<float>(key * key, Allocator.Persistent);
-            allNativeArrays.Add(newArray);
-            return newArray;
+            currentIndexUsed = 0;
         }
 
         public void Dispose()
         {
-            foreach (var queue in noiseNativeArrayDictionary.Values)
+            foreach (var nativeArray in nativeArrays)
             {
-                while (queue.Count > 0)
-                {
-                    var nativeArray = queue.Dequeue();
-                    if (nativeArray.IsCreated)
-                        nativeArray.Dispose();
-                }
+                nativeArray.Dispose();
             }
+        }
+    }
+    
+    public class NoiseNativeArrayProvider : IDisposable
+    {
+        private readonly Dictionary<int, NoiseNativeArray> noiseNativeArrayDictionary = new();
 
-            foreach (var nativeArray in allNativeArrays)
+        public void Reset()
+        {
+            foreach (var noiseNativeArray in noiseNativeArrayDictionary.Values)
             {
-                if (nativeArray.IsCreated)
-                    nativeArray.Dispose();
+                noiseNativeArray.Reset();
             }
+        }
 
-            noiseNativeArrayDictionary.Clear();
-            allNativeArrays.Clear();
+        public NativeArray<float> GetNoiseNativeArray(int key)
+        {
+            if (noiseNativeArrayDictionary.TryGetValue(key, out var noiseArray))
+                return noiseArray.GetNativeArray();
+
+            var newArray = new NoiseNativeArray(key);
+            noiseNativeArrayDictionary[key] = newArray;
+            return newArray.GetNativeArray();
+        }
+
+        public void Dispose()
+        {
+            foreach (var noiseNativeArray in noiseNativeArrayDictionary.Values)
+            {
+                noiseNativeArray.Dispose();
+            }
         }
     }
 }
