@@ -33,11 +33,5 @@ namespace DCL.Friends
             To = to;
             MessageBody = messageBody;
         }
-
-        public bool IsSentTo(string userId) =>
-            To.Address == userId;
-
-        public bool IsReceivedFrom(string userId) =>
-            From.Address == userId;
     }
 }

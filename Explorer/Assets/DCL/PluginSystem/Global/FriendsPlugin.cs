@@ -29,6 +29,7 @@ namespace DCL.PluginSystem.Global
         private readonly IMVCManager mvcManager;
         private readonly IInputBlock inputBlock;
         private readonly ISelfProfile selfProfile;
+        private readonly IProfileRepository profileRepository;
         private readonly CancellationTokenSource lifeCycleCancellationToken = new ();
         private RPCFriendsService? friendsService;
 
@@ -36,6 +37,7 @@ namespace DCL.PluginSystem.Global
             IWeb3IdentityCache identityCache,
             FeatureFlagsCache featureFlagsCache,
             ISelfProfile selfProfile,
+            IProfileRepository profileRepository,
             IAssetsProvisioner assetsProvisioner,
             IWebRequestController webRequestController,
             IMVCManager mvcManager,
@@ -45,6 +47,7 @@ namespace DCL.PluginSystem.Global
             this.identityCache = identityCache;
             this.featureFlagsCache = featureFlagsCache;
             this.selfProfile = selfProfile;
+            this.profileRepository = profileRepository;
             this.assetsProvisioner = assetsProvisioner;
             this.webRequestController = webRequestController;
             this.mvcManager = mvcManager;

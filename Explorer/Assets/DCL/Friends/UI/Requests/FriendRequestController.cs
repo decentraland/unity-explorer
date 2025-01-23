@@ -107,12 +107,12 @@ namespace DCL.Friends.UI.Requests
             }
             else
             {
-                if (selfAddress == fr.From)
+                if (selfAddress == fr.From.Address)
                 {
                     Toggle(ViewState.CANCEL);
                     SetUpAsCancel();
                 }
-                else if (selfAddress == fr.To)
+                else if (selfAddress == fr.To.Address)
                 {
                     Toggle(ViewState.RECEIVED);
                     SetUpAsReceived();
@@ -170,7 +170,7 @@ namespace DCL.Friends.UI.Requests
             viewConfig.MessageInput.text = $"<b>You:</b> {fr.MessageBody}";
 
             fetchUserCancellationToken = fetchUserCancellationToken.SafeRestart();
-            FetchUserDataAsync(viewConfig.UserAndMutualFriendsConfig, new Web3Address(fr.To), userThumbnailCancel!, fetchUserCancellationToken.Token)
+            FetchUserDataAsync(viewConfig.UserAndMutualFriendsConfig, fr.To, userThumbnailCancel!, fetchUserCancellationToken.Token)
                .Forget();
         }
 
@@ -190,52 +190,22 @@ namespace DCL.Friends.UI.Requests
             async UniTaskVoid LoadUserAndUpdateMessageWithUserNameAsync(CancellationToken ct)
             {
                 await FetchUserDataAsync(viewConfig.UserAndMutualFriendsConfig,
-                    new Web3Address(fr.From),
+                    fr.From,
                     userThumbnailReceived!,
                     ct);
 
-                Profile? profile = await profileRepository.GetAsync(fr.From, ct);
-
-                if (profile == null) return;
-
-                viewConfig.MessageInput.text = $"<b>{profile.Name}:</b> {fr.MessageBody}";
+                viewConfig.MessageInput.text = $"<b>{fr.From.Name}:</b> {fr.MessageBody}";
             }
         }
 
-        private async UniTask FetchUserDataAsync(FriendRequestView.UserAndMutualFriendsConfig config, Web3Address user,
-            ImageController thumbnailController, CancellationToken ct)
+        private async UniTask FetchUserDataAsync(FriendRequestView.UserAndMutualFriendsConfig config,
+            Web3Address user, ImageController thumbnailController, CancellationToken ct)
         {
             await UniTask.WhenAll(
-                LoadMutualFriendsAsync(),
+                LoadMutualFriendsAsync(config, user, ct),
                 LoadUserAsync());
 
             return;
-
-            async UniTask LoadMutualFriendsAsync()
-            {
-                foreach (FriendRequestView.UserAndMutualFriendsConfig.MutualThumbnail thumbnail in config.MutualThumbnails)
-                    thumbnail.Root.SetActive(false);
-
-                config.MutualContainer.SetActive(false);
-
-                // We only request the first page so we show a couple of mutual thumbnails. This is by design
-                PaginatedFriendsResult mutualFriendsResult = await friendsService.GetMutualFriendsAsync(user, 1, MUTUAL_PAGE_SIZE_BY_DESIGN, ct);
-
-                config.MutualContainer.SetActive(mutualFriendsResult.Friends.Count > 0);
-                config.MutalCountText.text = $"{mutualFriendsResult.TotalAmount} Mutual";
-
-                FriendRequestView.UserAndMutualFriendsConfig.MutualThumbnail[] mutualConfig = config.MutualThumbnails;
-
-                for (var i = 0; i < mutualConfig.Length; i++)
-                {
-                    bool friendExists = i < mutualFriendsResult.Friends.Count;
-                    mutualConfig[i].Root.SetActive(friendExists);
-                    if (!friendExists) continue;
-                    Profile mutualFriend = mutualFriendsResult.Friends[i];
-                    ImageView view = mutualConfig[i].Image;
-                    LoadThumbnail(mutualFriend, view, mutualFriendControllers[view]);
-                }
-            }
 
             async UniTask LoadUserAsync()
             {
@@ -249,6 +219,45 @@ namespace DCL.Friends.UI.Requests
                 config.UserNameHash.text = user.ToString()[^4..];
 
                 LoadThumbnail(profile, config.UserThumbnail, thumbnailController);
+            }
+        }
+
+        private async UniTask FetchUserDataAsync(FriendRequestView.UserAndMutualFriendsConfig config,
+            FriendProfile user, ImageController thumbnailController, CancellationToken ct)
+        {
+            config.UserName.text = user.Name;
+            config.UserNameVerification.SetActive(user.HasClaimedName);
+            config.UserNameHash.gameObject.SetActive(!user.HasClaimedName);
+            config.UserNameHash.text = user.Address.ToString()[^4..];
+            thumbnailController.RequestImage(user.FacePictureUrl);
+
+            await LoadMutualFriendsAsync(config, user.Address, ct);
+        }
+
+        private async UniTask LoadMutualFriendsAsync(FriendRequestView.UserAndMutualFriendsConfig config,
+            Web3Address user, CancellationToken ct)
+        {
+            foreach (FriendRequestView.UserAndMutualFriendsConfig.MutualThumbnail thumbnail in config.MutualThumbnails)
+                thumbnail.Root.SetActive(false);
+
+            config.MutualContainer.SetActive(false);
+
+            // We only request the first page so we show a couple of mutual thumbnails. This is by design
+            PaginatedFriendsResult mutualFriendsResult = await friendsService.GetMutualFriendsAsync(user, 1, MUTUAL_PAGE_SIZE_BY_DESIGN, ct);
+
+            config.MutualContainer.SetActive(mutualFriendsResult.Friends.Count > 0);
+            config.MutalCountText.text = $"{mutualFriendsResult.TotalAmount} Mutual";
+
+            FriendRequestView.UserAndMutualFriendsConfig.MutualThumbnail[] mutualConfig = config.MutualThumbnails;
+
+            for (var i = 0; i < mutualConfig.Length; i++)
+            {
+                bool friendExists = i < mutualFriendsResult.Friends.Count;
+                mutualConfig[i].Root.SetActive(friendExists);
+                if (!friendExists) continue;
+                FriendProfile mutualFriend = mutualFriendsResult.Friends[i];
+                ImageView view = mutualConfig[i].Image;
+                mutualFriendControllers[view].RequestImage(mutualFriend.FacePictureUrl);
             }
         }
 
@@ -290,11 +299,11 @@ namespace DCL.Friends.UI.Requests
 
             async UniTaskVoid RejectThenCloseAsync(CancellationToken ct)
             {
-                await friendsService.RejectFriendshipAsync(inputData.Request!.From, ct);
+                await friendsService.RejectFriendshipAsync(inputData.Request!.From.Address, ct);
 
                 Toggle(ViewState.CONFIRMED_REJECTED);
 
-                await ShowOperationConfirmationAsync(viewInstance!.rejectedConfirmed, new Web3Address(inputData.Request.From),
+                await ShowOperationConfirmationAsync(viewInstance!.rejectedConfirmed, inputData.Request.From.Address,
                     "Friend Request From <color=#FF8362>{0}</color> Rejected",
                     ct);
 
@@ -310,11 +319,11 @@ namespace DCL.Friends.UI.Requests
 
             async UniTaskVoid AcceptThenCloseAsync(CancellationToken ct)
             {
-                await friendsService.AcceptFriendshipAsync(inputData.Request!.From, ct);
+                await friendsService.AcceptFriendshipAsync(inputData.Request!.From.Address, ct);
 
                 Toggle(ViewState.CONFIRMED_ACCEPTED);
 
-                await ShowOperationConfirmationAsync(viewInstance!.rejectedConfirmed, new Web3Address(inputData.Request.From),
+                await ShowOperationConfirmationAsync(viewInstance!.rejectedConfirmed, inputData.Request.From.Address,
                     "You And <color=#FF8362>{0}</color> Are Now Friends!",
                     ct);
 
@@ -330,11 +339,11 @@ namespace DCL.Friends.UI.Requests
 
             async UniTaskVoid CancelThenCloseAsync(CancellationToken ct)
             {
-                await friendsService.CancelFriendshipAsync(inputData.Request!.To, ct);
+                await friendsService.CancelFriendshipAsync(inputData.Request!.To.Address, ct);
 
                 Toggle(ViewState.CONFIRMED_CANCELLED);
 
-                await ShowOperationConfirmationAsync(viewInstance!.rejectedConfirmed, new Web3Address(inputData.Request.From),
+                await ShowOperationConfirmationAsync(viewInstance!.rejectedConfirmed, inputData.Request.From.Address,
                     "Friend Request To <color=#73D3D3>{0}</color> Cancelled",
                     ct);
 

@@ -47,6 +47,18 @@ namespace DCL.Web3
         public static bool operator ==(Web3Address x, string? y) =>
             x.Equals(y);
 
+        public static bool operator ==(Web3Address x, Web3Address y) =>
+            x.Equals(y);
+
+        public static bool operator !=(Web3Address x, Web3Address y) =>
+            x.Equals(y);
+
+        public static bool operator !=(Web3Address x, Web3Address? y) =>
+            x.Equals(y);
+
+        public static bool operator ==(Web3Address x, Web3Address? y) =>
+            x.Equals(y);
+
         public static bool operator !=(Web3Address x, string? y) =>
             !x.Equals(y);
 

@@ -776,6 +776,7 @@ namespace Global.Dynamic
                     identityCache,
                     staticContainer.FeatureFlagsCache,
                     selfProfile,
+                    profileRepository,
                     assetsProvisioner,
                     staticContainer.WebRequestsContainer.WebRequestController,
                     mvcManager,
