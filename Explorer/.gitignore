@@ -75,3 +75,6 @@ Assets/AddressableAssetsData/Windows/*.meta
 Assets/AddressableAssetsData/Windows.meta
 Assets/AddressableAssetsData/ProfileDataSourceSettings.asset
 Assets/AddressableAssetsData/ProfileDataSourceSettings.asset.meta
+
+# Disk Caching
+DiskCache/
