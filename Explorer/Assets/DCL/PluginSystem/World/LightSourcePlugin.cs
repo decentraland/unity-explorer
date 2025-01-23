@@ -1,11 +1,13 @@
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.ECSComponents;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.ResourcesUnloading;
 using DCL.SDKComponents.LightSource.Systems;
 using ECS.LifeCycle;
+using ECS.LifeCycle.Systems;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -45,6 +47,8 @@ namespace DCL.PluginSystem.World
                 lightPoolRegistry,
                 sharedDependencies.SceneStateProvider
             ));
+
+            ResetDirtyFlagSystem<PBLightSource>.InjectToWorld(ref builder);
         }
 
         public async UniTask InitializeAsync(Settings settings, CancellationToken ct) =>
