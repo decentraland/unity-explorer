@@ -12,13 +12,15 @@ namespace DCL.UI.GenericContextMenu
         private readonly IObjectPool<GenericContextMenuSeparatorView> separatorPool;
         private readonly IObjectPool<GenericContextMenuButtonWithTextView> buttonPool;
         private readonly IObjectPool<GenericContextMenuToggleView> togglePool;
+        private readonly IObjectPool<GenericContextMenuUserProfileView> userProfilePool;
         private readonly List<GenericContextMenuComponentBase> currentControls = new ();
 
         public ControlsPoolManager(
             Transform controlsParent,
             GenericContextMenuSeparatorView separatorPrefab,
             GenericContextMenuButtonWithTextView buttonPrefab,
-            GenericContextMenuToggleView togglePrefab)
+            GenericContextMenuToggleView togglePrefab,
+            GenericContextMenuUserProfileView userProfilePrefab)
         {
             separatorPool = new ObjectPool<GenericContextMenuSeparatorView>(
                 createFunc: () => GameObject.Instantiate(separatorPrefab, controlsParent),
@@ -37,6 +39,12 @@ namespace DCL.UI.GenericContextMenu
                 actionOnGet: toggleView => toggleView.gameObject.SetActive(true),
                 actionOnRelease: toggleView => toggleView.gameObject.SetActive(false),
                 actionOnDestroy: toggleView => GameObject.Destroy(toggleView.gameObject));
+
+            userProfilePool = new ObjectPool<GenericContextMenuUserProfileView>(
+                createFunc: () => GameObject.Instantiate(userProfilePrefab, controlsParent),
+                actionOnGet: userProfileView => userProfileView.gameObject.SetActive(true),
+                actionOnRelease: userProfileView => userProfileView.gameObject.SetActive(false),
+                actionOnDestroy: userProfileView => GameObject.Destroy(userProfileView.gameObject));
         }
 
         public GenericContextMenuComponentBase GetContextMenuComponent<T>(T settings, int index) where T : IContextMenuControlSettings
@@ -45,13 +53,22 @@ namespace DCL.UI.GenericContextMenu
                                                         {
                                                             SeparatorContextMenuControlSettings separatorSettings => GetSeparator(separatorSettings),
                                                             ButtonContextMenuControlSettings buttonSettings => GetButton(buttonSettings),
-                                                            ToggleContextMenuControlSettings toggleSettings => GetToggle(toggleSettings, toggleSettings.initialValue),
+                                                            ToggleContextMenuControlSettings toggleSettings => GetToggle(toggleSettings),
+                                                            UserProfileContextMenuControlSettings userProfileSettings => GetUserProfile(userProfileSettings),
                                                             _ => throw new ArgumentOutOfRangeException()
                                                         };
             component!.transform.SetSiblingIndex(index);
             currentControls.Add(component);
 
             return component;
+        }
+
+        private GenericContextMenuComponentBase GetUserProfile(UserProfileContextMenuControlSettings settings)
+        {
+            GenericContextMenuUserProfileView userProfileView = userProfilePool.Get();
+            userProfileView.Configure(settings);
+
+            return userProfileView;
         }
 
         private GenericContextMenuComponentBase GetSeparator(SeparatorContextMenuControlSettings settings)
@@ -70,10 +87,10 @@ namespace DCL.UI.GenericContextMenu
             return separatorView;
         }
 
-        private GenericContextMenuComponentBase GetToggle(ToggleContextMenuControlSettings settings, bool initialValue)
+        private GenericContextMenuComponentBase GetToggle(ToggleContextMenuControlSettings settings)
         {
             GenericContextMenuToggleView separatorView = togglePool.Get();
-            separatorView.Configure(settings, initialValue);
+            separatorView.Configure(settings, settings.initialValue);
 
             return separatorView;
         }
@@ -97,6 +114,9 @@ namespace DCL.UI.GenericContextMenu
                         break;
                     case GenericContextMenuToggleView toggleView:
                         togglePool.Release(toggleView);
+                        break;
+                    case GenericContextMenuUserProfileView userProfileView:
+                        userProfilePool.Release(userProfileView);
                         break;
                 }
             }
