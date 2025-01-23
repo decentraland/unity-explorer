@@ -84,7 +84,6 @@ namespace DCL.Chat
             viewInstance.EmojiSelectionVisibilityChanged += OnViewEmojiSelectionVisibilityChanged;
             viewInstance.ChatBubbleVisibilityChanged += OnViewChatBubbleVisibilityChanged;
             viewInstance.InputSubmitted += OnViewInputSubmitted;
-            viewInstance.ChatMessageCreated += OnViewChatMessageCreated;
 
             viewInstance.CalculateUsernameColor = CalculateUsernameColor;
 
@@ -138,7 +137,6 @@ namespace DCL.Chat
             viewInstance.EmojiSelectionVisibilityChanged -= OnViewEmojiSelectionVisibilityChanged;
             viewInstance.ChatBubbleVisibilityChanged -= ChatBubbleVisibilityChanged;
             viewInstance.InputSubmitted -= OnViewInputSubmitted;
-            viewInstance.ChatMessageCreated -= OnViewChatMessageCreated;
 
             viewDependencies.DclInput.UI.Click.performed -= OnUIClickPerformed;
             viewDependencies.DclInput.Shortcuts.ToggleNametags.performed -= OnToggleNametagsShortcutPerformed;
@@ -187,14 +185,6 @@ namespace DCL.Chat
         {
             world.TryRemove<CameraBlockerComponent>(cameraEntity);
             inputBlock.Enable(InputMapComponent.BLOCK_USER_INPUT);
-        }
-
-        private void OnViewChatMessageCreated(int itemindex)
-        {
-            ChatMessage itemData = chatHistory.Messages[itemindex];
-
-            if (!itemData.IsPaddingElement && itemData.HasToAnimate)
-                chatHistory.ForceUpdateMessage(itemindex, new ChatMessage(itemData.Message, itemData.SenderValidatedName, itemData.WalletAddress, itemData.SentByOwnUser, false, itemData.SenderWalletId));
         }
 
         private void OnViewChatBubbleVisibilityChanged(bool isVisible)
