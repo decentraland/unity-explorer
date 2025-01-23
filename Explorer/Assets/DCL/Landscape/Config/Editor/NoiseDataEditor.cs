@@ -17,7 +17,7 @@ namespace DCL.Landscape.Config.Editor
 
             data.settings.ValidateValues();
 
-            generator = data.GetGenerator(1, 0, noiseGeneratorCache);
+            generator = data.GetGenerator(1, 0, noiseGeneratorCache, noiseGeneratorCache.noiseNativeArrayProvider);
             return generator.Schedule(new NoiseDataPointer(textureSize, 0, 0), default(JobHandle));
         }
 

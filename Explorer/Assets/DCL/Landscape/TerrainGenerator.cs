@@ -216,6 +216,7 @@ namespace DCL.Landscape
                     {
                         await GenerateTerrainDataAsync(chunkModel, terrainModel, worldSeed, cancellationToken, processReport);
                         await UniTask.Yield(cancellationToken);
+                        noiseGenCache.ResetNoiseNativeArrayProvider();
                     }
 
                     processReport?.SetProgress(PROGRESS_COUNTER_DIG_HOLES);
