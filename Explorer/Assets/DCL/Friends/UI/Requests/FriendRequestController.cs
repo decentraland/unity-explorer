@@ -12,18 +12,20 @@ using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using Utility;
-using Object = UnityEngine.Object;
 
 namespace DCL.Friends.UI.Requests
 {
     public class FriendRequestController : ControllerBase<FriendRequestView, FriendRequestParams>
     {
+        private const int MUTUAL_PAGE_SIZE_BY_DESIGN = 3;
+        private const int OPERATION_CONFIRMED_WAIT_TIME_MS = 5000;
+
         private readonly IWeb3IdentityCache identityCache;
         private readonly IFriendsService friendsService;
         private readonly IProfileRepository profileRepository;
         private readonly IWebRequestController webRequestController;
         private readonly IInputBlock inputBlock;
-        private readonly List<GameObject> mutualFriendThumbnailObjects = new ();
+        private readonly Dictionary<ImageView, ImageController> mutualFriendControllers = new ();
         private CancellationTokenSource? requestOperationCancellationToken;
         private CancellationTokenSource? fetchUserCancellationToken;
         private CancellationTokenSource? showPreCancelToastCancellationToken;
@@ -72,6 +74,21 @@ namespace DCL.Friends.UI.Requests
             viewInstance.received.AcceptButton.onClick.AddListener(Accept);
             viewInstance.received.RejectButton.onClick.AddListener(Reject);
             userThumbnailReceived = new ImageController(viewInstance.received.UserAndMutualFriendsConfig.UserThumbnail, webRequestController);
+
+            InstantiateMutualThumbnailControllers(viewInstance.received.UserAndMutualFriendsConfig);
+            InstantiateMutualThumbnailControllers(viewInstance.cancel.UserAndMutualFriendsConfig);
+            InstantiateMutualThumbnailControllers(viewInstance.send.UserAndMutualFriendsConfig);
+            return;
+
+            void InstantiateMutualThumbnailControllers(FriendRequestView.UserAndMutualFriendsConfig config)
+            {
+                for (var i = 0; i < config.MutualThumbnails.Length; i++)
+                {
+                    ImageView view = config.MutualThumbnails[i].Image;
+                    var controller = new ImageController(view, webRequestController);
+                    mutualFriendControllers[view] = controller;
+                }
+            }
         }
 
         protected override void OnViewShow()
@@ -196,28 +213,27 @@ namespace DCL.Friends.UI.Requests
 
             async UniTask LoadMutualFriendsAsync()
             {
-                config.MutualThumbnailTemplate.SetActive(false);
+                foreach (FriendRequestView.UserAndMutualFriendsConfig.MutualThumbnail thumbnail in config.MutualThumbnails)
+                    thumbnail.Root.SetActive(false);
+
                 config.MutualContainer.SetActive(false);
 
-                PaginatedFriendsResult mutualFriendsResult = await friendsService.GetMutualFriendsAsync(user, 1, 3, ct);
+                // We only request the first page so we show a couple of mutual thumbnails. This is by design
+                PaginatedFriendsResult mutualFriendsResult = await friendsService.GetMutualFriendsAsync(user, 1, MUTUAL_PAGE_SIZE_BY_DESIGN, ct);
 
                 config.MutualContainer.SetActive(mutualFriendsResult.Friends.Count > 0);
                 config.MutalCountText.text = $"{mutualFriendsResult.TotalAmount} Mutual";
 
-                foreach (GameObject thumbnail in mutualFriendThumbnailObjects)
-                    Object.Destroy(thumbnail);
+                FriendRequestView.UserAndMutualFriendsConfig.MutualThumbnail[] mutualConfig = config.MutualThumbnails;
 
-                mutualFriendThumbnailObjects.Clear();
-
-                foreach (Profile mutualFriend in mutualFriendsResult.Friends)
+                for (var i = 0; i < mutualConfig.Length; i++)
                 {
-                    GameObject go = Object.Instantiate(config.MutualThumbnailTemplate, config.MutualThumbnailTemplate.transform.parent);
-                    mutualFriendThumbnailObjects.Add(go);
-                    go.SetActive(true);
-
-                    ImageView view = go.GetComponentInChildren<ImageView>();
-                    var controller = new ImageController(view, webRequestController);
-                    LoadThumbnail(mutualFriend, view, controller);
+                    bool friendExists = i < mutualFriendsResult.Friends.Count;
+                    mutualConfig[i].Root.SetActive(friendExists);
+                    if (!friendExists) continue;
+                    Profile mutualFriend = mutualFriendsResult.Friends[i];
+                    ImageView view = mutualConfig[i].Image;
+                    LoadThumbnail(mutualFriend, view, mutualFriendControllers[view]);
                 }
             }
 
@@ -360,10 +376,10 @@ namespace DCL.Friends.UI.Requests
         }
 
         private void BlockUnwantedInputs() =>
-            inputBlock.Disable(InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.CAMERA, InputMapComponent.Kind.PLAYER);
+            inputBlock.Disable(InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.IN_WORLD_CAMERA, InputMapComponent.Kind.CAMERA, InputMapComponent.Kind.PLAYER);
 
         private void UnblockUnwantedInputs() =>
-            inputBlock.Enable(InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.CAMERA, InputMapComponent.Kind.PLAYER);
+            inputBlock.Enable(InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.IN_WORLD_CAMERA, InputMapComponent.Kind.CAMERA, InputMapComponent.Kind.PLAYER);
 
         private async UniTask ShowOperationConfirmationAsync(FriendRequestView.OperationConfirmedConfig config,
             Web3Address userId, string textWithUserNameParam, CancellationToken ct)
@@ -383,7 +399,7 @@ namespace DCL.Friends.UI.Requests
                     LoadThumbnail(myProfile, config.MyThumbnail, new ImageController(config.MyThumbnail, webRequestController));
             }
 
-            await UniTask.WhenAny(config.CloseButton.OnClickAsync(ct), UniTask.Delay(5000, cancellationToken: ct));
+            await UniTask.WhenAny(config.CloseButton.OnClickAsync(ct), UniTask.Delay(OPERATION_CONFIRMED_WAIT_TIME_MS, cancellationToken: ct));
         }
 
         private enum ViewState

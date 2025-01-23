@@ -63,8 +63,15 @@ namespace DCL.Friends.UI.Requests
             public TMP_Text UserNameHash;
             public GameObject UserNameVerification;
             public GameObject MutualContainer;
-            public GameObject MutualThumbnailTemplate;
+            public MutualThumbnail[] MutualThumbnails;
             public TMP_Text MutalCountText;
+
+            [Serializable]
+            public struct MutualThumbnail
+            {
+                public GameObject Root;
+                public ImageView Image;
+            }
         }
 
         [Serializable]

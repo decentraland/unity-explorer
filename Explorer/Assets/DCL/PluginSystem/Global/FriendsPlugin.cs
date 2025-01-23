@@ -8,7 +8,6 @@ using DCL.Friends.UI.Requests;
 using DCL.Input;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Profiles;
-using DCL.Web3;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using MVC;
