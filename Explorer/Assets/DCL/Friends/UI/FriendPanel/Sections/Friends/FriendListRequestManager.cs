@@ -18,14 +18,11 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 
         public FriendListRequestManager(IFriendsService friendsService,
             IFriendsEventBus friendEventBus,
-            int pageSize) : base(pageSize)
+            int pageSize,
+            int elementsMissingThreshold) : base(pageSize, elementsMissingThreshold)
         {
             this.friendsService = friendsService;
             this.friendEventBus = friendEventBus;
-        }
-
-        public override void Dispose()
-        {
         }
 
         public override int GetCollectionCount() =>
@@ -34,12 +31,18 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         protected override Profile GetCollectionElement(int index) =>
             friends[index];
 
-        protected override async UniTask FetchInitialDataAsync(CancellationToken ct)
+        protected override async UniTask<int> FetchDataAsync(int pageNumber, int pageSize, CancellationToken ct)
         {
-            // PaginatedFriendsResult result = await friendsService.GetFriendsAsync(1, 1000, ct);
+            // PaginatedFriendsResult result = await friendsService.GetFriendsAsync(pageNumber, pageSize, ct);
             //
             // friends.AddRange(result.Friends);
+            //
+            // return result.TotalAmount;
+            return FetchMockData();
+        }
 
+        private int FetchMockData()
+        {
             friends.Add(Profile.NewRandomProfile("0x05dE05303EAb867D51854E8b4fE03F7acb0624d9"));
             friends.Add(Profile.NewRandomProfile("0x3a4401589ce5e65e0603df86b03c18c9fa8a05d1"));
             friends.Add(Profile.NewRandomProfile("0x381fb40e076f54687febb6235c65e91b12c47efd"));
@@ -55,6 +58,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             friends.Add(Profile.NewRandomProfile("0x97574fcd296f73fe34823973390ebe4b9b065300"));
             friends.Add(Profile.NewRandomProfile("0x5d327dcd9b4dae70ebf9c4ebb0576a1de97da520"));
             friends.Add(Profile.NewRandomProfile("0xb1d3f75bc57e744f7f6f8b014f1a0dc385649628"));
+
+            return friends.Count;
         }
 
         protected override void CustomiseElement(FriendListUserView elementView, int index)

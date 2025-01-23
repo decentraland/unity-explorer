@@ -22,16 +22,12 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Blocked
         public BlockedRequestManager(IProfileRepository profileRepository,
             IProfileCache profileCache,
             IWeb3IdentityCache web3IdentityCache,
-            int pageSize) : base(pageSize)
+            int pageSize,
+            int elementsMissingThreshold) : base(pageSize, elementsMissingThreshold)
         {
             this.profileRepository = profileRepository;
             this.profileCache = profileCache;
             this.web3IdentityCache = web3IdentityCache;
-        }
-
-        public override void Dispose()
-        {
-
         }
 
         public override int GetCollectionCount() =>
@@ -49,7 +45,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Blocked
             elementView.ContextMenuButton.onClick.AddListener(() => ContextMenuClicked?.Invoke(elementView.UserProfile));
         }
 
-        protected override async UniTask FetchInitialDataAsync(CancellationToken ct)
+        protected override async UniTask<int> FetchDataAsync(int pageNumber, int pageSize, CancellationToken ct)
         {
             userProfile = await GetProfile(web3IdentityCache.Identity?.Address, ct);
 
@@ -62,9 +58,9 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Blocked
                 if (blockedProfile != null)
                     blockedProfiles.Add(blockedProfile);
             }
-        }
 
-        public int GetElementsNumber() => blockedProfiles.Count;
+            return userProfile!.Blocked.Count;
+        }
 
         public override void Reset()
         {

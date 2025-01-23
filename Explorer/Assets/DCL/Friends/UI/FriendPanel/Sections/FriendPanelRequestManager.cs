@@ -3,27 +3,36 @@ using DCL.Profiles;
 using SuperScrollView;
 using System;
 using System.Threading;
+using Utility;
 
 namespace DCL.Friends.UI.FriendPanel.Sections
 {
     public abstract class FriendPanelRequestManager<T> : IDisposable where T : FriendPanelUserView
     {
-        protected readonly int pageSize;
+        private readonly int pageSize;
+        private readonly int elementsMissingThreshold;
 
-        protected int pageNumber = 0;
-        protected int totalFetched = 0;
+        private CancellationTokenSource fetchNewDataCts = new ();
+        private int pageNumber;
+        private int totalFetched;
+        private int totalToFetch;
+        private bool isFetching;
 
         public bool HasElements { get; private set; }
         public bool WasInitialised { get; private set; }
 
         public event Action<Profile>? ElementClicked;
 
-        public FriendPanelRequestManager(int pageSize)
+        protected FriendPanelRequestManager(int pageSize, int elementsMissingThreshold)
         {
             this.pageSize = pageSize;
+            this.elementsMissingThreshold = elementsMissingThreshold;
         }
 
-        public abstract void Dispose();
+        public virtual void Dispose()
+        {
+            fetchNewDataCts.SafeCancelAndDispose();
+        }
 
         public abstract int GetCollectionCount();
         protected abstract Profile GetCollectionElement(int index);
@@ -41,16 +50,33 @@ namespace DCL.Friends.UI.FriendPanel.Sections
 
             CustomiseElement(view, index);
 
+            if (index >= totalFetched - elementsMissingThreshold && totalFetched < totalToFetch && !isFetching)
+                FetchNewDataAsync(loopListView, fetchNewDataCts.Token).Forget();
+
             return listItem;
         }
 
-        protected abstract UniTask FetchInitialDataAsync(CancellationToken ct);
+        private async UniTaskVoid FetchNewDataAsync(LoopListView2 loopListView, CancellationToken ct)
+        {
+            isFetching = true;
+
+            pageNumber++;
+            await FetchDataAsync(pageNumber, pageSize, ct);
+            totalFetched = GetCollectionCount();
+
+            loopListView.SetListItemCount(totalFetched);
+
+            isFetching = false;
+        }
+
+        protected abstract UniTask<int> FetchDataAsync(int pageNumber, int pageSize, CancellationToken ct);
 
         public async UniTask InitAsync(CancellationToken ct)
         {
-            await FetchInitialDataAsync(ct);
+            totalToFetch = await FetchDataAsync(pageNumber, pageSize, ct);
+            totalFetched = GetCollectionCount();
 
-            HasElements = GetCollectionCount() > 0;
+            HasElements = totalFetched > 0;
             WasInitialised = true;
         }
 

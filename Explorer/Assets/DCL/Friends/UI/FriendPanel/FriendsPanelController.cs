@@ -22,6 +22,7 @@ namespace DCL.Friends.UI.FriendPanel
         }
 
         private const int FRIENDS_PAGE_SIZE = 100;
+        private const int FRIENDS_FETCH_ELEMENTS_THRESHOLD = 5;
 
         private readonly IFriendsService friendsService;
         private readonly IFriendsEventBus friendEventBus;
@@ -106,7 +107,7 @@ namespace DCL.Friends.UI.FriendPanel
                 web3IdentityCache,
                 mvcManager,
                 systemClipboard,
-                new FriendListRequestManager(friendsService, friendEventBus, FRIENDS_PAGE_SIZE));
+                new FriendListRequestManager(friendsService, friendEventBus, FRIENDS_PAGE_SIZE, FRIENDS_FETCH_ELEMENTS_THRESHOLD));
             requestsSectionController = new RequestsSectionController(viewInstance!.RequestsSection,
                 friendsService,
                 friendEventBus,
@@ -116,7 +117,7 @@ namespace DCL.Friends.UI.FriendPanel
                 new RequestsRequestManager(friendsService, friendEventBus, FRIENDS_PAGE_SIZE, profileCache, profileRepository));
             blockedSectionController = new BlockedSectionController(viewInstance!.BlockedSection,
                 web3IdentityCache,
-                new BlockedRequestManager(profileRepository, profileCache, web3IdentityCache, FRIENDS_PAGE_SIZE),
+                new BlockedRequestManager(profileRepository, profileCache, web3IdentityCache, FRIENDS_PAGE_SIZE, FRIENDS_FETCH_ELEMENTS_THRESHOLD),
                 mvcManager);
 
             requestsSectionController.ReceivedRequestsCountChanged += FriendRequestCountChanged;
