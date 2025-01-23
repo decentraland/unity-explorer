@@ -1,9 +1,12 @@
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.Profiles;
+using SuperScrollView;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
+using Utility;
 
 namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 {
@@ -11,18 +14,70 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
     {
         private readonly IFriendsService friendsService;
         private readonly IFriendsEventBus friendEventBus;
+        private readonly IProfileRepository profileRepository;
+        private readonly IProfileCache profileCache;
+        private readonly LoopListView2 loopListView;
 
         private List<Profile> friends = new ();
+        private CancellationTokenSource addFriendProfileCts = new ();
 
         public event Action<Profile, Vector2, FriendListUserView>? ContextMenuClicked;
 
         public FriendListRequestManager(IFriendsService friendsService,
             IFriendsEventBus friendEventBus,
+            IProfileRepository profileRepository,
+            IProfileCache profileCache,
+            LoopListView2 loopListView,
             int pageSize,
             int elementsMissingThreshold) : base(pageSize, elementsMissingThreshold)
         {
             this.friendsService = friendsService;
             this.friendEventBus = friendEventBus;
+            this.profileRepository = profileRepository;
+            this.profileCache = profileCache;
+            this.loopListView = loopListView;
+
+            this.friendEventBus.OnFriendRequestAccepted += FriendRequestAccepted;
+        }
+
+        public override void Dispose()
+        {
+            base.Dispose();
+
+            friendEventBus.OnFriendRequestAccepted -= FriendRequestAccepted;
+            addFriendProfileCts.SafeCancelAndDispose();
+        }
+
+        private void FriendRequestAccepted(string friendId)
+        {
+            async UniTaskVoid AddNewFriendProfileAsync(CancellationToken ct)
+            {
+                Profile? newFriendProfile = await GetProfile(friendId, ct);
+                if (newFriendProfile != null)
+                {
+                    friends.Add(newFriendProfile);
+                    friends.Sort((f1, f2) => string.Compare(f1.Name, f2.Name, StringComparison.Ordinal));
+                    loopListView.RefreshAllShownItem();
+                }
+                else
+                    ReportHub.LogError(new ReportData(ReportCategory.FRIENDS), $"Couldn't fetch new friend profile for user {friendId}");
+            }
+
+            AddNewFriendProfileAsync(addFriendProfileCts.Token).Forget();
+        }
+
+        private async UniTask<Profile?> GetProfile(string userId, CancellationToken ct)
+        {
+            Profile? profile = profileCache.Get(userId);
+
+            if (profile == null)
+            {
+                profile = await profileRepository.GetAsync(userId, ct);
+                if (profile != null)
+                    profileCache.Set(userId, profile);
+            }
+
+            return profile;
         }
 
         public override int GetCollectionCount() =>
