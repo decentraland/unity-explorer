@@ -134,34 +134,23 @@ namespace DCL.Emoji
             previouslySelected = usedPoolItems[index];
         }
 
-        public void SetDrawOrder(CanvasOrdering order)
+        public void SetPanelVisibility(bool isVisible)
         {
-            // Empt
-        }
+            if (isVisible)
+            {
+                viewDependencies.DclInput.Player.ActionForward.performed += OnArrowUp;
+                viewDependencies.DclInput.Player.ActionBackward.performed += OnArrowDown;
+                viewDependencies.DclInput.UI.Submit.performed += OnSubmit;
+            }
+            else
+            {
+                viewDependencies.DclInput.Player.ActionForward.performed -= OnArrowUp;
+                viewDependencies.DclInput.Player.ActionBackward.performed -= OnArrowDown;
+                viewDependencies.DclInput.UI.Submit.performed -= OnSubmit;
+            }
 
-        public UniTask ShowAsync(CancellationToken ct)
-        {
-            viewDependencies.DclInput.Player.ActionForward.performed += OnArrowUp;
-            viewDependencies.DclInput.Player.ActionBackward.performed += OnArrowDown;
-            viewDependencies.DclInput.UI.Submit.performed += OnSubmit;
-            IsActive = true;
-            view.gameObject.SetActive(true);
-            return UniTask.CompletedTask;
-        }
-
-        public UniTask HideAsync(CancellationToken ct, bool isInstant = false)
-        {
-            viewDependencies.DclInput.Player.ActionForward.performed -= OnArrowUp;
-            viewDependencies.DclInput.Player.ActionBackward.performed -= OnArrowDown;
-            viewDependencies.DclInput.UI.Submit.performed -= OnSubmit;
-            IsActive = false;
-            view.gameObject.SetActive(false);
-            return UniTask.CompletedTask;
-        }
-
-        public void SetCanvasActive(bool isActive)
-        {
-            // Empty
+            IsActive = isVisible;
+            view.gameObject.SetActive(isVisible);
         }
 
         public void InjectDependencies(ViewDependencies dependencies)

@@ -22,7 +22,7 @@ using Utility;
 namespace DCL.Chat
 {
     // Note: The view never changes any data (chatMessages), that's done by the controller
-    public class ChatView : ViewBase, IViewWithGlobalDependencies, IPointerEnterHandler, IPointerExitHandler, IDisposable
+    public class ChatView : ViewBase, IView, IViewWithGlobalDependencies, IPointerEnterHandler, IPointerExitHandler, IDisposable
     {
         /// <summary>
         /// The prefab to use when instantiating a new item.
@@ -415,7 +415,7 @@ namespace DCL.Chat
                         EmojiSelectionVisibilityChanged?.Invoke(false);
                     }
 
-                    emojiSuggestionPanelController!.HideAsync(CancellationToken.None);
+                    emojiSuggestionPanelController!.SetPanelVisibility(false);
                 }
             }
         }
@@ -570,7 +570,7 @@ namespace DCL.Chat
             bool toggle = !emojiPanel.gameObject.activeInHierarchy;
             emojiPanel.gameObject.SetActive(toggle);
             emojiPanelButton.SetState(toggle);
-            emojiSuggestionPanelController!.HideAsync(CancellationToken.None);
+            emojiSuggestionPanelController!.SetPanelVisibility(false);
             emojiPanel.EmojiContainer.gameObject.SetActive(toggle);
             inputField.ActivateInputField();
 
@@ -643,7 +643,7 @@ namespace DCL.Chat
         {
             if (emojiSuggestionPanelController is { IsActive: true })
             {
-                emojiSuggestionPanelController.HideAsync(CancellationToken.None);
+                emojiSuggestionPanelController!.SetPanelVisibility(false);
                 return;
             }
 
@@ -733,7 +733,7 @@ namespace DCL.Chat
             inputField.ActivateInputField();
 
             if (shouldClose)
-                emojiSuggestionPanelController!.HideAsync(CancellationToken.None);
+                emojiSuggestionPanelController!.SetPanelVisibility(false);
         }
 
         private void AddEmojiToInput(string emoji)
@@ -758,7 +758,7 @@ namespace DCL.Chat
             {
                 if (match.Value.Length < 2)
                 {
-                    emojiSuggestionPanelController!.HideAsync(CancellationToken.None);
+                    emojiSuggestionPanelController!.SetPanelVisibility(false);
                     return;
                 }
 
@@ -770,7 +770,7 @@ namespace DCL.Chat
             else
             {
                 if (emojiSuggestionPanelController is { IsActive: true })
-                    emojiSuggestionPanelController!.HideAsync(CancellationToken.None);
+                    emojiSuggestionPanelController!.SetPanelVisibility(false);
             }
         }
 
@@ -779,7 +779,7 @@ namespace DCL.Chat
             await DictionaryUtils.GetKeysWithPrefixAsync(emojiPanelController!.EmojiNameMapping, value, keysWithPrefix, ct);
 
             emojiSuggestionPanelController!.SetValues(keysWithPrefix);
-            emojiSuggestionPanelController.ShowAsync(CancellationToken.None);
+            emojiSuggestionPanelController!.SetPanelVisibility(true);
         }
 
         #endregion
