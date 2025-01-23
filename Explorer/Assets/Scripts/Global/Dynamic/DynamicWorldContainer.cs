@@ -817,7 +817,8 @@ namespace Global.Dynamic
                     profileCache,
                     profileRepository,
                     clipboard,
-                    staticContainer.WebRequestsContainer.WebRequestController));
+                    staticContainer.WebRequestsContainer.WebRequestController,
+                    staticContainer.LoadingStatus));
 
             if (dynamicWorldParams.EnableAnalytics)
                 globalPlugins.Add(new AnalyticsPlugin(

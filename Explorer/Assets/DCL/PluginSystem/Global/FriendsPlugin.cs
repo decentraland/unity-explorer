@@ -12,6 +12,7 @@ using DCL.Multiplayer.Connectivity;
 using DCL.Profiles;
 using DCL.Web3.Identities;
 using DCL.UI.MainUI;
+using DCL.UserInAppInitializationFlow;
 using DCL.WebRequests;
 using MVC;
 using System.Threading;
@@ -32,6 +33,7 @@ namespace DCL.PluginSystem.Global
         private readonly IProfileRepository profileRepository;
         private readonly ISystemClipboard systemClipboard;
         private readonly IWebRequestController webRequestController;
+        private readonly ILoadingStatus loadingStatus;
         private readonly CancellationTokenSource lifeCycleCancellationToken = new ();
 
         private RPCFriendsService? friendsService;
@@ -47,7 +49,8 @@ namespace DCL.PluginSystem.Global
             IProfileCache profileCache,
             IProfileRepository profileRepository,
             ISystemClipboard systemClipboard,
-            IWebRequestController webRequestController)
+            IWebRequestController webRequestController,
+            ILoadingStatus loadingStatus)
         {
             this.mainUIView = mainUIView;
             this.dclUrlSource = dclUrlSource;
@@ -58,6 +61,7 @@ namespace DCL.PluginSystem.Global
             this.profileRepository = profileRepository;
             this.systemClipboard = systemClipboard;
             this.webRequestController = webRequestController;
+            this.loadingStatus = loadingStatus;
         }
 
         public void Dispose()
@@ -89,7 +93,8 @@ namespace DCL.PluginSystem.Global
 
             FriendsPanelView friendsPanelPrefab = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.FriendsPanelPrefab, ct)).GetComponent<FriendsPanelView>();
 
-            friendsPanelController = new FriendsPanelController(FriendsPanelController.CreateLazily(friendsPanelPrefab, null),
+            friendsPanelController = new FriendsPanelController(FriendsPanelController.Preallocate(friendsPanelPrefab, null, out FriendsPanelView panelView),
+                panelView,
                 mainUIView.ChatView,
                 mainUIView.SidebarView.FriendRequestNotificationIndicator,
                 friendsService,
@@ -99,7 +104,8 @@ namespace DCL.PluginSystem.Global
                 profileCache,
                 profileRepository,
                 systemClipboard,
-                webRequestController);
+                webRequestController,
+                loadingStatus);
 
             mvcManager.RegisterController(friendsPanelController);
         }

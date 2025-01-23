@@ -16,7 +16,6 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         private readonly IFriendsService friendsService;
         private readonly IFriendsEventBus friendEventBus;
         private readonly IProfileRepository profileRepository;
-        private readonly IProfileCache profileCache;
         private readonly LoopListView2 loopListView;
 
         private List<Profile> friends = new ();
@@ -27,7 +26,6 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         public FriendListRequestManager(IFriendsService friendsService,
             IFriendsEventBus friendEventBus,
             IProfileRepository profileRepository,
-            IProfileCache profileCache,
             IWebRequestController webRequestController,
             LoopListView2 loopListView,
             int pageSize,
@@ -36,7 +34,6 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             this.friendsService = friendsService;
             this.friendEventBus = friendEventBus;
             this.profileRepository = profileRepository;
-            this.profileCache = profileCache;
             this.loopListView = loopListView;
 
             this.friendEventBus.OnFriendRequestAccepted += FriendRequestAccepted;
@@ -54,7 +51,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         {
             async UniTaskVoid AddNewFriendProfileAsync(CancellationToken ct)
             {
-                Profile? newFriendProfile = await GetProfile(friendId, ct);
+                Profile? newFriendProfile = await profileRepository.GetAsync(friendId, ct);
                 if (newFriendProfile != null)
                 {
                     friends.Add(newFriendProfile);
@@ -66,20 +63,6 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             }
 
             AddNewFriendProfileAsync(addFriendProfileCts.Token).Forget();
-        }
-
-        private async UniTask<Profile?> GetProfile(string userId, CancellationToken ct)
-        {
-            Profile? profile = profileCache.Get(userId);
-
-            if (profile == null)
-            {
-                profile = await profileRepository.GetAsync(userId, ct);
-                if (profile != null)
-                    profileCache.Set(userId, profile);
-            }
-
-            return profile;
         }
 
         public override int GetCollectionCount() =>

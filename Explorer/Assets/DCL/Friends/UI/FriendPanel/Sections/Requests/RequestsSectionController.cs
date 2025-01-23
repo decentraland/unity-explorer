@@ -5,6 +5,8 @@ using DCL.Passport;
 using DCL.Profiles;
 using DCL.UI.GenericContextMenu;
 using DCL.UI.GenericContextMenu.Controls.Configs;
+using DCL.UserInAppInitializationFlow;
+using DCL.Utilities;
 using DCL.Web3.Identities;
 using MVC;
 using System;
@@ -18,6 +20,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
     {
         private readonly GenericContextMenu contextMenu;
         private readonly UserProfileContextMenuControlSettings userProfileContextMenuControlSettings;
+        private readonly ILoadingStatus loadingStatus;
 
         private Profile? lastClickedProfileCtx;
         private CancellationTokenSource friendshipOperationCts = new ();
@@ -30,9 +33,12 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             IWeb3IdentityCache web3IdentityCache,
             IMVCManager mvcManager,
             ISystemClipboard systemClipboard,
+            ILoadingStatus loadingStatus,
             RequestsRequestManager requestManager)
             : base(view, friendsService, friendEventBus, web3IdentityCache, mvcManager, requestManager)
         {
+            this.loadingStatus = loadingStatus;
+
             contextMenu = new GenericContextMenu(view.ContextMenuSettings.ContextMenuWidth, verticalLayoutPadding: new RectOffset(15, 15, 20, 25), elementsSpacing: 5)
                          .AddControl(userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings(systemClipboard, profile => Debug.Log($"Send friendship request to {profile.UserId}")))
                          .AddControl(new SeparatorContextMenuControlSettings(20, -15, -15))
@@ -49,6 +55,9 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             friendEventBus.OnFriendRequestRejected += PropagateRequestAcceptedRejected;
 
             ReceivedRequestsCountChanged += UpdateReceivedRequestsSectionCount;
+
+            //TODO (lorenzo): reset and reinit as soon as identity changes
+            loadingStatus.CurrentStage.Subscribe(PrewarmRequests);
         }
 
         public override void Dispose()
@@ -63,6 +72,18 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
 
             ReceivedRequestsCountChanged -= UpdateReceivedRequestsSectionCount;
             friendshipOperationCts.SafeCancelAndDispose();
+        }
+
+        private void PrewarmRequests(LoadingStatus.LoadingStage stage)
+        {
+            if (stage != LoadingStatus.LoadingStage.Completed) return;
+
+            async UniTaskVoid PrewarmAsync(CancellationToken ct)
+            {
+                await InitAsync(ct);
+                loadingStatus.CurrentStage.Unsubscribe(PrewarmRequests);
+            }
+            PrewarmAsync(friendshipOperationCts.Token).Forget();
         }
 
         private void OpenProfilePassport(Profile profile) =>
@@ -126,7 +147,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             mvcManager.ShowAsync(GenericContextMenuController.IssueCommand(new GenericContextMenuParameter(contextMenu, buttonPosition, actionOnHide: () => elementView.CanUnHover = true))).Forget();
         }
 
-        protected override async UniTaskVoid InitAsync(CancellationToken ct)
+        protected override async UniTask InitAsync(CancellationToken ct)
         {
             view.SetLoadingState(true);
 

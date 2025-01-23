@@ -83,7 +83,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections
             view.LoopList.RefreshAllShownItem();
         }
 
-        protected virtual async UniTaskVoid InitAsync(CancellationToken ct)
+        protected virtual async UniTask InitAsync(CancellationToken ct)
         {
             view.SetLoadingState(true);
             view.SetEmptyState(false);

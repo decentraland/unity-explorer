@@ -5,6 +5,7 @@ using DCL.Friends.UI.FriendPanel.Sections.Blocked;
 using DCL.Friends.UI.FriendPanel.Sections.Friends;
 using DCL.Friends.UI.FriendPanel.Sections.Requests;
 using DCL.Profiles;
+using DCL.UserInAppInitializationFlow;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using MVC;
@@ -26,26 +27,19 @@ namespace DCL.Friends.UI.FriendPanel
         private const int FRIENDS_REQUEST_PAGE_SIZE = 1000;
         private const int FRIENDS_FETCH_ELEMENTS_THRESHOLD = 5;
 
-        private readonly IFriendsService friendsService;
-        private readonly IFriendsEventBus friendEventBus;
         private readonly ChatView chatView;
         private readonly NotificationIndicatorView sidebarRequestNotificationIndicator;
-        private readonly IMVCManager mvcManager;
-        private readonly IWeb3IdentityCache web3IdentityCache;
-        private readonly IProfileCache profileCache;
-        private readonly IProfileRepository profileRepository;
-        private readonly ISystemClipboard systemClipboard;
-        private readonly IWebRequestController webRequestController;
+        private readonly BlockedSectionController blockedSectionController;
+        private readonly FriendSectionController friendSectionController;
+        private readonly RequestsSectionController requestsSectionController;
 
-        private BlockedSectionController blockedSectionController;
-        private FriendSectionController friendSectionController;
-        private RequestsSectionController requestsSectionController;
         private CancellationTokenSource friendsPanelCts = new ();
         private bool chatWasVisible;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
         public FriendsPanelController(ViewFactoryMethod viewFactory,
+            FriendsPanelView instantiatedView,
             ChatView chatView,
             NotificationIndicatorView sidebarRequestNotificationIndicator,
             IFriendsService friendsService,
@@ -55,18 +49,31 @@ namespace DCL.Friends.UI.FriendPanel
             IProfileCache profileCache,
             IProfileRepository profileRepository,
             ISystemClipboard systemClipboard,
-            IWebRequestController webRequestController) : base(viewFactory)
+            IWebRequestController webRequestController,
+            ILoadingStatus loadingStatus) : base(viewFactory)
         {
             this.chatView = chatView;
             this.sidebarRequestNotificationIndicator = sidebarRequestNotificationIndicator;
-            this.friendsService = friendsService;
-            this.friendEventBus = friendEventBus;
-            this.mvcManager = mvcManager;
-            this.web3IdentityCache = web3IdentityCache;
-            this.profileCache = profileCache;
-            this.profileRepository = profileRepository;
-            this.systemClipboard = systemClipboard;
-            this.webRequestController = webRequestController;
+
+            friendSectionController = new FriendSectionController(instantiatedView.FriendsSection,
+                web3IdentityCache,
+                mvcManager,
+                systemClipboard,
+                new FriendListRequestManager(friendsService, friendEventBus, profileRepository, webRequestController, instantiatedView.FriendsSection.LoopList, FRIENDS_PAGE_SIZE, FRIENDS_FETCH_ELEMENTS_THRESHOLD));
+            requestsSectionController = new RequestsSectionController(instantiatedView.RequestsSection,
+                friendsService,
+                friendEventBus,
+                web3IdentityCache,
+                mvcManager,
+                systemClipboard,
+                loadingStatus,
+                new RequestsRequestManager(friendsService, friendEventBus, webRequestController, FRIENDS_REQUEST_PAGE_SIZE, profileCache, profileRepository));
+            blockedSectionController = new BlockedSectionController(instantiatedView.BlockedSection,
+                web3IdentityCache,
+                new BlockedRequestManager(profileRepository, web3IdentityCache, webRequestController, FRIENDS_PAGE_SIZE, FRIENDS_FETCH_ELEMENTS_THRESHOLD),
+                mvcManager);
+
+            requestsSectionController.ReceivedRequestsCountChanged += FriendRequestCountChanged;
         }
 
         public override void Dispose()
@@ -108,24 +115,6 @@ namespace DCL.Friends.UI.FriendPanel
         {
             base.OnViewInstantiated();
 
-            friendSectionController = new FriendSectionController(viewInstance!.FriendsSection,
-                web3IdentityCache,
-                mvcManager,
-                systemClipboard,
-                new FriendListRequestManager(friendsService, friendEventBus, profileRepository, profileCache, webRequestController, viewInstance!.FriendsSection.LoopList, FRIENDS_PAGE_SIZE, FRIENDS_FETCH_ELEMENTS_THRESHOLD));
-            requestsSectionController = new RequestsSectionController(viewInstance!.RequestsSection,
-                friendsService,
-                friendEventBus,
-                web3IdentityCache,
-                mvcManager,
-                systemClipboard,
-                new RequestsRequestManager(friendsService, friendEventBus, webRequestController, FRIENDS_REQUEST_PAGE_SIZE, profileCache, profileRepository));
-            blockedSectionController = new BlockedSectionController(viewInstance!.BlockedSection,
-                web3IdentityCache,
-                new BlockedRequestManager(profileRepository, profileCache, web3IdentityCache, webRequestController, FRIENDS_PAGE_SIZE, FRIENDS_FETCH_ELEMENTS_THRESHOLD),
-                mvcManager);
-
-            requestsSectionController.ReceivedRequestsCountChanged += FriendRequestCountChanged;
             viewInstance!.FriendsTabButton.onClick.AddListener(() => ToggleTabs(FriendsPanelTab.FRIENDS));
             viewInstance.RequestsTabButton.onClick.AddListener(() => ToggleTabs(FriendsPanelTab.REQUESTS));
             viewInstance.BlockedTabButton.onClick.AddListener(() => ToggleTabs(FriendsPanelTab.BLOCKED));

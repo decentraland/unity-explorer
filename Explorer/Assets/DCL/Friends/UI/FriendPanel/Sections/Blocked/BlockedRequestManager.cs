@@ -11,7 +11,6 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Blocked
     public class BlockedRequestManager : FriendPanelRequestManager<BlockedUserView>
     {
         private readonly IProfileRepository profileRepository;
-        private readonly IProfileCache profileCache;
         private readonly IWeb3IdentityCache web3IdentityCache;
 
         private Profile? userProfile;
@@ -21,14 +20,12 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Blocked
         public event Action<Profile>? ContextMenuClicked;
 
         public BlockedRequestManager(IProfileRepository profileRepository,
-            IProfileCache profileCache,
             IWeb3IdentityCache web3IdentityCache,
             IWebRequestController webRequestController,
             int pageSize,
             int elementsMissingThreshold) : base(pageSize, elementsMissingThreshold, webRequestController)
         {
             this.profileRepository = profileRepository;
-            this.profileCache = profileCache;
             this.web3IdentityCache = web3IdentityCache;
         }
 
@@ -49,14 +46,14 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Blocked
 
         protected override async UniTask<int> FetchDataAsync(int pageNumber, int pageSize, CancellationToken ct)
         {
-            userProfile = await GetProfile(web3IdentityCache.Identity?.Address, ct);
+            userProfile = await profileRepository.GetAsync(web3IdentityCache.Identity?.Address, ct);
 
             if (userProfile == null)
                 throw new Exception($"Couldn't fetch user own profile for address {web3IdentityCache.Identity?.Address}");
 
             foreach (string blockedUserId in userProfile!.Blocked)
             {
-                Profile? blockedProfile = await GetProfile(blockedUserId, ct);
+                Profile? blockedProfile = await profileRepository.GetAsync(blockedUserId, ct);
                 if (blockedProfile != null)
                     blockedProfiles.Add(blockedProfile);
             }
@@ -70,18 +67,5 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Blocked
             blockedProfiles.Clear();
         }
 
-        private async UniTask<Profile?> GetProfile(string userId, CancellationToken ct)
-        {
-            Profile? profile = profileCache.Get(userId);
-
-            if (profile == null)
-            {
-                profile = await profileRepository.GetAsync(userId, ct);
-                if (profile != null)
-                    profileCache.Set(userId, profile);
-            }
-
-            return profile;
-        }
     }
 }
