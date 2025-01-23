@@ -1,0 +1,79 @@
+﻿
+#include "Includes/PlatformSpecifications.cginc"
+
+#pragma kernel CSInstancedRenderingVisibilityKernelLOD0
+#pragma kernel CSInstancedRenderingVisibilityKernelLOD1
+#pragma kernel CSInstancedRenderingVisibilityKernelLOD2
+
+RWStructuredBuffer<uint4> PerInstance_LODLevels; // LOD_A, LOD_B, LOD_Dither, LOD_Shadow 
+AppendStructuredBuffer<uint2> InstanceLookUpAndDither_LOD0;
+AppendStructuredBuffer<uint2> InstanceLookUpAndDither_LOD1;
+AppendStructuredBuffer<uint2> InstanceLookUpAndDither_LOD2;
+AppendStructuredBuffer<uint2> InstanceLookUpAndDither_LOD3;
+AppendStructuredBuffer<uint2> InstanceLookUpAndDither_LOD4;
+AppendStructuredBuffer<uint2> InstanceLookUpAndDither_LOD5;
+AppendStructuredBuffer<uint2> InstanceLookUpAndDither_LOD6;
+AppendStructuredBuffer<uint2> InstanceLookUpAndDither_LOD7;
+
+uniform uint nInstBufferSize;
+uniform uint nLODCount;
+
+[numthreads(GPUI_THREADS, 1, 1)]
+void ComputeLODBufferAccumulation(uint3 id : SV_DispatchThreadID)
+{
+    if (id.x >= nInstBufferSize)
+        return;
+
+    uint nLOD_A = PerInstance_LODLevels[id.x][0];
+    uint nLOD_B = PerInstance_LODLevels[id.x][1];
+    uint nLOD_Shadow = PerInstance_LODLevels[id.x][3];
+    if (nLOD_A < nLODCount)
+    {
+        if (nLOD_A == 0)
+        {
+            InstanceLookUpAndDither_LOD0.Append(uint2(id.x, 255 - PerInstance_LODLevels[id.x][3]));
+            if (nLOD_B < nLODCount)
+                InstanceLookUpAndDither_LOD1.Append(uint2(id.x, PerInstance_LODLevels[id.x][3]));
+        }
+        else if (nLOD_A == 1)
+        {
+            InstanceLookUpAndDither_LOD1.Append(uint2(id.x, 255 - PerInstance_LODLevels[id.x][3]));
+            if (nLOD_B < nLODCount)
+                InstanceLookUpAndDither_LOD2.Append(uint2(id.x, PerInstance_LODLevels[id.x][3]));
+        }
+        else if (nLOD_A == 2)
+        {
+            InstanceLookUpAndDither_LOD2.Append(uint2(id.x, 255 - PerInstance_LODLevels[id.x][3]));
+            if (nLOD_B < nLODCount)
+                InstanceLookUpAndDither_LOD3.Append(uint2(id.x, PerInstance_LODLevels[id.x][3]));
+        }
+        else if (nLOD_A == 3)
+        {
+            InstanceLookUpAndDither_LOD3.Append(uint2(id.x, 255 - PerInstance_LODLevels[id.x][3]));
+            if (nLOD_B < nLODCount)
+                InstanceLookUpAndDither_LOD4.Append(uint2(id.x, PerInstance_LODLevels[id.x][3]));
+        }
+        else if (nLOD_A == 4)
+        {
+            InstanceLookUpAndDither_LOD4.Append(uint2(id.x, 255 - PerInstance_LODLevels[id.x][3]));
+            if (nLOD_B < nLODCount)
+                InstanceLookUpAndDither_LOD5.Append(uint2(id.x, PerInstance_LODLevels[id.x][3]));
+        }
+        else if (nLOD_A == 5)
+        {
+            InstanceLookUpAndDither_LOD5.Append(uint2(id.x, 255 - PerInstance_LODLevels[id.x][3]));
+            if (nLOD_B < nLODCount)
+                InstanceLookUpAndDither_LOD6.Append(uint2(id.x, PerInstance_LODLevels[id.x][3]));
+        }
+        else if (nLOD_A == 6)
+        {
+            InstanceLookUpAndDither_LOD6.Append(uint2(id.x, 255 - PerInstance_LODLevels[id.x][3]));
+            if (nLOD_B < nLODCount)
+                InstanceLookUpAndDither_LOD7.Append(uint2(id.x, PerInstance_LODLevels[id.x][3]));
+        }
+        else if (nLOD_A == 7)
+        {
+            InstanceLookUpAndDither_LOD7.Append(uint2(id.x, 255 - PerInstance_LODLevels[id.x][3]));
+        }
+    }
+}
