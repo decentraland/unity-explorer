@@ -511,7 +511,7 @@ namespace Global.Dynamic
                 new ClearChatCommand(chatHistory),
                 new ReloadSceneChatCommand(reloadSceneController),
                 new LoadPortableExperienceChatCommand(staticContainer.PortableExperiencesController, staticContainer.FeatureFlagsCache),
-                new KillPortableExperienceChatCommand(staticContainer.PortableExperiencesController, staticContainer.FeatureFlagsCache),
+                new KillPortableExperienceChatCommand(staticContainer.PortableExperiencesController, staticContainer.FeatureFlagsCache), new VersionChatCommand()
             };
 
             chatCommands.Add(new HelpChatCommand(chatCommands, appArgs));
