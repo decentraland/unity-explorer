@@ -67,8 +67,6 @@ using DCL.SceneLoadingScreens.LoadingScreen;
 using DCL.SidebarBus;
 using DCL.UI.MainUI;
 using DCL.StylizedSkybox.Scripts.Plugin;
-using DCL.UI;
-using DCL.UI.HyperlinkHandler;
 using DCL.UserInAppInitializationFlow;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
@@ -182,7 +180,7 @@ namespace Global.Dynamic
             IAssetsProvisioner assetsProvisioner = dynamicWorldDependencies.AssetsProvisioner;
             IDebugContainerBuilder debugBuilder = dynamicWorldDependencies.DebugContainerBuilder;
             ITeleportBusController teleportBusController = new TeleportBusController();
-            ObjectProxy<INavmapBus> explorePanelNavmapBus = new ObjectProxy<INavmapBus>();
+            var explorePanelNavmapBus = new ObjectProxy<INavmapBus>();
             INavmapBus sharedNavmapCommandBus = new SharedNavmapBus(explorePanelNavmapBus);
 
             // If we have many undesired delays when using the third-party providers, it might be useful to cache it at app's bootstrap
@@ -564,7 +562,6 @@ namespace Global.Dynamic
             var multiplayerEmotesMessageBus = new MultiplayerEmotesMessageBus(messagePipesHub, multiplayerDebugSettings);
 
             var remoteMetadata = new DebounceRemoteMetadata(new RemoteMetadata(roomHub, staticContainer.RealmData));
-            var hyperlinkHandlerDependencies = new HyperlinkHandlerDependencies(mvcManager, dclCursor);
 
             var characterPreviewEventBus = new CharacterPreviewEventBus();
             var sidebarBus = new SidebarBus();
@@ -668,7 +665,6 @@ namespace Global.Dynamic
                     staticContainer.InputBlock,
                     globalWorld,
                     playerEntity,
-                    hyperlinkHandlerDependencies,
                     viewDependencies),
                 new ExplorePanelPlugin(
                     assetsProvisioner,
@@ -790,7 +786,7 @@ namespace Global.Dynamic
                 ),
                 new GenericPopupsPlugin(assetsProvisioner, mvcManager, clipboardManager),
                 new GenericContextMenuPlugin(assetsProvisioner, mvcManager),
-                new FriendsPlugin(bootstrapContainer.DecentralandUrlsSource, profileRepository, identityCache, staticContainer.FeatureFlagsCache, onlineUsersProvider, roomHub)
+                new FriendsPlugin(bootstrapContainer.DecentralandUrlsSource, profileRepository, identityCache, staticContainer.FeatureFlagsCache, onlineUsersProvider, roomHub),
             };
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);

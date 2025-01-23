@@ -44,7 +44,6 @@ namespace DCL.Chat
         private bool isInputSelected;
         private IReadOnlyList<RaycastResult> raycastResults;
         private UniTaskCompletionSource closePopupTask;
-        private HyperlinkHandlerDependencies hyperlinkHandlerDependencies;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
 
@@ -60,9 +59,8 @@ namespace DCL.Chat
             World world,
             Entity playerEntity,
             IInputBlock inputBlock,
-            HyperlinkHandlerDependencies hyperlinkHandlerDependencies,
             ViewDependencies viewDependencies
-            ) : base(viewFactory)
+        ) : base(viewFactory)
         {
             this.chatEntryConfiguration = chatEntryConfiguration;
             this.chatMessagesBus = chatMessagesBus;

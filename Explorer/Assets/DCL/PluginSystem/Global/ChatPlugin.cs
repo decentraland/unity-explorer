@@ -32,7 +32,6 @@ namespace DCL.PluginSystem.Global
         private readonly Arch.Core.World world;
         private readonly Entity playerEntity;
         private readonly MainUIView mainUIView;
-        private readonly HyperlinkHandlerDependencies hyperlinkHandlerDependencies;
         private readonly ViewDependencies viewDependencies;
 
         private ChatController chatController;
@@ -48,7 +47,6 @@ namespace DCL.PluginSystem.Global
             IInputBlock inputBlock,
             Arch.Core.World world,
             Entity playerEntity,
-            HyperlinkHandlerDependencies hyperlinkHandlerDependencies,
             ViewDependencies viewDependencies)
         {
             this.assetsProvisioner = assetsProvisioner;
@@ -60,7 +58,6 @@ namespace DCL.PluginSystem.Global
             this.inputBlock = inputBlock;
             this.world = world;
             this.playerEntity = playerEntity;
-            this.hyperlinkHandlerDependencies = hyperlinkHandlerDependencies;
             this.viewDependencies = viewDependencies;
             this.mainUIView = mainUIView;
             this.inputBlock = inputBlock;
@@ -89,7 +86,6 @@ namespace DCL.PluginSystem.Global
                 world,
                 playerEntity,
                 inputBlock,
-                hyperlinkHandlerDependencies,
                 viewDependencies
             );
 

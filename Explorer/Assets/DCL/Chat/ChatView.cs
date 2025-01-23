@@ -24,21 +24,15 @@ namespace DCL.Chat
     // Note: The view never changes any data (chatMessages), that's done by the controller
     public class ChatView : ViewBase, IView, IViewWithGlobalDependencies, IPointerEnterHandler, IPointerExitHandler, IDisposable
     {
-        /// <summary>
-        /// The prefab to use when instantiating a new item.
-        /// </summary>
-        private enum ChatItemPrefabIndex // It must match the list in the LoopListView.
-        {
-            ChatEntry,
-            ChatEntryOwn,
-            Padding,
-            SystemChatEntry
-        }
-
         public delegate Color CalculateUsernameColorDelegate(ChatMessage chatMessage);
-        public delegate void InputBoxFocusChangedDelegate(bool hasFocus);
         public delegate void EmojiSelectionVisibilityChangedDelegate(bool isVisible);
+        public delegate void InputBoxFocusChangedDelegate(bool hasFocus);
         public delegate void InputSubmittedDelegate(string message, string origin);
+
+        private const string EMOJI_SUGGESTION_PATTERN = @":\w+";
+        private const string EMOJI_TAG = "[emoji]";
+        private const string ORIGIN = "chat";
+        private static readonly Regex EMOJI_PATTERN_REGEX = new (EMOJI_SUGGESTION_PATTERN, RegexOptions.Compiled);
 
         [Header("Settings")]
         [Tooltip("The time it takes, in seconds, for the background of the chat window to fade-in/out when hovering with the mouse.")]
@@ -139,78 +133,44 @@ namespace DCL.Chat
 
         [SerializeField]
         private AudioClipConfig enterInputAudio;
-
-        /// <summary>
-        /// Raised when the mouse pointer hovers any part of the chat window.
-        /// </summary>
-        public event Action PointerEnter;
-
-        /// <summary>
-        /// Raised when the mouse pointer stops hovering the chat window.
-        /// </summary>
-        public event Action PointerExit;
-
-        /// <summary>
-        /// Raised when either the input box gains the focus or loses it.
-        /// </summary>
-        public event InputBoxFocusChangedDelegate InputBoxFocusChanged;
-
-        /// <summary>
-        /// Raised when either the emoji selection panel opens or closes.
-        /// </summary>
-        public event EmojiSelectionVisibilityChangedDelegate EmojiSelectionVisibilityChanged;
-
-        /// <summary>
-        /// Raised whenever the user attempts to send the content of the input box as a chat message.
-        /// </summary>
-        public event InputSubmittedDelegate InputSubmitted;
-
-        /// <summary>
-        /// Raised when the option to change the visibility of the chat bubbles over the avatar changes its value.
-        /// </summary>
-        public event Action<bool>? ChatBubbleVisibilityChanged;
-
-        /// <summary>
-        /// An external function that provides a way to calculate the color to be used to display a user name.
-        /// </summary>
-        public CalculateUsernameColorDelegate CalculateUsernameColor;
-
-        private const string EMOJI_SUGGESTION_PATTERN = @":\w+";
-        private const string EMOJI_TAG = "[emoji]";
-        private const string ORIGIN = "chat";
-        private static readonly Regex EMOJI_PATTERN_REGEX = new (EMOJI_SUGGESTION_PATTERN, RegexOptions.Compiled);
-
-        private ViewDependencies viewDependencies;
-
-        private EmojiPanelController? emojiPanelController;
-        private EmojiSuggestionPanel? emojiSuggestionPanelController;
         private readonly List<EmojiData> keysWithPrefix = new ();
 
-        private CancellationTokenSource emojiSearchCts;
-        private CancellationTokenSource emojiPanelCts;
-        private CancellationTokenSource fadeoutCts;
+        /// <summary>
+        ///     An external function that provides a way to calculate the color to be used to display a user name.
+        /// </summary>
+        public CalculateUsernameColorDelegate CalculateUsernameColor;
+        private IReadOnlyList<ChatMessage> chatMessages;
         private UniTaskCompletionSource closePopupTask;
 
         private Mouse device;
 
-        private bool isChatClosed;
-        private bool isInputSelected;
-        private IReadOnlyList<ChatMessage> chatMessages;
+        private EmojiPanelController? emojiPanelController;
+        private CancellationTokenSource emojiPanelCts;
+
+        private CancellationTokenSource emojiSearchCts;
+        private EmojiSuggestionPanel? emojiSuggestionPanelController;
+
         // The latest amount of messages added to the chat that must be animated yet
         private int entriesPendingToAnimate;
+        private CancellationTokenSource fadeoutCts;
+
+        private bool isChatClosed;
+        private bool isInputSelected;
+
+        private ViewDependencies viewDependencies;
 
         /// <summary>
-        /// Gets whether the scroll view is showing the bottom of the content, and it can't scroll down anymore.
+        ///     Gets whether the scroll view is showing the bottom of the content, and it can't scroll down anymore.
         /// </summary>
         public bool IsScrollAtBottom => loopList.ScrollRect.normalizedPosition.y <= 0.0f;
 
         /// <summary>
-        /// Gets whether the scroll view is showing the top of the content, and it can't scroll up anymore.
+        ///     Gets whether the scroll view is showing the top of the content, and it can't scroll up anymore.
         /// </summary>
         public bool IsScrollAtTop => loopList.ScrollRect.normalizedPosition.y >= 1.0f;
 
         /// <summary>
-        /// Get or sets the current content of the input box.
+        ///     Get or sets the current content of the input box.
         /// </summary>
         public string InputBoxText
         {
@@ -219,14 +179,11 @@ namespace DCL.Chat
         }
 
         /// <summary>
-        /// Gets or sets whether the field that allows changing the visibility of the chat bubbles is enabled or not.
+        ///     Gets or sets whether the field that allows changing the visibility of the chat bubbles is enabled or not.
         /// </summary>
         public bool EnableChatBubblesVisibilityField
         {
-            get
-            {
-                return chatBubblesToggle.Toggle.interactable;
-            }
+            get => chatBubblesToggle.Toggle.interactable;
 
             set
             {
@@ -241,10 +198,86 @@ namespace DCL.Chat
             }
         }
 
+        private void Start()
+        {
+            panelBackgroundCanvasGroup.alpha = 0;
+            scrollbarCanvasGroup.alpha = 0;
+        }
+
+        public void Dispose()
+        {
+            if (emojiPanelController != null)
+            {
+                emojiPanelController.EmojiSelected -= AddEmojiToInput;
+                emojiPanelController.Dispose();
+            }
+
+            if (emojiSuggestionPanelController != null)
+                emojiSuggestionPanelController.EmojiSelected -= AddEmojiFromSuggestion;
+
+            fadeoutCts.SafeCancelAndDispose();
+            emojiPanelCts.SafeCancelAndDispose();
+            emojiSearchCts.SafeCancelAndDispose();
+
+            viewDependencies.DclInput.UI.RightClick.performed -= OnRightClickRegistered;
+        }
+
+        public void OnPointerEnter(PointerEventData eventData)
+        {
+            PointerEnter?.Invoke();
+            panelBackgroundCanvasGroup.DOFade(1, BackgroundFadeTime);
+            scrollbarCanvasGroup.DOFade(1, BackgroundFadeTime);
+            StopChatEntriesFadeout();
+        }
+
+        public void OnPointerExit(PointerEventData eventData)
+        {
+            PointerExit?.Invoke();
+            panelBackgroundCanvasGroup.DOFade(0, BackgroundFadeTime);
+            scrollbarCanvasGroup.DOFade(0, BackgroundFadeTime);
+            StartChatEntriesFadeout();
+        }
+
+        public override UniTask HideAsync(CancellationToken ct, bool isInstant = false)
+        {
+            closePopupTask.TrySetResult();
+            return base.HideAsync(ct, isInstant);
+        }
+
         public void InjectDependencies(ViewDependencies dependencies)
         {
             viewDependencies = dependencies;
         }
+
+        /// <summary>
+        ///     Raised when the mouse pointer hovers any part of the chat window.
+        /// </summary>
+        public event Action PointerEnter;
+
+        /// <summary>
+        ///     Raised when the mouse pointer stops hovering the chat window.
+        /// </summary>
+        public event Action PointerExit;
+
+        /// <summary>
+        ///     Raised when either the input box gains the focus or loses it.
+        /// </summary>
+        public event InputBoxFocusChangedDelegate InputBoxFocusChanged;
+
+        /// <summary>
+        ///     Raised when either the emoji selection panel opens or closes.
+        /// </summary>
+        public event EmojiSelectionVisibilityChangedDelegate EmojiSelectionVisibilityChanged;
+
+        /// <summary>
+        ///     Raised whenever the user attempts to send the content of the input box as a chat message.
+        /// </summary>
+        public event InputSubmittedDelegate InputSubmitted;
+
+        /// <summary>
+        ///     Raised when the option to change the visibility of the chat bubbles over the avatar changes its value.
+        /// </summary>
+        public event Action<bool>? ChatBubbleVisibilityChanged;
 
         public void Initialize(IReadOnlyList<ChatMessage> chatMessages, bool areChatBubblesVisible)
         {
@@ -273,7 +306,7 @@ namespace DCL.Chat
         }
 
         /// <summary>
-        /// Replaces the message data of the view with another.
+        ///     Replaces the message data of the view with another.
         /// </summary>
         /// <param name="messages">The new messages to display in the view.</param>
         public void SetMessages(IReadOnlyList<ChatMessage> messages)
@@ -282,7 +315,7 @@ namespace DCL.Chat
         }
 
         /// <summary>
-        /// Opens or closes the chat window.
+        ///     Opens or closes the chat window.
         /// </summary>
         /// <param name="show">Whether to open or close it.</param>
         public void ToggleChat(bool show)
@@ -295,7 +328,7 @@ namespace DCL.Chat
         }
 
         /// <summary>
-        /// Makes the input box stop receiving user inputs.
+        ///     Makes the input box stop receiving user inputs.
         /// </summary>
         public void DisableInputBoxSubmissions()
         {
@@ -305,7 +338,7 @@ namespace DCL.Chat
         }
 
         /// <summary>
-        /// Makes the input box start receiving user inputs.
+        ///     Makes the input box start receiving user inputs.
         /// </summary>
         public void EnableInputBoxSubmissions()
         {
@@ -313,7 +346,7 @@ namespace DCL.Chat
         }
 
         /// <summary>
-        /// Moves the chat so it shows the last created message.
+        ///     Moves the chat so it shows the last created message.
         /// </summary>
         public void ShowLastMessage()
         {
@@ -321,7 +354,7 @@ namespace DCL.Chat
         }
 
         /// <summary>
-        /// Makes sure the chat window is showing all the messages stored in the data.
+        ///     Makes sure the chat window is showing all the messages stored in the data.
         /// </summary>
         public void RefreshMessages()
         {
@@ -335,29 +368,29 @@ namespace DCL.Chat
             loopList.SetListItemCount(chatMessages.Count);
             ShowLastMessage();
 
-// DISABLED UNTIL UNREAD MESSAGES FEATURE IS MERGED
+            // DISABLED UNTIL UNREAD MESSAGES FEATURE IS MERGED
 
             // Scroll view adjustment
-//            if (IsScrollAtBottom)
-//            {
-//                loopList.MovePanelToItemIndex(0, 0);
-//            }
-//            else
-//            {
-//                loopList.RefreshAllShownItem();
+            //            if (IsScrollAtBottom)
+            //            {
+            //                loopList.MovePanelToItemIndex(0, 0);
+            //            }
+            //            else
+            //            {
+            //                loopList.RefreshAllShownItem();
 
-                // When the scroll view is not at the bottom, chat messages should not move if a new message is added
-                // An offset has to be applied to the scroll view in order to prevent messages from moving
-//                LoopListViewItem2 addedItem = loopList.GetShownItemByIndex(1);
-//                float offsetToPreventScrollViewMovement = -addedItem.ItemSize - addedItem.Padding;
-//                loopList.MovePanelByOffset(offsetToPreventScrollViewMovement);
+            // When the scroll view is not at the bottom, chat messages should not move if a new message is added
+            // An offset has to be applied to the scroll view in order to prevent messages from moving
+            //                LoopListViewItem2 addedItem = loopList.GetShownItemByIndex(1);
+            //                float offsetToPreventScrollViewMovement = -addedItem.ItemSize - addedItem.Padding;
+            //                loopList.MovePanelByOffset(offsetToPreventScrollViewMovement);
 
-                // Known issue: When the scroll view is at the top, the scroll view moves a bit downwards
-//            }
+            // Known issue: When the scroll view is at the top, the scroll view moves a bit downwards
+            //            }
         }
 
         /// <summary>
-        /// Makes the input box gain the focus. It does not modify its content.
+        ///     Makes the input box gain the focus. It does not modify its content.
         /// </summary>
         public void FocusInputBox()
         {
@@ -368,7 +401,7 @@ namespace DCL.Chat
         }
 
         /// <summary>
-        /// Makes the input box gain the focus and replaces its content.
+        ///     Makes the input box gain the focus and replaces its content.
         /// </summary>
         /// <param name="text">The new content of the input box.</param>
         public void FocusInputBoxWithText(string text)
@@ -382,7 +415,7 @@ namespace DCL.Chat
         }
 
         /// <summary>
-        /// Makes the chat submit the current content of the input box.
+        ///     Makes the chat submit the current content of the input box.
         /// </summary>
         public void SubmitInput()
         {
@@ -390,7 +423,7 @@ namespace DCL.Chat
         }
 
         /// <summary>
-        /// Performs a click event on the chat window.
+        ///     Performs a click event on the chat window.
         /// </summary>
         public void Click()
         {
@@ -402,7 +435,7 @@ namespace DCL.Chat
                       emojiSuggestionPanel.gameObject.activeInHierarchy)) return;
 
                 IReadOnlyList<RaycastResult> raycastResults = viewDependencies.EventSystem.RaycastAll(device.position.value);
-                bool clickedOnPanel = false;
+                var clickedOnPanel = false;
 
                 foreach (RaycastResult result in raycastResults)
                     if (result.gameObject == emojiPanel.gameObject ||
@@ -425,51 +458,11 @@ namespace DCL.Chat
         }
 
         /// <summary>
-        /// Plays the sound FX of the chat receiving a new message.
+        ///     Plays the sound FX of the chat receiving a new message.
         /// </summary>
         public void PlayMessageReceivedSfx()
         {
             UIAudioEventsBus.Instance.SendPlayAudioEvent(chatReceiveMessageAudio);
-        }
-
-        public void OnPointerEnter(PointerEventData eventData)
-        {
-            PointerEnter?.Invoke();
-            panelBackgroundCanvasGroup.DOFade(1, BackgroundFadeTime);
-            scrollbarCanvasGroup.DOFade(1, BackgroundFadeTime);
-            StopChatEntriesFadeout();
-        }
-
-        public void OnPointerExit(PointerEventData eventData)
-        {
-            PointerExit?.Invoke();
-            panelBackgroundCanvasGroup.DOFade(0, BackgroundFadeTime);
-            scrollbarCanvasGroup.DOFade(0, BackgroundFadeTime);
-            StartChatEntriesFadeout();
-        }
-
-        public void Dispose()
-        {
-            if (emojiPanelController != null)
-            {
-                emojiPanelController.EmojiSelected -= AddEmojiToInput;
-                emojiPanelController.Dispose();
-            }
-
-            if (emojiSuggestionPanelController != null)
-                emojiSuggestionPanelController.EmojiSelected -= AddEmojiFromSuggestion;
-
-            fadeoutCts.SafeCancelAndDispose();
-            emojiPanelCts.SafeCancelAndDispose();
-            emojiSearchCts.SafeCancelAndDispose();
-
-            viewDependencies.DclInput.UI.RightClick.performed -= OnRightClickRegistered;
-        }
-
-        private void Start()
-        {
-            panelBackgroundCanvasGroup.alpha = 0;
-            scrollbarCanvasGroup.alpha = 0;
         }
 
         // Called by the LoopListView when the number of items change, it uses out data (chatMessages)
@@ -487,8 +480,7 @@ namespace DCL.Chat
             else
             {
                 item = listView.NewListViewItem(itemData.SystemMessage ? listView.ItemPrefabDataList[(int)ChatItemPrefabIndex.SystemChatEntry].mItemPrefab.name :
-                    itemData.SentByOwnUser ? listView.ItemPrefabDataList[(int)ChatItemPrefabIndex.ChatEntryOwn].mItemPrefab.name
-                                            : listView.ItemPrefabDataList[(int)ChatItemPrefabIndex.ChatEntry].mItemPrefab.name);
+                    itemData.SentByOwnUser ? listView.ItemPrefabDataList[(int)ChatItemPrefabIndex.ChatEntryOwn].mItemPrefab.name : listView.ItemPrefabDataList[(int)ChatItemPrefabIndex.ChatEntry].mItemPrefab.name);
 
                 ChatEntryView itemScript = item!.GetComponent<ChatEntryView>()!;
                 SetItemData(index, itemData, itemScript);
@@ -595,12 +587,6 @@ namespace DCL.Chat
             StopChatEntriesFadeout();
         }
 
-        public override UniTask HideAsync(CancellationToken ct, bool isInstant = false)
-        {
-            closePopupTask.TrySetResult();
-            return base.HideAsync(ct, isInstant);
-        }
-
         private void OnInputDeselected(string inputText)
         {
             isInputSelected = false;
@@ -698,7 +684,7 @@ namespace DCL.Chat
             closePopupTask.TrySetResult();
             closePopupTask = new UniTaskCompletionSource();
 
-            ChatEntryMenuPopupData data = new ChatEntryMenuPopupData(
+            var data = new ChatEntryMenuPopupData(
                 chatEntryView.messageBubbleElement.popupPosition.position,
                 messageText,
                 closePopupTask.Task);
@@ -709,8 +695,18 @@ namespace DCL.Chat
         private bool IsWithinCharacterLimit() =>
             inputField.text.Length < inputField.characterLimit;
 
-        #region Emojis
+        /// <summary>
+        ///     The prefab to use when instantiating a new item.
+        /// </summary>
+        private enum ChatItemPrefabIndex // It must match the list in the LoopListView.
+        {
+            ChatEntry,
+            ChatEntryOwn,
+            Padding,
+            SystemChatEntry,
+        }
 
+#region Emojis
         private void InitializeEmojiController()
         {
             emojiPanelController = new EmojiPanelController(emojiPanel, emojiPanelConfiguration, emojiMappingJson, emojiSectionViewPrefab, emojiButtonPrefab);
@@ -781,7 +777,6 @@ namespace DCL.Chat
             emojiSuggestionPanelController!.SetValues(keysWithPrefix);
             emojiSuggestionPanelController!.SetPanelVisibility(true);
         }
-
-        #endregion
+#endregion
     }
 }

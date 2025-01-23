@@ -17,28 +17,21 @@ namespace DCL.UI.HyperlinkHandler
         [SerializeField] private TMP_StyleSheet styleSheet;
 
         private readonly Dictionary<string, Action<string>> linkHandlers = new ();
+        private ICursor cursor;
+
+        private ViewDependencies dependencies;
         private bool initialized;
-        private bool isHovering;
         private bool isHighlighting;
+        private bool isHovering;
         private int lastHighlightedIndex = -1;
         private string originalText;
         private TMP_Style selectedStyle;
         private StringBuilder stringBuilder;
 
-        private ViewDependencies dependencies;
-        private ICursor cursor;
-
-
         private void Awake()
         {
             AddLinkHandlers();
             selectedStyle = styleSheet.GetStyle("LinkSelected");
-        }
-
-        public void InjectDependencies(ViewDependencies dependencies)
-        {
-            this.dependencies = dependencies;
-            initialized = true;
         }
 
         private void OnEnable()
@@ -70,7 +63,32 @@ namespace DCL.UI.HyperlinkHandler
             dependencies.Cursor.SetStyle(CursorStyle.Normal);
             isHovering = false;
             isHighlighting = false;
+
             //restore pointer and text
+        }
+
+        public void OnPointerMove(PointerEventData eventData)
+        {
+            if (!isHovering) return;
+
+            int linkIndex = TMP_TextUtilities.FindIntersectingLink(textComponent, eventData.position, null);
+
+            if (linkIndex != -1)
+            {
+                if (isHighlighting && lastHighlightedIndex == linkIndex) return;
+
+                ResetPreviousHighlight();
+                HighlightCurrentLink(linkIndex);
+                return;
+            }
+
+            if (isHighlighting) { ResetPreviousHighlight(); }
+        }
+
+        public void InjectDependencies(ViewDependencies dependencies)
+        {
+            this.dependencies = dependencies;
+            initialized = true;
         }
 
         private void AddLinkHandlers()
@@ -132,41 +150,20 @@ namespace DCL.UI.HyperlinkHandler
             await dependencies.GlobalUIViews.ShowChangeRealmPromptAsync(message, realm);
         }
 
-        public void OnPointerMove(PointerEventData eventData)
-        {
-            if (!isHovering) return;
-
-            int linkIndex = TMP_TextUtilities.FindIntersectingLink(textComponent, eventData.position, null);
-
-            if (linkIndex != -1)
-            {
-                if (isHighlighting && lastHighlightedIndex == linkIndex) return;
-
-                ResetPreviousHighlight();
-                HighlightCurrentLink(linkIndex);
-                return;
-            }
-
-            if (isHighlighting)
-            {
-                ResetPreviousHighlight();
-            }
-        }
-
         private void HighlightCurrentLink(int linkIndex)
         {
             lastHighlightedIndex = linkIndex;
             isHighlighting = true;
             dependencies.Cursor.SetStyle(CursorStyle.Interaction, true);
 
-            var linkInfo = textComponent.textInfo.linkInfo[linkIndex];
+            TMP_LinkInfo linkInfo = textComponent.textInfo.linkInfo[linkIndex];
 
             int startIndex = linkInfo.linkIdFirstCharacterIndex + linkInfo.linkIdLength + 2;
             int endIndex = startIndex + linkInfo.linkTextLength;
 
             originalText = textComponent.text;
             stringBuilder.Clear();
-            stringBuilder.Append(originalText).Insert(endIndex, selectedStyle.styleClosingDefinition).Insert(startIndex,selectedStyle.styleOpeningDefinition);
+            stringBuilder.Append(originalText).Insert(endIndex, selectedStyle.styleClosingDefinition).Insert(startIndex, selectedStyle.styleOpeningDefinition);
             textComponent.text = stringBuilder.ToString();
         }
 

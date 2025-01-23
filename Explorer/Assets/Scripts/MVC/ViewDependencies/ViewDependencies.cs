@@ -4,7 +4,7 @@ using DCL.Input;
 namespace MVC
 {
     /// <summary>
-    /// A set of references to the only systems a view can use directly, without the need of a controller.
+    ///     A set of references to the only systems and managers a view can use directly, without the need of a controller.
     /// </summary>
     public class ViewDependencies
     {
