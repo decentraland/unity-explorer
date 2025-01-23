@@ -12,6 +12,7 @@ using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
 using DCL.UI;
 using DCL.UI.MainUI;
+using Global.Dynamic.ChatCommands;
 using MVC;
 using System;
 using System.Threading;
@@ -35,6 +36,7 @@ namespace DCL.PluginSystem.Global
         private readonly IEventSystem eventSystem;
         private readonly MainUIView mainUIView;
         private readonly IClipboardManager clipboardManager;
+        private readonly ClearChatCommand clearChatCommand;
 
         private ChatController chatController;
 
@@ -50,6 +52,7 @@ namespace DCL.PluginSystem.Global
             MainUIView mainUIView,
             IInputBlock inputBlock,
             Arch.Core.World world,
+            ClearChatCommand clearChatCommand,
             Entity playerEntity, IClipboardManager clipboardManager)
         {
             this.assetsProvisioner = assetsProvisioner;
@@ -66,6 +69,7 @@ namespace DCL.PluginSystem.Global
             this.eventSystem = eventSystem;
             this.mainUIView = mainUIView;
             this.inputBlock = inputBlock;
+            this.clearChatCommand = clearChatCommand;
         }
 
         public void Dispose() { }
@@ -96,6 +100,8 @@ namespace DCL.PluginSystem.Global
                 mvcManager,
                 clipboardManager
             );
+
+            clearChatCommand.ChatController = chatController;
 
             mvcManager.RegisterController(chatController);
         }

@@ -3,18 +3,57 @@ using System.Collections.Generic;
 
 namespace DCL.Chat.History
 {
+    /// <summary>
+    /// Represents all the chat conversations of the current player.
+    /// </summary>
     public interface IChatHistory
     {
-        event Action Cleared;
+        /// <summary>
+        /// Raised when a new channel is added.
+        /// </summary>
+        event Action<ChatChannel>? ChannelAdded;
 
-        event Action<ChatMessage> MessageAdded;
+        /// <summary>
+        /// Raised when a channel is emptied.
+        /// </summary>
+        event Action<ChatChannel>? ChannelCleared;
 
-        IReadOnlyList<ChatMessage> Messages { get; }
+        /// <summary>
+        /// Raised when a message is added to a channel.
+        /// </summary>
+        event Action<ChatChannel, ChatMessage>? MessageAdded;
 
-        void AddMessage(ChatMessage message);
+        /// <summary>
+        /// Gets all the channels stored in the history.
+        /// </summary>
+        IReadOnlyDictionary<ChatChannel.ChannelId, ChatChannel> Channels {  get; }
 
-        void ForceUpdateMessage(int inIndex, ChatMessage message);
+        /// <summary>
+        /// Creates and stores a new channel.
+        /// </summary>
+        /// <param name="type">The type of the channel.</param>
+        /// <param name="channelName">The unique name of the channel (for a given type).</param>
+        /// <returns>
+        /// The id of the new channel.
+        /// </returns>
+        public ChatChannel.ChannelId AddChannel(ChatChannel.ChatChannelType type, string channelName);
 
-        void Clear();
+        /// <summary>
+        /// Adds a new message to a channel.
+        /// </summary>
+        /// <param name="channelId">The id of the channel.</param>
+        /// <param name="newMessage">The new message.</param>
+        public void AddMessage(ChatChannel.ChannelId channelId, ChatMessage newMessage);
+
+        /// <summary>
+        /// Deletes all the messages in all the channels.
+        /// </summary>
+        public void ClearAllChannels();
+
+        /// <summary>
+        /// Deletes all the messages in a channel.
+        /// </summary>
+        /// <param name="channelId">The id of the channel.</param>
+        public void ClearChannel(ChatChannel.ChannelId channelId);
     }
 }

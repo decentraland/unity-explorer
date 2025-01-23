@@ -5,41 +5,47 @@ namespace DCL.Chat.History
 {
     public class ChatHistory : IChatHistory
     {
-        public event Action? Cleared;
-        public event Action<ChatMessage>? MessageAdded;
+        public event Action<ChatChannel>? ChannelCleared;
+        public event Action<ChatChannel, ChatMessage>? MessageAdded;
+        public event Action<ChatChannel>? ChannelAdded;
 
-        private readonly List<ChatMessage> messages = new ();
+        private readonly Dictionary<ChatChannel.ChannelId, ChatChannel> channels = new ();
 
-        public IReadOnlyList<ChatMessage> Messages => messages;
+        public IReadOnlyDictionary<ChatChannel.ChannelId, ChatChannel> Channels => channels;
 
-        public void AddMessage(ChatMessage message)
+        public ChatHistory()
         {
-            if (messages.Count is 0)
+            AddChannel(ChatChannel.ChatChannelType.NearBy, string.Empty);
+        }
+
+        public ChatChannel.ChannelId AddChannel(ChatChannel.ChatChannelType type, string channelName)
+        {
+            ChatChannel newChannel = new ChatChannel(type, channelName);
+            newChannel.MessageAdded += (channel, newMessage) => { MessageAdded?.Invoke(channel, newMessage); };
+            newChannel.Cleared += (channel) => { ChannelCleared?.Invoke(channel); };
+            channels.Add(newChannel.Id, newChannel);
+
+            ChannelAdded?.Invoke(newChannel);
+
+            return newChannel.Id;
+        }
+
+        public void AddMessage(ChatChannel.ChannelId channelId, ChatMessage newMessage)
+        {
+            channels[channelId].AddMessage(newMessage);
+        }
+
+        public void ClearChannel(ChatChannel.ChannelId channelId)
+        {
+            channels[channelId].Clear();
+        }
+
+        public void ClearAllChannels()
+        {
+            foreach (var chatChannel in channels)
             {
-                // Adding two elements to count as top and bottom padding
-                messages.Add(new ChatMessage(true));
-                messages.Add(new ChatMessage(true));
+                chatChannel.Value.Clear();
             }
-
-            //Removing padding element and reversing list due to infinite scroll view behaviour
-            messages.Remove(messages[^1]);
-            messages.Reverse();
-            messages.Add(message);
-            messages.Add(new ChatMessage(true));
-            messages.Reverse();
-
-            MessageAdded?.Invoke(message);
-        }
-
-        public void ForceUpdateMessage(int inIndex, ChatMessage message)
-        {
-            messages[inIndex] = message;
-        }
-
-        public void Clear()
-        {
-            messages.Clear();
-            Cleared?.Invoke();
         }
     }
 }

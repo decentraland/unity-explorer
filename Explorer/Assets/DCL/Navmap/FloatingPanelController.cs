@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
+using DCL.Chat;
 using DCL.MapRenderer;
 using DCL.MapRenderer.MapLayers.Pins;
 using DCL.PlacesAPIService;
@@ -220,7 +221,7 @@ namespace DCL.Navmap
             if (destination == parcel)
                 mapPathEventBus.ArrivedToDestination();
 
-            chatMessagesBus.Send($"/{ChatCommandsUtils.COMMAND_GOTO} {parcel.x},{parcel.y}", ORIGIN);
+            chatMessagesBus.Send(ChatChannel.NEARBY_CHANNEL, $"/{ChatCommandsUtils.COMMAND_GOTO} {parcel.x},{parcel.y}", ORIGIN);
         }
 
         private void SetEmptyParcelInfo(Vector2Int parcel)

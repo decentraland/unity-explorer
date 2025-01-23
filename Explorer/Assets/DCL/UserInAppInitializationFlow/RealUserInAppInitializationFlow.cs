@@ -112,7 +112,7 @@ namespace DCL.UserInAppInitializationFlow
                 sentryDiagnostics
             ).WithAnalytics(analyticsController);
 
-            
+
             reloginOperation = new SequentialStartupOperation(
                 loadingStatus,
                 ensureLivekitConnectionStartupOperation,
@@ -196,7 +196,7 @@ namespace DCL.UserInAppInitializationFlow
         {
             portableExperiencesController.UnloadAllPortableExperiences();
             realmNavigator.RemoveCameraSamplingData();
-            chatHistory.Clear();
+            chatHistory.ClearAllChannels();
             await roomHub.StopAsync().Timeout(TimeSpan.FromSeconds(10));
         }
 
