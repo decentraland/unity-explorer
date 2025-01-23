@@ -7,6 +7,7 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Connectivity;
 using DCL.Profiles;
+using DCL.Profiles.Self;
 using DCL.Web3.Identities;
 using System.Threading;
 using Utility;
@@ -16,27 +17,21 @@ namespace DCL.PluginSystem.Global
     public class FriendsPlugin : IDCLGlobalPlugin<FriendsPluginSettings>
     {
         private readonly IDecentralandUrlsSource dclUrlSource;
-        private readonly IProfileRepository profileRepository;
         private readonly IWeb3IdentityCache identityCache;
         private readonly FeatureFlagsCache featureFlagsCache;
-        private readonly IOnlineUsersProvider apiOnlineUsersProvider;
-        private readonly IRoomHub roomHub;
+        private readonly ISelfProfile selfProfile;
         private readonly CancellationTokenSource lifeCycleCancellationToken = new ();
         private RPCFriendsService? friendsService;
 
         public FriendsPlugin(IDecentralandUrlsSource dclUrlSource,
-            IProfileRepository profileRepository,
             IWeb3IdentityCache identityCache,
             FeatureFlagsCache featureFlagsCache,
-            IOnlineUsersProvider apiOnlineUsersProvider,
-            IRoomHub roomHub)
+            ISelfProfile selfProfile)
         {
             this.dclUrlSource = dclUrlSource;
-            this.profileRepository = profileRepository;
             this.identityCache = identityCache;
             this.featureFlagsCache = featureFlagsCache;
-            this.apiOnlineUsersProvider = apiOnlineUsersProvider;
-            this.roomHub = roomHub;
+            this.selfProfile = selfProfile;
         }
 
         public void Dispose()
@@ -54,14 +49,15 @@ namespace DCL.PluginSystem.Global
             var friendsCache = new FriendsCache();
 
             friendsService = new RPCFriendsService(URLAddress.FromString(dclUrlSource.Url(DecentralandUrl.ApiFriends)),
-                friendEventBus, profileRepository, identityCache, friendsCache);
+                friendEventBus, identityCache, friendsCache, selfProfile);
 
             if (featureFlagsCache.Configuration.IsEnabled("alpha-friends-enabled"))
             {
                 // Fire and forget as this task will never finish
-                friendsService.SubscribeToIncomingFriendshipEventsAsync(
-                                   CancellationTokenSource.CreateLinkedTokenSource(lifeCycleCancellationToken.Token, ct).Token)
-                              .Forget();
+                var cts = CancellationTokenSource.CreateLinkedTokenSource(lifeCycleCancellationToken.Token, ct);
+
+                friendsService.SubscribeToIncomingFriendshipEventsAsync(cts.Token).Forget();
+                friendsService.SubscribeToConnectivityStatus(cts.Token).Forget();
             }
 
             // TODO: add the rest of the ui

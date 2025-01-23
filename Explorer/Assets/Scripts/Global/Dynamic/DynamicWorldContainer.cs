@@ -772,7 +772,10 @@ namespace Global.Dynamic
                     includeCameraReel
                 ),
                 new GenericContextMenuPlugin(assetsProvisioner, mvcManager),
-                new FriendsPlugin(bootstrapContainer.DecentralandUrlsSource, profileRepository, identityCache, staticContainer.FeatureFlagsCache, onlineUsersProvider, roomHub)
+                new FriendsPlugin(bootstrapContainer.DecentralandUrlsSource,
+                    identityCache,
+                    staticContainer.FeatureFlagsCache,
+                    selfProfile),
             };
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);
