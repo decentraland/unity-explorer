@@ -331,9 +331,9 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 5637096969320313785}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0.5}
-  m_AnchorMax: {x: 0, y: 0.5}
-  m_AnchoredPosition: {x: 20, y: 459.9026}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 20, y: -80.09741}
   m_SizeDelta: {x: 51, y: 20}
   m_Pivot: {x: 0, y: 0.5}
 --- !u!222 &8698869627840850485
@@ -1316,10 +1316,10 @@ RectTransform:
   - {fileID: 7713292239080694039}
   m_Father: {fileID: 5888857906923457301}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: -70.75}
+  m_SizeDelta: {x: 0, y: 141.5}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &4670413932100662117
 GameObject:
@@ -1575,9 +1575,9 @@ RectTransform:
   - {fileID: 3328635622133459741}
   m_Father: {fileID: 5637096969320313785}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0.5}
-  m_AnchorMax: {x: 0, y: 0.5}
-  m_AnchoredPosition: {x: 20, y: 498.3}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 20, y: -41.700012}
   m_SizeDelta: {x: 440, y: 22}
   m_Pivot: {x: 0, y: 0.5}
 --- !u!114 &3596971851092932794
@@ -1854,9 +1854,9 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 631330080915025279}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0.5}
-  m_AnchorMax: {x: 0, y: 0.5}
-  m_AnchoredPosition: {x: 20, y: 436}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 20, y: -28}
   m_SizeDelta: {x: 51, y: 20}
   m_Pivot: {x: 0, y: 0.5}
 --- !u!222 &4634212963848028733
@@ -3519,6 +3519,10 @@ PrefabInstance:
     - target: {fileID: 4407488380839927108, guid: 6a180d50880b443b4b6239fdc4eb88c5, type: 3}
       propertyPath: m_Name
       value: InfoSidePanelLoading
+      objectReference: {fileID: 0}
+    - target: {fileID: 4407488380839927108, guid: 6a180d50880b443b4b6239fdc4eb88c5, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8797775191845768574, guid: 6a180d50880b443b4b6239fdc4eb88c5, type: 3}
       propertyPath: m_Pivot.x
