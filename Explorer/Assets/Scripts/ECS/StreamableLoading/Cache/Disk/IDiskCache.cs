@@ -55,10 +55,10 @@ namespace ECS.StreamableLoading.Cache.Disk
 
     public interface IDiskSerializer<T>
     {
-        UniTask<SlicedOwnedMemory<byte>> Serialize(T data, CancellationToken token);
+        UniTask<SlicedOwnedMemory<byte>> SerializeAsync(T data, CancellationToken token);
 
         /// <param name="data">Takes ownership of Memory and is responsible for its disposal</param>
-        UniTask<T> Deserialize(SlicedOwnedMemory<byte> data, CancellationToken token);
+        UniTask<T> DeserializeAsync(SlicedOwnedMemory<byte> data, CancellationToken token);
     }
 
     /// <summary>

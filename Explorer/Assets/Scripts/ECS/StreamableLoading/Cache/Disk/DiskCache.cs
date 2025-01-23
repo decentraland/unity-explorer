@@ -101,7 +101,7 @@ namespace ECS.StreamableLoading.Cache.Disk
 
         public async UniTask<EnumResult<TaskError>> PutAsync(string key, string extension, T data, CancellationToken token)
         {
-            using SlicedOwnedMemory<byte> serializedData = await serializer.Serialize(data, token);
+            using SlicedOwnedMemory<byte> serializedData = await serializer.SerializeAsync(data, token);
             return await diskCache.PutAsync(key, extension, serializedData.Memory, token);
         }
 
@@ -117,7 +117,7 @@ namespace ECS.StreamableLoading.Cache.Disk
             if (data == null)
                 return EnumResult<Option<T>, TaskError>.SuccessResult(Option<T>.None);
 
-            T deserializedValue = await serializer.Deserialize(data.Value, token);
+            T deserializedValue = await serializer.DeserializeAsync(data.Value, token);
             return EnumResult<Option<T>, TaskError>.SuccessResult(Option<T>.Some(deserializedValue));
         }
 

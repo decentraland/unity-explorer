@@ -18,8 +18,8 @@ namespace SceneRuntime.Factory.Tests
             var token = new CancellationToken();
 
             // Act
-            var result = await serializer.Serialize(data, token);
-            string deserialized = await serializer.Deserialize(result, token);
+            var result = await serializer.SerializeAsync(data, token);
+            string deserialized = await serializer.DeserializeAsync(result, token);
 
             // Assert
             Assert.AreEqual(data, deserialized);

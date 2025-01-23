@@ -12,14 +12,14 @@ namespace ECS.StreamableLoading.Textures
 {
     public class TextureDiskSerializer : IDiskSerializer<Texture2DData>
     {
-        public async UniTask<SlicedOwnedMemory<byte>> Serialize(Texture2DData data, CancellationToken token)
+        public async UniTask<SlicedOwnedMemory<byte>> SerializeAsync(Texture2DData data, CancellationToken token)
         {
             //TODO must be optimised to avoid extra allocations
             await UniTask.SwitchToMainThread();
             return ToArray(data);
         }
 
-        public async UniTask<Texture2DData> Deserialize(SlicedOwnedMemory<byte> data, CancellationToken token)
+        public async UniTask<Texture2DData> DeserializeAsync(SlicedOwnedMemory<byte> data, CancellationToken token)
         {
             var meta = Meta.FromSpan(data.Memory.Span);
 
