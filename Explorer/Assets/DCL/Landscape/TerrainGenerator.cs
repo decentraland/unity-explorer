@@ -185,15 +185,17 @@ namespace DCL.Landscape
                         rootGo = factory.InstantiateSingletonTerrainRoot(TERRAIN_OBJECT_NAME);
                         rootGo.position = new Vector3(0, ROOT_VERTICAL_SHIFT, 0);
 
-                        Ocean = factory.CreateOcean(rootGo);
-                        Wind = factory.CreateWind();
+                        //Ocean = factory.CreateOcean(rootGo);
+                        //Wind = factory.CreateWind();
 
-                        Cliffs = boundariesGenerator.SpawnCliffs(terrainModel.MinInUnits, terrainModel.MaxInUnits);
-                        boundariesGenerator.SpawnBorderColliders(terrainModel.MinInUnits, terrainModel.MaxInUnits, terrainModel.SizeInUnits);
+                        //Cliffs = boundariesGenerator.SpawnCliffs(terrainModel.MinInUnits, terrainModel.MaxInUnits);
+                        //boundariesGenerator.SpawnBorderColliders(terrainModel.MinInUnits, terrainModel.MaxInUnits, terrainModel.SizeInUnits);
                     }
 
                     using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"[{t:F2}ms] Load Local Cache")))
                         await localCache.LoadAsync(forceCacheRegen);
+
+                    Debug.Log($"JUANI USING CACHE {localCache.IsValid()}");
 
                     using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"[{t:F2}ms] Empty Parcel Setup")))
                     {
@@ -216,6 +218,7 @@ namespace DCL.Landscape
                     {
                         await GenerateTerrainDataAsync(chunkModel, terrainModel, worldSeed, cancellationToken, processReport);
                         await UniTask.Yield(cancellationToken);
+                        noiseGenCache.ResetPool();
                     }
 
                     processReport?.SetProgress(PROGRESS_COUNTER_DIG_HOLES);
@@ -256,7 +259,9 @@ namespace DCL.Landscape
             }
 
             float endMemory = profilingProvider.SystemUsedMemoryInBytes / (1024 * 1024);
-            ReportHub.Log(ReportCategory.LANDSCAPE, $"The landscape generation took {endMemory - startMemory}MB of memory");
+            Debug.Log($"The landscape generation took {endMemory - startMemory}MB of memory");
+            ReportHub.Log(ReportCategory.LANDSCAPE, $"Current memory consumption is {profilingProvider.SystemUsedMemoryInBytes / (1024 * 1024)}MB of memory");
+
         }
 
         // waiting a frame to create the color map renderer created a new bug where some stones do not render properly, this should fix it
@@ -340,6 +345,7 @@ namespace DCL.Landscape
 
                 var tasks = new List<UniTask>
                 {
+                    
                     chunkDataGenerator.SetHeightsAsync(chunkModel.MinParcel, maxHeightIndex, parcelSize,
                         chunkModel.TerrainData, worldSeed, cancellationToken),
                     chunkDataGenerator.SetTexturesAsync(chunkModel.MinParcel.x * parcelSize,

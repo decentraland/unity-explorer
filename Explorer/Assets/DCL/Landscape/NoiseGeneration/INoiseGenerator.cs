@@ -16,5 +16,6 @@ namespace DCL.Landscape.NoiseGeneration
         NativeArray<float> GetResult(NoiseDataPointer noiseDataPointer);
 
         bool IsRecursive(NoiseDataBase otherNoiseData);
+
     }
 }

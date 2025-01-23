@@ -29,7 +29,15 @@ namespace DCL.Landscape
         private TerrainGenerator gen;
         private WorldTerrainGenerator wGen;
 
+        private static IMemoryProfiler memoryProfiler;
+
         private void Start()
+        {
+            memoryProfiler = new Profiler();
+            //GenerateAsync().Forget();
+        }
+
+        public void Generate()
         {
             GenerateAsync().Forget();
         }
@@ -47,6 +55,21 @@ namespace DCL.Landscape
         public void ClearAppCache()
         {
             CleanTerrainsCache();
+        }
+
+        public void SetUseCache(bool value)
+        {
+            clearCache = value;
+        }
+
+        public void SetHideDetails(bool value)
+        {
+            hideDetails = value;
+        }
+
+        public void SetHideTrees(bool value)
+        {
+            hideTrees = value;
         }
 
         [ContextMenu("Generate")]
@@ -74,15 +97,22 @@ namespace DCL.Landscape
             }
             else
             {
-                IMemoryProfiler memoryProfiler = new Profiler();
+                
                 gen = new TerrainGenerator(memoryProfiler, true, clearCache);
                 gen.Initialize(genData, ref emptyParcels, ref ownedParcels, "", false);
                 await gen.GenerateTerrainAndShowAsync(worldSeed, digHoles, hideTrees, hideDetails);
             }
 
-            emptyParcels.Dispose();
-            ownedParcels.Dispose();
+            LogMemory("Memory after generating terrain is");
+            //emptyParcels.Dispose();
+            //ownedParcels.Dispose();
             Log("Generate finished");
+        }
+
+        private static void LogMemory(string message)
+        {
+            float afterCleaning = memoryProfiler.SystemUsedMemoryInBytes / (1024 * 1024);
+            Debug.Log($"{message} {afterCleaning}MB of memory JUANI");
         }
 
         public static void CleanTerrainsCache()
@@ -106,9 +136,27 @@ namespace DCL.Landscape
             Log($"Clearing app cache finished {deletedFiles.Count}: {string.Join(", ", deletedFiles)}");
         }
 
+        public static void ClearMemory()
+        {
+            ReportHub.Log(ReportCategory.UNSPECIFIED, "About to clean memory");
+            ClearMemoryAsync().Forget();
+        }
+
+        private static async UniTask ClearMemoryAsync()
+        {
+            GC.Collect();
+            Resources.UnloadUnusedAssets();
+            for (int i = 0; i < 30; i++)
+            {
+                await UniTask.Yield();
+            }
+
+            LogMemory("Cleared memory and now we have");
+        }
+
         private static void Log(string message)
         {
-            ReportHub.Log(ReportData.UNSPECIFIED, message);
+            ReportHub.Log(ReportCategory.LANDSCAPE, message);
         }
     }
 }

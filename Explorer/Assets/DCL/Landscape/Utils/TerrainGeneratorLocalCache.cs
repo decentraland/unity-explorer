@@ -79,6 +79,7 @@ namespace DCL.Landscape.Utils
 
         public void SaveMetadataToFile(int seed, int chunkSize, int version, string parcelChecksum, bool isZone)
         {
+            return;
             var path = GetFilePath(seed, chunkSize, version, isZone);
             checksum = parcelChecksum;
             using FileStream fileStream = File.Create(path);
@@ -88,6 +89,7 @@ namespace DCL.Landscape.Utils
         public void SaveArrayToFile<T>(string name, string offsetX, string offsetZ, T[] arrayToSave, bool isZone)
             where T : struct
         {
+            return;
             var pathForDictionary = GetDictionaryFilePath(name, offsetX, offsetZ, isZone);
             using var fileStreamForHeights = File.Create(pathForDictionary);
             FORMATTER.Serialize(fileStreamForHeights, arrayToSave);
@@ -97,6 +99,7 @@ namespace DCL.Landscape.Utils
             bool isZone)
             where T : struct
         {
+            return;
             var pathForDictionary = GetDictionaryFilePath(name, offsetX, offsetZ, layer, isZone);
             using var fileStreamForHeights = File.Create(pathForDictionary);
             FORMATTER.Serialize(fileStreamForHeights, arrayToSave);
