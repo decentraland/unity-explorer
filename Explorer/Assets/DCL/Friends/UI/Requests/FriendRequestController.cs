@@ -184,10 +184,10 @@ namespace DCL.Friends.UI.Requests
             viewConfig.TimestampText.text = fr.Timestamp.ToString("M");
 
             fetchUserCancellationToken = fetchUserCancellationToken.SafeRestart();
-            LoadUserAndUpdateMessageWithUserName(fetchUserCancellationToken.Token).Forget();
+            LoadUserAndUpdateMessageWithUserNameAsync(fetchUserCancellationToken.Token).Forget();
             return;
 
-            async UniTaskVoid LoadUserAndUpdateMessageWithUserName(CancellationToken ct)
+            async UniTaskVoid LoadUserAndUpdateMessageWithUserNameAsync(CancellationToken ct)
             {
                 await FetchUserDataAsync(viewConfig.UserAndMutualFriendsConfig,
                     new Web3Address(fr.From),
