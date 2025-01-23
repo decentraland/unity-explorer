@@ -30,9 +30,7 @@ namespace DCL.Landscape.Config
 
         public float finalCutOff;
 
-        public override INoiseGenerator GetGenerator(uint baseSeed, uint variantSeed, NoiseGeneratorCache cache)
-        {
-            return new CompositeNoiseGenerator(this, baseSeed, variantSeed, cache);
-        }
+        public override INoiseGenerator GetGenerator(uint baseSeed, uint variantSeed, NoiseGeneratorCache cache) =>
+            new CompositeNoiseGenerator(this, baseSeed, variantSeed, cache);
     }
 }
