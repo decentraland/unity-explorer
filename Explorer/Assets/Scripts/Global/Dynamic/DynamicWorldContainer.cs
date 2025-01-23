@@ -621,6 +621,7 @@ namespace Global.Dynamic
                     assetsProvisioner,
                     staticContainer.SingletonSharedDependencies.FrameTimeBudget,
                     staticContainer.SingletonSharedDependencies.MemoryBudget,
+                    staticContainer.QualityContainer.RendererFeaturesCache,
                     staticContainer.RealmData,
                     staticContainer.MainPlayerAvatarBaseProxy,
                     debugBuilder,
