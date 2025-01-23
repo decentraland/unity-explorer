@@ -22,7 +22,7 @@ using Utility;
 namespace DCL.Chat
 {
     // Note: The view never changes any data (chatMessages), that's done by the controller
-    public class ChatView : ViewBase, IView, IPointerEnterHandler, IPointerExitHandler, IDisposable
+    public class ChatView : ViewBase, IView, IViewWithGlobalDependencies, IPointerEnterHandler, IPointerExitHandler, IDisposable
     {
         /// <summary>
         /// The prefab to use when instantiating a new item.
@@ -167,11 +167,6 @@ namespace DCL.Chat
         public event InputSubmittedDelegate InputSubmitted;
 
         /// <summary>
-        /// Raised when a new UI element that displays a chat message is created.
-        /// </summary>
-        public event ChatMessageCreatedDelegate ChatMessageCreated;
-
-        /// <summary>
         /// Raised when the option to change the visibility of the chat bubbles over the avatar changes its value.
         /// </summary>
         public event Action<bool>? ChatBubbleVisibilityChanged;
@@ -186,11 +181,7 @@ namespace DCL.Chat
         private const string ORIGIN = "chat";
         private static readonly Regex EMOJI_PATTERN_REGEX = new (EMOJI_SUGGESTION_PATTERN, RegexOptions.Compiled);
 
-        // Dependencies
-        private DCLInput dclInput;
-        private IEventSystem eventSystem;
-        private IMVCManager mvcManager;
-        private IClipboardManager clipboardManager;
+        private ViewDependencies viewDependencies;
 
         private EmojiPanelController? emojiPanelController;
         private EmojiSuggestionPanel? emojiSuggestionPanelController;
@@ -207,6 +198,9 @@ namespace DCL.Chat
         private bool isInputSelected;
         private IReadOnlyDictionary<ChatChannel.ChannelId, ChatChannel>? channels;
         private ChatChannel? currentChannel;
+
+        // The latest amount of messages added to the chat that must be animated yet
+        private int entriesPendingToAnimate;
 
         /// <summary>
         /// Gets whether the scroll view is showing the bottom of the content, and it can't scroll down anymore.
@@ -250,15 +244,16 @@ namespace DCL.Chat
             }
         }
 
+        public void InjectDependencies(ViewDependencies dependencies)
+        {
+            viewDependencies = dependencies;
+        }
+
         public void Initialize(IReadOnlyDictionary<ChatChannel.ChannelId, ChatChannel> chatChannels, ChatChannel.ChannelId defaultChannelId,
             IEventSystem eventSystem, DCLInput dclInput,
             IMVCManager mvcManager, IClipboardManager clipboardManager, bool areChatBubblesVisible)
         {
-            this.eventSystem = eventSystem;
-            this.dclInput = dclInput;
-            this.mvcManager = mvcManager;
-            this.clipboardManager = clipboardManager;
-            this.device = InputSystem.GetDevice<Mouse>();
+            device = InputSystem.GetDevice<Mouse>();
             this.channels = chatChannels;
 
             characterCounter.SetMaximumLength(inputField.characterLimit);
@@ -277,7 +272,7 @@ namespace DCL.Chat
 
             InitializeEmojiController();
 
-            dclInput.UI.RightClick.performed += _ => OnRightClickRegistered();
+            viewDependencies.DclInput.UI.RightClick.performed += OnRightClickRegistered;
             closePopupTask = new UniTaskCompletionSource();
 
             CurrentChannel = defaultChannelId;
@@ -308,6 +303,9 @@ namespace DCL.Chat
         {
             panelBackgroundCanvasGroup.gameObject.SetActive(show);
             loopList.gameObject.SetActive(show);
+
+            if (!show) // Note: This is necessary to avoid items animating when re-opening the chat window
+                entriesPendingToAnimate = 0;
         }
 
         /// <summary>
@@ -315,7 +313,7 @@ namespace DCL.Chat
         /// </summary>
         public void DisableInputBoxSubmissions()
         {
-            clipboardManager.OnPaste -= PasteClipboardText;
+            viewDependencies.ClipboardManager.OnPaste -= PasteClipboardText;
             inputField.onSubmit.RemoveAllListeners();
             inputField.DeactivateInputField();
         }
@@ -342,6 +340,13 @@ namespace DCL.Chat
         public void RefreshMessages()
         {
             ResetChatEntriesFadeout();
+            loopList.SetListItemCount(currentChannel.Messages.Count);
+
+            entriesPendingToAnimate = currentChannel.Messages.Count - loopList.ItemTotalCount;
+
+            if (entriesPendingToAnimate < 0)
+                entriesPendingToAnimate = 0;
+
             loopList.SetListItemCount(currentChannel.Messages.Count);
             ShowLastMessage();
 
@@ -411,7 +416,7 @@ namespace DCL.Chat
                 if (!(emojiPanel.gameObject.activeInHierarchy ||
                       emojiSuggestionPanel.gameObject.activeInHierarchy)) return;
 
-                IReadOnlyList<RaycastResult> raycastResults = eventSystem.RaycastAll(device.position.value);
+                IReadOnlyList<RaycastResult> raycastResults = viewDependencies.EventSystem.RaycastAll(device.position.value);
                 bool clickedOnPanel = false;
 
                 foreach (RaycastResult result in raycastResults)
@@ -472,6 +477,8 @@ namespace DCL.Chat
             fadeoutCts.SafeCancelAndDispose();
             emojiPanelCts.SafeCancelAndDispose();
             emojiSearchCts.SafeCancelAndDispose();
+
+            viewDependencies.DclInput.UI.RightClick.performed -= OnRightClickRegistered;
         }
 
         private void Start()
@@ -508,8 +515,6 @@ namespace DCL.Chat
                     OnChatMessageOptionsButtonClicked(itemData.Message, itemScript));
             }
 
-            ChatMessageCreated?.Invoke(index);
-
             return item;
         }
 
@@ -532,12 +537,9 @@ namespace DCL.Chat
 
             itemView.SetItemData(itemData);
 
-            //Workaround needed to animate the chat entries due to infinite scroll plugin behaviour
-            if (itemData.HasToAnimate)
-            {
+            // Views that correspond to new added items have to be animated
+            if (index - 1 < entriesPendingToAnimate) // Note: -1 because the first real message starts at 1, which is the latest messaged added
                 itemView.AnimateChatEntry();
-                // Note: itemData.HasToAnimate is set to false by the controller later
-            }
         }
 
         private void StopChatEntriesFadeout()
@@ -655,7 +657,7 @@ namespace DCL.Chat
         {
             if (emojiSuggestionPanelController is { IsActive: true })
             {
-                emojiSuggestionPanelController.SetPanelVisibility(false);
+                emojiSuggestionPanelController!.SetPanelVisibility(false);
                 return;
             }
 
@@ -687,12 +689,12 @@ namespace DCL.Chat
             ChatBubbleVisibilityChanged?.Invoke(isToggled);
         }
 
-        private void OnRightClickRegistered()
+        private void OnRightClickRegistered(InputAction.CallbackContext _)
         {
-            if (isInputSelected && clipboardManager.HasValue())
+            if (isInputSelected && viewDependencies.ClipboardManager.HasValue())
             {
-                clipboardManager.OnPaste -= PasteClipboardText;
-                clipboardManager.OnPaste += PasteClipboardText;
+                viewDependencies.ClipboardManager.OnPaste -= PasteClipboardText;
+                viewDependencies.ClipboardManager.OnPaste += PasteClipboardText;
                 closePopupTask.TrySetResult();
                 closePopupTask = new UniTaskCompletionSource();
 
@@ -700,7 +702,7 @@ namespace DCL.Chat
                     pastePopupPosition.position,
                     closePopupTask.Task);
 
-                mvcManager.ShowAndForget(PastePopupToastController.IssueCommand(data));
+                viewDependencies.GlobalUIViews.ShowPastePopupToastAsync(data);
                 inputField.ActivateInputField();
             }
         }
@@ -715,7 +717,7 @@ namespace DCL.Chat
                 messageText,
                 closePopupTask.Task);
 
-            mvcManager.ShowAsync(ChatEntryMenuPopupController.IssueCommand(data)).Forget();
+            viewDependencies.GlobalUIViews.ShowChatEntryMenuPopupAsync(data);
         }
 
         private bool IsWithinCharacterLimit() =>
@@ -728,7 +730,8 @@ namespace DCL.Chat
             emojiPanelController = new EmojiPanelController(emojiPanel, emojiPanelConfiguration, emojiMappingJson, emojiSectionViewPrefab, emojiButtonPrefab);
             emojiPanelController.EmojiSelected += AddEmojiToInput;
 
-            emojiSuggestionPanelController = new EmojiSuggestionPanel(emojiSuggestionPanel, emojiSuggestionViewPrefab, dclInput);
+            emojiSuggestionPanelController = new EmojiSuggestionPanel(emojiSuggestionPanel, emojiSuggestionViewPrefab);
+            emojiSuggestionPanelController.InjectDependencies(viewDependencies);
             emojiSuggestionPanelController.EmojiSelected += AddEmojiFromSuggestion;
 
             emojiPanelButton.Button.onClick.AddListener(ToggleEmojiPanel);
@@ -790,7 +793,7 @@ namespace DCL.Chat
             await DictionaryUtils.GetKeysWithPrefixAsync(emojiPanelController!.EmojiNameMapping, value, keysWithPrefix, ct);
 
             emojiSuggestionPanelController!.SetValues(keysWithPrefix);
-            emojiSuggestionPanelController.SetPanelVisibility(true);
+            emojiSuggestionPanelController!.SetPanelVisibility(true);
         }
 
         #endregion

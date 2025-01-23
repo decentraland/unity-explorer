@@ -63,7 +63,6 @@ namespace DCL.Chat.MessageBus
                     profile?.ValidatedName ?? string.Empty,
                     identity.Address,
                     true,
-                    true,
                     profile?.WalletId ?? null
                 )
             );
