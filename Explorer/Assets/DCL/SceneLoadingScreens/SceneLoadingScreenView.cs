@@ -55,7 +55,15 @@ namespace DCL.SceneLoadingScreens
         private readonly List<TipView> tips = new ();
         private readonly List<TipBreadcrumb> tipsBreadcrumbs = new ();
 
-        private const string BG_COLOR_PROPERTY = "_Color1";
+        private static readonly int BG_COLOR_PROPERTY = Shader.PropertyToID("_Color1");
+
+#if UNITY_EDITOR
+        private void Awake()
+        {
+            // Copy material in editor so we don't get asset changes
+            Background.material = new Material(Background.material);
+        }
+#endif
 
         public void ClearTips()
         {
@@ -131,6 +139,7 @@ namespace DCL.SceneLoadingScreens
         {
             Color currentColor = Background.material.GetColor(BG_COLOR_PROPERTY);
             float time = 0f;
+
             while (time < duration)
             {
                 ct.ThrowIfCancellationRequested();
@@ -139,6 +148,7 @@ namespace DCL.SceneLoadingScreens
                 await UniTask.Yield(PlayerLoopTiming.Update, ct);
                 time += Time.deltaTime;
             }
+
             Background.material.SetColor(BG_COLOR_PROPERTY, toColor);
         }
 
