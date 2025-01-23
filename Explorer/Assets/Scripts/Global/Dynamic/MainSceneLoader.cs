@@ -9,6 +9,7 @@ using DCL.Browser.DecentralandUrls;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.Input.Component;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Platforms;
 using DCL.PluginSystem;
@@ -18,7 +19,6 @@ using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Web3.Accounts.Factory;
 using DCL.Web3.Identities;
-using DCL.WebRequests;
 using DCL.WebRequests.Analytics;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Cache.Disk.CleanUp;
@@ -43,6 +43,9 @@ namespace Global.Dynamic
     {
         [Header("Startup Config")] [SerializeField]
         private RealmLaunchSettings launchSettings = null!;
+
+        [Space]
+        [SerializeField] private DecentralandEnvironment decentralandEnvironment;
 
         [Space]
         [SerializeField] private DebugViewsCatalog debugViewsCatalog = new ();
@@ -102,6 +105,18 @@ namespace Global.Dynamic
             ReportHub.Log(ReportCategory.ENGINE, "OnDestroy successfully finished");
         }
 
+        public void ApplyConfig(IAppArgs applicationParametersParser)
+        {
+            if (applicationParametersParser.TryGetValue(AppArgsFlags.ENVIRONMENT, out string? environment))
+                ParseEnvironment(environment!);
+        }
+
+        private void ParseEnvironment(string environment)
+        {
+            if (Enum.TryParse(environment, true, out DecentralandEnvironment env))
+                decentralandEnvironment = env;
+        }
+
         private async UniTask InitializeFlowAsync(CancellationToken ct)
         {
             IAppArgs applicationParametersParser = new ApplicationParametersParser(
@@ -131,13 +146,13 @@ namespace Global.Dynamic
 
             ISystemMemoryCap memoryCap = new SystemMemoryCap(MemoryCapMode.MAX_SYSTEM_MEMORY); // we use max memory on the loading screen
 
-            settings.ApplyConfig(applicationParametersParser);
+            ApplyConfig(applicationParametersParser);
             launchSettings.ApplyConfig(applicationParametersParser);
 
             World world = World.Create();
 
             var splashScreen = new SplashScreen(splashScreenAnimation, splashRoot, debugSettings.ShowSplash, splashScreenText);
-            var decentralandUrlsSource = new DecentralandUrlsSource(settings.DecentralandEnvironment, launchSettings.IsLocalSceneDevelopmentRealm);
+            var decentralandUrlsSource = new DecentralandUrlsSource(decentralandEnvironment, launchSettings.IsLocalSceneDevelopmentRealm);
 
             var texturesFuse = TextureFuseFactory();
 
@@ -168,6 +183,7 @@ namespace Global.Dynamic
                 realmUrls,
                 diskCache,
                 world,
+                decentralandEnvironment,
                 destroyCancellationToken
             );
 

@@ -165,7 +165,7 @@ namespace DCL.ResourcesUnloading.Tests
             var wearableAsset = new AttachmentRegularAsset(new GameObject(), new List<AttachmentRegularAsset.RendererInfo>(5), assetBundleData);
             assetBundleData.AddReference();
 
-            var cachedWearable = new CachedAttachment(wearableAsset, new GameObject());
+            var cachedWearable = new CachedAttachment(wearableAsset, new GameObject(), true);
             wearableAsset.AddReference();
 
             // Act
@@ -222,7 +222,7 @@ namespace DCL.ResourcesUnloading.Tests
             var wearable = new Wearable { WearableAssetResults = { [0] = new StreamableLoadingResult<AttachmentAssetBase>(wearableAsset) } };
             wearableStorage.AddWearable(hashID, wearable, true); // add to cache
 
-            var cachedWearable = new CachedAttachment(wearableAsset, new GameObject());
+            var cachedWearable = new CachedAttachment(wearableAsset, new GameObject(), true);
             wearableAsset.AddReference();
             attachmentsAssetsCache.Release(cachedWearable); // add to cache
 

@@ -83,6 +83,7 @@ namespace Global.Dynamic
             IRealmUrls realmUrls,
             IDiskCache diskCache,
             World world,
+            DecentralandEnvironment decentralandEnvironment,
             CancellationToken ct)
         {
             var browser = new UnityAppWebBrowser(decentralandUrlsSource);
@@ -100,7 +101,7 @@ namespace Global.Dynamic
                 ApplicationParametersParser = applicationParametersParser,
                 DebugSettings = debugSettings,
                 WorldVolumeMacBus = new WorldVolumeMacBus(),
-                Environment = sceneLoaderSettings.DecentralandEnvironment
+                Environment = decentralandEnvironment
             };
 
             await bootstrapContainer.InitializeContainerAsync<BootstrapContainer, BootstrapSettings>(settingsContainer, ct, async container =>
