@@ -26,7 +26,15 @@ namespace DCL.UI.LoadingSpinner
 
         private void InitializeMaterial()
         {
-            if (img.maskable) { material = img.materialForRendering; }
+            if (img.maskable)
+            {
+#if UNITY_EDITOR
+                // Copy material in editor so we don't get asset changes
+                material = new Material(img.materialForRendering);
+#else
+                material = img.materialForRendering;
+#endif
+            }
             else
             {
                 material = new Material(img.material);
