@@ -243,6 +243,8 @@ namespace DCL.Friends
                     },
                 },
             }, ct);
+
+            eventBus.BroadcastThatYouRejectedFriendRequestReceivedFromOtherUser(friendId);
         }
 
         public async UniTask CancelFriendshipAsync(string friendId, CancellationToken ct)
@@ -259,6 +261,8 @@ namespace DCL.Friends
                     },
                 },
             }, ct);
+
+            eventBus.BroadcastThatYouCancelledFriendRequestSentToOtherUser(friendId);
         }
 
         public async UniTask AcceptFriendshipAsync(string friendId, CancellationToken ct)
@@ -277,6 +281,8 @@ namespace DCL.Friends
             }, ct);
 
             friendsCache.Add(friendId);
+
+            eventBus.BroadcastThatYouAcceptedFriendRequestReceivedFromOtherUser(friendId);
         }
 
         public async UniTask DeleteFriendshipAsync(string friendId, CancellationToken ct)
@@ -295,6 +301,8 @@ namespace DCL.Friends
             }, ct);
 
             friendsCache.Remove(friendId);
+
+            eventBus.BroadcastThatYouRemovedFriendRequestSentToOtherUser(friendId);
         }
 
         public async UniTask<FriendRequest> RequestFriendshipAsync(string friendId, string messageBody, CancellationToken ct)
@@ -315,11 +323,15 @@ namespace DCL.Friends
 
             Profile? myProfile = await selfProfile.ProfileAsync(ct);
 
-            return new FriendRequest(response.Id,
+            var fr = new FriendRequest(response.Id,
                 DateTimeOffset.FromUnixTimeSeconds(response.CreatedAt).DateTime,
                 ToClientFriendProfile(myProfile!),
                 ToClientFriendProfile(response.Friend),
                 messageBody);
+
+            eventBus.BroadcastThatYouSentFriendRequestToOtherUser(fr);
+
+            return fr;
         }
 
         private async UniTask EnsureRpcConnectionAsync(CancellationToken ct)
