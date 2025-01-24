@@ -16,6 +16,8 @@ namespace DCL.MapRenderer.MapLayers.Categories
 {
     internal class LiveEventsMarkersController : MapLayerControllerBase, IMapCullingListener<ICategoryMarker>, IMapLayerController, IZoomScalingLayer
     {
+        public bool ZoomBlocked { get; set; }
+
         private static readonly TimeSpan LIVE_EVENTS_POLLING_TIME = TimeSpan.FromMinutes(5);
         private readonly MapLayer mapLayer;
 
@@ -100,7 +102,7 @@ namespace DCL.MapRenderer.MapLayers.Categories
                         mapCullingController.StartTracking(marker, this);
                 }
 
-                if(isEnabled)
+                if(isEnabled && !ZoomBlocked)
                     foreach (ICategoryMarker clusterableMarker in clusterController.UpdateClusters(zoomLevel, baseZoom, zoom, markers))
                         mapCullingController.StartTracking(clusterableMarker, this);
                 await UniTask.Delay(LIVE_EVENTS_POLLING_TIME, DelayType.Realtime, cancellationToken: ct);
@@ -110,11 +112,14 @@ namespace DCL.MapRenderer.MapLayers.Categories
 
         public void ApplyCameraZoom(float baseZoom, float zoom, int zoomLevel)
         {
+            if (ZoomBlocked)
+                return;
+
             this.baseZoom = baseZoom;
             this.zoom = zoom;
             this.zoomLevel = zoomLevel;
 
-            if (isEnabled)
+            if (isEnabled && !ZoomBlocked)
                 foreach (ICategoryMarker clusterableMarker in clusterController.UpdateClusters(zoomLevel, baseZoom, zoom, markers))
                     mapCullingController.StartTracking(clusterableMarker, this);
 
@@ -144,8 +149,13 @@ namespace DCL.MapRenderer.MapLayers.Categories
                 mapCullingController.StartTracking(marker, this);
 
             isEnabled = true;
-            foreach (ICategoryMarker clusterableMarker in clusterController.UpdateClusters(zoomLevel, baseZoom, zoom, markers))
-                mapCullingController.StartTracking(clusterableMarker, this);
+
+            if (!ZoomBlocked)
+            {
+                foreach (ICategoryMarker clusterableMarker in clusterController.UpdateClusters(zoomLevel, baseZoom, zoom, markers))
+                    mapCullingController.StartTracking(clusterableMarker, this);
+            }
+
             return UniTask.CompletedTask;
         }
 
@@ -153,6 +163,8 @@ namespace DCL.MapRenderer.MapLayers.Categories
         {
             foreach (var marker in markers.Values)
                 marker.ResetScale(coordsUtils.ParcelSize);
+
+            clusterController.ResetToBaseScale();
         }
 
         protected override void DisposeImpl()
