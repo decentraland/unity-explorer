@@ -427,6 +427,14 @@
       "dependencies": {},
       "hash": "cdd11bb74398afae73e71b6fe01114f597a6ce08"
     },
+    "org.decentraland.clearscript": {
+      "version": "file:../../../ClearScript/Unity/Package",
+      "depth": 0,
+      "source": "local",
+      "dependencies": {
+        "com.unity.nuget.newtonsoft-json": "3.2.1"
+      }
+    },
     "sc.stylizedwater2": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/StylizedWater2",
       "depth": 0,
