@@ -6,6 +6,7 @@ using DCL.WebRequests;
 using ECS.StreamableLoading.Cache;
 using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using System.Buffers;
+using ECS.StreamableLoading.Cache.Disk;
 
 namespace ECS.StreamableLoading.Textures
 {
@@ -16,8 +17,8 @@ namespace ECS.StreamableLoading.Textures
     [LogCategory(ReportCategory.TEXTURES)]
     public partial class LoadGlobalTextureSystem : LoadTextureSystem
     {
-        internal LoadGlobalTextureSystem(World world, IStreamableCache<Texture2DData, GetTextureIntention> cache, IWebRequestController webRequestController, ArrayPool<byte> buffersPools, ITexturesFuse texturesFuse) : base(
-            world, cache, webRequestController, buffersPools, texturesFuse
+        internal LoadGlobalTextureSystem(World world, IStreamableCache<Texture2DData, GetTextureIntention> cache, IWebRequestController webRequestController, ArrayPool<byte> buffersPools, ITexturesFuse texturesFuse, IDiskCache<Texture2DData> diskCache) : base(
+            world, cache, webRequestController, buffersPools, texturesFuse, diskCache
         ) { }
     }
 }

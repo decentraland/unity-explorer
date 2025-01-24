@@ -5,6 +5,7 @@ using DCL.WebRequests;
 using DCL.Diagnostics;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
+using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
 using Plugins.TexturesFuse.TexturesServerWrap;
@@ -28,8 +29,9 @@ namespace ECS.StreamableLoading.Textures
             IStreamableCache<Texture2DData, GetTextureIntention> cache,
             IWebRequestController webRequestController,
             ArrayPool<byte> buffersPool,
-            ITexturesFuse texturesFuse
-            ) : base(world, cache, webRequestController, buffersPool)
+            ITexturesFuse texturesFuse,
+            IDiskCache<Texture2DData> diskCache
+            ) : base(world, cache, webRequestController, buffersPool, diskCache)
         {
             this.texturesFuse = texturesFuse;
         }

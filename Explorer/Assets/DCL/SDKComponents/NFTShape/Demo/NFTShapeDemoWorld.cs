@@ -14,9 +14,11 @@ using DCL.Utilities.Extensions;
 using DCL.WebRequests;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
+using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.DeferredLoading;
 using ECS.StreamableLoading.NFTShapes;
 using ECS.StreamableLoading.NFTShapes.URNs;
+using ECS.StreamableLoading.Textures;
 using ECS.Unity.Transforms.Components;
 using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using System.Buffers;
@@ -59,7 +61,8 @@ namespace DCL.SDKComponents.NFTShape.Demo
                     new NftShapeCache(),
                     IWebRequestController.DEFAULT,
                     ArrayPool<byte>.Create(1024 * 1024, 100),
-                    ITexturesFuse.NewTestInstance()
+                    ITexturesFuse.NewTestInstance(),
+                    IDiskCache<Texture2DData>.Null.INSTANCE
                 ).InitializeAndReturnSelf(),
                 w => new LoadCycleNftShapeSystem(w, new BasedURNSource(new DecentralandUrlsSource(DecentralandEnvironment.Org))),
                 w => new InstantiateNftShapeSystem(w, new PoolNFTShapeRendererFactory(new ComponentPoolsRegistry(), framesPool), new FrameTimeCapBudget.Default(), framePrefabs, buffer),

@@ -77,6 +77,10 @@ namespace DCL.MapRenderer
             const int MIN_ZOOM = 5;
             const int MAX_ZOOM = 300;
 
+            // Each time we open the fullscreen map, we unblock zoom for all layers
+            foreach (IZoomScalingLayer layer in zoomScalingLayers)
+                layer.ZoomBlocked = false;
+
             // Clamp texture to the maximum size allowed, preserving aspect ratio
             Vector2Int zoomValues = cameraInput.ZoomValues;
             zoomValues.x = Mathf.Max(zoomValues.x, MIN_ZOOM);
@@ -99,8 +103,12 @@ namespace DCL.MapRenderer
             mapCameraController.OnReleasing -= ReleaseCamera;
             mapCameraController.ZoomChanged -= OnCameraZoomChanged;
 
+            // Each time we close the fullscreen map, we reset the scale for all layers and block its zoom
             foreach (IZoomScalingLayer layer in zoomScalingLayers)
+            {
                 layer.ResetToBaseScale();
+                layer.ZoomBlocked = true;
+            }
 
             DisableLayers(owner, mapCameraController.EnabledLayers);
             mapCameraPool.Release(mapCameraController);

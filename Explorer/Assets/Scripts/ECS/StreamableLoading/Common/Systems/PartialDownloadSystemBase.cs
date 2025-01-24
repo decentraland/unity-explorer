@@ -5,6 +5,7 @@ using DCL.WebRequests;
 using DCL.WebRequests.PartialDownload;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
+using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Common.Components;
 using System;
 using System.Buffers;
@@ -24,8 +25,9 @@ namespace ECS.StreamableLoading.Common.Systems
             World world,
             IStreamableCache<TData, TIntention> cache,
             IWebRequestController webRequestController,
-            ArrayPool<byte> buffersPool)
-            : base(world, cache)
+            ArrayPool<byte> buffersPool,
+            IDiskCache<TData> diskCache = null)
+            : base(world, cache, diskCache)
         {
             this.webRequestController = webRequestController;
             this.buffersPool = buffersPool;
@@ -51,6 +53,7 @@ namespace ECS.StreamableLoading.Common.Systems
 
             try
             {
+                await UniTask.SwitchToMainThread();
                 chunkData = await webRequestController.GetPartialAsync(
                     intention.CommonArguments,
                     ct,

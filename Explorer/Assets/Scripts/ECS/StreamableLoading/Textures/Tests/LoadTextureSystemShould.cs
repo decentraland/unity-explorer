@@ -1,4 +1,5 @@
-﻿using ECS.StreamableLoading.Common.Components;
+﻿using ECS.StreamableLoading.Cache.Disk;
+using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Tests;
 using ECS.TestSuite;
 using NSubstitute;
@@ -27,7 +28,7 @@ namespace ECS.StreamableLoading.Textures.Tests
             new () { CommonArguments = new CommonLoadingArguments(wrongTypePath) };
 
         protected override LoadTextureSystem CreateSystem() =>
-            new (world, cache, TestWebRequestController.INSTANCE, buffersPool, Substitute.For<ITexturesFuse>());
+            new (world, cache, TestWebRequestController.INSTANCE, buffersPool, Substitute.For<ITexturesFuse>(), IDiskCache<Texture2DData>.Null.INSTANCE);
 
         protected override void AssertSuccess(Texture2DData data)
         {

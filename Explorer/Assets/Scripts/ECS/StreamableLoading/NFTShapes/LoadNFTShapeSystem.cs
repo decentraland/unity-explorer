@@ -7,6 +7,7 @@ using DCL.Optimization.PerformanceBudgeting;
 using DCL.WebRequests;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
+using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
 using ECS.StreamableLoading.NFTShapes.DTOs;
@@ -33,7 +34,8 @@ namespace ECS.StreamableLoading.NFTShapes
             IStreamableCache<Texture2DData, GetNFTShapeIntention> cache,
             IWebRequestController webRequestController,
             ArrayPool<byte> buffersPool,
-            ITexturesFuse texturesFuse) : base(world, cache, webRequestController, buffersPool)
+            ITexturesFuse texturesFuse,
+            IDiskCache<Texture2DData> diskCache) : base(world, cache, webRequestController, buffersPool, diskCache)
         {
             this.webRequestController = webRequestController;
             this.texturesFuse = texturesFuse;
