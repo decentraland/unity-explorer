@@ -25,6 +25,7 @@ using System;
 using System.Threading;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.WebRequests.Analytics;
+using ECS.StreamableLoading.Cache.Disk;
 using SceneRuntime.Factory.WebSceneSource;
 using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using UnityEngine.AddressableAssets;
@@ -75,6 +76,7 @@ namespace Global.Tests.PlayMode
                 new WorldVolumeMacBus(),
                 false,
                 Substitute.For<IAnalyticsController>(),
+                new IDiskCache.Fake(),
                 ct
             );
 
