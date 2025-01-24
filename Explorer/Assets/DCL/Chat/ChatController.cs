@@ -80,7 +80,7 @@ namespace DCL.Chat
             chatHistory.MessageAdded += CreateChatEntry;
 
             viewInstance!.InjectDependencies(viewDependencies);
-            viewInstance!.Initialize(chatHistory.Channels, ChatChannel.NEARBY_CHANNEL, nametagsData.showChatBubbles);
+            viewInstance!.Initialize(chatHistory.Channels, ChatChannel.NEARBY_CHANNEL, nametagsData.showChatBubbles, chatEntryConfiguration);
 
             viewInstance.PointerEnter += OnChatViewPointerEnter;
             viewInstance.PointerExit += OnChatViewPointerExit;
@@ -89,8 +89,6 @@ namespace DCL.Chat
             viewInstance.EmojiSelectionVisibilityChanged += OnViewEmojiSelectionVisibilityChanged;
             viewInstance.ChatBubbleVisibilityChanged += OnViewChatBubbleVisibilityChanged;
             viewInstance.InputSubmitted += OnViewInputSubmitted;
-
-            viewInstance.CalculateUsernameColor = CalculateUsernameColor;
 
             OnFocus();
 
@@ -188,9 +186,6 @@ namespace DCL.Chat
             // New entry in the chat window
             viewInstance!.RefreshMessages();
         }
-
-        private Color CalculateUsernameColor(ChatMessage chatMessage) =>
-            chatEntryConfiguration.GetNameColor(chatMessage.SenderValidatedName);
 
         private void GenerateChatBubbleComponent(Entity e, ChatMessage chatMessage)
         {
