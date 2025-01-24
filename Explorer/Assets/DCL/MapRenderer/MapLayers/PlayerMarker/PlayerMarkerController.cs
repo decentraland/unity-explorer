@@ -104,8 +104,13 @@ namespace DCL.MapRenderer.MapLayers.PlayerMarker
             playerMarker.SetRotation(Quaternion.AngleAxis(rotation.eulerAngles.y, Vector3.back));
         }
 
+        public bool ZoomBlocked { get; set; }
+
         public void ApplyCameraZoom(float baseZoom, float zoom, int zoomLevel)
         {
+            if (ZoomBlocked)
+                return;
+
             playerMarker.SetZoom(baseZoom, zoom);
         }
 
