@@ -21,6 +21,8 @@ namespace DCL.MapRenderer.MapLayers.PointsOfInterest
 {
     internal class ScenesOfInterestMarkersController : MapLayerControllerBase, IMapCullingListener<ISceneOfInterestMarker>, IMapLayerController, IZoomScalingLayer
     {
+        public bool ZoomBlocked { get; set; }
+
         private const string EMPTY_PARCEL_NAME = "Empty parcel";
 
         private static readonly PoolExtensions.Scope<List<PlacesData.PlaceInfo>> EMPTY_PLACES = PoolExtensions.EmptyScope(new List<PlacesData.PlaceInfo>());
@@ -137,6 +139,9 @@ namespace DCL.MapRenderer.MapLayers.PointsOfInterest
 
         public void ApplyCameraZoom(float baseZoom, float zoom, int zoomLevel)
         {
+            if (ZoomBlocked)
+                return;
+
             this.baseZoom = baseZoom;
             this.zoom = zoom;
             this.zoomLevel = zoomLevel;
@@ -144,7 +149,7 @@ namespace DCL.MapRenderer.MapLayers.PointsOfInterest
             foreach (ISceneOfInterestMarker marker in markers.Values)
                 marker.SetZoom(coordsUtils.ParcelSize, baseZoom, zoom);
 
-            if (isEnabled)
+            if (isEnabled && !ZoomBlocked)
                 foreach (ISceneOfInterestMarker clusterableMarker in clusterController.UpdateClusters(zoomLevel, baseZoom, zoom, markers))
                     mapCullingController.StartTracking(clusterableMarker, this);
 
@@ -155,6 +160,8 @@ namespace DCL.MapRenderer.MapLayers.PointsOfInterest
         {
             foreach (var marker in markers.Values)
                 marker.ResetScale(coordsUtils.ParcelSize);
+
+            clusterController.ResetToBaseScale();
         }
 
         public UniTask Disable(CancellationToken cancellationToken)
@@ -178,8 +185,13 @@ namespace DCL.MapRenderer.MapLayers.PointsOfInterest
                 mapCullingController.StartTracking(marker, this);
 
             isEnabled = true;
-            foreach (ISceneOfInterestMarker clusterableMarker in clusterController.UpdateClusters(zoomLevel, baseZoom, zoom, markers))
-                mapCullingController.StartTracking(clusterableMarker, this);
+
+            if (!ZoomBlocked)
+            {
+                foreach (ISceneOfInterestMarker clusterableMarker in clusterController.UpdateClusters(zoomLevel, baseZoom, zoom, markers))
+                    mapCullingController.StartTracking(clusterableMarker, this);
+            }
+
             return UniTask.CompletedTask;
         }
 
