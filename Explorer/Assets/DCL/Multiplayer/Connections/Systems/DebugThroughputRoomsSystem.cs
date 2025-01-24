@@ -4,9 +4,12 @@ using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using DCL.Diagnostics;
+using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Connections.Systems.Throughput;
 using DCL.Nametags;
 using ECS.Abstract;
+using LiveKit.Rooms.Participants;
+using System.Collections.Generic;
 
 namespace DCL.Multiplayer.Connections.Systems
 {
@@ -18,18 +21,28 @@ namespace DCL.Multiplayer.Connections.Systems
         private readonly BufferBinding island;
         private readonly BufferBinding scene;
         private readonly bool buffersInitialized;
+        private readonly IRoomHub roomHub;
         private readonly float stepSeconds;
         private readonly DebugWidgetVisibilityBinding infoVisibilityBinding;
+
+        private readonly List<(string name, string value)> mutableListScene;
+        private readonly ElementBinding<IReadOnlyList<(string name, string value)>> livekitListScene;
+
+        private readonly List<(string name, string value)> mutableListIsland;
+        private readonly ElementBinding<IReadOnlyList<(string name, string value)>> livekitListIsland;
+
         private float current;
 
         public DebugThroughputRoomsSystem(
             World world,
+            IRoomHub roomHub,
             IDebugContainerBuilder debugBuilder,
             ThroughputBufferBunch islandBufferBunch,
             ThroughputBufferBunch sceneBufferBunch,
             float stepSeconds = 1f //one second by default
         ) : base(world)
         {
+            this.roomHub = roomHub;
             this.stepSeconds = stepSeconds;
             DebugWidgetBuilder? infoWidget = debugBuilder.TryAddWidget(IDebugContainerBuilder.Categories.ROOM_THROUGHPUT);
 
@@ -42,8 +55,17 @@ namespace DCL.Multiplayer.Connections.Systems
             infoVisibilityBinding = new DebugWidgetVisibilityBinding(true);
             infoWidget.SetVisibilityBinding(infoVisibilityBinding);
 
-            this.island = BufferBinding.CreateAndAttach(infoWidget, islandBufferBunch, "island");
-            this.scene = BufferBinding.CreateAndAttach(infoWidget, sceneBufferBunch, "scene");
+            this.island = BufferBinding.CreateAndAttach(infoWidget, islandBufferBunch, "Island");
+            this.scene = BufferBinding.CreateAndAttach(infoWidget, sceneBufferBunch, "Scene");
+
+            mutableListScene = new List<(string name, string value)>();
+            livekitListScene = new ElementBinding<IReadOnlyList<(string name, string value)>>(mutableListScene);
+            infoWidget.AddList("Livekit Scene", livekitListScene);
+
+            mutableListIsland = new List<(string name, string value)>();
+            livekitListIsland = new ElementBinding<IReadOnlyList<(string name, string value)>>(mutableListIsland);
+            infoWidget.AddList("Livekit Island", livekitListIsland);
+
             buffersInitialized = true;
         }
 
@@ -62,6 +84,9 @@ namespace DCL.Multiplayer.Connections.Systems
                 {
                     island.CollectAndDraw();
                     scene.CollectAndDraw();
+
+                    CollectAndDisplay(roomHub.SceneRoom().Room().Participants, mutableListScene, livekitListScene);
+                    CollectAndDisplay(roomHub.IslandRoom().Participants, mutableListIsland, livekitListIsland);
                 }
                 else
                 {
@@ -69,6 +94,21 @@ namespace DCL.Multiplayer.Connections.Systems
                     scene.Reset();
                 }
             }
+        }
+
+        private static void CollectAndDisplay(IParticipantsHub participantsHub, List<(string name, string value)> mutableList, ElementBinding<IReadOnlyList<(string name, string value)>> binding)
+        {
+            var participants = participantsHub.RemoteParticipantIdentities();
+            mutableList.Clear();
+
+            foreach (string sid in participants)
+            {
+                var participant = participantsHub.RemoteParticipant(sid);
+                if (participant == null) continue;
+                mutableList.Add((sid, participant.ConnectionQuality.ToString()));
+            }
+
+            binding.SetAndUpdate(mutableList);
         }
 
         private readonly struct BufferBinding
@@ -88,8 +128,13 @@ namespace DCL.Multiplayer.Connections.Systems
             {
                 var incoming = new ElementBinding<ulong>(0);
                 var outgoing = new ElementBinding<ulong>(0);
-                widgetBuilder.AddMarker($"{name} - incoming", incoming, DebugLongMarkerDef.Unit.Bytes);
-                widgetBuilder.AddMarker($"{name} - outgoing", outgoing, DebugLongMarkerDef.Unit.Bytes);
+
+                widgetBuilder.AddGroup(
+                    name,
+                    (new DebugConstLabelDef("Incoming"), new DebugLongMarkerDef(incoming, DebugLongMarkerDef.Unit.Bytes)),
+                    (new DebugConstLabelDef("Outgoing"), new DebugLongMarkerDef(incoming, DebugLongMarkerDef.Unit.Bytes))
+                );
+
                 return new BufferBinding(bunch, incoming, outgoing);
             }
 

@@ -122,7 +122,7 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
         }
 
         [Test]
-        public void ReturnDifferentCacheValuesForDifferentVersions()
+        public void ReturnSameCacheValuesForDifferentVersions()
         {
             //First, we simulate creation of a scene and the resolving of one asset budnle
             string version = "v" + SceneAssetBundleManifest.ASSET_BUNDLE_VERSION_REQUIRES_HASH;
@@ -146,7 +146,7 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
             string secondCacheableHash = intent.CommonArguments.GetCacheableURL();
 
             Assert.AreNotEqual(firstStandardURL, secondStandardURL);
-            Assert.AreNotEqual(firstCacheableHash, secondCacheableHash);
+            Assert.AreEqual(firstCacheableHash, secondCacheableHash);
         }
 
         [Test]

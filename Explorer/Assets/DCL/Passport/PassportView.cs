@@ -79,6 +79,14 @@ namespace DCL.Passport
         [field: SerializeField]
         public SoftMask ViewportSoftMask { get; private set; }
 
+#if UNITY_EDITOR
+        private void Awake()
+        {
+            // Copy material in editor so we don't get asset changes
+            BackgroundImage.material = new Material(BackgroundImage.material);
+        }
+#endif
+
         public void OpenPhotosSection()
         {
             OverviewSectionButton.SetSelected(false);
