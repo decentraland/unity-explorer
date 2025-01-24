@@ -109,7 +109,7 @@ namespace DCL.Friends
             }
         }
 
-        public async UniTask SubscribeToConnectivityStatus(CancellationToken ct)
+        public async UniTask SubscribeToConnectivityStatusAsync(CancellationToken ct)
         {
             await EnsureRpcConnectionAsync(ct);
 

@@ -77,7 +77,7 @@ namespace DCL.PluginSystem.Global
                 var cts = CancellationTokenSource.CreateLinkedTokenSource(lifeCycleCancellationToken.Token, ct);
 
                 friendsService.SubscribeToIncomingFriendshipEventsAsync(cts.Token).Forget();
-                friendsService.SubscribeToConnectivityStatus(cts.Token).Forget();
+                friendsService.SubscribeToConnectivityStatusAsync(cts.Token).Forget();
             }
 
             FriendRequestView friendRequestPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.FriendRequestPrefab, ct)).Value;
