@@ -17,8 +17,8 @@ using System;
 using System.Collections.Generic;
 using DCL.LOD;
 using DCL.Profiles;
+using ECS.StreamableLoading.Cache.InMemory;
 using ECS.StreamableLoading.NFTShapes;
-using SceneRuntime.Factory.WebSceneSource.Cache;
 using Unity.PerformanceTesting;
 using UnityEngine;
 using static Utility.Tests.TestsCategories;
@@ -44,7 +44,9 @@ namespace DCL.ResourcesUnloading.Tests
         private IProfileCache profileCache;
         private ProfileIntentionCache profileIntentionCache;
         private IComponentPoolsRegistry poolsRegistry;
-        private MemoryJsSourcesCache jsSourcesCache;
+
+        private IReadOnlyDictionary<string, string> innerOfCache;
+        private IMemoryCache<string, string> jsSourcesCache;
 
         private AssetBundleCache assetBundleCache;
 
@@ -68,7 +70,10 @@ namespace DCL.ResourcesUnloading.Tests
             emoteStorage = new MemoryEmotesStorage();
             profileCache = new DefaultProfileCache();
             profileIntentionCache = new ProfileIntentionCache();
-            jsSourcesCache = new MemoryJsSourcesCache();
+
+            var dict = new Dictionary<string, string>();
+            innerOfCache = dict;
+            jsSourcesCache = new MemoryCache<string, string>(dict);
 
             cacheCleaner = new CacheCleaner(releasablePerformanceBudget, null);
             cacheCleaner.Register(texturesCache);
@@ -191,7 +196,7 @@ namespace DCL.ResourcesUnloading.Tests
             Assert.That(attachmentsAssetsCache.cache.Count, Is.EqualTo(0));
             Assert.That(gltfContainerAssetsCache.cache.Count, Is.EqualTo(0));
             Assert.That(assetBundleCache.cache.Count, Is.EqualTo(0));
-            Assert.That(jsSourcesCache.Count, Is.EqualTo(0));
+            Assert.That(innerOfCache.Count, Is.EqualTo(0));
         }
 
         private void FillCachesWithElements(string hashID)
@@ -221,7 +226,7 @@ namespace DCL.ResourcesUnloading.Tests
             wearableAsset.AddReference();
             attachmentsAssetsCache.Release(cachedWearable); // add to cache
 
-            jsSourcesCache.Cache("a", new string('a', 1024 * 1024));
+            jsSourcesCache.Put("a", new string('a', 1024 * 1024));
         }
     }
 }
