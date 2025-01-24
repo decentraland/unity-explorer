@@ -8,6 +8,7 @@ using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using System;
 using System.Buffers;
+using System.IO;
 using System.Threading;
 using UnityEngine;
 
@@ -34,7 +35,7 @@ namespace ECS.StreamableLoading.Common.Systems
         {
             PartialLoadingState partialState = default;
             PartialDownloadingData chunkData;
-            byte[]? fullDataMemory = null;
+            MemoryStream? fullDataStream = null;
 
             // If the downloading has not started yet
             if (state.PartialDownloadingData == null)
@@ -61,8 +62,8 @@ namespace ECS.StreamableLoading.Common.Systems
 
                 if (state.PartialDownloadingData == null)
                 {
-                    fullDataMemory = buffersPool.Rent(chunkData.FullFileSize);
-                    partialState = new PartialLoadingState(fullDataMemory, chunkData.FullFileSize);
+                    fullDataStream = new MemoryStream(chunkData.FullFileSize);
+                    partialState = new PartialLoadingState(fullDataStream, chunkData.FullFileSize);
                 }
 
                 int finalBytesCount = chunkData.downloadedSize;
@@ -70,7 +71,8 @@ namespace ECS.StreamableLoading.Common.Systems
                 if (chunkData.RangeEnd > chunkData.FullFileSize)
                     finalBytesCount = chunkData.FullFileSize - chunkData.RangeStart;
 
-                Array.Copy(chunkData.DataBuffer, 0, partialState.FullData, chunkData.RangeStart, finalBytesCount);
+                partialState.FullData.Position = chunkData.RangeStart;
+                partialState.FullData.Write(chunkData.DataBuffer, 0, finalBytesCount);
 
                 if (chunkData.downloadedSize == chunkData.FullFileSize)
                     partialState.NextRangeStart = chunkData.FullFileSize;
@@ -91,12 +93,9 @@ namespace ECS.StreamableLoading.Common.Systems
             {
                 if(chunkData.DataBuffer != null)
                     buffersPool.Return(chunkData.DataBuffer);
-
-                if(fullDataMemory != null)
-                    buffersPool.Return(fullDataMemory);
             }
         }
 
-        protected abstract UniTask<StreamableLoadingResult<TData>> ProcessCompletedData(byte[] completeData, TIntention intention, IPartitionComponent partition, CancellationToken ct, StreamableLoadingState state);
+        protected abstract UniTask<StreamableLoadingResult<TData>> ProcessCompletedData(MemoryStream completeData, TIntention intention, IPartitionComponent partition, CancellationToken ct, StreamableLoadingState state);
     }
 }
