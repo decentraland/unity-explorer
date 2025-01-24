@@ -27,17 +27,17 @@ namespace DCL.Roads.Settings
         {
             Dictionary<string, PrefabInstanceDataBehaviour> loadedPrefabs = LoadAllPrefabs();
 
-            Dictionary<MeshData, HashSet<PerInstance>> tempMeshToMatrices = CollectInstancesMap(loadedPrefabs);
+            Dictionary<MeshData, HashSet<PerInstanceBuffer>> tempMeshToMatrices = CollectInstancesMap(loadedPrefabs);
 
-            RoadsMeshesGPUInstances = tempMeshToMatrices.Select(kvp => new MeshInstanceData { MeshData = kvp.Key, InstancesMatrices = kvp.Value.ToList() }).ToList();
+            RoadsMeshesGPUInstances = tempMeshToMatrices.Select(kvp => new MeshInstanceData { MeshData = kvp.Key, PerInstancesData = kvp.Value.ToArray() }).ToList();
 
             EditorUtility.SetDirty(this);
             AssetDatabase.SaveAssets();
         }
 
-        private Dictionary<MeshData, HashSet<PerInstance>> CollectInstancesMap(Dictionary<string, PrefabInstanceDataBehaviour> loadedPrefabs)
+        private Dictionary<MeshData, HashSet<PerInstanceBuffer>> CollectInstancesMap(Dictionary<string, PrefabInstanceDataBehaviour> loadedPrefabs)
         {
-            var tempMeshToMatrices = new Dictionary<MeshData, HashSet<PerInstance>>();
+            var tempMeshToMatrices = new Dictionary<MeshData, HashSet<PerInstanceBuffer>>();
 
             foreach (RoadDescription roadDescription in RoadDescriptions)
             {
@@ -51,14 +51,14 @@ namespace DCL.Roads.Settings
 
                 foreach (MeshInstanceData meshInstance in prefab.meshInstances)
                 {
-                    if (!tempMeshToMatrices.TryGetValue(meshInstance.MeshData, out HashSet<PerInstance> matrices))
+                    if (!tempMeshToMatrices.TryGetValue(meshInstance.MeshData, out HashSet<PerInstanceBuffer> matrices))
                     {
-                        matrices = new HashSet<PerInstance>();
+                        matrices = new HashSet<PerInstanceBuffer>();
                         tempMeshToMatrices.Add(meshInstance.MeshData, matrices);
                     }
 
-                    foreach (PerInstance instanceData in meshInstance.InstancesMatrices)
-                        matrices.Add(new PerInstance { objectToWorld = roadRoot * instanceData.objectToWorld });
+                    foreach (PerInstanceBuffer instanceData in meshInstance.PerInstancesData)
+                        matrices.Add(new PerInstanceBuffer { instMatrix = roadRoot * instanceData.instMatrix });
                 }
             }
 

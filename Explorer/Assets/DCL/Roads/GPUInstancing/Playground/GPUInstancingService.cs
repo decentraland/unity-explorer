@@ -10,17 +10,17 @@ namespace DCL.Roads.GPUInstancing.Playground
     {
         private const int BATCH_SIZE = 511;
 
-        internal readonly Dictionary<GPUInstancedRenderer, List<PerInstance>> gpuInstancingMap = new ();
-        private readonly Dictionary<GPUInstancedRenderer, List<PerInstance[]>> gpuBatchesMap = new ();
+        internal readonly Dictionary<GPUInstancedRenderer, PerInstanceBuffer[]> gpuInstancingMap = new ();
+        private readonly Dictionary<GPUInstancedRenderer, List<PerInstanceBuffer[]>> gpuBatchesMap = new ();
 
         public void RenderInstanced()
         {
-            foreach (KeyValuePair<GPUInstancedRenderer, List<PerInstance>> renderInstances in gpuInstancingMap)
+            foreach (KeyValuePair<GPUInstancedRenderer, PerInstanceBuffer[]> renderInstances in gpuInstancingMap)
             {
                 for (var i = 0; i < renderInstances.Key.RenderParamsArray.Length; i++) // foreach submesh
-                for (var j = 0; j < renderInstances.Value.Count; j += BATCH_SIZE)
+                for (var j = 0; j < renderInstances.Value.Length; j += BATCH_SIZE)
                 {
-                    PerInstance[] batch = renderInstances.Value.Skip(j).Take(BATCH_SIZE).ToArray();
+                    PerInstanceBuffer[] batch = renderInstances.Value.Skip(j).Take(BATCH_SIZE).ToArray();
                     Graphics.RenderMeshInstanced(in renderInstances.Key.RenderParamsArray[i], renderInstances.Key.Mesh, i, batch);
                 }
             }
@@ -28,11 +28,11 @@ namespace DCL.Roads.GPUInstancing.Playground
 
         public void RenderInstancedBatched()
         {
-            foreach ((GPUInstancedRenderer renderer, List<PerInstance[]> batches) in gpuBatchesMap)
+            foreach ((GPUInstancedRenderer renderer, List<PerInstanceBuffer[]> batches) in gpuBatchesMap)
             {
                 for (var subMeshIndex = 0; subMeshIndex < renderer.RenderParamsArray.Length; subMeshIndex++)
                 {
-                    foreach (PerInstance[] batch in batches)
+                    foreach (PerInstanceBuffer[] batch in batches)
                     {
                         if (batch.Length != 0)
                             Graphics.RenderMeshInstanced(in renderer.RenderParamsArray[subMeshIndex], renderer.Mesh, subMeshIndex, batch);
@@ -43,22 +43,22 @@ namespace DCL.Roads.GPUInstancing.Playground
 
         public void PrepareBatches()
         {
-            gpuBatchesMap.Clear();
-
-            foreach ((GPUInstancedRenderer renderer, List<PerInstance> matrices) in gpuInstancingMap)
-            {
-                var batches = new List<PerInstance[]>();
-
-                for (var i = 0; i < matrices.Count; i += BATCH_SIZE)
-                {
-                    int count = Mathf.Min(BATCH_SIZE, matrices.Count - i);
-                    var batch = new PerInstance[count];
-                    matrices.CopyTo(i, batch, 0, count);
-                    batches.Add(batch);
-                }
-
-                gpuBatchesMap[renderer] = batches;
-            }
+            // gpuBatchesMap.Clear();
+            //
+            // foreach ((GPUInstancedRenderer renderer, PerInstance[] matrices) in gpuInstancingMap)
+            // {
+            //     var batches = new List<PerInstance[]>();
+            //
+            //     for (var i = 0; i < matrices.Length; i += BATCH_SIZE)
+            //     {
+            //         int count = Mathf.Min(BATCH_SIZE, matrices.Length - i);
+            //         var batch = new PerInstance[count];
+            //         matrices.CopyTo(i, batch, 0, count);
+            //         batches.Add(batch);
+            //     }
+            //
+            //     gpuBatchesMap[renderer] = batches;
+            // }
         }
 
         public void AddToInstancingDirectCopy(List<MeshInstanceData> meshInstances)
@@ -68,7 +68,7 @@ namespace DCL.Roads.GPUInstancing.Playground
                 var instancedRenderer = prefabMeshInstance.MeshData.ToGPUInstancedRenderer();
 
                 if (!gpuInstancingMap.ContainsKey(instancedRenderer))
-                    gpuInstancingMap.Add(instancedRenderer, prefabMeshInstance.InstancesMatrices);
+                    gpuInstancingMap.Add(instancedRenderer, prefabMeshInstance.PerInstancesData);
             }
         }
 
@@ -84,29 +84,32 @@ namespace DCL.Roads.GPUInstancing.Playground
             {
                 var instancedRenderer = prefabMeshInstance.MeshData.ToGPUInstancedRenderer();
 
-                if (!gpuInstancingMap.TryGetValue(instancedRenderer, out List<PerInstance> matrix))
+                if (!gpuInstancingMap.TryGetValue(instancedRenderer, out PerInstanceBuffer[] matrix))
                 {
-                    matrix = new List<PerInstance>(prefabMeshInstance.InstancesMatrices.Count);
+                    matrix = new PerInstanceBuffer[prefabMeshInstance.PerInstancesData.Length];
                     gpuInstancingMap.Add(instancedRenderer, matrix);
                 }
 
-                foreach (PerInstance instanceData in prefabMeshInstance.InstancesMatrices)
-                    matrix.Add(new PerInstance { objectToWorld = roadRoot * instanceData.objectToWorld });
+                for (var i = 0; i < prefabMeshInstance.PerInstancesData.Length; i++)
+                {
+                    PerInstanceBuffer instanceBufferData = prefabMeshInstance.PerInstancesData[i];
+                    matrix[i] = new PerInstanceBuffer { instMatrix = roadRoot * instanceBufferData.instMatrix };
+                }
             }
         }
 
         private void AddToInstancing(MeshData[] meshes, Matrix4x4 roadRoot)
         {
-            foreach (MeshData meshData in meshes)
-            {
-                var instancedRenderer = meshData.ToGPUInstancedRenderer();
-                var instanceData = new PerInstance { objectToWorld = roadRoot * meshData.LocalToRootMatrix };
-
-                if (gpuInstancingMap.TryGetValue(instancedRenderer, out List<PerInstance> matrix))
-                    matrix.Add(instanceData);
-                else
-                    gpuInstancingMap.Add(instancedRenderer, new List<PerInstance> { instanceData });
-            }
+            // foreach (MeshData meshData in meshes)
+            // {
+            //     var instancedRenderer = meshData.ToGPUInstancedRenderer();
+            //     var instanceData = new PerInstance { objectToWorld = roadRoot * meshData.LocalToRootMatrix };
+            //
+            //     if (gpuInstancingMap.TryGetValue(instancedRenderer, out PerInstance[] matrix))
+            //         matrix.Add(instanceData);
+            //     else
+            //         gpuInstancingMap.Add(instancedRenderer, new[] { instanceData });
+            // }
         }
 
         private void AddToInstancing(PrefabInstanceDataBehaviour prefabData, Matrix4x4 roadRoot)

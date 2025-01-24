@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using UnityEngine;
+using UnityEngine.Serialization;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -12,23 +14,23 @@ namespace DCL.Roads.GPUInstancing.Playground
     public class MeshInstanceData
     {
         public MeshData MeshData;
-        public List<PerInstance> InstancesMatrices;
+        public PerInstanceBuffer[] PerInstancesData;
     }
 
-    [Serializable]
-    public struct PerInstance : IEquatable<PerInstance>
+    [Serializable, StructLayout(LayoutKind.Sequential)]
+    public struct PerInstanceBuffer : IEquatable<PerInstanceBuffer>
     {
-        public Matrix4x4 objectToWorld;
-        public Color colour;
+        public Matrix4x4 instMatrix;
+        public Vector4 instColourTint;
 
-        public bool Equals(PerInstance other) =>
-            objectToWorld.Equals(other.objectToWorld) && colour.Equals(other.colour);
+        public bool Equals(PerInstanceBuffer other) =>
+            instMatrix.Equals(other.instMatrix) && instColourTint.Equals(other.instColourTint);
 
         public override bool Equals(object obj) =>
-            obj is PerInstance other && Equals(other);
+            obj is PerInstanceBuffer other && Equals(other);
 
         public override int GetHashCode() =>
-            HashCode.Combine(objectToWorld, colour);
+            HashCode.Combine(instMatrix, instColourTint);
 
         // private const float EPSILON = 0.0001f;
 
@@ -108,17 +110,17 @@ namespace DCL.Roads.GPUInstancing.Playground
 
         private void CollectDataFromPrefabAsset()
         {
-            var tempMeshToMatrices = new Dictionary<MeshData, HashSet<PerInstance>>();
+            var tempMeshToMatrices = new Dictionary<MeshData, HashSet<PerInstanceBuffer>>();
 
             Meshes = CollectStandaloneMeshesData(tempMeshToMatrices);
             LODGroups = CollectLODGroupDatas(tempMeshToMatrices);
 
             meshInstances = new List<MeshInstanceData>(tempMeshToMatrices.Keys.Count);
-            foreach (KeyValuePair<MeshData, HashSet<PerInstance>> kvp in tempMeshToMatrices)
-                meshInstances.Add(new MeshInstanceData { MeshData = kvp.Key, InstancesMatrices = kvp.Value.ToList() });
+            foreach (KeyValuePair<MeshData, HashSet<PerInstanceBuffer>> kvp in tempMeshToMatrices)
+                meshInstances.Add(new MeshInstanceData { MeshData = kvp.Key, PerInstancesData = kvp.Value.ToArray() });
         }
 
-        private MeshData[] CollectStandaloneMeshesData(Dictionary<MeshData, HashSet<PerInstance>> tempMeshToMatrices)
+        private MeshData[] CollectStandaloneMeshesData(Dictionary<MeshData, HashSet<PerInstanceBuffer>> tempMeshToMatrices)
         {
             Renderer[] standaloneRenderers = gameObject.GetComponentsInChildren<Renderer>(true)
                                                        .Where(r => !AssignedToLODGroupInPrefabHierarchy(r.transform)).ToArray();
@@ -126,12 +128,12 @@ namespace DCL.Roads.GPUInstancing.Playground
             return CollectMeshData(standaloneRenderers, tempMeshToMatrices).ToArray();
         }
 
-        private LODGroupData[] CollectLODGroupDatas(Dictionary<MeshData, HashSet<PerInstance>> tempMeshToMatrices) =>
+        private LODGroupData[] CollectLODGroupDatas(Dictionary<MeshData, HashSet<PerInstanceBuffer>> tempMeshToMatrices) =>
             gameObject.GetComponentsInChildren<LODGroup>(true)
                       .Select(group => CollectLODGroupData(group, tempMeshToMatrices))
                       .Where(lodGroupData => lodGroupData.LODs.Length != 0 && lodGroupData.LODs[0].Meshes.Length != 0).ToArray();
 
-        private List<MeshData> CollectMeshData(Renderer[] renderers, Dictionary<MeshData, HashSet<PerInstance>> tempMeshToMatrices)
+        private List<MeshData> CollectMeshData(Renderer[] renderers, Dictionary<MeshData, HashSet<PerInstanceBuffer>> tempMeshToMatrices)
         {
             var list = new List<MeshData>();
 
@@ -156,15 +158,15 @@ namespace DCL.Roads.GPUInstancing.Playground
 
                 list.Add(meshData);
 
-                PerInstance data = new PerInstance
+                PerInstanceBuffer data = new PerInstanceBuffer
                 {
-                    objectToWorld = meshData.LocalToRootMatrix,
+                    instMatrix = meshData.LocalToRootMatrix,
                 };
 
                 if (tempMeshToMatrices.TryGetValue(meshData, out var matrices))
                     matrices.Add(data);
                 else
-                    tempMeshToMatrices[meshData] = new HashSet<PerInstance> { data };
+                    tempMeshToMatrices[meshData] = new HashSet<PerInstanceBuffer> { data };
             }
 
             return list;
@@ -186,7 +188,7 @@ namespace DCL.Roads.GPUInstancing.Playground
             return false;
         }
 
-        private LODGroupData CollectLODGroupData(LODGroup lodGroup, Dictionary<MeshData, HashSet<PerInstance>> tempMeshToMatrices)
+        private LODGroupData CollectLODGroupData(LODGroup lodGroup, Dictionary<MeshData, HashSet<PerInstanceBuffer>> tempMeshToMatrices)
         {
             lodGroup.RecalculateBounds();
 

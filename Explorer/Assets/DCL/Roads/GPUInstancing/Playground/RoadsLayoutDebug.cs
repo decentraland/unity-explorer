@@ -120,7 +120,7 @@ namespace DCL.Roads.GPUInstancing.Playground
                                                {
                                                    Mesh = propPair.Key.Mesh,
                                                    Material1 = propPair.Key.RenderParamsArray[0].material,
-                                                   InstancesCount = propPair.Value.Count,
+                                                   InstancesCount = propPair.Value.Length,
                                                })
                                               .ToArray();
         }
