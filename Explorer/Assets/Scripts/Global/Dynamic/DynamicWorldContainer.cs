@@ -623,6 +623,7 @@ namespace Global.Dynamic
                     assetsProvisioner,
                     staticContainer.SingletonSharedDependencies.FrameTimeBudget,
                     staticContainer.SingletonSharedDependencies.MemoryBudget,
+                    staticContainer.QualityContainer.RendererFeaturesCache,
                     staticContainer.RealmData,
                     staticContainer.MainPlayerAvatarBaseProxy,
                     debugBuilder,
@@ -818,7 +819,8 @@ namespace Global.Dynamic
                     profileRepository,
                     clipboard,
                     staticContainer.WebRequestsContainer.WebRequestController,
-                    staticContainer.LoadingStatus));
+                    staticContainer.LoadingStatus,
+                    staticContainer.InputBlock));
 
             if (dynamicWorldParams.EnableAnalytics)
                 globalPlugins.Add(new AnalyticsPlugin(

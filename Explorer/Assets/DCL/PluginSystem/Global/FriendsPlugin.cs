@@ -6,15 +6,16 @@ using DCL.Clipboard;
 using DCL.Friends;
 using DCL.Friends.UI;
 using DCL.Friends.UI.FriendPanel;
+using DCL.Friends.UI.Requests;
+using DCL.Input;
 using DCL.Multiplayer.Connections.DecentralandUrls;
-using DCL.Multiplayer.Connections.RoomHubs;
-using DCL.Multiplayer.Connectivity;
 using DCL.Profiles;
 using DCL.Web3.Identities;
 using DCL.UI.MainUI;
 using DCL.UserInAppInitializationFlow;
 using DCL.WebRequests;
 using MVC;
+using System;
 using System.Threading;
 using Utility;
 using UnityEngine;
@@ -34,6 +35,7 @@ namespace DCL.PluginSystem.Global
         private readonly ISystemClipboard systemClipboard;
         private readonly IWebRequestController webRequestController;
         private readonly ILoadingStatus loadingStatus;
+        private readonly IInputBlock inputBlock;
         private readonly CancellationTokenSource lifeCycleCancellationToken = new ();
 
         private RPCFriendsService? friendsService;
@@ -50,7 +52,8 @@ namespace DCL.PluginSystem.Global
             IProfileRepository profileRepository,
             ISystemClipboard systemClipboard,
             IWebRequestController webRequestController,
-            ILoadingStatus loadingStatus)
+            ILoadingStatus loadingStatus,
+            IInputBlock inputBlock)
         {
             this.mainUIView = mainUIView;
             this.dclUrlSource = dclUrlSource;
@@ -62,6 +65,7 @@ namespace DCL.PluginSystem.Global
             this.systemClipboard = systemClipboard;
             this.webRequestController = webRequestController;
             this.loadingStatus = loadingStatus;
+            this.inputBlock = inputBlock;
         }
 
         public void Dispose()
@@ -108,11 +112,28 @@ namespace DCL.PluginSystem.Global
                 loadingStatus);
 
             mvcManager.RegisterController(friendsPanelController);
+
+            FriendRequestView friendRequestPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.FriendRequestPrefab, ct)).Value;
+
+            var friendRequestController = new FriendRequestController(
+                FriendRequestController.CreateLazily(friendRequestPrefab, null),
+                web3IdentityCache, friendsService, profileRepository, webRequestController,
+                inputBlock);
+
+            mvcManager.RegisterController(friendRequestController);
         }
     }
 
     public class FriendsPluginSettings : IDCLPluginSettings
     {
         [field: SerializeField] public AssetReferenceGameObject FriendsPanelPrefab { get; set; } = null!;
+        [field: SerializeField]
+        public FriendRequestAssetReference FriendRequestPrefab { get; set; }
+
+        [Serializable]
+        public class FriendRequestAssetReference : ComponentReference<FriendRequestView>
+        {
+            public FriendRequestAssetReference(string guid) : base(guid) { }
+        }
     }
 }
