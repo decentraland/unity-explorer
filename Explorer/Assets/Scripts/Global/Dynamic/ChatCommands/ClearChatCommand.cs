@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Chat;
 using DCL.Chat.Commands;
 using DCL.Chat.History;
 using System.Threading;
@@ -16,16 +17,11 @@ namespace Global.Dynamic.ChatCommands
         public string Command => "clear";
         public string Description => "<b>/clear</b>\n    Clear the chat";
 
-        private readonly IChatHistory chatHistory;
-
-        public ClearChatCommand(IChatHistory chatHistory)
-        {
-            this.chatHistory = chatHistory;
-        }
+        public ChatController ChatController { get; set; }
 
         public UniTask<string> ExecuteCommandAsync(string[] parameters, CancellationToken ct)
         {
-            chatHistory.Clear();
+            ChatController?.Clear();
             return UniTask.FromResult(string.Empty);
         }
     }
