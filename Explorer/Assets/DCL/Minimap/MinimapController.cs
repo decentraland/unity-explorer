@@ -103,7 +103,7 @@ namespace DCL.Minimap
             viewInstance.sideMenuButton.onClick.AddListener(OpenSideMenu);
 
             viewInstance.goToGenesisCityButton.onClick.AddListener(() =>
-                realmNavigator.TeleportToParcelAsync(startParcelInGenesis, disposeCts.Token, true).Forget());
+                realmNavigator.TeleportToParcelAsync(startParcelInGenesis, disposeCts.Token, false).Forget());
 
             viewInstance.SideMenuCanvasGroup.alpha = 0;
             viewInstance.SideMenuCanvasGroup.gameObject.SetActive(false);
