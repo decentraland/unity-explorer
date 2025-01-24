@@ -10,6 +10,7 @@ using DCL.Web3.Identities;
 using DCL.WebRequests;
 using MVC;
 using System.Threading;
+using UnityEngine.InputSystem;
 using Utility;
 
 namespace DCL.Friends.UI.FriendPanel
@@ -32,8 +33,10 @@ namespace DCL.Friends.UI.FriendPanel
         private readonly BlockedSectionController blockedSectionController;
         private readonly FriendSectionController friendSectionController;
         private readonly RequestsSectionController requestsSectionController;
+        private readonly DCLInput dclInput;
 
         private CancellationTokenSource friendsPanelCts = new ();
+        private UniTaskCompletionSource closeTaskCompletionSource = new ();
         private bool chatWasVisible;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
@@ -51,10 +54,12 @@ namespace DCL.Friends.UI.FriendPanel
             ISystemClipboard systemClipboard,
             IWebRequestController webRequestController,
             IProfileThumbnailCache profileThumbnailCache,
-            ILoadingStatus loadingStatus) : base(viewFactory)
+            ILoadingStatus loadingStatus,
+            DCLInput dclInput) : base(viewFactory)
         {
             this.chatView = chatView;
             this.sidebarRequestNotificationIndicator = sidebarRequestNotificationIndicator;
+            this.dclInput = dclInput;
 
             friendSectionController = new FriendSectionController(instantiatedView.FriendsSection,
                 web3IdentityCache,
@@ -90,12 +95,32 @@ namespace DCL.Friends.UI.FriendPanel
             blockedSectionController.Dispose();
             friendSectionController.Dispose();
             requestsSectionController.Dispose();
+            UnregisterCloseHotkey();
         }
+
+        private void RegisterCloseHotkey()
+        {
+            dclInput.Shortcuts.FriendPanel.performed += CloseFriendsPanel;
+            dclInput.UI.Close.performed += CloseFriendsPanel;
+        }
+
+        private void UnregisterCloseHotkey()
+        {
+            dclInput.Shortcuts.FriendPanel.performed -= CloseFriendsPanel;
+            dclInput.UI.Close.performed -= CloseFriendsPanel;
+        }
+
+        private void CloseFriendsPanel(InputAction.CallbackContext obj) =>
+            closeTaskCompletionSource.TrySetResult();
+
+        protected override void OnViewShow() =>
+            RegisterCloseHotkey();
 
         protected override void OnBeforeViewShow()
         {
             base.OnBeforeViewShow();
             friendsPanelCts = friendsPanelCts.SafeRestart();
+            closeTaskCompletionSource = new UniTaskCompletionSource();
 
             chatWasVisible = chatView.IsChatVisible();
             if (chatWasVisible)
@@ -110,6 +135,8 @@ namespace DCL.Friends.UI.FriendPanel
 
             if (chatWasVisible)
                 chatView.ToggleChat(true);
+
+            UnregisterCloseHotkey();
         }
 
         protected override void OnViewInstantiated()
@@ -139,6 +166,6 @@ namespace DCL.Friends.UI.FriendPanel
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
-            viewInstance!.CloseButton.OnClickAsync(ct);
+            UniTask.WhenAny(viewInstance!.CloseButton.OnClickAsync(ct), closeTaskCompletionSource.Task);
     }
 }

@@ -2138,6 +2138,15 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""FriendPanel"",
+                    ""type"": ""Button"",
+                    ""id"": ""beb1ee53-edda-4028-98bb-2706bb7d853e"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -2314,6 +2323,17 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""groups"": """",
                     ""action"": ""Controls"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""a9c17c82-b11f-4a40-84ef-a26e3cf7f085"",
+                    ""path"": ""<Keyboard>/l"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""FriendPanel"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -3641,6 +3661,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         m_Shortcuts_OpenChat = m_Shortcuts.FindAction("OpenChat", throwIfNotFound: true);
         m_Shortcuts_OpenChatCommandLine = m_Shortcuts.FindAction("OpenChatCommandLine", throwIfNotFound: true);
         m_Shortcuts_Controls = m_Shortcuts.FindAction("Controls", throwIfNotFound: true);
+        m_Shortcuts_FriendPanel = m_Shortcuts.FindAction("FriendPanel", throwIfNotFound: true);
         // Emotes
         m_Emotes = asset.FindActionMap("Emotes", throwIfNotFound: true);
         m_Emotes_Slot1 = m_Emotes.FindAction("Slot 1", throwIfNotFound: true);
@@ -4276,6 +4297,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
     private readonly InputAction m_Shortcuts_OpenChat;
     private readonly InputAction m_Shortcuts_OpenChatCommandLine;
     private readonly InputAction m_Shortcuts_Controls;
+    private readonly InputAction m_Shortcuts_FriendPanel;
     public struct ShortcutsActions
     {
         private @DCLInput m_Wrapper;
@@ -4294,6 +4316,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         public InputAction @OpenChat => m_Wrapper.m_Shortcuts_OpenChat;
         public InputAction @OpenChatCommandLine => m_Wrapper.m_Shortcuts_OpenChatCommandLine;
         public InputAction @Controls => m_Wrapper.m_Shortcuts_Controls;
+        public InputAction @FriendPanel => m_Wrapper.m_Shortcuts_FriendPanel;
         public InputActionMap Get() { return m_Wrapper.m_Shortcuts; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -4345,6 +4368,9 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @Controls.started += instance.OnControls;
             @Controls.performed += instance.OnControls;
             @Controls.canceled += instance.OnControls;
+            @FriendPanel.started += instance.OnFriendPanel;
+            @FriendPanel.performed += instance.OnFriendPanel;
+            @FriendPanel.canceled += instance.OnFriendPanel;
         }
 
         private void UnregisterCallbacks(IShortcutsActions instance)
@@ -4391,6 +4417,9 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @Controls.started -= instance.OnControls;
             @Controls.performed -= instance.OnControls;
             @Controls.canceled -= instance.OnControls;
+            @FriendPanel.started -= instance.OnFriendPanel;
+            @FriendPanel.performed -= instance.OnFriendPanel;
+            @FriendPanel.canceled -= instance.OnFriendPanel;
         }
 
         public void RemoveCallbacks(IShortcutsActions instance)
@@ -4877,6 +4906,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         void OnOpenChat(InputAction.CallbackContext context);
         void OnOpenChatCommandLine(InputAction.CallbackContext context);
         void OnControls(InputAction.CallbackContext context);
+        void OnFriendPanel(InputAction.CallbackContext context);
     }
     public interface IEmotesActions
     {

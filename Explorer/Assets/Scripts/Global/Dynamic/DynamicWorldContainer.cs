@@ -820,7 +820,8 @@ namespace Global.Dynamic
                     clipboard,
                     staticContainer.WebRequestsContainer.WebRequestController,
                     staticContainer.LoadingStatus,
-                    staticContainer.InputBlock));
+                    staticContainer.InputBlock,
+                    dclInput));
 
             if (dynamicWorldParams.EnableAnalytics)
                 globalPlugins.Add(new AnalyticsPlugin(

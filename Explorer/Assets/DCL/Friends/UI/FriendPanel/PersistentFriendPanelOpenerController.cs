@@ -1,23 +1,28 @@
 using Cysharp.Threading.Tasks;
 using MVC;
 using System.Threading;
+using UnityEngine.InputSystem;
 
 namespace DCL.Friends.UI.FriendPanel
 {
     public class PersistentFriendPanelOpenerController : ControllerBase<PersistentFriendPanelOpenerView>
     {
         private readonly IMVCManager mvcManager;
+        private readonly DCLInput dclInput;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
 
         public PersistentFriendPanelOpenerController(ViewFactoryMethod viewFactory,
-            IMVCManager mvcManager)
+            IMVCManager mvcManager,
+            DCLInput dclInput)
             : base(viewFactory)
         {
             this.mvcManager = mvcManager;
+            this.dclInput = dclInput;
 
             mvcManager.OnViewShowed += OnViewShowed;
             mvcManager.OnViewClosed += OnViewClosed;
+            RegisterHotkey();
         }
 
         public override void Dispose()
@@ -26,8 +31,15 @@ namespace DCL.Friends.UI.FriendPanel
 
             mvcManager.OnViewShowed -= OnViewShowed;
             mvcManager.OnViewClosed -= OnViewClosed;
-            viewInstance!.OpenFriendPanelButton.onClick.RemoveListener(OpenEmoteWheel);
+            viewInstance!.OpenFriendPanelButton.onClick.RemoveListener(OpenFriendsPanel);
+            UnregisterHotkey();
         }
+
+        private void RegisterHotkey() =>
+            dclInput.Shortcuts.FriendPanel.performed += OpenFriendsPanel;
+
+        private void UnregisterHotkey() =>
+            dclInput.Shortcuts.FriendPanel.performed -= OpenFriendsPanel;
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
             UniTask.CompletedTask;
@@ -36,19 +48,21 @@ namespace DCL.Friends.UI.FriendPanel
         {
             base.OnViewInstantiated();
 
-            viewInstance!.OpenFriendPanelButton.onClick.AddListener(OpenEmoteWheel);
+            viewInstance!.OpenFriendPanelButton.onClick.AddListener(OpenFriendsPanel);
         }
 
-        private void OpenEmoteWheel()
-        {
+        private void OpenFriendsPanel(InputAction.CallbackContext obj) =>
+            OpenFriendsPanel();
+
+        private void OpenFriendsPanel() =>
             mvcManager.ShowAsync(FriendsPanelController.IssueCommand(new FriendsPanelParameter(FriendsPanelController.FriendsPanelTab.FRIENDS))).Forget();
-        }
 
         private void OnViewShowed(IController controller)
         {
             if (controller is not FriendsPanelController) return;
 
             viewInstance!.SetButtonStatePanelShow(true);
+            UnregisterHotkey();
         }
 
         private void OnViewClosed(IController controller)
@@ -56,6 +70,7 @@ namespace DCL.Friends.UI.FriendPanel
             if (controller is not FriendsPanelController) return;
 
             viewInstance!.SetButtonStatePanelShow(false);
+            RegisterHotkey();
         }
     }
 }

@@ -36,6 +36,7 @@ namespace DCL.PluginSystem.Global
         private readonly IWebRequestController webRequestController;
         private readonly ILoadingStatus loadingStatus;
         private readonly IInputBlock inputBlock;
+        private readonly DCLInput dclInput;
         private readonly CancellationTokenSource lifeCycleCancellationToken = new ();
 
         private RPCFriendsService? friendsService;
@@ -53,7 +54,8 @@ namespace DCL.PluginSystem.Global
             ISystemClipboard systemClipboard,
             IWebRequestController webRequestController,
             ILoadingStatus loadingStatus,
-            IInputBlock inputBlock)
+            IInputBlock inputBlock,
+            DCLInput dclInput)
         {
             this.mainUIView = mainUIView;
             this.dclUrlSource = dclUrlSource;
@@ -66,6 +68,7 @@ namespace DCL.PluginSystem.Global
             this.webRequestController = webRequestController;
             this.loadingStatus = loadingStatus;
             this.inputBlock = inputBlock;
+            this.dclInput = dclInput;
         }
 
         public void Dispose()
@@ -92,7 +95,7 @@ namespace DCL.PluginSystem.Global
                                CancellationTokenSource.CreateLinkedTokenSource(lifeCycleCancellationToken.Token, ct).Token)
                           .Forget();
 
-            var persistentFriendsOpenerController = new PersistentFriendPanelOpenerController(() => mainUIView.SidebarView.PersistentFriendsPanelOpener, mvcManager);
+            var persistentFriendsOpenerController = new PersistentFriendPanelOpenerController(() => mainUIView.SidebarView.PersistentFriendsPanelOpener, mvcManager, dclInput);
 
             mvcManager.RegisterController(persistentFriendsOpenerController);
 
@@ -111,7 +114,8 @@ namespace DCL.PluginSystem.Global
                 systemClipboard,
                 webRequestController,
                 profileThumbnailCache,
-                loadingStatus);
+                loadingStatus,
+                dclInput);
 
             mvcManager.RegisterController(friendsPanelController);
 
