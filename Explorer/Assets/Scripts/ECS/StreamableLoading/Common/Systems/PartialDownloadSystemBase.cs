@@ -35,17 +35,16 @@ namespace ECS.StreamableLoading.Common.Systems
         {
             PartialLoadingState partialState = default;
             PartialDownloadingData chunkData;
-            MemoryStream? fullDataStream = null;
 
-            // If the downloading has not started yet
             if (state.PartialDownloadingData == null)
             {
+                // If the downloading has not started yet, create the first chunk data
                 chunkData = new PartialDownloadingData(0, PartialDownloadingData.CHUNK_SIZE);
             }
             else
             {
+                // If the downloading has already started, get the next chunk data
                 partialState = state.PartialDownloadingData.Value;
-
                 chunkData = new PartialDownloadingData(partialState.NextRangeStart,
                     Mathf.Min(partialState.FullFileSize - 1, partialState.NextRangeStart + PartialDownloadingData.CHUNK_SIZE));
             }
@@ -60,9 +59,10 @@ namespace ECS.StreamableLoading.Common.Systems
                     buffersPool,
                     headersInfo: new WebRequestHeadersInfo().WithRange(chunkData.RangeStart, chunkData.RangeEnd));
 
+                //If this is the first chunk, we need to create the full data stream
                 if (state.PartialDownloadingData == null)
                 {
-                    fullDataStream = new MemoryStream(chunkData.FullFileSize);
+                    var fullDataStream = new MemoryStream(chunkData.FullFileSize);
                     partialState = new PartialLoadingState(fullDataStream, chunkData.FullFileSize);
                 }
 
@@ -71,14 +71,17 @@ namespace ECS.StreamableLoading.Common.Systems
                 if (chunkData.RangeEnd > chunkData.FullFileSize)
                     finalBytesCount = chunkData.FullFileSize - chunkData.RangeStart;
 
+                // Write the downloaded data to the full data stream by starting from the last range start
                 partialState.FullData.Position = chunkData.RangeStart;
                 partialState.FullData.Write(chunkData.DataBuffer, 0, finalBytesCount);
 
+                // Update the partial state with the new start range, if already completed set it to the full file size
                 if (chunkData.downloadedSize == chunkData.FullFileSize)
                     partialState.NextRangeStart = chunkData.FullFileSize;
                 else
                     partialState.NextRangeStart = chunkData.RangeEnd + 1;
 
+                // Check if the download is complete
                 if (partialState.FullyDownloaded)
                 {
                     StreamableLoadingResult<TData> loadedResult = await ProcessCompletedData(partialState.FullData, intention, partition, ct, state);
