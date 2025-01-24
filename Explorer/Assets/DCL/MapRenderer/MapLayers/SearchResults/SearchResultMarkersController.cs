@@ -16,6 +16,8 @@ namespace DCL.MapRenderer.MapLayers.SearchResults
 {
     internal class SearchResultMarkersController : MapLayerControllerBase, IMapCullingListener<ISearchResultMarker>, IMapLayerController, IZoomScalingLayer
     {
+        public bool ZoomBlocked { get; set; }
+
         private const string EMPTY_PARCEL_NAME = "Empty parcel";
 
         internal delegate ISearchResultMarker SearchResultsMarkerBuilder(
@@ -106,7 +108,7 @@ namespace DCL.MapRenderer.MapLayers.SearchResults
                 if(isEnabled)
                     mapCullingController.StartTracking(marker, this);
             }
-            if (isEnabled)
+            if (isEnabled && !ZoomBlocked)
                 foreach (ISearchResultMarker clusterableMarker in clusterController.UpdateClusters(zoomLevel, baseZoom, zoom, markers))
                     mapCullingController.StartTracking(clusterableMarker, this);
         }
@@ -116,6 +118,9 @@ namespace DCL.MapRenderer.MapLayers.SearchResults
 
         public void ApplyCameraZoom(float baseZoom, float zoom, int zoomLevel)
         {
+            if (ZoomBlocked)
+                return;
+
             this.baseZoom = baseZoom;
             this.zoom = zoom;
             this.zoomLevel = zoomLevel;
@@ -123,7 +128,7 @@ namespace DCL.MapRenderer.MapLayers.SearchResults
             foreach (ISearchResultMarker marker in markers.Values)
                 marker.SetZoom(coordsUtils.ParcelSize, baseZoom, zoom);
 
-            if (isEnabled)
+            if (isEnabled && !ZoomBlocked)
                 foreach (ISearchResultMarker clusterableMarker in clusterController.UpdateClusters(zoomLevel, baseZoom, zoom, markers))
                     mapCullingController.StartTracking(clusterableMarker, this);
 
@@ -148,8 +153,11 @@ namespace DCL.MapRenderer.MapLayers.SearchResults
             foreach (ISearchResultMarker marker in markers.Values)
                 mapCullingController.StartTracking(marker, this);
 
-            foreach (ISearchResultMarker clusterableMarker in clusterController.UpdateClusters(zoomLevel, baseZoom, zoom, markers))
-                mapCullingController.StartTracking(clusterableMarker, this);
+            if (!ZoomBlocked)
+            {
+                foreach (ISearchResultMarker clusterableMarker in clusterController.UpdateClusters(zoomLevel, baseZoom, zoom, markers))
+                    mapCullingController.StartTracking(clusterableMarker, this);
+            }
 
             isEnabled = true;
         }
@@ -158,6 +166,8 @@ namespace DCL.MapRenderer.MapLayers.SearchResults
         {
             foreach (var marker in markers.Values)
                 marker.ResetScale(coordsUtils.ParcelSize);
+
+            clusterController.ResetToBaseScale();
         }
 
         protected override void DisposeImpl()
