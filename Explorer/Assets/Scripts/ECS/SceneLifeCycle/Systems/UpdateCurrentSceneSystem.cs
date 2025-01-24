@@ -24,8 +24,6 @@ namespace ECS.SceneLifeCycle.Systems
 
         private Vector2Int lastParcelProcessed;
 
-        private readonly SceneAssetLock sceneAssetLock;
-
         private readonly IDebugContainerBuilder debugBuilder;
         private readonly ElementBinding<string> sceneNameBinding;
         private readonly ElementBinding<string> sceneParcelsBinding;
@@ -35,13 +33,12 @@ namespace ECS.SceneLifeCycle.Systems
         private GameObject sceneBoundsCube;
 
         internal UpdateCurrentSceneSystem(World world, IRealmData realmData, IScenesCache scenesCache, CurrentSceneInfo currentSceneInfo,
-                                            Entity playerEntity, SceneAssetLock sceneAssetLock, IDebugContainerBuilder debugBuilder) : base(world)
+                                            Entity playerEntity, IDebugContainerBuilder debugBuilder) : base(world)
         {
             this.realmData = realmData;
             this.scenesCache = scenesCache;
             this.currentSceneInfo = currentSceneInfo;
             this.playerEntity = playerEntity;
-            this.sceneAssetLock = sceneAssetLock;
             ResetProcessedParcel();
 
             debugInfoVisibilityBinding = new DebugWidgetVisibilityBinding(true);
@@ -91,8 +88,6 @@ namespace ECS.SceneLifeCycle.Systems
 
             if (!scenesCache.TryGetByParcel(parcel, out var currentScene))
                 return;
-
-            sceneAssetLock.TryLock(currentScene);
 
             if (!currentScene.SceneStateProvider.IsCurrent)
                 currentScene.SetIsCurrent(true);

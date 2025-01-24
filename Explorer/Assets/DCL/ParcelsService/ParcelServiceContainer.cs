@@ -26,10 +26,9 @@ namespace DCL.ParcelsService
             ISceneReadinessReportQueue sceneReadinessReportQueue,
             IDebugContainerBuilder debugContainerBuilder,
             LoadingScreenTimeout loadingScreenTimeout,
-            ILoadingScreen loadingScreen,
-            SceneAssetLock assetLock)
+            ILoadingScreen loadingScreen)
         {
-            var teleportController = new TeleportController(sceneReadinessReportQueue, assetLock);
+            var teleportController = new TeleportController(sceneReadinessReportQueue);
 
             BuildDebugWidget(teleportController, debugContainerBuilder, loadingScreen, loadingScreenTimeout);
 

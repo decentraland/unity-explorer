@@ -46,7 +46,6 @@ namespace Global.Dynamic
         private readonly TeleportController teleportController;
         private readonly PartitionDataContainer partitionDataContainer;
         private readonly IScenesCache scenesCache;
-        private readonly SceneAssetLock sceneAssetLock;
         private readonly IComponentPool<PartitionComponent> partitionComponentPool;
         private readonly bool isLocalSceneDevelopment;
 
@@ -94,7 +93,6 @@ namespace Global.Dynamic
             RealmData realmData,
             IScenesCache scenesCache,
             PartitionDataContainer partitionDataContainer,
-            SceneAssetLock sceneAssetLock,
             IDebugContainerBuilder debugContainerBuilder,
             IComponentPool<PartitionComponent> partitionComponentPool,
             bool isLocalSceneDevelopment
@@ -109,7 +107,6 @@ namespace Global.Dynamic
             this.retrieveSceneFromVolatileWorld = retrieveSceneFromVolatileWorld;
             this.scenesCache = scenesCache;
             this.partitionDataContainer = partitionDataContainer;
-            this.sceneAssetLock = sceneAssetLock;
             this.partitionComponentPool = partitionComponentPool;
             this.isLocalSceneDevelopment = isLocalSceneDevelopment;
             realmNavigatorDebugView = new RealmNavigatorDebugView(debugContainerBuilder);
@@ -238,7 +235,6 @@ namespace Global.Dynamic
             realmData.Invalidate();
 
             await UniTask.WhenAll(loadedScenes.Select(s => s.DisposeAsync()));
-            sceneAssetLock.Reset();
 
             CurrentDomain = null;
 

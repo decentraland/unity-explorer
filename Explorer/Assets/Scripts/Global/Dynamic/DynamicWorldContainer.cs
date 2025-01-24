@@ -281,7 +281,7 @@ namespace Global.Dynamic
             var loadingScreenTimeout = new LoadingScreenTimeout();
             ILoadingScreen loadingScreen = new LoadingScreen(mvcManager, loadingScreenTimeout);
 
-            var parcelServiceContainer = ParcelServiceContainer.Create(staticContainer.RealmData, staticContainer.SceneReadinessReportQueue, debugBuilder, loadingScreenTimeout, loadingScreen, staticContainer.SingletonSharedDependencies.SceneAssetLock);
+            var parcelServiceContainer = ParcelServiceContainer.Create(staticContainer.RealmData, staticContainer.SceneReadinessReportQueue, debugBuilder, loadingScreenTimeout, loadingScreen);
 
             var nftInfoAPIClient = new OpenSeaAPIClient(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
             var wearableCatalog = new WearableStorage();
@@ -343,7 +343,6 @@ namespace Global.Dynamic
                 staticContainer.RealmData,
                 staticContainer.ScenesCache,
                 staticContainer.PartitionDataContainer,
-                staticContainer.SingletonSharedDependencies.SceneAssetLock,
                 debugBuilder,
                 staticContainer.ComponentsContainer.ComponentPoolsRegistry
                                .GetReferenceTypePool<PartitionComponent>(),
