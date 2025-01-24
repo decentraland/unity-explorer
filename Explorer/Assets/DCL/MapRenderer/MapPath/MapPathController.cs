@@ -14,6 +14,8 @@ namespace DCL.MapRenderer
 {
     public class MapPathController : MapLayerControllerBase, IMapCullingListener<IPinMarker>, IMapLayerController, IZoomScalingLayer
     {
+        public bool ZoomBlocked { get; set; }
+
         internal delegate IPinMarker PinMarkerBuilder(IObjectPool<PinMarkerObject> objectsPool, IMapCullingController cullingController);
         private const float ARRIVAL_TOLERANCE_SQUARED = 50;
         private const float MINIMAP_RADIUS = 134;
@@ -180,6 +182,9 @@ namespace DCL.MapRenderer
 
         public void ApplyCameraZoom(float baseZoom, float newZoom, int zoomLevel)
         {
+            if (ZoomBlocked)
+                return;
+
             internalPinMarker.SetZoom(coordsUtils.ParcelSize, baseZoom, newZoom);
             mapPathRenderer.SetZoom(baseZoom, newZoom);
         }
