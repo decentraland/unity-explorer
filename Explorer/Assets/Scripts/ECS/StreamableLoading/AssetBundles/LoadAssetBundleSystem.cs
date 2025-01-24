@@ -17,6 +17,7 @@ using System.Threading;
 using AssetManagement;
 using DCL.WebRequests;
 using System.Buffers;
+using System.IO;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
@@ -44,9 +45,9 @@ namespace ECS.StreamableLoading.AssetBundles
             this.loadingMutex = loadingMutex;
         }
 
-        protected override async UniTask<StreamableLoadingResult<AssetBundleData>> ProcessCompletedData(byte[] completeData, GetAssetBundleIntention intention, IPartitionComponent partition, CancellationToken ct, StreamableLoadingState state)
+        protected override async UniTask<StreamableLoadingResult<AssetBundleData>> ProcessCompletedData(MemoryStream completeData, GetAssetBundleIntention intention, IPartitionComponent partition, CancellationToken ct, StreamableLoadingState state)
         {
-            AssetBundle? assetBundle = await AssetBundle.LoadFromMemoryAsync(completeData);
+            AssetBundle? assetBundle = await AssetBundle.LoadFromStreamAsync(completeData);
 
             // Release budget now to not hold it until dependencies are resolved to prevent a deadlock
             state.AcquiredBudget!.Release();
