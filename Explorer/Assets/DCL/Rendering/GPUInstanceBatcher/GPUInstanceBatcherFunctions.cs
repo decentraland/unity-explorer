@@ -18,17 +18,6 @@ namespace DCL.Rendering.GPUInstancerBatcher
         public static Texture2D dummyHiZTex;
         public static GPUIMatrixHandlingType matrixHandlingType;
 
-        public static void InitializeGPUBuffers<T>(List<T> runtimeDataList) where T : GPUInstancerRuntimeData
-        {
-            if (runtimeDataList == null || runtimeDataList.Count == 0)
-                return;
-
-            for (int i = 0; i < runtimeDataList.Count; i++)
-            {
-                InitializeGPUBuffer(runtimeDataList[i]);
-            }
-        }
-
         public static void InitializeGPUBuffer<T>(T runtimeData) where T : GPUInstancerRuntimeData
         {
             if (runtimeData == null || runtimeData.bufferSize == 0)

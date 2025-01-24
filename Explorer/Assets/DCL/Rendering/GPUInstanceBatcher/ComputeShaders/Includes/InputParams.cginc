@@ -24,8 +24,7 @@ uniform float fCameraHalfAngle;
 uniform float minCullingDistance;
 
 // distance culling
-uniform float minDistance;
-uniform float maxDistance;
+uniform float fMaxDistance;
 
 //frustum culling
 uniform bool isFrustumCulling;
@@ -48,6 +47,5 @@ uniform float4x4 shadowLODMap;
 uniform float4x4 lodSizes;
 uniform uint lodCount;
 uniform float deltaTime;
-uniform bool animateCrossFade;
 
 #endif

@@ -157,7 +157,7 @@ inline void IsCulled(in float4x4 instanceMatrix, in float dist, out bool culled)
     culled = false;
     
     // Distance culling
-    if (dist >= maxDistance || dist < minDistance)
+    if (dist >= fMaxDistance)
     {
         culled = true;
     }
