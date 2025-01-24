@@ -65,66 +65,72 @@ namespace DCL.Roads.Playground
                 RenderMeshesInstanced(prefab.meshInstances);
         }
 
-        private void RenderMeshesIndirect(PrefabInstanceDataBehaviour prefab)
+       private void RenderMeshesIndirect(PrefabInstanceDataBehaviour prefab)
+{
+    // Calculate total instances and commands across all meshes
+    int totalInstances = 0;
+    int totalCommands = 0;
+    foreach (var mesh in prefab.meshInstances)
+    {
+        totalInstances += mesh.PerInstancesData?.Length ?? 0;
+        totalCommands += mesh.MeshData.ToGPUInstancedRenderer().RenderParamsArray.Length;
+    }
+
+    // Create buffers once
+    drawArgsBuffer?.Release();
+    drawArgsBuffer = new GraphicsBuffer(GraphicsBuffer.Target.IndirectArguments, totalCommands, GraphicsBuffer.IndirectDrawIndexedArgs.size);
+    commandData = new GraphicsBuffer.IndirectDrawIndexedArgs[totalCommands];
+
+    instanceBuffer?.Release();
+    instanceBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, totalInstances, Marshal.SizeOf(typeof(PerInstanceBuffer)));
+
+    int currentInstanceOffset = 0;
+    currentCommandIndex = 0;
+
+    foreach (var mesh in prefab.meshInstances)
+    {
+        var instancedRenderer = mesh.MeshData.ToGPUInstancedRenderer();
+        int submeshCount = instancedRenderer.RenderParamsArray.Length;
+        int instanceCount = mesh.PerInstancesData?.Length ?? 0;
+
+        // Set instance data
+        Matrix4x4 baseMatrix = RoadShift
+            ? Matrix4x4.TRS(Descriptions[0].RoadCoordinate.ParcelToPositionFlat() + ParcelMathHelper.RoadPivotDeviation, Descriptions[0].Rotation.SelfOrIdentity(), Vector3.one)
+            : Matrix4x4.TRS(Vector3.zero, Quaternion.identity, Vector3.one);
+
+        PerInstanceBuffer[] shiftedTRS = mesh.PerInstancesData;
+        for (var i = 0; i < shiftedTRS.Length; i++)
         {
-            var mesh = prefab.meshInstances[indirectMeshIndex];
-
-            var instancedRenderer = mesh.MeshData.ToGPUInstancedRenderer();
-            int submeshCount = instancedRenderer.RenderParamsArray.Length;
-            int instanceCount = mesh.PerInstancesData?.Length ?? 0;
-
-            // Set buffers
-            {
-                int totalCommands = submeshCount; // one command per submesh
-
-                drawArgsBuffer?.Release();
-                drawArgsBuffer = new GraphicsBuffer(GraphicsBuffer.Target.IndirectArguments, totalCommands, GraphicsBuffer.IndirectDrawIndexedArgs.size);
-                commandData = new GraphicsBuffer.IndirectDrawIndexedArgs[totalCommands];
-
-                instanceBuffer?.Release();
-                instanceBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, instanceCount, Marshal.SizeOf(typeof(PerInstanceBuffer)));
-
-                Matrix4x4 baseMatrix = RoadShift
-                    ? Matrix4x4.TRS(Descriptions[0].RoadCoordinate.ParcelToPositionFlat() + ParcelMathHelper.RoadPivotDeviation, Descriptions[0].Rotation.SelfOrIdentity(), Vector3.one)
-                    : Matrix4x4.TRS(Vector3.zero, Quaternion.identity, Vector3.one);
-
-                PerInstanceBuffer[] shiftedTRS = mesh.PerInstancesData;
-
-                for (var i = 0; i < shiftedTRS.Length; i++)
-                {
-                    PerInstanceBuffer pid = shiftedTRS[i];
-                    pid.instMatrix = baseMatrix * pid.instMatrix;
-                    shiftedTRS[i] = pid;
-                }
-
-                instanceBuffer.SetData(shiftedTRS);
-            }
-
-            // foreach (MeshData meshData in meshes)
-            {
-                currentCommandIndex = 0;
-
-                for (int submeshIndex = 0; submeshIndex < submeshCount; submeshIndex++)
-                {
-                    commandData[currentCommandIndex].indexCountPerInstance = instancedRenderer.Mesh.GetIndexCount(submeshIndex);
-                    commandData[currentCommandIndex].instanceCount = (uint)instanceCount;
-                    commandData[currentCommandIndex].startIndex = instancedRenderer.Mesh.GetIndexStart(submeshIndex);
-                    commandData[currentCommandIndex].baseVertexIndex = 0;
-                    commandData[currentCommandIndex].startInstance = 0;
-
-                    drawArgsBuffer.SetData(commandData, currentCommandIndex, currentCommandIndex, count: 1);
-
-                    // Debug.Log(string.Join(", ",  mesh.MeshData.SharedMaterials[submeshIndex].shaderKeywords));
-                    RenderParams rparams = instancedRenderer.RenderParamsArray[submeshIndex];
-                    rparams.matProps = new MaterialPropertyBlock();
-
-                    rparams.matProps.SetBuffer("_PerInstanceBuffer", instanceBuffer);
-
-                    Graphics.RenderMeshIndirect(rparams, instancedRenderer.Mesh, drawArgsBuffer, commandCount: 1, currentCommandIndex);
-                    currentCommandIndex++;
-                }
-            }
+            PerInstanceBuffer pid = shiftedTRS[i];
+            pid.instMatrix = baseMatrix * pid.instMatrix;
+            shiftedTRS[i] = pid;
         }
+
+        instanceBuffer.SetData(shiftedTRS, 0, currentInstanceOffset, instanceCount);
+
+        // Set commands and render
+        for (int submeshIndex = 0; submeshIndex < submeshCount; submeshIndex++)
+        {
+            commandData[currentCommandIndex].indexCountPerInstance = instancedRenderer.Mesh.GetIndexCount(submeshIndex);
+            commandData[currentCommandIndex].instanceCount = (uint)instanceCount;
+            commandData[currentCommandIndex].startIndex = instancedRenderer.Mesh.GetIndexStart(submeshIndex);
+            commandData[currentCommandIndex].baseVertexIndex = 0;
+            commandData[currentCommandIndex].startInstance = (uint)currentInstanceOffset;
+
+            drawArgsBuffer.SetData(commandData, currentCommandIndex, currentCommandIndex, count: 1);
+
+            RenderParams rparams = instancedRenderer.RenderParamsArray[submeshIndex];
+            rparams.matProps = new MaterialPropertyBlock();
+            rparams.matProps.SetInt("_StartInstance", currentInstanceOffset);
+            rparams.matProps.SetBuffer("_PerInstanceBuffer", instanceBuffer);
+
+            Graphics.RenderMeshIndirect(rparams, instancedRenderer.Mesh, drawArgsBuffer, commandCount: 1, currentCommandIndex);
+            currentCommandIndex++;
+        }
+
+        currentInstanceOffset += instanceCount;
+    }
+}
 
         private void RenderMeshesInstanced(List<MeshInstanceData> meshInstances)
         {
