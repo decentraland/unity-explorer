@@ -34,6 +34,33 @@ namespace DCL.SDKComponents.LightSource.Systems
         protected override void Update(float t)
         {
             SetupLightSourceQuery(World);
+            UpdateLightSourceStateQuery(World);
+        }
+
+        [Query]
+        private void UpdateLightSourceState(ref LightSourceComponent lightSourceComponent, in PBLightSource pbLightSource)
+        {
+            if (!sceneStateProvider.IsCurrent) return;
+            if (pbLightSource.TypeCase == PBLightSource.TypeOneofCase.None) return;
+            if (!pbLightSource.IsDirty) return;
+
+            Light lightSourceInstance = lightSourceComponent.lightSourceInstance;
+
+            bool isSpot = pbLightSource.TypeCase == PBLightSource.TypeOneofCase.Spot;
+
+            lightSourceInstance.type = isSpot ? LightType.Spot : LightType.Point;
+
+            lightSourceInstance.enabled = pbLightSource.Active;
+            lightSourceInstance.color = PrimitivesConversionExtensions.PBColorToUnityColor(pbLightSource.Color);
+            lightSourceInstance.intensity = PrimitivesConversionExtensions.PBBrightnessInLumensToUnityCandels(pbLightSource.Brightness);
+            lightSourceInstance.range = pbLightSource.Range;
+            lightSourceInstance.shadows = PrimitivesConversionExtensions.PBLightSourceShadowToUnityLightShadow(pbLightSource.Shadow);
+
+            if (pbLightSource.TypeCase == PBLightSource.TypeOneofCase.Spot)
+            {
+                lightSourceInstance.innerSpotAngle = pbLightSource.Spot.InnerAngle;
+                lightSourceInstance.spotAngle = pbLightSource.Spot.OuterAngle;
+            }
         }
 
         [Query]
@@ -49,7 +76,7 @@ namespace DCL.SDKComponents.LightSource.Systems
             lightSourceInstance.transform.localRotation = Quaternion.identity;
 
             lightSourceInstance.color = PrimitivesConversionExtensions.PBColorToUnityColor(pbLightSource.Color);
-            lightSourceInstance.intensity = pbLightSource.Brightness;
+            lightSourceInstance.intensity = PrimitivesConversionExtensions.PBBrightnessInLumensToUnityCandels(pbLightSource.Brightness);
             lightSourceInstance.range = pbLightSource.Range;
             lightSourceInstance.shadows = PrimitivesConversionExtensions.PBLightSourceShadowToUnityLightShadow(pbLightSource.Shadow);
 

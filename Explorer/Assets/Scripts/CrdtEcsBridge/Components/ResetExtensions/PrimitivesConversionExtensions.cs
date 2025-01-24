@@ -57,5 +57,8 @@ namespace CrdtEcsBridge.Components.Conversion
                 default: throw new ArgumentOutOfRangeException(nameof(shadow), shadow, null);
             }
         }
+
+        public static float PBBrightnessInLumensToUnityCandels(float lumens) =>
+            lumens / (4f * Mathf.PI);
     }
 }
