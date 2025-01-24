@@ -1,10 +1,12 @@
 using Cysharp.Threading.Tasks;
 using DCL.Profiles;
 using DCL.WebRequests;
+using SuperScrollView;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
+using Utility;
 
 namespace DCL.Friends.UI.FriendPanel.Sections.Requests
 {
@@ -18,6 +20,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
 
         private readonly IProfileCache profileCache;
         private readonly IProfileRepository profileRepository;
+        private readonly LoopListView2 loopListView;
+        private readonly CancellationTokenSource modifyRequestsCts = new ();
 
         private List<FriendRequest> receivedRequests = new ();
         private List<FriendRequest> sentRequests = new ();
@@ -31,14 +35,51 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             IWebRequestController webRequestController,
             int pageSize,
             IProfileCache profileCache,
-            IProfileRepository profileRepository)
+            IProfileRepository profileRepository,
+            LoopListView2 loopListView)
             : base(friendsService, friendEventBus, webRequestController, pageSize, FriendPanelStatus.RECEIVED, FriendPanelStatus.SENT, STATUS_ELEMENT_INDEX, EMPTY_ELEMENT_INDEX, USER_ELEMENT_INDEX)
         {
             this.profileCache = profileCache;
             this.profileRepository = profileRepository;
+            this.loopListView = loopListView;
+
+            friendEventBus.OnFriendRequestReceived += FriendRequestReceived;
+            friendEventBus.OnFriendRequestSent += FriendRequestSent;
+            friendEventBus.OnFriendRequestCanceled += FriendRequestRemoved;
+            friendEventBus.OnFriendRequestRejected += FriendRequestRemoved;
         }
 
         public override void Dispose()
+        {
+            friendEventBus.OnFriendRequestReceived -= FriendRequestReceived;
+            friendEventBus.OnFriendRequestCanceled -= FriendRequestRemoved;
+            friendEventBus.OnFriendRequestRejected -= FriendRequestRemoved;
+            modifyRequestsCts.SafeCancelAndDispose();
+        }
+
+        private void FriendRequestReceived(FriendRequest request)
+        {
+            async UniTaskVoid AddFriendRequest(FriendRequest request, CancellationToken ct)
+            {
+                await profileRepository.GetAsync(request.From, ct);
+                receivedRequests.Add(request);
+                receivedRequests.Sort((r1, r2) => r2.Timestamp.CompareTo(r1.Timestamp));
+            }
+            AddFriendRequest(request, modifyRequestsCts.Token).Forget();
+        }
+
+        private void FriendRequestSent(FriendRequest request)
+        {
+            async UniTaskVoid AddFriendRequest(FriendRequest request, CancellationToken ct)
+            {
+                await profileRepository.GetAsync(request.To, ct);
+                sentRequests.Add(request);
+                sentRequests.Sort((r1, r2) => r2.Timestamp.CompareTo(r1.Timestamp));
+            }
+            AddFriendRequest(request, modifyRequestsCts.Token).Forget();
+        }
+
+        private void FriendRequestRemoved(string friendId)
         {
 
         }

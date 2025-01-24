@@ -67,7 +67,7 @@ namespace DCL.Friends.UI.FriendPanel
                 mvcManager,
                 systemClipboard,
                 loadingStatus,
-                new RequestsRequestManager(friendsService, friendEventBus, webRequestController, FRIENDS_REQUEST_PAGE_SIZE, profileCache, profileRepository));
+                new RequestsRequestManager(friendsService, friendEventBus, webRequestController, FRIENDS_REQUEST_PAGE_SIZE, profileCache, profileRepository, instantiatedView.RequestsSection.LoopList));
             blockedSectionController = new BlockedSectionController(instantiatedView.BlockedSection,
                 web3IdentityCache,
                 new BlockedRequestManager(profileRepository, web3IdentityCache, webRequestController, FRIENDS_PAGE_SIZE, FRIENDS_FETCH_ELEMENTS_THRESHOLD),
