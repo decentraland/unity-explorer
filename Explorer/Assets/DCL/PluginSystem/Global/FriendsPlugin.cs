@@ -80,6 +80,7 @@ namespace DCL.PluginSystem.Global
         public async UniTask InitializeAsync(FriendsPluginSettings settings, CancellationToken ct)
         {
             IFriendsEventBus friendEventBus = new DefaultFriendsEventBus();
+            IProfileThumbnailCache profileThumbnailCache = new ProfileThumbnailCache();
 
             var friendsCache = new FriendsCache();
 
@@ -109,6 +110,7 @@ namespace DCL.PluginSystem.Global
                 profileRepository,
                 systemClipboard,
                 webRequestController,
+                profileThumbnailCache,
                 loadingStatus);
 
             mvcManager.RegisterController(friendsPanelController);

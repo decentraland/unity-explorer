@@ -33,10 +33,10 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             buttons = new [] { ContextMenuButton };
         }
 
-        public override void Configure(Profile profile, IWebRequestController webRequestController)
+        public override void Configure(Profile profile, IWebRequestController webRequestController, IProfileThumbnailCache profileThumbnailCache)
         {
             buttons = new[] { ContextMenuButton, DeleteButton, AcceptButton };
-            base.Configure(profile, webRequestController);
+            base.Configure(profile, webRequestController, profileThumbnailCache);
         }
 
         protected override void ToggleButtonView(bool isActive)

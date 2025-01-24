@@ -22,8 +22,9 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Blocked
         public BlockedRequestManager(IProfileRepository profileRepository,
             IWeb3IdentityCache web3IdentityCache,
             IWebRequestController webRequestController,
+            IProfileThumbnailCache profileThumbnailCache,
             int pageSize,
-            int elementsMissingThreshold) : base(pageSize, elementsMissingThreshold, webRequestController)
+            int elementsMissingThreshold) : base(pageSize, elementsMissingThreshold, webRequestController, profileThumbnailCache)
         {
             this.profileRepository = profileRepository;
             this.web3IdentityCache = web3IdentityCache;

@@ -32,6 +32,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections
 
         public Profile UserProfile { get; protected set; }
         public event Action<Profile>? MainButtonClicked;
+        public event Action<Sprite>? SpriteLoaded;
 
         internal bool CanUnHover
         {
@@ -64,9 +65,19 @@ namespace DCL.Friends.UI.FriendPanel.Sections
             MainButtonClicked = null;
         }
 
-        public virtual void Configure(Profile profile, IWebRequestController webRequestController)
+        public void RemoveSpriteLoadedListeners()
         {
-            imageController ??= new ImageController(ProfileImageView, webRequestController);
+            SpriteLoaded = null;
+        }
+
+        public virtual void Configure(Profile profile, IWebRequestController webRequestController, IProfileThumbnailCache profileThumbnailCache)
+        {
+            if (imageController == null)
+            {
+                imageController = new ImageController(ProfileImageView, webRequestController);
+                imageController.SpriteLoaded += sprite => SpriteLoaded?.Invoke(sprite);
+            }
+
             UnHover();
             UserProfile = profile;
 
@@ -82,7 +93,10 @@ namespace DCL.Friends.UI.FriendPanel.Sections
             userColor.b += 0.3f;
             FaceRim.color = userColor;
 
-            if (profile.Avatar.FaceSnapshotUrl != URLAddress.EMPTY)
+            Sprite? thumbnail = profileThumbnailCache.GetThumbnail(profile.UserId);
+            if (thumbnail != null)
+                imageController.SetImage(thumbnail);
+            else if (profile.Avatar.FaceSnapshotUrl != URLAddress.EMPTY)
                 imageController.RequestImage(profile.Avatar.FaceSnapshotUrl, removePrevious: true);
         }
 

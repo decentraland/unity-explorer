@@ -4,6 +4,7 @@ using DCL.WebRequests;
 using SuperScrollView;
 using System;
 using System.Threading;
+using UnityEngine;
 using Utility;
 
 namespace DCL.Friends.UI.FriendPanel.Sections
@@ -12,7 +13,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections
     {
         private readonly int pageSize;
         private readonly int elementsMissingThreshold;
-        private IWebRequestController webRequestController;
+        private readonly IWebRequestController webRequestController;
+        private readonly IProfileThumbnailCache profileThumbnailCache;
 
         private CancellationTokenSource fetchNewDataCts = new ();
         private int pageNumber;
@@ -25,11 +27,14 @@ namespace DCL.Friends.UI.FriendPanel.Sections
 
         public event Action<Profile>? ElementClicked;
 
-        protected FriendPanelRequestManager(int pageSize, int elementsMissingThreshold, IWebRequestController webRequestController)
+        protected FriendPanelRequestManager(int pageSize, int elementsMissingThreshold,
+            IWebRequestController webRequestController,
+            IProfileThumbnailCache profileThumbnailCache)
         {
             this.pageSize = pageSize;
             this.elementsMissingThreshold = elementsMissingThreshold;
             this.webRequestController = webRequestController;
+            this.profileThumbnailCache = profileThumbnailCache;
         }
 
         public virtual void Dispose()
@@ -46,10 +51,13 @@ namespace DCL.Friends.UI.FriendPanel.Sections
         {
             LoopListViewItem2 listItem = loopListView.NewListViewItem(loopListView.ItemPrefabDataList[0].mItemPrefab.name);
             T view = listItem.GetComponent<T>();
-            view.Configure(GetCollectionElement(index), webRequestController);
+            view.Configure(GetCollectionElement(index), webRequestController, profileThumbnailCache);
 
             view.RemoveMainButtonClickListeners();
             view.MainButtonClicked += profile => ElementClicked?.Invoke(profile);
+
+            view.RemoveSpriteLoadedListeners();
+            view.SpriteLoaded += sprite => profileThumbnailCache.SetThumbnail(view.UserProfile.UserId, sprite);
 
             CustomiseElement(view, index);
 

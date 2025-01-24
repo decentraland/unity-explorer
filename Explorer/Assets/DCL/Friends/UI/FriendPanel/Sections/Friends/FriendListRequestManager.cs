@@ -27,9 +27,10 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             IFriendsEventBus friendEventBus,
             IProfileRepository profileRepository,
             IWebRequestController webRequestController,
+            IProfileThumbnailCache profileThumbnailCache,
             LoopListView2 loopListView,
             int pageSize,
-            int elementsMissingThreshold) : base(pageSize, elementsMissingThreshold, webRequestController)
+            int elementsMissingThreshold) : base(pageSize, elementsMissingThreshold, webRequestController, profileThumbnailCache)
         {
             this.friendsService = friendsService;
             this.friendEventBus = friendEventBus;

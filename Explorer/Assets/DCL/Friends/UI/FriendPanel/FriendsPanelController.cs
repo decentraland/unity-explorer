@@ -50,6 +50,7 @@ namespace DCL.Friends.UI.FriendPanel
             IProfileRepository profileRepository,
             ISystemClipboard systemClipboard,
             IWebRequestController webRequestController,
+            IProfileThumbnailCache profileThumbnailCache,
             ILoadingStatus loadingStatus) : base(viewFactory)
         {
             this.chatView = chatView;
@@ -59,7 +60,7 @@ namespace DCL.Friends.UI.FriendPanel
                 web3IdentityCache,
                 mvcManager,
                 systemClipboard,
-                new FriendListRequestManager(friendsService, friendEventBus, profileRepository, webRequestController, instantiatedView.FriendsSection.LoopList, FRIENDS_PAGE_SIZE, FRIENDS_FETCH_ELEMENTS_THRESHOLD));
+                new FriendListRequestManager(friendsService, friendEventBus, profileRepository, webRequestController, profileThumbnailCache, instantiatedView.FriendsSection.LoopList, FRIENDS_PAGE_SIZE, FRIENDS_FETCH_ELEMENTS_THRESHOLD));
             requestsSectionController = new RequestsSectionController(instantiatedView.RequestsSection,
                 friendsService,
                 friendEventBus,
@@ -67,10 +68,10 @@ namespace DCL.Friends.UI.FriendPanel
                 mvcManager,
                 systemClipboard,
                 loadingStatus,
-                new RequestsRequestManager(friendsService, friendEventBus, webRequestController, FRIENDS_REQUEST_PAGE_SIZE, profileCache, profileRepository, instantiatedView.RequestsSection.LoopList));
+                new RequestsRequestManager(friendsService, friendEventBus, webRequestController, profileThumbnailCache, FRIENDS_REQUEST_PAGE_SIZE, profileCache, profileRepository, instantiatedView.RequestsSection.LoopList));
             blockedSectionController = new BlockedSectionController(instantiatedView.BlockedSection,
                 web3IdentityCache,
-                new BlockedRequestManager(profileRepository, web3IdentityCache, webRequestController, FRIENDS_PAGE_SIZE, FRIENDS_FETCH_ELEMENTS_THRESHOLD),
+                new BlockedRequestManager(profileRepository, web3IdentityCache, webRequestController, profileThumbnailCache, FRIENDS_PAGE_SIZE, FRIENDS_FETCH_ELEMENTS_THRESHOLD),
                 mvcManager);
 
             requestsSectionController.ReceivedRequestsCountChanged += FriendRequestCountChanged;

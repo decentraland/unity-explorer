@@ -34,11 +34,12 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
         public RequestsRequestManager(IFriendsService friendsService,
             IFriendsEventBus friendEventBus,
             IWebRequestController webRequestController,
+            IProfileThumbnailCache profileThumbnailCache,
             int pageSize,
             IProfileCache profileCache,
             IProfileRepository profileRepository,
             LoopListView2 loopListView)
-            : base(friendsService, friendEventBus, webRequestController, pageSize, FriendPanelStatus.RECEIVED, FriendPanelStatus.SENT, STATUS_ELEMENT_INDEX, EMPTY_ELEMENT_INDEX, USER_ELEMENT_INDEX)
+            : base(friendsService, friendEventBus, webRequestController, profileThumbnailCache, pageSize, FriendPanelStatus.RECEIVED, FriendPanelStatus.SENT, STATUS_ELEMENT_INDEX, EMPTY_ELEMENT_INDEX, USER_ELEMENT_INDEX)
         {
             this.profileCache = profileCache;
             this.profileRepository = profileRepository;
