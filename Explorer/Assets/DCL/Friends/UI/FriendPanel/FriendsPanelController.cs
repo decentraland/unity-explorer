@@ -138,6 +138,6 @@ namespace DCL.Friends.UI.FriendPanel
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
-            UniTask.WhenAny(viewInstance!.CloseButton.OnClickAsync(ct), viewInstance.BackgroundCloseButton.OnClickAsync(ct));
+            viewInstance!.CloseButton.OnClickAsync(ct);
     }
 }
