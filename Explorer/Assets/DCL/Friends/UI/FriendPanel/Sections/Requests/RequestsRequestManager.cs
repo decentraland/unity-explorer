@@ -121,6 +121,12 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             elementView.MessagePreviewText.SetText(request.MessageBody.Length > MAX_REQUEST_MESSAGE_PREVIEW_LENGTH ? $"{request.MessageBody.Substring(0, MAX_REQUEST_MESSAGE_PREVIEW_LENGTH)}..." : request.MessageBody);
         }
 
+        protected override void ResetCollections()
+        {
+            receivedRequests.Clear();
+            sentRequests.Clear();
+        }
+
         protected override async UniTask FetchInitialDataAsync(CancellationToken ct)
         {
             //TODO (Lorenzo): every new friend request, also fetch the profiles to fill the cache

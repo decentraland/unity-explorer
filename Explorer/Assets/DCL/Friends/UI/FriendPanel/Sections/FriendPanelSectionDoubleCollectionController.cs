@@ -56,7 +56,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections
             requestManager.ElementClicked -= ElementClicked;
         }
 
-        private void Enable()
+        protected void CheckIdentityAndReset()
         {
             previousWeb3Identity ??= web3IdentityCache.Identity?.Address;
 
@@ -72,10 +72,11 @@ namespace DCL.Friends.UI.FriendPanel.Sections
                 InitAsync(friendListInitCts.Token).Forget();
         }
 
-        private void Disable()
-        {
+        private void Enable() =>
+            CheckIdentityAndReset();
+
+        private void Disable() =>
             friendListInitCts = friendListInitCts.SafeRestart();
-        }
 
         protected void FolderClicked()
         {

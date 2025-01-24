@@ -8,6 +8,7 @@ using DCL.UI.GenericContextMenu;
 using DCL.UI.GenericContextMenu.Controls.Configs;
 using DCL.UserInAppInitializationFlow;
 using DCL.Utilities;
+using DCL.Web3;
 using DCL.Web3.Identities;
 using MVC;
 using System;
@@ -22,14 +23,17 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
         private static readonly RectOffset CONTEXT_MENU_VERTICAL_LAYOUT_PADDING = new (15, 15, 20, 25);
         private const int CONTEXT_MENU_SEPARATOR_HEIGHT = 20;
         private const int CONTEXT_MENU_ELEMENTS_SPACING = 5;
+        private const int IDENTITY_CHANGE_POLLING_INTERVAL = 5000;
 
         private readonly GenericContextMenu contextMenu;
         private readonly UserProfileContextMenuControlSettings userProfileContextMenuControlSettings;
         private readonly ILoadingStatus loadingStatus;
+        private readonly IWeb3IdentityCache web3IdentityCache;
+        private readonly CancellationTokenSource lifeCycleCts = new ();
 
         private Profile? lastClickedProfileCtx;
+        private Web3Address? previousWeb3Identity;
         private CancellationTokenSource friendshipOperationCts = new ();
-        private CancellationTokenSource manageRequestCts = new ();
 
         public event Action<int>? ReceivedRequestsCountChanged;
 
@@ -43,6 +47,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             RequestsRequestManager requestManager)
             : base(view, friendsService, friendEventBus, web3IdentityCache, mvcManager, requestManager)
         {
+            this.web3IdentityCache = web3IdentityCache;
             this.loadingStatus = loadingStatus;
 
             contextMenu = new GenericContextMenu(view.ContextMenuSettings.ContextMenuWidth, verticalLayoutPadding: CONTEXT_MENU_VERTICAL_LAYOUT_PADDING, elementsSpacing: CONTEXT_MENU_ELEMENTS_SPACING)
@@ -63,7 +68,6 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
 
             ReceivedRequestsCountChanged += UpdateReceivedRequestsSectionCount;
 
-            //TODO (lorenzo): reset and reinit as soon as identity changes
             loadingStatus.CurrentStage.Subscribe(PrewarmRequests);
         }
 
@@ -80,11 +84,10 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
 
             ReceivedRequestsCountChanged -= UpdateReceivedRequestsSectionCount;
             friendshipOperationCts.SafeCancelAndDispose();
-            manageRequestCts.SafeCancelAndDispose();
         }
 
         private void RequestClicked(FriendRequest request) =>
-            mvcManager.ShowAsync(FriendRequestController.IssueCommand(new FriendRequestParams {Request = request}), manageRequestCts.Token).Forget();
+            mvcManager.ShowAsync(FriendRequestController.IssueCommand(new FriendRequestParams {Request = request})).Forget();
 
         private void PrewarmRequests(LoadingStatus.LoadingStage stage)
         {
@@ -94,6 +97,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             {
                 await InitAsync(ct);
                 loadingStatus.CurrentStage.Unsubscribe(PrewarmRequests);
+                previousWeb3Identity = web3IdentityCache.Identity?.Address;
+                CheckIdentityChangeAsync(lifeCycleCts.Token).Forget();
             }
             PrewarmAsync(friendshipOperationCts.Token).Forget();
         }
@@ -172,6 +177,20 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             requestManager.SecondFolderClicked += FolderClicked;
 
             PropagateReceivedRequestsCountChanged();
+        }
+
+        private async UniTaskVoid CheckIdentityChangeAsync(CancellationToken token)
+        {
+            while (token.IsCancellationRequested == false)
+            {
+                if (previousWeb3Identity != web3IdentityCache.Identity?.Address && web3IdentityCache.Identity?.Address != null)
+                {
+                    previousWeb3Identity = web3IdentityCache.Identity?.Address;
+                    CheckIdentityAndReset();
+                }
+                else
+                    await UniTask.Delay(IDENTITY_CHANGE_POLLING_INTERVAL, cancellationToken: token);
+            }
         }
 
         protected override void ElementClicked(Profile profile)

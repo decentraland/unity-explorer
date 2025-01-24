@@ -147,7 +147,10 @@ namespace DCL.Friends.UI.FriendPanel.Sections
             WasInitialised = false;
             pageNumber = 0;
             totalFetched = 0;
+            ResetCollections();
         }
+
+        protected abstract void ResetCollections();
 
         protected abstract UniTask FetchInitialDataAsync(CancellationToken ct);
 

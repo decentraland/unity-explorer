@@ -81,6 +81,9 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             return FetchMockData();
         }
 
+        protected override void ResetCollection() =>
+            friends.Clear();
+
         private int FetchMockData()
         {
             friends.Add(Profile.NewRandomProfile("0x05dE05303EAb867D51854E8b4fE03F7acb0624d9"));

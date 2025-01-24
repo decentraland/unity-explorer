@@ -56,6 +56,12 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             // elementView.OnlineStatus.SetText();
         }
 
+        protected override void ResetCollections()
+        {
+            onlineFriends.Clear();
+            offlineFriends.Clear();
+        }
+
         protected async override UniTask FetchInitialDataAsync(CancellationToken ct)
         {
             // PaginatedFriendsResult result = await friendsService.GetFriendsAsync(pageNumber, pageSize, ct);

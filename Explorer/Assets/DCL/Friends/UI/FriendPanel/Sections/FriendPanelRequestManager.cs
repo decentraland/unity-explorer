@@ -83,12 +83,15 @@ namespace DCL.Friends.UI.FriendPanel.Sections
             WasInitialised = true;
         }
 
-        public virtual void Reset()
+        public void Reset()
         {
             HasElements = false;
             WasInitialised = false;
             pageNumber = 0;
             totalFetched = 0;
+            ResetCollection();
         }
+
+        protected abstract void ResetCollection();
     }
 }

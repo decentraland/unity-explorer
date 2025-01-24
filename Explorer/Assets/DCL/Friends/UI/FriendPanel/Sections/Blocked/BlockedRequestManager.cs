@@ -61,11 +61,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Blocked
             return userProfile!.Blocked.Count;
         }
 
-        public override void Reset()
-        {
-            base.Reset();
+        protected override void ResetCollection() =>
             blockedProfiles.Clear();
-        }
-
     }
 }
