@@ -29,6 +29,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
         public event Action<FriendRequest>? DeleteRequestClicked;
         public event Action<FriendRequest>? AcceptRequestClicked;
         public event Action<Profile, Vector2, RequestUserView>? ContextMenuClicked;
+        public event Action<FriendRequest>? RequestClicked;
 
         public RequestsRequestManager(IFriendsService friendsService,
             IFriendsEventBus friendEventBus,
@@ -109,6 +110,9 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
                 elementView.AcceptButton.onClick.AddListener(() => AcceptRequestClicked?.Invoke(receivedRequests[collectionIndex]));
             }
 
+            elementView.SafelyResetMainButtonListeners();
+            elementView.MainButton.onClick.AddListener(() => RequestClicked?.Invoke(section == FriendPanelStatus.SENT ? sentRequests[collectionIndex] : receivedRequests[collectionIndex]));
+
             elementView.ContextMenuButton.onClick.RemoveAllListeners();
             elementView.ContextMenuButton.onClick.AddListener(() => ContextMenuClicked?.Invoke(elementView.UserProfile, elementView.ContextMenuButton.transform.position, elementView));
 
@@ -120,9 +124,9 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
         protected override async UniTask FetchInitialDataAsync(CancellationToken ct)
         {
             //TODO (Lorenzo): every new friend request, also fetch the profiles to fill the cache
-            receivedRequests.Add(new FriendRequest(Guid.NewGuid().ToString(), DateTime.Now.AddDays(-2), "0xd545b9e0a5f3638a5026d1914cc9b47ed16b5ae9", "0x05dE05303EAb867D51854E8b4fE03F7acb0624d9", "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi gravida libero quis sapien dictum, a vehicula nisi gravida"));
-            receivedRequests.Add(new FriendRequest(Guid.NewGuid().ToString(), DateTime.Now.AddDays(-1), "0xba7352cff5681b719daf33fa05e93153af8146c8", "0x05dE05303EAb867D51854E8b4fE03F7acb0624d9", "In hac habitasse platea dictumst. Proin sodales, sapien at facilisis consectetur, elit erat luctus quam, vel finibus lacus nulla vel tellus. Aenean vehicula urna nisl. Donec in lacus nisi. Aenean facilisis sagittis turpis nec finibus. Sed eu lorem arcu"));
-            sentRequests.Add(new FriendRequest(Guid.NewGuid().ToString(), DateTime.Now.AddMonths(-1), "0x05dE05303EAb867D51854E8b4fE03F7acb0624d9", "0x23e3d123f69fdd7f08a7c5685506bb344a12f1c4", "Aliquam consectetur euismod dui, vel iaculis ligula rhoncus eget. Maecenas faucibus consequat eros, nec pellentesque diam volutpat ac. Quisque aliquet dolor non tellus mattis, convallis lobortis mauris lobortis"));
+            receivedRequests.Add(new FriendRequest(Guid.NewGuid().ToString(), DateTime.Now.AddDays(-2), "0xd545b9e0a5f3638a5026d1914cc9b47ed16b5ae9", "0x31d4f4dd8615ec45bbb6330da69f60032aca219e", "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi gravida libero quis sapien dictum, a vehicula nisi gravida"));
+            receivedRequests.Add(new FriendRequest(Guid.NewGuid().ToString(), DateTime.Now.AddDays(-1), "0xba7352cff5681b719daf33fa05e93153af8146c8", "0x31d4f4dd8615ec45bbb6330da69f60032aca219e", "In hac habitasse platea dictumst. Proin sodales, sapien at facilisis consectetur, elit erat luctus quam, vel finibus lacus nulla vel tellus. Aenean vehicula urna nisl. Donec in lacus nisi. Aenean facilisis sagittis turpis nec finibus. Sed eu lorem arcu"));
+            sentRequests.Add(new FriendRequest(Guid.NewGuid().ToString(), DateTime.Now.AddMonths(-1), "0x31d4f4dd8615ec45bbb6330da69f60032aca219e", "0x23e3d123f69fdd7f08a7c5685506bb344a12f1c4", "Aliquam consectetur euismod dui, vel iaculis ligula rhoncus eget. Maecenas faucibus consequat eros, nec pellentesque diam volutpat ac. Quisque aliquet dolor non tellus mattis, convallis lobortis mauris lobortis"));
 
             await profileRepository.GetAsync("0xd545b9e0a5f3638a5026d1914cc9b47ed16b5ae9", ct);
             await profileRepository.GetAsync("0xba7352cff5681b719daf33fa05e93153af8146c8", ct);

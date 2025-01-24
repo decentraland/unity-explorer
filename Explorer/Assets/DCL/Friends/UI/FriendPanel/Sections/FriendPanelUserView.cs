@@ -1,3 +1,4 @@
+using CommunicationData.URLHelpers;
 using DCL.Chat;
 using DCL.Profiles;
 using DCL.UI;
@@ -52,6 +53,12 @@ namespace DCL.Friends.UI.FriendPanel.Sections
             MainButton.onClick.AddListener(() => MainButtonClicked?.Invoke(UserProfile));
         }
 
+        public void SafelyResetMainButtonListeners()
+        {
+            MainButton.onClick.RemoveAllListeners();
+            MainButton.onClick.AddListener(() => MainButtonClicked?.Invoke(UserProfile));
+        }
+
         public void RemoveMainButtonClickListeners()
         {
             MainButtonClicked = null;
@@ -75,7 +82,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections
             userColor.b += 0.3f;
             FaceRim.color = userColor;
 
-            imageController.RequestImage(profile.Avatar.FaceSnapshotUrl, removePrevious: true);
+            if (profile.Avatar.FaceSnapshotUrl != URLAddress.EMPTY)
+                imageController.RequestImage(profile.Avatar.FaceSnapshotUrl, removePrevious: true);
         }
 
         protected virtual void ToggleButtonView(bool isActive)

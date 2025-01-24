@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Clipboard;
 using DCL.Diagnostics;
+using DCL.Friends.UI.Requests;
 using DCL.Passport;
 using DCL.Profiles;
 using DCL.UI.GenericContextMenu;
@@ -24,6 +25,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
 
         private Profile? lastClickedProfileCtx;
         private CancellationTokenSource friendshipOperationCts = new ();
+        private CancellationTokenSource manageRequestCts = new ();
 
         public event Action<int>? ReceivedRequestsCountChanged;
 
@@ -49,6 +51,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             requestManager.DeleteRequestClicked += DeleteRequestClicked;
             requestManager.AcceptRequestClicked += AcceptRequestClicked;
             requestManager.ContextMenuClicked += ContextMenuClicked;
+            requestManager.RequestClicked += RequestClicked;
 
             friendEventBus.OnFriendRequestReceived += PropagateRequestReceived;
             friendEventBus.OnFriendRequestAccepted += PropagateRequestAcceptedRejected;
@@ -66,13 +69,18 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             requestManager.DeleteRequestClicked -= DeleteRequestClicked;
             requestManager.AcceptRequestClicked -= AcceptRequestClicked;
             requestManager.ContextMenuClicked -= ContextMenuClicked;
+            requestManager.RequestClicked -= RequestClicked;
             friendEventBus.OnFriendRequestReceived -= PropagateRequestReceived;
             friendEventBus.OnFriendRequestAccepted -= PropagateRequestAcceptedRejected;
             friendEventBus.OnFriendRequestRejected -= PropagateRequestAcceptedRejected;
 
             ReceivedRequestsCountChanged -= UpdateReceivedRequestsSectionCount;
             friendshipOperationCts.SafeCancelAndDispose();
+            manageRequestCts.SafeCancelAndDispose();
         }
+
+        private void RequestClicked(FriendRequest request) =>
+            mvcManager.ShowAsync(FriendRequestController.IssueCommand(new FriendRequestParams {Request = request}), manageRequestCts.Token).Forget();
 
         private void PrewarmRequests(LoadingStatus.LoadingStage stage)
         {
@@ -164,7 +172,6 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
 
         protected override void ElementClicked(Profile profile)
         {
-            Debug.Log($"ElementClicked on {profile.UserId}");
         }
 
     }
