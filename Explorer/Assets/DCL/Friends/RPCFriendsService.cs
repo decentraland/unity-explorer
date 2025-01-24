@@ -41,6 +41,9 @@ namespace DCL.Friends
         private readonly List<FriendProfile> friendProfileBuffer = new ();
 
         private RpcClientModule? module;
+        private bool isOpeningPort;
+        private bool isConnecting;
+        private bool isSendingAuthChain;
 
         public RPCFriendsService(URLAddress apiUrl,
             IFriendsEventBus eventBus,
@@ -176,8 +179,8 @@ namespace DCL.Friends
             };
 
             var response = await module!.CallUnaryProcedure<PaginatedFriendsProfilesResponse>(GET_MUTUAL_FRIENDS_PROCEDURE_NAME, payload)
-                                                                     .AttachExternalCancellation(ct)
-                                                                     .Timeout(TimeSpan.FromSeconds(TIMEOUT_SECONDS));
+                                        .AttachExternalCancellation(ct)
+                                        .Timeout(TimeSpan.FromSeconds(TIMEOUT_SECONDS));
 
             var profiles = ToClientFriendProfiles(response.Friends);
 
@@ -341,22 +344,34 @@ namespace DCL.Friends
                 case WebSocketState.Open:
                     break;
                 case WebSocketState.Connecting:
-                    await UniTask.WaitWhile(() => transport.State == WebSocketState.Connecting, cancellationToken: ct);
                     break;
                 default:
-                    await transport.ConnectAsync(ct);
+                    isConnecting = true;
+                    try { await transport.ConnectAsync(ct); }
+                    finally { isConnecting = false; }
+
                     transport.ListenForIncomingData();
 
+                    isSendingAuthChain = true;
                     // The service expects the auth-chain in json format within a 30 seconds threshold after connection
-                    await transport.SendMessageAsync(BuildAuthChain(), ct);
+                    try { await transport.SendMessageAsync(BuildAuthChain(), ct); }
+                    finally { isSendingAuthChain = false; }
+
                     break;
             }
 
-            if (module == null)
+            if (isOpeningPort || isSendingAuthChain || isConnecting)
+                await UniTask.WaitWhile(() => isOpeningPort || isSendingAuthChain || isConnecting, cancellationToken: ct);
+
+            if (module != null) return;
+
+            try
             {
+                isOpeningPort = true;
                 RpcClientPort port = await client.CreatePort("friends");
                 module = await port.LoadModule(RPC_SERVICE_NAME);
             }
+            finally { isOpeningPort = false; }
 
             return;
 
