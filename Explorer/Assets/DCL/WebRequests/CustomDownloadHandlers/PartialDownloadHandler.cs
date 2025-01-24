@@ -43,11 +43,8 @@ namespace DCL.WebRequests.CustomDownloadHandlers
 
             try
             {
-                for(var i = 0; i < dataLength; i++)
-                {
-                    partialData.DataBuffer[bufferPointer] = receivedData[i];
-                    bufferPointer++;
-                }
+                Array.Copy(receivedData, 0, partialData.DataBuffer, bufferPointer, dataLength);
+                bufferPointer += dataLength;
                 partialData.downloadedSize += dataLength;
                 return true;
             }
