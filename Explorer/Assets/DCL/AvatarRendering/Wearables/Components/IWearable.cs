@@ -28,6 +28,8 @@ namespace DCL.AvatarRendering.Wearables.Components
 
         bool HasSameModelsForAllGenders();
 
+        bool IsOutlineCompatible();
+
         public static IWearable NewEmpty() =>
             new Wearable();
     }

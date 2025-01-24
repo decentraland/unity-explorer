@@ -25,7 +25,6 @@ using DCL.Input;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.Landscape;
 using DCL.LOD.Systems;
-using DCL.MapPins.Components;
 using DCL.MapRenderer;
 using DCL.Minimap;
 using DCL.Multiplayer.Connections.Archipelago.AdapterAddress.Current;
@@ -37,6 +36,8 @@ using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.Pools;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Connections.Rooms.Status;
+using DCL.Multiplayer.Connections.Systems.Throughput;
+using DCL.Multiplayer.Connectivity;
 using DCL.Multiplayer.Deduplication;
 using DCL.Multiplayer.Emotes;
 using DCL.Multiplayer.HealthChecks;
@@ -189,14 +190,19 @@ namespace Global.Dynamic
                 staticContainer.RealmData);
 
             var placesAPIService = new PlacesAPIService(new PlacesAPIClient(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource));
+
             IEventsApiService eventsApiService = new HttpEventsApiService(staticContainer.WebRequestsContainer.WebRequestController,
                 URLDomain.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.ApiEvents)));
+
             var mapPathEventBus = new MapPathEventBus();
             INotificationsBusController notificationsBusController = new NotificationsBusController();
 
             DefaultTexturesContainer defaultTexturesContainer = null!;
             LODContainer lodContainer = null!;
             MapRendererContainer mapRendererContainer = null!;
+
+            IOnlineUsersProvider onlineUsersProvider = new ArchipelagoHttpOnlineUsersProvider(staticContainer.WebRequestsContainer.WebRequestController,
+                URLAddress.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.RemotePeers)));
 
             async UniTask InitializeContainersAsync(IPluginSettingsContainer settingsContainer, CancellationToken ct)
             {
@@ -239,6 +245,7 @@ namespace Global.Dynamic
                             notificationsBusController,
                             teleportBusController,
                             sharedNavmapCommandBus,
+                            onlineUsersProvider,
                             ct
                         );
             }
@@ -366,7 +373,11 @@ namespace Global.Dynamic
             LocalSceneDevelopmentController? localSceneDevelopmentController = localSceneDevelopment ? new LocalSceneDevelopmentController(reloadSceneController, dynamicWorldParams.LocalSceneDevelopmentRealm) : null;
 
             IRoomHub roomHub = localSceneDevelopment ? NullRoomHub.INSTANCE : new RoomHub(archipelagoIslandRoom, gateKeeperSceneRoom);
-            var messagePipesHub = new MessagePipesHub(roomHub, MultiPoolFactory(), MultiPoolFactory(), memoryPool);
+
+            var islandThroughputBunch = new ThroughputBufferBunch(new ThroughputBuffer(), new ThroughputBuffer());
+            var sceneThroughputBunch = new ThroughputBufferBunch(new ThroughputBuffer(), new ThroughputBuffer());
+
+            var messagePipesHub = new MessagePipesHub(roomHub, MultiPoolFactory(), MultiPoolFactory(), memoryPool, islandThroughputBunch, sceneThroughputBunch);
 
             var roomsStatus = new RoomsStatus(
                 roomHub,
@@ -457,9 +468,7 @@ namespace Global.Dynamic
                 backgroundMusic,
                 baseRealmNavigator,
                 loadingScreen,
-                staticContainer.FeatureFlagsProvider,
                 staticContainer.FeatureFlagsCache,
-                identityCache,
                 realmController,
                 realmMisc,
                 landscape,
@@ -594,7 +603,9 @@ namespace Global.Dynamic
                     staticContainer.ScenesCache,
                     emotesCache,
                     characterDataPropagationUtility,
-                    staticContainer.ComponentsContainer.ComponentPoolsRegistry
+                    staticContainer.ComponentsContainer.ComponentPoolsRegistry,
+                    islandThroughputBunch,
+                    sceneThroughputBunch
                 ),
                 new WorldInfoPlugin(worldInfoHub, debugBuilder, chatHistory),
                 new CharacterMotionPlugin(assetsProvisioner, staticContainer.CharacterContainer.CharacterObject, debugBuilder, staticContainer.ComponentsContainer.ComponentPoolsRegistry, staticContainer.SceneReadinessReportQueue),
@@ -610,6 +621,7 @@ namespace Global.Dynamic
                     assetsProvisioner,
                     staticContainer.SingletonSharedDependencies.FrameTimeBudget,
                     staticContainer.SingletonSharedDependencies.MemoryBudget,
+                    staticContainer.QualityContainer.RendererFeaturesCache,
                     staticContainer.RealmData,
                     staticContainer.MainPlayerAvatarBaseProxy,
                     debugBuilder,
@@ -636,7 +648,7 @@ namespace Global.Dynamic
                     webBrowser,
                     dynamicWorldDependencies.Web3Authenticator,
                     userInAppInAppInitializationFlow,
-                    profileCache, sidebarBus, chatEntryConfiguration,
+                    profileCache, sidebarBus, dclInput, chatEntryConfiguration,
                     globalWorld, playerEntity, includeCameraReel),
                 new ErrorPopupPlugin(mvcManager, assetsProvisioner),
                 connectionStatusPanelPlugin,
@@ -760,7 +772,15 @@ namespace Global.Dynamic
                     playerEntity,
                     includeCameraReel
                 ),
-                new FriendsPlugin(bootstrapContainer.DecentralandUrlsSource)
+                new GenericContextMenuPlugin(assetsProvisioner, mvcManager),
+                new FriendsPlugin(bootstrapContainer.DecentralandUrlsSource,
+                    profileRepository,
+                    identityCache,
+                    staticContainer.FeatureFlagsCache,
+                    assetsProvisioner,
+                    staticContainer.WebRequestsContainer.WebRequestController,
+                    mvcManager,
+                    staticContainer.InputBlock),
             };
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);

@@ -94,6 +94,8 @@ namespace DCL.SDKComponents.Tween.Systems
         [Query]
         private void UpdateTweenTransformSequence(ref SDKTweenComponent sdkTweenComponent, ref SDKTransform sdkTransform, in PBTween pbTween, CRDTEntity sdkEntity, TransformComponent transformComponent)
         {
+            if (pbTween.ModeCase == PBTween.ModeOneofCase.TextureMove) return;
+
             if (sdkTweenComponent.IsDirty)
             {
                 LegacySetupSupport(sdkTweenComponent, ref sdkTransform, ref transformComponent, sdkEntity, sceneStateProvider.IsCurrent);
@@ -108,6 +110,7 @@ namespace DCL.SDKComponents.Tween.Systems
         private void UpdateTweenTextureSequence(CRDTEntity sdkEntity, in PBTween pbTween, ref SDKTweenComponent sdkTweenComponent, ref MaterialComponent materialComponent)
         {
             if (pbTween.ModeCase != PBTween.ModeOneofCase.TextureMove) return;
+
             if (sdkTweenComponent.IsDirty)
             {
                 SetupTween(ref sdkTweenComponent, in pbTween);

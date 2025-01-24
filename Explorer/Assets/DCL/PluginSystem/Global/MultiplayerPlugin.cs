@@ -12,7 +12,7 @@ using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Connections.Rooms.Status;
 using DCL.Multiplayer.Connections.Systems;
-using DCL.Multiplayer.Connections.Systems.RoomIndicator;
+using DCL.Multiplayer.Connections.Systems.Throughput;
 using DCL.Multiplayer.Profiles.BroadcastProfiles;
 using DCL.Multiplayer.Profiles.Entities;
 using DCL.Multiplayer.Profiles.Poses;
@@ -60,6 +60,8 @@ namespace DCL.PluginSystem.Global
         private readonly IScenesCache scenesCache;
         private readonly ICharacterDataPropagationUtility characterDataPropagationUtility;
         private readonly IComponentPoolsRegistry poolsRegistry;
+        private readonly ThroughputBufferBunch islandThroughputBufferBunch;
+        private readonly ThroughputBufferBunch sceneThroughputBufferBunch;
 
         private IObjectPool<DebugRoomIndicatorView>? debugRoomIndicatorPool;
 
@@ -82,7 +84,10 @@ namespace DCL.PluginSystem.Global
             IScenesCache scenesCache,
             IEmoteStorage emoteStorage,
             ICharacterDataPropagationUtility characterDataPropagationUtility,
-            IComponentPoolsRegistry poolsRegistry)
+            IComponentPoolsRegistry poolsRegistry,
+            ThroughputBufferBunch islandThroughputBufferBunch,
+            ThroughputBufferBunch sceneThroughputBufferBunch
+        )
         {
             this.assetsProvisioner = assetsProvisioner;
             this.archipelagoIslandRoom = archipelagoIslandRoom;
@@ -103,6 +108,8 @@ namespace DCL.PluginSystem.Global
             this.emoteStorage = emoteStorage;
             this.characterDataPropagationUtility = characterDataPropagationUtility;
             this.poolsRegistry = poolsRegistry;
+            this.islandThroughputBufferBunch = islandThroughputBufferBunch;
+            this.sceneThroughputBufferBunch = sceneThroughputBufferBunch;
         }
 
         public void Dispose()
@@ -126,6 +133,7 @@ namespace DCL.PluginSystem.Global
 
             DebugRoomsSystem.InjectToWorld(ref builder, roomsStatus, archipelagoIslandRoom, gateKeeperSceneRoom, entityParticipantTable, remoteMetadata, debugContainerBuilder,
                 debugRoomIndicatorPool);
+            DebugThroughputRoomsSystem.InjectToWorld(ref builder, roomHub, debugContainerBuilder, islandThroughputBufferBunch, sceneThroughputBufferBunch);
 
             MultiplayerProfilesSystem.InjectToWorld(ref builder,
                 new RemoteAnnouncements(messagePipesHub),
