@@ -3,7 +3,6 @@ using System;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.Rendering;
-using UnityEngine.Serialization;
 
 namespace DCL.Roads.GPUInstancing.Playground
 {

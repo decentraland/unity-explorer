@@ -323,6 +323,7 @@ MonoBehaviour:
       ShadowCastingMode: 1
       SharedMaterials:
       - {fileID: 2100000, guid: 3e4bca0debfc05e44a50237bb3b6fd94, type: 2}
+      - {fileID: 2100000, guid: 3e4bca0debfc05e44a50237bb3b6fd94, type: 2}
     PerInstancesData:
     - instMatrix:
         e00: 0.00007909536
@@ -385,6 +386,7 @@ MonoBehaviour:
       ShadowCastingMode: 1
       SharedMaterials:
       - {fileID: 2100000, guid: 3e4bca0debfc05e44a50237bb3b6fd94, type: 2}
+      - {fileID: 2100000, guid: 3e4bca0debfc05e44a50237bb3b6fd94, type: 2}
     PerInstancesData:
     - instMatrix:
         e00: 0.00007909536
@@ -446,6 +448,7 @@ MonoBehaviour:
       ReceiveShadows: 1
       ShadowCastingMode: 1
       SharedMaterials:
+      - {fileID: 2100000, guid: 3e4bca0debfc05e44a50237bb3b6fd94, type: 2}
       - {fileID: 2100000, guid: 3e4bca0debfc05e44a50237bb3b6fd94, type: 2}
     PerInstancesData:
     - instMatrix:
@@ -1057,6 +1060,7 @@ MonoBehaviour:
         ShadowCastingMode: 1
         SharedMaterials:
         - {fileID: 2100000, guid: 3e4bca0debfc05e44a50237bb3b6fd94, type: 2}
+        - {fileID: 2100000, guid: 3e4bca0debfc05e44a50237bb3b6fd94, type: 2}
     - ScreenRelativeTransitionHeight: 0.018612256
       Meshes:
       - Renderer: {fileID: 2256158974808401958}
@@ -1083,6 +1087,7 @@ MonoBehaviour:
         ShadowCastingMode: 1
         SharedMaterials:
         - {fileID: 2100000, guid: 3e4bca0debfc05e44a50237bb3b6fd94, type: 2}
+        - {fileID: 2100000, guid: 3e4bca0debfc05e44a50237bb3b6fd94, type: 2}
     - ScreenRelativeTransitionHeight: 0.007446293
       Meshes:
       - Renderer: {fileID: 1919570692678399897}
@@ -1108,6 +1113,7 @@ MonoBehaviour:
         ReceiveShadows: 1
         ShadowCastingMode: 1
         SharedMaterials:
+        - {fileID: 2100000, guid: 3e4bca0debfc05e44a50237bb3b6fd94, type: 2}
         - {fileID: 2100000, guid: 3e4bca0debfc05e44a50237bb3b6fd94, type: 2}
   - LODGroup: {fileID: 3024127177159699033}
     Transform: {fileID: 8047303667113254184}
@@ -1142,6 +1148,7 @@ MonoBehaviour:
         ShadowCastingMode: 1
         SharedMaterials:
         - {fileID: 2100000, guid: 3e4bca0debfc05e44a50237bb3b6fd94, type: 2}
+        - {fileID: 2100000, guid: 3e4bca0debfc05e44a50237bb3b6fd94, type: 2}
     - ScreenRelativeTransitionHeight: 0.018612256
       Meshes:
       - Renderer: {fileID: 9148090681547420349}
@@ -1168,6 +1175,7 @@ MonoBehaviour:
         ShadowCastingMode: 1
         SharedMaterials:
         - {fileID: 2100000, guid: 3e4bca0debfc05e44a50237bb3b6fd94, type: 2}
+        - {fileID: 2100000, guid: 3e4bca0debfc05e44a50237bb3b6fd94, type: 2}
     - ScreenRelativeTransitionHeight: 0.007446293
       Meshes:
       - Renderer: {fileID: 8869945002959760642}
@@ -1193,6 +1201,7 @@ MonoBehaviour:
         ReceiveShadows: 1
         ShadowCastingMode: 1
         SharedMaterials:
+        - {fileID: 2100000, guid: 3e4bca0debfc05e44a50237bb3b6fd94, type: 2}
         - {fileID: 2100000, guid: 3e4bca0debfc05e44a50237bb3b6fd94, type: 2}
   - LODGroup: {fileID: 6373266204698834963}
     Transform: {fileID: 2173123648299061090}
@@ -1493,7 +1502,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 143359668154513586, guid: a0168356423e90f40a09a8586e4e00c4, type: 3}
       propertyPath: m_Materials.Array.size
-      value: 1
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 143359668154513586, guid: a0168356423e90f40a09a8586e4e00c4, type: 3}
       propertyPath: m_Materials.Array.data[0]
@@ -1565,7 +1574,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 722237781611112826, guid: a0168356423e90f40a09a8586e4e00c4, type: 3}
       propertyPath: m_Materials.Array.size
-      value: 1
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 722237781611112826, guid: a0168356423e90f40a09a8586e4e00c4, type: 3}
       propertyPath: m_Materials.Array.data[0]
@@ -1577,7 +1586,7 @@ PrefabInstance:
       objectReference: {fileID: 2100000, guid: 3e4bca0debfc05e44a50237bb3b6fd94, type: 2}
     - target: {fileID: 1146505382622983877, guid: a0168356423e90f40a09a8586e4e00c4, type: 3}
       propertyPath: m_Materials.Array.size
-      value: 1
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 1146505382622983877, guid: a0168356423e90f40a09a8586e4e00c4, type: 3}
       propertyPath: m_Materials.Array.data[0]
@@ -1633,7 +1642,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6937408713594888745, guid: a0168356423e90f40a09a8586e4e00c4, type: 3}
       propertyPath: m_Materials.Array.size
-      value: 1
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 6937408713594888745, guid: a0168356423e90f40a09a8586e4e00c4, type: 3}
       propertyPath: m_Materials.Array.data[0]
@@ -1645,7 +1654,7 @@ PrefabInstance:
       objectReference: {fileID: 2100000, guid: 3e4bca0debfc05e44a50237bb3b6fd94, type: 2}
     - target: {fileID: 7763668973861319649, guid: a0168356423e90f40a09a8586e4e00c4, type: 3}
       propertyPath: m_Materials.Array.size
-      value: 1
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 7763668973861319649, guid: a0168356423e90f40a09a8586e4e00c4, type: 3}
       propertyPath: m_Materials.Array.data[0]
@@ -1657,7 +1666,7 @@ PrefabInstance:
       objectReference: {fileID: 2100000, guid: 3e4bca0debfc05e44a50237bb3b6fd94, type: 2}
     - target: {fileID: 7949632010964872286, guid: a0168356423e90f40a09a8586e4e00c4, type: 3}
       propertyPath: m_Materials.Array.size
-      value: 1
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 7949632010964872286, guid: a0168356423e90f40a09a8586e4e00c4, type: 3}
       propertyPath: m_Materials.Array.data[0]

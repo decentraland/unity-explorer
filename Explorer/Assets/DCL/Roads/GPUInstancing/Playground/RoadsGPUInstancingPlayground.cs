@@ -1,6 +1,5 @@
 ﻿using DCL.Roads.GPUInstancing.Playground;
 using DCL.Roads.Settings;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -52,57 +51,58 @@ namespace DCL.Roads.Playground
         {
             if (!Run) return;
 
-            PrefabInstanceDataBehaviour prefab = GetAndSpawnOriginalPrefab();
+            // PrefabInstanceDataBehaviour prefab = GetAndSpawnOriginalPrefab();
+
+            PrefabInstanceDataBehaviour prefab = RoadShift switch
+                                                 {
+                                                     true => originalPrefabs.FirstOrDefault(op => op.name == Descriptions[0].RoadModel)!,
+                                                     _ => originalPrefabs[DebugId],
+                                                 };
 
             if (UseIndirect)
-                PrepareIndirectBuffers(prefab);
-
-            if (UseIndirect)
-                RenderMeshesIndirect(prefab.meshInstances[indirectMeshIndex]);
+                RenderMeshesIndirect(prefab);
             else
                 RenderMeshesInstanced(prefab.meshInstances);
         }
 
-        private void PrepareIndirectBuffers(PrefabInstanceDataBehaviour prefab)
+        private void RenderMeshesIndirect(PrefabInstanceDataBehaviour prefab)
         {
-            int totalCommands = 1;// prefab.meshInstances.Sum(mesh => mesh.MeshData.SharedMaterials.Length);
+            var mesh = prefab.meshInstances[indirectMeshIndex];
 
-            InitializeArgsBuffer(totalCommands);
-            PreparePerInstanceBuffer(prefab);
+            var instancedRenderer = mesh.MeshData.ToGPUInstancedRenderer();
+            int submeshCount = instancedRenderer.RenderParamsArray.Length;
+            int instanceCount = mesh.PerInstancesData?.Length ?? 0;
 
-            currentCommandIndex = 0;
-        }
+            // Set buffers
+            {
+                int totalCommands = submeshCount; // one command per submesh
 
-        private void PreparePerInstanceBuffer(PrefabInstanceDataBehaviour prefab)
-        {
-            instanceBuffer?.Release();
+                drawArgsBuffer?.Release();
+                drawArgsBuffer = new GraphicsBuffer(GraphicsBuffer.Target.IndirectArguments, totalCommands, GraphicsBuffer.IndirectDrawIndexedArgs.size);
+                commandData = new GraphicsBuffer.IndirectDrawIndexedArgs[totalCommands];
 
-            instanceBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured,
-                count: prefab.meshInstances[indirectMeshIndex].PerInstancesData.Length,
-                stride: Marshal.SizeOf(typeof(PerInstanceBuffer)));
+                instanceBuffer?.Release();
+                instanceBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, instanceCount, Marshal.SizeOf(typeof(PerInstanceBuffer)));
 
-            instanceBuffer.SetData(prefab.meshInstances[indirectMeshIndex].PerInstancesData);
-        }
+                Matrix4x4 baseMatrix = RoadShift
+                    ? Matrix4x4.TRS(Descriptions[0].RoadCoordinate.ParcelToPositionFlat() + ParcelMathHelper.RoadPivotDeviation, Descriptions[0].Rotation.SelfOrIdentity(), Vector3.one)
+                    : Matrix4x4.TRS(Vector3.zero, Quaternion.identity, Vector3.one);
 
-        private void InitializeArgsBuffer(int commandCount)
-        {
-            drawArgsBuffer?.Release();
-            drawArgsBuffer = new GraphicsBuffer(GraphicsBuffer.Target.IndirectArguments, commandCount, GraphicsBuffer.IndirectDrawIndexedArgs.size);
-            commandData = new GraphicsBuffer.IndirectDrawIndexedArgs[commandCount];
-        }
+                PerInstanceBuffer[] shiftedTRS = mesh.PerInstancesData;
 
-        private void RenderMeshesIndirect(MeshInstanceData mesh)
-        {
-            // Matrix4x4 baseMatrix = RoadShift
-            //     ? Matrix4x4.TRS(Descriptions[0].RoadCoordinate.ParcelToPositionFlat() + ParcelMathHelper.RoadPivotDeviation, Descriptions[0].Rotation.SelfOrIdentity(), Vector3.one)
-            //     : Matrix4x4.TRS(Vector3.zero, Quaternion.identity, Vector3.one);
+                for (var i = 0; i < shiftedTRS.Length; i++)
+                {
+                    PerInstanceBuffer pid = shiftedTRS[i];
+                    pid.instMatrix = baseMatrix * pid.instMatrix;
+                    shiftedTRS[i] = pid;
+                }
+
+                instanceBuffer.SetData(shiftedTRS);
+            }
 
             // foreach (MeshData meshData in meshes)
             {
-                var instancedRenderer = mesh.MeshData.ToGPUInstancedRenderer();
-
-                int submeshCount = instancedRenderer.RenderParamsArray.Length;
-                int instanceCount = mesh.PerInstancesData?.Length ?? 0;
+                currentCommandIndex = 0;
 
                 for (int submeshIndex = 0; submeshIndex < submeshCount; submeshIndex++)
                 {
@@ -112,24 +112,15 @@ namespace DCL.Roads.Playground
                     commandData[currentCommandIndex].baseVertexIndex = 0;
                     commandData[currentCommandIndex].startInstance = 0;
 
-                    drawArgsBuffer.SetData(commandData, currentCommandIndex, currentCommandIndex, 1);
+                    drawArgsBuffer.SetData(commandData, currentCommandIndex, currentCommandIndex, count: 1);
 
-                    // RenderParams rparams = new RenderParams(debugMaterial);
-                    // rparams.matProps = new MaterialPropertyBlock();
-                    // rparams.matProps.SetMatrix("_ObjectToWorld", yourMatrix);
-                    // rparams.matProps = new MaterialPropertyBlock();
-                    // mesh.MeshData.SharedMaterials[submeshIndex].EnableKeyword("_GPU_INSTANCER_BATCHER");
                     // Debug.Log(string.Join(", ",  mesh.MeshData.SharedMaterials[submeshIndex].shaderKeywords));
-                    // rparams.matProps.SetBuffer("_PerInstanceBuffer", instanceBuffer);
-                    // rparams.matProps.SetMatrix("_ObjectToWorld", Matrix4x4.Translate(new Vector3(5, 1, 2)));
                     RenderParams rparams = instancedRenderer.RenderParamsArray[submeshIndex];
-                    // var rparams = new RenderParams(DebugMaterial);
                     rparams.matProps = new MaterialPropertyBlock();
-                    // rparams.matProps.SetMatrix("_ObjectToWorld", Matrix4x4.TRS(new Vector3(5, 1, 2), Quaternion.Euler(0,90,0), Vector3.one));
+
                     rparams.matProps.SetBuffer("_PerInstanceBuffer", instanceBuffer);
 
-                    Graphics.RenderMeshIndirect(rparams, instancedRenderer.Mesh, drawArgsBuffer, submeshCount, currentCommandIndex);
-
+                    Graphics.RenderMeshIndirect(rparams, instancedRenderer.Mesh, drawArgsBuffer, commandCount: 1, currentCommandIndex);
                     currentCommandIndex++;
                 }
             }
