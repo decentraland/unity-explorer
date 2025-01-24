@@ -139,7 +139,7 @@ namespace DCL.ECSComponents {
     public const int BrightnessFieldNumber = 2;
     private float brightness_;
     /// <summary>
-    /// range from 0 to 1
+    /// range from 1 (dim) to 100,000 (very bright), expressed in Lumens for Point and Spot
     /// </summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
@@ -154,7 +154,7 @@ namespace DCL.ECSComponents {
     public const int RangeFieldNumber = 3;
     private float range_;
     /// <summary>
-    /// default = 10. range value: from 0 to 1
+    /// default = 10, expressed in meters
     /// </summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
@@ -751,6 +751,9 @@ namespace DCL.ECSComponents {
         /// <summary>Field number for the "inner_angle" field.</summary>
         public const int InnerAngleFieldNumber = 1;
         private float innerAngle_;
+        /// <summary>
+        /// default = 21.8. Inner angle can't be higher than outer angle, otherwise will default to same value. Min value is 0
+        /// </summary>
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
         public float InnerAngle {
@@ -763,6 +766,9 @@ namespace DCL.ECSComponents {
         /// <summary>Field number for the "outer_angle" field.</summary>
         public const int OuterAngleFieldNumber = 2;
         private float outerAngle_;
+        /// <summary>
+        /// default = 30. Outer angle can't be lower than inner angle, otherwise will inner angle will be set to same value. Max value is 179
+        /// </summary>
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
         public float OuterAngle {
