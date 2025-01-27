@@ -17,7 +17,7 @@ namespace DCL.ScenesDebug.ScenesConsistency.Conditions
         {
             var ready = false;
 
-            void OnSubmit(string _, string __)
+            void OnSubmit(ChatChannel _, string __, string ___)
             {
                 ready = true;
             }

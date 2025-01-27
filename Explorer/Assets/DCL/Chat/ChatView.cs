@@ -38,7 +38,8 @@ namespace DCL.Chat
         public delegate Color CalculateUsernameColorDelegate(ChatMessage chatMessage);
         public delegate void InputBoxFocusChangedDelegate(bool hasFocus);
         public delegate void EmojiSelectionVisibilityChangedDelegate(bool isVisible);
-        public delegate void InputSubmittedDelegate(string message, string origin);
+        public delegate void InputSubmittedDelegate(ChatChannel channel, string message, string origin);
+        public delegate void ChatMessageCreatedDelegate(int itemIndex);
 
         [Header("Settings")]
         [Tooltip("The time it takes, in seconds, for the background of the chat window to fade-in/out when hovering with the mouse.")]
@@ -195,7 +196,9 @@ namespace DCL.Chat
 
         private bool isChatClosed;
         private bool isInputSelected;
-        private IReadOnlyList<ChatMessage> chatMessages;
+        private IReadOnlyDictionary<ChatChannel.ChannelId, ChatChannel>? channels;
+        private ChatChannel? currentChannel;
+
         // The latest amount of messages added to the chat that must be animated yet
         private int entriesPendingToAnimate;
 
@@ -246,9 +249,10 @@ namespace DCL.Chat
             viewDependencies = dependencies;
         }
 
-        public void Initialize(IReadOnlyList<ChatMessage> chatMessages, bool areChatBubblesVisible)
+        public void Initialize(IReadOnlyDictionary<ChatChannel.ChannelId, ChatChannel> chatChannels, ChatChannel.ChannelId defaultChannelId, bool areChatBubblesVisible)
         {
             device = InputSystem.GetDevice<Mouse>();
+            this.channels = chatChannels;
 
             characterCounter.SetMaximumLength(inputField.characterLimit);
             characterCounter.gameObject.SetActive(false);
@@ -269,16 +273,24 @@ namespace DCL.Chat
             viewDependencies.DclInput.UI.RightClick.performed += OnRightClickRegistered;
             closePopupTask = new UniTaskCompletionSource();
 
-            SetMessages(chatMessages);
+            CurrentChannel = defaultChannelId;
         }
 
-        /// <summary>
-        /// Replaces the message data of the view with another.
-        /// </summary>
-        /// <param name="messages">The new messages to display in the view.</param>
-        public void SetMessages(IReadOnlyList<ChatMessage> messages)
+        public ChatChannel.ChannelId CurrentChannel
         {
-            chatMessages = messages;
+            get => currentChannel.Id;
+
+            set
+            {
+                if (currentChannel == null || !currentChannel.Id.Equals(value))
+                {
+                    currentChannel = channels[value];
+
+                    // Replaces the chat items (it uses pools to store item instances so they will be reused)
+                    loopList.SetListItemCount(0);
+                    loopList.SetListItemCount(currentChannel.Messages.Count);
+                }
+            }
         }
 
         /// <summary>
@@ -326,13 +338,14 @@ namespace DCL.Chat
         public void RefreshMessages()
         {
             ResetChatEntriesFadeout();
+            loopList.SetListItemCount(currentChannel.Messages.Count);
 
-            entriesPendingToAnimate = chatMessages.Count - loopList.ItemTotalCount;
+            entriesPendingToAnimate = currentChannel.Messages.Count - loopList.ItemTotalCount;
 
             if (entriesPendingToAnimate < 0)
                 entriesPendingToAnimate = 0;
 
-            loopList.SetListItemCount(chatMessages.Count);
+            loopList.SetListItemCount(currentChannel.Messages.Count);
             ShowLastMessage();
 
 // DISABLED UNTIL UNREAD MESSAGES FEATURE IS MERGED
@@ -476,10 +489,10 @@ namespace DCL.Chat
         // to customize a new instance of the ChatEntryView (it uses pools internally).
         private LoopListViewItem2? OnGetItemByIndex(LoopListView2 listView, int index)
         {
-            if (index < 0 || index >= chatMessages.Count)
+            if (index < 0 || index >= currentChannel.Messages.Count)
                 return null;
 
-            ChatMessage itemData = chatMessages[index];
+            ChatMessage itemData = currentChannel.Messages[index];
             LoopListViewItem2 item;
 
             if (itemData.IsPaddingElement)
@@ -666,7 +679,7 @@ namespace DCL.Chat
             inputField.text = string.Empty;
             inputField.ActivateInputField();
 
-            InputSubmitted?.Invoke(messageToSend, ORIGIN);
+            InputSubmitted?.Invoke(currentChannel, messageToSend, ORIGIN);
         }
 
         private void OnToggleChatBubblesValueChanged(bool isToggled)

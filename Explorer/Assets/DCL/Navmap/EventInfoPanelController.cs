@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
+using DCL.Chat;
 using DCL.Chat.Commands;
 using DCL.Chat.MessageBus;
 using DCL.EventsApi;
@@ -192,7 +193,7 @@ namespace DCL.Navmap
         private void JumpIn()
         {
             navmapBus.JumpIn(place!);
-            chatMessagesBus.Send($"/{ChatCommandsUtils.COMMAND_GOTO} {@event?.x},{@event?.y}", "jump in");
+            chatMessagesBus.Send(ChatChannel.NEARBY_CHANNEL, $"/{ChatCommandsUtils.COMMAND_GOTO} {@event?.x},{@event?.y}", "jump in");
         }
     }
 }

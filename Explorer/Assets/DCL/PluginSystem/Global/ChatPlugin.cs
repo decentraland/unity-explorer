@@ -12,6 +12,7 @@ using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
 using DCL.UI;
 using DCL.UI.MainUI;
+using Global.Dynamic.ChatCommands;
 using MVC;
 using System;
 using System.Threading;
@@ -33,6 +34,7 @@ namespace DCL.PluginSystem.Global
         private readonly Entity playerEntity;
         private readonly MainUIView mainUIView;
         private readonly ViewDependencies viewDependencies;
+        private readonly ClearChatCommand clearChatCommand;
 
         private ChatController chatController;
 
@@ -46,6 +48,7 @@ namespace DCL.PluginSystem.Global
             MainUIView mainUIView,
             IInputBlock inputBlock,
             Arch.Core.World world,
+            ClearChatCommand clearChatCommand,
             Entity playerEntity,
             ViewDependencies viewDependencies)
         {
@@ -61,6 +64,7 @@ namespace DCL.PluginSystem.Global
             this.viewDependencies = viewDependencies;
             this.mainUIView = mainUIView;
             this.inputBlock = inputBlock;
+            this.clearChatCommand = clearChatCommand;
         }
 
         public void Dispose() { }
@@ -88,6 +92,8 @@ namespace DCL.PluginSystem.Global
                 inputBlock,
                 viewDependencies
             );
+
+            clearChatCommand.ChatController = chatController;
 
             mvcManager.RegisterController(chatController);
         }
