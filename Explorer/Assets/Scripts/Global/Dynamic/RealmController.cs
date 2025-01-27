@@ -6,7 +6,6 @@ using DCL.Diagnostics;
 using DCL.Ipfs;
 using DCL.LOD.Components;
 using DCL.Optimization.Pools;
-using DCL.ParcelsService;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
@@ -52,28 +51,12 @@ namespace Global.Dynamic
         private readonly IComponentPool<PartitionComponent> partitionComponentPool;
         private readonly bool isLocalSceneDevelopment;
         private readonly IDecentralandUrlsSource urlsSource;
+        private readonly RealmNavigatorDebugView realmNavigatorDebugView;
 
         private GlobalWorld? globalWorld;
         private Entity realmEntity;
 
         public IRealmData RealmData => realmData;
-
-        private readonly RealmNavigatorDebugView realmNavigatorDebugView;
-        private readonly FeatureFlagsCache featureFlagsCache;
-
-        public RealmType Type
-        {
-            get
-            {
-                if (isLocalSceneDevelopment)
-                    return RealmType.LocalScene;
-
-                if (realmData is { Configured: true, ScenesAreFixed: false })
-                    return RealmType.GenesisCity;
-
-                return RealmType.World;
-            }
-        }
 
         public URLDomain? CurrentDomain { get; private set; }
 
@@ -99,8 +82,9 @@ namespace Global.Dynamic
             IScenesCache scenesCache,
             PartitionDataContainer partitionDataContainer,
             SceneAssetLock sceneAssetLock,
-            IDebugContainerBuilder debugContainerBuilder,
             IComponentPool<PartitionComponent> partitionComponentPool,
+            RealmNavigatorDebugView realmNavigatorDebugView,
+            bool isLocalSceneDevelopment)
             bool isLocalSceneDevelopment,
             IDecentralandUrlsSource urlsSource,
             FeatureFlagsCache featureFlagsCache)
@@ -120,6 +104,7 @@ namespace Global.Dynamic
             this.urlsSource = urlsSource;
             this.featureFlagsCache = featureFlagsCache;
             realmNavigatorDebugView = new RealmNavigatorDebugView(debugContainerBuilder);
+            this.realmNavigatorDebugView = realmNavigatorDebugView;
         }
 
         public async UniTask SetRealmAsync(URLDomain realm, CancellationToken ct)
