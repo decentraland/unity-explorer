@@ -1,4 +1,4 @@
-﻿using Arch.Core;
+﻿﻿using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.CommunicationData.URLHelpers;
@@ -22,8 +22,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using DCL.DebugUtilities;
-using DCL.FeatureFlags;
-using DCL.Multiplayer.Connections.DecentralandUrls;
+ using DCL.RealmNavigation;
 using ECS.SceneLifeCycle.Realm;
 using Unity.Mathematics;
 
@@ -50,12 +49,15 @@ namespace Global.Dynamic
         private readonly SceneAssetLock sceneAssetLock;
         private readonly IComponentPool<PartitionComponent> partitionComponentPool;
         private readonly bool isLocalSceneDevelopment;
-        private readonly IDecentralandUrlsSource urlsSource;
         private readonly RealmNavigatorDebugView realmNavigatorDebugView;
+        private readonly URLDomain assetBundleRegistry;
+
 
         private GlobalWorld? globalWorld;
         private Entity realmEntity;
 
+
+        
         public IRealmData RealmData => realmData;
 
         public URLDomain? CurrentDomain { get; private set; }
@@ -84,10 +86,8 @@ namespace Global.Dynamic
             SceneAssetLock sceneAssetLock,
             IComponentPool<PartitionComponent> partitionComponentPool,
             RealmNavigatorDebugView realmNavigatorDebugView,
-            bool isLocalSceneDevelopment)
             bool isLocalSceneDevelopment,
-            IDecentralandUrlsSource urlsSource,
-            FeatureFlagsCache featureFlagsCache)
+            URLDomain assetBundleRegistry)
         {
             this.web3IdentityCache = web3IdentityCache;
             this.webRequestController = webRequestController;
@@ -101,10 +101,8 @@ namespace Global.Dynamic
             this.sceneAssetLock = sceneAssetLock;
             this.partitionComponentPool = partitionComponentPool;
             this.isLocalSceneDevelopment = isLocalSceneDevelopment;
-            this.urlsSource = urlsSource;
-            this.featureFlagsCache = featureFlagsCache;
-            realmNavigatorDebugView = new RealmNavigatorDebugView(debugContainerBuilder);
             this.realmNavigatorDebugView = realmNavigatorDebugView;
+            this.assetBundleRegistry = assetBundleRegistry;
         }
 
         public async UniTask SetRealmAsync(URLDomain realm, CancellationToken ct)
@@ -122,11 +120,6 @@ namespace Global.Dynamic
             ServerAbout result = await genericGetRequest.OverwriteFromJsonAsync(serverAbout, WRJsonParser.Unity);
 
             string hostname = ResolveHostname(realm, result);
-
-            var assetBundleRegistry =
-                featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.ASSET_BUNDLE_FALLBACK)
-                    ? URLDomain.FromString(urlsSource.Url(DecentralandUrl.AssetBundleRegistry))
-                    : URLDomain.EMPTY;
 
             realmData.Reconfigure(
                 new IpfsRealm(web3IdentityCache, webRequestController, realm, assetBundleRegistry, result),
@@ -185,7 +178,7 @@ namespace Global.Dynamic
 
             var promise = AssetPromise<SceneDefinitions, GetSceneDefinitionList>.Create(GlobalWorld.EcsWorld,
                 new GetSceneDefinitionList(new List<SceneEntityDefinition>(staticLoadPositions.Count), staticLoadPositions,
-                    new CommonLoadingArguments(RealmData.Ipfs.AssetBundleRegistry)), PartitionComponent.TOP_PRIORITY);
+                    new CommonLoadingArguments(RealmData.Ipfs.EntitiesActiveEndpoint)), PartitionComponent.TOP_PRIORITY);
 
             promise = await promise.ToUniTaskAsync(GlobalWorld.EcsWorld, cancellationToken: ct);
 
