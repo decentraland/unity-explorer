@@ -1,4 +1,4 @@
-﻿﻿using Arch.Core;
+﻿using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.CommunicationData.URLHelpers;
@@ -21,9 +21,7 @@ using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using DCL.DebugUtilities;
  using DCL.RealmNavigation;
-using ECS.SceneLifeCycle.Realm;
 using Unity.Mathematics;
 
 namespace Global.Dynamic
