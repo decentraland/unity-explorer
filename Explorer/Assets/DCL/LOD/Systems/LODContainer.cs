@@ -70,7 +70,7 @@ namespace DCL.LOD.Systems
 
                 var visualSceneStateResolver = new VisualSceneStateResolver(roadDataDictionary.Keys.ToHashSet());
 
-                var roadAssetPool = new RoadAssetsPool(c.roadAssetsPrefabList, staticContainer.ComponentsContainer.ComponentPoolsRegistry);
+                var roadAssetPool = new RoadAssetsPool(realmData, c.roadAssetsPrefabList, staticContainer.ComponentsContainer.ComponentPoolsRegistry);
                 container.RoadAssetsPool = roadAssetPool;
                 staticContainer.CacheCleaner.Register(roadAssetPool);
 
