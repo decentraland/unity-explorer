@@ -137,8 +137,12 @@ namespace ECS.StreamableLoading.Common.Systems
                     // Release budget immediately, if we don't do it and load a lot of bundles with dependencies sequentially, it will be a deadlock
                     state.AcquiredBudget!.Release();
 
+                    OngoingRequestResult<TAsset> ongoingRequestResult;
                     // if the cached request is cancelled it does not mean failure for the new intent
-                    (requestIsNotFulfilled, result) = await cachedSource.Task.SuppressCancellationThrow();
+                    (requestIsNotFulfilled, ongoingRequestResult) = await cachedSource.Task.SuppressCancellationThrow();
+
+                    state.PartialDownloadingData = ongoingRequestResult.PartialDownloadingData;
+                    result = ongoingRequestResult.Result;
 
                     if (requestIsNotFulfilled)
                     {
@@ -268,7 +272,7 @@ namespace ECS.StreamableLoading.Common.Systems
         /// </summary>
         private async UniTask<StreamableLoadingResult<TAsset>?> CacheableFlowAsync(TIntention intention, StreamableLoadingState state, IPartitionComponent partition, CancellationToken ct)
         {
-            var source = new UniTaskCompletionSource<StreamableLoadingResult<TAsset>?>(); //AutoResetUniTaskCompletionSource<StreamableLoadingResult<TAsset>?>.Create();
+            var source = new UniTaskCompletionSource<OngoingRequestResult<TAsset>>(); //AutoResetUniTaskCompletionSource<StreamableLoadingResult<TAsset>?>.Create();
 
             // ReportHub.Log(GetReportCategory(), $"OngoingRequests.SyncAdd {intention.CommonArguments.URL}");
             cache.OngoingRequests.SyncTryAdd(intention.CommonArguments.GetCacheableURL(), source);
@@ -299,7 +303,7 @@ namespace ECS.StreamableLoading.Common.Systems
                 // continuation of cachedSource.Task.SuppressCancellationThrow();
                 TryRemoveOngoingRequest();
 
-                source.TrySetResult(result);
+                source.TrySetResult(new OngoingRequestResult<TAsset>(state.PartialDownloadingData, result));
 
                 // if result is null the next available source will be picked by another system
                 // which will prepare proper `Intention` accordingly
@@ -339,8 +343,7 @@ namespace ECS.StreamableLoading.Common.Systems
         private async UniTask<StreamableLoadingResult<TAsset>?> RepeatLoopAsync(TIntention intention, StreamableLoadingState state, IPartitionComponent partition, CancellationToken ct)
         {
             StreamableLoadingResult<TAsset>? result = await intention.RepeatLoopAsync(state, partition, cachedInternalFlowDelegate, GetReportData(), ct);
-            if (state.PartialDownloadingData is { FullyDownloaded: false }) return result;
-            return result is { Succeeded: false } ? SetIrrecoverableFailure(intention, result.Value) : result;
+            return result is { Succeeded: false, IsInitialized: true } ? SetIrrecoverableFailure(intention, result.Value) : result;
         }
 
         private StreamableLoadingResult<TAsset> SetIrrecoverableFailure(TIntention intention, StreamableLoadingResult<TAsset> failure)

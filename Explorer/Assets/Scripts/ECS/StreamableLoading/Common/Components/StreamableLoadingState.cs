@@ -73,7 +73,7 @@ namespace ECS.StreamableLoading.Common.Components
         /// <summary>
         ///     Is set when the partial downloading is supported for the given type of asset promise and has started
         /// </summary>
-        public PartialLoadingState? PartialDownloadingData { get; private set; }
+        public PartialLoadingState? PartialDownloadingData { get; internal set; }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SetAllowed(IAcquiredBudget budget)
