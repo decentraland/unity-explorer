@@ -16,7 +16,7 @@ namespace DCL.Roads.GPUInstancing.Playground
 
         [Space]
         public RoadSettingsAsset RoadsConfig;
-        public PrefabInstanceDataBehaviour[] Prefabs;
+        public GPUInstancedPrefab[] Prefabs;
 
         [Space]
         public bool Run;
@@ -49,7 +49,7 @@ namespace DCL.Roads.GPUInstancing.Playground
         [ContextMenu("DEBUG - Cache Prefabs")]
         private void CachePrefabs()
         {
-            var cachedPrefabs = new List<PrefabInstanceDataBehaviour>();
+            var cachedPrefabs = new List<GPUInstancedPrefab>();
 
             foreach (AssetReferenceGameObject ar in RoadsConfig.RoadAssetsReference)
             {
@@ -59,13 +59,13 @@ namespace DCL.Roads.GPUInstancing.Playground
 
                 if (prefab != null)
                 {
-                    PrefabInstanceDataBehaviour prefabBeh = prefab.GetComponent<PrefabInstanceDataBehaviour>();
-                    prefabBeh.CollectSelfData();
+                    GPUInstancedPrefab gpuInstancedPrefabBeh = prefab.GetComponent<GPUInstancedPrefab>();
+                    gpuInstancedPrefabBeh.CollectSelfData();
 
                     if (HideRoadsVisual)
-                        prefabBeh.HideVisuals();
+                        gpuInstancedPrefabBeh.HideVisuals();
 
-                    cachedPrefabs.Add(prefabBeh);
+                    cachedPrefabs.Add(gpuInstancedPrefabBeh);
                 }
 
                 operation.Release();
@@ -98,16 +98,16 @@ namespace DCL.Roads.GPUInstancing.Playground
             foreach (RoadDescription roadDescription in RoadsConfig.RoadDescriptions)
             {
                 if (IsOutOfRange(roadDescription.RoadCoordinate)) continue;
-                PrefabInstanceDataBehaviour prefab = Prefabs.FirstOrDefault(op => op.name == roadDescription.RoadModel);
+                GPUInstancedPrefab gpuInstancedPrefab = Prefabs.FirstOrDefault(op => op.name == roadDescription.RoadModel);
 
-                if (prefab == null)
+                if (gpuInstancedPrefab == null)
                 {
                     Debug.LogWarning($"Can't find prefab {roadDescription.RoadModel}");
                     continue;
                 }
 
                 Transform roadAsset =
-                    Instantiate(prefab, roadDescription.RoadCoordinate.ParcelToPositionFlat() + ParcelMathHelper.RoadPivotDeviation, roadDescription.Rotation, debugRoot)
+                    Instantiate(gpuInstancedPrefab, roadDescription.RoadCoordinate.ParcelToPositionFlat() + ParcelMathHelper.RoadPivotDeviation, roadDescription.Rotation, debugRoot)
                        .transform;
 
                 roadAsset.gameObject.SetActive(true);

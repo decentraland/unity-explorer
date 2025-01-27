@@ -13,7 +13,7 @@ namespace DCL.Roads.Playground
     {
         private static readonly int OBJECT_TO_WORLD = Shader.PropertyToID("_ObjectToWorld");
 
-        public PrefabInstanceDataBehaviour[] originalPrefabs;
+        public GPUInstancedPrefab[] originalPrefabs;
         public Material DebugMaterial;
 
         [Header("DEBUG SETTINGS")]
@@ -53,27 +53,27 @@ namespace DCL.Roads.Playground
 
             // PrefabInstanceDataBehaviour prefab = GetAndSpawnOriginalPrefab();
 
-            PrefabInstanceDataBehaviour prefab = RoadShift switch
+            GPUInstancedPrefab gpuInstancedPrefab = RoadShift switch
                                                  {
                                                      true => originalPrefabs.FirstOrDefault(op => op.name == Descriptions[0].RoadModel)!,
                                                      _ => originalPrefabs[DebugId],
                                                  };
 
             if (UseIndirect)
-                RenderMeshesIndirect(prefab);
+                RenderMeshesIndirect(gpuInstancedPrefab);
             else
-                RenderMeshesInstanced(prefab.meshInstances);
+                RenderMeshesInstanced(gpuInstancedPrefab.GPUInstancedMeshes);
         }
 
-       private void RenderMeshesIndirect(PrefabInstanceDataBehaviour prefab)
+    private void RenderMeshesIndirect(GPUInstancedPrefab gpuInstancedPrefab)
 {
     // Calculate total instances and commands across all meshes
     int totalInstances = 0;
     int totalCommands = 0;
-    foreach (var mesh in prefab.meshInstances)
+    foreach (var mesh in gpuInstancedPrefab.GPUInstancedMeshes)
     {
         totalInstances += mesh.PerInstancesData?.Length ?? 0;
-        totalCommands += mesh.MeshData.ToGPUInstancedRenderer().RenderParamsArray.Length;
+        totalCommands += mesh.meshInstanceData.ToGPUInstancedRenderer().RenderParamsArray.Length;
     }
 
     // Create buffers once
@@ -87,18 +87,18 @@ namespace DCL.Roads.Playground
     int currentInstanceOffset = 0;
     currentCommandIndex = 0;
 
-    foreach (var mesh in prefab.meshInstances)
+    // Set instance data
+    Matrix4x4 baseMatrix = RoadShift
+        ? Matrix4x4.TRS(Descriptions[0].RoadCoordinate.ParcelToPositionFlat() + ParcelMathHelper.RoadPivotDeviation, Descriptions[0].Rotation.SelfOrIdentity(), Vector3.one)
+        : Matrix4x4.TRS(Vector3.zero, Quaternion.identity, Vector3.one);
+
+    foreach (GPUInstancedMesh gpuInstancedMesh in gpuInstancedPrefab.GPUInstancedMeshes)
     {
-        var instancedRenderer = mesh.MeshData.ToGPUInstancedRenderer();
+        var instancedRenderer = gpuInstancedMesh.meshInstanceData.ToGPUInstancedRenderer();
         int submeshCount = instancedRenderer.RenderParamsArray.Length;
-        int instanceCount = mesh.PerInstancesData?.Length ?? 0;
+        int instanceCount = gpuInstancedMesh.PerInstancesData?.Length ?? 0;
 
-        // Set instance data
-        Matrix4x4 baseMatrix = RoadShift
-            ? Matrix4x4.TRS(Descriptions[0].RoadCoordinate.ParcelToPositionFlat() + ParcelMathHelper.RoadPivotDeviation, Descriptions[0].Rotation.SelfOrIdentity(), Vector3.one)
-            : Matrix4x4.TRS(Vector3.zero, Quaternion.identity, Vector3.one);
-
-        PerInstanceBuffer[] shiftedTRS = mesh.PerInstancesData;
+        PerInstanceBuffer[] shiftedTRS = gpuInstancedMesh.PerInstancesData;
         for (var i = 0; i < shiftedTRS.Length; i++)
         {
             PerInstanceBuffer pid = shiftedTRS[i];
@@ -106,7 +106,7 @@ namespace DCL.Roads.Playground
             shiftedTRS[i] = pid;
         }
 
-        instanceBuffer.SetData(shiftedTRS, 0, currentInstanceOffset, instanceCount);
+        instanceBuffer.SetData(shiftedTRS, managedBufferStartIndex: 0, graphicsBufferStartIndex: currentInstanceOffset, instanceCount);
 
         // Set commands and render
         for (int submeshIndex = 0; submeshIndex < submeshCount; submeshIndex++)
@@ -132,27 +132,27 @@ namespace DCL.Roads.Playground
     }
 }
 
-        private void RenderMeshesInstanced(List<MeshInstanceData> meshInstances)
+        private void RenderMeshesInstanced(List<GPUInstancedMesh> instancedMeshes)
         {
             Matrix4x4 baseMatrix = RoadShift
                 ? Matrix4x4.TRS(Descriptions[0].RoadCoordinate.ParcelToPositionFlat() + ParcelMathHelper.RoadPivotDeviation, Descriptions[0].Rotation.SelfOrIdentity(), Vector3.one)
                 : Matrix4x4.TRS(Vector3.zero, Quaternion.identity, Vector3.one);
 
-            foreach (MeshInstanceData mesh in meshInstances)
+            foreach (GPUInstancedMesh instancedMesh in instancedMeshes)
             {
-                GPUInstancedRenderer instancedRenderer = mesh.MeshData.ToGPUInstancedRenderer();
+                GPUInstancedRenderer instancedRenderer = instancedMesh.meshInstanceData.ToGPUInstancedRenderer();
 
-                List<Matrix4x4> shiftedInstanceData = new (mesh.PerInstancesData.Length);
+                List<Matrix4x4> shiftedInstanceData = new (instancedMesh.PerInstancesData.Length);
                 shiftedInstanceData.AddRange(RoadShift
-                    ? mesh.PerInstancesData.Select(matrix => baseMatrix * matrix.instMatrix)
-                    : mesh.PerInstancesData.Select(matrix => matrix.instMatrix));
+                    ? instancedMesh.PerInstancesData.Select(matrix => baseMatrix * matrix.instMatrix)
+                    : instancedMesh.PerInstancesData.Select(matrix => matrix.instMatrix));
 
                 for (var i = 0; i < instancedRenderer.RenderParamsArray.Length; i++)
                     Graphics.RenderMeshInstanced(in instancedRenderer.RenderParamsArray[i], instancedRenderer.Mesh, i, shiftedInstanceData);
             }
         }
 
-        private void RenderMeshesIndirectMeshAndLods(MeshData[] meshes)
+        private void RenderMeshesIndirectMeshAndLods(MeshInstanceData[] meshes)
         {
             // int totalCommandCount = meshes.SelectMany(mesh => mesh.SharedMaterials).Count();
             // if (commandBuffer == null || commandData.Length != totalCommandCount)
@@ -163,7 +163,7 @@ namespace DCL.Roads.Playground
                 : Matrix4x4.TRS(Vector3.zero, Quaternion.identity, Vector3.one);
 
             // var currentCommandIndex = 0; // Track the overall command index
-            foreach (MeshData meshData in meshes)
+            foreach (MeshInstanceData meshData in meshes)
             {
                 var instancedRenderer = meshData.ToGPUInstancedRenderer();
 
@@ -190,13 +190,13 @@ namespace DCL.Roads.Playground
             drawArgsBuffer!.SetData(commandData);
         }
 
-        private void RenderMeshesInstancedMeshAndLods(MeshData[] meshes)
+        private void RenderMeshesInstancedMeshAndLods(MeshInstanceData[] meshes)
         {
             Matrix4x4 baseMatrix = RoadShift
                 ? Matrix4x4.TRS(Descriptions[0].RoadCoordinate.ParcelToPositionFlat() + ParcelMathHelper.RoadPivotDeviation, Descriptions[0].Rotation.SelfOrIdentity(), Vector3.one)
                 : Matrix4x4.TRS(Vector3.zero, Quaternion.identity, Vector3.one);
 
-            foreach (MeshData meshData in meshes)
+            foreach (MeshInstanceData meshData in meshes)
             {
                 var instancedRenderer = meshData.ToGPUInstancedRenderer();
 
@@ -205,7 +205,7 @@ namespace DCL.Roads.Playground
             }
         }
 
-        private void RenderMeshDebug(MeshData[] meshes)
+        private void RenderMeshDebug(MeshInstanceData[] meshes)
         {
             if (UseIndirect)
                 RenderMeshesIndirectMeshAndLods(meshes);
@@ -213,33 +213,33 @@ namespace DCL.Roads.Playground
                 RenderMeshesInstancedMeshAndLods(meshes);
         }
 
-        private PrefabInstanceDataBehaviour GetAndSpawnOriginalPrefab()
+        private GPUInstancedPrefab GetAndSpawnOriginalPrefab()
         {
-            PrefabInstanceDataBehaviour originalPrefab = RoadShift switch
+            GPUInstancedPrefab originalGPUInstancedPrefab = RoadShift switch
                                                          {
                                                              true => originalPrefabs.FirstOrDefault(op => op.name == Descriptions[0].RoadModel)!,
                                                              _ => originalPrefabs[DebugId],
                                                          };
 
-            if (originalInstance == null || originalInstance.name != originalPrefab.name)
+            if (originalInstance == null || originalInstance.name != originalGPUInstancedPrefab.name)
             {
                 if (originalInstance != null)
                     DestroyImmediate(originalInstance);
 
-                originalInstance = Instantiate(originalPrefab.gameObject);
-                originalInstance.name = originalPrefab.name;
+                originalInstance = Instantiate(originalGPUInstancedPrefab.gameObject);
+                originalInstance.name = originalGPUInstancedPrefab.name;
                 originalInstance.transform.Translate(ComparisonShift.x, 0, ComparisonShift.y);
             }
 
-            originalPrefab.CollectSelfData();
+            originalGPUInstancedPrefab.CollectSelfData();
 
-            return originalPrefab;
+            return originalGPUInstancedPrefab;
         }
 
         [ContextMenu(nameof(PrefabsSelfCollect))]
         private void PrefabsSelfCollect()
         {
-            foreach (PrefabInstanceDataBehaviour prefab in originalPrefabs)
+            foreach (GPUInstancedPrefab prefab in originalPrefabs)
                 prefab.CollectSelfData();
         }
     }

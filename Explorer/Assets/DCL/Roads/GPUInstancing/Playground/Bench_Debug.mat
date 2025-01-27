@@ -21,7 +21,7 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: Bench_Debug
-  m_Shader: {fileID: 4800000, guid: 8faf67a1fa434e57954ed742410206e7, type: 3}
+  m_Shader: {fileID: 4800000, guid: 8850af49c3074b9f8d6beb85604bdfb6, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []

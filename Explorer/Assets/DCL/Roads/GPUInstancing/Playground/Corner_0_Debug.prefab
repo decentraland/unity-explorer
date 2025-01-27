@@ -77,8 +77,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2a93533cfb4b48c5866cdd42852bb92c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  meshInstances:
-  - MeshData:
+  GPUInstancedMeshes:
+  - meshInstanceData:
       Renderer: {fileID: 487818433152494848}
       Transform: {fileID: 1625298755692451439}
       LocalToRootMatrix:
@@ -122,7 +122,7 @@ MonoBehaviour:
         e32: 0
         e33: 1
       instColourTint: {x: 0, y: 0, z: 0, w: 0}
-  - MeshData:
+  - meshInstanceData:
       Renderer: {fileID: 315162561410437115}
       Transform: {fileID: 5490730228403473337}
       LocalToRootMatrix:
@@ -166,7 +166,7 @@ MonoBehaviour:
         e32: 0
         e33: 1
       instColourTint: {x: 0, y: 0, z: 0, w: 0}
-  - MeshData:
+  - meshInstanceData:
       Renderer: {fileID: 4790228258848908103}
       Transform: {fileID: 2956436175586928598}
       LocalToRootMatrix:
@@ -210,7 +210,7 @@ MonoBehaviour:
         e32: 0
         e33: 1
       instColourTint: {x: 0, y: 0, z: 0, w: 0}
-  - MeshData:
+  - meshInstanceData:
       Renderer: {fileID: 4667432527984631986}
       Transform: {fileID: 5749983117736331626}
       LocalToRootMatrix:
@@ -254,7 +254,7 @@ MonoBehaviour:
         e32: 0
         e33: 1
       instColourTint: {x: 0, y: 0, z: 0, w: 0}
-  - MeshData:
+  - meshInstanceData:
       Renderer: {fileID: 3243881059596970525}
       Transform: {fileID: 8562440808501443534}
       LocalToRootMatrix:
@@ -298,7 +298,7 @@ MonoBehaviour:
         e32: 0
         e33: 1
       instColourTint: {x: 0, y: 0, z: 0, w: 0}
-  - MeshData:
+  - meshInstanceData:
       Renderer: {fileID: 1492885097207036398}
       Transform: {fileID: 3468639902072086244}
       LocalToRootMatrix:
@@ -361,7 +361,7 @@ MonoBehaviour:
         e32: 0
         e33: 1
       instColourTint: {x: 0, y: 0, z: 0, w: 0}
-  - MeshData:
+  - meshInstanceData:
       Renderer: {fileID: 2256158974808401958}
       Transform: {fileID: 8364926160175316917}
       LocalToRootMatrix:
@@ -424,7 +424,7 @@ MonoBehaviour:
         e32: 0
         e33: 1
       instColourTint: {x: 0, y: 0, z: 0, w: 0}
-  - MeshData:
+  - meshInstanceData:
       Renderer: {fileID: 1919570692678399897}
       Transform: {fileID: 6331861942239395995}
       LocalToRootMatrix:
@@ -487,7 +487,7 @@ MonoBehaviour:
         e32: 0
         e33: 1
       instColourTint: {x: 0, y: 0, z: 0, w: 0}
-  - MeshData:
+  - meshInstanceData:
       Renderer: {fileID: 3426922652252359014}
       Transform: {fileID: 3767313372376783709}
       LocalToRootMatrix:
@@ -531,7 +531,7 @@ MonoBehaviour:
         e32: 0
         e33: 1
       instColourTint: {x: 0, y: 0, z: 0, w: 0}
-  - MeshData:
+  - meshInstanceData:
       Renderer: {fileID: 4016134348947269555}
       Transform: {fileID: 6374314064847649676}
       LocalToRootMatrix:
@@ -575,7 +575,7 @@ MonoBehaviour:
         e32: 0
         e33: 1
       instColourTint: {x: 0, y: 0, z: 0, w: 0}
-  - MeshData:
+  - meshInstanceData:
       Renderer: {fileID: 2858857772194872005}
       Transform: {fileID: 3646051099339544970}
       LocalToRootMatrix:
@@ -619,7 +619,7 @@ MonoBehaviour:
         e32: 0
         e33: 1
       instColourTint: {x: 0, y: 0, z: 0, w: 0}
-  - MeshData:
+  - meshInstanceData:
       Renderer: {fileID: 7560538401032283447}
       Transform: {fileID: 4929559773893304456}
       LocalToRootMatrix:
@@ -663,7 +663,7 @@ MonoBehaviour:
         e32: 0
         e33: 1
       instColourTint: {x: 0, y: 0, z: 0, w: 0}
-  - MeshData:
+  - meshInstanceData:
       Renderer: {fileID: 4747775013930338930}
       Transform: {fileID: 6849074475865088563}
       LocalToRootMatrix:
@@ -707,7 +707,7 @@ MonoBehaviour:
         e32: 0
         e33: 1
       instColourTint: {x: 0, y: 0, z: 0, w: 0}
-  - MeshData:
+  - meshInstanceData:
       Renderer: {fileID: 7266030814224078437}
       Transform: {fileID: 6003175690658424702}
       LocalToRootMatrix:
@@ -751,7 +751,7 @@ MonoBehaviour:
         e32: 0
         e33: 1
       instColourTint: {x: 0, y: 0, z: 0, w: 0}
-  - MeshData:
+  - meshInstanceData:
       Renderer: {fileID: 9179676536412399129}
       Transform: {fileID: 7037187133185001857}
       LocalToRootMatrix:
@@ -795,7 +795,7 @@ MonoBehaviour:
         e32: 0
         e33: 1
       instColourTint: {x: 0, y: 0, z: 0, w: 0}
-  - MeshData:
+  - meshInstanceData:
       Renderer: {fileID: 713462439708601443}
       Transform: {fileID: 7278580239064280854}
       LocalToRootMatrix:
@@ -839,7 +839,7 @@ MonoBehaviour:
         e32: 0
         e33: 1
       instColourTint: {x: 0, y: 0, z: 0, w: 0}
-  - MeshData:
+  - meshInstanceData:
       Renderer: {fileID: 703278123663347298}
       Transform: {fileID: 2154401929395241006}
       LocalToRootMatrix:

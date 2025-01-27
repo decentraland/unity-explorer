@@ -61,28 +61,28 @@ namespace DCL.Roads.GPUInstancing.Playground
             // }
         }
 
-        public void AddToInstancingDirectCopy(List<MeshInstanceData> meshInstances)
+        public void AddToInstancingDirectCopy(List<GPUInstancedMesh> meshInstances)
         {
-            foreach (MeshInstanceData prefabMeshInstance in meshInstances)
+            foreach (GPUInstancedMesh prefabMeshInstance in meshInstances)
             {
-                var instancedRenderer = prefabMeshInstance.MeshData.ToGPUInstancedRenderer();
+                var instancedRenderer = prefabMeshInstance.meshInstanceData.ToGPUInstancedRenderer();
 
                 if (!gpuInstancingMap.ContainsKey(instancedRenderer))
                     gpuInstancingMap.Add(instancedRenderer, prefabMeshInstance.PerInstancesData);
             }
         }
 
-        public void AddToInstancing(PrefabInstanceDataBehaviour[] prefabInstanceData, Matrix4x4 roadRoot)
+        public void AddToInstancing(GPUInstancedPrefab[] prefabInstanceData, Matrix4x4 roadRoot)
         {
-            foreach (PrefabInstanceDataBehaviour spawnedRoad in prefabInstanceData)
+            foreach (GPUInstancedPrefab spawnedRoad in prefabInstanceData)
                 AddToInstancing(spawnedRoad, roadRoot);
         }
 
-        public void AddToInstancing(List<MeshInstanceData> meshInstances, Matrix4x4 roadRoot)
+        public void AddToInstancing(List<GPUInstancedMesh> meshInstances, Matrix4x4 roadRoot)
         {
-            foreach (MeshInstanceData prefabMeshInstance in meshInstances)
+            foreach (GPUInstancedMesh prefabMeshInstance in meshInstances)
             {
-                var instancedRenderer = prefabMeshInstance.MeshData.ToGPUInstancedRenderer();
+                var instancedRenderer = prefabMeshInstance.meshInstanceData.ToGPUInstancedRenderer();
 
                 if (!gpuInstancingMap.TryGetValue(instancedRenderer, out PerInstanceBuffer[] matrix))
                 {
@@ -98,7 +98,7 @@ namespace DCL.Roads.GPUInstancing.Playground
             }
         }
 
-        private void AddToInstancing(MeshData[] meshes, Matrix4x4 roadRoot)
+        private void AddToInstancing(MeshInstanceData[] meshes, Matrix4x4 roadRoot)
         {
             // foreach (MeshData meshData in meshes)
             // {
@@ -112,12 +112,12 @@ namespace DCL.Roads.GPUInstancing.Playground
             // }
         }
 
-        private void AddToInstancing(PrefabInstanceDataBehaviour prefabData, Matrix4x4 roadRoot)
+        private void AddToInstancing(GPUInstancedPrefab gpuInstancedPrefabData, Matrix4x4 roadRoot)
         {
-            AddToInstancing(prefabData.Meshes, roadRoot);
+            AddToInstancing(gpuInstancedPrefabData.Meshes, roadRoot);
 
-            foreach (LODGroupData lodGroup in prefabData.LODGroups)
-            foreach (LODEntryMeshData lods in lodGroup.LODs)
+            foreach (LODGroupData lodGroup in gpuInstancedPrefabData.LODGroups)
+            foreach (GPUInstancedLOD lods in lodGroup.LODs)
                 AddToInstancing(lods.Meshes, roadRoot);
         }
 

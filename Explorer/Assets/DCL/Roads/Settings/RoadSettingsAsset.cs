@@ -14,7 +14,7 @@ namespace DCL.Roads.Settings
     [CreateAssetMenu(fileName = "Road Settings", menuName = "DCL/Various/Road Settings")]
     public class RoadSettingsAsset : ScriptableObject, IRoadSettingsAsset
     {
-        [SerializeField] public List<MeshInstanceData> RoadsMeshesGPUInstances;
+        [SerializeField] public List<GPUInstancedMesh> RoadsMeshesGPUInstances;
 
         [field: SerializeField] public List<RoadDescription> RoadDescriptions { get; set; }
         [field: SerializeField] public List<AssetReferenceGameObject> RoadAssetsReference { get; set; }
@@ -25,23 +25,23 @@ namespace DCL.Roads.Settings
 #if UNITY_EDITOR
         public void CollectAllMeshInstances()
         {
-            Dictionary<string, PrefabInstanceDataBehaviour> loadedPrefabs = LoadAllPrefabs();
+            Dictionary<string, GPUInstancedPrefab> loadedPrefabs = LoadAllPrefabs();
 
-            Dictionary<MeshData, HashSet<PerInstanceBuffer>> tempMeshToMatrices = CollectInstancesMap(loadedPrefabs);
+            Dictionary<MeshInstanceData, HashSet<PerInstanceBuffer>> tempMeshToMatrices = CollectInstancesMap(loadedPrefabs);
 
-            RoadsMeshesGPUInstances = tempMeshToMatrices.Select(kvp => new MeshInstanceData { MeshData = kvp.Key, PerInstancesData = kvp.Value.ToArray() }).ToList();
+            RoadsMeshesGPUInstances = tempMeshToMatrices.Select(kvp => new GPUInstancedMesh { meshInstanceData = kvp.Key, PerInstancesData = kvp.Value.ToArray() }).ToList();
 
             EditorUtility.SetDirty(this);
             AssetDatabase.SaveAssets();
         }
 
-        private Dictionary<MeshData, HashSet<PerInstanceBuffer>> CollectInstancesMap(Dictionary<string, PrefabInstanceDataBehaviour> loadedPrefabs)
+        private Dictionary<MeshInstanceData, HashSet<PerInstanceBuffer>> CollectInstancesMap(Dictionary<string, GPUInstancedPrefab> loadedPrefabs)
         {
-            var tempMeshToMatrices = new Dictionary<MeshData, HashSet<PerInstanceBuffer>>();
+            var tempMeshToMatrices = new Dictionary<MeshInstanceData, HashSet<PerInstanceBuffer>>();
 
             foreach (RoadDescription roadDescription in RoadDescriptions)
             {
-                if (!loadedPrefabs.TryGetValue(roadDescription.RoadModel, out PrefabInstanceDataBehaviour prefab))
+                if (!loadedPrefabs.TryGetValue(roadDescription.RoadModel, out GPUInstancedPrefab prefab))
                 {
                     Debug.LogWarning($"Can't find prefab {roadDescription.RoadModel}");
                     continue;
@@ -49,12 +49,12 @@ namespace DCL.Roads.Settings
 
                 var roadRoot = Matrix4x4.TRS(roadDescription.RoadCoordinate.ParcelToPositionFlat() + ParcelMathHelper.RoadPivotDeviation, roadDescription.Rotation.SelfOrIdentity(), Vector3.one);
 
-                foreach (MeshInstanceData meshInstance in prefab.meshInstances)
+                foreach (GPUInstancedMesh meshInstance in prefab.GPUInstancedMeshes)
                 {
-                    if (!tempMeshToMatrices.TryGetValue(meshInstance.MeshData, out HashSet<PerInstanceBuffer> matrices))
+                    if (!tempMeshToMatrices.TryGetValue(meshInstance.meshInstanceData, out HashSet<PerInstanceBuffer> matrices))
                     {
                         matrices = new HashSet<PerInstanceBuffer>();
-                        tempMeshToMatrices.Add(meshInstance.MeshData, matrices);
+                        tempMeshToMatrices.Add(meshInstance.meshInstanceData, matrices);
                     }
 
                     foreach (PerInstanceBuffer instanceData in meshInstance.PerInstancesData)
@@ -65,9 +65,9 @@ namespace DCL.Roads.Settings
             return tempMeshToMatrices;
         }
 
-        private Dictionary<string, PrefabInstanceDataBehaviour> LoadAllPrefabs()
+        private Dictionary<string, GPUInstancedPrefab> LoadAllPrefabs()
         {
-            var loadedPrefabs = new Dictionary<string, PrefabInstanceDataBehaviour>();
+            var loadedPrefabs = new Dictionary<string, GPUInstancedPrefab>();
 
             foreach (AssetReferenceGameObject assetRef in RoadAssetsReference)
             {
@@ -80,7 +80,7 @@ namespace DCL.Roads.Settings
                     continue;
                 }
 
-                PrefabInstanceDataBehaviour instanceBehaviour = prefab.GetComponent<PrefabInstanceDataBehaviour>();
+                GPUInstancedPrefab instanceBehaviour = prefab.GetComponent<GPUInstancedPrefab>();
 
                 if (instanceBehaviour == null)
                 {
