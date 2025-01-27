@@ -23,13 +23,19 @@ namespace DCL.Chat
             ChatEntry,
             ChatEntryOwn,
             Padding,
-            SystemChatEntry
+            SystemChatEntry,
+            Separator
         }
 
         /// <summary>
         /// Raised when the options button of a chat message is clicked.
         /// </summary>
-        public Action<string, ChatEntryView> ChatMessageOptionsButtonClicked;
+        public Action<string, ChatEntryView>? ChatMessageOptionsButtonClicked;
+
+        /// <summary>
+        /// Raised every time the scroll position of the messages viewer changes.
+        /// </summary>
+        public Action<Vector2>? ChatMessageViewerScrollPositionChanged;
 
         public delegate Color CalculateUsernameColorDelegate(ChatMessage chatMessage);
 
@@ -52,9 +58,12 @@ namespace DCL.Chat
         // The latest amount of messages added to the chat that must be animated yet
         private int entriesPendingToAnimate;
 
-        private IReadOnlyList<ChatMessage> chatMessages;
-        private CancellationTokenSource fadeoutCts;
-        private CalculateUsernameColorDelegate calculateUsernameColor;
+        private IReadOnlyList<ChatMessage>? chatMessages;
+        private CancellationTokenSource? fadeoutCts;
+        private CalculateUsernameColorDelegate? calculateUsernameColor;
+
+        private int separatorPositionIndex;
+        private int messageCountWhenSeparatorWasSet;
 
         /// <summary>
         /// Gets whether the scroll view is showing the bottom of the content, and it can't scroll down anymore.
@@ -67,6 +76,11 @@ namespace DCL.Chat
         public bool IsScrollAtTop => loopList.ScrollRect.normalizedPosition.y >= 1.0f;
 
         /// <summary>
+        /// Gets whether the separator item is currently visible.
+        /// </summary>
+        public bool IsSeparatorVisible { get; private set; }
+
+        /// <summary>
         /// Initializes the UI element and provides all its external dependencies.
         /// </summary>
         /// <param name="delegateImplementation">An external function that provides a way to calculate the color to be used to display a user name.</param>
@@ -74,6 +88,7 @@ namespace DCL.Chat
         {
             calculateUsernameColor = delegateImplementation;
             loopList.InitListView(0, OnGetItemByIndex);
+            loopList.ScrollRect.onValueChanged.AddListener(OnScrollRectValueChanged);
         }
 
         /// <summary>
@@ -117,9 +132,13 @@ namespace DCL.Chat
         /// <summary>
         /// Moves the chat so it shows the last created message.
         /// </summary>
-        public void ShowLastMessage()
+        /// <param name="useSmoothScroll">Whether to smoothly scroll to the end or not.</param>
+        public void ShowLastMessage(bool useSmoothScroll = false)
         {
-            loopList.MovePanelToItemIndex(0, 0);
+            if(useSmoothScroll)
+                loopList.ScrollRect.DONormalizedPos(new Vector2(1.0f, 0.0f), 0.5f);
+            else
+                loopList.MovePanelToItemIndex(0, 0);
         }
 
         /// <summary>
@@ -129,49 +148,75 @@ namespace DCL.Chat
         {
             ResetChatEntriesFadeout();
 
-            entriesPendingToAnimate = chatMessages.Count - loopList.ItemTotalCount;
+            int chatMessagesCount = chatMessages!.Count + (IsSeparatorVisible ? 1 : 0);
+
+            entriesPendingToAnimate = chatMessagesCount - loopList.ItemTotalCount;
 
             if (entriesPendingToAnimate < 0)
                 entriesPendingToAnimate = 0;
 
-            loopList.SetListItemCount(chatMessages.Count);
-            ShowLastMessage();
-
-// DISABLED UNTIL UNREAD MESSAGES FEATURE IS MERGED
+            loopList.SetListItemCount(chatMessagesCount, false);
 
             // Scroll view adjustment
-//            if (IsScrollAtBottom)
-//            {
-//                loopList.MovePanelToItemIndex(0, 0);
-//            }
-//            else
-//            {
-//                loopList.RefreshAllShownItem();
+            if (IsScrollAtBottom)
+            {
+                loopList.MovePanelToItemIndex(0, 0);
+            }
+            else
+            {
+                loopList.RefreshAllShownItem();
 
                 // When the scroll view is not at the bottom, chat messages should not move if a new message is added
                 // An offset has to be applied to the scroll view in order to prevent messages from moving
-//                LoopListViewItem2 addedItem = loopList.GetShownItemByIndex(1);
-//                float offsetToPreventScrollViewMovement = -addedItem.ItemSize - addedItem.Padding;
-//                loopList.MovePanelByOffset(offsetToPreventScrollViewMovement);
+                LoopListViewItem2 addedItem = loopList.GetShownItemByIndex(1);
+                float offsetToPreventScrollViewMovement = -addedItem.ItemSize - addedItem.Padding;
+                loopList.MovePanelByOffset(offsetToPreventScrollViewMovement);
 
                 // Known issue: When the scroll view is at the top, the scroll view moves a bit downwards
-//            }
+            }
 
             entriesPendingToAnimate = 0;
         }
 
+        /// <summary>
+        /// Plays an animation that makes all chat entries opaque.
+        /// </summary>
         public void StopChatEntriesFadeout()
         {
             fadeoutCts.SafeCancelAndDispose();
             chatEntriesCanvasGroup.alpha = 1;
         }
 
+        /// <summary>
+        /// Plays an animation that makes all chat entries transparent.
+        /// </summary>
         public void StartChatEntriesFadeout()
         {
             fadeoutCts.SafeCancelAndDispose();
             fadeoutCts = new CancellationTokenSource();
 
             AwaitAndFadeChatEntriesAsync(fadeoutCts.Token).Forget();
+        }
+
+        /// <summary>
+        /// Makes the separator item visible at a given position in the list.
+        /// If new items are added to the list afterward the separator will remain visually at the same position.
+        /// </summary>
+        /// <param name="chatMessageIndex">The index of the position where the separator has to be displayed.</param>
+        public void ShowSeparator(int chatMessageIndex)
+        {
+            IsSeparatorVisible = true;
+            separatorPositionIndex = chatMessageIndex;
+
+            messageCountWhenSeparatorWasSet = chatMessages!.Count;
+        }
+
+        /// <summary>
+        /// Makes the separator item invisible.
+        /// </summary>
+        public void HideSeparator()
+        {
+            IsSeparatorVisible = false;
         }
 
         public void Dispose()
@@ -188,13 +233,15 @@ namespace DCL.Chat
         // to customize a new instance of the ChatEntryView (it uses pools internally).
         private LoopListViewItem2? OnGetItemByIndex(LoopListView2 listView, int index)
         {
-            if (index < 0 || index >= chatMessages.Count)
+            if (index < 0 || index >= chatMessages!.Count)
                 return null;
 
             ChatMessage itemData = chatMessages[index];
             LoopListViewItem2 item;
 
-            if (itemData.IsPaddingElement)
+            if (IsSeparatorVisible && index == (chatMessages.Count - messageCountWhenSeparatorWasSet) + separatorPositionIndex)
+                item = listView.NewListViewItem(listView.ItemPrefabDataList[(int)ChatItemPrefabIndex.Separator].mItemPrefab.name);
+            else if (itemData.IsPaddingElement)
                 item = listView.NewListViewItem(listView.ItemPrefabDataList[(int)ChatItemPrefabIndex.Padding].mItemPrefab.name);
             else
             {
@@ -222,7 +269,7 @@ namespace DCL.Chat
 
         private void SetItemData(int index, ChatMessage itemData, ChatEntryView itemView)
         {
-            Color playerNameColor = calculateUsernameColor(itemData);
+            Color playerNameColor = calculateUsernameColor!(itemData);
 
             itemView.usernameElement.userName.color = playerNameColor;
 
@@ -250,10 +297,13 @@ namespace DCL.Chat
 
         private async UniTaskVoid AwaitAndFadeChatEntriesAsync(CancellationToken ct)
         {
-            fadeoutCts.Token.ThrowIfCancellationRequested();
+            fadeoutCts!.Token.ThrowIfCancellationRequested();
             chatEntriesCanvasGroup.alpha = 1;
             await UniTask.Delay(chatEntriesWaitBeforeFading, cancellationToken: ct);
             await chatEntriesCanvasGroup.DOFade(0.4f, chatEntriesFadeTime).ToUniTask(cancellationToken: ct);
         }
+
+        private void OnScrollRectValueChanged(Vector2 scrollPosition)
+            => ChatMessageViewerScrollPositionChanged?.Invoke(scrollPosition);
     }
 }

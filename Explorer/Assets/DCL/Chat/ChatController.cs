@@ -14,7 +14,6 @@ using MVC;
 using System;
 using System.Text.RegularExpressions;
 using System.Threading;
-using UnityEngine;
 using UnityEngine.InputSystem;
 using Utility.Arch;
 
@@ -77,7 +76,7 @@ namespace DCL.Chat
 
             //We start processing messages once the view is ready
             chatMessagesBus.MessageAdded += OnChatBusMessageAdded;
-            chatHistory.MessageAdded += CreateChatEntry;
+            chatHistory.MessageAdded += CreateChatEntry; // TODO: This should not exist, the only way to add a chat message from outside should be by using the bus
 
             viewInstance!.InjectDependencies(viewDependencies);
             viewInstance!.Initialize(chatHistory.Channels, ChatChannel.NEARBY_CHANNEL, nametagsData.showChatBubbles, chatEntryConfiguration);
@@ -89,12 +88,37 @@ namespace DCL.Chat
             viewInstance.EmojiSelectionVisibilityChanged += OnViewEmojiSelectionVisibilityChanged;
             viewInstance.ChatBubbleVisibilityChanged += OnViewChatBubbleVisibilityChanged;
             viewInstance.InputSubmitted += OnViewInputSubmitted;
+            viewInstance.ScrollBottomReached += OnViewScrollBottomReached;
 
             OnFocus();
 
             // Intro message
             // TODO: Use localization systems here:
             chatHistory.AddMessage(ChatChannel.NEARBY_CHANNEL, ChatMessage.NewFromSystem("Type /help for available commands."));
+
+//            ChatChannel.ChannelId id = chatHistory.AddChannel(ChatChannel.ChatChannelType.User, "USER1");
+//            chatHistory.AddMessage(id, new ChatMessage("USER1", "user", "", false, false, "", true));
+//            id = chatHistory.AddChannel(ChatChannel.ChatChannelType.User, "USER2");
+//            chatHistory.AddMessage(id, new ChatMessage("USER2", "user", "", false, false, "", true));
+//            id = chatHistory.AddChannel(ChatChannel.ChatChannelType.User, "USER3");
+//            chatHistory.AddMessage(id, new ChatMessage("USER3", "user", "", false, false, "", true));
+//            id = chatHistory.AddChannel(ChatChannel.ChatChannelType.User, "USER4");
+//            chatHistory.AddMessage(id, new ChatMessage("USER4", "user", "", false, false, "", true));
+        }
+
+        //        private int current = 0;
+ //       private ChatChannel.ChannelId[] ids = new []
+ //       {
+ //           ChatChannel.NEARBY_CHANNEL,
+    //        new ChatChannel.ChannelId(ChatChannel.ChatChannelType.User, "USER1"),
+    //        new ChatChannel.ChannelId(ChatChannel.ChatChannelType.User, "USER2"),
+    //        new ChatChannel.ChannelId(ChatChannel.ChatChannelType.User, "USER3"),
+    //        new ChatChannel.ChannelId(ChatChannel.ChatChannelType.User, "USER4")
+   //     };
+
+        private void OnViewScrollBottomReached()
+        {
+            chatHistory.Channels[viewInstance.CurrentChannel]!.MarkAllMessagesAsRead();
         }
 
         protected override void OnBlur()
@@ -125,6 +149,8 @@ namespace DCL.Chat
             viewDependencies.DclInput.Shortcuts.ToggleNametags.performed -= OnToggleNametagsShortcutPerformed;
             viewDependencies.DclInput.Shortcuts.OpenChat.performed -= OnOpenChatShortcutPerformed;
             viewDependencies.DclInput.Shortcuts.OpenChatCommandLine.performed -= OnOpenChatCommandLineShortcutPerformed;
+
+            chatHistory.Channels[viewInstance!.CurrentChannel].MarkAllMessagesAsRead();
         }
 
         public override void Dispose()
@@ -139,6 +165,7 @@ namespace DCL.Chat
             viewInstance.EmojiSelectionVisibilityChanged -= OnViewEmojiSelectionVisibilityChanged;
             viewInstance.ChatBubbleVisibilityChanged -= ChatBubbleVisibilityChanged;
             viewInstance.InputSubmitted -= OnViewInputSubmitted;
+            viewInstance.ScrollBottomReached -= OnViewScrollBottomReached;
 
             viewDependencies.DclInput.UI.Click.performed -= OnUIClickPerformed;
             viewDependencies.DclInput.Shortcuts.ToggleNametags.performed -= OnToggleNametagsShortcutPerformed;
@@ -154,6 +181,8 @@ namespace DCL.Chat
 
         private void CreateChatEntry(ChatChannel channel, ChatMessage chatMessage)
         {
+            bool isSentByOwnUser = chatMessage is { SystemMessage: false, SentByOwnUser: true };
+
             // Chat bubble over the avatars
             if (chatMessage.SentByOwnUser == false && entityParticipantTable.TryGet(chatMessage.WalletAddress, out IReadOnlyEntityParticipantTable.Entry entry))
             {
@@ -161,11 +190,17 @@ namespace DCL.Chat
                 GenerateChatBubbleComponent(entity, chatMessage);
                 viewInstance!.PlayMessageReceivedSfx();
             }
-            else if (chatMessage is { SystemMessage: false, SentByOwnUser: true })
+            else if (isSentByOwnUser)
                 GenerateChatBubbleComponent(playerEntity, chatMessage);
+
+            if (viewInstance!.IsScrollAtBottom || isSentByOwnUser)
+                chatHistory.Channels[viewInstance.CurrentChannel].MarkAllMessagesAsRead();
 
             // New entry in the chat window
             viewInstance!.RefreshMessages();
+
+            if(isSentByOwnUser)
+                viewInstance!.ShowLastMessage();
         }
 
         private void GenerateChatBubbleComponent(Entity e, ChatMessage chatMessage)
@@ -232,12 +267,15 @@ namespace DCL.Chat
 
         private void OnToggleNametagsShortcutPerformed(InputAction.CallbackContext obj)
         {
+//            chatHistory.AddMessage(viewInstance!.CurrentChannel, new ChatMessage("NEW!", "Test", "", false, "", true));
             nametagsData.showNameTags = !nametagsData.showNameTags;
             viewInstance!.EnableChatBubblesVisibilityField = nametagsData.showNameTags;
         }
 
         private void OnUIClickPerformed(InputAction.CallbackContext obj)
         {
+//            current = (current + 1) % chatHistory.Channels.Count;
+//            viewInstance.CurrentChannel = ids[current];
             viewInstance!.Click();
         }
 

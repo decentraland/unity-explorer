@@ -24,6 +24,7 @@ namespace DCL.Chat
         public delegate void InputBoxFocusChangedDelegate(bool hasFocus);
         public delegate void EmojiSelectionVisibilityChangedDelegate(bool isVisible);
         public delegate void InputSubmittedDelegate(ChatChannel channel, string message, string origin);
+        public delegate void ScrollBottomReachedDelegate();
 
         [Header("Settings")]
         [Tooltip("The time it takes, in seconds, for the background of the chat window to fade-in/out when hovering with the mouse.")]
@@ -60,6 +61,12 @@ namespace DCL.Chat
 
         [SerializeField]
         private ChatMessageViewerElement chatMessageViewer;
+
+        [SerializeField]
+        private Button scrollToBottomButton;
+
+        [SerializeField]
+        private TMP_Text scrollToBottomNumberText;
 
         [Header("Emojis")]
 
@@ -139,6 +146,11 @@ namespace DCL.Chat
         /// </summary>
         public event Action<bool>? ChatBubbleVisibilityChanged;
 
+        /// <summary>
+        /// Raised when the user scrolls down the list to the bottom.
+        /// </summary>
+        public event ScrollBottomReachedDelegate ScrollBottomReached;
+
         private const string EMOJI_SUGGESTION_PATTERN = @":\w+";
         private const string EMOJI_TAG = "[emoji]";
         private const string ORIGIN = "chat";
@@ -172,6 +184,11 @@ namespace DCL.Chat
         }
 
         /// <summary>
+        /// Gets whether the scroll view is showing the bottom of the content, and it can't scroll down anymore.
+        /// </summary>
+        public bool IsScrollAtBottom => chatMessageViewer.IsScrollAtBottom;
+
+        /// <summary>
         /// Gets or sets whether the field that allows changing the visibility of the chat bubbles is enabled or not.
         /// </summary>
         public bool EnableChatBubblesVisibilityField
@@ -194,6 +211,15 @@ namespace DCL.Chat
             }
         }
 
+        /// <summary>
+        /// Gets or sets whether the Unread messages count (AKA scroll-to-bottom button) is visible or not.
+        /// </summary>
+        public bool IsUnreadMessagesCountVisible
+        {
+            get => scrollToBottomButton.gameObject.activeInHierarchy;
+            set => scrollToBottomButton.gameObject.SetActive(value);
+        }
+
         public void InjectDependencies(ViewDependencies dependencies)
         {
             viewDependencies = dependencies;
@@ -214,6 +240,8 @@ namespace DCL.Chat
             closeChatButton.onClick.AddListener(CloseChat);
             chatMessageViewer.Initialize(CalculateUsernameColor);
             chatMessageViewer.ChatMessageOptionsButtonClicked += OnChatMessageOptionsButtonClicked;
+            chatMessageViewer.ChatMessageViewerScrollPositionChanged += OnChatMessageViewerScrollPositionChanged;
+            scrollToBottomButton.onClick.AddListener(OnScrollToEndButtonClicked);
 
             chatBubblesToggle.IsSoundEnabled = false;
             chatBubblesToggle.Toggle.isOn = areChatBubblesVisible;
@@ -228,15 +256,23 @@ namespace DCL.Chat
             CurrentChannel = defaultChannelId;
         }
 
+        private void OnScrollToEndButtonClicked()
+        {
+            chatMessageViewer.ShowLastMessage(true);
+        }
+
+        /// <summary>
+        /// Gets or sets the chat channel to be displayed, using its Id.
+        /// </summary>
         public ChatChannel.ChannelId CurrentChannel
         {
-            get => currentChannel.Id;
+            get => currentChannel!.Id;
 
             set
             {
                 if (currentChannel == null || !currentChannel.Id.Equals(value))
                 {
-                    currentChannel = channels[value];
+                    currentChannel = channels![value];
 
                     chatMessageViewer.SetData(currentChannel.Messages);
                 }
@@ -251,6 +287,16 @@ namespace DCL.Chat
         {
             panelBackgroundCanvasGroup.gameObject.SetActive(show);
             chatMessageViewer.SetVisibility(show);
+
+            if (!show)
+            {
+                chatMessageViewer.HideSeparator();
+                IsUnreadMessagesCountVisible = false;
+            }
+            else
+            {
+                chatMessageViewer.ShowLastMessage();
+            }
         }
 
         /// <summary>
@@ -309,7 +355,17 @@ namespace DCL.Chat
         /// </summary>
         public void RefreshMessages()
         {
+            int pendingMessages = currentChannel!.Messages.Count - currentChannel.ReadMessages;
+
+            if(pendingMessages > 0 && !chatMessageViewer.IsSeparatorVisible)
+                chatMessageViewer.ShowSeparator(pendingMessages + 1);
+
             chatMessageViewer.RefreshMessages();
+
+            IsUnreadMessagesCountVisible = pendingMessages != 0;
+
+            if (pendingMessages > 0)
+                scrollToBottomNumberText.text = pendingMessages > 9 ? "+9" : pendingMessages.ToString();
         }
 
         /// <summary>
@@ -354,6 +410,12 @@ namespace DCL.Chat
         {
             UIAudioEventsBus.Instance.SendPlayAudioEvent(chatReceiveMessageAudio);
         }
+
+        /// <summary>
+        /// Moves the chat so it shows the last created message.
+        /// </summary>
+        public void ShowLastMessage()
+            => chatMessageViewer.ShowLastMessage();
 
         public void OnPointerEnter(PointerEventData eventData)
         {
@@ -503,7 +565,7 @@ namespace DCL.Chat
             inputField.text = string.Empty;
             inputField.ActivateInputField();
 
-            InputSubmitted?.Invoke(currentChannel, messageToSend, ORIGIN);
+            InputSubmitted?.Invoke(currentChannel!, messageToSend, ORIGIN);
         }
 
         private void OnToggleChatBubblesValueChanged(bool isToggled)
@@ -547,6 +609,16 @@ namespace DCL.Chat
 
         private Color CalculateUsernameColor(ChatMessage chatMessage) =>
             chatEntryConfiguration.GetNameColor(chatMessage.SenderValidatedName);
+
+        private void OnChatMessageViewerScrollPositionChanged(Vector2 scrollPosition)
+        {
+            if (chatMessageViewer.IsScrollAtBottom)
+            {
+                IsUnreadMessagesCountVisible = false;
+
+                ScrollBottomReached?.Invoke();
+            }
+        }
 
         #region Emojis
 
