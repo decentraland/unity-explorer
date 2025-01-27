@@ -13,7 +13,6 @@ namespace DCL.Diagnostics
 
         public void LogException(Exception exception, Object context)
         {
-            throw new NotImplementedException();
         }
     }
 
