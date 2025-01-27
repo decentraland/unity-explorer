@@ -104,6 +104,7 @@ namespace Global.Dynamic
             Entity playerEntity,
             ITexturesFuse texturesFuse,
             ISystemMemoryCap memoryCap,
+            UIDocument sceneUIRoot,
             CancellationToken ct
         ) =>
             await StaticContainer.CreateAsync(
@@ -126,6 +127,7 @@ namespace Global.Dynamic
                 EnableAnalytics,
                 bootstrapContainer.Analytics,
                 diskCache,
+                sceneUIRoot,
                 ct
             );
 
@@ -135,6 +137,7 @@ namespace Global.Dynamic
             DynamicSceneLoaderSettings settings,
             DynamicSettings dynamicSettings,
             UIDocument uiToolkitRoot,
+            UIDocument scenesUIRoot,
             UIDocument cursorRoot,
             AudioClipConfig backgroundMusic,
             WorldInfoTool worldInfoTool,
@@ -151,6 +154,7 @@ namespace Global.Dynamic
                 staticContainer,
                 scenePluginSettingsContainer,
                 uiToolkitRoot,
+                scenesUIRoot,
                 cursorRoot,
                 dynamicSettings,
                 bootstrapContainer.Web3Authenticator,

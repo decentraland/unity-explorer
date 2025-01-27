@@ -29,6 +29,7 @@ using ECS.StreamableLoading.Cache.Disk;
 using SceneRuntime.Factory.WebSceneSource;
 using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using UnityEngine.AddressableAssets;
+using UnityEngine.UIElements;
 
 namespace Global.Tests.PlayMode
 {
@@ -77,6 +78,7 @@ namespace Global.Tests.PlayMode
                 false,
                 Substitute.For<IAnalyticsController>(),
                 new IDiskCache.Fake(),
+                Substitute.For<UIDocument>(),
                 ct
             );
 

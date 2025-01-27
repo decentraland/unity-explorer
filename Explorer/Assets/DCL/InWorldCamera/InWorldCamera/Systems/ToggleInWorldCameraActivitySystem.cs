@@ -127,8 +127,11 @@ namespace DCL.InWorldCamera.Systems
                 debugContainerBuilder.IsVisible = wasDebugVisible;
 
             hudController.Hide();
-            mvcManager.SetAllViewsCanvasActive(except: hudController, true);
-            sceneUIRoot.rootVisualElement.parent.style.display = DisplayStyle.Flex;
+            World.Add(camera, new ToggleUIRequest()
+            {
+                Enable = true,
+                Except = hudController
+            });
 
             SwitchToThirdPersonCamera();
 
@@ -150,8 +153,12 @@ namespace DCL.InWorldCamera.Systems
             }
 
             hudController.Show();
-            mvcManager.SetAllViewsCanvasActive(except: hudController, false);
-            sceneUIRoot.rootVisualElement.parent.style.display = DisplayStyle.None;
+
+            World.Add(camera, new ToggleUIRequest
+            {
+                Enable = false,
+                Except = hudController
+            });
 
             SwitchToInWorldCamera();
 
