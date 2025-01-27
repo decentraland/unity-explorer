@@ -27,11 +27,17 @@ namespace DCL.ScenesDebug.ScenesConsistency.ReportLogs
             writer.WriteLine($"{DateTime.Now:HH:mm:ss} Result of logs: ");
 
             Application.logMessageReceivedThreaded += ApplicationOnlogMessageReceivedThreaded;
+            Application.logMessageReceived += ApplicationOnlogMessageReceived;
+        }
+
+        private void ApplicationOnlogMessageReceived(string condition, string stacktrace, LogType type)
+        {
+            // DO NOTHING!!!
         }
 
         private void ApplicationOnlogMessageReceivedThreaded(string condition, string stacktrace, LogType type)
         {
-            writer.WriteLine($"{DateTime.Now:HH:mm:ss} {type}: {condition} {stacktrace}");
+           // writer.WriteLine($"{DateTime.Now:HH:mm:ss} {type}: {condition} {stacktrace}");
         }
 
         public void Dispose()

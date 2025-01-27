@@ -6,6 +6,17 @@ using Object = UnityEngine.Object;
 
 namespace DCL.Diagnostics
 {
+    public class NullReportLogger : ILogHandler {
+        public void LogFormat(LogType logType, Object context, string format, params object[] args)
+        {
+        }
+
+        public void LogException(Exception exception, Object context)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
     /// <summary>
     ///     Provides an extended way for logging, overrides default Unity DebugLogHandler.
     /// </summary>
