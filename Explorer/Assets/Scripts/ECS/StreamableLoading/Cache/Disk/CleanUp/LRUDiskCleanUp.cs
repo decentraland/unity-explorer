@@ -16,7 +16,7 @@ namespace ECS.StreamableLoading.Cache.Disk.CleanUp
         /// </summary>
         private readonly FileSystemEnumerable<CacheFileInfo> files;
 
-        public LRUDiskCleanUp(CacheDirectory cacheDirectory, long maxCacheSizeBytes = 1024 ^ 3) //1GB
+        public LRUDiskCleanUp(CacheDirectory cacheDirectory, long maxCacheSizeBytes = 1024 * 1024 * 1024) //1GB
         {
             this.cacheDirectory = cacheDirectory;
             this.maxCacheSizeBytes = maxCacheSizeBytes;
