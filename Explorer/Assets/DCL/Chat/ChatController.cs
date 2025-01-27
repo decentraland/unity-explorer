@@ -95,26 +95,7 @@ namespace DCL.Chat
             // Intro message
             // TODO: Use localization systems here:
             chatHistory.AddMessage(ChatChannel.NEARBY_CHANNEL, ChatMessage.NewFromSystem("Type /help for available commands."));
-
-//            ChatChannel.ChannelId id = chatHistory.AddChannel(ChatChannel.ChatChannelType.User, "USER1");
-//            chatHistory.AddMessage(id, new ChatMessage("USER1", "user", "", false, false, "", true));
-//            id = chatHistory.AddChannel(ChatChannel.ChatChannelType.User, "USER2");
-//            chatHistory.AddMessage(id, new ChatMessage("USER2", "user", "", false, false, "", true));
-//            id = chatHistory.AddChannel(ChatChannel.ChatChannelType.User, "USER3");
-//            chatHistory.AddMessage(id, new ChatMessage("USER3", "user", "", false, false, "", true));
-//            id = chatHistory.AddChannel(ChatChannel.ChatChannelType.User, "USER4");
-//            chatHistory.AddMessage(id, new ChatMessage("USER4", "user", "", false, false, "", true));
         }
-
-//        private int current = 0;
- //       private ChatChannel.ChannelId[] ids = new []
- //       {
- //           ChatChannel.NEARBY_CHANNEL,
-    //        new ChatChannel.ChannelId(ChatChannel.ChatChannelType.User, "USER1"),
-    //        new ChatChannel.ChannelId(ChatChannel.ChatChannelType.User, "USER2"),
-    //        new ChatChannel.ChannelId(ChatChannel.ChatChannelType.User, "USER3"),
-    //        new ChatChannel.ChannelId(ChatChannel.ChatChannelType.User, "USER4")
-   //     };
 
         protected override void OnBlur()
         {
@@ -251,15 +232,12 @@ namespace DCL.Chat
 
         private void OnToggleNametagsShortcutPerformed(InputAction.CallbackContext obj)
         {
-//            chatHistory.AddMessage(viewInstance!.CurrentChannel, new ChatMessage("NEW!", "Test", "", false, false, "", true));
             nametagsData.showNameTags = !nametagsData.showNameTags;
             viewInstance!.EnableChatBubblesVisibilityField = nametagsData.showNameTags;
         }
 
         private void OnUIClickPerformed(InputAction.CallbackContext obj)
         {
-//            current = (current + 1) % chatHistory.Channels.Count;
-//            viewInstance.CurrentChannel = ids[current];
             viewInstance!.Click();
         }
 
