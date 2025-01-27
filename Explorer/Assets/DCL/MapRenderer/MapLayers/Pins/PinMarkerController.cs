@@ -21,6 +21,8 @@ namespace DCL.MapRenderer.MapLayers.Pins
 {
     internal class PinMarkerController : MapLayerControllerBase, IMapCullingListener<IPinMarker>, IMapLayerController, IZoomScalingLayer
     {
+        public bool ZoomBlocked { get; set; }
+
         internal delegate IPinMarker PinMarkerBuilder(
             IObjectPool<PinMarkerObject> objectsPool,
             IMapCullingController cullingController);
@@ -156,6 +158,9 @@ namespace DCL.MapRenderer.MapLayers.Pins
 
         public void ApplyCameraZoom(float baseZoom, float zoom, int zoomLevel)
         {
+            if (ZoomBlocked)
+                return;
+
             foreach (IPinMarker marker in markers.Values)
                 marker.SetZoom(coordsUtils.ParcelSize, baseZoom, zoom);
         }

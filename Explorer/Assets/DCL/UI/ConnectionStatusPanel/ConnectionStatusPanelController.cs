@@ -17,7 +17,7 @@ using Utility;
 
 namespace DCL.UI.ConnectionStatusPanel
 {
-    public partial class ConnectionStatusPanelController : ControllerBase<ConnectionStatusPanelView>
+    public class ConnectionStatusPanelController : ControllerBase<ConnectionStatusPanelView>
     {
         private readonly IUserInAppInitializationFlow userInAppInitializationFlow;
         private readonly IMVCManager mvcManager;

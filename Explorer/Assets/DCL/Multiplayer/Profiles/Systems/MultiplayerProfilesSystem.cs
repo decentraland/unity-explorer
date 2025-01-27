@@ -10,6 +10,7 @@ using DCL.Multiplayer.Profiles.Poses;
 using DCL.Multiplayer.Profiles.RemoteAnnouncements;
 using DCL.Multiplayer.Profiles.RemoteProfiles;
 using DCL.Multiplayer.Profiles.RemoveIntentions;
+using DCL.RealmNavigation;
 using DCL.UserInAppInitializationFlow;
 using ECS;
 using ECS.Abstract;
