@@ -1,19 +1,20 @@
 using DCL.Utilities;
 using SceneRunner.Scene;
 using System;
+using DCL.Ipfs;
 
 namespace ECS.SceneLifeCycle.CurrentScene
 {
     public class CurrentSceneInfo : ICurrentSceneInfo
     {
         private readonly ReactiveProperty<ICurrentSceneInfo.RunningStatus?> status = new (null);
-        private readonly ReactiveProperty<ICurrentSceneInfo.AssetBundleStatus?> assetBundleStatus = new (null);
+        private readonly ReactiveProperty<AssetBundleRegistryEnum?> assetBundleStatus = new (null);
 
 
         public bool IsPlayerStandingOnScene { get; private set; }
 
         public IReadonlyReactiveProperty<ICurrentSceneInfo.RunningStatus?> SceneStatus => status;
-        public IReadonlyReactiveProperty<ICurrentSceneInfo.AssetBundleStatus?> SceneAssetBundleStatus => assetBundleStatus;
+        public IReadonlyReactiveProperty<AssetBundleRegistryEnum?> SceneAssetBundleStatus => assetBundleStatus;
 
 
         public void Update(ISceneFacade? sceneFacade)
@@ -23,14 +24,12 @@ namespace ECS.SceneLifeCycle.CurrentScene
             assetBundleStatus.UpdateValue(AssetBundleStatusFrom(sceneFacade));
         }
 
-        private static ICurrentSceneInfo.AssetBundleStatus? AssetBundleStatusFrom(ISceneFacade? sceneFacade)
+        private static AssetBundleRegistryEnum? AssetBundleStatusFrom(ISceneFacade? sceneFacade)
         {
             if (sceneFacade == null)
                 return null;
 
-            return !string.IsNullOrEmpty(sceneFacade.SceneData.SceneEntityDefinition.status) && sceneFacade.SceneData.SceneEntityDefinition.status == "complete"
-                ? ICurrentSceneInfo.AssetBundleStatus.LATEST
-                : ICurrentSceneInfo.AssetBundleStatus.UPDATING;
+            return sceneFacade.SceneData.SceneEntityDefinition.assetBundleRegistryEnum;
         }
 
         private static ICurrentSceneInfo.RunningStatus? StatusFrom(ISceneFacade? sceneFacade)

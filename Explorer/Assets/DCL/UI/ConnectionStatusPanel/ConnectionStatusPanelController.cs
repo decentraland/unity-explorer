@@ -13,6 +13,7 @@ using MVC;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using DCL.Ipfs;
 using Utility;
 
 namespace DCL.UI.ConnectionStatusPanel
@@ -65,7 +66,7 @@ namespace DCL.UI.ConnectionStatusPanel
             Bind(roomsStatus.ConnectionQualityIsland, viewInstance.GlobalRoom);
         }
 
-        private void AssetBundleSceneStatusOnUpdate(ICurrentSceneInfo.AssetBundleStatus? obj)
+        private void AssetBundleSceneStatusOnUpdate(AssetBundleRegistryEnum? obj)
         {
             if (obj == null)
             {

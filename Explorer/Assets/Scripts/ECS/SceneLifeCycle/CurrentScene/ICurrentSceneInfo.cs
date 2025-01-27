@@ -1,3 +1,4 @@
+using DCL.Ipfs;
 using DCL.Utilities;
 
 namespace ECS.SceneLifeCycle.CurrentScene
@@ -10,18 +11,12 @@ namespace ECS.SceneLifeCycle.CurrentScene
             Crashed,
         }
 
-        enum AssetBundleStatus
-        {
-            LATEST,
-            UPDATING
-        }
-
         bool IsPlayerStandingOnScene { get; }
 
         /// <returns>it's null in a case the player is not standing on any scene</returns>
         IReadonlyReactiveProperty<RunningStatus?> SceneStatus { get; }
 
         /// <returns>it's null in a case the player is not standing on any scene</returns>
-        IReadonlyReactiveProperty<AssetBundleStatus?> SceneAssetBundleStatus { get; }
+        IReadonlyReactiveProperty<AssetBundleRegistryEnum?> SceneAssetBundleStatus { get; }
     }
 }

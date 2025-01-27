@@ -1,6 +1,7 @@
 using ECS.SceneLifeCycle.CurrentScene;
 using System;
 using System.Collections.Generic;
+using DCL.Ipfs;
 
 namespace DCL.UI.ConnectionStatusPanel.StatusEntry
 {
@@ -36,9 +37,9 @@ namespace DCL.UI.ConnectionStatusPanel.StatusEntry
             [ICurrentSceneInfo.RunningStatus.Good] = "Good", [ICurrentSceneInfo.RunningStatus.Crashed] = "Crashed"
         };
 
-        private static readonly IReadOnlyDictionary<ICurrentSceneInfo.AssetBundleStatus, string> CACHE_LATEST_VERSION_STATUS = new Dictionary<ICurrentSceneInfo.AssetBundleStatus, string>
+        private static readonly IReadOnlyDictionary<AssetBundleRegistryEnum, string> CACHE_LATEST_VERSION_STATUS = new Dictionary<AssetBundleRegistryEnum, string>
         {
-            [ICurrentSceneInfo.AssetBundleStatus.LATEST] = "Latest", [ICurrentSceneInfo.AssetBundleStatus.UPDATING] = "Updating"
+            [AssetBundleRegistryEnum.complete] = "Latest", [AssetBundleRegistryEnum.fallback] = "Updating"
         };
 
         public static void ShowStatus(this IStatusEntry statusEntry, IStatusEntry.Status status)
@@ -51,7 +52,7 @@ namespace DCL.UI.ConnectionStatusPanel.StatusEntry
             statusEntry.ShowStatus(CACHE_SCENE_STATUS[runningStatus]!);
         }
 
-        public static void ShowStatus(this IStatusEntry statusEntry, ICurrentSceneInfo.AssetBundleStatus runningStatus)
+        public static void ShowStatus(this IStatusEntry statusEntry, AssetBundleRegistryEnum runningStatus)
         {
             statusEntry.ShowStatus(CACHE_LATEST_VERSION_STATUS[runningStatus]!);
         }
