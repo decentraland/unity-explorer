@@ -306,7 +306,9 @@ namespace Global.Dynamic
                 debugBuilder,
                 loadingScreenTimeout,
                 loadingScreen,
-                localSceneDevelopment);
+                localSceneDevelopment,
+                bootstrapContainer.DecentralandUrlsSource,
+                staticContainer.FeatureFlagsCache);
 
             var terrainContainer = TerrainContainer.Create(staticContainer, realmContainer, dynamicWorldParams.EnableLandscape, localSceneDevelopment);
 
