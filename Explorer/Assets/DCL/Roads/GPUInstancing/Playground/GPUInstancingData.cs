@@ -65,10 +65,12 @@ namespace DCL.Roads.GPUInstancing.Playground
     [Serializable]
     public class MeshInstanceData : IEquatable<MeshInstanceData>
     {
-        public MeshRenderer Renderer;
+        // PerInstance data
         public Transform Transform;
         public Matrix4x4 LocalToRootMatrix;
 
+        // Shared data
+        public MeshRenderer Renderer;
         public Mesh SharedMesh;
 
         public bool ReceiveShadows;
@@ -76,6 +78,7 @@ namespace DCL.Roads.GPUInstancing.Playground
 
         public Material[] SharedMaterials;
 
+        // RenderParams are not Serializable, so that is why we save collected raw data and transition to RenderParams at runtime
         public GPUInstancedRenderer ToGPUInstancedRenderer() =>
             new (SharedMesh, SharedMaterials.Select(mat => new RenderParams(mat)
             {
@@ -84,6 +87,7 @@ namespace DCL.Roads.GPUInstancing.Playground
                 // ?? worldBounds = new Bounds(center: Vector3.zero, size: Vector3.one * 999999f), ?? what value ??
             }).ToArray());
 
+        // Equals when MeshFilter and MeshRenderer settings are same, but Transform could be different
         public bool Equals(MeshInstanceData other) =>
             other != null &&
             Equals(SharedMesh, other.SharedMesh) && // Mesh
