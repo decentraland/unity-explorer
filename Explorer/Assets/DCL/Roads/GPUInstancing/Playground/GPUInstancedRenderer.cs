@@ -11,7 +11,7 @@ namespace DCL.Roads.Playground
     public struct GPUInstancedRenderer : IEquatable<GPUInstancedRenderer>
     {
         public readonly Mesh Mesh;
-        public readonly RenderParams[] RenderParamsArray;
+        public readonly RenderParams[] RenderParamsArray; // array for submeshes
 
         public GPUInstancedRenderer(Mesh mesh, RenderParams[] renderParamsArray)
         {
