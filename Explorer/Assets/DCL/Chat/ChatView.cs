@@ -4,6 +4,7 @@ using DCL.Clipboard;
 using DCL.Emoji;
 using DCL.Input;
 using DCL.UI;
+using DCL.UI.InputFieldValidator;
 using MVC;
 using DG.Tweening;
 using SuperScrollView;
@@ -67,6 +68,9 @@ namespace DCL.Chat
         [FormerlySerializedAs("InputField")]
         [SerializeField]
         private TMP_InputField inputField;
+
+        [SerializeField]
+        private ValidatedInputFieldElement validatedInputField;
 
         [FormerlySerializedAs("CharacterCounter")]
         [SerializeField]
@@ -286,7 +290,7 @@ namespace DCL.Chat
             characterCounter.SetMaximumLength(inputField.characterLimit);
             characterCounter.gameObject.SetActive(false);
 
-            inputField.onValueChanged.AddListener(OnInputChanged);
+            validatedInputField.OnInputValidated += OnInputChanged;
             inputField.onSelect.AddListener(OnInputSelected);
             inputField.onDeselect.AddListener(OnInputDeselected);
             closeChatButton.onClick.AddListener(CloseChat);
@@ -580,7 +584,13 @@ namespace DCL.Chat
             int caretPosition = inputField.stringPosition;
             string textToInsert = pastedText.Length > remainingSpace ? pastedText[..remainingSpace] : pastedText;
 
-            inputField.text = inputField.text.Insert(caretPosition, textToInsert);
+            //When pasting we need to add each character individually to properly parse the pasted text as it relies on a per-character validation
+            foreach (char c in textToInsert)
+            {
+                inputField.text = inputField.text.Insert(caretPosition, c.ToString());
+                caretPosition++;
+            }
+
             inputField.stringPosition += textToInsert.Length;
             inputField.ActivateInputField();
             characterCounter.SetCharacterCount(inputField.text.Length);

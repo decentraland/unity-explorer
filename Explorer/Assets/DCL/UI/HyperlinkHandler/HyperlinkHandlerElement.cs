@@ -17,6 +17,7 @@ namespace DCL.UI.HyperlinkHandler
         [SerializeField] private TMP_StyleSheet styleSheet;
 
         private readonly Dictionary<string, Action<string>> linkHandlers = new ();
+        private readonly StringBuilder stringBuilder = new ();
         private ICursor cursor;
 
         private ViewDependencies dependencies;
@@ -26,17 +27,11 @@ namespace DCL.UI.HyperlinkHandler
         private int lastHighlightedIndex = -1;
         private string originalText;
         private TMP_Style selectedStyle;
-        private StringBuilder stringBuilder;
 
         private void Awake()
         {
             AddLinkHandlers();
             selectedStyle = styleSheet.GetStyle("LinkSelected");
-        }
-
-        private void OnEnable()
-        {
-            //LINKS SHOULD BE FORMATTED AND VALIDATED FROM WHEREVER THEY COME?
         }
 
         public void OnPointerClick(PointerEventData eventData)
@@ -63,8 +58,6 @@ namespace DCL.UI.HyperlinkHandler
             dependencies.Cursor.SetStyle(CursorStyle.Normal);
             isHovering = false;
             isHighlighting = false;
-
-            //restore pointer and text
         }
 
         public void OnPointerMove(PointerEventData eventData)
@@ -119,7 +112,10 @@ namespace DCL.UI.HyperlinkHandler
 
         private void HandleURLLink(string url)
         {
-            //if URL doesn't have https: at beginning, add it here
+            //if URL doesn't have http:// at beginning we add it here
+            if (!url.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+                url = "https://" + url;
+
             OpenUrlAsync(url).Forget();
         }
 
@@ -158,7 +154,7 @@ namespace DCL.UI.HyperlinkHandler
 
             TMP_LinkInfo linkInfo = textComponent.textInfo.linkInfo[linkIndex];
 
-            int startIndex = linkInfo.linkIdFirstCharacterIndex + linkInfo.linkIdLength + 2;
+            int startIndex = linkInfo.linkIdFirstCharacterIndex + linkInfo.linkIdLength + 1;
             int endIndex = startIndex + linkInfo.linkTextLength;
 
             originalText = textComponent.text;
