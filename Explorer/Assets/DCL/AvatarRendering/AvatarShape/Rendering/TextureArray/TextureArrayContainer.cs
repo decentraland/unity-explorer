@@ -32,7 +32,6 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
         public TextureArraySlot?[] SetTexturesFromOriginalMaterial(Material originalMaterial, Material targetMaterial)
         {
             TextureArraySlot?[] results = slotsPool.Get();
-            // if (!originalMaterial.IsKeywordEnabled("_DCL_TEXTURE_ARRAYS")) return results;
 
             for (var i = 0; i < mappings.Count; i++)
             {

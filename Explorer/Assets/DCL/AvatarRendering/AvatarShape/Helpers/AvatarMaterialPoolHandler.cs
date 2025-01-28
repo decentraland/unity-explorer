@@ -24,9 +24,6 @@ namespace DCL.AvatarRendering.AvatarShape
 
             foreach (Material material in materials)
             {
-                // if (material.shader.name == TextureArrayConstants.TOON_SHADER)
-                //     material.DisableKeyword("_DCL_TEXTURE_ARRAYS");
-
                 var textureArrayContainer = textureArrayContainerFactory.Create(material.shader, DEFAULT_RESOLUTIONS);
 
                 //Create the pool
