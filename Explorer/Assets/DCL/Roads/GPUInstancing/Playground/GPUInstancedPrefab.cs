@@ -9,12 +9,16 @@ namespace DCL.Roads.GPUInstancing.Playground
 {
     public class GPUInstancedPrefab : MonoBehaviour
     {
-        [SerializeField]
-        public List<GPUInstancedMesh> GPUInstancedMeshes;
+        [SerializeField] public List<GPUInstancedMesh> InstancedMeshes;
+        [SerializeField, Tooltip("for RenderMeshIndirect")] public List<GPUInstancedMesh> IndirectInstancedMeshes;
+        [SerializeField, Tooltip("for RenderMeshInstanced")] public List<GPUInstancedMesh> DirectInstancedMeshes;
+
+        [SerializeField] private Shader indirectShader;
 
         public MeshInstanceData[] Meshes;
         public LODGroupData[] LODGroups;
 
+        // Call it not in prefab mode, but from Asset in Project window
         [ContextMenu(nameof(CollectSelfData))]
         public void CollectSelfData()
         {
@@ -50,6 +54,12 @@ namespace DCL.Roads.GPUInstancing.Playground
             }
         }
 
+        private bool IsMyShader(Material[] materials)
+        {
+            if (indirectShader == null || materials == null) return false;
+            return materials.Any(m => m != null && m.shader == indirectShader);
+        }
+
         private void CollectDataFromPrefabAsset()
         {
             var tempMeshToMatrices = new Dictionary<MeshInstanceData, HashSet<PerInstanceBuffer>>();
@@ -57,9 +67,26 @@ namespace DCL.Roads.GPUInstancing.Playground
             Meshes = CollectStandaloneMeshesData(tempMeshToMatrices);
             LODGroups = CollectLODGroupDatas(tempMeshToMatrices);
 
-            GPUInstancedMeshes = new List<GPUInstancedMesh>(tempMeshToMatrices.Keys.Count);
+            InstancedMeshes = new List<GPUInstancedMesh>(tempMeshToMatrices.Keys.Count);
+            IndirectInstancedMeshes = new List<GPUInstancedMesh>(tempMeshToMatrices.Keys.Count);
+            DirectInstancedMeshes   = new List<GPUInstancedMesh>(tempMeshToMatrices.Keys.Count);
+
             foreach (KeyValuePair<MeshInstanceData, HashSet<PerInstanceBuffer>> kvp in tempMeshToMatrices)
-                GPUInstancedMeshes.Add(new GPUInstancedMesh { meshInstanceData = kvp.Key, PerInstancesData = kvp.Value.ToArray() });
+            {
+                var meshInstance = new GPUInstancedMesh
+                {
+                    meshInstanceData = kvp.Key,
+                    PerInstancesData = kvp.Value.ToArray()
+                };
+
+                // Optionally, if there is a need for unified view of all GPU-instanced meshes
+                InstancedMeshes.Add(meshInstance);
+
+                if (IsMyShader(kvp.Key.SharedMaterials))
+                    IndirectInstancedMeshes.Add(meshInstance);
+                else
+                    DirectInstancedMeshes.Add(meshInstance);
+            }
         }
 
         private MeshInstanceData[] CollectStandaloneMeshesData(Dictionary<MeshInstanceData, HashSet<PerInstanceBuffer>> tempMeshToMatrices)

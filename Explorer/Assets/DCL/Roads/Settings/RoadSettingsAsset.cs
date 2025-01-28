@@ -49,7 +49,7 @@ namespace DCL.Roads.Settings
 
                 var roadRoot = Matrix4x4.TRS(roadDescription.RoadCoordinate.ParcelToPositionFlat() + ParcelMathHelper.RoadPivotDeviation, roadDescription.Rotation.SelfOrIdentity(), Vector3.one);
 
-                foreach (GPUInstancedMesh meshInstance in prefab.GPUInstancedMeshes)
+                foreach (GPUInstancedMesh meshInstance in prefab.InstancedMeshes)
                 {
                     if (!tempMeshToMatrices.TryGetValue(meshInstance.meshInstanceData, out HashSet<PerInstanceBuffer> matrices))
                     {

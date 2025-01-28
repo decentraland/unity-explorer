@@ -1,10 +1,10 @@
 ﻿using DCL.Roads.GPUInstancing.Playground;
 using DCL.Roads.Settings;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
 using UnityEngine;
+using UnityEngine.Rendering;
 using Utility;
 
 namespace DCL.Roads.Playground
@@ -40,6 +40,7 @@ namespace DCL.Roads.Playground
 
         private GPUInstancedRenderer[] gpuInstancedRenderers;
         private GPUInstancedPrefab currentPrefab;
+        public Shader shader;
 
         private void OnDisable()
         {
@@ -63,22 +64,25 @@ namespace DCL.Roads.Playground
             if (currentPrefab.name != gpuInstancedPrefab.name)
             {
                 currentPrefab = gpuInstancedPrefab;
-                AdjustBuffers(currentPrefab);
+                AdjustBuffers(currentPrefab.IndirectInstancedMeshes);
             }
 
             if (UseIndirect)
+            {
                 RenderMeshesIndirectAll();
+                RenderMeshesInstanced(gpuInstancedPrefab.DirectInstancedMeshes);
+            }
             else
-                RenderMeshesInstanced(gpuInstancedPrefab.GPUInstancedMeshes);
+                RenderMeshesInstanced(gpuInstancedPrefab.InstancedMeshes);
         }
 
-        private void AdjustBuffers(GPUInstancedPrefab gpuInstancedPrefab)
+        private void AdjustBuffers(List<GPUInstancedMesh> gpuInstancedMeshes)
         {
             // Calculate total instances and commands across all meshes
             var totalInstances = 0;
             var totalCommands = 0;
 
-            foreach (var mesh in gpuInstancedPrefab.GPUInstancedMeshes)
+            foreach (var mesh in gpuInstancedMeshes)
             {
                 totalInstances += mesh.PerInstancesData?.Length ?? 0;
                 totalCommands += mesh.meshInstanceData.ToGPUInstancedRenderer().RenderParamsArray.Length;
@@ -86,10 +90,13 @@ namespace DCL.Roads.Playground
 
             // Create buffers once
             drawArgsBuffer?.Release();
+            instanceBuffer?.Release();
+
+            if(totalCommands == 0) return;
+
             drawArgsBuffer = new GraphicsBuffer(GraphicsBuffer.Target.IndirectArguments, totalCommands, GraphicsBuffer.IndirectDrawIndexedArgs.size);
             commandData = new GraphicsBuffer.IndirectDrawIndexedArgs[totalCommands];
 
-            instanceBuffer?.Release();
             instanceBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, totalInstances, Marshal.SizeOf(typeof(PerInstanceBuffer)));
 
             // Set instance data
@@ -97,34 +104,33 @@ namespace DCL.Roads.Playground
                 ? Matrix4x4.TRS(Descriptions[0].RoadCoordinate.ParcelToPositionFlat() + ParcelMathHelper.RoadPivotDeviation, Descriptions[0].Rotation.SelfOrIdentity(), Vector3.one)
                 : Matrix4x4.TRS(Vector3.zero, Quaternion.identity, Vector3.one);
 
-            PrepareForRenderMeshesIndirect(currentPrefab, baseMatrix);
+            PrepareForRenderMeshesIndirect(gpuInstancedMeshes, baseMatrix);
         }
 
-        private void PrepareForRenderMeshesIndirect(GPUInstancedPrefab gpuInstancedPrefab, Matrix4x4 baseMatrix)
+        private void PrepareForRenderMeshesIndirect(List<GPUInstancedMesh> gpuInstancedMeshes, Matrix4x4 baseMatrix)
         {
             var currentInstanceOffset = 0;
             var currentCommandIndex = 0;
 
-            gpuInstancedRenderers = new GPUInstancedRenderer[gpuInstancedPrefab.GPUInstancedMeshes.Count];
+            gpuInstancedRenderers = new GPUInstancedRenderer[gpuInstancedMeshes.Count];
 
-            for (var id = 0; id < gpuInstancedPrefab.GPUInstancedMeshes.Count; id++)
+            for (var id = 0; id < gpuInstancedMeshes.Count; id++)
             {
-                GPUInstancedMesh gpuInstancedMesh = gpuInstancedPrefab.GPUInstancedMeshes[id];
+                GPUInstancedMesh gpuInstancedMesh = gpuInstancedMeshes[id];
                 var gpuInstancedRenderer = gpuInstancedMesh.meshInstanceData.ToGPUInstancedRenderer();
 
                 int submeshCount = gpuInstancedRenderer.RenderParamsArray.Length;
                 int instanceCount = gpuInstancedMesh.PerInstancesData?.Length ?? 0;
 
-                PerInstanceBuffer[] shiftedTRS = gpuInstancedMesh.PerInstancesData;
+                // PerInstanceBuffer[] shiftedTRS = gpuInstancedMesh.PerInstancesData;
+                // for (var i = 0; i < shiftedTRS.Length; i++)
+                // {
+                //     PerInstanceBuffer pid = shiftedTRS[i];
+                //     pid.instMatrix = baseMatrix * pid.instMatrix;
+                //     shiftedTRS[i] = pid;
+                // }
 
-                for (var i = 0; i < shiftedTRS.Length; i++)
-                {
-                    PerInstanceBuffer pid = shiftedTRS[i];
-                    pid.instMatrix = baseMatrix * pid.instMatrix;
-                    shiftedTRS[i] = pid;
-                }
-
-                instanceBuffer.SetData(shiftedTRS, managedBufferStartIndex: 0, graphicsBufferStartIndex: currentInstanceOffset, instanceCount);
+                instanceBuffer.SetData(gpuInstancedMesh.PerInstancesData, managedBufferStartIndex: 0, graphicsBufferStartIndex: currentInstanceOffset, instanceCount);
 
                 // Set commands and render
                 for (var submeshIndex = 0; submeshIndex < submeshCount; submeshIndex++)
@@ -140,6 +146,7 @@ namespace DCL.Roads.Playground
                     gpuInstancedRenderer.RenderParamsArray[submeshIndex].matProps = new MaterialPropertyBlock();
                     gpuInstancedRenderer.RenderParamsArray[submeshIndex].matProps.SetInt("_StartInstance", currentInstanceOffset);
                     gpuInstancedRenderer.RenderParamsArray[submeshIndex].matProps.SetBuffer("_PerInstanceBuffer", instanceBuffer);
+                    gpuInstancedRenderer.RenderParamsArray[submeshIndex].material.EnableKeyword(new LocalKeyword(shader, "_GPU_INSTANCER_BATCHER"));
 
                     currentCommandIndex++;
                 }
@@ -154,10 +161,9 @@ namespace DCL.Roads.Playground
             for (var commandId = 0; commandId < gpuInstancedRenderers.Length; commandId++)
             {
                 ref GPUInstancedRenderer gpuInstancedRenderer = ref gpuInstancedRenderers[commandId];
-
                 for (var index = 0; index < gpuInstancedRenderer.RenderParamsArray.Length; index++)
                 {
-                    ref var renderParams = ref gpuInstancedRenderer.RenderParamsArray[index];
+                    ref RenderParams renderParams = ref gpuInstancedRenderer.RenderParamsArray[index];
                     Graphics.RenderMeshIndirect(renderParams, gpuInstancedRenderer.Mesh, drawArgsBuffer, commandCount: 1, commandId);
                 }
             }
@@ -169,7 +175,7 @@ namespace DCL.Roads.Playground
             int totalInstances = 0;
             int totalCommands = 0;
 
-            foreach (var mesh in prefab.GPUInstancedMeshes)
+            foreach (var mesh in prefab.InstancedMeshes)
             {
                 totalInstances += mesh.PerInstancesData?.Length ?? 0;
                 totalCommands += mesh.meshInstanceData.ToGPUInstancedRenderer().RenderParamsArray.Length;
@@ -191,7 +197,7 @@ namespace DCL.Roads.Playground
                 ? Matrix4x4.TRS(Descriptions[0].RoadCoordinate.ParcelToPositionFlat() + ParcelMathHelper.RoadPivotDeviation, Descriptions[0].Rotation.SelfOrIdentity(), Vector3.one)
                 : Matrix4x4.TRS(Vector3.zero, Quaternion.identity, Vector3.one);
 
-            foreach (var mesh in prefab.GPUInstancedMeshes)
+            foreach (var mesh in prefab.InstancedMeshes)
             {
                 var instancedRenderer = mesh.meshInstanceData.ToGPUInstancedRenderer();
                 int submeshCount = instancedRenderer.RenderParamsArray.Length;

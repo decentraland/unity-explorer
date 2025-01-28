@@ -18,7 +18,7 @@ namespace DCL.Roads.GPUInstancing.Playground
     public struct PerInstanceBuffer : IEquatable<PerInstanceBuffer>
     {
         public Matrix4x4 instMatrix;
-        public Vector4 instColourTint;
+        public Vector3 instColourTint;
 
         public bool Equals(PerInstanceBuffer other) =>
             instMatrix.Equals(other.instMatrix) && instColourTint.Equals(other.instColourTint);
