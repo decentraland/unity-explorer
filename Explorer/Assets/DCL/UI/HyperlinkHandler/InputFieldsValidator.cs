@@ -31,9 +31,9 @@ namespace DCL.UI.InputFieldValidator
 
             text = ProcessWord(text);
 
-            int lenghtDifference = text.Length - textLength;
+            int lenghtDifference = textLength - text.Length;
 
-            pos = pos + lenghtDifference;
+            pos  = pos + lenghtDifference;
         }
 
         public override char Validate(ref string text, ref int pos, char ch)

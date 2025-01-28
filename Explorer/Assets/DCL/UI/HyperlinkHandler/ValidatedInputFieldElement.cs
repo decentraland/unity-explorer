@@ -26,6 +26,7 @@ namespace DCL.UI.InputFieldValidator
             {
                 int position = inputField.stringPosition;
                 fieldsValidator.ValidateOnBackspace(ref text, ref position);
+                inputField.text = text;
                 inputField.stringPosition = position;
             }
 

@@ -902,6 +902,7 @@ MonoBehaviour:
   emojiPanel: {fileID: 8642591472055175998}
   emojiSuggestionPanel: {fileID: 5472059768468074674}
   inputField: {fileID: 5622104160664987093}
+  validatedInputField: {fileID: 3471475428591990870}
   characterCounter: {fileID: 5274648269416443391}
   panelBackgroundCanvasGroup: {fileID: 4742269820946521976}
   scrollbarCanvasGroup: {fileID: 3440437672233669333}
@@ -1023,6 +1024,17 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 1533203949891575784, guid: 754fd4e2bb7828240808af9ce37feb93, type: 3}
   m_PrefabInstance: {fileID: 1890474067062928347}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &3471475428591990870 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 3031336685803096973, guid: 754fd4e2bb7828240808af9ce37feb93, type: 3}
+  m_PrefabInstance: {fileID: 1890474067062928347}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7205abfc5a5d4130814dc60ba9ec54de, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!114 &5274648269416443391 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 5985002989317627428, guid: 754fd4e2bb7828240808af9ce37feb93, type: 3}

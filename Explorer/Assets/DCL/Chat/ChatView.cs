@@ -1,8 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
-using DCL.Clipboard;
 using DCL.Emoji;
-using DCL.Input;
 using DCL.UI;
 using DCL.UI.InputFieldValidator;
 using MVC;
@@ -290,7 +288,6 @@ namespace DCL.Chat
             characterCounter.SetMaximumLength(inputField.characterLimit);
             characterCounter.gameObject.SetActive(false);
 
-            validatedInputField.OnInputValidated += OnInputChanged;
             inputField.onSelect.AddListener(OnInputSelected);
             inputField.onDeselect.AddListener(OnInputDeselected);
             closeChatButton.onClick.AddListener(CloseChat);
@@ -305,6 +302,7 @@ namespace DCL.Chat
 
             viewDependencies.DclInput.UI.RightClick.performed += OnRightClickRegistered;
             closePopupTask = new UniTaskCompletionSource();
+            validatedInputField.OnInputValidated += OnInputChanged;
 
             SetMessages(chatMessages);
         }
