@@ -41,6 +41,7 @@ using SceneRunner.Mapping;
 using System.Collections.Generic;
 using System.Threading;
 using DCL.PerformanceAndDiagnostics.Analytics;
+using DCL.RealmNavigation;
 using DCL.UserInAppInitializationFlow;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Textures;
