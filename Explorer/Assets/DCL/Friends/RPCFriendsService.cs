@@ -144,7 +144,7 @@ namespace DCL.Friends
             {
                 Pagination = new Pagination
                 {
-                    Offset = (pageNum - 1) * pageSize,
+                    Offset = pageNum * pageSize,
                     Limit = pageSize,
                 },
             };
@@ -169,7 +169,7 @@ namespace DCL.Friends
             {
                 Pagination = new Pagination
                 {
-                    Offset = (pageNum - 1) * pageSize,
+                    Offset = pageNum * pageSize,
                     Limit = pageSize,
                 },
                 User = new User
@@ -407,7 +407,7 @@ namespace DCL.Friends
             {
                 Pagination = new Pagination
                 {
-                    Offset = (pageNum - 1) * pageSize,
+                    Offset = pageNum * pageSize,
                     Limit = pageSize,
                 },
             };
@@ -439,7 +439,7 @@ namespace DCL.Friends
                     throw new Exception($"Cannot fetch friend requests {procedureName} {response.ResponseCase}");
             }
 
-            return new PaginatedFriendRequestsResult(friendRequestsBuffer, response.PaginationData.Total);
+            return new PaginatedFriendRequestsResult(friendRequestsBuffer, response.PaginationData?.Total ?? 0);
         }
 
         private async UniTask<UpsertFriendshipResponse.Types.Accepted> UpdateFriendshipAsync(

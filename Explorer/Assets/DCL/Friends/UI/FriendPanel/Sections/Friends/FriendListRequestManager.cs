@@ -19,9 +19,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         private readonly IFriendsEventBus friendEventBus;
         private readonly IProfileRepository profileRepository;
         private readonly LoopListView2 loopListView;
-
-        private List<FriendProfile> friends = new ();
-        private CancellationTokenSource addFriendProfileCts = new ();
+        private readonly List<FriendProfile> friends = new ();
+        private readonly CancellationTokenSource addFriendProfileCts = new ();
 
         public event Action<FriendProfile, Vector2, FriendListUserView>? ContextMenuClicked;
 
@@ -76,11 +75,15 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 
         protected override async UniTask<int> FetchDataAsync(int pageNumber, int pageSize, CancellationToken ct)
         {
-            // using PaginatedFriendsResult result = await friendsService.GetFriendsAsync(pageNumber, pageSize, ct);
-            //
-            // friends.AddRange(result.Friends);
-            //
-            // return result.TotalAmount;
+            using PaginatedFriendsResult result = await friendsService.GetFriendsAsync(pageNumber, pageSize, ct);
+
+            foreach (FriendProfile friend in result.Friends)
+            {
+                if (friends.Contains(friend)) continue;
+                friends.Add(friend);
+            }
+
+            return result.TotalAmount;
             return FetchMockData();
         }
 

@@ -5,10 +5,10 @@ namespace DCL.Friends
 {
     public class FriendProfile
     {
-        public Web3Address Address { get; private set; }
-        public string Name { get; private set; }
-        public bool HasClaimedName { get; private set; }
-        public URLAddress FacePictureUrl { get; private set; }
+        public Web3Address Address { get; }
+        public string Name { get; }
+        public bool HasClaimedName { get; }
+        public URLAddress FacePictureUrl { get; }
 
         public FriendProfile(Web3Address address, string name, bool hasClaimedName, URLAddress facePictureUrl)
         {
@@ -17,5 +17,19 @@ namespace DCL.Friends
             HasClaimedName = hasClaimedName;
             FacePictureUrl = facePictureUrl;
         }
+
+        private bool Equals(FriendProfile other) =>
+            Address.Equals(other.Address);
+
+        public override bool Equals(object? obj)
+        {
+            if (ReferenceEquals(null, obj)) return false;
+            if (ReferenceEquals(this, obj)) return true;
+            if (obj.GetType() != this.GetType()) return false;
+            return Equals((FriendProfile) obj);
+        }
+
+        public override int GetHashCode() =>
+            Address.GetHashCode();
     }
 }
