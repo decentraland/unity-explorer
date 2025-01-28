@@ -12,6 +12,7 @@ using DCL.Input;
 using DCL.Input.Component;
 using DCL.InWorldCamera.Settings;
 using DCL.InWorldCamera.UI;
+using DCL.Nametags;
 using ECS.Abstract;
 using MVC;
 using UnityEngine;
@@ -37,6 +38,7 @@ namespace DCL.InWorldCamera.Systems
         private readonly IMVCManager mvcManager;
         private readonly DCLInput.InWorldCameraActions inputSchema;
         private readonly UIDocument sceneUIRoot;
+        private readonly NametagsData nametagsData;
 
         private SingleInstanceEntity camera;
         private SingleInstanceEntity inputMap;
@@ -54,7 +56,8 @@ namespace DCL.InWorldCamera.Systems
             ICursor cursor,
             IMVCManager mvcManager,
             DCLInput.InWorldCameraActions inputSchema,
-            UIDocument sceneUIRoot) : base(world)
+            UIDocument sceneUIRoot,
+            NametagsData nametagsData) : base(world)
         {
             this.settings = settings;
             this.hudController = hudController;
@@ -64,6 +67,7 @@ namespace DCL.InWorldCamera.Systems
             this.mvcManager = mvcManager;
             this.inputSchema = inputSchema;
             this.sceneUIRoot = sceneUIRoot;
+            this.nametagsData = nametagsData;
 
             behindUpOffset = Vector3.up * settings.BehindUpOffset;
         }
@@ -88,6 +92,9 @@ namespace DCL.InWorldCamera.Systems
 
                 if (inputSchema.ShowHide.triggered)
                     hudController.ToggleVisibility();
+
+                if(inputSchema.ToggleNametags.triggered)
+                    nametagsData.showNameTags = !nametagsData.showNameTags;
             }
 
             if (World.TryGet(camera, out ToggleInWorldCameraRequest request))

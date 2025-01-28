@@ -744,7 +744,8 @@ namespace Global.Dynamic
                     mainUIView.SidebarView.EnsureNotNull().InWorldCameraButton,
                     dynamicWorldDependencies.RootUIDocument,
                     globalWorld,
-                    debugBuilder));
+                    debugBuilder,
+                    nametagsData));
 
             if (dynamicWorldParams.EnableAnalytics)
                 globalPlugins.Add(new AnalyticsPlugin(
