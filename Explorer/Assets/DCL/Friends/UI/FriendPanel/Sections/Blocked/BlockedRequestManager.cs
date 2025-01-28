@@ -13,11 +13,11 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Blocked
         private readonly IProfileRepository profileRepository;
         private readonly IWeb3IdentityCache web3IdentityCache;
 
-        private Profile? userProfile;
-        private List<Profile> blockedProfiles = new ();
+        private FriendProfile? userProfile;
+        private List<FriendProfile> blockedProfiles = new ();
 
-        public event Action<Profile>? UnblockClicked;
-        public event Action<Profile>? ContextMenuClicked;
+        public event Action<FriendProfile>? UnblockClicked;
+        public event Action<FriendProfile>? ContextMenuClicked;
 
         public BlockedRequestManager(IProfileRepository profileRepository,
             IWeb3IdentityCache web3IdentityCache,
@@ -33,7 +33,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Blocked
         public override int GetCollectionCount() =>
             blockedProfiles.Count;
 
-        protected override Profile GetCollectionElement(int index) =>
+        protected override FriendProfile GetCollectionElement(int index) =>
             blockedProfiles[index];
 
         protected override void CustomiseElement(BlockedUserView elementView, int index)
@@ -47,19 +47,19 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Blocked
 
         protected override async UniTask<int> FetchDataAsync(int pageNumber, int pageSize, CancellationToken ct)
         {
-            userProfile = await profileRepository.GetAsync(web3IdentityCache.Identity?.Address, ct);
+            // userProfile = await profileRepository.GetAsync(web3IdentityCache.Identity?.Address, ct);
+            //
+            // if (userProfile == null)
+            //     throw new Exception($"Couldn't fetch user own profile for address {web3IdentityCache.Identity?.Address}");
+            //
+            // foreach (string blockedUserId in userProfile!.Blocked)
+            // {
+            //     Profile? blockedProfile = await profileRepository.GetAsync(blockedUserId, ct);
+            //     if (blockedProfile != null)
+            //         blockedProfiles.Add(blockedProfile);
+            // }
 
-            if (userProfile == null)
-                throw new Exception($"Couldn't fetch user own profile for address {web3IdentityCache.Identity?.Address}");
-
-            foreach (string blockedUserId in userProfile!.Blocked)
-            {
-                Profile? blockedProfile = await profileRepository.GetAsync(blockedUserId, ct);
-                if (blockedProfile != null)
-                    blockedProfiles.Add(blockedProfile);
-            }
-
-            return userProfile!.Blocked.Count;
+            return 0;
         }
 
         protected override void ResetCollection() =>

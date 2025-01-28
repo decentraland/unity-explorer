@@ -1,4 +1,3 @@
-using DCL.Profiles;
 using DCL.WebRequests;
 using System;
 using TMPro;
@@ -25,7 +24,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Blocked
             }
         }
 
-        public override void Configure(Profile profile, IWebRequestController webRequestController, IProfileThumbnailCache profileThumbnailCache)
+        public override void Configure(FriendProfile profile, IWebRequestController webRequestController, IProfileThumbnailCache profileThumbnailCache)
         {
             buttons = new[] { UnblockButton, ContextMenuButton };
             base.Configure(profile, webRequestController, profileThumbnailCache);

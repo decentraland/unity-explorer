@@ -1,5 +1,4 @@
 using Cysharp.Threading.Tasks;
-using DCL.Profiles;
 using DCL.Web3;
 using DCL.Web3.Identities;
 using SuperScrollView;
@@ -47,13 +46,13 @@ namespace DCL.Friends.UI.FriendPanel.Sections
         private LoopListViewItem2 OnGetItemByIndex(LoopListView2 loopListView, int index) =>
             requestManager.GetLoopListItemByIndex(loopListView, index);
 
-        protected abstract void ElementClicked(Profile profile);
+        protected abstract void ElementClicked(FriendProfile profile);
 
         private void Enable()
         {
             previousWeb3Identity ??= web3IdentityCache.Identity?.Address;
 
-            if (previousWeb3Identity != web3IdentityCache.Identity?.Address)
+            if (!previousWeb3Identity.Equals(web3IdentityCache.Identity?.Address))
             {
                 previousWeb3Identity = web3IdentityCache.Identity?.Address;
                 requestManager.Reset();

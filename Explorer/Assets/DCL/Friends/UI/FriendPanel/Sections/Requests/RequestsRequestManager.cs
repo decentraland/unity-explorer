@@ -1,5 +1,7 @@
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Profiles;
+using DCL.Web3;
 using DCL.WebRequests;
 using SuperScrollView;
 using System;
@@ -28,7 +30,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
 
         public event Action<FriendRequest>? DeleteRequestClicked;
         public event Action<FriendRequest>? AcceptRequestClicked;
-        public event Action<Profile, Vector2, RequestUserView>? ContextMenuClicked;
+        public event Action<FriendProfile, Vector2, RequestUserView>? ContextMenuClicked;
         public event Action<FriendRequest>? RequestClicked;
 
         public RequestsRequestManager(IFriendsService friendsService,
@@ -92,15 +94,11 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
         public override int GetSecondCollectionCount() =>
             sentRequests.Count;
 
-        protected override Profile GetFirstCollectionElement(int index) =>
+        protected override FriendProfile GetFirstCollectionElement(int index) =>
+            receivedRequests[index].From;
 
-            // profileCache.Get(receivedRequests[index].From);
-            null;
-
-        protected override Profile GetSecondCollectionElement(int index) =>
-
-            // profileCache.Get(sentRequests[index].To);
-            null;
+        protected override FriendProfile GetSecondCollectionElement(int index) =>
+            sentRequests[index].To;
 
         protected override void CustomiseElement(RequestUserView elementView, int collectionIndex, FriendPanelStatus section)
         {
@@ -134,14 +132,14 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
 
         protected override async UniTask FetchInitialDataAsync(CancellationToken ct)
         {
-            //TODO (Lorenzo): every new friend request, also fetch the profiles to fill the cache
-            // receivedRequests.Add(new FriendRequest(Guid.NewGuid().ToString(), DateTime.Now.AddDays(-2), "0xd545b9e0a5f3638a5026d1914cc9b47ed16b5ae9", "0x31d4f4dd8615ec45bbb6330da69f60032aca219e", "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi gravida libero quis sapien dictum, a vehicula nisi gravida"));
-            // receivedRequests.Add(new FriendRequest(Guid.NewGuid().ToString(), DateTime.Now.AddDays(-1), "0xba7352cff5681b719daf33fa05e93153af8146c8", "0x31d4f4dd8615ec45bbb6330da69f60032aca219e", "In hac habitasse platea dictumst. Proin sodales, sapien at facilisis consectetur, elit erat luctus quam, vel finibus lacus nulla vel tellus. Aenean vehicula urna nisl. Donec in lacus nisi. Aenean facilisis sagittis turpis nec finibus. Sed eu lorem arcu"));
-            // sentRequests.Add(new FriendRequest(Guid.NewGuid().ToString(), DateTime.Now.AddMonths(-1), "0x31d4f4dd8615ec45bbb6330da69f60032aca219e", "0x23e3d123f69fdd7f08a7c5685506bb344a12f1c4", "Aliquam consectetur euismod dui, vel iaculis ligula rhoncus eget. Maecenas faucibus consequat eros, nec pellentesque diam volutpat ac. Quisque aliquet dolor non tellus mattis, convallis lobortis mauris lobortis"));
-            //
-            // await profileRepository.GetAsync("0xd545b9e0a5f3638a5026d1914cc9b47ed16b5ae9", ct);
-            // await profileRepository.GetAsync("0xba7352cff5681b719daf33fa05e93153af8146c8", ct);
-            // await profileRepository.GetAsync("0x23e3d123f69fdd7f08a7c5685506bb344a12f1c4", ct);
+            FriendProfile friendProfile1 = new FriendProfile(new Web3Address("0xd545b9e0a5f3638a5026d1914cc9b47ed16b5ae9"), "Test1", false, URLAddress.EMPTY);
+            FriendProfile friendProfile2 = new FriendProfile(new Web3Address("0xba7352cff5681b719daf33fa05e93153af8146c8"), "Test2", false, URLAddress.EMPTY);
+            FriendProfile friendProfile3 = new FriendProfile(new Web3Address("0x23e3d123f69fdd7f08a7c5685506bb344a12f1c4"), "Test3", true, URLAddress.EMPTY);
+            FriendProfile userFriendProfile = new FriendProfile(new Web3Address("0x31d4f4dd8615ec45bbb6330da69f60032aca219e"), "MyUser", true, URLAddress.EMPTY);
+
+            receivedRequests.Add(new FriendRequest(Guid.NewGuid().ToString(), DateTime.Now.AddDays(-2), friendProfile1, userFriendProfile, "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi gravida libero quis sapien dictum, a vehicula nisi gravida"));
+            receivedRequests.Add(new FriendRequest(Guid.NewGuid().ToString(), DateTime.Now.AddDays(-1), friendProfile2, userFriendProfile, "In hac habitasse platea dictumst. Proin sodales, sapien at facilisis consectetur, elit erat luctus quam, vel finibus lacus nulla vel tellus. Aenean vehicula urna nisl. Donec in lacus nisi. Aenean facilisis sagittis turpis nec finibus. Sed eu lorem arcu"));
+            sentRequests.Add(new FriendRequest(Guid.NewGuid().ToString(), DateTime.Now.AddMonths(-1), userFriendProfile, friendProfile3, "Aliquam consectetur euismod dui, vel iaculis ligula rhoncus eget. Maecenas faucibus consequat eros, nec pellentesque diam volutpat ac. Quisque aliquet dolor non tellus mattis, convallis lobortis mauris lobortis"));
         }
     }
 }

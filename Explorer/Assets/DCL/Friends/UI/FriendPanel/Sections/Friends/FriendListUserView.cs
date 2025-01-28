@@ -1,4 +1,3 @@
-using DCL.Profiles;
 using DCL.WebRequests;
 using TMPro;
 using UnityEngine;
@@ -16,7 +15,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         [field: SerializeField] public Image OnlineStatusColorIndicator { get; private set; }
         [field: SerializeField] public OnlineStatusConfiguration OnlineStatusConfiguration { get; private set; }
 
-        public override void Configure(Profile profile, IWebRequestController webRequestController, IProfileThumbnailCache profileThumbnailCache)
+        public override void Configure(FriendProfile profile, IWebRequestController webRequestController, IProfileThumbnailCache profileThumbnailCache)
         {
             buttons = new[] { JumpInButton, ContextMenuButton };
             base.Configure(profile, webRequestController, profileThumbnailCache);

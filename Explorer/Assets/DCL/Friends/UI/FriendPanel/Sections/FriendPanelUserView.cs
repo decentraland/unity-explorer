@@ -1,6 +1,5 @@
 using CommunicationData.URLHelpers;
 using DCL.Chat;
-using DCL.Profiles;
 using DCL.UI;
 using DCL.WebRequests;
 using System;
@@ -30,8 +29,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections
         private bool canUnHover = true;
         private ImageController? imageController;
 
-        public Profile UserProfile { get; protected set; }
-        public event Action<Profile>? MainButtonClicked;
+        public FriendProfile UserProfile { get; protected set; }
+        public event Action<FriendProfile>? MainButtonClicked;
         public event Action<Sprite>? SpriteLoaded;
 
         internal bool CanUnHover
@@ -70,7 +69,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections
             SpriteLoaded = null;
         }
 
-        public virtual void Configure(Profile profile, IWebRequestController webRequestController, IProfileThumbnailCache profileThumbnailCache)
+        public virtual void Configure(FriendProfile friendProfile, IWebRequestController webRequestController, IProfileThumbnailCache profileThumbnailCache)
         {
             if (imageController == null)
             {
@@ -79,25 +78,25 @@ namespace DCL.Friends.UI.FriendPanel.Sections
             }
 
             UnHover();
-            UserProfile = profile;
+            UserProfile = friendProfile;
 
-            Color userColor = ChatEntryConfiguration.GetNameColor(profile.Name);
+            Color userColor = ChatEntryConfiguration.GetNameColor(friendProfile.Name);
 
-            UserName.text = profile.Name;
+            UserName.text = friendProfile.Name;
             UserName.color = userColor;
-            UserNameTag.text = $"#{profile.UserId[^4..]}";
-            UserNameTag.gameObject.SetActive(!profile.HasClaimedName);
+            UserNameTag.text = $"#{friendProfile.Address.ToString()[^4..]}";
+            UserNameTag.gameObject.SetActive(!friendProfile.HasClaimedName);
             FaceFrame.color = userColor;
             userColor.r += 0.3f;
             userColor.g += 0.3f;
             userColor.b += 0.3f;
             FaceRim.color = userColor;
 
-            Sprite? thumbnail = profileThumbnailCache.GetThumbnail(profile.UserId);
+            Sprite? thumbnail = profileThumbnailCache.GetThumbnail(friendProfile.Address.ToString());
             if (thumbnail != null)
                 imageController.SetImage(thumbnail);
-            else if (profile.Avatar.FaceSnapshotUrl != URLAddress.EMPTY)
-                imageController.RequestImage(profile.Avatar.FaceSnapshotUrl, removePrevious: true);
+            else if (friendProfile.FacePictureUrl != URLAddress.EMPTY)
+                imageController.RequestImage(friendProfile.FacePictureUrl, removePrevious: true);
         }
 
         protected virtual void ToggleButtonView(bool isActive)

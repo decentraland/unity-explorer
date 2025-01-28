@@ -1,6 +1,5 @@
 using Cysharp.Threading.Tasks;
 using DCL.Passport;
-using DCL.Profiles;
 using DCL.Web3.Identities;
 using MVC;
 using UnityEngine;
@@ -28,19 +27,19 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             requestManager.ContextMenuClicked -= ContextMenuClicked;
         }
 
-        protected override void ElementClicked(Profile profile)
+        protected override void ElementClicked(FriendProfile profile)
         {
-            mvcManager.ShowAsync(PassportController.IssueCommand(new PassportController.Params(profile.UserId))).Forget();
+            mvcManager.ShowAsync(PassportController.IssueCommand(new PassportController.Params(profile.Address.ToString()))).Forget();
         }
 
-        private void JumpInClicked(Profile profile)
+        private void JumpInClicked(FriendProfile profile)
         {
-            Debug.Log($"JumpInClicked on {profile.UserId}");
+            Debug.Log($"JumpInClicked on {profile.Address.ToString()}");
         }
 
-        private void ContextMenuClicked(Profile profile)
+        private void ContextMenuClicked(FriendProfile profile)
         {
-            Debug.Log($"ContextMenuClicked on {profile.UserId}");
+            Debug.Log($"ContextMenuClicked on {profile.Address.ToString()}");
         }
     }
 }

@@ -3,7 +3,6 @@ using DCL.Clipboard;
 using DCL.Diagnostics;
 using DCL.Friends.UI.Requests;
 using DCL.Passport;
-using DCL.Profiles;
 using DCL.RealmNavigation;
 using DCL.UI.GenericContextMenu;
 using DCL.UI.GenericContextMenu.Controls.Configs;
@@ -31,7 +30,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly CancellationTokenSource lifeCycleCts = new ();
 
-        private Profile? lastClickedProfileCtx;
+        private FriendProfile? lastClickedProfileCtx;
         private Web3Address? previousWeb3Identity;
         private CancellationTokenSource friendshipOperationCts = new ();
 
@@ -51,11 +50,11 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             this.loadingStatus = loadingStatus;
 
             contextMenu = new GenericContextMenu(view.ContextMenuSettings.ContextMenuWidth, verticalLayoutPadding: CONTEXT_MENU_VERTICAL_LAYOUT_PADDING, elementsSpacing: CONTEXT_MENU_ELEMENTS_SPACING)
-                         .AddControl(userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings(systemClipboard, profile => Debug.Log($"Send friendship request to {profile.UserId}")))
+                         .AddControl(userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings(systemClipboard, profile => Debug.Log($"Send friendship request to {profile}")))
                          .AddControl(new SeparatorContextMenuControlSettings(CONTEXT_MENU_SEPARATOR_HEIGHT, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.left, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.right))
                          .AddControl(new ButtonContextMenuControlSettings(view.ContextMenuSettings.ViewProfileText, view.ContextMenuSettings.ViewProfileSprite, () => OpenProfilePassport(lastClickedProfileCtx!)))
-                         .AddControl(new ButtonContextMenuControlSettings(view.ContextMenuSettings.BlockText, view.ContextMenuSettings.BlockSprite, () => Debug.Log($"Block {lastClickedProfileCtx!.UserId}")))
-                         .AddControl(new ButtonContextMenuControlSettings(view.ContextMenuSettings.ReportText, view.ContextMenuSettings.ReportSprite, () => Debug.Log($"Report {lastClickedProfileCtx!.UserId}")));
+                         .AddControl(new ButtonContextMenuControlSettings(view.ContextMenuSettings.BlockText, view.ContextMenuSettings.BlockSprite, () => Debug.Log($"Block {lastClickedProfileCtx!.Address}")))
+                         .AddControl(new ButtonContextMenuControlSettings(view.ContextMenuSettings.ReportText, view.ContextMenuSettings.ReportSprite, () => Debug.Log($"Report {lastClickedProfileCtx!.Address}")));
 
             requestManager.DeleteRequestClicked += DeleteRequestClicked;
             requestManager.AcceptRequestClicked += AcceptRequestClicked;
@@ -68,7 +67,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
 
             ReceivedRequestsCountChanged += UpdateReceivedRequestsSectionCount;
 
-            // loadingStatus.CurrentStage.Subscribe(PrewarmRequests);
+            loadingStatus.CurrentStage.Subscribe(PrewarmRequests);
         }
 
         public override void Dispose()
@@ -103,8 +102,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             PrewarmAsync(friendshipOperationCts.Token).Forget();
         }
 
-        private void OpenProfilePassport(Profile profile) =>
-            mvcManager.ShowAsync(PassportController.IssueCommand(new PassportController.Params(profile.UserId))).Forget();
+        private void OpenProfilePassport(FriendProfile profile) =>
+            mvcManager.ShowAsync(PassportController.IssueCommand(new PassportController.Params(profile.Address.ToString()))).Forget();
 
         private void PropagateRequestReceived(FriendRequest request) =>
             PropagateReceivedRequestsCountChanged();
@@ -156,10 +155,10 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             RejectFriendshipAsync(friendshipOperationCts.Token).Forget();
         }
 
-        private void ContextMenuClicked(Profile profile, Vector2 buttonPosition, RequestUserView elementView)
+        private void ContextMenuClicked(FriendProfile friendProfile, Vector2 buttonPosition, RequestUserView elementView)
         {
-            lastClickedProfileCtx = profile;
-            userProfileContextMenuControlSettings.SetInitialData(profile, view.ChatEntryConfiguration.GetNameColor(profile.Name), UserProfileContextMenuControlSettings.FriendshipStatus.NONE);
+            lastClickedProfileCtx = friendProfile;
+            userProfileContextMenuControlSettings.SetInitialData(friendProfile.Name, friendProfile.Address, friendProfile.HasClaimedName, view.ChatEntryConfiguration.GetNameColor(friendProfile.Name), UserProfileContextMenuControlSettings.FriendshipStatus.NONE);
             elementView.CanUnHover = false;
             mvcManager.ShowAsync(GenericContextMenuController.IssueCommand(new GenericContextMenuParameter(contextMenu, buttonPosition, actionOnHide: () => elementView.CanUnHover = true))).Forget();
         }
@@ -183,7 +182,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
         {
             while (token.IsCancellationRequested == false)
             {
-                if (previousWeb3Identity != web3IdentityCache.Identity?.Address && web3IdentityCache.Identity?.Address != null)
+                if (!previousWeb3Identity.Equals(web3IdentityCache.Identity?.Address) && web3IdentityCache.Identity?.Address != null)
                 {
                     previousWeb3Identity = web3IdentityCache.Identity?.Address;
                     CheckIdentityAndReset();
@@ -193,7 +192,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             }
         }
 
-        protected override void ElementClicked(Profile profile)
+        protected override void ElementClicked(FriendProfile profile)
         {
         }
 

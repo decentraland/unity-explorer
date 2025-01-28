@@ -29,18 +29,18 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Blocked
             requestManager.ContextMenuClicked -= ContextMenuClicked;
         }
 
-        private void UnblockUserClicked(Profile profile)
+        private void UnblockUserClicked(FriendProfile profile)
         {
-            Debug.Log($"UnblockUserClicked on {profile.UserId}");
+            Debug.Log($"UnblockUserClicked on {profile.Address.ToString()}");
         }
 
-        private void ContextMenuClicked(Profile profile)
+        private void ContextMenuClicked(FriendProfile profile)
         {
-            Debug.Log($"ContextMenuClicked on {profile.UserId}");
+            Debug.Log($"ContextMenuClicked on {profile.Address.ToString()}");
         }
 
-        protected override void ElementClicked(Profile profile) =>
-            mvcManager.ShowAsync(PassportController.IssueCommand(new PassportController.Params(profile.UserId))).Forget();
+        protected override void ElementClicked(FriendProfile profile) =>
+            mvcManager.ShowAsync(PassportController.IssueCommand(new PassportController.Params(profile.Address.ToString()))).Forget();
 
     }
 }

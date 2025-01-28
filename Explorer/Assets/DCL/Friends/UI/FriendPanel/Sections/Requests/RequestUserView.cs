@@ -1,4 +1,3 @@
-using DCL.Profiles;
 using DCL.WebRequests;
 using System;
 using System.Globalization;
@@ -33,7 +32,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             buttons = new [] { ContextMenuButton };
         }
 
-        public override void Configure(Profile profile, IWebRequestController webRequestController, IProfileThumbnailCache profileThumbnailCache)
+        public override void Configure(FriendProfile profile, IWebRequestController webRequestController, IProfileThumbnailCache profileThumbnailCache)
         {
             buttons = new[] { ContextMenuButton, DeleteButton, AcceptButton };
             base.Configure(profile, webRequestController, profileThumbnailCache);

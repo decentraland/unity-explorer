@@ -1,10 +1,8 @@
 using Cysharp.Threading.Tasks;
-using DCL.Profiles;
 using DCL.WebRequests;
 using SuperScrollView;
 using System;
 using System.Threading;
-using UnityEngine;
 using Utility;
 
 namespace DCL.Friends.UI.FriendPanel.Sections
@@ -25,7 +23,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections
         public bool HasElements { get; private set; }
         public bool WasInitialised { get; private set; }
 
-        public event Action<Profile>? ElementClicked;
+        public event Action<FriendProfile>? ElementClicked;
 
         protected FriendPanelRequestManager(int pageSize, int elementsMissingThreshold,
             IWebRequestController webRequestController,
@@ -43,7 +41,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections
         }
 
         public abstract int GetCollectionCount();
-        protected abstract Profile GetCollectionElement(int index);
+        protected abstract FriendProfile GetCollectionElement(int index);
 
         protected virtual void CustomiseElement(T elementView, int index) { }
 
@@ -57,7 +55,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections
             view.MainButtonClicked += profile => ElementClicked?.Invoke(profile);
 
             view.RemoveSpriteLoadedListeners();
-            view.SpriteLoaded += sprite => profileThumbnailCache.SetThumbnail(view.UserProfile.UserId, sprite);
+            view.SpriteLoaded += sprite => profileThumbnailCache.SetThumbnail(view.UserProfile.Address.ToString(), sprite);
 
             CustomiseElement(view, index);
 

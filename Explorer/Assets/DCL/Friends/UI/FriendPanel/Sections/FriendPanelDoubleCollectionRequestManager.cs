@@ -1,5 +1,4 @@
 using Cysharp.Threading.Tasks;
-using DCL.Profiles;
 using DCL.WebRequests;
 using SuperScrollView;
 using System;
@@ -30,7 +29,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections
         public bool HasElements { get; private set; }
         public bool WasInitialised { get; private set; }
 
-        public event Action<Profile>? ElementClicked;
+        public event Action<FriendProfile>? ElementClicked;
         public event Action? FirstFolderClicked;
         public event Action? SecondFolderClicked;
 
@@ -62,8 +61,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections
         public abstract int GetFirstCollectionCount();
         public abstract int GetSecondCollectionCount();
 
-        protected abstract Profile GetFirstCollectionElement(int index);
-        protected abstract Profile GetSecondCollectionElement(int index);
+        protected abstract FriendProfile GetFirstCollectionElement(int index);
+        protected abstract FriendProfile GetSecondCollectionElement(int index);
 
         protected virtual void CustomiseElement(T elementView, int index, FriendPanelStatus section) { }
 
@@ -97,7 +96,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections
                     friendListUserView.RemoveMainButtonClickListeners();
                     friendListUserView.MainButtonClicked += profile => ElementClicked?.Invoke(profile);
                     friendListUserView.RemoveSpriteLoadedListeners();
-                    friendListUserView.SpriteLoaded += sprite => profileThumbnailCache.SetThumbnail(friendListUserView.UserProfile.UserId, sprite);
+                    friendListUserView.SpriteLoaded += sprite => profileThumbnailCache.SetThumbnail(friendListUserView.UserProfile.Address.ToString(), sprite);
                 }
             }
             else if (index == onlineFriendMarker + 1)
@@ -122,7 +121,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections
                     friendListUserView.RemoveMainButtonClickListeners();
                     friendListUserView.MainButtonClicked += profile => ElementClicked?.Invoke(profile);
                     friendListUserView.RemoveSpriteLoadedListeners();
-                    friendListUserView.SpriteLoaded += sprite => profileThumbnailCache.SetThumbnail(friendListUserView.UserProfile.UserId, sprite);
+                    friendListUserView.SpriteLoaded += sprite => profileThumbnailCache.SetThumbnail(friendListUserView.UserProfile.Address.ToString(), sprite);
                 }
             }
 
