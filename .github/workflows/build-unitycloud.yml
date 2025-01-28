@@ -157,6 +157,7 @@ jobs:
               clean_build=$(echo "${{ join(github.event.pull_request.labels.*.name, ' ') }}" | grep -qw 'clean-build' && echo true || echo false)
             fi
           fi
+          echo "Set clean_build to: $clean_build"
           echo "clean_build=${clean_build}" >> $GITHUB_OUTPUT
 
           if [ "${{ github.event.inputs.cache_strategy }}" ]; then
