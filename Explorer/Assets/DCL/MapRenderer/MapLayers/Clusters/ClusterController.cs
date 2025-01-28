@@ -158,5 +158,11 @@ namespace DCL.MapRenderer.MapLayers.Cluster
 
             return false;
         }
+
+        public void ResetToBaseScale()
+        {
+            foreach (var marker in clusteredMarkers)
+                marker.ResetScale(coordsUtils.ParcelSize);
+        }
     }
 }

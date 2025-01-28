@@ -5,7 +5,7 @@ using DCL.Friends.UI.FriendPanel.Sections.Blocked;
 using DCL.Friends.UI.FriendPanel.Sections.Friends;
 using DCL.Friends.UI.FriendPanel.Sections.Requests;
 using DCL.Profiles;
-using DCL.UserInAppInitializationFlow;
+using DCL.RealmNavigation;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using MVC;

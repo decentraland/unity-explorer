@@ -9,6 +9,7 @@ using System;
 using System.Threading;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
+using DCL.RealmNavigation;
 using DCL.UserInAppInitializationFlow;
 using DCL.Utilities;
 using UnityEngine.Localization.Settings;
