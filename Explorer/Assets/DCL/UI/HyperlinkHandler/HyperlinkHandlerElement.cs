@@ -165,13 +165,13 @@ namespace DCL.UI.HyperlinkHandler
 
         private void ResetPreviousHighlight()
         {
-            if (lastHighlightedIndex >= 0)
-            {
-                textComponent.text = originalText;
-                dependencies.Cursor.SetStyle(CursorStyle.Normal);
-                lastHighlightedIndex = -1;
-                isHighlighting = false;
-            }
+            if (lastHighlightedIndex < 0) return;
+
+            textComponent.text = originalText;
+            dependencies.Cursor.SetStyle(CursorStyle.Normal);
+            lastHighlightedIndex = -1;
+            isHighlighting = false;
+            originalText = null;
         }
     }
 }
