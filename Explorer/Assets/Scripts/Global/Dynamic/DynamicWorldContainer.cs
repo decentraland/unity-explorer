@@ -753,7 +753,8 @@ namespace Global.Dynamic
                     staticContainer.WebRequestsContainer.WebRequestController,
                     staticContainer.LoadingStatus,
                     staticContainer.InputBlock,
-                    dclInput));
+                    dclInput,
+                    selfProfile));
 
             if (dynamicWorldParams.EnableAnalytics)
                 globalPlugins.Add(new AnalyticsPlugin(

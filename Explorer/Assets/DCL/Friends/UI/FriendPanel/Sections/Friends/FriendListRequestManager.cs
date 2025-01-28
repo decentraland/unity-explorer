@@ -37,14 +37,14 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             this.profileRepository = profileRepository;
             this.loopListView = loopListView;
 
-            this.friendEventBus.OnFriendRequestAccepted += FriendRequestAccepted;
+            // this.friendEventBus.OnFriendRequestAccepted += FriendRequestAccepted;
         }
 
         public override void Dispose()
         {
             base.Dispose();
 
-            friendEventBus.OnFriendRequestAccepted -= FriendRequestAccepted;
+            // friendEventBus.OnFriendRequestAccepted -= FriendRequestAccepted;
             addFriendProfileCts.SafeCancelAndDispose();
         }
 

@@ -63,12 +63,12 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             requestManager.RequestClicked += RequestClicked;
 
             friendEventBus.OnFriendRequestReceived += PropagateRequestReceived;
-            friendEventBus.OnFriendRequestAccepted += PropagateRequestAcceptedRejected;
-            friendEventBus.OnFriendRequestRejected += PropagateRequestAcceptedRejected;
+            // friendEventBus.OnFriendRequestAccepted += PropagateRequestAcceptedRejected;
+            // friendEventBus.OnFriendRequestRejected += PropagateRequestAcceptedRejected;
 
             ReceivedRequestsCountChanged += UpdateReceivedRequestsSectionCount;
 
-            loadingStatus.CurrentStage.Subscribe(PrewarmRequests);
+            // loadingStatus.CurrentStage.Subscribe(PrewarmRequests);
         }
 
         public override void Dispose()
@@ -79,8 +79,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             requestManager.ContextMenuClicked -= ContextMenuClicked;
             requestManager.RequestClicked -= RequestClicked;
             friendEventBus.OnFriendRequestReceived -= PropagateRequestReceived;
-            friendEventBus.OnFriendRequestAccepted -= PropagateRequestAcceptedRejected;
-            friendEventBus.OnFriendRequestRejected -= PropagateRequestAcceptedRejected;
+            // friendEventBus.OnFriendRequestAccepted -= PropagateRequestAcceptedRejected;
+            // friendEventBus.OnFriendRequestRejected -= PropagateRequestAcceptedRejected;
 
             ReceivedRequestsCountChanged -= UpdateReceivedRequestsSectionCount;
             friendshipOperationCts.SafeCancelAndDispose();
@@ -126,7 +126,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             {
                 try
                 {
-                    await friendsService.RejectFriendshipAsync(request.From, ct);
+                    // await friendsService.RejectFriendshipAsync(request.From, ct);
                 }
                 catch(Exception e)
                 {
@@ -145,7 +145,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             {
                 try
                 {
-                    await friendsService.AcceptFriendshipAsync(request.From, ct);
+                    // await friendsService.AcceptFriendshipAsync(request.From, ct);
                 }
                 catch(Exception e)
                 {

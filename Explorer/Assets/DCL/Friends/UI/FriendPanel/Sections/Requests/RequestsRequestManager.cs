@@ -45,41 +45,41 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             this.profileRepository = profileRepository;
             this.loopListView = loopListView;
 
-            friendEventBus.OnFriendRequestReceived += FriendRequestReceived;
-            friendEventBus.OnFriendRequestSent += FriendRequestSent;
-            friendEventBus.OnFriendRequestCanceled += FriendRequestRemoved;
-            friendEventBus.OnFriendRequestRejected += FriendRequestRemoved;
+            // friendEventBus.OnFriendRequestReceived += FriendRequestReceived;
+            // friendEventBus.OnFriendRequestSent += FriendRequestSent;
+            // friendEventBus.OnFriendRequestCanceled += FriendRequestRemoved;
+            // friendEventBus.OnFriendRequestRejected += FriendRequestRemoved;
         }
 
         public override void Dispose()
         {
-            friendEventBus.OnFriendRequestReceived -= FriendRequestReceived;
-            friendEventBus.OnFriendRequestCanceled -= FriendRequestRemoved;
-            friendEventBus.OnFriendRequestRejected -= FriendRequestRemoved;
+            // friendEventBus.OnFriendRequestReceived -= FriendRequestReceived;
+            // friendEventBus.OnFriendRequestCanceled -= FriendRequestRemoved;
+            // friendEventBus.OnFriendRequestRejected -= FriendRequestRemoved;
             modifyRequestsCts.SafeCancelAndDispose();
         }
 
-        private void FriendRequestReceived(FriendRequest request)
-        {
-            async UniTaskVoid AddFriendRequest(FriendRequest request, CancellationToken ct)
-            {
-                await profileRepository.GetAsync(request.From, ct);
-                receivedRequests.Add(request);
-                receivedRequests.Sort((r1, r2) => r2.Timestamp.CompareTo(r1.Timestamp));
-            }
-            AddFriendRequest(request, modifyRequestsCts.Token).Forget();
-        }
-
-        private void FriendRequestSent(FriendRequest request)
-        {
-            async UniTaskVoid AddFriendRequest(FriendRequest request, CancellationToken ct)
-            {
-                await profileRepository.GetAsync(request.To, ct);
-                sentRequests.Add(request);
-                sentRequests.Sort((r1, r2) => r2.Timestamp.CompareTo(r1.Timestamp));
-            }
-            AddFriendRequest(request, modifyRequestsCts.Token).Forget();
-        }
+        // private void FriendRequestReceived(FriendRequest request)
+        // {
+        //     async UniTaskVoid AddFriendRequest(FriendRequest request, CancellationToken ct)
+        //     {
+        //         await profileRepository.GetAsync(request.From, ct);
+        //         receivedRequests.Add(request);
+        //         receivedRequests.Sort((r1, r2) => r2.Timestamp.CompareTo(r1.Timestamp));
+        //     }
+        //     AddFriendRequest(request, modifyRequestsCts.Token).Forget();
+        // }
+        //
+        // private void FriendRequestSent(FriendRequest request)
+        // {
+        //     async UniTaskVoid AddFriendRequest(FriendRequest request, CancellationToken ct)
+        //     {
+        //         await profileRepository.GetAsync(request.To, ct);
+        //         sentRequests.Add(request);
+        //         sentRequests.Sort((r1, r2) => r2.Timestamp.CompareTo(r1.Timestamp));
+        //     }
+        //     AddFriendRequest(request, modifyRequestsCts.Token).Forget();
+        // }
 
         private void FriendRequestRemoved(string friendId)
         {
@@ -93,10 +93,14 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             sentRequests.Count;
 
         protected override Profile GetFirstCollectionElement(int index) =>
-            profileCache.Get(receivedRequests[index].From);
+
+            // profileCache.Get(receivedRequests[index].From);
+            null;
 
         protected override Profile GetSecondCollectionElement(int index) =>
-            profileCache.Get(sentRequests[index].To);
+
+            // profileCache.Get(sentRequests[index].To);
+            null;
 
         protected override void CustomiseElement(RequestUserView elementView, int collectionIndex, FriendPanelStatus section)
         {
@@ -131,13 +135,13 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
         protected override async UniTask FetchInitialDataAsync(CancellationToken ct)
         {
             //TODO (Lorenzo): every new friend request, also fetch the profiles to fill the cache
-            receivedRequests.Add(new FriendRequest(Guid.NewGuid().ToString(), DateTime.Now.AddDays(-2), "0xd545b9e0a5f3638a5026d1914cc9b47ed16b5ae9", "0x31d4f4dd8615ec45bbb6330da69f60032aca219e", "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi gravida libero quis sapien dictum, a vehicula nisi gravida"));
-            receivedRequests.Add(new FriendRequest(Guid.NewGuid().ToString(), DateTime.Now.AddDays(-1), "0xba7352cff5681b719daf33fa05e93153af8146c8", "0x31d4f4dd8615ec45bbb6330da69f60032aca219e", "In hac habitasse platea dictumst. Proin sodales, sapien at facilisis consectetur, elit erat luctus quam, vel finibus lacus nulla vel tellus. Aenean vehicula urna nisl. Donec in lacus nisi. Aenean facilisis sagittis turpis nec finibus. Sed eu lorem arcu"));
-            sentRequests.Add(new FriendRequest(Guid.NewGuid().ToString(), DateTime.Now.AddMonths(-1), "0x31d4f4dd8615ec45bbb6330da69f60032aca219e", "0x23e3d123f69fdd7f08a7c5685506bb344a12f1c4", "Aliquam consectetur euismod dui, vel iaculis ligula rhoncus eget. Maecenas faucibus consequat eros, nec pellentesque diam volutpat ac. Quisque aliquet dolor non tellus mattis, convallis lobortis mauris lobortis"));
-
-            await profileRepository.GetAsync("0xd545b9e0a5f3638a5026d1914cc9b47ed16b5ae9", ct);
-            await profileRepository.GetAsync("0xba7352cff5681b719daf33fa05e93153af8146c8", ct);
-            await profileRepository.GetAsync("0x23e3d123f69fdd7f08a7c5685506bb344a12f1c4", ct);
+            // receivedRequests.Add(new FriendRequest(Guid.NewGuid().ToString(), DateTime.Now.AddDays(-2), "0xd545b9e0a5f3638a5026d1914cc9b47ed16b5ae9", "0x31d4f4dd8615ec45bbb6330da69f60032aca219e", "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi gravida libero quis sapien dictum, a vehicula nisi gravida"));
+            // receivedRequests.Add(new FriendRequest(Guid.NewGuid().ToString(), DateTime.Now.AddDays(-1), "0xba7352cff5681b719daf33fa05e93153af8146c8", "0x31d4f4dd8615ec45bbb6330da69f60032aca219e", "In hac habitasse platea dictumst. Proin sodales, sapien at facilisis consectetur, elit erat luctus quam, vel finibus lacus nulla vel tellus. Aenean vehicula urna nisl. Donec in lacus nisi. Aenean facilisis sagittis turpis nec finibus. Sed eu lorem arcu"));
+            // sentRequests.Add(new FriendRequest(Guid.NewGuid().ToString(), DateTime.Now.AddMonths(-1), "0x31d4f4dd8615ec45bbb6330da69f60032aca219e", "0x23e3d123f69fdd7f08a7c5685506bb344a12f1c4", "Aliquam consectetur euismod dui, vel iaculis ligula rhoncus eget. Maecenas faucibus consequat eros, nec pellentesque diam volutpat ac. Quisque aliquet dolor non tellus mattis, convallis lobortis mauris lobortis"));
+            //
+            // await profileRepository.GetAsync("0xd545b9e0a5f3638a5026d1914cc9b47ed16b5ae9", ct);
+            // await profileRepository.GetAsync("0xba7352cff5681b719daf33fa05e93153af8146c8", ct);
+            // await profileRepository.GetAsync("0x23e3d123f69fdd7f08a7c5685506bb344a12f1c4", ct);
         }
     }
 }

@@ -10,6 +10,7 @@ using DCL.Input;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Profiles;
 using DCL.RealmNavigation;
+using DCL.Profiles.Self;
 using DCL.Web3.Identities;
 using DCL.UI.MainUI;
 using DCL.WebRequests;
@@ -36,6 +37,7 @@ namespace DCL.PluginSystem.Global
         private readonly ILoadingStatus loadingStatus;
         private readonly IInputBlock inputBlock;
         private readonly DCLInput dclInput;
+        private readonly ISelfProfile selfProfile;
         private readonly CancellationTokenSource lifeCycleCancellationToken = new ();
 
         private RPCFriendsService? friendsService;
@@ -54,7 +56,8 @@ namespace DCL.PluginSystem.Global
             IWebRequestController webRequestController,
             ILoadingStatus loadingStatus,
             IInputBlock inputBlock,
-            DCLInput dclInput)
+            DCLInput dclInput,
+            ISelfProfile selfProfile)
         {
             this.mainUIView = mainUIView;
             this.dclUrlSource = dclUrlSource;
@@ -68,6 +71,7 @@ namespace DCL.PluginSystem.Global
             this.loadingStatus = loadingStatus;
             this.inputBlock = inputBlock;
             this.dclInput = dclInput;
+            this.selfProfile = selfProfile;
         }
 
         public void Dispose()
@@ -87,12 +91,13 @@ namespace DCL.PluginSystem.Global
             var friendsCache = new FriendsCache();
 
             friendsService = new RPCFriendsService(URLAddress.FromString(dclUrlSource.Url(DecentralandUrl.ApiFriends)),
-                friendEventBus, profileRepository, web3IdentityCache, friendsCache);
+                friendEventBus, web3IdentityCache, friendsCache, selfProfile);
 
             // Fire and forget as this task will never finish
-            friendsService.SubscribeToIncomingFriendshipEventsAsync(
-                               CancellationTokenSource.CreateLinkedTokenSource(lifeCycleCancellationToken.Token, ct).Token)
-                          .Forget();
+            var cts = CancellationTokenSource.CreateLinkedTokenSource(lifeCycleCancellationToken.Token, ct);
+
+            friendsService.SubscribeToIncomingFriendshipEventsAsync(cts.Token).Forget();
+            friendsService.SubscribeToConnectivityStatusAsync(cts.Token).Forget();
 
             FriendsPanelView friendsPanelPrefab = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.FriendsPanelPrefab, ct)).GetComponent<FriendsPanelView>();
 

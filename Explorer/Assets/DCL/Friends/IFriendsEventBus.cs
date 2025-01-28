@@ -4,29 +4,51 @@ namespace DCL.Friends
 {
     public interface IFriendsEventBus
     {
+        public delegate void UserIdOperation(string userId);
+
+        /// <summary>
+        /// Other user sent you a friend request
+        /// </summary>
         event Action<FriendRequest> OnFriendRequestReceived;
-        event Action<FriendRequest> OnFriendRequestSent;
-        event Action<string> OnFriendRequestAccepted;
-        event Action<string> OnFriendRequestRejected;
-        event Action<string> OnFriendRequestCanceled;
-        event Action<string> OnFriendRequestRemoved;
-        event Action<string> OnFriendConnected;
-        event Action<string> OnFriendDisconnected;
+        event UserIdOperation OnOtherUserAcceptedYourRequest;
+        event UserIdOperation OnOtherUserRejectedYourRequest;
+        event UserIdOperation OnOtherUserCancelledTheRequest;
+        event UserIdOperation OnOtherUserRemovedTheRequest;
+
+        event Action<FriendRequest> OnYouSentFriendRequestToOtherUser;
+        event UserIdOperation OnYouRemovedFriendRequestSentToOtherUser;
+        event UserIdOperation OnYouCancelledFriendRequestSentToOtherUser;
+        event UserIdOperation OnYouAcceptedFriendRequestReceivedFromOtherUser;
+        event UserIdOperation OnYouRejectedFriendRequestReceivedFromOtherUser;
+
+        event Action<FriendProfile> OnFriendConnected;
+        event Action<FriendProfile> OnFriendDisconnected;
+        event Action<FriendProfile> OnFriendAway;
 
         void BroadcastFriendRequestReceived(FriendRequest request);
 
-        void BroadcastFriendRequestSent(FriendRequest request);
+        void BroadcastThatOtherUserAcceptedYourRequest(string userId);
 
-        void BroadcastFriendRequestAccepted(string friendId);
+        void BroadcastThatOtherUserRejectedYourRequest(string userId);
 
-        void BroadcastFriendRequestRejected(string friendId);
+        void BroadcastThatOtherUserCancelledTheRequest(string userId);
 
-        void BroadcastFriendRequestCanceled(string friendId);
+        void BroadcastThatOtherUserRemovedTheRequest(string userId);
 
-        void BroadcastFriendRequestRemoved(string friendId);
+        void BroadcastFriendConnected(FriendProfile friend);
 
-        void BroadcastFriendConnected(string friendId);
+        void BroadcastFriendDisconnected(FriendProfile friend);
 
-        void BroadcastFriendDisconnected(string friendId);
+        void BroadcastFriendAsAway(FriendProfile friend);
+
+        void BroadcastThatYouSentFriendRequestToOtherUser(FriendRequest request);
+
+        void BroadcastThatYouRemovedFriendRequestSentToOtherUser(string userId);
+
+        void BroadcastThatYouAcceptedFriendRequestReceivedFromOtherUser(string userId);
+
+        void BroadcastThatYouCancelledFriendRequestSentToOtherUser(string userId);
+
+        void BroadcastThatYouRejectedFriendRequestReceivedFromOtherUser(string userId);
     }
 }
