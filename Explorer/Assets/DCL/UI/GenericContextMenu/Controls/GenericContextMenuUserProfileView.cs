@@ -45,14 +45,14 @@ namespace DCL.UI.GenericContextMenu.Controls
         {
             HorizontalLayoutComponent.padding = settings.horizontalLayoutPadding;
 
-            ConfigureUserNameAndTag(settings.profile.Name, settings.profile.UserId, settings.profile.HasClaimedName, settings.userColor);
+            ConfigureUserNameAndTag(settings.userName, settings.userAddress, settings.hasClaimedName, settings.userColor);
             ConfigureAddFriendButton(settings.friendshipStatus);
 
             RectTransformComponent.sizeDelta = new Vector2(RectTransformComponent.sizeDelta.x, CalculateComponentHeight());
 
-            CopyNameButton.onClick.AddListener(() => settings.systemClipboard.Set(settings.profile.Name));
-            CopyAddressButton.onClick.AddListener(() => settings.systemClipboard.Set(settings.profile.UserId));
-            AddFriendButton.onClick.AddListener(() => settings.requestFriendshipAction(settings.profile));
+            CopyNameButton.onClick.AddListener(() => settings.systemClipboard.Set(settings.userName));
+            CopyAddressButton.onClick.AddListener(() => settings.systemClipboard.Set(settings.userAddress));
+            AddFriendButton.onClick.AddListener(() => settings.requestFriendshipAction(settings.userAddress));
         }
 
         private void ConfigureUserNameAndTag(string userName, string userAddress, bool hasClaimedName, Color userColor)
