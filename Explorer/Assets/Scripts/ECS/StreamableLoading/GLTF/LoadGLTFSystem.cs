@@ -11,7 +11,6 @@ using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
 using GLTFast;
 using GLTFast.Materials;
-using GLTFast.Schema;
 using SceneRunner.Scene;
 using System;
 using System.Threading;
@@ -23,7 +22,6 @@ namespace ECS.StreamableLoading.GLTF
     public partial class LoadGLTFSystem: LoadSystemBase<GLTFData, GetGLTFIntention>
     {
         private static MaterialGenerator gltfMaterialGenerator = new DecentralandMaterialGenerator("DCL/Scene");
-        private static TextureCompressor texCompressor = new TextureCompressor();
 
         private readonly ISceneData? sceneData;
         private readonly string? contentSourceUrl;
@@ -91,13 +89,16 @@ namespace ECS.StreamableLoading.GLTF
 
         private void PatchTexturesForWearable(GltfImport gltfImport)
         {
-            // Texture2D[] texturesToDestroy = new Texture2D[gltfImport.TextureCount];
             for (int i = 0; i < gltfImport.TextureCount; i++)
             {
                 var originalTexture = gltfImport.GetTexture(i);
 
-                // Compress the texture to BC7
-                var compressedTexture = texCompressor.CompressToTargetFormat(originalTexture, TextureFormat.BC7);
+                // Ensure the tex ends up being RGBA32 for all wearable textures that come from raw GLTFs
+                // Note: BC7 (asset bundle textures optimization) cannot be compressed in runtime with
+                // Unity so a different format was chosen: RGBA32
+                var compressedTexture = EnsureRGBA32Format(originalTexture);
+                if (compressedTexture == originalTexture)
+                    continue;
 
                 // Copy properties from original texture
                 compressedTexture.wrapMode = originalTexture.wrapMode;
@@ -121,14 +122,7 @@ namespace ECS.StreamableLoading.GLTF
 
                 // Clean up original texture
                 UnityEngine.Object.Destroy(originalTexture);
-                // texturesToDestroy[i] = originalTexture;
             }
-
-            // Clean up original textures
-            /*for (var i = 0; i < texturesToDestroy.Length; i++)
-            {
-                UnityEngine.Object.Destroy(texturesToDestroy[i]);
-            }*/
         }
 
         private async UniTask InstantiateGltfAsync(GltfImport gltfImport, Transform rootContainerTransform)
@@ -150,6 +144,48 @@ namespace ECS.StreamableLoading.GLTF
                 }
             else
                 await gltfImport.InstantiateSceneAsync(rootContainerTransform);
+        }
+
+        private static Texture2D EnsureRGBA32Format(Texture2D sourceTexture)
+        {
+            if (sourceTexture.format == TextureFormat.RGBA32)
+                return sourceTexture;
+
+            // Most likely the source texture won't be flagged as
+            // readable so the RenderTexture approach has to be used
+            RenderTexture rt = RenderTexture.GetTemporary(
+                sourceTexture.width,
+                sourceTexture.height,
+                0,
+                RenderTextureFormat.ARGB32);
+
+            try
+            {
+                Graphics.Blit(sourceTexture, rt);
+
+                // Borrow active RT
+                RenderTexture previous = RenderTexture.active;
+                RenderTexture.active = rt;
+
+                Texture2D rgba32Texture = new Texture2D(
+                    sourceTexture.width,
+                    sourceTexture.height,
+                    TextureFormat.RGBA32,
+                    false,
+                    false);
+
+                rgba32Texture.ReadPixels(new Rect(0, 0, rt.width, rt.height), 0, 0);
+                rgba32Texture.Apply();
+
+                // Return previously active RT
+                RenderTexture.active = previous;
+
+                return rgba32Texture;
+            }
+            finally
+            {
+                RenderTexture.ReleaseTemporary(rt);
+            }
         }
     }
 }

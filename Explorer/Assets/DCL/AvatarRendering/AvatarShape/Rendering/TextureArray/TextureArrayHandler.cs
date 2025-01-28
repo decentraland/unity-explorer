@@ -20,7 +20,7 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
         private readonly int initialCapacityForEachResolution;
         private readonly TextureFormat textureFormat;
 
-        private readonly IReadOnlyDictionary<TextureArrayKey, Texture> defaultTextures;
+        private readonly IReadOnlyDictionary<TextureArrayKey, Texture>? defaultTextures;
 
         public TextureArrayHandler(
             int minArraySize,
@@ -28,7 +28,7 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
             int textureID,
             IReadOnlyList<int> defaultResolutions,
             TextureFormat textureFormat,
-            IReadOnlyDictionary<TextureArrayKey, Texture> defaultTextures,
+            IReadOnlyDictionary<TextureArrayKey, Texture>? defaultTextures = null,
             int initialCapacityForEachResolution = PoolConstants.AVATARS_COUNT)
         {
             this.minArraySize = minArraySize;
@@ -76,18 +76,20 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
             handlersByResolution[resolution] = slotHandler;
 
             // When the handler is created initialize the default texture
-            for (int i = 0; i < defaultTextures.Count; ++i)
+            if (defaultTextures != null)
             {
-                if (defaultTextures.TryGetValue(new TextureArrayKey(textureID, resolution, i), out var defaultTexture))
+                for (int i = 0; i < defaultTextures.Count; ++i)
                 {
-                    var defaultSlot = slotHandler.GetNextFreeSlot();
-                    Graphics.CopyTexture(defaultTexture, srcElement: 0, srcMip: 0, defaultSlot.TextureArray, dstElement: defaultSlot.UsedSlotIndex, dstMip: 0);
+                    if (defaultTextures.TryGetValue(new TextureArrayKey(textureID, resolution, i), out var defaultTexture))
+                    {
+                        var defaultSlot = slotHandler.GetNextFreeSlot();
+                        Graphics.CopyTexture(defaultTexture, srcElement: 0, srcMip: 0, defaultSlot.TextureArray, dstElement: defaultSlot.UsedSlotIndex, dstMip: 0);
+                    }
                 }
             }
 
             return slotHandler;
         }
-
 
         private TextureArraySlotHandler CreateHandler(Vector2Int resolution)
         {
@@ -96,12 +98,15 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
             handlersByResolution[resolution] = slotHandler;
 
             // When the handler is created initialize the default texture
-            for (int i = 0; i < defaultTextures.Count; ++i)
+            if (defaultTextures != null)
             {
-                if (defaultTextures.TryGetValue(new TextureArrayKey(textureID, resolution, i), out var defaultTexture))
+                for (int i = 0; i < defaultTextures.Count; ++i)
                 {
-                    var defaultSlot = slotHandler.GetNextFreeSlot();
-                    Graphics.CopyTexture(defaultTexture, srcElement: 0, srcMip: 0, defaultSlot.TextureArray, dstElement: defaultSlot.UsedSlotIndex, dstMip: 0);
+                    if (defaultTextures.TryGetValue(new TextureArrayKey(textureID, resolution, i), out var defaultTexture))
+                    {
+                        var defaultSlot = slotHandler.GetNextFreeSlot();
+                        Graphics.CopyTexture(defaultTexture, srcElement: 0, srcMip: 0, defaultSlot.TextureArray, dstElement: defaultSlot.UsedSlotIndex, dstMip: 0);
+                    }
                 }
             }
 

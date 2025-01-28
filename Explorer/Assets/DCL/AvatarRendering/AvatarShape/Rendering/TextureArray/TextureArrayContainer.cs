@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Pool;
+using static DCL.AvatarRendering.AvatarShape.Rendering.TextureArray.TextureArrayConstants;
 
 namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
 {
@@ -31,16 +32,21 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
         public TextureArraySlot?[] SetTexturesFromOriginalMaterial(Material originalMaterial, Material targetMaterial)
         {
             TextureArraySlot?[] results = slotsPool.Get();
+            // if (!originalMaterial.IsKeywordEnabled("_DCL_TEXTURE_ARRAYS")) return results;
 
             for (var i = 0; i < mappings.Count; i++)
             {
                 TextureArrayMapping mapping = mappings[i];
                 // Check if the texture is present in the original material
                 var tex = originalMaterial.GetTexture(mapping.OriginalTextureID) as Texture2D;
-                if (tex && tex.format == mapping.Handler.GetTextureFormat())
+                var handlerFormat = mapping.Handler.GetTextureFormat();
+                if (tex && tex.format == handlerFormat)
                     results[i] = mapping.Handler.SetTexture(targetMaterial, tex, new Vector2Int(tex.width, tex.height));
-                else
-                   mapping.Handler.SetDefaultTexture(targetMaterial, mapping.DefaultFallbackResolution);
+                else if (tex == null
+                         || handlerFormat == DEFAULT_BASEMAP_TEXTURE_FORMAT
+                         || handlerFormat == DEFAULT_NORMALMAP_TEXTURE_FORMAT
+                         || handlerFormat == DEFAULT_EMISSIVEMAP_TEXTURE_FORMAT)
+                    mapping.Handler.SetDefaultTexture(targetMaterial, mapping.DefaultFallbackResolution);
             }
 
             return results;
@@ -53,11 +59,14 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
             for (var i = 0; i < mappings.Count; i++)
             {
                 TextureArrayMapping mapping = mappings[i];
+                var handlerFormat = mapping.Handler.GetTextureFormat();
 
                 if (textures.TryGetValue(mapping.OriginalTextureID, out var texture))
                     results[i] = mapping.Handler.SetTexture(targetMaterial, texture as Texture2D, new Vector2Int(texture.width, texture.height));
-                else
-                    mapping.Handler.SetDefaultTexture(targetMaterial, mapping.DefaultFallbackResolution, defaultSlotIndexUsed);
+                else if (handlerFormat == DEFAULT_BASEMAP_TEXTURE_FORMAT
+                         || handlerFormat == DEFAULT_NORMALMAP_TEXTURE_FORMAT
+                         || handlerFormat == DEFAULT_EMISSIVEMAP_TEXTURE_FORMAT)
+                   mapping.Handler.SetDefaultTexture(targetMaterial, mapping.DefaultFallbackResolution, defaultSlotIndexUsed);
             }
 
             return results;
