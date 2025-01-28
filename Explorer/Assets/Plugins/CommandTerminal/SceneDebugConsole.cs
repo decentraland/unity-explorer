@@ -211,7 +211,7 @@ namespace CommandTerminal
             }
         }
 
-        public void Log(string message, string stackTrace = "", LogType type = LogType.Log, bool scrollToBottom = true)
+        public void Log(string message, string stackTrace = "", LogType type = LogType.Log, bool scrollToBottom = false)
         {
             consoleBuffer.HandleLog(message, stackTrace, type);
 
