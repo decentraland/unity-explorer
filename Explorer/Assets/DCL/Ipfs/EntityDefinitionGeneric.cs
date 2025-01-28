@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Newtonsoft.Json;
 
 namespace DCL.Ipfs
 {
@@ -16,6 +17,9 @@ namespace DCL.Ipfs
         public string version;
         public long timestamp;
         public string type;
+
+        [JsonProperty("status")]
+        public AssetBundleRegistryEnum assetBundleRegistryEnum;
 
         public EntityDefinitionGeneric() { }
 

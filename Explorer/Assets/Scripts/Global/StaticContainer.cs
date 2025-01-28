@@ -41,6 +41,7 @@ using SceneRunner.Mapping;
 using System.Collections.Generic;
 using System.Threading;
 using DCL.PerformanceAndDiagnostics.Analytics;
+using DCL.RealmNavigation;
 using DCL.UserInAppInitializationFlow;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Textures;
@@ -204,7 +205,7 @@ namespace Global
             container.PhysicsTickProvider = new PhysicsTickProvider();
             container.FeatureFlagsCache = new FeatureFlagsCache();
 
-            container.PortableExperiencesController = new ECSPortableExperiencesController(web3IdentityProvider, container.WebRequestsContainer.WebRequestController, container.ScenesCache, container.FeatureFlagsCache, localSceneDevelopment);
+            container.PortableExperiencesController = new ECSPortableExperiencesController(web3IdentityProvider, container.WebRequestsContainer.WebRequestController, container.ScenesCache, container.FeatureFlagsCache, localSceneDevelopment, decentralandUrlsSource);
 
 
             container.FeatureFlagsProvider = new HttpFeatureFlagsProvider(container.WebRequestsContainer.WebRequestController,

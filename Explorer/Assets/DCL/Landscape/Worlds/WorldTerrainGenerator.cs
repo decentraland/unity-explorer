@@ -113,6 +113,7 @@ namespace DCL.Landscape
             {
                 await GenerateTerrainDataAsync(chunkModel, terrainModel, worldSeed, cancellationToken);
                 await UniTask.Yield(cancellationToken);
+                noiseGenCache.ResetNoiseNativeArrayProvider();
             }
 
             if (processReport != null) processReport.SetProgress(0.5f);
