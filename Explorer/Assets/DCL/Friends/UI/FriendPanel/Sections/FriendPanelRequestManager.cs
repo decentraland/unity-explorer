@@ -70,7 +70,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections
             isFetching = true;
 
             pageNumber++;
-            await FetchDataAsync(pageNumber, pageSize, ct);
+            totalToFetch = await FetchDataAsync(pageNumber, pageSize, ct);
             totalFetched = GetCollectionCount();
 
             loopListView.SetListItemCount(totalFetched);

@@ -1,7 +1,4 @@
-using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
-using DCL.Profiles;
-using DCL.Web3;
 using DCL.WebRequests;
 using SuperScrollView;
 using System;
@@ -19,8 +16,6 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
         private const int EMPTY_ELEMENT_INDEX = 2;
         private const int MAX_REQUEST_MESSAGE_PREVIEW_LENGTH = 23;
 
-        private readonly IProfileCache profileCache;
-        private readonly IProfileRepository profileRepository;
         private readonly LoopListView2 loopListView;
         private readonly CancellationTokenSource modifyRequestsCts = new ();
         private readonly List<FriendRequest> receivedRequests = new ();
@@ -36,52 +31,71 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             IWebRequestController webRequestController,
             IProfileThumbnailCache profileThumbnailCache,
             int pageSize,
-            IProfileCache profileCache,
-            IProfileRepository profileRepository,
             LoopListView2 loopListView)
             : base(friendsService, friendEventBus, webRequestController, profileThumbnailCache, pageSize, FriendPanelStatus.RECEIVED, FriendPanelStatus.SENT, STATUS_ELEMENT_INDEX, EMPTY_ELEMENT_INDEX, USER_ELEMENT_INDEX)
         {
-            this.profileCache = profileCache;
-            this.profileRepository = profileRepository;
             this.loopListView = loopListView;
 
-            // friendEventBus.OnFriendRequestReceived += FriendRequestReceived;
-            // friendEventBus.OnFriendRequestSent += FriendRequestSent;
-            // friendEventBus.OnFriendRequestCanceled += FriendRequestRemoved;
-            // friendEventBus.OnFriendRequestRejected += FriendRequestRemoved;
+            this.friendEventBus.OnYouAcceptedFriendRequestReceivedFromOtherUser += ReceivedRemoved;
+            this.friendEventBus.OnYouRejectedFriendRequestReceivedFromOtherUser += ReceivedRemoved;
+            this.friendEventBus.OnOtherUserRemovedTheRequest += ReceivedRemoved;
+            this.friendEventBus.OnOtherUserCancelledTheRequest += ReceivedRemoved;
+
+            this.friendEventBus.OnOtherUserRejectedYourRequest += SentRemoved;
+            this.friendEventBus.OnOtherUserAcceptedYourRequest += SentRemoved;
+            this.friendEventBus.OnYouCancelledFriendRequestSentToOtherUser += SentRemoved;
+            this.friendEventBus.OnYouRemovedFriendRequestSentToOtherUser += SentRemoved;
+
+            this.friendEventBus.OnYouSentFriendRequestToOtherUser += CreateNewSentRequest;
+            this.friendEventBus.OnFriendRequestReceived += CreateNewReceivedRequest;
         }
 
         public override void Dispose()
         {
-            // friendEventBus.OnFriendRequestReceived -= FriendRequestReceived;
-            // friendEventBus.OnFriendRequestCanceled -= FriendRequestRemoved;
-            // friendEventBus.OnFriendRequestRejected -= FriendRequestRemoved;
+            friendEventBus.OnYouAcceptedFriendRequestReceivedFromOtherUser -= ReceivedRemoved;
+            friendEventBus.OnYouRejectedFriendRequestReceivedFromOtherUser -= ReceivedRemoved;
+            friendEventBus.OnOtherUserRemovedTheRequest -= ReceivedRemoved;
+            friendEventBus.OnOtherUserCancelledTheRequest -= ReceivedRemoved;
+
+            friendEventBus.OnOtherUserRejectedYourRequest -= SentRemoved;
+            friendEventBus.OnOtherUserAcceptedYourRequest -= SentRemoved;
+            friendEventBus.OnYouCancelledFriendRequestSentToOtherUser -= SentRemoved;
+            friendEventBus.OnYouRemovedFriendRequestSentToOtherUser -= SentRemoved;
+
+            friendEventBus.OnYouSentFriendRequestToOtherUser -= CreateNewSentRequest;
+            friendEventBus.OnFriendRequestReceived -= CreateNewReceivedRequest;
             modifyRequestsCts.SafeCancelAndDispose();
         }
 
-        // private void FriendRequestReceived(FriendRequest request)
-        // {
-        //     async UniTaskVoid AddFriendRequest(FriendRequest request, CancellationToken ct)
-        //     {
-        //         await profileRepository.GetAsync(request.From, ct);
-        //         receivedRequests.Add(request);
-        //         receivedRequests.Sort((r1, r2) => r2.Timestamp.CompareTo(r1.Timestamp));
-        //     }
-        //     AddFriendRequest(request, modifyRequestsCts.Token).Forget();
-        // }
-        //
-        // private void FriendRequestSent(FriendRequest request)
-        // {
-        //     async UniTaskVoid AddFriendRequest(FriendRequest request, CancellationToken ct)
-        //     {
-        //         await profileRepository.GetAsync(request.To, ct);
-        //         sentRequests.Add(request);
-        //         sentRequests.Sort((r1, r2) => r2.Timestamp.CompareTo(r1.Timestamp));
-        //     }
-        //     AddFriendRequest(request, modifyRequestsCts.Token).Forget();
-        // }
+        private void CreateNewReceivedRequest(FriendRequest request)
+        {
+            if (receivedRequests.Contains(request)) return;
 
-        private void FriendRequestRemoved(string friendId) { }
+            receivedRequests.Add(request);
+            receivedRequests.Sort((r1, r2) => r2.Timestamp.CompareTo(r1.Timestamp));
+            loopListView.RefreshAllShownItem();
+        }
+
+        private void CreateNewSentRequest(FriendRequest request)
+        {
+            if (sentRequests.Contains(request)) return;
+
+            sentRequests.Add(request);
+            sentRequests.Sort((r1, r2) => r2.Timestamp.CompareTo(r1.Timestamp));
+            loopListView.RefreshAllShownItem();
+        }
+
+        private void SentRemoved(string friendId)
+        {
+            sentRequests.RemoveAll(request => request.To.Address.ToString().Equals(friendId));
+            loopListView.RefreshAllShownItem();
+        }
+
+        private void ReceivedRemoved(string friendId)
+        {
+            receivedRequests.RemoveAll(request => request.To.Address.ToString().Equals(friendId));
+            loopListView.RefreshAllShownItem();
+        }
 
         public override int GetFirstCollectionCount() =>
             receivedRequests.Count;

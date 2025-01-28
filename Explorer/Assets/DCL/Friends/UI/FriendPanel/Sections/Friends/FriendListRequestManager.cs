@@ -38,14 +38,16 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             this.profileRepository = profileRepository;
             this.loopListView = loopListView;
 
-            // this.friendEventBus.OnFriendRequestAccepted += FriendRequestAccepted;
+            this.friendEventBus.OnYouAcceptedFriendRequestReceivedFromOtherUser += FriendRequestAccepted;
+            this.friendEventBus.OnOtherUserAcceptedYourRequest += FriendRequestAccepted;
         }
 
         public override void Dispose()
         {
             base.Dispose();
 
-            // friendEventBus.OnFriendRequestAccepted -= FriendRequestAccepted;
+            friendEventBus.OnYouAcceptedFriendRequestReceivedFromOtherUser -= FriendRequestAccepted;
+            friendEventBus.OnOtherUserAcceptedYourRequest -= FriendRequestAccepted;
             addFriendProfileCts.SafeCancelAndDispose();
         }
 
@@ -56,7 +58,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
                 Profile? newFriendProfile = await profileRepository.GetAsync(friendId, ct);
                 if (newFriendProfile != null)
                 {
-                    // friends.Add(newFriendProfile);
+                    friends.Add(newFriendProfile.ToFriendProfile());
                     friends.Sort((f1, f2) => string.Compare(f1.Name, f2.Name, StringComparison.Ordinal));
                     loopListView.RefreshAllShownItem();
                 }
