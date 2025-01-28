@@ -50,7 +50,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
                 {
                     foreach (var rend in wearable.Renderers)
                     {
-                        if (rend.sharedMaterial.renderQueue >= 2000 && rend.sharedMaterial.renderQueue < 3000)
+                        if (rend.gameObject.activeSelf && rend.enabled && rend.sharedMaterial.renderQueue >= 2000 && rend.sharedMaterial.renderQueue < 3000)
                             OutlineCompatibleRenderers.Add(rend);
                     }
                 }
