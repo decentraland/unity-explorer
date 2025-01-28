@@ -550,7 +550,7 @@ MonoBehaviour:
   <raycaster>k__BackingField: {fileID: 332660972209890747}
   <viewAnimationElement>k__BackingField: {fileID: 3538348039145732992}
   <CloseButton>k__BackingField: {fileID: 7574615442871783476}
-  <BackgroundCloseButton>k__BackingField: {fileID: 0}
+  <CanvasGroup>k__BackingField: {fileID: 1856855778101277456}
   <FriendsTabButton>k__BackingField: {fileID: 7787606427768405980}
   <FriendsTabSelected>k__BackingField: {fileID: 7393858782328466687}
   <FriendsSection>k__BackingField: {fileID: 8589710569225848205}

@@ -35,11 +35,15 @@ namespace DCL.Friends.UI.FriendPanel
             UnregisterHotkey();
         }
 
-        private void RegisterHotkey() =>
+        private void RegisterHotkey()
+        {
             dclInput.Shortcuts.FriendPanel.performed += OpenFriendsPanel;
+        }
 
-        private void UnregisterHotkey() =>
+        private void UnregisterHotkey()
+        {
             dclInput.Shortcuts.FriendPanel.performed -= OpenFriendsPanel;
+        }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
             UniTask.CompletedTask;
@@ -55,7 +59,7 @@ namespace DCL.Friends.UI.FriendPanel
             OpenFriendsPanel();
 
         private void OpenFriendsPanel() =>
-            mvcManager.ShowAsync(FriendsPanelController.IssueCommand(new FriendsPanelParameter(FriendsPanelController.FriendsPanelTab.FRIENDS))).Forget();
+            mvcManager.ShowAsync(FriendsPanelController.IssueCommand(new FriendsPanelParameter()));
 
         private void OnViewShowed(IController controller)
         {

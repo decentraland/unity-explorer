@@ -39,7 +39,7 @@ namespace DCL.Friends.UI.FriendPanel
         private UniTaskCompletionSource closeTaskCompletionSource = new ();
         private bool chatWasVisible;
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
 
         public FriendsPanelController(ViewFactoryMethod viewFactory,
             FriendsPanelView instantiatedView,
@@ -89,6 +89,7 @@ namespace DCL.Friends.UI.FriendPanel
             viewInstance!.FriendsTabButton.onClick.RemoveAllListeners();
             viewInstance.RequestsTabButton.onClick.RemoveAllListeners();
             viewInstance.BlockedTabButton.onClick.RemoveAllListeners();
+            viewInstance.CloseButton.onClick.RemoveAllListeners();
             requestsSectionController.ReceivedRequestsCountChanged -= FriendRequestCountChanged;
             friendsPanelCts.SafeCancelAndDispose();
 
@@ -146,6 +147,7 @@ namespace DCL.Friends.UI.FriendPanel
             viewInstance!.FriendsTabButton.onClick.AddListener(() => ToggleTabs(FriendsPanelTab.FRIENDS));
             viewInstance.RequestsTabButton.onClick.AddListener(() => ToggleTabs(FriendsPanelTab.REQUESTS));
             viewInstance.BlockedTabButton.onClick.AddListener(() => ToggleTabs(FriendsPanelTab.BLOCKED));
+            viewInstance.CloseButton.onClick.AddListener(() => CloseFriendsPanel(default(InputAction.CallbackContext)));
 
             ToggleTabs(FriendsPanelTab.FRIENDS);
         }
@@ -165,7 +167,10 @@ namespace DCL.Friends.UI.FriendPanel
             viewInstance.BlockedSection.SetActive(tab == FriendsPanelTab.BLOCKED);
         }
 
-        protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
-            UniTask.WhenAny(viewInstance!.CloseButton.OnClickAsync(ct), closeTaskCompletionSource.Task);
+        protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
+        {
+            await UniTask.WhenAny(viewInstance!.CloseButton.OnClickAsync(ct), closeTaskCompletionSource.Task);
+            await HideViewAsync(ct);
+        }
     }
 }

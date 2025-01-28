@@ -95,10 +95,6 @@ namespace DCL.PluginSystem.Global
                                CancellationTokenSource.CreateLinkedTokenSource(lifeCycleCancellationToken.Token, ct).Token)
                           .Forget();
 
-            var persistentFriendsOpenerController = new PersistentFriendPanelOpenerController(() => mainUIView.SidebarView.PersistentFriendsPanelOpener, mvcManager, dclInput);
-
-            mvcManager.RegisterController(persistentFriendsOpenerController);
-
             FriendsPanelView friendsPanelPrefab = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.FriendsPanelPrefab, ct)).GetComponent<FriendsPanelView>();
 
             friendsPanelController = new FriendsPanelController(FriendsPanelController.Preallocate(friendsPanelPrefab, null, out FriendsPanelView panelView),
@@ -118,6 +114,9 @@ namespace DCL.PluginSystem.Global
                 dclInput);
 
             mvcManager.RegisterController(friendsPanelController);
+
+            var persistentFriendsOpenerController = new PersistentFriendPanelOpenerController(() => mainUIView.SidebarView.PersistentFriendsPanelOpener, mvcManager, dclInput);
+            mvcManager.RegisterController(persistentFriendsOpenerController);
 
             FriendRequestView friendRequestPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.FriendRequestPrefab, ct)).Value;
 
