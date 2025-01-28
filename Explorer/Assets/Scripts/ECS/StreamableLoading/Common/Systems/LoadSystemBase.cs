@@ -14,6 +14,7 @@ using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using Utility;
+using Utility.Types;
 
 namespace ECS.StreamableLoading.Common.Systems
 {
@@ -25,16 +26,15 @@ namespace ECS.StreamableLoading.Common.Systems
     /// <typeparam name="TIntention"></typeparam>
     public abstract class LoadSystemBase<TAsset, TIntention> : BaseUnityLoopSystem where TIntention: struct, ILoadingIntention
     {
+        private const string DISK_CACHE_EXTENSION = "dat";
         private static readonly QueryDescription CREATE_WEB_REQUEST = new QueryDescription()
                                                                      .WithAll<TIntention, IPartitionComponent, StreamableLoadingState>()
                                                                      .WithNone<StreamableLoadingResult<TAsset>>();
 
-        private const string DISK_CACHE_EXTENSION = "dat";
-
         private readonly IStreamableCache<TAsset, TIntention> cache;
 
         /// <summary>
-        /// If the disk cache is not provided, it mean the disk cache is not supported for this particular asset type
+        ///     If the disk cache is not provided, it mean the disk cache is not supported for this particular asset type
         /// </summary>
         private readonly IGenericCache<TAsset, TIntention> genericCache;
 
@@ -132,21 +132,17 @@ namespace ECS.StreamableLoading.Common.Systems
 
                 // if the request is cached wait for it
                 // If there is an ongoing request it means that the result is neither cached, nor failed
-                if (cache.OngoingRequests.SyncTryGetValue(intention.CommonArguments.GetCacheableURL(), out var cachedSource))
+                if (cache.OngoingRequests.SyncTryGetValue(intention.CommonArguments.GetCacheableURL(), out UniTaskCompletionSource<OngoingRequestResult<TAsset>>? cachedSource))
                 {
                     // Release budget immediately, if we don't do it and load a lot of bundles with dependencies sequentially, it will be a deadlock
                     state.AcquiredBudget!.Release();
 
                     OngoingRequestResult<TAsset> ongoingRequestResult;
+
                     // if the cached request is cancelled it does not mean failure for the new intent
                     (requestIsNotFulfilled, ongoingRequestResult) = await cachedSource.Task.SuppressCancellationThrow();
 
-                    // Thus we keep the partial downloading data unique for an entity (not shared with others)
-                    if (ongoingRequestResult is { PartialDownloadingData: { FullyDownloaded: false } })
-                    {
-                        state.PartialDownloadingData?.Dispose();
-                        state.PartialDownloadingData = new PartialLoadingState(ongoingRequestResult.PartialDownloadingData.Value);
-                    }
+                    SynchronizePartialData(state, ongoingRequestResult);
 
                     result = ongoingRequestResult.Result;
 
@@ -157,11 +153,11 @@ namespace ECS.StreamableLoading.Common.Systems
                     }
                 }
 
-                var cachedContent = await genericCache.ContentAsync(intention, disposalCt);
+                EnumResult<Option<TAsset>, TaskError> cachedContent = await genericCache.ContentAsync(intention, disposalCt);
 
                 if (cachedContent.Success)
                 {
-                    var option = cachedContent.Value;
+                    Option<TAsset> option = cachedContent.Value;
 
                     if (option.Has)
                     {
@@ -173,7 +169,7 @@ namespace ECS.StreamableLoading.Common.Systems
                 // Try load from cache first
 
                 // If the given URL failed irrecoverably just return the failure
-                if (cache.IrrecoverableFailures.TryGetValue(intention.CommonArguments.GetCacheableURL(), out var failure))
+                if (cache.IrrecoverableFailures.TryGetValue(intention.CommonArguments.GetCacheableURL(), out StreamableLoadingResult<TAsset> failure))
                 {
                     result = failure;
                     return;
@@ -196,6 +192,21 @@ namespace ECS.StreamableLoading.Common.Systems
                 result = new StreamableLoadingResult<TAsset>(GetReportCategory(), e);
             }
             finally { FinalizeLoading(entity, intention, result, source, state); }
+        }
+
+        /// <summary>
+        ///     Synchronizes Partial Loading Data of the request that waiting for another requests of the same Asset to finish
+        ///     <para>
+        ///         Provokes Partial Data to be copied in order to keep both promises independent
+        ///     </para>
+        /// </summary>
+        private static void SynchronizePartialData(StreamableLoadingState state, in OngoingRequestResult<TAsset> ongoingRequestResult)
+        {
+            state.PartialDownloadingData?.Dispose();
+            state.PartialDownloadingData = null;
+
+            if (ongoingRequestResult is { PartialDownloadingData: { FullyDownloaded: false } })
+                state.PartialDownloadingData = new PartialLoadingState(ongoingRequestResult.PartialDownloadingData.Value);
         }
 
         protected virtual void DisposeAbandonedResult(TAsset asset) { }

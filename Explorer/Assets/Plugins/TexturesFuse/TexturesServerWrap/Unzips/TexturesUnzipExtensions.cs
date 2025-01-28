@@ -11,7 +11,7 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
     {
         public static async UniTask<EnumResult<IOwnedTexture2D, NativeMethods.ImageResult>> TextureFromBytesAsync(
             this ITexturesFuse fuse,
-            Memory<byte> bytes,
+            ReadOnlyMemory<byte> bytes,
             TextureType type,
             CancellationToken token
         )

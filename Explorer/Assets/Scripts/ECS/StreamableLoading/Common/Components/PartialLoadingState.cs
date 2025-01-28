@@ -9,10 +9,7 @@ namespace ECS.StreamableLoading.Common.Components
         private static readonly ArrayPool<byte> FULL_FILE_POOL = ArrayPool<byte>.Create(64 * 1024 * 1024, 10); // 64 MB
         private static readonly MemoryOwner<byte> EMPTY_MEMORY_OWNER = MemoryOwner<byte>.Empty;
 
-        public readonly Memory<byte> FullData => memoryOwner.Memory;
-        public readonly int FullFileSize => memoryOwner.Length;
-
-        public int NextRangeStart;
+        public readonly int FullFileSize;
 
         // Add expiration time/TTL/additional data here as required
 
@@ -22,14 +19,23 @@ namespace ECS.StreamableLoading.Common.Components
         {
             memoryOwner = MemoryOwner<byte>.Allocate(fullFileSize, FULL_FILE_POOL);
             NextRangeStart = 0;
+            FullFileSize = fullFileSize;
         }
 
         public PartialLoadingState(in PartialLoadingState otherInstance) : this(otherInstance.FullFileSize)
         {
-            otherInstance.FullData.CopyTo(FullData);
+            AppendData(otherInstance.FullData[..otherInstance.NextRangeStart]);
         }
 
-        public bool FullyDownloaded => NextRangeStart >= FullFileSize;
+        public int NextRangeStart { get; private set; }
+        public readonly bool FullyDownloaded => NextRangeStart >= FullFileSize;
+        public readonly ReadOnlyMemory<byte> FullData => memoryOwner.Memory;
+
+        internal void AppendData(ReadOnlyMemory<byte> data)
+        {
+            data.CopyTo(memoryOwner.Memory[NextRangeStart..]);
+            NextRangeStart += data.Length;
+        }
 
         /// <summary>
         ///     When the memory ownership is transferred, the responsibility to dispose of the memory will be on the external caller

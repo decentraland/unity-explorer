@@ -71,13 +71,7 @@ namespace ECS.StreamableLoading.Common.Systems
                     finalBytesCount = chunkData.FullFileSize - chunkData.RangeStart;
 
                 // Write the downloaded data to the full data stream by starting from the last range start
-                chunkData.DataBuffer.AsMemory()[..finalBytesCount].CopyTo(partialState.FullData[chunkData.RangeStart..]);
-
-                // Update the partial state with the new start range, if already completed set it to the full file size
-                if (chunkData.downloadedSize == chunkData.FullFileSize)
-                    partialState.NextRangeStart = chunkData.FullFileSize;
-                else
-                    partialState.NextRangeStart = chunkData.RangeEnd + 1;
+                partialState.AppendData(chunkData.DataBuffer.AsMemory()[..finalBytesCount]);
 
                 state.SetChunkData(partialState);
 

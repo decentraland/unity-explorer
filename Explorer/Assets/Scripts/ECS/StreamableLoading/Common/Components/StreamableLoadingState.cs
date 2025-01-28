@@ -77,7 +77,7 @@ namespace ECS.StreamableLoading.Common.Components
         /// </summary>
         public PartialLoadingState? PartialDownloadingData { get; internal set; }
 
-        public Memory<byte> GetFullyDownloadedData()
+        public ReadOnlyMemory<byte> GetFullyDownloadedData()
         {
             Assert.IsTrue(PartialDownloadingData is { FullyDownloaded: true });
             return PartialDownloadingData!.Value.FullData;

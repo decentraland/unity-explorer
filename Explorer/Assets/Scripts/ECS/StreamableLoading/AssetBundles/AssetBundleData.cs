@@ -120,7 +120,8 @@ namespace ECS.StreamableLoading.AssetBundles
             if (mainAsset != null)
                 Object.DestroyImmediate(mainAsset, true);
 
-            AssetBundle.UnloadAsync(unloadAllLoadedObjects: true);
+            if (AssetBundle)
+                AssetBundle.UnloadAsync(unloadAllLoadedObjects: true);
 
             // Underlying memory for dependencies is released when the dependency itself is fully disposed of
             underlyingMemory.Dispose();
