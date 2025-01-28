@@ -57,7 +57,7 @@ namespace DCL.UI.HyperlinkHandler
         {
             dependencies.Cursor.SetStyle(CursorStyle.Normal);
             isHovering = false;
-            isHighlighting = false;
+            ResetPreviousHighlight();
         }
 
         public void OnPointerMove(PointerEventData eventData)

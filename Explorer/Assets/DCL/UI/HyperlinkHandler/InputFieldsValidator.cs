@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using TMPro;
@@ -13,27 +14,39 @@ namespace DCL.UI.InputFieldValidator
         private static readonly Regex RICH_TEXT_TAG_REGEX = new (@"<(?!\/?(b|i)(>|\s))[^>]+>", RegexOptions.Compiled);
         private static readonly Regex LINK_TAG_REGEX = new (@"<#[0-9A-Fa-f]{6}><link=(url|scene|world|user):.*?>(.*?)</link></color>", RegexOptions.Compiled);
         private static readonly Regex WEBSITE_REGEX = new (
-            @"\b((https?:\/\/)?(www\.)?[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?\.[a-zA-Z]{2,63}(\/[^\s]*)?)\b",
+            @"\b((https?:\/\/)?(www\.)[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?\.[a-zA-Z]{2,63}(\/[^\s]*)?)\b",
             RegexOptions.Compiled);
+        private static readonly Regex SCENE_REGEX = new Regex(@"(?<!\S)-?\d{1,3},\s*-?\d{1,3}(?!\S)", RegexOptions.Compiled);
+        private static readonly Regex WORLD_REGEX = new Regex(@"(?<!\S)[a-zA-Z0-9][a-zA-Z0-9-]*\.dcl\.eth(?!\S)", RegexOptions.Compiled);
 
         [SerializeField] private TMP_StyleSheet styleSheet;
 
         private TMP_Style style;
 
-        private void Awake()
+        public void InitializeStyles()
         {
             style = styleSheet.GetStyle("Link");
         }
 
         public void ValidateOnBackspace(ref string text, ref int pos)
         {
-            int textLength = text.Length;
+            text = text.Insert(pos, "TAG");
 
             text = ProcessWord(text);
 
-            int lenghtDifference = textLength - text.Length;
+            int tag = text.IndexOf("TAG", StringComparison.InvariantCulture);
+            int tag2 = text.LastIndexOf("TAG", StringComparison.InvariantCulture);
 
-            pos  = pos + lenghtDifference;
+            if (tag != tag2)
+            {
+                pos = tag2 - 3;
+            }
+            else
+            {
+                pos = tag;
+            }
+
+            text = text.Replace("TAG", "");
         }
 
         public override char Validate(ref string text, ref int pos, char ch)
@@ -61,10 +74,23 @@ namespace DCL.UI.InputFieldValidator
                 return tag.Replace('<', '‹').Replace('>', '›');
             });
 
+
             text = WEBSITE_REGEX.Replace(text, match =>
             {
                 string website = match.Value;
-                return $"{styleSheet.GetStyle("Link").styleOpeningDefinition}<link=url:{website}>{website}</link>{styleSheet.GetStyle("Link").styleClosingDefinition}";
+                return string.Concat(style.styleOpeningDefinition, "<link=url:", website, ">", website, "</link>", style.styleClosingDefinition);
+            });
+
+            text = SCENE_REGEX.Replace(text, match =>
+            {
+                string scene = match.Value;
+                return string.Concat(style.styleOpeningDefinition, "<link=scene:", scene, ">", scene, "</link>", style.styleClosingDefinition);
+            });
+
+            text = WORLD_REGEX.Replace(text, match =>
+            {
+                string world = match.Value;
+                return string.Concat(style.styleOpeningDefinition, "<link=world:", world, ">", world, "</link>", style.styleClosingDefinition);
             });
 
             return text;

@@ -17,6 +17,7 @@ namespace DCL.UI.InputFieldValidator
         {
             inputField.characterValidation = TMP_InputField.CharacterValidation.CustomValidator;
             inputField.inputValidator = fieldsValidator;
+            fieldsValidator.InitializeStyles();
             inputField.onValueChanged.AddListener(Validate);
         }
 
@@ -26,7 +27,7 @@ namespace DCL.UI.InputFieldValidator
             {
                 int position = inputField.stringPosition;
                 fieldsValidator.ValidateOnBackspace(ref text, ref position);
-                inputField.text = text;
+                inputField.SetTextWithoutNotify(text);
                 inputField.stringPosition = position;
             }
 
