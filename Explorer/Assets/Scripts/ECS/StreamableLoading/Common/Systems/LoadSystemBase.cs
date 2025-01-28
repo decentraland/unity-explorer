@@ -11,6 +11,7 @@ using ECS.StreamableLoading.Cache.Generic;
 using ECS.StreamableLoading.Cache.InMemory;
 using ECS.StreamableLoading.Common.Components;
 using System;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using Utility;
@@ -343,7 +344,7 @@ namespace ECS.StreamableLoading.Common.Systems
 
         private StreamableLoadingResult<TAsset> SetIrrecoverableFailure(TIntention intention, StreamableLoadingResult<TAsset> failure)
         {
-            cache.IrrecoverableFailures.Add(intention.CommonArguments.GetCacheableURL(), failure);
+            cache.IrrecoverableFailures.TryAdd(intention.CommonArguments.GetCacheableURL(), failure);
             return failure;
         }
     }
