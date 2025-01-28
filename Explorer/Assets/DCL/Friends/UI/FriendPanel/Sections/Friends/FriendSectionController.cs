@@ -1,6 +1,5 @@
 using Cysharp.Threading.Tasks;
 using DCL.Clipboard;
-using DCL.Passport;
 using DCL.UI.GenericContextMenu;
 using DCL.UI.GenericContextMenu.Controls.Configs;
 using DCL.Web3.Identities;
@@ -12,7 +11,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
     public class FriendSectionController : FriendPanelSectionController<FriendsSectionView, FriendListRequestManager, FriendListUserView>
     {
         private readonly IMVCManager mvcManager;
-        private readonly IFriendsService friendsService;
+        private readonly IPassportBridge passportBridge;
         private readonly GenericContextMenu contextMenu;
         private readonly UserProfileContextMenuControlSettings userProfileContextMenuControlSettings;
 
@@ -22,16 +21,18 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             IWeb3IdentityCache web3IdentityCache,
             IMVCManager mvcManager,
             ISystemClipboard systemClipboard,
-            FriendListRequestManager requestManager) : base(view, web3IdentityCache, requestManager)
+            FriendListRequestManager requestManager,
+            IPassportBridge passportBridge) : base(view, web3IdentityCache, requestManager)
         {
             this.mvcManager = mvcManager;
+            this.passportBridge = passportBridge;
 
             contextMenu = new GenericContextMenu(view.ContextMenuSettings.ContextMenuWidth, verticalLayoutPadding: new RectOffset(15, 15, 20, 25), elementsSpacing: 5)
-               .AddControl(userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings(systemClipboard, userId => Debug.Log($"Send friendship request to {userId}")))
-                .AddControl(new SeparatorContextMenuControlSettings(20, -15, -15))
-                .AddControl(new ButtonContextMenuControlSettings(view.ContextMenuSettings.ViewProfileText, view.ContextMenuSettings.ViewProfileSprite, () => OpenProfilePassport(lastClickedProfileCtx!)))
-                .AddControl(new ButtonContextMenuControlSettings(view.ContextMenuSettings.BlockText, view.ContextMenuSettings.BlockSprite, () => Debug.Log($"Block {lastClickedProfileCtx!.Address.ToString()}")))
-                .AddControl(new ButtonContextMenuControlSettings(view.ContextMenuSettings.ReportText, view.ContextMenuSettings.ReportSprite, () => Debug.Log($"Report {lastClickedProfileCtx!.Address.ToString()}")));
+                         .AddControl(userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings(systemClipboard, userId => Debug.Log($"Send friendship request to {userId}")))
+                         .AddControl(new SeparatorContextMenuControlSettings(20, -15, -15))
+                         .AddControl(new ButtonContextMenuControlSettings(view.ContextMenuSettings.ViewProfileText, view.ContextMenuSettings.ViewProfileSprite, () => OpenProfilePassport(lastClickedProfileCtx!)))
+                         .AddControl(new ButtonContextMenuControlSettings(view.ContextMenuSettings.BlockText, view.ContextMenuSettings.BlockSprite, () => Debug.Log($"Block {lastClickedProfileCtx!.Address.ToString()}")))
+                         .AddControl(new ButtonContextMenuControlSettings(view.ContextMenuSettings.ReportText, view.ContextMenuSettings.ReportSprite, () => Debug.Log($"Report {lastClickedProfileCtx!.Address.ToString()}")));
 
             requestManager.ContextMenuClicked += ContextMenuClicked;
         }
@@ -51,7 +52,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         }
 
         private void OpenProfilePassport(FriendProfile profile) =>
-            mvcManager.ShowAsync(PassportController.IssueCommand(new PassportController.Params(profile.Address.ToString()))).Forget();
+            passportBridge.ShowAsync(profile.Address).Forget();
 
         protected override void ElementClicked(FriendProfile profile) =>
             OpenProfilePassport(profile);

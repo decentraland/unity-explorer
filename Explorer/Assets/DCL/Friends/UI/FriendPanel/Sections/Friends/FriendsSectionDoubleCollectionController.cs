@@ -1,5 +1,4 @@
 using Cysharp.Threading.Tasks;
-using DCL.Passport;
 using DCL.Web3.Identities;
 using MVC;
 using UnityEngine;
@@ -8,14 +7,18 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 {
     public class FriendsSectionDoubleCollectionController : FriendPanelSectionDoubleCollectionController<FriendsSectionView, FriendListPagedDoubleCollectionRequestManager, FriendListUserView>
     {
+        private readonly IPassportBridge passportBridge;
+
         public FriendsSectionDoubleCollectionController(FriendsSectionView view,
             IFriendsService friendsService,
             IFriendsEventBus friendEventBus,
             IWeb3IdentityCache web3IdentityCache,
             IMVCManager mvcManager,
-            FriendListPagedDoubleCollectionRequestManager doubleCollectionRequestManager)
+            FriendListPagedDoubleCollectionRequestManager doubleCollectionRequestManager,
+            IPassportBridge passportBridge)
             : base(view, friendsService, friendEventBus, web3IdentityCache, mvcManager, doubleCollectionRequestManager)
         {
+            this.passportBridge = passportBridge;
             doubleCollectionRequestManager.JumpInClicked += JumpInClicked;
             doubleCollectionRequestManager.ContextMenuClicked += ContextMenuClicked;
         }
@@ -29,7 +32,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 
         protected override void ElementClicked(FriendProfile profile)
         {
-            mvcManager.ShowAsync(PassportController.IssueCommand(new PassportController.Params(profile.Address.ToString()))).Forget();
+            passportBridge.ShowAsync(profile.Address).Forget();
         }
 
         private void JumpInClicked(FriendProfile profile)

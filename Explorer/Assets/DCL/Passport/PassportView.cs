@@ -79,6 +79,21 @@ namespace DCL.Passport
         [field: SerializeField]
         public SoftMask ViewportSoftMask { get; private set; }
 
+        [field: SerializeField]
+        public GameObject FriendInteractionContainer { get; private set; }
+
+        [field: SerializeField]
+        public Button AddFriendButton { get; private set; }
+
+        [field: SerializeField]
+        public Button AcceptFriendButton { get; private set; }
+
+        [field: SerializeField]
+        public Button RemoveFriendButton { get; private set; }
+
+        [field: SerializeField]
+        public Button CancelFriendButton { get; private set; }
+
 #if UNITY_EDITOR
         private void Awake()
         {

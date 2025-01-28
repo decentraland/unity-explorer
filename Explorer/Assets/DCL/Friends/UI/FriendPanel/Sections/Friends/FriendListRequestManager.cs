@@ -55,7 +55,9 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         {
             async UniTaskVoid AddNewFriendProfileAsync(CancellationToken ct)
             {
+                // TODO: we should avoid requesting the profile.. instead the service should emit a FriendProfile
                 Profile? newFriendProfile = await profileRepository.GetAsync(friendId, ct);
+
                 if (newFriendProfile != null)
                 {
                     friends.Add(newFriendProfile.ToFriendProfile());

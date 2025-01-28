@@ -2,7 +2,6 @@ using Cysharp.Threading.Tasks;
 using DCL.Clipboard;
 using DCL.Diagnostics;
 using DCL.Friends.UI.Requests;
-using DCL.Passport;
 using DCL.RealmNavigation;
 using DCL.UI.GenericContextMenu;
 using DCL.UI.GenericContextMenu.Controls.Configs;
@@ -27,12 +26,13 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
         private readonly GenericContextMenu contextMenu;
         private readonly UserProfileContextMenuControlSettings userProfileContextMenuControlSettings;
         private readonly ILoadingStatus loadingStatus;
+        private readonly IPassportBridge passportBridge;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly CancellationTokenSource lifeCycleCts = new ();
+        private readonly CancellationTokenSource friendshipOperationCts = new ();
 
         private FriendProfile? lastClickedProfileCtx;
         private Web3Address? previousWeb3Identity;
-        private CancellationTokenSource friendshipOperationCts = new ();
 
         public event Action<int>? ReceivedRequestsCountChanged;
 
@@ -43,11 +43,13 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             IMVCManager mvcManager,
             ISystemClipboard systemClipboard,
             ILoadingStatus loadingStatus,
-            RequestsRequestManager requestManager)
+            RequestsRequestManager requestManager,
+            IPassportBridge passportBridge)
             : base(view, friendsService, friendEventBus, web3IdentityCache, mvcManager, requestManager)
         {
             this.web3IdentityCache = web3IdentityCache;
             this.loadingStatus = loadingStatus;
+            this.passportBridge = passportBridge;
 
             contextMenu = new GenericContextMenu(view.ContextMenuSettings.ContextMenuWidth, verticalLayoutPadding: CONTEXT_MENU_VERTICAL_LAYOUT_PADDING, elementsSpacing: CONTEXT_MENU_ELEMENTS_SPACING)
                          .AddControl(userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings(systemClipboard, profile => Debug.Log($"Send friendship request to {profile}")))
@@ -103,7 +105,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
         }
 
         private void OpenProfilePassport(FriendProfile profile) =>
-            mvcManager.ShowAsync(PassportController.IssueCommand(new PassportController.Params(profile.Address.ToString()))).Forget();
+            passportBridge.ShowAsync(profile.Address).Forget();
 
         private void PropagateRequestReceived(FriendRequest request) =>
             PropagateReceivedRequestsCountChanged();

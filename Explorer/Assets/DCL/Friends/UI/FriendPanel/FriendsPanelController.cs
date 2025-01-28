@@ -49,13 +49,13 @@ namespace DCL.Friends.UI.FriendPanel
             IFriendsEventBus friendEventBus,
             IMVCManager mvcManager,
             IWeb3IdentityCache web3IdentityCache,
-            IProfileCache profileCache,
             IProfileRepository profileRepository,
             ISystemClipboard systemClipboard,
             IWebRequestController webRequestController,
             IProfileThumbnailCache profileThumbnailCache,
             ILoadingStatus loadingStatus,
-            DCLInput dclInput) : base(viewFactory)
+            DCLInput dclInput,
+            IPassportBridge passportBridge) : base(viewFactory)
         {
             this.chatView = chatView;
             this.sidebarRequestNotificationIndicator = sidebarRequestNotificationIndicator;
@@ -65,7 +65,8 @@ namespace DCL.Friends.UI.FriendPanel
                 web3IdentityCache,
                 mvcManager,
                 systemClipboard,
-                new FriendListRequestManager(friendsService, friendEventBus, profileRepository, webRequestController, profileThumbnailCache, instantiatedView.FriendsSection.LoopList, FRIENDS_PAGE_SIZE, FRIENDS_FETCH_ELEMENTS_THRESHOLD));
+                new FriendListRequestManager(friendsService, friendEventBus, profileRepository, webRequestController, profileThumbnailCache, instantiatedView.FriendsSection.LoopList, FRIENDS_PAGE_SIZE, FRIENDS_FETCH_ELEMENTS_THRESHOLD),
+                passportBridge);
             requestsSectionController = new RequestsSectionController(instantiatedView.RequestsSection,
                 friendsService,
                 friendEventBus,
@@ -73,11 +74,13 @@ namespace DCL.Friends.UI.FriendPanel
                 mvcManager,
                 systemClipboard,
                 loadingStatus,
-                new RequestsRequestManager(friendsService, friendEventBus, webRequestController, profileThumbnailCache, FRIENDS_REQUEST_PAGE_SIZE, instantiatedView.RequestsSection.LoopList));
+                new RequestsRequestManager(friendsService, friendEventBus, webRequestController, profileThumbnailCache, FRIENDS_REQUEST_PAGE_SIZE, instantiatedView.RequestsSection.LoopList),
+                passportBridge);
             blockedSectionController = new BlockedSectionController(instantiatedView.BlockedSection,
                 web3IdentityCache,
                 new BlockedRequestManager(profileRepository, web3IdentityCache, webRequestController, profileThumbnailCache, FRIENDS_PAGE_SIZE, FRIENDS_FETCH_ELEMENTS_THRESHOLD),
-                mvcManager);
+                mvcManager,
+                passportBridge);
 
             requestsSectionController.ReceivedRequestsCountChanged += FriendRequestCountChanged;
         }
@@ -86,10 +89,10 @@ namespace DCL.Friends.UI.FriendPanel
         {
             base.Dispose();
 
-            viewInstance!.FriendsTabButton.onClick.RemoveAllListeners();
-            viewInstance.RequestsTabButton.onClick.RemoveAllListeners();
-            viewInstance.BlockedTabButton.onClick.RemoveAllListeners();
-            viewInstance.CloseButton.onClick.RemoveAllListeners();
+            viewInstance?.FriendsTabButton.onClick.RemoveAllListeners();
+            viewInstance?.RequestsTabButton.onClick.RemoveAllListeners();
+            viewInstance?.BlockedTabButton.onClick.RemoveAllListeners();
+            viewInstance?.CloseButton.onClick.RemoveAllListeners();
             requestsSectionController.ReceivedRequestsCountChanged -= FriendRequestCountChanged;
             friendsPanelCts.SafeCancelAndDispose();
 

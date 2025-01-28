@@ -22,9 +22,9 @@ using DCL.DebugUtilities;
 using DCL.EventsApi;
 using DCL.FeatureFlags;
 using DCL.Friends;
+using DCL.Friends.Passport;
 using DCL.Input;
 using DCL.InWorldCamera.CameraReelStorageService;
-using DCL.Landscape;
 using DCL.LOD.Systems;
 using DCL.MapRenderer;
 using DCL.Minimap;
@@ -66,8 +66,8 @@ using DCL.Profiles.Self;
 using DCL.RealmNavigation;
 using DCL.SceneLoadingScreens.LoadingScreen;
 using DCL.SidebarBus;
-using DCL.UI.MainUI;
 using DCL.StylizedSkybox.Scripts.Plugin;
+using DCL.UI.MainUI;
 using DCL.UserInAppInitializationFlow;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
@@ -517,6 +517,8 @@ namespace Global.Dynamic
             bool includeCameraReel = staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.CAMERA_REEL) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.CAMERA_REEL)) || Application.isEditor;
             bool includeFriends = staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.FRIENDS) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.FRIENDS)) || Application.isEditor;
 
+            var friendServiceProxy = new ObjectProxy<IFriendsService>();
+
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
                 new MultiplayerPlugin(
@@ -705,7 +707,9 @@ namespace Global.Dynamic
                     cameraReelStorageService,
                     globalWorld,
                     playerEntity,
-                    includeCameraReel
+                    includeCameraReel,
+                    friendServiceProxy,
+                    includeFriends
                 ),
                 new GenericContextMenuPlugin(assetsProvisioner, mvcManager),
             };
@@ -741,20 +745,23 @@ namespace Global.Dynamic
                     debugBuilder));
 
             if (includeFriends)
+            {
                 globalPlugins.Add(new FriendsPlugin(
                     mainUIView,
                     bootstrapContainer.DecentralandUrlsSource,
                     mvcManager,
                     assetsProvisioner,
                     identityCache,
-                    profileCache,
                     profileRepository,
                     clipboard,
                     staticContainer.WebRequestsContainer.WebRequestController,
                     staticContainer.LoadingStatus,
                     staticContainer.InputBlock,
                     dclInput,
-                    selfProfile));
+                    selfProfile,
+                    new MVCPassportBridge(mvcManager),
+                    friendServiceProxy));
+            }
 
             if (dynamicWorldParams.EnableAnalytics)
                 globalPlugins.Add(new AnalyticsPlugin(

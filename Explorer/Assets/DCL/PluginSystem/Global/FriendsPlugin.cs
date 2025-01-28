@@ -13,6 +13,7 @@ using DCL.RealmNavigation;
 using DCL.Profiles.Self;
 using DCL.Web3.Identities;
 using DCL.UI.MainUI;
+using DCL.Utilities;
 using DCL.WebRequests;
 using MVC;
 using System;
@@ -30,7 +31,6 @@ namespace DCL.PluginSystem.Global
         private readonly IMVCManager mvcManager;
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IWeb3IdentityCache web3IdentityCache;
-        private readonly IProfileCache profileCache;
         private readonly IProfileRepository profileRepository;
         private readonly ISystemClipboard systemClipboard;
         private readonly IWebRequestController webRequestController;
@@ -38,6 +38,8 @@ namespace DCL.PluginSystem.Global
         private readonly IInputBlock inputBlock;
         private readonly DCLInput dclInput;
         private readonly ISelfProfile selfProfile;
+        private readonly IPassportBridge passportBridge;
+        private readonly ObjectProxy<IFriendsService> friendServiceProxy;
         private readonly CancellationTokenSource lifeCycleCancellationToken = new ();
 
         private RPCFriendsService? friendsService;
@@ -50,21 +52,21 @@ namespace DCL.PluginSystem.Global
             IMVCManager mvcManager,
             IAssetsProvisioner assetsProvisioner,
             IWeb3IdentityCache web3IdentityCache,
-            IProfileCache profileCache,
             IProfileRepository profileRepository,
             ISystemClipboard systemClipboard,
             IWebRequestController webRequestController,
             ILoadingStatus loadingStatus,
             IInputBlock inputBlock,
             DCLInput dclInput,
-            ISelfProfile selfProfile)
+            ISelfProfile selfProfile,
+            IPassportBridge passportBridge,
+            ObjectProxy<IFriendsService> friendServiceProxy)
         {
             this.mainUIView = mainUIView;
             this.dclUrlSource = dclUrlSource;
             this.mvcManager = mvcManager;
             this.assetsProvisioner = assetsProvisioner;
             this.web3IdentityCache = web3IdentityCache;
-            this.profileCache = profileCache;
             this.profileRepository = profileRepository;
             this.systemClipboard = systemClipboard;
             this.webRequestController = webRequestController;
@@ -72,6 +74,8 @@ namespace DCL.PluginSystem.Global
             this.inputBlock = inputBlock;
             this.dclInput = dclInput;
             this.selfProfile = selfProfile;
+            this.passportBridge = passportBridge;
+            this.friendServiceProxy = friendServiceProxy;
         }
 
         public void Dispose()
@@ -92,6 +96,7 @@ namespace DCL.PluginSystem.Global
 
             friendsService = new RPCFriendsService(URLAddress.FromString(dclUrlSource.Url(DecentralandUrl.ApiFriends)),
                 friendEventBus, web3IdentityCache, friendsCache, selfProfile);
+            friendServiceProxy.SetObject(friendsService);
 
             // Fire and forget as this task will never finish
             var cts = CancellationTokenSource.CreateLinkedTokenSource(lifeCycleCancellationToken.Token, ct);
@@ -109,13 +114,13 @@ namespace DCL.PluginSystem.Global
                 friendEventBus,
                 mvcManager,
                 web3IdentityCache,
-                profileCache,
                 profileRepository,
                 systemClipboard,
                 webRequestController,
                 profileThumbnailCache,
                 loadingStatus,
-                dclInput);
+                dclInput,
+                passportBridge);
 
             mvcManager.RegisterController(friendsPanelController);
 

@@ -9,6 +9,7 @@ using DCL.BadgesAPIService;
 using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.Chat;
+using DCL.Friends;
 using DCL.Input;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -17,6 +18,7 @@ using DCL.NotificationsBusController.NotificationsBus;
 using DCL.Passport;
 using DCL.Profiles;
 using DCL.Profiles.Self;
+using DCL.Utilities;
 using DCL.WebRequests;
 using ECS;
 using MVC;
@@ -50,6 +52,8 @@ namespace DCL.PluginSystem.Global
         private readonly Arch.Core.World world;
         private readonly Entity playerEntity;
         private readonly bool enableCameraReel;
+        private readonly ObjectProxy<IFriendsService> friendsService;
+        private readonly bool enableFriends;
 
         private PassportController? passportController;
 
@@ -75,7 +79,9 @@ namespace DCL.PluginSystem.Global
             ICameraReelScreenshotsStorage cameraReelScreenshotsStorage,
             Arch.Core.World world,
             Entity playerEntity,
-            bool enableCameraReel
+            bool enableCameraReel,
+            ObjectProxy<IFriendsService> friendsService,
+            bool enableFriends
         )
         {
             this.assetsProvisioner = assetsProvisioner;
@@ -100,6 +106,8 @@ namespace DCL.PluginSystem.Global
             this.cameraReelStorageService = cameraReelStorageService;
             this.cameraReelScreenshotsStorage = cameraReelScreenshotsStorage;
             this.enableCameraReel = enableCameraReel;
+            this.friendsService = friendsService;
+            this.enableFriends = enableFriends;
         }
 
         public void Dispose()
@@ -145,10 +153,12 @@ namespace DCL.PluginSystem.Global
                 remoteMetadata,
                 cameraReelStorageService,
                 cameraReelScreenshotsStorage,
+                friendsService,
                 passportSettings.GridLayoutFixedColumnCount,
                 passportSettings.ThumbnailHeight,
                 passportSettings.ThumbnailWidth,
-                enableCameraReel
+                enableCameraReel,
+                enableFriends
             );
 
             mvcManager.RegisterController(passportController);
