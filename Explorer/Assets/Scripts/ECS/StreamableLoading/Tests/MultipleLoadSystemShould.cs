@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using DCL.WebRequests;
 using ECS.Prioritization.Components;
+using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Textures;
 using NUnit.Framework;
 using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
@@ -22,7 +23,7 @@ namespace ECS.StreamableLoading.Tests
         {
             // set-up
             var world = World.Create();
-            var loadSystem = new LoadTextureSystem(world, new TexturesCache<GetTextureIntention>(), IWebRequestController.DEFAULT);
+            var loadSystem = new LoadTextureSystem(world, new TexturesCache<GetTextureIntention>(), IWebRequestController.DEFAULT, IDiskCache<Texture2DData>.Null.INSTANCE);
             var promises = new List<Promise>(REQUESTS_COUNT);
             for (var i = 0; i < REQUESTS_COUNT; i++) promises.Add(NewPromise(world));
 

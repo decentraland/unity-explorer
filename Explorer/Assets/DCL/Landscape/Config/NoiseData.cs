@@ -15,8 +15,10 @@ namespace DCL.Landscape.Config
             persistance = 0.3f,
         };
 
-        public override INoiseGenerator GetGenerator(uint baseSeed, uint variantSeed, NoiseGeneratorCache cache) =>
-            new NoiseGenerator(this, variantSeed, baseSeed);
+        public override INoiseGenerator GetGenerator(uint baseSeed, uint variantSeed, NoiseGeneratorCache cache)
+        {
+            return new NoiseGenerator(this, variantSeed, baseSeed, cache.noiseNativeArrayProvider);
+        }
     }
 
     [Serializable]

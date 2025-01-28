@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.WebRequests;
+using DCL.WebRequests.GenericDelete;
 using ECS;
 using JetBrains.Annotations;
 using Newtonsoft.Json;
@@ -148,6 +149,16 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
                                 request.url,
                                 new FlatFetchResponse<GenericPutRequest>(),
                                 GenericPutArguments.CreateJsonOrDefault(request.init?.body),
+                                cancellationTokenSource.Token,
+                                headersInfo: headers,
+                                signInfo: signInfo,
+                                reportCategory: GetReportData());
+                            break;
+                        case "delete":
+                            response = await webController.DeleteAsync<FlatFetchResponse<GenericDeleteRequest>, FlatFetchResponse>(
+                                request.url,
+                                new FlatFetchResponse<GenericDeleteRequest>(),
+                                GenericDeleteArguments.FromJsonOrDefault(request.init?.body),
                                 cancellationTokenSource.Token,
                                 headersInfo: headers,
                                 signInfo: signInfo,

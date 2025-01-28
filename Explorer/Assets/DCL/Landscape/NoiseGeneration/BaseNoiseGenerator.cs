@@ -11,14 +11,17 @@ namespace DCL.Landscape.NoiseGeneration
     {
         internal NativeHashMap<NoiseDataPointer, NativeArray<float>> noiseResultDictionary;
         private NativeHashMap<NoiseDataPointer, JobHandle> jobHandleDictionary;
-
+        private readonly NoiseNativeArrayProvider noiseNativeArrayProvider;
+        
         internal readonly NoiseData noiseData;
         internal readonly float maxHeight;
         internal NativeArray<float2> offsets;
 
-        protected BaseNoiseGenerator(NoiseData noiseData, uint variantSeed, uint baseSeed)
+
+        protected BaseNoiseGenerator(NoiseData noiseData, uint variantSeed, uint baseSeed, NoiseNativeArrayProvider noiseNativeArrayProvider)
         {
             this.noiseData = noiseData;
+            this.noiseNativeArrayProvider = noiseNativeArrayProvider;
             NoiseSettings noiseSettings = noiseData.settings;
             offsets = new NativeArray<float2>(noiseData.settings.octaves, Allocator.Persistent);
             var random = new Random(baseSeed + noiseData.settings.seed + variantSeed);
@@ -31,7 +34,7 @@ namespace DCL.Landscape.NoiseGeneration
         private void CheckCache(NoiseDataPointer pointerKey)
         {
             if (!noiseResultDictionary.ContainsKey(pointerKey))
-                noiseResultDictionary.Add(pointerKey, new NativeArray<float>(pointerKey.size * pointerKey.size, Allocator.Persistent));
+                noiseResultDictionary.Add(pointerKey, noiseNativeArrayProvider.GetNoiseNativeArray(pointerKey.size));
         }
 
         public JobHandle Schedule(NoiseDataPointer noiseDataPointer, JobHandle parentJobHandle, int batchCount = 32)
@@ -62,9 +65,6 @@ namespace DCL.Landscape.NoiseGeneration
 
         private void ClearCache()
         {
-            foreach (KVPair<NoiseDataPointer, NativeArray<float>> pair in noiseResultDictionary)
-                pair.Value.Dispose();
-
             noiseResultDictionary.Dispose();
             jobHandleDictionary.Dispose();
             offsets.Dispose();

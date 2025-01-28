@@ -18,6 +18,7 @@ namespace ECS.StreamableLoading.Textures
         public readonly bool IsVideoTexture;
         public readonly CRDTEntity VideoPlayerEntity;
         public readonly string FileHash;
+        public readonly string Src => CommonArguments.URL.Value;
 
         public CancellationTokenSource CancellationTokenSource => CommonArguments.CancellationTokenSource;
 

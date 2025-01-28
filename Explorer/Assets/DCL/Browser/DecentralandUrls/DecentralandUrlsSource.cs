@@ -109,6 +109,7 @@ namespace DCL.Browser.DecentralandUrls
                 // TODO: use the environment once the service is deployed to prod
                 DecentralandUrl.ApiFriends => "wss://rpc-social-service-ea.decentraland.zone",
                 // DecentralandUrl.ApiFriends => $"wss://rpc-social-service-ea.decentraland.{ENV}",
+                DecentralandUrl.AssetBundleRegistry => $"https://asset-bundle-registry.decentraland.{ENV}/entities/active",
                 _ => throw new ArgumentOutOfRangeException(nameof(decentralandUrl), decentralandUrl, null!)
             };
     }
