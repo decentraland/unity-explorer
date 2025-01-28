@@ -1,5 +1,3 @@
-using System;
-
 namespace DCL.WebRequests.PartialDownload
 {
     public class PartialDownloadingData

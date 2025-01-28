@@ -9,7 +9,6 @@ using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Common.Components;
 using System;
 using System.Buffers;
-using System.IO;
 using System.Threading;
 using UnityEngine;
 
@@ -64,10 +63,7 @@ namespace ECS.StreamableLoading.Common.Systems
 
                 //If this is the first chunk, we need to create the full data stream
                 if (state.PartialDownloadingData == null)
-                {
-                    var fullDataStream = new MemoryStream(chunkData.FullFileSize);
-                    partialState = new PartialLoadingState(fullDataStream, chunkData.FullFileSize);
-                }
+                    partialState = new PartialLoadingState(chunkData.FullFileSize);
 
                 int finalBytesCount = chunkData.downloadedSize;
 
@@ -75,8 +71,7 @@ namespace ECS.StreamableLoading.Common.Systems
                     finalBytesCount = chunkData.FullFileSize - chunkData.RangeStart;
 
                 // Write the downloaded data to the full data stream by starting from the last range start
-                partialState.FullData.Position = chunkData.RangeStart;
-                partialState.FullData.Write(chunkData.DataBuffer, 0, finalBytesCount);
+                chunkData.DataBuffer.AsMemory()[..finalBytesCount].CopyTo(partialState.FullData[chunkData.RangeStart..]);
 
                 // Update the partial state with the new start range, if already completed set it to the full file size
                 if (chunkData.downloadedSize == chunkData.FullFileSize)
@@ -84,15 +79,12 @@ namespace ECS.StreamableLoading.Common.Systems
                 else
                     partialState.NextRangeStart = chunkData.RangeEnd + 1;
 
+                state.SetChunkData(partialState);
+
                 // Check if the download is complete
                 if (partialState.FullyDownloaded)
-                {
-                    StreamableLoadingResult<TData> loadedResult = await ProcessCompletedData(partialState.FullData, intention, partition, ct, state);
-                    state.SetChunkData(partialState);
-                    return loadedResult;
-                }
+                    return await ProcessCompletedData(state, intention, partition, ct);
 
-                state.SetChunkData(partialState);
                 return default;
             }
             finally
@@ -102,6 +94,6 @@ namespace ECS.StreamableLoading.Common.Systems
             }
         }
 
-        protected abstract UniTask<StreamableLoadingResult<TData>> ProcessCompletedData(MemoryStream completeData, TIntention intention, IPartitionComponent partition, CancellationToken ct, StreamableLoadingState state);
+        protected abstract UniTask<StreamableLoadingResult<TData>> ProcessCompletedData(StreamableLoadingState state, TIntention intention, IPartitionComponent partition, CancellationToken ct);
     }
 }

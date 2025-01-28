@@ -10,7 +10,6 @@ using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
 using Plugins.TexturesFuse.TexturesServerWrap;
 using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
-using System;
 using System.Buffers;
 using System.IO;
 using System.Threading;
@@ -36,12 +35,9 @@ namespace ECS.StreamableLoading.Textures
             this.texturesFuse = texturesFuse;
         }
 
-        protected override async UniTask<StreamableLoadingResult<Texture2DData>> ProcessCompletedData(MemoryStream completeData, GetTextureIntention intention, IPartitionComponent partition, CancellationToken ct, StreamableLoadingState state)
+        protected override async UniTask<StreamableLoadingResult<Texture2DData>> ProcessCompletedData(StreamableLoadingState state, GetTextureIntention intention, IPartitionComponent partition, CancellationToken ct)
         {
-            if (!completeData.TryGetBuffer(out ArraySegment<byte> buffer))
-                throw new InvalidOperationException("Could not get buffer from MemoryStream");
-
-            EnumResult<IOwnedTexture2D,NativeMethods.ImageResult> textureFromBytesAsync = await texturesFuse.TextureFromBytesAsync(buffer.Array, TextureType.Albedo, ct);
+            EnumResult<IOwnedTexture2D, NativeMethods.ImageResult> textureFromBytesAsync = await texturesFuse.TextureFromBytesAsync(state.GetFullyDownloadedData(), intention.TextureType, ct);
             return new StreamableLoadingResult<Texture2DData>(new Texture2DData(textureFromBytesAsync.Value));
         }
     }

@@ -2,7 +2,9 @@ using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.WebRequests.PartialDownload;
 using System;
+using System.Buffers;
 using System.Runtime.CompilerServices;
+using UnityEngine.Assertions;
 using UnityEngine.Pool;
 
 namespace ECS.StreamableLoading.Common.Components
@@ -74,6 +76,21 @@ namespace ECS.StreamableLoading.Common.Components
         ///     Is set when the partial downloading is supported for the given type of asset promise and has started
         /// </summary>
         public PartialLoadingState? PartialDownloadingData { get; internal set; }
+
+        public Memory<byte> GetFullyDownloadedData()
+        {
+            Assert.IsTrue(PartialDownloadingData is { FullyDownloaded: true });
+            return PartialDownloadingData!.Value.FullData;
+        }
+
+        public IMemoryOwner<byte> ClaimOwnershipOverFullyDownloadedData()
+        {
+            Assert.IsTrue(PartialDownloadingData is { FullyDownloaded: true });
+            PartialLoadingState value = PartialDownloadingData!.Value;
+            IMemoryOwner<byte> owner = value.TransferMemoryOwnership();
+            PartialDownloadingData = value;
+            return owner;
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SetAllowed(IAcquiredBudget budget)

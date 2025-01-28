@@ -14,7 +14,6 @@ using ECS.StreamableLoading.NFTShapes.DTOs;
 using ECS.StreamableLoading.Textures;
 using Plugins.TexturesFuse.TexturesServerWrap;
 using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
-using System;
 using System.Buffers;
 using System.IO;
 using System.Threading;
@@ -50,12 +49,9 @@ namespace ECS.StreamableLoading.NFTShapes
             return await base.FlowInternalAsync(intention, state, partition, ct);
         }
 
-        protected override async UniTask<StreamableLoadingResult<Texture2DData>> ProcessCompletedData(MemoryStream completeData, GetNFTShapeIntention intention, IPartitionComponent partition,  CancellationToken ct, StreamableLoadingState state)
+        protected override async UniTask<StreamableLoadingResult<Texture2DData>> ProcessCompletedData(StreamableLoadingState state, GetNFTShapeIntention intention, IPartitionComponent partition, CancellationToken ct)
         {
-            if (!completeData.TryGetBuffer(out ArraySegment<byte> buffer))
-                throw new InvalidOperationException("Could not get buffer from MemoryStream");
-
-            EnumResult<IOwnedTexture2D,NativeMethods.ImageResult> textureFromBytesAsync = await texturesFuse.TextureFromBytesAsync(buffer.Array, TextureType.Albedo, ct);
+            EnumResult<IOwnedTexture2D, NativeMethods.ImageResult> textureFromBytesAsync = await texturesFuse.TextureFromBytesAsync(state.GetFullyDownloadedData(), TextureType.Albedo, ct);
             return new StreamableLoadingResult<Texture2DData>(new Texture2DData(textureFromBytesAsync.Value));
         }
 

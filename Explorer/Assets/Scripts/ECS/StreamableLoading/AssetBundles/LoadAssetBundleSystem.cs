@@ -45,9 +45,11 @@ namespace ECS.StreamableLoading.AssetBundles
             this.loadingMutex = loadingMutex;
         }
 
-        protected override async UniTask<StreamableLoadingResult<AssetBundleData>> ProcessCompletedData(MemoryStream completeData, GetAssetBundleIntention intention, IPartitionComponent partition, CancellationToken ct, StreamableLoadingState state)
+        protected override async UniTask<StreamableLoadingResult<AssetBundleData>> ProcessCompletedData(StreamableLoadingState state, GetAssetBundleIntention intention, IPartitionComponent partition, CancellationToken ct)
         {
-            AssetBundle? assetBundle = await AssetBundle.LoadFromStreamAsync(completeData);
+            var memoryStream = new AssetBundleData.MemoryStream(state.ClaimOwnershipOverFullyDownloadedData());
+
+            AssetBundle? assetBundle = await AssetBundle.LoadFromStreamAsync(memoryStream.stream);
 
             // Release budget now to not hold it until dependencies are resolved to prevent a deadlock
             state.AcquiredBudget!.Release();
@@ -87,14 +89,13 @@ namespace ECS.StreamableLoading.AssetBundles
                 else
                     dependencies = Array.Empty<AssetBundleData>();
 
-                Debug.Log($"Dependencies count {dependencies.Length}");
-
                 ct.ThrowIfCancellationRequested();
 
                 string version = intention.Manifest != null ? intention.Manifest.GetVersion() : string.Empty;
                 string source = intention.CommonArguments.CurrentSource.ToStringNonAlloc();
 
-                return await CreateAssetBundleDataAsync(assetBundle, metrics, intention.ExpectedObjectType, mainAsset, loadingMutex, dependencies, GetReportData(), version, source, intention.LookForShaderAssets, ct);
+                StreamableLoadingResult<AssetBundleData> result = await CreateAssetBundleDataAsync(assetBundle, metrics, intention.ExpectedObjectType, mainAsset, loadingMutex, dependencies, memoryStream, GetReportData(), version, source, intention.LookForShaderAssets, ct);
+                return result;
             }
             catch (Exception)
             {
@@ -104,6 +105,7 @@ namespace ECS.StreamableLoading.AssetBundles
                 if (assetBundle)
                     assetBundle.Unload(true);
 
+                memoryStream.Dispose();
                 throw;
             }
         }
@@ -120,24 +122,25 @@ namespace ECS.StreamableLoading.AssetBundles
             return await UniTask.WhenAll(assetBundleMetadata.dependencies.Select(hash => WaitForDependencyAsync(manifest, hash, customEmbeddedSubdirectory, partition, ct)));
         }
 
-        public static async UniTask<StreamableLoadingResult<AssetBundleData>> CreateAssetBundleDataAsync(
+        internal static async UniTask<StreamableLoadingResult<AssetBundleData>> CreateAssetBundleDataAsync(
             AssetBundle assetBundle, AssetBundleMetrics? metrics, Type? expectedObjType, string? mainAsset,
             AssetBundleLoadingMutex loadingMutex,
             AssetBundleData[] dependencies,
+            AssetBundleData.MemoryStream memoryStream,
             ReportData reportCategory,
             string version,
             string source,
             bool lookForShaderAssets,
             CancellationToken ct)
         {
-            // if the type was not specified don't load any assets
+            // if the type was not specified don't load any assets (we don't know when they will be indirectly requested)
             if (expectedObjType == null)
-                return new StreamableLoadingResult<AssetBundleData>(new AssetBundleData(assetBundle, metrics, dependencies));
+                return new StreamableLoadingResult<AssetBundleData>(new AssetBundleData(assetBundle, metrics, dependencies, memoryStream));
 
             if (lookForShaderAssets && expectedObjType == typeof(GameObject))
             {
                 //If there are no dependencies, it means that this gameobject asset bundle has the shader in it.
-                //All gameobject asset bundles ahould at least have the dependency on the shader.
+                //All gameobject asset bundles should at least have the dependency on the shader.
                 //This will cause a material leak, as the same material will be loaded again. This needs to be solved at asset bundle level
                 if (dependencies.Length == 0)
                     throw new AssetBundleContainsShaderException(assetBundle.name);
@@ -145,9 +148,15 @@ namespace ECS.StreamableLoading.AssetBundles
 
             Object? asset = await LoadAllAssetsAsync(assetBundle, expectedObjType, mainAsset, loadingMutex, reportCategory, ct);
 
-            return new StreamableLoadingResult<AssetBundleData>(new AssetBundleData(assetBundle, metrics, asset, expectedObjType, dependencies,
+            var assetBundleData = new AssetBundleData(assetBundle, metrics, asset, expectedObjType, dependencies,
                 version: version,
-                source: source));
+                source: source);
+
+            assetBundleData.UnloadAB(ref memoryStream);
+
+            // After this point it's no longer possible to load other assets from the asset bundle
+
+            return new StreamableLoadingResult<AssetBundleData>(assetBundleData);
         }
 
         private static async UniTask<Object> LoadAllAssetsAsync(AssetBundle assetBundle, Type objectType, string? mainAsset, AssetBundleLoadingMutex loadingMutex, ReportData reportCategory,

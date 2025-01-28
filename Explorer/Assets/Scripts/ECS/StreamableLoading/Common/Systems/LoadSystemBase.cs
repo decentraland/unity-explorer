@@ -141,7 +141,13 @@ namespace ECS.StreamableLoading.Common.Systems
                     // if the cached request is cancelled it does not mean failure for the new intent
                     (requestIsNotFulfilled, ongoingRequestResult) = await cachedSource.Task.SuppressCancellationThrow();
 
-                    state.PartialDownloadingData = ongoingRequestResult.PartialDownloadingData;
+                    // Thus we keep the partial downloading data unique for an entity (not shared with others)
+                    if (ongoingRequestResult is { PartialDownloadingData: { FullyDownloaded: false } })
+                    {
+                        state.PartialDownloadingData?.Dispose();
+                        state.PartialDownloadingData = new PartialLoadingState(ongoingRequestResult.PartialDownloadingData.Value);
+                    }
+
                     result = ongoingRequestResult.Result;
 
                     if (requestIsNotFulfilled)

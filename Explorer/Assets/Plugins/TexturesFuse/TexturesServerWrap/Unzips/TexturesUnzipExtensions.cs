@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using System;
+using System.Buffers;
 using System.Runtime.InteropServices;
 using System.Threading;
 using Utility.Types;
@@ -8,32 +9,19 @@ namespace Plugins.TexturesFuse.TexturesServerWrap.Unzips
 {
     public static class TexturesUnzipExtensions
     {
-        private struct HandleScope : IDisposable
-        {
-            private GCHandle handle;
-
-            public IntPtr Addr => handle.AddrOfPinnedObject();
-
-            public HandleScope(object obj)
-            {
-                handle = GCHandle.Alloc(obj, GCHandleType.Pinned);
-            }
-
-            public void Dispose()
-            {
-                handle.Free();
-            }
-        }
-
         public static async UniTask<EnumResult<IOwnedTexture2D, NativeMethods.ImageResult>> TextureFromBytesAsync(
             this ITexturesFuse fuse,
-            byte[] bytes,
+            Memory<byte> bytes,
             TextureType type,
             CancellationToken token
         )
         {
-            using var pinned = new HandleScope(bytes);
-            var result = await fuse.TextureFromBytesAsync(pinned.Addr, bytes.Length, type, token);
+            using MemoryHandle pinned = bytes.Pin();
+            IntPtr ptr;
+
+            unsafe { ptr = (IntPtr)pinned.Pointer; }
+
+            EnumResult<IOwnedTexture2D, NativeMethods.ImageResult> result = await fuse.TextureFromBytesAsync(ptr, bytes.Length, type, token);
             return result;
         }
 
