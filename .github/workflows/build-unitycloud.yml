@@ -144,8 +144,9 @@ jobs:
       - name: Set default values
         id: set_defaults
         run: |
-          if [ "${{ github.event.inputs.clean_build }}" ]; then
-            clean_build=${{ github.event.inputs.clean_build }}
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            echo "Checking all PR labels..."
+            clean_build=$(echo "${{ join(...) }}" | grep -q 'clean-build' && echo true || echo false)
           elif [ "${{ inputs.clean_build }}" ]; then
             clean_build=${{ inputs.clean_build }}
           elif [ "${{ github.event.label.name }}" == "clean-build" ]; then
