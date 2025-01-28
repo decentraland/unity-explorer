@@ -63,7 +63,6 @@ namespace DCL.PluginSystem.World
 
         public async UniTask InitializeAsync(Settings settings, CancellationToken ct)
         {
-            //canvas = (await assetsProvisioner.ProvideInstanceAsync(settings.Canvas, ct: ct)).Value;
             StyleSheet scenesUIStyleSheet = (await assetsProvisioner.ProvideMainAssetAsync(settings.StyleSheet, ct)).Value;
 
             canvas.rootVisualElement.styleSheets.Add(scenesUIStyleSheet);
