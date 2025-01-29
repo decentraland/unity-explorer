@@ -654,7 +654,7 @@ namespace Global.Dynamic
                     dynamicWorldDependencies.Web3Authenticator,
                     userInAppInAppInitializationFlow,
                     profileCache, sidebarBus, dclInput, chatEntryConfiguration,
-                    globalWorld, playerEntity, includeCameraReel),
+                    globalWorld, playerEntity, includeCameraReel, chatHistory),
                 new ErrorPopupPlugin(mvcManager, assetsProvisioner),
                 connectionStatusPanelPlugin,
                 new MinimapPlugin(mvcManager, minimap),

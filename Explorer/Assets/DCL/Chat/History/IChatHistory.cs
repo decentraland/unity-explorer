@@ -24,9 +24,24 @@ namespace DCL.Chat.History
         event Action<ChatChannel, ChatMessage>? MessageAdded;
 
         /// <summary>
+        /// Raised when a message is read, added or removed in any channel.
+        /// </summary>
+        event Action ReadMessagesChanged;
+
+        /// <summary>
         /// Gets all the channels stored in the history.
         /// </summary>
         IReadOnlyDictionary<ChatChannel.ChannelId, ChatChannel> Channels {  get; }
+
+        /// <summary>
+        /// Gets the sum of all read messages in all channels.
+        /// </summary>
+        public int ReadMessages { get; }
+
+        /// <summary>
+        /// Gets the sum of all messages in all channels.
+        /// </summary>
+        public int TotalMessages { get; }
 
         /// <summary>
         /// Creates and stores a new channel.
@@ -37,6 +52,12 @@ namespace DCL.Chat.History
         /// The id of the new channel.
         /// </returns>
         public ChatChannel.ChannelId AddChannel(ChatChannel.ChatChannelType type, string channelName);
+
+        /// <summary>
+        /// Removes a channel along with its messages (which implies a change in the amount of read messages).
+        /// </summary>
+        /// <param name="channelId">The channel to remove.</param>
+        public void RemoveChannel(ChatChannel.ChannelId channelId);
 
         /// <summary>
         /// Adds a new message to a channel.

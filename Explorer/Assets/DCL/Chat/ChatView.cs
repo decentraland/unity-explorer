@@ -280,22 +280,29 @@ namespace DCL.Chat
         }
 
         /// <summary>
-        /// Opens or closes the chat window.
+        /// Gets or sets whether the chat panel is open or close (the input box is visible in any case).
         /// </summary>
-        /// <param name="show">Whether to open or close it.</param>
-        public void ToggleChat(bool show)
+        public bool IsUnfolded
         {
-            panelBackgroundCanvasGroup.gameObject.SetActive(show);
-            chatMessageViewer.SetVisibility(show);
+            get => panelBackgroundCanvasGroup.gameObject.activeInHierarchy;
 
-            if (!show)
+            set
             {
-                chatMessageViewer.HideSeparator();
-                IsUnreadMessagesCountVisible = false;
-            }
-            else
-            {
-                chatMessageViewer.ShowLastMessage();
+                if(value == panelBackgroundCanvasGroup.gameObject.activeInHierarchy)
+                    return;
+
+                panelBackgroundCanvasGroup.gameObject.SetActive(value);
+                chatMessageViewer.SetVisibility(value);
+
+                if (!value)
+                {
+                    chatMessageViewer.HideSeparator();
+                    IsUnreadMessagesCountVisible = false;
+                }
+                else
+                {
+                    chatMessageViewer.ShowLastMessage();
+                }
             }
         }
 
@@ -457,7 +464,7 @@ namespace DCL.Chat
         private void CloseChat()
         {
             isChatClosed = true;
-            ToggleChat(false);
+            IsUnfolded = false;
         }
 
         private void ToggleEmojiPanel()
@@ -513,7 +520,7 @@ namespace DCL.Chat
             if (isChatClosed)
             {
                 isChatClosed = false;
-                ToggleChat(true);
+                IsUnfolded = true;
                 chatMessageViewer.ShowLastMessage();
             }
 

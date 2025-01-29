@@ -65,6 +65,11 @@ namespace DCL.Chat
         public event Action<ChatChannel, ChatMessage>? MessageAdded;
 
         /// <summary>
+        /// Raised when a message is read, added or removed.
+        /// </summary>
+        public event Action ReadMessagesChanged;
+
+        /// <summary>
         /// Gets all the messages contained in the thread. The first messages in the list are the latest added.
         /// </summary>
         public IReadOnlyList<ChatMessage> Messages => messages;
@@ -107,6 +112,7 @@ namespace DCL.Chat
             messages.Reverse();
 
             MessageAdded?.Invoke(this, message);
+            ReadMessagesChanged?.Invoke();
         }
 
         /// <summary>
@@ -116,6 +122,7 @@ namespace DCL.Chat
         {
             messages.Clear();
             Cleared?.Invoke(this);
+            ReadMessagesChanged?.Invoke();
         }
 
         /// <summary>
@@ -124,6 +131,7 @@ namespace DCL.Chat
         public void MarkAllMessagesAsRead()
         {
             ReadMessages = messages.Count;
+            ReadMessagesChanged?.Invoke();
         }
     }
 }

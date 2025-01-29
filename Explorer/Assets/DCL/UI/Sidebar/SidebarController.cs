@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.Chat;
+using DCL.Chat.History;
 using DCL.ExplorePanel;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Notifications.NotificationsMenu;
@@ -35,6 +36,8 @@ namespace DCL.UI.Sidebar
         private readonly IWeb3IdentityCache identityCache;
         private readonly IWebBrowser webBrowser;
         private readonly bool includeCameraReel;
+        private readonly ChatView chatView;
+        private readonly IChatHistory chatHistory;
 
         private CancellationTokenSource profileWidgetCts = new ();
         private CancellationTokenSource systemMenuCts = new ();
@@ -57,7 +60,9 @@ namespace DCL.UI.Sidebar
             IWeb3IdentityCache identityCache,
             IProfileRepository profileRepository,
             IWebBrowser webBrowser,
-            bool includeCameraReel)
+            bool includeCameraReel,
+            ChatView chatView,
+            IChatHistory chatHistory)
             : base(viewFactory)
         {
             this.mvcManager = mvcManager;
@@ -74,6 +79,9 @@ namespace DCL.UI.Sidebar
             this.profileRepository = profileRepository;
             this.webBrowser = webBrowser;
             this.includeCameraReel = includeCameraReel;
+
+            this.chatView = chatView;
+            this.chatHistory = chatHistory;
         }
 
         public override void Dispose()
@@ -108,6 +116,7 @@ namespace DCL.UI.Sidebar
             viewInstance.skyboxButton.Button.onClick.AddListener(OpenSkyboxSettings);
             viewInstance.SkyboxMenuView.OnViewHidden += OnSkyboxSettingsClosed;
             viewInstance.controlsButton.onClick.AddListener(OnControlsButtonClicked);
+            viewInstance.unreadMessagesButton.onClick.AddListener(OnUnreadMessagesButtonClicked);
 
             if (includeCameraReel)
                 viewInstance.cameraReelButton.onClick.AddListener(() => OpenExplorePanelInSection(ExploreSections.CameraReel));
@@ -116,6 +125,18 @@ namespace DCL.UI.Sidebar
                 viewInstance.cameraReelButton.gameObject.SetActive(false);
                 viewInstance.InWorldCameraButton.gameObject.SetActive(false);
             }
+
+            chatHistory.ReadMessagesChanged += OnChatHistoryReadMessagesChanged;
+        }
+
+        private void OnChatHistoryReadMessagesChanged()
+        {
+            viewInstance!.chatUnreadMessagesNumber.Number =  chatHistory.TotalMessages - chatHistory.ReadMessages;
+        }
+
+        private void OnUnreadMessagesButtonClicked()
+        {
+            chatView.IsUnfolded = true;
         }
 
         private void OnHelpButtonClicked()
