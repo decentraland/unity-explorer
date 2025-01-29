@@ -15,6 +15,9 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
         private const int STATUS_ELEMENT_INDEX = 1;
         private const int EMPTY_ELEMENT_INDEX = 2;
 
+        private const int REQUEST_MAX_AMOUNT = 100;
+        private const int REQUEST_PAGE_NUMBER = 0;
+
         private readonly LoopListView2 loopListView;
         private readonly CancellationTokenSource modifyRequestsCts = new ();
         private readonly List<FriendRequest> receivedRequests = new ();
@@ -139,8 +142,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
         protected override async UniTask FetchInitialDataAsync(CancellationToken ct)
         {
             (PaginatedFriendRequestsResult received, PaginatedFriendRequestsResult sent) =
-                await UniTask.WhenAll(friendsService.GetReceivedFriendRequestsAsync(1, 100, ct),
-                    friendsService.GetSentFriendRequestsAsync(1, 100, ct));
+                await UniTask.WhenAll(friendsService.GetReceivedFriendRequestsAsync(REQUEST_PAGE_NUMBER, REQUEST_MAX_AMOUNT, ct),
+                    friendsService.GetSentFriendRequestsAsync(REQUEST_PAGE_NUMBER, REQUEST_MAX_AMOUNT, ct));
 
             foreach (FriendRequest fr in received.Requests)
             {
