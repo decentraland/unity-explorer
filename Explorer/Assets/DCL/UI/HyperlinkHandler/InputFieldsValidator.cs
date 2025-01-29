@@ -14,10 +14,14 @@ namespace DCL.UI.InputFieldValidator
         private static readonly Regex RICH_TEXT_TAG_REGEX = new (@"<(?!\/?(b|i)(>|\s))[^>]+>", RegexOptions.Compiled);
         private static readonly Regex LINK_TAG_REGEX = new (@"<#[0-9A-Fa-f]{6}><link=(url|scene|world|user):.*?>(.*?)</link></color>", RegexOptions.Compiled);
         private static readonly Regex WEBSITE_REGEX = new (@"\b((https?:\/\/)?(www\.)[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?\.[a-zA-Z]{2,63}(\/[^\s]*)?)\b", RegexOptions.Compiled);
-        private static readonly Regex SCENE_REGEX = new (@"(?<!\S)-?\d{1,3},\s*-?\d{1,3}(?!\S)", RegexOptions.Compiled);
-        private static readonly Regex WORLD_REGEX = new (@"(?<!\S)[a-zA-Z0-9][a-zA-Z0-9-]*\.dcl\.eth(?!\S)", RegexOptions.Compiled);
+        private static readonly Regex WORLD_REGEX = new (@"[a-zA-Z0-9][a-zA-Z0-9-]*\.dcl\.eth", RegexOptions.Compiled);
+        private static readonly Regex SCENE_REGEX = new (@"-?\d{1,3},\s*-?\d{1,3}", RegexOptions.Compiled);
+
+        private const string TAG = "§";
 
         [SerializeField] private TMP_StyleSheet styleSheet;
+
+
         private readonly StringBuilder mainStringBuilder = new ();
         private readonly StringBuilder tempStringBuilder = new ();
         private string linkClosingStyle;
@@ -30,31 +34,26 @@ namespace DCL.UI.InputFieldValidator
             linkOpeningStyle = style.styleOpeningDefinition + "<link=";
             linkClosingStyle = "</link>" + style.styleClosingDefinition;
         }
-
-        public void ValidateOnBackspace2(ref string text, ref int pos)
-        {
-            text = text.Insert(pos, "TAG");
-
-            //text = ProcessWord(text);
-
-            int tag = text.IndexOf("TAG", StringComparison.InvariantCulture);
-            int tag2 = text.LastIndexOf("TAG", StringComparison.InvariantCulture);
-
-            if (tag != tag2) { pos = tag2 - 3; }
-            else { pos = tag; }
-
-            text = text.Replace("TAG", "");
-        }
-
+        
         public void ValidateOnBackspace(ref string text, ref int pos)
         {
             if (pos <= 0 || text.Length == 0)
                 return;
 
             mainStringBuilder.Clear();
-            mainStringBuilder.Append(text);
+            mainStringBuilder.Append(text).Insert(pos, TAG);
 
             text = ProcessWord(ref pos);
+
+            //Not Ideal implementation, but other methods are much more convoluted,
+            //will try to find something better before merging to dev
+            int tag = text.IndexOf(TAG, StringComparison.InvariantCulture);
+            int tag2 = text.LastIndexOf(TAG, StringComparison.InvariantCulture);
+
+            if (tag != tag2) { pos = tag2 - 1; }
+            else { pos = tag; }
+
+            text = text.Replace(TAG, "");
         }
 
         public override char Validate(ref string text, ref int pos, char ch)
