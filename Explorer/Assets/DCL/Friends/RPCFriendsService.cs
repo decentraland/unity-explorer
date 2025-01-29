@@ -346,16 +346,22 @@ namespace DCL.Friends
                 case WebSocketState.Connecting:
                     break;
                 default:
-                    isConnecting = true;
-                    try { await transport.ConnectAsync(ct); }
-                    finally { isConnecting = false; }
+                    if (!isConnecting)
+                    {
+                        isConnecting = true;
+                        try { await transport.ConnectAsync(ct); }
+                        finally { isConnecting = false; }
 
-                    transport.ListenForIncomingData();
+                        if (!isSendingAuthChain)
+                        {
+                            isSendingAuthChain = true;
+                            // The service expects the auth-chain in json format within a 30 seconds threshold after connection
+                            try { await transport.SendMessageAsync(BuildAuthChain(), ct); }
+                            finally { isSendingAuthChain = false; }
+                        }
 
-                    isSendingAuthChain = true;
-                    // The service expects the auth-chain in json format within a 30 seconds threshold after connection
-                    try { await transport.SendMessageAsync(BuildAuthChain(), ct); }
-                    finally { isSendingAuthChain = false; }
+                        transport.ListenForIncomingData();
+                    }
 
                     break;
             }
