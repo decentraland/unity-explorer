@@ -1,6 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using TMPro;
@@ -11,16 +9,23 @@ namespace DCL.UI.InputFieldValidator
     [CreateAssetMenu(fileName = "InputFieldValidator", menuName = "DCL/UI/InputFieldValidator")]
     public class InputFieldsValidator : TMP_InputValidator
     {
+        private const string TAG = "§";
+        private const string SCENE = "scene";
+        private const string WORLD = "world";
+        private const string URL = "url";
+        private const string USER = "user";
+
         private static readonly Regex RICH_TEXT_TAG_REGEX = new (@"<(?!\/?(b|i)(>|\s))[^>]+>", RegexOptions.Compiled);
         private static readonly Regex LINK_TAG_REGEX = new (@"<#[0-9A-Fa-f]{6}><link=(url|scene|world|user):.*?>(.*?)</link></color>", RegexOptions.Compiled);
-        private static readonly Regex WEBSITE_REGEX = new (@"\b((https?:\/\/)?(www\.)[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?\.[a-zA-Z]{2,63}(\/[^\s]*)?)\b", RegexOptions.Compiled);
-        private static readonly Regex WORLD_REGEX = new (@"[a-zA-Z0-9][a-zA-Z0-9-]*\.dcl\.eth", RegexOptions.Compiled);
-        private static readonly Regex SCENE_REGEX = new (@"-?\d{1,3},\s*-?\d{1,3}", RegexOptions.Compiled);
+        private static readonly Regex WEBSITE_REGEX = new (
+            @"(?:^|\s)§?((http§?s?:\/\/)?§?(www\.)§?[a-zA-Z0-9]§?(?:[a-zA-Z0-9-]*§?[a-zA-Z0-9]*)?§?\.§?[a-zA-Z]{2,30}§?[a-zA-Z]{0,33}§?(\/[^\s]*)?)§?(?=\s|$)",
+            RegexOptions.Compiled);
+        private static readonly Regex SCENE_REGEX = new (@"(?:^|\s)-?§?\d{0,1}§?\d{0,1}§?\d{1}§?,§?-?§?\d{1}§?\d{0,1}§?\d{0,1}§?(?=\s|$)", RegexOptions.Compiled);
 
-        private const string TAG = "§";
+        private static readonly Regex WORLD_REGEX = new (@"(?:^|\s)§?[a-zA-Z0-9]§?[a-zA-Z0-9]*§?[a-zA-Z0-9]*§?\.dcl\.eth§?(?=\s|$)",
+            RegexOptions.Compiled);
 
         [SerializeField] private TMP_StyleSheet styleSheet;
-
 
         private readonly StringBuilder mainStringBuilder = new ();
         private readonly StringBuilder tempStringBuilder = new ();
@@ -34,7 +39,7 @@ namespace DCL.UI.InputFieldValidator
             linkOpeningStyle = style.styleOpeningDefinition + "<link=";
             linkClosingStyle = "</link>" + style.styleClosingDefinition;
         }
-        
+
         public void ValidateOnBackspace(ref string text, ref int pos)
         {
             if (pos <= 0 || text.Length == 0)
@@ -126,20 +131,38 @@ namespace DCL.UI.InputFieldValidator
         }
 
         private StringBuilder WrapWithUrlLink(Match match) =>
-            WrapWithLink(match, "url");
+            WrapWithLink(match, LinkType.URL);
 
         private StringBuilder WrapWithSceneLink(Match match) =>
-            WrapWithLink(match, "scene");
+            WrapWithLink(match, LinkType.SCENE);
 
         private StringBuilder WrapWithWorldLink(Match match) =>
-            WrapWithLink(match, "world");
+            WrapWithLink(match, LinkType.WORLD);
 
-        private StringBuilder WrapWithLink(Match match, string linkType)
+        private StringBuilder WrapWithLink(Match match, LinkType linkType)
         {
             tempStringBuilder.Clear();
+            string linkTypeString = string.Empty;
+
+            //Validate here if these are valid before creating the links
+            switch (linkType)
+            {
+                case LinkType.SCENE:
+                    linkTypeString = SCENE;
+                    break;
+                case LinkType.WORLD:
+                    linkTypeString = WORLD;
+                    break;
+                case LinkType.URL:
+                    linkTypeString = URL;
+                    break;
+                case LinkType.USER:
+                    linkTypeString = USER;
+                    break;
+            }
 
             tempStringBuilder.Append(linkOpeningStyle)
-                             .Append(linkType)
+                             .Append(linkTypeString)
                              .Append(':')
                              .Append(match.Value)
                              .Append(">")
@@ -147,6 +170,14 @@ namespace DCL.UI.InputFieldValidator
                              .Append(linkClosingStyle);
 
             return tempStringBuilder;
+        }
+
+        private enum LinkType
+        {
+            SCENE,
+            WORLD,
+            URL,
+            USER,
         }
     }
 }

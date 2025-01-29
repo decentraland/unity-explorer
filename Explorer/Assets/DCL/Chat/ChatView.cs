@@ -82,7 +82,6 @@ namespace DCL.Chat
         [SerializeField]
         private AudioClipConfig chatInputTextAudio;
 
-
         /// <summary>
         ///     An external function that provides a way to calculate the color to be used to display a user name.
         /// </summary>
@@ -223,6 +222,8 @@ namespace DCL.Chat
             chatInputBox.EmojiSelectionVisibilityChanged += OnEmojiSelectionVisibilityChanged;
             chatInputBox.InputChanged += OnInputChanged;
             chatInputBox.InputSubmitted += OnInputSubmitted;
+
+            closePopupTask = new UniTaskCompletionSource();
 
             SetMessages(chatMessages);
         }

@@ -13,13 +13,17 @@ namespace DCL.UI.HyperlinkHandler
 {
     public class HyperlinkHandlerElement : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler, IPointerMoveHandler, IViewWithGlobalDependencies
     {
+        private const string SCENE = "scene";
+        private const string WORLD = "world";
+        private const string URL = "url";
+        private const string USER = "user";
+
         [SerializeField] private TMP_Text textComponent;
         [SerializeField] private TMP_StyleSheet styleSheet;
 
         private readonly Dictionary<string, Action<string>> linkHandlers = new ();
         private readonly StringBuilder stringBuilder = new ();
         private ICursor cursor;
-
         private ViewDependencies dependencies;
         private bool initialized;
         private bool isHighlighting;
@@ -86,9 +90,9 @@ namespace DCL.UI.HyperlinkHandler
 
         private void AddLinkHandlers()
         {
-            linkHandlers.Add("url", HandleURLLink);
-            linkHandlers.Add("world", HandleWorldLink);
-            linkHandlers.Add("scene", HandleSceneLink);
+            linkHandlers.Add(URL, HandleURLLink);
+            linkHandlers.Add(WORLD, HandleWorldLink);
+            linkHandlers.Add(SCENE, HandleSceneLink);
         }
 
         private void ProcessLink(string linkID)
