@@ -77,10 +77,7 @@ namespace DCL.AvatarRendering.Wearables
         }
 
         public async UniTask<IReadOnlyCollection<IWearable>?> RequestPointersAsync(IReadOnlyCollection<URN> pointers,
-            BodyShape bodyShape,
-            CancellationToken ct) =>
-                // pass "pointers source" here? from 'self-preview-source-url'... supposedly the Intention should have the CommonArguments
-                await source.RequestPointersAsync(pointers, bodyShape, ct);
-
+            BodyShape bodyShape, CancellationToken ct)
+            => await source.RequestPointersAsync(pointers, bodyShape, ct);
     }
 }

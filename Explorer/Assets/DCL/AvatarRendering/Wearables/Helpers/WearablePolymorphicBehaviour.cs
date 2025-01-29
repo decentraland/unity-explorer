@@ -234,25 +234,18 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             World world,
             string? rawFilesDownloadUrl = null) where T: IAvatarAttachment
         {
+            // An index is added to the promise to know to which slot of the WearableAssets it belongs to
+
             if (rawFilesDownloadUrl != null)
             {
-                // Create RAW GLTF download promise HERE...
-
-                // customStreamingSubdirectory
-                // TODO: Somehow propagate filename here...
-                // TODO: Somehow propagate rawFileDownloadURL in the promise...
-                // wearable.DTO.ContentDownloadUrl
-
-                // TODO: Support more than 1 content file ???
-                /*foreach (AvatarAttachmentDTO.Content content in wearable.DTO.content)
+                foreach (AvatarAttachmentDTO.Content content in wearable.DTO.content)
                 {
-                    var promise = RawGltfPromise.Create(world, GetGLTFIntention.Create(content.file, content.hash), partitionComponent);
-                    // ...
-                }*/
+                    // TODO: Change this for facial wearables?
+                    if (!content.file.EndsWith(".glb")) continue;
 
-                var promise = RawGltfPromise.Create(world, GetGLTFIntention.Create(wearable.DTO.content[0].file, wearable.DTO.content[0].hash), partitionComponent);
-                world.Create(promise, wearable, intention.BodyShape, index);
-                wearable.UpdateLoadingStatus(true);
+                    var promise = RawGltfPromise.Create(world, GetGLTFIntention.Create(content.file, content.hash), partitionComponent);
+                    world.Create(promise, wearable, intention.BodyShape, index);
+                }
             }
             else
             {
@@ -264,10 +257,10 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                         customEmbeddedSubDirectory: customStreamingSubdirectory,
                         manifest: sceneAssetBundleManifest, cancellationTokenSource: intention.CancellationTokenSource),
                     partitionComponent);
-
-                world.Create(promise, wearable, intention.BodyShape, index); // Add an index to the promise so we know to which slot of the WearableAssets it belongs
-                wearable.UpdateLoadingStatus(true);
+                world.Create(promise, wearable, intention.BodyShape, index);
             }
+
+            wearable.UpdateLoadingStatus(true);
         }
 
         public static StreamableLoadingResult<AttachmentAssetBase> ToWearableAsset(this StreamableLoadingResult<AssetBundleData> result, IWearable wearable)

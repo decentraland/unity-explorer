@@ -219,10 +219,10 @@ namespace DCL.WebRequests
                 UnityWebRequest webRequest = request.UnityWebRequest;
                 string text = webRequest.downloadHandler.text;
 
-                await SwitchToThreadAsync(threadFlags);
-
                 if (webRequest.url.Contains("builder"))
                     Debug.Log($"PRAVS - JSON Response: {text}");
+
+                await SwitchToThreadAsync(threadFlags);
 
                 try
                 {
