@@ -79,6 +79,11 @@ namespace DCL.Friends.UI.FriendPanel.Sections
 
         protected void FolderClicked()
         {
+            RefreshLoopList();
+        }
+
+        private void RefreshLoopList()
+        {
             view.LoopList.SetListItemCount(requestManager.GetElementsNumber(), false);
             view.LoopList.RefreshAllShownItem();
         }
@@ -97,7 +102,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections
 
             if (requestManager.HasElements)
             {
-                view.LoopList.SetListItemCount(requestManager.GetElementsNumber(), false);
+                RefreshLoopList();
                 requestManager.FirstFolderClicked += FolderClicked;
                 requestManager.SecondFolderClicked += FolderClicked;
             }

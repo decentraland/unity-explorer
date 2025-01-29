@@ -67,6 +67,12 @@ namespace DCL.Friends.UI.FriendPanel.Sections
             friendListInitCts = friendListInitCts.SafeRestart();
         }
 
+        private void RefreshLoopList()
+        {
+            view.LoopList.SetListItemCount(requestManager.GetCollectionCount(), false);
+            view.LoopList.RefreshAllShownItem();
+        }
+
         protected virtual async UniTaskVoid InitAsync(CancellationToken ct)
         {
             view.SetLoadingState(true);
@@ -80,7 +86,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections
             view.SetScrollViewState(requestManager.HasElements);
 
             if (requestManager.HasElements)
-                view.LoopList.SetListItemCount(requestManager.GetCollectionCount(), false);
+                RefreshLoopList();
         }
     }
 }

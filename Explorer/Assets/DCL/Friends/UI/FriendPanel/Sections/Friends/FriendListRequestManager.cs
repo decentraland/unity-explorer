@@ -64,7 +64,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
                 {
                     friends.Add(newFriendProfile.ToFriendProfile());
                     friends.Sort((f1, f2) => string.Compare(f1.Name, f2.Name, StringComparison.Ordinal));
-                    loopListView.RefreshAllShownItem();
+                    RefreshLoopList();
                 }
                 else
                     ReportHub.LogError(new ReportData(ReportCategory.FRIENDS), $"Couldn't fetch new friend profile for user {friendId}");
@@ -76,6 +76,12 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         private void RemoveFriend(string userid)
         {
             friends.RemoveAll(friendProfile => friendProfile.Address.ToString().Equals(userid));
+            RefreshLoopList();
+        }
+
+        private void RefreshLoopList()
+        {
+            loopListView.SetListItemCount(GetCollectionCount(), false);
             loopListView.RefreshAllShownItem();
         }
 

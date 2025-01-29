@@ -40,8 +40,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
 
             this.friendEventBus.OnYouAcceptedFriendRequestReceivedFromOtherUser += ReceivedRemoved;
             this.friendEventBus.OnYouRejectedFriendRequestReceivedFromOtherUser += ReceivedRemoved;
-            this.friendEventBus.OnOtherUserRemovedTheRequest += ReceivedRemoved;
-            this.friendEventBus.OnOtherUserCancelledTheRequest += ReceivedRemoved;
+            this.friendEventBus.OnOtherUserRemovedTheRequest += RemoteReceivedRemoved;
+            this.friendEventBus.OnOtherUserCancelledTheRequest += RemoteReceivedRemoved;
 
             this.friendEventBus.OnOtherUserRejectedYourRequest += SentRemoved;
             this.friendEventBus.OnOtherUserAcceptedYourRequest += SentRemoved;
@@ -73,7 +73,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
 
             receivedRequests.Add(request);
             receivedRequests.Sort((r1, r2) => r2.Timestamp.CompareTo(r1.Timestamp));
-            loopListView.RefreshAllShownItem();
+            RefreshLoopList();
         }
 
         private void CreateNewSentRequest(FriendRequest request)
@@ -82,18 +82,30 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
 
             sentRequests.Add(request);
             sentRequests.Sort((r1, r2) => r2.Timestamp.CompareTo(r1.Timestamp));
-            loopListView.RefreshAllShownItem();
+            RefreshLoopList();
         }
 
         private void SentRemoved(string friendId)
         {
             sentRequests.RemoveAll(request => request.To.Address.ToString().Equals(friendId));
-            loopListView.RefreshAllShownItem();
+            RefreshLoopList();
         }
 
         private void ReceivedRemoved(string friendId)
         {
             receivedRequests.RemoveAll(request => request.To.Address.ToString().Equals(friendId));
+            RefreshLoopList();
+        }
+        
+        private void RemoteReceivedRemoved(string friendId)
+        {
+            receivedRequests.RemoveAll(request => request.From.Address.ToString().Equals(friendId));
+            RefreshLoopList();
+        }
+
+        private void RefreshLoopList()
+        {
+            loopListView.SetListItemCount(GetElementsNumber(), false);
             loopListView.RefreshAllShownItem();
         }
 
