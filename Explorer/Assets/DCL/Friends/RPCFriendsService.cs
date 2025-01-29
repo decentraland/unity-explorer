@@ -36,7 +36,8 @@ namespace DCL.Friends
         private readonly ISelfProfile selfProfile;
         private readonly WebSocketRpcTransport transport;
         private readonly RpcClient client;
-        private readonly List<FriendRequest> friendRequestsBuffer = new ();
+        private readonly List<FriendRequest> receivedFriendRequestsBuffer = new ();
+        private readonly List<FriendRequest> sentFriendRequestsBuffer = new ();
         private readonly Dictionary<string, string> authChainBuffer = new ();
         private readonly List<FriendProfile> friendProfileBuffer = new ();
 
@@ -226,11 +227,95 @@ namespace DCL.Friends
             return FriendshipStatus.NONE;
         }
 
-        public async UniTask<PaginatedFriendRequestsResult> GetReceivedFriendRequestsAsync(int pageNum, int pageSize, CancellationToken ct) =>
-            await GetFriendRequestsAsync(pageNum, pageSize, GET_RECEIVED_FRIEND_REQUESTS_PROCEDURE_NAME, ct);
+        public async UniTask<PaginatedFriendRequestsResult> GetReceivedFriendRequestsAsync(int pageNum, int pageSize, CancellationToken ct)
+        {
+            await EnsureRpcConnectionAsync(ct);
 
-        public async UniTask<PaginatedFriendRequestsResult> GetSentFriendRequestsAsync(int pageNum, int pageSize, CancellationToken ct) =>
-            await GetFriendRequestsAsync(pageNum, pageSize, GET_SENT_FRIEND_REQUESTS_PROCEDURE_NAME, ct);
+            receivedFriendRequestsBuffer.Clear();
+
+            var payload = new GetFriendshipRequestsPayload
+            {
+                Pagination = new Pagination
+                {
+                    Offset = pageNum * pageSize,
+                    Limit = pageSize,
+                },
+            };
+
+            PaginatedFriendshipRequestsResponse response = await module!.CallUnaryProcedure<PaginatedFriendshipRequestsResponse>(GET_RECEIVED_FRIEND_REQUESTS_PROCEDURE_NAME, payload)
+                                                                        .AttachExternalCancellation(ct)
+                                                                        .Timeout(TimeSpan.FromSeconds(TIMEOUT_SECONDS));
+
+            Profile? myProfile = await selfProfile.ProfileAsync(ct);
+
+            switch (response.ResponseCase)
+            {
+                case PaginatedFriendshipRequestsResponse.ResponseOneofCase.Requests:
+                    foreach (var rr in response.Requests.Requests)
+                    {
+                        var fr = new FriendRequest(
+                            rr.Id,
+                            DateTimeOffset.FromUnixTimeMilliseconds(rr.CreatedAt).DateTime,
+                            ToClientFriendProfile(rr.Friend),
+                            ToClientFriendProfile(myProfile!),
+                            rr.Message);
+
+                        receivedFriendRequestsBuffer.Add(fr);
+                    }
+
+                    break;
+                case PaginatedFriendshipRequestsResponse.ResponseOneofCase.InternalServerError:
+                default:
+                    throw new Exception($"Cannot fetch received friend requests {response.ResponseCase}");
+            }
+
+            return new PaginatedFriendRequestsResult(receivedFriendRequestsBuffer, response.PaginationData?.Total ?? 0);
+        }
+
+        public async UniTask<PaginatedFriendRequestsResult> GetSentFriendRequestsAsync(int pageNum, int pageSize, CancellationToken ct)
+        {
+            await EnsureRpcConnectionAsync(ct);
+
+            sentFriendRequestsBuffer.Clear();
+
+            var payload = new GetFriendshipRequestsPayload
+            {
+                Pagination = new Pagination
+                {
+                    Offset = pageNum * pageSize,
+                    Limit = pageSize,
+                },
+            };
+
+            PaginatedFriendshipRequestsResponse response = await module!.CallUnaryProcedure<PaginatedFriendshipRequestsResponse>(GET_SENT_FRIEND_REQUESTS_PROCEDURE_NAME, payload)
+                                                                        .AttachExternalCancellation(ct)
+                                                                        .Timeout(TimeSpan.FromSeconds(TIMEOUT_SECONDS));
+
+            Profile? myProfile = await selfProfile.ProfileAsync(ct);
+
+            switch (response.ResponseCase)
+            {
+                case PaginatedFriendshipRequestsResponse.ResponseOneofCase.Requests:
+                    foreach (var rr in response.Requests.Requests)
+                    {
+                        var fr = new FriendRequest(
+                            rr.Id,
+                            DateTimeOffset.FromUnixTimeMilliseconds(rr.CreatedAt).DateTime,
+                            ToClientFriendProfile(myProfile!),
+                            ToClientFriendProfile(rr.Friend),
+                            rr.Message);
+
+                        sentFriendRequestsBuffer.Add(fr);
+                    }
+
+                    break;
+                case PaginatedFriendshipRequestsResponse.ResponseOneofCase.InternalServerError:
+                default:
+                    throw new Exception($"Cannot fetch received friend requests {response.ResponseCase}");
+            }
+
+            return new PaginatedFriendRequestsResult(sentFriendRequestsBuffer, response.PaginationData?.Total ?? 0);
+        }
 
         public async UniTask RejectFriendshipAsync(string friendId, CancellationToken ct)
         {
@@ -400,52 +485,6 @@ namespace DCL.Friends
 
                 return JsonConvert.SerializeObject(authChainBuffer);
             }
-        }
-
-        private async UniTask<PaginatedFriendRequestsResult> GetFriendRequestsAsync(int pageNum, int pageSize, string procedureName,
-            CancellationToken ct)
-        {
-            await EnsureRpcConnectionAsync(ct);
-
-            friendRequestsBuffer.Clear();
-
-            var payload = new GetFriendshipRequestsPayload
-            {
-                Pagination = new Pagination
-                {
-                    Offset = pageNum * pageSize,
-                    Limit = pageSize,
-                },
-            };
-
-            PaginatedFriendshipRequestsResponse response = await module!.CallUnaryProcedure<PaginatedFriendshipRequestsResponse>(procedureName, payload)
-                                                                        .AttachExternalCancellation(ct)
-                                                                        .Timeout(TimeSpan.FromSeconds(TIMEOUT_SECONDS));
-
-            Profile? myProfile = await selfProfile.ProfileAsync(ct);
-
-            switch (response.ResponseCase)
-            {
-                case PaginatedFriendshipRequestsResponse.ResponseOneofCase.Requests:
-                    foreach (var rr in response.Requests.Requests)
-                    {
-                        var fr = new FriendRequest(
-                            rr.Id,
-                            DateTimeOffset.FromUnixTimeMilliseconds(rr.CreatedAt).DateTime,
-                            ToClientFriendProfile(rr.Friend),
-                            ToClientFriendProfile(myProfile!),
-                            rr.Message);
-
-                        friendRequestsBuffer.Add(fr);
-                    }
-
-                    break;
-                case PaginatedFriendshipRequestsResponse.ResponseOneofCase.InternalServerError:
-                default:
-                    throw new Exception($"Cannot fetch friend requests {procedureName} {response.ResponseCase}");
-            }
-
-            return new PaginatedFriendRequestsResult(friendRequestsBuffer, response.PaginationData?.Total ?? 0);
         }
 
         private async UniTask<UpsertFriendshipResponse.Types.Accepted> UpdateFriendshipAsync(
