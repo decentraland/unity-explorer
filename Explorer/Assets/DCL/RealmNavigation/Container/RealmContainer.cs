@@ -47,6 +47,7 @@ namespace DCL.RealmNavigation
 
             var assetBundleRegistry =
                 featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.ASSET_BUNDLE_FALLBACK)
+                && !localSceneDevelopment
                     ? URLDomain.FromString(urlsSource.Url(DecentralandUrl.AssetBundleRegistry))
                     : URLDomain.EMPTY;
 
