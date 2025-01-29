@@ -10,7 +10,7 @@ namespace DCL.Friends
         public event IFriendsEventBus.UserIdOperation? OnOtherUserRejectedYourRequest;
         public event IFriendsEventBus.UserIdOperation? OnOtherUserCancelledTheRequest;
         public event Action<FriendRequest>? OnYouSentFriendRequestToOtherUser;
-        public event IFriendsEventBus.UserIdOperation? OnYouRemovedFriendRequestSentToOtherUser;
+        public event IFriendsEventBus.UserIdOperation? OnYouRemovedFriend;
         public event IFriendsEventBus.UserIdOperation? OnYouCancelledFriendRequestSentToOtherUser;
         public event IFriendsEventBus.UserIdOperation? OnYouAcceptedFriendRequestReceivedFromOtherUser;
         public event IFriendsEventBus.UserIdOperation? OnYouRejectedFriendRequestReceivedFromOtherUser;
@@ -24,8 +24,8 @@ namespace DCL.Friends
         public void BroadcastThatYouSentFriendRequestToOtherUser(FriendRequest request) =>
             OnYouSentFriendRequestToOtherUser?.Invoke(request);
 
-        public void BroadcastThatYouRemovedFriendRequestSentToOtherUser(string userId) =>
-            OnYouRemovedFriendRequestSentToOtherUser?.Invoke(userId);
+        public void BroadcastThatYouRemovedFriend(string userId) =>
+            OnYouRemovedFriend?.Invoke(userId);
 
         public void BroadcastThatYouAcceptedFriendRequestReceivedFromOtherUser(string userId) =>
             OnYouAcceptedFriendRequestReceivedFromOtherUser?.Invoke(userId);

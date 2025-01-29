@@ -43,7 +43,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             this.friendEventBus.OnOtherUserRejectedYourRequest += SentRemoved;
             this.friendEventBus.OnOtherUserAcceptedYourRequest += SentRemoved;
             this.friendEventBus.OnYouCancelledFriendRequestSentToOtherUser += SentRemoved;
-            this.friendEventBus.OnYouRemovedFriendRequestSentToOtherUser += SentRemoved;
+            this.friendEventBus.OnYouRemovedFriend += SentRemoved;
 
             this.friendEventBus.OnYouSentFriendRequestToOtherUser += CreateNewSentRequest;
             this.friendEventBus.OnFriendRequestReceived += CreateNewReceivedRequest;
@@ -59,7 +59,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             friendEventBus.OnOtherUserRejectedYourRequest -= SentRemoved;
             friendEventBus.OnOtherUserAcceptedYourRequest -= SentRemoved;
             friendEventBus.OnYouCancelledFriendRequestSentToOtherUser -= SentRemoved;
-            friendEventBus.OnYouRemovedFriendRequestSentToOtherUser -= SentRemoved;
+            friendEventBus.OnYouRemovedFriend -= SentRemoved;
 
             friendEventBus.OnYouSentFriendRequestToOtherUser -= CreateNewSentRequest;
             friendEventBus.OnFriendRequestReceived -= CreateNewReceivedRequest;

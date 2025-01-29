@@ -305,7 +305,7 @@ namespace DCL.Friends
 
             friendsCache.Remove(friendId);
 
-            eventBus.BroadcastThatYouRemovedFriendRequestSentToOtherUser(friendId);
+            eventBus.BroadcastThatYouRemovedFriend(friendId);
         }
 
         public async UniTask<FriendRequest> RequestFriendshipAsync(string friendId, string messageBody, CancellationToken ct)
