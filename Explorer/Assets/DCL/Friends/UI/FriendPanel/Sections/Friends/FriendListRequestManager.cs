@@ -41,6 +41,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             this.friendEventBus.OnYouAcceptedFriendRequestReceivedFromOtherUser += FriendRequestAccepted;
             this.friendEventBus.OnOtherUserAcceptedYourRequest += FriendRequestAccepted;
             this.friendEventBus.OnYouRemovedFriend += RemoveFriend;
+            this.friendEventBus.OnOtherUserRemovedTheFriendship += RemoveFriend;
         }
 
         public override void Dispose()
@@ -50,6 +51,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             friendEventBus.OnYouAcceptedFriendRequestReceivedFromOtherUser -= FriendRequestAccepted;
             friendEventBus.OnOtherUserAcceptedYourRequest -= FriendRequestAccepted;
             friendEventBus.OnYouRemovedFriend -= RemoveFriend;
+            friendEventBus.OnOtherUserRemovedTheFriendship -= RemoveFriend;
             addFriendProfileCts.SafeCancelAndDispose();
         }
 

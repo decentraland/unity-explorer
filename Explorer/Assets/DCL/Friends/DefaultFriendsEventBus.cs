@@ -5,7 +5,7 @@ namespace DCL.Friends
     public class DefaultFriendsEventBus : IFriendsEventBus
     {
         public event Action<FriendRequest>? OnFriendRequestReceived;
-        public event IFriendsEventBus.UserIdOperation? OnOtherUserRemovedTheRequest;
+        public event IFriendsEventBus.UserIdOperation? OnOtherUserRemovedTheFriendship;
         public event IFriendsEventBus.UserIdOperation? OnOtherUserAcceptedYourRequest;
         public event IFriendsEventBus.UserIdOperation? OnOtherUserRejectedYourRequest;
         public event IFriendsEventBus.UserIdOperation? OnOtherUserCancelledTheRequest;
@@ -45,8 +45,8 @@ namespace DCL.Friends
         public void BroadcastThatOtherUserCancelledTheRequest(string userId) =>
             OnOtherUserCancelledTheRequest?.Invoke(userId);
 
-        public void BroadcastThatOtherUserRemovedTheRequest(string userId) =>
-            OnOtherUserRemovedTheRequest?.Invoke(userId);
+        public void BroadcastThatOtherUserRemovedTheFriendship(string userId) =>
+            OnOtherUserRemovedTheFriendship?.Invoke(userId);
 
         public void BroadcastFriendConnected(FriendProfile friend) =>
             OnFriendConnected?.Invoke(friend);

@@ -88,7 +88,7 @@ namespace DCL.Friends
 
                     case FriendshipUpdate.UpdateOneofCase.Delete:
                         friendsCache.Remove(response.Delete.User.Address);
-                        eventBus.BroadcastThatOtherUserRemovedTheRequest(response.Delete.User.Address);
+                        eventBus.BroadcastThatOtherUserRemovedTheFriendship(response.Delete.User.Address);
                         break;
 
                     case FriendshipUpdate.UpdateOneofCase.Reject:

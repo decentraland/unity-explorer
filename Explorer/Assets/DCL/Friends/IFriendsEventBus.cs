@@ -13,7 +13,7 @@ namespace DCL.Friends
         event UserIdOperation OnOtherUserAcceptedYourRequest;
         event UserIdOperation OnOtherUserRejectedYourRequest;
         event UserIdOperation OnOtherUserCancelledTheRequest;
-        event UserIdOperation OnOtherUserRemovedTheRequest;
+        event UserIdOperation OnOtherUserRemovedTheFriendship;
 
         event Action<FriendRequest> OnYouSentFriendRequestToOtherUser;
         event UserIdOperation OnYouRemovedFriend;
@@ -33,7 +33,7 @@ namespace DCL.Friends
 
         void BroadcastThatOtherUserCancelledTheRequest(string userId);
 
-        void BroadcastThatOtherUserRemovedTheRequest(string userId);
+        void BroadcastThatOtherUserRemovedTheFriendship(string userId);
 
         void BroadcastFriendConnected(FriendProfile friend);
 
