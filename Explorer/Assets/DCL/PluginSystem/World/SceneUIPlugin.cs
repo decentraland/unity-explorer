@@ -101,10 +101,6 @@ namespace DCL.PluginSystem.World
         public class Settings : IDCLPluginSettings
         {
             [field: Header(nameof(SceneUIPlugin) + "." + nameof(Settings))]
-            [field: Space]
-            [field: SerializeField]
-            public UIDocumentRef Canvas { get; private set; } = null!;
-
             [field: SerializeField]
             public AssetReferenceStyleSheet StyleSheet { get; private set; } = null!;
         }
