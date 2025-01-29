@@ -167,7 +167,7 @@ namespace DCL.Navmap
 
                 if (place == null) place = new PlacesData.PlaceInfo(clickedParcel.Parcel);
 
-                navmapBus.SelectPlaceAsync(place, fetchPlaceAndShowCancellationToken.Token).Forget();
+                navmapBus.SelectPlaceAsync(place, fetchPlaceAndShowCancellationToken.Token, true).Forget();
             }
 
             fetchPlaceAndShowCancellationToken = fetchPlaceAndShowCancellationToken.SafeRestart();
