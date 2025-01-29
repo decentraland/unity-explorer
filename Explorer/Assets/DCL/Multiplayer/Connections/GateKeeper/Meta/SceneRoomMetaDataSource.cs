@@ -1,6 +1,7 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Ipfs;
+using ECS;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Realm;
 using ECS.SceneLifeCycle.SceneDefinition;
@@ -18,26 +19,26 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
 {
     public class SceneRoomMetaDataSource : ISceneRoomMetaDataSource
     {
-        private readonly IRealmController realmController;
+        private readonly IRealmData realmData;
         private readonly IExposedTransform characterTransform;
         private readonly World world;
 
         private readonly bool forceSceneIsolation;
 
-        public SceneRoomMetaDataSource(IRealmController realmController, IExposedTransform characterTransform, World world, bool forceSceneIsolation)
+        public SceneRoomMetaDataSource(IRealmData realmData, IExposedTransform characterTransform, World world, bool forceSceneIsolation)
         {
-            this.realmController = realmController;
+            this.realmData = realmData;
             this.characterTransform = characterTransform;
             this.world = world;
             this.forceSceneIsolation = forceSceneIsolation;
         }
 
-        public bool ScenesCommunicationIsIsolated => forceSceneIsolation || !realmController.RealmData.ScenesAreFixed;
+        public bool ScenesCommunicationIsIsolated => forceSceneIsolation || !realmData.ScenesAreFixed;
 
         public MetaData.Input GetMetadataInput() =>
             new (
-                realmController.RealmData.RealmName,
-                realmController.IsWorld()
+                realmData.RealmName,
+                realmData.IsWorld()
                     ? Vector2Int.zero
                     : characterTransform.Position.ToParcel()
             );
@@ -45,7 +46,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
         public async UniTask<Result<MetaData>> MetaDataAsync(MetaData.Input input, CancellationToken token)
         {
             // Places API is relevant for Genesis City only
-            if (realmController.IsWorld())
+            if (realmData.IsWorld())
                 return Result<MetaData>.SuccessResult(new MetaData(input.RealmName, input));
 
             using PooledObject<List<SceneEntityDefinition>> pooledEntityDefinitionList = ListPool<SceneEntityDefinition>.Get(out List<SceneEntityDefinition>? entityDefinitionList);
@@ -56,7 +57,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
             // TODO: instead of making a new request, Room Change request should be initiated when the scene definition is loaded by ECS,
             // currently these processes are completely separated
             var promise = AssetPromise<SceneDefinitions, GetSceneDefinitionList>.Create(world,
-                new GetSceneDefinitionList(entityDefinitionList, pointersList, new CommonLoadingArguments(realmController.RealmData.Ipfs.EntitiesActiveEndpoint)),
+                new GetSceneDefinitionList(entityDefinitionList, pointersList, new CommonLoadingArguments(realmData.Ipfs.AssetBundleRegistry)),
                 PartitionComponent.TOP_PRIORITY);
 
             promise = await promise.ToUniTaskAsync(world, cancellationToken: token);
@@ -70,6 +71,6 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
             );
         }
 
-        public bool MetadataIsDirty => !realmController.RealmData.ScenesAreFixed && characterTransform.Position.IsDirty;
+        public bool MetadataIsDirty => !realmData.ScenesAreFixed && characterTransform.Position.IsDirty;
     }
 }

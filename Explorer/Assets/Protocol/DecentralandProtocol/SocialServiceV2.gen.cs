@@ -28,102 +28,168 @@ namespace Decentraland.SocialService.V2 {
             "Y2VfdjIucHJvdG8SHmRlY2VudHJhbGFuZC5zb2NpYWxfc2VydmljZS52Mhob",
             "Z29vZ2xlL3Byb3RvYnVmL2VtcHR5LnByb3RvIhkKF0ludmFsaWRGcmllbmRz",
             "aGlwQWN0aW9uIhUKE0ludGVybmFsU2VydmVyRXJyb3IiFwoEVXNlchIPCgdh",
-            "ZGRyZXNzGAEgASgJInsKD1JlcXVlc3RSZXNwb25zZRIyCgR1c2VyGAEgASgL",
-            "MiQuZGVjZW50cmFsYW5kLnNvY2lhbF9zZXJ2aWNlLnYyLlVzZXISEgoKY3Jl",
-            "YXRlZF9hdBgCIAEoAxIUCgdtZXNzYWdlGAMgASgJSACIAQFCCgoIX21lc3Nh",
-            "Z2UiZgoOUmVxdWVzdFBheWxvYWQSMgoEdXNlchgBIAEoCzIkLmRlY2VudHJh",
-            "bGFuZC5zb2NpYWxfc2VydmljZS52Mi5Vc2VyEhQKB21lc3NhZ2UYAyABKAlI",
-            "AIgBAUIKCghfbWVzc2FnZSJNCghSZXF1ZXN0cxJBCghyZXF1ZXN0cxgBIAMo",
-            "CzIvLmRlY2VudHJhbGFuZC5zb2NpYWxfc2VydmljZS52Mi5SZXF1ZXN0UmVz",
-            "cG9uc2UiRAoOQWNjZXB0UmVzcG9uc2USMgoEdXNlchgBIAEoCzIkLmRlY2Vu",
-            "dHJhbGFuZC5zb2NpYWxfc2VydmljZS52Mi5Vc2VyIkMKDUFjY2VwdFBheWxv",
-            "YWQSMgoEdXNlchgBIAEoCzIkLmRlY2VudHJhbGFuZC5zb2NpYWxfc2Vydmlj",
-            "ZS52Mi5Vc2VyIkQKDlJlamVjdFJlc3BvbnNlEjIKBHVzZXIYASABKAsyJC5k",
-            "ZWNlbnRyYWxhbmQuc29jaWFsX3NlcnZpY2UudjIuVXNlciJDCg1SZWplY3RQ",
+            "ZGRyZXNzGAEgASgJIisKClBhZ2luYXRpb24SDQoFbGltaXQYASABKAUSDgoG",
+            "b2Zmc2V0GAIgASgFIoUBChlGcmllbmRzaGlwUmVxdWVzdFJlc3BvbnNlEjIK",
+            "BHVzZXIYASABKAsyJC5kZWNlbnRyYWxhbmQuc29jaWFsX3NlcnZpY2UudjIu",
+            "VXNlchISCgpjcmVhdGVkX2F0GAIgASgDEhQKB21lc3NhZ2UYAyABKAlIAIgB",
+            "AUIKCghfbWVzc2FnZSJhChJGcmllbmRzaGlwUmVxdWVzdHMSSwoIcmVxdWVz",
+            "dHMYASADKAsyOS5kZWNlbnRyYWxhbmQuc29jaWFsX3NlcnZpY2UudjIuRnJp",
+            "ZW5kc2hpcFJlcXVlc3RSZXNwb25zZSK7AQoRR2V0RnJpZW5kc1BheWxvYWQS",
+            "QwoKcGFnaW5hdGlvbhgBIAEoCzIqLmRlY2VudHJhbGFuZC5zb2NpYWxfc2Vy",
+            "dmljZS52Mi5QYWdpbmF0aW9uSACIAQESRwoGc3RhdHVzGAIgASgOMjIuZGVj",
+            "ZW50cmFsYW5kLnNvY2lhbF9zZXJ2aWNlLnYyLkNvbm5lY3Rpdml0eVN0YXR1",
+            "c0gBiAEBQg0KC19wYWdpbmF0aW9uQgkKB19zdGF0dXMicgocR2V0RnJpZW5k",
+            "c2hpcFJlcXVlc3RzUGF5bG9hZBJDCgpwYWdpbmF0aW9uGAEgASgLMiouZGVj",
+            "ZW50cmFsYW5kLnNvY2lhbF9zZXJ2aWNlLnYyLlBhZ2luYXRpb25IAIgBAUIN",
+            "CgtfcGFnaW5hdGlvbiLeBgoXVXBzZXJ0RnJpZW5kc2hpcFBheWxvYWQSWQoH",
+            "cmVxdWVzdBgBIAEoCzJGLmRlY2VudHJhbGFuZC5zb2NpYWxfc2VydmljZS52",
+            "Mi5VcHNlcnRGcmllbmRzaGlwUGF5bG9hZC5SZXF1ZXN0UGF5bG9hZEgAElcK",
+            "BmFjY2VwdBgCIAEoCzJFLmRlY2VudHJhbGFuZC5zb2NpYWxfc2VydmljZS52",
+            "Mi5VcHNlcnRGcmllbmRzaGlwUGF5bG9hZC5BY2NlcHRQYXlsb2FkSAASVwoG",
+            "cmVqZWN0GAQgASgLMkUuZGVjZW50cmFsYW5kLnNvY2lhbF9zZXJ2aWNlLnYy",
+            "LlVwc2VydEZyaWVuZHNoaXBQYXlsb2FkLlJlamVjdFBheWxvYWRIABJXCgZk",
+            "ZWxldGUYBSABKAsyRS5kZWNlbnRyYWxhbmQuc29jaWFsX3NlcnZpY2UudjIu",
+            "VXBzZXJ0RnJpZW5kc2hpcFBheWxvYWQuRGVsZXRlUGF5bG9hZEgAElcKBmNh",
+            "bmNlbBgGIAEoCzJFLmRlY2VudHJhbGFuZC5zb2NpYWxfc2VydmljZS52Mi5V",
+            "cHNlcnRGcmllbmRzaGlwUGF5bG9hZC5DYW5jZWxQYXlsb2FkSAAaZgoOUmVx",
+            "dWVzdFBheWxvYWQSMgoEdXNlchgBIAEoCzIkLmRlY2VudHJhbGFuZC5zb2Np",
+            "YWxfc2VydmljZS52Mi5Vc2VyEhQKB21lc3NhZ2UYAyABKAlIAIgBAUIKCghf",
+            "bWVzc2FnZRpDCg1BY2NlcHRQYXlsb2FkEjIKBHVzZXIYASABKAsyJC5kZWNl",
+            "bnRyYWxhbmQuc29jaWFsX3NlcnZpY2UudjIuVXNlchpDCg1SZWplY3RQYXls",
+            "b2FkEjIKBHVzZXIYASABKAsyJC5kZWNlbnRyYWxhbmQuc29jaWFsX3NlcnZp",
+            "Y2UudjIuVXNlchpDCg1EZWxldGVQYXlsb2FkEjIKBHVzZXIYASABKAsyJC5k",
+            "ZWNlbnRyYWxhbmQuc29jaWFsX3NlcnZpY2UudjIuVXNlchpDCg1DYW5jZWxQ",
             "YXlsb2FkEjIKBHVzZXIYASABKAsyJC5kZWNlbnRyYWxhbmQuc29jaWFsX3Nl",
-            "cnZpY2UudjIuVXNlciJECg5EZWxldGVSZXNwb25zZRIyCgR1c2VyGAEgASgL",
-            "MiQuZGVjZW50cmFsYW5kLnNvY2lhbF9zZXJ2aWNlLnYyLlVzZXIiQwoNRGVs",
-            "ZXRlUGF5bG9hZBIyCgR1c2VyGAEgASgLMiQuZGVjZW50cmFsYW5kLnNvY2lh",
-            "bF9zZXJ2aWNlLnYyLlVzZXIiRAoOQ2FuY2VsUmVzcG9uc2USMgoEdXNlchgB",
-            "IAEoCzIkLmRlY2VudHJhbGFuZC5zb2NpYWxfc2VydmljZS52Mi5Vc2VyIkMK",
-            "DUNhbmNlbFBheWxvYWQSMgoEdXNlchgBIAEoCzIkLmRlY2VudHJhbGFuZC5z",
-            "b2NpYWxfc2VydmljZS52Mi5Vc2VyIuoCChdVcHNlcnRGcmllbmRzaGlwUGF5",
-            "bG9hZBJBCgdyZXF1ZXN0GAEgASgLMi4uZGVjZW50cmFsYW5kLnNvY2lhbF9z",
-            "ZXJ2aWNlLnYyLlJlcXVlc3RQYXlsb2FkSAASPwoGYWNjZXB0GAIgASgLMi0u",
-            "ZGVjZW50cmFsYW5kLnNvY2lhbF9zZXJ2aWNlLnYyLkFjY2VwdFBheWxvYWRI",
-            "ABI/CgZyZWplY3QYBCABKAsyLS5kZWNlbnRyYWxhbmQuc29jaWFsX3NlcnZp",
-            "Y2UudjIuUmVqZWN0UGF5bG9hZEgAEj8KBmRlbGV0ZRgFIAEoCzItLmRlY2Vu",
-            "dHJhbGFuZC5zb2NpYWxfc2VydmljZS52Mi5EZWxldGVQYXlsb2FkSAASPwoG",
-            "Y2FuY2VsGAYgASgLMi0uZGVjZW50cmFsYW5kLnNvY2lhbF9zZXJ2aWNlLnYy",
-            "LkNhbmNlbFBheWxvYWRIAEIICgZhY3Rpb24iSgoUTXV0dWFsRnJpZW5kc1Bh",
-            "eWxvYWQSMgoEdXNlchgBIAEoCzIkLmRlY2VudHJhbGFuZC5zb2NpYWxfc2Vy",
-            "dmljZS52Mi5Vc2VyIkQKDVVzZXJzUmVzcG9uc2USMwoFdXNlcnMYASADKAsy",
-            "JC5kZWNlbnRyYWxhbmQuc29jaWFsX3NlcnZpY2UudjIuVXNlciK8AQoaRnJp",
-            "ZW5kc2hpcFJlcXVlc3RzUmVzcG9uc2USPAoIcmVxdWVzdHMYASABKAsyKC5k",
-            "ZWNlbnRyYWxhbmQuc29jaWFsX3NlcnZpY2UudjIuUmVxdWVzdHNIABJUChVp",
+            "cnZpY2UudjIuVXNlckIICgZhY3Rpb24ioQEKF0dldE11dHVhbEZyaWVuZHNQ",
+            "YXlsb2FkEjIKBHVzZXIYASABKAsyJC5kZWNlbnRyYWxhbmQuc29jaWFsX3Nl",
+            "cnZpY2UudjIuVXNlchJDCgpwYWdpbmF0aW9uGAIgASgLMiouZGVjZW50cmFs",
+            "YW5kLnNvY2lhbF9zZXJ2aWNlLnYyLlBhZ2luYXRpb25IAIgBAUINCgtfcGFn",
+            "aW5hdGlvbiIwChFQYWdpbmF0ZWRSZXNwb25zZRINCgV0b3RhbBgBIAEoBRIM",
+            "CgRwYWdlGAIgASgFIpkBChZQYWdpbmF0ZWRVc2Vyc1Jlc3BvbnNlEjMKBXVz",
+            "ZXJzGAEgAygLMiQuZGVjZW50cmFsYW5kLnNvY2lhbF9zZXJ2aWNlLnYyLlVz",
+            "ZXISSgoPcGFnaW5hdGlvbl9kYXRhGAIgASgLMjEuZGVjZW50cmFsYW5kLnNv",
+            "Y2lhbF9zZXJ2aWNlLnYyLlBhZ2luYXRlZFJlc3BvbnNlIrQCCiNQYWdpbmF0",
+            "ZWRGcmllbmRzaGlwUmVxdWVzdHNSZXNwb25zZRJGCghyZXF1ZXN0cxgBIAEo",
+            "CzIyLmRlY2VudHJhbGFuZC5zb2NpYWxfc2VydmljZS52Mi5GcmllbmRzaGlw",
+            "UmVxdWVzdHNIABJUChVpbnRlcm5hbF9zZXJ2ZXJfZXJyb3IYAiABKAsyMy5k",
+            "ZWNlbnRyYWxhbmQuc29jaWFsX3NlcnZpY2UudjIuSW50ZXJuYWxTZXJ2ZXJF",
+            "cnJvckgAEk8KD3BhZ2luYXRpb25fZGF0YRgDIAEoCzIxLmRlY2VudHJhbGFu",
+            "ZC5zb2NpYWxfc2VydmljZS52Mi5QYWdpbmF0ZWRSZXNwb25zZUgBiAEBQgoK",
+            "CHJlc3BvbnNlQhIKEF9wYWdpbmF0aW9uX2RhdGEi3QIKGFVwc2VydEZyaWVu",
+            "ZHNoaXBSZXNwb25zZRJVCghhY2NlcHRlZBgBIAEoCzJBLmRlY2VudHJhbGFu",
+            "ZC5zb2NpYWxfc2VydmljZS52Mi5VcHNlcnRGcmllbmRzaGlwUmVzcG9uc2Uu",
+            "QWNjZXB0ZWRIABJcChlpbnZhbGlkX2ZyaWVuZHNoaXBfYWN0aW9uGAIgASgL",
+            "MjcuZGVjZW50cmFsYW5kLnNvY2lhbF9zZXJ2aWNlLnYyLkludmFsaWRGcmll",
+            "bmRzaGlwQWN0aW9uSAASVAoVaW50ZXJuYWxfc2VydmVyX2Vycm9yGAMgASgL",
+            "MjMuZGVjZW50cmFsYW5kLnNvY2lhbF9zZXJ2aWNlLnYyLkludGVybmFsU2Vy",
+            "dmVyRXJyb3JIABoqCghBY2NlcHRlZBIKCgJpZBgBIAEoCRISCgpjcmVhdGVk",
+            "X2F0GAIgASgDQgoKCHJlc3BvbnNlIs4FChBGcmllbmRzaGlwVXBkYXRlEkwK",
+            "B3JlcXVlc3QYASABKAsyOS5kZWNlbnRyYWxhbmQuc29jaWFsX3NlcnZpY2Uu",
+            "djIuRnJpZW5kc2hpcFJlcXVlc3RSZXNwb25zZUgAElEKBmFjY2VwdBgCIAEo",
+            "CzI/LmRlY2VudHJhbGFuZC5zb2NpYWxfc2VydmljZS52Mi5GcmllbmRzaGlw",
+            "VXBkYXRlLkFjY2VwdFJlc3BvbnNlSAASUQoGcmVqZWN0GAMgASgLMj8uZGVj",
+            "ZW50cmFsYW5kLnNvY2lhbF9zZXJ2aWNlLnYyLkZyaWVuZHNoaXBVcGRhdGUu",
+            "UmVqZWN0UmVzcG9uc2VIABJRCgZkZWxldGUYBCABKAsyPy5kZWNlbnRyYWxh",
+            "bmQuc29jaWFsX3NlcnZpY2UudjIuRnJpZW5kc2hpcFVwZGF0ZS5EZWxldGVS",
+            "ZXNwb25zZUgAElEKBmNhbmNlbBgFIAEoCzI/LmRlY2VudHJhbGFuZC5zb2Np",
+            "YWxfc2VydmljZS52Mi5GcmllbmRzaGlwVXBkYXRlLkNhbmNlbFJlc3BvbnNl",
+            "SAAaRAoOQWNjZXB0UmVzcG9uc2USMgoEdXNlchgBIAEoCzIkLmRlY2VudHJh",
+            "bGFuZC5zb2NpYWxfc2VydmljZS52Mi5Vc2VyGkQKDlJlamVjdFJlc3BvbnNl",
+            "EjIKBHVzZXIYASABKAsyJC5kZWNlbnRyYWxhbmQuc29jaWFsX3NlcnZpY2Uu",
+            "djIuVXNlchpECg5EZWxldGVSZXNwb25zZRIyCgR1c2VyGAEgASgLMiQuZGVj",
+            "ZW50cmFsYW5kLnNvY2lhbF9zZXJ2aWNlLnYyLlVzZXIaRAoOQ2FuY2VsUmVz",
+            "cG9uc2USMgoEdXNlchgBIAEoCzIkLmRlY2VudHJhbGFuZC5zb2NpYWxfc2Vy",
+            "dmljZS52Mi5Vc2VyQggKBnVwZGF0ZSJQChpHZXRGcmllbmRzaGlwU3RhdHVz",
+            "UGF5bG9hZBIyCgR1c2VyGAEgASgLMiQuZGVjZW50cmFsYW5kLnNvY2lhbF9z",
+            "ZXJ2aWNlLnYyLlVzZXIivQIKG0dldEZyaWVuZHNoaXBTdGF0dXNSZXNwb25z",
+            "ZRJSCghhY2NlcHRlZBgBIAEoCzI+LmRlY2VudHJhbGFuZC5zb2NpYWxfc2Vy",
+            "dmljZS52Mi5HZXRGcmllbmRzaGlwU3RhdHVzUmVzcG9uc2UuT2tIABJUChVp",
             "bnRlcm5hbF9zZXJ2ZXJfZXJyb3IYAiABKAsyMy5kZWNlbnRyYWxhbmQuc29j",
-            "aWFsX3NlcnZpY2UudjIuSW50ZXJuYWxTZXJ2ZXJFcnJvckgAQgoKCHJlc3Bv",
-            "bnNlIr0CChhVcHNlcnRGcmllbmRzaGlwUmVzcG9uc2USVQoIYWNjZXB0ZWQY",
-            "ASABKAsyQS5kZWNlbnRyYWxhbmQuc29jaWFsX3NlcnZpY2UudjIuVXBzZXJ0",
-            "RnJpZW5kc2hpcFJlc3BvbnNlLkFjY2VwdGVkSAASXAoZaW52YWxpZF9mcmll",
-            "bmRzaGlwX2FjdGlvbhgCIAEoCzI3LmRlY2VudHJhbGFuZC5zb2NpYWxfc2Vy",
-            "dmljZS52Mi5JbnZhbGlkRnJpZW5kc2hpcEFjdGlvbkgAElQKFWludGVybmFs",
-            "X3NlcnZlcl9lcnJvchgDIAEoCzIzLmRlY2VudHJhbGFuZC5zb2NpYWxfc2Vy",
-            "dmljZS52Mi5JbnRlcm5hbFNlcnZlckVycm9ySAAaCgoIQWNjZXB0ZWRCCgoI",
-            "cmVzcG9uc2Ui6AIKEEZyaWVuZHNoaXBVcGRhdGUSQgoHcmVxdWVzdBgBIAEo",
-            "CzIvLmRlY2VudHJhbGFuZC5zb2NpYWxfc2VydmljZS52Mi5SZXF1ZXN0UmVz",
-            "cG9uc2VIABJACgZhY2NlcHQYAiABKAsyLi5kZWNlbnRyYWxhbmQuc29jaWFs",
-            "X3NlcnZpY2UudjIuQWNjZXB0UmVzcG9uc2VIABJACgZyZWplY3QYBCABKAsy",
-            "Li5kZWNlbnRyYWxhbmQuc29jaWFsX3NlcnZpY2UudjIuUmVqZWN0UmVzcG9u",
-            "c2VIABJACgZkZWxldGUYBSABKAsyLi5kZWNlbnRyYWxhbmQuc29jaWFsX3Nl",
-            "cnZpY2UudjIuRGVsZXRlUmVzcG9uc2VIABJACgZjYW5jZWwYBiABKAsyLi5k",
-            "ZWNlbnRyYWxhbmQuc29jaWFsX3NlcnZpY2UudjIuQ2FuY2VsUmVzcG9uc2VI",
-            "AEIICgZ1cGRhdGUyxgUKDVNvY2lhbFNlcnZpY2USVwoKR2V0RnJpZW5kcxIW",
-            "Lmdvb2dsZS5wcm90b2J1Zi5FbXB0eRotLmRlY2VudHJhbGFuZC5zb2NpYWxf",
-            "c2VydmljZS52Mi5Vc2Vyc1Jlc3BvbnNlIgAwARJ7ChBHZXRNdXR1YWxGcmll",
-            "bmRzEjQuZGVjZW50cmFsYW5kLnNvY2lhbF9zZXJ2aWNlLnYyLk11dHVhbEZy",
-            "aWVuZHNQYXlsb2FkGi0uZGVjZW50cmFsYW5kLnNvY2lhbF9zZXJ2aWNlLnYy",
-            "LlVzZXJzUmVzcG9uc2UiADABEnQKHEdldFBlbmRpbmdGcmllbmRzaGlwUmVx",
-            "dWVzdHMSFi5nb29nbGUucHJvdG9idWYuRW1wdHkaOi5kZWNlbnRyYWxhbmQu",
-            "c29jaWFsX3NlcnZpY2UudjIuRnJpZW5kc2hpcFJlcXVlc3RzUmVzcG9uc2Ui",
-            "ABJxChlHZXRTZW50RnJpZW5kc2hpcFJlcXVlc3RzEhYuZ29vZ2xlLnByb3Rv",
-            "YnVmLkVtcHR5GjouZGVjZW50cmFsYW5kLnNvY2lhbF9zZXJ2aWNlLnYyLkZy",
-            "aWVuZHNoaXBSZXF1ZXN0c1Jlc3BvbnNlIgAShwEKEFVwc2VydEZyaWVuZHNo",
-            "aXASNy5kZWNlbnRyYWxhbmQuc29jaWFsX3NlcnZpY2UudjIuVXBzZXJ0RnJp",
-            "ZW5kc2hpcFBheWxvYWQaOC5kZWNlbnRyYWxhbmQuc29jaWFsX3NlcnZpY2Uu",
-            "djIuVXBzZXJ0RnJpZW5kc2hpcFJlc3BvbnNlIgASbAocU3Vic2NyaWJlVG9G",
-            "cmllbmRzaGlwVXBkYXRlcxIWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eRowLmRl",
-            "Y2VudHJhbGFuZC5zb2NpYWxfc2VydmljZS52Mi5GcmllbmRzaGlwVXBkYXRl",
-            "IgAwAWIGcHJvdG8z"));
+            "aWFsX3NlcnZpY2UudjIuSW50ZXJuYWxTZXJ2ZXJFcnJvckgAGmgKAk9rEkAK",
+            "BnN0YXR1cxgBIAEoDjIwLmRlY2VudHJhbGFuZC5zb2NpYWxfc2VydmljZS52",
+            "Mi5GcmllbmRzaGlwU3RhdHVzEhQKB21lc3NhZ2UYAiABKAlIAIgBAUIKCghf",
+            "bWVzc2FnZUIKCghyZXNwb25zZSo3ChJDb25uZWN0aXZpdHlTdGF0dXMSCgoG",
+            "T05MSU5FEAASCwoHT0ZGTElORRABEggKBEFXQVkQAip+ChBGcmllbmRzaGlw",
+            "U3RhdHVzEhAKDFJFUVVFU1RfU0VOVBAAEhQKEFJFUVVFU1RfUkVDRUlWRUQQ",
+            "ARIMCghDQU5DRUxFRBACEgwKCEFDQ0VQVEVEEAMSDAoIUkVKRUNURUQQBBIL",
+            "CgdERUxFVEVEEAUSCwoHQkxPQ0tFRBAGMuYHCg1Tb2NpYWxTZXJ2aWNlEnkK",
+            "CkdldEZyaWVuZHMSMS5kZWNlbnRyYWxhbmQuc29jaWFsX3NlcnZpY2UudjIu",
+            "R2V0RnJpZW5kc1BheWxvYWQaNi5kZWNlbnRyYWxhbmQuc29jaWFsX3NlcnZp",
+            "Y2UudjIuUGFnaW5hdGVkVXNlcnNSZXNwb25zZSIAEoUBChBHZXRNdXR1YWxG",
+            "cmllbmRzEjcuZGVjZW50cmFsYW5kLnNvY2lhbF9zZXJ2aWNlLnYyLkdldE11",
+            "dHVhbEZyaWVuZHNQYXlsb2FkGjYuZGVjZW50cmFsYW5kLnNvY2lhbF9zZXJ2",
+            "aWNlLnYyLlBhZ2luYXRlZFVzZXJzUmVzcG9uc2UiABKjAQocR2V0UGVuZGlu",
+            "Z0ZyaWVuZHNoaXBSZXF1ZXN0cxI8LmRlY2VudHJhbGFuZC5zb2NpYWxfc2Vy",
+            "dmljZS52Mi5HZXRGcmllbmRzaGlwUmVxdWVzdHNQYXlsb2FkGkMuZGVjZW50",
+            "cmFsYW5kLnNvY2lhbF9zZXJ2aWNlLnYyLlBhZ2luYXRlZEZyaWVuZHNoaXBS",
+            "ZXF1ZXN0c1Jlc3BvbnNlIgASoAEKGUdldFNlbnRGcmllbmRzaGlwUmVxdWVz",
+            "dHMSPC5kZWNlbnRyYWxhbmQuc29jaWFsX3NlcnZpY2UudjIuR2V0RnJpZW5k",
+            "c2hpcFJlcXVlc3RzUGF5bG9hZBpDLmRlY2VudHJhbGFuZC5zb2NpYWxfc2Vy",
+            "dmljZS52Mi5QYWdpbmF0ZWRGcmllbmRzaGlwUmVxdWVzdHNSZXNwb25zZSIA",
+            "EocBChBVcHNlcnRGcmllbmRzaGlwEjcuZGVjZW50cmFsYW5kLnNvY2lhbF9z",
+            "ZXJ2aWNlLnYyLlVwc2VydEZyaWVuZHNoaXBQYXlsb2FkGjguZGVjZW50cmFs",
+            "YW5kLnNvY2lhbF9zZXJ2aWNlLnYyLlVwc2VydEZyaWVuZHNoaXBSZXNwb25z",
+            "ZSIAEmwKHFN1YnNjcmliZVRvRnJpZW5kc2hpcFVwZGF0ZXMSFi5nb29nbGUu",
+            "cHJvdG9idWYuRW1wdHkaMC5kZWNlbnRyYWxhbmQuc29jaWFsX3NlcnZpY2Uu",
+            "djIuRnJpZW5kc2hpcFVwZGF0ZSIAMAESkAEKE0dldEZyaWVuZHNoaXBTdGF0",
+            "dXMSOi5kZWNlbnRyYWxhbmQuc29jaWFsX3NlcnZpY2UudjIuR2V0RnJpZW5k",
+            "c2hpcFN0YXR1c1BheWxvYWQaOy5kZWNlbnRyYWxhbmQuc29jaWFsX3NlcnZp",
+            "Y2UudjIuR2V0RnJpZW5kc2hpcFN0YXR1c1Jlc3BvbnNlIgBiBnByb3RvMw=="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { global::Google.Protobuf.WellKnownTypes.EmptyReflection.Descriptor, },
-          new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
+          new pbr::GeneratedClrTypeInfo(new[] {typeof(global::Decentraland.SocialService.V2.ConnectivityStatus), typeof(global::Decentraland.SocialService.V2.FriendshipStatus), }, null, new pbr::GeneratedClrTypeInfo[] {
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.SocialService.V2.InvalidFriendshipAction), global::Decentraland.SocialService.V2.InvalidFriendshipAction.Parser, null, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.SocialService.V2.InternalServerError), global::Decentraland.SocialService.V2.InternalServerError.Parser, null, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.SocialService.V2.User), global::Decentraland.SocialService.V2.User.Parser, new[]{ "Address" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.SocialService.V2.RequestResponse), global::Decentraland.SocialService.V2.RequestResponse.Parser, new[]{ "User", "CreatedAt", "Message" }, new[]{ "Message" }, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.SocialService.V2.RequestPayload), global::Decentraland.SocialService.V2.RequestPayload.Parser, new[]{ "User", "Message" }, new[]{ "Message" }, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.SocialService.V2.Requests), global::Decentraland.SocialService.V2.Requests.Parser, new[]{ "Requests_" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.SocialService.V2.AcceptResponse), global::Decentraland.SocialService.V2.AcceptResponse.Parser, new[]{ "User" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.SocialService.V2.AcceptPayload), global::Decentraland.SocialService.V2.AcceptPayload.Parser, new[]{ "User" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.SocialService.V2.RejectResponse), global::Decentraland.SocialService.V2.RejectResponse.Parser, new[]{ "User" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.SocialService.V2.RejectPayload), global::Decentraland.SocialService.V2.RejectPayload.Parser, new[]{ "User" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.SocialService.V2.DeleteResponse), global::Decentraland.SocialService.V2.DeleteResponse.Parser, new[]{ "User" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.SocialService.V2.DeletePayload), global::Decentraland.SocialService.V2.DeletePayload.Parser, new[]{ "User" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.SocialService.V2.CancelResponse), global::Decentraland.SocialService.V2.CancelResponse.Parser, new[]{ "User" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.SocialService.V2.CancelPayload), global::Decentraland.SocialService.V2.CancelPayload.Parser, new[]{ "User" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.SocialService.V2.UpsertFriendshipPayload), global::Decentraland.SocialService.V2.UpsertFriendshipPayload.Parser, new[]{ "Request", "Accept", "Reject", "Delete", "Cancel" }, new[]{ "Action" }, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.SocialService.V2.MutualFriendsPayload), global::Decentraland.SocialService.V2.MutualFriendsPayload.Parser, new[]{ "User" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.SocialService.V2.UsersResponse), global::Decentraland.SocialService.V2.UsersResponse.Parser, new[]{ "Users" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.SocialService.V2.FriendshipRequestsResponse), global::Decentraland.SocialService.V2.FriendshipRequestsResponse.Parser, new[]{ "Requests", "InternalServerError" }, new[]{ "Response" }, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.SocialService.V2.UpsertFriendshipResponse), global::Decentraland.SocialService.V2.UpsertFriendshipResponse.Parser, new[]{ "Accepted", "InvalidFriendshipAction", "InternalServerError" }, new[]{ "Response" }, null, null, new pbr::GeneratedClrTypeInfo[] { new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.SocialService.V2.UpsertFriendshipResponse.Types.Accepted), global::Decentraland.SocialService.V2.UpsertFriendshipResponse.Types.Accepted.Parser, null, null, null, null, null)}),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.SocialService.V2.FriendshipUpdate), global::Decentraland.SocialService.V2.FriendshipUpdate.Parser, new[]{ "Request", "Accept", "Reject", "Delete", "Cancel" }, new[]{ "Update" }, null, null, null)
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.SocialService.V2.Pagination), global::Decentraland.SocialService.V2.Pagination.Parser, new[]{ "Limit", "Offset" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.SocialService.V2.FriendshipRequestResponse), global::Decentraland.SocialService.V2.FriendshipRequestResponse.Parser, new[]{ "User", "CreatedAt", "Message" }, new[]{ "Message" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.SocialService.V2.FriendshipRequests), global::Decentraland.SocialService.V2.FriendshipRequests.Parser, new[]{ "Requests" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.SocialService.V2.GetFriendsPayload), global::Decentraland.SocialService.V2.GetFriendsPayload.Parser, new[]{ "Pagination", "Status" }, new[]{ "Pagination", "Status" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.SocialService.V2.GetFriendshipRequestsPayload), global::Decentraland.SocialService.V2.GetFriendshipRequestsPayload.Parser, new[]{ "Pagination" }, new[]{ "Pagination" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.SocialService.V2.UpsertFriendshipPayload), global::Decentraland.SocialService.V2.UpsertFriendshipPayload.Parser, new[]{ "Request", "Accept", "Reject", "Delete", "Cancel" }, new[]{ "Action" }, null, null, new pbr::GeneratedClrTypeInfo[] { new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.SocialService.V2.UpsertFriendshipPayload.Types.RequestPayload), global::Decentraland.SocialService.V2.UpsertFriendshipPayload.Types.RequestPayload.Parser, new[]{ "User", "Message" }, new[]{ "Message" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.SocialService.V2.UpsertFriendshipPayload.Types.AcceptPayload), global::Decentraland.SocialService.V2.UpsertFriendshipPayload.Types.AcceptPayload.Parser, new[]{ "User" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.SocialService.V2.UpsertFriendshipPayload.Types.RejectPayload), global::Decentraland.SocialService.V2.UpsertFriendshipPayload.Types.RejectPayload.Parser, new[]{ "User" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.SocialService.V2.UpsertFriendshipPayload.Types.DeletePayload), global::Decentraland.SocialService.V2.UpsertFriendshipPayload.Types.DeletePayload.Parser, new[]{ "User" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.SocialService.V2.UpsertFriendshipPayload.Types.CancelPayload), global::Decentraland.SocialService.V2.UpsertFriendshipPayload.Types.CancelPayload.Parser, new[]{ "User" }, null, null, null, null)}),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.SocialService.V2.GetMutualFriendsPayload), global::Decentraland.SocialService.V2.GetMutualFriendsPayload.Parser, new[]{ "User", "Pagination" }, new[]{ "Pagination" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.SocialService.V2.PaginatedResponse), global::Decentraland.SocialService.V2.PaginatedResponse.Parser, new[]{ "Total", "Page" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.SocialService.V2.PaginatedUsersResponse), global::Decentraland.SocialService.V2.PaginatedUsersResponse.Parser, new[]{ "Users", "PaginationData" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.SocialService.V2.PaginatedFriendshipRequestsResponse), global::Decentraland.SocialService.V2.PaginatedFriendshipRequestsResponse.Parser, new[]{ "Requests", "InternalServerError", "PaginationData" }, new[]{ "Response", "PaginationData" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.SocialService.V2.UpsertFriendshipResponse), global::Decentraland.SocialService.V2.UpsertFriendshipResponse.Parser, new[]{ "Accepted", "InvalidFriendshipAction", "InternalServerError" }, new[]{ "Response" }, null, null, new pbr::GeneratedClrTypeInfo[] { new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.SocialService.V2.UpsertFriendshipResponse.Types.Accepted), global::Decentraland.SocialService.V2.UpsertFriendshipResponse.Types.Accepted.Parser, new[]{ "Id", "CreatedAt" }, null, null, null, null)}),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.SocialService.V2.FriendshipUpdate), global::Decentraland.SocialService.V2.FriendshipUpdate.Parser, new[]{ "Request", "Accept", "Reject", "Delete", "Cancel" }, new[]{ "Update" }, null, null, new pbr::GeneratedClrTypeInfo[] { new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.SocialService.V2.FriendshipUpdate.Types.AcceptResponse), global::Decentraland.SocialService.V2.FriendshipUpdate.Types.AcceptResponse.Parser, new[]{ "User" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.SocialService.V2.FriendshipUpdate.Types.RejectResponse), global::Decentraland.SocialService.V2.FriendshipUpdate.Types.RejectResponse.Parser, new[]{ "User" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.SocialService.V2.FriendshipUpdate.Types.DeleteResponse), global::Decentraland.SocialService.V2.FriendshipUpdate.Types.DeleteResponse.Parser, new[]{ "User" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.SocialService.V2.FriendshipUpdate.Types.CancelResponse), global::Decentraland.SocialService.V2.FriendshipUpdate.Types.CancelResponse.Parser, new[]{ "User" }, null, null, null, null)}),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.SocialService.V2.GetFriendshipStatusPayload), global::Decentraland.SocialService.V2.GetFriendshipStatusPayload.Parser, new[]{ "User" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.SocialService.V2.GetFriendshipStatusResponse), global::Decentraland.SocialService.V2.GetFriendshipStatusResponse.Parser, new[]{ "Accepted", "InternalServerError" }, new[]{ "Response" }, null, null, new pbr::GeneratedClrTypeInfo[] { new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.SocialService.V2.GetFriendshipStatusResponse.Types.Ok), global::Decentraland.SocialService.V2.GetFriendshipStatusResponse.Types.Ok.Parser, new[]{ "Status", "Message" }, new[]{ "Message" }, null, null, null)})
           }));
     }
     #endregion
 
   }
+  #region Enums
+  public enum ConnectivityStatus {
+    [pbr::OriginalName("ONLINE")] Online = 0,
+    [pbr::OriginalName("OFFLINE")] Offline = 1,
+    [pbr::OriginalName("AWAY")] Away = 2,
+  }
+
+  public enum FriendshipStatus {
+    [pbr::OriginalName("REQUEST_SENT")] RequestSent = 0,
+    [pbr::OriginalName("REQUEST_RECEIVED")] RequestReceived = 1,
+    [pbr::OriginalName("CANCELED")] Canceled = 2,
+    [pbr::OriginalName("ACCEPTED")] Accepted = 3,
+    [pbr::OriginalName("REJECTED")] Rejected = 4,
+    [pbr::OriginalName("DELETED")] Deleted = 5,
+    [pbr::OriginalName("BLOCKED")] Blocked = 6,
+  }
+
+  #endregion
+
   #region Messages
+  /// <summary>
+  /// Errors
+  /// </summary>
   public sealed partial class InvalidFriendshipAction : pb::IMessage<InvalidFriendshipAction>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
@@ -428,6 +494,9 @@ namespace Decentraland.SocialService.V2 {
 
   }
 
+  /// <summary>
+  /// Types
+  /// </summary>
   public sealed partial class User : pb::IMessage<User>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
@@ -617,16 +686,16 @@ namespace Decentraland.SocialService.V2 {
 
   }
 
-  public sealed partial class RequestResponse : pb::IMessage<RequestResponse>
+  public sealed partial class Pagination : pb::IMessage<Pagination>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
   #endif
   {
-    private static readonly pb::MessageParser<RequestResponse> _parser = new pb::MessageParser<RequestResponse>(() => new RequestResponse());
+    private static readonly pb::MessageParser<Pagination> _parser = new pb::MessageParser<Pagination>(() => new Pagination());
     private pb::UnknownFieldSet _unknownFields;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public static pb::MessageParser<RequestResponse> Parser { get { return _parser; } }
+    public static pb::MessageParser<Pagination> Parser { get { return _parser; } }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
@@ -642,7 +711,7 @@ namespace Decentraland.SocialService.V2 {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public RequestResponse() {
+    public Pagination() {
       OnConstruction();
     }
 
@@ -650,7 +719,233 @@ namespace Decentraland.SocialService.V2 {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public RequestResponse(RequestResponse other) : this() {
+    public Pagination(Pagination other) : this() {
+      limit_ = other.limit_;
+      offset_ = other.offset_;
+      _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public Pagination Clone() {
+      return new Pagination(this);
+    }
+
+    /// <summary>Field number for the "limit" field.</summary>
+    public const int LimitFieldNumber = 1;
+    private int limit_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public int Limit {
+      get { return limit_; }
+      set {
+        limit_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "offset" field.</summary>
+    public const int OffsetFieldNumber = 2;
+    private int offset_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public int Offset {
+      get { return offset_; }
+      set {
+        offset_ = value;
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override bool Equals(object other) {
+      return Equals(other as Pagination);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool Equals(Pagination other) {
+      if (ReferenceEquals(other, null)) {
+        return false;
+      }
+      if (ReferenceEquals(other, this)) {
+        return true;
+      }
+      if (Limit != other.Limit) return false;
+      if (Offset != other.Offset) return false;
+      return Equals(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override int GetHashCode() {
+      int hash = 1;
+      if (Limit != 0) hash ^= Limit.GetHashCode();
+      if (Offset != 0) hash ^= Offset.GetHashCode();
+      if (_unknownFields != null) {
+        hash ^= _unknownFields.GetHashCode();
+      }
+      return hash;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override string ToString() {
+      return pb::JsonFormatter.ToDiagnosticString(this);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void WriteTo(pb::CodedOutputStream output) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      output.WriteRawMessage(this);
+    #else
+      if (Limit != 0) {
+        output.WriteRawTag(8);
+        output.WriteInt32(Limit);
+      }
+      if (Offset != 0) {
+        output.WriteRawTag(16);
+        output.WriteInt32(Offset);
+      }
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(output);
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
+      if (Limit != 0) {
+        output.WriteRawTag(8);
+        output.WriteInt32(Limit);
+      }
+      if (Offset != 0) {
+        output.WriteRawTag(16);
+        output.WriteInt32(Offset);
+      }
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(ref output);
+      }
+    }
+    #endif
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public int CalculateSize() {
+      int size = 0;
+      if (Limit != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeInt32Size(Limit);
+      }
+      if (Offset != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeInt32Size(Offset);
+      }
+      if (_unknownFields != null) {
+        size += _unknownFields.CalculateSize();
+      }
+      return size;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(Pagination other) {
+      if (other == null) {
+        return;
+      }
+      if (other.Limit != 0) {
+        Limit = other.Limit;
+      }
+      if (other.Offset != 0) {
+        Offset = other.Offset;
+      }
+      _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(pb::CodedInputStream input) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      input.ReadRawMessage(this);
+    #else
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+        switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+            break;
+          case 8: {
+            Limit = input.ReadInt32();
+            break;
+          }
+          case 16: {
+            Offset = input.ReadInt32();
+            break;
+          }
+        }
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+        switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
+            break;
+          case 8: {
+            Limit = input.ReadInt32();
+            break;
+          }
+          case 16: {
+            Offset = input.ReadInt32();
+            break;
+          }
+        }
+      }
+    }
+    #endif
+
+  }
+
+  public sealed partial class FriendshipRequestResponse : pb::IMessage<FriendshipRequestResponse>
+  #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      , pb::IBufferMessage
+  #endif
+  {
+    private static readonly pb::MessageParser<FriendshipRequestResponse> _parser = new pb::MessageParser<FriendshipRequestResponse>(() => new FriendshipRequestResponse());
+    private pb::UnknownFieldSet _unknownFields;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pb::MessageParser<FriendshipRequestResponse> Parser { get { return _parser; } }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pbr::MessageDescriptor Descriptor {
+      get { return global::Decentraland.SocialService.V2.SocialServiceV2Reflection.Descriptor.MessageTypes[4]; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    pbr::MessageDescriptor pb::IMessage.Descriptor {
+      get { return Descriptor; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public FriendshipRequestResponse() {
+      OnConstruction();
+    }
+
+    partial void OnConstruction();
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public FriendshipRequestResponse(FriendshipRequestResponse other) : this() {
       user_ = other.user_ != null ? other.user_.Clone() : null;
       createdAt_ = other.createdAt_;
       message_ = other.message_;
@@ -659,8 +954,8 @@ namespace Decentraland.SocialService.V2 {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public RequestResponse Clone() {
-      return new RequestResponse(this);
+    public FriendshipRequestResponse Clone() {
+      return new FriendshipRequestResponse(this);
     }
 
     /// <summary>Field number for the "user" field.</summary>
@@ -714,12 +1009,12 @@ namespace Decentraland.SocialService.V2 {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override bool Equals(object other) {
-      return Equals(other as RequestResponse);
+      return Equals(other as FriendshipRequestResponse);
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public bool Equals(RequestResponse other) {
+    public bool Equals(FriendshipRequestResponse other) {
       if (ReferenceEquals(other, null)) {
         return false;
       }
@@ -818,7 +1113,7 @@ namespace Decentraland.SocialService.V2 {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public void MergeFrom(RequestResponse other) {
+    public void MergeFrom(FriendshipRequestResponse other) {
       if (other == null) {
         return;
       }
@@ -901,263 +1196,16 @@ namespace Decentraland.SocialService.V2 {
 
   }
 
-  public sealed partial class RequestPayload : pb::IMessage<RequestPayload>
+  public sealed partial class FriendshipRequests : pb::IMessage<FriendshipRequests>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
   #endif
   {
-    private static readonly pb::MessageParser<RequestPayload> _parser = new pb::MessageParser<RequestPayload>(() => new RequestPayload());
+    private static readonly pb::MessageParser<FriendshipRequests> _parser = new pb::MessageParser<FriendshipRequests>(() => new FriendshipRequests());
     private pb::UnknownFieldSet _unknownFields;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public static pb::MessageParser<RequestPayload> Parser { get { return _parser; } }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public static pbr::MessageDescriptor Descriptor {
-      get { return global::Decentraland.SocialService.V2.SocialServiceV2Reflection.Descriptor.MessageTypes[4]; }
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    pbr::MessageDescriptor pb::IMessage.Descriptor {
-      get { return Descriptor; }
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public RequestPayload() {
-      OnConstruction();
-    }
-
-    partial void OnConstruction();
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public RequestPayload(RequestPayload other) : this() {
-      user_ = other.user_ != null ? other.user_.Clone() : null;
-      message_ = other.message_;
-      _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public RequestPayload Clone() {
-      return new RequestPayload(this);
-    }
-
-    /// <summary>Field number for the "user" field.</summary>
-    public const int UserFieldNumber = 1;
-    private global::Decentraland.SocialService.V2.User user_;
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public global::Decentraland.SocialService.V2.User User {
-      get { return user_; }
-      set {
-        user_ = value;
-      }
-    }
-
-    /// <summary>Field number for the "message" field.</summary>
-    public const int MessageFieldNumber = 3;
-    private string message_;
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public string Message {
-      get { return message_ ?? ""; }
-      set {
-        message_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
-      }
-    }
-    /// <summary>Gets whether the "message" field is set</summary>
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public bool HasMessage {
-      get { return message_ != null; }
-    }
-    /// <summary>Clears the value of the "message" field</summary>
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public void ClearMessage() {
-      message_ = null;
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public override bool Equals(object other) {
-      return Equals(other as RequestPayload);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public bool Equals(RequestPayload other) {
-      if (ReferenceEquals(other, null)) {
-        return false;
-      }
-      if (ReferenceEquals(other, this)) {
-        return true;
-      }
-      if (!object.Equals(User, other.User)) return false;
-      if (Message != other.Message) return false;
-      return Equals(_unknownFields, other._unknownFields);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public override int GetHashCode() {
-      int hash = 1;
-      if (user_ != null) hash ^= User.GetHashCode();
-      if (HasMessage) hash ^= Message.GetHashCode();
-      if (_unknownFields != null) {
-        hash ^= _unknownFields.GetHashCode();
-      }
-      return hash;
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public override string ToString() {
-      return pb::JsonFormatter.ToDiagnosticString(this);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public void WriteTo(pb::CodedOutputStream output) {
-    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
-      output.WriteRawMessage(this);
-    #else
-      if (user_ != null) {
-        output.WriteRawTag(10);
-        output.WriteMessage(User);
-      }
-      if (HasMessage) {
-        output.WriteRawTag(26);
-        output.WriteString(Message);
-      }
-      if (_unknownFields != null) {
-        _unknownFields.WriteTo(output);
-      }
-    #endif
-    }
-
-    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
-      if (user_ != null) {
-        output.WriteRawTag(10);
-        output.WriteMessage(User);
-      }
-      if (HasMessage) {
-        output.WriteRawTag(26);
-        output.WriteString(Message);
-      }
-      if (_unknownFields != null) {
-        _unknownFields.WriteTo(ref output);
-      }
-    }
-    #endif
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public int CalculateSize() {
-      int size = 0;
-      if (user_ != null) {
-        size += 1 + pb::CodedOutputStream.ComputeMessageSize(User);
-      }
-      if (HasMessage) {
-        size += 1 + pb::CodedOutputStream.ComputeStringSize(Message);
-      }
-      if (_unknownFields != null) {
-        size += _unknownFields.CalculateSize();
-      }
-      return size;
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public void MergeFrom(RequestPayload other) {
-      if (other == null) {
-        return;
-      }
-      if (other.user_ != null) {
-        if (user_ == null) {
-          User = new global::Decentraland.SocialService.V2.User();
-        }
-        User.MergeFrom(other.User);
-      }
-      if (other.HasMessage) {
-        Message = other.Message;
-      }
-      _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public void MergeFrom(pb::CodedInputStream input) {
-    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
-      input.ReadRawMessage(this);
-    #else
-      uint tag;
-      while ((tag = input.ReadTag()) != 0) {
-        switch(tag) {
-          default:
-            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
-            break;
-          case 10: {
-            if (user_ == null) {
-              User = new global::Decentraland.SocialService.V2.User();
-            }
-            input.ReadMessage(User);
-            break;
-          }
-          case 26: {
-            Message = input.ReadString();
-            break;
-          }
-        }
-      }
-    #endif
-    }
-
-    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
-      uint tag;
-      while ((tag = input.ReadTag()) != 0) {
-        switch(tag) {
-          default:
-            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
-            break;
-          case 10: {
-            if (user_ == null) {
-              User = new global::Decentraland.SocialService.V2.User();
-            }
-            input.ReadMessage(User);
-            break;
-          }
-          case 26: {
-            Message = input.ReadString();
-            break;
-          }
-        }
-      }
-    }
-    #endif
-
-  }
-
-  public sealed partial class Requests : pb::IMessage<Requests>
-  #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
-      , pb::IBufferMessage
-  #endif
-  {
-    private static readonly pb::MessageParser<Requests> _parser = new pb::MessageParser<Requests>(() => new Requests());
-    private pb::UnknownFieldSet _unknownFields;
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public static pb::MessageParser<Requests> Parser { get { return _parser; } }
+    public static pb::MessageParser<FriendshipRequests> Parser { get { return _parser; } }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
@@ -1173,7 +1221,7 @@ namespace Decentraland.SocialService.V2 {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public Requests() {
+    public FriendshipRequests() {
       OnConstruction();
     }
 
@@ -1181,37 +1229,37 @@ namespace Decentraland.SocialService.V2 {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public Requests(Requests other) : this() {
+    public FriendshipRequests(FriendshipRequests other) : this() {
       requests_ = other.requests_.Clone();
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public Requests Clone() {
-      return new Requests(this);
+    public FriendshipRequests Clone() {
+      return new FriendshipRequests(this);
     }
 
     /// <summary>Field number for the "requests" field.</summary>
-    public const int Requests_FieldNumber = 1;
-    private static readonly pb::FieldCodec<global::Decentraland.SocialService.V2.RequestResponse> _repeated_requests_codec
-        = pb::FieldCodec.ForMessage(10, global::Decentraland.SocialService.V2.RequestResponse.Parser);
-    private readonly pbc::RepeatedField<global::Decentraland.SocialService.V2.RequestResponse> requests_ = new pbc::RepeatedField<global::Decentraland.SocialService.V2.RequestResponse>();
+    public const int RequestsFieldNumber = 1;
+    private static readonly pb::FieldCodec<global::Decentraland.SocialService.V2.FriendshipRequestResponse> _repeated_requests_codec
+        = pb::FieldCodec.ForMessage(10, global::Decentraland.SocialService.V2.FriendshipRequestResponse.Parser);
+    private readonly pbc::RepeatedField<global::Decentraland.SocialService.V2.FriendshipRequestResponse> requests_ = new pbc::RepeatedField<global::Decentraland.SocialService.V2.FriendshipRequestResponse>();
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public pbc::RepeatedField<global::Decentraland.SocialService.V2.RequestResponse> Requests_ {
+    public pbc::RepeatedField<global::Decentraland.SocialService.V2.FriendshipRequestResponse> Requests {
       get { return requests_; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override bool Equals(object other) {
-      return Equals(other as Requests);
+      return Equals(other as FriendshipRequests);
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public bool Equals(Requests other) {
+    public bool Equals(FriendshipRequests other) {
       if (ReferenceEquals(other, null)) {
         return false;
       }
@@ -1276,7 +1324,7 @@ namespace Decentraland.SocialService.V2 {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public void MergeFrom(Requests other) {
+    public void MergeFrom(FriendshipRequests other) {
       if (other == null) {
         return;
       }
@@ -1326,16 +1374,17 @@ namespace Decentraland.SocialService.V2 {
 
   }
 
-  public sealed partial class AcceptResponse : pb::IMessage<AcceptResponse>
+  public sealed partial class GetFriendsPayload : pb::IMessage<GetFriendsPayload>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
   #endif
   {
-    private static readonly pb::MessageParser<AcceptResponse> _parser = new pb::MessageParser<AcceptResponse>(() => new AcceptResponse());
+    private static readonly pb::MessageParser<GetFriendsPayload> _parser = new pb::MessageParser<GetFriendsPayload>(() => new GetFriendsPayload());
     private pb::UnknownFieldSet _unknownFields;
+    private int _hasBits0;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public static pb::MessageParser<AcceptResponse> Parser { get { return _parser; } }
+    public static pb::MessageParser<GetFriendsPayload> Parser { get { return _parser; } }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
@@ -1351,7 +1400,7 @@ namespace Decentraland.SocialService.V2 {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public AcceptResponse() {
+    public GetFriendsPayload() {
       OnConstruction();
     }
 
@@ -1359,45 +1408,73 @@ namespace Decentraland.SocialService.V2 {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public AcceptResponse(AcceptResponse other) : this() {
-      user_ = other.user_ != null ? other.user_.Clone() : null;
+    public GetFriendsPayload(GetFriendsPayload other) : this() {
+      _hasBits0 = other._hasBits0;
+      pagination_ = other.pagination_ != null ? other.pagination_.Clone() : null;
+      status_ = other.status_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public AcceptResponse Clone() {
-      return new AcceptResponse(this);
+    public GetFriendsPayload Clone() {
+      return new GetFriendsPayload(this);
     }
 
-    /// <summary>Field number for the "user" field.</summary>
-    public const int UserFieldNumber = 1;
-    private global::Decentraland.SocialService.V2.User user_;
+    /// <summary>Field number for the "pagination" field.</summary>
+    public const int PaginationFieldNumber = 1;
+    private global::Decentraland.SocialService.V2.Pagination pagination_;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public global::Decentraland.SocialService.V2.User User {
-      get { return user_; }
+    public global::Decentraland.SocialService.V2.Pagination Pagination {
+      get { return pagination_; }
       set {
-        user_ = value;
+        pagination_ = value;
       }
+    }
+
+    /// <summary>Field number for the "status" field.</summary>
+    public const int StatusFieldNumber = 2;
+    private global::Decentraland.SocialService.V2.ConnectivityStatus status_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::Decentraland.SocialService.V2.ConnectivityStatus Status {
+      get { if ((_hasBits0 & 1) != 0) { return status_; } else { return global::Decentraland.SocialService.V2.ConnectivityStatus.Online; } }
+      set {
+        _hasBits0 |= 1;
+        status_ = value;
+      }
+    }
+    /// <summary>Gets whether the "status" field is set</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool HasStatus {
+      get { return (_hasBits0 & 1) != 0; }
+    }
+    /// <summary>Clears the value of the "status" field</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearStatus() {
+      _hasBits0 &= ~1;
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override bool Equals(object other) {
-      return Equals(other as AcceptResponse);
+      return Equals(other as GetFriendsPayload);
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public bool Equals(AcceptResponse other) {
+    public bool Equals(GetFriendsPayload other) {
       if (ReferenceEquals(other, null)) {
         return false;
       }
       if (ReferenceEquals(other, this)) {
         return true;
       }
-      if (!object.Equals(User, other.User)) return false;
+      if (!object.Equals(Pagination, other.Pagination)) return false;
+      if (Status != other.Status) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -1405,7 +1482,8 @@ namespace Decentraland.SocialService.V2 {
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override int GetHashCode() {
       int hash = 1;
-      if (user_ != null) hash ^= User.GetHashCode();
+      if (pagination_ != null) hash ^= Pagination.GetHashCode();
+      if (HasStatus) hash ^= Status.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -1424,9 +1502,13 @@ namespace Decentraland.SocialService.V2 {
     #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       output.WriteRawMessage(this);
     #else
-      if (user_ != null) {
+      if (pagination_ != null) {
         output.WriteRawTag(10);
-        output.WriteMessage(User);
+        output.WriteMessage(Pagination);
+      }
+      if (HasStatus) {
+        output.WriteRawTag(16);
+        output.WriteEnum((int) Status);
       }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
@@ -1438,9 +1520,13 @@ namespace Decentraland.SocialService.V2 {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
-      if (user_ != null) {
+      if (pagination_ != null) {
         output.WriteRawTag(10);
-        output.WriteMessage(User);
+        output.WriteMessage(Pagination);
+      }
+      if (HasStatus) {
+        output.WriteRawTag(16);
+        output.WriteEnum((int) Status);
       }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
@@ -1452,8 +1538,11 @@ namespace Decentraland.SocialService.V2 {
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public int CalculateSize() {
       int size = 0;
-      if (user_ != null) {
-        size += 1 + pb::CodedOutputStream.ComputeMessageSize(User);
+      if (pagination_ != null) {
+        size += 1 + pb::CodedOutputStream.ComputeMessageSize(Pagination);
+      }
+      if (HasStatus) {
+        size += 1 + pb::CodedOutputStream.ComputeEnumSize((int) Status);
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -1463,15 +1552,18 @@ namespace Decentraland.SocialService.V2 {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public void MergeFrom(AcceptResponse other) {
+    public void MergeFrom(GetFriendsPayload other) {
       if (other == null) {
         return;
       }
-      if (other.user_ != null) {
-        if (user_ == null) {
-          User = new global::Decentraland.SocialService.V2.User();
+      if (other.pagination_ != null) {
+        if (pagination_ == null) {
+          Pagination = new global::Decentraland.SocialService.V2.Pagination();
         }
-        User.MergeFrom(other.User);
+        Pagination.MergeFrom(other.Pagination);
+      }
+      if (other.HasStatus) {
+        Status = other.Status;
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -1489,10 +1581,14 @@ namespace Decentraland.SocialService.V2 {
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
             break;
           case 10: {
-            if (user_ == null) {
-              User = new global::Decentraland.SocialService.V2.User();
+            if (pagination_ == null) {
+              Pagination = new global::Decentraland.SocialService.V2.Pagination();
             }
-            input.ReadMessage(User);
+            input.ReadMessage(Pagination);
+            break;
+          }
+          case 16: {
+            Status = (global::Decentraland.SocialService.V2.ConnectivityStatus) input.ReadEnum();
             break;
           }
         }
@@ -1511,10 +1607,14 @@ namespace Decentraland.SocialService.V2 {
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
             break;
           case 10: {
-            if (user_ == null) {
-              User = new global::Decentraland.SocialService.V2.User();
+            if (pagination_ == null) {
+              Pagination = new global::Decentraland.SocialService.V2.Pagination();
             }
-            input.ReadMessage(User);
+            input.ReadMessage(Pagination);
+            break;
+          }
+          case 16: {
+            Status = (global::Decentraland.SocialService.V2.ConnectivityStatus) input.ReadEnum();
             break;
           }
         }
@@ -1524,16 +1624,16 @@ namespace Decentraland.SocialService.V2 {
 
   }
 
-  public sealed partial class AcceptPayload : pb::IMessage<AcceptPayload>
+  public sealed partial class GetFriendshipRequestsPayload : pb::IMessage<GetFriendshipRequestsPayload>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
   #endif
   {
-    private static readonly pb::MessageParser<AcceptPayload> _parser = new pb::MessageParser<AcceptPayload>(() => new AcceptPayload());
+    private static readonly pb::MessageParser<GetFriendshipRequestsPayload> _parser = new pb::MessageParser<GetFriendshipRequestsPayload>(() => new GetFriendshipRequestsPayload());
     private pb::UnknownFieldSet _unknownFields;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public static pb::MessageParser<AcceptPayload> Parser { get { return _parser; } }
+    public static pb::MessageParser<GetFriendshipRequestsPayload> Parser { get { return _parser; } }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
@@ -1549,7 +1649,7 @@ namespace Decentraland.SocialService.V2 {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public AcceptPayload() {
+    public GetFriendshipRequestsPayload() {
       OnConstruction();
     }
 
@@ -1557,45 +1657,45 @@ namespace Decentraland.SocialService.V2 {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public AcceptPayload(AcceptPayload other) : this() {
-      user_ = other.user_ != null ? other.user_.Clone() : null;
+    public GetFriendshipRequestsPayload(GetFriendshipRequestsPayload other) : this() {
+      pagination_ = other.pagination_ != null ? other.pagination_.Clone() : null;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public AcceptPayload Clone() {
-      return new AcceptPayload(this);
+    public GetFriendshipRequestsPayload Clone() {
+      return new GetFriendshipRequestsPayload(this);
     }
 
-    /// <summary>Field number for the "user" field.</summary>
-    public const int UserFieldNumber = 1;
-    private global::Decentraland.SocialService.V2.User user_;
+    /// <summary>Field number for the "pagination" field.</summary>
+    public const int PaginationFieldNumber = 1;
+    private global::Decentraland.SocialService.V2.Pagination pagination_;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public global::Decentraland.SocialService.V2.User User {
-      get { return user_; }
+    public global::Decentraland.SocialService.V2.Pagination Pagination {
+      get { return pagination_; }
       set {
-        user_ = value;
+        pagination_ = value;
       }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override bool Equals(object other) {
-      return Equals(other as AcceptPayload);
+      return Equals(other as GetFriendshipRequestsPayload);
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public bool Equals(AcceptPayload other) {
+    public bool Equals(GetFriendshipRequestsPayload other) {
       if (ReferenceEquals(other, null)) {
         return false;
       }
       if (ReferenceEquals(other, this)) {
         return true;
       }
-      if (!object.Equals(User, other.User)) return false;
+      if (!object.Equals(Pagination, other.Pagination)) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -1603,7 +1703,7 @@ namespace Decentraland.SocialService.V2 {
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override int GetHashCode() {
       int hash = 1;
-      if (user_ != null) hash ^= User.GetHashCode();
+      if (pagination_ != null) hash ^= Pagination.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -1622,9 +1722,9 @@ namespace Decentraland.SocialService.V2 {
     #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       output.WriteRawMessage(this);
     #else
-      if (user_ != null) {
+      if (pagination_ != null) {
         output.WriteRawTag(10);
-        output.WriteMessage(User);
+        output.WriteMessage(Pagination);
       }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
@@ -1636,9 +1736,9 @@ namespace Decentraland.SocialService.V2 {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
-      if (user_ != null) {
+      if (pagination_ != null) {
         output.WriteRawTag(10);
-        output.WriteMessage(User);
+        output.WriteMessage(Pagination);
       }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
@@ -1650,8 +1750,8 @@ namespace Decentraland.SocialService.V2 {
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public int CalculateSize() {
       int size = 0;
-      if (user_ != null) {
-        size += 1 + pb::CodedOutputStream.ComputeMessageSize(User);
+      if (pagination_ != null) {
+        size += 1 + pb::CodedOutputStream.ComputeMessageSize(Pagination);
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -1661,15 +1761,15 @@ namespace Decentraland.SocialService.V2 {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public void MergeFrom(AcceptPayload other) {
+    public void MergeFrom(GetFriendshipRequestsPayload other) {
       if (other == null) {
         return;
       }
-      if (other.user_ != null) {
-        if (user_ == null) {
-          User = new global::Decentraland.SocialService.V2.User();
+      if (other.pagination_ != null) {
+        if (pagination_ == null) {
+          Pagination = new global::Decentraland.SocialService.V2.Pagination();
         }
-        User.MergeFrom(other.User);
+        Pagination.MergeFrom(other.Pagination);
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -1687,10 +1787,10 @@ namespace Decentraland.SocialService.V2 {
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
             break;
           case 10: {
-            if (user_ == null) {
-              User = new global::Decentraland.SocialService.V2.User();
+            if (pagination_ == null) {
+              Pagination = new global::Decentraland.SocialService.V2.Pagination();
             }
-            input.ReadMessage(User);
+            input.ReadMessage(Pagination);
             break;
           }
         }
@@ -1709,1198 +1809,10 @@ namespace Decentraland.SocialService.V2 {
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
             break;
           case 10: {
-            if (user_ == null) {
-              User = new global::Decentraland.SocialService.V2.User();
+            if (pagination_ == null) {
+              Pagination = new global::Decentraland.SocialService.V2.Pagination();
             }
-            input.ReadMessage(User);
-            break;
-          }
-        }
-      }
-    }
-    #endif
-
-  }
-
-  public sealed partial class RejectResponse : pb::IMessage<RejectResponse>
-  #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
-      , pb::IBufferMessage
-  #endif
-  {
-    private static readonly pb::MessageParser<RejectResponse> _parser = new pb::MessageParser<RejectResponse>(() => new RejectResponse());
-    private pb::UnknownFieldSet _unknownFields;
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public static pb::MessageParser<RejectResponse> Parser { get { return _parser; } }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public static pbr::MessageDescriptor Descriptor {
-      get { return global::Decentraland.SocialService.V2.SocialServiceV2Reflection.Descriptor.MessageTypes[8]; }
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    pbr::MessageDescriptor pb::IMessage.Descriptor {
-      get { return Descriptor; }
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public RejectResponse() {
-      OnConstruction();
-    }
-
-    partial void OnConstruction();
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public RejectResponse(RejectResponse other) : this() {
-      user_ = other.user_ != null ? other.user_.Clone() : null;
-      _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public RejectResponse Clone() {
-      return new RejectResponse(this);
-    }
-
-    /// <summary>Field number for the "user" field.</summary>
-    public const int UserFieldNumber = 1;
-    private global::Decentraland.SocialService.V2.User user_;
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public global::Decentraland.SocialService.V2.User User {
-      get { return user_; }
-      set {
-        user_ = value;
-      }
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public override bool Equals(object other) {
-      return Equals(other as RejectResponse);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public bool Equals(RejectResponse other) {
-      if (ReferenceEquals(other, null)) {
-        return false;
-      }
-      if (ReferenceEquals(other, this)) {
-        return true;
-      }
-      if (!object.Equals(User, other.User)) return false;
-      return Equals(_unknownFields, other._unknownFields);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public override int GetHashCode() {
-      int hash = 1;
-      if (user_ != null) hash ^= User.GetHashCode();
-      if (_unknownFields != null) {
-        hash ^= _unknownFields.GetHashCode();
-      }
-      return hash;
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public override string ToString() {
-      return pb::JsonFormatter.ToDiagnosticString(this);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public void WriteTo(pb::CodedOutputStream output) {
-    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
-      output.WriteRawMessage(this);
-    #else
-      if (user_ != null) {
-        output.WriteRawTag(10);
-        output.WriteMessage(User);
-      }
-      if (_unknownFields != null) {
-        _unknownFields.WriteTo(output);
-      }
-    #endif
-    }
-
-    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
-      if (user_ != null) {
-        output.WriteRawTag(10);
-        output.WriteMessage(User);
-      }
-      if (_unknownFields != null) {
-        _unknownFields.WriteTo(ref output);
-      }
-    }
-    #endif
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public int CalculateSize() {
-      int size = 0;
-      if (user_ != null) {
-        size += 1 + pb::CodedOutputStream.ComputeMessageSize(User);
-      }
-      if (_unknownFields != null) {
-        size += _unknownFields.CalculateSize();
-      }
-      return size;
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public void MergeFrom(RejectResponse other) {
-      if (other == null) {
-        return;
-      }
-      if (other.user_ != null) {
-        if (user_ == null) {
-          User = new global::Decentraland.SocialService.V2.User();
-        }
-        User.MergeFrom(other.User);
-      }
-      _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public void MergeFrom(pb::CodedInputStream input) {
-    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
-      input.ReadRawMessage(this);
-    #else
-      uint tag;
-      while ((tag = input.ReadTag()) != 0) {
-        switch(tag) {
-          default:
-            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
-            break;
-          case 10: {
-            if (user_ == null) {
-              User = new global::Decentraland.SocialService.V2.User();
-            }
-            input.ReadMessage(User);
-            break;
-          }
-        }
-      }
-    #endif
-    }
-
-    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
-      uint tag;
-      while ((tag = input.ReadTag()) != 0) {
-        switch(tag) {
-          default:
-            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
-            break;
-          case 10: {
-            if (user_ == null) {
-              User = new global::Decentraland.SocialService.V2.User();
-            }
-            input.ReadMessage(User);
-            break;
-          }
-        }
-      }
-    }
-    #endif
-
-  }
-
-  public sealed partial class RejectPayload : pb::IMessage<RejectPayload>
-  #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
-      , pb::IBufferMessage
-  #endif
-  {
-    private static readonly pb::MessageParser<RejectPayload> _parser = new pb::MessageParser<RejectPayload>(() => new RejectPayload());
-    private pb::UnknownFieldSet _unknownFields;
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public static pb::MessageParser<RejectPayload> Parser { get { return _parser; } }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public static pbr::MessageDescriptor Descriptor {
-      get { return global::Decentraland.SocialService.V2.SocialServiceV2Reflection.Descriptor.MessageTypes[9]; }
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    pbr::MessageDescriptor pb::IMessage.Descriptor {
-      get { return Descriptor; }
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public RejectPayload() {
-      OnConstruction();
-    }
-
-    partial void OnConstruction();
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public RejectPayload(RejectPayload other) : this() {
-      user_ = other.user_ != null ? other.user_.Clone() : null;
-      _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public RejectPayload Clone() {
-      return new RejectPayload(this);
-    }
-
-    /// <summary>Field number for the "user" field.</summary>
-    public const int UserFieldNumber = 1;
-    private global::Decentraland.SocialService.V2.User user_;
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public global::Decentraland.SocialService.V2.User User {
-      get { return user_; }
-      set {
-        user_ = value;
-      }
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public override bool Equals(object other) {
-      return Equals(other as RejectPayload);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public bool Equals(RejectPayload other) {
-      if (ReferenceEquals(other, null)) {
-        return false;
-      }
-      if (ReferenceEquals(other, this)) {
-        return true;
-      }
-      if (!object.Equals(User, other.User)) return false;
-      return Equals(_unknownFields, other._unknownFields);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public override int GetHashCode() {
-      int hash = 1;
-      if (user_ != null) hash ^= User.GetHashCode();
-      if (_unknownFields != null) {
-        hash ^= _unknownFields.GetHashCode();
-      }
-      return hash;
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public override string ToString() {
-      return pb::JsonFormatter.ToDiagnosticString(this);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public void WriteTo(pb::CodedOutputStream output) {
-    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
-      output.WriteRawMessage(this);
-    #else
-      if (user_ != null) {
-        output.WriteRawTag(10);
-        output.WriteMessage(User);
-      }
-      if (_unknownFields != null) {
-        _unknownFields.WriteTo(output);
-      }
-    #endif
-    }
-
-    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
-      if (user_ != null) {
-        output.WriteRawTag(10);
-        output.WriteMessage(User);
-      }
-      if (_unknownFields != null) {
-        _unknownFields.WriteTo(ref output);
-      }
-    }
-    #endif
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public int CalculateSize() {
-      int size = 0;
-      if (user_ != null) {
-        size += 1 + pb::CodedOutputStream.ComputeMessageSize(User);
-      }
-      if (_unknownFields != null) {
-        size += _unknownFields.CalculateSize();
-      }
-      return size;
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public void MergeFrom(RejectPayload other) {
-      if (other == null) {
-        return;
-      }
-      if (other.user_ != null) {
-        if (user_ == null) {
-          User = new global::Decentraland.SocialService.V2.User();
-        }
-        User.MergeFrom(other.User);
-      }
-      _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public void MergeFrom(pb::CodedInputStream input) {
-    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
-      input.ReadRawMessage(this);
-    #else
-      uint tag;
-      while ((tag = input.ReadTag()) != 0) {
-        switch(tag) {
-          default:
-            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
-            break;
-          case 10: {
-            if (user_ == null) {
-              User = new global::Decentraland.SocialService.V2.User();
-            }
-            input.ReadMessage(User);
-            break;
-          }
-        }
-      }
-    #endif
-    }
-
-    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
-      uint tag;
-      while ((tag = input.ReadTag()) != 0) {
-        switch(tag) {
-          default:
-            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
-            break;
-          case 10: {
-            if (user_ == null) {
-              User = new global::Decentraland.SocialService.V2.User();
-            }
-            input.ReadMessage(User);
-            break;
-          }
-        }
-      }
-    }
-    #endif
-
-  }
-
-  public sealed partial class DeleteResponse : pb::IMessage<DeleteResponse>
-  #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
-      , pb::IBufferMessage
-  #endif
-  {
-    private static readonly pb::MessageParser<DeleteResponse> _parser = new pb::MessageParser<DeleteResponse>(() => new DeleteResponse());
-    private pb::UnknownFieldSet _unknownFields;
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public static pb::MessageParser<DeleteResponse> Parser { get { return _parser; } }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public static pbr::MessageDescriptor Descriptor {
-      get { return global::Decentraland.SocialService.V2.SocialServiceV2Reflection.Descriptor.MessageTypes[10]; }
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    pbr::MessageDescriptor pb::IMessage.Descriptor {
-      get { return Descriptor; }
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public DeleteResponse() {
-      OnConstruction();
-    }
-
-    partial void OnConstruction();
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public DeleteResponse(DeleteResponse other) : this() {
-      user_ = other.user_ != null ? other.user_.Clone() : null;
-      _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public DeleteResponse Clone() {
-      return new DeleteResponse(this);
-    }
-
-    /// <summary>Field number for the "user" field.</summary>
-    public const int UserFieldNumber = 1;
-    private global::Decentraland.SocialService.V2.User user_;
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public global::Decentraland.SocialService.V2.User User {
-      get { return user_; }
-      set {
-        user_ = value;
-      }
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public override bool Equals(object other) {
-      return Equals(other as DeleteResponse);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public bool Equals(DeleteResponse other) {
-      if (ReferenceEquals(other, null)) {
-        return false;
-      }
-      if (ReferenceEquals(other, this)) {
-        return true;
-      }
-      if (!object.Equals(User, other.User)) return false;
-      return Equals(_unknownFields, other._unknownFields);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public override int GetHashCode() {
-      int hash = 1;
-      if (user_ != null) hash ^= User.GetHashCode();
-      if (_unknownFields != null) {
-        hash ^= _unknownFields.GetHashCode();
-      }
-      return hash;
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public override string ToString() {
-      return pb::JsonFormatter.ToDiagnosticString(this);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public void WriteTo(pb::CodedOutputStream output) {
-    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
-      output.WriteRawMessage(this);
-    #else
-      if (user_ != null) {
-        output.WriteRawTag(10);
-        output.WriteMessage(User);
-      }
-      if (_unknownFields != null) {
-        _unknownFields.WriteTo(output);
-      }
-    #endif
-    }
-
-    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
-      if (user_ != null) {
-        output.WriteRawTag(10);
-        output.WriteMessage(User);
-      }
-      if (_unknownFields != null) {
-        _unknownFields.WriteTo(ref output);
-      }
-    }
-    #endif
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public int CalculateSize() {
-      int size = 0;
-      if (user_ != null) {
-        size += 1 + pb::CodedOutputStream.ComputeMessageSize(User);
-      }
-      if (_unknownFields != null) {
-        size += _unknownFields.CalculateSize();
-      }
-      return size;
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public void MergeFrom(DeleteResponse other) {
-      if (other == null) {
-        return;
-      }
-      if (other.user_ != null) {
-        if (user_ == null) {
-          User = new global::Decentraland.SocialService.V2.User();
-        }
-        User.MergeFrom(other.User);
-      }
-      _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public void MergeFrom(pb::CodedInputStream input) {
-    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
-      input.ReadRawMessage(this);
-    #else
-      uint tag;
-      while ((tag = input.ReadTag()) != 0) {
-        switch(tag) {
-          default:
-            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
-            break;
-          case 10: {
-            if (user_ == null) {
-              User = new global::Decentraland.SocialService.V2.User();
-            }
-            input.ReadMessage(User);
-            break;
-          }
-        }
-      }
-    #endif
-    }
-
-    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
-      uint tag;
-      while ((tag = input.ReadTag()) != 0) {
-        switch(tag) {
-          default:
-            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
-            break;
-          case 10: {
-            if (user_ == null) {
-              User = new global::Decentraland.SocialService.V2.User();
-            }
-            input.ReadMessage(User);
-            break;
-          }
-        }
-      }
-    }
-    #endif
-
-  }
-
-  public sealed partial class DeletePayload : pb::IMessage<DeletePayload>
-  #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
-      , pb::IBufferMessage
-  #endif
-  {
-    private static readonly pb::MessageParser<DeletePayload> _parser = new pb::MessageParser<DeletePayload>(() => new DeletePayload());
-    private pb::UnknownFieldSet _unknownFields;
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public static pb::MessageParser<DeletePayload> Parser { get { return _parser; } }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public static pbr::MessageDescriptor Descriptor {
-      get { return global::Decentraland.SocialService.V2.SocialServiceV2Reflection.Descriptor.MessageTypes[11]; }
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    pbr::MessageDescriptor pb::IMessage.Descriptor {
-      get { return Descriptor; }
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public DeletePayload() {
-      OnConstruction();
-    }
-
-    partial void OnConstruction();
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public DeletePayload(DeletePayload other) : this() {
-      user_ = other.user_ != null ? other.user_.Clone() : null;
-      _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public DeletePayload Clone() {
-      return new DeletePayload(this);
-    }
-
-    /// <summary>Field number for the "user" field.</summary>
-    public const int UserFieldNumber = 1;
-    private global::Decentraland.SocialService.V2.User user_;
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public global::Decentraland.SocialService.V2.User User {
-      get { return user_; }
-      set {
-        user_ = value;
-      }
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public override bool Equals(object other) {
-      return Equals(other as DeletePayload);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public bool Equals(DeletePayload other) {
-      if (ReferenceEquals(other, null)) {
-        return false;
-      }
-      if (ReferenceEquals(other, this)) {
-        return true;
-      }
-      if (!object.Equals(User, other.User)) return false;
-      return Equals(_unknownFields, other._unknownFields);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public override int GetHashCode() {
-      int hash = 1;
-      if (user_ != null) hash ^= User.GetHashCode();
-      if (_unknownFields != null) {
-        hash ^= _unknownFields.GetHashCode();
-      }
-      return hash;
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public override string ToString() {
-      return pb::JsonFormatter.ToDiagnosticString(this);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public void WriteTo(pb::CodedOutputStream output) {
-    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
-      output.WriteRawMessage(this);
-    #else
-      if (user_ != null) {
-        output.WriteRawTag(10);
-        output.WriteMessage(User);
-      }
-      if (_unknownFields != null) {
-        _unknownFields.WriteTo(output);
-      }
-    #endif
-    }
-
-    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
-      if (user_ != null) {
-        output.WriteRawTag(10);
-        output.WriteMessage(User);
-      }
-      if (_unknownFields != null) {
-        _unknownFields.WriteTo(ref output);
-      }
-    }
-    #endif
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public int CalculateSize() {
-      int size = 0;
-      if (user_ != null) {
-        size += 1 + pb::CodedOutputStream.ComputeMessageSize(User);
-      }
-      if (_unknownFields != null) {
-        size += _unknownFields.CalculateSize();
-      }
-      return size;
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public void MergeFrom(DeletePayload other) {
-      if (other == null) {
-        return;
-      }
-      if (other.user_ != null) {
-        if (user_ == null) {
-          User = new global::Decentraland.SocialService.V2.User();
-        }
-        User.MergeFrom(other.User);
-      }
-      _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public void MergeFrom(pb::CodedInputStream input) {
-    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
-      input.ReadRawMessage(this);
-    #else
-      uint tag;
-      while ((tag = input.ReadTag()) != 0) {
-        switch(tag) {
-          default:
-            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
-            break;
-          case 10: {
-            if (user_ == null) {
-              User = new global::Decentraland.SocialService.V2.User();
-            }
-            input.ReadMessage(User);
-            break;
-          }
-        }
-      }
-    #endif
-    }
-
-    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
-      uint tag;
-      while ((tag = input.ReadTag()) != 0) {
-        switch(tag) {
-          default:
-            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
-            break;
-          case 10: {
-            if (user_ == null) {
-              User = new global::Decentraland.SocialService.V2.User();
-            }
-            input.ReadMessage(User);
-            break;
-          }
-        }
-      }
-    }
-    #endif
-
-  }
-
-  public sealed partial class CancelResponse : pb::IMessage<CancelResponse>
-  #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
-      , pb::IBufferMessage
-  #endif
-  {
-    private static readonly pb::MessageParser<CancelResponse> _parser = new pb::MessageParser<CancelResponse>(() => new CancelResponse());
-    private pb::UnknownFieldSet _unknownFields;
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public static pb::MessageParser<CancelResponse> Parser { get { return _parser; } }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public static pbr::MessageDescriptor Descriptor {
-      get { return global::Decentraland.SocialService.V2.SocialServiceV2Reflection.Descriptor.MessageTypes[12]; }
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    pbr::MessageDescriptor pb::IMessage.Descriptor {
-      get { return Descriptor; }
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public CancelResponse() {
-      OnConstruction();
-    }
-
-    partial void OnConstruction();
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public CancelResponse(CancelResponse other) : this() {
-      user_ = other.user_ != null ? other.user_.Clone() : null;
-      _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public CancelResponse Clone() {
-      return new CancelResponse(this);
-    }
-
-    /// <summary>Field number for the "user" field.</summary>
-    public const int UserFieldNumber = 1;
-    private global::Decentraland.SocialService.V2.User user_;
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public global::Decentraland.SocialService.V2.User User {
-      get { return user_; }
-      set {
-        user_ = value;
-      }
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public override bool Equals(object other) {
-      return Equals(other as CancelResponse);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public bool Equals(CancelResponse other) {
-      if (ReferenceEquals(other, null)) {
-        return false;
-      }
-      if (ReferenceEquals(other, this)) {
-        return true;
-      }
-      if (!object.Equals(User, other.User)) return false;
-      return Equals(_unknownFields, other._unknownFields);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public override int GetHashCode() {
-      int hash = 1;
-      if (user_ != null) hash ^= User.GetHashCode();
-      if (_unknownFields != null) {
-        hash ^= _unknownFields.GetHashCode();
-      }
-      return hash;
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public override string ToString() {
-      return pb::JsonFormatter.ToDiagnosticString(this);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public void WriteTo(pb::CodedOutputStream output) {
-    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
-      output.WriteRawMessage(this);
-    #else
-      if (user_ != null) {
-        output.WriteRawTag(10);
-        output.WriteMessage(User);
-      }
-      if (_unknownFields != null) {
-        _unknownFields.WriteTo(output);
-      }
-    #endif
-    }
-
-    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
-      if (user_ != null) {
-        output.WriteRawTag(10);
-        output.WriteMessage(User);
-      }
-      if (_unknownFields != null) {
-        _unknownFields.WriteTo(ref output);
-      }
-    }
-    #endif
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public int CalculateSize() {
-      int size = 0;
-      if (user_ != null) {
-        size += 1 + pb::CodedOutputStream.ComputeMessageSize(User);
-      }
-      if (_unknownFields != null) {
-        size += _unknownFields.CalculateSize();
-      }
-      return size;
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public void MergeFrom(CancelResponse other) {
-      if (other == null) {
-        return;
-      }
-      if (other.user_ != null) {
-        if (user_ == null) {
-          User = new global::Decentraland.SocialService.V2.User();
-        }
-        User.MergeFrom(other.User);
-      }
-      _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public void MergeFrom(pb::CodedInputStream input) {
-    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
-      input.ReadRawMessage(this);
-    #else
-      uint tag;
-      while ((tag = input.ReadTag()) != 0) {
-        switch(tag) {
-          default:
-            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
-            break;
-          case 10: {
-            if (user_ == null) {
-              User = new global::Decentraland.SocialService.V2.User();
-            }
-            input.ReadMessage(User);
-            break;
-          }
-        }
-      }
-    #endif
-    }
-
-    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
-      uint tag;
-      while ((tag = input.ReadTag()) != 0) {
-        switch(tag) {
-          default:
-            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
-            break;
-          case 10: {
-            if (user_ == null) {
-              User = new global::Decentraland.SocialService.V2.User();
-            }
-            input.ReadMessage(User);
-            break;
-          }
-        }
-      }
-    }
-    #endif
-
-  }
-
-  public sealed partial class CancelPayload : pb::IMessage<CancelPayload>
-  #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
-      , pb::IBufferMessage
-  #endif
-  {
-    private static readonly pb::MessageParser<CancelPayload> _parser = new pb::MessageParser<CancelPayload>(() => new CancelPayload());
-    private pb::UnknownFieldSet _unknownFields;
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public static pb::MessageParser<CancelPayload> Parser { get { return _parser; } }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public static pbr::MessageDescriptor Descriptor {
-      get { return global::Decentraland.SocialService.V2.SocialServiceV2Reflection.Descriptor.MessageTypes[13]; }
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    pbr::MessageDescriptor pb::IMessage.Descriptor {
-      get { return Descriptor; }
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public CancelPayload() {
-      OnConstruction();
-    }
-
-    partial void OnConstruction();
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public CancelPayload(CancelPayload other) : this() {
-      user_ = other.user_ != null ? other.user_.Clone() : null;
-      _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public CancelPayload Clone() {
-      return new CancelPayload(this);
-    }
-
-    /// <summary>Field number for the "user" field.</summary>
-    public const int UserFieldNumber = 1;
-    private global::Decentraland.SocialService.V2.User user_;
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public global::Decentraland.SocialService.V2.User User {
-      get { return user_; }
-      set {
-        user_ = value;
-      }
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public override bool Equals(object other) {
-      return Equals(other as CancelPayload);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public bool Equals(CancelPayload other) {
-      if (ReferenceEquals(other, null)) {
-        return false;
-      }
-      if (ReferenceEquals(other, this)) {
-        return true;
-      }
-      if (!object.Equals(User, other.User)) return false;
-      return Equals(_unknownFields, other._unknownFields);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public override int GetHashCode() {
-      int hash = 1;
-      if (user_ != null) hash ^= User.GetHashCode();
-      if (_unknownFields != null) {
-        hash ^= _unknownFields.GetHashCode();
-      }
-      return hash;
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public override string ToString() {
-      return pb::JsonFormatter.ToDiagnosticString(this);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public void WriteTo(pb::CodedOutputStream output) {
-    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
-      output.WriteRawMessage(this);
-    #else
-      if (user_ != null) {
-        output.WriteRawTag(10);
-        output.WriteMessage(User);
-      }
-      if (_unknownFields != null) {
-        _unknownFields.WriteTo(output);
-      }
-    #endif
-    }
-
-    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
-      if (user_ != null) {
-        output.WriteRawTag(10);
-        output.WriteMessage(User);
-      }
-      if (_unknownFields != null) {
-        _unknownFields.WriteTo(ref output);
-      }
-    }
-    #endif
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public int CalculateSize() {
-      int size = 0;
-      if (user_ != null) {
-        size += 1 + pb::CodedOutputStream.ComputeMessageSize(User);
-      }
-      if (_unknownFields != null) {
-        size += _unknownFields.CalculateSize();
-      }
-      return size;
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public void MergeFrom(CancelPayload other) {
-      if (other == null) {
-        return;
-      }
-      if (other.user_ != null) {
-        if (user_ == null) {
-          User = new global::Decentraland.SocialService.V2.User();
-        }
-        User.MergeFrom(other.User);
-      }
-      _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public void MergeFrom(pb::CodedInputStream input) {
-    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
-      input.ReadRawMessage(this);
-    #else
-      uint tag;
-      while ((tag = input.ReadTag()) != 0) {
-        switch(tag) {
-          default:
-            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
-            break;
-          case 10: {
-            if (user_ == null) {
-              User = new global::Decentraland.SocialService.V2.User();
-            }
-            input.ReadMessage(User);
-            break;
-          }
-        }
-      }
-    #endif
-    }
-
-    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
-      uint tag;
-      while ((tag = input.ReadTag()) != 0) {
-        switch(tag) {
-          default:
-            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
-            break;
-          case 10: {
-            if (user_ == null) {
-              User = new global::Decentraland.SocialService.V2.User();
-            }
-            input.ReadMessage(User);
+            input.ReadMessage(Pagination);
             break;
           }
         }
@@ -2924,7 +1836,7 @@ namespace Decentraland.SocialService.V2 {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Decentraland.SocialService.V2.SocialServiceV2Reflection.Descriptor.MessageTypes[14]; }
+      get { return global::Decentraland.SocialService.V2.SocialServiceV2Reflection.Descriptor.MessageTypes[8]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -2975,8 +1887,8 @@ namespace Decentraland.SocialService.V2 {
     public const int RequestFieldNumber = 1;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public global::Decentraland.SocialService.V2.RequestPayload Request {
-      get { return actionCase_ == ActionOneofCase.Request ? (global::Decentraland.SocialService.V2.RequestPayload) action_ : null; }
+    public global::Decentraland.SocialService.V2.UpsertFriendshipPayload.Types.RequestPayload Request {
+      get { return actionCase_ == ActionOneofCase.Request ? (global::Decentraland.SocialService.V2.UpsertFriendshipPayload.Types.RequestPayload) action_ : null; }
       set {
         action_ = value;
         actionCase_ = value == null ? ActionOneofCase.None : ActionOneofCase.Request;
@@ -2987,8 +1899,8 @@ namespace Decentraland.SocialService.V2 {
     public const int AcceptFieldNumber = 2;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public global::Decentraland.SocialService.V2.AcceptPayload Accept {
-      get { return actionCase_ == ActionOneofCase.Accept ? (global::Decentraland.SocialService.V2.AcceptPayload) action_ : null; }
+    public global::Decentraland.SocialService.V2.UpsertFriendshipPayload.Types.AcceptPayload Accept {
+      get { return actionCase_ == ActionOneofCase.Accept ? (global::Decentraland.SocialService.V2.UpsertFriendshipPayload.Types.AcceptPayload) action_ : null; }
       set {
         action_ = value;
         actionCase_ = value == null ? ActionOneofCase.None : ActionOneofCase.Accept;
@@ -2999,8 +1911,8 @@ namespace Decentraland.SocialService.V2 {
     public const int RejectFieldNumber = 4;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public global::Decentraland.SocialService.V2.RejectPayload Reject {
-      get { return actionCase_ == ActionOneofCase.Reject ? (global::Decentraland.SocialService.V2.RejectPayload) action_ : null; }
+    public global::Decentraland.SocialService.V2.UpsertFriendshipPayload.Types.RejectPayload Reject {
+      get { return actionCase_ == ActionOneofCase.Reject ? (global::Decentraland.SocialService.V2.UpsertFriendshipPayload.Types.RejectPayload) action_ : null; }
       set {
         action_ = value;
         actionCase_ = value == null ? ActionOneofCase.None : ActionOneofCase.Reject;
@@ -3011,8 +1923,8 @@ namespace Decentraland.SocialService.V2 {
     public const int DeleteFieldNumber = 5;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public global::Decentraland.SocialService.V2.DeletePayload Delete {
-      get { return actionCase_ == ActionOneofCase.Delete ? (global::Decentraland.SocialService.V2.DeletePayload) action_ : null; }
+    public global::Decentraland.SocialService.V2.UpsertFriendshipPayload.Types.DeletePayload Delete {
+      get { return actionCase_ == ActionOneofCase.Delete ? (global::Decentraland.SocialService.V2.UpsertFriendshipPayload.Types.DeletePayload) action_ : null; }
       set {
         action_ = value;
         actionCase_ = value == null ? ActionOneofCase.None : ActionOneofCase.Delete;
@@ -3023,8 +1935,8 @@ namespace Decentraland.SocialService.V2 {
     public const int CancelFieldNumber = 6;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public global::Decentraland.SocialService.V2.CancelPayload Cancel {
-      get { return actionCase_ == ActionOneofCase.Cancel ? (global::Decentraland.SocialService.V2.CancelPayload) action_ : null; }
+    public global::Decentraland.SocialService.V2.UpsertFriendshipPayload.Types.CancelPayload Cancel {
+      get { return actionCase_ == ActionOneofCase.Cancel ? (global::Decentraland.SocialService.V2.UpsertFriendshipPayload.Types.CancelPayload) action_ : null; }
       set {
         action_ = value;
         actionCase_ = value == null ? ActionOneofCase.None : ActionOneofCase.Cancel;
@@ -3197,31 +2109,31 @@ namespace Decentraland.SocialService.V2 {
       switch (other.ActionCase) {
         case ActionOneofCase.Request:
           if (Request == null) {
-            Request = new global::Decentraland.SocialService.V2.RequestPayload();
+            Request = new global::Decentraland.SocialService.V2.UpsertFriendshipPayload.Types.RequestPayload();
           }
           Request.MergeFrom(other.Request);
           break;
         case ActionOneofCase.Accept:
           if (Accept == null) {
-            Accept = new global::Decentraland.SocialService.V2.AcceptPayload();
+            Accept = new global::Decentraland.SocialService.V2.UpsertFriendshipPayload.Types.AcceptPayload();
           }
           Accept.MergeFrom(other.Accept);
           break;
         case ActionOneofCase.Reject:
           if (Reject == null) {
-            Reject = new global::Decentraland.SocialService.V2.RejectPayload();
+            Reject = new global::Decentraland.SocialService.V2.UpsertFriendshipPayload.Types.RejectPayload();
           }
           Reject.MergeFrom(other.Reject);
           break;
         case ActionOneofCase.Delete:
           if (Delete == null) {
-            Delete = new global::Decentraland.SocialService.V2.DeletePayload();
+            Delete = new global::Decentraland.SocialService.V2.UpsertFriendshipPayload.Types.DeletePayload();
           }
           Delete.MergeFrom(other.Delete);
           break;
         case ActionOneofCase.Cancel:
           if (Cancel == null) {
-            Cancel = new global::Decentraland.SocialService.V2.CancelPayload();
+            Cancel = new global::Decentraland.SocialService.V2.UpsertFriendshipPayload.Types.CancelPayload();
           }
           Cancel.MergeFrom(other.Cancel);
           break;
@@ -3243,7 +2155,7 @@ namespace Decentraland.SocialService.V2 {
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
             break;
           case 10: {
-            global::Decentraland.SocialService.V2.RequestPayload subBuilder = new global::Decentraland.SocialService.V2.RequestPayload();
+            global::Decentraland.SocialService.V2.UpsertFriendshipPayload.Types.RequestPayload subBuilder = new global::Decentraland.SocialService.V2.UpsertFriendshipPayload.Types.RequestPayload();
             if (actionCase_ == ActionOneofCase.Request) {
               subBuilder.MergeFrom(Request);
             }
@@ -3252,7 +2164,7 @@ namespace Decentraland.SocialService.V2 {
             break;
           }
           case 18: {
-            global::Decentraland.SocialService.V2.AcceptPayload subBuilder = new global::Decentraland.SocialService.V2.AcceptPayload();
+            global::Decentraland.SocialService.V2.UpsertFriendshipPayload.Types.AcceptPayload subBuilder = new global::Decentraland.SocialService.V2.UpsertFriendshipPayload.Types.AcceptPayload();
             if (actionCase_ == ActionOneofCase.Accept) {
               subBuilder.MergeFrom(Accept);
             }
@@ -3261,7 +2173,7 @@ namespace Decentraland.SocialService.V2 {
             break;
           }
           case 34: {
-            global::Decentraland.SocialService.V2.RejectPayload subBuilder = new global::Decentraland.SocialService.V2.RejectPayload();
+            global::Decentraland.SocialService.V2.UpsertFriendshipPayload.Types.RejectPayload subBuilder = new global::Decentraland.SocialService.V2.UpsertFriendshipPayload.Types.RejectPayload();
             if (actionCase_ == ActionOneofCase.Reject) {
               subBuilder.MergeFrom(Reject);
             }
@@ -3270,7 +2182,7 @@ namespace Decentraland.SocialService.V2 {
             break;
           }
           case 42: {
-            global::Decentraland.SocialService.V2.DeletePayload subBuilder = new global::Decentraland.SocialService.V2.DeletePayload();
+            global::Decentraland.SocialService.V2.UpsertFriendshipPayload.Types.DeletePayload subBuilder = new global::Decentraland.SocialService.V2.UpsertFriendshipPayload.Types.DeletePayload();
             if (actionCase_ == ActionOneofCase.Delete) {
               subBuilder.MergeFrom(Delete);
             }
@@ -3279,7 +2191,7 @@ namespace Decentraland.SocialService.V2 {
             break;
           }
           case 50: {
-            global::Decentraland.SocialService.V2.CancelPayload subBuilder = new global::Decentraland.SocialService.V2.CancelPayload();
+            global::Decentraland.SocialService.V2.UpsertFriendshipPayload.Types.CancelPayload subBuilder = new global::Decentraland.SocialService.V2.UpsertFriendshipPayload.Types.CancelPayload();
             if (actionCase_ == ActionOneofCase.Cancel) {
               subBuilder.MergeFrom(Cancel);
             }
@@ -3303,7 +2215,7 @@ namespace Decentraland.SocialService.V2 {
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
             break;
           case 10: {
-            global::Decentraland.SocialService.V2.RequestPayload subBuilder = new global::Decentraland.SocialService.V2.RequestPayload();
+            global::Decentraland.SocialService.V2.UpsertFriendshipPayload.Types.RequestPayload subBuilder = new global::Decentraland.SocialService.V2.UpsertFriendshipPayload.Types.RequestPayload();
             if (actionCase_ == ActionOneofCase.Request) {
               subBuilder.MergeFrom(Request);
             }
@@ -3312,7 +2224,7 @@ namespace Decentraland.SocialService.V2 {
             break;
           }
           case 18: {
-            global::Decentraland.SocialService.V2.AcceptPayload subBuilder = new global::Decentraland.SocialService.V2.AcceptPayload();
+            global::Decentraland.SocialService.V2.UpsertFriendshipPayload.Types.AcceptPayload subBuilder = new global::Decentraland.SocialService.V2.UpsertFriendshipPayload.Types.AcceptPayload();
             if (actionCase_ == ActionOneofCase.Accept) {
               subBuilder.MergeFrom(Accept);
             }
@@ -3321,7 +2233,7 @@ namespace Decentraland.SocialService.V2 {
             break;
           }
           case 34: {
-            global::Decentraland.SocialService.V2.RejectPayload subBuilder = new global::Decentraland.SocialService.V2.RejectPayload();
+            global::Decentraland.SocialService.V2.UpsertFriendshipPayload.Types.RejectPayload subBuilder = new global::Decentraland.SocialService.V2.UpsertFriendshipPayload.Types.RejectPayload();
             if (actionCase_ == ActionOneofCase.Reject) {
               subBuilder.MergeFrom(Reject);
             }
@@ -3330,7 +2242,7 @@ namespace Decentraland.SocialService.V2 {
             break;
           }
           case 42: {
-            global::Decentraland.SocialService.V2.DeletePayload subBuilder = new global::Decentraland.SocialService.V2.DeletePayload();
+            global::Decentraland.SocialService.V2.UpsertFriendshipPayload.Types.DeletePayload subBuilder = new global::Decentraland.SocialService.V2.UpsertFriendshipPayload.Types.DeletePayload();
             if (actionCase_ == ActionOneofCase.Delete) {
               subBuilder.MergeFrom(Delete);
             }
@@ -3339,7 +2251,7 @@ namespace Decentraland.SocialService.V2 {
             break;
           }
           case 50: {
-            global::Decentraland.SocialService.V2.CancelPayload subBuilder = new global::Decentraland.SocialService.V2.CancelPayload();
+            global::Decentraland.SocialService.V2.UpsertFriendshipPayload.Types.CancelPayload subBuilder = new global::Decentraland.SocialService.V2.UpsertFriendshipPayload.Types.CancelPayload();
             if (actionCase_ == ActionOneofCase.Cancel) {
               subBuilder.MergeFrom(Cancel);
             }
@@ -3352,23 +2264,1070 @@ namespace Decentraland.SocialService.V2 {
     }
     #endif
 
+    #region Nested types
+    /// <summary>Container for nested types declared in the UpsertFriendshipPayload message type.</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static partial class Types {
+      public sealed partial class RequestPayload : pb::IMessage<RequestPayload>
+      #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+          , pb::IBufferMessage
+      #endif
+      {
+        private static readonly pb::MessageParser<RequestPayload> _parser = new pb::MessageParser<RequestPayload>(() => new RequestPayload());
+        private pb::UnknownFieldSet _unknownFields;
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public static pb::MessageParser<RequestPayload> Parser { get { return _parser; } }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public static pbr::MessageDescriptor Descriptor {
+          get { return global::Decentraland.SocialService.V2.UpsertFriendshipPayload.Descriptor.NestedTypes[0]; }
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        pbr::MessageDescriptor pb::IMessage.Descriptor {
+          get { return Descriptor; }
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public RequestPayload() {
+          OnConstruction();
+        }
+
+        partial void OnConstruction();
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public RequestPayload(RequestPayload other) : this() {
+          user_ = other.user_ != null ? other.user_.Clone() : null;
+          message_ = other.message_;
+          _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public RequestPayload Clone() {
+          return new RequestPayload(this);
+        }
+
+        /// <summary>Field number for the "user" field.</summary>
+        public const int UserFieldNumber = 1;
+        private global::Decentraland.SocialService.V2.User user_;
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public global::Decentraland.SocialService.V2.User User {
+          get { return user_; }
+          set {
+            user_ = value;
+          }
+        }
+
+        /// <summary>Field number for the "message" field.</summary>
+        public const int MessageFieldNumber = 3;
+        private string message_;
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public string Message {
+          get { return message_ ?? ""; }
+          set {
+            message_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+          }
+        }
+        /// <summary>Gets whether the "message" field is set</summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public bool HasMessage {
+          get { return message_ != null; }
+        }
+        /// <summary>Clears the value of the "message" field</summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void ClearMessage() {
+          message_ = null;
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public override bool Equals(object other) {
+          return Equals(other as RequestPayload);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public bool Equals(RequestPayload other) {
+          if (ReferenceEquals(other, null)) {
+            return false;
+          }
+          if (ReferenceEquals(other, this)) {
+            return true;
+          }
+          if (!object.Equals(User, other.User)) return false;
+          if (Message != other.Message) return false;
+          return Equals(_unknownFields, other._unknownFields);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public override int GetHashCode() {
+          int hash = 1;
+          if (user_ != null) hash ^= User.GetHashCode();
+          if (HasMessage) hash ^= Message.GetHashCode();
+          if (_unknownFields != null) {
+            hash ^= _unknownFields.GetHashCode();
+          }
+          return hash;
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public override string ToString() {
+          return pb::JsonFormatter.ToDiagnosticString(this);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void WriteTo(pb::CodedOutputStream output) {
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+          output.WriteRawMessage(this);
+        #else
+          if (user_ != null) {
+            output.WriteRawTag(10);
+            output.WriteMessage(User);
+          }
+          if (HasMessage) {
+            output.WriteRawTag(26);
+            output.WriteString(Message);
+          }
+          if (_unknownFields != null) {
+            _unknownFields.WriteTo(output);
+          }
+        #endif
+        }
+
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
+          if (user_ != null) {
+            output.WriteRawTag(10);
+            output.WriteMessage(User);
+          }
+          if (HasMessage) {
+            output.WriteRawTag(26);
+            output.WriteString(Message);
+          }
+          if (_unknownFields != null) {
+            _unknownFields.WriteTo(ref output);
+          }
+        }
+        #endif
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public int CalculateSize() {
+          int size = 0;
+          if (user_ != null) {
+            size += 1 + pb::CodedOutputStream.ComputeMessageSize(User);
+          }
+          if (HasMessage) {
+            size += 1 + pb::CodedOutputStream.ComputeStringSize(Message);
+          }
+          if (_unknownFields != null) {
+            size += _unknownFields.CalculateSize();
+          }
+          return size;
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void MergeFrom(RequestPayload other) {
+          if (other == null) {
+            return;
+          }
+          if (other.user_ != null) {
+            if (user_ == null) {
+              User = new global::Decentraland.SocialService.V2.User();
+            }
+            User.MergeFrom(other.User);
+          }
+          if (other.HasMessage) {
+            Message = other.Message;
+          }
+          _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void MergeFrom(pb::CodedInputStream input) {
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+          input.ReadRawMessage(this);
+        #else
+          uint tag;
+          while ((tag = input.ReadTag()) != 0) {
+            switch(tag) {
+              default:
+                _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+                break;
+              case 10: {
+                if (user_ == null) {
+                  User = new global::Decentraland.SocialService.V2.User();
+                }
+                input.ReadMessage(User);
+                break;
+              }
+              case 26: {
+                Message = input.ReadString();
+                break;
+              }
+            }
+          }
+        #endif
+        }
+
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
+          uint tag;
+          while ((tag = input.ReadTag()) != 0) {
+            switch(tag) {
+              default:
+                _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
+                break;
+              case 10: {
+                if (user_ == null) {
+                  User = new global::Decentraland.SocialService.V2.User();
+                }
+                input.ReadMessage(User);
+                break;
+              }
+              case 26: {
+                Message = input.ReadString();
+                break;
+              }
+            }
+          }
+        }
+        #endif
+
+      }
+
+      public sealed partial class AcceptPayload : pb::IMessage<AcceptPayload>
+      #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+          , pb::IBufferMessage
+      #endif
+      {
+        private static readonly pb::MessageParser<AcceptPayload> _parser = new pb::MessageParser<AcceptPayload>(() => new AcceptPayload());
+        private pb::UnknownFieldSet _unknownFields;
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public static pb::MessageParser<AcceptPayload> Parser { get { return _parser; } }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public static pbr::MessageDescriptor Descriptor {
+          get { return global::Decentraland.SocialService.V2.UpsertFriendshipPayload.Descriptor.NestedTypes[1]; }
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        pbr::MessageDescriptor pb::IMessage.Descriptor {
+          get { return Descriptor; }
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public AcceptPayload() {
+          OnConstruction();
+        }
+
+        partial void OnConstruction();
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public AcceptPayload(AcceptPayload other) : this() {
+          user_ = other.user_ != null ? other.user_.Clone() : null;
+          _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public AcceptPayload Clone() {
+          return new AcceptPayload(this);
+        }
+
+        /// <summary>Field number for the "user" field.</summary>
+        public const int UserFieldNumber = 1;
+        private global::Decentraland.SocialService.V2.User user_;
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public global::Decentraland.SocialService.V2.User User {
+          get { return user_; }
+          set {
+            user_ = value;
+          }
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public override bool Equals(object other) {
+          return Equals(other as AcceptPayload);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public bool Equals(AcceptPayload other) {
+          if (ReferenceEquals(other, null)) {
+            return false;
+          }
+          if (ReferenceEquals(other, this)) {
+            return true;
+          }
+          if (!object.Equals(User, other.User)) return false;
+          return Equals(_unknownFields, other._unknownFields);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public override int GetHashCode() {
+          int hash = 1;
+          if (user_ != null) hash ^= User.GetHashCode();
+          if (_unknownFields != null) {
+            hash ^= _unknownFields.GetHashCode();
+          }
+          return hash;
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public override string ToString() {
+          return pb::JsonFormatter.ToDiagnosticString(this);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void WriteTo(pb::CodedOutputStream output) {
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+          output.WriteRawMessage(this);
+        #else
+          if (user_ != null) {
+            output.WriteRawTag(10);
+            output.WriteMessage(User);
+          }
+          if (_unknownFields != null) {
+            _unknownFields.WriteTo(output);
+          }
+        #endif
+        }
+
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
+          if (user_ != null) {
+            output.WriteRawTag(10);
+            output.WriteMessage(User);
+          }
+          if (_unknownFields != null) {
+            _unknownFields.WriteTo(ref output);
+          }
+        }
+        #endif
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public int CalculateSize() {
+          int size = 0;
+          if (user_ != null) {
+            size += 1 + pb::CodedOutputStream.ComputeMessageSize(User);
+          }
+          if (_unknownFields != null) {
+            size += _unknownFields.CalculateSize();
+          }
+          return size;
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void MergeFrom(AcceptPayload other) {
+          if (other == null) {
+            return;
+          }
+          if (other.user_ != null) {
+            if (user_ == null) {
+              User = new global::Decentraland.SocialService.V2.User();
+            }
+            User.MergeFrom(other.User);
+          }
+          _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void MergeFrom(pb::CodedInputStream input) {
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+          input.ReadRawMessage(this);
+        #else
+          uint tag;
+          while ((tag = input.ReadTag()) != 0) {
+            switch(tag) {
+              default:
+                _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+                break;
+              case 10: {
+                if (user_ == null) {
+                  User = new global::Decentraland.SocialService.V2.User();
+                }
+                input.ReadMessage(User);
+                break;
+              }
+            }
+          }
+        #endif
+        }
+
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
+          uint tag;
+          while ((tag = input.ReadTag()) != 0) {
+            switch(tag) {
+              default:
+                _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
+                break;
+              case 10: {
+                if (user_ == null) {
+                  User = new global::Decentraland.SocialService.V2.User();
+                }
+                input.ReadMessage(User);
+                break;
+              }
+            }
+          }
+        }
+        #endif
+
+      }
+
+      public sealed partial class RejectPayload : pb::IMessage<RejectPayload>
+      #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+          , pb::IBufferMessage
+      #endif
+      {
+        private static readonly pb::MessageParser<RejectPayload> _parser = new pb::MessageParser<RejectPayload>(() => new RejectPayload());
+        private pb::UnknownFieldSet _unknownFields;
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public static pb::MessageParser<RejectPayload> Parser { get { return _parser; } }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public static pbr::MessageDescriptor Descriptor {
+          get { return global::Decentraland.SocialService.V2.UpsertFriendshipPayload.Descriptor.NestedTypes[2]; }
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        pbr::MessageDescriptor pb::IMessage.Descriptor {
+          get { return Descriptor; }
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public RejectPayload() {
+          OnConstruction();
+        }
+
+        partial void OnConstruction();
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public RejectPayload(RejectPayload other) : this() {
+          user_ = other.user_ != null ? other.user_.Clone() : null;
+          _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public RejectPayload Clone() {
+          return new RejectPayload(this);
+        }
+
+        /// <summary>Field number for the "user" field.</summary>
+        public const int UserFieldNumber = 1;
+        private global::Decentraland.SocialService.V2.User user_;
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public global::Decentraland.SocialService.V2.User User {
+          get { return user_; }
+          set {
+            user_ = value;
+          }
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public override bool Equals(object other) {
+          return Equals(other as RejectPayload);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public bool Equals(RejectPayload other) {
+          if (ReferenceEquals(other, null)) {
+            return false;
+          }
+          if (ReferenceEquals(other, this)) {
+            return true;
+          }
+          if (!object.Equals(User, other.User)) return false;
+          return Equals(_unknownFields, other._unknownFields);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public override int GetHashCode() {
+          int hash = 1;
+          if (user_ != null) hash ^= User.GetHashCode();
+          if (_unknownFields != null) {
+            hash ^= _unknownFields.GetHashCode();
+          }
+          return hash;
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public override string ToString() {
+          return pb::JsonFormatter.ToDiagnosticString(this);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void WriteTo(pb::CodedOutputStream output) {
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+          output.WriteRawMessage(this);
+        #else
+          if (user_ != null) {
+            output.WriteRawTag(10);
+            output.WriteMessage(User);
+          }
+          if (_unknownFields != null) {
+            _unknownFields.WriteTo(output);
+          }
+        #endif
+        }
+
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
+          if (user_ != null) {
+            output.WriteRawTag(10);
+            output.WriteMessage(User);
+          }
+          if (_unknownFields != null) {
+            _unknownFields.WriteTo(ref output);
+          }
+        }
+        #endif
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public int CalculateSize() {
+          int size = 0;
+          if (user_ != null) {
+            size += 1 + pb::CodedOutputStream.ComputeMessageSize(User);
+          }
+          if (_unknownFields != null) {
+            size += _unknownFields.CalculateSize();
+          }
+          return size;
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void MergeFrom(RejectPayload other) {
+          if (other == null) {
+            return;
+          }
+          if (other.user_ != null) {
+            if (user_ == null) {
+              User = new global::Decentraland.SocialService.V2.User();
+            }
+            User.MergeFrom(other.User);
+          }
+          _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void MergeFrom(pb::CodedInputStream input) {
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+          input.ReadRawMessage(this);
+        #else
+          uint tag;
+          while ((tag = input.ReadTag()) != 0) {
+            switch(tag) {
+              default:
+                _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+                break;
+              case 10: {
+                if (user_ == null) {
+                  User = new global::Decentraland.SocialService.V2.User();
+                }
+                input.ReadMessage(User);
+                break;
+              }
+            }
+          }
+        #endif
+        }
+
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
+          uint tag;
+          while ((tag = input.ReadTag()) != 0) {
+            switch(tag) {
+              default:
+                _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
+                break;
+              case 10: {
+                if (user_ == null) {
+                  User = new global::Decentraland.SocialService.V2.User();
+                }
+                input.ReadMessage(User);
+                break;
+              }
+            }
+          }
+        }
+        #endif
+
+      }
+
+      public sealed partial class DeletePayload : pb::IMessage<DeletePayload>
+      #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+          , pb::IBufferMessage
+      #endif
+      {
+        private static readonly pb::MessageParser<DeletePayload> _parser = new pb::MessageParser<DeletePayload>(() => new DeletePayload());
+        private pb::UnknownFieldSet _unknownFields;
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public static pb::MessageParser<DeletePayload> Parser { get { return _parser; } }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public static pbr::MessageDescriptor Descriptor {
+          get { return global::Decentraland.SocialService.V2.UpsertFriendshipPayload.Descriptor.NestedTypes[3]; }
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        pbr::MessageDescriptor pb::IMessage.Descriptor {
+          get { return Descriptor; }
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public DeletePayload() {
+          OnConstruction();
+        }
+
+        partial void OnConstruction();
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public DeletePayload(DeletePayload other) : this() {
+          user_ = other.user_ != null ? other.user_.Clone() : null;
+          _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public DeletePayload Clone() {
+          return new DeletePayload(this);
+        }
+
+        /// <summary>Field number for the "user" field.</summary>
+        public const int UserFieldNumber = 1;
+        private global::Decentraland.SocialService.V2.User user_;
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public global::Decentraland.SocialService.V2.User User {
+          get { return user_; }
+          set {
+            user_ = value;
+          }
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public override bool Equals(object other) {
+          return Equals(other as DeletePayload);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public bool Equals(DeletePayload other) {
+          if (ReferenceEquals(other, null)) {
+            return false;
+          }
+          if (ReferenceEquals(other, this)) {
+            return true;
+          }
+          if (!object.Equals(User, other.User)) return false;
+          return Equals(_unknownFields, other._unknownFields);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public override int GetHashCode() {
+          int hash = 1;
+          if (user_ != null) hash ^= User.GetHashCode();
+          if (_unknownFields != null) {
+            hash ^= _unknownFields.GetHashCode();
+          }
+          return hash;
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public override string ToString() {
+          return pb::JsonFormatter.ToDiagnosticString(this);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void WriteTo(pb::CodedOutputStream output) {
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+          output.WriteRawMessage(this);
+        #else
+          if (user_ != null) {
+            output.WriteRawTag(10);
+            output.WriteMessage(User);
+          }
+          if (_unknownFields != null) {
+            _unknownFields.WriteTo(output);
+          }
+        #endif
+        }
+
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
+          if (user_ != null) {
+            output.WriteRawTag(10);
+            output.WriteMessage(User);
+          }
+          if (_unknownFields != null) {
+            _unknownFields.WriteTo(ref output);
+          }
+        }
+        #endif
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public int CalculateSize() {
+          int size = 0;
+          if (user_ != null) {
+            size += 1 + pb::CodedOutputStream.ComputeMessageSize(User);
+          }
+          if (_unknownFields != null) {
+            size += _unknownFields.CalculateSize();
+          }
+          return size;
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void MergeFrom(DeletePayload other) {
+          if (other == null) {
+            return;
+          }
+          if (other.user_ != null) {
+            if (user_ == null) {
+              User = new global::Decentraland.SocialService.V2.User();
+            }
+            User.MergeFrom(other.User);
+          }
+          _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void MergeFrom(pb::CodedInputStream input) {
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+          input.ReadRawMessage(this);
+        #else
+          uint tag;
+          while ((tag = input.ReadTag()) != 0) {
+            switch(tag) {
+              default:
+                _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+                break;
+              case 10: {
+                if (user_ == null) {
+                  User = new global::Decentraland.SocialService.V2.User();
+                }
+                input.ReadMessage(User);
+                break;
+              }
+            }
+          }
+        #endif
+        }
+
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
+          uint tag;
+          while ((tag = input.ReadTag()) != 0) {
+            switch(tag) {
+              default:
+                _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
+                break;
+              case 10: {
+                if (user_ == null) {
+                  User = new global::Decentraland.SocialService.V2.User();
+                }
+                input.ReadMessage(User);
+                break;
+              }
+            }
+          }
+        }
+        #endif
+
+      }
+
+      public sealed partial class CancelPayload : pb::IMessage<CancelPayload>
+      #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+          , pb::IBufferMessage
+      #endif
+      {
+        private static readonly pb::MessageParser<CancelPayload> _parser = new pb::MessageParser<CancelPayload>(() => new CancelPayload());
+        private pb::UnknownFieldSet _unknownFields;
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public static pb::MessageParser<CancelPayload> Parser { get { return _parser; } }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public static pbr::MessageDescriptor Descriptor {
+          get { return global::Decentraland.SocialService.V2.UpsertFriendshipPayload.Descriptor.NestedTypes[4]; }
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        pbr::MessageDescriptor pb::IMessage.Descriptor {
+          get { return Descriptor; }
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public CancelPayload() {
+          OnConstruction();
+        }
+
+        partial void OnConstruction();
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public CancelPayload(CancelPayload other) : this() {
+          user_ = other.user_ != null ? other.user_.Clone() : null;
+          _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public CancelPayload Clone() {
+          return new CancelPayload(this);
+        }
+
+        /// <summary>Field number for the "user" field.</summary>
+        public const int UserFieldNumber = 1;
+        private global::Decentraland.SocialService.V2.User user_;
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public global::Decentraland.SocialService.V2.User User {
+          get { return user_; }
+          set {
+            user_ = value;
+          }
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public override bool Equals(object other) {
+          return Equals(other as CancelPayload);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public bool Equals(CancelPayload other) {
+          if (ReferenceEquals(other, null)) {
+            return false;
+          }
+          if (ReferenceEquals(other, this)) {
+            return true;
+          }
+          if (!object.Equals(User, other.User)) return false;
+          return Equals(_unknownFields, other._unknownFields);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public override int GetHashCode() {
+          int hash = 1;
+          if (user_ != null) hash ^= User.GetHashCode();
+          if (_unknownFields != null) {
+            hash ^= _unknownFields.GetHashCode();
+          }
+          return hash;
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public override string ToString() {
+          return pb::JsonFormatter.ToDiagnosticString(this);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void WriteTo(pb::CodedOutputStream output) {
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+          output.WriteRawMessage(this);
+        #else
+          if (user_ != null) {
+            output.WriteRawTag(10);
+            output.WriteMessage(User);
+          }
+          if (_unknownFields != null) {
+            _unknownFields.WriteTo(output);
+          }
+        #endif
+        }
+
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
+          if (user_ != null) {
+            output.WriteRawTag(10);
+            output.WriteMessage(User);
+          }
+          if (_unknownFields != null) {
+            _unknownFields.WriteTo(ref output);
+          }
+        }
+        #endif
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public int CalculateSize() {
+          int size = 0;
+          if (user_ != null) {
+            size += 1 + pb::CodedOutputStream.ComputeMessageSize(User);
+          }
+          if (_unknownFields != null) {
+            size += _unknownFields.CalculateSize();
+          }
+          return size;
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void MergeFrom(CancelPayload other) {
+          if (other == null) {
+            return;
+          }
+          if (other.user_ != null) {
+            if (user_ == null) {
+              User = new global::Decentraland.SocialService.V2.User();
+            }
+            User.MergeFrom(other.User);
+          }
+          _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void MergeFrom(pb::CodedInputStream input) {
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+          input.ReadRawMessage(this);
+        #else
+          uint tag;
+          while ((tag = input.ReadTag()) != 0) {
+            switch(tag) {
+              default:
+                _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+                break;
+              case 10: {
+                if (user_ == null) {
+                  User = new global::Decentraland.SocialService.V2.User();
+                }
+                input.ReadMessage(User);
+                break;
+              }
+            }
+          }
+        #endif
+        }
+
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
+          uint tag;
+          while ((tag = input.ReadTag()) != 0) {
+            switch(tag) {
+              default:
+                _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
+                break;
+              case 10: {
+                if (user_ == null) {
+                  User = new global::Decentraland.SocialService.V2.User();
+                }
+                input.ReadMessage(User);
+                break;
+              }
+            }
+          }
+        }
+        #endif
+
+      }
+
+    }
+    #endregion
+
   }
 
-  public sealed partial class MutualFriendsPayload : pb::IMessage<MutualFriendsPayload>
+  public sealed partial class GetMutualFriendsPayload : pb::IMessage<GetMutualFriendsPayload>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
   #endif
   {
-    private static readonly pb::MessageParser<MutualFriendsPayload> _parser = new pb::MessageParser<MutualFriendsPayload>(() => new MutualFriendsPayload());
+    private static readonly pb::MessageParser<GetMutualFriendsPayload> _parser = new pb::MessageParser<GetMutualFriendsPayload>(() => new GetMutualFriendsPayload());
     private pb::UnknownFieldSet _unknownFields;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public static pb::MessageParser<MutualFriendsPayload> Parser { get { return _parser; } }
+    public static pb::MessageParser<GetMutualFriendsPayload> Parser { get { return _parser; } }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Decentraland.SocialService.V2.SocialServiceV2Reflection.Descriptor.MessageTypes[15]; }
+      get { return global::Decentraland.SocialService.V2.SocialServiceV2Reflection.Descriptor.MessageTypes[9]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -3379,7 +3338,7 @@ namespace Decentraland.SocialService.V2 {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public MutualFriendsPayload() {
+    public GetMutualFriendsPayload() {
       OnConstruction();
     }
 
@@ -3387,15 +3346,16 @@ namespace Decentraland.SocialService.V2 {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public MutualFriendsPayload(MutualFriendsPayload other) : this() {
+    public GetMutualFriendsPayload(GetMutualFriendsPayload other) : this() {
       user_ = other.user_ != null ? other.user_.Clone() : null;
+      pagination_ = other.pagination_ != null ? other.pagination_.Clone() : null;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public MutualFriendsPayload Clone() {
-      return new MutualFriendsPayload(this);
+    public GetMutualFriendsPayload Clone() {
+      return new GetMutualFriendsPayload(this);
     }
 
     /// <summary>Field number for the "user" field.</summary>
@@ -3410,15 +3370,27 @@ namespace Decentraland.SocialService.V2 {
       }
     }
 
+    /// <summary>Field number for the "pagination" field.</summary>
+    public const int PaginationFieldNumber = 2;
+    private global::Decentraland.SocialService.V2.Pagination pagination_;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public override bool Equals(object other) {
-      return Equals(other as MutualFriendsPayload);
+    public global::Decentraland.SocialService.V2.Pagination Pagination {
+      get { return pagination_; }
+      set {
+        pagination_ = value;
+      }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public bool Equals(MutualFriendsPayload other) {
+    public override bool Equals(object other) {
+      return Equals(other as GetMutualFriendsPayload);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool Equals(GetMutualFriendsPayload other) {
       if (ReferenceEquals(other, null)) {
         return false;
       }
@@ -3426,6 +3398,7 @@ namespace Decentraland.SocialService.V2 {
         return true;
       }
       if (!object.Equals(User, other.User)) return false;
+      if (!object.Equals(Pagination, other.Pagination)) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -3434,6 +3407,7 @@ namespace Decentraland.SocialService.V2 {
     public override int GetHashCode() {
       int hash = 1;
       if (user_ != null) hash ^= User.GetHashCode();
+      if (pagination_ != null) hash ^= Pagination.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -3456,6 +3430,10 @@ namespace Decentraland.SocialService.V2 {
         output.WriteRawTag(10);
         output.WriteMessage(User);
       }
+      if (pagination_ != null) {
+        output.WriteRawTag(18);
+        output.WriteMessage(Pagination);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -3470,6 +3448,10 @@ namespace Decentraland.SocialService.V2 {
         output.WriteRawTag(10);
         output.WriteMessage(User);
       }
+      if (pagination_ != null) {
+        output.WriteRawTag(18);
+        output.WriteMessage(Pagination);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -3483,6 +3465,9 @@ namespace Decentraland.SocialService.V2 {
       if (user_ != null) {
         size += 1 + pb::CodedOutputStream.ComputeMessageSize(User);
       }
+      if (pagination_ != null) {
+        size += 1 + pb::CodedOutputStream.ComputeMessageSize(Pagination);
+      }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
       }
@@ -3491,7 +3476,7 @@ namespace Decentraland.SocialService.V2 {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public void MergeFrom(MutualFriendsPayload other) {
+    public void MergeFrom(GetMutualFriendsPayload other) {
       if (other == null) {
         return;
       }
@@ -3500,6 +3485,12 @@ namespace Decentraland.SocialService.V2 {
           User = new global::Decentraland.SocialService.V2.User();
         }
         User.MergeFrom(other.User);
+      }
+      if (other.pagination_ != null) {
+        if (pagination_ == null) {
+          Pagination = new global::Decentraland.SocialService.V2.Pagination();
+        }
+        Pagination.MergeFrom(other.Pagination);
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -3523,6 +3514,13 @@ namespace Decentraland.SocialService.V2 {
             input.ReadMessage(User);
             break;
           }
+          case 18: {
+            if (pagination_ == null) {
+              Pagination = new global::Decentraland.SocialService.V2.Pagination();
+            }
+            input.ReadMessage(Pagination);
+            break;
+          }
         }
       }
     #endif
@@ -3545,6 +3543,13 @@ namespace Decentraland.SocialService.V2 {
             input.ReadMessage(User);
             break;
           }
+          case 18: {
+            if (pagination_ == null) {
+              Pagination = new global::Decentraland.SocialService.V2.Pagination();
+            }
+            input.ReadMessage(Pagination);
+            break;
+          }
         }
       }
     }
@@ -3552,21 +3557,21 @@ namespace Decentraland.SocialService.V2 {
 
   }
 
-  public sealed partial class UsersResponse : pb::IMessage<UsersResponse>
+  public sealed partial class PaginatedResponse : pb::IMessage<PaginatedResponse>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
   #endif
   {
-    private static readonly pb::MessageParser<UsersResponse> _parser = new pb::MessageParser<UsersResponse>(() => new UsersResponse());
+    private static readonly pb::MessageParser<PaginatedResponse> _parser = new pb::MessageParser<PaginatedResponse>(() => new PaginatedResponse());
     private pb::UnknownFieldSet _unknownFields;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public static pb::MessageParser<UsersResponse> Parser { get { return _parser; } }
+    public static pb::MessageParser<PaginatedResponse> Parser { get { return _parser; } }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Decentraland.SocialService.V2.SocialServiceV2Reflection.Descriptor.MessageTypes[16]; }
+      get { return global::Decentraland.SocialService.V2.SocialServiceV2Reflection.Descriptor.MessageTypes[10]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -3577,7 +3582,7 @@ namespace Decentraland.SocialService.V2 {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public UsersResponse() {
+    public PaginatedResponse() {
       OnConstruction();
     }
 
@@ -3585,15 +3590,242 @@ namespace Decentraland.SocialService.V2 {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public UsersResponse(UsersResponse other) : this() {
-      users_ = other.users_.Clone();
+    public PaginatedResponse(PaginatedResponse other) : this() {
+      total_ = other.total_;
+      page_ = other.page_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public UsersResponse Clone() {
-      return new UsersResponse(this);
+    public PaginatedResponse Clone() {
+      return new PaginatedResponse(this);
+    }
+
+    /// <summary>Field number for the "total" field.</summary>
+    public const int TotalFieldNumber = 1;
+    private int total_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public int Total {
+      get { return total_; }
+      set {
+        total_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "page" field.</summary>
+    public const int PageFieldNumber = 2;
+    private int page_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public int Page {
+      get { return page_; }
+      set {
+        page_ = value;
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override bool Equals(object other) {
+      return Equals(other as PaginatedResponse);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool Equals(PaginatedResponse other) {
+      if (ReferenceEquals(other, null)) {
+        return false;
+      }
+      if (ReferenceEquals(other, this)) {
+        return true;
+      }
+      if (Total != other.Total) return false;
+      if (Page != other.Page) return false;
+      return Equals(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override int GetHashCode() {
+      int hash = 1;
+      if (Total != 0) hash ^= Total.GetHashCode();
+      if (Page != 0) hash ^= Page.GetHashCode();
+      if (_unknownFields != null) {
+        hash ^= _unknownFields.GetHashCode();
+      }
+      return hash;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override string ToString() {
+      return pb::JsonFormatter.ToDiagnosticString(this);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void WriteTo(pb::CodedOutputStream output) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      output.WriteRawMessage(this);
+    #else
+      if (Total != 0) {
+        output.WriteRawTag(8);
+        output.WriteInt32(Total);
+      }
+      if (Page != 0) {
+        output.WriteRawTag(16);
+        output.WriteInt32(Page);
+      }
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(output);
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
+      if (Total != 0) {
+        output.WriteRawTag(8);
+        output.WriteInt32(Total);
+      }
+      if (Page != 0) {
+        output.WriteRawTag(16);
+        output.WriteInt32(Page);
+      }
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(ref output);
+      }
+    }
+    #endif
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public int CalculateSize() {
+      int size = 0;
+      if (Total != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeInt32Size(Total);
+      }
+      if (Page != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeInt32Size(Page);
+      }
+      if (_unknownFields != null) {
+        size += _unknownFields.CalculateSize();
+      }
+      return size;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(PaginatedResponse other) {
+      if (other == null) {
+        return;
+      }
+      if (other.Total != 0) {
+        Total = other.Total;
+      }
+      if (other.Page != 0) {
+        Page = other.Page;
+      }
+      _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(pb::CodedInputStream input) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      input.ReadRawMessage(this);
+    #else
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+        switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+            break;
+          case 8: {
+            Total = input.ReadInt32();
+            break;
+          }
+          case 16: {
+            Page = input.ReadInt32();
+            break;
+          }
+        }
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+        switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
+            break;
+          case 8: {
+            Total = input.ReadInt32();
+            break;
+          }
+          case 16: {
+            Page = input.ReadInt32();
+            break;
+          }
+        }
+      }
+    }
+    #endif
+
+  }
+
+  public sealed partial class PaginatedUsersResponse : pb::IMessage<PaginatedUsersResponse>
+  #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      , pb::IBufferMessage
+  #endif
+  {
+    private static readonly pb::MessageParser<PaginatedUsersResponse> _parser = new pb::MessageParser<PaginatedUsersResponse>(() => new PaginatedUsersResponse());
+    private pb::UnknownFieldSet _unknownFields;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pb::MessageParser<PaginatedUsersResponse> Parser { get { return _parser; } }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pbr::MessageDescriptor Descriptor {
+      get { return global::Decentraland.SocialService.V2.SocialServiceV2Reflection.Descriptor.MessageTypes[11]; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    pbr::MessageDescriptor pb::IMessage.Descriptor {
+      get { return Descriptor; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public PaginatedUsersResponse() {
+      OnConstruction();
+    }
+
+    partial void OnConstruction();
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public PaginatedUsersResponse(PaginatedUsersResponse other) : this() {
+      users_ = other.users_.Clone();
+      paginationData_ = other.paginationData_ != null ? other.paginationData_.Clone() : null;
+      _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public PaginatedUsersResponse Clone() {
+      return new PaginatedUsersResponse(this);
     }
 
     /// <summary>Field number for the "users" field.</summary>
@@ -3607,15 +3839,27 @@ namespace Decentraland.SocialService.V2 {
       get { return users_; }
     }
 
+    /// <summary>Field number for the "pagination_data" field.</summary>
+    public const int PaginationDataFieldNumber = 2;
+    private global::Decentraland.SocialService.V2.PaginatedResponse paginationData_;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public override bool Equals(object other) {
-      return Equals(other as UsersResponse);
+    public global::Decentraland.SocialService.V2.PaginatedResponse PaginationData {
+      get { return paginationData_; }
+      set {
+        paginationData_ = value;
+      }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public bool Equals(UsersResponse other) {
+    public override bool Equals(object other) {
+      return Equals(other as PaginatedUsersResponse);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool Equals(PaginatedUsersResponse other) {
       if (ReferenceEquals(other, null)) {
         return false;
       }
@@ -3623,6 +3867,7 @@ namespace Decentraland.SocialService.V2 {
         return true;
       }
       if(!users_.Equals(other.users_)) return false;
+      if (!object.Equals(PaginationData, other.PaginationData)) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -3631,6 +3876,7 @@ namespace Decentraland.SocialService.V2 {
     public override int GetHashCode() {
       int hash = 1;
       hash ^= users_.GetHashCode();
+      if (paginationData_ != null) hash ^= PaginationData.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -3650,6 +3896,10 @@ namespace Decentraland.SocialService.V2 {
       output.WriteRawMessage(this);
     #else
       users_.WriteTo(output, _repeated_users_codec);
+      if (paginationData_ != null) {
+        output.WriteRawTag(18);
+        output.WriteMessage(PaginationData);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -3661,6 +3911,10 @@ namespace Decentraland.SocialService.V2 {
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
       users_.WriteTo(ref output, _repeated_users_codec);
+      if (paginationData_ != null) {
+        output.WriteRawTag(18);
+        output.WriteMessage(PaginationData);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -3672,6 +3926,9 @@ namespace Decentraland.SocialService.V2 {
     public int CalculateSize() {
       int size = 0;
       size += users_.CalculateSize(_repeated_users_codec);
+      if (paginationData_ != null) {
+        size += 1 + pb::CodedOutputStream.ComputeMessageSize(PaginationData);
+      }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
       }
@@ -3680,11 +3937,17 @@ namespace Decentraland.SocialService.V2 {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public void MergeFrom(UsersResponse other) {
+    public void MergeFrom(PaginatedUsersResponse other) {
       if (other == null) {
         return;
       }
       users_.Add(other.users_);
+      if (other.paginationData_ != null) {
+        if (paginationData_ == null) {
+          PaginationData = new global::Decentraland.SocialService.V2.PaginatedResponse();
+        }
+        PaginationData.MergeFrom(other.PaginationData);
+      }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
 
@@ -3702,6 +3965,13 @@ namespace Decentraland.SocialService.V2 {
             break;
           case 10: {
             users_.AddEntriesFrom(input, _repeated_users_codec);
+            break;
+          }
+          case 18: {
+            if (paginationData_ == null) {
+              PaginationData = new global::Decentraland.SocialService.V2.PaginatedResponse();
+            }
+            input.ReadMessage(PaginationData);
             break;
           }
         }
@@ -3723,6 +3993,13 @@ namespace Decentraland.SocialService.V2 {
             users_.AddEntriesFrom(ref input, _repeated_users_codec);
             break;
           }
+          case 18: {
+            if (paginationData_ == null) {
+              PaginationData = new global::Decentraland.SocialService.V2.PaginatedResponse();
+            }
+            input.ReadMessage(PaginationData);
+            break;
+          }
         }
       }
     }
@@ -3730,21 +4007,21 @@ namespace Decentraland.SocialService.V2 {
 
   }
 
-  public sealed partial class FriendshipRequestsResponse : pb::IMessage<FriendshipRequestsResponse>
+  public sealed partial class PaginatedFriendshipRequestsResponse : pb::IMessage<PaginatedFriendshipRequestsResponse>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
   #endif
   {
-    private static readonly pb::MessageParser<FriendshipRequestsResponse> _parser = new pb::MessageParser<FriendshipRequestsResponse>(() => new FriendshipRequestsResponse());
+    private static readonly pb::MessageParser<PaginatedFriendshipRequestsResponse> _parser = new pb::MessageParser<PaginatedFriendshipRequestsResponse>(() => new PaginatedFriendshipRequestsResponse());
     private pb::UnknownFieldSet _unknownFields;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public static pb::MessageParser<FriendshipRequestsResponse> Parser { get { return _parser; } }
+    public static pb::MessageParser<PaginatedFriendshipRequestsResponse> Parser { get { return _parser; } }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Decentraland.SocialService.V2.SocialServiceV2Reflection.Descriptor.MessageTypes[17]; }
+      get { return global::Decentraland.SocialService.V2.SocialServiceV2Reflection.Descriptor.MessageTypes[12]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -3755,7 +4032,7 @@ namespace Decentraland.SocialService.V2 {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public FriendshipRequestsResponse() {
+    public PaginatedFriendshipRequestsResponse() {
       OnConstruction();
     }
 
@@ -3763,7 +4040,8 @@ namespace Decentraland.SocialService.V2 {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public FriendshipRequestsResponse(FriendshipRequestsResponse other) : this() {
+    public PaginatedFriendshipRequestsResponse(PaginatedFriendshipRequestsResponse other) : this() {
+      paginationData_ = other.paginationData_ != null ? other.paginationData_.Clone() : null;
       switch (other.ResponseCase) {
         case ResponseOneofCase.Requests:
           Requests = other.Requests.Clone();
@@ -3778,16 +4056,16 @@ namespace Decentraland.SocialService.V2 {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public FriendshipRequestsResponse Clone() {
-      return new FriendshipRequestsResponse(this);
+    public PaginatedFriendshipRequestsResponse Clone() {
+      return new PaginatedFriendshipRequestsResponse(this);
     }
 
     /// <summary>Field number for the "requests" field.</summary>
     public const int RequestsFieldNumber = 1;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public global::Decentraland.SocialService.V2.Requests Requests {
-      get { return responseCase_ == ResponseOneofCase.Requests ? (global::Decentraland.SocialService.V2.Requests) response_ : null; }
+    public global::Decentraland.SocialService.V2.FriendshipRequests Requests {
+      get { return responseCase_ == ResponseOneofCase.Requests ? (global::Decentraland.SocialService.V2.FriendshipRequests) response_ : null; }
       set {
         response_ = value;
         responseCase_ = value == null ? ResponseOneofCase.None : ResponseOneofCase.Requests;
@@ -3803,6 +4081,18 @@ namespace Decentraland.SocialService.V2 {
       set {
         response_ = value;
         responseCase_ = value == null ? ResponseOneofCase.None : ResponseOneofCase.InternalServerError;
+      }
+    }
+
+    /// <summary>Field number for the "pagination_data" field.</summary>
+    public const int PaginationDataFieldNumber = 3;
+    private global::Decentraland.SocialService.V2.PaginatedResponse paginationData_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::Decentraland.SocialService.V2.PaginatedResponse PaginationData {
+      get { return paginationData_; }
+      set {
+        paginationData_ = value;
       }
     }
 
@@ -3830,12 +4120,12 @@ namespace Decentraland.SocialService.V2 {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override bool Equals(object other) {
-      return Equals(other as FriendshipRequestsResponse);
+      return Equals(other as PaginatedFriendshipRequestsResponse);
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public bool Equals(FriendshipRequestsResponse other) {
+    public bool Equals(PaginatedFriendshipRequestsResponse other) {
       if (ReferenceEquals(other, null)) {
         return false;
       }
@@ -3844,6 +4134,7 @@ namespace Decentraland.SocialService.V2 {
       }
       if (!object.Equals(Requests, other.Requests)) return false;
       if (!object.Equals(InternalServerError, other.InternalServerError)) return false;
+      if (!object.Equals(PaginationData, other.PaginationData)) return false;
       if (ResponseCase != other.ResponseCase) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
@@ -3854,6 +4145,7 @@ namespace Decentraland.SocialService.V2 {
       int hash = 1;
       if (responseCase_ == ResponseOneofCase.Requests) hash ^= Requests.GetHashCode();
       if (responseCase_ == ResponseOneofCase.InternalServerError) hash ^= InternalServerError.GetHashCode();
+      if (paginationData_ != null) hash ^= PaginationData.GetHashCode();
       hash ^= (int) responseCase_;
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
@@ -3881,6 +4173,10 @@ namespace Decentraland.SocialService.V2 {
         output.WriteRawTag(18);
         output.WriteMessage(InternalServerError);
       }
+      if (paginationData_ != null) {
+        output.WriteRawTag(26);
+        output.WriteMessage(PaginationData);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -3899,6 +4195,10 @@ namespace Decentraland.SocialService.V2 {
         output.WriteRawTag(18);
         output.WriteMessage(InternalServerError);
       }
+      if (paginationData_ != null) {
+        output.WriteRawTag(26);
+        output.WriteMessage(PaginationData);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -3915,6 +4215,9 @@ namespace Decentraland.SocialService.V2 {
       if (responseCase_ == ResponseOneofCase.InternalServerError) {
         size += 1 + pb::CodedOutputStream.ComputeMessageSize(InternalServerError);
       }
+      if (paginationData_ != null) {
+        size += 1 + pb::CodedOutputStream.ComputeMessageSize(PaginationData);
+      }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
       }
@@ -3923,14 +4226,20 @@ namespace Decentraland.SocialService.V2 {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public void MergeFrom(FriendshipRequestsResponse other) {
+    public void MergeFrom(PaginatedFriendshipRequestsResponse other) {
       if (other == null) {
         return;
+      }
+      if (other.paginationData_ != null) {
+        if (paginationData_ == null) {
+          PaginationData = new global::Decentraland.SocialService.V2.PaginatedResponse();
+        }
+        PaginationData.MergeFrom(other.PaginationData);
       }
       switch (other.ResponseCase) {
         case ResponseOneofCase.Requests:
           if (Requests == null) {
-            Requests = new global::Decentraland.SocialService.V2.Requests();
+            Requests = new global::Decentraland.SocialService.V2.FriendshipRequests();
           }
           Requests.MergeFrom(other.Requests);
           break;
@@ -3958,7 +4267,7 @@ namespace Decentraland.SocialService.V2 {
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
             break;
           case 10: {
-            global::Decentraland.SocialService.V2.Requests subBuilder = new global::Decentraland.SocialService.V2.Requests();
+            global::Decentraland.SocialService.V2.FriendshipRequests subBuilder = new global::Decentraland.SocialService.V2.FriendshipRequests();
             if (responseCase_ == ResponseOneofCase.Requests) {
               subBuilder.MergeFrom(Requests);
             }
@@ -3973,6 +4282,13 @@ namespace Decentraland.SocialService.V2 {
             }
             input.ReadMessage(subBuilder);
             InternalServerError = subBuilder;
+            break;
+          }
+          case 26: {
+            if (paginationData_ == null) {
+              PaginationData = new global::Decentraland.SocialService.V2.PaginatedResponse();
+            }
+            input.ReadMessage(PaginationData);
             break;
           }
         }
@@ -3991,7 +4307,7 @@ namespace Decentraland.SocialService.V2 {
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
             break;
           case 10: {
-            global::Decentraland.SocialService.V2.Requests subBuilder = new global::Decentraland.SocialService.V2.Requests();
+            global::Decentraland.SocialService.V2.FriendshipRequests subBuilder = new global::Decentraland.SocialService.V2.FriendshipRequests();
             if (responseCase_ == ResponseOneofCase.Requests) {
               subBuilder.MergeFrom(Requests);
             }
@@ -4006,6 +4322,13 @@ namespace Decentraland.SocialService.V2 {
             }
             input.ReadMessage(subBuilder);
             InternalServerError = subBuilder;
+            break;
+          }
+          case 26: {
+            if (paginationData_ == null) {
+              PaginationData = new global::Decentraland.SocialService.V2.PaginatedResponse();
+            }
+            input.ReadMessage(PaginationData);
             break;
           }
         }
@@ -4029,7 +4352,7 @@ namespace Decentraland.SocialService.V2 {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Decentraland.SocialService.V2.SocialServiceV2Reflection.Descriptor.MessageTypes[18]; }
+      get { return global::Decentraland.SocialService.V2.SocialServiceV2Reflection.Descriptor.MessageTypes[13]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -4390,6 +4713,8 @@ namespace Decentraland.SocialService.V2 {
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
         public Accepted(Accepted other) : this() {
+          id_ = other.id_;
+          createdAt_ = other.createdAt_;
           _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
         }
 
@@ -4397,6 +4722,30 @@ namespace Decentraland.SocialService.V2 {
         [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
         public Accepted Clone() {
           return new Accepted(this);
+        }
+
+        /// <summary>Field number for the "id" field.</summary>
+        public const int IdFieldNumber = 1;
+        private string id_ = "";
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public string Id {
+          get { return id_; }
+          set {
+            id_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+          }
+        }
+
+        /// <summary>Field number for the "created_at" field.</summary>
+        public const int CreatedAtFieldNumber = 2;
+        private long createdAt_;
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public long CreatedAt {
+          get { return createdAt_; }
+          set {
+            createdAt_ = value;
+          }
         }
 
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -4414,6 +4763,8 @@ namespace Decentraland.SocialService.V2 {
           if (ReferenceEquals(other, this)) {
             return true;
           }
+          if (Id != other.Id) return false;
+          if (CreatedAt != other.CreatedAt) return false;
           return Equals(_unknownFields, other._unknownFields);
         }
 
@@ -4421,6 +4772,8 @@ namespace Decentraland.SocialService.V2 {
         [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
         public override int GetHashCode() {
           int hash = 1;
+          if (Id.Length != 0) hash ^= Id.GetHashCode();
+          if (CreatedAt != 0L) hash ^= CreatedAt.GetHashCode();
           if (_unknownFields != null) {
             hash ^= _unknownFields.GetHashCode();
           }
@@ -4439,6 +4792,14 @@ namespace Decentraland.SocialService.V2 {
         #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
           output.WriteRawMessage(this);
         #else
+          if (Id.Length != 0) {
+            output.WriteRawTag(10);
+            output.WriteString(Id);
+          }
+          if (CreatedAt != 0L) {
+            output.WriteRawTag(16);
+            output.WriteInt64(CreatedAt);
+          }
           if (_unknownFields != null) {
             _unknownFields.WriteTo(output);
           }
@@ -4449,6 +4810,14 @@ namespace Decentraland.SocialService.V2 {
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
         void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
+          if (Id.Length != 0) {
+            output.WriteRawTag(10);
+            output.WriteString(Id);
+          }
+          if (CreatedAt != 0L) {
+            output.WriteRawTag(16);
+            output.WriteInt64(CreatedAt);
+          }
           if (_unknownFields != null) {
             _unknownFields.WriteTo(ref output);
           }
@@ -4459,6 +4828,12 @@ namespace Decentraland.SocialService.V2 {
         [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
         public int CalculateSize() {
           int size = 0;
+          if (Id.Length != 0) {
+            size += 1 + pb::CodedOutputStream.ComputeStringSize(Id);
+          }
+          if (CreatedAt != 0L) {
+            size += 1 + pb::CodedOutputStream.ComputeInt64Size(CreatedAt);
+          }
           if (_unknownFields != null) {
             size += _unknownFields.CalculateSize();
           }
@@ -4470,6 +4845,12 @@ namespace Decentraland.SocialService.V2 {
         public void MergeFrom(Accepted other) {
           if (other == null) {
             return;
+          }
+          if (other.Id.Length != 0) {
+            Id = other.Id;
+          }
+          if (other.CreatedAt != 0L) {
+            CreatedAt = other.CreatedAt;
           }
           _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
         }
@@ -4486,6 +4867,14 @@ namespace Decentraland.SocialService.V2 {
               default:
                 _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
                 break;
+              case 10: {
+                Id = input.ReadString();
+                break;
+              }
+              case 16: {
+                CreatedAt = input.ReadInt64();
+                break;
+              }
             }
           }
         #endif
@@ -4501,6 +4890,14 @@ namespace Decentraland.SocialService.V2 {
               default:
                 _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
                 break;
+              case 10: {
+                Id = input.ReadString();
+                break;
+              }
+              case 16: {
+                CreatedAt = input.ReadInt64();
+                break;
+              }
             }
           }
         }
@@ -4527,7 +4924,7 @@ namespace Decentraland.SocialService.V2 {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Decentraland.SocialService.V2.SocialServiceV2Reflection.Descriptor.MessageTypes[19]; }
+      get { return global::Decentraland.SocialService.V2.SocialServiceV2Reflection.Descriptor.MessageTypes[14]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -4578,8 +4975,8 @@ namespace Decentraland.SocialService.V2 {
     public const int RequestFieldNumber = 1;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public global::Decentraland.SocialService.V2.RequestResponse Request {
-      get { return updateCase_ == UpdateOneofCase.Request ? (global::Decentraland.SocialService.V2.RequestResponse) update_ : null; }
+    public global::Decentraland.SocialService.V2.FriendshipRequestResponse Request {
+      get { return updateCase_ == UpdateOneofCase.Request ? (global::Decentraland.SocialService.V2.FriendshipRequestResponse) update_ : null; }
       set {
         update_ = value;
         updateCase_ = value == null ? UpdateOneofCase.None : UpdateOneofCase.Request;
@@ -4590,8 +4987,8 @@ namespace Decentraland.SocialService.V2 {
     public const int AcceptFieldNumber = 2;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public global::Decentraland.SocialService.V2.AcceptResponse Accept {
-      get { return updateCase_ == UpdateOneofCase.Accept ? (global::Decentraland.SocialService.V2.AcceptResponse) update_ : null; }
+    public global::Decentraland.SocialService.V2.FriendshipUpdate.Types.AcceptResponse Accept {
+      get { return updateCase_ == UpdateOneofCase.Accept ? (global::Decentraland.SocialService.V2.FriendshipUpdate.Types.AcceptResponse) update_ : null; }
       set {
         update_ = value;
         updateCase_ = value == null ? UpdateOneofCase.None : UpdateOneofCase.Accept;
@@ -4599,11 +4996,11 @@ namespace Decentraland.SocialService.V2 {
     }
 
     /// <summary>Field number for the "reject" field.</summary>
-    public const int RejectFieldNumber = 4;
+    public const int RejectFieldNumber = 3;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public global::Decentraland.SocialService.V2.RejectResponse Reject {
-      get { return updateCase_ == UpdateOneofCase.Reject ? (global::Decentraland.SocialService.V2.RejectResponse) update_ : null; }
+    public global::Decentraland.SocialService.V2.FriendshipUpdate.Types.RejectResponse Reject {
+      get { return updateCase_ == UpdateOneofCase.Reject ? (global::Decentraland.SocialService.V2.FriendshipUpdate.Types.RejectResponse) update_ : null; }
       set {
         update_ = value;
         updateCase_ = value == null ? UpdateOneofCase.None : UpdateOneofCase.Reject;
@@ -4611,11 +5008,11 @@ namespace Decentraland.SocialService.V2 {
     }
 
     /// <summary>Field number for the "delete" field.</summary>
-    public const int DeleteFieldNumber = 5;
+    public const int DeleteFieldNumber = 4;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public global::Decentraland.SocialService.V2.DeleteResponse Delete {
-      get { return updateCase_ == UpdateOneofCase.Delete ? (global::Decentraland.SocialService.V2.DeleteResponse) update_ : null; }
+    public global::Decentraland.SocialService.V2.FriendshipUpdate.Types.DeleteResponse Delete {
+      get { return updateCase_ == UpdateOneofCase.Delete ? (global::Decentraland.SocialService.V2.FriendshipUpdate.Types.DeleteResponse) update_ : null; }
       set {
         update_ = value;
         updateCase_ = value == null ? UpdateOneofCase.None : UpdateOneofCase.Delete;
@@ -4623,11 +5020,11 @@ namespace Decentraland.SocialService.V2 {
     }
 
     /// <summary>Field number for the "cancel" field.</summary>
-    public const int CancelFieldNumber = 6;
+    public const int CancelFieldNumber = 5;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public global::Decentraland.SocialService.V2.CancelResponse Cancel {
-      get { return updateCase_ == UpdateOneofCase.Cancel ? (global::Decentraland.SocialService.V2.CancelResponse) update_ : null; }
+    public global::Decentraland.SocialService.V2.FriendshipUpdate.Types.CancelResponse Cancel {
+      get { return updateCase_ == UpdateOneofCase.Cancel ? (global::Decentraland.SocialService.V2.FriendshipUpdate.Types.CancelResponse) update_ : null; }
       set {
         update_ = value;
         updateCase_ = value == null ? UpdateOneofCase.None : UpdateOneofCase.Cancel;
@@ -4640,9 +5037,9 @@ namespace Decentraland.SocialService.V2 {
       None = 0,
       Request = 1,
       Accept = 2,
-      Reject = 4,
-      Delete = 5,
-      Cancel = 6,
+      Reject = 3,
+      Delete = 4,
+      Cancel = 5,
     }
     private UpdateOneofCase updateCase_ = UpdateOneofCase.None;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -4719,15 +5116,15 @@ namespace Decentraland.SocialService.V2 {
         output.WriteMessage(Accept);
       }
       if (updateCase_ == UpdateOneofCase.Reject) {
-        output.WriteRawTag(34);
+        output.WriteRawTag(26);
         output.WriteMessage(Reject);
       }
       if (updateCase_ == UpdateOneofCase.Delete) {
-        output.WriteRawTag(42);
+        output.WriteRawTag(34);
         output.WriteMessage(Delete);
       }
       if (updateCase_ == UpdateOneofCase.Cancel) {
-        output.WriteRawTag(50);
+        output.WriteRawTag(42);
         output.WriteMessage(Cancel);
       }
       if (_unknownFields != null) {
@@ -4749,15 +5146,15 @@ namespace Decentraland.SocialService.V2 {
         output.WriteMessage(Accept);
       }
       if (updateCase_ == UpdateOneofCase.Reject) {
-        output.WriteRawTag(34);
+        output.WriteRawTag(26);
         output.WriteMessage(Reject);
       }
       if (updateCase_ == UpdateOneofCase.Delete) {
-        output.WriteRawTag(42);
+        output.WriteRawTag(34);
         output.WriteMessage(Delete);
       }
       if (updateCase_ == UpdateOneofCase.Cancel) {
-        output.WriteRawTag(50);
+        output.WriteRawTag(42);
         output.WriteMessage(Cancel);
       }
       if (_unknownFields != null) {
@@ -4800,31 +5197,31 @@ namespace Decentraland.SocialService.V2 {
       switch (other.UpdateCase) {
         case UpdateOneofCase.Request:
           if (Request == null) {
-            Request = new global::Decentraland.SocialService.V2.RequestResponse();
+            Request = new global::Decentraland.SocialService.V2.FriendshipRequestResponse();
           }
           Request.MergeFrom(other.Request);
           break;
         case UpdateOneofCase.Accept:
           if (Accept == null) {
-            Accept = new global::Decentraland.SocialService.V2.AcceptResponse();
+            Accept = new global::Decentraland.SocialService.V2.FriendshipUpdate.Types.AcceptResponse();
           }
           Accept.MergeFrom(other.Accept);
           break;
         case UpdateOneofCase.Reject:
           if (Reject == null) {
-            Reject = new global::Decentraland.SocialService.V2.RejectResponse();
+            Reject = new global::Decentraland.SocialService.V2.FriendshipUpdate.Types.RejectResponse();
           }
           Reject.MergeFrom(other.Reject);
           break;
         case UpdateOneofCase.Delete:
           if (Delete == null) {
-            Delete = new global::Decentraland.SocialService.V2.DeleteResponse();
+            Delete = new global::Decentraland.SocialService.V2.FriendshipUpdate.Types.DeleteResponse();
           }
           Delete.MergeFrom(other.Delete);
           break;
         case UpdateOneofCase.Cancel:
           if (Cancel == null) {
-            Cancel = new global::Decentraland.SocialService.V2.CancelResponse();
+            Cancel = new global::Decentraland.SocialService.V2.FriendshipUpdate.Types.CancelResponse();
           }
           Cancel.MergeFrom(other.Cancel);
           break;
@@ -4846,7 +5243,7 @@ namespace Decentraland.SocialService.V2 {
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
             break;
           case 10: {
-            global::Decentraland.SocialService.V2.RequestResponse subBuilder = new global::Decentraland.SocialService.V2.RequestResponse();
+            global::Decentraland.SocialService.V2.FriendshipRequestResponse subBuilder = new global::Decentraland.SocialService.V2.FriendshipRequestResponse();
             if (updateCase_ == UpdateOneofCase.Request) {
               subBuilder.MergeFrom(Request);
             }
@@ -4855,7 +5252,7 @@ namespace Decentraland.SocialService.V2 {
             break;
           }
           case 18: {
-            global::Decentraland.SocialService.V2.AcceptResponse subBuilder = new global::Decentraland.SocialService.V2.AcceptResponse();
+            global::Decentraland.SocialService.V2.FriendshipUpdate.Types.AcceptResponse subBuilder = new global::Decentraland.SocialService.V2.FriendshipUpdate.Types.AcceptResponse();
             if (updateCase_ == UpdateOneofCase.Accept) {
               subBuilder.MergeFrom(Accept);
             }
@@ -4863,8 +5260,8 @@ namespace Decentraland.SocialService.V2 {
             Accept = subBuilder;
             break;
           }
-          case 34: {
-            global::Decentraland.SocialService.V2.RejectResponse subBuilder = new global::Decentraland.SocialService.V2.RejectResponse();
+          case 26: {
+            global::Decentraland.SocialService.V2.FriendshipUpdate.Types.RejectResponse subBuilder = new global::Decentraland.SocialService.V2.FriendshipUpdate.Types.RejectResponse();
             if (updateCase_ == UpdateOneofCase.Reject) {
               subBuilder.MergeFrom(Reject);
             }
@@ -4872,8 +5269,8 @@ namespace Decentraland.SocialService.V2 {
             Reject = subBuilder;
             break;
           }
-          case 42: {
-            global::Decentraland.SocialService.V2.DeleteResponse subBuilder = new global::Decentraland.SocialService.V2.DeleteResponse();
+          case 34: {
+            global::Decentraland.SocialService.V2.FriendshipUpdate.Types.DeleteResponse subBuilder = new global::Decentraland.SocialService.V2.FriendshipUpdate.Types.DeleteResponse();
             if (updateCase_ == UpdateOneofCase.Delete) {
               subBuilder.MergeFrom(Delete);
             }
@@ -4881,8 +5278,8 @@ namespace Decentraland.SocialService.V2 {
             Delete = subBuilder;
             break;
           }
-          case 50: {
-            global::Decentraland.SocialService.V2.CancelResponse subBuilder = new global::Decentraland.SocialService.V2.CancelResponse();
+          case 42: {
+            global::Decentraland.SocialService.V2.FriendshipUpdate.Types.CancelResponse subBuilder = new global::Decentraland.SocialService.V2.FriendshipUpdate.Types.CancelResponse();
             if (updateCase_ == UpdateOneofCase.Cancel) {
               subBuilder.MergeFrom(Cancel);
             }
@@ -4906,7 +5303,7 @@ namespace Decentraland.SocialService.V2 {
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
             break;
           case 10: {
-            global::Decentraland.SocialService.V2.RequestResponse subBuilder = new global::Decentraland.SocialService.V2.RequestResponse();
+            global::Decentraland.SocialService.V2.FriendshipRequestResponse subBuilder = new global::Decentraland.SocialService.V2.FriendshipRequestResponse();
             if (updateCase_ == UpdateOneofCase.Request) {
               subBuilder.MergeFrom(Request);
             }
@@ -4915,7 +5312,7 @@ namespace Decentraland.SocialService.V2 {
             break;
           }
           case 18: {
-            global::Decentraland.SocialService.V2.AcceptResponse subBuilder = new global::Decentraland.SocialService.V2.AcceptResponse();
+            global::Decentraland.SocialService.V2.FriendshipUpdate.Types.AcceptResponse subBuilder = new global::Decentraland.SocialService.V2.FriendshipUpdate.Types.AcceptResponse();
             if (updateCase_ == UpdateOneofCase.Accept) {
               subBuilder.MergeFrom(Accept);
             }
@@ -4923,8 +5320,8 @@ namespace Decentraland.SocialService.V2 {
             Accept = subBuilder;
             break;
           }
-          case 34: {
-            global::Decentraland.SocialService.V2.RejectResponse subBuilder = new global::Decentraland.SocialService.V2.RejectResponse();
+          case 26: {
+            global::Decentraland.SocialService.V2.FriendshipUpdate.Types.RejectResponse subBuilder = new global::Decentraland.SocialService.V2.FriendshipUpdate.Types.RejectResponse();
             if (updateCase_ == UpdateOneofCase.Reject) {
               subBuilder.MergeFrom(Reject);
             }
@@ -4932,8 +5329,8 @@ namespace Decentraland.SocialService.V2 {
             Reject = subBuilder;
             break;
           }
-          case 42: {
-            global::Decentraland.SocialService.V2.DeleteResponse subBuilder = new global::Decentraland.SocialService.V2.DeleteResponse();
+          case 34: {
+            global::Decentraland.SocialService.V2.FriendshipUpdate.Types.DeleteResponse subBuilder = new global::Decentraland.SocialService.V2.FriendshipUpdate.Types.DeleteResponse();
             if (updateCase_ == UpdateOneofCase.Delete) {
               subBuilder.MergeFrom(Delete);
             }
@@ -4941,8 +5338,8 @@ namespace Decentraland.SocialService.V2 {
             Delete = subBuilder;
             break;
           }
-          case 50: {
-            global::Decentraland.SocialService.V2.CancelResponse subBuilder = new global::Decentraland.SocialService.V2.CancelResponse();
+          case 42: {
+            global::Decentraland.SocialService.V2.FriendshipUpdate.Types.CancelResponse subBuilder = new global::Decentraland.SocialService.V2.FriendshipUpdate.Types.CancelResponse();
             if (updateCase_ == UpdateOneofCase.Cancel) {
               subBuilder.MergeFrom(Cancel);
             }
@@ -4954,6 +5351,1535 @@ namespace Decentraland.SocialService.V2 {
       }
     }
     #endif
+
+    #region Nested types
+    /// <summary>Container for nested types declared in the FriendshipUpdate message type.</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static partial class Types {
+      public sealed partial class AcceptResponse : pb::IMessage<AcceptResponse>
+      #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+          , pb::IBufferMessage
+      #endif
+      {
+        private static readonly pb::MessageParser<AcceptResponse> _parser = new pb::MessageParser<AcceptResponse>(() => new AcceptResponse());
+        private pb::UnknownFieldSet _unknownFields;
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public static pb::MessageParser<AcceptResponse> Parser { get { return _parser; } }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public static pbr::MessageDescriptor Descriptor {
+          get { return global::Decentraland.SocialService.V2.FriendshipUpdate.Descriptor.NestedTypes[0]; }
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        pbr::MessageDescriptor pb::IMessage.Descriptor {
+          get { return Descriptor; }
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public AcceptResponse() {
+          OnConstruction();
+        }
+
+        partial void OnConstruction();
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public AcceptResponse(AcceptResponse other) : this() {
+          user_ = other.user_ != null ? other.user_.Clone() : null;
+          _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public AcceptResponse Clone() {
+          return new AcceptResponse(this);
+        }
+
+        /// <summary>Field number for the "user" field.</summary>
+        public const int UserFieldNumber = 1;
+        private global::Decentraland.SocialService.V2.User user_;
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public global::Decentraland.SocialService.V2.User User {
+          get { return user_; }
+          set {
+            user_ = value;
+          }
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public override bool Equals(object other) {
+          return Equals(other as AcceptResponse);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public bool Equals(AcceptResponse other) {
+          if (ReferenceEquals(other, null)) {
+            return false;
+          }
+          if (ReferenceEquals(other, this)) {
+            return true;
+          }
+          if (!object.Equals(User, other.User)) return false;
+          return Equals(_unknownFields, other._unknownFields);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public override int GetHashCode() {
+          int hash = 1;
+          if (user_ != null) hash ^= User.GetHashCode();
+          if (_unknownFields != null) {
+            hash ^= _unknownFields.GetHashCode();
+          }
+          return hash;
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public override string ToString() {
+          return pb::JsonFormatter.ToDiagnosticString(this);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void WriteTo(pb::CodedOutputStream output) {
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+          output.WriteRawMessage(this);
+        #else
+          if (user_ != null) {
+            output.WriteRawTag(10);
+            output.WriteMessage(User);
+          }
+          if (_unknownFields != null) {
+            _unknownFields.WriteTo(output);
+          }
+        #endif
+        }
+
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
+          if (user_ != null) {
+            output.WriteRawTag(10);
+            output.WriteMessage(User);
+          }
+          if (_unknownFields != null) {
+            _unknownFields.WriteTo(ref output);
+          }
+        }
+        #endif
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public int CalculateSize() {
+          int size = 0;
+          if (user_ != null) {
+            size += 1 + pb::CodedOutputStream.ComputeMessageSize(User);
+          }
+          if (_unknownFields != null) {
+            size += _unknownFields.CalculateSize();
+          }
+          return size;
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void MergeFrom(AcceptResponse other) {
+          if (other == null) {
+            return;
+          }
+          if (other.user_ != null) {
+            if (user_ == null) {
+              User = new global::Decentraland.SocialService.V2.User();
+            }
+            User.MergeFrom(other.User);
+          }
+          _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void MergeFrom(pb::CodedInputStream input) {
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+          input.ReadRawMessage(this);
+        #else
+          uint tag;
+          while ((tag = input.ReadTag()) != 0) {
+            switch(tag) {
+              default:
+                _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+                break;
+              case 10: {
+                if (user_ == null) {
+                  User = new global::Decentraland.SocialService.V2.User();
+                }
+                input.ReadMessage(User);
+                break;
+              }
+            }
+          }
+        #endif
+        }
+
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
+          uint tag;
+          while ((tag = input.ReadTag()) != 0) {
+            switch(tag) {
+              default:
+                _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
+                break;
+              case 10: {
+                if (user_ == null) {
+                  User = new global::Decentraland.SocialService.V2.User();
+                }
+                input.ReadMessage(User);
+                break;
+              }
+            }
+          }
+        }
+        #endif
+
+      }
+
+      public sealed partial class RejectResponse : pb::IMessage<RejectResponse>
+      #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+          , pb::IBufferMessage
+      #endif
+      {
+        private static readonly pb::MessageParser<RejectResponse> _parser = new pb::MessageParser<RejectResponse>(() => new RejectResponse());
+        private pb::UnknownFieldSet _unknownFields;
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public static pb::MessageParser<RejectResponse> Parser { get { return _parser; } }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public static pbr::MessageDescriptor Descriptor {
+          get { return global::Decentraland.SocialService.V2.FriendshipUpdate.Descriptor.NestedTypes[1]; }
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        pbr::MessageDescriptor pb::IMessage.Descriptor {
+          get { return Descriptor; }
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public RejectResponse() {
+          OnConstruction();
+        }
+
+        partial void OnConstruction();
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public RejectResponse(RejectResponse other) : this() {
+          user_ = other.user_ != null ? other.user_.Clone() : null;
+          _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public RejectResponse Clone() {
+          return new RejectResponse(this);
+        }
+
+        /// <summary>Field number for the "user" field.</summary>
+        public const int UserFieldNumber = 1;
+        private global::Decentraland.SocialService.V2.User user_;
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public global::Decentraland.SocialService.V2.User User {
+          get { return user_; }
+          set {
+            user_ = value;
+          }
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public override bool Equals(object other) {
+          return Equals(other as RejectResponse);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public bool Equals(RejectResponse other) {
+          if (ReferenceEquals(other, null)) {
+            return false;
+          }
+          if (ReferenceEquals(other, this)) {
+            return true;
+          }
+          if (!object.Equals(User, other.User)) return false;
+          return Equals(_unknownFields, other._unknownFields);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public override int GetHashCode() {
+          int hash = 1;
+          if (user_ != null) hash ^= User.GetHashCode();
+          if (_unknownFields != null) {
+            hash ^= _unknownFields.GetHashCode();
+          }
+          return hash;
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public override string ToString() {
+          return pb::JsonFormatter.ToDiagnosticString(this);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void WriteTo(pb::CodedOutputStream output) {
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+          output.WriteRawMessage(this);
+        #else
+          if (user_ != null) {
+            output.WriteRawTag(10);
+            output.WriteMessage(User);
+          }
+          if (_unknownFields != null) {
+            _unknownFields.WriteTo(output);
+          }
+        #endif
+        }
+
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
+          if (user_ != null) {
+            output.WriteRawTag(10);
+            output.WriteMessage(User);
+          }
+          if (_unknownFields != null) {
+            _unknownFields.WriteTo(ref output);
+          }
+        }
+        #endif
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public int CalculateSize() {
+          int size = 0;
+          if (user_ != null) {
+            size += 1 + pb::CodedOutputStream.ComputeMessageSize(User);
+          }
+          if (_unknownFields != null) {
+            size += _unknownFields.CalculateSize();
+          }
+          return size;
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void MergeFrom(RejectResponse other) {
+          if (other == null) {
+            return;
+          }
+          if (other.user_ != null) {
+            if (user_ == null) {
+              User = new global::Decentraland.SocialService.V2.User();
+            }
+            User.MergeFrom(other.User);
+          }
+          _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void MergeFrom(pb::CodedInputStream input) {
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+          input.ReadRawMessage(this);
+        #else
+          uint tag;
+          while ((tag = input.ReadTag()) != 0) {
+            switch(tag) {
+              default:
+                _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+                break;
+              case 10: {
+                if (user_ == null) {
+                  User = new global::Decentraland.SocialService.V2.User();
+                }
+                input.ReadMessage(User);
+                break;
+              }
+            }
+          }
+        #endif
+        }
+
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
+          uint tag;
+          while ((tag = input.ReadTag()) != 0) {
+            switch(tag) {
+              default:
+                _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
+                break;
+              case 10: {
+                if (user_ == null) {
+                  User = new global::Decentraland.SocialService.V2.User();
+                }
+                input.ReadMessage(User);
+                break;
+              }
+            }
+          }
+        }
+        #endif
+
+      }
+
+      public sealed partial class DeleteResponse : pb::IMessage<DeleteResponse>
+      #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+          , pb::IBufferMessage
+      #endif
+      {
+        private static readonly pb::MessageParser<DeleteResponse> _parser = new pb::MessageParser<DeleteResponse>(() => new DeleteResponse());
+        private pb::UnknownFieldSet _unknownFields;
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public static pb::MessageParser<DeleteResponse> Parser { get { return _parser; } }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public static pbr::MessageDescriptor Descriptor {
+          get { return global::Decentraland.SocialService.V2.FriendshipUpdate.Descriptor.NestedTypes[2]; }
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        pbr::MessageDescriptor pb::IMessage.Descriptor {
+          get { return Descriptor; }
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public DeleteResponse() {
+          OnConstruction();
+        }
+
+        partial void OnConstruction();
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public DeleteResponse(DeleteResponse other) : this() {
+          user_ = other.user_ != null ? other.user_.Clone() : null;
+          _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public DeleteResponse Clone() {
+          return new DeleteResponse(this);
+        }
+
+        /// <summary>Field number for the "user" field.</summary>
+        public const int UserFieldNumber = 1;
+        private global::Decentraland.SocialService.V2.User user_;
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public global::Decentraland.SocialService.V2.User User {
+          get { return user_; }
+          set {
+            user_ = value;
+          }
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public override bool Equals(object other) {
+          return Equals(other as DeleteResponse);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public bool Equals(DeleteResponse other) {
+          if (ReferenceEquals(other, null)) {
+            return false;
+          }
+          if (ReferenceEquals(other, this)) {
+            return true;
+          }
+          if (!object.Equals(User, other.User)) return false;
+          return Equals(_unknownFields, other._unknownFields);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public override int GetHashCode() {
+          int hash = 1;
+          if (user_ != null) hash ^= User.GetHashCode();
+          if (_unknownFields != null) {
+            hash ^= _unknownFields.GetHashCode();
+          }
+          return hash;
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public override string ToString() {
+          return pb::JsonFormatter.ToDiagnosticString(this);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void WriteTo(pb::CodedOutputStream output) {
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+          output.WriteRawMessage(this);
+        #else
+          if (user_ != null) {
+            output.WriteRawTag(10);
+            output.WriteMessage(User);
+          }
+          if (_unknownFields != null) {
+            _unknownFields.WriteTo(output);
+          }
+        #endif
+        }
+
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
+          if (user_ != null) {
+            output.WriteRawTag(10);
+            output.WriteMessage(User);
+          }
+          if (_unknownFields != null) {
+            _unknownFields.WriteTo(ref output);
+          }
+        }
+        #endif
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public int CalculateSize() {
+          int size = 0;
+          if (user_ != null) {
+            size += 1 + pb::CodedOutputStream.ComputeMessageSize(User);
+          }
+          if (_unknownFields != null) {
+            size += _unknownFields.CalculateSize();
+          }
+          return size;
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void MergeFrom(DeleteResponse other) {
+          if (other == null) {
+            return;
+          }
+          if (other.user_ != null) {
+            if (user_ == null) {
+              User = new global::Decentraland.SocialService.V2.User();
+            }
+            User.MergeFrom(other.User);
+          }
+          _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void MergeFrom(pb::CodedInputStream input) {
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+          input.ReadRawMessage(this);
+        #else
+          uint tag;
+          while ((tag = input.ReadTag()) != 0) {
+            switch(tag) {
+              default:
+                _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+                break;
+              case 10: {
+                if (user_ == null) {
+                  User = new global::Decentraland.SocialService.V2.User();
+                }
+                input.ReadMessage(User);
+                break;
+              }
+            }
+          }
+        #endif
+        }
+
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
+          uint tag;
+          while ((tag = input.ReadTag()) != 0) {
+            switch(tag) {
+              default:
+                _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
+                break;
+              case 10: {
+                if (user_ == null) {
+                  User = new global::Decentraland.SocialService.V2.User();
+                }
+                input.ReadMessage(User);
+                break;
+              }
+            }
+          }
+        }
+        #endif
+
+      }
+
+      public sealed partial class CancelResponse : pb::IMessage<CancelResponse>
+      #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+          , pb::IBufferMessage
+      #endif
+      {
+        private static readonly pb::MessageParser<CancelResponse> _parser = new pb::MessageParser<CancelResponse>(() => new CancelResponse());
+        private pb::UnknownFieldSet _unknownFields;
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public static pb::MessageParser<CancelResponse> Parser { get { return _parser; } }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public static pbr::MessageDescriptor Descriptor {
+          get { return global::Decentraland.SocialService.V2.FriendshipUpdate.Descriptor.NestedTypes[3]; }
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        pbr::MessageDescriptor pb::IMessage.Descriptor {
+          get { return Descriptor; }
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public CancelResponse() {
+          OnConstruction();
+        }
+
+        partial void OnConstruction();
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public CancelResponse(CancelResponse other) : this() {
+          user_ = other.user_ != null ? other.user_.Clone() : null;
+          _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public CancelResponse Clone() {
+          return new CancelResponse(this);
+        }
+
+        /// <summary>Field number for the "user" field.</summary>
+        public const int UserFieldNumber = 1;
+        private global::Decentraland.SocialService.V2.User user_;
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public global::Decentraland.SocialService.V2.User User {
+          get { return user_; }
+          set {
+            user_ = value;
+          }
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public override bool Equals(object other) {
+          return Equals(other as CancelResponse);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public bool Equals(CancelResponse other) {
+          if (ReferenceEquals(other, null)) {
+            return false;
+          }
+          if (ReferenceEquals(other, this)) {
+            return true;
+          }
+          if (!object.Equals(User, other.User)) return false;
+          return Equals(_unknownFields, other._unknownFields);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public override int GetHashCode() {
+          int hash = 1;
+          if (user_ != null) hash ^= User.GetHashCode();
+          if (_unknownFields != null) {
+            hash ^= _unknownFields.GetHashCode();
+          }
+          return hash;
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public override string ToString() {
+          return pb::JsonFormatter.ToDiagnosticString(this);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void WriteTo(pb::CodedOutputStream output) {
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+          output.WriteRawMessage(this);
+        #else
+          if (user_ != null) {
+            output.WriteRawTag(10);
+            output.WriteMessage(User);
+          }
+          if (_unknownFields != null) {
+            _unknownFields.WriteTo(output);
+          }
+        #endif
+        }
+
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
+          if (user_ != null) {
+            output.WriteRawTag(10);
+            output.WriteMessage(User);
+          }
+          if (_unknownFields != null) {
+            _unknownFields.WriteTo(ref output);
+          }
+        }
+        #endif
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public int CalculateSize() {
+          int size = 0;
+          if (user_ != null) {
+            size += 1 + pb::CodedOutputStream.ComputeMessageSize(User);
+          }
+          if (_unknownFields != null) {
+            size += _unknownFields.CalculateSize();
+          }
+          return size;
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void MergeFrom(CancelResponse other) {
+          if (other == null) {
+            return;
+          }
+          if (other.user_ != null) {
+            if (user_ == null) {
+              User = new global::Decentraland.SocialService.V2.User();
+            }
+            User.MergeFrom(other.User);
+          }
+          _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void MergeFrom(pb::CodedInputStream input) {
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+          input.ReadRawMessage(this);
+        #else
+          uint tag;
+          while ((tag = input.ReadTag()) != 0) {
+            switch(tag) {
+              default:
+                _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+                break;
+              case 10: {
+                if (user_ == null) {
+                  User = new global::Decentraland.SocialService.V2.User();
+                }
+                input.ReadMessage(User);
+                break;
+              }
+            }
+          }
+        #endif
+        }
+
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
+          uint tag;
+          while ((tag = input.ReadTag()) != 0) {
+            switch(tag) {
+              default:
+                _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
+                break;
+              case 10: {
+                if (user_ == null) {
+                  User = new global::Decentraland.SocialService.V2.User();
+                }
+                input.ReadMessage(User);
+                break;
+              }
+            }
+          }
+        }
+        #endif
+
+      }
+
+    }
+    #endregion
+
+  }
+
+  public sealed partial class GetFriendshipStatusPayload : pb::IMessage<GetFriendshipStatusPayload>
+  #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      , pb::IBufferMessage
+  #endif
+  {
+    private static readonly pb::MessageParser<GetFriendshipStatusPayload> _parser = new pb::MessageParser<GetFriendshipStatusPayload>(() => new GetFriendshipStatusPayload());
+    private pb::UnknownFieldSet _unknownFields;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pb::MessageParser<GetFriendshipStatusPayload> Parser { get { return _parser; } }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pbr::MessageDescriptor Descriptor {
+      get { return global::Decentraland.SocialService.V2.SocialServiceV2Reflection.Descriptor.MessageTypes[15]; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    pbr::MessageDescriptor pb::IMessage.Descriptor {
+      get { return Descriptor; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public GetFriendshipStatusPayload() {
+      OnConstruction();
+    }
+
+    partial void OnConstruction();
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public GetFriendshipStatusPayload(GetFriendshipStatusPayload other) : this() {
+      user_ = other.user_ != null ? other.user_.Clone() : null;
+      _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public GetFriendshipStatusPayload Clone() {
+      return new GetFriendshipStatusPayload(this);
+    }
+
+    /// <summary>Field number for the "user" field.</summary>
+    public const int UserFieldNumber = 1;
+    private global::Decentraland.SocialService.V2.User user_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::Decentraland.SocialService.V2.User User {
+      get { return user_; }
+      set {
+        user_ = value;
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override bool Equals(object other) {
+      return Equals(other as GetFriendshipStatusPayload);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool Equals(GetFriendshipStatusPayload other) {
+      if (ReferenceEquals(other, null)) {
+        return false;
+      }
+      if (ReferenceEquals(other, this)) {
+        return true;
+      }
+      if (!object.Equals(User, other.User)) return false;
+      return Equals(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override int GetHashCode() {
+      int hash = 1;
+      if (user_ != null) hash ^= User.GetHashCode();
+      if (_unknownFields != null) {
+        hash ^= _unknownFields.GetHashCode();
+      }
+      return hash;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override string ToString() {
+      return pb::JsonFormatter.ToDiagnosticString(this);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void WriteTo(pb::CodedOutputStream output) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      output.WriteRawMessage(this);
+    #else
+      if (user_ != null) {
+        output.WriteRawTag(10);
+        output.WriteMessage(User);
+      }
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(output);
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
+      if (user_ != null) {
+        output.WriteRawTag(10);
+        output.WriteMessage(User);
+      }
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(ref output);
+      }
+    }
+    #endif
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public int CalculateSize() {
+      int size = 0;
+      if (user_ != null) {
+        size += 1 + pb::CodedOutputStream.ComputeMessageSize(User);
+      }
+      if (_unknownFields != null) {
+        size += _unknownFields.CalculateSize();
+      }
+      return size;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(GetFriendshipStatusPayload other) {
+      if (other == null) {
+        return;
+      }
+      if (other.user_ != null) {
+        if (user_ == null) {
+          User = new global::Decentraland.SocialService.V2.User();
+        }
+        User.MergeFrom(other.User);
+      }
+      _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(pb::CodedInputStream input) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      input.ReadRawMessage(this);
+    #else
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+        switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+            break;
+          case 10: {
+            if (user_ == null) {
+              User = new global::Decentraland.SocialService.V2.User();
+            }
+            input.ReadMessage(User);
+            break;
+          }
+        }
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+        switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
+            break;
+          case 10: {
+            if (user_ == null) {
+              User = new global::Decentraland.SocialService.V2.User();
+            }
+            input.ReadMessage(User);
+            break;
+          }
+        }
+      }
+    }
+    #endif
+
+  }
+
+  public sealed partial class GetFriendshipStatusResponse : pb::IMessage<GetFriendshipStatusResponse>
+  #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      , pb::IBufferMessage
+  #endif
+  {
+    private static readonly pb::MessageParser<GetFriendshipStatusResponse> _parser = new pb::MessageParser<GetFriendshipStatusResponse>(() => new GetFriendshipStatusResponse());
+    private pb::UnknownFieldSet _unknownFields;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pb::MessageParser<GetFriendshipStatusResponse> Parser { get { return _parser; } }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pbr::MessageDescriptor Descriptor {
+      get { return global::Decentraland.SocialService.V2.SocialServiceV2Reflection.Descriptor.MessageTypes[16]; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    pbr::MessageDescriptor pb::IMessage.Descriptor {
+      get { return Descriptor; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public GetFriendshipStatusResponse() {
+      OnConstruction();
+    }
+
+    partial void OnConstruction();
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public GetFriendshipStatusResponse(GetFriendshipStatusResponse other) : this() {
+      switch (other.ResponseCase) {
+        case ResponseOneofCase.Accepted:
+          Accepted = other.Accepted.Clone();
+          break;
+        case ResponseOneofCase.InternalServerError:
+          InternalServerError = other.InternalServerError.Clone();
+          break;
+      }
+
+      _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public GetFriendshipStatusResponse Clone() {
+      return new GetFriendshipStatusResponse(this);
+    }
+
+    /// <summary>Field number for the "accepted" field.</summary>
+    public const int AcceptedFieldNumber = 1;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::Decentraland.SocialService.V2.GetFriendshipStatusResponse.Types.Ok Accepted {
+      get { return responseCase_ == ResponseOneofCase.Accepted ? (global::Decentraland.SocialService.V2.GetFriendshipStatusResponse.Types.Ok) response_ : null; }
+      set {
+        response_ = value;
+        responseCase_ = value == null ? ResponseOneofCase.None : ResponseOneofCase.Accepted;
+      }
+    }
+
+    /// <summary>Field number for the "internal_server_error" field.</summary>
+    public const int InternalServerErrorFieldNumber = 2;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::Decentraland.SocialService.V2.InternalServerError InternalServerError {
+      get { return responseCase_ == ResponseOneofCase.InternalServerError ? (global::Decentraland.SocialService.V2.InternalServerError) response_ : null; }
+      set {
+        response_ = value;
+        responseCase_ = value == null ? ResponseOneofCase.None : ResponseOneofCase.InternalServerError;
+      }
+    }
+
+    private object response_;
+    /// <summary>Enum of possible cases for the "response" oneof.</summary>
+    public enum ResponseOneofCase {
+      None = 0,
+      Accepted = 1,
+      InternalServerError = 2,
+    }
+    private ResponseOneofCase responseCase_ = ResponseOneofCase.None;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public ResponseOneofCase ResponseCase {
+      get { return responseCase_; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearResponse() {
+      responseCase_ = ResponseOneofCase.None;
+      response_ = null;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override bool Equals(object other) {
+      return Equals(other as GetFriendshipStatusResponse);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool Equals(GetFriendshipStatusResponse other) {
+      if (ReferenceEquals(other, null)) {
+        return false;
+      }
+      if (ReferenceEquals(other, this)) {
+        return true;
+      }
+      if (!object.Equals(Accepted, other.Accepted)) return false;
+      if (!object.Equals(InternalServerError, other.InternalServerError)) return false;
+      if (ResponseCase != other.ResponseCase) return false;
+      return Equals(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override int GetHashCode() {
+      int hash = 1;
+      if (responseCase_ == ResponseOneofCase.Accepted) hash ^= Accepted.GetHashCode();
+      if (responseCase_ == ResponseOneofCase.InternalServerError) hash ^= InternalServerError.GetHashCode();
+      hash ^= (int) responseCase_;
+      if (_unknownFields != null) {
+        hash ^= _unknownFields.GetHashCode();
+      }
+      return hash;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override string ToString() {
+      return pb::JsonFormatter.ToDiagnosticString(this);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void WriteTo(pb::CodedOutputStream output) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      output.WriteRawMessage(this);
+    #else
+      if (responseCase_ == ResponseOneofCase.Accepted) {
+        output.WriteRawTag(10);
+        output.WriteMessage(Accepted);
+      }
+      if (responseCase_ == ResponseOneofCase.InternalServerError) {
+        output.WriteRawTag(18);
+        output.WriteMessage(InternalServerError);
+      }
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(output);
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
+      if (responseCase_ == ResponseOneofCase.Accepted) {
+        output.WriteRawTag(10);
+        output.WriteMessage(Accepted);
+      }
+      if (responseCase_ == ResponseOneofCase.InternalServerError) {
+        output.WriteRawTag(18);
+        output.WriteMessage(InternalServerError);
+      }
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(ref output);
+      }
+    }
+    #endif
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public int CalculateSize() {
+      int size = 0;
+      if (responseCase_ == ResponseOneofCase.Accepted) {
+        size += 1 + pb::CodedOutputStream.ComputeMessageSize(Accepted);
+      }
+      if (responseCase_ == ResponseOneofCase.InternalServerError) {
+        size += 1 + pb::CodedOutputStream.ComputeMessageSize(InternalServerError);
+      }
+      if (_unknownFields != null) {
+        size += _unknownFields.CalculateSize();
+      }
+      return size;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(GetFriendshipStatusResponse other) {
+      if (other == null) {
+        return;
+      }
+      switch (other.ResponseCase) {
+        case ResponseOneofCase.Accepted:
+          if (Accepted == null) {
+            Accepted = new global::Decentraland.SocialService.V2.GetFriendshipStatusResponse.Types.Ok();
+          }
+          Accepted.MergeFrom(other.Accepted);
+          break;
+        case ResponseOneofCase.InternalServerError:
+          if (InternalServerError == null) {
+            InternalServerError = new global::Decentraland.SocialService.V2.InternalServerError();
+          }
+          InternalServerError.MergeFrom(other.InternalServerError);
+          break;
+      }
+
+      _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(pb::CodedInputStream input) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      input.ReadRawMessage(this);
+    #else
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+        switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+            break;
+          case 10: {
+            global::Decentraland.SocialService.V2.GetFriendshipStatusResponse.Types.Ok subBuilder = new global::Decentraland.SocialService.V2.GetFriendshipStatusResponse.Types.Ok();
+            if (responseCase_ == ResponseOneofCase.Accepted) {
+              subBuilder.MergeFrom(Accepted);
+            }
+            input.ReadMessage(subBuilder);
+            Accepted = subBuilder;
+            break;
+          }
+          case 18: {
+            global::Decentraland.SocialService.V2.InternalServerError subBuilder = new global::Decentraland.SocialService.V2.InternalServerError();
+            if (responseCase_ == ResponseOneofCase.InternalServerError) {
+              subBuilder.MergeFrom(InternalServerError);
+            }
+            input.ReadMessage(subBuilder);
+            InternalServerError = subBuilder;
+            break;
+          }
+        }
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+        switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
+            break;
+          case 10: {
+            global::Decentraland.SocialService.V2.GetFriendshipStatusResponse.Types.Ok subBuilder = new global::Decentraland.SocialService.V2.GetFriendshipStatusResponse.Types.Ok();
+            if (responseCase_ == ResponseOneofCase.Accepted) {
+              subBuilder.MergeFrom(Accepted);
+            }
+            input.ReadMessage(subBuilder);
+            Accepted = subBuilder;
+            break;
+          }
+          case 18: {
+            global::Decentraland.SocialService.V2.InternalServerError subBuilder = new global::Decentraland.SocialService.V2.InternalServerError();
+            if (responseCase_ == ResponseOneofCase.InternalServerError) {
+              subBuilder.MergeFrom(InternalServerError);
+            }
+            input.ReadMessage(subBuilder);
+            InternalServerError = subBuilder;
+            break;
+          }
+        }
+      }
+    }
+    #endif
+
+    #region Nested types
+    /// <summary>Container for nested types declared in the GetFriendshipStatusResponse message type.</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static partial class Types {
+      public sealed partial class Ok : pb::IMessage<Ok>
+      #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+          , pb::IBufferMessage
+      #endif
+      {
+        private static readonly pb::MessageParser<Ok> _parser = new pb::MessageParser<Ok>(() => new Ok());
+        private pb::UnknownFieldSet _unknownFields;
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public static pb::MessageParser<Ok> Parser { get { return _parser; } }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public static pbr::MessageDescriptor Descriptor {
+          get { return global::Decentraland.SocialService.V2.GetFriendshipStatusResponse.Descriptor.NestedTypes[0]; }
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        pbr::MessageDescriptor pb::IMessage.Descriptor {
+          get { return Descriptor; }
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public Ok() {
+          OnConstruction();
+        }
+
+        partial void OnConstruction();
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public Ok(Ok other) : this() {
+          status_ = other.status_;
+          message_ = other.message_;
+          _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public Ok Clone() {
+          return new Ok(this);
+        }
+
+        /// <summary>Field number for the "status" field.</summary>
+        public const int StatusFieldNumber = 1;
+        private global::Decentraland.SocialService.V2.FriendshipStatus status_ = global::Decentraland.SocialService.V2.FriendshipStatus.RequestSent;
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public global::Decentraland.SocialService.V2.FriendshipStatus Status {
+          get { return status_; }
+          set {
+            status_ = value;
+          }
+        }
+
+        /// <summary>Field number for the "message" field.</summary>
+        public const int MessageFieldNumber = 2;
+        private string message_;
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public string Message {
+          get { return message_ ?? ""; }
+          set {
+            message_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+          }
+        }
+        /// <summary>Gets whether the "message" field is set</summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public bool HasMessage {
+          get { return message_ != null; }
+        }
+        /// <summary>Clears the value of the "message" field</summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void ClearMessage() {
+          message_ = null;
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public override bool Equals(object other) {
+          return Equals(other as Ok);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public bool Equals(Ok other) {
+          if (ReferenceEquals(other, null)) {
+            return false;
+          }
+          if (ReferenceEquals(other, this)) {
+            return true;
+          }
+          if (Status != other.Status) return false;
+          if (Message != other.Message) return false;
+          return Equals(_unknownFields, other._unknownFields);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public override int GetHashCode() {
+          int hash = 1;
+          if (Status != global::Decentraland.SocialService.V2.FriendshipStatus.RequestSent) hash ^= Status.GetHashCode();
+          if (HasMessage) hash ^= Message.GetHashCode();
+          if (_unknownFields != null) {
+            hash ^= _unknownFields.GetHashCode();
+          }
+          return hash;
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public override string ToString() {
+          return pb::JsonFormatter.ToDiagnosticString(this);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void WriteTo(pb::CodedOutputStream output) {
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+          output.WriteRawMessage(this);
+        #else
+          if (Status != global::Decentraland.SocialService.V2.FriendshipStatus.RequestSent) {
+            output.WriteRawTag(8);
+            output.WriteEnum((int) Status);
+          }
+          if (HasMessage) {
+            output.WriteRawTag(18);
+            output.WriteString(Message);
+          }
+          if (_unknownFields != null) {
+            _unknownFields.WriteTo(output);
+          }
+        #endif
+        }
+
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
+          if (Status != global::Decentraland.SocialService.V2.FriendshipStatus.RequestSent) {
+            output.WriteRawTag(8);
+            output.WriteEnum((int) Status);
+          }
+          if (HasMessage) {
+            output.WriteRawTag(18);
+            output.WriteString(Message);
+          }
+          if (_unknownFields != null) {
+            _unknownFields.WriteTo(ref output);
+          }
+        }
+        #endif
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public int CalculateSize() {
+          int size = 0;
+          if (Status != global::Decentraland.SocialService.V2.FriendshipStatus.RequestSent) {
+            size += 1 + pb::CodedOutputStream.ComputeEnumSize((int) Status);
+          }
+          if (HasMessage) {
+            size += 1 + pb::CodedOutputStream.ComputeStringSize(Message);
+          }
+          if (_unknownFields != null) {
+            size += _unknownFields.CalculateSize();
+          }
+          return size;
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void MergeFrom(Ok other) {
+          if (other == null) {
+            return;
+          }
+          if (other.Status != global::Decentraland.SocialService.V2.FriendshipStatus.RequestSent) {
+            Status = other.Status;
+          }
+          if (other.HasMessage) {
+            Message = other.Message;
+          }
+          _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void MergeFrom(pb::CodedInputStream input) {
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+          input.ReadRawMessage(this);
+        #else
+          uint tag;
+          while ((tag = input.ReadTag()) != 0) {
+            switch(tag) {
+              default:
+                _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+                break;
+              case 8: {
+                Status = (global::Decentraland.SocialService.V2.FriendshipStatus) input.ReadEnum();
+                break;
+              }
+              case 18: {
+                Message = input.ReadString();
+                break;
+              }
+            }
+          }
+        #endif
+        }
+
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
+          uint tag;
+          while ((tag = input.ReadTag()) != 0) {
+            switch(tag) {
+              default:
+                _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
+                break;
+              case 8: {
+                Status = (global::Decentraland.SocialService.V2.FriendshipStatus) input.ReadEnum();
+                break;
+              }
+              case 18: {
+                Message = input.ReadString();
+                break;
+              }
+            }
+          }
+        }
+        #endif
+
+      }
+
+    }
+    #endregion
 
   }
 

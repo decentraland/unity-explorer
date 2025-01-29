@@ -7,7 +7,7 @@ namespace DCL.Landscape.NoiseGeneration
 {
     public class NoiseGenerator : BaseNoiseGenerator
     {
-        public NoiseGenerator(NoiseData noiseData, uint variantSeed, uint baseSeed) : base(noiseData, variantSeed, baseSeed) { }
+        public NoiseGenerator(NoiseData noiseData, uint variantSeed, uint baseSeed, NoiseNativeArrayProvider provider) : base(noiseData, variantSeed, baseSeed, provider) { }
 
         protected override JobHandle OnSchedule(NoiseDataPointer noiseDataPointer, JobHandle parentJobHandle, int batchCount)
         {
