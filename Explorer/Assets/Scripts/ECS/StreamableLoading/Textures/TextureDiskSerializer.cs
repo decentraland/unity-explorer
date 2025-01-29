@@ -36,6 +36,7 @@ namespace ECS.StreamableLoading.Textures
 
         private static SlicedOwnedMemory<byte> ToArray(Texture2DData data)
         {
+            data.Asset.Compress(true);
             var textureData = data.Asset.GetRawTextureData<byte>()!;
 
             var meta = new Meta(data.Asset);
