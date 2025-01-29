@@ -498,7 +498,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7205abfc5a5d4130814dc60ba9ec54de, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  inputField: {fileID: 0}
+  inputField: {fileID: 2519340724717527833}
   fieldsValidator: {fileID: 11400000, guid: 88e0aa12d37277b458dcadcda7dcf4b2, type: 2}
 --- !u!1 &3990285322017698901
 GameObject:
