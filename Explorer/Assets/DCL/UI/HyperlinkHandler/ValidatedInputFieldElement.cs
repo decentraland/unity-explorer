@@ -65,16 +65,6 @@ namespace DCL.UI.InputFieldValidator
             inputField.OnSelect(null);
         }
 
-        private void OnInputFieldSelected(string _)
-        {
-            InputFieldSelectionChanged?.Invoke(true);
-        }
-
-        private void OnInputFieldDeselected(string _)
-        {
-            InputFieldSelectionChanged?.Invoke(false);
-        }
-
         /// <summary>
         ///     Selects the input field, gives it focus, replaces its content if the text is not null and moves the caret to its correct position.
         /// </summary>
@@ -101,7 +91,7 @@ namespace DCL.UI.InputFieldValidator
         }
 
         /// <summary>
-        ///     Manually sends an OnSubmit event from the InputField
+        ///     Manually sends an OnSubmit event from the InputField -- used by chat commands - probably needs to be removed
         /// </summary>
         public void SubmitInput(BaseEventData eventData)
         {
@@ -116,7 +106,7 @@ namespace DCL.UI.InputFieldValidator
 
             string textToInsert = pastedText.Length > remainingSpace ? pastedText[..remainingSpace] : pastedText;
 
-            //When inserting text we need to add each character individually to properly parse the pasted text as it relies on a per-character validation
+            //When inserting text we need to add each character individually to properly parse the text as it relies on a per-character validation
             foreach (char c in textToInsert)
             {
                 inputField.text = inputField.text.Insert(position, c.ToString());
@@ -129,6 +119,16 @@ namespace DCL.UI.InputFieldValidator
         private void Submit(string text)
         {
             InputFieldSubmit?.Invoke(text);
+        }
+
+        private void OnInputFieldSelected(string _)
+        {
+            InputFieldSelectionChanged?.Invoke(true);
+        }
+
+        private void OnInputFieldDeselected(string _)
+        {
+            InputFieldSelectionChanged?.Invoke(false);
         }
 
         private void Validate(string text)
