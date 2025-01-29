@@ -1,19 +1,14 @@
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
-using DCL.Emoji;
 using DCL.UI;
-using DCL.UI.InputFieldValidator;
 using MVC;
 using DG.Tweening;
 using SuperScrollView;
 using System;
 using System.Collections.Generic;
-using System.Text.RegularExpressions;
 using System.Threading;
-using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
-using UnityEngine.InputSystem;
 using UnityEngine.Serialization;
 using UnityEngine.UI;
 using Utility;
@@ -24,14 +19,7 @@ namespace DCL.Chat
     public class ChatView : ViewBase, IView, IViewWithGlobalDependencies, IPointerEnterHandler, IPointerExitHandler, IDisposable
     {
         public delegate Color CalculateUsernameColorDelegate(ChatMessage chatMessage);
-        public delegate void EmojiSelectionVisibilityChangedDelegate(bool isVisible);
         public delegate void InputBoxFocusChangedDelegate(bool hasFocus);
-        public delegate void InputSubmittedDelegate(string message, string origin);
-
-        private const string EMOJI_SUGGESTION_PATTERN = @":\w+";
-        private const string EMOJI_TAG = "[emoji]";
-        private const string ORIGIN = "chat";
-        private static readonly Regex EMOJI_PATTERN_REGEX = new (EMOJI_SUGGESTION_PATTERN, RegexOptions.Compiled);
 
         [Header("Settings")]
         [Tooltip("The time it takes, in seconds, for the background of the chat window to fade-in/out when hovering with the mouse.")]
@@ -55,24 +43,8 @@ namespace DCL.Chat
         [SerializeField]
         private ToggleView chatBubblesToggle;
 
-        [FormerlySerializedAs("EmojiPanel")]
         [SerializeField]
-        private EmojiPanelView emojiPanel;
-
-        [FormerlySerializedAs("EmojiSuggestionPanel")]
-        [SerializeField]
-        private EmojiSuggestionPanelView emojiSuggestionPanel;
-
-        [FormerlySerializedAs("InputField")]
-        [SerializeField]
-        private TMP_InputField inputField;
-
-        [SerializeField]
-        private ValidatedInputFieldElement validatedInputField;
-
-        [FormerlySerializedAs("CharacterCounter")]
-        [SerializeField]
-        private CharacterCounterView characterCounter;
+        private ChatInputBoxElement chatInputBox;
 
         [FormerlySerializedAs("PanelBackgroundCanvasGroup")]
         [SerializeField]
@@ -90,32 +62,9 @@ namespace DCL.Chat
         [SerializeField]
         private LoopListView2 loopList;
 
-        [FormerlySerializedAs("EmojiPanelButton")]
-        [SerializeField]
-        private EmojiButtonView emojiPanelButton;
-
         [FormerlySerializedAs("CloseChatButton")]
         [SerializeField]
         private Button closeChatButton;
-
-        [Header("Dependencies")]
-        [SerializeField]
-        private EmojiPanelConfigurationSO emojiPanelConfiguration;
-
-        [SerializeField]
-        private TextAsset emojiMappingJson;
-
-        [SerializeField]
-        private EmojiSectionView emojiSectionViewPrefab;
-
-        [SerializeField]
-        private EmojiButton emojiButtonPrefab;
-
-        [SerializeField]
-        private EmojiSuggestionView emojiSuggestionViewPrefab;
-
-        [SerializeField]
-        private RectTransform pastePopupPosition;
 
         [Header("Audio")]
         [SerializeField]
@@ -133,9 +82,6 @@ namespace DCL.Chat
         [SerializeField]
         private AudioClipConfig chatInputTextAudio;
 
-        [SerializeField]
-        private AudioClipConfig enterInputAudio;
-        private readonly List<EmojiData> keysWithPrefix = new ();
 
         /// <summary>
         ///     An external function that provides a way to calculate the color to be used to display a user name.
@@ -143,14 +89,6 @@ namespace DCL.Chat
         public CalculateUsernameColorDelegate CalculateUsernameColor;
         private IReadOnlyList<ChatMessage> chatMessages;
         private UniTaskCompletionSource closePopupTask;
-
-        private Mouse device;
-
-        private EmojiPanelController? emojiPanelController;
-        private CancellationTokenSource emojiPanelCts;
-
-        private CancellationTokenSource emojiSearchCts;
-        private EmojiSuggestionPanel? emojiSuggestionPanelController;
 
         // The latest amount of messages added to the chat that must be animated yet
         private int entriesPendingToAnimate;
@@ -176,8 +114,8 @@ namespace DCL.Chat
         /// </summary>
         public string InputBoxText
         {
-            get => inputField.text;
-            set => inputField.text = value;
+            get => chatInputBox.InputBoxText;
+            set => chatInputBox.InputBoxText = value;
         }
 
         /// <summary>
@@ -208,20 +146,8 @@ namespace DCL.Chat
 
         public void Dispose()
         {
-            if (emojiPanelController != null)
-            {
-                emojiPanelController.EmojiSelected -= AddEmojiToInput;
-                emojiPanelController.Dispose();
-            }
-
-            if (emojiSuggestionPanelController != null)
-                emojiSuggestionPanelController.EmojiSelected -= AddEmojiFromSuggestion;
-
+            chatInputBox.Dispose();
             fadeoutCts.SafeCancelAndDispose();
-            emojiPanelCts.SafeCancelAndDispose();
-            emojiSearchCts.SafeCancelAndDispose();
-
-            viewDependencies.DclInput.UI.RightClick.performed -= OnRightClickRegistered;
         }
 
         public void OnPointerEnter(PointerEventData eventData)
@@ -242,13 +168,14 @@ namespace DCL.Chat
 
         public override UniTask HideAsync(CancellationToken ct, bool isInstant = false)
         {
-            closePopupTask.TrySetResult();
+            chatInputBox.OnViewHide();
             return base.HideAsync(ct, isInstant);
         }
 
         public void InjectDependencies(ViewDependencies dependencies)
         {
             viewDependencies = dependencies;
+            chatInputBox.InjectDependencies(dependencies);
         }
 
         /// <summary>
@@ -269,12 +196,12 @@ namespace DCL.Chat
         /// <summary>
         ///     Raised when either the emoji selection panel opens or closes.
         /// </summary>
-        public event EmojiSelectionVisibilityChangedDelegate EmojiSelectionVisibilityChanged;
+        public event ChatInputBoxElement.EmojiSelectionVisibilityChangedDelegate EmojiSelectionVisibilityChanged;
 
         /// <summary>
         ///     Raised whenever the user attempts to send the content of the input box as a chat message.
         /// </summary>
-        public event InputSubmittedDelegate InputSubmitted;
+        public event ChatInputBoxElement.InputSubmittedDelegate InputSubmitted;
 
         /// <summary>
         ///     Raised when the option to change the visibility of the chat bubbles over the avatar changes its value.
@@ -283,13 +210,6 @@ namespace DCL.Chat
 
         public void Initialize(IReadOnlyList<ChatMessage> chatMessages, bool areChatBubblesVisible)
         {
-            device = InputSystem.GetDevice<Mouse>();
-
-            characterCounter.SetMaximumLength(inputField.characterLimit);
-            characterCounter.gameObject.SetActive(false);
-
-            inputField.onSelect.AddListener(OnInputSelected);
-            inputField.onDeselect.AddListener(OnInputDeselected);
             closeChatButton.onClick.AddListener(CloseChat);
             loopList.InitListView(0, OnGetItemByIndex);
 
@@ -298,13 +218,38 @@ namespace DCL.Chat
             chatBubblesToggle.Toggle.onValueChanged.AddListener(OnToggleChatBubblesValueChanged);
             chatBubblesToggle.IsSoundEnabled = true;
 
-            InitializeEmojiController();
-
-            viewDependencies.DclInput.UI.RightClick.performed += OnRightClickRegistered;
-            closePopupTask = new UniTaskCompletionSource();
-            validatedInputField.OnInputValidated += OnInputChanged;
+            chatInputBox.Initialize();
+            chatInputBox.InputBoxSelectionChanged += OnInputBoxSelectionChanged;
+            chatInputBox.EmojiSelectionVisibilityChanged += OnEmojiSelectionVisibilityChanged;
+            chatInputBox.InputChanged += OnInputChanged;
+            chatInputBox.InputSubmitted += OnInputSubmitted;
 
             SetMessages(chatMessages);
+        }
+
+        private void OnInputBoxSelectionChanged(bool isSelected)
+        {
+            if (isSelected)
+            {
+                if (isChatClosed)
+                {
+                    isChatClosed = false;
+                    ToggleChat(true);
+                    ShowLastMessage();
+                }
+
+                if (isInputSelected) return;
+
+                isInputSelected = true;
+                StopChatEntriesFadeout();
+                InputBoxFocusChanged?.Invoke(true);
+            }
+            else
+            {
+                isInputSelected = false;
+                StartChatEntriesFadeout();
+                InputBoxFocusChanged?.Invoke(false);
+            }
         }
 
         /// <summary>
@@ -334,9 +279,7 @@ namespace DCL.Chat
         /// </summary>
         public void DisableInputBoxSubmissions()
         {
-            viewDependencies.ClipboardManager.OnPaste -= PasteClipboardText;
-            inputField.onSubmit.RemoveAllListeners();
-            inputField.DeactivateInputField();
+            chatInputBox.DisableInputBoxSubmissions();
         }
 
         /// <summary>
@@ -344,7 +287,7 @@ namespace DCL.Chat
         /// </summary>
         public void EnableInputBoxSubmissions()
         {
-            inputField.onSubmit.AddListener(OnSubmit);
+            chatInputBox.EnableInputBoxSubmissions();
         }
 
         /// <summary>
@@ -396,10 +339,7 @@ namespace DCL.Chat
         /// </summary>
         public void FocusInputBox()
         {
-            if (emojiSuggestionPanelController is { IsActive: true }) return;
-            if (inputField.isFocused) return;
-
-            inputField.OnSelect(null);
+            chatInputBox.FocusInputBox();
         }
 
         /// <summary>
@@ -408,12 +348,7 @@ namespace DCL.Chat
         /// <param name="text">The new content of the input box.</param>
         public void FocusInputBoxWithText(string text)
         {
-            if (gameObject.activeInHierarchy && inputField.isFocused == false)
-            {
-                inputField.text = text;
-                inputField.ActivateInputField();
-                inputField.caretPosition = inputField.text.Length;
-            }
+            chatInputBox.FocusInputBoxWithText(text);
         }
 
         /// <summary>
@@ -421,7 +356,7 @@ namespace DCL.Chat
         /// </summary>
         public void SubmitInput()
         {
-            inputField.OnSubmit(new BaseEventData(null));
+            chatInputBox.SubmitInput();
         }
 
         /// <summary>
@@ -429,34 +364,7 @@ namespace DCL.Chat
         /// </summary>
         public void Click()
         {
-            CheckIfClickedOnEmojiPanel();
-
-            void CheckIfClickedOnEmojiPanel()
-            {
-                if (!(emojiPanel.gameObject.activeInHierarchy ||
-                      emojiSuggestionPanel.gameObject.activeInHierarchy)) return;
-
-                IReadOnlyList<RaycastResult> raycastResults = viewDependencies.EventSystem.RaycastAll(device.position.value);
-                var clickedOnPanel = false;
-
-                foreach (RaycastResult result in raycastResults)
-                    if (result.gameObject == emojiPanel.gameObject ||
-                        result.gameObject == emojiSuggestionPanel.ScrollView.gameObject ||
-                        result.gameObject == emojiPanelButton.gameObject)
-                        clickedOnPanel = true;
-
-                if (!clickedOnPanel)
-                {
-                    if (emojiPanel.gameObject.activeInHierarchy)
-                    {
-                        emojiPanelButton.SetState(false);
-                        emojiPanel.gameObject.SetActive(false);
-                        EmojiSelectionVisibilityChanged?.Invoke(false);
-                    }
-
-                    emojiSuggestionPanelController!.SetPanelVisibility(false);
-                }
-            }
+            chatInputBox.Click();
         }
 
         /// <summary>
@@ -496,6 +404,19 @@ namespace DCL.Chat
             }
 
             return item;
+        }
+
+        private void OnChatMessageOptionsButtonClicked(string messageText, ChatEntryView chatEntryView)
+        {
+            closePopupTask.TrySetResult();
+            closePopupTask = new UniTaskCompletionSource();
+
+            var data = new ChatEntryMenuPopupData(
+                chatEntryView.messageBubbleElement.popupPosition.position,
+                messageText,
+                closePopupTask.Task);
+
+            viewDependencies.GlobalUIViews.ShowChatEntryMenuPopupAsync(data);
         }
 
         private void SetItemData(int index, ChatMessage itemData, ChatEntryView itemView)
@@ -556,152 +477,25 @@ namespace DCL.Chat
             ToggleChat(false);
         }
 
-        private void ToggleEmojiPanel()
-        {
-            UIAudioEventsBus.Instance.SendPlayAudioEvent(openEmojiPanelAudio);
-
-            emojiPanelCts = emojiPanelCts.SafeRestart();
-            bool toggle = !emojiPanel.gameObject.activeInHierarchy;
-            emojiPanel.gameObject.SetActive(toggle);
-            emojiPanelButton.SetState(toggle);
-            emojiSuggestionPanelController!.SetPanelVisibility(false);
-            emojiPanel.EmojiContainer.gameObject.SetActive(toggle);
-            inputField.ActivateInputField();
-
-            EmojiSelectionVisibilityChanged?.Invoke(toggle);
-        }
-
-        private void PasteClipboardText(object sender, string pastedText)
-        {
-            if (!inputField.isActiveAndEnabled) return;
-
-            int remainingSpace = inputField.characterLimit - inputField.text.Length;
-
-            if (remainingSpace <= 0) return;
-
-            int caretPosition = inputField.stringPosition;
-            string textToInsert = pastedText.Length > remainingSpace ? pastedText[..remainingSpace] : pastedText;
-
-            //When pasting we need to add each character individually to properly parse the pasted text as it relies on a per-character validation
-            foreach (char c in textToInsert)
-            {
-                inputField.text = inputField.text.Insert(caretPosition, c.ToString());
-                caretPosition++;
-            }
-
-            inputField.stringPosition += textToInsert.Length;
-            inputField.ActivateInputField();
-            characterCounter.SetCharacterCount(inputField.text.Length);
-            StopChatEntriesFadeout();
-        }
-
-        private void OnInputDeselected(string inputText)
-        {
-            isInputSelected = false;
-            emojiPanelButton.SetColor(false);
-            characterCounter.gameObject.SetActive(false);
-            StartChatEntriesFadeout();
-            InputBoxFocusChanged?.Invoke(false);
-        }
-
-        private void OnInputSelected(string inputText)
-        {
-            if (isChatClosed)
-            {
-                isChatClosed = false;
-                ToggleChat(true);
-                ShowLastMessage();
-            }
-
-            UIAudioEventsBus.Instance.SendPlayAudioEvent(enterInputAudio);
-
-            if (isInputSelected) return;
-
-            isInputSelected = true;
-            emojiPanelButton.SetColor(true);
-            characterCounter.gameObject.SetActive(true);
-            StopChatEntriesFadeout();
-            InputBoxFocusChanged?.Invoke(true);
-        }
-
         private void OnInputChanged(string inputText)
         {
-            HandleEmojiSearch(inputText);
-            UIAudioEventsBus.Instance.SendPlayAudioEvent(chatInputTextAudio);
-            closePopupTask.TrySetResult();
-            characterCounter.SetCharacterCount(inputText.Length);
             StopChatEntriesFadeout();
         }
 
-        private void OnSubmit(string _)
+        private void OnEmojiSelectionVisibilityChanged(bool isVisible)
         {
-            if (emojiSuggestionPanelController is { IsActive: true })
-            {
-                emojiSuggestionPanelController!.SetPanelVisibility(false);
-                return;
-            }
+            EmojiSelectionVisibilityChanged?.Invoke(isVisible);
+        }
 
-            if (emojiPanel.gameObject.activeInHierarchy)
-            {
-                emojiPanelButton.SetState(false);
-                emojiPanelController!.SetPanelVisibility(false);
-                EmojiSelectionVisibilityChanged?.Invoke(false);
-            }
-
-            if (string.IsNullOrWhiteSpace(inputField.text))
-            {
-                inputField.DeactivateInputField();
-                inputField.OnDeselect(null);
-                return;
-            }
-
-            UIAudioEventsBus.Instance.SendPlayAudioEvent(chatSendMessageAudio);
-            string messageToSend = inputField.text;
-
-            inputField.text = string.Empty;
-            inputField.ActivateInputField();
-
-            InputSubmitted?.Invoke(messageToSend, ORIGIN);
+        private void OnInputSubmitted(string messageToSend, string origin)
+        {
+            InputSubmitted?.Invoke(messageToSend, origin);
         }
 
         private void OnToggleChatBubblesValueChanged(bool isToggled)
         {
             ChatBubbleVisibilityChanged?.Invoke(isToggled);
         }
-
-        private void OnRightClickRegistered(InputAction.CallbackContext _)
-        {
-            if (isInputSelected && viewDependencies.ClipboardManager.HasValue())
-            {
-                viewDependencies.ClipboardManager.OnPaste -= PasteClipboardText;
-                viewDependencies.ClipboardManager.OnPaste += PasteClipboardText;
-                closePopupTask.TrySetResult();
-                closePopupTask = new UniTaskCompletionSource();
-
-                var data = new PastePopupToastData(
-                    pastePopupPosition.position,
-                    closePopupTask.Task);
-
-                viewDependencies.GlobalUIViews.ShowPastePopupToastAsync(data);
-                inputField.ActivateInputField();
-            }
-        }
-
-        private void OnChatMessageOptionsButtonClicked(string messageText, ChatEntryView chatEntryView)
-        {
-            closePopupTask.TrySetResult();
-            closePopupTask = new UniTaskCompletionSource();
-
-            var data = new ChatEntryMenuPopupData(
-                chatEntryView.messageBubbleElement.popupPosition.position,
-                messageText,
-                closePopupTask.Task);
-
-            viewDependencies.GlobalUIViews.ShowChatEntryMenuPopupAsync(data);
-        }
-
-        private bool IsWithinCharacterLimit() =>
-            inputField.text.Length < inputField.characterLimit;
 
         /// <summary>
         ///     The prefab to use when instantiating a new item.
@@ -713,78 +507,5 @@ namespace DCL.Chat
             Padding,
             SystemChatEntry,
         }
-
-#region Emojis
-        private void InitializeEmojiController()
-        {
-            emojiPanelController = new EmojiPanelController(emojiPanel, emojiPanelConfiguration, emojiMappingJson, emojiSectionViewPrefab, emojiButtonPrefab);
-            emojiPanelController.EmojiSelected += AddEmojiToInput;
-
-            emojiSuggestionPanelController = new EmojiSuggestionPanel(emojiSuggestionPanel, emojiSuggestionViewPrefab);
-            emojiSuggestionPanelController.InjectDependencies(viewDependencies);
-            emojiSuggestionPanelController.EmojiSelected += AddEmojiFromSuggestion;
-
-            emojiPanelButton.Button.onClick.AddListener(ToggleEmojiPanel);
-        }
-
-        private void AddEmojiFromSuggestion(string emojiCode, bool shouldClose)
-        {
-            if (!IsWithinCharacterLimit()) return;
-
-            UIAudioEventsBus.Instance.SendPlayAudioEvent(addEmojiAudio);
-            inputField.SetTextWithoutNotify(inputField.text.Replace(EMOJI_PATTERN_REGEX.Match(inputField.text).Value, emojiCode));
-            inputField.stringPosition += emojiCode.Length;
-            inputField.ActivateInputField();
-
-            if (shouldClose)
-                emojiSuggestionPanelController!.SetPanelVisibility(false);
-        }
-
-        private void AddEmojiToInput(string emoji)
-        {
-            UIAudioEventsBus.Instance.SendPlayAudioEvent(addEmojiAudio);
-
-            if (!IsWithinCharacterLimit()) return;
-
-            int caretPosition = inputField.stringPosition;
-            inputField.text = inputField.text.Insert(caretPosition, EMOJI_TAG);
-            inputField.text = inputField.text.Replace(EMOJI_TAG, emoji);
-            inputField.stringPosition += emoji.Length;
-
-            inputField.ActivateInputField();
-        }
-
-        private void HandleEmojiSearch(string inputText)
-        {
-            Match match = EMOJI_PATTERN_REGEX.Match(inputText);
-
-            if (match.Success)
-            {
-                if (match.Value.Length < 2)
-                {
-                    emojiSuggestionPanelController!.SetPanelVisibility(false);
-                    return;
-                }
-
-                emojiSearchCts.SafeCancelAndDispose();
-                emojiSearchCts = new CancellationTokenSource();
-
-                SearchAndSetEmojiSuggestionsAsync(match.Value, emojiSearchCts.Token).Forget();
-            }
-            else
-            {
-                if (emojiSuggestionPanelController is { IsActive: true })
-                    emojiSuggestionPanelController!.SetPanelVisibility(false);
-            }
-        }
-
-        private async UniTaskVoid SearchAndSetEmojiSuggestionsAsync(string value, CancellationToken ct)
-        {
-            await DictionaryUtils.GetKeysWithPrefixAsync(emojiPanelController!.EmojiNameMapping, value, keysWithPrefix, ct);
-
-            emojiSuggestionPanelController!.SetValues(keysWithPrefix);
-            emojiSuggestionPanelController!.SetPanelVisibility(true);
-        }
-#endregion
     }
 }
