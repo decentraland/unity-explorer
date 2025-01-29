@@ -56,6 +56,7 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         ApiFriends,
         AssetBundleRegistry,
 
-        BuilderApiContent
+        BuilderApiDtos,
+        BuilderApiContent,
     }
 }

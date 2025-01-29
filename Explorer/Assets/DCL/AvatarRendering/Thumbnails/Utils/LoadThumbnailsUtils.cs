@@ -78,7 +78,7 @@ namespace DCL.AvatarRendering.Thumbnails.Utils
             using var urlBuilderScope = URL_BUILDER_POOL.AutoScope();
             var urlBuilder = urlBuilderScope.Value;
             urlBuilder.Clear();
-            urlBuilder.AppendDomain(attachment.DTO.FilesDownloadUrl != null ? URLDomain.FromString(attachment.DTO.FilesDownloadUrl) : realmData.Ipfs.ContentBaseUrl)
+            urlBuilder.AppendDomain(attachment.DTO.ContentDownloadUrl != null ? URLDomain.FromString(attachment.DTO.ContentDownloadUrl) : realmData.Ipfs.ContentBaseUrl)
                       .AppendPath(thumbnailPath);
 
             var promise = Promise.Create(world,

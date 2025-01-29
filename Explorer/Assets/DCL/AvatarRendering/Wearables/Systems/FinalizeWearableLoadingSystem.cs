@@ -323,7 +323,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
         private bool CreateAssetPromiseIfRequired(IWearable component, in GetWearablesByPointersIntention intention, IPartitionComponent partitionComponent)
         {
-            bool filesDownloadUrlAvailable = !string.IsNullOrEmpty(component.DTO.FilesDownloadUrl);
+            bool filesDownloadUrlAvailable = !string.IsNullOrEmpty(component.DTO.ContentDownloadUrl);
 
             // Do not repeat the promise if already failed once. Otherwise it will end up in an endless loading:true state
             if (!filesDownloadUrlAvailable && component.ManifestResult is { Succeeded: false }) return false;
@@ -332,7 +332,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 && !filesDownloadUrlAvailable && component.ManifestResult == null)
                 return component.CreateAssetBundleManifestPromise(World, intention.BodyShape, intention.CancellationTokenSource, partitionComponent);
 
-            if (component.TryCreateAssetPromise(in intention, customStreamingSubdirectory, partitionComponent, World, GetReportCategory(), component.DTO.FilesDownloadUrl))
+            if (component.TryCreateAssetPromise(in intention, customStreamingSubdirectory, partitionComponent, World, GetReportCategory(), component.DTO.ContentDownloadUrl))
             {
                 component.UpdateLoadingStatus(true);
                 return true;

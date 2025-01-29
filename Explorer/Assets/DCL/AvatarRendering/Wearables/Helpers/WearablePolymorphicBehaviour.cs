@@ -241,7 +241,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                 // customStreamingSubdirectory
                 // TODO: Somehow propagate filename here...
                 // TODO: Somehow propagate rawFileDownloadURL in the promise...
-                // wearable.DTO.FilesDownloadUrl
+                // wearable.DTO.ContentDownloadUrl
 
                 // TODO: Support more than 1 content file ???
                 /*foreach (AvatarAttachmentDTO.Content content in wearable.DTO.content)

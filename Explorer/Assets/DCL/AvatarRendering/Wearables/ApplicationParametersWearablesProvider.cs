@@ -2,6 +2,7 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Components;
+using ECS.StreamableLoading.Common.Components;
 using Global.AppArgs;
 using System;
 using System.Collections.Generic;
@@ -15,12 +16,13 @@ namespace DCL.AvatarRendering.Wearables
         private readonly IAppArgs appArgs;
         private readonly IWearablesProvider source;
         private readonly List<IWearable> resultWearablesBuffer = new ();
+        private readonly string builderDTOsUrl;
 
-        public ApplicationParametersWearablesProvider(IAppArgs appArgs,
-            IWearablesProvider source)
+        public ApplicationParametersWearablesProvider(IAppArgs appArgs, IWearablesProvider source, string builderDTOsUrl)
         {
             this.appArgs = appArgs;
             this.source = source;
+            this.builderDTOsUrl = builderDTOsUrl;
         }
 
         public async UniTask<(IReadOnlyList<IWearable> results, int totalAmount)> GetAsync(int pageSize, int pageNumber, CancellationToken ct,
@@ -30,45 +32,48 @@ namespace DCL.AvatarRendering.Wearables
             IWearablesProvider.CollectionType collectionType = IWearablesProvider.CollectionType.All,
             string? name = null,
             List<IWearable>? results = null,
-            string? intentionUrl = null)
+            CommonLoadingArguments? loadingArguments = null)
         {
-            if (!appArgs.TryGetValue(AppArgsFlags.SELF_PREVIEW_WEARABLES, out string? wearablesCsv))
-                // Regular flow when no "self preview wearables" are provided:
-                return await source.GetAsync(pageSize, pageNumber, ct, sortingField, orderBy, category, collectionType, name, results);
-
-            URN[] pointers = wearablesCsv!.Split(',', StringSplitOptions.RemoveEmptyEntries)
-                                          .Select(s => new URN(s))
-                                          .ToArray();
-
-            if (appArgs.TryGetValue(AppArgsFlags.SELF_PREVIEW_SOURCE_URL, out string? downloadSourceUrl))
+            if (appArgs.TryGetValue(AppArgsFlags.SELF_PREVIEW_WEARABLES, out string? wearablesCsv))
             {
-                // TODO: support many
-                downloadSourceUrl += $"/collections/{pointers[0]}/items";
+                URN[] pointers = wearablesCsv!.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                                              .Select(s => new URN(s))
+                                              .ToArray();
 
+                (IReadOnlyCollection<IWearable>? maleWearables, IReadOnlyCollection<IWearable>? femaleWearables) =
+                    await UniTask.WhenAll(RequestPointersAsync(pointers, BodyShape.MALE, ct),
+                        RequestPointersAsync(pointers, BodyShape.FEMALE, ct));
+
+                results ??= new List<IWearable>();
+
+                lock (resultWearablesBuffer)
+                {
+                    resultWearablesBuffer.Clear();
+
+                    if (maleWearables != null)
+                        resultWearablesBuffer.AddRange(maleWearables);
+
+                    if (femaleWearables != null)
+                        resultWearablesBuffer.AddRange(femaleWearables);
+
+                    int pageIndex = pageNumber - 1;
+                    results.AddRange(resultWearablesBuffer.Skip(pageIndex * pageSize).Take(pageSize));
+                    return (results, resultWearablesBuffer.Count);
+                }
+            }
+
+            if (appArgs.TryGetValue(AppArgsFlags.SELF_PREVIEW_BUILDER_COLLECTION, out string? collectionId))
+            {
                 return await source.GetAsync(pageSize, pageNumber, ct, sortingField, orderBy, category, collectionType, name, results,
-                    intentionUrl: downloadSourceUrl);
+                    loadingArguments: new CommonLoadingArguments(
+                        builderDTOsUrl.Replace("[COL-ID]", collectionId),
+                        cancellationTokenSource: new CancellationTokenSource(),
+                        needsBuilderAPISigning: true
+                    ));
             }
 
-            (IReadOnlyCollection<IWearable>? maleWearables, IReadOnlyCollection<IWearable>? femaleWearables) =
-                await UniTask.WhenAll(RequestPointersAsync(pointers, BodyShape.MALE, ct),
-                    RequestPointersAsync(pointers, BodyShape.FEMALE, ct));
-
-            results ??= new List<IWearable>();
-
-            lock (resultWearablesBuffer)
-            {
-                resultWearablesBuffer.Clear();
-
-                if (maleWearables != null)
-                    resultWearablesBuffer.AddRange(maleWearables);
-
-                if (femaleWearables != null)
-                    resultWearablesBuffer.AddRange(femaleWearables);
-
-                int pageIndex = pageNumber - 1;
-                results.AddRange(resultWearablesBuffer.Skip(pageIndex * pageSize).Take(pageSize));
-                return (results, resultWearablesBuffer.Count);
-            }
+            // Regular path without any "self-preview" element
+            return await source.GetAsync(pageSize, pageNumber, ct, sortingField, orderBy, category, collectionType, name, results);
         }
 
         public async UniTask<IReadOnlyCollection<IWearable>?> RequestPointersAsync(IReadOnlyCollection<URN> pointers,

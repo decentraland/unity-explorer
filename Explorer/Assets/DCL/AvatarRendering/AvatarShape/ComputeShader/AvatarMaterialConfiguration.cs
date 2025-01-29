@@ -67,17 +67,6 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             PoolMaterialSetup poolMaterialSetup = poolHandler.GetMaterialPool(shaderId);
             Material avatarMaterial = poolMaterialSetup.Pool.Get();
 
-            // DEBUG
-            if (originalMaterial.enabledKeywords.Length == 0)
-            {
-                // avatarMaterial = originalMaterial;
-                /*originalMaterial.EnableKeyword("_MAIN_LIGHT_SHADOWS_CASCADE");
-                originalMaterial.EnableKeyword("_ADDITIONAL_LIGHT_SHADOWS");
-                originalMaterial.EnableKeyword("_SHADOWS_SOFT");
-                originalMaterial.EnableKeyword("_FORWARD_PLUS");*/
-                Debug.Log("...");
-            }
-
             var baseColor = originalMaterial.GetColor(BASE_COLOR);
             avatarMaterial.SetColor(BASE_COLOR, baseColor);
             avatarMaterial.renderQueue = (int)RenderQueue.Geometry;

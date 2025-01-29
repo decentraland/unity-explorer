@@ -221,7 +221,7 @@ namespace DCL.WebRequests
 
                 await SwitchToThreadAsync(threadFlags);
 
-                if (text.Contains("6de5361f-"))
+                if (webRequest.url.Contains("builder"))
                     Debug.Log($"PRAVS - JSON Response: {text}");
 
                 try

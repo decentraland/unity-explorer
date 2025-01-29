@@ -82,14 +82,12 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
                 return new WearableDTO()
                 {
-                    FilesDownloadUrl = "https://builder-api.decentraland.org/v1/storage/contents/",
+                    // Take this from DecentralandUrl.BuilderApiContent but HOW ???
+                    ContentDownloadUrl = "https://builder-api.decentraland.org/v1/storage/contents/",
                     metadata = this,
                     id = this.id,
                     type = this.type,
                     content = parsedContent
-                    // string[] pointers;
-                    // long timestamp;
-                    // string version;
                 };
             }
         }
