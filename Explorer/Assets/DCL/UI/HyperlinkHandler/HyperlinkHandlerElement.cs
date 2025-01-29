@@ -97,8 +97,8 @@ namespace DCL.UI.HyperlinkHandler
 
         private void ProcessLink(string linkID)
         {
-            // Expected format: "linkType:linkValue", we force the count to 2 as URLs will come in format https://
-            string[] linkParts = linkID.Split(':', 2);
+            // Expected format is "linkType=linkValue"
+            string[] linkParts = linkID.Split('=');
 
             if (linkParts.Length != 2)
             {

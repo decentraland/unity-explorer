@@ -3,20 +3,22 @@ using System.Text;
 using System.Text.RegularExpressions;
 using TMPro;
 using UnityEngine;
+using Utility;
 
 namespace DCL.UI.InputFieldValidator
 {
     [CreateAssetMenu(fileName = "InputFieldValidator", menuName = "DCL/UI/InputFieldValidator")]
     public class InputFieldsValidator : TMP_InputValidator
     {
-        private const string TAG = "§";
+        private const string TAG_STRING = "§";
+        private const char TAG_CHAR = '§';
         private const string SCENE = "scene";
         private const string WORLD = "world";
         private const string URL = "url";
         private const string USER = "user";
 
         private static readonly Regex RICH_TEXT_TAG_REGEX = new (@"<(?!\/?(b|i)(>|\s))[^>]+>", RegexOptions.Compiled);
-        private static readonly Regex LINK_TAG_REGEX = new (@"<#[0-9A-Fa-f]{6}><link=(url|scene|world|user):.*?>(.*?)</link></color>", RegexOptions.Compiled);
+        private static readonly Regex LINK_TAG_REGEX = new (@"<#[0-9A-Fa-f]{6}><link=(url|scene|world|user)=.*?>(.*?)</link></color>", RegexOptions.Compiled);
         private static readonly Regex WEBSITE_REGEX = new (
             @"(?:^|\s)§?((http§?s?:\/\/)?§?(www\.)§?[a-zA-Z0-9]§?(?:[a-zA-Z0-9-]*§?[a-zA-Z0-9]*)?§?\.§?[a-zA-Z]{2,30}§?[a-zA-Z]{0,33}§?(\/[^\s]*)?)§?(?=\s|$)",
             RegexOptions.Compiled);
@@ -45,56 +47,64 @@ namespace DCL.UI.InputFieldValidator
             if (pos <= 0 || text.Length == 0)
                 return;
 
-            mainStringBuilder.Clear();
-            mainStringBuilder.Append(text).Insert(pos, TAG);
-
-            ProcessMainStringBuilder(ref pos);
-
-            text = mainStringBuilder.ToString();
-
-            //Not Ideal implementation, but other methods are much more convoluted,
-            //will try to find something better before merging to dev
-            int tag = text.IndexOf(TAG, StringComparison.InvariantCulture);
-            int tag2 = text.LastIndexOf(TAG, StringComparison.InvariantCulture);
-
-            if (tag != tag2) { pos = tag2 - 1; }
-            else { pos = tag; }
-
-            text = mainStringBuilder.Replace(TAG, "").ToString();
+            PerformValidation(ref text, ref pos);
         }
 
         public override char Validate(ref string text, ref int pos, char ch)
+            => PerformValidation(ref text, ref pos, ch);
+
+
+        private char PerformValidation(ref string text, ref int pos, char ch = default)
         {
             mainStringBuilder.Clear();
-            mainStringBuilder.Append(text).Insert(pos, ch);
-            ProcessMainStringBuilder(ref pos);
-            text = mainStringBuilder.ToString();
+            mainStringBuilder.Append(text.AsSpan(0, pos));
+
+            if (ch != default)
+                mainStringBuilder.Append(ch);
+
+            mainStringBuilder.Append(TAG_STRING);
+
+            mainStringBuilder.Append(text.AsSpan(pos));
+
+            ProcessMainStringBuilder();
+            pos = GetPositionFromTag(mainStringBuilder);
+            text = mainStringBuilder.Remove(pos,1).ToString();
             return ch;
         }
 
-        private void ProcessMainStringBuilder(ref int pos)
+        private int GetPositionFromTag(StringBuilder stringBuilder)
         {
-            int originalLength = mainStringBuilder.Length;
+            int length = stringBuilder.Length;
 
+            for (int i = 0; i < length; i++)
+            {
+                if (stringBuilder[i] == TAG_CHAR)
+                    return i;
+            }
+            return 0;
+        }
+
+        private void ProcessMainStringBuilder()
+        {
             RemoveLinkTags(mainStringBuilder);
             ReplaceMatches(RICH_TEXT_TAG_REGEX, mainStringBuilder, ReplaceRichTextTags);
             ReplaceMatches(WEBSITE_REGEX, mainStringBuilder, WrapWithUrlLink);
             ReplaceMatches(SCENE_REGEX, mainStringBuilder, WrapWithSceneLink);
             ReplaceMatches(WORLD_REGEX, mainStringBuilder, WrapWithWorldLink);
-
-            int lengthDifference = mainStringBuilder.Length - originalLength;
-            pos += lengthDifference + 1;
         }
 
-        private void RemoveLinkTags(StringBuilder sb)
+        private void RemoveLinkTags(StringBuilder stringBuilder)
         {
-            MatchCollection matches = LINK_TAG_REGEX.Matches(sb.ToString());
+            var text = stringBuilder.ToString();
+            MatchCollection matches = LINK_TAG_REGEX.Matches(text);
 
             for (int i = matches.Count - 1; i >= 0; i--)
             {
                 Match match = matches[i];
-                sb.Remove(match.Index, match.Length);
-                sb.Insert(match.Index, match.Groups[2]);
+                stringBuilder.Clear()
+                             .Append(text.AsSpan(0, match.Index))
+                             .Append(match.Groups[2])
+                             .Append(text.AsSpan(match.Index + match.Length));
             }
         }
 
@@ -105,9 +115,7 @@ namespace DCL.UI.InputFieldValidator
             for (var i = 0; i < match.Value.Length; i++)
             {
                 char c = match.Value[i];
-
-                tempStringBuilder.Append(c == '<' ? '‹' :
-                    c == '>' ? '›' : c);
+                tempStringBuilder.Append(c == '<' ? '‹' : c == '>' ? '›' : c);
             }
 
             return tempStringBuilder;
@@ -115,7 +123,8 @@ namespace DCL.UI.InputFieldValidator
 
         private void ReplaceMatches(Regex regex, StringBuilder stringBuilder, Func<Match, StringBuilder> evaluator)
         {
-            MatchCollection matches = regex.Matches(stringBuilder.ToString());
+            var text = stringBuilder.ToString();
+            MatchCollection matches = regex.Matches(text);
 
             if (matches.Count == 0)
                 return;
@@ -123,8 +132,10 @@ namespace DCL.UI.InputFieldValidator
             for (int i = matches.Count - 1; i >= 0; i--)
             {
                 Match match = matches[i];
-                stringBuilder.Remove(match.Index, match.Length);
-                stringBuilder.Insert(match.Index, evaluator(match));
+                stringBuilder.Clear()
+                             .Append(text.AsSpan(0, match.Index))
+                             .Append(evaluator(match))
+                             .Append(text.AsSpan(match.Index + match.Length));
             }
         }
 
@@ -141,11 +152,16 @@ namespace DCL.UI.InputFieldValidator
         {
             tempStringBuilder.Clear();
             string linkTypeString = string.Empty;
+            string matchWithoutTag = match.Value.Replace(TAG_STRING, "");
 
             //Validate here if these are valid before creating the links
             switch (linkType)
             {
                 case LinkType.SCENE:
+                    string[] splitCords = matchWithoutTag.Split(',');
+                    if (splitCords.Length != 2 ||
+                        !AreCoordsValid(int.Parse(splitCords[0]), int.Parse(splitCords[1])))
+                        return tempStringBuilder.Append(match);
                     linkTypeString = SCENE;
                     break;
                 case LinkType.WORLD:
@@ -161,14 +177,17 @@ namespace DCL.UI.InputFieldValidator
 
             tempStringBuilder.Append(linkOpeningStyle)
                              .Append(linkTypeString)
-                             .Append(':')
-                             .Append(match.Value)
+                             .Append('=')
+                             .Append(matchWithoutTag)
                              .Append(">")
-                             .Append(match.Value)
+                             .Append(match)
                              .Append(linkClosingStyle);
 
             return tempStringBuilder;
         }
+
+        private bool AreCoordsValid(int x, int y) =>
+            GenesisCityData.IsInsideBounds(x, y);
 
         private enum LinkType
         {
