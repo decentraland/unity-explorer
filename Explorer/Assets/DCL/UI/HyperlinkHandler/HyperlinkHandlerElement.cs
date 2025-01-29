@@ -17,6 +17,7 @@ namespace DCL.UI.HyperlinkHandler
         private const string WORLD = "world";
         private const string URL = "url";
         private const string USER = "user";
+        private const string REALM_CHANGE_CONFIRMATION_MESSAGE = "Are you sure you want to enter this realm?";
 
         [SerializeField] private TMP_Text textComponent;
         [SerializeField] private TMP_StyleSheet styleSheet;
@@ -125,7 +126,7 @@ namespace DCL.UI.HyperlinkHandler
 
         private void HandleWorldLink(string sceneName)
         {
-            ChangeRealmAsync("Are ya sure ya wanna go there?", sceneName).Forget();
+            ChangeRealmAsync(REALM_CHANGE_CONFIRMATION_MESSAGE, sceneName).Forget();
         }
 
         private void HandleSceneLink(string itemId)
