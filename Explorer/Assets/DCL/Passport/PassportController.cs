@@ -23,6 +23,7 @@ using DCL.Passport.Modules;
 using DCL.Passport.Modules.Badges;
 using DCL.Profiles;
 using DCL.Profiles.Self;
+using DCL.UI;
 using DCL.Utilities;
 using DCL.Web3;
 using DCL.WebRequests;
@@ -44,6 +45,7 @@ namespace DCL.Passport
             NOTIFICATION
         }
 
+        private const int MUTUAL_PAGE_SIZE = 3;
         private static readonly int BG_SHADER_COLOR_1 = Shader.PropertyToID("_Color1");
 
         private readonly ICursor cursor;
@@ -71,6 +73,7 @@ namespace DCL.Passport
         private readonly ICameraReelStorageService cameraReelStorageService;
         private readonly ICameraReelScreenshotsStorage cameraReelScreenshotsStorage;
         private readonly ObjectProxy<IFriendsService> friendServiceProxy;
+        private readonly Dictionary<ImageView, ImageController> mutualFriendImages = new ();
         private readonly int gridLayoutFixedColumnCount;
         private readonly int thumbnailHeight;
         private readonly int thumbnailWidth;
@@ -86,6 +89,7 @@ namespace DCL.Passport
         private CancellationTokenSource? photoLoadingCts;
         private CancellationTokenSource? friendshipStatusCts;
         private CancellationTokenSource? friendshipOperationCts;
+        private CancellationTokenSource? fetchMutualFriendsCts;
         private PassportErrorsController? passportErrorsController;
         private PassportCharacterPreviewController? characterPreviewController;
         private PassportSection currentSection;
@@ -193,6 +197,20 @@ namespace DCL.Passport
 
             viewInstance.PhotosSectionButton.gameObject.SetActive(enableCameraReel);
             viewInstance.FriendInteractionContainer.SetActive(enableFriendshipInteractions);
+
+            InstantiateMutualThumbnailControllers();
+            return;
+
+            void InstantiateMutualThumbnailControllers()
+            {
+                var config = viewInstance!.MutualFriends;
+                for (var i = 0; i < config.Thumbnails.Length; i++)
+                {
+                    ImageView view = config.Thumbnails[i].Image;
+                    var controller = new ImageController(view, webRequestController);
+                    mutualFriendImages[view] = controller;
+                }
+            }
         }
 
         private void OnPublishError()
@@ -217,7 +235,10 @@ namespace DCL.Passport
             viewInstance!.ErrorNotification.Hide(true);
 
             if (enableFriendshipInteractions)
+            {
                 ShowFriendshipInteraction();
+                ShowMutualFriends();
+            }
 
             PassportOpened?.Invoke(currentUserId, isOwnProfile);
         }
@@ -257,6 +278,7 @@ namespace DCL.Passport
             characterPreviewController?.Dispose();
             friendshipStatusCts.SafeCancelAndDispose();
             friendshipOperationCts.SafeCancelAndDispose();
+            fetchMutualFriendsCts?.SafeCancelAndDispose();
             photoLoadingCts.SafeCancelAndDispose();
 
             passportProfileInfoController.OnProfilePublished -= OnProfilePublished;
@@ -456,6 +478,48 @@ namespace DCL.Passport
                         viewInstance!.AcceptFriendButton.gameObject.SetActive(true);
                         break;
                     case FriendshipStatus.BLOCKED: break;
+                }
+            }
+        }
+
+        private void ShowMutualFriends()
+        {
+            var config = viewInstance!.MutualFriends;
+            config.Root.SetActive(false);
+
+            if (inputData.IsOwnProfile) return;
+            if (!friendServiceProxy.Configured) return;
+
+            IFriendsService friendService = friendServiceProxy.Object!;
+
+            fetchMutualFriendsCts = fetchMutualFriendsCts.SafeRestart();
+            FetchMutualFriendsAsync(fetchMutualFriendsCts.Token).Forget();
+            return;
+
+            async UniTaskVoid FetchMutualFriendsAsync(CancellationToken ct)
+            {
+                foreach (var thumbnail in config.Thumbnails)
+                    thumbnail.Root.SetActive(false);
+
+                config.Root.SetActive(false);
+
+                // We only request the first page so we show a couple of mutual thumbnails. This is by design
+                PaginatedFriendsResult mutualFriendsResult = await friendService.GetMutualFriendsAsync(
+                    inputData.UserId, 1, MUTUAL_PAGE_SIZE, ct);
+
+                config.Root.SetActive(mutualFriendsResult.Friends.Count > 0);
+                config.AmountLabel.text = $"{mutualFriendsResult.TotalAmount} Mutual";
+
+                var mutualConfig = config.Thumbnails;
+
+                for (var i = 0; i < mutualConfig.Length; i++)
+                {
+                    bool friendExists = i < mutualFriendsResult.Friends.Count;
+                    mutualConfig[i].Root.SetActive(friendExists);
+                    if (!friendExists) continue;
+                    FriendProfile mutualFriend = mutualFriendsResult.Friends[i];
+                    ImageView view = mutualConfig[i].Image;
+                    mutualFriendImages[view].RequestImage(mutualFriend.FacePictureUrl);
                 }
             }
         }

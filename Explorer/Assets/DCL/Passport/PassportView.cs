@@ -6,6 +6,8 @@ using DCL.Passport.Modules.Badges;
 using DCL.UI;
 using MVC;
 using SoftMasking;
+using System;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -93,6 +95,24 @@ namespace DCL.Passport
 
         [field: SerializeField]
         public Button CancelFriendButton { get; private set; }
+
+        [field: SerializeField]
+        public MutualFriendsConfig MutualFriends { get; private set; }
+
+        [Serializable]
+        public struct MutualFriendsConfig
+        {
+            public GameObject Root;
+            public MutualThumbnail[] Thumbnails;
+            public TMP_Text AmountLabel;
+
+            [Serializable]
+            public struct MutualThumbnail
+            {
+                public GameObject Root;
+                public ImageView Image;
+            }
+        }
 
 #if UNITY_EDITOR
         private void Awake()
