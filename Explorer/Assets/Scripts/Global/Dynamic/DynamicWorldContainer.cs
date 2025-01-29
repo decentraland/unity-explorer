@@ -501,7 +501,6 @@ namespace Global.Dynamic
             var connectionStatusPanelPlugin = new ConnectionStatusPanelPlugin(userInAppInAppInitializationFlow, mvcManager, mainUIView, roomsStatus, currentSceneInfo, reloadSceneController, globalWorld, playerEntity, debugBuilder, chatCommandsBus);
             var chatTeleporter = new ChatTeleporter(realmNavigator, new ChatEnvironmentValidator(bootstrapContainer.Environment), bootstrapContainer.DecentralandUrlsSource);
 
-            ClearChatCommand clearChatCommand = new ClearChatCommand();
 
             var chatCommands = new List<IChatCommand>
             {
@@ -510,10 +509,10 @@ namespace Global.Dynamic
                 new WorldChatCommand(chatTeleporter),
                 new DebugPanelChatCommand(debugBuilder, chatCommandsBus),
                 new ShowEntityChatCommand(worldInfoHub),
-                clearChatCommand,
                 new ReloadSceneChatCommand(reloadSceneController),
                 new LoadPortableExperienceChatCommand(staticContainer.PortableExperiencesController, staticContainer.FeatureFlagsCache),
                 new KillPortableExperienceChatCommand(staticContainer.PortableExperiencesController, staticContainer.FeatureFlagsCache),
+                new ClearChatCommand(chatCommandsBus),
             };
 
             chatCommands.Add(new HelpChatCommand(chatCommands, appArgs));
@@ -666,9 +665,9 @@ namespace Global.Dynamic
                     mainUIView,
                     staticContainer.InputBlock,
                     globalWorld,
-                    clearChatCommand,
                     playerEntity,
-                    viewDependencies),
+                    viewDependencies,
+                    chatCommandsBus),
                 new ExplorePanelPlugin(
                     assetsProvisioner,
                     mvcManager,

@@ -3,16 +3,14 @@ using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Chat;
+using DCL.Chat.Commands;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
-using DCL.Clipboard;
 using DCL.Emoji;
 using DCL.Input;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
-using DCL.UI.HyperlinkHandler;
 using DCL.UI.MainUI;
-using Global.Dynamic.ChatCommands;
 using MVC;
 using System;
 using System.Threading;
@@ -34,7 +32,7 @@ namespace DCL.PluginSystem.Global
         private readonly Entity playerEntity;
         private readonly MainUIView mainUIView;
         private readonly ViewDependencies viewDependencies;
-        private readonly ClearChatCommand clearChatCommand;
+        private readonly IChatCommandsBus chatCommandsBus;
 
         private ChatController chatController;
 
@@ -48,9 +46,9 @@ namespace DCL.PluginSystem.Global
             MainUIView mainUIView,
             IInputBlock inputBlock,
             Arch.Core.World world,
-            ClearChatCommand clearChatCommand,
             Entity playerEntity,
-            ViewDependencies viewDependencies)
+            ViewDependencies viewDependencies,
+            IChatCommandsBus chatCommandsBus)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -62,9 +60,9 @@ namespace DCL.PluginSystem.Global
             this.world = world;
             this.playerEntity = playerEntity;
             this.viewDependencies = viewDependencies;
+            this.chatCommandsBus = chatCommandsBus;
             this.mainUIView = mainUIView;
             this.inputBlock = inputBlock;
-            this.clearChatCommand = clearChatCommand;
         }
 
         public void Dispose() { }
@@ -90,10 +88,9 @@ namespace DCL.PluginSystem.Global
                 world,
                 playerEntity,
                 inputBlock,
-                viewDependencies
+                viewDependencies,
+                chatCommandsBus
             );
-
-            clearChatCommand.ChatController = chatController;
 
             mvcManager.RegisterController(chatController);
         }

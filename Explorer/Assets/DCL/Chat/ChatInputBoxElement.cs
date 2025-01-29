@@ -22,7 +22,7 @@ namespace DCL.Chat
         public delegate void InputChangedDelegate(string input);
         public delegate void InputSubmittedDelegate(string message, string origin);
 
-        private const string EMOJI_SUGGESTION_PATTERN = @":\w+";
+        private const string EMOJI_SUGGESTION_PATTERN = @"(?<!https?:)(:\w+)";
         private const string ORIGIN = "chat";
         private static readonly Regex EMOJI_PATTERN_REGEX = new (EMOJI_SUGGESTION_PATTERN, RegexOptions.Compiled);
 
@@ -150,7 +150,7 @@ namespace DCL.Chat
         /// <param name="text">The new content of the input box.</param>
         public void FocusInputBoxWithText(string text)
         {
-            if (gameObject.activeInHierarchy && validatedInputField.IsFocused)
+            if (validatedInputField.IsFocused)
                 validatedInputField.SelectInputField(text);
         }
 

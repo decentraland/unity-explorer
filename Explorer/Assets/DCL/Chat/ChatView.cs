@@ -27,10 +27,6 @@ namespace DCL.Chat
         [SerializeField]
         private float BackgroundFadeTime = 0.2f;
 
-        [Tooltip("The maximum amount of character allowed in the input box.")]
-        [SerializeField]
-        private int MaxMessageLength = 250;
-
         [Header("UI elements")]
         [FormerlySerializedAs("ChatBubblesToggle")]
         [SerializeField]
@@ -48,20 +44,11 @@ namespace DCL.Chat
         private Button closeChatButton;
 
         [SerializeField]
-        private RectTransform pastePopupPosition;
-
-        [SerializeField]
         private ChatMessageViewerElement chatMessageViewer;
 
         [Header("Audio")]
         [SerializeField]
-        private AudioClipConfig chatSendMessageAudio;
-
-        [SerializeField]
         private AudioClipConfig chatReceiveMessageAudio;
-
-        [SerializeField]
-        private AudioClipConfig chatInputTextAudio;
 
         private IReadOnlyList<ChatMessage> chatMessages;
 
