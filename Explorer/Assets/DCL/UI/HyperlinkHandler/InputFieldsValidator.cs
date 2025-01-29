@@ -48,7 +48,9 @@ namespace DCL.UI.InputFieldValidator
             mainStringBuilder.Clear();
             mainStringBuilder.Append(text).Insert(pos, TAG);
 
-            text = ProcessWord(ref pos);
+            ProcessMainStringBuilder(ref pos);
+
+            text = mainStringBuilder.ToString();
 
             //Not Ideal implementation, but other methods are much more convoluted,
             //will try to find something better before merging to dev
@@ -58,21 +60,19 @@ namespace DCL.UI.InputFieldValidator
             if (tag != tag2) { pos = tag2 - 1; }
             else { pos = tag; }
 
-            text = text.Replace(TAG, "");
+            text = mainStringBuilder.Replace(TAG, "").ToString();
         }
 
         public override char Validate(ref string text, ref int pos, char ch)
         {
             mainStringBuilder.Clear();
             mainStringBuilder.Append(text).Insert(pos, ch);
-
-            pos++;
-
-            text = ProcessWord(ref pos);
+            ProcessMainStringBuilder(ref pos);
+            text = mainStringBuilder.ToString();
             return ch;
         }
 
-        private string ProcessWord(ref int pos)
+        private void ProcessMainStringBuilder(ref int pos)
         {
             int originalLength = mainStringBuilder.Length;
 
@@ -83,9 +83,7 @@ namespace DCL.UI.InputFieldValidator
             ReplaceMatches(WORLD_REGEX, mainStringBuilder, WrapWithWorldLink);
 
             int lengthDifference = mainStringBuilder.Length - originalLength;
-            pos += lengthDifference;
-
-            return mainStringBuilder.ToString();
+            pos += lengthDifference + 1;
         }
 
         private void RemoveLinkTags(StringBuilder sb)
