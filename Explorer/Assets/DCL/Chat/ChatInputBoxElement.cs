@@ -60,7 +60,7 @@ namespace DCL.Chat
 
         public string InputBoxText
         {
-            get => validatedInputField.GetText();
+            get => validatedInputField.InputText;
             set => validatedInputField.SetText(value);
         }
 
@@ -93,19 +93,17 @@ namespace DCL.Chat
         {
             device = InputSystem.GetDevice<Mouse>();
 
-            characterCounter.SetMaximumLength(inputField.characterLimit);
+            characterCounter.SetMaximumLength(validatedInputField.CharacterLimit);
             characterCounter.gameObject.SetActive(false);
 
-            inputField.onSelect.AddListener(OnInputSelected);
-            inputField.onDeselect.AddListener(OnInputDeselected);
-
             InitializeEmojiController();
+
+            validatedInputField.InputFieldSelectionChanged += OnInputFieldSelectionChanged;
+            validatedInputField.InputValidated += OnInputValidated;
 
             viewDependencies.DclInput.UI.RightClick.performed += OnRightClickRegistered;
 
             closePopupTask = new UniTaskCompletionSource();
-
-            validatedInputField.OnInputValidated += OnInputChanged;
         }
 
         /// <summary>
@@ -114,13 +112,13 @@ namespace DCL.Chat
         public void DisableInputBoxSubmissions()
         {
             viewDependencies.ClipboardManager.OnPaste -= PasteClipboardText;
-            validatedInputField.OnSubmit -= OnSubmit;
+            validatedInputField.InputFieldSubmit -= InputFieldSubmit;
             validatedInputField.DeactivateInputField();
         }
 
         public void EnableInputBoxSubmissions()
         {
-            validatedInputField.OnSubmit += OnSubmit;
+            validatedInputField.InputFieldSubmit += InputFieldSubmit;
         }
 
         public void OnViewHide()
@@ -132,12 +130,12 @@ namespace DCL.Chat
         {
             if (emojiSuggestionPanelController is { IsActive: true }) return;
 
-            if (validatedInputField.IsFocused()) return;
+            if (validatedInputField.IsFocused) return;
 
             validatedInputField.SelectInputField();
         }
 
-        private void OnInputChanged(string inputText)
+        private void OnInputValidated(string inputText)
         {
             HandleEmojiSearch(inputText);
             UIAudioEventsBus.Instance.SendPlayAudioEvent(chatInputTextAudio);
@@ -152,7 +150,7 @@ namespace DCL.Chat
         /// <param name="text">The new content of the input box.</param>
         public void FocusInputBoxWithText(string text)
         {
-            if (gameObject.activeInHierarchy && validatedInputField.IsFocused())
+            if (gameObject.activeInHierarchy && validatedInputField.IsFocused)
                 validatedInputField.SelectInputField(text);
         }
 
@@ -213,8 +211,8 @@ namespace DCL.Chat
                     closePopupTask.Task);
 
                 viewDependencies.GlobalUIViews.ShowPastePopupToastAsync(data);
-                inputField.ActivateInputField();
-                InputChanged?.Invoke(inputField.text);
+                validatedInputField.ActivateInputField();
+                InputChanged?.Invoke(validatedInputField.InputText);
             }
         }
 
@@ -236,10 +234,16 @@ namespace DCL.Chat
         private void PasteClipboardText(object sender, string pastedText)
         {
             validatedInputField.InsertTextAtSelectedPosition(pastedText);
-            characterCounter.SetCharacterCount(validatedInputField.GetTextLength());
+            characterCounter.SetCharacterCount(validatedInputField.TextLength);
         }
 
-        private void OnInputDeselected(string inputText)
+        private void OnInputFieldSelectionChanged(bool isSelected)
+        {
+            if (isSelected) OnInputSelected();
+            else OnInputDeselected();
+        }
+
+        private void OnInputDeselected()
         {
             isInputSelected = false;
             emojiPanelButton.SetColor(false);
@@ -247,7 +251,7 @@ namespace DCL.Chat
             InputBoxSelectionChanged?.Invoke(false);
         }
 
-        private void OnInputSelected(string inputText)
+        private void OnInputSelected()
         {
             InputBoxSelectionChanged?.Invoke(true);
 
@@ -260,7 +264,7 @@ namespace DCL.Chat
             characterCounter.gameObject.SetActive(true);
         }
 
-        private void OnSubmit(string _)
+        private void InputFieldSubmit(string _)
         {
             if (emojiSuggestionPanelController is { IsActive: true })
             {
@@ -275,7 +279,7 @@ namespace DCL.Chat
                 EmojiSelectionVisibilityChanged?.Invoke(false);
             }
 
-            if (string.IsNullOrWhiteSpace(validatedInputField.GetText()))
+            if (string.IsNullOrWhiteSpace(validatedInputField.InputText))
             {
                 validatedInputField.DeactivateInputField();
                 validatedInputField.DeselectInputField();
@@ -284,7 +288,7 @@ namespace DCL.Chat
 
             //Send message and clear Input Field
             UIAudioEventsBus.Instance.SendPlayAudioEvent(chatSendMessageAudio);
-            string messageToSend = validatedInputField.GetText();
+            string messageToSend = validatedInputField.InputText;
 
             validatedInputField.ResetInputField();
 
@@ -323,11 +327,11 @@ namespace DCL.Chat
 
         private void AddEmojiFromSuggestion(string emojiCode, bool shouldClose)
         {
-            if (!validatedInputField.IsWithinCharacterLimit()) return;
+            if (!validatedInputField.IsWithinCharacterLimit(emojiCode.Length)) return;
 
             UIAudioEventsBus.Instance.SendPlayAudioEvent(addEmojiAudio);
 
-            inputField.SetTextWithoutNotify(inputField.text.Replace(EMOJI_PATTERN_REGEX.Match(inputField.text).Value, emojiCode));
+            inputField.SetTextWithoutNotify(inputField.text.Replace(EMOJI_PATTERN_REGEX.Match(validatedInputField.InputText).Value, emojiCode));
             inputField.stringPosition += emojiCode.Length;
 
             validatedInputField.ActivateInputField();
@@ -342,13 +346,7 @@ namespace DCL.Chat
 
             if (!validatedInputField.IsWithinCharacterLimit(emoji.Length)) return;
 
-            int caretPosition = validatedInputField.GetStringPosition();
-
-            inputField.text = inputField.text.Insert(caretPosition, emoji);
-
-            inputField.stringPosition += emoji.Length;
-
-            inputField.ActivateInputField();
+            validatedInputField.InsertTextAtSelectedPosition(emoji);
         }
 
         private void HandleEmojiSearch(string inputText)

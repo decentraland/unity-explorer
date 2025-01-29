@@ -2,17 +2,25 @@ using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
-using UnityEngine.UI;
 
 namespace DCL.UI.InputFieldValidator
 {
     [RequireComponent(typeof(TMP_InputField))]
-    public class ValidatedInputFieldElement : MonoBehaviour //Maybe this is better? analyze if it makes sense or not?!
+    public class ValidatedInputFieldElement : MonoBehaviour
     {
+        public delegate void InputFieldInputValidatedDelegate(string validatedInput);
+        public delegate void InputFieldSelectionChangedDelegate(bool isSelected);
+        public delegate void InputFieldSubmitDelegate(string submittedInput);
+
         [SerializeField] private TMP_InputField inputField;
         [SerializeField] private InputFieldsValidator fieldsValidator;
 
-        private int lastLenght;
+        private int lastTextLenght;
+
+        public int CharacterLimit => inputField.characterLimit;
+        public int TextLength => inputField.text.Length;
+        public string InputText => inputField.text;
+        public bool IsFocused => inputField.isFocused;
 
         private void Awake()
         {
@@ -21,30 +29,19 @@ namespace DCL.UI.InputFieldValidator
             fieldsValidator.InitializeStyles();
             inputField.onValueChanged.AddListener(Validate);
             inputField.onSubmit.AddListener(Submit);
+            inputField.onSelect.AddListener(OnInputFieldSelected);
+            inputField.onDeselect.AddListener(OnInputFieldDeselected);
         }
 
-        public int GetTextLength() =>
-            inputField.text.Length;
+        public event InputFieldSubmitDelegate InputValidated;
+        public event InputFieldInputValidatedDelegate InputFieldSubmit;
+        public event InputFieldSelectionChangedDelegate InputFieldSelectionChanged;
 
         public void DeactivateInputField() =>
             inputField.DeactivateInputField();
 
         public void ActivateInputField() =>
             inputField.ActivateInputField();
-
-        public string GetText() =>
-            inputField.text;
-
-        public bool IsFocused() =>
-            inputField.isFocused;
-
-        /// <summary>
-        ///     Represents the position of the caret in the real string (disregarding hidden or replaced text)
-        ///     for example, an emoji occupies only 1 "space" visually but actually is represented internally in Unicode so it takes 10 chars in reality)
-        ///     or for example a rich text tag is invisible, but still takes 3 or more spaces
-        /// </summary>
-        public int GetStringPosition() =>
-            inputField.stringPosition;
 
         /// <summary>
         ///     Sets the current content of the input field.
@@ -62,16 +59,20 @@ namespace DCL.UI.InputFieldValidator
         public bool IsWithinCharacterLimit(int newTextLenght = 0) =>
             inputField.text.Length + newTextLenght < inputField.characterLimit;
 
-        public event Action<string> OnInputValidated;
-        public event Action<string> OnSubmit;
-
-        /// <summary>
-        ///     Selects the input field, gives it focus, replaces its content if the text is not null and moves the caret to its correct position.
-        /// </summary>
         public void InsertTextAtSelectedPosition(string text)
         {
             InsertTextAtPosition(text, inputField.stringPosition);
             inputField.OnSelect(null);
+        }
+
+        private void OnInputFieldSelected(string _)
+        {
+            InputFieldSelectionChanged?.Invoke(true);
+        }
+
+        private void OnInputFieldDeselected(string _)
+        {
+            InputFieldSelectionChanged?.Invoke(false);
         }
 
         /// <summary>
@@ -127,12 +128,12 @@ namespace DCL.UI.InputFieldValidator
 
         private void Submit(string text)
         {
-            OnSubmit?.Invoke(text);
+            InputFieldSubmit?.Invoke(text);
         }
 
         private void Validate(string text)
         {
-            if (lastLenght > text.Length)
+            if (lastTextLenght > text.Length)
             {
                 int position = inputField.stringPosition;
                 fieldsValidator.ValidateOnBackspace(ref text, ref position);
@@ -140,8 +141,8 @@ namespace DCL.UI.InputFieldValidator
                 inputField.stringPosition = position;
             }
 
-            lastLenght = text.Length;
-            OnInputValidated?.Invoke(text);
+            lastTextLenght = text.Length;
+            InputValidated?.Invoke(text);
         }
     }
 }
