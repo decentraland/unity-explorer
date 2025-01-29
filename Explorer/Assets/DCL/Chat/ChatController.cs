@@ -73,6 +73,12 @@ namespace DCL.Chat
             this.viewDependencies = viewDependencies;
         }
 
+        public void Clear() // Called by a command
+        {
+            chatHistory.ClearChannel(viewInstance!.CurrentChannel);
+            viewInstance!.RefreshMessages();
+        }
+
         protected override void OnViewInstantiated()
         {
             cameraEntity = world.CacheCamera();
@@ -80,10 +86,9 @@ namespace DCL.Chat
             //We start processing messages once the view is ready
             chatMessagesBus.MessageAdded += OnChatBusMessageAdded;
             chatHistory.MessageAdded += CreateChatEntry;
-            chatHistory.Cleared += OnChatHistoryCleared;
 
             viewInstance!.InjectDependencies(viewDependencies);
-            viewInstance!.Initialize(chatHistory.Messages, nametagsData.showChatBubbles);
+            viewInstance!.Initialize(chatHistory.Channels, ChatChannel.NEARBY_CHANNEL, nametagsData.showChatBubbles, chatEntryConfiguration);
 
             viewInstance.PointerEnter += OnChatViewPointerEnter;
             viewInstance.PointerExit += OnChatViewPointerExit;
@@ -93,13 +98,11 @@ namespace DCL.Chat
             viewInstance.ChatBubbleVisibilityChanged += OnViewChatBubbleVisibilityChanged;
             viewInstance.InputSubmitted += OnViewInputSubmitted;
 
-            viewInstance.CalculateUsernameColor = CalculateUsernameColor;
-
             OnFocus();
 
             // Intro message
             // TODO: Use localization systems here:
-            chatHistory.AddMessage(ChatMessage.NewFromSystem("Type /help for available commands."));
+            chatHistory.AddMessage(ChatChannel.NEARBY_CHANNEL, ChatMessage.NewFromSystem("Type /help for available commands."));
         }
 
         protected override void OnBlur()
@@ -136,7 +139,6 @@ namespace DCL.Chat
         {
             chatMessagesBus.MessageAdded -= OnChatBusMessageAdded;
             chatHistory.MessageAdded -= CreateChatEntry;
-            chatHistory.Cleared -= OnChatHistoryCleared;
 
             viewInstance!.PointerEnter -= OnChatViewPointerEnter;
             viewInstance.PointerExit -= OnChatViewPointerExit;
@@ -158,7 +160,7 @@ namespace DCL.Chat
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
             UniTask.Never(ct);
 
-        private void CreateChatEntry(ChatMessage chatMessage)
+        private void CreateChatEntry(ChatChannel channel, ChatMessage chatMessage)
         {
             // Chat bubble over the avatars
             if (chatMessage.SentByOwnUser == false && entityParticipantTable.TryGet(chatMessage.WalletAddress, out IReadOnlyEntityParticipantTable.Entry entry))
@@ -173,9 +175,6 @@ namespace DCL.Chat
             // New entry in the chat window
             viewInstance!.RefreshMessages();
         }
-
-        private Color CalculateUsernameColor(ChatMessage chatMessage) =>
-            chatEntryConfiguration.GetNameColor(chatMessage.SenderValidatedName);
 
         private void GenerateChatBubbleComponent(Entity e, ChatMessage chatMessage)
         {
@@ -202,9 +201,9 @@ namespace DCL.Chat
             ChatBubbleVisibilityChanged?.Invoke(isVisible);
         }
 
-        private void OnViewInputSubmitted(string message, string origin)
+        private void OnViewInputSubmitted(ChatChannel channel, string message, string origin)
         {
-            chatMessagesBus.Send(message, origin);
+            chatMessagesBus.Send(channel.Id, message, origin);
         }
 
         private void OnViewEmojiSelectionVisibilityChanged(bool isVisible)
@@ -255,14 +254,9 @@ namespace DCL.Chat
             viewInstance!.FocusInputBox();
         }
 
-        private void OnChatBusMessageAdded(ChatMessage chatMessage)
+        private void OnChatBusMessageAdded(ChatChannel.ChannelId channelId, ChatMessage chatMessage)
         {
-            chatHistory.AddMessage(chatMessage);
-        }
-
-        private void OnChatHistoryCleared()
-        {
-            viewInstance!.RefreshMessages();
+            chatHistory.AddMessage(channelId, chatMessage);
         }
     }
 }
