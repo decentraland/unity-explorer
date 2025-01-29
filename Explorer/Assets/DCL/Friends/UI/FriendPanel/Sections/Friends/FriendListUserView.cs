@@ -11,6 +11,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         [field: SerializeField] public Button JumpInButton { get; private set; }
 
         [field: Header("Online status")]
+        [field: SerializeField] public GameObject OnlineStatusContainer { get; private set; }
         [field: SerializeField] public TMP_Text OnlineStatusText { get; private set; }
         [field: SerializeField] public Image OnlineStatusColorIndicator { get; private set; }
         [field: SerializeField] public OnlineStatusConfiguration OnlineStatusConfiguration { get; private set; }
@@ -30,7 +31,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 
         public void ToggleOnlineStatus(bool isActive)
         {
-            OnlineStatusText.gameObject.SetActive(isActive);
+            OnlineStatusContainer.SetActive(isActive);
             OnlineStatusColorIndicator.gameObject.SetActive(isActive);
             if (!isActive)
                 buttons = new[] { ContextMenuButton };

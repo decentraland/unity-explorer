@@ -13,7 +13,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
         [field: SerializeField] public Button DeleteButton { get; private set; }
         [field: SerializeField] public Button AcceptButton { get; private set; }
         [field: SerializeField] public TMP_Text RequestDateText { get; private set; }
-        [field: SerializeField] public TMP_Text MessagePreviewText { get; private set; }
+        [field: SerializeField] public GameObject HasMessageIndicator { get; private set; }
 
         private DateTime requestDate;
         public DateTime RequestDate

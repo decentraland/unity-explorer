@@ -14,7 +14,6 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
         private const int USER_ELEMENT_INDEX = 0;
         private const int STATUS_ELEMENT_INDEX = 1;
         private const int EMPTY_ELEMENT_INDEX = 2;
-        private const int MAX_REQUEST_MESSAGE_PREVIEW_LENGTH = 23;
 
         private readonly LoopListView2 loopListView;
         private readonly CancellationTokenSource modifyRequestsCts = new ();
@@ -130,7 +129,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
 
             FriendRequest request = section == FriendPanelStatus.RECEIVED ? receivedRequests[collectionIndex] : sentRequests[collectionIndex];
             elementView.RequestDate = request.Timestamp;
-            elementView.MessagePreviewText.SetText(request.MessageBody.Length > MAX_REQUEST_MESSAGE_PREVIEW_LENGTH ? $"{request.MessageBody.Substring(0, MAX_REQUEST_MESSAGE_PREVIEW_LENGTH)}..." : request.MessageBody);
+            elementView.HasMessageIndicator.SetActive(!string.IsNullOrEmpty(request.MessageBody));
         }
 
         protected override void ResetCollections()

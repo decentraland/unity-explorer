@@ -101,7 +101,7 @@ namespace DCL.Friends
 
                         var fr = new FriendRequest(
                             request.Id,
-                            DateTimeOffset.FromUnixTimeSeconds(request.CreatedAt).DateTime,
+                            DateTimeOffset.FromUnixTimeMilliseconds(request.CreatedAt).DateTime,
                             ToClientFriendProfile(request.Friend),
                             ToClientFriendProfile(myProfile!),
                             request.HasMessage ? request.Message : string.Empty);
@@ -327,7 +327,7 @@ namespace DCL.Friends
             Profile? myProfile = await selfProfile.ProfileAsync(ct);
 
             var fr = new FriendRequest(response.Id,
-                DateTimeOffset.FromUnixTimeSeconds(response.CreatedAt).DateTime,
+                DateTimeOffset.FromUnixTimeMilliseconds(response.CreatedAt).DateTime,
                 ToClientFriendProfile(myProfile!),
                 ToClientFriendProfile(response.Friend),
                 messageBody);
@@ -425,7 +425,7 @@ namespace DCL.Friends
                     {
                         var fr = new FriendRequest(
                             rr.Id,
-                            DateTimeOffset.FromUnixTimeSeconds(rr.CreatedAt).DateTime,
+                            DateTimeOffset.FromUnixTimeMilliseconds(rr.CreatedAt).DateTime,
                             ToClientFriendProfile(rr.Friend),
                             ToClientFriendProfile(myProfile!),
                             rr.Message);
