@@ -44,6 +44,7 @@ namespace DCL.PluginSystem.World
         private readonly ILazyMaxSize lazyMaxSize;
         private readonly ITexturesFuse texturesFuse;
         private readonly IDiskCache<Texture2DData> diskCache;
+        private readonly bool compressionEnabled;
         private readonly ISizedStreamableCache<Texture2DData, GetNFTShapeIntention> cache = new NftShapeCache();
 
         static NFTShapePlugin()
@@ -60,7 +61,8 @@ namespace DCL.PluginSystem.World
             CacheCleaner cacheCleaner,
             ITexturesFuse texturesFuse,
             ArrayPool<byte> buffersPool,
-            IDiskCache<Texture2DData> diskCache
+            IDiskCache<Texture2DData> diskCache,
+            bool compressionEnabled = false
         ) : this(
             decentralandUrlsSource,
             instantiationFrameTimeBudgetProvider,
@@ -73,7 +75,8 @@ namespace DCL.PluginSystem.World
             lazyMaxSize,
             texturesFuse,
             buffersPool,
-            diskCache
+            diskCache,
+            compressionEnabled
         ) { }
 
         public NFTShapePlugin(
@@ -88,7 +91,8 @@ namespace DCL.PluginSystem.World
             ILazyMaxSize lazyMaxSize,
             ITexturesFuse texturesFuse,
             ArrayPool<byte> buffersPool,
-            IDiskCache<Texture2DData> diskCache
+            IDiskCache<Texture2DData> diskCache,
+            bool compressionEnabled = false
         ) : this(
             decentralandUrlsSource,
             new PoolNFTShapeRendererFactory(componentPoolsRegistry, framesPool),
@@ -100,7 +104,8 @@ namespace DCL.PluginSystem.World
             lazyMaxSize,
             texturesFuse,
             buffersPool,
-            diskCache
+            diskCache,
+            compressionEnabled
         ) { }
 
         public NFTShapePlugin(
@@ -114,7 +119,8 @@ namespace DCL.PluginSystem.World
             ILazyMaxSize lazyMaxSize,
             ITexturesFuse texturesFuse,
             ArrayPool<byte> buffersPool,
-            IDiskCache<Texture2DData> diskCache
+            IDiskCache<Texture2DData> diskCache,
+            bool compressionEnabled = false
         )
         {
             this.decentralandUrlsSource = decentralandUrlsSource;
@@ -127,6 +133,7 @@ namespace DCL.PluginSystem.World
             this.texturesFuse = texturesFuse;
             this.buffersPool = buffersPool;
             this.diskCache = diskCache;
+            this.compressionEnabled = compressionEnabled;
             cacheCleaner.Register(cache);
         }
 
@@ -150,7 +157,7 @@ namespace DCL.PluginSystem.World
         {
             var buffer = sharedDependencies.EntityEventsBuilder.Rent<NftShapeRendererComponent>();
 
-            LoadNFTShapeSystem.InjectToWorld(ref builder, cache, webRequestController, buffersPool, texturesFuse, diskCache);
+            LoadNFTShapeSystem.InjectToWorld(ref builder, cache, webRequestController, buffersPool, texturesFuse, diskCache, compressionEnabled);
             LoadCycleNftShapeSystem.InjectToWorld(ref builder, new BasedURNSource(decentralandUrlsSource));
             InstantiateNftShapeSystem.InjectToWorld(ref builder, nftShapeRendererFactory, instantiationFrameTimeBudgetProvider, framePrefabs, buffer);
             VisibilityNftShapeSystem.InjectToWorld(ref builder, buffer);

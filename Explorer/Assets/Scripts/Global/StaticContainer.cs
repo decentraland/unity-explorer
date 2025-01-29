@@ -232,7 +232,7 @@ namespace Global
             {
                 new TransformsPlugin(sharedDependencies, exposedPlayerTransform, exposedGlobalDataContainer.ExposedCameraData),
                 new BillboardPlugin(exposedGlobalDataContainer.ExposedCameraData),
-                new NFTShapePlugin(decentralandUrlsSource, container.assetsProvisioner, sharedDependencies.FrameTimeBudget, componentsContainer.ComponentPoolsRegistry, container.WebRequestsContainer.WebRequestController, container.CacheCleaner, texturesFuse, buffersPool, textureDiskCache),
+                new NFTShapePlugin(decentralandUrlsSource, container.assetsProvisioner, sharedDependencies.FrameTimeBudget, componentsContainer.ComponentPoolsRegistry, container.WebRequestsContainer.WebRequestController, container.CacheCleaner, texturesFuse, buffersPool, textureDiskCache, compressionEnabled),
                 new TextShapePlugin(sharedDependencies.FrameTimeBudget, container.CacheCleaner, componentsContainer.ComponentPoolsRegistry),
                 new MaterialsPlugin(sharedDependencies, videoTexturePool),
                 textureResolvePlugin,

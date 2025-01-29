@@ -62,7 +62,8 @@ namespace DCL.SDKComponents.NFTShape.Demo
                     IWebRequestController.DEFAULT,
                     ArrayPool<byte>.Create(1024 * 1024, 100),
                     ITexturesFuse.NewTestInstance(),
-                    IDiskCache<Texture2DData>.Null.INSTANCE
+                    IDiskCache<Texture2DData>.Null.INSTANCE,
+                    false
                 ).InitializeAndReturnSelf(),
                 w => new LoadCycleNftShapeSystem(w, new BasedURNSource(new DecentralandUrlsSource(DecentralandEnvironment.Org))),
                 w => new InstantiateNftShapeSystem(w, new PoolNFTShapeRendererFactory(new ComponentPoolsRegistry(), framesPool), new FrameTimeCapBudget.Default(), framePrefabs, buffer),

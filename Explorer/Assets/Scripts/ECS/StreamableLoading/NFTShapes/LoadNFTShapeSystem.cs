@@ -17,6 +17,8 @@ using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using System.Buffers;
 using System.IO;
 using System.Threading;
+using UnityEngine;
+using Utility;
 using Utility.Types;
 
 namespace ECS.StreamableLoading.NFTShapes
@@ -27,6 +29,7 @@ namespace ECS.StreamableLoading.NFTShapes
     {
         private readonly IWebRequestController webRequestController;
         private readonly ITexturesFuse texturesFuse;
+        private readonly bool compressionEnabled;
 
         public LoadNFTShapeSystem(
             World world,
@@ -34,10 +37,12 @@ namespace ECS.StreamableLoading.NFTShapes
             IWebRequestController webRequestController,
             ArrayPool<byte> buffersPool,
             ITexturesFuse texturesFuse,
-            IDiskCache<Texture2DData> diskCache) : base(world, cache, webRequestController, buffersPool, diskCache)
+            IDiskCache<Texture2DData> diskCache,
+            bool compressionEnabled) : base(world, cache, webRequestController, buffersPool, diskCache)
         {
             this.webRequestController = webRequestController;
             this.texturesFuse = texturesFuse;
+            this.compressionEnabled = compressionEnabled;
         }
 
         protected override async UniTask<StreamableLoadingResult<Texture2DData>> FlowInternalAsync(GetNFTShapeIntention intention, StreamableLoadingState state, IPartitionComponent partition, CancellationToken ct)
@@ -51,8 +56,20 @@ namespace ECS.StreamableLoading.NFTShapes
 
         protected override async UniTask<StreamableLoadingResult<Texture2DData>> ProcessCompletedData(StreamableLoadingState state, GetNFTShapeIntention intention, IPartitionComponent partition, CancellationToken ct)
         {
-            EnumResult<IOwnedTexture2D, NativeMethods.ImageResult> textureFromBytesAsync = await texturesFuse.TextureFromBytesAsync(state.GetFullyDownloadedData(), TextureType.Albedo, ct);
-            return new StreamableLoadingResult<Texture2DData>(new Texture2DData(textureFromBytesAsync.Value));
+            if (compressionEnabled)
+            {
+                EnumResult<IOwnedTexture2D, NativeMethods.ImageResult> textureFromBytesAsync = await texturesFuse.TextureFromBytesAsync(state.GetFullyDownloadedData(), TextureType.Albedo, ct);
+                return new StreamableLoadingResult<Texture2DData>(new Texture2DData(textureFromBytesAsync.Value));
+            }
+            else
+            {
+                Texture2D texture = new Texture2D(1, 1);
+                texture.LoadImage(state.GetFullyDownloadedData().ToArray());
+                texture.wrapMode = GetNFTShapeIntention.WRAP_MODE;
+                texture.filterMode = GetNFTShapeIntention.FILTER_MODE;
+                texture.SetDebugName(intention.CommonArguments.URL.Value);
+                return new StreamableLoadingResult<Texture2DData>(new Texture2DData(texture));
+            }
         }
 
         private async UniTask<string> ImageUrlAsync(CommonArguments commonArguments, CancellationToken ct)
