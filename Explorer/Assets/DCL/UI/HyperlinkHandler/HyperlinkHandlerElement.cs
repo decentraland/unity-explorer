@@ -31,12 +31,12 @@ namespace DCL.UI.HyperlinkHandler
         private bool isHovering;
         private int lastHighlightedIndex = -1;
         private string originalText;
-        private TMP_Style selectedStyle;
+        private TMP_Style linkSelectedStyle;
 
         private void Awake()
         {
             AddLinkHandlers();
-            selectedStyle = styleSheet.GetStyle("LinkSelected");
+            linkSelectedStyle = styleSheet.GetStyle("LinkSelected");
         }
 
         public void OnPointerClick(PointerEventData eventData)
@@ -164,7 +164,12 @@ namespace DCL.UI.HyperlinkHandler
 
             originalText = textComponent.text;
             stringBuilder.Clear();
-            stringBuilder.Append(originalText).Insert(endIndex, selectedStyle.styleClosingDefinition).Insert(startIndex, selectedStyle.styleOpeningDefinition);
+            stringBuilder.Append(originalText.AsSpan(0,startIndex))
+                         .Append(linkSelectedStyle.styleOpeningDefinition)
+                         .Append(originalText.AsSpan(startIndex, linkInfo.linkTextLength))
+                         .Append(linkSelectedStyle.styleClosingDefinition)
+                         .Append(originalText.AsSpan(endIndex));
+
             textComponent.text = stringBuilder.ToString();
         }
 
