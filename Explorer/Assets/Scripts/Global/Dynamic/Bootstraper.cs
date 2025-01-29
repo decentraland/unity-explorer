@@ -104,7 +104,8 @@ namespace Global.Dynamic
             Entity playerEntity,
             ITexturesFuse texturesFuse,
             ISystemMemoryCap memoryCap,
-            CancellationToken ct
+            CancellationToken ct,
+            bool compressionEnabled = false
         ) =>
             await StaticContainer.CreateAsync(
                 bootstrapContainer.DecentralandUrlsSource,
@@ -126,7 +127,8 @@ namespace Global.Dynamic
                 EnableAnalytics,
                 bootstrapContainer.Analytics,
                 diskCache,
-                ct
+                ct,
+                compressionEnabled
             );
 
         public async UniTask<(DynamicWorldContainer?, bool)> LoadDynamicWorldContainerAsync(BootstrapContainer bootstrapContainer,
