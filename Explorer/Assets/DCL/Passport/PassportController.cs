@@ -505,7 +505,7 @@ namespace DCL.Passport
 
                 // We only request the first page so we show a couple of mutual thumbnails. This is by design
                 PaginatedFriendsResult mutualFriendsResult = await friendService.GetMutualFriendsAsync(
-                    inputData.UserId, 1, MUTUAL_PAGE_SIZE, ct);
+                    inputData.UserId, 0, MUTUAL_PAGE_SIZE, ct);
 
                 config.Root.SetActive(mutualFriendsResult.Friends.Count > 0);
                 config.AmountLabel.text = $"{mutualFriendsResult.TotalAmount} Mutual";

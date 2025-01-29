@@ -243,7 +243,7 @@ namespace DCL.Friends.UI.Requests
             config.MutualContainer.SetActive(false);
 
             // We only request the first page so we show a couple of mutual thumbnails. This is by design
-            PaginatedFriendsResult mutualFriendsResult = await friendsService.GetMutualFriendsAsync(user, 1, MUTUAL_PAGE_SIZE_BY_DESIGN, ct);
+            PaginatedFriendsResult mutualFriendsResult = await friendsService.GetMutualFriendsAsync(user, 0, MUTUAL_PAGE_SIZE_BY_DESIGN, ct);
 
             config.MutualContainer.SetActive(mutualFriendsResult.Friends.Count > 0);
             config.MutalCountText.text = $"{mutualFriendsResult.TotalAmount} Mutual";
