@@ -9,13 +9,13 @@ namespace DCL.WebRequests.CustomDownloadHandlers
 {
     public class PartialDownloadHandler : DownloadHandlerScript
     {
-        private readonly PartialDownloadingData partialData;
         private readonly ArrayPool<byte> buffersPool;
         private int bufferPointer = 0;
+        public byte[]? PartialData;
+        public int DownloadedSize;
 
-        public PartialDownloadHandler(ref PartialDownloadingData partialData, byte[] preallocatedBuffer, ArrayPool<byte> buffersPool) : base(preallocatedBuffer)
+        public PartialDownloadHandler(byte[] preallocatedBuffer, ArrayPool<byte> buffersPool) : base(preallocatedBuffer)
         {
-            this.partialData = partialData;
             this.buffersPool = buffersPool;
         }
 
@@ -29,23 +29,24 @@ namespace DCL.WebRequests.CustomDownloadHandlers
             if (dataLength == 0)
                 return false; // No data received
 
-            if (partialData.DataBuffer == null)
+
+            if (PartialData == null)
             {
-                partialData.DataBuffer = buffersPool.Rent(dataLength);
+                PartialData = buffersPool.Rent(dataLength);
             }
-            else if(partialData.DataBuffer.Length < bufferPointer + dataLength)
+            else if(PartialData.Length < bufferPointer + dataLength)
             {
-                var newBuffer = buffersPool.Rent(partialData.DataBuffer.Length + dataLength);
-                Array.Copy(partialData.DataBuffer, newBuffer, partialData.DataBuffer.Length);
-                buffersPool.Return(partialData.DataBuffer, true);
-                partialData.DataBuffer = newBuffer;
+                var newBuffer = buffersPool.Rent(PartialData.Length + dataLength);
+                Array.Copy(PartialData, newBuffer, PartialData.Length);
+                buffersPool.Return(PartialData, true);
+                PartialData = newBuffer;
             }
 
             try
             {
-                Array.Copy(receivedData, 0, partialData.DataBuffer, bufferPointer, dataLength);
+                Array.Copy(receivedData, 0, PartialData, bufferPointer, dataLength);
                 bufferPointer += dataLength;
-                partialData.downloadedSize += dataLength;
+                DownloadedSize += dataLength;
                 return true;
             }
             catch (Exception ex)

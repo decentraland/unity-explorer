@@ -67,50 +67,42 @@ namespace DCL.WebRequests
         ) where TOp: struct, IWebRequestOp<GenericGetRequest, TResult> =>
             controller.SendAsync<GenericGetRequest, GenericGetArguments, TOp, TResult>(commonArguments, default(GenericGetArguments), webRequestOp, ct, reportData, headersInfo, signInfo, ignoreErrorCodes);
 
-        public static UniTask<PartialDownloadingData> GetPartialAsync(
+        public static UniTask<PartialDownloadedData> GetPartialAsync(
             this IWebRequestController controller,
             CommonArguments commonArguments,
             CancellationToken ct,
             ReportData reportData,
-            ref PartialDownloadingData partialData,
             ArrayPool<byte> buffersPool,
             WebRequestHeadersInfo? headersInfo = null,
             WebRequestSignInfo? signInfo = null,
             ISet<long>? ignoreErrorCodes = null
         )
         {
-            PartialDownloadHandler handler = new PartialDownloadHandler(ref partialData, PARTIAL_DOWNLOAD_BUFFER, buffersPool);
-            return controller.SendAsync<GenericGetRequest, GenericGetArguments, PartialDownloadOp, PartialDownloadingData>(commonArguments, default(GenericGetArguments), new PartialDownloadOp(ref partialData), ct, reportData, headersInfo, signInfo, ignoreErrorCodes, downloadHandler: handler, suppressErrors: true);
+            PartialDownloadHandler handler = new PartialDownloadHandler(PARTIAL_DOWNLOAD_BUFFER, buffersPool);
+            return controller.SendAsync<GenericGetRequest, GenericGetArguments, PartialDownloadOp, PartialDownloadedData>(commonArguments, default(GenericGetArguments), new PartialDownloadOp(), ct, reportData, headersInfo, signInfo, ignoreErrorCodes, downloadHandler: handler, suppressErrors: true);
         }
 
-        public struct PartialDownloadOp : IWebRequestOp<GenericGetRequest, PartialDownloadingData>
+        private struct PartialDownloadOp : IWebRequestOp<GenericGetRequest, PartialDownloadedData>
         {
-            private PartialDownloadingData data;
-
-            public PartialDownloadOp(ref PartialDownloadingData data)
+            public async UniTask<PartialDownloadedData> ExecuteAsync(GenericGetRequest webRequest, CancellationToken ct)
             {
-                this.data = data;
-            }
+                var partialDownloadHandler = (PartialDownloadHandler)webRequest.UnityWebRequest.downloadHandler;
+                int fullFileSize;
 
-            public async UniTask<PartialDownloadingData> ExecuteAsync(GenericGetRequest webRequest, CancellationToken ct)
-            {
-                if (data.FullFileSize == 0)
+                if (DownloadHandlersUtils.TryGetFullSize(webRequest.UnityWebRequest.GetResponseHeader(CONTENT_RANGE_HEADER), out int fullSize))
                 {
-                    if (DownloadHandlersUtils.TryGetFullSize(webRequest.UnityWebRequest.GetResponseHeader(CONTENT_RANGE_HEADER), out int fullSize))
-                    {
-                        data.FullFileSize = fullSize;
-                    }
-                    else if (int.TryParse(webRequest.UnityWebRequest.GetResponseHeader(CONTENT_LENGTH_HEADER), out int contentSize))
-                    {
-                        data.FullFileSize = contentSize;
-                    }
-                    else
-                    {
-                        data.FullFileSize = Convert.ToInt32(webRequest.UnityWebRequest.downloadedBytes);
-                    }
+                    fullFileSize = fullSize;
+                }
+                else if (int.TryParse(webRequest.UnityWebRequest.GetResponseHeader(CONTENT_LENGTH_HEADER), out int contentSize))
+                {
+                    fullFileSize = contentSize;
+                }
+                else
+                {
+                    fullFileSize = Convert.ToInt32(webRequest.UnityWebRequest.downloadedBytes);
                 }
 
-                return this.data;
+                return new PartialDownloadedData(partialDownloadHandler.PartialData, partialDownloadHandler.DownloadedSize, fullFileSize);
             }
         }
         public static UniTask<TResult> PostAsync<TOp, TResult>(

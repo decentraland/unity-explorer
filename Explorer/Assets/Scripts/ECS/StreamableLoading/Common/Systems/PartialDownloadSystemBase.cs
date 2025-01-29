@@ -35,43 +35,43 @@ namespace ECS.StreamableLoading.Common.Systems
         protected override async UniTask<StreamableLoadingResult<TData>> FlowInternalAsync(TIntention intention, StreamableLoadingState state, IPartitionComponent partition, CancellationToken ct)
         {
             PartialLoadingState partialState = default;
-            PartialDownloadingData chunkData;
+            PartialDownloadingRange chunkRange;
+            PartialDownloadedData downloadedData = default;
 
             if (state.PartialDownloadingData == null)
             {
                 // If the downloading has not started yet, create the first chunk data
-                chunkData = new PartialDownloadingData(0, PartialDownloadingData.CHUNK_SIZE);
+                chunkRange = new PartialDownloadingRange(0, PartialDownloadingRange.CHUNK_SIZE);
             }
             else
             {
                 // If the downloading has already started, get the next chunk data
                 partialState = state.PartialDownloadingData.Value;
-                chunkData = new PartialDownloadingData(partialState.NextRangeStart,
-                    Mathf.Min(partialState.FullFileSize - 1, partialState.NextRangeStart + PartialDownloadingData.CHUNK_SIZE));
+                chunkRange = new PartialDownloadingRange(partialState.NextRangeStart,
+                    Mathf.Min(partialState.FullFileSize - 1, partialState.NextRangeStart + PartialDownloadingRange.CHUNK_SIZE));
             }
 
             try
             {
                 await UniTask.SwitchToMainThread();
-                chunkData = await webRequestController.GetPartialAsync(
+                downloadedData = await webRequestController.GetPartialAsync(
                     intention.CommonArguments,
                     ct,
                     reportData: ReportCategory.PARTIAL_LOADING,
-                    ref chunkData,
                     buffersPool,
-                    headersInfo: new WebRequestHeadersInfo().WithRange(chunkData.RangeStart, chunkData.RangeEnd));
+                    headersInfo: new WebRequestHeadersInfo().WithRange(chunkRange.RangeStart, chunkRange.RangeEnd));
 
                 //If this is the first chunk, we need to create the full data stream
                 if (state.PartialDownloadingData == null)
-                    partialState = new PartialLoadingState(chunkData.FullFileSize);
+                    partialState = new PartialLoadingState(downloadedData.FullFileSize);
 
-                int finalBytesCount = chunkData.downloadedSize;
+                int finalBytesCount = downloadedData.DownloadedSize;
 
-                if (chunkData.RangeEnd > chunkData.FullFileSize)
-                    finalBytesCount = chunkData.FullFileSize - chunkData.RangeStart;
+                if (chunkRange.RangeEnd > downloadedData.FullFileSize)
+                    finalBytesCount = downloadedData.FullFileSize - chunkRange.RangeStart;
 
                 // Write the downloaded data to the full data stream by starting from the last range start
-                partialState.AppendData(chunkData.DataBuffer.AsMemory()[..finalBytesCount]);
+                partialState.AppendData(downloadedData.DestinationArray.AsMemory()[..finalBytesCount]);
 
                 state.SetChunkData(partialState);
 
@@ -83,8 +83,8 @@ namespace ECS.StreamableLoading.Common.Systems
             }
             finally
             {
-                if(chunkData.DataBuffer != null)
-                    buffersPool.Return(chunkData.DataBuffer);
+                if(downloadedData.DestinationArray != null)
+                    buffersPool.Return(downloadedData.DestinationArray);
             }
         }
 
