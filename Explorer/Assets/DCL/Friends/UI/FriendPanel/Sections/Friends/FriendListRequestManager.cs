@@ -40,6 +40,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 
             this.friendEventBus.OnYouAcceptedFriendRequestReceivedFromOtherUser += FriendRequestAccepted;
             this.friendEventBus.OnOtherUserAcceptedYourRequest += FriendRequestAccepted;
+            this.friendEventBus.OnYouRemovedFriend += RemoveFriend;
         }
 
         public override void Dispose()
@@ -48,6 +49,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 
             friendEventBus.OnYouAcceptedFriendRequestReceivedFromOtherUser -= FriendRequestAccepted;
             friendEventBus.OnOtherUserAcceptedYourRequest -= FriendRequestAccepted;
+            friendEventBus.OnYouRemovedFriend -= RemoveFriend;
             addFriendProfileCts.SafeCancelAndDispose();
         }
 
@@ -69,6 +71,12 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             }
 
             AddNewFriendProfileAsync(addFriendProfileCts.Token).Forget();
+        }
+
+        private void RemoveFriend(string userid)
+        {
+            friends.RemoveAll(friendProfile => friendProfile.Address.ToString().Equals(userid));
+            loopListView.RefreshAllShownItem();
         }
 
         public override int GetCollectionCount() =>
