@@ -1,16 +1,13 @@
-﻿using DCL.Roads.Playground;
-using System;
-using System.Linq;
+﻿using System;
 using System.Runtime.InteropServices;
 using UnityEngine;
-using UnityEngine.Rendering;
 
 namespace DCL.Roads.GPUInstancing.Playground
 {
     [Serializable]
     public class GPUInstancedMesh
     {
-        public MeshInstanceData meshInstanceData;
+        public MeshRenderingData meshRenderingData;
         public PerInstanceBuffer[] PerInstancesData;
     }
 
@@ -19,6 +16,12 @@ namespace DCL.Roads.GPUInstancing.Playground
     {
         public Matrix4x4 instMatrix;
         public Vector3 instColourTint;
+
+        public PerInstanceBuffer(Matrix4x4 instMatrix)
+        {
+            this.instMatrix = instMatrix;
+            this.instColourTint = Vector3.one;
+        }
 
         public bool Equals(PerInstanceBuffer other) =>
             instMatrix.Equals(other.instMatrix) && instColourTint.Equals(other.instColourTint);
@@ -63,66 +66,10 @@ namespace DCL.Roads.GPUInstancing.Playground
     }
 
     [Serializable]
-    public class MeshInstanceData : IEquatable<MeshInstanceData>
-    {
-        // PerInstance data
-        public Transform Transform;
-        public Matrix4x4 LocalToRootMatrix;
-
-        // Shared data
-        public MeshRenderer Renderer;
-        public Mesh SharedMesh;
-
-        public bool ReceiveShadows;
-        public ShadowCastingMode ShadowCastingMode;
-
-        public Material[] SharedMaterials;
-
-        // RenderParams are not Serializable, so that is why we save collected raw data and transition to RenderParams at runtime
-        public GPUInstancedRenderer ToGPUInstancedRenderer() =>
-            new (SharedMesh, SharedMaterials.Select(mat => new RenderParams(mat)
-            {
-                receiveShadows = ReceiveShadows,
-                shadowCastingMode = ShadowCastingMode,
-                // ?? worldBounds = new Bounds(center: Vector3.zero, size: Vector3.one * 999999f), ?? what value ??
-            }).ToArray());
-
-        // Equals when MeshFilter and MeshRenderer settings are same, but Transform could be different
-        public bool Equals(MeshInstanceData other) =>
-            other != null &&
-            Equals(SharedMesh, other.SharedMesh) && // Mesh
-            ReceiveShadows == other.ReceiveShadows && ShadowCastingMode == other.ShadowCastingMode && // Shadows
-            SharedMaterials != null && other.SharedMaterials != null && SharedMaterials.SequenceEqual(other.SharedMaterials); // Materials
-
-        public override bool Equals(object obj) =>
-            obj is MeshInstanceData other && Equals(other);
-
-        public override int GetHashCode()
-        {
-            unchecked
-            {
-                var hash = 17;
-                hash = (hash * 23) + (SharedMesh != null ? SharedMesh.GetHashCode() : 0);
-                hash = (hash * 23) + ReceiveShadows.GetHashCode();
-                hash = (hash * 23) + ShadowCastingMode.GetHashCode();
-
-                if (SharedMaterials == null) return hash;
-
-                foreach (var material in SharedMaterials)
-                    hash = (hash * 23) + (material != null ? material.GetHashCode() : 0);
-
-                return hash;
-            }
-        }
-
-
-    }
-
-    [Serializable]
     public class GPUInstancedLOD
     {
         public float ScreenRelativeTransitionHeight;
-        public MeshInstanceData[] Meshes;
+        public MeshRenderingData[] Meshes;
     }
 
     [Serializable]
@@ -131,6 +78,7 @@ namespace DCL.Roads.GPUInstancing.Playground
         public LODGroup LODGroup;
         public Transform Transform;
 
+        [Space]
         public float ObjectSize;
         public Bounds LODBounds;
 
@@ -142,7 +90,7 @@ namespace DCL.Roads.GPUInstancing.Playground
             var isInitialized = false;
 
             foreach (GPUInstancedLOD mid in LODs)
-            foreach (MeshInstanceData data in mid.Meshes)
+            foreach (MeshRenderingData data in mid.Meshes)
             {
                 if (!isInitialized)
                 {
