@@ -5,6 +5,12 @@ using UnityEngine;
 namespace DCL.Roads.GPUInstancing.Playground
 {
     [Serializable]
+    public class GPUInstancingLodLevel
+    {
+        public MeshRenderingData[] MeshRenderingDatas;
+    }
+
+    [Serializable]
     public class GPUInstancingCandidate
     {
         private const int MAX_LODS_LEVEL = 8;
@@ -16,7 +22,7 @@ namespace DCL.Roads.GPUInstancing.Playground
         public Bounds Bounds;
 
         public float[] LodsScreenSpaceSizes;
-        public List<MeshRenderingData[]> Lods;
+        public List<GPUInstancingLodLevel> Lods;
 
         public GPUInstancingCandidate(LODGroup lodGroup, Matrix4x4 localToRootMatrix)
         {
@@ -29,7 +35,7 @@ namespace DCL.Roads.GPUInstancing.Playground
             ObjectSize = lodGroup.size;
 
             LodsScreenSpaceSizes = new float [lodLevels.Length];
-            Lods = new List<MeshRenderingData[]>();
+            Lods = new List<GPUInstancingLodLevel>();
 
             for (var i = 0; i < lodLevels.Length && i < MAX_LODS_LEVEL; i++)
             {
@@ -45,7 +51,7 @@ namespace DCL.Roads.GPUInstancing.Playground
                 }
 
                 if(lodMeshes.Count > 0)
-                    Lods.Add(lodMeshes.ToArray());
+                    Lods.Add(new GPUInstancingLodLevel{ MeshRenderingDatas = lodMeshes.ToArray()});
             }
 
             UpdateBounds();
@@ -56,8 +62,8 @@ namespace DCL.Roads.GPUInstancing.Playground
         {
             var isInitialized = false;
 
-            foreach (MeshRenderingData[] mid in Lods)
-            foreach (MeshRenderingData data in mid)
+            foreach (GPUInstancingLodLevel lodLevel in Lods)
+            foreach (MeshRenderingData data in lodLevel.MeshRenderingDatas)
             {
                 if (!isInitialized)
                 {

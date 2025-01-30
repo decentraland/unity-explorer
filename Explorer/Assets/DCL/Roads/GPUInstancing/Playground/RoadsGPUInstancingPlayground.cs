@@ -53,7 +53,12 @@ namespace DCL.Roads.Playground
         public void Update()
         {
             if (!Run) return;
-            RenderMeshesIndirectOld(originalPrefabs[DebugId]);
+
+            if (UseIndirect)
+                RenderMeshesIndirectOld(originalPrefabs[DebugId]);
+            else
+                RenderMeshesInstanced(originalPrefabs[DebugId].InstancedMeshes);
+
             return;
             GPUInstancedPrefab gpuInstancedPrefab = RoadShift switch
                                                     {
@@ -141,7 +146,7 @@ namespace DCL.Roads.Playground
                     // rparams.camera = Camera.current;
 
                     if(rparams.material.shader == shader)
-                        rparams.material.EnableKeyword(gpuInstancingKeyword);
+                        rparams.material.DisableKeyword(gpuInstancingKeyword);
                     else
                         Debug.LogWarning($"material {rparams.material.name} has different shader {rparams.material.shader}");
 

@@ -680,6 +680,7 @@ GameObject:
   - component: {fileID: 1701440523}
   - component: {fileID: 1701440525}
   - component: {fileID: 1701440526}
+  - component: {fileID: 1701440527}
   m_Layer: 0
   m_Name: _EntryPoint
   m_TagString: Untagged
@@ -709,7 +710,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1701440522}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 617ce4e6e2874daea2a10081aeb7cfd4, type: 3}
   m_Name: 
@@ -770,7 +771,7 @@ MonoBehaviour:
   - {fileID: 3930940137979377588, guid: c5fd6869b2cebd74f892a9e390734b5a, type: 3}
   - {fileID: 9192449264072165692, guid: 74cec7b5359025447b3f7dcb7923a0e1, type: 3}
   - {fileID: -7855571798948278487, guid: 28fe79bce715ec543aef1e2d9a7fe1d8, type: 3}
-  DebugId: 3
+  DebugId: 0
   ComparisonShift: {x: 0, y: 20}
   RoadShift: 0
   Descriptions:
@@ -778,7 +779,7 @@ MonoBehaviour:
     Rotation: {x: 0, y: 0.70710677, z: 0, w: 0.70710677}
     RoadModel: Corner_0
   UseIndirect: 0
-  indirectMeshIndex: 2
+  indirectMeshIndex: 0
   Run: 0
   shader: {fileID: 4800000, guid: 56a9743f8d94f684190dc11bb521fb78, type: 3}
 --- !u!114 &1701440526
@@ -1032,6 +1033,25 @@ MonoBehaviour:
     Material1: {fileID: 2100000, guid: 9ada01858a3601d4c94c92f1e5e2e0bc, type: 2}
     InstancesCount: 77
   debugRoot: {fileID: 0}
+--- !u!114 &1701440527
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1701440522}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0509811668994b469a2724dc59d856df, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  originalPrefabs:
+  - {fileID: 3083617024737014214, guid: 2d6ac3b70dd761a428bae0e655a93ebc, type: 3}
+  PrefabId: 0
+  CandidateId: 2
+  LodLevel: 0
+  RenderFullPrefab: 0
+  Run: 0
 --- !u!1 &1758766808
 GameObject:
   m_ObjectHideFlags: 0

@@ -24,7 +24,10 @@ namespace DCL.Roads.GPUInstancing.Playground
                 transform.localScale = Vector3.one;
 
             if (PrefabUtility.IsPartOfPrefabAsset(gameObject))
+            {
+                candidates = new List<GPUInstancingCandidate>();
                 CollectInstancingCandidates();
+            }
 #endif
         }
 
