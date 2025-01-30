@@ -25,9 +25,9 @@ namespace DCL.UI.GenericContextMenu.Controls.Configs
         internal FriendshipStatus friendshipStatus;
         internal readonly RectOffset horizontalLayoutPadding;
         internal readonly ISystemClipboard systemClipboard;
-        internal readonly Action<string> requestFriendshipAction;
+        internal readonly Action<string, FriendshipStatus> requestFriendshipAction;
 
-        public UserProfileContextMenuControlSettings(ISystemClipboard systemClipboard, Action<string> requestFriendshipAction, RectOffset? horizontalLayoutPadding = null)
+        public UserProfileContextMenuControlSettings(ISystemClipboard systemClipboard, Action<string, FriendshipStatus> requestFriendshipAction, RectOffset? horizontalLayoutPadding = null)
         {
             this.systemClipboard = systemClipboard;
             this.requestFriendshipAction = requestFriendshipAction;

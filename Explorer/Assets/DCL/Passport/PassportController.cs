@@ -180,7 +180,7 @@ namespace DCL.Passport
             notificationBusController.SubscribeToNotificationTypeReceived(NotificationType.BADGE_GRANTED, OnBadgeNotificationReceived);
             notificationBusController.SubscribeToNotificationTypeClick(NotificationType.BADGE_GRANTED, OnBadgeNotificationClicked);
 
-            userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings(systemClipboard, profile => Debug.Log($"Send friendship request to {profile}"));
+            userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings(systemClipboard, (profile, asd) => Debug.Log($"Send friendship request to {profile}"));
         }
 
         private void ThumbnailClicked(List<CameraReelResponseCompact> reels, int index, Action<CameraReelResponseCompact> reelDeleteIntention) =>
@@ -520,7 +520,7 @@ namespace DCL.Passport
             Profile? profile = await profileRepository.GetAsync(inputData.UserId, ct);
             if (profile == null) return;
 
-            Sprite? thumbnailSprite = await profileThumbnailCache.GetThumbnail(profile, ct);
+            Sprite? thumbnailSprite = await profileThumbnailCache.GetThumbnailAsync(profile, ct);
 
             viewInstance!.ContextMenuButton.gameObject.SetActive(true);
 

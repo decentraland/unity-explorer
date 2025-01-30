@@ -26,7 +26,7 @@ namespace DCL.Friends
         public Sprite? GetThumbnail(string userId) =>
             thumbnails.GetValueOrDefault(userId);
 
-        public async UniTask<Sprite?> GetThumbnail(Profile profile, CancellationToken ct)
+        public async UniTask<Sprite?> GetThumbnailAsync(Profile profile, CancellationToken ct)
         {
             Sprite? sprite = GetThumbnail(profile.UserId);
             if (sprite != null)

@@ -5,7 +5,9 @@ using DCL.UI.GenericContextMenu;
 using DCL.UI.GenericContextMenu.Controls.Configs;
 using DCL.Web3.Identities;
 using MVC;
+using System.Threading;
 using UnityEngine;
+using Utility;
 
 namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 {
@@ -20,6 +22,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         private readonly GenericContextMenu contextMenu;
         private readonly UserProfileContextMenuControlSettings userProfileContextMenuControlSettings;
         private readonly IProfileThumbnailCache profileThumbnailCache;
+        private readonly IFriendsService friendsService;
+        private readonly CancellationTokenSource friendshipOperationCts = new();
 
         private FriendProfile? lastClickedProfileCtx;
 
@@ -29,14 +33,16 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             ISystemClipboard systemClipboard,
             FriendListRequestManager requestManager,
             IPassportBridge passportBridge,
-            IProfileThumbnailCache profileThumbnailCache) : base(view, web3IdentityCache, requestManager)
+            IProfileThumbnailCache profileThumbnailCache,
+            IFriendsService friendsService) : base(view, web3IdentityCache, requestManager)
         {
             this.mvcManager = mvcManager;
             this.passportBridge = passportBridge;
             this.profileThumbnailCache = profileThumbnailCache;
+            this.friendsService = friendsService;
 
             contextMenu = new GenericContextMenu(view.ContextMenuSettings.ContextMenuWidth, verticalLayoutPadding: CONTEXT_MENU_VERTICAL_LAYOUT_PADDING, elementsSpacing: CONTEXT_MENU_ELEMENTS_SPACING)
-                         .AddControl(userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings(systemClipboard, userId => Debug.Log($"Send friendship request to {userId}")))
+                         .AddControl(userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings(systemClipboard, HandleContextMenuUserProfileButton))
                          .AddControl(new SeparatorContextMenuControlSettings(CONTEXT_MENU_SEPARATOR_HEIGHT, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.left, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.right))
                          .AddControl(new ButtonContextMenuControlSettings(view.ContextMenuSettings.ViewProfileText, view.ContextMenuSettings.ViewProfileSprite, () => OpenProfilePassport(lastClickedProfileCtx!)))
                          .AddControl(new ButtonContextMenuControlSettings(view.ContextMenuSettings.ViewProfileText, view.ContextMenuSettings.ViewProfileSprite, () => OpenProfilePassport(lastClickedProfileCtx!)))
@@ -49,6 +55,18 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         {
             base.Dispose();
             requestManager.ContextMenuClicked -= ContextMenuClicked;
+            friendshipOperationCts.SafeCancelAndDispose();
+        }
+
+        private void HandleContextMenuUserProfileButton(string userId, UserProfileContextMenuControlSettings.FriendshipStatus friendshipStatus)
+        {
+            RemoveFriendThenChangeInteractionStatusAsync(friendshipOperationCts.Token).Forget();
+            return;
+
+            async UniTaskVoid RemoveFriendThenChangeInteractionStatusAsync(CancellationToken ct)
+            {
+                await friendsService.DeleteFriendshipAsync(userId, ct);
+            }
         }
 
         private void ContextMenuClicked(FriendProfile friendProfile, Vector2 buttonPosition, FriendListUserView elementView)

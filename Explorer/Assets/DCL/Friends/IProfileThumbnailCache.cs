@@ -8,7 +8,7 @@ namespace DCL.Friends
     public interface IProfileThumbnailCache
     {
         Sprite? GetThumbnail(string userId);
-        UniTask<Sprite?> GetThumbnail(Profile profile, CancellationToken ct = default);
+        UniTask<Sprite?> GetThumbnailAsync(Profile profile, CancellationToken ct = default);
         void SetThumbnail(string userId, Sprite sprite);
     }
 }

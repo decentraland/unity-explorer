@@ -1,9 +1,12 @@
+using Cysharp.Threading.Tasks;
 using DCL.UI.GenericContextMenu.Controls.Configs;
 using System;
+using System.Threading;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
+using Utility;
 
 namespace DCL.UI.GenericContextMenu.Controls
 {
@@ -12,6 +15,13 @@ namespace DCL.UI.GenericContextMenu.Controls
         private const int USER_NAME_MIN_HEIGHT = 20;
         private const int FACE_FRAME_MIN_HEIGHT = 60;
         private const int FRIEND_BUTTON_MIN_HEIGHT = 40;
+        private const int COPY_ANIMATION_DURATION = 1000;
+
+        private enum CopyUserInfoSection
+        {
+            NAME,
+            ADDRESS
+        }
 
         [field: SerializeField] public Image FaceFrame { get; private set; }
         [field: SerializeField] public Image FaceRim { get; private set; }
@@ -22,7 +32,9 @@ namespace DCL.UI.GenericContextMenu.Controls
         [field: SerializeField] public Image ClaimedNameBadge { get; private set; }
         [field: SerializeField] public GameObject ClaimedNameBadgeSeparator { get; private set; }
         [field: SerializeField] public Button CopyNameButton { get; private set; }
+        [field: SerializeField] public WarningNotificationView CopyNameToast { get; private set; }
         [field: SerializeField] public Button CopyAddressButton { get; private set; }
+        [field: SerializeField] public WarningNotificationView CopyAddressToast { get; private set; }
         [field: SerializeField] public VerticalLayoutGroup ContentVerticalLayout { get; private set; }
 
         [field: Header("Friendship Button")]
@@ -43,6 +55,8 @@ namespace DCL.UI.GenericContextMenu.Controls
         [field: SerializeField] private RectTransform addButtonRectTransform;
         [field: SerializeField] private Sprite defaultEmptyThumbnail;
 
+        private CancellationTokenSource copyAnimationCts = new();
+
         public void Configure(UserProfileContextMenuControlSettings settings)
         {
             HorizontalLayoutComponent.padding = settings.horizontalLayoutPadding;
@@ -53,9 +67,25 @@ namespace DCL.UI.GenericContextMenu.Controls
 
             RectTransformComponent.sizeDelta = new Vector2(RectTransformComponent.sizeDelta.x, CalculateComponentHeight());
 
-            CopyNameButton.onClick.AddListener(() => settings.systemClipboard.Set(settings.userName));
-            CopyAddressButton.onClick.AddListener(() => settings.systemClipboard.Set(settings.userAddress));
-            AddFriendButton.onClick.AddListener(() => settings.requestFriendshipAction(settings.userAddress));
+            copyAnimationCts = copyAnimationCts.SafeRestart();
+
+            CopyNameButton.onClick.AddListener(() => CopyUserInfo(settings, CopyUserInfoSection.NAME));
+            CopyAddressButton.onClick.AddListener(() => CopyUserInfo(settings, CopyUserInfoSection.ADDRESS));
+            AddFriendButton.onClick.AddListener(() => settings.requestFriendshipAction(settings.userAddress, settings.friendshipStatus));
+        }
+
+        private void CopyUserInfo(UserProfileContextMenuControlSettings settings, CopyUserInfoSection section)
+        {
+            settings.systemClipboard.Set(section == CopyUserInfoSection.NAME ? settings.userName : settings.userAddress);
+            CopyNameAnimationAsync(copyAnimationCts.Token).Forget();
+
+            async UniTaskVoid CopyNameAnimationAsync(CancellationToken ct)
+            {
+                WarningNotificationView toast = section == CopyUserInfoSection.NAME ? CopyNameToast : CopyAddressToast;
+                toast.Show(ct);
+                await UniTask.Delay(COPY_ANIMATION_DURATION, cancellationToken: ct);
+                toast.Hide(ct: ct);
+            }
         }
 
         private void ConfigureUserNameAndTag(string userName, string userAddress, bool hasClaimedName, Color userColor)
@@ -68,6 +98,9 @@ namespace DCL.UI.GenericContextMenu.Controls
             UserNameTag.gameObject.SetActive(!hasClaimedName);
             ClaimedNameBadge.gameObject.SetActive(hasClaimedName);
             ClaimedNameBadgeSeparator.gameObject.SetActive(hasClaimedName);
+
+            CopyAddressToast.Hide(true);
+            CopyNameToast.Hide(true);
 
             FaceFrame.color = userColor;
             userColor.r += 0.3f;
@@ -124,12 +157,11 @@ namespace DCL.UI.GenericContextMenu.Controls
             CopyNameButton.onClick.RemoveAllListeners();
             CopyAddressButton.onClick.RemoveAllListeners();
             AddFriendButton.onClick.RemoveAllListeners();
+            copyAnimationCts.SafeCancelAndDispose();
         }
 
         public override void RegisterCloseListener(Action listener)
         {
-            CopyNameButton.onClick.AddListener(new UnityAction(listener));
-            CopyAddressButton.onClick.AddListener(new UnityAction(listener));
             AddFriendButton.onClick.AddListener(new UnityAction(listener));
         }
     }
