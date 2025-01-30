@@ -82,7 +82,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections
             RefreshLoopList();
         }
 
-        private void RefreshLoopList()
+        protected void RefreshLoopList()
         {
             view.LoopList.SetListItemCount(requestManager.GetElementsNumber(), false);
             view.LoopList.RefreshAllShownItem();

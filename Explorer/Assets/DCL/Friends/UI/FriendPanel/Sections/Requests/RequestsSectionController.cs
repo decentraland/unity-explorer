@@ -173,7 +173,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
 
             view.SetLoadingState(false);
 
-            view.LoopList.SetListItemCount(requestManager.GetElementsNumber(), false);
+            RefreshLoopList();
             requestManager.FirstFolderClicked += FolderClicked;
             requestManager.SecondFolderClicked += FolderClicked;
 
