@@ -68,7 +68,8 @@ namespace DCL.Friends.UI.FriendPanel
                 systemClipboard,
                 new FriendListRequestManager(friendsService, friendEventBus, profileRepository, webRequestController, profileThumbnailCache, instantiatedView.FriendsSection.LoopList, FRIENDS_PAGE_SIZE, FRIENDS_FETCH_ELEMENTS_THRESHOLD),
                 passportBridge,
-                profileThumbnailCache);
+                profileThumbnailCache,
+                friendsService);
             requestsSectionController = new RequestsSectionController(instantiatedView.RequestsSection,
                 friendsService,
                 friendEventBus,
