@@ -19,6 +19,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         private readonly IPassportBridge passportBridge;
         private readonly GenericContextMenu contextMenu;
         private readonly UserProfileContextMenuControlSettings userProfileContextMenuControlSettings;
+        private readonly IProfileThumbnailCache profileThumbnailCache;
 
         private FriendProfile? lastClickedProfileCtx;
 
@@ -28,10 +29,12 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             ISystemClipboard systemClipboard,
             FriendListRequestManager requestManager,
             IPassportBridge passportBridge,
-            IWebBrowser webBrowser) : base(view, web3IdentityCache, requestManager)
+            IWebBrowser webBrowser,
+            IProfileThumbnailCache profileThumbnailCache) : base(view, web3IdentityCache, requestManager)
         {
             this.mvcManager = mvcManager;
             this.passportBridge = passportBridge;
+            this.profileThumbnailCache = profileThumbnailCache;
 
             contextMenu = new GenericContextMenu(view.ContextMenuSettings.ContextMenuWidth, verticalLayoutPadding: CONTEXT_MENU_VERTICAL_LAYOUT_PADDING, elementsSpacing: CONTEXT_MENU_ELEMENTS_SPACING)
                          .AddControl(userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings(systemClipboard, userId => Debug.Log($"Send friendship request to {userId}")))
@@ -53,7 +56,9 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         private void ContextMenuClicked(FriendProfile friendProfile, Vector2 buttonPosition, FriendListUserView elementView)
         {
             lastClickedProfileCtx = friendProfile;
-            userProfileContextMenuControlSettings.SetInitialData(friendProfile.Name, friendProfile.Address, friendProfile.HasClaimedName, view.ChatEntryConfiguration.GetNameColor(friendProfile.Name), UserProfileContextMenuControlSettings.FriendshipStatus.FRIEND);
+            userProfileContextMenuControlSettings.SetInitialData(friendProfile.Name, friendProfile.Address, friendProfile.HasClaimedName,
+                view.ChatEntryConfiguration.GetNameColor(friendProfile.Name), UserProfileContextMenuControlSettings.FriendshipStatus.FRIEND,
+                profileThumbnailCache.GetThumbnail(friendProfile.Address.ToString()));
             elementView.CanUnHover = false;
             mvcManager.ShowAsync(GenericContextMenuController.IssueCommand(new GenericContextMenuParameter(contextMenu, buttonPosition, actionOnHide: () => elementView.CanUnHover = true))).Forget();
         }

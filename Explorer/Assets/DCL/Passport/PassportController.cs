@@ -81,7 +81,7 @@ namespace DCL.Passport
         private readonly ICameraReelStorageService cameraReelStorageService;
         private readonly ICameraReelScreenshotsStorage cameraReelScreenshotsStorage;
         private readonly ObjectProxy<IFriendsService> friendServiceProxy;
-        private readonly ISystemClipboard systemClipboard;
+        private readonly IProfileThumbnailCache profileThumbnailCache;
         private readonly Dictionary<ImageView, ImageController> mutualFriendImages = new ();
         private readonly int gridLayoutFixedColumnCount;
         private readonly int thumbnailHeight;
@@ -141,6 +141,7 @@ namespace DCL.Passport
             ICameraReelScreenshotsStorage cameraReelScreenshotsStorage,
             ObjectProxy<IFriendsService> friendServiceProxy,
             ISystemClipboard systemClipboard,
+            IProfileThumbnailCache profileThumbnailCache,
             int gridLayoutFixedColumnCount,
             int thumbnailHeight,
             int thumbnailWidth,
@@ -168,7 +169,7 @@ namespace DCL.Passport
             this.cameraReelStorageService = cameraReelStorageService;
             this.cameraReelScreenshotsStorage = cameraReelScreenshotsStorage;
             this.friendServiceProxy = friendServiceProxy;
-            this.systemClipboard = systemClipboard;
+            this.profileThumbnailCache = profileThumbnailCache;
             this.gridLayoutFixedColumnCount = gridLayoutFixedColumnCount;
             this.thumbnailHeight = thumbnailHeight;
             this.thumbnailWidth = thumbnailWidth;
@@ -528,7 +529,9 @@ namespace DCL.Passport
             if (friendshipStatus != FriendshipStatus.BLOCKED)
                 contextMenu.AddControl(new ButtonContextMenuControlSettings(viewInstance.BlockText, viewInstance.BlockSprite, () => Debug.Log($"Block {currentUserId}")));
 
-            userProfileContextMenuControlSettings.SetInitialData(profile.Name, profile.UserId, profile.HasClaimedName, viewInstance.ChatEntryConfiguration.GetNameColor(profile.Name), ConvertFriendshipStatus(friendshipStatus));
+            userProfileContextMenuControlSettings.SetInitialData(profile.Name, profile.UserId, profile.HasClaimedName,
+                viewInstance.ChatEntryConfiguration.GetNameColor(profile.Name), ConvertFriendshipStatus(friendshipStatus),
+                profileThumbnailCache.GetThumbnail(profile.UserId));
         }
 
         private UserProfileContextMenuControlSettings.FriendshipStatus ConvertFriendshipStatus(FriendshipStatus friendshipStatus)

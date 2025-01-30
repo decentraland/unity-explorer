@@ -55,6 +55,7 @@ namespace DCL.PluginSystem.Global
         private readonly bool enableCameraReel;
         private readonly ObjectProxy<IFriendsService> friendsService;
         private readonly ISystemClipboard systemClipboard;
+        private readonly IProfileThumbnailCache profileThumbnailCache;
         private readonly bool enableFriends;
 
         private PassportController? passportController;
@@ -84,6 +85,7 @@ namespace DCL.PluginSystem.Global
             bool enableCameraReel,
             ObjectProxy<IFriendsService> friendsService,
             ISystemClipboard systemClipboard,
+            IProfileThumbnailCache profileThumbnailCache,
             bool enableFriends
         )
         {
@@ -111,6 +113,7 @@ namespace DCL.PluginSystem.Global
             this.enableCameraReel = enableCameraReel;
             this.friendsService = friendsService;
             this.systemClipboard = systemClipboard;
+            this.profileThumbnailCache = profileThumbnailCache;
             this.enableFriends = enableFriends;
         }
 
@@ -159,6 +162,7 @@ namespace DCL.PluginSystem.Global
                 cameraReelScreenshotsStorage,
                 friendsService,
                 systemClipboard,
+                profileThumbnailCache,
                 passportSettings.GridLayoutFixedColumnCount,
                 passportSettings.ThumbnailHeight,
                 passportSettings.ThumbnailWidth,

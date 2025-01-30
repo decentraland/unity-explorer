@@ -15,6 +15,7 @@ namespace DCL.UI.GenericContextMenu.Controls
 
         [field: SerializeField] public Image FaceFrame { get; private set; }
         [field: SerializeField] public Image FaceRim { get; private set; }
+        [field: SerializeField] public ImageView ThumbnailImageView { get; private set; }
         [field: SerializeField] public TMP_Text UserName { get; private set; }
         [field: SerializeField] public TMP_Text UserNameTag { get; private set; }
         [field: SerializeField] public TMP_Text UserAddress { get; private set; }
@@ -40,12 +41,14 @@ namespace DCL.UI.GenericContextMenu.Controls
         [field: SerializeField] private RectTransform faceFrameRectTransform;
         [field: SerializeField] private RectTransform userAddressRectTransform;
         [field: SerializeField] private RectTransform addButtonRectTransform;
+        [field: SerializeField] private Sprite defaultEmptyThumbnail;
 
         public void Configure(UserProfileContextMenuControlSettings settings)
         {
             HorizontalLayoutComponent.padding = settings.horizontalLayoutPadding;
 
             ConfigureUserNameAndTag(settings.userName, settings.userAddress, settings.hasClaimedName, settings.userColor);
+            ThumbnailImageView.SetImage(settings.userThumbnail ?? defaultEmptyThumbnail);
             ConfigureAddFriendButton(settings.friendshipStatus);
 
             RectTransformComponent.sizeDelta = new Vector2(RectTransformComponent.sizeDelta.x, CalculateComponentHeight());
