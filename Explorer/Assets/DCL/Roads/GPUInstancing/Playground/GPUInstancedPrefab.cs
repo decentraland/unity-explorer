@@ -10,12 +10,13 @@ namespace DCL.Roads.GPUInstancing.Playground
     public class GPUInstancedPrefab : MonoBehaviour
     {
         [SerializeField] public List<GPUInstancedMesh> InstancedMeshes;
+
         [SerializeField, Tooltip("for RenderMeshIndirect")] public List<GPUInstancedMesh> IndirectInstancedMeshes;
         [SerializeField, Tooltip("for RenderMeshInstanced")] public List<GPUInstancedMesh> DirectInstancedMeshes;
 
         [SerializeField] private Shader indirectShader;
 
-        public MeshInstanceData[] Meshes;
+        public MeshRenderingData[] Meshes;
         public LODGroupData[] LODGroups;
 
         // Call it not in prefab mode, but from Asset in Project window
@@ -39,7 +40,7 @@ namespace DCL.Roads.GPUInstancing.Playground
 
         public void HideVisuals()
         {
-            foreach (MeshInstanceData mesh in Meshes)
+            foreach (MeshRenderingData mesh in Meshes)
                 mesh.Renderer.enabled = false;
 
             foreach (LODGroupData lodGroup in LODGroups)
@@ -49,7 +50,7 @@ namespace DCL.Roads.GPUInstancing.Playground
                 lodGroup.LODGroup.enabled = false;
 
                 foreach (GPUInstancedLOD lod in lodGroup.LODs)
-                foreach (MeshInstanceData mesh in lod.Meshes)
+                foreach (MeshRenderingData mesh in lod.Meshes)
                     mesh.Renderer.enabled = false;
             }
         }
@@ -62,7 +63,7 @@ namespace DCL.Roads.GPUInstancing.Playground
 
         private void CollectDataFromPrefabAsset()
         {
-            var tempMeshToMatrices = new Dictionary<MeshInstanceData, HashSet<PerInstanceBuffer>>();
+            var tempMeshToMatrices = new Dictionary<MeshRenderingData, HashSet<PerInstanceBuffer>>();
 
             Meshes = CollectStandaloneMeshesData(tempMeshToMatrices);
             LODGroups = CollectLODGroupDatas(tempMeshToMatrices);
@@ -71,25 +72,25 @@ namespace DCL.Roads.GPUInstancing.Playground
             IndirectInstancedMeshes = new List<GPUInstancedMesh>(tempMeshToMatrices.Keys.Count);
             DirectInstancedMeshes   = new List<GPUInstancedMesh>(tempMeshToMatrices.Keys.Count);
 
-            foreach (KeyValuePair<MeshInstanceData, HashSet<PerInstanceBuffer>> kvp in tempMeshToMatrices)
+            foreach (KeyValuePair<MeshRenderingData, HashSet<PerInstanceBuffer>> kvp in tempMeshToMatrices)
             {
                 var meshInstance = new GPUInstancedMesh
                 {
-                    meshInstanceData = kvp.Key,
+                    meshRenderingData = kvp.Key,
                     PerInstancesData = kvp.Value.ToArray()
                 };
 
                 // Optionally, if there is a need for unified view of all GPU-instanced meshes
                 InstancedMeshes.Add(meshInstance);
 
-                if (IsMyShader(kvp.Key.SharedMaterials))
+                if (IsMyShader(kvp.Key.Renderer.sharedMaterials))
                     IndirectInstancedMeshes.Add(meshInstance);
                 else
                     DirectInstancedMeshes.Add(meshInstance);
             }
         }
 
-        private MeshInstanceData[] CollectStandaloneMeshesData(Dictionary<MeshInstanceData, HashSet<PerInstanceBuffer>> tempMeshToMatrices)
+        private MeshRenderingData[] CollectStandaloneMeshesData(Dictionary<MeshRenderingData, HashSet<PerInstanceBuffer>> tempMeshToMatrices)
         {
             Renderer[] standaloneRenderers = gameObject.GetComponentsInChildren<Renderer>(true)
                                                        .Where(r => !AssignedToLODGroupInPrefabHierarchy(r.transform)).ToArray();
@@ -97,14 +98,14 @@ namespace DCL.Roads.GPUInstancing.Playground
             return CollectMeshData(standaloneRenderers, tempMeshToMatrices).ToArray();
         }
 
-        private LODGroupData[] CollectLODGroupDatas(Dictionary<MeshInstanceData, HashSet<PerInstanceBuffer>> tempMeshToMatrices) =>
+        private LODGroupData[] CollectLODGroupDatas(Dictionary<MeshRenderingData, HashSet<PerInstanceBuffer>> tempMeshToMatrices) =>
             gameObject.GetComponentsInChildren<LODGroup>(true)
                       .Select(group => CollectLODGroupData(group, tempMeshToMatrices))
                       .Where(lodGroupData => lodGroupData.LODs.Length != 0 && lodGroupData.LODs[0].Meshes.Length != 0).ToArray();
 
-        private List<MeshInstanceData> CollectMeshData(Renderer[] renderers, Dictionary<MeshInstanceData, HashSet<PerInstanceBuffer>> tempMeshToMatrices)
+        private List<MeshRenderingData> CollectMeshData(Renderer[] renderers, Dictionary<MeshRenderingData, HashSet<PerInstanceBuffer>> tempMeshToMatrices)
         {
-            var list = new List<MeshInstanceData>();
+            var list = new List<MeshRenderingData>();
 
             foreach (Renderer rndr in renderers)
             {
@@ -114,28 +115,28 @@ namespace DCL.Roads.GPUInstancing.Playground
                 MeshFilter meshFilter = rndr.GetComponent<MeshFilter>();
                 if (meshFilter == null || meshFilter.sharedMesh == null) return list;
 
-                MeshInstanceData meshInstanceData = new MeshInstanceData
+                MeshRenderingData meshRenderingData = new MeshRenderingData(meshRenderer);
                 {
-                    Transform = meshRenderer.transform,
-                    SharedMesh = meshFilter.sharedMesh,
-                    SharedMaterials = meshRenderer.sharedMaterials,
-                    ReceiveShadows = meshRenderer.receiveShadows,
-                    ShadowCastingMode = meshRenderer.shadowCastingMode,
-                    Renderer = meshRenderer,
-                    LocalToRootMatrix = transform.worldToLocalMatrix * rndr.transform.localToWorldMatrix, // root * child
+                    // Transform = meshRenderer.transform,
+                    // SharedMesh = meshFilter.sharedMesh,
+                    // SharedMaterials = meshRenderer.sharedMaterials,
+                    // ReceiveShadows = meshRenderer.receiveShadows,
+                    // ShadowCastingMode = meshRenderer.shadowCastingMode,
+                    // Renderer = meshRenderer,
+                    // LocalToRootMatrix = transform.worldToLocalMatrix * rndr.transform.localToWorldMatrix, // root * child
                 };
 
-                list.Add(meshInstanceData);
+                list.Add(meshRenderingData);
 
                 PerInstanceBuffer data = new PerInstanceBuffer
                 {
-                    instMatrix = meshInstanceData.LocalToRootMatrix,
+                    // instMatrix = meshRenderingData.LocalToRootMatrix,
                 };
 
-                if (tempMeshToMatrices.TryGetValue(meshInstanceData, out var matrices))
+                if (tempMeshToMatrices.TryGetValue(meshRenderingData, out var matrices))
                     matrices.Add(data);
                 else
-                    tempMeshToMatrices[meshInstanceData] = new HashSet<PerInstanceBuffer> { data };
+                    tempMeshToMatrices[meshRenderingData] = new HashSet<PerInstanceBuffer> { data };
             }
 
             return list;
@@ -157,7 +158,7 @@ namespace DCL.Roads.GPUInstancing.Playground
             return false;
         }
 
-        private LODGroupData CollectLODGroupData(LODGroup lodGroup, Dictionary<MeshInstanceData, HashSet<PerInstanceBuffer>> tempMeshToMatrices)
+        private LODGroupData CollectLODGroupData(LODGroup lodGroup, Dictionary<MeshRenderingData, HashSet<PerInstanceBuffer>> tempMeshToMatrices)
         {
             lodGroup.RecalculateBounds();
 
@@ -186,7 +187,7 @@ namespace DCL.Roads.GPUInstancing.Playground
             var isInitialized = false;
 
             foreach (GPUInstancedLOD mid in lodGroup.LODs)
-            foreach (MeshInstanceData data in mid.Meshes)
+            foreach (MeshRenderingData data in mid.Meshes)
             {
                 if (!isInitialized)
                 {

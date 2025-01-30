@@ -26,17 +26,17 @@ namespace DCL.Roads.Settings
         {
             Dictionary<string, GPUInstancedPrefab> loadedPrefabs = LoadAllPrefabs();
 
-            Dictionary<MeshInstanceData, HashSet<PerInstanceBuffer>> tempMeshToMatrices = CollectInstancesMap(loadedPrefabs);
+            Dictionary<MeshRenderingData, HashSet<PerInstanceBuffer>> tempMeshToMatrices = CollectInstancesMap(loadedPrefabs);
 
-            RoadsMeshesGPUInstances = tempMeshToMatrices.Select(kvp => new GPUInstancedMesh { meshInstanceData = kvp.Key, PerInstancesData = kvp.Value.ToArray() }).ToList();
+            RoadsMeshesGPUInstances = tempMeshToMatrices.Select(kvp => new GPUInstancedMesh { meshRenderingData = kvp.Key, PerInstancesData = kvp.Value.ToArray() }).ToList();
 
             EditorUtility.SetDirty(this);
             AssetDatabase.SaveAssets();
         }
 
-        private Dictionary<MeshInstanceData, HashSet<PerInstanceBuffer>> CollectInstancesMap(Dictionary<string, GPUInstancedPrefab> loadedPrefabs)
+        private Dictionary<MeshRenderingData, HashSet<PerInstanceBuffer>> CollectInstancesMap(Dictionary<string, GPUInstancedPrefab> loadedPrefabs)
         {
-            var tempMeshToMatrices = new Dictionary<MeshInstanceData, HashSet<PerInstanceBuffer>>();
+            var tempMeshToMatrices = new Dictionary<MeshRenderingData, HashSet<PerInstanceBuffer>>();
 
             foreach (RoadDescription roadDescription in RoadDescriptions)
             {
@@ -50,10 +50,10 @@ namespace DCL.Roads.Settings
 
                 foreach (GPUInstancedMesh meshInstance in prefab.InstancedMeshes)
                 {
-                    if (!tempMeshToMatrices.TryGetValue(meshInstance.meshInstanceData, out HashSet<PerInstanceBuffer> matrices))
+                    if (!tempMeshToMatrices.TryGetValue(meshInstance.meshRenderingData, out HashSet<PerInstanceBuffer> matrices))
                     {
                         matrices = new HashSet<PerInstanceBuffer>();
-                        tempMeshToMatrices.Add(meshInstance.meshInstanceData, matrices);
+                        tempMeshToMatrices.Add(meshInstance.meshRenderingData, matrices);
                     }
 
                     foreach (PerInstanceBuffer instanceData in meshInstance.PerInstancesData)

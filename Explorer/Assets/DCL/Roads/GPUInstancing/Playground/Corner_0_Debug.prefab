@@ -42,6 +42,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6440150890663514947}
   - component: {fileID: -3050293953787146782}
+  - component: {fileID: -4115198936312551282}
   m_Layer: 0
   m_Name: Corner_0_Debug
   m_TagString: Untagged
@@ -78,31 +79,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   InstancedMeshes:
-  - meshInstanceData:
-      Transform: {fileID: 1625298755692451439}
-      LocalToRootMatrix:
-        e00: 1
-        e01: 0
-        e02: 0
-        e03: 0
-        e10: 0
-        e11: 1
-        e12: 0
-        e13: 0
-        e20: 0
-        e21: 0
-        e22: 1
-        e23: 0
-        e30: 0
-        e31: 0
-        e32: 0
-        e33: 1
-      Renderer: {fileID: 487818433152494848}
-      SharedMesh: {fileID: 6549383457765728042, guid: 84366f692ac68a74fa0b72a63c361aff, type: 3}
-      ReceiveShadows: 1
-      ShadowCastingMode: 1
-      SharedMaterials:
-      - {fileID: 2100000, guid: 3e4bca0debfc05e44a50237bb3b6fd94, type: 2}
+  - meshRenderingData:
+      SharedMesh: {fileID: 0}
+      Renderer: {fileID: 0}
     PerInstancesData:
     - instMatrix:
         e00: 1
@@ -121,32 +100,10 @@ MonoBehaviour:
         e31: 0
         e32: 0
         e33: 1
-      instColourTint: {x: 0, y: 0, z: 0, w: 0}
-  - meshInstanceData:
-      Transform: {fileID: 5490730228403473337}
-      LocalToRootMatrix:
-        e00: -1
-        e01: 0
-        e02: 0.0000059008594
-        e03: 0
-        e10: 0
-        e11: 1
-        e12: 0
-        e13: 0
-        e20: -0.0000059008594
-        e21: 0
-        e22: -1
-        e23: 0
-        e30: 0
-        e31: 0
-        e32: 0
-        e33: 1
-      Renderer: {fileID: 315162561410437115}
-      SharedMesh: {fileID: 9031037228045548633, guid: 84eb849725a65eb419ecf049b3119757, type: 3}
-      ReceiveShadows: 1
-      ShadowCastingMode: 1
-      SharedMaterials:
-      - {fileID: 2100000, guid: 3e4bca0debfc05e44a50237bb3b6fd94, type: 2}
+      instColourTint: {x: 0, y: 0, z: 0}
+  - meshRenderingData:
+      SharedMesh: {fileID: 0}
+      Renderer: {fileID: 0}
     PerInstancesData:
     - instMatrix:
         e00: -1
@@ -165,32 +122,10 @@ MonoBehaviour:
         e31: 0
         e32: 0
         e33: 1
-      instColourTint: {x: 0, y: 0, z: 0, w: 0}
-  - meshInstanceData:
-      Transform: {fileID: 2956436175586928598}
-      LocalToRootMatrix:
-        e00: -1
-        e01: 0
-        e02: 0.0000059008594
-        e03: 0
-        e10: 0
-        e11: 1
-        e12: 0
-        e13: 0
-        e20: -0.0000059008594
-        e21: 0
-        e22: -1
-        e23: 0
-        e30: 0
-        e31: 0
-        e32: 0
-        e33: 1
-      Renderer: {fileID: 4790228258848908103}
-      SharedMesh: {fileID: -6359036865849020546, guid: 84eb849725a65eb419ecf049b3119757, type: 3}
-      ReceiveShadows: 1
-      ShadowCastingMode: 1
-      SharedMaterials:
-      - {fileID: 2100000, guid: 3e4bca0debfc05e44a50237bb3b6fd94, type: 2}
+      instColourTint: {x: 0, y: 0, z: 0}
+  - meshRenderingData:
+      SharedMesh: {fileID: 0}
+      Renderer: {fileID: 0}
     PerInstancesData:
     - instMatrix:
         e00: -1
@@ -209,32 +144,10 @@ MonoBehaviour:
         e31: 0
         e32: 0
         e33: 1
-      instColourTint: {x: 0, y: 0, z: 0, w: 0}
-  - meshInstanceData:
-      Transform: {fileID: 5749983117736331626}
-      LocalToRootMatrix:
-        e00: -1
-        e01: 0
-        e02: 0.0000059306617
-        e03: -8
-        e10: 0
-        e11: 1
-        e12: 0
-        e13: 0
-        e20: -0.0000059306617
-        e21: 0
-        e22: -1
-        e23: 8
-        e30: 0
-        e31: 0
-        e32: 0
-        e33: 1
-      Renderer: {fileID: 4667432527984631986}
-      SharedMesh: {fileID: 5755458239639996712, guid: 14c353cd19b5ed543b9bb8851997011b, type: 3}
-      ReceiveShadows: 1
-      ShadowCastingMode: 1
-      SharedMaterials:
-      - {fileID: 2100000, guid: 3e4bca0debfc05e44a50237bb3b6fd94, type: 2}
+      instColourTint: {x: 0, y: 0, z: 0}
+  - meshRenderingData:
+      SharedMesh: {fileID: 0}
+      Renderer: {fileID: 0}
     PerInstancesData:
     - instMatrix:
         e00: -1
@@ -253,32 +166,10 @@ MonoBehaviour:
         e31: 0
         e32: 0
         e33: 1
-      instColourTint: {x: 0, y: 0, z: 0, w: 0}
-  - meshInstanceData:
-      Transform: {fileID: 8562440808501443534}
-      LocalToRootMatrix:
-        e00: -1
-        e01: 0
-        e02: 0.0000059306617
-        e03: -8
-        e10: 0
-        e11: 1
-        e12: 0
-        e13: 0
-        e20: -0.0000059306617
-        e21: 0
-        e22: -1
-        e23: 8
-        e30: 0
-        e31: 0
-        e32: 0
-        e33: 1
-      Renderer: {fileID: 3243881059596970525}
-      SharedMesh: {fileID: -3740609248378964520, guid: 14c353cd19b5ed543b9bb8851997011b, type: 3}
-      ReceiveShadows: 1
-      ShadowCastingMode: 1
-      SharedMaterials:
-      - {fileID: 2100000, guid: 3e4bca0debfc05e44a50237bb3b6fd94, type: 2}
+      instColourTint: {x: 0, y: 0, z: 0}
+  - meshRenderingData:
+      SharedMesh: {fileID: 0}
+      Renderer: {fileID: 0}
     PerInstancesData:
     - instMatrix:
         e00: -1
@@ -297,33 +188,10 @@ MonoBehaviour:
         e31: 0
         e32: 0
         e33: 1
-      instColourTint: {x: 0, y: 0, z: 0, w: 0}
-  - meshInstanceData:
-      Transform: {fileID: 3468639902072086244}
-      LocalToRootMatrix:
-        e00: 0.00007909536
-        e01: 0
-        e02: 1.0000001
-        e03: 0
-        e10: 0
-        e11: 1
-        e12: 0
-        e13: 0
-        e20: -1.0000001
-        e21: 0
-        e22: 0.00007909536
-        e23: 0
-        e30: 0
-        e31: 0
-        e32: 0
-        e33: 1
-      Renderer: {fileID: 1492885097207036398}
-      SharedMesh: {fileID: 4166020912628018431, guid: 455bd1c33ae1c814e80059a9aaddc441, type: 3}
-      ReceiveShadows: 1
-      ShadowCastingMode: 1
-      SharedMaterials:
-      - {fileID: 2100000, guid: 3e4bca0debfc05e44a50237bb3b6fd94, type: 2}
-      - {fileID: 2100000, guid: 3e4bca0debfc05e44a50237bb3b6fd94, type: 2}
+      instColourTint: {x: 0, y: 0, z: 0}
+  - meshRenderingData:
+      SharedMesh: {fileID: 0}
+      Renderer: {fileID: 0}
     PerInstancesData:
     - instMatrix:
         e00: 0.00007909536
@@ -342,7 +210,7 @@ MonoBehaviour:
         e31: 0
         e32: 0
         e33: 1
-      instColourTint: {x: 0, y: 0, z: 0, w: 0}
+      instColourTint: {x: 0, y: 0, z: 0}
     - instMatrix:
         e00: -1
         e01: 0
@@ -360,33 +228,10 @@ MonoBehaviour:
         e31: 0
         e32: 0
         e33: 1
-      instColourTint: {x: 0, y: 0, z: 0, w: 0}
-  - meshInstanceData:
-      Transform: {fileID: 8364926160175316917}
-      LocalToRootMatrix:
-        e00: 0.00007909536
-        e01: 0
-        e02: 1.0000001
-        e03: 0
-        e10: 0
-        e11: 1
-        e12: 0
-        e13: 0
-        e20: -1.0000001
-        e21: 0
-        e22: 0.00007909536
-        e23: 0
-        e30: 0
-        e31: 0
-        e32: 0
-        e33: 1
-      Renderer: {fileID: 2256158974808401958}
-      SharedMesh: {fileID: -2665897731168356493, guid: 455bd1c33ae1c814e80059a9aaddc441, type: 3}
-      ReceiveShadows: 1
-      ShadowCastingMode: 1
-      SharedMaterials:
-      - {fileID: 2100000, guid: 3e4bca0debfc05e44a50237bb3b6fd94, type: 2}
-      - {fileID: 2100000, guid: 3e4bca0debfc05e44a50237bb3b6fd94, type: 2}
+      instColourTint: {x: 0, y: 0, z: 0}
+  - meshRenderingData:
+      SharedMesh: {fileID: 0}
+      Renderer: {fileID: 0}
     PerInstancesData:
     - instMatrix:
         e00: 0.00007909536
@@ -405,7 +250,7 @@ MonoBehaviour:
         e31: 0
         e32: 0
         e33: 1
-      instColourTint: {x: 0, y: 0, z: 0, w: 0}
+      instColourTint: {x: 0, y: 0, z: 0}
     - instMatrix:
         e00: -1
         e01: 0
@@ -423,33 +268,10 @@ MonoBehaviour:
         e31: 0
         e32: 0
         e33: 1
-      instColourTint: {x: 0, y: 0, z: 0, w: 0}
-  - meshInstanceData:
-      Transform: {fileID: 6331861942239395995}
-      LocalToRootMatrix:
-        e00: 0.00007909536
-        e01: 0
-        e02: 1.0000001
-        e03: 0
-        e10: 0
-        e11: 1
-        e12: 0
-        e13: 0
-        e20: -1.0000001
-        e21: 0
-        e22: 0.00007909536
-        e23: 0
-        e30: 0
-        e31: 0
-        e32: 0
-        e33: 1
-      Renderer: {fileID: 1919570692678399897}
-      SharedMesh: {fileID: -4788003504506777672, guid: 455bd1c33ae1c814e80059a9aaddc441, type: 3}
-      ReceiveShadows: 1
-      ShadowCastingMode: 1
-      SharedMaterials:
-      - {fileID: 2100000, guid: 3e4bca0debfc05e44a50237bb3b6fd94, type: 2}
-      - {fileID: 2100000, guid: 3e4bca0debfc05e44a50237bb3b6fd94, type: 2}
+      instColourTint: {x: 0, y: 0, z: 0}
+  - meshRenderingData:
+      SharedMesh: {fileID: 0}
+      Renderer: {fileID: 0}
     PerInstancesData:
     - instMatrix:
         e00: 0.00007909536
@@ -468,7 +290,7 @@ MonoBehaviour:
         e31: 0
         e32: 0
         e33: 1
-      instColourTint: {x: 0, y: 0, z: 0, w: 0}
+      instColourTint: {x: 0, y: 0, z: 0}
     - instMatrix:
         e00: -1
         e01: 0
@@ -486,32 +308,10 @@ MonoBehaviour:
         e31: 0
         e32: 0
         e33: 1
-      instColourTint: {x: 0, y: 0, z: 0, w: 0}
-  - meshInstanceData:
-      Transform: {fileID: 3767313372376783709}
-      LocalToRootMatrix:
-        e00: 1.3
-        e01: 0
-        e02: 0
-        e03: 5.0000005
-        e10: 0
-        e11: 1.3
-        e12: 0
-        e13: 0.25
-        e20: 0
-        e21: 0
-        e22: 1.3
-        e23: -5.0000005
-        e30: 0
-        e31: 0
-        e32: 0
-        e33: 1
-      Renderer: {fileID: 3426922652252359014}
-      SharedMesh: {fileID: 6452406434197112212, guid: 7a6c9e87b01b5f94bb28e74c58d938f9, type: 3}
-      ReceiveShadows: 1
-      ShadowCastingMode: 1
-      SharedMaterials:
-      - {fileID: 2100000, guid: 4b09b64dee8b53b4a9bc1155c05102aa, type: 2}
+      instColourTint: {x: 0, y: 0, z: 0}
+  - meshRenderingData:
+      SharedMesh: {fileID: 0}
+      Renderer: {fileID: 0}
     PerInstancesData:
     - instMatrix:
         e00: 1.3
@@ -530,32 +330,10 @@ MonoBehaviour:
         e31: 0
         e32: 0
         e33: 1
-      instColourTint: {x: 0, y: 0, z: 0, w: 0}
-  - meshInstanceData:
-      Transform: {fileID: 6374314064847649676}
-      LocalToRootMatrix:
-        e00: 1.3
-        e01: 0
-        e02: 0
-        e03: 5.0000005
-        e10: 0
-        e11: 1.3
-        e12: 0
-        e13: 0.25
-        e20: 0
-        e21: 0
-        e22: 1.3
-        e23: -5.0000005
-        e30: 0
-        e31: 0
-        e32: 0
-        e33: 1
-      Renderer: {fileID: 4016134348947269555}
-      SharedMesh: {fileID: -5805549381320072616, guid: 7a6c9e87b01b5f94bb28e74c58d938f9, type: 3}
-      ReceiveShadows: 1
-      ShadowCastingMode: 1
-      SharedMaterials:
-      - {fileID: 2100000, guid: 4b09b64dee8b53b4a9bc1155c05102aa, type: 2}
+      instColourTint: {x: 0, y: 0, z: 0}
+  - meshRenderingData:
+      SharedMesh: {fileID: 0}
+      Renderer: {fileID: 0}
     PerInstancesData:
     - instMatrix:
         e00: 1.3
@@ -574,32 +352,10 @@ MonoBehaviour:
         e31: 0
         e32: 0
         e33: 1
-      instColourTint: {x: 0, y: 0, z: 0, w: 0}
-  - meshInstanceData:
-      Transform: {fileID: 3646051099339544970}
-      LocalToRootMatrix:
-        e00: 1.3
-        e01: 0
-        e02: 0
-        e03: 5.0000005
-        e10: 0
-        e11: 1.3
-        e12: 0
-        e13: 0.25
-        e20: 0
-        e21: 0
-        e22: 1.3
-        e23: -5.0000005
-        e30: 0
-        e31: 0
-        e32: 0
-        e33: 1
-      Renderer: {fileID: 2858857772194872005}
-      SharedMesh: {fileID: -2628765915206297012, guid: 7a6c9e87b01b5f94bb28e74c58d938f9, type: 3}
-      ReceiveShadows: 1
-      ShadowCastingMode: 1
-      SharedMaterials:
-      - {fileID: 2100000, guid: 4b09b64dee8b53b4a9bc1155c05102aa, type: 2}
+      instColourTint: {x: 0, y: 0, z: 0}
+  - meshRenderingData:
+      SharedMesh: {fileID: 0}
+      Renderer: {fileID: 0}
     PerInstancesData:
     - instMatrix:
         e00: 1.3
@@ -618,32 +374,10 @@ MonoBehaviour:
         e31: 0
         e32: 0
         e33: 1
-      instColourTint: {x: 0, y: 0, z: 0, w: 0}
-  - meshInstanceData:
-      Transform: {fileID: 4929559773893304456}
-      LocalToRootMatrix:
-        e00: 1
-        e01: 0
-        e02: 0
-        e03: 5.0000005
-        e10: 0
-        e11: 1
-        e12: 0
-        e13: 0
-        e20: 0
-        e21: 0
-        e22: 1
-        e23: -5.0000005
-        e30: 0
-        e31: 0
-        e32: 0
-        e33: 1
-      Renderer: {fileID: 7560538401032283447}
-      SharedMesh: {fileID: 5054886108376055829, guid: 072903bcfed699f499960c32e1302b0f, type: 3}
-      ReceiveShadows: 1
-      ShadowCastingMode: 1
-      SharedMaterials:
-      - {fileID: 2100000, guid: 3e4bca0debfc05e44a50237bb3b6fd94, type: 2}
+      instColourTint: {x: 0, y: 0, z: 0}
+  - meshRenderingData:
+      SharedMesh: {fileID: 0}
+      Renderer: {fileID: 0}
     PerInstancesData:
     - instMatrix:
         e00: 1
@@ -662,32 +396,10 @@ MonoBehaviour:
         e31: 0
         e32: 0
         e33: 1
-      instColourTint: {x: 0, y: 0, z: 0, w: 0}
-  - meshInstanceData:
-      Transform: {fileID: 6849074475865088563}
-      LocalToRootMatrix:
-        e00: 1
-        e01: 0
-        e02: 0
-        e03: 5.0000005
-        e10: 0
-        e11: 1
-        e12: 0
-        e13: 0
-        e20: 0
-        e21: 0
-        e22: 1
-        e23: -5.0000005
-        e30: 0
-        e31: 0
-        e32: 0
-        e33: 1
-      Renderer: {fileID: 4747775013930338930}
-      SharedMesh: {fileID: -3441998875801778676, guid: 072903bcfed699f499960c32e1302b0f, type: 3}
-      ReceiveShadows: 1
-      ShadowCastingMode: 1
-      SharedMaterials:
-      - {fileID: 2100000, guid: 3e4bca0debfc05e44a50237bb3b6fd94, type: 2}
+      instColourTint: {x: 0, y: 0, z: 0}
+  - meshRenderingData:
+      SharedMesh: {fileID: 0}
+      Renderer: {fileID: 0}
     PerInstancesData:
     - instMatrix:
         e00: 1
@@ -706,32 +418,10 @@ MonoBehaviour:
         e31: 0
         e32: 0
         e33: 1
-      instColourTint: {x: 0, y: 0, z: 0, w: 0}
-  - meshInstanceData:
-      Transform: {fileID: 6003175690658424702}
-      LocalToRootMatrix:
-        e00: 1
-        e01: 0
-        e02: 0
-        e03: 5.0000005
-        e10: 0
-        e11: 1
-        e12: 0
-        e13: 0
-        e20: 0
-        e21: 0
-        e22: 1
-        e23: -5.0000005
-        e30: 0
-        e31: 0
-        e32: 0
-        e33: 1
-      Renderer: {fileID: 7266030814224078437}
-      SharedMesh: {fileID: -2339752442410856566, guid: 072903bcfed699f499960c32e1302b0f, type: 3}
-      ReceiveShadows: 1
-      ShadowCastingMode: 1
-      SharedMaterials:
-      - {fileID: 2100000, guid: 3e4bca0debfc05e44a50237bb3b6fd94, type: 2}
+      instColourTint: {x: 0, y: 0, z: 0}
+  - meshRenderingData:
+      SharedMesh: {fileID: 0}
+      Renderer: {fileID: 0}
     PerInstancesData:
     - instMatrix:
         e00: 1
@@ -750,32 +440,10 @@ MonoBehaviour:
         e31: 0
         e32: 0
         e33: 1
-      instColourTint: {x: 0, y: 0, z: 0, w: 0}
-  - meshInstanceData:
-      Transform: {fileID: 7037187133185001857}
-      LocalToRootMatrix:
-        e00: 0.000037789345
-        e01: 0
-        e02: -1.0000001
-        e03: -4
-        e10: 0
-        e11: 1
-        e12: 0
-        e13: 0
-        e20: 1.0000001
-        e21: 0
-        e22: 0.000037789345
-        e23: -6
-        e30: 0
-        e31: 0
-        e32: 0
-        e33: 1
-      Renderer: {fileID: 9179676536412399129}
-      SharedMesh: {fileID: 8020616577449614874, guid: a8db31bfddc59a545864b23eff2057a8, type: 3}
-      ReceiveShadows: 1
-      ShadowCastingMode: 1
-      SharedMaterials:
-      - {fileID: 2100000, guid: 3e4bca0debfc05e44a50237bb3b6fd94, type: 2}
+      instColourTint: {x: 0, y: 0, z: 0}
+  - meshRenderingData:
+      SharedMesh: {fileID: 0}
+      Renderer: {fileID: 0}
     PerInstancesData:
     - instMatrix:
         e00: 0.000037789345
@@ -794,32 +462,10 @@ MonoBehaviour:
         e31: 0
         e32: 0
         e33: 1
-      instColourTint: {x: 0, y: 0, z: 0, w: 0}
-  - meshInstanceData:
-      Transform: {fileID: 7278580239064280854}
-      LocalToRootMatrix:
-        e00: 0.000037789345
-        e01: 0
-        e02: -1.0000001
-        e03: -4
-        e10: 0
-        e11: 1
-        e12: 0
-        e13: 0
-        e20: 1.0000001
-        e21: 0
-        e22: 0.000037789345
-        e23: -6
-        e30: 0
-        e31: 0
-        e32: 0
-        e33: 1
-      Renderer: {fileID: 713462439708601443}
-      SharedMesh: {fileID: 5005996464823043455, guid: a8db31bfddc59a545864b23eff2057a8, type: 3}
-      ReceiveShadows: 1
-      ShadowCastingMode: 1
-      SharedMaterials:
-      - {fileID: 2100000, guid: 3e4bca0debfc05e44a50237bb3b6fd94, type: 2}
+      instColourTint: {x: 0, y: 0, z: 0}
+  - meshRenderingData:
+      SharedMesh: {fileID: 0}
+      Renderer: {fileID: 0}
     PerInstancesData:
     - instMatrix:
         e00: 0.000037789345
@@ -838,32 +484,10 @@ MonoBehaviour:
         e31: 0
         e32: 0
         e33: 1
-      instColourTint: {x: 0, y: 0, z: 0, w: 0}
-  - meshInstanceData:
-      Transform: {fileID: 2154401929395241006}
-      LocalToRootMatrix:
-        e00: 0.000037789345
-        e01: 0
-        e02: -1.0000001
-        e03: -4
-        e10: 0
-        e11: 1
-        e12: 0
-        e13: 0
-        e20: 1.0000001
-        e21: 0
-        e22: 0.000037789345
-        e23: -6
-        e30: 0
-        e31: 0
-        e32: 0
-        e33: 1
-      Renderer: {fileID: 703278123663347298}
-      SharedMesh: {fileID: -3836542332788760596, guid: a8db31bfddc59a545864b23eff2057a8, type: 3}
-      ReceiveShadows: 1
-      ShadowCastingMode: 1
-      SharedMaterials:
-      - {fileID: 2100000, guid: 3e4bca0debfc05e44a50237bb3b6fd94, type: 2}
+      instColourTint: {x: 0, y: 0, z: 0}
+  - meshRenderingData:
+      SharedMesh: {fileID: 0}
+      Renderer: {fileID: 0}
     PerInstancesData:
     - instMatrix:
         e00: 0.000037789345
@@ -882,33 +506,11 @@ MonoBehaviour:
         e31: 0
         e32: 0
         e33: 1
-      instColourTint: {x: 0, y: 0, z: 0, w: 0}
+      instColourTint: {x: 0, y: 0, z: 0}
   IndirectInstancedMeshes:
-  - meshInstanceData:
-      Transform: {fileID: 1625298755692451439}
-      LocalToRootMatrix:
-        e00: 1
-        e01: 0
-        e02: 0
-        e03: 0
-        e10: 0
-        e11: 1
-        e12: 0
-        e13: 0
-        e20: 0
-        e21: 0
-        e22: 1
-        e23: 0
-        e30: 0
-        e31: 0
-        e32: 0
-        e33: 1
-      Renderer: {fileID: 487818433152494848}
-      SharedMesh: {fileID: 6549383457765728042, guid: 84366f692ac68a74fa0b72a63c361aff, type: 3}
-      ReceiveShadows: 1
-      ShadowCastingMode: 1
-      SharedMaterials:
-      - {fileID: 2100000, guid: 3e4bca0debfc05e44a50237bb3b6fd94, type: 2}
+  - meshRenderingData:
+      SharedMesh: {fileID: 0}
+      Renderer: {fileID: 0}
     PerInstancesData:
     - instMatrix:
         e00: 1
@@ -927,32 +529,10 @@ MonoBehaviour:
         e31: 0
         e32: 0
         e33: 1
-      instColourTint: {x: 0, y: 0, z: 0, w: 0}
-  - meshInstanceData:
-      Transform: {fileID: 5490730228403473337}
-      LocalToRootMatrix:
-        e00: -1
-        e01: 0
-        e02: 0.0000059008594
-        e03: 0
-        e10: 0
-        e11: 1
-        e12: 0
-        e13: 0
-        e20: -0.0000059008594
-        e21: 0
-        e22: -1
-        e23: 0
-        e30: 0
-        e31: 0
-        e32: 0
-        e33: 1
-      Renderer: {fileID: 315162561410437115}
-      SharedMesh: {fileID: 9031037228045548633, guid: 84eb849725a65eb419ecf049b3119757, type: 3}
-      ReceiveShadows: 1
-      ShadowCastingMode: 1
-      SharedMaterials:
-      - {fileID: 2100000, guid: 3e4bca0debfc05e44a50237bb3b6fd94, type: 2}
+      instColourTint: {x: 0, y: 0, z: 0}
+  - meshRenderingData:
+      SharedMesh: {fileID: 0}
+      Renderer: {fileID: 0}
     PerInstancesData:
     - instMatrix:
         e00: -1
@@ -971,32 +551,10 @@ MonoBehaviour:
         e31: 0
         e32: 0
         e33: 1
-      instColourTint: {x: 0, y: 0, z: 0, w: 0}
-  - meshInstanceData:
-      Transform: {fileID: 2956436175586928598}
-      LocalToRootMatrix:
-        e00: -1
-        e01: 0
-        e02: 0.0000059008594
-        e03: 0
-        e10: 0
-        e11: 1
-        e12: 0
-        e13: 0
-        e20: -0.0000059008594
-        e21: 0
-        e22: -1
-        e23: 0
-        e30: 0
-        e31: 0
-        e32: 0
-        e33: 1
-      Renderer: {fileID: 4790228258848908103}
-      SharedMesh: {fileID: -6359036865849020546, guid: 84eb849725a65eb419ecf049b3119757, type: 3}
-      ReceiveShadows: 1
-      ShadowCastingMode: 1
-      SharedMaterials:
-      - {fileID: 2100000, guid: 3e4bca0debfc05e44a50237bb3b6fd94, type: 2}
+      instColourTint: {x: 0, y: 0, z: 0}
+  - meshRenderingData:
+      SharedMesh: {fileID: 0}
+      Renderer: {fileID: 0}
     PerInstancesData:
     - instMatrix:
         e00: -1
@@ -1015,32 +573,10 @@ MonoBehaviour:
         e31: 0
         e32: 0
         e33: 1
-      instColourTint: {x: 0, y: 0, z: 0, w: 0}
-  - meshInstanceData:
-      Transform: {fileID: 5749983117736331626}
-      LocalToRootMatrix:
-        e00: -1
-        e01: 0
-        e02: 0.0000059306617
-        e03: -8
-        e10: 0
-        e11: 1
-        e12: 0
-        e13: 0
-        e20: -0.0000059306617
-        e21: 0
-        e22: -1
-        e23: 8
-        e30: 0
-        e31: 0
-        e32: 0
-        e33: 1
-      Renderer: {fileID: 4667432527984631986}
-      SharedMesh: {fileID: 5755458239639996712, guid: 14c353cd19b5ed543b9bb8851997011b, type: 3}
-      ReceiveShadows: 1
-      ShadowCastingMode: 1
-      SharedMaterials:
-      - {fileID: 2100000, guid: 3e4bca0debfc05e44a50237bb3b6fd94, type: 2}
+      instColourTint: {x: 0, y: 0, z: 0}
+  - meshRenderingData:
+      SharedMesh: {fileID: 0}
+      Renderer: {fileID: 0}
     PerInstancesData:
     - instMatrix:
         e00: -1
@@ -1059,32 +595,10 @@ MonoBehaviour:
         e31: 0
         e32: 0
         e33: 1
-      instColourTint: {x: 0, y: 0, z: 0, w: 0}
-  - meshInstanceData:
-      Transform: {fileID: 8562440808501443534}
-      LocalToRootMatrix:
-        e00: -1
-        e01: 0
-        e02: 0.0000059306617
-        e03: -8
-        e10: 0
-        e11: 1
-        e12: 0
-        e13: 0
-        e20: -0.0000059306617
-        e21: 0
-        e22: -1
-        e23: 8
-        e30: 0
-        e31: 0
-        e32: 0
-        e33: 1
-      Renderer: {fileID: 3243881059596970525}
-      SharedMesh: {fileID: -3740609248378964520, guid: 14c353cd19b5ed543b9bb8851997011b, type: 3}
-      ReceiveShadows: 1
-      ShadowCastingMode: 1
-      SharedMaterials:
-      - {fileID: 2100000, guid: 3e4bca0debfc05e44a50237bb3b6fd94, type: 2}
+      instColourTint: {x: 0, y: 0, z: 0}
+  - meshRenderingData:
+      SharedMesh: {fileID: 0}
+      Renderer: {fileID: 0}
     PerInstancesData:
     - instMatrix:
         e00: -1
@@ -1103,33 +617,10 @@ MonoBehaviour:
         e31: 0
         e32: 0
         e33: 1
-      instColourTint: {x: 0, y: 0, z: 0, w: 0}
-  - meshInstanceData:
-      Transform: {fileID: 3468639902072086244}
-      LocalToRootMatrix:
-        e00: 0.00007909536
-        e01: 0
-        e02: 1.0000001
-        e03: 0
-        e10: 0
-        e11: 1
-        e12: 0
-        e13: 0
-        e20: -1.0000001
-        e21: 0
-        e22: 0.00007909536
-        e23: 0
-        e30: 0
-        e31: 0
-        e32: 0
-        e33: 1
-      Renderer: {fileID: 1492885097207036398}
-      SharedMesh: {fileID: 4166020912628018431, guid: 455bd1c33ae1c814e80059a9aaddc441, type: 3}
-      ReceiveShadows: 1
-      ShadowCastingMode: 1
-      SharedMaterials:
-      - {fileID: 2100000, guid: 3e4bca0debfc05e44a50237bb3b6fd94, type: 2}
-      - {fileID: 2100000, guid: 3e4bca0debfc05e44a50237bb3b6fd94, type: 2}
+      instColourTint: {x: 0, y: 0, z: 0}
+  - meshRenderingData:
+      SharedMesh: {fileID: 0}
+      Renderer: {fileID: 0}
     PerInstancesData:
     - instMatrix:
         e00: 0.00007909536
@@ -1148,7 +639,7 @@ MonoBehaviour:
         e31: 0
         e32: 0
         e33: 1
-      instColourTint: {x: 0, y: 0, z: 0, w: 0}
+      instColourTint: {x: 0, y: 0, z: 0}
     - instMatrix:
         e00: -1
         e01: 0
@@ -1166,33 +657,10 @@ MonoBehaviour:
         e31: 0
         e32: 0
         e33: 1
-      instColourTint: {x: 0, y: 0, z: 0, w: 0}
-  - meshInstanceData:
-      Transform: {fileID: 8364926160175316917}
-      LocalToRootMatrix:
-        e00: 0.00007909536
-        e01: 0
-        e02: 1.0000001
-        e03: 0
-        e10: 0
-        e11: 1
-        e12: 0
-        e13: 0
-        e20: -1.0000001
-        e21: 0
-        e22: 0.00007909536
-        e23: 0
-        e30: 0
-        e31: 0
-        e32: 0
-        e33: 1
-      Renderer: {fileID: 2256158974808401958}
-      SharedMesh: {fileID: -2665897731168356493, guid: 455bd1c33ae1c814e80059a9aaddc441, type: 3}
-      ReceiveShadows: 1
-      ShadowCastingMode: 1
-      SharedMaterials:
-      - {fileID: 2100000, guid: 3e4bca0debfc05e44a50237bb3b6fd94, type: 2}
-      - {fileID: 2100000, guid: 3e4bca0debfc05e44a50237bb3b6fd94, type: 2}
+      instColourTint: {x: 0, y: 0, z: 0}
+  - meshRenderingData:
+      SharedMesh: {fileID: 0}
+      Renderer: {fileID: 0}
     PerInstancesData:
     - instMatrix:
         e00: 0.00007909536
@@ -1211,7 +679,7 @@ MonoBehaviour:
         e31: 0
         e32: 0
         e33: 1
-      instColourTint: {x: 0, y: 0, z: 0, w: 0}
+      instColourTint: {x: 0, y: 0, z: 0}
     - instMatrix:
         e00: -1
         e01: 0
@@ -1229,33 +697,10 @@ MonoBehaviour:
         e31: 0
         e32: 0
         e33: 1
-      instColourTint: {x: 0, y: 0, z: 0, w: 0}
-  - meshInstanceData:
-      Transform: {fileID: 6331861942239395995}
-      LocalToRootMatrix:
-        e00: 0.00007909536
-        e01: 0
-        e02: 1.0000001
-        e03: 0
-        e10: 0
-        e11: 1
-        e12: 0
-        e13: 0
-        e20: -1.0000001
-        e21: 0
-        e22: 0.00007909536
-        e23: 0
-        e30: 0
-        e31: 0
-        e32: 0
-        e33: 1
-      Renderer: {fileID: 1919570692678399897}
-      SharedMesh: {fileID: -4788003504506777672, guid: 455bd1c33ae1c814e80059a9aaddc441, type: 3}
-      ReceiveShadows: 1
-      ShadowCastingMode: 1
-      SharedMaterials:
-      - {fileID: 2100000, guid: 3e4bca0debfc05e44a50237bb3b6fd94, type: 2}
-      - {fileID: 2100000, guid: 3e4bca0debfc05e44a50237bb3b6fd94, type: 2}
+      instColourTint: {x: 0, y: 0, z: 0}
+  - meshRenderingData:
+      SharedMesh: {fileID: 0}
+      Renderer: {fileID: 0}
     PerInstancesData:
     - instMatrix:
         e00: 0.00007909536
@@ -1274,7 +719,7 @@ MonoBehaviour:
         e31: 0
         e32: 0
         e33: 1
-      instColourTint: {x: 0, y: 0, z: 0, w: 0}
+      instColourTint: {x: 0, y: 0, z: 0}
     - instMatrix:
         e00: -1
         e01: 0
@@ -1292,32 +737,10 @@ MonoBehaviour:
         e31: 0
         e32: 0
         e33: 1
-      instColourTint: {x: 0, y: 0, z: 0, w: 0}
-  - meshInstanceData:
-      Transform: {fileID: 4929559773893304456}
-      LocalToRootMatrix:
-        e00: 1
-        e01: 0
-        e02: 0
-        e03: 5.0000005
-        e10: 0
-        e11: 1
-        e12: 0
-        e13: 0
-        e20: 0
-        e21: 0
-        e22: 1
-        e23: -5.0000005
-        e30: 0
-        e31: 0
-        e32: 0
-        e33: 1
-      Renderer: {fileID: 7560538401032283447}
-      SharedMesh: {fileID: 5054886108376055829, guid: 072903bcfed699f499960c32e1302b0f, type: 3}
-      ReceiveShadows: 1
-      ShadowCastingMode: 1
-      SharedMaterials:
-      - {fileID: 2100000, guid: 3e4bca0debfc05e44a50237bb3b6fd94, type: 2}
+      instColourTint: {x: 0, y: 0, z: 0}
+  - meshRenderingData:
+      SharedMesh: {fileID: 0}
+      Renderer: {fileID: 0}
     PerInstancesData:
     - instMatrix:
         e00: 1
@@ -1336,32 +759,10 @@ MonoBehaviour:
         e31: 0
         e32: 0
         e33: 1
-      instColourTint: {x: 0, y: 0, z: 0, w: 0}
-  - meshInstanceData:
-      Transform: {fileID: 6849074475865088563}
-      LocalToRootMatrix:
-        e00: 1
-        e01: 0
-        e02: 0
-        e03: 5.0000005
-        e10: 0
-        e11: 1
-        e12: 0
-        e13: 0
-        e20: 0
-        e21: 0
-        e22: 1
-        e23: -5.0000005
-        e30: 0
-        e31: 0
-        e32: 0
-        e33: 1
-      Renderer: {fileID: 4747775013930338930}
-      SharedMesh: {fileID: -3441998875801778676, guid: 072903bcfed699f499960c32e1302b0f, type: 3}
-      ReceiveShadows: 1
-      ShadowCastingMode: 1
-      SharedMaterials:
-      - {fileID: 2100000, guid: 3e4bca0debfc05e44a50237bb3b6fd94, type: 2}
+      instColourTint: {x: 0, y: 0, z: 0}
+  - meshRenderingData:
+      SharedMesh: {fileID: 0}
+      Renderer: {fileID: 0}
     PerInstancesData:
     - instMatrix:
         e00: 1
@@ -1380,32 +781,10 @@ MonoBehaviour:
         e31: 0
         e32: 0
         e33: 1
-      instColourTint: {x: 0, y: 0, z: 0, w: 0}
-  - meshInstanceData:
-      Transform: {fileID: 6003175690658424702}
-      LocalToRootMatrix:
-        e00: 1
-        e01: 0
-        e02: 0
-        e03: 5.0000005
-        e10: 0
-        e11: 1
-        e12: 0
-        e13: 0
-        e20: 0
-        e21: 0
-        e22: 1
-        e23: -5.0000005
-        e30: 0
-        e31: 0
-        e32: 0
-        e33: 1
-      Renderer: {fileID: 7266030814224078437}
-      SharedMesh: {fileID: -2339752442410856566, guid: 072903bcfed699f499960c32e1302b0f, type: 3}
-      ReceiveShadows: 1
-      ShadowCastingMode: 1
-      SharedMaterials:
-      - {fileID: 2100000, guid: 3e4bca0debfc05e44a50237bb3b6fd94, type: 2}
+      instColourTint: {x: 0, y: 0, z: 0}
+  - meshRenderingData:
+      SharedMesh: {fileID: 0}
+      Renderer: {fileID: 0}
     PerInstancesData:
     - instMatrix:
         e00: 1
@@ -1424,32 +803,10 @@ MonoBehaviour:
         e31: 0
         e32: 0
         e33: 1
-      instColourTint: {x: 0, y: 0, z: 0, w: 0}
-  - meshInstanceData:
-      Transform: {fileID: 7037187133185001857}
-      LocalToRootMatrix:
-        e00: 0.000037789345
-        e01: 0
-        e02: -1.0000001
-        e03: -4
-        e10: 0
-        e11: 1
-        e12: 0
-        e13: 0
-        e20: 1.0000001
-        e21: 0
-        e22: 0.000037789345
-        e23: -6
-        e30: 0
-        e31: 0
-        e32: 0
-        e33: 1
-      Renderer: {fileID: 9179676536412399129}
-      SharedMesh: {fileID: 8020616577449614874, guid: a8db31bfddc59a545864b23eff2057a8, type: 3}
-      ReceiveShadows: 1
-      ShadowCastingMode: 1
-      SharedMaterials:
-      - {fileID: 2100000, guid: 3e4bca0debfc05e44a50237bb3b6fd94, type: 2}
+      instColourTint: {x: 0, y: 0, z: 0}
+  - meshRenderingData:
+      SharedMesh: {fileID: 0}
+      Renderer: {fileID: 0}
     PerInstancesData:
     - instMatrix:
         e00: 0.000037789345
@@ -1468,32 +825,10 @@ MonoBehaviour:
         e31: 0
         e32: 0
         e33: 1
-      instColourTint: {x: 0, y: 0, z: 0, w: 0}
-  - meshInstanceData:
-      Transform: {fileID: 7278580239064280854}
-      LocalToRootMatrix:
-        e00: 0.000037789345
-        e01: 0
-        e02: -1.0000001
-        e03: -4
-        e10: 0
-        e11: 1
-        e12: 0
-        e13: 0
-        e20: 1.0000001
-        e21: 0
-        e22: 0.000037789345
-        e23: -6
-        e30: 0
-        e31: 0
-        e32: 0
-        e33: 1
-      Renderer: {fileID: 713462439708601443}
-      SharedMesh: {fileID: 5005996464823043455, guid: a8db31bfddc59a545864b23eff2057a8, type: 3}
-      ReceiveShadows: 1
-      ShadowCastingMode: 1
-      SharedMaterials:
-      - {fileID: 2100000, guid: 3e4bca0debfc05e44a50237bb3b6fd94, type: 2}
+      instColourTint: {x: 0, y: 0, z: 0}
+  - meshRenderingData:
+      SharedMesh: {fileID: 0}
+      Renderer: {fileID: 0}
     PerInstancesData:
     - instMatrix:
         e00: 0.000037789345
@@ -1512,32 +847,10 @@ MonoBehaviour:
         e31: 0
         e32: 0
         e33: 1
-      instColourTint: {x: 0, y: 0, z: 0, w: 0}
-  - meshInstanceData:
-      Transform: {fileID: 2154401929395241006}
-      LocalToRootMatrix:
-        e00: 0.000037789345
-        e01: 0
-        e02: -1.0000001
-        e03: -4
-        e10: 0
-        e11: 1
-        e12: 0
-        e13: 0
-        e20: 1.0000001
-        e21: 0
-        e22: 0.000037789345
-        e23: -6
-        e30: 0
-        e31: 0
-        e32: 0
-        e33: 1
-      Renderer: {fileID: 703278123663347298}
-      SharedMesh: {fileID: -3836542332788760596, guid: a8db31bfddc59a545864b23eff2057a8, type: 3}
-      ReceiveShadows: 1
-      ShadowCastingMode: 1
-      SharedMaterials:
-      - {fileID: 2100000, guid: 3e4bca0debfc05e44a50237bb3b6fd94, type: 2}
+      instColourTint: {x: 0, y: 0, z: 0}
+  - meshRenderingData:
+      SharedMesh: {fileID: 0}
+      Renderer: {fileID: 0}
     PerInstancesData:
     - instMatrix:
         e00: 0.000037789345
@@ -1556,33 +869,11 @@ MonoBehaviour:
         e31: 0
         e32: 0
         e33: 1
-      instColourTint: {x: 0, y: 0, z: 0, w: 0}
+      instColourTint: {x: 0, y: 0, z: 0}
   DirectInstancedMeshes:
-  - meshInstanceData:
-      Transform: {fileID: 3767313372376783709}
-      LocalToRootMatrix:
-        e00: 1.3
-        e01: 0
-        e02: 0
-        e03: 5.0000005
-        e10: 0
-        e11: 1.3
-        e12: 0
-        e13: 0.25
-        e20: 0
-        e21: 0
-        e22: 1.3
-        e23: -5.0000005
-        e30: 0
-        e31: 0
-        e32: 0
-        e33: 1
-      Renderer: {fileID: 3426922652252359014}
-      SharedMesh: {fileID: 6452406434197112212, guid: 7a6c9e87b01b5f94bb28e74c58d938f9, type: 3}
-      ReceiveShadows: 1
-      ShadowCastingMode: 1
-      SharedMaterials:
-      - {fileID: 2100000, guid: 4b09b64dee8b53b4a9bc1155c05102aa, type: 2}
+  - meshRenderingData:
+      SharedMesh: {fileID: 0}
+      Renderer: {fileID: 0}
     PerInstancesData:
     - instMatrix:
         e00: 1.3
@@ -1601,32 +892,10 @@ MonoBehaviour:
         e31: 0
         e32: 0
         e33: 1
-      instColourTint: {x: 0, y: 0, z: 0, w: 0}
-  - meshInstanceData:
-      Transform: {fileID: 6374314064847649676}
-      LocalToRootMatrix:
-        e00: 1.3
-        e01: 0
-        e02: 0
-        e03: 5.0000005
-        e10: 0
-        e11: 1.3
-        e12: 0
-        e13: 0.25
-        e20: 0
-        e21: 0
-        e22: 1.3
-        e23: -5.0000005
-        e30: 0
-        e31: 0
-        e32: 0
-        e33: 1
-      Renderer: {fileID: 4016134348947269555}
-      SharedMesh: {fileID: -5805549381320072616, guid: 7a6c9e87b01b5f94bb28e74c58d938f9, type: 3}
-      ReceiveShadows: 1
-      ShadowCastingMode: 1
-      SharedMaterials:
-      - {fileID: 2100000, guid: 4b09b64dee8b53b4a9bc1155c05102aa, type: 2}
+      instColourTint: {x: 0, y: 0, z: 0}
+  - meshRenderingData:
+      SharedMesh: {fileID: 0}
+      Renderer: {fileID: 0}
     PerInstancesData:
     - instMatrix:
         e00: 1.3
@@ -1645,32 +914,10 @@ MonoBehaviour:
         e31: 0
         e32: 0
         e33: 1
-      instColourTint: {x: 0, y: 0, z: 0, w: 0}
-  - meshInstanceData:
-      Transform: {fileID: 3646051099339544970}
-      LocalToRootMatrix:
-        e00: 1.3
-        e01: 0
-        e02: 0
-        e03: 5.0000005
-        e10: 0
-        e11: 1.3
-        e12: 0
-        e13: 0.25
-        e20: 0
-        e21: 0
-        e22: 1.3
-        e23: -5.0000005
-        e30: 0
-        e31: 0
-        e32: 0
-        e33: 1
-      Renderer: {fileID: 2858857772194872005}
-      SharedMesh: {fileID: -2628765915206297012, guid: 7a6c9e87b01b5f94bb28e74c58d938f9, type: 3}
-      ReceiveShadows: 1
-      ShadowCastingMode: 1
-      SharedMaterials:
-      - {fileID: 2100000, guid: 4b09b64dee8b53b4a9bc1155c05102aa, type: 2}
+      instColourTint: {x: 0, y: 0, z: 0}
+  - meshRenderingData:
+      SharedMesh: {fileID: 0}
+      Renderer: {fileID: 0}
     PerInstancesData:
     - instMatrix:
         e00: 1.3
@@ -1689,33 +936,11 @@ MonoBehaviour:
         e31: 0
         e32: 0
         e33: 1
-      instColourTint: {x: 0, y: 0, z: 0, w: 0}
+      instColourTint: {x: 0, y: 0, z: 0}
   indirectShader: {fileID: 4800000, guid: 8850af49c3074b9f8d6beb85604bdfb6, type: 3}
   Meshes:
-  - Transform: {fileID: 1625298755692451439}
-    LocalToRootMatrix:
-      e00: 1
-      e01: 0
-      e02: 0
-      e03: 0
-      e10: 0
-      e11: 1
-      e12: 0
-      e13: 0
-      e20: 0
-      e21: 0
-      e22: 1
-      e23: 0
-      e30: 0
-      e31: 0
-      e32: 0
-      e33: 1
+  - SharedMesh: {fileID: 6549383457765728042, guid: 84366f692ac68a74fa0b72a63c361aff, type: 3}
     Renderer: {fileID: 487818433152494848}
-    SharedMesh: {fileID: 6549383457765728042, guid: 84366f692ac68a74fa0b72a63c361aff, type: 3}
-    ReceiveShadows: 1
-    ShadowCastingMode: 1
-    SharedMaterials:
-    - {fileID: 2100000, guid: 3e4bca0debfc05e44a50237bb3b6fd94, type: 2}
   LODGroups:
   - LODGroup: {fileID: 5519120852973214052}
     Transform: {fileID: 778494389371923989}
@@ -1726,56 +951,12 @@ MonoBehaviour:
     LODs:
     - ScreenRelativeTransitionHeight: 0.13763738
       Meshes:
-      - Transform: {fileID: 5490730228403473337}
-        LocalToRootMatrix:
-          e00: -1
-          e01: 0
-          e02: 0.0000059008594
-          e03: 0
-          e10: 0
-          e11: 1
-          e12: 0
-          e13: 0
-          e20: -0.0000059008594
-          e21: 0
-          e22: -1
-          e23: 0
-          e30: 0
-          e31: 0
-          e32: 0
-          e33: 1
+      - SharedMesh: {fileID: 9031037228045548633, guid: 84eb849725a65eb419ecf049b3119757, type: 3}
         Renderer: {fileID: 315162561410437115}
-        SharedMesh: {fileID: 9031037228045548633, guid: 84eb849725a65eb419ecf049b3119757, type: 3}
-        ReceiveShadows: 1
-        ShadowCastingMode: 1
-        SharedMaterials:
-        - {fileID: 2100000, guid: 3e4bca0debfc05e44a50237bb3b6fd94, type: 2}
     - ScreenRelativeTransitionHeight: 0.027252605
       Meshes:
-      - Transform: {fileID: 2956436175586928598}
-        LocalToRootMatrix:
-          e00: -1
-          e01: 0
-          e02: 0.0000059008594
-          e03: 0
-          e10: 0
-          e11: 1
-          e12: 0
-          e13: 0
-          e20: -0.0000059008594
-          e21: 0
-          e22: -1
-          e23: 0
-          e30: 0
-          e31: 0
-          e32: 0
-          e33: 1
+      - SharedMesh: {fileID: -6359036865849020546, guid: 84eb849725a65eb419ecf049b3119757, type: 3}
         Renderer: {fileID: 4790228258848908103}
-        SharedMesh: {fileID: -6359036865849020546, guid: 84eb849725a65eb419ecf049b3119757, type: 3}
-        ReceiveShadows: 1
-        ShadowCastingMode: 1
-        SharedMaterials:
-        - {fileID: 2100000, guid: 3e4bca0debfc05e44a50237bb3b6fd94, type: 2}
   - LODGroup: {fileID: 7273928734457217315}
     Transform: {fileID: 2497298823506490962}
     ObjectSize: 1
@@ -1785,56 +966,12 @@ MonoBehaviour:
     LODs:
     - ScreenRelativeTransitionHeight: 0.008696001
       Meshes:
-      - Transform: {fileID: 5749983117736331626}
-        LocalToRootMatrix:
-          e00: -1
-          e01: 0
-          e02: 0.0000059306617
-          e03: -8
-          e10: 0
-          e11: 1
-          e12: 0
-          e13: 0
-          e20: -0.0000059306617
-          e21: 0
-          e22: -1
-          e23: 8
-          e30: 0
-          e31: 0
-          e32: 0
-          e33: 1
+      - SharedMesh: {fileID: 5755458239639996712, guid: 14c353cd19b5ed543b9bb8851997011b, type: 3}
         Renderer: {fileID: 4667432527984631986}
-        SharedMesh: {fileID: 5755458239639996712, guid: 14c353cd19b5ed543b9bb8851997011b, type: 3}
-        ReceiveShadows: 1
-        ShadowCastingMode: 1
-        SharedMaterials:
-        - {fileID: 2100000, guid: 3e4bca0debfc05e44a50237bb3b6fd94, type: 2}
     - ScreenRelativeTransitionHeight: 0.0017579735
       Meshes:
-      - Transform: {fileID: 8562440808501443534}
-        LocalToRootMatrix:
-          e00: -1
-          e01: 0
-          e02: 0.0000059306617
-          e03: -8
-          e10: 0
-          e11: 1
-          e12: 0
-          e13: 0
-          e20: -0.0000059306617
-          e21: 0
-          e22: -1
-          e23: 8
-          e30: 0
-          e31: 0
-          e32: 0
-          e33: 1
+      - SharedMesh: {fileID: -3740609248378964520, guid: 14c353cd19b5ed543b9bb8851997011b, type: 3}
         Renderer: {fileID: 3243881059596970525}
-        SharedMesh: {fileID: -3740609248378964520, guid: 14c353cd19b5ed543b9bb8851997011b, type: 3}
-        ReceiveShadows: 1
-        ShadowCastingMode: 1
-        SharedMaterials:
-        - {fileID: 2100000, guid: 3e4bca0debfc05e44a50237bb3b6fd94, type: 2}
   - LODGroup: {fileID: 5209586177937977538}
     Transform: {fileID: 1015056694944303027}
     ObjectSize: 4.3663797
@@ -1844,85 +981,16 @@ MonoBehaviour:
     LODs:
     - ScreenRelativeTransitionHeight: 0.037784006
       Meshes:
-      - Transform: {fileID: 3468639902072086244}
-        LocalToRootMatrix:
-          e00: 0.00007909536
-          e01: 0
-          e02: 1.0000001
-          e03: 0
-          e10: 0
-          e11: 1
-          e12: 0
-          e13: 0
-          e20: -1.0000001
-          e21: 0
-          e22: 0.00007909536
-          e23: 0
-          e30: 0
-          e31: 0
-          e32: 0
-          e33: 1
+      - SharedMesh: {fileID: 4166020912628018431, guid: 455bd1c33ae1c814e80059a9aaddc441, type: 3}
         Renderer: {fileID: 1492885097207036398}
-        SharedMesh: {fileID: 4166020912628018431, guid: 455bd1c33ae1c814e80059a9aaddc441, type: 3}
-        ReceiveShadows: 1
-        ShadowCastingMode: 1
-        SharedMaterials:
-        - {fileID: 2100000, guid: 3e4bca0debfc05e44a50237bb3b6fd94, type: 2}
-        - {fileID: 2100000, guid: 3e4bca0debfc05e44a50237bb3b6fd94, type: 2}
     - ScreenRelativeTransitionHeight: 0.018612256
       Meshes:
-      - Transform: {fileID: 8364926160175316917}
-        LocalToRootMatrix:
-          e00: 0.00007909536
-          e01: 0
-          e02: 1.0000001
-          e03: 0
-          e10: 0
-          e11: 1
-          e12: 0
-          e13: 0
-          e20: -1.0000001
-          e21: 0
-          e22: 0.00007909536
-          e23: 0
-          e30: 0
-          e31: 0
-          e32: 0
-          e33: 1
+      - SharedMesh: {fileID: -2665897731168356493, guid: 455bd1c33ae1c814e80059a9aaddc441, type: 3}
         Renderer: {fileID: 2256158974808401958}
-        SharedMesh: {fileID: -2665897731168356493, guid: 455bd1c33ae1c814e80059a9aaddc441, type: 3}
-        ReceiveShadows: 1
-        ShadowCastingMode: 1
-        SharedMaterials:
-        - {fileID: 2100000, guid: 3e4bca0debfc05e44a50237bb3b6fd94, type: 2}
-        - {fileID: 2100000, guid: 3e4bca0debfc05e44a50237bb3b6fd94, type: 2}
     - ScreenRelativeTransitionHeight: 0.007446293
       Meshes:
-      - Transform: {fileID: 6331861942239395995}
-        LocalToRootMatrix:
-          e00: 0.00007909536
-          e01: 0
-          e02: 1.0000001
-          e03: 0
-          e10: 0
-          e11: 1
-          e12: 0
-          e13: 0
-          e20: -1.0000001
-          e21: 0
-          e22: 0.00007909536
-          e23: 0
-          e30: 0
-          e31: 0
-          e32: 0
-          e33: 1
+      - SharedMesh: {fileID: -4788003504506777672, guid: 455bd1c33ae1c814e80059a9aaddc441, type: 3}
         Renderer: {fileID: 1919570692678399897}
-        SharedMesh: {fileID: -4788003504506777672, guid: 455bd1c33ae1c814e80059a9aaddc441, type: 3}
-        ReceiveShadows: 1
-        ShadowCastingMode: 1
-        SharedMaterials:
-        - {fileID: 2100000, guid: 3e4bca0debfc05e44a50237bb3b6fd94, type: 2}
-        - {fileID: 2100000, guid: 3e4bca0debfc05e44a50237bb3b6fd94, type: 2}
   - LODGroup: {fileID: 3024127177159699033}
     Transform: {fileID: 8047303667113254184}
     ObjectSize: 4.366378
@@ -1932,85 +1000,16 @@ MonoBehaviour:
     LODs:
     - ScreenRelativeTransitionHeight: 0.037784006
       Meshes:
-      - Transform: {fileID: 5879701371677230207}
-        LocalToRootMatrix:
-          e00: -1
-          e01: 0
-          e02: 0.00011843442
-          e03: 0
-          e10: 0
-          e11: 1
-          e12: 0
-          e13: 0
-          e20: -0.00011843442
-          e21: 0
-          e22: -1
-          e23: 0
-          e30: 0
-          e31: 0
-          e32: 0
-          e33: 1
+      - SharedMesh: {fileID: 4166020912628018431, guid: 455bd1c33ae1c814e80059a9aaddc441, type: 3}
         Renderer: {fileID: 8434181854114718581}
-        SharedMesh: {fileID: 4166020912628018431, guid: 455bd1c33ae1c814e80059a9aaddc441, type: 3}
-        ReceiveShadows: 1
-        ShadowCastingMode: 1
-        SharedMaterials:
-        - {fileID: 2100000, guid: 3e4bca0debfc05e44a50237bb3b6fd94, type: 2}
-        - {fileID: 2100000, guid: 3e4bca0debfc05e44a50237bb3b6fd94, type: 2}
     - ScreenRelativeTransitionHeight: 0.018612256
       Meshes:
-      - Transform: {fileID: 1562116465525351726}
-        LocalToRootMatrix:
-          e00: -1
-          e01: 0
-          e02: 0.00011843442
-          e03: 0
-          e10: 0
-          e11: 1
-          e12: 0
-          e13: 0
-          e20: -0.00011843442
-          e21: 0
-          e22: -1
-          e23: 0
-          e30: 0
-          e31: 0
-          e32: 0
-          e33: 1
+      - SharedMesh: {fileID: -2665897731168356493, guid: 455bd1c33ae1c814e80059a9aaddc441, type: 3}
         Renderer: {fileID: 9148090681547420349}
-        SharedMesh: {fileID: -2665897731168356493, guid: 455bd1c33ae1c814e80059a9aaddc441, type: 3}
-        ReceiveShadows: 1
-        ShadowCastingMode: 1
-        SharedMaterials:
-        - {fileID: 2100000, guid: 3e4bca0debfc05e44a50237bb3b6fd94, type: 2}
-        - {fileID: 2100000, guid: 3e4bca0debfc05e44a50237bb3b6fd94, type: 2}
     - ScreenRelativeTransitionHeight: 0.007446293
       Meshes:
-      - Transform: {fileID: 3919462361186753024}
-        LocalToRootMatrix:
-          e00: -1
-          e01: 0
-          e02: 0.00011843442
-          e03: 0
-          e10: 0
-          e11: 1
-          e12: 0
-          e13: 0
-          e20: -0.00011843442
-          e21: 0
-          e22: -1
-          e23: 0
-          e30: 0
-          e31: 0
-          e32: 0
-          e33: 1
+      - SharedMesh: {fileID: -4788003504506777672, guid: 455bd1c33ae1c814e80059a9aaddc441, type: 3}
         Renderer: {fileID: 8869945002959760642}
-        SharedMesh: {fileID: -4788003504506777672, guid: 455bd1c33ae1c814e80059a9aaddc441, type: 3}
-        ReceiveShadows: 1
-        ShadowCastingMode: 1
-        SharedMaterials:
-        - {fileID: 2100000, guid: 3e4bca0debfc05e44a50237bb3b6fd94, type: 2}
-        - {fileID: 2100000, guid: 3e4bca0debfc05e44a50237bb3b6fd94, type: 2}
   - LODGroup: {fileID: 6373266204698834963}
     Transform: {fileID: 2173123648299061090}
     ObjectSize: 3.2996411
@@ -2020,82 +1019,16 @@ MonoBehaviour:
     LODs:
     - ScreenRelativeTransitionHeight: 0.028259004
       Meshes:
-      - Transform: {fileID: 3767313372376783709}
-        LocalToRootMatrix:
-          e00: 1.3
-          e01: 0
-          e02: 0
-          e03: 5.0000005
-          e10: 0
-          e11: 1.3
-          e12: 0
-          e13: 0.25
-          e20: 0
-          e21: 0
-          e22: 1.3
-          e23: -5.0000005
-          e30: 0
-          e31: 0
-          e32: 0
-          e33: 1
+      - SharedMesh: {fileID: 6452406434197112212, guid: 7a6c9e87b01b5f94bb28e74c58d938f9, type: 3}
         Renderer: {fileID: 3426922652252359014}
-        SharedMesh: {fileID: 6452406434197112212, guid: 7a6c9e87b01b5f94bb28e74c58d938f9, type: 3}
-        ReceiveShadows: 1
-        ShadowCastingMode: 1
-        SharedMaterials:
-        - {fileID: 2100000, guid: 4b09b64dee8b53b4a9bc1155c05102aa, type: 2}
     - ScreenRelativeTransitionHeight: 0.018698368
       Meshes:
-      - Transform: {fileID: 6374314064847649676}
-        LocalToRootMatrix:
-          e00: 1.3
-          e01: 0
-          e02: 0
-          e03: 5.0000005
-          e10: 0
-          e11: 1.3
-          e12: 0
-          e13: 0.25
-          e20: 0
-          e21: 0
-          e22: 1.3
-          e23: -5.0000005
-          e30: 0
-          e31: 0
-          e32: 0
-          e33: 1
+      - SharedMesh: {fileID: -5805549381320072616, guid: 7a6c9e87b01b5f94bb28e74c58d938f9, type: 3}
         Renderer: {fileID: 4016134348947269555}
-        SharedMesh: {fileID: -5805549381320072616, guid: 7a6c9e87b01b5f94bb28e74c58d938f9, type: 3}
-        ReceiveShadows: 1
-        ShadowCastingMode: 1
-        SharedMaterials:
-        - {fileID: 2100000, guid: 4b09b64dee8b53b4a9bc1155c05102aa, type: 2}
     - ScreenRelativeTransitionHeight: 0.005794622
       Meshes:
-      - Transform: {fileID: 3646051099339544970}
-        LocalToRootMatrix:
-          e00: 1.3
-          e01: 0
-          e02: 0
-          e03: 5.0000005
-          e10: 0
-          e11: 1.3
-          e12: 0
-          e13: 0.25
-          e20: 0
-          e21: 0
-          e22: 1.3
-          e23: -5.0000005
-          e30: 0
-          e31: 0
-          e32: 0
-          e33: 1
+      - SharedMesh: {fileID: -2628765915206297012, guid: 7a6c9e87b01b5f94bb28e74c58d938f9, type: 3}
         Renderer: {fileID: 2858857772194872005}
-        SharedMesh: {fileID: -2628765915206297012, guid: 7a6c9e87b01b5f94bb28e74c58d938f9, type: 3}
-        ReceiveShadows: 1
-        ShadowCastingMode: 1
-        SharedMaterials:
-        - {fileID: 2100000, guid: 4b09b64dee8b53b4a9bc1155c05102aa, type: 2}
   - LODGroup: {fileID: 7100564173025900271}
     Transform: {fileID: 2652720063976325534}
     ObjectSize: 3.3840914
@@ -2105,82 +1038,16 @@ MonoBehaviour:
     LODs:
     - ScreenRelativeTransitionHeight: 0.029014042
       Meshes:
-      - Transform: {fileID: 4929559773893304456}
-        LocalToRootMatrix:
-          e00: 1
-          e01: 0
-          e02: 0
-          e03: 5.0000005
-          e10: 0
-          e11: 1
-          e12: 0
-          e13: 0
-          e20: 0
-          e21: 0
-          e22: 1
-          e23: -5.0000005
-          e30: 0
-          e31: 0
-          e32: 0
-          e33: 1
+      - SharedMesh: {fileID: 5054886108376055829, guid: 072903bcfed699f499960c32e1302b0f, type: 3}
         Renderer: {fileID: 7560538401032283447}
-        SharedMesh: {fileID: 5054886108376055829, guid: 072903bcfed699f499960c32e1302b0f, type: 3}
-        ReceiveShadows: 1
-        ShadowCastingMode: 1
-        SharedMaterials:
-        - {fileID: 2100000, guid: 3e4bca0debfc05e44a50237bb3b6fd94, type: 2}
     - ScreenRelativeTransitionHeight: 0.01931875
       Meshes:
-      - Transform: {fileID: 6849074475865088563}
-        LocalToRootMatrix:
-          e00: 1
-          e01: 0
-          e02: 0
-          e03: 5.0000005
-          e10: 0
-          e11: 1
-          e12: 0
-          e13: 0
-          e20: 0
-          e21: 0
-          e22: 1
-          e23: -5.0000005
-          e30: 0
-          e31: 0
-          e32: 0
-          e33: 1
+      - SharedMesh: {fileID: -3441998875801778676, guid: 072903bcfed699f499960c32e1302b0f, type: 3}
         Renderer: {fileID: 4747775013930338930}
-        SharedMesh: {fileID: -3441998875801778676, guid: 072903bcfed699f499960c32e1302b0f, type: 3}
-        ReceiveShadows: 1
-        ShadowCastingMode: 1
-        SharedMaterials:
-        - {fileID: 2100000, guid: 3e4bca0debfc05e44a50237bb3b6fd94, type: 2}
     - ScreenRelativeTransitionHeight: 0.005944445
       Meshes:
-      - Transform: {fileID: 6003175690658424702}
-        LocalToRootMatrix:
-          e00: 1
-          e01: 0
-          e02: 0
-          e03: 5.0000005
-          e10: 0
-          e11: 1
-          e12: 0
-          e13: 0
-          e20: 0
-          e21: 0
-          e22: 1
-          e23: -5.0000005
-          e30: 0
-          e31: 0
-          e32: 0
-          e33: 1
+      - SharedMesh: {fileID: -2339752442410856566, guid: 072903bcfed699f499960c32e1302b0f, type: 3}
         Renderer: {fileID: 7266030814224078437}
-        SharedMesh: {fileID: -2339752442410856566, guid: 072903bcfed699f499960c32e1302b0f, type: 3}
-        ReceiveShadows: 1
-        ShadowCastingMode: 1
-        SharedMaterials:
-        - {fileID: 2100000, guid: 3e4bca0debfc05e44a50237bb3b6fd94, type: 2}
   - LODGroup: {fileID: 7454210205254032256}
     Transform: {fileID: 2389356523861880049}
     ObjectSize: 2.7376783
@@ -2190,82 +1057,29 @@ MonoBehaviour:
     LODs:
     - ScreenRelativeTransitionHeight: 0.15454863
       Meshes:
-      - Transform: {fileID: 7037187133185001857}
-        LocalToRootMatrix:
-          e00: 0.000037789345
-          e01: 0
-          e02: -1.0000001
-          e03: -4
-          e10: 0
-          e11: 1
-          e12: 0
-          e13: 0
-          e20: 1.0000001
-          e21: 0
-          e22: 0.000037789345
-          e23: -6
-          e30: 0
-          e31: 0
-          e32: 0
-          e33: 1
+      - SharedMesh: {fileID: 8020616577449614874, guid: a8db31bfddc59a545864b23eff2057a8, type: 3}
         Renderer: {fileID: 9179676536412399129}
-        SharedMesh: {fileID: 8020616577449614874, guid: a8db31bfddc59a545864b23eff2057a8, type: 3}
-        ReceiveShadows: 1
-        ShadowCastingMode: 1
-        SharedMaterials:
-        - {fileID: 2100000, guid: 3e4bca0debfc05e44a50237bb3b6fd94, type: 2}
     - ScreenRelativeTransitionHeight: 0.022414275
       Meshes:
-      - Transform: {fileID: 7278580239064280854}
-        LocalToRootMatrix:
-          e00: 0.000037789345
-          e01: 0
-          e02: -1.0000001
-          e03: -4
-          e10: 0
-          e11: 1
-          e12: 0
-          e13: 0
-          e20: 1.0000001
-          e21: 0
-          e22: 0.000037789345
-          e23: -6
-          e30: 0
-          e31: 0
-          e32: 0
-          e33: 1
+      - SharedMesh: {fileID: 5005996464823043455, guid: a8db31bfddc59a545864b23eff2057a8, type: 3}
         Renderer: {fileID: 713462439708601443}
-        SharedMesh: {fileID: 5005996464823043455, guid: a8db31bfddc59a545864b23eff2057a8, type: 3}
-        ReceiveShadows: 1
-        ShadowCastingMode: 1
-        SharedMaterials:
-        - {fileID: 2100000, guid: 3e4bca0debfc05e44a50237bb3b6fd94, type: 2}
     - ScreenRelativeTransitionHeight: 0.0046898406
       Meshes:
-      - Transform: {fileID: 2154401929395241006}
-        LocalToRootMatrix:
-          e00: 0.000037789345
-          e01: 0
-          e02: -1.0000001
-          e03: -4
-          e10: 0
-          e11: 1
-          e12: 0
-          e13: 0
-          e20: 1.0000001
-          e21: 0
-          e22: 0.000037789345
-          e23: -6
-          e30: 0
-          e31: 0
-          e32: 0
-          e33: 1
+      - SharedMesh: {fileID: -3836542332788760596, guid: a8db31bfddc59a545864b23eff2057a8, type: 3}
         Renderer: {fileID: 703278123663347298}
-        SharedMesh: {fileID: -3836542332788760596, guid: a8db31bfddc59a545864b23eff2057a8, type: 3}
-        ReceiveShadows: 1
-        ShadowCastingMode: 1
-        SharedMaterials:
-        - {fileID: 2100000, guid: 3e4bca0debfc05e44a50237bb3b6fd94, type: 2}
+--- !u!114 &-4115198936312551282
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2041678399592302828}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 910e9d8905854143bf4a85c5df7c15a5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  candidates: []
 --- !u!1 &6907255391070348972
 GameObject:
   m_ObjectHideFlags: 0
@@ -2298,6 +1112,8 @@ Transform:
   - {fileID: 1625298755692451439}
   - {fileID: 4640861789917438130}
   - {fileID: 2389356523861880049}
+  - {fileID: 2479139587761111170}
+  - {fileID: 5823643312895510090}
   m_Father: {fileID: 2903636937266556486}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &1534209931501650268
@@ -2514,11 +1330,6 @@ MeshRenderer:
   m_CorrespondingSourceObject: {fileID: 143359668154513586, guid: a0168356423e90f40a09a8586e4e00c4, type: 3}
   m_PrefabInstance: {fileID: 1534209931501650268}
   m_PrefabAsset: {fileID: 0}
---- !u!4 &1562116465525351726 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 65121238957499506, guid: a0168356423e90f40a09a8586e4e00c4, type: 3}
-  m_PrefabInstance: {fileID: 1534209931501650268}
-  m_PrefabAsset: {fileID: 0}
 --- !u!4 &1625298755692451439 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 271521470279489331, guid: a0168356423e90f40a09a8586e4e00c4, type: 3}
@@ -2539,11 +1350,6 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 4026969864975595278, guid: a0168356423e90f40a09a8586e4e00c4, type: 3}
   m_PrefabInstance: {fileID: 1534209931501650268}
   m_PrefabAsset: {fileID: 0}
---- !u!4 &2956436175586928598 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 4345345563537008266, guid: a0168356423e90f40a09a8586e4e00c4, type: 3}
-  m_PrefabInstance: {fileID: 1534209931501650268}
-  m_PrefabAsset: {fileID: 0}
 --- !u!205 &3024127177159699033 stripped
 LODGroup:
   m_CorrespondingSourceObject: {fileID: 4376725232526633733, guid: a0168356423e90f40a09a8586e4e00c4, type: 3}
@@ -2552,16 +1358,6 @@ LODGroup:
 --- !u!23 &3243881059596970525 stripped
 MeshRenderer:
   m_CorrespondingSourceObject: {fileID: 4057197282933435201, guid: a0168356423e90f40a09a8586e4e00c4, type: 3}
-  m_PrefabInstance: {fileID: 1534209931501650268}
-  m_PrefabAsset: {fileID: 0}
---- !u!4 &3468639902072086244 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 2695842329877077944, guid: a0168356423e90f40a09a8586e4e00c4, type: 3}
-  m_PrefabInstance: {fileID: 1534209931501650268}
-  m_PrefabAsset: {fileID: 0}
---- !u!4 &3919462361186753024 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 2535000532129717084, guid: a0168356423e90f40a09a8586e4e00c4, type: 3}
   m_PrefabInstance: {fileID: 1534209931501650268}
   m_PrefabAsset: {fileID: 0}
 --- !u!23 &4667432527984631986 stripped
@@ -2579,29 +1375,9 @@ LODGroup:
   m_CorrespondingSourceObject: {fileID: 6703239481862877598, guid: a0168356423e90f40a09a8586e4e00c4, type: 3}
   m_PrefabInstance: {fileID: 1534209931501650268}
   m_PrefabAsset: {fileID: 0}
---- !u!4 &5490730228403473337 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 6447014745906432741, guid: a0168356423e90f40a09a8586e4e00c4, type: 3}
-  m_PrefabInstance: {fileID: 1534209931501650268}
-  m_PrefabAsset: {fileID: 0}
 --- !u!205 &5519120852973214052 stripped
 LODGroup:
   m_CorrespondingSourceObject: {fileID: 6475403175479416888, guid: a0168356423e90f40a09a8586e4e00c4, type: 3}
-  m_PrefabInstance: {fileID: 1534209931501650268}
-  m_PrefabAsset: {fileID: 0}
---- !u!4 &5749983117736331626 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 6523060417460340790, guid: a0168356423e90f40a09a8586e4e00c4, type: 3}
-  m_PrefabInstance: {fileID: 1534209931501650268}
-  m_PrefabAsset: {fileID: 0}
---- !u!4 &5879701371677230207 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 4959165721934988579, guid: a0168356423e90f40a09a8586e4e00c4, type: 3}
-  m_PrefabInstance: {fileID: 1534209931501650268}
-  m_PrefabAsset: {fileID: 0}
---- !u!4 &6331861942239395995 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 4797970974940512711, guid: a0168356423e90f40a09a8586e4e00c4, type: 3}
   m_PrefabInstance: {fileID: 1534209931501650268}
   m_PrefabAsset: {fileID: 0}
 --- !u!205 &7273928734457217315 stripped
@@ -2614,19 +1390,9 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 8856152477598456948, guid: a0168356423e90f40a09a8586e4e00c4, type: 3}
   m_PrefabInstance: {fileID: 1534209931501650268}
   m_PrefabAsset: {fileID: 0}
---- !u!4 &8364926160175316917 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 7015671195682438889, guid: a0168356423e90f40a09a8586e4e00c4, type: 3}
-  m_PrefabInstance: {fileID: 1534209931501650268}
-  m_PrefabAsset: {fileID: 0}
 --- !u!23 &8434181854114718581 stripped
 MeshRenderer:
   m_CorrespondingSourceObject: {fileID: 6937408713594888745, guid: a0168356423e90f40a09a8586e4e00c4, type: 3}
-  m_PrefabInstance: {fileID: 1534209931501650268}
-  m_PrefabAsset: {fileID: 0}
---- !u!4 &8562440808501443534 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 7176905201113184914, guid: a0168356423e90f40a09a8586e4e00c4, type: 3}
   m_PrefabInstance: {fileID: 1534209931501650268}
   m_PrefabAsset: {fileID: 0}
 --- !u!23 &8869945002959760642 stripped
@@ -2734,24 +1500,9 @@ MeshRenderer:
   m_CorrespondingSourceObject: {fileID: 3881796035626815068, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
   m_PrefabInstance: {fileID: 4339309099081818687}
   m_PrefabAsset: {fileID: 0}
---- !u!4 &2154401929395241006 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 2440295145327911441, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
-  m_PrefabInstance: {fileID: 4339309099081818687}
-  m_PrefabAsset: {fileID: 0}
 --- !u!4 &2389356523861880049 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 2094422023557664462, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
-  m_PrefabInstance: {fileID: 4339309099081818687}
-  m_PrefabAsset: {fileID: 0}
---- !u!4 &7037187133185001857 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 6742256751843044286, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
-  m_PrefabInstance: {fileID: 4339309099081818687}
-  m_PrefabAsset: {fileID: 0}
---- !u!4 &7278580239064280854 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 6429702705823796521, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
   m_PrefabInstance: {fileID: 4339309099081818687}
   m_PrefabAsset: {fileID: 0}
 --- !u!205 &7454210205254032256 stripped
@@ -2763,6 +1514,186 @@ LODGroup:
 MeshRenderer:
   m_CorrespondingSourceObject: {fileID: 4853914537683649574, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
   m_PrefabInstance: {fileID: 4339309099081818687}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1001 &4573209615091945036
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 6076375538876477220}
+    m_Modifications:
+    - target: {fileID: 1610935267799635060, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+      propertyPath: m_Name
+      value: Bench01 (1)
+      objectReference: {fileID: 0}
+    - target: {fileID: 2094422023557664462, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 0.001
+      objectReference: {fileID: 0}
+    - target: {fileID: 2094422023557664462, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0.001
+      objectReference: {fileID: 0}
+    - target: {fileID: 2094422023557664462, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 0.001
+      objectReference: {fileID: 0}
+    - target: {fileID: 2094422023557664462, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0.00284
+      objectReference: {fileID: 0}
+    - target: {fileID: 2094422023557664462, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2094422023557664462, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -0.00241
+      objectReference: {fileID: 0}
+    - target: {fileID: 2094422023557664462, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.70712024
+      objectReference: {fileID: 0}
+    - target: {fileID: 2094422023557664462, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2094422023557664462, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0.7070934
+      objectReference: {fileID: 0}
+    - target: {fileID: 2094422023557664462, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2094422023557664462, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2094422023557664462, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: -89.998
+      objectReference: {fileID: 0}
+    - target: {fileID: 2094422023557664462, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3881796035626815068, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: 3e4bca0debfc05e44a50237bb3b6fd94, type: 2}
+    - target: {fileID: 3889659928480427101, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: 3e4bca0debfc05e44a50237bb3b6fd94, type: 2}
+    - target: {fileID: 4853914537683649574, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: 3e4bca0debfc05e44a50237bb3b6fd94, type: 2}
+    - target: {fileID: 6578349561275120063, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+      propertyPath: m_Size
+      value: 2.7376783
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+--- !u!4 &2479139587761111170 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 2094422023557664462, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+  m_PrefabInstance: {fileID: 4573209615091945036}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1001 &5602861696614893700
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 6076375538876477220}
+    m_Modifications:
+    - target: {fileID: 1610935267799635060, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+      propertyPath: m_Name
+      value: Bench01 (2)
+      objectReference: {fileID: 0}
+    - target: {fileID: 2094422023557664462, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 0.001
+      objectReference: {fileID: 0}
+    - target: {fileID: 2094422023557664462, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0.001
+      objectReference: {fileID: 0}
+    - target: {fileID: 2094422023557664462, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 0.001
+      objectReference: {fileID: 0}
+    - target: {fileID: 2094422023557664462, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -0.00265
+      objectReference: {fileID: 0}
+    - target: {fileID: 2094422023557664462, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2094422023557664462, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -0.00088
+      objectReference: {fileID: 0}
+    - target: {fileID: 2094422023557664462, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.70712024
+      objectReference: {fileID: 0}
+    - target: {fileID: 2094422023557664462, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2094422023557664462, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0.7070934
+      objectReference: {fileID: 0}
+    - target: {fileID: 2094422023557664462, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2094422023557664462, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2094422023557664462, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: -89.998
+      objectReference: {fileID: 0}
+    - target: {fileID: 2094422023557664462, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3881796035626815068, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: 3e4bca0debfc05e44a50237bb3b6fd94, type: 2}
+    - target: {fileID: 3889659928480427101, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: 3e4bca0debfc05e44a50237bb3b6fd94, type: 2}
+    - target: {fileID: 4853914537683649574, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: 3e4bca0debfc05e44a50237bb3b6fd94, type: 2}
+    - target: {fileID: 6578349561275120063, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+      propertyPath: m_Size
+      value: 2.7376783
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+--- !u!4 &5823643312895510090 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 2094422023557664462, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+  m_PrefabInstance: {fileID: 5602861696614893700}
   m_PrefabAsset: {fileID: 0}
 --- !u!1001 &7161908094603813238
 PrefabInstance:
@@ -2909,16 +1840,6 @@ MeshRenderer:
   m_CorrespondingSourceObject: {fileID: 5542500168062412816, guid: c3f0925194868a5478e507bcc2cc31ba, type: 3}
   m_PrefabInstance: {fileID: 7161908094603813238}
   m_PrefabAsset: {fileID: 0}
---- !u!4 &3646051099339544970 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 5907972153593346300, guid: c3f0925194868a5478e507bcc2cc31ba, type: 3}
-  m_PrefabInstance: {fileID: 7161908094603813238}
-  m_PrefabAsset: {fileID: 0}
---- !u!4 &3767313372376783709 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 6281425241902299691, guid: c3f0925194868a5478e507bcc2cc31ba, type: 3}
-  m_PrefabInstance: {fileID: 7161908094603813238}
-  m_PrefabAsset: {fileID: 0}
 --- !u!23 &4016134348947269555 stripped
 MeshRenderer:
   m_CorrespondingSourceObject: {fileID: 6113664660616365765, guid: c3f0925194868a5478e507bcc2cc31ba, type: 3}
@@ -2934,29 +1855,9 @@ MeshRenderer:
   m_CorrespondingSourceObject: {fileID: 2488037923301223172, guid: c3f0925194868a5478e507bcc2cc31ba, type: 3}
   m_PrefabInstance: {fileID: 7161908094603813238}
   m_PrefabAsset: {fileID: 0}
---- !u!4 &4929559773893304456 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 2814016428840960510, guid: c3f0925194868a5478e507bcc2cc31ba, type: 3}
-  m_PrefabInstance: {fileID: 7161908094603813238}
-  m_PrefabAsset: {fileID: 0}
---- !u!4 &6003175690658424702 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 3471049406381180424, guid: c3f0925194868a5478e507bcc2cc31ba, type: 3}
-  m_PrefabInstance: {fileID: 7161908094603813238}
-  m_PrefabAsset: {fileID: 0}
 --- !u!205 &6373266204698834963 stripped
 LODGroup:
   m_CorrespondingSourceObject: {fileID: 4257685811283728741, guid: c3f0925194868a5478e507bcc2cc31ba, type: 3}
-  m_PrefabInstance: {fileID: 7161908094603813238}
-  m_PrefabAsset: {fileID: 0}
---- !u!4 &6374314064847649676 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 4256510407518182138, guid: c3f0925194868a5478e507bcc2cc31ba, type: 3}
-  m_PrefabInstance: {fileID: 7161908094603813238}
-  m_PrefabAsset: {fileID: 0}
---- !u!4 &6849074475865088563 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 4353003393019069253, guid: c3f0925194868a5478e507bcc2cc31ba, type: 3}
   m_PrefabInstance: {fileID: 7161908094603813238}
   m_PrefabAsset: {fileID: 0}
 --- !u!205 &7100564173025900271 stripped
