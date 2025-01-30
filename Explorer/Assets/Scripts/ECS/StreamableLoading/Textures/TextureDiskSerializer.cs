@@ -16,7 +16,7 @@ namespace ECS.StreamableLoading.Textures
         {
             //TODO must be optimised to avoid extra allocations
             await UniTask.SwitchToMainThread();
-            return ToArray(data);
+            return ToArray(data.Asset);
         }
 
         public async UniTask<Texture2DData> DeserializeAsync(SlicedOwnedMemory<byte> data, CancellationToken token)
@@ -34,12 +34,13 @@ namespace ECS.StreamableLoading.Textures
             return new Texture2DData(new MemoryOwnedTexture2D(data, texture));
         }
 
-        private static SlicedOwnedMemory<byte> ToArray(Texture2DData data)
+        private static SlicedOwnedMemory<byte> ToArray(Texture2D data)
         {
-            data.Asset.Compress(true);
-            var textureData = data.Asset.GetRawTextureData<byte>()!;
+            data = ResizedTextureMultipleOf4(data);
+            data.Compress(true);
+            var textureData = data.GetRawTextureData<byte>()!;
 
-            var meta = new Meta(data.Asset);
+            var meta = new Meta(data);
             Span<byte> metaData = stackalloc byte[meta.ArrayLength];
             meta.ToSpan(metaData);
 
@@ -51,6 +52,29 @@ namespace ECS.StreamableLoading.Textures
             textureData.AsSpan().CopyTo(memory.Slice(metaData.Length).Span);
 
             return memoryOwner;
+        }
+
+        private static Texture2D ResizedTextureMultipleOf4(Texture2D input)
+        {
+            if (input.width % 4 == 0 && input.height % 4 == 0)
+                return input;
+
+            int newWidth = input.width - (input.width % 4);
+            int newHeight = input.height - (input.height % 4);
+
+            RenderTexture temporary = RenderTexture.GetTemporary(newWidth, newHeight)!;
+            Graphics.Blit(input, temporary);
+
+            Texture2D output = new Texture2D(newWidth, newHeight);
+            var previousActive = RenderTexture.active;
+            RenderTexture.active = temporary;
+            output.ReadPixels(new Rect(0, 0, newWidth, newHeight), 0, 0);
+            output.Apply();
+
+            RenderTexture.active = previousActive!;
+            RenderTexture.ReleaseTemporary(temporary);
+
+            return output;
         }
 
         [Serializable]
