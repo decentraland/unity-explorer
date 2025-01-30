@@ -81,7 +81,12 @@ namespace DCL.AvatarRendering.Wearables
             LoadWearableAssetBundleManifestSystem.InjectToWorld(ref builder, new NoCache<SceneAssetBundleManifest, GetWearableAssetBundleManifestIntention>(true, true), assetBundleURL, webRequestController);
             LoadDefaultWearablesSystem.InjectToWorld(ref builder, defaultWearablesDTOs, defaultEmptyWearableAsset, wearableStorage);
 
-            LoadGLTFSystem.InjectToWorld(ref builder, new NoCache<GLTFData, GetGLTFIntention>(false, false), webRequestController, contentSourceUrl: builderContentURL.Value);
+            LoadGLTFSystem.InjectToWorld(ref builder,
+                new NoCache<GLTFData, GetGLTFIntention>(false, false),
+                webRequestController,
+                true,
+                true,
+                contentDownloadUrl: builderContentURL.Value);
 
             ResolveAvatarAttachmentThumbnailSystem.InjectToWorld(ref builder);
         }

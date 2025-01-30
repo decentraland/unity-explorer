@@ -83,6 +83,8 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                 return new WearableDTO()
                 {
                     // Take this from DecentralandUrl.BuilderApiContent but HOW ???
+                    // Maybe avoid using it from here and rely on NeedsBuilderAPISigning
+                    // to use the DecentralandUrl.BuilderApiContent url ?
                     ContentDownloadUrl = "https://builder-api.decentraland.org/v1/storage/contents/",
                     metadata = this,
                     id = this.id,

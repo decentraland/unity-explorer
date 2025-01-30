@@ -57,7 +57,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             IPartitionComponent partitionComponent,
             World world,
             ReportData reportData,
-            string? rawFilesDownloadUrl = null
+            string? contentDownloadUrl = null
         )
         {
             SceneAssetBundleManifest? manifest = !EnumUtils.HasFlag(intention.PermittedSources, AssetSource.WEB) ? null : wearable.ManifestResult?.Asset;
@@ -76,7 +76,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                         bodyShape,
                         world,
                         reportData,
-                        rawFilesDownloadUrl
+                        contentDownloadUrl
                     );
                 default:
                     return TryCreateSingleGameObjectPromise(
@@ -88,7 +88,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                         bodyShape,
                         world,
                         reportData,
-                        rawFilesDownloadUrl
+                        contentDownloadUrl
                     );
             }
         }
@@ -102,12 +102,12 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             BodyShape bodyShape,
             World world,
             ReportData reportData,
-            string? rawFilesDownloadUrl = null
+            string? contentDownloadUrl = null
         )
         {
             ref WearableAssets wearableAssets = ref InitializeResultsArray(wearable, bodyShape, 1);
 
-            return TryCreateMainFilePromise(typeof(GameObject), sceneAssetBundleManifest, intention, customStreamingSubdirectory, wearable, partitionComponent, ref wearableAssets, bodyShape, world, reportData, rawFilesDownloadUrl);
+            return TryCreateMainFilePromise(typeof(GameObject), sceneAssetBundleManifest, intention, customStreamingSubdirectory, wearable, partitionComponent, ref wearableAssets, bodyShape, world, reportData, contentDownloadUrl);
         }
 
         /// <summary>
@@ -122,7 +122,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             BodyShape bodyShape,
             World world,
             ReportData reportData,
-            string? rawFilesDownloadUrl = null
+            string? contentDownloadUrl = null
         )
         {
             ref WearableAssets wearableAssets = ref InitializeResultsArray(wearable, bodyShape, 2);
@@ -193,7 +193,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             BodyShape bodyShape,
             World world,
             ReportData reportData,
-            string? rawFilesDownloadUrl = null
+            string? contentDownloadUrl = null
         )
             where T: IAvatarAttachment
         {
@@ -217,7 +217,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                 MAIN_ASSET_INDEX,
                 partitionComponent,
                 world,
-                rawFilesDownloadUrl);
+                contentDownloadUrl);
 
             return true;
         }
@@ -232,11 +232,11 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             int index,
             IPartitionComponent partitionComponent,
             World world,
-            string? rawFilesDownloadUrl = null) where T: IAvatarAttachment
+            string? contentDownloadUrl = null) where T: IAvatarAttachment
         {
             // An index is added to the promise to know to which slot of the WearableAssets it belongs to
 
-            if (rawFilesDownloadUrl != null)
+            if (contentDownloadUrl != null)
             {
                 foreach (AvatarAttachmentDTO.Content content in wearable.DTO.content)
                 {

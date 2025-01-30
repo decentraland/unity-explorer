@@ -9,7 +9,6 @@ using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
 using GLTFast.Loading;
-using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -17,9 +16,9 @@ using System.Threading.Tasks;
 using UnityEngine.Networking;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.Texture2DData, ECS.StreamableLoading.Textures.GetTextureIntention>;
 
-namespace ECS.StreamableLoading.GLTF
+namespace ECS.StreamableLoading.GLTF.DownloadProvider
 {
-    internal class GltFastGlobalDownloadProvider : IDownloadProvider, IDisposable
+    internal class GltFastGlobalDownloadProvider : IGLTFastDisposableDownloadProvider
     {
         private const int ATTEMPTS_COUNT = 6;
 

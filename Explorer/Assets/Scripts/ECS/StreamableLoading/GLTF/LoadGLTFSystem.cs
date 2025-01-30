@@ -9,6 +9,7 @@ using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
+using ECS.StreamableLoading.GLTF.DownloadProvider;
 using GLTFast;
 using GLTFast.Materials;
 using SceneRunner.Scene;
@@ -23,32 +24,44 @@ namespace ECS.StreamableLoading.GLTF
     {
         private static MaterialGenerator gltfMaterialGenerator = new DecentralandMaterialGenerator("DCL/Scene");
 
-        private readonly ISceneData? sceneData;
-        private readonly string? contentSourceUrl;
         private readonly IWebRequestController webRequestController;
         private readonly GltFastReportHubLogger gltfConsoleLogger = new GltFastReportHubLogger();
+        private readonly bool patchTexturesFormat;
+        private readonly bool importFilesByHash;
+        private readonly ISceneData? sceneData;
+        private readonly string? contentDownloadUrl;
 
-        internal LoadGLTFSystem(World world, IStreamableCache<GLTFData, GetGLTFIntention> cache, IWebRequestController webRequestController, ISceneData? sceneData = null, string? contentSourceUrl = null) : base(world, cache)
+        internal LoadGLTFSystem(World world,
+            IStreamableCache<GLTFData, GetGLTFIntention> cache,
+            IWebRequestController webRequestController,
+            bool patchTexturesFormat,
+            bool importFilesByHash,
+            ISceneData? sceneData = null,
+            string? contentDownloadUrl = null) : base(world, cache)
         {
-            this.sceneData = sceneData;
-            this.contentSourceUrl = contentSourceUrl;
             this.webRequestController = webRequestController;
+            this.patchTexturesFormat = patchTexturesFormat;
+            this.importFilesByHash = importFilesByHash;
+            this.sceneData = sceneData;
+            this.contentDownloadUrl = contentDownloadUrl;
         }
 
         protected override async UniTask<StreamableLoadingResult<GLTFData>> FlowInternalAsync(GetGLTFIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
             var reportData = new ReportData(GetReportCategory());
-            bool contentSourceUrlAvailable = !string.IsNullOrEmpty(contentSourceUrl);
 
-            if (!contentSourceUrlAvailable && (sceneData == null || !sceneData.SceneContent.TryGetContentUrl(intention.Name!, out _)))
+            if (sceneData != null && !sceneData.SceneContent.TryGetContentUrl(intention.Name!, out _))
                 return new StreamableLoadingResult<GLTFData>(reportData, new Exception("The content to download couldn't be found"));
 
             // Acquired budget is released inside GLTFastDownloadedProvider once the GLTF has been fetched
-            GltFastSceneDownloadProvider? gltfSceneDownloadProvider = sceneData != null ? new GltFastSceneDownloadProvider(World, sceneData, partition, intention.Name!, reportData, webRequestController, acquiredBudget) : null;
-            GltFastGlobalDownloadProvider? gltfGlobalDownloadProvider = contentSourceUrlAvailable ? new GltFastGlobalDownloadProvider(World, contentSourceUrl!, partition, reportData, webRequestController, acquiredBudget) : null;
+            // Cannot inject DownloadProvider from outside, because it needs the AcquiredBudget and PartitionComponent
+            IGLTFastDisposableDownloadProvider gltFastDownloadProvider =
+                sceneData != null ?
+                new GltFastSceneDownloadProvider(World, sceneData!, partition, intention.Name!, reportData, webRequestController, acquiredBudget)
+                : new GltFastGlobalDownloadProvider(World, contentDownloadUrl!, partition, reportData, webRequestController, acquiredBudget);
 
             var gltfImport = new GltfImport(
-                downloadProvider: contentSourceUrlAvailable ? gltfGlobalDownloadProvider : gltfSceneDownloadProvider,
+                downloadProvider: gltFastDownloadProvider,
                 logger: gltfConsoleLogger,
                 materialGenerator: gltfMaterialGenerator);
 
@@ -59,10 +72,8 @@ namespace ECS.StreamableLoading.GLTF
                 GenerateMipMaps = false,
             };
 
-            // bool success = await gltfImport.Load(intention.Name, gltFastSettings, ct);
-            bool success = await gltfImport.Load(contentSourceUrlAvailable ? intention.Hash : intention.Name, gltFastSettings, ct);
-            gltfSceneDownloadProvider?.Dispose();
-            gltfGlobalDownloadProvider?.Dispose();
+            bool success = await gltfImport.Load(importFilesByHash ? intention.Hash : intention.Name, gltFastSettings, ct);
+            gltFastDownloadProvider.Dispose();
 
             if (success)
             {
@@ -74,9 +85,8 @@ namespace ECS.StreamableLoading.GLTF
 
                 await InstantiateGltfAsync(gltfImport, rootContainer.transform);
 
-                // TODO: FOR WEARABLES THE TEXTURE HAS TO BE COMPRESSED IN A SPECIFIC TYPE:
-                // https://github.com/decentraland/asset-bundle-converter/blob/741e4e380d7ac83e58650b91b9c76157126f2393/asset-bundle-converter/Assets/AssetBundleConverter/AssetBundleConverter.cs#L815~L843
-                if (contentSourceUrlAvailable)
+                // Ensure the tex ends up being RGBA32 for all wearable textures that come from raw GLTFs
+                if (patchTexturesFormat)
                     PatchTexturesForWearable(gltfImport);
 
                 return new StreamableLoadingResult<GLTFData>(new GLTFData(gltfImport, rootContainer));
@@ -93,7 +103,6 @@ namespace ECS.StreamableLoading.GLTF
             {
                 var originalTexture = gltfImport.GetTexture(i);
 
-                // Ensure the tex ends up being RGBA32 for all wearable textures that come from raw GLTFs
                 // Note: BC7 (asset bundle textures optimization) cannot be compressed in runtime with
                 // Unity so a different format was chosen: RGBA32
                 var compressedTexture = EnsureRGBA32Format(originalTexture);

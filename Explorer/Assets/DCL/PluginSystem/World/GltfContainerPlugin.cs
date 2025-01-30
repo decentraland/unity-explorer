@@ -60,7 +60,13 @@ namespace DCL.PluginSystem.World
         {
             var buffer = sharedDependencies.EntityEventsBuilder.Rent<GltfContainerComponent>();
 
-            LoadGLTFSystem.InjectToWorld(ref builder, new NoCache<GLTFData, GetGLTFIntention>(false, false), webRequestController, sceneData: sharedDependencies.SceneData);
+            LoadGLTFSystem.InjectToWorld(
+                ref builder,
+                new NoCache<GLTFData, GetGLTFIntention>(false, false),
+                webRequestController,
+                false,
+                false,
+                sceneData: sharedDependencies.SceneData);
 
             // Asset loading
             PrepareGltfAssetLoadingSystem.InjectToWorld(ref builder, assetsCache, localSceneDevelopment, useRemoteAssetBundles);

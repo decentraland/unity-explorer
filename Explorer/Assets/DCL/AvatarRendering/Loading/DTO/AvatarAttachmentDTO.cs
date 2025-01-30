@@ -50,9 +50,6 @@ namespace DCL.AvatarRendering.Loading.DTO
         {
             public abstract DataBase AbstractData { get; }
 
-            // Needed for builder-fetched assets
-            // public Dictionary<string, string> contents;
-
             //urn
             public string id;
             public string name;
