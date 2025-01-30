@@ -279,6 +279,7 @@ namespace DCL.Chat
         {
             viewDependencies = dependencies;
             chatInputBox.InjectDependencies(dependencies);
+            chatMessageViewer.InjectDependencies(dependencies);
         }
 
         private void OnInputBoxSelectionChanged(bool isSelected)
