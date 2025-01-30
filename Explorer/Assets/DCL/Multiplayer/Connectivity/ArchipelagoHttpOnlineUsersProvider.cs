@@ -14,6 +14,7 @@ namespace DCL.Multiplayer.Connectivity
 
         private readonly IWebRequestController webRequestController;
         private readonly URLAddress baseUrl;
+        private readonly URLBuilder urlBuilder = new ();
 
         public ArchipelagoHttpOnlineUsersProvider(
             IWebRequestController webRequestController,
@@ -26,5 +27,17 @@ namespace DCL.Multiplayer.Connectivity
         public async UniTask<IReadOnlyCollection<OnlineUserData>> GetAsync(CancellationToken ct) =>
             await webRequestController.GetAsync(baseUrl, ct, ReportCategory.MULTIPLAYER)
                                       .CreateFromNewtonsoftJsonAsync<List<OnlineUserData>>(serializerSettings: SERIALIZER_SETTINGS);
+
+        public async UniTask<IReadOnlyCollection<OnlineUserData>> GetAsync(IEnumerable<string> userIds, CancellationToken ct)
+        {
+            urlBuilder.Clear();
+            urlBuilder.AppendDomain(URLDomain.FromString(baseUrl));
+
+            foreach (string userId in userIds)
+                urlBuilder.AppendParameter(new URLParameter("id", userId));
+
+            return await webRequestController.GetAsync(baseUrl, ct, ReportCategory.MULTIPLAYER)
+                                             .CreateFromNewtonsoftJsonAsync<List<OnlineUserData>>(serializerSettings: SERIALIZER_SETTINGS);
+        }
     }
 }

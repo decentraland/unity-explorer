@@ -10,19 +10,18 @@ using DCL.Friends.UI.Requests;
 using DCL.Input;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Profiles;
-using DCL.RealmNavigation;
 using DCL.Profiles.Self;
-using DCL.Web3.Identities;
+using DCL.RealmNavigation;
 using DCL.UI.MainUI;
 using DCL.Utilities;
+using DCL.Web3.Identities;
 using DCL.WebRequests;
 using MVC;
 using System;
-using System.Net.WebSockets;
 using System.Threading;
-using Utility;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+using Utility;
 
 namespace DCL.PluginSystem.Global
 {
