@@ -241,7 +241,7 @@ namespace DCL.MapRenderer.MapLayers.PointsOfInterest
             if (visibleMarkers.TryGetValue(gameObject, out ISceneOfInterestMarker marker))
             {
                 marker.ToggleSelection(true);
-                navmapBus.SelectPlaceAsync(marker.PlaceInfo, cts.Token).Forget();
+                navmapBus.SelectPlaceAsync(marker.PlaceInfo, cts.Token, true).Forget();
                 mapRenderMarker = marker;
                 return true;
             }

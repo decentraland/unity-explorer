@@ -10,6 +10,10 @@ using Global;
 using Global.Dynamic;
 using System.Collections.Generic;
 using System.Threading;
+using CommunicationData.URLHelpers;
+using DCL.Browser.DecentralandUrls;
+using DCL.FeatureFlags;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using Unity.Mathematics;
 using UnityEngine;
 using Utility.Storage;
@@ -30,7 +34,9 @@ namespace DCL.RealmNavigation
             IDebugContainerBuilder debugContainerBuilder,
             LoadingScreenTimeout loadingScreenTimeout,
             ILoadingScreen loadingScreen,
-            bool localSceneDevelopment)
+            bool localSceneDevelopment,
+            IDecentralandUrlsSource urlsSource,
+            FeatureFlagsCache featureFlagsCache)
         {
             var teleportController = new TeleportController(staticContainer.SceneReadinessReportQueue, staticContainer.SingletonSharedDependencies.SceneAssetLock);
 
@@ -38,6 +44,11 @@ namespace DCL.RealmNavigation
             var retrieveSceneFromVolatileWorld = new RetrieveSceneFromVolatileWorld(staticContainer.RealmData);
 
             var realmNavigatorDebugView = new RealmNavigatorDebugView(debugContainerBuilder);
+
+            var assetBundleRegistry =
+                featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.ASSET_BUNDLE_FALLBACK)
+                    ? URLDomain.FromString(urlsSource.Url(DecentralandUrl.AssetBundleRegistry))
+                    : URLDomain.EMPTY;
 
             var realmController = new RealmController(
                 identityCache,
@@ -53,7 +64,8 @@ namespace DCL.RealmNavigation
                 staticContainer.ComponentsContainer.ComponentPoolsRegistry
                                .GetReferenceTypePool<PartitionComponent>(),
                 realmNavigatorDebugView,
-                localSceneDevelopment
+                localSceneDevelopment,
+                assetBundleRegistry
             );
 
             BuildDebugWidget(teleportController, debugContainerBuilder, loadingScreen, loadingScreenTimeout);

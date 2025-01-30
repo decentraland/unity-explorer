@@ -21,9 +21,7 @@ using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using DCL.DebugUtilities;
-using DCL.RealmNavigation;
-using ECS.SceneLifeCycle.Realm;
+ using DCL.RealmNavigation;
 using Unity.Mathematics;
 
 namespace Global.Dynamic
@@ -50,10 +48,14 @@ namespace Global.Dynamic
         private readonly IComponentPool<PartitionComponent> partitionComponentPool;
         private readonly bool isLocalSceneDevelopment;
         private readonly RealmNavigatorDebugView realmNavigatorDebugView;
+        private readonly URLDomain assetBundleRegistry;
+
 
         private GlobalWorld? globalWorld;
         private Entity realmEntity;
 
+
+        
         public IRealmData RealmData => realmData;
 
         public URLDomain? CurrentDomain { get; private set; }
@@ -82,7 +84,8 @@ namespace Global.Dynamic
             SceneAssetLock sceneAssetLock,
             IComponentPool<PartitionComponent> partitionComponentPool,
             RealmNavigatorDebugView realmNavigatorDebugView,
-            bool isLocalSceneDevelopment)
+            bool isLocalSceneDevelopment,
+            URLDomain assetBundleRegistry)
         {
             this.web3IdentityCache = web3IdentityCache;
             this.webRequestController = webRequestController;
@@ -97,6 +100,7 @@ namespace Global.Dynamic
             this.partitionComponentPool = partitionComponentPool;
             this.isLocalSceneDevelopment = isLocalSceneDevelopment;
             this.realmNavigatorDebugView = realmNavigatorDebugView;
+            this.assetBundleRegistry = assetBundleRegistry;
         }
 
         public async UniTask SetRealmAsync(URLDomain realm, CancellationToken ct)
@@ -116,7 +120,7 @@ namespace Global.Dynamic
             string hostname = ResolveHostname(realm, result);
 
             realmData.Reconfigure(
-                new IpfsRealm(web3IdentityCache, webRequestController, realm, result),
+                new IpfsRealm(web3IdentityCache, webRequestController, realm, assetBundleRegistry, result),
                 result.configurations.realmName.EnsureNotNull("Realm name not found"),
                 result.configurations.networkId,
                 result.comms?.adapter ?? result.comms?.fixedAdapter ?? "offline:offline", //"offline property like in previous implementation"
