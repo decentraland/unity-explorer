@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Browser;
 using DCL.Chat;
 using DCL.Clipboard;
 using DCL.Friends.UI.FriendPanel.Sections.Blocked;
@@ -55,7 +56,8 @@ namespace DCL.Friends.UI.FriendPanel
             IProfileThumbnailCache profileThumbnailCache,
             ILoadingStatus loadingStatus,
             DCLInput dclInput,
-            IPassportBridge passportBridge) : base(viewFactory)
+            IPassportBridge passportBridge,
+            IWebBrowser webBrowser) : base(viewFactory)
         {
             this.chatView = chatView;
             this.sidebarRequestNotificationIndicator = sidebarRequestNotificationIndicator;
@@ -66,7 +68,8 @@ namespace DCL.Friends.UI.FriendPanel
                 mvcManager,
                 systemClipboard,
                 new FriendListRequestManager(friendsService, friendEventBus, profileRepository, webRequestController, profileThumbnailCache, instantiatedView.FriendsSection.LoopList, FRIENDS_PAGE_SIZE, FRIENDS_FETCH_ELEMENTS_THRESHOLD),
-                passportBridge);
+                passportBridge,
+                webBrowser);
             requestsSectionController = new RequestsSectionController(instantiatedView.RequestsSection,
                 friendsService,
                 friendEventBus,
@@ -75,7 +78,8 @@ namespace DCL.Friends.UI.FriendPanel
                 systemClipboard,
                 loadingStatus,
                 new RequestsRequestManager(friendsService, friendEventBus, webRequestController, profileThumbnailCache, FRIENDS_REQUEST_PAGE_SIZE, instantiatedView.RequestsSection.LoopList),
-                passportBridge);
+                passportBridge,
+                webBrowser);
             blockedSectionController = new BlockedSectionController(instantiatedView.BlockedSection,
                 web3IdentityCache,
                 new BlockedRequestManager(profileRepository, web3IdentityCache, webRequestController, profileThumbnailCache, FRIENDS_PAGE_SIZE, FRIENDS_FETCH_ELEMENTS_THRESHOLD),

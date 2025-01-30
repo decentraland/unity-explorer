@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Browser;
 using DCL.Clipboard;
 using DCL.UI.GenericContextMenu;
 using DCL.UI.GenericContextMenu.Controls.Configs;
@@ -10,6 +11,10 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 {
     public class FriendSectionController : FriendPanelSectionController<FriendsSectionView, FriendListRequestManager, FriendListUserView>
     {
+        private static readonly RectOffset CONTEXT_MENU_VERTICAL_LAYOUT_PADDING = new (15, 15, 20, 25);
+        private const int CONTEXT_MENU_SEPARATOR_HEIGHT = 20;
+        private const int CONTEXT_MENU_ELEMENTS_SPACING = 5;
+
         private readonly IMVCManager mvcManager;
         private readonly IPassportBridge passportBridge;
         private readonly GenericContextMenu contextMenu;
@@ -22,17 +27,19 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             IMVCManager mvcManager,
             ISystemClipboard systemClipboard,
             FriendListRequestManager requestManager,
-            IPassportBridge passportBridge) : base(view, web3IdentityCache, requestManager)
+            IPassportBridge passportBridge,
+            IWebBrowser webBrowser) : base(view, web3IdentityCache, requestManager)
         {
             this.mvcManager = mvcManager;
             this.passportBridge = passportBridge;
 
-            contextMenu = new GenericContextMenu(view.ContextMenuSettings.ContextMenuWidth, verticalLayoutPadding: new RectOffset(15, 15, 20, 25), elementsSpacing: 5)
+            contextMenu = new GenericContextMenu(view.ContextMenuSettings.ContextMenuWidth, verticalLayoutPadding: CONTEXT_MENU_VERTICAL_LAYOUT_PADDING, elementsSpacing: CONTEXT_MENU_ELEMENTS_SPACING)
                          .AddControl(userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings(systemClipboard, userId => Debug.Log($"Send friendship request to {userId}")))
-                         .AddControl(new SeparatorContextMenuControlSettings(20, -15, -15))
+                         .AddControl(new SeparatorContextMenuControlSettings(CONTEXT_MENU_SEPARATOR_HEIGHT, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.left, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.right))
+                         .AddControl(new ButtonContextMenuControlSettings(view.ContextMenuSettings.ViewProfileText, view.ContextMenuSettings.ViewProfileSprite, () => OpenProfilePassport(lastClickedProfileCtx!)))
                          .AddControl(new ButtonContextMenuControlSettings(view.ContextMenuSettings.ViewProfileText, view.ContextMenuSettings.ViewProfileSprite, () => OpenProfilePassport(lastClickedProfileCtx!)))
                          .AddControl(new ButtonContextMenuControlSettings(view.ContextMenuSettings.BlockText, view.ContextMenuSettings.BlockSprite, () => Debug.Log($"Block {lastClickedProfileCtx!.Address.ToString()}")))
-                         .AddControl(new ButtonContextMenuControlSettings(view.ContextMenuSettings.ReportText, view.ContextMenuSettings.ReportSprite, () => Debug.Log($"Report {lastClickedProfileCtx!.Address.ToString()}")));
+                         .AddControl(new ButtonContextMenuControlSettings(view.ContextMenuSettings.ReportText, view.ContextMenuSettings.ReportSprite, () => FriendsCommonActions.ReportPlayer(webBrowser)));
 
             requestManager.ContextMenuClicked += ContextMenuClicked;
         }

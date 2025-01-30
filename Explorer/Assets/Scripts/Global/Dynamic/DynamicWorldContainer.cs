@@ -760,7 +760,8 @@ namespace Global.Dynamic
                     dclInput,
                     selfProfile,
                     new MVCPassportBridge(mvcManager),
-                    friendServiceProxy));
+                    friendServiceProxy,
+                    webBrowser));
             }
 
             if (dynamicWorldParams.EnableAnalytics)

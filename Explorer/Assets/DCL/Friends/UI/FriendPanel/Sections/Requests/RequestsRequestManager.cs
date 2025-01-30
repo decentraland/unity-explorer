@@ -40,7 +40,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
 
             this.friendEventBus.OnYouAcceptedFriendRequestReceivedFromOtherUser += ReceivedRemoved;
             this.friendEventBus.OnYouRejectedFriendRequestReceivedFromOtherUser += ReceivedRemoved;
-            this.friendEventBus.OnOtherUserCancelledTheRequest += RemoteReceivedRemoved;
+            this.friendEventBus.OnOtherUserCancelledTheRequest += ReceivedRemoved;
 
             this.friendEventBus.OnOtherUserRejectedYourRequest += SentRemoved;
             this.friendEventBus.OnOtherUserAcceptedYourRequest += SentRemoved;
@@ -90,12 +90,6 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
         }
 
         private void ReceivedRemoved(string friendId)
-        {
-            receivedRequests.RemoveAll(request => request.To.Address.ToString().Equals(friendId));
-            RefreshLoopList();
-        }
-
-        private void RemoteReceivedRemoved(string friendId)
         {
             receivedRequests.RemoveAll(request => request.From.Address.ToString().Equals(friendId));
             RefreshLoopList();

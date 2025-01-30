@@ -2,6 +2,7 @@ using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.Browser;
 using DCL.Clipboard;
 using DCL.Friends;
 using DCL.Friends.UI.FriendPanel;
@@ -40,6 +41,7 @@ namespace DCL.PluginSystem.Global
         private readonly ISelfProfile selfProfile;
         private readonly IPassportBridge passportBridge;
         private readonly ObjectProxy<IFriendsService> friendServiceProxy;
+        private readonly IWebBrowser webBrowser;
         private readonly CancellationTokenSource lifeCycleCancellationToken = new ();
 
         private RPCFriendsService? friendsService;
@@ -60,7 +62,8 @@ namespace DCL.PluginSystem.Global
             DCLInput dclInput,
             ISelfProfile selfProfile,
             IPassportBridge passportBridge,
-            ObjectProxy<IFriendsService> friendServiceProxy)
+            ObjectProxy<IFriendsService> friendServiceProxy,
+            IWebBrowser webBrowser)
         {
             this.mainUIView = mainUIView;
             this.dclUrlSource = dclUrlSource;
@@ -76,6 +79,7 @@ namespace DCL.PluginSystem.Global
             this.selfProfile = selfProfile;
             this.passportBridge = passportBridge;
             this.friendServiceProxy = friendServiceProxy;
+            this.webBrowser = webBrowser;
         }
 
         public void Dispose()
@@ -120,7 +124,8 @@ namespace DCL.PluginSystem.Global
                 profileThumbnailCache,
                 loadingStatus,
                 dclInput,
-                passportBridge);
+                passportBridge,
+                webBrowser);
 
             mvcManager.RegisterController(friendsPanelController);
 
