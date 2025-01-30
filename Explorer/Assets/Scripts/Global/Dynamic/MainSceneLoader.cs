@@ -164,9 +164,7 @@ namespace Global.Dynamic
             var webRequestsContainer = WebRequestsContainer.Create(identityCache, texturesFuse, debugContainerBuilder, staticSettings.WebRequestsBudget, compressionEnabled);
             var realmUrls = new RealmUrls(launchSettings, new RealmNamesMap(webRequestsContainer.WebRequestController), decentralandUrlsSource);
 
-            var cacheDirectory = CacheDirectory.NewDefault();
-            var diskCleanUp = new LRUDiskCleanUp(cacheDirectory);
-            var diskCache = new DiskCache(cacheDirectory, diskCleanUp);
+            var diskCache = NewInstanceDiskCache(applicationParametersParser);
 
             bootstrapContainer = await BootstrapContainer.CreateAsync(
                 debugSettings,
@@ -311,6 +309,20 @@ namespace Global.Dynamic
             // We restore all inputs except EmoteWheel and FreeCamera as they should be disabled by default
             staticContainer!.InputBlock.EnableAll(InputMapComponent.Kind.FREE_CAMERA,
                 InputMapComponent.Kind.EMOTE_WHEEL);
+        }
+
+        private static IDiskCache NewInstanceDiskCache(IAppArgs appArgs)
+        {
+            if (appArgs.HasFlag(AppArgsFlags.DISABLE_DISK_CACHE))
+            {
+                ReportHub.Log(ReportData.UNSPECIFIED, $"Disable disk cache, flag --{AppArgsFlags.DISABLE_DISK_CACHE} is passed");
+                return new IDiskCache.Fake();
+            }
+
+            var cacheDirectory = CacheDirectory.NewDefault();
+            var diskCleanUp = new LRUDiskCleanUp(cacheDirectory);
+            var diskCache = new DiskCache(cacheDirectory, diskCleanUp);
+            return diskCache;
         }
 
         [ContextMenu(nameof(ValidateSettingsAsync))]
