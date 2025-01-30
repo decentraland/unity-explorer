@@ -12,10 +12,7 @@ using DCL.Nametags;
 using ECS.Abstract;
 using MVC;
 using System;
-using System.Collections.Generic;
-using System.Text.RegularExpressions;
 using System.Threading;
-using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using Utility.Arch;
 
@@ -35,12 +32,6 @@ namespace DCL.Chat
         private readonly IChatCommandsBus chatCommandsBus;
 
         private SingleInstanceEntity cameraEntity;
-        private (IChatCommand command, Match param) chatCommand;
-
-        private bool isChatClosed;
-        private bool isInputSelected;
-        private IReadOnlyList<RaycastResult> raycastResults;
-        private UniTaskCompletionSource closePopupTask;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
 

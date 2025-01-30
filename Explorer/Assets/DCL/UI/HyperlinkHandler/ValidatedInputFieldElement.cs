@@ -1,9 +1,17 @@
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.Serialization;
 
 namespace DCL.UI.InputFieldValidator
 {
+    /// <summary>
+    /// This class serves as an in-between other classes and the TMP_InputField, allowing to validate the text input and to access the validated text
+    /// This is needed because the normal TMP_InputField doesn't validate the input text always, but only when is entered directly through the input field
+    /// When assigning text to the input text (like inputField.text = "something") it won't perform a validation
+    /// When removing text through the backspace or delete keys, it won't validate text either
+    /// So this requires an intermediary class that forces this logic so all text input into the field is validated and formatted properly.
+    /// </summary>
     [RequireComponent(typeof(TMP_InputField))]
     public class ValidatedInputFieldElement : MonoBehaviour
     {
@@ -12,7 +20,7 @@ namespace DCL.UI.InputFieldValidator
         public delegate void InputFieldSubmitDelegate(string submittedInput);
 
         [SerializeField] private TMP_InputField inputField;
-        [SerializeField] private InputFieldsValidator fieldsValidator;
+        [FormerlySerializedAs("fieldsValidator")] [SerializeField] private InputFieldValidator inputFieldValidator;
 
         private int lastTextLenght;
 
@@ -24,8 +32,8 @@ namespace DCL.UI.InputFieldValidator
         private void Awake()
         {
             inputField.characterValidation = TMP_InputField.CharacterValidation.CustomValidator;
-            inputField.inputValidator = fieldsValidator;
-            fieldsValidator.InitializeStyles();
+            inputField.inputValidator = inputFieldValidator;
+            inputFieldValidator.InitializeStyles();
             inputField.onValueChanged.AddListener(Validate);
             inputField.onSubmit.AddListener(Submit);
             inputField.onSelect.AddListener(OnInputFieldSelected);
@@ -105,14 +113,13 @@ namespace DCL.UI.InputFieldValidator
 
             string textToInsert = pastedText.Length > remainingSpace ? pastedText[..remainingSpace] : pastedText;
 
-            //When inserting text we need to add each character individually to properly parse the text as it relies on a per-character validation
-            foreach (char c in textToInsert)
-            {
-                inputField.text = inputField.text.Insert(position, c.ToString());
-                position++;
-            }
+            var newText = inputField.text.Insert(position, textToInsert);
+            var newPosition = position + newText.Length;
 
-            inputField.stringPosition += textToInsert.Length;
+            inputFieldValidator.Validate(ref newText, ref newPosition);
+            inputField.text = newText;
+
+            inputField.stringPosition = newPosition;
         }
 
         private void Submit(string text)
@@ -135,7 +142,7 @@ namespace DCL.UI.InputFieldValidator
             if (lastTextLenght > text.Length)
             {
                 int position = inputField.stringPosition;
-                fieldsValidator.ValidateOnBackspace(ref text, ref position);
+                inputFieldValidator.Validate(ref text, ref position);
                 inputField.SetTextWithoutNotify(text);
                 inputField.stringPosition = position;
             }

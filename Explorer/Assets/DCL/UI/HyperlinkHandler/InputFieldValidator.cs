@@ -7,11 +7,15 @@ using Utility;
 
 namespace DCL.UI.InputFieldValidator
 {
-    // THis SO needs extracting into another class probably, as it has too much logic for my taste.
-    // I need to figure out how to make it work correctly with the TMP_InputField, as it requires this SO if we want to use the validation
-
+    /// <summary>
+    /// This is a validator that is called automatically by the TMP_InputField (if correctly configured) under certain circumstances.
+    /// It needs to inherit from TMP_InputValidator and have a Validate method
+    /// Validate will only be called by TMP_InputField when appending characters to the input, not when removing or setting the text
+    /// That's where the backspace validation is used. Also, this adds the required rich text tags to the text when detecting hyperlinks of
+    /// different types. And finally, this also filters invalid rich text tags that should not be admitted.
+    /// </summary>
     [CreateAssetMenu(fileName = "InputFieldValidator", menuName = "DCL/UI/InputFieldValidator")]
-    public class InputFieldsValidator : TMP_InputValidator
+    public class InputFieldValidator : TMP_InputValidator
     {
         private const string TAG_STRING = "§";
         private const char TAG_CHAR = '§';
@@ -21,7 +25,9 @@ namespace DCL.UI.InputFieldValidator
         private const string USER = "user";
 
         private static readonly Regex RICH_TEXT_TAG_REGEX = new (@"<(?!\/?(b|i)(>|\s))[^>]+>", RegexOptions.Compiled);
-        private static readonly Regex LINK_TAG_REGEX = new (@"<#[0-9A-Fa-f]{6}><link=(url|scene|world|user)=.*?>(.*?)</link></color>", RegexOptions.Compiled);
+        private static readonly Regex LINK_TAG_REGEX = new (
+            @"[<‹]#[0-9A-Fa-f]{6}[>›][<‹]link=(url|scene|world|user)=.*?[>›](.*?)[<‹]/link[>›][<‹]/color[>›]",
+            RegexOptions.Compiled);
         private static readonly Regex WEBSITE_REGEX = new (
             @"(?<=^|\s)§?((http§?s?:\/\/)?§?(www\.)§?[a-zA-Z0-9]§?(?:[a-zA-Z0-9-]*§?[a-zA-Z0-9]*)?§?\.§?[a-zA-Z]{2,30}§?[a-zA-Z]{0,33}§?(\/[^\s]*)?)§?(?=\s|$)",
             RegexOptions.Compiled);
@@ -44,7 +50,7 @@ namespace DCL.UI.InputFieldValidator
             linkClosingStyle = "</link>" + style.styleClosingDefinition;
         }
 
-        public void ValidateOnBackspace(ref string text, ref int pos)
+        public void Validate(ref string text, ref int pos)
         {
             if (pos <= 0 || text.Length == 0)
                 return;
@@ -57,6 +63,12 @@ namespace DCL.UI.InputFieldValidator
 
         private char PerformValidation(ref string text, ref int pos, char ch = default)
         {
+            if (text.StartsWith("/"))
+            {
+                pos++;
+                text += ch;
+                return ch;
+            }
             mainStringBuilder.Clear();
             mainStringBuilder.Append(text.AsSpan(0, pos));
 

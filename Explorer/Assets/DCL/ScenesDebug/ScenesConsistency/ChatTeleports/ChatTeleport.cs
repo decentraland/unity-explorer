@@ -3,9 +3,7 @@ using DCL.Chat;
 using DCL.Chat.Commands;
 using DCL.ScenesDebug.ScenesConsistency.DelayedResources;
 using DCL.Utilities.Extensions;
-using TMPro;
 using UnityEngine;
-using UnityEngine.EventSystems;
 
 namespace DCL.ScenesDebug.ScenesConsistency.ChatTeleports
 {
