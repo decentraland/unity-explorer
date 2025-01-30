@@ -6,6 +6,7 @@ using DCL.BadgesAPIService;
 using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.Chat;
+using DCL.Clipboard;
 using DCL.Diagnostics;
 using DCL.Friends;
 using DCL.Friends.UI.Requests;
@@ -24,6 +25,8 @@ using DCL.Passport.Modules.Badges;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI;
+using DCL.UI.GenericContextMenu;
+using DCL.UI.GenericContextMenu.Controls.Configs;
 using DCL.Utilities;
 using DCL.Web3;
 using DCL.WebRequests;
@@ -47,6 +50,11 @@ namespace DCL.Passport
 
         private const int MUTUAL_PAGE_SIZE = 3;
         private static readonly int BG_SHADER_COLOR_1 = Shader.PropertyToID("_Color1");
+        private static readonly RectOffset CONTEXT_MENU_VERTICAL_LAYOUT_PADDING = new (15, 15, 20, 25);
+        private static readonly Vector2 CONTEXT_MENU_OFFSET = new (25, 0);
+        private const int CONTEXT_MENU_SEPARATOR_HEIGHT = 20;
+        private const int CONTEXT_MENU_ELEMENTS_SPACING = 5;
+        private const int CONTEXT_MENU_WIDTH = 250;
 
         private readonly ICursor cursor;
         private readonly IProfileRepository profileRepository;
@@ -73,12 +81,14 @@ namespace DCL.Passport
         private readonly ICameraReelStorageService cameraReelStorageService;
         private readonly ICameraReelScreenshotsStorage cameraReelScreenshotsStorage;
         private readonly ObjectProxy<IFriendsService> friendServiceProxy;
+        private readonly ISystemClipboard systemClipboard;
         private readonly Dictionary<ImageView, ImageController> mutualFriendImages = new ();
         private readonly int gridLayoutFixedColumnCount;
         private readonly int thumbnailHeight;
         private readonly int thumbnailWidth;
         private readonly bool enableCameraReel;
         private readonly bool enableFriendshipInteractions;
+        private readonly UserProfileContextMenuControlSettings userProfileContextMenuControlSettings;
 
         private CameraReelGalleryController? cameraReelGalleryController;
         private Profile? ownProfile;
@@ -95,6 +105,9 @@ namespace DCL.Passport
         private PassportSection currentSection;
         private PassportSection alreadyLoadedSections;
         private BadgesDetails_PassportModuleController? badgesDetailsPassportModuleController;
+        private GenericContextMenu contextMenu;
+
+        private UniTaskCompletionSource? contextMenuCloseTask;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
@@ -127,6 +140,7 @@ namespace DCL.Passport
             ICameraReelStorageService cameraReelStorageService,
             ICameraReelScreenshotsStorage cameraReelScreenshotsStorage,
             ObjectProxy<IFriendsService> friendServiceProxy,
+            ISystemClipboard systemClipboard,
             int gridLayoutFixedColumnCount,
             int thumbnailHeight,
             int thumbnailWidth,
@@ -154,6 +168,7 @@ namespace DCL.Passport
             this.cameraReelStorageService = cameraReelStorageService;
             this.cameraReelScreenshotsStorage = cameraReelScreenshotsStorage;
             this.friendServiceProxy = friendServiceProxy;
+            this.systemClipboard = systemClipboard;
             this.gridLayoutFixedColumnCount = gridLayoutFixedColumnCount;
             this.thumbnailHeight = thumbnailHeight;
             this.thumbnailWidth = thumbnailWidth;
@@ -163,6 +178,8 @@ namespace DCL.Passport
             passportProfileInfoController = new PassportProfileInfoController(selfProfile, world, playerEntity);
             notificationBusController.SubscribeToNotificationTypeReceived(NotificationType.BADGE_GRANTED, OnBadgeNotificationReceived);
             notificationBusController.SubscribeToNotificationTypeClick(NotificationType.BADGE_GRANTED, OnBadgeNotificationClicked);
+
+            userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings(systemClipboard, profile => Debug.Log($"Send friendship request to {profile}"));
         }
 
         private void ThumbnailClicked(List<CameraReelResponseCompact> reels, int index, Action<CameraReelResponseCompact> reelDeleteIntention) =>
@@ -194,6 +211,7 @@ namespace DCL.Passport
             viewInstance.AddFriendButton.onClick.AddListener(SendFriendRequest);
             viewInstance.CancelFriendButton.onClick.AddListener(CancelFriendRequest);
             viewInstance.RemoveFriendButton.onClick.AddListener(RemoveFriend);
+            viewInstance.ContextMenuButton.onClick.AddListener(ShowContextMenu);
 
             viewInstance.PhotosSectionButton.gameObject.SetActive(enableCameraReel);
             viewInstance.FriendInteractionContainer.SetActive(enableFriendshipInteractions);
@@ -213,9 +231,20 @@ namespace DCL.Passport
             }
         }
 
+        private void ShowContextMenu()
+        {
+            contextMenuCloseTask = new UniTaskCompletionSource();
+            mvcManager.ShowAsync(GenericContextMenuController.IssueCommand(new GenericContextMenuParameter(contextMenu, viewInstance!.ContextMenuButton.transform.position, closeTask: contextMenuCloseTask?.Task))).Forget();
+        }
+
         private void OnPublishError()
         {
             passportErrorsController!.Show();
+        }
+
+        protected override void OnBeforeViewShow()
+        {
+            viewInstance!.ContextMenuButton.gameObject.SetActive(false);
         }
 
         protected override void OnViewShow()
@@ -263,6 +292,7 @@ namespace DCL.Passport
                 module.Clear();
 
             currentSection = PassportSection.NONE;
+            contextMenuCloseTask?.TrySetResult();
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
@@ -479,7 +509,39 @@ namespace DCL.Passport
                         break;
                     case FriendshipStatus.BLOCKED: break;
                 }
+
+                await SetupContextMenu(friendshipStatus, ct);
             }
+        }
+
+        private async UniTask SetupContextMenu(FriendshipStatus friendshipStatus, CancellationToken ct)
+        {
+            Profile? profile = await profileRepository.GetAsync(inputData.UserId, ct);
+            if (profile == null) return;
+
+            viewInstance!.ContextMenuButton.gameObject.SetActive(true);
+
+            contextMenu = new GenericContextMenu(CONTEXT_MENU_WIDTH, CONTEXT_MENU_OFFSET, CONTEXT_MENU_VERTICAL_LAYOUT_PADDING, CONTEXT_MENU_ELEMENTS_SPACING)
+                                     .AddControl(userProfileContextMenuControlSettings)
+                                     .AddControl(new SeparatorContextMenuControlSettings(CONTEXT_MENU_SEPARATOR_HEIGHT, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.left, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.right));
+
+            if (friendshipStatus != FriendshipStatus.BLOCKED)
+                contextMenu.AddControl(new ButtonContextMenuControlSettings(viewInstance.BlockText, viewInstance.BlockSprite, () => Debug.Log($"Block {currentUserId}")));
+
+            userProfileContextMenuControlSettings.SetInitialData(profile.Name, profile.UserId, profile.HasClaimedName, viewInstance.ChatEntryConfiguration.GetNameColor(profile.Name), ConvertFriendshipStatus(friendshipStatus));
+        }
+
+        private UserProfileContextMenuControlSettings.FriendshipStatus ConvertFriendshipStatus(FriendshipStatus friendshipStatus)
+        {
+            return friendshipStatus switch
+            {
+                FriendshipStatus.NONE => UserProfileContextMenuControlSettings.FriendshipStatus.NONE,
+                FriendshipStatus.FRIEND => UserProfileContextMenuControlSettings.FriendshipStatus.FRIEND,
+                FriendshipStatus.REQUEST_SENT => UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_SENT,
+                FriendshipStatus.REQUEST_RECEIVED => UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_RECEIVED,
+                FriendshipStatus.BLOCKED => UserProfileContextMenuControlSettings.FriendshipStatus.BLOCKED,
+                _ => UserProfileContextMenuControlSettings.FriendshipStatus.NONE
+            };
         }
 
         private void ShowMutualFriends()

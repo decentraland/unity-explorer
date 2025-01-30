@@ -9,6 +9,7 @@ using DCL.BadgesAPIService;
 using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.Chat;
+using DCL.Clipboard;
 using DCL.Friends;
 using DCL.Input;
 using DCL.InWorldCamera.CameraReelStorageService;
@@ -53,6 +54,7 @@ namespace DCL.PluginSystem.Global
         private readonly Entity playerEntity;
         private readonly bool enableCameraReel;
         private readonly ObjectProxy<IFriendsService> friendsService;
+        private readonly ISystemClipboard systemClipboard;
         private readonly bool enableFriends;
 
         private PassportController? passportController;
@@ -81,6 +83,7 @@ namespace DCL.PluginSystem.Global
             Entity playerEntity,
             bool enableCameraReel,
             ObjectProxy<IFriendsService> friendsService,
+            ISystemClipboard systemClipboard,
             bool enableFriends
         )
         {
@@ -107,6 +110,7 @@ namespace DCL.PluginSystem.Global
             this.cameraReelScreenshotsStorage = cameraReelScreenshotsStorage;
             this.enableCameraReel = enableCameraReel;
             this.friendsService = friendsService;
+            this.systemClipboard = systemClipboard;
             this.enableFriends = enableFriends;
         }
 
@@ -154,6 +158,7 @@ namespace DCL.PluginSystem.Global
                 cameraReelStorageService,
                 cameraReelScreenshotsStorage,
                 friendsService,
+                systemClipboard,
                 passportSettings.GridLayoutFixedColumnCount,
                 passportSettings.ThumbnailHeight,
                 passportSettings.ThumbnailWidth,

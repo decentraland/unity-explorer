@@ -1,4 +1,5 @@
 using DCL.CharacterPreview;
+using DCL.Chat;
 using DCL.InWorldCamera.CameraReelGallery;
 using DCL.Passport.Modals;
 using DCL.Passport.Modules;
@@ -98,6 +99,18 @@ namespace DCL.Passport
 
         [field: SerializeField]
         public MutualFriendsConfig MutualFriends { get; private set; }
+
+        [field: Header("Context menu")]
+        [field: SerializeField]
+        public ChatEntryConfigurationSO ChatEntryConfiguration { get; private set; }
+        [field: SerializeField]
+        public Button ContextMenuButton { get; private set; }
+
+        [field: SerializeField]
+        public Sprite BlockSprite { get; private set; }
+
+        [field: SerializeField]
+        public string BlockText { get; private set; } = "Block";
 
         [Serializable]
         public struct MutualFriendsConfig

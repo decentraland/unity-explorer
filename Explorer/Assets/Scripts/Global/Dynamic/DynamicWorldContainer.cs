@@ -709,6 +709,7 @@ namespace Global.Dynamic
                     playerEntity,
                     includeCameraReel,
                     friendServiceProxy,
+                    clipboard,
                     includeFriends
                 ),
                 new GenericContextMenuPlugin(assetsProvisioner, mvcManager),
