@@ -30,8 +30,8 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
         public LoadWearablesByParamSystem(
             World world, IWebRequestController webRequestController, IStreamableCache<WearablesResponse, GetWearableByParamIntention> cache,
             IRealmData realmData, URLSubdirectory lambdaSubdirectory, URLSubdirectory wearablesSubdirectory,
-            IWearableStorage wearableStorage
-        ) : base(world, cache, wearableStorage, webRequestController, realmData)
+            IWearableStorage wearableStorage, string? builderContentURL = null
+        ) : base(world, cache, wearableStorage, webRequestController, realmData, builderContentURL)
         {
             this.realmData = realmData;
             this.lambdaSubdirectory = lambdaSubdirectory;
@@ -71,7 +71,7 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
 
         protected override async UniTask<IBuilderLambdaResponse<IBuilderLambdaResponseElement<WearableDTO>>> ParseBuilderResponseAsync(GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> adapter)
         {
-            var result = await adapter.CreateFromJson<WearableDTO.BuilderLambdaResponse>(WRJsonParser.Newtonsoft);
+            var result = await adapter.CreateFromJson<BuilderWearableDTO.BuilderLambdaResponse>(WRJsonParser.Newtonsoft);
             return result;
         }
     }

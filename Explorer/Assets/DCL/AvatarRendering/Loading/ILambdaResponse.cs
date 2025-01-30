@@ -32,6 +32,6 @@ namespace DCL.AvatarRendering.Loading
     {
         IReadOnlyDictionary<string, string> Contents { get; }
 
-        TElementDTO BuildWearableDTO();
+        TElementDTO BuildWearableDTO(string contentDownloadUrl);
     }
 }

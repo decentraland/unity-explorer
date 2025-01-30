@@ -21,7 +21,7 @@ namespace DCL.AvatarRendering.Loading.DTO
         public long timestamp;
         public string version;
         public Content[] content;
-        public string? ContentDownloadUrl;
+        public string? ContentDownloadUrl { get; protected set; }
 
         public abstract MetadataBase Metadata { get; }
 

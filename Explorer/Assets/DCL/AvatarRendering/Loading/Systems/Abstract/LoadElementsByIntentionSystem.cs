@@ -25,18 +25,21 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
         private readonly IAvatarElementStorage<TAvatarElement, TAvatarElementDTO> avatarElementStorage;
         private readonly IWebRequestController webRequestController;
         private readonly IRealmData realmData;
+        private readonly string? builderContentURL;
 
         protected LoadElementsByIntentionSystem(
             World world,
             IStreamableCache<TAsset, TIntention> cache,
             IAvatarElementStorage<TAvatarElement, TAvatarElementDTO> avatarElementStorage,
             IWebRequestController webRequestController,
-            IRealmData realmData
+            IRealmData realmData,
+            string? builderContentURL = null
         ) : base(world, cache)
         {
             this.avatarElementStorage = avatarElementStorage;
             this.webRequestController = webRequestController;
             this.realmData = realmData;
+            this.builderContentURL = builderContentURL;
         }
 
         protected sealed override async UniTask<StreamableLoadingResult<TAsset>> FlowInternalAsync(TIntention intention,
@@ -120,11 +123,13 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
         // private void LoadBuilderItem<TResponseElement>(ref TIntention intention, IBuilderLambdaResponse<TResponseElement> lambdaResponse) where TResponseElement : IBuilderLambdaResponseElement<TAvatarElementDTO>
         private void LoadBuilderItem(ref TIntention intention, IBuilderLambdaResponse<IBuilderLambdaResponseElement<TAvatarElementDTO>> lambdaResponse)
         {
+            if (string.IsNullOrEmpty(builderContentURL)) return;
+
             intention.SetTotal(lambdaResponse.WearablesCollection.Count);
 
             foreach (var element in lambdaResponse.WearablesCollection)
             {
-                var wearable = avatarElementStorage.GetOrAddByDTO(element.BuildWearableDTO());
+                var wearable = avatarElementStorage.GetOrAddByDTO(element.BuildWearableDTO(builderContentURL));
                 intention.AppendToResult(wearable);
             }
         }

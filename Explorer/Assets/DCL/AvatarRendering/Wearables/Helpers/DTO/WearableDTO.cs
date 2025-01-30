@@ -50,7 +50,11 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             [JsonIgnore]
             public IReadOnlyList<ElementIndividualDataDto> IndividualData => individualData;
         }
+    }
 
+    [Serializable]
+    public class BuilderWearableDTO : WearableDTO
+    {
         [Serializable]
         public struct BuilderLambdaResponse : IBuilderLambdaResponse<BuilderWearableMetadataDto>
         {
@@ -62,7 +66,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         }
 
         [Serializable]
-        public class BuilderWearableMetadataDto : WearableMetadataDto, IBuilderLambdaResponseElement<WearableDTO>
+        public class BuilderWearableMetadataDto : WearableMetadataDto, IBuilderLambdaResponseElement<BuilderWearableDTO>
         {
             public Dictionary<string, string> contents;
             public string type;
@@ -70,7 +74,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             [JsonIgnore]
             public IReadOnlyDictionary<string, string> Contents => contents;
 
-            public WearableDTO BuildWearableDTO()
+            public BuilderWearableDTO BuildWearableDTO(string contentDownloadUrl)
             {
                 Content[] parsedContent = new Content[contents.Count];
                 int i = 0;
@@ -80,12 +84,9 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                     i++;
                 }
 
-                return new WearableDTO()
+                return new BuilderWearableDTO()
                 {
-                    // Take this from DecentralandUrl.BuilderApiContent but HOW ???
-                    // Maybe avoid using it from here and rely on NeedsBuilderAPISigning
-                    // to use the DecentralandUrl.BuilderApiContent url ?
-                    ContentDownloadUrl = "https://builder-api.decentraland.org/v1/storage/contents/",
+                    ContentDownloadUrl = contentDownloadUrl,
                     metadata = this,
                     id = this.id,
                     type = this.type,
