@@ -1,14 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace DCL.Roads.GPUInstancing.Playground
 {
     [Serializable]
     public class GPUInstancingPrefabData : MonoBehaviour
     {
-        public List<GPUInstancingCandidate> candidates;
+        public List<GPUInstancingCandidate> indirectCandidates;
 
         [ContextMenu(nameof(CollectSelfData))]
         public void CollectSelfData()
@@ -25,13 +27,13 @@ namespace DCL.Roads.GPUInstancing.Playground
 
             if (PrefabUtility.IsPartOfPrefabAsset(gameObject))
             {
-                candidates = new List<GPUInstancingCandidate>();
-                CollectInstancingCandidates();
+                indirectCandidates = new List<GPUInstancingCandidate>();
+                CollectInstancingCandidatesFromLODGroups();
             }
 #endif
         }
 
-        private void CollectInstancingCandidates()
+        private void CollectInstancingCandidatesFromLODGroups()
         {
             foreach (LODGroup lodGroup in gameObject.GetComponentsInChildren<LODGroup>(true))
             {
@@ -52,7 +54,7 @@ namespace DCL.Roads.GPUInstancing.Playground
 
         private bool TryAddToCollected(LODGroup lodGroup, Matrix4x4 localToRootMatrix)
         {
-            foreach (GPUInstancingCandidate existingCandidate in candidates)
+            foreach (GPUInstancingCandidate existingCandidate in indirectCandidates)
             {
                 if (IsRenderingDataSame(lodGroup, existingCandidate))
                 {
@@ -147,7 +149,7 @@ namespace DCL.Roads.GPUInstancing.Playground
             if (ValidLODGroup(lodGroup))
             {
                 var candidate = new GPUInstancingCandidate(lodGroup, localToRootMatrix);
-                candidates.Add(candidate);
+                indirectCandidates.Add(candidate);
             }
         }
 
