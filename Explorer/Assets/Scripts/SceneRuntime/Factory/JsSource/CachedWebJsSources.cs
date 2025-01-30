@@ -5,6 +5,7 @@ using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Cache.Generic;
 using ECS.StreamableLoading.Cache.InMemory;
 using SceneRuntime.Factory.WebSceneSource;
+using System;
 using System.Threading;
 
 namespace SceneRuntime.Factory.JsSource
@@ -24,6 +25,10 @@ namespace SceneRuntime.Factory.JsSource
         public async UniTask<string> SceneSourceCodeAsync(URLAddress path, CancellationToken ct)
         {
             string key = path.Value;
+
+            if (key.StartsWith("file://", StringComparison.Ordinal))
+                return await origin.SceneSourceCodeAsync(path, ct);
+
             var result = await cache.ContentOrFetchAsync(key, origin, static v => SceneSourceCodeAsync(v), ct);
             return result.Unwrap().Value.EnsureNotNull();
         }

@@ -117,5 +117,8 @@ namespace DCL.MapRenderer.MapLayers.SearchResults
             if (poolableBehavior.instance != null)
                 poolableBehavior.instance.ToggleSelection(isSelected);
         }
+
+        public Vector2Int? GetParcelPosition() =>
+            placeInfo?.base_position_processed;
     }
 }

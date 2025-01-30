@@ -17,5 +17,8 @@ namespace DCL.MapRenderer.MapLayers
 
         UniTaskVoid AnimateDeSelectionAsync(CancellationToken ct) =>
             new ();
+
+        Vector2Int? GetParcelPosition() =>
+            null;
     }
 }
