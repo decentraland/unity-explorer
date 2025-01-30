@@ -520,6 +520,8 @@ namespace DCL.Passport
             Profile? profile = await profileRepository.GetAsync(inputData.UserId, ct);
             if (profile == null) return;
 
+            Sprite? thumbnailSprite = await profileThumbnailCache.GetThumbnail(profile, ct);
+
             viewInstance!.ContextMenuButton.gameObject.SetActive(true);
 
             contextMenu = new GenericContextMenu(CONTEXT_MENU_WIDTH, CONTEXT_MENU_OFFSET, CONTEXT_MENU_VERTICAL_LAYOUT_PADDING, CONTEXT_MENU_ELEMENTS_SPACING)
@@ -531,7 +533,7 @@ namespace DCL.Passport
 
             userProfileContextMenuControlSettings.SetInitialData(profile.Name, profile.UserId, profile.HasClaimedName,
                 viewInstance.ChatEntryConfiguration.GetNameColor(profile.Name), ConvertFriendshipStatus(friendshipStatus),
-                profileThumbnailCache.GetThumbnail(profile.UserId));
+                thumbnailSprite);
         }
 
         private UserProfileContextMenuControlSettings.FriendshipStatus ConvertFriendshipStatus(FriendshipStatus friendshipStatus)

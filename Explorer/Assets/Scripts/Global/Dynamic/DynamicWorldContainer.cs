@@ -518,7 +518,7 @@ namespace Global.Dynamic
             bool includeFriends = staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.FRIENDS) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.FRIENDS)) || Application.isEditor;
 
             var friendServiceProxy = new ObjectProxy<IFriendsService>();
-            IProfileThumbnailCache profileThumbnailCache = new ProfileThumbnailCache();
+            IProfileThumbnailCache profileThumbnailCache = new ProfileThumbnailCache(staticContainer.WebRequestsContainer.WebRequestController);
 
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
