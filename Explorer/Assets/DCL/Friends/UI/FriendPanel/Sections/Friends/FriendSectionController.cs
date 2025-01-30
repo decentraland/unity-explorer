@@ -29,7 +29,6 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             ISystemClipboard systemClipboard,
             FriendListRequestManager requestManager,
             IPassportBridge passportBridge,
-            IWebBrowser webBrowser,
             IProfileThumbnailCache profileThumbnailCache) : base(view, web3IdentityCache, requestManager)
         {
             this.mvcManager = mvcManager;
@@ -41,8 +40,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
                          .AddControl(new SeparatorContextMenuControlSettings(CONTEXT_MENU_SEPARATOR_HEIGHT, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.left, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.right))
                          .AddControl(new ButtonContextMenuControlSettings(view.ContextMenuSettings.ViewProfileText, view.ContextMenuSettings.ViewProfileSprite, () => OpenProfilePassport(lastClickedProfileCtx!)))
                          .AddControl(new ButtonContextMenuControlSettings(view.ContextMenuSettings.ViewProfileText, view.ContextMenuSettings.ViewProfileSprite, () => OpenProfilePassport(lastClickedProfileCtx!)))
-                         .AddControl(new ButtonContextMenuControlSettings(view.ContextMenuSettings.BlockText, view.ContextMenuSettings.BlockSprite, () => Debug.Log($"Block {lastClickedProfileCtx!.Address.ToString()}")))
-                         .AddControl(new ButtonContextMenuControlSettings(view.ContextMenuSettings.ReportText, view.ContextMenuSettings.ReportSprite, () => FriendsCommonActions.ReportPlayer(webBrowser)));
+                         .AddControl(new ButtonContextMenuControlSettings(view.ContextMenuSettings.BlockText, view.ContextMenuSettings.BlockSprite, () => Debug.Log($"Block {lastClickedProfileCtx!.Address.ToString()}")));
 
             requestManager.ContextMenuClicked += ContextMenuClicked;
         }

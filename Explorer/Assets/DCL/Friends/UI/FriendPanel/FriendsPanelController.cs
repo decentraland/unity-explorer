@@ -56,8 +56,7 @@ namespace DCL.Friends.UI.FriendPanel
             IProfileThumbnailCache profileThumbnailCache,
             ILoadingStatus loadingStatus,
             DCLInput dclInput,
-            IPassportBridge passportBridge,
-            IWebBrowser webBrowser) : base(viewFactory)
+            IPassportBridge passportBridge) : base(viewFactory)
         {
             this.chatView = chatView;
             this.sidebarRequestNotificationIndicator = sidebarRequestNotificationIndicator;
@@ -69,7 +68,6 @@ namespace DCL.Friends.UI.FriendPanel
                 systemClipboard,
                 new FriendListRequestManager(friendsService, friendEventBus, profileRepository, webRequestController, profileThumbnailCache, instantiatedView.FriendsSection.LoopList, FRIENDS_PAGE_SIZE, FRIENDS_FETCH_ELEMENTS_THRESHOLD),
                 passportBridge,
-                webBrowser,
                 profileThumbnailCache);
             requestsSectionController = new RequestsSectionController(instantiatedView.RequestsSection,
                 friendsService,
@@ -80,7 +78,6 @@ namespace DCL.Friends.UI.FriendPanel
                 loadingStatus,
                 new RequestsRequestManager(friendsService, friendEventBus, webRequestController, profileThumbnailCache, FRIENDS_REQUEST_PAGE_SIZE, instantiatedView.RequestsSection.LoopList),
                 passportBridge,
-                webBrowser,
                 profileThumbnailCache);
             blockedSectionController = new BlockedSectionController(instantiatedView.BlockedSection,
                 web3IdentityCache,

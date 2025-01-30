@@ -764,7 +764,6 @@ namespace Global.Dynamic
                     selfProfile,
                     new MVCPassportBridge(mvcManager),
                     friendServiceProxy,
-                    webBrowser,
                     profileThumbnailCache));
             }
 
