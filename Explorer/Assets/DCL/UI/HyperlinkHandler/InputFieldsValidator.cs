@@ -7,6 +7,9 @@ using Utility;
 
 namespace DCL.UI.InputFieldValidator
 {
+    // THis SO needs extracting into another class probably, as it has too much logic for my taste.
+    // I need to figure out how to make it work correctly with the TMP_InputField, as it requires this SO if we want to use the validation
+
     [CreateAssetMenu(fileName = "InputFieldValidator", menuName = "DCL/UI/InputFieldValidator")]
     public class InputFieldsValidator : TMP_InputValidator
     {
@@ -20,10 +23,10 @@ namespace DCL.UI.InputFieldValidator
         private static readonly Regex RICH_TEXT_TAG_REGEX = new (@"<(?!\/?(b|i)(>|\s))[^>]+>", RegexOptions.Compiled);
         private static readonly Regex LINK_TAG_REGEX = new (@"<#[0-9A-Fa-f]{6}><link=(url|scene|world|user)=.*?>(.*?)</link></color>", RegexOptions.Compiled);
         private static readonly Regex WEBSITE_REGEX = new (
-            @"(?:^|\s)§?((http§?s?:\/\/)?§?(www\.)§?[a-zA-Z0-9]§?(?:[a-zA-Z0-9-]*§?[a-zA-Z0-9]*)?§?\.§?[a-zA-Z]{2,30}§?[a-zA-Z]{0,33}§?(\/[^\s]*)?)§?(?=\s|$)",
+            @"(?<=^|\s)§?((http§?s?:\/\/)?§?(www\.)§?[a-zA-Z0-9]§?(?:[a-zA-Z0-9-]*§?[a-zA-Z0-9]*)?§?\.§?[a-zA-Z]{2,30}§?[a-zA-Z]{0,33}§?(\/[^\s]*)?)§?(?=\s|$)",
             RegexOptions.Compiled);
-        private static readonly Regex SCENE_REGEX = new (@"(?:^|\s)-?§?\d{0,1}§?\d{0,1}§?\d{1}§?,§?-?§?\d{1}§?\d{0,1}§?\d{0,1}§?(?=\s|$)", RegexOptions.Compiled);
-        private static readonly Regex WORLD_REGEX = new (@"(?:^|\s)§?[a-zA-Z0-9]§?[a-zA-Z0-9]*§?[a-zA-Z0-9]*§?\.dcl\.eth§?(?=\s|$)",
+        private static readonly Regex SCENE_REGEX = new (@"(?<=^|\s)-?§?\d{0,1}§?\d{0,1}§?\d{1}§?,§?-?§?\d{1}§?\d{0,1}§?\d{0,1}§?(?=\s|$)", RegexOptions.Compiled);
+        private static readonly Regex WORLD_REGEX = new (@"(?<=^|\s)§?[a-zA-Z0-9]§?[a-zA-Z0-9]*§?[a-zA-Z0-9]*§?\.dcl\.eth§?(?=\s|$)",
             RegexOptions.Compiled);
 
         [SerializeField] private TMP_StyleSheet styleSheet;
@@ -49,16 +52,15 @@ namespace DCL.UI.InputFieldValidator
             PerformValidation(ref text, ref pos);
         }
 
-        public override char Validate(ref string text, ref int pos, char ch)
-            => PerformValidation(ref text, ref pos, ch);
-
+        public override char Validate(ref string text, ref int pos, char ch) =>
+            PerformValidation(ref text, ref pos, ch);
 
         private char PerformValidation(ref string text, ref int pos, char ch = default)
         {
             mainStringBuilder.Clear();
             mainStringBuilder.Append(text.AsSpan(0, pos));
 
-            if (ch != default)
+            if (ch != default(int))
                 mainStringBuilder.Append(ch);
 
             mainStringBuilder.Append(TAG_STRING);
@@ -67,7 +69,7 @@ namespace DCL.UI.InputFieldValidator
 
             ProcessMainStringBuilder();
             pos = GetPositionFromTag(mainStringBuilder);
-            text = mainStringBuilder.Remove(pos,1).ToString();
+            text = mainStringBuilder.Remove(pos, 1).ToString();
             return ch;
         }
 
@@ -75,11 +77,12 @@ namespace DCL.UI.InputFieldValidator
         {
             int length = stringBuilder.Length;
 
-            for (int i = 0; i < length; i++)
+            for (var i = 0; i < length; i++)
             {
                 if (stringBuilder[i] == TAG_CHAR)
                     return i;
             }
+
             return 0;
         }
 
@@ -97,14 +100,24 @@ namespace DCL.UI.InputFieldValidator
             var text = stringBuilder.ToString();
             MatchCollection matches = LINK_TAG_REGEX.Matches(text);
 
-            for (int i = matches.Count - 1; i >= 0; i--)
+            if (matches.Count <= 0) return;
+
+            stringBuilder.Clear();
+            stringBuilder.Append(text.AsSpan(0, matches[0].Index));
+
+            for (var i = 0; i < matches.Count; i++)
             {
                 Match match = matches[i];
-                stringBuilder.Clear()
-                             .Append(text.AsSpan(0, match.Index))
-                             .Append(match.Groups[2])
-                             .Append(text.AsSpan(match.Index + match.Length));
+                stringBuilder.Append(match.Groups[2]);
+
+                if (i < matches.Count - 1)
+                {
+                    int nextStart = matches[i + 1].Index;
+                    stringBuilder.Append(text.AsSpan(match.Index + match.Length, nextStart - (match.Index + match.Length)));
+                }
             }
+
+            stringBuilder.Append(text.AsSpan(matches[^1].Index + matches[^1].Length));
         }
 
         private StringBuilder ReplaceRichTextTags(Match match)
@@ -114,7 +127,9 @@ namespace DCL.UI.InputFieldValidator
             for (var i = 0; i < match.Value.Length; i++)
             {
                 char c = match.Value[i];
-                tempStringBuilder.Append(c == '<' ? '‹' : c == '>' ? '›' : c);
+
+                tempStringBuilder.Append(c == '<' ? '‹' :
+                    c == '>' ? '›' : c);
             }
 
             return tempStringBuilder;
@@ -128,14 +143,22 @@ namespace DCL.UI.InputFieldValidator
             if (matches.Count == 0)
                 return;
 
-            for (int i = matches.Count - 1; i >= 0; i--)
+            stringBuilder.Clear();
+            stringBuilder.Append(text.AsSpan(0, matches[0].Index));
+
+            for (var i = 0; i < matches.Count; i++)
             {
                 Match match = matches[i];
-                stringBuilder.Clear()
-                             .Append(text.AsSpan(0, match.Index))
-                             .Append(evaluator(match))
-                             .Append(text.AsSpan(match.Index + match.Length));
+                stringBuilder.Append(evaluator(match));
+
+                if (i < matches.Count - 1)
+                {
+                    int nextStart = matches[i + 1].Index;
+                    stringBuilder.Append(text.AsSpan(match.Index + match.Length, nextStart - (match.Index + match.Length)));
+                }
             }
+
+            stringBuilder.Append(text.AsSpan(matches[^1].Index + matches[^1].Length));
         }
 
         private StringBuilder WrapWithUrlLink(Match match) =>
@@ -158,9 +181,11 @@ namespace DCL.UI.InputFieldValidator
             {
                 case LinkType.SCENE:
                     string[] splitCords = matchWithoutTag.Split(',');
+
                     if (splitCords.Length != 2 ||
                         !AreCoordsValid(int.Parse(splitCords[0]), int.Parse(splitCords[1])))
                         return tempStringBuilder.Append(match);
+
                     linkTypeString = SCENE;
                     break;
                 case LinkType.WORLD:
