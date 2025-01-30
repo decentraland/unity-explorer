@@ -518,6 +518,7 @@ namespace Global.Dynamic
             bool includeFriends = staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.FRIENDS) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.FRIENDS)) || Application.isEditor;
 
             var friendServiceProxy = new ObjectProxy<IFriendsService>();
+            IProfileThumbnailCache profileThumbnailCache = new ProfileThumbnailCache();
 
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
@@ -710,6 +711,7 @@ namespace Global.Dynamic
                     includeCameraReel,
                     friendServiceProxy,
                     clipboard,
+                    profileThumbnailCache,
                     includeFriends
                 ),
                 new GenericContextMenuPlugin(assetsProvisioner, mvcManager),
@@ -762,7 +764,8 @@ namespace Global.Dynamic
                     selfProfile,
                     new MVCPassportBridge(mvcManager),
                     friendServiceProxy,
-                    webBrowser));
+                    webBrowser,
+                    profileThumbnailCache));
             }
 
             if (dynamicWorldParams.EnableAnalytics)

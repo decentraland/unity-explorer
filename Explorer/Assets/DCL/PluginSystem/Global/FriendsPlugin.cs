@@ -42,6 +42,7 @@ namespace DCL.PluginSystem.Global
         private readonly IPassportBridge passportBridge;
         private readonly ObjectProxy<IFriendsService> friendServiceProxy;
         private readonly IWebBrowser webBrowser;
+        private readonly IProfileThumbnailCache profileThumbnailCache;
         private readonly CancellationTokenSource lifeCycleCancellationToken = new ();
 
         private RPCFriendsService? friendsService;
@@ -63,7 +64,8 @@ namespace DCL.PluginSystem.Global
             ISelfProfile selfProfile,
             IPassportBridge passportBridge,
             ObjectProxy<IFriendsService> friendServiceProxy,
-            IWebBrowser webBrowser)
+            IWebBrowser webBrowser,
+            IProfileThumbnailCache profileThumbnailCache)
         {
             this.mainUIView = mainUIView;
             this.dclUrlSource = dclUrlSource;
@@ -80,6 +82,7 @@ namespace DCL.PluginSystem.Global
             this.passportBridge = passportBridge;
             this.friendServiceProxy = friendServiceProxy;
             this.webBrowser = webBrowser;
+            this.profileThumbnailCache = profileThumbnailCache;
         }
 
         public void Dispose()
@@ -94,7 +97,7 @@ namespace DCL.PluginSystem.Global
         public async UniTask InitializeAsync(FriendsPluginSettings settings, CancellationToken ct)
         {
             IFriendsEventBus friendEventBus = new DefaultFriendsEventBus();
-            IProfileThumbnailCache profileThumbnailCache = new ProfileThumbnailCache();
+
 
             var friendsCache = new FriendsCache();
 
