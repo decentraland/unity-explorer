@@ -17,10 +17,12 @@ using System;
 using System.Collections.Generic;
 using DCL.LOD;
 using DCL.Profiles;
+using ECS;
+using ECS.StreamableLoading.Cache.InMemory;
 using ECS.StreamableLoading.NFTShapes;
-using SceneRuntime.Factory.WebSceneSource.Cache;
 using Unity.PerformanceTesting;
 using UnityEngine;
+using UnityEngine.Profiling;
 using static Utility.Tests.TestsCategories;
 
 namespace DCL.ResourcesUnloading.Tests
@@ -44,7 +46,9 @@ namespace DCL.ResourcesUnloading.Tests
         private IProfileCache profileCache;
         private ProfileIntentionCache profileIntentionCache;
         private IComponentPoolsRegistry poolsRegistry;
-        private MemoryJsSourcesCache jsSourcesCache;
+
+        private IReadOnlyDictionary<string, string> innerOfCache;
+        private IMemoryCache<string, string> jsSourcesCache;
 
         private AssetBundleCache assetBundleCache;
 
@@ -63,12 +67,15 @@ namespace DCL.ResourcesUnloading.Tests
             attachmentsAssetsCache = new AttachmentsAssetsCache(100, poolsRegistry);
             wearableStorage = new WearableStorage();
             lodAssets = new LODCache(new GameObjectPool<LODGroup>(new GameObject().transform));
-            roadAssets = new RoadAssetsPool(new List<GameObject>());
+            roadAssets = new RoadAssetsPool(new IRealmData.Fake(), new List<GameObject>());
             nftShapeCache = new NftShapeCache();
             emoteStorage = new MemoryEmotesStorage();
             profileCache = new DefaultProfileCache();
             profileIntentionCache = new ProfileIntentionCache();
-            jsSourcesCache = new MemoryJsSourcesCache();
+
+            var dict = new Dictionary<string, string>();
+            innerOfCache = dict;
+            jsSourcesCache = new MemoryCache<string, string>(dict);
 
             cacheCleaner = new CacheCleaner(releasablePerformanceBudget, null);
             cacheCleaner.Register(texturesCache);
@@ -140,9 +147,9 @@ namespace DCL.ResourcesUnloading.Tests
             SampleGroup totalAllocatedMemory = new SampleGroup("TotalAllocatedMemory", SampleUnit.Kilobyte, increaseIsBetter: false);
 
             // Act
-            long memoryBefore = UnityEngine.Profiling.Profiler.GetTotalAllocatedMemoryLong();
+            long memoryBefore = Profiler.GetTotalAllocatedMemoryLong();
             cacheCleaner.UnloadCache();
-            long memoryAfter = UnityEngine.Profiling.Profiler.GetTotalAllocatedMemoryLong();
+            long memoryAfter = Profiler.GetTotalAllocatedMemoryLong();
 
             Measure.Custom(totalAllocatedMemory, (memoryAfter - memoryBefore) / 1024f);
         }
@@ -160,7 +167,7 @@ namespace DCL.ResourcesUnloading.Tests
             var wearableAsset = new AttachmentRegularAsset(new GameObject(), new List<AttachmentRegularAsset.RendererInfo>(5), assetBundleData);
             assetBundleData.AddReference();
 
-            var cachedWearable = new CachedAttachment(wearableAsset, new GameObject());
+            var cachedWearable = new CachedAttachment(wearableAsset, new GameObject(), true);
             wearableAsset.AddReference();
 
             // Act
@@ -191,7 +198,7 @@ namespace DCL.ResourcesUnloading.Tests
             Assert.That(attachmentsAssetsCache.cache.Count, Is.EqualTo(0));
             Assert.That(gltfContainerAssetsCache.cache.Count, Is.EqualTo(0));
             Assert.That(assetBundleCache.cache.Count, Is.EqualTo(0));
-            Assert.That(jsSourcesCache.Count, Is.EqualTo(0));
+            Assert.That(innerOfCache.Count, Is.EqualTo(0));
         }
 
         private void FillCachesWithElements(string hashID)
@@ -217,11 +224,11 @@ namespace DCL.ResourcesUnloading.Tests
             var wearable = new Wearable { WearableAssetResults = { [0] = new StreamableLoadingResult<AttachmentAssetBase>(wearableAsset) } };
             wearableStorage.AddWearable(hashID, wearable, true); // add to cache
 
-            var cachedWearable = new CachedAttachment(wearableAsset, new GameObject());
+            var cachedWearable = new CachedAttachment(wearableAsset, new GameObject(), true);
             wearableAsset.AddReference();
             attachmentsAssetsCache.Release(cachedWearable); // add to cache
 
-            jsSourcesCache.Cache("a", new string('a', 1024 * 1024));
+            jsSourcesCache.Put("a", new string('a', 1024 * 1024));
         }
     }
 }

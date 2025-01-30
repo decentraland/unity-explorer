@@ -1,8 +1,6 @@
 using DCL.Quality.Runtime;
-using System;
 using System.Linq;
 using UnityEditor;
-using UnityEditor.Callbacks;
 using UnityEditor.Compilation;
 
 namespace DCL.Quality

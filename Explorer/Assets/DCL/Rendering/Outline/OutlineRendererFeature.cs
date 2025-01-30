@@ -1,5 +1,6 @@
 ﻿using DCL.Diagnostics;
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
@@ -25,6 +26,7 @@ namespace DCL.Rendering.Avatar
         private readonly ReportData m_ReportData = new ("DCL_RenderFeature_Outline", ReportHint.SessionStatic);
 
         [SerializeField] private OutlineRendererFeature_Settings m_Settings;
+        public static List<Renderer> m_OutlineRenderers = new ();
 
         // DepthNormals Pass Data
         private OutlineDrawPass outlineDrawPass;
@@ -47,7 +49,7 @@ namespace DCL.Rendering.Avatar
 
         public override void Create()
         {
-            outlineDrawPass = new OutlineDrawPass();
+            outlineDrawPass = new OutlineDrawPass(m_OutlineRenderers);
             outlineDrawPass.renderPassEvent = RenderPassEvent.BeforeRenderingOpaques;
 
             outlineRenderPass = new OutlineRenderPass();

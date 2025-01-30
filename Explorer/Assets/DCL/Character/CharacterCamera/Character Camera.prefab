@@ -351,7 +351,7 @@ MonoBehaviour:
     <Speed>k__BackingField: 5
     <DefaultPosition>k__BackingField: {x: 0, y: 10, z: 0}
   shoulderChangeSpeed: 4
-  <DefaultCameraMode>k__BackingField: 2
+  <DefaultCameraMode>k__BackingField: 1
   <Brain>k__BackingField: {fileID: 1924827267997815873}
 --- !u!1 &2902897560403827600
 GameObject:
@@ -1285,7 +1285,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_CollideAgainst:
     serializedVersion: 2
-    m_Bits: 1
+    m_Bits: 131073
   m_IgnoreTag: 
   m_TransparentLayers:
     serializedVersion: 2
@@ -1678,7 +1678,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_CollideAgainst:
     serializedVersion: 2
-    m_Bits: 1
+    m_Bits: 131073
   m_IgnoreTag: 
   m_TransparentLayers:
     serializedVersion: 2

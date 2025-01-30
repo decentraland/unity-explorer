@@ -57,6 +57,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 542424588a68b46f688ef5c667aa0c68
+    m_Address: ControlsPanel
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 5af318126b38647fea34ff22fba4ef17
     m_Address: Assets/DCL/UI/ColorPicker/BodyShapeColors.asset
     m_ReadOnly: 0
