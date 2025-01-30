@@ -130,7 +130,7 @@ namespace DCL.Roads.GPUInstancing.Playground
 
                 PerInstanceBuffer data = new PerInstanceBuffer
                 {
-                    // instMatrix = meshRenderingData.LocalToRootMatrix,
+                    instMatrix = transform.worldToLocalMatrix * rndr.transform.localToWorldMatrix,
                 };
 
                 if (tempMeshToMatrices.TryGetValue(meshRenderingData, out var matrices))
