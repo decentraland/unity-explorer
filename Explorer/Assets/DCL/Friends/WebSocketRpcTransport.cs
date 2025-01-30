@@ -11,11 +11,11 @@ namespace DCL.Friends
     public class WebSocketRpcTransport : ITransport
     {
         private readonly Uri uri;
-        private readonly ClientWebSocket webSocket;
         private readonly CancellationTokenSource lifeCycleCancellationToken = new ();
         private readonly byte[] receiveBuffer;
+        private readonly ClientWebSocket webSocket;
 
-        private bool isConnected => webSocket.State == WebSocketState.Open;
+        private bool isConnected => State == WebSocketState.Open;
 
         public event Action? OnCloseEvent;
         public event Action<string>? OnErrorEvent;
@@ -28,19 +28,19 @@ namespace DCL.Friends
             int bufferSize = 4096)
         {
             this.uri = uri;
-            webSocket = new ClientWebSocket();
             receiveBuffer = new byte[bufferSize];
+            webSocket = new ClientWebSocket();
         }
 
         public void Dispose()
         {
             lifeCycleCancellationToken.SafeCancelAndDispose();
-            webSocket.Dispose();
+            webSocket?.Dispose();
         }
 
         public async UniTask ConnectAsync(CancellationToken ct)
         {
-            if (webSocket.State is WebSocketState.Open)
+            if (State is WebSocketState.Open or WebSocketState.Connecting)
                 throw new Exception("Web socket already connected");
 
             await webSocket.ConnectAsync(uri, ct);
@@ -104,10 +104,13 @@ namespace DCL.Friends
         public void Close() =>
             CloseAsync(lifeCycleCancellationToken.Token).Forget();
 
-        private async UniTask CloseAsync(CancellationToken ct)
+        public async UniTask CloseAsync(CancellationToken ct)
         {
-            await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "", ct);
-            OnCloseEvent?.Invoke();
+            if (State is WebSocketState.Open or WebSocketState.CloseReceived)
+            {
+                await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "", ct);
+                OnCloseEvent?.Invoke();
+            }
         }
     }
 }

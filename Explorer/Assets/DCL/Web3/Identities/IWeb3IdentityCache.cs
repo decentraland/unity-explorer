@@ -6,6 +6,9 @@ namespace DCL.Web3.Identities
 {
     public interface IWeb3IdentityCache : IDisposable
     {
+        event Action OnIdentityCleared;
+        event Action OnIdentityChanged;
+
         IWeb3Identity? Identity { get; set; }
 
         void Clear();
@@ -13,6 +16,9 @@ namespace DCL.Web3.Identities
         class Fake : IWeb3IdentityCache
         {
             private readonly IWeb3Identity? identity;
+
+            public event Action? OnIdentityCleared;
+            public event Action? OnIdentityChanged;
 
             public Fake() : this(new IWeb3Identity.Random()) { }
 
@@ -58,6 +64,18 @@ namespace DCL.Web3.Identities
                         )
                     )
                 );
+            }
+
+            public event Action? OnIdentityCleared
+            {
+                add => origin.OnIdentityCleared += value;
+                remove => origin.OnIdentityCleared -= value;
+            }
+
+            public event Action? OnIdentityChanged
+            {
+                add => origin.OnIdentityChanged += value;
+                remove => origin.OnIdentityChanged -= value;
             }
 
             public IWeb3Identity? Identity

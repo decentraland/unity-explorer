@@ -18,6 +18,7 @@ using DCL.Utilities;
 using DCL.WebRequests;
 using MVC;
 using System;
+using System.Net.WebSockets;
 using System.Threading;
 using Utility;
 using UnityEngine;
@@ -43,9 +44,10 @@ namespace DCL.PluginSystem.Global
         private readonly ObjectProxy<IFriendsService> friendServiceProxy;
         private readonly IProfileThumbnailCache profileThumbnailCache;
         private readonly CancellationTokenSource lifeCycleCancellationToken = new ();
+        private readonly IWebBrowser webBrowser;
 
+        private CancellationTokenSource friendServiceSubscriptionCancellationToken = new ();
         private RPCFriendsService? friendsService;
-
         private FriendsPanelController? friendsPanelController;
 
         public FriendsPlugin(
@@ -85,7 +87,7 @@ namespace DCL.PluginSystem.Global
         public void Dispose()
         {
             friendsPanelController?.Dispose();
-            lifeCycleCancellationToken.SafeCancelAndDispose();
+            friendServiceSubscriptionCancellationToken.SafeCancelAndDispose();
             friendsService?.Dispose();
         }
 
@@ -100,10 +102,11 @@ namespace DCL.PluginSystem.Global
 
             friendsService = new RPCFriendsService(URLAddress.FromString(dclUrlSource.Url(DecentralandUrl.ApiFriends)),
                 friendEventBus, web3IdentityCache, friendsCache, selfProfile);
+
             friendServiceProxy.SetObject(friendsService);
 
             // Fire and forget as this task will never finish
-            var cts = CancellationTokenSource.CreateLinkedTokenSource(lifeCycleCancellationToken.Token, ct);
+            var cts = CancellationTokenSource.CreateLinkedTokenSource(friendServiceSubscriptionCancellationToken.Token, ct);
 
             friendsService.SubscribeToIncomingFriendshipEventsAsync(cts.Token).Forget();
             friendsService.SubscribeToConnectivityStatusAsync(cts.Token).Forget();
@@ -139,6 +142,32 @@ namespace DCL.PluginSystem.Global
                 inputBlock);
 
             mvcManager.RegisterController(friendRequestController);
+
+            web3IdentityCache.OnIdentityCleared += DisconnectRpcClient;
+            web3IdentityCache.OnIdentityChanged += ReconnectRpcClient;
+        }
+
+        private void ReconnectRpcClient()
+        {
+            friendServiceSubscriptionCancellationToken = friendServiceSubscriptionCancellationToken.SafeRestart();
+            ReconnectRpcClientAsync(friendServiceSubscriptionCancellationToken.Token).Forget();
+            return;
+
+            async UniTaskVoid ReconnectRpcClientAsync(CancellationToken ct)
+            {
+                if (friendsService == null) return;
+
+                await friendsService.DisconnectAsync(ct);
+
+                friendsService.SubscribeToIncomingFriendshipEventsAsync(ct).Forget();
+                friendsService.SubscribeToConnectivityStatusAsync(ct).Forget();
+            }
+        }
+
+        private void DisconnectRpcClient()
+        {
+            friendServiceSubscriptionCancellationToken.SafeCancelAndDispose();
+            // friendsService?.DisconnectAsync(friendServiceSubscriptionCancellationToken.Token).Forget();
         }
     }
 

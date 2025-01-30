@@ -29,22 +29,24 @@ namespace DCL.Friends
         private const string SUBSCRIBE_FRIENDSHIP_UPDATES_PROCEDURE_NAME = "SubscribeToFriendshipUpdates";
         private const string GET_MUTUAL_FRIENDS_PROCEDURE_NAME = "GetMutualFriends";
         private const string SUBSCRIBE_TO_CONNECTIVITY_UPDATES = "SubscribeToFriendConnectivityUpdates";
+        private const int CONNECTION_TIMEOUT_SECS = 10;
+        private const int CONNECTION_RETRIES = 3;
 
+        private readonly URLAddress apiUrl;
         private readonly IFriendsEventBus eventBus;
         private readonly IWeb3IdentityCache identityCache;
         private readonly FriendsCache friendsCache;
         private readonly ISelfProfile selfProfile;
-        private readonly WebSocketRpcTransport transport;
-        private readonly RpcClient client;
         private readonly List<FriendRequest> receivedFriendRequestsBuffer = new ();
         private readonly List<FriendRequest> sentFriendRequestsBuffer = new ();
         private readonly Dictionary<string, string> authChainBuffer = new ();
         private readonly List<FriendProfile> friendProfileBuffer = new ();
+        private readonly SemaphoreSlim handshakeMutex = new (1, 1);
 
         private RpcClientModule? module;
-        private bool isOpeningPort;
-        private bool isConnecting;
-        private bool isSendingAuthChain;
+        private RpcClientPort? port;
+        private WebSocketRpcTransport? transport;
+        private RpcClient? client;
 
         public RPCFriendsService(URLAddress apiUrl,
             IFriendsEventBus eventBus,
@@ -52,18 +54,40 @@ namespace DCL.Friends
             FriendsCache friendsCache,
             ISelfProfile selfProfile)
         {
+            this.apiUrl = apiUrl;
             this.eventBus = eventBus;
             this.identityCache = identityCache;
             this.friendsCache = friendsCache;
             this.selfProfile = selfProfile;
-            transport = new WebSocketRpcTransport(new Uri(apiUrl));
-            client = new RpcClient(transport);
         }
 
         public void Dispose()
         {
-            transport.Dispose();
-            client.Dispose();
+            transport?.Dispose();
+            client?.Dispose();
+        }
+
+        public async UniTask DisconnectAsync(CancellationToken ct)
+        {
+            try
+            {
+                await handshakeMutex.WaitAsync(ct);
+
+                port?.Close();
+                port = null;
+                module = null;
+
+                if (transport != null)
+                {
+                    await transport.CloseAsync(ct);
+                    transport.Dispose();
+                    transport = null;
+                }
+
+                client?.Dispose();
+                client = null;
+            }
+            finally { handshakeMutex.Release(); }
         }
 
         public async UniTask SubscribeToIncomingFriendshipEventsAsync(CancellationToken ct)
@@ -424,47 +448,62 @@ namespace DCL.Friends
 
         private async UniTask EnsureRpcConnectionAsync(CancellationToken ct)
         {
-            switch (transport.State)
+            var handshakeFinished = false;
+            int retries = CONNECTION_RETRIES;
+
+            while (!handshakeFinished && retries > 0)
             {
-                case WebSocketState.Open:
-                    break;
-                case WebSocketState.Connecting:
-                    break;
-                default:
-                    if (!isConnecting)
-                    {
-                        isConnecting = true;
-                        try { await transport.ConnectAsync(ct); }
-                        finally { isConnecting = false; }
-
-                        if (!isSendingAuthChain)
-                        {
-                            isSendingAuthChain = true;
-                            // The service expects the auth-chain in json format within a 30 seconds threshold after connection
-                            try { await transport.SendMessageAsync(BuildAuthChain(), ct); }
-                            finally { isSendingAuthChain = false; }
-                        }
-
-                        transport.ListenForIncomingData();
-                    }
-
-                    break;
+                try
+                {
+                    retries--;
+                    await StartHandshake();
+                    handshakeFinished = true;
+                }
+                catch (WebSocketException)
+                {
+                    if (retries == 0)
+                        throw;
+                }
+                catch (TimeoutException)
+                {
+                    if (retries == 0)
+                        throw;
+                }
             }
-
-            if (isOpeningPort || isSendingAuthChain || isConnecting)
-                await UniTask.WaitWhile(() => isOpeningPort || isSendingAuthChain || isConnecting, cancellationToken: ct);
-
-            if (module != null) return;
-
-            try
-            {
-                isOpeningPort = true;
-                RpcClientPort port = await client.CreatePort("friends");
-                module = await port.LoadModule(RPC_SERVICE_NAME);
-            }
-            finally { isOpeningPort = false; }
 
             return;
+
+            async UniTask StartHandshake()
+            {
+                try
+                {
+                    await handshakeMutex.WaitAsync(ct);
+
+                    transport ??= new WebSocketRpcTransport(new Uri(apiUrl));
+                    client ??= new RpcClient(transport);
+
+                    switch (transport.State)
+                    {
+                        case WebSocketState.Open:
+                            break;
+                        case WebSocketState.Connecting:
+                            break;
+                        default:
+                            await transport.ConnectAsync(ct).Timeout(TimeSpan.FromSeconds(CONNECTION_TIMEOUT_SECS));
+
+                            // The service expects the auth-chain in json format within a 30 seconds threshold after connection
+                            await transport.SendMessageAsync(BuildAuthChain(), ct);
+
+                            transport.ListenForIncomingData();
+
+                            break;
+                    }
+
+                    port ??= await client.CreatePort("friends");
+                    module ??= await port.LoadModule(RPC_SERVICE_NAME);
+                }
+                finally { handshakeMutex.Release(); }
+            }
 
             string BuildAuthChain()
             {
