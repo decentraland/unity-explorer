@@ -34,7 +34,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             FriendListRequestManager requestManager,
             IPassportBridge passportBridge,
             IProfileThumbnailCache profileThumbnailCache,
-            IFriendsService friendsService) : base(view, web3IdentityCache, requestManager)
+            IFriendsService friendsService,
+            bool includeUserBlocking) : base(view, web3IdentityCache, requestManager)
         {
             this.mvcManager = mvcManager;
             this.passportBridge = passportBridge;
@@ -45,8 +46,10 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
                          .AddControl(userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings(systemClipboard, HandleContextMenuUserProfileButton))
                          .AddControl(new SeparatorContextMenuControlSettings(CONTEXT_MENU_SEPARATOR_HEIGHT, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.left, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.right))
                          .AddControl(new ButtonContextMenuControlSettings(view.ContextMenuSettings.ViewProfileText, view.ContextMenuSettings.ViewProfileSprite, () => OpenProfilePassport(lastClickedProfileCtx!)))
-                         .AddControl(new ButtonContextMenuControlSettings(view.ContextMenuSettings.ViewProfileText, view.ContextMenuSettings.ViewProfileSprite, () => OpenProfilePassport(lastClickedProfileCtx!)))
-                         .AddControl(new ButtonContextMenuControlSettings(view.ContextMenuSettings.BlockText, view.ContextMenuSettings.BlockSprite, () => Debug.Log($"Block {lastClickedProfileCtx!.Address.ToString()}")));
+                         .AddControl(new ButtonContextMenuControlSettings(view.ContextMenuSettings.ViewProfileText, view.ContextMenuSettings.ViewProfileSprite, () => OpenProfilePassport(lastClickedProfileCtx!)));
+
+            if (includeUserBlocking)
+                contextMenu.AddControl(new ButtonContextMenuControlSettings(view.ContextMenuSettings.BlockText, view.ContextMenuSettings.BlockSprite, () => Debug.Log($"Block {lastClickedProfileCtx!.Address.ToString()}")));
 
             requestManager.ContextMenuClicked += ContextMenuClicked;
         }

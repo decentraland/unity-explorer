@@ -24,5 +24,6 @@
 
         public const string CAMERA_REEL = "alfa-camera-reel";
         public const string FRIENDS = "alfa-friends";
+        public const string FRIENDS_USER_BLOCKING = "alfa-friends-user-blocking";
     }
 }

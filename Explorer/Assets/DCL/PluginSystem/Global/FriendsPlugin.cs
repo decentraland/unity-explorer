@@ -44,6 +44,7 @@ namespace DCL.PluginSystem.Global
         private readonly IProfileThumbnailCache profileThumbnailCache;
         private readonly CancellationTokenSource lifeCycleCancellationToken = new ();
         private readonly IWebBrowser webBrowser;
+        private readonly bool includeUserBlocking;
 
         private CancellationTokenSource friendServiceSubscriptionCancellationToken = new ();
         private RPCFriendsService? friendsService;
@@ -64,7 +65,8 @@ namespace DCL.PluginSystem.Global
             ISelfProfile selfProfile,
             IPassportBridge passportBridge,
             ObjectProxy<IFriendsService> friendServiceProxy,
-            IProfileThumbnailCache profileThumbnailCache)
+            IProfileThumbnailCache profileThumbnailCache,
+            bool includeUserBlocking)
         {
             this.mainUIView = mainUIView;
             this.dclUrlSource = dclUrlSource;
@@ -81,6 +83,7 @@ namespace DCL.PluginSystem.Global
             this.passportBridge = passportBridge;
             this.friendServiceProxy = friendServiceProxy;
             this.profileThumbnailCache = profileThumbnailCache;
+            this.includeUserBlocking = includeUserBlocking;
         }
 
         public void Dispose()
@@ -126,7 +129,8 @@ namespace DCL.PluginSystem.Global
                 profileThumbnailCache,
                 loadingStatus,
                 dclInput,
-                passportBridge);
+                passportBridge,
+                includeUserBlocking);
 
             mvcManager.RegisterController(friendsPanelController);
 

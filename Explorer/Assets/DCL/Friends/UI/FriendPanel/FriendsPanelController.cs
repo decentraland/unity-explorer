@@ -35,6 +35,7 @@ namespace DCL.Friends.UI.FriendPanel
         private readonly FriendSectionController friendSectionController;
         private readonly RequestsSectionController requestsSectionController;
         private readonly DCLInput dclInput;
+        private readonly bool includeUserBlocking;
 
         private CancellationTokenSource friendsPanelCts = new ();
         private UniTaskCompletionSource closeTaskCompletionSource = new ();
@@ -56,11 +57,13 @@ namespace DCL.Friends.UI.FriendPanel
             IProfileThumbnailCache profileThumbnailCache,
             ILoadingStatus loadingStatus,
             DCLInput dclInput,
-            IPassportBridge passportBridge) : base(viewFactory)
+            IPassportBridge passportBridge,
+            bool includeUserBlocking) : base(viewFactory)
         {
             this.chatView = chatView;
             this.sidebarRequestNotificationIndicator = sidebarRequestNotificationIndicator;
             this.dclInput = dclInput;
+            this.includeUserBlocking = includeUserBlocking;
 
             friendSectionController = new FriendSectionController(instantiatedView.FriendsSection,
                 web3IdentityCache,
@@ -69,7 +72,8 @@ namespace DCL.Friends.UI.FriendPanel
                 new FriendListRequestManager(friendsService, friendEventBus, profileRepository, webRequestController, profileThumbnailCache, instantiatedView.FriendsSection.LoopList, FRIENDS_PAGE_SIZE, FRIENDS_FETCH_ELEMENTS_THRESHOLD),
                 passportBridge,
                 profileThumbnailCache,
-                friendsService);
+                friendsService,
+                includeUserBlocking);
             requestsSectionController = new RequestsSectionController(instantiatedView.RequestsSection,
                 friendsService,
                 friendEventBus,
@@ -79,7 +83,8 @@ namespace DCL.Friends.UI.FriendPanel
                 loadingStatus,
                 new RequestsRequestManager(friendsService, friendEventBus, webRequestController, profileThumbnailCache, FRIENDS_REQUEST_PAGE_SIZE, instantiatedView.RequestsSection.LoopList),
                 passportBridge,
-                profileThumbnailCache);
+                profileThumbnailCache,
+                includeUserBlocking);
             blockedSectionController = new BlockedSectionController(instantiatedView.BlockedSection,
                 web3IdentityCache,
                 new BlockedRequestManager(profileRepository, web3IdentityCache, webRequestController, profileThumbnailCache, FRIENDS_PAGE_SIZE, FRIENDS_FETCH_ELEMENTS_THRESHOLD),
@@ -155,6 +160,8 @@ namespace DCL.Friends.UI.FriendPanel
             viewInstance.RequestsTabButton.onClick.AddListener(() => ToggleTabs(FriendsPanelTab.REQUESTS));
             viewInstance.BlockedTabButton.onClick.AddListener(() => ToggleTabs(FriendsPanelTab.BLOCKED));
             viewInstance.CloseButton.onClick.AddListener(() => CloseFriendsPanel(default(InputAction.CallbackContext)));
+
+            viewInstance.BlockedTabButton.gameObject.SetActive(includeUserBlocking);
 
             ToggleTabs(FriendsPanelTab.FRIENDS);
         }

@@ -516,6 +516,7 @@ namespace Global.Dynamic
 
             bool includeCameraReel = staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.CAMERA_REEL) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.CAMERA_REEL)) || Application.isEditor;
             bool includeFriends = staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.FRIENDS) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.FRIENDS)) || Application.isEditor;
+            bool includeUserBlocking = staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.FRIENDS_USER_BLOCKING) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.FRIENDS_USER_BLOCKING)) || Application.isEditor;
 
             var friendServiceProxy = new ObjectProxy<IFriendsService>();
             IProfileThumbnailCache profileThumbnailCache = new ProfileThumbnailCache(staticContainer.WebRequestsContainer.WebRequestController);
@@ -712,7 +713,8 @@ namespace Global.Dynamic
                     friendServiceProxy,
                     clipboard,
                     profileThumbnailCache,
-                    includeFriends
+                    includeFriends,
+                    includeUserBlocking
                 ),
                 new GenericContextMenuPlugin(assetsProvisioner, mvcManager),
             };
@@ -764,7 +766,8 @@ namespace Global.Dynamic
                     selfProfile,
                     new MVCPassportBridge(mvcManager),
                     friendServiceProxy,
-                    profileThumbnailCache));
+                    profileThumbnailCache,
+                    includeUserBlocking));
             }
 
             if (dynamicWorldParams.EnableAnalytics)

@@ -57,6 +57,7 @@ namespace DCL.PluginSystem.Global
         private readonly ISystemClipboard systemClipboard;
         private readonly IProfileThumbnailCache profileThumbnailCache;
         private readonly bool enableFriends;
+        private readonly bool includeUserBlocking;
 
         private PassportController? passportController;
 
@@ -86,7 +87,8 @@ namespace DCL.PluginSystem.Global
             ObjectProxy<IFriendsService> friendsService,
             ISystemClipboard systemClipboard,
             IProfileThumbnailCache profileThumbnailCache,
-            bool enableFriends
+            bool enableFriends,
+            bool includeUserBlocking
         )
         {
             this.assetsProvisioner = assetsProvisioner;
@@ -115,6 +117,7 @@ namespace DCL.PluginSystem.Global
             this.systemClipboard = systemClipboard;
             this.profileThumbnailCache = profileThumbnailCache;
             this.enableFriends = enableFriends;
+            this.includeUserBlocking = includeUserBlocking;
         }
 
         public void Dispose()
@@ -167,7 +170,8 @@ namespace DCL.PluginSystem.Global
                 passportSettings.ThumbnailHeight,
                 passportSettings.ThumbnailWidth,
                 enableCameraReel,
-                enableFriends
+                enableFriends,
+                includeUserBlocking
             );
 
             mvcManager.RegisterController(passportController);

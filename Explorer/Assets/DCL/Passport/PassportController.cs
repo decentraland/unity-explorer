@@ -88,6 +88,7 @@ namespace DCL.Passport
         private readonly int thumbnailWidth;
         private readonly bool enableCameraReel;
         private readonly bool enableFriendshipInteractions;
+        private readonly bool includeUserBlocking;
         private readonly UserProfileContextMenuControlSettings userProfileContextMenuControlSettings;
 
         private CameraReelGalleryController? cameraReelGalleryController;
@@ -146,7 +147,8 @@ namespace DCL.Passport
             int thumbnailHeight,
             int thumbnailWidth,
             bool enableCameraReel,
-            bool enableFriendshipInteractions) : base(viewFactory)
+            bool enableFriendshipInteractions,
+            bool includeUserBlocking) : base(viewFactory)
         {
             this.cursor = cursor;
             this.profileRepository = profileRepository;
@@ -175,6 +177,7 @@ namespace DCL.Passport
             this.thumbnailWidth = thumbnailWidth;
             this.enableCameraReel = enableCameraReel;
             this.enableFriendshipInteractions = enableFriendshipInteractions;
+            this.includeUserBlocking = includeUserBlocking;
 
             passportProfileInfoController = new PassportProfileInfoController(selfProfile, world, playerEntity);
             notificationBusController.SubscribeToNotificationTypeReceived(NotificationType.BADGE_GRANTED, OnBadgeNotificationReceived);
@@ -528,7 +531,7 @@ namespace DCL.Passport
                                      .AddControl(userProfileContextMenuControlSettings)
                                      .AddControl(new SeparatorContextMenuControlSettings(CONTEXT_MENU_SEPARATOR_HEIGHT, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.left, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.right));
 
-            if (friendshipStatus != FriendshipStatus.BLOCKED)
+            if (friendshipStatus != FriendshipStatus.BLOCKED && includeUserBlocking)
                 contextMenu.AddControl(new ButtonContextMenuControlSettings(viewInstance.BlockText, viewInstance.BlockSprite, () => Debug.Log($"Block {currentUserId}")));
 
             userProfileContextMenuControlSettings.SetInitialData(profile.Name, profile.UserId, profile.HasClaimedName,
