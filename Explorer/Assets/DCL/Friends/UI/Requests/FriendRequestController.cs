@@ -35,7 +35,7 @@ namespace DCL.Friends.UI.Requests
         private ImageController? userThumbnailCancel;
         private ImageController? userThumbnailReceived;
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Overlay;
 
         public FriendRequestController(ViewFactoryMethod viewFactory,
             IWeb3IdentityCache identityCache,
@@ -277,9 +277,9 @@ namespace DCL.Friends.UI.Requests
                         viewInstance.send.MessageInput.text,
                         ct);
 
-                    Toggle(ViewState.CONFIRMED_SENT);
-
-                    await ShowOperationConfirmationAsync(viewInstance.sentConfirmed, inputData.DestinationUser!.Value,
+                    await ShowOperationConfirmationAsync(
+                        ViewState.CONFIRMED_SENT,
+                        viewInstance.sentConfirmed, inputData.DestinationUser!.Value,
                         "Friend Request Sent To <color=#73D3D3>{0}</color>",
                         ct);
 
@@ -302,9 +302,9 @@ namespace DCL.Friends.UI.Requests
             {
                 await friendsService.RejectFriendshipAsync(inputData.Request!.From.Address, ct);
 
-                Toggle(ViewState.CONFIRMED_REJECTED);
-
-                await ShowOperationConfirmationAsync(viewInstance!.rejectedConfirmed, inputData.Request.From.Address,
+                await ShowOperationConfirmationAsync(
+                    ViewState.CONFIRMED_REJECTED,
+                    viewInstance!.rejectedConfirmed, inputData.Request.From.Address,
                     "Friend Request From <color=#FF8362>{0}</color> Rejected",
                     ct);
 
@@ -322,9 +322,9 @@ namespace DCL.Friends.UI.Requests
             {
                 await friendsService.AcceptFriendshipAsync(inputData.Request!.From.Address, ct);
 
-                Toggle(ViewState.CONFIRMED_ACCEPTED);
-
-                await ShowOperationConfirmationAsync(viewInstance!.acceptedConfirmed, inputData.Request.From.Address,
+                await ShowOperationConfirmationAsync(
+                    ViewState.CONFIRMED_ACCEPTED,
+                    viewInstance!.acceptedConfirmed, inputData.Request.From.Address,
                     "You And <color=#FF8362>{0}</color> Are Now Friends!",
                     ct);
 
@@ -342,9 +342,9 @@ namespace DCL.Friends.UI.Requests
             {
                 await friendsService.CancelFriendshipAsync(inputData.Request!.To.Address, ct);
 
-                Toggle(ViewState.CONFIRMED_CANCELLED);
-
-                await ShowOperationConfirmationAsync(viewInstance!.cancelledConfirmed, inputData.Request.To.Address,
+                await ShowOperationConfirmationAsync(
+                    ViewState.CONFIRMED_CANCELLED,
+                    viewInstance!.cancelledConfirmed, inputData.Request.To.Address,
                     "Friend Request To <color=#73D3D3>{0}</color> Cancelled",
                     ct);
 
@@ -391,7 +391,9 @@ namespace DCL.Friends.UI.Requests
         private void UnblockUnwantedInputs() =>
             inputBlock.Enable(InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.IN_WORLD_CAMERA, InputMapComponent.Kind.CAMERA, InputMapComponent.Kind.PLAYER);
 
-        private async UniTask ShowOperationConfirmationAsync(FriendRequestView.OperationConfirmedConfig config,
+        private async UniTask ShowOperationConfirmationAsync(
+            ViewState state,
+            FriendRequestView.OperationConfirmedConfig config,
             Web3Address userId, string textWithUserNameParam, CancellationToken ct)
         {
             Profile? profile = await profileRepository.GetAsync(userId, ct);
@@ -409,7 +411,11 @@ namespace DCL.Friends.UI.Requests
                     LoadThumbnail(myProfile, config.MyThumbnail, new ImageController(config.MyThumbnail, webRequestController));
             }
 
+            Toggle(state);
+
+            await viewInstance!.PlayShowAnimationAsync(config, ct);
             await UniTask.WhenAny(config.CloseButton.OnClickAsync(ct), UniTask.Delay(OPERATION_CONFIRMED_WAIT_TIME_MS, cancellationToken: ct));
+            await viewInstance!.PlayHideAnimationAsync(config, ct);
         }
 
         private enum ViewState

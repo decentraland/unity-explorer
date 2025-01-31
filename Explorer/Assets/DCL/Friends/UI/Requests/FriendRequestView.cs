@@ -1,6 +1,9 @@
+using Cysharp.Threading.Tasks;
 using DCL.UI;
+using DG.Tweening;
 using MVC;
 using System;
+using System.Threading;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -9,6 +12,9 @@ namespace DCL.Friends.UI.Requests
 {
     public class FriendRequestView : ViewBase, IView
     {
+        private const float FADE_ANIMATION_DURATION = 0.4f;
+        private const float SCALE_ANIMATION_DURATION = 0.5f;
+
         public SendConfig send;
         public CancelConfig cancel;
         public ReceivedConfig received;
@@ -16,6 +22,32 @@ namespace DCL.Friends.UI.Requests
         public OperationConfirmedConfig cancelledConfirmed;
         public OperationConfirmedConfig rejectedConfirmed;
         public OperationConfirmedConfig acceptedConfirmed;
+
+        public async UniTask PlayShowAnimationAsync(OperationConfirmedConfig config, CancellationToken ct)
+        {
+            config.Rays.rotation = Quaternion.identity;
+            config.Root.transform.localScale = Vector3.zero;
+
+            await config.CanvasGroup.DOFade(1, FADE_ANIMATION_DURATION)
+                        .ToUniTask(cancellationToken: ct);
+
+            await config.Root.transform.DOScale(Vector3.one, SCALE_ANIMATION_DURATION)
+                        .SetEase(Ease.OutBounce)
+                        .ToUniTask(cancellationToken: ct);
+
+            config.Rays.DORotate(new Vector3(0, 0, 360), 2f, RotateMode.FastBeyond360)
+                  .SetEase(Ease.Linear)
+                  .SetLoops(-1, LoopType.Restart)
+                  .ToUniTask(cancellationToken: ct);
+        }
+
+        public async UniTask PlayHideAnimationAsync(OperationConfirmedConfig config, CancellationToken ct)
+        {
+            config.Root.transform.DOScale(Vector3.zero, SCALE_ANIMATION_DURATION / 2);
+
+            await config.CanvasGroup.DOFade(0, FADE_ANIMATION_DURATION / 2)
+                        .ToUniTask(cancellationToken: ct);
+        }
 
         [Serializable]
         public struct SendConfig
@@ -82,6 +114,8 @@ namespace DCL.Friends.UI.Requests
             public ImageView? MyThumbnail;
             public TMP_Text Label;
             public Button CloseButton;
+            public Transform Rays;
+            public CanvasGroup CanvasGroup;
         }
     }
 }
