@@ -108,9 +108,9 @@ namespace DCL.Roads.Playground
             var currentCommandIndex = 0;
 
             // Set instance data
-            // Matrix4x4 baseMatrix = RoadShift
-            //     ? Matrix4x4.TRS(Descriptions[0].RoadCoordinate.ParcelToPositionFlat() + ParcelMathHelper.RoadPivotDeviation, Descriptions[0].Rotation.SelfOrIdentity(), Vector3.one)
-            //     : Matrix4x4.TRS(Vector3.zero, Quaternion.identity, Vector3.one);
+            Matrix4x4 baseMatrix = RoadShift
+                ? Matrix4x4.TRS(Descriptions[0].RoadCoordinate.ParcelToPositionFlat() + ParcelMathHelper.RoadPivotDeviation, Descriptions[0].Rotation.SelfOrIdentity(), Vector3.one)
+                : Matrix4x4.TRS(Vector3.zero, Quaternion.identity, Vector3.one);
 
             // foreach (var mesh in prefab.InstancedMeshes)
             {

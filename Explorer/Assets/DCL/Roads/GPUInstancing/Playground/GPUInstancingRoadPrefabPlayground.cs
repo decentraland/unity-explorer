@@ -1,9 +1,11 @@
 ﻿using DCL.Roads.GPUInstancing.Playground;
+using DCL.Roads.Settings;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
 using UnityEngine;
 using UnityEngine.Rendering;
+using Utility;
 
 namespace DCL.Roads.GPUInstancing
 {
@@ -18,22 +20,25 @@ namespace DCL.Roads.GPUInstancing
     public class GPUInstancingRoadPrefabPlayground : MonoBehaviour
     {
         // --- INDIRECT ---
-        private readonly Dictionary<GPUInstancingCandidate, GPUInstancingBuffers> candidatesBuffers = new ();
+        private readonly Dictionary<GPUInstancingCandidate, GPUInstancingBuffers> candidatesBuffersTable = new ();
 
         public GPUInstancingPrefabData[] originalPrefabs;
+        public Shader shader;
 
         [Min(0)] public int PrefabId;
         [Min(0)] public int CandidateId;
         [Min(0)] public int LodLevel;
-        public bool RenderFullPrefab;
+
+        [Header("ROADS")]
+        public RoadDescription[] Descriptions;
 
         [Space]
+        public bool RenderFullPrefab;
+        public bool UseRoadShift;
         public bool UseIndirect;
 
         [Space]
         public bool Run;
-
-        public Shader shader;
 
         private string currentNane;
 
@@ -43,31 +48,35 @@ namespace DCL.Roads.GPUInstancing
 
             int prefabId = Mathf.Min(PrefabId, originalPrefabs.Length -1);
 
+            var baseMatrix = UseRoadShift
+                ? Matrix4x4.TRS(Descriptions[0].RoadCoordinate.ParcelToPositionFlat() + ParcelMathHelper.RoadPivotDeviation, Descriptions[0].Rotation.SelfOrIdentity(), Vector3.one)
+                : Matrix4x4.TRS(Vector3.zero, Quaternion.identity, Vector3.one);
+
             if (currentNane != originalPrefabs[prefabId].name)
             {
                 currentNane = originalPrefabs[prefabId].name;
 
                 foreach (var candidate in originalPrefabs[prefabId].indirectCandidates)
-                    AdjustBuffers(candidate);
+                    AdjustBuffers(candidate, baseMatrix);
             }
 
             if (UseIndirect)
             {
                 foreach (var candidate in originalPrefabs[prefabId].indirectCandidates)
-                    RenderCandidateIndirect(candidate, candidatesBuffers[candidate]);
+                    RenderCandidateIndirect(candidate, candidatesBuffersTable[candidate]);
 
                 foreach (var candidate in originalPrefabs[prefabId].directCandidates)
-                    RenderCandidateInstanced(candidate);
+                    RenderCandidateInstanced(candidate, baseMatrix);
             }
             else
             {
                 if (RenderFullPrefab)
                     foreach (GPUInstancingCandidate candidate in originalPrefabs[prefabId].indirectCandidates)
-                        RenderCandidateInstanced(candidate);
+                        RenderCandidateInstanced(candidate, baseMatrix);
                 else
                 {
                     int candidateId = Mathf.Min(CandidateId, originalPrefabs[prefabId].indirectCandidates.Count -1);
-                    RenderCandidateInstanced(candidate: originalPrefabs[prefabId].indirectCandidates[candidateId]);
+                    RenderCandidateInstanced(candidate: originalPrefabs[prefabId].indirectCandidates[candidateId], baseMatrix);
                 }
             }
         }
@@ -76,7 +85,7 @@ namespace DCL.Roads.GPUInstancing
         {
             currentNane = string.Empty;
 
-            foreach (GPUInstancingBuffers buffers in candidatesBuffers.Values)
+            foreach (GPUInstancingBuffers buffers in candidatesBuffersTable.Values)
             {
                 buffers.InstanceBuffer.Dispose();
                 buffers.InstanceBuffer = null;
@@ -86,12 +95,12 @@ namespace DCL.Roads.GPUInstancing
             }
         }
 
-        private void AdjustBuffers(GPUInstancingCandidate candidate)
+        private void AdjustBuffers(GPUInstancingCandidate candidate, Matrix4x4 baseMatrix)
         {
-            if (!candidatesBuffers.TryGetValue(candidate, out GPUInstancingBuffers buffers))
+            if (!candidatesBuffersTable.TryGetValue(candidate, out GPUInstancingBuffers buffers))
             {
                 buffers = new GPUInstancingBuffers();
-                candidatesBuffers.Add(candidate, buffers);
+                candidatesBuffersTable.Add(candidate, buffers);
             }
 
             var totalCommands = 0;
@@ -107,18 +116,17 @@ namespace DCL.Roads.GPUInstancing
             buffers.DrawArgsBuffer = new GraphicsBuffer(GraphicsBuffer.Target.IndirectArguments, totalCommands, GraphicsBuffer.IndirectDrawIndexedArgs.size);
             buffers.DrawArgsCommandData = new GraphicsBuffer.IndirectDrawIndexedArgs[totalCommands];
 
+            PerInstanceBuffer[] roadShiftInstancesBuffer = candidate.InstancesBuffer.ToArray();
+            for (var i = 0; i < roadShiftInstancesBuffer.Length; i++)
+            {
+                PerInstanceBuffer pid = roadShiftInstancesBuffer[i];
+                pid.instMatrix = baseMatrix * pid.instMatrix;
+                roadShiftInstancesBuffer[i] = pid;
+            }
+
             buffers.InstanceBuffer?.Release();
-            buffers.InstanceBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, candidate.InstancesBuffer.Count, Marshal.SizeOf(typeof(PerInstanceBuffer)));
-
-            // PerInstanceBuffer[] shiftedTRS = candidate.InstancesBuffer.ToArray();
-            // for (var i = 0; i < shiftedTRS.Length; i++)
-            // {
-            //     PerInstanceBuffer pid = shiftedTRS[i];
-            //     pid.instMatrix = baseMatrix * pid.instMatrix;
-            //     shiftedTRS[i] = pid;
-            // }
-
-            buffers.InstanceBuffer.SetData(candidate.InstancesBuffer, 0, 0, candidate.InstancesBuffer.Count);
+            buffers.InstanceBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, roadShiftInstancesBuffer.Length, Marshal.SizeOf(typeof(PerInstanceBuffer)));
+            buffers.InstanceBuffer.SetData(roadShiftInstancesBuffer, 0, 0, roadShiftInstancesBuffer.Length);
         }
 
         private void RenderCandidateIndirect(GPUInstancingCandidate candidate, GPUInstancingBuffers buffers)
@@ -160,7 +168,7 @@ namespace DCL.Roads.GPUInstancing
             }
         }
 
-        private void RenderCandidateInstanced(GPUInstancingCandidate candidate)
+        private void RenderCandidateInstanced(GPUInstancingCandidate candidate, Matrix4x4 baseMatrix)
         {
             int lodLevel = Mathf.Min(LodLevel, candidate.Lods.Count - 1);
             foreach (MeshRenderingData meshRendering in candidate.Lods[lodLevel].MeshRenderingDatas)
@@ -168,11 +176,7 @@ namespace DCL.Roads.GPUInstancing
                 var instancedRenderer = meshRendering.ToGPUInstancedRenderer();
 
                 List<Matrix4x4> shiftedInstanceData = new (candidate.InstancesBuffer.Count);
-
-                shiftedInstanceData.AddRange(
-
-                    // RoadShift ? instancedMesh.PerInstancesData.Select(matrix => baseMatrix * matrix.instMatrix) :
-                    candidate.InstancesBuffer.Select(matrix => matrix.instMatrix));
+                shiftedInstanceData.AddRange(candidate.InstancesBuffer.Select(matrix => baseMatrix * matrix.instMatrix));
 
                 for (var i = 0; i < instancedRenderer.RenderParamsArray.Length; i++)
                     Graphics.RenderMeshInstanced(in instancedRenderer.RenderParamsArray[i], instancedRenderer.Mesh, i, shiftedInstanceData);
