@@ -320,7 +320,17 @@ namespace Global.Dynamic
             }
 
             var cacheDirectory = CacheDirectory.NewDefault();
-            var diskCleanUp = new LRUDiskCleanUp(cacheDirectory);
+
+            IDiskCleanUp diskCleanUp;
+
+            if (appArgs.HasFlag(AppArgsFlags.DISABLE_DISK_CACHE_CLEANUP))
+            {
+                ReportHub.Log(ReportData.UNSPECIFIED, $"Disable disk cache cleanup, flag --{AppArgsFlags.DISABLE_DISK_CACHE_CLEANUP} is passed");
+                diskCleanUp = IDiskCleanUp.None.INSTANCE;
+            }
+            else
+                diskCleanUp = new LRUDiskCleanUp(cacheDirectory);
+
             var diskCache = new DiskCache(cacheDirectory, diskCleanUp);
             return diskCache;
         }
