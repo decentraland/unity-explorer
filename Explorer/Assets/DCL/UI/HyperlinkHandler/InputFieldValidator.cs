@@ -29,7 +29,7 @@ namespace DCL.UI.InputFieldValidator
             @"[<‹]#[0-9A-Fa-f]{6}[>›][<‹]link=(url|scene|world|user)=.*?[>›](.*?)[<‹]/link[>›][<‹]/color[>›]",
             RegexOptions.Compiled);
         private static readonly Regex WEBSITE_REGEX = new (
-            @"(?<=^|\s)§?((http§?s?:\/\/)?§?(www\.)§?[a-zA-Z0-9]§?(?:[a-zA-Z0-9-]*§?[a-zA-Z0-9]*)?§?\.§?[a-zA-Z]{2,30}§?[a-zA-Z]{0,33}§?(\/[^\s]*)?)§?(?=\s|$)",
+            @"(?<=^|\s)§?((https§?:\/\/)?§?(www\.)?§?[a-zA-Z0-9]§?(?:[a-zA-Z0-9-]*§?[a-zA-Z0-9]*)?§?\.§?[a-zA-Z]{2,30}§?[a-zA-Z]{0,33}§?(\/[^\s]*)?)§?(?=\s|$)",
             RegexOptions.Compiled);
         private static readonly Regex SCENE_REGEX = new (@"(?<=^|\s)-?§?\d{0,1}§?\d{0,1}§?\d{1}§?,§?-?§?\d{1}§?\d{0,1}§?\d{0,1}§?(?=\s|$)", RegexOptions.Compiled);
         private static readonly Regex WORLD_REGEX = new (@"(?<=^|\s)§?[a-zA-Z0-9]§?[a-zA-Z0-9]*§?[a-zA-Z0-9]*§?\.dcl\.eth§?(?=\s|$)",
