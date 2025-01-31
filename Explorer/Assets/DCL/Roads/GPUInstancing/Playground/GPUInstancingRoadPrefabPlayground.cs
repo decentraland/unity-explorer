@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
 using UnityEngine;
-using UnityEngine.Rendering;
 using Utility;
 
 namespace DCL.Roads.GPUInstancing
@@ -19,8 +18,8 @@ namespace DCL.Roads.GPUInstancing
     [ExecuteAlways]
     public class GPUInstancingRoadPrefabPlayground : MonoBehaviour
     {
-        // --- INDIRECT ---
         private readonly Dictionary<GPUInstancingCandidate, GPUInstancingBuffers> candidatesBuffersTable = new ();
+        private readonly Dictionary<Material, Material> instancingMaterials = new();
 
         public GPUInstancingPrefabData[] originalPrefabs;
         public Shader shader;
@@ -41,6 +40,12 @@ namespace DCL.Roads.GPUInstancing
         public bool Run;
 
         private string currentNane;
+
+        [ContextMenu(nameof(LogMaterialsAmount))]
+        private void LogMaterialsAmount()
+        {
+            Debug.Log(instancingMaterials.Count);
+        }
 
         public void Update()
         {
@@ -110,7 +115,9 @@ namespace DCL.Roads.GPUInstancing
             MeshRenderingData[] meshes = candidate.Lods[lodLevel].MeshRenderingDatas;
 
             foreach (MeshRenderingData mesh in meshes)
-                totalCommands += mesh.ToGPUInstancedRenderer().RenderParamsArray.Length;
+            {
+                totalCommands += mesh.ToGPUInstancedRenderer(instancingMaterials).RenderParamsArray.Length;
+            }
 
             buffers.DrawArgsBuffer?.Release();
             buffers.DrawArgsBuffer = new GraphicsBuffer(GraphicsBuffer.Target.IndirectArguments, totalCommands, GraphicsBuffer.IndirectDrawIndexedArgs.size);
@@ -138,7 +145,7 @@ namespace DCL.Roads.GPUInstancing
             // foreach (var lod in candidate.Lods)
             foreach (MeshRenderingData mesh in meshes)
             {
-                var instancedRenderer = mesh.ToGPUInstancedRenderer();
+                var instancedRenderer = mesh.ToGPUInstancedRenderer(instancingMaterials);
                 int submeshCount = instancedRenderer.RenderParamsArray.Length;
 
                 // Set commands and render
@@ -157,11 +164,6 @@ namespace DCL.Roads.GPUInstancing
                     rparams.matProps = new MaterialPropertyBlock();
                     rparams.matProps.SetBuffer("_PerInstanceBuffer", buffers.InstanceBuffer);
 
-                    if (rparams.material.shader == shader)
-                        rparams.material.EnableKeyword(new LocalKeyword(shader, "_GPU_INSTANCER_BATCHER"));
-                    else
-                        Debug.LogWarning($"material {rparams.material.name} has different shader {rparams.material.shader}");
-
                     Graphics.RenderMeshIndirect(rparams, instancedRenderer.Mesh, buffers.DrawArgsBuffer, commandCount: 1, currentCommandIndex);
                     currentCommandIndex++;
                 }
@@ -173,7 +175,7 @@ namespace DCL.Roads.GPUInstancing
             int lodLevel = Mathf.Min(LodLevel, candidate.Lods.Count - 1);
             foreach (MeshRenderingData meshRendering in candidate.Lods[lodLevel].MeshRenderingDatas)
             {
-                var instancedRenderer = meshRendering.ToGPUInstancedRenderer();
+                var instancedRenderer = meshRendering.ToGPUInstancedRenderer(instancingMaterials);
 
                 List<Matrix4x4> shiftedInstanceData = new (candidate.InstancesBuffer.Count);
                 shiftedInstanceData.AddRange(candidate.InstancesBuffer.Select(matrix => baseMatrix * matrix.instMatrix));

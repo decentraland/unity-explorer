@@ -1040,25 +1040,25 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1701440522}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0509811668994b469a2724dc59d856df, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   originalPrefabs:
   - {fileID: 3083617024737014214, guid: 2d6ac3b70dd761a428bae0e655a93ebc, type: 3}
+  shader: {fileID: 4800000, guid: 56a9743f8d94f684190dc11bb521fb78, type: 3}
   PrefabId: 0
   CandidateId: 0
   LodLevel: 0
+  Descriptions:
+  - RoadCoordinate: {x: 1, y: 1}
+    Rotation: {x: 0, y: 0.38268346, z: 0, w: 0.9238795}
+    RoadModel: 
   RenderFullPrefab: 0
   UseRoadShift: 0
-  Descriptions:
-  - RoadCoordinate: {x: 10, y: 0}
-    Rotation: {x: 0, y: 0.70710677, z: 0, w: 0.70710677}
-    RoadModel: 
   UseIndirect: 0
   Run: 0
-  shader: {fileID: 4800000, guid: 56a9743f8d94f684190dc11bb521fb78, type: 3}
 --- !u!1 &1758766808
 GameObject:
   m_ObjectHideFlags: 0

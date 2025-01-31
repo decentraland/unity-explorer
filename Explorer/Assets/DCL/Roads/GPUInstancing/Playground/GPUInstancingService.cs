@@ -65,7 +65,7 @@ namespace DCL.Roads.GPUInstancing.Playground
         {
             foreach (GPUInstancedMesh prefabMeshInstance in meshInstances)
             {
-                var instancedRenderer = prefabMeshInstance.meshRenderingData.ToGPUInstancedRenderer();
+                GPUInstancedRenderer instancedRenderer = prefabMeshInstance.meshRenderingData.ToGPUInstancedRenderer(null);
 
                 if (!gpuInstancingMap.ContainsKey(instancedRenderer))
                     gpuInstancingMap.Add(instancedRenderer, prefabMeshInstance.PerInstancesData);
@@ -82,7 +82,7 @@ namespace DCL.Roads.GPUInstancing.Playground
         {
             foreach (GPUInstancedMesh prefabMeshInstance in meshInstances)
             {
-                var instancedRenderer = prefabMeshInstance.meshRenderingData.ToGPUInstancedRenderer();
+                var instancedRenderer = prefabMeshInstance.meshRenderingData.ToGPUInstancedRenderer(null);
 
                 if (!gpuInstancingMap.TryGetValue(instancedRenderer, out PerInstanceBuffer[] matrix))
                 {

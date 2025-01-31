@@ -11,6 +11,7 @@ namespace DCL.Roads.GPUInstancing.Playground
     {
         public List<GPUInstancingCandidate> indirectCandidates;
         public List<GPUInstancingCandidate> directCandidates;
+
         [SerializeField] private Shader indirectShader;
 
         [ContextMenu(nameof(CollectSelfData))]

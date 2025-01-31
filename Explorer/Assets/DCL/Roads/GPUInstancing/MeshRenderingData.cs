@@ -1,7 +1,9 @@
 ﻿using DCL.Roads.Playground;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.Rendering;
 using Utility;
 
 namespace DCL.Roads.GPUInstancing.Playground
@@ -21,20 +23,44 @@ namespace DCL.Roads.GPUInstancing.Playground
         }
 
         // RenderParams are not Serializable, so that is why we save collected raw data and transition to RenderParams at runtime
-        public GPUInstancedRenderer ToGPUInstancedRenderer() =>
-            new (SharedMesh, Renderer.sharedMaterials.Select(mat => new RenderParams(mat)
+        public GPUInstancedRenderer ToGPUInstancedRenderer(Dictionary<Material, Material> instancingMaterials)
+        {
+            var renderParams = Renderer.sharedMaterials.Select(sharedMat =>
             {
-                layer                  = Renderer.gameObject.layer,
-                lightProbeProxyVolume  = null, // no custom proxy volume
-                lightProbeUsage        = Renderer.lightProbeUsage,
-                motionVectorMode       = Renderer.motionVectorGenerationMode,
-                receiveShadows         = Renderer.receiveShadows,
-                reflectionProbeUsage   = Renderer.reflectionProbeUsage,
-                rendererPriority       = Renderer.rendererPriority,
-                renderingLayerMask     = Renderer.renderingLayerMask,
-                shadowCastingMode      = Renderer.shadowCastingMode,
-                worldBounds = new Bounds(center: Vector3.zero, size: new Vector3( GenesisCityData.EXTENTS.x * ParcelMathHelper.PARCEL_SIZE, STREET_MAX_HEIGHT, GenesisCityData.EXTENTS.y * ParcelMathHelper.PARCEL_SIZE)), // roads are not high
-            }).ToArray());
+                if (!instancingMaterials.TryGetValue(sharedMat, out Material instancedMat))
+                {
+                    instancedMat = new Material(sharedMat) { name = $"{sharedMat.name}_Instanced" };
+                    instancedMat.EnableKeyword(new LocalKeyword(instancedMat.shader, "_GPU_INSTANCER_BATCHER"));
+                    sharedMat.DisableKeyword(new LocalKeyword(instancedMat.shader, "_GPU_INSTANCER_BATCHER"));
+                    instancingMaterials.Add(sharedMat, instancedMat);
+                }
+
+                return new RenderParams
+                {
+                    material = instancedMat,
+                    layer = Renderer.gameObject.layer,
+                    lightProbeProxyVolume = null, // no custom proxy volume
+                    lightProbeUsage = Renderer.lightProbeUsage,
+                    motionVectorMode = Renderer.motionVectorGenerationMode,
+                    receiveShadows = Renderer.receiveShadows,
+                    reflectionProbeUsage = Renderer.reflectionProbeUsage,
+                    rendererPriority = Renderer.rendererPriority,
+                    renderingLayerMask = Renderer.renderingLayerMask,
+                    shadowCastingMode = Renderer.shadowCastingMode,
+                    worldBounds = new Bounds(
+                        center: Vector3.zero,
+                        size: new Vector3(
+                            GenesisCityData.EXTENTS.x * ParcelMathHelper.PARCEL_SIZE,
+                            STREET_MAX_HEIGHT,
+                            GenesisCityData.EXTENTS.y * ParcelMathHelper.PARCEL_SIZE
+                        )
+                    )
+                };
+            }).ToArray();
+
+            var instancedRenderer = new GPUInstancedRenderer(SharedMesh, renderParams);
+            return instancedRenderer;
+        }
 
         // Equals when MeshFilter and MeshRenderer settings are same, but Transform could be different
         public bool Equals(MeshRenderingData other) =>

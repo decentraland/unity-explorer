@@ -91,7 +91,7 @@ namespace DCL.Roads.Playground
             {
                 var mesh = prefab.InstancedMeshes[indirectMeshIndex];
                 totalInstances += mesh.PerInstancesData?.Length ?? 0;
-                totalCommands += mesh.meshRenderingData.ToGPUInstancedRenderer().RenderParamsArray.Length;
+                totalCommands += mesh.meshRenderingData.ToGPUInstancedRenderer(null).RenderParamsArray.Length;
             }
 
             // Create buffers once
@@ -115,7 +115,7 @@ namespace DCL.Roads.Playground
             // foreach (var mesh in prefab.InstancedMeshes)
             {
                 GPUInstancedMesh mesh = prefab.InstancedMeshes[indirectMeshIndex];
-                var instancedRenderer = mesh.meshRenderingData.ToGPUInstancedRenderer();
+                var instancedRenderer = mesh.meshRenderingData.ToGPUInstancedRenderer(null);
                 int submeshCount = instancedRenderer.RenderParamsArray.Length;
                 int instanceCount = mesh.PerInstancesData?.Length ?? 0;
 
@@ -167,7 +167,7 @@ namespace DCL.Roads.Playground
             foreach (var mesh in gpuInstancedMeshes)
             {
                 totalInstances += mesh.PerInstancesData?.Length ?? 0;
-                totalCommands += mesh.meshRenderingData.ToGPUInstancedRenderer().RenderParamsArray.Length;
+                totalCommands += mesh.meshRenderingData.ToGPUInstancedRenderer(null).RenderParamsArray.Length;
             }
 
             // Create buffers once
@@ -199,7 +199,7 @@ namespace DCL.Roads.Playground
             for (var id = 0; id < gpuInstancedMeshes.Count; id++)
             {
                 GPUInstancedMesh gpuInstancedMesh = gpuInstancedMeshes[id];
-                var gpuInstancedRenderer = gpuInstancedMesh.meshRenderingData.ToGPUInstancedRenderer();
+                var gpuInstancedRenderer = gpuInstancedMesh.meshRenderingData.ToGPUInstancedRenderer(null);
 
                 int submeshCount = gpuInstancedRenderer.RenderParamsArray.Length;
                 int instanceCount = gpuInstancedMesh.PerInstancesData?.Length ?? 0;
@@ -258,7 +258,7 @@ namespace DCL.Roads.Playground
 
             foreach (GPUInstancedMesh instancedMesh in instancedMeshes)
             {
-                GPUInstancedRenderer instancedRenderer = instancedMesh.meshRenderingData.ToGPUInstancedRenderer();
+                GPUInstancedRenderer instancedRenderer = instancedMesh.meshRenderingData.ToGPUInstancedRenderer(null);
 
                 List<Matrix4x4> shiftedInstanceData = new (instancedMesh.PerInstancesData.Length);
                 shiftedInstanceData.AddRange(RoadShift
