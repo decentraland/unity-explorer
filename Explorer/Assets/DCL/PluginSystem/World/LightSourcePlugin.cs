@@ -90,7 +90,7 @@ namespace DCL.PluginSystem.World
             public LightDefaultsRef LightSourceDefaultValues;
 
             [Serializable]
-            public class LightDefaultsRef : ComponentReference<LightSourceDefaults>
+            public class LightDefaultsRef : AssetReferenceT<LightSourceDefaults>
             {
                 public LightDefaultsRef(string guid) : base(guid) { }
             }
