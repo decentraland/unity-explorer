@@ -38,8 +38,8 @@ on:
           - library
           - workspace
           - inherit
-       version:
-        description: 'Set the build version override'
+      version:
+        description: 'Set the build version'
         required: false
         type: string
   workflow_call:
