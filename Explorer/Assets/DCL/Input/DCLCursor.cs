@@ -18,9 +18,8 @@ namespace DCL.Input
         private readonly Vector2 normalCursorHotspot;
         private readonly Vector2 interactionCursorHotspot;
         private CursorStyle cursorStyle = CursorStyle.None;
-        private bool isForced;
 
-        public bool IsForced() => isForced;
+        public bool IsStyleForced { get; private set; }
 
         public DCLCursor(Texture2D normalCursor, Texture2D interactionCursor, Vector2 normalCursorHotspot, Vector2 interactionCursorHotspot)
         {
@@ -54,7 +53,7 @@ namespace DCL.Input
         public void SetStyle(CursorStyle style, bool force = false)
         {
             if (cursorStyle == style) return;
-            isForced = force;
+            IsStyleForced = force;
 
             cursorStyle = style;
 

@@ -121,7 +121,7 @@ namespace DCL.Chat
             validatedInputField.InputFieldSubmit += InputFieldSubmit;
         }
 
-        public void OnViewHide()
+        public void ClosePopups()
         {
             closePopupTask.TrySetResult();
         }

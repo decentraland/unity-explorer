@@ -271,7 +271,7 @@ namespace DCL.Chat
         public override UniTask HideAsync(CancellationToken ct, bool isInstant = false)
         {
             closePopupTask.TrySetResult();
-            chatInputBox.OnViewHide();
+            chatInputBox.ClosePopups();
             return base.HideAsync(ct, isInstant);
         }
 
