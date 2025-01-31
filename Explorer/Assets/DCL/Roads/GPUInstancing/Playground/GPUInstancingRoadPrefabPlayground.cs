@@ -86,7 +86,8 @@ namespace DCL.Roads.GPUInstancing
             var totalCommands = 0;
 
             // foreach (var lod in candidate.Lods)
-            MeshRenderingData[] meshes = candidate.Lods[LodLevel].MeshRenderingDatas;
+            var lod = LodLevel < candidate.Lods.Count ? LodLevel : candidate.Lods.Count - 1;
+            MeshRenderingData[] meshes = candidate.Lods[lod].MeshRenderingDatas;
 
             foreach (MeshRenderingData mesh in meshes)
                 totalCommands += mesh.ToGPUInstancedRenderer().RenderParamsArray.Length;
@@ -111,7 +112,8 @@ namespace DCL.Roads.GPUInstancing
 
         private void RenderCandidateIndirect(GPUInstancingCandidate candidate, GPUInstancingBuffers buffers)
         {
-            MeshRenderingData[] meshes = candidate.Lods[LodLevel].MeshRenderingDatas;
+            var lod = LodLevel < candidate.Lods.Count ? LodLevel : candidate.Lods.Count - 1;
+            MeshRenderingData[] meshes = candidate.Lods[lod].MeshRenderingDatas;
             var currentCommandIndex = 0;
 
             // foreach (var lod in candidate.Lods)
