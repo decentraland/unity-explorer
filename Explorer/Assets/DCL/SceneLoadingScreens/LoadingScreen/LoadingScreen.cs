@@ -89,6 +89,9 @@ namespace DCL.SceneLoadingScreens.LoadingScreen
                 if (loadReport.GetStatus().TaskStatus == UniTaskStatus.Pending)
                     ReportHub.LogError(ReportCategory.SCENE_LOADING, "Loading screen finished unexpectedly, but the loading process continues");
 
+                if (finalResult.HasValue && !result.Success)
+                    ReportHub.LogError(ReportCategory.SCENE_LOADING, $"Loading screen finished with an error after the flow has finished: {result.Error.AsMessage()}");
+
                 return result;
             }
 

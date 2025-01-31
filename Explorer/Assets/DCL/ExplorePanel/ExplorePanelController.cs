@@ -79,8 +79,7 @@ namespace DCL.ExplorePanel
         private void OnRewardAssigned(object[] parameters)
         {
             mvcManager.ShowAsync(IssueCommand(new ExplorePanelParameter(ExploreSections.Backpack))).Forget();
-            lastShownSection = ExploreSections.Backpack;
-            OnBackpackHotkeyPressed(default(InputAction.CallbackContext));
+            ShowSection(ExploreSections.Backpack);
         }
 
         public override void Dispose()
