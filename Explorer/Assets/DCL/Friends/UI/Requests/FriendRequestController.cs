@@ -165,7 +165,7 @@ namespace DCL.Friends.UI.Requests
             viewConfig.PreCancelToastContainer.SetActive(false);
             viewConfig.PreCancelButton.gameObject.SetActive(true);
             viewConfig.CancelButton.gameObject.SetActive(false);
-            viewConfig.TimestampText.text = fr.Timestamp.ToString("M");
+            viewConfig.TimestampText.text = fr.Timestamp.ToString("MMM dd").ToUpper();
             viewConfig.MessageInputContainer.SetActive(!string.IsNullOrEmpty(fr.MessageBody));
             viewConfig.MessageInput.text = $"<b>You:</b> {fr.MessageBody}";
 
@@ -181,7 +181,7 @@ namespace DCL.Friends.UI.Requests
 
             viewConfig.MessageInputContainer.SetActive(!string.IsNullOrEmpty(fr.MessageBody));
             viewConfig.MessageInput.text = fr.MessageBody;
-            viewConfig.TimestampText.text = fr.Timestamp.ToString("M");
+            viewConfig.TimestampText.text = fr.Timestamp.ToString("MMM dd").ToUpper();
 
             fetchUserCancellationToken = fetchUserCancellationToken.SafeRestart();
             LoadUserAndUpdateMessageWithUserNameAsync(fetchUserCancellationToken.Token).Forget();
@@ -323,7 +323,7 @@ namespace DCL.Friends.UI.Requests
 
                 Toggle(ViewState.CONFIRMED_ACCEPTED);
 
-                await ShowOperationConfirmationAsync(viewInstance!.rejectedConfirmed, inputData.Request.From.Address,
+                await ShowOperationConfirmationAsync(viewInstance!.acceptedConfirmed, inputData.Request.From.Address,
                     "You And <color=#FF8362>{0}</color> Are Now Friends!",
                     ct);
 
@@ -343,7 +343,7 @@ namespace DCL.Friends.UI.Requests
 
                 Toggle(ViewState.CONFIRMED_CANCELLED);
 
-                await ShowOperationConfirmationAsync(viewInstance!.rejectedConfirmed, inputData.Request.From.Address,
+                await ShowOperationConfirmationAsync(viewInstance!.cancelledConfirmed, inputData.Request.From.Address,
                     "Friend Request To <color=#73D3D3>{0}</color> Cancelled",
                     ct);
 
