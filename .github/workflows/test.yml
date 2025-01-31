@@ -24,7 +24,7 @@ jobs:
   test:
     if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event.pull_request.draft == false) || (github.event.label.name == 'force-build')
     name: Test
-    runs-on: Ubuntu-Big
+    runs-on: windows-latest
     steps:
 
       - name: Checkout code
@@ -85,7 +85,7 @@ jobs:
 
 
       # Configure test runner
-      - uses: game-ci/unity-test-runner@v4.1.1
+      - uses: game-ci/unity-test-runner@v4.3.1
         id: testRunner
         timeout-minutes: 30
         continue-on-error: true
@@ -96,19 +96,17 @@ jobs:
       - name: Convert NUnit to JUnit
         if: always()
         run: |
-          mkdir -p ${{ steps.testRunner.outputs.artifactsPath }}-junit
-          sudo rm /etc/apt/sources.list.d/microsoft-prod.list
-          sudo apt-get update
-          sudo apt-get install -y xsltproc
-          sudo xsltproc \
-            --output ${{ steps.testRunner.outputs.artifactsPath }}-junit/playmode-results-junit.xml \
-            .github/workflows/nunit-to-junit.xsl \
-            ${{ steps.testRunner.outputs.artifactsPath }}/playmode-results.xml \
+          New-Item -ItemType Directory -Force -Path "${{ steps.testRunner.outputs.artifactsPath }}-junit"
+          choco install xsltproc
+          xsltproc `
+            --output "${{ steps.testRunner.outputs.artifactsPath }}-junit/playmode-results-junit.xml" `
+            .github/workflows/nunit-to-junit.xsl `
+            "${{ steps.testRunner.outputs.artifactsPath }}/playmode-results.xml"
 
-          sudo xsltproc \
-            --output ${{ steps.testRunner.outputs.artifactsPath }}-junit/editmode-results-junit.xml \
-            .github/workflows/nunit-to-junit.xsl \
-            ${{ steps.testRunner.outputs.artifactsPath }}/editmode-results.xml
+          xsltproc `
+            --output "${{ steps.testRunner.outputs.artifactsPath }}-junit/editmode-results-junit.xml" `
+            .github/workflows/nunit-to-junit.xsl `
+            "${{ steps.testRunner.outputs.artifactsPath }}/editmode-results.xml"
 
       - name: Report test results
         uses: decentraland/test-reporting@v0.3
