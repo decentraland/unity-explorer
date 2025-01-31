@@ -8,6 +8,7 @@ using System.Text;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.Serialization;
 
 namespace DCL.UI.HyperlinkHandler
 {
@@ -18,10 +19,10 @@ namespace DCL.UI.HyperlinkHandler
         private const string WORLD = "world";
         private const string URL = "url";
         private const string USER = "user";
-        private const string REALM_CHANGE_CONFIRMATION_MESSAGE = "Are you sure you want to enter this World?";
 
         [SerializeField] private TMP_Text textComponent;
         [SerializeField] private TMP_StyleSheet styleSheet;
+        [SerializeField] private string realmChangeConfirmationMessage = "Are you sure you want to enter this World?";
 
         private readonly Dictionary<string, Action<string>> linkHandlers = new ();
         private readonly StringBuilder stringBuilder = new ();
@@ -127,7 +128,7 @@ namespace DCL.UI.HyperlinkHandler
 
         private void HandleWorldLink(string sceneName)
         {
-            ChangeRealmAsync(REALM_CHANGE_CONFIRMATION_MESSAGE, sceneName).Forget();
+            ChangeRealmAsync(realmChangeConfirmationMessage, sceneName).Forget();
         }
 
         private void HandleSceneLink(string itemId)
