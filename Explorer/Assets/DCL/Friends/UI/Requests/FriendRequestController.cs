@@ -217,7 +217,7 @@ namespace DCL.Friends.UI.Requests
                 config.UserName.text = profile.Name;
                 config.UserNameVerification.SetActive(profile.HasClaimedName);
                 config.UserNameHash.gameObject.SetActive(!profile.HasClaimedName);
-                config.UserNameHash.text = user.ToString()[^4..];
+                config.UserNameHash.text = $"#{user.ToString()[^4..]}";
 
                 LoadThumbnail(profile, config.UserThumbnail, thumbnailController);
             }
@@ -229,7 +229,7 @@ namespace DCL.Friends.UI.Requests
             config.UserName.text = user.Name;
             config.UserNameVerification.SetActive(user.HasClaimedName);
             config.UserNameHash.gameObject.SetActive(!user.HasClaimedName);
-            config.UserNameHash.text = user.Address.ToString()[^4..];
+            config.UserNameHash.text = $"#{user.Address.ToString()[^4..]}";
             thumbnailController.RequestImage(user.FacePictureUrl);
 
             await LoadMutualFriendsAsync(config, user.Address, ct);
