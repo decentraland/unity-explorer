@@ -51,7 +51,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             this.profileThumbnailCache = profileThumbnailCache;
 
             contextMenu = new GenericContextMenu(view.ContextMenuSettings.ContextMenuWidth, verticalLayoutPadding: CONTEXT_MENU_VERTICAL_LAYOUT_PADDING, elementsSpacing: CONTEXT_MENU_ELEMENTS_SPACING)
-                         .AddControl(userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings(systemClipboard, (profile, asd) => Debug.Log($"Send friendship request to {profile}")))
+                         .AddControl(userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings(systemClipboard, HandleContextMenuUserProfileButton))
                          .AddControl(new SeparatorContextMenuControlSettings(CONTEXT_MENU_SEPARATOR_HEIGHT, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.left, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.right))
                          .AddControl(new ButtonContextMenuControlSettings(view.ContextMenuSettings.ViewProfileText, view.ContextMenuSettings.ViewProfileSprite, () => OpenProfilePassport(lastClickedProfileCtx!)))
                          .AddControl(new ButtonContextMenuControlSettings(view.ContextMenuSettings.BlockText, view.ContextMenuSettings.BlockSprite, () => Debug.Log($"Block {lastClickedProfileCtx!.Address}")));
@@ -85,6 +85,26 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             ReceivedRequestsCountChanged -= UpdateReceivedRequestsSectionCount;
             friendshipOperationCts.SafeCancelAndDispose();
             web3IdentityCache.OnIdentityChanged -= ResetAndInit;
+        }
+
+        private void HandleContextMenuUserProfileButton(string userId, UserProfileContextMenuControlSettings.FriendshipStatus friendshipStatus)
+        {
+            if (friendshipStatus == UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_SENT)
+                CancelFriendshipRequestAsync(friendshipOperationCts.Token).Forget();
+            else if (friendshipStatus == UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_RECEIVED)
+                AcceptFriendshipAsync(friendshipOperationCts.Token).Forget();
+
+            return;
+
+            async UniTaskVoid CancelFriendshipRequestAsync(CancellationToken ct)
+            {
+                await friendsService.CancelFriendshipAsync(userId, ct);
+            }
+
+            async UniTaskVoid AcceptFriendshipAsync(CancellationToken ct)
+            {
+                await friendsService.AcceptFriendshipAsync(userId, ct);
+            }
         }
 
         private void ResetAndInit()

@@ -60,10 +60,10 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 
         private void HandleContextMenuUserProfileButton(string userId, UserProfileContextMenuControlSettings.FriendshipStatus friendshipStatus)
         {
-            RemoveFriendThenChangeInteractionStatusAsync(friendshipOperationCts.Token).Forget();
+            DeleteFriendshipAsync(friendshipOperationCts.Token).Forget();
             return;
 
-            async UniTaskVoid RemoveFriendThenChangeInteractionStatusAsync(CancellationToken ct)
+            async UniTaskVoid DeleteFriendshipAsync(CancellationToken ct)
             {
                 await friendsService.DeleteFriendshipAsync(userId, ct);
             }
