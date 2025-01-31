@@ -5,6 +5,7 @@ using System.Linq;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+using UnityEngine.Serialization;
 using Utility;
 
 namespace DCL.Roads.Settings
@@ -13,7 +14,8 @@ namespace DCL.Roads.Settings
     [CreateAssetMenu(fileName = "Road Settings", menuName = "DCL/Various/Road Settings")]
     public class RoadSettingsAsset : ScriptableObject, IRoadSettingsAsset
     {
-        [SerializeField] public List<GPUInstancedMesh> RoadsMeshesGPUInstances;
+        public List<GPUInstancingCandidate> IndirectCandidates;
+        public List<GPUInstancingCandidate> DirectCandidates;
 
         [field: SerializeField] public List<RoadDescription> RoadDescriptions { get; set; }
         [field: SerializeField] public List<AssetReferenceGameObject> RoadAssetsReference { get; set; }
@@ -22,51 +24,47 @@ namespace DCL.Roads.Settings
         IReadOnlyList<AssetReferenceGameObject> IRoadSettingsAsset.RoadAssetsReference => RoadAssetsReference;
 
 #if UNITY_EDITOR
-        public void CollectAllMeshInstances()
+        public void CollectGPUInstancingCandidates(Vector2Int min, Vector2Int max)
         {
-            Dictionary<string, GPUInstancedPrefab> loadedPrefabs = LoadAllPrefabs();
+            Dictionary<string, GPUInstancingPrefabData> loadedPrefabs = LoadAllPrefabs();
 
-            Dictionary<MeshRenderingData, HashSet<PerInstanceBuffer>> tempMeshToMatrices = CollectInstancesMap(loadedPrefabs);
-
-            RoadsMeshesGPUInstances = tempMeshToMatrices.Select(kvp => new GPUInstancedMesh { meshRenderingData = kvp.Key, PerInstancesData = kvp.Value.ToArray() }).ToList();
-
-            EditorUtility.SetDirty(this);
-            AssetDatabase.SaveAssets();
-        }
-
-        private Dictionary<MeshRenderingData, HashSet<PerInstanceBuffer>> CollectInstancesMap(Dictionary<string, GPUInstancedPrefab> loadedPrefabs)
-        {
-            var tempMeshToMatrices = new Dictionary<MeshRenderingData, HashSet<PerInstanceBuffer>>();
+            var tempDirectCandidates = new Dictionary<GPUInstancingCandidate, HashSet<PerInstanceBuffer>>();
+            var tempIndirectCandidates = new Dictionary<GPUInstancingCandidate, HashSet<PerInstanceBuffer>>();
 
             foreach (RoadDescription roadDescription in RoadDescriptions)
             {
-                if (!loadedPrefabs.TryGetValue(roadDescription.RoadModel, out GPUInstancedPrefab prefab))
+                if (IsOutOfRange(roadDescription.RoadCoordinate)) continue;
+
+                if (!loadedPrefabs.TryGetValue(roadDescription.RoadModel, out GPUInstancingPrefabData prefab))
                 {
                     Debug.LogWarning($"Can't find prefab {roadDescription.RoadModel}");
                     continue;
                 }
 
-                var roadRoot = Matrix4x4.TRS(roadDescription.RoadCoordinate.ParcelToPositionFlat() + ParcelMathHelper.RoadPivotDeviation, roadDescription.Rotation.SelfOrIdentity(), Vector3.one);
+                var roadRoot = Matrix4x4.TRS(
+                    roadDescription.RoadCoordinate.ParcelToPositionFlat() + ParcelMathHelper.RoadPivotDeviation,
+                    roadDescription.Rotation.SelfOrIdentity(),
+                    Vector3.one);
 
-                foreach (GPUInstancedMesh meshInstance in prefab.InstancedMeshes)
-                {
-                    if (!tempMeshToMatrices.TryGetValue(meshInstance.meshRenderingData, out HashSet<PerInstanceBuffer> matrices))
-                    {
-                        matrices = new HashSet<PerInstanceBuffer>();
-                        tempMeshToMatrices.Add(meshInstance.meshRenderingData, matrices);
-                    }
-
-                    foreach (PerInstanceBuffer instanceData in meshInstance.PerInstancesData)
-                        matrices.Add(new PerInstanceBuffer { instMatrix = roadRoot * instanceData.instMatrix });
-                }
+                ProcessCandidates(prefab.directCandidates, roadRoot, tempDirectCandidates);
+                ProcessCandidates(prefab.indirectCandidates, roadRoot, tempIndirectCandidates);
             }
 
-            return tempMeshToMatrices;
+            DirectCandidates = tempDirectCandidates.Select(kvp => new GPUInstancingCandidate(kvp.Key, kvp.Value)).ToList();
+            IndirectCandidates = tempIndirectCandidates.Select(kvp => new GPUInstancingCandidate(kvp.Key, kvp.Value)).ToList();
+
+            EditorUtility.SetDirty(this);
+            AssetDatabase.SaveAssets();
+            return;
+
+            bool IsOutOfRange(Vector2Int roadCoordinate) =>
+                roadCoordinate.x < min.x || roadCoordinate.x > max.x ||
+                roadCoordinate.y < min.y || roadCoordinate.y > max.y;
         }
 
-        private Dictionary<string, GPUInstancedPrefab> LoadAllPrefabs()
+        private Dictionary<string,GPUInstancingPrefabData> LoadAllPrefabs()
         {
-            var loadedPrefabs = new Dictionary<string, GPUInstancedPrefab>();
+            var loadedPrefabs = new Dictionary<string, GPUInstancingPrefabData>();
 
             foreach (AssetReferenceGameObject assetRef in RoadAssetsReference)
             {
@@ -79,7 +77,7 @@ namespace DCL.Roads.Settings
                     continue;
                 }
 
-                GPUInstancedPrefab instanceBehaviour = prefab.GetComponent<GPUInstancedPrefab>();
+                GPUInstancingPrefabData instanceBehaviour = prefab.GetComponent<GPUInstancingPrefabData>();
 
                 if (instanceBehaviour == null)
                 {
@@ -91,6 +89,21 @@ namespace DCL.Roads.Settings
             }
 
             return loadedPrefabs;
+        }
+
+        private void ProcessCandidates(List<GPUInstancingCandidate> sourceCandidates, Matrix4x4 roadRoot, Dictionary<GPUInstancingCandidate, HashSet<PerInstanceBuffer>> targetDict)
+        {
+            foreach (GPUInstancingCandidate candidate in sourceCandidates)
+            {
+                if (!targetDict.TryGetValue(candidate, out HashSet<PerInstanceBuffer> matrices))
+                {
+                    matrices = new HashSet<PerInstanceBuffer>();
+                    targetDict.Add(candidate, matrices);
+                }
+
+                foreach (PerInstanceBuffer instanceData in candidate.InstancesBuffer)
+                    matrices.Add(new PerInstanceBuffer { instMatrix = roadRoot * instanceData.instMatrix });
+            }
         }
 #endif
     }

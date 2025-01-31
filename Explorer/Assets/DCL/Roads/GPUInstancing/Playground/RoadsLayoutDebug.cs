@@ -77,14 +77,14 @@ namespace DCL.Roads.GPUInstancing.Playground
         [ContextMenu("DEBUG - Collect Instances on Roads Config")]
         private void CollectAllMeshInstancesOnRoadsConfig()
         {
-            RoadsConfig.CollectAllMeshInstances();
+            // RoadsConfig.CollectGPUInstancingCandidates();
         }
 
         [ContextMenu("DEBUG - TransferFromConfigToService")]
         private void TransferFromConfigToService()
         {
             gpuInstancingService = new GPUInstancingService();
-            gpuInstancingService.AddToInstancingDirectCopy(RoadsConfig.RoadsMeshesGPUInstances);
+            // gpuInstancingService.AddToInstancingDirectCopy(RoadsConfig.RoadsMeshesGPUInstances);
             gpuInstancingService.PrepareBatches();
             CollectDebugInfo();
         }
