@@ -8,25 +8,30 @@ namespace DCL.Chat.History
     /// </summary>
     public interface IChatHistory
     {
+        public delegate void ChannelAddedDelegate(ChatChannel addedChannel);
+        public delegate void ChannelClearedDelegate(ChatChannel claredChannel);
+        public delegate void MessageAddedDelegate(ChatChannel destinationChannel, ChatMessage addedMessage);
+        public delegate void ReadMessagesChangedDelegate();
+
         /// <summary>
         /// Raised when a new channel is added.
         /// </summary>
-        event Action<ChatChannel>? ChannelAdded;
+        event ChannelAddedDelegate ChannelAdded;
 
         /// <summary>
         /// Raised when a channel is emptied.
         /// </summary>
-        event Action<ChatChannel>? ChannelCleared;
+        event ChannelClearedDelegate ChannelCleared;
 
         /// <summary>
         /// Raised when a message is added to a channel.
         /// </summary>
-        event Action<ChatChannel, ChatMessage>? MessageAdded;
+        event MessageAddedDelegate MessageAdded;
 
         /// <summary>
         /// Raised when a message is read, added or removed in any channel.
         /// </summary>
-        event Action ReadMessagesChanged;
+        event ReadMessagesChangedDelegate ReadMessagesChanged;
 
         /// <summary>
         /// Gets all the channels stored in the history.

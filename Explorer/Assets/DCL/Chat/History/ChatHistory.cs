@@ -1,14 +1,13 @@
-using System;
 using System.Collections.Generic;
 
 namespace DCL.Chat.History
 {
     public class ChatHistory : IChatHistory
     {
-        public event Action<ChatChannel>? ChannelCleared;
-        public event Action<ChatChannel, ChatMessage>? MessageAdded;
-        public event Action<ChatChannel>? ChannelAdded;
-        public event Action? ReadMessagesChanged;
+        public event IChatHistory.ChannelAddedDelegate ChannelAdded;
+        public event IChatHistory.ChannelClearedDelegate ChannelCleared;
+        public event IChatHistory.MessageAddedDelegate MessageAdded;
+        public event IChatHistory.ReadMessagesChangedDelegate ReadMessagesChanged;
 
         private readonly Dictionary<ChatChannel.ChannelId, ChatChannel> channels = new ();
 
@@ -52,8 +51,8 @@ namespace DCL.Chat.History
         public ChatChannel.ChannelId AddChannel(ChatChannel.ChatChannelType type, string channelName)
         {
             ChatChannel newChannel = new ChatChannel(type, channelName);
-            newChannel.MessageAdded += (channel, newMessage) => { MessageAdded?.Invoke(channel, newMessage); };
-            newChannel.Cleared += (channel) => { ChannelCleared?.Invoke(channel); };
+            newChannel.MessageAdded += (destinationChannel, addedMessage) => { MessageAdded?.Invoke(destinationChannel, addedMessage); };
+            newChannel.Cleared += (clearedChannel) => { ChannelCleared?.Invoke(clearedChannel); };
             newChannel.ReadMessagesChanged += () => { ReadMessagesChanged?.Invoke(); };
 
             channels.Add(newChannel.Id, newChannel);

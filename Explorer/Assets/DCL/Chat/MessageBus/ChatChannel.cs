@@ -52,22 +52,26 @@ namespace DCL.Chat
         /// <summary>
         /// The ID of the "near-by" channel, which is always the same.
         /// </summary>
-        public static readonly ChatChannel.ChannelId NEARBY_CHANNEL = new ChannelId(ChatChannelType.NearBy, string.Empty);
+        public static readonly ChannelId NEARBY_CHANNEL = new (ChatChannelType.NearBy, string.Empty);
+
+        public delegate void ClearedDelegate(ChatChannel clearedChannel);
+        public delegate void MessageAddedDelegate(ChatChannel destinationChannel, ChatMessage addedMessage);
+        public delegate void ReadMessagesChangedDelegate();
 
         /// <summary>
         /// Raised when all the messages of the channel are deleted.
         /// </summary>
-        public event Action<ChatChannel>? Cleared;
+        public event ClearedDelegate Cleared;
 
         /// <summary>
         /// Raised when a message is added to the channel.
         /// </summary>
-        public event Action<ChatChannel, ChatMessage>? MessageAdded;
+        public event MessageAddedDelegate MessageAdded;
 
         /// <summary>
         /// Raised when a message is read, added or removed.
         /// </summary>
-        public event Action ReadMessagesChanged;
+        public event ReadMessagesChangedDelegate ReadMessagesChanged;
 
         /// <summary>
         /// Gets all the messages contained in the thread. The first messages in the list are the latest added.

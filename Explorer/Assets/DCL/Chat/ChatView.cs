@@ -25,6 +25,8 @@ namespace DCL.Chat
         public delegate void EmojiSelectionVisibilityChangedDelegate(bool isVisible);
         public delegate void InputSubmittedDelegate(ChatChannel channel, string message, string origin);
         public delegate void ScrollBottomReachedDelegate();
+        public delegate void PointerEventDelegate();
+        public delegate void ChatBubbleVisibilityChangedDelegate(bool isVisible);
 
         [Header("Settings")]
         [Tooltip("The time it takes, in seconds, for the background of the chat window to fade-in/out when hovering with the mouse.")]
@@ -119,12 +121,12 @@ namespace DCL.Chat
         /// <summary>
         /// Raised when the mouse pointer hovers any part of the chat window.
         /// </summary>
-        public event Action PointerEnter;
+        public event PointerEventDelegate PointerEnter;
 
         /// <summary>
         /// Raised when the mouse pointer stops hovering the chat window.
         /// </summary>
-        public event Action PointerExit;
+        public event PointerEventDelegate PointerExit;
 
         /// <summary>
         /// Raised when either the input box gains the focus or loses it.
@@ -144,7 +146,7 @@ namespace DCL.Chat
         /// <summary>
         /// Raised when the option to change the visibility of the chat bubbles over the avatar changes its value.
         /// </summary>
-        public event Action<bool>? ChatBubbleVisibilityChanged;
+        public event ChatBubbleVisibilityChangedDelegate? ChatBubbleVisibilityChanged;
 
         /// <summary>
         /// Raised when the user scrolls down the list to the bottom.

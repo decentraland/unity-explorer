@@ -21,6 +21,8 @@ namespace DCL.Chat
 {
     public class ChatController : ControllerBase<ChatView>
     {
+        public delegate void ChatBubbleVisibilityChangedDelegate(bool isVisible);
+
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
         private readonly ChatEntryConfigurationSO chatEntryConfiguration;
         private readonly IChatMessagesBus chatMessagesBus;
@@ -39,6 +41,7 @@ namespace DCL.Chat
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
 
         public event Action<bool>? ChatBubbleVisibilityChanged;
+        public event ChatBubbleVisibilityChangedDelegate? ChatBubbleVisibilityChanged;
 
         public ChatController(
             ViewFactoryMethod viewFactory,
@@ -68,6 +71,29 @@ namespace DCL.Chat
         {
             chatHistory.ClearChannel(viewInstance!.CurrentChannel);
             viewInstance!.RefreshMessages();
+        }
+
+        public override void Dispose()
+        {
+            chatMessagesBus.MessageAdded -= OnChatBusMessageAdded;
+            chatHistory.MessageAdded -= CreateChatEntry;
+
+            viewInstance!.PointerEnter -= OnChatViewPointerEnter;
+            viewInstance.PointerExit -= OnChatViewPointerExit;
+
+            viewInstance.InputBoxFocusChanged -= OnViewInputBoxFocusChanged;
+            viewInstance.EmojiSelectionVisibilityChanged -= OnViewEmojiSelectionVisibilityChanged;
+            viewInstance.ChatBubbleVisibilityChanged -= OnViewChatBubbleVisibilityChanged;
+            viewInstance.InputSubmitted -= OnViewInputSubmitted;
+            viewInstance.ScrollBottomReached -= OnViewScrollBottomReached;
+
+            viewDependencies.DclInput.UI.Click.performed -= OnUIClickPerformed;
+            viewDependencies.DclInput.Shortcuts.ToggleNametags.performed -= OnToggleNametagsShortcutPerformed;
+            viewDependencies.DclInput.Shortcuts.OpenChat.performed -= OnOpenChatShortcutPerformed;
+            viewDependencies.DclInput.Shortcuts.OpenChatCommandLine.performed -= OnOpenChatCommandLineShortcutPerformed;
+            viewDependencies.DclInput.UI.Submit.performed -= OnSubmitShorcutPerformed;
+
+            viewInstance.Dispose();
         }
 
         protected override void OnViewInstantiated()
@@ -151,29 +177,6 @@ namespace DCL.Chat
             viewDependencies.DclInput.Shortcuts.OpenChatCommandLine.performed -= OnOpenChatCommandLineShortcutPerformed;
 
             chatHistory.Channels[viewInstance!.CurrentChannel].MarkAllMessagesAsRead();
-        }
-
-        public override void Dispose()
-        {
-            chatMessagesBus.MessageAdded -= OnChatBusMessageAdded;
-            chatHistory.MessageAdded -= CreateChatEntry;
-
-            viewInstance!.PointerEnter -= OnChatViewPointerEnter;
-            viewInstance.PointerExit -= OnChatViewPointerExit;
-
-            viewInstance.InputBoxFocusChanged -= OnViewInputBoxFocusChanged;
-            viewInstance.EmojiSelectionVisibilityChanged -= OnViewEmojiSelectionVisibilityChanged;
-            viewInstance.ChatBubbleVisibilityChanged -= ChatBubbleVisibilityChanged;
-            viewInstance.InputSubmitted -= OnViewInputSubmitted;
-            viewInstance.ScrollBottomReached -= OnViewScrollBottomReached;
-
-            viewDependencies.DclInput.UI.Click.performed -= OnUIClickPerformed;
-            viewDependencies.DclInput.Shortcuts.ToggleNametags.performed -= OnToggleNametagsShortcutPerformed;
-            viewDependencies.DclInput.Shortcuts.OpenChat.performed -= OnOpenChatShortcutPerformed;
-            viewDependencies.DclInput.Shortcuts.OpenChatCommandLine.performed -= OnOpenChatCommandLineShortcutPerformed;
-            viewDependencies.DclInput.UI.Submit.performed -= OnSubmitShorcutPerformed;
-
-            viewInstance.Dispose();
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>

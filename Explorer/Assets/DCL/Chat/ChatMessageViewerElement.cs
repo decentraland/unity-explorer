@@ -15,6 +15,10 @@ namespace DCL.Chat
     /// </summary>
     public class ChatMessageViewerElement : MonoBehaviour, IDisposable
     {
+        public delegate void ChatMessageOptionsButtonClickedDelegate(string chatMessage, ChatEntryView chatEntryView);
+        public delegate void ChatMessageViewerScrollPositionChangedDelegate(Vector2 newScrollPosition);
+        public delegate Color CalculateUsernameColorDelegate(ChatMessage chatMessage);
+
         /// <summary>
         /// The prefab to use when instantiating a new item.
         /// </summary>
@@ -30,14 +34,12 @@ namespace DCL.Chat
         /// <summary>
         /// Raised when the options button of a chat message is clicked.
         /// </summary>
-        public Action<string, ChatEntryView>? ChatMessageOptionsButtonClicked;
+        public ChatMessageOptionsButtonClickedDelegate? ChatMessageOptionsButtonClicked;
 
         /// <summary>
         /// Raised every time the scroll position of the messages viewer changes.
         /// </summary>
-        public Action<Vector2>? ChatMessageViewerScrollPositionChanged;
-
-        public delegate Color CalculateUsernameColorDelegate(ChatMessage chatMessage);
+        public ChatMessageViewerScrollPositionChangedDelegate? ChatMessageViewerScrollPositionChanged;
 
         [SerializeField]
         private float chatEntriesFadeTime = 3f;
