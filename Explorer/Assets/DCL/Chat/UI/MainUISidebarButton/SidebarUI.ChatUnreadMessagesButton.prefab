@@ -284,7 +284,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   numberText: {fileID: 5963940505578897515}
   numberPanel: {fileID: 2572776792413058915}
-  maximum: 1
+  maximum: 9
 --- !u!224 &7334132066458495893 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 2788950014895397509, guid: 571c63ddcf1523b45a64fabd71cb6dd5, type: 3}

@@ -68,12 +68,12 @@ namespace DCL.Chat
         /// <summary>
         /// Gets whether the scroll view is showing the bottom of the content, and it can't scroll down anymore.
         /// </summary>
-        public bool IsScrollAtBottom => loopList.ScrollRect.normalizedPosition.y <= 0.0f;
+        public bool IsScrollAtBottom => loopList.ScrollRect.normalizedPosition.y <= 0.001f;
 
         /// <summary>
         /// Gets whether the scroll view is showing the top of the content, and it can't scroll up anymore.
         /// </summary>
-        public bool IsScrollAtTop => loopList.ScrollRect.normalizedPosition.y >= 1.0f;
+        public bool IsScrollAtTop => loopList.ScrollRect.normalizedPosition.y >= 0.999f;
 
         /// <summary>
         /// Gets whether the separator item is currently visible.
@@ -149,12 +149,12 @@ namespace DCL.Chat
             ResetChatEntriesFadeout();
 
             int chatMessagesCount = chatMessages!.Count + (IsSeparatorVisible ? 1 : 0);
+            int newEntries = chatMessagesCount - loopList.ItemTotalCount;
 
-            entriesPendingToAnimate = chatMessagesCount - loopList.ItemTotalCount;
+            if (newEntries < 0)
+                newEntries = 0;
 
-            if (entriesPendingToAnimate < 0)
-                entriesPendingToAnimate = 0;
-
+            entriesPendingToAnimate = newEntries;
             loopList.SetListItemCount(chatMessagesCount, false);
 
             // Scroll view adjustment
@@ -168,8 +168,11 @@ namespace DCL.Chat
 
                 // When the scroll view is not at the bottom, chat messages should not move if a new message is added
                 // An offset has to be applied to the scroll view in order to prevent messages from moving
-                LoopListViewItem2 addedItem = loopList.GetShownItemByIndex(1);
-                float offsetToPreventScrollViewMovement = -addedItem.ItemSize - addedItem.Padding;
+                float offsetToPreventScrollViewMovement = 0.0f;
+
+                for (int i = 1; i < newEntries + 1; ++i) // Note: newEntries + 1 because the first item is always a padding
+                    offsetToPreventScrollViewMovement -= loopList.ItemList[i].ItemSize + loopList.ItemList[i].Padding;
+
                 loopList.MovePanelByOffset(offsetToPreventScrollViewMovement);
 
                 // Known issue: When the scroll view is at the top, the scroll view moves a bit downwards
@@ -236,27 +239,39 @@ namespace DCL.Chat
             if (index < 0 || index >= chatMessages!.Count)
                 return null;
 
-            ChatMessage itemData = chatMessages[index];
             LoopListViewItem2 item;
 
-            if (IsSeparatorVisible && index == (chatMessages.Count - messageCountWhenSeparatorWasSet) + separatorPositionIndex)
+            bool isSeparatorIndex = IsSeparatorVisible && index == (chatMessages.Count - messageCountWhenSeparatorWasSet) + separatorPositionIndex;
+
+            if (isSeparatorIndex)
+            {
+                // Note: The separator is not part of the data, it is a view thing, so it is not a type of chat message, it is inserted by adding an extra item to the count and
+                //       faking it in this method, when it tries to create a new item
                 item = listView.NewListViewItem(listView.ItemPrefabDataList[(int)ChatItemPrefabIndex.Separator].mItemPrefab.name);
-            else if (itemData.IsPaddingElement)
-                item = listView.NewListViewItem(listView.ItemPrefabDataList[(int)ChatItemPrefabIndex.Padding].mItemPrefab.name);
+            }
             else
             {
-                item = listView.NewListViewItem(itemData.SystemMessage ? listView.ItemPrefabDataList[(int)ChatItemPrefabIndex.SystemChatEntry].mItemPrefab.name :
-                    itemData.SentByOwnUser ? listView.ItemPrefabDataList[(int)ChatItemPrefabIndex.ChatEntryOwn].mItemPrefab.name
-                                            : listView.ItemPrefabDataList[(int)ChatItemPrefabIndex.ChatEntry].mItemPrefab.name);
+                bool isIndexAfterSeparator = IsSeparatorVisible && index > (chatMessages.Count - messageCountWhenSeparatorWasSet) + separatorPositionIndex;
 
-                ChatEntryView itemScript = item!.GetComponent<ChatEntryView>()!;
-                SetItemData(index, itemData, itemScript);
+                ChatMessage itemData = chatMessages[index - (isIndexAfterSeparator ? 1 : 0)]; // Ignores the index used for the separator
 
-                Button? messageOptionsButton = itemScript.messageBubbleElement.messageOptionsButton;
-                messageOptionsButton?.onClick.RemoveAllListeners();
+                if (itemData.IsPaddingElement)
+                    item = listView.NewListViewItem(listView.ItemPrefabDataList[(int)ChatItemPrefabIndex.Padding].mItemPrefab.name);
+                else
+                {
+                    item = listView.NewListViewItem(itemData.SystemMessage ? listView.ItemPrefabDataList[(int)ChatItemPrefabIndex.SystemChatEntry].mItemPrefab.name :
+                        itemData.SentByOwnUser ? listView.ItemPrefabDataList[(int)ChatItemPrefabIndex.ChatEntryOwn].mItemPrefab.name
+                                                : listView.ItemPrefabDataList[(int)ChatItemPrefabIndex.ChatEntry].mItemPrefab.name);
 
-                messageOptionsButton?.onClick.AddListener(() =>
-                    OnChatMessageOptionsButtonClicked(itemData.Message, itemScript));
+                    ChatEntryView itemScript = item!.GetComponent<ChatEntryView>()!;
+                    SetItemData(index, itemData, itemScript);
+
+                    Button? messageOptionsButton = itemScript.messageBubbleElement.messageOptionsButton;
+                    messageOptionsButton?.onClick.RemoveAllListeners();
+
+                    messageOptionsButton?.onClick.AddListener(() =>
+                        OnChatMessageOptionsButtonClicked(itemData.Message, itemScript));
+                }
             }
 
             return item;

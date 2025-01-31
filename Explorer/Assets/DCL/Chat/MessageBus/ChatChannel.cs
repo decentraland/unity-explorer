@@ -122,7 +122,7 @@ namespace DCL.Chat
         {
             messages.Clear();
             Cleared?.Invoke(this);
-            ReadMessagesChanged?.Invoke();
+            MarkAllMessagesAsRead();
         }
 
         /// <summary>
