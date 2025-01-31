@@ -150,21 +150,6 @@ namespace ECS.StreamableLoading.Common.Systems
                     }
                 }
 
-                var cachedContent = await genericCache.ContentAsync(intention, disposalCt);
-
-                if (cachedContent.Success)
-                {
-                    var option = cachedContent.Value;
-
-                    if (option.Has)
-                    {
-                        result = new StreamableLoadingResult<TAsset>(option.Value);
-                        return;
-                    }
-                }
-
-                // Try load from cache first
-
                 // If the given URL failed irrecoverably just return the failure
                 if (cache.IrrecoverableFailures.TryGetValue(intention.CommonArguments.GetCacheableURL(), out var failure))
                 {
@@ -269,8 +254,22 @@ namespace ECS.StreamableLoading.Common.Systems
         {
             var source = new UniTaskCompletionSource<StreamableLoadingResult<TAsset>?>(); //AutoResetUniTaskCompletionSource<StreamableLoadingResult<TAsset>?>.Create();
 
-            // ReportHub.Log(GetReportCategory(), $"OngoingRequests.SyncAdd {intention.CommonArguments.URL}");
             cache.OngoingRequests.SyncTryAdd(intention.CommonArguments.GetCacheableURL(), source);
+
+            // Try load from cache first
+            var cachedContent = await genericCache.ContentAsync(intention, ct);
+
+            if (cachedContent.Success)
+            {
+                var option = cachedContent.Value;
+
+                if (option.Has)
+                {
+                    var cacheResult = new StreamableLoadingResult<TAsset>(option.Value);
+                    source.TrySetResult(cacheResult);
+                    return cacheResult;
+                }
+            }
 
             var ongoingRequestRemoved = false;
 
