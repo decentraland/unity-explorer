@@ -255,6 +255,7 @@ namespace ECS.StreamableLoading.Common.Systems
             var source = new UniTaskCompletionSource<StreamableLoadingResult<TAsset>?>(); //AutoResetUniTaskCompletionSource<StreamableLoadingResult<TAsset>?>.Create();
 
             cache.OngoingRequests.SyncTryAdd(intention.CommonArguments.GetCacheableURL(), source);
+            var ongoingRequestRemoved = false;
 
             // Try load from cache first
             var cachedContent = await genericCache.ContentAsync(intention, ct);
@@ -266,12 +267,11 @@ namespace ECS.StreamableLoading.Common.Systems
                 if (option.Has)
                 {
                     var cacheResult = new StreamableLoadingResult<TAsset>(option.Value);
+                    TryRemoveOngoingRequest();
                     source.TrySetResult(cacheResult);
                     return cacheResult;
                 }
             }
-
-            var ongoingRequestRemoved = false;
 
             StreamableLoadingResult<TAsset>? result = null;
 
