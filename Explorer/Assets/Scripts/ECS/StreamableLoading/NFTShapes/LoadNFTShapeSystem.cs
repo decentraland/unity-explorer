@@ -5,6 +5,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.WebRequests;
+using DCL.WebRequests.WebContentSizes;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Cache.Disk;
@@ -23,8 +24,9 @@ namespace ECS.StreamableLoading.NFTShapes
     public partial class LoadNFTShapeSystem : LoadSystemBase<Texture2DData, GetNFTShapeIntention>
     {
         private readonly IWebRequestController webRequestController;
+        private readonly IWebContentSizes webContentSizes;
 
-        public LoadNFTShapeSystem(World world, IStreamableCache<Texture2DData, GetNFTShapeIntention> cache, IWebRequestController webRequestController, IDiskCache<Texture2DData> diskCache) : base(world, cache, diskCache)
+        public LoadNFTShapeSystem(World world, IStreamableCache<Texture2DData, GetNFTShapeIntention> cache, IWebRequestController webRequestController, IDiskCache<Texture2DData> diskCache, IWebContentSizes webContentSizes) : base(world, cache, diskCache)
         {
             this.webRequestController = webRequestController;
         }
@@ -32,6 +34,10 @@ namespace ECS.StreamableLoading.NFTShapes
         protected override async UniTask<StreamableLoadingResult<Texture2DData>> FlowInternalAsync(GetNFTShapeIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
             string imageUrl = await ImageUrlAsync(intention.CommonArguments, ct);
+            bool isOkSize = await webContentSizes.IsOkSizeAsync(imageUrl, ct);
+
+            if (isOkSize == false)
+                return new StreamableLoadingResult<Texture2DData>(GetReportCategory(), new Exception("Image size is too big"));
 
             // texture request
             // Attempts should be always 1 as there is a repeat loop in `LoadSystemBase`
