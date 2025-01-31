@@ -170,7 +170,6 @@ namespace DCL.Chat
 
         private Mouse device;
 
-        private bool isChatClosed;
         private bool isInputSelected;
         private IReadOnlyDictionary<ChatChannel.ChannelId, ChatChannel>? channels;
         private ChatChannel? currentChannel;
@@ -465,7 +464,6 @@ namespace DCL.Chat
 
         private void CloseChat()
         {
-            isChatClosed = true;
             IsUnfolded = false;
         }
 
@@ -519,9 +517,8 @@ namespace DCL.Chat
 
         private void OnInputSelected(string inputText)
         {
-            if (isChatClosed)
+            if (!IsUnfolded)
             {
-                isChatClosed = false;
                 IsUnfolded = true;
                 chatMessageViewer.ShowLastMessage();
             }

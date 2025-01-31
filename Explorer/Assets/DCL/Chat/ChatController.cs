@@ -11,7 +11,6 @@ using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
 using ECS.Abstract;
 using MVC;
-using System;
 using System.Text.RegularExpressions;
 using System.Threading;
 using UnityEngine.InputSystem;
@@ -40,7 +39,6 @@ namespace DCL.Chat
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
 
-        public event Action<bool>? ChatBubbleVisibilityChanged;
         public event ChatBubbleVisibilityChangedDelegate? ChatBubbleVisibilityChanged;
 
         public ChatController(
