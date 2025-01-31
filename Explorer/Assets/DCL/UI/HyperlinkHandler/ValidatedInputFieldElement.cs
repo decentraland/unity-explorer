@@ -122,8 +122,11 @@ namespace DCL.UI.InputFieldValidator
             inputField.stringPosition = newPosition;
         }
 
+        //We do a validation before submitting
         private void Submit(string text)
         {
+            var position = 0;
+            inputFieldValidator.Validate(ref text, ref position);
             InputFieldSubmit?.Invoke(text);
         }
 
@@ -146,6 +149,10 @@ namespace DCL.UI.InputFieldValidator
                 inputField.SetTextWithoutNotify(text);
                 inputField.stringPosition = position;
             }
+
+            // We dont show rich text when the chat is in command "mode", to avoid having hidden text.
+            // As soon as the bar is removed, the input is re-validated and all invalid formats are removed
+            inputField.richText = !text.StartsWith("/");
 
             lastTextLenght = text.Length;
             InputValidated?.Invoke(text);

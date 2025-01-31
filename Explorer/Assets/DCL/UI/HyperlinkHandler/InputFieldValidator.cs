@@ -52,7 +52,7 @@ namespace DCL.UI.InputFieldValidator
 
         public void Validate(ref string text, ref int pos)
         {
-            if (pos <= 0 || text.Length == 0)
+            if (text.Length == 0)
                 return;
 
             PerformValidation(ref text, ref pos);
@@ -63,12 +63,6 @@ namespace DCL.UI.InputFieldValidator
 
         private char PerformValidation(ref string text, ref int pos, char ch = default)
         {
-            if (text.StartsWith("/"))
-            {
-                pos++;
-                text += ch;
-                return ch;
-            }
             mainStringBuilder.Clear();
             mainStringBuilder.Append(text.AsSpan(0, pos));
 
@@ -79,7 +73,8 @@ namespace DCL.UI.InputFieldValidator
 
             mainStringBuilder.Append(text.AsSpan(pos));
 
-            ProcessMainStringBuilder();
+            if (!text.StartsWith("/"))
+                ProcessMainStringBuilder();
             pos = GetPositionFromTag(mainStringBuilder);
             text = mainStringBuilder.Remove(pos, 1).ToString();
             return ch;
