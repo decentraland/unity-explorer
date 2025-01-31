@@ -35,7 +35,7 @@ namespace DCL.Friends.UI.Requests
         private ImageController? userThumbnailCancel;
         private ImageController? userThumbnailReceived;
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Overlay;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
         public FriendRequestController(ViewFactoryMethod viewFactory,
             IWeb3IdentityCache identityCache,

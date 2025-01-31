@@ -644,10 +644,21 @@ namespace DCL.Passport
 
         private void SendFriendRequest()
         {
-            mvcManager.ShowAsync(FriendRequestController.IssueCommand(new FriendRequestParams
+            friendshipOperationCts = friendshipOperationCts.SafeRestart();
+
+            ShowFriendRequestUIAsync(friendshipOperationCts.Token).Forget();
+            return;
+
+            async UniTaskVoid ShowFriendRequestUIAsync(CancellationToken ct)
             {
-                DestinationUser = new Web3Address(inputData.UserId),
-            })).Forget();
+                await mvcManager.ShowAsync(FriendRequestController.IssueCommand(new FriendRequestParams
+                {
+                    DestinationUser = new Web3Address(inputData.UserId),
+                }), ct);
+
+                // Refresh the friendship status
+                ShowFriendshipInteraction();
+            }
         }
 
         private void AcceptFriendship()
