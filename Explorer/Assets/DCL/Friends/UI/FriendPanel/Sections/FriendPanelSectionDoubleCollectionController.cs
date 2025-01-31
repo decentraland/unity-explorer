@@ -1,5 +1,4 @@
 using Cysharp.Threading.Tasks;
-using DCL.Web3;
 using DCL.Web3.Identities;
 using MVC;
 using SuperScrollView;
@@ -21,10 +20,10 @@ namespace DCL.Friends.UI.FriendPanel.Sections
         protected readonly IMVCManager mvcManager;
         protected readonly U requestManager;
 
-        protected CancellationTokenSource friendListInitCts = new ();
-        private Web3Address? previousWeb3Identity;
+        protected UniTaskCompletionSource? panelLifecycleTask;
+        private CancellationTokenSource friendListInitCts = new ();
 
-        public FriendPanelSectionDoubleCollectionController(T view,
+        protected FriendPanelSectionDoubleCollectionController(T view,
             IFriendsService friendsService,
             IFriendsEventBus friendEventBus,
             IWeb3IdentityCache web3IdentityCache,
@@ -42,6 +41,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections
             this.view.Disable += Disable;
             this.view.LoopList.InitListView(0, OnGetItemByIndex);
             requestManager.ElementClicked += ElementClicked;
+            web3IdentityCache.OnIdentityChanged += ResetState;
         }
 
         public virtual void Dispose()
@@ -53,29 +53,33 @@ namespace DCL.Friends.UI.FriendPanel.Sections
             requestManager.FirstFolderClicked -= FolderClicked;
             requestManager.SecondFolderClicked -= FolderClicked;
             requestManager.ElementClicked -= ElementClicked;
+            web3IdentityCache.OnIdentityChanged -= ResetState;
         }
 
-        protected void CheckIdentityAndReset()
+        protected void ResetState()
         {
-            previousWeb3Identity ??= web3IdentityCache.Identity?.Address;
+            requestManager.Reset();
+            requestManager.FirstFolderClicked -= FolderClicked;
+            requestManager.SecondFolderClicked -= FolderClicked;
+        }
 
-            if (!previousWeb3Identity.Equals(web3IdentityCache.Identity?.Address))
-            {
-                previousWeb3Identity = web3IdentityCache.Identity?.Address;
-                requestManager.Reset();
-                requestManager.FirstFolderClicked -= FolderClicked;
-                requestManager.SecondFolderClicked -= FolderClicked;
-            }
-
+        protected void CheckShouldInit()
+        {
             if (!requestManager.WasInitialised)
                 InitAsync(friendListInitCts.Token).Forget();
         }
 
-        private void Enable() =>
-            CheckIdentityAndReset();
+        private void Enable()
+        {
+            panelLifecycleTask = new UniTaskCompletionSource();
+            CheckShouldInit();
+        }
 
-        private void Disable() =>
+        private void Disable()
+        {
+            panelLifecycleTask?.TrySetResult();
             friendListInitCts = friendListInitCts.SafeRestart();
+        }
 
         protected void FolderClicked()
         {

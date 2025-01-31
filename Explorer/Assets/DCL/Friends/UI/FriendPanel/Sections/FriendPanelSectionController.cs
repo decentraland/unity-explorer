@@ -1,5 +1,4 @@
 using Cysharp.Threading.Tasks;
-using DCL.Web3;
 using DCL.Web3.Identities;
 using SuperScrollView;
 using System;
@@ -17,10 +16,10 @@ namespace DCL.Friends.UI.FriendPanel.Sections
         private readonly IWeb3IdentityCache web3IdentityCache;
         protected readonly U requestManager;
 
-        protected CancellationTokenSource friendListInitCts = new ();
-        private Web3Address? previousWeb3Identity;
+        protected UniTaskCompletionSource? panelLifecycleTask;
+        private CancellationTokenSource friendListInitCts = new ();
 
-        public FriendPanelSectionController(T view,
+        protected FriendPanelSectionController(T view,
             IWeb3IdentityCache web3IdentityCache,
             U requestManager)
         {
@@ -32,6 +31,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections
             this.view.Disable += Disable;
             this.view.LoopList.InitListView(0, OnGetItemByIndex);
             requestManager.ElementClicked += ElementClicked;
+            web3IdentityCache.OnIdentityChanged += ResetState;
         }
 
         public virtual void Dispose()
@@ -41,6 +41,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections
             requestManager.ElementClicked -= ElementClicked;
             requestManager.Dispose();
             friendListInitCts.SafeCancelAndDispose();
+            web3IdentityCache.OnIdentityChanged -= ResetState;
         }
 
         private LoopListViewItem2 OnGetItemByIndex(LoopListView2 loopListView, int index) =>
@@ -48,22 +49,19 @@ namespace DCL.Friends.UI.FriendPanel.Sections
 
         protected abstract void ElementClicked(FriendProfile profile);
 
+        private void ResetState() =>
+            requestManager.Reset();
+
         private void Enable()
         {
-            previousWeb3Identity ??= web3IdentityCache.Identity?.Address;
-
-            if (!previousWeb3Identity.Equals(web3IdentityCache.Identity?.Address))
-            {
-                previousWeb3Identity = web3IdentityCache.Identity?.Address;
-                requestManager.Reset();
-            }
-
+            panelLifecycleTask = new UniTaskCompletionSource();
             if (!requestManager.WasInitialised)
                 InitAsync(friendListInitCts.Token).Forget();
         }
 
         private void Disable()
         {
+            panelLifecycleTask?.TrySetResult();
             friendListInitCts = friendListInitCts.SafeRestart();
         }
 

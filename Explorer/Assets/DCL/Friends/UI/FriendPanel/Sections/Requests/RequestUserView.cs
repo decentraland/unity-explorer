@@ -16,6 +16,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
         [field: SerializeField] public GameObject HasMessageIndicator { get; private set; }
 
         private DateTime requestDate;
+        private FriendPanelStatus parentStatus;
+
         public DateTime RequestDate
         {
             get => requestDate;
@@ -27,7 +29,19 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             }
         }
 
-        public void InhibitInteractionButtons()
+        public FriendPanelStatus ParentStatus
+        {
+            get => parentStatus;
+
+            set
+            {
+                parentStatus = value;
+                if (value == FriendPanelStatus.SENT)
+                    InhibitInteractionButtons();
+            }
+        }
+
+        private void InhibitInteractionButtons()
         {
             buttons = new [] { ContextMenuButton };
         }
