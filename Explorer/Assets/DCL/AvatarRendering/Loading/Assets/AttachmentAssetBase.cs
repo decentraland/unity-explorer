@@ -16,7 +16,7 @@ namespace DCL.AvatarRendering.Loading.Assets
     {
         public readonly Texture Texture;
 
-        public AttachmentTextureAsset(Texture texture, AssetBundleData assetBundleData)  : base(assetBundleData)
+        public AttachmentTextureAsset(Texture texture, AssetBundleData?  assetBundleData)  : base(assetBundleData)
         {
             this.Texture = texture;
         }

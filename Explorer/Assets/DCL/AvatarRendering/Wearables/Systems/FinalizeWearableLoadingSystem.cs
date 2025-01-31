@@ -20,6 +20,7 @@ using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.GLTF;
+using ECS.StreamableLoading.Textures;
 using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
@@ -28,6 +29,7 @@ using Utility;
 using AssetBundleManifestPromise = ECS.StreamableLoading.Common.AssetPromise<SceneRunner.Scene.SceneAssetBundleManifest, DCL.AvatarRendering.Wearables.Components.GetWearableAssetBundleManifestIntention>;
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
 using RawGltfPromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.GLTF.GLTFData, ECS.StreamableLoading.GLTF.GetGLTFIntention>;
+using TexturePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.Texture2DData, ECS.StreamableLoading.Textures.GetTextureIntention>;
 using StreamableResult = ECS.StreamableLoading.Common.Components.StreamableLoadingResult<DCL.AvatarRendering.Wearables.Components.WearablesResolution>;
 
 namespace DCL.AvatarRendering.Wearables.Systems
@@ -71,6 +73,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
             ResolveWearablePromiseQuery(World, defaultWearablesResolved);
 
             FinalizeRawGltfWearableLoadingQuery(World, defaultWearablesResolved);
+            FinalizeRawFacialFeatureTexLoadingQuery(World, defaultWearablesResolved);
 
             // Asset Bundles can be Resolved with Embedded Data
             FinalizeAssetBundleManifestLoadingQuery(World, defaultWearablesResolved);
@@ -307,6 +310,40 @@ namespace DCL.AvatarRendering.Wearables.Systems
             }
         }
 
+        [Query]
+        [None(typeof(URLPath))] // thumbnails
+        private void FinalizeRawFacialFeatureTexLoading(
+            [Data] bool defaultWearablesResolved,
+            Entity entity,
+            ref TexturePromise promise,
+            ref IWearable wearable,
+            in BodyShape bodyShape,
+            int index
+        )
+        {
+            if (wearable.Type != WearableType.FacialFeature) return;
+
+            if (promise.LoadingIntention.CancellationTokenSource.IsCancellationRequested)
+            {
+                ResetWearableResultOnCancellation(wearable, in bodyShape, index);
+                promise.ForgetLoading(World);
+                World.Destroy(entity);
+                return;
+            }
+
+            if (promise.TryConsume(World, out StreamableLoadingResult<Texture2DData> result))
+            {
+                // every asset in the batch is mandatory => if at least one has already failed set the default wearables
+                if (result.Succeeded && !AnyAssetHasFailed(wearable, bodyShape))
+                    SetWearableResult(wearable, result, in bodyShape, index);
+                else
+                    SetDefaultWearables(defaultWearablesResolved, wearable, in bodyShape);
+
+                wearable.UpdateLoadingStatus(!AllAssetsAreLoaded(wearable, bodyShape));
+                World.Destroy(entity);
+            }
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool AllAssetsAreLoaded(IWearable wearable, BodyShape bodyShape)
         {
@@ -332,7 +369,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 && !filesDownloadUrlAvailable && component.ManifestResult == null)
                 return component.CreateAssetBundleManifestPromise(World, intention.BodyShape, intention.CancellationTokenSource, partitionComponent);
 
-            if (component.TryCreateAssetPromise(in intention, customStreamingSubdirectory, partitionComponent, World, GetReportCategory(), component.DTO.ContentDownloadUrl))
+            if (component.TryCreateAssetPromise(in intention, customStreamingSubdirectory, partitionComponent, World, GetReportCategory()))
             {
                 component.UpdateLoadingStatus(true);
                 return true;
@@ -433,30 +470,16 @@ namespace DCL.AvatarRendering.Wearables.Systems
         }
 
         private static void SetWearableResult(IWearable wearable, StreamableLoadingResult<AssetBundleData> result, in BodyShape bodyShape, int index)
-        {
-            StreamableLoadingResult<AttachmentAssetBase> wearableResult = result.ToWearableAsset(wearable);
-
-            if (wearable.IsUnisex() && wearable.HasSameModelsForAllGenders())
-            {
-                SetByRef(BodyShape.MALE);
-                SetByRef(BodyShape.FEMALE);
-            }
-            else
-                SetByRef(bodyShape);
-
-            return;
-
-            void SetByRef(BodyShape bodyShape)
-            {
-                ref var asset = ref wearable.WearableAssetResults[bodyShape];
-                asset.Results[index] = wearableResult;
-            }
-        }
+            => SetWearableResult(wearable, result.ToWearableAsset(wearable), bodyShape, index);
 
         private static void SetWearableResult(IWearable wearable, StreamableLoadingResult<GLTFData> result, in BodyShape bodyShape, int index)
-        {
-            StreamableLoadingResult<AttachmentAssetBase> wearableResult = result.ToWearableAsset(wearable);
+            => SetWearableResult(wearable, result.ToWearableAsset(wearable), bodyShape, index);
 
+        private static void SetWearableResult(IWearable wearable, StreamableLoadingResult<Texture2DData> result, in BodyShape bodyShape, int index)
+            => SetWearableResult(wearable, result.ToWearableAsset(wearable), bodyShape, index);
+
+        private static void SetWearableResult(IWearable wearable, StreamableLoadingResult<AttachmentAssetBase> wearableResult, in BodyShape bodyShape, int index)
+        {
             if (wearable.IsUnisex() && wearable.HasSameModelsForAllGenders())
             {
                 SetByRef(BodyShape.MALE);
@@ -471,7 +494,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
             {
                 ref var asset = ref wearable.WearableAssetResults[bodyShape];
                 asset.Results[index] = wearableResult;
-        }
             }
+        }
     }
 }

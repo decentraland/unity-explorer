@@ -59,10 +59,13 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
             {
                 TextureArrayMapping mapping = mappings[i];
                 var handlerFormat = mapping.Handler.GetTextureFormat();
+                bool foundTexture = textures.TryGetValue(mapping.OriginalTextureID, out var texture);
+                Texture2D tex = texture as Texture2D;
 
-                if (textures.TryGetValue(mapping.OriginalTextureID, out var texture))
-                    results[i] = mapping.Handler.SetTexture(targetMaterial, texture as Texture2D, new Vector2Int(texture.width, texture.height));
-                else if (handlerFormat == DEFAULT_BASEMAP_TEXTURE_FORMAT
+                if (foundTexture && tex!.format == handlerFormat)
+                    results[i] = mapping.Handler.SetTexture(targetMaterial, tex, new Vector2Int(tex.width, tex.height));
+                else if (tex == null
+                         || handlerFormat == DEFAULT_BASEMAP_TEXTURE_FORMAT
                          || handlerFormat == DEFAULT_NORMALMAP_TEXTURE_FORMAT
                          || handlerFormat == DEFAULT_EMISSIVEMAP_TEXTURE_FORMAT)
                    mapping.Handler.SetDefaultTexture(targetMaterial, mapping.DefaultFallbackResolution, defaultSlotIndexUsed);
