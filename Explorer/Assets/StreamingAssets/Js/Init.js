@@ -87,4 +87,6 @@ globalThis.WebAssembly.Module = function () {
     throw new Error('Wasm is not allowed in scene runtimes')
 }
 
+global = globalThis;
+
 console.log("UnityOpsApi initialized")

@@ -20,6 +20,7 @@ using DCL.InWorldCamera.Settings;
 using DCL.InWorldCamera.Systems;
 using DCL.InWorldCamera.UI;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Nametags;
 using DCL.PlacesAPIService;
 using DCL.Profiles;
 using DCL.Profiles.Self;
@@ -70,6 +71,7 @@ namespace DCL.PluginSystem.Global
         private readonly UIDocument rootUIDocument;
         private readonly Arch.Core.World globalWorld;
         private readonly IDebugContainerBuilder debugContainerBuilder;
+        private readonly NametagsData nametagsData;
 
         private ScreenRecorder recorder;
         private GameObject hud;
@@ -91,7 +93,8 @@ namespace DCL.PluginSystem.Global
             Button sidebarButton,
             UIDocument rootUIDocument,
             Arch.Core.World globalWorld,
-            IDebugContainerBuilder debugContainerBuilder)
+            IDebugContainerBuilder debugContainerBuilder,
+            NametagsData nametagsData)
         {
             this.input = input;
             this.selfProfile = selfProfile;
@@ -118,6 +121,7 @@ namespace DCL.PluginSystem.Global
             this.rootUIDocument = rootUIDocument;
             this.globalWorld = globalWorld;
             this.debugContainerBuilder = debugContainerBuilder;
+            this.nametagsData = nametagsData;
 
             factory = new InWorldCameraFactory();
         }
@@ -176,7 +180,7 @@ namespace DCL.PluginSystem.Global
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
-            ToggleInWorldCameraActivitySystem.InjectToWorld(ref builder, settings.TransitionSettings, inWorldCameraController, followTarget, debugContainerBuilder, cursor, mvcManager, input.InWorldCamera, rootUIDocument);
+            ToggleInWorldCameraActivitySystem.InjectToWorld(ref builder, settings.TransitionSettings, inWorldCameraController, followTarget, debugContainerBuilder, cursor, mvcManager, input.InWorldCamera, rootUIDocument, nametagsData);
             EmitInWorldCameraInputSystem.InjectToWorld(ref builder, input.InWorldCamera);
             MoveInWorldCameraSystem.InjectToWorld(ref builder, settings.MovementSettings, characterObject.Controller.transform, cursor);
             CaptureScreenshotSystem.InjectToWorld(ref builder, recorder, playerEntity, metadataBuilder, coroutineRunner, cameraReelStorageService, inWorldCameraController);
