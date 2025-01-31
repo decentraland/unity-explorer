@@ -484,7 +484,6 @@ namespace DCL.Passport
         {
             DisableAllFriendInteractions();
 
-            if (inputData.IsOwnProfile) return;
             if (!friendServiceProxy.Configured) return;
 
             IFriendsService friendService = friendServiceProxy.Object!;
@@ -495,6 +494,11 @@ namespace DCL.Passport
 
             async UniTaskVoid FetchFriendshipStatusAndShowInteractionAsync(CancellationToken ct)
             {
+                // Fetch our own profile since inputData.IsOwnProfile sometimes is wrong
+                Profile? ownProfile = await selfProfile.ProfileAsync(ct);
+                // Dont show any interaction for our own user
+                if (ownProfile?.UserId == inputData.UserId) return;
+
                 FriendshipStatus friendshipStatus = await friendService.GetFriendshipStatusAsync(inputData.UserId, ct);
 
                 switch (friendshipStatus)
