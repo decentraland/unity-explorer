@@ -20,6 +20,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections
         protected readonly IMVCManager mvcManager;
         protected readonly U requestManager;
 
+        protected UniTaskCompletionSource? panelLifecycleTask;
         private CancellationTokenSource friendListInitCts = new ();
 
         protected FriendPanelSectionDoubleCollectionController(T view,
@@ -68,11 +69,17 @@ namespace DCL.Friends.UI.FriendPanel.Sections
                 InitAsync(friendListInitCts.Token).Forget();
         }
 
-        private void Enable() =>
+        private void Enable()
+        {
+            panelLifecycleTask = new UniTaskCompletionSource();
             CheckShouldInit();
+        }
 
-        private void Disable() =>
+        private void Disable()
+        {
+            panelLifecycleTask?.TrySetResult();
             friendListInitCts = friendListInitCts.SafeRestart();
+        }
 
         protected void FolderClicked()
         {

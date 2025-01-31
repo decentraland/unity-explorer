@@ -115,9 +115,9 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
 
         protected override void CustomiseElement(RequestUserView elementView, int collectionIndex, FriendPanelStatus section)
         {
-            if (section == FriendPanelStatus.SENT)
-                elementView.InhibitInteractionButtons();
-            else
+            elementView.ParentStatus = section;
+
+            if (section != FriendPanelStatus.SENT)
             {
                 elementView.DeleteButton.onClick.RemoveAllListeners();
                 elementView.DeleteButton.onClick.AddListener(() => DeleteRequestClicked?.Invoke(receivedRequests[collectionIndex]));

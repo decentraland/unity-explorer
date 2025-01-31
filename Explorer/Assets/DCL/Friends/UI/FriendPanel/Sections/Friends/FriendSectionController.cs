@@ -76,7 +76,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
                 view.ChatEntryConfiguration.GetNameColor(friendProfile.Name), UserProfileContextMenuControlSettings.FriendshipStatus.FRIEND,
                 profileThumbnailCache.GetThumbnail(friendProfile.Address.ToString()));
             elementView.CanUnHover = false;
-            mvcManager.ShowAsync(GenericContextMenuController.IssueCommand(new GenericContextMenuParameter(contextMenu, buttonPosition, actionOnHide: () => elementView.CanUnHover = true))).Forget();
+            mvcManager.ShowAsync(GenericContextMenuController.IssueCommand(new GenericContextMenuParameter(contextMenu, buttonPosition, actionOnHide: () => elementView.CanUnHover = true, closeTask: panelLifecycleTask?.Task))).Forget();
         }
 
         private void OpenProfilePassport(FriendProfile profile) =>

@@ -16,6 +16,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections
         private readonly IWeb3IdentityCache web3IdentityCache;
         protected readonly U requestManager;
 
+        protected UniTaskCompletionSource? panelLifecycleTask;
         private CancellationTokenSource friendListInitCts = new ();
 
         protected FriendPanelSectionController(T view,
@@ -53,12 +54,14 @@ namespace DCL.Friends.UI.FriendPanel.Sections
 
         private void Enable()
         {
+            panelLifecycleTask = new UniTaskCompletionSource();
             if (!requestManager.WasInitialised)
                 InitAsync(friendListInitCts.Token).Forget();
         }
 
         private void Disable()
         {
+            panelLifecycleTask?.TrySetResult();
             friendListInitCts = friendListInitCts.SafeRestart();
         }
 
