@@ -16,7 +16,6 @@ namespace ECS.StreamableLoading.Cache.Generic
 
         UniTask<EnumResult<Option<T>, TaskError>> ReadFromDisk(TKey key, CancellationToken token);
 
-        bool IsReadingFromCache(TKey key);
     }
 
     public static class GenericCacheExtensions

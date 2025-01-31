@@ -70,10 +70,5 @@ namespace ECS.StreamableLoading.Cache.Generic
             return EnumResult<Option<T>, TaskError>.SuccessResult(Option<T>.None);
         }
 
-        public bool IsReadingFromCache(TKey key)
-        {
-            string stringKey = stringifyFunc(key)!;
-            return readingKeys.SyncTryGetValue(stringKey, out object bla);
-        }
     }
 }
