@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 namespace DCL.Roads.GPUInstancing.Playground
 {
@@ -11,6 +10,8 @@ namespace DCL.Roads.GPUInstancing.Playground
     public class GPUInstancingPrefabData : MonoBehaviour
     {
         public List<GPUInstancingCandidate> indirectCandidates;
+        public List<GPUInstancingCandidate> directCandidates;
+        [SerializeField] private Shader indirectShader;
 
         [ContextMenu(nameof(CollectSelfData))]
         public void CollectSelfData()
@@ -25,9 +26,14 @@ namespace DCL.Roads.GPUInstancing.Playground
             if (transform.localScale != Vector3.one)
                 transform.localScale = Vector3.one;
 
+            if (indirectShader == null)
+                Debug.LogWarning($"Shader is not assigned! This will result in empty {nameof(indirectCandidates)} list!");
+
             if (PrefabUtility.IsPartOfPrefabAsset(gameObject))
             {
                 indirectCandidates = new List<GPUInstancingCandidate>();
+                directCandidates = new List<GPUInstancingCandidate>();
+                CollectInstancingCandidatesFromStandaloneMeshes();
                 CollectInstancingCandidatesFromLODGroups();
             }
 #endif
@@ -39,22 +45,59 @@ namespace DCL.Roads.GPUInstancing.Playground
             {
                 UnityEngine.LOD[] lods = lodGroup.GetLODs();
 
-                if (lods.Length == 0 || lods[0].renderers.Length == 0)
+                if (lods.Length == 0 || lods[0].renderers.Length == 0 || lods[0].renderers[0] == null || lods[0].renderers[0].sharedMaterials.Length == 0)
                 {
-                    Debug.LogWarning($"{lodGroup.name} has LODGroup with no lods or no renderers on the first lod level!");
+                    Debug.LogWarning($"{lodGroup.name} has LODGroup with no lods/renderers/materials on the first lod level! Please revise the prefab.");
                     continue;
                 }
 
                 Matrix4x4 localToRootMatrix = transform.worldToLocalMatrix * lodGroup.transform.localToWorldMatrix; // root * child
 
-                if (!TryAddToCollected(lodGroup, localToRootMatrix))
-                    AddNewCandidate(lodGroup, localToRootMatrix);
+                var collectedCandidates = IsMyShader(lods[0].renderers[0].sharedMaterials) ? indirectCandidates : directCandidates;
+                if (!TryAddToCollected(lodGroup, localToRootMatrix, collectedCandidates))
+                    AddNewCandidate(lodGroup, localToRootMatrix, collectedCandidates);
             }
         }
 
-        private bool TryAddToCollected(LODGroup lodGroup, Matrix4x4 localToRootMatrix)
+        private void CollectInstancingCandidatesFromStandaloneMeshes()
         {
-            foreach (GPUInstancingCandidate existingCandidate in indirectCandidates)
+            foreach (MeshRenderer mr in GetComponentsInChildren<MeshRenderer>(true))
+            {
+                if (mr == null
+                    || mr.sharedMaterial == null
+                    || mr.GetComponent<MeshFilter>().sharedMesh == null
+                    )
+                    continue;
+
+                if (!AssignedToLODGroupInPrefabHierarchy(mr.transform))
+                {
+                    Matrix4x4 localToRootMatrix = transform.worldToLocalMatrix * mr.transform.localToWorldMatrix; // root * child
+
+                    var collectedCandidates = IsMyShader(mr.sharedMaterials) ? indirectCandidates : directCandidates;
+                    if (!TryAddSingleMeshToCollected(mr, localToRootMatrix, collectedCandidates))
+                        AddNewStandaloneMeshCandidate(mr, localToRootMatrix, collectedCandidates);
+                }
+            }
+        }
+
+        private bool TryAddSingleMeshToCollected(MeshRenderer meshRenderer, Matrix4x4 localToRootMatrix, List<GPUInstancingCandidate> collectedCandidates)
+        {
+            foreach (GPUInstancingCandidate existingCandidate in collectedCandidates)
+            {
+                if (IsRenderingDataSame(meshRenderer, existingCandidate))
+                {
+                    Debug.Log($"Same single mesh: {meshRenderer.name} and {existingCandidate.Reference.name}", meshRenderer);
+                    AddInstance(existingCandidate, localToRootMatrix);
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private bool TryAddToCollected(LODGroup lodGroup, Matrix4x4 localToRootMatrix, List<GPUInstancingCandidate> collectedCandidates)
+        {
+            foreach (GPUInstancingCandidate existingCandidate in collectedCandidates)
             {
                 if (IsRenderingDataSame(lodGroup, existingCandidate))
                 {
@@ -72,6 +115,7 @@ namespace DCL.Roads.GPUInstancing.Playground
             // TODO (Vit): validate and log warning for - same names but not same prefab, same prefab but not same Lods, same Lods but MeshRenderer settings are different
             // bool hasSimilarNames = lodGroup.name.Contains(existing.Reference.name) || lodGroup.name.Contains(existing.Reference.name);
 
+            if (existing.Reference == null) return false;
             if (AreSamePrefabAsset(lodGroup.gameObject, existing.Reference.gameObject))
                 return true;
 
@@ -101,6 +145,9 @@ namespace DCL.Roads.GPUInstancing.Playground
 
             return true;
         }
+
+        private bool IsRenderingDataSame(MeshRenderer meshRenderer, GPUInstancingCandidate existing) =>
+            AreSamePrefabAsset(meshRenderer.gameObject, existing.Reference.gameObject) || AreMeshRenderersEquivalent(meshRenderer, existing.Lods[0].MeshRenderingDatas[0].Renderer);
 
         public static bool AreMeshRenderersEquivalent(MeshRenderer mrA, MeshRenderer mrB)
         {
@@ -144,14 +191,14 @@ namespace DCL.Roads.GPUInstancing.Playground
             return areSame;
         }
 
-        private void AddNewCandidate(LODGroup lodGroup, Matrix4x4 localToRootMatrix)
+        private void AddNewCandidate(LODGroup lodGroup, Matrix4x4 localToRootMatrix, List<GPUInstancingCandidate> collectedCandidates)
         {
             if (ValidLODGroup(lodGroup))
-            {
-                var candidate = new GPUInstancingCandidate(lodGroup, localToRootMatrix);
-                indirectCandidates.Add(candidate);
-            }
+                collectedCandidates.Add(new GPUInstancingCandidate(lodGroup, localToRootMatrix));
         }
+
+        private void AddNewStandaloneMeshCandidate(MeshRenderer meshRenderer, Matrix4x4 localToRootMatrix, List<GPUInstancingCandidate> collectedCandidates) =>
+            collectedCandidates.Add(new GPUInstancingCandidate(meshRenderer, localToRootMatrix));
 
         private bool ValidLODGroup(LODGroup lodGroup)
         {
@@ -176,6 +223,28 @@ namespace DCL.Roads.GPUInstancing.Playground
         private void AddInstance(GPUInstancingCandidate existingCandidate, Matrix4x4 localToRootMatrix)
         {
             existingCandidate.InstancesBuffer.Add(new PerInstanceBuffer(localToRootMatrix));
+        }
+
+        private bool AssignedToLODGroupInPrefabHierarchy(Transform transform)
+        {
+            Transform current = transform;
+            Transform root = this.transform;
+
+            while (current != root && current != null)
+            {
+                if (current.GetComponent<LODGroup>() != null)
+                    return true;
+
+                current = current.parent;
+            }
+
+            return false;
+        }
+
+        private bool IsMyShader(Material[] materials)
+        {
+            if (indirectShader == null || materials == null) return false;
+            return materials.Any(m => m != null && m.shader == indirectShader);
         }
     }
 }

@@ -27,6 +27,7 @@ namespace DCL.Roads.GPUInstancing.Playground
         public GPUInstancingCandidate(LODGroup lodGroup, Matrix4x4 localToRootMatrix)
         {
             Reference = lodGroup;
+
             UnityEngine.LOD[] lodLevels = lodGroup.GetLODs();
             lodGroup.RecalculateBounds();
 
@@ -56,6 +57,28 @@ namespace DCL.Roads.GPUInstancing.Playground
 
             UpdateBounds();
         }
+
+        public GPUInstancingCandidate(MeshRenderer meshRenderer, Matrix4x4 localToRootMatrix)
+        {
+            if (meshRenderer.sharedMaterial == null) return;
+
+            Reference = null;  // No LODGroup
+            InstancesBuffer = new List<PerInstanceBuffer> { new() { instMatrix = localToRootMatrix } };
+
+            if (meshRenderer.TryGetComponent(out MeshFilter mf))
+                ObjectSize = mf.sharedMesh.bounds.extents.magnitude * 2f;
+            else
+                ObjectSize = 1f;
+
+            LodsScreenSpaceSizes = new[] { 1.0f }; // Single LOD => We only have 1 screen space size and 1 LOD level
+            Lods = new List<GPUInstancingLodLevel>(1); // only 1 lod level
+
+            var singleLodMeshes = new List<MeshRenderingData> { new (meshRenderer) };
+            Lods.Add(new GPUInstancingLodLevel { MeshRenderingDatas = singleLodMeshes.ToArray() });
+
+            UpdateBounds();
+        }
+
 
         // TODO (Vit): calculate bounds properly
         public void UpdateBounds()

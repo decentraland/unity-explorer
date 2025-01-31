@@ -41,30 +41,41 @@ namespace DCL.Roads.GPUInstancing
         {
             if (!Run) return;
 
-            if (currentNane != originalPrefabs[PrefabId].indirectCandidates[CandidateId].Reference.name)
-            {
-                currentNane = originalPrefabs[PrefabId].indirectCandidates[CandidateId].Reference.name;
+            int prefabId = Mathf.Min(PrefabId, originalPrefabs.Length -1);
 
-                foreach (var candidate in originalPrefabs[PrefabId].indirectCandidates)
+            if (currentNane != originalPrefabs[prefabId].name)
+            {
+                currentNane = originalPrefabs[prefabId].name;
+
+                foreach (var candidate in originalPrefabs[prefabId].indirectCandidates)
                     AdjustBuffers(candidate);
             }
 
             if (UseIndirect)
             {
-                foreach (var candidate in originalPrefabs[PrefabId].indirectCandidates)
+                foreach (var candidate in originalPrefabs[prefabId].indirectCandidates)
                     RenderCandidateIndirect(candidate, candidatesBuffers[candidate]);
-                return;
-            }
 
-            if (RenderFullPrefab)
-                foreach (GPUInstancingCandidate candidate in originalPrefabs[PrefabId].indirectCandidates)
+                foreach (var candidate in originalPrefabs[prefabId].directCandidates)
                     RenderCandidateInstanced(candidate);
+            }
             else
-                RenderCandidateInstanced(candidate: originalPrefabs[PrefabId].indirectCandidates[CandidateId]);
+            {
+                if (RenderFullPrefab)
+                    foreach (GPUInstancingCandidate candidate in originalPrefabs[prefabId].indirectCandidates)
+                        RenderCandidateInstanced(candidate);
+                else
+                {
+                    int candidateId = Mathf.Min(CandidateId, originalPrefabs[prefabId].indirectCandidates.Count -1);
+                    RenderCandidateInstanced(candidate: originalPrefabs[prefabId].indirectCandidates[candidateId]);
+                }
+            }
         }
 
         private void OnDisable()
         {
+            currentNane = string.Empty;
+
             foreach (GPUInstancingBuffers buffers in candidatesBuffers.Values)
             {
                 buffers.InstanceBuffer.Dispose();
@@ -86,8 +97,8 @@ namespace DCL.Roads.GPUInstancing
             var totalCommands = 0;
 
             // foreach (var lod in candidate.Lods)
-            var lod = LodLevel < candidate.Lods.Count ? LodLevel : candidate.Lods.Count - 1;
-            MeshRenderingData[] meshes = candidate.Lods[lod].MeshRenderingDatas;
+            int lodLevel = Mathf.Min(LodLevel, candidate.Lods.Count - 1);
+            MeshRenderingData[] meshes = candidate.Lods[lodLevel].MeshRenderingDatas;
 
             foreach (MeshRenderingData mesh in meshes)
                 totalCommands += mesh.ToGPUInstancedRenderer().RenderParamsArray.Length;
@@ -112,8 +123,8 @@ namespace DCL.Roads.GPUInstancing
 
         private void RenderCandidateIndirect(GPUInstancingCandidate candidate, GPUInstancingBuffers buffers)
         {
-            var lod = LodLevel < candidate.Lods.Count ? LodLevel : candidate.Lods.Count - 1;
-            MeshRenderingData[] meshes = candidate.Lods[lod].MeshRenderingDatas;
+            int lodLevel = Mathf.Min(LodLevel, candidate.Lods.Count - 1);
+            MeshRenderingData[] meshes = candidate.Lods[lodLevel].MeshRenderingDatas;
             var currentCommandIndex = 0;
 
             // foreach (var lod in candidate.Lods)
@@ -151,7 +162,8 @@ namespace DCL.Roads.GPUInstancing
 
         private void RenderCandidateInstanced(GPUInstancingCandidate candidate)
         {
-            foreach (MeshRenderingData meshRendering in candidate.Lods[LodLevel].MeshRenderingDatas)
+            int lodLevel = Mathf.Min(LodLevel, candidate.Lods.Count - 1);
+            foreach (MeshRenderingData meshRendering in candidate.Lods[lodLevel].MeshRenderingDatas)
             {
                 var instancedRenderer = meshRendering.ToGPUInstancedRenderer();
 

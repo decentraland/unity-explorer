@@ -1051,8 +1051,8 @@ MonoBehaviour:
   CandidateId: 0
   LodLevel: 0
   RenderFullPrefab: 0
-  UseIndirect: 0
-  Run: 0
+  UseIndirect: 1
+  Run: 1
   shader: {fileID: 4800000, guid: 56a9743f8d94f684190dc11bb521fb78, type: 3}
 --- !u!1 &1758766808
 GameObject:
