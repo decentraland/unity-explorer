@@ -19,6 +19,7 @@ namespace DCL.Friends.UI.Requests
     {
         private const int MUTUAL_PAGE_SIZE_BY_DESIGN = 3;
         private const int OPERATION_CONFIRMED_WAIT_TIME_MS = 5000;
+        private const string DATE_FORMAT = "MMM dd";
 
         private readonly IWeb3IdentityCache identityCache;
         private readonly IFriendsService friendsService;
@@ -165,7 +166,7 @@ namespace DCL.Friends.UI.Requests
             viewConfig.PreCancelToastContainer.SetActive(false);
             viewConfig.PreCancelButton.gameObject.SetActive(true);
             viewConfig.CancelButton.gameObject.SetActive(false);
-            viewConfig.TimestampText.text = fr.Timestamp.ToString("MMM dd").ToUpper();
+            viewConfig.TimestampText.text = fr.Timestamp.ToString(DATE_FORMAT).ToUpper();
             viewConfig.MessageInputContainer.SetActive(!string.IsNullOrEmpty(fr.MessageBody));
             viewConfig.MessageInput.text = $"<b>You:</b> {fr.MessageBody}";
 
@@ -181,7 +182,7 @@ namespace DCL.Friends.UI.Requests
 
             viewConfig.MessageInputContainer.SetActive(!string.IsNullOrEmpty(fr.MessageBody));
             viewConfig.MessageInput.text = fr.MessageBody;
-            viewConfig.TimestampText.text = fr.Timestamp.ToString("MMM dd").ToUpper();
+            viewConfig.TimestampText.text = fr.Timestamp.ToString(DATE_FORMAT).ToUpper();
 
             fetchUserCancellationToken = fetchUserCancellationToken.SafeRestart();
             LoadUserAndUpdateMessageWithUserNameAsync(fetchUserCancellationToken.Token).Forget();
