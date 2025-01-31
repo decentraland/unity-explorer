@@ -80,7 +80,7 @@ namespace DCL.Passport
         public GameObject PhotosSectionPanel { get; private set; }
 
         [field: SerializeField]
-        public SoftMask ViewportSoftMask { get; private set; }
+        public RectMask2D ViewportSoftMask { get; private set; }
 
         [field: SerializeField]
         public GameObject FriendInteractionContainer { get; private set; }
