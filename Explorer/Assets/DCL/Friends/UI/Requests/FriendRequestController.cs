@@ -344,7 +344,7 @@ namespace DCL.Friends.UI.Requests
 
                 Toggle(ViewState.CONFIRMED_CANCELLED);
 
-                await ShowOperationConfirmationAsync(viewInstance!.cancelledConfirmed, inputData.Request.From.Address,
+                await ShowOperationConfirmationAsync(viewInstance!.cancelledConfirmed, inputData.Request.To.Address,
                     "Friend Request To <color=#73D3D3>{0}</color> Cancelled",
                     ct);
 
