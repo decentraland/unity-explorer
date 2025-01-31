@@ -164,9 +164,9 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
 
         private void AcceptRequestClicked(FriendRequest request)
         {
-            RejectFriendshipAsync(friendshipOperationCts.Token).Forget();
+            AcceptFriendshipAsync(friendshipOperationCts.Token).Forget();
 
-            async UniTaskVoid RejectFriendshipAsync(CancellationToken ct)
+            async UniTaskVoid AcceptFriendshipAsync(CancellationToken ct)
             {
                 try
                 {
