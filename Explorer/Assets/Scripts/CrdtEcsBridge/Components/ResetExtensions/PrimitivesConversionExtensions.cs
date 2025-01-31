@@ -1,3 +1,4 @@
+using DCL.Diagnostics;
 using DCL.ECSComponents;
 using Decentraland.Common;
 using System;
@@ -54,7 +55,11 @@ namespace CrdtEcsBridge.Components.Conversion
                 case PBLightSource.Types.ShadowType.StNone: return LightShadows.None;
                 case PBLightSource.Types.ShadowType.StSoft: return LightShadows.Soft;
                 case PBLightSource.Types.ShadowType.StHard: return LightShadows.Hard;
-                default: throw new ArgumentOutOfRangeException(nameof(shadow), shadow, null);
+                default:
+                {
+                    ReportHub.LogError(ReportCategory.UNSPECIFIED, "Null shadow type provided, using None instead");
+                    return LightShadows.None;
+                }
             }
         }
 
