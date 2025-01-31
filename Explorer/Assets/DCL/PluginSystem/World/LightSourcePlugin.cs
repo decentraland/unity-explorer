@@ -1,10 +1,12 @@
 using Arch.SystemGroups;
+using CrdtEcsBridge.Components.Conversion;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.ResourcesUnloading;
+using DCL.SDKComponents.LightSource;
 using DCL.SDKComponents.LightSource.Systems;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Systems;
@@ -18,8 +20,9 @@ using Object = UnityEngine.Object;
 
 namespace DCL.PluginSystem.World
 {
-    public class LightSourcePlugin : IDCLWorldPlugin<LightSourcePlugin.Settings>
+    public class LightSourcePlugin : IDCLWorldPlugin<LightSourcePlugin.LightSourceSettings>
     {
+        private static LightSourceDefaults lightSourceDefaults;
         private readonly IComponentPoolsRegistry poolsRegistry;
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly CacheCleaner cacheCleaner;
@@ -35,59 +38,62 @@ namespace DCL.PluginSystem.World
             this.cacheCleaner = cacheCleaner;
         }
 
-        public void Dispose()
-        {
-            throw new NotImplementedException();
-        }
+        public void Dispose() { }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
             finalizeWorldSystems.Add(LightSourceSystem.InjectToWorld(
                 ref builder,
-                lightPoolRegistry,
-                sharedDependencies.SceneStateProvider
+                sharedDependencies.SceneData,
+                sharedDependencies.SceneStateProvider,
+                sharedDependencies.ScenePartition,
+                lightPoolRegistry
             ));
 
             ResetDirtyFlagSystem<PBLightSource>.InjectToWorld(ref builder);
         }
 
-        public async UniTask InitializeAsync(Settings settings, CancellationToken ct) =>
+        public async UniTask InitializeAsync(LightSourceSettings settings, CancellationToken ct) =>
             await CreateLightSourcePoolAsync(settings, ct);
 
-        private async UniTask CreateLightSourcePoolAsync(Settings settings, CancellationToken ct)
+        private async UniTask CreateLightSourcePoolAsync(LightSourceSettings settings, CancellationToken ct)
         {
+            lightSourceDefaults = (await assetsProvisioner.ProvideMainAssetAsync(settings.LightSourceDefaultValues, ct: ct)).Value;
             Light light = (await assetsProvisioner.ProvideMainAssetAsync(settings.LightSourcePrefab, ct: ct)).Value.GetComponent<Light>();
             lightPoolRegistry = poolsRegistry.AddGameObjectPool(() => Object.Instantiate(light, Vector3.zero, quaternion.identity), onRelease: OnPoolRelease, onGet: OnPoolGet);
             cacheCleaner.Register(lightPoolRegistry);
         }
 
-        private static void OnPoolRelease(Light light)
-        {
+        private static void OnPoolRelease(Light light) =>
             light.enabled = false;
+
+        private static void OnPoolGet(Light light)
+        {
+            light.enabled = lightSourceDefaults.active;
             light.transform.SetParent(null);
-            light.transform.localPosition = Vector3.zero;
-            light.transform.localRotation = Quaternion.identity;
-
-            light.color = Color.white;
-            light.intensity = 1;
-            light.range = 10;
+            light.transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
+            light.color = lightSourceDefaults.color;
+            light.intensity = PrimitivesConversionExtensions.PBBrightnessInLumensToUnityCandels(lightSourceDefaults.brightness);
+            light.range = lightSourceDefaults.range;
+            light.type = LightType.Spot;
             light.shadows = LightShadows.None;
-            light.type = LightType.Point;
-
-            light.innerSpotAngle = 12.8f;
-            light.spotAngle = 30f;
+            light.innerSpotAngle = lightSourceDefaults.innerAngle;
+            light.spotAngle = lightSourceDefaults.outerAngle;
         }
 
-        private static void OnPoolGet(Light light) =>
-            light.enabled = false;
-
-        [Serializable]
-        public class Settings : IDCLPluginSettings
+        public struct LightSourceSettings : IDCLPluginSettings
         {
-            [field: Header(nameof(LightSourcePlugin) + "." + nameof(Settings))]
-            [field: Space]
             [field: SerializeField]
             public AssetReferenceGameObject LightSourcePrefab;
+
+            [field: SerializeField]
+            public LightDefaultsRef LightSourceDefaultValues;
+
+            [Serializable]
+            public class LightDefaultsRef : ComponentReference<LightSourceDefaults>
+            {
+                public LightDefaultsRef(string guid) : base(guid) { }
+            }
         }
     }
 }

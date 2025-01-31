@@ -28,7 +28,7 @@ MonoBehaviour:
   - rid: 634089542387236867
   - rid: 1970080267461197826
   - rid: 5734404086669770757
-  - rid: 3414977917307846658
+  - rid: 3414978281095036931
   references:
     version: 2
     RefIds:
@@ -155,11 +155,16 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
-    - rid: 3414977917307846658
-      type: {class: LightSourcePlugin/Settings, ns: DCL.PluginSystem.World, asm: DCL.Plugins}
+    - rid: 3414978281095036931
+      type: {class: LightSourcePlugin/LightSourceSettings, ns: DCL.PluginSystem.World, asm: DCL.Plugins}
       data:
         LightSourcePrefab:
           m_AssetGUID: 7f09a2d0d9adc4e43b67879ab9cdf360
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        LightSourceDefaultValues:
+          m_AssetGUID: 
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
