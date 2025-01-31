@@ -29,6 +29,7 @@ namespace ECS.StreamableLoading.NFTShapes
         public LoadNFTShapeSystem(World world, IStreamableCache<Texture2DData, GetNFTShapeIntention> cache, IWebRequestController webRequestController, IDiskCache<Texture2DData> diskCache, IWebContentSizes webContentSizes) : base(world, cache, diskCache)
         {
             this.webRequestController = webRequestController;
+            this.webContentSizes = webContentSizes;
         }
 
         protected override async UniTask<StreamableLoadingResult<Texture2DData>> FlowInternalAsync(GetNFTShapeIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
