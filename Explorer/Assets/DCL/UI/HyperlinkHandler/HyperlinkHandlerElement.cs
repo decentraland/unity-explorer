@@ -13,11 +13,12 @@ namespace DCL.UI.HyperlinkHandler
 {
     public class HyperlinkHandlerElement : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler, IPointerMoveHandler, IViewWithGlobalDependencies
     {
+        //In the future we might need to migrate all these settings into a configurable SO
         private const string SCENE = "scene";
         private const string WORLD = "world";
         private const string URL = "url";
         private const string USER = "user";
-        private const string REALM_CHANGE_CONFIRMATION_MESSAGE = "Are you sure you want to enter this realm?";
+        private const string REALM_CHANGE_CONFIRMATION_MESSAGE = "Are you sure you want to enter this World?";
 
         [SerializeField] private TMP_Text textComponent;
         [SerializeField] private TMP_StyleSheet styleSheet;
