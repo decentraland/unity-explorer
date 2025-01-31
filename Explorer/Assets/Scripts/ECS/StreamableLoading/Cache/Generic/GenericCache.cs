@@ -3,7 +3,9 @@ using DCL.Diagnostics;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Cache.InMemory;
 using System;
+using System.Collections.Generic;
 using System.Threading;
+using Utility;
 using Utility.Types;
 
 namespace ECS.StreamableLoading.Cache.Generic
@@ -14,6 +16,7 @@ namespace ECS.StreamableLoading.Cache.Generic
         private readonly IDiskCache<T> diskCache;
         private readonly Func<TKey, string> stringifyFunc;
         private readonly string extension;
+        private readonly Dictionary<string, object> readingKeys;
 
         public GenericCache(IMemoryCache<T, TKey> memoryCache, IDiskCache<T> diskCache, Func<TKey, string> stringifyFunc, string extension)
         {
@@ -21,6 +24,7 @@ namespace ECS.StreamableLoading.Cache.Generic
             this.diskCache = diskCache;
             this.stringifyFunc = stringifyFunc;
             this.extension = extension;
+            readingKeys = new Dictionary<string, object>();
         }
 
         public UniTask<EnumResult<TaskError>> PutAsync(TKey key, T value, CancellationToken token)
@@ -29,12 +33,19 @@ namespace ECS.StreamableLoading.Cache.Generic
             return diskCache.PutAsync(stringifyFunc(key)!, extension, value, token);
         }
 
-        public async UniTask<EnumResult<Option<T>, TaskError>> ContentAsync(TKey key, CancellationToken token)
+        public UniTask<EnumResult<Option<T>, TaskError>> ReadFromCache(TKey key, CancellationToken token)
         {
             if (memoryCache.TryGet(key, out T result))
-                return EnumResult<Option<T>, TaskError>.SuccessResult(Option<T>.Some(result));
+                return UniTask.FromResult(EnumResult<Option<T>, TaskError>.SuccessResult(Option<T>.Some(result)));
 
+            return UniTask.FromResult(EnumResult<Option<T>, TaskError>.SuccessResult(Option<T>.None));
+        }
+
+        public async UniTask<EnumResult<Option<T>, TaskError>> ReadFromDisk(TKey key, CancellationToken token)
+        {
             string stringKey = stringifyFunc(key)!;
+
+            readingKeys!.SyncTryAdd(stringKey, null);
 
             var diskResult = await diskCache.ContentAsync(stringKey, extension, token);
 
@@ -54,7 +65,15 @@ namespace ECS.StreamableLoading.Cache.Generic
                     $"Error getting disk cache content for '{key}' - {diskResult.Error!.Value.State} {diskResult.Error!.Value.Message}"
                 );
 
+            readingKeys.SyncRemove(stringKey);
+
             return EnumResult<Option<T>, TaskError>.SuccessResult(Option<T>.None);
+        }
+
+        public bool IsReadingFromCache(TKey key)
+        {
+            string stringKey = stringifyFunc(key)!;
+            return readingKeys.SyncTryGetValue(stringKey, out object bla);
         }
     }
 }

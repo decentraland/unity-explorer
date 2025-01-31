@@ -13,6 +13,7 @@ using ECS.StreamableLoading.Common.Components;
 using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
+using UnityEngine;
 using Utility;
 
 namespace ECS.StreamableLoading.Common.Systems
@@ -150,12 +151,12 @@ namespace ECS.StreamableLoading.Common.Systems
                     }
                 }
 
-                var cachedContent = await genericCache.ContentAsync(intention, disposalCt);
-
+                // Try load from cache first
+                var cachedContent = await genericCache.ReadFromCache(intention, disposalCt);
+                
                 if (cachedContent.Success)
                 {
                     var option = cachedContent.Value;
-
                     if (option.Has)
                     {
                         result = new StreamableLoadingResult<TAsset>(option.Value);
@@ -163,7 +164,6 @@ namespace ECS.StreamableLoading.Common.Systems
                     }
                 }
 
-                // Try load from cache first
 
                 // If the given URL failed irrecoverably just return the failure
                 if (cache.IrrecoverableFailures.TryGetValue(intention.CommonArguments.GetCacheableURL(), out var failure))
@@ -278,20 +278,31 @@ namespace ECS.StreamableLoading.Common.Systems
 
             try
             {
-                result = await RepeatLoopAsync(intention, acquiredBudget, partition, ct);
-
+                var cachedContentFromDisk = await genericCache.ReadFromDisk(intention, ct);
+                if (cachedContentFromDisk.Success)
+                {
+                    var option = cachedContentFromDisk.Value;
+                    if (option.Has)
+                        result = new StreamableLoadingResult<TAsset>(option.Value);
+                    else
+                        result = await RepeatLoopAsync(intention, acquiredBudget, partition, ct);
+                }
+                else
+                {
+                    result = await RepeatLoopAsync(intention, acquiredBudget, partition, ct);
+                }
+                
                 // Ensure that we returned to the main thread
                 await UniTask.SwitchToMainThread(ct);
 
                 // before firing the continuation of the ongoing request
                 // Add result to the cache
                 if (result is { Succeeded: true })
-                    genericCache
-                       .PutAsync(intention, result.Value.Asset!, ct)
-                       .Forget(
-                            static e =>
-                                ReportHub.LogError(ReportCategory.STREAMABLE_LOADING, $"Error putting cache content: {e.Message}")
-                        );
+                {
+                    await                     genericCache
+                        .PutAsync(intention, result.Value.Asset!, ct);
+                }
+
 
                 // Set result for the reusable source
                 // Remove from the ongoing requests immediately because finally will be called later than

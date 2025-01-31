@@ -12,7 +12,11 @@ namespace ECS.StreamableLoading.Cache.Generic
     {
         UniTask<EnumResult<TaskError>> PutAsync(TKey key, T value, CancellationToken token);
 
-        UniTask<EnumResult<Option<T>, TaskError>> ContentAsync(TKey key, CancellationToken token);
+        UniTask<EnumResult<Option<T>, TaskError>> ReadFromCache(TKey key, CancellationToken token);
+
+        UniTask<EnumResult<Option<T>, TaskError>> ReadFromDisk(TKey key, CancellationToken token);
+
+        bool IsReadingFromCache(TKey key);
     }
 
     public static class GenericCacheExtensions
@@ -25,7 +29,7 @@ namespace ECS.StreamableLoading.Cache.Generic
             CancellationToken token
         )
         {
-            var result = await cache.ContentAsync(key, token);
+            var result = await cache.ReadFromCache(key, token);
 
             if (result.Success == false || result.Value.Has)
                 return result;
