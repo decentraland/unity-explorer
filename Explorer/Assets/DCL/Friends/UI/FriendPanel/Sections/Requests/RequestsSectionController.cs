@@ -1,5 +1,4 @@
 using Cysharp.Threading.Tasks;
-using DCL.Browser;
 using DCL.Clipboard;
 using DCL.Diagnostics;
 using DCL.Friends.UI.Requests;
@@ -7,7 +6,6 @@ using DCL.RealmNavigation;
 using DCL.UI.GenericContextMenu;
 using DCL.UI.GenericContextMenu.Controls.Configs;
 using DCL.Utilities;
-using DCL.Web3;
 using DCL.Web3.Identities;
 using MVC;
 using System;
@@ -22,7 +20,6 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
         private static readonly RectOffset CONTEXT_MENU_VERTICAL_LAYOUT_PADDING = new (15, 15, 20, 25);
         private const int CONTEXT_MENU_SEPARATOR_HEIGHT = 20;
         private const int CONTEXT_MENU_ELEMENTS_SPACING = 5;
-        private const int IDENTITY_CHANGE_POLLING_INTERVAL = 5000;
 
         private readonly GenericContextMenu contextMenu;
         private readonly UserProfileContextMenuControlSettings userProfileContextMenuControlSettings;
@@ -30,11 +27,9 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
         private readonly IPassportBridge passportBridge;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IProfileThumbnailCache profileThumbnailCache;
-        private readonly CancellationTokenSource lifeCycleCts = new ();
         private readonly CancellationTokenSource friendshipOperationCts = new ();
 
         private FriendProfile? lastClickedProfileCtx;
-        private Web3Address? previousWeb3Identity;
 
         public event Action<int>? ReceivedRequestsCountChanged;
 
@@ -73,6 +68,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             ReceivedRequestsCountChanged += UpdateReceivedRequestsSectionCount;
 
             loadingStatus.CurrentStage.Subscribe(PrewarmRequests);
+            web3IdentityCache.OnIdentityChanged += ResetAndInit;
         }
 
         public override void Dispose()
@@ -88,6 +84,14 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
 
             ReceivedRequestsCountChanged -= UpdateReceivedRequestsSectionCount;
             friendshipOperationCts.SafeCancelAndDispose();
+            web3IdentityCache.OnIdentityChanged -= ResetAndInit;
+        }
+
+        private void ResetAndInit()
+        {
+            ResetState();
+            PropagateReceivedRequestsCountChanged();
+            CheckShouldInit();
         }
 
         private void RequestClicked(FriendRequest request) =>
@@ -97,14 +101,13 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
         {
             if (stage != LoadingStatus.LoadingStage.Completed) return;
 
+            PrewarmAsync(friendshipOperationCts.Token).Forget();
+
             async UniTaskVoid PrewarmAsync(CancellationToken ct)
             {
                 await InitAsync(ct);
                 loadingStatus.CurrentStage.Unsubscribe(PrewarmRequests);
-                previousWeb3Identity = web3IdentityCache.Identity?.Address;
-                CheckIdentityChangeAsync(lifeCycleCts.Token).Forget();
             }
-            PrewarmAsync(friendshipOperationCts.Token).Forget();
         }
 
         private void OpenProfilePassport(FriendProfile profile) =>
@@ -169,30 +172,18 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
         protected override async UniTask InitAsync(CancellationToken ct)
         {
             view.SetLoadingState(true);
+            view.SetScrollViewState(false);
 
             await requestManager.InitAsync(ct);
 
             view.SetLoadingState(false);
+            view.SetScrollViewState(true);
 
             RefreshLoopList();
             requestManager.FirstFolderClicked += FolderClicked;
             requestManager.SecondFolderClicked += FolderClicked;
 
             PropagateReceivedRequestsCountChanged();
-        }
-
-        private async UniTaskVoid CheckIdentityChangeAsync(CancellationToken token)
-        {
-            while (token.IsCancellationRequested == false)
-            {
-                if (!previousWeb3Identity.Equals(web3IdentityCache.Identity?.Address) && web3IdentityCache.Identity?.Address != null)
-                {
-                    previousWeb3Identity = web3IdentityCache.Identity?.Address;
-                    CheckIdentityAndReset();
-                }
-                else
-                    await UniTask.Delay(IDENTITY_CHANGE_POLLING_INTERVAL, cancellationToken: token);
-            }
         }
 
         protected override void ElementClicked(FriendProfile profile)
