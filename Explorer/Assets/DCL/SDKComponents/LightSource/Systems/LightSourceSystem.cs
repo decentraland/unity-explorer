@@ -55,6 +55,25 @@ namespace DCL.SDKComponents.LightSource.Systems
         }
 
         [Query]
+        [All(typeof(PBLightSource))]
+        [None(typeof(LightSourceComponent))]
+        private void CreateLightSourceComponent(in Entity entity, ref PBLightSource pbLightSource, in TransformComponent transform)
+        {
+            if (!sceneStateProvider.IsCurrent) return;
+            if (pbLightSource.TypeCase == PBLightSource.TypeOneofCase.None) return;
+
+            Light lightSourceInstance = poolRegistry.Get();
+
+            lightSourceInstance.transform.SetParent(transform.Transform, false);
+            lightSourceInstance.transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
+            lightSourceInstance.transform.localScale = Vector3.one;
+
+            var lightSourceComponent = new LightSourceComponent(lightSourceInstance);
+            pbLightSource.IsDirty = true;
+            World.Add(entity, lightSourceComponent);
+        }
+
+        [Query]
         private void UpdateLightSource(ref LightSourceComponent lightSourceComponent, in PBLightSource pbLightSource)
         {
             if (!sceneStateProvider.IsCurrent) return;
@@ -64,10 +83,13 @@ namespace DCL.SDKComponents.LightSource.Systems
             Light lightSourceInstance = lightSourceComponent.lightSourceInstance;
 
             bool isActive = !pbLightSource.HasActive || pbLightSource.Active;
-            lightSourceInstance.enabled = isActive;
 
             // No need to set anything if the component is not active
-            if (!isActive) return;
+            if (!isActive)
+            {
+                lightSourceInstance.enabled = false;
+                return;
+            }
 
             bool isSpot = pbLightSource.TypeCase == PBLightSource.TypeOneofCase.Spot;
 
@@ -76,7 +98,7 @@ namespace DCL.SDKComponents.LightSource.Systems
             lightSourceInstance.color = pbLightSource.Color.ToUnityColor();
 
             if (pbLightSource.HasBrightness)
-                lightSourceInstance.intensity = pbLightSource.Brightness;
+                lightSourceInstance.intensity = PrimitivesConversionExtensions.PBBrightnessInLumensToUnityCandels(pbLightSource.Brightness);
 
             if (pbLightSource.HasRange)
                 lightSourceInstance.range = pbLightSource.Range;
@@ -101,6 +123,8 @@ namespace DCL.SDKComponents.LightSource.Systems
                 }
             }
             else { lightSourceInstance.shadows = PrimitivesConversionExtensions.PBLightSourceShadowToUnityLightShadow(pbLightSource.Point.Shadow); }
+
+            lightSourceInstance.enabled = true;
         }
 
         private bool TryCreateGetTexturePromise(in TextureComponent? textureComponent, ref Promise? promise)
@@ -150,25 +174,6 @@ namespace DCL.SDKComponents.LightSource.Systems
 
             Promise promiseValue = promise.Value;
             promiseValue.TryDereference(World);
-        }
-
-        [Query]
-        [All(typeof(PBLightSource))]
-        [None(typeof(LightSourceComponent))]
-        private void CreateLightSourceComponent(in Entity entity, ref PBLightSource pbLightSource, in TransformComponent transform)
-        {
-            if (!sceneStateProvider.IsCurrent) return;
-            if (pbLightSource.TypeCase == PBLightSource.TypeOneofCase.None) return;
-
-            Light lightSourceInstance = poolRegistry.Get();
-
-            lightSourceInstance.transform.SetParent(transform.Transform, false);
-            lightSourceInstance.transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
-            lightSourceInstance.transform.localScale = Vector3.one;
-
-            var lightSourceComponent = new LightSourceComponent(lightSourceInstance);
-
-            World.Add(entity, lightSourceComponent);
         }
 
         [Query]
