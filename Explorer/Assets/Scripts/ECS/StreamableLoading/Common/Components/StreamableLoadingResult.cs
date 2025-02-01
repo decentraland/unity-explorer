@@ -1,5 +1,7 @@
-﻿using DCL.Diagnostics;
+﻿using AssetManagement;
+using DCL.Diagnostics;
 using System;
+using System.Runtime.CompilerServices;
 
 namespace ECS.StreamableLoading.Common.Components
 {
@@ -42,10 +44,24 @@ namespace ECS.StreamableLoading.Common.Components
         public Exception? Exception => exceptionData?.exception;
         public ReportData ReportData => exceptionData?.reportData ?? ReportData.UNSPECIFIED;
 
-        public StreamableLoadingResult(T? asset) : this()
+#if STREAMABLE_LOADING_SOURCE_DEBUG
+        public readonly AssetSource Source;
+#endif
+
+        public StreamableLoadingResult(T? asset, AssetSource source = AssetSource.NONE) : this()
         {
             Asset = asset;
             Succeeded = true;
+
+#if STREAMABLE_LOADING_SOURCE_DEBUG
+            this.Source = source;
+
+            if (source is not AssetSource.NONE)
+                ReportHub.Log(
+                    ReportData.UNSPECIFIED,
+                    $"StreamableLoadingResult source: {source} for asset: {asset?.GetType().Name} {asset?.ToString() ?? "null"}"
+                );
+#endif
         }
 
         public StreamableLoadingResult(ReportData reportData, Exception exception) : this()
@@ -57,6 +73,10 @@ namespace ECS.StreamableLoading.Common.Components
         }
 
         public bool IsInitialized => Exception != null || Asset != null || Succeeded;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public StreamableLoadingResult<T> WithSource(AssetSource source) =>
+            this.Succeeded ? new StreamableLoadingResult<T>(Asset, source) : this;
 
         public override string ToString() =>
             IsInitialized ? Succeeded ? Asset!.ToString() : Exception!.ToString() : "Not Initialized";

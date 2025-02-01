@@ -267,6 +267,7 @@ namespace ECS.StreamableLoading.Common.Systems
                 if (option.Has)
                 {
                     var cacheResult = new StreamableLoadingResult<TAsset>(option.Value);
+                    cacheResult = cacheResult.WithSource(AssetSource.CACHE);
                     TryRemoveOngoingRequest();
                     source.TrySetResult(cacheResult);
                     return cacheResult;
@@ -337,6 +338,7 @@ namespace ECS.StreamableLoading.Common.Systems
         private async UniTask<StreamableLoadingResult<TAsset>?> RepeatLoopAsync(TIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
             StreamableLoadingResult<TAsset>? result = await intention.RepeatLoopAsync(acquiredBudget, partition, cachedInternalFlowDelegate, GetReportData(), ct);
+            result = result?.WithSource(intention.CommonArguments.CurrentSource);
             return result is { Succeeded: false } ? SetIrrecoverableFailure(intention, result.Value) : result;
         }
 

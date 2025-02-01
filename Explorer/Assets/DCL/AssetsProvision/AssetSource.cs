@@ -18,24 +18,29 @@ namespace AssetManagement
         EMBEDDED = 1,
 
         /// <summary>
+        ///     Load from memory or disk cache
+        /// </summary>
+        CACHE = 1 << 1,
+
+        /// <summary>
         ///     Downloaded over network
         /// </summary>
-        WEB = 1 << 1,
+        WEB = 2 << 2,
 
         /// <summary>
         ///     Downloaded over Addressables
         /// </summary>
-        ADDRESSABLE = 2 << 2,
+        ADDRESSABLE = 1 << 4,
 
         /// <summary>
         ///     All sources
         /// </summary>
-        ALL = EMBEDDED | WEB | ADDRESSABLE,
+        ALL = EMBEDDED | CACHE | WEB | ADDRESSABLE,
     }
 
     public static class AssetSourceEnumExtensions
     {
-        private static readonly Dictionary<AssetSource, string> CurrentSourceStrings = new()
+        private static readonly Dictionary<AssetSource, string> CURRENT_SOURCE_STRINGS = new ()
         {
             {
                 AssetSource.ADDRESSABLE, "ADDRESSABLE"
@@ -45,12 +50,16 @@ namespace AssetManagement
             },
             {
                 AssetSource.WEB, "WEB"
-            }
+            },
+            {
+                AssetSource.CACHE, "CACHE"
+            },
+            {
+                AssetSource.NONE, "NONE"
+            },
         };
 
-        public static string ToStringNonAlloc(this AssetSource source)
-        {
-            return CurrentSourceStrings[source];
-        }
+        public static string ToStringNonAlloc(this AssetSource source) =>
+            CURRENT_SOURCE_STRINGS[source]!;
     }
 }
