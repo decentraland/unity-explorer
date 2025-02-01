@@ -26,7 +26,7 @@ namespace ECS.StreamableLoading.NFTShapes
         private readonly IWebRequestController webRequestController;
         private readonly IWebContentSizes webContentSizes;
 
-        public LoadNFTShapeSystem(World world, IStreamableCache<Texture2DData, GetNFTShapeIntention> cache, IWebRequestController webRequestController, IDiskCache<Texture2DData> diskCache, IWebContentSizes webContentSizes) : base(world, cache, diskCache)
+        public LoadNFTShapeSystem(World world, IStreamableCache<Texture2DData, GetNFTShapeIntention> cache, IWebRequestController webRequestController, IDiskCache<Texture2DData> diskCache, IWebContentSizes webContentSizes) : base(world, cache, diskCache, "nft")
         {
             this.webRequestController = webRequestController;
             this.webContentSizes = webContentSizes;

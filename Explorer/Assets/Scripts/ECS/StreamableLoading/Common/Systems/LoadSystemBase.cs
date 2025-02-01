@@ -29,8 +29,6 @@ namespace ECS.StreamableLoading.Common.Systems
                                                                      .WithAll<TIntention, IPartitionComponent, StreamableLoadingState>()
                                                                      .WithNone<StreamableLoadingResult<TAsset>>();
 
-        private const string DISK_CACHE_EXTENSION = "dat";
-
         private readonly IStreamableCache<TAsset, TIntention> cache;
 
         /// <summary>
@@ -44,7 +42,7 @@ namespace ECS.StreamableLoading.Common.Systems
 
         private bool systemIsDisposed;
 
-        protected LoadSystemBase(World world, IStreamableCache<TAsset, TIntention> cache, IDiskCache<TAsset>? diskCache = null) : base(world)
+        protected LoadSystemBase(World world, IStreamableCache<TAsset, TIntention> cache, IDiskCache<TAsset>? diskCache = null, string cacheExtension = "dat") : base(world)
         {
             this.cache = cache;
 
@@ -52,7 +50,7 @@ namespace ECS.StreamableLoading.Common.Systems
                 new StreamableWrapMemoryCache<TAsset, TIntention>(cache),
                 diskCache ?? IDiskCache<TAsset>.Null.INSTANCE,
                 static intention => intention.CommonArguments.URL.Value,
-                DISK_CACHE_EXTENSION
+                cacheExtension
             );
 
             query = World!.Query(in CREATE_WEB_REQUEST);
