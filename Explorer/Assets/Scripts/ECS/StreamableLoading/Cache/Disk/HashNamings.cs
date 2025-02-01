@@ -1,9 +1,9 @@
+using DCL.Diagnostics;
 using DCL.Optimization.ThreadSafePool;
 using DCL.Utilities.Extensions;
 using System;
 using System.Buffers;
 using System.Collections.Generic;
-using System.IO;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -53,6 +53,9 @@ namespace ECS.StreamableLoading.Cache.Disk
             sb.Append(extension);
 
             var path = sb.ToString();
+
+            ReportHub.Log(ReportCategory.DISK_CACHE, $"Hash name fro key: {key} to {path}");
+
             return path;
         }
 
