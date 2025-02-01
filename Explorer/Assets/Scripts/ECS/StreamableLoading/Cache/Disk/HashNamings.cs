@@ -54,7 +54,7 @@ namespace ECS.StreamableLoading.Cache.Disk
 
             var path = sb.ToString();
 
-            ReportHub.Log(ReportCategory.DISK_CACHE, $"Hash name fro key: {key} to {path}");
+            ReportHub.Log(ReportCategory.DISK_CACHE, $"Hash name from key: {key} to {path}");
 
             return path;
         }
