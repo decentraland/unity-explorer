@@ -79,6 +79,7 @@ namespace DCL.PluginSystem.World
             light.shadows = LightShadows.None;
             light.innerSpotAngle = lightSourceDefaults.innerAngle;
             light.spotAngle = lightSourceDefaults.outerAngle;
+            light.cookie = null;
         }
 
         public struct LightSourceSettings : IDCLPluginSettings

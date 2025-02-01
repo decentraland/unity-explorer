@@ -121,6 +121,10 @@ namespace DCL.SDKComponents.LightSource.Systems
                     TextureComponent? shadowTexture = pbLightSource.Spot.ShadowMaskTexture.CreateTextureComponent(sceneData);
                     TryCreateGetTexturePromise(in shadowTexture, ref lightSourceComponent.TextureMaskPromise);
                 }
+                else
+                {
+                    lightSourceInstance.cookie = null;
+                }
             }
             else { lightSourceInstance.shadows = PrimitivesConversionExtensions.PBLightSourceShadowToUnityLightShadow(pbLightSource.Point.Shadow); }
 
