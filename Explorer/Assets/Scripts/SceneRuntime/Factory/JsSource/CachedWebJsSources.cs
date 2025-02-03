@@ -31,6 +31,10 @@ namespace SceneRuntime.Factory.JsSource
                 return await origin.SceneSourceCodeAsync(path, ct);
 
             var result = await cache.ContentOrFetchAsync(key, origin, static v => SceneSourceCodeAsync(v), ct);
+
+            if (result.Success == false)
+                throw new Exception($"CachedWebJsSources: SceneSourceCodeAsync failed for url {path.Value}: {result.Error!.Value.State} {result.Error!.Value.Message}");
+
             return result.Unwrap().Value.EnsureNotNull();
         }
 
