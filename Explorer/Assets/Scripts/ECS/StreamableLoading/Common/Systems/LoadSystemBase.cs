@@ -265,7 +265,7 @@ namespace ECS.StreamableLoading.Common.Systems
             try
             {
                 // Try load from cache first
-                result = await TryLoadFromCache(intention, ct) ?? await RepeatLoopAsync(intention, acquiredBudget, partition, ct);
+                result = await TryLoadFromCacheAsync(intention, ct) ?? await RepeatLoopAsync(intention, acquiredBudget, partition, ct);
 
                 // Ensure that we returned to the main thread
                 await UniTask.SwitchToMainThread(ct);
@@ -322,7 +322,7 @@ namespace ECS.StreamableLoading.Common.Systems
             }
         }
 
-        private async UniTask<StreamableLoadingResult<TAsset>?> TryLoadFromCache(TIntention intention, CancellationToken ct)
+        private async UniTask<StreamableLoadingResult<TAsset>?> TryLoadFromCacheAsync(TIntention intention, CancellationToken ct)
         {
             EnumResult<Option<TAsset>, TaskError> cachedContent = await genericCache.ContentAsync(intention, ct);
 
