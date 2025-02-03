@@ -12,64 +12,44 @@ using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
 using ECS.StreamableLoading.NFTShapes.DTOs;
 using ECS.StreamableLoading.Textures;
-using Plugins.TexturesFuse.TexturesServerWrap;
 using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
-using System.Buffers;
-using System.IO;
+using System;
 using System.Threading;
-using UnityEngine;
-using Utility;
-using Utility.Types;
 
 namespace ECS.StreamableLoading.NFTShapes
 {
     [UpdateInGroup(typeof(StreamableLoadingGroup))]
     [LogCategory(ReportCategory.NFT_SHAPE_WEB_REQUEST)]
-    public partial class LoadNFTShapeSystem : PartialDownloadSystemBase<Texture2DData, GetNFTShapeIntention>
+    public partial class LoadNFTShapeSystem : LoadSystemBase<Texture2DData, GetNFTShapeIntention>
     {
         private readonly IWebRequestController webRequestController;
-        private readonly ITexturesFuse texturesFuse;
-        private readonly bool compressionEnabled;
 
-        public LoadNFTShapeSystem(
-            World world,
-            IStreamableCache<Texture2DData, GetNFTShapeIntention> cache,
-            IWebRequestController webRequestController,
-            ArrayPool<byte> buffersPool,
-            ITexturesFuse texturesFuse,
-            IDiskCache<Texture2DData> diskCache,
-            bool compressionEnabled) : base(world, cache, webRequestController, buffersPool, diskCache)
+        public LoadNFTShapeSystem(World world, IStreamableCache<Texture2DData, GetNFTShapeIntention> cache, IWebRequestController webRequestController, IDiskCache<Texture2DData> diskCache) : base(world, cache, diskCache)
         {
             this.webRequestController = webRequestController;
-            this.texturesFuse = texturesFuse;
-            this.compressionEnabled = compressionEnabled;
         }
 
         protected override async UniTask<StreamableLoadingResult<Texture2DData>> FlowInternalAsync(GetNFTShapeIntention intention, StreamableLoadingState state, IPartitionComponent partition, CancellationToken ct)
         {
             string imageUrl = await ImageUrlAsync(intention.CommonArguments, ct);
-            var arguments = intention.CommonArguments;
-            arguments.URL = URLAddress.FromString(imageUrl);
-            intention.CommonArguments = arguments;
-            return await base.FlowInternalAsync(intention, state, partition, ct);
-        }
 
-        protected override async UniTask<StreamableLoadingResult<Texture2DData>> ProcessCompletedData(StreamableLoadingState state, GetNFTShapeIntention intention, IPartitionComponent partition, CancellationToken ct)
-        {
-            if (compressionEnabled)
-            {
-                EnumResult<IOwnedTexture2D, NativeMethods.ImageResult> textureFromBytesAsync = await texturesFuse.TextureFromBytesAsync(state.GetFullyDownloadedData(), TextureType.Albedo, ct);
-                return new StreamableLoadingResult<Texture2DData>(new Texture2DData(textureFromBytesAsync.Value));
-            }
-            else
-            {
-                Texture2D texture = new Texture2D(1, 1);
-                texture.LoadImage(state.GetFullyDownloadedData().ToArray());
-                texture.wrapMode = GetNFTShapeIntention.WRAP_MODE;
-                texture.filterMode = GetNFTShapeIntention.FILTER_MODE;
-                texture.SetDebugName(intention.CommonArguments.URL.Value);
-                return new StreamableLoadingResult<Texture2DData>(new Texture2DData(texture));
-            }
+            // texture request
+            // Attempts should be always 1 as there is a repeat loop in `LoadSystemBase`
+            var result = await webRequestController.GetTextureAsync(
+                new CommonLoadingArguments(URLAddress.FromString(imageUrl), attempts: 1),
+                new GetTextureArguments(TextureType.Albedo),
+                new GetTextureWebRequest.CreateTextureOp(GetNFTShapeIntention.WRAP_MODE, GetNFTShapeIntention.FILTER_MODE),
+                ct,
+                GetReportData()
+            );
+
+            if (result == null)
+                return new StreamableLoadingResult<Texture2DData>(
+                    GetReportData(),
+                    new Exception($"Error loading texture from url {intention.CommonArguments.URL}")
+                );
+
+            return new StreamableLoadingResult<Texture2DData>(new Texture2DData(result));
         }
 
         private async UniTask<string> ImageUrlAsync(CommonArguments commonArguments, CancellationToken ct)

@@ -54,8 +54,7 @@ namespace Global.Dynamic
             Entity playerEntity,
             ITexturesFuse texturesFuse,
             ISystemMemoryCap memoryCap,
-            CancellationToken ct,
-            bool compressionEnabled = false
+            CancellationToken ct
         )
         {
             (StaticContainer? container, bool isSuccess) result = await core.LoadStaticContainerAsync(bootstrapContainer, globalPluginSettingsContainer, debugContainerBuilder, playerEntity, texturesFuse, memoryCap, ct);

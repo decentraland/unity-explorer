@@ -1,67 +1,46 @@
 using Arch.Core;
 using Arch.SystemGroups;
-using CommunityToolkit.HighPerformance;
 using Cysharp.Threading.Tasks;
 using DCL.WebRequests;
 using DCL.Diagnostics;
-using DCL.Profiling;
+using DCL.Optimization.PerformanceBudgeting;
+using DCL.Utilities.Extensions;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
-using Plugins.TexturesFuse.TexturesServerWrap;
-using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
+using ECS.Unity.Textures.Utils;
 using System;
-using System.Buffers;
-using System.IO;
 using System.Threading;
-using Unity.Collections;
-using UnityEngine;
-using Utility;
-using Utility.Types;
 
 namespace ECS.StreamableLoading.Textures
 {
     [UpdateInGroup(typeof(StreamableLoadingGroup))]
     [LogCategory(ReportCategory.TEXTURES)]
-    public partial class LoadTextureSystem : PartialDownloadSystemBase<Texture2DData, GetTextureIntention>
+    public partial class LoadTextureSystem : LoadSystemBase<Texture2DData, GetTextureIntention>
     {
-        private readonly ITexturesFuse texturesFuse;
-        private readonly bool compressionEnabled;
+        private readonly IWebRequestController webRequestController;
 
-        public LoadTextureSystem(
-            World world,
-            IStreamableCache<Texture2DData, GetTextureIntention> cache,
-            IWebRequestController webRequestController,
-            ArrayPool<byte> buffersPool,
-            ITexturesFuse texturesFuse,
-            IDiskCache<Texture2DData> diskCache,
-            bool compressionEnabled
-            ) : base(world, cache, webRequestController, buffersPool, diskCache)
+        internal LoadTextureSystem(World world, IStreamableCache<Texture2DData, GetTextureIntention> cache, IWebRequestController webRequestController, IDiskCache<Texture2DData> diskCache) : base(world, cache, diskCache)
         {
-            this.texturesFuse = texturesFuse;
-            this.compressionEnabled = compressionEnabled;
+            this.webRequestController = webRequestController;
         }
 
-        protected override async UniTask<StreamableLoadingResult<Texture2DData>> ProcessCompletedData(StreamableLoadingState state, GetTextureIntention intention, IPartitionComponent partition, CancellationToken ct)
+        protected override async UniTask<StreamableLoadingResult<Texture2DData>> FlowInternalAsync(GetTextureIntention intention, StreamableLoadingState state, IPartitionComponent partition, CancellationToken ct)
         {
-            ProfilingCounters.TexturesAmount.Value++;
-            if (compressionEnabled)
-            {
-                EnumResult<IOwnedTexture2D, NativeMethods.ImageResult> textureFromBytesAsync = await texturesFuse.TextureFromBytesAsync(state.GetFullyDownloadedData(), intention.TextureType, ct);
-                return new StreamableLoadingResult<Texture2DData>(new Texture2DData(textureFromBytesAsync.Value));
-            }
-            else
-            {
-                Texture2D texture = new Texture2D(1, 1);
-                texture.LoadImage(state.GetFullyDownloadedData().ToArray());
-                texture.wrapMode = intention.WrapMode;
-                texture.filterMode = intention.FilterMode;
-                texture.SetDebugName(intention.CommonArguments.URL.Value);
-                return new StreamableLoadingResult<Texture2DData>(new Texture2DData(texture));
-            }
-        }
+            if (intention.IsVideoTexture) throw new NotSupportedException($"{nameof(LoadTextureSystem)} does not support video textures. They should be handled by {nameof(VideoTextureUtils)}");
 
+            // Attempts should be always 1 as there is a repeat loop in `LoadSystemBase`
+            var result = await webRequestController.GetTextureAsync(
+                intention.CommonArguments,
+                new GetTextureArguments(intention.TextureType),
+                GetTextureWebRequest.CreateTexture(intention.WrapMode, intention.FilterMode),
+                ct,
+                GetReportData()
+            );
+
+            return new StreamableLoadingResult<Texture2DData>(new Texture2DData(result.EnsureNotNull()));
+        }
     }
 }
