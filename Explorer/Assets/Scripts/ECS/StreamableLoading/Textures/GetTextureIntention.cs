@@ -14,6 +14,7 @@ namespace ECS.StreamableLoading.Textures
         public readonly TextureWrapMode WrapMode;
         public readonly FilterMode FilterMode;
         public readonly TextureType TextureType;
+
         // OR
         public readonly bool IsVideoTexture;
         public readonly CRDTEntity VideoPlayerEntity;
@@ -23,9 +24,10 @@ namespace ECS.StreamableLoading.Textures
         public CancellationTokenSource CancellationTokenSource => CommonArguments.CancellationTokenSource;
 
         // Note: Depending on the origin of the texture, it may not have a file hash, so the source URL is used in equality comparisons
-        private string cacheKey => string.IsNullOrEmpty(FileHash) ? CommonArguments.URL.Value : FileHash;
+        private readonly string cacheKey => string.IsNullOrEmpty(FileHash) ? CommonArguments.URL.Value : FileHash;
 
-        public GetTextureIntention(string url, string fileHash, TextureWrapMode wrapMode, FilterMode filterMode, TextureType textureType, int attemptsCount = StreamableLoadingDefaults.ATTEMPTS_COUNT)
+        public GetTextureIntention(string url, string fileHash, TextureWrapMode wrapMode, FilterMode filterMode, TextureType textureType,
+            int attemptsCount = StreamableLoadingDefaults.ATTEMPTS_COUNT)
         {
             CommonArguments = new CommonLoadingArguments(url, attempts: attemptsCount);
             WrapMode = wrapMode;
@@ -48,7 +50,6 @@ namespace ECS.StreamableLoading.Textures
         }
 
         public bool Equals(GetTextureIntention other) =>
-            this.AreUrlEquals(other) &&
             cacheKey == other.cacheKey &&
             WrapMode == other.WrapMode &&
             FilterMode == other.FilterMode &&
@@ -58,10 +59,10 @@ namespace ECS.StreamableLoading.Textures
         public override bool Equals(object obj) =>
             obj is GetTextureIntention other && Equals(other);
 
-        public override readonly int GetHashCode() =>
-            HashCode.Combine((int)WrapMode, (int)FilterMode, CommonArguments.URL,cacheKey, IsVideoTexture, VideoPlayerEntity);
+        public readonly override int GetHashCode() =>
+            HashCode.Combine((int)WrapMode, (int)FilterMode, cacheKey, IsVideoTexture, VideoPlayerEntity);
 
-        public override readonly string ToString() =>
+        public readonly override string ToString() =>
             $"Get Texture: {(IsVideoTexture ? $"Video {VideoPlayerEntity}" : CommonArguments.URL)}";
     }
 }
