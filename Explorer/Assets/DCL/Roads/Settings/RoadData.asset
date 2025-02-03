@@ -23179,6 +23179,39 @@ MonoBehaviour:
   - RoadCoordinate: {x: 58, y: -150}
     Rotation: {x: 0, y: 1, z: 0, w: 0}
     RoadModel: Road_0
+  - RoadCoordinate: {x: 24, y: -150}
+    Rotation: {x: 0, y: 1, z: 0, w: 0}
+    RoadModel: Road_B
+  - RoadCoordinate: {x: 26, y: -150}
+    Rotation: {x: 0, y: 1, z: 0, w: 0}
+    RoadModel: Road_B
+  - RoadCoordinate: {x: 27, y: -150}
+    Rotation: {x: 0, y: 1, z: 0, w: 0}
+    RoadModel: Road_A
+  - RoadCoordinate: {x: 28, y: -150}
+    Rotation: {x: 0, y: 1, z: 0, w: 0}
+    RoadModel: Road_B
+  - RoadCoordinate: {x: 30, y: -150}
+    Rotation: {x: 0, y: 1, z: 0, w: 0}
+    RoadModel: Road_B
+  - RoadCoordinate: {x: 31, y: -150}
+    Rotation: {x: 0, y: 1, z: 0, w: 0}
+    RoadModel: Road_E
+  - RoadCoordinate: {x: 42, y: -150}
+    Rotation: {x: 0, y: 1, z: 0, w: 0}
+    RoadModel: Road_0
+  - RoadCoordinate: {x: 44, y: -150}
+    Rotation: {x: 0, y: 1, z: 0, w: 0}
+    RoadModel: Road_0
+  - RoadCoordinate: {x: 45, y: -150}
+    Rotation: {x: 0, y: 1, z: 0, w: 0}
+    RoadModel: Road_C
+  - RoadCoordinate: {x: 46, y: -150}
+    Rotation: {x: 0, y: 1, z: 0, w: 0}
+    RoadModel: Road_0
+  - RoadCoordinate: {x: 47, y: -150}
+    Rotation: {x: 0, y: 1, z: 0, w: 0}
+    RoadModel: Road_C
   <RoadAssetsReference>k__BackingField:
   - m_AssetGUID: 2d6ac3b70dd761a428bae0e655a93ebc
     m_SubObjectName: 
