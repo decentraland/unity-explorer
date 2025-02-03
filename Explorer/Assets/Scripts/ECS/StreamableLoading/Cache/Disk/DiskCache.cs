@@ -50,15 +50,10 @@ namespace ECS.StreamableLoading.Cache.Disk
                 if (File.Exists(path) == false)
                     return EnumResult<SlicedOwnedMemory<byte>?, TaskError>.SuccessResult(null);
 
-                SlicedOwnedMemory<byte> data;
+                await using var stream = new FileStream(path, FileMode.Open, FileAccess.Read);
+                var data = new SlicedOwnedMemory<byte>(MemoryPool<byte>.Shared!.Rent((int)stream.Length)!, (int)stream.Length);
 
-                {
-                    using var stream = new FileStream(path, FileMode.Open, FileAccess.Read);
-                    data = new SlicedOwnedMemory<byte>(MemoryPool<byte>.Shared!.Rent((int)stream.Length)!, (int)stream.Length);
-
-                    int _ = await stream.ReadAsync(data.Memory, token);
-                }
-
+                int _ = await stream.ReadAsync(data.Memory, token);
                 diskCleanUp.NotifyUsed(fileName);
                 return EnumResult<SlicedOwnedMemory<byte>?, TaskError>.SuccessResult(data);
             }
