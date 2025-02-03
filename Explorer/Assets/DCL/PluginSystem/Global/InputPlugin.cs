@@ -42,6 +42,7 @@ namespace DCL.PluginSystem.Global
         private readonly IMVCManager mvcManager;
         private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly UIDocument rootUIDocument;
+        private readonly UIDocument sceneUIDocument;
         private readonly UIDocument cursorUIDocument;
         private readonly IExposedCameraData cameraData;
         private CrosshairCanvas crosshairCanvas = null!;
@@ -56,6 +57,7 @@ namespace DCL.PluginSystem.Global
             IMVCManager mvcManager,
             IDebugContainerBuilder debugContainerBuilder,
             UIDocument rootUIDocument,
+            UIDocument sceneUIDocument,
             UIDocument cursorUIDocument,
             IExposedCameraData cameraData)
         {
@@ -68,6 +70,7 @@ namespace DCL.PluginSystem.Global
             this.mvcManager = mvcManager;
             this.debugContainerBuilder = debugContainerBuilder;
             this.rootUIDocument = rootUIDocument;
+            this.sceneUIDocument = sceneUIDocument;
             this.cursorUIDocument = cursorUIDocument;
             this.cameraData = cameraData;
 
@@ -101,7 +104,7 @@ namespace DCL.PluginSystem.Global
             DropPlayerFromFreeCameraSystem.InjectToWorld(ref builder, dclInput.FreeCamera.DropPlayer);
             UpdateEmoteInputSystem.InjectToWorld(ref builder, dclInput, messageBus, mvcManager);
             UpdateCursorInputSystem.InjectToWorld(ref builder, dclInput, eventSystem, cursor, crosshairCanvas, cameraData);
-            UpdateShowHideUIInputSystem.InjectToWorld(ref builder, dclInput, mvcManager, debugContainerBuilder, rootUIDocument, cursorUIDocument);
+            UpdateShowHideUIInputSystem.InjectToWorld(ref builder, dclInput, mvcManager, debugContainerBuilder, rootUIDocument, sceneUIDocument, cursorUIDocument);
         }
 
         public void Dispose()

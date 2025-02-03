@@ -28,7 +28,9 @@ using DCL.WebRequests.Analytics;
 using ECS.StreamableLoading.Cache.Disk;
 using SceneRuntime.Factory.WebSceneSource;
 using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
+using UnityEngine;
 using UnityEngine.AddressableAssets;
+using UnityEngine.UIElements;
 
 namespace Global.Tests.PlayMode
 {
@@ -36,11 +38,13 @@ namespace Global.Tests.PlayMode
     {
         private const string GLOBAL_CONTAINER_ADDRESS = "Integration Tests Global Container";
         private const string WORLD_CONTAINER_ADDRESS = "Integration Tests World Container";
+        private const string SCENES_UI_ADDRESS = "ScenesUIRootCanvas";
 
         public static async UniTask<(StaticContainer staticContainer, SceneSharedContainer sceneSharedContainer)> CreateStaticContainer(CancellationToken ct)
         {
             PluginSettingsContainer globalSettingsContainer = await Addressables.LoadAssetAsync<PluginSettingsContainer>(GLOBAL_CONTAINER_ADDRESS);
             PluginSettingsContainer sceneSettingsContainer = await Addressables.LoadAssetAsync<PluginSettingsContainer>(WORLD_CONTAINER_ADDRESS);
+            UIDocument scenesUI = (await Addressables.LoadAssetAsync<GameObject>(SCENES_UI_ADDRESS)).GetComponent<UIDocument>(); // This is / should be the only place where we load this via Addressables
             IAssetsProvisioner assetProvisioner = new AddressablesProvisioner().WithErrorTrace();
             IDecentralandUrlsSource dclUrls = new DecentralandUrlsSource(DecentralandEnvironment.Org);
 
@@ -77,6 +81,7 @@ namespace Global.Tests.PlayMode
                 false,
                 Substitute.For<IAnalyticsController>(),
                 new IDiskCache.Fake(),
+                scenesUI,
                 ct
             );
 

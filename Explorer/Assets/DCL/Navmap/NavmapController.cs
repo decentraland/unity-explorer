@@ -6,6 +6,7 @@ using DCL.MapRenderer.CommonBehavior;
 using DCL.MapRenderer.ConsumerUtils;
 using DCL.MapRenderer.MapCameraController;
 using DCL.MapRenderer.MapLayers;
+using DCL.MapRenderer.MapLayers.Pins;
 using DCL.MapRenderer.MapLayers.PlayerMarker;
 using DCL.Navmap.FilterPanel;
 using DCL.PlacesAPIService;
@@ -126,14 +127,24 @@ namespace DCL.Navmap
 
         private void SetDestination(PlacesData.PlaceInfo? placeInfo)
         {
-            mapPathEventBus.SetDestination(lastParcelClicked.Parcel, lastParcelClicked.PinMarker);
+            Vector2Int destinationParcel = placeInfo switch
+                                           {
+                                               { Positions: { Length: 1 } } => placeInfo.Positions[0],
+                                               { Positions: { Length: > 1 } } => placeInfo.base_position_processed,
+                                               _ => Vector2Int.zero,
+                                           };
+
+            IPinMarker? destinationPinMarker = destinationParcel == lastParcelClicked.Parcel ? lastParcelClicked.PinMarker : null;
+
+            mapPathEventBus.SetDestination(destinationParcel, destinationPinMarker);
             navmapView.DestinationInfoElement.gameObject.SetActive(true);
 
-            if (lastParcelClicked.PinMarker != null) { navmapView.DestinationInfoElement.Setup(lastParcelClicked.PinMarker.Title, true, lastParcelClicked.PinMarker.CurrentSprite); }
+            if (destinationPinMarker != null)
+                navmapView.DestinationInfoElement.Setup(destinationPinMarker.Title, true, destinationPinMarker.CurrentSprite);
             else
             {
                 parcelTitleStringBuilder.Clear();
-                var parcelDescription = parcelTitleStringBuilder.Append(placeInfo != null ? placeInfo.title : EMPTY_PARCEL_NAME).Append(" ").Append(lastParcelClicked.Parcel.ToString()).ToString();
+                var parcelDescription = parcelTitleStringBuilder.Append(placeInfo != null ? placeInfo.title : EMPTY_PARCEL_NAME).Append(" ").Append(destinationParcel.ToString()).ToString();
                 navmapView.DestinationInfoElement.Setup(parcelDescription, false, null);
             }
         }
@@ -156,7 +167,7 @@ namespace DCL.Navmap
 
                 if (place == null) place = new PlacesData.PlaceInfo(clickedParcel.Parcel);
 
-                navmapBus.SelectPlaceAsync(place, fetchPlaceAndShowCancellationToken.Token).Forget();
+                navmapBus.SelectPlaceAsync(place, fetchPlaceAndShowCancellationToken.Token, true).Forget();
             }
 
             fetchPlaceAndShowCancellationToken = fetchPlaceAndShowCancellationToken.SafeRestart();
