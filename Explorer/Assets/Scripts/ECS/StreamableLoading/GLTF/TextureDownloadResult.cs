@@ -12,18 +12,18 @@ namespace ECS.StreamableLoading.GLTF
         public byte[] Data => Array.Empty<byte>();
         public string Text => string.Empty;
         public bool? IsBinary => true;
-        public readonly IDisposableTexture Texture;
+        private readonly IDisposableTexture texture;
 
         public TextureDownloadResult(Texture2D? texture)
         {
-            Texture = new DisposableTexture() { Texture = texture };
+            this.texture = new DisposableTexture { Texture = texture };
             Error = null!;
             Success = false;
         }
 
         public IDisposableTexture GetTexture(bool forceSampleLinear) =>
-            Texture;
+            texture;
 
-        public void Dispose() => Texture.Dispose();
+        public void Dispose() => texture.Dispose();
     }
 }

@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace ECS.StreamableLoading.GLTF
 {
-    public struct DisposableTexture : IDisposableTexture
+    public class DisposableTexture : IDisposableTexture
     {
         public Texture2D? Texture { get; set; }
 
