@@ -23,7 +23,7 @@ namespace ECS.StreamableLoading.Tests
         {
             // set-up
             var world = World.Create();
-            var loadSystem = new LoadTextureSystem(world, new TexturesCache<GetTextureIntention>(), IWebRequestController.DEFAULT, IDiskCache<Texture2DData>.Null.INSTANCE);
+            var loadSystem = new LoadSceneTextureSystem(world, new TexturesCache<GetTextureIntention>(), IWebRequestController.DEFAULT, IDiskCache<Texture2DData>.Null.INSTANCE);
             var promises = new List<Promise>(REQUESTS_COUNT);
             for (var i = 0; i < REQUESTS_COUNT; i++) promises.Add(NewPromise(world));
 

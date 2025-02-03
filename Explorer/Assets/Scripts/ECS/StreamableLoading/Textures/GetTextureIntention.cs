@@ -3,6 +3,7 @@ using ECS.StreamableLoading.Common.Components;
 using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using System;
 using System.Threading;
+using SceneRunner.Scene;
 using UnityEngine;
 
 namespace ECS.StreamableLoading.Textures
@@ -25,7 +26,7 @@ namespace ECS.StreamableLoading.Textures
         // Note: Depending on the origin of the texture, it may not have a file hash, so the source URL is used in equality comparisons
         private string cacheKey => string.IsNullOrEmpty(FileHash) ? CommonArguments.URL.Value : FileHash;
 
-        public GetTextureIntention(string url, string fileHash, TextureWrapMode wrapMode, FilterMode filterMode, TextureType textureType, int attemptsCount = StreamableLoadingDefaults.ATTEMPTS_COUNT)
+        public GetTextureIntention(string url, string fileHash, TextureWrapMode wrapMode, FilterMode filterMode, TextureType textureType, int attemptsCount = StreamableLoadingDefaults.ATTEMPTS_COUNT, SceneAssetBundleManifest? manifest = null)
         {
             CommonArguments = new CommonLoadingArguments(url, attempts: attemptsCount);
             WrapMode = wrapMode;
