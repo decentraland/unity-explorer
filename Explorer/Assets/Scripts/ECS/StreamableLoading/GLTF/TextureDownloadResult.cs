@@ -5,14 +5,14 @@ using UnityEngine;
 
 namespace ECS.StreamableLoading.GLTF
 {
-    public struct TextureDownloadResult : ITextureDownload
+    public class TextureDownloadResult : ITextureDownload
     {
         public bool Success { get; set; }
         public string? Error { get; set; }
         public byte[] Data => Array.Empty<byte>();
         public string Text => string.Empty;
         public bool? IsBinary => true;
-        private readonly IDisposableTexture texture;
+        private readonly DisposableTexture texture;
 
         public TextureDownloadResult(Texture2D? texture)
         {
