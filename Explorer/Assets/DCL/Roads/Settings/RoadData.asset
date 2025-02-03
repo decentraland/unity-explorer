@@ -23156,13 +23156,13 @@ MonoBehaviour:
     Rotation: {x: 0, y: 1, z: 0, w: 0}
     RoadModel: Road_0
   - RoadCoordinate: {x: 16, y: -137}
-    Rotation: {x: 0, y: 1, z: 0, w: 0}
+    Rotation: {x: 0, y: 0.70710677, z: 0, w: 0.70710677}
     RoadModel: Road_C
   - RoadCoordinate: {x: 16, y: -136}
-    Rotation: {x: 0, y: 1, z: 0, w: 0}
+    Rotation: {x: 0, y: 0.70710677, z: 0, w: 0.70710677}
     RoadModel: Road_B
   - RoadCoordinate: {x: 16, y: -135}
-    Rotation: {x: 0, y: 1, z: 0, w: 0}
+    Rotation: {x: 0, y: 0.70710677, z: 0, w: 0.70710677}
     RoadModel: Road_C
   - RoadCoordinate: {x: 16, y: -134}
     Rotation: {x: 0, y: 1, z: 0, w: 0}
