@@ -1,11 +1,11 @@
+using MVC;
+using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace DCL.Chat
 {
-
-
     public class ChatEntryMessageBubbleElement : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {
         [field: SerializeField] internal ChatEntryUsernameElement usernameElement { get; private set; }
@@ -15,12 +15,12 @@ namespace DCL.Chat
         [field: SerializeField] internal ChatEntryConfigurationSO configurationSo { get; private set; }
         [field: SerializeField] internal RectTransform popupPosition { get; private set; }
 
+        private Vector2 backgroundSize;
+
         private float backgroundHeightOffset => configurationSo.BackgroundHeightOffset;
         private float backgroundWidthOffset => configurationSo.BackgroundWidthOffset;
         private float maxEntryWidth => configurationSo.MaxEntryWidth;
         private float verifiedBadgeWidth => configurationSo.VerifiedBadgeWidth;
-
-        private Vector2 backgroundSize;
 
         public void OnPointerEnter(PointerEventData eventData)
         {
@@ -30,6 +30,11 @@ namespace DCL.Chat
         public void OnPointerExit(PointerEventData eventData)
         {
             messageOptionsButton?.gameObject.SetActive(false);
+        }
+
+        public void SetupHyperlinkHandlerDependencies(ViewDependencies dependencies)
+        {
+            messageContentElement.hyperlinkHandler.InjectDependencies(dependencies);
         }
 
         public void SetMessageData(ChatMessage data)
@@ -48,7 +53,7 @@ namespace DCL.Chat
             int nameLenght = message.SenderValidatedName.Length + (string.IsNullOrEmpty(message.SenderWalletId) ? 0 : message.SenderWalletId.Length);
             int emojisCount = GetEmojisCount(message.Message);
 
-            var messageContentText = messageContentElement.messageContentText;
+            TMP_Text messageContentText = messageContentElement.messageContentText;
 
             if (nameLenght > (emojisCount > 0 ? messageContentText.GetParsedText().Length + emojisCount : messageContentText.GetParsedText().Length))
                 return usernameElement.GetUserNamePreferredWidth(backgroundWidthOffset, verifiedBadgeWidth);
@@ -61,6 +66,5 @@ namespace DCL.Chat
 
         private int GetEmojisCount(string message) =>
             message.Split("\\U0").Length - 1;
-
     }
 }

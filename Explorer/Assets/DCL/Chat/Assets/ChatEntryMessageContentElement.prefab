@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 5118336956721699336}
   - component: {fileID: 2681651048344826938}
   - component: {fileID: 7487901908219479282}
+  - component: {fileID: 4356320699868230769}
   m_Layer: 5
   m_Name: ChatEntryMessageContentElement
   m_TagString: Untagged
@@ -167,3 +168,18 @@ MonoBehaviour:
   <messageContentRectTransform>k__BackingField: {fileID: 8258041763941702871}
   <messageContentSizeFitter>k__BackingField: {fileID: 5118336956721699336}
   <messageContentText>k__BackingField: {fileID: 2681651048344826938}
+  <hyperlinkHandler>k__BackingField: {fileID: 4356320699868230769}
+--- !u!114 &4356320699868230769
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5238833002639546345}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 71db578cd89a48d0903a2e608024fcd5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  textComponent: {fileID: 2681651048344826938}
+  styleSheet: {fileID: 11400000, guid: 3675d28be476ed544a0b350da26e2d70, type: 2}

@@ -1,5 +1,6 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.Chat.Commands;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using ECS.SceneLifeCycle.Realm;
 using System;
@@ -8,7 +9,7 @@ using System.Threading;
 using UnityEngine;
 using Utility.Types;
 
-namespace Global.Dynamic.ChatCommands
+namespace DCL.Chat.Commands
 {
     /// <summary>
     /// Handles teleporting players to parcels or realms.

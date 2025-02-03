@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
+using MVC;
 using SuperScrollView;
 using System;
 using System.Collections.Generic;
@@ -13,7 +14,7 @@ namespace DCL.Chat
     /// <summary>
     /// A UI element that displays a list of chat messages.
     /// </summary>
-    public class ChatMessageViewerElement : MonoBehaviour, IDisposable
+    public class ChatMessageViewerElement : MonoBehaviour, IDisposable, IViewWithGlobalDependencies
     {
         /// <summary>
         /// The prefab to use when instantiating a new item.
@@ -55,7 +56,7 @@ namespace DCL.Chat
         private IReadOnlyList<ChatMessage> chatMessages;
         private CancellationTokenSource fadeoutCts;
         private CalculateUsernameColorDelegate calculateUsernameColor;
-
+        private ViewDependencies viewDependencies;
         /// <summary>
         /// Gets whether the scroll view is showing the bottom of the content, and it can't scroll down anymore.
         /// </summary>
@@ -204,6 +205,7 @@ namespace DCL.Chat
 
                 ChatEntryView itemScript = item!.GetComponent<ChatEntryView>()!;
                 SetItemData(index, itemData, itemScript);
+                itemScript.messageBubbleElement.SetupHyperlinkHandlerDependencies(viewDependencies);
 
                 Button? messageOptionsButton = itemScript.messageBubbleElement.messageOptionsButton;
                 messageOptionsButton?.onClick.RemoveAllListeners();
@@ -254,6 +256,11 @@ namespace DCL.Chat
             chatEntriesCanvasGroup.alpha = 1;
             await UniTask.Delay(chatEntriesWaitBeforeFading, cancellationToken: ct);
             await chatEntriesCanvasGroup.DOFade(0.4f, chatEntriesFadeTime).ToUniTask(cancellationToken: ct);
+        }
+
+        public void InjectDependencies(ViewDependencies dependencies)
+        {
+            viewDependencies = dependencies;
         }
     }
 }

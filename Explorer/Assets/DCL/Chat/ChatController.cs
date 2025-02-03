@@ -12,9 +12,7 @@ using DCL.Nametags;
 using ECS.Abstract;
 using MVC;
 using System;
-using System.Text.RegularExpressions;
 using System.Threading;
-using UnityEngine;
 using UnityEngine.InputSystem;
 using Utility.Arch;
 
@@ -26,23 +24,20 @@ namespace DCL.Chat
         private readonly ChatEntryConfigurationSO chatEntryConfiguration;
         private readonly IChatMessagesBus chatMessagesBus;
         private readonly NametagsData nametagsData;
-
         private readonly IChatHistory chatHistory;
         private readonly World world;
         private readonly Entity playerEntity;
-
         private readonly IInputBlock inputBlock;
         private readonly ViewDependencies viewDependencies;
+        private readonly IChatCommandsBus chatCommandsBus;
 
         private SingleInstanceEntity cameraEntity;
-        private (IChatCommand command, Match param) chatCommand;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
 
         public event Action<bool>? ChatBubbleVisibilityChanged;
 
-        public ChatController(
-            ViewFactoryMethod viewFactory,
+        public ChatController(ViewFactoryMethod viewFactory,
             ChatEntryConfigurationSO chatEntryConfiguration,
             IChatMessagesBus chatMessagesBus,
             IChatHistory chatHistory,
@@ -51,8 +46,8 @@ namespace DCL.Chat
             World world,
             Entity playerEntity,
             IInputBlock inputBlock,
-            ViewDependencies viewDependencies
-        ) : base(viewFactory)
+            ViewDependencies viewDependencies,
+            IChatCommandsBus chatCommandsBus) : base(viewFactory)
         {
             this.chatEntryConfiguration = chatEntryConfiguration;
             this.chatMessagesBus = chatMessagesBus;
@@ -63,6 +58,7 @@ namespace DCL.Chat
             this.playerEntity = playerEntity;
             this.inputBlock = inputBlock;
             this.viewDependencies = viewDependencies;
+            this.chatCommandsBus = chatCommandsBus;
         }
 
         public void Clear() // Called by a command
@@ -77,6 +73,7 @@ namespace DCL.Chat
 
             //We start processing messages once the view is ready
             chatMessagesBus.MessageAdded += OnChatBusMessageAdded;
+            chatCommandsBus.OnClearChat += Clear;
             chatHistory.MessageAdded += CreateChatEntry;
 
             viewInstance!.InjectDependencies(viewDependencies);
@@ -131,6 +128,7 @@ namespace DCL.Chat
         {
             chatMessagesBus.MessageAdded -= OnChatBusMessageAdded;
             chatHistory.MessageAdded -= CreateChatEntry;
+            chatCommandsBus.OnClearChat -= Clear;
 
             viewInstance!.PointerEnter -= OnChatViewPointerEnter;
             viewInstance.PointerExit -= OnChatViewPointerExit;

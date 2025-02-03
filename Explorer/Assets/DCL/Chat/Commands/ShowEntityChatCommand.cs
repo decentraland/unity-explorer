@@ -4,7 +4,7 @@ using SceneRunner.Debugging;
 using SceneRunner.Debugging.Hub;
 using System.Threading;
 
-namespace Global.Dynamic.ChatCommands
+namespace DCL.Chat.Commands
 {
     /// <summary>
     /// Show entity components info.

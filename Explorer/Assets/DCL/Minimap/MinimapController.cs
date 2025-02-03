@@ -49,13 +49,13 @@ namespace DCL.Minimap
         private readonly ISceneRestrictionBusController sceneRestrictionBusController;
         private readonly IRealmController realmController;
 
+        private readonly string startParcelInGenesis;
+
         private CancellationTokenSource cts;
         private MapRendererTrackPlayerPosition mapRendererTrackPlayerPosition;
         private IMapCameraController? mapCameraController;
         private Vector2Int previousParcelPosition;
         private SceneRestrictionsController? sceneRestrictionsController;
-
-        private readonly string startParcelInGenesis;
 
         public IReadOnlyDictionary<MapLayer, IMapLayerParameter> LayersParameters { get; } = new Dictionary<MapLayer, IMapLayerParameter>
             { { MapLayer.PlayerMarker, new PlayerMarkerParameter { BackgroundIsActive = false } } };
