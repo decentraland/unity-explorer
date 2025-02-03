@@ -14,6 +14,7 @@ using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using Utility;
+using Utility.Types;
 
 namespace ECS.StreamableLoading.Common.Systems
 {
@@ -255,28 +256,12 @@ namespace ECS.StreamableLoading.Common.Systems
             cache.OngoingRequests.SyncTryAdd(intention.CommonArguments.GetCacheableURL(), source);
             var ongoingRequestRemoved = false;
 
-            // Try load from cache first
-            var cachedContent = await genericCache.ContentAsync(intention, ct);
-
-            if (cachedContent.Success)
-            {
-                var option = cachedContent.Value;
-
-                if (option.Has)
-                {
-                    var cacheResult = new StreamableLoadingResult<TAsset>(option.Value);
-                    cacheResult = cacheResult.WithSource(AssetSource.CACHE);
-                    TryRemoveOngoingRequest();
-                    source.TrySetResult(cacheResult);
-                    return cacheResult;
-                }
-            }
-
             StreamableLoadingResult<TAsset>? result = null;
 
             try
             {
-                result = await RepeatLoopAsync(intention, acquiredBudget, partition, ct);
+                // Try load from cache first
+                result = await TryLoadFromCache(intention, ct) ?? await RepeatLoopAsync(intention, acquiredBudget, partition, ct);
 
                 // Ensure that we returned to the main thread
                 await UniTask.SwitchToMainThread(ct);
@@ -333,10 +318,24 @@ namespace ECS.StreamableLoading.Common.Systems
             }
         }
 
+        private async UniTask<StreamableLoadingResult<TAsset>?> TryLoadFromCache(TIntention intention, CancellationToken ct)
+        {
+            EnumResult<Option<TAsset>, TaskError> cachedContent = await genericCache.ContentAsync(intention, ct);
+
+            if (cachedContent.Success)
+            {
+                Option<TAsset> option = cachedContent.Value;
+
+                if (option.Has)
+                    return new StreamableLoadingResult<TAsset>(option.Value);
+            }
+
+            return null;
+        }
+
         private async UniTask<StreamableLoadingResult<TAsset>?> RepeatLoopAsync(TIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
             StreamableLoadingResult<TAsset>? result = await intention.RepeatLoopAsync(acquiredBudget, partition, cachedInternalFlowDelegate, GetReportData(), ct);
-            result = result?.WithSource(intention.CommonArguments.CurrentSource);
             return result is { Succeeded: false } ? SetIrrecoverableFailure(intention, result.Value) : result;
         }
 

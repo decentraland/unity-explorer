@@ -18,24 +18,19 @@ namespace AssetManagement
         EMBEDDED = 1,
 
         /// <summary>
-        ///     Load from memory or disk cache
-        /// </summary>
-        CACHE = 1 << 1,
-
-        /// <summary>
         ///     Downloaded over network
         /// </summary>
-        WEB = 2 << 2,
+        WEB = 1 << 1,
 
         /// <summary>
         ///     Downloaded over Addressables
         /// </summary>
-        ADDRESSABLE = 1 << 4,
+        ADDRESSABLE = 1 << 2,
 
         /// <summary>
         ///     All sources
         /// </summary>
-        ALL = EMBEDDED | CACHE | WEB | ADDRESSABLE,
+        ALL = EMBEDDED | WEB | ADDRESSABLE,
     }
 
     public static class AssetSourceEnumExtensions
@@ -50,9 +45,6 @@ namespace AssetManagement
             },
             {
                 AssetSource.WEB, "WEB"
-            },
-            {
-                AssetSource.CACHE, "CACHE"
             },
             {
                 AssetSource.NONE, "NONE"
