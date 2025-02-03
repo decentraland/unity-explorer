@@ -1,4 +1,3 @@
-using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.RealmNavigation.LoadingOperation;
 using DCL.Utilities;
 
