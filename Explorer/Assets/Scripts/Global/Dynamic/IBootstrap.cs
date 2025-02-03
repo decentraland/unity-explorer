@@ -28,11 +28,12 @@ namespace Global.Dynamic
             Entity playerEntity,
             ITexturesFuse texturesFuse,
             ISystemMemoryCap memoryCap,
+            UIDocument scenesUIRoot,
             CancellationToken ct
         );
 
         UniTask<(DynamicWorldContainer?, bool)> LoadDynamicWorldContainerAsync(BootstrapContainer bootstrapContainer, StaticContainer staticContainer, PluginSettingsContainer scenePluginSettingsContainer, DynamicSceneLoaderSettings settings, DynamicSettings dynamicSettings,
-            UIDocument uiToolkitRoot, UIDocument cursorRoot, AudioClipConfig backgroundMusic,
+            UIDocument uiToolkitRoot, UIDocument scenesUIRoot, UIDocument cursorRoot, AudioClipConfig backgroundMusic,
             WorldInfoTool worldInfoTool,
             Entity playerEntity,
             IAppArgs appArgs,

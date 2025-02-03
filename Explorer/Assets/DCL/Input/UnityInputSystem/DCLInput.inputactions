@@ -3104,6 +3104,15 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
+                },
+                {
+                    "name": "ToggleNametags",
+                    "type": "Button",
+                    "id": "35bcdb9a-cdac-4391-a47e-6f6a134f694d",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
                 }
             ],
             "bindings": [
@@ -3555,6 +3564,17 @@
                     "processors": "",
                     "groups": "",
                     "action": "Screenshot",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "a39e9815-f60c-4e5d-afef-3fe7fcd03dfa",
+                    "path": "<Keyboard>/n",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "ToggleNametags",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

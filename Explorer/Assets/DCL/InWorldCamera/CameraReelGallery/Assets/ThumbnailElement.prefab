@@ -149,7 +149,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchoredPosition: {x: -10, y: -10}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 1, y: 1}
 --- !u!1 &4693459573345756047
@@ -187,7 +187,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 4, y: 4}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &8365274367876713441
 CanvasRenderer:
@@ -217,8 +217,8 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 0}
-  m_Type: 0
+  m_Sprite: {fileID: 21300000, guid: 4bc8ac5f2d268405da4ed45362da582a, type: 3}
+  m_Type: 1
   m_PreserveAspect: 0
   m_FillCenter: 1
   m_FillMethod: 4
@@ -258,10 +258,10 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 8174522652015465086}
   - {fileID: 4395404846359650668}
   - {fileID: 2524361969500198592}
   - {fileID: 3651668776247032185}
+  - {fileID: 8174522652015465086}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -314,9 +314,9 @@ MonoBehaviour:
   <optionButtonContainer>k__BackingField: {fileID: 3651668776247032185}
   <button>k__BackingField: {fileID: 7425802945127696628}
   <outline>k__BackingField: {fileID: 4693459573345756047}
-  <optionButtonOffset>k__BackingField: {x: -11, y: -23, z: 0}
-  <scaleFactorOnHover>k__BackingField: 1.01
-  <scaleAnimationDuration>k__BackingField: 0.3
+  <optionButtonOffset>k__BackingField: {x: -10, y: -23, z: 0}
+  <scaleFactorOnHover>k__BackingField: 1
+  <scaleAnimationDuration>k__BackingField: 0
   <thumbnailLoadedAnimationDuration>k__BackingField: 0.3
 --- !u!1001 &686625780324777799
 PrefabInstance:

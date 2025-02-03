@@ -23,6 +23,7 @@ namespace Global.Dynamic
         public readonly StaticContainer StaticContainer;
         public readonly IPluginSettingsContainer SettingsContainer;
         public readonly UIDocument RootUIDocument;
+        public readonly UIDocument ScenesUIDocument;
         public readonly UIDocument CursorUIDocument;
         public readonly DynamicSettings DynamicSettings;
         public readonly IWeb3VerifiedAuthenticator Web3Authenticator;
@@ -37,6 +38,7 @@ namespace Global.Dynamic
             StaticContainer staticContainer,
             IPluginSettingsContainer settingsContainer,
             UIDocument rootUIDocument,
+            UIDocument scenesUIRoot,
             UIDocument cursorUIDocument,
             DynamicSettings dynamicSettings,
             IWeb3VerifiedAuthenticator web3Authenticator,
@@ -51,6 +53,7 @@ namespace Global.Dynamic
             StaticContainer = staticContainer;
             SettingsContainer = settingsContainer;
             RootUIDocument = rootUIDocument;
+            ScenesUIDocument = scenesUIRoot;
             CursorUIDocument = cursorUIDocument;
             DynamicSettings = dynamicSettings;
             Web3Authenticator = web3Authenticator;

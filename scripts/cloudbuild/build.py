@@ -34,6 +34,7 @@ is_release_workflow = os.getenv('IS_RELEASE_BUILD', 'false').lower() == 'true'
 URL = utils.create_base_url(os.getenv('ORG_ID'), os.getenv('PROJECT_ID'))
 HEADERS = utils.create_headers(os.getenv('API_KEY'))
 POLL_TIME = int(os.getenv('POLL_TIME', '60')) # Seconds
+GLOBAL_TIMEOUT = int(os.getenv('GLOBAL_TIMEOUT', '10800')) # Seconds
 
 build_healthy = True
 
@@ -538,11 +539,17 @@ else:
 # Poll the build stats every {POLL_TIME}s
 start_time = time.time()
 while True:
+    elapsed_time = time.time() - start_time
+    if elapsed_time > GLOBAL_TIMEOUT:
+        print(f'Global timeout reached: {datetime.timedelta(seconds=elapsed_time)}. Cancelling build...')
+        cancel_build(id)
+        sys.exit(1)
+
     if poll_build(id):
-        print(f'Runner elapsed time: {datetime.timedelta(seconds=(time.time() - start_time))} | Polling again in {POLL_TIME}s [...]')
+        print(f'Runner elapsed time: {datetime.timedelta(seconds=elapsed_time)} | Polling again in {POLL_TIME}s [...]')
         time.sleep(POLL_TIME)
     else:
-        print(f'Runner FINAL elapsed time: {datetime.timedelta(seconds=(time.time() - start_time))}')
+        print(f'Runner FINAL elapsed time: {datetime.timedelta(seconds=elapsed_time)}')
         break
 
 # Handle build artifact
