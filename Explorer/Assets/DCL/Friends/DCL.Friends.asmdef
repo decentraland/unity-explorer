@@ -29,8 +29,7 @@
         "GUID:029c1c1b674aaae47a6841a0b89ad80e",
         "GUID:f95d9c0cf55f3455cbbb2b2bfc56e55c",
         "GUID:766b242fb43af451aaa331f39872177d",
-        "GUID:977f79b5e6de8468d8967dfff5ca8128",
-        "DCL.Friends.Chat.BusInterface"
+        "GUID:977f79b5e6de8468d8967dfff5ca8128"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
