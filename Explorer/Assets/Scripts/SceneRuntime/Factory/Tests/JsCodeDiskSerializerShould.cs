@@ -30,7 +30,7 @@ namespace SceneRuntime.Factory.Tests
         {
             // Arrange
             var diskCache = new DiskCache<string>(new DiskCache(CacheDirectory.New("Test"), IDiskCleanUp.None.INSTANCE), new StringDiskSerializer());
-            var key = HashKey.FromOwnedMemory(OwnedMemory.FromString("https://decentraland.org/images/ui/dark-atlas-v3.png"));
+            var key = HashKey.FromString("https://decentraland.org/images/ui/dark-atlas-v3.png");
             const string DATA = "Test data string";
             const string EXTENSION = "txt";
             var token = new CancellationToken();
