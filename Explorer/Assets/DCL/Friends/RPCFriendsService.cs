@@ -479,16 +479,19 @@ namespace DCL.Friends
                 {
                     await handshakeMutex.WaitAsync(ct);
 
-                    transport ??= new WebSocketRpcTransport(new Uri(apiUrl));
-                    client ??= new RpcClient(transport);
-
-                    switch (transport.State)
+                    switch (transport?.State ?? WebSocketState.Closed)
                     {
                         case WebSocketState.Open:
                             break;
                         case WebSocketState.Connecting:
+                            await UniTask.WaitWhile(() => transport!.State == WebSocketState.Connecting, cancellationToken: ct);
                             break;
                         default:
+                            client?.Dispose();
+                            transport?.Dispose();
+                            transport = new WebSocketRpcTransport(new Uri(apiUrl));
+                            client = new RpcClient(transport);
+
                             await transport.ConnectAsync(ct).Timeout(TimeSpan.FromSeconds(CONNECTION_TIMEOUT_SECS));
 
                             // The service expects the auth-chain in json format within a 30 seconds threshold after connection
@@ -496,11 +499,11 @@ namespace DCL.Friends
 
                             transport.ListenForIncomingData();
 
+                            port = await client.CreatePort("friends");
+                            module = await port.LoadModule(RPC_SERVICE_NAME);
+
                             break;
                     }
-
-                    port ??= await client.CreatePort("friends");
-                    module ??= await port.LoadModule(RPC_SERVICE_NAME);
                 }
                 finally { handshakeMutex.Release(); }
             }
