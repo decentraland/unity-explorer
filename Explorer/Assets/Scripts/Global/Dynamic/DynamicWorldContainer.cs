@@ -22,6 +22,8 @@ using DCL.DebugUtilities;
 using DCL.EventsApi;
 using DCL.FeatureFlags;
 using DCL.Friends;
+using DCL.Friends.Chat;
+using DCL.Friends.Chat.BusInterface;
 using DCL.Friends.Passport;
 using DCL.Input;
 using DCL.InWorldCamera.CameraReelStorageService;
@@ -520,6 +522,7 @@ namespace Global.Dynamic
 
             var friendServiceProxy = new ObjectProxy<IFriendsService>();
             IProfileThumbnailCache profileThumbnailCache = new ProfileThumbnailCache(staticContainer.WebRequestsContainer.WebRequestController);
+            IChatLifecycleBusController chatLifecycleBusController = new ChatLifecycleBusController(mvcManager);
 
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
@@ -592,7 +595,7 @@ namespace Global.Dynamic
                 new ErrorPopupPlugin(mvcManager, assetsProvisioner),
                 connectionStatusPanelPlugin,
                 new MinimapPlugin(mvcManager, minimap),
-                new ChatPlugin(assetsProvisioner, mvcManager, chatMessagesBus, chatHistory, entityParticipantTable, nametagsData, dclInput, unityEventSystem, mainUIView, staticContainer.InputBlock, globalWorld, playerEntity),
+                new ChatPlugin(assetsProvisioner, mvcManager, chatMessagesBus, chatHistory, entityParticipantTable, nametagsData, dclInput, unityEventSystem, mainUIView, staticContainer.InputBlock, chatLifecycleBusController, globalWorld, playerEntity),
                 new ExplorePanelPlugin(
                     assetsProvisioner,
                     mvcManager,
@@ -767,6 +770,7 @@ namespace Global.Dynamic
                     new MVCPassportBridge(mvcManager),
                     friendServiceProxy,
                     profileThumbnailCache,
+                    chatLifecycleBusController,
                     includeUserBlocking));
             }
 

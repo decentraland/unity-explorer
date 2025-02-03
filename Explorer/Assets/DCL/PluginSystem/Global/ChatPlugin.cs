@@ -6,6 +6,7 @@ using DCL.Chat;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
 using DCL.Emoji;
+using DCL.Friends.Chat.BusInterface;
 using DCL.Input;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
@@ -32,6 +33,7 @@ namespace DCL.PluginSystem.Global
         private readonly Entity playerEntity;
         private readonly IEventSystem eventSystem;
         private readonly MainUIView mainUIView;
+        private readonly IChatLifecycleBusController chatLifecycleBusController;
 
         private ChatController chatController;
 
@@ -46,6 +48,7 @@ namespace DCL.PluginSystem.Global
             IEventSystem eventSystem,
             MainUIView mainUIView,
             IInputBlock inputBlock,
+            IChatLifecycleBusController chatLifecycleBusController,
             Arch.Core.World world,
             Entity playerEntity
         )
@@ -63,6 +66,7 @@ namespace DCL.PluginSystem.Global
             this.eventSystem = eventSystem;
             this.mainUIView = mainUIView;
             this.inputBlock = inputBlock;
+            this.chatLifecycleBusController = chatLifecycleBusController;
         }
 
         public void Dispose() { }
@@ -98,7 +102,8 @@ namespace DCL.PluginSystem.Global
                 playerEntity,
                 dclInput,
                 eventSystem,
-                inputBlock
+                inputBlock,
+                chatLifecycleBusController
             );
 
             mvcManager.RegisterController(chatController);

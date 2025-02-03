@@ -5,6 +5,7 @@ using DCL.AssetsProvision;
 using DCL.Browser;
 using DCL.Clipboard;
 using DCL.Friends;
+using DCL.Friends.Chat.BusInterface;
 using DCL.Friends.UI.FriendPanel;
 using DCL.Friends.UI.Requests;
 using DCL.Input;
@@ -44,6 +45,7 @@ namespace DCL.PluginSystem.Global
         private readonly IProfileThumbnailCache profileThumbnailCache;
         private readonly CancellationTokenSource lifeCycleCancellationToken = new ();
         private readonly IWebBrowser webBrowser;
+        private readonly IChatLifecycleBusController chatLifecycleBusController;
         private readonly bool includeUserBlocking;
 
         private CancellationTokenSource friendServiceSubscriptionCancellationToken = new ();
@@ -66,6 +68,7 @@ namespace DCL.PluginSystem.Global
             IPassportBridge passportBridge,
             ObjectProxy<IFriendsService> friendServiceProxy,
             IProfileThumbnailCache profileThumbnailCache,
+            IChatLifecycleBusController chatLifecycleBusController,
             bool includeUserBlocking)
         {
             this.mainUIView = mainUIView;
@@ -83,6 +86,7 @@ namespace DCL.PluginSystem.Global
             this.passportBridge = passportBridge;
             this.friendServiceProxy = friendServiceProxy;
             this.profileThumbnailCache = profileThumbnailCache;
+            this.chatLifecycleBusController = chatLifecycleBusController;
             this.includeUserBlocking = includeUserBlocking;
         }
 
@@ -117,7 +121,7 @@ namespace DCL.PluginSystem.Global
 
             friendsPanelController = new FriendsPanelController(FriendsPanelController.Preallocate(friendsPanelPrefab, null, out FriendsPanelView panelView),
                 panelView,
-                mainUIView.ChatView,
+                chatLifecycleBusController,
                 mainUIView.SidebarView.FriendRequestNotificationIndicator,
                 friendsService,
                 friendEventBus,

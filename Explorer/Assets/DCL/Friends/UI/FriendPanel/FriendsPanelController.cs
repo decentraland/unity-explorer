@@ -1,7 +1,6 @@
 using Cysharp.Threading.Tasks;
-using DCL.Browser;
-using DCL.Chat;
 using DCL.Clipboard;
+using DCL.Friends.Chat.BusInterface;
 using DCL.Friends.UI.FriendPanel.Sections.Blocked;
 using DCL.Friends.UI.FriendPanel.Sections.Friends;
 using DCL.Friends.UI.FriendPanel.Sections.Requests;
@@ -29,7 +28,7 @@ namespace DCL.Friends.UI.FriendPanel
         private const int FRIENDS_REQUEST_PAGE_SIZE = 1000;
         private const int FRIENDS_FETCH_ELEMENTS_THRESHOLD = 5;
 
-        private readonly ChatView chatView;
+        private readonly IChatLifecycleBusController chatLifecycleBusController;
         private readonly NotificationIndicatorView sidebarRequestNotificationIndicator;
         private readonly BlockedSectionController blockedSectionController;
         private readonly FriendSectionController friendSectionController;
@@ -39,13 +38,12 @@ namespace DCL.Friends.UI.FriendPanel
 
         private CancellationTokenSource friendsPanelCts = new ();
         private UniTaskCompletionSource closeTaskCompletionSource = new ();
-        private bool chatWasVisible;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
 
         public FriendsPanelController(ViewFactoryMethod viewFactory,
             FriendsPanelView instantiatedView,
-            ChatView chatView,
+            IChatLifecycleBusController chatLifecycleBusController,
             NotificationIndicatorView sidebarRequestNotificationIndicator,
             IFriendsService friendsService,
             IFriendsEventBus friendEventBus,
@@ -60,7 +58,7 @@ namespace DCL.Friends.UI.FriendPanel
             IPassportBridge passportBridge,
             bool includeUserBlocking) : base(viewFactory)
         {
-            this.chatView = chatView;
+            this.chatLifecycleBusController = chatLifecycleBusController;
             this.sidebarRequestNotificationIndicator = sidebarRequestNotificationIndicator;
             this.dclInput = dclInput;
             this.includeUserBlocking = includeUserBlocking;
@@ -135,9 +133,7 @@ namespace DCL.Friends.UI.FriendPanel
             friendsPanelCts = friendsPanelCts.SafeRestart();
             closeTaskCompletionSource = new UniTaskCompletionSource();
 
-            chatWasVisible = chatView.IsChatVisible();
-            if (chatWasVisible)
-                chatView.ToggleChat(false);
+            chatLifecycleBusController.HideChat();
 
             ToggleTabs(inputData.TabToShow);
         }
@@ -146,8 +142,7 @@ namespace DCL.Friends.UI.FriendPanel
         {
             base.OnViewClose();
 
-            if (chatWasVisible)
-                chatView.ToggleChat(true);
+            chatLifecycleBusController.ShowChat();
 
             UnregisterCloseHotkey();
         }

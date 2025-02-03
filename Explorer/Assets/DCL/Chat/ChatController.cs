@@ -6,6 +6,7 @@ using DCL.Chat.Commands;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
 using DCL.Emoji;
+using DCL.Friends.Chat.BusInterface;
 using DCL.Input;
 using DCL.Input.Component;
 using DCL.Input.Systems;
@@ -83,7 +84,8 @@ namespace DCL.Chat
             Entity playerEntity,
             DCLInput dclInput,
             IEventSystem eventSystem,
-            IInputBlock inputBlock
+            IInputBlock inputBlock,
+            IChatLifecycleBusController chatLifecycleBusController
         ) : base(viewFactory)
         {
             this.chatEntryConfiguration = chatEntryConfiguration;
@@ -102,7 +104,15 @@ namespace DCL.Chat
             this.eventSystem = eventSystem;
             this.inputBlock = inputBlock;
 
+            chatLifecycleBusController.SubscribeToHideChatCommand(HideBusCommandReceived);
+
             device = InputSystem.GetDevice<Mouse>();
+
+        }
+
+        private void HideBusCommandReceived()
+        {
+            HideViewAsync(CancellationToken.None).Forget();
         }
 
         protected override void OnViewInstantiated()
