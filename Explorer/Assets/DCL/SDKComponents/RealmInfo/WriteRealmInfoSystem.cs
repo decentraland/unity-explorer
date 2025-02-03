@@ -59,9 +59,9 @@ namespace DCL.SDKComponents.RealmInfo
                 component.RealmName = data.realmData.RealmName;
                 component.NetworkId = data.realmData.NetworkId;
                 component.CommsAdapter = data.realmData.CommsAdapter;
-                data.commsRoomInfo.WriteToComponent(component);
+                component.IsPreview = data.realmData.IsLocalSceneDevelopment;
 
-                // component.IsPreview // TODO: when E@ supports running in preview mode
+                data.commsRoomInfo.WriteToComponent(component);
             }, SpecialEntitiesID.SCENE_ROOT_ENTITY, (realmData, commsRoomInfo));
         }
 
@@ -70,15 +70,15 @@ namespace DCL.SDKComponents.RealmInfo
             private readonly ObjectProxy<IRoomHub> roomHubProxy;
             private readonly ISceneData sceneData;
 
+            public string IslandSid { get; private set; }
+
+            public bool IsConnectedSceneRoom { get; private set; }
+
             public CommsRoomInfo(ObjectProxy<IRoomHub> roomHubProxy, ISceneData sceneData)
             {
                 this.roomHubProxy = roomHubProxy;
                 this.sceneData = sceneData;
             }
-
-            public string IslandSid { get; private set; }
-
-            public bool IsConnectedSceneRoom { get; private set; }
 
             /// <summary>
             ///     Returns true if rooms info has changed
