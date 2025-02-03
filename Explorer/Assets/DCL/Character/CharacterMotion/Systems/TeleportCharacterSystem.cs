@@ -62,7 +62,7 @@ namespace DCL.CharacterMotion.Systems
                         ResolveAsCancelled(entity, in teleportIntent);
                         return;
                     case UniTaskStatus.Faulted:
-                        ResolveAsFailure(entity, in teleportIntent, status.Exception!);
+                        ResolveAsFailure(entity, in teleportIntent, controller, ref platformComponent, status.Exception!);
                         return;
                 }
 
@@ -72,7 +72,7 @@ namespace DCL.CharacterMotion.Systems
                 {
                     var exception = new TimeoutException("Teleport timed out");
                     loadReport?.SetException(exception);
-                    ResolveAsFailure(entity, in teleportIntent, exception);
+                    ResolveAsFailure(entity, in teleportIntent, controller, ref platformComponent, exception);
                     return;
                 }
 
@@ -105,14 +105,21 @@ namespace DCL.CharacterMotion.Systems
             }
         }
 
-        private void ResolveAsFailure(Entity entity, in PlayerTeleportIntent playerTeleportIntent, Exception exception)
+        private void ResolveAsFailure(Entity entity, in PlayerTeleportIntent playerTeleportIntent, CharacterController controller, ref CharacterPlatformComponent platformComponent, Exception exception)
         {
             // Warning: delegate allocation, it's tolerated because Teleport executes not too often
             FinalizeQueuedLoadReport(in playerTeleportIntent, report => report.SetException(exception));
 
+            // Even if the teleport failed, we still need to move the player to the target position and don't leave him in PLAYER_MORDOR_POSITION
+            controller.transform.position = playerTeleportIntent.Position;
+
+            // Reset the current platform so we don't bounce back if we are touching the world plane
+            platformComponent.CurrentPlatform = null;
+
             ReportHub.LogException(exception, GetReportData());
             RestoreCameraDataQuery(World);
             World.Remove<PlayerTeleportIntent>(entity);
+            World.Add(entity, new PlayerTeleportIntent.JustTeleported(UnityEngine.Time.frameCount + COUNTDOWN_FRAMES));
         }
 
         private void ResolveAsCancelled(Entity entity, in PlayerTeleportIntent playerTeleportIntent)
