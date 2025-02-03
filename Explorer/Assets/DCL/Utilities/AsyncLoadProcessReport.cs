@@ -1,9 +1,11 @@
 ﻿using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
+using DCL.Utilities.Extensions;
 using System;
 using System.Threading;
 using Utility.Types;
 
-namespace DCL.AsyncLoadReporting
+namespace DCL.Utilities
 {
     /// <summary>
     ///     Via this class the system that runs in the scene world can notify about its [visual] readiness to the upper layer
@@ -42,13 +44,8 @@ namespace DCL.AsyncLoadReporting
         ///     Translates internals that can throw exceptions into a result free from exceptions
         /// </summary>
         /// <returns></returns>
-        public async UniTask<Status> WaitUntilFinishedAsync()
-        {
-            try { await completionSource.Task; }
-            catch (Exception e) { return new Status(e, completionSource.UnsafeGetStatus()); }
-
-            return new Status(null, completionSource.UnsafeGetStatus());
-        }
+        public UniTask<EnumResult<TaskError>> WaitUntilFinishedAsync() =>
+            completionSource.Task.SuppressToResultAsync(ReportCategory.SCENE_LOADING);
 
         public Status GetStatus() =>
             new (exception, completionSource.UnsafeGetStatus());

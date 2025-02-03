@@ -1,6 +1,6 @@
-using DCL.AsyncLoadReporting;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.RealmNavigation.LoadingOperation;
+using DCL.Utilities;
 
 namespace DCL.UserInAppInitializationFlow.StartupOperations
 {

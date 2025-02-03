@@ -239,7 +239,13 @@ namespace SceneRunner
                 );
             }
 
-            try { sceneRuntime.ExecuteSceneJson(); }
+            try
+            {
+                if (sceneData.SceneShortInfo.BaseParcel == new Vector2Int(-149, 150))
+                    throw new Exception("Manual Exception");
+
+                sceneRuntime.ExecuteSceneJson();
+            }
             catch (Exception e)
             {
                 await ReportExceptionAsync(e, runtimeDeps, deps.ExceptionsHandler);
