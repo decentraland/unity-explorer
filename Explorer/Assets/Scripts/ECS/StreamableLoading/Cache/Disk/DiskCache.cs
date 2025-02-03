@@ -20,7 +20,7 @@ namespace ECS.StreamableLoading.Cache.Disk
             this.diskCleanUp = diskCleanUp;
         }
 
-        public async UniTask<EnumResult<TaskError>> PutAsync(string key, string extension, ReadOnlyMemory<byte> data, CancellationToken token)
+        public async UniTask<EnumResult<TaskError>> PutAsync(HashKey key, string extension, ReadOnlyMemory<byte> data, CancellationToken token)
         {
             await using var scope = await ExecuteOnThreadPoolScope.NewScopeAsync();
 
@@ -38,7 +38,7 @@ namespace ECS.StreamableLoading.Cache.Disk
             return EnumResult<TaskError>.SuccessResult();
         }
 
-        public async UniTask<EnumResult<SlicedOwnedMemory<byte>?, TaskError>> ContentAsync(string key, string extension, CancellationToken token)
+        public async UniTask<EnumResult<SlicedOwnedMemory<byte>?, TaskError>> ContentAsync(HashKey key, string extension, CancellationToken token)
         {
             await using var scope = await ExecuteOnThreadPoolScope.NewScopeAsync();
 
@@ -62,7 +62,7 @@ namespace ECS.StreamableLoading.Cache.Disk
             catch (Exception e) { return EnumResult<SlicedOwnedMemory<byte>?, TaskError>.ErrorResult(TaskError.UnexpectedException, e.Message ?? string.Empty); }
         }
 
-        public async UniTask<EnumResult<TaskError>> RemoveAsync(string key, string extension, CancellationToken token)
+        public async UniTask<EnumResult<TaskError>> RemoveAsync(HashKey key, string extension, CancellationToken token)
         {
             await using var scope = await ExecuteOnThreadPoolScope.NewScopeAsync();
 
@@ -75,7 +75,7 @@ namespace ECS.StreamableLoading.Cache.Disk
             catch (Exception e) { return EnumResult<TaskError>.ErrorResult(TaskError.UnexpectedException, e.Message ?? string.Empty); }
         }
 
-        private string PathFrom(string key, string extension)
+        private string PathFrom(HashKey key, string extension)
         {
             string hashName = HashNamings.HashNameFrom(key, extension);
             return PathFrom(hashName);
@@ -99,13 +99,13 @@ namespace ECS.StreamableLoading.Cache.Disk
             this.serializer = serializer;
         }
 
-        public async UniTask<EnumResult<TaskError>> PutAsync(string key, string extension, T data, CancellationToken token)
+        public async UniTask<EnumResult<TaskError>> PutAsync(HashKey key, string extension, T data, CancellationToken token)
         {
             using SlicedOwnedMemory<byte> serializedData = await serializer.SerializeAsync(data, token);
             return await diskCache.PutAsync(key, extension, serializedData.Memory, token);
         }
 
-        public async UniTask<EnumResult<Option<T>, TaskError>> ContentAsync(string key, string extension, CancellationToken token)
+        public async UniTask<EnumResult<Option<T>, TaskError>> ContentAsync(HashKey key, string extension, CancellationToken token)
         {
             var result = await diskCache.ContentAsync(key, extension, token);
 
@@ -121,7 +121,7 @@ namespace ECS.StreamableLoading.Cache.Disk
             return EnumResult<Option<T>, TaskError>.SuccessResult(Option<T>.Some(deserializedValue));
         }
 
-        public UniTask<EnumResult<TaskError>> RemoveAsync(string key, string extension, CancellationToken token) =>
+        public UniTask<EnumResult<TaskError>> RemoveAsync(HashKey key, string extension, CancellationToken token) =>
             diskCache.RemoveAsync(key, extension, token);
     }
 }

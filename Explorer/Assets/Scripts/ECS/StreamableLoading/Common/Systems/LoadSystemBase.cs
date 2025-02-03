@@ -7,6 +7,7 @@ using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Cache.Disk;
+using ECS.StreamableLoading.Cache.Disk.Cacheables;
 using ECS.StreamableLoading.Cache.Generic;
 using ECS.StreamableLoading.Cache.InMemory;
 using ECS.StreamableLoading.Common.Components;
@@ -43,16 +44,21 @@ namespace ECS.StreamableLoading.Common.Systems
 
         private bool systemIsDisposed;
 
-        protected LoadSystemBase(World world, IStreamableCache<TAsset, TIntention> cache, IDiskCache<TAsset>? diskCache = null, string cacheExtension = "dat") : base(world)
+        protected LoadSystemBase(World world, IStreamableCache<TAsset, TIntention> cache, DiskCacheOptions<TAsset, TIntention>? diskCacheOptions = null) : base(world)
         {
             this.cache = cache;
 
-            genericCache = new GenericCache<TAsset, TIntention>(
-                new StreamableWrapMemoryCache<TAsset, TIntention>(cache),
-                diskCache ?? IDiskCache<TAsset>.Null.INSTANCE,
-                static intention => intention.CommonArguments.URL.Value,
-                cacheExtension
-            );
+            var memoryCache = new StreamableWrapMemoryCache<TAsset, TIntention>(cache);
+
+            if (diskCacheOptions == null)
+                genericCache = new MemoryOnlyGenericCache<TAsset, TIntention>(memoryCache);
+            else
+                genericCache = new GenericCache<TAsset, TIntention>(
+                    new StreamableWrapMemoryCache<TAsset, TIntention>(cache),
+                    diskCacheOptions.Value.DiskCache,
+                    diskCacheOptions.Value.DiskHashCompute,
+                    diskCacheOptions.Value.Extension
+                );
 
             query = World!.Query(in CREATE_WEB_REQUEST);
             cachedInternalFlowDelegate = FlowInternalAsync;

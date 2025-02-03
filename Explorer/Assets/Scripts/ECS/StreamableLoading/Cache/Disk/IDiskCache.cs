@@ -1,7 +1,6 @@
 using Cysharp.Threading.Tasks;
 using System;
 using System.Buffers;
-using System.Collections.Concurrent;
 using System.Threading;
 using Utility.Types;
 
@@ -9,32 +8,32 @@ namespace ECS.StreamableLoading.Cache.Disk
 {
     public interface IDiskCache
     {
-        UniTask<EnumResult<TaskError>> PutAsync(string key, string extension, ReadOnlyMemory<byte> data, CancellationToken token);
+        UniTask<EnumResult<TaskError>> PutAsync(HashKey key, string extension, ReadOnlyMemory<byte> data, CancellationToken token);
 
-        UniTask<EnumResult<SlicedOwnedMemory<byte>?, TaskError>> ContentAsync(string key, string extension, CancellationToken token);
+        UniTask<EnumResult<SlicedOwnedMemory<byte>?, TaskError>> ContentAsync(HashKey key, string extension, CancellationToken token);
 
-        UniTask<EnumResult<TaskError>> RemoveAsync(string key, string extension, CancellationToken token);
+        UniTask<EnumResult<TaskError>> RemoveAsync(HashKey key, string extension, CancellationToken token);
 
         class Fake : IDiskCache
         {
-            public UniTask<EnumResult<TaskError>> PutAsync(string key, string extension, ReadOnlyMemory<byte> data, CancellationToken token) =>
+            public UniTask<EnumResult<TaskError>> PutAsync(HashKey key, string extension, ReadOnlyMemory<byte> data, CancellationToken token) =>
                 UniTask.FromResult(EnumResult<TaskError>.ErrorResult(TaskError.MessageError, "It's fake"));
 
-            public UniTask<EnumResult<SlicedOwnedMemory<byte>?, TaskError>> ContentAsync(string key, string extension, CancellationToken token) =>
+            public UniTask<EnumResult<SlicedOwnedMemory<byte>?, TaskError>> ContentAsync(HashKey key, string extension, CancellationToken token) =>
                 UniTask.FromResult(EnumResult<SlicedOwnedMemory<byte>?, TaskError>.SuccessResult(null));
 
-            public UniTask<EnumResult<TaskError>> RemoveAsync(string key, string extension, CancellationToken token) =>
+            public UniTask<EnumResult<TaskError>> RemoveAsync(HashKey key, string extension, CancellationToken token) =>
                 UniTask.FromResult(EnumResult<TaskError>.SuccessResult());
         }
     }
 
     public interface IDiskCache<T>
     {
-        UniTask<EnumResult<TaskError>> PutAsync(string key, string extension, T data, CancellationToken token);
+        UniTask<EnumResult<TaskError>> PutAsync(HashKey key, string extension, T data, CancellationToken token);
 
-        UniTask<EnumResult<Option<T>, TaskError>> ContentAsync(string key, string extension, CancellationToken token);
+        UniTask<EnumResult<Option<T>, TaskError>> ContentAsync(HashKey key, string extension, CancellationToken token);
 
-        UniTask<EnumResult<TaskError>> RemoveAsync(string key, string extension, CancellationToken token);
+        UniTask<EnumResult<TaskError>> RemoveAsync(HashKey key, string extension, CancellationToken token);
 
         class Null : IDiskCache<T>
         {
@@ -42,13 +41,13 @@ namespace ECS.StreamableLoading.Cache.Disk
 
             private Null() { }
 
-            public UniTask<EnumResult<TaskError>> PutAsync(string key, string extension, T data, CancellationToken token) =>
+            public UniTask<EnumResult<TaskError>> PutAsync(HashKey key, string extension, T data, CancellationToken token) =>
                 UniTask.FromResult(EnumResult<TaskError>.ErrorResult(TaskError.MessageError, "It's null"));
 
-            public UniTask<EnumResult<Option<T>, TaskError>> ContentAsync(string key, string extension, CancellationToken token) =>
+            public UniTask<EnumResult<Option<T>, TaskError>> ContentAsync(HashKey key, string extension, CancellationToken token) =>
                 UniTask.FromResult(EnumResult<Option<T>, TaskError>.SuccessResult(Option<T>.None));
 
-            public UniTask<EnumResult<TaskError>> RemoveAsync(string key, string extension, CancellationToken token) =>
+            public UniTask<EnumResult<TaskError>> RemoveAsync(HashKey key, string extension, CancellationToken token) =>
                 UniTask.FromResult(EnumResult<TaskError>.SuccessResult());
         }
     }

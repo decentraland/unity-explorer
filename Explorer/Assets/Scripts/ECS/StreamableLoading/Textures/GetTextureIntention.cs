@@ -1,4 +1,5 @@
 ﻿using CRDT;
+using ECS.StreamableLoading.Cache.Disk.Cacheables;
 using ECS.StreamableLoading.Common.Components;
 using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using System;
@@ -64,5 +65,21 @@ namespace ECS.StreamableLoading.Textures
 
         public readonly override string ToString() =>
             $"Get Texture: {(IsVideoTexture ? $"Video {VideoPlayerEntity}" : CommonArguments.URL)}";
+
+        public class DiskHashCompute : AbstractDiskHashCompute<GetTextureIntention>
+        {
+            public static readonly DiskHashCompute INSTANCE = new ();
+
+            private DiskHashCompute() { }
+
+            protected override void FillPayload(IHashKeyPayload keyPayload, GetTextureIntention asset)
+            {
+                keyPayload.Put(asset.cacheKey);
+                keyPayload.Put((int)asset.WrapMode);
+                keyPayload.Put((int)asset.FilterMode);
+                keyPayload.Put(asset.IsVideoTexture);
+                keyPayload.Put(asset.VideoPlayerEntity.Id);
+            }
+        }
     }
 }

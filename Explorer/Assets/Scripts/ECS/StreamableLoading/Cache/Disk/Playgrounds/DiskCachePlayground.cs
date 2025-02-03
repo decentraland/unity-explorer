@@ -25,10 +25,12 @@ namespace ECS.StreamableLoading.Cache.Disk.Playgrounds
             string testExtension = Path.GetExtension(testFile);
 
             IDiskCache diskCache = NewDiskCache();
-            var result = await diskCache.PutAsync(testFile, testExtension, testData, destroyCancellationToken);
+            using HashKey hashKey = HashKey.FromString(testFile);
+
+            var result = await diskCache.PutAsync(hashKey, testExtension, testData, destroyCancellationToken);
             print($"Put result: success {result.Success} and error {result.Error?.Message}");
 
-            var contentResult = await diskCache.ContentAsync(testFile, testExtension, destroyCancellationToken);
+            var contentResult = await diskCache.ContentAsync(hashKey, testExtension, destroyCancellationToken);
             print($"Content result: success {contentResult.Success} and error {contentResult.Error?.Message}");
 
             print($"Content equals: {testData.AsSpan().SequenceEqual(contentResult.Value!.Value.Memory.Span)}");
@@ -38,7 +40,8 @@ namespace ECS.StreamableLoading.Cache.Disk.Playgrounds
         public async UniTaskVoid RemoveAsync()
         {
             IDiskCache diskCache = NewDiskCache();
-            var result = await diskCache.RemoveAsync(testFile, Path.GetExtension(testFile), destroyCancellationToken);
+            using HashKey hashKey = HashKey.FromString(testFile);
+            var result = await diskCache.RemoveAsync(hashKey, Path.GetExtension(testFile), destroyCancellationToken);
             print($"Remove result: success {result.Success} and error {result.Error?.Message}");
         }
     }
