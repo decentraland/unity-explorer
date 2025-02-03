@@ -54,12 +54,14 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings(systemClipboard, HandleContextMenuUserProfileButton);
 
             requestManager.ContextMenuClicked += ContextMenuClicked;
+            requestManager.JumpInClicked += JumpInClicked;
         }
 
         public override void Dispose()
         {
             base.Dispose();
             requestManager.ContextMenuClicked -= ContextMenuClicked;
+            requestManager.JumpInClicked -= JumpInClicked;
             friendshipOperationCts.SafeCancelAndDispose();
             jumpToFriendLocationCts.SafeCancelAndDispose();
         }
@@ -122,6 +124,9 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
                 realmNavigator.TeleportToParcelAsync(position, ct, false).Forget();
             }
         }
+
+        private void JumpInClicked(FriendProfile profile) =>
+            JumpToFriendLocation(profile);
 
         private void OpenProfilePassport(FriendProfile profile) =>
             passportBridge.ShowAsync(profile.Address).Forget();

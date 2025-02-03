@@ -24,6 +24,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         private readonly CancellationTokenSource addFriendProfileCts = new ();
 
         public event Action<FriendProfile, Vector2, FriendListUserView>? ContextMenuClicked;
+        public event Action<FriendProfile>? JumpInClicked;
 
         public FriendListRequestManager(IFriendsService friendsService,
             IFriendsEventBus friendEventBus,
@@ -66,6 +67,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 
         private void FriendChangedOnlineStatus(FriendProfile friendProfile, OnlineStatus onlineStatus)
         {
+            Debug.Log($"User {friendProfile.Name} changed status to {onlineStatus}");
+            
             if (!friends.Contains(friendProfile))
                 AddNewFriendProfile(friendProfile);
 
@@ -168,6 +171,9 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         {
             elementView.ContextMenuButton.onClick.RemoveAllListeners();
             elementView.ContextMenuButton.onClick.AddListener(() => ContextMenuClicked?.Invoke(elementView.UserProfile, elementView.ContextMenuButton.transform.position, elementView));
+
+            elementView.JumpInButton.onClick.RemoveAllListeners();
+            elementView.JumpInButton.onClick.AddListener(() => JumpInClicked?.Invoke(elementView.UserProfile));
 
             elementView.ToggleOnlineStatus(true);
             FriendProfile friendProfile = friends[index];
