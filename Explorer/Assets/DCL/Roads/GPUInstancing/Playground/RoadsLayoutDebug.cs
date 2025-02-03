@@ -63,7 +63,10 @@ namespace DCL.Roads.GPUInstancing.Playground
                     gpuInstancedPrefabBeh.CollectSelfData();
 
                     if (HideRoadsVisual)
+                    {
+                        gpuInstancedPrefabBeh.GetComponent<GPUInstancingPrefabData>().HideVisuals();
                         gpuInstancedPrefabBeh.HideVisuals();
+                    }
 
                     cachedPrefabs.Add(gpuInstancedPrefabBeh);
                 }

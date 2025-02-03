@@ -12,9 +12,10 @@ namespace DCL.Roads.GPUInstancing.Playground
         public List<GPUInstancingCandidate> indirectCandidates;
         public List<GPUInstancingCandidate> directCandidates;
 
-        public List<Renderer> DisabledRenderers;
-
         [SerializeField] private Shader indirectShader;
+
+        public List<LODGroup> instancedLodGroups;
+        public List<Renderer> InstancedRenderers;
 
         [ContextMenu(nameof(CollectSelfData))]
         public void CollectSelfData()
@@ -30,17 +31,25 @@ namespace DCL.Roads.GPUInstancing.Playground
                 transform.localScale = Vector3.one;
 
             if (indirectShader == null)
-                Debug.LogWarning($"Shader is not assigned on: {this.name}! This will result in empty {nameof(indirectCandidates)} list!");
+                Debug.LogWarning($"Shader is not assigned on: {name}! This will result in empty {nameof(indirectCandidates)} list!");
 
             if (PrefabUtility.IsPartOfPrefabAsset(gameObject))
             {
                 indirectCandidates = new List<GPUInstancingCandidate>();
                 directCandidates = new List<GPUInstancingCandidate>();
-                DisabledRenderers = new List<Renderer>();
+                instancedLodGroups = new List<LODGroup>();
+                InstancedRenderers = new List<Renderer>();
                 CollectInstancingCandidatesFromStandaloneMeshes();
                 CollectInstancingCandidatesFromLODGroups();
             }
 #endif
+        }
+
+        [ContextMenu(nameof(HideVisuals))]
+        public void HideVisuals()
+        {
+            foreach (var instancedRenderer in InstancedRenderers) instancedRenderer.enabled = false;
+            foreach (var instancedLodGroup in instancedLodGroups) instancedLodGroup.enabled = false;
         }
 
         private void CollectInstancingCandidatesFromLODGroups()
@@ -55,13 +64,16 @@ namespace DCL.Roads.GPUInstancing.Playground
                     continue;
                 }
 
-                foreach (var lod in lodGroup.GetLODs())
+                instancedLodGroups.Add(lodGroup);
+
+                foreach (UnityEngine.LOD lod in lodGroup.GetLODs())
                 foreach (Renderer lodRenderer in lod.renderers)
-                    DisabledRenderers.Add(lodRenderer);
+                    InstancedRenderers.Add(lodRenderer);
 
                 Matrix4x4 localToRootMatrix = transform.worldToLocalMatrix * lodGroup.transform.localToWorldMatrix; // root * child
 
-                var collectedCandidates = IsMyShader(lods[0].renderers[0].sharedMaterials) ? indirectCandidates : directCandidates;
+                List<GPUInstancingCandidate> collectedCandidates = IsMyShader(lods[0].renderers[0].sharedMaterials) ? indirectCandidates : directCandidates;
+
                 if (!TryAddToCollected(lodGroup, localToRootMatrix, collectedCandidates))
                     AddNewCandidate(lodGroup, localToRootMatrix, collectedCandidates);
             }
@@ -76,11 +88,12 @@ namespace DCL.Roads.GPUInstancing.Playground
 
                 if (!AssignedToLODGroupInPrefabHierarchy(mr.transform))
                 {
-                    DisabledRenderers.Add(mr);
+                    InstancedRenderers.Add(mr);
 
                     Matrix4x4 localToRootMatrix = transform.worldToLocalMatrix * mr.transform.localToWorldMatrix; // root * child
 
-                    var collectedCandidates = IsMyShader(mr.sharedMaterials) ? indirectCandidates : directCandidates;
+                    List<GPUInstancingCandidate> collectedCandidates = IsMyShader(mr.sharedMaterials) ? indirectCandidates : directCandidates;
+
                     if (!TryAddSingleMeshToCollected(mr, localToRootMatrix, collectedCandidates))
                         AddNewStandaloneMeshCandidate(mr, localToRootMatrix, collectedCandidates);
                 }
@@ -123,6 +136,7 @@ namespace DCL.Roads.GPUInstancing.Playground
             // bool hasSimilarNames = lodGroup.name.Contains(existing.Reference.name) || lodGroup.name.Contains(existing.Reference.name);
 
             if (existing.Reference == null) return false;
+
             // if (AreSamePrefabAsset(lodGroup.gameObject, existing.Reference.gameObject)) return true;
 
             UnityEngine.LOD[] lods = lodGroup.GetLODs();
@@ -186,7 +200,7 @@ namespace DCL.Roads.GPUInstancing.Playground
 
         public static bool AreSamePrefabAsset(GameObject go1, GameObject go2)
         {
-            if(go1 == null || go2 == null) return false;
+            if (go1 == null || go2 == null) return false;
 
             string path1 = PrefabUtility.GetPrefabAssetPathOfNearestInstanceRoot(go1);
             string path2 = PrefabUtility.GetPrefabAssetPathOfNearestInstanceRoot(go2);

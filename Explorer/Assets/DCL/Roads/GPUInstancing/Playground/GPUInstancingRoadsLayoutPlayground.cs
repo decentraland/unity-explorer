@@ -17,6 +17,8 @@ namespace DCL.Roads.GPUInstancing.Playground
         [Space] public List<GPUInstancingCandidate> Candidates;
 
         [Space] public Transform roadsRoot;
+        public bool HideRoadsVisual;
+
         public Vector2Int ParcelsMin;
         public Vector2Int ParcelsMax;
 

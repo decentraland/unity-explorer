@@ -214,10 +214,7 @@ namespace DCL.Roads.GPUInstancing
         private void SpawnOriginalPrefab(GPUInstancingPrefabData prefab, Vector2 pos)
         {
             if (DisableMeshRenderers)
-            {
-                foreach (MeshRenderer mr in prefab.DisabledRenderers)
-                    mr.enabled = false;
-            }
+                prefab.HideVisuals();
 
             if (originalInstance == null || originalInstance.name != prefab.name)
             {
