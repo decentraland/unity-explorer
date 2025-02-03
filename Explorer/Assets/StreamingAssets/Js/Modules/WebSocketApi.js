@@ -16,9 +16,13 @@ class WebSocket {
     constructor(url, protocols) {
         //TODO: add checks if Scene can actually use WebSocket
 
-        if (url.toString().toLowerCase().substr(0, 4) !== 'wss:') {
-            throw new Error("Can't connect to unsafe WebSocket server")
-        }
+        //TODO: delete commented out code. This was commented to move the responsability to check 
+        // if we're in preview mode to allow connecting to unsafe websocket server to the client
+        // if (
+        //     //false && 
+        //     url.toString().toLowerCase().substr(0, 4) !== 'wss:') {
+        //     throw new Error("Can't connect to unsafe WebSocket server")
+        // }
 
         this.webSocketId = UnityWebSocketApi.Create(url);
         this.#url = url;

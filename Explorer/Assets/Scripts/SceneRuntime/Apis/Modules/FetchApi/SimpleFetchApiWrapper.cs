@@ -28,6 +28,7 @@ namespace SceneRuntime.Apis.Modules.FetchApi
         public object Fetch(string requestMethod, string url, object headers, bool hasBody, string body,
             string redirect, int timeout)
         {
+            //TODO allow http for local
             return FetchAsync(cancellationTokenSource.Token).ToDisconnectedPromise();
 
             async UniTask<ResponseToJs> FetchAsync(CancellationToken ct)
