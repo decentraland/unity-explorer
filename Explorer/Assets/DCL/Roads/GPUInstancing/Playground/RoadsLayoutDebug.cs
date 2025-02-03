@@ -12,7 +12,7 @@ namespace DCL.Roads.GPUInstancing.Playground
     [ExecuteAlways]
     public class RoadsLayoutDebug : MonoBehaviour
     {
-        private GPUInstancingService gpuInstancingService;
+        private GPUInstancingServiceOld gpuInstancingServiceOld;
 
         [Space]
         public RoadSettingsAsset RoadsConfig;
@@ -43,7 +43,7 @@ namespace DCL.Roads.GPUInstancing.Playground
         public void Update()
         {
             if (Run)
-                gpuInstancingService.RenderInstancedBatched();
+                gpuInstancingServiceOld.RenderInstancedBatched();
         }
 
         [ContextMenu("DEBUG - Cache Prefabs")]
@@ -86,9 +86,9 @@ namespace DCL.Roads.GPUInstancing.Playground
         [ContextMenu("DEBUG - TransferFromConfigToService")]
         private void TransferFromConfigToService()
         {
-            gpuInstancingService = new GPUInstancingService();
+            gpuInstancingServiceOld = new GPUInstancingServiceOld();
             // gpuInstancingService.AddToInstancingDirectCopy(RoadsConfig.RoadsMeshesGPUInstances);
-            gpuInstancingService.PrepareBatches();
+            gpuInstancingServiceOld.PrepareBatches();
             CollectDebugInfo();
         }
 
@@ -119,7 +119,7 @@ namespace DCL.Roads.GPUInstancing.Playground
 
         private void CollectDebugInfo()
         {
-            MeshesDebug = gpuInstancingService.gpuInstancingMap.Select(propPair => new GPUMeshDebug
+            MeshesDebug = gpuInstancingServiceOld.gpuInstancingMap.Select(propPair => new GPUMeshDebug
                                                {
                                                    Mesh = propPair.Key.Mesh,
                                                    Material1 = propPair.Key.RenderParamsArray[0].material,

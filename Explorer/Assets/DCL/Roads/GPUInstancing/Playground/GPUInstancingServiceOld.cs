@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace DCL.Roads.GPUInstancing.Playground
 {
-    public class GPUInstancingService
+    public class GPUInstancingServiceOld
     {
         private const int BATCH_SIZE = 511;
 

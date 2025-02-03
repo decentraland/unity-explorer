@@ -8,13 +8,6 @@ using Utility;
 
 namespace DCL.Roads.GPUInstancing
 {
-    public class GPUInstancingBuffers
-    {
-        public GraphicsBuffer InstanceBuffer;
-        public GraphicsBuffer DrawArgsBuffer;
-        public GraphicsBuffer.IndirectDrawIndexedArgs[] DrawArgsCommandData;
-    }
-
     [ExecuteAlways]
     public class GPUInstancingRoadPrefabPlayground : MonoBehaviour
     {
