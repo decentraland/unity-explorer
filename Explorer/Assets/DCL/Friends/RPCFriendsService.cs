@@ -456,7 +456,7 @@ namespace DCL.Friends
                 try
                 {
                     retries--;
-                    await StartHandshake();
+                    await StartHandshakeAsync();
                     handshakeFinished = true;
                 }
                 catch (WebSocketException)
@@ -473,7 +473,7 @@ namespace DCL.Friends
 
             return;
 
-            async UniTask StartHandshake()
+            async UniTask StartHandshakeAsync()
             {
                 try
                 {

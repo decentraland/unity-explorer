@@ -518,11 +518,11 @@ namespace DCL.Passport
                     case FriendshipStatus.BLOCKED: break;
                 }
 
-                await SetupContextMenu(friendshipStatus, ct);
+                await SetupContextMenuAsync(friendshipStatus, ct);
             }
         }
 
-        private async UniTask SetupContextMenu(FriendshipStatus friendshipStatus, CancellationToken ct)
+        private async UniTask SetupContextMenuAsync(FriendshipStatus friendshipStatus, CancellationToken ct)
         {
             Profile? profile = await profileRepository.GetAsync(inputData.UserId, ct);
             if (profile == null) return;
