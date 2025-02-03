@@ -12,12 +12,17 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         [SerializeField] private Sprite viewProfileSprite;
         [SerializeField] private string viewProfileText = "View Profile";
         [Space(10)]
+        [SerializeField] private Sprite jumpToLocationSprite;
+        [SerializeField] private string jumpToLocationText = "Jump to Location";
+        [Space(10)]
         [SerializeField] private Sprite blockSprite;
         [SerializeField] private string blockText = "Block";
 
         public int ContextMenuWidth => contextMenuWidth;
         public Sprite ViewProfileSprite => viewProfileSprite;
         public string ViewProfileText => viewProfileText;
+        public Sprite JumpToLocationSprite => jumpToLocationSprite;
+        public string JumpToLocationText => jumpToLocationText;
         public Sprite BlockSprite => blockSprite;
         public string BlockText => blockText;
     }

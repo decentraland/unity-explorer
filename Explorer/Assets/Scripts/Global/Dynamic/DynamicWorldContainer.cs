@@ -772,6 +772,8 @@ namespace Global.Dynamic
                     friendServiceProxy,
                     profileThumbnailCache,
                     chatLifecycleBusController,
+                    onlineUsersProvider,
+                    realmNavigator,
                     includeUserBlocking));
             }
 

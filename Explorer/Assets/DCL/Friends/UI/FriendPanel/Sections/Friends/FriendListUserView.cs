@@ -20,6 +20,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         {
             buttons = new[] { JumpInButton, ContextMenuButton };
             base.Configure(profile, webRequestController, profileThumbnailCache);
+            SetOnlineStatus(OnlineStatus.OFFLINE);
         }
 
         public void SetOnlineStatus(OnlineStatus onlineStatus)

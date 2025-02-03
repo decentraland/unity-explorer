@@ -10,6 +10,7 @@ using DCL.Friends.UI.FriendPanel;
 using DCL.Friends.UI.Requests;
 using DCL.Input;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Multiplayer.Connectivity;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.RealmNavigation;
@@ -17,6 +18,7 @@ using DCL.UI.MainUI;
 using DCL.Utilities;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
+using ECS.SceneLifeCycle.Realm;
 using MVC;
 using System;
 using System.Threading;
@@ -46,6 +48,8 @@ namespace DCL.PluginSystem.Global
         private readonly CancellationTokenSource lifeCycleCancellationToken = new ();
         private readonly IWebBrowser webBrowser;
         private readonly IChatLifecycleBusController chatLifecycleBusController;
+        private readonly IOnlineUsersProvider onlineUsersProvider;
+        private readonly IRealmNavigator realmNavigator;
         private readonly bool includeUserBlocking;
 
         private CancellationTokenSource friendServiceSubscriptionCancellationToken = new ();
@@ -69,6 +73,8 @@ namespace DCL.PluginSystem.Global
             ObjectProxy<IFriendsService> friendServiceProxy,
             IProfileThumbnailCache profileThumbnailCache,
             IChatLifecycleBusController chatLifecycleBusController,
+            IOnlineUsersProvider onlineUsersProvider,
+            IRealmNavigator realmNavigator,
             bool includeUserBlocking)
         {
             this.mainUIView = mainUIView;
@@ -87,6 +93,8 @@ namespace DCL.PluginSystem.Global
             this.friendServiceProxy = friendServiceProxy;
             this.profileThumbnailCache = profileThumbnailCache;
             this.chatLifecycleBusController = chatLifecycleBusController;
+            this.onlineUsersProvider = onlineUsersProvider;
+            this.realmNavigator = realmNavigator;
             this.includeUserBlocking = includeUserBlocking;
         }
 
@@ -134,6 +142,8 @@ namespace DCL.PluginSystem.Global
                 loadingStatus,
                 dclInput,
                 passportBridge,
+                onlineUsersProvider,
+                realmNavigator,
                 includeUserBlocking);
 
             mvcManager.RegisterController(friendsPanelController);

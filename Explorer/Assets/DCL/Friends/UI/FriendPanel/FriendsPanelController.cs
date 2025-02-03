@@ -4,10 +4,12 @@ using DCL.Friends.Chat.BusInterface;
 using DCL.Friends.UI.FriendPanel.Sections.Blocked;
 using DCL.Friends.UI.FriendPanel.Sections.Friends;
 using DCL.Friends.UI.FriendPanel.Sections.Requests;
+using DCL.Multiplayer.Connectivity;
 using DCL.Profiles;
 using DCL.RealmNavigation;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
+using ECS.SceneLifeCycle.Realm;
 using MVC;
 using System.Threading;
 using UnityEngine.InputSystem;
@@ -56,6 +58,8 @@ namespace DCL.Friends.UI.FriendPanel
             ILoadingStatus loadingStatus,
             DCLInput dclInput,
             IPassportBridge passportBridge,
+            IOnlineUsersProvider onlineUsersProvider,
+            IRealmNavigator realmNavigator,
             bool includeUserBlocking) : base(viewFactory)
         {
             this.chatLifecycleBusController = chatLifecycleBusController;
@@ -71,6 +75,8 @@ namespace DCL.Friends.UI.FriendPanel
                 passportBridge,
                 profileThumbnailCache,
                 friendsService,
+                onlineUsersProvider,
+                realmNavigator,
                 includeUserBlocking);
             requestsSectionController = new RequestsSectionController(instantiatedView.RequestsSection,
                 friendsService,
