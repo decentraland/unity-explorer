@@ -22,6 +22,7 @@ using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Cache.Disk.CleanUp;
+using ECS.StreamableLoading.Cache.Disk.Lock;
 using Global.AppArgs;
 using Global.Dynamic.RealmUrl;
 using Global.Dynamic.RealmUrl.Names;
@@ -320,6 +321,7 @@ namespace Global.Dynamic
             }
 
             var cacheDirectory = CacheDirectory.NewDefault();
+            var filesLock = new FilesLock();
 
             IDiskCleanUp diskCleanUp;
 
@@ -329,9 +331,9 @@ namespace Global.Dynamic
                 diskCleanUp = IDiskCleanUp.None.INSTANCE;
             }
             else
-                diskCleanUp = new LRUDiskCleanUp(cacheDirectory);
+                diskCleanUp = new LRUDiskCleanUp(cacheDirectory, filesLock);
 
-            var diskCache = new DiskCache(cacheDirectory, diskCleanUp);
+            var diskCache = new DiskCache(cacheDirectory, filesLock, diskCleanUp);
             return diskCache;
         }
 

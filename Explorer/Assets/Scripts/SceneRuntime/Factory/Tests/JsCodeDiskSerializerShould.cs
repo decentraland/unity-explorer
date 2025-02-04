@@ -1,5 +1,6 @@
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Cache.Disk.CleanUp;
+using ECS.StreamableLoading.Cache.Disk.Lock;
 using NUnit.Framework;
 using SceneRuntime.Factory.JsSource;
 using System.Threading;
@@ -29,7 +30,7 @@ namespace SceneRuntime.Factory.Tests
         public async Task Cache()
         {
             // Arrange
-            var diskCache = new DiskCache<string>(new DiskCache(CacheDirectory.New("Test"), IDiskCleanUp.None.INSTANCE), new StringDiskSerializer());
+            var diskCache = new DiskCache<string>(new DiskCache(CacheDirectory.New("Test"), new FilesLock(), IDiskCleanUp.None.INSTANCE), new StringDiskSerializer());
             var key = HashKey.FromString("https://decentraland.org/images/ui/dark-atlas-v3.png");
             const string DATA = "Test data string";
             const string EXTENSION = "txt";
