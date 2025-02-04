@@ -1,6 +1,8 @@
+using DCL.Diagnostics;
 using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Web;
 using UnityEngine;
@@ -27,6 +29,8 @@ namespace Global.AppArgs
 
             if (useInEditorFlags && Application.isEditor)
                 AddAlwaysInEditorFlags();
+
+            LogArguments();
         }
 
         public bool HasFlag(string flagName) =>
@@ -103,6 +107,23 @@ namespace Global.AppArgs
 
                 appParameters[REALM_PARAM] = realmParamValue;
             }
+        }
+
+        private void LogArguments()
+        {
+            const int COUNT_PER_LINE = 7;
+            var sb = new StringBuilder(COUNT_PER_LINE * appParameters.Count);
+            var count = 1;
+
+            sb.AppendLine("Application arguments:");
+
+            foreach ((string? key, string? value) in appParameters)
+            {
+                sb.Append("Arg ").Append(count).Append(": ").Append(key).Append(" = ").Append(value).Append("\n");
+                count++;
+            }
+
+            ReportHub.Log(ReportData.UNSPECIFIED, sb.ToString());
         }
     }
 }
