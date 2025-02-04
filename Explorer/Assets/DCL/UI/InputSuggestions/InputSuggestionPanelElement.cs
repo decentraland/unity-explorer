@@ -3,13 +3,14 @@ using MVC;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.Pool;
 using UnityEngine.UI;
 
 namespace DCL.UI.SuggestionPanel
 {
     public class InputSuggestionPanelElement : MonoBehaviour, IViewWithGlobalDependencies
     {
-        public delegate void SuggestionSelectedDelegate(string hasFocus, bool shouldClose);
+        public delegate void SuggestionSelectedDelegate(string suggestionId, bool shouldClose);
 
         public event SuggestionSelectedDelegate SuggestionSelectedEvent;
 
@@ -18,16 +19,15 @@ namespace DCL.UI.SuggestionPanel
 
         [Header("References")]
         [field: SerializeField] private Transform suggestionContainer;
-        [field: SerializeField] private RectTransform scrollView;
         [field: SerializeField] private ScrollRect scrollViewComponent;
         [field: SerializeField] private GameObject noResultsIndicator;
 
+        [field: SerializeField] public RectTransform ScrollViewRect { get; private set; }
+
         public bool IsActive { get; private set; }
 
-        private readonly Dictionary<InputSuggestionType, GameObjectPool<BaseInputSuggestionElement>> suggestionItemsPools = new ();
+        private readonly Dictionary<InputSuggestionType, ObjectPool<BaseInputSuggestionElement>> suggestionItemsPools = new ();
         private readonly List<BaseInputSuggestionElement> usedPoolItems = new ();
-
-
 
         private InputSuggestionType currentSuggestionType;
         private int currentIndex = 0;
@@ -39,7 +39,7 @@ namespace DCL.UI.SuggestionPanel
             viewDependencies = dependencies;
         }
 
-        public InputSuggestionPanelElement()
+        public void Initialize()
         {
             CreateSuggestionPools();
         }
@@ -48,12 +48,11 @@ namespace DCL.UI.SuggestionPanel
         {
             foreach (var suggestionElement in configurationSo.SuggestionElements)
             {
-                var suggestionPool = new GameObjectPool<BaseInputSuggestionElement>(
-                    suggestionContainer!,
+                var suggestionPool = new ObjectPool<BaseInputSuggestionElement>(
                     () => CreatePoolElement(suggestionElement),
-                    onRelease: element => { element.OnReleased(); },
-                    maxSize: 80,
-                    onGet: element => { element.OnGet(); }
+                    element => { element.OnGet(); },
+                    element => { element.OnReleased(); },
+                    defaultCapacity: 20
                 );
 
                 suggestionItemsPools.Add(suggestionElement.GetSuggestionType(), suggestionPool);
@@ -63,8 +62,13 @@ namespace DCL.UI.SuggestionPanel
         private BaseInputSuggestionElement CreatePoolElement(BaseInputSuggestionElement prefab)
         {
             BaseInputSuggestionElement inputSuggestionElement = Instantiate(prefab, suggestionContainer);
-            inputSuggestionElement.SuggestionSelectedEvent += (suggestionId) => SuggestionSelectedEvent?.Invoke(suggestionId, true);
+            inputSuggestionElement.SuggestionSelectedEvent += OnSuggestionSelected;
             return inputSuggestionElement;
+        }
+
+        private void OnSuggestionSelected(string suggestionId)
+        {
+            SuggestionSelectedEvent?.Invoke(suggestionId, true);
         }
 
 
@@ -91,7 +95,7 @@ namespace DCL.UI.SuggestionPanel
         }
 
 
-        public void SetSuggestionValues(InputSuggestionType suggestionType, List<ISuggestionElementData> foundSuggestions)
+        public void SetSuggestionValues(InputSuggestionType suggestionType, IList<ISuggestionElementData> foundSuggestions)
         {
             noResultsIndicator.gameObject.SetActive(foundSuggestions.Count == 0);
 
@@ -100,47 +104,57 @@ namespace DCL.UI.SuggestionPanel
             switch (foundSuggestions.Count)
             {
                 case <= 1:
-                    scrollView.sizeDelta = new Vector2(scrollView.sizeDelta.x, configurationSo.minHeight);
+                    ScrollViewRect.sizeDelta = new Vector2(ScrollViewRect.sizeDelta.x, configurationSo.minHeight);
                     break;
                 case <= 7:
-                    scrollView.sizeDelta = new Vector2(scrollView.sizeDelta.x, (configurationSo.entryHeight * foundSuggestions.Count) + configurationSo.padding);
+                    ScrollViewRect.sizeDelta = new Vector2(ScrollViewRect.sizeDelta.x, (configurationSo.entryHeight * foundSuggestions.Count) + configurationSo.padding);
                     break;
                 default:
-                    scrollView.sizeDelta = new Vector2(scrollView.sizeDelta.x, configurationSo.maxHeight);
+                    ScrollViewRect.sizeDelta = new Vector2(ScrollViewRect.sizeDelta.x, configurationSo.maxHeight);
                     break;
             }
 
-            //if the suggestion type is different, we release all items from the pool,
-            //otherwise, we only release the elements that are over the found suggestion amount.
-            if (currentSuggestionType != suggestionType)
-            {
-                for (var i = 0; i < usedPoolItems.Count; i++)
-                    suggestionItemsPools[currentSuggestionType].Release(usedPoolItems[i]);
-                usedPoolItems.Clear();
-            }
-            else
-            {
-                for(int i = foundSuggestions.Count; i < usedPoolItems.Count; i++)
-                    suggestionItemsPools[currentSuggestionType].Release(usedPoolItems[i]);
+            if (suggestionType != InputSuggestionType.NONE)
+            { //if the suggestion type is different, we release all items from the pool,
+                //otherwise, we only release the elements that are over the found suggestion amount.
 
-                for(int i = usedPoolItems.Count - 1; i >= foundSuggestions.Count; i--)
-                    usedPoolItems.RemoveAt(i);
-            }
-
-            for (var i = 0; i < foundSuggestions.Count; i++)
-            {
-                ISuggestionElementData elementData = foundSuggestions[i];
-                if(usedPoolItems.Count > i)
+                if (currentSuggestionType != InputSuggestionType.NONE)
                 {
-                    usedPoolItems[i].Setup(elementData);
-                    usedPoolItems[i].gameObject.transform.SetAsLastSibling();
+                    if (currentSuggestionType != suggestionType)
+                    {
+                        for (var i = 0; i < usedPoolItems.Count; i++)
+                            suggestionItemsPools[currentSuggestionType].Release(usedPoolItems[i]);
+
+                        usedPoolItems.Clear();
+                    }
+                    else
+                    {
+                        for (int i = foundSuggestions.Count; i < usedPoolItems.Count; i++)
+                            suggestionItemsPools[currentSuggestionType].Release(usedPoolItems[i]);
+
+                        for (int i = usedPoolItems.Count - 1; i >= foundSuggestions.Count; i--)
+                            usedPoolItems.RemoveAt(i);
+                    }
                 }
-                else
+
+                currentSuggestionType = suggestionType;
+
+                for (var i = 0; i < foundSuggestions.Count; i++)
                 {
-                    BaseInputSuggestionElement emojiSuggestionView = suggestionItemsPools[suggestionType].Get();
-                    emojiSuggestionView.Setup(elementData);
-                    emojiSuggestionView.gameObject.transform.SetAsLastSibling();
-                    usedPoolItems.Add(emojiSuggestionView);
+                    ISuggestionElementData elementData = foundSuggestions[i];
+
+                    if (usedPoolItems.Count > i)
+                    {
+                        usedPoolItems[i].Setup(elementData);
+                        usedPoolItems[i].gameObject.transform.SetAsLastSibling();
+                    }
+                    else
+                    {
+                        BaseInputSuggestionElement emojiSuggestionView = suggestionItemsPools[suggestionType].Get();
+                        emojiSuggestionView.Setup(elementData);
+                        emojiSuggestionView.gameObject.transform.SetAsLastSibling();
+                        usedPoolItems.Add(emojiSuggestionView);
+                    }
                 }
             }
 
@@ -156,10 +170,10 @@ namespace DCL.UI.SuggestionPanel
                 return;
 
             if (lastSelectedInputSuggestion != null)
-                lastSelectedInputSuggestion.SetSelectionState(false);//SelectedBackground.SetActive(false));
+                lastSelectedInputSuggestion.SetSelectionState(false);
 
             currentIndex = index;
-            usedPoolItems[index].SetSelectionState(true);//SelectedBackground.SetActive(true));
+            usedPoolItems[index].SetSelectionState(true);
             lastSelectedInputSuggestion = usedPoolItems[index];
         }
 

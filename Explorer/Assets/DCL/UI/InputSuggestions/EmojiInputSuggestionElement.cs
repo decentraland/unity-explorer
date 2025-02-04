@@ -11,19 +11,25 @@ namespace DCL.UI.SuggestionPanel
         [field: SerializeField] public TMP_Text EmojiName { get; private set; }
         [field: SerializeField] public GameObject SelectedBackground { get; private set; }
 
-        private void OnEnable()
+        private void Awake()
         {
             EmojiButton.onClick.AddListener(HandleButtonClick);
-        }
-
-        private void OnDisable()
-        {
-            EmojiButton.onClick.RemoveListener(HandleButtonClick);
         }
 
         private void HandleButtonClick()
         {
             OnSuggestionSelected();
+        }
+
+        public override void OnGet()
+        {
+            gameObject.SetActive(true);
+        }
+
+        public override void OnReleased()
+        {
+            SelectedBackground.SetActive(false);
+            gameObject.SetActive(false);
         }
 
         protected override void SetupContinuation(EmojiInputSuggestionData suggestionElementData)
@@ -32,5 +38,10 @@ namespace DCL.UI.SuggestionPanel
             EmojiName.text = suggestionElementData.EmojiData.EmojiName;
         }
 
+        public override void SetSelectionState(bool isSelected)
+        {
+            base.SetSelectionState(isSelected);
+            SelectedBackground.SetActive(isSelected);
+        }
     }
 }
