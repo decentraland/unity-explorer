@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using ECS.StreamableLoading.Cache.Disk.CleanUp;
+using ECS.StreamableLoading.Cache.Disk.Lock;
 using System;
 using System.Buffers;
 using System.IO;
@@ -12,11 +13,13 @@ namespace ECS.StreamableLoading.Cache.Disk
     public class DiskCache : IDiskCache
     {
         private readonly CacheDirectory directory;
+        private readonly FilesLock filesLock;
         private readonly IDiskCleanUp diskCleanUp;
 
-        public DiskCache(CacheDirectory directory, IDiskCleanUp diskCleanUp)
+        public DiskCache(CacheDirectory directory, FilesLock filesLock, IDiskCleanUp diskCleanUp)
         {
             this.directory = directory;
+            this.filesLock = filesLock;
             this.diskCleanUp = diskCleanUp;
         }
 
@@ -27,6 +30,11 @@ namespace ECS.StreamableLoading.Cache.Disk
             try
             {
                 string path = PathFrom(key, extension);
+                using var _ = filesLock.TryLock(path, out bool success);
+
+                if (success == false)
+                    return EnumResult<TaskError>.ErrorResult(TaskError.MessageError, "File is being used");
+
                 await using var stream = new FileStream(path, FileMode.Create, FileAccess.Write);
                 await stream.WriteAsync(data, token);
                 diskCleanUp.CleanUpIfNeeded();
@@ -46,6 +54,11 @@ namespace ECS.StreamableLoading.Cache.Disk
             {
                 string fileName = HashNamings.HashNameFrom(key, extension);
                 string path = PathFrom(fileName);
+
+                using var fileScope = filesLock.TryLock(path, out bool success);
+
+                if (success == false)
+                    return EnumResult<SlicedOwnedMemory<byte>?, TaskError>.SuccessResult(null);
 
                 if (File.Exists(path) == false)
                     return EnumResult<SlicedOwnedMemory<byte>?, TaskError>.SuccessResult(null);
@@ -69,6 +82,11 @@ namespace ECS.StreamableLoading.Cache.Disk
             try
             {
                 string path = PathFrom(key, extension);
+                using var fileScope = filesLock.TryLock(path, out bool success);
+
+                if (success == false)
+                    return EnumResult<TaskError>.ErrorResult(TaskError.MessageError, "File is being used");
+
                 if (File.Exists(path)) File.Delete(path);
                 return EnumResult<TaskError>.SuccessResult();
             }
