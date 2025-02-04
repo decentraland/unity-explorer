@@ -41,6 +41,10 @@ namespace DCL.SDKComponents.MediaStream
         private float cachedCameraHorizontalFOV;
         private float cachedCameraTanValue; // A pre-calculated value of the tangent of half the FOV, used to calculate the size on screen
 
+#if DEBUG_VIDEO_PRIORITIES
+        private int debugPlayingVideoCount = 0;
+#endif
+
         public UpdateMediaPlayerPrioritizationSystem(World world, IExposedCameraData exposedCameraData, VideoPrioritizationSettings videoPrioritizationSettings) : base(world)
         {
             this.videoPrioritizationSettings = videoPrioritizationSettings;
@@ -73,7 +77,8 @@ namespace DCL.SDKComponents.MediaStream
 
 #if DEBUG_VIDEO_PRIORITIES
 
-            ReportHub.Log(GetReportData(), "<color=cyan>" + sortedVideoPriorities.Count + "</color>");
+            ReportHub.Log(GetReportData(), $"<color=cyan>Currently playing: {debugPlayingVideoCount}</color>");
+            debugPlayingVideoCount = 0;
 
             float maximumPlayingVideos = Mathf.Min(sortedVideoPriorities.Count, videoPrioritizationSettings.MaximumSimultaneousVideos);
 
@@ -93,13 +98,7 @@ namespace DCL.SDKComponents.MediaStream
         [None(typeof(VideoStateByPriorityComponent))]
         private void AddVideoStatesByPriority(Entity entity, in MediaPlayerComponent mediaPlayer, in VideoTextureConsumer videoTextureConsumer)
         {
-            // Using the diagonal of the box instead of the height, meshes that occupy "the same" area on screen should have the same priority
-            float videoMeshLocalSize = (videoTextureConsumer.BoundsMax - videoTextureConsumer.BoundsMin).magnitude;
-
-            VideoStateByPriorityComponent newVideoStateByPriority = new VideoStateByPriorityComponent(
-                                                                            entity,
-                                                                            videoMeshLocalSize * 0.5f,
-                                                                            mediaPlayer.IsPlaying);
+            VideoStateByPriorityComponent newVideoStateByPriority = new VideoStateByPriorityComponent(entity, mediaPlayer.IsPlaying);
 
 #if DEBUG_VIDEO_PRIORITIES
             // Adds a colored cube to a corner of the video mesh renderer which shows the priority of the video
@@ -140,10 +139,10 @@ namespace DCL.SDKComponents.MediaStream
                 if (mediaPlayer.MediaPlayer.Control.IsPlaying())
                 {
                     videoStateByPriority.WantsToPlay = true;
-                    videoStateByPriority.MediaPlayStartTime = Time.realtimeSinceStartup;
+                    videoStateByPriority.MediaPlayStartTime = Time.realtimeSinceStartup - (float)mediaPlayer.MediaPlayer.Control.GetCurrentTime();
 
 #if DEBUG_VIDEO_PRIORITIES
-                    ReportHub.Log(GetReportData(),"Video: PLAYED MANUALLY");
+                    ReportHub.Log(GetReportData(),$"Video: PLAYED MANUALLY: {videoStateByPriority.MediaPlayStartTime} // {mediaPlayer.MediaPlayer.Control.GetCurrentTime()}");
 #endif
                 }
                 else
@@ -159,6 +158,8 @@ namespace DCL.SDKComponents.MediaStream
             // If the video should be playing according to external state changes...
             if (videoStateByPriority.WantsToPlay)
             {
+                videoStateByPriority.Score = float.MinValue;
+
                 Vector3 boundsMin = videoTextureConsumer.BoundsMin;
                 Vector3 boundsMax = videoTextureConsumer.BoundsMax;
                 Vector3 videoCenterPosition = (boundsMax + boundsMin) * 0.5f;
@@ -189,7 +190,9 @@ namespace DCL.SDKComponents.MediaStream
                     // Skips videos that are too far
                     if (distance <= videoPrioritizationSettings.MaximumDistanceLimit)
                     {
-                        float screenSize = Mathf.Clamp01(CalculateObjectHeightRelativeToScreenHeight(videoStateByPriority.HalfSize, distance));
+                        // Using the diagonal of the box instead of the height, meshes that occupy "the same" area on screen should have the same priority
+                        float videoMeshLocalSize = (videoTextureConsumer.BoundsMax - videoTextureConsumer.BoundsMin).magnitude;
+                        float screenSize = Mathf.Clamp01(CalculateObjectHeightRelativeToScreenHeight(videoMeshLocalSize, distance));
 
                         // Skips videos that are too small on screen
                         if (screenSize >= videoPrioritizationSettings.MinimumSizeLimit)
@@ -202,21 +205,21 @@ namespace DCL.SDKComponents.MediaStream
                                                          dotProduct * videoPrioritizationSettings.AngleWeight;
 
 #if DEBUG_VIDEO_PRIORITIES
-                            ReportHub.Log(GetReportData(),$"VIDEO ENTITY[{videoStateByPriority.Entity.Id}] Dist: {distance} HSize:{videoStateByPriority.HalfSize} / {CalculateObjectHeightRelativeToScreenHeight(videoStateByPriority.HalfSize, distance)} Dot:{dotProduct} SCORE:{videoStateByPriority.Score}");
+                            ReportHub.Log(GetReportData(),$"VIDEO ENTITY[{videoStateByPriority.Entity.Id}] Dist: {distance} HSize:{videoMeshLocalSize} / {CalculateObjectHeightRelativeToScreenHeight(videoMeshLocalSize, distance)} Dot:{dotProduct} SCORE:{videoStateByPriority.Score}");
 #endif
-
-                            // Sorts the playing video list by score, on insertion
-                            int i = 0;
-
-                            for (; i < sortedVideoPriorities.Count; ++i)
-                                if (sortedVideoPriorities[i].Score <= videoStateByPriority.Score)
-                                    break;
-
-                            if (i <= sortedVideoPriorities.Count)
-                                sortedVideoPriorities.Insert(i, videoStateByPriority);
                         }
                     }
                 }
+
+                // Sorts the playing video list by score, on insertion
+                int i = 0;
+
+                for (; i < sortedVideoPriorities.Count; ++i)
+                    if (sortedVideoPriorities[i].Score <= videoStateByPriority.Score)
+                        break;
+
+                if (i <= sortedVideoPriorities.Count)
+                    sortedVideoPriorities.Insert(i, videoStateByPriority);
             }
         }
 
@@ -227,24 +230,30 @@ namespace DCL.SDKComponents.MediaStream
         private void UpdateVideoStateDependingOnPriority([Data] int maxSimultaneousVideos, ref VideoStateByPriorityComponent videoStateByPriority, ref MediaPlayerComponent mediaPlayer)
         {
             bool mustPlay = false;
-            int playingVideoCount = Mathf.Min(maxSimultaneousVideos, sortedVideoPriorities.Count);
-            double pauseDuration = 0.0f;
 
-            // Is the current video player in the list of playing video players? And is it in the first N elements that are allowed to play at maximum? And should it be playing?
-            for (int i = 0; i < playingVideoCount; ++i)
+            if (sortedVideoPriorities.Count <= maxSimultaneousVideos)
             {
-                if (sortedVideoPriorities[i].Entity == videoStateByPriority.Entity &&
-                    sortedVideoPriorities[i].WantsToPlay)
-                {
-                    mustPlay = true;
-                    pauseDuration = Time.realtimeSinceStartup - videoStateByPriority.MediaPlayStartTime;
+                mustPlay = videoStateByPriority.WantsToPlay;
+            }
+            else
+            {
+                int playingVideoCount = Mathf.Min(maxSimultaneousVideos, sortedVideoPriorities.Count);
 
-                    break;
+                // Is the current video player in the list of playing video players? And is it in the first N elements that are allowed to play at maximum? And should it be playing?
+                for (int i = 0; i < playingVideoCount; ++i)
+                {
+                    if (sortedVideoPriorities[i].Entity == videoStateByPriority.Entity &&
+                        sortedVideoPriorities[i].WantsToPlay)
+                    {
+                        mustPlay = true;
+                        break;
+                    }
                 }
             }
 
             if (mustPlay && !videoStateByPriority.IsPlaying)
             {
+                double pauseDuration = Time.realtimeSinceStartup - videoStateByPriority.MediaPlayStartTime;
                 double seekTime = pauseDuration % mediaPlayer.Duration;
 
                 if (!mediaPlayer.MediaPlayer.Control.IsPlaying())
@@ -257,7 +266,7 @@ namespace DCL.SDKComponents.MediaStream
                 videoStateByPriority.IsPlaying = true;
 
 #if DEBUG_VIDEO_PRIORITIES
-                ReportHub.Log(GetReportData(),"VIDEO RESUMED BY PRIORITY: " + videoStateByPriority.Entity.Id + " t:" + seekTime);
+                ReportHub.Log(GetReportData(),$"VIDEO RESUMED BY PRIORITY:  [{videoStateByPriority.Entity.Id}]  t: {seekTime} // {mediaPlayer.MediaPlayer.Control.GetCurrentTime()} -- {videoStateByPriority.MediaPlayStartTime}");
 #endif
             }
             else if(!mustPlay && (videoStateByPriority.IsPlaying || mediaPlayer.MediaPlayer.Control.IsPlaying()))
@@ -270,9 +279,14 @@ namespace DCL.SDKComponents.MediaStream
                 videoStateByPriority.IsPlaying = false;
 
 #if DEBUG_VIDEO_PRIORITIES
-                ReportHub.Log(GetReportData(),"VIDEO CULLED BY PRIORITY: " + videoStateByPriority.Entity.Id);
+                ReportHub.Log(GetReportData(),$"VIDEO CULLED BY PRIORITY: [{videoStateByPriority.Entity.Id}]  t: {mediaPlayer.MediaPlayer.Control.GetCurrentTime()}");
 #endif
             }
+
+#if DEBUG_VIDEO_PRIORITIES
+            if (videoStateByPriority.IsPlaying)
+                debugPlayingVideoCount++;
+#endif
         }
 
         /// <summary>
@@ -287,12 +301,11 @@ namespace DCL.SDKComponents.MediaStream
         }
 
         // Called when the scene is unloaded
-        public override void Dispose()
+        protected override void OnDispose()
         {
 #if DEBUG_VIDEO_PRIORITIES
             DestroyAllDebuggingSignsQuery(World);
 #endif
-            base.Dispose();
         }
 
         [Query]

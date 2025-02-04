@@ -5,21 +5,34 @@ using Cysharp.Threading.Tasks;
 using DCL.ApplicationVersionGuard;
 using DCL.Audio;
 using DCL.AuthenticationScreenFlow;
+using DCL.Browser.DecentralandUrls;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.Input.Component;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.PerformanceBudgeting;
+using DCL.Platforms;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
+using DCL.Web3.Accounts.Factory;
+using DCL.Web3.Identities;
+using DCL.WebRequests.Analytics;
+using ECS.StreamableLoading.Cache.Disk;
+using ECS.StreamableLoading.Cache.Disk.CleanUp;
 using Global.AppArgs;
+using Global.Dynamic.RealmUrl;
+using Global.Dynamic.RealmUrl.Names;
 using MVC;
+using Plugins.TexturesFuse.TexturesServerWrap.CompressShaders;
+using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using SceneRunner.Debugging;
 using System;
 using System.Linq;
 using System.Threading;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UIElements;
 using Utility;
@@ -32,6 +45,9 @@ namespace Global.Dynamic
         private RealmLaunchSettings launchSettings = null!;
 
         [Space]
+        [SerializeField] private DecentralandEnvironment decentralandEnvironment;
+
+        [Space]
         [SerializeField] private DebugViewsCatalog debugViewsCatalog = new ();
 
         [Space]
@@ -41,11 +57,13 @@ namespace Global.Dynamic
         [SerializeField] private PluginSettingsContainer globalPluginSettingsContainer = null!;
         [SerializeField] private PluginSettingsContainer scenePluginSettingsContainer = null!;
         [SerializeField] private UIDocument uiToolkitRoot = null!;
+        [SerializeField] private UIDocument scenesUIRoot = null!;
         [SerializeField] private UIDocument cursorRoot = null!;
         [SerializeField] private UIDocument debugUiRoot = null!;
         [SerializeField] private DynamicSceneLoaderSettings settings = null!;
         [SerializeField] private DynamicSettings dynamicSettings = null!;
         [SerializeField] private GameObject splashRoot = null!;
+        [SerializeField] private TMP_Text splashScreenText = null!;
         [SerializeField] private Animator splashScreenAnimation = null!;
         [SerializeField] private Animator logoAnimation = null!;
         [SerializeField] private AudioClipConfig backgroundMusic = null!;
@@ -88,6 +106,18 @@ namespace Global.Dynamic
             ReportHub.Log(ReportCategory.ENGINE, "OnDestroy successfully finished");
         }
 
+        public void ApplyConfig(IAppArgs applicationParametersParser)
+        {
+            if (applicationParametersParser.TryGetValue(AppArgsFlags.ENVIRONMENT, out string? environment))
+                ParseEnvironment(environment!);
+        }
+
+        private void ParseEnvironment(string environment)
+        {
+            if (Enum.TryParse(environment, true, out DecentralandEnvironment env))
+                decentralandEnvironment = env;
+        }
+
         private async UniTask InitializeFlowAsync(CancellationToken ct)
         {
             IAppArgs applicationParametersParser = new ApplicationParametersParser(
@@ -96,30 +126,77 @@ namespace Global.Dynamic
 #else
                 Environment.GetCommandLineArgs()
 #endif
-                );
+            );
+
+            bool compressionEnabled = IPlatform.DEFAULT.IsNot(IPlatform.Kind.Windows) || applicationParametersParser.HasFlag(AppArgsFlags.FORCE_TEXTURE_COMPRESSION);
+
+            if (IPlatform.DEFAULT.Is(IPlatform.Kind.Mac) && SystemInfo.processorType!.Contains("Intel", StringComparison.InvariantCultureIgnoreCase))
+                compressionEnabled = false;
+
+            ITexturesFuse TextureFuseFactory() =>
+                ITexturesFuse.NewDefault();
+
+            ICompressShaders compressShaders = compressionEnabled ? ICompressShaders.NewDefault(TextureFuseFactory, IPlatform.DEFAULT) : ICompressShaders.NewEmpty();
+
+            if (applicationParametersParser.HasFlag(ICompressShaders.CMD_ARGS))
+            {
+                await compressShaders.WarmUpIfRequiredAsync(ct);
+                IPlatform.DEFAULT.Quit();
+                return;
+            }
+
             ISystemMemoryCap memoryCap = new SystemMemoryCap(MemoryCapMode.MAX_SYSTEM_MEMORY); // we use max memory on the loading screen
 
-            settings.ApplyConfig(applicationParametersParser);
+            ApplyConfig(applicationParametersParser);
             launchSettings.ApplyConfig(applicationParametersParser);
 
             World world = World.Create();
 
-            bootstrapContainer = await BootstrapContainer.CreateAsync(debugSettings, sceneLoaderSettings: settings,
-                globalPluginSettingsContainer, launchSettings,
+            var splashScreen = new SplashScreen(splashScreenAnimation, splashRoot, debugSettings.ShowSplash, splashScreenText);
+            var decentralandUrlsSource = new DecentralandUrlsSource(decentralandEnvironment, launchSettings.IsLocalSceneDevelopmentRealm);
+
+            var texturesFuse = TextureFuseFactory();
+
+            var web3AccountFactory = new Web3AccountFactory();
+            var identityCache = new IWeb3IdentityCache.Default(web3AccountFactory);
+            var debugContainerBuilder = DebugUtilitiesContainer.Create(debugViewsCatalog, applicationParametersParser.HasDebugFlag()).Builder;
+            var staticSettings = (globalPluginSettingsContainer as IPluginSettingsContainer).GetSettings<StaticSettings>();
+            var webRequestsContainer = WebRequestsContainer.Create(identityCache, texturesFuse, debugContainerBuilder, staticSettings.WebRequestsBudget, compressionEnabled);
+            var realmUrls = new RealmUrls(launchSettings, new RealmNamesMap(webRequestsContainer.WebRequestController), decentralandUrlsSource);
+
+            var cacheDirectory = CacheDirectory.NewDefault();
+            var diskCleanUp = new LRUDiskCleanUp(cacheDirectory);
+            var diskCache = new DiskCache(cacheDirectory, diskCleanUp);
+
+            bootstrapContainer = await BootstrapContainer.CreateAsync(
+                debugSettings,
+                sceneLoaderSettings: settings,
+                decentralandUrlsSource,
+                webRequestsContainer,
+                identityCache,
+                globalPluginSettingsContainer,
+                launchSettings,
                 applicationParametersParser,
+                splashScreen,
+                compressShaders
+                   .WithSplashScreen(splashScreen, hideOnFinish: false)
+                   .WithLog("Load Guard"),
+                realmUrls,
+                diskCache,
                 world,
-                destroyCancellationToken);
+                decentralandEnvironment,
+                destroyCancellationToken
+            );
 
             IBootstrap bootstrap = bootstrapContainer!.Bootstrap!;
 
             try
             {
-                var splashScreen = new SplashScreen(splashScreenAnimation, splashRoot, debugSettings.ShowSplash);
-                bootstrap.PreInitializeSetup(cursorRoot, debugUiRoot, splashScreen, destroyCancellationToken);
+                await bootstrap.PreInitializeSetupAsync(cursorRoot, debugUiRoot, destroyCancellationToken);
 
                 bool isLoaded;
                 Entity playerEntity = world.Create(new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY));
-                (staticContainer, isLoaded) = await bootstrap.LoadStaticContainerAsync(bootstrapContainer, globalPluginSettingsContainer, debugViewsCatalog, playerEntity, memoryCap, ct);
+                (staticContainer, isLoaded) = await bootstrap.LoadStaticContainerAsync(bootstrapContainer, globalPluginSettingsContainer, debugContainerBuilder, playerEntity, TextureFuseFactory(), memoryCap, scenesUIRoot, ct);
 
                 if (!isLoaded)
                 {
@@ -129,8 +206,13 @@ namespace Global.Dynamic
 
                 bootstrap.InitializePlayerEntity(staticContainer!, playerEntity);
 
+                await bootstrap.InitializeFeatureFlagsAsync(bootstrapContainer.IdentityCache!.Identity,
+                    bootstrapContainer.DecentralandUrlsSource, staticContainer!, ct);
+
+                bootstrap.ApplyFeatureFlagConfigs(staticContainer!.FeatureFlagsCache);
+
                 (dynamicWorldContainer, isLoaded) = await bootstrap.LoadDynamicWorldContainerAsync(bootstrapContainer, staticContainer!, scenePluginSettingsContainer, settings,
-                    dynamicSettings, uiToolkitRoot, cursorRoot, splashScreen, backgroundMusic, worldInfoTool.EnsureNotNull(), playerEntity,
+                    dynamicSettings, uiToolkitRoot, scenesUIRoot, cursorRoot, backgroundMusic, worldInfoTool.EnsureNotNull(), playerEntity,
                     applicationParametersParser,
                     coroutineRunner: this,
                     destroyCancellationToken);
@@ -140,8 +222,6 @@ namespace Global.Dynamic
                     GameReports.PrintIsDead();
                     return;
                 }
-
-                await bootstrap.InitializeFeatureFlagsAsync(bootstrapContainer.IdentityCache!.Identity, bootstrapContainer.DecentralandUrlsSource, staticContainer!, ct);
 
                 if (await DoesApplicationRequireVersionUpdateAsync(applicationParametersParser, splashScreen, ct))
                     return; // stop bootstrapping;
@@ -158,7 +238,7 @@ namespace Global.Dynamic
 
                 await bootstrap.LoadStartingRealmAsync(dynamicWorldContainer!, ct);
 
-                await bootstrap.UserInitializationAsync(dynamicWorldContainer!, globalWorld, playerEntity, splashScreen, ct);
+                await bootstrap.UserInitializationAsync(dynamicWorldContainer!, globalWorld, playerEntity, ct);
 
                 //This is done in order to release the memory usage of the splash screen logo animation sprites
                 //The logo is used only at first launch, so we can safely release it after the game is loaded
@@ -229,7 +309,8 @@ namespace Global.Dynamic
         {
             // We enable Inputs through the inputBlock so the block counters can be properly updated and the component Active flags are up-to-date as well
             // We restore all inputs except EmoteWheel and FreeCamera as they should be disabled by default
-            staticContainer!.InputBlock.Enable(InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.PLAYER, InputMapComponent.Kind.EMOTES, InputMapComponent.Kind.CAMERA);
+            staticContainer!.InputBlock.EnableAll(InputMapComponent.Kind.FREE_CAMERA,
+                InputMapComponent.Kind.EMOTE_WHEEL);
         }
 
         [ContextMenu(nameof(ValidateSettingsAsync))]

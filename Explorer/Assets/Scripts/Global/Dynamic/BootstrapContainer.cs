@@ -8,16 +8,22 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PerformanceAndDiagnostics.Analytics.Services;
 using DCL.PluginSystem;
+using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.Settings;
 using DCL.Web3;
 using DCL.Web3.Abstract;
 using DCL.Web3.Accounts.Factory;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
+using DCL.WebRequests;
+using DCL.WebRequests.Analytics;
 using ECS.SceneLifeCycle.Realm;
+using ECS.StreamableLoading.Cache.Disk;
 using Global.AppArgs;
 using Plugins.RustSegment.SegmentServerWrap;
 using Global.Dynamic.DebugSettings;
+using Global.Dynamic.RealmUrl;
+using Plugins.TexturesFuse.TexturesServerWrap.CompressShaders;
 using Segment.Analytics;
 using Sentry;
 using System;
@@ -66,44 +72,53 @@ namespace Global.Dynamic
         public static async UniTask<BootstrapContainer> CreateAsync(
             DebugSettings.DebugSettings debugSettings,
             DynamicSceneLoaderSettings sceneLoaderSettings,
+            IDecentralandUrlsSource decentralandUrlsSource,
+            WebRequestsContainer webRequestsContainer,
+            IWeb3IdentityCache identityCache,
             IPluginSettingsContainer settingsContainer,
             RealmLaunchSettings realmLaunchSettings,
             IAppArgs applicationParametersParser,
+            ISplashScreen splashScreen,
+            ICompressShaders compressShaders,
+            IRealmUrls realmUrls,
+            IDiskCache diskCache,
             World world,
+            DecentralandEnvironment decentralandEnvironment,
             CancellationToken ct)
         {
-            var decentralandUrlsSource = new DecentralandUrlsSource(sceneLoaderSettings.DecentralandEnvironment);
             var browser = new UnityAppWebBrowser(decentralandUrlsSource);
             var web3AccountFactory = new Web3AccountFactory();
 
             var bootstrapContainer = new BootstrapContainer
             {
+                IdentityCache = identityCache,
                 Web3AccountFactory = web3AccountFactory,
                 AssetsProvisioner = new AddressablesProvisioner(),
                 DecentralandUrlsSource = decentralandUrlsSource,
                 WebBrowser = browser,
-                LocalSceneDevelopment = realmLaunchSettings.IsLocalSceneDevelopmentRealm || realmLaunchSettings.GetStartingRealm(decentralandUrlsSource) == IRealmNavigator.LOCALHOST,
+                LocalSceneDevelopment = realmLaunchSettings.IsLocalSceneDevelopmentRealm,
                 UseRemoteAssetBundles = realmLaunchSettings.useRemoteAssetsBundles,
                 ApplicationParametersParser = applicationParametersParser,
                 DebugSettings = debugSettings,
                 WorldVolumeMacBus = new WorldVolumeMacBus(),
-                Environment = sceneLoaderSettings.DecentralandEnvironment
+                Environment = decentralandEnvironment
             };
 
             await bootstrapContainer.InitializeContainerAsync<BootstrapContainer, BootstrapSettings>(settingsContainer, ct, async container =>
             {
                 container.reportHandlingSettings = await ProvideReportHandlingSettingsAsync(container.AssetsProvisioner!, container.settings, ct);
-                (container.Bootstrap, container.Analytics) = await CreateBootstrapperAsync(debugSettings, applicationParametersParser, container, container.settings, realmLaunchSettings, world, container.settings.BuildData, ct);
-                (container.IdentityCache, container.VerifiedEthereumApi, container.Web3Authenticator) = CreateWeb3Dependencies(sceneLoaderSettings, web3AccountFactory, browser, container, decentralandUrlsSource);
+                (container.Bootstrap, container.Analytics) = await CreateBootstrapperAsync(debugSettings, applicationParametersParser, splashScreen, compressShaders, realmUrls, diskCache, container, webRequestsContainer, container.settings, realmLaunchSettings, world, container.settings.BuildData, ct);
+                (container.VerifiedEthereumApi, container.Web3Authenticator) = CreateWeb3Dependencies(sceneLoaderSettings, web3AccountFactory, identityCache, browser, container, decentralandUrlsSource);
 
                 if (container.enableAnalytics)
+                {
                     container.Analytics!.Initialize(container.IdentityCache.Identity);
 
-                bool enableSceneDebugConsole = realmLaunchSettings.IsLocalSceneDevelopmentRealm || applicationParametersParser.HasFlag(AppArgsFlags.SCENE_CONSOLE);
-                container.DiagnosticsContainer = container.enableAnalytics
-                    ? DiagnosticsContainer.Create(container.ReportHandlingSettings, enableSceneDebugConsole, (ReportHandler.DebugLog, new CriticalLogsAnalyticsHandler(container.Analytics)))
-                    : DiagnosticsContainer.Create(container.ReportHandlingSettings, enableSceneDebugConsole);
+                    CrashDetector.Initialize(container.Analytics);
+                }
 
+                bool enableSceneDebugConsole = realmLaunchSettings.IsLocalSceneDevelopmentRealm || applicationParametersParser.HasFlag(AppArgsFlags.SCENE_CONSOLE);
+                container.DiagnosticsContainer = DiagnosticsContainer.Create(container.ReportHandlingSettings, enableSceneDebugConsole);
                 container.DiagnosticsContainer.AddSentryScopeConfigurator(AddIdentityToSentryScope);
 
                 void AddIdentityToSentryScope(Scope scope)
@@ -116,9 +131,15 @@ namespace Global.Dynamic
             return bootstrapContainer;
         }
 
-        private static async UniTask<(IBootstrap, IAnalyticsController)> CreateBootstrapperAsync(IDebugSettings debugSettings,
+        private static async UniTask<(IBootstrap, IAnalyticsController)> CreateBootstrapperAsync(
+            IDebugSettings debugSettings,
             IAppArgs appArgs,
+            ISplashScreen splashScreen,
+            ICompressShaders compressShaders,
+            IRealmUrls realmUrls,
+            IDiskCache diskCache,
             BootstrapContainer container,
+            WebRequestsContainer webRequestsContainer,
             BootstrapSettings bootstrapSettings,
             RealmLaunchSettings realmLaunchSettings,
             World world,
@@ -128,14 +149,14 @@ namespace Global.Dynamic
             AnalyticsConfiguration analyticsConfig = (await container.AssetsProvisioner.ProvideMainAssetAsync(bootstrapSettings.AnalyticsConfigRef, ct)).Value;
             container.enableAnalytics = analyticsConfig.Mode != AnalyticsMode.DISABLED;
 
-            var coreBootstrap = new Bootstrap(debugSettings, appArgs, container.DecentralandUrlsSource, realmLaunchSettings, world)
+            var coreBootstrap = new Bootstrap(debugSettings, appArgs, splashScreen, compressShaders, realmUrls, realmLaunchSettings, webRequestsContainer, diskCache, world)
             {
                 EnableAnalytics = container.enableAnalytics,
             };
 
             if (container.enableAnalytics)
             {
-                IAnalyticsService service = CreateAnalyticsService(analyticsConfig, ct);
+                IAnalyticsService service = CreateAnalyticsService(analyticsConfig, container.ApplicationParametersParser, ct);
 
                 appArgs.TryGetValue(AppArgsFlags.Analytics.LAUNCHER_ID, out string? launcherAnonymousId);
                 appArgs.TryGetValue(AppArgsFlags.Analytics.SESSION_ID, out string? sessionId);
@@ -147,6 +168,7 @@ namespace Global.Dynamic
                 };
 
                 var analyticsController = new AnalyticsController(service, appArgs, analyticsConfig, launcherTraits, buildData);
+                var criticalLogsAnalyticsHandler = new CriticalLogsAnalyticsHandler(analyticsController);
 
                 return (new BootstrapAnalyticsDecorator(coreBootstrap, analyticsController), analyticsController);
             }
@@ -154,10 +176,10 @@ namespace Global.Dynamic
             return (coreBootstrap, IAnalyticsController.Null);
         }
 
-        private static IAnalyticsService CreateAnalyticsService(AnalyticsConfiguration analyticsConfig, CancellationToken token)
+        private static IAnalyticsService CreateAnalyticsService(AnalyticsConfiguration analyticsConfig, IAppArgs args, CancellationToken token)
         {
             // Force segment in release
-            if (!Debug.isDebugBuild)
+            if (!args.HasDebugFlag())
                 return CreateSegmentAnalyticsOrFallbackToDebug(analyticsConfig, token);
 
             return analyticsConfig.Mode switch
@@ -182,29 +204,18 @@ namespace Global.Dynamic
         }
 
         private static (
-            LogWeb3IdentityCache identityCache,
             IVerifiedEthereumApi web3VerifiedAuthenticator,
             IWeb3VerifiedAuthenticator web3Authenticator
             )
             CreateWeb3Dependencies(
                 DynamicSceneLoaderSettings sceneLoaderSettings,
                 IWeb3AccountFactory web3AccountFactory,
+                IWeb3IdentityCache identityCache,
                 IWebBrowser webBrowser,
                 BootstrapContainer container,
                 IDecentralandUrlsSource decentralandUrlsSource
             )
         {
-            var identityCache = new LogWeb3IdentityCache(
-                new ProxyIdentityCache(
-                    new MemoryWeb3IdentityCache(),
-                    new PlayerPrefsIdentityProvider(
-                        new PlayerPrefsIdentityProvider.DecentralandIdentityWithNethereumAccountJsonSerializer(
-                            web3AccountFactory
-                        )
-                    )
-                )
-            );
-
             var dappWeb3Authenticator = new DappWeb3Authenticator(
                 webBrowser,
                 decentralandUrlsSource.Url(DecentralandUrl.ApiAuth),
@@ -219,7 +230,7 @@ namespace Global.Dynamic
             if (container.enableAnalytics)
                 coreWeb3Authenticator = new IdentityAnalyticsDecorator(coreWeb3Authenticator, container.Analytics!);
 
-            return (identityCache, dappWeb3Authenticator, coreWeb3Authenticator);
+            return (dappWeb3Authenticator, coreWeb3Authenticator);
         }
 
         public static async UniTask<ProvidedAsset<ReportsHandlingSettings>> ProvideReportHandlingSettingsAsync(IAssetsProvisioner assetsProvisioner, BootstrapSettings settings, CancellationToken ct)
@@ -242,7 +253,6 @@ namespace Global.Dynamic
         [field: SerializeField] public ReportHandlingSettingsRef ReportHandlingSettingsDevelopment { get; private set; }
         [field: SerializeField] public ReportHandlingSettingsRef ReportHandlingSettingsProduction { get; private set; }
         [field: SerializeField] public BuildData BuildData { get; private set; }
-
 
         [Serializable]
         public class ReportHandlingSettingsRef : AssetReferenceT<ReportsHandlingSettings>

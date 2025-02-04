@@ -118,11 +118,15 @@ namespace DCL.SceneLoadingScreens
             tipsRotationCancellationToken = tipsRotationCancellationToken.SafeRestart();
             RotateTipsOverTimeAsync(tips.Duration, tipsRotationCancellationToken.Token).Forget();
 
-            // Waiting should spin no longer than the async load report itself, the life-cycle of the load report is secured by the upper layer
-            var combinedToken = inputData.AsyncLoadProcessReport.WaitUntilFinishedAsync().ToCancellationToken(ct);
+            // Can't create cancellation token from the finished task, it will throw an exception immediately
+            if (inputData.AsyncLoadProcessReport.GetStatus().TaskStatus == UniTaskStatus.Pending)
+            {
+                // Waiting should spin no longer than the async load report itself, the life-cycle of the load report is secured by the upper layer
+                var combinedToken = inputData.AsyncLoadProcessReport.WaitUntilFinishedAsync().ToCancellationToken(ct);
 
-            await UniTask.WhenAll(WaitUntilWorldIsLoadedAsync(0.8f, combinedToken), WaitTimeThresholdAsync(0.2f, combinedToken))
-                         .SuppressCancellationThrow();
+                await UniTask.WhenAll(WaitUntilWorldIsLoadedAsync(0.8f, combinedToken), WaitTimeThresholdAsync(0.2f, combinedToken))
+                             .SuppressCancellationThrow();
+            }
 
             // Fade should be performed if loadingProcess is finished but the "hard" token is still ok
             if (!ct.IsCancellationRequested)
@@ -256,12 +260,12 @@ namespace DCL.SceneLoadingScreens
 
         private void BlockUnwantedInputs()
         {
-            inputBlock.Disable(InputMapComponent.Kind.CAMERA, InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.PLAYER);
+            inputBlock.Disable(InputMapComponent.BLOCK_USER_INPUT);
         }
 
         private void UnblockUnwantedInputs()
         {
-            inputBlock.Enable(InputMapComponent.Kind.CAMERA, InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.PLAYER);
+            inputBlock.Enable(InputMapComponent.BLOCK_USER_INPUT);
         }
     }
 }

@@ -1,8 +1,8 @@
-﻿using DCL.Diagnostics;
-using DCL.Web3.Identities;
+﻿using DCL.Web3.Identities;
 using ECS;
 using Global.AppArgs;
 using Segment.Serialization;
+using System;
 using UnityEngine;
 using Utility;
 using static DCL.PerformanceAndDiagnostics.Analytics.IAnalyticsController;
@@ -13,8 +13,8 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
     {
         private readonly IAnalyticsService analytics;
 
-        private bool isInitialized;
         public AnalyticsConfiguration Configuration { get; }
+        public string SessionID { get; }
 
         public AnalyticsController(
             IAnalyticsService analyticsService,
@@ -26,16 +26,20 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             analytics = analyticsService;
             Configuration = configuration;
 
-            analytics.AddPlugin(new StaticCommonTraitsPlugin(appArgs, launcherTraits, buildData));
+            Configuration.Initialize();
+
+            SessionID = !string.IsNullOrEmpty(launcherTraits.SessionId) ? launcherTraits.SessionId : SystemInfo.deviceUniqueIdentifier + DateTime.Now.ToString("yyyyMMddHHmmssfff");
+
+            analytics.AddPlugin(new StaticCommonTraitsPlugin(appArgs, SessionID, launcherTraits.LauncherAnonymousId, buildData));
         }
 
         public void Initialize(IWeb3Identity? web3Identity)
         {
-            TrackSystemInfo();
-            analytics.Identify(web3Identity?.Address ?? "not cached");
-            analytics.Flush();
+            if (web3Identity != null && web3Identity.Address != null)
+                analytics.Identify(web3Identity?.Address);
 
-            isInitialized = true;
+            TrackSystemInfo();
+            analytics.Flush();
         }
 
         public void SetCommonParam(IRealmData realmData, IWeb3IdentityCache? identityCache, IExposedTransform playerTransform)
@@ -48,9 +52,6 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
         public void Track(string eventName, JsonObject? properties = null)
         {
-            if (!isInitialized)
-                ReportHub.LogError(ReportCategory.ANALYTICS, $"Analytics {nameof(Track)} called before initialization. Event {eventName} won't be tracked.");
-
             if (Configuration.EventIsEnabled(eventName))
                 analytics.Track(eventName, properties);
         }
@@ -74,7 +75,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
         private void TrackSystemInfo()
         {
-            analytics.Track(AnalyticsEvents.General.SYSTEM_INFO_REPORT, new JsonObject
+            Track(AnalyticsEvents.General.SYSTEM_INFO_REPORT, new JsonObject
             {
                 ["device_model"] = SystemInfo.deviceModel, // "XPS 17 9720 (Dell Inc.)"
                 ["operating_system"] = SystemInfo.operatingSystem, // "Windows 11  (10.0.22631) 64bit"

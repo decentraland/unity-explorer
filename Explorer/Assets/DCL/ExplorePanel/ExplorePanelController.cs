@@ -14,6 +14,7 @@ using MVC;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using Utility;
 
@@ -23,7 +24,6 @@ namespace DCL.ExplorePanel
     {
         private readonly SettingsController settingsController;
         private readonly BackpackController backpackController;
-        private readonly CameraReelController cameraReelController;
         private readonly ProfileWidgetController profileWidgetController;
         private readonly ProfileMenuController profileMenuController;
         private readonly DCLInput dclInput;
@@ -34,17 +34,16 @@ namespace DCL.ExplorePanel
 
         private Dictionary<ExploreSections, TabSelectorView> tabsBySections;
         private Dictionary<ExploreSections, ISection> exploreSections;
-
         private SectionSelectorController<ExploreSections> sectionSelectorController;
-        private CancellationTokenSource animationCts;
+        private CancellationTokenSource? animationCts;
         private CancellationTokenSource? profileWidgetCts;
         private CancellationTokenSource? profileMenuCts;
-        private TabSelectorView previousSelector;
+        private TabSelectorView? previousSelector;
         private ExploreSections lastShownSection;
-
         private bool isControlClosing;
 
         public NavmapController NavmapController { get; }
+        public CameraReelController CameraReelController { get; }
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Fullscreen;
 
@@ -66,7 +65,7 @@ namespace DCL.ExplorePanel
             NavmapController = navmapController;
             this.settingsController = settingsController;
             this.backpackController = backpackController;
-            this.cameraReelController = cameraReelController;
+            CameraReelController = cameraReelController;
             this.profileWidgetController = profileWidgetController;
             this.dclInput = dclInput;
             this.explorePanelEscapeAction = explorePanelEscapeAction;
@@ -80,8 +79,7 @@ namespace DCL.ExplorePanel
         private void OnRewardAssigned(object[] parameters)
         {
             mvcManager.ShowAsync(IssueCommand(new ExplorePanelParameter(ExploreSections.Backpack))).Forget();
-            lastShownSection = ExploreSections.Backpack;
-            OnBackpackHotkeyPressed(default(InputAction.CallbackContext));
+            ShowSection(ExploreSections.Backpack);
         }
 
         public override void Dispose()
@@ -99,7 +97,7 @@ namespace DCL.ExplorePanel
                 { ExploreSections.Navmap, NavmapController },
                 { ExploreSections.Settings, settingsController },
                 { ExploreSections.Backpack, backpackController },
-                { ExploreSections.CameraReel, cameraReelController },
+                { ExploreSections.CameraReel, CameraReelController },
             };
 
             sectionSelectorController = new SectionSelectorController<ExploreSections>(exploreSections, ExploreSections.Navmap);
@@ -132,9 +130,9 @@ namespace DCL.ExplorePanel
         protected override void OnViewShow()
         {
             isControlClosing = false;
-            sectionSelectorController.ResetAnimators();
+            sectionSelectorController!.ResetAnimators();
 
-            foreach ((ExploreSections section, TabSelectorView? tab) in tabsBySections)
+            foreach ((ExploreSections section, TabSelectorView? tab) in tabsBySections!)
             {
                 ToggleSection(section == inputData.Section, tab, section, true);
                 sectionSelectorController.SetAnimationState(section == inputData.Section, tabsBySections[section]);
@@ -159,19 +157,18 @@ namespace DCL.ExplorePanel
         private void ToggleSection(bool isOn, TabSelectorView tabSelectorView, ExploreSections shownSection, bool animate)
         {
             if (isOn && animate && shownSection != lastShownSection)
-                sectionSelectorController.SetAnimationState(false, tabsBySections[lastShownSection]);
+                sectionSelectorController!.SetAnimationState(false, tabsBySections![lastShownSection]);
 
             animationCts.SafeCancelAndDispose();
             animationCts = new CancellationTokenSource();
-            sectionSelectorController.OnTabSelectorToggleValueChangedAsync(isOn, tabSelectorView, shownSection, animationCts.Token, animate).Forget();
+            sectionSelectorController!.OnTabSelectorToggleValueChangedAsync(isOn, tabSelectorView, shownSection, animationCts.Token, animate).Forget();
 
-            if (isOn)
-            {
-                if (shownSection == lastShownSection)
-                    exploreSections[lastShownSection].Activate();
+            if (!isOn) return;
 
-                lastShownSection = shownSection;
-            }
+            if (shownSection == lastShownSection)
+                exploreSections![lastShownSection].Activate();
+
+            lastShownSection = shownSection;
         }
 
         private void RegisterHotkeys()
@@ -181,7 +178,7 @@ namespace DCL.ExplorePanel
             dclInput.Shortcuts.Map.performed += OnMapHotkeyPressed;
             dclInput.Shortcuts.Settings.performed += OnSettingsHotkeyPressed;
             dclInput.Shortcuts.Backpack.performed += OnBackpackHotkeyPressed;
-            dclInput.Shortcuts.CameraReel.performed += OnCameraReelHotkeyPressed;
+            dclInput.InWorldCamera.CameraReel.performed += OnCameraReelHotkeyPressed;
         }
 
         private void OnCameraReelHotkeyPressed(InputAction.CallbackContext ctx)
@@ -199,6 +196,10 @@ namespace DCL.ExplorePanel
 
         private void OnCloseMainMenu(InputAction.CallbackContext obj)
         {
+            // Search bar could be focused when closing the menu, so we need to remove the focus,
+            // which will also re-enable shortcuts
+            EventSystem.current.SetSelectedGameObject(null);
+
             profileMenuController.HideViewAsync(CancellationToken.None).Forget();
             isControlClosing = true;
         }
@@ -207,7 +208,7 @@ namespace DCL.ExplorePanel
         {
             if (lastShownSection != ExploreSections.Navmap)
             {
-                sectionSelectorController.SetAnimationState(false, tabsBySections[lastShownSection]);
+                sectionSelectorController!.SetAnimationState(false, tabsBySections![lastShownSection]);
                 ShowSection(ExploreSections.Navmap);
             }
             else
@@ -218,7 +219,7 @@ namespace DCL.ExplorePanel
         {
             if (lastShownSection != ExploreSections.Settings)
             {
-                sectionSelectorController.SetAnimationState(false, tabsBySections[lastShownSection]);
+                sectionSelectorController!.SetAnimationState(false, tabsBySections![lastShownSection]);
                 ShowSection(ExploreSections.Settings);
             }
             else
@@ -229,7 +230,7 @@ namespace DCL.ExplorePanel
         {
             if (lastShownSection != ExploreSections.Backpack)
             {
-                sectionSelectorController.SetAnimationState(false, tabsBySections[lastShownSection]);
+                sectionSelectorController!.SetAnimationState(false, tabsBySections![lastShownSection]);
                 ShowSection(ExploreSections.Backpack);
             }
             else
@@ -238,12 +239,12 @@ namespace DCL.ExplorePanel
 
         private void ShowSection(ExploreSections section)
         {
-            ToggleSection(true, tabsBySections[section], section, true);
+            ToggleSection(true, tabsBySections![section], section, true);
         }
 
         protected override void OnViewClose()
         {
-            foreach (ISection exploreSectionsValue in exploreSections.Values)
+            foreach (ISection exploreSectionsValue in exploreSections!.Values)
                 exploreSectionsValue.Deactivate();
 
             if (profileMenuController.State is ControllerState.ViewFocused or ControllerState.ViewBlurred)
@@ -263,17 +264,17 @@ namespace DCL.ExplorePanel
             dclInput.Shortcuts.Map.performed -= OnMapHotkeyPressed;
             dclInput.Shortcuts.Settings.performed -= OnSettingsHotkeyPressed;
             dclInput.Shortcuts.Backpack.performed -= OnBackpackHotkeyPressed;
-            dclInput.Shortcuts.CameraReel.performed -= OnCameraReelHotkeyPressed;
+            dclInput.InWorldCamera.CameraReel.performed -= OnCameraReelHotkeyPressed;
         }
 
         private void BlockUnwantedInputs()
         {
-            inputBlock.Disable(InputMapComponent.Kind.CAMERA , InputMapComponent.Kind.PLAYER);
+            inputBlock.Disable(InputMapComponent.Kind.CAMERA, InputMapComponent.Kind.PLAYER);
         }
 
         private void UnblockUnwantedInputs()
         {
-            inputBlock.Enable(InputMapComponent.Kind.CAMERA , InputMapComponent.Kind.PLAYER);
+            inputBlock.Enable(InputMapComponent.Kind.CAMERA, InputMapComponent.Kind.PLAYER);
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct)

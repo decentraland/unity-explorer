@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.WebRequests;
+using DCL.WebRequests.GenericDelete;
 using ECS;
 using JetBrains.Annotations;
 using Newtonsoft.Json;
@@ -148,6 +149,16 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
                                 headersInfo: headers,
                                 signInfo: signInfo,
                                 reportCategory: GetReportData());
+                            break;
+                        case "delete":
+                            response = await webController.DeleteAsync<FlatFetchResponse<GenericDeleteRequest>, FlatFetchResponse>(
+                                request.url,
+                                new FlatFetchResponse<GenericDeleteRequest>(),
+                                GenericDeleteArguments.FromJsonOrDefault(request.init?.body),
+                                cancellationTokenSource.Token,
+                                headersInfo: headers,
+                                signInfo: signInfo,
+                                reportCategory: GetReportData());
 
                             break;
                         default: throw new Exception($"Method {method} is not supported for signed fetch");
@@ -155,7 +166,17 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
 
                     return response;
                 }
-                catch (UnityWebRequestException e) { return new FlatFetchResponse(false, e.ResponseCode, e.ResponseCode.ToString(), e.Error, e.ResponseHeaders); }
+                catch (UnityWebRequestException e)
+                {
+                    if (e.ResponseHeaders.TryGetValue("Content-type", out var contentType) && contentType.Contains("application/json", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var flatFetchError = JsonConvert.DeserializeObject<FlatFetchError>(e.Text);
+                        return new FlatFetchResponse(false, e.ResponseCode, e.ResponseCode.ToString(), flatFetchError.error,
+                            e.ResponseHeaders);
+                    }
+                    return new FlatFetchResponse(false, e.ResponseCode, e.ResponseCode.ToString(), e.Error,
+                        e.ResponseHeaders);
+                }
                 catch (Exception e)
                 {
                     ReportHub.LogException(e, new ReportData(ReportCategory.SCENE_FETCH_REQUEST));

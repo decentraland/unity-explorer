@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace DCL.MapRenderer.MapLayers
 {
@@ -6,15 +7,18 @@ namespace DCL.MapRenderer.MapLayers
     public enum MapLayer
     {
         None,
+        ParcelsAtlas = 1,
         SatelliteAtlas = 1 << 1,
         ScenesOfInterest = 1 << 3,
         HotUsersMarkers = 1 << 4,
         ParcelHoverHighlight = 1 << 6,
         Favorites = 1 << 7,
-        Pins = 1 << 8,
-        PlayerMarker = 1 << 9,
-        Path = 1 << 10,
-
+        Category = 1 << 8,
+        Pins = 1 << 9,
+        PlayerMarker = 1 << 10,
+        Path = 1 << 11,
+        SearchResults = 1 << 12,
+        LiveEvents = 1 << 13,
         // Add yours
     }
 }

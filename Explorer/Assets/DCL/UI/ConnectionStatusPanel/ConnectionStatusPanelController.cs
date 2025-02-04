@@ -13,11 +13,12 @@ using MVC;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using DCL.Ipfs;
 using Utility;
 
 namespace DCL.UI.ConnectionStatusPanel
 {
-    public partial class ConnectionStatusPanelController : ControllerBase<ConnectionStatusPanelView>
+    public class ConnectionStatusPanelController : ControllerBase<ConnectionStatusPanelView>
     {
         private readonly IUserInAppInitializationFlow userInAppInitializationFlow;
         private readonly IMVCManager mvcManager;
@@ -58,9 +59,22 @@ namespace DCL.UI.ConnectionStatusPanel
         protected override void OnViewInstantiated()
         {
             currentSceneInfo.SceneStatus.OnUpdate += SceneStatusOnUpdate;
+            currentSceneInfo.SceneAssetBundleStatus.OnUpdate += AssetBundleSceneStatusOnUpdate;
             SceneStatusOnUpdate(currentSceneInfo.SceneStatus.Value);
-            Bind(roomsStatus.ConnectionQualityScene, viewInstance.SceneRoom);
+            AssetBundleSceneStatusOnUpdate(currentSceneInfo.SceneAssetBundleStatus.Value);
+            Bind(roomsStatus.ConnectionQualityScene, viewInstance!.SceneRoom);
             Bind(roomsStatus.ConnectionQualityIsland, viewInstance.GlobalRoom);
+        }
+
+        private void AssetBundleSceneStatusOnUpdate(AssetBundleRegistryEnum? obj)
+        {
+            if (obj == null)
+            {
+                viewInstance!.AssetBundle.HideStatus();
+                return;
+            }
+
+            viewInstance!.AssetBundle.ShowStatus(obj.Value);
         }
 
         protected override void OnViewShow() =>
@@ -69,7 +83,7 @@ namespace DCL.UI.ConnectionStatusPanel
         public void SetVisibility(bool isVisible) =>
             viewInstance?.gameObject.SetActive(isVisible);
 
-        private void SceneStatusOnUpdate(ICurrentSceneInfo.Status? obj)
+        private void SceneStatusOnUpdate(ICurrentSceneInfo.RunningStatus? obj)
         {
             const float DELAY = 5f;
 
@@ -82,15 +96,15 @@ namespace DCL.UI.ConnectionStatusPanel
 
             if (obj == null)
             {
-                viewInstance.Scene.HideStatus();
+                viewInstance!.Scene.HideStatus();
                 return;
             }
 
             var status = obj.Value;
 
-            viewInstance.Scene.ShowStatus(status);
+            viewInstance!.Scene.ShowStatus(status);
 
-            if (status is ICurrentSceneInfo.Status.Crashed)
+            if (status is ICurrentSceneInfo.RunningStatus.Crashed)
                 ShowButtonAsync(cancellationTokenSource.Token).Forget();
         }
 
@@ -119,17 +133,17 @@ namespace DCL.UI.ConnectionStatusPanel
             if (value.Value is not ConnectionQuality.QualityLost)
                 return;
 
-            await mvcManager.ShowAsync(new ShowCommand<ErrorPopupView, ErrorPopupData>(ErrorPopupData.Empty), ct);
+            await mvcManager.ShowAsync(new ShowCommand<ErrorPopupView, ErrorPopupData>(ErrorPopupData.Default), ct);
             await userInAppInitializationFlow.ExecuteAsync(
-                new UserInAppInitializationFlowParameters
-                {
-                    ShowAuthentication = true,
-                    ShowLoading = true,
-                    ReloadRealm = true,
-                    FromLogout = false,
-                    World = world,
-                    PlayerEntity = playerEntity,
-                }, ct);
+                new UserInAppInitializationFlowParameters(
+                    showAuthentication: true,
+                    showLoading: true,
+                    loadSource: IUserInAppInitializationFlow.LoadSource.Recover,
+                    world: world,
+                    playerEntity: playerEntity
+                ),
+                ct
+            );
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>

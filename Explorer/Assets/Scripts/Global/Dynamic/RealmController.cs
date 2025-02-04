@@ -6,7 +6,6 @@ using DCL.Diagnostics;
 using DCL.Ipfs;
 using DCL.LOD.Components;
 using DCL.Optimization.Pools;
-using DCL.ParcelsService;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
@@ -22,7 +21,7 @@ using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using DCL.DebugUtilities;
+ using DCL.RealmNavigation;
 using Unity.Mathematics;
 
 namespace Global.Dynamic
@@ -32,7 +31,7 @@ namespace Global.Dynamic
         // TODO it can be dangerous to clear the realm, instead we may destroy it fully and reconstruct but we will need to
         // TODO construct player/camera entities again and allocate more memory. Evaluate
         // Realms + Promises
-        private static readonly QueryDescription CLEAR_QUERY = new QueryDescription().WithAny<RealmComponent, GetSceneDefinition, GetSceneDefinitionList, SceneDefinitionComponent, SceneLODInfo, EmptySceneComponent>();
+        private static readonly QueryDescription CLEAR_QUERY = new QueryDescription().WithAny<RealmComponent, GetSceneDefinition, GetSceneDefinitionList, SceneDefinitionComponent, SceneLODInfo, EmptySceneComponent>().WithNone<PortableExperienceComponent>();
 
         private readonly List<ISceneFacade> allScenes = new (PoolConstants.SCENES_COUNT);
         private readonly ServerAbout serverAbout = new ();
@@ -47,13 +46,18 @@ namespace Global.Dynamic
         private readonly IScenesCache scenesCache;
         private readonly SceneAssetLock sceneAssetLock;
         private readonly IComponentPool<PartitionComponent> partitionComponentPool;
+        private readonly bool isLocalSceneDevelopment;
+        private readonly RealmNavigatorDebugView realmNavigatorDebugView;
+        private readonly URLDomain assetBundleRegistry;
+
 
         private GlobalWorld? globalWorld;
         private Entity realmEntity;
 
+
+        
         public IRealmData RealmData => realmData;
 
-        private readonly RealmNavigatorDebugView realmNavigatorDebugView;
         public URLDomain? CurrentDomain { get; private set; }
 
         public GlobalWorld GlobalWorld
@@ -78,8 +82,10 @@ namespace Global.Dynamic
             IScenesCache scenesCache,
             PartitionDataContainer partitionDataContainer,
             SceneAssetLock sceneAssetLock,
-            IDebugContainerBuilder debugContainerBuilder,
-            IComponentPool<PartitionComponent> partitionComponentPool)
+            IComponentPool<PartitionComponent> partitionComponentPool,
+            RealmNavigatorDebugView realmNavigatorDebugView,
+            bool isLocalSceneDevelopment,
+            URLDomain assetBundleRegistry)
         {
             this.web3IdentityCache = web3IdentityCache;
             this.webRequestController = webRequestController;
@@ -92,7 +98,9 @@ namespace Global.Dynamic
             this.partitionDataContainer = partitionDataContainer;
             this.sceneAssetLock = sceneAssetLock;
             this.partitionComponentPool = partitionComponentPool;
-            realmNavigatorDebugView = new RealmNavigatorDebugView(debugContainerBuilder);
+            this.isLocalSceneDevelopment = isLocalSceneDevelopment;
+            this.realmNavigatorDebugView = realmNavigatorDebugView;
+            this.assetBundleRegistry = assetBundleRegistry;
         }
 
         public async UniTask SetRealmAsync(URLDomain realm, CancellationToken ct)
@@ -112,12 +120,13 @@ namespace Global.Dynamic
             string hostname = ResolveHostname(realm, result);
 
             realmData.Reconfigure(
-                new IpfsRealm(web3IdentityCache, webRequestController, realm, result),
+                new IpfsRealm(web3IdentityCache, webRequestController, realm, assetBundleRegistry, result),
                 result.configurations.realmName.EnsureNotNull("Realm name not found"),
                 result.configurations.networkId,
                 result.comms?.adapter ?? result.comms?.fixedAdapter ?? "offline:offline", //"offline property like in previous implementation"
                 result.comms?.protocol ?? "v3",
-                hostname
+                hostname,
+                isLocalSceneDevelopment
             );
 
             // Add the realm component
@@ -135,6 +144,7 @@ namespace Global.Dynamic
             partitionDataContainer.Restart();
 
             CurrentDomain = realm;
+
             realmNavigatorDebugView.UpdateRealmName(CurrentDomain.Value.ToString(), result.lambdas.publicUrl,
                 result.content.publicUrl);
         }
@@ -170,7 +180,7 @@ namespace Global.Dynamic
 
             promise = await promise.ToUniTaskAsync(GlobalWorld.EcsWorld, cancellationToken: ct);
 
-            if (promise.TryGetResult(GlobalWorld.EcsWorld, out var result) && result.Succeeded)
+            if (promise.TryGetResult(GlobalWorld.EcsWorld, out StreamableLoadingResult<SceneDefinitions> result) && result.Succeeded)
                 return result.Asset;
 
             return null;
@@ -183,6 +193,7 @@ namespace Global.Dynamic
             if (globalWorld != null)
             {
                 loadedScenes = FindLoadedScenesAndClearSceneCache(true);
+
                 // Destroy everything without awaiting as it's Application Quit
                 globalWorld.SafeDispose(ReportCategory.SCENE_LOADING);
             }
@@ -204,7 +215,7 @@ namespace Global.Dynamic
 
             // release pooled entities
             for (var i = 0; i < globalWorld.FinalizeWorldSystems.Count; i++)
-                    globalWorld.FinalizeWorldSystems[i].FinalizeComponents(world.Query(in CLEAR_QUERY));
+                globalWorld.FinalizeWorldSystems[i].FinalizeComponents(world.Query(in CLEAR_QUERY));
 
             // Clear the world from everything connected to the current realm
             world.Destroy(in CLEAR_QUERY);

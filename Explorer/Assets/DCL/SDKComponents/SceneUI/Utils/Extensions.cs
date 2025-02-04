@@ -65,18 +65,26 @@ namespace DCL.SDKComponents.SceneUI.Utils
         {
             EventCallback<PointerDownEvent> newOnPointerDownCallback = _ => uiTransformComponent.PointerEventTriggered = PointerEventType.PetDown;
             EventCallback<PointerUpEvent> newOnPointerUpCallback = _ => uiTransformComponent.PointerEventTriggered = PointerEventType.PetUp;
+            EventCallback<PointerEnterEvent> newOnPointerEnterCallback = _ => uiTransformComponent.PointerEventTriggered = PointerEventType.PetHoverEnter;
+            EventCallback<PointerLeaveEvent> newOnPointerLeaveCallback = _ => uiTransformComponent.PointerEventTriggered = PointerEventType.PetHoverLeave;
 
             uiTransformComponent.UnregisterPointerCallbacks();
             uiTransformComponent.Transform.RegisterCallback(newOnPointerDownCallback);
             uiTransformComponent.currentOnPointerDownCallback = newOnPointerDownCallback;
             uiTransformComponent.Transform.RegisterCallback(newOnPointerUpCallback);
             uiTransformComponent.currentOnPointerUpCallback = newOnPointerUpCallback;
+            uiTransformComponent.Transform.RegisterCallback(newOnPointerEnterCallback);
+            uiTransformComponent.currentOnPointerEnterCallback = newOnPointerEnterCallback;
+            uiTransformComponent.Transform.RegisterCallback(newOnPointerLeaveCallback);
+            uiTransformComponent.currentOnPointerLeaveCallback = newOnPointerLeaveCallback;
         }
 
         public static void UnregisterPointerCallbacks(this UITransformComponent uiTransformComponent)
         {
             uiTransformComponent.Transform.UnregisterCallback(uiTransformComponent.currentOnPointerDownCallback);
             uiTransformComponent.Transform.UnregisterCallback(uiTransformComponent.currentOnPointerUpCallback);
+            uiTransformComponent.Transform.UnregisterCallback(uiTransformComponent.currentOnPointerEnterCallback);
+            uiTransformComponent.Transform.UnregisterCallback(uiTransformComponent.currentOnPointerLeaveCallback);
         }
 
         public static void RegisterInputCallbacks(this UIInputComponent uiInputComponent, IInputBlock inputBlock)
@@ -99,13 +107,13 @@ namespace DCL.SDKComponents.SceneUI.Utils
             EventCallback<FocusInEvent> newOnFocusInCallback = evt =>
             {
                 evt.StopPropagation();
-                inputBlock.Disable(InputMapComponent.Kind.CAMERA , InputMapComponent.Kind.SHORTCUTS , InputMapComponent.Kind.PLAYER);
+                inputBlock.Disable(InputMapComponent.Kind.CAMERA , InputMapComponent.Kind.SHORTCUTS , InputMapComponent.Kind.PLAYER, InputMapComponent.Kind.IN_WORLD_CAMERA);
             };
 
             EventCallback<FocusOutEvent> newOnFocusOutCallback = evt =>
             {
                 evt.StopPropagation();
-                inputBlock.Enable(InputMapComponent.Kind.CAMERA , InputMapComponent.Kind.SHORTCUTS , InputMapComponent.Kind.PLAYER);
+                inputBlock.Enable(InputMapComponent.Kind.CAMERA , InputMapComponent.Kind.SHORTCUTS , InputMapComponent.Kind.PLAYER, InputMapComponent.Kind.IN_WORLD_CAMERA);
             };
 
             uiInputComponent.UnregisterInputCallbacks();

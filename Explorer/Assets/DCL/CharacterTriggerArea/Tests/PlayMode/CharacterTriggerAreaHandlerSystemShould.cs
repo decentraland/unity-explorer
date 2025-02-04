@@ -69,14 +69,12 @@ namespace DCL.CharacterTriggerArea.Tests
             UnityEngine.Physics.simulationMode = SimulationMode.Script;
         }
 
-        [TearDown]
-        public void Teardown()
+        protected override void OnTearDown()
         {
             poolsRegistry.Dispose();
             Object.DestroyImmediate(entityTransformComponent.Transform.gameObject);
             Object.DestroyImmediate(fakeMainPlayerGO);
             Object.DestroyImmediate(fakeMainPlayerAvatarGO);
-            Object.DestroyImmediate(characterTriggerArea.gameObject);
         }
 
         [Test]

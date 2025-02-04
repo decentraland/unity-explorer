@@ -2,17 +2,16 @@
 using DCL.AvatarRendering.Loading.Assets;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.LOD;
-using DCL.Optimization;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.Profiles;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.Cache;
+using ECS.StreamableLoading.Cache.InMemory;
 using ECS.StreamableLoading.NFTShapes;
 using ECS.StreamableLoading.Textures;
 using ECS.Unity.GLTFContainer.Asset.Cache;
-using ECS.Unity.GLTFContainer.Asset.Components;
 using NSubstitute;
 using NUnit.Framework;
 using UnityEngine;
@@ -27,9 +26,9 @@ namespace DCL.ResourcesUnloading.Tests
         private IReleasablePerformanceBudget releasablePerformanceBudget;
         private IWearableStorage wearableStorage;
         private IAttachmentsAssetsCache attachmentsAssetsCache;
-        private IStreamableCache<Texture2DData, GetTextureIntention> texturesCache;
+        private ISizedStreamableCache<Texture2DData, GetTextureIntention> texturesCache;
         private IStreamableCache<AudioClipData, GetAudioClipIntention> audioClipsCache;
-        private IStreamableCache<Texture2DData, GetNFTShapeIntention> nftShapeCache;
+        private ISizedStreamableCache<Texture2DData, GetNFTShapeIntention> nftShapeCache;
         private IGltfContainerAssetsCache gltfContainerAssetsCache;
         private IStreamableCache<AssetBundleData, GetAssetBundleIntention> assetBundleCache;
         private IExtendedObjectPool<Material> materialPool;
@@ -38,7 +37,7 @@ namespace DCL.ResourcesUnloading.Tests
         private IRoadAssetPool roadAssetPool;
         private IEmoteStorage emoteStorage;
         private IStreamableCache<ProfileData, GetProfileIntention> profileIntentionCache;
-        private IJsSourcesCache jsSourcesCache;
+        private IMemoryCache<string, string> jsSourcesCache;
 
         [SetUp]
         public void SetUp()
@@ -50,19 +49,19 @@ namespace DCL.ResourcesUnloading.Tests
             wearableStorage = Substitute.For<IWearableStorage>();
             attachmentsAssetsCache = Substitute.For<IAttachmentsAssetsCache>();
 
-            texturesCache = Substitute.For<IStreamableCache<Texture2DData, GetTextureIntention>>();
+            texturesCache = Substitute.For<ISizedStreamableCache<Texture2DData, GetTextureIntention>>();
             audioClipsCache = Substitute.For<IStreamableCache<AudioClipData, GetAudioClipIntention>>();
             assetBundleCache = Substitute.For<IStreamableCache<AssetBundleData, GetAssetBundleIntention>>();
             gltfContainerAssetsCache = Substitute.For<IGltfContainerAssetsCache>();
             profileCache = Substitute.For<IProfileCache>();
             lodAssetsPool = Substitute.For<ILODCache>();
             roadAssetPool = Substitute.For<IRoadAssetPool>();
-            nftShapeCache = Substitute.For<IStreamableCache<Texture2DData, GetNFTShapeIntention>>();
+            nftShapeCache = Substitute.For<ISizedStreamableCache<Texture2DData, GetNFTShapeIntention>>();
             emoteStorage = Substitute.For<IEmoteStorage>();
             profileIntentionCache = Substitute.For<IStreamableCache<ProfileData, GetProfileIntention>>();
-            jsSourcesCache = Substitute.For<IJsSourcesCache>();
+            jsSourcesCache = Substitute.For<IMemoryCache<string, string>>();
 
-            cacheCleaner = new CacheCleaner(releasablePerformanceBudget);
+            cacheCleaner = new CacheCleaner(releasablePerformanceBudget, null);
 
             cacheCleaner.Register(wearableStorage);
             cacheCleaner.Register(texturesCache);

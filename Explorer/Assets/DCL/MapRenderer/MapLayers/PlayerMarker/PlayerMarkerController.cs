@@ -8,6 +8,7 @@ using DCL.ECSComponents;
 using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.Culling;
 using MVC;
+using System;
 using System.Threading;
 using UnityEngine;
 using Utility;
@@ -47,6 +48,9 @@ namespace DCL.MapRenderer.MapLayers.PlayerMarker
             playerMarker = builder(instantiationParent);
         }
 
+        public UniTask InitializeAsync(CancellationToken cancellationToken) =>
+            UniTask.CompletedTask;
+
         public void CreateSystems(ref ArchSystemsWorldBuilder<World> builder)
         {
             system = TrackPlayerPositionSystem.InjectToWorld(ref builder);
@@ -64,7 +68,7 @@ namespace DCL.MapRenderer.MapLayers.PlayerMarker
             SetRotation(transformComponent.Transform.rotation);
         }
 
-        public UniTask Enable(CancellationToken cancellationToken)
+        public UniTask EnableAsync(CancellationToken cancellationToken)
         {
             playerMarker.SetActive(true);
             return UniTask.CompletedTask;
@@ -100,8 +104,13 @@ namespace DCL.MapRenderer.MapLayers.PlayerMarker
             playerMarker.SetRotation(Quaternion.AngleAxis(rotation.eulerAngles.y, Vector3.back));
         }
 
-        public void ApplyCameraZoom(float baseZoom, float zoom)
+        public bool ZoomBlocked { get; set; }
+
+        public void ApplyCameraZoom(float baseZoom, float zoom, int zoomLevel)
         {
+            if (ZoomBlocked)
+                return;
+
             playerMarker.SetZoom(baseZoom, zoom);
         }
 

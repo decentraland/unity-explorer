@@ -24,8 +24,8 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
 
         public IReadOnlyList<ReelThumbnailController> Setup(DateTime bucket,
             List<CameraReelResponseCompact> images,
-            OptionButtonController? optionsButton,
-            Action<CameraReelResponseCompact, Sprite> onThumbnailLoaded,
+            CameraReelOptionButtonController? optionsButton,
+            Action<CameraReelResponseCompact, Texture> onThumbnailLoaded,
             Action<CameraReelResponseCompact> onThumbnailClicked)
         {
             this.DateTimeBucket = bucket;

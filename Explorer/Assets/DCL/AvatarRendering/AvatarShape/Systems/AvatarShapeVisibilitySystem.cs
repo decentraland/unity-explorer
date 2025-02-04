@@ -5,6 +5,9 @@ using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Character.Components;
 using DCL.CharacterCamera;
+using DCL.ECSComponents;
+using DCL.Quality;
+using DCL.Rendering.Avatar;
 using ECS.Abstract;
 using System.Runtime.CompilerServices;
 using UnityEngine;
@@ -14,9 +17,13 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
     [UpdateInGroup(typeof(CameraGroup))]
     public partial class AvatarShapeVisibilitySystem : BaseUnityLoopSystem
     {
+        private readonly OutlineRendererFeature? outlineFeature;
         private SingleInstanceEntity camera;
 
-        public AvatarShapeVisibilitySystem(World world) : base(world) { }
+        public AvatarShapeVisibilitySystem(World world, IRendererFeaturesCache outlineFeature) : base(world)
+        {
+            this.outlineFeature = outlineFeature.GetRendererFeature<OutlineRendererFeature>();
+        }
 
         public override void Initialize()
         {
@@ -31,6 +38,29 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             UpdateMainPlayerAvatarVisibilityOnCameraDistanceQuery(World);
             UpdateNonPlayerAvatarVisibilityOnCameraDistanceQuery(World);
             UpdateAvatarsVisibilityStateQuery(World);
+            GetAvatarsVisibleWithOutlineQuery(World);
+        }
+
+        public bool IsVisibleInCamera(Camera camera, Bounds bounds)
+        {
+            Plane[] planes = GeometryUtility.CalculateFrustumPlanes(camera);
+            return GeometryUtility.TestPlanesAABB(planes, bounds);
+        }
+
+        public bool IsWithinCameraDistance(Camera camera, Transform objectTransform, float maxDistancesquared)
+        {
+            var diff = camera.transform.position - objectTransform.position;
+            float distance = diff.sqrMagnitude;
+            return distance <= maxDistancesquared;
+        }
+
+        [Query]
+        private void GetAvatarsVisibleWithOutline(in AvatarBase avatarBase, ref AvatarShapeComponent avatarShape)
+        {
+            if (outlineFeature != null && outlineFeature.isActive && IsWithinCameraDistance(camera.GetCameraComponent(World).Camera, avatarBase.HeadAnchorPoint, 64.0f) && IsVisibleInCamera(camera.GetCameraComponent(World).Camera, avatarBase.AvatarSkinnedMeshRenderer.bounds))
+            {
+                OutlineRendererFeature.m_OutlineRenderers.AddRange(avatarShape.OutlineCompatibleRenderers);
+            }
         }
 
         [Query]
@@ -45,7 +75,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
         [Query]
         [All(typeof(AvatarShapeComponent))]
-        [None(typeof(AvatarCachedVisibilityComponent), typeof(PlayerComponent))]
+        [None(typeof(AvatarCachedVisibilityComponent), typeof(PlayerComponent), typeof(PBAvatarShape))]
         private void AddOthersCachedVisibilityComponent(in Entity entity, ref AvatarShapeComponent avatarShape)
         {
             bool shouldBeHidden = avatarShape.HiddenByModifierArea;
@@ -67,14 +97,13 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         }
 
         [Query]
-        [None(typeof(PlayerComponent))]
         private void UpdateAvatarsVisibilityState(ref AvatarShapeComponent avatarShape, ref AvatarCachedVisibilityComponent avatarCachedVisibility)
         {
             bool shouldBeHidden = avatarShape.HiddenByModifierArea;
             UpdateVisibilityState(ref avatarShape, ref avatarCachedVisibility, shouldBeHidden);
         }
 
-        private void UpdateVisibilityState( ref AvatarShapeComponent avatarShape, ref AvatarCachedVisibilityComponent avatarCachedVisibility, bool shouldBeHidden)
+        private void UpdateVisibilityState(ref AvatarShapeComponent avatarShape, ref AvatarCachedVisibilityComponent avatarCachedVisibility, bool shouldBeHidden)
         {
             if (avatarCachedVisibility.IsVisible == shouldBeHidden)
                 return;
@@ -83,6 +112,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                 Hide(ref avatarShape);
             else
                 Show(ref avatarShape);
+
             avatarCachedVisibility.IsVisible = shouldBeHidden;
         }
 

@@ -1,7 +1,10 @@
 using DCL.Browser.DecentralandUrls;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.WebRequests;
 using Global.AppArgs;
 using Global.Dynamic;
+using Global.Dynamic.RealmUrl;
+using Global.Dynamic.RealmUrl.Names;
 using NUnit.Framework;
 
 namespace Global.Tests.EditMode
@@ -12,52 +15,61 @@ namespace Global.Tests.EditMode
         public void ApplyDeeplinkOnDevelopmentMode()
         {
             RealmLaunchSettings realmLaunchSettings = new RealmLaunchSettings();
+
             ApplicationParametersParser applicationParametersParser = new (new[]
             {
-                "decentraland://?realm=http://127.0.0.1:8000&position=100,100&local-scene=true",
+                "decentraland://?realm=http://127.0.0.1:8000&position=100,100&local-scene=true"
             });
+
             DecentralandUrlsSource dclUrlSource = new (DecentralandEnvironment.Org);
 
             realmLaunchSettings.ApplyConfig(applicationParametersParser);
 
+            IRealmUrls realmUrls = new RealmUrls(realmLaunchSettings, new RealmNamesMap(IWebRequestController.DEFAULT), dclUrlSource);
+
             Assert.IsTrue(realmLaunchSettings.IsLocalSceneDevelopmentRealm);
-            Assert.AreEqual("http://127.0.0.1:8000", realmLaunchSettings.GetLocalSceneDevelopmentRealm(dclUrlSource));
-            Assert.AreEqual(100, realmLaunchSettings.TargetScene.x);
-            Assert.AreEqual(100, realmLaunchSettings.TargetScene.y);
+            Assert.AreEqual("http://127.0.0.1:8000", realmUrls.LocalSceneDevelopmentRealmBlocking()!);
+            Assert.AreEqual(100, realmLaunchSettings.targetScene.x);
+            Assert.AreEqual(100, realmLaunchSettings.targetScene.y);
         }
 
         [Test]
         public void DoNotSetDevelopmentModeIfMissingLocalSceneParam()
         {
             RealmLaunchSettings realmLaunchSettings = new RealmLaunchSettings();
+
             ApplicationParametersParser applicationParametersParser = new (new[]
             {
                 "decentraland://?realm=http://127.0.0.1:8000&position=70,70",
             });
+
             DecentralandUrlsSource dclUrlSource = new (DecentralandEnvironment.Org);
 
             realmLaunchSettings.ApplyConfig(applicationParametersParser);
 
+            IRealmUrls realmUrls = new RealmUrls(realmLaunchSettings, new RealmNamesMap(IWebRequestController.DEFAULT), dclUrlSource);
+
             Assert.IsFalse(realmLaunchSettings.IsLocalSceneDevelopmentRealm);
-            Assert.AreEqual("http://127.0.0.1:8000", realmLaunchSettings.GetStartingRealm(dclUrlSource));
-            Assert.AreEqual(70, realmLaunchSettings.TargetScene.x);
-            Assert.AreEqual(70, realmLaunchSettings.TargetScene.y);
+            Assert.AreEqual("http://127.0.0.1:8000", realmUrls.StartingRealmBlocking());
+            Assert.AreEqual(70, realmLaunchSettings.targetScene.x);
+            Assert.AreEqual(70, realmLaunchSettings.targetScene.y);
         }
 
         [Test]
         public void ApplyStartingPositionFromAppArgs()
         {
-            RealmLaunchSettings realmLaunchSettings = new RealmLaunchSettings();
+            var realmLaunchSettings = new RealmLaunchSettings();
+
             ApplicationParametersParser applicationParametersParser = new (new[]
             {
                 "--position",
-                "50,50",
+                "50,50"
             });
 
             realmLaunchSettings.ApplyConfig(applicationParametersParser);
 
-            Assert.AreEqual(50, realmLaunchSettings.TargetScene.x);
-            Assert.AreEqual(50, realmLaunchSettings.TargetScene.y);
+            Assert.AreEqual(50, realmLaunchSettings.targetScene.x);
+            Assert.AreEqual(50, realmLaunchSettings.targetScene.y);
         }
 
         [TestCase("https://peer.decentraland.zone")]
@@ -65,16 +77,20 @@ namespace Global.Tests.EditMode
         public void ApplyStartingRealmFromAppArgs(string realm)
         {
             RealmLaunchSettings realmLaunchSettings = new RealmLaunchSettings();
+
             ApplicationParametersParser applicationParametersParser = new (new[]
             {
                 "--realm",
                 realm,
             });
+
             DecentralandUrlsSource dclUrlSource = new (DecentralandEnvironment.Org);
 
             realmLaunchSettings.ApplyConfig(applicationParametersParser);
 
-            Assert.AreEqual(realm, realmLaunchSettings.GetStartingRealm(dclUrlSource));
+            IRealmUrls realmUrls = new RealmUrls(realmLaunchSettings, new RealmNamesMap(IWebRequestController.DEFAULT), dclUrlSource);
+
+            Assert.AreEqual(realm, realmUrls.StartingRealmBlocking());
         }
 
         [TestCase("metadyne.dcl.eth")]
@@ -82,16 +98,20 @@ namespace Global.Tests.EditMode
         public void ApplyWorldFromAppArgs(string world)
         {
             RealmLaunchSettings realmLaunchSettings = new RealmLaunchSettings();
+
             ApplicationParametersParser applicationParametersParser = new (new[]
             {
                 "--realm",
                 world,
             });
+
             DecentralandUrlsSource dclUrlSource = new (DecentralandEnvironment.Org);
 
             realmLaunchSettings.ApplyConfig(applicationParametersParser);
 
-            Assert.AreEqual($"https://worlds-content-server.decentraland.org/world/{world}", realmLaunchSettings.GetStartingRealm(dclUrlSource));
+            IRealmUrls realmUrls = new RealmUrls(realmLaunchSettings, new RealmNamesMap(IWebRequestController.DEFAULT), dclUrlSource);
+
+            Assert.AreEqual($"https://worlds-content-server.decentraland.org/world/{world}", realmUrls.StartingRealmBlocking());
         }
 
         [Test]
@@ -100,6 +120,7 @@ namespace Global.Tests.EditMode
         public void IgnoreWindowsRealmInvalidation(string world)
         {
             RealmLaunchSettings realmLaunchSettings = new RealmLaunchSettings();
+
             ApplicationParametersParser applicationParametersParser = new (new[]
             {
                 $"decentraland://realm={world}/", // WinOS on some occasions adds that final '/'
@@ -116,6 +137,7 @@ namespace Global.Tests.EditMode
         public void IgnoreMacOSRealmInvalidation(string realm)
         {
             RealmLaunchSettings realmLaunchSettings = new RealmLaunchSettings();
+
             ApplicationParametersParser applicationParametersParser = new (new[]
             {
                 $"decentraland://realm=http//{realm}", // MacOS removes the ':' from the realm url param

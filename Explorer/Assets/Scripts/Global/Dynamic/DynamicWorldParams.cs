@@ -23,6 +23,7 @@ namespace Global.Dynamic
         public readonly StaticContainer StaticContainer;
         public readonly IPluginSettingsContainer SettingsContainer;
         public readonly UIDocument RootUIDocument;
+        public readonly UIDocument ScenesUIDocument;
         public readonly UIDocument CursorUIDocument;
         public readonly DynamicSettings DynamicSettings;
         public readonly IWeb3VerifiedAuthenticator Web3Authenticator;
@@ -37,6 +38,7 @@ namespace Global.Dynamic
             StaticContainer staticContainer,
             IPluginSettingsContainer settingsContainer,
             UIDocument rootUIDocument,
+            UIDocument scenesUIRoot,
             UIDocument cursorUIDocument,
             DynamicSettings dynamicSettings,
             IWeb3VerifiedAuthenticator web3Authenticator,
@@ -51,6 +53,7 @@ namespace Global.Dynamic
             StaticContainer = staticContainer;
             SettingsContainer = settingsContainer;
             RootUIDocument = rootUIDocument;
+            ScenesUIDocument = scenesUIRoot;
             CursorUIDocument = cursorUIDocument;
             DynamicSettings = dynamicSettings;
             Web3Authenticator = web3Authenticator;
@@ -72,14 +75,13 @@ namespace Global.Dynamic
         public HybridSceneParams HybridSceneParams { get; init; }
         public string LocalSceneDevelopmentRealm { get; init; }
         public IAppArgs AppParameters { get; init; }
+        public string DefaultStartingRealm { get; init; }
     }
 
     public struct HybridSceneParams
     {
         public bool EnableHybridScene { get; set; }
         public HybridSceneContentServer HybridSceneContentServer { get; set; }
-        public Vector2Int StartParcel { get; init; }
-
         public string World { get; init; }
     }
 }

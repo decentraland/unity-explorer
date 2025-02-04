@@ -17,12 +17,15 @@ namespace DCL.Browser.DecentralandUrls
 
         private readonly Dictionary<DecentralandUrl, string> cache = new ();
         private readonly string environmentDomainLowerCase;
+        private readonly bool isLocalSceneDevelopment;
+
 
         public string DecentralandDomain => environmentDomainLowerCase;
 
-        public DecentralandUrlsSource(DecentralandEnvironment environment)
+        public DecentralandUrlsSource(DecentralandEnvironment environment, bool isLocalSceneDevelopment = false)
         {
             environmentDomainLowerCase = environment.ToString()!.ToLower();
+            this.isLocalSceneDevelopment = isLocalSceneDevelopment;
 
             switch (environment)
             {
@@ -57,6 +60,16 @@ namespace DCL.Browser.DecentralandUrls
             return url!;
         }
 
+        public string GetHostnameForFeatureFlag()
+        {
+            if (isLocalSceneDevelopment)
+            {
+                return "localhost";
+            }
+
+            return Url(DecentralandUrl.Host);
+        }
+
         private static string RawUrl(DecentralandUrl decentralandUrl) =>
             decentralandUrl switch
             {
@@ -67,27 +80,35 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.ApiAuth => $"https://auth-api.decentraland.{ENV}",
                 DecentralandUrl.AuthSignature => $"https://decentraland.{ENV}/auth/requests",
                 DecentralandUrl.POI => $"https://dcl-lists.decentraland.{ENV}/pois",
+                DecentralandUrl.Map => $"https://places.decentraland.{ENV}/api/map",
                 DecentralandUrl.ContentModerationReport => $"https://places.decentraland.{ENV}/api/report",
-                DecentralandUrl.GateKeeperSceneAdapter =>
-                    $"https://comms-gatekeeper.decentraland.{ENV}/get-scene-adapter",
+                DecentralandUrl.GateKeeperSceneAdapter => $"https://comms-gatekeeper.decentraland.{ENV}/get-scene-adapter",
+                DecentralandUrl.ApiEvents => $"https://events.decentraland.{ENV}/api/events",
                 DecentralandUrl.OpenSea => $"https://opensea.decentraland.{ENV}",
                 DecentralandUrl.Host => $"https://decentraland.{ENV}",
+                DecentralandUrl.ApiChunks => $"https://api.decentraland.{ENV}/v1/map.png",
                 DecentralandUrl.PeerAbout => $"https://peer.decentraland.{ENV}/about",
+                DecentralandUrl.RemotePeers => $"https://archipelago-ea-stats.decentraland.{ENV}/comms/peers",
                 DecentralandUrl.DAO => $"https://decentraland.{ENV}/dao/",
                 DecentralandUrl.Notification => $"https://notifications.decentraland.{ENV}/notifications",
-                DecentralandUrl.NotificationRead =>
-                    $"https://notifications.decentraland.{ENV}/notifications/read",
+                DecentralandUrl.NotificationRead => $"https://notifications.decentraland.{ENV}/notifications/read",
                 DecentralandUrl.FeatureFlags => $"https://feature-flags.decentraland.{ENV}",
                 DecentralandUrl.Help => $"https://decentraland.{ENV}/help/",
                 DecentralandUrl.Market => $"https://market.decentraland.{ENV}",
                 DecentralandUrl.AssetBundlesCDN => ASSET_BUNDLE_URL,
                 DecentralandUrl.ArchipelagoStatus => $"https://archipelago-ea-stats.decentraland.{ENV}/status",
+                DecentralandUrl.ArchipelagoHotScenes => $"https://archipelago-ea-stats.decentraland.{ENV}/hot-scenes",
                 DecentralandUrl.GatekeeperStatus => $"https://comms-gatekeeper.decentraland.{ENV}/status",
                 DecentralandUrl.Genesis => GENESIS_URL,
                 DecentralandUrl.Badges => $"https://badges.decentraland.{ENV}",
-                DecentralandUrl.CameraReelUsers =>  $"https://camera-reel-service.decentraland.{ENV}/api/users",
+                DecentralandUrl.CameraReelUsers => $"https://camera-reel-service.decentraland.{ENV}/api/users",
                 DecentralandUrl.CameraReelImages => $"https://camera-reel-service.decentraland.{ENV}/api/images",
+                DecentralandUrl.CameraReelPlaces => $"https://camera-reel-service.decentraland.{ENV}/api/places",
                 DecentralandUrl.CameraReelLink => $"https://reels.decentraland.{ENV}",
+                // TODO: use the environment once the service is deployed to prod
+                DecentralandUrl.ApiFriends => "wss://rpc-social-service-ea.decentraland.zone",
+                // DecentralandUrl.ApiFriends => $"wss://rpc-social-service-ea.decentraland.{ENV}",
+                DecentralandUrl.AssetBundleRegistry => $"https://asset-bundle-registry.decentraland.{ENV}/entities/active",
                 _ => throw new ArgumentOutOfRangeException(nameof(decentralandUrl), decentralandUrl, null!)
             };
     }

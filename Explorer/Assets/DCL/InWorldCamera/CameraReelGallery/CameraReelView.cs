@@ -7,29 +7,27 @@ namespace DCL.InWorldCamera.CameraReelGallery
 {
     public class CameraReelView : MonoBehaviour
     {
-        [Header("Controls")]
-        [SerializeField] internal Button goToCameraButton;
+        [field: Header("Controls")]
+        [field: SerializeField] internal Button goToCameraButton { get; private set; }
 
-        [Header("Storage objects")]
-        [SerializeField] internal StorageProgressBar storageProgressBar;
-        [SerializeField] internal GameObject storageFullIcon;
-        [SerializeField] internal GameObject loadingSpinner;
-        [SerializeField] internal GameObject emptyState;
-        [SerializeField] internal CanvasGroup storageFullToast;
+        [field: Header("Storage objects")]
+        [field: SerializeField] internal StorageProgressBar storageProgressBar { get; private set; }
+        [field: SerializeField] internal GameObject storageFullIcon { get; private set; }
+        [field: SerializeField] internal GameObject emptyState { get; private set; }
+        [field: SerializeField] internal CanvasGroup storageFullToast { get; private set; }
 
-        [Header("Gallery")]
-        public CameraReelGalleryView cameraReelGalleryView;
+        [field: Header("Gallery")]
+        [field: SerializeField] public CameraReelGalleryView CameraReelGalleryView { get; private set; }
 
-        [Header("Storage configuration")]
-        [SerializeField] internal float storageFullToastFadeTime = 0.3f;
+        [field: Header("Storage configuration")]
+        [field: SerializeField] internal float storageFullToastFadeTime { get; private set; } = 0.3f;
 
-        [Header("Context menu")]
-        public OptionButtonView optionsButton;
-        public ContextMenuView contextMenu;
+        [field: Header("Context menu")]
+        [field: SerializeField] public CameraReelOptionButtonView CameraReelOptionsButton { get; private set; }
 
-        [Header("Animators")]
-        [SerializeField] internal Animator panelAnimator;
-        [SerializeField] internal Animator headerAnimator;
+        [field: Header("Animators")]
+        [field: SerializeField] internal Animator panelAnimator { get; private set; }
+        [field: SerializeField] internal Animator headerAnimator { get; private set; }
 
         internal event Action? MouseEnter;
         internal event Action? MouseExit;

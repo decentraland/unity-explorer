@@ -1,13 +1,22 @@
-using Cysharp.Threading.Tasks;
 using DCL.AsyncLoadReporting;
-using DCL.UserInAppInitializationFlow.StartupOperations.Struct;
-using System.Threading;
-using Utility.Types;
+using DCL.PerformanceAndDiagnostics.Analytics;
+using DCL.RealmNavigation.LoadingOperation;
 
 namespace DCL.UserInAppInitializationFlow.StartupOperations
 {
-    public interface IStartupOperation
+    public interface IStartupOperation : ILoadingOperation<IStartupOperation.Params>
     {
-        UniTask<Result> ExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct);
+        public readonly struct Params : ILoadingOperationParams
+        {
+            public Params(AsyncLoadProcessReport report, UserInAppInitializationFlowParameters flowParameters)
+            {
+                Report = report;
+                FlowParameters = flowParameters;
+            }
+
+            public AsyncLoadProcessReport Report { get; }
+
+            public UserInAppInitializationFlowParameters FlowParameters { get; }
+        }
     }
 }

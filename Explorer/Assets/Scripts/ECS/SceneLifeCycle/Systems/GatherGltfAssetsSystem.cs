@@ -9,6 +9,7 @@ using ECS.Unity.GLTFContainer.Components;
 using SceneRunner.Scene;
 using System.Collections.Generic;
 using DCL.Optimization.PerformanceBudgeting;
+using DCL.RealmNavigation;
 using DCL.UserInAppInitializationFlow;
 using ECS.Unity.Transforms.Components;
 using System;
@@ -66,7 +67,7 @@ namespace ECS.SceneLifeCycle.Systems
             startTime = Time.time;
         }
 
-        public override void Dispose()
+        protected override void OnDispose()
         {
             if (entitiesUnderObservation != null)
             {

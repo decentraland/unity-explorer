@@ -68,3 +68,13 @@ crashlytics-build.properties
 
 # Sentry
 .sentryconfig.json
+
+# Addressables temporary data
+Assets/AddressableAssetsData/Windows/**
+Assets/AddressableAssetsData/Windows/*.meta
+Assets/AddressableAssetsData/Windows.meta
+Assets/AddressableAssetsData/ProfileDataSourceSettings.asset
+Assets/AddressableAssetsData/ProfileDataSourceSettings.asset.meta
+
+# Disk Caching
+DiskCache/

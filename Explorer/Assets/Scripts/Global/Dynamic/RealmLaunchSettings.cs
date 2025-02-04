@@ -1,4 +1,3 @@
-using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.CommunicationData.URLHelpers;
 using ECS.SceneLifeCycle.Realm;
 using Global.AppArgs;
@@ -7,6 +6,8 @@ using System.Collections.Generic;
 using System.Linq;
 using SceneRunner.Scene;
 using System.Text.RegularExpressions;
+using DCL.FeatureFlags;
+using DCL.UserInAppInitializationFlow.StartupOperations;
 using Unity.Mathematics;
 using UnityEngine;
 
@@ -36,10 +37,9 @@ namespace Global.Dynamic
 
         [SerializeField] private string[] portableExperiencesEnsToLoadAtGameStart;
 
-        public Vector2Int TargetScene => targetScene;
-
         private bool isLocalSceneDevelopmentRealm;
         public bool IsLocalSceneDevelopmentRealm => isLocalSceneDevelopmentRealm
+
                                                     // This is for development purposes only,
                                                     // so we can easily start local development from the editor without application args
                                                     || initialRealm == InitialRealm.Localhost;
@@ -49,40 +49,26 @@ namespace Global.Dynamic
             if (predefinedScenes.enabled)
                 return predefinedScenes.parcels.Select(p => new int2(p.x, p.y)).ToList();
 
-            return IsLocalSceneDevelopmentRealm ? new List<int2>(){new int2(TargetScene.x, TargetScene.y)}
+            return IsLocalSceneDevelopmentRealm
+                ? new List<int2> { new (targetScene.x, targetScene.y) }
                 : Array.Empty<int2>();
         }
 
-        public HybridSceneParams CreateHybridSceneParams(Vector2Int startParcel)
+        public HybridSceneParams CreateHybridSceneParams()
         {
             if (initialRealm == InitialRealm.Localhost)
             {
                 return new HybridSceneParams
                 {
-                    StartParcel = startParcel, EnableHybridScene = useRemoteAssetsBundles, HybridSceneContentServer = remoteHybridSceneContentServer, World = remoteHybridSceneContentServer.Equals(HybridSceneContentServer.World) ? remoteHibridWorld : "",
+                    EnableHybridScene = useRemoteAssetsBundles,
+                    HybridSceneContentServer = remoteHybridSceneContentServer,
+                    World = remoteHybridSceneContentServer.Equals(HybridSceneContentServer.World)
+                        ? remoteHibridWorld
+                        : ""
                 };
             }
 
             return new HybridSceneParams();
-        }
-
-        public string? GetLocalSceneDevelopmentRealm(IDecentralandUrlsSource decentralandUrlsSource) =>
-            IsLocalSceneDevelopmentRealm ? GetStartingRealm(decentralandUrlsSource) : null;
-
-        public string GetStartingRealm(IDecentralandUrlsSource decentralandUrlsSource)
-        {
-            return initialRealm switch
-                   {
-                       InitialRealm.GenesisCity => decentralandUrlsSource.Url(DecentralandUrl.Genesis),
-                       InitialRealm.SDK => IRealmNavigator.SDK_TEST_SCENES_URL,
-                       InitialRealm.Goerli => IRealmNavigator.GOERLI_URL,
-                       InitialRealm.StreamingWorld => IRealmNavigator.STREAM_WORLD_URL,
-                       InitialRealm.TestScenes => IRealmNavigator.TEST_SCENES_URL,
-                       InitialRealm.World => IRealmNavigator.WORLDS_DOMAIN + "/" + targetWorld,
-                       InitialRealm.Localhost => IRealmNavigator.LOCALHOST,
-                       InitialRealm.Custom => customRealm,
-                       _ => decentralandUrlsSource.Url(DecentralandUrl.Genesis),
-                   };
         }
 
         public void ApplyConfig(IAppArgs applicationParameters)
@@ -90,8 +76,8 @@ namespace Global.Dynamic
             if (applicationParameters.TryGetValue(AppArgsFlags.REALM, out string? realm))
                 ParseRealmAppParameter(applicationParameters, realm);
 
-            if (applicationParameters.TryGetValue(AppArgsFlags.POSITION, out string? position))
-                ParsePositionAppParameter(position);
+            if (applicationParameters.TryGetValue(AppArgsFlags.POSITION, out var parcelToTeleportOverride))
+                ParsePositionAppParameter(parcelToTeleportOverride);
         }
 
         private void ParseRealmAppParameter(IAppArgs appParameters, string realmParamValue)
@@ -99,8 +85,8 @@ namespace Global.Dynamic
             if (string.IsNullOrEmpty(realmParamValue)) return;
 
             bool isLocalSceneDevelopment = appParameters.TryGetValue(AppArgsFlags.LOCAL_SCENE, out string localSceneParamValue)
-                                    && ParseLocalSceneParameter(localSceneParamValue)
-                                    && IsRealmAValidUrl(realmParamValue);
+                                           && ParseLocalSceneParameter(localSceneParamValue)
+                                           && IsRealmAValidUrl(realmParamValue);
 
             if (isLocalSceneDevelopment)
                 SetLocalSceneDevelopmentRealm(realmParamValue);
@@ -156,5 +142,29 @@ namespace Global.Dynamic
         private bool IsRealmAValidUrl(string realmParam) =>
             Uri.TryCreate(realmParam, UriKind.Absolute, out Uri? uriResult)
             && (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps);
+
+        public void CheckStartParcelFeatureFlagOverride(IAppArgs appArgs, FeatureFlagsCache featureFlagsCache)
+        {
+            //First we need to check if the user has passed a position as an argument.
+            //If we have set a position trough args, the feature flag should not be taken into consideration
+            //This is the case used on local scene development from creator hub/scene args
+            //Check https://github.com/decentraland/js-sdk-toolchain/blob/2c002ca9e6feb98a771337190db2945e013d7b93/packages/%40dcl/sdk-commands/src/commands/start/explorer-alpha.ts#L29
+            if (appArgs.HasFlag(AppArgsFlags.POSITION))
+                return;
+
+            //Note: If you dont want the feature flag for the localhost hostname, remember to remove ir from the feature flag configuration
+            // (https://features.decentraland.systems/#/features/strategies/explorer-alfa-genesis-spawn-parcel)
+            string? parcelToTeleportOverride = null;
+
+            //If not, we check the feature flag usage
+            var featureFlagOverride =
+                featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.GENESIS_STARTING_PARCEL) &&
+                featureFlagsCache.Configuration.TryGetTextPayload(FeatureFlagsStrings.GENESIS_STARTING_PARCEL,
+                    FeatureFlagsStrings.STRING_VARIANT, out parcelToTeleportOverride) &&
+                parcelToTeleportOverride != null;
+
+            if (featureFlagOverride)
+                ParsePositionAppParameter(parcelToTeleportOverride);
+        }
     }
 }

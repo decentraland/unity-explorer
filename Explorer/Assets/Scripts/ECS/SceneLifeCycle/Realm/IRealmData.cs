@@ -1,6 +1,7 @@
 ﻿using CommunicationData.URLHelpers;
-using Cysharp.Threading.Tasks;
 using DCL.Ipfs;
+using DCL.Utilities;
+using System;
 
 namespace ECS
 {
@@ -10,6 +11,8 @@ namespace ECS
     public interface IRealmData
     {
         IIpfsRealm Ipfs { get; }
+
+        IReadonlyReactiveProperty<RealmKind> RealmType { get; }
 
         /// <summary>
         ///     Indicates that the realm contains a fixed number of scenes
@@ -24,6 +27,7 @@ namespace ECS
         string CommsAdapter { get; }
         string Protocol { get; }
         string Hostname { get; }
+        bool IsLocalSceneDevelopment { get; }
 
         /// <summary>
         ///     Whether the data was set at least once
@@ -34,12 +38,14 @@ namespace ECS
         class Fake : IRealmData
         {
             public IIpfsRealm Ipfs { get; }
+            public IReadonlyReactiveProperty<RealmKind> RealmType => new ReactiveProperty<RealmKind>(RealmKind.GenesisCity);
             public bool ScenesAreFixed { get; }
             public string RealmName { get; }
             public int NetworkId { get; }
             public string CommsAdapter { get; }
             public string Protocol { get; }
             public string Hostname { get; }
+            public bool IsLocalSceneDevelopment { get; }
             public bool Configured { get; }
             public bool IsDirty { get; internal set; }
 
@@ -63,11 +69,5 @@ namespace ECS
                 Hostname = hostname;
             }
         }
-    }
-
-    public static class RealmDataExtensions
-    {
-        public static UniTask WaitConfiguredAsync(this IRealmData realmData) =>
-            UniTask.WaitUntil(() => realmData.Configured);
     }
 }

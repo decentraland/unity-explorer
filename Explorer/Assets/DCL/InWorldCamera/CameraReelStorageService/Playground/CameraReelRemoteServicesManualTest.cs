@@ -4,6 +4,7 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using System;
+using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using System.Linq;
 using System.Threading;
 using UnityEngine;

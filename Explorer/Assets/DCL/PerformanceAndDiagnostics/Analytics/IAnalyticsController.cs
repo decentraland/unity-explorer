@@ -1,4 +1,3 @@
-using DCL.Multiplayer.HealthChecks;
 using DCL.Web3.Identities;
 using ECS;
 using Segment.Serialization;
@@ -13,6 +12,8 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         public const string UNDEFINED = "UNDEFINED";
 
         AnalyticsConfiguration Configuration { get; }
+
+        string SessionID { get; }
 
         public static IAnalyticsController Null => NullAnalytics.Instance;
 
@@ -33,6 +34,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             public static IAnalyticsController Instance => INSTANCE.Value;
 
             public AnalyticsConfiguration Configuration => ScriptableObject.CreateInstance<AnalyticsConfiguration>();
+            public string SessionID => string.Empty;
 
             private NullAnalytics() { }
 
@@ -46,11 +48,5 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
             public void Flush() { }
         }
-    }
-
-    public static class AnalyticsExtensions
-    {
-        public static IHealthCheck WithFailAnalytics(this IHealthCheck origin, IAnalyticsController analyticsController) =>
-            new FailAnalyticsHealthCheckDecorator(origin, analyticsController);
     }
 }
