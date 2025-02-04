@@ -5,6 +5,11 @@ using UnityEngine;
 
 namespace ECS.StreamableLoading.GLTF
 {
+    /// <summary>
+    /// Provides a mechanism to inspect the progress and result of downloading or accessing a texture from a GLTF asset.
+    ///
+    /// Note: This was changed from struct to class to avoid boxing both in the client and the GLTF plugin usage
+    /// </summary>
     public class TextureDownloadResult : ITextureDownload
     {
         public bool Success { get; set; }

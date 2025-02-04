@@ -3,6 +3,13 @@ using UnityEngine;
 
 namespace ECS.StreamableLoading.GLTF
 {
+    /// <summary>
+    /// Represents a texture resource that can be disposed of when no longer needed.
+    /// 
+    /// Notes:
+    /// - Known issue where destruction of texture on disposal is performed before the GLTF finishes loading. Pending investigation.
+    /// - This was changed from struct to class to avoid boxing both in the client and the GLTF plugin usage
+    /// </summary>
     public class DisposableTexture : IDisposableTexture
     {
         public Texture2D? Texture { get; set; }

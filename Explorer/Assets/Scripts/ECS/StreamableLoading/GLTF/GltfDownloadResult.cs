@@ -2,6 +2,11 @@ using GLTFast.Loading;
 
 namespace ECS.StreamableLoading.GLTF
 {
+    /// <summary>
+    /// Provides a mechanism to inspect the progress and result of a GLTF asset download or access request
+    ///
+    /// Note: This was changed from struct to class to avoid boxing both in the client and the GLTF plugin usage
+    /// </summary>
     public class GltfDownloadResult : IDownload
     {
         public GltfDownloadResult(byte[] data, string text, string? error, bool success)
