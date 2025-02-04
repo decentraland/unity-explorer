@@ -3106,6 +3106,15 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""ToggleNametags"",
+                    ""type"": ""Button"",
+                    ""id"": ""35bcdb9a-cdac-4391-a47e-6f6a134f694d"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -3559,6 +3568,17 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""action"": ""Screenshot"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""a39e9815-f60c-4e5d-afef-3fe7fcd03dfa"",
+                    ""path"": ""<Keyboard>/n"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""ToggleNametags"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -3681,6 +3701,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         m_InWorldCamera_CameraReel = m_InWorldCamera.FindAction("CameraReel", throwIfNotFound: true);
         m_InWorldCamera_ShowHide = m_InWorldCamera.FindAction("ShowHide", throwIfNotFound: true);
         m_InWorldCamera_Close = m_InWorldCamera.FindAction("Close", throwIfNotFound: true);
+        m_InWorldCamera_ToggleNametags = m_InWorldCamera.FindAction("ToggleNametags", throwIfNotFound: true);
     }
 
     public void Dispose()
@@ -4676,6 +4697,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
     private readonly InputAction m_InWorldCamera_CameraReel;
     private readonly InputAction m_InWorldCamera_ShowHide;
     private readonly InputAction m_InWorldCamera_Close;
+    private readonly InputAction m_InWorldCamera_ToggleNametags;
     public struct InWorldCameraActions
     {
         private @DCLInput m_Wrapper;
@@ -4692,6 +4714,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         public InputAction @CameraReel => m_Wrapper.m_InWorldCamera_CameraReel;
         public InputAction @ShowHide => m_Wrapper.m_InWorldCamera_ShowHide;
         public InputAction @Close => m_Wrapper.m_InWorldCamera_Close;
+        public InputAction @ToggleNametags => m_Wrapper.m_InWorldCamera_ToggleNametags;
         public InputActionMap Get() { return m_Wrapper.m_InWorldCamera; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -4737,6 +4760,9 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @Close.started += instance.OnClose;
             @Close.performed += instance.OnClose;
             @Close.canceled += instance.OnClose;
+            @ToggleNametags.started += instance.OnToggleNametags;
+            @ToggleNametags.performed += instance.OnToggleNametags;
+            @ToggleNametags.canceled += instance.OnToggleNametags;
         }
 
         private void UnregisterCallbacks(IInWorldCameraActions instance)
@@ -4777,6 +4803,9 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @Close.started -= instance.OnClose;
             @Close.performed -= instance.OnClose;
             @Close.canceled -= instance.OnClose;
+            @ToggleNametags.started -= instance.OnToggleNametags;
+            @ToggleNametags.performed -= instance.OnToggleNametags;
+            @ToggleNametags.canceled -= instance.OnToggleNametags;
         }
 
         public void RemoveCallbacks(IInWorldCameraActions instance)
@@ -4920,5 +4949,6 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         void OnCameraReel(InputAction.CallbackContext context);
         void OnShowHide(InputAction.CallbackContext context);
         void OnClose(InputAction.CallbackContext context);
+        void OnToggleNametags(InputAction.CallbackContext context);
     }
 }
