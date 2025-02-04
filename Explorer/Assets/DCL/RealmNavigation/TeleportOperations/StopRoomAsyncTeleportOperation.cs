@@ -19,7 +19,7 @@ namespace DCL.RealmNavigation.TeleportOperations
         protected override async UniTask InternalExecuteAsync(TeleportParams teleportParams, CancellationToken ct)
         {
             float finalizationProgress =
-                teleportParams.LoadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.LivekitStopping);
+                teleportParams.LoadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.LiveKitStopping);
 
             await roomHub.StopAsync().Timeout(livekitTimeout);
             teleportParams.Report.SetProgress(finalizationProgress);
