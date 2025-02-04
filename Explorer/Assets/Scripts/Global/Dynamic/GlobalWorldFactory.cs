@@ -138,11 +138,8 @@ namespace Global.Dynamic
                 loadSceneSystemLogic,
                 sceneFactory, NoCache<ISceneFacade, GetSceneFacadeIntention>.INSTANCE);
 
-            GlobalDeferredLoadingSystem.InjectToWorld(ref builder, sceneBudget, memoryBudget, staticContainer.SingletonSharedDependencies.SceneAssetLock);
+            GlobalDeferredLoadingSystem.InjectToWorld(ref builder, sceneBudget, memoryBudget, staticContainer.SingletonSharedDependencies.SceneAssetLock, new QualityReductorManager(world));
 
-            QualityReductorSystem.InjectToWorld(ref builder);
-            
-            
             LoadStaticPointersSystem.InjectToWorld(ref builder);
             LoadFixedPointersSystem.InjectToWorld(ref builder);
             LoadPortableExperiencePointersSystem.InjectToWorld(ref builder);
