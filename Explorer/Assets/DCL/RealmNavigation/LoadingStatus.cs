@@ -14,15 +14,15 @@ namespace DCL.RealmNavigation
             [LoadingStage.Init] = 0f,
             [LoadingStage.AuthenticationScreenShowing] = 0.05f,
             [LoadingStage.UnloadCacheChecking] = 0.05f,
-            [LoadingStage.LiveKitConnectionEnsuring] = 0.1f, //Used in initialization Flow
-            [LoadingStage.LivekitStopping] = 0.1f, //Used in Teleport Flow
+            [LoadingStage.LiveKitStopping] = 0.1f, //Used in Teleport Flow
             [LoadingStage.RealmChanging] = 0.25f, //Used in Teleport Flow
-            [LoadingStage.ProfileLoading] = 0.2f,
-            [LoadingStage.PlayerAvatarLoading] = 0.4f,
-            [LoadingStage.LandscapeLoading] = 0.7f,
-            [LoadingStage.OnboardingChecking] = 0.80f,
-            [LoadingStage.RealmRestarting] = 0.85f, //Used in initialization Flow
-            [LoadingStage.PlayerTeleporting] = 0.95f,
+            [LoadingStage.ProfileLoading] = 0.1f,
+            [LoadingStage.PlayerAvatarLoading] = 0.3f,
+            [LoadingStage.LandscapeLoading] = 0.6f,
+            [LoadingStage.OnboardingChecking] = 0.7f,
+            [LoadingStage.RealmRestarting] = 0.75f, //Used in initialization Flow // TODO not used!
+            [LoadingStage.PlayerTeleporting] = 0.85f,
+            [LoadingStage.LiveKitConnectionEnsuring] = 0.95f, //Used in initialization Flow
             [LoadingStage.GlobalPXsLoading] = 0.99f, //Used in initialization Flow
             [LoadingStage.LivekitRestarting] = 0.99f, //Used in Teleport Flow
             [LoadingStage.Completed] = 1f
@@ -42,7 +42,7 @@ namespace DCL.RealmNavigation
             RealmRestarting,
             RealmChanging,
 
-            LivekitStopping,
+            LiveKitStopping,
             PlayerTeleporting,
             LivekitRestarting,
             GlobalPXsLoading,

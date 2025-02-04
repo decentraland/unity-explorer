@@ -1,6 +1,5 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
-using DCL.AsyncLoadReporting;
 using DCL.ECSComponents;
 using ECS.Abstract;
 using ECS.Groups;
@@ -11,6 +10,7 @@ using System.Collections.Generic;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.RealmNavigation;
 using DCL.UserInAppInitializationFlow;
+using DCL.Utilities;
 using ECS.Unity.Transforms.Components;
 using System;
 using UnityEngine;

@@ -1,5 +1,4 @@
 ﻿using Cysharp.Threading.Tasks;
-using DCL.AsyncLoadReporting;
 using DCL.Diagnostics;
 using DCL.Utilities.Extensions;
 using System;
@@ -11,7 +10,7 @@ namespace DCL.RealmNavigation.LoadingOperation
     public abstract class LoadingOperationBase<TParams> : ILoadingOperation<TParams> where TParams: ILoadingOperationParams
     {
         private readonly Func<Exception, EnumResult<TaskError>> createError;
-        private readonly string reportCategory;
+        protected readonly string reportCategory;
 
         protected LoadingOperationBase(string reportCategory = ReportCategory.SCENE_LOADING)
         {

@@ -300,6 +300,8 @@ namespace DCL.Diagnostics
 
         public const string FRIENDS = nameof(FRIENDS);
 
+        public const string DISK_CACHE = nameof(DISK_CACHE);
+
         public const string LIGHT_SOURCE = nameof(LIGHT_SOURCE);
     }
 }

@@ -1,6 +1,5 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
-using DCL.AsyncLoadReporting;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Profiles;
 using DCL.Profiles.Self;
