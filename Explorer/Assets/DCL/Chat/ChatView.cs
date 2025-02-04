@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.UI;
+using DCL.UI.Profiles.Helpers;
 using MVC;
 using DG.Tweening;
 using System;
@@ -84,6 +85,7 @@ namespace DCL.Chat
 
         private ViewDependencies viewDependencies;
         private UniTaskCompletionSource closePopupTask;
+        private IProfileNameColorHelper profileNameColorHelper;
 
         // The latest amount of messages added to the chat that must be animated yet
         private int entriesPendingToAnimate;
@@ -94,7 +96,6 @@ namespace DCL.Chat
 
         private IReadOnlyDictionary<ChatChannel.ChannelId, ChatChannel>? channels;
         private ChatChannel? currentChannel;
-        private ChatEntryConfigurationSO chatEntryConfiguration;
 
         /// <summary>
         ///     Get or sets the current content of the input box.
@@ -136,10 +137,13 @@ namespace DCL.Chat
             fadeoutCts.SafeCancelAndDispose();
         }
 
-        public void Initialize(IReadOnlyDictionary<ChatChannel.ChannelId, ChatChannel> chatChannels, ChatChannel.ChannelId defaultChannelId, bool areChatBubblesVisible, ChatEntryConfigurationSO chatEntryConfiguration)
+        public void Initialize(IReadOnlyDictionary<ChatChannel.ChannelId, ChatChannel> chatChannels,
+            ChatChannel.ChannelId defaultChannelId,
+            bool areChatBubblesVisible, IProfileNameColorHelper profileNameColorHelper)
         {
             this.channels = chatChannels;
-            this.chatEntryConfiguration = chatEntryConfiguration;
+            this.profileNameColorHelper = profileNameColorHelper;
+
             closeChatButton.onClick.AddListener(CloseChat);
             chatMessageViewer.Initialize(CalculateUsernameColor);
             chatMessageViewer.ChatMessageOptionsButtonClicked += OnChatMessageOptionsButtonClicked;
@@ -348,7 +352,7 @@ namespace DCL.Chat
         }
 
         private Color CalculateUsernameColor(ChatMessage chatMessage) =>
-            chatEntryConfiguration.GetNameColor(chatMessage.SenderValidatedName);
+            profileNameColorHelper.GetNameColor(chatMessage.SenderValidatedName);
 
     }
 }

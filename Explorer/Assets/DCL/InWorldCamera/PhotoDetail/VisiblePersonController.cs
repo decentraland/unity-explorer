@@ -4,7 +4,6 @@ using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
-using DCL.Chat;
 using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using DCL.Profiles;
 using DCL.UI;
@@ -18,6 +17,7 @@ using UnityEngine;
 using UnityEngine.Pool;
 using UnityEngine.UI;
 using DCL.InWorldCamera.PassportBridge;
+using DCL.UI.Profiles.Helpers;
 using Utility;
 
 namespace DCL.InWorldCamera.PhotoDetail
@@ -37,7 +37,7 @@ namespace DCL.InWorldCamera.PhotoDetail
         private readonly IPassportBridge passportBridge;
         private readonly List<EquippedWearableController> wearableControllers = new();
         private readonly PhotoDetailPoolManager photoDetailPoolManager;
-        private readonly ChatEntryConfigurationSO chatEntryConfiguration;
+        private readonly IProfileNameColorHelper profileNameColorHelper;
 
         private VisiblePerson? visiblePerson;
         private bool isShowingWearables;
@@ -52,7 +52,7 @@ namespace DCL.InWorldCamera.PhotoDetail
             IWearablesProvider wearablesProvider,
             IPassportBridge passportBridge,
             PhotoDetailPoolManager photoDetailPoolManager,
-            ChatEntryConfigurationSO chatEntryConfiguration)
+            IProfileNameColorHelper profileNameColorHelper)
         {
             this.view = view;
             this.profileRepository = profileRepository;
@@ -61,7 +61,7 @@ namespace DCL.InWorldCamera.PhotoDetail
             this.wearablesProvider = wearablesProvider;
             this.passportBridge = passportBridge;
             this.photoDetailPoolManager = photoDetailPoolManager;
-            this.chatEntryConfiguration = chatEntryConfiguration;
+            this.profileNameColorHelper = profileNameColorHelper;
 
             this.imageController = new ImageController(view.profileImage, webRequestController);
             this.view.userProfileButton.onClick.AddListener(ShowPersonPassportClicked);
@@ -78,7 +78,7 @@ namespace DCL.InWorldCamera.PhotoDetail
             view.wearableListLoadingSpinner.SetActive(false);
             view.wearableListEmptyMessage.SetActive(false);
             loadWearablesCts = loadWearablesCts.SafeRestart();
-            Color userColor = chatEntryConfiguration.GetNameColor(visiblePerson.userName);
+            Color userColor = profileNameColorHelper.GetNameColor(visiblePerson.userName);
 
             view.userName.text = visiblePerson.userName;
             view.userName.color = userColor;

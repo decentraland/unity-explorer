@@ -9,6 +9,7 @@ using DCL.Input.Component;
 using DCL.Input.Systems;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
+using DCL.UI.Profiles.Helpers;
 using ECS.Abstract;
 using MVC;
 using System;
@@ -21,7 +22,7 @@ namespace DCL.Chat
     public class ChatController : ControllerBase<ChatView>
     {
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
-        private readonly ChatEntryConfigurationSO chatEntryConfiguration;
+        private readonly IProfileNameColorHelper profileNameColorHelper;
         private readonly IChatMessagesBus chatMessagesBus;
         private readonly NametagsData nametagsData;
         private readonly IChatHistory chatHistory;
@@ -38,7 +39,7 @@ namespace DCL.Chat
         public event Action<bool>? ChatBubbleVisibilityChanged;
 
         public ChatController(ViewFactoryMethod viewFactory,
-            ChatEntryConfigurationSO chatEntryConfiguration,
+            IProfileNameColorHelper profileNameColorHelper,
             IChatMessagesBus chatMessagesBus,
             IChatHistory chatHistory,
             IReadOnlyEntityParticipantTable entityParticipantTable,
@@ -49,7 +50,7 @@ namespace DCL.Chat
             ViewDependencies viewDependencies,
             IChatCommandsBus chatCommandsBus) : base(viewFactory)
         {
-            this.chatEntryConfiguration = chatEntryConfiguration;
+            this.profileNameColorHelper = profileNameColorHelper;
             this.chatMessagesBus = chatMessagesBus;
             this.chatHistory = chatHistory;
             this.entityParticipantTable = entityParticipantTable;
@@ -77,7 +78,7 @@ namespace DCL.Chat
             chatHistory.MessageAdded += CreateChatEntry;
 
             viewInstance!.InjectDependencies(viewDependencies);
-            viewInstance!.Initialize(chatHistory.Channels, ChatChannel.NEARBY_CHANNEL, nametagsData.showChatBubbles, chatEntryConfiguration);
+            viewInstance!.Initialize(chatHistory.Channels, ChatChannel.NEARBY_CHANNEL, nametagsData.showChatBubbles, profileNameColorHelper);
 
             viewInstance.PointerEnter += OnChatViewPointerEnter;
             viewInstance.PointerExit += OnChatViewPointerExit;

@@ -67,6 +67,7 @@ using DCL.SceneLoadingScreens.LoadingScreen;
 using DCL.SidebarBus;
 using DCL.UI.MainUI;
 using DCL.StylizedSkybox.Scripts.Plugin;
+using DCL.UI.Profiles.Helpers;
 using DCL.UserInAppInitializationFlow;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
@@ -286,6 +287,7 @@ namespace Global.Dynamic
             var wearableCatalog = new WearableStorage();
             var characterPreviewFactory = new CharacterPreviewFactory(staticContainer.ComponentsContainer.ComponentPoolsRegistry);
             IWebBrowser webBrowser = bootstrapContainer.WebBrowser;
+            IProfileNameColorHelper profileNameColorHelper = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.ProfileNameColorHelper, ct: ct)).Value;
             ChatEntryConfigurationSO chatEntryConfiguration = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.ChatEntryConfiguration, ct)).Value;
             NametagsData nametagsData = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.NametagsData, ct)).Value;
 
@@ -629,7 +631,7 @@ namespace Global.Dynamic
                     staticContainer.MainPlayerAvatarBaseProxy,
                     debugBuilder,
                     staticContainer.CacheCleaner,
-                    chatEntryConfiguration,
+                    profileNameColorHelper,
                     new DefaultFaceFeaturesHandler(wearableCatalog),
                     nametagsData,
                     defaultTexturesContainer.TextureArrayContainerFactory,
@@ -651,12 +653,12 @@ namespace Global.Dynamic
                     webBrowser,
                     dynamicWorldDependencies.Web3Authenticator,
                     userInAppInAppInitializationFlow,
-                    profileCache, sidebarBus, dclInput, chatEntryConfiguration,
+                    profileCache, sidebarBus, dclInput, profileNameColorHelper,
                     globalWorld, playerEntity, includeCameraReel),
                 new ErrorPopupPlugin(mvcManager, assetsProvisioner),
                 connectionStatusPanelPlugin,
                 new MinimapPlugin(mvcManager, minimap),
-                new ChatPlugin(assetsProvisioner,
+                new ChatPlugin(
                     mvcManager,
                     chatMessagesBus,
                     chatHistory,
@@ -667,7 +669,8 @@ namespace Global.Dynamic
                     globalWorld,
                     playerEntity,
                     viewDependencies,
-                    chatCommandsBus),
+                    chatCommandsBus,
+                    profileNameColorHelper),
                 new ExplorePanelPlugin(
                     assetsProvisioner,
                     mvcManager,
@@ -698,7 +701,7 @@ namespace Global.Dynamic
                     notificationsBusController,
                     characterPreviewEventBus,
                     mapPathEventBus,
-                    chatEntryConfiguration,
+                    profileNameColorHelper,
                     backpackEventBus,
                     thirdPartyNftProviderSource,
                     wearablesProvider,
@@ -768,7 +771,7 @@ namespace Global.Dynamic
                     dclCursor,
                     profileRepository,
                     characterPreviewFactory,
-                    chatEntryConfiguration,
+                    profileNameColorHelper,
                     staticContainer.RealmData,
                     assetBundlesURL,
                     staticContainer.WebRequestsContainer.WebRequestController,
@@ -819,7 +822,8 @@ namespace Global.Dynamic
                     mainUIView.SidebarView.EnsureNotNull().InWorldCameraButton,
                     dynamicWorldDependencies.RootUIDocument,
                     globalWorld,
-                    debugBuilder));
+                    debugBuilder,
+                    profileNameColorHelper));
 
             if (dynamicWorldParams.EnableAnalytics)
                 globalPlugins.Add(new AnalyticsPlugin(

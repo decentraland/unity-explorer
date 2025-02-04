@@ -5,7 +5,6 @@ using DCL.Backpack;
 using DCL.BadgesAPIService;
 using DCL.Browser;
 using DCL.CharacterPreview;
-using DCL.Chat;
 using DCL.Diagnostics;
 using DCL.Input;
 using DCL.Input.Component;
@@ -21,6 +20,7 @@ using DCL.Passport.Modules;
 using DCL.Passport.Modules.Badges;
 using DCL.Profiles;
 using DCL.Profiles.Self;
+using DCL.UI.Profiles.Helpers;
 using DCL.WebRequests;
 using MVC;
 using System;
@@ -46,7 +46,7 @@ namespace DCL.Passport
         private readonly ICursor cursor;
         private readonly IProfileRepository profileRepository;
         private readonly ICharacterPreviewFactory characterPreviewFactory;
-        private readonly ChatEntryConfigurationSO chatEntryConfiguration;
+        private readonly IProfileNameColorHelper profileNameColorHelper;
         private readonly NftTypeIconSO rarityBackgrounds;
         private readonly NFTColorsSO rarityColors;
         private readonly NftTypeIconSO categoryIcons;
@@ -96,7 +96,7 @@ namespace DCL.Passport
             ICursor cursor,
             IProfileRepository profileRepository,
             ICharacterPreviewFactory characterPreviewFactory,
-            ChatEntryConfigurationSO chatEntryConfiguration,
+            IProfileNameColorHelper profileNameColorHelper,
             NftTypeIconSO rarityBackgrounds,
             NFTColorsSO rarityColors,
             NftTypeIconSO categoryIcons,
@@ -123,7 +123,7 @@ namespace DCL.Passport
             this.cursor = cursor;
             this.profileRepository = profileRepository;
             this.characterPreviewFactory = characterPreviewFactory;
-            this.chatEntryConfiguration = chatEntryConfiguration;
+            this.profileNameColorHelper = profileNameColorHelper;
             this.rarityBackgrounds = rarityBackgrounds;
             this.rarityColors = rarityColors;
             this.categoryIcons = categoryIcons;
@@ -158,7 +158,7 @@ namespace DCL.Passport
             Assert.IsNotNull(world);
             passportErrorsController = new PassportErrorsController(viewInstance!.ErrorNotification);
             characterPreviewController = new PassportCharacterPreviewController(viewInstance.CharacterPreviewView, characterPreviewFactory, world, characterPreviewEventBus);
-            commonPassportModules.Add(new UserBasicInfo_PassportModuleController(viewInstance.UserBasicInfoModuleView, chatEntryConfiguration, selfProfile, passportErrorsController));
+            commonPassportModules.Add(new UserBasicInfo_PassportModuleController(viewInstance.UserBasicInfoModuleView, profileNameColorHelper, selfProfile, passportErrorsController));
             overviewPassportModules.Add(new UserDetailedInfo_PassportModuleController(viewInstance.UserDetailedInfoModuleView, mvcManager, selfProfile, viewInstance.AddLinkModal, passportErrorsController, passportProfileInfoController));
             overviewPassportModules.Add(new EquippedItems_PassportModuleController(viewInstance.EquippedItemsModuleView, world, rarityBackgrounds, rarityColors, categoryIcons, thumbnailProvider, webBrowser, decentralandUrlsSource, passportErrorsController));
             overviewPassportModules.Add(new BadgesOverview_PassportModuleController(viewInstance.BadgesOverviewModuleView, badgesAPIClient, passportErrorsController, webRequestController));
@@ -288,7 +288,7 @@ namespace DCL.Passport
 
         private void UpdateBackgroundColor(string profileName)
         {
-            Color.RGBToHSV(chatEntryConfiguration.GetNameColor(profileName), out float h, out float s, out float v);
+            Color.RGBToHSV(profileNameColorHelper.GetNameColor(profileName), out float h, out float s, out float v);
             viewInstance?.BackgroundImage.material.SetColor(BG_SHADER_COLOR_1, Color.HSVToRGB(h, s, Mathf.Clamp01(v - 0.3f)));
         }
 

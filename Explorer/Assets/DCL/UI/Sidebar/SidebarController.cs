@@ -1,6 +1,5 @@
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
-using DCL.Chat;
 using DCL.ExplorePanel;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Notifications.NotificationsMenu;
@@ -10,12 +9,12 @@ using DCL.Profiles;
 using DCL.SidebarBus;
 using DCL.UI.Controls;
 using DCL.UI.ProfileElements;
+using DCL.UI.Profiles.Helpers;
 using DCL.UI.Skybox;
 using DCL.Web3.Identities;
 using MVC;
 using System;
 using System.Threading;
-using UnityEngine;
 using Utility;
 
 namespace DCL.UI.Sidebar
@@ -30,7 +29,7 @@ namespace DCL.UI.Sidebar
         private readonly ProfileMenuController profileMenuController;
         private readonly SkyboxMenuController skyboxMenuController;
         private readonly ControlsPanelController controlsPanelController;
-        private readonly ChatEntryConfigurationSO chatEntryConfiguration;
+        private readonly IProfileNameColorHelper profileNameColorHelper;
         private readonly IProfileRepository profileRepository;
         private readonly IWeb3IdentityCache identityCache;
         private readonly IWebBrowser webBrowser;
@@ -53,7 +52,7 @@ namespace DCL.UI.Sidebar
             SkyboxMenuController skyboxMenuController,
             ControlsPanelController controlsPanelController,
             ISidebarBus sidebarBus,
-            ChatEntryConfigurationSO chatEntryConfiguration,
+            IProfileNameColorHelper profileNameColorHelper,
             IWeb3IdentityCache identityCache,
             IProfileRepository profileRepository,
             IWebBrowser webBrowser,
@@ -68,7 +67,7 @@ namespace DCL.UI.Sidebar
             this.notificationsMenuController = notificationsMenuController;
             this.skyboxMenuController = skyboxMenuController;
             this.controlsPanelController = controlsPanelController;
-            this.chatEntryConfiguration = chatEntryConfiguration;
+            this.profileNameColorHelper = profileNameColorHelper;
 
             this.identityCache = identityCache;
             this.profileRepository = profileRepository;
@@ -179,7 +178,7 @@ namespace DCL.UI.Sidebar
         private async UniTaskVoid UpdateFrameColorAsync()
         {
             Profile? profile = await profileRepository.GetAsync(identityCache.Identity!.Address, profileWidgetCts.Token);
-            viewInstance!.FaceFrame.color = chatEntryConfiguration.GetNameColor(profile?.Name);
+            viewInstance!.FaceFrame.color = profileNameColorHelper.GetNameColor(profile?.Name);
         }
 
         protected override void OnViewClose()

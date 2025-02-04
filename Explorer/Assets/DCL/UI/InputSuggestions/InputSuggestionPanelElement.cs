@@ -1,4 +1,3 @@
-using DCL.Optimization.Pools;
 using MVC;
 using System.Collections.Generic;
 using UnityEngine;
@@ -10,7 +9,7 @@ namespace DCL.UI.SuggestionPanel
 {
     public class InputSuggestionPanelElement : MonoBehaviour, IViewWithGlobalDependencies
     {
-        public delegate void SuggestionSelectedDelegate(string suggestionId, bool shouldClose);
+        public delegate void SuggestionSelectedDelegate(string suggestionId, InputSuggestionType suggestionType, bool shouldClose);
 
         public event SuggestionSelectedDelegate SuggestionSelectedEvent;
 
@@ -68,14 +67,14 @@ namespace DCL.UI.SuggestionPanel
 
         private void OnSuggestionSelected(string suggestionId)
         {
-            SuggestionSelectedEvent?.Invoke(suggestionId, true);
+            SuggestionSelectedEvent?.Invoke(suggestionId, currentSuggestionType,true);
         }
 
 
         private void OnSubmit(InputAction.CallbackContext obj)
         {
             if (lastSelectedInputSuggestion != null && IsActive)
-                SuggestionSelectedEvent?.Invoke(lastSelectedInputSuggestion.SuggestionId, false);
+                SuggestionSelectedEvent?.Invoke(lastSelectedInputSuggestion.SuggestionId, currentSuggestionType,false);
         }
 
         private void OnArrowUp(InputAction.CallbackContext obj)

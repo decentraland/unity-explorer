@@ -467,7 +467,7 @@ MonoBehaviour:
       enabled: 0
       parcels:
       - {x: 145, y: 60}
-    targetWorld: MetadyneLabs.dcl.eth
+    targetWorld: olavra.dcl.eth
     customRealm: https://sdk-team-cdn.decentraland.org/ipfs/goerli-plaza-main-latest
     remoteHibridWorld: MetadyneLabs.dcl.eth
     remoteHybridSceneContentServer: 1
@@ -521,6 +521,11 @@ MonoBehaviour:
     <DirectionalLight>k__BackingField: {fileID: 233166827}
     <ChatEntryConfiguration>k__BackingField:
       m_AssetGUID: 6afb31861b85441b6ab2b988819bb96a
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_EditorAssetChanged: 0
+    <ProfileNameColorHelper>k__BackingField:
+      m_AssetGUID: 91e6cea64d2f8df42b229b6b8e118191
       m_SubObjectName: 
       m_SubObjectType: 
       m_EditorAssetChanged: 0

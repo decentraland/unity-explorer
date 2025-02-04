@@ -5,6 +5,7 @@ using DCL.UI;
 using DCL.UI.InputFieldValidator;
 using DCL.UI.SuggestionPanel;
 using MVC;
+using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -23,9 +24,10 @@ namespace DCL.Chat
         public delegate void InputChangedDelegate(string input);
         public delegate void InputSubmittedDelegate(string message, string origin);
 
-        private const string EMOJI_SUGGESTION_PATTERN = @"(?<!https?:)(:\w+)";
         private const string ORIGIN = "chat";
-        private static readonly Regex EMOJI_PATTERN_REGEX = new (EMOJI_SUGGESTION_PATTERN, RegexOptions.Compiled);
+        private static readonly Regex EMOJI_PATTERN_REGEX = new (@"(?<!https?:)(:\w{2,})", RegexOptions.Compiled);
+        private static readonly Regex USERNAMES_PATTERN_REGEX = new (@"^@[A-Za-z0-9]{3,15}(?:#[A-Za-z0-9]{4})?(?=\s|$)",
+           RegexOptions.Compiled);
 
         [SerializeField] private TMP_InputField inputField;
         [SerializeField] private ValidatedInputFieldElement validatedInputField;
@@ -44,6 +46,7 @@ namespace DCL.Chat
 
         [Header("Audio")]
         [SerializeField] private AudioClipConfig addEmojiAudio;
+        [SerializeField] private AudioClipConfig addUserNameAudio;
         [SerializeField] private AudioClipConfig openEmojiPanelAudio;
         [SerializeField] private AudioClipConfig chatSendMessageAudio;
         [SerializeField] private AudioClipConfig chatInputTextAudio;
@@ -97,6 +100,10 @@ namespace DCL.Chat
             characterCounter.gameObject.SetActive(false);
 
             InitializeEmojiController();
+
+            suggestionPanel.InjectDependencies(viewDependencies);
+            suggestionPanel.Initialize();
+            suggestionPanel.SuggestionSelectedEvent += OnSuggestionSelected;
 
             validatedInputField.InputFieldSelectionChanged += OnInputFieldSelectionChanged;
             validatedInputField.InputValidated += OnInputValidated;
@@ -303,7 +310,7 @@ namespace DCL.Chat
                 emojiPanelController.Dispose();
             }
 
-            suggestionPanel.SuggestionSelectedEvent -= AddEmojiFromSuggestion;
+            suggestionPanel.SuggestionSelectedEvent -= OnSuggestionSelected;
 
             emojiPanelCts.SafeCancelAndDispose();
             emojiSearchCts.SafeCancelAndDispose();
@@ -311,16 +318,74 @@ namespace DCL.Chat
             viewDependencies.DclInput.UI.RightClick.performed -= OnRightClickRegistered;
         }
 
+        private void OnSuggestionSelected(string suggestionId, InputSuggestionType suggestionType, bool shouldClose)
+        {
+            switch (suggestionType)
+            {
+                case InputSuggestionType.NONE:
+                    AddUsernameFromSuggestion(suggestionId, shouldClose);
+                    break;
+                case InputSuggestionType.EMOJIS:
+                    AddEmojiFromSuggestion(suggestionId, shouldClose);
+                    break;
+                case InputSuggestionType.USERNAMES: break;
+            }
+        }
+
+        private void AddUsernameFromSuggestion(string username, bool shouldClose)
+        {
+            if (!validatedInputField.IsWithinCharacterLimit(username.Length)) return;
+
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(addUserNameAudio);
+
+            inputField.SetTextWithoutNotify(inputField.text.Replace(USERNAMES_PATTERN_REGEX.Match(validatedInputField.InputText).Value, username));
+            inputField.stringPosition += username.Length;
+
+            validatedInputField.ActivateInputField();
+
+            if (shouldClose)
+                suggestionPanel.SetPanelVisibility(false);
+        }
+
+        private void HandleUsernameSearch(string inputText)
+        {
+            Match match = USERNAMES_PATTERN_REGEX.Match(inputText);
+
+            if (match.Success)
+            {
+                emojiSearchCts.SafeCancelAndDispose();
+                emojiSearchCts = new CancellationTokenSource();
+
+                SearchAndSetEmojiSuggestionsAsync(match.Value, emojiSearchCts.Token).Forget();
+            }
+            else
+            {
+                if (suggestionPanel.IsActive)
+                    suggestionPanel.SetPanelVisibility(false);
+            }
+        }
+
+        private async UniTaskVoid SearchAndSetUsernameSuggestionsAsync(string value, CancellationToken ct)
+        {
+            await DictionaryUtils.GetKeysWithPrefixAsync(emojiPanelController!.EmojiNameMapping, value, keysWithPrefix, ct);
+
+            var suggestions = new List<ISuggestionElementData>();
+
+            foreach (EmojiData emojiData in keysWithPrefix)
+                suggestions.Add(new EmojiInputSuggestionData(emojiData));
+
+            suggestionPanel.SetSuggestionValues(InputSuggestionType.EMOJIS, suggestions);
+            suggestionPanel.SetPanelVisibility(true);
+        }
+
+
+
+
 #region Emojis
         private void InitializeEmojiController()
         {
             emojiPanelController = new EmojiPanelController(emojiPanel, emojiPanelConfiguration, emojiMappingJson, emojiSectionViewPrefab, emojiButtonPrefab);
             emojiPanelController.EmojiSelected += AddEmojiToInput;
-
-            suggestionPanel.InjectDependencies(viewDependencies);
-            suggestionPanel.Initialize();
-            suggestionPanel.SuggestionSelectedEvent += AddEmojiFromSuggestion;
-
             emojiPanelButton.Button.onClick.AddListener(ToggleEmojiPanel);
         }
 

@@ -1,9 +1,9 @@
 using Cysharp.Threading.Tasks;
-using DCL.Chat;
 using DCL.Diagnostics;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI.ProfileElements;
+using DCL.UI.Profiles.Helpers;
 using System;
 using System.Threading;
 using Utility;
@@ -23,7 +23,7 @@ namespace DCL.Passport.Modules
 
         public UserBasicInfo_PassportModuleController(
             UserBasicInfo_PassportModuleView view,
-            ChatEntryConfigurationSO chatEntryConfiguration,
+            IProfileNameColorHelper profileNameColorHelper,
             ISelfProfile selfProfile,
             PassportErrorsController passportErrorsController)
         {
@@ -31,7 +31,7 @@ namespace DCL.Passport.Modules
             this.selfProfile = selfProfile;
             this.passportErrorsController = passportErrorsController;
 
-            nameElementController = new UserNameElementController(view.UserNameElement, chatEntryConfiguration);
+            nameElementController = new UserNameElementController(view.UserNameElement, profileNameColorHelper);
             walletAddressElementController = new UserWalletAddressElementController(view.UserWalletAddressElement);
         }
 
