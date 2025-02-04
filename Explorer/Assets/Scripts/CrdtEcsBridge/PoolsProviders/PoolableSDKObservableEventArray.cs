@@ -41,8 +41,11 @@ namespace CrdtEcsBridge.PoolsProviders
             IsDisposed = true;
         }
 
-        public IEnumerator<SDKObservableEvent> GetEnumerator() =>
-            Length <= 0 ? ((IEnumerable<SDKObservableEvent>)System.Array.Empty<SDKObservableEvent>()).GetEnumerator() : new Enumerator(this);
+        public Enumerator GetEnumerator() =>
+            new Enumerator(this);
+
+        IEnumerator<SDKObservableEvent> IEnumerable<SDKObservableEvent>.GetEnumerator() =>
+            GetEnumerator();
 
         IEnumerator IEnumerable.GetEnumerator() =>
             GetEnumerator();
