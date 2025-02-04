@@ -262,9 +262,7 @@ namespace Global.Dynamic
 
         private async UniTask<bool> DoesApplicationRequireVersionUpdateAsync(IAppArgs applicationParametersParser, SplashScreen splashScreen, CancellationToken ct)
         {
-            applicationParametersParser.TryGetValue(AppArgsFlags.SIMULATE_VERSION, out string? version);
-            string? currentVersion = version ?? Application.version;
-
+            string? currentVersion = CurrentVersion(applicationParametersParser);
             bool runVersionControl = debugSettings.EnableVersionUpdateGuard;
 
             if (applicationParametersParser.HasDebugFlag() && !Application.isEditor)
@@ -291,6 +289,14 @@ namespace Global.Dynamic
 
             await dynamicWorldContainer!.MvcManager.ShowAsync(LauncherRedirectionScreenController.IssueCommand(), ct);
             return true;
+        }
+
+        private static string? CurrentVersion(IAppArgs appArgs)
+        {
+            appArgs.TryGetValue(AppArgsFlags.SIMULATE_VERSION, out string? version);
+            string? currentVersion = version ?? Application.version;
+            ReportHub.Log(ReportData.UNSPECIFIED, $"Current Decentraland version: {currentVersion}");
+            return currentVersion;
         }
 
         private void DisableInputs()
