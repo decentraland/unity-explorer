@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using ECS.StreamableLoading.Cache.Disk.CleanUp;
+using ECS.StreamableLoading.Cache.Disk.Lock;
 using System;
 using System.IO;
 using UnityEngine;
@@ -17,7 +18,7 @@ namespace ECS.StreamableLoading.Cache.Disk.Playgrounds
         }
 
         private IDiskCache NewDiskCache() =>
-            new DiskCache(CacheDirectory.New(cacheDirectory), IDiskCleanUp.None.INSTANCE);
+            new DiskCache(CacheDirectory.New(cacheDirectory), new FilesLock(), IDiskCleanUp.None.INSTANCE);
 
         private async UniTaskVoid StartAsync()
         {
