@@ -34,11 +34,11 @@ namespace CommandTerminal
 
         public void HandleLog(string message, string stackTrace, LogType logType)
         {
-            logs.Add(new LogItem(logType, message, stackTrace));
-
             // Logs will only be added from the local SDK Scene (no other scenes consuming performance)
             // If we detect this check becomes a problem we may change it
-            if (logs.Count > maxItems) { logs.RemoveAt(0); }
+            if (logs.Count == maxItems)
+                logs.RemoveAt(0);
+            logs.Add(new LogItem(logType, message, stackTrace));
         }
 
         public void Clear()

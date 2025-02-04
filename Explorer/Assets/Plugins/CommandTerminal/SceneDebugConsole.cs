@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -35,6 +36,7 @@ namespace CommandTerminal
         private InputAction toggleInputAction;
         private InputAction toggleLargeInputAction;
         [SerializeField] private int logsMaxAmount = 512;
+        [SerializeField] private bool autoScrollOnNewLogs = false;
 
         [Header("Theme")]
         [SerializeField] private int fontSize = 20;
@@ -54,6 +56,13 @@ namespace CommandTerminal
         private TerminalState state;
         private Rect window;
         private GUIStyle windowStyle;
+        private Queue<string> pendingLogs = new Queue<string>();
+        private float scrollYCompensation = 0f;
+        private bool isScrollAtBottom = false;
+        private float normalizedScrollPosition = 1f;
+        private float totalContentHeight = 0f;
+        private Queue<string> pendingContentHeightAdditions = new Queue<string>();
+        private Queue<string> pendingContentHeightRemovals = new Queue<string>();
 
         private bool isClosed => state == TerminalState.Close && Mathf.Approximately(currentOpenValue, openTarget);
 
@@ -76,16 +85,38 @@ namespace CommandTerminal
 
         private void Update()
         {
+            // TODO: can all of these be moved inside OnGUI() ???
+
             if (isClosed)
             {
                 if (toggleLargeInputAction.triggered)
                     SetState(TerminalState.OpenFull);
                 else if (toggleInputAction.triggered)
                     SetState(TerminalState.OpenSmall);
+
+                return;
             }
-            else if (toggleInputAction.triggered || toggleLargeInputAction.triggered)
+
+            if (toggleInputAction.triggered || toggleLargeInputAction.triggered)
             {
                 SetState(TerminalState.Close);
+                return;
+            }
+
+            while (pendingContentHeightAdditions.Count > 0)
+            {
+                string message = pendingContentHeightAdditions.Dequeue();
+                float height = CalculateLogLabelHeight(message);
+                totalContentHeight += height;
+
+                if (!autoScrollOnNewLogs)
+                    scrollYCompensation += height;
+            }
+            while (pendingContentHeightRemovals.Count > 0)
+            {
+                string message = pendingContentHeightRemovals.Dequeue();
+                float height = CalculateLogLabelHeight(message);
+                totalContentHeight -= height;
             }
         }
 
@@ -95,6 +126,14 @@ namespace CommandTerminal
 
             HandleOpenness();
             window = GUILayout.Window(88, window, DrawConsole, "", windowStyle);
+
+            // Calculate normalized scroll position
+            float viewportHeight = window.height - windowStyle.padding.vertical;
+            float maxScrollValue = Mathf.Max(0, totalContentHeight - viewportHeight);
+            normalizedScrollPosition = maxScrollValue > 0 ? scrollPosition.y / maxScrollValue : 1f;
+
+            // THIS IS NOT WORKING IN Log()...
+            isScrollAtBottom = normalizedScrollPosition >= 0.95f;
         }
 
         private void SetState(TerminalState newState)
@@ -121,6 +160,7 @@ namespace CommandTerminal
 
                     realWindowSize = openTarget;
                     scrollPosition.y = int.MaxValue;
+                    isScrollAtBottom = true;
                     break;
                 }
                 case TerminalState.OpenFull:
@@ -128,6 +168,8 @@ namespace CommandTerminal
                 {
                     realWindowSize = Screen.height * maxHeight;
                     openTarget = realWindowSize;
+                    scrollPosition.y = int.MaxValue;
+                    isScrollAtBottom = true;
                     break;
                 }
             }
@@ -140,7 +182,6 @@ namespace CommandTerminal
             realWindowSize = Screen.height * maxHeight / 3;
             window = new Rect(0, currentOpenValue - realWindowSize, Screen.width, realWindowSize);
 
-            // Set background color
             backgroundTex = new Texture2D(1, 1);
             backgroundTex.SetPixel(0, 0, backgroundColor);
             backgroundTex.Apply();
@@ -164,19 +205,29 @@ namespace CommandTerminal
 
         private void DrawConsole(int Window2D)
         {
+            if (!autoScrollOnNewLogs && scrollYCompensation > 0)
+            {
+                scrollPosition.y = Mathf.Max(0, scrollPosition.y - scrollYCompensation);
+                scrollYCompensation = 0;
+            }
+
             scrollPosition = GUILayout.BeginScrollView(scrollPosition, false, false, GUIStyle.none, GUIStyle.none);
-            GUILayout.FlexibleSpace();
             DrawLogs();
             GUILayout.EndScrollView();
+
+            // if (isScrollAtBottom)
+            //     scrollPosition.y = int.MaxValue;
         }
 
         private void DrawLogs()
         {
+            GUILayout.BeginVertical();
             foreach (LogItem log in consoleBuffer.Logs)
             {
                 labelStyle.normal.textColor = GetLogColor(log.Type);
                 GUILayout.Label(log.Message, labelStyle);
             }
+            GUILayout.EndVertical();
         }
 
         private void HandleOpenness()
@@ -211,12 +262,27 @@ namespace CommandTerminal
             }
         }
 
-        public void Log(string message, string stackTrace = "", LogType type = LogType.Log, bool scrollToBottom = false)
+        private float CalculateLogLabelHeight(string message)
         {
-            consoleBuffer.HandleLog(message, stackTrace, type);
+            var content = new GUIContent(message);
+            float contentWidth = window.width - windowStyle.padding.horizontal;
+            float height = labelStyle.CalcHeight(content, contentWidth);
+            return height;
+        }
 
-            if (scrollToBottom)
-                scrollPosition.y = int.MaxValue;
+        public void Log(string message, string stackTrace = "", LogType type = LogType.Log)
+        {
+            // If scroll is at the bottom, keep it at the bottom
+            // if (isScrollAtBottom || autoScrollOnNewLogs)
+            //     scrollPosition.y = int.MaxValue;
+
+            // Queue the message for height calculation on the main thread
+            pendingContentHeightAdditions.Enqueue(message);
+
+            if (consoleBuffer.Logs.Count == logsMaxAmount)
+                pendingContentHeightRemovals.Enqueue(consoleBuffer.Logs[0].Message);
+
+            consoleBuffer.HandleLog(message, stackTrace, type);
         }
     }
 }
