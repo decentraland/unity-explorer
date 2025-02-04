@@ -78,7 +78,11 @@ namespace ECS.StreamableLoading.DeferredLoading
 
             for (i = 0; i < loadingIntentions.Count; i++)
             {
-                if (!memoryBudget.TrySpendBudget()) break;
+                if (!memoryBudget.TrySpendBudget())
+                {
+                    World.Create(new QualityReductionRequest());
+                    break;
+                }
                 if (!releasablePerformanceLoadingBudget.TrySpendBudget(out IAcquiredBudget acquiredBudget)) break;
 
                 ref StreamableLoadingState state = ref loadingIntentions[i].StatePointer.Value;
