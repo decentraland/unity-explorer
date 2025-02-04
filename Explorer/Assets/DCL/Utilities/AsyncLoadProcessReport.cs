@@ -41,11 +41,11 @@ namespace DCL.Utilities
         }
 
         /// <summary>
-        ///     Translates internals that can throw exceptions into a result free from exceptions
+        ///     Translates internals that can throw exceptions into a result free from exceptions <br/>
+        ///     If reportData is provided, it will log the exception
         /// </summary>
-        /// <returns></returns>
-        public UniTask<EnumResult<TaskError>> WaitUntilFinishedAsync() =>
-            completionSource.Task.SuppressToResultAsync(ReportCategory.SCENE_LOADING);
+        public UniTask<EnumResult<TaskError>> WaitUntilFinishedAsync(ReportData? reportData = null) =>
+            completionSource.Task.SuppressToResultAsync(reportData);
 
         public Status GetStatus() =>
             new (exception, completionSource.UnsafeGetStatus());

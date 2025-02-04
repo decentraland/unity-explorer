@@ -1,4 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.Utilities;
 using System;
 using UnityEngine;
@@ -41,7 +42,7 @@ namespace ECS.SceneLifeCycle.Reporting
             // Add report to the queue so it will be grabbed by the actual scene or LODs
             sceneReadinessReportQueue.Enqueue(parcel, loadProcessReport);
 
-            return loadProcessReport.WaitUntilFinishedAsync();
+            return loadProcessReport.WaitUntilFinishedAsync(ReportCategory.SCENE_LOADING);
         }
     }
 }
