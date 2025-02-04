@@ -157,6 +157,7 @@ namespace DCL.PluginSystem.Global
             foreach (var extendedObjectPool in avatarMaterialPoolHandler.GetAllMaterialsPools())
                 cacheCleaner.Register(extendedObjectPool.Pool);
 
+            AvatarQualityReductorSystem.InjectToWorld(ref builder);
 
             AvatarInstantiatorSystem.InjectToWorld(ref builder, frameTimeCapBudget, memoryBudget, avatarPoolRegistry, avatarMaterialPoolHandler,
                 computeShaderPool, attachmentsAssetsCache, skinningStrategy, vertOutBuffer, mainPlayerAvatarBaseProxy, defaultFaceFeaturesHandler,
@@ -188,7 +189,7 @@ namespace DCL.PluginSystem.Global
         {
             AvatarBase avatarBasePrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.AvatarBase, ct: ct)).Value.EnsureGetComponent<AvatarBase>();
 
-            componentPoolsRegistry.AddGameObjectPool(() => Object.Instantiate(avatarBasePrefab, Vector3.zero, Quaternion.identity));
+            componentPoolsRegistry.AddGameObjectPool(() => Object.Instantiate(avatarBasePrefab, Vector3.zero, Quaternion.identity), avatarBase => avatarBase.GhostRenderer.SetActive(true));
             avatarPoolRegistry = componentPoolsRegistry.GetReferenceTypePool<AvatarBase>().EnsureNotNull("ReferenceTypePool of type AvatarBase not found in the registry");
         }
 

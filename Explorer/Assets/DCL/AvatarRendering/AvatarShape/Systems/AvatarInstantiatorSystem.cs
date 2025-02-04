@@ -84,31 +84,55 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             InstantiateMainPlayerAvatarQuery(World);
             InstantiateNewAvatarQuery(World);
             InstantiateExistingAvatarQuery(World);
+
+            CreateEmptyAvatarQuery(World);
+            CreateEmptyAvatarMainPlayerQuery(World);
         }
 
         [Query]
-        [None(typeof(PlayerComponent), typeof(AvatarBase), typeof(AvatarTransformMatrixComponent), typeof(AvatarCustomSkinningComponent))]
-        private AvatarBase? InstantiateNewAvatar(in Entity entity, ref AvatarShapeComponent avatarShapeComponent, ref CharacterTransform transformComponent)
+        [All(typeof(PlayerComponent))]
+        [None(typeof(AvatarBase))]
+        private void CreateEmptyAvatarMainPlayer(in Entity entity, AvatarShapeComponent avatarShapeComponent, CharacterTransform transformComponent)
         {
-            if (!ReadyToInstantiateNewAvatar(ref avatarShapeComponent)) return null;
-
-            if (!avatarShapeComponent.WearablePromise.SafeTryConsume(World, GetReportCategory(), out WearablesLoadResult wearablesResult)) return null;
-
-            AvatarBase avatarBase = avatarPoolRegistry.Get();
+            var avatarBase = avatarPoolRegistry.Get();
             avatarBase.gameObject.name = $"Avatar {avatarShapeComponent.ID}";
 
-            Transform avatarTransform = avatarBase.transform;
+            var avatarTransform = avatarBase.transform;
+            avatarTransform.SetParent(transformComponent.Transform, false);
+            avatarBase.RigBuilder.enabled = true;
 
+            World.Add(entity, avatarBase);
+        }
+
+        [Query]
+        [None(typeof(PlayerComponent), typeof(AvatarBase))]
+        private void CreateEmptyAvatar(in Entity entity, AvatarShapeComponent avatarShapeComponent, CharacterTransform transformComponent)
+        {
+            var avatarBase = avatarPoolRegistry.Get();
+            avatarBase.gameObject.name = $"Avatar {avatarShapeComponent.ID}";
+
+            var avatarTransform = avatarBase.transform;
+            avatarTransform.SetParent(transformComponent.Transform, false);
+
+            World.Add(entity, avatarBase);
+        }
+
+        [Query]
+        [None(typeof(PlayerComponent), typeof(AvatarTransformMatrixComponent), typeof(AvatarCustomSkinningComponent))]
+        private bool InstantiateNewAvatar(in Entity entity, ref AvatarShapeComponent avatarShapeComponent, ref CharacterTransform transformComponent, AvatarBase avatarBase)
+        {
+            if (!ReadyToInstantiateNewAvatar(ref avatarShapeComponent)) return false;
+
+            if (!avatarShapeComponent.WearablePromise.SafeTryConsume(World, GetReportCategory(), out var wearablesResult)) return false;
+
+            Transform avatarTransform = avatarBase.transform;
             if (transformComponent.Transform != null)
             {
-                avatarTransform.SetParent(transformComponent.Transform, false);
-
                 using PoolExtensions.Scope<List<Transform>> children = avatarTransform.gameObject.GetComponentsInChildrenIntoPooledList<Transform>(true);
 
                 for (var index = 0; index < children.Value.Count; index++)
                 {
                     Transform child = children.Value[index];
-
                     if (child != null) { child.gameObject.layer = transformComponent.Transform.gameObject.layer; }
                 }
             }
@@ -120,28 +144,26 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
             AvatarCustomSkinningComponent skinningComponent = InstantiateAvatar(ref avatarShapeComponent, in wearablesResult, avatarBase);
 
-            World.Add(entity, avatarBase, (IAvatarView)avatarBase, avatarTransformMatrixComponent, skinningComponent);
-            return avatarBase;
+            avatarBase.GhostRenderer.SetActive(false);
+            World.Add(entity, (IAvatarView)avatarBase, avatarTransformMatrixComponent, skinningComponent);
+            return true;
         }
 
         [Query]
         [All(typeof(PlayerComponent))]
-        [None(typeof(AvatarBase), typeof(AvatarTransformMatrixComponent), typeof(AvatarCustomSkinningComponent))]
-        private void InstantiateMainPlayerAvatar(in Entity entity, ref AvatarShapeComponent avatarShapeComponent, ref CharacterTransform transformComponent)
+        [None(typeof(AvatarTransformMatrixComponent), typeof(AvatarCustomSkinningComponent))]
+        private void InstantiateMainPlayerAvatar(in Entity entity, ref AvatarShapeComponent avatarShapeComponent, ref CharacterTransform transformComponent, AvatarBase avatarBase)
         {
-            var avatarBase = InstantiateNewAvatar(entity, ref avatarShapeComponent, ref transformComponent);
-
-            if (avatarBase != null)
-            {
-                avatarBase.RigBuilder.enabled = true;
+            bool done = InstantiateNewAvatar(entity, ref avatarShapeComponent, ref transformComponent, avatarBase);
+            if (done)
                 mainPlayerAvatarBaseProxy.SetObject(avatarBase);
-            }
         }
 
         [Query]
         [All(typeof(CharacterTransform))]
         [None(typeof(DeleteEntityIntention))]
-        private void InstantiateExistingAvatar(ref AvatarShapeComponent avatarShapeComponent, AvatarBase avatarBase,
+        private void InstantiateExistingAvatar(ref AvatarShapeComponent avatarShapeComponent,
+            AvatarBase avatarBase,
             ref AvatarCustomSkinningComponent skinningComponent,
             ref AvatarTransformMatrixComponent avatarTransformMatrixComponent)
         {

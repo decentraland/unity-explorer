@@ -7,7 +7,7 @@ using ECS.Abstract;
 namespace ECS.StreamableLoading.DeferredLoading
 {
     [UpdateInGroup(typeof(PresentationSystemGroup))]
-    public class QualityReductorSystem : BaseUnityLoopSystem
+    public partial class QualityReductorSystem : BaseUnityLoopSystem
     {
         public QualityReductorSystem(World world) : base(world) { }
 
@@ -17,6 +17,10 @@ namespace ECS.StreamableLoading.DeferredLoading
         }
 
         [Query]
-        public void ProcessQualityReduction(in QualityReductionRequest qualityReductionRequest) { }
+        public void ProcessQualityReduction(in Entity entity, in QualityReductionRequest qualityReductionRequest)
+        {
+            World.Create(new AvatarQualityReductionRequest());
+            World.Destroy(entity);
+        }
     }
 }

@@ -66,7 +66,7 @@ namespace DCL.GlobalPartitioning
         }
 
         public GlobalDeferredLoadingSystem(World world, IReleasablePerformanceBudget releasablePerformanceLoadingBudget, IPerformanceBudget memoryBudget, SceneAssetLock sceneAssetLock)
-            : base(world, COMPONENT_HANDLERS, releasablePerformanceLoadingBudget, memoryBudget)
+            : base(world, COMPONENT_HANDLERS, releasablePerformanceLoadingBudget, memoryBudget, true)
         {
             this.sceneAssetLock = sceneAssetLock;
         }

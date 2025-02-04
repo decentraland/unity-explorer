@@ -21,12 +21,15 @@ namespace ECS.StreamableLoading.DeferredLoading
         private readonly QueryDescription[] sameBoatQueries;
         private readonly IPerformanceBudget memoryBudget;
 
-        protected DeferredLoadingSystem(World world, QueryDescription[] sameBoatQueries, IReleasablePerformanceBudget releasablePerformanceLoadingBudget, IPerformanceBudget memoryBudget) : base(world)
+        private bool doQualityReduction;
+
+        protected DeferredLoadingSystem(World world, QueryDescription[] sameBoatQueries, IReleasablePerformanceBudget releasablePerformanceLoadingBudget, IPerformanceBudget memoryBudget, bool doQualityReduction = false) : base(world)
         {
             this.sameBoatQueries = sameBoatQueries;
             this.releasablePerformanceLoadingBudget = releasablePerformanceLoadingBudget;
             this.memoryBudget = memoryBudget;
             loadingIntentions = ListPool<IntentionData>.Get()!;
+            this.doQualityReduction = doQualityReduction;
         }
 
         protected static QueryDescription CreateQuery<TIntention, TAsset>() where TIntention: ILoadingIntention =>

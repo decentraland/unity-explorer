@@ -36,6 +36,7 @@ using SceneRunner.Scene;
 using SceneRuntime;
 using System.Collections.Generic;
 using System.Threading;
+using ECS.StreamableLoading.DeferredLoading;
 using SystemGroups.Visualiser;
 using UnityEngine;
 using Utility;
@@ -139,6 +140,9 @@ namespace Global.Dynamic
 
             GlobalDeferredLoadingSystem.InjectToWorld(ref builder, sceneBudget, memoryBudget, staticContainer.SingletonSharedDependencies.SceneAssetLock);
 
+            QualityReductorSystem.InjectToWorld(ref builder);
+            
+            
             LoadStaticPointersSystem.InjectToWorld(ref builder);
             LoadFixedPointersSystem.InjectToWorld(ref builder);
             LoadPortableExperiencePointersSystem.InjectToWorld(ref builder);
