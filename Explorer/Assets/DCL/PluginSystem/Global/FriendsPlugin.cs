@@ -10,6 +10,7 @@ using DCL.Friends.UI.FriendPanel;
 using DCL.Friends.UI.Requests;
 using DCL.Input;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.NotificationsBusController.NotificationsBus;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.RealmNavigation;
@@ -46,6 +47,7 @@ namespace DCL.PluginSystem.Global
         private readonly CancellationTokenSource lifeCycleCancellationToken = new ();
         private readonly IWebBrowser webBrowser;
         private readonly IChatLifecycleBusController chatLifecycleBusController;
+        private readonly INotificationsBusController notificationsBusController;
         private readonly bool includeUserBlocking;
 
         private CancellationTokenSource friendServiceSubscriptionCancellationToken = new ();
@@ -69,6 +71,7 @@ namespace DCL.PluginSystem.Global
             ObjectProxy<IFriendsService> friendServiceProxy,
             IProfileThumbnailCache profileThumbnailCache,
             IChatLifecycleBusController chatLifecycleBusController,
+            INotificationsBusController notificationsBusController,
             bool includeUserBlocking)
         {
             this.mainUIView = mainUIView;
@@ -87,6 +90,7 @@ namespace DCL.PluginSystem.Global
             this.friendServiceProxy = friendServiceProxy;
             this.profileThumbnailCache = profileThumbnailCache;
             this.chatLifecycleBusController = chatLifecycleBusController;
+            this.notificationsBusController = notificationsBusController;
             this.includeUserBlocking = includeUserBlocking;
         }
 
@@ -138,7 +142,12 @@ namespace DCL.PluginSystem.Global
 
             mvcManager.RegisterController(friendsPanelController);
 
-            var persistentFriendsOpenerController = new PersistentFriendPanelOpenerController(() => mainUIView.SidebarView.PersistentFriendsPanelOpener, mvcManager, dclInput);
+            var persistentFriendsOpenerController = new PersistentFriendPanelOpenerController(() => mainUIView.SidebarView.PersistentFriendsPanelOpener,
+                mvcManager,
+                dclInput,
+                notificationsBusController,
+                passportBridge,
+                friendsService);
             mvcManager.RegisterController(persistentFriendsOpenerController);
 
             FriendRequestView friendRequestPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.FriendRequestPrefab, ct)).Value;

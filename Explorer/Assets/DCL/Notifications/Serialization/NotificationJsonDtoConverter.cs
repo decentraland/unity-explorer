@@ -42,6 +42,8 @@ namespace DCL.Notifications.Serialization
                     "reward_assignment" => new RewardAssignedNotification(),
                     "reward_in_progress" => new RewardInProgressNotification(),
                     "badge_granted" => new BadgeGrantedNotification(),
+                    "social_service_friendship_request" => new FriendRequestReceivedNotification(),
+                    "social_service_friendship_accepted" => new FriendRequestAcceptedNotification(),
                     _ => null
                 };
 

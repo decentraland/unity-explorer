@@ -166,7 +166,7 @@ namespace DCL.Friends.UI.FriendPanel
             sidebarRequestNotificationIndicator.SetNotificationCount(count);
         }
 
-        private void ToggleTabs(FriendsPanelTab tab)
+        internal void ToggleTabs(FriendsPanelTab tab)
         {
             viewInstance!.FriendsTabSelected.SetActive(tab == FriendsPanelTab.FRIENDS);
             viewInstance!.FriendsSection.SetActive(tab == FriendsPanelTab.FRIENDS);
