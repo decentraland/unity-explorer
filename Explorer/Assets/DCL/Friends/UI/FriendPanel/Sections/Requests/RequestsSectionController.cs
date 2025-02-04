@@ -65,8 +65,9 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             requestManager.RequestClicked += RequestClicked;
 
             friendEventBus.OnFriendRequestReceived += PropagateRequestReceived;
-            friendEventBus.OnYouAcceptedFriendRequestReceivedFromOtherUser += PropagateRequestAcceptedRejected;
-            friendEventBus.OnYouRejectedFriendRequestReceivedFromOtherUser += PropagateRequestAcceptedRejected;
+            friendEventBus.OnYouAcceptedFriendRequestReceivedFromOtherUser += PropagateReceivedRequestsCountChanged;
+            friendEventBus.OnYouRejectedFriendRequestReceivedFromOtherUser += PropagateReceivedRequestsCountChanged;
+            friendEventBus.OnOtherUserCancelledTheRequest += PropagateReceivedRequestsCountChanged;
 
             ReceivedRequestsCountChanged += UpdateReceivedRequestsSectionCount;
 
@@ -82,8 +83,9 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             requestManager.ContextMenuClicked -= ContextMenuClicked;
             requestManager.RequestClicked -= RequestClicked;
             friendEventBus.OnFriendRequestReceived -= PropagateRequestReceived;
-            friendEventBus.OnYouAcceptedFriendRequestReceivedFromOtherUser -= PropagateRequestAcceptedRejected;
-            friendEventBus.OnYouRejectedFriendRequestReceivedFromOtherUser -= PropagateRequestAcceptedRejected;
+            friendEventBus.OnYouAcceptedFriendRequestReceivedFromOtherUser -= PropagateReceivedRequestsCountChanged;
+            friendEventBus.OnYouRejectedFriendRequestReceivedFromOtherUser -= PropagateReceivedRequestsCountChanged;
+            friendEventBus.OnOtherUserCancelledTheRequest -= PropagateReceivedRequestsCountChanged;
 
             ReceivedRequestsCountChanged -= UpdateReceivedRequestsSectionCount;
             friendshipOperationCts.SafeCancelAndDispose();
@@ -139,7 +141,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
         private void PropagateRequestReceived(FriendRequest request) =>
             PropagateReceivedRequestsCountChanged();
 
-        private void PropagateRequestAcceptedRejected(string userId) =>
+        private void PropagateReceivedRequestsCountChanged(string userId) =>
             PropagateReceivedRequestsCountChanged();
 
         private void PropagateReceivedRequestsCountChanged() =>
