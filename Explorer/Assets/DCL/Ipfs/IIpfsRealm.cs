@@ -12,6 +12,7 @@ namespace DCL.Ipfs
         public URLDomain LambdasBaseUrl { get; }
         public IReadOnlyList<string> SceneUrns { get; }
         public URLDomain EntitiesActiveEndpoint { get; }
+        public URLDomain AssetBundleRegistry { get; }
 
         UniTask PublishAsync<T>(EntityDefinitionGeneric<T> entity, CancellationToken ct, IReadOnlyDictionary<string, byte[]>? contentFiles = null);
 

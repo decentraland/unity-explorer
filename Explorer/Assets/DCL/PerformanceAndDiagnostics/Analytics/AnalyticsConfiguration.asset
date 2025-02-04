@@ -25,6 +25,8 @@ MonoBehaviour:
       isEnabled: 1
     - eventName: loading_error
       isEnabled: 1
+    - eventName: crash
+      isEnabled: 1
   - groupName: Map
     events:
     - eventName: map_jump_in

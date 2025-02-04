@@ -57,6 +57,7 @@ namespace Global.Dynamic
         [SerializeField] private PluginSettingsContainer globalPluginSettingsContainer = null!;
         [SerializeField] private PluginSettingsContainer scenePluginSettingsContainer = null!;
         [SerializeField] private UIDocument uiToolkitRoot = null!;
+        [SerializeField] private UIDocument scenesUIRoot = null!;
         [SerializeField] private UIDocument cursorRoot = null!;
         [SerializeField] private UIDocument debugUiRoot = null!;
         [SerializeField] private DynamicSceneLoaderSettings settings = null!;
@@ -195,7 +196,7 @@ namespace Global.Dynamic
 
                 bool isLoaded;
                 Entity playerEntity = world.Create(new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY));
-                (staticContainer, isLoaded) = await bootstrap.LoadStaticContainerAsync(bootstrapContainer, globalPluginSettingsContainer, debugContainerBuilder, playerEntity, TextureFuseFactory(), memoryCap, ct);
+                (staticContainer, isLoaded) = await bootstrap.LoadStaticContainerAsync(bootstrapContainer, globalPluginSettingsContainer, debugContainerBuilder, playerEntity, TextureFuseFactory(), memoryCap, scenesUIRoot, ct);
 
                 if (!isLoaded)
                 {
@@ -211,7 +212,7 @@ namespace Global.Dynamic
                 bootstrap.ApplyFeatureFlagConfigs(staticContainer!.FeatureFlagsCache);
 
                 (dynamicWorldContainer, isLoaded) = await bootstrap.LoadDynamicWorldContainerAsync(bootstrapContainer, staticContainer!, scenePluginSettingsContainer, settings,
-                    dynamicSettings, uiToolkitRoot, cursorRoot, backgroundMusic, worldInfoTool.EnsureNotNull(), playerEntity,
+                    dynamicSettings, uiToolkitRoot, scenesUIRoot, cursorRoot, backgroundMusic, worldInfoTool.EnsureNotNull(), playerEntity,
                     applicationParametersParser,
                     coroutineRunner: this,
                     destroyCancellationToken);

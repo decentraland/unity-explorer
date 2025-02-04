@@ -40,9 +40,10 @@ namespace DCL.PluginSystem.World
         private readonly IInputBlock inputBlock;
         private UIDocument? canvas;
 
-        public SceneUIPlugin(ECSWorldSingletonSharedDependencies singletonSharedDependencies, IAssetsProvisioner assetsProvisioner, IInputBlock inputBlock, ObjectProxy<DCLInput> inputProxy)
+        public SceneUIPlugin(ECSWorldSingletonSharedDependencies singletonSharedDependencies, IAssetsProvisioner assetsProvisioner, IInputBlock inputBlock, ObjectProxy<DCLInput> inputProxy, UIDocument sceneUIRoot)
         {
             this.assetsProvisioner = assetsProvisioner;
+            this.canvas = sceneUIRoot;
             this.inputBlock = inputBlock;
             componentPoolsRegistry = singletonSharedDependencies.ComponentPoolsRegistry;
             transformsPool = componentPoolsRegistry.AddComponentPool<UITransformComponent>(onRelease: UiElementUtils.ReleaseUITransformComponent, maxSize: 200);
@@ -58,19 +59,15 @@ namespace DCL.PluginSystem.World
 
         public void Dispose()
         {
-            if (inputProxy.Configured) { inputProxy.Object.Shortcuts.ShowHideUI.performed -= ChangeUIShowState; }
         }
 
         public async UniTask InitializeAsync(Settings settings, CancellationToken ct)
         {
-            canvas = (await assetsProvisioner.ProvideInstanceAsync(settings.Canvas, ct: ct)).Value;
             StyleSheet scenesUIStyleSheet = (await assetsProvisioner.ProvideMainAssetAsync(settings.StyleSheet, ct)).Value;
 
             canvas.rootVisualElement.styleSheets.Add(scenesUIStyleSheet);
             canvas.rootVisualElement.AddToClassList("sceneUIMainCanvas");
             canvas.rootVisualElement.pickingMode = PickingMode.Ignore;
-
-            if (inputProxy.Configured) { inputProxy.Object.Shortcuts.ShowHideUI.performed += ChangeUIShowState; }
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
@@ -100,20 +97,10 @@ namespace DCL.PluginSystem.World
             finalizeWorldSystems.Add(ReleasePoolableComponentSystem<Label, UITextComponent>.InjectToWorld(ref builder, componentPoolsRegistry));
         }
 
-        private void ChangeUIShowState(InputAction.CallbackContext callbackContext)
-        {
-            if (canvas != null)
-                canvas.rootVisualElement.parent.style.display = canvas.rootVisualElement.parent.style.display.value == DisplayStyle.Flex ? DisplayStyle.None : DisplayStyle.Flex;
-        }
-
         [Serializable]
         public class Settings : IDCLPluginSettings
         {
             [field: Header(nameof(SceneUIPlugin) + "." + nameof(Settings))]
-            [field: Space]
-            [field: SerializeField]
-            public UIDocumentRef Canvas { get; private set; } = null!;
-
             [field: SerializeField]
             public AssetReferenceStyleSheet StyleSheet { get; private set; } = null!;
         }

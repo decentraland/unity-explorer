@@ -3,7 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Profiles;
 using DCL.Web3.Chains;
 using DCL.Web3.Identities;
-using Decentraland.SocialService.V3;
+using Decentraland.SocialService.V2;
 using Google.Protobuf.WellKnownTypes;
 using Newtonsoft.Json;
 using rpc_csharp;
@@ -169,13 +169,13 @@ namespace DCL.Friends
                 case GetFriendshipStatusResponse.ResponseOneofCase.Accepted:
                     switch (response.Accepted.Status)
                     {
-                        case Decentraland.SocialService.V3.FriendshipStatus.Accepted:
+                        case Decentraland.SocialService.V2.FriendshipStatus.Accepted:
                             return FriendshipStatus.FRIEND;
-                        case Decentraland.SocialService.V3.FriendshipStatus.Blocked:
+                        case Decentraland.SocialService.V2.FriendshipStatus.Blocked:
                             return FriendshipStatus.BLOCKED;
-                        case Decentraland.SocialService.V3.FriendshipStatus.RequestReceived:
+                        case Decentraland.SocialService.V2.FriendshipStatus.RequestReceived:
                             return FriendshipStatus.REQUEST_RECEIVED;
-                        case Decentraland.SocialService.V3.FriendshipStatus.RequestSent:
+                        case Decentraland.SocialService.V2.FriendshipStatus.RequestSent:
                             return FriendshipStatus.REQUEST_SENT;
                     }
 
