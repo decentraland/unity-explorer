@@ -44,6 +44,8 @@ namespace DCL.UserInAppInitializationFlow
             var loadLandscapeStartupOperation = new LoadLandscapeStartupOperation(loadingStatus, terrainContainer.Landscape);
             var checkOnboardingStartupOperation = new CheckOnboardingStartupOperation(loadingStatus, selfProfile, staticContainer.FeatureFlagsCache, appArgs, realmNavigationContainer.RealmNavigator);
             var teleportStartupOperation = new TeleportStartupOperation(loadingStatus, realmContainer.RealmController, staticContainer.ExposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy, realmContainer.TeleportController, staticContainer.ExposedGlobalDataContainer.CameraSamplingData, dynamicWorldParams.StartParcel);
+
+            // TODO review why loadGlobalPxOperation is invoked on recovery
             var loadGlobalPxOperation = new LoadGlobalPortableExperiencesStartupOperation(loadingStatus, selfProfile, staticContainer.FeatureFlagsCache, bootstrapContainer.DebugSettings, staticContainer.PortableExperiencesController);
             var sentryDiagnostics = new SentryDiagnosticStartupOperation(realmContainer.RealmController, bootstrapContainer.DiagnosticsContainer);
 
