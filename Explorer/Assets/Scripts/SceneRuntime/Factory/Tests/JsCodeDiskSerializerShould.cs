@@ -1,5 +1,6 @@
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Cache.Disk.CleanUp;
+using ECS.StreamableLoading.Cache.Disk.Lock;
 using NUnit.Framework;
 using SceneRuntime.Factory.JsSource;
 using System.Threading;
@@ -29,19 +30,19 @@ namespace SceneRuntime.Factory.Tests
         public async Task Cache()
         {
             // Arrange
-            var diskCache = new DiskCache<string>(new DiskCache(CacheDirectory.New("Test"), IDiskCleanUp.None.INSTANCE), new StringDiskSerializer());
-            const string KEY = "https://decentraland.org/images/ui/dark-atlas-v3.png";
+            var diskCache = new DiskCache<string>(new DiskCache(CacheDirectory.New("Test"), new FilesLock(), IDiskCleanUp.None.INSTANCE), new StringDiskSerializer());
+            var key = HashKey.FromString("https://decentraland.org/images/ui/dark-atlas-v3.png");
             const string DATA = "Test data string";
             const string EXTENSION = "txt";
             var token = new CancellationToken();
 
             // Act
-            var result = await diskCache.PutAsync(KEY, EXTENSION, DATA, token);
+            var result = await diskCache.PutAsync(key, EXTENSION, DATA, token);
 
             if (result.Success == false)
                 throw new System.Exception($"CachedWebJsSources: SceneSourceCodeAsync: diskCache.PutAsync failed: {result.Error!.Value.State} {result.Error!.Value.Message}");
 
-            var contentResult = await diskCache.ContentAsync(KEY, EXTENSION, token);
+            var contentResult = await diskCache.ContentAsync(key, EXTENSION, token);
 
             // Assert
             Assert.AreEqual(DATA, contentResult.Unwrap().Value);

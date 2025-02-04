@@ -1,6 +1,5 @@
 ﻿using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
-using DCL.AsyncLoadReporting;
 using System;
 using System.Threading;
 using UnityEngine;
