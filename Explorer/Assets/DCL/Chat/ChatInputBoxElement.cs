@@ -40,8 +40,6 @@ namespace DCL.Chat
         [SerializeField] private EmojiButtonView emojiPanelButton;
         [SerializeField] private EmojiPanelView emojiPanel;
 
-        //[SerializeField] private EmojiSuggestionView emojiSuggestionViewPrefab;
-        //[SerializeField] private EmojiSuggestionPanelView emojiSuggestionPanel;
         [SerializeField] private InputSuggestionPanelElement suggestionPanel;
 
         [Header("Audio")]
@@ -57,7 +55,6 @@ namespace DCL.Chat
         private EmojiPanelController? emojiPanelController;
         private CancellationTokenSource emojiPanelCts = new ();
         private CancellationTokenSource emojiSearchCts = new ();
-        //private EmojiSuggestionPanel? emojiSuggestionPanelController;
         private bool isInputSelected;
         private ViewDependencies viewDependencies;
 
@@ -131,8 +128,6 @@ namespace DCL.Chat
 
         public void FocusInputBox()
         {
-            //if (emojiSuggestionPanelController is { IsActive: true }) return;
-
             if (suggestionPanel.IsActive) return;
 
             if (validatedInputField.IsFocused) return;
@@ -177,7 +172,6 @@ namespace DCL.Chat
             void CheckIfClickedOnEmojiPanel()
             {
                 if (!(emojiPanel.gameObject.activeInHierarchy ||
-                      //emojiSuggestionPanel.gameObject.activeInHierarchy ||
                       suggestionPanel.gameObject.activeInHierarchy)) return;
 
                 IReadOnlyList<RaycastResult> raycastResults = viewDependencies.EventSystem.RaycastAll(device.position.value);
@@ -185,7 +179,6 @@ namespace DCL.Chat
 
                 foreach (RaycastResult result in raycastResults)
                     if (result.gameObject == emojiPanel.gameObject ||
-                        //result.gameObject == emojiSuggestionPanel.ScrollView.gameObject ||
                         result.gameObject == emojiPanelButton.gameObject ||
                         result.gameObject == suggestionPanel.ScrollViewRect.gameObject)
                         clickedOnPanel = true;
@@ -200,7 +193,6 @@ namespace DCL.Chat
                     }
 
                     suggestionPanel.SetPanelVisibility(false);
-                    //emojiSuggestionPanelController!.SetPanelVisibility(false);
                 }
             }
         }
@@ -233,7 +225,6 @@ namespace DCL.Chat
             emojiPanel.gameObject.SetActive(toggle);
             emojiPanelButton.SetState(toggle);
             suggestionPanel.SetPanelVisibility(false);
-            //emojiSuggestionPanelController!.SetPanelVisibility(false);
             emojiPanel.EmojiContainer.gameObject.SetActive(toggle);
             validatedInputField.ActivateInputField();
 
@@ -275,12 +266,6 @@ namespace DCL.Chat
 
         private void InputFieldSubmit(string _)
         {
-            // if (emojiSuggestionPanelController is { IsActive: true })
-            // {
-            //     emojiSuggestionPanelController!.SetPanelVisibility(false);
-            //     return;
-            // }
-
             if (suggestionPanel.IsActive)
             {
                 suggestionPanel.SetPanelVisibility(false);
@@ -320,9 +305,6 @@ namespace DCL.Chat
 
             suggestionPanel.SuggestionSelectedEvent -= AddEmojiFromSuggestion;
 
-           // if (emojiSuggestionPanelController != null)
-           //     emojiSuggestionPanelController.EmojiSelected -= AddEmojiFromSuggestion;
-
             emojiPanelCts.SafeCancelAndDispose();
             emojiSearchCts.SafeCancelAndDispose();
 
@@ -335,9 +317,6 @@ namespace DCL.Chat
             emojiPanelController = new EmojiPanelController(emojiPanel, emojiPanelConfiguration, emojiMappingJson, emojiSectionViewPrefab, emojiButtonPrefab);
             emojiPanelController.EmojiSelected += AddEmojiToInput;
 
-            //emojiSuggestionPanelController = new EmojiSuggestionPanel(emojiSuggestionPanel, emojiSuggestionViewPrefab);
-            //emojiSuggestionPanelController.InjectDependencies(viewDependencies);
-            //emojiSuggestionPanelController.EmojiSelected += AddEmojiFromSuggestion;
             suggestionPanel.InjectDependencies(viewDependencies);
             suggestionPanel.Initialize();
             suggestionPanel.SuggestionSelectedEvent += AddEmojiFromSuggestion;
@@ -358,7 +337,6 @@ namespace DCL.Chat
 
             if (shouldClose)
                 suggestionPanel.SetPanelVisibility(false);
-                //emojiSuggestionPanelController!.SetPanelVisibility(false);
         }
 
         private void AddEmojiToInput(string emoji)
@@ -379,7 +357,6 @@ namespace DCL.Chat
                 if (match.Value.Length < 2)
                 {
                     suggestionPanel.SetPanelVisibility(false);
-                    //emojiSuggestionPanelController!.SetPanelVisibility(false);
                     return;
                 }
 
@@ -392,8 +369,6 @@ namespace DCL.Chat
             {
                 if (suggestionPanel.IsActive)
                     suggestionPanel.SetPanelVisibility(false);
-                //if (emojiSuggestionPanelController is { IsActive: true })
-                    //emojiSuggestionPanelController!.SetPanelVisibility(false);
             }
         }
 
@@ -402,16 +377,12 @@ namespace DCL.Chat
             await DictionaryUtils.GetKeysWithPrefixAsync(emojiPanelController!.EmojiNameMapping, value, keysWithPrefix, ct);
 
             var suggestions = new List<ISuggestionElementData>();
-            foreach (var emojiData in keysWithPrefix)
-            {
+
+            foreach (EmojiData emojiData in keysWithPrefix)
                 suggestions.Add(new EmojiInputSuggestionData(emojiData));
-            }
 
             suggestionPanel.SetSuggestionValues(InputSuggestionType.EMOJIS, suggestions);
             suggestionPanel.SetPanelVisibility(true);
-
-            //emojiSuggestionPanelController!.SetValues(keysWithPrefix);
-            //emojiSuggestionPanelController!.SetPanelVisibility(true);
         }
 #endregion
     }

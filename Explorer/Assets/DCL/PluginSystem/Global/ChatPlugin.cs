@@ -103,18 +103,6 @@ namespace DCL.PluginSystem.Global
             public AssetReferenceT<ChatEntryConfigurationSO> ChatEntryConfiguration { get; private set; }
 
             [Serializable]
-            public class EmojiSuggestionPanelRef : ComponentReference<EmojiSuggestionPanelView>
-            {
-                public EmojiSuggestionPanelRef(string guid) : base(guid) { }
-            }
-
-            [Serializable]
-            public class EmojiSuggestionRef : ComponentReference<EmojiSuggestionView>
-            {
-                public EmojiSuggestionRef(string guid) : base(guid) { }
-            }
-
-            [Serializable]
             public class EmojiSectionRef : ComponentReference<EmojiSectionView>
             {
                 public EmojiSectionRef(string guid) : base(guid) { }
