@@ -773,7 +773,8 @@ namespace Global.Dynamic
                     profileThumbnailCache,
                     chatLifecycleBusController,
                     notificationsBusController,
-                    includeUserBlocking));
+                    includeUserBlocking,
+                    appArgs));
             }
 
             if (dynamicWorldParams.EnableAnalytics)

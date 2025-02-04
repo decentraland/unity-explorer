@@ -18,6 +18,7 @@ using DCL.UI.MainUI;
 using DCL.Utilities;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
+using Global.AppArgs;
 using MVC;
 using System;
 using System.Threading;
@@ -44,11 +45,10 @@ namespace DCL.PluginSystem.Global
         private readonly IPassportBridge passportBridge;
         private readonly ObjectProxy<IFriendsService> friendServiceProxy;
         private readonly IProfileThumbnailCache profileThumbnailCache;
-        private readonly CancellationTokenSource lifeCycleCancellationToken = new ();
-        private readonly IWebBrowser webBrowser;
         private readonly IChatLifecycleBusController chatLifecycleBusController;
         private readonly INotificationsBusController notificationsBusController;
         private readonly bool includeUserBlocking;
+        private readonly IAppArgs appArgs;
 
         private CancellationTokenSource friendServiceSubscriptionCancellationToken = new ();
         private RPCFriendsService? friendsService;
@@ -72,7 +72,8 @@ namespace DCL.PluginSystem.Global
             IProfileThumbnailCache profileThumbnailCache,
             IChatLifecycleBusController chatLifecycleBusController,
             INotificationsBusController notificationsBusController,
-            bool includeUserBlocking)
+            bool includeUserBlocking,
+            IAppArgs appArgs)
         {
             this.mainUIView = mainUIView;
             this.dclUrlSource = dclUrlSource;
@@ -92,6 +93,7 @@ namespace DCL.PluginSystem.Global
             this.chatLifecycleBusController = chatLifecycleBusController;
             this.notificationsBusController = notificationsBusController;
             this.includeUserBlocking = includeUserBlocking;
+            this.appArgs = appArgs;
         }
 
         public void Dispose()
@@ -107,17 +109,15 @@ namespace DCL.PluginSystem.Global
         {
             IFriendsEventBus friendEventBus = new DefaultFriendsEventBus();
 
-
             var friendsCache = new FriendsCache();
 
-            friendsService = new RPCFriendsService(URLAddress.FromString(dclUrlSource.Url(DecentralandUrl.ApiFriends)),
+            friendsService = new RPCFriendsService(GetApiUrl(),
                 friendEventBus, web3IdentityCache, friendsCache, selfProfile);
 
             friendServiceProxy.SetObject(friendsService);
 
             // Fire and forget as this task will never finish
             var cts = CancellationTokenSource.CreateLinkedTokenSource(friendServiceSubscriptionCancellationToken.Token, ct);
-
             friendsService.SubscribeToIncomingFriendshipEventsAsync(cts.Token).Forget();
             friendsService.SubscribeToConnectivityStatusAsync(cts.Token).Forget();
 
@@ -161,6 +161,16 @@ namespace DCL.PluginSystem.Global
 
             web3IdentityCache.OnIdentityCleared += DisconnectRpcClient;
             web3IdentityCache.OnIdentityChanged += ReconnectRpcClient;
+        }
+
+        private URLAddress GetApiUrl()
+        {
+            string url = dclUrlSource.Url(DecentralandUrl.ApiFriends);
+
+            if (appArgs.TryGetValue(AppArgsFlags.FRIENDS_API_URL, out string? urlFromArgs))
+                url = urlFromArgs!;
+
+            return URLAddress.FromString(url);
         }
 
         private void ReconnectRpcClient()
