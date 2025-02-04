@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
+using UnityEngine.ResourceManagement.AsyncOperations;
+using Utility;
 
 namespace DCL.Roads.GPUInstancing.Playground
 {
@@ -13,7 +16,8 @@ namespace DCL.Roads.GPUInstancing.Playground
         private readonly Dictionary<Material, Material> instancingMaterials = new ();
 
         public RoadSettingsAsset RoadsConfig;
-        public GPUInstancedPrefab[] Prefabs;
+        public GPUInstancingPrefabData[] Prefabs;
+        
         [Space] public List<GPUInstancingCandidate> Candidates;
 
         [Space] public Transform roadsRoot;
@@ -21,6 +25,9 @@ namespace DCL.Roads.GPUInstancing.Playground
 
         public Vector2Int ParcelsMin;
         public Vector2Int ParcelsMax;
+
+        [HideInInspector]
+        public Transform debugRoot;
 
 
         [Min(0)] public int LodLevel;
@@ -153,6 +160,70 @@ namespace DCL.Roads.GPUInstancing.Playground
             buffers.InstanceBuffer?.Release();
             buffers.InstanceBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured,  candidate.InstancesBuffer.Count, Marshal.SizeOf(typeof(PerInstanceBuffer)));
             buffers.InstanceBuffer.SetData( candidate.InstancesBuffer, 0, 0,  candidate.InstancesBuffer.Count);
+        }
+
+
+          [ContextMenu("DEBUG - Cache Prefabs")]
+        private void CachePrefabs()
+        {
+            var cachedPrefabs = new List<GPUInstancingPrefabData>();
+
+            foreach (AssetReferenceGameObject ar in RoadsConfig.RoadAssetsReference)
+            {
+                AsyncOperationHandle<GameObject> operation = ar.LoadAssetAsync<GameObject>();
+                operation.WaitForCompletion();
+                GameObject prefab = operation.Result;
+
+                if (prefab != null)
+                {
+                    GPUInstancingPrefabData gpuInstancedPrefabBeh = prefab.GetComponent<GPUInstancingPrefabData>();
+                    gpuInstancedPrefabBeh.CollectSelfData();
+
+                    if (HideRoadsVisual)
+                        gpuInstancedPrefabBeh.HideVisuals();
+                    else
+                        gpuInstancedPrefabBeh.ShowVisuals();
+
+                    cachedPrefabs.Add(gpuInstancedPrefabBeh);
+                }
+
+                operation.Release();
+            }
+
+            Prefabs = cachedPrefabs.ToArray();
+        }
+
+        [ContextMenu("DEBUG - Spawn Roads")]
+        private void SpawnRoads()
+        {
+            debugRoot = new GameObject("RoadsRoot").transform;
+            debugRoot.gameObject.SetActive(false);
+
+            foreach (RoadDescription roadDescription in RoadsConfig.RoadDescriptions)
+            {
+                if (IsOutOfRange(roadDescription.RoadCoordinate)) continue;
+                GPUInstancingPrefabData gpuInstancedPrefab = Prefabs.FirstOrDefault(op => op.name == roadDescription.RoadModel);
+
+                if (gpuInstancedPrefab == null)
+                {
+                    Debug.LogWarning($"Can't find prefab {roadDescription.RoadModel}");
+                    continue;
+                }
+
+                Transform roadAsset =
+                    Instantiate(gpuInstancedPrefab, roadDescription.RoadCoordinate.ParcelToPositionFlat() + ParcelMathHelper.RoadPivotDeviation, roadDescription.Rotation, debugRoot)
+                       .transform;
+
+                roadAsset.gameObject.SetActive(true);
+            }
+        }
+
+        private bool IsOutOfRange(Vector2Int roadCoordinate)
+        {
+            Debug.Log(roadCoordinate.ToString());
+
+            return roadCoordinate.x < ParcelsMin.x || roadCoordinate.x > ParcelsMax.x ||
+                   roadCoordinate.y < ParcelsMin.y || roadCoordinate.y > ParcelsMax.y;
         }
     }
 }

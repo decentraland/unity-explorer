@@ -74,7 +74,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1695901382951145361}
-  - component: {fileID: 7366307715687282388}
+  - component: {fileID: -8127953255485897863}
   m_Layer: 0
   m_Name: EmptyFork_D
   m_TagString: Untagged
@@ -98,7 +98,7 @@ Transform:
   - {fileID: 3009857657889592917}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &7366307715687282388
+--- !u!114 &-8127953255485897863
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -107,12 +107,14 @@ MonoBehaviour:
   m_GameObject: {fileID: 7892713949432104266}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2a93533cfb4b48c5866cdd42852bb92c, type: 3}
+  m_Script: {fileID: 11500000, guid: 910e9d8905854143bf4a85c5df7c15a5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  PrefabInstance:
-    Meshes: []
-    LODGroups: []
+  indirectCandidates: []
+  directCandidates: []
+  indirectShader: {fileID: 4800000, guid: 56a9743f8d94f684190dc11bb521fb78, type: 3}
+  instancedLodGroups: []
+  InstancedRenderers: []
 --- !u!1001 &2682052727550297406
 PrefabInstance:
   m_ObjectHideFlags: 0

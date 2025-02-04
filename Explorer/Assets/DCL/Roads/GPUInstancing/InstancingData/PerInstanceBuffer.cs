@@ -4,13 +4,6 @@ using UnityEngine;
 
 namespace DCL.Roads.GPUInstancing.Playground
 {
-    [Serializable]
-    public class GPUInstancedMesh
-    {
-        public MeshRenderingData meshRenderingData;
-        public PerInstanceBuffer[] PerInstancesData;
-    }
-
     [Serializable, StructLayout(LayoutKind.Sequential)]
     public struct PerInstanceBuffer : IEquatable<PerInstanceBuffer>
     {
@@ -63,42 +56,5 @@ namespace DCL.Roads.GPUInstancing.Playground
         //         return hash;
         //     }
         // }
-    }
-
-    [Serializable]
-    public class GPUInstancedLOD
-    {
-        public float ScreenRelativeTransitionHeight;
-        public MeshRenderingData[] Meshes;
-    }
-
-    [Serializable]
-    public class LODGroupData
-    {
-        public LODGroup LODGroup;
-        public Transform Transform;
-
-        [Space]
-        public float ObjectSize;
-        public Bounds LODBounds;
-
-        [Space]
-        public GPUInstancedLOD[] LODs;
-
-        public void UpdateGroupBounds()
-        {
-            var isInitialized = false;
-
-            foreach (GPUInstancedLOD mid in LODs)
-            foreach (MeshRenderingData data in mid.Meshes)
-            {
-                if (!isInitialized)
-                {
-                    LODBounds = data.SharedMesh.bounds;
-                    isInitialized = true;
-                }
-                else LODBounds.Encapsulate(data.SharedMesh.bounds);
-            }
-        }
     }
 }

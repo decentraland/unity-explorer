@@ -45,7 +45,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 808449057889472420}
-  - component: {fileID: -784669753798829287}
+  - component: {fileID: -1800353671136048537}
   m_Layer: 0
   m_Name: OpenCorner_A
   m_TagString: Untagged
@@ -69,7 +69,7 @@ Transform:
   - {fileID: 938349679026620783}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &-784669753798829287
+--- !u!114 &-1800353671136048537
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -78,12 +78,14 @@ MonoBehaviour:
   m_GameObject: {fileID: 5548905871513905382}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2a93533cfb4b48c5866cdd42852bb92c, type: 3}
+  m_Script: {fileID: 11500000, guid: 910e9d8905854143bf4a85c5df7c15a5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  PrefabInstance:
-    Meshes: []
-    LODGroups: []
+  indirectCandidates: []
+  directCandidates: []
+  indirectShader: {fileID: 4800000, guid: 56a9743f8d94f684190dc11bb521fb78, type: 3}
+  instancedLodGroups: []
+  InstancedRenderers: []
 --- !u!1 &6629692934358463266
 GameObject:
   m_ObjectHideFlags: 0

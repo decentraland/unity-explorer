@@ -45,7 +45,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8977210460448449364}
-  - component: {fileID: -4948953840568192674}
+  - component: {fileID: -1136450105748218226}
   m_Layer: 0
   m_Name: Road_A
   m_TagString: Untagged
@@ -69,7 +69,7 @@ Transform:
   - {fileID: 1724065888206440311}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &-4948953840568192674
+--- !u!114 &-1136450105748218226
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -78,12 +78,14 @@ MonoBehaviour:
   m_GameObject: {fileID: 6601831651598654260}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2a93533cfb4b48c5866cdd42852bb92c, type: 3}
+  m_Script: {fileID: 11500000, guid: 910e9d8905854143bf4a85c5df7c15a5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  PrefabInstance:
-    Meshes: []
-    LODGroups: []
+  indirectCandidates: []
+  directCandidates: []
+  indirectShader: {fileID: 4800000, guid: 56a9743f8d94f684190dc11bb521fb78, type: 3}
+  instancedLodGroups: []
+  InstancedRenderers: []
 --- !u!1 &7481651600361898752
 GameObject:
   m_ObjectHideFlags: 0
