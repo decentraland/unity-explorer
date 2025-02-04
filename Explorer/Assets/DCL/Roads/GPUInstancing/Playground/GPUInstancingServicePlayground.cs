@@ -14,31 +14,50 @@ namespace DCL.Roads.GPUInstancing
         public GPUInstancingPrefabData[] originalPrefabs;
         [Min(0)] public int PrefabId;
 
+        public bool DirectOnly;
+        public bool InderctOnly;
+        public bool FullRoadsLayout;
         [Space] public bool Run;
+
+        private int currentPrefabId;
 
         public void Update()
         {
             if (!Run) return;
 
-            instancingService.RenderIndirect();
-        }
+            if (!FullRoadsLayout && currentPrefabId != Mathf.Min(PrefabId, originalPrefabs.Length - 1))
+                AddPrefabToService();
 
-        [ContextMenu(nameof(AddPrefabToService))]
-        public void AddPrefabToService()
-        {
-            int prefabId = Mathf.Min(PrefabId, originalPrefabs.Length - 1);
-            instancingService.Add(originalPrefabs[prefabId].indirectCandidates);
-        }
-
-        [ContextMenu(nameof(AddRoadsToService))]
-        public void AddRoadsToService()
-        {
-            instancingService.Add(RoadsConfig.IndirectCandidates);
+            if (InderctOnly)
+                instancingService.RenderIndirect();
+            else if (DirectOnly)
+                instancingService.RenderDirect();
+            else
+                instancingService.Render();
         }
 
         private void OnDisable()
         {
             instancingService.Clear();
+        }
+
+        [ContextMenu(nameof(AddPrefabToService))]
+        public void AddPrefabToService()
+        {
+            instancingService.Clear();
+
+            currentPrefabId = Mathf.Min(PrefabId, originalPrefabs.Length - 1);
+            instancingService.AddToIndirect(originalPrefabs[currentPrefabId].indirectCandidates);
+            instancingService.AddToDirect(originalPrefabs[currentPrefabId].directCandidates);
+        }
+
+        [ContextMenu(nameof(AddRoadsToService))]
+        public void AddRoadsToService()
+        {
+            instancingService.Clear();
+
+            instancingService.AddToIndirect(RoadsConfig.IndirectCandidates);
+            instancingService.AddToDirect(RoadsConfig.DirectCandidates);
         }
     }
 }

@@ -21,6 +21,7 @@ namespace DCL.Roads.GPUInstancing.Playground
         public Transform Transform;
 
         public List<PerInstanceBuffer> InstancesBuffer;
+        public List<Matrix4x4> InstancesBufferDirect;
 
         public float ObjectSize;
         public Bounds Bounds;
@@ -31,6 +32,7 @@ namespace DCL.Roads.GPUInstancing.Playground
         public GPUInstancingCandidate(GPUInstancingCandidate candidate)
         {
             InstancesBuffer = candidate.InstancesBuffer;
+
             ObjectSize = candidate.ObjectSize;
             Bounds = candidate.Bounds;
 
@@ -42,6 +44,7 @@ namespace DCL.Roads.GPUInstancing.Playground
         {
             Name = candidate.Name;
             InstancesBuffer = instanceBuffers.ToList();
+
             ObjectSize = candidate.ObjectSize;
             Bounds = candidate.Bounds;
 
@@ -108,6 +111,13 @@ namespace DCL.Roads.GPUInstancing.Playground
             Lods.Add(new GPUInstancingLodLevel { MeshRenderingDatas = singleLodMeshes.ToArray() });
 
             UpdateBounds();
+        }
+
+        public void PopulateDirectInstancingBuffer()
+        {
+            InstancesBufferDirect = new List<Matrix4x4>(InstancesBuffer.Count);
+            for (var i = 0; i < InstancesBuffer.Count; i++)
+                InstancesBufferDirect.Add(InstancesBuffer[i].instMatrix);
         }
 
         // TODO (Vit): calculate bounds properly

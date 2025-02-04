@@ -1,7 +1,6 @@
 ﻿using DCL.Roads.Playground;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 using UnityEngine.Rendering;
 using Utility;
@@ -12,9 +11,12 @@ namespace DCL.Roads.GPUInstancing.Playground
     public class MeshRenderingData : IEquatable<MeshRenderingData>
     {
         private const float STREET_MAX_HEIGHT = 10f;
+        private const string GPU_INSTANCING_KEYWORD = "_GPU_INSTANCER_BATCHER";
 
         public Mesh SharedMesh;
         public MeshRenderer Renderer;
+
+        public GPUInstancedRenderer GPUInstancedRenderer { get; private set; }
 
         public MeshRenderingData(MeshRenderer renderer)
         {
@@ -22,20 +24,28 @@ namespace DCL.Roads.GPUInstancing.Playground
             Renderer = renderer;
         }
 
-        // RenderParams are not Serializable, so that is why we save collected raw data and transition to RenderParams at runtime
+        public void Initialize(Dictionary<Material, Material> instancingMaterials)
+        {
+            GPUInstancedRenderer = ToGPUInstancedRenderer(instancingMaterials);
+        }
+
+        // RenderParams are not Serializable, that is why we save collected raw data and transition to RenderParams at runtime
         public GPUInstancedRenderer ToGPUInstancedRenderer(Dictionary<Material, Material> instancingMaterials)
         {
-            var renderParams = Renderer.sharedMaterials.Select(sharedMat =>
+            var sharedMaterials = Renderer.sharedMaterials;
+            var renderParamsArray = new RenderParams[sharedMaterials.Length];
+
+            for (var i = 0; i < sharedMaterials.Length; i++)
             {
+                var sharedMat = sharedMaterials[i];
                 if (!instancingMaterials.TryGetValue(sharedMat, out Material instancedMat))
                 {
-                    instancedMat = new Material(sharedMat) { name = $"{sharedMat.name}_Instanced" };
-                    instancedMat.EnableKeyword(new LocalKeyword(instancedMat.shader, "_GPU_INSTANCER_BATCHER"));
-                    sharedMat.DisableKeyword(new LocalKeyword(instancedMat.shader, "_GPU_INSTANCER_BATCHER"));
+                    instancedMat = new Material(sharedMat) { name = $"{sharedMat.name}_GPUInstancingIndirect" };
+                    instancedMat.EnableKeyword(new LocalKeyword(instancedMat.shader, GPU_INSTANCING_KEYWORD));
                     instancingMaterials.Add(sharedMat, instancedMat);
                 }
 
-                return new RenderParams
+                renderParamsArray[i] = new RenderParams
                 {
                     material = instancedMat,
                     layer = Renderer.gameObject.layer,
@@ -47,27 +57,32 @@ namespace DCL.Roads.GPUInstancing.Playground
                     rendererPriority = Renderer.rendererPriority,
                     renderingLayerMask = Renderer.renderingLayerMask,
                     shadowCastingMode = Renderer.shadowCastingMode,
-                    worldBounds = new Bounds(
-                        center: Vector3.zero,
-                        size: new Vector3(
-                            GenesisCityData.EXTENTS.x * ParcelMathHelper.PARCEL_SIZE,
-                            STREET_MAX_HEIGHT,
-                            GenesisCityData.EXTENTS.y * ParcelMathHelper.PARCEL_SIZE
-                        )
-                    )
+                    worldBounds = new Bounds(Vector3.zero, new Vector3(GenesisCityData.EXTENTS.x * ParcelMathHelper.PARCEL_SIZE, STREET_MAX_HEIGHT, GenesisCityData.EXTENTS.y * ParcelMathHelper.PARCEL_SIZE)),
                 };
-            }).ToArray();
+            }
 
-            var instancedRenderer = new GPUInstancedRenderer(SharedMesh, renderParams);
-            return instancedRenderer;
+            return new GPUInstancedRenderer(SharedMesh, renderParamsArray);
         }
 
         // Equals when MeshFilter and MeshRenderer settings are same, but Transform could be different
-        public bool Equals(MeshRenderingData other) =>
-            other != null &&
-            Equals(SharedMesh, other.SharedMesh) && // Mesh
-            Renderer.receiveShadows == other.Renderer.receiveShadows && Renderer.shadowCastingMode == other.Renderer.shadowCastingMode && // Shadows
-            Renderer.sharedMaterials != null && other.Renderer.sharedMaterials != null && Renderer.sharedMaterials.SequenceEqual(other.Renderer.sharedMaterials); // Materials
+        public bool Equals(MeshRenderingData other)
+        {
+            if (other == null) return false;
+            if (!Equals(SharedMesh, other.SharedMesh)) return false;
+            if (Renderer.receiveShadows != other.Renderer.receiveShadows) return false;
+            if (Renderer.shadowCastingMode != other.Renderer.shadowCastingMode) return false;
+
+            var materials1 = Renderer.sharedMaterials;
+            var materials2 = other.Renderer.sharedMaterials;
+
+            if (materials1 == null || materials2 == null) return false;
+            if (materials1.Length != materials2.Length) return false;
+
+            for (var i = 0; i < materials1.Length; i++)
+                if (!Equals(materials1[i], materials2[i])) return false;
+
+            return true;
+        }
 
         public override bool Equals(object obj) =>
             obj is MeshRenderingData other && Equals(other);

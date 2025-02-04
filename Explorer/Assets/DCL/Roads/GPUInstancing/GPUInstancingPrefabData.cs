@@ -52,6 +52,12 @@ namespace DCL.Roads.GPUInstancing.Playground
             foreach (var instancedLodGroup in instancedLodGroups) instancedLodGroup.enabled = false;
         }
 
+        public void ShowVisuals()
+        {
+            foreach (var instancedRenderer in InstancedRenderers) instancedRenderer.enabled = true;
+            foreach (var instancedLodGroup in instancedLodGroups) instancedLodGroup.enabled = true;
+        }
+
         private void CollectInstancingCandidatesFromLODGroups()
         {
             foreach (LODGroup lodGroup in gameObject.GetComponentsInChildren<LODGroup>(true))
@@ -266,7 +272,14 @@ namespace DCL.Roads.GPUInstancing.Playground
         private bool IsMyShader(Material[] materials)
         {
             if (indirectShader == null || materials == null) return false;
-            return materials.Any(m => m != null && m.shader == indirectShader);
+
+            foreach (var m in materials)
+            {
+                if (m == null || m.shader != indirectShader)
+                    return false;
+            }
+
+            return true;
         }
     }
 }

@@ -3,6 +3,7 @@ using DCL.Roads.Settings;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
+using UnityEditor;
 using UnityEngine;
 using Utility;
 
@@ -201,13 +202,23 @@ namespace DCL.Roads.GPUInstancing
         private void PrefabsSelfCollect()
         {
             foreach (GPUInstancingPrefabData prefab in originalPrefabs)
+            {
                 prefab.CollectSelfData();
+                prefab.ShowVisuals();
+
+#if UNITY_EDITOR
+                EditorUtility.SetDirty(this);
+                AssetDatabase.SaveAssets();
+#endif
+            }
         }
 
         private void SpawnOriginalPrefab(GPUInstancingPrefabData prefab, Vector2 pos)
         {
             if (DisableMeshRenderers)
                 prefab.HideVisuals();
+            else
+                prefab.ShowVisuals();
 
             if (originalInstance == null || originalInstance.name != prefab.name)
             {

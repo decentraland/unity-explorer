@@ -1,4 +1,5 @@
 ﻿using DCL.Roads.GPUInstancing.Playground;
+using DCL.Roads.Playground;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using UnityEngine;
@@ -10,20 +11,34 @@ namespace DCL.Roads.GPUInstancing
         private readonly Dictionary<GPUInstancingCandidate, GPUInstancingBuffers> candidatesBuffersTable = new ();
         private readonly Dictionary<Material, Material> instancingMaterials = new ();
 
+        private readonly List<GPUInstancingCandidate> directCandidates = new ();
+
+        public void Render()
+        {
+            RenderIndirect();
+            RenderDirect();
+        }
+
         public void RenderIndirect()
         {
             foreach ((GPUInstancingCandidate candidate, GPUInstancingBuffers buffers) in candidatesBuffersTable)
                 RenderCandidateIndirect(candidate, buffers);
         }
 
-        private void RenderCandidateIndirect(GPUInstancingCandidate candidate, GPUInstancingBuffers buffers)
+        public void RenderDirect()
+        {
+            foreach (GPUInstancingCandidate candidate in directCandidates)
+                RenderCandidateDirect(candidate);
+        }
+
+        private static void RenderCandidateIndirect(GPUInstancingCandidate candidate, GPUInstancingBuffers buffers)
         {
             var currentCommandIndex = 0;
 
             foreach (GPUInstancingLodLevel lod in candidate.Lods)
             foreach (MeshRenderingData mesh in lod.MeshRenderingDatas)
             {
-                var instancedRenderer = mesh.ToGPUInstancedRenderer(instancingMaterials);
+                GPUInstancedRenderer instancedRenderer = mesh.GPUInstancedRenderer;
                 int submeshCount = instancedRenderer.RenderParamsArray.Length;
 
                 // Set commands and render
@@ -48,13 +63,39 @@ namespace DCL.Roads.GPUInstancing
             }
         }
 
-        public void Add(List<GPUInstancingCandidate> candidates)
+        private static void RenderCandidateDirect(GPUInstancingCandidate candidate)
         {
-            foreach (GPUInstancingCandidate candidate in candidates)
-                Add(candidate);
+            foreach (GPUInstancingLodLevel lod in candidate.Lods)
+            foreach (MeshRenderingData meshRendering in lod.MeshRenderingDatas)
+            {
+                GPUInstancedRenderer instancedRenderer = meshRendering.GPUInstancedRenderer;
+
+                for (var i = 0; i < instancedRenderer.RenderParamsArray.Length; i++)
+                    Graphics.RenderMeshInstanced(in instancedRenderer.RenderParamsArray[i], instancedRenderer.Mesh, i, candidate.InstancesBufferDirect);
+            }
         }
 
-        private void Add(GPUInstancingCandidate candidate)
+        public void AddToDirect(List<GPUInstancingCandidate> candidates)
+        {
+            directCandidates.AddRange(candidates);
+
+            foreach (GPUInstancingCandidate candidate in candidates)
+            {
+                candidate.PopulateDirectInstancingBuffer();
+
+                foreach (GPUInstancingLodLevel lodLevel in candidate.Lods)
+                foreach (MeshRenderingData mesh in lodLevel.MeshRenderingDatas)
+                    mesh.Initialize(instancingMaterials);
+            }
+        }
+
+        public void AddToIndirect(List<GPUInstancingCandidate> candidates)
+        {
+            foreach (GPUInstancingCandidate candidate in candidates)
+                AddToIndirect(candidate);
+        }
+
+        private void AddToIndirect(GPUInstancingCandidate candidate)
         {
             if (!candidatesBuffersTable.TryGetValue(candidate, out GPUInstancingBuffers buffers))
             {
@@ -66,7 +107,10 @@ namespace DCL.Roads.GPUInstancing
 
             foreach (GPUInstancingLodLevel lodLevel in candidate.Lods)
             foreach (MeshRenderingData mesh in lodLevel.MeshRenderingDatas)
-                totalCommands += mesh.ToGPUInstancedRenderer(instancingMaterials).RenderParamsArray.Length;
+            {
+                mesh.Initialize(instancingMaterials);
+                totalCommands += mesh.GPUInstancedRenderer.RenderParamsArray.Length; // i.e. sub-meshes
+            }
 
             buffers.DrawArgsBuffer?.Release();
             buffers.DrawArgsBuffer = new GraphicsBuffer(GraphicsBuffer.Target.IndirectArguments, totalCommands, GraphicsBuffer.IndirectDrawIndexedArgs.size);
@@ -89,6 +133,9 @@ namespace DCL.Roads.GPUInstancing
             }
 
             candidatesBuffersTable.Clear();
+            instancingMaterials.Clear();
+
+            directCandidates.Clear();
         }
     }
 
