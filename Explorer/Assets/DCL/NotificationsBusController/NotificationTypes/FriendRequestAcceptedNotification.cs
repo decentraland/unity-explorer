@@ -1,0 +1,47 @@
+using Newtonsoft.Json;
+using System;
+
+namespace DCL.NotificationsBusController.NotificationTypes
+{
+    [Serializable]
+    public class FriendRequestAcceptedNotification : NotificationBase
+    {
+        private const string NOTIFICATION_HEADER = "Friend Request Accepted!";
+        private const string NOTIFICATION_TITLE_FORMAT = "{0}#{1} accepted your friend request.";
+
+        [JsonProperty("metadata")]
+        public FriendRequestAcceptedNotificationMetadata Metadata { get; set; }
+
+        public override string GetHeader() =>
+            NOTIFICATION_HEADER;
+
+        public override string GetTitle() =>
+            string.Format(NOTIFICATION_TITLE_FORMAT, Metadata.Sender.Name, Metadata.Sender.Address[..^4]);
+
+        public override string GetThumbnail() =>
+            Metadata.Sender.ProfileImageUrl;
+    }
+
+    [Serializable]
+    public struct FriendRequestAcceptedNotificationMetadata
+    {
+        [JsonProperty("sender")]
+        public FriendRequestProfile Sender { get; set; }
+    }
+
+    [Serializable]
+    public struct FriendRequestProfile
+    {
+        [JsonProperty("address")]
+        public string Address { get; set; }
+
+        [JsonProperty("name")]
+        public string Name { get; set; }
+
+        [JsonProperty("profileImageUrl")]
+        public string ProfileImageUrl { get; set; }
+
+        [JsonProperty("hasClaimedName")]
+        public bool HasClaimedName { get; set; }
+    }
+}

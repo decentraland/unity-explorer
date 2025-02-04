@@ -108,12 +108,12 @@ namespace DCL.Friends.UI.Requests
             }
             else
             {
-                if (selfAddress == fr.From.Address)
+                if (selfAddress.ToString() == fr.From.Address)
                 {
                     Toggle(ViewState.CANCEL);
                     SetUpAsCancel();
                 }
-                else if (selfAddress == fr.To.Address)
+                else if (selfAddress.ToString() == fr.To.Address)
                 {
                     Toggle(ViewState.RECEIVED);
                     SetUpAsReceived();

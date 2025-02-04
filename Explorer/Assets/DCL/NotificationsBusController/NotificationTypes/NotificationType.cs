@@ -28,6 +28,8 @@ namespace DCL.NotificationsBusController.NotificationTypes
         WORLDS_PERMISSION_GRANTED,
         WORLDS_PERMISSION_REVOKED,
         BADGE_GRANTED,
+        SOCIAL_SERVICE_FRIENDSHIP_REQUEST,
+        SOCIAL_SERVICE_FRIENDSHIP_ACCEPTED,
         //Internal notification types
         INTERNAL_ARRIVED_TO_DESTINATION,
     }
