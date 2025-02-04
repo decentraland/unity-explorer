@@ -120,7 +120,6 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
             }
         }
 
-        // private void LoadBuilderItem<TResponseElement>(ref TIntention intention, IBuilderLambdaResponse<TResponseElement> lambdaResponse) where TResponseElement : IBuilderLambdaResponseElement<TAvatarElementDTO>
         private void LoadBuilderItem(ref TIntention intention, IBuilderLambdaResponse<IBuilderLambdaResponseElement<TAvatarElementDTO>> lambdaResponse)
         {
             if (string.IsNullOrEmpty(builderContentURL)) return;
@@ -129,7 +128,7 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
 
             foreach (var element in lambdaResponse.WearablesCollection)
             {
-                var wearable = avatarElementStorage.GetOrAddByDTO(element.BuildWearableDTO(builderContentURL));
+                var wearable = avatarElementStorage.GetOrAddByDTO(element.BuildWearableDTO(builderContentURL), false);
                 intention.AppendToResult(wearable);
             }
         }

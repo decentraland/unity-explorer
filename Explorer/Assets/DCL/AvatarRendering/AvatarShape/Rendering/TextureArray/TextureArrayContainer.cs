@@ -39,12 +39,9 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
                 // Check if the texture is present in the original material
                 var tex = originalMaterial.GetTexture(mapping.OriginalTextureID) as Texture2D;
                 var handlerFormat = mapping.Handler.GetTextureFormat();
-                if (tex && tex.format == handlerFormat)
+                if (tex && tex!.format == handlerFormat)
                     results[i] = mapping.Handler.SetTexture(targetMaterial, tex, new Vector2Int(tex.width, tex.height));
-                else if (tex == null
-                         || handlerFormat == DEFAULT_BASEMAP_TEXTURE_FORMAT
-                         || handlerFormat == DEFAULT_NORMALMAP_TEXTURE_FORMAT
-                         || handlerFormat == DEFAULT_EMISSIVEMAP_TEXTURE_FORMAT)
+                else if (tex == null || IsFormatValidForDefaultTex(handlerFormat))
                     mapping.Handler.SetDefaultTexture(targetMaterial, mapping.DefaultFallbackResolution);
             }
 
@@ -64,14 +61,16 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
 
                 if (foundTexture && tex!.format == handlerFormat)
                     results[i] = mapping.Handler.SetTexture(targetMaterial, tex, new Vector2Int(tex.width, tex.height));
-                else if (tex == null
-                         || handlerFormat == DEFAULT_BASEMAP_TEXTURE_FORMAT
-                         || handlerFormat == DEFAULT_NORMALMAP_TEXTURE_FORMAT
-                         || handlerFormat == DEFAULT_EMISSIVEMAP_TEXTURE_FORMAT)
+                else if (tex == null || IsFormatValidForDefaultTex(handlerFormat))
                    mapping.Handler.SetDefaultTexture(targetMaterial, mapping.DefaultFallbackResolution, defaultSlotIndexUsed);
             }
 
             return results;
         }
+
+        private bool IsFormatValidForDefaultTex(TextureFormat texFormat) =>
+            texFormat == DEFAULT_BASEMAP_TEXTURE_FORMAT
+            || texFormat == DEFAULT_NORMALMAP_TEXTURE_FORMAT
+            || texFormat == DEFAULT_EMISSIVEMAP_TEXTURE_FORMAT;
     }
 }

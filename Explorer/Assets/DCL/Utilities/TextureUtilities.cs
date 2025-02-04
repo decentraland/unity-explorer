@@ -16,8 +16,6 @@ public static class TextureUtilities
         if (sourceTexture.format == TextureFormat.RGBA32)
             return sourceTexture;
 
-        Debug.Log($"PRAVS - {sourceTexture.format} -> RGBA32");
-
         // Most likely the source texture won't be flagged as
         // readable so the RenderTexture approach has to be used
         RenderTexture rt = RenderTexture.GetTemporary(
