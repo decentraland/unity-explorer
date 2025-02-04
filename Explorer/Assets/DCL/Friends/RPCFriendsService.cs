@@ -347,7 +347,7 @@ namespace DCL.Friends
 
             await this.UpdateFriendshipAsync(new UpsertFriendshipPayload
             {
-                Request = new UpsertFriendshipPayload.Types.RequestPayload
+                Reject = new UpsertFriendshipPayload.Types.RejectPayload
                 {
                     User = new User
                     {
