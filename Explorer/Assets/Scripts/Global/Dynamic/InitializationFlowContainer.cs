@@ -51,12 +51,12 @@ namespace DCL.UserInAppInitializationFlow
                 loadingStatus,
                 new IStartupOperation[]
                 {
-                    ensureLivekitConnectionStartupOperation,
                     preloadProfileStartupOperation,
                     loadPlayerAvatarStartupOperation,
                     loadLandscapeStartupOperation,
                     checkOnboardingStartupOperation,
                     teleportStartupOperation,
+                    ensureLivekitConnectionStartupOperation,
                     loadGlobalPxOperation,
                     sentryDiagnostics,
                 },
@@ -70,12 +70,12 @@ namespace DCL.UserInAppInitializationFlow
                 loadingStatus,
                 new IStartupOperation[]
                 {
-                    ensureLivekitConnectionStartupOperation,
                     preloadProfileStartupOperation,
                     loadPlayerAvatarStartupOperation,
                     loadLandscapeStartupOperation,
                     checkOnboardingStartupOperation,
                     teleportStartupOperation,
+                    ensureLivekitConnectionStartupOperation,
                     loadGlobalPxOperation,
                     sentryDiagnostics,
                 },
