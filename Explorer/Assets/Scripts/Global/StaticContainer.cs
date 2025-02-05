@@ -42,7 +42,7 @@ using System.Collections.Generic;
 using System.Threading;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.RealmNavigation;
-using DCL.UserInAppInitializationFlow;
+using DCL.Roads.GPUInstancing;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Textures;
 using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
@@ -106,6 +106,7 @@ namespace Global
         public IPortableExperiencesController PortableExperiencesController { get; private set; }
         public IDebugContainerBuilder DebugContainerBuilder { get; private set; }
         public ISceneRestrictionBusController SceneRestrictionBusController { get; private set; }
+        public GPUInstancingService GPUInstancingService { get; private set; }
 
         public ILoadingStatus LoadingStatus { get; private set; }
 
@@ -170,7 +171,7 @@ namespace Global
             container.texturesFuse = texturesFuse;
 
             var exposedPlayerTransform = new ExposedTransform();
-
+            container.GPUInstancingService = new GPUInstancingService();
             container.CharacterContainer = new CharacterContainer(container.assetsProvisioner, exposedGlobalDataContainer.ExposedCameraData, exposedPlayerTransform);
 
             bool result = await InitializeContainersAsync(container, settingsContainer, ct);

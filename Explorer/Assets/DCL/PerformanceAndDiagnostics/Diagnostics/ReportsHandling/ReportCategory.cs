@@ -299,5 +299,6 @@ namespace DCL.Diagnostics
         public const string IN_WORLD_CAMERA = nameof(IN_WORLD_CAMERA);
 
         public const string FRIENDS = nameof(FRIENDS);
+        public const string GPU_INSTANCING = nameof(GPU_INSTANCING);
     }
 }
