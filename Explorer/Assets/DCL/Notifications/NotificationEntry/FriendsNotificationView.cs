@@ -9,7 +9,7 @@ using UnityEngine.UI;
 
 namespace DCL.Notifications.NotificationEntry
 {
-    public class FriendsNotificationView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
+    public class FriendsNotificationView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, INotificationView
     {
         public event Action<NotificationType, INotification> NotificationClicked;
         public NotificationType NotificationType { get; set; }
@@ -25,16 +25,16 @@ namespace DCL.Notifications.NotificationEntry
         public Image Background { get; private set; }
 
         [field: SerializeField]
-        public GameObject UnreadImage { get; private set; }
+        public GameObject UnreadImage { get; set; }
 
         [field: SerializeField]
         public Button MainButton { get; private set; }
 
         [field: SerializeField]
-        public Button CloseButton { get; private set; }
+        public Button CloseButton { get; set; }
 
         [field: SerializeField]
-        public TMP_Text HeaderText { get; private set; }
+        public TMP_Text HeaderText { get; set; }
 
         [field: SerializeField]
         public TMP_Text UserNameText { get; private set; }
@@ -46,19 +46,50 @@ namespace DCL.Notifications.NotificationEntry
         public GameObject UserAddressSeparator { get; private set; }
 
         [field: SerializeField]
-        public TMP_Text TitleText { get; private set; }
+        public TMP_Text TitleText { get; set; }
 
         [field: SerializeField]
-        public ImageView NotificationImage { get; private set; }
+        public TMP_Text TimeText { get; set; }
+
+        [field: SerializeField]
+        public ImageView NotificationImage { get; set; }
 
         [field: SerializeField]
         public Image NotificationImageBackground { get; private set; }
 
         [field: SerializeField]
-        public Image NotificationTypeImage { get; private set; }
+        public Image NotificationTypeImage { get; set; }
 
         [field: SerializeField]
         public ChatEntryConfigurationSO ChatEntryConfiguration { get; private set; }
+
+        public void ConfigureFromAcceptedNotificationData(FriendRequestAcceptedNotification notification)
+        {
+            Color userColor = ChatEntryConfiguration.GetNameColor(notification.Metadata.Sender.Name);
+            UserNameText.text = notification.Metadata.Sender.Name;
+            UserNameText.color = userColor;
+            UserAddressText.text = notification.Metadata.Sender.Address;
+            TitleText.text = notification.GetTitle();
+            UserAddressText.gameObject.SetActive(!notification.Metadata.Sender.HasClaimedName);
+            UserAddressSeparator.SetActive(!notification.Metadata.Sender.HasClaimedName);
+            NotificationImageBackground.color = userColor;
+            Notification = notification;
+            NotificationType = notification.Type;
+        }
+
+        public void ConfigureFromReceivedNotificationData(FriendRequestReceivedNotification notification)
+        {
+            Color userColor = ChatEntryConfiguration.GetNameColor(notification.Metadata.Sender.Name);
+            UserNameText.text = notification.Metadata.Sender.Name;
+            UserNameText.color = userColor;
+            UserAddressText.text = notification.Metadata.Sender.Address;
+            TitleText.text = notification.GetTitle();
+            UserAddressText.gameObject.SetActive(!notification.Metadata.Sender.HasClaimedName);
+            UserAddressSeparator.SetActive(!notification.Metadata.Sender.HasClaimedName);
+            NotificationImageBackground.color = userColor;
+            Notification = notification;
+            NotificationType = notification.Type;
+        }
 
         private void Start()
         {

@@ -174,24 +174,10 @@ namespace DCL.Notifications.NewNotification
                     viewInstance.NotificationView.NotificationImageBackground.sprite = rarityBackgroundMapping.GetTypeImage(rewardAssignedNotification.Metadata.Rarity);
                     break;
                 case FriendRequestAcceptedNotification friendRequestAcceptedNotification:
-                    Color acceptedUserColor = viewInstance!.FriendsNotificationView.ChatEntryConfiguration.GetNameColor(friendRequestAcceptedNotification.Metadata.Sender.Name);
-                    viewInstance.FriendsNotificationView.UserNameText.text = friendRequestAcceptedNotification.Metadata.Sender.Name;
-                    viewInstance.FriendsNotificationView.UserNameText.color = acceptedUserColor;
-                    viewInstance.FriendsNotificationView.UserAddressText.text = friendRequestAcceptedNotification.Metadata.Sender.Address;
-                    viewInstance.FriendsNotificationView.TitleText.text = friendRequestAcceptedNotification.GetTitle();
-                    viewInstance.FriendsNotificationView.UserAddressText.gameObject.SetActive(!friendRequestAcceptedNotification.Metadata.Sender.HasClaimedName);
-                    viewInstance.FriendsNotificationView.UserAddressSeparator.SetActive(!friendRequestAcceptedNotification.Metadata.Sender.HasClaimedName);
-                    viewInstance.FriendsNotificationView.NotificationImageBackground.color = acceptedUserColor;
+                    viewInstance!.FriendsNotificationView.ConfigureFromAcceptedNotificationData(friendRequestAcceptedNotification);
                     break;
                 case FriendRequestReceivedNotification friendRequestReceivedNotification:
-                    Color receivedUserColor = viewInstance!.FriendsNotificationView.ChatEntryConfiguration.GetNameColor(friendRequestReceivedNotification.Metadata.Sender.Name);
-                    viewInstance!.FriendsNotificationView.UserNameText.text = friendRequestReceivedNotification.Metadata.Sender.Name;
-                    viewInstance!.FriendsNotificationView.UserNameText.color = receivedUserColor;
-                    viewInstance.FriendsNotificationView.UserAddressText.text = friendRequestReceivedNotification.Metadata.Sender.Address;
-                    viewInstance.FriendsNotificationView.TitleText.text = friendRequestReceivedNotification.GetTitle();
-                    viewInstance.FriendsNotificationView.UserAddressText.gameObject.SetActive(!friendRequestReceivedNotification.Metadata.Sender.HasClaimedName);
-                    viewInstance.FriendsNotificationView.UserAddressSeparator.SetActive(!friendRequestReceivedNotification.Metadata.Sender.HasClaimedName);
-                    viewInstance.FriendsNotificationView.NotificationImageBackground.color = receivedUserColor;
+                    viewInstance!.FriendsNotificationView.ConfigureFromReceivedNotificationData(friendRequestReceivedNotification);
                     break;
             }
         }
