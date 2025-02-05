@@ -288,7 +288,7 @@ namespace ECS.StreamableLoading.Common.Systems
             try
             {
                 // Try load from cache first
-                result = await TryLoadFromCacheAsync(intention, ct) ?? await RepeatLoopAsync(intention, acquiredBudget, partition, ct);
+                result = await TryLoadFromCacheAsync(intention, ct) ?? await RepeatLoopAsync(intention, state, partition, ct);
 
                 // Ensure that we returned to the main thread
                 await UniTask.SwitchToMainThread(ct);

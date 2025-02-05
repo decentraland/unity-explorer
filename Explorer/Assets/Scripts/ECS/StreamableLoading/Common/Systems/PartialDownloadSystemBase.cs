@@ -24,9 +24,8 @@ namespace ECS.StreamableLoading.Common.Systems
             World world,
             IStreamableCache<TData, TIntention> cache,
             IWebRequestController webRequestController,
-            ArrayPool<byte> buffersPool,
-            IDiskCache<TData> diskCache = null)
-            : base(world, cache, diskCache)
+            ArrayPool<byte> buffersPool)
+            : base(world, cache)
         {
             this.webRequestController = webRequestController;
             this.buffersPool = buffersPool;
