@@ -47,13 +47,15 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
             IWebRequestController webRequests,
             ISceneRoomMetaDataSource metaDataSource,
             IDecentralandUrlsSource decentralandUrlsSource,
-            IScenesCache scenesCache)
+            IScenesCache scenesCache,
+            DecentralandUrl adapterUrl = DecentralandUrl.GateKeeperSceneAdapter
+        )
         {
             this.webRequests = webRequests;
             this.metaDataSource = metaDataSource;
             this.scenesCache = scenesCache;
 
-            sceneHandleUrl = decentralandUrlsSource.Url(DecentralandUrl.GateKeeperSceneAdapter);
+            sceneHandleUrl = decentralandUrlsSource.Url(adapterUrl);
         }
 
         public IGateKeeperSceneRoom AsActivatable() =>

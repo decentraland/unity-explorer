@@ -27,6 +27,7 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         AuthSignature,
 
         GateKeeperSceneAdapter,
+        LocalGateKeeperSceneAdapter,
 
         OpenSea,
 
@@ -55,6 +56,5 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
 
         ApiFriends,
         AssetBundleRegistry
-
     }
 }
