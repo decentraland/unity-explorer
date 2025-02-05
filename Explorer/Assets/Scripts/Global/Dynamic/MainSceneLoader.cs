@@ -294,7 +294,7 @@ namespace Global.Dynamic
         {
             appArgs.TryGetValue(AppArgsFlags.SIMULATE_VERSION, out string? version);
             string? currentVersion = version ?? Application.version;
-            ReportHub.LogProductionInfo(ReportCategory.VERSION_CONTROL, $"Current Decentraland version: {currentVersion}");
+            ReportHub.LogProductionInfo($"Current Decentraland version: {currentVersion}");
             return currentVersion;
         }
 

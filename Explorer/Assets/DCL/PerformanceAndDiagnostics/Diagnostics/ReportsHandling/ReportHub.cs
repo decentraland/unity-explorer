@@ -90,9 +90,9 @@ namespace DCL.Diagnostics
         ///     Methods guarantees that the message will be logged at any environment condition.
         ///     Any heavy computation (string interpolations, concat and etc) should be avoided
         /// </summary>
-        public static void LogProductionInfo(ReportData reportData, string message, ReportHandler reportToHandlers = ReportHandler.All)
+        public static void LogProductionInfo(string message, ReportHandler reportToHandlers = ReportHandler.All)
         {
-            Instance.Log(LogType.Log, reportData, message, null, reportToHandlers);
+            Instance.Log(LogType.Log, ReportCategory.ALWAYS, message, null, reportToHandlers);
         }
 
         /// <summary>

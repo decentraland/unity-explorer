@@ -123,7 +123,7 @@ namespace Global.AppArgs
                 count++;
             }
 
-            ReportHub.LogProductionInfo(ReportCategory.APP_ARGS, sb.ToString());
+            ReportHub.LogProductionInfo(sb.ToString());
         }
     }
 }

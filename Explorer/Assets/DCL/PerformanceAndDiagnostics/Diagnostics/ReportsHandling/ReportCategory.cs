@@ -302,6 +302,6 @@ namespace DCL.Diagnostics
 
         public const string DISK_CACHE = nameof(DISK_CACHE);
 
-        public const string APP_ARGS = nameof(APP_ARGS);
+        public const string ALWAYS = nameof(ALWAYS);
     }
 }
