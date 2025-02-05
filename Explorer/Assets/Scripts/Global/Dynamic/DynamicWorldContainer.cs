@@ -311,7 +311,8 @@ namespace Global.Dynamic
                 loadingScreen,
                 localSceneDevelopment,
                 bootstrapContainer.DecentralandUrlsSource,
-                staticContainer.FeatureFlagsCache);
+                staticContainer.FeatureFlagsCache,
+                appArgs);
 
             var terrainContainer = TerrainContainer.Create(staticContainer, realmContainer, dynamicWorldParams.EnableLandscape, localSceneDevelopment);
 

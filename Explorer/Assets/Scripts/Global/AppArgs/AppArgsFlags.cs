@@ -12,6 +12,7 @@
 
         public const string ENVIRONMENT = "dclenv";
         public const string REALM = "realm";
+        public const string COMMS_ADAPTER = "comms-adapter";
         public const string LOCAL_SCENE = "local-scene";
         public const string POSITION = "position";
 
