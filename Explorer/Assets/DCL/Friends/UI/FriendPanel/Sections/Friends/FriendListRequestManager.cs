@@ -19,10 +19,13 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         private readonly IFriendsEventBus friendEventBus;
         private readonly IProfileRepository profileRepository;
         private readonly LoopListView2 loopListView;
+        private readonly bool isConnectivityStatusEnabled;
         private readonly List<FriendProfile> friends = new ();
+        private readonly Dictionary<FriendProfile, OnlineStatus> friendsOnlineStatus = new ();
         private readonly CancellationTokenSource addFriendProfileCts = new ();
 
         public event Action<FriendProfile, Vector2, FriendListUserView>? ContextMenuClicked;
+        public event Action<FriendProfile>? JumpInClicked;
 
         public FriendListRequestManager(IFriendsService friendsService,
             IFriendsEventBus friendEventBus,
@@ -31,17 +34,23 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             IProfileThumbnailCache profileThumbnailCache,
             LoopListView2 loopListView,
             int pageSize,
-            int elementsMissingThreshold) : base(pageSize, elementsMissingThreshold, webRequestController, profileThumbnailCache)
+            int elementsMissingThreshold,
+            bool isConnectivityStatusEnabled) : base(pageSize, elementsMissingThreshold, webRequestController, profileThumbnailCache)
         {
             this.friendsService = friendsService;
             this.friendEventBus = friendEventBus;
             this.profileRepository = profileRepository;
             this.loopListView = loopListView;
+            this.isConnectivityStatusEnabled = isConnectivityStatusEnabled;
 
             this.friendEventBus.OnYouAcceptedFriendRequestReceivedFromOtherUser += FriendRequestAccepted;
             this.friendEventBus.OnOtherUserAcceptedYourRequest += FriendRequestAccepted;
             this.friendEventBus.OnYouRemovedFriend += RemoveFriend;
             this.friendEventBus.OnOtherUserRemovedTheFriendship += RemoveFriend;
+
+            this.friendEventBus.OnFriendConnected += FriendBecameOnline;
+            this.friendEventBus.OnFriendAway += FriendBecameAway;
+            this.friendEventBus.OnFriendDisconnected += FriendBecameOffline;
         }
 
         public override void Dispose()
@@ -53,6 +62,37 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             friendEventBus.OnYouRemovedFriend -= RemoveFriend;
             friendEventBus.OnOtherUserRemovedTheFriendship -= RemoveFriend;
             addFriendProfileCts.SafeCancelAndDispose();
+
+            friendEventBus.OnFriendConnected -= FriendBecameOnline;
+            friendEventBus.OnFriendAway -= FriendBecameAway;
+            friendEventBus.OnFriendDisconnected -= FriendBecameOffline;
+        }
+
+        private void FriendChangedOnlineStatus(FriendProfile friendProfile, OnlineStatus onlineStatus)
+        {
+            Debug.Log($"User {friendProfile.Name} changed status to {onlineStatus}");
+
+            if (!friends.Contains(friendProfile))
+                AddNewFriendProfile(friendProfile);
+
+            friendsOnlineStatus[friendProfile] = onlineStatus;
+
+            RefreshLoopList();
+        }
+
+        private void FriendBecameOnline(FriendProfile friendProfile) =>
+            FriendChangedOnlineStatus(friendProfile, OnlineStatus.ONLINE);
+
+        private void FriendBecameAway(FriendProfile friendProfile) =>
+            FriendChangedOnlineStatus(friendProfile, OnlineStatus.AWAY);
+
+        private void FriendBecameOffline(FriendProfile friendProfile) =>
+            FriendChangedOnlineStatus(friendProfile, OnlineStatus.OFFLINE);
+
+        private void AddNewFriendProfile(FriendProfile friendProfile)
+        {
+            friends.Add(friendProfile);
+            friends.Sort((f1, f2) => string.Compare(f1.Name, f2.Name, StringComparison.Ordinal));
         }
 
         private void FriendRequestAccepted(string friendId)
@@ -64,8 +104,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 
                 if (newFriendProfile != null)
                 {
-                    friends.Add(newFriendProfile.ToFriendProfile());
-                    friends.Sort((f1, f2) => string.Compare(f1.Name, f2.Name, StringComparison.Ordinal));
+                    AddNewFriendProfile(newFriendProfile.ToFriendProfile());
                     RefreshLoopList();
                 }
                 else
@@ -136,7 +175,17 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             elementView.ContextMenuButton.onClick.RemoveAllListeners();
             elementView.ContextMenuButton.onClick.AddListener(() => ContextMenuClicked?.Invoke(elementView.UserProfile, elementView.ContextMenuButton.transform.position, elementView));
 
-            elementView.ToggleOnlineStatus(false);
+            elementView.JumpInButton.onClick.RemoveAllListeners();
+            elementView.JumpInButton.onClick.AddListener(() => JumpInClicked?.Invoke(elementView.UserProfile));
+
+            elementView.ToggleOnlineStatus(isConnectivityStatusEnabled);
+
+            FriendProfile friendProfile = friends[index];
+            if (friendsOnlineStatus.TryGetValue(friendProfile, out OnlineStatus onlineStatus))
+                elementView.SetOnlineStatus(onlineStatus);
         }
+
+        public bool IsFriendInGame(FriendProfile friendProfile) =>
+            friendsOnlineStatus.TryGetValue(friendProfile, out OnlineStatus onlineStatus) && onlineStatus != OnlineStatus.OFFLINE;
     }
 }

@@ -22,6 +22,7 @@
         public const string CAMERA_REEL = "camera-reel";
         public const string FRIENDS = "friends";
         public const string FRIENDS_API_URL = "friends-api-url";
+        public const string FRIENDS_ONLINE_STATUS = "friends-online-status";
         public const string FRIENDS_USER_BLOCKING = "friends-user-blocking";
 
         public const string FORCE_TEXTURE_COMPRESSION = "force-texture-compression";

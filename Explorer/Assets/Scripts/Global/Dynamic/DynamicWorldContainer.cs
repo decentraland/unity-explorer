@@ -774,8 +774,11 @@ namespace Global.Dynamic
                     profileThumbnailCache,
                     chatLifecycleBusController,
                     notificationsBusController,
+                    onlineUsersProvider,
+                    realmNavigator,
                     includeUserBlocking,
-                    appArgs));
+                    appArgs,
+                    staticContainer.FeatureFlagsCache));
             }
 
             if (dynamicWorldParams.EnableAnalytics)

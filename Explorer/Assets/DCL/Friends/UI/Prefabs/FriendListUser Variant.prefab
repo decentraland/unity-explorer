@@ -727,7 +727,8 @@ MonoBehaviour:
   <JumpInButton>k__BackingField: {fileID: 3539447002694376727}
   <OnlineStatusContainer>k__BackingField: {fileID: 8160862183830856682}
   <OnlineStatusText>k__BackingField: {fileID: 7747039600216781622}
-  <OnlineStatusColorIndicator>k__BackingField: {fileID: 2261045933952845536}
+  <OnlineStatusIndicator>k__BackingField: {fileID: 6473188668892043502}
+  <OnlineStatusColorIndicator>k__BackingField: {fileID: 3320316131485797577}
   <OnlineStatusConfiguration>k__BackingField: {fileID: 11400000, guid: bbca3b81bc8c54e1fb00e0cc1fa3f195, type: 2}
 --- !u!114 &7162172119129587731 stripped
 MonoBehaviour:

@@ -13,6 +13,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         [field: Header("Online status")]
         [field: SerializeField] public GameObject OnlineStatusContainer { get; private set; }
         [field: SerializeField] public TMP_Text OnlineStatusText { get; private set; }
+        [field: SerializeField] public GameObject OnlineStatusIndicator { get; private set; }
         [field: SerializeField] public Image OnlineStatusColorIndicator { get; private set; }
         [field: SerializeField] public OnlineStatusConfiguration OnlineStatusConfiguration { get; private set; }
 
@@ -20,6 +21,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         {
             buttons = new[] { JumpInButton, ContextMenuButton };
             base.Configure(profile, webRequestController, profileThumbnailCache);
+            SetOnlineStatus(OnlineStatus.OFFLINE);
         }
 
         public void SetOnlineStatus(OnlineStatus onlineStatus)
@@ -27,12 +29,17 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             OnlineStatusConfigurationData configurationData = OnlineStatusConfiguration.GetConfiguration(onlineStatus);
             OnlineStatusText.SetText(configurationData.StatusText);
             OnlineStatusColorIndicator.color = configurationData.StatusColor;
+
+            buttons = onlineStatus == OnlineStatus.OFFLINE ? new[] { ContextMenuButton } : new[] { JumpInButton, ContextMenuButton };
+
+            JumpInButton.gameObject.SetActive(onlineStatus != OnlineStatus.OFFLINE);
         }
 
         public void ToggleOnlineStatus(bool isActive)
         {
             OnlineStatusContainer.SetActive(isActive);
-            OnlineStatusColorIndicator.gameObject.SetActive(isActive);
+            OnlineStatusIndicator.SetActive(isActive);
+
             if (!isActive)
                 buttons = new[] { ContextMenuButton };
         }

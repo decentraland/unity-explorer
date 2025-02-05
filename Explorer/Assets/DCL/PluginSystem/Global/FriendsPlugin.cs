@@ -4,12 +4,14 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Browser;
 using DCL.Clipboard;
+using DCL.FeatureFlags;
 using DCL.Friends;
 using DCL.Friends.Chat.BusInterface;
 using DCL.Friends.UI.FriendPanel;
 using DCL.Friends.UI.Requests;
 using DCL.Input;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Multiplayer.Connectivity;
 using DCL.NotificationsBusController.NotificationsBus;
 using DCL.Profiles;
 using DCL.Profiles.Self;
@@ -18,6 +20,7 @@ using DCL.UI.MainUI;
 using DCL.Utilities;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
+using ECS.SceneLifeCycle.Realm;
 using Global.AppArgs;
 using MVC;
 using System;
@@ -46,9 +49,12 @@ namespace DCL.PluginSystem.Global
         private readonly ObjectProxy<IFriendsService> friendServiceProxy;
         private readonly IProfileThumbnailCache profileThumbnailCache;
         private readonly IChatLifecycleBusController chatLifecycleBusController;
+        private readonly IOnlineUsersProvider onlineUsersProvider;
+        private readonly IRealmNavigator realmNavigator;
         private readonly INotificationsBusController notificationsBusController;
         private readonly bool includeUserBlocking;
         private readonly IAppArgs appArgs;
+        private readonly FeatureFlagsCache featureFlagsCache;
 
         private CancellationTokenSource friendServiceSubscriptionCancellationToken = new ();
         private RPCFriendsService? friendsService;
@@ -72,8 +78,11 @@ namespace DCL.PluginSystem.Global
             IProfileThumbnailCache profileThumbnailCache,
             IChatLifecycleBusController chatLifecycleBusController,
             INotificationsBusController notificationsBusController,
+            IOnlineUsersProvider onlineUsersProvider,
+            IRealmNavigator realmNavigator,
             bool includeUserBlocking,
-            IAppArgs appArgs)
+            IAppArgs appArgs,
+            FeatureFlagsCache featureFlagsCache)
         {
             this.mainUIView = mainUIView;
             this.dclUrlSource = dclUrlSource;
@@ -91,9 +100,12 @@ namespace DCL.PluginSystem.Global
             this.friendServiceProxy = friendServiceProxy;
             this.profileThumbnailCache = profileThumbnailCache;
             this.chatLifecycleBusController = chatLifecycleBusController;
+            this.onlineUsersProvider = onlineUsersProvider;
+            this.realmNavigator = realmNavigator;
             this.notificationsBusController = notificationsBusController;
             this.includeUserBlocking = includeUserBlocking;
             this.appArgs = appArgs;
+            this.featureFlagsCache = featureFlagsCache;
         }
 
         public void Dispose()
@@ -119,7 +131,11 @@ namespace DCL.PluginSystem.Global
             // Fire and forget as this task will never finish
             var cts = CancellationTokenSource.CreateLinkedTokenSource(friendServiceSubscriptionCancellationToken.Token, ct);
             friendsService.SubscribeToIncomingFriendshipEventsAsync(cts.Token).Forget();
-            friendsService.SubscribeToConnectivityStatusAsync(cts.Token).Forget();
+
+            bool isConnectivityStatusEnabled = IsConnectivityStatusEnabled();
+
+            if (isConnectivityStatusEnabled)
+                friendsService.SubscribeToConnectivityStatusAsync(cts.Token).Forget();
 
             FriendsPanelView friendsPanelPrefab = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.FriendsPanelPrefab, ct)).GetComponent<FriendsPanelView>();
 
@@ -138,7 +154,10 @@ namespace DCL.PluginSystem.Global
                 loadingStatus,
                 dclInput,
                 passportBridge,
-                includeUserBlocking);
+                onlineUsersProvider,
+                realmNavigator,
+                includeUserBlocking,
+                isConnectivityStatusEnabled);
 
             mvcManager.RegisterController(friendsPanelController);
 
@@ -174,6 +193,10 @@ namespace DCL.PluginSystem.Global
             return URLAddress.FromString(url);
         }
 
+        private bool IsConnectivityStatusEnabled() =>
+            appArgs.HasFlag(AppArgsFlags.FRIENDS_ONLINE_STATUS)
+                || featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.FRIENDS_ONLINE_STATUS);
+
         private void ReconnectRpcClient()
         {
             friendServiceSubscriptionCancellationToken = friendServiceSubscriptionCancellationToken.SafeRestart();
@@ -188,7 +211,9 @@ namespace DCL.PluginSystem.Global
                 catch (Exception) { }
 
                 friendsService.SubscribeToIncomingFriendshipEventsAsync(ct).Forget();
-                friendsService.SubscribeToConnectivityStatusAsync(ct).Forget();
+
+                if (IsConnectivityStatusEnabled())
+                    friendsService.SubscribeToConnectivityStatusAsync(ct).Forget();
             }
         }
 
