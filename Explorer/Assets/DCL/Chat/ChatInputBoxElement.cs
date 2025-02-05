@@ -369,7 +369,7 @@ namespace DCL.Chat
 
             if (match.Success)
             {
-                lastMatch = match.Value;
+                lastMatch = match.Groups[1].Value;
                 searchCts.SafeCancelAndDispose();
                 searchCts = new CancellationTokenSource();
                 SearchAndSetUsernameSuggestionsAsync(lastMatch, searchCts.Token).Forget();
