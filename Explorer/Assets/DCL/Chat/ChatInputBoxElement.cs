@@ -328,7 +328,7 @@ namespace DCL.Chat
                 case InputSuggestionType.EMOJIS:
                     AddEmojiFromSuggestion(suggestionId, shouldClose);
                     break;
-                case InputSuggestionType.USERNAMES: break;
+                case InputSuggestionType.PROFILE: break;
             }
         }
 

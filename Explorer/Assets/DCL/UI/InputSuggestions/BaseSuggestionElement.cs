@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace DCL.UI.SuggestionPanel
 {
@@ -34,6 +35,9 @@ namespace DCL.UI.SuggestionPanel
     public abstract class BaseInputSuggestionElement<T> : BaseInputSuggestionElement
         where T : ISuggestionElementData
     {
+        [field: SerializeField] private Button selectionButton;
+        [field: SerializeField] private GameObject selectedBackground;
+
         private T elementData;
 
         public override void Setup(ISuggestionElementData data)
@@ -54,12 +58,38 @@ namespace DCL.UI.SuggestionPanel
         public override InputSuggestionType GetSuggestionType() =>
             elementData.GetInputSuggestionType();
 
+        private void Awake()
+        {
+            selectionButton.onClick.AddListener(HandleButtonClick);
+        }
+
+        private void HandleButtonClick()
+        {
+            OnSuggestionSelected();
+        }
+
+        public override void OnGet()
+        {
+            gameObject.SetActive(true);
+        }
+
+        public override void OnReleased()
+        {
+            selectedBackground.SetActive(false);
+            gameObject.SetActive(false);
+        }
+
+        public override void SetSelectionState(bool isSelected)
+        {
+            base.SetSelectionState(isSelected);
+            selectedBackground.SetActive(isSelected);
+        }
     }
 
     public enum InputSuggestionType
     {
         NONE,
         EMOJIS,
-        USERNAMES,
+        PROFILE,
     }
 }
