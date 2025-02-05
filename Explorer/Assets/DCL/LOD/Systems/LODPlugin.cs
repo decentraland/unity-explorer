@@ -88,6 +88,7 @@ namespace DCL.PluginSystem.Global
                 UpdateSceneLODInfoSystem.InjectToWorld(ref builder, lodSettingsAsset, scenesCache, sceneReadinessReportQueue, decentralandUrlsSource);
                 InstantiateSceneLODInfoSystem.InjectToWorld(ref builder, frameCapBudget, memoryBudget, scenesCache, sceneReadinessReportQueue, lodTextureArrayContainer, partitionSettings);
                 LODDebugToolsSystem.InjectToWorld(ref builder, debugBuilder, lodSettingsAsset, lodLevels);
+                LODQualityReductorSystem.InjectToWorld(ref builder, lodCache);
             }
             else
                 UpdateSceneLODInfoMockSystem.InjectToWorld(ref builder, sceneReadinessReportQueue, scenesCache);

@@ -46,7 +46,7 @@ namespace DCL.LOD.Systems
         }
 
         [Query]
-        [None(typeof(DeleteEntityIntention), typeof(PortableExperienceComponent))]
+        [None(typeof(DeleteEntityIntention), typeof(PortableExperienceComponent), typeof(LODQualityReducedComponent))]
         private void UpdateLODLevel(ref SceneLODInfo sceneLODInfo, ref PartitionComponent partitionComponent, SceneDefinitionComponent sceneDefinitionComponent)
         {
             if (!partitionComponent.IsBehind) // Only want to load scene in our direction of travel

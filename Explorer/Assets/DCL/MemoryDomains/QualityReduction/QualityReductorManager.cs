@@ -1,8 +1,10 @@
+using System.Collections.Generic;
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using ECS.Abstract;
+using ECS.StreamableLoading.DeferredLoading.QualityReductors;
 
 namespace ECS.StreamableLoading.DeferredLoading
 {
@@ -10,30 +12,25 @@ namespace ECS.StreamableLoading.DeferredLoading
     {
         private readonly World World;
 
-        
-        private bool avatarQualityReduced;
+        private readonly List<QualityReductor> qualityReductors = new ();
 
         public QualityReductorManager(World world)
         {
             World = world;
+            qualityReductors.Add(new AvatarQualityReductor());
+            qualityReductors.Add(new LODQualityReductor());
         }
 
-        public void RequestQualityReduction()
+        public void RequestQualityReduction(World world)
         {
-            if (!avatarQualityReduced)
-            {
-                World.Create(new AvatarQualityReductionRequest(true));
-                avatarQualityReduced = true;
-            }
+            foreach (var qualityReductor in qualityReductors)
+                qualityReductor.RequestQualityReduction(world);
         }
 
-        public void RequestQualityIncrease()
+        public void RequestQualityIncrease(World world)
         {
-            if (avatarQualityReduced)
-            {
-                World.Create(new AvatarQualityReductionRequest(false));
-                avatarQualityReduced = false;
-            }
+            foreach (var qualityReductor in qualityReductors)
+                qualityReductor.RequestQualityIncrease(world);
         }
         
     }

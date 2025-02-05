@@ -8,6 +8,8 @@ using ECS.Abstract;
 using DCL.AvatarRendering.AvatarShape.Helpers;
 using DCL.AvatarRendering.Loading.Assets;
 using DCL.Profiles;
+using ECS.StreamableLoading.DeferredLoading;
+using ECS.StreamableLoading.DeferredLoading.Components;
 
 namespace DCL.AvatarRendering.AvatarShape.Systems
 {
@@ -16,10 +18,10 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
     {
         private static readonly QueryDescription ALL_AVATARS_QUERY_FULL_QUALITY = new QueryDescription()
             .WithAll<AvatarBase, AvatarShapeComponent>()
-            .WithNone<PlayerComponent, AvatarQualityReduced>();
+            .WithNone<PlayerComponent, AvatarQualityReducedComponent>();
 
         private static readonly QueryDescription ALL_AVATARS_QUERY_REDUCED_QUALITY = new QueryDescription()
-            .WithAll<AvatarBase, AvatarShapeComponent, AvatarQualityReduced, Profile>()
+            .WithAll<AvatarBase, AvatarShapeComponent, AvatarQualityReducedComponent, Profile>()
             .WithNone<PlayerComponent>();
 
         private readonly IAttachmentsAssetsCache wearableAssetsCache;
@@ -36,34 +38,44 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         }
 
         [Query]
-        private void TryReduceQuality(in Entity entity, ref AvatarQualityReductionRequest reductionRequest)
+        private void TryReduceQuality(in Entity entity, ref QualityChangeRequest reductionRequest)
         {
-            if (!reductionRequest.Reduce) return;
+            if (reductionRequest.Domain != QualityReductionRequestDomain.AVATAR) return;
+
+            if (!reductionRequest.IsReduce()) return;
 
             //TODO: Use frame budget?
             World.Query(ALL_AVATARS_QUERY_FULL_QUALITY, (Entity entity, ref AvatarBase avatarBase, ref AvatarShapeComponent avatarShapeComponent) =>
             {
-                AvatarReducedQuality(ref avatarShapeComponent, avatarBase);
-                World.Add(entity, new AvatarQualityReduced());
+                ReduceAvatarQuality(ref avatarShapeComponent, avatarBase);
+                World.Add(entity, new AvatarQualityReducedComponent());
             });
             World.Destroy(entity);
         }
 
         [Query]
-        private void TryIncreaseQuality(in Entity entity, ref AvatarQualityReductionRequest reductionRequest)
+        private void TryIncreaseQuality(in Entity entity, ref QualityChangeRequest reductionRequest)
         {
-            if (reductionRequest.Reduce) return;
+            if (reductionRequest.Domain != QualityReductionRequestDomain.AVATAR) return;
+
+            if (reductionRequest.IsReduce()) return;
 
             //TODO: Use frame budget?
-            World.Query(ALL_AVATARS_QUERY_REDUCED_QUALITY, (Entity entity, ref Profile profile) =>
+            World.Query(ALL_AVATARS_QUERY_REDUCED_QUALITY, (Entity entity, ref Profile profile, ref AvatarBase avatarBase) =>
             {
-                profile.IsDirty = true;
-                World.Remove<AvatarQualityReduced>(entity);
+                IncreaseAvatarQuality(ref profile, avatarBase);
+                World.Remove<AvatarQualityReducedComponent>(entity);
             });
             World.Destroy(entity);
         }
 
-        private void AvatarReducedQuality(ref AvatarShapeComponent avatarShapeComponent, AvatarBase avatarBase)
+        private static void IncreaseAvatarQuality(ref Profile profile, AvatarBase avatarBase)
+        {
+            profile.IsDirty = true;
+            avatarBase.GhostRenderer.SetActive(false);
+        }
+
+        private void ReduceAvatarQuality(ref AvatarShapeComponent avatarShapeComponent, AvatarBase avatarBase)
         {
             if (avatarShapeComponent.WearablePromise.IsConsumed)
             {

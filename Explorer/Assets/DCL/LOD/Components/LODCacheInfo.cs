@@ -15,12 +15,22 @@ namespace DCL.LOD.Components
         public byte SuccessfullLODs;
         public byte FailedLODs;
 
+
+        private readonly int lodLevels;
         public LODCacheInfo(LODGroup lodGroup, int lodLevels)
         {
             LodGroup = lodGroup;
             LODAssets = new LODAsset[lodLevels];
             CullRelativeHeightPercentage = 0;
             LODChangeRelativeDistance = 0;
+            SuccessfullLODs = 0;
+            FailedLODs = 0;
+            this.lodLevels = lodLevels;
+        }
+
+        public void Reset()
+        {
+            LODAssets = new LODAsset[lodLevels];
             SuccessfullLODs = 0;
             FailedLODs = 0;
         }

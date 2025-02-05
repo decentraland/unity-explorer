@@ -21,15 +21,13 @@ namespace ECS.StreamableLoading.DeferredLoading
         private readonly QueryDescription[] sameBoatQueries;
         private readonly IPerformanceBudget memoryBudget;
 
-        private readonly QualityReductorManager? qualityReductorManager;
 
-        protected DeferredLoadingSystem(World world, QueryDescription[] sameBoatQueries, IReleasablePerformanceBudget releasablePerformanceLoadingBudget, IPerformanceBudget memoryBudget, QualityReductorManager qualityReductorManager) : base(world)
+        protected DeferredLoadingSystem(World world, QueryDescription[] sameBoatQueries, IReleasablePerformanceBudget releasablePerformanceLoadingBudget, IPerformanceBudget memoryBudget) : base(world)
         {
             this.sameBoatQueries = sameBoatQueries;
             this.releasablePerformanceLoadingBudget = releasablePerformanceLoadingBudget;
             this.memoryBudget = memoryBudget;
             loadingIntentions = ListPool<IntentionData>.Get()!;
-            this.qualityReductorManager = qualityReductorManager;
         }
 
         protected static QueryDescription CreateQuery<TIntention, TAsset>() where TIntention: ILoadingIntention =>
@@ -83,11 +81,8 @@ namespace ECS.StreamableLoading.DeferredLoading
             {
                 if (!memoryBudget.TrySpendBudget())
                 {
-                    qualityReductorManager?.RequestQualityReduction();
                     break;
                 }
-
-                qualityReductorManager?.RequestQualityIncrease();
                 if (!releasablePerformanceLoadingBudget.TrySpendBudget(out IAcquiredBudget acquiredBudget)) break;
 
                 ref StreamableLoadingState state = ref loadingIntentions[i].StatePointer.Value;

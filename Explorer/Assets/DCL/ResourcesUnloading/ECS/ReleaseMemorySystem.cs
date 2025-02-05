@@ -1,11 +1,9 @@
-﻿using System;
-using Arch.SystemGroups;
+﻿using Arch.SystemGroups;
 using DCL.Optimization.PerformanceBudgeting;
-using DCL.ResourcesUnloading;
 using DCL.ResourcesUnloading.UnloadStrategies;
 using ECS.Abstract;
 using ECS.Groups;
-using UnityEngine;
+using ECS.StreamableLoading.DeferredLoading;
 
 namespace DCL.PluginSystem.Global
 {
@@ -14,16 +12,23 @@ namespace DCL.PluginSystem.Global
     {
         private readonly IMemoryUsageProvider memoryBudgetProvider;
         private readonly UnloadStrategyHandler unloadStrategyHandler;
+        private readonly QualityReductorManager qualityReductorManager;
 
         internal ReleaseMemorySystem(Arch.Core.World world, IMemoryUsageProvider memoryBudgetProvider,
             UnloadStrategyHandler unloadStrategyHandler) : base(world)
         {
             this.memoryBudgetProvider = memoryBudgetProvider;
             this.unloadStrategyHandler = unloadStrategyHandler;
+            qualityReductorManager = new QualityReductorManager(world);
         }
 
         protected override void Update(float t)
         {
+            if (memoryBudgetProvider.GetMemoryUsageStatus() == MemoryUsageStatus.FULL)
+                qualityReductorManager.RequestQualityReduction(World);
+            else
+                qualityReductorManager.RequestQualityIncrease(World);
+            
             if (memoryBudgetProvider.GetMemoryUsageStatus() != MemoryUsageStatus.NORMAL)
                 unloadStrategyHandler.TryUnload();
             else
