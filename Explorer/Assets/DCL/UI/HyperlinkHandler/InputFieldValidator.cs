@@ -32,8 +32,8 @@ namespace DCL.UI.InputFieldValidator
             @"(?<=^|\s)§?((https§?:\/\/)?§?(www\.)?§?[a-zA-Z0-9]§?(?:[a-zA-Z0-9-]*§?[a-zA-Z0-9]*)?§?\.§?[a-zA-Z]{2,30}§?[a-zA-Z]{0,33}§?(\/[^\s]*)?)§?(?=\s|$)",
             RegexOptions.Compiled);
         private static readonly Regex SCENE_REGEX = new (@"(?<=^|\s)-?§?\d{0,1}§?\d{0,1}§?\d{1}§?,§?-?§?\d{1}§?\d{0,1}§?\d{0,1}§?(?=\s|$)", RegexOptions.Compiled);
-        private static readonly Regex WORLD_REGEX = new (@"(?<=^|\s)§?[a-zA-Z0-9]§?[a-zA-Z0-9]*§?[a-zA-Z0-9]*§?\.dcl\.eth§?(?=\s|$)",
-            RegexOptions.Compiled);
+        private static readonly Regex WORLD_REGEX = new (@"(?<=^|\s)§?[a-zA-Z0-9]§?[a-zA-Z0-9]*§?[a-zA-Z0-9]*§?\.dcl\.eth§?(?=\s|$)", RegexOptions.Compiled);
+        private static readonly Regex USERNAME_REGEX = new (@"(?<=^|\s)§?@§?[A-Za-z0-9]{3,15}(?:#[A-Za-z0-9]{4})?§?(?=\s|$)", RegexOptions.Compiled);
 
         [SerializeField] private TMP_StyleSheet styleSheet;
 
@@ -75,6 +75,7 @@ namespace DCL.UI.InputFieldValidator
 
             if (!text.StartsWith("/"))
                 ProcessMainStringBuilder();
+
             pos = GetPositionFromTag(mainStringBuilder);
             text = mainStringBuilder.Remove(pos, 1).ToString();
             return ch;
@@ -85,10 +86,8 @@ namespace DCL.UI.InputFieldValidator
             int length = stringBuilder.Length;
 
             for (var i = 0; i < length; i++)
-            {
                 if (stringBuilder[i] == TAG_CHAR)
                     return i;
-            }
 
             return 0;
         }
@@ -100,6 +99,7 @@ namespace DCL.UI.InputFieldValidator
             ReplaceMatches(WEBSITE_REGEX, mainStringBuilder, WrapWithUrlLink);
             ReplaceMatches(SCENE_REGEX, mainStringBuilder, WrapWithSceneLink);
             ReplaceMatches(WORLD_REGEX, mainStringBuilder, WrapWithWorldLink);
+            ReplaceMatches(USERNAME_REGEX, mainStringBuilder, WrapWithUsernameLink);
         }
 
         private void RemoveLinkTags(StringBuilder stringBuilder)
@@ -176,6 +176,9 @@ namespace DCL.UI.InputFieldValidator
 
         private StringBuilder WrapWithWorldLink(Match match) =>
             WrapWithLink(match, LinkType.WORLD);
+
+        private StringBuilder WrapWithUsernameLink(Match match) =>
+            WrapWithLink(match, LinkType.USER);
 
         private StringBuilder WrapWithLink(Match match, LinkType linkType)
         {

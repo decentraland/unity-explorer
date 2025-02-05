@@ -82,7 +82,8 @@ namespace DCL.UI.HyperlinkHandler
                 return;
             }
 
-            if (isHighlighting) { ResetPreviousHighlight(); }
+            if (isHighlighting)
+                ResetPreviousHighlight();
         }
 
         public void InjectDependencies(ViewDependencies dependencies)
@@ -112,7 +113,8 @@ namespace DCL.UI.HyperlinkHandler
             string linkType = linkParts[0].ToLower();
             string linkValue = linkParts[1];
 
-            if (linkHandlers.TryGetValue(linkType, out Action<string> linkHandler)) { linkHandler.Invoke(linkValue); }
+            if (linkHandlers.TryGetValue(linkType, out Action<string> linkHandler))
+                linkHandler.Invoke(linkValue);
             else
                 ReportHub.LogWarning(ReportCategory.UI, $"No handler found for link: {linkID}");
         }
@@ -136,6 +138,12 @@ namespace DCL.UI.HyperlinkHandler
             string[] splitCords = itemId.Split(',');
             var coords = new Vector2Int(int.Parse(splitCords[0]), int.Parse(splitCords[1]));
             TeleportAsync(coords).Forget();
+        }
+
+        private void HandleUserLink(string itemId)
+        {
+            //Validate if user exists and is connected right now
+            //Show context menu for that profile
         }
 
         private async UniTask OpenUrlAsync(string url) =>
@@ -166,7 +174,8 @@ namespace DCL.UI.HyperlinkHandler
 
             originalText = textComponent.text;
             stringBuilder.Clear();
-            stringBuilder.Append(originalText.AsSpan(0,startIndex))
+
+            stringBuilder.Append(originalText.AsSpan(0, startIndex))
                          .Append(linkSelectedStyle.styleOpeningDefinition)
                          .Append(originalText.AsSpan(startIndex, linkInfo.linkTextLength))
                          .Append(linkSelectedStyle.styleClosingDefinition)
