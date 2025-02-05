@@ -18,7 +18,7 @@ namespace ECS.StreamableLoading.Common
             Span<byte> metaData = stackalloc byte[Meta.META_SIZE];
             meta.ToSpan(metaData);
 
-            int targetSize = Meta.META_SIZE + data.FullData.Length;
+            int targetSize = Meta.META_SIZE + data.NextRangeStart;
             var memoryOwner = new SlicedOwnedMemory<byte>(MemoryPool<byte>.Shared.Rent(targetSize), targetSize);
             var memory = memoryOwner.Memory;
 
