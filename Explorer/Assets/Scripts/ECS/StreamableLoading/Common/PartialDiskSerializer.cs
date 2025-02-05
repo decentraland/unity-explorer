@@ -9,11 +9,8 @@ namespace ECS.StreamableLoading.Common
 {
     public class PartialDiskSerializer : IDiskSerializer<PartialLoadingState>
     {
-        public async UniTask<SlicedOwnedMemory<byte>> SerializeAsync(PartialLoadingState data, CancellationToken token)
-        {
-            await UniTask.SwitchToMainThread();
-            return SerializeInternal(data);
-        }
+        public SlicedOwnedMemory<byte> Serialize(PartialLoadingState data) =>
+            SerializeInternal(data);
 
         private static SlicedOwnedMemory<byte> SerializeInternal(PartialLoadingState data)
         {

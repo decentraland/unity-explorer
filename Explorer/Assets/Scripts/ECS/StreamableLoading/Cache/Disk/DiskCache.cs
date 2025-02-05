@@ -106,7 +106,7 @@ namespace ECS.StreamableLoading.Cache.Disk
         }
     }
 
-    public class DiskCache<T> : IDiskCache<T> where T: class
+    public class DiskCache<T> : IDiskCache<T>
     {
         private readonly IDiskCache diskCache;
         private readonly IDiskSerializer<T> serializer;
@@ -119,9 +119,12 @@ namespace ECS.StreamableLoading.Cache.Disk
 
         public async UniTask<EnumResult<TaskError>> PutAsync(HashKey key, string extension, T data, CancellationToken token)
         {
-            using SlicedOwnedMemory<byte> serializedData = await serializer.SerializeAsync(data, token);
+            using SlicedOwnedMemory<byte> serializedData = Serialize(data);
             return await diskCache.PutAsync(key, extension, serializedData.Memory, token);
         }
+
+        public SlicedOwnedMemory<byte> Serialize(T data) =>
+            serializer.Serialize(data);
 
         public async UniTask<EnumResult<Option<T>, TaskError>> ContentAsync(HashKey key, string extension, CancellationToken token)
         {
