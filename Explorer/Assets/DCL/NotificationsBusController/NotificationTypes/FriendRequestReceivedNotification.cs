@@ -34,10 +34,8 @@ namespace DCL.NotificationsBusController.NotificationTypes
         [JsonProperty("message")]
         public string Message { get; set; }
 
-        [JsonProperty("friendRequestId")]
-        public string FriendRequestId { get; set; }
+        [JsonProperty("requestId")]
+        public string RequestId { get; set; }
 
-        [JsonProperty("timestamp")]
-        public string Timestamp { get; set; }
     }
 }

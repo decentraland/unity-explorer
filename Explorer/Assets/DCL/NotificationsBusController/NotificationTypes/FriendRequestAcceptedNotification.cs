@@ -27,6 +27,12 @@ namespace DCL.NotificationsBusController.NotificationTypes
     {
         [JsonProperty("sender")]
         public FriendRequestProfile Sender { get; set; }
+
+        [JsonProperty("receiver")]
+        public FriendRequestProfile Receiver { get; set; }
+
+        [JsonProperty("requestId")]
+        public string RequestId { get; set; }
     }
 
     [Serializable]
