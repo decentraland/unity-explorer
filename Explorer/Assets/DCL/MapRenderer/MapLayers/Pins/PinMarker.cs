@@ -175,5 +175,8 @@ namespace DCL.MapRenderer.MapLayers.Pins
 
         public GameObject? GetGameObject() =>
             poolableBehavior.instance != null ? poolableBehavior.instance.gameObject : null;
+
+        public Vector2Int? GetParcelPosition() =>
+            ParcelPosition;
     }
 }

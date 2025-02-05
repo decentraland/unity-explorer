@@ -13,6 +13,7 @@
             public const string INITIAL_LOADING = "initial_loading";
             public const string PERFORMANCE_REPORT = "performance_report";
             public const string ERROR = "error";
+            public const string CRASH = "crash";
             public const string LOADING_ERROR = "loading_error";
         }
 

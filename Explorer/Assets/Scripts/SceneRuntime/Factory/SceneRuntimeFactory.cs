@@ -59,6 +59,7 @@ namespace SceneRuntime.Factory
 
 #if UNITY_EDITOR
             const string DIR = "Assets/DCL/ScenesDebug/ScenesConsistency/JsCodes";
+
             if (Directory.Exists(DIR))
                 cache = new FileJsSourcesCache(DIR);
             else
@@ -77,7 +78,7 @@ namespace SceneRuntime.Factory
             CancellationToken ct,
             InstantiationBehavior instantiationBehavior = InstantiationBehavior.StayOnMainThread)
         {
-            AssertCalledOnTheMainThread();
+            await EnsureCalledOnMainThreadAsync();
 
             jsSourcesCache.Cache(
                 $"{realmData.RealmName} {sceneShortInfo.BaseParcel.x},{sceneShortInfo.BaseParcel.y} {sceneShortInfo.Name}.js",
@@ -106,17 +107,18 @@ namespace SceneRuntime.Factory
             CancellationToken ct,
             InstantiationBehavior instantiationBehavior = InstantiationBehavior.StayOnMainThread)
         {
-            AssertCalledOnTheMainThread();
-
+            await EnsureCalledOnMainThreadAsync();
             string sourceCode = await webJsSources.SceneSourceCodeAsync(path, ct);
-
             return await CreateBySourceCodeAsync(sourceCode, instancePoolsProvider, sceneShortInfo, ct, instantiationBehavior);
         }
 
-        private static void AssertCalledOnTheMainThread()
+        private static async UniTask EnsureCalledOnMainThreadAsync()
         {
             if (!PlayerLoopHelper.IsMainThread)
-                throw new ThreadStateException($"{nameof(CreateByPathAsync)} must be called on the main thread");
+            {
+                ReportHub.Log(ReportCategory.SCENE_FACTORY, $"{nameof(CreateByPathAsync)} must be called on the main thread");
+                await UniTask.SwitchToMainThread();
+            }
         }
 
         private async UniTask<(string validateCode, string initCode)> GetJsInitSourceCodeAsync(CancellationToken ct)

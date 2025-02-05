@@ -1,7 +1,9 @@
 using CrdtEcsBridge.PoolsProviders;
 using DCL.Diagnostics;
 using JetBrains.Annotations;
+using Microsoft.ClearScript;
 using Microsoft.ClearScript.JavaScript;
+using SceneRunner.Scene.ExceptionsHandling;
 using System;
 using System.Collections.Generic;
 
@@ -13,9 +15,12 @@ namespace SceneRuntime.Apis.Modules.CommunicationsControllerApi
 
         private readonly List<PoolableByteArray> lastInput = new (10);
 
-        public CommunicationsControllerAPIWrapper(ICommunicationsControllerAPI api, IInstancePoolsProvider instancePoolsProvider) : base(api)
+        private readonly ISceneExceptionsHandler sceneExceptionsHandler;
+
+        public CommunicationsControllerAPIWrapper(ICommunicationsControllerAPI api, IInstancePoolsProvider instancePoolsProvider, ISceneExceptionsHandler sceneExceptionsHandler) : base(api)
         {
             this.instancePoolsProvider = instancePoolsProvider;
+            this.sceneExceptionsHandler = sceneExceptionsHandler;
         }
 
         protected override void DisposeInternal()
@@ -30,8 +35,7 @@ namespace SceneRuntime.Apis.Modules.CommunicationsControllerApi
             lastInput.Clear();
         }
 
-        [UsedImplicitly]
-        public object SendBinary(IList<object> dataList)
+        private void SendBinaryToParticipants(IList<object> dataList, string? recipient)
         {
             try
             {
@@ -62,13 +66,51 @@ namespace SceneRuntime.Apis.Modules.CommunicationsControllerApi
                     lastInput.RemoveAt(lastIndex);
                 }
 
-                return api.SendBinary(lastInput);
+                api.SendBinary(lastInput, recipient);
             }
             catch (Exception e)
             {
-                ReportHub.LogException(e, ReportCategory.ENGINE);
-                throw;
+                sceneExceptionsHandler.OnEngineException(e);
             }
+        }
+
+        [UsedImplicitly]
+        public object SendBinary(IList<object> broadcastData) =>
+            SendBinary(broadcastData, null);
+
+        [UsedImplicitly]
+        public object SendBinary(IList<object> broadcastData, IList<object>? peerData)
+        {
+            SendBinaryToParticipants(broadcastData, null);
+
+            if (peerData != null)
+                for (var i = 0; i < peerData.Count; i++)
+                {
+                    object? obj = peerData[i];
+
+                    if (obj is IScriptObject perRecipientStruct)
+                    {
+                        var recipient = (IList<object>)perRecipientStruct.GetProperty("address")!;
+                        var data = (IList<object>)perRecipientStruct.GetProperty("data")!;
+
+                        if (data.Count is 0)
+                            continue;
+
+                        if (recipient.Count is 0)
+                            SendBinaryToParticipants(data, null);
+
+                        foreach (object? address in recipient)
+                            if (address != null)
+                            {
+                                var stringAddress = (string)address;
+
+                                if (!string.IsNullOrEmpty(stringAddress))
+                                    SendBinaryToParticipants(data, stringAddress);
+                            }
+                    }
+                }
+
+            return api.GetResult();
         }
     }
 }

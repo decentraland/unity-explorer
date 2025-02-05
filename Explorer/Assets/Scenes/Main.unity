@@ -474,6 +474,7 @@ MonoBehaviour:
     useRemoteAssetsBundles: 1
     isolateSceneCommunication: 0
     portableExperiencesEnsToLoadAtGameStart: []
+  decentralandEnvironment: 0
   debugViewsCatalog:
     <Widget>k__BackingField: {fileID: 9197481963319205126, guid: f3bf08b2b62097d4aa0574f7bafa4a86, type: 3}
     <ControlContainer>k__BackingField: {fileID: 9197481963319205126, guid: 6da3ff28c8a87e0428fa07019c15fa2f, type: 3}
@@ -508,6 +509,7 @@ MonoBehaviour:
   globalPluginSettingsContainer: {fileID: 11400000, guid: 7575a56449e4af444b9c13267319c95d, type: 2}
   scenePluginSettingsContainer: {fileID: 11400000, guid: 52a2a6abe420a8b4db9dc55df4b42e92, type: 2}
   uiToolkitRoot: {fileID: 1901323878}
+  scenesUIRoot: {fileID: 1970628421}
   cursorRoot: {fileID: 46733614}
   debugUiRoot: {fileID: 946305963}
   settings: {fileID: 11400000, guid: 2e1d2c350e04ac3428300d032c5ee567, type: 2}
@@ -947,6 +949,74 @@ MonoBehaviour:
   sceneCoordinates: {x: 0, y: 0}
   entityId: 0
   message: 
+--- !u!1001 &1970628420
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 4780495006830554941, guid: e0f5a4ab5d8f74640ae94adb6824bd45, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4780495006830554941, guid: e0f5a4ab5d8f74640ae94adb6824bd45, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4780495006830554941, guid: e0f5a4ab5d8f74640ae94adb6824bd45, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4780495006830554941, guid: e0f5a4ab5d8f74640ae94adb6824bd45, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4780495006830554941, guid: e0f5a4ab5d8f74640ae94adb6824bd45, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4780495006830554941, guid: e0f5a4ab5d8f74640ae94adb6824bd45, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4780495006830554941, guid: e0f5a4ab5d8f74640ae94adb6824bd45, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4780495006830554941, guid: e0f5a4ab5d8f74640ae94adb6824bd45, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4780495006830554941, guid: e0f5a4ab5d8f74640ae94adb6824bd45, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4780495006830554941, guid: e0f5a4ab5d8f74640ae94adb6824bd45, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8765448689815683113, guid: e0f5a4ab5d8f74640ae94adb6824bd45, type: 3}
+      propertyPath: m_Name
+      value: ScenesUIRootCanvas
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: e0f5a4ab5d8f74640ae94adb6824bd45, type: 3}
+--- !u!114 &1970628421 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 3889322179606995116, guid: e0f5a4ab5d8f74640ae94adb6824bd45, type: 3}
+  m_PrefabInstance: {fileID: 1970628420}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 19102, guid: 0000000000000000e000000000000000, type: 0}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &2104274356
 GameObject:
   m_ObjectHideFlags: 0
@@ -1294,6 +1364,7 @@ SceneRoots:
   - {fileID: 946305964}
   - {fileID: 46733615}
   - {fileID: 1901323879}
+  - {fileID: 1970628420}
   - {fileID: 6834788295734673943}
   - {fileID: 1929393544}
   - {fileID: 2104274357}

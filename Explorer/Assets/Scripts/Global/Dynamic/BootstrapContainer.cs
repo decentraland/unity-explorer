@@ -18,6 +18,7 @@ using DCL.Web3.Identities;
 using DCL.WebRequests;
 using DCL.WebRequests.Analytics;
 using ECS.SceneLifeCycle.Realm;
+using ECS.StreamableLoading.Cache.Disk;
 using Global.AppArgs;
 using Plugins.RustSegment.SegmentServerWrap;
 using Global.Dynamic.DebugSettings;
@@ -80,7 +81,9 @@ namespace Global.Dynamic
             ISplashScreen splashScreen,
             ICompressShaders compressShaders,
             IRealmUrls realmUrls,
+            IDiskCache diskCache,
             World world,
+            DecentralandEnvironment decentralandEnvironment,
             CancellationToken ct)
         {
             var browser = new UnityAppWebBrowser(decentralandUrlsSource);
@@ -98,17 +101,21 @@ namespace Global.Dynamic
                 ApplicationParametersParser = applicationParametersParser,
                 DebugSettings = debugSettings,
                 WorldVolumeMacBus = new WorldVolumeMacBus(),
-                Environment = sceneLoaderSettings.DecentralandEnvironment
+                Environment = decentralandEnvironment
             };
 
             await bootstrapContainer.InitializeContainerAsync<BootstrapContainer, BootstrapSettings>(settingsContainer, ct, async container =>
             {
                 container.reportHandlingSettings = await ProvideReportHandlingSettingsAsync(container.AssetsProvisioner!, container.settings, ct);
-                (container.Bootstrap, container.Analytics) = await CreateBootstrapperAsync(debugSettings, applicationParametersParser, splashScreen, compressShaders, realmUrls, container, webRequestsContainer, container.settings, realmLaunchSettings, world, container.settings.BuildData, ct);
+                (container.Bootstrap, container.Analytics) = await CreateBootstrapperAsync(debugSettings, applicationParametersParser, splashScreen, compressShaders, realmUrls, diskCache, container, webRequestsContainer, container.settings, realmLaunchSettings, world, container.settings.BuildData, ct);
                 (container.VerifiedEthereumApi, container.Web3Authenticator) = CreateWeb3Dependencies(sceneLoaderSettings, web3AccountFactory, identityCache, browser, container, decentralandUrlsSource);
 
                 if (container.enableAnalytics)
+                {
                     container.Analytics!.Initialize(container.IdentityCache.Identity);
+
+                    CrashDetector.Initialize(container.Analytics);
+                }
 
                 bool enableSceneDebugConsole = realmLaunchSettings.IsLocalSceneDevelopmentRealm || applicationParametersParser.HasFlag(AppArgsFlags.SCENE_CONSOLE);
                 container.DiagnosticsContainer = DiagnosticsContainer.Create(container.ReportHandlingSettings, enableSceneDebugConsole);
@@ -130,6 +137,7 @@ namespace Global.Dynamic
             ISplashScreen splashScreen,
             ICompressShaders compressShaders,
             IRealmUrls realmUrls,
+            IDiskCache diskCache,
             BootstrapContainer container,
             WebRequestsContainer webRequestsContainer,
             BootstrapSettings bootstrapSettings,
@@ -141,7 +149,7 @@ namespace Global.Dynamic
             AnalyticsConfiguration analyticsConfig = (await container.AssetsProvisioner.ProvideMainAssetAsync(bootstrapSettings.AnalyticsConfigRef, ct)).Value;
             container.enableAnalytics = analyticsConfig.Mode != AnalyticsMode.DISABLED;
 
-            var coreBootstrap = new Bootstrap(debugSettings, appArgs, splashScreen, compressShaders, realmUrls, realmLaunchSettings, webRequestsContainer, world)
+            var coreBootstrap = new Bootstrap(debugSettings, appArgs, splashScreen, compressShaders, realmUrls, realmLaunchSettings, webRequestsContainer, diskCache, world)
             {
                 EnableAnalytics = container.enableAnalytics,
             };

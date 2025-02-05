@@ -3,6 +3,7 @@ using DCL.Audio;
 using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.MapLayers;
 using DCL.MapRenderer.MapLayers.ParcelHighlight;
+using DCL.MapRenderer.MapLayers.PointsOfInterest;
 using DCL.Navmap;
 using DCL.UI;
 using System;
@@ -115,35 +116,34 @@ namespace DCL.MapRenderer.MapCameraController
             return hitObject;
         }
 
-        public GameObject? ProcessMouseClick(Vector2 normalizedCoordinates, Vector2Int parcel)
+        public Vector2Int? ProcessMouseClick(Vector2 normalizedCoordinates, Vector2Int parcel)
         {
             clickCt = clickCt.SafeRestart();
 
             previouslyClickedMarker?.ToggleSelection(false);
             previouslyClickedMarker = null;
 
-            GameObject? hitObject = null;
+            Vector2Int? hitParcel = null;
             RaycastHit2D raycast = Physics2D.Raycast(GetLocalPosition(normalizedCoordinates), Vector2.zero, 10);
             UIAudioEventsBus.Instance.SendPlayAudioEvent(clickAudio);
 
             if (raycast.collider != null)
             {
-                hitObject = raycast.collider.gameObject;
-
                 foreach (IMapLayerController mapLayerController in interactableLayers)
-                    if (mapLayerController.TryClickObject(hitObject, clickCt, out IMapRendererMarker? clickedMarker))
+                    if (mapLayerController.TryClickObject(raycast.collider.gameObject, clickCt, out IMapRendererMarker? clickedMarker))
                     {
                         previouslyClickedMarker = clickedMarker;
-                        return hitObject;
+                        hitParcel = clickedMarker?.GetParcelPosition();
+                        return hitParcel;
                     }
             }
             else
             {
                 navmapBus.MoveCameraTo(parcel, CAMERA_MOVE_SPEED);
-                hitObject = null;
+                hitParcel = parcel;
             }
 
-            return hitObject;
+            return hitParcel;
         }
 
         public void Initialize(MapLayer layers)

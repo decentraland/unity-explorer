@@ -6,11 +6,14 @@ using DCL.Optimization.PerformanceBudgeting;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
+using ECS.StreamableLoading.Cache.Generic;
+using ECS.StreamableLoading.Cache.InMemory;
 using ECS.StreamableLoading.Common.Components;
 using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using Utility;
+using Utility.Types;
 
 namespace ECS.StreamableLoading.Common.Systems
 {
@@ -26,7 +29,12 @@ namespace ECS.StreamableLoading.Common.Systems
                                                                      .WithAll<TIntention, IPartitionComponent, StreamableLoadingState>()
                                                                      .WithNone<StreamableLoadingResult<TAsset>>();
 
-        protected readonly IStreamableCache<TAsset, TIntention> cache;
+        private readonly IStreamableCache<TAsset, TIntention> cache;
+
+        /// <summary>
+        /// If the disk cache is not provided, it mean the disk cache is not supported for this particular asset type
+        /// </summary>
+        private readonly IGenericCache<TAsset, TIntention> genericCache;
 
         private readonly AssetsLoadingUtility.InternalFlowDelegate<TAsset, TIntention> cachedInternalFlowDelegate;
         private readonly Query query;
@@ -34,9 +42,22 @@ namespace ECS.StreamableLoading.Common.Systems
 
         private bool systemIsDisposed;
 
-        protected LoadSystemBase(World world, IStreamableCache<TAsset, TIntention> cache) : base(world)
+        protected LoadSystemBase(World world, IStreamableCache<TAsset, TIntention> cache, DiskCacheOptions<TAsset, TIntention>? diskCacheOptions = null) : base(world)
         {
             this.cache = cache;
+
+            var memoryCache = new StreamableWrapMemoryCache<TAsset, TIntention>(cache);
+
+            if (diskCacheOptions == null)
+                genericCache = new MemoryOnlyGenericCache<TAsset, TIntention>(memoryCache);
+            else
+                genericCache = new GenericCache<TAsset, TIntention>(
+                    new StreamableWrapMemoryCache<TAsset, TIntention>(cache),
+                    diskCacheOptions.Value.DiskCache,
+                    diskCacheOptions.Value.DiskHashCompute,
+                    diskCacheOptions.Value.Extension
+                );
+
             query = World!.Query(in CREATE_WEB_REQUEST);
             cachedInternalFlowDelegate = FlowInternalAsync;
             cancellationTokenSource = new CancellationTokenSource();
@@ -75,7 +96,7 @@ namespace ECS.StreamableLoading.Common.Systems
         {
             AssetSource currentSource = intention.CommonArguments.CurrentSource;
 
-            EntityReference entityReference = World.Reference(entity);
+            EntityReference entityReference = World!.Reference(entity);
 
             if (state.Value != StreamableLoadingState.Status.Allowed)
             {
@@ -131,14 +152,6 @@ namespace ECS.StreamableLoading.Common.Systems
                         return;
                     }
                 }
-
-                if (cache.TryGet(intention, out TAsset asset))
-                {
-                    result = new StreamableLoadingResult<TAsset>(asset);
-                    return;
-                }
-
-                // Try load from cache first
 
                 // If the given URL failed irrecoverably just return the failure
                 if (cache.IrrecoverableFailures.TryGetValue(intention.CommonArguments.GetCacheableURL(), out var failure))
@@ -244,16 +257,15 @@ namespace ECS.StreamableLoading.Common.Systems
         {
             var source = new UniTaskCompletionSource<StreamableLoadingResult<TAsset>?>(); //AutoResetUniTaskCompletionSource<StreamableLoadingResult<TAsset>?>.Create();
 
-            // ReportHub.Log(GetReportCategory(), $"OngoingRequests.SyncAdd {intention.CommonArguments.URL}");
-            cache.OngoingRequests.SyncAdd(intention.CommonArguments.GetCacheableURL(), source);
-
+            cache.OngoingRequests.SyncTryAdd(intention.CommonArguments.GetCacheableURL(), source);
             var ongoingRequestRemoved = false;
 
             StreamableLoadingResult<TAsset>? result = null;
 
             try
             {
-                result = await RepeatLoopAsync(intention, acquiredBudget, partition, ct);
+                // Try load from cache first
+                result = await TryLoadFromCacheAsync(intention, ct) ?? await RepeatLoopAsync(intention, acquiredBudget, partition, ct);
 
                 // Ensure that we returned to the main thread
                 await UniTask.SwitchToMainThread(ct);
@@ -261,7 +273,12 @@ namespace ECS.StreamableLoading.Common.Systems
                 // before firing the continuation of the ongoing request
                 // Add result to the cache
                 if (result is { Succeeded: true })
-                    cache.Add(in intention, result.Value.Asset!);
+                    genericCache
+                       .PutAsync(intention, result.Value.Asset!, ct)
+                       .Forget(
+                            static e =>
+                                ReportHub.LogError(ReportCategory.STREAMABLE_LOADING, $"Error putting cache content: {e.Message}")
+                        );
 
                 // Set result for the reusable source
                 // Remove from the ongoing requests immediately because finally will be called later than
@@ -305,6 +322,21 @@ namespace ECS.StreamableLoading.Common.Systems
             }
         }
 
+        private async UniTask<StreamableLoadingResult<TAsset>?> TryLoadFromCacheAsync(TIntention intention, CancellationToken ct)
+        {
+            EnumResult<Option<TAsset>, TaskError> cachedContent = await genericCache.ContentAsync(intention, ct);
+
+            if (cachedContent.Success)
+            {
+                Option<TAsset> option = cachedContent.Value;
+
+                if (option.Has)
+                    return new StreamableLoadingResult<TAsset>(option.Value);
+            }
+
+            return null;
+        }
+
         private async UniTask<StreamableLoadingResult<TAsset>?> RepeatLoopAsync(TIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
             StreamableLoadingResult<TAsset>? result = await intention.RepeatLoopAsync(acquiredBudget, partition, cachedInternalFlowDelegate, GetReportData(), ct);
@@ -313,7 +345,8 @@ namespace ECS.StreamableLoading.Common.Systems
 
         private StreamableLoadingResult<TAsset> SetIrrecoverableFailure(TIntention intention, StreamableLoadingResult<TAsset> failure)
         {
-            cache.IrrecoverableFailures.Add(intention.CommonArguments.GetCacheableURL(), failure);
+            bool result = cache.IrrecoverableFailures.SyncTryAdd(intention.CommonArguments.GetCacheableURL(), failure);
+            if (result == false) ReportHub.LogError(GetReportData(), $"Irrecoverable failure for {intention} is already added");
             return failure;
         }
     }

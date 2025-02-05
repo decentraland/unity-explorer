@@ -23107,6 +23107,111 @@ MonoBehaviour:
   - RoadCoordinate: {x: 13, y: 0}
     Rotation: {x: 0, y: 1, z: 0, w: 0}
     RoadModel: 13,0
+  - RoadCoordinate: {x: 16, y: -121}
+    Rotation: {x: 0, y: 1, z: 0, w: 0}
+    RoadModel: Road_A
+  - RoadCoordinate: {x: 8, y: -121}
+    Rotation: {x: 0, y: 1, z: 0, w: 0}
+    RoadModel: Road_A
+  - RoadCoordinate: {x: 8, y: -124}
+    Rotation: {x: 0, y: 1, z: 0, w: 0}
+    RoadModel: Road_D
+  - RoadCoordinate: {x: 8, y: -127}
+    Rotation: {x: 0, y: 1, z: 0, w: 0}
+    RoadModel: Road_C
+  - RoadCoordinate: {x: 7, y: -133}
+    Rotation: {x: 0, y: 0.70710677, z: 0, w: 0.70710677}
+    RoadModel: Road_E
+  - RoadCoordinate: {x: 7, y: -134}
+    Rotation: {x: 0, y: 0.70710677, z: 0, w: -0.70710677}
+    RoadModel: Fork_D
+  - RoadCoordinate: {x: 7, y: -135}
+    Rotation: {x: 0, y: 0.70710677, z: 0, w: 0.70710677}
+    RoadModel: Road_E
+  - RoadCoordinate: {x: 7, y: -136}
+    Rotation: {x: 0, y: 0.70710677, z: 0, w: 0.70710677}
+    RoadModel: Road_0
+  - RoadCoordinate: {x: 7, y: -137}
+    Rotation: {x: 0, y: 0.70710677, z: 0, w: 0.70710677}
+    RoadModel: Road_A
+  - RoadCoordinate: {x: 7, y: -138}
+    Rotation: {x: 0, y: 1, z: 0, w: 0}
+    RoadModel: Corner_0
+  - RoadCoordinate: {x: 8, y: -138}
+    Rotation: {x: 0, y: 1, z: 0, w: 0}
+    RoadModel: Road_E
+  - RoadCoordinate: {x: 8, y: -141}
+    Rotation: {x: 0, y: 1, z: 0, w: 0}
+    RoadModel: Road_C
+  - RoadCoordinate: {x: 8, y: -144}
+    Rotation: {x: 0, y: 1, z: 0, w: 0}
+    RoadModel: Road_A
+  - RoadCoordinate: {x: 9, y: -144}
+    Rotation: {x: 0, y: 1, z: 0, w: 0}
+    RoadModel: Road_0
+  - RoadCoordinate: {x: 16, y: -141}
+    Rotation: {x: 0, y: 1, z: 0, w: 0}
+    RoadModel: Road_C
+  - RoadCoordinate: {x: 16, y: -144}
+    Rotation: {x: 0, y: 1, z: 0, w: 0}
+    RoadModel: Road_0
+  - RoadCoordinate: {x: 16, y: -137}
+    Rotation: {x: 0, y: 0.70710677, z: 0, w: 0.70710677}
+    RoadModel: Road_C
+  - RoadCoordinate: {x: 16, y: -136}
+    Rotation: {x: 0, y: 0.70710677, z: 0, w: 0.70710677}
+    RoadModel: Road_B
+  - RoadCoordinate: {x: 16, y: -135}
+    Rotation: {x: 0, y: 0.70710677, z: 0, w: 0.70710677}
+    RoadModel: Road_C
+  - RoadCoordinate: {x: 16, y: -134}
+    Rotation: {x: 0, y: 0.70710677, z: 0, w: -0.70710677}
+    RoadModel: Fork_0
+  - RoadCoordinate: {x: 16, y: -133}
+    Rotation: {x: 0, y: 0.70710677, z: 0, w: 0.70710677}
+    RoadModel: Road_E
+  - RoadCoordinate: {x: 16, y: -150}
+    Rotation: {x: 0, y: 1, z: 0, w: 0}
+    RoadModel: Road_0
+  - RoadCoordinate: {x: 57, y: -150}
+    Rotation: {x: 0, y: 1, z: 0, w: 0}
+    RoadModel: Road_A
+  - RoadCoordinate: {x: 58, y: -150}
+    Rotation: {x: 0, y: 1, z: 0, w: 0}
+    RoadModel: Road_0
+  - RoadCoordinate: {x: 24, y: -150}
+    Rotation: {x: 0, y: 1, z: 0, w: 0}
+    RoadModel: Road_B
+  - RoadCoordinate: {x: 26, y: -150}
+    Rotation: {x: 0, y: 1, z: 0, w: 0}
+    RoadModel: Road_B
+  - RoadCoordinate: {x: 27, y: -150}
+    Rotation: {x: 0, y: 1, z: 0, w: 0}
+    RoadModel: Road_A
+  - RoadCoordinate: {x: 28, y: -150}
+    Rotation: {x: 0, y: 1, z: 0, w: 0}
+    RoadModel: Road_B
+  - RoadCoordinate: {x: 30, y: -150}
+    Rotation: {x: 0, y: 1, z: 0, w: 0}
+    RoadModel: Road_B
+  - RoadCoordinate: {x: 31, y: -150}
+    Rotation: {x: 0, y: 1, z: 0, w: 0}
+    RoadModel: Road_E
+  - RoadCoordinate: {x: 42, y: -150}
+    Rotation: {x: 0, y: 1, z: 0, w: 0}
+    RoadModel: Road_0
+  - RoadCoordinate: {x: 44, y: -150}
+    Rotation: {x: 0, y: 1, z: 0, w: 0}
+    RoadModel: Road_0
+  - RoadCoordinate: {x: 45, y: -150}
+    Rotation: {x: 0, y: 1, z: 0, w: 0}
+    RoadModel: Road_C
+  - RoadCoordinate: {x: 46, y: -150}
+    Rotation: {x: 0, y: 1, z: 0, w: 0}
+    RoadModel: Road_0
+  - RoadCoordinate: {x: 47, y: -150}
+    Rotation: {x: 0, y: 1, z: 0, w: 0}
+    RoadModel: Road_C
   <RoadAssetsReference>k__BackingField:
   - m_AssetGUID: 2d6ac3b70dd761a428bae0e655a93ebc
     m_SubObjectName: 

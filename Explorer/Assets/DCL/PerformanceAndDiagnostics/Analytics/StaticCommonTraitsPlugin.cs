@@ -23,10 +23,11 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
         public override PluginType Type => PluginType.Enrichment;
 
-        public StaticCommonTraitsPlugin(IAppArgs appArgs, LauncherTraits launcherTraits, BuildData buildData)
+        public StaticCommonTraitsPlugin(IAppArgs appArgs, string sessionId, string launcherAnonymousId, BuildData buildData)
         {
-            sessionId = !string.IsNullOrEmpty(launcherTraits.SessionId) ? launcherTraits.SessionId : SystemInfo.deviceUniqueIdentifier + DateTime.Now.ToString("yyyyMMddHHmmssfff");
-            launcherAnonymousId = launcherTraits.LauncherAnonymousId;
+            this.sessionId = sessionId;
+            this.launcherAnonymousId = launcherAnonymousId;
+
             runtime = ChooseRuntime(appArgs);
             installSource = buildData.InstallSource;
         }

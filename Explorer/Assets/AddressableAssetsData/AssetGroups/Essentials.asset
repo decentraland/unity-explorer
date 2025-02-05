@@ -127,11 +127,6 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 43daf6965002847a19f241e71b28fd9b
-    m_Address: Assets/DCL/InWorldCamera/CameraReelGallery/Assets/ContextMenuSO/ReelGalleryContextMenuConfig.asset
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 4a2a7b610414b45c1b576946ce094877
     m_Address: NftCategoryIcons
     m_ReadOnly: 0
@@ -387,6 +382,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: dcc6085d51c3e443f82d4d58e0087519
+    m_Address: Assets/DCL/Friends/Prefabs/FriendRequest.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: e052984ad30813240bd28c945f4cab60
     m_Address: DottedLineRenderer
     m_ReadOnly: 0
@@ -429,6 +429,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: fdd9de2cf51974e4f9be30ab72d8eabd
     m_Address: MapLayerIconMapping
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: fe90941e720314adfb13574446732ea7
+    m_Address: UserProfile
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

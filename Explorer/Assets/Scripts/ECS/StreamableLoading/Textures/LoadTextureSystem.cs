@@ -7,6 +7,7 @@ using DCL.Optimization.PerformanceBudgeting;
 using DCL.Utilities.Extensions;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
+using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
 using ECS.Unity.Textures.Utils;
@@ -21,7 +22,10 @@ namespace ECS.StreamableLoading.Textures
     {
         private readonly IWebRequestController webRequestController;
 
-        internal LoadTextureSystem(World world, IStreamableCache<Texture2DData, GetTextureIntention> cache, IWebRequestController webRequestController) : base(world, cache)
+        internal LoadTextureSystem(World world, IStreamableCache<Texture2DData, GetTextureIntention> cache, IWebRequestController webRequestController, IDiskCache<Texture2DData> diskCache)
+            : base(
+                world, cache, new DiskCacheOptions<Texture2DData, GetTextureIntention>(diskCache, GetTextureIntention.DiskHashCompute.INSTANCE, "tex")
+            )
         {
             this.webRequestController = webRequestController;
         }

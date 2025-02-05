@@ -60,6 +60,11 @@ namespace Utility.Types
 
         public static implicit operator Result(Result<T> result) =>
             result.Success ? Result.SuccessResult() : Result.ErrorResult(result.ErrorMessage!);
+
+        public EnumResult<TErrorEnum> AsEnumResult<TErrorEnum>(TErrorEnum inErrorCase) =>
+            Success
+                ? EnumResult<TErrorEnum>.SuccessResult()
+                : EnumResult<TErrorEnum>.ErrorResult(inErrorCase, ErrorMessage!);
     }
 
     public readonly struct EnumResult<TErrorEnum>
@@ -118,7 +123,7 @@ namespace Utility.Types
         public static EnumResult<TValue, TErrorEnum> SuccessResult(TValue value) =>
             new (value, null);
 
-        public static EnumResult<TValue, TErrorEnum> ErrorResult(TErrorEnum state, string errorMessage) =>
+        public static EnumResult<TValue, TErrorEnum> ErrorResult(TErrorEnum state, string errorMessage = "") =>
             new (default(TValue)!, (state, errorMessage));
 
         public static bool TryErrorIfCancelled(CancellationToken token, out EnumResult<TValue, TErrorEnum> result)
@@ -142,6 +147,26 @@ namespace Utility.Types
 
         public override string ToString() =>
             $"EnumResult<{typeof(TValue).Name}, {typeof(TErrorEnum).Name}>: {(Success ? "Success" : $"Error: {Error!.Value.State} - {Error.Value.Message}")}";
+    }
+
+    /// <summary>
+    /// Used for cases when none is expected to be returned, difference from Nullable that it can handle both struct and class
+    /// </summary>
+    public readonly struct Option<T>
+    {
+        public readonly T Value;
+        public readonly bool Has;
+
+        public static Option<T> None => new ();
+
+        public static Option<T> Some(T value) =>
+            new (value, true);
+
+        private Option(T value, bool has)
+        {
+            this.Value = value;
+            this.Has = has;
+        }
     }
 
     public enum TaskError

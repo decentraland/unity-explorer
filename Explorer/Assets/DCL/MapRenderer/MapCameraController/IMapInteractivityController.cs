@@ -25,6 +25,9 @@ namespace DCL.MapRenderer.MapCameraController
 
         GameObject? ProcessMousePosition(Vector2 worldPosition, Vector2 screenPosition);
 
-        GameObject? ProcessMouseClick(Vector2 worldPosition, Vector2Int parcel);
+        /// <summary>
+        /// Returns the parcel position clicked (if any) or null if it doesn't (this includes map markers)
+        /// </summary>
+        Vector2Int? ProcessMouseClick(Vector2 worldPosition, Vector2Int parcel);
     }
 }
