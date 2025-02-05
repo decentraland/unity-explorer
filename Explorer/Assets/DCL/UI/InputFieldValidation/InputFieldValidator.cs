@@ -34,7 +34,7 @@ namespace DCL.UI.InputFieldValidator
         private static readonly Regex SCENE_REGEX = new (@"(?<=^|\s)-?§?\d{0,1}§?\d{0,1}§?\d{1}§?,§?-?§?\d{1}§?\d{0,1}§?\d{0,1}§?(?=\s|$)", RegexOptions.Compiled);
         private static readonly Regex WORLD_REGEX = new (@"(?<=^|\s)§?[a-zA-Z0-9]§?[a-zA-Z0-9]*§?[a-zA-Z0-9]*§?\.dcl\.eth§?(?=\s|$)", RegexOptions.Compiled);
 
-        private static readonly Regex USERNAME_REGEX = new (@"(?<=^|\s)([A-Za-z0-9]*?)@([A-Za-z0-9]{3,15}(?:#[A-Za-z0-9]{4})?)(?=\s|$)", RegexOptions.Compiled);
+        private static readonly Regex USERNAME_REGEX = new (@"(?<=^|\s)([A-Za-z0-9]*?)@([A-Za-z0-9]{3,15}§?(?:#[A-Za-z0-9]{4})?)§?(?=\s|$)", RegexOptions.Compiled);
 
         //private static readonly Regex USERNAME_REGEX = new (@"(?<=^|\s)§?@§?[A-Za-z0-9]{3,15}(?:#[A-Za-z0-9]{4})?§?(?=\s|$)", RegexOptions.Compiled);
 

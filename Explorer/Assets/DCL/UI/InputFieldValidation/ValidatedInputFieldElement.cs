@@ -122,6 +122,21 @@ namespace DCL.UI.InputFieldValidator
             inputField.stringPosition = newPosition;
         }
 
+        public void ReplaceText(string oldValue, string newValue)
+        {
+            int remainingSpace = inputField.characterLimit - inputField.text.Length;
+
+            if (remainingSpace <= 0) return;
+
+            var newText = inputField.text.Replace(oldValue, newValue);
+            var newPosition = inputField.stringPosition + newValue.Length - oldValue.Length;
+
+            inputFieldValidator.Validate(ref newText, ref newPosition);
+            inputField.text = newText;
+            inputField.stringPosition = newPosition;
+        }
+
+
         //We do a validation before submitting
         private void Submit(string text)
         {

@@ -353,8 +353,7 @@ namespace DCL.Chat
 
             UIAudioEventsBus.Instance.SendPlayAudioEvent(addUserNameAudio);
 
-            inputField.SetTextWithoutNotify(inputField.text.Replace(lastMatch, username));
-            inputField.stringPosition += username.Length;
+            validatedInputField.ReplaceText(lastMatch, username);
 
             validatedInputField.ActivateInputField();
 
