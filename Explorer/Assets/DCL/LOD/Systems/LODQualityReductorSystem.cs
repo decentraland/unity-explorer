@@ -14,7 +14,7 @@ namespace DCL.LOD.Systems
 {
     [UpdateInGroup(typeof(RealmGroup))]
     [LogCategory(ReportCategory.LOD)]
-    public  class LODQualityReductorSystem : BaseUnityLoopSystem
+    public partial class LODQualityReductorSystem : BaseUnityLoopSystem
     {
         private static readonly QueryDescription ALL_LOD_QUERY_FULL_QUALITY = new QueryDescription()
             .WithAll<SceneLODInfo>()
@@ -74,6 +74,9 @@ namespace DCL.LOD.Systems
 
         private void ReduceLODQuality(ref SceneLODInfo sceneLODInfo)
         {
+            if (!sceneLODInfo.IsInitialized())
+                return;
+            
             lodCache.Release(sceneLODInfo.id, sceneLODInfo.metadata);
             sceneLODInfo.metadata.SuccessfullLODs = 0;
             sceneLODInfo.metadata.FailedLODs = 0;
