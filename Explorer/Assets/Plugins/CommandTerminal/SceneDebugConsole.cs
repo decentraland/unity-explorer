@@ -7,18 +7,32 @@ using UnityEngine.InputSystem;
 
 namespace CommandTerminal
 {
-    public enum TerminalState
-    {
-        Close,
-        OpenSmall,
-        OpenFull,
-    }
-
     /// <summary>
     ///     Dedicated toggleable console for displaying only JS scene messages/logs/errors
     /// </summary>
     public class SceneDebugConsole : MonoBehaviour
     {
+        private enum TerminalState
+        {
+            Close,
+            OpenSmall,
+            OpenFull,
+        }
+
+        private readonly struct LogItem
+        {
+            public readonly LogType Type;
+            public readonly string Message;
+            public readonly string StackTrace;
+
+            public LogItem(LogType type, string message, string stackTrace)
+            {
+                Type = type;
+                Message = message;
+                StackTrace = stackTrace;
+            }
+        }
+
         [Header("Window")]
         [Range(0, 1)]
         [SerializeField]
@@ -45,8 +59,9 @@ namespace CommandTerminal
         [SerializeField] private Color foregroundColor = Color.white;
         [SerializeField] private Color warningColor = Color.yellow;
         [SerializeField] private Color errorColor = Color.red;
+
+        private Queue<LogItem> logs = new ();
         private Texture2D backgroundTex;
-        private ConsoleBuffer consoleBuffer;
         private float currentOpenValue;
         private TextEditor editorState;
         private GUIStyle labelStyle;
@@ -63,6 +78,7 @@ namespace CommandTerminal
         private float totalContentHeight = 0f;
         private Queue<string> pendingContentHeightAdditions = new Queue<string>();
         private Queue<string> pendingContentHeightRemovals = new Queue<string>();
+        private Queue<LogItem> logsToBeProcessed = new Queue<LogItem>();
 
         private bool isClosed => state == TerminalState.Close && Mathf.Approximately(currentOpenValue, openTarget);
 
@@ -76,11 +92,6 @@ namespace CommandTerminal
 
             SetupWindow();
             SetupLabels();
-        }
-
-        private void OnEnable()
-        {
-            consoleBuffer = new ConsoleBuffer(logsMaxAmount);
         }
 
         private void Update()
@@ -128,7 +139,7 @@ namespace CommandTerminal
             if (isClosed) return;
 
             HandleOpenness();
-            window = GUILayout.Window(88, window, DrawConsole, "", windowStyle);
+            window = GUILayout.Window(88, window, WindowUpdate, "", windowStyle);
 
             // Calculate normalized scroll position
             float viewportHeight = window.height - windowStyle.padding.vertical;
@@ -205,7 +216,7 @@ namespace CommandTerminal
             labelStyle.fontSize = fontSize;
         }
 
-        private void DrawConsole(int Window2D)
+        private void WindowUpdate(int Window2D)
         {
             if (!autoScrollOnNewLogs && scrollYCompensation > 0)
             {
@@ -214,14 +225,22 @@ namespace CommandTerminal
             }
 
             scrollPosition = GUILayout.BeginScrollView(scrollPosition, false, false, GUIStyle.none, GUIStyle.none);
+
+            // Update logs collection before drawing
+            while (logsToBeProcessed.Count > 0)
+            {
+                HandleLog(logsToBeProcessed.Dequeue());
+            }
+
             DrawLogs();
+
             GUILayout.EndScrollView();
         }
 
         private void DrawLogs()
         {
             GUILayout.BeginVertical();
-            foreach (LogItem log in consoleBuffer.Logs)
+            foreach (LogItem log in logs)
             {
                 labelStyle.normal.textColor = GetLogColor(log.Type);
                 GUILayout.Label(log.Message, labelStyle);
@@ -269,19 +288,25 @@ namespace CommandTerminal
             return height;
         }
 
-        public void Log(string message, string stackTrace = "", LogType type = LogType.Log)
+        // Log() is called from a thread (many GUI operations have to run in the main thread)
+        public void Log(string message, string stackTrace = "", LogType logType = LogType.Log)
+        {
+            logsToBeProcessed.Enqueue(new LogItem(logType, message, stackTrace));
+        }
+
+        private void HandleLog(LogItem logItem)
         {
             // If scroll is at the bottom, keep it at the bottom
             if (isScrollAtBottom || autoScrollOnNewLogs)
                 scrollPosition.y = int.MaxValue;
 
             // Queue the message for height calculation on the main thread
-            pendingContentHeightAdditions.Enqueue(message);
+            pendingContentHeightAdditions.Enqueue(logItem.Message);
 
-            if (consoleBuffer.Logs.Count == logsMaxAmount)
-                pendingContentHeightRemovals.Enqueue(consoleBuffer.Logs[0].Message);
+            if (logs.Count == logsMaxAmount)
+                pendingContentHeightRemovals.Enqueue(logs.Dequeue().Message); // remove oldest log
 
-            consoleBuffer.HandleLog(message, stackTrace, type);
+            logs.Enqueue(logItem);
         }
     }
 }
