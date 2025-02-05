@@ -72,7 +72,6 @@ namespace CommandTerminal
         private TerminalState state;
         private Rect screenRect;
         private GUIStyle windowStyle;
-        private float scrollYCompensation = 0f;
         private bool isScrollAtBottom = false;
         private float normalizedScrollPosition = 1f;
         private float totalContentHeight = 0f;
@@ -197,10 +196,10 @@ namespace CommandTerminal
 
         private void WindowUpdate(int Window2D)
         {
-            if (!autoScrollOnNewLogs && scrollYCompensation > 0)
+            // Process logs to be handled
+            while (logsToBeProcessed.Count > 0)
             {
-                scrollPosition.y = Mathf.Max(0, scrollPosition.y - scrollYCompensation);
-                scrollYCompensation = 0;
+                HandleLog(logsToBeProcessed.Dequeue());
             }
 
             scrollPosition = GUILayout.BeginScrollView(scrollPosition, false, false, GUIStyle.none, GUIStyle.none);
@@ -212,12 +211,6 @@ namespace CommandTerminal
 
         private void DrawLogs()
         {
-            // Process logs to be handled
-            while (logsToBeProcessed.Count > 0)
-            {
-                HandleLog(logsToBeProcessed.Dequeue());
-            }
-
             GUILayout.BeginVertical();
             foreach (LogItem log in logs)
             {
@@ -267,32 +260,30 @@ namespace CommandTerminal
             return height;
         }
 
-        private void HandleLog(LogItem logItem)
+        private void HandleLog(LogItem newLog)
         {
             // Calculate and update content height
-            float newLogHeight = CalculateLogLabelHeight(logItem.Message);
+            logs.Enqueue(newLog);
+            float newLogHeight = CalculateLogLabelHeight(newLog.Message);
             totalContentHeight += newLogHeight;
 
-            if (autoScrollOnNewLogs)
-                scrollPosition.y = int.MaxValue;
-            else
-                scrollYCompensation += newLogHeight;
-
-            if (logs.Count == logsMaxAmount)
+            if (logs.Count > logsMaxAmount)
             {
-                LogItem removedLog = logs.Dequeue();
+                float scrollYCompensation = 0;
+
+                LogItem removedLog = logs.Dequeue(); // remove oldest
                 float removedLogHeight = CalculateLogLabelHeight(removedLog.Message);
                 totalContentHeight -= removedLogHeight;
-            }
 
-            logs.Enqueue(logItem);
+                if (!autoScrollOnNewLogs)
+                    scrollYCompensation += newLogHeight;
+
+                scrollPosition.y = Mathf.Max(0, scrollPosition.y - scrollYCompensation);
+            }
 
             // If scroll is at the bottom, keep it at the bottom
-            if (isScrollAtBottom)
-            {
+            if (isScrollAtBottom || autoScrollOnNewLogs)
                 scrollPosition.y = int.MaxValue;
-                scrollYCompensation = 0;
-            }
         }
     }
 }
