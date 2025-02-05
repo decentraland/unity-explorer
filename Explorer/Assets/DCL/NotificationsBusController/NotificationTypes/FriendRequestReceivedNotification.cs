@@ -7,7 +7,7 @@ namespace DCL.NotificationsBusController.NotificationTypes
     public class FriendRequestReceivedNotification : NotificationBase
     {
         private const string NOTIFICATION_HEADER = "Friend Request Received";
-        private const string NOTIFICATION_TITLE_FORMAT = "{0}#{1} wants to be your friend!";
+        private const string NOTIFICATION_TITLE = "wants to be your friend!";
 
         [JsonProperty("metadata")]
         public FriendRequestReceivedNotificationMetadata Metadata { get; set; }
@@ -16,7 +16,7 @@ namespace DCL.NotificationsBusController.NotificationTypes
             NOTIFICATION_HEADER;
 
         public override string GetTitle() =>
-            string.Format(NOTIFICATION_TITLE_FORMAT, Metadata.Sender.Name, Metadata.Sender.Address[..^4]);
+            NOTIFICATION_TITLE;
 
         public override string GetThumbnail() =>
             Metadata.Sender.ProfileImageUrl;
