@@ -1,5 +1,4 @@
 using Cysharp.Threading.Tasks;
-using DCL.AsyncLoadReporting;
 using DCL.Profiles.Self;
 using DCL.RealmNavigation;
 using System.Threading;

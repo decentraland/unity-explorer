@@ -2,6 +2,7 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Utilities.Extensions;
 using ECS.StreamableLoading.Cache.Disk;
+using ECS.StreamableLoading.Cache.Disk.Cacheables;
 using ECS.StreamableLoading.Cache.Generic;
 using ECS.StreamableLoading.Cache.InMemory;
 using SceneRuntime.Factory.WebSceneSource;
@@ -19,7 +20,7 @@ namespace SceneRuntime.Factory.JsSource
         public CachedWebJsSources(IWebJsSources origin, IMemoryCache<string, string> cache, IDiskCache<string> diskCache)
         {
             this.origin = origin;
-            this.cache = new GenericCache<string, string>(cache, diskCache, static s => s, EXTENSION);
+            this.cache = new GenericCache<string, string>(cache, diskCache, DiskHashCompute.INSTANCE, EXTENSION);
         }
 
         public async UniTask<string> SceneSourceCodeAsync(URLAddress path, CancellationToken ct)
@@ -30,10 +31,24 @@ namespace SceneRuntime.Factory.JsSource
                 return await origin.SceneSourceCodeAsync(path, ct);
 
             var result = await cache.ContentOrFetchAsync(key, origin, static v => SceneSourceCodeAsync(v), ct);
+
+            if (result.Success == false)
+                throw new Exception($"CachedWebJsSources: SceneSourceCodeAsync failed for url {path.Value}: {result.Error!.Value.State} {result.Error!.Value.Message}");
+
             return result.Unwrap().Value.EnsureNotNull();
         }
 
         private static UniTask<string> SceneSourceCodeAsync((string key, IWebJsSources ctx, CancellationToken token) value) =>
             value.ctx!.SceneSourceCodeAsync(URLAddress.FromString(value.key!), value.token);
+
+        private class DiskHashCompute : AbstractDiskHashCompute<string>
+        {
+            public static readonly DiskHashCompute INSTANCE = new ();
+
+            protected override void FillPayload(IHashKeyPayload keyPayload, string asset)
+            {
+                keyPayload.Put(asset);
+            }
+        }
     }
 }

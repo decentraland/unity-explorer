@@ -1,6 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
-using DCL.AsyncLoadReporting;
 using DCL.SceneLoadingScreens.LoadingScreen;
+using DCL.Utilities;
 using MVC;
 using NSubstitute;
 using NUnit.Framework;

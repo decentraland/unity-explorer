@@ -1,5 +1,4 @@
 using Cysharp.Threading.Tasks;
-using DCL.AsyncLoadReporting;
 using DCL.Diagnostics;
 using ECS.SceneLifeCycle.Realm;
 using System;
