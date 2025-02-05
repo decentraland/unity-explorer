@@ -118,6 +118,9 @@ namespace CommandTerminal
                 float height = CalculateLogLabelHeight(message);
                 totalContentHeight -= height;
             }
+
+            if (isScrollAtBottom)
+                scrollYCompensation = 0;
         }
 
         private void OnGUI()
@@ -132,8 +135,7 @@ namespace CommandTerminal
             float maxScrollValue = Mathf.Max(0, totalContentHeight - viewportHeight);
             normalizedScrollPosition = maxScrollValue > 0 ? scrollPosition.y / maxScrollValue : 1f;
 
-            // THIS IS NOT WORKING IN Log()...
-            isScrollAtBottom = normalizedScrollPosition >= 0.95f;
+            isScrollAtBottom = normalizedScrollPosition >= 0.99f;
         }
 
         private void SetState(TerminalState newState)
@@ -214,9 +216,6 @@ namespace CommandTerminal
             scrollPosition = GUILayout.BeginScrollView(scrollPosition, false, false, GUIStyle.none, GUIStyle.none);
             DrawLogs();
             GUILayout.EndScrollView();
-
-            // if (isScrollAtBottom)
-            //     scrollPosition.y = int.MaxValue;
         }
 
         private void DrawLogs()
@@ -273,8 +272,8 @@ namespace CommandTerminal
         public void Log(string message, string stackTrace = "", LogType type = LogType.Log)
         {
             // If scroll is at the bottom, keep it at the bottom
-            // if (isScrollAtBottom || autoScrollOnNewLogs)
-            //     scrollPosition.y = int.MaxValue;
+            if (isScrollAtBottom || autoScrollOnNewLogs)
+                scrollPosition.y = int.MaxValue;
 
             // Queue the message for height calculation on the main thread
             pendingContentHeightAdditions.Enqueue(message);

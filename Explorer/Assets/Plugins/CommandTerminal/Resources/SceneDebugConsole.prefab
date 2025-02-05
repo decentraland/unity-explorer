@@ -48,9 +48,9 @@ MonoBehaviour:
   smallTerminalRatio: 0.33
   toggleSpeed: 1000
   inputActions: {fileID: -944628639613478452, guid: 6cec26357c7fb8f44b03ce452209387d, type: 3}
-  logsMaxAmount: 20
+  logsMaxAmount: 30
   autoScrollOnNewLogs: 0
-  fontSize: 30
+  fontSize: 20
   consoleFont: {fileID: 0}
   backgroundColor: {r: 0, g: 0, b: 0, a: 1}
   foregroundColor: {r: 1, g: 1, b: 1, a: 1}
