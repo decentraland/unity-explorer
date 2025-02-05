@@ -168,7 +168,7 @@ namespace DCL.Chat
         {
             this.channels = chatChannels;
             this.chatEntryConfiguration = chatEntryConfiguration;
-            closeChatButton.onClick.AddListener(CloseChat);
+            closeChatButton.onClick.AddListener(OnCloseChatButtonClicked);
             chatMessageViewer.Initialize(CalculateUsernameColor);
             chatMessageViewer.ChatMessageOptionsButtonClicked += OnChatMessageOptionsButtonClicked;
             chatMessageViewer.ChatMessageViewerScrollPositionChanged += OnChatMessageViewerScrollPositionChanged;
@@ -390,10 +390,9 @@ namespace DCL.Chat
             viewDependencies.GlobalUIViews.ShowChatEntryMenuPopupAsync(data);
         }
 
-        private void CloseChat()
+        private void OnCloseChatButtonClicked()
         {
-            isChatClosed = true;
-            ToggleChat(false);
+            IsUnfolded = false;
         }
 
         private void OnInputChanged(string inputText)
