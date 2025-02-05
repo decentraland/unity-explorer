@@ -3,7 +3,6 @@ using DCL.Chat.MessageBus.Deduplication;
 using DCL.Multiplayer.Connections.Messaging;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.Messaging.Pipe;
-using Decentraland.Kernel.Comms.Rfc4;
 using DCL.Profiles;
 using LiveKit.Proto;
 using System;
@@ -26,8 +25,8 @@ namespace DCL.Chat.MessageBus
             this.profileRepository = profileRepository;
             this.messageDeduplication = messageDeduplication;
 
-            messagePipesHub.IslandPipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Chat>(Packet.MessageOneofCase.Chat, OnMessageReceived);
-            messagePipesHub.ScenePipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Chat>(Packet.MessageOneofCase.Chat, OnMessageReceived);
+            messagePipesHub.IslandPipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Chat>(Decentraland.Kernel.Comms.Rfc4.Packet.MessageOneofCase.Chat, OnMessageReceived);
+            messagePipesHub.ScenePipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Chat>(Decentraland.Kernel.Comms.Rfc4.Packet.MessageOneofCase.Chat, OnMessageReceived);
         }
 
         public void Dispose()
@@ -85,9 +84,9 @@ namespace DCL.Chat.MessageBus
         private string ParseChatMessageFromPayloadMessage(string payloadMessage)
         {
             // TODO: Remove this line once this code is merged to dev
+            return payloadMessage.StartsWith("<") ? payloadMessage.Substring(payloadMessage.IndexOf('>') + 1)
+                                                  : payloadMessage;
             return payloadMessage;
-
-            return payloadMessage.Substring(payloadMessage.IndexOf('>') + 1);
         }
 
         public void Send(ChatChannel.ChannelId channelId, string message, string origin)

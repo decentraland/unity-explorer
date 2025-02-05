@@ -1,31 +1,39 @@
 ﻿using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
-using DCL.Chat.Commands;
+using DCL.Diagnostics;
 using DCL.FeatureFlags;
+using DCL.Utilities.Extensions;
 using PortableExperiences.Controller;
 using System;
 using System.Threading;
 
-namespace Global.Dynamic.ChatCommands
+namespace DCL.Chat.Commands
 {
     /// <summary>
-    /// Kills a portable experience.
+    /// Load a Portable Experience.
     ///
     /// Usage:
-    ///     /killpx *name*
+    ///     /loadpx *name*
+    ///
+    /// <example>
+    /// Commands could be:
+    ///     "/loadpx globalpx"
+    ///     "/loadpx olavra.dcl.eth"
+    /// This will load any world as a Global PX
+    /// </example>
     /// </summary>
-    public class KillPortableExperienceChatCommand : IChatCommand
+    public class LoadPortableExperienceChatCommand : IChatCommand
     {
         private const string ENS_SUFFIX = ".dcl.eth";
 
-        public string Command => "killpx";
-        public string Description => "<b>/killpx <i><name></i></b>\n  Kill a portable experience";
+        public string Command => "loadpx";
+        public string Description => "<b>/loadpx <i><name></i></b>\n  Load a Portable Experience";
         public bool DebugOnly => true;
 
         private readonly IPortableExperiencesController portableExperiencesController;
         private readonly FeatureFlagsCache featureFlagsCache;
 
-        public KillPortableExperienceChatCommand(IPortableExperiencesController portableExperiencesController, FeatureFlagsCache featureFlagsCache)
+        public LoadPortableExperienceChatCommand(IPortableExperiencesController portableExperiencesController, FeatureFlagsCache featureFlagsCache)
         {
             this.portableExperiencesController = portableExperiencesController;
             this.featureFlagsCache = featureFlagsCache;
@@ -46,14 +54,14 @@ namespace Global.Dynamic.ChatCommands
 
             await UniTask.SwitchToMainThread(ct);
 
-            var response = portableExperiencesController.UnloadPortableExperienceByEns(new ENS(pxName));
+            var result = await portableExperiencesController.CreatePortableExperienceByEnsAsync(new ENS(pxName), ct, true, true).SuppressAnyExceptionWithFallback(new IPortableExperiencesController.SpawnResponse(), ReportCategory.PORTABLE_EXPERIENCE);
 
-            bool isSuccess = response.status;
+            bool isSuccess = !string.IsNullOrEmpty(result.ens);
 
             if (ct.IsCancellationRequested)
                 return "🔴 Error. The operation was canceled!";
 
-            return isSuccess ? $"🟢 The Portable Experience {pxName} has been Killed" : $"🔴 Error. Could not Kill the Portable Experience {pxName}";
+            return isSuccess ? $"🟢 The Portable Experience {pxName} has started loading" : $"🔴 Error. Could not load {pxName} as a Portable Experience";
         }
     }
 }

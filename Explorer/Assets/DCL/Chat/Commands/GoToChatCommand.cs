@@ -1,5 +1,4 @@
 ﻿using Cysharp.Threading.Tasks;
-using DCL.Chat.Commands;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.WebRequests;
@@ -8,7 +7,7 @@ using UnityEngine;
 using Utility;
 using Random = UnityEngine.Random;
 
-namespace Global.Dynamic.ChatCommands
+namespace DCL.Chat.Commands
 {
     /// <summary>
     /// Teleports the player within Genesis to a specific, random, or crowded position,

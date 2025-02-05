@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
+using MVC;
 using SuperScrollView;
 using System;
 using System.Collections.Generic;
@@ -13,7 +14,7 @@ namespace DCL.Chat
     /// <summary>
     /// A UI element that displays a list of chat messages.
     /// </summary>
-    public class ChatMessageViewerElement : MonoBehaviour, IDisposable
+    public class ChatMessageViewerElement : MonoBehaviour, IDisposable, IViewWithGlobalDependencies
     {
         public delegate void ChatMessageOptionsButtonClickedDelegate(string chatMessage, ChatEntryView chatEntryView);
         public delegate void ChatMessageViewerScrollPositionChangedDelegate(Vector2 newScrollPosition);
@@ -66,6 +67,8 @@ namespace DCL.Chat
 
         private int separatorPositionIndex;
         private int messageCountWhenSeparatorWasSet;
+
+        private ViewDependencies viewDependencies;
 
         /// <summary>
         /// Gets whether the scroll view is showing the bottom of the content, and it can't scroll down anymore.
@@ -265,8 +268,9 @@ namespace DCL.Chat
                         itemData.SentByOwnUser ? listView.ItemPrefabDataList[(int)ChatItemPrefabIndex.ChatEntryOwn].mItemPrefab.name
                                                 : listView.ItemPrefabDataList[(int)ChatItemPrefabIndex.ChatEntry].mItemPrefab.name);
 
-                    ChatEntryView itemScript = item!.GetComponent<ChatEntryView>()!;
-                    SetItemData(index, itemData, itemScript);
+                ChatEntryView itemScript = item!.GetComponent<ChatEntryView>()!;
+                SetItemData(index, itemData, itemScript);
+                itemScript.messageBubbleElement.SetupHyperlinkHandlerDependencies(viewDependencies);
 
                     Button? messageOptionsButton = itemScript.messageBubbleElement.messageOptionsButton;
                     messageOptionsButton?.onClick.RemoveAllListeners();
@@ -318,6 +322,11 @@ namespace DCL.Chat
             chatEntriesCanvasGroup.alpha = 1;
             await UniTask.Delay(chatEntriesWaitBeforeFading, cancellationToken: ct);
             await chatEntriesCanvasGroup.DOFade(0.4f, chatEntriesFadeTime).ToUniTask(cancellationToken: ct);
+        }
+
+        public void InjectDependencies(ViewDependencies dependencies)
+        {
+            viewDependencies = dependencies;
         }
 
         private void OnScrollRectValueChanged(Vector2 scrollPosition)

@@ -180,8 +180,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e8facb6a795b74627b44b47cb560e799, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  inputField: {fileID: 5622104160664987093}
-  inputFieldRectTransform: {fileID: 1115583169272015923}
+  inputField: {fileID: 4092135091884069058}
+  inputFieldRectTransform: {fileID: 6520705227176678513}
   contentRectTransform: {fileID: 8211434791048164212}
   minimumHeight: 40
 --- !u!1 &9152785347356188261
@@ -279,30 +279,14 @@ MonoBehaviour:
   <canvas>k__BackingField: {fileID: 6099333271793956856}
   <raycaster>k__BackingField: {fileID: 2110952359374055602}
   BackgroundFadeTime: 0.2
-  MaxMessageLength: 250
   chatBubblesToggle: {fileID: 4830781885806626314}
-  inputField: {fileID: 5622104160664987093}
-  characterCounter: {fileID: 5274648269416443391}
+  chatInputBox: {fileID: 5059819421467020040}
   panelBackgroundCanvasGroup: {fileID: 4742269820946521976}
   closeChatButton: {fileID: 1104092725699042680}
-  pastePopupPosition: {fileID: 8997778028803641515}
   chatMessageViewer: {fileID: 682925133115260549}
   scrollToBottomButton: {fileID: 9113485324403049089}
   scrollToBottomNumberText: {fileID: 7120039366210821642}
-  emojiPanel: {fileID: 8642591472055175998}
-  emojiSuggestionPanel: {fileID: 5472059768468074674}
-  emojiPanelButton: {fileID: 5796404896790943328}
-  emojiPanelConfiguration: {fileID: 11400000, guid: 51646f2adc3264ba7bf9b4f90febbd22, type: 2}
-  emojiMappingJson: {fileID: 4900000, guid: 7355ae17e96e64b9592813524510dc45, type: 3}
-  emojiSectionViewPrefab: {fileID: 7843218067654608663, guid: d4552d3a2432742f58c63ba71bdfb50e, type: 3}
-  emojiButtonPrefab: {fileID: 8273076807335735701, guid: 7d0a647adf3334ee1a142e7bf69f128d, type: 3}
-  emojiSuggestionViewPrefab: {fileID: -5260165294436727257, guid: 5bc332aa8fd2147cab980e20e64bec03, type: 3}
-  addEmojiAudio: {fileID: 11400000, guid: ab59a5b2a814f02419850961fc490805, type: 2}
-  openEmojiPanelAudio: {fileID: 11400000, guid: abc438e2962540549b414d54fbc89eed, type: 2}
-  chatSendMessageAudio: {fileID: 11400000, guid: efe341aa011f4c8428d3246fa65ef5b0, type: 2}
   chatReceiveMessageAudio: {fileID: 11400000, guid: 1c179628ffe816f4c9be1ba12630f97f, type: 2}
-  chatInputTextAudio: {fileID: 11400000, guid: d6b0660efe9c3954c937d083f8aa9c98, type: 2}
-  enterInputAudio: {fileID: 11400000, guid: 8703731941d082441b7bc7c6e9720b34, type: 2}
 --- !u!1001 &1890474067062928347
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -405,31 +389,9 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 1533203949891575784, guid: 754fd4e2bb7828240808af9ce37feb93, type: 3}
   m_PrefabInstance: {fileID: 1890474067062928347}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &5274648269416443391 stripped
+--- !u!114 &4092135091884069058 stripped
 MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 5985002989317627428, guid: 754fd4e2bb7828240808af9ce37feb93, type: 3}
-  m_PrefabInstance: {fileID: 1890474067062928347}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d52b8ae7e003f4dac8bc233a9bec4eff, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
---- !u!114 &5472059768468074674 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 5894360322644460393, guid: 754fd4e2bb7828240808af9ce37feb93, type: 3}
-  m_PrefabInstance: {fileID: 1890474067062928347}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ede92f1128314ccab26c2f0389e572f4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
---- !u!114 &5622104160664987093 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 6069139085487838734, guid: 754fd4e2bb7828240808af9ce37feb93, type: 3}
+  m_CorrespondingSourceObject: {fileID: 2519340724717527833, guid: 754fd4e2bb7828240808af9ce37feb93, type: 3}
   m_PrefabInstance: {fileID: 1890474067062928347}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 0}
@@ -438,31 +400,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2da0c512f12947e489f739169773d7ca, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!114 &5796404896790943328 stripped
+--- !u!114 &5059819421467020040 stripped
 MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 5353838427765777851, guid: 754fd4e2bb7828240808af9ce37feb93, type: 3}
+  m_CorrespondingSourceObject: {fileID: 6630502416812194003, guid: 754fd4e2bb7828240808af9ce37feb93, type: 3}
   m_PrefabInstance: {fileID: 1890474067062928347}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8fef2260eb7f54392b8c68f9874d1d28, type: 3}
+  m_Script: {fileID: 11500000, guid: 18b5dde3d1a0473dbcf0d7305ac86c38, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!114 &8642591472055175998 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 7911970236011968741, guid: 754fd4e2bb7828240808af9ce37feb93, type: 3}
-  m_PrefabInstance: {fileID: 1890474067062928347}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2ebd3771315604fc09ca02ca37850846, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
---- !u!224 &8997778028803641515 stripped
+--- !u!224 &6520705227176678513 stripped
 RectTransform:
-  m_CorrespondingSourceObject: {fileID: 7413724693438948208, guid: 754fd4e2bb7828240808af9ce37feb93, type: 3}
+  m_CorrespondingSourceObject: {fileID: 4630372213285562282, guid: 754fd4e2bb7828240808af9ce37feb93, type: 3}
   m_PrefabInstance: {fileID: 1890474067062928347}
   m_PrefabAsset: {fileID: 0}
 --- !u!1001 &1949774983281342339

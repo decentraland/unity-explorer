@@ -11,7 +11,7 @@ using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
 using ECS.Abstract;
 using MVC;
-using System.Text.RegularExpressions;
+using System;
 using System.Threading;
 using UnityEngine.InputSystem;
 using Utility.Arch;
@@ -26,16 +26,14 @@ namespace DCL.Chat
         private readonly ChatEntryConfigurationSO chatEntryConfiguration;
         private readonly IChatMessagesBus chatMessagesBus;
         private readonly NametagsData nametagsData;
-
         private readonly IChatHistory chatHistory;
         private readonly World world;
         private readonly Entity playerEntity;
-
         private readonly IInputBlock inputBlock;
         private readonly ViewDependencies viewDependencies;
+        private readonly IChatCommandsBus chatCommandsBus;
 
         private SingleInstanceEntity cameraEntity;
-        private (IChatCommand command, Match param) chatCommand;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
 
@@ -51,8 +49,8 @@ namespace DCL.Chat
             World world,
             Entity playerEntity,
             IInputBlock inputBlock,
-            ViewDependencies viewDependencies
-        ) : base(viewFactory)
+            ViewDependencies viewDependencies,
+            IChatCommandsBus chatCommandsBus) : base(viewFactory)
         {
             this.chatEntryConfiguration = chatEntryConfiguration;
             this.chatMessagesBus = chatMessagesBus;
@@ -63,6 +61,7 @@ namespace DCL.Chat
             this.playerEntity = playerEntity;
             this.inputBlock = inputBlock;
             this.viewDependencies = viewDependencies;
+            this.chatCommandsBus = chatCommandsBus;
         }
 
         public void Clear() // Called by a command
@@ -75,6 +74,7 @@ namespace DCL.Chat
         {
             chatMessagesBus.MessageAdded -= OnChatBusMessageAdded;
             chatHistory.MessageAdded -= CreateChatEntry;
+            chatCommandsBus.OnClearChat -= Clear;
 
             viewInstance!.PointerEnter -= OnChatViewPointerEnter;
             viewInstance.PointerExit -= OnChatViewPointerExit;
@@ -101,6 +101,7 @@ namespace DCL.Chat
             //We start processing messages once the view is ready
             chatMessagesBus.MessageAdded += OnChatBusMessageAdded;
             chatHistory.MessageAdded += CreateChatEntry; // TODO: This should not exist, the only way to add a chat message from outside should be by using the bus
+            chatCommandsBus.OnClearChat += Clear;
 
             viewInstance!.InjectDependencies(viewDependencies);
             viewInstance!.Initialize(chatHistory.Channels, ChatChannel.NEARBY_CHANNEL, nametagsData.showChatBubbles, chatEntryConfiguration);
