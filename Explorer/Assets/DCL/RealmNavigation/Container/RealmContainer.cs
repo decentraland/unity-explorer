@@ -103,7 +103,7 @@ namespace DCL.RealmNavigation
                                               async (report, token) =>
                                               {
                                                   WaitForSceneReadiness? sceneReadiness = await teleportController.TeleportToSceneSpawnPointAsync(binding.Value, report, token);
-                                                  return await sceneReadiness.ToUniTask().SuppressToResultAsync();
+                                                  return await sceneReadiness.ToUniTask();
                                               }, CancellationToken.None)
                                          .Forget();
                         }

@@ -1,8 +1,8 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using ECS.StreamableLoading.Cache.Disk;
+using ECS.StreamableLoading.Cache.Disk.Cacheables;
 using ECS.StreamableLoading.Cache.InMemory;
-using System;
 using System.Threading;
 using Utility.Types;
 
@@ -12,21 +12,22 @@ namespace ECS.StreamableLoading.Cache.Generic
     {
         private readonly IMemoryCache<T, TKey> memoryCache;
         private readonly IDiskCache<T> diskCache;
-        private readonly Func<TKey, string> stringifyFunc;
+        private readonly IDiskHashCompute<TKey> diskHashCompute;
         private readonly string extension;
 
-        public GenericCache(IMemoryCache<T, TKey> memoryCache, IDiskCache<T> diskCache, Func<TKey, string> stringifyFunc, string extension)
+        public GenericCache(IMemoryCache<T, TKey> memoryCache, IDiskCache<T> diskCache, IDiskHashCompute<TKey> diskHashCompute, string extension)
         {
             this.memoryCache = memoryCache;
             this.diskCache = diskCache;
-            this.stringifyFunc = stringifyFunc;
+            this.diskHashCompute = diskHashCompute;
             this.extension = extension;
         }
 
-        public UniTask<EnumResult<TaskError>> PutAsync(TKey key, T value, CancellationToken token)
+        public async UniTask<EnumResult<TaskError>> PutAsync(TKey key, T value, CancellationToken token)
         {
             memoryCache.Put(key, value);
-            return diskCache.PutAsync(stringifyFunc(key)!, extension, value, token);
+            using var hashKey = diskHashCompute.ComputeHash(key);
+            return await diskCache.PutAsync(hashKey, extension, value, token);
         }
 
         public async UniTask<EnumResult<Option<T>, TaskError>> ContentAsync(TKey key, CancellationToken token)
@@ -34,9 +35,8 @@ namespace ECS.StreamableLoading.Cache.Generic
             if (memoryCache.TryGet(key, out T result))
                 return EnumResult<Option<T>, TaskError>.SuccessResult(Option<T>.Some(result));
 
-            string stringKey = stringifyFunc(key)!;
-
-            var diskResult = await diskCache.ContentAsync(stringKey, extension, token);
+            using var hashKey = diskHashCompute.ComputeHash(key);
+            var diskResult = await diskCache.ContentAsync(hashKey, extension, token);
 
             if (diskResult.Success)
             {

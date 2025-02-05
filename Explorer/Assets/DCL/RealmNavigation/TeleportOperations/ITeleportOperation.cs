@@ -1,6 +1,6 @@
 using CommunicationData.URLHelpers;
-using DCL.AsyncLoadReporting;
 using DCL.RealmNavigation.LoadingOperation;
+using DCL.Utilities;
 using UnityEngine;
 
 namespace DCL.RealmNavigation.TeleportOperations

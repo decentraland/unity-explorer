@@ -239,7 +239,10 @@ namespace SceneRunner
                 );
             }
 
-            try { sceneRuntime.ExecuteSceneJson(); }
+            try
+            {
+                sceneRuntime.ExecuteSceneJson();
+            }
             catch (Exception e)
             {
                 await ReportExceptionAsync(e, runtimeDeps, deps.ExceptionsHandler);

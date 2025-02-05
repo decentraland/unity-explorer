@@ -1,4 +1,4 @@
-﻿using DCL.AsyncLoadReporting;
+﻿using DCL.Utilities;
 using ECS.SceneLifeCycle.Reporting;
 using ECS.SceneLifeCycle.SceneDefinition;
 using System;

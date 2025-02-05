@@ -29,7 +29,7 @@ namespace DCL.RealmNavigation.LoadingOperation
             operation.CurrentOp.OnUpdate += op => labelBinding.Value = op?.GetType().Name ?? "None";
 
             builder.AddControl(new DebugConstLabelDef("Current Op:"), new DebugSetOnlyLabelDef(labelBinding), hint);
-            builder.AddControl(new DebugDropdownDef(choices, binding, "Interrupt On"), null);
+            builder.AddControl(new DebugDropdownDef(binding, "Interrupt On"), null);
         }
     }
 }

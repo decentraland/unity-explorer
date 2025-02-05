@@ -25,6 +25,8 @@
         public const string FRIENDS_USER_BLOCKING = "friends-user-blocking";
 
         public const string FORCE_TEXTURE_COMPRESSION = "force-texture-compression";
+        public const string DISABLE_DISK_CACHE = "disable-disk-cache";
+        public const string DISABLE_DISK_CACHE_CLEANUP = "disable-disk-cache-cleanup";
 
         public static class Multiplayer
         {
