@@ -720,6 +720,7 @@ namespace Global.Dynamic
                     includeUserBlocking
                 ),
                 new GenericContextMenuPlugin(assetsProvisioner, mvcManager),
+                realmNavigatorContainer.CreatePlugin(),
             };
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);

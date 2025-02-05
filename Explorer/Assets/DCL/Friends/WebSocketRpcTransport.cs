@@ -35,7 +35,9 @@ namespace DCL.Friends
         public void Dispose()
         {
             lifeCycleCancellationToken.SafeCancelAndDispose();
-            webSocket?.Dispose();
+
+            try { webSocket.Dispose(); }
+            catch (ObjectDisposedException) { }
         }
 
         public async UniTask ConnectAsync(CancellationToken ct)

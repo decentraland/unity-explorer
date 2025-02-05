@@ -1,6 +1,5 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
-using DCL.AsyncLoadReporting;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
 using DCL.Profiles.Self;

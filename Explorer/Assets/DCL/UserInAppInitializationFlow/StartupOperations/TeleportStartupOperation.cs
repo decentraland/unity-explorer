@@ -6,8 +6,10 @@ using DCL.RealmNavigation.TeleportOperations;
 using DCL.Utilities;
 using ECS.Prioritization.Components;
 using Global.Dynamic;
+using System;
 using System.Threading;
 using UnityEngine;
+using Utility.Types;
 
 namespace DCL.UserInAppInitializationFlow.StartupOperations
 {
@@ -26,7 +28,7 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
             this.startParcel = startParcel;
         }
 
-        protected override UniTask InternalExecuteAsync(IStartupOperation.Params report, CancellationToken ct) =>
-            InternalExecuteAsync(report, startParcel, ct);
+        public override UniTask<EnumResult<TaskError>> ExecuteAsync(IStartupOperation.Params args, CancellationToken ct) =>
+            InternalExecuteAsync(args, startParcel, ct);
     }
 }

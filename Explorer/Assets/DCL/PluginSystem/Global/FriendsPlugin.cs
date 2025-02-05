@@ -158,6 +158,7 @@ namespace DCL.PluginSystem.Global
                 notificationsBusController,
                 passportBridge,
                 friendsService);
+
             mvcManager.RegisterController(persistentFriendsOpenerController);
 
             FriendRequestView friendRequestPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.FriendRequestPrefab, ct)).Value;
@@ -193,7 +194,8 @@ namespace DCL.PluginSystem.Global
             {
                 if (friendsService == null) return;
 
-                await friendsService.DisconnectAsync(ct);
+                try { await friendsService.DisconnectAsync(ct); }
+                catch (Exception) { }
 
                 friendsService.SubscribeToIncomingFriendshipEventsAsync(ct).Forget();
                 friendsService.SubscribeToConnectivityStatusAsync(ct).Forget();
@@ -202,8 +204,17 @@ namespace DCL.PluginSystem.Global
 
         private void DisconnectRpcClient()
         {
-            friendServiceSubscriptionCancellationToken.SafeCancelAndDispose();
-            // friendsService?.DisconnectAsync(friendServiceSubscriptionCancellationToken.Token).Forget();
+            friendServiceSubscriptionCancellationToken = friendServiceSubscriptionCancellationToken.SafeRestart();
+            DisconnectRpcClientAsync(friendServiceSubscriptionCancellationToken.Token).Forget();
+            return;
+
+            async UniTaskVoid DisconnectRpcClientAsync(CancellationToken ct)
+            {
+                if (friendsService == null) return;
+
+                try { await friendsService.DisconnectAsync(ct); }
+                catch (Exception) { }
+            }
         }
     }
 
