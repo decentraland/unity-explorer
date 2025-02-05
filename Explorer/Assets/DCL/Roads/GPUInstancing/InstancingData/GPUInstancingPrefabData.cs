@@ -11,8 +11,6 @@ namespace DCL.Roads.GPUInstancing.Playground
         public List<GPUInstancingCandidate> indirectCandidates;
         public List<GPUInstancingCandidate> directCandidates;
 
-        [SerializeField] private Shader indirectShader;
-
         public List<LODGroup> instancedLodGroups;
         public List<Renderer> InstancedRenderers;
 
@@ -28,9 +26,6 @@ namespace DCL.Roads.GPUInstancing.Playground
 
             if (transform.localScale != Vector3.one)
                 transform.localScale = Vector3.one;
-
-            if (indirectShader == null)
-                Debug.LogWarning($"Shader is not assigned on: {name}! This will result in empty {nameof(indirectCandidates)} list!");
 
             if (PrefabUtility.IsPartOfPrefabAsset(gameObject))
             {
@@ -77,10 +72,9 @@ namespace DCL.Roads.GPUInstancing.Playground
 
                 Matrix4x4 localToRootMatrix = transform.worldToLocalMatrix * lodGroup.transform.localToWorldMatrix; // root * child
 
-                List<GPUInstancingCandidate> collectedCandidates = IsMyShader(lods[0].renderers[0].sharedMaterials) ? indirectCandidates : directCandidates;
-
-                if (!TryAddToCollected(lodGroup, localToRootMatrix, collectedCandidates))
-                    AddNewCandidate(lodGroup, localToRootMatrix, collectedCandidates);
+                // List<GPUInstancingCandidate> collectedCandidates = IsMyShader(lods[0].renderers[0].sharedMaterials) ? indirectCandidates : directCandidates;
+                if (!TryAddToCollected(lodGroup, localToRootMatrix, indirectCandidates))
+                    AddNewCandidate(lodGroup, localToRootMatrix, indirectCandidates);
             }
         }
 
@@ -97,10 +91,9 @@ namespace DCL.Roads.GPUInstancing.Playground
 
                     Matrix4x4 localToRootMatrix = transform.worldToLocalMatrix * mr.transform.localToWorldMatrix; // root * child
 
-                    List<GPUInstancingCandidate> collectedCandidates = IsMyShader(mr.sharedMaterials) ? indirectCandidates : directCandidates;
-
-                    if (!TryAddSingleMeshToCollected(mr, localToRootMatrix, collectedCandidates))
-                        AddNewStandaloneMeshCandidate(mr, localToRootMatrix, collectedCandidates);
+                    // List<GPUInstancingCandidate> collectedCandidates = IsMyShader(mr.sharedMaterials) ? indirectCandidates : directCandidates;
+                    if (!TryAddSingleMeshToCollected(mr, localToRootMatrix, indirectCandidates))
+                        AddNewStandaloneMeshCandidate(mr, localToRootMatrix, indirectCandidates);
                 }
             }
         }
@@ -230,17 +223,12 @@ namespace DCL.Roads.GPUInstancing.Playground
         private bool ValidLODGroup(LODGroup lodGroup)
         {
             foreach (UnityEngine.LOD lod in lodGroup.GetLODs())
+            foreach (Renderer lodRenderer in lod.renderers)
             {
-                foreach (Renderer lodRenderer in lod.renderers)
+                if (lodRenderer == null)
                 {
-                    if (lodRenderer == null)
-                    {
-                        Debug.LogWarning($"{lodGroup.name} has no renderer assigned! Consider removing LODGroup");
-                        return false;
-                    }
-
-                    if (lodRenderer is not MeshRenderer)
-                        return false;
+                    Debug.LogWarning($"{lodGroup.name} has no renderer assigned! Consider removing LODGroup");
+                    return false;
                 }
             }
 
@@ -266,19 +254,6 @@ namespace DCL.Roads.GPUInstancing.Playground
             }
 
             return false;
-        }
-
-        private bool IsMyShader(Material[] materials)
-        {
-            if (indirectShader == null || materials == null) return false;
-
-            foreach (var m in materials)
-            {
-                if (m == null || m.shader != indirectShader)
-                    return false;
-            }
-
-            return true;
         }
     }
 }

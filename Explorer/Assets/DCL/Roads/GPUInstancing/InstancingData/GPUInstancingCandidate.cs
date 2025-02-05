@@ -28,6 +28,7 @@ namespace DCL.Roads.GPUInstancing.Playground
 
         public float[] LodsScreenSpaceSizes;
         public List<GPUInstancingLodLevel> Lods;
+        private static string[] whitelistedShaders = {"DCL/Scene"}; // "Universal Render Pipeline/Nature/Stylized Grass"
 
         public GPUInstancingCandidate(GPUInstancingCandidate candidate)
         {
@@ -78,7 +79,7 @@ namespace DCL.Roads.GPUInstancing.Playground
 
                 foreach (Renderer renderer in lod.renderers)
                 {
-                    if (renderer is MeshRenderer meshRenderer && renderer.sharedMaterial != null)
+                    if (renderer is MeshRenderer meshRenderer && renderer.sharedMaterial != null && IsValidShader(meshRenderer.sharedMaterials))
                         lodMeshes.Add(new MeshRenderingData(meshRenderer));
                 }
 
@@ -91,7 +92,7 @@ namespace DCL.Roads.GPUInstancing.Playground
 
         public GPUInstancingCandidate(MeshRenderer meshRenderer, Matrix4x4 localToRootMatrix)
         {
-            if (meshRenderer.sharedMaterial == null) return;
+            if (meshRenderer.sharedMaterial == null || !IsValidShader(meshRenderer.sharedMaterials)) return;
 
             Reference = null; // No LODGroup
             Transform = meshRenderer.transform;
@@ -111,6 +112,20 @@ namespace DCL.Roads.GPUInstancing.Playground
             Lods.Add(new GPUInstancingLodLevel { MeshRenderingDatas = singleLodMeshes.ToArray() });
 
             UpdateBounds();
+        }
+
+        private bool IsValidShader(Material[] materials)
+        {
+            if (materials == null) return false;
+
+            foreach (var m in materials)
+            {
+                Debug.Log(m.shader.name);
+                if (m == null || !whitelistedShaders.Contains(m.shader.name))
+                    return false;
+            }
+
+            return true;
         }
 
         public void PopulateDirectInstancingBuffer()

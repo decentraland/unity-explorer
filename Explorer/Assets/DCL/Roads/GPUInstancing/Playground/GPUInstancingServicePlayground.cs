@@ -1,6 +1,8 @@
 ﻿using DCL.Roads.GPUInstancing.Playground;
 using DCL.Roads.Settings;
+using UnityEditor;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace DCL.Roads.GPUInstancing
 {
@@ -14,9 +16,12 @@ namespace DCL.Roads.GPUInstancing
         public GPUInstancingPrefabData[] originalPrefabs;
         [Min(0)] public int PrefabId;
 
+        public Vector2Int ParcelsMin;
+        public Vector2Int ParcelsMax;
+
         public bool DirectOnly;
         public bool InderctOnly;
-        public bool FullRoadsLayout;
+        public bool OnePrefabDebug;
         [Space] public bool Run;
 
         private int currentPrefabId;
@@ -25,20 +30,41 @@ namespace DCL.Roads.GPUInstancing
         {
             if (!Run) return;
 
-            if (!FullRoadsLayout && currentPrefabId != Mathf.Min(PrefabId, originalPrefabs.Length - 1))
+            if (OnePrefabDebug && currentPrefabId != Mathf.Min(PrefabId, originalPrefabs.Length - 1))
                 AddPrefabToService();
 
-            if (InderctOnly)
-                instancingService.RenderIndirect();
-            else if (DirectOnly)
-                instancingService.RenderDirect();
-            else
+            // if (InderctOnly)
+            //     instancingService.RenderIndirect();
+            // else if (DirectOnly)
+            //     instancingService.RenderDirect();
+            // else
                 instancingService.Render();
         }
 
         private void OnDisable()
         {
             instancingService.Clear();
+        }
+
+        [ContextMenu(nameof(PrefabsSelfCollect))]
+        private void PrefabsSelfCollect()
+        {
+            foreach (GPUInstancingPrefabData prefab in originalPrefabs)
+            {
+                prefab.CollectSelfData();
+                prefab.ShowVisuals();
+
+#if UNITY_EDITOR
+                EditorUtility.SetDirty(this);
+                AssetDatabase.SaveAssets();
+#endif
+            }
+        }
+
+        [ContextMenu("DEBUG - Collect Instances on Roads Config")]
+        private void CollectAllMeshInstancesOnRoadsConfig()
+        {
+            RoadsConfig.CollectGPUInstancingCandidates(ParcelsMin, ParcelsMax);
         }
 
         [ContextMenu(nameof(AddPrefabToService))]

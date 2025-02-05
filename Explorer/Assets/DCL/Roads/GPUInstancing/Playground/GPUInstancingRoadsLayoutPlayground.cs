@@ -17,7 +17,7 @@ namespace DCL.Roads.GPUInstancing.Playground
 
         public RoadSettingsAsset RoadsConfig;
         public GPUInstancingPrefabData[] Prefabs;
-        
+
         [Space] public List<GPUInstancingCandidate> Candidates;
 
         [Space] public Transform roadsRoot;
@@ -56,12 +56,13 @@ namespace DCL.Roads.GPUInstancing.Playground
             foreach (var lod in candidate.Lods)
             foreach (MeshRenderingData meshRendering in lod.MeshRenderingDatas)
             {
-                var instancedRenderer = meshRendering.ToGPUInstancedRenderer(instancingMaterials);
+                meshRendering.Initialize(instancingMaterials);
+
                 List<Matrix4x4> shiftedInstanceData = new (candidate.InstancesBuffer.Count);
                 shiftedInstanceData.AddRange(candidate.InstancesBuffer.Select(matrix => matrix.instMatrix));
 
-                for (var i = 0; i < instancedRenderer.RenderParamsArray.Length; i++)
-                    Graphics.RenderMeshInstanced(in instancedRenderer.RenderParamsArray[i], instancedRenderer.Mesh, i, shiftedInstanceData);
+                for (var i = 0; i < meshRendering.RenderParamsArray.Length; i++)
+                    Graphics.RenderMeshInstanced(in meshRendering.RenderParamsArray[i], meshRendering.SharedMesh, i, shiftedInstanceData);
             }
         }
 
@@ -74,26 +75,27 @@ namespace DCL.Roads.GPUInstancing.Playground
             // foreach (var lod in candidate.Lods)
             foreach (MeshRenderingData mesh in meshes)
             {
-                var instancedRenderer = mesh.ToGPUInstancedRenderer(instancingMaterials);
-                int submeshCount = instancedRenderer.RenderParamsArray.Length;
+                mesh.Initialize(instancingMaterials);
+
+                int submeshCount = mesh.RenderParamsArray.Length;
 
                 // Set commands and render
                 for (var submeshIndex = 0; submeshIndex < submeshCount; submeshIndex++)
                 {
-                    buffers.DrawArgsCommandData[currentCommandIndex].indexCountPerInstance = instancedRenderer.Mesh.GetIndexCount(submeshIndex);
+                    buffers.DrawArgsCommandData[currentCommandIndex].indexCountPerInstance = mesh.SharedMesh.GetIndexCount(submeshIndex);
                     buffers.DrawArgsCommandData[currentCommandIndex].instanceCount = (uint)candidate.InstancesBuffer.Count;
-                    buffers.DrawArgsCommandData[currentCommandIndex].startIndex = instancedRenderer.Mesh.GetIndexStart(submeshIndex);
+                    buffers.DrawArgsCommandData[currentCommandIndex].startIndex = mesh.SharedMesh.GetIndexStart(submeshIndex);
                     buffers.DrawArgsCommandData[currentCommandIndex].baseVertexIndex = 0;
                     buffers.DrawArgsCommandData[currentCommandIndex].startInstance = 0;
                     buffers.DrawArgsBuffer.SetData(buffers.DrawArgsCommandData, currentCommandIndex, currentCommandIndex, count: 1);
 
-                    RenderParams rparams = instancedRenderer.RenderParamsArray[submeshIndex];
+                    RenderParams rparams = mesh.RenderParamsArray[submeshIndex];
 
                     // rparams.camera = Camera.current;
                     rparams.matProps = new MaterialPropertyBlock();
                     rparams.matProps.SetBuffer("_PerInstanceBuffer", buffers.InstanceBuffer);
 
-                    Graphics.RenderMeshIndirect(rparams, instancedRenderer.Mesh, buffers.DrawArgsBuffer, commandCount: 1, currentCommandIndex);
+                    Graphics.RenderMeshIndirect(rparams, mesh.SharedMesh, buffers.DrawArgsBuffer, commandCount: 1, currentCommandIndex);
                     currentCommandIndex++;
                 }
             }
@@ -116,12 +118,6 @@ namespace DCL.Roads.GPUInstancing.Playground
 
             Candidates.Clear();
             candidatesBuffersTable.Clear();
-        }
-
-        [ContextMenu("DEBUG - Collect Instances on Roads Config")]
-        private void CollectAllMeshInstancesOnRoadsConfig()
-        {
-            RoadsConfig.CollectGPUInstancingCandidates(ParcelsMin, ParcelsMax);
         }
 
         [ContextMenu("DEBUG - TransferFromConfigToService")]
@@ -151,7 +147,11 @@ namespace DCL.Roads.GPUInstancing.Playground
             int lodLevel = Mathf.Min(LodLevel, candidate.Lods.Count - 1);
             MeshRenderingData[] meshes = candidate.Lods[lodLevel].MeshRenderingDatas;
 
-            foreach (MeshRenderingData mesh in meshes) { totalCommands += mesh.ToGPUInstancedRenderer(instancingMaterials).RenderParamsArray.Length; }
+            foreach (MeshRenderingData mesh in meshes)
+            {
+                mesh.Initialize(instancingMaterials);
+                totalCommands += mesh.RenderParamsArray.Length;
+            }
 
             buffers.DrawArgsBuffer?.Release();
             buffers.DrawArgsBuffer = new GraphicsBuffer(GraphicsBuffer.Target.IndirectArguments, totalCommands, GraphicsBuffer.IndirectDrawIndexedArgs.size);
@@ -162,8 +162,7 @@ namespace DCL.Roads.GPUInstancing.Playground
             buffers.InstanceBuffer.SetData( candidate.InstancesBuffer, 0, 0,  candidate.InstancesBuffer.Count);
         }
 
-
-          [ContextMenu("DEBUG - Cache Prefabs")]
+        [ContextMenu("DEBUG - Cache Prefabs")]
         private void CachePrefabs()
         {
             var cachedPrefabs = new List<GPUInstancingPrefabData>();

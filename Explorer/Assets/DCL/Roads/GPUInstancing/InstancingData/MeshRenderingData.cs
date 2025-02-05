@@ -1,5 +1,4 @@
-﻿using DCL.Roads.Playground;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -16,7 +15,7 @@ namespace DCL.Roads.GPUInstancing.Playground
         public Mesh SharedMesh;
         public MeshRenderer Renderer;
 
-        public GPUInstancedRenderer GPUInstancedRenderer { get; private set; }
+        public RenderParams[] RenderParamsArray { get; private set; }// array for submeshes
 
         public MeshRenderingData(MeshRenderer renderer)
         {
@@ -26,11 +25,11 @@ namespace DCL.Roads.GPUInstancing.Playground
 
         public void Initialize(Dictionary<Material, Material> instancingMaterials)
         {
-            GPUInstancedRenderer = ToGPUInstancedRenderer(instancingMaterials);
+            RenderParamsArray = CreateRenderParams(instancingMaterials);
         }
 
         // RenderParams are not Serializable, that is why we save collected raw data and transition to RenderParams at runtime
-        public GPUInstancedRenderer ToGPUInstancedRenderer(Dictionary<Material, Material> instancingMaterials)
+        private RenderParams[] CreateRenderParams(Dictionary<Material, Material> instancingMaterials)
         {
             var sharedMaterials = Renderer.sharedMaterials;
             var renderParamsArray = new RenderParams[sharedMaterials.Length];
@@ -61,7 +60,7 @@ namespace DCL.Roads.GPUInstancing.Playground
                 };
             }
 
-            return new GPUInstancedRenderer(SharedMesh, renderParamsArray);
+            return renderParamsArray;
         }
 
         // Equals when MeshFilter and MeshRenderer settings are same, but Transform could be different

@@ -1,5 +1,4 @@
 ﻿using DCL.Roads.GPUInstancing.Playground;
-using DCL.Roads.Playground;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using UnityEngine;
@@ -36,28 +35,28 @@ namespace DCL.Roads.GPUInstancing
             var currentCommandIndex = 0;
 
             foreach (GPUInstancingLodLevel lod in candidate.Lods)
-            foreach (MeshRenderingData mesh in lod.MeshRenderingDatas)
+            foreach (MeshRenderingData meshData in lod.MeshRenderingDatas)
             {
-                GPUInstancedRenderer instancedRenderer = mesh.GPUInstancedRenderer;
-                int submeshCount = instancedRenderer.RenderParamsArray.Length;
+                int submeshCount = meshData.RenderParamsArray.Length;
 
                 // Set commands and render
                 for (var submeshIndex = 0; submeshIndex < submeshCount; submeshIndex++)
                 {
-                    buffers.DrawArgsCommandData[currentCommandIndex].indexCountPerInstance = instancedRenderer.Mesh.GetIndexCount(submeshIndex);
+                    buffers.DrawArgsCommandData[currentCommandIndex].indexCountPerInstance = meshData.SharedMesh.GetIndexCount(submeshIndex);
                     buffers.DrawArgsCommandData[currentCommandIndex].instanceCount = (uint)candidate.InstancesBuffer.Count;
-                    buffers.DrawArgsCommandData[currentCommandIndex].startIndex = instancedRenderer.Mesh.GetIndexStart(submeshIndex);
+                    buffers.DrawArgsCommandData[currentCommandIndex].startIndex = meshData.SharedMesh.GetIndexStart(submeshIndex);
                     buffers.DrawArgsCommandData[currentCommandIndex].baseVertexIndex = 0;
                     buffers.DrawArgsCommandData[currentCommandIndex].startInstance = 0;
                     buffers.DrawArgsBuffer.SetData(buffers.DrawArgsCommandData, currentCommandIndex, currentCommandIndex, count: 1);
 
-                    RenderParams rparams = instancedRenderer.RenderParamsArray[submeshIndex];
+                    RenderParams rparams = meshData.RenderParamsArray[submeshIndex];
 
                     // rparams.camera = Camera.current;
                     rparams.matProps = new MaterialPropertyBlock();
                     rparams.matProps.SetBuffer("_PerInstanceBuffer", buffers.InstanceBuffer);
+                    // rparams.matProps.SetMatrix("_LocalShift", meshData.Renderer.localToWorldMatrix);
 
-                    Graphics.RenderMeshIndirect(rparams, instancedRenderer.Mesh, buffers.DrawArgsBuffer, commandCount: 1, currentCommandIndex);
+                    Graphics.RenderMeshIndirect(rparams, meshData.SharedMesh, buffers.DrawArgsBuffer, commandCount: 1, currentCommandIndex);
                     currentCommandIndex++;
                 }
             }
@@ -68,10 +67,8 @@ namespace DCL.Roads.GPUInstancing
             foreach (GPUInstancingLodLevel lod in candidate.Lods)
             foreach (MeshRenderingData meshRendering in lod.MeshRenderingDatas)
             {
-                GPUInstancedRenderer instancedRenderer = meshRendering.GPUInstancedRenderer;
-
-                for (var i = 0; i < instancedRenderer.RenderParamsArray.Length; i++)
-                    Graphics.RenderMeshInstanced(in instancedRenderer.RenderParamsArray[i], instancedRenderer.Mesh, i, candidate.InstancesBufferDirect);
+                for (var i = 0; i < meshRendering.RenderParamsArray.Length; i++)
+                    Graphics.RenderMeshInstanced(in meshRendering.RenderParamsArray[i], meshRendering.SharedMesh, i, candidate.InstancesBufferDirect);
             }
         }
 
@@ -109,7 +106,7 @@ namespace DCL.Roads.GPUInstancing
             foreach (MeshRenderingData mesh in lodLevel.MeshRenderingDatas)
             {
                 mesh.Initialize(instancingMaterials);
-                totalCommands += mesh.GPUInstancedRenderer.RenderParamsArray.Length; // i.e. sub-meshes
+                totalCommands += mesh.RenderParamsArray.Length; // i.e. sub-meshes
             }
 
             buffers.DrawArgsBuffer?.Release();
