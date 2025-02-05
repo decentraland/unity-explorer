@@ -29,6 +29,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             trackEvent.Context["realm"] = realmData is not { Configured: true } ? NOT_CONFIGURED : realmData.RealmName;
             trackEvent.Context["parcel"] = playerTransform == null? NOT_CONFIGURED : playerTransform.Position.ToParcel().ToString();
             trackEvent.Context["position"] = playerTransform == null? NOT_CONFIGURED : playerTransform.Position.Value.ToShortString();
+            trackEvent.Context["direct"] = true;
 
             return trackEvent;
         }

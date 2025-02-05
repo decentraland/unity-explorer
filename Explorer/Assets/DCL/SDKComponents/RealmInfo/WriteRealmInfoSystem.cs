@@ -46,6 +46,9 @@ namespace DCL.SDKComponents.RealmInfo
             if (initialized & !commsRoomInfo.TryFetchNewInfo() && !realmData.IsDirty)
                 return;
 
+            if (!realmData.Configured) // Realm is not configured for PX only // TODO review what should be propagated as PX has its own RealmData, here the global one is used
+                return;
+
             PropagateToScene();
         }
 

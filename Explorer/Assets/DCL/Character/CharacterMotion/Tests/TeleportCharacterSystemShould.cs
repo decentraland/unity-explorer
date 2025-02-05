@@ -1,9 +1,9 @@
 ﻿using Arch.Core;
 using Cysharp.Threading.Tasks;
-using DCL.AsyncLoadReporting;
 using DCL.CharacterCamera;
 using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Systems;
+using DCL.Utilities;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Reporting;
 using ECS.TestSuite;
