@@ -716,6 +716,7 @@ namespace Global.Dynamic
                     staticContainer.WebRequestsContainer.WebRequestController,
                     mvcManager,
                     staticContainer.InputBlock),
+                realmNavigatorContainer.CreatePlugin(),
             };
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);

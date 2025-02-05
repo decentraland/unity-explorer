@@ -1,14 +1,16 @@
 ﻿using Cysharp.Threading.Tasks;
-using DCL.AsyncLoadReporting;
+using DCL.Diagnostics;
+using DCL.Utilities;
 using System;
 using UnityEngine;
+using Utility.Types;
 
 namespace ECS.SceneLifeCycle.Reporting
 {
     public static class WaitForSceneReadinessExtensions
     {
-        public static UniTask ToUniTask(this WaitForSceneReadiness? waitForSceneReadiness) =>
-            waitForSceneReadiness?.ExecuteAsync() ?? UniTask.CompletedTask;
+        public static UniTask<EnumResult<TaskError>> ToUniTask(this WaitForSceneReadiness? waitForSceneReadiness) =>
+            waitForSceneReadiness?.ExecuteAsync() ?? UniTask.FromResult(EnumResult<TaskError>.SuccessResult());
     }
 
     public class WaitForSceneReadiness
@@ -30,7 +32,7 @@ namespace ECS.SceneLifeCycle.Reporting
         ///     Add the scene readiness report to the queue and wait for its resolution
         /// </summary>
         /// <returns></returns>
-        internal async UniTask ExecuteAsync()
+        internal UniTask<EnumResult<TaskError>> ExecuteAsync()
         {
             if (executed)
                 throw new Exception(nameof(WaitForSceneReadiness) + " can be executed only once");
@@ -40,7 +42,7 @@ namespace ECS.SceneLifeCycle.Reporting
             // Add report to the queue so it will be grabbed by the actual scene or LODs
             sceneReadinessReportQueue.Enqueue(parcel, loadProcessReport);
 
-            await loadProcessReport.WaitUntilFinishedAsync();
+            return loadProcessReport.WaitUntilFinishedAsync(ReportCategory.SCENE_LOADING);
         }
     }
 }

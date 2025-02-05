@@ -60,6 +60,11 @@ namespace Utility.Types
 
         public static implicit operator Result(Result<T> result) =>
             result.Success ? Result.SuccessResult() : Result.ErrorResult(result.ErrorMessage!);
+
+        public EnumResult<TErrorEnum> AsEnumResult<TErrorEnum>(TErrorEnum inErrorCase) =>
+            Success
+                ? EnumResult<TErrorEnum>.SuccessResult()
+                : EnumResult<TErrorEnum>.ErrorResult(inErrorCase, ErrorMessage!);
     }
 
     public readonly struct EnumResult<TErrorEnum>
