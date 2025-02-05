@@ -25,7 +25,7 @@ namespace AssetManagement
         /// <summary>
         ///     Downloaded over Addressables
         /// </summary>
-        ADDRESSABLE = 2 << 2,
+        ADDRESSABLE = 1 << 2,
 
         /// <summary>
         ///     All sources
@@ -35,7 +35,7 @@ namespace AssetManagement
 
     public static class AssetSourceEnumExtensions
     {
-        private static readonly Dictionary<AssetSource, string> CurrentSourceStrings = new()
+        private static readonly Dictionary<AssetSource, string> CURRENT_SOURCE_STRINGS = new ()
         {
             {
                 AssetSource.ADDRESSABLE, "ADDRESSABLE"
@@ -45,12 +45,13 @@ namespace AssetManagement
             },
             {
                 AssetSource.WEB, "WEB"
-            }
+            },
+            {
+                AssetSource.NONE, "NONE"
+            },
         };
 
-        public static string ToStringNonAlloc(this AssetSource source)
-        {
-            return CurrentSourceStrings[source];
-        }
+        public static string ToStringNonAlloc(this AssetSource source) =>
+            CURRENT_SOURCE_STRINGS[source]!;
     }
 }

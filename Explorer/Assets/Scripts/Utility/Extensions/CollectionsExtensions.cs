@@ -13,9 +13,9 @@ namespace Utility
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void SyncTryAdd<TKey, TValue>(this IDictionary<TKey, TValue> dictionary, TKey key, TValue value)
+        public static bool SyncTryAdd<TKey, TValue>(this IDictionary<TKey, TValue> dictionary, TKey key, TValue value)
         {
-            lock (dictionary) { dictionary.TryAdd(key, value); }
+            lock (dictionary) { return dictionary.TryAdd(key, value); }
         }
 
         public static bool SyncTryGetValue<TKey, TValue>(this IDictionary<TKey, TValue> dictionary, TKey key, out TValue value)
