@@ -7,8 +7,10 @@ using DCL.Chat.Commands;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
 using DCL.Input;
+using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
+using DCL.Profiles;
 using DCL.UI.MainUI;
 using DCL.UI.Profiles.Helpers;
 using MVC;
@@ -31,6 +33,8 @@ namespace DCL.PluginSystem.Global
         private readonly ViewDependencies viewDependencies;
         private readonly IChatCommandsBus chatCommandsBus;
         private readonly IProfileNameColorHelper profileNameColorHelper;
+        private readonly IRoomHub roomHub;
+        private readonly IProfileRepository profileRepository;
 
         private ChatController chatController;
 
@@ -46,7 +50,8 @@ namespace DCL.PluginSystem.Global
             Entity playerEntity,
             ViewDependencies viewDependencies,
             IChatCommandsBus chatCommandsBus,
-            IProfileNameColorHelper profileNameColorHelper)
+            IProfileNameColorHelper profileNameColorHelper,
+            IRoomHub roomHub, IProfileRepository profileRepository)
         {
             this.mvcManager = mvcManager;
             this.chatHistory = chatHistory;
@@ -59,6 +64,8 @@ namespace DCL.PluginSystem.Global
             this.viewDependencies = viewDependencies;
             this.chatCommandsBus = chatCommandsBus;
             this.profileNameColorHelper = profileNameColorHelper;
+            this.roomHub = roomHub;
+            this.profileRepository = profileRepository;
             this.mainUIView = mainUIView;
             this.inputBlock = inputBlock;
         }
@@ -85,7 +92,9 @@ namespace DCL.PluginSystem.Global
                 playerEntity,
                 inputBlock,
                 viewDependencies,
-                chatCommandsBus
+                chatCommandsBus,
+                roomHub,
+                profileRepository
             );
 
             mvcManager.RegisterController(chatController);

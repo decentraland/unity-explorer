@@ -1,4 +1,3 @@
-using DCL.Emoji;
 using DCL.Profiles;
 using UnityEngine;
 

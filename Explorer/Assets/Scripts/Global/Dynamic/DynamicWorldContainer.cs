@@ -670,7 +670,9 @@ namespace Global.Dynamic
                     playerEntity,
                     viewDependencies,
                     chatCommandsBus,
-                    profileNameColorHelper),
+                    profileNameColorHelper,
+                    roomHub,
+                    profileRepository),
                 new ExplorePanelPlugin(
                     assetsProvisioner,
                     mvcManager,

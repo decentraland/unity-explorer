@@ -1,8 +1,11 @@
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.Emoji;
+using DCL.Multiplayer.Connections.RoomHubs;
+using DCL.Profiles;
 using DCL.UI;
 using DCL.UI.InputFieldValidator;
+using DCL.UI.Profiles.Helpers;
 using DCL.UI.SuggestionPanel;
 using MVC;
 using System;
@@ -26,8 +29,7 @@ namespace DCL.Chat
 
         private const string ORIGIN = "chat";
         private static readonly Regex EMOJI_PATTERN_REGEX = new (@"(?<!https?:)(:\w{2,})", RegexOptions.Compiled);
-        private static readonly Regex USERNAMES_PATTERN_REGEX = new (@"^@[A-Za-z0-9]{3,15}(?:#[A-Za-z0-9]{4})?(?=\s|$)",
-           RegexOptions.Compiled);
+        private static readonly Regex USERNAMES_PATTERN_REGEX = new (@"(?:^|\s)@([A-Za-z0-9]{1,15})(?=\s|$)", RegexOptions.Compiled);
 
         [SerializeField] private TMP_InputField inputField;
         [SerializeField] private ValidatedInputFieldElement validatedInputField;
@@ -52,14 +54,23 @@ namespace DCL.Chat
         [SerializeField] private AudioClipConfig chatInputTextAudio;
         [SerializeField] private AudioClipConfig enterInputAudio;
 
-        private readonly List<EmojiData> keysWithPrefix = new ();
+        private readonly List<EmojiData> emojiKeys = new ();
+        private readonly List<ProfileInputSuggestionData> profileKeys = new ();
+
         private UniTaskCompletionSource closePopupTask;
         private Mouse device;
         private EmojiPanelController? emojiPanelController;
+        public readonly Dictionary<string, ProfileInputSuggestionData> ProfileNameMapping = new ();
         private CancellationTokenSource emojiPanelCts = new ();
-        private CancellationTokenSource emojiSearchCts = new ();
+        private CancellationTokenSource searchCts = new ();
         private bool isInputSelected;
         private ViewDependencies viewDependencies;
+
+        //THIS SHOULD NOT BE HERE!
+        private IRoomHub roomHub;
+        private IProfileNameColorHelper profileNameColorHelper;
+        private IProfileRepository profileRepository;
+        private string lastMatch;
 
         public string InputBoxText
         {
@@ -92,7 +103,7 @@ namespace DCL.Chat
         /// </summary>
         public event InputChangedDelegate InputChanged;
 
-        public void Initialize()
+        public void Initialize(IRoomHub roomHub, IProfileNameColorHelper profileNameColorHelper, IProfileRepository profileRepository)
         {
             device = InputSystem.GetDevice<Mouse>();
 
@@ -109,6 +120,10 @@ namespace DCL.Chat
             validatedInputField.InputValidated += OnInputValidated;
 
             viewDependencies.DclInput.UI.RightClick.performed += OnRightClickRegistered;
+
+            this.roomHub = roomHub;
+            this.profileNameColorHelper = profileNameColorHelper;
+            this.profileRepository = profileRepository;
 
             closePopupTask = new UniTaskCompletionSource();
         }
@@ -145,6 +160,7 @@ namespace DCL.Chat
         private void OnInputValidated(string inputText)
         {
             HandleEmojiSearch(inputText);
+            HandleUsernameSearch(inputText);
             UIAudioEventsBus.Instance.SendPlayAudioEvent(chatInputTextAudio);
             closePopupTask.TrySetResult();
             characterCounter.SetCharacterCount(inputText.Length);
@@ -313,7 +329,7 @@ namespace DCL.Chat
             suggestionPanel.SuggestionSelectedEvent -= OnSuggestionSelected;
 
             emojiPanelCts.SafeCancelAndDispose();
-            emojiSearchCts.SafeCancelAndDispose();
+            searchCts.SafeCancelAndDispose();
 
             viewDependencies.DclInput.UI.RightClick.performed -= OnRightClickRegistered;
         }
@@ -322,13 +338,13 @@ namespace DCL.Chat
         {
             switch (suggestionType)
             {
-                case InputSuggestionType.NONE:
-                    AddUsernameFromSuggestion(suggestionId, shouldClose);
-                    break;
+                case InputSuggestionType.NONE: break;
                 case InputSuggestionType.EMOJIS:
                     AddEmojiFromSuggestion(suggestionId, shouldClose);
                     break;
-                case InputSuggestionType.PROFILE: break;
+                case InputSuggestionType.PROFILE:
+                    AddUsernameFromSuggestion(suggestionId, shouldClose);
+                    break;
             }
         }
 
@@ -338,7 +354,7 @@ namespace DCL.Chat
 
             UIAudioEventsBus.Instance.SendPlayAudioEvent(addUserNameAudio);
 
-            inputField.SetTextWithoutNotify(inputField.text.Replace(USERNAMES_PATTERN_REGEX.Match(validatedInputField.InputText).Value, username));
+            inputField.SetTextWithoutNotify(inputField.text.Replace(lastMatch, username));
             inputField.stringPosition += username.Length;
 
             validatedInputField.ActivateInputField();
@@ -353,10 +369,10 @@ namespace DCL.Chat
 
             if (match.Success)
             {
-                emojiSearchCts.SafeCancelAndDispose();
-                emojiSearchCts = new CancellationTokenSource();
-
-                SearchAndSetEmojiSuggestionsAsync(match.Value, emojiSearchCts.Token).Forget();
+                lastMatch = match.Value;
+                searchCts.SafeCancelAndDispose();
+                searchCts = new CancellationTokenSource();
+                SearchAndSetUsernameSuggestionsAsync(lastMatch, searchCts.Token).Forget();
             }
             else
             {
@@ -367,19 +383,38 @@ namespace DCL.Chat
 
         private async UniTaskVoid SearchAndSetUsernameSuggestionsAsync(string value, CancellationToken ct)
         {
-            await DictionaryUtils.GetKeysWithPrefixAsync(emojiPanelController!.EmojiNameMapping, value, keysWithPrefix, ct);
+            //TODO FRAN: Make this more general so all types of suggestions can reuse the same code
+            await UpdateProfileNameMapping(ct);
+
+            await DictionaryUtils.GetKeysWithPrefixAsync(ProfileNameMapping, value, profileKeys, ct);
 
             var suggestions = new List<ISuggestionElementData>();
 
-            foreach (EmojiData emojiData in keysWithPrefix)
-                suggestions.Add(new EmojiInputSuggestionData(emojiData));
+            foreach (var data in profileKeys)
+                suggestions.Add(data);
 
-            suggestionPanel.SetSuggestionValues(InputSuggestionType.EMOJIS, suggestions);
+            suggestionPanel.SetSuggestionValues(InputSuggestionType.PROFILE, suggestions);
             suggestionPanel.SetPanelVisibility(true);
         }
 
+        private async UniTask UpdateProfileNameMapping(CancellationToken ct)
+        {
+            //TODO FRAN: Fix this so it doesnt run every time we put one letter, this should be filled and updated regularly, but not every time.
+            var remoteParticipantIdentities = roomHub.IslandRoom().Participants.RemoteParticipantIdentities();
 
+            ProfileNameMapping.Clear();
+            foreach (var participant in remoteParticipantIdentities)
+            {
+                await ExecuteAsync();
 
+                async UniTask ExecuteAsync()
+                {
+                    Profile? profile = await profileRepository.GetAsync(participant, ct);
+                    var color = profileNameColorHelper.GetNameColor(profile.Name);
+                    ProfileNameMapping.TryAdd(profile.DisplayName, new ProfileInputSuggestionData(profile, color));
+                }
+            }
+        }
 
 #region Emojis
         private void InitializeEmojiController()
@@ -425,10 +460,10 @@ namespace DCL.Chat
                     return;
                 }
 
-                emojiSearchCts.SafeCancelAndDispose();
-                emojiSearchCts = new CancellationTokenSource();
+                searchCts.SafeCancelAndDispose();
+                searchCts = new CancellationTokenSource();
 
-                SearchAndSetEmojiSuggestionsAsync(match.Value, emojiSearchCts.Token).Forget();
+                SearchAndSetEmojiSuggestionsAsync(match.Value, searchCts.Token).Forget();
             }
             else
             {
@@ -439,12 +474,12 @@ namespace DCL.Chat
 
         private async UniTaskVoid SearchAndSetEmojiSuggestionsAsync(string value, CancellationToken ct)
         {
-            await DictionaryUtils.GetKeysWithPrefixAsync(emojiPanelController!.EmojiNameMapping, value, keysWithPrefix, ct);
+            await DictionaryUtils.GetKeysWithPrefixAsync(emojiPanelController!.EmojiNameMapping, value, emojiKeys, ct);
 
             var suggestions = new List<ISuggestionElementData>();
 
-            foreach (EmojiData emojiData in keysWithPrefix)
-                suggestions.Add(new EmojiInputSuggestionData(emojiData));
+            foreach (EmojiData emojiData in emojiKeys)
+                suggestions.Add(new EmojiInputSuggestionData(emojiData.EmojiCode, emojiData.EmojiName));
 
             suggestionPanel.SetSuggestionValues(InputSuggestionType.EMOJIS, suggestions);
             suggestionPanel.SetPanelVisibility(true);

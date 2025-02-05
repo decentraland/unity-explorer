@@ -1,18 +1,18 @@
-using DCL.Emoji;
-
 namespace DCL.UI.SuggestionPanel
 {
     public readonly struct EmojiInputSuggestionData : ISuggestionElementData
     {
-        public readonly EmojiData EmojiData { get; }
+        public readonly string EmojiCode;
+        public readonly string EmojiName;
 
-        public EmojiInputSuggestionData(EmojiData emojiData)
+        public EmojiInputSuggestionData(string emojiCode, string emojiName)
         {
-            EmojiData = emojiData;
+            EmojiCode = emojiCode;
+            EmojiName = emojiName;
         }
 
         public string GetId() =>
-            EmojiData.EmojiCode;
+            EmojiCode;
 
         public InputSuggestionType GetInputSuggestionType() =>
             InputSuggestionType.EMOJIS;

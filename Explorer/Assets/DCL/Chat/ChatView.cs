@@ -1,5 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
+using DCL.Multiplayer.Connections.RoomHubs;
+using DCL.Profiles;
 using DCL.UI;
 using DCL.UI.Profiles.Helpers;
 using MVC;
@@ -139,7 +141,10 @@ namespace DCL.Chat
 
         public void Initialize(IReadOnlyDictionary<ChatChannel.ChannelId, ChatChannel> chatChannels,
             ChatChannel.ChannelId defaultChannelId,
-            bool areChatBubblesVisible, IProfileNameColorHelper profileNameColorHelper)
+            bool areChatBubblesVisible,
+            IProfileNameColorHelper profileNameColorHelper,
+            IRoomHub roomHub,
+            IProfileRepository profileRepository)
         {
             this.channels = chatChannels;
             this.profileNameColorHelper = profileNameColorHelper;
@@ -153,7 +158,7 @@ namespace DCL.Chat
             chatBubblesToggle.Toggle.onValueChanged.AddListener(OnToggleChatBubblesValueChanged);
             chatBubblesToggle.IsSoundEnabled = true;
 
-            chatInputBox.Initialize();
+            chatInputBox.Initialize(roomHub, profileNameColorHelper, profileRepository);
             chatInputBox.InputBoxSelectionChanged += OnInputBoxSelectionChanged;
             chatInputBox.EmojiSelectionVisibilityChanged += OnEmojiSelectionVisibilityChanged;
             chatInputBox.InputChanged += OnInputChanged;

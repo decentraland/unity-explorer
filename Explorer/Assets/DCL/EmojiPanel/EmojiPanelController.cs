@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.UI.SuggestionPanel;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -22,6 +23,7 @@ namespace DCL.Emoji
 
         private readonly List<EmojiSectionView> emojiSectionViews = new ();
         public readonly Dictionary<string, EmojiData> EmojiNameMapping = new ();
+
         private readonly Dictionary<int, string> emojiValueMapping = new ();
         private readonly Dictionary<EmojiSectionName, RectTransform> sectionTransforms = new ();
         private readonly List<EmojiData> foundEmojis = new ();
@@ -128,7 +130,7 @@ namespace DCL.Emoji
             startDec = int.Parse(hexRangeStart, System.Globalization.NumberStyles.HexNumber);
             endDec = int.Parse(hexRageEnd, System.Globalization.NumberStyles.HexNumber);
 
-            for (int i = 0; i < endDec-startDec; i++)
+            for (var i = 0; i < endDec-startDec; i++)
             {
                 emojiCode = startDec + i;
 

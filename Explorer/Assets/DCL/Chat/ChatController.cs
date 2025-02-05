@@ -7,8 +7,10 @@ using DCL.Chat.MessageBus;
 using DCL.Input;
 using DCL.Input.Component;
 using DCL.Input.Systems;
+using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
+using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
 using ECS.Abstract;
 using MVC;
@@ -31,6 +33,8 @@ namespace DCL.Chat
         private readonly IInputBlock inputBlock;
         private readonly ViewDependencies viewDependencies;
         private readonly IChatCommandsBus chatCommandsBus;
+        private readonly IRoomHub roomHub;
+        private readonly IProfileRepository profileRepository;
 
         private SingleInstanceEntity cameraEntity;
 
@@ -48,7 +52,8 @@ namespace DCL.Chat
             Entity playerEntity,
             IInputBlock inputBlock,
             ViewDependencies viewDependencies,
-            IChatCommandsBus chatCommandsBus) : base(viewFactory)
+            IChatCommandsBus chatCommandsBus,
+            IRoomHub roomHub, IProfileRepository profileRepository) : base(viewFactory)
         {
             this.profileNameColorHelper = profileNameColorHelper;
             this.chatMessagesBus = chatMessagesBus;
@@ -60,6 +65,8 @@ namespace DCL.Chat
             this.inputBlock = inputBlock;
             this.viewDependencies = viewDependencies;
             this.chatCommandsBus = chatCommandsBus;
+            this.roomHub = roomHub;
+            this.profileRepository = profileRepository;
         }
 
         public void Clear() // Called by a command
@@ -78,7 +85,7 @@ namespace DCL.Chat
             chatHistory.MessageAdded += CreateChatEntry;
 
             viewInstance!.InjectDependencies(viewDependencies);
-            viewInstance!.Initialize(chatHistory.Channels, ChatChannel.NEARBY_CHANNEL, nametagsData.showChatBubbles, profileNameColorHelper);
+            viewInstance!.Initialize(chatHistory.Channels, ChatChannel.NEARBY_CHANNEL, nametagsData.showChatBubbles, profileNameColorHelper, roomHub, profileRepository);
 
             viewInstance.PointerEnter += OnChatViewPointerEnter;
             viewInstance.PointerExit += OnChatViewPointerExit;
@@ -131,6 +138,14 @@ namespace DCL.Chat
             chatHistory.MessageAdded -= CreateChatEntry;
             chatCommandsBus.OnClearChat -= Clear;
 
+            viewDependencies.DclInput.UI.Click.performed -= OnUIClickPerformed;
+            viewDependencies.DclInput.Shortcuts.ToggleNametags.performed -= OnToggleNametagsShortcutPerformed;
+            viewDependencies.DclInput.Shortcuts.OpenChat.performed -= OnOpenChatShortcutPerformed;
+            viewDependencies.DclInput.Shortcuts.OpenChatCommandLine.performed -= OnOpenChatCommandLineShortcutPerformed;
+            viewDependencies.DclInput.UI.Submit.performed -= OnSubmitShorcutPerformed;
+
+            // It can be null before finishing loading
+            if (viewInstance == null) return;
             viewInstance!.PointerEnter -= OnChatViewPointerEnter;
             viewInstance.PointerExit -= OnChatViewPointerExit;
 
@@ -138,12 +153,6 @@ namespace DCL.Chat
             viewInstance.EmojiSelectionVisibilityChanged -= OnViewEmojiSelectionVisibilityChanged;
             viewInstance.ChatBubbleVisibilityChanged -= ChatBubbleVisibilityChanged;
             viewInstance.InputSubmitted -= OnViewInputSubmitted;
-
-            viewDependencies.DclInput.UI.Click.performed -= OnUIClickPerformed;
-            viewDependencies.DclInput.Shortcuts.ToggleNametags.performed -= OnToggleNametagsShortcutPerformed;
-            viewDependencies.DclInput.Shortcuts.OpenChat.performed -= OnOpenChatShortcutPerformed;
-            viewDependencies.DclInput.Shortcuts.OpenChatCommandLine.performed -= OnOpenChatCommandLineShortcutPerformed;
-            viewDependencies.DclInput.UI.Submit.performed -= OnSubmitShorcutPerformed;
 
             viewInstance.Dispose();
         }
