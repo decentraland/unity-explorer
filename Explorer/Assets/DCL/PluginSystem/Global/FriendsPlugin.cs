@@ -179,6 +179,8 @@ namespace DCL.PluginSystem.Global
 
             mvcManager.RegisterController(friendRequestController);
 
+            // We need to restart the connection to the service as credentials changes
+            // since that affects which friends the user can access
             web3IdentityCache.OnIdentityCleared += DisconnectRpcClient;
             web3IdentityCache.OnIdentityChanged += ReconnectRpcClient;
         }

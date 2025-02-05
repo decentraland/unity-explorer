@@ -1,5 +1,6 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.Web3;
@@ -31,6 +32,7 @@ namespace DCL.Friends
         private const string SUBSCRIBE_TO_CONNECTIVITY_UPDATES = "SubscribeToFriendConnectivityUpdates";
         private const int CONNECTION_TIMEOUT_SECS = 10;
         private const int CONNECTION_RETRIES = 3;
+        private const int RETRY_STREAM_THROTTLE_MS = 1000;
 
         private readonly URLAddress apiUrl;
         private readonly IFriendsEventBus eventBus;
@@ -94,45 +96,68 @@ namespace DCL.Friends
         {
             await EnsureRpcConnectionAsync(ct);
 
-            IUniTaskAsyncEnumerable<FriendshipUpdate> stream =
-                module!.CallServerStream<FriendshipUpdate>(SUBSCRIBE_FRIENDSHIP_UPDATES_PROCEDURE_NAME, new Empty());
-
-            await foreach (var response in stream.WithCancellation(ct))
+            // We try to keep the stream open until cancellation is requested
+            // If by any reason the rpc connection has a problem, we need to wait until it is restored, so we re-open the stream
+            while (!ct.IsCancellationRequested)
             {
-                switch (response.UpdateCase)
+                try { await OpenStreamAndProcessUpdatesAsync(); }
+                catch (Exception e) when (e is not OperationCanceledException)
                 {
-                    case FriendshipUpdate.UpdateOneofCase.Accept:
-                        friendsCache.Add(response.Accept.User.Address);
-                        eventBus.BroadcastThatOtherUserAcceptedYourRequest(response.Accept.User.Address);
-                        break;
+                    while (!ct.IsCancellationRequested && transport?.State != WebSocketState.Open)
+                        await UniTask.Delay(RETRY_STREAM_THROTTLE_MS, cancellationToken: ct);
+                }
+            }
 
-                    case FriendshipUpdate.UpdateOneofCase.Cancel:
-                        eventBus.BroadcastThatOtherUserCancelledTheRequest(response.Cancel.User.Address);
-                        break;
+            return;
 
-                    case FriendshipUpdate.UpdateOneofCase.Delete:
-                        friendsCache.Remove(response.Delete.User.Address);
-                        eventBus.BroadcastThatOtherUserRemovedTheFriendship(response.Delete.User.Address);
-                        break;
+            async UniTask OpenStreamAndProcessUpdatesAsync()
+            {
+                IUniTaskAsyncEnumerable<FriendshipUpdate> stream =
+                    module!.CallServerStream<FriendshipUpdate>(SUBSCRIBE_FRIENDSHIP_UPDATES_PROCEDURE_NAME, new Empty());
 
-                    case FriendshipUpdate.UpdateOneofCase.Reject:
-                        eventBus.BroadcastThatOtherUserRejectedYourRequest(response.Reject.User.Address);
-                        break;
+                await foreach (var response in stream.WithCancellation(ct))
+                {
+                    try
+                    {
+                        switch (response.UpdateCase)
+                        {
+                            case FriendshipUpdate.UpdateOneofCase.Accept:
+                                friendsCache.Add(response.Accept.User.Address);
+                                eventBus.BroadcastThatOtherUserAcceptedYourRequest(response.Accept.User.Address);
+                                break;
 
-                    case FriendshipUpdate.UpdateOneofCase.Request:
-                        var request = response.Request;
+                            case FriendshipUpdate.UpdateOneofCase.Cancel:
+                                eventBus.BroadcastThatOtherUserCancelledTheRequest(response.Cancel.User.Address);
+                                break;
 
-                        Profile? myProfile = await selfProfile.ProfileAsync(ct);
+                            case FriendshipUpdate.UpdateOneofCase.Delete:
+                                friendsCache.Remove(response.Delete.User.Address);
+                                eventBus.BroadcastThatOtherUserRemovedTheFriendship(response.Delete.User.Address);
+                                break;
 
-                        var fr = new FriendRequest(
-                            request.Id,
-                            DateTimeOffset.FromUnixTimeMilliseconds(request.CreatedAt).DateTime,
-                            ToClientFriendProfile(request.Friend),
-                            ToClientFriendProfile(myProfile!),
-                            request.HasMessage ? request.Message : string.Empty);
+                            case FriendshipUpdate.UpdateOneofCase.Reject:
+                                eventBus.BroadcastThatOtherUserRejectedYourRequest(response.Reject.User.Address);
+                                break;
 
-                        eventBus.BroadcastFriendRequestReceived(fr);
-                        break;
+                            case FriendshipUpdate.UpdateOneofCase.Request:
+                                var request = response.Request;
+
+                                Profile? myProfile = await selfProfile.ProfileAsync(ct);
+
+                                var fr = new FriendRequest(
+                                    request.Id,
+                                    DateTimeOffset.FromUnixTimeMilliseconds(request.CreatedAt).DateTime,
+                                    ToClientFriendProfile(request.Friend),
+                                    ToClientFriendProfile(myProfile!),
+                                    request.HasMessage ? request.Message : string.Empty);
+
+                                eventBus.BroadcastFriendRequestReceived(fr);
+                                break;
+                        }
+                    }
+
+                    // Do exception handling as we need to keep the stream open in case we have an internal error in the processing of the data
+                    catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogException(e, new ReportData(ReportCategory.FRIENDS)); }
                 }
             }
         }
@@ -141,22 +166,45 @@ namespace DCL.Friends
         {
             await EnsureRpcConnectionAsync(ct);
 
-            IUniTaskAsyncEnumerable<FriendConnectivityUpdate> stream =
-                module!.CallServerStream<FriendConnectivityUpdate>(SUBSCRIBE_TO_CONNECTIVITY_UPDATES, new Empty());
-
-            await foreach (var response in stream.WithCancellation(ct))
+            // We try to keep the stream open until cancellation is requested
+            // If by any reason the rpc connection has a problem, we need to wait until it is restored, so we re-open the stream
+            while (!ct.IsCancellationRequested)
             {
-                switch (response.Status)
+                try { await OpenStreamAndProcessUpdatesAsync(); }
+                catch (Exception e) when (e is not OperationCanceledException)
                 {
-                    case ConnectivityStatus.Away:
-                        eventBus.BroadcastFriendAsAway(ToClientFriendProfile(response.Friend));
-                        break;
-                    case ConnectivityStatus.Offline:
-                        eventBus.BroadcastFriendDisconnected(ToClientFriendProfile(response.Friend));
-                        break;
-                    case ConnectivityStatus.Online:
-                        eventBus.BroadcastFriendConnected(ToClientFriendProfile(response.Friend));
-                        break;
+                    while (!ct.IsCancellationRequested && transport?.State != WebSocketState.Open)
+                        await UniTask.Delay(RETRY_STREAM_THROTTLE_MS, cancellationToken: ct);
+                }
+            }
+
+            return;
+
+            async UniTask OpenStreamAndProcessUpdatesAsync()
+            {
+                IUniTaskAsyncEnumerable<FriendConnectivityUpdate> stream =
+                    module!.CallServerStream<FriendConnectivityUpdate>(SUBSCRIBE_TO_CONNECTIVITY_UPDATES, new Empty());
+
+                await foreach (var response in stream.WithCancellation(ct))
+                {
+                    try
+                    {
+                        switch (response.Status)
+                        {
+                            case ConnectivityStatus.Away:
+                                eventBus.BroadcastFriendAsAway(ToClientFriendProfile(response.Friend));
+                                break;
+                            case ConnectivityStatus.Offline:
+                                eventBus.BroadcastFriendDisconnected(ToClientFriendProfile(response.Friend));
+                                break;
+                            case ConnectivityStatus.Online:
+                                eventBus.BroadcastFriendConnected(ToClientFriendProfile(response.Friend));
+                                break;
+                        }
+                    }
+
+                    // Do exception handling as we need to keep the stream open in case we have an internal error in the processing of the data
+                    catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogException(e, new ReportData(ReportCategory.FRIENDS)); }
                 }
             }
         }
