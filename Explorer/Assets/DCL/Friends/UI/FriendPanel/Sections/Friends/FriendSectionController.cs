@@ -24,12 +24,14 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         private readonly IPassportBridge passportBridge;
         private readonly IProfileThumbnailCache profileThumbnailCache;
         private readonly IFriendsService friendsService;
-        private readonly CancellationTokenSource friendshipOperationCts = new();
-        private readonly CancellationTokenSource jumpToFriendLocationCts = new();
         private readonly UserProfileContextMenuControlSettings userProfileContextMenuControlSettings;
         private readonly IOnlineUsersProvider onlineUsersProvider;
         private readonly IRealmNavigator realmNavigator;
         private readonly bool includeUserBlocking;
+        private readonly string[] getUserPositionBuffer = new string[1];
+
+        private CancellationTokenSource? friendshipOperationCts;
+        private CancellationTokenSource? jumpToFriendLocationCts;
 
         public FriendSectionController(FriendsSectionView view,
             IWeb3IdentityCache web3IdentityCache,
@@ -68,6 +70,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 
         private void HandleContextMenuUserProfileButton(string userId, UserProfileContextMenuControlSettings.FriendshipStatus friendshipStatus)
         {
+            friendshipOperationCts = friendshipOperationCts.SafeRestart();
             DeleteFriendshipAsync(friendshipOperationCts.Token).Forget();
             return;
 
@@ -82,23 +85,25 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             userProfileContextMenuControlSettings.SetInitialData(friendProfile.Name, friendProfile.Address, friendProfile.HasClaimedName,
                 view.ChatEntryConfiguration.GetNameColor(friendProfile.Name), UserProfileContextMenuControlSettings.FriendshipStatus.FRIEND,
                 profileThumbnailCache.GetThumbnail(friendProfile.Address.ToString()));
+
             elementView.CanUnHover = false;
 
             mvcManager.ShowAsync(GenericContextMenuController.IssueCommand(
-                new GenericContextMenuParameter(
-                    config: BuildContextMenu(friendProfile),
-                    anchorPosition: buttonPosition,
-                    actionOnHide: () => elementView.CanUnHover = true,
-                    closeTask: panelLifecycleTask?.Task))
-            ).Forget();
+                           new GenericContextMenuParameter(
+                               config: BuildContextMenu(friendProfile),
+                               anchorPosition: buttonPosition,
+                               actionOnHide: () => elementView.CanUnHover = true,
+                               closeTask: panelLifecycleTask?.Task))
+                       )
+                      .Forget();
         }
 
         private GenericContextMenu BuildContextMenu(FriendProfile friendProfile)
         {
             GenericContextMenu contextMenu = new GenericContextMenu(view.ContextMenuSettings.ContextMenuWidth, verticalLayoutPadding: CONTEXT_MENU_VERTICAL_LAYOUT_PADDING, elementsSpacing: CONTEXT_MENU_ELEMENTS_SPACING)
-               .AddControl(userProfileContextMenuControlSettings)
-               .AddControl(new SeparatorContextMenuControlSettings(CONTEXT_MENU_SEPARATOR_HEIGHT, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.left, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.right))
-               .AddControl(new ButtonContextMenuControlSettings(view.ContextMenuSettings.ViewProfileText, view.ContextMenuSettings.ViewProfileSprite, () => OpenProfilePassport(friendProfile)));
+                                            .AddControl(userProfileContextMenuControlSettings)
+                                            .AddControl(new SeparatorContextMenuControlSettings(CONTEXT_MENU_SEPARATOR_HEIGHT, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.left, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.right))
+                                            .AddControl(new ButtonContextMenuControlSettings(view.ContextMenuSettings.ViewProfileText, view.ContextMenuSettings.ViewProfileSprite, () => OpenProfilePassport(friendProfile)));
 
             if (requestManager.IsFriendInGame(friendProfile))
                 contextMenu.AddControl(new ButtonContextMenuControlSettings(view.ContextMenuSettings.JumpToLocationText, view.ContextMenuSettings.JumpToLocationSprite, () => JumpToFriendLocation(friendProfile)));
@@ -111,11 +116,16 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 
         private void JumpToFriendLocation(FriendProfile profile)
         {
+            jumpToFriendLocationCts = jumpToFriendLocationCts.SafeRestart();
             JumpToFriendLocationAsync(jumpToFriendLocationCts.Token).Forget();
+            return;
 
             async UniTaskVoid JumpToFriendLocationAsync(CancellationToken ct = default)
             {
-                IReadOnlyCollection<OnlineUserData> onlineData = await onlineUsersProvider.GetAsync(new List<string> { profile.Address.ToString() }, ct);
+                getUserPositionBuffer[0] = profile.Address.ToString();
+
+                IReadOnlyCollection<OnlineUserData> onlineData = await onlineUsersProvider.GetAsync(getUserPositionBuffer, ct);
+
                 if (onlineData.Count == 0)
                     return;
 

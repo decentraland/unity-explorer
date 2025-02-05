@@ -777,7 +777,8 @@ namespace Global.Dynamic
                     onlineUsersProvider,
                     realmNavigator,
                     includeUserBlocking,
-                    appArgs));
+                    appArgs,
+                    staticContainer.FeatureFlagsCache));
             }
 
             if (dynamicWorldParams.EnableAnalytics)

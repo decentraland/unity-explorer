@@ -39,6 +39,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         {
             OnlineStatusContainer.SetActive(isActive);
             OnlineStatusIndicator.SetActive(isActive);
+
             if (!isActive)
                 buttons = new[] { ContextMenuButton };
         }

@@ -19,6 +19,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         private readonly IFriendsEventBus friendEventBus;
         private readonly IProfileRepository profileRepository;
         private readonly LoopListView2 loopListView;
+        private readonly bool isConnectivityStatusEnabled;
         private readonly List<FriendProfile> friends = new ();
         private readonly Dictionary<FriendProfile, OnlineStatus> friendsOnlineStatus = new ();
         private readonly CancellationTokenSource addFriendProfileCts = new ();
@@ -33,12 +34,14 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             IProfileThumbnailCache profileThumbnailCache,
             LoopListView2 loopListView,
             int pageSize,
-            int elementsMissingThreshold) : base(pageSize, elementsMissingThreshold, webRequestController, profileThumbnailCache)
+            int elementsMissingThreshold,
+            bool isConnectivityStatusEnabled) : base(pageSize, elementsMissingThreshold, webRequestController, profileThumbnailCache)
         {
             this.friendsService = friendsService;
             this.friendEventBus = friendEventBus;
             this.profileRepository = profileRepository;
             this.loopListView = loopListView;
+            this.isConnectivityStatusEnabled = isConnectivityStatusEnabled;
 
             this.friendEventBus.OnYouAcceptedFriendRequestReceivedFromOtherUser += FriendRequestAccepted;
             this.friendEventBus.OnOtherUserAcceptedYourRequest += FriendRequestAccepted;
@@ -68,7 +71,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         private void FriendChangedOnlineStatus(FriendProfile friendProfile, OnlineStatus onlineStatus)
         {
             Debug.Log($"User {friendProfile.Name} changed status to {onlineStatus}");
-            
+
             if (!friends.Contains(friendProfile))
                 AddNewFriendProfile(friendProfile);
 
@@ -175,7 +178,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             elementView.JumpInButton.onClick.RemoveAllListeners();
             elementView.JumpInButton.onClick.AddListener(() => JumpInClicked?.Invoke(elementView.UserProfile));
 
-            elementView.ToggleOnlineStatus(true);
+            elementView.ToggleOnlineStatus(isConnectivityStatusEnabled);
+
             FriendProfile friendProfile = friends[index];
             if (friendsOnlineStatus.TryGetValue(friendProfile, out OnlineStatus onlineStatus))
                 elementView.SetOnlineStatus(onlineStatus);

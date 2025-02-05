@@ -60,7 +60,8 @@ namespace DCL.Friends.UI.FriendPanel
             IPassportBridge passportBridge,
             IOnlineUsersProvider onlineUsersProvider,
             IRealmNavigator realmNavigator,
-            bool includeUserBlocking) : base(viewFactory)
+            bool includeUserBlocking,
+            bool isConnectivityStatusEnabled) : base(viewFactory)
         {
             this.chatLifecycleBusController = chatLifecycleBusController;
             this.sidebarRequestNotificationIndicator = sidebarRequestNotificationIndicator;
@@ -71,7 +72,7 @@ namespace DCL.Friends.UI.FriendPanel
                 web3IdentityCache,
                 mvcManager,
                 systemClipboard,
-                new FriendListRequestManager(friendsService, friendEventBus, profileRepository, webRequestController, profileThumbnailCache, instantiatedView.FriendsSection.LoopList, FRIENDS_PAGE_SIZE, FRIENDS_FETCH_ELEMENTS_THRESHOLD),
+                new FriendListRequestManager(friendsService, friendEventBus, profileRepository, webRequestController, profileThumbnailCache, instantiatedView.FriendsSection.LoopList, FRIENDS_PAGE_SIZE, FRIENDS_FETCH_ELEMENTS_THRESHOLD, isConnectivityStatusEnabled),
                 passportBridge,
                 profileThumbnailCache,
                 friendsService,
