@@ -86,6 +86,11 @@ namespace DCL.Chat
         public bool IsSeparatorVisible { get; private set; }
 
         /// <summary>
+        /// Gets the current index of the separator item in the list, which will vary as new items are added afterward.
+        /// </summary>
+        public int CurrentSeparatorIndex => chatMessages!.Count - messageCountWhenSeparatorWasSet + separatorPositionIndex;
+
+        /// <summary>
         /// Initializes the UI element and provides all its external dependencies.
         /// </summary>
         /// <param name="delegateImplementation">An external function that provides a way to calculate the color to be used to display a user name.</param>
@@ -227,6 +232,29 @@ namespace DCL.Chat
             IsSeparatorVisible = false;
         }
 
+        public void InjectDependencies(ViewDependencies dependencies)
+        {
+            viewDependencies = dependencies;
+        }
+
+        /// <summary>
+        /// Checks whether an item of the scroll view is in a position where the user can see it or not.
+        /// </summary>
+        /// <param name="itemIndex">The index of the item in the entire list, being zero the index of the bottom-most.</param>
+        /// <returns>True if the item is visible; False otherwise.</returns>
+        public bool IsItemVisible(int itemIndex)
+        {
+            LoopListViewItem2 item = loopList.GetShownItemByItemIndex(itemIndex);
+
+            if (item != null)
+            {
+                float itemVerticalPosition = item.transform.position.y;
+                return itemVerticalPosition > loopList.ViewPortTrans.position.y && itemVerticalPosition < loopList.ViewPortTrans.position.y + loopList.ViewPortHeight;
+            }
+
+            return false;
+        }
+
         public void Dispose()
         {
             fadeoutCts.SafeCancelAndDispose();
@@ -246,7 +274,7 @@ namespace DCL.Chat
 
             LoopListViewItem2 item;
 
-            bool isSeparatorIndex = IsSeparatorVisible && index == (chatMessages.Count - messageCountWhenSeparatorWasSet) + separatorPositionIndex;
+            bool isSeparatorIndex = IsSeparatorVisible && index == CurrentSeparatorIndex;
 
             if (isSeparatorIndex)
             {
@@ -256,7 +284,7 @@ namespace DCL.Chat
             }
             else
             {
-                bool isIndexAfterSeparator = IsSeparatorVisible && index > (chatMessages.Count - messageCountWhenSeparatorWasSet) + separatorPositionIndex;
+                bool isIndexAfterSeparator = IsSeparatorVisible && index > CurrentSeparatorIndex;
 
                 ChatMessage itemData = chatMessages[index - (isIndexAfterSeparator ? 1 : 0)]; // Ignores the index used for the separator
 
@@ -268,9 +296,9 @@ namespace DCL.Chat
                         itemData.SentByOwnUser ? listView.ItemPrefabDataList[(int)ChatItemPrefabIndex.ChatEntryOwn].mItemPrefab.name
                                                 : listView.ItemPrefabDataList[(int)ChatItemPrefabIndex.ChatEntry].mItemPrefab.name);
 
-                ChatEntryView itemScript = item!.GetComponent<ChatEntryView>()!;
-                SetItemData(index, itemData, itemScript);
-                itemScript.messageBubbleElement.SetupHyperlinkHandlerDependencies(viewDependencies);
+                    ChatEntryView itemScript = item!.GetComponent<ChatEntryView>()!;
+                    SetItemData(index, itemData, itemScript);
+                    itemScript.messageBubbleElement.SetupHyperlinkHandlerDependencies(viewDependencies);
 
                     Button? messageOptionsButton = itemScript.messageBubbleElement.messageOptionsButton;
                     messageOptionsButton?.onClick.RemoveAllListeners();
@@ -324,12 +352,9 @@ namespace DCL.Chat
             await chatEntriesCanvasGroup.DOFade(0.4f, chatEntriesFadeTime).ToUniTask(cancellationToken: ct);
         }
 
-        public void InjectDependencies(ViewDependencies dependencies)
-        {
-            viewDependencies = dependencies;
-        }
-
         private void OnScrollRectValueChanged(Vector2 scrollPosition)
-            => ChatMessageViewerScrollPositionChanged?.Invoke(scrollPosition);
+        {
+            ChatMessageViewerScrollPositionChanged?.Invoke(scrollPosition);
+        }
     }
 }

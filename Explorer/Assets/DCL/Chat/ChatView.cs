@@ -60,8 +60,6 @@ namespace DCL.Chat
         [SerializeField]
         private AudioClipConfig chatReceiveMessageAudio;
 
-        private IReadOnlyList<ChatMessage> chatMessages;
-
         /// <summary>
         /// Raised when the mouse pointer hovers any part of the chat window.
         /// </summary>
@@ -97,6 +95,7 @@ namespace DCL.Chat
         /// </summary>
         public event ScrollBottomReachedDelegate ScrollBottomReached;
 
+        private IReadOnlyList<ChatMessage> chatMessages;
         private ViewDependencies viewDependencies;
         private UniTaskCompletionSource closePopupTask;
 
@@ -109,6 +108,11 @@ namespace DCL.Chat
         private IReadOnlyDictionary<ChatChannel.ChannelId, ChatChannel>? channels;
         private ChatChannel? currentChannel;
         private ChatEntryConfigurationSO chatEntryConfiguration;
+
+        // If the NEW unread messages separator is viewed by the user, it will be able to move if a new message arrives
+        private bool isUnreadMessagesSeparatorConsumed;
+        // Used exclusively to calculate the new position of the NEW unread messages separator
+        private int previousPendingMessages;
 
         /// <summary>
         /// Get or sets the current content of the input box.
@@ -232,6 +236,7 @@ namespace DCL.Chat
                 {
                     chatMessageViewer.HideSeparator();
                     IsUnreadMessagesCountVisible = false;
+                    previousPendingMessages = 0;
                 }
                 else
                 {
@@ -291,8 +296,11 @@ namespace DCL.Chat
         {
             int pendingMessages = currentChannel!.Messages.Count - currentChannel.ReadMessages;
 
-            if(pendingMessages > 0 && !chatMessageViewer.IsSeparatorVisible)
-                chatMessageViewer.ShowSeparator(pendingMessages + 1);
+            if (pendingMessages > 0 && (!chatMessageViewer.IsSeparatorVisible || isUnreadMessagesSeparatorConsumed))
+            {
+                isUnreadMessagesSeparatorConsumed = false;
+                chatMessageViewer.ShowSeparator(pendingMessages - previousPendingMessages + 1);
+            }
 
             chatMessageViewer.RefreshMessages();
 
@@ -300,6 +308,8 @@ namespace DCL.Chat
 
             if (pendingMessages > 0)
                 scrollToBottomNumberText.text = pendingMessages > 9 ? "+9" : pendingMessages.ToString();
+
+            previousPendingMessages = pendingMessages;
         }
 
         /// <summary>
@@ -424,9 +434,13 @@ namespace DCL.Chat
             if (chatMessageViewer.IsScrollAtBottom)
             {
                 IsUnreadMessagesCountVisible = false;
+                previousPendingMessages = 0;
 
                 ScrollBottomReached?.Invoke();
             }
+
+            if (chatMessageViewer.IsSeparatorVisible && chatMessageViewer.IsItemVisible(chatMessageViewer.CurrentSeparatorIndex))
+                isUnreadMessagesSeparatorConsumed = true;
         }
 
     }
