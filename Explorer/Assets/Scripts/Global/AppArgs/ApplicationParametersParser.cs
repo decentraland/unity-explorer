@@ -123,7 +123,7 @@ namespace Global.AppArgs
                 count++;
             }
 
-            ReportHub.Log(ReportCategory.ALWAYS, sb.ToString());
+            ReportHub.Log(ReportData.UNSPECIFIED, sb.ToString());
         }
     }
 }

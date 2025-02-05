@@ -190,16 +190,6 @@ MonoBehaviour:
       Severity: 1
     - Category: TEXTURES
       Severity: 0
-    - Category: ALWAYS
-      Severity: 3
-    - Category: ALWAYS
-      Severity: 2
-    - Category: ALWAYS
-      Severity: 0
-    - Category: ALWAYS
-      Severity: 4
-    - Category: ALWAYS
-      Severity: 1
   sentryMatrix:
     entries:
     - Category: AUDIO_SOURCES
