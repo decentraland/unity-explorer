@@ -5,54 +5,28 @@ using DCL.Optimization.PerformanceBudgeting;
 using DCL.Diagnostics;
 using DCL.WebRequests;
 using ECS.Prioritization.Components;
-using ECS.StreamableLoading.Common;
-using ECS.StreamableLoading.Common.Components;
-using ECS.StreamableLoading.Textures;
-using GLTFast.Loading;
 using SceneRunner.Scene;
 using System;
-using System.Threading;
-using System.Threading.Tasks;
-using UnityEngine.Networking;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.Texture2DData, ECS.StreamableLoading.Textures.GetTextureIntention>;
 
 namespace ECS.StreamableLoading.GLTF.DownloadProvider
 {
-    internal class GltFastSceneDownloadProvider : IGLTFastDisposableDownloadProvider
+    internal class GltFastSceneDownloadProvider : GltFastDownloadProviderBase
     {
         private const int ATTEMPTS_COUNT = 6;
 
-        private readonly IAcquiredBudget acquiredBudget;
         private readonly string targetGltfOriginalPath;
         private readonly ISceneData sceneData;
-        private readonly World world;
-        private readonly IPartitionComponent partitionComponent;
-        private readonly IWebRequestController webRequestController;
-        private readonly ReportData reportData;
 
         public GltFastSceneDownloadProvider(World world, ISceneData sceneData, IPartitionComponent partitionComponent, string targetGltfOriginalPath, ReportData reportData,
             IWebRequestController webRequestController, IAcquiredBudget acquiredBudget)
+            : base(world, partitionComponent, reportData, webRequestController, acquiredBudget)
         {
-            this.world = world;
             this.sceneData = sceneData;
-            this.partitionComponent = partitionComponent;
             this.targetGltfOriginalPath = targetGltfOriginalPath;
-            this.reportData = reportData;
-            this.webRequestController = webRequestController;
-            this.acquiredBudget = acquiredBudget;
         }
 
-        public void Dispose()
-        {
-            acquiredBudget.Release();
-        }
-
-        private static string GetUrl(Uri uri) =>
-            (uri.IsAbsoluteUri ? uri.AbsoluteUri : uri.ToString()) ?? string.Empty;
-
-        // RequestAsync is used for fetching the GLTF file itself + some external textures. Whenever this
-        // method's request of the base GLTF is finished, the propagated budget for assets loading must be released.
-        public async Task<IDownload> RequestAsync(Uri uri)
+        protected override Uri GetDownloadUri(Uri uri)
         {
             bool isBaseGltfFetch = uri.OriginalString.Equals(targetGltfOriginalPath);
             string originalFilePath = GetFileOriginalPathFromUri(uri);
@@ -63,67 +37,22 @@ namespace ECS.StreamableLoading.GLTF.DownloadProvider
                 throw new Exception($"Error on GLTF download ({targetGltfOriginalPath} - {originalFilePath}): NOT FOUND");
             }
 
-            uri = new Uri(tryGetContentUrlResult);
-            var commonArguments = new CommonArguments(URLAddress.FromString(GetUrl(uri)));
-
-            byte[] data = Array.Empty<byte>();
-            string error = string.Empty;
-            string text = string.Empty;
-            bool success;
-
-            DownloadHandler? downloadHandler = null;
-
-            try
-            {
-                downloadHandler = await webRequestController.GetAsync(commonArguments, new CancellationToken(), reportData).ExposeDownloadHandlerAsync();
-                data = downloadHandler.data;
-
-                if (!GltfValidator.IsGltfBinaryFormat(downloadHandler.nativeData))
-                    text = downloadHandler.text;
-
-                error = downloadHandler.error;
-            }
-            catch (UnityWebRequestException e)
-            {
-                error = $"Error on GLTF download ({targetGltfOriginalPath} - {uri}): {e.Error} - {e.Message}";
-            }
-            finally
-            {
-                if (isBaseGltfFetch) acquiredBudget.Release();
-                success = string.IsNullOrEmpty(error);
-                downloadHandler?.Dispose();
-            }
-
-            return new GltfDownloadResult
-            {
-                Data = data,
-                Text = text,
-                Error = error,
-                Success = success,
-            };
+            return new Uri(tryGetContentUrlResult);
         }
 
-        public async Task<ITextureDownload> RequestTextureAsync(Uri uri, bool nonReadable, bool forceLinear)
+        protected override string GetErrorMessage(Uri downloadUri, UnityWebRequestException e)
         {
-            string textureOriginalPath = GetFileOriginalPathFromUri(uri);
-            sceneData.SceneContent.TryGetContentUrl(textureOriginalPath, out URLAddress tryGetContentUrlResult);
+            return $"Error on GLTF download ({targetGltfOriginalPath} - {downloadUri}): {e.Error} - {e.Message}";
+        }
 
-            var texturePromise = Promise.Create(world, new GetTextureIntention
-            {
-                CommonArguments = new CommonLoadingArguments(tryGetContentUrlResult, attempts: ATTEMPTS_COUNT),
-            }, partitionComponent);
+        protected override bool ShouldReleaseBudget(Uri uri)
+        {
+            return uri.OriginalString.Equals(targetGltfOriginalPath);
+        }
 
-            // The textures fetching need to finish before the GLTF loading can continue its flow...
-            Promise promiseResult = await texturePromise.ToUniTaskAsync(world, cancellationToken: new CancellationToken());
-
-            if (promiseResult.Result is { Succeeded: false })
-                throw new Exception($"Error on GLTF Texture download: {promiseResult.Result.Value.Exception!.Message}");
-
-            return new TextureDownloadResult(promiseResult.Result?.Asset)
-            {
-                Error = promiseResult.Result?.Exception?.Message,
-                Success = (bool)promiseResult.Result?.Succeeded,
-            };
+        protected override string GetTextureErrorMessage(Promise promiseResult)
+        {
+            return $"Error on GLTF Texture download: {promiseResult.Result.Value.Exception!.Message}";
         }
 
         private string GetFileOriginalPathFromUri(Uri uri)
