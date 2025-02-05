@@ -23,5 +23,8 @@ namespace ECS.StreamableLoading.Cache.Disk
 
         public static CacheDirectory NewDefault() =>
             New("DiskCache");
+
+        public static CacheDirectory NewDefaultSubdirectory(string subdirectory) =>
+            New("DiskCache/" + subdirectory);
     }
 }

@@ -50,14 +50,14 @@ namespace ECS.StreamableLoading.Common
 
             public void ToSpan(Span<byte> span)
             {
-                for (int i = 0; i < 8; i++)
+                for (int i = 0; i < 4; i++)
                     span[i] = (byte)((MaxFileSize >> (i * 8)) & 0xFF);
             }
 
             public static Meta FromSpan(ReadOnlySpan<byte> array)
             {
                 var maxFileSize = 0;
-                for (var i = 0; i < 8; i++)
+                for (var i = 0; i < 4; i++)
                     maxFileSize |= array[i] << (i * 8);
 
                 return new Meta(maxFileSize);

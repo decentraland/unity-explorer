@@ -6,11 +6,14 @@ using DCL.WebRequests.PartialDownload;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Cache.Disk;
+using ECS.StreamableLoading.Cache.Disk.CleanUp;
+using ECS.StreamableLoading.Cache.Disk.Lock;
 using ECS.StreamableLoading.Common.Components;
 using System;
 using System.Buffers;
 using System.Threading;
 using UnityEngine;
+using Utility.Types;
 
 namespace ECS.StreamableLoading.Common.Systems
 {
@@ -19,6 +22,7 @@ namespace ECS.StreamableLoading.Common.Systems
     {
         private readonly IWebRequestController webRequestController;
         private readonly ArrayPool<byte> buffersPool;
+        private IDiskCache<PartialLoadingState> partialDiskCache;
 
         protected PartialDownloadSystemBase(
             World world,
@@ -29,11 +33,27 @@ namespace ECS.StreamableLoading.Common.Systems
         {
             this.webRequestController = webRequestController;
             this.buffersPool = buffersPool;
+            var diskCache = new DiskCache(CacheDirectory.NewDefaultSubdirectory("partials"), new FilesLock(), IDiskCleanUp.None.INSTANCE);
+            partialDiskCache = new DiskCache<PartialLoadingState>(diskCache, new PartialDiskSerializer());
         }
 
         protected override async UniTask<StreamableLoadingResult<TData>> FlowInternalAsync(TIntention intention, StreamableLoadingState state, IPartitionComponent partition, CancellationToken ct)
         {
-            PartialLoadingState partialState = default;
+            EnumResult<Option<PartialLoadingState>,TaskError> cachedPartial = await partialDiskCache.ContentAsync(HashKey.FromString(intention.CommonArguments.GetCacheableURL()), "part", ct);
+
+            if (cachedPartial.Success && cachedPartial.Value.Has)
+            {
+                var cachedState = cachedPartial.Value.Value;
+                state.SetChunkData(cachedState);
+
+                // If the cached data is complete, process it directly
+                if (cachedState.FullyDownloaded)
+                    return await ProcessCompletedData(state, intention, partition, ct);
+            }
+
+            // If no cache or incomplete cached data, proceed with normal flow
+            PartialLoadingState partialState = cachedPartial.Success && cachedPartial.Value.Has ?
+                cachedPartial.Value.Value : default;
             PartialDownloadingRange chunkRange;
             PartialDownloadedData downloadedData = default;
 
@@ -71,7 +91,7 @@ namespace ECS.StreamableLoading.Common.Systems
 
                 // Write the downloaded data to the full data stream by starting from the last range start
                 partialState.AppendData(downloadedData.DestinationArray.AsMemory()[..finalBytesCount]);
-
+                partialDiskCache.PutAsync(HashKey.FromString(intention.CommonArguments.GetCacheableURL()), "part", partialState, ct).Forget();
                 state.SetChunkData(partialState);
 
                 // Check if the download is complete

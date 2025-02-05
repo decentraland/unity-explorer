@@ -49,6 +49,7 @@ namespace ECS.StreamableLoading.AssetBundles
         {
             var memoryStream = new AssetBundleData.MemoryStream(state.ClaimOwnershipOverFullyDownloadedData());
 
+            UniTask.SwitchToMainThread();
             AssetBundle? assetBundle = await AssetBundle.LoadFromStreamAsync(memoryStream.stream);
 
             // Release budget now to not hold it until dependencies are resolved to prevent a deadlock

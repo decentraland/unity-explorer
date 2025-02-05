@@ -123,7 +123,7 @@ namespace ECS.StreamableLoading.Cache.Disk
             return await diskCache.PutAsync(key, extension, serializedData.Memory, token);
         }
 
-        public SlicedOwnedMemory<byte> Serialize(T data) =>
+        private SlicedOwnedMemory<byte> Serialize(T data) =>
             serializer.Serialize(data);
 
         public async UniTask<EnumResult<Option<T>, TaskError>> ContentAsync(HashKey key, string extension, CancellationToken token)
