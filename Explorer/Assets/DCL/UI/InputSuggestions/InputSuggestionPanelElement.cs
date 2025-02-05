@@ -114,7 +114,8 @@ namespace DCL.UI.SuggestionPanel
             }
 
             if (suggestionType != InputSuggestionType.NONE)
-            { //if the suggestion type is different, we release all items from the pool,
+            {
+                //if the suggestion type is different, we release all items from the pool,
                 //otherwise, we only release the elements that are over the found suggestion amount.
 
                 if (currentSuggestionType != InputSuggestionType.NONE)

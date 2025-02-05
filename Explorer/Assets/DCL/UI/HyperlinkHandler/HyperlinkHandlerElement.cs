@@ -1,14 +1,15 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Input;
+using DCL.Profiles;
 using MVC;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
-using UnityEngine.Serialization;
 
 namespace DCL.UI.HyperlinkHandler
 {
@@ -26,7 +27,7 @@ namespace DCL.UI.HyperlinkHandler
 
         private readonly Dictionary<string, Action<string>> linkHandlers = new ();
         private readonly StringBuilder stringBuilder = new ();
-        private ICursor cursor;
+
         private ViewDependencies dependencies;
         private bool initialized;
         private bool isHighlighting;
@@ -97,6 +98,7 @@ namespace DCL.UI.HyperlinkHandler
             linkHandlers.Add(URL, HandleURLLink);
             linkHandlers.Add(WORLD, HandleWorldLink);
             linkHandlers.Add(SCENE, HandleSceneLink);
+            linkHandlers.Add(USER, HandleUserLink);
         }
 
         private void ProcessLink(string linkID)
@@ -140,10 +142,20 @@ namespace DCL.UI.HyperlinkHandler
             TeleportAsync(coords).Forget();
         }
 
-        private void HandleUserLink(string itemId)
+        private void HandleUserLink(string userId)
         {
-            //Validate if user exists and is connected right now
-            //Show context menu for that profile
+            OpenUserProfileContextMenu(userId).Forget();
+        }
+
+        private async UniTask OpenUserProfileContextMenu(string userId)
+        {
+            Profile profile = await dependencies.ProfileRepository.GetAsync(userId, ct: new CancellationToken());
+
+            if (profile == null) return;
+
+            var color = dependencies.ProfileNameColorHelper.GetNameColor(profile.Name);
+
+            await dependencies.GlobalUIViews.ShowUserProfileContextMenu(profile, color, this.transform);
         }
 
         private async UniTask OpenUrlAsync(string url) =>

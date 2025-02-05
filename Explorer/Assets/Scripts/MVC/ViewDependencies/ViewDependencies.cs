@@ -1,5 +1,7 @@
 ﻿using DCL.Clipboard;
 using DCL.Input;
+using DCL.Profiles;
+using DCL.UI.Profiles.Helpers;
 
 namespace MVC
 {
@@ -13,14 +15,19 @@ namespace MVC
         public readonly MVCManagerMenusAccessFacade GlobalUIViews;
         public readonly IClipboardManager ClipboardManager;
         public readonly ICursor Cursor;
+        public readonly IProfileRepository ProfileRepository;
+        public readonly IProfileNameColorHelper ProfileNameColorHelper;
 
-        public ViewDependencies(DCLInput dclInput, IEventSystem eventSystem, MVCManagerMenusAccessFacade globalUIViews, IClipboardManager clipboardManager, ICursor cursor)
+        public ViewDependencies(DCLInput dclInput, IEventSystem eventSystem, MVCManagerMenusAccessFacade globalUIViews, IClipboardManager clipboardManager, ICursor cursor,
+            IProfileRepository profileRepository, IProfileNameColorHelper profileNameColorHelper)
         {
             DclInput = dclInput;
             EventSystem = eventSystem;
             GlobalUIViews = globalUIViews;
             ClipboardManager = clipboardManager;
             Cursor = cursor;
+            ProfileRepository = profileRepository;
+            ProfileNameColorHelper = profileNameColorHelper;
         }
     }
 }

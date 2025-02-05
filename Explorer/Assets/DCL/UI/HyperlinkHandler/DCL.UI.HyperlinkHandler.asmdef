@@ -2,16 +2,14 @@
     "name": "DCL.UI.HyperlinkHandler",
     "rootNamespace": "",
     "references": [
-        "GUID:45f6fff651a0a514f8edfdaf9cce45af",
         "GUID:3640f3c0b42946b0b8794a1ed8e06ca5",
         "GUID:f51ebe6a0ceec4240a699833d6309b23",
         "GUID:6055be8ebefd69e48b49212b09b47b2f",
-        "GUID:bd0560debe21467c961ac123eedc3c05",
-        "GUID:448ba91996ca4f1b9226ae37fe258dcb",
-        "GUID:26dfeb689dce47e296e47d5f55216bf7",
         "GUID:ac3295688c7c22745a96e6ac34718181",
         "GUID:9cce9838ccdc58d46b673e02f1058718",
-        "GUID:fa7b3fdbb04d67549916da7bd2af58ab"
+        "GUID:e56a0d6a94c144c784012e63b6043100",
+        "GUID:ff38b7506167d314d987b4b8e8406988",
+        "GUID:8322ea9340a544c59ddc56d4793eac74"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

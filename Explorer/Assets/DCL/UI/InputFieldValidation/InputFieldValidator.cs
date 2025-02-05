@@ -33,7 +33,10 @@ namespace DCL.UI.InputFieldValidator
             RegexOptions.Compiled);
         private static readonly Regex SCENE_REGEX = new (@"(?<=^|\s)-?§?\d{0,1}§?\d{0,1}§?\d{1}§?,§?-?§?\d{1}§?\d{0,1}§?\d{0,1}§?(?=\s|$)", RegexOptions.Compiled);
         private static readonly Regex WORLD_REGEX = new (@"(?<=^|\s)§?[a-zA-Z0-9]§?[a-zA-Z0-9]*§?[a-zA-Z0-9]*§?\.dcl\.eth§?(?=\s|$)", RegexOptions.Compiled);
-        private static readonly Regex USERNAME_REGEX = new (@"(?<=^|\s)§?@§?[A-Za-z0-9]{3,15}(?:#[A-Za-z0-9]{4})?§?(?=\s|$)", RegexOptions.Compiled);
+
+        private static readonly Regex USERNAME_REGEX = new (@"(?<=^|\s)([A-Za-z0-9]*?)@([A-Za-z0-9]{3,15}(?:#[A-Za-z0-9]{4})?)(?=\s|$)", RegexOptions.Compiled);
+
+        //private static readonly Regex USERNAME_REGEX = new (@"(?<=^|\s)§?@§?[A-Za-z0-9]{3,15}(?:#[A-Za-z0-9]{4})?§?(?=\s|$)", RegexOptions.Compiled);
 
         [SerializeField] private TMP_StyleSheet styleSheet;
 
@@ -205,8 +208,14 @@ namespace DCL.UI.InputFieldValidator
                     linkTypeString = URL;
                     break;
                 case LinkType.USER:
-                    linkTypeString = USER;
-                    break;
+                    tempStringBuilder.Append(linkOpeningStyle)
+                                     .Append(USER)
+                                     .Append('=')
+                                     .Append(match.Groups[1].Value)
+                                     .Append(">")
+                                     .Append(match.Groups[2].Value)
+                                     .Append(linkClosingStyle);
+                    return tempStringBuilder;
             }
 
             tempStringBuilder.Append(linkOpeningStyle)

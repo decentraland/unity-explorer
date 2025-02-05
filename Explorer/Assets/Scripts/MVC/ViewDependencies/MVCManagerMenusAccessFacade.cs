@@ -1,8 +1,12 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.ChangeRealmPrompt;
+using DCL.Clipboard;
 using DCL.ExternalUrlPrompt;
+using DCL.Profiles;
 using DCL.TeleportPrompt;
 using DCL.UI;
+using DCL.UI.GenericContextMenu;
+using DCL.UI.GenericContextMenu.Controls.Configs;
 using UnityEngine;
 
 namespace MVC
@@ -13,10 +17,15 @@ namespace MVC
     public class MVCManagerMenusAccessFacade
     {
         private readonly IMVCManager mvcManager;
+        private readonly GenericContextMenu contextMenu;
+        private readonly UserProfileContextMenuControlSettings userProfileContextMenuControlSettings;
 
-        public MVCManagerMenusAccessFacade(IMVCManager mvcManager)
+        public MVCManagerMenusAccessFacade(IMVCManager mvcManager, ISystemClipboard systemClipboard)
         {
             this.mvcManager = mvcManager;
+            //TODO FRAN -> Add proper request friend action here when Friends functionality is merged to dev
+            userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings(systemClipboard, null);
+            contextMenu = new GenericContextMenu().AddControl(userProfileContextMenuControlSettings);
         }
 
         public UniTask ShowExternalUrlPromptAsync(string url) =>
@@ -33,5 +42,14 @@ namespace MVC
 
         public UniTask ShowChatEntryMenuPopupAsync(ChatEntryMenuPopupData data) =>
             mvcManager.ShowAsync(ChatEntryMenuPopupController.IssueCommand(data));
+
+        public UniTask ShowUserProfileContextMenu(Profile profile, Color userColor, Transform transform) {
+
+            userProfileContextMenuControlSettings.SetInitialData(profile, userColor, UserProfileContextMenuControlSettings.FriendshipStatus.NONE);
+
+            return mvcManager.ShowAsync(GenericContextMenuController.IssueCommand(
+                new GenericContextMenuParameter(contextMenu, transform.position
+                )));
+        }
     }
 }

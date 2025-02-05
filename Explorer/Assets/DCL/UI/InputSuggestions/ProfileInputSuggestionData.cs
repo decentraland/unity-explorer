@@ -14,8 +14,9 @@ namespace DCL.UI.SuggestionPanel
             UsernameColor = usernameColor;
         }
 
+        //TODO FRAN: This is probably not right, we might need to extract this data into this struct directly
         public string GetId() =>
-            ProfileData.DisplayName;
+            ProfileData.UserId + "@" + ProfileData.DisplayName;
 
         public InputSuggestionType GetInputSuggestionType() =>
             InputSuggestionType.PROFILE;

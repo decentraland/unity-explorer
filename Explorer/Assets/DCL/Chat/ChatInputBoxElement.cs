@@ -8,7 +8,6 @@ using DCL.UI.InputFieldValidator;
 using DCL.UI.Profiles.Helpers;
 using DCL.UI.SuggestionPanel;
 using MVC;
-using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -369,10 +368,10 @@ namespace DCL.Chat
 
             if (match.Success)
             {
-                lastMatch = match.Groups[1].Value;
+                lastMatch = match.Value;
                 searchCts.SafeCancelAndDispose();
                 searchCts = new CancellationTokenSource();
-                SearchAndSetUsernameSuggestionsAsync(lastMatch, searchCts.Token).Forget();
+                SearchAndSetUsernameSuggestionsAsync(match.Groups[1].Value, searchCts.Token).Forget();
             }
             else
             {
