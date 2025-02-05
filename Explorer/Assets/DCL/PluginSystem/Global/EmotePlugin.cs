@@ -49,7 +49,7 @@ namespace DCL.PluginSystem.Global
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
         private readonly AudioClipsCache audioClipsCache;
         private readonly URLDomain assetBundleURL;
-        private readonly URLDomain builderContentURL;
+        private readonly string builderContentURL;
         private readonly MainUIView mainUIView;
         private readonly ICursor cursor;
         private readonly IInputBlock inputBlock;
@@ -76,7 +76,7 @@ namespace DCL.PluginSystem.Global
             IInputBlock inputBlock,
             Arch.Core.World world,
             Entity playerEntity,
-            URLDomain builderContentURL)
+            string builderContentURL)
         {
             this.messageBus = messageBus;
             this.debugBuilder = debugBuilder;
@@ -118,7 +118,7 @@ namespace DCL.PluginSystem.Global
 
             LoadOwnedEmotesSystem.InjectToWorld(ref builder, realmData, webRequestController,
                 new NoCache<EmotesResolution, GetOwnedEmotesFromRealmIntention>(false, false),
-                emoteStorage, builderContentURL.Value);
+                emoteStorage, builderContentURL);
 
             CharacterEmoteSystem.InjectToWorld(ref builder, emoteStorage, messageBus, audioSourceReference, debugBuilder);
 

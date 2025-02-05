@@ -362,13 +362,13 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
         private bool CreateAssetPromiseIfRequired(IWearable component, in GetWearablesByPointersIntention intention, IPartitionComponent partitionComponent)
         {
-            bool filesDownloadUrlAvailable = !string.IsNullOrEmpty(component.DTO.ContentDownloadUrl);
+            bool dtoHasContentDownloadUrl = !string.IsNullOrEmpty(component.DTO.ContentDownloadUrl);
 
             // Do not repeat the promise if already failed once. Otherwise it will end up in an endless loading:true state
-            if (!filesDownloadUrlAvailable && component.ManifestResult is { Succeeded: false }) return false;
+            if (!dtoHasContentDownloadUrl && component.ManifestResult is { Succeeded: false }) return false;
 
             if (EnumUtils.HasFlag(intention.PermittedSources, AssetSource.WEB) // Manifest is required for Web loading only
-                && !filesDownloadUrlAvailable && component.ManifestResult == null)
+                && !dtoHasContentDownloadUrl && component.ManifestResult == null)
                 return component.CreateAssetBundleManifestPromise(World, intention.BodyShape, intention.CancellationTokenSource, partitionComponent);
 
             if (component.TryCreateAssetPromise(in intention, customStreamingSubdirectory, partitionComponent, World, GetReportCategory()))
@@ -471,12 +471,15 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 ResetBodyShape(bodyShape);
         }
 
+        // Asset Bundle Wearable
         private static void SetWearableResult(IWearable wearable, StreamableLoadingResult<AssetBundleData> result, in BodyShape bodyShape, int index)
             => SetWearableResult(wearable, result.ToWearableAsset(wearable), bodyShape, index);
 
+        // Raw GLTF Wearable
         private static void SetWearableResult(IWearable wearable, StreamableLoadingResult<GLTFData> result, in BodyShape bodyShape, int index)
             => SetWearableResult(wearable, result.ToWearableAsset(wearable), bodyShape, index);
 
+        // Raw Facial Feature Wearable
         private static void SetWearableResult(IWearable wearable, StreamableLoadingResult<Texture2DData> result, in BodyShape bodyShape, int index)
             => SetWearableResult(wearable, result.ToWearableAsset(wearable), bodyShape, index);
 
