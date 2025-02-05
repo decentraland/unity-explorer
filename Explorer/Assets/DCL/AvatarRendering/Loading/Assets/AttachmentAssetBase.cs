@@ -78,7 +78,7 @@ namespace DCL.AvatarRendering.Loading.Assets
     }
 
     /// <summary>
-    ///     Represents an original wearable asset
+    ///     Represents an original wearable asset (raw or asset bundle)
     /// </summary>
     public abstract class AttachmentAssetBase : IDisposable
     {

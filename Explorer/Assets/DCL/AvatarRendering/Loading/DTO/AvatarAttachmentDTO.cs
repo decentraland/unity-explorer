@@ -62,7 +62,7 @@ namespace DCL.AvatarRendering.Loading.DTO
         }
 
         [Serializable]
-        public class DataBase
+        public abstract class DataBase
         {
             public Representation[] representations;
             public string category;

@@ -105,7 +105,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         }
 
         /// <summary>
-        ///     Facial feature can consists of the main texture and the mask
+        ///     Facial feature can consist of the main texture and the mask
         /// </summary>
         private static bool TryCreateFacialFeaturePromises(
             SceneAssetBundleManifest? sceneAssetBundleManifest,
@@ -118,17 +118,6 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             ReportData reportData)
         {
             ref WearableAssets wearableAssets = ref InitializeResultsArray(wearable, bodyShape, 2);
-
-
-            /*var promise = Promise.Create(world,
-                new GetTextureIntention
-                {
-                    // If cancellation token source was not provided a new one will be created
-                    CommonArguments = new CommonLoadingArguments(urlBuilder.Build(), cancellationTokenSource: cancellationTokenSource),
-                },
-                partitionComponent);
-
-            world.Create(attachment, promise, partitionComponent);*/
 
             // 0 stands for the main texture
             // 1 stands for the mask
@@ -234,35 +223,22 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             IPartitionComponent partitionComponent,
             World world) where T: IAvatarAttachment
         {
-            // An index is added to the promise to know to which slot of the WearableAssets it belongs to
-
             if (!string.IsNullOrEmpty(wearable.DTO.ContentDownloadUrl))
             {
                 foreach (AvatarAttachmentDTO.Content content in wearable.DTO.content)
                 {
-                    if (content.file.EndsWith(".glb")) // Wearables cannot be GLTF
-                    {
-                        var promise = RawGltfPromise.Create(world, GetGLTFIntention.Create(content.file, content.hash), partitionComponent);
-                        world.Create(promise, wearable, intention.BodyShape, index);
-                    }
-                    else if (content.file.EndsWith(".png")) // Wearables documentation specifies PNG format
-                    {
-                        if (content.file.StartsWith("thumbnail")) continue;
-
-                        // Texture
-                        var promise = TexturePromise.Create(world,
-                            new GetTextureIntention
-                            {
-                                // If cancellation token source was not provided a new one will be created
-                                CommonArguments = new CommonLoadingArguments(URLAddress.FromString(wearable.DTO.ContentDownloadUrl+content.hash), cancellationTokenSource: intention.CancellationTokenSource),
-                            },
-                            partitionComponent);
-                        world.Create(promise, wearable, intention.BodyShape, index);
-                    }
+                    CreateRawWearablePromise(
+                        content,
+                        intention,
+                        wearable,
+                        index,
+                        partitionComponent,
+                        world);
                 }
             }
             else
             {
+                // An index is added to the promise to know to which slot of the WearableAssets it belongs to
                 var promise = AssetBundlePromise.Create(world,
                     GetAssetBundleIntention.FromHash(
                         expectedObjectType,
@@ -277,6 +253,42 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             wearable.UpdateLoadingStatus(true);
         }
 
+        /// <summary>
+        ///     Handle the creation of non-asset-bundle wearable promises, either a GLTFData promise for regular
+        ///     wearables or a Texture2DData promise for Facial Feature wearables.
+        /// </summary>
+        private static void CreateRawWearablePromise<T>(
+            AvatarAttachmentDTO.Content content,
+            GetWearablesByPointersIntention intention,
+            T wearable,
+            int index,
+            IPartitionComponent partitionComponent,
+            World world) where T: IAvatarAttachment
+        {
+            // An index is added to the promises to know to which slot of the WearableAssets it belongs to
+
+            if (content.file.EndsWith(".glb")) // Wearables cannot be GLTF
+            {
+                var promise = RawGltfPromise.Create(world, GetGLTFIntention.Create(content.file, content.hash), partitionComponent);
+                world.Create(promise, wearable, intention.BodyShape, index);
+            }
+            else if (content.file.EndsWith(".png")) // Wearables documentation specifies PNG format
+            {
+                if (content.file.StartsWith("thumbnail")) return;
+
+                // Texture
+                var promise = TexturePromise.Create(world,
+                    new GetTextureIntention
+                    {
+                        // If cancellation token source was not provided a new one will be created
+                        CommonArguments = new CommonLoadingArguments(URLAddress.FromString(wearable.DTO.ContentDownloadUrl+content.hash), cancellationTokenSource: intention.CancellationTokenSource),
+                    },
+                    partitionComponent);
+                world.Create(promise, wearable, intention.BodyShape, index);
+            }
+        }
+
+        // Asset Bundle Wearable
         public static StreamableLoadingResult<AttachmentAssetBase> ToWearableAsset(this StreamableLoadingResult<AssetBundleData> result, IWearable wearable)
         {
             if (!result.Succeeded) return new StreamableLoadingResult<AttachmentAssetBase>(result.ReportData, result.Exception!);
@@ -290,6 +302,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             }
         }
 
+        // Raw GLTF Wearable
         public static StreamableLoadingResult<AttachmentAssetBase> ToWearableAsset(this StreamableLoadingResult<GLTFData> result, IWearable wearable)
         {
             if (!result.Succeeded) return new StreamableLoadingResult<AttachmentAssetBase>(result.ReportData, result.Exception!);
@@ -297,11 +310,10 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             return new StreamableLoadingResult<AttachmentAssetBase>(ToRegularAsset(result));
         }
 
+        // Raw Facial Feature Wearable
         public static StreamableLoadingResult<AttachmentAssetBase> ToWearableAsset(this StreamableLoadingResult<Texture2DData> result, IWearable wearable)
         {
             if (!result.Succeeded) return new StreamableLoadingResult<AttachmentAssetBase>(result.ReportData, result.Exception!);
-
-            // if (result.Asset.Asset.name.StartsWith("thumbnail")) new StreamableLoadingResult<AttachmentAssetBase>();
 
             // Has to be RGBA32 to work with the avatar shader TextureArrays (Unity cannot compress BC7 in runtime)
             return new StreamableLoadingResult<AttachmentAssetBase>(new AttachmentTextureAsset(TextureUtilities.EnsureRGBA32Format(result.Asset!.Asset), null));

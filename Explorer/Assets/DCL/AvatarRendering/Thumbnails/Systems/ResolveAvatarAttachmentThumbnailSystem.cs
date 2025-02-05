@@ -8,7 +8,7 @@ using DCL.Diagnostics;
 using ECS.Abstract;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
-using TexturePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.Texture2DData, ECS.StreamableLoading.Textures.GetTextureIntention>;
+using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.Texture2DData, ECS.StreamableLoading.Textures.GetTextureIntention>;
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
 
 namespace DCL.AvatarRendering.Thumbnails.Systems
@@ -24,7 +24,7 @@ namespace DCL.AvatarRendering.Thumbnails.Systems
 
         protected override void Update(float t)
         {
-            CompleteWearableThumbnailTexDownloadQuery(World);
+            CompleteWearableThumbnailDownloadQuery(World);
             CompleteWearableABThumbnailDownloadQuery(World);
         }
 
@@ -37,6 +37,7 @@ namespace DCL.AvatarRendering.Thumbnails.Systems
                 return;
             }
 
+
             if (promise.TryConsume(World, out var result))
             {
                 wearable.ThumbnailAssetResult = result.ToFullRectSpriteData(LoadThumbnailsUtils.DEFAULT_THUMBNAIL);
@@ -45,7 +46,7 @@ namespace DCL.AvatarRendering.Thumbnails.Systems
         }
 
         [Query]
-        private void CompleteWearableThumbnailTexDownload(Entity entity, ref IAvatarAttachment wearable, ref TexturePromise promise)
+        private void CompleteWearableThumbnailDownload(Entity entity, ref IAvatarAttachment wearable, ref Promise promise)
         {
             if (promise.TryForgetWithEntityIfCancelled(entity, World!))
             {
