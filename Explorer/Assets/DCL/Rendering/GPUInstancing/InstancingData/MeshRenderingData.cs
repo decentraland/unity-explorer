@@ -7,7 +7,7 @@ using Utility;
 namespace DCL.Roads.GPUInstancing.Playground
 {
     [Serializable]
-    public class MeshRenderingData : IEquatable<MeshRenderingData>
+    public class MeshRenderingData
     {
         private const float STREET_MAX_HEIGHT = 10f;
         private const string GPU_INSTANCING_KEYWORD = "_GPU_INSTANCER_BATCHER";

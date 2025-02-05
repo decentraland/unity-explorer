@@ -2,7 +2,6 @@
 using DCL.Roads.Settings;
 using UnityEditor;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 namespace DCL.Roads.GPUInstancing
 {
@@ -19,8 +18,6 @@ namespace DCL.Roads.GPUInstancing
         public Vector2Int ParcelsMin;
         public Vector2Int ParcelsMax;
 
-        public bool DirectOnly;
-        public bool InderctOnly;
         public bool OnePrefabDebug;
         [Space] public bool Run;
 
@@ -33,17 +30,12 @@ namespace DCL.Roads.GPUInstancing
             if (OnePrefabDebug && currentPrefabId != Mathf.Min(PrefabId, originalPrefabs.Length - 1))
                 AddPrefabToService();
 
-            // if (InderctOnly)
-            //     instancingService.RenderIndirect();
-            // else if (DirectOnly)
-            //     instancingService.RenderDirect();
-            // else
-                instancingService.Render();
+            instancingService.RenderIndirect();
         }
 
         private void OnDisable()
         {
-            instancingService.Clear();
+            instancingService.Dispose();
         }
 
         [ContextMenu(nameof(PrefabsSelfCollect))]
@@ -61,16 +53,15 @@ namespace DCL.Roads.GPUInstancing
             }
         }
 
-        [ContextMenu("DEBUG - Collect Instances on Roads Config")]
-        private void CollectAllMeshInstancesOnRoadsConfig()
+        [ContextMenu(nameof(RoadConfigCollect))]
+        private void RoadConfigCollect()
         {
             RoadsConfig.CollectGPUInstancingCandidates(ParcelsMin, ParcelsMax);
         }
 
-        [ContextMenu(nameof(AddPrefabToService))]
-        public void AddPrefabToService()
+        private void AddPrefabToService()
         {
-            instancingService.Clear();
+            instancingService.Dispose();
 
             currentPrefabId = Mathf.Min(PrefabId, originalPrefabs.Length - 1);
             instancingService.AddToIndirect(originalPrefabs[currentPrefabId].indirectCandidates);
@@ -78,9 +69,9 @@ namespace DCL.Roads.GPUInstancing
         }
 
         [ContextMenu(nameof(AddRoadsToService))]
-        public void AddRoadsToService()
+        private void AddRoadsToService()
         {
-            instancingService.Clear();
+            instancingService.Dispose();
 
             instancingService.AddToIndirect(RoadsConfig.IndirectCandidates);
             instancingService.AddToDirect(RoadsConfig.DirectCandidates);
