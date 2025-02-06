@@ -17,6 +17,7 @@ namespace DCL.Multiplayer.Movement.Systems
     [LogCategory(ReportCategory.AVATAR)]
     public partial class SDKAvatarShapesMotionSystem : BaseUnityLoopSystem
     {
+        private const float ROTATION_SPEED = 5f;
         private const float RUN_SPEED_THRESHOLD = 9.5f;
         private const float JOG_SPEED_THRESHOLD = 4f;
 
@@ -54,7 +55,11 @@ namespace DCL.Multiplayer.Movement.Systems
             newDirection.y = 0;
 
             if (newDirection != Vector3.zero)
-                characterTransformComp.Transform.forward = newDirection.normalized;
+            {
+                Vector3 currentForward = characterTransformComp.Transform.forward;
+                Vector3 targetForward = newDirection.normalized;
+                characterTransformComp.Transform.forward = Vector3.Lerp(currentForward, targetForward, UnityEngine.Time.deltaTime * ROTATION_SPEED);
+            }
         }
 
         private static void UpdateAnimations(
