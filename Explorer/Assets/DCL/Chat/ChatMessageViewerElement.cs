@@ -152,6 +152,15 @@ namespace DCL.Chat
         }
 
         /// <summary>
+        /// Moves the scroll view so an item is visible in the panel.
+        /// </summary>
+        /// <param name="itemIndex">The index of the item in the list.</param>
+        public void ShowItem(int itemIndex)
+        {
+            loopList.MovePanelToItemIndex(itemIndex, 0.0f);
+        }
+
+        /// <summary>
         /// Makes sure the view is showing all the messages stored in the data.
         /// </summary>
         public void RefreshMessages()

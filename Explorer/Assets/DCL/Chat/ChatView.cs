@@ -238,10 +238,6 @@ namespace DCL.Chat
                     IsUnreadMessagesCountVisible = false;
                     previousPendingMessages = 0;
                 }
-                else
-                {
-                    chatMessageViewer.ShowLastMessage();
-                }
             }
         }
 
@@ -304,7 +300,7 @@ namespace DCL.Chat
 
             chatMessageViewer.RefreshMessages();
 
-            IsUnreadMessagesCountVisible = pendingMessages != 0;
+            IsUnreadMessagesCountVisible = IsUnfolded && !IsScrollAtBottom && pendingMessages != 0;
 
             if (pendingMessages > 0)
                 scrollToBottomNumberText.text = pendingMessages > 9 ? "+9" : pendingMessages.ToString();
@@ -361,6 +357,24 @@ namespace DCL.Chat
             viewDependencies = dependencies;
             chatInputBox.InjectDependencies(dependencies);
             chatMessageViewer.InjectDependencies(dependencies);
+        }
+
+        /// <summary>
+        /// Refreshes the list of messages (adds the unread messages elements if needed) and scrolls the list so the first of
+        /// the unread messages, if any, is visible.
+        /// </summary>
+        public void ShowNewMessages()
+        {
+            if(currentChannel!.Messages.Count == 0)
+                return;
+
+            // Trick: This is necessary in order to properly refresh the scroll view position
+            chatMessageViewer.ShowItem(currentChannel.Messages.Count - 1);
+
+            RefreshMessages();
+
+            if (currentChannel.ReadMessages < currentChannel.Messages.Count)
+                chatMessageViewer.ShowItem(chatMessageViewer.CurrentSeparatorIndex - 1); // It shows the first of the unread messages at least
         }
 
         private void OnInputBoxSelectionChanged(bool isSelected)

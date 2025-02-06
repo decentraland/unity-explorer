@@ -136,7 +136,11 @@ namespace DCL.UI.Sidebar
 
         private void OnUnreadMessagesButtonClicked()
         {
-            chatView.IsUnfolded = true;
+            if (!chatView.IsUnfolded)
+            {
+                chatView.IsUnfolded = true;
+                chatView.ShowNewMessages();
+            }
         }
 
         private void OnHelpButtonClicked()

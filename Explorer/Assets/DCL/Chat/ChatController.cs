@@ -11,7 +11,6 @@ using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
 using ECS.Abstract;
 using MVC;
-using System;
 using System.Threading;
 using UnityEngine.InputSystem;
 using Utility.Arch;
@@ -195,7 +194,11 @@ namespace DCL.Chat
             else if (isSentByOwnUser)
                 GenerateChatBubbleComponent(playerEntity, chatMessage);
 
-            if (viewInstance!.IsScrollAtBottom || isSentByOwnUser)
+            // If the chat is showing the channel that receives the message and the scroll view is at the bottom, mark everything as read
+            if (viewInstance!.IsUnfolded && channel.Id.Equals(viewInstance.CurrentChannel) && viewInstance.IsScrollAtBottom)
+                chatHistory.Channels[viewInstance.CurrentChannel].MarkAllMessagesAsRead();
+
+            if(isSentByOwnUser)
                 chatHistory.Channels[viewInstance.CurrentChannel].MarkAllMessagesAsRead();
 
             // New entry in the chat window
