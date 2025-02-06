@@ -2,11 +2,14 @@ using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Browser.DecentralandUrls;
 using DCL.Character.Components;
+using DCL.DemoWorlds;
+using DCL.GlobalPartitioning;
 using DCL.Ipfs;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.FfiClients;
 using DCL.Multiplayer.Connections.GateKeeper.Meta;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms;
+using DCL.Optimization.PerformanceBudgeting;
 using DCL.Web3.Accounts.Factory;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
@@ -25,7 +28,7 @@ namespace DCL.Multiplayer.Connections.Demo
 {
     public class LocalSceneDevelopmentPlayground : MonoBehaviour
     {
-        private LoadSceneDefinitionListSystem system = null!;
+        private IDemoWorld demoWorld = null!;
 
         private void Start()
         {
@@ -34,7 +37,7 @@ namespace DCL.Multiplayer.Connections.Demo
 
         private void Update()
         {
-            system.Update(UnityEngine.Time.deltaTime);
+            demoWorld.Update();
         }
 
         private async UniTaskVoid LaunchAsync()
@@ -54,12 +57,19 @@ namespace DCL.Multiplayer.Connections.Demo
                     webRequests,
                     new SceneRoomLogMetaDataSource(new SceneRoomMetaDataSource(new IRealmData.Fake(), character, world, false)),
                     urlsSource,
-                    new ScenesCache(),
-                    DecentralandUrl.LocalGateKeeperSceneAdapter
+                    new ScenesCache()
+                   // ,
+                   //  DecentralandUrl.LocalGateKeeperSceneAdapter
                 ).StartAsync()
                  .Forget();
 
-            system = new LoadSceneDefinitionListSystem(world, webRequests, new NoCache<SceneDefinitions, GetSceneDefinitionList>(false, false));
+            demoWorld = new DemoWorld(
+                world,
+                w => { },
+                w => new LoadSceneDefinitionListSystem(w, webRequests, new NoCache<SceneDefinitions, GetSceneDefinitionList>(false, false)),
+                w => new GlobalDeferredLoadingSystem(w, new NullPerformanceBudget(), new NullPerformanceBudget(), new SceneAssetLock())
+            );
+            demoWorld.SetUp();
         }
     }
 }
