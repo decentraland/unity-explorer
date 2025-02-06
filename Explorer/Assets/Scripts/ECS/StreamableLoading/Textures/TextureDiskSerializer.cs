@@ -4,6 +4,7 @@ using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using System;
 using System.Buffers;
 using System.Threading;
+using Unity.Profiling;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using Object = UnityEngine.Object;
@@ -12,6 +13,8 @@ namespace ECS.StreamableLoading.Textures
 {
     public class TextureDiskSerializer : IDiskSerializer<Texture2DData>
     {
+        private static readonly ProfilerMarker SERIALIZE_MARKER = new ("TextureDiskSerializer.Serialize");
+
         public async UniTask<SlicedOwnedMemory<byte>> SerializeAsync(Texture2DData data, CancellationToken token)
         {
             //TODO must be optimised to avoid extra allocations
@@ -36,6 +39,7 @@ namespace ECS.StreamableLoading.Textures
 
         private static SlicedOwnedMemory<byte> ToArray(Texture2D data)
         {
+            using var markerScope = SERIALIZE_MARKER.Auto();
             data = ResizedTextureMultipleOf4(data);
             data.Compress(true);
             var textureData = data.GetRawTextureData<byte>()!;
