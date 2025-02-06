@@ -23,8 +23,7 @@ namespace DCL.UI.GenericContextMenu.Controls
             ADDRESS
         }
 
-        [field: SerializeField] public Image FaceFrame { get; private set; }
-        [field: SerializeField] public Image FaceRim { get; private set; }
+        [field: SerializeField] public Image ThumbnailBackground { get; private set; }
         [field: SerializeField] public ImageView ThumbnailImageView { get; private set; }
         [field: SerializeField] public TMP_Text UserName { get; private set; }
         [field: SerializeField] public TMP_Text UserNameTag { get; private set; }
@@ -99,11 +98,7 @@ namespace DCL.UI.GenericContextMenu.Controls
             CopyAddressToast.Hide(true);
             CopyNameToast.Hide(true);
 
-            FaceFrame.color = userColor;
-            userColor.r += 0.3f;
-            userColor.g += 0.3f;
-            userColor.b += 0.3f;
-            FaceRim.color = userColor;
+            ThumbnailBackground.color = userColor;
         }
 
         private float CalculateComponentHeight()

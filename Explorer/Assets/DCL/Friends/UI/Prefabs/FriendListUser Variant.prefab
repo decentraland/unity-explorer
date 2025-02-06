@@ -720,8 +720,7 @@ MonoBehaviour:
   <ChatEntryConfiguration>k__BackingField: {fileID: 11400000, guid: 6afb31861b85441b6ab2b988819bb96a, type: 2}
   <UserName>k__BackingField: {fileID: 880053671944594964}
   <UserNameTag>k__BackingField: {fileID: 5189747532995577403}
-  <FaceFrame>k__BackingField: {fileID: 7162172119129587731}
-  <FaceRim>k__BackingField: {fileID: 2832497847450356709}
+  <ThumbnailBackground>k__BackingField: {fileID: 2832497847450356709}
   <ProfileImageView>k__BackingField: {fileID: 5110362416587355827}
   <ContextMenuButton>k__BackingField: {fileID: 7541025456679391709}
   <JumpInButton>k__BackingField: {fileID: 3539447002694376727}
@@ -730,17 +729,6 @@ MonoBehaviour:
   <OnlineStatusIndicator>k__BackingField: {fileID: 6473188668892043502}
   <OnlineStatusColorIndicator>k__BackingField: {fileID: 3320316131485797577}
   <OnlineStatusConfiguration>k__BackingField: {fileID: 11400000, guid: bbca3b81bc8c54e1fb00e0cc1fa3f195, type: 2}
---- !u!114 &7162172119129587731 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 5406061596824009179, guid: 5dd1047f77ec242c3bb28f7edc2af796, type: 3}
-  m_PrefabInstance: {fileID: 2910193944685869512}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!224 &8037349931924411618 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 5181799103937588522, guid: 5dd1047f77ec242c3bb28f7edc2af796, type: 3}

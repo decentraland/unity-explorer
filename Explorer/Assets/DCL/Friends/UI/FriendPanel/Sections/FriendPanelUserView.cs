@@ -22,8 +22,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections
         [field: SerializeField] public ChatEntryConfigurationSO ChatEntryConfiguration { get; private set; }
         [field: SerializeField] public TMP_Text UserName { get; private set; }
         [field: SerializeField] public TMP_Text UserNameTag { get; private set; }
-        [field: SerializeField] public Image FaceFrame { get; private set; }
-        [field: SerializeField] public Image FaceRim { get; private set; }
+        [field: SerializeField] public Image ThumbnailBackground { get; private set; }
         [field: SerializeField] public ImageView ProfileImageView { get; private set; }
 
         private bool canUnHover = true;
@@ -86,11 +85,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections
             UserName.color = userColor;
             UserNameTag.text = $"#{friendProfile.Address.ToString()[^4..]}";
             UserNameTag.gameObject.SetActive(!friendProfile.HasClaimedName);
-            FaceFrame.color = userColor;
-            userColor.r += 0.3f;
-            userColor.g += 0.3f;
-            userColor.b += 0.3f;
-            FaceRim.color = userColor;
+            ThumbnailBackground.color = userColor;
 
             Sprite? thumbnail = profileThumbnailCache.GetThumbnail(friendProfile.Address.ToString());
             if (thumbnail != null)

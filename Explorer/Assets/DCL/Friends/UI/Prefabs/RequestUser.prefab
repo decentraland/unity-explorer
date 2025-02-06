@@ -1103,17 +1103,6 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 6422732380923386402, guid: 5dd1047f77ec242c3bb28f7edc2af796, type: 3}
   m_PrefabInstance: {fileID: 6033305386341014719}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &1782487746437047652 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 5406061596824009179, guid: 5dd1047f77ec242c3bb28f7edc2af796, type: 3}
-  m_PrefabInstance: {fileID: 6033305386341014719}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &3234931286704210667 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 9177864993776066132, guid: 5dd1047f77ec242c3bb28f7edc2af796, type: 3}
@@ -1138,8 +1127,7 @@ MonoBehaviour:
   <ChatEntryConfiguration>k__BackingField: {fileID: 11400000, guid: 6afb31861b85441b6ab2b988819bb96a, type: 2}
   <UserName>k__BackingField: {fileID: 8642155449442485091}
   <UserNameTag>k__BackingField: {fileID: 3736898434265359180}
-  <FaceFrame>k__BackingField: {fileID: 1782487746437047652}
-  <FaceRim>k__BackingField: {fileID: 6671664456971759250}
+  <ThumbnailBackground>k__BackingField: {fileID: 6671664456971759250}
   <ProfileImageView>k__BackingField: {fileID: 4409632322689881028}
   <ContextMenuButton>k__BackingField: {fileID: 5637797142498573802}
   <DeleteButton>k__BackingField: {fileID: 4259715656478843361}
