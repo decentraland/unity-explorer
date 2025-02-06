@@ -75,6 +75,7 @@ namespace CommandTerminal
         private bool isScrollAtBottom = false;
         private float normalizedScrollPosition = 1f;
         private float totalContentHeight = 0f;
+        float scrollYCompensation = 0;
 
         private bool isClosed => state == TerminalState.Close && Mathf.Approximately(currentOpenValue, openTarget);
 
@@ -196,10 +197,14 @@ namespace CommandTerminal
 
         private void WindowUpdate(int Window2D)
         {
-            // Process logs to be handled
+            // Process logs in main thread, before drawing
             while (logsToBeProcessed.Count > 0)
             {
                 HandleLog(logsToBeProcessed.Dequeue());
+                if (autoScrollOnNewLogs)
+                    scrollPosition.y = int.MaxValue;
+
+                UpdateScrollPosition();
             }
 
             scrollPosition = GUILayout.BeginScrollView(scrollPosition, false, false, GUIStyle.none, GUIStyle.none);
@@ -207,6 +212,50 @@ namespace CommandTerminal
             DrawLogs();
 
             GUILayout.EndScrollView();
+        }
+
+        private void HandleLog(LogItem newLog)
+        {
+            // Calculate and update content height
+            logs.Enqueue(newLog);
+            float newLogHeight = CalculateLogLabelHeight(newLog.Message);
+            totalContentHeight += newLogHeight;
+
+            if (logs.Count > logsMaxAmount)
+            {
+                LogItem removedLog = logs.Dequeue(); // remove oldest
+                float removedLogHeight = CalculateLogLabelHeight(removedLog.Message);
+                totalContentHeight -= removedLogHeight;
+
+                if (!autoScrollOnNewLogs)
+                    scrollYCompensation += newLogHeight;
+            }
+        }
+
+        private void UpdateScrollPosition()
+        {
+            // If scroll is at the bottom, keep it at the bottom
+            if (isScrollAtBottom)
+            {
+                scrollPosition.y = int.MaxValue;
+                scrollYCompensation = 0;
+                return;
+            }
+
+            if (scrollYCompensation > 0)
+            {
+                scrollPosition.y = Mathf.Max(0, scrollPosition.y - scrollYCompensation);
+                scrollYCompensation = 0;
+                return;
+            }
+        }
+
+        private float CalculateLogLabelHeight(string message)
+        {
+            var content = new GUIContent(message);
+            float contentWidth = screenRect.width - windowStyle.padding.horizontal;
+            float height = labelStyle.CalcHeight(content, contentWidth);
+            return height;
         }
 
         private void DrawLogs()
@@ -250,40 +299,6 @@ namespace CommandTerminal
                 case LogType.Warning: return warningColor;
                 default: return errorColor;
             }
-        }
-
-        private float CalculateLogLabelHeight(string message)
-        {
-            var content = new GUIContent(message);
-            float contentWidth = screenRect.width - windowStyle.padding.horizontal;
-            float height = labelStyle.CalcHeight(content, contentWidth);
-            return height;
-        }
-
-        private void HandleLog(LogItem newLog)
-        {
-            // Calculate and update content height
-            logs.Enqueue(newLog);
-            float newLogHeight = CalculateLogLabelHeight(newLog.Message);
-            totalContentHeight += newLogHeight;
-
-            if (logs.Count > logsMaxAmount)
-            {
-                float scrollYCompensation = 0;
-
-                LogItem removedLog = logs.Dequeue(); // remove oldest
-                float removedLogHeight = CalculateLogLabelHeight(removedLog.Message);
-                totalContentHeight -= removedLogHeight;
-
-                if (!autoScrollOnNewLogs)
-                    scrollYCompensation += newLogHeight;
-
-                scrollPosition.y = Mathf.Max(0, scrollPosition.y - scrollYCompensation);
-            }
-
-            // If scroll is at the bottom, keep it at the bottom
-            if (isScrollAtBottom || autoScrollOnNewLogs)
-                scrollPosition.y = int.MaxValue;
         }
     }
 }
