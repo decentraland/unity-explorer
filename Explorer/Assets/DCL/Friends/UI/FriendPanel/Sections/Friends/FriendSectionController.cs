@@ -130,8 +130,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
                     return;
 
                 OnlineUserData userData = onlineData.First();
-                Vector2Int position = new Vector2Int((int)userData.position.x, (int)userData.position.y);
-                realmNavigator.TeleportToParcelAsync(position, ct, false).Forget();
+                Vector2Int parcel = userData.position.ToParcel();
+                realmNavigator.TeleportToParcelAsync(parcel, ct, false).Forget();
             }
         }
 
