@@ -41,7 +41,7 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
                 var handlerFormat = mapping.Handler.GetTextureFormat();
                 if (tex && tex!.format == handlerFormat)
                     results[i] = mapping.Handler.SetTexture(targetMaterial, tex, new Vector2Int(tex.width, tex.height));
-                else if (tex == null || IsFormatValidForDefaultTex(handlerFormat))
+                else if (IsFormatValidForDefaultTex(handlerFormat))
                     mapping.Handler.SetDefaultTexture(targetMaterial, mapping.DefaultFallbackResolution);
             }
 
@@ -61,7 +61,7 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
 
                 if (foundTexture && tex!.format == handlerFormat)
                     results[i] = mapping.Handler.SetTexture(targetMaterial, tex, new Vector2Int(tex.width, tex.height));
-                else if (tex == null || IsFormatValidForDefaultTex(handlerFormat))
+                else if (IsFormatValidForDefaultTex(handlerFormat))
                    mapping.Handler.SetDefaultTexture(targetMaterial, mapping.DefaultFallbackResolution, defaultSlotIndexUsed);
             }
 
