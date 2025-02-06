@@ -183,7 +183,7 @@ namespace DCL.Passport
             notificationBusController.SubscribeToNotificationTypeReceived(NotificationType.BADGE_GRANTED, OnBadgeNotificationReceived);
             notificationBusController.SubscribeToNotificationTypeClick(NotificationType.BADGE_GRANTED, OnBadgeNotificationClicked);
 
-            userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings(systemClipboard, (profile, asd) => Debug.Log($"Send friendship request to {profile}"));
+            userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings(systemClipboard, ExecuteFriendshipOperationFromContextMenu);
         }
 
         private void ThumbnailClicked(List<CameraReelResponseCompact> reels, int index, Action<CameraReelResponseCompact> reelDeleteIntention) =>
@@ -604,6 +604,20 @@ namespace DCL.Passport
             viewInstance.AddFriendButton.gameObject.SetActive(false);
             viewInstance.CancelFriendButton.gameObject.SetActive(false);
             viewInstance.RemoveFriendButton.gameObject.SetActive(false);
+        }
+
+        private void ExecuteFriendshipOperationFromContextMenu(string profile,
+            UserProfileContextMenuControlSettings.FriendshipStatus friendshipStatus)
+        {
+            switch (friendshipStatus)
+            {
+                case UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_SENT:
+                    CancelFriendRequest();
+                    break;
+                case UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_RECEIVED:
+                    AcceptFriendship();
+                    break;
+            }
         }
 
         private void RemoveFriend()
