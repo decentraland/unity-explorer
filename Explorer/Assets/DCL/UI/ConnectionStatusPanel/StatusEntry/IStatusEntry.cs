@@ -39,7 +39,7 @@ namespace DCL.UI.ConnectionStatusPanel.StatusEntry
 
         private static readonly IReadOnlyDictionary<AssetBundleRegistryEnum, string> CACHE_LATEST_VERSION_STATUS = new Dictionary<AssetBundleRegistryEnum, string>
         {
-            [AssetBundleRegistryEnum.complete] = "Latest", [AssetBundleRegistryEnum.fallback] = "Updating"
+            [AssetBundleRegistryEnum.complete] = "Latest", [AssetBundleRegistryEnum.fallback] = "Updating", [AssetBundleRegistryEnum.pending] = "Failed"
         };
 
         public static void ShowStatus(this IStatusEntry statusEntry, IStatusEntry.Status status)

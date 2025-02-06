@@ -5,17 +5,16 @@ namespace DCL.DebugUtilities
 {
     public class DebugDropdownDef : IDebugElementDef
     {
-        public readonly List<string> Choices;
+        public List<string> Choices => Binding.values;
 
         public readonly IndexedElementBinding Binding;
 
         public readonly string Label;
 
-        public DebugDropdownDef(List<string> choices, IndexedElementBinding binding, string label)
+        public DebugDropdownDef(IndexedElementBinding binding, string label)
         {
             Binding = binding;
             Label = label;
-            Choices = choices;
         }
     }
 }

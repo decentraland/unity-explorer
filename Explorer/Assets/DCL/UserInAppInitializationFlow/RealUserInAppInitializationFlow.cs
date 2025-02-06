@@ -85,22 +85,30 @@ namespace DCL.UserInAppInitializationFlow
                 if (parameters.ShowAuthentication)
                 {
                     loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.AuthenticationScreenShowing);
-                    if (parameters.LoadSource is IUserInAppInitializationFlow.LoadSource.Logout)
+
+                    switch (parameters.LoadSource)
                     {
-                        await DoLogoutOperationsAsync();
-                        //Restart the realm and show the authentications screen simultaneously to avoid the "empty space" flicker
-                        //No error should be possible at this point
-                        // TODO move SetRealmAsync to an operation
-                        await UniTask.WhenAll(ShowAuthenticationScreenAsync(ct),
-                            realmController.SetRealmAsync(
-                                URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.Genesis)), ct));
-                    }
-                    else
-                    {
-                        await UniTask.WhenAll(
-                            ShowAuthenticationScreenAsync(ct),
-                            ShowErrorPopupIfRequired(result, ct)
-                        );
+                        case IUserInAppInitializationFlow.LoadSource.Logout:
+                            await DoLogoutOperationsAsync();
+
+                            //Restart the realm and show the authentications screen simultaneously to avoid the "empty space" flicker
+                            //No error should be possible at this point
+                            // TODO move SetRealmAsync to an operation
+                            await UniTask.WhenAll(ShowAuthenticationScreenAsync(ct),
+                                realmController.SetRealmAsync(
+                                    URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.Genesis)), ct));
+
+                            break;
+                        case IUserInAppInitializationFlow.LoadSource.Recover:
+                            await DoRecoveryOperationsAsync();
+                            goto default;
+                        default:
+                            await UniTask.WhenAll(
+                                ShowAuthenticationScreenAsync(ct),
+                                ShowErrorPopupIfRequired(result, ct)
+                            );
+
+                            break;
                     }
                 }
 
@@ -141,6 +149,12 @@ namespace DCL.UserInAppInitializationFlow
             portableExperiencesController.UnloadAllPortableExperiences();
             realmNavigator.RemoveCameraSamplingData();
             chatHistory.Clear();
+            await roomHub.StopAsync().Timeout(TimeSpan.FromSeconds(10));
+        }
+
+        // TODO should be an operation
+        private async UniTask DoRecoveryOperationsAsync()
+        {
             await roomHub.StopAsync().Timeout(TimeSpan.FromSeconds(10));
         }
 
