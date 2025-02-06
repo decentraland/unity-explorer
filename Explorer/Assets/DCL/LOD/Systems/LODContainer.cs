@@ -15,6 +15,7 @@ using System.Linq;
 using System.Threading;
 using DCL.Optimization.Pools;
 using DCL.Roads.GPUInstancing;
+using DCL.Roads.GPUInstancing.Playground;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 
@@ -118,7 +119,11 @@ namespace DCL.LOD.Systems
             roadAssetsPrefabList = new List<GameObject>();
 
             foreach (AssetReferenceGameObject? t in roadSettingsAsset.Value.RoadAssetsReference)
-                roadAssetsPrefabList.Add((await assetsProvisioner.ProvideMainAssetAsync(t, ct: ct)).Value);
+            {
+                var prefab = await assetsProvisioner.ProvideMainAssetAsync(t, ct: ct);
+                prefab.Value.GetComponent<GPUInstancingPrefabData>().HideVisuals();
+                roadAssetsPrefabList.Add(prefab.Value);
+            }
 
             realmData.RealmType.OnUpdate += SwitchRoadsInstancedRendering;
         }

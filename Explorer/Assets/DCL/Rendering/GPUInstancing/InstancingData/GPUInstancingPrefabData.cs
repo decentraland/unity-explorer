@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEditor;
 using UnityEngine;
 
@@ -8,11 +9,13 @@ namespace DCL.Roads.GPUInstancing.Playground
     [Serializable]
     public class GPUInstancingPrefabData : MonoBehaviour
     {
+        private static string[] whitelistedShaders = { "DCL/Scene" }; // "Universal Render Pipeline/Nature/Stylized Grass"
+
         public List<GPUInstancingCandidate> indirectCandidates;
         public List<GPUInstancingCandidate> directCandidates;
 
-        public List<LODGroup> instancedLodGroups;
         public List<Renderer> InstancedRenderers;
+        public List<LODGroup> InstancedLODGroups;
 
         [ContextMenu(nameof(CollectSelfData))]
         public void CollectSelfData()
@@ -31,8 +34,9 @@ namespace DCL.Roads.GPUInstancing.Playground
             {
                 indirectCandidates = new List<GPUInstancingCandidate>();
                 directCandidates = new List<GPUInstancingCandidate>();
-                instancedLodGroups = new List<LODGroup>();
                 InstancedRenderers = new List<Renderer>();
+                InstancedLODGroups = new List<LODGroup>();
+
                 CollectInstancingCandidatesFromStandaloneMeshes();
                 CollectInstancingCandidatesFromLODGroups();
             }
@@ -42,21 +46,23 @@ namespace DCL.Roads.GPUInstancing.Playground
         [ContextMenu(nameof(HideVisuals))]
         public void HideVisuals()
         {
-            foreach (var instancedRenderer in InstancedRenderers) instancedRenderer.enabled = false;
-            foreach (var instancedLodGroup in instancedLodGroups) instancedLodGroup.enabled = false;
+            foreach (Renderer instancedRenderer in InstancedRenderers)
+            {
+                instancedRenderer.enabled = false;
+            }
         }
 
         public void ShowVisuals()
         {
-            foreach (var instancedRenderer in InstancedRenderers) instancedRenderer.enabled = true;
-            foreach (var instancedLodGroup in instancedLodGroups) instancedLodGroup.enabled = true;
+            foreach (Renderer instancedRenderer in InstancedRenderers) instancedRenderer.enabled = true;
+            foreach (LODGroup lodGroup in InstancedLODGroups) lodGroup.enabled = true;
         }
 
         private void CollectInstancingCandidatesFromLODGroups()
         {
             foreach (LODGroup lodGroup in gameObject.GetComponentsInChildren<LODGroup>(true))
             {
-                UnityEngine.LOD[] lods = lodGroup.GetLODs();
+                LOD[] lods = lodGroup.GetLODs();
 
                 if (lods.Length == 0 || lods[0].renderers.Length == 0 || lods[0].renderers[0] == null || lods[0].renderers[0].sharedMaterials.Length == 0)
                 {
@@ -64,11 +70,27 @@ namespace DCL.Roads.GPUInstancing.Playground
                     continue;
                 }
 
-                instancedLodGroups.Add(lodGroup);
+                var validLodLevels = 0;
 
-                foreach (UnityEngine.LOD lod in lodGroup.GetLODs())
-                foreach (Renderer lodRenderer in lod.renderers)
-                    InstancedRenderers.Add(lodRenderer);
+                foreach (LOD lod in lods)
+                {
+                    var addedRenderers = 0;
+
+                    foreach (Renderer lodRenderer in lod.renderers)
+                    {
+                        if (lodRenderer is MeshRenderer && IsValidShader(lodRenderer.sharedMaterials))
+                        {
+                            InstancedRenderers.Add(lodRenderer);
+                            addedRenderers++;
+                        }
+                    }
+
+                    if (addedRenderers == lod.renderers.Length)
+                        validLodLevels++;
+                }
+
+                if (validLodLevels == lods.Length)
+                    InstancedLODGroups.Add(lodGroup);
 
                 Matrix4x4 localToRootMatrix = transform.worldToLocalMatrix * lodGroup.transform.localToWorldMatrix; // root * child
 
@@ -82,7 +104,7 @@ namespace DCL.Roads.GPUInstancing.Playground
         {
             foreach (MeshRenderer mr in GetComponentsInChildren<MeshRenderer>(true))
             {
-                if (mr == null || mr.sharedMaterial == null || mr.GetComponent<MeshFilter>().sharedMesh == null)
+                if (mr == null || mr.sharedMaterial == null || mr.GetComponent<MeshFilter>().sharedMesh == null || !IsValidShader(mr.sharedMaterials))
                     continue;
 
                 if (!AssignedToLODGroupInPrefabHierarchy(mr.transform))
@@ -137,7 +159,7 @@ namespace DCL.Roads.GPUInstancing.Playground
 
             // if (AreSamePrefabAsset(lodGroup.gameObject, existing.Reference.gameObject)) return true;
 
-            UnityEngine.LOD[] lods = lodGroup.GetLODs();
+            LOD[] lods = lodGroup.GetLODs();
 
             if (lods.Length != existing.Lods.Count)
             {
@@ -147,7 +169,7 @@ namespace DCL.Roads.GPUInstancing.Playground
                 return false;
             }
 
-            UnityEngine.LOD[] eLods = existing.Reference.GetLODs();
+            LOD[] eLods = existing.Reference.GetLODs();
 
             for (var index = 0; index < lods.Length; index++)
             {
@@ -222,7 +244,7 @@ namespace DCL.Roads.GPUInstancing.Playground
 
         private bool ValidLODGroup(LODGroup lodGroup)
         {
-            foreach (UnityEngine.LOD lod in lodGroup.GetLODs())
+            foreach (LOD lod in lodGroup.GetLODs())
             foreach (Renderer lodRenderer in lod.renderers)
             {
                 if (lodRenderer == null)
@@ -254,6 +276,21 @@ namespace DCL.Roads.GPUInstancing.Playground
             }
 
             return false;
+        }
+
+        private bool IsValidShader(Material[] materials)
+        {
+            if (materials == null) return false;
+
+            foreach (Material m in materials)
+            {
+                Debug.Log(m.shader.name);
+
+                if (m == null || !whitelistedShaders.Contains(m.shader.name))
+                    return false;
+            }
+
+            return true;
         }
     }
 }
