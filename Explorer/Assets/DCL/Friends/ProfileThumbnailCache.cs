@@ -32,10 +32,24 @@ namespace DCL.Friends
             if (sprite != null)
                 return sprite;
 
-            if (profile.Avatar.FaceSnapshotUrl.Equals(URLAddress.EMPTY)) return null;
+            return await DownloadThumbnailAsync(profile.UserId, profile.Avatar.FaceSnapshotUrl, ct);
+        }
+
+        public async UniTask<Sprite?> GetThumbnailAsync(string userId, string thumbnailUrl, CancellationToken ct)
+        {
+            Sprite? sprite = GetThumbnail(userId);
+            if (sprite != null)
+                return sprite;
+
+            return await DownloadThumbnailAsync(userId, thumbnailUrl, ct);
+        }
+
+        private async UniTask<Sprite?> DownloadThumbnailAsync(string userId, string thumbnailUrl, CancellationToken ct)
+        {
+            if (URLAddress.EMPTY.Equals(thumbnailUrl)) return null;
 
             IOwnedTexture2D ownedTexture = await webRequestController.GetTextureAsync(
-                new CommonArguments(URLAddress.FromString(profile.Avatar.FaceSnapshotUrl)),
+                new CommonArguments(URLAddress.FromString(thumbnailUrl)),
                 new GetTextureArguments(TextureType.Albedo),
                 GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp),
                 ct,
@@ -46,7 +60,7 @@ namespace DCL.Friends
             texture.filterMode = FilterMode.Bilinear;
             Sprite downloadedSprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), VectorUtilities.OneHalf, PIXELS_PER_UNIT, 0, SpriteMeshType.FullRect, Vector4.one, false);
 
-            SetThumbnail(profile.UserId, downloadedSprite);
+            SetThumbnail(userId, downloadedSprite);
 
             return downloadedSprite;
         }

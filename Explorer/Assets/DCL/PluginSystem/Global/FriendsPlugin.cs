@@ -8,6 +8,7 @@ using DCL.FeatureFlags;
 using DCL.Friends;
 using DCL.Friends.Chat.BusInterface;
 using DCL.Friends.UI.FriendPanel;
+using DCL.Friends.UI.PushNotifications;
 using DCL.Friends.UI.Requests;
 using DCL.Input;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -178,6 +179,13 @@ namespace DCL.PluginSystem.Global
                 inputBlock);
 
             mvcManager.RegisterController(friendRequestController);
+
+            var friendPushNotificationController = new FriendPushNotificationController(() => mainUIView.FriendPushNotificationView,
+                friendEventBus,
+                profileThumbnailCache,
+                isConnectivityStatusEnabled);
+
+            mvcManager.RegisterController(friendPushNotificationController);
 
             // We need to restart the connection to the service as credentials changes
             // since that affects which friends the user can access
