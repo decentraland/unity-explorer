@@ -26,6 +26,11 @@ namespace DCL.Friends.UI.PushNotifications
 
         private void Start()
         {
+            HideToast();
+        }
+
+        internal void HideToast()
+        {
             PanelCanvasGroup.alpha = 0f;
         }
 
@@ -36,7 +41,7 @@ namespace DCL.Friends.UI.PushNotifications
             UserNameText.color = userColor;
 
             UserNameText.text = friendProfile.Name;
-            UserAddressText.text = $"#{friendProfile.Address.ToString()[..^4]}";
+            UserAddressText.text = $"#{friendProfile.Address.ToString()[^4..]}";
             UserAddressText.gameObject.SetActive(friendProfile.HasClaimedName);
 
             if (profileThumbnail != null)

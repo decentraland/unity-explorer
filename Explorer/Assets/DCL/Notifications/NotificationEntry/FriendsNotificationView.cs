@@ -68,7 +68,7 @@ namespace DCL.Notifications.NotificationEntry
             Color userColor = ChatEntryConfiguration.GetNameColor(notification.Metadata.Sender.Name);
             UserNameText.text = notification.Metadata.Sender.Name;
             UserNameText.color = userColor;
-            UserAddressText.text = notification.Metadata.Sender.Address;
+            UserAddressText.text = notification.Metadata.Sender.Address[^4..];
             TitleText.text = notification.GetTitle();
             UserAddressText.gameObject.SetActive(!notification.Metadata.Sender.HasClaimedName);
             UserAddressSeparator.SetActive(!notification.Metadata.Sender.HasClaimedName);
@@ -82,7 +82,7 @@ namespace DCL.Notifications.NotificationEntry
             Color userColor = ChatEntryConfiguration.GetNameColor(notification.Metadata.Sender.Name);
             UserNameText.text = notification.Metadata.Sender.Name;
             UserNameText.color = userColor;
-            UserAddressText.text = notification.Metadata.Sender.Address;
+            UserAddressText.text = notification.Metadata.Sender.Address[^4..];
             TitleText.text = notification.GetTitle();
             UserAddressText.gameObject.SetActive(!notification.Metadata.Sender.HasClaimedName);
             UserAddressSeparator.SetActive(!notification.Metadata.Sender.HasClaimedName);
