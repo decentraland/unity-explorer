@@ -1,4 +1,10 @@
+using DCL.Diagnostics;
+using DCL.ECSComponents;
+using Decentraland.Common;
+using System;
 using UnityEngine;
+using Quaternion = UnityEngine.Quaternion;
+using Vector3 = UnityEngine.Vector3;
 
 namespace CrdtEcsBridge.Components.Conversion
 {
@@ -23,5 +29,41 @@ namespace CrdtEcsBridge.Components.Conversion
                 z = protoQuaternion.Z,
                 w = protoQuaternion.W,
             };
+
+        public static Color PBColorToUnityColor(Color3 protoColor, float alphaValue = 1) =>
+            new ()
+            {
+                r = protoColor.R,
+                g = protoColor.G,
+                b = protoColor.B,
+                a = alphaValue,
+            };
+
+        public static Color PBColorToUnityColor(Color4 protoColor) =>
+            new ()
+            {
+                r = protoColor.R,
+                g = protoColor.G,
+                b = protoColor.B,
+                a = protoColor.A,
+            };
+
+        public static LightShadows PBLightSourceShadowToUnityLightShadow(PBLightSource.Types.ShadowType shadow)
+        {
+            switch (shadow)
+            {
+                case PBLightSource.Types.ShadowType.StNone: return LightShadows.None;
+                case PBLightSource.Types.ShadowType.StSoft: return LightShadows.Soft;
+                case PBLightSource.Types.ShadowType.StHard: return LightShadows.Hard;
+                default:
+                {
+                    ReportHub.LogError(ReportCategory.UNSPECIFIED, "Null shadow type provided, using None instead");
+                    return LightShadows.None;
+                }
+            }
+        }
+
+        public static float PBBrightnessInLumensToUnityCandels(float lumens) =>
+            lumens / (4f * Mathf.PI);
     }
 }
