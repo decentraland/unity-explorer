@@ -15,24 +15,21 @@ namespace DCL.Multiplayer.Movement.Systems
 {
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     [LogCategory(ReportCategory.AVATAR)]
-    public partial class SDKAvatarMotionSystem : BaseUnityLoopSystem
+    public partial class SDKAvatarShapesMotionSystem : BaseUnityLoopSystem
     {
         private const float RUN_SPEED_THRESHOLD = 9.5f;
         private const float JOG_SPEED_THRESHOLD = 4f;
 
-        private SDKAvatarMotionSystem(World world) : base(world)
-        {
-
-        }
+        private SDKAvatarShapesMotionSystem(World world) : base(world) { }
 
         protected override void Update(float t)
         {
-            UpdateSDKAvatarMotionQuery(World);
+            UpdateMotionQuery(World);
         }
 
         [Query]
         [None(typeof(Profile))]
-        private void UpdateSDKAvatarMotion(
+        private void UpdateMotion(
             ref CharacterTransform characterTransformComp,
             ref CharacterOldPosition characterOldPositionComp,
             in IAvatarView view,
