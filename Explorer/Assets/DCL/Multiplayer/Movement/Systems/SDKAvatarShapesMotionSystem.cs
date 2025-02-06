@@ -30,43 +30,44 @@ namespace DCL.Multiplayer.Movement.Systems
         [Query]
         [None(typeof(Profile))]
         private void UpdateMotion(
-            ref CharacterTransform characterTransformComp,
-            ref CharacterOldPosition characterOldPositionComp,
             in IAvatarView view,
+            ref CharacterTransform characterTransformComponent,
+            ref CharacterLastPosition characterLastPositionComponent,
             ref CharacterAnimationComponent animationComponent)
         {
-            UpdateRotation(characterTransformComp, ref characterOldPositionComp);
-            UpdateAnimations(view, ref animationComponent, characterTransformComp, ref characterOldPositionComp);
-            characterOldPositionComp.OldPosition = characterTransformComp.Transform.position;
+            UpdateRotation(characterTransformComponent, ref characterLastPositionComponent);
+            UpdateAnimations(view, characterTransformComponent, ref characterLastPositionComponent, ref animationComponent);
+            UpdateLastPosition(ref characterTransformComponent, ref characterLastPositionComponent);
         }
 
         private static void UpdateRotation(
             CharacterTransform characterTransformComp,
-            ref CharacterOldPosition characterOldPositionComp)
+            ref CharacterLastPosition characterLastPositionComp)
         {
             var currentPosition = characterTransformComp.Transform.position;
-            var oldPosition = characterOldPositionComp.OldPosition;
+            var oldPosition = characterLastPositionComp.LastPosition;
 
             if (oldPosition == currentPosition)
                 return;
 
             Vector3 newDirection = currentPosition - oldPosition;
             newDirection.y = 0;
+
             if (newDirection != Vector3.zero)
                 characterTransformComp.Transform.forward = newDirection.normalized;
         }
 
         private static void UpdateAnimations(
             IAvatarView view,
-            ref CharacterAnimationComponent animationComponent,
             CharacterTransform characterTransformComp,
-            ref CharacterOldPosition characterOldPositionComp)
+            ref CharacterLastPosition characterLastPositionComp,
+            ref CharacterAnimationComponent animationComponent)
         {
             const bool IS_JUMP_TRIGGERED = false;
             const bool IS_STUNNED = false;
 
             var currentPosition = characterTransformComp.Transform.position;
-            var oldPosition = characterOldPositionComp.OldPosition;
+            var oldPosition = characterLastPositionComp.LastPosition;
             float movementBlendValue = 0;
 
             if (oldPosition != currentPosition)
@@ -93,5 +94,10 @@ namespace DCL.Multiplayer.Movement.Systems
             // other states
             AnimationStatesLogic.SetAnimatorParameters(view, ref animationComponent.States, animationComponent.States.IsJumping, IS_JUMP_TRIGGERED, IS_STUNNED);
         }
+
+        private static void UpdateLastPosition(
+            ref CharacterTransform characterTransformComponent,
+            ref CharacterLastPosition characterLastPositionComponent) =>
+            characterLastPositionComponent.LastPosition = characterTransformComponent.Transform.position;
     }
 }
