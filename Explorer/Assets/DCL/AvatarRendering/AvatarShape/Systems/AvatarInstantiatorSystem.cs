@@ -21,6 +21,7 @@ using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.StreamableLoading.Common;
 using System.Collections.Generic;
+using DCL.ECSComponents;
 using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
@@ -113,6 +114,10 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
             var avatarTransform = avatarBase.transform;
             avatarTransform.SetParent(transformComponent.Transform, false);
+
+            //TODO: PBAvatarShapes may never load due to creators bugs, so we need to turn off their ghost renderer
+            if (World.Has<PBAvatarShape>(entity))
+                avatarBase.GhostRenderer.SetActive(false);
 
             World.Add(entity, avatarBase);
         }
