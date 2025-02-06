@@ -153,14 +153,13 @@ namespace ECS.Unity.Materials.Systems
             PartitionComponent partitionComponent)
         {
             TryCreateGetTexturePromise(entity, in materialComponent.Data.Textures.AlbedoTexture, oldTexturesData?.AlbedoTexture, ref materialComponent.AlbedoTexPromise, partitionComponent);
+            TryCreateGetTexturePromise(entity, in materialComponent.Data.Textures.AlphaTexture, oldTexturesData?.AlphaTexture, ref materialComponent.AlphaTexPromise, partitionComponent);
 
             if (materialComponent.Data.IsPbrMaterial)
             {
-                TryCreateGetTexturePromise(entity, in materialComponent.Data.Textures.AlphaTexture, oldTexturesData?.AlphaTexture, ref materialComponent.AlphaTexPromise, partitionComponent);
                 TryCreateGetTexturePromise(entity, in materialComponent.Data.Textures.EmissiveTexture, oldTexturesData?.EmissiveTexture, ref materialComponent.EmissiveTexPromise, partitionComponent);
                 TryCreateGetTexturePromise(entity, in materialComponent.Data.Textures.BumpTexture, oldTexturesData?.BumpTexture, ref materialComponent.BumpTexPromise, partitionComponent);
             }
-            else { TryCreateGetTexturePromise(entity, in materialComponent.Data.Textures.AlphaTexture, oldTexturesData?.AlphaTexture, ref materialComponent.AlphaTexPromise, partitionComponent); }
         }
 
         private static MaterialData CreateBasicMaterialData(in PBMaterial pbMaterial, in TextureComponent? albedoTexture, in TextureComponent? alphaTexture) =>
