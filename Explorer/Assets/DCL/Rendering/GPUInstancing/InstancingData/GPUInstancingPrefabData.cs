@@ -9,7 +9,7 @@ namespace DCL.Roads.GPUInstancing.Playground
     [Serializable]
     public class GPUInstancingPrefabData : MonoBehaviour
     {
-        private static string[] whitelistedShaders = { "DCL/Scene" }; // "Universal Render Pipeline/Nature/Stylized Grass"
+        private static string[] whitelistedShaders = { "DCL/Scene", "Universal Render Pipeline/Nature/Stylized Grass" };
 
         public List<GPUInstancingCandidate> indirectCandidates;
         public List<GPUInstancingCandidate> directCandidates;
@@ -39,7 +39,23 @@ namespace DCL.Roads.GPUInstancing.Playground
 
                 CollectInstancingCandidatesFromStandaloneMeshes();
                 CollectInstancingCandidatesFromLODGroups();
+
+                SavePrefabChanges();
             }
+#endif
+        }
+
+        private void SavePrefabChanges()
+        {
+#if UNITY_EDITOR
+            if (!PrefabUtility.IsPartOfPrefabAsset(gameObject))
+                return;
+
+            EditorUtility.SetDirty(this);
+
+            string assetPath = PrefabUtility.GetPrefabAssetPathOfNearestInstanceRoot(gameObject);
+            if (!string.IsNullOrEmpty(assetPath))
+                AssetDatabase.SaveAssetIfDirty(AssetDatabase.LoadAssetAtPath<GameObject>(assetPath));
 #endif
         }
 
@@ -78,7 +94,7 @@ namespace DCL.Roads.GPUInstancing.Playground
 
                     foreach (Renderer lodRenderer in lod.renderers)
                     {
-                        if (lodRenderer is MeshRenderer && IsValidShader(lodRenderer.sharedMaterials))
+                        if (lodRenderer is MeshRenderer)// && IsValidShader(lodRenderer.sharedMaterials))
                         {
                             InstancedRenderers.Add(lodRenderer);
                             addedRenderers++;
@@ -104,7 +120,7 @@ namespace DCL.Roads.GPUInstancing.Playground
         {
             foreach (MeshRenderer mr in GetComponentsInChildren<MeshRenderer>(true))
             {
-                if (mr == null || mr.sharedMaterial == null || mr.GetComponent<MeshFilter>().sharedMesh == null || !IsValidShader(mr.sharedMaterials))
+                if (mr == null || mr.sharedMaterial == null || mr.GetComponent<MeshFilter>().sharedMesh == null)// || !IsValidShader(mr.sharedMaterials))
                     continue;
 
                 if (!AssignedToLODGroupInPrefabHierarchy(mr.transform))
@@ -286,11 +302,56 @@ namespace DCL.Roads.GPUInstancing.Playground
             {
                 Debug.Log(m.shader.name);
 
-                if (m == null || !whitelistedShaders.Contains(m.shader.name))
+                if (m == null)
                     return false;
+
+                foreach (var mat in materials)
+                foreach (string shader in whitelistedShaders)
+                    return shader.Contains(mat.name);
             }
 
-            return true;
+            return false;
         }
+
+        // private bool IsValidShader(Material[] materials)
+        // {
+        //     if (materials == null)
+        //     {
+        //         Debug.LogWarning($"[{gameObject.name}] Materials array is null");
+        //         return false;
+        //     }
+        //
+        //     if (materials.Length == 0)
+        //     {
+        //         Debug.LogWarning($"[{gameObject.name}] Materials array is empty");
+        //         return false;
+        //     }
+        //
+        //     foreach (Material m in materials)
+        //     {
+        //         if (m == null)
+        //         {
+        //             Debug.LogWarning($"[{gameObject.name}] Found null material in materials array");
+        //             return false;
+        //         }
+        //
+        //         if (m.shader == null)
+        //         {
+        //             Debug.LogWarning($"[{gameObject.name}] Material {m.name} has null shader");
+        //             return false;
+        //         }
+        //
+        //         string shaderName = m.shader.name;
+        //         Debug.Log($"[{gameObject.name}] Checking shader: {shaderName}");
+        //
+        //         if (!whitelistedShaders.Contains(shaderName))
+        //         {
+        //             Debug.LogWarning($"[{gameObject.name}] Shader {shaderName} is not in whitelist: [{string.Join(", ", whitelistedShaders)}]");
+        //             return false;
+        //         }
+        //     }
+        //
+        //     return true;
+        // }
     }
 }
