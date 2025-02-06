@@ -27,14 +27,7 @@ namespace DCL.LOD.Components
             FailedLODs = 0;
             this.lodLevels = lodLevels;
         }
-
-        public void Reset()
-        {
-            LODAssets = new LODAsset[lodLevels];
-            SuccessfullLODs = 0;
-            FailedLODs = 0;
-        }
-        
+      
         public void Dispose()
         {
             foreach (var lodAsset in LODAssets)

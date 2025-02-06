@@ -66,7 +66,6 @@ namespace DCL.LOD.Systems
             //TODO: Use frame budget?
             World.Query(ALL_LOD_QUERY_REDUCED_QUALITY, (Entity entity, ref SceneLODInfo sceneLODInfo) =>
             {
-                sceneLODInfo.metadata.Reset();
                 World.Remove<LODQualityReducedComponent>(entity);
             });
             World.Destroy(entity);
@@ -78,8 +77,9 @@ namespace DCL.LOD.Systems
                 return;
             
             lodCache.Release(sceneLODInfo.id, sceneLODInfo.metadata);
-            sceneLODInfo.metadata.SuccessfullLODs = 0;
-            sceneLODInfo.metadata.FailedLODs = 0;
+
+            //We reset the scene lod info but dont remove it
+            sceneLODInfo.id = string.Empty;
             sceneLODInfo.Dispose(World);
         }
     }
