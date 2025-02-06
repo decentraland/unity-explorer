@@ -207,6 +207,7 @@ namespace Global.Dynamic
                          .CreateAsync(
                               settingsContainer,
                               assetsProvisioner,
+                              appArgs,
                               ct
                           )
                          .ThrowOnFail();
