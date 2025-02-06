@@ -213,7 +213,7 @@ namespace DCL.UI.InputFieldValidator
                                      .Append('=')
                                      .Append(match.Groups[1].Value)
                                      .Append(">")
-                                     .Append(match.Groups[2].Value)
+                                     .Append("@" + match.Groups[2].Value)
                                      .Append(linkClosingStyle);
                     return tempStringBuilder;
             }

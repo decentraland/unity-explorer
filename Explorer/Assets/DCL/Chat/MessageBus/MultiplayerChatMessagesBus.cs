@@ -26,6 +26,7 @@ namespace DCL.Chat.MessageBus
             this.messagePipesHub = messagePipesHub;
             this.profileRepository = profileRepository;
             this.messageDeduplication = messageDeduplication;
+            this.selfProfile = selfProfile;
 
             messagePipesHub.IslandPipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Chat>(Decentraland.Kernel.Comms.Rfc4.Packet.MessageOneofCase.Chat, OnMessageReceived);
             messagePipesHub.ScenePipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Chat>(Decentraland.Kernel.Comms.Rfc4.Packet.MessageOneofCase.Chat, OnMessageReceived);
@@ -87,17 +88,16 @@ namespace DCL.Chat.MessageBus
 
         private async UniTask<bool> CheckMentionOnChatMessage(string chatMessage)
         {
-            //Check if the message contains the display name of our user with a @ before it
             var profile = await selfProfile.ProfileAsync(cancellationTokenSource.Token);
+
+            if (profile == null) return false;
+
             return chatMessage.Contains("@" + profile?.DisplayName);
         }
 
 
         private string ParseChatMessageFromPayloadMessage(string payloadMessage)
         {
-            // TODO: Remove this line once this code is merged to dev
-            return payloadMessage;
-
             return payloadMessage.Substring(payloadMessage.IndexOf('>') + 1);
         }
 
