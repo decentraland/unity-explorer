@@ -60,6 +60,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Bench01
       objectReference: {fileID: 0}
+    - target: {fileID: 3413871308355667320, guid: a8db31bfddc59a545864b23eff2057a8, type: 3}
+      propertyPath: m_CastShadows
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4742473837712756890, guid: a8db31bfddc59a545864b23eff2057a8, type: 3}
       propertyPath: m_FadeMode
       value: 0

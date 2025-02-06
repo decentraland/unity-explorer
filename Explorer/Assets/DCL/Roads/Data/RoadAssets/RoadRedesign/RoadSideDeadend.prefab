@@ -48,6 +48,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: -2977378004791151619, guid: f01b3ef9777b42844a62fc08a509aeca, type: 3}
+      propertyPath: m_CastShadows
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: f01b3ef9777b42844a62fc08a509aeca, type: 3}
       propertyPath: m_Name
       value: RoadSideDeadend

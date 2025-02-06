@@ -57,6 +57,10 @@ PrefabInstance:
       value: RoadSideDecor01
       objectReference: {fileID: 0}
     - target: {fileID: 1386865200143816641, guid: 455bd1c33ae1c814e80059a9aaddc441, type: 3}
+      propertyPath: m_CastShadows
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1386865200143816641, guid: 455bd1c33ae1c814e80059a9aaddc441, type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 
       objectReference: {fileID: 2100000, guid: 080ee30e4f4ff5c4fae19015bec5167c, type: 2}
