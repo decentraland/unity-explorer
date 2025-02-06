@@ -19,7 +19,6 @@ namespace DCL.PluginSystem.World.Dependencies
         public readonly IReleasablePerformanceBudget LoadingBudget;
         public readonly FrameTimeCapBudget FrameTimeBudget;
         public readonly MemoryBudget MemoryBudget;
-        public readonly SceneAssetLock SceneAssetLock;
 
         public ECSWorldSingletonSharedDependencies(
             IComponentPoolsRegistry componentPoolsRegistry,
@@ -29,7 +28,6 @@ namespace DCL.PluginSystem.World.Dependencies
             IReleasablePerformanceBudget loadingBudget,
             FrameTimeCapBudget frameTimeBudget,
             MemoryBudget memoryBudget,
-            SceneAssetLock sceneAssetLock,
             ISceneMapping sceneMapping
         )
         {
@@ -42,7 +40,6 @@ namespace DCL.PluginSystem.World.Dependencies
             LoadingBudget = loadingBudget;
             FrameTimeBudget = frameTimeBudget;
             MemoryBudget = memoryBudget;
-            SceneAssetLock = sceneAssetLock;
             SceneMapping = sceneMapping;
         }
     }

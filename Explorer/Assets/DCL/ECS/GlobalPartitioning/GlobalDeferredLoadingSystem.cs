@@ -6,6 +6,7 @@ using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.AvatarRendering.Wearables.Systems;
+using DCL.CharacterMotion.Components;
 using DCL.Ipfs;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Profiles;
@@ -42,7 +43,8 @@ namespace DCL.GlobalPartitioning
     public partial class GlobalDeferredLoadingSystem : DeferredLoadingSystem
     {
         private static readonly QueryDescription[] COMPONENT_HANDLERS;
-        private readonly SceneAssetLock sceneAssetLock;
+        private Vector2Int teleportParcel;
+        private bool isSceneLocked;
 
         static GlobalDeferredLoadingSystem()
         {
@@ -55,8 +57,6 @@ namespace DCL.GlobalPartitioning
                 CreateQuery<GetWearableByParamIntention, IWearable[]>(),
                 CreateQuery<GetWearableAssetBundleManifestIntention, SceneAssetBundleManifest>(),
                 CreateQuery<GetAssetBundleIntention, AssetBundleData>(),
-                CreateQuery<GetGLTFIntention, GLTFData>(),
-                CreateQuery<GetProfileIntention, ProfileData>(),
                 CreateQuery<GetTextureIntention, Texture2DData>(),
                 CreateQuery<GetNFTShapeIntention, Texture2DData>(),
                 CreateQuery<GetEmotesByPointersFromRealmIntention, EmotesDTOList>(),
@@ -65,15 +65,33 @@ namespace DCL.GlobalPartitioning
             };
         }
 
-        public GlobalDeferredLoadingSystem(World world, IReleasablePerformanceBudget releasablePerformanceLoadingBudget, IPerformanceBudget memoryBudget, SceneAssetLock sceneAssetLock)
+        public GlobalDeferredLoadingSystem(World world, IReleasablePerformanceBudget releasablePerformanceLoadingBudget, IPerformanceBudget memoryBudget)
             : base(world, COMPONENT_HANDLERS, releasablePerformanceLoadingBudget, memoryBudget)
         {
-            this.sceneAssetLock = sceneAssetLock;
         }
 
         protected override void Update(float t)
         {
-            if (sceneAssetLock.IsLocked) return;
+            isSceneLocked = false;
+            World.Query(new QueryDescription().WithAll<PlayerTeleportIntent>(), (ref PlayerTeleportIntent teleportIntent) =>
+            {
+                teleportParcel = teleportIntent.Parcel;
+                World.Query(new QueryDescription().WithAll<ISceneFacade>(), (ref ISceneFacade sceneFacade) =>
+                {
+                    if (sceneFacade.Contains(teleportParcel) && !sceneFacade.IsSceneReady())
+                        isSceneLocked = true;
+                });
+            });
+
+            if (isSceneLocked)
+            {
+                Debug.Log("JUANI LOCK ON");
+                return;
+            }
+
+            Debug.Log("JUANI LOCK OFF");
+
+            
             base.Update(t);
         }
     }
