@@ -11,6 +11,7 @@ namespace DCL.Chat
         public readonly string WalletAddress;
         public readonly bool SentByOwnUser;
         public readonly bool SystemMessage;
+        public readonly bool IsMention;
 
         public ChatMessage(
             string message,
@@ -18,6 +19,7 @@ namespace DCL.Chat
             string walletAddress,
             bool sentByOwnUser,
             string senderWalletId,
+            bool isMention = false,
             bool systemMessage = false)
         {
             Message = message;
@@ -26,12 +28,14 @@ namespace DCL.Chat
             SentByOwnUser = sentByOwnUser;
             IsPaddingElement = false;
             SenderWalletId = senderWalletId;
+            IsMention = isMention;
             SystemMessage = systemMessage;
         }
 
         public ChatMessage(bool isPaddingElement)
         {
             IsPaddingElement = isPaddingElement;
+            IsMention = false;
             SenderWalletId = string.Empty;
             Message = string.Empty;
             SenderValidatedName = string.Empty;
@@ -42,7 +46,7 @@ namespace DCL.Chat
 
         public static ChatMessage NewFromSystem(string message) =>
             new (message, "DCL System", string.Empty, true,
-                null, true);
+                null, false, true);
 
         public bool Equals(ChatMessage other) =>
             IsPaddingElement == other.IsPaddingElement &&
@@ -51,13 +55,14 @@ namespace DCL.Chat
             SenderWalletId == other.SenderWalletId &&
             WalletAddress == other.WalletAddress &&
             SentByOwnUser == other.SentByOwnUser &&
-            SystemMessage == other.SystemMessage;
+            SystemMessage == other.SystemMessage &&
+            IsMention == other.IsMention;
 
         public override bool Equals(object? obj) =>
             obj is ChatMessage other && Equals(other);
 
         public override int GetHashCode() =>
             HashCode.Combine(IsPaddingElement, Message, SenderValidatedName, SenderWalletId,
-                WalletAddress, SentByOwnUser, SystemMessage);
+                WalletAddress, SentByOwnUser, SystemMessage, IsMention);
     }
 }

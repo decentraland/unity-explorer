@@ -14,6 +14,7 @@ namespace DCL.Chat
         [field: SerializeField] internal ChatEntryMessageContentElement messageContentElement { get; private set; }
         [field: SerializeField] internal ChatEntryConfigurationSO configurationSo { get; private set; }
         [field: SerializeField] internal RectTransform popupPosition { get; private set; }
+        [field: SerializeField] internal GameObject mentionedOutline { get; private set; }
 
         private Vector2 backgroundSize;
 
@@ -46,6 +47,7 @@ namespace DCL.Chat
             backgroundSize.y = Mathf.Max(messageContentElement.messageContentRectTransform.sizeDelta.y + backgroundHeightOffset);
             backgroundSize.x = CalculatePreferredWidth(data);
             backgroundRectTransform.sizeDelta = backgroundSize;
+            mentionedOutline.SetActive(data.IsMention);
         }
 
         private float CalculatePreferredWidth(ChatMessage message)

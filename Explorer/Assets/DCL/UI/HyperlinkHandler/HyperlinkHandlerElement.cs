@@ -149,6 +149,8 @@ namespace DCL.UI.HyperlinkHandler
 
         private async UniTask OpenUserProfileContextMenu(string userId)
         {
+            //TODO FRAN URGENT!: Here we should be checking again the list of connected users and getting from there the user hash
+            //and with that getting the profile and with that calling the context menu, otherwise we could be trying to see disconnected users...
             Profile profile = await dependencies.ProfileRepository.GetAsync(userId, ct: new CancellationToken());
 
             if (profile == null) return;

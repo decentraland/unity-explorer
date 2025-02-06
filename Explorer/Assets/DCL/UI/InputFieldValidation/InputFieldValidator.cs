@@ -35,7 +35,7 @@ namespace DCL.UI.InputFieldValidator
         private static readonly Regex WORLD_REGEX = new (@"(?<=^|\s)§?[a-zA-Z0-9]§?[a-zA-Z0-9]*§?[a-zA-Z0-9]*§?\.dcl\.eth§?(?=\s|$)", RegexOptions.Compiled);
 
         private static readonly Regex USERNAME_REGEX = new (@"(?<=^|\s)([A-Za-z0-9]*?)@([A-Za-z0-9]{3,15}§?(?:#[A-Za-z0-9]{4})?)§?(?=\s|$)", RegexOptions.Compiled);
-
+        //TODO FRAN URGENT!: We need to remove the hash from the username! we will check it in the hyperlink handler comparing the username to the connected users (similar to the parsing done to get the suggestions)
         //private static readonly Regex USERNAME_REGEX = new (@"(?<=^|\s)§?@§?[A-Za-z0-9]{3,15}(?:#[A-Za-z0-9]{4})?§?(?=\s|$)", RegexOptions.Compiled);
 
         [SerializeField] private TMP_StyleSheet styleSheet;

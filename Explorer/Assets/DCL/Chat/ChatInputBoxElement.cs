@@ -353,6 +353,7 @@ namespace DCL.Chat
 
             UIAudioEventsBus.Instance.SendPlayAudioEvent(addUserNameAudio);
 
+            //TODO FRAN: We need to do the same for emojis probably.
             validatedInputField.ReplaceText(lastMatch, username);
 
             validatedInputField.ActivateInputField();

@@ -4,6 +4,7 @@ using DCL.Multiplayer.Connections.Messaging;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.Messaging.Pipe;
 using DCL.Profiles;
+using DCL.Profiles.Self;
 using LiveKit.Proto;
 using System;
 using System.Threading;
@@ -16,10 +17,11 @@ namespace DCL.Chat.MessageBus
         private readonly IProfileRepository profileRepository;
         private readonly IMessageDeduplication<double> messageDeduplication;
         private readonly CancellationTokenSource cancellationTokenSource = new ();
+        private readonly ISelfProfile selfProfile;
 
         public event Action<ChatChannel.ChannelId, ChatMessage>? MessageAdded;
 
-        public MultiplayerChatMessagesBus(IMessagePipesHub messagePipesHub, IProfileRepository profileRepository, IMessageDeduplication<double> messageDeduplication)
+        public MultiplayerChatMessagesBus(IMessagePipesHub messagePipesHub, IProfileRepository profileRepository, ISelfProfile selfProfile, IMessageDeduplication<double> messageDeduplication)
         {
             this.messagePipesHub = messagePipesHub;
             this.profileRepository = profileRepository;
@@ -51,6 +53,7 @@ namespace DCL.Chat.MessageBus
 
                 ChatChannel.ChannelId parsedChannelId = ParseChatChannelIdFromPayloadMessage(receivedMessage.Payload.Message);
                 string chatMessage = ParseChatMessageFromPayloadMessage(receivedMessage.Payload.Message);
+                bool isMention = await CheckMentionOnChatMessage(chatMessage);
 
                 MessageAdded?.Invoke(
                     parsedChannelId,
@@ -59,7 +62,8 @@ namespace DCL.Chat.MessageBus
                         profile?.ValidatedName ?? string.Empty,
                         receivedMessage.FromWalletId,
                         false,
-                        profile?.WalletId ?? null
+                        profile?.WalletId ?? null,
+                        isMention
                     )
                 );
             }
@@ -80,6 +84,14 @@ namespace DCL.Chat.MessageBus
                 return ChatChannel.NEARBY_CHANNEL;
             }
         }
+
+        private async UniTask<bool> CheckMentionOnChatMessage(string chatMessage)
+        {
+            //Check if the message contains the display name of our user with a @ before it
+            var profile = await selfProfile.ProfileAsync(cancellationTokenSource.Token);
+            return chatMessage.Contains("@" + profile?.DisplayName);
+        }
+
 
         private string ParseChatMessageFromPayloadMessage(string payloadMessage)
         {
