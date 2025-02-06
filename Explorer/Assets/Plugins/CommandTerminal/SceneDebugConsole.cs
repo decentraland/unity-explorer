@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -6,18 +7,32 @@ using UnityEngine.InputSystem;
 
 namespace CommandTerminal
 {
-    public enum TerminalState
-    {
-        Close,
-        OpenSmall,
-        OpenFull,
-    }
-
     /// <summary>
-    ///     Dedicated toggleable console for displaying only JS scene messages/logs/errors
+    ///     Dedicated toggleable console for displaying scene messages/logs/errors during Local Scene Development
     /// </summary>
     public class SceneDebugConsole : MonoBehaviour
     {
+        private enum TerminalState
+        {
+            Close,
+            OpenSmall,
+            OpenFull,
+        }
+
+        private readonly struct LogItem
+        {
+            public readonly LogType Type;
+            public readonly string Message;
+            public readonly string StackTrace;
+
+            public LogItem(LogType type, string message, string stackTrace)
+            {
+                Type = type;
+                Message = message;
+                StackTrace = stackTrace;
+            }
+        }
+
         [Header("Window")]
         [Range(0, 1)]
         [SerializeField]
@@ -35,6 +50,7 @@ namespace CommandTerminal
         private InputAction toggleInputAction;
         private InputAction toggleLargeInputAction;
         [SerializeField] private int logsMaxAmount = 512;
+        [SerializeField] private bool autoScrollOnNewLogs = false;
 
         [Header("Theme")]
         [SerializeField] private int fontSize = 20;
@@ -43,8 +59,10 @@ namespace CommandTerminal
         [SerializeField] private Color foregroundColor = Color.white;
         [SerializeField] private Color warningColor = Color.yellow;
         [SerializeField] private Color errorColor = Color.red;
+
+        private Queue<LogItem> logs = new ();
+        private Queue<LogItem> logsToBeProcessed = new Queue<LogItem>();
         private Texture2D backgroundTex;
-        private ConsoleBuffer consoleBuffer;
         private float currentOpenValue;
         private TextEditor editorState;
         private GUIStyle labelStyle;
@@ -52,10 +70,20 @@ namespace CommandTerminal
         private float realWindowSize;
         private Vector2 scrollPosition;
         private TerminalState state;
-        private Rect window;
+        private Rect screenRect;
         private GUIStyle windowStyle;
+        private bool isScrollAtBottom = false;
+        private float normalizedScrollPosition = 1f;
+        private float totalContentHeight = 0f;
+        float scrollYCompensation = 0;
 
         private bool isClosed => state == TerminalState.Close && Mathf.Approximately(currentOpenValue, openTarget);
+
+        // Log() is called from a thread (many GUI operations have to run in the main thread)
+        public void Log(string message, string stackTrace = "", LogType logType = LogType.Log)
+        {
+            logsToBeProcessed.Enqueue(new LogItem(logType, message, stackTrace));
+        }
 
         private void Start()
         {
@@ -69,11 +97,6 @@ namespace CommandTerminal
             SetupLabels();
         }
 
-        private void OnEnable()
-        {
-            consoleBuffer = new ConsoleBuffer(logsMaxAmount);
-        }
-
         private void Update()
         {
             if (isClosed)
@@ -82,11 +105,12 @@ namespace CommandTerminal
                     SetState(TerminalState.OpenFull);
                 else if (toggleInputAction.triggered)
                     SetState(TerminalState.OpenSmall);
+
+                return;
             }
-            else if (toggleInputAction.triggered || toggleLargeInputAction.triggered)
-            {
+
+            if (toggleInputAction.triggered || toggleLargeInputAction.triggered)
                 SetState(TerminalState.Close);
-            }
         }
 
         private void OnGUI()
@@ -94,7 +118,14 @@ namespace CommandTerminal
             if (isClosed) return;
 
             HandleOpenness();
-            window = GUILayout.Window(88, window, DrawConsole, "", windowStyle);
+            screenRect = GUILayout.Window(88, screenRect, WindowUpdate, "", windowStyle);
+
+            // Calculate normalized scroll position
+            float viewportHeight = screenRect.height - windowStyle.padding.vertical;
+            float maxScrollValue = Mathf.Max(0, totalContentHeight - viewportHeight);
+            normalizedScrollPosition = maxScrollValue > 0 ? scrollPosition.y / maxScrollValue : 1f;
+
+            isScrollAtBottom = normalizedScrollPosition >= 0.99f;
         }
 
         private void SetState(TerminalState newState)
@@ -121,6 +152,7 @@ namespace CommandTerminal
 
                     realWindowSize = openTarget;
                     scrollPosition.y = int.MaxValue;
+                    isScrollAtBottom = true;
                     break;
                 }
                 case TerminalState.OpenFull:
@@ -128,6 +160,8 @@ namespace CommandTerminal
                 {
                     realWindowSize = Screen.height * maxHeight;
                     openTarget = realWindowSize;
+                    scrollPosition.y = int.MaxValue;
+                    isScrollAtBottom = true;
                     break;
                 }
             }
@@ -138,9 +172,8 @@ namespace CommandTerminal
         private void SetupWindow()
         {
             realWindowSize = Screen.height * maxHeight / 3;
-            window = new Rect(0, currentOpenValue - realWindowSize, Screen.width, realWindowSize);
+            screenRect = new Rect(0, currentOpenValue - realWindowSize, Screen.width, realWindowSize);
 
-            // Set background color
             backgroundTex = new Texture2D(1, 1);
             backgroundTex.SetPixel(0, 0, backgroundColor);
             backgroundTex.Apply();
@@ -162,21 +195,78 @@ namespace CommandTerminal
             labelStyle.fontSize = fontSize;
         }
 
-        private void DrawConsole(int Window2D)
+        private void WindowUpdate(int Window2D)
         {
+            // Process logs in main thread, before drawing
+            while (logsToBeProcessed.Count > 0)
+            {
+                HandleLog(logsToBeProcessed.Dequeue());
+                if (autoScrollOnNewLogs)
+                    scrollPosition.y = int.MaxValue;
+
+                UpdateScrollPosition();
+            }
+
             scrollPosition = GUILayout.BeginScrollView(scrollPosition, false, false, GUIStyle.none, GUIStyle.none);
-            GUILayout.FlexibleSpace();
+
             DrawLogs();
+
             GUILayout.EndScrollView();
+        }
+
+        private void HandleLog(LogItem newLog)
+        {
+            // Calculate and update content height
+            logs.Enqueue(newLog);
+            float newLogHeight = CalculateLogLabelHeight(newLog.Message);
+            totalContentHeight += newLogHeight;
+
+            if (logs.Count > logsMaxAmount)
+            {
+                LogItem removedLog = logs.Dequeue(); // remove oldest
+                float removedLogHeight = CalculateLogLabelHeight(removedLog.Message);
+                totalContentHeight -= removedLogHeight;
+
+                if (!autoScrollOnNewLogs)
+                    scrollYCompensation += newLogHeight;
+            }
+        }
+
+        private void UpdateScrollPosition()
+        {
+            // If scroll is at the bottom, keep it at the bottom
+            if (isScrollAtBottom)
+            {
+                scrollPosition.y = int.MaxValue;
+                scrollYCompensation = 0;
+                return;
+            }
+
+            if (scrollYCompensation > 0)
+            {
+                scrollPosition.y = Mathf.Max(0, scrollPosition.y - scrollYCompensation);
+                scrollYCompensation = 0;
+                return;
+            }
+        }
+
+        private float CalculateLogLabelHeight(string message)
+        {
+            var content = new GUIContent(message);
+            float contentWidth = screenRect.width - windowStyle.padding.horizontal;
+            float height = labelStyle.CalcHeight(content, contentWidth);
+            return height;
         }
 
         private void DrawLogs()
         {
-            foreach (LogItem log in consoleBuffer.Logs)
+            GUILayout.BeginVertical();
+            foreach (LogItem log in logs)
             {
                 labelStyle.normal.textColor = GetLogColor(log.Type);
                 GUILayout.Label(log.Message, labelStyle);
             }
+            GUILayout.EndVertical();
         }
 
         private void HandleOpenness()
@@ -198,7 +288,7 @@ namespace CommandTerminal
                 return; // Already at target
             }
 
-            window = new Rect(0, currentOpenValue - realWindowSize, Screen.width, realWindowSize);
+            screenRect = new Rect(0, currentOpenValue - realWindowSize, Screen.width, realWindowSize);
         }
 
         private Color GetLogColor(LogType type)
@@ -209,14 +299,6 @@ namespace CommandTerminal
                 case LogType.Warning: return warningColor;
                 default: return errorColor;
             }
-        }
-
-        public void Log(string message, string stackTrace = "", LogType type = LogType.Log, bool scrollToBottom = true)
-        {
-            consoleBuffer.HandleLog(message, stackTrace, type);
-
-            if (scrollToBottom)
-                scrollPosition.y = int.MaxValue;
         }
     }
 }

@@ -3,6 +3,7 @@
     public enum AssetBundleRegistryEnum
     {
         complete,
-        fallback
+        fallback,
+        pending
     }
 }
