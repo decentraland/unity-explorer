@@ -31,8 +31,6 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             OnlineStatusColorIndicator.color = configurationData.StatusColor;
 
             buttons = onlineStatus == OnlineStatus.OFFLINE ? new[] { ContextMenuButton } : new[] { JumpInButton, ContextMenuButton };
-
-            JumpInButton.gameObject.SetActive(onlineStatus != OnlineStatus.OFFLINE);
         }
 
         public void ToggleOnlineStatus(bool isActive)
