@@ -52,6 +52,10 @@ PrefabInstance:
       propertyPath: m_Enabled
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: -823843268507753107, guid: 2afff092fdd28f64f98e318d5f618ce2, type: 3}
+      propertyPath: m_CastShadows
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 2afff092fdd28f64f98e318d5f618ce2, type: 3}
       propertyPath: m_Name
       value: FountainBase
