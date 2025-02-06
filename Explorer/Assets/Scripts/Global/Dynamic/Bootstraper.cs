@@ -20,6 +20,7 @@ using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Cache.InMemory;
+using ECS.StreamableLoading.Common.Components;
 using Global.AppArgs;
 using Global.Dynamic.DebugSettings;
 using Global.Dynamic.RealmUrl;
@@ -47,6 +48,7 @@ namespace Global.Dynamic
         private readonly RealmLaunchSettings realmLaunchSettings;
         private readonly WebRequestsContainer webRequestsContainer;
         private readonly IDiskCache diskCache;
+        private readonly IDiskCache<PartialLoadingState> partialsDiskCache;
         private readonly World world;
 
         private URLDomain? startingRealm;
@@ -64,6 +66,7 @@ namespace Global.Dynamic
             RealmLaunchSettings realmLaunchSettings,
             WebRequestsContainer webRequestsContainer,
             IDiskCache diskCache,
+            IDiskCache<PartialLoadingState> partialsDiskCache,
             World world)
         {
             this.debugSettings = debugSettings;
@@ -74,6 +77,7 @@ namespace Global.Dynamic
             this.realmLaunchSettings = realmLaunchSettings;
             this.webRequestsContainer = webRequestsContainer;
             this.diskCache = diskCache;
+            this.partialsDiskCache = partialsDiskCache;
             this.world = world;
         }
 
@@ -127,6 +131,7 @@ namespace Global.Dynamic
                 EnableAnalytics,
                 bootstrapContainer.Analytics,
                 diskCache,
+                partialsDiskCache,
                 sceneUIRoot,
                 ct
             );

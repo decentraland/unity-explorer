@@ -28,13 +28,13 @@ namespace ECS.StreamableLoading.Common.Systems
             World world,
             IStreamableCache<TData, TIntention> cache,
             IWebRequestController webRequestController,
-            ArrayPool<byte> buffersPool)
+            ArrayPool<byte> buffersPool,
+            IDiskCache<PartialLoadingState> partialDiskCache)
             : base(world, cache)
         {
             this.webRequestController = webRequestController;
             this.buffersPool = buffersPool;
-            var diskCache = new DiskCache(CacheDirectory.NewDefaultSubdirectory("partials"), new FilesLock(), IDiskCleanUp.None.INSTANCE);
-            partialDiskCache = new DiskCache<PartialLoadingState>(diskCache, new PartialDiskSerializer());
+            this.partialDiskCache = partialDiskCache;
         }
 
         protected override async UniTask<StreamableLoadingResult<TData>> FlowInternalAsync(TIntention intention, StreamableLoadingState state, IPartitionComponent partition, CancellationToken ct)

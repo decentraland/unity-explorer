@@ -16,6 +16,7 @@ using System;
 using System.Threading;
 using AssetManagement;
 using DCL.WebRequests;
+using ECS.StreamableLoading.Cache.Disk;
 using System.Buffers;
 using System.IO;
 using UnityEngine;
@@ -40,7 +41,8 @@ namespace ECS.StreamableLoading.AssetBundles
             IStreamableCache<AssetBundleData, GetAssetBundleIntention> cache,
             IWebRequestController webRequestController,
             ArrayPool<byte> buffersPool,
-            AssetBundleLoadingMutex loadingMutex) : base(world, cache, webRequestController, buffersPool)
+            AssetBundleLoadingMutex loadingMutex,
+            IDiskCache<PartialLoadingState> partialDiskCache) : base(world, cache, webRequestController, buffersPool, partialDiskCache)
         {
             this.loadingMutex = loadingMutex;
         }

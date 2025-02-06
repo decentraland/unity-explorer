@@ -26,6 +26,7 @@ using System.Threading;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.WebRequests.Analytics;
 using ECS.StreamableLoading.Cache.Disk;
+using ECS.StreamableLoading.Common.Components;
 using SceneRuntime.Factory.WebSceneSource;
 using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using UnityEngine;
@@ -81,6 +82,7 @@ namespace Global.Tests.PlayMode
                 false,
                 Substitute.For<IAnalyticsController>(),
                 new IDiskCache.Fake(),
+                Substitute.For<IDiskCache<PartialLoadingState>>(),
                 scenesUI,
                 ct
             );

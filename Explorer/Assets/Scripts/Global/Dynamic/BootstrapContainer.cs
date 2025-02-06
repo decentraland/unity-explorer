@@ -19,6 +19,7 @@ using DCL.WebRequests;
 using DCL.WebRequests.Analytics;
 using ECS.SceneLifeCycle.Realm;
 using ECS.StreamableLoading.Cache.Disk;
+using ECS.StreamableLoading.Common.Components;
 using Global.AppArgs;
 using Plugins.RustSegment.SegmentServerWrap;
 using Global.Dynamic.DebugSettings;
@@ -82,6 +83,7 @@ namespace Global.Dynamic
             ICompressShaders compressShaders,
             IRealmUrls realmUrls,
             IDiskCache diskCache,
+            IDiskCache<PartialLoadingState> partialsDiskCache,
             World world,
             DecentralandEnvironment decentralandEnvironment,
             CancellationToken ct)
@@ -107,7 +109,7 @@ namespace Global.Dynamic
             await bootstrapContainer.InitializeContainerAsync<BootstrapContainer, BootstrapSettings>(settingsContainer, ct, async container =>
             {
                 container.reportHandlingSettings = await ProvideReportHandlingSettingsAsync(container.AssetsProvisioner!, container.settings, ct);
-                (container.Bootstrap, container.Analytics) = await CreateBootstrapperAsync(debugSettings, applicationParametersParser, splashScreen, compressShaders, realmUrls, diskCache, container, webRequestsContainer, container.settings, realmLaunchSettings, world, container.settings.BuildData, ct);
+                (container.Bootstrap, container.Analytics) = await CreateBootstrapperAsync(debugSettings, applicationParametersParser, splashScreen, compressShaders, realmUrls, diskCache, partialsDiskCache, container, webRequestsContainer, container.settings, realmLaunchSettings, world, container.settings.BuildData, ct);
                 (container.VerifiedEthereumApi, container.Web3Authenticator) = CreateWeb3Dependencies(sceneLoaderSettings, web3AccountFactory, identityCache, browser, container, decentralandUrlsSource);
 
                 if (container.enableAnalytics)
@@ -138,6 +140,7 @@ namespace Global.Dynamic
             ICompressShaders compressShaders,
             IRealmUrls realmUrls,
             IDiskCache diskCache,
+            IDiskCache<PartialLoadingState> partialsDiskCache,
             BootstrapContainer container,
             WebRequestsContainer webRequestsContainer,
             BootstrapSettings bootstrapSettings,
@@ -149,7 +152,7 @@ namespace Global.Dynamic
             AnalyticsConfiguration analyticsConfig = (await container.AssetsProvisioner.ProvideMainAssetAsync(bootstrapSettings.AnalyticsConfigRef, ct)).Value;
             container.enableAnalytics = analyticsConfig.Mode != AnalyticsMode.DISABLED;
 
-            var coreBootstrap = new Bootstrap(debugSettings, appArgs, splashScreen, compressShaders, realmUrls, realmLaunchSettings, webRequestsContainer, diskCache, world)
+            var coreBootstrap = new Bootstrap(debugSettings, appArgs, splashScreen, compressShaders, realmUrls, realmLaunchSettings, webRequestsContainer, diskCache, partialsDiskCache, world)
             {
                 EnableAnalytics = container.enableAnalytics,
             };
