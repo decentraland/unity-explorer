@@ -53,7 +53,7 @@ namespace DCL.Friends.UI.FriendPanel
 
             mvcManager.OnViewShowed -= OnViewShowed;
             mvcManager.OnViewClosed -= OnViewClosed;
-            viewInstance!.OpenFriendPanelButton.onClick.RemoveListener(OpenFriendsPanel);
+            viewInstance?.OpenFriendPanelButton.onClick.RemoveListener(OpenFriendsPanel);
             UnregisterHotkey();
             friendRequestReceivedCts.SafeCancelAndDispose();
         }
