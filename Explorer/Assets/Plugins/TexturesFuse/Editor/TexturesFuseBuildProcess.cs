@@ -1,72 +1,48 @@
 using System.IO;
-using System.Linq;
 using UnityEditor;
 using UnityEditor.Build;
 using UnityEditor.Build.Reporting;
-using UnityEditor.Callbacks;
 using UnityEngine;
 
 namespace Plugins.TexturesFuse.Editor
 {
-    public class TexturesFuseBuildProcess : IPreprocessBuildWithReport, IPostprocessBuildWithReport
+    public sealed class TexturesFuseBuildProcess : IPostprocessBuildWithReport
     {
-        private const string PATH_TO_MODIFY = "Assets/Plugins/TexturesFuse/textures-server";
-        private const string PLUGINS_DIR = "plugins";
-
         public int callbackOrder => 0;
-
-        public void OnPreprocessBuild(BuildReport report)
-        {
-            var result = Directory.EnumerateFiles(PATH_TO_MODIFY, "*.h", SearchOption.AllDirectories)
-                                  .Concat(Directory.EnumerateFiles(PATH_TO_MODIFY, "*.c", SearchOption.AllDirectories))
-                                  .Concat(Directory.EnumerateFiles(PATH_TO_MODIFY, "*.cpp", SearchOption.AllDirectories));
-
-            foreach (string filePath in result)
-                File.Move(filePath, $"{filePath}_ignore");
-
-            // Refresh the AssetDatabase to reflect changes
-            AssetDatabase.Refresh();
-        }
-
-        [PostProcessBuild(1)]
-        public static void OnPostprocessBuild(BuildTarget target, string pathToBuiltProject)
-        {
-            var result = Directory.EnumerateFiles(PATH_TO_MODIFY, "*.h_ignore", SearchOption.AllDirectories)
-                                  .Concat(Directory.EnumerateFiles(PATH_TO_MODIFY, "*.c_ignore", SearchOption.AllDirectories))
-                                  .Concat(Directory.EnumerateFiles(PATH_TO_MODIFY, "*.cpp_ignore", SearchOption.AllDirectories));
-
-            foreach (string filePath in result)
-                File.Move(filePath, filePath.Replace("_ignore", ""));
-
-            // Refresh the AssetDatabase to reflect changes
-            AssetDatabase.Refresh();
-        }
 
         public void OnPostprocessBuild(BuildReport report)
         {
-            if (Application.platform is not RuntimePlatform.WindowsEditor)
+            if (report.summary.platform != BuildTarget.StandaloneWindows64)
                 return;
 
+            string projectDir = Path.GetDirectoryName(Application.dataPath);
+            string sourceDir = Path.Combine(projectDir, "plugins");
+
+            if (!Directory.Exists(sourceDir))
+            {
+                Debug.LogWarning(
+                    $"Could not copy the texture fuse plugins to the build output because the source directory '{sourceDir}' does not exist.");
+
+                return;
+            }
+
             // Get the build path
-            string buildPath = report!.summary.outputPath!;
-            string targetDir = Path.Combine(buildPath, "plugins");
+            string outputDir = Path.GetDirectoryName(report.summary.outputPath);
+            string targetDir = Path.Combine(outputDir, "plugins");
 
-            // Check if source folder exists
-            if (Directory.Exists(PLUGINS_DIR) == false)
-                Debug.LogError("Source folder does not exist. No files were copied.");
-
-            CopyFilesRecursively(PLUGINS_DIR, targetDir);
+            CopyFilesRecursively(sourceDir, targetDir);
         }
 
-        private static void CopyFilesRecursively(string sourcePath, string targetPath)
+        private static void CopyFilesRecursively(string sourceDir, string targetDir)
         {
-            //Now Create all of the directories
-            foreach (string dirPath in Directory.GetDirectories(sourcePath, "*", SearchOption.AllDirectories))
-                Directory.CreateDirectory(dirPath.Replace(sourcePath, targetPath));
+            string[] files = Directory.GetFiles(sourceDir, "*", SearchOption.AllDirectories);
 
-            //Copy all the files & Replaces any files with the same name
-            foreach (string newPath in Directory.GetFiles(sourcePath, "*.*", SearchOption.AllDirectories))
-                File.Copy(newPath, newPath.Replace(sourcePath, targetPath), true);
+            foreach (string sourceFile in files)
+            {
+                string targetFile = targetDir + sourceFile[sourceDir.Length..];
+                Directory.CreateDirectory(Path.GetDirectoryName(targetFile));
+                File.Copy(sourceFile, targetFile, overwrite: true);
+            }
         }
     }
 }
