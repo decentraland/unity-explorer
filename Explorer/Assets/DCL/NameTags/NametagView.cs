@@ -26,12 +26,15 @@ namespace DCL.Nametags
         private const int DEFAULT_OPACITY_MAX_DISTANCE = 20;
         private const int DEFAULT_ADDITIONAL_MS_PER_CHARACTER = 20;
         private const int DEFAULT_BUBBLE_IDLE_TIME_MS = 5000;
+        private const string WALLET_ID_OPENING_STYLE = "<color=#FFFFFF66><font=\\\"LiberationSans SDF\\\">";
+        private const string WALLET_ID_CLOSING_STYLE = "</font></color>";
 
         [field: SerializeField] public TMP_Text Username { get; private set; }
         [field: SerializeField] public RectTransform VerifiedIcon { get; private set; }
         [field: SerializeField] public SpriteRenderer VerifiedIconRenderer { get; private set; }
         [field: SerializeField] public TMP_Text MessageContent { get; private set; }
         [field: SerializeField] public SpriteRenderer Background { get; private set; }
+        [field: SerializeField] public GameObject OutlineObject { get; private set; }
         [field: SerializeField] public SpriteRenderer BubblePeak { get; private set; }
         [field: SerializeField] public RectTransform MessageContentRectTransform { get; private set; }
         [field: SerializeField] internal AnimationCurve backgroundEaseAnimationCurve { get; private set; }
@@ -70,7 +73,7 @@ namespace DCL.Nametags
             messageContentAnchoredPosition = new Vector2(0, chatBubbleConfiguration.bubbleMarginOffsetHeight / 3);
         }
 
-        public void SetUsername(string username, string walletId, bool hasClaimedName, bool useVerifiedIcon)
+        public void SetUsername(string username, string? walletId, bool hasClaimedName, bool useVerifiedIcon)
         {
             ResetElement();
 
@@ -80,8 +83,7 @@ namespace DCL.Nametags
             isClaimedName = hasClaimedName;
             VerifiedIcon.gameObject.SetActive(hasClaimedName && useVerifiedIcon);
 
-            //TODO FRAN: Fix this -> should use a TMP Style probably instead of being hardcoded here
-            Username.text = hasClaimedName ? username : $"{username}<color=#FFFFFF66><font=\"LiberationSans SDF\">#{walletId}</font></color>";
+            Username.text = hasClaimedName ? username : $"{username}{WALLET_ID_OPENING_STYLE}{walletId}{WALLET_ID_CLOSING_STYLE}";
 
             Username.rectTransform.sizeDelta = new Vector2(Username.preferredWidth, DEFAULT_HEIGHT);
             MessageContent.color = startingTextColor;
@@ -124,12 +126,12 @@ namespace DCL.Nametags
             VerifiedIconRenderer.color = backgroundColor;
         }
 
-        public void SetChatMessage(string chatMessage)
+        public void SetChatMessage(string chatMessage, bool isMention)
         {
             cts.SafeCancelAndDispose();
             cts = new CancellationTokenSource();
 
-            StartChatBubbleFlowAsync(chatMessage, cts.Token).Forget();
+            StartChatBubbleFlowAsync(chatMessage, isMention, cts.Token).Forget();
         }
 
         private void ResetElement()
@@ -143,16 +145,17 @@ namespace DCL.Nametags
             MessageContent.text = string.Empty;
             Background.size = Vector2.zero;
             previousDistance = 0;
+            OutlineObject.SetActive(false);
         }
 
-        private async UniTaskVoid StartChatBubbleFlowAsync(string chatMessage, CancellationToken ct)
+        private async UniTaskVoid StartChatBubbleFlowAsync(string chatMessage, bool isMention, CancellationToken ct)
         {
             try
             {
                 if (isAnimatingIn || isWaiting)
                     await AnimateOutAsync(ct);
 
-                await AnimateInAsync(chatMessage, ct);
+                await AnimateInAsync(chatMessage, isMention, ct);
 
                 isAnimatingIn = false;
                 isWaiting = true;
@@ -174,7 +177,7 @@ namespace DCL.Nametags
             chatMessage.Length * (chatBubbleConfiguration?.additionalMsPerCharacter ?? DEFAULT_ADDITIONAL_MS_PER_CHARACTER);
 
         //TODO: jobify this to improve the performance
-        private async UniTask AnimateInAsync(string messageContent, CancellationToken ct)
+        private async UniTask AnimateInAsync(string messageContent, bool isMention, CancellationToken ct)
         {
             ct.ThrowIfCancellationRequested();
 
@@ -218,6 +221,8 @@ namespace DCL.Nametags
                 verifiedIconFinalPosition.y = usernameFinalPosition.y;
                 VerifiedIcon.DOAnchorPos(verifiedIconFinalPosition, animationInDuration).SetEase(backgroundEaseAnimationCurve).ToUniTask(cancellationToken: ct);
             }
+
+            OutlineObject.SetActive(isMention);
 
             //Start all animations
             await UniTask.WhenAll(

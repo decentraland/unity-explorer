@@ -122,7 +122,7 @@ namespace DCL.Nametags
 
             nametagView.Id = avatarShape.ID;
             nametagView.Username.color = profileNameColorHelper.GetNameColor(avatarShape.Name);
-            nametagView.SetUsername(avatarShape.Name, avatarShape.ID.Substring(avatarShape.ID.Length - 4), profile.HasClaimedName, true);
+            nametagView.SetUsername(profile.ValidatedName, profile.WalletId, profile.HasClaimedName, true);
             nametagView.gameObject.name = avatarShape.ID;
             UpdateTagTransparencyAndScale(nametagView, camera.Camera, characterTransform.Position);
 
@@ -134,7 +134,7 @@ namespace DCL.Nametags
         private void ProcessChatBubbleComponents(Entity e, in ChatBubbleComponent chatBubbleComponent, in NametagView nametagView)
         {
             if (nametagsData.showChatBubbles)
-                nametagView.SetChatMessage(chatBubbleComponent.ChatMessage);
+                nametagView.SetChatMessage(chatBubbleComponent.ChatMessage, chatBubbleComponent.IsMention);
 
             World.Remove<ChatBubbleComponent>(e);
         }
