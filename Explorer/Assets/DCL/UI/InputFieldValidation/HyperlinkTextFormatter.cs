@@ -17,8 +17,8 @@ namespace DCL.UI.InputFieldValidator
         private const string WORLD = "world";
         private const string URL = "url";
         private const string USER = "user";
-        private const string LINK_CLOSING_STYLE = "<#00B2FF><link=";
-        private const string LINK_OPENING_STYLE = "</link></color>";
+        private const string LINK_OPENING_STYLE = "<#00B2FF><link=";
+        private const string LINK_CLOSING_STYLE = "</link></color>";
 
 
         private static readonly Regex RICH_TEXT_TAG_REGEX = new (@"<(?!\/?(b|i)(>|\s))[^>]+>", RegexOptions.Compiled);
