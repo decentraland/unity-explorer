@@ -32,8 +32,6 @@ namespace SceneRunner.Scene
 
         void SetIsCurrent(bool isCurrent);
 
-        bool IsCurrent();
-
         internal UniTask StartScene();
 
         internal UniTask Tick(float dt);

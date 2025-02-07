@@ -191,11 +191,6 @@ namespace SceneRunner
             deps.SyncDeps.ECSWorldFacade.OnSceneIsCurrentChanged(isCurrent);
         }
 
-        public bool IsCurrent()
-        {
-            return SceneStateProvider.IsCurrent;
-        }
-
         public async UniTask DisposeAsync()
         {
             // Because of multithreading Disposing is not synced with the update loop
