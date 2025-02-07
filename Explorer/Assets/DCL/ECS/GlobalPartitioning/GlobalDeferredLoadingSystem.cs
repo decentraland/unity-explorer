@@ -66,7 +66,7 @@ namespace DCL.GlobalPartitioning
 
             COMPONENT_HANDLERS_SCENES = new[]
             {
-                CreateQuery<GetSceneDefinitionList, SceneDefinitions>(), CreateQuery<GetSceneDefinition, SceneEntityDefinition>(), CreateQuery<GetSceneFacadeIntention, ISceneFacade>()
+                CreateQuery<GetSceneDefinitionList, SceneDefinitions>(), CreateQuery<GetSceneDefinition, SceneEntityDefinition>()
             };
         }
 
