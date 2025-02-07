@@ -17,4 +17,10 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
 
         bool MetadataIsDirty { get; }
     }
+
+    public static class SceneRoomMetaDataSourceExtensions
+    {
+        public static SceneRoomLogMetaDataSource WithLog(this ISceneRoomMetaDataSource origin) =>
+            new (origin);
+    }
 }

@@ -108,8 +108,8 @@ namespace Global
         public IPortableExperiencesController PortableExperiencesController { get; private set; }
         public IDebugContainerBuilder DebugContainerBuilder { get; private set; }
         public ISceneRestrictionBusController SceneRestrictionBusController { get; private set; }
-
         public ILoadingStatus LoadingStatus { get; private set; }
+        public ILaunchMode LaunchMode { get; private set; }
 
         public void Dispose()
         {
@@ -171,6 +171,7 @@ namespace Global
             container.MemoryCap = memoryCap;
             container.SceneRestrictionBusController = new SceneRestrictionBusController();
             container.texturesFuse = texturesFuse;
+            container.LaunchMode = launchMode;
 
             var exposedPlayerTransform = new ExposedTransform();
 
@@ -209,7 +210,6 @@ namespace Global
             container.FeatureFlagsCache = new FeatureFlagsCache();
 
             container.PortableExperiencesController = new ECSPortableExperiencesController(web3IdentityProvider, container.WebRequestsContainer.WebRequestController, container.ScenesCache, container.FeatureFlagsCache, launchMode, decentralandUrlsSource);
-
 
             container.FeatureFlagsProvider = new HttpFeatureFlagsProvider(container.WebRequestsContainer.WebRequestController,
                 container.FeatureFlagsCache);

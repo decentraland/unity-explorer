@@ -17,6 +17,12 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
             metaData = new MetaData(name, metadataInput);
         }
 
+        public static ConstSceneRoomMetaDataSource FromMachineUUID()
+        {
+            //TODO provide unique ID from the machine
+            return new ConstSceneRoomMetaDataSource("random");
+        }
+
         public bool ScenesCommunicationIsIsolated => true;
 
         public bool MetadataIsDirty => false;

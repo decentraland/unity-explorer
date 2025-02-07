@@ -6,7 +6,7 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.FfiClients;
 using DCL.Multiplayer.Connections.GateKeeper.Meta;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms;
-using DCL.PlacesAPIService;
+using DCL.Multiplayer.Connections.GateKeeper.Rooms.Options;
 using DCL.Web3.Accounts.Factory;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
@@ -14,7 +14,6 @@ using DCL.WebRequests.Analytics;
 using DCL.WebRequests.RequestsHub;
 using ECS;
 using ECS.SceneLifeCycle;
-using ECS.SceneLifeCycle.Realm;
 using Global.Dynamic.LaunchModes;
 using LiveKit.Internal.FFIClients;
 using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
@@ -37,19 +36,21 @@ namespace DCL.Multiplayer.Connections.Demo
             var world = World.Create();
             world.Create(new CharacterTransform(new GameObject("Player").transform));
 
-            var urlsSource = new DecentralandUrlsSource(DecentralandEnvironment.Zone, ILaunchMode.PLAY);
+            var launchMode = ILaunchMode.PLAY;
+            var urlsSource = new DecentralandUrlsSource(DecentralandEnvironment.Zone, launchMode);
 
             IWeb3IdentityCache? identityCache = await ArchipelagoFakeIdentityCache.NewAsync(urlsSource, new Web3AccountFactory());
             var character = new ExposedTransform();
             var webRequests = new LogWebRequestController(new WebRequestController(new WebRequestsAnalyticsContainer(), identityCache, new RequestHub(ITexturesFuse.NewDefault(), false)));
             var realmData = new IRealmData.Fake();
 
+            var metaDataSource = new SceneRoomLogMetaDataSource(new SceneRoomMetaDataSource(realmData, character, world, false));
+            var options = new GateKeeperSceneRoomOptions(launchMode, urlsSource, metaDataSource, metaDataSource);
             new GateKeeperSceneRoom(
                 webRequests,
-                new SceneRoomLogMetaDataSource(new SceneRoomMetaDataSource(new IRealmData.Fake(), character, world, false)),
-                urlsSource,
-                new ScenesCache()
-            ).StartAsync();
+                new ScenesCache(),
+                options
+            ).StartAsync().Forget();
         }
     }
 }
