@@ -7,7 +7,6 @@ using DCL.Character.Components;
 using DCL.CharacterMotion.Animation;
 using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
-using DCL.Profiles;
 using ECS.Abstract;
 using UnityEngine;
 
@@ -29,7 +28,6 @@ namespace DCL.Multiplayer.Movement.Systems
         }
 
         [Query]
-        [None(typeof(Profile))]
         private void UpdateMotion(
             in IAvatarView view,
             ref CharacterTransform characterTransformComponent,
