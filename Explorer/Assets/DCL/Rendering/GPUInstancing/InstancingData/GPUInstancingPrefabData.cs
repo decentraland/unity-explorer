@@ -1,8 +1,9 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.EditorCoroutines.Editor;
 using UnityEditor;
-using UnityEditor.SceneManagement;
 using UnityEngine;
 
 namespace DCL.Roads.GPUInstancing.Playground
@@ -18,85 +19,167 @@ namespace DCL.Roads.GPUInstancing.Playground
 
         public Shader[] whitelistShaders;
 
+        #if UNITY_EDITOR
         [ContextMenu(nameof(CollectSelfData))]
-        public void CollectSelfData()
+public void CollectSelfData()
+{
+    string assetPath = PrefabUtility.GetPrefabAssetPathOfNearestInstanceRoot(gameObject);
+    if (string.IsNullOrEmpty(assetPath))
+        return;
+
+    // Start the collection coroutine
+    EditorCoroutineUtility.StartCoroutine(CollectDataWithPrefabInstance(assetPath), this);
+}
+
+private IEnumerator CollectDataWithPrefabInstance(string assetPath)
+{
+    GameObject prefabAsset = AssetDatabase.LoadAssetAtPath<GameObject>(assetPath);
+    GameObject tempInstance = (GameObject)PrefabUtility.InstantiatePrefab(prefabAsset);
+
+    try
+    {
+        // Position at origin
+        tempInstance.transform.position = Vector3.zero;
+        tempInstance.transform.rotation = Quaternion.identity;
+        tempInstance.transform.localScale = Vector3.one;
+
+        // Wait 2 frames to ensure proper initialization and camera has rendered
+        for (var i = 0; i < 2; i++) yield return new WaitForEndOfFrame();
+
+        var instanceComponent = tempInstance.GetComponent<GPUInstancingPrefabData>();
+
+        // Clear and collect new data
+        instanceComponent.indirectCandidates = new List<GPUInstancingCandidate>();
+        instanceComponent.directCandidates = new List<GPUInstancingCandidate>();
+        instanceComponent.InstancedRenderers = new List<Renderer>();
+        instanceComponent.InstancedLODGroups = new List<LODGroup>();
+
+        // Collect the data
+        instanceComponent.CollectInstancingCandidatesFromStandaloneMeshes(instanceComponent.GetComponentsInChildren<MeshRenderer>(false));
+        instanceComponent.CollectInstancingCandidatesFromLODGroups(instanceComponent.GetComponentsInChildren<LODGroup>(false));
+
+        // Remap all references from instance to prefab
+        RemapReferencesToPrefab(instanceComponent, tempInstance, prefabAsset);
+
+        // Copy the collected data back to the original prefab
+        var originalPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(assetPath);
+        var originalComponent = originalPrefab.GetComponent<GPUInstancingPrefabData>();
+        EditorUtility.CopySerialized(instanceComponent, originalComponent);
+
+        // Save the changes
+        EditorUtility.SetDirty(originalComponent);
+        AssetDatabase.SaveAssets();
+
+        yield return new WaitForEndOfFrame();
+    }
+    finally
+    {
+        DestroyImmediate(tempInstance);
+    }
+}
+
+private void RemapReferencesToPrefab(GPUInstancingPrefabData instanceComponent, GameObject instance, GameObject prefab)
+{
+    // Remap InstancedRenderers
+    instanceComponent.InstancedRenderers = RemapComponentReferences<Renderer>(
+        instanceComponent.InstancedRenderers, instance, prefab);
+
+    // Remap InstancedLODGroups
+    instanceComponent.InstancedLODGroups = RemapComponentReferences<LODGroup>(
+        instanceComponent.InstancedLODGroups, instance, prefab);
+
+    // Remap Candidates
+    foreach (var candidate in instanceComponent.indirectCandidates)
+    {
+        RemapCandidate(candidate, instance, prefab);
+    }
+    foreach (var candidate in instanceComponent.directCandidates)
+    {
+        RemapCandidate(candidate, instance, prefab);
+    }
+}
+
+private List<T> RemapComponentReferences<T>(List<T> instanceComponents, GameObject instance, GameObject prefab) where T : Component
+{
+    var remappedComponents = new List<T>();
+    foreach (var component in instanceComponents)
+    {
+        string relativePath = GetRelativePath(instance.transform, component.transform);
+        var prefabTransform = prefab.transform.Find(relativePath);
+        if (prefabTransform != null)
         {
-#if UNITY_EDITOR
-            string assetPath = PrefabUtility.GetPrefabAssetPathOfNearestInstanceRoot(gameObject);
-
-            if (string.IsNullOrEmpty(assetPath))
-                return;
-
-            // AssetDatabase.Refresh();
-
-            // FIX (VIt): we need to open prefab in stage mode, so Unity correctly recognize shaders (otherwise sometimes it will use just default Lit shader and ruin our ValidShader check)
-            PrefabStage prefabStage = PrefabStageUtility.OpenPrefab(assetPath);
-
-            foreach (Shader whitelistedShader in whitelistShaders)
+            var prefabComponent = prefabTransform.GetComponent<T>();
+            if (prefabComponent != null)
             {
-                string shaderPath = AssetDatabase.GetAssetPath(whitelistedShader);
-                Shader loadedShader = AssetDatabase.LoadAssetAtPath<Shader>(shaderPath);
+                remappedComponents.Add(prefabComponent);
             }
-            GameObject prefabRoot = prefabStage.prefabContentsRoot;
-
-            // Force shader reload on all materials
-            foreach (MeshRenderer renderer in prefabRoot.GetComponentsInChildren<MeshRenderer>())
-            foreach (Material mat in renderer.sharedMaterials)
-            {
-                if (mat != null)
-                {
-                    string shaderName = mat.shader.name;
-                    var m = new Material(Shader.Find(shaderName));
-                }
-            }
-
-            AssetDatabase.Refresh();
-            EditorApplication.delayCall += () =>
-            {
-                try
-                {
-                    GPUInstancingPrefabData instanceComponent = prefabRoot.GetComponent<GPUInstancingPrefabData>();
-
-                    instanceComponent.SetPrefabRootTransformToZero();
-                    instanceComponent.indirectCandidates = new List<GPUInstancingCandidate>();
-                    instanceComponent.directCandidates = new List<GPUInstancingCandidate>();
-                    instanceComponent.InstancedRenderers = new List<Renderer>();
-                    instanceComponent.InstancedLODGroups = new List<LODGroup>();
-                    instanceComponent.CollectInstancingCandidatesFromStandaloneMeshes(instanceComponent.GetComponentsInChildren<MeshRenderer>(false));
-                    instanceComponent.CollectInstancingCandidatesFromLODGroups(instanceComponent.GetComponentsInChildren<LODGroup>(false));
-
-                    EditorSceneManager.MarkSceneDirty(prefabStage.scene);
-                    StageUtility.GoToMainStage();
-                }
-                catch (Exception e)
-                {
-                    Debug.LogError($"Error during collection: {e}");
-                    StageUtility.GoToMainStage();
-                }
-            };
-#endif
         }
+    }
+    return remappedComponents;
+}
+
+private void RemapCandidate(GPUInstancingCandidate candidate, GameObject instance, GameObject prefab)
+{
+    // Remap Transform
+    if (candidate.Transform != null)
+    {
+        string transformPath = GetRelativePath(instance.transform, candidate.Transform);
+        candidate.Transform = prefab.transform.Find(transformPath);
+    }
+
+    // Remap LODGroup reference
+    if (candidate.Reference != null)
+    {
+        string referencePath = GetRelativePath(instance.transform, candidate.Reference.transform);
+        var prefabTransform = prefab.transform.Find(referencePath);
+        candidate.Reference = prefabTransform?.GetComponent<LODGroup>();
+    }
+
+    // Remap MeshRenderingData references in each LOD level
+    if (candidate.Lods != null)
+    {
+        foreach (var lod in candidate.Lods)
+        {
+            if (lod.MeshRenderingDatas != null)
+            {
+                foreach (var renderData in lod.MeshRenderingDatas)
+                {
+                    if (renderData.Renderer != null)
+                    {
+                        string rendererPath = GetRelativePath(instance.transform, renderData.Renderer.transform);
+                        var prefabTransform = prefab.transform.Find(rendererPath);
+                        renderData.Renderer = prefabTransform?.GetComponent<MeshRenderer>();
+                    }
+                }
+            }
+        }
+    }
+}
+
+private string GetRelativePath(Transform root, Transform target)
+{
+    var path = new System.Text.StringBuilder();
+    Transform current = target;
+
+    while (current != null && current != root)
+    {
+        if (path.Length > 0)
+        {
+            path.Insert(0, "/");
+        }
+        path.Insert(0, current.name);
+        current = current.parent;
+    }
+
+    return path.ToString();
+}
+#endif
 
         private void SetPrefabRootTransformToZero()
         {
             if (transform.position != Vector3.zero) transform.position = Vector3.zero;
             if (transform.rotation != Quaternion.identity) transform.rotation = Quaternion.identity;
             if (transform.localScale != Vector3.one) transform.localScale = Vector3.one;
-        }
-
-        private void SavePrefabChanges()
-        {
-#if UNITY_EDITOR
-            if (!PrefabUtility.IsPartOfPrefabAsset(gameObject))
-                return;
-
-            EditorUtility.SetDirty(this);
-
-            string assetPath = PrefabUtility.GetPrefabAssetPathOfNearestInstanceRoot(gameObject);
-
-            if (!string.IsNullOrEmpty(assetPath))
-                AssetDatabase.SaveAssetIfDirty(AssetDatabase.LoadAssetAtPath<GameObject>(assetPath));
-#endif
         }
 
         [ContextMenu(nameof(HideVisuals))]
@@ -107,7 +190,10 @@ namespace DCL.Roads.GPUInstancing.Playground
 
         public void ShowVisuals()
         {
-            foreach (Renderer instancedRenderer in InstancedRenderers) instancedRenderer.enabled = true;
+            return;
+            if(InstancedRenderers != null)
+                foreach (Renderer instancedRenderer in InstancedRenderers) instancedRenderer.enabled = true;
+
             foreach (LODGroup lodGroup in InstancedLODGroups) lodGroup.enabled = true;
         }
 
