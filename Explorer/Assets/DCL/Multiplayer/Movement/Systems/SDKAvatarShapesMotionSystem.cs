@@ -8,6 +8,7 @@ using DCL.CharacterMotion.Animation;
 using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
 using DCL.Utilities;
+using DCL.Utilities.Extensions;
 using ECS.Abstract;
 using UnityEngine;
 
@@ -48,9 +49,7 @@ namespace DCL.Multiplayer.Movement.Systems
             if (oldPosition == currentPosition)
                 return;
 
-            Vector3 newDirection = currentPosition - oldPosition;
-            newDirection.y = 0;
-
+            Vector3 newDirection = oldPosition.GetYFlattenDirection(currentPosition);
             if (newDirection != Vector3.zero)
             {
                 Vector3 currentForward = characterTransformComp.Transform.forward;
