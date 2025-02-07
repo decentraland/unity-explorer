@@ -131,7 +131,7 @@ namespace DCL.UI.InputFieldValidator
         /// </summary>
         private void OnSubmit(string text)
         {
-            chatInputFormatter?.FormatText(ref text);
+            text = chatInputFormatter?.FormatText(text);
             InputFieldSubmitEvent?.Invoke(text);
         }
 

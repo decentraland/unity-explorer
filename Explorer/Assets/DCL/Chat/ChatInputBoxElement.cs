@@ -101,18 +101,20 @@ namespace DCL.Chat
         {
             device = InputSystem.GetDevice<Mouse>();
 
-            characterCounter.SetMaximumLength(inputFieldController.CharacterLimit);
-            characterCounter.gameObject.SetActive(false);
-
             InitializeEmojiPanelController();
-            InitializeEmojiMapping(emojiPanelController!.EmojiNameMapping);
+            InitializeEmojiMapping(emojiPanelController.EmojiNameMapping);
+            InitializeProfilesMapping();
 
             suggestionPanelController = new InputSuggestionPanelController(suggestionPanel, viewDependencies);
+            //TODO Fran: Move this event to the controller
             suggestionPanel.SuggestionSelectedEvent += OnSuggestionSelected;
 
             inputFieldController = new InputFieldController(inputField, viewDependencies.HyperlinkTextFormatter);
             inputFieldController.InputFieldSelectionChangedEvent += OnInputFieldSelectionChanged;
             inputFieldController.InputChangedEvent += OnInputChanged;
+
+            characterCounter.SetMaximumLength(inputFieldController.CharacterLimit);
+            characterCounter.gameObject.SetActive(false);
 
             viewDependencies.DclInput.UI.RightClick.performed += OnRightClickRegistered;
 
@@ -391,11 +393,19 @@ namespace DCL.Chat
             emojiPanelButton.Button.onClick.AddListener(ToggleEmojiPanel);
         }
 
-        private void InitializeEmojiMapping(Dictionary<string, EmojiData> emojiNameMapping)
+        private void InitializeEmojiMapping(Dictionary<string, EmojiData> emojiNameDataMapping)
         {
-            foreach ((string emojiName, EmojiData emojiData) in emojiNameMapping)
+            suggestionsPerTypeMap.Add(InputSuggestionType.EMOJIS, new Dictionary<string, IInputSuggestionElementData>());
+
+            foreach ((string emojiName, EmojiData emojiData) in emojiNameDataMapping)
                 suggestionsPerTypeMap[InputSuggestionType.EMOJIS][emojiName] = new EmojiInputSuggestionData(emojiData.EmojiCode, emojiData.EmojiName);
         }
+
+        private void InitializeProfilesMapping()
+        {
+            suggestionsPerTypeMap.Add(InputSuggestionType.PROFILE, new Dictionary<string, IInputSuggestionElementData>());
+        }
+
 
         private void AddEmojiToInput(string emoji)
         {
