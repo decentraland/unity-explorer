@@ -32,7 +32,7 @@ namespace DCL.Friends
         private const string SUBSCRIBE_TO_CONNECTIVITY_UPDATES = "SubscribeToFriendConnectivityUpdates";
         private const int CONNECTION_TIMEOUT_SECS = 10;
         private const int CONNECTION_RETRIES = 3;
-        private const int RETRY_STREAM_THROTTLE_MS = 1000;
+        private const int RETRY_STREAM_THROTTLE_MS = 30000;
 
         private readonly URLAddress apiUrl;
         private readonly IFriendsEventBus eventBus;
@@ -100,19 +100,18 @@ namespace DCL.Friends
 
         public async UniTask SubscribeToIncomingFriendshipEventsAsync(CancellationToken ct)
         {
-            await EnsureRpcConnectionAsync(ct);
-
             // We try to keep the stream open until cancellation is requested
             // If by any reason the rpc connection has a problem, we need to wait until it is restored, so we re-open the stream
             while (!ct.IsCancellationRequested)
             {
                 try
                 {
+                    await EnsureRpcConnectionAsync(ct);
                     await OpenStreamAndProcessUpdatesAsync();
                 }
                 catch (Exception e) when (e is not OperationCanceledException)
                 {
-                    await UniTask.WaitWhile(() => !isConnectionReady, cancellationToken: ct);
+                    ReportHub.LogException(e, new ReportData(ReportCategory.FRIENDS));
                 }
 
                 await UniTask.Delay(RETRY_STREAM_THROTTLE_MS, cancellationToken: ct);
@@ -178,21 +177,20 @@ namespace DCL.Friends
 
         public async UniTask SubscribeToConnectivityStatusAsync(CancellationToken ct)
         {
-            await EnsureRpcConnectionAsync(ct);
-
             // We try to keep the stream open until cancellation is requested
             // If by any reason the rpc connection has a problem, we need to wait until it is restored, so we re-open the stream
             while (!ct.IsCancellationRequested)
             {
                 try
                 {
+                    await EnsureRpcConnectionAsync(ct);
                     await OpenStreamAndProcessUpdatesAsync();
                 }
                 catch (Exception e) when (e is not OperationCanceledException)
                 {
-                    await UniTask.WaitWhile(() => !isConnectionReady, cancellationToken: ct);
+                    ReportHub.LogException(e, new ReportData(ReportCategory.FRIENDS));
                 }
-                
+
                 await UniTask.Delay(RETRY_STREAM_THROTTLE_MS, cancellationToken: ct);
             }
 
