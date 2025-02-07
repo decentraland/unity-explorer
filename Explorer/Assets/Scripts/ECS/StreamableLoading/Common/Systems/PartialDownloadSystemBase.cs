@@ -48,7 +48,7 @@ namespace ECS.StreamableLoading.Common.Systems
 
                 // If the cached data is complete, process it directly
                 if (cachedState.FullyDownloaded)
-                    return await ProcessCompletedData(state, intention, partition, ct);
+                    return await ProcessCompletedDataAsync(state, intention, partition, ct);
             }
 
             // If no cache or incomplete cached data, proceed with normal flow
@@ -97,7 +97,7 @@ namespace ECS.StreamableLoading.Common.Systems
 
                 // Check if the download is complete
                 if (partialState.FullyDownloaded)
-                    return await ProcessCompletedData(state, intention, partition, ct);
+                    return await ProcessCompletedDataAsync(state, intention, partition, ct);
 
                 return default;
             }
@@ -111,6 +111,6 @@ namespace ECS.StreamableLoading.Common.Systems
         private string GetIntentionResourceStringFromUrl(TIntention intention) =>
             intention.CommonArguments.URL.Value.Split("/")[^1];
 
-        protected abstract UniTask<StreamableLoadingResult<TData>> ProcessCompletedData(StreamableLoadingState state, TIntention intention, IPartitionComponent partition, CancellationToken ct);
+        protected abstract UniTask<StreamableLoadingResult<TData>> ProcessCompletedDataAsync(StreamableLoadingState state, TIntention intention, IPartitionComponent partition, CancellationToken ct);
     }
 }

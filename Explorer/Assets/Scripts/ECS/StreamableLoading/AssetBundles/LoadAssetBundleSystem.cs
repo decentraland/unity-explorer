@@ -47,7 +47,7 @@ namespace ECS.StreamableLoading.AssetBundles
             this.loadingMutex = loadingMutex;
         }
 
-        protected override async UniTask<StreamableLoadingResult<AssetBundleData>> ProcessCompletedData(StreamableLoadingState state, GetAssetBundleIntention intention, IPartitionComponent partition, CancellationToken ct)
+        protected override async UniTask<StreamableLoadingResult<AssetBundleData>> ProcessCompletedDataAsync(StreamableLoadingState state, GetAssetBundleIntention intention, IPartitionComponent partition, CancellationToken ct)
         {
             var memoryStream = new AssetBundleData.MemoryStream(state.ClaimOwnershipOverFullyDownloadedData());
 
