@@ -154,7 +154,7 @@ namespace DCL.Chat
         {
             lastMatch = suggestionPanelController!.HandleSuggestionsSearch(inputText, EMOJI_PATTERN_REGEX, InputSuggestionType.EMOJIS, suggestionsPerTypeMap[InputSuggestionType.EMOJIS]);
 
-            //If we dont find any emoji pattern only then we look for username patterns
+            //If we don't find any emoji pattern only then we look for username patterns
             if (lastMatch.IsNullOrEmpty())
             {
                 UpdateProfileNameMap();

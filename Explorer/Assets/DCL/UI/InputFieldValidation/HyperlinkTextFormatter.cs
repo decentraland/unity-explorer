@@ -1,4 +1,5 @@
 using DCL.Profiles;
+using DCL.UI.Utilities;
 using System;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -14,12 +15,9 @@ namespace DCL.UI.InputFieldValidator
     [Serializable]
     public class HyperlinkTextFormatter : ITextFormatter
     {
-        private const string SCENE = "scene";
-        private const string WORLD = "world";
-        private const string URL = "url";
-        private const string USER = "user";
         private const string LINK_OPENING_STYLE = "<#00B2FF><link=";
         private const string LINK_CLOSING_STYLE = "</link></color>";
+        private const int LINK_TAG_LIMIT = (256 - 10) / 2;
 
         private static readonly Regex RICH_TEXT_TAG_REGEX = new (@"<(?!\/?(b|i)(>|\s))[^>]+>", RegexOptions.Compiled);
 
@@ -120,46 +118,46 @@ namespace DCL.UI.InputFieldValidator
             WrapWithLink(match, LinkType.WORLD);
 
         private StringBuilder WrapWithUsernameLink(Match match) =>
-            WrapWithLink(match, LinkType.USER);
+            WrapWithLink(match, LinkType.PROFILE);
 
         private StringBuilder WrapWithLink(Match match, LinkType linkType)
         {
             tempStringBuilder.Clear();
+
+            //TODO FRAN:
+            //There is a limit for link tags in TextMeshPro of 256 chars split between text and the link itself. Longer links are not detected as such.
+            //This requires a different implementation using a "pointer" to the proper link instead of embedding it in the tag.
+            if (match.Value.Length > LINK_TAG_LIMIT)
+                return tempStringBuilder.Append(match);
+
             string linkTypeString = null;
 
-            //Validate here if these are valid before creating the links
             switch (linkType)
             {
                 case LinkType.SCENE:
                     if (!AreCoordsValid(int.Parse(match.Groups[1].Value), int.Parse(match.Groups[2].Value)))
                         return tempStringBuilder.Append(match);
-                    linkTypeString = SCENE;
+
+                    linkTypeString = HyperlinkConstants.SCENE;
                     break;
                 case LinkType.WORLD:
-                    linkTypeString = WORLD;
+                    linkTypeString = HyperlinkConstants.WORLD;
                     break;
                 case LinkType.URL:
-                    linkTypeString = URL;
+                    linkTypeString = HyperlinkConstants.URL;
                     break;
-                case LinkType.USER:
+                case LinkType.PROFILE:
                     if (!IsUserNameValid(match.Groups[1].Value))
                         return tempStringBuilder.Append(match);
 
-                    tempStringBuilder.Append(LINK_OPENING_STYLE)
-                                     .Append(USER)
-                                     .Append('=')
-                                     .Append(match.Groups[1])
-                                     .Append(">")
-                                     .Append(match)
-                                     .Append(LINK_CLOSING_STYLE);
-
-                    return tempStringBuilder;
+                    linkTypeString = HyperlinkConstants.PROFILE;
+                    break;
             }
 
             tempStringBuilder.Append(LINK_OPENING_STYLE)
                              .Append(linkTypeString)
-                             .Append('=')
-                             .Append(match)
+                             .Append("=")
+                             .Append(linkType == LinkType.PROFILE? match.Groups[1] : match)
                              .Append(">")
                              .Append(match)
                              .Append(LINK_CLOSING_STYLE);
@@ -181,7 +179,7 @@ namespace DCL.UI.InputFieldValidator
             SCENE,
             WORLD,
             URL,
-            USER,
+            PROFILE,
         }
     }
 }

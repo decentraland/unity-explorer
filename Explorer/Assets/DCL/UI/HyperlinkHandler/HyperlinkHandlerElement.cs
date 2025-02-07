@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Input;
 using DCL.Profiles;
+using DCL.UI.Utilities;
 using MVC;
 using System;
 using System.Collections.Generic;
@@ -15,10 +16,6 @@ namespace DCL.UI.HyperlinkHandler
     public class HyperlinkHandlerElement : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler, IPointerMoveHandler, IViewWithGlobalDependencies
     {
         //In the future we might need to migrate all these settings into a configurable SO
-        private const string SCENE = "scene";
-        private const string WORLD = "world";
-        private const string URL = "url";
-        private const string USER = "user";
         private const string REALM_CHANGE_CONFIRMATION_MESSAGE = "Are you sure you want to enter this World?";
 
         [SerializeField] private TMP_Text textComponent;
@@ -94,10 +91,10 @@ namespace DCL.UI.HyperlinkHandler
 
         private void AddLinkHandlers()
         {
-            linkHandlers.Add(URL, HandleURLLink);
-            linkHandlers.Add(WORLD, HandleWorldLink);
-            linkHandlers.Add(SCENE, HandleSceneLink);
-            linkHandlers.Add(USER, HandleUserLink);
+            linkHandlers.Add(HyperlinkConstants.URL, HandleURLLink);
+            linkHandlers.Add(HyperlinkConstants.WORLD, HandleWorldLink);
+            linkHandlers.Add(HyperlinkConstants.SCENE, HandleSceneLink);
+            linkHandlers.Add(HyperlinkConstants.PROFILE, HandleUserLink);
         }
 
         private void ProcessLink(string linkID)
@@ -148,7 +145,6 @@ namespace DCL.UI.HyperlinkHandler
 
         private async UniTask OpenUserProfileContextMenu(string userName)
         {
-            //TODO FRAN: CHECK IF THIS CAN BE DONE USING JUST THE ID?
             Profile profile = dependencies.ProfileCache.GetByUserName(userName);
 
             if (profile == null) return;

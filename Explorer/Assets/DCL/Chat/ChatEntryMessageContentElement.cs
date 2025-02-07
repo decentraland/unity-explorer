@@ -14,11 +14,11 @@ namespace DCL.Chat
 
         public void SetMessageContent(string content)
         {
-            messageContentText.text = content;
+            messageContentText.SetText(content);
 
             //Force mesh is needed otherwise entryText.GetParsedText() in CalculatePreferredWidth will return the original text
-            //of the previous frame
-            messageContentText.ForceMeshUpdate();
+            //of the previous frame, also data for links and whatnot would not be updated either even after many seconds.
+            messageContentText.ForceMeshUpdate(true, true);
             messageContentSizeFitter.SetLayoutVertical();
         }
     }
