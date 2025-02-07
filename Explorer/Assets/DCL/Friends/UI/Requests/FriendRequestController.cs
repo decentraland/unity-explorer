@@ -10,7 +10,6 @@ using MVC;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using UnityEngine;
 using Utility;
 
 namespace DCL.Friends.UI.Requests
@@ -26,14 +25,12 @@ namespace DCL.Friends.UI.Requests
         private readonly IProfileRepository profileRepository;
         private readonly IWebRequestController webRequestController;
         private readonly IInputBlock inputBlock;
+        private readonly IProfileThumbnailCache profileThumbnailCache;
         private readonly Dictionary<ImageView, ImageController> mutualFriendControllers = new ();
         private CancellationTokenSource? requestOperationCancellationToken;
         private CancellationTokenSource? fetchUserCancellationToken;
         private CancellationTokenSource? showPreCancelToastCancellationToken;
         private UniTaskCompletionSource? lifeCycleTask;
-        private ImageController? userThumbnailSendNew;
-        private ImageController? userThumbnailCancel;
-        private ImageController? userThumbnailReceived;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
@@ -42,13 +39,15 @@ namespace DCL.Friends.UI.Requests
             IFriendsService friendsService,
             IProfileRepository profileRepository,
             IWebRequestController webRequestController,
-            IInputBlock inputBlock) : base(viewFactory)
+            IInputBlock inputBlock,
+            IProfileThumbnailCache profileThumbnailCache) : base(viewFactory)
         {
             this.identityCache = identityCache;
             this.friendsService = friendsService;
             this.profileRepository = profileRepository;
             this.webRequestController = webRequestController;
             this.inputBlock = inputBlock;
+            this.profileThumbnailCache = profileThumbnailCache;
         }
 
         protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
@@ -64,17 +63,14 @@ namespace DCL.Friends.UI.Requests
             viewInstance!.send.SendButton.onClick.AddListener(Send);
             viewInstance.send.CancelButton.onClick.AddListener(Close);
             viewInstance.send.MessageInput.onValueChanged.AddListener(UpdateBodyMessageCharacterCount);
-            userThumbnailSendNew = new ImageController(viewInstance.send.UserAndMutualFriendsConfig.UserThumbnail, webRequestController);
 
             viewInstance.cancel.PreCancelButton.onClick.AddListener(ShowPreCancelToastAndEnableCancelButton);
             viewInstance.cancel.CancelButton.onClick.AddListener(Cancel);
             viewInstance.cancel.BackButton.onClick.AddListener(Close);
-            userThumbnailCancel = new ImageController(viewInstance.cancel.UserAndMutualFriendsConfig.UserThumbnail, webRequestController);
 
             viewInstance.received.BackButton.onClick.AddListener(Close);
             viewInstance.received.AcceptButton.onClick.AddListener(Accept);
             viewInstance.received.RejectButton.onClick.AddListener(Reject);
-            userThumbnailReceived = new ImageController(viewInstance.received.UserAndMutualFriendsConfig.UserThumbnail, webRequestController);
 
             InstantiateMutualThumbnailControllers(viewInstance.received.UserAndMutualFriendsConfig);
             InstantiateMutualThumbnailControllers(viewInstance.cancel.UserAndMutualFriendsConfig);
@@ -152,11 +148,30 @@ namespace DCL.Friends.UI.Requests
             viewInstance!.send.MessageInput.text = "";
 
             fetchUserCancellationToken = fetchUserCancellationToken.SafeRestart();
-            FetchUserDataAsync(viewInstance.send.UserAndMutualFriendsConfig,
-                    inputData.DestinationUser!.Value,
-                    userThumbnailSendNew!,
-                    fetchUserCancellationToken.Token)
-               .Forget();
+
+            UniTask.WhenAll(LoadMutualFriendsAsync(viewInstance.send.UserAndMutualFriendsConfig,
+                            inputData.DestinationUser!.Value,
+                            fetchUserCancellationToken.Token),
+                        LoadUserAsync(viewInstance.send.UserAndMutualFriendsConfig,
+                            inputData.DestinationUser!.Value,
+                            fetchUserCancellationToken.Token))
+                   .Forget();
+
+            return;
+
+            async UniTask LoadUserAsync(FriendRequestView.UserAndMutualFriendsConfig config, Web3Address user, CancellationToken ct)
+            {
+                Profile? profile = await profileRepository.GetAsync(user, ct);
+
+                if (profile == null) return;
+
+                config.UserName.text = profile.Name;
+                config.UserNameVerification.SetActive(profile.HasClaimedName);
+                config.UserNameHash.gameObject.SetActive(!profile.HasClaimedName);
+                config.UserNameHash.text = $"#{user.ToString()[^4..]}";
+
+                await config.UserThumbnail.LoadThumbnailSafeAsync(profileThumbnailCache, user, profile.Avatar.FaceSnapshotUrl, ct);
+            }
         }
 
         private void SetUpAsCancel()
@@ -171,7 +186,8 @@ namespace DCL.Friends.UI.Requests
             viewConfig.MessageInput.text = $"<b>You:</b> {fr.MessageBody}";
 
             fetchUserCancellationToken = fetchUserCancellationToken.SafeRestart();
-            FetchUserDataAsync(viewConfig.UserAndMutualFriendsConfig, fr.To, userThumbnailCancel!, fetchUserCancellationToken.Token)
+
+            FetchUserDataAsync(viewConfig.UserAndMutualFriendsConfig, fr.To, fetchUserCancellationToken.Token)
                .Forget();
         }
 
@@ -192,7 +208,6 @@ namespace DCL.Friends.UI.Requests
             {
                 await FetchUserDataAsync(viewConfig.UserAndMutualFriendsConfig,
                     fr.From,
-                    userThumbnailReceived!,
                     ct);
 
                 viewConfig.MessageInput.text = $"<b>{fr.From.Name}:</b> {fr.MessageBody}";
@@ -200,39 +215,15 @@ namespace DCL.Friends.UI.Requests
         }
 
         private async UniTask FetchUserDataAsync(FriendRequestView.UserAndMutualFriendsConfig config,
-            Web3Address user, ImageController thumbnailController, CancellationToken ct)
-        {
-            await UniTask.WhenAll(
-                LoadMutualFriendsAsync(config, user, ct),
-                LoadUserAsync());
-
-            return;
-
-            async UniTask LoadUserAsync()
-            {
-                Profile? profile = await profileRepository.GetAsync(user, ct);
-
-                if (profile == null) return;
-
-                config.UserName.text = profile.Name;
-                config.UserNameVerification.SetActive(profile.HasClaimedName);
-                config.UserNameHash.gameObject.SetActive(!profile.HasClaimedName);
-                config.UserNameHash.text = $"#{user.ToString()[^4..]}";
-
-                LoadThumbnail(profile, config.UserThumbnail, thumbnailController);
-            }
-        }
-
-        private async UniTask FetchUserDataAsync(FriendRequestView.UserAndMutualFriendsConfig config,
-            FriendProfile user, ImageController thumbnailController, CancellationToken ct)
+            FriendProfile user, CancellationToken ct)
         {
             config.UserName.text = user.Name;
             config.UserNameVerification.SetActive(user.HasClaimedName);
             config.UserNameHash.gameObject.SetActive(!user.HasClaimedName);
             config.UserNameHash.text = $"#{user.Address.ToString()[^4..]}";
-            thumbnailController.RequestImage(user.FacePictureUrl);
 
-            await LoadMutualFriendsAsync(config, user.Address, ct);
+            await UniTask.WhenAll(config.UserThumbnail.LoadThumbnailSafeAsync(profileThumbnailCache, user.Address, user.FacePictureUrl, ct),
+                LoadMutualFriendsAsync(config, user.Address, ct));
         }
 
         private async UniTask LoadMutualFriendsAsync(FriendRequestView.UserAndMutualFriendsConfig config,
@@ -273,22 +264,19 @@ namespace DCL.Friends.UI.Requests
 
                 try
                 {
-                    await friendsService.RequestFriendshipAsync(inputData.DestinationUser!.Value,
+                    FriendRequest request = await friendsService.RequestFriendshipAsync(inputData.DestinationUser!.Value,
                         viewInstance.send.MessageInput.text,
                         ct);
 
                     await ShowOperationConfirmationAsync(
                         ViewState.CONFIRMED_SENT,
-                        viewInstance.sentConfirmed, inputData.DestinationUser!.Value,
+                        viewInstance.sentConfirmed, request.To,
                         "Friend Request Sent To <color=#73D3D3>{0}</color>",
                         ct);
 
                     Close();
                 }
-                finally
-                {
-                    viewInstance.send.SendButton.interactable = true;
-                }
+                finally { viewInstance.send.SendButton.interactable = true; }
             }
         }
 
@@ -304,7 +292,7 @@ namespace DCL.Friends.UI.Requests
 
                 await ShowOperationConfirmationAsync(
                     ViewState.CONFIRMED_REJECTED,
-                    viewInstance!.rejectedConfirmed, inputData.Request.From.Address,
+                    viewInstance!.rejectedConfirmed, inputData.Request.From,
                     "Friend Request From <color=#FF8362>{0}</color> Rejected",
                     ct);
 
@@ -324,7 +312,7 @@ namespace DCL.Friends.UI.Requests
 
                 await ShowOperationConfirmationAsync(
                     ViewState.CONFIRMED_ACCEPTED,
-                    viewInstance!.acceptedConfirmed, inputData.Request.From.Address,
+                    viewInstance!.acceptedConfirmed, inputData.Request.From,
                     "You And <color=#FF8362>{0}</color> Are Now Friends!",
                     ct);
 
@@ -344,7 +332,7 @@ namespace DCL.Friends.UI.Requests
 
                 await ShowOperationConfirmationAsync(
                     ViewState.CONFIRMED_CANCELLED,
-                    viewInstance!.cancelledConfirmed, inputData.Request.To.Address,
+                    viewInstance!.cancelledConfirmed, inputData.Request.To,
                     "Friend Request To <color=#73D3D3>{0}</color> Cancelled",
                     ct);
 
@@ -372,19 +360,6 @@ namespace DCL.Friends.UI.Requests
         private void UpdateBodyMessageCharacterCount(string text) =>
             viewInstance!.send.MessageCharacterCountText.text = $"{text.Length}/140";
 
-        private void LoadThumbnail(Profile profile, ImageView imageView, ImageController controller)
-        {
-            if (profile.ProfilePicture != null)
-            {
-                Sprite? sprite = profile.ProfilePicture?.Asset.Sprite;
-
-                if (sprite != null)
-                    imageView.SetImage(sprite);
-            }
-            else
-                controller.RequestImage(profile.Avatar.FaceSnapshotUrl);
-        }
-
         private void BlockUnwantedInputs() =>
             inputBlock.Disable(InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.IN_WORLD_CAMERA, InputMapComponent.Kind.CAMERA, InputMapComponent.Kind.PLAYER);
 
@@ -394,21 +369,17 @@ namespace DCL.Friends.UI.Requests
         private async UniTask ShowOperationConfirmationAsync(
             ViewState state,
             FriendRequestView.OperationConfirmedConfig config,
-            Web3Address userId, string textWithUserNameParam, CancellationToken ct)
+            FriendProfile profile, string textWithUserNameParam, CancellationToken ct)
         {
-            Profile? profile = await profileRepository.GetAsync(userId, ct);
-            if (profile == null) return;
-
             config.Label.text = string.Format(textWithUserNameParam, profile.Name);
-
-            LoadThumbnail(profile, config.FriendThumbnail, new ImageController(config.FriendThumbnail, webRequestController));
+            config.FriendThumbnail.LoadThumbnailSafeAsync(profileThumbnailCache, profile.Address, profile.FacePictureUrl, ct).Forget();
 
             if (config.MyThumbnail != null)
             {
                 Profile? myProfile = await profileRepository.GetAsync(identityCache.EnsuredIdentity().Address, ct);
 
                 if (myProfile != null)
-                    LoadThumbnail(myProfile, config.MyThumbnail, new ImageController(config.MyThumbnail, webRequestController));
+                    config.MyThumbnail.LoadThumbnailSafeAsync(profileThumbnailCache, new Web3Address(myProfile.UserId), myProfile.Avatar.FaceSnapshotUrl, ct).Forget();
             }
 
             Toggle(state);

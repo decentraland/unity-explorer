@@ -1,4 +1,3 @@
-using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Friends.UI.FriendPanel.Sections;
 using DCL.Friends.UI.Requests;
@@ -22,8 +21,7 @@ namespace DCL.Friends.UI.FriendPanel
 
         private FriendsPanelController? friendsPanelController;
         private bool isFriendPanelControllerOpen;
-
-        private readonly CancellationTokenSource friendRequestReceivedCts = new ();
+        private CancellationTokenSource? friendRequestReceivedCts;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
 
@@ -73,6 +71,7 @@ namespace DCL.Friends.UI.FriendPanel
             if (parameters.Length == 0 || parameters[0] is not FriendRequestReceivedNotification)
                 return;
 
+            friendRequestReceivedCts = friendRequestReceivedCts.SafeRestart();
             ManageFriendRequestReceivedNotificationAsync((FriendRequestReceivedNotification)parameters[0], friendRequestReceivedCts.Token).Forget();
 
             async UniTaskVoid ManageFriendRequestReceivedNotificationAsync(FriendRequestReceivedNotification notification, CancellationToken ct)
