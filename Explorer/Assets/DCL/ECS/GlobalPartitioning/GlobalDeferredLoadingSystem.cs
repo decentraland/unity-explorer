@@ -75,6 +75,7 @@ namespace DCL.GlobalPartitioning
             : base(world, COMPONENT_HANDLERS_SCENES, releasablePerformanceLoadingBudget, memoryBudget)
         {
             this.scenesCache = scenesCache;
+            this.playerEntity = playerEntity;
         }
 
         protected override void Update(float t)
