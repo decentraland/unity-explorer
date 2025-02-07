@@ -4,6 +4,29 @@ using UnityEngine.EventSystems;
 
 namespace DCL.UI.InputFieldValidator
 {
+
+    //TODO FRAN: This might need to be an extension of the TMP_InputField -> this way we avoid all the drawbacks of having to repeat input field events and can override certain events
+    /*EXAMPLE TO INVALIDATE UP AND DOWN ARROWS + CAN BE USED FOR CTRL + V to disable pasting directly and instead use our own methods (pasting with ctrlV throws an "input changed" event for each character)
+    public class CustomInputField : TMP_InputField
+    {
+        public override void ProcessEvent(Event e)
+        {
+            // Check if it's a keydown event for up or down arrows
+            if (e.type == EventType.KeyDown &&
+                (e.keyCode == KeyCode.UpArrow || e.keyCode == KeyCode.DownArrow))
+            {
+                // Consume the event to prevent default behavior
+                e.Use();
+                return;
+            }
+
+            // Process all other events normally
+            base.ProcessEvent(e);
+        }
+    }
+    */
+
+
     /// <summary>
     /// This controller serves as an in-between other classes and the TMP_InputField, capturing events and
     /// making sure that if a formatter is referenced a properly formatted text is submitted.
@@ -131,6 +154,9 @@ namespace DCL.UI.InputFieldValidator
         /// </summary>
         private void OnSubmit(string text)
         {
+            //TODO FRAN: This needs fixing, as doing a submit from the suggestions panel, also triggers this submit formatting.
+            //so we need to signal this class if it should format the text or not.
+            //It might be better to call format text from outside classes? :hmmmmmmmmmm
             text = chatInputFormatter?.FormatText(text);
             InputFieldSubmitEvent?.Invoke(text);
         }

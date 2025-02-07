@@ -76,8 +76,8 @@ namespace DCL.UI.SuggestionPanel
         {
             if (lastSelectedInputSuggestion != null && IsActive)
                 SuggestionSelectedEvent?.Invoke(lastSelectedInputSuggestion.SuggestionId);
-
-            SetPanelVisibility(false);
+            else
+                SetPanelVisibility(false);
         }
 
         private void OnArrowUp(InputAction.CallbackContext obj)
@@ -178,18 +178,16 @@ namespace DCL.UI.SuggestionPanel
 
         public void SetPanelVisibility(bool isVisible)
         {
-            //TODO FRAN: Make the panel fade instead of just pop in and out of existence.
             if (isVisible)
             {
-                //TODO FRAN: REPLACE THESE FOR NEW DEFINED UI ACTIONS so DCLInput.UI.UPArrow and DOWNArrow or whatever
-                viewDependencies.DclInput.Player.ActionForward.performed += OnArrowUp;
-                viewDependencies.DclInput.Player.ActionBackward.performed += OnArrowDown;
+                viewDependencies.DclInput.UI.ActionUp.performed += OnArrowUp;
+                viewDependencies.DclInput.UI.ActionDown.performed += OnArrowDown;
                 viewDependencies.DclInput.UI.Submit.performed += OnSubmit;
             }
             else
             {
-                viewDependencies.DclInput.Player.ActionForward.performed -= OnArrowUp;
-                viewDependencies.DclInput.Player.ActionBackward.performed -= OnArrowDown;
+                viewDependencies.DclInput.UI.ActionUp.performed -= OnArrowUp;
+                viewDependencies.DclInput.UI.ActionDown.performed -= OnArrowDown;
                 viewDependencies.DclInput.UI.Submit.performed -= OnSubmit;
             }
 
