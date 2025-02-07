@@ -2,6 +2,7 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
+using Arch.SystemGroups.Throttling;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Character.Components;
 using DCL.CharacterMotion.Animation;
@@ -16,6 +17,7 @@ namespace DCL.Multiplayer.Movement.Systems
 {
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     [LogCategory(ReportCategory.AVATAR)]
+    [ThrottlingEnabled]
     public partial class SDKAvatarShapesMotionSystem : BaseUnityLoopSystem
     {
         public const float ROTATION_SPEED = 5f;
