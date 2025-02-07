@@ -42,13 +42,17 @@ namespace DCL.GlobalPartitioning
     [UpdateBefore(typeof(LoadWearablesByParamSystem))]
     public partial class GlobalDeferredLoadingSystem : DeferredLoadingSystem
     {
-        private static readonly QueryDescription[] COMPONENT_HANDLERS;
+        private static readonly QueryDescription[] COMPONENT_HANDLERS_SCENES_ASSETS;
+        private static readonly QueryDescription[] COMPONENT_HANDLERS_SCENES;
+
         private Vector2Int teleportParcel;
-        private bool isSceneLocked;
+        private bool downloadOnlySceneMetadata;
+        private readonly IScenesCache scenesCache;
+
 
         static GlobalDeferredLoadingSystem()
         {
-            COMPONENT_HANDLERS = new[]
+            COMPONENT_HANDLERS_SCENES_ASSETS = new[]
             {
                 CreateQuery<GetSceneDefinitionList, SceneDefinitions>(),
                 CreateQuery<GetSceneDefinition, SceneEntityDefinition>(),
@@ -63,36 +67,37 @@ namespace DCL.GlobalPartitioning
                 CreateQuery<GetOwnedEmotesFromRealmIntention, EmotesResolution>(),
                 CreateQuery<GetAudioClipIntention, AudioClipData>(),
             };
+
+            COMPONENT_HANDLERS_SCENES = new[]
+            {
+                CreateQuery<GetSceneDefinitionList, SceneDefinitions>(), CreateQuery<GetSceneDefinition, SceneEntityDefinition>(), CreateQuery<GetSceneFacadeIntention, ISceneFacade>()
+            };
         }
 
-        public GlobalDeferredLoadingSystem(World world, IReleasablePerformanceBudget releasablePerformanceLoadingBudget, IPerformanceBudget memoryBudget)
-            : base(world, COMPONENT_HANDLERS, releasablePerformanceLoadingBudget, memoryBudget)
+        public GlobalDeferredLoadingSystem(World world, IReleasablePerformanceBudget releasablePerformanceLoadingBudget, IPerformanceBudget memoryBudget, IScenesCache scenesCache)
+            : base(world, COMPONENT_HANDLERS_SCENES, releasablePerformanceLoadingBudget, memoryBudget)
         {
+            this.scenesCache = scenesCache;
         }
 
         protected override void Update(float t)
         {
-            isSceneLocked = false;
+            FilterHandlersIfInTeleport();
+            base.Update(t);
+        }
+
+        private void FilterHandlersIfInTeleport()
+        {
+            downloadOnlySceneMetadata = false;
             World.Query(new QueryDescription().WithAll<PlayerTeleportIntent>(), (ref PlayerTeleportIntent teleportIntent) =>
             {
                 teleportParcel = teleportIntent.Parcel;
-                World.Query(new QueryDescription().WithAll<ISceneFacade>(), (ref ISceneFacade sceneFacade) =>
-                {
-                    if (sceneFacade.Contains(teleportParcel) && !sceneFacade.IsSceneReady())
-                        isSceneLocked = true;
-                });
+                //If the scene is already in the cache, but not ready, we want to download only its assets.
+                if (scenesCache.TryGetByParcel(teleportParcel, out var sceneFacade) && !sceneFacade.IsSceneReady())
+                    downloadOnlySceneMetadata = true;
             });
 
-            if (isSceneLocked)
-            {
-                Debug.Log("JUANI LOCK ON");
-                return;
-            }
-
-            Debug.Log("JUANI LOCK OFF");
-
-            
-            base.Update(t);
+            sameBoatQueries = downloadOnlySceneMetadata ? COMPONENT_HANDLERS_SCENES : COMPONENT_HANDLERS_SCENES_ASSETS;
         }
     }
 }

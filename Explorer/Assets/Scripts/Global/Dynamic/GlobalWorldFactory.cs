@@ -137,7 +137,7 @@ namespace Global.Dynamic
                 loadSceneSystemLogic,
                 sceneFactory, NoCache<ISceneFacade, GetSceneFacadeIntention>.INSTANCE);
 
-            GlobalDeferredLoadingSystem.InjectToWorld(ref builder, sceneBudget, memoryBudget);
+            GlobalDeferredLoadingSystem.InjectToWorld(ref builder, sceneBudget, memoryBudget, scenesCache);
 
             LoadStaticPointersSystem.InjectToWorld(ref builder);
             LoadFixedPointersSystem.InjectToWorld(ref builder);
