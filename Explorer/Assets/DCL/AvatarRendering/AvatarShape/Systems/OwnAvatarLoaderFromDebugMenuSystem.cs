@@ -37,7 +37,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
             debugContainerBuilder.TryAddWidget("Profile: Avatar Shape")
                                  ?.SetVisibilityBinding(widgetVisibility = new DebugWidgetVisibilityBinding(false))
-                                 .AddStringFieldWithConfirmation("0x..", "Set Address", UpdateProfileForOwnAvatar);
+                                 .AddStringFieldWithConfirmation("0x..", "Set Address", UpdateProfileForOwnAvatarAsync);
         }
 
         protected override void Update(float t)
@@ -45,7 +45,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             widgetVisibility?.SetVisible(realmData.Configured);
         }
 
-        private async void UpdateProfileForOwnAvatar(string profileId)
+        private async void UpdateProfileForOwnAvatarAsync(string profileId)
         {
             const int VERSION = 0;
 
