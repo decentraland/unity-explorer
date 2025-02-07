@@ -113,9 +113,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   indirectCandidates: []
   directCandidates: []
-  indirectShader: {fileID: 4800000, guid: 56a9743f8d94f684190dc11bb521fb78, type: 3}
-  instancedLodGroups: []
   InstancedRenderers: []
+  InstancedLODGroups: []
+  whitelistShaders:
+  - {fileID: 4800000, guid: 56a9743f8d94f684190dc11bb521fb78, type: 3}
+  - {fileID: 4800000, guid: d7dd1c3f4cba1d441a7d295a168bac0d, type: 3}
 --- !u!1001 &4166536358434357706
 PrefabInstance:
   m_ObjectHideFlags: 0
