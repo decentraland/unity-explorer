@@ -68,9 +68,6 @@ namespace DCL.Multiplayer.Movement.Systems
             ref CharacterLastPosition characterLastPositionComp,
             ref CharacterAnimationComponent animationComponent)
         {
-            const bool IS_JUMP_TRIGGERED = false;
-            const bool IS_STUNNED = false;
-
             var currentPosition = characterTransformComp.Transform.position;
             var oldPosition = characterLastPositionComp.LastPosition;
             float movementBlendValue = 0;
@@ -97,7 +94,7 @@ namespace DCL.Multiplayer.Movement.Systems
             AnimationSlideBlendLogic.SetAnimatorParameters(ref animationComponent, view);
 
             // other states
-            AnimationStatesLogic.SetAnimatorParameters(view, ref animationComponent.States, animationComponent.States.IsJumping, IS_JUMP_TRIGGERED, IS_STUNNED);
+            AnimationStatesLogic.SetAnimatorParameters(view, ref animationComponent.States, animationComponent.States.IsJumping, jumpTriggered: false, isStunned: false);
         }
 
         private static void UpdateLastPosition(
