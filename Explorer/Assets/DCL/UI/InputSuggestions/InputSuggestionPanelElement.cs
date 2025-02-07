@@ -134,8 +134,9 @@ namespace DCL.UI.SuggestionPanel
                     for (int i = usedPoolItems.Count - 1; i >= foundSuggestions.Count; i--)
                         usedPoolItems.RemoveAt(i);
                 }
+            }
 
-                currentSuggestionType = suggestionType;
+            currentSuggestionType = suggestionType;
 
                 for (var i = 0; i < foundSuggestions.Count; i++)
                 {
@@ -153,7 +154,7 @@ namespace DCL.UI.SuggestionPanel
                         suggestionElement.gameObject.transform.SetAsLastSibling();
                         usedPoolItems.Add(suggestionElement);
                     }
-                }
+
             }
 
             if (usedPoolItems.Count > 0)

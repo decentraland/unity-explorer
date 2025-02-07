@@ -323,6 +323,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b8a099ade8dc4f37be24a9a7fc30bb88, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  <MaxSuggestionAmount>k__BackingField: 5
   selectionButton: {fileID: 7583984127850801498}
   selectedBackground: {fileID: 5978463543333982807}
   faceSnapshotImage: {fileID: 7886327566689672897}

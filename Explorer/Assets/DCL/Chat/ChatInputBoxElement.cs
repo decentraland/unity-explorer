@@ -56,8 +56,8 @@ namespace DCL.Chat
 
         private UniTaskCompletionSource closePopupTask;
         private Mouse device;
-        private EmojiPanelController emojiPanelController;
-        private InputSuggestionPanelController suggestionPanelController;
+        private EmojiPanelController? emojiPanelController;
+        private InputSuggestionPanelController? suggestionPanelController;
         private InputFieldController inputFieldController;
 
         private CancellationTokenSource emojiPanelCts = new ();
@@ -287,7 +287,7 @@ namespace DCL.Chat
             characterCounter.gameObject.SetActive(true);
         }
 
-        private void InputFieldSubmitEvent(string _)
+        private void InputFieldSubmitEvent(string submittedText)
         {
             if (suggestionPanel.IsActive)
             {
@@ -302,7 +302,7 @@ namespace DCL.Chat
                 EmojiSelectionVisibilityChanged?.Invoke(false);
             }
 
-            if (string.IsNullOrWhiteSpace(inputFieldController.InputText))
+            if (string.IsNullOrWhiteSpace(submittedText))
             {
                 inputFieldController.DeactivateInputField();
                 inputFieldController.DeselectInputField();
@@ -311,11 +311,10 @@ namespace DCL.Chat
 
             //Send message and clear Input Field
             UIAudioEventsBus.Instance.SendPlayAudioEvent(chatSendMessageAudio);
-            string messageToSend = inputFieldController.InputText;
 
             inputFieldController.ResetInputField();
 
-            InputSubmitted?.Invoke(messageToSend, ORIGIN);
+            InputSubmitted?.Invoke(submittedText, ORIGIN);
         }
 
         public void Dispose()
@@ -324,6 +323,11 @@ namespace DCL.Chat
             {
                 emojiPanelController.EmojiSelected -= AddEmojiToInput;
                 emojiPanelController.Dispose();
+            }
+
+            if (suggestionPanelController != null)
+            {
+                suggestionPanelController.Dispose();
             }
 
             suggestionPanel.SuggestionSelectedEvent -= OnSuggestionSelected;
