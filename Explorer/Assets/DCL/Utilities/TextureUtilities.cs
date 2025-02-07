@@ -16,8 +16,21 @@ public static class TextureUtilities
         if (sourceTexture.format == TextureFormat.RGBA32)
             return sourceTexture;
 
-        // Most likely the source texture won't be flagged as
-        // readable so the RenderTexture approach has to be used
+        Texture2D rgba32Texture = new Texture2D(
+            sourceTexture.width,
+            sourceTexture.height,
+            TextureFormat.RGBA32,
+            false,
+            false);
+
+        if (sourceTexture.isReadable)
+        {
+            rgba32Texture.SetPixels(sourceTexture.GetPixels());
+            rgba32Texture.Apply();
+            return rgba32Texture;
+        }
+
+        // For non-readable textures, use RenderTexture approach
         RenderTexture rt = RenderTexture.GetTemporary(
             sourceTexture.width,
             sourceTexture.height,
@@ -31,13 +44,6 @@ public static class TextureUtilities
             // Borrow active RT
             RenderTexture previous = RenderTexture.active;
             RenderTexture.active = rt;
-
-            Texture2D rgba32Texture = new Texture2D(
-                sourceTexture.width,
-                sourceTexture.height,
-                TextureFormat.RGBA32,
-                false,
-                false);
 
             rgba32Texture.ReadPixels(new Rect(0, 0, rt.width, rt.height), 0, 0);
             rgba32Texture.Apply();
