@@ -62,10 +62,9 @@ namespace DCL.GlobalPartitioning
                 CreateQuery<GetWearableAssetBundleManifestIntention, SceneAssetBundleManifest>(),
                 CreateQuery<GetAssetBundleIntention, AssetBundleData>(),
                 CreateQuery<GetTextureIntention, Texture2DData>(),
-                CreateQuery<GetNFTShapeIntention, Texture2DData>(),
                 CreateQuery<GetEmotesByPointersFromRealmIntention, EmotesDTOList>(),
                 CreateQuery<GetOwnedEmotesFromRealmIntention, EmotesResolution>(),
-                CreateQuery<GetAudioClipIntention, AudioClipData>(),
+                CreateQuery<GetAudioClipIntention, AudioClipData>(), CreateQuery<GetGLTFIntention, GLTFData>()
             };
 
             COMPONENT_HANDLERS_SCENES = new[]
