@@ -12,6 +12,7 @@ using DCL.WebRequests;
 using DCL.WebRequests.Analytics;
 using DCL.WebRequests.RequestsHub;
 using ECS.SceneLifeCycle;
+using Global.Dynamic.LaunchModes;
 using LiveKit.Internal.FFIClients;
 using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using UnityEngine;
@@ -32,7 +33,7 @@ namespace DCL.Multiplayer.Connections.Demo
             var world = World.Create();
             world.Create(new CharacterTransform(new GameObject("Player").transform));
 
-            var urlsSource = new DecentralandUrlsSource(DecentralandEnvironment.Org);
+            var urlsSource = new DecentralandUrlsSource(DecentralandEnvironment.Org, ILaunchMode.PLAY);
 
             IWeb3IdentityCache? identityCache = await ArchipelagoFakeIdentityCache.NewAsync(urlsSource, new Web3AccountFactory());
             var webRequests = new LogWebRequestController(new WebRequestController(new WebRequestsAnalyticsContainer(), identityCache, new RequestHub(ITexturesFuse.NewDefault(), false)));

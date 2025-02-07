@@ -16,9 +16,9 @@ using ECS.Unity.GLTFContainer.Components;
 using ECS.Unity.GLTFContainer.Systems;
 using ECS.Unity.Visibility.Systems;
 using System.Collections.Generic;
-using DCL.UserInAppInitializationFlow;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.GLTF;
+using Global.Dynamic.LaunchModes;
 
 namespace DCL.PluginSystem.World
 {
@@ -32,16 +32,17 @@ namespace DCL.PluginSystem.World
         private readonly GltfContainerAssetsCache assetsCache;
         private readonly ECSWorldSingletonSharedDependencies globalDeps;
         private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
+        private readonly ILaunchMode launchMode;
         private readonly bool localSceneDevelopment;
         private readonly bool useRemoteAssetBundles;
         private readonly IWebRequestController webRequestController;
         private readonly ILoadingStatus loadingStatus;
 
-        public GltfContainerPlugin(ECSWorldSingletonSharedDependencies globalDeps, CacheCleaner cacheCleaner, ISceneReadinessReportQueue sceneReadinessReportQueue, IComponentPoolsRegistry poolsRegistry, bool localSceneDevelopment, bool useRemoteAssetBundles, IWebRequestController webRequestController, ILoadingStatus loadingStatus)
+        public GltfContainerPlugin(ECSWorldSingletonSharedDependencies globalDeps, CacheCleaner cacheCleaner, ISceneReadinessReportQueue sceneReadinessReportQueue, IComponentPoolsRegistry poolsRegistry, ILaunchMode launchMode, bool useRemoteAssetBundles, IWebRequestController webRequestController, ILoadingStatus loadingStatus)
         {
             this.globalDeps = globalDeps;
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
-            this.localSceneDevelopment = localSceneDevelopment;
+            this.launchMode = launchMode;
             this.useRemoteAssetBundles = useRemoteAssetBundles;
             this.webRequestController = webRequestController;
             this.loadingStatus = loadingStatus;

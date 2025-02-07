@@ -19,6 +19,7 @@ using Global.Dynamic;
 using SceneRunner.Scene;
 using System.Linq;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using Global.Dynamic.LaunchModes;
 
 namespace PortableExperiences.Controller
 {
@@ -33,6 +34,7 @@ namespace PortableExperiences.Controller
         private readonly IScenesCache scenesCache;
         private readonly List<IPortableExperiencesController.SpawnResponse> spawnResponsesList = new ();
         private readonly FeatureFlagsCache featureFlagsCache;
+        private readonly ILaunchMode launchMode;
         private readonly IDecentralandUrlsSource urlsSources;
         private readonly bool isLocalSceneDevelopment;
         private GlobalWorld globalWorld;
@@ -53,15 +55,15 @@ namespace PortableExperiences.Controller
             IWebRequestController webRequestController,
             IScenesCache scenesCache,
             FeatureFlagsCache featureFlagsCache,
-            bool isLocalSceneDevelopment,
+            ILaunchMode launchMode,
             IDecentralandUrlsSource urlsSources)
         {
             this.web3IdentityCache = web3IdentityCache;
             this.webRequestController = webRequestController;
             this.scenesCache = scenesCache;
             this.featureFlagsCache = featureFlagsCache;
+            this.launchMode = launchMode;
             this.urlsSources = urlsSources;
-            this.isLocalSceneDevelopment = isLocalSceneDevelopment;
         }
 
         public async UniTask<IPortableExperiencesController.SpawnResponse> CreatePortableExperienceByEnsAsync(ENS ens, CancellationToken ct, bool isGlobalPortableExperience = false, bool force = false)
