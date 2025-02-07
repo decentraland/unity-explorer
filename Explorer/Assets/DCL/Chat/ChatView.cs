@@ -1,9 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
-using DCL.Multiplayer.Connections.RoomHubs;
-using DCL.Profiles;
 using DCL.UI;
-using DCL.UI.Profiles.Helpers;
 using MVC;
 using DG.Tweening;
 using System;
@@ -87,7 +84,6 @@ namespace DCL.Chat
 
         private ViewDependencies viewDependencies;
         private UniTaskCompletionSource closePopupTask;
-        private IProfileNameColorHelper profileNameColorHelper;
 
         // The latest amount of messages added to the chat that must be animated yet
         private int entriesPendingToAnimate;
@@ -141,13 +137,10 @@ namespace DCL.Chat
 
         public void Initialize(IReadOnlyDictionary<ChatChannel.ChannelId, ChatChannel> chatChannels,
             ChatChannel.ChannelId defaultChannelId,
-            bool areChatBubblesVisible,
-            IProfileNameColorHelper profileNameColorHelper,
-            IRoomHub roomHub,
-            IProfileRepository profileRepository)
+            bool areChatBubblesVisible
+        )
         {
-            this.channels = chatChannels;
-            this.profileNameColorHelper = profileNameColorHelper;
+            channels = chatChannels;
 
             closeChatButton.onClick.AddListener(CloseChat);
             chatMessageViewer.Initialize(CalculateUsernameColor);
@@ -158,7 +151,7 @@ namespace DCL.Chat
             chatBubblesToggle.Toggle.onValueChanged.AddListener(OnToggleChatBubblesValueChanged);
             chatBubblesToggle.IsSoundEnabled = true;
 
-            chatInputBox.Initialize(roomHub, profileNameColorHelper, profileRepository);
+            chatInputBox.Initialize();
             chatInputBox.InputBoxSelectionChanged += OnInputBoxSelectionChanged;
             chatInputBox.EmojiSelectionVisibilityChanged += OnEmojiSelectionVisibilityChanged;
             chatInputBox.InputChanged += OnInputChanged;
@@ -225,9 +218,7 @@ namespace DCL.Chat
         public void FocusInputBoxWithText(string text)
         {
             if (gameObject.activeInHierarchy)
-            {
                 chatInputBox.FocusInputBoxWithText(text);
-            }
         }
 
         /// <summary>
@@ -357,7 +348,6 @@ namespace DCL.Chat
         }
 
         private Color CalculateUsernameColor(ChatMessage chatMessage) =>
-            profileNameColorHelper.GetNameColor(chatMessage.SenderValidatedName);
-
+            viewDependencies.ProfileNameColorHelper.GetNameColor(chatMessage.SenderValidatedName);
     }
 }

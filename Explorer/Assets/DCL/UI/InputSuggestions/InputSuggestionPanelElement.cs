@@ -9,7 +9,7 @@ namespace DCL.UI.SuggestionPanel
 {
     public class InputSuggestionPanelElement : MonoBehaviour, IViewWithGlobalDependencies
     {
-        public delegate void SuggestionSelectedDelegate(string suggestionId, InputSuggestionType suggestionType, bool shouldClose);
+        public delegate void SuggestionSelectedDelegate(string suggestionId);
 
         public event SuggestionSelectedDelegate SuggestionSelectedEvent;
 
@@ -20,12 +20,12 @@ namespace DCL.UI.SuggestionPanel
         [field: SerializeField] private Transform suggestionContainer;
         [field: SerializeField] private ScrollRect scrollViewComponent;
         [field: SerializeField] private GameObject noResultsIndicator;
-
         [field: SerializeField] public RectTransform ScrollViewRect { get; private set; }
 
         public bool IsActive { get; private set; }
 
         private readonly Dictionary<InputSuggestionType, ObjectPool<BaseInputSuggestionElement>> suggestionItemsPools = new ();
+        private readonly Dictionary<InputSuggestionType, int> maxSuggestionsPerType = new ();
         private readonly List<BaseInputSuggestionElement> usedPoolItems = new ();
 
         private InputSuggestionType currentSuggestionType;
@@ -45,16 +45,17 @@ namespace DCL.UI.SuggestionPanel
 
         private void CreateSuggestionPools()
         {
-            foreach (var suggestionElement in configurationSo.SuggestionElements)
+            foreach (BaseInputSuggestionElement suggestionElement in configurationSo.SuggestionElements)
             {
                 var suggestionPool = new ObjectPool<BaseInputSuggestionElement>(
                     () => CreatePoolElement(suggestionElement),
                     element => { element.OnGet(); },
                     element => { element.OnReleased(); },
-                    defaultCapacity: 20
+                    defaultCapacity: 10
                 );
 
                 suggestionItemsPools.Add(suggestionElement.GetSuggestionType(), suggestionPool);
+                maxSuggestionsPerType.Add(suggestionElement.GetSuggestionType(), suggestionElement.MaxSuggestionAmount);
             }
         }
 
@@ -67,14 +68,16 @@ namespace DCL.UI.SuggestionPanel
 
         private void OnSuggestionSelected(string suggestionId)
         {
-            SuggestionSelectedEvent?.Invoke(suggestionId, currentSuggestionType,true);
+            SuggestionSelectedEvent?.Invoke(suggestionId);
+            SetPanelVisibility(false);
         }
-
 
         private void OnSubmit(InputAction.CallbackContext obj)
         {
             if (lastSelectedInputSuggestion != null && IsActive)
-                SuggestionSelectedEvent?.Invoke(lastSelectedInputSuggestion.SuggestionId, currentSuggestionType,false);
+                SuggestionSelectedEvent?.Invoke(lastSelectedInputSuggestion.SuggestionId);
+
+            SetPanelVisibility(false);
         }
 
         private void OnArrowUp(InputAction.CallbackContext obj)
@@ -93,55 +96,50 @@ namespace DCL.UI.SuggestionPanel
                 SetSelection(0);
         }
 
-
-        public void SetSuggestionValues(InputSuggestionType suggestionType, IList<ISuggestionElementData> foundSuggestions)
+        public void SetSuggestionValues(InputSuggestionType suggestionType, IList<IInputSuggestionElementData> foundSuggestions)
         {
             noResultsIndicator.gameObject.SetActive(foundSuggestions.Count == 0);
 
-            scrollViewComponent.vertical = foundSuggestions.Count > 7;
+            if (suggestionType == InputSuggestionType.NONE) return;
 
-            switch (foundSuggestions.Count)
+            int maxSuggestions = maxSuggestionsPerType[suggestionType];
+
+            scrollViewComponent.vertical = foundSuggestions.Count > maxSuggestions;
+
+            float scrollViewHeight = configurationSo.maxHeight;
+
+            if (foundSuggestions.Count <= 1)
+                scrollViewHeight = configurationSo.minHeight;
+            else if (foundSuggestions.Count <= maxSuggestions)
+                scrollViewHeight = (configurationSo.entryHeight * foundSuggestions.Count) + configurationSo.padding;
+
+            ScrollViewRect.sizeDelta = new Vector2(ScrollViewRect.sizeDelta.x, scrollViewHeight);
+
+            //if the suggestion type is different, we release all items from the pool,
+            //otherwise, we only release the elements that are over the found suggestion amount.
+            if (currentSuggestionType != InputSuggestionType.NONE)
             {
-                case <= 1:
-                    ScrollViewRect.sizeDelta = new Vector2(ScrollViewRect.sizeDelta.x, configurationSo.minHeight);
-                    break;
-                case <= 7:
-                    ScrollViewRect.sizeDelta = new Vector2(ScrollViewRect.sizeDelta.x, (configurationSo.entryHeight * foundSuggestions.Count) + configurationSo.padding);
-                    break;
-                default:
-                    ScrollViewRect.sizeDelta = new Vector2(ScrollViewRect.sizeDelta.x, configurationSo.maxHeight);
-                    break;
-            }
-
-            if (suggestionType != InputSuggestionType.NONE)
-            {
-                //if the suggestion type is different, we release all items from the pool,
-                //otherwise, we only release the elements that are over the found suggestion amount.
-
-                if (currentSuggestionType != InputSuggestionType.NONE)
+                if (currentSuggestionType != suggestionType)
                 {
-                    if (currentSuggestionType != suggestionType)
-                    {
-                        for (var i = 0; i < usedPoolItems.Count; i++)
-                            suggestionItemsPools[currentSuggestionType].Release(usedPoolItems[i]);
+                    for (var i = 0; i < usedPoolItems.Count; i++)
+                        suggestionItemsPools[currentSuggestionType].Release(usedPoolItems[i]);
 
-                        usedPoolItems.Clear();
-                    }
-                    else
-                    {
-                        for (int i = foundSuggestions.Count; i < usedPoolItems.Count; i++)
-                            suggestionItemsPools[currentSuggestionType].Release(usedPoolItems[i]);
+                    usedPoolItems.Clear();
+                }
+                else
+                {
+                    for (int i = foundSuggestions.Count; i < usedPoolItems.Count; i++)
+                        suggestionItemsPools[currentSuggestionType].Release(usedPoolItems[i]);
 
-                        for (int i = usedPoolItems.Count - 1; i >= foundSuggestions.Count; i--)
-                            usedPoolItems.RemoveAt(i);
-                    }
+                    for (int i = usedPoolItems.Count - 1; i >= foundSuggestions.Count; i--)
+                        usedPoolItems.RemoveAt(i);
                 }
 
                 currentSuggestionType = suggestionType;
 
                 for (var i = 0; i < foundSuggestions.Count; i++)
                 {
-                    ISuggestionElementData elementData = foundSuggestions[i];
+                    IInputSuggestionElementData elementData = foundSuggestions[i];
 
                     if (usedPoolItems.Count > i)
                     {
@@ -150,15 +148,15 @@ namespace DCL.UI.SuggestionPanel
                     }
                     else
                     {
-                        BaseInputSuggestionElement emojiSuggestionView = suggestionItemsPools[suggestionType].Get();
-                        emojiSuggestionView.Setup(elementData);
-                        emojiSuggestionView.gameObject.transform.SetAsLastSibling();
-                        usedPoolItems.Add(emojiSuggestionView);
+                        BaseInputSuggestionElement suggestionElement = suggestionItemsPools[suggestionType].Get();
+                        suggestionElement.Setup(elementData);
+                        suggestionElement.gameObject.transform.SetAsLastSibling();
+                        usedPoolItems.Add(suggestionElement);
                     }
                 }
             }
 
-            if(usedPoolItems.Count > 0)
+            if (usedPoolItems.Count > 0)
                 SetSelection(0);
             else
                 lastSelectedInputSuggestion = null;
@@ -179,8 +177,10 @@ namespace DCL.UI.SuggestionPanel
 
         public void SetPanelVisibility(bool isVisible)
         {
+            //TODO FRAN: Make the panel fade instead of just pop in and out of existence.
             if (isVisible)
             {
+                //TODO FRAN: REPLACE THESE FOR NEW DEFINED UI ACTIONS so DCLInput.UI.UPArrow and DOWNArrow or whatever
                 viewDependencies.DclInput.Player.ActionForward.performed += OnArrowUp;
                 viewDependencies.DclInput.Player.ActionBackward.performed += OnArrowDown;
                 viewDependencies.DclInput.UI.Submit.performed += OnSubmit;

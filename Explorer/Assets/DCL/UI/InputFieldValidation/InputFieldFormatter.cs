@@ -1,3 +1,4 @@
+using MVC;
 using System;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -7,15 +8,15 @@ using Utility;
 
 namespace DCL.UI.InputFieldValidator
 {
-    /// <summary>
-    /// This is a validator that is called automatically by the TMP_InputField (if correctly configured) under certain circumstances.
-    /// It needs to inherit from TMP_InputValidator and have a Validate method
-    /// Validate will only be called by TMP_InputField when appending characters to the input, not when removing or setting the text
-    /// That's where the backspace validation is used. Also, this adds the required rich text tags to the text when detecting hyperlinks of
-    /// different types. And finally, this also filters invalid rich text tags that should not be admitted.
-    /// </summary>
-    [CreateAssetMenu(fileName = "InputFieldValidator", menuName = "DCL/UI/InputFieldValidator")]
-    public class InputFieldValidator : TMP_InputValidator
+    public interface IInputFieldFormatter
+    {
+        void InitializeStyles();
+
+        void Format(ref string text, ref int pos);
+    }
+
+    [Serializable]
+    public class InputFieldFormatter : IInputFieldFormatter, IViewWithGlobalDependencies
     {
         private const string TAG_STRING = "§";
         private const char TAG_CHAR = '§';
@@ -35,6 +36,7 @@ namespace DCL.UI.InputFieldValidator
         private static readonly Regex WORLD_REGEX = new (@"(?<=^|\s)§?[a-zA-Z0-9]§?[a-zA-Z0-9]*§?[a-zA-Z0-9]*§?\.dcl\.eth§?(?=\s|$)", RegexOptions.Compiled);
 
         private static readonly Regex USERNAME_REGEX = new (@"(?<=^|\s)([A-Za-z0-9]*?)@([A-Za-z0-9]{3,15}§?(?:#[A-Za-z0-9]{4})?)§?(?=\s|$)", RegexOptions.Compiled);
+
         //TODO FRAN URGENT!: We need to remove the hash from the username! we will check it in the hyperlink handler comparing the username to the connected users (similar to the parsing done to get the suggestions)
         //private static readonly Regex USERNAME_REGEX = new (@"(?<=^|\s)§?@§?[A-Za-z0-9]{3,15}(?:#[A-Za-z0-9]{4})?§?(?=\s|$)", RegexOptions.Compiled);
 
@@ -46,6 +48,11 @@ namespace DCL.UI.InputFieldValidator
 
         private string linkOpeningStyle;
 
+        public void InjectDependencies(ViewDependencies dependencies)
+        {
+            throw new NotImplementedException();
+        }
+
         public void InitializeStyles()
         {
             TMP_Style style = styleSheet.GetStyle("Link");
@@ -53,16 +60,13 @@ namespace DCL.UI.InputFieldValidator
             linkClosingStyle = "</link>" + style.styleClosingDefinition;
         }
 
-        public void Validate(ref string text, ref int pos)
+        public void Format(ref string text, ref int pos)
         {
             if (text.Length == 0)
                 return;
 
             PerformValidation(ref text, ref pos);
         }
-
-        public override char Validate(ref string text, ref int pos, char ch) =>
-            PerformValidation(ref text, ref pos, ch);
 
         private char PerformValidation(ref string text, ref int pos, char ch = default)
         {
@@ -215,6 +219,7 @@ namespace DCL.UI.InputFieldValidator
                                      .Append(">")
                                      .Append("@" + match.Groups[2].Value)
                                      .Append(linkClosingStyle);
+
                     return tempStringBuilder;
             }
 

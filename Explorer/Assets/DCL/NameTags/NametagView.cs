@@ -11,59 +11,43 @@ namespace DCL.Nametags
 {
     public class NametagView : MonoBehaviour
     {
-        private const int EMOJI_LENGTH = 10;
         private const float DISTANCE_THRESHOLD = 0.1f;
         private const float DEFAULT_HEIGHT = 0.3f;
         private const float MESSAGE_CONTENT_FONT_SIZE = 1.3f;
         private const float DEFAULT_MARGIN_OFFSET_HEIGHT = 0.15f;
         private const float DEFAULT_MARGIN_OFFSET_WIDTH = 0.2f;
-        private const int DEFAULT_OPACITY_MAX_DISTANCE = 20;
-        private const int DEFAULT_ADDITIONAL_MS_PER_CHARACTER = 20;
         private const float DEFAULT_BUBBLE_MARGIN_OFFSET_WIDTH = 0.4f;
         private const float DEFAULT_BUBBLE_MARGIN_OFFSET_HEIGHT = 0.6f;
         private const float DEFAULT_BUBBLE_ANIMATION_IN_DURATION = 0.5f;
         private const float DEFAULT_BUBBLE_ANIMATION_OUT_DURATION = 0.35f;
-        private const int DEFAULT_BUBBLE_IDLE_TIME_MS = 5000;
         private const float DEFAULT_SINGLE_EMOJI_EXTRA_HEIGHT = 0.1f;
         private const float DEFAULT_SINGLE_EMOJI_SIZE = 3.5f;
+        private const int EMOJI_LENGTH = 10;
+        private const int DEFAULT_OPACITY_MAX_DISTANCE = 20;
+        private const int DEFAULT_ADDITIONAL_MS_PER_CHARACTER = 20;
+        private const int DEFAULT_BUBBLE_IDLE_TIME_MS = 5000;
 
-        [field: SerializeField]
-        public TMP_Text Username { get; private set; }
+        [field: SerializeField] public TMP_Text Username { get; private set; }
+        [field: SerializeField] public RectTransform VerifiedIcon { get; private set; }
+        [field: SerializeField] public SpriteRenderer VerifiedIconRenderer { get; private set; }
+        [field: SerializeField] public TMP_Text MessageContent { get; private set; }
+        [field: SerializeField] public SpriteRenderer Background { get; private set; }
+        [field: SerializeField] public SpriteRenderer BubblePeak { get; private set; }
+        [field: SerializeField] public RectTransform MessageContentRectTransform { get; private set; }
+        [field: SerializeField] internal AnimationCurve backgroundEaseAnimationCurve { get; private set; }
+        [field: SerializeField] internal AnimationCurve alphaOverDistanceCurve { get; private set; }
+        [field: SerializeField] public float MaxWidth { get; private set; }
 
-        [field: SerializeField]
-        public RectTransform VerifiedIcon { get; private set; }
-
-        [field: SerializeField]
-        public SpriteRenderer VerifiedIconRenderer { get; private set; }
-
-        [field: SerializeField]
-        public TMP_Text MessageContent { get; private set; }
-
-        [field: SerializeField]
-        public SpriteRenderer Background { get; private set; }
-
-        [field: SerializeField]
-        public SpriteRenderer BubblePeak { get; private set; }
-
-        [field: SerializeField]
-        public RectTransform MessageContentRectTransform { get; private set; }
-
-        [field: SerializeField]
-        internal AnimationCurve backgroundEaseAnimationCurve { get; private set; }
-
-        [field: SerializeField]
-        internal AnimationCurve alphaOverDistanceCurve { get; private set; }
-
-        public string Id;
-
-        [field: SerializeField]
-        public float MaxWidth { get; private set; }
-        public float alpha { private set; get; }
+        public string Id; //TODO FRAN: I dont like this
+        public float alpha { private set; get; } //TODO FRAN: I dont like this
 
         private readonly Color finishColor = new (1, 1, 1, 0);
-        private Vector2 messageContentAnchoredPosition;
+        private readonly Color startingTextColor = new (1, 1, 1, 0);
+
         private bool isAnimatingIn;
         private bool isWaiting;
+        private bool isClaimedName;
+        private Vector2 messageContentAnchoredPosition;
         private Vector2 usernameFinalPosition;
         private Vector2 verifiedIconFinalPosition;
         private Vector2 verifiedIconInitialPosition;
@@ -73,18 +57,17 @@ namespace DCL.Nametags
         private Vector2 usernamePos;
         private float previousDistance;
         private float additionalHeight;
-        private readonly Color startingTextColor = new (1, 1, 1, 0);
         private Color textColor = new (1, 1, 1, 1);
         private Color usernameTextColor = new (1, 1, 1, 1);
         private Color backgroundColor = new (1, 1, 1, 1);
+
         private ChatBubbleConfigurationSO? chatBubbleConfiguration;
-        private bool isClaimedName;
         private CancellationTokenSource? cts;
 
         public void InjectConfiguration(ChatBubbleConfigurationSO chatBubbleConfigurationSo)
         {
             chatBubbleConfiguration = chatBubbleConfigurationSo;
-            messageContentAnchoredPosition = new (0, chatBubbleConfiguration.bubbleMarginOffsetHeight / 3);
+            messageContentAnchoredPosition = new Vector2(0, chatBubbleConfiguration.bubbleMarginOffsetHeight / 3);
         }
 
         public void SetUsername(string username, string walletId, bool hasClaimedName, bool useVerifiedIcon)
@@ -96,7 +79,10 @@ namespace DCL.Nametags
 
             isClaimedName = hasClaimedName;
             VerifiedIcon.gameObject.SetActive(hasClaimedName && useVerifiedIcon);
+
+            //TODO FRAN: Fix this -> should use a TMP Style probably instead of being hardcoded here
             Username.text = hasClaimedName ? username : $"{username}<color=#FFFFFF66><font=\"LiberationSans SDF\">#{walletId}</font></color>";
+
             Username.rectTransform.sizeDelta = new Vector2(Username.preferredWidth, DEFAULT_HEIGHT);
             MessageContent.color = startingTextColor;
 

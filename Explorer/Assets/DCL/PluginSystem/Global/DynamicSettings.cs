@@ -16,7 +16,6 @@ namespace DCL.PluginSystem.Global
     {
         [field: SerializeField] public AssetReferenceGameObject PopupCloserView { get; private set; }
         [field: SerializeField] public Light DirectionalLight { get; private set; }
-        [field: SerializeField] public AssetReferenceT<ChatEntryConfigurationSO> ChatEntryConfiguration { get; private set; }
         [field: SerializeField] public ProfileNameColorHelperRef ProfileNameColorHelper { get; private set; }
         [field: SerializeField] public AssetReferenceT<NametagsData> NametagsData { get; private set; }
         [field: SerializeField] public AssetReferenceT<CursorSettings> CursorSettings { get; private set; }
@@ -24,7 +23,6 @@ namespace DCL.PluginSystem.Global
         [field: SerializeField] public AssetReferenceT<AudioMixer> GeneralAudioMixer { get; private set; }
         [field: SerializeField] public AssetReferenceT<MultiplayerDebugSettings> MultiplayerDebugSettings { get; private set; }
         [field: SerializeField] public AssetReferenceGameObject AppVerRedirectionScreenPrefab { get; private set; }
-
 
         [Serializable]
         public class ProfileNameColorHelperRef : AssetReferenceT<ProfileNameColorsConfigurationSO>

@@ -321,7 +321,7 @@ GameObject:
   - component: {fileID: 2519340724717527833}
   - component: {fileID: 8022680272017825496}
   m_Layer: 5
-  m_Name: ValidatedInputField
+  m_Name: ExtendedInputField
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -434,14 +434,14 @@ MonoBehaviour:
   m_VerticalScrollbarEventHandler: {fileID: 0}
   m_LayoutGroup: {fileID: 0}
   m_ScrollSensitivity: 1
-  m_ContentType: 9
+  m_ContentType: 0
   m_InputType: 0
   m_AsteriskChar: 42
   m_KeyboardType: 0
   m_LineType: 1
   m_HideMobileInput: 0
   m_HideSoftKeyboard: 0
-  m_CharacterValidation: 8
+  m_CharacterValidation: 0
   m_RegexValue: 
   m_GlobalPointSize: 14
   m_CharacterLimit: 250
@@ -476,16 +476,16 @@ MonoBehaviour:
   m_CaretBlinkRate: 0.85
   m_CaretWidth: 2
   m_ReadOnly: 0
-  m_RichText: 1
+  m_RichText: 0
   m_GlobalFontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_OnFocusSelectAll: 0
   m_ResetOnDeActivation: 1
   m_KeepTextSelectionVisible: 0
-  m_RestoreOriginalTextOnEscape: 1
+  m_RestoreOriginalTextOnEscape: 0
   m_isRichTextEditingAllowed: 0
-  m_LineLimit: 0
+  m_LineLimit: 5
   isAlert: 0
-  m_InputValidator: {fileID: 11400000, guid: 88e0aa12d37277b458dcadcda7dcf4b2, type: 2}
+  m_InputValidator: {fileID: 0}
   m_ShouldActivateOnSelect: 1
 --- !u!114 &8022680272017825496
 MonoBehaviour:
@@ -500,7 +500,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   inputField: {fileID: 2519340724717527833}
-  inputFieldValidator: {fileID: 11400000, guid: 88e0aa12d37277b458dcadcda7dcf4b2, type: 2}
+  inputFieldFormatter:
+    styleSheet: {fileID: 0}
+  styleSheet: {fileID: 11400000, guid: 3675d28be476ed544a0b350da26e2d70, type: 2}
 --- !u!1 &3990285322017698901
 GameObject:
   m_ObjectHideFlags: 0
@@ -618,7 +620,7 @@ MonoBehaviour:
   m_ActiveFontFeatures: 6e72656b
   m_enableExtraPadding: 1
   checkPaddingRequired: 0
-  m_isRichText: 1
+  m_isRichText: 0
   m_EmojiFallbackSupport: 1
   m_parseCtrlCharacters: 1
   m_isOrthographic: 1
@@ -752,7 +754,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   inputField: {fileID: 2519340724717527833}
-  validatedInputField: {fileID: 8022680272017825496}
+  extendedInputField: {fileID: 8022680272017825496}
   characterCounter: {fileID: 5985002989317627428}
   pastePopupPosition: {fileID: 7413724693438948208}
   emojiPanelConfiguration: {fileID: 11400000, guid: 51646f2adc3264ba7bf9b4f90febbd22, type: 2}

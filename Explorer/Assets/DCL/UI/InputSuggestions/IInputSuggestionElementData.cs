@@ -1,13 +1,13 @@
 namespace DCL.UI.SuggestionPanel
 {
-    public interface ISuggestionElementData
+    public interface IInputSuggestionElementData
     {
         string GetId();
 
         InputSuggestionType GetInputSuggestionType();
     }
 
-    public struct SuggestionElementData : ISuggestionElementData
+    public struct InputSuggestionElementData : IInputSuggestionElementData
     {
         public string GetId() =>
             "ID";

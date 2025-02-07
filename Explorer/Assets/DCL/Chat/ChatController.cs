@@ -85,7 +85,7 @@ namespace DCL.Chat
             chatHistory.MessageAdded += CreateChatEntry;
 
             viewInstance!.InjectDependencies(viewDependencies);
-            viewInstance!.Initialize(chatHistory.Channels, ChatChannel.NEARBY_CHANNEL, nametagsData.showChatBubbles, profileNameColorHelper, roomHub, profileRepository);
+            viewInstance!.Initialize(chatHistory.Channels, ChatChannel.NEARBY_CHANNEL, nametagsData.showChatBubbles);
 
             viewInstance.PointerEnter += OnChatViewPointerEnter;
             viewInstance.PointerExit += OnChatViewPointerExit;
@@ -179,7 +179,7 @@ namespace DCL.Chat
         private void GenerateChatBubbleComponent(Entity e, ChatMessage chatMessage)
         {
             if (nametagsData is { showChatBubbles: true, showNameTags: true })
-                world.AddOrGet(e, new ChatBubbleComponent(chatMessage.Message, chatMessage.SenderValidatedName, chatMessage.WalletAddress));
+                world.AddOrGet(e, new ChatBubbleComponent(chatMessage.Message, chatMessage.SenderValidatedName, chatMessage.WalletAddress, chatMessage.IsMention));
         }
 
         private void DisableUnwantedInputs()

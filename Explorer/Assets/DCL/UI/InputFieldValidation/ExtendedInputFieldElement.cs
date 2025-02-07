@@ -1,3 +1,4 @@
+using MVC;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -6,23 +7,23 @@ using UnityEngine.Serialization;
 namespace DCL.UI.InputFieldValidator
 {
     /// <summary>
-    /// This class serves as an in-between other classes and the TMP_InputField, allowing to validate the text input and to access the validated text
-    /// This is needed because the normal TMP_InputField doesn't validate the input text always, but only when is entered directly through the input field
-    /// When assigning text to the input text (like inputField.text = "something") it won't perform a validation
-    /// When removing text through the backspace or delete keys, it won't validate text either
-    /// So this requires an intermediary class that forces this logic so all text input into the field is validated and formatted properly.
+    /// This class serves as an in-between other classes and the TMP_InputField, capturing events and
+    /// making sure that properly formatted text is submitted and if a formatter is referenced, formatted text can be obtained from it.
+    /// Also checks the size of inserted and replaced text, to make sure the input field limits aren't exceeded.
     /// </summary>
     [RequireComponent(typeof(TMP_InputField))]
-    public class ValidatedInputFieldElement : MonoBehaviour
+    public class ExtendedInputFieldElement : MonoBehaviour, IViewWithGlobalDependencies
     {
-        public delegate void InputFieldInputValidatedDelegate(string validatedInput);
+        public delegate void InputFieldInputChangedDelegate(string changedText);
         public delegate void InputFieldSelectionChangedDelegate(bool isSelected);
         public delegate void InputFieldSubmitDelegate(string submittedInput);
 
         [SerializeField] private TMP_InputField inputField;
-        [FormerlySerializedAs("fieldsValidator")] [SerializeField] private InputFieldValidator inputFieldValidator;
+        [SerializeField] private InputFieldFormatter inputFieldFormatter;
+        [SerializeField] private TMP_StyleSheet styleSheet;
 
         private int lastTextLenght;
+        private ViewDependencies dependencies;
 
         public int CharacterLimit => inputField.characterLimit;
         public int TextLength => inputField.text.Length;
@@ -31,18 +32,16 @@ namespace DCL.UI.InputFieldValidator
 
         private void Awake()
         {
-            inputField.characterValidation = TMP_InputField.CharacterValidation.CustomValidator;
-            inputField.inputValidator = inputFieldValidator;
-            inputFieldValidator.InitializeStyles();
-            inputField.onValueChanged.AddListener(Validate);
-            inputField.onSubmit.AddListener(Submit);
+            inputFieldFormatter?.InitializeStyles();
+            inputField.onValueChanged.AddListener(OnInputChanged);
+            inputField.onSubmit.AddListener(OnSubmit);
             inputField.onSelect.AddListener(OnInputFieldSelected);
             inputField.onDeselect.AddListener(OnInputFieldDeselected);
         }
 
-        public event InputFieldSubmitDelegate InputValidated;
-        public event InputFieldInputValidatedDelegate InputFieldSubmit;
-        public event InputFieldSelectionChangedDelegate InputFieldSelectionChanged;
+        public event InputFieldInputChangedDelegate InputChangedEvent;
+        public event InputFieldSubmitDelegate InputFieldSubmitEvent;
+        public event InputFieldSelectionChangedDelegate InputFieldSelectionChangedEvent;
 
         public void DeactivateInputField() =>
             inputField.DeactivateInputField();
@@ -105,6 +104,9 @@ namespace DCL.UI.InputFieldValidator
             inputField.OnSubmit(eventData);
         }
 
+        /// <summary>
+        ///     Only the text that fits inside the input field character limits will be inserted, anything else will be lost.
+        /// </summary>
         private void InsertTextAtPosition(string pastedText, int position)
         {
             int remainingSpace = inputField.characterLimit - inputField.text.Length;
@@ -113,64 +115,48 @@ namespace DCL.UI.InputFieldValidator
 
             string textToInsert = pastedText.Length > remainingSpace ? pastedText[..remainingSpace] : pastedText;
 
-            var newText = inputField.text.Insert(position, textToInsert);
-            var newPosition = position + newText.Length;
-
-            inputFieldValidator.Validate(ref newText, ref newPosition);
-            inputField.text = newText;
-
-            inputField.stringPosition = newPosition;
+            inputField.text = inputField.text.Insert(position, textToInsert);
+            inputField.stringPosition = position + textToInsert.Length;
         }
 
         public void ReplaceText(string oldValue, string newValue)
         {
-            int remainingSpace = inputField.characterLimit - inputField.text.Length;
+            int textLenghtDifference = newValue.Length - oldValue.Length;
 
-            if (remainingSpace <= 0) return;
+            if (!IsWithinCharacterLimit(textLenghtDifference)) return;
 
-            var newText = inputField.text.Replace(oldValue, newValue);
-            var newPosition = inputField.stringPosition + newValue.Length - oldValue.Length;
-
-            inputFieldValidator.Validate(ref newText, ref newPosition);
-            inputField.text = newText;
-            inputField.stringPosition = newPosition;
+            inputField.text = inputField.text.Replace(oldValue, newValue);
+            inputField.stringPosition += textLenghtDifference;
         }
 
-
-        //We do a validation before submitting
-        private void Submit(string text)
+        /// <summary>
+        ///     Before submitting the text is Formatted, so links are added and invalid rich text tags are converted to inert ones.
+        /// </summary>
+        private void OnSubmit(string text)
         {
             var position = 0;
-            inputFieldValidator.Validate(ref text, ref position);
-            InputFieldSubmit?.Invoke(text);
+            inputFieldFormatter?.Format(ref text, ref position);
+            InputFieldSubmitEvent?.Invoke(text);
         }
 
         private void OnInputFieldSelected(string _)
         {
-            InputFieldSelectionChanged?.Invoke(true);
+            InputFieldSelectionChangedEvent?.Invoke(true);
         }
 
         private void OnInputFieldDeselected(string _)
         {
-            InputFieldSelectionChanged?.Invoke(false);
+            InputFieldSelectionChangedEvent?.Invoke(false);
         }
 
-        private void Validate(string text)
+        private void OnInputChanged(string text)
         {
-            if (lastTextLenght > text.Length)
-            {
-                int position = inputField.stringPosition;
-                inputFieldValidator.Validate(ref text, ref position);
-                inputField.SetTextWithoutNotify(text);
-                inputField.stringPosition = position;
-            }
+            InputChangedEvent?.Invoke(text);
+        }
 
-            // We dont show rich text when the chat is in command "mode", to avoid having hidden text.
-            // As soon as the bar is removed, the input is re-validated and all invalid formats are removed
-            inputField.richText = !text.StartsWith("/");
-
-            lastTextLenght = text.Length;
-            InputValidated?.Invoke(text);
+        public void InjectDependencies(ViewDependencies dependencies)
+        {
+            this.dependencies = dependencies;
         }
     }
 }

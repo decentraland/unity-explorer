@@ -8,10 +8,10 @@ namespace DCL.UI.SuggestionPanel
         [field: SerializeField] private TMP_Text emoji;
         [field: SerializeField] private TMP_Text emojiName;
 
-        protected override void SetupContinuation(EmojiInputSuggestionData suggestionElementData)
+        protected override void SetupContinuation(EmojiInputSuggestionData inputSuggestionElementData)
         {
-            emoji.text = suggestionElementData.EmojiCode;
-            emojiName.text = suggestionElementData.EmojiName;
+            emoji.text = inputSuggestionElementData.EmojiCode;
+            emojiName.text = inputSuggestionElementData.EmojiName;
         }
     }
 }

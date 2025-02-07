@@ -1,6 +1,6 @@
 namespace DCL.UI.SuggestionPanel
 {
-    public readonly struct EmojiInputSuggestionData : ISuggestionElementData
+    public readonly struct EmojiInputSuggestionData : IInputSuggestionElementData
     {
         public readonly string EmojiCode;
         public readonly string EmojiName;

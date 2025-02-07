@@ -287,8 +287,7 @@ namespace Global.Dynamic
             var wearableCatalog = new WearableStorage();
             var characterPreviewFactory = new CharacterPreviewFactory(staticContainer.ComponentsContainer.ComponentPoolsRegistry);
             IWebBrowser webBrowser = bootstrapContainer.WebBrowser;
-            IProfileNameColorHelper profileNameColorHelper = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.ProfileNameColorHelper, ct: ct)).Value;
-            ChatEntryConfigurationSO chatEntryConfiguration = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.ChatEntryConfiguration, ct)).Value;
+            IProfileNameColorHelper profileNameColorHelper = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.ProfileNameColorHelper, ct)).Value;
             NametagsData nametagsData = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.NametagsData, ct)).Value;
 
             IProfileCache profileCache = new DefaultProfileCache();
@@ -503,7 +502,6 @@ namespace Global.Dynamic
             var connectionStatusPanelPlugin = new ConnectionStatusPanelPlugin(userInAppInAppInitializationFlow, mvcManager, mainUIView, roomsStatus, currentSceneInfo, reloadSceneController, globalWorld, playerEntity, debugBuilder, chatCommandsBus);
             var chatTeleporter = new ChatTeleporter(realmNavigator, new ChatEnvironmentValidator(bootstrapContainer.Environment), bootstrapContainer.DecentralandUrlsSource);
 
-
             var chatCommands = new List<IChatCommand>
             {
                 new GoToChatCommand(chatTeleporter, staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource),
@@ -586,7 +584,7 @@ namespace Global.Dynamic
 
             bool includeCameraReel = staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.CAMERA_REEL) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.CAMERA_REEL)) || Application.isEditor;
 
-            var viewDependencies = new ViewDependencies(dclInput, unityEventSystem, new MVCManagerMenusAccessFacade(mvcManager, clipboard), clipboardManager, dclCursor, profileRepository, profileNameColorHelper);
+            var viewDependencies = new ViewDependencies(dclInput, unityEventSystem, new MVCManagerMenusAccessFacade(mvcManager, clipboard), clipboardManager, dclCursor, profileCache, profileNameColorHelper, roomHub);
 
             var globalPlugins = new List<IDCLGlobalPlugin>
             {

@@ -80,26 +80,23 @@ namespace DCL.Chat.MessageBus
                 return new ChatChannel.ChannelId(parsedChannelType, channelIdName);
             }
             else
-            {
+
                 // TODO: Remove this line once this code is merged to dev
                 return ChatChannel.NEARBY_CHANNEL;
-            }
         }
 
         private async UniTask<bool> CheckMentionOnChatMessage(string chatMessage)
         {
-            var profile = await selfProfile.ProfileAsync(cancellationTokenSource.Token);
+            Profile profile = await selfProfile.ProfileAsync(cancellationTokenSource.Token);
 
             if (profile == null) return false;
 
+            //TODO FRAN see if we can fix this:
             return chatMessage.Contains("@" + profile?.DisplayName);
         }
 
-
-        private string ParseChatMessageFromPayloadMessage(string payloadMessage)
-        {
-            return payloadMessage.Substring(payloadMessage.IndexOf('>') + 1);
-        }
+        private string ParseChatMessageFromPayloadMessage(string payloadMessage) =>
+            payloadMessage.Substring(payloadMessage.IndexOf('>') + 1);
 
         public void Send(ChatChannel.ChannelId channelId, string message, string origin)
         {

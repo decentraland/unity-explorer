@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace DCL.UI.SuggestionPanel
 {
-    public readonly struct ProfileInputSuggestionData : ISuggestionElementData
+    public readonly struct ProfileInputSuggestionData : IInputSuggestionElementData
     {
         public Profile ProfileData { get; }
         public Color UsernameColor { get; }
