@@ -12,7 +12,6 @@ using ECS.StreamableLoading.Common.Systems;
 using ECS.StreamableLoading.GLTF.DownloadProvider;
 using GLTFast;
 using GLTFast.Materials;
-using SceneRunner.Scene;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -28,37 +27,28 @@ namespace ECS.StreamableLoading.GLTF
         private readonly GltFastReportHubLogger gltfConsoleLogger = new GltFastReportHubLogger();
         private readonly bool patchTexturesFormat;
         private readonly bool importFilesByHash;
-        private readonly ISceneData? sceneData;
-        private readonly string? contentDownloadUrl;
+        private readonly IGltFastDownloadStrategy downloadStrategy;
 
         internal LoadGLTFSystem(World world,
             IStreamableCache<GLTFData, GetGLTFIntention> cache,
             IWebRequestController webRequestController,
             bool patchTexturesFormat,
             bool importFilesByHash,
-            ISceneData? sceneData = null,
-            string? contentDownloadUrl = null) : base(world, cache)
+            IGltFastDownloadStrategy downloadStrategy) : base(world, cache)
         {
             this.webRequestController = webRequestController;
             this.patchTexturesFormat = patchTexturesFormat;
             this.importFilesByHash = importFilesByHash;
-            this.sceneData = sceneData;
-            this.contentDownloadUrl = contentDownloadUrl;
+            this.downloadStrategy = downloadStrategy;
         }
 
         protected override async UniTask<StreamableLoadingResult<GLTFData>> FlowInternalAsync(GetGLTFIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
             var reportData = new ReportData(GetReportCategory());
 
-            if (sceneData != null && !sceneData.SceneContent.TryGetContentUrl(intention.Name!, out _))
-                return new StreamableLoadingResult<GLTFData>(reportData, new Exception("The content to download couldn't be found"));
-
             // Acquired budget is released inside GLTFastDownloadedProvider once the GLTF has been fetched
             // Cannot inject DownloadProvider from outside, because it needs the AcquiredBudget and PartitionComponent
-            IGLTFastDisposableDownloadProvider gltFastDownloadProvider =
-                sceneData != null ?
-                new GltFastSceneDownloadProvider(World, sceneData!, partition, intention.Name!, reportData, webRequestController, acquiredBudget)
-                : new GltFastGlobalDownloadProvider(World, contentDownloadUrl!, partition, reportData, webRequestController, acquiredBudget);
+            IGLTFastDisposableDownloadProvider gltFastDownloadProvider = downloadStrategy.CreateDownloadProvider(World, intention, partition, reportData, webRequestController, acquiredBudget);
 
             var gltfImport = new GltfImport(
                 downloadProvider: gltFastDownloadProvider,

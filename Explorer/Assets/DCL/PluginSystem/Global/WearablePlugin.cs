@@ -17,6 +17,7 @@ using DCL.WebRequests;
 using ECS;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.GLTF;
+using ECS.StreamableLoading.GLTF.DownloadProvider;
 using Newtonsoft.Json;
 using SceneRunner.Scene;
 using System;
@@ -96,7 +97,7 @@ namespace DCL.AvatarRendering.Wearables
                     webRequestController,
                     true,
                     true,
-                    contentDownloadUrl: builderContentURL);
+                    new GltFastGlobalDownloadStrategy(builderContentURL));
             }
 
             ResolveAvatarAttachmentThumbnailSystem.InjectToWorld(ref builder);

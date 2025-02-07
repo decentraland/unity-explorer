@@ -16,9 +16,9 @@ using ECS.Unity.GLTFContainer.Components;
 using ECS.Unity.GLTFContainer.Systems;
 using ECS.Unity.Visibility.Systems;
 using System.Collections.Generic;
-using DCL.UserInAppInitializationFlow;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.GLTF;
+using ECS.StreamableLoading.GLTF.DownloadProvider;
 
 namespace DCL.PluginSystem.World
 {
@@ -66,7 +66,7 @@ namespace DCL.PluginSystem.World
                 webRequestController,
                 false,
                 false,
-                sceneData: sharedDependencies.SceneData);
+                new GltFastSceneDownloadStrategy(sharedDependencies.SceneData));
 
             // Asset loading
             PrepareGltfAssetLoadingSystem.InjectToWorld(ref builder, assetsCache, localSceneDevelopment, useRemoteAssetBundles);
