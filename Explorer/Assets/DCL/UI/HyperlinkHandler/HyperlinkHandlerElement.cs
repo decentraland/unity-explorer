@@ -6,7 +6,6 @@ using MVC;
 using System;
 using System.Collections.Generic;
 using System.Text;
-using System.Threading;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -20,10 +19,10 @@ namespace DCL.UI.HyperlinkHandler
         private const string WORLD = "world";
         private const string URL = "url";
         private const string USER = "user";
+        private const string REALM_CHANGE_CONFIRMATION_MESSAGE = "Are you sure you want to enter this World?";
 
         [SerializeField] private TMP_Text textComponent;
         [SerializeField] private TMP_StyleSheet styleSheet;
-        [SerializeField] private string realmChangeConfirmationMessage = "Are you sure you want to enter this World?";
 
         private readonly Dictionary<string, Action<string>> linkHandlers = new ();
         private readonly StringBuilder stringBuilder = new ();
@@ -132,7 +131,7 @@ namespace DCL.UI.HyperlinkHandler
 
         private void HandleWorldLink(string sceneName)
         {
-            ChangeRealmAsync(realmChangeConfirmationMessage, sceneName).Forget();
+            ChangeRealmAsync(REALM_CHANGE_CONFIRMATION_MESSAGE, sceneName).Forget();
         }
 
         private void HandleSceneLink(string itemId)
@@ -142,22 +141,21 @@ namespace DCL.UI.HyperlinkHandler
             TeleportAsync(coords).Forget();
         }
 
-        private void HandleUserLink(string userId)
+        private void HandleUserLink(string userName)
         {
-            OpenUserProfileContextMenu(userId).Forget();
+            OpenUserProfileContextMenu(userName).Forget();
         }
 
-        private async UniTask OpenUserProfileContextMenu(string userId)
+        private async UniTask OpenUserProfileContextMenu(string userName)
         {
-            //TODO FRAN URGENT!: Here we should be checking again the list of connected users and getting from there the user hash
-            //and with that getting the profile and with that calling the context menu, otherwise we could be trying to see disconnected users...
-            Profile profile = await dependencies.ProfileRepository.GetAsync(userId, ct: new CancellationToken());
+            //TODO FRAN: CHECK IF THIS CAN BE DONE USING JUST THE ID?
+            Profile profile = dependencies.ProfileCache.GetByUserName(userName);
 
             if (profile == null) return;
 
-            var color = dependencies.ProfileNameColorHelper.GetNameColor(profile.Name);
+            Color color = dependencies.ProfileNameColorHelper.GetNameColor(profile.Name);
 
-            await dependencies.GlobalUIViews.ShowUserProfileContextMenu(profile, color, this.transform);
+            await dependencies.GlobalUIViews.ShowUserProfileContextMenu(profile, color, transform);
         }
 
         private async UniTask OpenUrlAsync(string url) =>

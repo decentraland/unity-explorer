@@ -582,7 +582,7 @@ namespace Global.Dynamic
             IUserCalendar userCalendar = new GoogleUserCalendar(webBrowser);
             ISystemClipboard clipboard = new UnityClipboard();
             IClipboardManager clipboardManager = new ClipboardManager(clipboard);
-            ITextFormatter hyperlinkTextFormatter = new HyperlinkTextFormatter();
+            ITextFormatter hyperlinkTextFormatter = new HyperlinkTextFormatter(profileCache);
 
             bool includeCameraReel = staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.CAMERA_REEL) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.CAMERA_REEL)) || Application.isEditor;
 

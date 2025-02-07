@@ -1,3 +1,6 @@
+using System;
+using System.Text.RegularExpressions;
+
 namespace DCL.Clipboard
 {
     public interface IClipboardManager
@@ -10,6 +13,8 @@ namespace DCL.Clipboard
 
         void Copy(object sender, string text);
 
+        void CopyAndSanitize(object sender, string text);
+
         void Paste(object sender);
 
         bool HasValue();
@@ -18,6 +23,7 @@ namespace DCL.Clipboard
     public class ClipboardManager : IClipboardManager
     {
         private readonly ISystemClipboard systemClipboard;
+        private static readonly Regex TAG_REGEX = new(@"<[^>]*>", RegexOptions.Compiled);
 
         public ClipboardManager(ISystemClipboard systemClipboard)
         {
@@ -34,6 +40,13 @@ namespace DCL.Clipboard
         {
             systemClipboard.Set(text);
             OnCopy?.Invoke(sender, text);
+        }
+
+        public void CopyAndSanitize(object sender, string text)
+        {
+            string sanitizedString = TAG_REGEX.Replace(text, "");
+            systemClipboard.Set(sanitizedString);
+            OnCopy?.Invoke(sender, sanitizedString);
         }
 
         public void Paste(object sender)

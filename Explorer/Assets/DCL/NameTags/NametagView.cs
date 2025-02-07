@@ -26,7 +26,7 @@ namespace DCL.Nametags
         private const int DEFAULT_OPACITY_MAX_DISTANCE = 20;
         private const int DEFAULT_ADDITIONAL_MS_PER_CHARACTER = 20;
         private const int DEFAULT_BUBBLE_IDLE_TIME_MS = 5000;
-        private const string WALLET_ID_OPENING_STYLE = "<color=#FFFFFF66><font=\\\"LiberationSans SDF\\\">";
+        private const string WALLET_ID_OPENING_STYLE = "<color=#FFFFFF66><font=\"LiberationSans SDF\">";
         private const string WALLET_ID_CLOSING_STYLE = "</font></color>";
 
         [field: SerializeField] public TMP_Text Username { get; private set; }

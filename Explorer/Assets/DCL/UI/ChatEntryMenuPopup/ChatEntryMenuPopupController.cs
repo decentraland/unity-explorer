@@ -29,7 +29,7 @@ namespace DCL.UI
 
         private void OnCopyButtonClicked()
         {
-            clipboardManager.Copy(this, inputData.CopiedText);
+            clipboardManager.CopyAndSanitize(this, inputData.CopiedText);
         }
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
