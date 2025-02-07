@@ -319,7 +319,6 @@ GameObject:
   - component: {fileID: 6390207580349773865}
   - component: {fileID: 5744857206850753412}
   - component: {fileID: 2519340724717527833}
-  - component: {fileID: 8022680272017825496}
   m_Layer: 5
   m_Name: ExtendedInputField
   m_TagString: Untagged
@@ -487,22 +486,6 @@ MonoBehaviour:
   isAlert: 0
   m_InputValidator: {fileID: 0}
   m_ShouldActivateOnSelect: 1
---- !u!114 &8022680272017825496
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3792262144511168890}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7205abfc5a5d4130814dc60ba9ec54de, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  inputField: {fileID: 2519340724717527833}
-  inputFieldFormatter:
-    styleSheet: {fileID: 0}
-  styleSheet: {fileID: 11400000, guid: 3675d28be476ed544a0b350da26e2d70, type: 2}
 --- !u!1 &3990285322017698901
 GameObject:
   m_ObjectHideFlags: 0
@@ -754,7 +737,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   inputField: {fileID: 2519340724717527833}
-  extendedInputField: {fileID: 8022680272017825496}
   characterCounter: {fileID: 5985002989317627428}
   pastePopupPosition: {fileID: 7413724693438948208}
   emojiPanelConfiguration: {fileID: 11400000, guid: 51646f2adc3264ba7bf9b4f90febbd22, type: 2}
@@ -765,7 +747,6 @@ MonoBehaviour:
   emojiPanel: {fileID: 7911970236011968741}
   suggestionPanel: {fileID: 2510728601115133750}
   addEmojiAudio: {fileID: 11400000, guid: ab59a5b2a814f02419850961fc490805, type: 2}
-  addUserNameAudio: {fileID: 11400000, guid: ab59a5b2a814f02419850961fc490805, type: 2}
   openEmojiPanelAudio: {fileID: 11400000, guid: abc438e2962540549b414d54fbc89eed, type: 2}
   chatSendMessageAudio: {fileID: 11400000, guid: efe341aa011f4c8428d3246fa65ef5b0, type: 2}
   chatInputTextAudio: {fileID: 11400000, guid: d6b0660efe9c3954c937d083f8aa9c98, type: 2}

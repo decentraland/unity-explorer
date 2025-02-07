@@ -10,6 +10,6 @@ namespace MVC
         /// Sets the references to the systems the view may need.
         /// </summary>
         /// <param name="dependencies">References to systems the view may need. Not all are required.</param>
-        void InjectDependencies(ViewDependencies dependencies);
+        public void InjectDependencies(ViewDependencies dependencies);
     }
 }

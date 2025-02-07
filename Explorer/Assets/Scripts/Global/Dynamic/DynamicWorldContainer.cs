@@ -67,6 +67,7 @@ using DCL.SceneLoadingScreens.LoadingScreen;
 using DCL.SidebarBus;
 using DCL.UI.MainUI;
 using DCL.StylizedSkybox.Scripts.Plugin;
+using DCL.UI.InputFieldValidator;
 using DCL.UI.Profiles.Helpers;
 using DCL.UserInAppInitializationFlow;
 using DCL.Utilities;
@@ -581,10 +582,11 @@ namespace Global.Dynamic
             IUserCalendar userCalendar = new GoogleUserCalendar(webBrowser);
             ISystemClipboard clipboard = new UnityClipboard();
             IClipboardManager clipboardManager = new ClipboardManager(clipboard);
+            ITextFormatter hyperlinkTextFormatter = new HyperlinkTextFormatter();
 
             bool includeCameraReel = staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.CAMERA_REEL) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.CAMERA_REEL)) || Application.isEditor;
 
-            var viewDependencies = new ViewDependencies(dclInput, unityEventSystem, new MVCManagerMenusAccessFacade(mvcManager, clipboard), clipboardManager, dclCursor, profileCache, profileNameColorHelper, roomHub);
+            var viewDependencies = new ViewDependencies(dclInput, unityEventSystem, new MVCManagerMenusAccessFacade(mvcManager, clipboard), clipboardManager, dclCursor, profileCache, profileNameColorHelper, roomHub, hyperlinkTextFormatter);
 
             var globalPlugins = new List<IDCLGlobalPlugin>
             {

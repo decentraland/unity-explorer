@@ -1,18 +1,17 @@
 {
-  "name": "DCL.UI.InputFieldValidation",
-  "rootNamespace": "",
-  "references": [
-    "GUID:6055be8ebefd69e48b49212b09b47b2f",
-    "GUID:fa7b3fdbb04d67549916da7bd2af58ab",
-    "GUID:9cce9838ccdc58d46b673e02f1058718"
-  ],
-  "includePlatforms": [],
-  "excludePlatforms": [],
-  "allowUnsafeCode": false,
-  "overrideReferences": false,
-  "precompiledReferences": [],
-  "autoReferenced": true,
-  "defineConstraints": [],
-  "versionDefines": [],
-  "noEngineReferences": false
+    "name": "DCL.UI.InputFieldValidation",
+    "rootNamespace": "",
+    "references": [
+        "GUID:6055be8ebefd69e48b49212b09b47b2f",
+        "GUID:fa7b3fdbb04d67549916da7bd2af58ab"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
 }

@@ -1,43 +1,40 @@
-using MVC;
+using JetBrains.Annotations;
 using TMPro;
-using UnityEngine;
 using UnityEngine.EventSystems;
-using UnityEngine.Serialization;
 
 namespace DCL.UI.InputFieldValidator
 {
     /// <summary>
-    /// This class serves as an in-between other classes and the TMP_InputField, capturing events and
-    /// making sure that properly formatted text is submitted and if a formatter is referenced, formatted text can be obtained from it.
+    /// This controller serves as an in-between other classes and the TMP_InputField, capturing events and
+    /// making sure that if a formatter is referenced a properly formatted text is submitted.
     /// Also checks the size of inserted and replaced text, to make sure the input field limits aren't exceeded.
     /// </summary>
-    [RequireComponent(typeof(TMP_InputField))]
-    public class ExtendedInputFieldElement : MonoBehaviour, IViewWithGlobalDependencies
+    public class InputFieldController
     {
-        public delegate void InputFieldInputChangedDelegate(string changedText);
-        public delegate void InputFieldSelectionChangedDelegate(bool isSelected);
-        public delegate void InputFieldSubmitDelegate(string submittedInput);
+       public delegate void InputFieldInputChangedDelegate(string changedText);
+       public delegate void InputFieldSelectionChangedDelegate(bool isSelected);
+       public delegate void InputFieldSubmitDelegate(string submittedInput);
 
-        [SerializeField] private TMP_InputField inputField;
-        [SerializeField] private InputFieldFormatter inputFieldFormatter;
-        [SerializeField] private TMP_StyleSheet styleSheet;
+       private readonly TMP_InputField inputField;
+       [CanBeNull] private readonly ITextFormatter chatInputFormatter;
 
-        private int lastTextLenght;
-        private ViewDependencies dependencies;
+       private int lastTextLenght;
 
-        public int CharacterLimit => inputField.characterLimit;
+       public InputFieldController(TMP_InputField inputField, ITextFormatter chatInputFormatter = null)
+       {
+           this.inputField = inputField;
+           this.chatInputFormatter = chatInputFormatter;
+
+           inputField.onValueChanged.AddListener(OnInputChanged);
+           inputField.onSubmit.AddListener(OnSubmit);
+           inputField.onSelect.AddListener(OnInputFieldSelected);
+           inputField.onDeselect.AddListener(OnInputFieldDeselected);
+       }
+
+       public int CharacterLimit => inputField.characterLimit;
         public int TextLength => inputField.text.Length;
         public string InputText => inputField.text;
         public bool IsFocused => inputField.isFocused;
-
-        private void Awake()
-        {
-            inputFieldFormatter?.InitializeStyles();
-            inputField.onValueChanged.AddListener(OnInputChanged);
-            inputField.onSubmit.AddListener(OnSubmit);
-            inputField.onSelect.AddListener(OnInputFieldSelected);
-            inputField.onDeselect.AddListener(OnInputFieldDeselected);
-        }
 
         public event InputFieldInputChangedDelegate InputChangedEvent;
         public event InputFieldSubmitDelegate InputFieldSubmitEvent;
@@ -134,8 +131,7 @@ namespace DCL.UI.InputFieldValidator
         /// </summary>
         private void OnSubmit(string text)
         {
-            var position = 0;
-            inputFieldFormatter?.Format(ref text, ref position);
+            chatInputFormatter?.FormatText(ref text);
             InputFieldSubmitEvent?.Invoke(text);
         }
 
@@ -152,11 +148,6 @@ namespace DCL.UI.InputFieldValidator
         private void OnInputChanged(string text)
         {
             InputChangedEvent?.Invoke(text);
-        }
-
-        public void InjectDependencies(ViewDependencies dependencies)
-        {
-            this.dependencies = dependencies;
         }
     }
 }

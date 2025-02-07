@@ -1,137 +1,62 @@
-using MVC;
 using System;
 using System.Text;
 using System.Text.RegularExpressions;
-using TMPro;
-using UnityEngine;
 using Utility;
 
 namespace DCL.UI.InputFieldValidator
 {
-    public interface IInputFieldFormatter
+    public interface ITextFormatter
     {
-        void InitializeStyles();
-
-        void Format(ref string text, ref int pos);
+        string FormatText(string text);
     }
 
     [Serializable]
-    public class InputFieldFormatter : IInputFieldFormatter, IViewWithGlobalDependencies
+    public class HyperlinkTextFormatter : ITextFormatter
     {
-        private const string TAG_STRING = "§";
-        private const char TAG_CHAR = '§';
         private const string SCENE = "scene";
         private const string WORLD = "world";
         private const string URL = "url";
         private const string USER = "user";
+        private const string LINK_CLOSING_STYLE = "<#00B2FF><link=";
+        private const string LINK_OPENING_STYLE = "</link></color>";
+
 
         private static readonly Regex RICH_TEXT_TAG_REGEX = new (@"<(?!\/?(b|i)(>|\s))[^>]+>", RegexOptions.Compiled);
-        private static readonly Regex LINK_TAG_REGEX = new (
-            @"[<‹]#[0-9A-Fa-f]{6}[>›][<‹]link=(url|scene|world|user)=.*?[>›](.*?)[<‹]/link[>›][<‹]/color[>›]",
+        private static readonly Regex WEBSITE_REGEX = new (@"(?<=^|\s)((https?:\/\/)?(www\.)?[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9]*)?\.[a-zA-Z]{2,30}[a-zA-Z]{0,33}(\/[^\s]*)?)(?=\s|$)",
             RegexOptions.Compiled);
-        private static readonly Regex WEBSITE_REGEX = new (
-            @"(?<=^|\s)§?((https§?:\/\/)?§?(www\.)?§?[a-zA-Z0-9]§?(?:[a-zA-Z0-9-]*§?[a-zA-Z0-9]*)?§?\.§?[a-zA-Z]{2,30}§?[a-zA-Z]{0,33}§?(\/[^\s]*)?)§?(?=\s|$)",
-            RegexOptions.Compiled);
-        private static readonly Regex SCENE_REGEX = new (@"(?<=^|\s)-?§?\d{0,1}§?\d{0,1}§?\d{1}§?,§?-?§?\d{1}§?\d{0,1}§?\d{0,1}§?(?=\s|$)", RegexOptions.Compiled);
-        private static readonly Regex WORLD_REGEX = new (@"(?<=^|\s)§?[a-zA-Z0-9]§?[a-zA-Z0-9]*§?[a-zA-Z0-9]*§?\.dcl\.eth§?(?=\s|$)", RegexOptions.Compiled);
-
-        private static readonly Regex USERNAME_REGEX = new (@"(?<=^|\s)([A-Za-z0-9]*?)@([A-Za-z0-9]{3,15}§?(?:#[A-Za-z0-9]{4})?)§?(?=\s|$)", RegexOptions.Compiled);
+        private static readonly Regex SCENE_REGEX = new (@"(?<=^|\s)-?\d{1,3},-?\d{1,3}(?=\s|$)", RegexOptions.Compiled);
+        private static readonly Regex WORLD_REGEX = new (@"(?<=^|\s)*[a-zA-Z0-9]*\.dcl\.eth§?(?=\s|$)", RegexOptions.Compiled);
+        private static readonly Regex USERNAME_REGEX = new (@"(?<=^|\s)@([A-Za-z0-9]{3,15}(?:#[A-Za-z0-9]{4})?)(?=\s|$)", RegexOptions.Compiled);
 
         //TODO FRAN URGENT!: We need to remove the hash from the username! we will check it in the hyperlink handler comparing the username to the connected users (similar to the parsing done to get the suggestions)
         //private static readonly Regex USERNAME_REGEX = new (@"(?<=^|\s)§?@§?[A-Za-z0-9]{3,15}(?:#[A-Za-z0-9]{4})?§?(?=\s|$)", RegexOptions.Compiled);
 
-        [SerializeField] private TMP_StyleSheet styleSheet;
-
         private readonly StringBuilder mainStringBuilder = new ();
         private readonly StringBuilder tempStringBuilder = new ();
-        private string linkClosingStyle;
 
-        private string linkOpeningStyle;
-
-        public void InjectDependencies(ViewDependencies dependencies)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void InitializeStyles()
-        {
-            TMP_Style style = styleSheet.GetStyle("Link");
-            linkOpeningStyle = style.styleOpeningDefinition + "<link=";
-            linkClosingStyle = "</link>" + style.styleClosingDefinition;
-        }
-
-        public void Format(ref string text, ref int pos)
+        public string FormatText(string text)
         {
             if (text.Length == 0)
-                return;
+                return text;
 
-            PerformValidation(ref text, ref pos);
-        }
+            if (text.StartsWith("/"))
+                return text;
 
-        private char PerformValidation(ref string text, ref int pos, char ch = default)
-        {
             mainStringBuilder.Clear();
-            mainStringBuilder.Append(text.AsSpan(0, pos));
+            mainStringBuilder.Append(text);
 
-            if (ch != default(int))
-                mainStringBuilder.Append(ch);
+            ProcessMainStringBuilder();
 
-            mainStringBuilder.Append(TAG_STRING);
-
-            mainStringBuilder.Append(text.AsSpan(pos));
-
-            if (!text.StartsWith("/"))
-                ProcessMainStringBuilder();
-
-            pos = GetPositionFromTag(mainStringBuilder);
-            text = mainStringBuilder.Remove(pos, 1).ToString();
-            return ch;
-        }
-
-        private int GetPositionFromTag(StringBuilder stringBuilder)
-        {
-            int length = stringBuilder.Length;
-
-            for (var i = 0; i < length; i++)
-                if (stringBuilder[i] == TAG_CHAR)
-                    return i;
-
-            return 0;
+            return mainStringBuilder.ToString();
         }
 
         private void ProcessMainStringBuilder()
         {
-            RemoveLinkTags(mainStringBuilder);
             ReplaceMatches(RICH_TEXT_TAG_REGEX, mainStringBuilder, ReplaceRichTextTags);
             ReplaceMatches(WEBSITE_REGEX, mainStringBuilder, WrapWithUrlLink);
             ReplaceMatches(SCENE_REGEX, mainStringBuilder, WrapWithSceneLink);
             ReplaceMatches(WORLD_REGEX, mainStringBuilder, WrapWithWorldLink);
             ReplaceMatches(USERNAME_REGEX, mainStringBuilder, WrapWithUsernameLink);
-        }
-
-        private void RemoveLinkTags(StringBuilder stringBuilder)
-        {
-            var text = stringBuilder.ToString();
-            MatchCollection matches = LINK_TAG_REGEX.Matches(text);
-
-            if (matches.Count <= 0) return;
-
-            stringBuilder.Clear();
-            stringBuilder.Append(text.AsSpan(0, matches[0].Index));
-
-            for (var i = 0; i < matches.Count; i++)
-            {
-                Match match = matches[i];
-                stringBuilder.Append(match.Groups[2]);
-
-                if (i < matches.Count - 1)
-                {
-                    int nextStart = matches[i + 1].Index;
-                    stringBuilder.Append(text.AsSpan(match.Index + match.Length, nextStart - (match.Index + match.Length)));
-                }
-            }
-
-            stringBuilder.Append(text.AsSpan(matches[^1].Index + matches[^1].Length));
         }
 
         private StringBuilder ReplaceRichTextTags(Match match)
@@ -191,13 +116,13 @@ namespace DCL.UI.InputFieldValidator
         {
             tempStringBuilder.Clear();
             string linkTypeString = string.Empty;
-            string matchWithoutTag = match.Value.Replace(TAG_STRING, "");
 
             //Validate here if these are valid before creating the links
             switch (linkType)
             {
                 case LinkType.SCENE:
-                    string[] splitCords = matchWithoutTag.Split(',');
+                    //TODO: Maybe we can make the match automatically split in 2 groups when detecting this? so we dont need additional string works?
+                    string[] splitCords = match.Value.Split(',');
 
                     if (splitCords.Length != 2 ||
                         !AreCoordsValid(int.Parse(splitCords[0]), int.Parse(splitCords[1])))
@@ -212,24 +137,24 @@ namespace DCL.UI.InputFieldValidator
                     linkTypeString = URL;
                     break;
                 case LinkType.USER:
-                    tempStringBuilder.Append(linkOpeningStyle)
+                    tempStringBuilder.Append(LINK_OPENING_STYLE)
                                      .Append(USER)
                                      .Append('=')
                                      .Append(match.Groups[1].Value)
                                      .Append(">")
                                      .Append("@" + match.Groups[2].Value)
-                                     .Append(linkClosingStyle);
+                                     .Append(LINK_CLOSING_STYLE);
 
                     return tempStringBuilder;
             }
 
-            tempStringBuilder.Append(linkOpeningStyle)
+            tempStringBuilder.Append(LINK_OPENING_STYLE)
                              .Append(linkTypeString)
                              .Append('=')
-                             .Append(matchWithoutTag)
+                             .Append(match)
                              .Append(">")
                              .Append(match)
-                             .Append(linkClosingStyle);
+                             .Append(LINK_CLOSING_STYLE);
 
             return tempStringBuilder;
         }
