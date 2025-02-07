@@ -53,10 +53,9 @@ namespace DCL.Multiplayer.Movement.Systems
             if (newDirection != Vector3.zero)
             {
                 Vector3 currentForward = characterTransformComp.Transform.forward;
-                Vector3 targetForward = newDirection.normalized;
 
-                if (Vector3.Dot(currentForward, targetForward) < 0.999f)
-                    characterTransformComp.Transform.forward = Vector3.Lerp(currentForward, targetForward, UnityEngine.Time.deltaTime * ROTATION_SPEED);
+                if (Vector3.Dot(currentForward, newDirection) < 0.999f)
+                    characterTransformComp.Transform.forward = Vector3.Lerp(currentForward, newDirection, UnityEngine.Time.deltaTime * ROTATION_SPEED);
             }
         }
 
