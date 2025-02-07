@@ -1,3 +1,4 @@
+using DCL.Diagnostics;
 using System;
 using System.Buffers;
 using UnityEngine;
@@ -49,7 +50,7 @@ namespace DCL.WebRequests.CustomDownloadHandlers
             }
             catch (Exception ex)
             {
-                Debug.LogError($"Error writing data: {ex.Message}");
+                ReportHub.LogError(ReportCategory.PARTIAL_LOADING, $"Error writing data: {ex.Message}");
                 return false;
             }
         }
