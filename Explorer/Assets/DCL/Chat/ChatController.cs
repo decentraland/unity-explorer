@@ -157,6 +157,8 @@ namespace DCL.Chat
             dclInput.Shortcuts.ToggleNametags.performed += ToggleNametagsFromShortcut;
             dclInput.Shortcuts.OpenChat.performed += OnOpenChat;
             dclInput.Shortcuts.OpenChatCommandLine.performed += OnOpenChatCommand;
+
+            viewInstance!.LoopList.RefreshAllShownItem();
         }
 
         protected override void OnViewClose()
