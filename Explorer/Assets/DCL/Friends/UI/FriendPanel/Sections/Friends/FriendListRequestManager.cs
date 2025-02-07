@@ -92,7 +92,18 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         private void AddNewFriendProfile(FriendProfile friendProfile)
         {
             friends.Add(friendProfile);
-            friends.Sort((f1, f2) => string.Compare(f1.Name, f2.Name, StringComparison.Ordinal));
+            SortFriendList();
+        }
+
+        private void SortFriendList()
+        {
+            friends.Sort((f1, f2) =>
+            {
+                int statusComparison = friendsOnlineStatus.GetValueOrDefault(f1, OnlineStatus.OFFLINE)
+                                                          .CompareTo(friendsOnlineStatus.GetValueOrDefault(f2, OnlineStatus.OFFLINE));
+
+                return statusComparison != 0 ? statusComparison : string.Compare(f1.Name, f2.Name, StringComparison.Ordinal);
+            });
         }
 
         private void FriendRequestAccepted(string friendId)
@@ -141,6 +152,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
                 if (friends.Contains(friend)) continue;
                 friends.Add(friend);
             }
+
+            SortFriendList();
 
             return result.TotalAmount;
             return FetchMockData();
