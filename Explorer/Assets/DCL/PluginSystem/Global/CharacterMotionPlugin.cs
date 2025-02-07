@@ -1,6 +1,7 @@
 ﻿using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.AvatarRendering.AvatarShape.Systems;
 using DCL.AvatarRendering.Emotes;
 using DCL.Character;
 using DCL.Character.Components;
@@ -79,6 +80,7 @@ namespace DCL.PluginSystem.Global
             HandsIKSystem.InjectToWorld(ref builder, debugContainerBuilder);
             HeadIKSystem.InjectToWorld(ref builder, debugContainerBuilder);
             ReleasePoolableComponentSystem<Transform, CharacterTransform>.InjectToWorld(ref builder, componentPoolsRegistry);
+            SDKAvatarShapesMotionSystem.InjectToWorld(ref builder);
         }
     }
 }

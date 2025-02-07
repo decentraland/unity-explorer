@@ -32,6 +32,7 @@ using UnityEngine.AddressableAssets;
 using UnityEngine.Pool;
 using Utility;
 using Object = UnityEngine.Object;
+using SDKAvatarShapesMotionSystem = DCL.AvatarRendering.AvatarShape.Systems.SDKAvatarShapesMotionSystem;
 using StartAvatarMatricesCalculationSystem = DCL.AvatarRendering.AvatarShape.Systems.StartAvatarMatricesCalculationSystem;
 #if UNITY_EDITOR
 using DCL.AvatarAnimation;

@@ -13,7 +13,7 @@ using DCL.Utilities.Extensions;
 using ECS.Abstract;
 using UnityEngine;
 
-namespace DCL.Multiplayer.Movement.Systems
+namespace DCL.AvatarRendering.AvatarShape.Systems
 {
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     [LogCategory(ReportCategory.AVATAR)]

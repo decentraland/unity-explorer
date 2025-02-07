@@ -91,7 +91,6 @@ namespace DCL.PluginSystem.Global
             RemotePlayerAnimationSystem.InjectToWorld(ref builder, settings.Value.ExtrapolationSettings, settings.Value);
             CleanUpRemoteMotionSystem.InjectToWorld(ref builder);
             MultiplayerMovementDebugSystem.InjectToWorld(ref builder, arguments.PlayerEntity, realmData, debugBuilder, remoteEntities, playerTransform, debugSettings.Value, settings.Value, entityParticipantTable, remoteMetadata);
-            SDKAvatarShapesMotionSystem.InjectToWorld(ref builder);
         }
     }
 }
