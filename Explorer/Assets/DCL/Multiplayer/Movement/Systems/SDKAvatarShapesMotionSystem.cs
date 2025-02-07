@@ -20,7 +20,7 @@ namespace DCL.Multiplayer.Movement.Systems
     [ThrottlingEnabled]
     public partial class SDKAvatarShapesMotionSystem : BaseUnityLoopSystem
     {
-        public const float ROTATION_SPEED = 5f;
+        private const float ROTATION_SPEED = 5f;
 
         private SDKAvatarShapesMotionSystem(World world) : base(world) { }
 
