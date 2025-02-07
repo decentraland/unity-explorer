@@ -286,7 +286,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
             [Data] bool defaultWearablesResolved,
             Entity entity,
             ref RawGltfPromise promise,
-            ref IWearable wearable,
+            in IWearable wearable,
             in BodyShape bodyShape,
             int index
         )
@@ -317,7 +317,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
             [Data] bool defaultWearablesResolved,
             Entity entity,
             ref TexturePromise promise,
-            ref IWearable wearable,
+            in IWearable wearable,
             in BodyShape bodyShape,
             int index
         )

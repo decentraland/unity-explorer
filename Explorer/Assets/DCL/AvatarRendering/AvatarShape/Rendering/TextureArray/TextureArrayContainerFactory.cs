@@ -37,36 +37,29 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
 
         private TextureArrayContainer CreateToon(IReadOnlyList<int> defaultResolutions)
         {
-            var textureArrayMapping = new TextureArrayMapping[]
+            var textureArrayMapping = new List<TextureArrayMapping>
             {
+                // Asset Bundle Wearables
                 new (new TextureArrayHandler(MAIN_TEXTURE_ARRAY_SIZE, MAINTEX_ARR_SHADER_INDEX, MAINTEX_ARR_TEX_SHADER, defaultResolutions, DEFAULT_BASEMAP_TEXTURE_FORMAT, defaultTextures),
                     MAINTEX_ORIGINAL_TEXTURE, MAIN_TEXTURE_RESOLUTION),
                 new (new TextureArrayHandler(NORMAL_TEXTURE_ARRAY_SIZE, NORMAL_MAP_TEX_ARR_INDEX, NORMAL_MAP_TEX_ARR, defaultResolutions, DEFAULT_NORMALMAP_TEXTURE_FORMAT, defaultTextures),
                     BUMP_MAP_ORIGINAL_TEXTURE_ID, NORMAL_TEXTURE_RESOLUTION),
                 new (new TextureArrayHandler(EMISSION_TEXTURE_ARRAY_SIZE, EMISSIVE_MAP_TEX_ARR_INDEX, EMISSIVE_MAP_TEX_ARR, defaultResolutions, DEFAULT_EMISSIVEMAP_TEXTURE_FORMAT, defaultTextures),
                     EMISSION_MAP_ORIGINAL_TEXTURE_ID, EMISSION_TEXTURE_RESOLUTION),
-
-                // new (new TextureArrayHandler(OTHER_TEXTURE_ARRAY_SIZE, METALLIC_GLOSS_MAP_ARR_SHADER_ID, METALLIC_GLOSS_MAP_ARR_TEX_SHADER_ID), METALLIC_GLOSS_MAP_ORIGINAL_TEXTURE_ID),
-                // new (new TextureArrayHandler(OTHER_TEXTURE_ARRAY_SIZE, OCCLUSION_MAP_ARR_SHADER_ID, OCCLUSION_MAP_ARR_TEX_SHADER_ID), OCCLUSION_MAP_ORIGINAL_TEXTURE_ID),
             };
 
             if (enableRawGltfWearables)
             {
-                textureArrayMapping = new TextureArrayMapping[]
+                // Raw GLTF Wearables
+                textureArrayMapping.AddRange(new[]
                 {
-                    // Asset Bundle Wearables (BC7/BC5)
-                    textureArrayMapping[0],
-                    textureArrayMapping[1],
-                    textureArrayMapping[2],
-
-                    // Raw GLTF Wearables (RGBA32)
-                    new (new TextureArrayHandler(MAIN_TEXTURE_ARRAY_SIZE, MAINTEX_ARR_SHADER_INDEX, MAINTEX_ARR_TEX_SHADER, defaultResolutions, DEFAULT_RAW_WEARABLE_TEXTURE_FORMAT),
+                    new TextureArrayMapping(new TextureArrayHandler(MAIN_TEXTURE_ARRAY_SIZE, MAINTEX_ARR_SHADER_INDEX, MAINTEX_ARR_TEX_SHADER, defaultResolutions, DEFAULT_RAW_WEARABLE_TEXTURE_FORMAT),
                         MAINTEX_ORIGINAL_TEXTURE, MAIN_TEXTURE_RESOLUTION),
-                    new (new TextureArrayHandler(NORMAL_TEXTURE_ARRAY_SIZE, NORMAL_MAP_TEX_ARR_INDEX, NORMAL_MAP_TEX_ARR, defaultResolutions, DEFAULT_RAW_WEARABLE_TEXTURE_FORMAT),
+                    new TextureArrayMapping(new TextureArrayHandler(NORMAL_TEXTURE_ARRAY_SIZE, NORMAL_MAP_TEX_ARR_INDEX, NORMAL_MAP_TEX_ARR, defaultResolutions, DEFAULT_RAW_WEARABLE_TEXTURE_FORMAT),
                         BUMP_MAP_ORIGINAL_TEXTURE_ID, NORMAL_TEXTURE_RESOLUTION),
-                    new (new TextureArrayHandler(EMISSION_TEXTURE_ARRAY_SIZE, EMISSIVE_MAP_TEX_ARR_INDEX, EMISSIVE_MAP_TEX_ARR, defaultResolutions, DEFAULT_RAW_WEARABLE_TEXTURE_FORMAT),
-                        EMISSION_MAP_ORIGINAL_TEXTURE_ID, EMISSION_TEXTURE_RESOLUTION),
-                };
+                    new TextureArrayMapping(new TextureArrayHandler(EMISSION_TEXTURE_ARRAY_SIZE, EMISSIVE_MAP_TEX_ARR_INDEX, EMISSIVE_MAP_TEX_ARR, defaultResolutions, DEFAULT_RAW_WEARABLE_TEXTURE_FORMAT),
+                        EMISSION_MAP_ORIGINAL_TEXTURE_ID, EMISSION_TEXTURE_RESOLUTION)
+                });
             }
 
             return new TextureArrayContainer(textureArrayMapping);
@@ -74,24 +67,25 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
 
         private TextureArrayContainer CreateFacial(IReadOnlyList<int> defaultResolutions)
         {
-            var textureArrayMapping = new TextureArrayMapping[]
+            var textureArrayMapping = new List<TextureArrayMapping>
             {
-                new (new TextureArrayHandler(FACIAL_FEATURES_TEXTURE_ARRAY_SIZE, MAINTEX_ARR_SHADER_INDEX, MAINTEX_ARR_TEX_SHADER, defaultResolutions, DEFAULT_BASEMAP_TEXTURE_FORMAT, defaultTextures), MAINTEX_ORIGINAL_TEXTURE, FACIAL_FEATURES_TEXTURE_RESOLUTION),
-                new (new TextureArrayHandler(FACIAL_FEATURES_TEXTURE_ARRAY_SIZE, MASK_ARR_SHADER_ID, MASK_ARR_TEX_SHADER_ID, defaultResolutions, DEFAULT_BASEMAP_TEXTURE_FORMAT, defaultTextures), MASK_ORIGINAL_TEXTURE_ID, FACIAL_FEATURES_TEXTURE_RESOLUTION),
+                // Asset Bundle Facial Feature Wearables
+                new (new TextureArrayHandler(FACIAL_FEATURES_TEXTURE_ARRAY_SIZE, MAINTEX_ARR_SHADER_INDEX, MAINTEX_ARR_TEX_SHADER, defaultResolutions, DEFAULT_BASEMAP_TEXTURE_FORMAT, defaultTextures),
+                    MAINTEX_ORIGINAL_TEXTURE, FACIAL_FEATURES_TEXTURE_RESOLUTION),
+                new (new TextureArrayHandler(FACIAL_FEATURES_TEXTURE_ARRAY_SIZE, MASK_ARR_SHADER_ID, MASK_ARR_TEX_SHADER_ID, defaultResolutions, DEFAULT_BASEMAP_TEXTURE_FORMAT, defaultTextures),
+                    MASK_ORIGINAL_TEXTURE_ID, FACIAL_FEATURES_TEXTURE_RESOLUTION)
             };
 
             if (enableRawGltfWearables)
             {
-                textureArrayMapping = new TextureArrayMapping[]
+                // Raw Facial Feature Wearables
+                textureArrayMapping.AddRange(new[]
                 {
-                    // Asset Bundle Facial Feature Wearables (BC7)
-                    textureArrayMapping[0],
-                    textureArrayMapping[1],
-
-                    // Raw Facial Feature Wearables (RGBA32)
-                    new (new TextureArrayHandler(FACIAL_FEATURES_TEXTURE_ARRAY_SIZE, MAINTEX_ARR_SHADER_INDEX, MAINTEX_ARR_TEX_SHADER, defaultResolutions, DEFAULT_RAW_WEARABLE_TEXTURE_FORMAT), MAINTEX_ORIGINAL_TEXTURE, FACIAL_FEATURES_TEXTURE_RESOLUTION),
-                    new (new TextureArrayHandler(FACIAL_FEATURES_TEXTURE_ARRAY_SIZE, MASK_ARR_SHADER_ID, MASK_ARR_TEX_SHADER_ID, defaultResolutions, DEFAULT_RAW_WEARABLE_TEXTURE_FORMAT), MASK_ORIGINAL_TEXTURE_ID, FACIAL_FEATURES_TEXTURE_RESOLUTION),
-                };
+                    new TextureArrayMapping(new TextureArrayHandler(FACIAL_FEATURES_TEXTURE_ARRAY_SIZE, MAINTEX_ARR_SHADER_INDEX, MAINTEX_ARR_TEX_SHADER, defaultResolutions, DEFAULT_RAW_WEARABLE_TEXTURE_FORMAT),
+                        MAINTEX_ORIGINAL_TEXTURE, FACIAL_FEATURES_TEXTURE_RESOLUTION),
+                    new TextureArrayMapping(new TextureArrayHandler(FACIAL_FEATURES_TEXTURE_ARRAY_SIZE, MASK_ARR_SHADER_ID, MASK_ARR_TEX_SHADER_ID, defaultResolutions, DEFAULT_RAW_WEARABLE_TEXTURE_FORMAT),
+                        MASK_ORIGINAL_TEXTURE_ID, FACIAL_FEATURES_TEXTURE_RESOLUTION)
+                });
             }
 
             return new TextureArrayContainer(textureArrayMapping);

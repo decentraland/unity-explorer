@@ -62,7 +62,7 @@ namespace DCL.PluginSystem.World
 
             LoadGLTFSystem.InjectToWorld(
                 ref builder,
-                new NoCache<GLTFData, GetGLTFIntention>(false, false),
+                NoCache<GLTFData, GetGLTFIntention>.INSTANCE,
                 webRequestController,
                 false,
                 false,

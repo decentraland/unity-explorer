@@ -76,15 +76,13 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
             handlersByResolution[resolution] = slotHandler;
 
             // When the handler is created initialize the default texture
-            if (defaultTextures != null)
+            var count = defaultTextures?.Count ?? 0;
+            for (int i = 0; i < count; ++i)
             {
-                for (int i = 0; i < defaultTextures.Count; ++i)
+                if (defaultTextures!.TryGetValue(new TextureArrayKey(textureID, resolution, i), out var defaultTexture))
                 {
-                    if (defaultTextures.TryGetValue(new TextureArrayKey(textureID, resolution, i), out var defaultTexture))
-                    {
-                        var defaultSlot = slotHandler.GetNextFreeSlot();
-                        Graphics.CopyTexture(defaultTexture, srcElement: 0, srcMip: 0, defaultSlot.TextureArray, dstElement: defaultSlot.UsedSlotIndex, dstMip: 0);
-                    }
+                    var defaultSlot = slotHandler.GetNextFreeSlot();
+                    Graphics.CopyTexture(defaultTexture, srcElement: 0, srcMip: 0, defaultSlot.TextureArray, dstElement: defaultSlot.UsedSlotIndex, dstMip: 0);
                 }
             }
 
