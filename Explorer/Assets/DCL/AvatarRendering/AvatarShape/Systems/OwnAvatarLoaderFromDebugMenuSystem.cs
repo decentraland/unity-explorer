@@ -7,11 +7,7 @@ using DCL.Diagnostics;
 using DCL.Profiles;
 using ECS;
 using ECS.Abstract;
-using ECS.Prioritization.Components;
 using System.Threading;
-using Promise = ECS.StreamableLoading.Common.AssetPromise<
-    DCL.Profiles.Profile,
-    DCL.Profiles.GetProfileIntention>;
 
 namespace DCL.AvatarRendering.AvatarShape.Systems
 {
@@ -22,18 +18,22 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         private readonly Entity ownPlayerEntity;
         private readonly IRealmData realmData;
         private readonly DebugWidgetVisibilityBinding? widgetVisibility;
+        private readonly IProfileRepository profileRepository;
 
+        
         private CancellationTokenSource? fetchProfileCancellationToken;
 
         public OwnAvatarLoaderFromDebugMenuSystem(
             World world,
             Entity ownPlayerEntity,
             IDebugContainerBuilder debugContainerBuilder,
-            IRealmData realmData)
+            IRealmData realmData,
+            IProfileRepository profileRepository)
             : base(world)
         {
             this.ownPlayerEntity = ownPlayerEntity;
             this.realmData = realmData;
+            this.profileRepository = profileRepository;
 
             debugContainerBuilder.TryAddWidget("Profile: Avatar Shape")
                                  ?.SetVisibilityBinding(widgetVisibility = new DebugWidgetVisibilityBinding(false))
@@ -45,15 +45,12 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             widgetVisibility?.SetVisible(realmData.Configured);
         }
 
-        private void UpdateProfileForOwnAvatar(string profileId)
+        private async void UpdateProfileForOwnAvatar(string profileId)
         {
             const int VERSION = 0;
 
-            var promise = Promise.Create(World,
-                new GetProfileIntention(profileId, VERSION),
-                PartitionComponent.TOP_PRIORITY);
-
-            World.Add(ownPlayerEntity, promise);
+            var newProfile = await profileRepository.GetAsync(profileId, VERSION, CancellationToken.None);
+            World.Set(ownPlayerEntity, newProfile);
         }
     }
 }
