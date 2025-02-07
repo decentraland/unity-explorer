@@ -159,6 +159,7 @@ namespace DCL.Chat
             dclInput.Shortcuts.OpenChatCommandLine.performed += OnOpenChatCommand;
 
             viewInstance!.LoopList.RefreshAllShownItem();
+            OnFocus();
         }
 
         protected override void OnViewClose()
@@ -168,6 +169,7 @@ namespace DCL.Chat
             dclInput.Shortcuts.ToggleNametags.performed -= ToggleNametagsFromShortcut;
             dclInput.Shortcuts.OpenChat.performed -= OnOpenChat;
             dclInput.Shortcuts.OpenChatCommandLine.performed -= OnOpenChatCommand;
+            OnBlur();
         }
 
         private void OnClick(InputAction.CallbackContext obj)
