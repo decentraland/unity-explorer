@@ -76,14 +76,7 @@ namespace DCL.Multiplayer.Movement.Systems
                 movementBlendValue = speed > RUN_SPEED_THRESHOLD ? 3 : speed > JOG_SPEED_THRESHOLD ? 2 : 1;
             }
 
-            animationComponent.IsSliding = false;
-            animationComponent.States.MovementBlendValue = movementBlendValue;
-            animationComponent.States.SlideBlendValue = 0;
-            animationComponent.States.IsGrounded = true;
-            animationComponent.States.IsJumping = false;
-            animationComponent.States.IsLongJump = false;
-            animationComponent.States.IsLongFall = false;
-            animationComponent.States.IsFalling = false;
+            SetGroundedMovement(ref animationComponent, movementBlendValue);
 
             // movement blend
             AnimationMovementBlendLogic.SetAnimatorParameters(ref animationComponent, view, animationComponent.States.IsGrounded, 0);
@@ -93,6 +86,18 @@ namespace DCL.Multiplayer.Movement.Systems
 
             // other states
             AnimationStatesLogic.SetAnimatorParameters(view, ref animationComponent.States, animationComponent.States.IsJumping, jumpTriggered: false, isStunned: false);
+        }
+
+        private static void SetGroundedMovement(ref CharacterAnimationComponent animationComponent, float movementBlendValue)
+        {
+            animationComponent.IsSliding = false;
+            animationComponent.States.MovementBlendValue = movementBlendValue;
+            animationComponent.States.SlideBlendValue = 0;
+            animationComponent.States.IsGrounded = true;
+            animationComponent.States.IsJumping = false;
+            animationComponent.States.IsLongJump = false;
+            animationComponent.States.IsLongFall = false;
+            animationComponent.States.IsFalling = false;
         }
 
         private static void UpdateLastPosition(
