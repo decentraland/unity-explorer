@@ -21,6 +21,7 @@ using ECS.StreamableLoading.Common.Components;
 using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using Utility;
 using AssetBundleManifestPromise = ECS.StreamableLoading.Common.AssetPromise<SceneRunner.Scene.SceneAssetBundleManifest, DCL.AvatarRendering.Wearables.Components.GetWearableAssetBundleManifestIntention>;
 using StreamableResult = ECS.StreamableLoading.Common.Components.StreamableLoadingResult<DCL.AvatarRendering.Wearables.Components.WearablesResolution>;
@@ -330,6 +331,20 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 ResetBodyShape(bodyShape);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        protected static bool AllAssetsAreLoaded(IWearable wearable, BodyShape bodyShape)
+        {
+            for (var i = 0; i < wearable.WearableAssetResults[bodyShape].Results.Length; i++)
+                if (wearable.WearableAssetResults[bodyShape].Results[i] is not { IsInitialized: true })
+                    return false;
+
+            return true;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        protected static bool AnyAssetHasFailed(IWearable wearable, BodyShape bodyShape) =>
+            wearable.WearableAssetResults[bodyShape].ReplacedWithDefaults;
+
         protected static void SetWearableResult(IWearable wearable, StreamableLoadingResult<AttachmentAssetBase> wearableResult, in BodyShape bodyShape, int index)
         {
             if (wearable.IsUnisex() && wearable.HasSameModelsForAllGenders())
@@ -346,6 +361,37 @@ namespace DCL.AvatarRendering.Wearables.Systems
             {
                 ref var asset = ref wearable.WearableAssetResults[bodyShape];
                 asset.Results[index] = wearableResult;
+            }
+        }
+
+        protected void FinalizeAssetLoading<TAsset, TLoadingIntention>(
+            bool defaultWearablesResolved,
+            Entity entity,
+            ref AssetPromise<TAsset, TLoadingIntention> promise,
+            in IWearable wearable,
+            in BodyShape bodyShape,
+            int index,
+            Func<StreamableLoadingResult<TAsset>, StreamableLoadingResult<AttachmentAssetBase>> toWearableAsset
+        ) where TLoadingIntention : IAssetIntention, IEquatable<TLoadingIntention>
+        {
+            if (promise.LoadingIntention.CancellationTokenSource.IsCancellationRequested)
+            {
+                ResetWearableResultOnCancellation(wearable, in bodyShape, index);
+                promise.ForgetLoading(World);
+                World.Destroy(entity);
+                return;
+            }
+
+            if (promise.SafeTryConsume(World, GetReportCategory(), out StreamableLoadingResult<TAsset> result))
+            {
+                // every asset in the batch is mandatory => if at least one has already failed set the default wearables
+                if (result.Succeeded && !AnyAssetHasFailed(wearable, bodyShape))
+                    SetWearableResult(wearable, toWearableAsset(result), in bodyShape, index);
+                else
+                    SetDefaultWearables(defaultWearablesResolved, wearable, in bodyShape);
+
+                wearable.UpdateLoadingStatus(!AllAssetsAreLoaded(wearable, bodyShape));
+                World.Destroy(entity);
             }
         }
     }

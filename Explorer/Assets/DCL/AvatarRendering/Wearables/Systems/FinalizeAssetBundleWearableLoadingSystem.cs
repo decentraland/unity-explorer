@@ -12,9 +12,7 @@ using DCL.Diagnostics;
 using ECS;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.AssetBundles;
-using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
-using System.Runtime.CompilerServices;
 using Utility;
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
 
@@ -23,9 +21,9 @@ namespace DCL.AvatarRendering.Wearables.Systems
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     [UpdateBefore(typeof(PrepareGlobalAssetBundleLoadingParametersSystem))]
     [LogCategory(ReportCategory.WEARABLE)]
-    public partial class FinalizeAssetBundleWearableLoadingSystemBase : FinalizeWearableLoadingSystemBase
+    public partial class FinalizeAssetBundleWearableLoadingSystem : FinalizeWearableLoadingSystemBase
     {
-        public FinalizeAssetBundleWearableLoadingSystemBase(
+        public FinalizeAssetBundleWearableLoadingSystem(
             World world,
             IWearableStorage wearableStorage,
             IRealmData realmData,
@@ -48,45 +46,13 @@ namespace DCL.AvatarRendering.Wearables.Systems
             [Data] bool defaultWearablesResolved,
             Entity entity,
             ref AssetBundlePromise promise,
-            ref IWearable wearable,
+            IWearable wearable,
             in BodyShape bodyShape,
             int index
         )
         {
-            if (promise.LoadingIntention.CancellationTokenSource.IsCancellationRequested)
-            {
-                ResetWearableResultOnCancellation(wearable, in bodyShape, index);
-                promise.ForgetLoading(World);
-                World.Destroy(entity);
-                return;
-            }
-
-            if (promise.SafeTryConsume(World, GetReportCategory(), out StreamableLoadingResult<AssetBundleData> result))
-            {
-                // every asset in the batch is mandatory => if at least one has already failed set the default wearables
-                if (result.Succeeded && !AnyAssetHasFailed(wearable, bodyShape))
-                    SetWearableResult(wearable, result, in bodyShape, index);
-                else
-                    SetDefaultWearables(defaultWearablesResolved, wearable, in bodyShape);
-
-                wearable.UpdateLoadingStatus(!AllAssetsAreLoaded(wearable, bodyShape));
-                World.Destroy(entity);
-            }
+            FinalizeAssetLoading<AssetBundleData, GetAssetBundleIntention>(defaultWearablesResolved, entity, ref promise, wearable, in bodyShape, index, result => result.ToWearableAsset(wearable));
         }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static bool AllAssetsAreLoaded(IWearable wearable, BodyShape bodyShape)
-        {
-            for (var i = 0; i < wearable.WearableAssetResults[bodyShape].Results.Length; i++)
-                if (wearable.WearableAssetResults[bodyShape].Results[i] is not { IsInitialized: true })
-                    return false;
-
-            return true;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static bool AnyAssetHasFailed(IWearable wearable, BodyShape bodyShape) =>
-            wearable.WearableAssetResults[bodyShape].ReplacedWithDefaults;
 
         protected override bool CreateAssetPromiseIfRequired(IWearable component, in GetWearablesByPointersIntention intention, IPartitionComponent partitionComponent)
         {
@@ -108,7 +74,6 @@ namespace DCL.AvatarRendering.Wearables.Systems
             return false;
         }
 
-        // Asset Bundle Wearable
         private static void SetWearableResult(IWearable wearable, StreamableLoadingResult<AssetBundleData> result, in BodyShape bodyShape, int index)
             => SetWearableResult(wearable, result.ToWearableAsset(wearable), bodyShape, index);
     }
