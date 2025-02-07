@@ -227,13 +227,18 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             {
                 foreach (AvatarAttachmentDTO.Content content in wearable.DTO.content)
                 {
-                    CreateRawWearablePromise(
-                        content,
-                        intention,
-                        wearable,
-                        index,
-                        partitionComponent,
-                        world);
+                    if (content.hash == hash)
+                    {
+                        CreateRawWearablePromise(
+                            content,
+                            intention,
+                            wearable,
+                            index,
+                            partitionComponent,
+                            world);
+
+                        break;
+                    }
                 }
             }
             else
@@ -267,16 +272,13 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         {
             // An index is added to the promises to know to which slot of the WearableAssets it belongs to
 
-            if (content.file.EndsWith(".glb")) // Wearables cannot be GLTF
+            if (content.file.EndsWith(".glb")) // Wearables cannot be ".gltf"
             {
                 var promise = RawGltfPromise.Create(world, GetGLTFIntention.Create(content.file, content.hash), partitionComponent);
                 world.Create(promise, wearable, intention.BodyShape, index);
             }
-            else if (content.file.EndsWith(".png")) // Wearables documentation specifies PNG format
+            else if (content.file.EndsWith(".png")) // Facial Feature Wearables documentation specifies PNG format
             {
-                if (content.file.StartsWith("thumbnail")) return;
-
-                // Texture
                 var promise = TexturePromise.Create(world,
                     new GetTextureIntention
                     {

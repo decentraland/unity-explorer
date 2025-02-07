@@ -313,7 +313,6 @@ namespace DCL.AvatarRendering.Wearables.Systems
         }
 
         [Query]
-        [None(typeof(URLPath))] // thumbnails
         private void FinalizeRawFacialFeatureTexLoading(
             [Data] bool defaultWearablesResolved,
             Entity entity,
