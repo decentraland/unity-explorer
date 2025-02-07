@@ -53,7 +53,7 @@ namespace DCL.Friends.UI.FriendPanel
 
             mvcManager.OnViewShowed -= OnViewShowed;
             mvcManager.OnViewClosed -= OnViewClosed;
-            viewInstance?.OpenFriendPanelButton.onClick.RemoveListener(OpenFriendsPanel);
+            viewInstance?.OpenFriendPanelButton.onClick.RemoveListener(ToggleFriendsPanel);
             UnregisterHotkey();
             friendRequestReceivedCts.SafeCancelAndDispose();
         }
@@ -83,7 +83,7 @@ namespace DCL.Friends.UI.FriendPanel
                     if (isFriendPanelControllerOpen)
                         friendsPanelController?.ToggleTabs(FriendsPanelController.FriendsPanelTab.FRIENDS);
                     else
-                        OpenFriendsPanel();
+                        ToggleFriendsPanel();
                 else if (friendshipStatus == FriendshipStatus.REQUEST_RECEIVED)
                     mvcManager.ShowAsync(FriendRequestController.IssueCommand(new FriendRequestParams
                     {
@@ -117,14 +117,19 @@ namespace DCL.Friends.UI.FriendPanel
         {
             base.OnViewInstantiated();
 
-            viewInstance!.OpenFriendPanelButton.onClick.AddListener(OpenFriendsPanel);
+            viewInstance!.OpenFriendPanelButton.onClick.AddListener(ToggleFriendsPanel);
         }
 
         private void OpenFriendsPanel(InputAction.CallbackContext obj) =>
-            OpenFriendsPanel();
+            ToggleFriendsPanel();
 
-        private void OpenFriendsPanel() =>
-            mvcManager.ShowAsync(FriendsPanelController.IssueCommand(new FriendsPanelParameter()));
+        private void ToggleFriendsPanel()
+        {
+            if (isFriendPanelControllerOpen)
+                friendsPanelController?.CloseFriendsPanel(default(InputAction.CallbackContext));
+            else
+                mvcManager.ShowAsync(FriendsPanelController.IssueCommand(new FriendsPanelParameter()));
+        }
 
         private void OnViewShowed(IController controller)
         {

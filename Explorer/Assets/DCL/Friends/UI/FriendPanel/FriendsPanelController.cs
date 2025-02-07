@@ -128,7 +128,7 @@ namespace DCL.Friends.UI.FriendPanel
             dclInput.UI.Close.performed -= CloseFriendsPanel;
         }
 
-        private void CloseFriendsPanel(InputAction.CallbackContext obj) =>
+        internal void CloseFriendsPanel(InputAction.CallbackContext obj) =>
             closeTaskCompletionSource.TrySetResult();
 
         protected override void OnViewShow() =>
