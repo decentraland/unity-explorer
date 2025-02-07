@@ -23,7 +23,6 @@ using DCL.EventsApi;
 using DCL.FeatureFlags;
 using DCL.Input;
 using DCL.InWorldCamera.CameraReelStorageService;
-using DCL.Landscape;
 using DCL.LOD.Systems;
 using DCL.MapRenderer;
 using DCL.Minimap;
@@ -460,7 +459,9 @@ namespace Global.Dynamic
                 new ClearChatCommand(chatHistory),
                 new ReloadSceneChatCommand(reloadSceneController),
                 new LoadPortableExperienceChatCommand(staticContainer.PortableExperiencesController, staticContainer.FeatureFlagsCache),
-                new KillPortableExperienceChatCommand(staticContainer.PortableExperiencesController, staticContainer.FeatureFlagsCache), new VersionChatCommand()
+                new KillPortableExperienceChatCommand(staticContainer.PortableExperiencesController, staticContainer.FeatureFlagsCache),
+                new VersionChatCommand(),
+                new RoomsChatCommand(roomHub),
             };
 
             chatCommands.Add(new HelpChatCommand(chatCommands, appArgs));
