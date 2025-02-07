@@ -107,7 +107,7 @@ namespace DCL.Notifications.NotificationsMenu
             {
                 view.LoopList.DoActionForEachShownItem((item2, param) =>
                 {
-                    NotificationView notificationView = item2!.GetComponent<NotificationView>();
+                    INotificationView notificationView = item2!.GetComponent<INotificationView>();
                     INotification notificationData = notificationView.Notification;
 
                     ManageNotificationReadStatus(notificationData, true);
@@ -232,10 +232,12 @@ namespace DCL.Notifications.NotificationsMenu
                 case FriendRequestReceivedNotification friendRequestReceivedNotification:
                     FriendsNotificationView friendNotificationView = (FriendsNotificationView)notificationView;
                     friendNotificationView.ConfigureFromReceivedNotificationData(friendRequestReceivedNotification);
+                    friendNotificationView.TimeText.gameObject.SetActive(true);
                     break;
                 case FriendRequestAcceptedNotification friendRequestAcceptedNotification:
                     FriendsNotificationView friendNotificationView2 = (FriendsNotificationView)notificationView;
                     friendNotificationView2.ConfigureFromAcceptedNotificationData(friendRequestAcceptedNotification);
+                    friendNotificationView2.TimeText.gameObject.SetActive(true);
                     break;
             }
         }

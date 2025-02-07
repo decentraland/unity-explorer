@@ -1363,7 +1363,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 156379979973073561, guid: ecd13bf6dffc14c9684f3d75340af2ff, type: 3}
       propertyPath: m_Pivot.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 156379979973073561, guid: ecd13bf6dffc14c9684f3d75340af2ff, type: 3}
       propertyPath: m_Pivot.y
@@ -1371,7 +1371,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 156379979973073561, guid: ecd13bf6dffc14c9684f3d75340af2ff, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 156379979973073561, guid: ecd13bf6dffc14c9684f3d75340af2ff, type: 3}
       propertyPath: m_AnchorMax.y
@@ -1379,7 +1379,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 156379979973073561, guid: ecd13bf6dffc14c9684f3d75340af2ff, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 156379979973073561, guid: ecd13bf6dffc14c9684f3d75340af2ff, type: 3}
       propertyPath: m_AnchorMin.y
@@ -1427,7 +1427,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 156379979973073561, guid: ecd13bf6dffc14c9684f3d75340af2ff, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -8
+      value: -10
       objectReference: {fileID: 0}
     - target: {fileID: 156379979973073561, guid: ecd13bf6dffc14c9684f3d75340af2ff, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -1600,6 +1600,22 @@ PrefabInstance:
     - target: {fileID: 7458666700397644770, guid: ecd13bf6dffc14c9684f3d75340af2ff, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7790241617297123937, guid: ecd13bf6dffc14c9684f3d75340af2ff, type: 3}
+      propertyPath: <NormalColor>k__BackingField.a
+      value: 0.011764706
+      objectReference: {fileID: 0}
+    - target: {fileID: 7790241617297123937, guid: ecd13bf6dffc14c9684f3d75340af2ff, type: 3}
+      propertyPath: <NormalColor>k__BackingField.b
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7790241617297123937, guid: ecd13bf6dffc14c9684f3d75340af2ff, type: 3}
+      propertyPath: <NormalColor>k__BackingField.g
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7790241617297123937, guid: ecd13bf6dffc14c9684f3d75340af2ff, type: 3}
+      propertyPath: <NormalColor>k__BackingField.r
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
