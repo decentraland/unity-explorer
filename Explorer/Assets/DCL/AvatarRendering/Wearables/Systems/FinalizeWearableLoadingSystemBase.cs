@@ -2,7 +2,6 @@
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
-using AssetManagement;
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Loading;
 using DCL.AvatarRendering.Loading.Assets;
@@ -19,35 +18,28 @@ using ECS.Prioritization.Components;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
-using ECS.StreamableLoading.GLTF;
-using ECS.StreamableLoading.Textures;
 using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 using Utility;
 using AssetBundleManifestPromise = ECS.StreamableLoading.Common.AssetPromise<SceneRunner.Scene.SceneAssetBundleManifest, DCL.AvatarRendering.Wearables.Components.GetWearableAssetBundleManifestIntention>;
-using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
 using StreamableResult = ECS.StreamableLoading.Common.Components.StreamableLoadingResult<DCL.AvatarRendering.Wearables.Components.WearablesResolution>;
-
-// Non-Asset-Bundle wearable promises
-using RawGltfPromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.GLTF.GLTFData, ECS.StreamableLoading.GLTF.GetGLTFIntention>;
-using TexturePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.Texture2DData, ECS.StreamableLoading.Textures.GetTextureIntention>;
 
 namespace DCL.AvatarRendering.Wearables.Systems
 {
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     [UpdateBefore(typeof(PrepareGlobalAssetBundleLoadingParametersSystem))]
     [LogCategory(ReportCategory.WEARABLE)]
-    public partial class FinalizeWearableLoadingSystem : FinalizeElementsLoadingSystem<GetWearableDTOByPointersIntention, IWearable, WearableDTO, WearablesDTOList>
+    // Class should be abstract but cannot be due to Arch auto-generated code needs
+    public partial class FinalizeWearableLoadingSystemBase : FinalizeElementsLoadingSystem<GetWearableDTOByPointersIntention, IWearable, WearableDTO, WearablesDTOList>
     {
-        private readonly URLSubdirectory customStreamingSubdirectory;
-        private readonly IRealmData realmData;
-        private readonly IWearableStorage wearableStorage;
+        protected readonly URLSubdirectory customStreamingSubdirectory;
+        protected readonly IRealmData realmData;
+        protected readonly IWearableStorage wearableStorage;
 
-        private SingleInstanceEntity defaultWearablesState;
+        protected SingleInstanceEntity defaultWearablesState;
 
-        public FinalizeWearableLoadingSystem(
+        public FinalizeWearableLoadingSystemBase(
             World world,
             IWearableStorage wearableStorage,
             IRealmData realmData,
@@ -74,17 +66,12 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
             ResolveWearablePromiseQuery(World, defaultWearablesResolved);
 
-            FinalizeRawGltfWearableLoadingQuery(World, defaultWearablesResolved);
-            FinalizeRawFacialFeatureTexLoadingQuery(World, defaultWearablesResolved);
-
-            // Asset Bundles can be Resolved with Embedded Data
             FinalizeAssetBundleManifestLoadingQuery(World, defaultWearablesResolved);
-            FinalizeAssetBundleLoadingQuery(World, defaultWearablesResolved);
         }
 
         [Query]
         [None(typeof(StreamableResult))]
-        private void ResolveWearablePromise([Data] bool defaultWearablesResolved, in Entity entity, ref GetWearablesByPointersIntention wearablesByPointersIntention, ref IPartitionComponent partitionComponent)
+        protected void ResolveWearablePromise([Data] bool defaultWearablesResolved, in Entity entity, ref GetWearablesByPointersIntention wearablesByPointersIntention, ref IPartitionComponent partitionComponent)
         {
             if (wearablesByPointersIntention.CancellationTokenSource.IsCancellationRequested)
             {
@@ -183,9 +170,8 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 World.Add(entity, new StreamableResult(new WearablesResolution(hideWearablesResolution.VisibleWearables, hideWearablesResolution.HiddenCategories)));
         }
 
-        //TODO extract!!!
         [Query]
-        private void FinalizeWearableDTO(Entity entity, ref AssetPromise<WearablesDTOList, GetWearableDTOByPointersIntention> promise, ref BodyShape bodyShape)
+        protected void FinalizeWearableDTO(Entity entity, ref AssetPromise<WearablesDTOList, GetWearableDTOByPointersIntention> promise, ref BodyShape bodyShape)
         {
             if (TryFinalizeIfCancelled(entity, promise))
                 return;
@@ -227,7 +213,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
         }
 
         [Query]
-        private void FinalizeAssetBundleManifestLoading([Data] bool defaultWearablesResolved, Entity entity, ref AssetBundleManifestPromise promise, ref IWearable wearable, ref BodyShape bodyShape)
+        protected void FinalizeAssetBundleManifestLoading([Data] bool defaultWearablesResolved, Entity entity, ref AssetBundleManifestPromise promise, ref IWearable wearable, ref BodyShape bodyShape)
         {
             if (promise.TryForgetWithEntityIfCancelled(entity, World!))
             {
@@ -250,136 +236,10 @@ namespace DCL.AvatarRendering.Wearables.Systems
             }
         }
 
-        [Query]
-        private void FinalizeAssetBundleLoading(
-            [Data] bool defaultWearablesResolved,
-            Entity entity,
-            ref AssetBundlePromise promise,
-            ref IWearable wearable,
-            in BodyShape bodyShape,
-            int index
-        )
-        {
-            if (promise.LoadingIntention.CancellationTokenSource.IsCancellationRequested)
-            {
-                ResetWearableResultOnCancellation(wearable, in bodyShape, index);
-                promise.ForgetLoading(World);
-                World.Destroy(entity);
-                return;
-            }
+        protected virtual bool CreateAssetPromiseIfRequired(IWearable component, in GetWearablesByPointersIntention intention, IPartitionComponent partitionComponent) =>
+            false;
 
-            if (promise.SafeTryConsume(World, GetReportCategory(), out StreamableLoadingResult<AssetBundleData> result))
-            {
-                // every asset in the batch is mandatory => if at least one has already failed set the default wearables
-                if (result.Succeeded && !AnyAssetHasFailed(wearable, bodyShape))
-                    SetWearableResult(wearable, result, in bodyShape, index);
-                else
-                    SetDefaultWearables(defaultWearablesResolved, wearable, in bodyShape);
-
-                wearable.UpdateLoadingStatus(!AllAssetsAreLoaded(wearable, bodyShape));
-                World.Destroy(entity);
-            }
-        }
-
-        [Query]
-        private void FinalizeRawGltfWearableLoading(
-            [Data] bool defaultWearablesResolved,
-            Entity entity,
-            ref RawGltfPromise promise,
-            in IWearable wearable,
-            in BodyShape bodyShape,
-            int index
-        )
-        {
-            if (promise.LoadingIntention.CancellationTokenSource.IsCancellationRequested)
-            {
-                ResetWearableResultOnCancellation(wearable, in bodyShape, index);
-                promise.ForgetLoading(World);
-                World.Destroy(entity);
-                return;
-            }
-
-            if (promise.TryConsume(World, out StreamableLoadingResult<GLTFData> result))
-            {
-                // every asset in the batch is mandatory => if at least one has already failed set the default wearables
-                if (result.Succeeded && !AnyAssetHasFailed(wearable, bodyShape))
-                    SetWearableResult(wearable, result, in bodyShape, index);
-                else
-                    SetDefaultWearables(defaultWearablesResolved, wearable, in bodyShape);
-
-                wearable.UpdateLoadingStatus(!AllAssetsAreLoaded(wearable, bodyShape));
-                World.Destroy(entity);
-            }
-        }
-
-        [Query]
-        private void FinalizeRawFacialFeatureTexLoading(
-            [Data] bool defaultWearablesResolved,
-            Entity entity,
-            ref TexturePromise promise,
-            in IWearable wearable,
-            in BodyShape bodyShape,
-            int index
-        )
-        {
-            if (wearable.Type != WearableType.FacialFeature) return;
-
-            if (promise.LoadingIntention.CancellationTokenSource.IsCancellationRequested)
-            {
-                ResetWearableResultOnCancellation(wearable, in bodyShape, index);
-                promise.ForgetLoading(World);
-                World.Destroy(entity);
-                return;
-            }
-
-            if (promise.TryConsume(World, out StreamableLoadingResult<Texture2DData> result))
-            {
-                // every asset in the batch is mandatory => if at least one has already failed set the default wearables
-                if (result.Succeeded && !AnyAssetHasFailed(wearable, bodyShape))
-                    SetWearableResult(wearable, result, in bodyShape, index);
-                else
-                    SetDefaultWearables(defaultWearablesResolved, wearable, in bodyShape);
-
-                wearable.UpdateLoadingStatus(!AllAssetsAreLoaded(wearable, bodyShape));
-                World.Destroy(entity);
-            }
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static bool AllAssetsAreLoaded(IWearable wearable, BodyShape bodyShape)
-        {
-            for (var i = 0; i < wearable.WearableAssetResults[bodyShape].Results.Length; i++)
-                if (wearable.WearableAssetResults[bodyShape].Results[i] is not { IsInitialized: true })
-                    return false;
-
-            return true;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static bool AnyAssetHasFailed(IWearable wearable, BodyShape bodyShape) =>
-            wearable.WearableAssetResults[bodyShape].ReplacedWithDefaults;
-
-        private bool CreateAssetPromiseIfRequired(IWearable component, in GetWearablesByPointersIntention intention, IPartitionComponent partitionComponent)
-        {
-            bool dtoHasContentDownloadUrl = !string.IsNullOrEmpty(component.DTO.ContentDownloadUrl);
-
-            // Do not repeat the promise if already failed once. Otherwise it will end up in an endless loading:true state
-            if (!dtoHasContentDownloadUrl && component.ManifestResult is { Succeeded: false }) return false;
-
-            if (EnumUtils.HasFlag(intention.PermittedSources, AssetSource.WEB) // Manifest is required for Web loading only
-                && !dtoHasContentDownloadUrl && component.ManifestResult == null)
-                return component.CreateAssetBundleManifestPromise(World, intention.BodyShape, intention.CancellationTokenSource, partitionComponent);
-
-            if (component.TryCreateAssetPromise(in intention, customStreamingSubdirectory, partitionComponent, World, GetReportCategory()))
-            {
-                component.UpdateLoadingStatus(true);
-                return true;
-            }
-
-            return false;
-        }
-
-        private void CreateMissingPointersPromise(List<URN> missingPointers, GetWearablesByPointersIntention intention, IPartitionComponent partitionComponent)
+        protected void CreateMissingPointersPromise(List<URN> missingPointers, GetWearablesByPointersIntention intention, IPartitionComponent partitionComponent)
         {
             var wearableDtoByPointersIntention = new GetWearableDTOByPointersIntention(
                 missingPointers,
@@ -390,7 +250,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
             World.Create(promise, intention.BodyShape, partitionComponent);
         }
 
-        private void SetDefaultWearables(bool defaultWearablesLoaded, IWearable wearable, in BodyShape bodyShape)
+        protected void SetDefaultWearables(bool defaultWearablesLoaded, IWearable wearable, in BodyShape bodyShape)
         {
             if (!defaultWearablesLoaded)
             {
@@ -448,7 +308,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
         /// <summary>
         ///     If the loading of the asset was cancelled reset the promise so we can start downloading it again with a new intent
         /// </summary>
-        private static void ResetWearableResultOnCancellation(IWearable wearable, in BodyShape bodyShape, int index)
+        protected static void ResetWearableResultOnCancellation(IWearable wearable, in BodyShape bodyShape, int index)
         {
             wearable.UpdateLoadingStatus(false);
 
@@ -470,19 +330,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 ResetBodyShape(bodyShape);
         }
 
-        // Asset Bundle Wearable
-        private static void SetWearableResult(IWearable wearable, StreamableLoadingResult<AssetBundleData> result, in BodyShape bodyShape, int index)
-            => SetWearableResult(wearable, result.ToWearableAsset(wearable), bodyShape, index);
-
-        // Raw GLTF Wearable
-        private static void SetWearableResult(IWearable wearable, StreamableLoadingResult<GLTFData> result, in BodyShape bodyShape, int index)
-            => SetWearableResult(wearable, result.ToWearableAsset(wearable), bodyShape, index);
-
-        // Raw Facial Feature Wearable
-        private static void SetWearableResult(IWearable wearable, StreamableLoadingResult<Texture2DData> result, in BodyShape bodyShape, int index)
-            => SetWearableResult(wearable, result.ToWearableAsset(wearable), bodyShape, index);
-
-        private static void SetWearableResult(IWearable wearable, StreamableLoadingResult<AttachmentAssetBase> wearableResult, in BodyShape bodyShape, int index)
+        protected static void SetWearableResult(IWearable wearable, StreamableLoadingResult<AttachmentAssetBase> wearableResult, in BodyShape bodyShape, int index)
         {
             if (wearable.IsUnisex() && wearable.HasSameModelsForAllGenders())
             {

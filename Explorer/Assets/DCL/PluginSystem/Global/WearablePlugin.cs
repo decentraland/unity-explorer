@@ -84,7 +84,7 @@ namespace DCL.AvatarRendering.Wearables
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in GlobalPluginArguments arguments)
         {
-            FinalizeWearableLoadingSystem.InjectToWorld(ref builder, wearableStorage, realmData, WEARABLES_EMBEDDED_SUBDIRECTORY);
+            FinalizeAssetBundleWearableLoadingSystemBase.InjectToWorld(ref builder, wearableStorage, realmData, WEARABLES_EMBEDDED_SUBDIRECTORY);
             LoadWearablesByParamSystem.InjectToWorld(ref builder, webRequestController, new NoCache<WearablesResponse, GetWearableByParamIntention>(false, false), realmData, EXPLORER_SUBDIRECTORY, WEARABLES_COMPLEMENT_URL, wearableStorage, builderContentURL);
             LoadWearablesDTOByPointersSystem.InjectToWorld(ref builder, webRequestController, new NoCache<WearablesDTOList, GetWearableDTOByPointersIntention>(false, false));
             LoadWearableAssetBundleManifestSystem.InjectToWorld(ref builder, new NoCache<SceneAssetBundleManifest, GetWearableAssetBundleManifestIntention>(true, true), assetBundleURL, webRequestController);
@@ -92,6 +92,7 @@ namespace DCL.AvatarRendering.Wearables
 
             if (builderWearablesPreview)
             {
+                FinalizeRawWearableLoadingSystemBase.InjectToWorld(ref builder, wearableStorage, realmData, WEARABLES_EMBEDDED_SUBDIRECTORY);
                 LoadGLTFSystem.InjectToWorld(ref builder,
                     new NoCache<GLTFData, GetGLTFIntention>(false, false),
                     webRequestController,
