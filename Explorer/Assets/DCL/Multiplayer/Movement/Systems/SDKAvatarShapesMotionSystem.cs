@@ -35,7 +35,7 @@ namespace DCL.Multiplayer.Movement.Systems
         {
             UpdateRotation(characterTransformComponent, ref characterLastPositionComponent);
             UpdateAnimations(view, characterTransformComponent, ref characterLastPositionComponent, ref animationComponent);
-            UpdateLastPosition(ref characterTransformComponent, ref characterLastPositionComponent);
+            characterLastPositionComponent.LastPosition = characterTransformComponent.Transform.position;
         }
 
         private static void UpdateRotation(
@@ -98,10 +98,5 @@ namespace DCL.Multiplayer.Movement.Systems
             animationComponent.States.IsLongFall = false;
             animationComponent.States.IsFalling = false;
         }
-
-        private static void UpdateLastPosition(
-            ref CharacterTransform characterTransformComponent,
-            ref CharacterLastPosition characterLastPositionComponent) =>
-            characterLastPositionComponent.LastPosition = characterTransformComponent.Transform.position;
     }
 }
