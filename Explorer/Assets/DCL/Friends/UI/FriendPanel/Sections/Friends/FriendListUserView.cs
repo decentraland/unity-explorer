@@ -19,7 +19,9 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 
         public override void Configure(FriendProfile profile, IWebRequestController webRequestController, IProfileThumbnailCache profileThumbnailCache)
         {
-            buttons = new[] { JumpInButton, ContextMenuButton };
+            buttons.Clear();
+            buttons.Add(JumpInButton);
+            buttons.Add(ContextMenuButton);
             base.Configure(profile, webRequestController, profileThumbnailCache);
             SetOnlineStatus(OnlineStatus.OFFLINE);
         }
@@ -30,7 +32,11 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             OnlineStatusText.SetText(configurationData.StatusText);
             OnlineStatusColorIndicator.color = configurationData.StatusColor;
 
-            buttons = onlineStatus == OnlineStatus.OFFLINE ? new[] { ContextMenuButton } : new[] { JumpInButton, ContextMenuButton };
+            buttons.Clear();
+            buttons.Add(ContextMenuButton);
+
+            if (onlineStatus != OnlineStatus.OFFLINE)
+                buttons.Add(JumpInButton);
         }
 
         public void ToggleOnlineStatus(bool isActive)
@@ -39,7 +45,10 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             OnlineStatusIndicator.SetActive(isActive);
 
             if (!isActive)
-                buttons = new[] { ContextMenuButton };
+            {
+                buttons.Clear();
+                buttons.Add(ContextMenuButton);
+            }
         }
     }
 }

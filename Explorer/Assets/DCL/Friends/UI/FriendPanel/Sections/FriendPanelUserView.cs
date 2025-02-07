@@ -3,6 +3,7 @@ using DCL.Chat;
 using DCL.UI;
 using DCL.WebRequests;
 using System;
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -12,7 +13,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections
 {
     public class FriendPanelUserView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {
-        protected Button[] buttons { get; set; }
+        protected List<Button> buttons = new ();
+
         [field: SerializeField] public Image Background { get; private set; }
         [field: SerializeField] public Color NormalColor { get; private set; }
         [field: SerializeField] public Color HoveredColor { get; private set; }
@@ -96,7 +98,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections
 
         protected virtual void ToggleButtonView(bool isActive)
         {
-            for (int i = 0; i < buttons.Length; i++)
+            for (int i = 0; i < buttons.Count; i++)
                 buttons[i].gameObject.SetActive(isActive);
         }
 

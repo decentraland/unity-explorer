@@ -43,12 +43,16 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
 
         private void InhibitInteractionButtons()
         {
-            buttons = new [] { ContextMenuButton };
+            buttons.Clear();
+            buttons.Add(ContextMenuButton);
         }
 
         public override void Configure(FriendProfile profile, IWebRequestController webRequestController, IProfileThumbnailCache profileThumbnailCache)
         {
-            buttons = new[] { ContextMenuButton, DeleteButton, AcceptButton };
+            buttons.Clear();
+            buttons.Add(ContextMenuButton);
+            buttons.Add(DeleteButton);
+            buttons.Add(AcceptButton);
             base.Configure(profile, webRequestController, profileThumbnailCache);
         }
 
