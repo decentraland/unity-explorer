@@ -1,7 +1,5 @@
-using DCL.WebRequests.PartialDownload;
 using System;
 using System.Buffers;
-using System.IO;
 using UnityEngine;
 using UnityEngine.Networking;
 

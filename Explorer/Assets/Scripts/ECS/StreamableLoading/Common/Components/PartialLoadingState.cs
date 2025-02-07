@@ -11,8 +11,6 @@ namespace ECS.StreamableLoading.Common.Components
 
         public readonly int FullFileSize;
 
-        // Add expiration time/TTL/additional data here as required
-
         private MemoryOwner<byte> memoryOwner;
 
         public PartialLoadingState(int fullFileSize)

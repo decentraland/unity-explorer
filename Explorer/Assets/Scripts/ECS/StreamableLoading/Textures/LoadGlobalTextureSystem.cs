@@ -4,8 +4,6 @@ using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.Diagnostics;
 using DCL.WebRequests;
 using ECS.StreamableLoading.Cache;
-using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
-using System.Buffers;
 using ECS.StreamableLoading.Cache.Disk;
 
 namespace ECS.StreamableLoading.Textures
