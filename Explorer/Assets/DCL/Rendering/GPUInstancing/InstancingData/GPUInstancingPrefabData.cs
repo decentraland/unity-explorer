@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEngine;
 
 namespace DCL.Roads.GPUInstancing.Playground
@@ -9,40 +10,78 @@ namespace DCL.Roads.GPUInstancing.Playground
     [Serializable]
     public class GPUInstancingPrefabData : MonoBehaviour
     {
-        private static string[] whitelistedShaders = { "DCL/Scene", "Universal Render Pipeline/Nature/Stylized Grass" };
-
         public List<GPUInstancingCandidate> indirectCandidates;
         public List<GPUInstancingCandidate> directCandidates;
 
         public List<Renderer> InstancedRenderers;
         public List<LODGroup> InstancedLODGroups;
 
+        public Shader[] whitelistShaders;
+
         [ContextMenu(nameof(CollectSelfData))]
         public void CollectSelfData()
         {
 #if UNITY_EDITOR
-            if (transform.position != Vector3.zero)
-                transform.position = Vector3.zero;
+            string assetPath = PrefabUtility.GetPrefabAssetPathOfNearestInstanceRoot(gameObject);
 
-            if (transform.rotation != Quaternion.identity)
-                transform.rotation = Quaternion.identity;
+            if (string.IsNullOrEmpty(assetPath))
+                return;
 
-            if (transform.localScale != Vector3.one)
-                transform.localScale = Vector3.one;
+            // AssetDatabase.Refresh();
 
-            if (PrefabUtility.IsPartOfPrefabAsset(gameObject))
+            // FIX (VIt): we need to open prefab in stage mode, so Unity correctly recognize shaders (otherwise sometimes it will use just default Lit shader and ruin our ValidShader check)
+            PrefabStage prefabStage = PrefabStageUtility.OpenPrefab(assetPath);
+
+            foreach (Shader whitelistedShader in whitelistShaders)
             {
-                indirectCandidates = new List<GPUInstancingCandidate>();
-                directCandidates = new List<GPUInstancingCandidate>();
-                InstancedRenderers = new List<Renderer>();
-                InstancedLODGroups = new List<LODGroup>();
-
-                CollectInstancingCandidatesFromStandaloneMeshes();
-                CollectInstancingCandidatesFromLODGroups();
-
-                SavePrefabChanges();
+                string shaderPath = AssetDatabase.GetAssetPath(whitelistedShader);
+                Shader loadedShader = AssetDatabase.LoadAssetAtPath<Shader>(shaderPath);
             }
+            GameObject prefabRoot = prefabStage.prefabContentsRoot;
+
+            // Force shader reload on all materials
+            foreach (MeshRenderer renderer in prefabRoot.GetComponentsInChildren<MeshRenderer>())
+            foreach (Material mat in renderer.sharedMaterials)
+            {
+                if (mat != null)
+                {
+                    string shaderName = mat.shader.name;
+                    var m = new Material(Shader.Find(shaderName));
+                }
+            }
+
+            AssetDatabase.Refresh();
+            EditorApplication.delayCall += () =>
+            {
+                try
+                {
+                    GPUInstancingPrefabData instanceComponent = prefabRoot.GetComponent<GPUInstancingPrefabData>();
+
+                    instanceComponent.SetPrefabRootTransformToZero();
+                    instanceComponent.indirectCandidates = new List<GPUInstancingCandidate>();
+                    instanceComponent.directCandidates = new List<GPUInstancingCandidate>();
+                    instanceComponent.InstancedRenderers = new List<Renderer>();
+                    instanceComponent.InstancedLODGroups = new List<LODGroup>();
+                    instanceComponent.CollectInstancingCandidatesFromStandaloneMeshes(instanceComponent.GetComponentsInChildren<MeshRenderer>(false));
+                    instanceComponent.CollectInstancingCandidatesFromLODGroups(instanceComponent.GetComponentsInChildren<LODGroup>(false));
+
+                    EditorSceneManager.MarkSceneDirty(prefabStage.scene);
+                    StageUtility.GoToMainStage();
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError($"Error during collection: {e}");
+                    StageUtility.GoToMainStage();
+                }
+            };
 #endif
+        }
+
+        private void SetPrefabRootTransformToZero()
+        {
+            if (transform.position != Vector3.zero) transform.position = Vector3.zero;
+            if (transform.rotation != Quaternion.identity) transform.rotation = Quaternion.identity;
+            if (transform.localScale != Vector3.one) transform.localScale = Vector3.one;
         }
 
         private void SavePrefabChanges()
@@ -54,6 +93,7 @@ namespace DCL.Roads.GPUInstancing.Playground
             EditorUtility.SetDirty(this);
 
             string assetPath = PrefabUtility.GetPrefabAssetPathOfNearestInstanceRoot(gameObject);
+
             if (!string.IsNullOrEmpty(assetPath))
                 AssetDatabase.SaveAssetIfDirty(AssetDatabase.LoadAssetAtPath<GameObject>(assetPath));
 #endif
@@ -62,10 +102,7 @@ namespace DCL.Roads.GPUInstancing.Playground
         [ContextMenu(nameof(HideVisuals))]
         public void HideVisuals()
         {
-            foreach (Renderer instancedRenderer in InstancedRenderers)
-            {
-                instancedRenderer.enabled = false;
-            }
+            foreach (Renderer instancedRenderer in InstancedRenderers) { instancedRenderer.enabled = false; }
         }
 
         public void ShowVisuals()
@@ -74,9 +111,9 @@ namespace DCL.Roads.GPUInstancing.Playground
             foreach (LODGroup lodGroup in InstancedLODGroups) lodGroup.enabled = true;
         }
 
-        private void CollectInstancingCandidatesFromLODGroups()
+        private void CollectInstancingCandidatesFromLODGroups(LODGroup[] lodGroups)
         {
-            foreach (LODGroup lodGroup in gameObject.GetComponentsInChildren<LODGroup>(true))
+            foreach (LODGroup lodGroup in lodGroups)
             {
                 LOD[] lods = lodGroup.GetLODs();
 
@@ -94,7 +131,7 @@ namespace DCL.Roads.GPUInstancing.Playground
 
                     foreach (Renderer lodRenderer in lod.renderers)
                     {
-                        if (lodRenderer is MeshRenderer)// && IsValidShader(lodRenderer.sharedMaterials))
+                        if (lodRenderer is MeshRenderer) // && IsValidShader(lodRenderer.sharedMaterials))
                         {
                             InstancedRenderers.Add(lodRenderer);
                             addedRenderers++;
@@ -116,15 +153,27 @@ namespace DCL.Roads.GPUInstancing.Playground
             }
         }
 
-        private void CollectInstancingCandidatesFromStandaloneMeshes()
+        private void CollectInstancingCandidatesFromStandaloneMeshes(MeshRenderer[] meshRenderers)
         {
-            foreach (MeshRenderer mr in GetComponentsInChildren<MeshRenderer>(true))
+            foreach (MeshRenderer mr in meshRenderers)
             {
-                if (mr == null || mr.sharedMaterial == null || mr.GetComponent<MeshFilter>().sharedMesh == null)// || !IsValidShader(mr.sharedMaterials))
+                if (mr == null || mr.sharedMaterial == null || mr.GetComponent<MeshFilter>().sharedMesh == null
+                    || !mr.gameObject.activeSelf || mr.gameObject.name.EndsWith("_collider")
+                    || !GPUInstancingCandidate.IsValidShader(mr.sharedMaterials, whitelistShaders))
                     continue;
 
-                if (!AssignedToLODGroupInPrefabHierarchy(mr.transform))
+                if (!AssignedToLODGroupInPrefabHierarchy(mr))
                 {
+                    Debug.Log($"0 mesh {mr.transform.name} is without LOD", mr.gameObject);
+
+                    if (!GPUInstancingCandidate.IsValidShader(mr.sharedMaterials, whitelistShaders))
+                    {
+                        Debug.Log($"1.0 mesh {mr.transform.name} has no valid shader {mr.sharedMaterial.shader.name}", mr.gameObject);
+                        continue;
+                    }
+
+                    Debug.Log($"1.1 mesh {mr.transform.name} is valid, adding it", mr.gameObject);
+
                     InstancedRenderers.Add(mr);
 
                     Matrix4x4 localToRootMatrix = transform.worldToLocalMatrix * mr.transform.localToWorldMatrix; // root * child
@@ -140,7 +189,7 @@ namespace DCL.Roads.GPUInstancing.Playground
         {
             foreach (GPUInstancingCandidate existingCandidate in collectedCandidates)
             {
-                if (IsRenderingDataSame(meshRenderer, existingCandidate))
+                if (IsSingleRenderingDataSame(meshRenderer, existingCandidate))
                 {
                     Debug.Log($"Same single mesh: {meshRenderer.name} and {existingCandidate.Transform.name}", meshRenderer);
                     AddInstance(existingCandidate, localToRootMatrix);
@@ -202,8 +251,8 @@ namespace DCL.Roads.GPUInstancing.Playground
             return true;
         }
 
-        private bool IsRenderingDataSame(MeshRenderer meshRenderer, GPUInstancingCandidate existing) =>
-            AreSamePrefabAsset(meshRenderer.gameObject, existing.Reference?.gameObject) || AreMeshRenderersEquivalent(meshRenderer, existing.Lods[0].MeshRenderingDatas[0].Renderer);
+        private bool IsSingleRenderingDataSame(MeshRenderer meshRenderer, GPUInstancingCandidate existing) =>
+            AreMeshRenderersEquivalent(meshRenderer, existing.Lods[0].MeshRenderingDatas[0].Renderer);
 
         public static bool AreMeshRenderersEquivalent(MeshRenderer mrA, MeshRenderer mrB)
         {
@@ -252,11 +301,11 @@ namespace DCL.Roads.GPUInstancing.Playground
         private void AddNewCandidate(LODGroup lodGroup, Matrix4x4 localToRootMatrix, List<GPUInstancingCandidate> collectedCandidates)
         {
             if (ValidLODGroup(lodGroup))
-                collectedCandidates.Add(new GPUInstancingCandidate(lodGroup, localToRootMatrix));
+                collectedCandidates.Add(new GPUInstancingCandidate(lodGroup, localToRootMatrix, whitelistShaders));
         }
 
         private void AddNewStandaloneMeshCandidate(MeshRenderer meshRenderer, Matrix4x4 localToRootMatrix, List<GPUInstancingCandidate> collectedCandidates) =>
-            collectedCandidates.Add(new GPUInstancingCandidate(meshRenderer, localToRootMatrix));
+            collectedCandidates.Add(new GPUInstancingCandidate(meshRenderer, localToRootMatrix, whitelistShaders));
 
         private bool ValidLODGroup(LODGroup lodGroup)
         {
@@ -278,14 +327,13 @@ namespace DCL.Roads.GPUInstancing.Playground
             existingCandidate.InstancesBuffer.Add(new PerInstanceBuffer(localToRootMatrix));
         }
 
-        private bool AssignedToLODGroupInPrefabHierarchy(Transform transform)
+        private bool AssignedToLODGroupInPrefabHierarchy(MeshRenderer renderer)
         {
-            Transform current = transform;
-            Transform root = this.transform;
+            Transform current = renderer.transform;
 
-            while (current != root && current != null)
+            while (current != transform && current != null)
             {
-                if (current.GetComponent<LODGroup>() != null)
+                if (IsAssignedToTheGroup(current.GetComponent<LODGroup>(), renderer))
                     return true;
 
                 current = current.parent;
@@ -294,64 +342,9 @@ namespace DCL.Roads.GPUInstancing.Playground
             return false;
         }
 
-        private bool IsValidShader(Material[] materials)
+        private bool IsAssignedToTheGroup(LODGroup getComponent, MeshRenderer meshRenderer)
         {
-            if (materials == null) return false;
-
-            foreach (Material m in materials)
-            {
-                Debug.Log(m.shader.name);
-
-                if (m == null)
-                    return false;
-
-                foreach (var mat in materials)
-                foreach (string shader in whitelistedShaders)
-                    return shader.Contains(mat.name);
-            }
-
-            return false;
+            return getComponent != null && getComponent.GetLODs().Any(lod => lod.renderers.Any(lodRenderer => meshRenderer == lodRenderer));
         }
-
-        // private bool IsValidShader(Material[] materials)
-        // {
-        //     if (materials == null)
-        //     {
-        //         Debug.LogWarning($"[{gameObject.name}] Materials array is null");
-        //         return false;
-        //     }
-        //
-        //     if (materials.Length == 0)
-        //     {
-        //         Debug.LogWarning($"[{gameObject.name}] Materials array is empty");
-        //         return false;
-        //     }
-        //
-        //     foreach (Material m in materials)
-        //     {
-        //         if (m == null)
-        //         {
-        //             Debug.LogWarning($"[{gameObject.name}] Found null material in materials array");
-        //             return false;
-        //         }
-        //
-        //         if (m.shader == null)
-        //         {
-        //             Debug.LogWarning($"[{gameObject.name}] Material {m.name} has null shader");
-        //             return false;
-        //         }
-        //
-        //         string shaderName = m.shader.name;
-        //         Debug.Log($"[{gameObject.name}] Checking shader: {shaderName}");
-        //
-        //         if (!whitelistedShaders.Contains(shaderName))
-        //         {
-        //             Debug.LogWarning($"[{gameObject.name}] Shader {shaderName} is not in whitelist: [{string.Join(", ", whitelistedShaders)}]");
-        //             return false;
-        //         }
-        //     }
-        //
-        //     return true;
-        // }
     }
 }

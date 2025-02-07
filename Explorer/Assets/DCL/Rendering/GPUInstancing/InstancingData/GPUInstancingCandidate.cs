@@ -28,7 +28,7 @@ namespace DCL.Roads.GPUInstancing.Playground
 
         public float[] LodsScreenSpaceSizes;
         public List<GPUInstancingLodLevel> Lods;
-        private static string[] whitelistedShaders = {"DCL/Scene", "Universal Render Pipeline/Nature/Stylized Grass" };
+        public Shader[] whitelistedShaders;
 
         public GPUInstancingCandidate(GPUInstancingCandidate candidate)
         {
@@ -53,13 +53,15 @@ namespace DCL.Roads.GPUInstancing.Playground
             Lods = candidate.Lods;
         }
 
-        public GPUInstancingCandidate(LODGroup lodGroup, Matrix4x4 localToRootMatrix)
+        public GPUInstancingCandidate(LODGroup lodGroup, Matrix4x4 localToRootMatrix, Shader[] whitelistShaders)
         {
+            this.whitelistedShaders = whitelistShaders;
+
             Reference = lodGroup;
             Transform = lodGroup.transform;
             Name = lodGroup.transform.name;
 
-            UnityEngine.LOD[] lodLevels = lodGroup.GetLODs();
+            LOD[] lodLevels = lodGroup.GetLODs();
             lodGroup.RecalculateBounds();
 
             InstancesBuffer = new List<PerInstanceBuffer> { new () { instMatrix = localToRootMatrix } };
@@ -71,7 +73,7 @@ namespace DCL.Roads.GPUInstancing.Playground
 
             for (var i = 0; i < lodLevels.Length && i < MAX_LODS_LEVEL; i++)
             {
-                UnityEngine.LOD lod = lodLevels[i];
+                LOD lod = lodLevels[i];
 
                 LodsScreenSpaceSizes[i] = lod.screenRelativeTransitionHeight;
 
@@ -79,7 +81,7 @@ namespace DCL.Roads.GPUInstancing.Playground
 
                 foreach (Renderer renderer in lod.renderers)
                 {
-                    if (renderer is MeshRenderer meshRenderer && renderer.sharedMaterial != null)// && IsValidShader(meshRenderer.sharedMaterials))
+                    if (renderer is MeshRenderer meshRenderer && renderer.sharedMaterial != null && IsValidShader(meshRenderer.sharedMaterials, whitelistedShaders))
                         lodMeshes.Add(new MeshRenderingData(meshRenderer));
                 }
 
@@ -90,9 +92,11 @@ namespace DCL.Roads.GPUInstancing.Playground
             UpdateBounds();
         }
 
-        public GPUInstancingCandidate(MeshRenderer meshRenderer, Matrix4x4 localToRootMatrix)
+        public GPUInstancingCandidate(MeshRenderer meshRenderer, Matrix4x4 localToRootMatrix, Shader[] whitelistShaders)
         {
-            if (meshRenderer.sharedMaterial == null)// || !IsValidShader(meshRenderer.sharedMaterials))
+            this.whitelistedShaders = whitelistShaders;
+
+            if (meshRenderer.sharedMaterial == null||!IsValidShader(meshRenderer.sharedMaterials, whitelistedShaders))
                 return;
 
             Reference = null; // No LODGroup
@@ -115,23 +119,41 @@ namespace DCL.Roads.GPUInstancing.Playground
             UpdateBounds();
         }
 
-        private bool IsValidShader(Material[] materials)
+        public static bool IsValidShader(Material[] materials, Shader[] whitelistShaders)
         {
-            if (materials == null) return false;
+            if (materials == null || materials.Length == 0) return false;
 
-            foreach (var m in materials)
+            foreach (Material m in materials)
             {
-                Debug.Log(m.shader.name);
-                if (m == null || !whitelistedShaders.Contains(m.shader.name))
+                if (m == null)
                     return false;
+
+                if (!IsInWhitelist(m, whitelistShaders))
+                {
+                    Debug.LogWarning($"Material {m.name} uses non-whitelisted shader: {m.shader.name}");
+                    return false;
+                }
             }
 
             return true;
         }
 
+        private static bool IsInWhitelist(Material material, Shader[] whitelistShaders)
+        {
+            if (whitelistShaders == null || whitelistShaders.Length == 0)
+            {
+                Debug.LogError("No whitelist shaders defined!");
+                return false;
+            }
+
+            return whitelistShaders.Where(shader => shader != null).
+                                      Any(shader => material.shader == shader || material.shader.name == shader.name || material.shader.name.StartsWith(shader.name) || shader.name.StartsWith(material.shader.name));
+        }
+
         public void PopulateDirectInstancingBuffer()
         {
             InstancesBufferDirect = new List<Matrix4x4>(InstancesBuffer.Count);
+
             for (var i = 0; i < InstancesBuffer.Count; i++)
                 InstancesBufferDirect.Add(InstancesBuffer[i].instMatrix);
         }
@@ -166,7 +188,6 @@ namespace DCL.Roads.GPUInstancing.Playground
 
             if (Lods.Count != other.Lods.Count)
                 return false;
-
 
             for (var i = 0; i < Lods.Count; i++)
             {

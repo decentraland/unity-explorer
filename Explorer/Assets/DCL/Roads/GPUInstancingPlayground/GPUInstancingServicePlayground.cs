@@ -45,11 +45,6 @@ namespace DCL.Roads.GPUInstancing
             {
                 prefab.CollectSelfData();
                 prefab.ShowVisuals();
-
-#if UNITY_EDITOR
-                EditorUtility.SetDirty(this);
-                AssetDatabase.SaveAssets();
-#endif
             }
         }
 
