@@ -73,7 +73,7 @@ namespace DCL.Multiplayer.Movement.Systems
             if (oldPosition != currentPosition)
             {
                 float speed = Vector3.Distance(oldPosition, currentPosition) / UnityEngine.Time.deltaTime;
-                movementBlendValue = speed > RemotePlayerUtils.RUN_SPEED_THRESHOLD ? 3 : speed > RemotePlayerUtils.JOG_SPEED_THRESHOLD ? 2 : 1;
+                movementBlendValue = RemotePlayerUtils.GetBlendValueFromSpeed(speed);
             }
 
             SetGroundedMovement(ref animationComponent, movementBlendValue);

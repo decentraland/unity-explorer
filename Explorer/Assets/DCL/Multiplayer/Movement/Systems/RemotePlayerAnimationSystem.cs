@@ -125,8 +125,7 @@ namespace DCL.Multiplayer.Movement.Systems
             float speed = Vector3.Distance(intComp.Start.position, intComp.End.position) / intComp.TotalDuration;
 
             // 3 - run, 2 - jog, 1 - walk.
-            float midPointBlendValue = speed > RemotePlayerUtils.RUN_SPEED_THRESHOLD ? 3 :
-                speed > RemotePlayerUtils.JOG_SPEED_THRESHOLD ? 2 : 1;
+            float midPointBlendValue = RemotePlayerUtils.GetBlendValueFromSpeed(speed);
 
             float lerpValue = intComp.Time / intComp.TotalDuration;
 
