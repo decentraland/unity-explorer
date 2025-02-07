@@ -7,6 +7,7 @@ using DCL.Character.Components;
 using DCL.CharacterMotion.Animation;
 using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
+using DCL.Utilities;
 using ECS.Abstract;
 using UnityEngine;
 
@@ -16,9 +17,7 @@ namespace DCL.Multiplayer.Movement.Systems
     [LogCategory(ReportCategory.AVATAR)]
     public partial class SDKAvatarShapesMotionSystem : BaseUnityLoopSystem
     {
-        private const float ROTATION_SPEED = 5f;
-        private const float RUN_SPEED_THRESHOLD = 9.5f;
-        private const float JOG_SPEED_THRESHOLD = 4f;
+        public const float ROTATION_SPEED = 5f;
 
         private SDKAvatarShapesMotionSystem(World world) : base(world) { }
 
@@ -73,7 +72,7 @@ namespace DCL.Multiplayer.Movement.Systems
             if (oldPosition != currentPosition)
             {
                 float speed = Vector3.Distance(oldPosition, currentPosition) / UnityEngine.Time.deltaTime;
-                movementBlendValue = speed > RUN_SPEED_THRESHOLD ? 3 : speed > JOG_SPEED_THRESHOLD ? 2 : 1;
+                movementBlendValue = speed > RemotePlayerUtils.RUN_SPEED_THRESHOLD ? 3 : speed > RemotePlayerUtils.JOG_SPEED_THRESHOLD ? 2 : 1;
             }
 
             SetGroundedMovement(ref animationComponent, movementBlendValue);
