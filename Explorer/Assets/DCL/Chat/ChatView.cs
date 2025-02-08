@@ -31,6 +31,14 @@ namespace DCL.Chat
         [SerializeField]
         private float BackgroundFadeTime = 0.2f;
 
+        [Tooltip("The time it waits, in seconds, since the scroll view reaches the bottom until the scroll-to-bottom button starts hiding.")]
+        [SerializeField]
+        private float scrollToBottomButtonTimeBeforeHiding = 2.0f;
+
+        [Tooltip("The time it takes, in seconds, for the scroll-to-bottom button to fade out.")]
+        [SerializeField]
+        private float scrollToBottomButtonFadeOutDuration = 0.5f;
+
         [Header("UI elements")]
         [FormerlySerializedAs("ChatBubblesToggle")]
         [SerializeField]
@@ -55,6 +63,9 @@ namespace DCL.Chat
 
         [SerializeField]
         private TMP_Text scrollToBottomNumberText;
+
+        [SerializeField]
+        private CanvasGroup scrollToBottomCanvasGroup;
 
         [Header("Audio")]
         [SerializeField]
@@ -95,7 +106,6 @@ namespace DCL.Chat
         /// </summary>
         public event ScrollBottomReachedDelegate ScrollBottomReached;
 
-        private IReadOnlyList<ChatMessage> chatMessages;
         private ViewDependencies viewDependencies;
         private UniTaskCompletionSource closePopupTask;
 
@@ -151,10 +161,18 @@ namespace DCL.Chat
         /// <summary>
         /// Gets or sets whether the Unread messages count (AKA scroll-to-bottom button) is visible or not.
         /// </summary>
-        public bool IsUnreadMessagesCountVisible
+        public bool IsScrollToBottomButtonVisible
         {
             get => scrollToBottomButton.gameObject.activeInHierarchy;
-            set => scrollToBottomButton.gameObject.SetActive(value);
+
+            set
+            {
+                // Resets animation
+                scrollToBottomCanvasGroup.DOKill();
+                scrollToBottomCanvasGroup.alpha = value ? 1.0f : 0.0f;
+
+                scrollToBottomButton.gameObject.SetActive(value);
+            }
         }
 
         private void Start()
@@ -235,7 +253,7 @@ namespace DCL.Chat
                 if (!value)
                 {
                     chatMessageViewer.HideSeparator();
-                    IsUnreadMessagesCountVisible = false;
+                    IsScrollToBottomButtonVisible = false;
                     previousPendingMessages = 0;
                 }
             }
@@ -300,7 +318,7 @@ namespace DCL.Chat
 
             chatMessageViewer.RefreshMessages();
 
-            IsUnreadMessagesCountVisible = IsUnfolded && !IsScrollAtBottom && pendingMessages != 0;
+            IsScrollToBottomButtonVisible = IsUnfolded && !IsScrollAtBottom && pendingMessages != 0;
 
             if (pendingMessages > 0)
                 scrollToBottomNumberText.text = pendingMessages > 9 ? "+9" : pendingMessages.ToString();
@@ -432,7 +450,7 @@ namespace DCL.Chat
 
         private void OnInputSubmitted(string messageToSend, string origin)
         {
-            InputSubmitted?.Invoke(currentChannel, messageToSend, origin);
+            InputSubmitted?.Invoke(currentChannel!, messageToSend, origin);
         }
 
         private void OnToggleChatBubblesValueChanged(bool isToggled)
@@ -445,10 +463,12 @@ namespace DCL.Chat
 
         private void OnChatMessageViewerScrollPositionChanged(Vector2 scrollPosition)
         {
-            if (chatMessageViewer.IsScrollAtBottom)
+            if (chatMessageViewer.IsScrollAtBottom && currentChannel!.Messages.Count != 0)
             {
-                IsUnreadMessagesCountVisible = false;
                 previousPendingMessages = 0;
+
+                if (IsScrollToBottomButtonVisible)
+                    scrollToBottomCanvasGroup.DOFade(0.0f, scrollToBottomButtonFadeOutDuration).SetDelay(scrollToBottomButtonTimeBeforeHiding).OnComplete(() => { IsScrollToBottomButtonVisible = false; });
 
                 ScrollBottomReached?.Invoke();
             }

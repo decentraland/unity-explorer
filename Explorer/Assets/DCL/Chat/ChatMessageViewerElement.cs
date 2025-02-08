@@ -185,16 +185,19 @@ namespace DCL.Chat
             {
                 loopList.RefreshAllShownItem();
 
-                // When the scroll view is not at the bottom, chat messages should not move if a new message is added
-                // An offset has to be applied to the scroll view in order to prevent messages from moving
-                float offsetToPreventScrollViewMovement = 0.0f;
+                if (loopList.ItemList.Count >= newEntries + 1)
+                {
+                    // When the scroll view is not at the bottom, chat messages should not move if a new message is added
+                    // An offset has to be applied to the scroll view in order to prevent messages from moving
+                    float offsetToPreventScrollViewMovement = 0.0f;
 
-                for (int i = 1; i < newEntries + 1; ++i) // Note: newEntries + 1 because the first item is always a padding
-                    offsetToPreventScrollViewMovement -= loopList.ItemList[i].ItemSize + loopList.ItemList[i].Padding;
+                    for (int i = 1; i < newEntries + 1; ++i) // Note: newEntries + 1 because the first item is always a padding
+                        offsetToPreventScrollViewMovement -= loopList.ItemList[i].ItemSize + loopList.ItemList[i].Padding;
 
-                loopList.MovePanelByOffset(offsetToPreventScrollViewMovement);
+                    loopList.MovePanelByOffset(offsetToPreventScrollViewMovement);
 
-                // Known issue: When the scroll view is at the top, the scroll view moves a bit downwards
+                    // Known issue: When the scroll view is at the top, the scroll view moves a bit downwards
+                }
             }
 
             entriesPendingToAnimate = 0;

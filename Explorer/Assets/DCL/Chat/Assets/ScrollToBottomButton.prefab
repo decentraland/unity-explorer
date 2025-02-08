@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 5268840170035367400}
   - component: {fileID: 4844857545220871138}
   - component: {fileID: 1548013259375583996}
+  - component: {fileID: 62959541091759732}
   m_Layer: 5
   m_Name: ScrollToBottomButton
   m_TagString: Untagged
@@ -122,6 +123,18 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!225 &62959541091759732
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1627061817419957045}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!1 &3709005451956757485
 GameObject:
   m_ObjectHideFlags: 0
