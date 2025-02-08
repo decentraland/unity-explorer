@@ -18,7 +18,7 @@ namespace DCL.Chat
     // Note: The view never changes any data (chatMessages), that's done by the controller
     public class ChatView : ViewBase, IView, IViewWithGlobalDependencies, IPointerEnterHandler, IPointerExitHandler, IDisposable
     {
-        public delegate Color CalculateUsernameColorDelegate(ChatMessage chatMessage);
+        public delegate void FoldingChangedDelegate(bool isUnfolded);
         public delegate void InputBoxFocusChangedDelegate(bool hasFocus);
         public delegate void InputSubmittedDelegate(ChatChannel channel, string message, string origin);
         public delegate void EmojiSelectionVisibilityChangedDelegate(bool isVisible);
@@ -105,6 +105,11 @@ namespace DCL.Chat
         /// Raised when the user scrolls down the list to the bottom.
         /// </summary>
         public event ScrollBottomReachedDelegate ScrollBottomReached;
+
+        /// <summary>
+        /// Raised when the UI is folded or unfolded.
+        /// </summary>
+        public FoldingChangedDelegate FoldingChanged;
 
         private ViewDependencies viewDependencies;
         private UniTaskCompletionSource closePopupTask;
@@ -261,6 +266,8 @@ namespace DCL.Chat
                     IsScrollToBottomButtonVisible = false;
                     previousPendingMessages = 0;
                 }
+
+                FoldingChanged?.Invoke(value);
             }
         }
 

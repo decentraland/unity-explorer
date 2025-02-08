@@ -127,6 +127,12 @@ namespace DCL.UI.Sidebar
             }
 
             chatHistory.ReadMessagesChanged += OnChatHistoryReadMessagesChanged;
+            chatView.FoldingChanged += OnChatViewFoldingChanged;
+        }
+
+        private void OnChatViewFoldingChanged(bool isUnfolded)
+        {
+            // TODO: The sidebar should provide a mechanism to fix the icon of a button, so it can be active while the Chat window is unfolded
         }
 
         private void OnChatHistoryReadMessagesChanged()
