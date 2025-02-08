@@ -405,6 +405,8 @@ namespace DCL.Chat
 
             if (currentChannel.ReadMessages < currentChannel.Messages.Count)
                 chatMessageViewer.ShowItem(chatMessageViewer.CurrentSeparatorIndex - 1); // It shows the first of the unread messages at least
+
+            IsScrollToBottomButtonVisible = !IsScrollAtBottom;
         }
 
         private void OnChannelCleared(ChatChannel clearedChannel)

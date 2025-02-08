@@ -157,7 +157,7 @@ namespace DCL.Chat
         /// <param name="itemIndex">The index of the item in the list.</param>
         public void ShowItem(int itemIndex)
         {
-            loopList.MovePanelToItemIndex(itemIndex, 0.0f);
+            loopList.MovePanelToItemIndex(itemIndex, loopList.ViewPortHeight - 170.0f);
         }
 
         /// <summary>
