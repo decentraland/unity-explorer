@@ -228,7 +228,12 @@ namespace DCL.Chat
             {
                 if (currentChannel == null || !currentChannel.Id.Equals(value))
                 {
+                    if (currentChannel != null)
+                        currentChannel.Cleared -= OnChannelCleared;
+
                     currentChannel = channels![value];
+
+                    currentChannel.Cleared += OnChannelCleared;
 
                     chatMessageViewer.SetData(currentChannel.Messages);
                 }
@@ -393,6 +398,13 @@ namespace DCL.Chat
 
             if (currentChannel.ReadMessages < currentChannel.Messages.Count)
                 chatMessageViewer.ShowItem(chatMessageViewer.CurrentSeparatorIndex - 1); // It shows the first of the unread messages at least
+        }
+
+        private void OnChannelCleared(ChatChannel clearedChannel)
+        {
+            chatMessageViewer.HideSeparator();
+            IsScrollToBottomButtonVisible = false;
+            previousPendingMessages = 0;
         }
 
         private void OnInputBoxSelectionChanged(bool isSelected)

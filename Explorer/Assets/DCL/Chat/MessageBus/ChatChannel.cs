@@ -101,6 +101,7 @@ namespace DCL.Chat
         /// <param name="message">A message.</param>
         public void AddMessage(ChatMessage message)
         {
+            // TODO: It makes no sense to store padding stuff in the chat data
             if (messages.Count is 0)
             {
                 // Adding two elements to count as top and bottom padding
@@ -125,8 +126,9 @@ namespace DCL.Chat
         public void Clear()
         {
             messages.Clear();
-            Cleared?.Invoke(this);
             MarkAllMessagesAsRead();
+
+            Cleared?.Invoke(this);
         }
 
         /// <summary>
