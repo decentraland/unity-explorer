@@ -5,72 +5,76 @@ using UnityEngine.EventSystems;
 
 namespace DCL.UI.CustomInputField
 {
-    //TODO FRAN: This might need to be an extension of the TMP_InputField -> this way we avoid all the drawbacks of having to repeat input field events and can override certain events
     /// <summary>
     /// This custom class serves as an in-between other classes and the TMP_InputField, capturing some events
     /// and making checks when text is inserted and replaced, to make sure the input field limits aren't exceeded.
     /// </summary>
     public class CustomInputField : TMP_InputField
     {
-       private bool isApplePlatform;
-       private readonly Event processingEvent = new Event();
+        private bool isApplePlatform;
 
-       public event Action? OnRightClickEvent;
-       public event Action? OnPasteShortcutDetectedEvent;
+        public event Action? OnRightClickEvent;
+        public event Action? OnPasteShortcutPerformedEvent;
 
-       public bool UpAndDownArrowsEnabled { get; set; }
+        public bool UpAndDownArrowsEnabled { get; set; }
 
-       protected override void Awake()
-       {
-           base.Awake();
-           isApplePlatform = SystemInfo.operatingSystemFamily == OperatingSystemFamily.MacOSX || SystemInfo.operatingSystem.Contains("iOS");
-       }
+        protected override void Awake()
+        {
+            base.Awake();
+            isApplePlatform = SystemInfo.operatingSystemFamily == OperatingSystemFamily.MacOSX || SystemInfo.operatingSystem.Contains("iOS");
+        }
 
-       public override void OnPointerClick(PointerEventData eventData)
-       {
-           if (eventData.button == PointerEventData.InputButton.Right)
-           {
-               ActivateInputField();
-               Select();
-               OnRightClickEvent?.Invoke();
-           }
-           else
-           {
-               base.OnPointerClick(eventData);
-           }
-       }
+        public override void OnPointerClick(PointerEventData eventData)
+        {
+            if (eventData.button == PointerEventData.InputButton.Right)
+            {
+                ActivateInputField();
+                Select();
+                OnRightClickEvent?.Invoke();
+            }
+            else
+                base.OnPointerClick(eventData);
+        }
 
-       public override void OnUpdateSelected(BaseEventData eventData)
-       {
-           if (!isFocused)
-               return;
+        public override void OnUpdateSelected(BaseEventData eventData)
+        {
+            if (!isFocused)
+                return;
 
-           while (Event.PopEvent(processingEvent))
-           {
-               EventType eventType = processingEvent.rawType;
-               if (eventType == EventType.KeyDown)
-               {
-                   if (processingEvent.keyCode == KeyCode.V)
-                   {
-                       var currentEventModifiers = processingEvent.modifiers;
-                       bool ctrl = isApplePlatform ? (currentEventModifiers & EventModifiers.Command) != 0 : (currentEventModifiers & EventModifiers.Control) != 0;
-                       bool shift = (currentEventModifiers & EventModifiers.Shift) != 0;
-                       bool alt = (currentEventModifiers & EventModifiers.Alt) != 0;
-                       bool ctrlOnly = ctrl && !alt && !shift;
-                       if (ctrlOnly)
-                       {
-                           OnPasteShortcutDetectedEvent?.Invoke();
-                           processingEvent.Use();
-                       }
-                   }
-                   //If the UpAndDownArrows are not enabled, we skip these events so the input panel does not use them.
-                   else if (!UpAndDownArrowsEnabled &&
-                              processingEvent.keyCode is KeyCode.UpArrow or KeyCode.DownArrow)
-                       processingEvent.Use();
-               }
-           }
+            var shouldCallBase = true;
 
-           base.OnUpdateSelected(eventData);
+            if (Event.current != null)
+            {
+                EventType eventType = Event.current.type;
+
+                if (eventType == EventType.KeyDown)
+                {
+                    if (Event.current.keyCode == KeyCode.V)
+                    {
+                        EventModifiers currentEventModifiers = Event.current.modifiers;
+                        bool ctrl = isApplePlatform ? (currentEventModifiers & EventModifiers.Command) != 0 : (currentEventModifiers & EventModifiers.Control) != 0;
+                        bool shift = (currentEventModifiers & EventModifiers.Shift) != 0;
+                        bool alt = (currentEventModifiers & EventModifiers.Alt) != 0;
+                        bool ctrlOnly = ctrl && !alt && !shift;
+
+                        if (ctrlOnly)
+                        {
+                            OnPasteShortcutPerformedEvent?.Invoke();
+                            Event.current.Use();
+                            shouldCallBase = false;
+                        }
+                    }
+                    else if (!UpAndDownArrowsEnabled &&
+                             Event.current.keyCode is KeyCode.UpArrow or KeyCode.DownArrow)
+                    {
+                        Event.current.Use();
+                        shouldCallBase = false;
+                    }
+                }
+            }
+
+            if (shouldCallBase)
+                base.OnUpdateSelected(eventData);
         }
 
         public bool IsWithinCharacterLimit(int newTextLenght = 0) =>

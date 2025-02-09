@@ -109,9 +109,8 @@ namespace DCL.Chat
             inputField.onSelect.AddListener(OnInputSelected);
             inputField.onDeselect.AddListener(OnInputDeselected);
             inputField.onValueChanged.AddListener(OnInputChanged);
-            inputField.onSubmit.AddListener(InputFieldSubmitEvent);
             inputField.OnRightClickEvent += OnRightClickRegistered;
-            inputField.OnPasteShortcutDetectedEvent += OnPasteShortcutDetected;
+            inputField.OnPasteShortcutPerformedEvent += OnPasteShortcutPerformed;
 
             characterCounter.SetMaximumLength(inputField.characterLimit);
             characterCounter.gameObject.SetActive(false);
@@ -149,7 +148,7 @@ namespace DCL.Chat
             inputField.SelectInputField();
         }
 
-        private void OnPasteShortcutDetected()
+        private void OnPasteShortcutPerformed()
         {
             viewDependencies.ClipboardManager.Paste(this);
         }
@@ -338,7 +337,7 @@ namespace DCL.Chat
             emojiPanelCts.SafeCancelAndDispose();
 
             inputField.OnRightClickEvent -= OnRightClickRegistered;
-            inputField.OnPasteShortcutDetectedEvent -= OnPasteShortcutDetected;
+            inputField.OnPasteShortcutPerformedEvent -= OnPasteShortcutPerformed;
         }
 
         private void OnSuggestionSelected(string suggestionId)
