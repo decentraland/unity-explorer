@@ -180,7 +180,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   inputField: {fileID: 3303684574617829340}
-  inputFieldRectTransform: {fileID: 0}
+  inputFieldRectTransform: {fileID: 6186551520230418445}
   contentRectTransform: {fileID: 8211434791048164212}
   minimumHeight: 40
 --- !u!1 &9152785347356188261
@@ -408,6 +408,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 18b5dde3d1a0473dbcf0d7305ac86c38, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!224 &6186551520230418445 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 5757671742141307862, guid: 754fd4e2bb7828240808af9ce37feb93, type: 3}
+  m_PrefabInstance: {fileID: 1890474067062928347}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &1949774983281342339
 PrefabInstance:
   m_ObjectHideFlags: 0
