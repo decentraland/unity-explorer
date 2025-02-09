@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using MVC;
+using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -7,8 +8,12 @@ using Utility;
 
 namespace DCL.UI.SuggestionPanel
 {
+    public delegate void SuggestionSelectedDelegate(string suggestionId);
+
     public class InputSuggestionPanelController
     {
+        public event SuggestionSelectedDelegate SuggestionSelectedEvent;
+
         private readonly InputSuggestionPanelElement suggestionPanel;
 
         private CancellationTokenSource searchCts = new ();
@@ -20,6 +25,12 @@ namespace DCL.UI.SuggestionPanel
             this.suggestionPanel = suggestionPanel;
             this.suggestionPanel.InjectDependencies(viewDependencies);
             this.suggestionPanel.Initialize();
+            this.suggestionPanel.SuggestionSelectedEvent += OnSuggestionSelected;
+        }
+
+        private void OnSuggestionSelected(string suggestionId)
+        {
+            SuggestionSelectedEvent?.Invoke(suggestionId);
         }
 
         public void SetPanelVisibility(bool isVisible)

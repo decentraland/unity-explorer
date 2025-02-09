@@ -13,9 +13,11 @@ using UnityEngine.EventSystems;
 
 namespace DCL.UI.HyperlinkHandler
 {
-    public class HyperlinkHandlerElement : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler, IPointerMoveHandler, IViewWithGlobalDependencies
+    /// <summary>
+    /// Adding this component into an object that contains a TMP_Text, will allow it to handle hyperlinks, both for hover behaviour and also clicking on the links themselves.
+    /// </summary>
+    public class TextHyperlinkHandlerElement : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler, IPointerMoveHandler, IViewWithGlobalDependencies
     {
-        //In the future we might need to migrate all these settings into a configurable SO
         private const string REALM_CHANGE_CONFIRMATION_MESSAGE = "Are you sure you want to enter this World?";
 
         [SerializeField] private TMP_Text textComponent;
@@ -97,9 +99,9 @@ namespace DCL.UI.HyperlinkHandler
             linkHandlers.Add(HyperlinkConstants.PROFILE, HandleUserLink);
         }
 
+        // Expected format is "linkType=linkValue"
         private void ProcessLink(string linkID)
         {
-            // Expected format is "linkType=linkValue"
             string[] linkParts = linkID.Split('=');
 
             if (linkParts.Length != 2)
@@ -119,7 +121,6 @@ namespace DCL.UI.HyperlinkHandler
 
         private void HandleURLLink(string url)
         {
-            //if URL doesn't have http:// at beginning we add it here
             if (!url.StartsWith("http", StringComparison.OrdinalIgnoreCase))
                 url = "https://" + url;
 
@@ -197,6 +198,7 @@ namespace DCL.UI.HyperlinkHandler
             if (lastHighlightedIndex < 0) return;
 
             textComponent.text = originalText;
+            //TODO FRAN: Check if this next line is needed as we are setting the cursor elsewhere when we need to, so it might not be and we might be over writhing other changes
             dependencies.Cursor.SetStyle(CursorStyle.Normal);
             lastHighlightedIndex = -1;
             isHighlighting = false;

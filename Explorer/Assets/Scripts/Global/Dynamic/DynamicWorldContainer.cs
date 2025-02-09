@@ -67,7 +67,7 @@ using DCL.SceneLoadingScreens.LoadingScreen;
 using DCL.SidebarBus;
 using DCL.UI.MainUI;
 using DCL.StylizedSkybox.Scripts.Plugin;
-using DCL.UI.InputFieldValidator;
+using DCL.UI.InputFieldFormatting;
 using DCL.UI.Profiles.Helpers;
 using DCL.UserInAppInitializationFlow;
 using DCL.Utilities;

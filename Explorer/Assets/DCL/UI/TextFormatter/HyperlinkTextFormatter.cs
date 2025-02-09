@@ -5,13 +5,8 @@ using System.Text;
 using System.Text.RegularExpressions;
 using Utility;
 
-namespace DCL.UI.InputFieldValidator
+namespace DCL.UI.InputFieldFormatting
 {
-    public interface ITextFormatter
-    {
-        string FormatText(string text);
-    }
-
     [Serializable]
     public class HyperlinkTextFormatter : ITextFormatter
     {

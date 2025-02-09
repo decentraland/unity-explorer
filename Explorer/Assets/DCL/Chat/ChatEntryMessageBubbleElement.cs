@@ -35,7 +35,7 @@ namespace DCL.Chat
 
         public void SetupHyperlinkHandlerDependencies(ViewDependencies dependencies)
         {
-            messageContentElement.hyperlinkHandler.InjectDependencies(dependencies);
+            messageContentElement.textHyperlinkHandler.InjectDependencies(dependencies);
         }
 
         public void SetMessageData(ChatMessage data)

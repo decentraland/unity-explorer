@@ -9,8 +9,6 @@ namespace DCL.UI.SuggestionPanel
 {
     public class InputSuggestionPanelElement : MonoBehaviour, IViewWithGlobalDependencies
     {
-        public delegate void SuggestionSelectedDelegate(string suggestionId);
-
         public event SuggestionSelectedDelegate SuggestionSelectedEvent;
 
         [Header("Panel Configuration")]

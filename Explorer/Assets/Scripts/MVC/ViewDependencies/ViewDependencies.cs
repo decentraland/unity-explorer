@@ -2,7 +2,7 @@
 using DCL.Input;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Profiles;
-using DCL.UI.InputFieldValidator;
+using DCL.UI.InputFieldFormatting;
 using DCL.UI.Profiles.Helpers;
 
 namespace MVC
