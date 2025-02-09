@@ -78,22 +78,22 @@ namespace DCL.Chat
         /// <summary>
         ///     Raised when either the input box is selected or deselected.
         /// </summary>
-        public event InputBoxSelectionChangedDelegate InputBoxSelectionChanged;
+        public event InputBoxSelectionChangedDelegate? InputBoxSelectionChanged;
 
         /// <summary>
         ///     Raised when either the emoji selection panel opens or closes.
         /// </summary>
-        public event EmojiSelectionVisibilityChangedDelegate EmojiSelectionVisibilityChanged;
+        public event EmojiSelectionVisibilityChangedDelegate? EmojiSelectionVisibilityChanged;
 
         /// <summary>
         ///     Raised whenever the user attempts to send the content of the input box as a chat message.
         /// </summary>
-        public event InputSubmittedDelegate InputSubmitted;
+        public event InputSubmittedDelegate? InputSubmitted;
 
         /// <summary>
         ///     Raised whenever the input changes
         /// </summary>
-        public event InputChangedDelegate InputChanged;
+        public event InputChangedDelegate? InputChanged;
 
         public void Initialize()
         {
@@ -109,7 +109,9 @@ namespace DCL.Chat
             inputField.onSelect.AddListener(OnInputSelected);
             inputField.onDeselect.AddListener(OnInputDeselected);
             inputField.onValueChanged.AddListener(OnInputChanged);
+            inputField.onSubmit.AddListener(InputFieldSubmitEvent);
             inputField.OnRightClickEvent += OnRightClickRegistered;
+            inputField.OnPasteShortcutDetectedEvent += OnPasteShortcutDetected;
 
             characterCounter.SetMaximumLength(inputField.characterLimit);
             characterCounter.gameObject.SetActive(false);
@@ -145,6 +147,11 @@ namespace DCL.Chat
             if (inputField.isFocused) return;
 
             inputField.SelectInputField();
+        }
+
+        private void OnPasteShortcutDetected()
+        {
+            viewDependencies.ClipboardManager.Paste(this);
         }
 
         private void OnInputChanged(string inputText)
@@ -286,7 +293,7 @@ namespace DCL.Chat
         {
             if (suggestionPanel.IsActive)
             {
-                suggestionPanelController.SetPanelVisibility(false);
+                suggestionPanelController!.SetPanelVisibility(false);
                 lastMatch = null;
                 return;
             }
@@ -328,10 +335,10 @@ namespace DCL.Chat
                 suggestionPanelController.SuggestionSelectedEvent -= OnSuggestionSelected;
             }
 
-
             emojiPanelCts.SafeCancelAndDispose();
 
             inputField.OnRightClickEvent -= OnRightClickRegistered;
+            inputField.OnPasteShortcutDetectedEvent -= OnPasteShortcutDetected;
         }
 
         private void OnSuggestionSelected(string suggestionId)
@@ -379,7 +386,8 @@ namespace DCL.Chat
                     }
                     else
                     {
-                        Color color = viewDependencies.ProfileNameColorHelper.GetNameColor(profile.Name);
+                        //Color should be stored in the profile so we dont re-calculate it for every place we use it. Leave this for future implementation along with profile picture.
+                        Color color = viewDependencies.ProfileNameColorHelper.GetNameColor(profile.DisplayName);
                         suggestionsPerTypeMap[InputSuggestionType.PROFILE].TryAdd(profile.DisplayName, new ProfileInputSuggestionData(profile, color));
                     }
                 }

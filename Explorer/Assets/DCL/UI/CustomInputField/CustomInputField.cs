@@ -16,6 +16,7 @@ namespace DCL.UI.CustomInputField
        private readonly Event processingEvent = new Event();
 
        public event Action? OnRightClickEvent;
+       public event Action? OnPasteShortcutDetectedEvent;
 
        public bool UpAndDownArrowsEnabled { get; set; }
 
@@ -30,6 +31,7 @@ namespace DCL.UI.CustomInputField
            if (eventData.button == PointerEventData.InputButton.Right)
            {
                ActivateInputField();
+               Select();
                OnRightClickEvent?.Invoke();
            }
            else
@@ -57,8 +59,7 @@ namespace DCL.UI.CustomInputField
                        bool ctrlOnly = ctrl && !alt && !shift;
                        if (ctrlOnly)
                        {
-                           //TODO FRAN: We Could send an OnPaste event upwards?! better maybe?
-                           InsertTextAtSelectedPosition(GUIUtility.systemCopyBuffer);
+                           OnPasteShortcutDetectedEvent?.Invoke();
                            processingEvent.Use();
                        }
                    }
