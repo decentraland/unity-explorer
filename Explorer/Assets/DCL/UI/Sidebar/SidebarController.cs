@@ -127,7 +127,13 @@ namespace DCL.UI.Sidebar
             }
 
             chatHistory.ReadMessagesChanged += OnChatHistoryReadMessagesChanged;
+            chatHistory.MessageAdded += OnChatHistoryMessageAdded;
             chatView.FoldingChanged += OnChatViewFoldingChanged;
+        }
+
+        private void OnChatHistoryMessageAdded(ChatChannel destinationChannel, ChatMessage addedMessage)
+        {
+            viewInstance!.chatUnreadMessagesNumber.Number =  chatHistory.TotalMessages - chatHistory.ReadMessages;
         }
 
         private void OnChatViewFoldingChanged(bool isUnfolded)
@@ -135,7 +141,7 @@ namespace DCL.UI.Sidebar
             // TODO: The sidebar should provide a mechanism to fix the icon of a button, so it can be active while the Chat window is unfolded
         }
 
-        private void OnChatHistoryReadMessagesChanged()
+        private void OnChatHistoryReadMessagesChanged(ChatChannel changedChannel)
         {
             viewInstance!.chatUnreadMessagesNumber.Number =  chatHistory.TotalMessages - chatHistory.ReadMessages;
         }

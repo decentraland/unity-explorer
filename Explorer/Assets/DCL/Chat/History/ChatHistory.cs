@@ -53,7 +53,7 @@ namespace DCL.Chat.History
             ChatChannel newChannel = new ChatChannel(type, channelName);
             newChannel.MessageAdded += (destinationChannel, addedMessage) => { MessageAdded?.Invoke(destinationChannel, addedMessage); };
             newChannel.Cleared += (clearedChannel) => { ChannelCleared?.Invoke(clearedChannel); };
-            newChannel.ReadMessagesChanged += () => { ReadMessagesChanged?.Invoke(); };
+            newChannel.ReadMessagesChanged += (changedChannel) => { ReadMessagesChanged?.Invoke(changedChannel); };
 
             channels.Add(newChannel.Id, newChannel);
 
@@ -68,7 +68,7 @@ namespace DCL.Chat.History
             channels.Remove(channelId);
 
             if(channel.ReadMessages != channel.Messages.Count)
-                ReadMessagesChanged?.Invoke();
+                ReadMessagesChanged?.Invoke(channel);
         }
 
         public void AddMessage(ChatChannel.ChannelId channelId, ChatMessage newMessage)
@@ -85,7 +85,7 @@ namespace DCL.Chat.History
         {
             foreach (var chatChannel in channels)
             {
-                chatChannel.Value.Clear();
+                ClearChannel(chatChannel.Key);
             }
         }
     }

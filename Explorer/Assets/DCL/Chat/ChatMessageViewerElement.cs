@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Chat.History;
 using DG.Tweening;
 using MVC;
 using SuperScrollView;

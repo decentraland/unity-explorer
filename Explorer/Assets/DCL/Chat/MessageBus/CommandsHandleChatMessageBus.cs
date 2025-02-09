@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Chat.Commands;
+using DCL.Chat.History;
 using System;
 using System.Collections.Generic;
 using System.Linq;

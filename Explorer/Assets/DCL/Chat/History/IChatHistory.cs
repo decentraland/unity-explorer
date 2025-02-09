@@ -11,7 +11,7 @@ namespace DCL.Chat.History
         public delegate void ChannelAddedDelegate(ChatChannel addedChannel);
         public delegate void ChannelClearedDelegate(ChatChannel claredChannel);
         public delegate void MessageAddedDelegate(ChatChannel destinationChannel, ChatMessage addedMessage);
-        public delegate void ReadMessagesChangedDelegate();
+        public delegate void ReadMessagesChangedDelegate(ChatChannel changedChannel);
 
         /// <summary>
         /// Raised when a new channel is added.

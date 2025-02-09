@@ -1,6 +1,6 @@
 using System;
 
-namespace DCL.Chat
+namespace DCL.Chat.History
 {
     public readonly struct ChatMessage : IEquatable<ChatMessage>
     {

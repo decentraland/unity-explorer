@@ -1,3 +1,4 @@
+using DCL.Chat.History;
 using System;
 using System.Collections.Generic;
 

@@ -1,7 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
-using DCL.Chat;
 using DCL.Chat.Commands;
+using DCL.Chat.History;
 using DCL.Chat.MessageBus;
 using DCL.EventsApi;
 using DCL.PlacesAPIService;

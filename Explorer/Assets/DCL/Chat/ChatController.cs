@@ -34,6 +34,10 @@ namespace DCL.Chat
 
         private SingleInstanceEntity cameraEntity;
 
+        // Used exclusively to calculate the new value of the read messages once the Unread messages separator has been viewed
+        private int messageCountWhenSeparatorViewed;
+        private bool hasToResetUnreadMessagesWhenNewMessageArrive;
+
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
 
         public event ChatBubbleVisibilityChangedDelegate? ChatBubbleVisibilityChanged;
@@ -66,13 +70,14 @@ namespace DCL.Chat
         public void Clear() // Called by a command
         {
             chatHistory.ClearChannel(viewInstance!.CurrentChannel);
-            viewInstance!.RefreshMessages();
+            messageCountWhenSeparatorViewed = 0;
         }
 
         public override void Dispose()
         {
             chatMessagesBus.MessageAdded -= OnChatBusMessageAdded;
-            chatHistory.MessageAdded -= CreateChatEntry;
+            chatHistory.MessageAdded -= OnChatHistoryMessageAdded;
+            chatHistory.ReadMessagesChanged -= OnChatHistoryReadMessagesChanged;
             chatCommandsBus.OnClearChat -= Clear;
 
             viewInstance!.PointerEnter -= OnChatViewPointerEnter;
@@ -83,6 +88,8 @@ namespace DCL.Chat
             viewInstance.ChatBubbleVisibilityChanged -= OnViewChatBubbleVisibilityChanged;
             viewInstance.InputSubmitted -= OnViewInputSubmitted;
             viewInstance.ScrollBottomReached -= OnViewScrollBottomReached;
+            viewInstance.UnreadMessagesSeparatorViewed -= OnViewUnreadMessagesSeparatorViewed;
+            viewInstance.FoldingChanged -= OnViewFoldingChanged;
 
             viewDependencies.DclInput.UI.Click.performed -= OnUIClickPerformed;
             viewDependencies.DclInput.Shortcuts.ToggleNametags.performed -= OnToggleNametagsShortcutPerformed;
@@ -99,7 +106,8 @@ namespace DCL.Chat
 
             //We start processing messages once the view is ready
             chatMessagesBus.MessageAdded += OnChatBusMessageAdded;
-            chatHistory.MessageAdded += CreateChatEntry; // TODO: This should not exist, the only way to add a chat message from outside should be by using the bus
+            chatHistory.MessageAdded += OnChatHistoryMessageAdded; // TODO: This should not exist, the only way to add a chat message from outside should be by using the bus
+            chatHistory.ReadMessagesChanged += OnChatHistoryReadMessagesChanged;
             chatCommandsBus.OnClearChat += Clear;
 
             viewInstance!.InjectDependencies(viewDependencies);
@@ -113,6 +121,8 @@ namespace DCL.Chat
             viewInstance.ChatBubbleVisibilityChanged += OnViewChatBubbleVisibilityChanged;
             viewInstance.InputSubmitted += OnViewInputSubmitted;
             viewInstance.ScrollBottomReached += OnViewScrollBottomReached;
+            viewInstance.UnreadMessagesSeparatorViewed += OnViewUnreadMessagesSeparatorViewed;
+            viewInstance.FoldingChanged += OnViewFoldingChanged;
 
             OnFocus();
 
@@ -140,9 +150,58 @@ namespace DCL.Chat
     //        new ChatChannel.ChannelId(ChatChannel.ChatChannelType.User, "USER4")
    //     };
 
+
+        private void OnChatHistoryMessageAdded(ChatChannel destinationChannel, ChatMessage addedMessage)
+        {
+            bool isSentByOwnUser = addedMessage is { SystemMessage: false, SentByOwnUser: true };
+
+            CreateChatBubble(destinationChannel, addedMessage, isSentByOwnUser);
+
+            // If the chat is showing the channel that receives the message and the scroll view is at the bottom, mark everything as read
+            if (viewInstance!.IsUnfolded && destinationChannel.Id.Equals(viewInstance.CurrentChannel) && viewInstance.IsScrollAtBottom)
+                MarkCurrentChannelAsRead();
+
+            if (isSentByOwnUser)
+            {
+                MarkCurrentChannelAsRead();
+                viewInstance.RefreshMessages();
+                viewInstance.ShowLastMessage();
+            }
+            else
+            {
+                // Note: When the unread messages separator (NEW line) is viewed, it gets ready to jump to a new position.
+                //       Once a new message arrives, the separator moves to the position of that new message and the count of
+                //       unread messages is set to 1.
+                if (hasToResetUnreadMessagesWhenNewMessageArrive)
+                {
+                    hasToResetUnreadMessagesWhenNewMessageArrive = false;
+                    destinationChannel.ReadMessages = messageCountWhenSeparatorViewed;
+                }
+
+                viewInstance.RefreshMessages();
+            }
+        }
+
+        private void OnViewFoldingChanged(bool isUnfolded)
+        {
+            if (!isUnfolded)
+                MarkCurrentChannelAsRead();
+        }
+
+        private void OnChatHistoryReadMessagesChanged(ChatChannel changedChannel)
+        {
+            viewInstance!.RefreshMessages();
+        }
+
+        private void OnViewUnreadMessagesSeparatorViewed()
+        {
+            messageCountWhenSeparatorViewed = chatHistory.Channels[viewInstance!.CurrentChannel].Messages.Count;
+            hasToResetUnreadMessagesWhenNewMessageArrive = true;
+        }
+
         private void OnViewScrollBottomReached()
         {
-            chatHistory.Channels[viewInstance.CurrentChannel]!.MarkAllMessagesAsRead();
+            MarkCurrentChannelAsRead();
         }
 
         protected override void OnBlur()
@@ -174,16 +233,20 @@ namespace DCL.Chat
             viewDependencies.DclInput.Shortcuts.OpenChat.performed -= OnOpenChatShortcutPerformed;
             viewDependencies.DclInput.Shortcuts.OpenChatCommandLine.performed -= OnOpenChatCommandLineShortcutPerformed;
 
+            MarkCurrentChannelAsRead();
+        }
+
+        private void MarkCurrentChannelAsRead()
+        {
             chatHistory.Channels[viewInstance!.CurrentChannel].MarkAllMessagesAsRead();
+            messageCountWhenSeparatorViewed = chatHistory.Channels[viewInstance.CurrentChannel].ReadMessages;
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
             UniTask.Never(ct);
 
-        private void CreateChatEntry(ChatChannel channel, ChatMessage chatMessage)
+        private void CreateChatBubble(ChatChannel channel, ChatMessage chatMessage, bool isSentByOwnUser)
         {
-            bool isSentByOwnUser = chatMessage is { SystemMessage: false, SentByOwnUser: true };
-
             // Chat bubble over the avatars
             if (chatMessage.SentByOwnUser == false && entityParticipantTable.TryGet(chatMessage.WalletAddress, out IReadOnlyEntityParticipantTable.Entry entry))
             {
@@ -193,19 +256,6 @@ namespace DCL.Chat
             }
             else if (isSentByOwnUser)
                 GenerateChatBubbleComponent(playerEntity, chatMessage);
-
-            // If the chat is showing the channel that receives the message and the scroll view is at the bottom, mark everything as read
-            if (viewInstance!.IsUnfolded && channel.Id.Equals(viewInstance.CurrentChannel) && viewInstance.IsScrollAtBottom)
-                chatHistory.Channels[viewInstance.CurrentChannel].MarkAllMessagesAsRead();
-
-            if(isSentByOwnUser)
-                chatHistory.Channels[viewInstance.CurrentChannel].MarkAllMessagesAsRead();
-
-            // New entry in the chat window
-            viewInstance!.RefreshMessages();
-
-            if(isSentByOwnUser)
-                viewInstance!.ShowLastMessage();
         }
 
         private void GenerateChatBubbleComponent(Entity e, ChatMessage chatMessage)

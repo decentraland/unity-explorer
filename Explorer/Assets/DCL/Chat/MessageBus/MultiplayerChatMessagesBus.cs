@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Chat.History;
 using DCL.Chat.MessageBus.Deduplication;
 using DCL.Multiplayer.Connections.Messaging;
 using DCL.Multiplayer.Connections.Messaging.Hubs;

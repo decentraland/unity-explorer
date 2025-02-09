@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
+using DCL.Chat.History;
 using DCL.UI;
 using MVC;
 using DG.Tweening;
@@ -25,6 +26,7 @@ namespace DCL.Chat
         public delegate void ScrollBottomReachedDelegate();
         public delegate void PointerEventDelegate();
         public delegate void ChatBubbleVisibilityChangedDelegate(bool isVisible);
+        public delegate void UnreadMessagesSeparatorViewedDelegate();
 
         [Header("Settings")]
         [Tooltip("The time it takes, in seconds, for the background of the chat window to fade-in/out when hovering with the mouse.")]
@@ -109,7 +111,12 @@ namespace DCL.Chat
         /// <summary>
         /// Raised when the UI is folded or unfolded.
         /// </summary>
-        public FoldingChangedDelegate FoldingChanged;
+        public event FoldingChangedDelegate FoldingChanged;
+
+        /// <summary>
+        /// Raised when the Unread messages separator is visible for the user.
+        /// </summary>
+        public event UnreadMessagesSeparatorViewedDelegate UnreadMessagesSeparatorViewed;
 
         private ViewDependencies viewDependencies;
         private UniTaskCompletionSource closePopupTask;
@@ -123,11 +130,6 @@ namespace DCL.Chat
         private IReadOnlyDictionary<ChatChannel.ChannelId, ChatChannel>? channels;
         private ChatChannel? currentChannel;
         private ChatEntryConfigurationSO chatEntryConfiguration;
-
-        // If the NEW unread messages separator is viewed by the user, it will be able to move if a new message arrives
-        private bool isUnreadMessagesSeparatorConsumed;
-        // Used exclusively to calculate the new position of the NEW unread messages separator
-        private int previousPendingMessages;
 
         /// <summary>
         /// Get or sets the current content of the input box.
@@ -164,21 +166,9 @@ namespace DCL.Chat
         }
 
         /// <summary>
-        /// Gets or sets whether the Unread messages count (AKA scroll-to-bottom button) is visible or not.
+        /// Gets whether the Unread messages count (AKA scroll-to-bottom button) is visible or not.
         /// </summary>
-        public bool IsScrollToBottomButtonVisible
-        {
-            get => scrollToBottomButton.gameObject.activeInHierarchy;
-
-            set
-            {
-                // Resets animation
-                scrollToBottomCanvasGroup.DOKill();
-                scrollToBottomCanvasGroup.alpha = value ? 1.0f : 0.0f;
-
-                scrollToBottomButton.gameObject.SetActive(value);
-            }
-        }
+        public bool IsScrollToBottomButtonVisible => scrollToBottomButton.gameObject.activeInHierarchy;
 
         private void Start()
         {
@@ -233,12 +223,7 @@ namespace DCL.Chat
             {
                 if (currentChannel == null || !currentChannel.Id.Equals(value))
                 {
-                    if (currentChannel != null)
-                        currentChannel.Cleared -= OnChannelCleared;
-
                     currentChannel = channels![value];
-
-                    currentChannel.Cleared += OnChannelCleared;
 
                     chatMessageViewer.SetData(currentChannel.Messages);
                 }
@@ -263,8 +248,7 @@ namespace DCL.Chat
                 if (!value)
                 {
                     chatMessageViewer.HideSeparator();
-                    IsScrollToBottomButtonVisible = false;
-                    previousPendingMessages = 0;
+                    SetScrollToBottomVisibility(false);
                 }
 
                 FoldingChanged?.Invoke(value);
@@ -322,20 +306,17 @@ namespace DCL.Chat
         {
             int pendingMessages = currentChannel!.Messages.Count - currentChannel.ReadMessages;
 
-            if (pendingMessages > 0 && (!chatMessageViewer.IsSeparatorVisible || isUnreadMessagesSeparatorConsumed))
+            if (pendingMessages > 0)
             {
-                isUnreadMessagesSeparatorConsumed = false;
-                chatMessageViewer.ShowSeparator(pendingMessages - previousPendingMessages + 1);
+                chatMessageViewer.ShowSeparator(pendingMessages + 1);
             }
 
             chatMessageViewer.RefreshMessages();
 
-            IsScrollToBottomButtonVisible = IsUnfolded && !IsScrollAtBottom && pendingMessages != 0;
+            SetScrollToBottomVisibility(IsUnfolded && !IsScrollAtBottom && pendingMessages != 0, true);
 
             if (pendingMessages > 0)
                 scrollToBottomNumberText.text = pendingMessages > 9 ? "+9" : pendingMessages.ToString();
-
-            previousPendingMessages = pendingMessages;
         }
 
         /// <summary>
@@ -398,22 +379,51 @@ namespace DCL.Chat
             if(currentChannel!.Messages.Count == 0)
                 return;
 
-            // Trick: This is necessary in order to properly refresh the scroll view position
-            chatMessageViewer.ShowItem(currentChannel.Messages.Count - 1);
-
-            RefreshMessages();
-
+            // If there are unread messages...
             if (currentChannel.ReadMessages < currentChannel.Messages.Count)
-                chatMessageViewer.ShowItem(chatMessageViewer.CurrentSeparatorIndex - 1); // It shows the first of the unread messages at least
+            {
+                // Trick: This is necessary in order to properly refresh the scroll view position
+                chatMessageViewer.ShowItem(currentChannel.Messages.Count - 1);
 
-            IsScrollToBottomButtonVisible = !IsScrollAtBottom;
+                RefreshMessages();
+
+                chatMessageViewer.ShowItem(chatMessageViewer.CurrentSeparatorIndex - 1); // It shows the first of the unread messages at least
+                SetScrollToBottomVisibility(!IsScrollAtBottom);
+
+                // The separator will always be visible when this occurs
+                UnreadMessagesSeparatorViewed?.Invoke();
+            }
+            else
+                RefreshMessages();
         }
 
-        private void OnChannelCleared(ChatChannel clearedChannel)
+        /// <summary>
+        /// Changes the visibility of the scroll-to-bottom button.
+        /// </summary>
+        /// <param name="isVisible">Whether to make it visible or invisible.</param>
+        /// <param name="useAnimation">Whether to use a fading animation or change its visual state immediately.</param>
+        public void SetScrollToBottomVisibility(bool isVisible, bool useAnimation = false)
         {
-            chatMessageViewer.HideSeparator();
-            IsScrollToBottomButtonVisible = false;
-            previousPendingMessages = 0;
+            // Resets animation
+            scrollToBottomCanvasGroup.DOKill();
+
+            if (isVisible)
+            {
+                scrollToBottomCanvasGroup.alpha = 1.0f;
+                scrollToBottomButton.gameObject.SetActive(true);
+            }
+            else
+            {
+                if(useAnimation)
+                    scrollToBottomCanvasGroup.DOFade(0.0f, scrollToBottomButtonFadeOutDuration).
+                                              SetDelay(scrollToBottomButtonTimeBeforeHiding).
+                                              OnComplete(() => { scrollToBottomButton.gameObject.SetActive(false); });
+                else
+                {
+                    scrollToBottomCanvasGroup.alpha = 0.0f;
+                    scrollToBottomButton.gameObject.SetActive(false);
+                }
+            }
         }
 
         private void OnInputBoxSelectionChanged(bool isSelected)
@@ -486,16 +496,14 @@ namespace DCL.Chat
         {
             if (chatMessageViewer.IsScrollAtBottom && currentChannel!.Messages.Count != 0)
             {
-                previousPendingMessages = 0;
-
                 if (IsScrollToBottomButtonVisible)
-                    scrollToBottomCanvasGroup.DOFade(0.0f, scrollToBottomButtonFadeOutDuration).SetDelay(scrollToBottomButtonTimeBeforeHiding).OnComplete(() => { IsScrollToBottomButtonVisible = false; });
+                    SetScrollToBottomVisibility(false, true);
 
                 ScrollBottomReached?.Invoke();
             }
 
             if (chatMessageViewer.IsSeparatorVisible && chatMessageViewer.IsItemVisible(chatMessageViewer.CurrentSeparatorIndex))
-                isUnreadMessagesSeparatorConsumed = true;
+                UnreadMessagesSeparatorViewed?.Invoke();
         }
 
     }

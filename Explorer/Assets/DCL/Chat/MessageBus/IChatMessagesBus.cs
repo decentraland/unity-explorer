@@ -1,4 +1,5 @@
 using DCL.Chat.Commands;
+using DCL.Chat.History;
 using DCL.DebugUtilities;
 using DCL.Profiles;
 using DCL.Web3.Identities;

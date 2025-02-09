@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace DCL.Chat
+namespace DCL.Chat.History
 {
     /// <summary>
     /// Represents a conversation thread. The amount of people involved depends on the type of channel.
@@ -56,7 +56,7 @@ namespace DCL.Chat
 
         public delegate void ClearedDelegate(ChatChannel clearedChannel);
         public delegate void MessageAddedDelegate(ChatChannel destinationChannel, ChatMessage addedMessage);
-        public delegate void ReadMessagesChangedDelegate();
+        public delegate void ReadMessagesChangedDelegate(ChatChannel changedChannel);
 
         /// <summary>
         /// Raised when all the messages of the channel are deleted.
@@ -86,9 +86,22 @@ namespace DCL.Chat
         /// <summary>
         /// The amount of messages already read by the local participant in the chat.
         /// </summary>
-        public int ReadMessages { get; private set; }
+        public int ReadMessages
+        {
+            get => readMessages;
+
+            set
+            {
+                if (value != readMessages)
+                {
+                    readMessages = value;
+                    ReadMessagesChanged?.Invoke(this);
+                }
+            }
+        }
 
         private readonly List<ChatMessage> messages = new ();
+        private int readMessages;
 
         public ChatChannel(ChatChannelType channelType, string channelName)
         {
@@ -117,7 +130,6 @@ namespace DCL.Chat
             messages.Reverse();
 
             MessageAdded?.Invoke(this, message);
-            ReadMessagesChanged?.Invoke();
         }
 
         /// <summary>
@@ -137,7 +149,6 @@ namespace DCL.Chat
         public void MarkAllMessagesAsRead()
         {
             ReadMessages = messages.Count;
-            ReadMessagesChanged?.Invoke();
         }
     }
 }
