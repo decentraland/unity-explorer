@@ -27,7 +27,6 @@ namespace DCL.RealmNavigation
         private static readonly Random RANDOM = new ();
 
         private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
-        private readonly SceneAssetLock sceneAssetLock;
 
         private IRetrieveScene? retrieveScene;
         private World? world;
@@ -49,10 +48,9 @@ namespace DCL.RealmNavigation
             }
         }
 
-        public TeleportController(ISceneReadinessReportQueue sceneReadinessReportQueue, SceneAssetLock sceneAssetLock)
+        public TeleportController(ISceneReadinessReportQueue sceneReadinessReportQueue)
         {
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
-            this.sceneAssetLock = sceneAssetLock;
         }
 
         public void InvalidateRealm()
@@ -63,9 +61,6 @@ namespace DCL.RealmNavigation
         private async UniTask<WaitForSceneReadiness?> TeleportAsync(Vector2Int parcel, PickTargetDelegate pickTargetDelegate,
             AsyncLoadProcessReport loadReport, CancellationToken ct)
         {
-            // if current scene is still loading it will block the teleport until its assets are resolved or timed out
-            sceneAssetLock.Reset();
-
             if (retrieveScene == null)
             {
                 TeleportCharacter(new PlayerTeleportIntent(ParcelMathHelper.GetPositionByParcelPosition(parcel, true), parcel, ct, loadReport));
