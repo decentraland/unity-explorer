@@ -11,29 +11,30 @@ namespace DCL.UI.CustomInputField
     /// </summary>
     public class CustomInputField : TMP_InputField
     {
-        private bool isApplePlatform;
+        private bool isControlPressed;
 
         public event Action? OnRightClickEvent;
         public event Action? OnPasteShortcutPerformedEvent;
 
         public bool UpAndDownArrowsEnabled { get; set; }
 
-        protected override void Awake()
-        {
-            base.Awake();
-            isApplePlatform = SystemInfo.operatingSystemFamily == OperatingSystemFamily.MacOSX || SystemInfo.operatingSystem.Contains("iOS");
-        }
-
         public override void OnPointerClick(PointerEventData eventData)
         {
             if (eventData.button == PointerEventData.InputButton.Right)
             {
-                ActivateInputField();
-                Select();
+                OnSelect(null);
+                int insertionIndex = TMP_TextUtilities.GetCursorIndexFromPosition(m_TextComponent, eventData.position, eventData.pressEventCamera);
+                caretPosition = insertionIndex;
                 OnRightClickEvent?.Invoke();
             }
             else
                 base.OnPointerClick(eventData);
+        }
+
+        public override void OnDeselect(BaseEventData eventData)
+        {
+            isControlPressed = false;
+            base.OnDeselect(eventData);
         }
 
         public override void OnUpdateSelected(BaseEventData eventData)
@@ -49,20 +50,15 @@ namespace DCL.UI.CustomInputField
 
                 if (eventType == EventType.KeyDown)
                 {
-                    if (Event.current.keyCode == KeyCode.V)
+                    if (Event.current.keyCode == KeyCode.LeftCommand || Event.current.keyCode == KeyCode.LeftControl)
                     {
-                        EventModifiers currentEventModifiers = Event.current.modifiers;
-                        bool ctrl = isApplePlatform ? (currentEventModifiers & EventModifiers.Command) != 0 : (currentEventModifiers & EventModifiers.Control) != 0;
-                        bool shift = (currentEventModifiers & EventModifiers.Shift) != 0;
-                        bool alt = (currentEventModifiers & EventModifiers.Alt) != 0;
-                        bool ctrlOnly = ctrl && !alt && !shift;
-
-                        if (ctrlOnly)
-                        {
+                        isControlPressed = true;
+                    }
+                    else if ( isControlPressed && Event.current.keyCode == KeyCode.V)
+                    {
                             OnPasteShortcutPerformedEvent?.Invoke();
                             Event.current.Use();
                             shouldCallBase = false;
-                        }
                     }
                     else if (!UpAndDownArrowsEnabled &&
                              Event.current.keyCode is KeyCode.UpArrow or KeyCode.DownArrow)
@@ -70,6 +66,10 @@ namespace DCL.UI.CustomInputField
                         Event.current.Use();
                         shouldCallBase = false;
                     }
+                }
+                else if (eventType == EventType.KeyUp)
+                {
+                    if (Event.current.keyCode == KeyCode.LeftCommand || Event.current.keyCode == KeyCode.LeftControl) { isControlPressed = false; }
                 }
             }
 
@@ -104,6 +104,7 @@ namespace DCL.UI.CustomInputField
         {
             text = string.Empty;
             ActivateInputField();
+            isControlPressed = false;
         }
 
         /// <summary>
