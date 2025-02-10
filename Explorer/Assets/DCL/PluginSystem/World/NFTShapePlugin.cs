@@ -39,6 +39,7 @@ namespace DCL.PluginSystem.World
         private readonly IWebRequestController webRequestController;
         private readonly IFramePrefabs framePrefabs;
         private readonly ILazyMaxSize lazyMaxSize;
+        private readonly IWebContentSizes webContentSizes;
         private readonly IDiskCache<Texture2DData> diskCache;
         private readonly ISizedStreamableCache<Texture2DData, GetNFTShapeIntention> cache = new NftShapeCache();
 
@@ -88,7 +89,8 @@ namespace DCL.PluginSystem.World
             cacheCleaner,
             framePrefabs,
             lazyMaxSize,
-            diskCache
+            diskCache,
+            webContentSizes
         ) { }
 
         public NFTShapePlugin(
@@ -100,7 +102,8 @@ namespace DCL.PluginSystem.World
             CacheCleaner cacheCleaner,
             IFramePrefabs framePrefabs,
             ILazyMaxSize lazyMaxSize,
-            IDiskCache<Texture2DData> diskCache
+            IDiskCache<Texture2DData> diskCache,
+            IWebContentSizes webContentSizes
         )
         {
             this.decentralandUrlsSource = decentralandUrlsSource;
@@ -111,6 +114,7 @@ namespace DCL.PluginSystem.World
             this.framePrefabs = framePrefabs;
             this.lazyMaxSize = lazyMaxSize;
             this.diskCache = diskCache;
+            this.webContentSizes = webContentSizes;
             cacheCleaner.Register(cache);
         }
 
@@ -134,7 +138,7 @@ namespace DCL.PluginSystem.World
         {
             var buffer = sharedDependencies.EntityEventsBuilder.Rent<NftShapeRendererComponent>();
 
-            LoadNFTShapeSystem.InjectToWorld(ref builder, cache, webRequestController, diskCache);
+            LoadNFTShapeSystem.InjectToWorld(ref builder, cache, webRequestController, diskCache, webContentSizes);
             LoadCycleNftShapeSystem.InjectToWorld(ref builder, new BasedURNSource(decentralandUrlsSource));
             InstantiateNftShapeSystem.InjectToWorld(ref builder, nftShapeRendererFactory, instantiationFrameTimeBudgetProvider, framePrefabs, buffer);
             VisibilityNftShapeSystem.InjectToWorld(ref builder, buffer);

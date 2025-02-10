@@ -9,9 +9,9 @@ namespace DCL.DebugUtilities.UIBindings
     /// <typeparam name="T"></typeparam>
     public class IndexedElementBinding : ElementBinding<string>
     {
-        private readonly IReadOnlyList<string> values;
+        internal readonly List<string> values;
 
-        public IndexedElementBinding(IReadOnlyList<string> values, string defaultValue, Action<(string value, int index)>? onValueChange = null) : base(defaultValue)
+        public IndexedElementBinding(List<string> values, string defaultValue, Action<(string value, int index)>? onValueChange = null) : base(defaultValue)
         {
             this.values = values;
             SetIndex();

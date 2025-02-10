@@ -1,5 +1,4 @@
 using Cysharp.Threading.Tasks;
-using DCL.AsyncLoadReporting;
 using DCL.Diagnostics;
 using DCL.Landscape.Jobs;
 using DCL.Landscape.NoiseGeneration;
@@ -11,6 +10,7 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Threading;
 using DCL.Profiling;
+using DCL.Utilities;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;

@@ -1,3 +1,4 @@
+using ECS.StreamableLoading.Cache.Disk.Lock;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -9,6 +10,7 @@ namespace ECS.StreamableLoading.Cache.Disk.CleanUp
     public class LRUDiskCleanUp : IDiskCleanUp
     {
         private readonly CacheDirectory cacheDirectory;
+        private readonly FilesLock filesLock;
         private readonly long maxCacheSizeBytes;
 
         /// <summary>
@@ -16,9 +18,10 @@ namespace ECS.StreamableLoading.Cache.Disk.CleanUp
         /// </summary>
         private readonly FileSystemEnumerable<CacheFileInfo> files;
 
-        public LRUDiskCleanUp(CacheDirectory cacheDirectory, long maxCacheSizeBytes = 1024 * 1024 * 1024) //1GB
+        public LRUDiskCleanUp(CacheDirectory cacheDirectory, FilesLock filesLock, long maxCacheSizeBytes = 1024 * 1024 * 1024) //1GB
         {
             this.cacheDirectory = cacheDirectory;
+            this.filesLock = filesLock;
             this.maxCacheSizeBytes = maxCacheSizeBytes;
 
             files = new FileSystemEnumerable<CacheFileInfo>(
@@ -48,6 +51,11 @@ namespace ECS.StreamableLoading.Cache.Disk.CleanUp
                 for (int i = 0; i < cachedFiles.Count; i++)
                 {
                     var file = cachedFiles[i];
+                    using var lockScope = filesLock.TryLock(file.FullPath, out bool success);
+
+                    if (success == false)
+                        continue;
+
                     File.Delete(file.FullPath);
                     directorySize -= file.Size;
                     if (directorySize < maxCacheSizeBytes) break;
