@@ -9,7 +9,6 @@ namespace DCL.Roads.GPUInstancing.Playground
     [Serializable]
     public class MeshRenderingData
     {
-        private const float STREET_MAX_HEIGHT = 10f;
         private const string GPU_INSTANCING_KEYWORD = "_GPU_INSTANCER_BATCHER";
 
         public Mesh SharedMesh;
@@ -56,52 +55,10 @@ namespace DCL.Roads.GPUInstancing.Playground
                     rendererPriority = Renderer.rendererPriority,
                     renderingLayerMask = Renderer.renderingLayerMask,
                     shadowCastingMode = Renderer.shadowCastingMode,
-                    worldBounds = new Bounds(Vector3.zero, new Vector3(GenesisCityData.EXTENTS.x * ParcelMathHelper.PARCEL_SIZE, STREET_MAX_HEIGHT, GenesisCityData.EXTENTS.y * ParcelMathHelper.PARCEL_SIZE)),
                 };
             }
 
             return renderParamsArray;
-        }
-
-        // Equals when MeshFilter and MeshRenderer settings are same, but Transform could be different
-        public bool Equals(MeshRenderingData other)
-        {
-            if (other == null) return false;
-            if (!Equals(SharedMesh, other.SharedMesh)) return false;
-            if (Renderer.receiveShadows != other.Renderer.receiveShadows) return false;
-            if (Renderer.shadowCastingMode != other.Renderer.shadowCastingMode) return false;
-
-            var materials1 = Renderer.sharedMaterials;
-            var materials2 = other.Renderer.sharedMaterials;
-
-            if (materials1 == null || materials2 == null) return false;
-            if (materials1.Length != materials2.Length) return false;
-
-            for (var i = 0; i < materials1.Length; i++)
-                if (!Equals(materials1[i], materials2[i])) return false;
-
-            return true;
-        }
-
-        public override bool Equals(object obj) =>
-            obj is MeshRenderingData other && Equals(other);
-
-        public override int GetHashCode()
-        {
-            unchecked
-            {
-                var hash = 17;
-                hash = (hash * 23) + (SharedMesh != null ? SharedMesh.GetHashCode() : 0);
-                hash = (hash * 23) + Renderer.receiveShadows.GetHashCode();
-                hash = (hash * 23) + Renderer.shadowCastingMode.GetHashCode();
-
-                if (Renderer.sharedMaterials == null) return hash;
-
-                foreach (var material in Renderer.sharedMaterials)
-                    hash = (hash * 23) + (material != null ? material.GetHashCode() : 0);
-
-                return hash;
-            }
         }
     }
 }

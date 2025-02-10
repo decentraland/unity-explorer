@@ -3,15 +3,31 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using UnityEngine;
+using Utility;
 
 namespace DCL.Roads.GPUInstancing
 {
     public class GPUInstancingService : IDisposable
     {
+        private const float STREET_MAX_HEIGHT = 10f;
+        private static readonly Bounds RENDER_PARAMS_WORLD_BOUNDS =
+            new (Vector3.zero, new Vector3(GenesisCityData.EXTENTS.x * ParcelMathHelper.PARCEL_SIZE, STREET_MAX_HEIGHT, GenesisCityData.EXTENTS.y * ParcelMathHelper.PARCEL_SIZE));
+
         private readonly Dictionary<GPUInstancingCandidate, GPUInstancingBuffers> candidatesBuffersTable = new ();
         private readonly Dictionary<Material, Material> instancingMaterials = new ();
 
         private readonly List<GPUInstancingCandidate> directCandidates = new ();
+
+        public void Dispose()
+        {
+            foreach (GPUInstancingBuffers buffers in candidatesBuffersTable.Values)
+                buffers.Dispose();
+
+            candidatesBuffersTable.Clear();
+            instancingMaterials.Clear();
+
+            directCandidates.Clear();
+        }
 
         public void RenderIndirect()
         {
@@ -40,11 +56,12 @@ namespace DCL.Roads.GPUInstancing
 
                     RenderParams rparams = meshData.RenderParamsArray[submeshIndex];
 
-                    // rparams.camera = Camera.current;
                     rparams.matProps = new MaterialPropertyBlock();
                     rparams.matProps.SetBuffer("_PerInstanceBuffer", buffers.InstanceBuffer);
-                    // rparams.matProps.SetMatrix("_LocalShift", meshData.Renderer.localToWorldMatrix);
+                    rparams.worldBounds = RENDER_PARAMS_WORLD_BOUNDS;
+                    // rparams.camera = Camera.current;
 
+                    // rparams.matProps.SetMatrix("_LocalShift", meshData.Renderer.localToWorldMatrix);
                     Graphics.RenderMeshIndirect(rparams, meshData.SharedMesh, buffers.DrawArgsBuffer, commandCount: 1, currentCommandIndex);
                     currentCommandIndex++;
                 }
@@ -128,17 +145,6 @@ namespace DCL.Roads.GPUInstancing
                 foreach (MeshRenderingData mesh in lodLevel.MeshRenderingDatas)
                     mesh.Initialize(instancingMaterials);
             }
-        }
-
-        public void Dispose()
-        {
-            foreach (GPUInstancingBuffers buffers in candidatesBuffersTable.Values)
-                buffers.Dispose();
-
-            candidatesBuffersTable.Clear();
-            instancingMaterials.Clear();
-
-            directCandidates.Clear();
         }
     }
 
