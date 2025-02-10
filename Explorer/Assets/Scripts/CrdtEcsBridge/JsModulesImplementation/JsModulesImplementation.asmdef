@@ -2,6 +2,7 @@
     "name": "JsModulesImplementation",
     "rootNamespace": "",
     "references": [
+        "GUID:9659fcb6593e30b46909c1245ed056df",
         "GUID:0b3eab7834a09c24ca4e84fe0d8a43ce",
         "GUID:f51ebe6a0ceec4240a699833d6309b23",
         "GUID:0f4c0f120707fb74497f5d581b9858f8",

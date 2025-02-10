@@ -36,7 +36,7 @@ using SceneRunner.Scene;
 using SceneRuntime;
 using System.Collections.Generic;
 using System.Threading;
-using ECS.StreamableLoading.DeferredLoading;
+using DCL.Profiles;
 using SystemGroups.Visualiser;
 using UnityEngine;
 using Utility;
@@ -69,6 +69,7 @@ namespace Global.Dynamic
         private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
         private readonly HybridSceneParams hybridSceneParams;
         private readonly bool localSceneDevelopment;
+        private readonly IProfileRepository profileRepository;
 
         public GlobalWorldFactory(in StaticContainer staticContainer,
             CameraSamplingData cameraSamplingData, RealmSamplingData realmSamplingData,
@@ -80,7 +81,8 @@ namespace Global.Dynamic
             IEmotesMessageBus emotesMessageBus,
             World world,
             ISceneReadinessReportQueue sceneReadinessReportQueue,
-            bool localSceneDevelopment)
+            bool localSceneDevelopment,
+            IProfileRepository profileRepository)
         {
             partitionedWorldsAggregateFactory = staticContainer.SingletonSharedDependencies.AggregateFactory;
             componentPoolsRegistry = staticContainer.ComponentsContainer.ComponentPoolsRegistry;
@@ -104,6 +106,7 @@ namespace Global.Dynamic
             this.localSceneDevelopment = localSceneDevelopment;
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
             this.world = world;
+            this.profileRepository = profileRepository;
 
             memoryBudget = staticContainer.SingletonSharedDependencies.MemoryBudget;
             physicsTickProvider = staticContainer.PhysicsTickProvider;
@@ -138,7 +141,7 @@ namespace Global.Dynamic
                 loadSceneSystemLogic,
                 sceneFactory, NoCache<ISceneFacade, GetSceneFacadeIntention>.INSTANCE);
 
-            GlobalDeferredLoadingSystem.InjectToWorld(ref builder, sceneBudget, memoryBudget, staticContainer.SingletonSharedDependencies.SceneAssetLock, new QualityReductorManager(world));
+            GlobalDeferredLoadingSystem.InjectToWorld(ref builder, sceneBudget, memoryBudget, scenesCache, playerEntity);
 
             LoadStaticPointersSystem.InjectToWorld(ref builder);
             LoadFixedPointersSystem.InjectToWorld(ref builder);
@@ -171,11 +174,11 @@ namespace Global.Dynamic
             UpdatePhysicsTickSystem.InjectToWorld(ref builder, physicsTickProvider);
             UpdateTimeSystem.InjectToWorld(ref builder);
 
-            OwnAvatarLoaderFromDebugMenuSystem.InjectToWorld(ref builder, playerEntity, debugContainerBuilder, realmData);
+            OwnAvatarLoaderFromDebugMenuSystem.InjectToWorld(ref builder, playerEntity, debugContainerBuilder, realmData, profileRepository);
 
             UnloadPortableExperiencesSystem.InjectToWorld(ref builder);
 
-            UpdateCurrentSceneSystem.InjectToWorld(ref builder, realmData, scenesCache, currentSceneInfo, playerEntity, staticContainer.SingletonSharedDependencies.SceneAssetLock, debugContainerBuilder);
+            UpdateCurrentSceneSystem.InjectToWorld(ref builder, realmData, scenesCache, currentSceneInfo, playerEntity, debugContainerBuilder);
 
             var pluginArgs = new GlobalPluginArguments(playerEntity, v8ActiveEngines);
 
@@ -184,7 +187,7 @@ namespace Global.Dynamic
 
             var finalizeWorldSystems = new IFinalizeWorldSystem[]
             {
-                UnloadSceneSystem.InjectToWorld(ref builder, scenesCache, staticContainer.SingletonSharedDependencies.SceneAssetLock, localSceneDevelopment), UnloadSceneLODSystem.InjectToWorld(ref builder, scenesCache, lodCache),
+                UnloadSceneSystem.InjectToWorld(ref builder, scenesCache, localSceneDevelopment), UnloadSceneLODSystem.InjectToWorld(ref builder, scenesCache, lodCache),
                 new ReleaseRealmPooledComponentSystem(componentPoolsRegistry),
             };
 

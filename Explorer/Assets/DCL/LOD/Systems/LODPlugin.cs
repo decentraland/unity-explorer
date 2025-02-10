@@ -32,7 +32,6 @@ namespace DCL.PluginSystem.Global
 
         private IExtendedObjectPool<Material> lodMaterialPool;
         private readonly ILODSettingsAsset lodSettingsAsset;
-        private readonly SceneAssetLock sceneAssetLock;
         private TextureArrayContainer lodTextureArrayContainer;
         private readonly CacheCleaner cacheCleaner;
 
@@ -46,7 +45,7 @@ namespace DCL.PluginSystem.Global
         public LODPlugin(RealmData realmData, IPerformanceBudget memoryBudget,
             IPerformanceBudget frameCapBudget, IScenesCache scenesCache, IDebugContainerBuilder debugBuilder,
             ISceneReadinessReportQueue sceneReadinessReportQueue, VisualSceneStateResolver visualSceneStateResolver, TextureArrayContainerFactory textureArrayContainerFactory,
-            ILODSettingsAsset lodSettingsAsset, SceneAssetLock sceneAssetLock, IRealmPartitionSettings partitionSettings,
+            ILODSettingsAsset lodSettingsAsset, IRealmPartitionSettings partitionSettings,
             ILODCache lodCache, IComponentPool<LODGroup> lodGroupPool, IDecentralandUrlsSource decentralandUrlsSource, Transform lodCacheParent, bool lodEnabled,
             int lodLevels)
         {
@@ -60,7 +59,6 @@ namespace DCL.PluginSystem.Global
             this.visualSceneStateResolver = visualSceneStateResolver;
             this.textureArrayContainerFactory = textureArrayContainerFactory;
             this.lodSettingsAsset = lodSettingsAsset;
-            this.sceneAssetLock = sceneAssetLock;
             this.lodEnabled = lodEnabled;
             this.partitionSettings = partitionSettings;
             this.lodCache = lodCache;
@@ -75,7 +73,7 @@ namespace DCL.PluginSystem.Global
                 TextureFormat.BC7, lodSettingsAsset.ArraySizeForMissingResolutions, lodSettingsAsset.CapacityForMissingResolutions);
 
             ResolveVisualSceneStateSystem.InjectToWorld(ref builder, lodSettingsAsset, visualSceneStateResolver, realmData);
-            UpdateVisualSceneStateSystem.InjectToWorld(ref builder, realmData, scenesCache, lodCache, lodSettingsAsset, visualSceneStateResolver, sceneAssetLock);
+            UpdateVisualSceneStateSystem.InjectToWorld(ref builder, realmData, scenesCache, lodCache, lodSettingsAsset, visualSceneStateResolver);
 
             if (lodEnabled)
             {

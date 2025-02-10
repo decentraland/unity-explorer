@@ -18,7 +18,7 @@ namespace ECS.StreamableLoading.DeferredLoading
 
         private readonly List<IntentionData> loadingIntentions;
 
-        private readonly QueryDescription[] sameBoatQueries;
+        protected QueryDescription[] sameBoatQueries;
         private readonly IPerformanceBudget memoryBudget;
 
 

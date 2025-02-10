@@ -1,5 +1,7 @@
-﻿using DCL.Diagnostics;
+﻿using AssetManagement;
+using DCL.Diagnostics;
 using System;
+using System.Runtime.CompilerServices;
 
 namespace ECS.StreamableLoading.Common.Components
 {
@@ -42,7 +44,7 @@ namespace ECS.StreamableLoading.Common.Components
         public Exception? Exception => exceptionData?.exception;
         public ReportData ReportData => exceptionData?.reportData ?? ReportData.UNSPECIFIED;
 
-        public StreamableLoadingResult(T? asset) : this()
+        public StreamableLoadingResult(T? asset, AssetSource source = AssetSource.NONE) : this()
         {
             Asset = asset;
             Succeeded = true;
