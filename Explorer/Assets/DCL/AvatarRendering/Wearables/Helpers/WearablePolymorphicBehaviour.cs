@@ -318,7 +318,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             if (!result.Succeeded) return new StreamableLoadingResult<AttachmentAssetBase>(result.ReportData, result.Exception!);
 
             // Has to be RGBA32 to work with the avatar shader TextureArrays (Unity cannot compress BC7 in runtime)
-            return new StreamableLoadingResult<AttachmentAssetBase>(new AttachmentTextureAsset(TextureUtilities.EnsureRGBA32Format(result.Asset!.Asset), null));
+            return new StreamableLoadingResult<AttachmentAssetBase>(new AttachmentTextureAsset(TextureUtilities.EnsureRGBA32Format(result.Asset!.Asset), result.Asset));
         }
 
         public static AttachmentRegularAsset ToRegularAsset(this StreamableLoadingResult<AssetBundleData> result)
@@ -348,7 +348,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             foreach (SkinnedMeshRenderer skinnedMeshRenderer in pooledList.Value)
                 rendererInfos.Add(new AttachmentRegularAsset.RendererInfo(skinnedMeshRenderer, skinnedMeshRenderer.sharedMaterial));
 
-            return new AttachmentRegularAsset(go, rendererInfos, null);
+            return new AttachmentRegularAsset(go, rendererInfos, result.Asset);
         }
 
         public static void AssignWearableAsset(this IWearable wearable, AttachmentRegularAsset attachmentRegularAsset, BodyShape bodyShape)
