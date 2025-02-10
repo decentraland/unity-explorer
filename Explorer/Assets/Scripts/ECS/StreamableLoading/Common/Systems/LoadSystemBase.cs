@@ -25,7 +25,6 @@ namespace ECS.StreamableLoading.Common.Systems
     /// <typeparam name="TIntention"></typeparam>
     public abstract class LoadSystemBase<TAsset, TIntention> : BaseUnityLoopSystem where TIntention: struct, ILoadingIntention
     {
-        private const string DISK_CACHE_EXTENSION = "dat";
         private static readonly QueryDescription CREATE_WEB_REQUEST = new QueryDescription()
                                                                      .WithAll<TIntention, IPartitionComponent, StreamableLoadingState>()
                                                                      .WithNone<StreamableLoadingResult<TAsset>>();

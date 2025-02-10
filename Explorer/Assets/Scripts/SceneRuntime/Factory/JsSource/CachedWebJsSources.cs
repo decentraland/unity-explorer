@@ -45,7 +45,7 @@ namespace SceneRuntime.Factory.JsSource
         {
             public static readonly DiskHashCompute INSTANCE = new ();
 
-            protected override void FillPayload(IHashKeyPayload keyPayload, string asset)
+            protected override void FillPayload(IHashKeyPayload keyPayload, in string asset)
             {
                 keyPayload.Put(asset);
             }

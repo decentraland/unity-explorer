@@ -26,7 +26,7 @@ namespace ECS.StreamableLoading.Cache.Generic
         public async UniTask<EnumResult<TaskError>> PutAsync(TKey key, T value, CancellationToken token)
         {
             memoryCache.Put(key, value);
-            using var hashKey = diskHashCompute.ComputeHash(key);
+            using HashKey hashKey = diskHashCompute.ComputeHash(in key);
             return await diskCache.PutAsync(hashKey, extension, value, token);
         }
 
@@ -35,7 +35,7 @@ namespace ECS.StreamableLoading.Cache.Generic
             if (memoryCache.TryGet(key, out T result))
                 return EnumResult<Option<T>, TaskError>.SuccessResult(Option<T>.Some(result));
 
-            using var hashKey = diskHashCompute.ComputeHash(key);
+            using HashKey hashKey = diskHashCompute.ComputeHash(in key);
             var diskResult = await diskCache.ContentAsync(hashKey, extension, token);
 
             if (diskResult.Success)

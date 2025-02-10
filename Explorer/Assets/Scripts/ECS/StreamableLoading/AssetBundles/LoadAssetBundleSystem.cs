@@ -42,7 +42,7 @@ namespace ECS.StreamableLoading.AssetBundles
             IWebRequestController webRequestController,
             ArrayPool<byte> buffersPool,
             AssetBundleLoadingMutex loadingMutex,
-            IDiskCache<PartialLoadingState> partialDiskCache) : base(world, cache, webRequestController, buffersPool, partialDiskCache)
+            IDiskCache<PartialLoadingState> partialDiskCache) : base(world, cache, webRequestController, buffersPool, partialDiskCache, GetAssetBundleIntention.DiskHashCompute.INSTANCE)
         {
             this.loadingMutex = loadingMutex;
         }

@@ -1,5 +1,6 @@
 ﻿using AssetManagement;
 using CommunicationData.URLHelpers;
+using ECS.StreamableLoading.Cache.Disk.Cacheables;
 using ECS.StreamableLoading.Common.Components;
 using SceneRunner.Scene;
 using System;
@@ -96,5 +97,20 @@ namespace ECS.StreamableLoading.AssetBundles
 
         public override string ToString() =>
             $"Get Asset Bundle: {Name} ({Hash})";
+
+        public class DiskHashCompute : AbstractDiskHashCompute<GetAssetBundleIntention>
+        {
+            public static readonly DiskHashCompute INSTANCE = new ();
+
+            private DiskHashCompute() { }
+
+            protected override void FillPayload(IHashKeyPayload keyPayload, in GetAssetBundleIntention asset)
+            {
+                keyPayload.Put(asset.Hash ?? "");
+
+                if (asset.Name != null)
+                    keyPayload.Put(asset.Name);
+            }
+        }
     }
 }
