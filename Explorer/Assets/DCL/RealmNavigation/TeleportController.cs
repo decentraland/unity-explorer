@@ -1,10 +1,10 @@
 ﻿using Arch.Core;
 using Cysharp.Threading.Tasks;
-using DCL.AsyncLoadReporting;
 using DCL.Character;
 using DCL.CharacterCamera;
 using DCL.CharacterMotion.Components;
 using DCL.Ipfs;
+using DCL.Utilities;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Reporting;
 using System;

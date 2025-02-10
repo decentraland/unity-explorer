@@ -48,6 +48,6 @@ namespace DCL.AvatarRendering.Wearables.Components.Intentions
             obj is GetWearableByParamIntention other && Equals(other);
 
         public override int GetHashCode() =>
-            HashCode.Combine(Params, UserID, CancellationTokenSource, CommonArguments);
+            HashCode.Combine(Params, UserID);
     }
 }

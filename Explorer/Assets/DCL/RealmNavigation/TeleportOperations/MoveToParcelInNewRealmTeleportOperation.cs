@@ -4,7 +4,9 @@ using DCL.Diagnostics;
 using DCL.Utilities;
 using ECS.Prioritization.Components;
 using Global.Dynamic;
+using System;
 using System.Threading;
+using Utility.Types;
 
 namespace DCL.RealmNavigation.TeleportOperations
 {
@@ -13,7 +15,7 @@ namespace DCL.RealmNavigation.TeleportOperations
         public MoveToParcelInNewRealmTeleportOperation(ILoadingStatus loadingStatus, IGlobalRealmController realmController, ObjectProxy<Entity> cameraEntity, ITeleportController teleportController, CameraSamplingData cameraSamplingData,
             string reportCategory = ReportCategory.SCENE_LOADING) : base(loadingStatus, realmController, cameraEntity, teleportController, cameraSamplingData, reportCategory) { }
 
-        protected override UniTask InternalExecuteAsync(TeleportParams args, CancellationToken ct) =>
+        public override UniTask<EnumResult<TaskError>> ExecuteAsync(TeleportParams args, CancellationToken ct) =>
             InternalExecuteAsync(args, args.CurrentDestinationParcel, ct);
     }
 }
