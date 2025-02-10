@@ -50,9 +50,6 @@ namespace DCL.Friends
         private WebSocketRpcTransport? transport;
         private RpcClient? client;
 
-        private bool isConnectionReady => transport?.State == WebSocketState.Open && module != null && client != null &&
-                                          port != null;
-
         public RPCFriendsService(URLAddress apiUrl,
             IFriendsEventBus eventBus,
             IWeb3IdentityCache identityCache,
