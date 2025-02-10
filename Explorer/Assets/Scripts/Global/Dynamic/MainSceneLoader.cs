@@ -26,6 +26,7 @@ using ECS.StreamableLoading.Cache.Disk.Lock;
 using Global.AppArgs;
 using Global.Dynamic.RealmUrl;
 using Global.Dynamic.RealmUrl.Names;
+using Global.Versioning;
 using MVC;
 using Plugins.TexturesFuse.TexturesServerWrap.CompressShaders;
 using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
@@ -167,6 +168,8 @@ namespace Global.Dynamic
 
             var diskCache = NewInstanceDiskCache(applicationParametersParser);
 
+            DCLVersion dclVersion = DCLVersion.FromAppArgs(applicationParametersParser);
+
             bootstrapContainer = await BootstrapContainer.CreateAsync(
                 debugSettings,
                 sceneLoaderSettings: settings,
@@ -184,6 +187,7 @@ namespace Global.Dynamic
                 diskCache,
                 world,
                 decentralandEnvironment,
+                dclVersion,
                 destroyCancellationToken
             );
 
@@ -214,6 +218,7 @@ namespace Global.Dynamic
                     dynamicSettings, uiToolkitRoot, scenesUIRoot, cursorRoot, backgroundMusic, worldInfoTool.EnsureNotNull(), playerEntity,
                     applicationParametersParser,
                     coroutineRunner: this,
+                    dclVersion,
                     destroyCancellationToken);
 
                 if (!isLoaded)
@@ -261,7 +266,7 @@ namespace Global.Dynamic
 
         private async UniTask<bool> DoesApplicationRequireVersionUpdateAsync(IAppArgs applicationParametersParser, SplashScreen splashScreen, CancellationToken ct)
         {
-            string? currentVersion = CurrentVersion(applicationParametersParser);
+            DCLVersion currentVersion = DCLVersion.FromAppArgs(applicationParametersParser);
             bool runVersionControl = debugSettings.EnableVersionUpdateGuard;
 
             if (applicationParametersParser.HasDebugFlag() && !Application.isEditor)
@@ -273,7 +278,7 @@ namespace Global.Dynamic
             var appVersionGuard = new ApplicationVersionGuard(staticContainer!.WebRequestsContainer.WebRequestController, bootstrapContainer!.WebBrowser);
             string? latestVersion = await appVersionGuard.GetLatestVersionAsync(ct);
 
-            if (!currentVersion.IsOlderThan(latestVersion))
+            if (!currentVersion.Version.IsOlderThan(latestVersion))
                 return false;
 
             splashScreen.Hide();
@@ -283,19 +288,11 @@ namespace Global.Dynamic
             ControllerBase<LauncherRedirectionScreenView, ControllerNoData>.ViewFactoryMethod authScreenFactory =
                 LauncherRedirectionScreenController.CreateLazily(appVerRedirectionScreenPrefab.Value.GetComponent<LauncherRedirectionScreenView>(), null);
 
-            var launcherRedirectionScreenController = new LauncherRedirectionScreenController(appVersionGuard, authScreenFactory, currentVersion, latestVersion);
+            var launcherRedirectionScreenController = new LauncherRedirectionScreenController(appVersionGuard, authScreenFactory, currentVersion.Version, latestVersion);
             dynamicWorldContainer!.MvcManager.RegisterController(launcherRedirectionScreenController);
 
             await dynamicWorldContainer!.MvcManager.ShowAsync(LauncherRedirectionScreenController.IssueCommand(), ct);
             return true;
-        }
-
-        private static string? CurrentVersion(IAppArgs appArgs)
-        {
-            appArgs.TryGetValue(AppArgsFlags.SIMULATE_VERSION, out string? version);
-            string? currentVersion = version ?? Application.version;
-            ReportHub.LogProductionInfo($"Current Decentraland version: {currentVersion}");
-            return currentVersion;
         }
 
         private void DisableInputs()

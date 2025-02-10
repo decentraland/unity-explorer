@@ -1,23 +1,26 @@
 ﻿using System.Threading;
 using Cysharp.Threading.Tasks;
 using DCL.Chat.Commands;
-using UnityEngine;
+using Global.Versioning;
 
 namespace Global.Dynamic.ChatCommands
 {
     public class VersionChatCommand : IChatCommand
     {
+        private readonly DCLVersion dclVersion;
+
         public string Command => "version";
         public string Description => "<b>/version</b>\n  Show the current version of the client";
 
-        public bool ValidateParameters(string[] parameters)
+        public VersionChatCommand(DCLVersion dclVersion)
         {
-            return parameters.Length == 0;
+            this.dclVersion = dclVersion;
         }
 
-        public UniTask<string> ExecuteCommandAsync(string[] parameters, CancellationToken ct)
-        {
-            return UniTask.FromResult(Application.version);
-        }
+        public bool ValidateParameters(string[] parameters) =>
+            parameters.Length == 0;
+
+        public UniTask<string> ExecuteCommandAsync(string[] parameters, CancellationToken ct) =>
+            UniTask.FromResult(dclVersion.Version);
     }
 }
