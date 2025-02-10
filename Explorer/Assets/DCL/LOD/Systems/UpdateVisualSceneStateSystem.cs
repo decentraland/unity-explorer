@@ -72,7 +72,7 @@ namespace ECS.SceneLifeCycle.Systems
             if (!visualSceneState.IsDirty) return;
 
             if (visualSceneState.CurrentVisualSceneState == VisualSceneStateEnum.SHOWING_SCENE) return;
-            
+
             visualSceneState.IsDirty = false;
             World.Add(entity, SceneLODInfo.Create());
         }
@@ -118,7 +118,7 @@ namespace ECS.SceneLifeCycle.Systems
                 World.Remove<ISceneFacade, AssetPromise<ISceneFacade, GetSceneFacadeIntention>>(entity);
             }
         }
-        
+
         [Query]
         [All(typeof(SceneLODInfo))]
         private void CleanPromiseLODSharedState(in Entity entity,
@@ -137,7 +137,7 @@ namespace ECS.SceneLifeCycle.Systems
         private void UpdateVisualSceneState(ref PartitionComponent partitionComponent,
             ref SceneDefinitionComponent sceneDefinitionComponent, ref VisualSceneState visualSceneState)
         {
-            if (partitionComponent.IsDirty)
+            if (partitionComponent.IsDirty && !sceneDefinitionComponent.IsPortableExperience) // Visual State is never changed for Portable Experiences
                 visualSceneStateResolver.ResolveVisualSceneState(ref visualSceneState, partitionComponent,
                     sceneDefinitionComponent, lodSettingsAsset, realmData);
         }
