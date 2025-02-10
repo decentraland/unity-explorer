@@ -71,6 +71,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections
 
         private void Enable()
         {
+            view.LoopList.ResetListView();
             panelLifecycleTask = new UniTaskCompletionSource();
             CheckShouldInit();
         }
