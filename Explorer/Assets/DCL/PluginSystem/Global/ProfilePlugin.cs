@@ -13,15 +13,11 @@ namespace DCL.PluginSystem.Global
         private readonly IProfileRepository profileRepository;
         private readonly IProfileCache profileCache;
         private readonly CacheCleaner cacheCleaner;
-        private readonly IStreamableCache<ProfileData, GetProfileIntention> profileIntentionCache;
 
-        public ProfilePlugin(IProfileRepository profileRepository, IProfileCache profileCache, CacheCleaner cacheCleaner,
-            IStreamableCache<ProfileData, GetProfileIntention> profileIntentionCache)
+        public ProfilePlugin(IProfileRepository profileRepository, IProfileCache profileCache, CacheCleaner cacheCleaner)
         {
-            this.profileRepository = profileRepository;
             this.profileCache = profileCache;
             this.cacheCleaner = cacheCleaner;
-            this.profileIntentionCache = profileIntentionCache;
         }
 
         public void Dispose() { }
@@ -29,13 +25,11 @@ namespace DCL.PluginSystem.Global
         public UniTask Initialize(IPluginSettingsContainer container, CancellationToken ct)
         {
             cacheCleaner.Register(profileCache);
-            cacheCleaner.Register(profileIntentionCache);
             return UniTask.CompletedTask;
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
-            LoadProfileSystem.InjectToWorld(ref builder, profileIntentionCache, profileRepository);
             ResolveProfilePictureSystem.InjectToWorld(ref builder);
             ResetDirtyFlagSystem<Profile>.InjectToWorld(ref builder);
         }
