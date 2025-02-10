@@ -9,6 +9,7 @@ using DCL.Chat;
 using DCL.Clipboard;
 using DCL.Diagnostics;
 using DCL.Friends;
+using DCL.Friends.UI;
 using DCL.Friends.UI.Requests;
 using DCL.Input;
 using DCL.Input.Component;
@@ -633,7 +634,10 @@ namespace DCL.Passport
 
             async UniTaskVoid RemoveFriendThenChangeInteractionStatusAsync(CancellationToken ct)
             {
-                await friendService.DeleteFriendshipAsync(inputData.UserId, ct);
+                await mvcManager.ShowAsync(UnfriendConfirmationPopupController.IssueCommand(new UnfriendConfirmationPopupController.Params
+                {
+                    UserId = new Web3Address(inputData.UserId),
+                }), ct);
 
                 DisableAllFriendInteractions();
                 viewInstance!.AddFriendButton.gameObject.SetActive(true);

@@ -6,6 +6,7 @@ using DCL.Clipboard;
 using DCL.FeatureFlags;
 using DCL.Friends;
 using DCL.Friends.Chat.BusInterface;
+using DCL.Friends.UI;
 using DCL.Friends.UI.FriendPanel;
 using DCL.Friends.UI.PushNotifications;
 using DCL.Friends.UI.Requests;
@@ -26,7 +27,6 @@ using MVC;
 using System;
 using System.Threading;
 using UnityEngine;
-using UnityEngine.AddressableAssets;
 using Utility;
 
 namespace DCL.PluginSystem.Global
@@ -59,6 +59,7 @@ namespace DCL.PluginSystem.Global
         private CancellationTokenSource friendServiceSubscriptionCancellationToken = new ();
         private RPCFriendsService? friendsService;
         private FriendsPanelController? friendsPanelController;
+        private UnfriendConfirmationPopupController? unfriendConfirmationPopupController;
 
         public FriendsPlugin(
             MainUIView mainUIView,
@@ -189,6 +190,14 @@ namespace DCL.PluginSystem.Global
 
             mvcManager.RegisterController(friendPushNotificationController);
 
+            UnfriendConfirmationPopupView unfriendConfirmationPopupPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.UnfriendConfirmationPrefab, ct)).Value;
+
+            unfriendConfirmationPopupController = new UnfriendConfirmationPopupController(
+                UnfriendConfirmationPopupController.CreateLazily(unfriendConfirmationPopupPrefab, null),
+                friendsService, profileRepository, profileThumbnailCache);
+
+            mvcManager.RegisterController(unfriendConfirmationPopupController);
+
             // We need to restart the connection to the service as credentials changes
             // since that affects which friends the user can access
             web3IdentityCache.OnIdentityCleared += DisconnectRpcClient;
@@ -250,10 +259,19 @@ namespace DCL.PluginSystem.Global
         [field: SerializeField]
         public FriendRequestAssetReference FriendRequestPrefab { get; set; }
 
+        [field: SerializeField]
+        public UnfriendConfirmationPopupAssetReference UnfriendConfirmationPrefab { get; set; }
+
         [Serializable]
         public class FriendRequestAssetReference : ComponentReference<FriendRequestView>
         {
             public FriendRequestAssetReference(string guid) : base(guid) { }
+        }
+
+        [Serializable]
+        public class UnfriendConfirmationPopupAssetReference : ComponentReference<UnfriendConfirmationPopupView>
+        {
+            public UnfriendConfirmationPopupAssetReference(string guid) : base(guid) { }
         }
     }
 }

@@ -3,6 +3,7 @@ using DCL.Clipboard;
 using DCL.Multiplayer.Connectivity;
 using DCL.UI.GenericContextMenu;
 using DCL.UI.GenericContextMenu.Controls.Configs;
+using DCL.Web3;
 using DCL.Web3.Identities;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
@@ -17,14 +18,12 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         private readonly IMVCManager mvcManager;
         private readonly IPassportBridge passportBridge;
         private readonly IProfileThumbnailCache profileThumbnailCache;
-        private readonly IFriendsService friendsService;
         private readonly UserProfileContextMenuControlSettings userProfileContextMenuControlSettings;
         private readonly IOnlineUsersProvider onlineUsersProvider;
         private readonly IRealmNavigator realmNavigator;
         private readonly bool includeUserBlocking;
         private readonly string[] getUserPositionBuffer = new string[1];
 
-        private CancellationTokenSource? friendshipOperationCts;
         private CancellationTokenSource? jumpToFriendLocationCts;
 
         public FriendsSectionDoubleCollectionController(FriendsSectionView view,
@@ -43,7 +42,6 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         {
             this.mvcManager = mvcManager;
             this.profileThumbnailCache = profileThumbnailCache;
-            this.friendsService = friendsService;
             this.passportBridge = passportBridge;
             this.onlineUsersProvider = onlineUsersProvider;
             this.realmNavigator = realmNavigator;
@@ -60,20 +58,15 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             base.Dispose();
             requestManager.ContextMenuClicked -= ContextMenuClicked;
             requestManager.JumpInClicked -= JumpInClicked;
-            friendshipOperationCts.SafeCancelAndDispose();
             jumpToFriendLocationCts.SafeCancelAndDispose();
         }
 
         private void HandleContextMenuUserProfileButton(string userId, UserProfileContextMenuControlSettings.FriendshipStatus friendshipStatus)
         {
-            friendshipOperationCts = friendshipOperationCts.SafeRestart();
-            DeleteFriendshipAsync(friendshipOperationCts.Token).Forget();
-            return;
-
-            async UniTaskVoid DeleteFriendshipAsync(CancellationToken ct)
+            mvcManager.ShowAsync(UnfriendConfirmationPopupController.IssueCommand(new UnfriendConfirmationPopupController.Params
             {
-                await friendsService.DeleteFriendshipAsync(userId, ct);
-            }
+                UserId = new Web3Address(userId),
+            })).Forget();
         }
 
         protected override void ElementClicked(FriendProfile profile)
