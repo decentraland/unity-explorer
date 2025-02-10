@@ -24,6 +24,7 @@ namespace MVC
         {
             this.mvcManager = mvcManager;
             //TODO FRAN -> Add proper request friend action here when Friends functionality is merged to dev
+            //TODO FRAN -> Also add here button to MENTION user in chat.
             userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings(systemClipboard, null);
             contextMenu = new GenericContextMenu().AddControl(userProfileContextMenuControlSettings);
         }

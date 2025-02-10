@@ -41,8 +41,8 @@ namespace DCL.Nametags
         [field: SerializeField] internal AnimationCurve alphaOverDistanceCurve { get; private set; }
         [field: SerializeField] public float MaxWidth { get; private set; }
 
-        public string Id; //TODO FRAN: I dont like this
-        public float alpha { private set; get; } //TODO FRAN: I dont like this
+        public string Id;
+        public float alpha { private set; get; }
 
         private readonly Color finishColor = new (1, 1, 1, 0);
         private readonly Color startingTextColor = new (1, 1, 1, 0);
@@ -62,7 +62,8 @@ namespace DCL.Nametags
         private float additionalHeight;
         private Color textColor = new (1, 1, 1, 1);
         private Color usernameTextColor = new (1, 1, 1, 1);
-        private Color backgroundColor = new (1, 1, 1, 1);
+        private readonly Color defaultBackgroundColor = new (1, 1, 1, 1);
+        private readonly Color mentionedBackgroundColor = new (0.227f, 0.0588f, 0.3137f, 1);
 
         private ChatBubbleConfigurationSO? chatBubbleConfiguration;
         private CancellationTokenSource? cts;
@@ -119,6 +120,7 @@ namespace DCL.Nametags
             alpha = alphaOverDistanceCurve.Evaluate((distance - fullOpacityMaxDistance) / (maxDistance - fullOpacityMaxDistance));
             textColor.a = distance > fullOpacityMaxDistance ? alpha : 1;
             usernameTextColor.a = distance > fullOpacityMaxDistance ? alpha : 1;
+            var backgroundColor = Background.color;
             backgroundColor.a = distance > fullOpacityMaxDistance ? alpha : 1;
             BubblePeak.color = backgroundColor;
             Background.color = backgroundColor;
@@ -185,6 +187,7 @@ namespace DCL.Nametags
             isAnimatingIn = true;
             MessageContent.gameObject.SetActive(true);
             BubblePeak.gameObject.SetActive(true);
+            Background.color = isMention? mentionedBackgroundColor : defaultBackgroundColor;
 
             //Set message content and calculate the preferred size of the background with the addition of a margin
             MessageContent.text = messageContent;
@@ -254,6 +257,11 @@ namespace DCL.Nametags
             ct.ThrowIfCancellationRequested();
 
             BubblePeak.gameObject.SetActive(false);
+
+            //TODO FRAN: probably animate these values so it looks better?
+            OutlineObject.SetActive(false);
+            Background.color = defaultBackgroundColor;
+
             backgroundFinalSize.y = Username.preferredHeight + (chatBubbleConfiguration?.nametagMarginOffsetHeight ?? DEFAULT_MARGIN_OFFSET_HEIGHT);
 
             float nametagMarginOffsetWidth = chatBubbleConfiguration?.nametagMarginOffsetWidth ?? DEFAULT_MARGIN_OFFSET_WIDTH;

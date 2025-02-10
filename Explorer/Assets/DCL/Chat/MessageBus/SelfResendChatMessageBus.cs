@@ -84,7 +84,7 @@ namespace DCL.Chat.MessageBus
             chatMessage.Contains(displayName);
 
 
-        //TODO FRAN: Make these values constants
+        //TODO FRAN: Make these values constants + Auto mentions should have links disabled and be marked as NOT mentions
         private string AddStyleToUserMention(string chatMessage, string userName) =>
             chatMessage.Replace($"<link=profile>{userName}</link>",$"<mark=#438FFF40>{userName}</mark>");
 
