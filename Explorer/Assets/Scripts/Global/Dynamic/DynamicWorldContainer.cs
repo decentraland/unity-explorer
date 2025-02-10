@@ -566,8 +566,7 @@ namespace Global.Dynamic
                     wearableCatalog,
                     remoteEntities,
                     staticContainer.CharacterContainer.Transform),
-                new MainUIPlugin(mvcManager, sidebarBus, mainUIView),
-                new ProfilePlugin(profileRepository, profileCache, staticContainer.CacheCleaner, new ProfileIntentionCache()),
+                new MainUIPlugin(mvcManager, sidebarBus, mainUIView), new ProfilePlugin(profileRepository, profileCache, staticContainer.CacheCleaner),
                 new MapRendererPlugin(mapRendererContainer.MapRenderer),
                 new SidebarPlugin(
                     assetsProvisioner,
@@ -776,7 +775,8 @@ namespace Global.Dynamic
                 multiplayerEmotesMessageBus,
                 globalWorld,
                 staticContainer.SceneReadinessReportQueue,
-                localSceneDevelopment
+                localSceneDevelopment,
+                profileRepository
             );
 
             staticContainer.RoomHubProxy.SetObject(roomHub);
