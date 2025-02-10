@@ -137,10 +137,13 @@ namespace DCL.PluginSystem.Global
             if (isConnectivityStatusEnabled)
                 friendsService.SubscribeToConnectivityStatusAsync(cts.Token).Forget();
 
-            FriendsPanelView friendsPanelPrefab = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.FriendsPanelPrefab, ct)).GetComponent<FriendsPanelView>();
-
-            friendsPanelController = new FriendsPanelController(FriendsPanelController.Preallocate(friendsPanelPrefab, null, out FriendsPanelView panelView),
-                panelView,
+            friendsPanelController = new FriendsPanelController(() =>
+                {
+                    var panelView = mainUIView.FriendsPanelViewView;
+                    panelView.gameObject.SetActive(false);
+                    return panelView;
+                },
+                mainUIView.FriendsPanelViewView,
                 chatLifecycleBusController,
                 mainUIView.SidebarView.FriendRequestNotificationIndicator,
                 friendsService,
@@ -244,7 +247,6 @@ namespace DCL.PluginSystem.Global
 
     public class FriendsPluginSettings : IDCLPluginSettings
     {
-        [field: SerializeField] public AssetReferenceGameObject FriendsPanelPrefab { get; set; } = null!;
         [field: SerializeField]
         public FriendRequestAssetReference FriendRequestPrefab { get; set; }
 
