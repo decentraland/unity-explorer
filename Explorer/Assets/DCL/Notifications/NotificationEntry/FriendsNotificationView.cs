@@ -11,6 +11,9 @@ namespace DCL.Notifications.NotificationEntry
 {
     public class FriendsNotificationView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, INotificationView
     {
+        private const string FRIEND_REQUEST_CLAIMED_NAME_TEMPLATE = "<color=#{0}>{1} <color=#ECEBED>{2}";
+        private const string FRIEND_REQUEST_UNCLAIMED_NAME_TEMPLATE = "<color=#{0}>{1}<color=#A09BA8>#{2} <color=#ECEBED>{3}";
+
         public event Action<NotificationType, INotification> NotificationClicked;
         public NotificationType NotificationType { get; set; }
         public INotification Notification { get; set; }
@@ -37,15 +40,6 @@ namespace DCL.Notifications.NotificationEntry
         public TMP_Text HeaderText { get; set; }
 
         [field: SerializeField]
-        public TMP_Text UserNameText { get; private set; }
-
-        [field: SerializeField]
-        public TMP_Text UserAddressText { get; private set; }
-
-        [field: SerializeField]
-        public GameObject UserAddressSeparator { get; private set; }
-
-        [field: SerializeField]
         public TMP_Text TitleText { get; set; }
 
         [field: SerializeField]
@@ -66,12 +60,7 @@ namespace DCL.Notifications.NotificationEntry
         public void ConfigureFromAcceptedNotificationData(FriendRequestAcceptedNotification notification)
         {
             Color userColor = ChatEntryConfiguration.GetNameColor(notification.Metadata.Sender.Name);
-            UserNameText.text = notification.Metadata.Sender.Name;
-            UserNameText.color = userColor;
-            UserAddressText.text = notification.Metadata.Sender.Address[^4..];
-            TitleText.text = notification.GetTitle();
-            UserAddressText.gameObject.SetActive(!notification.Metadata.Sender.HasClaimedName);
-            UserAddressSeparator.SetActive(!notification.Metadata.Sender.HasClaimedName);
+            SetTitleText(notification, notification.Metadata.Sender, userColor);
             NotificationImageBackground.color = userColor;
             Notification = notification;
             NotificationType = notification.Type;
@@ -80,15 +69,17 @@ namespace DCL.Notifications.NotificationEntry
         public void ConfigureFromReceivedNotificationData(FriendRequestReceivedNotification notification)
         {
             Color userColor = ChatEntryConfiguration.GetNameColor(notification.Metadata.Sender.Name);
-            UserNameText.text = notification.Metadata.Sender.Name;
-            UserNameText.color = userColor;
-            UserAddressText.text = notification.Metadata.Sender.Address[^4..];
-            TitleText.text = notification.GetTitle();
-            UserAddressText.gameObject.SetActive(!notification.Metadata.Sender.HasClaimedName);
-            UserAddressSeparator.SetActive(!notification.Metadata.Sender.HasClaimedName);
+            SetTitleText(notification, notification.Metadata.Sender, userColor);
             NotificationImageBackground.color = userColor;
             Notification = notification;
             NotificationType = notification.Type;
+        }
+
+        private void SetTitleText(NotificationBase notification, FriendRequestProfile sender, Color userColor)
+        {
+            TitleText.SetText(sender.HasClaimedName
+                ? string.Format(FRIEND_REQUEST_CLAIMED_NAME_TEMPLATE, ColorUtility.ToHtmlStringRGB(userColor), sender.Name, notification.GetTitle())
+                : string.Format(FRIEND_REQUEST_UNCLAIMED_NAME_TEMPLATE, ColorUtility.ToHtmlStringRGB(userColor), sender.Name, sender.Address[^4..], notification.GetTitle()));
         }
 
         private void Start()
