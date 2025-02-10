@@ -14,8 +14,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
         private const int USER_ELEMENT_INDEX = 0;
         private const int STATUS_ELEMENT_INDEX = 1;
         private const int EMPTY_ELEMENT_INDEX = 2;
-
-        private const int REQUEST_PAGE_NUMBER = 0;
+        private const int REQUEST_THRESHOLD = 0;
 
         private readonly LoopListView2 loopListView;
         private readonly CancellationTokenSource modifyRequestsCts = new ();
@@ -33,7 +32,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             IProfileThumbnailCache profileThumbnailCache,
             int pageSize,
             LoopListView2 loopListView)
-            : base(friendsService, friendEventBus, webRequestController, profileThumbnailCache, pageSize, FriendPanelStatus.RECEIVED, FriendPanelStatus.SENT, STATUS_ELEMENT_INDEX, EMPTY_ELEMENT_INDEX, USER_ELEMENT_INDEX)
+            : base(friendsService, friendEventBus, webRequestController, profileThumbnailCache, pageSize, REQUEST_THRESHOLD, FriendPanelStatus.RECEIVED, FriendPanelStatus.SENT, STATUS_ELEMENT_INDEX, EMPTY_ELEMENT_INDEX, USER_ELEMENT_INDEX)
         {
             this.loopListView = loopListView;
 
@@ -100,10 +99,13 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             loopListView.RefreshAllShownItem();
         }
 
-        public override int GetFirstCollectionCount() =>
+        internal int GetReceivedRequestCount() =>
+            GetFirstCollectionCount();
+
+        protected override int GetFirstCollectionCount() =>
             receivedRequests.Count;
 
-        public override int GetSecondCollectionCount() =>
+        protected override int GetSecondCollectionCount() =>
             sentRequests.Count;
 
         protected override FriendProfile GetFirstCollectionElement(int index) =>
@@ -142,11 +144,11 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             sentRequests.Clear();
         }
 
-        protected override async UniTask FetchInitialDataAsync(CancellationToken ct)
+        protected override async UniTask<int> FetchDataAsync(int pageNumber, int pageSize, CancellationToken ct)
         {
             (PaginatedFriendRequestsResult received, PaginatedFriendRequestsResult sent) =
-                await UniTask.WhenAll(friendsService.GetReceivedFriendRequestsAsync(REQUEST_PAGE_NUMBER, pageSize, ct),
-                    friendsService.GetSentFriendRequestsAsync(REQUEST_PAGE_NUMBER, pageSize, ct));
+                await UniTask.WhenAll(friendsService.GetReceivedFriendRequestsAsync(pageNumber, pageSize, ct),
+                    friendsService.GetSentFriendRequestsAsync(pageNumber, pageSize, ct));
 
             foreach (FriendRequest fr in received.Requests)
             {
@@ -159,6 +161,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
                 if (sentRequests.Contains(fr)) continue;
                 sentRequests.Add(fr);
             }
+
+            return received.TotalAmount + sent.TotalAmount;
 
             // FriendProfile friendProfile1 = new FriendProfile(new Web3Address("0xd545b9e0a5f3638a5026d1914cc9b47ed16b5ae9"), "Test1", false, URLAddress.EMPTY);
             // FriendProfile friendProfile2 = new FriendProfile(new Web3Address("0xba7352cff5681b719daf33fa05e93153af8146c8"), "Test2", false, URLAddress.EMPTY);

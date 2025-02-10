@@ -3,6 +3,7 @@ using DCL.WebRequests;
 using SuperScrollView;
 using System;
 using System.Threading;
+using Utility;
 
 namespace DCL.Friends.UI.FriendPanel.Sections
 {
@@ -10,7 +11,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections
     {
         protected readonly IFriendsService friendsService;
         protected readonly IFriendsEventBus friendEventBus;
-        protected readonly int pageSize;
+        private readonly int pageSize;
+        private readonly int elementsMissingThreshold;
 
         private readonly IWebRequestController webRequestController;
         private readonly IProfileThumbnailCache profileThumbnailCache;
@@ -19,12 +21,15 @@ namespace DCL.Friends.UI.FriendPanel.Sections
         private readonly int statusElementIndex;
         private readonly int emptyElementIndex;
         private readonly int userElementIndex;
+        private readonly CancellationTokenSource fetchNewDataCts = new ();
 
-        protected int pageNumber = 0;
-        protected int totalFetched = 0;
+        private int pageNumber;
+        private int totalFetched;
+        private int totalToFetch;
+        private bool isFetching;
 
-        private bool excludeFirstCollection = false;
-        private bool excludeSecondCollection = false;
+        private bool excludeFirstCollection;
+        private bool excludeSecondCollection;
 
         public bool HasElements { get; private set; }
         public bool WasInitialised { get; private set; }
@@ -38,6 +43,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections
             IWebRequestController webRequestController,
             IProfileThumbnailCache profileThumbnailCache,
             int pageSize,
+            int elementsMissingThreshold,
             FriendPanelStatus firstCollectionStatus,
             FriendPanelStatus secondCollectionStatus,
             int statusElementIndex,
@@ -49,6 +55,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections
             this.webRequestController = webRequestController;
             this.profileThumbnailCache = profileThumbnailCache;
             this.pageSize = pageSize;
+            this.elementsMissingThreshold = elementsMissingThreshold;
             this.firstCollectionStatus = firstCollectionStatus;
             this.secondCollectionStatus = secondCollectionStatus;
             this.statusElementIndex = statusElementIndex;
@@ -56,10 +63,13 @@ namespace DCL.Friends.UI.FriendPanel.Sections
             this.userElementIndex = userElementIndex;
         }
 
-        public abstract void Dispose();
+        public virtual void Dispose()
+        {
+            fetchNewDataCts.SafeCancelAndDispose();
+        }
 
-        public abstract int GetFirstCollectionCount();
-        public abstract int GetSecondCollectionCount();
+        protected abstract int GetFirstCollectionCount();
+        protected abstract int GetSecondCollectionCount();
 
         protected abstract FriendProfile GetFirstCollectionElement(int index);
         protected abstract FriendProfile GetSecondCollectionElement(int index);
@@ -125,7 +135,23 @@ namespace DCL.Friends.UI.FriendPanel.Sections
                 }
             }
 
+            if (index - onlineFriendMarker - 2 >= totalFetched - elementsMissingThreshold && totalFetched < totalToFetch && !isFetching)
+                FetchNewDataAsync(loopListView, fetchNewDataCts.Token).Forget();
+
             return listItem;
+        }
+
+        private async UniTaskVoid FetchNewDataAsync(LoopListView2 loopListView, CancellationToken ct)
+        {
+            isFetching = true;
+
+            pageNumber++;
+            totalToFetch = await FetchDataAsync(pageNumber, pageSize, ct);
+            totalFetched = GetFirstCollectionCount() + GetSecondCollectionCount();
+
+            loopListView.SetListItemCount(GetElementsNumber());
+
+            isFetching = false;
         }
 
         public int GetElementsNumber()
@@ -158,13 +184,14 @@ namespace DCL.Friends.UI.FriendPanel.Sections
 
         protected abstract void ResetCollections();
 
-        protected abstract UniTask FetchInitialDataAsync(CancellationToken ct);
+        protected abstract UniTask<int> FetchDataAsync(int pageNumber, int pageSize, CancellationToken ct);
 
         public async UniTask InitAsync(CancellationToken ct)
         {
-            await FetchInitialDataAsync(ct);
+            totalToFetch = await FetchDataAsync(pageNumber, pageSize, ct);
+            totalFetched = GetFirstCollectionCount() + GetSecondCollectionCount();
 
-            HasElements = GetFirstCollectionCount() + GetSecondCollectionCount() > 0;
+            HasElements = totalFetched > 0;
             WasInitialised = true;
         }
 

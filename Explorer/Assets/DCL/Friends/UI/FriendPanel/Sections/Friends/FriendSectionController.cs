@@ -16,10 +16,6 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 {
     public class FriendSectionController : FriendPanelSectionController<FriendsSectionView, FriendListRequestManager, FriendListUserView>
     {
-        private static readonly RectOffset CONTEXT_MENU_VERTICAL_LAYOUT_PADDING = new (15, 15, 20, 25);
-        private const int CONTEXT_MENU_SEPARATOR_HEIGHT = 20;
-        private const int CONTEXT_MENU_ELEMENTS_SPACING = 5;
-
         private readonly IMVCManager mvcManager;
         private readonly IPassportBridge passportBridge;
         private readonly IProfileThumbnailCache profileThumbnailCache;
@@ -90,7 +86,9 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 
             mvcManager.ShowAsync(GenericContextMenuController.IssueCommand(
                            new GenericContextMenuParameter(
-                               config: BuildContextMenu(friendProfile),
+                               config: FriendListSectionUtilities.BuildContextMenu(friendProfile, view.ContextMenuSettings,
+                                   userProfileContextMenuControlSettings, onlineUsersProvider, realmNavigator, passportBridge,
+                                   getUserPositionBuffer, jumpToFriendLocationCts, includeUserBlocking, false),
                                anchorPosition: buttonPosition,
                                actionOnHide: () => elementView.CanUnHover = true,
                                closeTask: panelLifecycleTask?.Task))
@@ -98,50 +96,10 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
                       .Forget();
         }
 
-        private GenericContextMenu BuildContextMenu(FriendProfile friendProfile)
-        {
-            GenericContextMenu contextMenu = new GenericContextMenu(view.ContextMenuSettings.ContextMenuWidth, verticalLayoutPadding: CONTEXT_MENU_VERTICAL_LAYOUT_PADDING, elementsSpacing: CONTEXT_MENU_ELEMENTS_SPACING)
-                                            .AddControl(userProfileContextMenuControlSettings)
-                                            .AddControl(new SeparatorContextMenuControlSettings(CONTEXT_MENU_SEPARATOR_HEIGHT, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.left, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.right))
-                                            .AddControl(new ButtonContextMenuControlSettings(view.ContextMenuSettings.ViewProfileText, view.ContextMenuSettings.ViewProfileSprite, () => OpenProfilePassport(friendProfile)));
-
-            if (requestManager.IsFriendInGame(friendProfile))
-                contextMenu.AddControl(new ButtonContextMenuControlSettings(view.ContextMenuSettings.JumpToLocationText, view.ContextMenuSettings.JumpToLocationSprite, () => JumpToFriendLocation(friendProfile)));
-
-            if (includeUserBlocking)
-                contextMenu.AddControl(new ButtonContextMenuControlSettings(view.ContextMenuSettings.BlockText, view.ContextMenuSettings.BlockSprite, () => Debug.Log($"Block {friendProfile.Address.ToString()}")));
-
-            return contextMenu;
-        }
-
-        private void JumpToFriendLocation(FriendProfile profile)
-        {
-            jumpToFriendLocationCts = jumpToFriendLocationCts.SafeRestart();
-            JumpToFriendLocationAsync(jumpToFriendLocationCts.Token).Forget();
-            return;
-
-            async UniTaskVoid JumpToFriendLocationAsync(CancellationToken ct = default)
-            {
-                getUserPositionBuffer[0] = profile.Address.ToString();
-
-                IReadOnlyCollection<OnlineUserData> onlineData = await onlineUsersProvider.GetAsync(getUserPositionBuffer, ct);
-
-                if (onlineData.Count == 0)
-                    return;
-
-                OnlineUserData userData = onlineData.First();
-                Vector2Int parcel = userData.position.ToParcel();
-                realmNavigator.TeleportToParcelAsync(parcel, ct, false).Forget();
-            }
-        }
-
         private void JumpInClicked(FriendProfile profile) =>
-            JumpToFriendLocation(profile);
-
-        private void OpenProfilePassport(FriendProfile profile) =>
-            passportBridge.ShowAsync(profile.Address).Forget();
+            FriendListSectionUtilities.JumpToFriendLocation(profile, jumpToFriendLocationCts, getUserPositionBuffer, onlineUsersProvider, realmNavigator);
 
         protected override void ElementClicked(FriendProfile profile) =>
-            OpenProfilePassport(profile);
+            FriendListSectionUtilities.OpenProfilePassport(profile, passportBridge);
     }
 }

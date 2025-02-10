@@ -13,8 +13,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections
         private readonly int elementsMissingThreshold;
         private readonly IWebRequestController webRequestController;
         private readonly IProfileThumbnailCache profileThumbnailCache;
+        private readonly CancellationTokenSource fetchNewDataCts = new ();
 
-        private CancellationTokenSource fetchNewDataCts = new ();
         private int pageNumber;
         private int totalFetched;
         private int totalToFetch;

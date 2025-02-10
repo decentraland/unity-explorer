@@ -1,13 +1,31 @@
 using Cysharp.Threading.Tasks;
+using DCL.Clipboard;
+using DCL.Multiplayer.Connectivity;
+using DCL.UI.GenericContextMenu;
+using DCL.UI.GenericContextMenu.Controls.Configs;
 using DCL.Web3.Identities;
+using ECS.SceneLifeCycle.Realm;
 using MVC;
+using System.Threading;
 using UnityEngine;
+using Utility;
 
 namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 {
     public class FriendsSectionDoubleCollectionController : FriendPanelSectionDoubleCollectionController<FriendsSectionView, FriendListPagedDoubleCollectionRequestManager, FriendListUserView>
     {
+        private readonly IMVCManager mvcManager;
         private readonly IPassportBridge passportBridge;
+        private readonly IProfileThumbnailCache profileThumbnailCache;
+        private readonly IFriendsService friendsService;
+        private readonly UserProfileContextMenuControlSettings userProfileContextMenuControlSettings;
+        private readonly IOnlineUsersProvider onlineUsersProvider;
+        private readonly IRealmNavigator realmNavigator;
+        private readonly bool includeUserBlocking;
+        private readonly string[] getUserPositionBuffer = new string[1];
+
+        private CancellationTokenSource? friendshipOperationCts;
+        private CancellationTokenSource? jumpToFriendLocationCts;
 
         public FriendsSectionDoubleCollectionController(FriendsSectionView view,
             IFriendsService friendsService,
@@ -15,10 +33,24 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             IWeb3IdentityCache web3IdentityCache,
             IMVCManager mvcManager,
             FriendListPagedDoubleCollectionRequestManager doubleCollectionRequestManager,
-            IPassportBridge passportBridge)
+            IPassportBridge passportBridge,
+            IProfileThumbnailCache profileThumbnailCache,
+            IOnlineUsersProvider onlineUsersProvider,
+            IRealmNavigator realmNavigator,
+            ISystemClipboard systemClipboard,
+            bool includeUserBlocking)
             : base(view, friendsService, friendEventBus, web3IdentityCache, mvcManager, doubleCollectionRequestManager)
         {
+            this.mvcManager = mvcManager;
+            this.profileThumbnailCache = profileThumbnailCache;
+            this.friendsService = friendsService;
             this.passportBridge = passportBridge;
+            this.onlineUsersProvider = onlineUsersProvider;
+            this.realmNavigator = realmNavigator;
+            this.includeUserBlocking = includeUserBlocking;
+
+            userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings(systemClipboard, HandleContextMenuUserProfileButton);
+
             doubleCollectionRequestManager.JumpInClicked += JumpInClicked;
             doubleCollectionRequestManager.ContextMenuClicked += ContextMenuClicked;
         }
@@ -26,8 +58,22 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         public override void Dispose()
         {
             base.Dispose();
-            requestManager.JumpInClicked -= JumpInClicked;
             requestManager.ContextMenuClicked -= ContextMenuClicked;
+            requestManager.JumpInClicked -= JumpInClicked;
+            friendshipOperationCts.SafeCancelAndDispose();
+            jumpToFriendLocationCts.SafeCancelAndDispose();
+        }
+
+        private void HandleContextMenuUserProfileButton(string userId, UserProfileContextMenuControlSettings.FriendshipStatus friendshipStatus)
+        {
+            friendshipOperationCts = friendshipOperationCts.SafeRestart();
+            DeleteFriendshipAsync(friendshipOperationCts.Token).Forget();
+            return;
+
+            async UniTaskVoid DeleteFriendshipAsync(CancellationToken ct)
+            {
+                await friendsService.DeleteFriendshipAsync(userId, ct);
+            }
         }
 
         protected override void ElementClicked(FriendProfile profile)
@@ -35,14 +81,27 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             passportBridge.ShowAsync(profile.Address).Forget();
         }
 
-        private void JumpInClicked(FriendProfile profile)
+        private void ContextMenuClicked(FriendProfile friendProfile, Vector2 buttonPosition, FriendListUserView elementView)
         {
-            Debug.Log($"JumpInClicked on {profile.Address.ToString()}");
+            userProfileContextMenuControlSettings.SetInitialData(friendProfile.Name, friendProfile.Address, friendProfile.HasClaimedName,
+                view.ChatEntryConfiguration.GetNameColor(friendProfile.Name), UserProfileContextMenuControlSettings.FriendshipStatus.FRIEND,
+                profileThumbnailCache.GetThumbnail(friendProfile.Address.ToString()));
+
+            elementView.CanUnHover = false;
+
+            mvcManager.ShowAsync(GenericContextMenuController.IssueCommand(
+                           new GenericContextMenuParameter(
+                               config: FriendListSectionUtilities.BuildContextMenu(friendProfile, view.ContextMenuSettings,
+                                   userProfileContextMenuControlSettings, onlineUsersProvider, realmNavigator, passportBridge,
+                                   getUserPositionBuffer, jumpToFriendLocationCts, includeUserBlocking, requestManager.IsFriendInGame(friendProfile)),
+                               anchorPosition: buttonPosition,
+                               actionOnHide: () => elementView.CanUnHover = true,
+                               closeTask: panelLifecycleTask?.Task))
+                       )
+                      .Forget();
         }
 
-        private void ContextMenuClicked(FriendProfile profile)
-        {
-            Debug.Log($"ContextMenuClicked on {profile.Address.ToString()}");
-        }
+        private void JumpInClicked(FriendProfile profile) =>
+            FriendListSectionUtilities.JumpToFriendLocation(profile, jumpToFriendLocationCts, getUserPositionBuffer, onlineUsersProvider, realmNavigator);
     }
 }

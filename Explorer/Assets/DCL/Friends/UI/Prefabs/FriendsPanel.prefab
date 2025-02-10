@@ -4421,6 +4421,10 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 5067470841955805679, guid: b689896acccd644a5b9acbfadac411d6, type: 3}
+      propertyPath: m_text
+      value: No Friends
+      objectReference: {fileID: 0}
     - target: {fileID: 6557179177061178844, guid: b689896acccd644a5b9acbfadac411d6, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5

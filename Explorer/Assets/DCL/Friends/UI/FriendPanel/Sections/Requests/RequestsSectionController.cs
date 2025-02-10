@@ -145,7 +145,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             PropagateReceivedRequestsCountChanged();
 
         private void PropagateReceivedRequestsCountChanged() =>
-            ReceivedRequestsCountChanged?.Invoke(requestManager.GetFirstCollectionCount());
+            ReceivedRequestsCountChanged?.Invoke(requestManager.GetReceivedRequestCount());
 
         private void UpdateReceivedRequestsSectionCount(int count) =>
             view.TabNotificationIndicator.SetNotificationCount(count);

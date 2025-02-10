@@ -33,7 +33,8 @@ namespace DCL.Friends.UI.FriendPanel
         private readonly IChatLifecycleBusController chatLifecycleBusController;
         private readonly NotificationIndicatorView sidebarRequestNotificationIndicator;
         private readonly BlockedSectionController blockedSectionController;
-        private readonly FriendSectionController friendSectionController;
+        private readonly FriendSectionController? friendSectionController;
+        private readonly FriendsSectionDoubleCollectionController? friendSectionControllerConnectivity;
         private readonly RequestsSectionController requestsSectionController;
         private readonly DCLInput dclInput;
         private readonly bool includeUserBlocking;
@@ -68,17 +69,31 @@ namespace DCL.Friends.UI.FriendPanel
             this.dclInput = dclInput;
             this.includeUserBlocking = includeUserBlocking;
 
-            friendSectionController = new FriendSectionController(instantiatedView.FriendsSection,
-                web3IdentityCache,
-                mvcManager,
-                systemClipboard,
-                new FriendListRequestManager(friendsService, friendEventBus, profileRepository, webRequestController, profileThumbnailCache, instantiatedView.FriendsSection.LoopList, FRIENDS_PAGE_SIZE, FRIENDS_FETCH_ELEMENTS_THRESHOLD, isConnectivityStatusEnabled),
-                passportBridge,
-                profileThumbnailCache,
-                friendsService,
-                onlineUsersProvider,
-                realmNavigator,
-                includeUserBlocking);
+            if (isConnectivityStatusEnabled)
+                friendSectionControllerConnectivity = new FriendsSectionDoubleCollectionController(instantiatedView.FriendsSection,
+                    friendsService,
+                    friendEventBus,
+                    web3IdentityCache,
+                    mvcManager,
+                    new FriendListPagedDoubleCollectionRequestManager(friendsService, friendEventBus, webRequestController, profileThumbnailCache, profileRepository, instantiatedView.FriendsSection.LoopList, FRIENDS_PAGE_SIZE, FRIENDS_FETCH_ELEMENTS_THRESHOLD),
+                    passportBridge,
+                    profileThumbnailCache,
+                    onlineUsersProvider,
+                    realmNavigator,
+                    systemClipboard,
+                    includeUserBlocking);
+            else
+                friendSectionController = new FriendSectionController(instantiatedView.FriendsSection,
+                    web3IdentityCache,
+                    mvcManager,
+                    systemClipboard,
+                    new FriendListRequestManager(friendsService, friendEventBus, profileRepository, webRequestController, profileThumbnailCache, instantiatedView.FriendsSection.LoopList, FRIENDS_PAGE_SIZE, FRIENDS_FETCH_ELEMENTS_THRESHOLD),
+                    passportBridge,
+                    profileThumbnailCache,
+                    friendsService,
+                    onlineUsersProvider,
+                    realmNavigator,
+                    includeUserBlocking);
             requestsSectionController = new RequestsSectionController(instantiatedView.RequestsSection,
                 friendsService,
                 friendEventBus,
@@ -111,7 +126,8 @@ namespace DCL.Friends.UI.FriendPanel
             friendsPanelCts.SafeCancelAndDispose();
 
             blockedSectionController.Dispose();
-            friendSectionController.Dispose();
+            friendSectionController?.Dispose();
+            friendSectionControllerConnectivity?.Dispose();
             requestsSectionController.Dispose();
             UnregisterCloseHotkey();
         }
