@@ -135,7 +135,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections
                 }
             }
 
-            if (index - onlineFriendMarker - 2 >= totalFetched - elementsMissingThreshold && totalFetched < totalToFetch && !isFetching)
+            if (GetSecondCollectionCount() > 0 && index - onlineFriendMarker - 2 >= totalFetched - elementsMissingThreshold && totalFetched < totalToFetch && !isFetching)
                 FetchNewDataAsync(loopListView, fetchNewDataCts.Token).Forget();
 
             return listItem;
