@@ -12,6 +12,7 @@ namespace DCL.UI.SuggestionPanel
 
         protected override void SetupContinuation(ProfileInputSuggestionData data)
         {
+            SuggestionId = data.ProfileData.DisplayName;
             simpleUserNameElement.Setup(data.ProfileData, data.UsernameColor);
             faceFrame.color = data.UsernameColor;
             //Disabled for now, we need to implement the profile picture fetching.

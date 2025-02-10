@@ -10,6 +10,7 @@ namespace DCL.UI.SuggestionPanel
 
         protected override void SetupContinuation(EmojiInputSuggestionData inputSuggestionElementData)
         {
+            SuggestionId = inputSuggestionElementData.EmojiCode;
             emoji.text = inputSuggestionElementData.EmojiCode;
             emojiName.text = inputSuggestionElementData.EmojiName;
         }

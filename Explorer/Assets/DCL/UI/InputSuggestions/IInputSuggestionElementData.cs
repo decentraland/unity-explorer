@@ -6,13 +6,4 @@ namespace DCL.UI.SuggestionPanel
 
         InputSuggestionType GetInputSuggestionType();
     }
-
-    public struct InputSuggestionElementData : IInputSuggestionElementData
-    {
-        public string GetId() =>
-            "ID";
-
-        public InputSuggestionType GetInputSuggestionType() =>
-            InputSuggestionType.NONE;
-    }
 }

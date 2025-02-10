@@ -186,8 +186,6 @@ namespace DCL.UI.HyperlinkHandler
             if (lastHighlightedIndex < 0) return;
 
             textComponent.text = originalText;
-            //TODO FRAN: Check if this next line is needed as we are setting the cursor elsewhere when we need to, so it might not be and we might be over writhing other changes
-            dependencies.Cursor.SetStyle(CursorStyle.Normal);
             lastHighlightedIndex = -1;
             isHighlighting = false;
             originalText = null;
