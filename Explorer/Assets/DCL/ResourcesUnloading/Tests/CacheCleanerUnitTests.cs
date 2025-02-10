@@ -36,7 +36,6 @@ namespace DCL.ResourcesUnloading.Tests
         private ILODCache lodAssetsPool;
         private IRoadAssetPool roadAssetPool;
         private IEmoteStorage emoteStorage;
-        private IStreamableCache<ProfileData, GetProfileIntention> profileIntentionCache;
         private IMemoryCache<string, string> jsSourcesCache;
 
         [SetUp]
@@ -58,7 +57,6 @@ namespace DCL.ResourcesUnloading.Tests
             roadAssetPool = Substitute.For<IRoadAssetPool>();
             nftShapeCache = Substitute.For<ISizedStreamableCache<Texture2DData, GetNFTShapeIntention>>();
             emoteStorage = Substitute.For<IEmoteStorage>();
-            profileIntentionCache = Substitute.For<IStreamableCache<ProfileData, GetProfileIntention>>();
             jsSourcesCache = Substitute.For<IMemoryCache<string, string>>();
 
             cacheCleaner = new CacheCleaner(releasablePerformanceBudget, null);
@@ -75,7 +73,6 @@ namespace DCL.ResourcesUnloading.Tests
             cacheCleaner.Register(roadAssetPool);
             cacheCleaner.Register(nftShapeCache);
             cacheCleaner.Register(emoteStorage);
-            cacheCleaner.Register(profileIntentionCache);
             cacheCleaner.Register(jsSourcesCache);
         }
 
