@@ -147,8 +147,25 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 
         private void RemoveFriend(string userid)
         {
-            onlineFriends.RemoveAll(friendProfile => friendProfile.Address.ToString().Equals(userid));
-            offlineFriends.RemoveAll(friendProfile => friendProfile.Address.ToString().Equals(userid));
+            onlineFriends.RemoveAll(friendProfile =>
+            {
+                bool toRemove = friendProfile.Address.ToString().Equals(userid);
+
+                if (toRemove)
+                    friendsOnlineStatus.Remove(friendProfile);
+
+                return toRemove;
+            });
+
+            offlineFriends.RemoveAll(friendProfile =>
+            {
+                bool toRemove = friendProfile.Address.ToString().Equals(userid);
+
+                if (toRemove)
+                    friendsOnlineStatus.Remove(friendProfile);
+
+                return toRemove;
+            });
             RefreshLoopList();
         }
 

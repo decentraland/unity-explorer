@@ -70,6 +70,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 
         private void FriendRequestAccepted(string friendId)
         {
+            AddNewFriendProfileAsync(addFriendProfileCts.Token).Forget();
+
             async UniTaskVoid AddNewFriendProfileAsync(CancellationToken ct)
             {
                 // TODO: we should avoid requesting the profile.. instead the service should emit a FriendProfile
@@ -83,8 +85,6 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
                 else
                     ReportHub.LogError(new ReportData(ReportCategory.FRIENDS), $"Couldn't fetch new friend profile for user {friendId}");
             }
-
-            AddNewFriendProfileAsync(addFriendProfileCts.Token).Forget();
         }
 
         private void RemoveFriend(string userid)
