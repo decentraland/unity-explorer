@@ -44,13 +44,12 @@ namespace DCL.UI.HyperlinkHandler
         {
             if (!initialized) return;
 
-            int linkIndex = TMP_TextUtilities.FindIntersectingLink(textComponent, eventData.position, null);
-
-            if (linkIndex != -1)
+            if (lastHighlightedIndex != -1)
             {
-                TMP_LinkInfo linkInfo = textComponent.textInfo.linkInfo[linkIndex];
-                string linkID = linkInfo.GetLinkID();
-                ProcessLink(linkID);
+                TMP_LinkInfo linkInfo = textComponent.textInfo.linkInfo[lastHighlightedIndex];
+                string linkType = linkInfo.GetLinkID();
+                string linkText = linkInfo.GetLinkText();
+                ProcessLink(linkType, linkText);
             }
         }
 
@@ -100,23 +99,12 @@ namespace DCL.UI.HyperlinkHandler
         }
 
         // Expected format is "linkType=linkValue"
-        private void ProcessLink(string linkID)
+        private void ProcessLink(string linkType, string linkValue)
         {
-            string[] linkParts = linkID.Split('=');
-
-            if (linkParts.Length != 2)
-            {
-                ReportHub.LogWarning(ReportCategory.UI, $"Invalid link format: {linkID}");
-                return;
-            }
-
-            string linkType = linkParts[0].ToLower();
-            string linkValue = linkParts[1];
-
             if (linkHandlers.TryGetValue(linkType, out Action<string> linkHandler))
                 linkHandler.Invoke(linkValue);
             else
-                ReportHub.LogWarning(ReportCategory.UI, $"No handler found for link: {linkID}");
+                ReportHub.LogWarning(ReportCategory.UI, $"No handler found for link: {linkType}");
         }
 
         private void HandleURLLink(string url)
@@ -141,7 +129,7 @@ namespace DCL.UI.HyperlinkHandler
 
         private void HandleUserLink(string userName)
         {
-            OpenUserProfileContextMenu(userName).Forget();
+            OpenUserProfileContextMenu(userName.Substring(1)).Forget();
         }
 
         private async UniTask OpenUserProfileContextMenu(string userName)

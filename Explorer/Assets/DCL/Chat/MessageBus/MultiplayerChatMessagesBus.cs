@@ -54,7 +54,19 @@ namespace DCL.Chat.MessageBus
 
                 ChatChannel.ChannelId parsedChannelId = ParseChatChannelIdFromPayloadMessage(receivedMessage.Payload.Message);
                 string chatMessage = ParseChatMessageFromPayloadMessage(receivedMessage.Payload.Message);
-                bool isMention = await CheckMentionOnChatMessage(chatMessage);
+
+                Profile? ownProfile = await selfProfile.ProfileAsync(cancellationTokenSource.Token);
+
+                var isMention = false;
+
+                if (ownProfile != null)
+                {
+                    string displayName = ownProfile.MentionName;
+                    isMention = CheckMentionOnChatMessage(chatMessage, displayName);
+
+                    if (isMention)
+                        chatMessage = AddStyleToUserMention(chatMessage, displayName);
+                }
 
                 MessageAdded?.Invoke(
                     parsedChannelId,
@@ -85,15 +97,14 @@ namespace DCL.Chat.MessageBus
                 return ChatChannel.NEARBY_CHANNEL;
         }
 
-        private async UniTask<bool> CheckMentionOnChatMessage(string chatMessage)
-        {
-            Profile profile = await selfProfile.ProfileAsync(cancellationTokenSource.Token);
+        private bool CheckMentionOnChatMessage(string chatMessage, string displayName) =>
+            chatMessage.Contains(displayName);
 
-            if (profile == null) return false;
 
-            //TODO FRAN see if we can fix this:
-            return chatMessage.Contains("@" + profile?.DisplayName);
-        }
+        //TODO FRAN: Make these values constants also we need to remove links from our name so we cant click on it (but keep the formatting),
+        //maybe use another text formatter to extract it from here?
+        private string AddStyleToUserMention(string chatMessage, string userName) =>
+            chatMessage.Replace($"<link=profile>{userName}</link>",$"<mark=#438FFF40>{userName}</mark>");
 
         private string ParseChatMessageFromPayloadMessage(string payloadMessage) =>
             payloadMessage.Substring(payloadMessage.IndexOf('>') + 1);

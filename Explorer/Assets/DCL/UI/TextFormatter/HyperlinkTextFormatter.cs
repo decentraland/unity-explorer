@@ -12,20 +12,17 @@ namespace DCL.UI.InputFieldFormatting
     {
         private const string LINK_OPENING_STYLE = "<#00B2FF><link=";
         private const string LINK_CLOSING_STYLE = "</link></color>";
-        private const int LINK_TAG_LIMIT = (256 - 10) / 2;
 
         private static readonly Regex RICH_TEXT_TAG_REGEX = new (@"<(?!\/?(b|i)(>|\s))[^>]+>", RegexOptions.Compiled);
 
         private static readonly Regex WEBSITE_REGEX = new (@"(?<=^|\s)(https?:\/\/)([a-zA-Z0-9-]+\.)*[a-zA-Z0-9][a-zA-Z0-9-]+\.[a-zA-Z]{2,}(\/[^\s]*)?(?=\s|$)",
             RegexOptions.Compiled);
 
-        //private static readonly Regex WEBSITE_REGEX = new (@"(?<=^|\s)((https?:\/\/)?(www\.)?[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9]*)?\.[a-zA-Z]{2,30}[a-zA-Z]{0,33}(\/[^\s]*)?)(?=\s|$)",
-//            RegexOptions.Compiled);
         private static readonly Regex SCENE_REGEX = new (@"(?<=^|\s)(-?\d{1,3}),(-?\d{1,3})(?=\s|$)", RegexOptions.Compiled);
 
         private static readonly Regex WORLD_REGEX = new (@"(?<=^|\s)*[a-zA-Z0-9]*\.dcl\.eth(?=\s|$)", RegexOptions.Compiled);
 
-        //This Regex will detect any pattern of format @username#1234 being the part with the "#" optional. This requires the username to start and/or end with an empty space or start/end of line.
+        // This Regex will detect any pattern of format @username#1234 being the part with the "#" optional. This requires the username to start and/or end with an empty space or start/end of line.
         private static readonly Regex USERNAME_REGEX = new (@"(?<=^|\s)@([A-Za-z0-9]{3,15}(?:#[A-Za-z0-9]{4})?)(?=\s|$)", RegexOptions.Compiled);
 
         private readonly StringBuilder mainStringBuilder = new ();
@@ -119,12 +116,6 @@ namespace DCL.UI.InputFieldFormatting
         {
             tempStringBuilder.Clear();
 
-            //TODO FRAN:
-            //There is a limit for link tags in TextMeshPro of 256 chars split between text and the link itself. Longer links are not detected as such.
-            //This requires a different implementation using a "pointer" to the proper link instead of embedding it in the tag.
-            if (match.Value.Length > LINK_TAG_LIMIT)
-                return tempStringBuilder.Append(match);
-
             string linkTypeString = null;
 
             switch (linkType)
@@ -132,7 +123,6 @@ namespace DCL.UI.InputFieldFormatting
                 case LinkType.SCENE:
                     if (!AreCoordsValid(int.Parse(match.Groups[1].Value), int.Parse(match.Groups[2].Value)))
                         return tempStringBuilder.Append(match);
-
                     linkTypeString = HyperlinkConstants.SCENE;
                     break;
                 case LinkType.WORLD:
@@ -151,8 +141,6 @@ namespace DCL.UI.InputFieldFormatting
 
             tempStringBuilder.Append(LINK_OPENING_STYLE)
                              .Append(linkTypeString)
-                             .Append("=")
-                             .Append(linkType == LinkType.PROFILE? match.Groups[1] : match)
                              .Append(">")
                              .Append(match)
                              .Append(LINK_CLOSING_STYLE);

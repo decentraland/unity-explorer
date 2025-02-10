@@ -65,7 +65,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 4848194f7bc4d4e509d067d3160eadac, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 801e6533af5234c36ae16bfc0549d451, type: 3}
   m_Type: 1
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -204,8 +204,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1d8a2ca8e7094397a8282c4e41f4f51d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  <backgroundDefaultColor>k__BackingField: {r: 0, g: 0, b: 0, a: 0.69803923}
+  <backgroundMentionedColor>k__BackingField: {r: 0.22745098, g: 0.05882353, b: 0.3137255, a: 1}
   <usernameElement>k__BackingField: {fileID: 7863012580743549792}
   <backgroundRectTransform>k__BackingField: {fileID: 6709421707846502462}
+  <backgroundImage>k__BackingField: {fileID: 1538423492232376238}
   <messageOptionsButton>k__BackingField: {fileID: 6789486922077095390}
   <messageContentElement>k__BackingField: {fileID: 7075669071389611758}
   <configurationSo>k__BackingField: {fileID: 11400000, guid: 6afb31861b85441b6ab2b988819bb96a, type: 2}

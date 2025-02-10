@@ -56,6 +56,17 @@ namespace DCL.Chat.MessageBus
 
             Profile? profile = await profileRepository.GetAsync(identity.Address, CancellationToken.None);
 
+            var isMention = false;
+
+            if (profile != null)
+            {
+                string displayName = profile.MentionName;
+                isMention = CheckMentionOnChatMessage(message, displayName);
+
+                if (isMention)
+                    message = AddStyleToUserMention(message, displayName);
+            }
+
             MessageAdded?.Invoke(
                 channelId,
                 new ChatMessage(
@@ -63,9 +74,19 @@ namespace DCL.Chat.MessageBus
                     profile?.ValidatedName ?? string.Empty,
                     identity.Address,
                     true,
-                    profile?.WalletId ?? null
+                    profile?.WalletId ?? null,
+                    isMention: isMention
                 )
             );
         }
+
+        private bool CheckMentionOnChatMessage(string chatMessage, string displayName) =>
+            chatMessage.Contains(displayName);
+
+
+        //TODO FRAN: Make these values constants
+        private string AddStyleToUserMention(string chatMessage, string userName) =>
+            chatMessage.Replace($"<link=profile>{userName}</link>",$"<mark=#438FFF40>{userName}</mark>");
+
     }
 }

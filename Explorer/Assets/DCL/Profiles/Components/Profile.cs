@@ -1,3 +1,4 @@
+using Castle.Core.Internal;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.ECSComponents;
@@ -23,6 +24,7 @@ namespace DCL.Profiles
 
         private string userId;
         private string name;
+        private string mentionName;
         private bool hasClaimedName;
         public StreamableLoadingResult<SpriteData>.WithFallback? ProfilePicture { get; set; }
 
@@ -57,6 +59,9 @@ namespace DCL.Profiles
 
         public string DisplayName { get; private set; }
         public string UnclaimedName { get; internal set; }
+
+        //The Display Name with @ before it. Cached here to avoid further allocations when receiving messages from other players.
+        public string MentionName => mentionName.IsNullOrEmpty()? mentionName = "@" + DisplayName : mentionName;
 
         public bool HasClaimedName
         {

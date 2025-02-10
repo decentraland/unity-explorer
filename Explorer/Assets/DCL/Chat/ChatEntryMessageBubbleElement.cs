@@ -8,8 +8,12 @@ namespace DCL.Chat
 {
     public class ChatEntryMessageBubbleElement : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {
+        [field: SerializeField] internal Color backgroundDefaultColor { get; private set; }
+        [field: SerializeField] internal Color backgroundMentionedColor { get; private set; }
+
         [field: SerializeField] internal ChatEntryUsernameElement usernameElement { get; private set; }
         [field: SerializeField] internal RectTransform backgroundRectTransform { get; private set; }
+        [field: SerializeField] internal Image backgroundImage { get; private set; }
         [field: SerializeField] internal Button? messageOptionsButton { get; private set; }
         [field: SerializeField] internal ChatEntryMessageContentElement messageContentElement { get; private set; }
         [field: SerializeField] internal ChatEntryConfigurationSO configurationSo { get; private set; }
@@ -48,6 +52,7 @@ namespace DCL.Chat
             backgroundSize.x = CalculatePreferredWidth(data);
             backgroundRectTransform.sizeDelta = backgroundSize;
             mentionedOutline.SetActive(data.IsMention);
+            backgroundImage.color = data.IsMention ? backgroundMentionedColor : backgroundDefaultColor;
         }
 
         private float CalculatePreferredWidth(ChatMessage message)
