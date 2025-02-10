@@ -29,15 +29,11 @@ namespace SceneRuntime.Apis.Modules.FetchApi
         public object Fetch(string requestMethod, string url, object headers, bool hasBody, string body,
             string redirect, int timeout)
         {
-            // if we're in preview mode to allow connecting to unsafe websocket server to the client
-            if (!isPreview && !url.ToLower().StartsWith("https://"))
-                throw new Exception("Can't make an unsafe http request, please upgrade to https. url=" + url);
-
             return FetchAsync(cancellationTokenSource.Token).ToDisconnectedPromise();
 
             async UniTask<ResponseToJs> FetchAsync(CancellationToken ct)
             {
-                ISimpleFetchApi.Response response = await api.FetchAsync(requestMethod, url, headers, hasBody, body, redirect, timeout, webController, ct);
+                ISimpleFetchApi.Response response = await api.FetchAsync(requestMethod, url, headers, hasBody, body, redirect, timeout, webController, ct, isPreview);
 
                 var headersToJs = new PropertyBag();
 

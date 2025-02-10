@@ -35,12 +35,18 @@ namespace SceneRuntime.Apis.Modules
         [PublicAPI("Used by StreamingAssets/Js/Modules/webSocketApi.js")]
         public object ConnectAsync(int websocketId, string url)
         {
-            // if we're in preview mode to allow connecting to unsafe websocket server to the client
-            if (!isPreview && !url.ToLower().StartsWith("https://"))
-                throw new Exception("Can't make an unsafe http request, please upgrade to https. url=" + url);
+            try
+            {
+                // if we're in preview mode to allow connecting to unsafe websocket server to the client
+                if (!isPreview && !url.ToLower().StartsWith("wss://"))
+                    throw new Exception("Can't make an unsafe http request, please upgrade to https. url=" + url);
 
-            try { return api.ConnectAsync(websocketId, url, cancellationTokenSource.Token).ReportAndRethrowException(exceptionsHandler).ToDisconnectedPromise(); }
-            catch (Exception e) { return Task.FromException(e).ToPromise(); }
+                return api.ConnectAsync(websocketId, url, cancellationTokenSource.Token).ReportAndRethrowException(exceptionsHandler).ToDisconnectedPromise();
+            }
+            catch (Exception e)
+            {
+                return Task.FromException(e).ToPromise();
+            }
         }
 
         [PublicAPI("Used by StreamingAssets/Js/Modules/webSocketApi.js")]

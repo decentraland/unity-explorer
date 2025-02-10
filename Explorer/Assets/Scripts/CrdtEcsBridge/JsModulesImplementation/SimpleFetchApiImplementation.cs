@@ -46,19 +46,24 @@ namespace CrdtEcsBridge.JsModulesImplementation
             string redirect,
             int timeout,
             IWebRequestController webController,
-            CancellationToken ct
+            CancellationToken ct,
+            bool isPreview
         )
         {
-            RequestMethod parsedRequestMethod = ParseRequestMethod(requestMethod);
-
-            if (parsedRequestMethod == RequestMethod.INVALID)
-                throw new ArgumentException("Invalid request method.");
-
-            var commonArguments = new CommonArguments(URLAddress.FromString(url), timeout: timeout);
-            WebRequestHeadersInfo webRequestHeaders = HeadersFromJsObject(headers);
-
             try
             {
+                // if we're in preview mode to allow connecting to unsafe websocket server to the client
+                if (!isPreview && !url.ToLower().StartsWith("https://"))
+                    throw new Exception("Can't make an unsafe http request, please upgrade to https. url=" + url);
+
+                RequestMethod parsedRequestMethod = ParseRequestMethod(requestMethod);
+
+                if (parsedRequestMethod == RequestMethod.INVALID)
+                    throw new ArgumentException("Invalid request method.");
+
+                var commonArguments = new CommonArguments(URLAddress.FromString(url), timeout: timeout);
+                WebRequestHeadersInfo webRequestHeaders = HeadersFromJsObject(headers);
+
                 await UniTask.SwitchToMainThread();
 
                 switch (parsedRequestMethod)

@@ -5,7 +5,7 @@ namespace SceneRuntime
     public class JsApiWrapperBase<TApi> : IJsApiWrapper where TApi: IDisposable
     {
         protected readonly TApi api;
-        protected bool isPreview;
+        protected readonly bool isPreview;
 
         protected JsApiWrapperBase(TApi api, bool isPreview)
         {
