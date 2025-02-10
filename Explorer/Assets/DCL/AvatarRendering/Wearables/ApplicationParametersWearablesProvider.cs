@@ -13,6 +13,8 @@ namespace DCL.AvatarRendering.Wearables
 {
     public class ApplicationParametersWearablesProvider : IWearablesProvider
     {
+        private const string BUILDER_DTO_URL_COL_ID = "[COL-ID]";
+
         private readonly IAppArgs appArgs;
         private readonly IWearablesProvider source;
         private readonly List<IWearable> resultWearablesBuffer = new ();
@@ -67,7 +69,7 @@ namespace DCL.AvatarRendering.Wearables
             {
                 return await source.GetAsync(pageSize, pageNumber, ct, sortingField, orderBy, category, collectionType, name, results,
                     loadingArguments: new CommonLoadingArguments(
-                        builderDTOsUrl.Replace("[COL-ID]", collectionId),
+                        builderDTOsUrl.Replace(BUILDER_DTO_URL_COL_ID, collectionId),
                         cancellationTokenSource: new CancellationTokenSource()
                     ),
                     needsBuilderAPISigning: true);
