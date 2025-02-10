@@ -28,6 +28,7 @@ namespace DCL.UI.MainUI
 
         private readonly ISidebarBus sidebarBus;
         private readonly IMVCManager mvcManager;
+        private readonly bool isFriendsEnabled;
 
         private bool waitingToShowSidebar;
         private bool waitingToHideSidebar;
@@ -42,10 +43,12 @@ namespace DCL.UI.MainUI
         public MainUIController(
             ViewFactoryMethod viewFactory,
             ISidebarBus sidebarBus,
-            IMVCManager mvcManager) : base(viewFactory)
+            IMVCManager mvcManager,
+            bool isFriendsEnabled) : base(viewFactory)
         {
             this.sidebarBus = sidebarBus;
             this.mvcManager = mvcManager;
+            this.isFriendsEnabled = isFriendsEnabled;
         }
 
         protected override void OnViewInstantiated()
@@ -56,11 +59,16 @@ namespace DCL.UI.MainUI
             viewInstance.pointerDetectionArea.OnExitArea += OnPointerExit;
             mvcManager.ShowAsync(SidebarController.IssueCommand()).Forget();
             mvcManager.ShowAsync(MinimapController.IssueCommand()).Forget();
-            mvcManager.ShowAsync(FriendPushNotificationController.IssueCommand()).Forget();
             mvcManager.ShowAsync(ChatController.IssueCommand()).Forget();
             mvcManager.ShowAsync(ConnectionStatusPanelController.IssueCommand()).Forget();
             mvcManager.ShowAsync(PersistentEmoteWheelOpenerController.IssueCommand()).Forget();
-            mvcManager.ShowAsync(PersistentFriendPanelOpenerController.IssueCommand()).Forget();
+
+            if (isFriendsEnabled)
+            {
+                mvcManager.ShowAsync(FriendPushNotificationController.IssueCommand()).Forget();
+                mvcManager.ShowAsync(PersistentFriendPanelOpenerController.IssueCommand()).Forget();
+            }
+
             showingSidebar = true;
         }
 
