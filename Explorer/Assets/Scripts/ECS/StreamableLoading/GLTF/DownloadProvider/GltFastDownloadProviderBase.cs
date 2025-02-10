@@ -80,13 +80,7 @@ namespace ECS.StreamableLoading.GLTF.DownloadProvider
                 downloadHandler?.Dispose();
             }
 
-            return new GltfDownloadResult
-            {
-                Data = data,
-                Text = text,
-                Error = error,
-                Success = success,
-            };
+            return new GltfDownloadResult(data, text, error, success);
         }
 
         public async Task<ITextureDownload> RequestTextureAsync(Uri uri, bool nonReadable, bool forceLinear)

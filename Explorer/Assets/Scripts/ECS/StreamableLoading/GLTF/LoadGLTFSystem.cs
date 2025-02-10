@@ -133,7 +133,7 @@ namespace ECS.StreamableLoading.GLTF
 
                     if (i != 0)
                     {
-                        var go = new GameObject($"{rootContainerTransform.name}_{i}");
+                        var go = new GameObject($"{rootContainerTransform.name}_{i.ToString()}");
                         Transform goTransform = go.transform;
                         goTransform.SetParent(rootContainerTransform, false);
                         targetTransform = goTransform;
