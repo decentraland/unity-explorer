@@ -1,5 +1,6 @@
 using System;
 using System.Text;
+using System.Text.RegularExpressions;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -13,7 +14,7 @@ namespace DCL.UI.CustomInputField
     public class CustomInputField : TMP_InputField
     {
         private bool isControlPressed;
-        private readonly StringBuilder stringBuilder = new();
+        private readonly StringBuilder stringBuilder = new ();
 
         public event Action? OnRightClickEvent;
         public event Action? OnPasteShortcutPerformedEvent;
@@ -58,11 +59,11 @@ namespace DCL.UI.CustomInputField
                     //trying to play 200 sounds simultaneously.
                     if (Event.current.keyCode == KeyCode.LeftCommand || Event.current.keyCode == KeyCode.LeftControl)
                         isControlPressed = true;
-                    else if ( isControlPressed && Event.current.keyCode == KeyCode.V)
+                    else if (isControlPressed && Event.current.keyCode == KeyCode.V)
                     {
-                            OnPasteShortcutPerformedEvent?.Invoke();
-                            Event.current.Use();
-                            shouldCallBase = false;
+                        OnPasteShortcutPerformedEvent?.Invoke();
+                        Event.current.Use();
+                        shouldCallBase = false;
                     }
                     else if (!UpAndDownArrowsEnabled &&
                              Event.current.keyCode is KeyCode.UpArrow or KeyCode.DownArrow)
@@ -72,9 +73,8 @@ namespace DCL.UI.CustomInputField
                     }
                 }
                 else if (eventType == EventType.KeyUp)
-                {
-                    if (Event.current.keyCode == KeyCode.LeftCommand || Event.current.keyCode == KeyCode.LeftControl) { isControlPressed = false; }
-                }
+                    if (Event.current.keyCode == KeyCode.LeftCommand || Event.current.keyCode == KeyCode.LeftControl)
+                        isControlPressed = false;
             }
 
             if (shouldCallBase)
@@ -128,25 +128,25 @@ namespace DCL.UI.CustomInputField
         }
 
         /// <summary>
-        ///
+        ///     This method replaces a replaceAmount of characters starting at replaceAt position with a newValue
         /// </summary>
-        public void ReplaceTextAtPosition(int startingPosition, int textLenght, string newValue, bool notify = false)
+        public void ReplaceTextAtPosition(int replaceAt, int replaceAmount, string newValue, bool notify = false)
         {
-            int textLenghtDifference = newValue.Length - textLenght;
+            int textLenghtDifference = newValue.Length - replaceAmount;
 
             if (!IsWithinCharacterLimit(textLenghtDifference)) return;
 
             stringBuilder.Clear();
-            stringBuilder.Append(text.AsSpan(0, startingPosition))
+
+            stringBuilder.Append(text.AsSpan(0, replaceAt))
                          .Append(newValue)
-                         .Append(text.AsSpan(startingPosition + textLenght));
+                         .Append(text.AsSpan(replaceAt + replaceAmount));
 
             if (notify) text = stringBuilder.ToString();
             else
-            {
                 SetTextWithoutNotify(stringBuilder.ToString());
-            }
-            stringPosition += textLenghtDifference;
+
+            stringPosition += replaceAt + replaceAmount;
         }
     }
 }

@@ -120,7 +120,7 @@ namespace DCL.Nametags
             alpha = alphaOverDistanceCurve.Evaluate((distance - fullOpacityMaxDistance) / (maxDistance - fullOpacityMaxDistance));
             textColor.a = distance > fullOpacityMaxDistance ? alpha : 1;
             usernameTextColor.a = distance > fullOpacityMaxDistance ? alpha : 1;
-            var backgroundColor = Background.color;
+            Color backgroundColor = Background.color;
             backgroundColor.a = distance > fullOpacityMaxDistance ? alpha : 1;
             BubblePeak.color = backgroundColor;
             Background.color = backgroundColor;
@@ -187,7 +187,7 @@ namespace DCL.Nametags
             isAnimatingIn = true;
             MessageContent.gameObject.SetActive(true);
             BubblePeak.gameObject.SetActive(true);
-            Background.color = isMention? mentionedBackgroundColor : defaultBackgroundColor;
+            Background.color = isMention ? mentionedBackgroundColor : defaultBackgroundColor;
 
             //Set message content and calculate the preferred size of the background with the addition of a margin
             MessageContent.text = messageContent;
@@ -258,7 +258,7 @@ namespace DCL.Nametags
 
             BubblePeak.gameObject.SetActive(false);
 
-            //TODO FRAN: probably animate these values so it looks better?
+            //TODO FRAN URGENT: probably animate these values so it looks better?
             OutlineObject.SetActive(false);
             Background.color = defaultBackgroundColor;
 

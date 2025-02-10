@@ -52,7 +52,8 @@ namespace DCL.Chat
             backgroundSize.x = CalculatePreferredWidth(data);
             backgroundRectTransform.sizeDelta = backgroundSize;
             mentionedOutline.SetActive(data.IsMention);
-            //TODO FRAN: There is an issue with masks and alphas interfering with the color that should be visible here
+
+            //TODO FRAN URGENT: There is an issue with masks and alphas interfering with the color that should be visible here
             backgroundImage.color = data.IsMention ? backgroundMentionedColor : backgroundDefaultColor;
         }
 

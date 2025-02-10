@@ -23,8 +23,9 @@ namespace MVC
         public MVCManagerMenusAccessFacade(IMVCManager mvcManager, ISystemClipboard systemClipboard)
         {
             this.mvcManager = mvcManager;
+
             //TODO FRAN -> Add proper request friend action here when Friends functionality is merged to dev
-            //TODO FRAN -> Also add here button to MENTION user in chat.
+            //TODO FRAN URGENT -> Add here button to MENTION user in chat.
             userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings(systemClipboard, null);
             contextMenu = new GenericContextMenu().AddControl(userProfileContextMenuControlSettings);
         }
@@ -44,8 +45,8 @@ namespace MVC
         public UniTask ShowChatEntryMenuPopupAsync(ChatEntryMenuPopupData data) =>
             mvcManager.ShowAsync(ChatEntryMenuPopupController.IssueCommand(data));
 
-        public UniTask ShowUserProfileContextMenu(Profile profile, Color userColor, Transform transform) {
-
+        public UniTask ShowUserProfileContextMenu(Profile profile, Color userColor, Transform transform)
+        {
             userProfileContextMenuControlSettings.SetInitialData(profile, userColor, UserProfileContextMenuControlSettings.FriendshipStatus.NONE);
 
             return mvcManager.ShowAsync(GenericContextMenuController.IssueCommand(

@@ -62,6 +62,7 @@ namespace DCL.Chat
         private CancellationTokenSource emojiPanelCts = new ();
         private bool isInputSelected;
         private Match lastMatch = Match.Empty;
+        private int wordMatchIndex;
 
         private ViewDependencies viewDependencies;
 
@@ -116,7 +117,6 @@ namespace DCL.Chat
             characterCounter.SetMaximumLength(inputField.characterLimit);
             characterCounter.gameObject.SetActive(false);
 
-
             closePopupTask = new UniTaskCompletionSource();
         }
 
@@ -162,10 +162,11 @@ namespace DCL.Chat
             //it would always capture the first one instead of the current one.
             //var wordMatch = PRE_MATCH_PATTERN_REGEX.Match(inputText.Substring(0, inputField.stringPosition));
 
-            var wordMatch = PRE_MATCH_PATTERN_REGEX.Match(inputText.Substring(0, inputField.stringPosition));
+            Match wordMatch = PRE_MATCH_PATTERN_REGEX.Match(inputText.Substring(0, inputField.stringPosition));
 
             if (wordMatch.Success)
             {
+                wordMatchIndex = wordMatch.Index;
                 lastMatch = suggestionPanelController!.HandleSuggestionsSearch(wordMatch.Value, EMOJI_PATTERN_REGEX, InputSuggestionType.EMOJIS, suggestionsPerTypeMap[InputSuggestionType.EMOJIS]);
 
                 //If we don't find any emoji pattern only then we look for username patterns
@@ -177,6 +178,7 @@ namespace DCL.Chat
             }
             else
             {
+                suggestionPanelController!.SetPanelVisibility(false);
                 lastMatch = Match.Empty;
             }
 
@@ -211,8 +213,7 @@ namespace DCL.Chat
         /// </summary>
         public void Click()
         {
-            //TODO FRAN after release: This could work with callbacks from the panels, not by checking raycasts.
-            //Issue #3317
+            //TODO FRAN Issue #3317 after release: This could work with callbacks from the panels, not by checking raycasts.
             CheckIfClickedOnEmojiPanel();
 
             void CheckIfClickedOnEmojiPanel()
@@ -282,7 +283,6 @@ namespace DCL.Chat
             inputField.InsertTextAtSelectedPosition(pastedText);
             characterCounter.SetCharacterCount(inputField.text.Length);
         }
-
 
         private void OnInputDeselected(string _)
         {
@@ -367,8 +367,10 @@ namespace DCL.Chat
             if (!lastMatch.Success || !inputField.IsWithinCharacterLimit(suggestion.Length - lastMatch.Groups[1].Length)) return;
 
             UIAudioEventsBus.Instance.SendPlayAudioEvent(addEmojiAudio);
+            int replaceAmount = lastMatch.Groups[1].Length;
+            int replaceAt = wordMatchIndex + lastMatch.Groups[1].Index;
 
-            inputField.ReplaceTextAtPosition(lastMatch.Groups[1].Index, lastMatch.Groups[1].Length, suggestion);
+            inputField.ReplaceTextAtPosition(replaceAt, replaceAmount, suggestion);
 
             inputField.ActivateInputField();
 
@@ -405,8 +407,7 @@ namespace DCL.Chat
                     }
                     else
                     {
-                        //TODO FRAN: Color should be stored in the profile so we dont re-calculate it for every place we use it. Leaving this for after shape improvements along with profile picture.
-                        //Ticket #3276
+                        //TODO FRAN Issue #3276: Color should be stored in the profile so we dont re-calculate it for every place we use it. Leaving this for after shape improvements along with profile picture.
                         Color color = viewDependencies.ProfileNameColorHelper.GetNameColor(profile.DisplayName);
                         suggestionsPerTypeMap[InputSuggestionType.PROFILE].TryAdd(profile.DisplayName, new ProfileInputSuggestionData(profile, color));
                     }
@@ -434,7 +435,6 @@ namespace DCL.Chat
         {
             suggestionsPerTypeMap.Add(InputSuggestionType.PROFILE, new Dictionary<string, IInputSuggestionElementData>());
         }
-
 
         private void AddEmojiToInput(string emoji)
         {
