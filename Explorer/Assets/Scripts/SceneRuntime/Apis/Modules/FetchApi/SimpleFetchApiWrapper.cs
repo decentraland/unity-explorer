@@ -3,6 +3,7 @@ using DCL.WebRequests;
 using JetBrains.Annotations;
 using Microsoft.ClearScript;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using Utility;
 
@@ -13,7 +14,7 @@ namespace SceneRuntime.Apis.Modules.FetchApi
         private readonly CancellationTokenSource cancellationTokenSource;
         private readonly IWebRequestController webController;
 
-        public SimpleFetchApiWrapper(ISimpleFetchApi api, IWebRequestController webController) : base(api)
+        public SimpleFetchApiWrapper(ISimpleFetchApi api, IWebRequestController webController, bool isPreview) : base(api, isPreview)
         {
             cancellationTokenSource = new CancellationTokenSource();
             this.webController = webController;
@@ -28,7 +29,10 @@ namespace SceneRuntime.Apis.Modules.FetchApi
         public object Fetch(string requestMethod, string url, object headers, bool hasBody, string body,
             string redirect, int timeout)
         {
-            //TODO allow http for local
+            // if we're in preview mode to allow connecting to unsafe websocket server to the client
+            if (!isPreview && !url.ToLower().StartsWith("https://"))
+                throw new Exception("Can't make an unsafe http request, please upgrade to https. url=" + url);
+
             return FetchAsync(cancellationTokenSource.Token).ToDisconnectedPromise();
 
             async UniTask<ResponseToJs> FetchAsync(CancellationToken ct)
@@ -38,7 +42,7 @@ namespace SceneRuntime.Apis.Modules.FetchApi
                 var headersToJs = new PropertyBag();
 
                 if (response.Headers != null)
-                    foreach (var header in response.Headers)
+                    foreach (KeyValuePair<string, string> header in response.Headers)
                         headersToJs.Add(header.Key, header.Value);
 
                 return new ResponseToJs
@@ -58,7 +62,6 @@ namespace SceneRuntime.Apis.Modules.FetchApi
         [Serializable]
         public struct ResponseToJs
         {
-            public PropertyBag headers;
             public bool ok;
             public bool redirected;
             public int status;
@@ -66,6 +69,7 @@ namespace SceneRuntime.Apis.Modules.FetchApi
             public string url;
             public string data;
             public string type;
+            public PropertyBag headers;
         }
     }
 }

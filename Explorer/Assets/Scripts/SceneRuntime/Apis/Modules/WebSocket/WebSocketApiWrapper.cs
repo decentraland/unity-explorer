@@ -13,7 +13,7 @@ namespace SceneRuntime.Apis.Modules
         private readonly CancellationTokenSource cancellationTokenSource;
         private readonly IJavaScriptApiExceptionsHandler exceptionsHandler;
 
-        public WebSocketApiWrapper(IWebSocketApi api, IJavaScriptApiExceptionsHandler exceptionsHandler) : base(api)
+        public WebSocketApiWrapper(IWebSocketApi api, IJavaScriptApiExceptionsHandler exceptionsHandler, bool isPreview) : base(api, isPreview)
         {
             this.exceptionsHandler = exceptionsHandler;
             cancellationTokenSource = new CancellationTokenSource();
@@ -35,7 +35,10 @@ namespace SceneRuntime.Apis.Modules
         [PublicAPI("Used by StreamingAssets/Js/Modules/webSocketApi.js")]
         public object ConnectAsync(int websocketId, string url)
         {
-            //TODO allow http for local
+            // if we're in preview mode to allow connecting to unsafe websocket server to the client
+            if (!isPreview && !url.ToLower().StartsWith("https://"))
+                throw new Exception("Can't make an unsafe http request, please upgrade to https. url=" + url);
+
             try { return api.ConnectAsync(websocketId, url, cancellationTokenSource.Token).ReportAndRethrowException(exceptionsHandler).ToDisconnectedPromise(); }
             catch (Exception e) { return Task.FromException(e).ToPromise(); }
         }
@@ -49,7 +52,7 @@ namespace SceneRuntime.Apis.Modules
                           .ReportAndRethrowException(exceptionsHandler)
                           .ToDisconnectedPromise();
             }
-            catch (Exception e) { return Task.FromException(e).ToPromise();}
+            catch (Exception e) { return Task.FromException(e).ToPromise(); }
         }
 
         [PublicAPI("Used by StreamingAssets/Js/Modules/webSocketApi.js")]
@@ -61,7 +64,7 @@ namespace SceneRuntime.Apis.Modules
                           .ReportAndRethrowException(exceptionsHandler)
                           .ToDisconnectedPromise();
             }
-            catch (Exception e) { return Task.FromException(e).ToPromise();}
+            catch (Exception e) { return Task.FromException(e).ToPromise(); }
         }
 
         [PublicAPI("Used by StreamingAssets/Js/Modules/webSocketApi.js")]
@@ -73,7 +76,7 @@ namespace SceneRuntime.Apis.Modules
                           .ReportAndRethrowException(exceptionsHandler)
                           .ToDisconnectedPromise();
             }
-            catch (Exception e) { return Task.FromException(e).ToPromise();}
+            catch (Exception e) { return Task.FromException(e).ToPromise(); }
         }
 
         [PublicAPI("Used by StreamingAssets/Js/Modules/webSocketApi.js")]

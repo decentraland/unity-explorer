@@ -80,8 +80,8 @@ namespace SceneRuntime
             sceneRuntime.RegisterRuntime(runtime, exceptionsHandler);
             sceneRuntime.RegisterEthereumApi(ethereumApi, web3IdentityCache, exceptionsHandler);
             sceneRuntime.RegisterUserIdentityApi(profileRepository, web3IdentityCache, exceptionsHandler);
-            sceneRuntime.RegisterWebSocketApi(webSocketApi, exceptionsHandler);
-            sceneRuntime.RegisterSimpleFetchApi(simpleFetchApi, webRequestController);
+            sceneRuntime.RegisterWebSocketApi(webSocketApi, exceptionsHandler, realmData.IsLocalSceneDevelopment);
+            sceneRuntime.RegisterSimpleFetchApi(simpleFetchApi, webRequestController, realmData.IsLocalSceneDevelopment);
             sceneRuntime.RegisterCommunicationsControllerApi(communicationsControllerAPI, instancePoolsProvider, exceptionsHandler);
             sceneRuntime.RegisterPortableExperiencesApi(portableExperiencesController, exceptionsHandler);
         }
@@ -118,8 +118,8 @@ namespace SceneRuntime
             sceneRuntime.RegisterRuntime(runtime, exceptionsHandler);
             sceneRuntime.RegisterEthereumApi(ethereumApi, web3IdentityCache, exceptionsHandler);
             sceneRuntime.RegisterUserIdentityApi(profileRepository, web3IdentityCache, exceptionsHandler);
-            sceneRuntime.RegisterWebSocketApi(webSocketApi, exceptionsHandler);
-            sceneRuntime.RegisterSimpleFetchApi(simpleFetchApi, webRequestController);
+            sceneRuntime.RegisterWebSocketApi(webSocketApi, exceptionsHandler, realmData.IsLocalSceneDevelopment);
+            sceneRuntime.RegisterSimpleFetchApi(simpleFetchApi, webRequestController, realmData.IsLocalSceneDevelopment);
             sceneRuntime.RegisterCommunicationsControllerApi(communicationsControllerAPI, instancePoolsProvider, exceptionsHandler);
             sceneRuntime.RegisterPortableExperiencesApi(portableExperiencesController, exceptionsHandler);
         }
@@ -184,9 +184,9 @@ namespace SceneRuntime
             sceneRuntime.Register("UnityUserIdentityApi", new UserIdentityApiWrapper(profileRepository, identityCache, sceneExceptionsHandler));
         }
 
-        private static void RegisterWebSocketApi(this ISceneRuntime sceneRuntime, IWebSocketApi webSocketApi, ISceneExceptionsHandler sceneExceptionsHandler)
+        private static void RegisterWebSocketApi(this ISceneRuntime sceneRuntime, IWebSocketApi webSocketApi, ISceneExceptionsHandler sceneExceptionsHandler, bool isPreview)
         {
-            sceneRuntime.Register("UnityWebSocketApi", new WebSocketApiWrapper(webSocketApi, sceneExceptionsHandler));
+            sceneRuntime.Register("UnityWebSocketApi", new WebSocketApiWrapper(webSocketApi, sceneExceptionsHandler, isPreview));
         }
 
         private static void RegisterCommunicationsControllerApi(this ISceneRuntime sceneRuntime, ICommunicationsControllerAPI api, IInstancePoolsProvider instancePoolsProvider, ISceneExceptionsHandler sceneExceptionsHandler)
@@ -194,9 +194,9 @@ namespace SceneRuntime
             sceneRuntime.Register("UnityCommunicationsControllerApi", new CommunicationsControllerAPIWrapper(api, instancePoolsProvider, sceneExceptionsHandler));
         }
 
-        private static void RegisterSimpleFetchApi(this ISceneRuntime sceneRuntime, ISimpleFetchApi simpleFetchApi, IWebRequestController webRequestController)
+        private static void RegisterSimpleFetchApi(this ISceneRuntime sceneRuntime, ISimpleFetchApi simpleFetchApi, IWebRequestController webRequestController, bool isPreview)
         {
-            sceneRuntime.Register("UnitySimpleFetchApi", new SimpleFetchApiWrapper(simpleFetchApi, webRequestController));
+            sceneRuntime.Register("UnitySimpleFetchApi", new SimpleFetchApiWrapper(simpleFetchApi, webRequestController, isPreview));
         }
 
         public static void RegisterSDKMessageBusCommsApi(this ISceneRuntime sceneRuntime, ISDKMessageBusCommsControllerAPI api)
