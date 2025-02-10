@@ -1,5 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Optimization.Hashing;
+using Plugins.MachineInfo.MachineInfoWrap;
 using System.Threading;
 using UnityEngine;
 using Utility.Types;
@@ -19,8 +21,12 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
 
         public static ConstSceneRoomMetaDataSource FromMachineUUID()
         {
-            //TODO provide unique ID from the machine
-            return new ConstSceneRoomMetaDataSource("random");
+            string uuid = MachineInfo.UUID();
+            using var key = HashKey.FromString(uuid);
+
+            //hashed due privacy purposes to don't expose user's unique machine uuid
+            string hashed = HashUtility.ByteString(key.Hash.Memory);
+            return new ConstSceneRoomMetaDataSource(hashed);
         }
 
         public bool ScenesCommunicationIsIsolated => true;

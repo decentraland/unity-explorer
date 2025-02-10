@@ -2,9 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Security.Cryptography;
 
-namespace ECS.StreamableLoading.Cache.Disk
+namespace DCL.Optimization.Hashing
 {
-    public static class DiskHashing
+    public static class SHA256Hashing
     {
         public const int SHA256_HASH_LENGTH = 32; //sha256 produces 32 bits
         private static readonly SHA256 SHA256 = SHA256.Create()!;
