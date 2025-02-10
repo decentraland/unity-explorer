@@ -68,8 +68,8 @@ using DCL.Profiles.Self;
 using DCL.RealmNavigation;
 using DCL.SceneLoadingScreens.LoadingScreen;
 using DCL.SidebarBus;
-using DCL.StylizedSkybox.Scripts.Plugin;
 using DCL.UI.MainUI;
+using DCL.StylizedSkybox.Scripts.Plugin;
 using DCL.UserInAppInitializationFlow;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
@@ -577,7 +577,7 @@ namespace Global.Dynamic
                     remoteEntities,
                     staticContainer.CharacterContainer.Transform),
                 new MainUIPlugin(mvcManager, sidebarBus, mainUIView, includeFriends),
-                new ProfilePlugin(profileRepository, profileCache, staticContainer.CacheCleaner, new ProfileIntentionCache()),
+                new ProfilePlugin(profileRepository, profileCache, staticContainer.CacheCleaner),
                 new MapRendererPlugin(mapRendererContainer.MapRenderer),
                 new SidebarPlugin(
                     assetsProvisioner,
@@ -810,7 +810,8 @@ namespace Global.Dynamic
                 multiplayerEmotesMessageBus,
                 globalWorld,
                 staticContainer.SceneReadinessReportQueue,
-                localSceneDevelopment
+                localSceneDevelopment,
+                profileRepository
             );
 
             staticContainer.RoomHubProxy.SetObject(roomHub);

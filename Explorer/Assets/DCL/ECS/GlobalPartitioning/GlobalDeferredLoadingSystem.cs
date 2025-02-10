@@ -56,7 +56,6 @@ namespace DCL.GlobalPartitioning
                 CreateQuery<GetWearableAssetBundleManifestIntention, SceneAssetBundleManifest>(),
                 CreateQuery<GetAssetBundleIntention, AssetBundleData>(),
                 CreateQuery<GetGLTFIntention, GLTFData>(),
-                CreateQuery<GetProfileIntention, ProfileData>(),
                 CreateQuery<GetTextureIntention, Texture2DData>(),
                 CreateQuery<GetNFTShapeIntention, Texture2DData>(),
                 CreateQuery<GetEmotesByPointersFromRealmIntention, EmotesDTOList>(),

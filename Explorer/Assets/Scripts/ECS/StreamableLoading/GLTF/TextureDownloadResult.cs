@@ -5,25 +5,30 @@ using UnityEngine;
 
 namespace ECS.StreamableLoading.GLTF
 {
-    public struct TextureDownloadResult : ITextureDownload
+    /// <summary>
+    /// Provides a mechanism to inspect the progress and result of downloading or accessing a texture from a GLTF asset.
+    ///
+    /// Note: This was changed from struct to class to avoid boxing both in the client and the GLTF plugin usage
+    /// </summary>
+    public class TextureDownloadResult : ITextureDownload
     {
         public bool Success { get; set; }
         public string? Error { get; set; }
         public byte[] Data => Array.Empty<byte>();
         public string Text => string.Empty;
         public bool? IsBinary => true;
-        public readonly IDisposableTexture Texture;
+        private readonly DisposableTexture texture;
 
         public TextureDownloadResult(Texture2D? texture)
         {
-            Texture = new DisposableTexture() { Texture = texture };
+            this.texture = new DisposableTexture { Texture = texture };
             Error = null!;
             Success = false;
         }
 
         public IDisposableTexture GetTexture(bool forceSampleLinear) =>
-            Texture;
+            texture;
 
-        public void Dispose() => Texture.Dispose();
+        public void Dispose() => texture.Dispose();
     }
 }
