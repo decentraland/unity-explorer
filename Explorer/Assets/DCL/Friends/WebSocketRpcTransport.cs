@@ -25,7 +25,7 @@ namespace DCL.Friends
         public WebSocketState State => webSocket.State;
 
         public WebSocketRpcTransport(Uri uri,
-            int bufferSize = 4096)
+            int bufferSize = 100000)
         {
             this.uri = uri;
             receiveBuffer = new byte[bufferSize];

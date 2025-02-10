@@ -26,8 +26,8 @@ namespace DCL.Friends.UI.FriendPanel
             BLOCKED
         }
 
-        private const int FRIENDS_PAGE_SIZE = 100;
-        private const int FRIENDS_REQUEST_PAGE_SIZE = 1000;
+        private const int FRIENDS_PAGE_SIZE = 20;
+        private const int FRIENDS_REQUEST_PAGE_SIZE = 100;
         private const int FRIENDS_FETCH_ELEMENTS_THRESHOLD = 5;
 
         private readonly IChatLifecycleBusController chatLifecycleBusController;
