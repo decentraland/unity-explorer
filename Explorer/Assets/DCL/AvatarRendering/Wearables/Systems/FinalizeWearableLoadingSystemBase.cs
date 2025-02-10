@@ -31,7 +31,6 @@ namespace DCL.AvatarRendering.Wearables.Systems
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     [UpdateBefore(typeof(PrepareGlobalAssetBundleLoadingParametersSystem))]
     [LogCategory(ReportCategory.WEARABLE)]
-    // Class should be abstract but cannot be due to Arch auto-generated code needs
     public partial class FinalizeWearableLoadingSystemBase : FinalizeElementsLoadingSystem<GetWearableDTOByPointersIntention, IWearable, WearableDTO, WearablesDTOList>
     {
         protected readonly URLSubdirectory customStreamingSubdirectory;
