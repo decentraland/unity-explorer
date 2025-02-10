@@ -28,6 +28,7 @@ namespace DCL.Chat
         private const string ORIGIN = "chat";
         private static readonly Regex EMOJI_PATTERN_REGEX = new (@"(?<!https?:)(:\w{2,10})", RegexOptions.Compiled);
         private static readonly Regex PROFILE_PATTERN_REGEX = new (@"(?:^|\s)@([A-Za-z0-9]{1,15})(?=\s|$)", RegexOptions.Compiled);
+        private static readonly Regex PRE_MATCH_PATTERN_REGEX = new (@"(?<=^|\s)([@:]\S+)$", RegexOptions.Compiled);
 
         [SerializeField] private CustomInputField inputField;
         [SerializeField] private CharacterCounterView characterCounter;
@@ -60,7 +61,7 @@ namespace DCL.Chat
 
         private CancellationTokenSource emojiPanelCts = new ();
         private bool isInputSelected;
-        private string? lastMatch;
+        private Match lastMatch = Match.Empty;
 
         private ViewDependencies viewDependencies;
 
@@ -155,17 +156,31 @@ namespace DCL.Chat
 
         private void OnInputChanged(string inputText)
         {
-            lastMatch = suggestionPanelController!.HandleSuggestionsSearch(inputText, EMOJI_PATTERN_REGEX, InputSuggestionType.EMOJIS, suggestionsPerTypeMap[InputSuggestionType.EMOJIS]);
+            //With this we are detecting only the last word (where the current caret position is) and checking for matches there.
+            //This regex already pre-matches the starting patterns for both Emoji ":" and Profile "@" patterns, and only sends the match further to validate other specific conditions
+            //This is needed because otherwise we wouldn't know which word in the whole text we are trying to match, and if there were several potential matches
+            //it would always capture the first one instead of the current one.
+            //var wordMatch = PRE_MATCH_PATTERN_REGEX.Match(inputText.Substring(0, inputField.stringPosition));
 
-            //If we don't find any emoji pattern only then we look for username patterns
-            //TODO FRAN: MAKE SURE WE ONLY DETECT THE LATEST USERNAME PATTERN, IF THERE IS ONE ALREADY DETECTED WE SHOULD NOT DETECT IT AGAIN
-            if (lastMatch.IsNullOrEmpty())
+            var wordMatch = PRE_MATCH_PATTERN_REGEX.Match(inputText.Substring(0, inputField.stringPosition));
+
+            if (wordMatch.Success)
             {
-                UpdateProfileNameMap();
-                lastMatch = suggestionPanelController.HandleSuggestionsSearch(inputText, PROFILE_PATTERN_REGEX, InputSuggestionType.PROFILE, suggestionsPerTypeMap[InputSuggestionType.PROFILE]);
+                lastMatch = suggestionPanelController!.HandleSuggestionsSearch(wordMatch.Value, EMOJI_PATTERN_REGEX, InputSuggestionType.EMOJIS, suggestionsPerTypeMap[InputSuggestionType.EMOJIS]);
+
+                //If we don't find any emoji pattern only then we look for username patterns
+                if (!lastMatch.Success)
+                {
+                    UpdateProfileNameMap();
+                    lastMatch = suggestionPanelController.HandleSuggestionsSearch(wordMatch.Value, PROFILE_PATTERN_REGEX, InputSuggestionType.PROFILE, suggestionsPerTypeMap[InputSuggestionType.PROFILE]);
+                }
+            }
+            else
+            {
+                lastMatch = Match.Empty;
             }
 
-            inputField.UpAndDownArrowsEnabled = lastMatch.IsNullOrEmpty();
+            inputField.UpAndDownArrowsEnabled = !lastMatch.Success;
 
             UIAudioEventsBus.Instance.SendPlayAudioEvent(chatInputTextAudio);
             closePopupTask.TrySetResult();
@@ -196,7 +211,9 @@ namespace DCL.Chat
         /// </summary>
         public void Click()
         {
-            CheckIfClickedOnEmojiPanel(); //TODO FRAN: This should work with callbacks from the panels, not by checking raycasts??
+            //TODO FRAN after release: This could work with callbacks from the panels, not by checking raycasts.
+            //Issue #3317
+            CheckIfClickedOnEmojiPanel();
 
             void CheckIfClickedOnEmojiPanel()
             {
@@ -293,7 +310,7 @@ namespace DCL.Chat
             if (suggestionPanel.IsActive)
             {
                 suggestionPanelController!.SetPanelVisibility(false);
-                lastMatch = null;
+                lastMatch = Match.Empty;
                 return;
             }
 
@@ -347,28 +364,31 @@ namespace DCL.Chat
 
         private void ReplaceSuggestionInText(string suggestion)
         {
-            if (lastMatch == null || !inputField.IsWithinCharacterLimit(suggestion.Length)) return;
+            if (!lastMatch.Success || !inputField.IsWithinCharacterLimit(suggestion.Length - lastMatch.Groups[1].Length)) return;
 
             UIAudioEventsBus.Instance.SendPlayAudioEvent(addEmojiAudio);
 
-            inputField.ReplaceText(lastMatch, suggestion);
+            inputField.ReplaceTextAtPosition(lastMatch.Groups[1].Index, lastMatch.Groups[1].Length, suggestion);
 
             inputField.ActivateInputField();
+
+            lastMatch = Match.Empty;
         }
 
         private void UpdateProfileNameMap()
         {
             //NOTE: This information should come from the channel where this chat is taking place and that channel should make sure this list is updated.
-            //For now this will work, but is not the final implementation.
+            //For now this will work, but is not the final implementation, this will be changed in the next shape.
             IReadOnlyCollection<string> remoteParticipantIdentities = viewDependencies.RoomHub.IslandRoom().Participants.RemoteParticipantIdentities();
 
-            //We Remove participants that are no longer in the island
-            foreach (string key in suggestionsPerTypeMap[InputSuggestionType.PROFILE].Keys)
-            {
-                IInputSuggestionElementData? suggestionData = suggestionsPerTypeMap[InputSuggestionType.PROFILE][key];
+            var profileSuggestions = suggestionsPerTypeMap[InputSuggestionType.PROFILE].ToList();
 
-                if (!remoteParticipantIdentities.Contains(suggestionData.GetId()))
-                    suggestionsPerTypeMap[InputSuggestionType.PROFILE].Remove(key);
+            for (var index = 0; index < profileSuggestions.Count; index++)
+            {
+                KeyValuePair<string, IInputSuggestionElementData> kvp = profileSuggestions[index];
+
+                if (!remoteParticipantIdentities.Contains(kvp.Value.GetId()))
+                    suggestionsPerTypeMap[InputSuggestionType.PROFILE].Remove(kvp.Key);
             }
 
             //We add or update the remaining participants
@@ -385,7 +405,8 @@ namespace DCL.Chat
                     }
                     else
                     {
-                        //Color should be stored in the profile so we dont re-calculate it for every place we use it. Leave this for future implementation along with profile picture.
+                        //TODO FRAN: Color should be stored in the profile so we dont re-calculate it for every place we use it. Leaving this for after shape improvements along with profile picture.
+                        //Ticket #3276
                         Color color = viewDependencies.ProfileNameColorHelper.GetNameColor(profile.DisplayName);
                         suggestionsPerTypeMap[InputSuggestionType.PROFILE].TryAdd(profile.DisplayName, new ProfileInputSuggestionData(profile, color));
                     }

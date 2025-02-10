@@ -38,21 +38,21 @@ namespace DCL.UI.SuggestionPanel
             suggestionPanel.SetPanelVisibility(isVisible);
         }
 
-        public string HandleSuggestionsSearch(string inputText, Regex regex, InputSuggestionType suggestionType, Dictionary<string, IInputSuggestionElementData> suggestionDataMap)
+        public Match HandleSuggestionsSearch(string inputText, Regex regex, InputSuggestionType suggestionType, Dictionary<string, IInputSuggestionElementData> suggestionDataMap)
         {
             Match match = regex.Match(inputText);
 
-            if (match.Success)
+            if (match.Success && match.Groups.Count > 1)
             {
                 searchCts = searchCts.SafeRestart();
-                SearchAndSetSuggestionsAsync(match.Value, suggestionType, suggestionDataMap, searchCts.Token).Forget();
-                return match.Value;
+                SearchAndSetSuggestionsAsync(match.Groups[1].Value, suggestionType, suggestionDataMap, searchCts.Token).Forget();
+                return match;
             }
 
             if (suggestionPanel.IsActive)
                 SetPanelVisibility(false);
 
-            return null;
+            return Match.Empty;
         }
 
         private async UniTaskVoid SearchAndSetSuggestionsAsync(string value, InputSuggestionType suggestionType, Dictionary<string, IInputSuggestionElementData> suggestionDataMap, CancellationToken ct)

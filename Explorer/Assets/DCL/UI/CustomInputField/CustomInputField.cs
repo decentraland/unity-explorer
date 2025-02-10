@@ -1,4 +1,5 @@
 using System;
+using System.Text;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -12,6 +13,7 @@ namespace DCL.UI.CustomInputField
     public class CustomInputField : TMP_InputField
     {
         private bool isControlPressed;
+        private readonly StringBuilder stringBuilder = new();
 
         public event Action? OnRightClickEvent;
         public event Action? OnPasteShortcutPerformedEvent;
@@ -50,10 +52,12 @@ namespace DCL.UI.CustomInputField
 
                 if (eventType == EventType.KeyDown)
                 {
+                    //This whole logic is so we can capture Ctrl+V events before they are sent to the input field
+                    //Otherwise the input field inserts each character pasted one by one, and sending on Input changed events
+                    //For each character which is not desirable, slows down the game quite a bit and also overflows our sounds manager
+                    //trying to play 200 sounds simultaneously.
                     if (Event.current.keyCode == KeyCode.LeftCommand || Event.current.keyCode == KeyCode.LeftControl)
-                    {
                         isControlPressed = true;
-                    }
                     else if ( isControlPressed && Event.current.keyCode == KeyCode.V)
                     {
                             OnPasteShortcutPerformedEvent?.Invoke();
@@ -108,6 +112,7 @@ namespace DCL.UI.CustomInputField
         }
 
         /// <summary>
+        ///     This Method inserts a text starting in a specific position.
         ///     Only the text that fits inside the input field character limits will be inserted, anything else will be lost.
         /// </summary>
         private void InsertTextAtPosition(string pastedText, int position)
@@ -122,13 +127,25 @@ namespace DCL.UI.CustomInputField
             stringPosition = position + textToInsert.Length;
         }
 
-        public void ReplaceText(string oldValue, string newValue)
+        /// <summary>
+        ///
+        /// </summary>
+        public void ReplaceTextAtPosition(int startingPosition, int textLenght, string newValue, bool notify = false)
         {
-            int textLenghtDifference = newValue.Length - oldValue.Length;
+            int textLenghtDifference = newValue.Length - textLenght;
 
             if (!IsWithinCharacterLimit(textLenghtDifference)) return;
 
-            text = text.Replace(oldValue, newValue);
+            stringBuilder.Clear();
+            stringBuilder.Append(text.AsSpan(0, startingPosition))
+                         .Append(newValue)
+                         .Append(text.AsSpan(startingPosition + textLenght));
+
+            if (notify) text = stringBuilder.ToString();
+            else
+            {
+                SetTextWithoutNotify(stringBuilder.ToString());
+            }
             stringPosition += textLenghtDifference;
         }
     }
