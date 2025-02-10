@@ -6,6 +6,7 @@ using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using DCL.MemoryDomains.MemoryDomainComponents;
 using UnityEngine.Pool;
 using Utility;
 using static ECS.StreamableLoading.Common.Components.StreamableLoadingState;
@@ -32,7 +33,7 @@ namespace ECS.StreamableLoading.DeferredLoading
 
         protected static QueryDescription CreateQuery<TIntention, TAsset>() where TIntention: ILoadingIntention =>
             new QueryDescription()
-               .WithAll<TIntention, IPartitionComponent, StreamableLoadingState>()
+                .WithAll<TIntention, IPartitionComponent, StreamableLoadingState, MemoryDomainComponent>()
                .WithNone<StreamableLoadingResult<TAsset>>();
 
         protected override void Update(float t)
@@ -46,11 +47,13 @@ namespace ECS.StreamableLoading.DeferredLoading
                 {
                     ref IPartitionComponent partitionFirstElement = ref chunk.GetFirst<IPartitionComponent>();
                     ref StreamableLoadingState stateFirstElement = ref chunk.GetFirst<StreamableLoadingState>();
+                    ref var memoryDomainFirstElement = ref chunk.GetFirst<MemoryDomainComponent>();
 
                     foreach (int entityIndex in chunk)
                     {
                         ref StreamableLoadingState state = ref Unsafe.Add(ref stateFirstElement, entityIndex);
                         ref IPartitionComponent partition = ref Unsafe.Add(ref partitionFirstElement, entityIndex)!;
+                        ref var memoryDomain = ref Unsafe.Add(ref memoryDomainFirstElement, entityIndex)!;
 
                         // Process only not evaluated and explicitly forbidden entities
                         if (state.Value is not (Status.NotStarted or Status.Forbidden))
@@ -58,8 +61,7 @@ namespace ECS.StreamableLoading.DeferredLoading
 
                         var intentionData = new IntentionData
                         {
-                            StatePointer = new ManagedTypePointer<StreamableLoadingState>(ref state),
-                            PartitionComponent = partition
+                            StatePointer = new ManagedTypePointer<StreamableLoadingState>(ref state), PartitionComponent = partition, MemoryDomainComponent = memoryDomain
                         };
 
                         loadingIntentions.Add(intentionData);
@@ -70,6 +72,8 @@ namespace ECS.StreamableLoading.DeferredLoading
             if (loadingIntentions.Count == 0) return;
 
             loadingIntentions.Sort(static (p1, p2) => BucketBasedComparer.INSTANCE.Compare(p1.PartitionComponent, p2.PartitionComponent));
+            loadingIntentions.Sort(static (p1, p2) => MemoryDomainBasedComparer.INSTANCE.Compare(p1.MemoryDomainComponent, p2.MemoryDomainComponent));
+
             AnalyzeBudget();
         }
 
@@ -80,9 +84,7 @@ namespace ECS.StreamableLoading.DeferredLoading
             for (i = 0; i < loadingIntentions.Count; i++)
             {
                 if (!memoryBudget.TrySpendBudget())
-                {
                     break;
-                }
                 if (!releasablePerformanceLoadingBudget.TrySpendBudget(out IAcquiredBudget acquiredBudget)) break;
 
                 ref StreamableLoadingState state = ref loadingIntentions[i].StatePointer.Value;
@@ -106,6 +108,7 @@ namespace ECS.StreamableLoading.DeferredLoading
         {
             public IPartitionComponent PartitionComponent;
             public ManagedTypePointer<StreamableLoadingState> StatePointer;
+            public MemoryDomainComponent MemoryDomainComponent;
         }
     }
 }
