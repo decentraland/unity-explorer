@@ -1,7 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Optimization.Hashing;
-using Plugins.MachineInfo.MachineInfoWrap;
 using System.Threading;
 using UnityEngine;
 using Utility.Types;
