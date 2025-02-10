@@ -21,7 +21,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
 
         public static ConstSceneRoomMetaDataSource FromMachineUUID()
         {
-            string uuid = MachineInfo.UUID();
+            string uuid = SystemInfo.deviceUniqueIdentifier;
             using var key = HashKey.FromString(uuid);
 
             //hashed due privacy purposes to don't expose user's unique machine uuid
