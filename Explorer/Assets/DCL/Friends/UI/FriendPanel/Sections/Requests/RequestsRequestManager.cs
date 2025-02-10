@@ -85,12 +85,14 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
         {
             sentRequests.RemoveAll(request => request.To.Address.ToString().Equals(friendId));
             RefreshLoopList();
+            loopListView.ResetListView();
         }
 
         private void ReceivedRemoved(string friendId)
         {
             receivedRequests.RemoveAll(request => request.From.Address.ToString().Equals(friendId));
             RefreshLoopList();
+            loopListView.ResetListView();
         }
 
         private void RefreshLoopList()
