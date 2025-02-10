@@ -49,7 +49,8 @@ namespace DCL.AvatarRendering.Wearables
         public async UniTask<(IReadOnlyList<IWearable> results, int totalAmount)> GetAsync(int pageSize, int pageNumber, CancellationToken ct,
             IWearablesProvider.SortingField sortingField = IWearablesProvider.SortingField.Date, IWearablesProvider.OrderBy orderBy = IWearablesProvider.OrderBy.Descending,
             string? category = null, IWearablesProvider.CollectionType collectionType = IWearablesProvider.CollectionType.All,
-            string? name = null, List<IWearable>? results = null, CommonLoadingArguments? loadingArguments = null)
+            string? name = null, List<IWearable>? results = null, CommonLoadingArguments? loadingArguments = null,
+            bool needsBuilderAPISigning = false)
         {
             requestParameters.Clear();
             requestParameters.Add((PAGE_NUMBER, pageNumber.ToString()));
@@ -75,7 +76,7 @@ namespace DCL.AvatarRendering.Wearables
 
             results ??= new List<IWearable>();
 
-            var intention = new GetWearableByParamIntention(requestParameters, web3IdentityCache.Identity!.Address, results, 0);
+            var intention = new GetWearableByParamIntention(requestParameters, web3IdentityCache.Identity!.Address, results, 0, needsBuilderAPISigning);
             if (loadingArguments.HasValue)
                 intention.CommonArguments = loadingArguments.Value;
 

@@ -49,7 +49,7 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
 
             URLAddress url = BuildUrlFromIntention(in intention);
 
-            if (intention.CommonArguments.NeedsBuilderAPISigning)
+            if (intention.NeedsBuilderAPISigning)
             {
                 var lambdaResponse =
                     await ParseBuilderResponseAsync(

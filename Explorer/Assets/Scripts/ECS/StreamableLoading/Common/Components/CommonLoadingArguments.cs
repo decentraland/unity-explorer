@@ -11,7 +11,6 @@ namespace ECS.StreamableLoading.Common.Components
         public URLAddress? CacheableURL;
         public int Attempts;
         public int Timeout;
-        public bool NeedsBuilderAPISigning;
 
         /// <summary>
         ///     When the system fails to load from the current source it removes the source from the flags
@@ -37,8 +36,7 @@ namespace ECS.StreamableLoading.Common.Components
             int attempts = StreamableLoadingDefaults.ATTEMPTS_COUNT,
             AssetSource permittedSources = AssetSource.WEB,
             AssetSource currentSource = AssetSource.WEB,
-            CancellationTokenSource? cancellationTokenSource = null,
-            bool needsBuilderAPISigning = false)
+            CancellationTokenSource? cancellationTokenSource = null)
         {
             URL = url;
             CustomEmbeddedSubDirectory = customEmbeddedSubDirectory;
@@ -47,7 +45,6 @@ namespace ECS.StreamableLoading.Common.Components
             PermittedSources = permittedSources;
             CurrentSource = currentSource;
             CacheableURL = null;
-            NeedsBuilderAPISigning = needsBuilderAPISigning;
             CancellationTokenSource = cancellationTokenSource ?? new CancellationTokenSource();
         }
 
@@ -60,9 +57,8 @@ namespace ECS.StreamableLoading.Common.Components
             int attempts = StreamableLoadingDefaults.ATTEMPTS_COUNT,
             AssetSource permittedSources = AssetSource.WEB,
             AssetSource currentSource = AssetSource.WEB,
-            CancellationTokenSource cancellationTokenSource = null,
-            bool needsBuilderAPISigning = false) :
-            this(URLAddress.FromString(url), customEmbeddedSubDirectory, timeout, attempts, permittedSources, currentSource, cancellationTokenSource, needsBuilderAPISigning) { }
+            CancellationTokenSource cancellationTokenSource = null) :
+            this(URLAddress.FromString(url), customEmbeddedSubDirectory, timeout, attempts, permittedSources, currentSource, cancellationTokenSource) { }
 
         // Always override attempts count for streamable assets as repetitions are handled in LoadSystemBase
         public static implicit operator CommonArguments(in CommonLoadingArguments commonLoadingArguments) =>

@@ -16,7 +16,8 @@ namespace DCL.AvatarRendering.Wearables
             string? category = null, CollectionType collectionType = CollectionType.All,
             string? name = null,
             List<IWearable>? results = null,
-            CommonLoadingArguments? loadingArguments = null);
+            CommonLoadingArguments? loadingArguments = null,
+            bool needsBuilderAPISigning = false);
 
         UniTask<IReadOnlyCollection<IWearable>?> RequestPointersAsync(IReadOnlyCollection<URN> pointers,
             BodyShape bodyShape,

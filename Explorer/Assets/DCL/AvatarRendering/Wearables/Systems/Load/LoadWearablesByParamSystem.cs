@@ -44,7 +44,7 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
             IReadOnlyList<(string, string)> urlEncodedParams = intention.Params;
             urlBuilder.Clear();
 
-            if (intention.CommonArguments.URL != URLAddress.EMPTY && intention.CommonArguments.NeedsBuilderAPISigning)
+            if (intention.CommonArguments.URL != URLAddress.EMPTY && intention.NeedsBuilderAPISigning)
             {
                 var url = new Uri(intention.CommonArguments.URL);
                 urlBuilder.AppendDomain(URLDomain.FromString($"{url.Scheme}://{url.Host}"))

@@ -32,7 +32,8 @@ namespace DCL.AvatarRendering.Wearables
             IWearablesProvider.CollectionType collectionType = IWearablesProvider.CollectionType.All,
             string? name = null,
             List<IWearable>? results = null,
-            CommonLoadingArguments? loadingArguments = null)
+            CommonLoadingArguments? loadingArguments = null,
+            bool needsBuilderAPISigning = false)
         {
             if (appArgs.TryGetValue(AppArgsFlags.SELF_PREVIEW_WEARABLES, out string? wearablesCsv))
             {
@@ -67,9 +68,9 @@ namespace DCL.AvatarRendering.Wearables
                 return await source.GetAsync(pageSize, pageNumber, ct, sortingField, orderBy, category, collectionType, name, results,
                     loadingArguments: new CommonLoadingArguments(
                         builderDTOsUrl.Replace("[COL-ID]", collectionId),
-                        cancellationTokenSource: new CancellationTokenSource(),
-                        needsBuilderAPISigning: true
-                    ));
+                        cancellationTokenSource: new CancellationTokenSource()
+                    ),
+                    needsBuilderAPISigning: true);
             }
 
             // Regular path without any "self-preview" element
