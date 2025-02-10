@@ -1,8 +1,9 @@
 ﻿using Cysharp.Threading.Tasks;
-using DCL.AsyncLoadReporting;
+using DCL.Utilities;
 using ECS.SceneLifeCycle.Reporting;
 using System.Threading;
 using UnityEngine;
+using Utility.Types;
 
 namespace DCL.RealmNavigation
 {
@@ -15,10 +16,10 @@ namespace DCL.RealmNavigation
 
     public static class TeleportControllerExtensions
     {
-        public static async UniTask TryTeleportToSceneSpawnPointAsync(this ITeleportController teleportController, Vector2Int parcel, AsyncLoadProcessReport loadReport, CancellationToken ct)
+        public static async UniTask<EnumResult<TaskError>> TryTeleportToSceneSpawnPointAsync(this ITeleportController teleportController, Vector2Int parcel, AsyncLoadProcessReport loadReport, CancellationToken ct)
         {
             WaitForSceneReadiness? waitForSceneReadiness = await teleportController.TeleportToSceneSpawnPointAsync(parcel, loadReport, ct);
-            await waitForSceneReadiness.ToUniTask();
+            return await waitForSceneReadiness.ToUniTask();
         }
     }
 }

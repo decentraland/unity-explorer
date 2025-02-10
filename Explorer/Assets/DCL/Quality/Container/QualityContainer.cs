@@ -75,13 +75,13 @@ namespace DCL.Quality
         private void AddSettingsSelector(DebugWidgetBuilder builder)
         {
             // changing quality presets at runtime won't be reflected
-            string[] presets = QualitySettings.names;
+            var presets = QualitySettings.names.ToList();
 
             var binding = new IndexedElementBinding(presets, presets[QualitySettings.GetQualityLevel()], evt => QualitySettings.SetQualityLevel(evt.index));
 
             QualitySettings.activeQualityLevelChanged += (_, to) => binding.Value = presets[to];
 
-            builder.AddControl(new DebugDropdownDef(presets.ToList(), binding, "Level"), null);
+            builder.AddControl(new DebugDropdownDef(binding, "Level"), null);
         }
 
         public class Plugin : IDCLGlobalPluginWithoutSettings
