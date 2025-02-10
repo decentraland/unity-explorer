@@ -3,6 +3,7 @@ using DCL.Diagnostics;
 using JetBrains.Annotations;
 using Microsoft.ClearScript;
 using Microsoft.ClearScript.JavaScript;
+using SceneRunner.Scene.ExceptionsHandling;
 using System;
 using System.Collections.Generic;
 
@@ -14,9 +15,12 @@ namespace SceneRuntime.Apis.Modules.CommunicationsControllerApi
 
         private readonly List<PoolableByteArray> lastInput = new (10);
 
-        public CommunicationsControllerAPIWrapper(ICommunicationsControllerAPI api, IInstancePoolsProvider instancePoolsProvider) : base(api)
+        private readonly ISceneExceptionsHandler sceneExceptionsHandler;
+
+        public CommunicationsControllerAPIWrapper(ICommunicationsControllerAPI api, IInstancePoolsProvider instancePoolsProvider, ISceneExceptionsHandler sceneExceptionsHandler) : base(api)
         {
             this.instancePoolsProvider = instancePoolsProvider;
+            this.sceneExceptionsHandler = sceneExceptionsHandler;
         }
 
         protected override void DisposeInternal()
@@ -66,8 +70,7 @@ namespace SceneRuntime.Apis.Modules.CommunicationsControllerApi
             }
             catch (Exception e)
             {
-                ReportHub.LogException(e, ReportCategory.ENGINE);
-                throw;
+                sceneExceptionsHandler.OnEngineException(e);
             }
         }
 
