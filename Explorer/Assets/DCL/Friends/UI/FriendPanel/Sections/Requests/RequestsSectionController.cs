@@ -153,6 +153,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
         private void DeleteRequestClicked(FriendRequest request)
         {
             RejectFriendshipAsync(friendshipOperationCts.Token).Forget();
+            view.LoopList.ResetListView();
 
             async UniTaskVoid RejectFriendshipAsync(CancellationToken ct)
             {
@@ -170,6 +171,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
         private void AcceptRequestClicked(FriendRequest request)
         {
             AcceptFriendshipAsync(friendshipOperationCts.Token).Forget();
+            view.LoopList.ResetListView();
 
             async UniTaskVoid AcceptFriendshipAsync(CancellationToken ct)
             {
