@@ -67,6 +67,18 @@ namespace Utility
             }
         }
 
+        public static unsafe bool HasExactlyOneFlag<T>(this T value) where T: unmanaged, Enum
+        {
+            return sizeof(T) switch
+                   {
+                       sizeof(byte) => (*(byte*)&value & (*(byte*)&value - 1)) == 0,
+                       sizeof(short) => (*(short*)&value & (*(short*)&value - 1)) == 0,
+                       sizeof(int) => (*(int*)&value & (*(int*)&value - 1)) == 0,
+                       sizeof(long) => (*(long*)&value & (*(long*)&value - 1)) == 0,
+                       _ => false,
+                   };
+        }
+
         public static unsafe bool HasFlag<T>(T x, T y) where T: unmanaged, Enum
         {
             switch (sizeof(T))

@@ -6,7 +6,7 @@ using NSubstitute;
 using NUnit.Framework;
 using System.Buffers;
 using UnityEngine;
-using Utility.Multithreading;
+using UnityEngine.TestTools;
 
 namespace ECS.StreamableLoading.AssetBundles.Tests
 {
@@ -33,8 +33,11 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
         protected override GetAssetBundleIntention CreateNotFoundIntention() =>
             new (new CommonLoadingArguments(failPath));
 
-        protected override GetAssetBundleIntention CreateWrongTypeIntention() =>
-            new (new CommonLoadingArguments(wrongTypePath));
+        protected override GetAssetBundleIntention CreateWrongTypeIntention()
+        {
+            LogAssert.Expect(LogType.Error, "Failed to read data for the AssetBundle 'IO.Stream'.");
+            return new GetAssetBundleIntention(new CommonLoadingArguments(wrongTypePath));
+        }
 
         protected override LoadAssetBundleSystem CreateSystem() =>
             new (world, cache, IWebRequestController.DEFAULT, ArrayPool<byte>.Shared, new AssetBundleLoadingMutex(), Substitute.For<IDiskCache<PartialLoadingState>>());

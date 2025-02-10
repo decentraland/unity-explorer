@@ -8,6 +8,7 @@ using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
 using System;
 using System.Threading;
+using Utility;
 
 namespace ECS.StreamableLoading.Common.Systems
 {
@@ -52,7 +53,8 @@ namespace ECS.StreamableLoading.Common.Systems
                             + $"Trying sources: {intention.CommonArguments.PermittedSources} attemptCount {attemptCount} url: {intention.CommonArguments.URL}"
                         );
 
-                        if (intention.CommonArguments.PermittedSources == AssetSource.NONE)
+                        // Removal from Permitted Sources is done after this method
+                        if (intention.CommonArguments.PermittedSources.HasExactlyOneFlag())
 
                             // conclude now
                             return new StreamableLoadingResult<TAsset>(
