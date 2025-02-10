@@ -36,6 +36,7 @@ using SceneRunner.Scene;
 using SceneRuntime;
 using System.Collections.Generic;
 using System.Threading;
+using DCL.Profiles;
 using SystemGroups.Visualiser;
 using UnityEngine;
 using Utility;
@@ -68,6 +69,7 @@ namespace Global.Dynamic
         private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
         private readonly HybridSceneParams hybridSceneParams;
         private readonly bool localSceneDevelopment;
+        private readonly IProfileRepository profileRepository;
 
         public GlobalWorldFactory(in StaticContainer staticContainer,
             CameraSamplingData cameraSamplingData, RealmSamplingData realmSamplingData,
@@ -79,7 +81,8 @@ namespace Global.Dynamic
             IEmotesMessageBus emotesMessageBus,
             World world,
             ISceneReadinessReportQueue sceneReadinessReportQueue,
-            bool localSceneDevelopment)
+            bool localSceneDevelopment,
+            IProfileRepository profileRepository)
         {
             partitionedWorldsAggregateFactory = staticContainer.SingletonSharedDependencies.AggregateFactory;
             componentPoolsRegistry = staticContainer.ComponentsContainer.ComponentPoolsRegistry;
@@ -103,6 +106,7 @@ namespace Global.Dynamic
             this.localSceneDevelopment = localSceneDevelopment;
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
             this.world = world;
+            this.profileRepository = profileRepository;
 
             memoryBudget = staticContainer.SingletonSharedDependencies.MemoryBudget;
             physicsTickProvider = staticContainer.PhysicsTickProvider;
@@ -170,7 +174,7 @@ namespace Global.Dynamic
             UpdatePhysicsTickSystem.InjectToWorld(ref builder, physicsTickProvider);
             UpdateTimeSystem.InjectToWorld(ref builder);
 
-            OwnAvatarLoaderFromDebugMenuSystem.InjectToWorld(ref builder, playerEntity, debugContainerBuilder, realmData);
+            OwnAvatarLoaderFromDebugMenuSystem.InjectToWorld(ref builder, playerEntity, debugContainerBuilder, realmData, profileRepository);
 
             UnloadPortableExperiencesSystem.InjectToWorld(ref builder);
 
