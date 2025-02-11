@@ -47,14 +47,11 @@ namespace DCL.Web3.Identities
 
         private void RegisterSelf()
         {
-            using var accessor = memoryMappedFile.CreateViewAccessor(0, MemoryMappedFileSize());
-            mutex.WaitOne(MUTEX_TIMEOUT_MILLISECONDS);
-
-            try
+            ExecuteWithAccessor(this, static (i, accessor) =>
             {
                 using var _ = ListPool<Entry>.Get(out var list);
 
-                ReadFromFile(list, accessor);
+                i.ReadFromFile(list, accessor);
 
                 if (list.Count == MAX_INSTANCES_COUNT)
                     ReportHub.LogException(
@@ -62,29 +59,35 @@ namespace DCL.Web3.Identities
                         ReportCategory.PROFILE
                     );
 
-                var selfEntry = Entry.NewSelf(selfPID, list);
+                var selfEntry = Entry.NewSelf(i.selfPID, list);
                 list.Add(selfEntry);
-                storedKey = KeyFromEntry(selfEntry);
+                i.storedKey = KeyFromEntry(selfEntry);
 
                 WriteToFile(list, accessor);
-                accessor.Flush();
-            }
-            finally { mutex.ReleaseMutex(); }
+            });
         }
 
         private void UnregisterSelf()
         {
-            using var accessor = memoryMappedFile.CreateViewAccessor(0, MemoryMappedFileSize());
-            mutex.WaitOne(MUTEX_TIMEOUT_MILLISECONDS);
+            ExecuteWithAccessor(this, static (i, accessor) =>
+            {
+                using var _ = ListPool<Entry>.Get(out var list);
+                i.ReadFromFile(list, accessor, i.selfPID, static (entry, selfPID) => entry.PID == selfPID);
+                WriteToFile(list, accessor);
+            });
+        }
+
+        private static void ExecuteWithAccessor(MemoryMappedFilePlayerPrefsIdentityProviderKeyStrategy instance, Action<MemoryMappedFilePlayerPrefsIdentityProviderKeyStrategy, MemoryMappedViewAccessor> action)
+        {
+            using var accessor = instance.memoryMappedFile.CreateViewAccessor(0, MemoryMappedFileSize());
+            instance.mutex.WaitOne(MUTEX_TIMEOUT_MILLISECONDS);
 
             try
             {
-                using var _ = ListPool<Entry>.Get(out var list);
-                ReadFromFile(list, accessor, selfPID, static (entry, selfPID) => entry.PID == selfPID);
-                WriteToFile(list, accessor);
+                action(instance, accessor);
                 accessor.Flush();
             }
-            finally { mutex.ReleaseMutex(); }
+            finally { instance.mutex.ReleaseMutex(); }
         }
 
         public void Dispose()
