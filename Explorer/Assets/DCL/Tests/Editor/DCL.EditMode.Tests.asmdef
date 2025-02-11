@@ -2,6 +2,7 @@
     "name": "DCL.EditMode.Tests",
     "rootNamespace": "",
     "references": [
+        "GUID:9659fcb6593e30b46909c1245ed056df",
         "GUID:dc04f38471c3a459fb4d31124ee9127d",
         "GUID:f51ebe6a0ceec4240a699833d6309b23",
         "GUID:ac3295688c7c22745a96e6ac34718181",
@@ -92,8 +93,6 @@
         "NSubstitute.dll",
         "Arch.dll",
         "Arch.System.dll",
-        "ClearScript.V8.dll",
-        "ClearScript.Core.dll",
         "ClearScript.V8.ICUData.dll",
         "Newtonsoft.Json.dll",
         "Google.Protobuf.dll",

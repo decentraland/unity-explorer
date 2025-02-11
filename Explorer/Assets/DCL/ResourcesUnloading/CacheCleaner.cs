@@ -49,7 +49,6 @@ namespace DCL.ResourcesUnloading
         private IAttachmentsAssetsCache? wearableAssetsCache;
         private IWearableStorage? wearableStorage;
         private IProfileCache? profileCache;
-        private IStreamableCache<ProfileData, GetProfileIntention>? profileIntentionCache;
         private IRoadAssetPool? roadCache;
 
         private IEmoteStorage? emoteCache;
@@ -89,7 +88,6 @@ namespace DCL.ResourcesUnloading
             lodCache!.Unload(budgetToUse, budgeted ? GLTF_UNLOAD_CHUNK : int.MaxValue);
             assetBundleCache!.Unload(budgetToUse, budgeted ? AB_UNLOAD_CHUNK : int.MaxValue);
             profileCache!.Unload(budgetToUse, budgeted ? PROFILE_UNLOAD_CHUNK : int.MaxValue);
-            profileIntentionCache!.Unload(budgetToUse, budgeted ? PROFILE_UNLOAD_CHUNK : int.MaxValue);
             roadCache!.Unload(budgetToUse, budgeted ? GLTF_UNLOAD_CHUNK : int.MaxValue);
             jsSourcesCache?.Unload(budgetToUse);
 
@@ -143,9 +141,6 @@ namespace DCL.ResourcesUnloading
 
         public void Register(IProfileCache profileCache) =>
             this.profileCache = profileCache;
-
-        public void Register(IStreamableCache<ProfileData, GetProfileIntention> profileIntentionCache) =>
-            this.profileIntentionCache = profileIntentionCache;
 
         public void Register(IEmoteStorage emoteStorage) =>
             this.emoteCache = emoteStorage;
