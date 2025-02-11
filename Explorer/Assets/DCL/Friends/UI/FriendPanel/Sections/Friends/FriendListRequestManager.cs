@@ -118,32 +118,10 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             SortFriendList();
 
             return result.TotalAmount;
-            return FetchMockData();
         }
 
         protected override void ResetCollection() =>
             friends.Clear();
-
-        private int FetchMockData()
-        {
-            friends.Add(new FriendProfile(new Web3Address("0x05dE05303EAb867D51854E8b4fE03F7acb0624d9"), "Test1", false, URLAddress.EMPTY));
-            friends.Add(new FriendProfile(new Web3Address("0x3a4401589ce5e65e0603df86b03c18c9fa8a05d1"), "Test2", true, URLAddress.EMPTY));
-            friends.Add(new FriendProfile(new Web3Address("0x381fb40e076f54687febb6235c65e91b12c47efd"), "Test3", false, URLAddress.EMPTY));
-            friends.Add(new FriendProfile(new Web3Address("0x76ce124714816aaf1d3548e5ee8b499bc4b31455"), "Test4", false, URLAddress.EMPTY));
-            friends.Add(new FriendProfile(new Web3Address("0xcd110cd5dfc7f270fe137529ac17db8b81e28dd4"), "Test5", true, URLAddress.EMPTY));
-            friends.Add(new FriendProfile(new Web3Address("0x3faacc4e4287b82ccc1ca40adab0fc49a380b7ab"), "Test6", true, URLAddress.EMPTY));
-            friends.Add(new FriendProfile(new Web3Address("0x03d05ecbf55bcd0ee46b98e6a81d4baf91059a8b"), "Test7", false, URLAddress.EMPTY));
-            friends.Add(new FriendProfile(new Web3Address("0x4f7fe261619141ffa63fefee35bba886581292f4"), "Test8", false, URLAddress.EMPTY));
-            friends.Add(new FriendProfile(new Web3Address("0xd545b9e0a5f3638a5026d1914cc9b47ed16b5ae9"), "Test9", false, URLAddress.EMPTY));
-            friends.Add(new FriendProfile(new Web3Address("0xba7352cff5681b719daf33fa05e93153af8146c8"), "Test10", true, URLAddress.EMPTY));
-            friends.Add(new FriendProfile(new Web3Address("0x23e3d123f69fdd7f08a7c5685506bb344a12f1c4"), "Test11", false, URLAddress.EMPTY));
-            friends.Add(new FriendProfile(new Web3Address("0x5d327dcd9b4dae70ebf9c4ebb0576a1de97da520"), "Test12", false, URLAddress.EMPTY));
-            friends.Add(new FriendProfile(new Web3Address("0x97574fcd296f73fe34823973390ebe4b9b065300"), "Test13", false, URLAddress.EMPTY));
-            friends.Add(new FriendProfile(new Web3Address("0x5d327dcd9b4dae70ebf9c4ebb0576a1de97da520"), "Test14", true, URLAddress.EMPTY));
-            friends.Add(new FriendProfile(new Web3Address("0xb1d3f75bc57e744f7f6f8b014f1a0dc385649628"), "Test15", false, URLAddress.EMPTY));
-
-            return friends.Count;
-        }
 
         protected override void CustomiseElement(FriendListUserView elementView, int index)
         {

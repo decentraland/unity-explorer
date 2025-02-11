@@ -165,15 +165,6 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             }
 
             return received.TotalAmount + sent.TotalAmount;
-
-            // FriendProfile friendProfile1 = new FriendProfile(new Web3Address("0xd545b9e0a5f3638a5026d1914cc9b47ed16b5ae9"), "Test1", false, URLAddress.EMPTY);
-            // FriendProfile friendProfile2 = new FriendProfile(new Web3Address("0xba7352cff5681b719daf33fa05e93153af8146c8"), "Test2", false, URLAddress.EMPTY);
-            // FriendProfile friendProfile3 = new FriendProfile(new Web3Address("0x23e3d123f69fdd7f08a7c5685506bb344a12f1c4"), "Test3", true, URLAddress.EMPTY);
-            // FriendProfile userFriendProfile = new FriendProfile(new Web3Address("0x31d4f4dd8615ec45bbb6330da69f60032aca219e"), "MyUser", true, URLAddress.EMPTY);
-            //
-            // receivedRequests.Add(new FriendRequest(Guid.NewGuid().ToString(), DateTime.Now.AddDays(-2), friendProfile1, userFriendProfile, "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi gravida libero quis sapien dictum, a vehicula nisi gravida"));
-            // receivedRequests.Add(new FriendRequest(Guid.NewGuid().ToString(), DateTime.Now.AddDays(-1), friendProfile2, userFriendProfile, "In hac habitasse platea dictumst. Proin sodales, sapien at facilisis consectetur, elit erat luctus quam, vel finibus lacus nulla vel tellus. Aenean vehicula urna nisl. Donec in lacus nisi. Aenean facilisis sagittis turpis nec finibus. Sed eu lorem arcu"));
-            // sentRequests.Add(new FriendRequest(Guid.NewGuid().ToString(), DateTime.Now.AddMonths(-1), userFriendProfile, friendProfile3, "Aliquam consectetur euismod dui, vel iaculis ligula rhoncus eget. Maecenas faucibus consequat eros, nec pellentesque diam volutpat ac. Quisque aliquet dolor non tellus mattis, convallis lobortis mauris lobortis"));
         }
     }
 }
