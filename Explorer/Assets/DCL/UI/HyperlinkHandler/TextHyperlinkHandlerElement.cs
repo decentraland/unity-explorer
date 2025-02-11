@@ -129,10 +129,10 @@ namespace DCL.UI.HyperlinkHandler
 
         private void HandleUserLink(string userName)
         {
-            OpenUserProfileContextMenu(userName.Substring(1)).Forget();
+            OpenUserProfileContextMenuAsync(userName.Substring(1)).Forget();
         }
 
-        private async UniTask OpenUserProfileContextMenu(string userName)
+        private async UniTask OpenUserProfileContextMenuAsync(string userName)
         {
             Profile profile = dependencies.ProfileCache.GetByUserName(userName);
 

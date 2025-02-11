@@ -7,19 +7,15 @@ using Utility;
 
 namespace DCL.UI.InputFieldFormatting
 {
-    [Serializable]
     public class HyperlinkTextFormatter : ITextFormatter
     {
         private const string LINK_OPENING_STYLE = "<#00B2FF><link=";
         private const string LINK_CLOSING_STYLE = "</link></color>";
 
         private static readonly Regex RICH_TEXT_TAG_REGEX = new (@"<(?!\/?(b|i)(>|\s))[^>]+>", RegexOptions.Compiled);
-
         private static readonly Regex WEBSITE_REGEX = new (@"(?<=^|\s)(https?:\/\/)([a-zA-Z0-9-]+\.)*[a-zA-Z0-9][a-zA-Z0-9-]+\.[a-zA-Z]{2,}(\/[^\s]*)?(?=\s|$)",
             RegexOptions.Compiled);
-
         private static readonly Regex SCENE_REGEX = new (@"(?<=^|\s)(-?\d{1,3}),(-?\d{1,3})(?=\s|$)", RegexOptions.Compiled);
-
         private static readonly Regex WORLD_REGEX = new (@"(?<=^|\s)*[a-zA-Z0-9]*\.dcl\.eth(?=\s|$)", RegexOptions.Compiled);
 
         // This Regex will detect any pattern of format @username#1234 being the part with the "#" optional. This requires the username to start and/or end with an empty space or start/end of line.
@@ -27,11 +23,11 @@ namespace DCL.UI.InputFieldFormatting
 
         private readonly StringBuilder mainStringBuilder = new ();
         private readonly StringBuilder tempStringBuilder = new ();
-        public readonly IProfileCache ProfileCache;
+        private readonly IProfileCache profileCache;
 
         public HyperlinkTextFormatter(IProfileCache profileCache)
         {
-            ProfileCache = profileCache;
+            this.profileCache = profileCache;
         }
 
         public string FormatText(string text)
@@ -123,6 +119,7 @@ namespace DCL.UI.InputFieldFormatting
                 case LinkType.SCENE:
                     if (!AreCoordsValid(int.Parse(match.Groups[1].Value), int.Parse(match.Groups[2].Value)))
                         return tempStringBuilder.Append(match);
+
                     linkTypeString = HyperlinkConstants.SCENE;
                     break;
                 case LinkType.WORLD:
@@ -151,11 +148,8 @@ namespace DCL.UI.InputFieldFormatting
         private bool AreCoordsValid(int x, int y) =>
             GenesisCityData.IsInsideBounds(x, y);
 
-
         private bool IsUserNameValid(string username) =>
-            ProfileCache.GetByUserName(username) != null;
-
-
+            profileCache.GetByUserName(username) != null;
 
         private enum LinkType
         {

@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Text;
 using TMPro;
 using UnityEngine;
@@ -41,7 +40,6 @@ namespace DCL.UI.CustomInputField
             base.OnDeselect(eventData);
         }
 
-
         private readonly Event processingEvent = new ();
 
         public override void OnUpdateSelected(BaseEventData eventData)
@@ -61,30 +59,29 @@ namespace DCL.UI.CustomInputField
 
         private bool TryHandleSpecialKeys()
         {
-                //This whole logic is so we can capture Ctrl+V and up and down events before they are sent to the input field
-                //Otherwise the input field inserts each character pasted one by one, and sending on Input changed events
-                //For each character which is not desirable, slows down the game quite a bit and also overflows our sounds manager
-                //trying to play 200 sounds simultaneously. I dont like accessing keyboard directly, so this is prone to be
-                //refactored when we move this functionality to other input fields.
-                if (Keyboard.current.leftCommandKey.wasPressedThisFrame || Keyboard.current.leftCtrlKey.wasPressedThisFrame)
-                    isControlPressed = true;
+            //This whole logic is so we can capture Ctrl+V and up and down events before they are sent to the input field
+            //Otherwise the input field inserts each character pasted one by one, and sending on Input changed events
+            //For each character which is not desirable, slows down the game quite a bit and also overflows our sounds manager
+            //trying to play 200 sounds simultaneously. I dont like accessing keyboard directly, so this is prone to be
+            //refactored when we move this functionality to other input fields.
+            if (Keyboard.current.leftCommandKey.wasPressedThisFrame || Keyboard.current.leftCtrlKey.wasPressedThisFrame)
+                isControlPressed = true;
 
-                if (isControlPressed && Keyboard.current.vKey.wasPressedThisFrame)
-                {
-                    OnPasteShortcutPerformedEvent?.Invoke();
-                    return true;
-                }
+            if (isControlPressed && Keyboard.current.vKey.wasPressedThisFrame)
+            {
+                OnPasteShortcutPerformedEvent?.Invoke();
+                return true;
+            }
 
-                if (!UpAndDownArrowsEnabled &&
-                         (Keyboard.current.upArrowKey.wasPressedThisFrame || Keyboard.current.downArrowKey.wasPressedThisFrame))
-                    return true;
+            if (!UpAndDownArrowsEnabled &&
+                (Keyboard.current.upArrowKey.wasPressedThisFrame || Keyboard.current.downArrowKey.wasPressedThisFrame))
+                return true;
 
-                if (Keyboard.current.leftCommandKey.wasReleasedThisFrame || Keyboard.current.leftCtrlKey.wasReleasedThisFrame)
-                    isControlPressed = false;
+            if (Keyboard.current.leftCommandKey.wasReleasedThisFrame || Keyboard.current.leftCtrlKey.wasReleasedThisFrame)
+                isControlPressed = false;
 
-                return false;
+            return false;
         }
-
 
         public bool IsWithinCharacterLimit(int newTextLenght = 0) =>
             text.Length + newTextLenght < characterLimit;
