@@ -190,7 +190,6 @@ namespace Global
                 new ConcurrentLoadingPerformanceBudget(staticSettings.AssetsLoadingBudget),
                 new FrameTimeCapBudget(staticSettings.FrameTimeCap, profilingProvider),
                 new MemoryBudget(memoryCap, profilingProvider, staticSettings.MemoryThresholds),
-                new SceneAssetLock(),
                 new SceneMapping()
             );
 
@@ -256,6 +255,7 @@ namespace Global
                 new RealmInfoPlugin(container.RealmData, container.RoomHubProxy),
                 new InputModifierPlugin(globalWorld, container.PlayerEntity, container.SceneRestrictionBusController),
                 new MainCameraPlugin(componentsContainer.ComponentPoolsRegistry, container.assetsProvisioner, container.CacheCleaner, exposedGlobalDataContainer.ExposedCameraData, container.SceneRestrictionBusController, globalWorld),
+                new LightSourcePlugin(componentsContainer.ComponentPoolsRegistry, container.assetsProvisioner, container.CacheCleaner),
 
 #if UNITY_EDITOR
                 new GizmosWorldPlugin(),

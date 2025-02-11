@@ -44,7 +44,6 @@ namespace DCL.ResourcesUnloading.Tests
         private NftShapeCache nftShapeCache;
         private IEmoteStorage emoteStorage;
         private IProfileCache profileCache;
-        private ProfileIntentionCache profileIntentionCache;
         private IComponentPoolsRegistry poolsRegistry;
 
         private IReadOnlyDictionary<string, string> innerOfCache;
@@ -71,7 +70,6 @@ namespace DCL.ResourcesUnloading.Tests
             nftShapeCache = new NftShapeCache();
             emoteStorage = new MemoryEmotesStorage();
             profileCache = new DefaultProfileCache();
-            profileIntentionCache = new ProfileIntentionCache();
 
             var dict = new Dictionary<string, string>();
             innerOfCache = dict;
@@ -89,7 +87,6 @@ namespace DCL.ResourcesUnloading.Tests
             cacheCleaner.Register(nftShapeCache);
             cacheCleaner.Register(emoteStorage);
             cacheCleaner.Register(profileCache);
-            cacheCleaner.Register(profileIntentionCache);
             cacheCleaner.Register(jsSourcesCache);
         }
 
