@@ -2,6 +2,7 @@ using CrdtEcsBridge.PoolsProviders;
 using DCL.Diagnostics;
 using Microsoft.ClearScript;
 using Microsoft.ClearScript.V8.SplitProxy;
+using SceneRunner.Scene.ExceptionsHandling;
 using System;
 using System.Collections.Generic;
 
@@ -14,9 +15,12 @@ namespace SceneRuntime.Apis.Modules.CommunicationsControllerApi
         private readonly List<PoolableByteArray> lastInput = new (10);
         private readonly InvokeHostObject sendBinary;
 
-        public CommunicationsControllerAPIWrapper(ICommunicationsControllerAPI api, IInstancePoolsProvider instancePoolsProvider) : base(api)
+        private readonly ISceneExceptionsHandler sceneExceptionsHandler;
+
+        public CommunicationsControllerAPIWrapper(ICommunicationsControllerAPI api, IInstancePoolsProvider instancePoolsProvider, ISceneExceptionsHandler sceneExceptionsHandler) : base(api)
         {
             this.instancePoolsProvider = instancePoolsProvider;
+            this.sceneExceptionsHandler = sceneExceptionsHandler;
             sendBinary = SendBinary;
         }
 
@@ -75,8 +79,7 @@ namespace SceneRuntime.Apis.Modules.CommunicationsControllerApi
             }
             catch (Exception e)
             {
-                ReportHub.LogException(e, ReportCategory.ENGINE);
-                throw;
+                sceneExceptionsHandler.OnEngineException(e);
             }
         }
 

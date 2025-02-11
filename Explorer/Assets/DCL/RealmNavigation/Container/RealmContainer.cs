@@ -38,7 +38,7 @@ namespace DCL.RealmNavigation
             IDecentralandUrlsSource urlsSource,
             FeatureFlagsCache featureFlagsCache)
         {
-            var teleportController = new TeleportController(staticContainer.SceneReadinessReportQueue, staticContainer.SingletonSharedDependencies.SceneAssetLock);
+            var teleportController = new TeleportController(staticContainer.SceneReadinessReportQueue);
 
             var retrieveSceneFromFixedRealm = new RetrieveSceneFromFixedRealm();
             var retrieveSceneFromVolatileWorld = new RetrieveSceneFromVolatileWorld(staticContainer.RealmData);
@@ -60,7 +60,6 @@ namespace DCL.RealmNavigation
                 staticContainer.RealmData,
                 staticContainer.ScenesCache,
                 staticContainer.PartitionDataContainer,
-                staticContainer.SingletonSharedDependencies.SceneAssetLock,
                 staticContainer.ComponentsContainer.ComponentPoolsRegistry
                                .GetReferenceTypePool<PartitionComponent>(),
                 realmNavigatorDebugView,
@@ -103,7 +102,7 @@ namespace DCL.RealmNavigation
                                               async (report, token) =>
                                               {
                                                   WaitForSceneReadiness? sceneReadiness = await teleportController.TeleportToSceneSpawnPointAsync(binding.Value, report, token);
-                                                  return await sceneReadiness.ToUniTask().SuppressToResultAsync();
+                                                  return await sceneReadiness.ToUniTask();
                                               }, CancellationToken.None)
                                          .Forget();
                         }

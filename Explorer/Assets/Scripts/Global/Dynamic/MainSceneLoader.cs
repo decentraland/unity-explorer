@@ -22,9 +22,11 @@ using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Cache.Disk.CleanUp;
+using ECS.StreamableLoading.Cache.Disk.Lock;
 using Global.AppArgs;
 using Global.Dynamic.RealmUrl;
 using Global.Dynamic.RealmUrl.Names;
+using Global.Versioning;
 using MVC;
 using Plugins.TexturesFuse.TexturesServerWrap.CompressShaders;
 using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
@@ -164,9 +166,9 @@ namespace Global.Dynamic
             var webRequestsContainer = WebRequestsContainer.Create(identityCache, texturesFuse, debugContainerBuilder, staticSettings.WebRequestsBudget, compressionEnabled);
             var realmUrls = new RealmUrls(launchSettings, new RealmNamesMap(webRequestsContainer.WebRequestController), decentralandUrlsSource);
 
-            var cacheDirectory = CacheDirectory.NewDefault();
-            var diskCleanUp = new LRUDiskCleanUp(cacheDirectory);
-            var diskCache = new DiskCache(cacheDirectory, diskCleanUp);
+            var diskCache = NewInstanceDiskCache(applicationParametersParser);
+
+            DCLVersion dclVersion = DCLVersion.FromAppArgs(applicationParametersParser);
 
             bootstrapContainer = await BootstrapContainer.CreateAsync(
                 debugSettings,
@@ -185,6 +187,7 @@ namespace Global.Dynamic
                 diskCache,
                 world,
                 decentralandEnvironment,
+                dclVersion,
                 destroyCancellationToken
             );
 
@@ -215,6 +218,7 @@ namespace Global.Dynamic
                     dynamicSettings, uiToolkitRoot, scenesUIRoot, cursorRoot, backgroundMusic, worldInfoTool.EnsureNotNull(), playerEntity,
                     applicationParametersParser,
                     coroutineRunner: this,
+                    dclVersion,
                     destroyCancellationToken);
 
                 if (!isLoaded)
@@ -262,9 +266,7 @@ namespace Global.Dynamic
 
         private async UniTask<bool> DoesApplicationRequireVersionUpdateAsync(IAppArgs applicationParametersParser, SplashScreen splashScreen, CancellationToken ct)
         {
-            applicationParametersParser.TryGetValue(AppArgsFlags.SIMULATE_VERSION, out string? version);
-            string? currentVersion = version ?? Application.version;
-
+            DCLVersion currentVersion = DCLVersion.FromAppArgs(applicationParametersParser);
             bool runVersionControl = debugSettings.EnableVersionUpdateGuard;
 
             if (applicationParametersParser.HasDebugFlag() && !Application.isEditor)
@@ -276,7 +278,7 @@ namespace Global.Dynamic
             var appVersionGuard = new ApplicationVersionGuard(staticContainer!.WebRequestsContainer.WebRequestController, bootstrapContainer!.WebBrowser);
             string? latestVersion = await appVersionGuard.GetLatestVersionAsync(ct);
 
-            if (!currentVersion.IsOlderThan(latestVersion))
+            if (!currentVersion.Version.IsOlderThan(latestVersion))
                 return false;
 
             splashScreen.Hide();
@@ -286,7 +288,7 @@ namespace Global.Dynamic
             ControllerBase<LauncherRedirectionScreenView, ControllerNoData>.ViewFactoryMethod authScreenFactory =
                 LauncherRedirectionScreenController.CreateLazily(appVerRedirectionScreenPrefab.Value.GetComponent<LauncherRedirectionScreenView>(), null);
 
-            var launcherRedirectionScreenController = new LauncherRedirectionScreenController(appVersionGuard, authScreenFactory, currentVersion, latestVersion);
+            var launcherRedirectionScreenController = new LauncherRedirectionScreenController(appVersionGuard, authScreenFactory, currentVersion.Version, latestVersion);
             dynamicWorldContainer!.MvcManager.RegisterController(launcherRedirectionScreenController);
 
             await dynamicWorldContainer!.MvcManager.ShowAsync(LauncherRedirectionScreenController.IssueCommand(), ct);
@@ -311,6 +313,31 @@ namespace Global.Dynamic
             // We restore all inputs except EmoteWheel and FreeCamera as they should be disabled by default
             staticContainer!.InputBlock.EnableAll(InputMapComponent.Kind.FREE_CAMERA,
                 InputMapComponent.Kind.EMOTE_WHEEL);
+        }
+
+        private static IDiskCache NewInstanceDiskCache(IAppArgs appArgs)
+        {
+            if (appArgs.HasFlag(AppArgsFlags.DISABLE_DISK_CACHE))
+            {
+                ReportHub.Log(ReportData.UNSPECIFIED, $"Disable disk cache, flag --{AppArgsFlags.DISABLE_DISK_CACHE} is passed");
+                return new IDiskCache.Fake();
+            }
+
+            var cacheDirectory = CacheDirectory.NewDefault();
+            var filesLock = new FilesLock();
+
+            IDiskCleanUp diskCleanUp;
+
+            if (appArgs.HasFlag(AppArgsFlags.DISABLE_DISK_CACHE_CLEANUP))
+            {
+                ReportHub.Log(ReportData.UNSPECIFIED, $"Disable disk cache cleanup, flag --{AppArgsFlags.DISABLE_DISK_CACHE_CLEANUP} is passed");
+                diskCleanUp = IDiskCleanUp.None.INSTANCE;
+            }
+            else
+                diskCleanUp = new LRUDiskCleanUp(cacheDirectory, filesLock);
+
+            var diskCache = new DiskCache(cacheDirectory, filesLock, diskCleanUp);
+            return diskCache;
         }
 
         [ContextMenu(nameof(ValidateSettingsAsync))]

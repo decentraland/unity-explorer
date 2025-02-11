@@ -8,10 +8,8 @@ namespace SceneRunner.Scene
     public static class ISceneFacadeExtensions
     {
         public static void DisposeSceneFacadeAndRemoveFromCache(this ISceneFacade sceneFacade, IScenesCache scenesCache,
-            IReadOnlyList<Vector2Int> parcels, SceneAssetLock assetLock)
+            IReadOnlyList<Vector2Int> parcels)
         {
-            assetLock.TryUnlock(sceneFacade);
-
             sceneFacade.DisposeAsync().Forget();
             scenesCache.RemoveSceneFacade(parcels);
         }

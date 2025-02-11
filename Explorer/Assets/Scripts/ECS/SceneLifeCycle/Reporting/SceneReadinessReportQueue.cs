@@ -1,5 +1,5 @@
-using DCL.AsyncLoadReporting;
 using DCL.Optimization.Pools;
+using DCL.Utilities;
 using System.Collections.Generic;
 using UnityEngine;
 
