@@ -36,7 +36,11 @@ namespace DCL.Friends
         {
             lifeCycleCancellationToken.SafeCancelAndDispose();
 
-            try { webSocket.Dispose(); }
+            try
+            {
+                webSocket.Abort();
+                webSocket.Dispose();
+            }
             catch (ObjectDisposedException) { }
         }
 
