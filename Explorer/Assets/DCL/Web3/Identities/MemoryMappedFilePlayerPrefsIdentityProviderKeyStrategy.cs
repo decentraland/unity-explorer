@@ -13,7 +13,7 @@ namespace DCL.Web3.Identities
     /// </summary>
     public class MemoryMappedFilePlayerPrefsIdentityProviderKeyStrategy : IPlayerPrefsIdentityProviderKeyStrategy
     {
-        private const string MMF_NAME = "DCL_AppInstancesTracking";
+        private const string MMF_NAME = "Global\\DCL_AppInstancesTracking";
         private const string MUTEX_NAME = "DCL_AppInstancesTrackingMutex";
         private const int MAX_INSTANCES_COUNT = 64;
         private const int MUTEX_TIMEOUT_MILLISECONDS = 5000;
