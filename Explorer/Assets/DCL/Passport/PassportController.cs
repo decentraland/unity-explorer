@@ -88,7 +88,6 @@ namespace DCL.Passport
         private readonly ObjectProxy<IFriendsService> friendServiceProxy;
         private readonly ObjectProxy<IFriendOnlineStatusCache> friendOnlineStatusCacheProxy;
         private readonly IProfileThumbnailCache profileThumbnailCache;
-        private readonly Dictionary<ImageView, ImageController> mutualFriendImages = new ();
         private readonly int gridLayoutFixedColumnCount;
         private readonly int thumbnailHeight;
         private readonly int thumbnailWidth;
@@ -235,20 +234,6 @@ namespace DCL.Passport
 
             viewInstance.PhotosSectionButton.gameObject.SetActive(enableCameraReel);
             viewInstance.FriendInteractionContainer.SetActive(enableFriendshipInteractions);
-
-            InstantiateMutualThumbnailControllers();
-            return;
-
-            void InstantiateMutualThumbnailControllers()
-            {
-                var config = viewInstance!.MutualFriends;
-                for (var i = 0; i < config.Thumbnails.Length; i++)
-                {
-                    ImageView view = config.Thumbnails[i].Image;
-                    var controller = new ImageController(view, webRequestController);
-                    mutualFriendImages[view] = controller;
-                }
-            }
         }
 
         private void ShowContextMenu()
@@ -614,7 +599,7 @@ namespace DCL.Passport
                     if (!friendExists) continue;
                     FriendProfile mutualFriend = mutualFriendsResult.Friends[i];
                     ImageView view = mutualConfig[i].Image;
-                    mutualFriendImages[view].RequestImage(mutualFriend.FacePictureUrl);
+                    view.LoadThumbnailSafeAsync(profileThumbnailCache, mutualFriend.Address, mutualFriend.FacePictureUrl, ct).Forget();
                 }
             }
         }
@@ -643,12 +628,7 @@ namespace DCL.Passport
 
         private void RemoveFriend()
         {
-            if (!friendServiceProxy.Configured) return;
-
-            IFriendsService friendService = friendServiceProxy.Object!;
-
             friendshipOperationCts = friendshipOperationCts.SafeRestart();
-
             RemoveFriendThenChangeInteractionStatusAsync(friendshipOperationCts.Token).Forget();
             return;
 

@@ -5,10 +5,8 @@ using DCL.Profiles;
 using DCL.UI;
 using DCL.Web3;
 using DCL.Web3.Identities;
-using DCL.WebRequests;
 using MVC;
 using System;
-using System.Collections.Generic;
 using System.Threading;
 using Utility;
 
@@ -23,10 +21,8 @@ namespace DCL.Friends.UI.Requests
         private readonly IWeb3IdentityCache identityCache;
         private readonly IFriendsService friendsService;
         private readonly IProfileRepository profileRepository;
-        private readonly IWebRequestController webRequestController;
         private readonly IInputBlock inputBlock;
         private readonly IProfileThumbnailCache profileThumbnailCache;
-        private readonly Dictionary<ImageView, ImageController> mutualFriendControllers = new ();
         private CancellationTokenSource? requestOperationCancellationToken;
         private CancellationTokenSource? fetchUserCancellationToken;
         private CancellationTokenSource? showPreCancelToastCancellationToken;
@@ -38,14 +34,12 @@ namespace DCL.Friends.UI.Requests
             IWeb3IdentityCache identityCache,
             IFriendsService friendsService,
             IProfileRepository profileRepository,
-            IWebRequestController webRequestController,
             IInputBlock inputBlock,
             IProfileThumbnailCache profileThumbnailCache) : base(viewFactory)
         {
             this.identityCache = identityCache;
             this.friendsService = friendsService;
             this.profileRepository = profileRepository;
-            this.webRequestController = webRequestController;
             this.inputBlock = inputBlock;
             this.profileThumbnailCache = profileThumbnailCache;
         }
@@ -71,21 +65,6 @@ namespace DCL.Friends.UI.Requests
             viewInstance.received.BackButton.onClick.AddListener(Close);
             viewInstance.received.AcceptButton.onClick.AddListener(Accept);
             viewInstance.received.RejectButton.onClick.AddListener(Reject);
-
-            InstantiateMutualThumbnailControllers(viewInstance.received.UserAndMutualFriendsConfig);
-            InstantiateMutualThumbnailControllers(viewInstance.cancel.UserAndMutualFriendsConfig);
-            InstantiateMutualThumbnailControllers(viewInstance.send.UserAndMutualFriendsConfig);
-            return;
-
-            void InstantiateMutualThumbnailControllers(FriendRequestView.UserAndMutualFriendsConfig config)
-            {
-                for (var i = 0; i < config.MutualThumbnails.Length; i++)
-                {
-                    ImageView view = config.MutualThumbnails[i].Image;
-                    var controller = new ImageController(view, webRequestController);
-                    mutualFriendControllers[view] = controller;
-                }
-            }
         }
 
         protected override void OnViewShow()
@@ -249,7 +228,7 @@ namespace DCL.Friends.UI.Requests
                 if (!friendExists) continue;
                 FriendProfile mutualFriend = mutualFriendsResult.Friends[i];
                 ImageView view = mutualConfig[i].Image;
-                mutualFriendControllers[view].RequestImage(mutualFriend.FacePictureUrl);
+                view.LoadThumbnailSafeAsync(profileThumbnailCache, mutualFriend.Address, mutualFriend.FacePictureUrl, ct).Forget();
             }
         }
 
