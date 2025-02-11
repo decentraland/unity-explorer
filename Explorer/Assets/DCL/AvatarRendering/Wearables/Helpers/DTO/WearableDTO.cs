@@ -77,17 +77,19 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             public BuilderWearableDTO BuildWearableDTO(string contentDownloadUrl)
             {
                 Content[] parsedContent = new Content[contents.Count];
-                var enumerator = contents.GetEnumerator();
-                for (int i = 0; i < parsedContent.Length; i++)
+
+                using (var enumerator = contents.GetEnumerator())
                 {
-                    enumerator.MoveNext();
-                    parsedContent[i] = new Content()
+                    for (int i = 0; i < parsedContent.Length; i++)
                     {
-                        file = enumerator.Current.Key,
-                        hash = enumerator.Current.Value
-                    };
+                        enumerator.MoveNext();
+                        parsedContent[i] = new Content()
+                        {
+                            file = enumerator.Current.Key,
+                            hash = enumerator.Current.Value
+                        };
+                    }
                 }
-                enumerator.Dispose();
 
                 return new BuilderWearableDTO()
                 {
