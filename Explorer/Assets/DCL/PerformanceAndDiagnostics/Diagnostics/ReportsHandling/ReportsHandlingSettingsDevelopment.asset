@@ -486,6 +486,16 @@ MonoBehaviour:
       Severity: 2
     - Category: COMMS_SCENE_HANDLER
       Severity: 2
+    - Category: ALWAYS
+      Severity: 3
+    - Category: ALWAYS
+      Severity: 2
+    - Category: ALWAYS
+      Severity: 0
+    - Category: ALWAYS
+      Severity: 4
+    - Category: ALWAYS
+      Severity: 1
   sentryMatrix:
     entries: []
   debounceEnabled: 1

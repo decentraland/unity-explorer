@@ -8,6 +8,7 @@ using ECS;
 using ECS.Abstract;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.CurrentScene;
+using Global.Versioning;
 using SceneRuntime;
 using System;
 using System.Globalization;
@@ -66,7 +67,7 @@ namespace DCL.Profiling.ECS
         private bool sceneMetricsEnabled;
 
         private DebugViewProfilingSystem(World world, IRealmData realmData, IProfiler profiler, MemoryBudget memoryBudget, IDebugContainerBuilder debugBuilder,
-            V8ActiveEngines v8ActiveEngines, IScenesCache scenesCache) : base(world)
+            V8ActiveEngines v8ActiveEngines, IScenesCache scenesCache, DCLVersion dclVersion) : base(world)
         {
             this.realmData = realmData;
             this.profiler = profiler;
@@ -79,7 +80,7 @@ namespace DCL.Profiling.ECS
 
             void CreateView()
             {
-                var version = new ElementBinding<string>(Application.version);
+                var version = new ElementBinding<string>(dclVersion.Version);
 
                 debugBuilder.TryAddWidget(IDebugContainerBuilder.Categories.PERFORMANCE)
                            ?.SetVisibilityBinding(performanceVisibilityBinding = new DebugWidgetVisibilityBinding(true))
