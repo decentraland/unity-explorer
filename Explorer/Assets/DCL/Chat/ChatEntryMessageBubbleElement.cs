@@ -22,6 +22,8 @@ namespace DCL.Chat
 
         private Vector2 backgroundSize;
 
+        private Vector2 backgroundSize;
+
         private float backgroundHeightOffset => configurationSo.BackgroundHeightOffset;
         private float backgroundWidthOffset => configurationSo.BackgroundWidthOffset;
         private float maxEntryWidth => configurationSo.MaxEntryWidth;

@@ -1,4 +1,3 @@
-using Castle.Core.Internal;
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.Emoji;
@@ -279,7 +278,6 @@ namespace DCL.Chat
             suggestionPanelController!.SetPanelVisibility(false);
             emojiPanel.EmojiContainer.gameObject.SetActive(toggle);
             inputField.ActivateInputField();
-
             EmojiSelectionVisibilityChanged?.Invoke(toggle);
         }
 

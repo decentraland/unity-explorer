@@ -48,7 +48,7 @@ namespace DCL.ChangeRealmPrompt
                 return UniTask.CompletedTask;
 
             return UniTask.WhenAny(
-                viewInstance.CloseButton.OnClickAsync(ct),
+                viewInstance!.CloseButton.OnClickAsync(ct),
                 viewInstance.CancelButton.OnClickAsync(ct),
                 viewInstance.ContinueButton.OnClickAsync(ct));
         }
@@ -61,7 +61,7 @@ namespace DCL.ChangeRealmPrompt
                 resultCallback?.Invoke(ChangeRealmPromptResultType.Approved);
             else
             {
-                viewInstance.MessageText.text = message;
+                viewInstance!.MessageText.text = message;
                 viewInstance.RealmText.text = realm;
             }
         }

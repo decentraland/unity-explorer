@@ -1,6 +1,11 @@
 fileFormatVersion: 2
+<<<<<<<< HEAD:Explorer/Assets/DCL/UI/GenericContextMenu/Prefabs/MentionUserButton.prefab.meta
 guid: 734732fb25eed5944b9c5a5814249f81
 PrefabImporter:
+========
+guid: 6a48072a2835e984c81f98936d9133db
+AssemblyDefinitionImporter:
+>>>>>>>> feat/chat/chat_improvements_main:Explorer/Assets/DCL/Chat/MessageBus/DCL.Chat.MessageBus.asmdef.meta
   externalObjects: {}
   userData: 
   assetBundleName: 
