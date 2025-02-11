@@ -35,7 +35,6 @@ namespace DCL.Nametags
         [field: SerializeField] public TMP_Text MessageContent { get; private set; }
         [field: SerializeField] public SpriteRenderer Background { get; private set; }
         [field: SerializeField] public SpriteRenderer Outline { get; private set; }
-        [field: SerializeField] public GameObject OutlineObject { get; private set; }
         [field: SerializeField] public SpriteRenderer BubblePeak { get; private set; }
         [field: SerializeField] public RectTransform MessageContentRectTransform { get; private set; }
         [field: SerializeField] internal AnimationCurve backgroundEaseAnimationCurve { get; private set; }
@@ -63,8 +62,7 @@ namespace DCL.Nametags
         private float additionalHeight;
         private Color textColor = new (1, 1, 1, 1);
         private Color usernameTextColor = new (1, 1, 1, 1);
-        private readonly Color defaultBackgroundColor = new (0.08627f, 0.08235f, 0.094117f, 1);
-        private readonly Color mentionedBackgroundColor = new (0.227f, 0.0588f, 0.3137f, 1);
+        private readonly Color defaultBackgroundColor = new (1, 1, 1, 1);
 
         private ChatBubbleConfigurationSO? chatBubbleConfiguration;
         private CancellationTokenSource? cts;
@@ -101,11 +99,13 @@ namespace DCL.Nametags
                 usernamePos.x -= VerifiedIcon.sizeDelta.x / 2;
                 Username.rectTransform.anchoredPosition = usernamePos;
                 Background.size = new Vector2(Username.preferredWidth + nametagMarginOffsetWidth + VerifiedIcon.sizeDelta.x, Username.preferredHeight + nametagMarginOffsetHeight);
+                Outline.size = new Vector2(Username.preferredWidth + nametagMarginOffsetWidth + VerifiedIcon.sizeDelta.x, Username.preferredHeight + nametagMarginOffsetHeight);
             }
             else
             {
                 Username.rectTransform.anchoredPosition = Vector2.zero;
                 Background.size = new Vector2(Username.preferredWidth + nametagMarginOffsetWidth, Username.preferredHeight + nametagMarginOffsetHeight);
+                Outline.size = new Vector2(Username.preferredWidth + nametagMarginOffsetWidth, Username.preferredHeight + nametagMarginOffsetHeight);
             }
         }
 
@@ -125,6 +125,7 @@ namespace DCL.Nametags
             backgroundColor.a = distance > fullOpacityMaxDistance ? alpha : 1;
             BubblePeak.color = backgroundColor;
             Background.color = backgroundColor;
+            Outline.color = backgroundColor;
             Username.color = usernameTextColor;
             VerifiedIconRenderer.color = backgroundColor;
         }
@@ -147,8 +148,9 @@ namespace DCL.Nametags
             Username.rectTransform.anchoredPosition = Vector2.zero;
             MessageContent.text = string.Empty;
             Background.size = Vector2.zero;
+            Outline.size = Vector2.zero;
             previousDistance = 0;
-            OutlineObject.SetActive(false);
+            Outline.gameObject.SetActive(false);
         }
 
         private async UniTaskVoid StartChatBubbleFlowAsync(string chatMessage, bool isMention, CancellationToken ct)
@@ -188,7 +190,9 @@ namespace DCL.Nametags
             isAnimatingIn = true;
             MessageContent.gameObject.SetActive(true);
             BubblePeak.gameObject.SetActive(true);
-            Background.color = isMention ? mentionedBackgroundColor : defaultBackgroundColor;
+            Background.gameObject.SetActive(!isMention);
+            Outline.gameObject.SetActive(isMention);
+            Background.color = defaultBackgroundColor;
 
             //Set message content and calculate the preferred size of the background with the addition of a margin
             MessageContent.text = messageContent;
@@ -226,7 +230,8 @@ namespace DCL.Nametags
                 VerifiedIcon.DOAnchorPos(verifiedIconFinalPosition, animationInDuration).SetEase(backgroundEaseAnimationCurve).ToUniTask(cancellationToken: ct);
             }
 
-            OutlineObject.SetActive(isMention);
+            Background.gameObject.SetActive(!isMention);
+            Outline.gameObject.SetActive(isMention);
 
             //Start all animations
             await UniTask.WhenAll(
@@ -284,8 +289,8 @@ namespace DCL.Nametags
                 DOTween.To(() => Outline.size, x => Outline.size = x, backgroundFinalSize, animationOutDuration / 2).SetEase(Ease.Linear).ToUniTask(cancellationToken: ct)
             );
 
-            OutlineObject.SetActive(false);
-            Background.color = defaultBackgroundColor;
+            Background.gameObject.SetActive(true);
+            Outline.gameObject.SetActive(false);
         }
 
         private float CalculatePreferredWidth(string messageContent)
