@@ -8,7 +8,7 @@ namespace SceneRuntime.Apis.Modules.RestrictedActionsApi
     {
         bool TryOpenExternalUrl(string url);
 
-        void TryMovePlayerTo(Vector3 newRelativePosition, Vector3? cameraTarget);
+        void TryMovePlayerTo(Vector3 newRelativePosition, Vector3? cameraTarget, Quaternion? newRotation);
 
         void TryTeleportTo(Vector2Int newCoords);
 

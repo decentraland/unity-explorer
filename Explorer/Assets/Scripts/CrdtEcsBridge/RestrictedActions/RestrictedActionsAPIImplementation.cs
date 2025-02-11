@@ -43,7 +43,7 @@ namespace CrdtEcsBridge.RestrictedActions
             return true;
         }
 
-        public void TryMovePlayerTo(Vector3 newRelativePosition, Vector3? cameraTarget)
+        public void TryMovePlayerTo(Vector3 newRelativePosition, Vector3? cameraTarget, Quaternion? newRotation)
         {
             if (!sceneStateProvider.IsCurrent)
                 return;
@@ -57,7 +57,7 @@ namespace CrdtEcsBridge.RestrictedActions
                 return;
             }
 
-            MoveAndRotatePlayerAsync(newAbsolutePosition, newAbsoluteCameraTarget).Forget();
+            MoveAndRotatePlayerAsync(newAbsolutePosition, newAbsoluteCameraTarget, newRotation).Forget();
         }
 
         public void TryTeleportTo(Vector2Int coords)
@@ -129,11 +129,11 @@ namespace CrdtEcsBridge.RestrictedActions
             return true;
         }
 
-        private async UniTask MoveAndRotatePlayerAsync(Vector3 newAbsolutePosition, Vector3? newAbsoluteCameraTarget)
+        private async UniTask MoveAndRotatePlayerAsync(Vector3 newAbsolutePosition, Vector3? newAbsoluteCameraTarget, Quaternion? newRotation)
         {
             await UniTask.SwitchToMainThread();
 
-            globalWorldActions.MoveAndRotatePlayer(newAbsolutePosition, newAbsoluteCameraTarget);
+            globalWorldActions.MoveAndRotatePlayer(newAbsolutePosition, newAbsoluteCameraTarget, newRotation);
             globalWorldActions.RotateCamera(newAbsoluteCameraTarget, newAbsolutePosition);
         }
 

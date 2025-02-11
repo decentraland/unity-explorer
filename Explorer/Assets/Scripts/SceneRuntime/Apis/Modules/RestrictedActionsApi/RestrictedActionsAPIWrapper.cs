@@ -30,6 +30,7 @@ namespace SceneRuntime.Apis.Modules.RestrictedActionsApi
         {
             api.TryMovePlayerTo(
                 new Vector3((float)newRelativePositionX, (float)newRelativePositionY, (float)newRelativePositionZ),
+                null,
                 null);
         }
 
@@ -40,7 +41,20 @@ namespace SceneRuntime.Apis.Modules.RestrictedActionsApi
         {
             api.TryMovePlayerTo(
                 new Vector3((float)newRelativePositionX, (float)newRelativePositionY, (float)newRelativePositionZ),
-                new Vector3((float)cameraTargetX, (float)cameraTargetY, (float)cameraTargetZ));
+                new Vector3((float)cameraTargetX, (float)cameraTargetY, (float)cameraTargetZ),
+                null);
+        }
+
+        [UsedImplicitly]
+        public void MovePlayerTo(
+            double newRelativePositionX, double newRelativePositionY, double newRelativePositionZ,
+            double cameraTargetX, double cameraTargetY, double cameraTargetZ,
+            double rotationX, double rotationY, double rotationZ, double rotationW)
+        {
+            api.TryMovePlayerTo(
+                new Vector3((float)newRelativePositionX, (float)newRelativePositionY, (float)newRelativePositionZ),
+                new Vector3((float)cameraTargetX, (float)cameraTargetY, (float)cameraTargetZ),
+                new Quaternion((float)rotationX, (float)rotationY, (float)rotationZ, (float)rotationW));
         }
 
         [UsedImplicitly]
