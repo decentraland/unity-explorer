@@ -63,8 +63,8 @@ namespace DCL.Nametags
         private Color textColor = new (1, 1, 1, 1);
         private Color usernameTextColor = new (1, 1, 1, 1);
         private Color backgroundColor = new (1, 1, 1, 1);
-        private readonly Color defaultBackgroundColor = new (0.08627f, 0.08235f, 0.094117f, 1);
-        private readonly Color mentionedBackgroundColor = new (0.227f, 0.0588f, 0.3137f, 1);
+        private readonly Color mentionedPeakColor = new (0.78039f, 0.247058f, 0.79215f, 1);
+        private readonly Color defaultPeakColor = new (0.08627f, 0.08235f, 0.094117f, 1);
 
         private ChatBubbleConfigurationSO? chatBubbleConfiguration;
         private CancellationTokenSource? cts;
@@ -194,7 +194,7 @@ namespace DCL.Nametags
             isAnimatingIn = true;
             MessageContent.gameObject.SetActive(true);
             BubblePeak.gameObject.SetActive(true);
-            BubblePeak.color = isMention? mentionedBackgroundColor : defaultBackgroundColor;
+            BubblePeak.color = isMention? mentionedPeakColor : defaultPeakColor;
             Background.gameObject.SetActive(!isMention);
             Outline.gameObject.SetActive(isMention);
             Background.color = backgroundColor;
