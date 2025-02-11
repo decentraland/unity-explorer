@@ -1,8 +1,10 @@
 using System;
+using System.Collections.Generic;
 using System.Text;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.InputSystem;
 
 namespace DCL.UI.CustomInputField
 {
@@ -39,120 +41,48 @@ namespace DCL.UI.CustomInputField
             base.OnDeselect(eventData);
         }
 
-        //I don't like this, but given that I cannot override properly the TMP_InputField methods, this is kind of the only way.
-        //Copying the existing logic and adding the specific change I need to handle special behaviours
-        //Otherwise I have no way of avoiding the Input Field from getting certain events that we need to filter out.
-#region Code Adapted from TMP_InputField
 
         private readonly Event processingEvent = new ();
-        private int compositionLength => compositionString?.Length ?? 0;
-        private string? compositionString => inputSystem?.compositionString;
-
-        private BaseInput? inputSystem
-        {
-            get
-            {
-                if (EventSystem.current && EventSystem.current.currentInputModule)
-                    return EventSystem.current.currentInputModule.input;
-
-                return null;
-            }
-        }
-
 
         public override void OnUpdateSelected(BaseEventData eventData)
         {
             if (!isFocused)
                 return;
 
-            var consumedEvent = false;
-
-            while (Event.PopEvent(processingEvent))
-            {
-                if (TryHandleSpecialKeys())
-                {
-                    consumedEvent = true;
-                    continue;
-                }
-
-                EventType eventType = processingEvent.rawType;
-
-                if (eventType == EventType.KeyUp)
-                    continue;
-
-                if (eventType == EventType.KeyDown)
-                {
-                    consumedEvent = true;
-
-                    // Special handling on OSX which produces more events which need to be suppressed.
-                    if (compositionLength == 0)
-                    {
-                        // Suppress other events related to navigation or termination of composition sequence.
-                        if (processingEvent.character == 0 && processingEvent.modifiers == EventModifiers.None)
-                            continue;
-                    }
-
-                    EditState editState = KeyPressed(processingEvent);
-                    if (editState == EditState.Finish)
-                    {
-                        if (!wasCanceled)
-                            SendOnSubmit();
-
-                        DeactivateInputField();
-                        break;
-                    }
-
-                    UpdateLabel();
-                    textComponent.ForceMeshUpdate();
-
-                    continue;
-                }
-
-                if (eventType is EventType.ValidateCommand or EventType.ExecuteCommand)
-                    if (processingEvent.commandName == "SelectAll")
-                    {
-                        SelectAll();
-                        consumedEvent = true;
-                    }
-            }
-
-            if (consumedEvent)
+            if (TryHandleSpecialKeys())
             {
                 UpdateLabel();
                 eventData.Use();
+                return;
             }
-        }
 
-#endregion
+            base.OnUpdateSelected(eventData);
+        }
 
         private bool TryHandleSpecialKeys()
         {
-            EventType eventType = processingEvent.type;
-
-            if (eventType == EventType.KeyDown)
-            {
-                //This whole logic is so we can capture Ctrl+V events before they are sent to the input field
+                //This whole logic is so we can capture Ctrl+V and up and down events before they are sent to the input field
                 //Otherwise the input field inserts each character pasted one by one, and sending on Input changed events
                 //For each character which is not desirable, slows down the game quite a bit and also overflows our sounds manager
-                //trying to play 200 sounds simultaneously.
-                if (processingEvent.keyCode == KeyCode.LeftCommand || processingEvent.keyCode == KeyCode.LeftControl)
+                //trying to play 200 sounds simultaneously. I dont like accessing keyboard directly, so this is prone to be
+                //refactored when we move this functionality to other input fields.
+                if (Keyboard.current.leftCommandKey.wasPressedThisFrame || Keyboard.current.leftCtrlKey.wasPressedThisFrame)
                     isControlPressed = true;
-                else if (isControlPressed && processingEvent.keyCode == KeyCode.V)
+
+                if (isControlPressed && Keyboard.current.vKey.wasPressedThisFrame)
                 {
                     OnPasteShortcutPerformedEvent?.Invoke();
                     return true;
                 }
-                else if (!UpAndDownArrowsEnabled &&
-                         processingEvent.keyCode is KeyCode.UpArrow or KeyCode.DownArrow)
-                {
+
+                if (!UpAndDownArrowsEnabled &&
+                         (Keyboard.current.upArrowKey.wasPressedThisFrame || Keyboard.current.downArrowKey.wasPressedThisFrame))
                     return true;
-                }
-            }
-            else if (eventType == EventType.KeyUp)
-                if (processingEvent.keyCode == KeyCode.LeftCommand || processingEvent.keyCode == KeyCode.LeftControl)
+
+                if (Keyboard.current.leftCommandKey.wasReleasedThisFrame || Keyboard.current.leftCtrlKey.wasReleasedThisFrame)
                     isControlPressed = false;
 
-            return false;
+                return false;
         }
 
 

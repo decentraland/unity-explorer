@@ -133,6 +133,7 @@ namespace DCL.Chat
         public void EnableInputBoxSubmissions()
         {
             inputField.onSubmit.AddListener(InputFieldSubmitEvent);
+            viewDependencies.ClipboardManager.OnPaste += PasteClipboardText;
         }
 
         public void ClosePopups()
