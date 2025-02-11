@@ -78,21 +78,29 @@ namespace DCL.Friends.UI.FriendPanel
             {
                 FriendshipStatus friendshipStatus = await friendsService.GetFriendshipStatusAsync(notification.Metadata.Sender.Address, ct);
 
-                if (friendshipStatus == FriendshipStatus.FRIEND)
-                    if (isFriendPanelControllerOpen)
-                        friendsPanelController?.ToggleTabs(FriendsPanelController.FriendsPanelTab.FRIENDS);
-                    else
-                        ToggleFriendsPanel();
-                else if (friendshipStatus == FriendshipStatus.REQUEST_RECEIVED)
-                    mvcManager.ShowAsync(FriendRequestController.IssueCommand(new FriendRequestParams
-                    {
-                        Request = new FriendRequest(
-                            friendRequestId: notification.Metadata.RequestId,
-                            timestamp: GetDateTimeFromString(notification.Timestamp),
-                            from: notification.Metadata.Sender.ToFriendProfile(),
-                            to: notification.Metadata.Receiver.ToFriendProfile(),
-                            messageBody: notification.Metadata.Message)
-                    }), ct).Forget();
+                switch (friendshipStatus)
+                {
+                    case FriendshipStatus.FRIEND:
+                        if (isFriendPanelControllerOpen)
+                            friendsPanelController?.ToggleTabs(FriendsPanelController.FriendsPanelTab.FRIENDS);
+                        else
+                            ToggleFriendsPanel();
+                        break;
+                    case FriendshipStatus.REQUEST_RECEIVED:
+                        mvcManager.ShowAsync(FriendRequestController.IssueCommand(new FriendRequestParams
+                        {
+                            Request = new FriendRequest(
+                                friendRequestId: notification.Metadata.RequestId,
+                                timestamp: GetDateTimeFromString(notification.Timestamp),
+                                from: notification.Metadata.Sender.ToFriendProfile(),
+                                to: notification.Metadata.Receiver.ToFriendProfile(),
+                                messageBody: notification.Metadata.Message)
+                        }), ct).Forget();
+                        break;
+                    default:
+                        passportBridge.ShowAsync(new Web3Address(notification.Metadata.Sender.Address)).Forget();
+                        break;
+                }
             }
         }
 
