@@ -55,10 +55,10 @@ namespace DCL.Friends.UI
             base.OnBeforeViewShow();
 
             fetchProfileCancellationToken = fetchProfileCancellationToken.SafeRestart();
-            FetchProfileAndFillDescription(fetchProfileCancellationToken.Token).Forget();
+            FetchProfileAndFillDescriptionAsync(fetchProfileCancellationToken.Token).Forget();
             return;
 
-            async UniTaskVoid FetchProfileAndFillDescription(CancellationToken ct)
+            async UniTaskVoid FetchProfileAndFillDescriptionAsync(CancellationToken ct)
             {
                 viewInstance!.ProfileImage.IsLoading = true;
                 viewInstance!.DescriptionLabel.text = "Are you sure you want to unfriend?";
