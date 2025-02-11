@@ -21,6 +21,45 @@ namespace DCL.Roads.GPUInstancing
         [Min(0)] public int CandidateId;
         [Min(0)] public int LodLevel;
 
+        private GraphicsBuffer.IndirectDrawIndexedArgs[] drawargscommands;
+        public ComputeShader FrustumCullingAndLODGenComputeShader;
+        private string FrustumCullingAndLODGenComputeShader_KernelName = "CameraCullingAndLODCalculationKernel";
+        protected static int FrustumCullingAndLODGenComputeShader_KernelIDs;
+        private static readonly int ComputeVar_nInstBufferSize = Shader.PropertyToID("nInstBufferSize"); // uint
+        private static readonly int ComputeVar_nLODCount = Shader.PropertyToID("nLODCount"); // uint
+        private static readonly int ComputeVar_PerInstance_LODLevels  = Shader.PropertyToID("PerInstance_LODLevels"); // RWStructuredBuffer<uint4>
+        private static readonly int ComputeVar_PerInstanceData = Shader.PropertyToID("PerInstanceData"); // RWStructuredBuffer<PerInstance>
+        private static readonly int ComputeVar_InstanceLookUpAndDither = Shader.PropertyToID("InstanceLookUpAndDither"); // RWStructuredBuffer<uint2>
+        private static readonly int ComputeVar_nPerInstanceBufferSize = Shader.PropertyToID("nPerInstanceBufferSize"); // uint
+        private static readonly int ComputeVar_vBoundsCenter = Shader.PropertyToID("vBoundsCenter"); // float3
+        private static readonly int ComputeVar_vBoundsExtents = Shader.PropertyToID("vBoundsExtents"); // float3
+        private static readonly int ComputeVar_matCamera_MVP = Shader.PropertyToID("matCamera_MVP"); // float4x4
+        private static readonly int ComputeVar_vCameraPosition = Shader.PropertyToID("vCameraPosition"); // float3
+        private static readonly int ComputeVar_fCameraHalfAngle = Shader.PropertyToID("fCameraHalfAngle"); // float
+        private static readonly int ComputeVar_minCullingDistance = Shader.PropertyToID("minCullingDistance"); // float
+        private static readonly int ComputeVar_fMaxDistance = Shader.PropertyToID("fMaxDistance"); // float
+        private static readonly int ComputeVar_isFrustumCulling = Shader.PropertyToID("isFrustumCulling");
+        private static readonly int ComputeVar_frustumOffset = Shader.PropertyToID("frustumOffset"); // float
+        private static readonly int ComputeVar_isOcclusionCulling = Shader.PropertyToID("isOcclusionCulling");
+        private static readonly int ComputeVar_occlusionOffset = Shader.PropertyToID("occlusionOffset"); // float
+        private static readonly int ComputeVar_occlusionAccuracy = Shader.PropertyToID("occlusionAccuracy"); // uint
+        private static readonly int ComputeVar_hiZTxtrSize = Shader.PropertyToID("hiZTxtrSize"); // float4
+        private static readonly int ComputeVar_hiZMap = Shader.PropertyToID("hiZMap"); // Texture2D<float4>
+        private static readonly int ComputeVar_sampler_hiZMap = Shader.PropertyToID("sampler_hiZMap"); // SamplerState
+        private static readonly int ComputeVar_cullShadows = Shader.PropertyToID("cullShadows"); // bool
+        private static readonly int ComputeVar_fShadowDistance = Shader.PropertyToID("fShadowDistance"); // float
+        private static readonly int ComputeVar_shadowLODMap = Shader.PropertyToID("shadowLODMap"); // float4x4
+        private static readonly int ComputeVar_lodSizes = Shader.PropertyToID("lodSizes"); // float4x4
+        private static readonly int ComputeVar_nLodCount = Shader.PropertyToID("nLodCount"); // uint
+        private static readonly int ComputeVar_deltaTime = Shader.PropertyToID("deltaTime"); // float
+
+        private ComputeBuffer cbLODLevels;
+        private ComputeBuffer cbInstanceLookUpAndDither;
+
+        public ComputeShader IndirectBufferGenerationComputeShader;
+        private string IndirectBufferGenerationComputeShader_KernelName = "ComputeLODBufferAccumulation";
+        protected static int IndirectBufferGenerationComputeShader_KernelIDs;
+
         [Header("ROADS")]
         public RoadDescription[] Descriptions;
         public Vector2 comparisonShift;
@@ -37,6 +76,55 @@ namespace DCL.Roads.GPUInstancing
 
         private string currentNane;
         private GameObject originalInstance;
+
+        // PerInstanceMatrix - Matrix4x4, Colour
+        // PerInstanceLODLevels - UINT4 - LOD_A, LOD_B, LOD_Dither, LOD_Shadow (0-8 LOD_ID, 0-8 LOD_ID, 0-8 LOD_ID, 0-255 dither value) e.g. (LOD2 current lod, LOD3 next lod, LOD2 shadow lod, 124 dither amount)
+        // PerInstanceLookUpAndDither - UINT2 (InstanceID - lookup into PerInstanceMatrix, Dither 0-255)
+
+        // 10x instances and 3x LODs
+        // [0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,2,2,2,2,2,2,2,2,2,2] Representation of Array Sections
+        // [0,1,3,5,*,*,*,*,*,2,4,6,*,*,*,*,*,*,*,7,8,9,10,*,*,*,*,*] Actual data
+        // DrawArgs[3] - [0].instanceCount == 4, [1].instanceCount == 3, [2].instanceCount == 4
+        // DrawArgs[3] - [0].startInstance == 0, [1].instanceCount == 10, [2].instanceCount == 20
+
+        public void PrepareKernels(ComputeBuffer _PerInstanceMatrices, int _nInstanceCount, int _nLODCount)
+        {
+            cbLODLevels = new ComputeBuffer(_nInstanceCount, sizeof(uint)*4);
+            cbInstanceLookUpAndDither = new ComputeBuffer(_nInstanceCount * _nLODCount, sizeof(uint)*2);
+            drawargscommands = new GraphicsBuffer.IndirectDrawIndexedArgs[_nLODCount];
+            FrustumCullingAndLODGenComputeShader_KernelIDs = FrustumCullingAndLODGenComputeShader.FindKernel(FrustumCullingAndLODGenComputeShader_KernelName);
+            IndirectBufferGenerationComputeShader_KernelIDs = IndirectBufferGenerationComputeShader.FindKernel(IndirectBufferGenerationComputeShader_KernelName);
+        }
+
+        public void DispatchFrustumCullingAndLODGenComputeShader(ComputeBuffer _PerInstanceMatrices, int _nInstanceCount, int _nLODCount, Matrix4x4 _LODSizes)
+        {
+            // private static readonly int ComputeVar_lodSizes = Shader.PropertyToID("lodSizes"); // float4x4
+            // private static readonly int ComputeVar_nLodCount = Shader.PropertyToID("nLodCount"); // uint
+            // private static readonly int ComputeVar_vBoundsCenter = Shader.PropertyToID("vBoundsCenter"); // float3
+            // private static readonly int ComputeVar_vBoundsExtents = Shader.PropertyToID("vBoundsExtents"); // float3
+            // private static readonly int ComputeVar_nLODCount = Shader.PropertyToID("nLODCount"); // uint
+            // private static readonly int ComputeVar_nPerInstanceBufferSize = Shader.PropertyToID("nPerInstanceBufferSize"); // uint
+            // private static readonly int ComputeVar_matCamera_MVP = Shader.PropertyToID("matCamera_MVP"); // float4x4
+            // private static readonly int ComputeVar_vCameraPosition = Shader.PropertyToID("vCameraPosition"); // float3
+            // private static readonly int ComputeVar_fCameraHalfAngle = Shader.PropertyToID("fCameraHalfAngle"); // float
+            // private static readonly int ComputeVar_minCullingDistance = Shader.PropertyToID("minCullingDistance"); // float
+            // private static readonly int ComputeVar_fMaxDistance = Shader.PropertyToID("fMaxDistance"); // float
+            // private static readonly int ComputeVar_isFrustumCulling = Shader.PropertyToID("isFrustumCulling");
+            // private static readonly int ComputeVar_frustumOffset = Shader.PropertyToID("frustumOffset"); // float
+
+            FrustumCullingAndLODGenComputeShader.SetInt(ComputeVar_nLODCount, _nLODCount);
+            FrustumCullingAndLODGenComputeShader.SetMatrix(ComputeVar_lodSizes, _LODSizes);
+            FrustumCullingAndLODGenComputeShader.SetBuffer(FrustumCullingAndLODGenComputeShader_KernelIDs, ComputeVar_PerInstanceData, _PerInstanceMatrices);
+            FrustumCullingAndLODGenComputeShader.SetBuffer(FrustumCullingAndLODGenComputeShader_KernelIDs, ComputeVar_PerInstance_LODLevels, cbLODLevels);
+            FrustumCullingAndLODGenComputeShader.Dispatch(FrustumCullingAndLODGenComputeShader_KernelIDs, 512, 0, 0);
+
+
+            IndirectBufferGenerationComputeShader.SetBuffer(IndirectBufferGenerationComputeShader_KernelIDs, ComputeVar_PerInstance_LODLevels, cbLODLevels);
+            IndirectBufferGenerationComputeShader.SetBuffer(IndirectBufferGenerationComputeShader_KernelIDs, ComputeVar_InstanceLookUpAndDither, cbInstanceLookUpAndDither);
+            IndirectBufferGenerationComputeShader.Dispatch(IndirectBufferGenerationComputeShader_KernelIDs, 512, 0, 0);
+
+            // Indirect Draw - bind matrix instance buffer and InstanceLookupAndDither with DrawArgs
+        }
 
         public void Update()
         {

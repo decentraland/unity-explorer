@@ -1,32 +1,14 @@
-﻿
-#include "Includes/PlatformSpecifications.cginc"
+﻿#include "Includes/PlatformSpecifications.cginc"
 
-#pragma kernel CSInstancedCameraCalculationKernel
-#pragma kernel CSInstancedCameraCalculationKernelCrossFade
+#pragma kernel CameraCullingAndLODCalculationKernel
 
-RWStructuredBuffer<uint4> gpuiInstanceLODData; // lodNo - shadowLodNo - cfLodNo - cfLevel 
+RWStructuredBuffer<uint4> PerInstance_LODLevels; // LOD_A, LOD_B, LOD_Dither, LOD_Shadow 
+#include "Includes/InputParams.cginc"
 #include "Includes/CullingFunctions.cginc"
 #include "Includes/CameraFunctions.cginc"
 
-[numthreads(GPUI_THREADS, 1, 1)]
-void CSInstancedCameraCalculationKernel(uint3 id : SV_DispatchThreadID)
-{
-    if (id.x >= bufferSize)
-        return;
-
-    float dist = 0;
-    bool culled = false;
-    float size = 0;
-
-    uint4 lodData = uint4(9, 9, 9, 0);
-    float4x4 instanceMatrix = gpuiInstanceData[id.x];
-    
-    CalculateDistanceAndSize(instanceMatrix, dist, size);
-    IsCulled(instanceMatrix, dist, culled);
-    CalculateLODNo(size, dist, culled, lodData.x, lodData.y);
-
-    gpuiInstanceLODData[id.x] = lodData;
-}
+uniform uint nInstBufferSize;
+uniform uint nLODCount;
 
 [numthreads(GPUI_THREADS, 1, 1)]
 void CameraCullingAndLODCalculationKernel(uint3 id : SV_DispatchThreadID)
@@ -36,44 +18,11 @@ void CameraCullingAndLODCalculationKernel(uint3 id : SV_DispatchThreadID)
 
     float fDistance = 0.0f;
     float fScreenSpaceSize = 0.0f;
-    float4x4 mInstMatrix = PerInstance_Matrices[id.x];
+    const float4x4 mInstMatrix = PerInstanceData[id.x].worldMatrix;
     EvaluateInstanceDistance(mInstMatrix, fDistance, fScreenSpaceSize);
 
-    bool bIsFrustumCulled = false;
-    FrustumCullTest(mInstMatrix, fDistance, bIsFrustumCulled);
-
-    uint4 resultsLOD = uint4(255, 255, 255, 0);
-    EvaluateLODLevel(fScreenSpaceSize, fDistance, bIsFrustumCulled, resultsLOD.x, resultsLOD.y);
-
-    PerInstance_LODLevels[id.x] = resultsLOD;
-}
-
-[numthreads(GPUI_THREADS, 1, 1)]
-void CSInstancedCameraCalculationKernelCrossFade(uint3 id : SV_DispatchThreadID)
-{
-    if (id.x >= bufferSize)
-        return;
-
-    float dist = 0;
-    bool culled = false;
-    float size = 0;
-    
-    uint4 lodData = uint4(9, 9, 9, 0);
-    float4x4 instanceMatrix = gpuiInstanceData[id.x];
-
-    CalculateDistanceAndSize(instanceMatrix, dist, size);
-    IsCulled(instanceMatrix, dist, culled);
-    CalculateLODNo(size, dist, culled, lodData.x, lodData.y);
-    
-    if (animateCrossFade)
+    if(IsCulled(mInstMatrix, fDistance))
     {
-        uint4 previousLodData = gpuiInstanceLODData[id.x];
-        lodData.w = previousLodData.w;
-        lodData.z = previousLodData.z;
-        CalculateCFLODNoAnimate(previousLodData.x, lodData.x, lodData.z, lodData.w);
+        PerInstance_LODLevels[id.x] = EvaluateLODLevel(nLodCount, lodSizes, fShadowDistance, fScreenSpaceSize, fDistance);
     }
-    else
-        CalculateCFLODNo(size, lodData.x, lodData.z, lodData.w);
-    
-    gpuiInstanceLODData[id.x] = lodData;
 }

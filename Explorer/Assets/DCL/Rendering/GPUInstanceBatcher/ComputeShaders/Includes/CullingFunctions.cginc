@@ -6,10 +6,10 @@
 inline void CalculateBoundingBox(in float4x4 objectTransformMatrix, inout float4 BoundingBox[8])
 {
     // Calculate clip space matrix
-    float4x4 to_clip_space_mat = mul(mvpMatrix, objectTransformMatrix);
+    float4x4 to_clip_space_mat = mul(matCamera_MVP, objectTransformMatrix);
     
-    float3 Min = boundsCenter - boundsExtents;
-    float3 Max = boundsCenter + boundsExtents;
+    float3 Min = vBoundsCenter - vBoundsExtents;
+    float3 Max = vBoundsCenter + vBoundsExtents;
 
 	// Transform all 8 corner points of the object bounding box to clip space
     BoundingBox[0] = mul(to_clip_space_mat, float4(Min.x, Max.y, Min.z, 1.0));
@@ -152,9 +152,9 @@ inline bool IsOcclusionCulled(float4 BoundingBox[8])
     return InstanceDepth > MaxDepth + occlusionOffset;
 }
 
-inline void IsCulled(in float4x4 instanceMatrix, in float dist, out bool culled)
+inline bool IsCulled(in float4x4 instanceMatrix, in float dist)
 {
-    culled = false;
+    bool culled = false;
     
     // Distance culling
     if (dist >= fMaxDistance)
@@ -179,6 +179,8 @@ inline void IsCulled(in float4x4 instanceMatrix, in float dist, out bool culled)
             culled = IsOcclusionCulled(BoundingBox);
         }
     }
+
+    return culled;
 }
 
 #endif

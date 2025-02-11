@@ -40,12 +40,12 @@ uniform SamplerState sampler_hiZMap; // variable name is recognized by the compi
 
 // shadows
 uniform bool cullShadows;
-uniform float shadowDistance;
+uniform float fShadowDistance;
 uniform float4x4 shadowLODMap;
 
 // LOD
 uniform float4x4 lodSizes;
-uniform uint lodCount;
+uniform uint nLodCount;
 uniform float deltaTime;
 
 #endif
