@@ -51,13 +51,13 @@ namespace DCL.Friends.UI.FriendPanel
         private void FolderButtonClick()
         {
             isFolderOpen = !isFolderOpen;
-            FolderButtonClicked?.Invoke(isFolderOpen, panelStatus);
+            FolderButtonClicked?.Invoke(!isFolderOpen, panelStatus);
             SetFolderDirection(isFolderOpen);
         }
 
         private void SetFolderDirection(bool isOpen)
         {
-            FolderButtonGraphics.DOScale(isOpen ? new Vector3(1f, -1f, 1f) : Vector3.one, FoldingAnimationDuration);
+            FolderButtonGraphics.DOScale(isOpen ? Vector3.one : new Vector3(1f, -1f, 1f), FoldingAnimationDuration);
         }
 
         public void ResetCallback()
