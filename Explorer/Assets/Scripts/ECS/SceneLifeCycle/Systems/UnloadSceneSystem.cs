@@ -20,13 +20,11 @@ namespace ECS.SceneLifeCycle.Systems
     public partial class UnloadSceneSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
         private readonly IScenesCache scenesCache;
-        private readonly SceneAssetLock sceneAssetLock;
         private readonly bool localSceneDevelopment;
 
-        internal UnloadSceneSystem(World world, IScenesCache scenesCache, SceneAssetLock sceneAssetLock, bool localSceneDevelopment) : base(world)
+        internal UnloadSceneSystem(World world, IScenesCache scenesCache, bool localSceneDevelopment) : base(world)
         {
             this.scenesCache = scenesCache;
-            this.sceneAssetLock = sceneAssetLock;
             this.localSceneDevelopment = localSceneDevelopment;
         }
 
@@ -46,7 +44,7 @@ namespace ECS.SceneLifeCycle.Systems
         [All(typeof(DeleteEntityIntention)), None(typeof(PortableExperienceComponent))]
         private void UnloadLoadedScene(in Entity entity, ref SceneDefinitionComponent definitionComponent, ref ISceneFacade sceneFacade)
         {
-            sceneFacade.DisposeSceneFacadeAndRemoveFromCache(scenesCache, definitionComponent.Parcels, sceneAssetLock);
+            sceneFacade.DisposeSceneFacadeAndRemoveFromCache(scenesCache, definitionComponent.Parcels);
 
             // Keep definition so it won't be downloaded again = Cache in ECS itself
             if (!localSceneDevelopment)
