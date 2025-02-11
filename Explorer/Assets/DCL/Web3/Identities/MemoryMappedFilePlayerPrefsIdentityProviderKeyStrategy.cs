@@ -54,21 +54,7 @@ namespace DCL.Web3.Identities
             {
                 using var _ = ListPool<Entry>.Get(out var list);
 
-                for (int i = 0; i < MAX_INSTANCES_COUNT; i++)
-                {
-                    accessor.Read(Entry.StructSize * i, out Entry entry);
-                    if (entry.PID == 0) break;
-
-                    // Get process if exists
-                    if (TryGetProcess(entry.PID, out var p) == false)
-                        continue;
-
-                    // Ensure the process is Explorer
-                    if (p?.ProcessName != selfProcessName)
-                        continue;
-
-                    list.Add(entry);
-                }
+                ReadFromFile(list, accessor);
 
                 if (list.Count == MAX_INSTANCES_COUNT)
                     ReportHub.LogException(
@@ -76,12 +62,25 @@ namespace DCL.Web3.Identities
                         ReportCategory.PROFILE
                     );
 
-                var selfEntry = Entry.NewSelf(selfPID, list.Count);
+                var selfEntry = Entry.NewSelf(selfPID, list);
                 list.Add(selfEntry);
                 storedKey = KeyFromEntry(selfEntry);
 
-                // memset 0
-                ZeroOutMemory(accessor);
+                WriteToFile(list, accessor);
+                accessor.Flush();
+            }
+            finally { mutex.ReleaseMutex(); }
+        }
+
+        private void UnregisterSelf()
+        {
+            using var accessor = memoryMappedFile.CreateViewAccessor(0, MemoryMappedFileSize());
+            mutex.WaitOne(MUTEX_TIMEOUT_MILLISECONDS);
+
+            try
+            {
+                using var _ = ListPool<Entry>.Get(out var list);
+                ReadFromFile(list, accessor, selfPID, static (entry, selfPID) => entry.PID == selfPID);
                 WriteToFile(list, accessor);
                 accessor.Flush();
             }
@@ -90,12 +89,43 @@ namespace DCL.Web3.Identities
 
         public void Dispose()
         {
+            UnregisterSelf();
             memoryMappedFile.Dispose();
             mutex.Dispose();
         }
 
+        private void ReadFromFile(IList<Entry> list, MemoryMappedViewAccessor accessor)
+        {
+            ReadFromFile<object>(list, accessor, null!, null);
+        }
+
+        private void ReadFromFile<TCtx>(IList<Entry> list, MemoryMappedViewAccessor accessor, TCtx ctx, Func<Entry, TCtx, bool>? ignoreFunc)
+        {
+            for (int i = 0; i < MAX_INSTANCES_COUNT; i++)
+            {
+                accessor.Read(Entry.StructSize * i, out Entry entry);
+                if (entry.PID == 0) break;
+
+                if (ignoreFunc != null && ignoreFunc(entry, ctx))
+                    break;
+
+                // Get process if exists
+                if (TryGetProcess(entry.PID, out var p) == false)
+                    continue;
+
+                // Ensure the process is Explorer
+                if (p?.ProcessName != selfProcessName)
+                    continue;
+
+                list.Add(entry);
+            }
+        }
+
         private static void WriteToFile(IReadOnlyList<Entry> list, MemoryMappedViewAccessor accessor)
         {
+            // memset 0
+            ZeroOutMemory(accessor);
+
             for (var i = 0; i < list.Count; i++)
             {
                 int offset = Entry.StructSize * i;
@@ -147,12 +177,27 @@ namespace DCL.Web3.Identities
             public int ProfileId;
             public int PID;
 
-            public static Entry NewSelf(int pid, int currentInstancesCount) =>
-                new ()
+            public static Entry NewSelf(int pid, IReadOnlyList<Entry> entries)
+            {
+                using var _ = HashSetPool<int>.Get(out var set);
+                foreach (Entry entry in entries) set.Add(entry.ProfileId);
+
+                var nextFreeId = 0;
+
+                for (int i = 0; i < entries.Count; i++)
+                {
+                    if (set.Contains(nextFreeId) == false)
+                        break;
+
+                    nextFreeId++;
+                }
+
+                return new ()
                 {
                     PID = pid,
-                    ProfileId = currentInstancesCount,
+                    ProfileId = nextFreeId,
                 };
+            }
 
             public static int StructSize
             {
