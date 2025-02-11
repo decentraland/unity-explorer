@@ -12,13 +12,13 @@ namespace DCL.Roads.GPUInstancing.Playground
     [ExecuteAlways]
     public class GPUInstancingRoadsLayoutPlayground : MonoBehaviour
     {
-        private readonly Dictionary<GPUInstancingCandidate, GPUInstancingBuffers> candidatesBuffersTable = new ();
+        private readonly Dictionary<GPUInstancingCandidate_Old, GPUInstancingBuffers> candidatesBuffersTable = new ();
         private readonly Dictionary<Material, Material> instancingMaterials = new ();
 
         public RoadSettingsAsset RoadsConfig;
-        public GPUInstancingPrefabData[] Prefabs;
+        public GPUInstancingPrefabData_Old[] Prefabs;
 
-        [Space] public List<GPUInstancingCandidate> Candidates;
+        [Space] public List<GPUInstancingCandidate_Old> Candidates;
 
         [Space] public Transform roadsRoot;
         public bool HideRoadsVisual;
@@ -47,33 +47,33 @@ namespace DCL.Roads.GPUInstancing.Playground
             foreach (var candidateWithBuffers in candidatesBuffersTable)
                 RenderCandidateIndirect(candidateWithBuffers.Key, candidateWithBuffers.Value);
 
-            foreach (GPUInstancingCandidate directCandidate in RoadsConfig.DirectCandidates)
+            foreach (GPUInstancingCandidate_Old directCandidate in RoadsConfig.DirectCandidates)
                 RenderCandidateInstanced(directCandidate);
         }
 
-        private void RenderCandidateInstanced(GPUInstancingCandidate candidate)
+        private void RenderCandidateInstanced(GPUInstancingCandidate_Old lodGroup)
         {
-            foreach (var lod in candidate.Lods)
-            foreach (MeshRenderingData meshRendering in lod.MeshRenderingDatas)
+            foreach (var lod in lodGroup.Lods_Old)
+            foreach (MeshRenderingData_Old meshRendering in lod.MeshRenderingDatas)
             {
                 meshRendering.Initialize(instancingMaterials);
 
-                List<Matrix4x4> shiftedInstanceData = new (candidate.InstancesBuffer.Count);
-                shiftedInstanceData.AddRange(candidate.InstancesBuffer.Select(matrix => matrix.instMatrix));
+                List<Matrix4x4> shiftedInstanceData = new (lodGroup.InstancesBuffer.Count);
+                shiftedInstanceData.AddRange(lodGroup.InstancesBuffer.Select(matrix => matrix.instMatrix));
 
                 for (var i = 0; i < meshRendering.RenderParamsArray.Length; i++)
                     Graphics.RenderMeshInstanced(in meshRendering.RenderParamsArray[i], meshRendering.SharedMesh, i, shiftedInstanceData);
             }
         }
 
-        private void RenderCandidateIndirect(GPUInstancingCandidate candidate, GPUInstancingBuffers buffers)
+        private void RenderCandidateIndirect(GPUInstancingCandidate_Old lodGroup, GPUInstancingBuffers buffers)
         {
-            int lodLevel = Mathf.Min(LodLevel, candidate.Lods.Count - 1);
-            MeshRenderingData[] meshes = candidate.Lods[lodLevel].MeshRenderingDatas;
+            int lodLevel = Mathf.Min(LodLevel, lodGroup.Lods_Old.Count - 1);
+            MeshRenderingData_Old[] meshes = lodGroup.Lods_Old[lodLevel].MeshRenderingDatas;
             var currentCommandIndex = 0;
 
             // foreach (var lod in candidate.Lods)
-            foreach (MeshRenderingData mesh in meshes)
+            foreach (MeshRenderingData_Old mesh in meshes)
             {
                 mesh.Initialize(instancingMaterials);
 
@@ -83,7 +83,7 @@ namespace DCL.Roads.GPUInstancing.Playground
                 for (var submeshIndex = 0; submeshIndex < submeshCount; submeshIndex++)
                 {
                     buffers.DrawArgsCommandData[currentCommandIndex].indexCountPerInstance = mesh.SharedMesh.GetIndexCount(submeshIndex);
-                    buffers.DrawArgsCommandData[currentCommandIndex].instanceCount = (uint)candidate.InstancesBuffer.Count;
+                    buffers.DrawArgsCommandData[currentCommandIndex].instanceCount = (uint)lodGroup.InstancesBuffer.Count;
                     buffers.DrawArgsCommandData[currentCommandIndex].startIndex = mesh.SharedMesh.GetIndexStart(submeshIndex);
                     buffers.DrawArgsCommandData[currentCommandIndex].baseVertexIndex = 0;
                     buffers.DrawArgsCommandData[currentCommandIndex].startInstance = 0;
@@ -126,28 +126,28 @@ namespace DCL.Roads.GPUInstancing.Playground
             Candidates.Clear();
             candidatesBuffersTable.Clear();
 
-            foreach (GPUInstancingCandidate candidate in RoadsConfig.IndirectCandidates)
+            foreach (GPUInstancingCandidate_Old candidate in RoadsConfig.IndirectCandidates)
                 AdjustBuffers(candidate);
 
             foreach (var candidate in candidatesBuffersTable.Keys)
-                Candidates.Add(new GPUInstancingCandidate(candidate));
+                Candidates.Add(new GPUInstancingCandidate_Old(candidate));
         }
 
-        private void AdjustBuffers(GPUInstancingCandidate candidate)
+        private void AdjustBuffers(GPUInstancingCandidate_Old lodGroup)
         {
-            if (!candidatesBuffersTable.TryGetValue(candidate, out GPUInstancingBuffers buffers))
+            if (!candidatesBuffersTable.TryGetValue(lodGroup, out GPUInstancingBuffers buffers))
             {
                 buffers = new GPUInstancingBuffers();
-                candidatesBuffersTable.Add(candidate, buffers);
+                candidatesBuffersTable.Add(lodGroup, buffers);
             }
 
             var totalCommands = 0;
 
             // foreach (var lod in candidate.Lods)
-            int lodLevel = Mathf.Min(LodLevel, candidate.Lods.Count - 1);
-            MeshRenderingData[] meshes = candidate.Lods[lodLevel].MeshRenderingDatas;
+            int lodLevel = Mathf.Min(LodLevel, lodGroup.Lods_Old.Count - 1);
+            MeshRenderingData_Old[] meshes = lodGroup.Lods_Old[lodLevel].MeshRenderingDatas;
 
-            foreach (MeshRenderingData mesh in meshes)
+            foreach (MeshRenderingData_Old mesh in meshes)
             {
                 mesh.Initialize(instancingMaterials);
                 totalCommands += mesh.RenderParamsArray.Length;
@@ -158,14 +158,14 @@ namespace DCL.Roads.GPUInstancing.Playground
             buffers.DrawArgsCommandData = new GraphicsBuffer.IndirectDrawIndexedArgs[totalCommands];
 
             buffers.InstanceBuffer?.Release();
-            buffers.InstanceBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured,  candidate.InstancesBuffer.Count, Marshal.SizeOf(typeof(PerInstanceBuffer)));
-            buffers.InstanceBuffer.SetData( candidate.InstancesBuffer, 0, 0,  candidate.InstancesBuffer.Count);
+            buffers.InstanceBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured,  lodGroup.InstancesBuffer.Count, Marshal.SizeOf(typeof(PerInstanceBuffer)));
+            buffers.InstanceBuffer.SetData( lodGroup.InstancesBuffer, 0, 0,  lodGroup.InstancesBuffer.Count);
         }
 
         [ContextMenu("DEBUG - Cache Prefabs")]
         private void CachePrefabs()
         {
-            var cachedPrefabs = new List<GPUInstancingPrefabData>();
+            var cachedPrefabs = new List<GPUInstancingPrefabData_Old>();
 
             foreach (AssetReferenceGameObject ar in RoadsConfig.RoadAssetsReference)
             {
@@ -175,7 +175,7 @@ namespace DCL.Roads.GPUInstancing.Playground
 
                 if (prefab != null)
                 {
-                    GPUInstancingPrefabData gpuInstancedPrefabBeh = prefab.GetComponent<GPUInstancingPrefabData>();
+                    GPUInstancingPrefabData_Old gpuInstancedPrefabBeh = prefab.GetComponent<GPUInstancingPrefabData_Old>();
                     gpuInstancedPrefabBeh.CollectSelfData();
 
                     if (HideRoadsVisual)
@@ -201,7 +201,7 @@ namespace DCL.Roads.GPUInstancing.Playground
             foreach (RoadDescription roadDescription in RoadsConfig.RoadDescriptions)
             {
                 if (IsOutOfRange(roadDescription.RoadCoordinate)) continue;
-                GPUInstancingPrefabData gpuInstancedPrefab = Prefabs.FirstOrDefault(op => op.name == roadDescription.RoadModel);
+                GPUInstancingPrefabData_Old gpuInstancedPrefab = Prefabs.FirstOrDefault(op => op.name == roadDescription.RoadModel);
 
                 if (gpuInstancedPrefab == null)
                 {

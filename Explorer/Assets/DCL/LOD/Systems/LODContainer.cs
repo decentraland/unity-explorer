@@ -121,7 +121,7 @@ namespace DCL.LOD.Systems
             foreach (AssetReferenceGameObject? t in roadSettingsAsset.Value.RoadAssetsReference)
             {
                 var prefab = await assetsProvisioner.ProvideMainAssetAsync(t, ct: ct);
-                prefab.Value.GetComponent<GPUInstancingPrefabData>().HideVisuals();
+                prefab.Value.GetComponent<GPUInstancingPrefabData_Old>().HideVisuals();
                 roadAssetsPrefabList.Add(prefab.Value);
             }
 

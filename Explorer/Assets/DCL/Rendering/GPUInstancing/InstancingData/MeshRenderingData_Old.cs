@@ -7,7 +7,13 @@ using Utility;
 namespace DCL.Roads.GPUInstancing.Playground
 {
     [Serializable]
-    public class MeshRenderingData
+    public class GPUInstancingLodLevel_Old
+    {
+        public MeshRenderingData_Old[] MeshRenderingDatas;
+    }
+
+    [Serializable]
+    public class MeshRenderingData_Old
     {
         private const string GPU_INSTANCING_KEYWORD = "_GPU_INSTANCER_BATCHER";
 
@@ -16,7 +22,7 @@ namespace DCL.Roads.GPUInstancing.Playground
 
         public RenderParams[] RenderParamsArray { get; private set; }// array for submeshes
 
-        public MeshRenderingData(MeshRenderer renderer)
+        public MeshRenderingData_Old(MeshRenderer renderer)
         {
             SharedMesh = renderer.GetComponent<MeshFilter>().sharedMesh;
             Renderer = renderer;

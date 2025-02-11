@@ -13,7 +13,7 @@ namespace DCL.Roads.GPUInstancing
 
         public RoadSettingsAsset RoadsConfig;
 
-        public GPUInstancingPrefabData[] originalPrefabs;
+        public GPUInstancingPrefabData_Old[] originalPrefabs;
         [Min(0)] public int PrefabId;
 
         public Vector2Int ParcelsMin;
@@ -42,7 +42,7 @@ namespace DCL.Roads.GPUInstancing
         [ContextMenu(nameof(PrefabsSelfCollect))]
         private void PrefabsSelfCollect()
         {
-            foreach (GPUInstancingPrefabData prefab in originalPrefabs)
+            foreach (GPUInstancingPrefabData_Old prefab in originalPrefabs)
             {
                 prefab.CollectSelfData();
                 prefab.ShowVisuals();

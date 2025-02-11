@@ -6,37 +6,10 @@ using UnityEngine.Rendering;
 namespace DCL.Roads.GPUInstancing.Playground
 {
     [Serializable]
-    public class LodsCombinedMesh
-    {
-        public List<CombineInstance> СombineInstances;
-
-        public Transform parent;
-
-        public Mesh LodCombinedMesh;
-        public Material SharedMaterial;
-
-        public List<RenderParamsSerialized> RenderParamsSerialized;
-
-        public LodsCombinedMesh(CombineInstance combineInstance, Material material, Renderer rend)
-        {
-            СombineInstances = new List<CombineInstance>();
-            RenderParamsSerialized = new List<RenderParamsSerialized>();
-            SharedMaterial = material;
-            parent = rend.transform.parent;
-
-            AddCombineInstance(combineInstance, rend);
-        }
-
-        public void AddCombineInstance(CombineInstance combineInstance, Renderer rend)
-        {
-            СombineInstances.Add(combineInstance);
-            RenderParamsSerialized.Add(new RenderParamsSerialized(rend));
-        }
-    }
-
-    [Serializable]
     public struct RenderParamsSerialized
     {
+        private const string GPU_INSTANCING_KEYWORD = "_GPU_INSTANCER_BATCHER";
+
         // Layers
         public int layer;
         public uint renderingLayerMask;
@@ -67,6 +40,30 @@ namespace DCL.Roads.GPUInstancing.Playground
             lightProbeProxyVolume = null; // no custom proxy volume
 
             motionVectorMode = rend.motionVectorGenerationMode;
+        }
+
+        public RenderParams ToRenderParams(Material sharedMat, Dictionary<Material, Material> instancingMaterials)
+        {
+            if (!instancingMaterials.TryGetValue(sharedMat, out Material instancedMat))
+            {
+                instancedMat = new Material(sharedMat) { name = $"{sharedMat.name}_GPUInstancingIndirect" };
+                instancedMat.EnableKeyword(new LocalKeyword(instancedMat.shader, GPU_INSTANCING_KEYWORD));
+                instancingMaterials.Add(sharedMat, instancedMat);
+            }
+
+            return new RenderParams
+            {
+                material = instancedMat,
+                layer = layer,
+                renderingLayerMask = renderingLayerMask,
+                rendererPriority = rendererPriority,
+                receiveShadows = receiveShadows,
+                shadowCastingMode = shadowCastingMode,
+                reflectionProbeUsage = reflectionProbeUsage,
+                lightProbeUsage = lightProbeUsage,
+                lightProbeProxyVolume = lightProbeProxyVolume, // no custom proxy volume
+                motionVectorMode = motionVectorMode,
+            };
         }
     }
 }

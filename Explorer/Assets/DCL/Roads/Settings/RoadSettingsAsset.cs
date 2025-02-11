@@ -13,8 +13,8 @@ namespace DCL.Roads.Settings
     [CreateAssetMenu(fileName = "Road Settings", menuName = "DCL/Various/Road Settings")]
     public class RoadSettingsAsset : ScriptableObject, IRoadSettingsAsset
     {
-        public List<GPUInstancingCandidate> IndirectCandidates;
-        public List<GPUInstancingCandidate> DirectCandidates;
+        public List<GPUInstancingCandidate_Old> IndirectCandidates;
+        public List<GPUInstancingCandidate_Old> DirectCandidates;
 
         [field: SerializeField] public List<RoadDescription> RoadDescriptions { get; set; }
         [field: SerializeField] public List<AssetReferenceGameObject> RoadAssetsReference { get; set; }
@@ -25,16 +25,16 @@ namespace DCL.Roads.Settings
 #if UNITY_EDITOR
         public void CollectGPUInstancingCandidates(Vector2Int min, Vector2Int max)
         {
-            Dictionary<string, GPUInstancingPrefabData> loadedPrefabs = LoadAllPrefabs();
+            Dictionary<string, GPUInstancingPrefabData_Old> loadedPrefabs = LoadAllPrefabs();
 
-            var tempDirectCandidates = new Dictionary<GPUInstancingCandidate, HashSet<PerInstanceBuffer>>();
-            var tempIndirectCandidates = new Dictionary<GPUInstancingCandidate, HashSet<PerInstanceBuffer>>();
+            var tempDirectCandidates = new Dictionary<GPUInstancingCandidate_Old, HashSet<PerInstanceBuffer>>();
+            var tempIndirectCandidates = new Dictionary<GPUInstancingCandidate_Old, HashSet<PerInstanceBuffer>>();
 
             foreach (RoadDescription roadDescription in RoadDescriptions)
             {
                 if (IsOutOfRange(roadDescription.RoadCoordinate)) continue;
 
-                if (!loadedPrefabs.TryGetValue(roadDescription.RoadModel, out GPUInstancingPrefabData prefab))
+                if (!loadedPrefabs.TryGetValue(roadDescription.RoadModel, out GPUInstancingPrefabData_Old prefab))
                 {
                     Debug.LogWarning($"Can't find prefab {roadDescription.RoadModel}");
                     continue;
@@ -49,8 +49,8 @@ namespace DCL.Roads.Settings
                 ProcessCandidates(prefab.indirectCandidates, roadRoot, tempIndirectCandidates);
             }
 
-            DirectCandidates = tempDirectCandidates.Select(kvp => new GPUInstancingCandidate(kvp.Key, kvp.Value)).ToList();
-            IndirectCandidates = tempIndirectCandidates.Select(kvp => new GPUInstancingCandidate(kvp.Key, kvp.Value)).ToList();
+            DirectCandidates = tempDirectCandidates.Select(kvp => new GPUInstancingCandidate_Old(kvp.Key, kvp.Value)).ToList();
+            IndirectCandidates = tempIndirectCandidates.Select(kvp => new GPUInstancingCandidate_Old(kvp.Key, kvp.Value)).ToList();
 
             EditorUtility.SetDirty(this);
             AssetDatabase.SaveAssets();
@@ -61,9 +61,9 @@ namespace DCL.Roads.Settings
                 roadCoordinate.y < min.y || roadCoordinate.y > max.y;
         }
 
-        private Dictionary<string,GPUInstancingPrefabData> LoadAllPrefabs()
+        private Dictionary<string,GPUInstancingPrefabData_Old> LoadAllPrefabs()
         {
-            var loadedPrefabs = new Dictionary<string, GPUInstancingPrefabData>();
+            var loadedPrefabs = new Dictionary<string, GPUInstancingPrefabData_Old>();
 
             foreach (AssetReferenceGameObject assetRef in RoadAssetsReference)
             {
@@ -76,7 +76,7 @@ namespace DCL.Roads.Settings
                     continue;
                 }
 
-                GPUInstancingPrefabData instanceBehaviour = prefab.GetComponent<GPUInstancingPrefabData>();
+                GPUInstancingPrefabData_Old instanceBehaviour = prefab.GetComponent<GPUInstancingPrefabData_Old>();
 
                 if (instanceBehaviour == null)
                 {
@@ -90,9 +90,9 @@ namespace DCL.Roads.Settings
             return loadedPrefabs;
         }
 
-        private void ProcessCandidates(List<GPUInstancingCandidate> sourceCandidates, Matrix4x4 roadRoot, Dictionary<GPUInstancingCandidate, HashSet<PerInstanceBuffer>> targetDict)
+        private void ProcessCandidates(List<GPUInstancingCandidate_Old> sourceCandidates, Matrix4x4 roadRoot, Dictionary<GPUInstancingCandidate_Old, HashSet<PerInstanceBuffer>> targetDict)
         {
-            foreach (GPUInstancingCandidate candidate in sourceCandidates)
+            foreach (GPUInstancingCandidate_Old candidate in sourceCandidates)
             {
                 if (!targetDict.TryGetValue(candidate, out HashSet<PerInstanceBuffer> matrices))
                 {
