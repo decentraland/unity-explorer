@@ -11,6 +11,7 @@ using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
 using DCL.Profiles;
+using DCL.Settings.Settings;
 using DCL.UI.Profiles.Helpers;
 using ECS.Abstract;
 using MVC;
@@ -33,9 +34,7 @@ namespace DCL.Chat
         private readonly IInputBlock inputBlock;
         private readonly ViewDependencies viewDependencies;
         private readonly IChatCommandsBus chatCommandsBus;
-        private readonly IRoomHub roomHub;
-        private readonly IProfileRepository profileRepository;
-
+        private readonly ChatAudioSettingsAsset chatAudioSettings;
         private SingleInstanceEntity cameraEntity;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
@@ -53,7 +52,7 @@ namespace DCL.Chat
             IInputBlock inputBlock,
             ViewDependencies viewDependencies,
             IChatCommandsBus chatCommandsBus,
-            IRoomHub roomHub, IProfileRepository profileRepository) : base(viewFactory)
+            ChatAudioSettingsAsset chatAudioSettings) : base(viewFactory)
         {
             this.profileNameColorHelper = profileNameColorHelper;
             this.chatMessagesBus = chatMessagesBus;
@@ -65,8 +64,7 @@ namespace DCL.Chat
             this.inputBlock = inputBlock;
             this.viewDependencies = viewDependencies;
             this.chatCommandsBus = chatCommandsBus;
-            this.roomHub = roomHub;
-            this.profileRepository = profileRepository;
+            this.chatAudioSettings = chatAudioSettings;
         }
 
         public void Clear() // Called by a command
@@ -85,7 +83,7 @@ namespace DCL.Chat
             chatHistory.MessageAdded += CreateChatEntry;
 
             viewInstance!.InjectDependencies(viewDependencies);
-            viewInstance!.Initialize(chatHistory.Channels, ChatChannel.NEARBY_CHANNEL, nametagsData.showChatBubbles);
+            viewInstance!.Initialize(chatHistory.Channels, ChatChannel.NEARBY_CHANNEL, nametagsData.showChatBubbles, chatAudioSettings);
 
             viewInstance.PointerEnter += OnChatViewPointerEnter;
             viewInstance.PointerExit += OnChatViewPointerExit;
@@ -167,7 +165,16 @@ namespace DCL.Chat
             {
                 Entity entity = entry.Entity;
                 GenerateChatBubbleComponent(entity, chatMessage);
-                viewInstance!.PlayMessageReceivedSfx();
+
+                switch (chatAudioSettings.chatSettings)
+                {
+                    case ChatSettings.None:
+                        return;
+                    case ChatSettings.Mentions when chatMessage.IsMention:
+                    case ChatSettings.All:
+                        viewInstance!.PlayMessageReceivedSfx(chatMessage.IsMention);
+                        break;
+                }
             }
             else if (chatMessage is { SystemMessage: false, SentByOwnUser: true })
                 GenerateChatBubbleComponent(playerEntity, chatMessage);
