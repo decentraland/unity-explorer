@@ -1,5 +1,4 @@
 using Cysharp.Threading.Tasks;
-using DCL.UI.SuggestionPanel;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -23,7 +22,6 @@ namespace DCL.Emoji
 
         private readonly List<EmojiSectionView> emojiSectionViews = new ();
         public readonly Dictionary<string, EmojiData> EmojiNameMapping = new ();
-
         private readonly Dictionary<int, string> emojiValueMapping = new ();
         private readonly Dictionary<EmojiSectionName, RectTransform> sectionTransforms = new ();
         private readonly List<EmojiData> foundEmojis = new ();
@@ -48,7 +46,6 @@ namespace DCL.Emoji
             emojiSearchController = new EmojiSearchController(view.SearchPanelView, view.EmojiSearchedContent, emojiButtonPrefab);
             emojiSearchController.SearchTextChanged += OnSearchTextChanged;
             emojiSearchController.EmojiSelected += emoji => EmojiSelected?.Invoke(emoji);
-
             foreach (KeyValuePair<string, string> emojiData in JsonConvert.DeserializeObject<Dictionary<string, string>>(emojiMappingJson.text))
             {
                 if (emojiPanelConfiguration.SpriteAsset.GetSpriteIndexFromName(emojiData.Value.ToUpper()) == -1)
@@ -67,10 +64,8 @@ namespace DCL.Emoji
         {
             view.EmojiContainerScrollView.gameObject.SetActive(string.IsNullOrEmpty(searchText));
             view.EmojiSearchResults.gameObject.SetActive(!string.IsNullOrEmpty(searchText));
-
             if (string.IsNullOrEmpty(searchText))
                 return;
-
             cts.SafeCancelAndDispose();
             cts = new CancellationTokenSource();
             OnSearchTextChangedAsync(searchText, cts.Token).Forget();
@@ -107,7 +102,6 @@ namespace DCL.Emoji
             {
                 EmojiSectionView sectionView = Object.Instantiate(emojiSectionPrefab, view.EmojiContainer);
                 sectionView.SectionTitle.text = emojiSection.title;
-
                 foreach (SerializableKeyValuePair<string, string> range in emojiSection.ranges)
                     GenerateEmojis(range.key, range.value, sectionView);
 
@@ -131,12 +125,11 @@ namespace DCL.Emoji
         {
             startDec = int.Parse(hexRangeStart, System.Globalization.NumberStyles.HexNumber);
             endDec = int.Parse(hexRageEnd, System.Globalization.NumberStyles.HexNumber);
-
-            for (var i = 0; i < endDec - startDec; i++)
+            for (int i = 0; i < endDec-startDec; i++)
             {
                 emojiCode = startDec + i;
 
-                if (emojiPanelConfiguration.SpriteAsset.GetSpriteIndexFromUnicode((uint)emojiCode) == -1)
+                if(emojiPanelConfiguration.SpriteAsset.GetSpriteIndexFromUnicode((uint) emojiCode) == -1)
                     continue;
 
                 EmojiButton emojiButton = Object.Instantiate(emojiButtonPrefab, sectionView.EmojiContainer);
