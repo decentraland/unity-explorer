@@ -26,49 +26,49 @@ namespace Decentraland.Kernel.Apis {
           string.Concat(
             "CjFkZWNlbnRyYWxhbmQva2VybmVsL2FwaXMvcmVzdHJpY3RlZF9hY3Rpb25z",
             "LnByb3RvEhhkZWNlbnRyYWxhbmQua2VybmVsLmFwaXMaIWRlY2VudHJhbGFu",
-            "ZC9jb21tb24vdmVjdG9ycy5wcm90byLwAQoTTW92ZVBsYXllclRvUmVxdWVz",
+            "ZC9jb21tb24vdmVjdG9ycy5wcm90byLrAQoTTW92ZVBsYXllclRvUmVxdWVz",
             "dBI7ChVuZXdfcmVsYXRpdmVfcG9zaXRpb24YASABKAsyHC5kZWNlbnRyYWxh",
             "bmQuY29tbW9uLlZlY3RvcjMSOAoNY2FtZXJhX3RhcmdldBgCIAEoCzIcLmRl",
-            "Y2VudHJhbGFuZC5jb21tb24uVmVjdG9yM0gAiAEBEjsKEGNoYXJhY3Rlcl90",
-            "YXJnZXQYAyABKAsyHC5kZWNlbnRyYWxhbmQuY29tbW9uLlZlY3RvcjNIAYgB",
-            "AUIQCg5fY2FtZXJhX3RhcmdldEITChFfY2hhcmFjdGVyX3RhcmdldCJMChFU",
-            "ZWxlcG9ydFRvUmVxdWVzdBI3ChF3b3JsZF9jb29yZGluYXRlcxgBIAEoCzIc",
-            "LmRlY2VudHJhbGFuZC5jb21tb24uVmVjdG9yMiIvChNUcmlnZ2VyRW1vdGVS",
-            "ZXF1ZXN0EhgKEHByZWRlZmluZWRfZW1vdGUYASABKAkiRQoSQ2hhbmdlUmVh",
-            "bG1SZXF1ZXN0Eg0KBXJlYWxtGAEgASgJEhQKB21lc3NhZ2UYAiABKAlIAIgB",
-            "AUIKCghfbWVzc2FnZSIlChZPcGVuRXh0ZXJuYWxVcmxSZXF1ZXN0EgsKA3Vy",
-            "bBgBIAEoCSIjChRPcGVuTmZ0RGlhbG9nUmVxdWVzdBILCgN1cm4YASABKAki",
-            "FwoVVW5ibG9ja1BvaW50ZXJSZXF1ZXN0IjAKE0NvbW1zQWRhcHRlclJlcXVl",
-            "c3QSGQoRY29ubmVjdGlvbl9zdHJpbmcYASABKAkiQwoYVHJpZ2dlclNjZW5l",
-            "RW1vdGVSZXF1ZXN0EgsKA3NyYxgBIAEoCRIRCgRsb29wGAIgASgISACIAQFC",
-            "BwoFX2xvb3AiIgoPU3VjY2Vzc1Jlc3BvbnNlEg8KB3N1Y2Nlc3MYASABKAgi",
-            "FgoUVHJpZ2dlckVtb3RlUmVzcG9uc2UiFgoUTW92ZVBsYXllclRvUmVzcG9u",
-            "c2UiFAoSVGVsZXBvcnRUb1Jlc3BvbnNlMp8HChhSZXN0cmljdGVkQWN0aW9u",
-            "c1NlcnZpY2USbwoMTW92ZVBsYXllclRvEi0uZGVjZW50cmFsYW5kLmtlcm5l",
-            "bC5hcGlzLk1vdmVQbGF5ZXJUb1JlcXVlc3QaLi5kZWNlbnRyYWxhbmQua2Vy",
-            "bmVsLmFwaXMuTW92ZVBsYXllclRvUmVzcG9uc2UiABJpCgpUZWxlcG9ydFRv",
-            "EisuZGVjZW50cmFsYW5kLmtlcm5lbC5hcGlzLlRlbGVwb3J0VG9SZXF1ZXN0",
-            "GiwuZGVjZW50cmFsYW5kLmtlcm5lbC5hcGlzLlRlbGVwb3J0VG9SZXNwb25z",
-            "ZSIAEm8KDFRyaWdnZXJFbW90ZRItLmRlY2VudHJhbGFuZC5rZXJuZWwuYXBp",
-            "cy5UcmlnZ2VyRW1vdGVSZXF1ZXN0Gi4uZGVjZW50cmFsYW5kLmtlcm5lbC5h",
-            "cGlzLlRyaWdnZXJFbW90ZVJlc3BvbnNlIgASaAoLQ2hhbmdlUmVhbG0SLC5k",
-            "ZWNlbnRyYWxhbmQua2VybmVsLmFwaXMuQ2hhbmdlUmVhbG1SZXF1ZXN0Giku",
-            "ZGVjZW50cmFsYW5kLmtlcm5lbC5hcGlzLlN1Y2Nlc3NSZXNwb25zZSIAEnAK",
-            "D09wZW5FeHRlcm5hbFVybBIwLmRlY2VudHJhbGFuZC5rZXJuZWwuYXBpcy5P",
-            "cGVuRXh0ZXJuYWxVcmxSZXF1ZXN0GikuZGVjZW50cmFsYW5kLmtlcm5lbC5h",
-            "cGlzLlN1Y2Nlc3NSZXNwb25zZSIAEmwKDU9wZW5OZnREaWFsb2cSLi5kZWNl",
-            "bnRyYWxhbmQua2VybmVsLmFwaXMuT3Blbk5mdERpYWxvZ1JlcXVlc3QaKS5k",
-            "ZWNlbnRyYWxhbmQua2VybmVsLmFwaXMuU3VjY2Vzc1Jlc3BvbnNlIgASdgoY",
-            "U2V0Q29tbXVuaWNhdGlvbnNBZGFwdGVyEi0uZGVjZW50cmFsYW5kLmtlcm5l",
-            "bC5hcGlzLkNvbW1zQWRhcHRlclJlcXVlc3QaKS5kZWNlbnRyYWxhbmQua2Vy",
-            "bmVsLmFwaXMuU3VjY2Vzc1Jlc3BvbnNlIgASdAoRVHJpZ2dlclNjZW5lRW1v",
-            "dGUSMi5kZWNlbnRyYWxhbmQua2VybmVsLmFwaXMuVHJpZ2dlclNjZW5lRW1v",
-            "dGVSZXF1ZXN0GikuZGVjZW50cmFsYW5kLmtlcm5lbC5hcGlzLlN1Y2Nlc3NS",
-            "ZXNwb25zZSIAYgZwcm90bzM="));
+            "Y2VudHJhbGFuZC5jb21tb24uVmVjdG9yM0gAiAEBEjoKDG5ld19yb3RhdGlv",
+            "bhgDIAEoCzIfLmRlY2VudHJhbGFuZC5jb21tb24uUXVhdGVybmlvbkgBiAEB",
+            "QhAKDl9jYW1lcmFfdGFyZ2V0Qg8KDV9uZXdfcm90YXRpb24iTAoRVGVsZXBv",
+            "cnRUb1JlcXVlc3QSNwoRd29ybGRfY29vcmRpbmF0ZXMYASABKAsyHC5kZWNl",
+            "bnRyYWxhbmQuY29tbW9uLlZlY3RvcjIiLwoTVHJpZ2dlckVtb3RlUmVxdWVz",
+            "dBIYChBwcmVkZWZpbmVkX2Vtb3RlGAEgASgJIkUKEkNoYW5nZVJlYWxtUmVx",
+            "dWVzdBINCgVyZWFsbRgBIAEoCRIUCgdtZXNzYWdlGAIgASgJSACIAQFCCgoI",
+            "X21lc3NhZ2UiJQoWT3BlbkV4dGVybmFsVXJsUmVxdWVzdBILCgN1cmwYASAB",
+            "KAkiIwoUT3Blbk5mdERpYWxvZ1JlcXVlc3QSCwoDdXJuGAEgASgJIhcKFVVu",
+            "YmxvY2tQb2ludGVyUmVxdWVzdCIwChNDb21tc0FkYXB0ZXJSZXF1ZXN0EhkK",
+            "EWNvbm5lY3Rpb25fc3RyaW5nGAEgASgJIkMKGFRyaWdnZXJTY2VuZUVtb3Rl",
+            "UmVxdWVzdBILCgNzcmMYASABKAkSEQoEbG9vcBgCIAEoCEgAiAEBQgcKBV9s",
+            "b29wIiIKD1N1Y2Nlc3NSZXNwb25zZRIPCgdzdWNjZXNzGAEgASgIIhYKFFRy",
+            "aWdnZXJFbW90ZVJlc3BvbnNlIhYKFE1vdmVQbGF5ZXJUb1Jlc3BvbnNlIhQK",
+            "ElRlbGVwb3J0VG9SZXNwb25zZTKfBwoYUmVzdHJpY3RlZEFjdGlvbnNTZXJ2",
+            "aWNlEm8KDE1vdmVQbGF5ZXJUbxItLmRlY2VudHJhbGFuZC5rZXJuZWwuYXBp",
+            "cy5Nb3ZlUGxheWVyVG9SZXF1ZXN0Gi4uZGVjZW50cmFsYW5kLmtlcm5lbC5h",
+            "cGlzLk1vdmVQbGF5ZXJUb1Jlc3BvbnNlIgASaQoKVGVsZXBvcnRUbxIrLmRl",
+            "Y2VudHJhbGFuZC5rZXJuZWwuYXBpcy5UZWxlcG9ydFRvUmVxdWVzdBosLmRl",
+            "Y2VudHJhbGFuZC5rZXJuZWwuYXBpcy5UZWxlcG9ydFRvUmVzcG9uc2UiABJv",
+            "CgxUcmlnZ2VyRW1vdGUSLS5kZWNlbnRyYWxhbmQua2VybmVsLmFwaXMuVHJp",
+            "Z2dlckVtb3RlUmVxdWVzdBouLmRlY2VudHJhbGFuZC5rZXJuZWwuYXBpcy5U",
+            "cmlnZ2VyRW1vdGVSZXNwb25zZSIAEmgKC0NoYW5nZVJlYWxtEiwuZGVjZW50",
+            "cmFsYW5kLmtlcm5lbC5hcGlzLkNoYW5nZVJlYWxtUmVxdWVzdBopLmRlY2Vu",
+            "dHJhbGFuZC5rZXJuZWwuYXBpcy5TdWNjZXNzUmVzcG9uc2UiABJwCg9PcGVu",
+            "RXh0ZXJuYWxVcmwSMC5kZWNlbnRyYWxhbmQua2VybmVsLmFwaXMuT3BlbkV4",
+            "dGVybmFsVXJsUmVxdWVzdBopLmRlY2VudHJhbGFuZC5rZXJuZWwuYXBpcy5T",
+            "dWNjZXNzUmVzcG9uc2UiABJsCg1PcGVuTmZ0RGlhbG9nEi4uZGVjZW50cmFs",
+            "YW5kLmtlcm5lbC5hcGlzLk9wZW5OZnREaWFsb2dSZXF1ZXN0GikuZGVjZW50",
+            "cmFsYW5kLmtlcm5lbC5hcGlzLlN1Y2Nlc3NSZXNwb25zZSIAEnYKGFNldENv",
+            "bW11bmljYXRpb25zQWRhcHRlchItLmRlY2VudHJhbGFuZC5rZXJuZWwuYXBp",
+            "cy5Db21tc0FkYXB0ZXJSZXF1ZXN0GikuZGVjZW50cmFsYW5kLmtlcm5lbC5h",
+            "cGlzLlN1Y2Nlc3NSZXNwb25zZSIAEnQKEVRyaWdnZXJTY2VuZUVtb3RlEjIu",
+            "ZGVjZW50cmFsYW5kLmtlcm5lbC5hcGlzLlRyaWdnZXJTY2VuZUVtb3RlUmVx",
+            "dWVzdBopLmRlY2VudHJhbGFuZC5rZXJuZWwuYXBpcy5TdWNjZXNzUmVzcG9u",
+            "c2UiAGIGcHJvdG8z"));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { global::Decentraland.Common.VectorsReflection.Descriptor, },
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
-            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Apis.MovePlayerToRequest), global::Decentraland.Kernel.Apis.MovePlayerToRequest.Parser, new[]{ "NewRelativePosition", "CameraTarget", "CharacterTarget" }, new[]{ "CameraTarget", "CharacterTarget" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Apis.MovePlayerToRequest), global::Decentraland.Kernel.Apis.MovePlayerToRequest.Parser, new[]{ "NewRelativePosition", "CameraTarget", "NewRotation" }, new[]{ "CameraTarget", "NewRotation" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Apis.TeleportToRequest), global::Decentraland.Kernel.Apis.TeleportToRequest.Parser, new[]{ "WorldCoordinates" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Apis.TriggerEmoteRequest), global::Decentraland.Kernel.Apis.TriggerEmoteRequest.Parser, new[]{ "PredefinedEmote" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Apis.ChangeRealmRequest), global::Decentraland.Kernel.Apis.ChangeRealmRequest.Parser, new[]{ "Realm", "Message" }, new[]{ "Message" }, null, null, null),
@@ -123,7 +123,7 @@ namespace Decentraland.Kernel.Apis {
     public MovePlayerToRequest(MovePlayerToRequest other) : this() {
       newRelativePosition_ = other.newRelativePosition_ != null ? other.newRelativePosition_.Clone() : null;
       cameraTarget_ = other.cameraTarget_ != null ? other.cameraTarget_.Clone() : null;
-      characterTarget_ = other.characterTarget_ != null ? other.characterTarget_.Clone() : null;
+      newRotation_ = other.newRotation_ != null ? other.newRotation_.Clone() : null;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -157,15 +157,15 @@ namespace Decentraland.Kernel.Apis {
       }
     }
 
-    /// <summary>Field number for the "character_target" field.</summary>
-    public const int CharacterTargetFieldNumber = 3;
-    private global::Decentraland.Common.Vector3 characterTarget_;
+    /// <summary>Field number for the "new_rotation" field.</summary>
+    public const int NewRotationFieldNumber = 3;
+    private global::Decentraland.Common.Quaternion newRotation_;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public global::Decentraland.Common.Vector3 CharacterTarget {
-      get { return characterTarget_; }
+    public global::Decentraland.Common.Quaternion NewRotation {
+      get { return newRotation_; }
       set {
-        characterTarget_ = value;
+        newRotation_ = value;
       }
     }
 
@@ -186,7 +186,7 @@ namespace Decentraland.Kernel.Apis {
       }
       if (!object.Equals(NewRelativePosition, other.NewRelativePosition)) return false;
       if (!object.Equals(CameraTarget, other.CameraTarget)) return false;
-      if (!object.Equals(CharacterTarget, other.CharacterTarget)) return false;
+      if (!object.Equals(NewRotation, other.NewRotation)) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -196,7 +196,7 @@ namespace Decentraland.Kernel.Apis {
       int hash = 1;
       if (newRelativePosition_ != null) hash ^= NewRelativePosition.GetHashCode();
       if (cameraTarget_ != null) hash ^= CameraTarget.GetHashCode();
-      if (characterTarget_ != null) hash ^= CharacterTarget.GetHashCode();
+      if (newRotation_ != null) hash ^= NewRotation.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -223,9 +223,9 @@ namespace Decentraland.Kernel.Apis {
         output.WriteRawTag(18);
         output.WriteMessage(CameraTarget);
       }
-      if (characterTarget_ != null) {
+      if (newRotation_ != null) {
         output.WriteRawTag(26);
-        output.WriteMessage(CharacterTarget);
+        output.WriteMessage(NewRotation);
       }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
@@ -245,9 +245,9 @@ namespace Decentraland.Kernel.Apis {
         output.WriteRawTag(18);
         output.WriteMessage(CameraTarget);
       }
-      if (characterTarget_ != null) {
+      if (newRotation_ != null) {
         output.WriteRawTag(26);
-        output.WriteMessage(CharacterTarget);
+        output.WriteMessage(NewRotation);
       }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
@@ -265,8 +265,8 @@ namespace Decentraland.Kernel.Apis {
       if (cameraTarget_ != null) {
         size += 1 + pb::CodedOutputStream.ComputeMessageSize(CameraTarget);
       }
-      if (characterTarget_ != null) {
-        size += 1 + pb::CodedOutputStream.ComputeMessageSize(CharacterTarget);
+      if (newRotation_ != null) {
+        size += 1 + pb::CodedOutputStream.ComputeMessageSize(NewRotation);
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -292,11 +292,11 @@ namespace Decentraland.Kernel.Apis {
         }
         CameraTarget.MergeFrom(other.CameraTarget);
       }
-      if (other.characterTarget_ != null) {
-        if (characterTarget_ == null) {
-          CharacterTarget = new global::Decentraland.Common.Vector3();
+      if (other.newRotation_ != null) {
+        if (newRotation_ == null) {
+          NewRotation = new global::Decentraland.Common.Quaternion();
         }
-        CharacterTarget.MergeFrom(other.CharacterTarget);
+        NewRotation.MergeFrom(other.NewRotation);
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -328,10 +328,10 @@ namespace Decentraland.Kernel.Apis {
             break;
           }
           case 26: {
-            if (characterTarget_ == null) {
-              CharacterTarget = new global::Decentraland.Common.Vector3();
+            if (newRotation_ == null) {
+              NewRotation = new global::Decentraland.Common.Quaternion();
             }
-            input.ReadMessage(CharacterTarget);
+            input.ReadMessage(NewRotation);
             break;
           }
         }
@@ -364,10 +364,10 @@ namespace Decentraland.Kernel.Apis {
             break;
           }
           case 26: {
-            if (characterTarget_ == null) {
-              CharacterTarget = new global::Decentraland.Common.Vector3();
+            if (newRotation_ == null) {
+              NewRotation = new global::Decentraland.Common.Quaternion();
             }
-            input.ReadMessage(CharacterTarget);
+            input.ReadMessage(NewRotation);
             break;
           }
         }
