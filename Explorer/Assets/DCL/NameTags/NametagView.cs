@@ -34,6 +34,7 @@ namespace DCL.Nametags
         [field: SerializeField] public SpriteRenderer VerifiedIconRenderer { get; private set; }
         [field: SerializeField] public TMP_Text MessageContent { get; private set; }
         [field: SerializeField] public SpriteRenderer Background { get; private set; }
+        [field: SerializeField] public SpriteRenderer Outline { get; private set; }
         [field: SerializeField] public GameObject OutlineObject { get; private set; }
         [field: SerializeField] public SpriteRenderer BubblePeak { get; private set; }
         [field: SerializeField] public RectTransform MessageContentRectTransform { get; private set; }
@@ -62,7 +63,7 @@ namespace DCL.Nametags
         private float additionalHeight;
         private Color textColor = new (1, 1, 1, 1);
         private Color usernameTextColor = new (1, 1, 1, 1);
-        private readonly Color defaultBackgroundColor = new (1, 1, 1, 1);
+        private readonly Color defaultBackgroundColor = new (0.08627f, 0.08235f, 0.094117f, 1);
         private readonly Color mentionedBackgroundColor = new (0.227f, 0.0588f, 0.3137f, 1);
 
         private ChatBubbleConfigurationSO? chatBubbleConfiguration;
@@ -232,7 +233,8 @@ namespace DCL.Nametags
                 DOTween.Sequence().AppendInterval(animationInDuration / 3).Append(MessageContent.DOColor(textColor, animationInDuration / 4)).Play().ToUniTask(cancellationToken: ct),
                 Username.rectTransform.DOAnchorPos(usernameFinalPosition, animationInDuration).SetEase(backgroundEaseAnimationCurve).ToUniTask(cancellationToken: ct),
                 MessageContent.rectTransform.DOAnchorPos(messageContentAnchoredPosition, animationInDuration).SetEase(backgroundEaseAnimationCurve).ToUniTask(cancellationToken: ct),
-                DOTween.To(() => Background.size, x => Background.size = x, preferredSize, animationInDuration).SetEase(backgroundEaseAnimationCurve).ToUniTask(cancellationToken: ct)
+                DOTween.To(() => Background.size, x => Background.size = x, preferredSize, animationInDuration).SetEase(backgroundEaseAnimationCurve).ToUniTask(cancellationToken: ct),
+                DOTween.To(() => Outline.size, x => Outline.size = x, preferredSize, animationInDuration).SetEase(backgroundEaseAnimationCurve).ToUniTask(cancellationToken: ct)
             );
         }
 
@@ -258,10 +260,6 @@ namespace DCL.Nametags
 
             BubblePeak.gameObject.SetActive(false);
 
-            //TODO FRAN URGENT: probably animate these values so it looks better?
-            OutlineObject.SetActive(false);
-            Background.color = defaultBackgroundColor;
-
             backgroundFinalSize.y = Username.preferredHeight + (chatBubbleConfiguration?.nametagMarginOffsetHeight ?? DEFAULT_MARGIN_OFFSET_HEIGHT);
 
             float nametagMarginOffsetWidth = chatBubbleConfiguration?.nametagMarginOffsetWidth ?? DEFAULT_MARGIN_OFFSET_WIDTH;
@@ -282,8 +280,12 @@ namespace DCL.Nametags
             await UniTask.WhenAll(
                 MessageContent.rectTransform.DOAnchorPos(textContentInitialPosition, animationOutDuration / 2).SetEase(Ease.Linear).ToUniTask(cancellationToken: ct),
                 MessageContent.DOColor(finishColor, animationOutDuration / 10).ToUniTask(cancellationToken: ct),
-                DOTween.To(() => Background.size, x => Background.size = x, backgroundFinalSize, animationOutDuration / 2).SetEase(Ease.Linear).ToUniTask(cancellationToken: ct)
+                DOTween.To(() => Background.size, x => Background.size = x, backgroundFinalSize, animationOutDuration / 2).SetEase(Ease.Linear).ToUniTask(cancellationToken: ct),
+                DOTween.To(() => Outline.size, x => Outline.size = x, backgroundFinalSize, animationOutDuration / 2).SetEase(Ease.Linear).ToUniTask(cancellationToken: ct)
             );
+
+            OutlineObject.SetActive(false);
+            Background.color = defaultBackgroundColor;
         }
 
         private float CalculatePreferredWidth(string messageContent)

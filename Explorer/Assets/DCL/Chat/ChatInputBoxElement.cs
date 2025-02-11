@@ -252,8 +252,6 @@ namespace DCL.Chat
         {
             if (isInputSelected && viewDependencies.ClipboardManager.HasValue())
             {
-                viewDependencies.ClipboardManager.OnPaste -= PasteClipboardText;
-                viewDependencies.ClipboardManager.OnPaste += PasteClipboardText;
                 closePopupTask.TrySetResult();
                 closePopupTask = new UniTaskCompletionSource();
 
