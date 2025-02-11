@@ -875,6 +875,10 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 7813611504790713137, guid: a78bfe36c05846b438aaf25abbe523cc, type: 3}
+      propertyPath: m_text
+      value: Mouse and Key Controls <color=#716B7C>[H]</color>
+      objectReference: {fileID: 0}
     - target: {fileID: 7953449017702476265, guid: a78bfe36c05846b438aaf25abbe523cc, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
