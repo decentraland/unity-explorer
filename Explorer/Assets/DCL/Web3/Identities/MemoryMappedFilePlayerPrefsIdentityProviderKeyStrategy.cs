@@ -217,11 +217,14 @@ namespace DCL.Web3.Identities
     /// </summary>
     internal class PMutex : IDisposable
     {
-        private const int ERROR_ALREADY_EXISTS = 183;
         /// <summary>
         /// From https://learn.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-waitforsingleobject
         /// </summary>
-        private const uint WAIT_OBJECT_0 = (uint)0x00000000L;
+        private const uint WAIT_OBJECT_0 = 0x00000000;
+
+        // Unix
+        private const int O_CREAT = 0x0200; // Create semaphore if it does not exist
+        private const int SEM_PERM = 0x1FF; // 0777 permissions
 
         private readonly string name;
         private readonly IntPtr pMutex;
@@ -238,37 +241,67 @@ namespace DCL.Web3.Identities
         [DllImport("kernel32.dll", SetLastError = true)]
         private static extern bool CloseHandle(IntPtr hObject);
 
+        [DllImport("libc", SetLastError = true)]
+        private static extern IntPtr sem_open(string name, int oflag, int mode, uint value);
+
+        [DllImport("libc", SetLastError = true)]
+        private static extern int sem_wait(IntPtr sem);
+
+        [DllImport("libc", SetLastError = true)]
+        private static extern int sem_post(IntPtr sem);
+
+        [DllImport("libc", SetLastError = true)]
+        private static extern int sem_close(IntPtr sem);
+
         public PMutex(string name)
         {
+#if UNITY_EDITOR_WIN || UNITY_STANDALONE_WIN || PLATFORM_STANDALONE_WIN
             pMutex = CreateMutex(IntPtr.Zero, false, name);
-            int lastError = Marshal.GetLastWin32Error();
+#else
+            pMutex = sem_open(name, O_CREAT, SEM_PERM, 1);
+#endif
 
             if (pMutex == IntPtr.Zero)
                 throw new Exception("Failed to create mutex.");
-
-            if (lastError == ERROR_ALREADY_EXISTS)
-                throw new Exception("Mutex already exists, another process is using it.");
         }
 
         public void WaitOne(uint milliseconds)
         {
+#if UNITY_EDITOR_WIN || UNITY_STANDALONE_WIN || PLATFORM_STANDALONE_WIN
             uint result = WaitForSingleObject(pMutex, milliseconds);
 
             if (result != WAIT_OBJECT_0)
-                throw new Exception("Cannot acquire mutex");
+                throw new Exception($"Cannot acquire mutex with result {result}");
+#else
+            int result = sem_wait(pMutex);
+
+            if (result != 0)
+                throw new Exception($"Cannot acquire mutex with result {result}");
+#endif
         }
 
         public void ReleaseMutex()
         {
+#if UNITY_EDITOR_WIN || UNITY_STANDALONE_WIN || PLATFORM_STANDALONE_WIN
             bool result = ReleaseMutex(pMutex);
 
             if (result == false)
                 throw new Exception("Cannot release mutex");
+#else
+            int result = sem_post(pMutex);
+
+            if (result != 0)
+                throw new Exception($"Cannot release mutex with result {result}");
+#endif
         }
 
         public void Dispose()
         {
+#if UNITY_EDITOR_WIN || UNITY_STANDALONE_WIN || PLATFORM_STANDALONE_WIN
             CloseHandle(pMutex);
+#else
+            sem_close(pMutex);
+#endif
         }
     }
 }
