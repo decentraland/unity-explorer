@@ -30,6 +30,7 @@ namespace DCL.Settings
         private readonly ControlsSettingsAsset controlsSettingsAsset;
         private readonly RectTransform rectTransform;
         private readonly List<SettingsFeatureController> controllers = new ();
+        private readonly ChatAudioSettingsAsset chatAudioSettingsAsset;
 
         public SettingsController(
             SettingsView view,
@@ -41,6 +42,7 @@ namespace DCL.Settings
             QualitySettingsAsset qualitySettingsAsset,
             ControlsSettingsAsset controlsSettingsAsset,
             ISystemMemoryCap memoryCap,
+            ChatAudioSettingsAsset chatAudioSettingsAsset,
             WorldVolumeMacBus worldVolumeMacBus = null)
         {
             this.view = view;
@@ -50,6 +52,7 @@ namespace DCL.Settings
             this.landscapeData = landscapeData;
             this.qualitySettingsAsset = qualitySettingsAsset;
             this.memoryCap = memoryCap;
+            this.chatAudioSettingsAsset = chatAudioSettingsAsset;
             this.worldVolumeMacBus = worldVolumeMacBus;
             this.controlsSettingsAsset = controlsSettingsAsset;
             this.videoPrioritizationSettings = videoPrioritizationSettings;
@@ -118,7 +121,7 @@ namespace DCL.Settings
                 generalGroupView.GroupTitle.text = group.GroupTitle;
 
                 foreach (SettingsModuleBindingBase module in group.Modules)
-                    controllers.Add(module?.CreateModule(generalGroupView.ModulesContainer, realmPartitionSettingsAsset, videoPrioritizationSettings, landscapeData, generalAudioMixer, qualitySettingsAsset, controlsSettingsAsset, memoryCap, worldVolumeMacBus));
+                    controllers.Add(module?.CreateModule(generalGroupView.ModulesContainer, realmPartitionSettingsAsset, videoPrioritizationSettings, landscapeData, generalAudioMixer, qualitySettingsAsset, controlsSettingsAsset, chatAudioSettingsAsset, memoryCap, worldVolumeMacBus));
             }
         }
 

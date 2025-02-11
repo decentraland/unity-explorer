@@ -11,15 +11,18 @@ using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
 using DCL.Profiles;
+using DCL.Settings.Settings;
 using DCL.UI.MainUI;
 using DCL.UI.Profiles.Helpers;
 using MVC;
 using System;
 using System.Threading;
+using UnityEngine;
+using UnityEngine.AddressableAssets;
 
 namespace DCL.PluginSystem.Global
 {
-    public class ChatPlugin : IDCLGlobalPluginWithoutSettings
+    public class ChatPlugin : IDCLGlobalPlugin<ChatPluginSettings>
     {
         private readonly IMVCManager mvcManager;
         private readonly IChatHistory chatHistory;
@@ -33,8 +36,7 @@ namespace DCL.PluginSystem.Global
         private readonly ViewDependencies viewDependencies;
         private readonly IChatCommandsBus chatCommandsBus;
         private readonly IProfileNameColorHelper profileNameColorHelper;
-        private readonly IRoomHub roomHub;
-        private readonly IProfileRepository profileRepository;
+        private readonly IAssetsProvisioner assetsProvisioner;
 
         private ChatController chatController;
 
@@ -51,7 +53,7 @@ namespace DCL.PluginSystem.Global
             ViewDependencies viewDependencies,
             IChatCommandsBus chatCommandsBus,
             IProfileNameColorHelper profileNameColorHelper,
-            IRoomHub roomHub, IProfileRepository profileRepository)
+            IAssetsProvisioner assetsProvisioner)
         {
             this.mvcManager = mvcManager;
             this.chatHistory = chatHistory;
@@ -64,8 +66,7 @@ namespace DCL.PluginSystem.Global
             this.viewDependencies = viewDependencies;
             this.chatCommandsBus = chatCommandsBus;
             this.profileNameColorHelper = profileNameColorHelper;
-            this.roomHub = roomHub;
-            this.profileRepository = profileRepository;
+            this.assetsProvisioner = assetsProvisioner;
             this.mainUIView = mainUIView;
             this.inputBlock = inputBlock;
         }
@@ -74,8 +75,10 @@ namespace DCL.PluginSystem.Global
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
 
-        public async UniTask InitializeAsync(NoExposedPluginSettings settings, CancellationToken ct)
+        public async UniTask InitializeAsync(ChatPluginSettings settings, CancellationToken ct)
         {
+            ProvidedAsset<ChatAudioSettingsAsset> chatSettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.ChatSettingsAsset, ct);
+
             chatController = new ChatController(
                 () =>
                 {
@@ -93,11 +96,18 @@ namespace DCL.PluginSystem.Global
                 inputBlock,
                 viewDependencies,
                 chatCommandsBus,
-                roomHub,
-                profileRepository
+                chatSettingsAsset.Value
             );
 
             mvcManager.RegisterController(chatController);
         }
+
+    }
+
+    public class ChatPluginSettings : IDCLPluginSettings
+    {
+
+        [field: SerializeField] public AssetReferenceT<ChatAudioSettingsAsset> ChatSettingsAsset { get; private set; }
+
     }
 }

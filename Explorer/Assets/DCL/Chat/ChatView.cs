@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
+using DCL.Settings.Settings;
 using DCL.UI;
 using MVC;
 using DG.Tweening;
@@ -47,8 +48,8 @@ namespace DCL.Chat
         private ChatMessageViewerElement chatMessageViewer;
 
         [Header("Audio")]
-        [SerializeField]
-        private AudioClipConfig chatReceiveMessageAudio;
+        [SerializeField]private AudioClipConfig chatReceiveMessageAudio;
+        [SerializeField] private AudioClipConfig chatReceiveMentionMessageAudio;
 
         private IReadOnlyList<ChatMessage> chatMessages;
 
@@ -137,7 +138,8 @@ namespace DCL.Chat
 
         public void Initialize(IReadOnlyDictionary<ChatChannel.ChannelId, ChatChannel> chatChannels,
             ChatChannel.ChannelId defaultChannelId,
-            bool areChatBubblesVisible
+            bool areChatBubblesVisible,
+            ChatAudioSettingsAsset chatAudioSettings
         )
         {
             channels = chatChannels;
@@ -151,7 +153,7 @@ namespace DCL.Chat
             chatBubblesToggle.Toggle.onValueChanged.AddListener(OnToggleChatBubblesValueChanged);
             chatBubblesToggle.IsSoundEnabled = true;
 
-            chatInputBox.Initialize();
+            chatInputBox.Initialize(chatAudioSettings);
             chatInputBox.InputBoxSelectionChanged += OnInputBoxSelectionChanged;
             chatInputBox.EmojiSelectionVisibilityChanged += OnEmojiSelectionVisibilityChanged;
             chatInputBox.InputChanged += OnInputChanged;
@@ -248,9 +250,9 @@ namespace DCL.Chat
         /// <summary>
         /// Plays the sound FX of the chat receiving a new message.
         /// </summary>
-        public void PlayMessageReceivedSfx()
+        public void PlayMessageReceivedSfx(bool isMention)
         {
-            UIAudioEventsBus.Instance.SendPlayAudioEvent(chatReceiveMessageAudio);
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(isMention? chatReceiveMentionMessageAudio : chatReceiveMessageAudio);
         }
 
         public void OnPointerEnter(PointerEventData eventData)

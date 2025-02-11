@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.Emoji;
 using DCL.Profiles;
+using DCL.Settings.Settings;
 using DCL.UI;
 using DCL.UI.CustomInputField;
 using DCL.UI.SuggestionPanel;
@@ -68,6 +69,7 @@ namespace DCL.Chat
         private bool isInputSelected;
         private Match lastMatch = Match.Empty;
         private int wordMatchIndex;
+        private ChatAudioSettingsAsset chatAudioSettings;
 
         public string InputBoxText
         {
@@ -100,9 +102,10 @@ namespace DCL.Chat
         /// </summary>
         public event InputChangedDelegate? InputChanged;
 
-        public void Initialize()
+        public void Initialize(ChatAudioSettingsAsset chatAudioSettings)
         {
             device = InputSystem.GetDevice<Mouse>();
+            this.chatAudioSettings = chatAudioSettings;
 
             InitializeEmojiPanelController();
             InitializeEmojiMapping(emojiPanelController!.EmojiNameMapping);
@@ -331,7 +334,8 @@ namespace DCL.Chat
             }
 
             //Send message and clear Input Field
-            UIAudioEventsBus.Instance.SendPlayAudioEvent(chatSendMessageAudio);
+            if (chatAudioSettings.chatSettings == ChatSettings.All)
+                UIAudioEventsBus.Instance.SendPlayAudioEvent(chatSendMessageAudio);
 
             inputField.ResetInputField();
             submittedText = viewDependencies.HyperlinkTextFormatter.FormatText(submittedText);

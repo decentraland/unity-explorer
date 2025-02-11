@@ -49,6 +49,7 @@ MonoBehaviour:
   - rid: 4782308287844188162
   - rid: 2168772563850493955
   - rid: 5734404474035240960
+  - rid: 7621844554961125379
   references:
     version: 2
     RefIds:
@@ -239,6 +240,11 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
         <ControlsSettingsAsset>k__BackingField:
           m_AssetGUID: 26489687fb2f3419886df8e49f34b006
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        <ChatSettingsAsset>k__BackingField:
+          m_AssetGUID: a358ab6eb8d31ca488364e13b54f5f9c
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
@@ -752,6 +758,14 @@ MonoBehaviour:
       data:
         ChangeRealmPromptPrefab:
           m_AssetGUID: 6b1f7cd8901871f42a19a8244244839e
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+    - rid: 7621844554961125379
+      type: {class: ChatPluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        <ChatSettingsAsset>k__BackingField:
+          m_AssetGUID: a358ab6eb8d31ca488364e13b54f5f9c
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0

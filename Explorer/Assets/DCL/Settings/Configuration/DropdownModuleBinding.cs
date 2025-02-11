@@ -24,6 +24,7 @@ namespace DCL.Settings.Configuration
             WINDOW_MODE_FEATURE,
             FPS_LIMIT_FEATURE,
             MEMORY_LIMIT_FEATURE,
+            CHAT_AUDIO_MODES_FEATURE,
             // add other features...
         }
 
@@ -35,6 +36,7 @@ namespace DCL.Settings.Configuration
             AudioMixer generalAudioMixer,
             QualitySettingsAsset qualitySettingsAsset,
             ControlsSettingsAsset controlsSettingsAsset,
+            ChatAudioSettingsAsset chatAudioSettingsAsset,
             ISystemMemoryCap systemMemoryCap,
             WorldVolumeMacBus worldVolumeMacBus = null)
         {
@@ -50,6 +52,7 @@ namespace DCL.Settings.Configuration
                                                        DropdownFeatures.WINDOW_MODE_FEATURE => new WindowModeSettingsController(viewInstance),
                                                        DropdownFeatures.FPS_LIMIT_FEATURE => new FpsLimitSettingsController(viewInstance),
                                                        DropdownFeatures.MEMORY_LIMIT_FEATURE => new MemoryLimitSettingController(viewInstance, systemMemoryCap),
+                                                       DropdownFeatures.CHAT_AUDIO_MODES_FEATURE => new ChatSoundsSettingsController(viewInstance, generalAudioMixer,chatAudioSettingsAsset),
                                                        // add other cases...
                                                        _ => throw new ArgumentOutOfRangeException(nameof(viewInstance))
                                                    };

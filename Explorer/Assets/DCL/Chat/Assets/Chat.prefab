@@ -284,6 +284,7 @@ MonoBehaviour:
   closeChatButton: {fileID: 1104092725699042680}
   chatMessageViewer: {fileID: 682925133115260549}
   chatReceiveMessageAudio: {fileID: 11400000, guid: 1c179628ffe816f4c9be1ba12630f97f, type: 2}
+  chatReceiveMentionMessageAudio: {fileID: 11400000, guid: c588f98cfe945864190c601f54ccb4d6, type: 2}
 --- !u!1001 &1890474067062928347
 PrefabInstance:
   m_ObjectHideFlags: 0

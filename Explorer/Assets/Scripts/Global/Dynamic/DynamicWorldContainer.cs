@@ -671,8 +671,7 @@ namespace Global.Dynamic
                     viewDependencies,
                     chatCommandsBus,
                     profileNameColorHelper,
-                    roomHub,
-                    profileRepository),
+                    assetsProvisioner),
                 new ExplorePanelPlugin(
                     assetsProvisioner,
                     mvcManager,
