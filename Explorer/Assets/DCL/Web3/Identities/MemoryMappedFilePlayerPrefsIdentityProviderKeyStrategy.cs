@@ -1,0 +1,166 @@
+using DCL.Diagnostics;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO.MemoryMappedFiles;
+using System.Threading;
+using UnityEngine.Pool;
+
+namespace DCL.Web3.Identities
+{
+    /// <summary>
+    /// Allows to run different profiles per each new launched instance of Explorer
+    /// </summary>
+    public class MemoryMappedFilePlayerPrefsIdentityProviderKeyStrategy : IPlayerPrefsIdentityProviderKeyStrategy
+    {
+        private const string MMF_NAME = "DCL_AppInstancesTracking";
+        private const string MUTEX_NAME = "DCL_AppInstancesTrackingMutex";
+        private const int MAX_INSTANCES_COUNT = 64;
+        private const int MUTEX_TIMEOUT_MILLISECONDS = 5000;
+
+        private readonly MemoryMappedFile memoryMappedFile;
+        private readonly Mutex mutex;
+        private readonly int selfPID;
+        private readonly string selfProcessName;
+
+        private string? storedKey;
+
+        public MemoryMappedFilePlayerPrefsIdentityProviderKeyStrategy()
+        {
+            memoryMappedFile = MemoryMappedFile.CreateOrOpen(MMF_NAME, MemoryMappedFileSize(), MemoryMappedFileAccess.ReadWrite);
+            mutex = new Mutex(false, MUTEX_NAME);
+            var self = Process.GetCurrentProcess();
+            selfProcessName = self.ProcessName;
+            selfPID = Process.GetCurrentProcess().Id;
+        }
+
+        public string PlayerPrefsKey
+        {
+            get
+            {
+                if (storedKey == null)
+                    RegisterSelf();
+
+                return storedKey!;
+            }
+        }
+
+        private void RegisterSelf()
+        {
+            using var accessor = memoryMappedFile.CreateViewAccessor(0, MemoryMappedFileSize());
+            mutex.WaitOne(MUTEX_TIMEOUT_MILLISECONDS);
+
+            try
+            {
+                using var _ = ListPool<Entry>.Get(out var list);
+
+                for (int i = 0; i < MAX_INSTANCES_COUNT; i++)
+                {
+                    accessor.Read(Entry.StructSize * i, out Entry entry);
+                    if (entry.PID == 0) break;
+
+                    // Get process if exists
+                    if (TryGetProcess(entry.PID, out var p) == false)
+                        continue;
+
+                    // Ensure the process is Explorer
+                    if (p?.ProcessName != selfProcessName)
+                        continue;
+
+                    list.Add(entry);
+                }
+
+                if (list.Count == MAX_INSTANCES_COUNT)
+                    ReportHub.LogException(
+                        new Exception($"Running max amount of instances {MAX_INSTANCES_COUNT}, please close one"),
+                        ReportCategory.PROFILE
+                    );
+
+                var selfEntry = Entry.NewSelf(selfPID, list.Count);
+                list.Add(selfEntry);
+                storedKey = KeyFromEntry(selfEntry);
+
+                // memset 0
+                ZeroOutMemory(accessor);
+                WriteToFile(list, accessor);
+                accessor.Flush();
+            }
+            finally { mutex.ReleaseMutex(); }
+        }
+
+        public void Dispose()
+        {
+            memoryMappedFile.Dispose();
+            mutex.Dispose();
+        }
+
+        private static void WriteToFile(IReadOnlyList<Entry> list, MemoryMappedViewAccessor accessor)
+        {
+            for (var i = 0; i < list.Count; i++)
+            {
+                int offset = Entry.StructSize * i;
+                var entry = list[i];
+                accessor.Write(offset, ref entry);
+            }
+        }
+
+        private static void ZeroOutMemory(MemoryMappedViewAccessor accessor)
+        {
+            var nullEntry = Entry.NULL_ENTRY;
+
+            for (int i = 0; i < MAX_INSTANCES_COUNT; i++)
+            {
+                int offset = Entry.StructSize * i;
+                accessor.Write(offset, ref nullEntry);
+            }
+        }
+
+        private static bool TryGetProcess(int pid, out Process? process)
+        {
+            try
+            {
+                process = Process.GetProcessById(pid);
+                return true;
+            }
+            catch (Exception)
+            {
+                process = null;
+                return false;
+            }
+        }
+
+        private static string KeyFromEntry(Entry entry)
+        {
+            if (entry.ProfileId == 0)
+                return IPlayerPrefsIdentityProviderKeyStrategy.DEFAULT_PREFS_KEY;
+
+            return IPlayerPrefsIdentityProviderKeyStrategy.DEFAULT_PREFS_KEY + entry.ProfileId;
+        }
+
+        private static int MemoryMappedFileSize() =>
+            Entry.StructSize * MAX_INSTANCES_COUNT;
+
+        private struct Entry
+        {
+            public static readonly Entry NULL_ENTRY = new () { ProfileId = 0, PID = 0 };
+
+            public int ProfileId;
+            public int PID;
+
+            public static Entry NewSelf(int pid, int currentInstancesCount) =>
+                new ()
+                {
+                    PID = pid,
+                    ProfileId = currentInstancesCount,
+                };
+
+            public static int StructSize
+            {
+                get
+                {
+                    unsafe { return sizeof(Entry); }
+                }
+            }
+        }
+    }
+}
