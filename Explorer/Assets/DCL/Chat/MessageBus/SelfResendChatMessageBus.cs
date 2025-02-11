@@ -63,10 +63,8 @@ namespace DCL.Chat.MessageBus
 
             Profile? ownProfile = await profileRepository.GetAsync(identity.Address, CancellationToken.None);
 
-            var isMention = false;
-
             if (ownProfile != null)
-                isMention = TryChangeUserMentionStyle(ref chatMessage, ownProfile.MentionName);
+                TryChangeUserMentionStyle(ref chatMessage, ownProfile.MentionName);
 
             MessageAdded?.Invoke(
                 channelId,
@@ -76,7 +74,7 @@ namespace DCL.Chat.MessageBus
                     identity.Address,
                     true,
                     ownProfile?.WalletId ?? null,
-                    isMention
+                    false
                 )
             );
         }
