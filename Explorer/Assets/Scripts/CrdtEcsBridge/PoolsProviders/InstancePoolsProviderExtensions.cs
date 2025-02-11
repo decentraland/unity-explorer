@@ -1,34 +1,44 @@
 ﻿using Microsoft.ClearScript.JavaScript;
-using System;
+using Microsoft.ClearScript.V8.SplitProxy;
 
 namespace CrdtEcsBridge.PoolsProviders
 {
     public static class InstancePoolsProviderExtensions
     {
-        public static void RenewCrdtRawDataPoolFromScriptArray(this IInstancePoolsProvider instancePoolsProvider,
-            ITypedArray<byte> scriptArray,
+        public static void RenewCrdtRawDataPoolFromScriptArray(
+            this IInstancePoolsProvider instancePoolsProvider, ITypedArray<byte> scriptArray,
             ref PoolableByteArray lastInput)
         {
-            var intLength = (int)scriptArray.Length;
+            EnsureArrayLength(instancePoolsProvider, (int)scriptArray.Length, ref lastInput);
 
+            // V8ScriptItem does not support zero length
+            if (scriptArray.Length > 0)
+                scriptArray.Read(0, scriptArray.Length, lastInput.Array, 0);
+        }
+
+        public static void RenewCrdtRawDataPoolFromScriptArray(
+            this IInstancePoolsProvider instancePoolsProvider, Uint8Array scriptArray,
+            ref PoolableByteArray lastInput)
+        {
+            EnsureArrayLength(instancePoolsProvider, scriptArray.Length, ref lastInput);
+            scriptArray.CopyTo(lastInput.Array);
+        }
+
+        private static void EnsureArrayLength(IInstancePoolsProvider instancePoolsProvider,
+            int scriptArrayLength, ref PoolableByteArray lastInput)
+        {
             // if the rented array can't keep the desired data, replace it
-            if (lastInput.Array.Length < intLength)
+            if (lastInput.Array.Length < scriptArrayLength)
             {
                 // Release the old one
                 lastInput.Dispose();
 
                 // Rent a new one
-                lastInput = instancePoolsProvider.GetAPIRawDataPool(intLength);
+                lastInput = instancePoolsProvider.GetAPIRawDataPool(scriptArrayLength);
             }
             // Otherwise set the desired length to the existing array so it provides a correct span
             else
-                lastInput.SetLength(intLength);
-
-            // V8ScriptItem does not support zero length
-            if (scriptArray.Length > 0)
-
-                // otherwise use the existing one
-                scriptArray.Read(0, scriptArray.Length, lastInput.Array, 0);
+                lastInput.SetLength(scriptArrayLength);
         }
 
         /// <summary>
