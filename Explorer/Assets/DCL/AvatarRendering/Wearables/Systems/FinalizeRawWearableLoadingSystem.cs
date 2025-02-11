@@ -71,12 +71,6 @@ namespace DCL.AvatarRendering.Wearables.Systems
             FinalizeAssetLoading<Texture2DData, GetTextureIntention>(defaultWearablesResolved, entity, ref promise, wearable, in bodyShape, index, result => result.ToWearableAsset(wearable));
         }
 
-        private static void SetWearableResult(IWearable wearable, StreamableLoadingResult<GLTFData> result, in BodyShape bodyShape, int index)
-            => SetWearableResult(wearable, result.ToWearableAsset(wearable), bodyShape, index);
-
-        private static void SetWearableResult(IWearable wearable, StreamableLoadingResult<Texture2DData> result, in BodyShape bodyShape, int index)
-            => SetWearableResult(wearable, result.ToWearableAsset(wearable), bodyShape, index);
-
         protected override bool CreateAssetPromiseIfRequired(IWearable component, in GetWearablesByPointersIntention intention, IPartitionComponent partitionComponent)
         {
             bool dtoHasContentDownloadUrl = !string.IsNullOrEmpty(component.DTO.ContentDownloadUrl);

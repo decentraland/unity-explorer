@@ -73,8 +73,5 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
             return false;
         }
-
-        private static void SetWearableResult(IWearable wearable, StreamableLoadingResult<AssetBundleData> result, in BodyShape bodyShape, int index)
-            => SetWearableResult(wearable, result.ToWearableAsset(wearable), bodyShape, index);
     }
 }
