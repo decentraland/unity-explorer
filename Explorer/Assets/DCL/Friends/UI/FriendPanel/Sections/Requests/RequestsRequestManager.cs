@@ -32,7 +32,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             IProfileThumbnailCache profileThumbnailCache,
             int pageSize,
             LoopListView2 loopListView)
-            : base(friendsService, friendEventBus, webRequestController, profileThumbnailCache, pageSize, REQUEST_THRESHOLD, FriendPanelStatus.RECEIVED, FriendPanelStatus.SENT, STATUS_ELEMENT_INDEX, EMPTY_ELEMENT_INDEX, USER_ELEMENT_INDEX)
+            : base(friendsService, friendEventBus, webRequestController, profileThumbnailCache, pageSize, REQUEST_THRESHOLD, FriendPanelStatus.RECEIVED, FriendPanelStatus.SENT, STATUS_ELEMENT_INDEX, EMPTY_ELEMENT_INDEX, USER_ELEMENT_INDEX, true)
         {
             this.loopListView = loopListView;
 

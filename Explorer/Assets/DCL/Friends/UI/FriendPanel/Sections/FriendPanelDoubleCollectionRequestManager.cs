@@ -13,6 +13,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections
         protected readonly IFriendsEventBus friendEventBus;
         private readonly int pageSize;
         private readonly int elementsMissingThreshold;
+        private readonly bool disablePagination;
 
         private readonly IWebRequestController webRequestController;
         private readonly IProfileThumbnailCache profileThumbnailCache;
@@ -48,7 +49,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections
             FriendPanelStatus secondCollectionStatus,
             int statusElementIndex,
             int emptyElementIndex,
-            int userElementIndex)
+            int userElementIndex,
+            bool disablePagination = false)
         {
             this.friendsService = friendsService;
             this.friendEventBus = friendEventBus;
@@ -61,6 +63,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections
             this.statusElementIndex = statusElementIndex;
             this.emptyElementIndex = emptyElementIndex;
             this.userElementIndex = userElementIndex;
+            this.disablePagination = disablePagination;
         }
 
         public virtual void Dispose()
@@ -132,11 +135,11 @@ namespace DCL.Friends.UI.FriendPanel.Sections
                     friendListUserView.MainButtonClicked += profile => ElementClicked?.Invoke(profile);
                     friendListUserView.RemoveSpriteLoadedListeners();
                     friendListUserView.SpriteLoaded += sprite => profileThumbnailCache.SetThumbnail(friendListUserView.UserProfile.Address.ToString(), sprite);
+
+                    if (!disablePagination && collectionIndex >= GetSecondCollectionCount() - elementsMissingThreshold && totalFetched < totalToFetch && !isFetching)
+                        FetchNewDataAsync(loopListView, fetchNewDataCts.Token).Forget();
                 }
             }
-
-            if (GetSecondCollectionCount() > 0 && index - onlineFriendMarker - 2 >= totalFetched - elementsMissingThreshold && totalFetched < totalToFetch && !isFetching)
-                FetchNewDataAsync(loopListView, fetchNewDataCts.Token).Forget();
 
             return listItem;
         }
@@ -149,7 +152,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections
             totalToFetch = await FetchDataAsync(pageNumber, pageSize, ct);
             totalFetched = GetFirstCollectionCount() + GetSecondCollectionCount();
 
-            loopListView.SetListItemCount(GetElementsNumber());
+            loopListView.SetListItemCount(GetElementsNumber(), false);
+            loopListView.RefreshAllShownItem();
 
             isFetching = false;
         }
