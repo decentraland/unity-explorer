@@ -62,7 +62,9 @@ namespace DCL.Nametags
         private float additionalHeight;
         private Color textColor = new (1, 1, 1, 1);
         private Color usernameTextColor = new (1, 1, 1, 1);
-        private readonly Color defaultBackgroundColor = new (1, 1, 1, 1);
+        private Color backgroundColor = new (1, 1, 1, 1);
+        private readonly Color defaultBackgroundColor = new (0.08627f, 0.08235f, 0.094117f, 1);
+        private readonly Color mentionedBackgroundColor = new (0.227f, 0.0588f, 0.3137f, 1);
 
         private ChatBubbleConfigurationSO? chatBubbleConfiguration;
         private CancellationTokenSource? cts;
@@ -121,9 +123,11 @@ namespace DCL.Nametags
             alpha = alphaOverDistanceCurve.Evaluate((distance - fullOpacityMaxDistance) / (maxDistance - fullOpacityMaxDistance));
             textColor.a = distance > fullOpacityMaxDistance ? alpha : 1;
             usernameTextColor.a = distance > fullOpacityMaxDistance ? alpha : 1;
-            Color backgroundColor = Background.color;
+            backgroundColor = Background.color;
             backgroundColor.a = distance > fullOpacityMaxDistance ? alpha : 1;
-            BubblePeak.color = backgroundColor;
+            var bubblePeakColor = BubblePeak.color;
+            bubblePeakColor.a = distance > fullOpacityMaxDistance ? alpha : 1;
+            BubblePeak.color = bubblePeakColor;
             Background.color = backgroundColor;
             Outline.color = backgroundColor;
             Username.color = usernameTextColor;
@@ -190,9 +194,10 @@ namespace DCL.Nametags
             isAnimatingIn = true;
             MessageContent.gameObject.SetActive(true);
             BubblePeak.gameObject.SetActive(true);
+            BubblePeak.color = isMention? mentionedBackgroundColor : defaultBackgroundColor;
             Background.gameObject.SetActive(!isMention);
             Outline.gameObject.SetActive(isMention);
-            Background.color = defaultBackgroundColor;
+            Background.color = backgroundColor;
 
             //Set message content and calculate the preferred size of the background with the addition of a margin
             MessageContent.text = messageContent;
@@ -229,9 +234,6 @@ namespace DCL.Nametags
                 verifiedIconFinalPosition.y = usernameFinalPosition.y;
                 VerifiedIcon.DOAnchorPos(verifiedIconFinalPosition, animationInDuration).SetEase(backgroundEaseAnimationCurve).ToUniTask(cancellationToken: ct);
             }
-
-            Background.gameObject.SetActive(!isMention);
-            Outline.gameObject.SetActive(isMention);
 
             //Start all animations
             await UniTask.WhenAll(

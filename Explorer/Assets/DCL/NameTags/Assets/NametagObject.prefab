@@ -57,7 +57,6 @@ MonoBehaviour:
   <MessageContent>k__BackingField: {fileID: 1264101715097455992}
   <Background>k__BackingField: {fileID: 2640253797295083812}
   <Outline>k__BackingField: {fileID: 7391796993993378391}
-  <OutlineObject>k__BackingField: {fileID: 7300897649141206058}
   <BubblePeak>k__BackingField: {fileID: 620214271584746127}
   <MessageContentRectTransform>k__BackingField: {fileID: 4776442481111019983}
   <backgroundEaseAnimationCurve>k__BackingField:
@@ -884,7 +883,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_Sprite: {fileID: 21300000, guid: fa91891c8f2c04b8a92dca7580141187, type: 3}
-  m_Color: {r: 0.08627451, g: 0.08235294, b: 0.09411765, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 1
