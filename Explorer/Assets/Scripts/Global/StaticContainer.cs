@@ -190,7 +190,6 @@ namespace Global
                 new ConcurrentLoadingPerformanceBudget(staticSettings.AssetsLoadingBudget),
                 new FrameTimeCapBudget(staticSettings.FrameTimeCap, profilingProvider),
                 new MemoryBudget(memoryCap, profilingProvider, staticSettings.MemoryThresholds),
-                new SceneAssetLock(),
                 new SceneMapping()
             );
 

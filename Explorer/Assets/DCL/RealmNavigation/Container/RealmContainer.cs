@@ -40,7 +40,7 @@ namespace DCL.RealmNavigation
             FeatureFlagsCache featureFlagsCache,
             IAppArgs appArgs)
         {
-            var teleportController = new TeleportController(staticContainer.SceneReadinessReportQueue, staticContainer.SingletonSharedDependencies.SceneAssetLock);
+            var teleportController = new TeleportController(staticContainer.SceneReadinessReportQueue);
 
             var retrieveSceneFromFixedRealm = new RetrieveSceneFromFixedRealm();
             var retrieveSceneFromVolatileWorld = new RetrieveSceneFromVolatileWorld(staticContainer.RealmData);
@@ -62,7 +62,6 @@ namespace DCL.RealmNavigation
                 staticContainer.RealmData,
                 staticContainer.ScenesCache,
                 staticContainer.PartitionDataContainer,
-                staticContainer.SingletonSharedDependencies.SceneAssetLock,
                 staticContainer.ComponentsContainer.ComponentPoolsRegistry
                                .GetReferenceTypePool<PartitionComponent>(),
                 realmNavigatorDebugView,
