@@ -12,6 +12,7 @@ using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using SceneRunner.Debugging;
 using System.Threading;
 using DCL.FeatureFlags;
+using Global.Versioning;
 using UnityEngine.UIElements;
 using Utility;
 
@@ -38,6 +39,7 @@ namespace Global.Dynamic
             Entity playerEntity,
             IAppArgs appArgs,
             ICoroutineRunner coroutineRunner,
+            DCLVersion dclVersion,
             CancellationToken ct);
 
         UniTask<bool> InitializePluginsAsync(StaticContainer staticContainer, DynamicWorldContainer dynamicWorldContainer,
