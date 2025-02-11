@@ -20,7 +20,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         private readonly LoopListView2 loopListView;
         private readonly IProfileRepository profileRepository;
         private readonly CancellationTokenSource addFriendProfileCts = new ();
-        private readonly Dictionary<FriendProfile, OnlineStatus> friendsOnlineStatus = new ();
+        private readonly IFriendOnlineStatusCache friendOnlineStatusCache;
         private readonly List<FriendProfile> onlineFriends = new ();
         private readonly List<FriendProfile> offlineFriends = new ();
 
@@ -32,11 +32,13 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             IWebRequestController webRequestController,
             IProfileThumbnailCache profileThumbnailCache,
             IProfileRepository profileRepository,
+            IFriendOnlineStatusCache friendOnlineStatusCache,
             LoopListView2 loopListView,
             int pageSize,
             int elementsMissingThreshold) : base(friendsService, friendEventBus, webRequestController, profileThumbnailCache, pageSize, elementsMissingThreshold, FriendPanelStatus.ONLINE, FriendPanelStatus.OFFLINE, STATUS_ELEMENT_INDEX, EMPTY_ELEMENT_INDEX, USER_ELEMENT_INDEX)
         {
             this.profileRepository = profileRepository;
+            this.friendOnlineStatusCache = friendOnlineStatusCache;
             this.loopListView = loopListView;
 
             friendEventBus.OnYouAcceptedFriendRequestReceivedFromOtherUser += FriendRequestAccepted;
@@ -44,9 +46,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             friendEventBus.OnYouRemovedFriend += RemoveFriend;
             friendEventBus.OnOtherUserRemovedTheFriendship += RemoveFriend;
 
-            friendEventBus.OnFriendConnected += FriendBecameOnline;
-            friendEventBus.OnFriendAway += FriendBecameAway;
-            friendEventBus.OnFriendDisconnected += FriendBecameOffline;
+            friendOnlineStatusCache.OnFriendBecameOnline += FriendBecameOnline;
+            friendOnlineStatusCache.OnFriendBecameOffline += FriendBecameOffline;
         }
 
         public override void Dispose()
@@ -57,37 +58,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             friendEventBus.OnOtherUserRemovedTheFriendship -= RemoveFriend;
             addFriendProfileCts.SafeCancelAndDispose();
 
-            friendEventBus.OnFriendConnected -= FriendBecameOnline;
-            friendEventBus.OnFriendAway -= FriendBecameAway;
-            friendEventBus.OnFriendDisconnected -= FriendBecameOffline;
-        }
-
-        private void FriendChangedOnlineStatus(FriendProfile friendProfile, OnlineStatus onlineStatus)
-        {
-            if (friendsOnlineStatus.TryGetValue(friendProfile, out OnlineStatus currentStatus) && currentStatus == onlineStatus)
-            {
-                Debug.Log($"Received duplicate connectivity update for User {friendProfile.Name} with status {onlineStatus}");
-                return;
-            }
-
-            Debug.Log($"User {friendProfile.Name} changed status to {onlineStatus}");
-
-            if (onlineStatus == OnlineStatus.OFFLINE)
-            {
-                onlineFriends.Remove(friendProfile);
-                if (!offlineFriends.Contains(friendProfile))
-                    AddNewFriendProfile(friendProfile, onlineStatus);
-            }
-            else
-            {
-                offlineFriends.Remove(friendProfile);
-                if (!onlineFriends.Contains(friendProfile))
-                    AddNewFriendProfile(friendProfile, onlineStatus);
-            }
-
-            friendsOnlineStatus[friendProfile] = onlineStatus;
-
-            RefreshLoopList();
+            friendOnlineStatusCache.OnFriendBecameOnline -= FriendBecameOnline;
+            friendOnlineStatusCache.OnFriendBecameOffline -= FriendBecameOffline;
         }
 
         private void AddNewFriendProfile(FriendProfile friendProfile, OnlineStatus onlineStatus)
@@ -111,14 +83,23 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             );
         }
 
-        private void FriendBecameOnline(FriendProfile friendProfile) =>
-            FriendChangedOnlineStatus(friendProfile, OnlineStatus.ONLINE);
+        private void FriendBecameOnline(FriendProfile friendProfile)
+        {
+            offlineFriends.Remove(friendProfile);
+            if (!onlineFriends.Contains(friendProfile))
+                AddNewFriendProfile(friendProfile, OnlineStatus.ONLINE);
 
-        private void FriendBecameAway(FriendProfile friendProfile) =>
-            FriendChangedOnlineStatus(friendProfile, OnlineStatus.AWAY);
+            RefreshLoopList();
+        }
 
-        private void FriendBecameOffline(FriendProfile friendProfile) =>
-            FriendChangedOnlineStatus(friendProfile, OnlineStatus.OFFLINE);
+        private void FriendBecameOffline(FriendProfile friendProfile)
+        {
+            onlineFriends.Remove(friendProfile);
+            if (!offlineFriends.Contains(friendProfile))
+                AddNewFriendProfile(friendProfile, OnlineStatus.OFFLINE);
+
+            RefreshLoopList();
+        }
 
         private void RefreshLoopList()
         {
@@ -147,25 +128,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 
         private void RemoveFriend(string userid)
         {
-            onlineFriends.RemoveAll(friendProfile =>
-            {
-                bool toRemove = friendProfile.Address.ToString().Equals(userid);
-
-                if (toRemove)
-                    friendsOnlineStatus.Remove(friendProfile);
-
-                return toRemove;
-            });
-
-            offlineFriends.RemoveAll(friendProfile =>
-            {
-                bool toRemove = friendProfile.Address.ToString().Equals(userid);
-
-                if (toRemove)
-                    friendsOnlineStatus.Remove(friendProfile);
-
-                return toRemove;
-            });
+            onlineFriends.RemoveAll(friendProfile => friendProfile.Address.ToString().Equals(userid));
+            offlineFriends.RemoveAll(friendProfile => friendProfile.Address.ToString().Equals(userid));
             RefreshLoopList();
         }
 
@@ -191,8 +155,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 
             elementView.ToggleOnlineStatus(true);
 
-            if (friendsOnlineStatus.TryGetValue(elementView.UserProfile, out OnlineStatus onlineStatus))
-                elementView.SetOnlineStatus(onlineStatus);
+            elementView.SetOnlineStatus(friendOnlineStatusCache.GetFriendStatus(elementView.UserProfile));
         }
 
         protected override void ResetCollections()
@@ -202,7 +165,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         }
 
         public bool IsFriendInGame(FriendProfile friendProfile) =>
-            friendsOnlineStatus.TryGetValue(friendProfile, out OnlineStatus onlineStatus) && onlineStatus != OnlineStatus.OFFLINE;
+            friendOnlineStatusCache.GetFriendStatus(friendProfile) != OnlineStatus.OFFLINE;
 
         protected override async UniTask<int> FetchDataAsync(int pageNumber, int pageSize, CancellationToken ct)
         {

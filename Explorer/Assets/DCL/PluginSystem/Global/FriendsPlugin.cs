@@ -135,6 +135,8 @@ namespace DCL.PluginSystem.Global
 
             bool isConnectivityStatusEnabled = IsConnectivityStatusEnabled();
 
+            IFriendOnlineStatusCache friendOnlineStatusCache = new FriendOnlineStatusCache(friendEventBus, isConnectivityStatusEnabled);
+
             if (isConnectivityStatusEnabled)
                 friendsService.SubscribeToConnectivityStatusAsync(cts.Token).Forget();
 
@@ -160,6 +162,7 @@ namespace DCL.PluginSystem.Global
                 passportBridge,
                 onlineUsersProvider,
                 realmNavigator,
+                friendOnlineStatusCache,
                 includeUserBlocking,
                 isConnectivityStatusEnabled);
 
@@ -184,9 +187,8 @@ namespace DCL.PluginSystem.Global
             mvcManager.RegisterController(friendRequestController);
 
             var friendPushNotificationController = new FriendPushNotificationController(() => mainUIView.FriendPushNotificationView,
-                friendEventBus,
-                profileThumbnailCache,
-                isConnectivityStatusEnabled);
+                friendOnlineStatusCache,
+                profileThumbnailCache);
 
             mvcManager.RegisterController(friendPushNotificationController);
 
