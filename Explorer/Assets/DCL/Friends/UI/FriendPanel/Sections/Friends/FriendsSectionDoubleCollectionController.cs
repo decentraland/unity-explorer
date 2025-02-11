@@ -15,7 +15,6 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 {
     public class FriendsSectionDoubleCollectionController : FriendPanelSectionDoubleCollectionController<FriendsSectionView, FriendListPagedDoubleCollectionRequestManager, FriendListUserView>
     {
-        private readonly IMVCManager mvcManager;
         private readonly IPassportBridge passportBridge;
         private readonly IProfileThumbnailCache profileThumbnailCache;
         private readonly UserProfileContextMenuControlSettings userProfileContextMenuControlSettings;
@@ -24,7 +23,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         private readonly bool includeUserBlocking;
         private readonly string[] getUserPositionBuffer = new string[1];
 
-        private CancellationTokenSource? jumpToFriendLocationCts;
+        private CancellationTokenSource jumpToFriendLocationCts = new ();
 
         public FriendsSectionDoubleCollectionController(FriendsSectionView view,
             IFriendsService friendsService,
@@ -40,7 +39,6 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             bool includeUserBlocking)
             : base(view, friendsService, friendEventBus, web3IdentityCache, mvcManager, doubleCollectionRequestManager)
         {
-            this.mvcManager = mvcManager;
             this.profileThumbnailCache = profileThumbnailCache;
             this.passportBridge = passportBridge;
             this.onlineUsersProvider = onlineUsersProvider;
@@ -76,6 +74,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 
         private void ContextMenuClicked(FriendProfile friendProfile, Vector2 buttonPosition, FriendListUserView elementView)
         {
+            jumpToFriendLocationCts = jumpToFriendLocationCts.SafeRestart();
+
             userProfileContextMenuControlSettings.SetInitialData(friendProfile.Name, friendProfile.Address, friendProfile.HasClaimedName,
                 view.ChatEntryConfiguration.GetNameColor(friendProfile.Name), UserProfileContextMenuControlSettings.FriendshipStatus.FRIEND,
                 profileThumbnailCache.GetThumbnail(friendProfile.Address.ToString()));
@@ -94,7 +94,10 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
                       .Forget();
         }
 
-        private void JumpInClicked(FriendProfile profile) =>
-            FriendListSectionUtilities.JumpToFriendLocation(profile, jumpToFriendLocationCts, getUserPositionBuffer, onlineUsersProvider, realmNavigator);
+        private void JumpInClicked(FriendProfile profile)
+        {
+            jumpToFriendLocationCts = jumpToFriendLocationCts.SafeRestart();
+            FriendListSectionUtilities.JumpToFriendLocation(profile.Address, jumpToFriendLocationCts, getUserPositionBuffer, onlineUsersProvider, realmNavigator);
+        }
     }
 }

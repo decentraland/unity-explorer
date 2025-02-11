@@ -525,6 +525,7 @@ namespace Global.Dynamic
             notificationsRequestController.StartGettingNewNotificationsOverTimeAsync(ct).SuppressCancellationThrow().Forget();
 
             var friendServiceProxy = new ObjectProxy<IFriendsService>();
+            var friendOnlineStatusCacheProxy = new ObjectProxy<IFriendOnlineStatusCache>();
             IProfileThumbnailCache profileThumbnailCache = new ProfileThumbnailCache(staticContainer.WebRequestsContainer.WebRequestController);
             IChatLifecycleBusController chatLifecycleBusController = new ChatLifecycleBusController(mvcManager);
 
@@ -718,8 +719,11 @@ namespace Global.Dynamic
                     playerEntity,
                     includeCameraReel,
                     friendServiceProxy,
+                    friendOnlineStatusCacheProxy,
                     clipboard,
                     profileThumbnailCache,
+                    onlineUsersProvider,
+                    realmNavigator,
                     includeFriends,
                     includeUserBlocking
                 ),
@@ -775,6 +779,7 @@ namespace Global.Dynamic
                     selfProfile,
                     new MVCPassportBridge(mvcManager),
                     friendServiceProxy,
+                    friendOnlineStatusCacheProxy,
                     profileThumbnailCache,
                     chatLifecycleBusController,
                     notificationsBusController,

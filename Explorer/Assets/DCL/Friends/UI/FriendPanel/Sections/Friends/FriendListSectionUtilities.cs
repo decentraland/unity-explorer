@@ -16,7 +16,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         private const int CONTEXT_MENU_SEPARATOR_HEIGHT = 20;
         private const int CONTEXT_MENU_ELEMENTS_SPACING = 5;
 
-        internal static void JumpToFriendLocation(FriendProfile profile,
+        public static void JumpToFriendLocation(string targetUserAddress,
             CancellationTokenSource? jumpToFriendLocationCts,
             string[] getUserPositionBuffer,
             IOnlineUsersProvider onlineUsersProvider,
@@ -28,7 +28,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 
             async UniTaskVoid JumpToFriendLocationAsync(CancellationToken ct = default)
             {
-                getUserPositionBuffer[0] = profile.Address.ToString();
+                getUserPositionBuffer[0] = targetUserAddress;
 
                 IReadOnlyCollection<OnlineUserData> onlineData = await onlineUsersProvider.GetAsync(getUserPositionBuffer, ct);
 
@@ -60,7 +60,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             if (isFriendInGame)
                 contextMenu.AddControl(new ButtonContextMenuControlSettings(contextMenuSettings.JumpToLocationText,
                     contextMenuSettings.JumpToLocationSprite,
-                    () => JumpToFriendLocation(friendProfile, jumpToFriendLocationCts, getUserPositionBuffer, onlineUsersProvider, realmNavigator)));
+                    () => JumpToFriendLocation(friendProfile.Address, jumpToFriendLocationCts, getUserPositionBuffer, onlineUsersProvider, realmNavigator)));
 
             if (includeUserBlocking)
                 contextMenu.AddControl(new ButtonContextMenuControlSettings(contextMenuSettings.BlockText, contextMenuSettings.BlockSprite, () => Debug.Log($"Block {friendProfile.Address.ToString()}")));

@@ -4619,6 +4619,8 @@ MonoBehaviour:
   <ContextMenuButton>k__BackingField: {fileID: 835179928905091827}
   <BlockSprite>k__BackingField: {fileID: 21300000, guid: 493ac3c2397b64caea2decabee6048e8, type: 3}
   <BlockText>k__BackingField: Block
+  <JumpInSprite>k__BackingField: {fileID: 21300000, guid: c5f0f436601ac144a91a6d6d2e2a2677, type: 3}
+  <JumpInText>k__BackingField: Jump to Location
 --- !u!1 &7226744569022002591
 GameObject:
   m_ObjectHideFlags: 0
@@ -5689,7 +5691,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 2756838715054702078}
   m_HandleRect: {fileID: 1242067529493426053}
   m_Direction: 2
-  m_Value: 1
+  m_Value: 0
   m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:

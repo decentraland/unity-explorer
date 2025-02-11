@@ -10,6 +10,8 @@ using DCL.Clipboard;
 using DCL.Diagnostics;
 using DCL.Friends;
 using DCL.Friends.UI;
+using DCL.Friends.UI.FriendPanel;
+using DCL.Friends.UI.FriendPanel.Sections.Friends;
 using DCL.Friends.UI.Requests;
 using DCL.Input;
 using DCL.Input.Component;
@@ -18,6 +20,7 @@ using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using DCL.InWorldCamera.PhotoDetail;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Multiplayer.Connectivity;
 using DCL.Multiplayer.Profiles.Poses;
 using DCL.NotificationsBusController.NotificationsBus;
 using DCL.NotificationsBusController.NotificationTypes;
@@ -31,6 +34,7 @@ using DCL.UI.GenericContextMenu.Controls.Configs;
 using DCL.Utilities;
 using DCL.Web3;
 using DCL.WebRequests;
+using ECS.SceneLifeCycle.Realm;
 using MVC;
 using System;
 using System.Collections.Generic;
@@ -82,6 +86,7 @@ namespace DCL.Passport
         private readonly ICameraReelStorageService cameraReelStorageService;
         private readonly ICameraReelScreenshotsStorage cameraReelScreenshotsStorage;
         private readonly ObjectProxy<IFriendsService> friendServiceProxy;
+        private readonly ObjectProxy<IFriendOnlineStatusCache> friendOnlineStatusCacheProxy;
         private readonly IProfileThumbnailCache profileThumbnailCache;
         private readonly Dictionary<ImageView, ImageController> mutualFriendImages = new ();
         private readonly int gridLayoutFixedColumnCount;
@@ -91,6 +96,9 @@ namespace DCL.Passport
         private readonly bool enableFriendshipInteractions;
         private readonly bool includeUserBlocking;
         private readonly UserProfileContextMenuControlSettings userProfileContextMenuControlSettings;
+        private readonly string[] getUserPositionBuffer = new string[1];
+        private readonly IOnlineUsersProvider onlineUsersProvider;
+        private readonly IRealmNavigator realmNavigator;
 
         private CameraReelGalleryController? cameraReelGalleryController;
         private Profile? ownProfile;
@@ -110,6 +118,7 @@ namespace DCL.Passport
         private GenericContextMenu contextMenu;
 
         private UniTaskCompletionSource? contextMenuCloseTask;
+        private CancellationTokenSource jumpToFriendLocationCts = new ();
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
@@ -142,8 +151,11 @@ namespace DCL.Passport
             ICameraReelStorageService cameraReelStorageService,
             ICameraReelScreenshotsStorage cameraReelScreenshotsStorage,
             ObjectProxy<IFriendsService> friendServiceProxy,
+            ObjectProxy<IFriendOnlineStatusCache> friendOnlineStatusCacheProxy,
             ISystemClipboard systemClipboard,
             IProfileThumbnailCache profileThumbnailCache,
+            IOnlineUsersProvider onlineUsersProvider,
+            IRealmNavigator realmNavigator,
             int gridLayoutFixedColumnCount,
             int thumbnailHeight,
             int thumbnailWidth,
@@ -172,7 +184,10 @@ namespace DCL.Passport
             this.cameraReelStorageService = cameraReelStorageService;
             this.cameraReelScreenshotsStorage = cameraReelScreenshotsStorage;
             this.friendServiceProxy = friendServiceProxy;
+            this.friendOnlineStatusCacheProxy = friendOnlineStatusCacheProxy;
             this.profileThumbnailCache = profileThumbnailCache;
+            this.onlineUsersProvider = onlineUsersProvider;
+            this.realmNavigator = realmNavigator;
             this.gridLayoutFixedColumnCount = gridLayoutFixedColumnCount;
             this.thumbnailHeight = thumbnailHeight;
             this.thumbnailWidth = thumbnailWidth;
@@ -239,6 +254,7 @@ namespace DCL.Passport
         private void ShowContextMenu()
         {
             contextMenuCloseTask = new UniTaskCompletionSource();
+            jumpToFriendLocationCts = jumpToFriendLocationCts.SafeRestart();
             mvcManager.ShowAsync(GenericContextMenuController.IssueCommand(new GenericContextMenuParameter(contextMenu, viewInstance!.ContextMenuButton.transform.position, closeTask: contextMenuCloseTask?.Task))).Forget();
         }
 
@@ -315,6 +331,7 @@ namespace DCL.Passport
             friendshipOperationCts.SafeCancelAndDispose();
             fetchMutualFriendsCts?.SafeCancelAndDispose();
             photoLoadingCts.SafeCancelAndDispose();
+            jumpToFriendLocationCts.SafeCancelAndDispose();
 
             passportProfileInfoController.OnProfilePublished -= OnProfilePublished;
             passportProfileInfoController.PublishError -= OnPublishError;
@@ -535,6 +552,9 @@ namespace DCL.Passport
             contextMenu = new GenericContextMenu(CONTEXT_MENU_WIDTH, CONTEXT_MENU_OFFSET, CONTEXT_MENU_VERTICAL_LAYOUT_PADDING, CONTEXT_MENU_ELEMENTS_SPACING)
                                      .AddControl(userProfileContextMenuControlSettings)
                                      .AddControl(new SeparatorContextMenuControlSettings(CONTEXT_MENU_SEPARATOR_HEIGHT, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.left, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.right));
+
+            if (friendOnlineStatusCacheProxy.Object!.GetFriendStatus(inputData.UserId) != OnlineStatus.OFFLINE)
+                contextMenu.AddControl(new ButtonContextMenuControlSettings(viewInstance.JumpInText, viewInstance.JumpInSprite, () => FriendListSectionUtilities.JumpToFriendLocation(profile.UserId, jumpToFriendLocationCts, getUserPositionBuffer, onlineUsersProvider, realmNavigator)));
 
             if (friendshipStatus != FriendshipStatus.BLOCKED && includeUserBlocking)
                 contextMenu.AddControl(new ButtonContextMenuControlSettings(viewInstance.BlockText, viewInstance.BlockSprite, () => Debug.Log($"Block {currentUserId}")));

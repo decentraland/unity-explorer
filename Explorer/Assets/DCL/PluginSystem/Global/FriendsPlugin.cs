@@ -47,6 +47,7 @@ namespace DCL.PluginSystem.Global
         private readonly ISelfProfile selfProfile;
         private readonly IPassportBridge passportBridge;
         private readonly ObjectProxy<IFriendsService> friendServiceProxy;
+        private readonly ObjectProxy<IFriendOnlineStatusCache> friendOnlineStatusCacheProxy;
         private readonly IProfileThumbnailCache profileThumbnailCache;
         private readonly IChatLifecycleBusController chatLifecycleBusController;
         private readonly IOnlineUsersProvider onlineUsersProvider;
@@ -76,6 +77,7 @@ namespace DCL.PluginSystem.Global
             ISelfProfile selfProfile,
             IPassportBridge passportBridge,
             ObjectProxy<IFriendsService> friendServiceProxy,
+            ObjectProxy<IFriendOnlineStatusCache> friendOnlineStatusCacheProxy,
             IProfileThumbnailCache profileThumbnailCache,
             IChatLifecycleBusController chatLifecycleBusController,
             INotificationsBusController notificationsBusController,
@@ -99,6 +101,7 @@ namespace DCL.PluginSystem.Global
             this.selfProfile = selfProfile;
             this.passportBridge = passportBridge;
             this.friendServiceProxy = friendServiceProxy;
+            this.friendOnlineStatusCacheProxy = friendOnlineStatusCacheProxy;
             this.profileThumbnailCache = profileThumbnailCache;
             this.chatLifecycleBusController = chatLifecycleBusController;
             this.onlineUsersProvider = onlineUsersProvider;
@@ -136,6 +139,7 @@ namespace DCL.PluginSystem.Global
             bool isConnectivityStatusEnabled = IsConnectivityStatusEnabled();
 
             IFriendOnlineStatusCache friendOnlineStatusCache = new FriendOnlineStatusCache(friendEventBus, isConnectivityStatusEnabled);
+            friendOnlineStatusCacheProxy.SetObject(friendOnlineStatusCache);
 
             if (isConnectivityStatusEnabled)
                 friendsService.SubscribeToConnectivityStatusAsync(cts.Token).Forget();

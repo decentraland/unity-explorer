@@ -14,6 +14,7 @@ using DCL.Friends;
 using DCL.Input;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Multiplayer.Connectivity;
 using DCL.Multiplayer.Profiles.Poses;
 using DCL.NotificationsBusController.NotificationsBus;
 using DCL.Passport;
@@ -22,6 +23,7 @@ using DCL.Profiles.Self;
 using DCL.Utilities;
 using DCL.WebRequests;
 using ECS;
+using ECS.SceneLifeCycle.Realm;
 using MVC;
 using System.Threading;
 using UnityEngine;
@@ -54,8 +56,11 @@ namespace DCL.PluginSystem.Global
         private readonly Entity playerEntity;
         private readonly bool enableCameraReel;
         private readonly ObjectProxy<IFriendsService> friendsService;
+        private readonly ObjectProxy<IFriendOnlineStatusCache> friendOnlineStatusCache;
         private readonly ISystemClipboard systemClipboard;
         private readonly IProfileThumbnailCache profileThumbnailCache;
+        private readonly IOnlineUsersProvider onlineUsersProvider;
+        private readonly IRealmNavigator realmNavigator;
         private readonly bool enableFriends;
         private readonly bool includeUserBlocking;
 
@@ -85,8 +90,11 @@ namespace DCL.PluginSystem.Global
             Entity playerEntity,
             bool enableCameraReel,
             ObjectProxy<IFriendsService> friendsService,
+            ObjectProxy<IFriendOnlineStatusCache> friendOnlineStatusCacheProxy,
             ISystemClipboard systemClipboard,
             IProfileThumbnailCache profileThumbnailCache,
+            IOnlineUsersProvider onlineUsersProvider,
+            IRealmNavigator realmNavigator,
             bool enableFriends,
             bool includeUserBlocking
         )
@@ -114,8 +122,11 @@ namespace DCL.PluginSystem.Global
             this.cameraReelScreenshotsStorage = cameraReelScreenshotsStorage;
             this.enableCameraReel = enableCameraReel;
             this.friendsService = friendsService;
+            this.friendOnlineStatusCache = friendOnlineStatusCacheProxy;
             this.systemClipboard = systemClipboard;
             this.profileThumbnailCache = profileThumbnailCache;
+            this.onlineUsersProvider = onlineUsersProvider;
+            this.realmNavigator = realmNavigator;
             this.enableFriends = enableFriends;
             this.includeUserBlocking = includeUserBlocking;
         }
@@ -164,8 +175,11 @@ namespace DCL.PluginSystem.Global
                 cameraReelStorageService,
                 cameraReelScreenshotsStorage,
                 friendsService,
+                friendOnlineStatusCache,
                 systemClipboard,
                 profileThumbnailCache,
+                onlineUsersProvider,
+                realmNavigator,
                 passportSettings.GridLayoutFixedColumnCount,
                 passportSettings.ThumbnailHeight,
                 passportSettings.ThumbnailWidth,

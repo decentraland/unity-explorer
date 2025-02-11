@@ -112,6 +112,12 @@ namespace DCL.Passport
         [field: SerializeField]
         public string BlockText { get; private set; } = "Block";
 
+        [field: SerializeField]
+        public Sprite JumpInSprite { get; private set; }
+
+        [field: SerializeField]
+        public string JumpInText { get; private set; } = "Jump to Location";
+
         [Serializable]
         public struct MutualFriendsConfig
         {

@@ -49,6 +49,9 @@ namespace DCL.Friends
         public OnlineStatus GetFriendStatus(FriendProfile friendProfile) =>
             friendsOnlineStatus.GetValueOrDefault(friendProfile, OnlineStatus.OFFLINE);
 
+        public OnlineStatus GetFriendStatus(string friendAddress) =>
+            GetFriendStatus(new FriendProfile(new Web3Address(friendAddress), string.Empty, false, URLAddress.EMPTY));
+
         private bool FriendOnlineStatusChanged(FriendProfile friendProfile, OnlineStatus onlineStatus)
         {
             if (friendsOnlineStatus.TryGetValue(friendProfile, out OnlineStatus currentStatus) && currentStatus == onlineStatus)

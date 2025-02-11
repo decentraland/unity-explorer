@@ -10,5 +10,6 @@ namespace DCL.Friends
         event Action<FriendProfile>? OnFriendBecameOffline;
 
         OnlineStatus GetFriendStatus(FriendProfile friendProfile);
+        OnlineStatus GetFriendStatus(string friendAddress);
     }
 }

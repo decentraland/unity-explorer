@@ -87,7 +87,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         }
 
         private void JumpInClicked(FriendProfile profile) =>
-            FriendListSectionUtilities.JumpToFriendLocation(profile, jumpToFriendLocationCts, getUserPositionBuffer, onlineUsersProvider, realmNavigator);
+            FriendListSectionUtilities.JumpToFriendLocation(profile.Address, jumpToFriendLocationCts, getUserPositionBuffer, onlineUsersProvider, realmNavigator);
 
         protected override void ElementClicked(FriendProfile profile) =>
             FriendListSectionUtilities.OpenProfilePassport(profile, passportBridge);
