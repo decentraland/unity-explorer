@@ -22,9 +22,9 @@ concurrency:
 
 jobs:
   test:
-    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event.pull_request.draft == false) || (github.event.label.name == 'force-build')
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event.pull_request.draft == false) || (github.event.label.name == 'force-build') || (github.event.label.name == 'clean-build')
     name: Test
-    runs-on: Ubuntu-Big
+    runs-on: windows-latest
     steps:
 
       - name: Checkout code
@@ -61,33 +61,42 @@ jobs:
       
       - name: 'Add GitHub to the SSH known hosts file'
         run: |
-              sshPath="$HOME/.ssh"
-              if [ ! -d "$sshPath" ]; then
-                mkdir -p "$sshPath"
-              fi
-              
-              knownHostsPath="$sshPath/known_hosts"
-              curl -s 'https://api.github.com/meta' | jq -r '.ssh_keys[] | "github.com " + .' >> "$knownHostsPath"
-              chmod 600 "$knownHostsPath"
+          $sshPath = Join-Path $env:USERPROFILE ".ssh"
+          if (-not (Test-Path $sshPath)) {
+              New-Item -ItemType Directory -Path $sshPath -Force
+          }
           
+          $knownHostsPath = Join-Path $sshPath "known_hosts"
+          $githubKeys = (Invoke-RestMethod -Uri 'https://api.github.com/meta').ssh_keys
+          $githubKeys | ForEach-Object { "github.com $_" } | Out-File -FilePath $knownHostsPath -Append
+          
+          # Set permissions (600 in Windows terms)
+          $acl = Get-Acl $knownHostsPath
+          $acl.SetAccessRuleProtection($true, $false)
+          $rule = New-Object System.Security.AccessControl.FileSystemAccessRule($env:USERNAME, "Read, Write", "Allow")
+          $acl.AddAccessRule($rule)
+          Set-Acl $knownHostsPath $acl
+
       - name: Clone Packages To Use Locally
         run: |
             git clone git@github.com:decentraland/unity-explorer-packages.git            
-            jsonFilePath="Explorer/Packages/manifest.json"
-            sed -i 's|git@github.com:decentraland/unity-explorer-packages.git?path=/StylizedGrassShader|file:../../unity-explorer-packages/StylizedGrassShader|' "$jsonFilePath"
-            sed -i 's|git@github.com:decentraland/unity-explorer-packages.git?path=/StylizedWater2|file:../../unity-explorer-packages/StylizedWater2|' "$jsonFilePath"
-            sed -i 's|git@github.com:decentraland/unity-explorer-packages.git?path=/AVProVideo|file:../../unity-explorer-packages/AVProVideo|' "$jsonFilePath"
-            sed -i 's|git@github.com:decentraland/unity-explorer-packages.git?path=/SuperScrollView|file:../../unity-explorer-packages/SuperScrollView|' "$jsonFilePath"
-            sed -i 's|git@github.com:decentraland/unity-explorer-packages.git?path=/SoftMask|file:../../unity-explorer-packages/SoftMask|' "$jsonFilePath"
-            ls -l
-            # Display the content of manifest.json
-            cat "$jsonFilePath"
+            $jsonFilePath = "Explorer/Packages/manifest.json"
+            (Get-Content $jsonFilePath) `
+                -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/StylizedGrassShader', 'file:../../unity-explorer-packages/StylizedGrassShader' `
+                -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/StylizedWater2', 'file:../../unity-explorer-packages/StylizedWater2' `
+                -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/AVProVideo', 'file:../../unity-explorer-packages/AVProVideo' `
+                -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/SuperScrollView', 'file:../../unity-explorer-packages/SuperScrollView' `
+                -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/SoftMask', 'file:../../unity-explorer-packages/SoftMask' |
+                Set-Content $jsonFilePath
+            
+            Get-ChildItem
+            Get-Content $jsonFilePath
 
 
       # Configure test runner
-      - uses: game-ci/unity-test-runner@v4.1.1
+      - uses: game-ci/unity-test-runner@v4.3.1
         id: testRunner
-        timeout-minutes: 30
+        timeout-minutes: 60
         continue-on-error: true
         with:
           projectPath: Explorer
@@ -96,19 +105,17 @@ jobs:
       - name: Convert NUnit to JUnit
         if: always()
         run: |
-          mkdir -p ${{ steps.testRunner.outputs.artifactsPath }}-junit
-          sudo rm /etc/apt/sources.list.d/microsoft-prod.list
-          sudo apt-get update
-          sudo apt-get install -y xsltproc
-          sudo xsltproc \
-            --output ${{ steps.testRunner.outputs.artifactsPath }}-junit/playmode-results-junit.xml \
-            .github/workflows/nunit-to-junit.xsl \
-            ${{ steps.testRunner.outputs.artifactsPath }}/playmode-results.xml \
+          New-Item -ItemType Directory -Force -Path "${{ steps.testRunner.outputs.artifactsPath }}-junit"
+          choco install xsltproc
+          xsltproc `
+            --output "${{ steps.testRunner.outputs.artifactsPath }}-junit/playmode-results-junit.xml" `
+            .github/workflows/nunit-to-junit.xsl `
+            "${{ steps.testRunner.outputs.artifactsPath }}/playmode-results.xml"
 
-          sudo xsltproc \
-            --output ${{ steps.testRunner.outputs.artifactsPath }}-junit/editmode-results-junit.xml \
-            .github/workflows/nunit-to-junit.xsl \
-            ${{ steps.testRunner.outputs.artifactsPath }}/editmode-results.xml
+          xsltproc `
+            --output "${{ steps.testRunner.outputs.artifactsPath }}-junit/editmode-results-junit.xml" `
+            .github/workflows/nunit-to-junit.xsl `
+            "${{ steps.testRunner.outputs.artifactsPath }}/editmode-results.xml"
 
       - name: Report test results
         uses: decentraland/test-reporting@v0.3
