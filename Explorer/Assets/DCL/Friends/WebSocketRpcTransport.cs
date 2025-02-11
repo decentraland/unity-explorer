@@ -4,6 +4,7 @@ using System;
 using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
+using UnityEngine;
 using Utility;
 
 namespace DCL.Friends
@@ -38,8 +39,10 @@ namespace DCL.Friends
 
             try
             {
+                Debug.Log($"Friends.WebSocket.Disposing..");
                 webSocket.Abort();
                 webSocket.Dispose();
+                Debug.Log($"Friends.WebSocket.Disposed");
             }
             catch (ObjectDisposedException) { }
         }
@@ -49,7 +52,9 @@ namespace DCL.Friends
             if (State is WebSocketState.Open or WebSocketState.Connecting)
                 throw new Exception("Web socket already connected");
 
+            Debug.Log($"Friends.WebSocket.Connecting: {uri}");
             await webSocket.ConnectAsync(uri, ct);
+            Debug.Log("Friends.WebSocket.Connected");
 
             OnConnectEvent?.Invoke();
         }
@@ -69,6 +74,8 @@ namespace DCL.Friends
                     try
                     {
                         WebSocketReceiveResult result = await webSocket.ReceiveAsync(receiveBuffer, ct);
+
+                        Debug.Log($"Friends.WebSocket.Received: Data size {result.Count}, data type: {result.MessageType}");
 
                         if (result.MessageType is WebSocketMessageType.Text or WebSocketMessageType.Binary)
                         {
@@ -97,14 +104,32 @@ namespace DCL.Friends
 
         public async UniTask SendMessageAsync(byte[] data, CancellationToken ct)
         {
-            try { await webSocket.SendAsync(data, WebSocketMessageType.Binary, true, ct); }
-            catch (WebSocketException e) { OnErrorEvent?.Invoke(e.Message); }
+            try
+            {
+                Debug.Log($"Friends.WebSocket.Sending: data size {data.Length}");
+                await webSocket.SendAsync(data, WebSocketMessageType.Binary, true, ct);
+                Debug.Log($"Friends.WebSocket.Sent: data size {data.Length}");
+            }
+            catch (WebSocketException e)
+            {
+                Debug.Log($"Friends.WebSocket.Send.Error: {e.Message}");
+                OnErrorEvent?.Invoke(e.Message);
+            }
         }
 
         public async UniTask SendMessageAsync(string data, CancellationToken ct)
         {
-            try { await webSocket.SendAsync(Encoding.UTF8.GetBytes(data), WebSocketMessageType.Text, true, ct); }
-            catch (WebSocketException e) { OnErrorEvent?.Invoke(e.Message); }
+            try
+            {
+                Debug.Log($"Friends.WebSocket.Sending: data size {data.Length}");
+                await webSocket.SendAsync(Encoding.UTF8.GetBytes(data), WebSocketMessageType.Text, true, ct);
+                Debug.Log($"Friends.WebSocket.Sent: data size {data.Length}");
+            }
+            catch (WebSocketException e)
+            {
+                Debug.Log($"Friends.WebSocket.Send.Error: {e.Message}");
+                OnErrorEvent?.Invoke(e.Message);
+            }
         }
 
         public void Close() =>
@@ -114,7 +139,9 @@ namespace DCL.Friends
         {
             if (State is WebSocketState.Open or WebSocketState.CloseReceived)
             {
+                Debug.Log("Friends.WebSocket.Disconnecting..");
                 await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "", ct);
+                Debug.Log("Friends.WebSocket.Disconnected");
                 OnCloseEvent?.Invoke();
             }
         }
