@@ -87,6 +87,15 @@ namespace DCL.Diagnostics
         }
 
         /// <summary>
+        ///     Methods guarantees that the message will be logged at any environment condition.
+        ///     Any heavy computation (string interpolations, concat and etc) should be avoided
+        /// </summary>
+        public static void LogProductionInfo(string message, ReportHandler reportToHandlers = ReportHandler.All)
+        {
+            Instance.Log(LogType.Log, ReportCategory.ALWAYS, message, null, reportToHandlers);
+        }
+
+        /// <summary>
         ///     Logs a message.
         /// </summary>
         /// <param name="logType">The type of the log message.</param>
