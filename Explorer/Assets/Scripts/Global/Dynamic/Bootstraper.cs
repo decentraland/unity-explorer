@@ -24,6 +24,7 @@ using ECS.StreamableLoading.Common.Components;
 using Global.AppArgs;
 using Global.Dynamic.DebugSettings;
 using Global.Dynamic.RealmUrl;
+using Global.Versioning;
 using MVC;
 using Plugins.TexturesFuse.TexturesServerWrap.CompressShaders;
 using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
@@ -149,6 +150,7 @@ namespace Global.Dynamic
             Entity playerEntity,
             IAppArgs appArgs,
             ICoroutineRunner coroutineRunner,
+            DCLVersion dclVersion,
             CancellationToken ct)
         {
             dynamicWorldDependencies = new DynamicWorldDependencies
@@ -193,6 +195,7 @@ namespace Global.Dynamic
                 playerEntity,
                 appArgs,
                 coroutineRunner,
+                dclVersion,
                 ct);
         }
 
