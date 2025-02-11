@@ -3,15 +3,22 @@ using DCL.Diagnostics;
 using DCL.Profiles;
 using DCL.Web3.Identities;
 using System;
+using System.Text;
 using System.Threading;
 
 namespace DCL.Chat.MessageBus
 {
     public class SelfResendChatMessageBus : IChatMessagesBus
     {
+        private const string LINK_PROFILE_OPENING = "<link=profile>";
+        private const string LINK_PROFILE_CLOSING = "</link>";
+        private const string MARK_OPENING = "<mark=#438FFF40>";
+        private const string MARK_CLOSING = "</mark>";
+
         private readonly MultiplayerChatMessagesBus origin;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IProfileRepository profileRepository;
+        private readonly StringBuilder sb = new ();
 
         public event Action<ChatChannel.ChannelId, ChatMessage>? MessageAdded;
 
@@ -44,7 +51,7 @@ namespace DCL.Chat.MessageBus
             SendSelfAsync(channelId, message).Forget();
         }
 
-        private async UniTaskVoid SendSelfAsync(ChatChannel.ChannelId channelId, string message)
+        private async UniTaskVoid SendSelfAsync(ChatChannel.ChannelId channelId, string chatMessage)
         {
             IWeb3Identity? identity = web3IdentityCache.Identity;
 
@@ -54,39 +61,35 @@ namespace DCL.Chat.MessageBus
                 return;
             }
 
-            Profile? profile = await profileRepository.GetAsync(identity.Address, CancellationToken.None);
+            Profile? ownProfile = await profileRepository.GetAsync(identity.Address, CancellationToken.None);
 
             var isMention = false;
 
-            if (profile != null)
-            {
-                string displayName = profile.MentionName;
-                isMention = CheckMentionOnChatMessage(message, displayName);
-
-                if (isMention)
-                    message = AddStyleToUserMention(message, displayName);
-            }
+            if (ownProfile != null)
+                isMention = TryChangeUserMentionStyle(ref chatMessage, ownProfile.MentionName);
 
             MessageAdded?.Invoke(
                 channelId,
                 new ChatMessage(
-                    message,
-                    profile?.ValidatedName ?? string.Empty,
+                    chatMessage,
+                    ownProfile?.ValidatedName ?? string.Empty,
                     identity.Address,
                     true,
-                    profile?.WalletId ?? null,
-                    isMention: isMention
+                    ownProfile?.WalletId ?? null,
+                    isMention
                 )
             );
         }
 
-        private bool CheckMentionOnChatMessage(string chatMessage, string displayName) =>
-            chatMessage.Contains(displayName);
+        private bool TryChangeUserMentionStyle(ref string chatMessage, string userName)
+        {
+            bool contains = chatMessage.Contains(userName, StringComparison.Ordinal);
 
+            if (!contains) return false;
 
-        //TODO FRAN: Make these values constants + Auto mentions should have links disabled and be marked as NOT mentions
-        private string AddStyleToUserMention(string chatMessage, string userName) =>
-            chatMessage.Replace($"<link=profile>{userName}</link>",$"<mark=#438FFF40>{userName}</mark>");
+            chatMessage = chatMessage.Replace($"{LINK_PROFILE_OPENING}{userName}{LINK_PROFILE_CLOSING}", $"{MARK_OPENING}{userName}{MARK_CLOSING}");
 
+            return true;
+        }
     }
 }

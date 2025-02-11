@@ -7,12 +7,18 @@ using DCL.Profiles;
 using DCL.Profiles.Self;
 using LiveKit.Proto;
 using System;
+using System.Text;
 using System.Threading;
 
 namespace DCL.Chat.MessageBus
 {
     public class MultiplayerChatMessagesBus : IChatMessagesBus
     {
+        private const string LINK_PROFILE_OPENING = "<link=profile>";
+        private const string LINK_PROFILE_CLOSING = "</link>";
+        private const string MARK_OPENING = "<mark=#438FFF40>";
+        private const string MARK_CLOSING = "</mark>";
+
         private readonly IMessagePipesHub messagePipesHub;
         private readonly IProfileRepository profileRepository;
         private readonly IMessageDeduplication<double> messageDeduplication;
@@ -60,13 +66,7 @@ namespace DCL.Chat.MessageBus
                 var isMention = false;
 
                 if (ownProfile != null)
-                {
-                    string displayName = ownProfile.MentionName;
-                    isMention = CheckMentionOnChatMessage(chatMessage, displayName);
-
-                    if (isMention)
-                        chatMessage = AddStyleToUserMention(chatMessage, displayName);
-                }
+                    isMention = TryChangeUserMentionStyle(ref chatMessage, ownProfile.MentionName);
 
                 MessageAdded?.Invoke(
                     parsedChannelId,
@@ -97,14 +97,16 @@ namespace DCL.Chat.MessageBus
                 return ChatChannel.NEARBY_CHANNEL;
         }
 
-        private bool CheckMentionOnChatMessage(string chatMessage, string displayName) =>
-            chatMessage.Contains(displayName);
+        private bool TryChangeUserMentionStyle(ref string chatMessage, string userName)
+        {
+            bool contains = chatMessage.Contains(userName, StringComparison.Ordinal);
 
+            if (!contains) return false;
 
-        //TODO FRAN: Make these values constants also we need to remove links from our name so we cant click on it (but keep the formatting),
-        //maybe use another text formatter to extract it from here?
-        private string AddStyleToUserMention(string chatMessage, string userName) =>
-            chatMessage.Replace($"<link=profile>{userName}</link>",$"<mark=#438FFF40>{userName}</mark>");
+            chatMessage = chatMessage.Replace($"{LINK_PROFILE_OPENING}{userName}{LINK_PROFILE_CLOSING}", $"{MARK_OPENING}{userName}{MARK_CLOSING}");
+
+            return true;
+        }
 
         private string ParseChatMessageFromPayloadMessage(string payloadMessage) =>
             payloadMessage.Substring(payloadMessage.IndexOf('>') + 1);

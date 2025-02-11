@@ -18,6 +18,10 @@ using Utility;
 
 namespace DCL.Chat
 {
+    //NOTE: This class is extracted from existing functionality in the ChatController and ChatView, so not all code is new, nor all code was refactored
+    /// <summary>
+    ///     This element condenses all the functionality related to the input box of the chat, including triggering suggestions, opening the emoji panel and updating the character counter
+    /// </summary>
     public class ChatInputBoxElement : MonoBehaviour, IViewWithGlobalDependencies
     {
         public delegate void EmojiSelectionVisibilityChangedDelegate(bool isVisible);
@@ -58,13 +62,12 @@ namespace DCL.Chat
         private Mouse device;
         private EmojiPanelController? emojiPanelController;
         private InputSuggestionPanelController? suggestionPanelController;
+        private ViewDependencies viewDependencies;
 
         private CancellationTokenSource emojiPanelCts = new ();
         private bool isInputSelected;
         private Match lastMatch = Match.Empty;
         private int wordMatchIndex;
-
-        private ViewDependencies viewDependencies;
 
         public string InputBoxText
         {
