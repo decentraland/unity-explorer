@@ -1,6 +1,5 @@
 ﻿using CrdtEcsBridge.PoolsProviders;
-using JetBrains.Annotations;
-using Microsoft.ClearScript.JavaScript;
+using Microsoft.ClearScript.V8.SplitProxy;
 using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents;
 using System;
@@ -8,7 +7,7 @@ using UnityEngine.Profiling;
 
 namespace SceneRuntime.Apis.Modules.EngineApi
 {
-    public class EngineApiWrapper : IJsApiWrapper
+    public class EngineApiWrapper : IJsApiWrapper, IV8HostObject
     {
         internal readonly IEngineApi api;
 
@@ -17,11 +16,19 @@ namespace SceneRuntime.Apis.Modules.EngineApi
 
         private PoolableByteArray lastInput = PoolableByteArray.EMPTY;
 
+        private readonly InvokeHostObject crdtSendToRenderer;
+        private readonly InvokeHostObject crdtGetState;
+        private readonly InvokeHostObject sendBatch;
+
         public EngineApiWrapper(IEngineApi api, IInstancePoolsProvider instancePoolsProvider, ISceneExceptionsHandler exceptionsHandler)
         {
             this.api = api;
             this.instancePoolsProvider = instancePoolsProvider;
             this.exceptionsHandler = exceptionsHandler;
+
+            crdtSendToRenderer = CrdtSendToRenderer;
+            crdtGetState = CrdtGetState;
+            sendBatch = SendBatch;
         }
 
         public void Dispose()
@@ -30,8 +37,13 @@ namespace SceneRuntime.Apis.Modules.EngineApi
             lastInput.ReleaseAndDispose();
         }
 
-        [UsedImplicitly]
-        public ScriptableByteArray CrdtSendToRenderer(ITypedArray<byte> data)
+        private void CrdtSendToRenderer(ReadOnlySpan<V8Value.Decoded> args, V8Value result)
+        {
+            Uint8Array data = args[0].GetUint8Array();
+            result.SetHostObject(CrdtSendToRenderer(data));
+        }
+
+        private ScriptableByteArray CrdtSendToRenderer(Uint8Array data)
         {
             try
             {
@@ -53,8 +65,10 @@ namespace SceneRuntime.Apis.Modules.EngineApi
             }
         }
 
-        [UsedImplicitly]
-        public ScriptableByteArray CrdtGetState()
+        private void CrdtGetState(ReadOnlySpan<V8Value.Decoded> args, V8Value result) =>
+            result.SetHostObject(CrdtGetState());
+
+        private ScriptableByteArray CrdtGetState()
         {
             try
             {
@@ -69,12 +83,34 @@ namespace SceneRuntime.Apis.Modules.EngineApi
             }
         }
 
-        [UsedImplicitly]
-        public virtual ScriptableSDKObservableEventArray? SendBatch() => null;
+        private void SendBatch(ReadOnlySpan<V8Value.Decoded> args, V8Value result)
+        {
+            result.SetHostObject(SendBatch());
+        }
+
+        protected virtual ScriptableSDKObservableEventArray? SendBatch() => null;
 
         public void SetIsDisposing()
         {
             api.SetIsDisposing();
+        }
+
+        void IV8HostObject.GetNamedProperty(StdString name, V8Value value, out bool isConst) =>
+            GetNamedProperty(name, value, out isConst);
+
+        protected virtual void GetNamedProperty(StdString name, V8Value value, out bool isConst)
+        {
+            isConst = true;
+
+            if (name.Equals(nameof(CrdtSendToRenderer)))
+                value.SetHostObject(crdtSendToRenderer);
+            else if (name.Equals(nameof(CrdtGetState)))
+                value.SetHostObject(crdtGetState);
+            else if (name.Equals(nameof(SendBatch)))
+                value.SetHostObject(sendBatch);
+            else
+                throw new NotImplementedException(
+                    $"Named property {name.ToString()} is not implemented");
         }
     }
 }
