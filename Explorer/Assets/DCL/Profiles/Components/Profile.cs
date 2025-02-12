@@ -1,4 +1,3 @@
-using Castle.Core.Internal;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.ECSComponents;
@@ -61,7 +60,7 @@ namespace DCL.Profiles
         public string UnclaimedName { get; internal set; }
 
         //The Display Name with @ before it. Cached here to avoid further allocations when receiving messages from other players.
-        public string MentionName => mentionName.IsNullOrEmpty()? mentionName = "@" + DisplayName : mentionName;
+        public string MentionName => string.IsNullOrEmpty(mentionName) ? mentionName = "@" + DisplayName : mentionName;
 
         public bool HasClaimedName
         {
