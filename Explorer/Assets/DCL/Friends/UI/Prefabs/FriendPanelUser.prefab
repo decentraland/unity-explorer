@@ -148,6 +148,7 @@ GameObject:
   - component: {fileID: 2995132675156982900}
   - component: {fileID: 7091116879237502089}
   - component: {fileID: 6176497728483893500}
+  - component: {fileID: 4997927028145684587}
   m_Layer: 5
   m_Name: FriendPanelUser
   m_TagString: Untagged
@@ -257,6 +258,21 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &4997927028145684587
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9177864993776066132}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1cdc6c1a43024e58bcd05d3e69a19db4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  <Button>k__BackingField: {fileID: 6176497728483893500}
+  <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
+  <ButtonHoverAudio>k__BackingField: {fileID: 11400000, guid: 59da234351971c0498a566fb811b0c36, type: 2}
 --- !u!1001 &7489581018203852575
 PrefabInstance:
   m_ObjectHideFlags: 0

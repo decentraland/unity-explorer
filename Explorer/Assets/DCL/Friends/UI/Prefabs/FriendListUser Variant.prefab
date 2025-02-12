@@ -299,6 +299,7 @@ GameObject:
   - component: {fileID: 8833668237824455263}
   - component: {fileID: 5161427373258483331}
   - component: {fileID: 3539447002694376727}
+  - component: {fileID: 7158890851243476228}
   m_Layer: 5
   m_Name: JumpInButton
   m_TagString: Untagged
@@ -407,6 +408,21 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &7158890851243476228
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7285149298956863811}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1cdc6c1a43024e58bcd05d3e69a19db4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  <Button>k__BackingField: {fileID: 3539447002694376727}
+  <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
+  <ButtonHoverAudio>k__BackingField: {fileID: 11400000, guid: 59da234351971c0498a566fb811b0c36, type: 2}
 --- !u!1001 &2910193944685869512
 PrefabInstance:
   m_ObjectHideFlags: 0
