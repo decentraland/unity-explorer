@@ -56,7 +56,7 @@ namespace DCL.Friends
         {
             if (friendsOnlineStatus.TryGetValue(friendProfile, out OnlineStatus currentStatus) && currentStatus == onlineStatus)
             {
-                ReportHub.Log(LogType.Warning, new ReportData("FriendOnlineStatus"), $"Received duplicate connectivity update for User {friendProfile.Name} with status {onlineStatus}");
+                ReportHub.Log(LogType.Warning, new ReportData(ReportCategory.FRIENDS), $"Received duplicate connectivity update for User {friendProfile.Name} with status {onlineStatus}");
                 return false;
             }
 

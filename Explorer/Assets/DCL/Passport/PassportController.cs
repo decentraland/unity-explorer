@@ -542,11 +542,16 @@ namespace DCL.Passport
                 contextMenu.AddControl(new ButtonContextMenuControlSettings(viewInstance.JumpInText, viewInstance.JumpInSprite, () => FriendListSectionUtilities.JumpToFriendLocation(profile.UserId, jumpToFriendLocationCts, getUserPositionBuffer, onlineUsersProvider, realmNavigator)));
 
             if (friendshipStatus != FriendshipStatus.BLOCKED && includeUserBlocking)
-                contextMenu.AddControl(new ButtonContextMenuControlSettings(viewInstance.BlockText, viewInstance.BlockSprite, () => Debug.Log($"Block {currentUserId}")));
+                contextMenu.AddControl(new ButtonContextMenuControlSettings(viewInstance.BlockText, viewInstance.BlockSprite, () => BlockUserClicked(inputData.UserId)));
 
             userProfileContextMenuControlSettings.SetInitialData(profile.Name, profile.UserId, profile.HasClaimedName,
                 viewInstance.ChatEntryConfiguration.GetNameColor(profile.Name), ConvertFriendshipStatus(friendshipStatus),
                 thumbnailSprite);
+        }
+
+        private static void BlockUserClicked(string userId)
+        {
+            ReportHub.Log(LogType.Error, new ReportData(ReportCategory.FRIENDS), $"Block user button clicked for {userId}. Users should not be able to reach this");
         }
 
         private UserProfileContextMenuControlSettings.FriendshipStatus ConvertFriendshipStatus(FriendshipStatus friendshipStatus)

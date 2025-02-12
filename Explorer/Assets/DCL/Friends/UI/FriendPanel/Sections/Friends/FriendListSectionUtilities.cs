@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.Multiplayer.Connectivity;
 using DCL.UI.GenericContextMenu.Controls.Configs;
 using ECS.SceneLifeCycle.Realm;
@@ -63,9 +64,14 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
                     () => JumpToFriendLocation(friendProfile.Address, jumpToFriendLocationCts, getUserPositionBuffer, onlineUsersProvider, realmNavigator)));
 
             if (includeUserBlocking)
-                contextMenu.AddControl(new ButtonContextMenuControlSettings(contextMenuSettings.BlockText, contextMenuSettings.BlockSprite, () => Debug.Log($"Block {friendProfile.Address.ToString()}")));
+                contextMenu.AddControl(new ButtonContextMenuControlSettings(contextMenuSettings.BlockText, contextMenuSettings.BlockSprite, () => BlockUserClicked(friendProfile)));
 
             return contextMenu;
+        }
+
+        private static void BlockUserClicked(FriendProfile profile)
+        {
+            ReportHub.Log(LogType.Error, new ReportData(ReportCategory.FRIENDS), $"Block user button clicked for {profile.Address.ToString()}. Users should not be able to reach this");
         }
 
         internal static void OpenProfilePassport(FriendProfile profile, IPassportBridge passportBridge) =>

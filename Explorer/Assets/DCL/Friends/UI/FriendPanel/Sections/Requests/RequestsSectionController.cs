@@ -27,8 +27,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
         private readonly IPassportBridge passportBridge;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IProfileThumbnailCache profileThumbnailCache;
-        private readonly CancellationTokenSource friendshipOperationCts = new ();
 
+        private CancellationTokenSource friendshipOperationCts = new ();
         private FriendProfile? lastClickedProfileCtx;
 
         public event Action<int>? ReceivedRequestsCountChanged;
@@ -57,7 +57,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
                          .AddControl(new ButtonContextMenuControlSettings(view.ContextMenuSettings.ViewProfileText, view.ContextMenuSettings.ViewProfileSprite, () => OpenProfilePassport(lastClickedProfileCtx!)));
 
             if (includeUserBlocking)
-                contextMenu.AddControl(new ButtonContextMenuControlSettings(view.ContextMenuSettings.BlockText, view.ContextMenuSettings.BlockSprite, () => Debug.Log($"Block {lastClickedProfileCtx!.Address}")));
+                contextMenu.AddControl(new ButtonContextMenuControlSettings(view.ContextMenuSettings.BlockText, view.ContextMenuSettings.BlockSprite, () => BlockUserClicked(lastClickedProfileCtx!)));
 
             requestManager.DeleteRequestClicked += DeleteRequestClicked;
             requestManager.AcceptRequestClicked += AcceptRequestClicked;
@@ -92,8 +92,15 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             web3IdentityCache.OnIdentityChanged -= ResetAndInit;
         }
 
+        private void BlockUserClicked(FriendProfile profile)
+        {
+            ReportHub.Log(LogType.Error, new ReportData(ReportCategory.FRIENDS), $"Block user button clicked for {profile.Address.ToString()}. Users should not be able to reach this");
+        }
+
         private void HandleContextMenuUserProfileButton(string userId, UserProfileContextMenuControlSettings.FriendshipStatus friendshipStatus)
         {
+            friendshipOperationCts = friendshipOperationCts.SafeRestart();
+
             if (friendshipStatus == UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_SENT)
                 CancelFriendshipRequestAsync(friendshipOperationCts.Token).Forget();
             else if (friendshipStatus == UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_RECEIVED)
@@ -152,6 +159,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
 
         private void DeleteRequestClicked(FriendRequest request)
         {
+            friendshipOperationCts = friendshipOperationCts.SafeRestart();
+
             RejectFriendshipAsync(friendshipOperationCts.Token).Forget();
 
             async UniTaskVoid RejectFriendshipAsync(CancellationToken ct)
@@ -169,6 +178,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
 
         private void AcceptRequestClicked(FriendRequest request)
         {
+            friendshipOperationCts = friendshipOperationCts.SafeRestart();
+
             AcceptFriendshipAsync(friendshipOperationCts.Token).Forget();
 
             async UniTaskVoid AcceptFriendshipAsync(CancellationToken ct)
@@ -192,7 +203,10 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
                 elementView.ParentStatus == FriendPanelStatus.SENT ? UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_SENT : UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_RECEIVED,
                 profileThumbnailCache.GetThumbnail(friendProfile.Address.ToString()));
             elementView.CanUnHover = false;
-            mvcManager.ShowAsync(GenericContextMenuController.IssueCommand(new GenericContextMenuParameter(contextMenu, buttonPosition, actionOnHide: () => elementView.CanUnHover = true, closeTask: panelLifecycleTask?.Task))).Forget();
+            mvcManager.ShowAsync(GenericContextMenuController.IssueCommand(new GenericContextMenuParameter(contextMenu, buttonPosition,
+                actionOnHide: () => elementView.CanUnHover = true,
+                closeTask: panelLifecycleTask?.Task)))
+                      .Forget();
         }
 
         protected override async UniTask InitAsync(CancellationToken ct)
