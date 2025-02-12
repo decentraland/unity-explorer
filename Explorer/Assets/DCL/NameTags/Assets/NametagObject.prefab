@@ -52,13 +52,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   <Username>k__BackingField: {fileID: 4673612476327640102}
-  <VerifiedIcon>k__BackingField: {fileID: 3767848672727676458}
-  <VerifiedIconRenderer>k__BackingField: {fileID: 4273700018563800502}
-  <MessageContent>k__BackingField: {fileID: 1264101715097455992}
-  <Background>k__BackingField: {fileID: 2640253797295083812}
-  <Outline>k__BackingField: {fileID: 7391796993993378391}
-  <BubblePeak>k__BackingField: {fileID: 620214271584746127}
-  <MessageContentRectTransform>k__BackingField: {fileID: 4776442481111019983}
+  <BackgroundSprite>k__BackingField: {fileID: 2640253797295083812}
+  <verifiedIcon>k__BackingField: {fileID: 3767848672727676458}
+  <verifiedIconRenderer>k__BackingField: {fileID: 4273700018563800502}
+  <messageContent>k__BackingField: {fileID: 1264101715097455992}
+  <mentionBackgroundSprite>k__BackingField: {fileID: 7391796993993378391}
+  <bubbleTailSprite>k__BackingField: {fileID: 620214271584746127}
+  <messageContentRectTransform>k__BackingField: {fileID: 4776442481111019983}
   <backgroundEaseAnimationCurve>k__BackingField:
     serializedVersion: 2
     m_Curve:
@@ -143,7 +143,9 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  <MaxWidth>k__BackingField: 2.5
+  <maxWidth>k__BackingField: 2.5
+  <mentionedPeakColor>k__BackingField: {r: 0.78039, g: 0.247058, b: 0.79215, a: 1}
+  <defaultPeakColor>k__BackingField: {r: 0.2627451, g: 0.24705884, b: 0.2901961, a: 1}
   Id: 
 --- !u!210 &317692783042627670
 SortingGroup:
@@ -467,7 +469,7 @@ GameObject:
   - component: {fileID: 8746724036618754241}
   - component: {fileID: 620214271584746127}
   m_Layer: 5
-  m_Name: BubblePeak
+  m_Name: BubbleTail
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -560,7 +562,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &8303410522818241084
 RectTransform:
   m_ObjectHideFlags: 0
@@ -622,7 +624,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_Sprite: {fileID: 21300000, guid: 0261db1dccf5c4e28ab3cd7f4c0abca1, type: 3}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 0.2627451, g: 0.24705882, b: 0.2901961, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 1
@@ -644,7 +646,7 @@ GameObject:
   - component: {fileID: 5473976778977378180}
   - component: {fileID: 4673612476327640102}
   m_Layer: 5
-  m_Name: Name
+  m_Name: UserName
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

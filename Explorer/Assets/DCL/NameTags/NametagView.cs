@@ -30,19 +30,22 @@ namespace DCL.Nametags
         private const string WALLET_ID_CLOSING_STYLE = "</font></color>";
 
         [field: SerializeField] public TMP_Text Username { get; private set; }
-        [field: SerializeField] public RectTransform VerifiedIcon { get; private set; }
-        [field: SerializeField] public SpriteRenderer VerifiedIconRenderer { get; private set; }
-        [field: SerializeField] public TMP_Text MessageContent { get; private set; }
-        [field: SerializeField] public SpriteRenderer Background { get; private set; }
-        [field: SerializeField] public SpriteRenderer Outline { get; private set; }
-        [field: SerializeField] public SpriteRenderer BubblePeak { get; private set; }
-        [field: SerializeField] public RectTransform MessageContentRectTransform { get; private set; }
+        [field: SerializeField] public SpriteRenderer BackgroundSprite { get; private set; }
+        [field: SerializeField] internal RectTransform verifiedIcon { get; private set; }
+        [field: SerializeField] internal SpriteRenderer verifiedIconRenderer { get; private set; }
+        [field: SerializeField] internal TMP_Text messageContent { get; private set; }
+        [field: SerializeField] internal SpriteRenderer mentionBackgroundSprite { get; private set; }
+        [field: SerializeField] internal SpriteRenderer bubbleTailSprite { get; private set; }
+        [field: SerializeField] internal RectTransform messageContentRectTransform { get; private set; }
         [field: SerializeField] internal AnimationCurve backgroundEaseAnimationCurve { get; private set; }
         [field: SerializeField] internal AnimationCurve alphaOverDistanceCurve { get; private set; }
-        [field: SerializeField] public float MaxWidth { get; private set; }
+        [field: SerializeField] internal float maxWidth { get; private set; }
+        [field: SerializeField] internal Color mentionedPeakColor { get; private set; }
+        [field: SerializeField] internal Color defaultPeakColor { get; private set; }
 
-        public string Id;
-        public float alpha { private set; get; }
+        [NonSerialized] public string Id = string.Empty;
+
+         public float NameTagAlpha { private set; get; }
 
         private readonly Color finishColor = new (1, 1, 1, 0);
         private readonly Color startingTextColor = new (1, 1, 1, 0);
@@ -63,8 +66,6 @@ namespace DCL.Nametags
         private Color textColor = new (1, 1, 1, 1);
         private Color usernameTextColor = new (1, 1, 1, 1);
         private Color backgroundColor = new (1, 1, 1, 1);
-        private readonly Color mentionedPeakColor = new (0.78039f, 0.247058f, 0.79215f, 1);
-        private readonly Color defaultPeakColor = new (0.08627f, 0.08235f, 0.094117f, 1);
 
         private ChatBubbleConfigurationSO? chatBubbleConfiguration;
         private CancellationTokenSource? cts;
@@ -83,12 +84,12 @@ namespace DCL.Nametags
             cts = new CancellationTokenSource();
 
             isClaimedName = hasClaimedName;
-            VerifiedIcon.gameObject.SetActive(hasClaimedName && useVerifiedIcon);
+            verifiedIcon.gameObject.SetActive(hasClaimedName && useVerifiedIcon);
 
             Username.text = hasClaimedName ? username : $"{username}{WALLET_ID_OPENING_STYLE}{walletId}{WALLET_ID_CLOSING_STYLE}";
 
             Username.rectTransform.sizeDelta = new Vector2(Username.preferredWidth, DEFAULT_HEIGHT);
-            MessageContent.color = startingTextColor;
+            messageContent.color = startingTextColor;
 
             float nametagMarginOffsetHeight = chatBubbleConfiguration?.nametagMarginOffsetHeight ?? DEFAULT_MARGIN_OFFSET_HEIGHT;
             float nametagMarginOffsetWidth = chatBubbleConfiguration?.nametagMarginOffsetWidth ?? DEFAULT_MARGIN_OFFSET_WIDTH;
@@ -96,18 +97,18 @@ namespace DCL.Nametags
             if (hasClaimedName && useVerifiedIcon)
             {
                 usernamePos.x = Username.rectTransform.anchoredPosition.x;
-                verifiedIconInitialPosition = new Vector2(Username.rectTransform.anchoredPosition.x + (Username.preferredWidth / 2) + (VerifiedIcon.sizeDelta.x / 2) - (nametagMarginOffsetHeight / 2), 0);
-                VerifiedIcon.anchoredPosition = verifiedIconInitialPosition;
-                usernamePos.x -= VerifiedIcon.sizeDelta.x / 2;
+                verifiedIconInitialPosition = new Vector2(Username.rectTransform.anchoredPosition.x + (Username.preferredWidth / 2) + (verifiedIcon.sizeDelta.x / 2) - (nametagMarginOffsetHeight / 2), 0);
+                verifiedIcon.anchoredPosition = verifiedIconInitialPosition;
+                usernamePos.x -= verifiedIcon.sizeDelta.x / 2;
                 Username.rectTransform.anchoredPosition = usernamePos;
-                Background.size = new Vector2(Username.preferredWidth + nametagMarginOffsetWidth + VerifiedIcon.sizeDelta.x, Username.preferredHeight + nametagMarginOffsetHeight);
-                Outline.size = new Vector2(Username.preferredWidth + nametagMarginOffsetWidth + VerifiedIcon.sizeDelta.x, Username.preferredHeight + nametagMarginOffsetHeight);
+                BackgroundSprite.size = new Vector2(Username.preferredWidth + nametagMarginOffsetWidth + verifiedIcon.sizeDelta.x, Username.preferredHeight + nametagMarginOffsetHeight);
+                mentionBackgroundSprite.size = new Vector2(Username.preferredWidth + nametagMarginOffsetWidth + verifiedIcon.sizeDelta.x, Username.preferredHeight + nametagMarginOffsetHeight);
             }
             else
             {
                 Username.rectTransform.anchoredPosition = Vector2.zero;
-                Background.size = new Vector2(Username.preferredWidth + nametagMarginOffsetWidth, Username.preferredHeight + nametagMarginOffsetHeight);
-                Outline.size = new Vector2(Username.preferredWidth + nametagMarginOffsetWidth, Username.preferredHeight + nametagMarginOffsetHeight);
+                BackgroundSprite.size = new Vector2(Username.preferredWidth + nametagMarginOffsetWidth, Username.preferredHeight + nametagMarginOffsetHeight);
+                mentionBackgroundSprite.size = new Vector2(Username.preferredWidth + nametagMarginOffsetWidth, Username.preferredHeight + nametagMarginOffsetHeight);
             }
         }
 
@@ -120,18 +121,18 @@ namespace DCL.Nametags
 
             previousDistance = distance;
             usernameTextColor = Username.color;
-            alpha = alphaOverDistanceCurve.Evaluate((distance - fullOpacityMaxDistance) / (maxDistance - fullOpacityMaxDistance));
-            textColor.a = distance > fullOpacityMaxDistance ? alpha : 1;
-            usernameTextColor.a = distance > fullOpacityMaxDistance ? alpha : 1;
-            backgroundColor = Background.color;
-            backgroundColor.a = distance > fullOpacityMaxDistance ? alpha : 1;
-            var bubblePeakColor = BubblePeak.color;
-            bubblePeakColor.a = distance > fullOpacityMaxDistance ? alpha : 1;
-            BubblePeak.color = bubblePeakColor;
-            Background.color = backgroundColor;
-            Outline.color = backgroundColor;
+            NameTagAlpha = alphaOverDistanceCurve.Evaluate((distance - fullOpacityMaxDistance) / (maxDistance - fullOpacityMaxDistance));
+            textColor.a = distance > fullOpacityMaxDistance ? NameTagAlpha : 1;
+            usernameTextColor.a = distance > fullOpacityMaxDistance ? NameTagAlpha : 1;
+            backgroundColor = BackgroundSprite.color;
+            backgroundColor.a = distance > fullOpacityMaxDistance ? NameTagAlpha : 1;
+            var bubblePeakColor = bubbleTailSprite.color;
+            bubblePeakColor.a = distance > fullOpacityMaxDistance ? NameTagAlpha : 1;
+            bubbleTailSprite.color = bubblePeakColor;
+            BackgroundSprite.color = backgroundColor;
+            mentionBackgroundSprite.color = backgroundColor;
             Username.color = usernameTextColor;
-            VerifiedIconRenderer.color = backgroundColor;
+            verifiedIconRenderer.color = backgroundColor;
         }
 
         public void SetChatMessage(string chatMessage, bool isMention)
@@ -150,11 +151,11 @@ namespace DCL.Nametags
             usernamePos = Vector2.zero;
             Username.text = string.Empty;
             Username.rectTransform.anchoredPosition = Vector2.zero;
-            MessageContent.text = string.Empty;
-            Background.size = Vector2.zero;
-            Outline.size = Vector2.zero;
+            messageContent.text = string.Empty;
+            BackgroundSprite.size = Vector2.zero;
+            mentionBackgroundSprite.size = Vector2.zero;
             previousDistance = 0;
-            Outline.gameObject.SetActive(false);
+            mentionBackgroundSprite.gameObject.SetActive(false);
         }
 
         private async UniTaskVoid StartChatBubbleFlowAsync(string chatMessage, bool isMention, CancellationToken ct)
@@ -192,56 +193,56 @@ namespace DCL.Nametags
 
             SetHeightAndTextStyle(messageContent);
             isAnimatingIn = true;
-            MessageContent.gameObject.SetActive(true);
-            BubblePeak.gameObject.SetActive(true);
-            BubblePeak.color = isMention? mentionedPeakColor : defaultPeakColor;
-            Background.gameObject.SetActive(!isMention);
-            Outline.gameObject.SetActive(isMention);
-            Background.color = backgroundColor;
+            this.messageContent.gameObject.SetActive(true);
+            bubbleTailSprite.gameObject.SetActive(true);
+            bubbleTailSprite.color = isMention? mentionedPeakColor : defaultPeakColor;
+            BackgroundSprite.gameObject.SetActive(!isMention);
+            mentionBackgroundSprite.gameObject.SetActive(isMention);
+            BackgroundSprite.color = backgroundColor;
 
             //Set message content and calculate the preferred size of the background with the addition of a margin
-            MessageContent.text = messageContent;
+            this.messageContent.text = messageContent;
 
             //Force mesh is needed otherwise entryText.GetParsedText() in CalculatePreferredWidth will return the original text
             //of the previous frame
-            MessageContent.ForceMeshUpdate();
+            this.messageContent.ForceMeshUpdate();
 
             //Calculate message content preferred size with fixed width
-            preferredSize = MessageContent.GetPreferredValues(messageContent, MaxWidth, 0);
+            preferredSize = this.messageContent.GetPreferredValues(messageContent, maxWidth, 0);
             preferredSize.x = CalculatePreferredWidth(messageContent);
             preferredSize.y += additionalHeight;
-            MessageContentRectTransform.sizeDelta = preferredSize;
+            messageContentRectTransform.sizeDelta = preferredSize;
 
             //Calculate the initial message content position to animate after
             textContentInitialPosition.x = preferredSize.x / 2;
             textContentInitialPosition.y = -preferredSize.y;
-            MessageContentRectTransform.anchoredPosition = textContentInitialPosition;
+            messageContentRectTransform.anchoredPosition = textContentInitialPosition;
 
             float bubbleMarginOffsetWidth = chatBubbleConfiguration?.bubbleMarginOffsetWidth ?? DEFAULT_BUBBLE_MARGIN_OFFSET_WIDTH;
             float bubbleMarginOffsetHeight = chatBubbleConfiguration?.bubbleMarginOffsetHeight ?? DEFAULT_BUBBLE_MARGIN_OFFSET_HEIGHT;
             float animationInDuration = chatBubbleConfiguration?.animationInDuration ?? DEFAULT_BUBBLE_ANIMATION_IN_DURATION;
 
-            preferredSize.x = MessageContentRectTransform.sizeDelta.x + bubbleMarginOffsetWidth;
+            preferredSize.x = messageContentRectTransform.sizeDelta.x + bubbleMarginOffsetWidth;
             preferredSize.y += bubbleMarginOffsetHeight;
 
             //set the username final position based on previous calculations
             usernameFinalPosition.x = (-preferredSize.x / 2) + (Username.preferredWidth / 2) + (bubbleMarginOffsetWidth / 2);
-            usernameFinalPosition.y = MessageContentRectTransform.sizeDelta.y + (bubbleMarginOffsetHeight / 3);
+            usernameFinalPosition.y = messageContentRectTransform.sizeDelta.y + (bubbleMarginOffsetHeight / 3);
 
             if (isClaimedName)
             {
-                verifiedIconFinalPosition.x = usernameFinalPosition.x + (Username.preferredWidth / 2) + (VerifiedIcon.sizeDelta.x / 2);
+                verifiedIconFinalPosition.x = usernameFinalPosition.x + (Username.preferredWidth / 2) + (verifiedIcon.sizeDelta.x / 2);
                 verifiedIconFinalPosition.y = usernameFinalPosition.y;
-                VerifiedIcon.DOAnchorPos(verifiedIconFinalPosition, animationInDuration).SetEase(backgroundEaseAnimationCurve).ToUniTask(cancellationToken: ct);
+                verifiedIcon.DOAnchorPos(verifiedIconFinalPosition, animationInDuration).SetEase(backgroundEaseAnimationCurve).ToUniTask(cancellationToken: ct);
             }
 
             //Start all animations
             await UniTask.WhenAll(
-                DOTween.Sequence().AppendInterval(animationInDuration / 3).Append(MessageContent.DOColor(textColor, animationInDuration / 4)).Play().ToUniTask(cancellationToken: ct),
+                DOTween.Sequence().AppendInterval(animationInDuration / 3).Append(this.messageContent.DOColor(textColor, animationInDuration / 4)).Play().ToUniTask(cancellationToken: ct),
                 Username.rectTransform.DOAnchorPos(usernameFinalPosition, animationInDuration).SetEase(backgroundEaseAnimationCurve).ToUniTask(cancellationToken: ct),
-                MessageContent.rectTransform.DOAnchorPos(messageContentAnchoredPosition, animationInDuration).SetEase(backgroundEaseAnimationCurve).ToUniTask(cancellationToken: ct),
-                DOTween.To(() => Background.size, x => Background.size = x, preferredSize, animationInDuration).SetEase(backgroundEaseAnimationCurve).ToUniTask(cancellationToken: ct),
-                DOTween.To(() => Outline.size, x => Outline.size = x, preferredSize, animationInDuration).SetEase(backgroundEaseAnimationCurve).ToUniTask(cancellationToken: ct)
+                this.messageContent.rectTransform.DOAnchorPos(messageContentAnchoredPosition, animationInDuration).SetEase(backgroundEaseAnimationCurve).ToUniTask(cancellationToken: ct),
+                DOTween.To(() => BackgroundSprite.size, x => BackgroundSprite.size = x, preferredSize, animationInDuration).SetEase(backgroundEaseAnimationCurve).ToUniTask(cancellationToken: ct),
+                DOTween.To(() => mentionBackgroundSprite.size, x => mentionBackgroundSprite.size = x, preferredSize, animationInDuration).SetEase(backgroundEaseAnimationCurve).ToUniTask(cancellationToken: ct)
             );
         }
 
@@ -250,14 +251,14 @@ namespace DCL.Nametags
             if (messageContent.Contains("\\U") && messageContent.Length == EMOJI_LENGTH)
             {
                 additionalHeight = chatBubbleConfiguration?.singleEmojiExtraHeight ?? DEFAULT_SINGLE_EMOJI_EXTRA_HEIGHT;
-                MessageContent.fontSize = chatBubbleConfiguration?.singleEmojiSize ?? DEFAULT_SINGLE_EMOJI_SIZE;
-                MessageContent.alignment = TextAlignmentOptions.Center;
+                this.messageContent.fontSize = chatBubbleConfiguration?.singleEmojiSize ?? DEFAULT_SINGLE_EMOJI_SIZE;
+                this.messageContent.alignment = TextAlignmentOptions.Center;
             }
             else
             {
                 additionalHeight = 0;
-                MessageContent.fontSize = MESSAGE_CONTENT_FONT_SIZE;
-                MessageContent.alignment = TextAlignmentOptions.Left;
+                this.messageContent.fontSize = MESSAGE_CONTENT_FONT_SIZE;
+                this.messageContent.alignment = TextAlignmentOptions.Left;
             }
         }
 
@@ -265,7 +266,7 @@ namespace DCL.Nametags
         {
             ct.ThrowIfCancellationRequested();
 
-            BubblePeak.gameObject.SetActive(false);
+            bubbleTailSprite.gameObject.SetActive(false);
 
             backgroundFinalSize.y = Username.preferredHeight + (chatBubbleConfiguration?.nametagMarginOffsetHeight ?? DEFAULT_MARGIN_OFFSET_HEIGHT);
 
@@ -274,9 +275,9 @@ namespace DCL.Nametags
 
             if (isClaimedName)
             {
-                backgroundFinalSize.x = Username.preferredWidth + nametagMarginOffsetWidth + VerifiedIcon.sizeDelta.x;
-                Username.rectTransform.DOAnchorPos(new Vector2(-VerifiedIcon.sizeDelta.x / 2, 0), animationOutDuration / 2).SetEase(Ease.Linear).ToUniTask(cancellationToken: ct);
-                VerifiedIcon.DOAnchorPos(verifiedIconInitialPosition, animationOutDuration / 2).SetEase(Ease.Linear).ToUniTask(cancellationToken: ct);
+                backgroundFinalSize.x = Username.preferredWidth + nametagMarginOffsetWidth + verifiedIcon.sizeDelta.x;
+                Username.rectTransform.DOAnchorPos(new Vector2(-verifiedIcon.sizeDelta.x / 2, 0), animationOutDuration / 2).SetEase(Ease.Linear).ToUniTask(cancellationToken: ct);
+                verifiedIcon.DOAnchorPos(verifiedIconInitialPosition, animationOutDuration / 2).SetEase(Ease.Linear).ToUniTask(cancellationToken: ct);
             }
             else
             {
@@ -285,27 +286,27 @@ namespace DCL.Nametags
             }
 
             await UniTask.WhenAll(
-                MessageContent.rectTransform.DOAnchorPos(textContentInitialPosition, animationOutDuration / 2).SetEase(Ease.Linear).ToUniTask(cancellationToken: ct),
-                MessageContent.DOColor(finishColor, animationOutDuration / 10).ToUniTask(cancellationToken: ct),
-                DOTween.To(() => Background.size, x => Background.size = x, backgroundFinalSize, animationOutDuration / 2).SetEase(Ease.Linear).ToUniTask(cancellationToken: ct),
-                DOTween.To(() => Outline.size, x => Outline.size = x, backgroundFinalSize, animationOutDuration / 2).SetEase(Ease.Linear).ToUniTask(cancellationToken: ct)
+                messageContent.rectTransform.DOAnchorPos(textContentInitialPosition, animationOutDuration / 2).SetEase(Ease.Linear).ToUniTask(cancellationToken: ct),
+                messageContent.DOColor(finishColor, animationOutDuration / 10).ToUniTask(cancellationToken: ct),
+                DOTween.To(() => BackgroundSprite.size, x => BackgroundSprite.size = x, backgroundFinalSize, animationOutDuration / 2).SetEase(Ease.Linear).ToUniTask(cancellationToken: ct),
+                DOTween.To(() => mentionBackgroundSprite.size, x => mentionBackgroundSprite.size = x, backgroundFinalSize, animationOutDuration / 2).SetEase(Ease.Linear).ToUniTask(cancellationToken: ct)
             );
 
-            Background.gameObject.SetActive(true);
-            Outline.gameObject.SetActive(false);
+            BackgroundSprite.gameObject.SetActive(true);
+            mentionBackgroundSprite.gameObject.SetActive(false);
         }
 
         private float CalculatePreferredWidth(string messageContent)
         {
             float nametagMarginOffsetWidth = chatBubbleConfiguration?.nametagMarginOffsetWidth ?? DEFAULT_MARGIN_OFFSET_WIDTH;
 
-            if (Username.preferredWidth + nametagMarginOffsetWidth + (isClaimedName ? VerifiedIcon.sizeDelta.x : 0) > MessageContent.preferredWidth)
-                return Username.preferredWidth + nametagMarginOffsetWidth + (isClaimedName ? VerifiedIcon.sizeDelta.x : 0);
+            if (Username.preferredWidth + nametagMarginOffsetWidth + (isClaimedName ? verifiedIcon.sizeDelta.x : 0) > this.messageContent.preferredWidth)
+                return Username.preferredWidth + nametagMarginOffsetWidth + (isClaimedName ? verifiedIcon.sizeDelta.x : 0);
 
-            if (MessageContent.GetPreferredValues(messageContent, MaxWidth, 0).x < MaxWidth)
-                return MessageContent.GetPreferredValues(messageContent, MaxWidth, 0).x;
+            if (this.messageContent.GetPreferredValues(messageContent, maxWidth, 0).x < maxWidth)
+                return this.messageContent.GetPreferredValues(messageContent, maxWidth, 0).x;
 
-            return MaxWidth;
+            return maxWidth;
         }
     }
 }
