@@ -44,6 +44,9 @@ namespace DCL.Chat
             SystemMessage = false;
         }
 
+        public static ChatMessage CopyWithNewMessage(string message, ChatMessage chatMessage) =>
+            new (message, chatMessage.SenderValidatedName, chatMessage.WalletAddress, chatMessage.SentByOwnUser, chatMessage.SenderWalletId, chatMessage.IsMention, chatMessage.SystemMessage);
+
         public static ChatMessage NewFromSystem(string message) =>
             new (message, "DCL System", string.Empty, true,
                 null, false, true);

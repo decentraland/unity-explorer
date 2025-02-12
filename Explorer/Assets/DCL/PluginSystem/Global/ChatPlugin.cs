@@ -12,6 +12,7 @@ using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
 using DCL.Profiles;
 using DCL.Settings.Settings;
+using DCL.UI.InputFieldFormatting;
 using DCL.UI.MainUI;
 using DCL.UI.Profiles.Helpers;
 using MVC;
@@ -37,6 +38,7 @@ namespace DCL.PluginSystem.Global
         private readonly IChatCommandsBus chatCommandsBus;
         private readonly IProfileNameColorHelper profileNameColorHelper;
         private readonly IAssetsProvisioner assetsProvisioner;
+        private readonly ITextFormatter hyperlinkTextFormatter;
 
         private ChatController chatController;
 
@@ -53,7 +55,7 @@ namespace DCL.PluginSystem.Global
             ViewDependencies viewDependencies,
             IChatCommandsBus chatCommandsBus,
             IProfileNameColorHelper profileNameColorHelper,
-            IAssetsProvisioner assetsProvisioner)
+            IAssetsProvisioner assetsProvisioner, ITextFormatter hyperlinkTextFormatter)
         {
             this.mvcManager = mvcManager;
             this.chatHistory = chatHistory;
@@ -67,6 +69,7 @@ namespace DCL.PluginSystem.Global
             this.chatCommandsBus = chatCommandsBus;
             this.profileNameColorHelper = profileNameColorHelper;
             this.assetsProvisioner = assetsProvisioner;
+            this.hyperlinkTextFormatter = hyperlinkTextFormatter;
             this.mainUIView = mainUIView;
             this.inputBlock = inputBlock;
         }
@@ -96,7 +99,8 @@ namespace DCL.PluginSystem.Global
                 inputBlock,
                 viewDependencies,
                 chatCommandsBus,
-                chatSettingsAsset.Value
+                chatSettingsAsset.Value,
+                hyperlinkTextFormatter
             );
 
             mvcManager.RegisterController(chatController);

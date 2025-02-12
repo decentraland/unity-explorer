@@ -10,11 +10,6 @@ namespace DCL.Chat.MessageBus
 {
     public class SelfResendChatMessageBus : IChatMessagesBus
     {
-        private const string LINK_PROFILE_OPENING = "<link=profile>";
-        private const string LINK_PROFILE_CLOSING = "</link>";
-        private const string MARK_OPENING = "<mark=#438FFF40>";
-        private const string MARK_CLOSING = "</mark>";
-
         private readonly MultiplayerChatMessagesBus origin;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IProfileRepository profileRepository;
@@ -63,9 +58,6 @@ namespace DCL.Chat.MessageBus
 
             Profile? ownProfile = await profileRepository.GetAsync(identity.Address, CancellationToken.None);
 
-            if (ownProfile != null)
-                TryChangeUserMentionStyle(ref chatMessage, ownProfile.MentionName);
-
             MessageAdded?.Invoke(
                 channelId,
                 new ChatMessage(
@@ -74,20 +66,10 @@ namespace DCL.Chat.MessageBus
                     identity.Address,
                     true,
                     ownProfile?.WalletId ?? null,
-                    false
+                    isMention: false
                 )
             );
         }
 
-        private bool TryChangeUserMentionStyle(ref string chatMessage, string userName)
-        {
-            bool contains = chatMessage.Contains(userName, StringComparison.Ordinal);
-
-            if (!contains) return false;
-
-            chatMessage = chatMessage.Replace($"{LINK_PROFILE_OPENING}{userName}{LINK_PROFILE_CLOSING}", $"{MARK_OPENING}{userName}{MARK_CLOSING}");
-
-            return true;
-        }
     }
 }

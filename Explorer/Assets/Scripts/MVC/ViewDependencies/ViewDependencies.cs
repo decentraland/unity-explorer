@@ -20,10 +20,9 @@ namespace MVC
         public readonly IProfileCache ProfileCache;
         public readonly IProfileNameColorHelper ProfileNameColorHelper;
         public readonly IRoomHub RoomHub;
-        public readonly ITextFormatter HyperlinkTextFormatter;
 
         public ViewDependencies(DCLInput dclInput, IEventSystem eventSystem, MVCManagerMenusAccessFacade globalUIViews, IClipboardManager clipboardManager, ICursor cursor,
-            IProfileCache profileCache, IProfileNameColorHelper profileNameColorHelper, IRoomHub roomHub, ITextFormatter hyperlinkTextFormatter)
+            IProfileCache profileCache, IProfileNameColorHelper profileNameColorHelper, IRoomHub roomHub)
         {
             DclInput = dclInput;
             EventSystem = eventSystem;
@@ -33,7 +32,6 @@ namespace MVC
             ProfileCache = profileCache;
             ProfileNameColorHelper = profileNameColorHelper;
             RoomHub = roomHub;
-            HyperlinkTextFormatter = hyperlinkTextFormatter;
         }
 
     }
