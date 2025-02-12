@@ -68,7 +68,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             if (receivedRequests.Contains(request)) return;
 
             receivedRequests.Add(request);
-            receivedRequests.Sort((r1, r2) => r2.Timestamp.CompareTo(r1.Timestamp));
+            FriendsSorter.SortFriendRequestList(receivedRequests);
             RefreshLoopList();
         }
 
@@ -77,7 +77,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             if (sentRequests.Contains(request)) return;
 
             sentRequests.Add(request);
-            sentRequests.Sort((r1, r2) => r2.Timestamp.CompareTo(r1.Timestamp));
+            FriendsSorter.SortFriendRequestList(sentRequests);
             RefreshLoopList();
         }
 

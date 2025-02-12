@@ -67,20 +67,13 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             if (onlineStatus == OnlineStatus.OFFLINE)
             {
                 offlineFriends.Add(friendProfile);
-                SortFriendList(offlineFriends);
+                FriendsSorter.SortFriendList(offlineFriends);
             }
             else
             {
                 onlineFriends.Add(friendProfile);
-                SortFriendList(onlineFriends);
+                FriendsSorter.SortFriendList(onlineFriends);
             }
-        }
-
-        private void SortFriendList(List<FriendProfile> friends)
-        {
-            friends.Sort((f1, f2) =>
-                string.Compare(f1.Name, f2.Name, StringComparison.Ordinal)
-            );
         }
 
         private void FriendBecameOnline(FriendProfile friendProfile)
@@ -174,7 +167,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
                 offlineFriends.Add(friend);
             }
 
-            SortFriendList(offlineFriends);
+            FriendsSorter.SortFriendList(offlineFriends);
 
             return result.TotalAmount;
         }

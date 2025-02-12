@@ -59,13 +59,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         private void AddNewFriendProfile(FriendProfile friendProfile)
         {
             friends.Add(friendProfile);
-            SortFriendList();
-        }
-
-        private void SortFriendList()
-        {
-            friends.Sort((f1, f2) =>
-                string.Compare(f1.Name, f2.Name, StringComparison.Ordinal));
+            FriendsSorter.SortFriendList(friends);
         }
 
         private void FriendRequestAccepted(string friendId)
@@ -115,7 +109,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
                 friends.Add(friend);
             }
 
-            SortFriendList();
+            FriendsSorter.SortFriendList(friends);
 
             return result.TotalAmount;
         }
