@@ -65,7 +65,7 @@ namespace DCL.Roads.GPUInstancingPlayground
             //         natArray[i + 1] = 0;
             //     }
             // }
-            cbInstanceLookUpAndDither.SetData(LookUp);
+            cbInstanceLookUpAndDither.SetData(LookUp, 0,0,4);
 
             drawArgsBuffer = new GraphicsBuffer(GraphicsBuffer.Target.IndirectArguments, _nLODCount, GraphicsBuffer.IndirectDrawIndexedArgs.size);
             drawArgsCommandData = new GraphicsBuffer.IndirectDrawIndexedArgs[_nLODCount];
@@ -93,6 +93,10 @@ namespace DCL.Roads.GPUInstancingPlayground
                     drawArgsCommandData[lodLevel].baseVertexIndex = combinedMesh.GetBaseVertex(lodLevel);
                     drawArgsCommandData[lodLevel].startInstance = (uint)lodLevel * (uint)candidate.InstancesBuffer.Count;
                 }
+
+                drawArgsCommandData[0].instanceCount = (uint)candidate.InstancesBuffer.Count;
+                drawArgsCommandData[1].instanceCount = 0;
+                drawArgsCommandData[2].instanceCount = 0;
 
                 drawArgsBuffer.SetData(drawArgsCommandData, 0, 0, count: lodCount);
 
