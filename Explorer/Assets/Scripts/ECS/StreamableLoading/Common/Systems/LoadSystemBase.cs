@@ -296,7 +296,7 @@ namespace ECS.StreamableLoading.Common.Systems
                 // Add result to the cache
                 if (result is { Succeeded: true })
                     genericCache
-                       .PutAsync(intention, result.Value.Asset!, ct)
+                       .PutAsync(intention, result.Value.Asset!, intention.IsQualifiedForDiskCache(), ct)
                        .Forget(
                             static e =>
                                 ReportHub.LogError(ReportCategory.STREAMABLE_LOADING, $"Error putting cache content: {e.Message}")
@@ -346,7 +346,7 @@ namespace ECS.StreamableLoading.Common.Systems
 
         private async UniTask<StreamableLoadingResult<TAsset>?> TryLoadFromCacheAsync(TIntention intention, CancellationToken ct)
         {
-            EnumResult<Option<TAsset>, TaskError> cachedContent = await genericCache.ContentAsync(intention, ct);
+            EnumResult<Option<TAsset>, TaskError> cachedContent = await genericCache.ContentAsync(intention, intention.IsQualifiedForDiskCache(), ct);
 
             if (cachedContent.Success)
             {

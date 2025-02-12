@@ -106,10 +106,7 @@ namespace ECS.StreamableLoading.AssetBundles
 
             protected override void FillPayload(IHashKeyPayload keyPayload, in GetAssetBundleIntention asset)
             {
-                keyPayload.Put(asset.Hash ?? "");
-
-                if (asset.Name != null)
-                    keyPayload.Put(asset.Name);
+                keyPayload.Put(asset.Hash ?? asset.Name!);
             }
         }
     }

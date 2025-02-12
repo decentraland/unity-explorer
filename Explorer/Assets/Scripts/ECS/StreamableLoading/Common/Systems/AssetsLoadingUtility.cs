@@ -34,7 +34,7 @@ namespace ECS.StreamableLoading.Common.Systems
 
             while (true)
             {
-                ReportHub.Log(reportData, $"Starting loading {intention}\n{partition}, attempts left: {attemptCount}");
+                ReportHub.Log(reportData, $"Starting loading {intention}\nfrom source {intention.CommonArguments.CurrentSource}\n{partition}, attempts left: {attemptCount}");
 
                 try { return await flow(intention, state, partition, ct); }
                 catch (UnityWebRequestException unityWebRequestException)
@@ -49,7 +49,7 @@ namespace ECS.StreamableLoading.Common.Systems
                         // no more sources left
                         ReportHub.Log(
                             reportData,
-                            $"Exception occured on loading {typeof(TAsset)} from {intention.ToString()}.\n"
+                            $"Exception occured on loading {typeof(TAsset)} from {intention.ToString()} from source {intention.CommonArguments.CurrentSource}.\n"
                             + $"Trying sources: {intention.CommonArguments.PermittedSources} attemptCount {attemptCount} url: {intention.CommonArguments.URL}"
                         );
 
