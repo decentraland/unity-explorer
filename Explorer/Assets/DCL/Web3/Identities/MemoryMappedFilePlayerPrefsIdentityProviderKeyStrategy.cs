@@ -1,4 +1,5 @@
 using DCL.Diagnostics;
+using Plugins.DclNativeMutex;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -14,7 +15,11 @@ namespace DCL.Web3.Identities
     public class MemoryMappedFilePlayerPrefsIdentityProviderKeyStrategy : IPlayerPrefsIdentityProviderKeyStrategy
     {
         private const string MMF_NAME = "Local\\DCL_AppInstancesTracking";
+#if UNITY_EDITOR_WIN || UNITY_STANDALONE_WIN || PLATFORM_STANDALONE_WIN
         private const string MUTEX_NAME = "Local\\DCL_AppInstancesTrackingMutex";
+#else
+        private const string MUTEX_NAME = "/dcl_tracking";
+#endif
         private const int MAX_INSTANCES_COUNT = 64;
         private const uint MUTEX_TIMEOUT_MILLISECONDS = 5000;
 
@@ -209,99 +214,6 @@ namespace DCL.Web3.Identities
                     unsafe { return sizeof(Entry); }
                 }
             }
-        }
-    }
-
-    /// <summary>
-    /// Created due named mutex is not supported by IL2CPP
-    /// </summary>
-    internal class PMutex : IDisposable
-    {
-        /// <summary>
-        /// From https://learn.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-waitforsingleobject
-        /// </summary>
-        private const uint WAIT_OBJECT_0 = 0x00000000;
-
-        // Unix
-        private const int O_CREAT = 0x0200; // Create semaphore if it does not exist
-        private const int SEM_PERM = 0x1FF; // 0777 permissions
-
-        private readonly string name;
-        private readonly IntPtr pMutex;
-
-        [DllImport("kernel32.dll", SetLastError = true)]
-        private static extern IntPtr CreateMutex(IntPtr lpMutexAttributes, bool bInitialOwner, string lpName);
-
-        [DllImport("kernel32.dll", SetLastError = true)]
-        private static extern uint WaitForSingleObject(IntPtr hHandle, uint dwMillisecond);
-
-        [DllImport("kernel32.dll", SetLastError = true)]
-        private static extern bool ReleaseMutex(IntPtr hMutex);
-
-        [DllImport("kernel32.dll", SetLastError = true)]
-        private static extern bool CloseHandle(IntPtr hObject);
-
-        [DllImport("libc", SetLastError = true)]
-        private static extern IntPtr sem_open(string name, int oflag, int mode, uint value);
-
-        [DllImport("libc", SetLastError = true)]
-        private static extern int sem_wait(IntPtr sem);
-
-        [DllImport("libc", SetLastError = true)]
-        private static extern int sem_post(IntPtr sem);
-
-        [DllImport("libc", SetLastError = true)]
-        private static extern int sem_close(IntPtr sem);
-
-        public PMutex(string name)
-        {
-#if UNITY_EDITOR_WIN || UNITY_STANDALONE_WIN || PLATFORM_STANDALONE_WIN
-            pMutex = CreateMutex(IntPtr.Zero, false, name);
-#else
-            pMutex = sem_open(name, O_CREAT, SEM_PERM, 1);
-#endif
-
-            if (pMutex == IntPtr.Zero)
-                throw new Exception("Failed to create mutex.");
-        }
-
-        public void WaitOne(uint milliseconds)
-        {
-#if UNITY_EDITOR_WIN || UNITY_STANDALONE_WIN || PLATFORM_STANDALONE_WIN
-            uint result = WaitForSingleObject(pMutex, milliseconds);
-
-            if (result != WAIT_OBJECT_0)
-                throw new Exception($"Cannot acquire mutex with result {result}");
-#else
-            int result = sem_wait(pMutex);
-
-            if (result != 0)
-                throw new Exception($"Cannot acquire mutex with result {result}");
-#endif
-        }
-
-        public void ReleaseMutex()
-        {
-#if UNITY_EDITOR_WIN || UNITY_STANDALONE_WIN || PLATFORM_STANDALONE_WIN
-            bool result = ReleaseMutex(pMutex);
-
-            if (result == false)
-                throw new Exception("Cannot release mutex");
-#else
-            int result = sem_post(pMutex);
-
-            if (result != 0)
-                throw new Exception($"Cannot release mutex with result {result}");
-#endif
-        }
-
-        public void Dispose()
-        {
-#if UNITY_EDITOR_WIN || UNITY_STANDALONE_WIN || PLATFORM_STANDALONE_WIN
-            CloseHandle(pMutex);
-#else
-            sem_close(pMutex);
-#endif
         }
     }
 }
