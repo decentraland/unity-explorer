@@ -1,3 +1,5 @@
+#ifdef __APPLE__
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h> // For sleep()
@@ -28,3 +30,4 @@ int main() {
     return 0;
 }
 
+#endif

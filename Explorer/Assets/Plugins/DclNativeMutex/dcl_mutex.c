@@ -1,3 +1,5 @@
+#ifdef __APPLE__
+
 #include "dcl_mutex.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -34,3 +36,5 @@ EXPORT int dcl_mutex_close_handle(void* mutex)
     int result = sem_close(mutex);
     return result;
 }
+
+#endif
