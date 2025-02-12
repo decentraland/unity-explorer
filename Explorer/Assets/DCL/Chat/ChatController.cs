@@ -12,6 +12,7 @@ using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
 using DCL.Profiles;
 using DCL.Settings.Settings;
+using DCL.UI.InputFieldFormatting;
 using DCL.UI.Profiles.Helpers;
 using ECS.Abstract;
 using MVC;
@@ -34,6 +35,7 @@ namespace DCL.Chat
         private readonly IInputBlock inputBlock;
         private readonly ViewDependencies viewDependencies;
         private readonly IChatCommandsBus chatCommandsBus;
+        private readonly ITextFormatter hyperlinkTextFormatter;
         private readonly ChatAudioSettingsAsset chatAudioSettings;
         private SingleInstanceEntity cameraEntity;
 
@@ -52,7 +54,7 @@ namespace DCL.Chat
             IInputBlock inputBlock,
             ViewDependencies viewDependencies,
             IChatCommandsBus chatCommandsBus,
-            ChatAudioSettingsAsset chatAudioSettings) : base(viewFactory)
+            ChatAudioSettingsAsset chatAudioSettings, ITextFormatter hyperlinkTextFormatter) : base(viewFactory)
         {
             this.profileNameColorHelper = profileNameColorHelper;
             this.chatMessagesBus = chatMessagesBus;
@@ -65,6 +67,7 @@ namespace DCL.Chat
             this.viewDependencies = viewDependencies;
             this.chatCommandsBus = chatCommandsBus;
             this.chatAudioSettings = chatAudioSettings;
+            this.hyperlinkTextFormatter = hyperlinkTextFormatter;
         }
 
         public void Clear() // Called by a command
@@ -263,7 +266,9 @@ namespace DCL.Chat
 
         private void OnChatBusMessageAdded(ChatChannel.ChannelId channelId, ChatMessage chatMessage)
         {
-            chatHistory.AddMessage(channelId, chatMessage);
+            string formattedText = hyperlinkTextFormatter.FormatText(chatMessage.Message);
+            var newChatMessage = ChatMessage.CopyWithNewMessage(formattedText, chatMessage);
+            chatHistory.AddMessage(channelId, newChatMessage);
         }
     }
 }

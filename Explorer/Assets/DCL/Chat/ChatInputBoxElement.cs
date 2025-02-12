@@ -336,7 +336,6 @@ namespace DCL.Chat
                 UIAudioEventsBus.Instance.SendPlayAudioEvent(chatSendMessageAudio);
 
             inputField.ResetInputField();
-            submittedText = viewDependencies.HyperlinkTextFormatter.FormatText(submittedText);
 
             InputSubmitted?.Invoke(submittedText, ORIGIN);
         }
