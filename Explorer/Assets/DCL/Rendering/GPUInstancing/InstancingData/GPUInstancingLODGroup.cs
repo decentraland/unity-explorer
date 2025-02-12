@@ -22,6 +22,7 @@ namespace DCL.Roads.GPUInstancing.Playground
         public float ObjectSize;
         public Bounds Bounds;
         public float[] LodsScreenSpaceSizes;
+        public Matrix4x4 LODSizesMatrix;
 
         [Space]
         public List<CombinedLodsRenderer> CombinedLodsRenderers;
@@ -33,7 +34,7 @@ namespace DCL.Roads.GPUInstancing.Playground
         [ContextMenu(nameof(CollectSelfData))]
         public void CollectSelfData()
         {
-            if (GetComponentsInChildren<GPUInstancingLODGroup>().Length != 0)
+            if (GetComponentsInChildren<GPUInstancingLODGroup>().Length > 1)
                 Debug.LogWarning($"{name} has nested GPU instancing candidates, that could lead to duplication of meshes!");
 
             CombinedLodsRenderers = new List<CombinedLodsRenderer>();
@@ -80,14 +81,50 @@ namespace DCL.Roads.GPUInstancing.Playground
 
             lodGroup.RecalculateBounds();
             ObjectSize = lodGroup.size;
-            LodsScreenSpaceSizes = new float [lods.Length];
 
+            BuildLODMatrix(lods);
+
+            UpdateBoundsByCombinedLods();
+            AssetDatabase.SaveAssets();
+        }
+
+        public void BuildLODMatrix(LOD[] lods)
+        {
+            LodsScreenSpaceSizes = new float[lods.Length];
             for (var i = 0; i < lods.Length && i < MAX_LODS_LEVEL; i++)
                 LodsScreenSpaceSizes[i] = lods[i].screenRelativeTransitionHeight;
 
-            UpdateBoundsByCombinedLods();
+            LODSizesMatrix = new Matrix4x4();
+            const float overlapFactor = 0.20f;
 
-            AssetDatabase.SaveAssets();
+            for (int i = 0; i < lods.Length && i < MAX_LODS_LEVEL; i++)
+            {
+                float endValue   = LodsScreenSpaceSizes[i];
+                float startValue;
+
+                if (i == 0)
+                    startValue = 0f;
+                else
+                {
+                    float prevEnd   = LodsScreenSpaceSizes[i - 1];
+                    float difference = prevEnd - endValue;
+                    float overlap    = difference * overlapFactor;
+
+                    startValue = prevEnd - overlap;
+                }
+
+                // 4) Write [startValue, endValue] into LODSizesMatrix.
+                //    The pattern:
+                //      - row0 & row1 for 'start'
+                //      - row2 & row3 for 'end'
+                //    i < 4 => row0 & row2, i >= 4 => row1 & row3
+                int rowStart = (i < 4) ? 0 : 1;
+                int rowEnd   = rowStart + 2;  // 2 or 3
+                int col      = i % 4;
+
+                LODSizesMatrix[rowStart, col] = startValue;
+                LODSizesMatrix[rowEnd,   col] = endValue;
+            }
         }
 
         private void CollectCombineInstances(LOD[] lods, Dictionary<(Material, Transform), CombinedLodsRenderer> combineDict)

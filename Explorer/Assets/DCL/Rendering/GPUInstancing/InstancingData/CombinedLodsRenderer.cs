@@ -29,7 +29,7 @@ namespace DCL.Roads.GPUInstancing.Playground
             SharedMaterial = material;
         }
 
-        public void Initialize(Dictionary<Material, Material> instancingMaterials)
+        public void InitializeRenderParams(Dictionary<Material, Material> instancingMaterials)
         {
             RenderParamsArray = new RenderParams[RenderParamsSerialized.Count];
 
