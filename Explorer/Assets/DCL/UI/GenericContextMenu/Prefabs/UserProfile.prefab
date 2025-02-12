@@ -511,6 +511,7 @@ GameObject:
   - component: {fileID: 1192557378594569466}
   - component: {fileID: 2476711162548179453}
   - component: {fileID: 7499613364615432906}
+  - component: {fileID: 325575808803439904}
   m_Layer: 5
   m_Name: CancelRequest
   m_TagString: Untagged
@@ -690,6 +691,21 @@ MonoBehaviour:
             m_StringArgument: 
             m_BoolArgument: 1
           m_CallState: 1
+--- !u!114 &325575808803439904
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1317328033002436429}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1cdc6c1a43024e58bcd05d3e69a19db4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  <Button>k__BackingField: {fileID: 2476711162548179453}
+  <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
+  <ButtonHoverAudio>k__BackingField: {fileID: 11400000, guid: 59da234351971c0498a566fb811b0c36, type: 2}
 --- !u!1 &1337293055434071888
 GameObject:
   m_ObjectHideFlags: 0
@@ -1114,6 +1130,7 @@ GameObject:
   - component: {fileID: 8773300436118547794}
   - component: {fileID: 9031934742710573606}
   - component: {fileID: 7225785648317091492}
+  - component: {fileID: 2472022489195568985}
   m_Layer: 5
   m_Name: AddFriend
   m_TagString: Untagged
@@ -1224,6 +1241,21 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &2472022489195568985
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2127823484790638231}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1cdc6c1a43024e58bcd05d3e69a19db4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  <Button>k__BackingField: {fileID: 7225785648317091492}
+  <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
+  <ButtonHoverAudio>k__BackingField: {fileID: 11400000, guid: 59da234351971c0498a566fb811b0c36, type: 2}
 --- !u!1 &2560360784462856290
 GameObject:
   m_ObjectHideFlags: 0
@@ -2116,6 +2148,7 @@ GameObject:
   - component: {fileID: 2254357607769587352}
   - component: {fileID: 2926700669047740195}
   - component: {fileID: 6472107892883149962}
+  - component: {fileID: 787579706574028236}
   m_Layer: 5
   m_Name: RemoveFriend
   m_TagString: Untagged
@@ -2295,6 +2328,21 @@ MonoBehaviour:
             m_StringArgument: 
             m_BoolArgument: 1
           m_CallState: 1
+--- !u!114 &787579706574028236
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4633043170558134531}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1cdc6c1a43024e58bcd05d3e69a19db4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  <Button>k__BackingField: {fileID: 2926700669047740195}
+  <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
+  <ButtonHoverAudio>k__BackingField: {fileID: 11400000, guid: 59da234351971c0498a566fb811b0c36, type: 2}
 --- !u!1 &4983295453174880201
 GameObject:
   m_ObjectHideFlags: 0
@@ -2421,6 +2469,7 @@ GameObject:
   - component: {fileID: 7172724049516229218}
   - component: {fileID: 4459669106562078384}
   - component: {fileID: 2792953813415601642}
+  - component: {fileID: 7855060657392661070}
   m_Layer: 5
   m_Name: AcceptFriend
   m_TagString: Untagged
@@ -2531,6 +2580,21 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &7855060657392661070
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5058834473428768320}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1cdc6c1a43024e58bcd05d3e69a19db4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  <Button>k__BackingField: {fileID: 2792953813415601642}
+  <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
+  <ButtonHoverAudio>k__BackingField: {fileID: 11400000, guid: 59da234351971c0498a566fb811b0c36, type: 2}
 --- !u!1 &5074778217436937362
 GameObject:
   m_ObjectHideFlags: 0
