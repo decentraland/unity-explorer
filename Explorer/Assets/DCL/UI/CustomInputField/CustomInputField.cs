@@ -130,7 +130,7 @@ namespace DCL.UI.CustomInputField
         }
 
         /// <summary>
-        ///     This method replaces a replaceAmount of characters starting at replaceAt position with a newValue
+        ///     This method replaces a replaceAmount of characters starting at replaceAt position with a newValue and adds an empty character after the inserted text
         /// </summary>
         public void ReplaceTextAtPosition(int replaceAt, int replaceAmount, string newValue, bool notify = false)
         {
@@ -142,13 +142,14 @@ namespace DCL.UI.CustomInputField
 
             stringBuilder.Append(text.AsSpan(0, replaceAt))
                          .Append(newValue)
+                         .Append(" ")
                          .Append(text.AsSpan(replaceAt + replaceAmount));
 
             if (notify) text = stringBuilder.ToString();
             else
                 SetTextWithoutNotify(stringBuilder.ToString());
 
-            stringPosition += replaceAt + newValue.Length;
+            stringPosition += replaceAt + newValue.Length + 1;
         }
     }
 }
