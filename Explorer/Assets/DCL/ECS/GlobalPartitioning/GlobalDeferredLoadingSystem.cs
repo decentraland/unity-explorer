@@ -5,10 +5,9 @@ using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
-using DCL.AvatarRendering.Wearables.Systems;
+using DCL.CharacterMotion.Components;
 using DCL.Ipfs;
 using DCL.Optimization.PerformanceBudgeting;
-using DCL.Profiles;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
@@ -17,7 +16,6 @@ using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.DeferredLoading;
 using ECS.StreamableLoading.GLTF;
-using ECS.StreamableLoading.NFTShapes;
 using ECS.StreamableLoading.Textures;
 using SceneRunner.Scene;
 using UnityEngine;
@@ -41,12 +39,16 @@ namespace DCL.GlobalPartitioning
     [UpdateBefore(typeof(LoadWearablesByParamSystem))]
     public partial class GlobalDeferredLoadingSystem : DeferredLoadingSystem
     {
-        private static readonly QueryDescription[] COMPONENT_HANDLERS;
-        private readonly SceneAssetLock sceneAssetLock;
+        private static readonly QueryDescription[] COMPONENT_HANDLERS_SCENES_ASSETS;
+        private static readonly QueryDescription[] COMPONENT_HANDLERS_SCENES;
+
+        private readonly IScenesCache scenesCache;
+        private readonly Entity playerEntity;
+
 
         static GlobalDeferredLoadingSystem()
         {
-            COMPONENT_HANDLERS = new[]
+            COMPONENT_HANDLERS_SCENES_ASSETS = new[]
             {
                 CreateQuery<GetSceneDefinitionList, SceneDefinitions>(),
                 CreateQuery<GetSceneDefinition, SceneEntityDefinition>(),
@@ -57,23 +59,43 @@ namespace DCL.GlobalPartitioning
                 CreateQuery<GetAssetBundleIntention, AssetBundleData>(),
                 CreateQuery<GetGLTFIntention, GLTFData>(),
                 CreateQuery<GetTextureIntention, Texture2DData>(),
-                CreateQuery<GetNFTShapeIntention, Texture2DData>(),
                 CreateQuery<GetEmotesByPointersFromRealmIntention, EmotesDTOList>(),
                 CreateQuery<GetOwnedEmotesFromRealmIntention, EmotesResolution>(),
-                CreateQuery<GetAudioClipIntention, AudioClipData>(),
+                CreateQuery<GetAudioClipIntention, AudioClipData>(), 
+                CreateQuery<GetGLTFIntention, GLTFData>()
+            };
+
+            COMPONENT_HANDLERS_SCENES = new[]
+            {
+                CreateQuery<GetSceneDefinitionList, SceneDefinitions>(), 
+                CreateQuery<GetSceneDefinition, SceneEntityDefinition>()
             };
         }
 
-        public GlobalDeferredLoadingSystem(World world, IReleasablePerformanceBudget releasablePerformanceLoadingBudget, IPerformanceBudget memoryBudget, SceneAssetLock sceneAssetLock)
-            : base(world, COMPONENT_HANDLERS, releasablePerformanceLoadingBudget, memoryBudget)
+        public GlobalDeferredLoadingSystem(World world, IReleasablePerformanceBudget releasablePerformanceLoadingBudget, IPerformanceBudget memoryBudget, IScenesCache scenesCache, Entity playerEntity)
+            : base(world, COMPONENT_HANDLERS_SCENES, releasablePerformanceLoadingBudget, memoryBudget)
         {
-            this.sceneAssetLock = sceneAssetLock;
+            this.scenesCache = scenesCache;
+            this.playerEntity = playerEntity;
         }
 
         protected override void Update(float t)
         {
-            if (sceneAssetLock.IsLocked) return;
+            FilterHandlersIfInTeleport();
             base.Update(t);
+        }
+
+        private void FilterHandlersIfInTeleport()
+        {
+            bool downloadOnlySceneMetadata = false;
+            //We check if the player is teleporting, and if the scene we want to teleport to has started.
+            //If so, only scene metadata will be allowed to de downloaded
+            if (World.TryGet(playerEntity, out PlayerTeleportIntent playerTeleportIntent))
+            {
+                if (scenesCache.Contains(playerTeleportIntent.Parcel))
+                    downloadOnlySceneMetadata = true;
+            }
+            sameBoatQueries = downloadOnlySceneMetadata ? COMPONENT_HANDLERS_SCENES : COMPONENT_HANDLERS_SCENES_ASSETS;
         }
     }
 }

@@ -141,7 +141,7 @@ namespace Global.Dynamic
                 loadSceneSystemLogic,
                 sceneFactory, NoCache<ISceneFacade, GetSceneFacadeIntention>.INSTANCE);
 
-            GlobalDeferredLoadingSystem.InjectToWorld(ref builder, sceneBudget, memoryBudget, staticContainer.SingletonSharedDependencies.SceneAssetLock);
+            GlobalDeferredLoadingSystem.InjectToWorld(ref builder, sceneBudget, memoryBudget, scenesCache, playerEntity);
 
             LoadStaticPointersSystem.InjectToWorld(ref builder);
             LoadFixedPointersSystem.InjectToWorld(ref builder);
@@ -178,7 +178,7 @@ namespace Global.Dynamic
 
             UnloadPortableExperiencesSystem.InjectToWorld(ref builder);
 
-            UpdateCurrentSceneSystem.InjectToWorld(ref builder, realmData, scenesCache, currentSceneInfo, playerEntity, staticContainer.SingletonSharedDependencies.SceneAssetLock, debugContainerBuilder);
+            UpdateCurrentSceneSystem.InjectToWorld(ref builder, realmData, scenesCache, currentSceneInfo, playerEntity, debugContainerBuilder);
 
             var pluginArgs = new GlobalPluginArguments(playerEntity, v8ActiveEngines);
 
@@ -187,7 +187,7 @@ namespace Global.Dynamic
 
             var finalizeWorldSystems = new IFinalizeWorldSystem[]
             {
-                UnloadSceneSystem.InjectToWorld(ref builder, scenesCache, staticContainer.SingletonSharedDependencies.SceneAssetLock, localSceneDevelopment), UnloadSceneLODSystem.InjectToWorld(ref builder, scenesCache, lodCache),
+                UnloadSceneSystem.InjectToWorld(ref builder, scenesCache, localSceneDevelopment), UnloadSceneLODSystem.InjectToWorld(ref builder, scenesCache, lodCache),
                 new ReleaseRealmPooledComponentSystem(componentPoolsRegistry),
             };
 
