@@ -1,4 +1,5 @@
 using DCL.Profiles;
+using DCL.Profiles.Self;
 using DCL.UI.Utilities;
 using System;
 using System.Text;
@@ -11,6 +12,8 @@ namespace DCL.UI.InputFieldFormatting
     {
         private const string LINK_OPENING_STYLE = "<#00B2FF><link=";
         private const string LINK_CLOSING_STYLE = "</link></color>";
+        private const string OWN_PROFILE_OPENING_STYLE = "<#00B2FF>";
+        private const string OWN_PROFILE_CLOSING_STYLE = "</color>";
 
         private static readonly Regex RICH_TEXT_TAG_REGEX = new (@"<(?!\/?(b|i)(>|\s))[^>]+>", RegexOptions.Compiled);
         private static readonly Regex WEBSITE_REGEX = new (@"(?<=^|\s)(https?:\/\/)([a-zA-Z0-9-]+\.)*[a-zA-Z0-9][a-zA-Z0-9-]+\.[a-zA-Z]{2,}(\/[^\s]*)?(?=\s|$)",
@@ -24,10 +27,12 @@ namespace DCL.UI.InputFieldFormatting
         private readonly StringBuilder mainStringBuilder = new ();
         private readonly StringBuilder tempStringBuilder = new ();
         private readonly IProfileCache profileCache;
+        private readonly SelfProfile selfProfile;
 
-        public HyperlinkTextFormatter(IProfileCache profileCache)
+        public HyperlinkTextFormatter(IProfileCache profileCache, SelfProfile selfProfile)
         {
             this.profileCache = profileCache;
+            this.selfProfile = selfProfile;
         }
 
         public string FormatText(string text)
@@ -129,10 +134,22 @@ namespace DCL.UI.InputFieldFormatting
                     linkTypeString = HyperlinkConstants.URL;
                     break;
                 case LinkType.PROFILE:
-                    if (!IsUserNameValid(match.Groups[1].Value))
+                    linkTypeString = HyperlinkConstants.PROFILE;
+
+                    string username = match.Groups[1].Value;
+                    if (IsOwnUsername(username))
+                    {
+                        tempStringBuilder.Append(OWN_PROFILE_OPENING_STYLE)
+                                         .Append(linkTypeString)
+                                         .Append(">")
+                                         .Append(match)
+                                         .Append(OWN_PROFILE_CLOSING_STYLE);
+                        return tempStringBuilder;
+                    }
+
+                    if (!IsUserNameValid(username))
                         return tempStringBuilder.Append(match);
 
-                    linkTypeString = HyperlinkConstants.PROFILE;
                     break;
             }
 
@@ -147,6 +164,8 @@ namespace DCL.UI.InputFieldFormatting
 
         private bool AreCoordsValid(int x, int y) =>
             GenesisCityData.IsInsideBounds(x, y);
+
+        private bool IsOwnUsername(string username) => selfProfile.OwnProfile?.UserId == username;
 
         private bool IsUserNameValid(string username) =>
             profileCache.GetByUserName(username) != null;
