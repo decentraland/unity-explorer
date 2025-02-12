@@ -4,7 +4,6 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using AssetManagement;
 using CommunicationData.URLHelpers;
-using DCL.AvatarRendering.Loading.Systems.Abstract;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
@@ -26,7 +25,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
     [UpdateAfter(typeof(FinalizeAssetBundleWearableLoadingSystem))]
     [UpdateAfter(typeof(FinalizeRawWearableLoadingSystem))]
     [LogCategory(ReportCategory.WEARABLE)]
-    public partial class ResolveWearablePromisesSystem : FinalizeElementsLoadingSystem<GetWearableDTOByPointersIntention, IWearable, WearableDTO, WearablesDTOList>
+    public partial class ResolveWearablePromisesSystem : BaseUnityLoopSystem
     {
         private readonly URLSubdirectory customStreamingSubdirectory;
         private readonly IWearableStorage wearableStorage;
@@ -38,7 +37,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
             IWearableStorage wearableStorage,
             IRealmData realmData,
             URLSubdirectory customStreamingSubdirectory
-            ) : base(world, wearableStorage, WearableComponentsUtils.POINTERS_POOL)
+            ) : base(world)
         {
             this.wearableStorage = wearableStorage;
             this.realmData = realmData;
@@ -53,6 +52,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
         protected override void Update(float t)
         {
             bool defaultWearablesResolved = defaultWearablesState.GetDefaultWearablesState(World!).ResolvedState == DefaultWearablesComponent.State.Success;
+
             ResolveWearablePromiseQuery(World, defaultWearablesResolved);
         }
 
