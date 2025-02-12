@@ -105,7 +105,7 @@ namespace DCL.Friends.UI.FriendPanel
         }
 
         private DateTime GetDateTimeFromString(string epochString) =>
-            !long.TryParse(epochString, out long unixTimestamp) ? new DateTime() : DateTimeOffset.FromUnixTimeSeconds(unixTimestamp).ToLocalTime().DateTime;
+            !long.TryParse(epochString, out long unixTimestamp) ? new DateTime() : DateTimeOffset.FromUnixTimeMilliseconds(unixTimestamp).ToLocalTime().DateTime;
 
         private void RegisterHotkey()
         {
