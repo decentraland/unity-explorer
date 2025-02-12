@@ -78,6 +78,8 @@ namespace Global.Dynamic
 
         private void Awake()
         {
+            SystemInfoUtils.Log();
+
             InitializeFlowAsync(destroyCancellationToken).Forget();
         }
 
@@ -317,7 +319,7 @@ namespace Global.Dynamic
 
         private static IDiskCache NewInstanceDiskCache(IAppArgs appArgs)
         {
-            if (appArgs.HasFlag(AppArgsFlags.DISABLE_DISK_CACHE))
+            //if (appArgs.HasFlag(AppArgsFlags.DISABLE_DISK_CACHE))
             {
                 ReportHub.Log(ReportData.UNSPECIFIED, $"Disable disk cache, flag --{AppArgsFlags.DISABLE_DISK_CACHE} is passed");
                 return new IDiskCache.Fake();
