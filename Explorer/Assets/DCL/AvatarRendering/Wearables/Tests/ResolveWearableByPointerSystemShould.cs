@@ -50,7 +50,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
                 ResolvedState = DefaultWearablesComponent.State.Success,
             });
 
-            system = new FinalizeAssetBundleWearableLoadingSystem(world, wearableStorage, new RealmData(new TestIpfsRealm()), URLSubdirectory.EMPTY);
+            system = new FinalizeAssetBundleWearableLoadingSystem(world, wearableStorage, new RealmData(new TestIpfsRealm()));
             system.Initialize();
         }
 
@@ -220,6 +220,9 @@ namespace DCL.AvatarRendering.Wearables.Tests
         [Test]
         public void CancelIntentionOnManifestStage()
         {
+            var resolveWearablePromisesSystem = new ResolveWearablePromisesSystem(world, wearableStorage, new RealmData(new TestIpfsRealm()), URLSubdirectory.EMPTY);
+            resolveWearablePromisesSystem.Initialize();
+
             LogAssert.ignoreFailingMessages = true;
 
             //Arrange
@@ -231,6 +234,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
                     { testUrn }, BodyShape.MALE, Array.Empty<string>());
 
             var promise = Promise.Create(world, getWearablesByPointersIntention, PartitionComponent.TOP_PRIORITY);
+            resolveWearablePromisesSystem.Update(0);
             system!.Update(0);
 
             //Act
@@ -244,6 +248,8 @@ namespace DCL.AvatarRendering.Wearables.Tests
 
             //No  Manifest promises should be left
             Assert.AreEqual(0, world.CountEntities(in new QueryDescription().WithAll<AssetBundleManifestPromise>()));
+
+            resolveWearablePromisesSystem.Dispose();
         }
 
         [Test]

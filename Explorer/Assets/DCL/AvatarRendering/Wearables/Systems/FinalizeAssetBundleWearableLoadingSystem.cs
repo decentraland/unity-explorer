@@ -2,20 +2,15 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
-using AssetManagement;
-using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Components;
-using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
 using ECS;
-using ECS.Prioritization.Components;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using SceneRunner.Scene;
-using Utility;
 using AssetBundleManifestPromise = ECS.StreamableLoading.Common.AssetPromise<SceneRunner.Scene.SceneAssetBundleManifest, DCL.AvatarRendering.Wearables.Components.GetWearableAssetBundleManifestIntention>;
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
 
@@ -29,9 +24,8 @@ namespace DCL.AvatarRendering.Wearables.Systems
         public FinalizeAssetBundleWearableLoadingSystem(
             World world,
             IWearableStorage wearableStorage,
-            IRealmData realmData,
-            URLSubdirectory customStreamingSubdirectory
-        ) : base(world, wearableStorage, realmData, customStreamingSubdirectory)
+            IRealmData realmData
+        ) : base(world, wearableStorage, realmData)
         {
         }
 
@@ -45,7 +39,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
         }
 
         [Query]
-        protected void FinalizeAssetBundleManifestLoading(Entity entity, ref AssetBundleManifestPromise promise, ref IWearable wearable, ref BodyShape bodyShape)
+        private void FinalizeAssetBundleManifestLoading(Entity entity, ref AssetBundleManifestPromise promise, ref IWearable wearable, ref BodyShape bodyShape)
         {
             if (promise.TryForgetWithEntityIfCancelled(entity, World!))
             {
@@ -78,24 +72,6 @@ namespace DCL.AvatarRendering.Wearables.Systems
         )
         {
             FinalizeAssetLoading<AssetBundleData, GetAssetBundleIntention>(entity, ref promise, wearable, in bodyShape, index, result => result.ToWearableAsset(wearable));
-        }
-
-        protected override bool CreateAssetPromiseIfRequired(IWearable component, in GetWearablesByPointersIntention intention, IPartitionComponent partitionComponent)
-        {
-            // Do not repeat the promise if already failed once. Otherwise it will end up in an endless loading:true state
-            if (component.ManifestResult is { Succeeded: false }) return false;
-
-            // Manifest is required for Web loading only
-            if (component.ManifestResult == null && EnumUtils.HasFlag(intention.PermittedSources, AssetSource.WEB))
-                return component.CreateAssetBundleManifestPromise(World, intention.BodyShape, intention.CancellationTokenSource, partitionComponent);
-
-            if (component.TryCreateAssetPromise(in intention, customStreamingSubdirectory, partitionComponent, World, GetReportCategory()))
-            {
-                component.UpdateLoadingStatus(true);
-                return true;
-            }
-
-            return false;
         }
     }
 }

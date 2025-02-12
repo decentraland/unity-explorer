@@ -2,16 +2,12 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
-using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Components;
-using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
 using ECS;
-using ECS.Prioritization.Components;
 using ECS.StreamableLoading.AssetBundles;
-using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.GLTF;
 using ECS.StreamableLoading.Textures;
 using RawGltfPromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.GLTF.GLTFData, ECS.StreamableLoading.GLTF.GetGLTFIntention>;
@@ -27,9 +23,8 @@ namespace DCL.AvatarRendering.Wearables.Systems
         public FinalizeRawWearableLoadingSystem(
             World world,
             IWearableStorage wearableStorage,
-            IRealmData realmData,
-            URLSubdirectory customStreamingSubdirectory
-        ) : base(world, wearableStorage, realmData, customStreamingSubdirectory)
+            IRealmData realmData
+        ) : base(world, wearableStorage, realmData)
         {
         }
 
@@ -65,22 +60,6 @@ namespace DCL.AvatarRendering.Wearables.Systems
             if (wearable.Type != WearableType.FacialFeature) return;
 
             FinalizeAssetLoading<Texture2DData, GetTextureIntention>(entity, ref promise, wearable, in bodyShape, index, result => result.ToWearableAsset(wearable));
-        }
-
-        protected override bool CreateAssetPromiseIfRequired(IWearable component, in GetWearablesByPointersIntention intention, IPartitionComponent partitionComponent)
-        {
-            bool dtoHasContentDownloadUrl = !string.IsNullOrEmpty(component.DTO.ContentDownloadUrl);
-
-            // Do not repeat the promise if already failed once. Otherwise it will end up in an endless loading:true state
-            if (!dtoHasContentDownloadUrl) return false;
-
-            if (component.TryCreateAssetPromise(in intention, customStreamingSubdirectory, partitionComponent, World, GetReportCategory()))
-            {
-                component.UpdateLoadingStatus(true);
-                return true;
-            }
-
-            return false;
         }
     }
 }
