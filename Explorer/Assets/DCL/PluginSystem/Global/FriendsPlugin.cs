@@ -136,6 +136,11 @@ namespace DCL.PluginSystem.Global
 
             friendServiceProxy.SetObject(friendsService);
 
+            // We need to restart the connection to the service as credentials changes
+            // since that affects which friends the user can access
+            web3IdentityCache.OnIdentityCleared += DisconnectRpcClient;
+            web3IdentityCache.OnIdentityChanged += ReconnectRpcClient;
+
             // Fire and forget as this task will never finish
             var cts = CancellationTokenSource.CreateLinkedTokenSource(friendServiceSubscriptionCancellationToken.Token, ct);
             friendsService.SubscribeToIncomingFriendshipEventsAsync(cts.Token).Forget();
@@ -208,11 +213,6 @@ namespace DCL.PluginSystem.Global
                 friendsService, profileRepository, profileThumbnailCache);
 
             mvcManager.RegisterController(unfriendConfirmationPopupController);
-
-            // We need to restart the connection to the service as credentials changes
-            // since that affects which friends the user can access
-            web3IdentityCache.OnIdentityCleared += DisconnectRpcClient;
-            web3IdentityCache.OnIdentityChanged += ReconnectRpcClient;
         }
 
         private URLAddress GetApiUrl()
