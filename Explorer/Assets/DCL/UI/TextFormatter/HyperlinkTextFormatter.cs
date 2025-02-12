@@ -134,14 +134,10 @@ namespace DCL.UI.InputFieldFormatting
                     linkTypeString = HyperlinkConstants.URL;
                     break;
                 case LinkType.PROFILE:
-                    linkTypeString = HyperlinkConstants.PROFILE;
-
                     string username = match.Groups[1].Value;
                     if (IsOwnUsername(username))
                     {
                         tempStringBuilder.Append(OWN_PROFILE_OPENING_STYLE)
-                                         .Append(linkTypeString)
-                                         .Append(">")
                                          .Append(match)
                                          .Append(OWN_PROFILE_CLOSING_STYLE);
                         return tempStringBuilder;
@@ -150,6 +146,7 @@ namespace DCL.UI.InputFieldFormatting
                     if (!IsUserNameValid(username))
                         return tempStringBuilder.Append(match);
 
+                    linkTypeString = HyperlinkConstants.PROFILE;
                     break;
             }
 
