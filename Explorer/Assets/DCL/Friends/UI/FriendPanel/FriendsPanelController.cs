@@ -7,6 +7,7 @@ using DCL.Friends.UI.FriendPanel.Sections.Requests;
 using DCL.Multiplayer.Connectivity;
 using DCL.Profiles;
 using DCL.RealmNavigation;
+using DCL.UI.Sidebar.SidebarActionsBus;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS.SceneLifeCycle.Realm;
@@ -37,6 +38,7 @@ namespace DCL.Friends.UI.FriendPanel
         private readonly FriendsSectionDoubleCollectionController? friendSectionControllerConnectivity;
         private readonly RequestsSectionController requestsSectionController;
         private readonly DCLInput dclInput;
+        private readonly ISidebarActionsBus sidebarActionsBus;
         private readonly bool includeUserBlocking;
 
         private CancellationTokenSource friendsPanelCts = new ();
@@ -62,12 +64,14 @@ namespace DCL.Friends.UI.FriendPanel
             IOnlineUsersProvider onlineUsersProvider,
             IRealmNavigator realmNavigator,
             IFriendOnlineStatusCache friendOnlineStatusCache,
+            ISidebarActionsBus sidebarActionsBus,
             bool includeUserBlocking,
             bool isConnectivityStatusEnabled) : base(viewFactory)
         {
             this.chatLifecycleBusController = chatLifecycleBusController;
             this.sidebarRequestNotificationIndicator = sidebarRequestNotificationIndicator;
             this.dclInput = dclInput;
+            this.sidebarActionsBus = sidebarActionsBus;
             this.includeUserBlocking = includeUserBlocking;
 
             if (isConnectivityStatusEnabled)
@@ -112,6 +116,7 @@ namespace DCL.Friends.UI.FriendPanel
                 passportBridge);
 
             requestsSectionController.ReceivedRequestsCountChanged += FriendRequestCountChanged;
+            sidebarActionsBus.SubscribeOnWidgetOpen(() => CloseFriendsPanel(default(InputAction.CallbackContext)));
         }
 
         public override void Dispose()
@@ -159,6 +164,8 @@ namespace DCL.Friends.UI.FriendPanel
             chatLifecycleBusController.HideChat();
 
             ToggleTabs(inputData.TabToShow);
+
+            sidebarActionsBus.CloseAllWidgets();
         }
 
         protected override void OnViewClose()

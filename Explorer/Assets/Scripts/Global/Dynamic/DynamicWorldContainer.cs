@@ -70,6 +70,7 @@ using DCL.SceneLoadingScreens.LoadingScreen;
 using DCL.SidebarBus;
 using DCL.UI.MainUI;
 using DCL.StylizedSkybox.Scripts.Plugin;
+using DCL.UI.Sidebar.SidebarActionsBus;
 using DCL.UserInAppInitializationFlow;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
@@ -529,6 +530,8 @@ namespace Global.Dynamic
             IProfileThumbnailCache profileThumbnailCache = new ProfileThumbnailCache(staticContainer.WebRequestsContainer.WebRequestController);
             IChatLifecycleBusController chatLifecycleBusController = new ChatLifecycleBusController(mvcManager);
 
+            ISidebarActionsBus sidebarActionsBus = new SidebarActionsBusController();
+
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
                 new MultiplayerPlugin(
@@ -595,7 +598,7 @@ namespace Global.Dynamic
                     webBrowser,
                     dynamicWorldDependencies.Web3Authenticator,
                     initializationFlowContainer.InitializationFlow,
-                    profileCache, sidebarBus, dclInput, chatEntryConfiguration,
+                    profileCache, sidebarBus, dclInput, chatEntryConfiguration, sidebarActionsBus,
                     globalWorld, playerEntity, includeCameraReel, includeFriends),
                 new ErrorPopupPlugin(mvcManager, assetsProvisioner),
                 connectionStatusPanelPlugin,
@@ -787,7 +790,8 @@ namespace Global.Dynamic
                     realmNavigator,
                     includeUserBlocking,
                     appArgs,
-                    staticContainer.FeatureFlagsCache));
+                    staticContainer.FeatureFlagsCache,
+                    sidebarActionsBus));
             }
 
             if (dynamicWorldParams.EnableAnalytics)

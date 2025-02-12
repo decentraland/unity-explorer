@@ -18,6 +18,7 @@ using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.RealmNavigation;
 using DCL.UI.MainUI;
+using DCL.UI.Sidebar.SidebarActionsBus;
 using DCL.Utilities;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
@@ -56,6 +57,7 @@ namespace DCL.PluginSystem.Global
         private readonly bool includeUserBlocking;
         private readonly IAppArgs appArgs;
         private readonly FeatureFlagsCache featureFlagsCache;
+        private readonly ISidebarActionsBus sidebarActionsBus;
 
         private CancellationTokenSource friendServiceSubscriptionCancellationToken = new ();
         private RPCFriendsService? friendsService;
@@ -85,7 +87,8 @@ namespace DCL.PluginSystem.Global
             IRealmNavigator realmNavigator,
             bool includeUserBlocking,
             IAppArgs appArgs,
-            FeatureFlagsCache featureFlagsCache)
+            FeatureFlagsCache featureFlagsCache,
+            ISidebarActionsBus sidebarActionsBus)
         {
             this.mainUIView = mainUIView;
             this.dclUrlSource = dclUrlSource;
@@ -110,6 +113,7 @@ namespace DCL.PluginSystem.Global
             this.includeUserBlocking = includeUserBlocking;
             this.appArgs = appArgs;
             this.featureFlagsCache = featureFlagsCache;
+            this.sidebarActionsBus = sidebarActionsBus;
         }
 
         public void Dispose()
@@ -167,6 +171,7 @@ namespace DCL.PluginSystem.Global
                 onlineUsersProvider,
                 realmNavigator,
                 friendOnlineStatusCache,
+                sidebarActionsBus,
                 includeUserBlocking,
                 isConnectivityStatusEnabled);
 
