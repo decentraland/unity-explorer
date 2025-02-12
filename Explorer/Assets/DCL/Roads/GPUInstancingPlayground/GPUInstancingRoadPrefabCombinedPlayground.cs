@@ -76,6 +76,34 @@ namespace DCL.Roads.GPUInstancingPlayground
 
             FrustumCullingAndLODGenComputeShader_KernelIDs = FrustumCullingAndLODGenComputeShader.FindKernel(FrustumCullingAndLODGenComputeShader_KernelName);
             IndirectBufferGenerationComputeShader_KernelIDs = IndirectBufferGenerationComputeShader.FindKernel(IndirectBufferGenerationComputeShader_KernelName);
+
+            //
+            {
+                int lodRendererID = Mathf.Min(LodRendererID, candidate.CombinedLodsRenderers.Count - 1);
+                CombinedLodsRenderer combinedLodRenderer = candidate.CombinedLodsRenderers[lodRendererID];
+                Mesh combinedMesh = combinedLodRenderer.CombinedMesh;
+
+                int lodCount = candidate.LodsScreenSpaceSizes.Length;
+
+                for (int lodLevel = 0; lodLevel < lodCount; lodLevel++)
+                {
+                    drawArgsCommandData[lodLevel].indexCountPerInstance = combinedMesh.GetIndexCount(lodLevel);
+                    drawArgsCommandData[lodLevel].instanceCount = (uint)candidate.InstancesBuffer.Count;
+                    drawArgsCommandData[lodLevel].startIndex = combinedMesh.GetIndexStart(lodLevel);
+                    drawArgsCommandData[lodLevel].baseVertexIndex = combinedMesh.GetBaseVertex(lodLevel);
+                    drawArgsCommandData[lodLevel].startInstance = (uint)lodLevel * (uint)candidate.InstancesBuffer.Count;
+                }
+
+                drawArgsBuffer.SetData(drawArgsCommandData, 0, 0, count: lodCount);
+
+                combinedLodRenderer.InitializeRenderParams(instancingMaterials);
+
+                ref RenderParams rparams = ref combinedLodRenderer.RenderParamsArray[0];
+                // rparams.camera = Camera.current;
+                rparams.matProps = new MaterialPropertyBlock();
+                rparams.matProps.SetBuffer("_PerInstanceBuffer", perInstanceMatrices);
+                rparams.matProps.SetBuffer("_PerInstanceLookUpAndDitherBuffer", cbInstanceLookUpAndDither);
+            }
         }
 
         public void DispatchFrustumCullingAndLODGenComputeShader(GraphicsBuffer _PerInstanceMatrices, GPUInstancingLODGroup candidate)
@@ -116,31 +144,12 @@ namespace DCL.Roads.GPUInstancingPlayground
         {
             // foreach (CombinedLodsRenderer combinedLodRenderer in candidate.CombinedLodsRenderers)
             {
-                var lodCount = candidate.LodsScreenSpaceSizes.Length;
                 int lodRendererID = Mathf.Min(LodRendererID, candidate.CombinedLodsRenderers.Count - 1);
-
                 CombinedLodsRenderer combinedLodRenderer = candidate.CombinedLodsRenderers[lodRendererID];
-                Mesh combinedMesh = combinedLodRenderer.CombinedMesh;
 
-                for (int lodLevel = 0; lodLevel < lodCount; lodLevel++)
-                {
-                    drawArgsCommandData[lodLevel].indexCountPerInstance = combinedMesh.GetIndexCount(lodLevel);
-                    drawArgsCommandData[lodLevel].instanceCount = (uint)candidate.InstancesBuffer.Count;
-                    drawArgsCommandData[lodLevel].startIndex = combinedMesh.GetIndexStart(lodLevel);
-                    drawArgsCommandData[lodLevel].baseVertexIndex = combinedMesh.GetBaseVertex(lodLevel);
-                    drawArgsCommandData[lodLevel].startInstance = (uint)lodLevel * (uint)candidate.InstancesBuffer.Count;
-                }
+                var lodCount = candidate.LodsScreenSpaceSizes.Length;
 
-                drawArgsBuffer.SetData(drawArgsCommandData, 0, 0, count: lodCount);
-
-                RenderParams rparams = combinedLodRenderer.RenderParamsArray[0];
-                combinedLodRenderer.InitializeRenderParams(instancingMaterials);
-                // rparams.camera = Camera.current;
-                rparams.matProps = new MaterialPropertyBlock();
-                rparams.matProps.SetBuffer("_PerInstanceBuffer", perInstanceMatrices);
-                rparams.matProps.SetBuffer("_PerInstanceLookUpAndDitherBuffer", cbInstanceLookUpAndDither);
-
-                Graphics.RenderMeshIndirect(rparams, combinedMesh, drawArgsBuffer, commandCount: lodCount, 0);
+                Graphics.RenderMeshIndirect(combinedLodRenderer.RenderParamsArray[0], combinedLodRenderer.CombinedMesh, drawArgsBuffer, commandCount: lodCount);
             }
         }
 

@@ -1007,7 +1007,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1701440522}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 31d2c19bba004128a417824fd4517053, type: 3}
   m_Name: 
@@ -1016,10 +1016,10 @@ MonoBehaviour:
   CandidateID: 2
   LodRendererID: 0
   LodLevel: 0
-  Run: 0
+  Run: 1
   FrustumCullingAndLODGenComputeShader: {fileID: 7200000, guid: 17fd5bf4525e4c7eb3384974e131d2a8, type: 3}
   IndirectBufferGenerationComputeShader: {fileID: 7200000, guid: ce2f103db0fd4bf086f0f4a36ae38c03, type: 3}
-  LookUp: 000000007d0000000100000078000000
+  LookUp: 000000007d0000000200000078000000
 --- !u!1 &1758766808
 GameObject:
   m_ObjectHideFlags: 0
