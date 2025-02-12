@@ -18,12 +18,11 @@ using ECS.Prioritization.Components;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
-using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using Utility;
-using AssetBundleManifestPromise = ECS.StreamableLoading.Common.AssetPromise<SceneRunner.Scene.SceneAssetBundleManifest, DCL.AvatarRendering.Wearables.Components.GetWearableAssetBundleManifestIntention>;
+
 using StreamableResult = ECS.StreamableLoading.Common.Components.StreamableLoadingResult<DCL.AvatarRendering.Wearables.Components.WearablesResolution>;
 
 namespace DCL.AvatarRendering.Wearables.Systems
@@ -36,6 +35,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
         protected readonly URLSubdirectory customStreamingSubdirectory;
         protected readonly IRealmData realmData;
         protected readonly IWearableStorage wearableStorage;
+        protected bool defaultWearablesResolved { get; private set; }
 
         protected SingleInstanceEntity defaultWearablesState;
 
@@ -58,15 +58,13 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
         protected override void Update(float t)
         {
-            bool defaultWearablesResolved = defaultWearablesState.GetDefaultWearablesState(World!).ResolvedState == DefaultWearablesComponent.State.Success;
+            defaultWearablesResolved = defaultWearablesState.GetDefaultWearablesState(World!).ResolvedState == DefaultWearablesComponent.State.Success;
 
             // Only DTO loading requires realmData
             if (realmData.Configured)
                 FinalizeWearableDTOQuery(World);
 
             ResolveWearablePromiseQuery(World, defaultWearablesResolved);
-
-            FinalizeAssetBundleManifestLoadingQuery(World, defaultWearablesResolved);
         }
 
         [Query]
@@ -212,30 +210,6 @@ namespace DCL.AvatarRendering.Wearables.Systems
             }
         }
 
-        [Query]
-        protected void FinalizeAssetBundleManifestLoading([Data] bool defaultWearablesResolved, Entity entity, ref AssetBundleManifestPromise promise, ref IWearable wearable, ref BodyShape bodyShape)
-        {
-            if (promise.TryForgetWithEntityIfCancelled(entity, World!))
-            {
-                wearable.ResetManifest();
-                return;
-            }
-
-            if (promise.SafeTryConsume(World, GetReportCategory(), out StreamableLoadingResult<SceneAssetBundleManifest> result))
-            {
-                if (result.Succeeded)
-                {
-                    AssetValidation.ValidateSceneAssetBundleManifest(result.Asset, AssetValidation.SceneIDError, result.Asset.GetSceneID());
-                    wearable.ManifestResult = result;
-                }
-                else
-                    SetDefaultWearables(defaultWearablesResolved, wearable, in bodyShape);
-
-                wearable.UpdateLoadingStatus(false);
-                World.Destroy(entity);
-            }
-        }
-
         protected virtual bool CreateAssetPromiseIfRequired(IWearable component, in GetWearablesByPointersIntention intention, IPartitionComponent partitionComponent) =>
             false;
 
@@ -364,7 +338,6 @@ namespace DCL.AvatarRendering.Wearables.Systems
         }
 
         protected void FinalizeAssetLoading<TAsset, TLoadingIntention>(
-            bool defaultWearablesResolved,
             Entity entity,
             ref AssetPromise<TAsset, TLoadingIntention> promise,
             in IWearable wearable,

@@ -12,8 +12,11 @@ using DCL.Diagnostics;
 using ECS;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.AssetBundles;
+using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
+using SceneRunner.Scene;
 using Utility;
+using AssetBundleManifestPromise = ECS.StreamableLoading.Common.AssetPromise<SceneRunner.Scene.SceneAssetBundleManifest, DCL.AvatarRendering.Wearables.Components.GetWearableAssetBundleManifestIntention>;
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
 
 namespace DCL.AvatarRendering.Wearables.Systems
@@ -36,14 +39,37 @@ namespace DCL.AvatarRendering.Wearables.Systems
         {
             base.Update(t);
 
-            bool defaultWearablesResolved = defaultWearablesState.GetDefaultWearablesState(World!).ResolvedState == DefaultWearablesComponent.State.Success;
+            // Asset Bundles can be Resolved with Embedded Data
+            FinalizeAssetBundleManifestLoadingQuery(World);
+            FinalizeAssetBundleLoadingQuery(World);
+        }
 
-            FinalizeAssetBundleLoadingQuery(World, defaultWearablesResolved);
+        [Query]
+        protected void FinalizeAssetBundleManifestLoading(Entity entity, ref AssetBundleManifestPromise promise, ref IWearable wearable, ref BodyShape bodyShape)
+        {
+            if (promise.TryForgetWithEntityIfCancelled(entity, World!))
+            {
+                wearable.ResetManifest();
+                return;
+            }
+
+            if (promise.SafeTryConsume(World, GetReportCategory(), out StreamableLoadingResult<SceneAssetBundleManifest> result))
+            {
+                if (result.Succeeded)
+                {
+                    AssetValidation.ValidateSceneAssetBundleManifest(result.Asset, AssetValidation.SceneIDError, result.Asset.GetSceneID());
+                    wearable.ManifestResult = result;
+                }
+                else
+                    SetDefaultWearables(defaultWearablesResolved, wearable, in bodyShape);
+
+                wearable.UpdateLoadingStatus(false);
+                World.Destroy(entity);
+            }
         }
 
         [Query]
         private void FinalizeAssetBundleLoading(
-            [Data] bool defaultWearablesResolved,
             Entity entity,
             ref AssetBundlePromise promise,
             IWearable wearable,
@@ -51,18 +77,16 @@ namespace DCL.AvatarRendering.Wearables.Systems
             int index
         )
         {
-            FinalizeAssetLoading<AssetBundleData, GetAssetBundleIntention>(defaultWearablesResolved, entity, ref promise, wearable, in bodyShape, index, result => result.ToWearableAsset(wearable));
+            FinalizeAssetLoading<AssetBundleData, GetAssetBundleIntention>(entity, ref promise, wearable, in bodyShape, index, result => result.ToWearableAsset(wearable));
         }
 
         protected override bool CreateAssetPromiseIfRequired(IWearable component, in GetWearablesByPointersIntention intention, IPartitionComponent partitionComponent)
         {
-            bool dtoHasContentDownloadUrl = !string.IsNullOrEmpty(component.DTO.ContentDownloadUrl);
-
             // Do not repeat the promise if already failed once. Otherwise it will end up in an endless loading:true state
-            if (!dtoHasContentDownloadUrl && component.ManifestResult is { Succeeded: false }) return false;
+            if (component.ManifestResult is { Succeeded: false }) return false;
 
-            if (EnumUtils.HasFlag(intention.PermittedSources, AssetSource.WEB) // Manifest is required for Web loading only
-                && !dtoHasContentDownloadUrl && component.ManifestResult == null)
+            // Manifest is required for Web loading only
+            if (component.ManifestResult == null && EnumUtils.HasFlag(intention.PermittedSources, AssetSource.WEB))
                 return component.CreateAssetBundleManifestPromise(World, intention.BodyShape, intention.CancellationTokenSource, partitionComponent);
 
             if (component.TryCreateAssetPromise(in intention, customStreamingSubdirectory, partitionComponent, World, GetReportCategory()))

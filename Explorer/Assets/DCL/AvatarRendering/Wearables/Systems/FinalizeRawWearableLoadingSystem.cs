@@ -37,15 +37,12 @@ namespace DCL.AvatarRendering.Wearables.Systems
         {
             base.Update(t);
 
-            bool defaultWearablesResolved = defaultWearablesState.GetDefaultWearablesState(World!).ResolvedState == DefaultWearablesComponent.State.Success;
-
-            FinalizeRawGltfWearableLoadingQuery(World, defaultWearablesResolved);
-            FinalizeRawFacialFeatureTexLoadingQuery(World, defaultWearablesResolved);
+            FinalizeRawGltfWearableLoadingQuery(World);
+            FinalizeRawFacialFeatureTexLoadingQuery(World);
         }
 
         [Query]
         private void FinalizeRawGltfWearableLoading(
-            [Data] bool defaultWearablesResolved,
             Entity entity,
             ref RawGltfPromise promise,
             IWearable wearable,
@@ -53,12 +50,11 @@ namespace DCL.AvatarRendering.Wearables.Systems
             int index
         )
         {
-            FinalizeAssetLoading<GLTFData, GetGLTFIntention>(defaultWearablesResolved, entity, ref promise, wearable, in bodyShape, index, result => result.ToWearableAsset(wearable));
+            FinalizeAssetLoading<GLTFData, GetGLTFIntention>(entity, ref promise, wearable, in bodyShape, index, result => result.ToWearableAsset(wearable));
         }
 
         [Query]
         private void FinalizeRawFacialFeatureTexLoading(
-            [Data] bool defaultWearablesResolved,
             Entity entity,
             ref TexturePromise promise,
             IWearable wearable,
@@ -68,7 +64,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
         {
             if (wearable.Type != WearableType.FacialFeature) return;
 
-            FinalizeAssetLoading<Texture2DData, GetTextureIntention>(defaultWearablesResolved, entity, ref promise, wearable, in bodyShape, index, result => result.ToWearableAsset(wearable));
+            FinalizeAssetLoading<Texture2DData, GetTextureIntention>(entity, ref promise, wearable, in bodyShape, index, result => result.ToWearableAsset(wearable));
         }
 
         protected override bool CreateAssetPromiseIfRequired(IWearable component, in GetWearablesByPointersIntention intention, IPartitionComponent partitionComponent)
