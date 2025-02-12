@@ -125,7 +125,7 @@ namespace DCL.Web3.Identities
                     continue;
 
                 // Ensure the process is Explorer
-                if (processName.Name == selfProcessName.Name)
+                if (processName.Name != selfProcessName.Name)
                     continue;
 
                 list.Add(entry);
