@@ -86,6 +86,7 @@ namespace DCL.Friends.UI.FriendPanel
                     onlineUsersProvider,
                     realmNavigator,
                     systemClipboard,
+                    friendOnlineStatusCache,
                     includeUserBlocking);
             else
                 friendSectionController = new FriendSectionController(instantiatedView.FriendsSection,

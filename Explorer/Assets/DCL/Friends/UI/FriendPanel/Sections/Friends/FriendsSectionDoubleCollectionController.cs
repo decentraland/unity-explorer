@@ -20,6 +20,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         private readonly UserProfileContextMenuControlSettings userProfileContextMenuControlSettings;
         private readonly IOnlineUsersProvider onlineUsersProvider;
         private readonly IRealmNavigator realmNavigator;
+        private readonly IFriendOnlineStatusCache friendOnlineStatusCache;
         private readonly bool includeUserBlocking;
         private readonly string[] getUserPositionBuffer = new string[1];
 
@@ -36,6 +37,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             IOnlineUsersProvider onlineUsersProvider,
             IRealmNavigator realmNavigator,
             ISystemClipboard systemClipboard,
+            IFriendOnlineStatusCache friendOnlineStatusCache,
             bool includeUserBlocking)
             : base(view, friendsService, friendEventBus, web3IdentityCache, mvcManager, doubleCollectionRequestManager)
         {
@@ -43,6 +45,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             this.passportBridge = passportBridge;
             this.onlineUsersProvider = onlineUsersProvider;
             this.realmNavigator = realmNavigator;
+            this.friendOnlineStatusCache = friendOnlineStatusCache;
             this.includeUserBlocking = includeUserBlocking;
 
             userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings(systemClipboard, HandleContextMenuUserProfileButton);
@@ -86,7 +89,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
                            new GenericContextMenuParameter(
                                config: FriendListSectionUtilities.BuildContextMenu(friendProfile, view.ContextMenuSettings,
                                    userProfileContextMenuControlSettings, onlineUsersProvider, realmNavigator, passportBridge,
-                                   getUserPositionBuffer, jumpToFriendLocationCts, includeUserBlocking, requestManager.IsFriendInGame(friendProfile)),
+                                   getUserPositionBuffer, jumpToFriendLocationCts, includeUserBlocking, friendOnlineStatusCache.GetFriendStatus(friendProfile.Address) != OnlineStatus.OFFLINE),
                                anchorPosition: buttonPosition,
                                actionOnHide: () => elementView.CanUnHover = true,
                                closeTask: panelLifecycleTask?.Task))

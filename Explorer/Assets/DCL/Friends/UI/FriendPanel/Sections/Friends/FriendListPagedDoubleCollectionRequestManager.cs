@@ -155,7 +155,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 
             elementView.ToggleOnlineStatus(true);
 
-            elementView.SetOnlineStatus(friendOnlineStatusCache.GetFriendStatus(elementView.UserProfile));
+            elementView.SetOnlineStatus(friendOnlineStatusCache.GetFriendStatus(elementView.UserProfile.Address));
         }
 
         protected override void ResetCollections()
@@ -163,9 +163,6 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             onlineFriends.Clear();
             offlineFriends.Clear();
         }
-
-        public bool IsFriendInGame(FriendProfile friendProfile) =>
-            friendOnlineStatusCache.GetFriendStatus(friendProfile) != OnlineStatus.OFFLINE;
 
         protected override async UniTask<int> FetchDataAsync(int pageNumber, int pageSize, CancellationToken ct)
         {
