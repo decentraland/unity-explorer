@@ -132,7 +132,7 @@ namespace DCL.PluginSystem.Global
             var friendsCache = new FriendsCache();
 
             friendsService = new RPCFriendsService(GetApiUrl(),
-                friendEventBus, web3IdentityCache, friendsCache, selfProfile);
+                friendEventBus, web3IdentityCache, friendsCache, selfProfile, onlineUsersProvider);
 
             friendServiceProxy.SetObject(friendsService);
 
