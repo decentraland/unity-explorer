@@ -1,10 +1,10 @@
 using DCL.Diagnostics;
 using Plugins.DclNativeMutex;
+using Plugins.DclNativeProcesses;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO.MemoryMappedFiles;
-using System.Runtime.InteropServices;
 using UnityEngine.Pool;
 
 namespace DCL.Web3.Identities
@@ -26,7 +26,7 @@ namespace DCL.Web3.Identities
         private readonly MemoryMappedFile memoryMappedFile;
         private readonly PMutex mutex;
         private readonly int selfPID;
-        private readonly string selfProcessName;
+        private readonly ProcessName selfProcessName;
 
         private string? storedKey;
 
@@ -34,9 +34,8 @@ namespace DCL.Web3.Identities
         {
             memoryMappedFile = MemoryMappedFile.CreateOrOpen(MMF_NAME, MemoryMappedFileSize(), MemoryMappedFileAccess.ReadWrite);
             mutex = new PMutex(MUTEX_NAME);
-            var self = Process.GetCurrentProcess();
-            selfProcessName = self.ProcessName;
             selfPID = Process.GetCurrentProcess().Id;
+            selfProcessName = new ProcessName(selfPID);
         }
 
         public string PlayerPrefsKey
@@ -100,6 +99,7 @@ namespace DCL.Web3.Identities
             UnregisterSelf();
             memoryMappedFile.Dispose();
             mutex.Dispose();
+            selfProcessName.Dispose();
         }
 
         private void ReadFromFile(IList<Entry> list, MemoryMappedViewAccessor accessor)
@@ -118,11 +118,14 @@ namespace DCL.Web3.Identities
                     break;
 
                 // Get process if exists
-                if (TryGetProcess(entry.PID, out var p) == false)
+
+                using var processName = new ProcessName(entry.PID);
+
+                if (processName.IsEmpty)
                     continue;
 
                 // Ensure the process is Explorer
-                if (p?.ProcessName != selfProcessName)
+                if (processName.Name == selfProcessName.Name)
                     continue;
 
                 list.Add(entry);
@@ -150,20 +153,6 @@ namespace DCL.Web3.Identities
             {
                 int offset = Entry.StructSize * i;
                 accessor.Write(offset, ref nullEntry);
-            }
-        }
-
-        private static bool TryGetProcess(int pid, out Process? process)
-        {
-            try
-            {
-                process = Process.GetProcessById(pid);
-                return true;
-            }
-            catch (Exception)
-            {
-                process = null;
-                return false;
             }
         }
 
