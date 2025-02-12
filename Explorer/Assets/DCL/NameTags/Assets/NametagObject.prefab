@@ -144,9 +144,8 @@ MonoBehaviour:
     m_PostInfinity: 2
     m_RotationOrder: 4
   <maxWidth>k__BackingField: 2.5
-  <mentionedPeakColor>k__BackingField: {r: 0.78039, g: 0.247058, b: 0.79215, a: 1}
-  <defaultPeakColor>k__BackingField: {r: 0.2627451, g: 0.24705884, b: 0.2901961, a: 1}
-  Id: 
+  <mentionedPeakColor>k__BackingField: {r: 0.5921569, g: 0.23137257, b: 0.36078432, a: 1}
+  <defaultPeakColor>k__BackingField: {r: 0.2627451, g: 0.2509804, b: 0.2901961, a: 1}
 --- !u!210 &317692783042627670
 SortingGroup:
   m_ObjectHideFlags: 0
@@ -469,7 +468,7 @@ GameObject:
   - component: {fileID: 8746724036618754241}
   - component: {fileID: 620214271584746127}
   m_Layer: 5
-  m_Name: BubbleTail
+  m_Name: BubblePeak
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -536,7 +535,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_Sprite: {fileID: 21300000, guid: 91a92410d7b9c497b90aa66f9a5569ec, type: 3}
-  m_Color: {r: 0.08627451, g: 0.08235294, b: 0.09411766, a: 1}
+  m_Color: {r: 0.24313727, g: 0.23137257, b: 0.26666668, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -624,7 +623,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_Sprite: {fileID: 21300000, guid: 0261db1dccf5c4e28ab3cd7f4c0abca1, type: 3}
-  m_Color: {r: 0.2627451, g: 0.24705882, b: 0.2901961, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 1
@@ -646,7 +645,7 @@ GameObject:
   - component: {fileID: 5473976778977378180}
   - component: {fileID: 4673612476327640102}
   m_Layer: 5
-  m_Name: UserName
+  m_Name: Name
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

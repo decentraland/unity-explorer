@@ -148,7 +148,7 @@ namespace DCL.UI.CustomInputField
             else
                 SetTextWithoutNotify(stringBuilder.ToString());
 
-            stringPosition += replaceAt + replaceAmount;
+            stringPosition += replaceAt + newValue.Length;
         }
     }
 }
