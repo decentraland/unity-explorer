@@ -18,7 +18,6 @@ namespace Plugins.DclNativeMutex
         private const int O_CREAT = 512; // Create semaphore if it does not exist
         private const int SEM_PERM = 777;
 
-        private readonly string name;
         private readonly IntPtr pMutex;
 
 #if UNITY_EDITOR_WIN || UNITY_STANDALONE_WIN || PLATFORM_STANDALONE_WIN
