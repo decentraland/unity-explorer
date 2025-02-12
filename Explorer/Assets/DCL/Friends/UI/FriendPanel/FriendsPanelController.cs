@@ -27,7 +27,7 @@ namespace DCL.Friends.UI.FriendPanel
             BLOCKED
         }
 
-        private const int FRIENDS_PAGE_SIZE = 20;
+        private const int FRIENDS_PAGE_SIZE = 50;
         private const int FRIENDS_REQUEST_PAGE_SIZE = 100;
         private const int FRIENDS_FETCH_ELEMENTS_THRESHOLD = 5;
 
@@ -87,6 +87,7 @@ namespace DCL.Friends.UI.FriendPanel
                     realmNavigator,
                     systemClipboard,
                     friendOnlineStatusCache,
+                    loadingStatus,
                     includeUserBlocking);
             else
                 friendSectionController = new FriendSectionController(instantiatedView.FriendsSection,
