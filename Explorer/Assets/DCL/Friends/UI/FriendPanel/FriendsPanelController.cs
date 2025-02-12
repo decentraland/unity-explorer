@@ -1,6 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Clipboard;
-using DCL.Friends.Chat.BusInterface;
+using DCL.Friends.Chat;
 using DCL.Friends.UI.FriendPanel.Sections.Blocked;
 using DCL.Friends.UI.FriendPanel.Sections.Friends;
 using DCL.Friends.UI.FriendPanel.Sections.Requests;

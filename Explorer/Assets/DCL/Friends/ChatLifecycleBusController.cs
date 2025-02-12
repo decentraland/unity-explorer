@@ -1,16 +1,16 @@
 using Cysharp.Threading.Tasks;
 using DCL.Chat;
-using DCL.Friends.Chat.BusInterface;
+using DCL.Friends.Chat;
 using MVC;
 using System;
 
-namespace DCL.Friends.Chat
+namespace DCL.Friends
 {
     public class ChatLifecycleBusController : IChatLifecycleBusController, IDisposable
     {
         private readonly IMVCManager mvcManager;
 
-        private event Action ChatHideAction;
+        private event Action? ChatHideAction;
 
         public ChatLifecycleBusController(IMVCManager mvcManager)
         {

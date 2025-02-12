@@ -1,12 +1,7 @@
 {
     "name": "DCL.Friends.Chat",
     "rootNamespace": "",
-    "references": [
-        "GUID:45f6fff651a0a514f8edfdaf9cce45af",
-        "GUID:766b242fb43af451aaa331f39872177d",
-        "GUID:f51ebe6a0ceec4240a699833d6309b23",
-        "DCL.Friends.Chat.BusInterface"
-    ],
+    "references": [],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,

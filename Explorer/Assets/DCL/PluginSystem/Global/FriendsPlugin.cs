@@ -5,7 +5,7 @@ using DCL.AssetsProvision;
 using DCL.Clipboard;
 using DCL.FeatureFlags;
 using DCL.Friends;
-using DCL.Friends.Chat.BusInterface;
+using DCL.Friends.Chat;
 using DCL.Friends.UI;
 using DCL.Friends.UI.FriendPanel;
 using DCL.Friends.UI.PushNotifications;

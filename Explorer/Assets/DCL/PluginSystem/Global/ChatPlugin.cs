@@ -6,7 +6,7 @@ using DCL.Chat;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
 using DCL.Emoji;
-using DCL.Friends.Chat.BusInterface;
+using DCL.Friends.Chat;
 using DCL.Input;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;

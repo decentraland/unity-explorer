@@ -23,7 +23,6 @@ using DCL.EventsApi;
 using DCL.FeatureFlags;
 using DCL.Friends;
 using DCL.Friends.Chat;
-using DCL.Friends.Chat.BusInterface;
 using DCL.Friends.Passport;
 using DCL.Input;
 using DCL.InWorldCamera.CameraReelStorageService;
