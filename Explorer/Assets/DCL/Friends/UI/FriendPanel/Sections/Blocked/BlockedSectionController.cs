@@ -13,7 +13,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Blocked
         public BlockedSectionController(BlockedSectionView view,
             IWeb3IdentityCache web3IdentityCache,
             BlockedRequestManager requestManager,
-            IPassportBridge passportBridge) : base(view, web3IdentityCache, requestManager)
+            IPassportBridge passportBridge) : base(view, requestManager)
         {
             this.passportBridge = passportBridge;
 

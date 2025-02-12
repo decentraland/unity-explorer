@@ -35,7 +35,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             IProfileThumbnailCache profileThumbnailCache,
             IOnlineUsersProvider onlineUsersProvider,
             IRealmNavigator realmNavigator,
-            bool includeUserBlocking) : base(view, web3IdentityCache, requestManager)
+            bool includeUserBlocking) : base(view, requestManager)
         {
             this.mvcManager = mvcManager;
             this.passportBridge = passportBridge;

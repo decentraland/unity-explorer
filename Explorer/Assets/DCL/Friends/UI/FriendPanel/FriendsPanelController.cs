@@ -6,7 +6,6 @@ using DCL.Friends.UI.FriendPanel.Sections.Friends;
 using DCL.Friends.UI.FriendPanel.Sections.Requests;
 using DCL.Multiplayer.Connectivity;
 using DCL.Profiles;
-using DCL.RealmNavigation;
 using DCL.UI.Sidebar.SidebarActionsBus;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
@@ -14,6 +13,7 @@ using ECS.SceneLifeCycle.Realm;
 using MVC;
 using System.Threading;
 using UnityEngine.InputSystem;
+using UnityEngine.Pool;
 using Utility;
 
 namespace DCL.Friends.UI.FriendPanel
@@ -58,7 +58,6 @@ namespace DCL.Friends.UI.FriendPanel
             ISystemClipboard systemClipboard,
             IWebRequestController webRequestController,
             IProfileThumbnailCache profileThumbnailCache,
-            ILoadingStatus loadingStatus,
             DCLInput dclInput,
             IPassportBridge passportBridge,
             IOnlineUsersProvider onlineUsersProvider,
@@ -78,7 +77,6 @@ namespace DCL.Friends.UI.FriendPanel
                 friendSectionControllerConnectivity = new FriendsSectionDoubleCollectionController(instantiatedView.FriendsSection,
                     friendsService,
                     friendEventBus,
-                    web3IdentityCache,
                     mvcManager,
                     new FriendListPagedDoubleCollectionRequestManager(friendsService, friendEventBus, webRequestController, profileThumbnailCache, profileRepository, friendOnlineStatusCache, instantiatedView.FriendsSection.LoopList, FRIENDS_PAGE_SIZE, FRIENDS_FETCH_ELEMENTS_THRESHOLD),
                     passportBridge,
@@ -87,7 +85,6 @@ namespace DCL.Friends.UI.FriendPanel
                     realmNavigator,
                     systemClipboard,
                     friendOnlineStatusCache,
-                    loadingStatus,
                     includeUserBlocking);
             else
                 friendSectionController = new FriendSectionController(instantiatedView.FriendsSection,
@@ -103,10 +100,8 @@ namespace DCL.Friends.UI.FriendPanel
             requestsSectionController = new RequestsSectionController(instantiatedView.RequestsSection,
                 friendsService,
                 friendEventBus,
-                web3IdentityCache,
                 mvcManager,
                 systemClipboard,
-                loadingStatus,
                 new RequestsRequestManager(friendsService, friendEventBus, webRequestController, profileThumbnailCache, FRIENDS_REQUEST_PAGE_SIZE, instantiatedView.RequestsSection.LoopList),
                 passportBridge,
                 profileThumbnailCache,
@@ -136,6 +131,38 @@ namespace DCL.Friends.UI.FriendPanel
             friendSectionControllerConnectivity?.Dispose();
             requestsSectionController.Dispose();
             UnregisterCloseHotkey();
+        }
+
+        public UniTask InitAsync(CancellationToken ct)
+        {
+            var tasks = ListPool<UniTask>.Get();
+
+            try
+            {
+                tasks.Add(requestsSectionController.InitAsync(ct));
+
+                // TODO: Remove it after the server's connectivity stream works as expected
+                // This call forces to load at least the first page of friends (around 50)
+                // Currently, as a mid-term solution, we poll connectivity status for each of the friends we have asked to the server through the archipelago api
+                // If we do not request any friends then we will get no connectivity updates
+                // This approach will work for most of the users (except those who have more than 50 friends whose going to get partial updates)
+                // When server's rpc stream works, it will automatically send connectivity updates for each friend no matter if we previously asked for it or not
+                if (friendSectionControllerConnectivity != null)
+                    tasks.Add(friendSectionControllerConnectivity.InitAsync(ct));
+
+                return UniTask.WhenAll(tasks);
+            }
+            finally
+            {
+                ListPool<UniTask>.Release(tasks);
+            }
+        }
+
+        public void Reset()
+        {
+            requestsSectionController.Reset();
+            friendSectionController?.Reset();
+            friendSectionControllerConnectivity?.Reset();
         }
 
         private void RegisterCloseHotkey()

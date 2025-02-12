@@ -1,5 +1,4 @@
 using Cysharp.Threading.Tasks;
-using DCL.Web3.Identities;
 using SuperScrollView;
 using System;
 using System.Threading;
@@ -13,25 +12,21 @@ namespace DCL.Friends.UI.FriendPanel.Sections
         where U : FriendPanelRequestManager<K>
     {
         protected readonly T view;
-        private readonly IWeb3IdentityCache web3IdentityCache;
         protected readonly U requestManager;
 
         protected UniTaskCompletionSource? panelLifecycleTask;
         private CancellationTokenSource friendListInitCts = new ();
 
         protected FriendPanelSectionController(T view,
-            IWeb3IdentityCache web3IdentityCache,
             U requestManager)
         {
             this.view = view;
-            this.web3IdentityCache = web3IdentityCache;
             this.requestManager = requestManager;
 
             this.view.Enable += Enable;
             this.view.Disable += Disable;
             this.view.LoopList.InitListView(0, OnGetItemByIndex);
             requestManager.ElementClicked += ElementClicked;
-            web3IdentityCache.OnIdentityChanged += ResetState;
         }
 
         public virtual void Dispose()
@@ -41,16 +36,15 @@ namespace DCL.Friends.UI.FriendPanel.Sections
             requestManager.ElementClicked -= ElementClicked;
             requestManager.Dispose();
             friendListInitCts.SafeCancelAndDispose();
-            web3IdentityCache.OnIdentityChanged -= ResetState;
         }
+
+        public void Reset() =>
+            requestManager.Reset();
 
         private LoopListViewItem2 OnGetItemByIndex(LoopListView2 loopListView, int index) =>
             requestManager.GetLoopListItemByIndex(loopListView, index);
 
         protected abstract void ElementClicked(FriendProfile profile);
-
-        private void ResetState() =>
-            requestManager.Reset();
 
         private void Enable()
         {

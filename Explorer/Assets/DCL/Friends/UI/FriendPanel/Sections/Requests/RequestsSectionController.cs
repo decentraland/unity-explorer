@@ -2,11 +2,8 @@ using Cysharp.Threading.Tasks;
 using DCL.Clipboard;
 using DCL.Diagnostics;
 using DCL.Friends.UI.Requests;
-using DCL.RealmNavigation;
 using DCL.UI.GenericContextMenu;
 using DCL.UI.GenericContextMenu.Controls.Configs;
-using DCL.Utilities;
-using DCL.Web3.Identities;
 using MVC;
 using System;
 using System.Threading;
@@ -23,9 +20,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
 
         private readonly GenericContextMenu contextMenu;
         private readonly UserProfileContextMenuControlSettings userProfileContextMenuControlSettings;
-        private readonly ILoadingStatus loadingStatus;
         private readonly IPassportBridge passportBridge;
-        private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IProfileThumbnailCache profileThumbnailCache;
 
         private CancellationTokenSource friendshipOperationCts = new ();
@@ -36,18 +31,14 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
         public RequestsSectionController(RequestsSectionView view,
             IFriendsService friendsService,
             IFriendsEventBus friendEventBus,
-            IWeb3IdentityCache web3IdentityCache,
             IMVCManager mvcManager,
             ISystemClipboard systemClipboard,
-            ILoadingStatus loadingStatus,
             RequestsRequestManager requestManager,
             IPassportBridge passportBridge,
             IProfileThumbnailCache profileThumbnailCache,
             bool includeUserBlocking)
-            : base(view, friendsService, friendEventBus, web3IdentityCache, mvcManager, requestManager)
+            : base(view, friendsService, friendEventBus, mvcManager, requestManager)
         {
-            this.web3IdentityCache = web3IdentityCache;
-            this.loadingStatus = loadingStatus;
             this.passportBridge = passportBridge;
             this.profileThumbnailCache = profileThumbnailCache;
 
@@ -70,9 +61,6 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             friendEventBus.OnOtherUserCancelledTheRequest += PropagateReceivedRequestsCountChanged;
 
             ReceivedRequestsCountChanged += UpdateReceivedRequestsSectionCount;
-
-            loadingStatus.CurrentStage.Subscribe(PrewarmRequests);
-            web3IdentityCache.OnIdentityChanged += ResetAndInit;
         }
 
         public override void Dispose()
@@ -89,7 +77,14 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
 
             ReceivedRequestsCountChanged -= UpdateReceivedRequestsSectionCount;
             friendshipOperationCts.SafeCancelAndDispose();
-            web3IdentityCache.OnIdentityChanged -= ResetAndInit;
+        }
+
+        public override void Reset()
+        {
+            base.Reset();
+
+            PropagateReceivedRequestsCountChanged();
+            CheckShouldInit();
         }
 
         private void BlockUserClicked(FriendProfile profile)
@@ -119,28 +114,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             }
         }
 
-        private void ResetAndInit()
-        {
-            ResetState();
-            PropagateReceivedRequestsCountChanged();
-            CheckShouldInit();
-        }
-
         private void RequestClicked(FriendRequest request) =>
             mvcManager.ShowAsync(FriendRequestController.IssueCommand(new FriendRequestParams {Request = request})).Forget();
-
-        private void PrewarmRequests(LoadingStatus.LoadingStage stage)
-        {
-            if (stage != LoadingStatus.LoadingStage.Completed) return;
-
-            PrewarmAsync(friendshipOperationCts.Token).Forget();
-
-            async UniTaskVoid PrewarmAsync(CancellationToken ct)
-            {
-                await InitAsync(ct);
-                loadingStatus.CurrentStage.Unsubscribe(PrewarmRequests);
-            }
-        }
 
         private void OpenProfilePassport(FriendProfile profile) =>
             passportBridge.ShowAsync(profile.Address).Forget();
@@ -209,7 +184,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
                       .Forget();
         }
 
-        protected override async UniTask InitAsync(CancellationToken ct)
+        public override async UniTask InitAsync(CancellationToken ct)
         {
             view.SetLoadingState(true);
             view.SetScrollViewState(false);

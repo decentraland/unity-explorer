@@ -63,6 +63,7 @@ namespace DCL.PluginSystem.Global
         private RPCFriendsService? friendsService;
         private FriendsPanelController? friendsPanelController;
         private UnfriendConfirmationPopupController? unfriendConfirmationPopupController;
+        private CancellationTokenSource? prewarmFriendsCancellationToken;
 
         public FriendsPlugin(
             MainUIView mainUIView,
@@ -121,6 +122,7 @@ namespace DCL.PluginSystem.Global
             friendsPanelController?.Dispose();
             friendServiceSubscriptionCancellationToken.SafeCancelAndDispose();
             friendsService?.Dispose();
+            prewarmFriendsCancellationToken.SafeCancelAndDispose();
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
@@ -136,11 +138,6 @@ namespace DCL.PluginSystem.Global
 
             friendServiceProxy.SetObject(friendsService);
 
-            // We need to restart the connection to the service as credentials changes
-            // since that affects which friends the user can access
-            web3IdentityCache.OnIdentityCleared += DisconnectRpcClient;
-            web3IdentityCache.OnIdentityChanged += ReconnectRpcClient;
-
             // Fire and forget as this task will never finish
             var cts = CancellationTokenSource.CreateLinkedTokenSource(friendServiceSubscriptionCancellationToken.Token, ct);
             friendsService.SubscribeToIncomingFriendshipEventsAsync(cts.Token).Forget();
@@ -152,6 +149,11 @@ namespace DCL.PluginSystem.Global
 
             if (isConnectivityStatusEnabled)
                 friendsService.SubscribeToConnectivityStatusAsync(cts.Token).Forget();
+
+            // We need to restart the connection to the service as identity changes
+            // since that affects which friends the user can access
+            web3IdentityCache.OnIdentityCleared += DisconnectRpcClient;
+            web3IdentityCache.OnIdentityChanged += ReconnectRpcClient;
 
             friendsPanelController = new FriendsPanelController(() =>
                 {
@@ -170,7 +172,6 @@ namespace DCL.PluginSystem.Global
                 systemClipboard,
                 webRequestController,
                 profileThumbnailCache,
-                loadingStatus,
                 dclInput,
                 passportBridge,
                 onlineUsersProvider,
@@ -213,6 +214,25 @@ namespace DCL.PluginSystem.Global
                 friendsService, profileRepository, profileThumbnailCache);
 
             mvcManager.RegisterController(unfriendConfirmationPopupController);
+
+            loadingStatus.CurrentStage.Subscribe(PreWarmFriends);
+        }
+
+        private void PreWarmFriends(LoadingStatus.LoadingStage stage)
+        {
+            if (stage != LoadingStatus.LoadingStage.Completed) return;
+
+            prewarmFriendsCancellationToken = prewarmFriendsCancellationToken.SafeRestart();
+            PrewarmAsync(prewarmFriendsCancellationToken.Token).Forget();
+            return;
+
+            async UniTaskVoid PrewarmAsync(CancellationToken ct)
+            {
+                if (friendsPanelController != null)
+                    await friendsPanelController.InitAsync(ct);
+
+                loadingStatus.CurrentStage.Unsubscribe(PreWarmFriends);
+            }
         }
 
         private URLAddress GetApiUrl()
@@ -246,6 +266,8 @@ namespace DCL.PluginSystem.Global
 
                 if (IsConnectivityStatusEnabled())
                     friendsService.SubscribeToConnectivityStatusAsync(ct).Forget();
+
+                friendsPanelController?.Reset();
             }
         }
 

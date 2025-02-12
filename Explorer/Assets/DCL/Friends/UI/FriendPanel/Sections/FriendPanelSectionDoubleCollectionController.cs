@@ -1,5 +1,4 @@
 using Cysharp.Threading.Tasks;
-using DCL.Web3.Identities;
 using MVC;
 using SuperScrollView;
 using System;
@@ -16,7 +15,6 @@ namespace DCL.Friends.UI.FriendPanel.Sections
         protected readonly T view;
         protected readonly IFriendsService friendsService;
         protected readonly IFriendsEventBus friendEventBus;
-        private readonly IWeb3IdentityCache web3IdentityCache;
         protected readonly IMVCManager mvcManager;
         protected readonly U requestManager;
 
@@ -26,14 +24,12 @@ namespace DCL.Friends.UI.FriendPanel.Sections
         protected FriendPanelSectionDoubleCollectionController(T view,
             IFriendsService friendsService,
             IFriendsEventBus friendEventBus,
-            IWeb3IdentityCache web3IdentityCache,
             IMVCManager mvcManager,
             U requestManager)
         {
             this.view = view;
             this.friendsService = friendsService;
             this.friendEventBus = friendEventBus;
-            this.web3IdentityCache = web3IdentityCache;
             this.mvcManager = mvcManager;
             this.requestManager = requestManager;
 
@@ -41,7 +37,6 @@ namespace DCL.Friends.UI.FriendPanel.Sections
             this.view.Disable += Disable;
             this.view.LoopList.InitListView(0, OnGetItemByIndex);
             requestManager.ElementClicked += ElementClicked;
-            web3IdentityCache.OnIdentityChanged += ResetState;
         }
 
         public virtual void Dispose()
@@ -53,10 +48,9 @@ namespace DCL.Friends.UI.FriendPanel.Sections
             requestManager.FirstFolderClicked -= FolderClicked;
             requestManager.SecondFolderClicked -= FolderClicked;
             requestManager.ElementClicked -= ElementClicked;
-            web3IdentityCache.OnIdentityChanged -= ResetState;
         }
 
-        protected void ResetState()
+        public virtual void Reset()
         {
             requestManager.Reset();
             requestManager.FirstFolderClicked -= FolderClicked;
@@ -93,7 +87,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections
             view.LoopList.RefreshAllShownItem();
         }
 
-        protected virtual async UniTask InitAsync(CancellationToken ct)
+        public virtual async UniTask InitAsync(CancellationToken ct)
         {
             view.SetLoadingState(true);
             view.SetEmptyState(false);
