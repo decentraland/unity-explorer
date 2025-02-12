@@ -609,6 +609,7 @@ MonoBehaviour:
   <ChatEntryConfiguration>k__BackingField: {fileID: 11400000, guid: 6afb31861b85441b6ab2b988819bb96a, type: 2}
   <UserName>k__BackingField: {fileID: 8766517600456461327}
   <UserNameTag>k__BackingField: {fileID: 4439377754047818784}
+  <VerifiedIcon>k__BackingField: {fileID: 8218420186549764868}
   <ThumbnailBackground>k__BackingField: {fileID: 5967679218760655358}
   <ProfileImageView>k__BackingField: {fileID: 3708114937530408104}
   <UnblockButton>k__BackingField: {fileID: 5048879491243901675}
@@ -661,6 +662,11 @@ MonoBehaviour:
 --- !u!224 &6059779626614268973 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 713193711783360510, guid: 5dd1047f77ec242c3bb28f7edc2af796, type: 3}
+  m_PrefabInstance: {fileID: 6772688781097931731}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &8218420186549764868 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 3454503966152282327, guid: 5dd1047f77ec242c3bb28f7edc2af796, type: 3}
   m_PrefabInstance: {fileID: 6772688781097931731}
   m_PrefabAsset: {fileID: 0}
 --- !u!114 &8766517600456461327 stripped

@@ -652,6 +652,11 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 2991372348764053754, guid: 5dd1047f77ec242c3bb28f7edc2af796, type: 3}
   m_PrefabInstance: {fileID: 2910193944685869512}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &546000933324138783 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 3454503966152282327, guid: 5dd1047f77ec242c3bb28f7edc2af796, type: 3}
+  m_PrefabInstance: {fileID: 2910193944685869512}
+  m_PrefabAsset: {fileID: 0}
 --- !u!114 &880053671944594964 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 2618141556115726300, guid: 5dd1047f77ec242c3bb28f7edc2af796, type: 3}
@@ -736,6 +741,7 @@ MonoBehaviour:
   <ChatEntryConfiguration>k__BackingField: {fileID: 11400000, guid: 6afb31861b85441b6ab2b988819bb96a, type: 2}
   <UserName>k__BackingField: {fileID: 880053671944594964}
   <UserNameTag>k__BackingField: {fileID: 5189747532995577403}
+  <VerifiedIcon>k__BackingField: {fileID: 546000933324138783}
   <ThumbnailBackground>k__BackingField: {fileID: 2832497847450356709}
   <ProfileImageView>k__BackingField: {fileID: 5110362416587355827}
   <ContextMenuButton>k__BackingField: {fileID: 7541025456679391709}

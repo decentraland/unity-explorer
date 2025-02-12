@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 1660524820491515679}
   - component: {fileID: 201369955981005807}
   - component: {fileID: 4259715656478843361}
+  - component: {fileID: 5673857098502696707}
   m_Layer: 5
   m_Name: DeleteButton
   m_TagString: Untagged
@@ -121,6 +122,21 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &5673857098502696707
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 91634707145533520}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1cdc6c1a43024e58bcd05d3e69a19db4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  <Button>k__BackingField: {fileID: 4259715656478843361}
+  <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
+  <ButtonHoverAudio>k__BackingField: {fileID: 11400000, guid: 59da234351971c0498a566fb811b0c36, type: 2}
 --- !u!1 &1104277341837610071
 GameObject:
   m_ObjectHideFlags: 0
@@ -133,6 +149,7 @@ GameObject:
   - component: {fileID: 4327938840999547472}
   - component: {fileID: 588925932476268023}
   - component: {fileID: 3451016736453679246}
+  - component: {fileID: 7270752031472170505}
   m_Layer: 5
   m_Name: AcceptButton
   m_TagString: Untagged
@@ -242,6 +259,21 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &7270752031472170505
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1104277341837610071}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1cdc6c1a43024e58bcd05d3e69a19db4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  <Button>k__BackingField: {fileID: 3451016736453679246}
+  <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
+  <ButtonHoverAudio>k__BackingField: {fileID: 11400000, guid: 59da234351971c0498a566fb811b0c36, type: 2}
 --- !u!1 &5014424532243186001
 GameObject:
   m_ObjectHideFlags: 0
@@ -1127,6 +1159,7 @@ MonoBehaviour:
   <ChatEntryConfiguration>k__BackingField: {fileID: 11400000, guid: 6afb31861b85441b6ab2b988819bb96a, type: 2}
   <UserName>k__BackingField: {fileID: 8642155449442485091}
   <UserNameTag>k__BackingField: {fileID: 3736898434265359180}
+  <VerifiedIcon>k__BackingField: {fileID: 8956048073426062440}
   <ThumbnailBackground>k__BackingField: {fileID: 6671664456971759250}
   <ProfileImageView>k__BackingField: {fileID: 4409632322689881028}
   <ContextMenuButton>k__BackingField: {fileID: 5637797142498573802}
@@ -1197,6 +1230,11 @@ MonoBehaviour:
 --- !u!224 &8807323456142015557 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 2991372348764053754, guid: 5dd1047f77ec242c3bb28f7edc2af796, type: 3}
+  m_PrefabInstance: {fileID: 6033305386341014719}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &8956048073426062440 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 3454503966152282327, guid: 5dd1047f77ec242c3bb28f7edc2af796, type: 3}
   m_PrefabInstance: {fileID: 6033305386341014719}
   m_PrefabAsset: {fileID: 0}
 --- !u!1001 &8849725491536618610

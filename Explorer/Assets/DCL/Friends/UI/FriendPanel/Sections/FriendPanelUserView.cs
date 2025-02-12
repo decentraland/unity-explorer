@@ -24,6 +24,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections
         [field: SerializeField] public ChatEntryConfigurationSO ChatEntryConfiguration { get; private set; }
         [field: SerializeField] public TMP_Text UserName { get; private set; }
         [field: SerializeField] public TMP_Text UserNameTag { get; private set; }
+        [field: SerializeField] public GameObject VerifiedIcon { get; private set; }
         [field: SerializeField] public Image ThumbnailBackground { get; private set; }
         [field: SerializeField] public ImageView ProfileImageView { get; private set; }
 
@@ -87,6 +88,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections
             UserName.color = userColor;
             UserNameTag.text = $"#{friendProfile.Address.ToString()[^4..]}";
             UserNameTag.gameObject.SetActive(!friendProfile.HasClaimedName);
+            VerifiedIcon.SetActive(friendProfile.HasClaimedName);
             ThumbnailBackground.color = userColor;
 
             Sprite? thumbnail = profileThumbnailCache.GetThumbnail(friendProfile.Address.ToString());
