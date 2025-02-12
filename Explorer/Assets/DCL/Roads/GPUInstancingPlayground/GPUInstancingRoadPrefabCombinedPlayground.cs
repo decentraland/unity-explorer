@@ -89,7 +89,7 @@ namespace DCL.Roads.GPUInstancingPlayground
             var ComputeVar_matCamera_MVP = cam.projectionMatrix * cam.worldToCameraMatrix;
             float ComputeVar_fCameraHalfAngle = 0.5f * cam.fieldOfView * Mathf.Deg2Rad;  // Get Camera Half Angle (vertical FOV/2 in radians)
 
-            // private static readonly int ComputeVar_isFrustumCulling = Shader.PropertyToID("isFrustumCulling");
+            // private static readonly int ComputeVar_isFrustumCulling = Shader.PropertyToID("isFrustumCulling"); - true
             // private static readonly int ComputeVar_frustumOffset = Shader.PropertyToID("frustumOffset"); // float
 
             Vector3 ComputeVar_vBoundsCenter = candidate.Bounds.center;
@@ -114,36 +114,33 @@ namespace DCL.Roads.GPUInstancingPlayground
 
         private void RenderCandidateIndirect(GPUInstancingLODGroup candidate)
         {
-            var currentCommandIndex = 0;
-
             // foreach (CombinedLodsRenderer combinedLodRenderer in candidate.CombinedLodsRenderers)
             {
+                var lodCount = candidate.LodsScreenSpaceSizes.Length;
                 int lodRendererID = Mathf.Min(LodRendererID, candidate.CombinedLodsRenderers.Count - 1);
 
                 CombinedLodsRenderer combinedLodRenderer = candidate.CombinedLodsRenderers[lodRendererID];
                 Mesh combinedMesh = combinedLodRenderer.CombinedMesh;
 
+                for (int lodLevel = 0; lodLevel < lodCount; lodLevel++)
                 {
-                    int lodLevel = Mathf.Min(LodLevel, combinedMesh.subMeshCount - 1);
-
-                    drawArgsCommandData[currentCommandIndex].indexCountPerInstance = combinedMesh.GetIndexCount(lodLevel);
-                    drawArgsCommandData[currentCommandIndex].instanceCount = (uint)candidate.InstancesBuffer.Count;
-                    drawArgsCommandData[currentCommandIndex].startIndex = combinedMesh.GetIndexStart(lodLevel);
-                    drawArgsCommandData[currentCommandIndex].baseVertexIndex = combinedMesh.GetBaseVertex(lodLevel);
-                    drawArgsCommandData[currentCommandIndex].startInstance = 0;
-
-                    drawArgsBuffer.SetData(drawArgsCommandData, currentCommandIndex, currentCommandIndex, count: 1);
-
-                    combinedLodRenderer.InitializeRenderParams(instancingMaterials);
-                    RenderParams rparams = combinedLodRenderer.RenderParamsArray[0];
-
-                    // rparams.camera = Camera.current;
-                    rparams.matProps = new MaterialPropertyBlock();
-                    rparams.matProps.SetBuffer("_PerInstanceBuffer", perInstanceMatrices);
-
-                    Graphics.RenderMeshIndirect(rparams, combinedMesh, drawArgsBuffer, commandCount: 1, currentCommandIndex);
-                    currentCommandIndex++;
+                    drawArgsCommandData[lodLevel].indexCountPerInstance = combinedMesh.GetIndexCount(lodLevel);
+                    drawArgsCommandData[lodLevel].instanceCount = (uint)candidate.InstancesBuffer.Count;
+                    drawArgsCommandData[lodLevel].startIndex = combinedMesh.GetIndexStart(lodLevel);
+                    drawArgsCommandData[lodLevel].baseVertexIndex = combinedMesh.GetBaseVertex(lodLevel);
+                    drawArgsCommandData[lodLevel].startInstance = (uint)lodLevel * (uint)candidate.InstancesBuffer.Count;
                 }
+
+                drawArgsBuffer.SetData(drawArgsCommandData, 0, 0, count: lodCount);
+
+                RenderParams rparams = combinedLodRenderer.RenderParamsArray[0];
+                combinedLodRenderer.InitializeRenderParams(instancingMaterials);
+                // rparams.camera = Camera.current;
+                rparams.matProps = new MaterialPropertyBlock();
+                rparams.matProps.SetBuffer("_PerInstanceBuffer", perInstanceMatrices);
+                rparams.matProps.SetBuffer("_PerInstanceLookUpAndDitherBuffer", cbInstanceLookUpAndDither);
+
+                Graphics.RenderMeshIndirect(rparams, combinedMesh, drawArgsBuffer, commandCount: lodCount, 0);
             }
         }
 
