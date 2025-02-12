@@ -57,14 +57,17 @@ namespace DCL.Friends.UI.Requests
             viewInstance!.send.SendButton.onClick.AddListener(Send);
             viewInstance.send.CancelButton.onClick.AddListener(Close);
             viewInstance.send.MessageInput.onValueChanged.AddListener(UpdateBodyMessageCharacterCount);
+            viewInstance.send.CloseButton.onClick.AddListener(Close);
 
             viewInstance.cancel.PreCancelButton.onClick.AddListener(ShowPreCancelToastAndEnableCancelButton);
             viewInstance.cancel.CancelButton.onClick.AddListener(Cancel);
             viewInstance.cancel.BackButton.onClick.AddListener(Close);
+            viewInstance.cancel.CloseButton.onClick.AddListener(Close);
 
             viewInstance.received.BackButton.onClick.AddListener(Close);
             viewInstance.received.AcceptButton.onClick.AddListener(Accept);
             viewInstance.received.RejectButton.onClick.AddListener(Reject);
+            viewInstance.received.CloseButton.onClick.AddListener(Close);
         }
 
         protected override void OnViewShow()

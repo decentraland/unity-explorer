@@ -58,6 +58,7 @@ namespace DCL.Friends.UI.Requests
             public TMP_Text MessageCharacterCountText;
             public Button CancelButton;
             public Button SendButton;
+            public Button CloseButton;
         }
 
         [Serializable]
@@ -70,6 +71,7 @@ namespace DCL.Friends.UI.Requests
             public Button PreCancelButton;
             public Button CancelButton;
             public Button BackButton;
+            public Button CloseButton;
             public GameObject PreCancelToastContainer;
             public TMP_Text TimestampText;
         }
@@ -84,6 +86,7 @@ namespace DCL.Friends.UI.Requests
             public Button RejectButton;
             public Button AcceptButton;
             public Button BackButton;
+            public Button CloseButton;
             public TMP_Text TimestampText;
         }
 
