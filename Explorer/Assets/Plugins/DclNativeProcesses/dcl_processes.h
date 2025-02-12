@@ -12,6 +12,8 @@ typedef DWORD pid_t;
 #endif
 
 #ifdef __APPLE__
+#include <sys/types.h>
+
 #define EXPORT __attribute__((visibility("default")))
 #endif
 

@@ -11,7 +11,7 @@ namespace Plugins.DclNativeProcesses
 #if UNITY_EDITOR_WIN || UNITY_STANDALONE_WIN || PLATFORM_STANDALONE_WIN
         private const string LIB_NAME = "DCLProcesses.dll";
 #else
-        private const string LIB_NAME = "DCLProcesses.dll";
+        private const string LIB_NAME = "libDCLProcesses.dylib";
 #endif
         [DllImport(LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
         public static extern IntPtr get_process_name(int pid);
