@@ -10,8 +10,7 @@ namespace DCL.Diagnostics
             var stringBuilder = new StringBuilder();
 
             stringBuilder.Clear();
-            stringBuilder.AppendLine("DEVICE INFORMATION");
-            stringBuilder.AppendLine("==================\n");
+            AppendHeader(ref stringBuilder, "DEVICE INFORMATION");
 
             // Device & OS
             stringBuilder.AppendFormat("Device Model: {0}\n", SystemInfo.deviceModel);
@@ -22,16 +21,14 @@ namespace DCL.Diagnostics
             stringBuilder.AppendFormat("Device Unique ID: {0}\n\n", SystemInfo.deviceUniqueIdentifier);
 
             // CPU & Memory
-            stringBuilder.AppendLine("HARDWARE");
-            stringBuilder.AppendLine("=========\n");
+            AppendHeader(ref stringBuilder, "HARDWARE");
             stringBuilder.AppendFormat("Processor Type: {0}\n", SystemInfo.processorType);
             stringBuilder.AppendFormat("Processor Count: {0}\n", SystemInfo.processorCount);
             stringBuilder.AppendFormat("Processor Frequency: {0} MHz\n", SystemInfo.processorFrequency);
             stringBuilder.AppendFormat("System Memory Size: {0} MB\n\n", SystemInfo.systemMemorySize);
 
             // Graphics
-            stringBuilder.AppendLine("GRAPHICS");
-            stringBuilder.AppendLine("========\n");
+            AppendHeader(ref stringBuilder, "GRAPHICS");
             stringBuilder.AppendFormat("Graphics Device Name: {0}\n", SystemInfo.graphicsDeviceName);
             stringBuilder.AppendFormat("Graphics Device Type: {0}\n", SystemInfo.graphicsDeviceType);
             stringBuilder.AppendFormat("Graphics Memory Size: {0} MB\n", SystemInfo.graphicsMemorySize);
@@ -40,8 +37,7 @@ namespace DCL.Diagnostics
             stringBuilder.AppendFormat("Supports Ray Tracing: {0}\n\n", SystemInfo.supportsRayTracing);
 
             // Unity & Application
-            stringBuilder.AppendLine("APPLICATION");
-            stringBuilder.AppendLine("===========\n");
+            AppendHeader(ref stringBuilder, "APPLICATION");
             stringBuilder.AppendFormat("Unity Version: {0}\n", Application.unityVersion);
             stringBuilder.AppendFormat("Company Name: {0}\n", Application.companyName);
             stringBuilder.AppendFormat("Product Name: {0}\n", Application.productName);
@@ -54,6 +50,13 @@ namespace DCL.Diagnostics
 
 
             ReportHub.LogProductionInfo(stringBuilder.ToString());
+        }
+
+        private static void AppendHeader(ref StringBuilder stringBuilder, string header)
+        {
+            stringBuilder.AppendLine("==================");
+            stringBuilder.AppendLine(header);
+            stringBuilder.AppendLine("==================\n");
         }
     }
 }
