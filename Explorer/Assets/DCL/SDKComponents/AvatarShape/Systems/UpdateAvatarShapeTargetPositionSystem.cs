@@ -4,12 +4,14 @@ using Arch.SystemGroups;
 using CrdtEcsBridge.Components.Transform;
 using DCL.Character.Components;
 using DCL.Diagnostics;
+using DCL.ECSComponents;
+using DCL.SDKComponents.Tween.Components;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.Unity.AvatarShape.Components;
 using ECS.Unity.Transforms.Systems;
 
-namespace ECS.Unity.AvatarShape.Systems
+namespace DCL.SDKComponents.AvatarShape.Systems
 {
     [UpdateInGroup(typeof(SyncedSimulationSystemGroup))]
     [UpdateBefore(typeof(UpdateTransformSystem))]
@@ -25,24 +27,47 @@ namespace ECS.Unity.AvatarShape.Systems
 
         protected override void Update(float t)
         {
-            UpdateAvatarShapeLastPositionQuery(World);
+            UpdateAvatarTargetPositionQuery(World);
+            UpdateAvatarWithTweenTargetPositionQuery(World);
         }
 
         [Query]
-        private void UpdateAvatarShapeLastPosition(ref SDKAvatarShapeComponent sdkAvatarShapeComponent, ref SDKTransform sdkTransform)
+        [None(typeof(SDKTweenComponent))]
+        private void UpdateAvatarTargetPosition(ref SDKAvatarShapeComponent sdkAvatarShapeComponent, ref SDKTransform sdkTransform)
         {
             if (!sdkTransform.IsDirty)
                 return;
 
-            ref CharacterTargetPosition characterTargetPosition = ref globalWorld.TryGetRef<CharacterTargetPosition>(
-                sdkAvatarShapeComponent.globalWorldEntity,
-                out bool hasCharacterLastPosition);
+            UpdateTargetPosition(ref sdkAvatarShapeComponent, ref sdkTransform, false);
+        }
 
-            if (!hasCharacterLastPosition)
+        [Query]
+        private void UpdateAvatarWithTweenTargetPosition(
+            ref SDKAvatarShapeComponent sdkAvatarShapeComponent,
+            ref SDKTransform sdkTransform,
+            ref SDKTweenComponent sdkTweenComponent)
+        {
+            if (sdkTweenComponent.TweenMode != PBTween.ModeOneofCase.Move || sdkTweenComponent.TweenStateStatus != TweenStateStatus.TsActive)
                 return;
 
-            characterTargetPosition.TargetPosition = sdkTransform.Position;
-            characterTargetPosition.FinalRotation = sdkTransform.Rotation;
+            UpdateTargetPosition(ref sdkAvatarShapeComponent, ref sdkTransform, true);
+        }
+
+        private void UpdateTargetPosition(
+            ref SDKAvatarShapeComponent sdkAvatarShapeComponent,
+            ref SDKTransform sdkTransform,
+            bool isManagedByTween)
+        {
+            ref CharacterTargetPositionComponent characterTargetPositionComponent = ref globalWorld.TryGetRef<CharacterTargetPositionComponent>(
+                sdkAvatarShapeComponent.globalWorldEntity,
+                out bool hasCharacterTargetPosition);
+
+            if (!hasCharacterTargetPosition)
+                return;
+
+            characterTargetPositionComponent.TargetPosition = sdkTransform.Position;
+            characterTargetPositionComponent.FinalRotation = sdkTransform.Rotation;
+            characterTargetPositionComponent.IsManagedByTween = isManagedByTween;
         }
     }
 }

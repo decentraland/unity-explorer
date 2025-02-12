@@ -1,7 +1,6 @@
 ﻿using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
-using DCL.AvatarRendering.AvatarShape.Systems;
 using DCL.AvatarRendering.Emotes;
 using DCL.Character;
 using DCL.Character.Components;
@@ -14,6 +13,7 @@ using ECS.ComponentsPooling.Systems;
 using ECS.SceneLifeCycle.Reporting;
 using System.Threading;
 using UnityEngine;
+using SDKAvatarShapesMotionSystem = DCL.Character.CharacterMotion.Systems.SDKAvatarShapesMotionSystem;
 
 namespace DCL.PluginSystem.Global
 {

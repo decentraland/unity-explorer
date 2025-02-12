@@ -5,6 +5,7 @@ using ECS.LifeCycle;
 using ECS.LifeCycle.Systems;
 using ECS.Unity.AvatarShape.Systems;
 using System.Collections.Generic;
+using UpdateAvatarShapeTargetPositionSystem = DCL.SDKComponents.AvatarShape.Systems.UpdateAvatarShapeTargetPositionSystem;
 
 namespace DCL.PluginSystem.World
 {
