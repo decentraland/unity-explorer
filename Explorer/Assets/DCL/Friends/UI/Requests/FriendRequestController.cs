@@ -269,11 +269,12 @@ namespace DCL.Friends.UI.Requests
             {
                 await friendsService.RejectFriendshipAsync(inputData.Request!.From.Address, ct);
 
-                await ShowOperationConfirmationAsync(
-                    ViewState.CONFIRMED_REJECTED,
-                    viewInstance!.rejectedConfirmed, inputData.Request.From,
-                    "Friend Request From <color=#FF8362>{0}</color> Rejected",
-                    ct);
+                // Dont show confirmation on negative actions
+                // await ShowOperationConfirmationAsync(
+                //     ViewState.CONFIRMED_REJECTED,
+                //     viewInstance!.rejectedConfirmed, inputData.Request.From,
+                //     "Friend Request From <color=#FF8362>{0}</color> Rejected",
+                //     ct);
 
                 Close();
             }
@@ -309,11 +310,12 @@ namespace DCL.Friends.UI.Requests
             {
                 await friendsService.CancelFriendshipAsync(inputData.Request!.To.Address, ct);
 
-                await ShowOperationConfirmationAsync(
-                    ViewState.CONFIRMED_CANCELLED,
-                    viewInstance!.cancelledConfirmed, inputData.Request.To,
-                    "Friend Request To <color=#73D3D3>{0}</color> Cancelled",
-                    ct);
+                // Dont show confirmation on negative actions
+                // await ShowOperationConfirmationAsync(
+                //     ViewState.CONFIRMED_CANCELLED,
+                //     viewInstance!.cancelledConfirmed, inputData.Request.To,
+                //     "Friend Request To <color=#73D3D3>{0}</color> Cancelled",
+                //     ct);
 
                 Close();
             }
