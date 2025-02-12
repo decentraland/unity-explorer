@@ -1,9 +1,5 @@
 fileFormatVersion: 2
-<<<<<<<< HEAD:Explorer/Assets/Protocol/DecentralandProtocol/LightSource.gen.cs.meta
-guid: 9368a24dda5bef84b8569eef12eba119
-========
 guid: 2b43bac7a50418643bfe4c92df43201d
->>>>>>>> dev:Explorer/Assets/DCL/RealmNavigation/Container/RealmNavigationContainer.cs.meta
 MonoImporter:
   externalObjects: {}
   serializedVersion: 2
