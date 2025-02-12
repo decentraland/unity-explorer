@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Audio;
 using DCL.UI;
 using DG.Tweening;
 using MVC;
@@ -34,6 +35,9 @@ namespace DCL.Friends.UI.Requests
             await config.Root.transform.DOScale(Vector3.one, SCALE_ANIMATION_DURATION)
                         .SetEase(Ease.OutBounce)
                         .ToUniTask(cancellationToken: ct);
+
+            if (config.Sound != null)
+                UIAudioEventsBus.Instance.SendPlayAudioEvent(config.Sound);
 
             config.Rays.DORotate(new Vector3(0, 0, 360), 2f, RotateMode.FastBeyond360)
                   .SetEase(Ease.Linear)
@@ -119,6 +123,7 @@ namespace DCL.Friends.UI.Requests
             public Button CloseButton;
             public Transform Rays;
             public CanvasGroup CanvasGroup;
+            public AudioClipConfig? Sound;
         }
     }
 }

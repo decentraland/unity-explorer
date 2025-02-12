@@ -4319,6 +4319,7 @@ MonoBehaviour:
     CloseButton: {fileID: 6492868746556403585}
     Rays: {fileID: 4091455786011589745}
     CanvasGroup: {fileID: 8786897316467330488}
+    Sound: {fileID: 11400000, guid: 668410f366ba7433fa951a769a903a0d, type: 2}
   cancelledConfirmed:
     Root: {fileID: 2719355748188288446}
     FriendThumbnail: {fileID: 2151907062323665016}
@@ -4327,6 +4328,7 @@ MonoBehaviour:
     CloseButton: {fileID: 6033788539887159641}
     Rays: {fileID: 3558083743310224041}
     CanvasGroup: {fileID: 8094740401621609312}
+    Sound: {fileID: 0}
   rejectedConfirmed:
     Root: {fileID: 8961641923950353555}
     FriendThumbnail: {fileID: 4917418893428273493}
@@ -4335,6 +4337,7 @@ MonoBehaviour:
     CloseButton: {fileID: 747422480044318836}
     Rays: {fileID: 7531118278995604356}
     CanvasGroup: {fileID: 3005442456529027661}
+    Sound: {fileID: 0}
   acceptedConfirmed:
     Root: {fileID: 3595195725759715872}
     FriendThumbnail: {fileID: 3997380123370089602}
@@ -4343,6 +4346,7 @@ MonoBehaviour:
     CloseButton: {fileID: 4472776619130474393}
     Rays: {fileID: 389011782947752911}
     CanvasGroup: {fileID: 266949489663737335}
+    Sound: {fileID: 11400000, guid: 668410f366ba7433fa951a769a903a0d, type: 2}
 --- !u!1 &5470517784721960661
 GameObject:
   m_ObjectHideFlags: 0
