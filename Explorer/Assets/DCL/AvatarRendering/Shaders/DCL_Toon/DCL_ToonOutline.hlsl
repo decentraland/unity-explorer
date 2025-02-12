@@ -91,7 +91,11 @@ VertexOutput vert (VertexInput v)
         Set_Outline_Width = Set_Outline_Width*2;
         float signVar = dot(normalize(v.vertex.xyz),normalize(v.normal))<0 ? -1 : 1;
         o.pos = UnityObjectToClipPos(float4(v.vertex.xyz + signVar*normalize(v.vertex)*Set_Outline_Width, 1));
-        float3 positionWS = TransformObjectToWorld(_GlobalAvatarBuffer[_lastAvatarVertCount + _lastWearableVertCount + v.index].position.xyz);
+        #ifdef _DCL_COMPUTE_SKINNING
+            float3 positionWS = TransformObjectToWorld(_GlobalAvatarBuffer[_lastAvatarVertCount + _lastWearableVertCount + v.index].position.xyz);
+        #else
+            float3 positionWS = TransformObjectToWorld(v.vertex.xyz);
+        #endif
     #endif
     //v.2.0.7.5
     o.pos.z = o.pos.z + _Offset_Z * _ClipCameraPos.z;
