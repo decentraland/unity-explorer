@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 
@@ -25,9 +26,17 @@ public static class TextureUtilities
 
         if (sourceTexture.isReadable)
         {
-            rgba32Texture.SetPixels(sourceTexture.GetPixels());
-            rgba32Texture.Apply();
-            return rgba32Texture;
+            try
+            {
+                rgba32Texture.SetPixels(sourceTexture.GetPixels());
+                rgba32Texture.Apply();
+                return rgba32Texture;
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"Error getting pixels: {e.Message}. Falling back to RenderTexture approach.");
+                // Fall through to RenderTexture approach
+            }
         }
 
         // For non-readable textures, use RenderTexture approach
