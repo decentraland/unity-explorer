@@ -1,3 +1,5 @@
+#ifdef __APPLE__ 
+
 #include <sys/mman.h>
 #include <sys/stat.h>        /* For mode constants */
 #include <fcntl.h>           /* For O_* constants */
@@ -45,3 +47,4 @@ EXPORT void dcl_nmmf_close(nmmf_t instance) {
     munmap(instance.memory, instance.size); 
     close(instance.fd);
 }
+#endif
