@@ -31,23 +31,25 @@ namespace DCL.Character.CharacterMotion.Systems
 
         protected override void Update(float t)
         {
-            UpdateMotionQuery(World);
+            UpdateMotionQuery(World, t);
         }
 
         [Query]
         private void UpdateMotion(
+            [Data] float deltaTime,
             in IAvatarView view,
             ref CharacterTransform characterTransformComponent,
             ref CharacterTargetPositionComponent characterTargetPositionComponent,
             ref CharacterAnimationComponent animationComponent)
         {
-            UpdatePosition(characterTransformComponent, ref characterTargetPositionComponent);
-            UpdateRotation(characterTransformComponent, ref characterTargetPositionComponent);
-            UpdateAnimations(view, characterTransformComponent, ref characterTargetPositionComponent, ref animationComponent);
+            UpdatePosition(deltaTime, characterTransformComponent, ref characterTargetPositionComponent);
+            UpdateRotation(deltaTime, characterTransformComponent, ref characterTargetPositionComponent);
+            UpdateAnimations(deltaTime, view, characterTransformComponent, ref characterTargetPositionComponent, ref animationComponent);
             characterTargetPositionComponent.LastPosition = characterTransformComponent.Transform.position;
         }
 
         private static void UpdatePosition(
+            float deltaTime,
             CharacterTransform characterTransformComponent,
             ref CharacterTargetPositionComponent characterTargetPositionComponent)
         {
@@ -56,7 +58,7 @@ namespace DCL.Character.CharacterMotion.Systems
             if (distanceToTarget < DISTANCE_EPSILON)
             {
                 characterTransformComponent.Transform.position = characterTargetPositionComponent.TargetPosition;
-                UpdateRotation(characterTransformComponent, characterTargetPositionComponent.FinalRotation);
+                UpdateRotation(deltaTime, characterTransformComponent, characterTargetPositionComponent.FinalRotation);
                 return;
             }
 
@@ -66,11 +68,11 @@ namespace DCL.Character.CharacterMotion.Systems
 
             float movementSpeed = WALK_SPEED;
             movementSpeed = distanceToTarget >= WALK_DISTANCE ?
-                Mathf.MoveTowards(movementSpeed, RUN_SPEED, UnityEngine.Time.deltaTime * RUN_SPEED * 10) :
-                Mathf.MoveTowards(movementSpeed, WALK_SPEED, UnityEngine.Time.deltaTime * RUN_SPEED * 30);
+                Mathf.MoveTowards(movementSpeed, RUN_SPEED, deltaTime * RUN_SPEED * 10) :
+                Mathf.MoveTowards(movementSpeed, WALK_SPEED, deltaTime * RUN_SPEED * 30);
 
             Vector3 flattenDirection = characterTargetPositionComponent.LastPosition.GetYFlattenDirection(characterTargetPositionComponent.TargetPosition);
-            Vector3 delta = flattenDirection.normalized * (movementSpeed * UnityEngine.Time.deltaTime);
+            Vector3 delta = flattenDirection.normalized * (movementSpeed * deltaTime);
             Vector3 directionVector = characterTargetPositionComponent.LastPosition.GetDirection(characterTargetPositionComponent.TargetPosition);
 
             // If we overshoot targetPosition, we adjust the delta value accordingly
@@ -81,10 +83,11 @@ namespace DCL.Character.CharacterMotion.Systems
         }
 
         private static void UpdateRotation(
+            float deltaTime,
             CharacterTransform characterTransformComponent,
             ref CharacterTargetPositionComponent characterTargetPositionComponent)
         {
-            // If the AvatarShape rotation is already controlled by a tween, we skip the it here
+            // If the AvatarShape rotation is already controlled by a tween, we skip it here
             if (characterTargetPositionComponent.IsRotationManagedByTween)
                 return;
 
@@ -93,18 +96,19 @@ namespace DCL.Character.CharacterMotion.Systems
                 return;
 
             Quaternion targetRotation = Quaternion.LookRotation(flattenDirection, Vector3.up);
-            UpdateRotation(characterTransformComponent, targetRotation);
+            UpdateRotation(deltaTime, characterTransformComponent, targetRotation);
         }
 
-        private static void UpdateRotation(CharacterTransform characterTransformComponent, Quaternion targetRotation)
+        private static void UpdateRotation(float deltaTime, CharacterTransform characterTransformComponent, Quaternion targetRotation)
         {
             if (Quaternion.Dot(characterTransformComponent.Transform.rotation, targetRotation) > DOT_THRESHOLD)
                 return;
 
-            characterTransformComponent.Transform.rotation = Quaternion.Slerp(characterTransformComponent.Transform.rotation, targetRotation, ROTATION_SPEED * UnityEngine.Time.deltaTime);
+            characterTransformComponent.Transform.rotation = Quaternion.Slerp(characterTransformComponent.Transform.rotation, targetRotation, ROTATION_SPEED * deltaTime);
         }
 
         private static void UpdateAnimations(
+            float deltaTime,
             IAvatarView view,
             CharacterTransform characterTransformComponent,
             ref CharacterTargetPositionComponent characterTargetPositionComponent,
@@ -115,7 +119,7 @@ namespace DCL.Character.CharacterMotion.Systems
 
             if (distanceToTarget > 0)
             {
-                float speed = Mathf.Round(distanceToTarget / UnityEngine.Time.deltaTime * 1000f) / 1000f;
+                float speed = Mathf.Round(distanceToTarget / deltaTime * 1000f) / 1000f;
                 movementBlendValue = RemotePlayerUtils.GetBlendValueFromSpeed(speed);
             }
 
