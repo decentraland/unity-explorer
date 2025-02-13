@@ -1,3 +1,4 @@
+using DCL.Diagnostics;
 using System;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
@@ -34,7 +35,7 @@ public static class TextureUtilities
             }
             catch (Exception e)
             {
-                Debug.LogError($"Error getting pixels: {e.Message}. Falling back to RenderTexture approach.");
+                ReportHub.LogError(ReportCategory.TEXTURES, $"Error getting pixels: {e.Message}. Falling back to RenderTexture approach.");
                 // Fall through to RenderTexture approach
             }
         }
