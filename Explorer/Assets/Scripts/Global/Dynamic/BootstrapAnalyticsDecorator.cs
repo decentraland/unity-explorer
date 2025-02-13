@@ -15,6 +15,7 @@ using SceneRunner.Debugging;
 using Segment.Serialization;
 using System.Threading;
 using DCL.FeatureFlags;
+using Global.Versioning;
 using UnityEngine.UIElements;
 using Utility;
 using static DCL.PerformanceAndDiagnostics.Analytics.AnalyticsEvents;
@@ -77,11 +78,12 @@ namespace Global.Dynamic
             Entity playerEntity,
             IAppArgs appArgs,
             ICoroutineRunner coroutineRunner,
+            DCLVersion dclVersion,
             CancellationToken ct)
         {
             (DynamicWorldContainer? container, bool) result =
                 await core.LoadDynamicWorldContainerAsync(bootstrapContainer, staticContainer, scenePluginSettingsContainer,
-                    settings, dynamicSettings, uiToolkitRoot, scenesUIRoot, cursorRoot, backgroundMusic, worldInfoTool, playerEntity, appArgs, coroutineRunner, ct);
+                    settings, dynamicSettings, uiToolkitRoot, scenesUIRoot, cursorRoot, backgroundMusic, worldInfoTool, playerEntity, appArgs, coroutineRunner, dclVersion, ct);
 
             analytics.Track(General.INITIAL_LOADING, new JsonObject
             {
@@ -149,6 +151,7 @@ namespace Global.Dynamic
         public void ApplyFeatureFlagConfigs(FeatureFlagsCache featureFlagsCache)
         {
             core.ApplyFeatureFlagConfigs(featureFlagsCache);
+
             //No analytics to track on this step
         }
 

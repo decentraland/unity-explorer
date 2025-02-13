@@ -1,6 +1,7 @@
 ﻿using DCL.Web3.Identities;
 using ECS;
 using Global.AppArgs;
+using Global.Versioning;
 using Segment.Serialization;
 using System;
 using UnityEngine;
@@ -21,7 +22,8 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             IAppArgs appArgs,
             AnalyticsConfiguration configuration,
             LauncherTraits launcherTraits,
-            BuildData buildData)
+            BuildData buildData,
+            DCLVersion dclVersion)
         {
             analytics = analyticsService;
             Configuration = configuration;
@@ -30,7 +32,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
             SessionID = !string.IsNullOrEmpty(launcherTraits.SessionId) ? launcherTraits.SessionId : SystemInfo.deviceUniqueIdentifier + DateTime.Now.ToString("yyyyMMddHHmmssfff");
 
-            analytics.AddPlugin(new StaticCommonTraitsPlugin(appArgs, SessionID, launcherTraits.LauncherAnonymousId, buildData));
+            analytics.AddPlugin(new StaticCommonTraitsPlugin(appArgs, SessionID, launcherTraits.LauncherAnonymousId, buildData, dclVersion));
         }
 
         public void Initialize(IWeb3Identity? web3Identity)
