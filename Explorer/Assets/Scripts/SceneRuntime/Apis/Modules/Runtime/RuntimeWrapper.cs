@@ -14,7 +14,7 @@ namespace SceneRuntime.Apis.Modules.Runtime
 
         private readonly CancellationTokenSource cancellationTokenSource;
 
-        public RuntimeWrapper(IRuntime api, ISceneExceptionsHandler exceptionsHandler, bool isPreview) : base(api, isPreview)
+        public RuntimeWrapper(IRuntime api, ISceneExceptionsHandler exceptionsHandler, bool isLocalSceneDevelopment) : base(api, isLocalSceneDevelopment)
         {
             this.exceptionsHandler = exceptionsHandler;
             cancellationTokenSource = new CancellationTokenSource();

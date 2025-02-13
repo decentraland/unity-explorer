@@ -169,9 +169,9 @@ namespace SceneRuntime
             sceneRuntime.Register("UnityUserActions", new UserActionsWrapper(api));
         }
 
-        private static void RegisterRuntime(this ISceneRuntime sceneRuntime, IRuntime api, ISceneExceptionsHandler sceneExceptionsHandler, bool isPreview)
+        private static void RegisterRuntime(this ISceneRuntime sceneRuntime, IRuntime api, ISceneExceptionsHandler sceneExceptionsHandler, bool isLocalSceneDevelopment)
         {
-            sceneRuntime.Register("UnityRuntime", new RuntimeWrapper(api, sceneExceptionsHandler, isPreview));
+            sceneRuntime.Register("UnityRuntime", new RuntimeWrapper(api, sceneExceptionsHandler, isLocalSceneDevelopment));
         }
 
         private static void RegisterEthereumApi(this ISceneRuntime sceneRuntime, IEthereumApi ethereumApi, IWeb3IdentityCache web3IdentityCache, ISceneExceptionsHandler sceneExceptionsHandler)
@@ -184,19 +184,19 @@ namespace SceneRuntime
             sceneRuntime.Register("UnityUserIdentityApi", new UserIdentityApiWrapper(profileRepository, identityCache, sceneExceptionsHandler));
         }
 
-        private static void RegisterWebSocketApi(this ISceneRuntime sceneRuntime, IWebSocketApi webSocketApi, ISceneExceptionsHandler sceneExceptionsHandler, bool isPreview)
+        private static void RegisterWebSocketApi(this ISceneRuntime sceneRuntime, IWebSocketApi webSocketApi, ISceneExceptionsHandler sceneExceptionsHandler, bool isLocalSceneDevelopment)
         {
-            sceneRuntime.Register("UnityWebSocketApi", new WebSocketApiWrapper(webSocketApi, sceneExceptionsHandler, isPreview));
+            sceneRuntime.Register("UnityWebSocketApi", new WebSocketApiWrapper(webSocketApi, sceneExceptionsHandler, isLocalSceneDevelopment));
         }
 
-        private static void RegisterCommunicationsControllerApi(this ISceneRuntime sceneRuntime, ICommunicationsControllerAPI api, IInstancePoolsProvider instancePoolsProvider, ISceneExceptionsHandler sceneExceptionsHandler, bool isPreview)
+        private static void RegisterCommunicationsControllerApi(this ISceneRuntime sceneRuntime, ICommunicationsControllerAPI api, IInstancePoolsProvider instancePoolsProvider, ISceneExceptionsHandler sceneExceptionsHandler, bool isLocalSceneDevelopment)
         {
-            sceneRuntime.Register("UnityCommunicationsControllerApi", new CommunicationsControllerAPIWrapper(api, instancePoolsProvider, sceneExceptionsHandler, isPreview));
+            sceneRuntime.Register("UnityCommunicationsControllerApi", new CommunicationsControllerAPIWrapper(api, instancePoolsProvider, sceneExceptionsHandler, isLocalSceneDevelopment));
         }
 
-        private static void RegisterSimpleFetchApi(this ISceneRuntime sceneRuntime, ISimpleFetchApi simpleFetchApi, IWebRequestController webRequestController, bool isPreview)
+        private static void RegisterSimpleFetchApi(this ISceneRuntime sceneRuntime, ISimpleFetchApi simpleFetchApi, IWebRequestController webRequestController, bool isLocalSceneDevelopment)
         {
-            sceneRuntime.Register("UnitySimpleFetchApi", new SimpleFetchApiWrapper(simpleFetchApi, webRequestController, isPreview));
+            sceneRuntime.Register("UnitySimpleFetchApi", new SimpleFetchApiWrapper(simpleFetchApi, webRequestController, isLocalSceneDevelopment));
         }
 
         public static void RegisterSDKMessageBusCommsApi(this ISceneRuntime sceneRuntime, ISDKMessageBusCommsControllerAPI api)

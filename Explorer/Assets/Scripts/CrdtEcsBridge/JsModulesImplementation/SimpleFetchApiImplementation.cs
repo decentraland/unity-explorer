@@ -47,13 +47,13 @@ namespace CrdtEcsBridge.JsModulesImplementation
             int timeout,
             IWebRequestController webController,
             CancellationToken ct,
-            bool isPreview
+            bool isLocalSceneDevelopment
         )
         {
             try
             {
-                // if we're in preview mode to allow connecting to unsafe websocket server to the client
-                if (!isPreview && !url.ToLower().StartsWith("https://"))
+                // if we're in LocalSceneDevelopment mode to allow connecting to unsafe websocket server to the client
+                if (!isLocalSceneDevelopment && !url.ToLower().StartsWith("https://"))
                     throw new Exception("Can't make an unsafe http request, please upgrade to https. url=" + url);
 
                 RequestMethod parsedRequestMethod = ParseRequestMethod(requestMethod);

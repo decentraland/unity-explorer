@@ -14,7 +14,7 @@ namespace SceneRuntime.Apis.Modules.FetchApi
         private readonly CancellationTokenSource cancellationTokenSource;
         private readonly IWebRequestController webController;
 
-        public SimpleFetchApiWrapper(ISimpleFetchApi api, IWebRequestController webController, bool isPreview) : base(api, isPreview)
+        public SimpleFetchApiWrapper(ISimpleFetchApi api, IWebRequestController webController, bool isLocalSceneDevelopment) : base(api, isLocalSceneDevelopment)
         {
             cancellationTokenSource = new CancellationTokenSource();
             this.webController = webController;
@@ -33,7 +33,7 @@ namespace SceneRuntime.Apis.Modules.FetchApi
 
             async UniTask<ResponseToJs> FetchAsync(CancellationToken ct)
             {
-                ISimpleFetchApi.Response response = await api.FetchAsync(requestMethod, url, headers, hasBody, body, redirect, timeout, webController, ct, isPreview);
+                ISimpleFetchApi.Response response = await api.FetchAsync(requestMethod, url, headers, hasBody, body, redirect, timeout, webController, ct, isLocalSceneDevelopment);
 
                 var headersToJs = new PropertyBag();
 
