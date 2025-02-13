@@ -11,7 +11,6 @@ using DCL.Diagnostics;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using ECS.Abstract;
-using System;
 using UnityEngine;
 
 namespace DCL.Character.CharacterMotion.Systems
@@ -116,8 +115,7 @@ namespace DCL.Character.CharacterMotion.Systems
 
             if (distanceToTarget > 0)
             {
-                float speed = distanceToTarget / UnityEngine.Time.deltaTime;
-                speed = (float)Math.Round(speed, 3);
+                float speed = Mathf.Round(distanceToTarget / UnityEngine.Time.deltaTime * 1000f) / 1000f;
                 movementBlendValue = RemotePlayerUtils.GetBlendValueFromSpeed(speed);
             }
 
