@@ -24,7 +24,6 @@ namespace DCL.UI.SuggestionPanel
         {
             this.suggestionPanel = suggestionPanel;
             this.suggestionPanel.InjectDependencies(viewDependencies);
-            this.suggestionPanel.Initialize();
             this.suggestionPanel.SuggestionSelectedEvent += OnSuggestionSelected;
         }
 
