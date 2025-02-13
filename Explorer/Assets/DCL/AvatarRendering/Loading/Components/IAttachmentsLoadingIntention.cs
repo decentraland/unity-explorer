@@ -9,5 +9,7 @@ namespace DCL.AvatarRendering.Loading.Components
         void SetTotal(int total);
 
         void AppendToResult(TResultElement resultElement);
+
+        bool NeedsBuilderAPISigning { get; }
     }
 }

@@ -1,3 +1,4 @@
+using DCL.AvatarRendering.Loading.DTO;
 using System.Collections.Generic;
 
 namespace DCL.AvatarRendering.Loading
@@ -20,5 +21,17 @@ namespace DCL.AvatarRendering.Loading
         TElementDTO Entity { get; }
 
         IReadOnlyList<ElementIndividualDataDto> IndividualData { get; }
+    }
+
+    public interface IBuilderLambdaResponse<out TBuilderLambdaResponseElement>
+    {
+        IReadOnlyList<TBuilderLambdaResponseElement> WearablesCollection { get; }
+    }
+
+    public interface IBuilderLambdaResponseElement<out TElementDTO>
+    {
+        IReadOnlyDictionary<string, string> Contents { get; }
+
+        TElementDTO BuildWearableDTO(string contentDownloadUrl);
     }
 }

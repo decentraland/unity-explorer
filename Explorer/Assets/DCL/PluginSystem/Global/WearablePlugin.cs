@@ -16,6 +16,8 @@ using DCL.ResourcesUnloading;
 using DCL.WebRequests;
 using ECS;
 using ECS.StreamableLoading.Cache;
+using ECS.StreamableLoading.GLTF;
+using ECS.StreamableLoading.GLTF.DownloadProvider;
 using Newtonsoft.Json;
 using SceneRunner.Scene;
 using System;
@@ -32,22 +34,32 @@ namespace DCL.AvatarRendering.Wearables
         private static readonly URLSubdirectory WEARABLES_COMPLEMENT_URL = URLSubdirectory.FromString("/wearables/");
         private static readonly URLSubdirectory WEARABLES_EMBEDDED_SUBDIRECTORY = URLSubdirectory.FromString("/Wearables/");
         private readonly URLDomain assetBundleURL;
+        private readonly string builderContentURL;
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IWebRequestController webRequestController;
-
+        private readonly bool builderWearablesPreview;
         private readonly IRealmData realmData;
         private readonly IWearableStorage wearableStorage;
 
         private WearablesDTOList defaultWearablesDTOs;
         private GameObject defaultEmptyWearableAsset;
 
-        public WearablePlugin(IAssetsProvisioner assetsProvisioner, IWebRequestController webRequestController, IRealmData realmData, URLDomain assetBundleURL, CacheCleaner cacheCleaner, IWearableStorage wearableStorage)
+        public WearablePlugin(IAssetsProvisioner assetsProvisioner,
+            IWebRequestController webRequestController,
+            IRealmData realmData,
+            URLDomain assetBundleURL,
+            CacheCleaner cacheCleaner,
+            IWearableStorage wearableStorage,
+            string builderContentURL,
+            bool builderWearablesPreview)
         {
             this.wearableStorage = wearableStorage;
             this.assetsProvisioner = assetsProvisioner;
             this.webRequestController = webRequestController;
             this.realmData = realmData;
             this.assetBundleURL = assetBundleURL;
+            this.builderContentURL = builderContentURL;
+            this.builderWearablesPreview = builderWearablesPreview;
 
             cacheCleaner.Register(this.wearableStorage);
         }
@@ -72,14 +84,25 @@ namespace DCL.AvatarRendering.Wearables
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in GlobalPluginArguments arguments)
         {
-            FinalizeWearableLoadingSystem.InjectToWorld(ref builder, wearableStorage, realmData, WEARABLES_EMBEDDED_SUBDIRECTORY);
-            LoadWearablesByParamSystem.InjectToWorld(ref builder, webRequestController, new NoCache<WearablesResponse, GetWearableByParamIntention>(false, false), realmData, EXPLORER_SUBDIRECTORY, WEARABLES_COMPLEMENT_URL, wearableStorage);
+            LoadWearablesByParamSystem.InjectToWorld(ref builder, webRequestController, new NoCache<WearablesResponse, GetWearableByParamIntention>(false, false), realmData, EXPLORER_SUBDIRECTORY, WEARABLES_COMPLEMENT_URL, wearableStorage, builderContentURL);
             LoadWearablesDTOByPointersSystem.InjectToWorld(ref builder, webRequestController, new NoCache<WearablesDTOList, GetWearableDTOByPointersIntention>(false, false));
             LoadWearableAssetBundleManifestSystem.InjectToWorld(ref builder, new NoCache<SceneAssetBundleManifest, GetWearableAssetBundleManifestIntention>(true, true), assetBundleURL, webRequestController);
-            LoadDefaultWearablesSystem.InjectToWorld(ref builder, defaultWearablesDTOs, defaultEmptyWearableAsset,
-                wearableStorage);
+            LoadDefaultWearablesSystem.InjectToWorld(ref builder, defaultWearablesDTOs, defaultEmptyWearableAsset, wearableStorage);
+
+            FinalizeAssetBundleWearableLoadingSystem.InjectToWorld(ref builder, wearableStorage, realmData);
+            if (builderWearablesPreview)
+            {
+                FinalizeRawWearableLoadingSystem.InjectToWorld(ref builder, wearableStorage, realmData);
+                LoadGLTFSystem.InjectToWorld(ref builder,
+                    new NoCache<GLTFData, GetGLTFIntention>(false, false),
+                    webRequestController,
+                    true,
+                    true,
+                    new GltFastGlobalDownloadStrategy(builderContentURL));
+            }
 
             ResolveAvatarAttachmentThumbnailSystem.InjectToWorld(ref builder);
+            ResolveWearablePromisesSystem.InjectToWorld(ref builder, wearableStorage, realmData, WEARABLES_EMBEDDED_SUBDIRECTORY);
         }
 
         [Serializable]
