@@ -5,7 +5,7 @@ namespace DCL.Diagnostics
 {
     public static class SystemInfoUtils
     {
-        public static void Log()
+        public static void Log(string version)
         {
             var stringBuilder = new StringBuilder();
 
@@ -41,7 +41,7 @@ namespace DCL.Diagnostics
             stringBuilder.AppendFormat("Unity Version: {0}\n", Application.unityVersion);
             stringBuilder.AppendFormat("Company Name: {0}\n", Application.companyName);
             stringBuilder.AppendFormat("Product Name: {0}\n", Application.productName);
-            stringBuilder.AppendFormat("Version: {0}\n", Application.version);
+            stringBuilder.AppendFormat("Version: {0}\n", version);
             stringBuilder.AppendFormat("Target Frame Rate: {0}\n", Application.targetFrameRate);
             stringBuilder.AppendFormat("Screen Resolution: {0}x{1}@{2}Hz\n",
             Screen.currentResolution.width,
