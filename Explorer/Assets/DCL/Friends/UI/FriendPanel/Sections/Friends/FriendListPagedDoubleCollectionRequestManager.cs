@@ -163,7 +163,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 
             foreach (FriendProfile friend in result.Friends)
             {
-                if (offlineFriends.Contains(friend)) continue;
+                if (offlineFriends.Contains(friend) || onlineFriends.Contains(friend)) continue;
                 offlineFriends.Add(friend);
             }
 
