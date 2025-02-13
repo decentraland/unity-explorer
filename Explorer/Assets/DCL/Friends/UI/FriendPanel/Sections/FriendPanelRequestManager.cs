@@ -70,21 +70,25 @@ namespace DCL.Friends.UI.FriendPanel.Sections
             isFetching = true;
 
             pageNumber++;
-            totalToFetch = await FetchDataAsync(pageNumber, pageSize, ct);
-            totalFetched = (pageNumber + 1) * pageSize;
+            await FetchDataInternalAsync(ct);
 
-            loopListView.SetListItemCount(totalFetched, false);
+            loopListView.SetListItemCount(GetCollectionCount(), false);
             loopListView.RefreshAllShownItem();
 
             isFetching = false;
+        }
+
+        private async UniTask FetchDataInternalAsync(CancellationToken ct)
+        {
+            totalToFetch = await FetchDataAsync(pageNumber, pageSize, ct);
+            totalFetched = (pageNumber + 1) * pageSize;
         }
 
         protected abstract UniTask<int> FetchDataAsync(int pageNumber, int pageSize, CancellationToken ct);
 
         public async UniTask InitAsync(CancellationToken ct)
         {
-            totalToFetch = await FetchDataAsync(pageNumber, pageSize, ct);
-            totalFetched = (pageNumber + 1) * pageSize;
+            await FetchDataInternalAsync(ct);
 
             HasElements = GetCollectionCount() > 0;
             WasInitialised = true;
