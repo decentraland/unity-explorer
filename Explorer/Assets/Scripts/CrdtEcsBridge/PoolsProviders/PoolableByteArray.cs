@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using UnityEngine.Assertions;
 
 namespace CrdtEcsBridge.PoolsProviders
 {
@@ -47,8 +46,11 @@ namespace CrdtEcsBridge.PoolsProviders
             IsDisposed = true;
         }
 
-        public IEnumerator<byte> GetEnumerator() =>
-            Length <= 0 ? ((IEnumerable<byte>)System.Array.Empty<byte>()).GetEnumerator() : new Enumerator(this);
+        public Enumerator GetEnumerator() =>
+            new Enumerator(this);
+
+        IEnumerator<byte> IEnumerable<byte>.GetEnumerator() =>
+            GetEnumerator();
 
         IEnumerator IEnumerable.GetEnumerator() =>
             GetEnumerator();

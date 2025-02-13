@@ -26,18 +26,16 @@ namespace ECS.SceneLifeCycle.Systems
         private readonly IScenesCache scenesCache;
         private readonly ILODCache lodCache;
         private readonly ILODSettingsAsset lodSettingsAsset;
-        private readonly SceneAssetLock sceneAssetLock;
         private readonly VisualSceneStateResolver visualSceneStateResolver;
 
         internal UpdateVisualSceneStateSystem(World world, IRealmData realmData, IScenesCache scenesCache, ILODCache lodCache,
-            ILODSettingsAsset lodSettingsAsset, VisualSceneStateResolver visualSceneStateResolver, SceneAssetLock sceneAssetLock) : base(world)
+            ILODSettingsAsset lodSettingsAsset, VisualSceneStateResolver visualSceneStateResolver) : base(world)
         {
             this.realmData = realmData;
             this.scenesCache = scenesCache;
             this.lodCache = lodCache;
             this.lodSettingsAsset = lodSettingsAsset;
             this.visualSceneStateResolver = visualSceneStateResolver;
-            this.sceneAssetLock = sceneAssetLock;
         }
 
         protected override void Update(float t)
@@ -114,7 +112,7 @@ namespace ECS.SceneLifeCycle.Systems
             {
                 //Dispose scene
                 sceneFacade.DisposeSceneFacadeAndRemoveFromCache(scenesCache,
-                    sceneDefinitionComponent.Parcels, sceneAssetLock);
+                    sceneDefinitionComponent.Parcels);
                 World.Remove<ISceneFacade, AssetPromise<ISceneFacade, GetSceneFacadeIntention>>(entity);
             }
         }

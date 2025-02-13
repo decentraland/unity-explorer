@@ -1,27 +1,48 @@
+# Pull Request Description
+
 ## What does this PR change?
-
 <!--
-Please make sure to include a good description of your changes. That means:
-- What you're changing and why (the problem you're solving).
-- If there is an issue, please mention it by number, e.g. #123
-- If it’s an optimization, add a performance comparison (before vs after).
-- If it's an SDK feature, make sure there's a test scene to try it out.
-- Optionally, link or add any useful external documentation: design/architecture documents, Figma links,
-  screenshots, etc.
+Please provide a clear and detailed description of your changes. Include:
+- What you're changing and why (describe the problem you're solving)
+- Which issue this addresses (if applicable), using #123 format
+- For optimizations: Include performance comparisons (before vs. after)
+- For SDK features: Include or link to a test scene
+- Links to relevant documentation:
+  - Design docs
+  - Architecture diagrams
+  - Figma designs
+  - Screenshots
+  - Other relevant context
 -->
 
-...
-
-## How to test the changes?
-
+## Test Instructions
 <!--
-When writing test steps, please keep them clear and specific. QA doesn’t have the same technical
-context, so while they'll do a smoke test, the more concrete your instructions, the better.
+Provide clear, specific steps for testing these changes. Remember:
+- QA team members may not have the same technical context
+- Be explicit about test requirements and expected outcomes
+- Include any specific configuration needed
 -->
 
-1. Launch the explorer
-2. ...
+### Prerequisites
+- [ ] List any required setup steps
+- [ ] Include environment/configuration requirements
 
-## Our Code Review Standards
+### Test Steps
+1. First step
+2. Second step
+3. Expected result after step 2
+4. ...
 
-https://github.com/decentraland/unity-renderer/blob/master/docs/code-review-standards.md
+### Additional Testing Notes
+- Note any edge cases to verify
+- Mention specific areas that need careful testing
+- List known limitations or potential issues
+
+## Quality Checklist
+- [ ] Changes have been tested locally
+- [ ] Documentation has been updated (if required)
+- [ ] Performance impact has been considered
+- [ ] For SDK features: Test scene is included
+
+## Code Review Reference
+Please review our [Code Review Standards](https://github.com/decentraland/unity-renderer/blob/master/docs/code-review-standards.md) before submitting.
