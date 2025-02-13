@@ -11,6 +11,7 @@ using DCL.Diagnostics;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using ECS.Abstract;
+using System;
 using UnityEngine;
 
 namespace DCL.Character.CharacterMotion.Systems
@@ -20,8 +21,7 @@ namespace DCL.Character.CharacterMotion.Systems
     [ThrottlingEnabled]
     public partial class SDKAvatarShapesMotionSystem : BaseUnityLoopSystem
     {
-        private const float DISTANCE_EPSILON = 0.1f;
-        private const float MAX_DISTANCE_FOR_INTERPOLATION = 50f;
+        private const float DISTANCE_EPSILON = 0.0001f;
         private const float WALK_DISTANCE = 1.5f;
         private const float WALK_SPEED = 4f;
         private const float RUN_SPEED = 10f;
@@ -44,7 +44,7 @@ namespace DCL.Character.CharacterMotion.Systems
         {
             UpdatePosition(characterTransformComponent, ref characterTargetPositionComponent);
             UpdateRotation(characterTransformComponent, ref characterTargetPositionComponent);
-            UpdateAnimations(view, ref characterTargetPositionComponent, ref animationComponent);
+            UpdateAnimations(view, characterTransformComponent, ref characterTargetPositionComponent, ref animationComponent);
             characterTargetPositionComponent.LastPosition = characterTransformComponent.Transform.position;
         }
 
@@ -54,14 +54,11 @@ namespace DCL.Character.CharacterMotion.Systems
         {
             float distanceToTarget = Vector3.Distance(characterTargetPositionComponent.TargetPosition, characterTargetPositionComponent.LastPosition);
 
-            switch (distanceToTarget)
+            if (distanceToTarget < DISTANCE_EPSILON)
             {
-                case 0:
-                    UpdateRotation(characterTransformComponent, characterTargetPositionComponent.FinalRotation);
-                    return;
-                case >= MAX_DISTANCE_FOR_INTERPOLATION or < DISTANCE_EPSILON:
-                    characterTransformComponent.Transform.position = characterTargetPositionComponent.TargetPosition;
-                    return;
+                characterTransformComponent.Transform.position = characterTargetPositionComponent.TargetPosition;
+                UpdateRotation(characterTransformComponent, characterTargetPositionComponent.FinalRotation);
+                return;
             }
 
             // If the AvatarShape movement is already controlled by a tween, we skip the interpolation
@@ -88,7 +85,7 @@ namespace DCL.Character.CharacterMotion.Systems
             CharacterTransform characterTransformComponent,
             ref CharacterTargetPositionComponent characterTargetPositionComponent)
         {
-            var flattenDirection = characterTargetPositionComponent.LastPosition.GetYFlattenDirection(characterTargetPositionComponent.TargetPosition);
+            var flattenDirection = characterTargetPositionComponent.LastPosition.GetYFlattenDirection(characterTransformComponent.Transform.position);
             if (flattenDirection == Vector3.zero)
                 return;
 
@@ -106,15 +103,17 @@ namespace DCL.Character.CharacterMotion.Systems
 
         private static void UpdateAnimations(
             IAvatarView view,
+            CharacterTransform characterTransformComponent,
             ref CharacterTargetPositionComponent characterTargetPositionComponent,
             ref CharacterAnimationComponent animationComponent)
         {
-            float distanceToTarget = Vector3.Distance(characterTargetPositionComponent.TargetPosition, characterTargetPositionComponent.LastPosition);
+            float distanceToTarget = Vector3.Distance(characterTransformComponent.Transform.position, characterTargetPositionComponent.LastPosition);
             float movementBlendValue = 0;
 
             if (distanceToTarget > 0)
             {
                 float speed = distanceToTarget / UnityEngine.Time.deltaTime;
+                speed = (float)Math.Round(speed, 3);
                 movementBlendValue = RemotePlayerUtils.GetBlendValueFromSpeed(speed);
             }
 
