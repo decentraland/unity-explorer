@@ -49,12 +49,12 @@ namespace SceneRuntime.Apis.Modules.RestrictedActionsApi
         public void MovePlayerTo(
             double newRelativePositionX, double newRelativePositionY, double newRelativePositionZ,
             double cameraTargetX, double cameraTargetY, double cameraTargetZ,
-            double rotationX, double rotationY, double rotationZ, double rotationW)
+            double avatarTargetX, double avatarTargetY, double avatarTargetZ)
         {
             api.TryMovePlayerTo(
                 new Vector3((float)newRelativePositionX, (float)newRelativePositionY, (float)newRelativePositionZ),
                 new Vector3((float)cameraTargetX, (float)cameraTargetY, (float)cameraTargetZ),
-                new Quaternion((float)rotationX, (float)rotationY, (float)rotationZ, (float)rotationW));
+                new Vector3((float)avatarTargetX, (float)avatarTargetY, (float)avatarTargetZ));
         }
 
         [UsedImplicitly]

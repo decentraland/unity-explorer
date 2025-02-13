@@ -64,16 +64,16 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             // Arrange
             Vector3 testNewRelativePosition = new Vector3(5, 5, 3);
             Vector3? testCameraTarget = withCameraTarget ? new Vector3(5, 3, 2) : null;
-            Quaternion? testRotation = withRotation ? Quaternion.Euler(0, 45, 0) : null;
+            Vector3? testAvatarTarget = withCameraTarget ? new Vector3(2, 6, -3) : null;
 
             // Act
-            restrictedActionsAPIImplementation.TryMovePlayerTo(testNewRelativePosition, testCameraTarget, testRotation);
+            restrictedActionsAPIImplementation.TryMovePlayerTo(testNewRelativePosition, testCameraTarget, testAvatarTarget);
 
             // Assert
             globalWorldActions.Received(1).MoveAndRotatePlayer(
                 sceneData.Geometry.BaseParcelPosition + testNewRelativePosition,
                 withCameraTarget ? sceneData.Geometry.BaseParcelPosition + testCameraTarget : null,
-                testRotation);
+                testAvatarTarget);
 
             globalWorldActions.Received(1).RotateCamera(
                 withCameraTarget ? sceneData.Geometry.BaseParcelPosition + testCameraTarget : null,

@@ -43,13 +43,14 @@ namespace CrdtEcsBridge.RestrictedActions
             return true;
         }
 
-        public void TryMovePlayerTo(Vector3 newRelativePosition, Vector3? cameraTarget, Quaternion? newRotation)
+        public void TryMovePlayerTo(Vector3 newRelativePosition, Vector3? cameraTarget, Vector3? avatarTarget)
         {
             if (!sceneStateProvider.IsCurrent)
                 return;
 
             Vector3 newAbsolutePosition = sceneData.Geometry.BaseParcelPosition + newRelativePosition;
             Vector3? newAbsoluteCameraTarget = cameraTarget != null ? sceneData.Geometry.BaseParcelPosition + cameraTarget.Value : null;
+            Vector3? newAbsoluteAvatarTarget = avatarTarget != null ? sceneData.Geometry.BaseParcelPosition + avatarTarget.Value : null;
 
             if (!IsPositionValid(newAbsolutePosition))
             {
@@ -57,7 +58,7 @@ namespace CrdtEcsBridge.RestrictedActions
                 return;
             }
 
-            MoveAndRotatePlayerAsync(newAbsolutePosition, newAbsoluteCameraTarget, newRotation).Forget();
+            MoveAndRotatePlayerAsync(newAbsolutePosition, newAbsoluteCameraTarget, newAbsoluteAvatarTarget).Forget();
         }
 
         public void TryTeleportTo(Vector2Int coords)
@@ -129,11 +130,11 @@ namespace CrdtEcsBridge.RestrictedActions
             return true;
         }
 
-        private async UniTask MoveAndRotatePlayerAsync(Vector3 newAbsolutePosition, Vector3? newAbsoluteCameraTarget, Quaternion? newRotation)
+        private async UniTask MoveAndRotatePlayerAsync(Vector3 newAbsolutePosition, Vector3? newAbsoluteCameraTarget, Vector3? newAbsoluteAvatarTarget)
         {
             await UniTask.SwitchToMainThread();
 
-            globalWorldActions.MoveAndRotatePlayer(newAbsolutePosition, newAbsoluteCameraTarget, newRotation);
+            globalWorldActions.MoveAndRotatePlayer(newAbsolutePosition, newAbsoluteCameraTarget, newAbsoluteAvatarTarget);
             globalWorldActions.RotateCamera(newAbsoluteCameraTarget, newAbsolutePosition);
         }
 
