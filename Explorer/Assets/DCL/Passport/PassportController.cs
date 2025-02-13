@@ -528,7 +528,12 @@ namespace DCL.Passport
         private async UniTask SetupContextMenuAsync(FriendshipStatus friendshipStatus, CancellationToken ct)
         {
             Profile? profile = await profileRepository.GetAsync(inputData.UserId, ct);
-            if (profile == null) return;
+
+            if (profile == null)
+            {
+                ReportHub.Log(LogType.Error, new ReportData(ReportCategory.FRIENDS), $"Failed to show context menu button for user {inputData.UserId}. Profile is null.");
+                return;
+            }
 
             Sprite? thumbnailSprite = await profileThumbnailCache.GetThumbnailAsync(profile, ct);
 
