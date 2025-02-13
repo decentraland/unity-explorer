@@ -1,9 +1,7 @@
 ﻿#ifndef _DCL_CULLING_FUNCTIONS_
 #define _DCL_CULLING_FUNCTIONS_
 
-#include "InputParams.cginc"
-
-inline void CalculateBoundingBox(in float4x4 objectTransformMatrix, inout float4 BoundingBox[8])
+inline void CalculateBoundingBox(in float4x4 objectTransformMatrix, inout float4 BoundingBox[8], float4x4 matCamera_MVP, float3 vBoundsCenter, float3 vBoundsExtents)
 {
     // Calculate clip space matrix
     float4x4 to_clip_space_mat = mul(matCamera_MVP, objectTransformMatrix);
@@ -22,7 +20,7 @@ inline void CalculateBoundingBox(in float4x4 objectTransformMatrix, inout float4
     BoundingBox[7] = mul(to_clip_space_mat, float4(Min.x, Min.y, Min.z, 1.0));
 }
 
-inline bool IsFrustumCulled(float4 BoundingBox[8])
+inline bool IsFrustumCulled(float4 BoundingBox[8], float frustumOffset)
 {
     bool isCulled = false;
     // Test all 8 points with both positive and negative planes
@@ -54,7 +52,7 @@ inline bool IsFrustumCulled(float4 BoundingBox[8])
     return isCulled;
 }
 
-inline float OcclusionSample(float4 BoundingRect, float LOD, float xOffset)
+inline float OcclusionSample(float4 BoundingRect, float LOD, float xOffset, Texture2D<float4> hiZMap, SamplerState sampler_hiZMap, float4 hiZTxtrSize, uint occlusionAccuracy)
 { 
     // Fetch the depth texture and sample it with the bounds
     // Middle Point
@@ -105,7 +103,7 @@ inline float OcclusionSample(float4 BoundingRect, float LOD, float xOffset)
     return MaxDepth;
 }
 
-inline bool IsOcclusionCulled(float4 BoundingBox[8])
+inline bool IsOcclusionCulled(float4 BoundingBox[8], float4 hiZTxtrSize, float occlusionOffset, uint occlusionAccuracy, Texture2D<float4> hiZMap, SamplerState sampler_hiZMap)
 {
     // NOTE: for Direct3D, the clipping space z coordinate ranges from 0 to w and for OpenGL, it ranges from -w to w. However, since we use Unity's Projection Matrix directly,
     // there is no need to worry about the difference between platforms. The projection matrix will always be left handed.
@@ -147,12 +145,12 @@ inline bool IsOcclusionCulled(float4 BoundingBox[8])
         
 	    // Calculate the texture LOD used for lookup in the depth buffer texture
     float LOD = ceil(log2(max(ViewSizeX, ViewSizeY) / pow(2, occlusionAccuracy)));
-    float MaxDepth = OcclusionSample(BoundingRect, LOD, 0);
+    float MaxDepth = OcclusionSample(BoundingRect, LOD, 0, hiZMap, sampler_hiZMap, hiZTxtrSize, occlusionAccuracy);
 
     return InstanceDepth > MaxDepth + occlusionOffset;
 }
 
-inline bool IsCulled(in float4x4 instanceMatrix, in float dist)
+inline bool IsCulled(in float4x4 instanceMatrix, in float dist, float fMaxDistance, float minCullingDistance, bool isFrustumCulling, bool isOcclusionCulling, float4x4 matCamera_MVP, float3 vBoundsCenter, float3 vBoundsExtents, float frustumOffset, float4 hiZTxtrSize, float occlusionOffset, uint occlusionAccuracy, Texture2D<float4> hiZMap, SamplerState sampler_hiZMap)
 {
     bool culled = false;
     
@@ -165,18 +163,18 @@ inline bool IsCulled(in float4x4 instanceMatrix, in float dist)
     if (!culled && dist >= minCullingDistance)
     {
         float4 BoundingBox[8];
-        CalculateBoundingBox(instanceMatrix, BoundingBox);
+        CalculateBoundingBox(instanceMatrix, BoundingBox, matCamera_MVP, vBoundsCenter, vBoundsExtents);
 
         // OBB Frustum Culling
         if (isFrustumCulling)
         {
-            culled = IsFrustumCulled(BoundingBox);
+            culled = IsFrustumCulled(BoundingBox, frustumOffset);
         }
     
         // Hierarchical Z-Buffer Occlusion Culling      
         if (!culled && isOcclusionCulling)
         {
-            culled = IsOcclusionCulled(BoundingBox);
+            culled = IsOcclusionCulled(BoundingBox, hiZTxtrSize, occlusionOffset, occlusionAccuracy,hiZMap, sampler_hiZMap);
         }
     }
 

@@ -1,14 +1,40 @@
 ﻿#include "Includes/PlatformSpecifications.cginc"
-
-#pragma kernel CameraCullingAndLODCalculationKernel
-
-RWStructuredBuffer<uint4> PerInstance_LODLevels; // LOD_A, LOD_B, LOD_Dither, LOD_Shadow 
-#include "Includes/InputParams.cginc"
 #include "Includes/CullingFunctions.cginc"
 #include "Includes/CameraFunctions.cginc"
 
+#pragma kernel CameraCullingAndLODCalculationKernel
+
+////////////////////
+// UNIFORM INPUTS
+////////////////////
+struct PerInstance
+{
+    float4x4 worldMatrix;
+    float3 colour;
+};
+RWStructuredBuffer<PerInstance> PerInstanceData;
 uniform uint nInstBufferSize;
 uniform uint nLODCount;
+uniform float4x4 lodSizes;
+uniform float fShadowDistance;
+uniform float fMaxDistance;
+uniform float minCullingDistance;
+uniform bool isOcclusionCulling;
+uniform bool isFrustumCulling;
+uniform float4x4 matCamera_MVP;
+uniform float3 vBoundsCenter;
+uniform float3 vBoundsExtents;
+uniform float frustumOffset;
+uniform float occlusionOffset;
+uniform uint occlusionAccuracy;
+uniform float4 hiZTxtrSize;
+uniform Texture2D<float4> hiZMap;
+uniform SamplerState sampler_hiZMap; // variable name is recognized by the compiler to reference hiZMap
+
+////////////////////
+// UNIFORM OUTPUTS
+////////////////////
+RWStructuredBuffer<uint4> PerInstance_LODLevels; // LOD_A, LOD_B, LOD_Dither, LOD_Shadow 
 
 [numthreads(GPUI_THREADS, 1, 1)]
 void CameraCullingAndLODCalculationKernel(uint3 id : SV_DispatchThreadID)
@@ -21,8 +47,8 @@ void CameraCullingAndLODCalculationKernel(uint3 id : SV_DispatchThreadID)
     const float4x4 mInstMatrix = PerInstanceData[id.x].worldMatrix;
     EvaluateInstanceDistance(mInstMatrix, fDistance, fScreenSpaceSize);
 
-    if(IsCulled(mInstMatrix, fDistance))
+    if(IsCulled(mInstMatrix, fDistance, fMaxDistance, minCullingDistance, isFrustumCulling, isOcclusionCulling, matCamera_MVP, vBoundsCenter, vBoundsExtents, frustumOffset, hiZTxtrSize, occlusionOffset, occlusionAccuracy, hiZMap, sampler_hiZMap))
     {
-        PerInstance_LODLevels[id.x] = EvaluateLODLevel(nLodCount, lodSizes, fShadowDistance, fScreenSpaceSize, fDistance);
+        PerInstance_LODLevels[id.x] = EvaluateLODLevel(nLODCount, lodSizes, fShadowDistance, fScreenSpaceSize, fDistance);
     }
 }

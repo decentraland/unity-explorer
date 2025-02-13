@@ -1,8 +1,6 @@
 ﻿#ifndef _DCL_CAMERA_FUNCTIONS_
 #define _DCL_CAMERA_FUNCTIONS_
 
-#include "InputParams.cginc"
-
 inline void EvaluateInstanceDistance(float4x4 instanceMatrix, out float dist, out float maxViewSize)
 {
     dist = 0;

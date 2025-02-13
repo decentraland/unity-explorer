@@ -2,13 +2,19 @@
 
 #pragma kernel ComputeLODBufferAccumulation
 
-RWStructuredBuffer<uint> IndirectDrawIndexedArgsBuffer; // 5x UINT, per draw args
-RWStructuredBuffer<uint4> PerInstance_LODLevels; // LOD_A, LOD_B, LOD_Dither, LOD_Shadow
-RWStructuredBuffer<uint2> InstanceLookUpAndDither;
-
+////////////////////
+// UNIFORM INPUTS
+////////////////////
 uniform uint nInstBufferSize;
 uniform uint nLODCount;
 uniform uint arrLODCount[8];
+RWStructuredBuffer<uint4> PerInstance_LODLevels; // LOD_A, LOD_B, LOD_Dither, LOD_Shadow
+
+////////////////////
+// UNIFORM OUTPUTS
+////////////////////
+RWStructuredBuffer<uint> IndirectDrawIndexedArgsBuffer; // 5x UINT, per draw args
+RWStructuredBuffer<uint2> InstanceLookUpAndDither;
 
 [numthreads(GPUI_THREADS, 1, 1)]
 void ComputeLODBufferAccumulation(uint3 id : SV_DispatchThreadID)

@@ -45,7 +45,6 @@ uniform float4x4 shadowLODMap;
 
 // LOD
 uniform float4x4 lodSizes;
-uniform uint nLodCount;
 uniform float deltaTime;
 
 #endif
