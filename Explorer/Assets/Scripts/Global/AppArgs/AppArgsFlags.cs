@@ -19,6 +19,7 @@
         public const string FORCED_EMOTES = "self-force-emotes";
         public const string SELF_PREVIEW_EMOTES = "self-preview-emotes";
         public const string SELF_PREVIEW_WEARABLES = "self-preview-wearables";
+        public const string SELF_PREVIEW_BUILDER_COLLECTION = "self-preview-builder-collection";
 
         public const string CAMERA_REEL = "camera-reel";
         public const string FRIENDS = "friends";

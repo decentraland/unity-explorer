@@ -75,5 +75,8 @@
         "com.segment.analytics.csharp"
       ]
     }
+  ],
+  "testables": [
+    "org.decentraland.clearscript"
   ]
 }

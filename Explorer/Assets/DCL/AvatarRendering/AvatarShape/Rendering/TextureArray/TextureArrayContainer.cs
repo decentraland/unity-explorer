@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Pool;
+using static DCL.AvatarRendering.AvatarShape.Rendering.TextureArray.TextureArrayConstants;
 
 namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
 {
@@ -37,10 +38,11 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
                 TextureArrayMapping mapping = mappings[i];
                 // Check if the texture is present in the original material
                 var tex = originalMaterial.GetTexture(mapping.OriginalTextureID) as Texture2D;
-                if (tex && tex.format == mapping.Handler.GetTextureFormat())
+                var handlerFormat = mapping.Handler.GetTextureFormat();
+                if (tex && tex!.format == handlerFormat)
                     results[i] = mapping.Handler.SetTexture(targetMaterial, tex, new Vector2Int(tex.width, tex.height));
-                else
-                   mapping.Handler.SetDefaultTexture(targetMaterial, mapping.DefaultFallbackResolution);
+                else if (IsFormatValidForDefaultTex(handlerFormat))
+                    mapping.Handler.SetDefaultTexture(targetMaterial, mapping.DefaultFallbackResolution);
             }
 
             return results;
@@ -53,14 +55,22 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
             for (var i = 0; i < mappings.Count; i++)
             {
                 TextureArrayMapping mapping = mappings[i];
+                var handlerFormat = mapping.Handler.GetTextureFormat();
+                bool foundTexture = textures.TryGetValue(mapping.OriginalTextureID, out var texture);
+                Texture2D tex = texture as Texture2D;
 
-                if (textures.TryGetValue(mapping.OriginalTextureID, out var texture))
-                    results[i] = mapping.Handler.SetTexture(targetMaterial, texture as Texture2D, new Vector2Int(texture.width, texture.height));
-                else
-                    mapping.Handler.SetDefaultTexture(targetMaterial, mapping.DefaultFallbackResolution, defaultSlotIndexUsed);
+                if (foundTexture && tex!.format == handlerFormat)
+                    results[i] = mapping.Handler.SetTexture(targetMaterial, tex, new Vector2Int(tex.width, tex.height));
+                else if (IsFormatValidForDefaultTex(handlerFormat))
+                   mapping.Handler.SetDefaultTexture(targetMaterial, mapping.DefaultFallbackResolution, defaultSlotIndexUsed);
             }
 
             return results;
         }
+
+        private bool IsFormatValidForDefaultTex(TextureFormat texFormat) =>
+            texFormat == DEFAULT_BASEMAP_TEXTURE_FORMAT
+            || texFormat == DEFAULT_NORMALMAP_TEXTURE_FORMAT
+            || texFormat == DEFAULT_EMISSIVEMAP_TEXTURE_FORMAT;
     }
 }
