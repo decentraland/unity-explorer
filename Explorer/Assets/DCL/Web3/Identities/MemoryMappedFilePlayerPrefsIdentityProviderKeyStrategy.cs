@@ -1,5 +1,4 @@
 using DCL.Diagnostics;
-using Plugins.DclNativeMemoryMappedFiles;
 using Plugins.DclNativeMutex;
 using Plugins.DclNativeProcesses;
 using System;
@@ -8,6 +7,11 @@ using System.Diagnostics;
 using System.IO.MemoryMappedFiles;
 using System.Runtime.InteropServices;
 using UnityEngine.Pool;
+
+#if UNITY_EDITOR_WIN || UNITY_STANDALONE_WIN || PLATFORM_STANDALONE_WIN
+#else
+using Plugins.DclNativeMemoryMappedFiles;
+#endif
 
 namespace DCL.Web3.Identities
 {

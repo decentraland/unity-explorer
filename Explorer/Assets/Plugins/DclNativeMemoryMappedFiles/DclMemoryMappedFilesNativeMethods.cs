@@ -4,15 +4,14 @@ using System.Runtime.InteropServices;
 
 namespace Plugins.DclNativeMemoryMappedFiles
 {
+#if UNITY_EDITOR_WIN || UNITY_STANDALONE_WIN || PLATFORM_STANDALONE_WIN
+#else
     /// <summary>
     /// IL2CPP doesn't fully support Unix functionality for Memory Mapped Files: IRC communication between user space processes
     /// </summary>
     internal static class DclMemoryMappedFilesNativeMethods
     {
-#if UNITY_EDITOR_WIN || UNITY_STANDALONE_WIN || PLATFORM_STANDALONE_WIN
-#else
         private const string LIB_NAME = "libDCL_NMMF.dylib";
-#endif
 
         [StructLayout(LayoutKind.Sequential)]
         [SuppressMessage("ReSharper", "InconsistentNaming")]
@@ -85,4 +84,5 @@ namespace Plugins.DclNativeMemoryMappedFiles
             DclMemoryMappedFilesNativeMethods.dcl_nmmf_close(native);
         }
     }
+#endif
 }
