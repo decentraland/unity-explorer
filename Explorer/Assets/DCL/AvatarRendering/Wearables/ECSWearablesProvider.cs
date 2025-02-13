@@ -8,6 +8,7 @@ using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Web3.Identities;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;
+using ECS.StreamableLoading.Common.Components;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -48,7 +49,8 @@ namespace DCL.AvatarRendering.Wearables
         public async UniTask<(IReadOnlyList<IWearable> results, int totalAmount)> GetAsync(int pageSize, int pageNumber, CancellationToken ct,
             IWearablesProvider.SortingField sortingField = IWearablesProvider.SortingField.Date, IWearablesProvider.OrderBy orderBy = IWearablesProvider.OrderBy.Descending,
             string? category = null, IWearablesProvider.CollectionType collectionType = IWearablesProvider.CollectionType.All,
-            string? name = null, List<IWearable>? results = null)
+            string? name = null, List<IWearable>? results = null, CommonLoadingArguments? loadingArguments = null,
+            bool needsBuilderAPISigning = false)
         {
             requestParameters.Clear();
             requestParameters.Add((PAGE_NUMBER, pageNumber.ToString()));
@@ -74,8 +76,12 @@ namespace DCL.AvatarRendering.Wearables
 
             results ??= new List<IWearable>();
 
+            var intention = new GetWearableByParamIntention(requestParameters, web3IdentityCache.Identity!.Address, results, 0, needsBuilderAPISigning);
+            if (loadingArguments.HasValue)
+                intention.CommonArguments = loadingArguments.Value;
+
             var wearablesPromise = ParamPromise.Create(world!,
-                new GetWearableByParamIntention(requestParameters, web3IdentityCache.Identity!.Address, results, 0),
+                intention,
                 PartitionComponent.TOP_PRIORITY);
 
             wearablesPromise = await wearablesPromise.ToUniTaskAsync(world!, cancellationToken: ct);

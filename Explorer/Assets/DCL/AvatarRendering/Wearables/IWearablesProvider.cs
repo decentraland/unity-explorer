@@ -2,6 +2,7 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Components;
+using ECS.StreamableLoading.Common.Components;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -14,7 +15,9 @@ namespace DCL.AvatarRendering.Wearables
             SortingField sortingField = SortingField.Date, OrderBy orderBy = OrderBy.Descending,
             string? category = null, CollectionType collectionType = CollectionType.All,
             string? name = null,
-            List<IWearable>? results = null);
+            List<IWearable>? results = null,
+            CommonLoadingArguments? loadingArguments = null,
+            bool needsBuilderAPISigning = false);
 
         UniTask<IReadOnlyCollection<IWearable>?> RequestPointersAsync(IReadOnlyCollection<URN> pointers,
             BodyShape bodyShape,

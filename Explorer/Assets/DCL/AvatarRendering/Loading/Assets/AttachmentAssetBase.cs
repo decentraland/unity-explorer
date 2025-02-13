@@ -1,6 +1,6 @@
 ﻿using DCL.Optimization.Pools;
 using DCL.Profiling;
-using ECS.StreamableLoading.AssetBundles;
+using ECS.StreamableLoading;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -16,7 +16,7 @@ namespace DCL.AvatarRendering.Loading.Assets
     {
         public readonly Texture Texture;
 
-        public AttachmentTextureAsset(Texture texture, AssetBundleData assetBundleData)  : base(assetBundleData)
+        public AttachmentTextureAsset(Texture texture, IStreamableRefCountData streamableData) : base(streamableData)
         {
             this.Texture = texture;
         }
@@ -35,7 +35,7 @@ namespace DCL.AvatarRendering.Loading.Assets
 
         public IReadOnlyList<RendererInfo> RendererInfos => rendererInfos;
 
-        public AttachmentRegularAsset(GameObject mainAsset, List<RendererInfo> rendererInfos, AssetBundleData? assetBundleData) : base(assetBundleData)
+        public AttachmentRegularAsset(GameObject mainAsset, List<RendererInfo> rendererInfos, IStreamableRefCountData streamableData) : base(streamableData)
         {
             MainAsset = mainAsset;
             this.rendererInfos = rendererInfos;
@@ -73,22 +73,23 @@ namespace DCL.AvatarRendering.Loading.Assets
 
         public string GetInstanceName()
         {
+            var assetBundleData = assetData as ECS.StreamableLoading.AssetBundles.AssetBundleData;
             return assetBundleData != null ? assetBundleData.GetInstanceName() : $"NOT_AB_{MainAsset.name}";
         }
     }
 
     /// <summary>
-    ///     Represents an original wearable asset
+    ///     Represents an original wearable asset (raw or asset bundle)
     /// </summary>
     public abstract class AttachmentAssetBase : IDisposable
     {
-        protected readonly AssetBundleData? assetBundleData;
+        protected readonly IStreamableRefCountData assetData;
 
         private bool disposed;
 
-        protected AttachmentAssetBase(AssetBundleData? assetBundleData)
+        protected AttachmentAssetBase(IStreamableRefCountData streamableData)
         {
-            this.assetBundleData = assetBundleData;
+            this.assetData = streamableData;
         }
 
         public int ReferenceCount { get; private set; }
@@ -98,7 +99,7 @@ namespace DCL.AvatarRendering.Loading.Assets
             if (disposed)
                 return;
 
-            assetBundleData?.Dereference();
+            assetData.Dereference();
 
             DisposeInternal();
 
