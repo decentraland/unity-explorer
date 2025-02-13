@@ -4,10 +4,14 @@ using Random = System.Random;
 
 namespace DCL.UI.Profiles.Helpers
 {
-    [CreateAssetMenu(fileName = "ProfileNameColorsConfiguration", menuName = "DCL/UI/Profile Name Colors Configuration")]
-    public class ProfileNameColorsConfigurationSO : ScriptableObject, IProfileNameColorHelper
+    public class ProfileNameColorHelper : IProfileNameColorHelper
     {
-        [SerializeField] private List<Color> nameColors;
+        private readonly List<Color> nameColors;
+
+        public ProfileNameColorHelper(List<Color> nameColors)
+        {
+            this.nameColors = nameColors;
+        }
 
         public Color GetNameColor(string username)
         {

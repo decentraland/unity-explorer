@@ -288,7 +288,7 @@ namespace Global.Dynamic
             var wearableCatalog = new WearableStorage();
             var characterPreviewFactory = new CharacterPreviewFactory(staticContainer.ComponentsContainer.ComponentPoolsRegistry);
             IWebBrowser webBrowser = bootstrapContainer.WebBrowser;
-            IProfileNameColorHelper profileNameColorHelper = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.ProfileNameColorHelper, ct)).Value;
+            IProfileNameColorHelper profileNameColorHelper = new ProfileNameColorHelper(dynamicSettings.UserNameColors);
             NametagsData nametagsData = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.NametagsData, ct)).Value;
 
             IProfileCache profileCache = new DefaultProfileCache();

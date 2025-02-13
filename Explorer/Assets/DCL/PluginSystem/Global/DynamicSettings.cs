@@ -5,9 +5,11 @@ using DCL.Multiplayer.Movement.Settings;
 using DCL.Nametags;
 using DCL.UI.Profiles.Helpers;
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Audio;
+using UnityEngine.Serialization;
 
 namespace DCL.PluginSystem.Global
 {
@@ -16,7 +18,6 @@ namespace DCL.PluginSystem.Global
     {
         [field: SerializeField] public AssetReferenceGameObject PopupCloserView { get; private set; }
         [field: SerializeField] public Light DirectionalLight { get; private set; }
-        [field: SerializeField] public ProfileNameColorHelperRef ProfileNameColorHelper { get; private set; }
         [field: SerializeField] public AssetReferenceT<NametagsData> NametagsData { get; private set; }
         [field: SerializeField] public AssetReferenceT<CursorSettings> CursorSettings { get; private set; }
         [field: SerializeField] public AssetReferenceGameObject MainUIView { get; private set; }
@@ -24,10 +25,6 @@ namespace DCL.PluginSystem.Global
         [field: SerializeField] public AssetReferenceT<MultiplayerDebugSettings> MultiplayerDebugSettings { get; private set; }
         [field: SerializeField] public AssetReferenceGameObject AppVerRedirectionScreenPrefab { get; private set; }
 
-        [Serializable]
-        public class ProfileNameColorHelperRef : AssetReferenceT<ProfileNameColorsConfigurationSO>
-        {
-            public ProfileNameColorHelperRef(string guid) : base(guid) { }
-        }
+        [field:SerializeField] public List<Color> UserNameColors { get; private set; }
     }
 }

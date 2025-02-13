@@ -266,9 +266,16 @@ namespace DCL.Chat
 
         private void OnChatBusMessageAdded(ChatChannel.ChannelId channelId, ChatMessage chatMessage)
         {
-            string formattedText = hyperlinkTextFormatter.FormatText(chatMessage.Message);
-            var newChatMessage = ChatMessage.CopyWithNewMessage(formattedText, chatMessage);
-            chatHistory.AddMessage(channelId, newChatMessage);
+            if (!chatMessage.SystemMessage)
+            {
+                string formattedText = hyperlinkTextFormatter.FormatText(chatMessage.Message);
+                var newChatMessage = ChatMessage.CopyWithNewMessage(formattedText, chatMessage);
+                chatHistory.AddMessage(channelId, newChatMessage);
+            }
+            else
+            {
+                chatHistory.AddMessage(channelId, chatMessage);
+            }
         }
     }
 }

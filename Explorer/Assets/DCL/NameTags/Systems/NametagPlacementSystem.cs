@@ -121,7 +121,7 @@ namespace DCL.Nametags
                 return;
 
             nametagView.Id = avatarShape.ID;
-            nametagView.Username.color = profileNameColorHelper.GetNameColor(avatarShape.Name);
+            nametagView.Username.color = profileNameColorHelper.GetNameColor(profile.DisplayName);
             nametagView.SetUsername(profile.ValidatedName, profile.WalletId, profile.HasClaimedName, true);
             nametagView.gameObject.name = avatarShape.ID;
             UpdateTagTransparencyAndScale(nametagView, camera.Camera, characterTransform.Position);
