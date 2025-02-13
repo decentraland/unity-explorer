@@ -37,7 +37,9 @@ namespace DCL.Friends.UI.PushNotifications
 
             async UniTaskVoid ResolveThumbnailAndShowAsync(CancellationToken ct)
             {
-                viewInstance!.HideToast();
+                if (viewInstance == null) return;
+
+                viewInstance.HideToast();
 
                 Sprite? profileThumbnail = await profileThumbnailCache.GetThumbnailAsync(friendProfile.Address, friendProfile.FacePictureUrl, ct);
 
