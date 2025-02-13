@@ -126,6 +126,7 @@ MonoBehaviour:
   toastFadeInDuration: 0.3
   toastVisibleDuration: 1
   toastVFadeOutDuration: 0.3
+  <ShowNotificationSound>k__BackingField: {fileID: 11400000, guid: 33affe5a01ca04bcdaf10484c87793e2, type: 2}
 --- !u!223 &5182163631995387074
 Canvas:
   m_ObjectHideFlags: 0

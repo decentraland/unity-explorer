@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Audio;
 using DCL.Chat;
 using DCL.UI;
 using DG.Tweening;
@@ -23,6 +24,9 @@ namespace DCL.Friends.UI.PushNotifications
         [field: SerializeField] public float toastFadeInDuration = 0.3f;
         [field: SerializeField] public float toastVisibleDuration = 1f;
         [field: SerializeField] public float toastVFadeOutDuration = 0.3f;
+
+        [field: Header("Audio")]
+        [field: SerializeField] public AudioClipConfig? ShowNotificationSound { get; private set; }
 
         private void Start()
         {
@@ -50,6 +54,7 @@ namespace DCL.Friends.UI.PushNotifications
 
         internal async UniTask ShowToastAsync(CancellationToken ct)
         {
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(ShowNotificationSound);
             await PanelCanvasGroup.DOFade(1f, toastFadeInDuration).ToUniTask(cancellationToken: ct);
             await UniTask.Delay((int)(toastVisibleDuration * 1000), cancellationToken: ct);
             await PanelCanvasGroup.DOFade(0f, toastVFadeOutDuration).ToUniTask(cancellationToken: ct);
