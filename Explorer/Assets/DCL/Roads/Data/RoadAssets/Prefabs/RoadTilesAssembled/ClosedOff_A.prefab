@@ -128,7 +128,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   IndirectCandidates:
-  - LODGroup: {fileID: 1353140677476836634}
+  - Name: RoadTileClosedOff
+    LODGroup: {fileID: 1353140677476836634}
     InstancesBuffer:
     - instMatrix:
         e00: 1
@@ -148,7 +149,8 @@ MonoBehaviour:
         e32: 0
         e33: 1
       instColourTint: {x: 1, y: 1, z: 1}
-  - LODGroup: {fileID: 7399694176564931539}
+  - Name: RoadSideClosedOff
+    LODGroup: {fileID: 7399694176564931539}
     InstancesBuffer:
     - instMatrix:
         e00: 1
@@ -168,7 +170,8 @@ MonoBehaviour:
         e32: 0
         e33: 1
       instColourTint: {x: 1, y: 1, z: 1}
-  - LODGroup: {fileID: 8315679767733611126}
+  - Name: RoadSideDecor01
+    LODGroup: {fileID: 8315679767733611126}
     InstancesBuffer:
     - instMatrix:
         e00: 1

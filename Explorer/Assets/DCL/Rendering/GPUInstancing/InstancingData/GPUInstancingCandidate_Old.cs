@@ -25,7 +25,6 @@ namespace DCL.Roads.GPUInstancing.Playground
         public float[] LodsScreenSpaceSizes;
 
         [Space]
-        public List<CombinedLodsRenderer> CombinedLodsRenderers;
         public List<GPUInstancingLodLevel_Old> Lods_Old;
 
          public GPUInstancingCandidate_Old(GPUInstancingCandidate_Old lodGroup)

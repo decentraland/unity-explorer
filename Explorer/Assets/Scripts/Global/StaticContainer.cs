@@ -107,7 +107,7 @@ namespace Global
         public IPortableExperiencesController PortableExperiencesController { get; private set; }
         public IDebugContainerBuilder DebugContainerBuilder { get; private set; }
         public ISceneRestrictionBusController SceneRestrictionBusController { get; private set; }
-        public GPUInstancingService GPUInstancingService { get; private set; }
+        public GPUInstancingService_Old GPUInstancingServiceOld { get; private set; }
 
         public ILoadingStatus LoadingStatus { get; private set; }
 
@@ -173,7 +173,7 @@ namespace Global
             container.texturesFuse = texturesFuse;
 
             var exposedPlayerTransform = new ExposedTransform();
-            container.GPUInstancingService = new GPUInstancingService();
+            container.GPUInstancingServiceOld = new GPUInstancingService_Old();
             container.CharacterContainer = new CharacterContainer(container.assetsProvisioner, exposedGlobalDataContainer.ExposedCameraData, exposedPlayerTransform);
 
             bool result = await InitializeContainersAsync(container, settingsContainer, ct);

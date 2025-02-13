@@ -128,7 +128,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   IndirectCandidates:
-  - LODGroup: {fileID: 3617992554820554555}
+  - Name: RoadTileRightCornerStraight
+    LODGroup: {fileID: 3617992554820554555}
     InstancesBuffer:
     - instMatrix:
         e00: 1
@@ -148,7 +149,8 @@ MonoBehaviour:
         e32: 0
         e33: 1
       instColourTint: {x: 1, y: 1, z: 1}
-  - LODGroup: {fileID: 8374667437615879406}
+  - Name: RoadSideStraight
+    LODGroup: {fileID: 8374667437615879406}
     InstancesBuffer:
     - instMatrix:
         e00: 0.0000027418134
@@ -168,7 +170,8 @@ MonoBehaviour:
         e32: 0
         e33: 1
       instColourTint: {x: 1, y: 1, z: 1}
-  - LODGroup: {fileID: 1448598302027637246}
+  - Name: RoadSideDecor01
+    LODGroup: {fileID: 1448598302027637246}
     InstancesBuffer:
     - instMatrix:
         e00: -1
@@ -188,7 +191,8 @@ MonoBehaviour:
         e32: 0
         e33: 1
       instColourTint: {x: 1, y: 1, z: 1}
-  - LODGroup: {fileID: 3216650454040222574}
+  - Name: RoadSideCornerSmall
+    LODGroup: {fileID: 3216650454040222574}
     InstancesBuffer:
     - instMatrix:
         e00: -1

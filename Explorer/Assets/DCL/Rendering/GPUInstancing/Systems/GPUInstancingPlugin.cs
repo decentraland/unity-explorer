@@ -9,22 +9,22 @@ namespace DCL.Rendering.GPUInstancing.Systems
     public class GPUInstancingPlugin  : IDCLGlobalPlugin
     {
         private readonly IRealmData realmData;
-        private readonly GPUInstancingService gpuInstancingService;
+        private readonly GPUInstancingService_Old gpuInstancingServiceOld;
 
-        public GPUInstancingPlugin(GPUInstancingService gpuInstancingService, IRealmData realmData)
+        public GPUInstancingPlugin(GPUInstancingService_Old gpuInstancingServiceOld, IRealmData realmData)
         {
             this.realmData = realmData;
-            this.gpuInstancingService = gpuInstancingService;
+            this.gpuInstancingServiceOld = gpuInstancingServiceOld;
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in GlobalPluginArguments arguments)
         {
-            GPUInstancingRenderSystem.InjectToWorld(ref builder, gpuInstancingService, realmData);
+            GPUInstancingRenderSystem.InjectToWorld(ref builder, gpuInstancingServiceOld, realmData);
         }
 
         public void Dispose()
         {
-            gpuInstancingService.Dispose();
+            gpuInstancingServiceOld.Dispose();
         }
     }
 }

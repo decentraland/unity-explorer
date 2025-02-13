@@ -128,7 +128,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   IndirectCandidates:
-  - LODGroup: {fileID: 5036026068851062205}
+  - Name: RoadTile2CornersDiagonal
+    LODGroup: {fileID: 5036026068851062205}
     InstancesBuffer:
     - instMatrix:
         e00: 1
@@ -148,7 +149,8 @@ MonoBehaviour:
         e32: 0
         e33: 1
       instColourTint: {x: 1, y: 1, z: 1}
-  - LODGroup: {fileID: 3768799782396905487}
+  - Name: RoadSideCornerSmall
+    LODGroup: {fileID: 3768799782396905487}
     InstancesBuffer:
     - instMatrix:
         e00: 0.0007041096

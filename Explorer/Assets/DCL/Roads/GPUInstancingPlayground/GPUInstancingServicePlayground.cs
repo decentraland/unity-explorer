@@ -1,7 +1,5 @@
 ﻿using DCL.Roads.GPUInstancing.Playground;
 using DCL.Roads.Settings;
-using System.Collections;
-using UnityEditor;
 using UnityEngine;
 
 namespace DCL.Roads.GPUInstancing
@@ -13,7 +11,7 @@ namespace DCL.Roads.GPUInstancing
 
         public RoadSettingsAsset RoadsConfig;
 
-        public GPUInstancingPrefabData_Old[] originalPrefabs;
+        public GPUInstancingPrefabData[] originalPrefabs;
         [Min(0)] public int PrefabId;
 
         public Vector2Int ParcelsMin;
@@ -39,38 +37,35 @@ namespace DCL.Roads.GPUInstancing
             instancingService.Dispose();
         }
 
-        [ContextMenu(nameof(PrefabsSelfCollect))]
+        // [ContextMenu(nameof(PrefabsSelfCollect))]
         private void PrefabsSelfCollect()
         {
-            foreach (GPUInstancingPrefabData_Old prefab in originalPrefabs)
+            foreach (GPUInstancingPrefabData prefab in originalPrefabs)
             {
                 prefab.CollectSelfData();
-                prefab.ShowVisuals();
+                // prefab.ShowVisuals();
             }
+        }
+
+        [ContextMenu(nameof(AddPrefabToService))]
+        private void AddPrefabToService()
+        {
+            instancingService.Dispose();
+            currentPrefabId = Mathf.Min(PrefabId, originalPrefabs.Length - 1);
+            instancingService.AddToIndirect(originalPrefabs[currentPrefabId].IndirectCandidates);
         }
 
         [ContextMenu(nameof(RoadConfigCollect))]
         private void RoadConfigCollect()
         {
-            RoadsConfig.CollectGPUInstancingCandidates(ParcelsMin, ParcelsMax);
-        }
-
-        private void AddPrefabToService()
-        {
-            instancingService.Dispose();
-
-            currentPrefabId = Mathf.Min(PrefabId, originalPrefabs.Length - 1);
-            instancingService.AddToIndirect(originalPrefabs[currentPrefabId].indirectCandidates);
-            instancingService.AddToDirect(originalPrefabs[currentPrefabId].directCandidates);
+            RoadsConfig.CollectGPUInstancingLODGroups(ParcelsMin, ParcelsMax);
         }
 
         [ContextMenu(nameof(AddRoadsToService))]
         private void AddRoadsToService()
         {
             instancingService.Dispose();
-
-            instancingService.AddToIndirect(RoadsConfig.IndirectCandidates);
-            instancingService.AddToDirect(RoadsConfig.DirectCandidates);
+            instancingService.AddToIndirect(RoadsConfig.IndirectLODGroups);
         }
     }
 }

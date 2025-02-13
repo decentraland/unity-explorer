@@ -130,6 +130,7 @@ namespace DCL.Roads.GPUInstancingPlayground
             drawArgsBuffer = new GraphicsBuffer(GraphicsBuffer.Target.IndirectArguments, _nLODCount, GraphicsBuffer.IndirectDrawIndexedArgs.size);
             drawArgsCommandData = new GraphicsBuffer.IndirectDrawIndexedArgs[_nLODCount];
 
+            // for (var lodRendererID = 0; lodRendererID < candidate.LODGroup.CombinedLodsRenderers.Count; lodRendererID++)
             {
                 int lodRendererID = Mathf.Min(LodRendererID, candidate.LODGroup.CombinedLodsRenderers.Count - 1);
                 CombinedLodsRenderer combinedLodRenderer = candidate.LODGroup.CombinedLodsRenderers[lodRendererID];

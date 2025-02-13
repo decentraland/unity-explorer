@@ -34,7 +34,7 @@ namespace DCL.LOD.Systems
         private ProvidedAsset<RoadSettingsAsset> roadSettingsAsset;
         private List<GameObject> roadAssetsPrefabList;
         private ProvidedAsset<LODSettingsAsset> lodSettingsAsset;
-        private GPUInstancingService gpuInstancingService;
+        private GPUInstancingService_Old gpuInstancingServiceOld;
         private RealmData realmData;
 
         public LODPlugin LODPlugin { get; private set; } = null!;
@@ -58,11 +58,11 @@ namespace DCL.LOD.Systems
             TextureArrayContainerFactory textureArrayContainerFactory,
             IDebugContainerBuilder debugBuilder,
             bool lodEnabled,
-            GPUInstancingService gpuInstancingService,
+            GPUInstancingService_Old gpuInstancingServiceOld,
             CancellationToken ct)
         {
             var container = new LODContainer(assetsProvisioner);
-            container.gpuInstancingService = gpuInstancingService;
+            container.gpuInstancingServiceOld = gpuInstancingServiceOld;
             container.realmData = realmData;
 
             return await container.InitializeContainerAsync<LODContainer, LODContainerSettings>(settingsContainer, ct, c =>
@@ -131,9 +131,9 @@ namespace DCL.LOD.Systems
         private void SwitchRoadsInstancedRendering(RealmKind realmKind)
         {
             if (realmKind == RealmKind.GenesisCity)
-                gpuInstancingService.AddToIndirect(roadSettingsAsset.Value.IndirectCandidates);
+                gpuInstancingServiceOld.AddToIndirect(roadSettingsAsset.Value.IndirectCandidates);
             else
-                gpuInstancingService.Remove(roadSettingsAsset.Value.IndirectCandidates);
+                gpuInstancingServiceOld.Remove(roadSettingsAsset.Value.IndirectCandidates);
         }
 
         [Serializable]

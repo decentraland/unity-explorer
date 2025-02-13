@@ -7,11 +7,13 @@ namespace DCL.Roads.GPUInstancing.Playground
     [Serializable]
     public class GPUInstancingLODGroupWithBuffer
     {
+        public string Name;
         public GPUInstancingLODGroup LODGroup;
         public List<PerInstanceBuffer> InstancesBuffer;
 
         public GPUInstancingLODGroupWithBuffer(GPUInstancingLODGroup lodGroup, List<PerInstanceBuffer> instances)
         {
+            Name = lodGroup.Name;
             LODGroup = lodGroup;
             InstancesBuffer = instances;
         }

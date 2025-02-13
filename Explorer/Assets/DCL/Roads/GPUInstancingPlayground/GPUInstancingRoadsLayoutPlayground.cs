@@ -16,7 +16,7 @@ namespace DCL.Roads.GPUInstancing.Playground
         private static readonly Bounds RENDER_PARAMS_WORLD_BOUNDS =
             new (Vector3.zero, new Vector3(GenesisCityData.EXTENTS.x * ParcelMathHelper.PARCEL_SIZE, STREET_MAX_HEIGHT, GenesisCityData.EXTENTS.y * ParcelMathHelper.PARCEL_SIZE));
 
-        private readonly Dictionary<GPUInstancingCandidate_Old, GPUInstancingBuffers> candidatesBuffersTable = new ();
+        private readonly Dictionary<GPUInstancingCandidate_Old, GPUInstancingBuffers_Old> candidatesBuffersTable = new ();
         private readonly Dictionary<Material, Material> instancingMaterials = new ();
 
         public RoadSettingsAsset RoadsConfig;
@@ -70,7 +70,7 @@ namespace DCL.Roads.GPUInstancing.Playground
             }
         }
 
-        private void RenderCandidateIndirect(GPUInstancingCandidate_Old lodGroup, GPUInstancingBuffers buffers)
+        private void RenderCandidateIndirect(GPUInstancingCandidate_Old lodGroup, GPUInstancingBuffers_Old buffersOld)
         {
             int lodLevel = Mathf.Min(LodLevel, lodGroup.Lods_Old.Count - 1);
             MeshRenderingData_Old[] meshes = lodGroup.Lods_Old[lodLevel].MeshRenderingDatas;
@@ -86,20 +86,20 @@ namespace DCL.Roads.GPUInstancing.Playground
                 // Set commands and render
                 for (var submeshIndex = 0; submeshIndex < submeshCount; submeshIndex++)
                 {
-                    buffers.DrawArgsCommandData[currentCommandIndex].indexCountPerInstance = mesh.SharedMesh.GetIndexCount(submeshIndex);
-                    buffers.DrawArgsCommandData[currentCommandIndex].instanceCount = (uint)lodGroup.InstancesBuffer.Count;
-                    buffers.DrawArgsCommandData[currentCommandIndex].startIndex = mesh.SharedMesh.GetIndexStart(submeshIndex);
-                    buffers.DrawArgsCommandData[currentCommandIndex].baseVertexIndex = 0;
-                    buffers.DrawArgsCommandData[currentCommandIndex].startInstance = 0;
-                    buffers.DrawArgsBuffer.SetData(buffers.DrawArgsCommandData, currentCommandIndex, currentCommandIndex, count: 1);
+                    buffersOld.DrawArgsCommandData[currentCommandIndex].indexCountPerInstance = mesh.SharedMesh.GetIndexCount(submeshIndex);
+                    buffersOld.DrawArgsCommandData[currentCommandIndex].instanceCount = (uint)lodGroup.InstancesBuffer.Count;
+                    buffersOld.DrawArgsCommandData[currentCommandIndex].startIndex = mesh.SharedMesh.GetIndexStart(submeshIndex);
+                    buffersOld.DrawArgsCommandData[currentCommandIndex].baseVertexIndex = 0;
+                    buffersOld.DrawArgsCommandData[currentCommandIndex].startInstance = 0;
+                    buffersOld.DrawArgsBuffer.SetData(buffersOld.DrawArgsCommandData, currentCommandIndex, currentCommandIndex, count: 1);
 
                    ref  RenderParams rparams = ref mesh.RenderParamsArray[submeshIndex];
                     // rparams.camera = Camera.current;
                     rparams.worldBounds = RENDER_PARAMS_WORLD_BOUNDS;
                     rparams.matProps = new MaterialPropertyBlock();
-                    rparams.matProps.SetBuffer("_PerInstanceBuffer", buffers.InstanceBuffer);
+                    rparams.matProps.SetBuffer("_PerInstanceBuffer", buffersOld.InstanceBuffer);
 
-                    Graphics.RenderMeshIndirect(rparams, mesh.SharedMesh, buffers.DrawArgsBuffer, commandCount: 1, currentCommandIndex);
+                    Graphics.RenderMeshIndirect(rparams, mesh.SharedMesh, buffersOld.DrawArgsBuffer, commandCount: 1, startCommand: currentCommandIndex);
                     currentCommandIndex++;
                 }
             }
@@ -111,7 +111,7 @@ namespace DCL.Roads.GPUInstancing.Playground
             roadsRoot = null;
             cached = false;
 
-            foreach (GPUInstancingBuffers buffers in candidatesBuffersTable.Values)
+            foreach (GPUInstancingBuffers_Old buffers in candidatesBuffersTable.Values)
             {
                 buffers.InstanceBuffer.Dispose();
                 buffers.InstanceBuffer = null;
@@ -139,9 +139,9 @@ namespace DCL.Roads.GPUInstancing.Playground
 
         private void AdjustBuffers(GPUInstancingCandidate_Old lodGroup)
         {
-            if (!candidatesBuffersTable.TryGetValue(lodGroup, out GPUInstancingBuffers buffers))
+            if (!candidatesBuffersTable.TryGetValue(lodGroup, out GPUInstancingBuffers_Old buffers))
             {
-                buffers = new GPUInstancingBuffers();
+                buffers = new GPUInstancingBuffers_Old();
                 candidatesBuffersTable.Add(lodGroup, buffers);
             }
 

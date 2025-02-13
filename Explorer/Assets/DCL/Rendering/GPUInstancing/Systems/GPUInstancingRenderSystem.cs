@@ -12,19 +12,19 @@ namespace DCL.Rendering.GPUInstancing.Systems
     [LogCategory(ReportCategory.GPU_INSTANCING)]
     public partial class GPUInstancingRenderSystem : BaseUnityLoopSystem
     {
-        private readonly GPUInstancingService gpuInstancingService;
+        private readonly GPUInstancingService_Old gpuInstancingServiceOld;
         private readonly IRealmData realmData;
 
-        public GPUInstancingRenderSystem(World world, GPUInstancingService gpuInstancingService, IRealmData realmData) : base(world)
+        public GPUInstancingRenderSystem(World world, GPUInstancingService_Old gpuInstancingServiceOld, IRealmData realmData) : base(world)
         {
-            this.gpuInstancingService = gpuInstancingService;
+            this.gpuInstancingServiceOld = gpuInstancingServiceOld;
             this.realmData = realmData;
         }
 
         protected override void Update(float t)
         {
             if (realmData.Configured)
-                gpuInstancingService.RenderIndirect();
+                gpuInstancingServiceOld.RenderIndirect();
         }
     }
 }

@@ -223,7 +223,7 @@ namespace Global.Dynamic
                               defaultTexturesContainer.TextureArrayContainerFactory,
                               debugBuilder,
                               dynamicWorldParams.EnableLOD,
-                              staticContainer.GPUInstancingService,
+                              staticContainer.GPUInstancingServiceOld,
                               ct
                           )
                          .ThrowOnFail();
@@ -716,7 +716,7 @@ namespace Global.Dynamic
                     mvcManager,
                     staticContainer.InputBlock),
                 realmNavigatorContainer.CreatePlugin(),
-                new GPUInstancingPlugin(staticContainer.GPUInstancingService, staticContainer.RealmData),
+                new GPUInstancingPlugin(staticContainer.GPUInstancingServiceOld, staticContainer.RealmData),
 
             };
 

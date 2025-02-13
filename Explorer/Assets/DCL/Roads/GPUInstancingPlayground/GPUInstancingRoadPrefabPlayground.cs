@@ -12,7 +12,7 @@ namespace DCL.Roads.GPUInstancing
     [ExecuteAlways]
     public class GPUInstancingRoadPrefabPlayground : MonoBehaviour
     {
-        private readonly Dictionary<GPUInstancingCandidate_Old, GPUInstancingBuffers> candidatesBuffersTable = new ();
+        private readonly Dictionary<GPUInstancingCandidate_Old, GPUInstancingBuffers_Old> candidatesBuffersTable = new ();
         private readonly Dictionary<Material, Material> instancingMaterials = new ();
 
         public GPUInstancingPrefabData_Old[] originalPrefabs;
@@ -173,7 +173,7 @@ namespace DCL.Roads.GPUInstancing
             DestroyImmediate(originalInstance);
             originalInstance = null;
 
-            foreach (GPUInstancingBuffers buffers in candidatesBuffersTable.Values)
+            foreach (GPUInstancingBuffers_Old buffers in candidatesBuffersTable.Values)
             {
                 buffers.InstanceBuffer.Dispose();
                 buffers.InstanceBuffer = null;
@@ -193,9 +193,9 @@ namespace DCL.Roads.GPUInstancing
 
         private void AdjustBuffers(GPUInstancingCandidate_Old lodGroup, Matrix4x4 baseMatrix)
         {
-            if (!candidatesBuffersTable.TryGetValue(lodGroup, out GPUInstancingBuffers buffers))
+            if (!candidatesBuffersTable.TryGetValue(lodGroup, out GPUInstancingBuffers_Old buffers))
             {
-                buffers = new GPUInstancingBuffers();
+                buffers = new GPUInstancingBuffers_Old();
                 candidatesBuffersTable.Add(lodGroup, buffers);
             }
 
@@ -233,7 +233,7 @@ namespace DCL.Roads.GPUInstancing
             buffers.InstanceBuffer.SetData(roadShiftInstancesBuffer, 0, 0, roadShiftInstancesBuffer.Length);
         }
 
-        private void RenderCandidateIndirect(GPUInstancingCandidate_Old lodGroup, GPUInstancingBuffers buffers)
+        private void RenderCandidateIndirect(GPUInstancingCandidate_Old lodGroup, GPUInstancingBuffers_Old buffersOld)
         {
             var currentCommandIndex = 0;
 
@@ -248,20 +248,20 @@ namespace DCL.Roads.GPUInstancing
                     // Set commands and render
                     for (var submeshIndex = 0; submeshIndex < submeshCount; submeshIndex++)
                     {
-                        buffers.DrawArgsCommandData[currentCommandIndex].indexCountPerInstance = mesh.SharedMesh.GetIndexCount(submeshIndex);
-                        buffers.DrawArgsCommandData[currentCommandIndex].instanceCount = (uint)lodGroup.InstancesBuffer.Count;
-                        buffers.DrawArgsCommandData[currentCommandIndex].startIndex = mesh.SharedMesh.GetIndexStart(submeshIndex);
-                        buffers.DrawArgsCommandData[currentCommandIndex].baseVertexIndex = 0;
-                        buffers.DrawArgsCommandData[currentCommandIndex].startInstance = 0;
-                        buffers.DrawArgsBuffer.SetData(buffers.DrawArgsCommandData, currentCommandIndex, currentCommandIndex, count: 1);
+                        buffersOld.DrawArgsCommandData[currentCommandIndex].indexCountPerInstance = mesh.SharedMesh.GetIndexCount(submeshIndex);
+                        buffersOld.DrawArgsCommandData[currentCommandIndex].instanceCount = (uint)lodGroup.InstancesBuffer.Count;
+                        buffersOld.DrawArgsCommandData[currentCommandIndex].startIndex = mesh.SharedMesh.GetIndexStart(submeshIndex);
+                        buffersOld.DrawArgsCommandData[currentCommandIndex].baseVertexIndex = 0;
+                        buffersOld.DrawArgsCommandData[currentCommandIndex].startInstance = 0;
+                        buffersOld.DrawArgsBuffer.SetData(buffersOld.DrawArgsCommandData, currentCommandIndex, currentCommandIndex, count: 1);
 
                         RenderParams rparams = mesh.RenderParamsArray[submeshIndex];
 
                         // rparams.camera = Camera.current;
                         rparams.matProps = new MaterialPropertyBlock();
-                        rparams.matProps.SetBuffer("_PerInstanceBuffer", buffers.InstanceBuffer);
+                        rparams.matProps.SetBuffer("_PerInstanceBuffer", buffersOld.InstanceBuffer);
 
-                        Graphics.RenderMeshIndirect(rparams, mesh.SharedMesh, buffers.DrawArgsBuffer, commandCount: 1, currentCommandIndex);
+                        Graphics.RenderMeshIndirect(rparams, mesh.SharedMesh, buffersOld.DrawArgsBuffer, commandCount: 1, currentCommandIndex);
                         currentCommandIndex++;
                     }
                 }

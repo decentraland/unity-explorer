@@ -16,6 +16,8 @@ namespace DCL.Roads.Settings
         public List<GPUInstancingCandidate_Old> IndirectCandidates;
         public List<GPUInstancingCandidate_Old> DirectCandidates;
 
+        public List<GPUInstancingLODGroupWithBuffer> IndirectLODGroups;
+
         [field: SerializeField] public List<RoadDescription> RoadDescriptions { get; set; }
         [field: SerializeField] public List<AssetReferenceGameObject> RoadAssetsReference { get; set; }
 
@@ -23,18 +25,17 @@ namespace DCL.Roads.Settings
         IReadOnlyList<AssetReferenceGameObject> IRoadSettingsAsset.RoadAssetsReference => RoadAssetsReference;
 
 #if UNITY_EDITOR
-        public void CollectGPUInstancingCandidates(Vector2Int min, Vector2Int max)
+        public void CollectGPUInstancingLODGroups(Vector2Int min, Vector2Int max)
         {
-            Dictionary<string, GPUInstancingPrefabData_Old> loadedPrefabs = LoadAllPrefabs();
+            Dictionary<string, GPUInstancingPrefabData> loadedPrefabs = LoadAllPrefabs();
 
-            var tempDirectCandidates = new Dictionary<GPUInstancingCandidate_Old, HashSet<PerInstanceBuffer>>();
-            var tempIndirectCandidates = new Dictionary<GPUInstancingCandidate_Old, HashSet<PerInstanceBuffer>>();
+            var tempIndirectCandidates = new Dictionary<GPUInstancingLODGroupWithBuffer, HashSet<PerInstanceBuffer>>();
 
             foreach (RoadDescription roadDescription in RoadDescriptions)
             {
                 if (IsOutOfRange(roadDescription.RoadCoordinate)) continue;
 
-                if (!loadedPrefabs.TryGetValue(roadDescription.RoadModel, out GPUInstancingPrefabData_Old prefab))
+                if (!loadedPrefabs.TryGetValue(roadDescription.RoadModel, out GPUInstancingPrefabData prefab))
                 {
                     Debug.LogWarning($"Can't find prefab {roadDescription.RoadModel}");
                     continue;
@@ -45,12 +46,10 @@ namespace DCL.Roads.Settings
                     roadDescription.Rotation.SelfOrIdentity(),
                     Vector3.one);
 
-                ProcessCandidates(prefab.directCandidates, roadRoot, tempDirectCandidates);
-                ProcessCandidates(prefab.indirectCandidates, roadRoot, tempIndirectCandidates);
+                ProcessCandidates(prefab.IndirectCandidates, roadRoot, tempIndirectCandidates);
             }
 
-            DirectCandidates = tempDirectCandidates.Select(kvp => new GPUInstancingCandidate_Old(kvp.Key, kvp.Value)).ToList();
-            IndirectCandidates = tempIndirectCandidates.Select(kvp => new GPUInstancingCandidate_Old(kvp.Key, kvp.Value)).ToList();
+            IndirectLODGroups = tempIndirectCandidates.Select(kvp => new GPUInstancingLODGroupWithBuffer(kvp.Key.LODGroup, kvp.Value.ToList())).ToList();
 
             EditorUtility.SetDirty(this);
             AssetDatabase.SaveAssets();
@@ -61,9 +60,48 @@ namespace DCL.Roads.Settings
                 roadCoordinate.y < min.y || roadCoordinate.y > max.y;
         }
 
-        private Dictionary<string,GPUInstancingPrefabData_Old> LoadAllPrefabs()
+
+        public void CollectGPUInstancingCandidates(Vector2Int min, Vector2Int max)
         {
-            var loadedPrefabs = new Dictionary<string, GPUInstancingPrefabData_Old>();
+            // Dictionary<string, GPUInstancingPrefabData_Old> loadedPrefabs = LoadAllPrefabs();
+            //
+            // var tempDirectCandidates = new Dictionary<GPUInstancingCandidate_Old, HashSet<PerInstanceBuffer>>();
+            // var tempIndirectCandidates = new Dictionary<GPUInstancingCandidate_Old, HashSet<PerInstanceBuffer>>();
+            //
+            // foreach (RoadDescription roadDescription in RoadDescriptions)
+            // {
+            //     if (IsOutOfRange(roadDescription.RoadCoordinate)) continue;
+            //
+            //     if (!loadedPrefabs.TryGetValue(roadDescription.RoadModel, out GPUInstancingPrefabData_Old prefab))
+            //     {
+            //         Debug.LogWarning($"Can't find prefab {roadDescription.RoadModel}");
+            //         continue;
+            //     }
+            //
+            //     var roadRoot = Matrix4x4.TRS(
+            //         roadDescription.RoadCoordinate.ParcelToPositionFlat() + ParcelMathHelper.RoadPivotDeviation,
+            //         roadDescription.Rotation.SelfOrIdentity(),
+            //         Vector3.one);
+            //
+            //     ProcessCandidates(prefab.directCandidates, roadRoot, tempDirectCandidates);
+            //     ProcessCandidates(prefab.indirectCandidates, roadRoot, tempIndirectCandidates);
+            // }
+            //
+            // DirectCandidates = tempDirectCandidates.Select(kvp => new GPUInstancingCandidate_Old(kvp.Key, kvp.Value)).ToList();
+            // IndirectCandidates = tempIndirectCandidates.Select(kvp => new GPUInstancingCandidate_Old(kvp.Key, kvp.Value)).ToList();
+            //
+            // EditorUtility.SetDirty(this);
+            // AssetDatabase.SaveAssets();
+            // return;
+            //
+            // bool IsOutOfRange(Vector2Int roadCoordinate) =>
+            //     roadCoordinate.x < min.x || roadCoordinate.x > max.x ||
+            //     roadCoordinate.y < min.y || roadCoordinate.y > max.y;
+        }
+
+        private Dictionary<string,GPUInstancingPrefabData> LoadAllPrefabs()
+        {
+            var loadedPrefabs = new Dictionary<string, GPUInstancingPrefabData>();
 
             foreach (AssetReferenceGameObject assetRef in RoadAssetsReference)
             {
@@ -76,7 +114,7 @@ namespace DCL.Roads.Settings
                     continue;
                 }
 
-                GPUInstancingPrefabData_Old instanceBehaviour = prefab.GetComponent<GPUInstancingPrefabData_Old>();
+                GPUInstancingPrefabData instanceBehaviour = prefab.GetComponent<GPUInstancingPrefabData>();
 
                 if (instanceBehaviour == null)
                 {
@@ -90,9 +128,9 @@ namespace DCL.Roads.Settings
             return loadedPrefabs;
         }
 
-        private void ProcessCandidates(List<GPUInstancingCandidate_Old> sourceCandidates, Matrix4x4 roadRoot, Dictionary<GPUInstancingCandidate_Old, HashSet<PerInstanceBuffer>> targetDict)
+        private void ProcessCandidates(List<GPUInstancingLODGroupWithBuffer> sourceCandidates, Matrix4x4 roadRoot, Dictionary<GPUInstancingLODGroupWithBuffer, HashSet<PerInstanceBuffer>> targetDict)
         {
-            foreach (GPUInstancingCandidate_Old candidate in sourceCandidates)
+            foreach (GPUInstancingLODGroupWithBuffer candidate in sourceCandidates)
             {
                 if (!targetDict.TryGetValue(candidate, out HashSet<PerInstanceBuffer> matrices))
                 {
