@@ -112,11 +112,6 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 91e6cea64d2f8df42b229b6b8e118191
-    m_Address: ProfileNameColorsConfiguration.asset
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: a00387527d7ddda41b9eb524b4a8662c
     m_Address: Assets/DCL/UI/ColorPicker/EyesColors.asset
     m_ReadOnly: 0
