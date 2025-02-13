@@ -71,7 +71,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections
 
             pageNumber++;
             totalToFetch = await FetchDataAsync(pageNumber, pageSize, ct);
-            totalFetched = GetCollectionCount();
+            totalFetched = (pageNumber + 1) * pageSize;
 
             loopListView.SetListItemCount(totalFetched, false);
             loopListView.RefreshAllShownItem();
@@ -84,9 +84,9 @@ namespace DCL.Friends.UI.FriendPanel.Sections
         public async UniTask InitAsync(CancellationToken ct)
         {
             totalToFetch = await FetchDataAsync(pageNumber, pageSize, ct);
-            totalFetched = GetCollectionCount();
+            totalFetched = (pageNumber + 1) * pageSize;
 
-            HasElements = totalFetched > 0;
+            HasElements = GetCollectionCount() > 0;
             WasInitialised = true;
         }
 
