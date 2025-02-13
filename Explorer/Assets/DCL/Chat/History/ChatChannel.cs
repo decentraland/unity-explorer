@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace DCL.Chat
+namespace DCL.Chat.History
 {
     /// <summary>
     /// Represents a conversation thread. The amount of people involved depends on the type of channel.
@@ -52,17 +52,26 @@ namespace DCL.Chat
         /// <summary>
         /// The ID of the "near-by" channel, which is always the same.
         /// </summary>
-        public static readonly ChatChannel.ChannelId NEARBY_CHANNEL = new ChannelId(ChatChannelType.NearBy, string.Empty);
+        public static readonly ChannelId NEARBY_CHANNEL = new (ChatChannelType.NearBy, string.Empty);
+
+        public delegate void ClearedDelegate(ChatChannel clearedChannel);
+        public delegate void MessageAddedDelegate(ChatChannel destinationChannel, ChatMessage addedMessage);
+        public delegate void ReadMessagesChangedDelegate(ChatChannel changedChannel);
 
         /// <summary>
         /// Raised when all the messages of the channel are deleted.
         /// </summary>
-        public event Action<ChatChannel>? Cleared;
+        public event ClearedDelegate Cleared;
 
         /// <summary>
         /// Raised when a message is added to the channel.
         /// </summary>
-        public event Action<ChatChannel, ChatMessage>? MessageAdded;
+        public event MessageAddedDelegate MessageAdded;
+
+        /// <summary>
+        /// Raised when a message is read, added or removed.
+        /// </summary>
+        public event ReadMessagesChangedDelegate ReadMessagesChanged;
 
         /// <summary>
         /// Gets all the messages contained in the thread. The first messages in the list are the latest added.
@@ -77,9 +86,22 @@ namespace DCL.Chat
         /// <summary>
         /// The amount of messages already read by the local participant in the chat.
         /// </summary>
-        public int ReadMessages { get; private set; }
+        public int ReadMessages
+        {
+            get => readMessages;
+
+            set
+            {
+                if (value != readMessages)
+                {
+                    readMessages = value;
+                    ReadMessagesChanged?.Invoke(this);
+                }
+            }
+        }
 
         private readonly List<ChatMessage> messages = new ();
+        private int readMessages;
 
         public ChatChannel(ChatChannelType channelType, string channelName)
         {
@@ -92,6 +114,7 @@ namespace DCL.Chat
         /// <param name="message">A message.</param>
         public void AddMessage(ChatMessage message)
         {
+            // TODO: It makes no sense to store padding stuff in the chat data
             if (messages.Count is 0)
             {
                 // Adding two elements to count as top and bottom padding
@@ -115,6 +138,8 @@ namespace DCL.Chat
         public void Clear()
         {
             messages.Clear();
+            MarkAllMessagesAsRead();
+
             Cleared?.Invoke(this);
         }
 

@@ -1,3 +1,4 @@
+using DCL.Chat.History;
 using MVC;
 using TMPro;
 using UnityEngine;

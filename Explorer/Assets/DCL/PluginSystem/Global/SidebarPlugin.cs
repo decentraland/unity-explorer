@@ -5,6 +5,7 @@ using DCL.AssetsProvision;
 using DCL.Backpack;
 using DCL.Browser;
 using DCL.Chat;
+using DCL.Chat.History;
 using DCL.Notifications;
 using DCL.Notifications.NotificationsMenu;
 using DCL.NotificationsBusController.NotificationsBus;
@@ -48,6 +49,7 @@ namespace DCL.PluginSystem.Global
         private readonly Arch.Core.World world;
         private readonly Entity playerEntity;
         private readonly bool includeCameraReel;
+        private readonly IChatHistory chatHistory;
 
         public SidebarPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -67,7 +69,8 @@ namespace DCL.PluginSystem.Global
             IProfileNameColorHelper profileNameColorHelper,
             Arch.Core.World world,
             Entity playerEntity,
-            bool includeCameraReel)
+            bool includeCameraReel,
+            IChatHistory chatHistory)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -87,6 +90,7 @@ namespace DCL.PluginSystem.Global
             this.world = world;
             this.playerEntity = playerEntity;
             this.includeCameraReel = includeCameraReel;
+            this.chatHistory = chatHistory;
         }
 
         public void Dispose() { }
@@ -119,7 +123,9 @@ namespace DCL.PluginSystem.Global
                 web3IdentityCache,
                 profileRepository,
                 webBrowser,
-                includeCameraReel
+                includeCameraReel,
+                mainUIView.ChatView,
+                chatHistory
             ));
         }
 

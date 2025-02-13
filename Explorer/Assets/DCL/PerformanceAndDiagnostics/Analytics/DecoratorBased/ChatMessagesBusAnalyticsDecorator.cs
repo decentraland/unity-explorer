@@ -1,4 +1,4 @@
-﻿using DCL.Chat;
+﻿using DCL.Chat.History;
 using DCL.Chat.MessageBus;
 using Segment.Serialization;
 using System;

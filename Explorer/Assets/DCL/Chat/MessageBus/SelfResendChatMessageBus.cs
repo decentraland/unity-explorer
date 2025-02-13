@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Chat.History;
 using DCL.Diagnostics;
 using DCL.Profiles;
 using DCL.Web3.Identities;

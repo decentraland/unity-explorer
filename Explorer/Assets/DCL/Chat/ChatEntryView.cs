@@ -1,3 +1,4 @@
+using DCL.Chat.History;
 using DG.Tweening;
 using System;
 using UnityEngine;
