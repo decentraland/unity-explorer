@@ -35,9 +35,9 @@ namespace DCL.UI.ProfileElements
         {
             currentProfile = profile;
 
-            Element.UserNameText.text = profile.Name;
-            Element.UserNameText.color = profileNameColorHelper.GetNameColor(profile.Name);
-            Element.UserNameHashtagText.text = $"#{profile.UserId[^4..]}";
+            Element.UserNameText.text = profile.ValidatedName;
+            Element.UserNameText.color = profile.UserNameColor;
+            Element.UserNameHashtagText.text = profile.WalletId;
             Element.UserNameHashtagText.gameObject.SetActive(!profile.HasClaimedName);
             Element.VerifiedMark.SetActive(profile.HasClaimedName);
         }

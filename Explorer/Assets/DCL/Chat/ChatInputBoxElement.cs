@@ -408,7 +408,7 @@ namespace DCL.Chat
                     else
                     {
                         //TODO FRAN Issue #3276: Color should be stored in the profile so we dont re-calculate it for every place we use it. Leaving this for after shape improvements along with profile picture.
-                        Color color = viewDependencies.ProfileNameColorHelper.GetNameColor(profile.DisplayName);
+                        Color color = profile.UserNameColor;
                         suggestionsPerTypeMap[InputSuggestionType.PROFILE].TryAdd(profile.DisplayName, new ProfileInputSuggestionData(profile, color));
                     }
                 }

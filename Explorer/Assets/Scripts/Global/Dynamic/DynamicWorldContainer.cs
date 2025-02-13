@@ -294,7 +294,7 @@ namespace Global.Dynamic
             IProfileCache profileCache = new DefaultProfileCache();
 
             var profileRepository = new LogProfileRepository(
-                new RealmProfileRepository(staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData, profileCache)
+                new RealmProfileRepository(staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData, profileCache, profileNameColorHelper)
             );
 
             var genesisTerrain = new TerrainGenerator(staticContainer.Profiler);

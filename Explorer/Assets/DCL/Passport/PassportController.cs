@@ -264,7 +264,7 @@ namespace DCL.Passport
                 if (profile == null)
                     return;
 
-                UpdateBackgroundColor(profile.Name);
+                UpdateBackgroundColor(profile.UserNameColor);
 
                 if (sectionToLoad == PassportSection.OVERVIEW)
                 {
@@ -286,9 +286,9 @@ namespace DCL.Passport
             }
         }
 
-        private void UpdateBackgroundColor(string profileName)
+        private void UpdateBackgroundColor(Color profileColor)
         {
-            Color.RGBToHSV(profileNameColorHelper.GetNameColor(profileName), out float h, out float s, out float v);
+            Color.RGBToHSV(profileColor, out float h, out float s, out float v);
             viewInstance?.BackgroundImage.material.SetColor(BG_SHADER_COLOR_1, Color.HSVToRGB(h, s, Mathf.Clamp01(v - 0.3f)));
         }
 

@@ -207,6 +207,11 @@ namespace DCL.Chat
                 SetItemData(index, itemData, itemScript);
                 itemScript.messageBubbleElement.SetupHyperlinkHandlerDependencies(viewDependencies);
 
+                itemScript.OnChatEntryClicked -= OnChatEntryClicked;
+
+                if (itemData is { SentByOwnUser: false, SystemMessage: false })
+                    itemScript.OnChatEntryClicked += OnChatEntryClicked;
+
                 Button? messageOptionsButton = itemScript.messageBubbleElement.messageOptionsButton;
                 messageOptionsButton?.onClick.RemoveAllListeners();
 
@@ -215,6 +220,15 @@ namespace DCL.Chat
             }
 
             return item;
+        }
+
+        private void OnChatEntryClicked(string walletAddress, Vector2 contextMenuPosition)
+        {
+            var profile = viewDependencies.ProfileCache.Get(walletAddress);
+            if (profile != null)
+            {
+                viewDependencies.GlobalUIViews.ShowUserProfileContextMenu(profile, contextMenuPosition);
+            }
         }
 
         private void OnChatMessageOptionsButtonClicked(string itemDataMessage, ChatEntryView itemScript)

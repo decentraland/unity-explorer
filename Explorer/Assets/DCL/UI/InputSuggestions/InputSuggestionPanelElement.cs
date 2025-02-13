@@ -32,14 +32,10 @@ namespace DCL.UI.SuggestionPanel
         private BaseInputSuggestionElement lastSelectedInputSuggestion;
         private ViewDependencies viewDependencies;
 
-        private void Awake()
-        {
-            CreateSuggestionPools();
-        }
-
         public void InjectDependencies(ViewDependencies dependencies)
         {
             viewDependencies = dependencies;
+            CreateSuggestionPools();
         }
 
         private void CreateSuggestionPools()

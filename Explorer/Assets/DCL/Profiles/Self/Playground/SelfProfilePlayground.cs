@@ -6,6 +6,7 @@ using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
 using DCL.Ipfs;
+using DCL.UI.Profiles.Helpers;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
@@ -45,7 +46,8 @@ namespace DCL.Profiles.Self.Playground
                                 )
                             )
                         ),
-                        new DefaultProfileCache()
+                        new DefaultProfileCache(),
+                        new ProfileNameColorHelper(new List<Color>())
                     )
                 ),
                 web3IdentityCache,

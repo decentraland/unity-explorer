@@ -1,4 +1,5 @@
 using DG.Tweening;
+using System;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -6,6 +7,10 @@ namespace DCL.Chat
 {
     public class ChatEntryView : MonoBehaviour
     {
+        public delegate void ChatEntryClickedDelegate(string walletAddress, Vector2 contextMenuPosition);
+
+        public ChatEntryClickedDelegate? OnChatEntryClicked;
+
         [field: SerializeField] internal RectTransform rectTransform { get; private set; }
         [field: SerializeField] internal CanvasGroup chatEntryCanvasGroup { get; private set; }
 
@@ -17,6 +22,20 @@ namespace DCL.Chat
         [field: SerializeField] internal Image? ProfileBackground { get; private set; }
         [field: SerializeField] internal Image? ProfileOutline { get; private set; }
         [field: SerializeField] internal Image playerIcon { get; private set; }
+        [field: SerializeField] internal Button profileButton { get; private set; }
+
+        private ChatMessage chatMessage;
+
+        private void Awake()
+        {
+            profileButton.onClick.AddListener(OpenContextMenu);
+        }
+
+        private void OpenContextMenu()
+        {
+            //TODO FRAN -> REFINE THE POSITION FOR THIS CONTEXT MENU
+            OnChatEntryClicked?.Invoke(chatMessage.WalletAddress, playerIcon.transform.position);
+        }
 
         public void AnimateChatEntry()
         {
@@ -26,6 +45,7 @@ namespace DCL.Chat
 
         public void SetItemData(ChatMessage data)
         {
+            chatMessage = data;
             usernameElement.SetUsername(data.SenderValidatedName, data.SenderWalletId);
             messageBubbleElement.SetMessageData(data);
             rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, messageBubbleElement.backgroundRectTransform.sizeDelta.y);

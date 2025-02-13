@@ -178,7 +178,8 @@ namespace DCL.UI.Sidebar
         private async UniTaskVoid UpdateFrameColorAsync()
         {
             Profile? profile = await profileRepository.GetAsync(identityCache.Identity!.Address, profileWidgetCts.Token);
-            viewInstance!.FaceFrame.color = profileNameColorHelper.GetNameColor(profile?.Name);
+            if (profile != null)
+                viewInstance!.FaceFrame.color = profile.UserNameColor;
         }
 
         protected override void OnViewClose()

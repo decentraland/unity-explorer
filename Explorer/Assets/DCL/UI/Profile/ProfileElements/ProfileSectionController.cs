@@ -58,7 +58,7 @@ namespace DCL.UI.ProfileElements
 
             nameElementController.Setup(profile);
             walletAddressElementController.Setup(profile);
-            viewInstance!.FaceFrame.color = profileNameColorHelper.GetNameColor(profile.Name);
+            viewInstance!.FaceFrame.color = profile.UserNameColor;
 
             profileImageController!.StopLoading();
 
