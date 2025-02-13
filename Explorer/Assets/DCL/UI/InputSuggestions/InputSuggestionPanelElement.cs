@@ -12,7 +12,7 @@ namespace DCL.UI.SuggestionPanel
         public event SuggestionSelectedDelegate SuggestionSelectedEvent;
 
         [Header("Panel Configuration")]
-        [field: SerializeField] private SuggestionPanelConfigurationSO configurationSo;
+        [SerializeField] private SuggestionPanelConfigurationSO configurationSo;
 
         [Header("References")]
         [field: SerializeField] private Transform suggestionContainer;

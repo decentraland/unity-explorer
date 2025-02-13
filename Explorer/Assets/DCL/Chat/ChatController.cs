@@ -169,12 +169,12 @@ namespace DCL.Chat
                 Entity entity = entry.Entity;
                 GenerateChatBubbleComponent(entity, chatMessage);
 
-                switch (chatAudioSettings.chatSettings)
+                switch (chatAudioSettings.chatAudioSettings)
                 {
-                    case ChatSettings.None:
+                    case ChatAudioSettings.NONE:
                         return;
-                    case ChatSettings.Mentions when chatMessage.IsMention:
-                    case ChatSettings.All:
+                    case ChatAudioSettings.MENTIONS_ONLY when chatMessage.IsMention:
+                    case ChatAudioSettings.ALL:
                         viewInstance!.PlayMessageReceivedSfx(chatMessage.IsMention);
                         break;
                 }

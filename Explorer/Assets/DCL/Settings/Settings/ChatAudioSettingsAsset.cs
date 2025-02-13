@@ -1,17 +1,18 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace DCL.Settings.Settings
 {
-    public enum ChatSettings
-    {
-        All,
-        Mentions,
-        None
-    }
-
     [CreateAssetMenu(fileName = "ChatAudioSettings", menuName = "DCL/Settings/Chat Audio Settings")]
     public class ChatAudioSettingsAsset : ScriptableObject
     {
-        public ChatSettings chatSettings = ChatSettings.All;
+        [FormerlySerializedAs("chatSettings")] public ChatAudioSettings chatAudioSettings = ChatAudioSettings.ALL;
+    }
+
+    public enum ChatAudioSettings
+    {
+        ALL = 0,
+        MENTIONS_ONLY = 1,
+        NONE = 2,
     }
 }

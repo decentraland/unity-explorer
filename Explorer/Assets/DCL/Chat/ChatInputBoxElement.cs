@@ -166,10 +166,7 @@ namespace DCL.Chat
             //This regex already pre-matches the starting patterns for both Emoji ":" and Profile "@" patterns, and only sends the match further to validate other specific conditions
             //This is needed because otherwise we wouldn't know which word in the whole text we are trying to match, and if there were several potential matches
             //it would always capture the first one instead of the current one.
-            //var wordMatch = PRE_MATCH_PATTERN_REGEX.Match(inputText.Substring(0, inputField.stringPosition));
-
-            Match wordMatch = PRE_MATCH_PATTERN_REGEX.Match(inputText.Substring(0, inputField.stringPosition));
-
+            Match wordMatch = PRE_MATCH_PATTERN_REGEX.Match(inputText, 0, inputField.stringPosition);
             if (wordMatch.Success)
             {
                 wordMatchIndex = wordMatch.Index;
@@ -332,7 +329,7 @@ namespace DCL.Chat
             }
 
             //Send message and clear Input Field
-            if (chatAudioSettings.chatSettings == ChatSettings.All)
+            if (chatAudioSettings.chatAudioSettings == ChatAudioSettings.ALL)
                 UIAudioEventsBus.Instance.SendPlayAudioEvent(chatSendMessageAudio);
 
             inputField.ResetInputField();

@@ -20,7 +20,6 @@ namespace DCL.UI.InputFieldFormatting
             RegexOptions.Compiled);
         private static readonly Regex SCENE_REGEX = new (@"(?<=^|\s)(-?\d{1,3}),(-?\d{1,3})(?=\s|$)", RegexOptions.Compiled);
         private static readonly Regex WORLD_REGEX = new (@"(?<=^|\s)*[a-zA-Z0-9]*\.dcl\.eth(?=\s|$)", RegexOptions.Compiled);
-
         // This Regex will detect any pattern of format @username#1234 being the part with the "#" optional. This requires the username to start and/or end with an empty space or start/end of line.
         private static readonly Regex USERNAME_REGEX = new (@"(?<=^|\s)@([A-Za-z0-9]{3,15}(?:#[A-Za-z0-9]{4})?)(?=\s|$)", RegexOptions.Compiled);
 
@@ -28,11 +27,21 @@ namespace DCL.UI.InputFieldFormatting
         private readonly StringBuilder tempStringBuilder = new ();
         private readonly IProfileCache profileCache;
         private readonly SelfProfile selfProfile;
+        private readonly Func<Match, StringBuilder> replaceRichTextTags;
+        private readonly Func<Match, StringBuilder> wrapWithUrlLink;
+        private readonly Func<Match, StringBuilder> wrapWithSceneLink;
+        private readonly Func<Match, StringBuilder> wrapWithWorldLink;
+        private readonly Func<Match, StringBuilder> wrapWithUsernameLink;
 
         public HyperlinkTextFormatter(IProfileCache profileCache, SelfProfile selfProfile)
         {
             this.profileCache = profileCache;
             this.selfProfile = selfProfile;
+            this.wrapWithUrlLink = WrapWithUrlLink;
+            this.replaceRichTextTags = ReplaceRichTextTags;
+            this.wrapWithUsernameLink = WrapWithUsernameLink;
+            this.wrapWithSceneLink = WrapWithSceneLink;
+            this.wrapWithWorldLink = WrapWithWorldLink;
         }
 
         public string FormatText(string text)
@@ -53,11 +62,11 @@ namespace DCL.UI.InputFieldFormatting
 
         private void ProcessMainStringBuilder()
         {
-            ReplaceMatches(RICH_TEXT_TAG_REGEX, mainStringBuilder, ReplaceRichTextTags);
-            ReplaceMatches(WEBSITE_REGEX, mainStringBuilder, WrapWithUrlLink);
-            ReplaceMatches(SCENE_REGEX, mainStringBuilder, WrapWithSceneLink);
-            ReplaceMatches(WORLD_REGEX, mainStringBuilder, WrapWithWorldLink);
-            ReplaceMatches(USERNAME_REGEX, mainStringBuilder, WrapWithUsernameLink);
+            ReplaceMatches(RICH_TEXT_TAG_REGEX, mainStringBuilder, replaceRichTextTags);
+            ReplaceMatches(WEBSITE_REGEX, mainStringBuilder, wrapWithUrlLink);
+            ReplaceMatches(SCENE_REGEX, mainStringBuilder, wrapWithSceneLink);
+            ReplaceMatches(WORLD_REGEX, mainStringBuilder, wrapWithWorldLink);
+            ReplaceMatches(USERNAME_REGEX, mainStringBuilder, wrapWithUsernameLink);
         }
 
         private StringBuilder ReplaceRichTextTags(Match match)
@@ -68,8 +77,7 @@ namespace DCL.UI.InputFieldFormatting
             {
                 char c = match.Value[i];
 
-                tempStringBuilder.Append(c == '<' ? '‹' :
-                    c == '>' ? '›' : c);
+                tempStringBuilder.Append(c == '<' ? '‹' : c == '>' ? '›' : c);
             }
 
             return tempStringBuilder;

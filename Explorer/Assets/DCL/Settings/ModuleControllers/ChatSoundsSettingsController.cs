@@ -1,4 +1,5 @@
-﻿using DCL.Settings.ModuleViews;
+﻿using DCL.Diagnostics;
+using DCL.Settings.ModuleViews;
 using DCL.Settings.Settings;
 using DCL.Settings.Utils;
 using UnityEngine.Audio;
@@ -28,15 +29,23 @@ namespace DCL.Settings.ModuleControllers
 
         private void SetChatSoundsSettings(int index)
         {
-            if (index == 2)
+            switch (index)
             {
-                chatAudioSettingsAsset.chatSettings = ChatSettings.None;
-                generalAudioMixer.SetFloat(CHAT_VOLUME_EXPOSED_PARAM, AudioUtils.PercentageVolumeToDecibel(0f));
-            }
-            else
-            {
-                generalAudioMixer.SetFloat(CHAT_VOLUME_EXPOSED_PARAM, AudioUtils.PercentageVolumeToDecibel(100f));
-                chatAudioSettingsAsset.chatSettings = index == 1 ? ChatSettings.Mentions : ChatSettings.All;
+                case (int)ChatAudioSettings.NONE:
+                    chatAudioSettingsAsset.chatAudioSettings = ChatAudioSettings.NONE;
+                    generalAudioMixer.SetFloat(CHAT_VOLUME_EXPOSED_PARAM, AudioUtils.PercentageVolumeToDecibel(0f));
+                    break;
+                case (int)ChatAudioSettings.MENTIONS_ONLY:
+                    chatAudioSettingsAsset.chatAudioSettings = ChatAudioSettings.MENTIONS_ONLY;
+                    generalAudioMixer.SetFloat(CHAT_VOLUME_EXPOSED_PARAM, AudioUtils.PercentageVolumeToDecibel(100f));
+                    goto default;
+                case (int)ChatAudioSettings.ALL:
+                    chatAudioSettingsAsset.chatAudioSettings = ChatAudioSettings.ALL;
+                    generalAudioMixer.SetFloat(CHAT_VOLUME_EXPOSED_PARAM, AudioUtils.PercentageVolumeToDecibel(100f));
+                    goto default;
+                default:
+                    ReportHub.LogWarning(ReportCategory.SETTINGS_MENU, $"Invalid index value for ChatSoundsSettingsController: {index}");
+                    break;
             }
 
             settingsDataStore.SetDropdownValue(CHAT_SOUNDS_DATA_STORE_KEY, index, save: true);
