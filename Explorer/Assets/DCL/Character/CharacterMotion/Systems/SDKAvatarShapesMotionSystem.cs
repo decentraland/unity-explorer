@@ -25,7 +25,7 @@ namespace DCL.Character.CharacterMotion.Systems
         private const float WALK_DISTANCE = 1.5f;
         private const float WALK_SPEED = 4f;
         private const float RUN_SPEED = 10f;
-        private const float ROTATION_SPEED = 10f;
+        private const float ROTATION_SPEED = 6.5f;
         private const float DOT_THRESHOLD = 0.999f;
 
         private SDKAvatarShapesMotionSystem(World world) : base(world) { }
@@ -61,8 +61,8 @@ namespace DCL.Character.CharacterMotion.Systems
                 return;
             }
 
-            // If the AvatarShape movement is already controlled by a tween, we skip the interpolation
-            if (characterTargetPositionComponent.IsManagedByTween)
+            // If the AvatarShape movement is already controlled by a tween, we skip it here
+            if (characterTargetPositionComponent.IsPositionManagedByTween)
                 return;
 
             float movementSpeed = WALK_SPEED;
@@ -85,6 +85,10 @@ namespace DCL.Character.CharacterMotion.Systems
             CharacterTransform characterTransformComponent,
             ref CharacterTargetPositionComponent characterTargetPositionComponent)
         {
+            // If the AvatarShape rotation is already controlled by a tween, we skip the it here
+            if (characterTargetPositionComponent.IsRotationManagedByTween)
+                return;
+
             var flattenDirection = characterTargetPositionComponent.LastPosition.GetYFlattenDirection(characterTransformComponent.Transform.position);
             if (flattenDirection == Vector3.zero)
                 return;

@@ -38,7 +38,7 @@ namespace DCL.SDKComponents.AvatarShape.Systems
             if (!sdkTransform.IsDirty)
                 return;
 
-            UpdateTargetPosition(ref sdkAvatarShapeComponent, ref sdkTransform, false);
+            UpdateTargetPosition(ref sdkAvatarShapeComponent, ref sdkTransform, false, false);
         }
 
         [Query]
@@ -47,16 +47,22 @@ namespace DCL.SDKComponents.AvatarShape.Systems
             ref SDKTransform sdkTransform,
             ref SDKTweenComponent sdkTweenComponent)
         {
-            if (sdkTweenComponent.TweenMode != PBTween.ModeOneofCase.Move || sdkTweenComponent.TweenStateStatus != TweenStateStatus.TsActive)
+            if ((sdkTweenComponent.TweenMode != PBTween.ModeOneofCase.Move && sdkTweenComponent.TweenMode != PBTween.ModeOneofCase.Rotate) ||
+                sdkTweenComponent.TweenStateStatus != TweenStateStatus.TsActive)
                 return;
 
-            UpdateTargetPosition(ref sdkAvatarShapeComponent, ref sdkTransform, true);
+            UpdateTargetPosition(
+                ref sdkAvatarShapeComponent,
+                ref sdkTransform,
+                sdkTweenComponent.TweenMode == PBTween.ModeOneofCase.Move,
+                sdkTweenComponent.TweenMode == PBTween.ModeOneofCase.Rotate);
         }
 
         private void UpdateTargetPosition(
             ref SDKAvatarShapeComponent sdkAvatarShapeComponent,
             ref SDKTransform sdkTransform,
-            bool isManagedByTween)
+            bool isPositionManagedByTween,
+            bool isRotationManagedByTween)
         {
             ref CharacterTargetPositionComponent characterTargetPositionComponent = ref globalWorld.TryGetRef<CharacterTargetPositionComponent>(
                 sdkAvatarShapeComponent.globalWorldEntity,
@@ -67,7 +73,8 @@ namespace DCL.SDKComponents.AvatarShape.Systems
 
             characterTargetPositionComponent.TargetPosition = sdkTransform.Position;
             characterTargetPositionComponent.FinalRotation = sdkTransform.Rotation;
-            characterTargetPositionComponent.IsManagedByTween = isManagedByTween;
+            characterTargetPositionComponent.IsPositionManagedByTween = isPositionManagedByTween;
+            characterTargetPositionComponent.IsRotationManagedByTween = isRotationManagedByTween;
         }
     }
 }

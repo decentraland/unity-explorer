@@ -7,14 +7,21 @@ namespace DCL.Character.Components
         public Vector3 LastPosition;
         public Vector3 TargetPosition;
         public Quaternion FinalRotation;
-        public bool IsManagedByTween;
+        public bool IsPositionManagedByTween;
+        public bool IsRotationManagedByTween;
 
-        public CharacterTargetPositionComponent(Vector3 lastPosition, Vector3 targetPosition, Quaternion finalRotation, bool isManagedByTween = false)
+        public CharacterTargetPositionComponent(
+            Vector3 lastPosition,
+            Vector3 targetPosition,
+            Quaternion finalRotation,
+            bool isPositionManagedByTween = false,
+            bool isRotationManagedByTween = false)
         {
             LastPosition = lastPosition;
             TargetPosition = targetPosition;
             FinalRotation = finalRotation;
-            IsManagedByTween = isManagedByTween;
+            IsPositionManagedByTween = isPositionManagedByTween;
+            IsRotationManagedByTween = isRotationManagedByTween;
         }
     }
 }
