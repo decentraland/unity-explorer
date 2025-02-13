@@ -144,8 +144,8 @@ MonoBehaviour:
     m_PostInfinity: 2
     m_RotationOrder: 4
   <maxWidth>k__BackingField: 2.5
-  <mentionedPeakColor>k__BackingField: {r: 0.5921569, g: 0.23137257, b: 0.36078432, a: 1}
-  <defaultPeakColor>k__BackingField: {r: 0.2627451, g: 0.2509804, b: 0.2901961, a: 1}
+  <mentionedPeakColor>k__BackingField: {r: 0.5568628, g: 0.25490198, b: 0.54901963, a: 1}
+  <defaultPeakColor>k__BackingField: {r: 0.2627451, g: 0.2509804, b: 0.28627452, a: 1}
 --- !u!210 &317692783042627670
 SortingGroup:
   m_ObjectHideFlags: 0
@@ -535,7 +535,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_Sprite: {fileID: 21300000, guid: 91a92410d7b9c497b90aa66f9a5569ec, type: 3}
-  m_Color: {r: 0.24313727, g: 0.23137257, b: 0.26666668, a: 1}
+  m_Color: {r: 0.5568628, g: 0.25490198, b: 0.54901963, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
