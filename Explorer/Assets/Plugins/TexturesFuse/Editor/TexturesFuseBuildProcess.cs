@@ -48,7 +48,7 @@ namespace Plugins.TexturesFuse.Editor
                 return;
 
             // Get the build path
-            string buildPath = report!.summary.outputPath!;
+            string buildPath = Path.GetDirectoryName(report!.summary.outputPath!);
             string targetDir = Path.Combine(buildPath, "plugins");
 
             // Check if source folder exists
