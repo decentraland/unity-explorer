@@ -33,6 +33,7 @@ namespace DCL.UI.HyperlinkHandler
         private int lastHighlightedIndex = -1;
         private string originalText;
         private TMP_Style linkSelectedStyle;
+        private TMP_LinkInfo lastLink;
 
         private void Awake()
         {
@@ -47,6 +48,7 @@ namespace DCL.UI.HyperlinkHandler
             if (lastHighlightedIndex != -1)
             {
                 TMP_LinkInfo linkInfo = textComponent.textInfo.linkInfo[lastHighlightedIndex];
+                lastLink = linkInfo;
                 string linkType = linkInfo.GetLinkID();
                 string linkText = linkInfo.GetLinkText();
                 ProcessLink(linkType, linkText);
@@ -132,15 +134,28 @@ namespace DCL.UI.HyperlinkHandler
             OpenUserProfileContextMenuAsync(userName.Substring(1)).Forget();
         }
 
+
+        private Vector2 GetLastCharacterPosition(TMP_LinkInfo linkInfo)
+        {
+            int lastCharacterIndex = linkInfo.linkTextfirstCharacterIndex + linkInfo.linkTextLength - 1;
+
+            TMP_CharacterInfo cInfo = textComponent.textInfo.characterInfo[lastCharacterIndex];
+
+            Vector3 bottomRight = cInfo.bottomRight;
+
+            RectTransform rectTransform = textComponent.rectTransform;
+            Vector3 lastCharacterPosition = rectTransform.TransformPoint(bottomRight);
+
+            return lastCharacterPosition;
+        }
+
         private async UniTask OpenUserProfileContextMenuAsync(string userName)
         {
             Profile profile = dependencies.ProfileCache.GetByUserName(userName);
 
             if (profile == null) return;
 
-            Color color = dependencies.ProfileNameColorHelper.GetNameColor(profile.Name);
-
-            await dependencies.GlobalUIViews.ShowUserProfileContextMenu(profile, color, transform);
+            await dependencies.GlobalUIViews.ShowUserProfileContextMenu(profile, GetLastCharacterPosition(lastLink));
         }
 
         private async UniTask OpenUrlAsync(string url) =>

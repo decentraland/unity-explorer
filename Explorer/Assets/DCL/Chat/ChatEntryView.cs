@@ -33,7 +33,6 @@ namespace DCL.Chat
 
         private void OpenContextMenu()
         {
-            //TODO FRAN -> REFINE THE POSITION FOR THIS CONTEXT MENU
             OnChatEntryClicked?.Invoke(chatMessage.WalletAddress, playerIcon.transform.position);
         }
 

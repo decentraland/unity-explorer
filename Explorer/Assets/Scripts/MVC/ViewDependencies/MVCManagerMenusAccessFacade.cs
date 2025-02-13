@@ -34,10 +34,11 @@ namespace MVC
             userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings(systemClipboard, null);
             openUserProfileButtonContextMenuControlSettings = new OpenUserProfileButtonContextMenuControlSettings(OnShowUserPassportClicked);
             mentionUserButtonContextMenuControlSettings = new MentionUserButtonContextMenuControlSettings(OnPasteUserClicked);
-            contextMenu = new GenericContextMenu().AddControl(userProfileContextMenuControlSettings)
-                                                  .AddControl(openUserProfileButtonContextMenuControlSettings)
-                                                  .AddControl(mentionUserButtonContextMenuControlSettings);
-
+            contextMenu = new GenericContextMenu(230, new Vector2(5,-10), anchorPoint: GenericContextMenuAnchorPoint.BOTTOM_LEFT)
+                         .AddControl(userProfileContextMenuControlSettings)
+                         .AddControl(new SeparatorContextMenuControlSettings())
+                         .AddControl(openUserProfileButtonContextMenuControlSettings)
+                         .AddControl(mentionUserButtonContextMenuControlSettings);
         }
 
         public UniTask ShowExternalUrlPromptAsync(string url) =>
@@ -58,18 +59,18 @@ namespace MVC
         public UniTask ShowPassport(string userId) =>
             mvcManager.ShowAsync(PassportController.IssueCommand(new PassportController.Params(userId)));
 
-        public UniTask ShowUserProfileContextMenu(Profile profile, Color userColor, Transform transform)
+        public UniTask ShowUserProfileContextMenu(Profile profile, Vector3 position)
         {
             closeContextMenuTask?.TrySetResult();
             closeContextMenuTask = new UniTaskCompletionSource();
-            userProfileContextMenuControlSettings.SetInitialData(profile, userColor, UserProfileContextMenuControlSettings.FriendshipStatus.NONE);
+            userProfileContextMenuControlSettings.SetInitialData(profile, profile.UserNameColor, UserProfileContextMenuControlSettings.FriendshipStatus.NONE);
             mentionUserButtonContextMenuControlSettings.SetData(profile);
             openUserProfileButtonContextMenuControlSettings.SetData(profile);
 
             return mvcManager.ShowAsync(GenericContextMenuController.IssueCommand(
                 new GenericContextMenuParameter(
                     contextMenu,
-                    transform.position,
+                    position,
                     closeTask: closeContextMenuTask.Task
                 )));
         }
