@@ -39,7 +39,7 @@ namespace SceneRuntime.Apis.Modules
             {
                 // if we're in isLocalSceneDevelopment mode to allow connecting to unsafe websocket server to the client
                 if (!isLocalSceneDevelopment && !url.ToLower().StartsWith("wss://"))
-                    throw new Exception("Can't make an unsafe http request, please upgrade to https. url=" + url);
+                    throw new Exception("Can't start an unsafe ws connection, please upgrade to wss. url=" + url);
 
                 return api.ConnectAsync(websocketId, url, cancellationTokenSource.Token).ReportAndRethrowException(exceptionsHandler).ToDisconnectedPromise();
             }
