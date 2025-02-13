@@ -27,10 +27,6 @@ namespace DCL.Roads.GPUInstancing.Playground
         [Space]
         public List<CombinedLodsRenderer> CombinedLodsRenderers;
 
-        [Header("BUFFERS")]
-        public List<PerInstanceBuffer> InstancesBuffer;
-        public List<Matrix4x4> InstancesBufferDirect;
-
         [ContextMenu(nameof(CollectSelfData))]
         public void CollectSelfData()
         {
@@ -91,24 +87,25 @@ namespace DCL.Roads.GPUInstancing.Playground
         public void BuildLODMatrix(LOD[] lods)
         {
             LodsScreenSpaceSizes = new float[lods.Length];
+
             for (var i = 0; i < lods.Length && i < MAX_LODS_LEVEL; i++)
                 LodsScreenSpaceSizes[i] = lods[i].screenRelativeTransitionHeight;
 
             LODSizesMatrix = new Matrix4x4();
             const float overlapFactor = 0.20f;
 
-            for (int i = 0; i < lods.Length && i < MAX_LODS_LEVEL; i++)
+            for (var i = 0; i < lods.Length && i < MAX_LODS_LEVEL; i++)
             {
-                float endValue   = LodsScreenSpaceSizes[i];
+                float endValue = LodsScreenSpaceSizes[i];
                 float startValue;
 
                 if (i == 0)
                     startValue = 0f;
                 else
                 {
-                    float prevEnd   = LodsScreenSpaceSizes[i - 1];
+                    float prevEnd = LodsScreenSpaceSizes[i - 1];
                     float difference = prevEnd - endValue;
-                    float overlap    = difference * overlapFactor;
+                    float overlap = difference * overlapFactor;
 
                     startValue = prevEnd - overlap;
                 }
@@ -118,12 +115,12 @@ namespace DCL.Roads.GPUInstancing.Playground
                 //      - row0 & row1 for 'start'
                 //      - row2 & row3 for 'end'
                 //    i < 4 => row0 & row2, i >= 4 => row1 & row3
-                int rowStart = (i < 4) ? 0 : 1;
-                int rowEnd   = rowStart + 2;  // 2 or 3
-                int col      = i % 4;
+                int rowStart = i < 4 ? 0 : 1;
+                int rowEnd = rowStart + 2; // 2 or 3
+                int col = i % 4;
 
                 LODSizesMatrix[rowStart, col] = startValue;
-                LODSizesMatrix[rowEnd,   col] = endValue;
+                LODSizesMatrix[rowEnd, col] = endValue;
             }
         }
 
@@ -231,17 +228,81 @@ namespace DCL.Roads.GPUInstancing.Playground
         {
             if (other == null) return false;
             if (ReferenceEquals(this, other)) return true;
-            if (AreSameNestedPrefabInstance(gameObject, other.gameObject)) return true;
 
-            if (Bounds == other.Bounds
-                && LodsScreenSpaceSizes.Length == other.LodsScreenSpaceSizes.Length
-                && LodsScreenSpaceSizes.SequenceEqual(other.LodsScreenSpaceSizes)
-                && CombinedLodsRenderers.Count == other.CombinedLodsRenderers.Count
-                && CombinedLodsRenderers[0].CombinedMesh == other.CombinedLodsRenderers[0].CombinedMesh
-                && CombinedLodsRenderers[0].SharedMaterial == other.CombinedLodsRenderers[0].SharedMaterial)
+            // Check if they're instances of the same prefab
+            if (AreSameNestedPrefabInstance(gameObject, other.gameObject))
                 return true;
 
-            return false;
+            // Check basic properties
+            if (Name != other.Name) return false;
+            if (Math.Abs(ObjectSize - other.ObjectSize) > 0.001f) return false; // Float comparison with epsilon
+
+            // Check LOD screen space sizes
+            if (LodsScreenSpaceSizes == null || other.LodsScreenSpaceSizes == null) return false;
+            if (LodsScreenSpaceSizes.Length != other.LodsScreenSpaceSizes.Length) return false;
+
+            // Compare LOD sizes with tolerance
+            const float lodSizeTolerance = 0.001f;
+
+            for (var i = 0; i < LodsScreenSpaceSizes.Length; i++)
+            {
+                if (Math.Abs(LodsScreenSpaceSizes[i] - other.LodsScreenSpaceSizes[i]) > lodSizeTolerance)
+                    return false;
+            }
+
+            // Check Combined Renderers
+            // if (CombinedLodsRenderers == null || other.CombinedLodsRenderers == null) return false;
+            // if (CombinedLodsRenderers.Count != other.CombinedLodsRenderers.Count) return false;
+
+            // Compare essential properties of combined renderers
+            // for (int i = 0; i < CombinedLodsRenderers.Count; i++)
+            // {
+            //     var thisRenderer = CombinedLodsRenderers[i];
+            //     var otherRenderer = other.CombinedLodsRenderers[i];
+            //
+            //     // Check if meshes have the same vertex count and submesh count
+            //     if (thisRenderer.CombinedMesh.vertexCount != otherRenderer.CombinedMesh.vertexCount)
+            //         return false;
+            //     if (thisRenderer.CombinedMesh.subMeshCount != otherRenderer.CombinedMesh.subMeshCount)
+            //         return false;
+            //
+            //     // Compare materials
+            //     if (thisRenderer.SharedMaterial.shader != otherRenderer.SharedMaterial.shader)
+            //         return false;
+            // }
+
+            return true;
+        }
+
+        public override int GetHashCode()
+        {
+            var hashCode = new HashCode();
+            hashCode.Add(Name);
+            hashCode.Add(ObjectSize);
+
+            // Add hash of LOD sizes
+            if (LodsScreenSpaceSizes != null)
+            {
+                foreach (float size in LodsScreenSpaceSizes)
+                    hashCode.Add(size);
+            }
+
+            // Add hash of combined renderers essential properties
+            // if (CombinedLodsRenderers != null)
+            // {
+            //     foreach (var renderer in CombinedLodsRenderers)
+            //     {
+            //         if (renderer.CombinedMesh != null)
+            //         {
+            //             hashCode.Add(renderer.CombinedMesh.vertexCount);
+            //             hashCode.Add(renderer.CombinedMesh.subMeshCount);
+            //         }
+            //         if (renderer.SharedMaterial != null && renderer.SharedMaterial.shader != null)
+            //             hashCode.Add(renderer.SharedMaterial.shader.name);
+            //     }
+            // }
+
+            return hashCode.ToHashCode();
         }
 
         public bool AreSameNestedPrefabInstance(GameObject obj1, GameObject obj2)
@@ -260,18 +321,6 @@ namespace DCL.Roads.GPUInstancing.Playground
 
         public override bool Equals(object obj) =>
             Equals(obj as GPUInstancingLODGroup);
-
-        public override int GetHashCode()
-        {
-            var hashCode = new HashCode();
-            hashCode.Add(base.GetHashCode());
-            hashCode.Add(Name);
-            hashCode.Add(ObjectSize);
-            hashCode.Add(Bounds);
-            hashCode.Add(LodsScreenSpaceSizes);
-            hashCode.Add(CombinedLodsRenderers);
-            return hashCode.ToHashCode();
-        }
 
         public static bool operator ==(GPUInstancingLODGroup left, GPUInstancingLODGroup right)
         {

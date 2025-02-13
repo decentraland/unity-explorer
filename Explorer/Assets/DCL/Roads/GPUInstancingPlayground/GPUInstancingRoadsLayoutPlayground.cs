@@ -12,6 +12,10 @@ namespace DCL.Roads.GPUInstancing.Playground
     [ExecuteAlways]
     public class GPUInstancingRoadsLayoutPlayground : MonoBehaviour
     {
+        private const float STREET_MAX_HEIGHT = 10f;
+        private static readonly Bounds RENDER_PARAMS_WORLD_BOUNDS =
+            new (Vector3.zero, new Vector3(GenesisCityData.EXTENTS.x * ParcelMathHelper.PARCEL_SIZE, STREET_MAX_HEIGHT, GenesisCityData.EXTENTS.y * ParcelMathHelper.PARCEL_SIZE));
+
         private readonly Dictionary<GPUInstancingCandidate_Old, GPUInstancingBuffers> candidatesBuffersTable = new ();
         private readonly Dictionary<Material, Material> instancingMaterials = new ();
 
@@ -89,9 +93,9 @@ namespace DCL.Roads.GPUInstancing.Playground
                     buffers.DrawArgsCommandData[currentCommandIndex].startInstance = 0;
                     buffers.DrawArgsBuffer.SetData(buffers.DrawArgsCommandData, currentCommandIndex, currentCommandIndex, count: 1);
 
-                    RenderParams rparams = mesh.RenderParamsArray[submeshIndex];
-
+                   ref  RenderParams rparams = ref mesh.RenderParamsArray[submeshIndex];
                     // rparams.camera = Camera.current;
+                    rparams.worldBounds = RENDER_PARAMS_WORLD_BOUNDS;
                     rparams.matProps = new MaterialPropertyBlock();
                     rparams.matProps.SetBuffer("_PerInstanceBuffer", buffers.InstanceBuffer);
 

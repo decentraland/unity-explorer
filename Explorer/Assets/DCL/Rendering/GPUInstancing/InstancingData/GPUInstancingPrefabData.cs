@@ -1,44 +1,52 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace DCL.Roads.GPUInstancing.Playground
 {
+    [Serializable]
+    public class GPUInstancingLODGroupWithBuffer
+    {
+        public GPUInstancingLODGroup LODGroup;
+        public List<PerInstanceBuffer> InstancesBuffer;
+
+        public GPUInstancingLODGroupWithBuffer(GPUInstancingLODGroup lodGroup, List<PerInstanceBuffer> instances)
+        {
+            LODGroup = lodGroup;
+            InstancesBuffer = instances;
+        }
+    }
+
     public class GPUInstancingPrefabData : MonoBehaviour
     {
-        public List<GPUInstancingLODGroup> IndirectCandidates;
+        public List<GPUInstancingLODGroupWithBuffer> IndirectCandidates;
+        private Dictionary<GPUInstancingLODGroup, List<PerInstanceBuffer>> candidatesTable;
 
         [ContextMenu(nameof(CollectSelfData))]
         public void CollectSelfData()
         {
-            IndirectCandidates = new List<GPUInstancingLODGroup>();
+            IndirectCandidates = new List<GPUInstancingLODGroupWithBuffer>();
+            candidatesTable = new Dictionary<GPUInstancingLODGroup, List<PerInstanceBuffer>>();
+
             foreach (GPUInstancingLODGroup lodGroup in GetComponentsInChildren<GPUInstancingLODGroup>())
             {
                 Matrix4x4 localToRootMatrix = transform.worldToLocalMatrix * lodGroup.transform.localToWorldMatrix; // root * child
-
-                if (!TryAddToCollected(lodGroup, localToRootMatrix))
-                    AddNewCandidate(lodGroup, localToRootMatrix);
+                TryAddToCollected(lodGroup, localToRootMatrix);
             }
+
+            foreach (KeyValuePair<GPUInstancingLODGroup,List<PerInstanceBuffer>> pair in candidatesTable)
+                IndirectCandidates.Add(new GPUInstancingLODGroupWithBuffer(pair.Key, pair.Value));
         }
 
-        private bool TryAddToCollected(GPUInstancingLODGroup newCandidate, Matrix4x4 localToRootMatrix)
+        private void TryAddToCollected(GPUInstancingLODGroup newCandidate, Matrix4x4 localToRootMatrix)
         {
-            foreach (GPUInstancingLODGroup collectedCandidates in IndirectCandidates)
+            if (candidatesTable.TryGetValue(newCandidate, out List<PerInstanceBuffer> instances))
             {
-                if (collectedCandidates.Equals(newCandidate))
-                {
-                    Debug.Log($"Same LODGroup: {newCandidate.Reference.name} and {collectedCandidates.Reference.name}", newCandidate);
-                    collectedCandidates.InstancesBuffer.Add(new PerInstanceBuffer(localToRootMatrix));
-                    return true;
-                }
+                Debug.Log($"Same LODGroup for {newCandidate.Reference.name}", newCandidate);
+                instances.Add(new PerInstanceBuffer(localToRootMatrix));
             }
-
-            return false;
-        }
-
-        private void AddNewCandidate(GPUInstancingLODGroup lodGroup, Matrix4x4 localToRootMatrix)
-        {
-            lodGroup.InstancesBuffer = new List<PerInstanceBuffer> { new (localToRootMatrix) };
-            IndirectCandidates.Add(lodGroup);
+            else
+                candidatesTable.Add(newCandidate, new List<PerInstanceBuffer> { new (localToRootMatrix) });
         }
     }
 }
