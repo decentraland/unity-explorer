@@ -1,10 +1,12 @@
 using DCL.Diagnostics;
+using Plugins.DclNativeMemoryMappedFiles;
 using Plugins.DclNativeMutex;
 using Plugins.DclNativeProcesses;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO.MemoryMappedFiles;
+using System.Runtime.InteropServices;
 using UnityEngine.Pool;
 
 namespace DCL.Web3.Identities
@@ -14,16 +16,22 @@ namespace DCL.Web3.Identities
     /// </summary>
     public class MemoryMappedFilePlayerPrefsIdentityProviderKeyStrategy : IPlayerPrefsIdentityProviderKeyStrategy
     {
-        private const string MMF_NAME = "Local\\DCL_AppInstancesTracking";
 #if UNITY_EDITOR_WIN || UNITY_STANDALONE_WIN || PLATFORM_STANDALONE_WIN
+        private const string MMF_NAME = "Local\\DCL_AppInstancesTracking";
         private const string MUTEX_NAME = "Local\\DCL_AppInstancesTrackingMutex";
 #else
+        private const string MMF_NAME = "/dcl_tracking_nmmf";
         private const string MUTEX_NAME = "/dcl_tracking";
 #endif
         private const int MAX_INSTANCES_COUNT = 64;
         private const uint MUTEX_TIMEOUT_MILLISECONDS = 5000;
 
+#if UNITY_EDITOR_WIN || UNITY_STANDALONE_WIN || PLATFORM_STANDALONE_WIN
         private readonly MemoryMappedFile memoryMappedFile;
+#else
+        private readonly NamedMemoryMappedFile memoryMappedFile;
+#endif
+
         private readonly PMutex mutex;
         private readonly int selfPID;
         private readonly ProcessName selfProcessName;
@@ -32,7 +40,11 @@ namespace DCL.Web3.Identities
 
         public MemoryMappedFilePlayerPrefsIdentityProviderKeyStrategy()
         {
+#if UNITY_EDITOR_WIN || UNITY_STANDALONE_WIN || PLATFORM_STANDALONE_WIN
             memoryMappedFile = MemoryMappedFile.CreateOrOpen(MMF_NAME, MemoryMappedFileSize(), MemoryMappedFileAccess.ReadWrite);
+#else
+            memoryMappedFile = new NamedMemoryMappedFile(MMF_NAME, MemoryMappedFileSize());
+#endif
             mutex = new PMutex(MUTEX_NAME);
             selfPID = Process.GetCurrentProcess().Id;
             selfProcessName = new ProcessName(selfPID);
@@ -81,9 +93,15 @@ namespace DCL.Web3.Identities
             });
         }
 
-        private static void ExecuteWithAccessor(MemoryMappedFilePlayerPrefsIdentityProviderKeyStrategy instance, Action<MemoryMappedFilePlayerPrefsIdentityProviderKeyStrategy, MemoryMappedViewAccessor> action)
+        private static void ExecuteWithAccessor(MemoryMappedFilePlayerPrefsIdentityProviderKeyStrategy instance, Action<MemoryMappedFilePlayerPrefsIdentityProviderKeyStrategy, Accessor> action)
         {
-            using var accessor = instance.memoryMappedFile.CreateViewAccessor(0, MemoryMappedFileSize());
+#if UNITY_EDITOR_WIN || UNITY_STANDALONE_WIN || PLATFORM_STANDALONE_WIN
+            var viewAccessor = instance.memoryMappedFile.CreateViewAccessor(0, MemoryMappedFileSize());
+            using var accessor = new Accessor(viewAccessor);
+#else
+            using var accessor = new Accessor(instance.memoryMappedFile);
+#endif
+
             instance.mutex.WaitOne(MUTEX_TIMEOUT_MILLISECONDS);
 
             try
@@ -102,16 +120,16 @@ namespace DCL.Web3.Identities
             selfProcessName.Dispose();
         }
 
-        private void ReadFromFile(IList<Entry> list, MemoryMappedViewAccessor accessor)
+        private void ReadFromFile(IList<Entry> list, Accessor accessor)
         {
             ReadFromFile<object>(list, accessor, null!, null);
         }
 
-        private void ReadFromFile<TCtx>(IList<Entry> list, MemoryMappedViewAccessor accessor, TCtx ctx, Func<Entry, TCtx, bool>? ignoreFunc)
+        private void ReadFromFile<TCtx>(IList<Entry> list, Accessor accessor, TCtx ctx, Func<Entry, TCtx, bool>? ignoreFunc)
         {
             for (int i = 0; i < MAX_INSTANCES_COUNT; i++)
             {
-                accessor.Read(Entry.StructSize * i, out Entry entry);
+                Entry entry = accessor.EntryAt(i);
                 if (entry.PID == 0) break;
 
                 if (ignoreFunc != null && ignoreFunc(entry, ctx))
@@ -132,28 +150,19 @@ namespace DCL.Web3.Identities
             }
         }
 
-        private static void WriteToFile(IReadOnlyList<Entry> list, MemoryMappedViewAccessor accessor)
+        private static void WriteToFile(IReadOnlyList<Entry> list, Accessor accessor)
         {
             // memset 0
             ZeroOutMemory(accessor);
 
             for (var i = 0; i < list.Count; i++)
-            {
-                int offset = Entry.StructSize * i;
-                var entry = list[i];
-                accessor.Write(offset, ref entry);
-            }
+                accessor.Write(list[i], i);
         }
 
-        private static void ZeroOutMemory(MemoryMappedViewAccessor accessor)
+        private static void ZeroOutMemory(Accessor accessor)
         {
             var nullEntry = Entry.NULL_ENTRY;
-
-            for (int i = 0; i < MAX_INSTANCES_COUNT; i++)
-            {
-                int offset = Entry.StructSize * i;
-                accessor.Write(offset, ref nullEntry);
-            }
+            for (var i = 0; i < MAX_INSTANCES_COUNT; i++) accessor.Write(nullEntry, i);
         }
 
         private static string KeyFromEntry(Entry entry)
@@ -202,6 +211,72 @@ namespace DCL.Web3.Identities
                 {
                     unsafe { return sizeof(Entry); }
                 }
+            }
+        }
+
+        private readonly struct Accessor : IDisposable
+        {
+#if UNITY_EDITOR_WIN || UNITY_STANDALONE_WIN || PLATFORM_STANDALONE_WIN
+            private readonly MemoryMappedViewAccessor accessor;
+#else
+            private readonly NamedMemoryMappedFile namedMemoryMappedFile;
+#endif
+
+#if UNITY_EDITOR_WIN || UNITY_STANDALONE_WIN || PLATFORM_STANDALONE_WIN
+            public Accessor(MemoryMappedViewAccessor accessor)
+            {
+                this.accessor = accessor;
+            }
+#else
+            public Accessor(NamedMemoryMappedFile namedMemoryMappedFile)
+            {
+                this.namedMemoryMappedFile = namedMemoryMappedFile;
+            }
+#endif
+
+            public void Write(Entry entry, int position)
+            {
+#if UNITY_EDITOR_WIN || UNITY_STANDALONE_WIN || PLATFORM_STANDALONE_WIN
+                int offset = Entry.StructSize * position;
+                accessor.Write(offset, ref entry);
+#else
+                unsafe
+                {
+                    byte* data = (byte*)&entry;
+                    Span<byte> span = new Span<byte>(data, Entry.StructSize);
+                    namedMemoryMappedFile.Write(span, Entry.StructSize * position);
+                }
+#endif
+            }
+
+            public Entry EntryAt(int position)
+            {
+#if UNITY_EDITOR_WIN || UNITY_STANDALONE_WIN || PLATFORM_STANDALONE_WIN
+                accessor.Read(Entry.StructSize * position, out Entry entry);
+                return entry;
+#else
+                unsafe
+                {
+                    Span<byte> span = stackalloc byte[Entry.StructSize];
+                    namedMemoryMappedFile.Read(Entry.StructSize * position, span);
+                    return MemoryMarshal.Read<Entry>(span);
+                }
+#endif
+            }
+
+            public void Flush()
+            {
+#if UNITY_EDITOR_WIN || UNITY_STANDALONE_WIN || PLATFORM_STANDALONE_WIN
+                accessor.Flush();
+#else
+#endif
+            }
+
+            public void Dispose()
+            {
+#if UNITY_EDITOR_WIN || UNITY_STANDALONE_WIN || PLATFORM_STANDALONE_WIN
+                accessor.Dispose();
+#endif
             }
         }
     }
