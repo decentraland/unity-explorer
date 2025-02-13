@@ -89,6 +89,7 @@ namespace DCL.Chat
         // The latest amount of messages added to the chat that must be animated yet
         private int entriesPendingToAnimate;
         private CancellationTokenSource fadeoutCts;
+        private CancellationTokenSource popupCts;
 
         private bool isChatClosed;
         private bool isInputSelected;
@@ -134,6 +135,7 @@ namespace DCL.Chat
         {
             chatInputBox.Dispose();
             fadeoutCts.SafeCancelAndDispose();
+            popupCts.SafeCancelAndDispose();
         }
 
         public void Initialize(IReadOnlyDictionary<ChatChannel.ChannelId, ChatChannel> chatChannels,
@@ -319,11 +321,13 @@ namespace DCL.Chat
                 messageText,
                 closePopupTask.Task);
 
-            viewDependencies.GlobalUIViews.ShowChatEntryMenuPopupAsync(data);
+            popupCts = popupCts.SafeRestart();
+            viewDependencies.GlobalUIViews.ShowChatEntryMenuPopupAsync(data, popupCts.Token).Forget();
         }
 
         private void CloseChat()
         {
+            popupCts.SafeCancelAndDispose();
             isChatClosed = true;
             ToggleChat(false);
         }

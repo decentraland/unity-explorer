@@ -7,9 +7,11 @@ using MVC;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using Utility;
 
 namespace DCL.UI.HyperlinkHandler
 {
@@ -26,7 +28,7 @@ namespace DCL.UI.HyperlinkHandler
         private readonly Dictionary<string, Action<string>> linkHandlers = new ();
         private readonly StringBuilder stringBuilder = new ();
 
-        private ViewDependencies dependencies;
+        private ViewDependencies viewDependencies;
         private bool initialized;
         private bool isHighlighting;
         private bool isHovering;
@@ -34,6 +36,7 @@ namespace DCL.UI.HyperlinkHandler
         private string originalText;
         private TMP_Style linkSelectedStyle;
         private TMP_LinkInfo lastLink;
+        private CancellationTokenSource cancellationTokenSource;
 
         private void Awake()
         {
@@ -47,6 +50,7 @@ namespace DCL.UI.HyperlinkHandler
 
             if (lastHighlightedIndex != -1)
             {
+                cancellationTokenSource = cancellationTokenSource.SafeRestart();
                 TMP_LinkInfo linkInfo = textComponent.textInfo.linkInfo[lastHighlightedIndex];
                 lastLink = linkInfo;
                 string linkType = linkInfo.GetLinkID();
@@ -62,7 +66,7 @@ namespace DCL.UI.HyperlinkHandler
 
         public void OnPointerExit(PointerEventData eventData)
         {
-            dependencies.Cursor.SetStyle(CursorStyle.Normal);
+            viewDependencies.Cursor.SetStyle(CursorStyle.Normal);
             isHovering = false;
             ResetPreviousHighlight();
         }
@@ -88,7 +92,7 @@ namespace DCL.UI.HyperlinkHandler
 
         public void InjectDependencies(ViewDependencies dependencies)
         {
-            this.dependencies = dependencies;
+            viewDependencies = dependencies;
             initialized = true;
         }
 
@@ -114,19 +118,19 @@ namespace DCL.UI.HyperlinkHandler
             if (!url.StartsWith("http", StringComparison.OrdinalIgnoreCase))
                 url = "https://" + url;
 
-            OpenUrlAsync(url).Forget();
+            OpenUrlAsync(url, cancellationTokenSource.Token).Forget();
         }
 
         private void HandleWorldLink(string sceneName)
         {
-            ChangeRealmAsync(REALM_CHANGE_CONFIRMATION_MESSAGE, sceneName).Forget();
+            ChangeRealmAsync(REALM_CHANGE_CONFIRMATION_MESSAGE, sceneName, cancellationTokenSource.Token).Forget();
         }
 
         private void HandleSceneLink(string itemId)
         {
             string[] splitCords = itemId.Split(',');
             var coords = new Vector2Int(int.Parse(splitCords[0]), int.Parse(splitCords[1]));
-            TeleportAsync(coords).Forget();
+            TeleportAsync(coords, cancellationTokenSource.Token).Forget();
         }
 
         private void HandleUserLink(string userName)
@@ -149,35 +153,35 @@ namespace DCL.UI.HyperlinkHandler
             return lastCharacterPosition;
         }
 
-        private async UniTask OpenUserProfileContextMenuAsync(string userName)
+        private async UniTaskVoid OpenUserProfileContextMenuAsync(string userName)
         {
-            Profile profile = dependencies.ProfileCache.GetByUserName(userName);
+            Profile profile = viewDependencies.ProfileCache.GetByUserName(userName);
 
             if (profile == null) return;
 
-            await dependencies.GlobalUIViews.ShowUserProfileContextMenu(profile, GetLastCharacterPosition(lastLink));
+            await viewDependencies.GlobalUIViews.ShowUserProfileContextMenu(profile, GetLastCharacterPosition(lastLink), cancellationTokenSource.Token);
         }
 
-        private async UniTask OpenUrlAsync(string url) =>
-            await dependencies.GlobalUIViews.ShowExternalUrlPromptAsync(url);
+        private async UniTaskVoid OpenUrlAsync(string url, CancellationToken ct) =>
+            await viewDependencies.GlobalUIViews.ShowExternalUrlPromptAsync(url, ct);
 
-        private async UniTask TeleportAsync(Vector2Int coords)
+        private async UniTaskVoid TeleportAsync(Vector2Int coords, CancellationToken ct)
         {
             await UniTask.SwitchToMainThread();
-            await dependencies.GlobalUIViews.ShowTeleporterPromptAsync(coords);
+            await viewDependencies.GlobalUIViews.ShowTeleporterPromptAsync(coords, ct);
         }
 
-        private async UniTask ChangeRealmAsync(string message, string realm)
+        private async UniTaskVoid ChangeRealmAsync(string message, string realm, CancellationToken ct)
         {
             await UniTask.SwitchToMainThread();
-            await dependencies.GlobalUIViews.ShowChangeRealmPromptAsync(message, realm);
+            await viewDependencies.GlobalUIViews.ShowChangeRealmPromptAsync(message, realm, ct);
         }
 
         private void HighlightCurrentLink(int linkIndex)
         {
             lastHighlightedIndex = linkIndex;
             isHighlighting = true;
-            dependencies.Cursor.SetStyle(CursorStyle.Interaction, true);
+            viewDependencies.Cursor.SetStyle(CursorStyle.Interaction, true);
 
             TMP_LinkInfo linkInfo = textComponent.textInfo.linkInfo[linkIndex];
 
@@ -204,6 +208,11 @@ namespace DCL.UI.HyperlinkHandler
             lastHighlightedIndex = -1;
             isHighlighting = false;
             originalText = null;
+        }
+
+        private void OnDestroy()
+        {
+            cancellationTokenSource.SafeCancelAndDispose();
         }
     }
 }

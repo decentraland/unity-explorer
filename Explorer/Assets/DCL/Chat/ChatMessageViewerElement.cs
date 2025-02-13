@@ -57,6 +57,8 @@ namespace DCL.Chat
         private CancellationTokenSource fadeoutCts;
         private CalculateUsernameColorDelegate calculateUsernameColor;
         private ViewDependencies viewDependencies;
+        private CancellationTokenSource popupCts;
+
         /// <summary>
         /// Gets whether the scroll view is showing the bottom of the content, and it can't scroll down anymore.
         /// </summary>
@@ -178,6 +180,7 @@ namespace DCL.Chat
         public void Dispose()
         {
             fadeoutCts.SafeCancelAndDispose();
+            popupCts.SafeCancelAndDispose();
         }
 
         private void Start()
@@ -227,7 +230,8 @@ namespace DCL.Chat
             var profile = viewDependencies.ProfileCache.Get(walletAddress);
             if (profile != null)
             {
-                viewDependencies.GlobalUIViews.ShowUserProfileContextMenu(profile, contextMenuPosition);
+                popupCts = popupCts.SafeRestart();
+                viewDependencies.GlobalUIViews.ShowUserProfileContextMenu(profile, contextMenuPosition, popupCts.Token);
             }
         }
 

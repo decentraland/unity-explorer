@@ -8,7 +8,9 @@ using DCL.TeleportPrompt;
 using DCL.UI;
 using DCL.UI.GenericContextMenu;
 using DCL.UI.GenericContextMenu.Controls.Configs;
+using System.Threading;
 using UnityEngine;
+using Utility;
 
 namespace MVC
 {
@@ -24,6 +26,7 @@ namespace MVC
         private readonly MentionUserButtonContextMenuControlSettings mentionUserButtonContextMenuControlSettings;
         private readonly OpenUserProfileButtonContextMenuControlSettings openUserProfileButtonContextMenuControlSettings;
         private UniTaskCompletionSource closeContextMenuTask;
+        private CancellationTokenSource cancellationTokenSource;
 
         public MVCManagerMenusAccessFacade(IMVCManager mvcManager, ISystemClipboard systemClipboard, IClipboardManager clipboardManager)
         {
@@ -41,25 +44,25 @@ namespace MVC
                          .AddControl(mentionUserButtonContextMenuControlSettings);
         }
 
-        public UniTask ShowExternalUrlPromptAsync(string url) =>
-            mvcManager.ShowAsync(ExternalUrlPromptController.IssueCommand(new ExternalUrlPromptController.Params(url)));
+        public UniTask ShowExternalUrlPromptAsync(string url, CancellationToken ct) =>
+            mvcManager.ShowAsync(ExternalUrlPromptController.IssueCommand(new ExternalUrlPromptController.Params(url)), ct);
 
-        public UniTask ShowTeleporterPromptAsync(Vector2Int coords) =>
-            mvcManager.ShowAsync(TeleportPromptController.IssueCommand(new TeleportPromptController.Params(coords)));
+        public UniTask ShowTeleporterPromptAsync(Vector2Int coords, CancellationToken ct) =>
+            mvcManager.ShowAsync(TeleportPromptController.IssueCommand(new TeleportPromptController.Params(coords)), ct);
 
-        public UniTask ShowChangeRealmPromptAsync(string message, string realm) =>
-            mvcManager.ShowAsync(ChangeRealmPromptController.IssueCommand(new ChangeRealmPromptController.Params(message, realm)));
+        public UniTask ShowChangeRealmPromptAsync(string message, string realm, CancellationToken ct) =>
+            mvcManager.ShowAsync(ChangeRealmPromptController.IssueCommand(new ChangeRealmPromptController.Params(message, realm)), ct);
 
-        public UniTask ShowPastePopupToastAsync(PastePopupToastData data) =>
-            mvcManager.ShowAsync(PastePopupToastController.IssueCommand(data));
+        public UniTask ShowPastePopupToastAsync(PastePopupToastData data, CancellationToken ct) =>
+            mvcManager.ShowAsync(PastePopupToastController.IssueCommand(data), ct);
 
-        public UniTask ShowChatEntryMenuPopupAsync(ChatEntryMenuPopupData data) =>
-            mvcManager.ShowAsync(ChatEntryMenuPopupController.IssueCommand(data));
+        public UniTask ShowChatEntryMenuPopupAsync(ChatEntryMenuPopupData data, CancellationToken ct) =>
+            mvcManager.ShowAsync(ChatEntryMenuPopupController.IssueCommand(data), ct);
 
-        public UniTask ShowPassport(string userId) =>
-            mvcManager.ShowAsync(PassportController.IssueCommand(new PassportController.Params(userId)));
+        public UniTask ShowPassport(string userId, CancellationToken ct) =>
+            mvcManager.ShowAsync(PassportController.IssueCommand(new PassportController.Params(userId)), ct);
 
-        public UniTask ShowUserProfileContextMenu(Profile profile, Vector3 position)
+        public UniTask ShowUserProfileContextMenu(Profile profile, Vector3 position, CancellationToken ct)
         {
             closeContextMenuTask?.TrySetResult();
             closeContextMenuTask = new UniTaskCompletionSource();
@@ -68,24 +71,21 @@ namespace MVC
             openUserProfileButtonContextMenuControlSettings.SetData(profile);
 
             return mvcManager.ShowAsync(GenericContextMenuController.IssueCommand(
-                new GenericContextMenuParameter(
-                    contextMenu,
-                    position,
-                    closeTask: closeContextMenuTask.Task
-                )));
+                new GenericContextMenuParameter(contextMenu, position, closeTask: closeContextMenuTask.Task)), ct);
         }
 
         private void OnShowUserPassportClicked(Profile data)
         {
+            cancellationTokenSource = cancellationTokenSource.SafeRestart();
             closeContextMenuTask.TrySetResult();
-            ShowPassport(data.UserId).Forget();
+            ShowPassport(data.UserId, cancellationTokenSource.Token).Forget();
         }
         private void OnPasteUserClicked(Profile data)
         {
             closeContextMenuTask.TrySetResult();
-            clipboardManager.Copy(this, data.MentionName);
+            //We need to add an extra character after adding the mention to the chat.
+            clipboardManager.Copy(this, data.MentionName + " ");
             clipboardManager.Paste(this);
         }
-
     }
 }

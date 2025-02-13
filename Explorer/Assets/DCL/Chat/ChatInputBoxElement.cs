@@ -69,6 +69,7 @@ namespace DCL.Chat
         private Match lastMatch = Match.Empty;
         private int wordMatchIndex;
         private ChatAudioSettingsAsset chatAudioSettings;
+        private CancellationTokenSource popupCts;
 
         public string InputBoxText
         {
@@ -258,7 +259,8 @@ namespace DCL.Chat
                     pastePopupPosition.position,
                     closePopupTask.Task);
 
-                viewDependencies.GlobalUIViews.ShowPastePopupToastAsync(data);
+                popupCts = popupCts.SafeRestart();
+                viewDependencies.GlobalUIViews.ShowPastePopupToastAsync(data, popupCts.Token).Forget();
                 inputField.ActivateInputField();
                 InputChanged?.Invoke(inputField.text);
             }
