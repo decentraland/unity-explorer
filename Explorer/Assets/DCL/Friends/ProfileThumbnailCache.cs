@@ -4,6 +4,7 @@ using DCL.Diagnostics;
 using DCL.Profiles;
 using DCL.WebRequests;
 using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -48,21 +49,28 @@ namespace DCL.Friends
         {
             if (URLAddress.EMPTY.Equals(thumbnailUrl)) return null;
 
-            IOwnedTexture2D ownedTexture = await webRequestController.GetTextureAsync(
-                new CommonArguments(URLAddress.FromString(thumbnailUrl)),
-                new GetTextureArguments(TextureType.Albedo),
-                GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp),
-                ct,
-                ReportCategory.UI
-            );
+            try
+            {
+                IOwnedTexture2D ownedTexture = await webRequestController.GetTextureAsync(
+                    new CommonArguments(URLAddress.FromString(thumbnailUrl)),
+                    new GetTextureArguments(TextureType.Albedo),
+                    GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp),
+                    ct,
+                    ReportCategory.UI
+                );
 
-            var texture = ownedTexture.Texture;
-            texture.filterMode = FilterMode.Bilinear;
-            Sprite downloadedSprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), VectorUtilities.OneHalf, PIXELS_PER_UNIT, 0, SpriteMeshType.FullRect, Vector4.one, false);
+                var texture = ownedTexture.Texture;
+                texture.filterMode = FilterMode.Bilinear;
+                Sprite downloadedSprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), VectorUtilities.OneHalf, PIXELS_PER_UNIT, 0, SpriteMeshType.FullRect, Vector4.one, false);
+                SetThumbnail(userId, downloadedSprite);
 
-            SetThumbnail(userId, downloadedSprite);
-
-            return downloadedSprite;
+                return downloadedSprite;
+            }
+            catch (Exception e)
+            {
+                ReportHub.LogException(e, new ReportData(ReportCategory.FRIENDS));
+                return null;
+            }
         }
 
         public void SetThumbnail(string userId, Sprite sprite) =>
