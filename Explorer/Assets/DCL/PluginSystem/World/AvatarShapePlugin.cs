@@ -1,11 +1,11 @@
 using Arch.SystemGroups;
 using DCL.ECSComponents;
 using DCL.PluginSystem.World.Dependencies;
+using DCL.SDKComponents.AvatarShape.Systems;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Systems;
 using ECS.Unity.AvatarShape.Systems;
 using System.Collections.Generic;
-using UpdateAvatarShapeTargetPositionSystem = DCL.SDKComponents.AvatarShape.Systems.UpdateAvatarShapeTargetPositionSystem;
 
 namespace DCL.PluginSystem.World
 {
@@ -28,7 +28,7 @@ namespace DCL.PluginSystem.World
             ResetDirtyFlagSystem<PBAvatarShape>.InjectToWorld(ref builder);
             var avatarShapeHandlerSystem = AvatarShapeHandlerSystem.InjectToWorld(ref builder, globalWorld);
             finalizeWorldSystems.Add(avatarShapeHandlerSystem);
-            UpdateAvatarShapeTargetPositionSystem.InjectToWorld(ref builder, globalWorld);
+            UpdateAvatarShapeInterpolateMovementSystem.InjectToWorld(ref builder, globalWorld);
         }
     }
 }
