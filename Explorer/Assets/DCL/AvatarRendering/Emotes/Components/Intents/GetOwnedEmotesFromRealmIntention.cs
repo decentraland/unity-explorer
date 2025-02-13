@@ -40,5 +40,7 @@ namespace DCL.AvatarRendering.Emotes
         {
             Result.List.Add(resultElement);
         }
+
+        public bool NeedsBuilderAPISigning { get; }
     }
 }
