@@ -51,4 +51,55 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             public IReadOnlyList<ElementIndividualDataDto> IndividualData => individualData;
         }
     }
+
+    [Serializable]
+    public class BuilderWearableDTO : WearableDTO
+    {
+        [Serializable]
+        public struct BuilderLambdaResponse : IBuilderLambdaResponse<BuilderWearableMetadataDto>
+        {
+            public bool ok;
+            public List<BuilderWearableMetadataDto> data;
+
+            [JsonIgnore]
+            public IReadOnlyList<BuilderWearableMetadataDto> WearablesCollection => data;
+        }
+
+        [Serializable]
+        public class BuilderWearableMetadataDto : WearableMetadataDto, IBuilderLambdaResponseElement<BuilderWearableDTO>
+        {
+            public Dictionary<string, string> contents;
+            public string type;
+
+            [JsonIgnore]
+            public IReadOnlyDictionary<string, string> Contents => contents;
+
+            public BuilderWearableDTO BuildWearableDTO(string contentDownloadUrl)
+            {
+                Content[] parsedContent = new Content[contents.Count];
+
+                using (var enumerator = contents.GetEnumerator())
+                {
+                    for (int i = 0; i < parsedContent.Length; i++)
+                    {
+                        enumerator.MoveNext();
+                        parsedContent[i] = new Content()
+                        {
+                            file = enumerator.Current.Key,
+                            hash = enumerator.Current.Value
+                        };
+                    }
+                }
+
+                return new BuilderWearableDTO()
+                {
+                    ContentDownloadUrl = contentDownloadUrl,
+                    metadata = this,
+                    id = this.id,
+                    type = this.type,
+                    content = parsedContent
+                };
+            }
+        }
+    }
 }

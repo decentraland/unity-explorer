@@ -19,6 +19,7 @@ using System.Collections.Generic;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.GLTF;
 using Global.Dynamic.LaunchModes;
+using ECS.StreamableLoading.GLTF.DownloadProvider;
 
 namespace DCL.PluginSystem.World
 {
@@ -61,7 +62,13 @@ namespace DCL.PluginSystem.World
         {
             var buffer = sharedDependencies.EntityEventsBuilder.Rent<GltfContainerComponent>();
 
-            LoadGLTFSystem.InjectToWorld(ref builder, new NoCache<GLTFData, GetGLTFIntention>(false, false), sharedDependencies.SceneData, webRequestController);
+            LoadGLTFSystem.InjectToWorld(
+                ref builder,
+                NoCache<GLTFData, GetGLTFIntention>.INSTANCE,
+                webRequestController,
+                false,
+                false,
+                new GltFastSceneDownloadStrategy(sharedDependencies.SceneData));
 
             // Asset loading
             PrepareGltfAssetLoadingSystem.InjectToWorld(ref builder, assetsCache, localSceneDevelopment, useRemoteAssetBundles);
