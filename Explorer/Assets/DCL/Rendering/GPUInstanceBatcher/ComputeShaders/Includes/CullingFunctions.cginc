@@ -150,35 +150,4 @@ inline bool IsOcclusionCulled(float4 BoundingBox[8], float4 hiZTxtrSize, float o
     return InstanceDepth > MaxDepth + occlusionOffset;
 }
 
-inline bool IsCulled(in float4x4 instanceMatrix, in float dist, float fMaxDistance, float minCullingDistance, bool isFrustumCulling, bool isOcclusionCulling, float4x4 matCamera_MVP, float3 vBoundsCenter, float3 vBoundsExtents, float frustumOffset, float4 hiZTxtrSize, float occlusionOffset, uint occlusionAccuracy, Texture2D<float4> hiZMap, SamplerState sampler_hiZMap)
-{
-    bool culled = false;
-    
-    // Distance culling
-    if (dist >= fMaxDistance)
-    {
-        culled = true;
-    }
-
-    if (!culled && dist >= minCullingDistance)
-    {
-        float4 BoundingBox[8];
-        CalculateBoundingBox(instanceMatrix, BoundingBox, matCamera_MVP, vBoundsCenter, vBoundsExtents);
-
-        // OBB Frustum Culling
-        if (isFrustumCulling)
-        {
-            culled = IsFrustumCulled(BoundingBox, frustumOffset);
-        }
-    
-        // Hierarchical Z-Buffer Occlusion Culling      
-        if (!culled && isOcclusionCulling)
-        {
-            culled = IsOcclusionCulled(BoundingBox, hiZTxtrSize, occlusionOffset, occlusionAccuracy,hiZMap, sampler_hiZMap);
-        }
-    }
-
-    return culled;
-}
-
 #endif

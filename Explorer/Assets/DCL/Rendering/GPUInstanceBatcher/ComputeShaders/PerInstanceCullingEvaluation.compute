@@ -7,6 +7,8 @@
 ////////////////////
 // UNIFORM INPUTS
 ////////////////////
+
+// PerInstance
 struct PerInstance
 {
     float4x4 worldMatrix;
@@ -14,24 +16,33 @@ struct PerInstance
 };
 RWStructuredBuffer<PerInstance> PerInstanceData;
 uniform uint nInstBufferSize;
+
+// LOD
 uniform uint nLODCount;
 uniform float4x4 lodSizes;
+
+// Shadow
 uniform float fShadowDistance;
+
+// Frustum
+uniform bool isFrustumCulling;
+uniform float3 vCameraPosition;
+uniform float fCameraHalfAngle;
 uniform float fMaxDistance;
 uniform float minCullingDistance;
-uniform bool isOcclusionCulling;
-uniform bool isFrustumCulling;
 uniform float4x4 matCamera_MVP;
 uniform float3 vBoundsCenter;
 uniform float3 vBoundsExtents;
 uniform float frustumOffset;
+
+// Occlusion
+uniform bool isOcclusionCulling;
 uniform float occlusionOffset;
 uniform uint occlusionAccuracy;
 uniform float4 hiZTxtrSize;
 uniform Texture2D<float4> hiZMap;
-uniform SamplerState sampler_hiZMap; // variable name is recognized by the compiler to reference hiZMap
-uniform float3 vCameraPosition;
-uniform float fCameraHalfAngle;
+uniform SamplerState sampler_hiZMap;
+
 
 ////////////////////
 // UNIFORM OUTPUTS
@@ -44,12 +55,38 @@ void CameraCullingAndLODCalculationKernel(uint3 id : SV_DispatchThreadID)
     if (id.x >= nInstBufferSize)
         return;
 
-    float fDistance = 0.0f;
-    float fScreenSpaceSize = 0.0f;
+    float fDistance;
+    float fScreenSpaceSize;
     const float4x4 mInstMatrix = PerInstanceData[id.x].worldMatrix;
     EvaluateInstanceDistance(mInstMatrix, fDistance, fScreenSpaceSize, vBoundsExtents, vCameraPosition, fCameraHalfAngle);
+    
+    bool bCulled = false;
+    
+    // Distance culling
+    if (fDistance >= fMaxDistance)
+    {
+        bCulled = true;
+    }
 
-    if(IsCulled(mInstMatrix, fDistance, fMaxDistance, minCullingDistance, isFrustumCulling, isOcclusionCulling, matCamera_MVP, vBoundsCenter, vBoundsExtents, frustumOffset, hiZTxtrSize, occlusionOffset, occlusionAccuracy, hiZMap, sampler_hiZMap))
+    if (bCulled == false && fDistance >= minCullingDistance)
+    {
+        float4 BoundingBox[8];
+        CalculateBoundingBox(mInstMatrix, BoundingBox, matCamera_MVP, vBoundsCenter, vBoundsExtents);
+
+        // OBB Frustum Culling
+        if (isFrustumCulling)
+        {
+            bCulled = IsFrustumCulled(BoundingBox, frustumOffset);
+        }
+    
+        // Hierarchical Z-Buffer Occlusion Culling      
+        if (bCulled == false && isOcclusionCulling)
+        {
+            bCulled = IsOcclusionCulled(BoundingBox, hiZTxtrSize, occlusionOffset, occlusionAccuracy,hiZMap, sampler_hiZMap);
+        }
+    }
+
+    if (bCulled == false)
     {
         PerInstance_LODLevels[id.x] = EvaluateLODLevel(nLODCount, lodSizes, fShadowDistance, fScreenSpaceSize, fDistance);
     }
