@@ -1,7 +1,10 @@
+using Cysharp.Threading.Tasks;
+using DCL.Audio;
 using DCL.Friends.UI.FriendPanel.Sections.Blocked;
 using DCL.Friends.UI.FriendPanel.Sections.Friends;
 using DCL.Friends.UI.FriendPanel.Sections.Requests;
 using MVC;
+using System.Threading;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -26,5 +29,23 @@ namespace DCL.Friends.UI.FriendPanel
         [field: SerializeField] public Button BlockedTabButton { get; private set; }
         [field: SerializeField] public GameObject BlockedTabSelected { get; private set; }
         [field: SerializeField] public BlockedSectionView BlockedSection { get; private set; }
+
+        [field: Header("Audio")]
+        [field: SerializeField]
+        public AudioClipConfig? OpenPanel { get; private set; }
+        [field: SerializeField]
+        public AudioClipConfig? ClosePanel { get; private set; }
+
+        protected override UniTask PlayShowAnimationAsync(CancellationToken ct)
+        {
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(OpenPanel);
+            return base.PlayShowAnimationAsync(ct);
+        }
+
+        protected override UniTask PlayHideAnimationAsync(CancellationToken ct)
+        {
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(ClosePanel);
+            return base.PlayHideAnimationAsync(ct);
+        }
     }
 }

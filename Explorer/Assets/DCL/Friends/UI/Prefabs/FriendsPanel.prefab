@@ -722,6 +722,8 @@ MonoBehaviour:
   <BlockedTabButton>k__BackingField: {fileID: 7014558804920885100}
   <BlockedTabSelected>k__BackingField: {fileID: 7770919079348390991}
   <BlockedSection>k__BackingField: {fileID: 4273218380790451976}
+  <OpenPanel>k__BackingField: {fileID: 11400000, guid: 41bf79b9388dc4b009650f4dbe9b3155, type: 2}
+  <ClosePanel>k__BackingField: {fileID: 11400000, guid: 9d16bdd7993a54999ac1e119599ef3c6, type: 2}
 --- !u!114 &3538348039145732992
 MonoBehaviour:
   m_ObjectHideFlags: 0
