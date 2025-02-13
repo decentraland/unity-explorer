@@ -42,7 +42,7 @@ namespace DCL.Roads.GPUInstancing.Playground
         {
             if (candidatesTable.TryGetValue(newCandidate, out List<PerInstanceBuffer> instances))
             {
-                Debug.Log($"Same LODGroup for {newCandidate.Reference.name}", newCandidate);
+                Debug.Log($"Same LODGroup for {newCandidate.Transform.name}", newCandidate);
                 instances.Add(new PerInstanceBuffer(localToRootMatrix));
             }
             else

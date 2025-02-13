@@ -78,6 +78,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8722637394614611640}
   - component: {fileID: 7559090715014262964}
+  - component: {fileID: -401096726136363782}
   m_Layer: 0
   m_Name: OpenRoad_C
   m_TagString: Untagged
@@ -113,13 +114,164 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 910e9d8905854143bf4a85c5df7c15a5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  indirectCandidates: []
-  directCandidates: []
   InstancedRenderers: []
   InstancedLODGroups: []
   whitelistShaders:
   - {fileID: 4800000, guid: 56a9743f8d94f684190dc11bb521fb78, type: 3}
   - {fileID: 4800000, guid: d7dd1c3f4cba1d441a7d295a168bac0d, type: 3}
+--- !u!114 &-401096726136363782
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8877945019775256264}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 78b95809cfdb462baad63b4f7e8ea5dd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  IndirectCandidates:
+  - LODGroup: {fileID: 6648325057951795945}
+    InstancesBuffer:
+    - instMatrix:
+        e00: 1
+        e01: 0
+        e02: 0
+        e03: 0
+        e10: 0
+        e11: 1
+        e12: 0
+        e13: 0
+        e20: 0
+        e21: 0
+        e22: 1
+        e23: 0
+        e30: 0
+        e31: 0
+        e32: 0
+        e33: 1
+      instColourTint: {x: 1, y: 1, z: 1}
+  - LODGroup: {fileID: 8966476025103678300}
+    InstancesBuffer:
+    - instMatrix:
+        e00: 0.0000027418134
+        e01: 0
+        e02: -1
+        e03: 0
+        e10: 0
+        e11: 1
+        e12: 0
+        e13: 0
+        e20: 1
+        e21: 0
+        e22: 0.0000027418134
+        e23: 0
+        e30: 0
+        e31: 0
+        e32: 0
+        e33: 1
+      instColourTint: {x: 1, y: 1, z: 1}
+  - LODGroup: {fileID: 2039547489914916428}
+    InstancesBuffer:
+    - instMatrix:
+        e00: -1
+        e01: 0
+        e02: 0.000009715555
+        e03: 0
+        e10: 0
+        e11: 1
+        e12: 0
+        e13: 0
+        e20: -0.000009715555
+        e21: 0
+        e22: -1
+        e23: 0
+        e30: 0
+        e31: 0
+        e32: 0
+        e33: 1
+      instColourTint: {x: 1, y: 1, z: 1}
+  - LODGroup: {fileID: 5447227121396225079}
+    InstancesBuffer:
+    - instMatrix:
+        e00: 1
+        e01: 0
+        e02: 0
+        e03: 0
+        e10: 0
+        e11: 1
+        e12: 0
+        e13: 0
+        e20: 0
+        e21: 0
+        e22: 1
+        e23: -6.250001
+        e30: 0
+        e31: 0
+        e32: 0
+        e33: 1
+      instColourTint: {x: 1, y: 1, z: 1}
+  - LODGroup: {fileID: 6992231685048587145}
+    InstancesBuffer:
+    - instMatrix:
+        e00: 0.0000029206276
+        e01: 0
+        e02: -1
+        e03: -4
+        e10: 0
+        e11: 1
+        e12: 0
+        e13: 0
+        e20: 1
+        e21: 0
+        e22: 0.0000029206276
+        e23: -6
+        e30: 0
+        e31: 0
+        e32: 0
+        e33: 1
+      instColourTint: {x: 1, y: 1, z: 1}
+  - LODGroup: {fileID: 4594248241214188785}
+    InstancesBuffer:
+    - instMatrix:
+        e00: 0.0000029206276
+        e01: 0
+        e02: -1
+        e03: 0
+        e10: 0
+        e11: 1
+        e12: 0
+        e13: 0
+        e20: 1
+        e21: 0
+        e22: 0.0000029206276
+        e23: 6.4000015
+        e30: 0
+        e31: 0
+        e32: 0
+        e33: 1
+      instColourTint: {x: 1, y: 1, z: 1}
+  - LODGroup: {fileID: 8590018906957173972}
+    InstancesBuffer:
+    - instMatrix:
+        e00: 1
+        e01: 0
+        e02: 0
+        e03: 0
+        e10: 0
+        e11: 1
+        e12: 0
+        e13: 0
+        e20: 0
+        e21: 0
+        e22: 1
+        e23: 0
+        e30: 0
+        e31: 0
+        e32: 0
+        e33: 1
+      instColourTint: {x: 1, y: 1, z: 1}
 --- !u!1001 &159101377439260706
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -128,6 +280,222 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 9218626374562096258}
     m_Modifications:
+    - target: {fileID: -2072684456832420949, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.size
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: -2072684456832420949, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].parent
+      value: 
+      objectReference: {fileID: 2244442327716343532}
+    - target: {fileID: -2072684456832420949, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[2].parent
+      value: 
+      objectReference: {fileID: 2244442327716343532}
+    - target: {fileID: -2072684456832420949, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[0].combinedMesh
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: -2072684456832420949, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: 228e96616bb1ef14da15352b4fcec919, type: 2}
+    - target: {fileID: -2072684456832420949, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[2].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: 228e96616bb1ef14da15352b4fcec919, type: 2}
+    - target: {fileID: -2072684456832420949, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].RenderParamsSerialized.Array.size
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: -2072684456832420949, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[2].RenderParamsSerialized.Array.size
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: -2072684456832420949, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].RenderParamsSerialized.Array.data[0].receiveShadows
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -2072684456832420949, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].RenderParamsSerialized.Array.data[1].receiveShadows
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -2072684456832420949, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].RenderParamsSerialized.Array.data[2].receiveShadows
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -2072684456832420949, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].RenderParamsSerialized.Array.data[3].receiveShadows
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -2072684456832420949, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[2].RenderParamsSerialized.Array.data[0].receiveShadows
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -2072684456832420949, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[2].RenderParamsSerialized.Array.data[1].receiveShadows
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -2072684456832420949, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[2].RenderParamsSerialized.Array.data[2].receiveShadows
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -2072684456832420949, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[2].RenderParamsSerialized.Array.data[3].receiveShadows
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -2072684456832420949, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].RenderParamsSerialized.Array.data[0].lightProbeUsage
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -2072684456832420949, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].RenderParamsSerialized.Array.data[1].lightProbeUsage
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -2072684456832420949, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].RenderParamsSerialized.Array.data[2].lightProbeUsage
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -2072684456832420949, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].RenderParamsSerialized.Array.data[3].lightProbeUsage
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -2072684456832420949, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[2].RenderParamsSerialized.Array.data[0].lightProbeUsage
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -2072684456832420949, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[2].RenderParamsSerialized.Array.data[1].lightProbeUsage
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -2072684456832420949, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[2].RenderParamsSerialized.Array.data[2].lightProbeUsage
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -2072684456832420949, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[2].RenderParamsSerialized.Array.data[3].lightProbeUsage
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -2072684456832420949, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].RenderParamsSerialized.Array.data[0].motionVectorMode
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -2072684456832420949, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].RenderParamsSerialized.Array.data[1].motionVectorMode
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -2072684456832420949, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].RenderParamsSerialized.Array.data[2].motionVectorMode
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -2072684456832420949, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].RenderParamsSerialized.Array.data[3].motionVectorMode
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -2072684456832420949, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[2].RenderParamsSerialized.Array.data[0].motionVectorMode
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -2072684456832420949, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[2].RenderParamsSerialized.Array.data[1].motionVectorMode
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -2072684456832420949, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[2].RenderParamsSerialized.Array.data[2].motionVectorMode
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -2072684456832420949, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[2].RenderParamsSerialized.Array.data[3].motionVectorMode
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -2072684456832420949, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].RenderParamsSerialized.Array.data[0].shadowCastingMode
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -2072684456832420949, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].RenderParamsSerialized.Array.data[1].shadowCastingMode
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -2072684456832420949, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].RenderParamsSerialized.Array.data[2].shadowCastingMode
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -2072684456832420949, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[2].RenderParamsSerialized.Array.data[0].shadowCastingMode
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -2072684456832420949, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[2].RenderParamsSerialized.Array.data[1].shadowCastingMode
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -2072684456832420949, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[2].RenderParamsSerialized.Array.data[2].shadowCastingMode
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -2072684456832420949, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].RenderParamsSerialized.Array.data[0].renderingLayerMask
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -2072684456832420949, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].RenderParamsSerialized.Array.data[1].renderingLayerMask
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -2072684456832420949, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].RenderParamsSerialized.Array.data[2].renderingLayerMask
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -2072684456832420949, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].RenderParamsSerialized.Array.data[3].renderingLayerMask
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -2072684456832420949, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[2].RenderParamsSerialized.Array.data[0].renderingLayerMask
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -2072684456832420949, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[2].RenderParamsSerialized.Array.data[1].renderingLayerMask
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -2072684456832420949, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[2].RenderParamsSerialized.Array.data[2].renderingLayerMask
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -2072684456832420949, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[2].RenderParamsSerialized.Array.data[3].renderingLayerMask
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -2072684456832420949, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].RenderParamsSerialized.Array.data[0].reflectionProbeUsage
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -2072684456832420949, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].RenderParamsSerialized.Array.data[1].reflectionProbeUsage
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -2072684456832420949, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].RenderParamsSerialized.Array.data[2].reflectionProbeUsage
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -2072684456832420949, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].RenderParamsSerialized.Array.data[3].reflectionProbeUsage
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -2072684456832420949, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[2].RenderParamsSerialized.Array.data[0].reflectionProbeUsage
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -2072684456832420949, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[2].RenderParamsSerialized.Array.data[1].reflectionProbeUsage
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -2072684456832420949, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[2].RenderParamsSerialized.Array.data[2].reflectionProbeUsage
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -2072684456832420949, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[2].RenderParamsSerialized.Array.data[3].reflectionProbeUsage
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 1610935267799635060, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
       propertyPath: m_Name
       value: Bench01
@@ -194,6 +562,17 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 2094422023557664462, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
   m_PrefabInstance: {fileID: 159101377439260706}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &6992231685048587145 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: -2072684456832420949, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+  m_PrefabInstance: {fileID: 159101377439260706}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dc16ca85c1b34d6d949a26e57d69ab33, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &316393603208699247
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -263,6 +642,17 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 10defc8dbd6761c4ba65c7a769500619, type: 3}
+--- !u!114 &5447227121396225079 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5763620687822965080, guid: 10defc8dbd6761c4ba65c7a769500619, type: 3}
+  m_PrefabInstance: {fileID: 316393603208699247}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dc16ca85c1b34d6d949a26e57d69ab33, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!4 &6611262799679333965 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 6907363163446049570, guid: 10defc8dbd6761c4ba65c7a769500619, type: 3}
@@ -276,6 +666,42 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 9218626374562096258}
     m_Modifications:
+    - target: {fileID: 3167230315515256952, guid: 42063baa639a06d47a07f4b219ee7f67, type: 3}
+      propertyPath: LODSizesMatrix.e01
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3167230315515256952, guid: 42063baa639a06d47a07f4b219ee7f67, type: 3}
+      propertyPath: LODSizesMatrix.e02
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3167230315515256952, guid: 42063baa639a06d47a07f4b219ee7f67, type: 3}
+      propertyPath: LODSizesMatrix.e20
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3167230315515256952, guid: 42063baa639a06d47a07f4b219ee7f67, type: 3}
+      propertyPath: LODSizesMatrix.e21
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3167230315515256952, guid: 42063baa639a06d47a07f4b219ee7f67, type: 3}
+      propertyPath: LODSizesMatrix.e22
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3167230315515256952, guid: 42063baa639a06d47a07f4b219ee7f67, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[0].combinedMesh
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 3167230315515256952, guid: 42063baa639a06d47a07f4b219ee7f67, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].combinedMesh
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 3167230315515256952, guid: 42063baa639a06d47a07f4b219ee7f67, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[2].combinedMesh
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 3167230315515256952, guid: 42063baa639a06d47a07f4b219ee7f67, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[3].combinedMesh
+      value: 
+      objectReference: {fileID: 0}
     - target: {fileID: 6153946807931067593, guid: 42063baa639a06d47a07f4b219ee7f67, type: 3}
       propertyPath: m_Name
       value: HedgeMiddleLarge
@@ -337,6 +763,17 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 42063baa639a06d47a07f4b219ee7f67, type: 3}
+--- !u!114 &4594248241214188785 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 3167230315515256952, guid: 42063baa639a06d47a07f4b219ee7f67, type: 3}
+  m_PrefabInstance: {fileID: 1456438802928782473}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dc16ca85c1b34d6d949a26e57d69ab33, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!4 &5339767187504319226 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 6786052351390189171, guid: 42063baa639a06d47a07f4b219ee7f67, type: 3}
@@ -411,11 +848,44 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 6c3dd4f75102f2e42bb181b20c2705d0, type: 3}
+--- !u!114 &2039547489914916428 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 4186956767674914982, guid: 6c3dd4f75102f2e42bb181b20c2705d0, type: 3}
+  m_PrefabInstance: {fileID: 2762645414267410154}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dc16ca85c1b34d6d949a26e57d69ab33, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &6648325057951795945 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 8797072925628750851, guid: 6c3dd4f75102f2e42bb181b20c2705d0, type: 3}
+  m_PrefabInstance: {fileID: 2762645414267410154}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dc16ca85c1b34d6d949a26e57d69ab33, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!4 &7792699177989486034 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 5364871002273604408, guid: 6c3dd4f75102f2e42bb181b20c2705d0, type: 3}
   m_PrefabInstance: {fileID: 2762645414267410154}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &8966476025103678300 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 6501422347249593782, guid: 6c3dd4f75102f2e42bb181b20c2705d0, type: 3}
+  m_PrefabInstance: {fileID: 2762645414267410154}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dc16ca85c1b34d6d949a26e57d69ab33, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &8806908769133557506
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -502,3 +972,14 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 2523021031970210244, guid: c3f0925194868a5478e507bcc2cc31ba, type: 3}
   m_PrefabInstance: {fileID: 8806908769133557506}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &8590018906957173972 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 940562319692800982, guid: c3f0925194868a5478e507bcc2cc31ba, type: 3}
+  m_PrefabInstance: {fileID: 8806908769133557506}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dc16ca85c1b34d6d949a26e57d69ab33, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 

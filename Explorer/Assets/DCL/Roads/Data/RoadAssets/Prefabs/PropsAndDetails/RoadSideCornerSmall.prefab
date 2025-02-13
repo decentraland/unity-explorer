@@ -145,8 +145,8 @@ MonoBehaviour:
   - 0.008696001
   - 0.0029982664
   LODSizesMatrix:
-    e00: 0
-    e01: 0.0075564543
+    e00: 1
+    e01: 0.009835548
     e02: 0
     e03: 0
     e10: 0
@@ -163,7 +163,7 @@ MonoBehaviour:
     e33: 0
   CombinedLodsRenderers:
   - parent: {fileID: 345860427014422763}
-    combinedMesh: {fileID: -352683321262929671}
+    combinedMesh: {fileID: 1535256777912303878}
     SharedMaterial: {fileID: 2100000, guid: 080ee30e4f4ff5c4fae19015bec5167c, type: 2}
     RenderParamsSerialized:
     - layer: 0
@@ -184,14 +184,12 @@ MonoBehaviour:
       lightProbeUsage: 1
       lightProbeProxyVolume: {fileID: 0}
       motionVectorMode: 1
-  InstancesBuffer: []
-  InstancesBufferDirect: []
 --- !u!205 &4798200095235504026 stripped
 LODGroup:
   m_CorrespondingSourceObject: {fileID: 4742473837712756890, guid: 14c353cd19b5ed543b9bb8851997011b, type: 3}
   m_PrefabInstance: {fileID: 235884021952947968}
   m_PrefabAsset: {fileID: 0}
---- !u!43 &-352683321262929671
+--- !u!43 &1535256777912303878
 Mesh:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}

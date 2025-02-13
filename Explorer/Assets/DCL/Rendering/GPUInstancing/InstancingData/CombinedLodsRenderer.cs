@@ -29,6 +29,15 @@ namespace DCL.Roads.GPUInstancing.Playground
             SharedMaterial = material;
         }
 
+        public CombinedLodsRenderer(Material material, Renderer rend, MeshFilter meshFilter)
+        {
+            parent = rend.transform.parent;
+            SharedMaterial = material;
+            combinedMesh = meshFilter.sharedMesh;
+
+            RenderParamsSerialized = new List<RenderParamsSerialized> { new (rend) };
+        }
+
         public void InitializeRenderParams(Dictionary<Material, Material> instancingMaterials)
         {
             RenderParamsArray = new RenderParams[RenderParamsSerialized.Count];

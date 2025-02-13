@@ -74,6 +74,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3479927675673800510}
   - component: {fileID: 1247183854371473649}
+  - component: {fileID: 946175995690111451}
   m_Layer: 0
   m_Name: OpenFork2CornersDiagonal_A
   m_TagString: Untagged
@@ -109,13 +110,82 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 910e9d8905854143bf4a85c5df7c15a5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  indirectCandidates: []
-  directCandidates: []
   InstancedRenderers: []
   InstancedLODGroups: []
   whitelistShaders:
   - {fileID: 4800000, guid: 56a9743f8d94f684190dc11bb521fb78, type: 3}
   - {fileID: 4800000, guid: d7dd1c3f4cba1d441a7d295a168bac0d, type: 3}
+--- !u!114 &946175995690111451
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6772374743669894871}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 78b95809cfdb462baad63b4f7e8ea5dd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  IndirectCandidates:
+  - LODGroup: {fileID: 5036026068851062205}
+    InstancesBuffer:
+    - instMatrix:
+        e00: 1
+        e01: 0
+        e02: 0
+        e03: 0
+        e10: 0
+        e11: 1
+        e12: 0
+        e13: 0
+        e20: 0
+        e21: 0
+        e22: 1
+        e23: 0
+        e30: 0
+        e31: 0
+        e32: 0
+        e33: 1
+      instColourTint: {x: 1, y: 1, z: 1}
+  - LODGroup: {fileID: 3768799782396905487}
+    InstancesBuffer:
+    - instMatrix:
+        e00: 0.0007041096
+        e01: 0
+        e02: -0.99999976
+        e03: 8
+        e10: 0
+        e11: 1
+        e12: 0
+        e13: 0
+        e20: 0.99999976
+        e21: 0
+        e22: 0.0007041096
+        e23: 8
+        e30: 0
+        e31: 0
+        e32: 0
+        e33: 1
+      instColourTint: {x: 1, y: 1, z: 1}
+    - instMatrix:
+        e00: -0.000698328
+        e01: 0
+        e02: 0.99999976
+        e03: -8
+        e10: 0
+        e11: 1
+        e12: 0
+        e13: 0
+        e20: -0.99999976
+        e21: 0
+        e22: -0.000698328
+        e23: -8
+        e30: 0
+        e31: 0
+        e32: 0
+        e33: 1
+      instColourTint: {x: 1, y: 1, z: 1}
 --- !u!1001 &2000135057208014671
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -185,8 +255,30 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: f91d15f5ec8ff934893936d0bb09ceb6, type: 3}
+--- !u!114 &3768799782396905487 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 3426288599126392640, guid: f91d15f5ec8ff934893936d0bb09ceb6, type: 3}
+  m_PrefabInstance: {fileID: 2000135057208014671}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dc16ca85c1b34d6d949a26e57d69ab33, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!4 &4607883395753150943 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 2608593210208550544, guid: f91d15f5ec8ff934893936d0bb09ceb6, type: 3}
   m_PrefabInstance: {fileID: 2000135057208014671}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &5036026068851062205 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 6783097495410508530, guid: f91d15f5ec8ff934893936d0bb09ceb6, type: 3}
+  m_PrefabInstance: {fileID: 2000135057208014671}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dc16ca85c1b34d6d949a26e57d69ab33, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 

@@ -27,6 +27,33 @@ namespace DCL.Roads.GPUInstancing.Playground
         [Space]
         public List<CombinedLodsRenderer> CombinedLodsRenderers;
 
+        [ContextMenu(nameof(CollectStandaloneRenderers))]
+        public void CollectStandaloneRenderers()
+        {
+            var renderer = GetComponent<MeshRenderer>();
+            var meshFilter = GetComponent<MeshFilter>();
+            var combinedRenderer = new CombinedLodsRenderer(renderer.sharedMaterial,  renderer,  meshFilter);
+            CombinedLodsRenderers = new List<CombinedLodsRenderer> { combinedRenderer };
+
+            // Position at origin (but not scale!)
+            transform.position = Vector3.zero;
+            transform.rotation = Quaternion.identity;
+
+            // LOD Group
+            Reference = null;
+            Transform = this.transform;
+            Name = this.transform.name;
+
+            LodsScreenSpaceSizes = new[] { 0.0f }; // Single LOD with maximum visibility
+            Bounds = new Bounds();
+            Bounds.Encapsulate(meshFilter.sharedMesh.bounds);
+
+            ObjectSize = Mathf.Max(Bounds.size.x, Bounds.size.y, Bounds.size.z);
+
+            BuildLODMatrix(1);
+            AssetDatabase.SaveAssets();
+        }
+
         [ContextMenu(nameof(CollectSelfData))]
         public void CollectSelfData()
         {
@@ -78,36 +105,36 @@ namespace DCL.Roads.GPUInstancing.Playground
             lodGroup.RecalculateBounds();
             ObjectSize = lodGroup.size;
 
-            BuildLODMatrix(lods);
-
-            UpdateBoundsByCombinedLods();
-            AssetDatabase.SaveAssets();
-        }
-
-        public void BuildLODMatrix(LOD[] lods)
-        {
             LodsScreenSpaceSizes = new float[lods.Length];
 
             for (var i = 0; i < lods.Length && i < MAX_LODS_LEVEL; i++)
                 LodsScreenSpaceSizes[i] = lods[i].screenRelativeTransitionHeight;
 
+            BuildLODMatrix(lods.Length);
+
+            UpdateBoundsByCombinedLods();
+            AssetDatabase.SaveAssets();
+        }
+
+        public void BuildLODMatrix(int lodsLength)
+        {
             LODSizesMatrix = new Matrix4x4();
             const float overlapFactor = 0.20f;
 
-            for (var i = 0; i < lods.Length && i < MAX_LODS_LEVEL; i++)
+            for (var i = 0; i < lodsLength && i < MAX_LODS_LEVEL; i++)
             {
                 float endValue = LodsScreenSpaceSizes[i];
                 float startValue;
 
                 if (i == 0)
-                    startValue = 0f;
+                    startValue = 1f;
                 else
                 {
                     float prevEnd = LodsScreenSpaceSizes[i - 1];
                     float difference = prevEnd - endValue;
                     float overlap = difference * overlapFactor;
 
-                    startValue = prevEnd - overlap;
+                    startValue = prevEnd + overlap;
                 }
 
                 // 4) Write [startValue, endValue] into LODSizesMatrix.

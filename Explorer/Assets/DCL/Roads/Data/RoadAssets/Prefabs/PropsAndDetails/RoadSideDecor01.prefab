@@ -159,9 +159,9 @@ MonoBehaviour:
   - 0.018612256
   - 0.013265422
   LODSizesMatrix:
-    e00: 0
-    e01: 0.03394966
-    e02: 0.01754289
+    e00: 1
+    e01: 0.041618355
+    e02: 0.019681623
     e03: 0
     e10: 0
     e11: 0
@@ -177,7 +177,7 @@ MonoBehaviour:
     e33: 0
   CombinedLodsRenderers:
   - parent: {fileID: 8105194792326734158}
-    combinedMesh: {fileID: 9063560184417374502}
+    combinedMesh: {fileID: 1630189970507768189}
     SharedMaterial: {fileID: 2100000, guid: 080ee30e4f4ff5c4fae19015bec5167c, type: 2}
     RenderParamsSerialized:
     - layer: 0
@@ -208,7 +208,7 @@ MonoBehaviour:
       lightProbeProxyVolume: {fileID: 0}
       motionVectorMode: 1
   - parent: {fileID: 8105194792326734158}
-    combinedMesh: {fileID: -3860868814163546323}
+    combinedMesh: {fileID: -4350694176670908495}
     SharedMaterial: {fileID: 2100000, guid: fcd067b2a5f3ade45846eef4205a2cb8, type: 2}
     RenderParamsSerialized:
     - layer: 0
@@ -238,9 +238,7 @@ MonoBehaviour:
       lightProbeUsage: 1
       lightProbeProxyVolume: {fileID: 0}
       motionVectorMode: 1
-  InstancesBuffer: []
-  InstancesBufferDirect: []
---- !u!43 &-3860868814163546323
+--- !u!43 &-4350694176670908495
 Mesh:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -425,7 +423,7 @@ Mesh:
     offset: 0
     size: 0
     path: 
---- !u!43 &9063560184417374502
+--- !u!43 &1630189970507768189
 Mesh:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
