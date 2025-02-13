@@ -147,8 +147,8 @@ namespace DCL.Friends.UI.FriendPanel
                 // If we do not request any friends then we will get no connectivity updates
                 // This approach will work for most of the users (except those who have more than 50 friends whose going to get partial updates)
                 // When server's rpc stream works, it will automatically send connectivity updates for each friend no matter if we previously asked for it or not
-                if (friendSectionControllerConnectivity != null)
-                    tasks.Add(friendSectionControllerConnectivity.InitAsync(ct));
+                // if (friendSectionControllerConnectivity != null)
+                //     tasks.Add(friendSectionControllerConnectivity.InitAsync(ct));
 
                 return UniTask.WhenAll(tasks);
             }

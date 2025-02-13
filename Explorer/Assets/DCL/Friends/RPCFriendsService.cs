@@ -185,7 +185,7 @@ namespace DCL.Friends
 
         public async UniTask SubscribeToConnectivityStatusAsync(CancellationToken ct)
         {
-            PollFromArchipelagoApi().Forget();
+            // PollFromArchipelagoApi().Forget();
 
             // We try to keep the stream open until cancellation is requested
             // If by any reason the rpc connection has a problem, we need to wait until it is restored, so we re-open the stream
