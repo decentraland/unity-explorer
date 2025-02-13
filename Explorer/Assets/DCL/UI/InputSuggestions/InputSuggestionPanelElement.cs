@@ -1,4 +1,5 @@
 using MVC;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -31,14 +32,14 @@ namespace DCL.UI.SuggestionPanel
         private BaseInputSuggestionElement lastSelectedInputSuggestion;
         private ViewDependencies viewDependencies;
 
+        private void Awake()
+        {
+            CreateSuggestionPools();
+        }
+
         public void InjectDependencies(ViewDependencies dependencies)
         {
             viewDependencies = dependencies;
-        }
-
-        public void Initialize()
-        {
-            CreateSuggestionPools();
         }
 
         private void CreateSuggestionPools()
