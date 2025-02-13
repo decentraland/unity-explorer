@@ -1,5 +1,4 @@
 using MVC;
-using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -28,7 +27,7 @@ namespace DCL.UI.SuggestionPanel
         private readonly List<BaseInputSuggestionElement> usedPoolItems = new ();
 
         private InputSuggestionType currentSuggestionType;
-        private int currentIndex = 0;
+        private int currentIndex;
         private BaseInputSuggestionElement lastSelectedInputSuggestion;
         private ViewDependencies viewDependencies;
 
@@ -91,7 +90,7 @@ namespace DCL.UI.SuggestionPanel
                 SetSelection(0);
         }
 
-        public void SetSuggestionValues(InputSuggestionType suggestionType, IList<IInputSuggestionElementData> foundSuggestions)
+        public void SetSuggestionValues<T>(InputSuggestionType suggestionType, IList<T> foundSuggestions) where T : IInputSuggestionElementData
         {
             noResultsIndicator.gameObject.SetActive(foundSuggestions.Count == 0);
 
@@ -135,7 +134,7 @@ namespace DCL.UI.SuggestionPanel
 
                 for (var i = 0; i < foundSuggestions.Count; i++)
                 {
-                    IInputSuggestionElementData elementData = foundSuggestions[i];
+                    T elementData = foundSuggestions[i];
 
                     if (usedPoolItems.Count > i)
                     {
@@ -186,6 +185,7 @@ namespace DCL.UI.SuggestionPanel
                 viewDependencies.DclInput.UI.Submit.performed -= OnSubmit;
             }
 
+            currentIndex = 0;
             IsActive = isVisible;
             gameObject.SetActive(isVisible);
         }

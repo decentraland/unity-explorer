@@ -16,7 +16,7 @@ namespace DCL.UI.SuggestionPanel
         /// </summary>
         public string SuggestionId { get; protected set; }
 
-        public virtual void Setup(IInputSuggestionElementData data) { }
+        public abstract void Setup<T>(T data) where T : IInputSuggestionElementData;
 
         /// <summary>
         /// Method to call when the SuggestionElement is Created in a pool
@@ -45,9 +45,6 @@ namespace DCL.UI.SuggestionPanel
 
         public virtual InputSuggestionType GetSuggestionType() =>
             InputSuggestionType.NONE;
-
-        public virtual IInputSuggestionElementData GetElementData() =>
-            null;
     }
 
     public abstract class BaseInputSuggestionElement<T> : BaseInputSuggestionElement
@@ -58,7 +55,7 @@ namespace DCL.UI.SuggestionPanel
 
         private T elementData;
 
-        public override void Setup(IInputSuggestionElementData data)
+        public override void Setup<TData>(TData data)
         {
             if (data is T typedData)
             {
@@ -71,9 +68,6 @@ namespace DCL.UI.SuggestionPanel
         /// This method allows each suggestion to add to the setup process, usually by configuring its visual state using the typed data
         /// </summary>
         protected virtual void SetupContinuation(T suggestionElementData) { }
-
-        public override IInputSuggestionElementData GetElementData() =>
-            elementData;
 
         public override InputSuggestionType GetSuggestionType() =>
             elementData.GetInputSuggestionType();

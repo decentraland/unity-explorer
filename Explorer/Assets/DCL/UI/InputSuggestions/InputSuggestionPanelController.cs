@@ -18,7 +18,6 @@ namespace DCL.UI.SuggestionPanel
 
         private CancellationTokenSource searchCts = new ();
         private string lastMatch;
-        private readonly List<IInputSuggestionElementData> keys = new ();
 
         public InputSuggestionPanelController(InputSuggestionPanelElement suggestionPanel, ViewDependencies viewDependencies)
         {
@@ -37,14 +36,14 @@ namespace DCL.UI.SuggestionPanel
             suggestionPanel.SetPanelVisibility(isVisible);
         }
 
-        public Match HandleSuggestionsSearch(string inputText, Regex regex, InputSuggestionType suggestionType, Dictionary<string, IInputSuggestionElementData> suggestionDataMap)
+        public Match HandleSuggestionsSearch<T>(string inputText, Regex regex, InputSuggestionType suggestionType, Dictionary<string, T> suggestionDataMap) where T : IInputSuggestionElementData
         {
             Match match = regex.Match(inputText);
 
             if (match.Success && match.Groups.Count > 1)
             {
                 searchCts = searchCts.SafeRestart();
-                SearchAndSetSuggestionsAsync(match.Groups[1].Value, suggestionType, suggestionDataMap, searchCts.Token).Forget();
+                SearchAndSetSuggestionsAsync<T>(match.Groups[1].Value, suggestionType, suggestionDataMap, searchCts.Token).Forget();
                 return match;
             }
 
@@ -54,16 +53,13 @@ namespace DCL.UI.SuggestionPanel
             return Match.Empty;
         }
 
-        private async UniTaskVoid SearchAndSetSuggestionsAsync(string value, InputSuggestionType suggestionType, Dictionary<string, IInputSuggestionElementData> suggestionDataMap, CancellationToken ct)
+        private async UniTaskVoid SearchAndSetSuggestionsAsync<T>(string value, InputSuggestionType suggestionType, Dictionary<string, T> suggestionDataMap, CancellationToken ct) where T : IInputSuggestionElementData
         {
-            await DictionaryUtils.GetKeysWithPrefixAsync(suggestionDataMap, value, keys, ct);
+            var resultList = new List<T>();
+            await DictionaryUtils.GetKeysWithPrefixAsync<T>(suggestionDataMap, value, resultList, ct);
 
-            var suggestions = new List<IInputSuggestionElementData>();
 
-            foreach (IInputSuggestionElementData data in keys)
-                suggestions.Add(data);
-
-            suggestionPanel.SetSuggestionValues(suggestionType, suggestions);
+            suggestionPanel.SetSuggestionValues(suggestionType, resultList);
             suggestionPanel.SetPanelVisibility(true);
         }
 

@@ -56,7 +56,8 @@ namespace DCL.Chat
         [SerializeField] private AudioClipConfig chatInputTextAudio;
         [SerializeField] private AudioClipConfig enterInputAudio;
 
-        private readonly Dictionary<InputSuggestionType, Dictionary<string, IInputSuggestionElementData>> suggestionsPerTypeMap = new ();
+        private readonly Dictionary<string, ProfileInputSuggestionData> profileSuggestionsDictionary = new ();
+        private readonly Dictionary<string, EmojiInputSuggestionData> emojiSuggestionsDictionary = new ();
 
         private UniTaskCompletionSource closePopupTask;
         private Mouse device;
@@ -109,7 +110,6 @@ namespace DCL.Chat
 
             InitializeEmojiPanelController();
             InitializeEmojiMapping(emojiPanelController!.EmojiNameMapping);
-            InitializeProfilesMapping();
 
             suggestionPanelController = new InputSuggestionPanelController(suggestionPanel, viewDependencies);
             suggestionPanelController.SuggestionSelectedEvent += OnSuggestionSelected;
@@ -171,13 +171,13 @@ namespace DCL.Chat
             if (wordMatch.Success)
             {
                 wordMatchIndex = wordMatch.Index;
-                lastMatch = suggestionPanelController!.HandleSuggestionsSearch(wordMatch.Value, EMOJI_PATTERN_REGEX, InputSuggestionType.EMOJIS, suggestionsPerTypeMap[InputSuggestionType.EMOJIS]);
+                lastMatch = suggestionPanelController!.HandleSuggestionsSearch(wordMatch.Value, EMOJI_PATTERN_REGEX, InputSuggestionType.EMOJIS, emojiSuggestionsDictionary);
 
                 //If we don't find any emoji pattern only then we look for username patterns
                 if (!lastMatch.Success)
                 {
                     UpdateProfileNameMap();
-                    lastMatch = suggestionPanelController.HandleSuggestionsSearch(wordMatch.Value, PROFILE_PATTERN_REGEX, InputSuggestionType.PROFILE, suggestionsPerTypeMap[InputSuggestionType.PROFILE]);
+                    lastMatch = suggestionPanelController.HandleSuggestionsSearch(wordMatch.Value, PROFILE_PATTERN_REGEX, InputSuggestionType.PROFILE, profileSuggestionsDictionary);
                 }
             }
             else
@@ -385,14 +385,14 @@ namespace DCL.Chat
             //For now this will work, but is not the final implementation, this will be changed in the next shape.
             IReadOnlyCollection<string> remoteParticipantIdentities = viewDependencies.RoomHub.IslandRoom().Participants.RemoteParticipantIdentities();
 
-            var profileSuggestions = suggestionsPerTypeMap[InputSuggestionType.PROFILE].ToList();
+            var profileSuggestions = profileSuggestionsDictionary.ToList();
 
             for (var index = 0; index < profileSuggestions.Count; index++)
             {
-                KeyValuePair<string, IInputSuggestionElementData> kvp = profileSuggestions[index];
+                KeyValuePair<string, ProfileInputSuggestionData> suggestion = profileSuggestions[index];
 
-                if (!remoteParticipantIdentities.Contains(kvp.Value.GetId()))
-                    suggestionsPerTypeMap[InputSuggestionType.PROFILE].Remove(kvp.Key);
+                if (!remoteParticipantIdentities.Contains(suggestion.Value.GetId()))
+                    profileSuggestionsDictionary.Remove(suggestion.Key);
             }
 
             //We add or update the remaining participants
@@ -402,16 +402,14 @@ namespace DCL.Chat
 
                 if (profile != null)
                 {
-                    if (suggestionsPerTypeMap[InputSuggestionType.PROFILE].TryGetValue(profile.DisplayName, out IInputSuggestionElementData? suggestionData) && suggestionData is ProfileInputSuggestionData profileSuggestionData)
+                    if (profileSuggestionsDictionary.TryGetValue(profile.DisplayName, out ProfileInputSuggestionData profileSuggestionData))
                     {
                         if (profileSuggestionData.ProfileData != profile)
-                            suggestionsPerTypeMap[InputSuggestionType.PROFILE][profile.DisplayName] = new ProfileInputSuggestionData(profile, profileSuggestionData.UsernameColor);
+                            profileSuggestionsDictionary[profile.DisplayName] = new ProfileInputSuggestionData(profile, profileSuggestionData.UsernameColor);
                     }
                     else
                     {
-                        //TODO FRAN Issue #3276: Color should be stored in the profile so we dont re-calculate it for every place we use it. Leaving this for after shape improvements along with profile picture.
-                        Color color = profile.UserNameColor;
-                        suggestionsPerTypeMap[InputSuggestionType.PROFILE].TryAdd(profile.DisplayName, new ProfileInputSuggestionData(profile, color));
+                        profileSuggestionsDictionary.TryAdd(profile.DisplayName, new ProfileInputSuggestionData(profile, profile.UserNameColor));
                     }
                 }
             }
@@ -427,16 +425,10 @@ namespace DCL.Chat
 
         private void InitializeEmojiMapping(Dictionary<string, EmojiData> emojiNameDataMapping)
         {
-            suggestionsPerTypeMap.Add(InputSuggestionType.EMOJIS, new Dictionary<string, IInputSuggestionElementData>());
-
             foreach ((string emojiName, EmojiData emojiData) in emojiNameDataMapping)
-                suggestionsPerTypeMap[InputSuggestionType.EMOJIS][emojiName] = new EmojiInputSuggestionData(emojiData.EmojiCode, emojiData.EmojiName);
+                emojiSuggestionsDictionary[emojiName] = new EmojiInputSuggestionData(emojiData.EmojiCode, emojiData.EmojiName);
         }
 
-        private void InitializeProfilesMapping()
-        {
-            suggestionsPerTypeMap.Add(InputSuggestionType.PROFILE, new Dictionary<string, IInputSuggestionElementData>());
-        }
 
         private void AddEmojiToInput(string emoji)
         {
