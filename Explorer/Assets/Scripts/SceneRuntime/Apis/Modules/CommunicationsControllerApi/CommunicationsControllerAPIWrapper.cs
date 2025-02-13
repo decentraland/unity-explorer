@@ -40,16 +40,13 @@ namespace SceneRuntime.Apis.Modules.CommunicationsControllerApi
         {
             try
             {
+                using var value = V8Value.New();
+
                 for (var i = 0; i < dataCount; i++)
                 {
-                    Uint8Array message;
-
-                    using (var value = V8Value.New())
-                    {
-                        dataList.GetIndexedProperty(i, value);
-                        var decoded = value.Decode();
-                        message = decoded.GetUint8Array();
-                    }
+                    dataList.GetIndexedProperty(i, value);
+                    using var messageHolder = value.Decode();
+                    Uint8Array message = messageHolder.GetUint8Array();
 
                     PoolableByteArray element = PoolableByteArray.EMPTY;
 
@@ -95,87 +92,46 @@ namespace SceneRuntime.Apis.Modules.CommunicationsControllerApi
 
         private ScriptObject SendBinary(V8Object broadcastData, V8Object peerData)
         {
-            using (var value = V8Value.New())
-            {
-                broadcastData.GetNamedProperty("length", value);
-                var decoded = value.Decode();
-                SendBinaryToParticipants(broadcastData, (int)decoded.GetNumber(), null);
-            }
+            using var value = V8Value.New();
+
+            broadcastData.GetNamedProperty("length", value);
+            SendBinaryToParticipants(broadcastData, (int)value.GetNumber(), null);
 
             if (peerData.GetHashCode() != 0)
             {
-                int peerDataCount;
-
-                using (var value = V8Value.New())
-                {
-                    peerData.GetNamedProperty("length", value);
-                    var decoded = value.Decode();
-                    peerDataCount = (int)decoded.GetNumber();
-                }
+                peerData.GetNamedProperty("length", value);
+                int peerDataCount = (int)value.GetNumber();
 
                 for (var i = 0; i < peerDataCount; i++)
                 {
-                    V8Object perRecipientStruct;
+                    peerData.GetIndexedProperty(i, value);
+                    using var perRecipientStructHolder = value.Decode();
+                    V8Object perRecipientStruct = perRecipientStructHolder.GetV8Object();
 
-                    using (var value = V8Value.New())
-                    {
-                        peerData.GetIndexedProperty(i, value);
-                        var decoded = value.Decode();
-                        perRecipientStruct = decoded.GetV8Object();
-                    }
+                    perRecipientStruct.GetNamedProperty("data", value);
+                    using var dataHolder = value.Decode();
+                    V8Object data = dataHolder.GetV8Object();
 
-                    V8Object data;
-
-                    using (var value = V8Value.New())
-                    {
-                        perRecipientStruct.GetNamedProperty("data", value);
-                        var decoded = value.Decode();
-                        data = decoded.GetV8Object();
-                    }
-
-                    int dataCount;
-
-                    using (var value = V8Value.New())
-                    {
-                        data.GetNamedProperty("length", value);
-                        var decoded = value.Decode();
-                        dataCount = (int)decoded.GetNumber();
-                    }
+                    data.GetNamedProperty("length", value);
+                    int dataCount = (int)value.GetNumber();
 
                     if (dataCount == 0)
                         continue;
 
-                    V8Object recipient;
+                    perRecipientStruct.GetNamedProperty("address", value);
+                    using var recipientHolder = value.Decode();
+                    V8Object recipient = recipientHolder.GetV8Object();
 
-                    using (var value = V8Value.New())
-                    {
-                        perRecipientStruct.GetNamedProperty("address", value);
-                        var decoded = value.Decode();
-                        recipient = decoded.GetV8Object();
-                    }
-
-                    int recipientCount;
-
-                    using (var value = V8Value.New())
-                    {
-                        recipient.GetNamedProperty("length", value);
-                        var decoded = value.Decode();
-                        recipientCount = (int)decoded.GetNumber();
-                    }
+                    recipient.GetNamedProperty("length", value);
+                    int recipientCount = (int)value.GetNumber();
 
                     if (recipientCount == 0)
                         SendBinaryToParticipants(data, dataCount, null);
                     else
                         for (int j = 0; j < recipientCount; j++)
                         {
-                            string address;
-
-                            using (var value = V8Value.New())
-                            {
-                                recipient.GetIndexedProperty(j, value);
-                                var decoded = value.Decode();
-                                address = decoded.GetString();
-                            }
+                            recipient.GetIndexedProperty(j, value);
+                            string address = value.GetString();
 
                             if (!string.IsNullOrEmpty(address))
                                 SendBinaryToParticipants(data, dataCount, address);

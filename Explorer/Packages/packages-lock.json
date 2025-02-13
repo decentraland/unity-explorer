@@ -434,7 +434,7 @@
       "dependencies": {
         "com.unity.nuget.newtonsoft-json": "3.2.1"
       },
-      "hash": "ca807a75e192c4975c6cf616a1ad0face91fbc00"
+      "hash": "93a5e3472390bc3e31c825632e46029ab773452f"
     },
     "sc.stylizedwater2": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/StylizedWater2",
