@@ -170,7 +170,8 @@ namespace DCL.UI.InputFieldFormatting
         private bool AreCoordsValid(int x, int y) =>
             GenesisCityData.IsInsideBounds(x, y);
 
-        private bool IsOwnUsername(string username) => selfProfile.OwnProfile?.DisplayName == username;
+        private bool IsOwnUsername(string username) =>
+            selfProfile.OwnProfile?.DisplayName == username;
 
         private bool IsUserNameValid(string username) =>
             profileCache.GetByUserName(username) != null;
