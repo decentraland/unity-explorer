@@ -1,7 +1,7 @@
 ﻿#ifndef _DCL_CAMERA_FUNCTIONS_
 #define _DCL_CAMERA_FUNCTIONS_
 
-inline void EvaluateInstanceDistance(float4x4 instanceMatrix, out float dist, out float maxViewSize)
+inline void EvaluateInstanceDistance(float4x4 instanceMatrix, out float dist, out float maxViewSize, float3 vBoundsExtents, float3 vCameraPosition, float fCameraHalfAngle)
 {
     dist = 0;
     maxViewSize = 0;
