@@ -6,6 +6,7 @@ using DG.Tweening;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.Serialization;
@@ -21,6 +22,7 @@ namespace DCL.Chat
         public delegate void InputBoxFocusChangedDelegate(bool hasFocus);
         public delegate void InputSubmittedDelegate(ChatChannel channel, string message, string origin);
         public delegate void EmojiSelectionVisibilityChangedDelegate(bool isVisible);
+        public delegate void MemberListVisibilityChangedDelegate(bool isVisible);
 
         [Header("Settings")]
         [Tooltip("The time it takes, in seconds, for the background of the chat window to fade-in/out when hovering with the mouse.")]
@@ -45,6 +47,33 @@ namespace DCL.Chat
 
         [SerializeField]
         private ChatMessageViewerElement chatMessageViewer;
+
+        [SerializeField]
+        private Button memberListButton;
+
+        [SerializeField]
+        private TMP_Text memberListNumberText;
+
+        [SerializeField]
+        private TMP_Text memberListNumberText2;
+
+        [SerializeField]
+        private ChatMemberListView memberListView;
+
+        [SerializeField]
+        private Button memberListOpeningButton;
+
+        [SerializeField]
+        private Button memberListClosingButton;
+
+        [SerializeField]
+        private GameObject defaultChatTitlebar;
+
+        [SerializeField]
+        private GameObject memberListTitlebar;
+
+        [SerializeField]
+        private GameObject chatPanel;
 
         [Header("Audio")]
         [SerializeField]
@@ -82,6 +111,8 @@ namespace DCL.Chat
         /// </summary>
         public event Action<bool>? ChatBubbleVisibilityChanged;
 
+        public event MemberListVisibilityChangedDelegate MemberListVisibilityChanged;
+
         private ViewDependencies viewDependencies;
         private UniTaskCompletionSource closePopupTask;
 
@@ -95,6 +126,9 @@ namespace DCL.Chat
         private IReadOnlyDictionary<ChatChannel.ChannelId, ChatChannel>? channels;
         private ChatChannel? currentChannel;
         private ChatEntryConfigurationSO chatEntryConfiguration;
+
+        private List<ChatMemberListView.MemberData> sortedMemberData = new();
+        private bool isMemberListDirty;
 
         /// <summary>
         ///     Get or sets the current content of the input box.
@@ -141,8 +175,11 @@ namespace DCL.Chat
             this.channels = chatChannels;
             this.chatEntryConfiguration = chatEntryConfiguration;
             closeChatButton.onClick.AddListener(CloseChat);
+            memberListOpeningButton.onClick.AddListener(OnMemberListOpeningButtonClicked);
+            memberListClosingButton.onClick.AddListener(OnMemberListClosingButtonClicked);
             chatMessageViewer.Initialize(CalculateUsernameColor);
             chatMessageViewer.ChatMessageOptionsButtonClicked += OnChatMessageOptionsButtonClicked;
+            memberListView.VisibilityChanged += OnMemberListViewVisibilityChanged;
 
             chatBubblesToggle.IsSoundEnabled = false;
             chatBubblesToggle.Toggle.isOn = areChatBubblesVisible;
@@ -183,6 +220,9 @@ namespace DCL.Chat
         {
             panelBackgroundCanvasGroup.gameObject.SetActive(show);
             chatMessageViewer.SetVisibility(show);
+
+            if (show)
+                memberListView.IsVisible = false;
         }
 
         /// <summary>
@@ -280,6 +320,48 @@ namespace DCL.Chat
             viewDependencies = dependencies;
             chatInputBox.InjectDependencies(dependencies);
             chatMessageViewer.InjectDependencies(dependencies);
+            memberListView.InjectDependencies(dependencies);
+        }
+
+        /// <summary>
+        ///
+        /// </summary>
+        /// <param name="newMember"></param>
+        public void AddMember(ChatMemberListView.MemberData newMember)
+        {
+            sortedMemberData.Add(newMember);
+            isMemberListDirty = true;
+        }
+
+        /// <summary>
+        ///
+        /// </summary>
+        /// <param name="memberId"></param>
+        public void RemoveMember(string memberId)
+        {
+            int memeberIndex = sortedMemberData.FindIndex(data => data.Id == memberId);
+
+            if (memeberIndex > -1)
+                sortedMemberData.RemoveAt(memeberIndex);
+
+            isMemberListDirty = true;
+        }
+
+        /// <summary>
+        ///
+        /// </summary>
+        /// <param name="memberData"></param>
+        public void SetMemberData(Dictionary<string, ChatMemberListView.MemberData> memberData)
+        {
+            sortedMemberData.Clear();
+
+            if(memberData.Count > sortedMemberData.Capacity)
+                sortedMemberData.Capacity = memberData.Count;
+
+            foreach (KeyValuePair<string, ChatMemberListView.MemberData> keyValuePair in memberData)
+                sortedMemberData.Add(keyValuePair.Value);
+
+            isMemberListDirty = true;
         }
 
         private void OnInputBoxSelectionChanged(bool isSelected)
@@ -350,5 +432,37 @@ namespace DCL.Chat
         private Color CalculateUsernameColor(ChatMessage chatMessage) =>
             chatEntryConfiguration.GetNameColor(chatMessage.SenderValidatedName);
 
+        private void OnMemberListClosingButtonClicked()
+        {
+            memberListView.IsVisible = false;
+            memberListTitlebar.gameObject.SetActive(false);
+            defaultChatTitlebar.gameObject.SetActive(true);
+            chatPanel.SetActive(true);
+        }
+
+        private void OnMemberListOpeningButtonClicked()
+        {
+            memberListView.IsVisible = true;
+            memberListTitlebar.gameObject.SetActive(true);
+            defaultChatTitlebar.gameObject.SetActive(false);
+            chatPanel.SetActive(false);
+        }
+
+        private void OnMemberListViewVisibilityChanged(bool isVisible)
+        {
+            MemberListVisibilityChanged?.Invoke(isVisible);
+        }
+
+        private void Update()
+        {
+            if (isMemberListDirty)
+            {
+                sortedMemberData.Sort((a, b) => string.Compare(a.Name, b.Name, StringComparison.OrdinalIgnoreCase));
+                memberListView.SetData(sortedMemberData);
+                memberListNumberText.text = sortedMemberData.Count.ToString();
+                memberListNumberText2.text = memberListNumberText.text;
+                isMemberListDirty = false;
+            }
+        }
     }
 }

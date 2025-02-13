@@ -7,12 +7,17 @@ using DCL.Chat.MessageBus;
 using DCL.Input;
 using DCL.Input.Component;
 using DCL.Input.Systems;
+using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
+using DCL.Profiles;
 using ECS.Abstract;
+using LiveKit.Rooms.Participants;
 using MVC;
 using System;
+using System.Collections.Generic;
 using System.Threading;
+using UnityEngine;
 using UnityEngine.InputSystem;
 using Utility.Arch;
 
@@ -30,8 +35,12 @@ namespace DCL.Chat
         private readonly IInputBlock inputBlock;
         private readonly ViewDependencies viewDependencies;
         private readonly IChatCommandsBus chatCommandsBus;
+        private readonly IParticipantsHub islandParticipants;
+        private readonly IParticipantsHub sceneParticipants;
 
         private SingleInstanceEntity cameraEntity;
+        private bool isMemberListInitialized;
+
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
 
@@ -47,7 +56,8 @@ namespace DCL.Chat
             Entity playerEntity,
             IInputBlock inputBlock,
             ViewDependencies viewDependencies,
-            IChatCommandsBus chatCommandsBus) : base(viewFactory)
+            IChatCommandsBus chatCommandsBus,
+            IRoomHub roomHub) : base(viewFactory)
         {
             this.chatEntryConfiguration = chatEntryConfiguration;
             this.chatMessagesBus = chatMessagesBus;
@@ -59,6 +69,8 @@ namespace DCL.Chat
             this.inputBlock = inputBlock;
             this.viewDependencies = viewDependencies;
             this.chatCommandsBus = chatCommandsBus;
+            this.islandParticipants = roomHub.IslandRoom().Participants;
+            this.sceneParticipants = roomHub.SceneRoom().Room().Participants;
         }
 
         public void Clear() // Called by a command
@@ -86,12 +98,16 @@ namespace DCL.Chat
             viewInstance.EmojiSelectionVisibilityChanged += OnViewEmojiSelectionVisibilityChanged;
             viewInstance.ChatBubbleVisibilityChanged += OnViewChatBubbleVisibilityChanged;
             viewInstance.InputSubmitted += OnViewInputSubmitted;
+            viewInstance.MemberListVisibilityChanged += OnMemberListVisibilityChanged;
 
             OnFocus();
 
             // Intro message
             // TODO: Use localization systems here:
             chatHistory.AddMessage(ChatChannel.NEARBY_CHANNEL, ChatMessage.NewFromSystem("Type /help for available commands."));
+
+            islandParticipants.UpdatesFromParticipant += OnParticipantsHubParticipantUpdated;
+            sceneParticipants.UpdatesFromParticipant += OnParticipantsHubParticipantUpdated;
         }
 
         protected override void OnBlur()
@@ -137,12 +153,16 @@ namespace DCL.Chat
             viewInstance.EmojiSelectionVisibilityChanged -= OnViewEmojiSelectionVisibilityChanged;
             viewInstance.ChatBubbleVisibilityChanged -= ChatBubbleVisibilityChanged;
             viewInstance.InputSubmitted -= OnViewInputSubmitted;
+            viewInstance.MemberListVisibilityChanged -= OnMemberListVisibilityChanged;
 
             viewDependencies.DclInput.UI.Click.performed -= OnUIClickPerformed;
             viewDependencies.DclInput.Shortcuts.ToggleNametags.performed -= OnToggleNametagsShortcutPerformed;
             viewDependencies.DclInput.Shortcuts.OpenChat.performed -= OnOpenChatShortcutPerformed;
             viewDependencies.DclInput.Shortcuts.OpenChatCommandLine.performed -= OnOpenChatCommandLineShortcutPerformed;
             viewDependencies.DclInput.UI.Submit.performed -= OnSubmitShorcutPerformed;
+
+            islandParticipants.UpdatesFromParticipant -= OnParticipantsHubParticipantUpdated;
+            sceneParticipants.UpdatesFromParticipant -= OnParticipantsHubParticipantUpdated;
 
             viewInstance.Dispose();
         }
@@ -247,6 +267,87 @@ namespace DCL.Chat
         private void OnChatBusMessageAdded(ChatChannel.ChannelId channelId, ChatMessage chatMessage)
         {
             chatHistory.AddMessage(channelId, chatMessage);
+        }
+
+        private void OnMemberListVisibilityChanged(bool isVisible)
+        {
+
+        }
+
+        private void OnParticipantsHubParticipantUpdated(Participant participant, UpdateFromParticipant update)
+        {
+            if (isMemberListInitialized)
+            {
+                if (update == UpdateFromParticipant.Connected)
+                {
+                    ChatMemberListView.MemberData newMember = GetMemberDataFromParticipantIdentity(participant.Identity);
+
+                    if(!string.IsNullOrEmpty(newMember.Name))
+                        viewInstance!.AddMember(GetMemberDataFromParticipantIdentity(participant.Identity));
+                }
+                else if(update == UpdateFromParticipant.Disconnected)
+                    viewInstance!.RemoveMember(participant.Identity);
+            }
+            else
+            {
+                InitializeMemberListData();
+            }
+        }
+
+        private void InitializeMemberListData()
+        {
+            Dictionary<string, ChatMemberListView.MemberData> members = new Dictionary<string, ChatMemberListView.MemberData>();
+
+            // Scene room
+            IReadOnlyCollection<string> sceneIdentities = sceneParticipants.RemoteParticipantIdentities();
+
+            foreach (string identity in sceneIdentities)
+            {
+                ChatMemberListView.MemberData newMember = GetMemberDataFromParticipantIdentity(identity);
+
+                if (!string.IsNullOrEmpty(newMember.Name))
+                    members.Add(identity, newMember);
+            }
+
+            // Island room
+            IReadOnlyCollection<string> islandIdentities = islandParticipants.RemoteParticipantIdentities();
+
+            foreach (string identity in islandIdentities)
+            {
+                if (!members.ContainsKey(identity)) // Participants could be duplicated in island and scene rooms
+                {
+                    ChatMemberListView.MemberData newMember = GetMemberDataFromParticipantIdentity(identity);
+
+                    if (!string.IsNullOrEmpty(newMember.Name))
+                        members.Add(identity, newMember);
+                }
+            }
+
+            viewInstance!.SetMemberData(members);
+
+            isMemberListInitialized = true;
+        }
+
+        private ChatMemberListView.MemberData GetMemberDataFromParticipantIdentity(string identity)
+        {
+            Profile profile = viewDependencies.ProfileCache.Get(identity);
+            ChatMemberListView.MemberData newMemberData = new ChatMemberListView.MemberData();
+            newMemberData.Id = identity;
+
+            if (profile != null)
+            {
+                newMemberData.Name = profile.ValidatedName;
+                newMemberData.ProfilePicture = !profile.ProfilePicture.HasValue ? null : profile.ProfilePicture.Value.Asset.Sprite;
+                newMemberData.ConnectionStatus = ChatMemberConnectionStatus.Online; // TODO: Get this info from somewhere, when the other shapes are developed
+                newMemberData.WalletId = profile.WalletId;
+                newMemberData.ProfileColor = chatEntryConfiguration.GetNameColor(profile.ValidatedName);
+            }
+            else
+            {
+                Debug.Log("MISSING PROFILE: " + identity);
+            }
+
+            return newMemberData;
         }
     }
 }

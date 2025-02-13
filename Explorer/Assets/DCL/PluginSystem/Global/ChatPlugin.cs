@@ -8,6 +8,7 @@ using DCL.Chat.History;
 using DCL.Chat.MessageBus;
 using DCL.Emoji;
 using DCL.Input;
+using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
 using DCL.UI.MainUI;
@@ -33,6 +34,7 @@ namespace DCL.PluginSystem.Global
         private readonly MainUIView mainUIView;
         private readonly ViewDependencies viewDependencies;
         private readonly IChatCommandsBus chatCommandsBus;
+        private readonly IRoomHub roomHub;
 
         private ChatController chatController;
 
@@ -48,7 +50,8 @@ namespace DCL.PluginSystem.Global
             Arch.Core.World world,
             Entity playerEntity,
             ViewDependencies viewDependencies,
-            IChatCommandsBus chatCommandsBus)
+            IChatCommandsBus chatCommandsBus,
+            IRoomHub roomHub)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -63,6 +66,7 @@ namespace DCL.PluginSystem.Global
             this.chatCommandsBus = chatCommandsBus;
             this.mainUIView = mainUIView;
             this.inputBlock = inputBlock;
+            this.roomHub = roomHub;
         }
 
         public void Dispose() { }
@@ -89,7 +93,8 @@ namespace DCL.PluginSystem.Global
                 playerEntity,
                 inputBlock,
                 viewDependencies,
-                chatCommandsBus
+                chatCommandsBus,
+                roomHub
             );
 
             mvcManager.RegisterController(chatController);

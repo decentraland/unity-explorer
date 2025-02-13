@@ -584,7 +584,7 @@ namespace Global.Dynamic
 
             bool includeCameraReel = staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.CAMERA_REEL) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.CAMERA_REEL)) || Application.isEditor;
 
-            var viewDependencies = new ViewDependencies(dclInput, unityEventSystem, new MVCManagerMenusAccessFacade(mvcManager), clipboardManager, dclCursor);
+            var viewDependencies = new ViewDependencies(dclInput, unityEventSystem, new MVCManagerMenusAccessFacade(mvcManager, clipboard), clipboardManager, dclCursor, profileCache);
 
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
@@ -667,7 +667,8 @@ namespace Global.Dynamic
                     globalWorld,
                     playerEntity,
                     viewDependencies,
-                    chatCommandsBus),
+                    chatCommandsBus,
+                    roomHub),
                 new ExplorePanelPlugin(
                     assetsProvisioner,
                     mvcManager,
