@@ -31,10 +31,8 @@ namespace DCL.Friends.UI.FriendPanel
         [field: SerializeField] public BlockedSectionView BlockedSection { get; private set; }
 
         [field: Header("Audio")]
-        [field: SerializeField]
-        public AudioClipConfig? OpenPanel { get; private set; }
-        [field: SerializeField]
-        public AudioClipConfig? ClosePanel { get; private set; }
+        [field: SerializeField] public AudioClipConfig? OpenPanel { get; private set; }
+        [field: SerializeField] public AudioClipConfig? ClosePanel { get; private set; }
 
         protected override UniTask PlayShowAnimationAsync(CancellationToken ct)
         {
