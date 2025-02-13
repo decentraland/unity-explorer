@@ -1,60 +1,68 @@
 using CrdtEcsBridge.PoolsProviders;
-using DCL.Diagnostics;
-using Microsoft.ClearScript.Util;
-using System.Collections;
-using System.Collections.Generic;
+using Microsoft.ClearScript.V8.SplitProxy;
+using System;
 
 namespace SceneRuntime.Apis.Modules
 {
-    public class ScriptableByteArray : IScriptableEnumerator<byte>
+    public sealed class ScriptableByteArray : IV8HostObject, IDisposable
     {
         public static readonly ScriptableByteArray EMPTY = new (PoolableByteArray.EMPTY);
 
-        private readonly IEnumerator<byte> enumerator;
         private PoolableByteArray array;
-
-        public byte Current => enumerator.Current;
-
-        public byte ScriptableCurrent => Current;
-
-        object IEnumerator.Current => Current;
-
-        object IScriptableEnumerator.ScriptableCurrent => ScriptableCurrent;
 
         public ScriptableByteArray(PoolableByteArray array)
         {
             this.array = array;
-            enumerator = array.GetEnumerator();
         }
 
         public void Dispose()
         {
-            enumerator.Dispose();
             array.Dispose();
         }
 
-        public bool MoveNext()
+        void IV8HostObject.GetEnumerator(V8Value result) =>
+            result.SetHostObject(new Enumerator(this));
+
+        private sealed class Enumerator : IV8HostObject
         {
-            if (array.IsDisposed)
+            private PoolableByteArray.Enumerator enumerator;
+            private readonly InvokeHostObject scriptableMoveNext;
+            private readonly InvokeHostObject scriptableDispose;
+
+            public Enumerator(ScriptableByteArray array)
             {
-                ReportHub.LogError(ReportCategory.CRDT_ECS_BRIDGE, "Trying to move next on a disposed ScriptableByteArray");
-                return false;
+                enumerator = array.array.GetEnumerator();
+                scriptableMoveNext = ScriptableMoveNext;
+                scriptableDispose = ScriptableDispose;
             }
 
-            return enumerator.MoveNext();
-        }
+            private void ScriptableMoveNext(ReadOnlySpan<V8Value.Decoded> args, V8Value result) =>
+                result.SetBoolean(enumerator.MoveNext());
 
-        public void Reset()
-        {
-            enumerator.Reset();
-        }
+            private void ScriptableDispose(ReadOnlySpan<V8Value.Decoded> args, V8Value result) =>
+                enumerator.Dispose();
 
-        public bool ScriptableMoveNext() =>
-            MoveNext();
-
-        public void ScriptableDispose()
-        {
-            Dispose();
+            void IV8HostObject.GetNamedProperty(StdString name, V8Value value, out bool isConst)
+            {
+                if (name.Equals("ScriptableCurrent"))
+                {
+                    value.SetInt32(enumerator.Current);
+                    isConst = false;
+                }
+                else if (name.Equals(nameof(ScriptableMoveNext)))
+                {
+                    value.SetHostObject(scriptableMoveNext);
+                    isConst = true;
+                }
+                else if (name.Equals(nameof(ScriptableDispose)))
+                {
+                    value.SetHostObject(scriptableDispose);
+                    isConst = true;
+                }
+                else
+                    throw new NotImplementedException(
+                        $"Named property {name.ToString()} is not implemented");
+            }
         }
     }
 }
