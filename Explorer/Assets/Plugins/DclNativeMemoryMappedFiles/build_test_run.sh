@@ -1,3 +1,3 @@
 ./build.sh
-clang test_run.c -L. -lDCL_NMMF
+clang nmmf_test_run.c -L. -lDCL_NMMF
 export DYLD_LIBRARY_PATH=$(pwd)

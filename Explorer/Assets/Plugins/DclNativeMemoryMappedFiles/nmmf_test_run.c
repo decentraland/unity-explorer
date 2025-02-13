@@ -5,7 +5,7 @@
 #include "dcl_nmmf.h"
 
 int main() {
-    const char* name = "/dcl_tracking_mmf";
+    const char* name = "/dcl_tracking_test";
 
     nmmf_t nmmf = dcl_nmmf_new(name, 512);
 

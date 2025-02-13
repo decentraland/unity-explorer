@@ -21,11 +21,11 @@ namespace Plugins.DclNativeMemoryMappedFiles
         {
             public unsafe void* memory;
             public int fd;
-            public int size;
+            public long size;
         }
 
         [DllImport(LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
-        public static extern nmmf_t dcl_nmmf_new(string name, int size);
+        public static extern nmmf_t dcl_nmmf_new(string name, long size);
 
         [DllImport(LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
         public static extern void dcl_nmmf_close(nmmf_t instance);
@@ -35,9 +35,9 @@ namespace Plugins.DclNativeMemoryMappedFiles
     {
         private readonly DclMemoryMappedFilesNativeMethods.nmmf_t native;
 
-        public int Size => native.size;
+        public long Size => native.size;
 
-        public NamedMemoryMappedFile(string name, int size)
+        public NamedMemoryMappedFile(string name, long size)
         {
             native = DclMemoryMappedFilesNativeMethods.dcl_nmmf_new(name, size);
 

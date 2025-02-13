@@ -10,13 +10,15 @@
 
 #define EXPORT __attribute__((visibility("default")))
 
+#include <unistd.h>
+
 typedef struct nmmf_t {
     void* memory;
     int fd;
-    int size;
+    off_t size;
 } nmmf_t;
 
-EXPORT nmmf_t dcl_nmmf_new(const char* name, int size);
+EXPORT nmmf_t dcl_nmmf_new(const char* name, off_t size);
 
 EXPORT void dcl_nmmf_close(nmmf_t instance);
 

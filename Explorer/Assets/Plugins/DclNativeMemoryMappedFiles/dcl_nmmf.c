@@ -3,20 +3,29 @@
 #include <fcntl.h>           /* For O_* constants */
 #include <unistd.h>
 #include <sys/mman.h>
+#include <errno.h>
 
 #include "dcl_nmmf.h"
 
-EXPORT nmmf_t dcl_nmmf_new(const char* name, int size) {
+EXPORT nmmf_t dcl_nmmf_new(const char* name, off_t size) {
     nmmf_t out = {0};
     int fd = shm_open(name, O_CREAT | O_RDWR, 0666);
     if (fd == -1) {
         return out;
     }
 
-    int tr = ftruncate(fd, size);
-    if (tr == -1) {
+    struct stat mapstat;
+    if (fstat(fd, &mapstat) == -1) {
         close(fd);
         return out;
+    }
+
+    if (mapstat.st_size < size){
+        int tr = ftruncate(fd, size);
+        if (tr == -1) {
+            close(fd);
+            return out;
+        }
     }
 
     void* memory = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
