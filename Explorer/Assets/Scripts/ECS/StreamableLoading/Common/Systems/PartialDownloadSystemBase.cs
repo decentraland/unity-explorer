@@ -139,9 +139,6 @@ namespace ECS.StreamableLoading.Common.Systems
             finally { diskHashKey?.Dispose(); }
         }
 
-        private string GetIntentionResourceStringFromUrl(TIntention intention) =>
-            intention.CommonArguments.URL.Value.Split("/")[^1];
-
         protected abstract UniTask<StreamableLoadingResult<TData>> ProcessCompletedDataAsync(StreamableLoadingState state, TIntention intention, IPartitionComponent partition, CancellationToken ct);
     }
 }
