@@ -49,5 +49,8 @@ namespace DCL.UI.Sidebar
         [field: Header("Controls")]
         [field: SerializeField] internal Button controlsButton { get; private set; }
 
+        [field: Header("Chat")]
+        [field: SerializeField] internal Button unreadMessagesButton { get; private set; }
+        [field: SerializeField] internal NumericBadgeUIElement chatUnreadMessagesNumber { get; private set; }
     }
 }
