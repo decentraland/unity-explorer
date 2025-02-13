@@ -166,6 +166,7 @@ namespace DCL.Friends.UI.Requests
             viewConfig.TimestampText.text = fr.Timestamp.ToString(DATE_FORMAT).ToUpper();
             viewConfig.MessageInputContainer.SetActive(!string.IsNullOrEmpty(fr.MessageBody));
             viewConfig.MessageInput.text = $"<b>You:</b> {fr.MessageBody}";
+            viewConfig.MessageInput.interactable = false;
 
             fetchUserCancellationToken = fetchUserCancellationToken.SafeRestart();
 
@@ -193,6 +194,7 @@ namespace DCL.Friends.UI.Requests
                     ct);
 
                 viewConfig.MessageInput.text = $"<b>{fr.From.Name}:</b> {fr.MessageBody}";
+                viewConfig.MessageInput.interactable = false;
             }
         }
 
