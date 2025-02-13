@@ -649,8 +649,7 @@ namespace DCL.Passport
                     UserId = new Web3Address(inputData.UserId),
                 }), ct);
 
-                DisableAllFriendInteractions();
-                viewInstance!.AddFriendButton.gameObject.SetActive(true);
+                ShowFriendshipInteraction();
             }
         }
 
@@ -669,8 +668,7 @@ namespace DCL.Passport
             {
                 await friendService.CancelFriendshipAsync(inputData.UserId, ct);
 
-                DisableAllFriendInteractions();
-                viewInstance!.AddFriendButton.gameObject.SetActive(true);
+                ShowFriendshipInteraction();
             }
         }
 
@@ -688,7 +686,6 @@ namespace DCL.Passport
                     DestinationUser = new Web3Address(inputData.UserId),
                 }), ct);
 
-                // Refresh the friendship status
                 ShowFriendshipInteraction();
             }
         }
@@ -708,8 +705,7 @@ namespace DCL.Passport
             {
                 await friendService.AcceptFriendshipAsync(inputData.UserId, ct);
 
-                DisableAllFriendInteractions();
-                viewInstance!.RemoveFriendButton.gameObject.SetActive(true);
+                ShowFriendshipInteraction();
             }
         }
     }
