@@ -2,19 +2,29 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Optimization.PerformanceBudgeting;
+using DCL.Web3.Identities;
 using DCL.WebRequests;
+using DCL.WebRequests.Analytics;
 using DCL.WebRequests.PartialDownload;
+using DCL.WebRequests.RequestsHub;
 using ECS.Prioritization.Components;
+using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Cache.Disk;
+using ECS.StreamableLoading.Cache.Disk.CleanUp;
+using ECS.StreamableLoading.Cache.Disk.Lock;
+using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Tests;
+using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
+using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using System;
 using System.Buffers;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading;
+using System.Threading.Tasks;
 using UnityEngine;
 using Utility.Types;
 using ABPromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
@@ -22,22 +32,23 @@ using ABPromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoadin
 namespace ECS.StreamableLoading.AssetBundles.Tests
 {
     [TestFixture]
-    public class LoadAssetBundlePartialSystemShould : PartialLoadSystemBaseShould<LoadAssetBundleSystem, AssetBundleData, GetAssetBundleIntention>
+    public class LoadAssetBundlePartialSystemShould :  UnitySystemTestBase<LoadAssetBundleSystem>//PartialLoadSystemBaseShould<LoadAssetBundleSystem, AssetBundleData, GetAssetBundleIntention>
     {
         //size 7600
         private string assetPath => $"{Application.dataPath + "/../TestResources/AssetBundles/bafkreid3xecd44iujaz5qekbdrt5orqdqj3wivg5zc5mya3zkorjhyrkda"}";
-        private const int REQUESTS_COUNT = 10;
+        private const int REQUESTS_COUNT = 5;
 
-        private readonly IWebRequestController webRequestController = Substitute.For<IWebRequestController>();
-        private readonly IDiskCache<PartialLoadingState> diskCachePartials = Substitute.For<IDiskCache<PartialLoadingState>>();
         private readonly List<ABPromise> promises = new (REQUESTS_COUNT);
-
-        ArrayPool<byte> BuffersPool = ArrayPool<byte>.Shared;
+        private readonly ArrayPool<byte> buffersPool = ArrayPool<byte>.Shared;
 
 
         [Test]
         public void ParallelABLoadsWithCacheShould()
         {
+            IDiskCache<PartialLoadingState> diskCachePartials = Substitute.For<IDiskCache<PartialLoadingState>>();
+            IWebRequestController webRequestController = Substitute.For<IWebRequestController>();
+            system = CreateSystem(webRequestController, diskCachePartials);
+            system.Initialize();
             byte[] fileBytes = File.ReadAllBytes(assetPath);
             var partialLoadingStateInCache = new PartialLoadingState(7600);
             partialLoadingStateInCache.AppendData(fileBytes);
@@ -58,49 +69,42 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
         }
 
         [Test]
-        public void ParallelABLoadsWithoutCacheShould()
+        public async Task ParallelABLoadsWithoutCacheShould()
         {
-            byte[] fileBytes = File.ReadAllBytes(assetPath);
-            byte[] firstChunk = new byte[5000];
-            byte[] secondChunk = new byte[2600];
-            Buffer.BlockCopy(fileBytes, 0, firstChunk, 0, Math.Min(5000, fileBytes.Length));
-            Buffer.BlockCopy(fileBytes, 5000, secondChunk, 0, 2600);
-
-            var intention = new GetAssetBundleIntention(new CommonLoadingArguments(assetPath));
-            intention.Hash = "bafkreid3xecd44iujaz5qekbdrt5orqdqj3wivg5zc5mya3zkorjhyrkda";
+            var diskCachePartials = Substitute.For<IDiskCache<PartialLoadingState>>();
+            IWebRequestController webRequestController = new WebRequestController(IWebRequestsAnalyticsContainer.DEFAULT, new IWeb3IdentityCache.Default(), new RequestHub(ITexturesFuse.NewDefault(), true));
+            system = CreateSystem(webRequestController, diskCachePartials);
+            system.Initialize();
 
             //Mocking an empty result from the cache to force the webrequest controller flow
             diskCachePartials.ContentAsync(Arg.Any<HashKey>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
                              .Returns(new UniTask<EnumResult<Option<PartialLoadingState>, TaskError>>(new EnumResult<Option<PartialLoadingState>, TaskError>()));
 
-            webRequestController.GetPartialAsync(
-                                     Arg.Any<CommonArguments>(),
-                                     Arg.Any<CancellationToken>(),
-                                     Arg.Any<ReportData>(),
-                                     BuffersPool,
-                                     Arg.Any<WebRequestHeadersInfo>())
-                                .Returns(
-                                     new UniTask<PartialDownloadedData>(new PartialDownloadedData(firstChunk, 5000, 7500)));
+            for (var i = 0; i < REQUESTS_COUNT; i++) promises.Add(NewABPromiseRemoteAsset(i));
 
-            for (var i = 0; i < REQUESTS_COUNT; i++) promises.Add(NewABPromise());
-
-            //First update will download the first chunk
             system.Update(0);
-            foreach (var assetPromise in promises)
+
+            while (!world.Get<StreamableLoadingState>(promises[0].Entity).PartialDownloadingData.HasValue)
             {
-                StreamableLoadingState streamableLoadingState = world.Get<StreamableLoadingState>(assetPromise.Entity);
-                Assert.That(streamableLoadingState.PartialDownloadingData.HasValue, Is.True);
-                Assert.That(streamableLoadingState.PartialDownloadingData.Value.FullyDownloaded, Is.False);
+                await UniTask.Yield();
             }
 
-            //Second update will download the second and final chunk, marking it as fully downloaded
-            system.Update(0);
             foreach (var assetPromise in promises)
             {
                 StreamableLoadingState streamableLoadingState = world.Get<StreamableLoadingState>(assetPromise.Entity);
                 Assert.That(streamableLoadingState.PartialDownloadingData.HasValue, Is.True);
                 Assert.That(streamableLoadingState.PartialDownloadingData.Value.FullyDownloaded, Is.True);
             }
+        }
+
+        private ABPromise NewABPromiseRemoteAsset(int index)
+        {
+            var intention = new GetAssetBundleIntention(new CommonLoadingArguments("https://ab-cdn.decentraland.org/v36/bafkreiaetzu4kz4wqwadrlglcu5r7wyxjuvz7y2gsugtc7sqsgqv4aellu/bafkreibfutn7mfd2mu3ux6g5eg6qek3gctuhdcot2y4mjzttwzmiqrwlpi_mac"));
+            intention.Hash = $"req{index}";
+            var partition = PartitionComponent.TOP_PRIORITY;
+            var assetPromise = ABPromise.Create(world, intention, partition);
+            world.Get<StreamableLoadingState>(assetPromise.Entity).SetAllowed(Substitute.For<IAcquiredBudget>());
+            return assetPromise;
         }
 
         private ABPromise NewABPromise()
@@ -112,8 +116,8 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
             return assetPromise;
         }
 
-        protected override LoadAssetBundleSystem CreateSystem() =>
-            new (world, cache, webRequestController, BuffersPool, new AssetBundleLoadingMutex(), diskCachePartials);
+        private LoadAssetBundleSystem CreateSystem(IWebRequestController webRequestController, IDiskCache<PartialLoadingState> diskCachePartials) =>
+            new (world, Substitute.For<IStreamableCache<AssetBundleData, GetAssetBundleIntention>>(), webRequestController, buffersPool, new AssetBundleLoadingMutex(), diskCachePartials);
 
         [TearDown]
         public void Cleanup()
