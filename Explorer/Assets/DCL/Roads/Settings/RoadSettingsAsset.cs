@@ -13,10 +13,8 @@ namespace DCL.Roads.Settings
     [CreateAssetMenu(fileName = "Road Settings", menuName = "DCL/Various/Road Settings")]
     public class RoadSettingsAsset : ScriptableObject, IRoadSettingsAsset
     {
-        public List<GPUInstancingCandidate_Old> IndirectCandidates;
-        public List<GPUInstancingCandidate_Old> DirectCandidates;
-
         public List<GPUInstancingLODGroupWithBuffer> IndirectLODGroups;
+        public List<GPUInstancingLODGroup> PropsAndTiles;
 
         [field: SerializeField] public List<RoadDescription> RoadDescriptions { get; set; }
         [field: SerializeField] public List<AssetReferenceGameObject> RoadAssetsReference { get; set; }
@@ -25,6 +23,18 @@ namespace DCL.Roads.Settings
         IReadOnlyList<AssetReferenceGameObject> IRoadSettingsAsset.RoadAssetsReference => RoadAssetsReference;
 
 #if UNITY_EDITOR
+        public void HideAll()
+        {
+            foreach (GPUInstancingLODGroup prop in PropsAndTiles)
+                prop.HideAll();
+        }
+
+        public void ShowAll()
+        {
+            foreach (GPUInstancingLODGroup prop in PropsAndTiles)
+                prop.ShowAll();
+        }
+
         public void CollectGPUInstancingLODGroups(Vector2Int min, Vector2Int max)
         {
             Dictionary<string, GPUInstancingPrefabData> loadedPrefabs = LoadAllPrefabs();
@@ -49,7 +59,10 @@ namespace DCL.Roads.Settings
                 ProcessCandidates(prefab.IndirectCandidates, roadRoot, tempIndirectCandidates);
             }
 
-            IndirectLODGroups = tempIndirectCandidates.Select(kvp => new GPUInstancingLODGroupWithBuffer(kvp.Key.LODGroup, kvp.Value.ToList())).ToList();
+            IndirectLODGroups = tempIndirectCandidates
+                               .Select(kvp => new GPUInstancingLODGroupWithBuffer(kvp.Key.LODGroup, kvp.Value.ToList()))
+                               .OrderBy(group => group.LODGroup.Name)
+                               .ToList();
 
             EditorUtility.SetDirty(this);
             AssetDatabase.SaveAssets();
@@ -58,45 +71,6 @@ namespace DCL.Roads.Settings
             bool IsOutOfRange(Vector2Int roadCoordinate) =>
                 roadCoordinate.x < min.x || roadCoordinate.x > max.x ||
                 roadCoordinate.y < min.y || roadCoordinate.y > max.y;
-        }
-
-
-        public void CollectGPUInstancingCandidates(Vector2Int min, Vector2Int max)
-        {
-            // Dictionary<string, GPUInstancingPrefabData_Old> loadedPrefabs = LoadAllPrefabs();
-            //
-            // var tempDirectCandidates = new Dictionary<GPUInstancingCandidate_Old, HashSet<PerInstanceBuffer>>();
-            // var tempIndirectCandidates = new Dictionary<GPUInstancingCandidate_Old, HashSet<PerInstanceBuffer>>();
-            //
-            // foreach (RoadDescription roadDescription in RoadDescriptions)
-            // {
-            //     if (IsOutOfRange(roadDescription.RoadCoordinate)) continue;
-            //
-            //     if (!loadedPrefabs.TryGetValue(roadDescription.RoadModel, out GPUInstancingPrefabData_Old prefab))
-            //     {
-            //         Debug.LogWarning($"Can't find prefab {roadDescription.RoadModel}");
-            //         continue;
-            //     }
-            //
-            //     var roadRoot = Matrix4x4.TRS(
-            //         roadDescription.RoadCoordinate.ParcelToPositionFlat() + ParcelMathHelper.RoadPivotDeviation,
-            //         roadDescription.Rotation.SelfOrIdentity(),
-            //         Vector3.one);
-            //
-            //     ProcessCandidates(prefab.directCandidates, roadRoot, tempDirectCandidates);
-            //     ProcessCandidates(prefab.indirectCandidates, roadRoot, tempIndirectCandidates);
-            // }
-            //
-            // DirectCandidates = tempDirectCandidates.Select(kvp => new GPUInstancingCandidate_Old(kvp.Key, kvp.Value)).ToList();
-            // IndirectCandidates = tempIndirectCandidates.Select(kvp => new GPUInstancingCandidate_Old(kvp.Key, kvp.Value)).ToList();
-            //
-            // EditorUtility.SetDirty(this);
-            // AssetDatabase.SaveAssets();
-            // return;
-            //
-            // bool IsOutOfRange(Vector2Int roadCoordinate) =>
-            //     roadCoordinate.x < min.x || roadCoordinate.x > max.x ||
-            //     roadCoordinate.y < min.y || roadCoordinate.y > max.y;
         }
 
         private Dictionary<string,GPUInstancingPrefabData> LoadAllPrefabs()

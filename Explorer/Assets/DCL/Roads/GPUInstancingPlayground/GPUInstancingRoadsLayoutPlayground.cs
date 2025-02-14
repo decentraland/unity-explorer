@@ -51,8 +51,8 @@ namespace DCL.Roads.GPUInstancing.Playground
             foreach (var candidateWithBuffers in candidatesBuffersTable)
                 RenderCandidateIndirect(candidateWithBuffers.Key, candidateWithBuffers.Value);
 
-            foreach (GPUInstancingCandidate_Old directCandidate in RoadsConfig.DirectCandidates)
-                RenderCandidateInstanced(directCandidate);
+            // foreach (GPUInstancingCandidate_Old directCandidate in RoadsConfig.DirectCandidates)
+                // RenderCandidateInstanced(directCandidate);
         }
 
         private void RenderCandidateInstanced(GPUInstancingCandidate_Old lodGroup)
@@ -130,8 +130,8 @@ namespace DCL.Roads.GPUInstancing.Playground
             Candidates.Clear();
             candidatesBuffersTable.Clear();
 
-            foreach (GPUInstancingCandidate_Old candidate in RoadsConfig.IndirectCandidates)
-                AdjustBuffers(candidate);
+            // foreach (GPUInstancingCandidate_Old candidate in RoadsConfig.IndirectCandidates)
+                // AdjustBuffers(candidate);
 
             foreach (var candidate in candidatesBuffersTable.Keys)
                 Candidates.Add(new GPUInstancingCandidate_Old(candidate));

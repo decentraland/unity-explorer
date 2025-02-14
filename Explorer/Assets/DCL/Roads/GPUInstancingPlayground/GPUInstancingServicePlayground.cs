@@ -1,6 +1,5 @@
 ﻿using DCL.Roads.GPUInstancing.Playground;
 using DCL.Roads.Settings;
-using System;
 using UnityEngine;
 
 namespace DCL.Roads.GPUInstancing
@@ -43,15 +42,6 @@ namespace DCL.Roads.GPUInstancing
             instancingService.Dispose();
         }
 
-        // [ContextMenu(nameof(PrefabsSelfCollect))]
-        private void PrefabsSelfCollect()
-        {
-            foreach (GPUInstancingPrefabData prefab in originalPrefabs)
-            {
-                prefab.CollectSelfData();
-                // prefab.ShowVisuals();
-            }
-        }
 
         [ContextMenu(nameof(AddPrefabToService))]
         private void AddPrefabToService()
@@ -72,6 +62,18 @@ namespace DCL.Roads.GPUInstancing
         {
             instancingService.Dispose();
             instancingService.AddToIndirect(RoadsConfig.IndirectLODGroups);
+        }
+
+        [ContextMenu(nameof(HideAll))]
+        private void HideAll()
+        {
+            RoadsConfig.HideAll();
+        }
+
+        [ContextMenu(nameof(ShowAll))]
+        private void ShowAll()
+        {
+            RoadsConfig.ShowAll();
         }
     }
 }
