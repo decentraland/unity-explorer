@@ -47,18 +47,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Blocked
 
         protected override async UniTask<int> FetchDataAsync(int pageNumber, int pageSize, CancellationToken ct)
         {
-            // userProfile = await profileRepository.GetAsync(web3IdentityCache.Identity?.Address, ct);
-            //
-            // if (userProfile == null)
-            //     throw new Exception($"Couldn't fetch user own profile for address {web3IdentityCache.Identity?.Address}");
-            //
-            // foreach (string blockedUserId in userProfile!.Blocked)
-            // {
-            //     Profile? blockedProfile = await profileRepository.GetAsync(blockedUserId, ct);
-            //     if (blockedProfile != null)
-            //         blockedProfiles.Add(blockedProfile);
-            // }
-
+            //TODO: Implement this with the new social service logic
             return 0;
         }
 
