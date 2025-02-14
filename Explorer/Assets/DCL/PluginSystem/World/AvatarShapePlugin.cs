@@ -1,6 +1,7 @@
 using Arch.SystemGroups;
 using DCL.ECSComponents;
 using DCL.PluginSystem.World.Dependencies;
+using DCL.SDKComponents.AvatarShape.Systems;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Systems;
 using ECS.Unity.AvatarShape.Systems;
@@ -27,6 +28,7 @@ namespace DCL.PluginSystem.World
             ResetDirtyFlagSystem<PBAvatarShape>.InjectToWorld(ref builder);
             var avatarShapeHandlerSystem = AvatarShapeHandlerSystem.InjectToWorld(ref builder, globalWorld);
             finalizeWorldSystems.Add(avatarShapeHandlerSystem);
+            UpdateAvatarShapeInterpolateMovementSystem.InjectToWorld(ref builder, globalWorld);
         }
     }
 }

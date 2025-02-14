@@ -10,6 +10,7 @@ using DCL.CharacterMotion.Utils;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Multiplayer.Movement.Settings;
+using DCL.Utilities;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using UnityEngine;
@@ -21,10 +22,6 @@ namespace DCL.Multiplayer.Movement.Systems
     [LogCategory(ReportCategory.MULTIPLAYER_MOVEMENT)]
     public partial class RemotePlayersMovementSystem : BaseUnityLoopSystem
     {
-        // Amount of positions with timestamp that older than timestamp of the last passed message, that will be skip in one frame.
-        private const int BEHIND_EXTRAPOLATION_BATCH = 10;
-        private const float ZERO_VELOCITY_SQR_THRESHOLD = 0.01f * 0.01f;
-
         private readonly IMultiplayerMovementSettings settings;
         private readonly ICharacterControllerSettings characterControllerSettings;
 
@@ -132,7 +129,7 @@ namespace DCL.Multiplayer.Movement.Systems
             float minExtTimestamp = extComp.Start.timestamp + Mathf.Min(extComp.Time, extComp.TotalMoveDuration);
 
             // Filter all messages that are behind in time (otherwise we will run back)
-            for (var i = 0; i < BEHIND_EXTRAPOLATION_BATCH && playerInbox.Count > 0 && remote.timestamp <= minExtTimestamp; i++)
+            for (var i = 0; i < RemotePlayerUtils.BEHIND_EXTRAPOLATION_BATCH && playerInbox.Count > 0 && remote.timestamp <= minExtTimestamp; i++)
                 remote = playerInbox.Dequeue();
 
             if (remote.timestamp <= minExtTimestamp)
@@ -189,7 +186,7 @@ namespace DCL.Multiplayer.Movement.Systems
         {
             RemotePlayerInterpolationSettings? intSettings = settings.InterpolationSettings;
 
-            bool useLinear = remotePlayerMovement.PastMessage.velocitySqrMagnitude < ZERO_VELOCITY_SQR_THRESHOLD || remote.velocitySqrMagnitude < ZERO_VELOCITY_SQR_THRESHOLD ||
+            bool useLinear = remotePlayerMovement.PastMessage.velocitySqrMagnitude < RemotePlayerUtils.ZERO_VELOCITY_SQR_THRESHOLD || remote.velocitySqrMagnitude < RemotePlayerUtils.ZERO_VELOCITY_SQR_THRESHOLD ||
                              remotePlayerMovement.PastMessage.animState.IsGrounded != remote.animState.IsGrounded || remotePlayerMovement.PastMessage.animState.IsJumping != remote.animState.IsJumping
                              || remotePlayerMovement.PastMessage.movementKind == MovementKind.IDLE || remote.movementKind == MovementKind.IDLE;
 
