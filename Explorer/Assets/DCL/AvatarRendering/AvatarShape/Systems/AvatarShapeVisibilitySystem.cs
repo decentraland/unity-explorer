@@ -19,10 +19,12 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
     {
         private readonly OutlineRendererFeature? outlineFeature;
         private SingleInstanceEntity camera;
+        private Plane[] planes;
 
         public AvatarShapeVisibilitySystem(World world, IRendererFeaturesCache outlineFeature) : base(world)
         {
             this.outlineFeature = outlineFeature.GetRendererFeature<OutlineRendererFeature>();
+            planes = new Plane[6];
         }
 
         public override void Initialize()
@@ -43,7 +45,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
         public bool IsVisibleInCamera(Camera camera, Bounds bounds)
         {
-            Plane[] planes = GeometryUtility.CalculateFrustumPlanes(camera);
+            GeometryUtility.CalculateFrustumPlanes(camera, planes);
             return GeometryUtility.TestPlanesAABB(planes, bounds);
         }
 
