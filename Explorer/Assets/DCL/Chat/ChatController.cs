@@ -12,13 +12,14 @@ using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
 using DCL.Profiles;
 using ECS.Abstract;
-using LiveKit.Rooms.Participants;
+using LiveKit.Proto;
+using LiveKit.Rooms;
 using MVC;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using UnityEngine;
 using UnityEngine.InputSystem;
+using Utility;
 using Utility.Arch;
 
 namespace DCL.Chat
@@ -35,12 +36,13 @@ namespace DCL.Chat
         private readonly IInputBlock inputBlock;
         private readonly ViewDependencies viewDependencies;
         private readonly IChatCommandsBus chatCommandsBus;
-        private readonly IParticipantsHub islandParticipants;
-        private readonly IParticipantsHub sceneParticipants;
+        private readonly IRoom islandRoom;
+        private readonly IRoom sceneRoom;
 
         private SingleInstanceEntity cameraEntity;
         private bool isMemberListInitialized;
-
+        private CancellationTokenSource memberListCts;
+        private string previousRoomSid = string.Empty;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
 
@@ -69,8 +71,8 @@ namespace DCL.Chat
             this.inputBlock = inputBlock;
             this.viewDependencies = viewDependencies;
             this.chatCommandsBus = chatCommandsBus;
-            this.islandParticipants = roomHub.IslandRoom().Participants;
-            this.sceneParticipants = roomHub.SceneRoom().Room().Participants;
+            this.islandRoom = roomHub.IslandRoom();
+            this.sceneRoom = roomHub.SceneRoom().Room();
         }
 
         public void Clear() // Called by a command
@@ -106,8 +108,27 @@ namespace DCL.Chat
             // TODO: Use localization systems here:
             chatHistory.AddMessage(ChatChannel.NEARBY_CHANNEL, ChatMessage.NewFromSystem("Type /help for available commands."));
 
-            islandParticipants.UpdatesFromParticipant += OnParticipantsHubParticipantUpdated;
-            sceneParticipants.UpdatesFromParticipant += OnParticipantsHubParticipantUpdated;
+            memberListCts = new CancellationTokenSource();
+            UniTask.RunOnThreadPool(UpdateMembersData);
+        }
+
+        private async UniTask UpdateMembersData()
+        {
+            while (!memberListCts.IsCancellationRequested)
+            {
+                // If the player jumps to another room (like a world) while the member list is visible, it must refresh
+                if (previousRoomSid != islandRoom.Info.Sid && viewInstance!.IsMemberListVisible)
+                {
+                    previousRoomSid = islandRoom.Info.Sid;
+                    RefreshMemberList();
+                }
+
+                // Updates the amount of members
+                if(canUpdateParticipants && islandRoom.Participants.RemoteParticipantIdentities().Count != viewInstance!.MemberCount)
+                    viewInstance!.MemberCount = islandRoom.Participants.RemoteParticipantIdentities().Count;
+
+                await UniTask.Delay(500);
+            }
         }
 
         protected override void OnBlur()
@@ -161,11 +182,12 @@ namespace DCL.Chat
             viewDependencies.DclInput.Shortcuts.OpenChatCommandLine.performed -= OnOpenChatCommandLineShortcutPerformed;
             viewDependencies.DclInput.UI.Submit.performed -= OnSubmitShorcutPerformed;
 
-            islandParticipants.UpdatesFromParticipant -= OnParticipantsHubParticipantUpdated;
-            sceneParticipants.UpdatesFromParticipant -= OnParticipantsHubParticipantUpdated;
+            memberListCts.SafeCancelAndDispose();
 
             viewInstance.Dispose();
         }
+
+        private bool canUpdateParticipants => islandRoom.Info.ConnectionState == ConnectionState.ConnConnected;
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
             UniTask.Never(ct);
@@ -271,37 +293,20 @@ namespace DCL.Chat
 
         private void OnMemberListVisibilityChanged(bool isVisible)
         {
-
-        }
-
-        private void OnParticipantsHubParticipantUpdated(Participant participant, UpdateFromParticipant update)
-        {
-            if (isMemberListInitialized)
+            if (isVisible && canUpdateParticipants)
             {
-                if (update == UpdateFromParticipant.Connected)
-                {
-                    ChatMemberListView.MemberData newMember = GetMemberDataFromParticipantIdentity(participant.Identity);
-
-                    if(!string.IsNullOrEmpty(newMember.Name))
-                        viewInstance!.AddMember(GetMemberDataFromParticipantIdentity(participant.Identity));
-                }
-                else if(update == UpdateFromParticipant.Disconnected)
-                    viewInstance!.RemoveMember(participant.Identity);
-            }
-            else
-            {
-                InitializeMemberListData();
+                RefreshMemberList();
             }
         }
 
-        private void InitializeMemberListData()
+        private Dictionary<string, ChatMemberListView.MemberData> GenerateMemberList()
         {
             Dictionary<string, ChatMemberListView.MemberData> members = new Dictionary<string, ChatMemberListView.MemberData>();
 
-            // Scene room
-            IReadOnlyCollection<string> sceneIdentities = sceneParticipants.RemoteParticipantIdentities();
+            // Island room
+            IReadOnlyCollection<string> islandIdentities = islandRoom.Participants.RemoteParticipantIdentities();
 
-            foreach (string identity in sceneIdentities)
+            foreach (string identity in islandIdentities)
             {
                 ChatMemberListView.MemberData newMember = GetMemberDataFromParticipantIdentity(identity);
 
@@ -309,45 +314,33 @@ namespace DCL.Chat
                     members.Add(identity, newMember);
             }
 
-            // Island room
-            IReadOnlyCollection<string> islandIdentities = islandParticipants.RemoteParticipantIdentities();
-
-            foreach (string identity in islandIdentities)
-            {
-                if (!members.ContainsKey(identity)) // Participants could be duplicated in island and scene rooms
-                {
-                    ChatMemberListView.MemberData newMember = GetMemberDataFromParticipantIdentity(identity);
-
-                    if (!string.IsNullOrEmpty(newMember.Name))
-                        members.Add(identity, newMember);
-                }
-            }
-
-            viewInstance!.SetMemberData(members);
-
-            isMemberListInitialized = true;
+            return members;
         }
 
         private ChatMemberListView.MemberData GetMemberDataFromParticipantIdentity(string identity)
         {
             Profile profile = viewDependencies.ProfileCache.Get(identity);
+
             ChatMemberListView.MemberData newMemberData = new ChatMemberListView.MemberData();
             newMemberData.Id = identity;
 
             if (profile != null)
             {
                 newMemberData.Name = profile.ValidatedName;
-                newMemberData.ProfilePicture = !profile.ProfilePicture.HasValue ? null : profile.ProfilePicture.Value.Asset.Sprite;
+                newMemberData.ProfilePicture = profile.ProfilePicture.Value.Asset.Sprite;
                 newMemberData.ConnectionStatus = ChatMemberConnectionStatus.Online; // TODO: Get this info from somewhere, when the other shapes are developed
                 newMemberData.WalletId = profile.WalletId;
                 newMemberData.ProfileColor = chatEntryConfiguration.GetNameColor(profile.ValidatedName);
             }
-            else
-            {
-                Debug.Log("MISSING PROFILE: " + identity);
-            }
 
             return newMemberData;
         }
+
+        private void RefreshMemberList()
+        {
+            Dictionary<string, ChatMemberListView.MemberData> members = GenerateMemberList();
+            viewInstance!.SetMemberData(members);
+        }
+
     }
 }

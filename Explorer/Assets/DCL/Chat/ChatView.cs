@@ -127,8 +127,10 @@ namespace DCL.Chat
         private ChatChannel? currentChannel;
         private ChatEntryConfigurationSO chatEntryConfiguration;
 
-        private List<ChatMemberListView.MemberData> sortedMemberData = new();
-        private bool isMemberListDirty;
+        private readonly List<ChatMemberListView.MemberData> sortedMemberData = new();
+        private bool isMemberListDirty; // These flags are necessary in order to allow the UI respond to state changes that happen in other threads
+        private bool isMemberListCountDirty;
+        private int memberListCount;
 
         /// <summary>
         ///     Get or sets the current content of the input box.
@@ -162,6 +164,27 @@ namespace DCL.Chat
         private void Start()
         {
             panelBackgroundCanvasGroup.alpha = 0;
+        }
+
+        private void Update()
+        {
+            // Applies to the UI the data changes performed previously
+            if (isMemberListDirty && IsMemberListVisible)
+            {
+                // In the nearby channel, members are presented alphabetically
+                sortedMemberData.Sort((a, b) => string.Compare(a.Name, b.Name, StringComparison.OrdinalIgnoreCase));
+                memberListView.SetData(sortedMemberData);
+                memberListCount = sortedMemberData.Count; // The amount of members must match the amount of items in the list
+            }
+
+            if (isMemberListDirty || (isMemberListCountDirty && !IsMemberListVisible)) // Once the member list is visible, the number does not change
+            {
+                memberListNumberText.text = memberListCount.ToString();
+                memberListNumberText2.text = memberListNumberText.text;
+            }
+
+            isMemberListDirty = false;
+            isMemberListCountDirty = false;
         }
 
         public void Dispose()
@@ -212,6 +235,8 @@ namespace DCL.Chat
             }
         }
 
+        public bool IsMemberListVisible => memberListView.IsVisible;
+
         /// <summary>
         /// Opens or closes the chat window.
         /// </summary>
@@ -246,6 +271,7 @@ namespace DCL.Chat
         /// </summary>
         public void FocusInputBox()
         {
+            memberListView.IsVisible = false; // Pressing enter while member list is visible shows the chat again
             chatInputBox.FocusInputBox();
         }
 
@@ -324,33 +350,10 @@ namespace DCL.Chat
         }
 
         /// <summary>
-        ///
+        /// Replaces the data of the participants in the current channel.
+        /// The list will be refreshed during the next Update.
         /// </summary>
-        /// <param name="newMember"></param>
-        public void AddMember(ChatMemberListView.MemberData newMember)
-        {
-            sortedMemberData.Add(newMember);
-            isMemberListDirty = true;
-        }
-
-        /// <summary>
-        ///
-        /// </summary>
-        /// <param name="memberId"></param>
-        public void RemoveMember(string memberId)
-        {
-            int memeberIndex = sortedMemberData.FindIndex(data => data.Id == memberId);
-
-            if (memeberIndex > -1)
-                sortedMemberData.RemoveAt(memeberIndex);
-
-            isMemberListDirty = true;
-        }
-
-        /// <summary>
-        ///
-        /// </summary>
-        /// <param name="memberData"></param>
+        /// <param name="memberData">The data of the members to be displayed in the member list.</param>
         public void SetMemberData(Dictionary<string, ChatMemberListView.MemberData> memberData)
         {
             sortedMemberData.Clear();
@@ -362,6 +365,24 @@ namespace DCL.Chat
                 sortedMemberData.Add(keyValuePair.Value);
 
             isMemberListDirty = true;
+        }
+
+        /// <summary>
+        /// Gets or sets the amount of participants in the current channel.
+        /// The UI will be refreshed in the next Update.
+        /// </summary>
+        public int MemberCount
+        {
+            get => memberListCount;
+
+            set
+            {
+                if (memberListCount != value)
+                {
+                    isMemberListCountDirty = true;
+                    memberListCount = value;
+                }
+            }
         }
 
         private void OnInputBoxSelectionChanged(bool isSelected)
@@ -435,34 +456,20 @@ namespace DCL.Chat
         private void OnMemberListClosingButtonClicked()
         {
             memberListView.IsVisible = false;
-            memberListTitlebar.gameObject.SetActive(false);
-            defaultChatTitlebar.gameObject.SetActive(true);
-            chatPanel.SetActive(true);
         }
 
         private void OnMemberListOpeningButtonClicked()
         {
             memberListView.IsVisible = true;
-            memberListTitlebar.gameObject.SetActive(true);
-            defaultChatTitlebar.gameObject.SetActive(false);
-            chatPanel.SetActive(false);
         }
 
         private void OnMemberListViewVisibilityChanged(bool isVisible)
         {
-            MemberListVisibilityChanged?.Invoke(isVisible);
-        }
+            memberListTitlebar.gameObject.SetActive(isVisible);
+            defaultChatTitlebar.gameObject.SetActive(!isVisible);
+            chatPanel.SetActive(!isVisible);
 
-        private void Update()
-        {
-            if (isMemberListDirty)
-            {
-                sortedMemberData.Sort((a, b) => string.Compare(a.Name, b.Name, StringComparison.OrdinalIgnoreCase));
-                memberListView.SetData(sortedMemberData);
-                memberListNumberText.text = sortedMemberData.Count.ToString();
-                memberListNumberText2.text = memberListNumberText.text;
-                isMemberListDirty = false;
-            }
+            MemberListVisibilityChanged?.Invoke(isVisible);
         }
     }
 }

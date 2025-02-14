@@ -11,6 +11,7 @@ using DCL.Input;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
+using DCL.Profiles;
 using DCL.UI.MainUI;
 using MVC;
 using System;

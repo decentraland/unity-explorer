@@ -262,5 +262,10 @@ namespace DCL.Chat
         {
             viewDependencies = dependencies;
         }
+
+        private void OnEnable()
+        {
+            loopList.RefreshAllShownItem(); // This avoids artifacts when new items are added while the object is disabled
+        }
     }
 }

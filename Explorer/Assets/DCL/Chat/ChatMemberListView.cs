@@ -7,6 +7,9 @@ namespace DCL.Chat
 {
     public class ChatMemberListView : MonoBehaviour, IViewWithGlobalDependencies
     {
+        /// <summary>
+        /// A subset of a Profile, stores only the necessary data to be presented by the view.
+        /// </summary>
         public struct MemberData
         {
             public string Id;
@@ -20,7 +23,7 @@ namespace DCL.Chat
         public delegate void VisibilityChangedDelegate(bool isVisible);
 
         /// <summary>
-        ///
+        /// Raised whenever the visibility of the member list changes.
         /// </summary>
         public event VisibilityChangedDelegate VisibilityChanged;
 
@@ -31,25 +34,20 @@ namespace DCL.Chat
 
         private ViewDependencies viewDependencies;
         private bool isInitialized;
+        private bool isVisible;
 
-        /// <summary>
-        ///
-        /// </summary>
         public bool IsVisible
         {
-            get
-            {
-                return gameObject.activeInHierarchy;
-            }
+            get => isVisible;
 
             set
             {
                 if (value != IsVisible)
                 {
+                    isVisible = value;
                     gameObject.SetActive(value);
                     VisibilityChanged?.Invoke(value);
                 }
-
             }
         }
 
@@ -59,9 +57,9 @@ namespace DCL.Chat
         }
 
         /// <summary>
-        ///
+        /// Replaces the data to be represented by the view.
         /// </summary>
-        /// <param name="memberData"></param>
+        /// <param name="memberData">The data related to the members of the list.</param>
         public void SetData(List<MemberData> memberData)
         {
             members = memberData;
@@ -72,6 +70,7 @@ namespace DCL.Chat
                 isInitialized = true;
             }
 
+            loopListView.SetListItemCount(members.Count);
             loopListView.RefreshAllShownItem();
         }
 
