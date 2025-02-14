@@ -1,5 +1,4 @@
 using Cysharp.Threading.Tasks;
-using DCL.Diagnostics;
 using rpc_csharp.transport;
 using System;
 using System.Net.WebSockets;
@@ -39,10 +38,8 @@ namespace DCL.Friends
 
             try
             {
-                ReportHub.Log(new ReportData(ReportCategory.FRIENDS), $"Friends.WebSocket.Disposing..");
                 webSocket.Abort();
                 webSocket.Dispose();
-                ReportHub.Log(new ReportData(ReportCategory.FRIENDS), $"Friends.WebSocket.Disposed");
             }
             catch (ObjectDisposedException) { }
         }
@@ -52,9 +49,7 @@ namespace DCL.Friends
             if (State is WebSocketState.Open or WebSocketState.Connecting)
                 throw new Exception("Web socket already connected");
 
-            ReportHub.Log(new ReportData(ReportCategory.FRIENDS), $"Friends.WebSocket.Connecting: {uri}");
             await webSocket.ConnectAsync(uri, ct);
-            ReportHub.Log(new ReportData(ReportCategory.FRIENDS), "Friends.WebSocket.Connected");
 
             OnConnectEvent?.Invoke();
         }
@@ -74,8 +69,6 @@ namespace DCL.Friends
                     try
                     {
                         WebSocketReceiveResult result = await webSocket.ReceiveAsync(receiveBuffer, ct);
-
-                        ReportHub.Log(new ReportData(ReportCategory.FRIENDS), $"Friends.WebSocket.Received: Data size {result.Count}, data type: {result.MessageType}");
 
                         if (result.MessageType is WebSocketMessageType.Text or WebSocketMessageType.Binary)
                         {
@@ -106,13 +99,10 @@ namespace DCL.Friends
         {
             try
             {
-                ReportHub.Log(new ReportData(ReportCategory.FRIENDS), $"Friends.WebSocket.Sending: data size {data.Length}");
                 await webSocket.SendAsync(data, WebSocketMessageType.Binary, true, ct);
-                ReportHub.Log(new ReportData(ReportCategory.FRIENDS), $"Friends.WebSocket.Sent: data size {data.Length}");
             }
             catch (WebSocketException e)
             {
-                ReportHub.Log(new ReportData(ReportCategory.FRIENDS), $"Friends.WebSocket.Send.Error: {e.Message}");
                 OnErrorEvent?.Invoke(e.Message);
             }
         }
@@ -121,13 +111,10 @@ namespace DCL.Friends
         {
             try
             {
-                ReportHub.Log(new ReportData(ReportCategory.FRIENDS), $"Friends.WebSocket.Sending: data size {data.Length}");
                 await webSocket.SendAsync(Encoding.UTF8.GetBytes(data), WebSocketMessageType.Text, true, ct);
-                ReportHub.Log(new ReportData(ReportCategory.FRIENDS), $"Friends.WebSocket.Sent: data size {data.Length}");
             }
             catch (WebSocketException e)
             {
-                ReportHub.Log(new ReportData(ReportCategory.FRIENDS), $"Friends.WebSocket.Send.Error: {e.Message}");
                 OnErrorEvent?.Invoke(e.Message);
             }
         }
@@ -139,9 +126,7 @@ namespace DCL.Friends
         {
             if (State is WebSocketState.Open or WebSocketState.CloseReceived)
             {
-                ReportHub.Log(new ReportData(ReportCategory.FRIENDS), "Friends.WebSocket.Disconnecting..");
                 await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "", ct);
-                ReportHub.Log(new ReportData(ReportCategory.FRIENDS), "Friends.WebSocket.Disconnected");
                 OnCloseEvent?.Invoke();
             }
         }

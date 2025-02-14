@@ -132,9 +132,6 @@ namespace DCL.Friends
 
             async UniTask OpenStreamAndProcessUpdatesAsync()
             {
-                ReportHub.Log(new ReportData(ReportCategory.FRIENDS),
-                    $"Friends.RPC.{SUBSCRIBE_FRIENDSHIP_UPDATES_PROCEDURE_NAME}");
-
                 IUniTaskAsyncEnumerable<FriendshipUpdate> stream =
                     module!.CallServerStream<FriendshipUpdate>(SUBSCRIBE_FRIENDSHIP_UPDATES_PROCEDURE_NAME,
                         new Empty());
@@ -143,9 +140,6 @@ namespace DCL.Friends
                 {
                     try
                     {
-                        ReportHub.Log(new ReportData(ReportCategory.FRIENDS),
-                            $"Friends.RPC.Received.FriendshipUpdate: {response.UpdateCase}");
-
                         switch (response.UpdateCase)
                         {
                             case FriendshipUpdate.UpdateOneofCase.Accept:
@@ -257,9 +251,6 @@ namespace DCL.Friends
 
             async UniTask OpenStreamAndProcessUpdatesAsync()
             {
-                ReportHub.Log(new ReportData(ReportCategory.FRIENDS),
-                    $"Friends.RPC.{SUBSCRIBE_TO_CONNECTIVITY_UPDATES}");
-
                 IUniTaskAsyncEnumerable<FriendConnectivityUpdate> stream =
                     module!.CallServerStream<FriendConnectivityUpdate>(SUBSCRIBE_TO_CONNECTIVITY_UPDATES, new Empty());
 
@@ -267,9 +258,6 @@ namespace DCL.Friends
                 {
                     try
                     {
-                        ReportHub.Log(new ReportData(ReportCategory.FRIENDS),
-                            $"Friends.RPC.Received.ConnectivityUpdate: {response.Status} for {response.Friend.Address}");
-
                         switch (response.Status)
                         {
                             case ConnectivityStatus.Away:
@@ -306,16 +294,10 @@ namespace DCL.Friends
                 },
             };
 
-            ReportHub.Log(new ReportData(ReportCategory.FRIENDS),
-                $"Friends.RPC.Send.{GET_FRIENDS_PROCEDURE_NAME}: {payload}");
-
             var response = await module!
                 .CallUnaryProcedure<PaginatedFriendsProfilesResponse>(GET_FRIENDS_PROCEDURE_NAME, payload)
                 .AttachExternalCancellation(ct)
                 .Timeout(TimeSpan.FromSeconds(TIMEOUT_SECONDS));
-
-            ReportHub.Log(new ReportData(ReportCategory.FRIENDS),
-                $"Friends.RPC.Received.{GET_FRIENDS_PROCEDURE_NAME}: {response}");
 
             foreach (var profile in response.Friends)
                 friendsCache.Add(profile.Address);
@@ -343,16 +325,10 @@ namespace DCL.Friends
                 },
             };
 
-            ReportHub.Log(new ReportData(ReportCategory.FRIENDS),
-                $"Friends.RPC.Send.{GET_MUTUAL_FRIENDS_PROCEDURE_NAME}: {payload}");
-
             var response = await module!
                 .CallUnaryProcedure<PaginatedFriendsProfilesResponse>(GET_MUTUAL_FRIENDS_PROCEDURE_NAME, payload)
                 .AttachExternalCancellation(ct)
                 .Timeout(TimeSpan.FromSeconds(TIMEOUT_SECONDS));
-
-            ReportHub.Log(new ReportData(ReportCategory.FRIENDS),
-                $"Friends.RPC.Received.{GET_MUTUAL_FRIENDS_PROCEDURE_NAME}: {response}");
 
             var profiles = ToClientFriendProfiles(response.Friends);
 
@@ -371,16 +347,10 @@ namespace DCL.Friends
                 },
             };
 
-            ReportHub.Log(new ReportData(ReportCategory.FRIENDS),
-                $"Friends.RPC.Send.{GET_FRIENDSHIP_STATUS_PROCEDURE_NAME}: {payload}");
-
             GetFriendshipStatusResponse response = await module!
                 .CallUnaryProcedure<GetFriendshipStatusResponse>(GET_FRIENDSHIP_STATUS_PROCEDURE_NAME, payload)
                 .AttachExternalCancellation(ct)
                 .Timeout(TimeSpan.FromSeconds(TIMEOUT_SECONDS));
-
-            ReportHub.Log(new ReportData(ReportCategory.FRIENDS),
-                $"Friends.RPC.Received.{GET_FRIENDSHIP_STATUS_PROCEDURE_NAME}: {response}");
 
             switch (response.ResponseCase)
             {
@@ -422,17 +392,11 @@ namespace DCL.Friends
                 },
             };
 
-            ReportHub.Log(new ReportData(ReportCategory.FRIENDS),
-                $"Friends.RPC.Send.{GET_RECEIVED_FRIEND_REQUESTS_PROCEDURE_NAME}: {payload}");
-
             PaginatedFriendshipRequestsResponse response = await module!
                 .CallUnaryProcedure<PaginatedFriendshipRequestsResponse>(GET_RECEIVED_FRIEND_REQUESTS_PROCEDURE_NAME,
                     payload)
                 .AttachExternalCancellation(ct)
                 .Timeout(TimeSpan.FromSeconds(TIMEOUT_SECONDS));
-
-            ReportHub.Log(new ReportData(ReportCategory.FRIENDS),
-                $"Friends.RPC.Received.{GET_RECEIVED_FRIEND_REQUESTS_PROCEDURE_NAME}: {response}");
 
             Profile? myProfile = await selfProfile.ProfileAsync(ct);
 
@@ -476,17 +440,11 @@ namespace DCL.Friends
                 },
             };
 
-            ReportHub.Log(new ReportData(ReportCategory.FRIENDS),
-                $"Friends.RPC.Send.{GET_SENT_FRIEND_REQUESTS_PROCEDURE_NAME}: {payload}");
-
             PaginatedFriendshipRequestsResponse response = await module!
                 .CallUnaryProcedure<PaginatedFriendshipRequestsResponse>(GET_SENT_FRIEND_REQUESTS_PROCEDURE_NAME,
                     payload)
                 .AttachExternalCancellation(ct)
                 .Timeout(TimeSpan.FromSeconds(TIMEOUT_SECONDS));
-
-            ReportHub.Log(new ReportData(ReportCategory.FRIENDS),
-                $"Friends.RPC.Received.{GET_SENT_FRIEND_REQUESTS_PROCEDURE_NAME}: {response}");
 
             Profile? myProfile = await selfProfile.ProfileAsync(ct);
 
@@ -660,23 +618,16 @@ namespace DCL.Friends
                         transport = new WebSocketRpcTransport(new Uri(apiUrl));
                         client = new RpcClient(transport);
 
-                        ReportHub.Log(new ReportData(ReportCategory.FRIENDS), "Friends.RPC.Connecting..");
                         await transport.ConnectAsync(ct).Timeout(TimeSpan.FromSeconds(CONNECTION_TIMEOUT_SECS));
-                        ReportHub.Log(new ReportData(ReportCategory.FRIENDS), "Friends.RPC.Connected");
 
                         string authChain = BuildAuthChain();
-                        ReportHub.Log(new ReportData(ReportCategory.FRIENDS),
-                            $"Friends.RPC.Authenticating: {authChain}");
                         // The service expects the auth-chain in json format within a 30 seconds threshold after connection
                         await transport.SendMessageAsync(authChain, ct);
-                        ReportHub.Log(new ReportData(ReportCategory.FRIENDS), "Friends.RPC.Authenticated");
 
                         transport.ListenForIncomingData();
 
-                        ReportHub.Log(new ReportData(ReportCategory.FRIENDS), "Friends.RPC.Port.Opening..");
                         port = await client.CreatePort("friends");
                         module = await port.LoadModule(RPC_SERVICE_NAME);
-                        ReportHub.Log(new ReportData(ReportCategory.FRIENDS), "Friends.RPC.Port.Opened");
                     }
                 }
                 finally
@@ -710,16 +661,10 @@ namespace DCL.Friends
             UpsertFriendshipPayload payload,
             CancellationToken ct)
         {
-            ReportHub.Log(new ReportData(ReportCategory.FRIENDS),
-                $"Friends.RPC.Send.{UPDATE_FRIENDSHIP_PROCEDURE_NAME}: {payload}");
-
             UpsertFriendshipResponse response = await module!
                 .CallUnaryProcedure<UpsertFriendshipResponse>(UPDATE_FRIENDSHIP_PROCEDURE_NAME, payload)
                 .AttachExternalCancellation(ct)
                 .Timeout(TimeSpan.FromSeconds(TIMEOUT_SECONDS));
-
-            ReportHub.Log(new ReportData(ReportCategory.FRIENDS),
-                $"Friends.RPC.Received.{UPDATE_FRIENDSHIP_PROCEDURE_NAME}: {response}");
 
             return response.ResponseCase switch
             {
