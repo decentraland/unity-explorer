@@ -38,14 +38,14 @@ namespace DCL.Settings.ModuleControllers
                 case (int)ChatAudioSettings.MENTIONS_ONLY:
                     chatAudioSettingsAsset.chatAudioSettings = ChatAudioSettings.MENTIONS_ONLY;
                     generalAudioMixer.SetFloat(CHAT_VOLUME_EXPOSED_PARAM, AudioUtils.PercentageVolumeToDecibel(100f));
-                    goto default;
+                    break;
                 case (int)ChatAudioSettings.ALL:
                     chatAudioSettingsAsset.chatAudioSettings = ChatAudioSettings.ALL;
                     generalAudioMixer.SetFloat(CHAT_VOLUME_EXPOSED_PARAM, AudioUtils.PercentageVolumeToDecibel(100f));
-                    goto default;
+                    break;
                 default:
                     ReportHub.LogWarning(ReportCategory.SETTINGS_MENU, $"Invalid index value for ChatSoundsSettingsController: {index}");
-                    break;
+                    return;
             }
 
             settingsDataStore.SetDropdownValue(CHAT_SOUNDS_DATA_STORE_KEY, index, save: true);
