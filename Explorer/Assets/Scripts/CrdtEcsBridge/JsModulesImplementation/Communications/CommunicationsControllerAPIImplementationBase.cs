@@ -1,4 +1,5 @@
 ﻿using CrdtEcsBridge.PoolsProviders;
+using Microsoft.ClearScript;
 using SceneRunner.Scene;
 using SceneRuntime;
 using SceneRuntime.Apis.Modules.CommunicationsControllerApi;
@@ -66,11 +67,11 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
                 }
         }
 
-        public object GetResult()
+        public ScriptObject GetResult()
         {
             lock (eventsToProcess)
             {
-                object result = jsOperations.ConvertToScriptTypedArrays(eventsToProcess);
+                ScriptObject result = jsOperations.ConvertToScriptTypedArrays(eventsToProcess);
                 CleanUpReceivedMessages();
                 return result;
             }

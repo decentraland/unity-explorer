@@ -80,6 +80,8 @@ namespace Global.Dynamic
 
         private void Awake()
         {
+
+
             InitializeFlowAsync(destroyCancellationToken).Forget();
         }
 
@@ -132,6 +134,9 @@ namespace Global.Dynamic
 #endif
             );
 
+            DCLVersion dclVersion = DCLVersion.FromAppArgs(applicationParametersParser);
+            SystemInfoUtils.Log(dclVersion.Version);
+
             bool compressionEnabled = IPlatform.DEFAULT.IsNot(IPlatform.Kind.Windows) || applicationParametersParser.HasFlag(AppArgsFlags.FORCE_TEXTURE_COMPRESSION);
 
             if (IPlatform.DEFAULT.Is(IPlatform.Kind.Mac) && SystemInfo.processorType!.Contains("Intel", StringComparison.InvariantCultureIgnoreCase))
@@ -171,7 +176,7 @@ namespace Global.Dynamic
             var diskCache = NewInstanceDiskCache(applicationParametersParser);
             var partialsDiskCache = NewInstancePartialDiskCache(applicationParametersParser);
 
-            DCLVersion dclVersion = DCLVersion.FromAppArgs(applicationParametersParser);
+
 
             bootstrapContainer = await BootstrapContainer.CreateAsync(
                 debugSettings,
