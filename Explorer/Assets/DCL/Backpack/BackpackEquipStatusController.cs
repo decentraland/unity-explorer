@@ -9,6 +9,7 @@ using DCL.Backpack.BackpackBus;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.Web3.Identities;
+using Global.AppArgs;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -26,7 +27,7 @@ namespace DCL.Backpack
         private readonly ISelfProfile selfProfile;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly ICollection<string> forceRender;
-
+        private readonly IAppArgs appArgs;
         private readonly World world;
         private readonly Entity playerEntity;
         private CancellationTokenSource? publishProfileCts;
@@ -39,7 +40,8 @@ namespace DCL.Backpack
             ICollection<string> forceRender,
             IWeb3IdentityCache web3IdentityCache,
             World world,
-            Entity playerEntity)
+            Entity playerEntity,
+            IAppArgs appArgs)
         {
             this.backpackEventBus = backpackEventBus;
             this.equippedEmotes = equippedEmotes;
@@ -50,7 +52,7 @@ namespace DCL.Backpack
 
             backpackEventBus.EquipWearableEvent += EquipWearable;
             backpackEventBus.UnEquipWearableEvent += UnEquipWearable;
-            backpackEventBus.PublishProfileEvent += PublishProfile;
+            backpackEventBus.PublishProfileEvent += UpdateProfile;
             backpackEventBus.EquipEmoteEvent += EquipEmote;
             backpackEventBus.UnEquipEmoteEvent += UnEquipEmote;
             backpackEventBus.ChangeColorEvent += ChangeColor;
@@ -59,13 +61,14 @@ namespace DCL.Backpack
 
             this.world = world;
             this.playerEntity = playerEntity;
+            this.appArgs = appArgs;
         }
 
         public void Dispose()
         {
             backpackEventBus.EquipWearableEvent -= EquipWearable;
             backpackEventBus.UnEquipWearableEvent -= UnEquipWearable;
-            backpackEventBus.PublishProfileEvent -= PublishProfile;
+            backpackEventBus.PublishProfileEvent -= UpdateProfile;
             backpackEventBus.EquipEmoteEvent -= EquipEmote;
             backpackEventBus.UnEquipEmoteEvent -= UnEquipEmote;
             backpackEventBus.ChangeColorEvent -= ChangeColor;
@@ -125,21 +128,24 @@ namespace DCL.Backpack
             }
         }
 
-        private void PublishProfile()
+        private void UpdateProfile()
         {
             if (web3IdentityCache.Identity == null)
                 return;
 
-            async UniTaskVoid PublishProfileAsync(CancellationToken ct)
-            {
-                var profile = await selfProfile.PublishAsync(ct);
-                // TODO: is it a single responsibility issue? perhaps we can move it elsewhere?
-                MultithreadingUtility.AssertMainThread(nameof(PublishProfileAsync), true);
-                UpdateAvatarInWorld(profile!);
-            }
-
             publishProfileCts = publishProfileCts.SafeRestart();
-            PublishProfileAsync(publishProfileCts.Token).Forget();
+            UpdateProfileAsync(publishProfileCts.Token).Forget();
+        }
+
+        private async UniTaskVoid UpdateProfileAsync(CancellationToken ct)
+        {
+            bool publishProfileChange = !appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_BUILDER_COLLECTION)
+                                        && !appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_WEARABLES);
+
+            var profile = await selfProfile.UpdateProfileAsync(publish: publishProfileChange, ct);
+            // TODO: is it a single responsibility issue? perhaps we can move it elsewhere?
+            MultithreadingUtility.AssertMainThread(nameof(UpdateProfileAsync), true);
+            UpdateAvatarInWorld(profile!);
         }
 
         private void UpdateAvatarInWorld(Profile profile)
