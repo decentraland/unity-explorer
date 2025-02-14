@@ -20,7 +20,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         private readonly LoopListView2 loopListView;
         private readonly IProfileRepository profileRepository;
         private readonly CancellationTokenSource addFriendProfileCts = new ();
-        private readonly IFriendOnlineStatusCache friendOnlineStatusCache;
+        private readonly IFriendsConnectivityStatusTracker friendsConnectivityStatusTracker;
         private readonly List<FriendProfile> onlineFriends = new ();
         private readonly List<FriendProfile> offlineFriends = new ();
 
@@ -32,13 +32,13 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             IWebRequestController webRequestController,
             IProfileThumbnailCache profileThumbnailCache,
             IProfileRepository profileRepository,
-            IFriendOnlineStatusCache friendOnlineStatusCache,
+            IFriendsConnectivityStatusTracker friendsConnectivityStatusTracker,
             LoopListView2 loopListView,
             int pageSize,
             int elementsMissingThreshold) : base(friendsService, friendEventBus, webRequestController, profileThumbnailCache, pageSize, elementsMissingThreshold, FriendPanelStatus.ONLINE, FriendPanelStatus.OFFLINE, STATUS_ELEMENT_INDEX, EMPTY_ELEMENT_INDEX, USER_ELEMENT_INDEX)
         {
             this.profileRepository = profileRepository;
-            this.friendOnlineStatusCache = friendOnlineStatusCache;
+            this.friendsConnectivityStatusTracker = friendsConnectivityStatusTracker;
             this.loopListView = loopListView;
 
             friendEventBus.OnYouAcceptedFriendRequestReceivedFromOtherUser += FriendRequestAccepted;
@@ -46,9 +46,9 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             friendEventBus.OnYouRemovedFriend += RemoveFriend;
             friendEventBus.OnOtherUserRemovedTheFriendship += RemoveFriend;
 
-            friendOnlineStatusCache.OnFriendBecameOnline += FriendBecameOnline;
-            friendOnlineStatusCache.OnFriendBecameAway += FriendBecameAway;
-            friendOnlineStatusCache.OnFriendBecameOffline += FriendBecameOffline;
+            friendsConnectivityStatusTracker.OnFriendBecameOnline += FriendBecameOnline;
+            friendsConnectivityStatusTracker.OnFriendBecameAway += FriendBecameAway;
+            friendsConnectivityStatusTracker.OnFriendBecameOffline += FriendBecameOffline;
         }
 
         public override void Dispose()
@@ -59,9 +59,9 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             friendEventBus.OnOtherUserRemovedTheFriendship -= RemoveFriend;
             addFriendProfileCts.SafeCancelAndDispose();
 
-            friendOnlineStatusCache.OnFriendBecameOnline -= FriendBecameOnline;
-            friendOnlineStatusCache.OnFriendBecameAway -= FriendBecameAway;
-            friendOnlineStatusCache.OnFriendBecameOffline -= FriendBecameOffline;
+            friendsConnectivityStatusTracker.OnFriendBecameOnline -= FriendBecameOnline;
+            friendsConnectivityStatusTracker.OnFriendBecameAway -= FriendBecameAway;
+            friendsConnectivityStatusTracker.OnFriendBecameOffline -= FriendBecameOffline;
         }
 
         private void AddNewFriendProfile(FriendProfile friendProfile, OnlineStatus onlineStatus)
@@ -159,7 +159,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 
             elementView.ToggleOnlineStatus(true);
 
-            elementView.SetOnlineStatus(friendOnlineStatusCache.GetFriendStatus(elementView.UserProfile.Address));
+            elementView.SetOnlineStatus(friendsConnectivityStatusTracker.GetFriendStatus(elementView.UserProfile.Address));
         }
 
         protected override void ResetCollections()

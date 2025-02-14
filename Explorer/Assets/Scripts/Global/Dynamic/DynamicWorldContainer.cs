@@ -529,7 +529,7 @@ namespace Global.Dynamic
             notificationsRequestController.StartGettingNewNotificationsOverTimeAsync(ct).SuppressCancellationThrow().Forget();
 
             var friendServiceProxy = new ObjectProxy<IFriendsService>();
-            var friendOnlineStatusCacheProxy = new ObjectProxy<IFriendOnlineStatusCache>();
+            var friendOnlineStatusCacheProxy = new ObjectProxy<IFriendsConnectivityStatusTracker>();
             IProfileThumbnailCache profileThumbnailCache = new ProfileThumbnailCache(staticContainer.WebRequestsContainer.WebRequestController);
             IChatLifecycleBusController chatLifecycleBusController = new ChatLifecycleBusController(mvcManager);
 

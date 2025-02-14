@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace DCL.Friends
 {
-    public class FriendOnlineStatusCache : IFriendOnlineStatusCache, IDisposable
+    public class FriendsConnectivityStatusTracker : IFriendsConnectivityStatusTracker, IDisposable
     {
         private readonly IFriendsEventBus friendEventBus;
         private readonly Dictionary<string, OnlineStatus> friendsOnlineStatus = new ();
@@ -13,7 +13,7 @@ namespace DCL.Friends
         public event Action<FriendProfile>? OnFriendBecameAway;
         public event Action<FriendProfile>? OnFriendBecameOffline;
 
-        public FriendOnlineStatusCache(IFriendsEventBus friendEventBus,
+        public FriendsConnectivityStatusTracker(IFriendsEventBus friendEventBus,
             bool isConnectivityStatusEnabled)
         {
             this.friendEventBus = friendEventBus;

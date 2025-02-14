@@ -62,7 +62,7 @@ namespace DCL.Friends.UI.FriendPanel
             IPassportBridge passportBridge,
             IOnlineUsersProvider onlineUsersProvider,
             IRealmNavigator realmNavigator,
-            IFriendOnlineStatusCache friendOnlineStatusCache,
+            IFriendsConnectivityStatusTracker friendsConnectivityStatusTracker,
             ISidebarActionsBus sidebarActionsBus,
             bool includeUserBlocking,
             bool isConnectivityStatusEnabled) : base(viewFactory)
@@ -78,13 +78,13 @@ namespace DCL.Friends.UI.FriendPanel
                     friendsService,
                     friendEventBus,
                     mvcManager,
-                    new FriendListPagedDoubleCollectionRequestManager(friendsService, friendEventBus, webRequestController, profileThumbnailCache, profileRepository, friendOnlineStatusCache, instantiatedView.FriendsSection.LoopList, FRIENDS_PAGE_SIZE, FRIENDS_FETCH_ELEMENTS_THRESHOLD),
+                    new FriendListPagedDoubleCollectionRequestManager(friendsService, friendEventBus, webRequestController, profileThumbnailCache, profileRepository, friendsConnectivityStatusTracker, instantiatedView.FriendsSection.LoopList, FRIENDS_PAGE_SIZE, FRIENDS_FETCH_ELEMENTS_THRESHOLD),
                     passportBridge,
                     profileThumbnailCache,
                     onlineUsersProvider,
                     realmNavigator,
                     systemClipboard,
-                    friendOnlineStatusCache,
+                    friendsConnectivityStatusTracker,
                     includeUserBlocking);
             else
                 friendSectionController = new FriendSectionController(instantiatedView.FriendsSection,

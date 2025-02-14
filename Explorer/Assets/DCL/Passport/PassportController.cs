@@ -86,7 +86,7 @@ namespace DCL.Passport
         private readonly ICameraReelStorageService cameraReelStorageService;
         private readonly ICameraReelScreenshotsStorage cameraReelScreenshotsStorage;
         private readonly ObjectProxy<IFriendsService> friendServiceProxy;
-        private readonly ObjectProxy<IFriendOnlineStatusCache> friendOnlineStatusCacheProxy;
+        private readonly ObjectProxy<IFriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy;
         private readonly IProfileThumbnailCache profileThumbnailCache;
         private readonly int gridLayoutFixedColumnCount;
         private readonly int thumbnailHeight;
@@ -150,7 +150,7 @@ namespace DCL.Passport
             ICameraReelStorageService cameraReelStorageService,
             ICameraReelScreenshotsStorage cameraReelScreenshotsStorage,
             ObjectProxy<IFriendsService> friendServiceProxy,
-            ObjectProxy<IFriendOnlineStatusCache> friendOnlineStatusCacheProxy,
+            ObjectProxy<IFriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy,
             ISystemClipboard systemClipboard,
             IProfileThumbnailCache profileThumbnailCache,
             IOnlineUsersProvider onlineUsersProvider,

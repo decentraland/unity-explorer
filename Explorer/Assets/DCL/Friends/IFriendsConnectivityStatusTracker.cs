@@ -3,7 +3,7 @@ using System;
 
 namespace DCL.Friends
 {
-    public interface IFriendOnlineStatusCache
+    public interface IFriendsConnectivityStatusTracker
     {
         event Action<FriendProfile>? OnFriendBecameOnline;
         event Action<FriendProfile>? OnFriendBecameAway;

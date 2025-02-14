@@ -8,25 +8,25 @@ namespace DCL.Friends.UI.PushNotifications
 {
     public class FriendPushNotificationController : ControllerBase<FriendPushNotificationView>
     {
-        private readonly IFriendOnlineStatusCache friendOnlineStatusCache;
+        private readonly IFriendsConnectivityStatusTracker friendsConnectivityStatusTracker;
         private readonly IProfileThumbnailCache profileThumbnailCache;
 
         private CancellationTokenSource toastAnimationCancellationTokenSource = new ();
 
         public FriendPushNotificationController(ViewFactoryMethod viewFactory,
-            IFriendOnlineStatusCache friendOnlineStatusCache,
+            IFriendsConnectivityStatusTracker friendsConnectivityStatusTracker,
             IProfileThumbnailCache profileThumbnailCache) : base(viewFactory)
         {
-            this.friendOnlineStatusCache = friendOnlineStatusCache;
+            this.friendsConnectivityStatusTracker = friendsConnectivityStatusTracker;
             this.profileThumbnailCache = profileThumbnailCache;
 
-            friendOnlineStatusCache.OnFriendBecameOnline += FriendConnected;
+            friendsConnectivityStatusTracker.OnFriendBecameOnline += FriendConnected;
         }
 
         public override void Dispose()
         {
             base.Dispose();
-            friendOnlineStatusCache.OnFriendBecameOnline -= FriendConnected;
+            friendsConnectivityStatusTracker.OnFriendBecameOnline -= FriendConnected;
             toastAnimationCancellationTokenSource.SafeCancelAndDispose();
         }
 

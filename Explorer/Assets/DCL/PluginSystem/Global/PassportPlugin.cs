@@ -56,7 +56,7 @@ namespace DCL.PluginSystem.Global
         private readonly Entity playerEntity;
         private readonly bool enableCameraReel;
         private readonly ObjectProxy<IFriendsService> friendsService;
-        private readonly ObjectProxy<IFriendOnlineStatusCache> friendOnlineStatusCache;
+        private readonly ObjectProxy<IFriendsConnectivityStatusTracker> friendOnlineStatusCache;
         private readonly ISystemClipboard systemClipboard;
         private readonly IProfileThumbnailCache profileThumbnailCache;
         private readonly IOnlineUsersProvider onlineUsersProvider;
@@ -90,7 +90,7 @@ namespace DCL.PluginSystem.Global
             Entity playerEntity,
             bool enableCameraReel,
             ObjectProxy<IFriendsService> friendsService,
-            ObjectProxy<IFriendOnlineStatusCache> friendOnlineStatusCacheProxy,
+            ObjectProxy<IFriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy,
             ISystemClipboard systemClipboard,
             IProfileThumbnailCache profileThumbnailCache,
             IOnlineUsersProvider onlineUsersProvider,
