@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: FriendPanel - Open
   m_EditorClassIdentifier: 
   audioClips:
-  - {fileID: 8300000, guid: 13c6d08f9a2b6144a9aa6257fa24a3ba, type: 3}
+  - {fileID: 8300000, guid: 590bf91ade06408408a1d23e10480116, type: 3}
   relativeVolume: 1
   audioCategory: 0
   pitchVariation: 0
