@@ -32,7 +32,7 @@ using ABPromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoadin
 namespace ECS.StreamableLoading.AssetBundles.Tests
 {
     [TestFixture]
-    public class LoadAssetBundlePartialSystemShould :  UnitySystemTestBase<LoadAssetBundleSystem>//PartialLoadSystemBaseShould<LoadAssetBundleSystem, AssetBundleData, GetAssetBundleIntention>
+    public class LoadAssetBundlePartialSystemShould :  UnitySystemTestBase<LoadAssetBundleSystem>
     {
         //size 7600
         private string assetPath => $"{Application.dataPath + "/../TestResources/AssetBundles/bafkreid3xecd44iujaz5qekbdrt5orqdqj3wivg5zc5mya3zkorjhyrkda"}";
