@@ -17,6 +17,7 @@ namespace DCL.Friends.UI.PushNotifications
         [field: SerializeField] public ImageView ThumbnailImageView { get; private set; }
         [field: SerializeField] public TMP_Text UserNameText { get; private set; }
         [field: SerializeField] public TMP_Text UserAddressText { get; private set; }
+        [field: SerializeField] public GameObject VerifiedIcon { get; private set; }
         [field: SerializeField] public CanvasGroup PanelCanvasGroup { get; private set; }
         [field: SerializeField] public ChatEntryConfigurationSO ChatEntryConfiguration { get; private set; }
 
@@ -46,7 +47,8 @@ namespace DCL.Friends.UI.PushNotifications
 
             UserNameText.text = friendProfile.Name;
             UserAddressText.text = $"#{friendProfile.Address.ToString()[^4..]}";
-            UserAddressText.gameObject.SetActive(friendProfile.HasClaimedName);
+            UserAddressText.gameObject.SetActive(!friendProfile.HasClaimedName);
+            VerifiedIcon.SetActive(friendProfile.HasClaimedName);
 
             if (profileThumbnail != null)
                 ThumbnailImageView.SetImage(profileThumbnail);
