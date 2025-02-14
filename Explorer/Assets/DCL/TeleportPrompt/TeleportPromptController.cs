@@ -1,6 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
-using DCL.Chat;
 using DCL.Chat.Commands;
+using DCL.Chat.History;
 using DCL.Diagnostics;
 using DCL.Input;
 using DCL.PlacesAPIService;

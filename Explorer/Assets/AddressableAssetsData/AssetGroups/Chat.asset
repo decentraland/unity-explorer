@@ -17,11 +17,6 @@ MonoBehaviour:
     m_SerializedData: []
   m_GUID: 8b013415c163949639034d60860ef87f
   m_SerializeEntries:
-  - m_GUID: 20fcd3bb3495c4af78b93a75fc26fccf
-    m_Address: EmojiSuggestionBox
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 51646f2adc3264ba7bf9b4f90febbd22
     m_Address: EmojiPanelConfig
     m_ReadOnly: 0
@@ -34,11 +29,6 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 543dff6efe38c4acb9118c149e6c6eca
     m_Address: EmojiPanel
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 5bc332aa8fd2147cab980e20e64bec03
-    m_Address: EmojiSuggestion
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

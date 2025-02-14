@@ -168,7 +168,7 @@ MonoBehaviour:
   <messageContentRectTransform>k__BackingField: {fileID: 8258041763941702871}
   <messageContentSizeFitter>k__BackingField: {fileID: 5118336956721699336}
   <messageContentText>k__BackingField: {fileID: 2681651048344826938}
-  <hyperlinkHandler>k__BackingField: {fileID: 4356320699868230769}
+  <textHyperlinkHandler>k__BackingField: {fileID: 4356320699868230769}
 --- !u!114 &4356320699868230769
 MonoBehaviour:
   m_ObjectHideFlags: 0

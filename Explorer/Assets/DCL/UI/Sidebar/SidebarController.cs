@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.Chat;
+using DCL.Chat.History;
 using DCL.ExplorePanel;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Notifications.NotificationsMenu;
@@ -15,7 +16,6 @@ using DCL.Web3.Identities;
 using MVC;
 using System;
 using System.Threading;
-using UnityEngine;
 using Utility;
 
 namespace DCL.UI.Sidebar
@@ -30,11 +30,12 @@ namespace DCL.UI.Sidebar
         private readonly ProfileMenuController profileMenuController;
         private readonly SkyboxMenuController skyboxMenuController;
         private readonly ControlsPanelController controlsPanelController;
-        private readonly ChatEntryConfigurationSO chatEntryConfiguration;
         private readonly IProfileRepository profileRepository;
         private readonly IWeb3IdentityCache identityCache;
         private readonly IWebBrowser webBrowser;
         private readonly bool includeCameraReel;
+        private readonly ChatView chatView;
+        private readonly IChatHistory chatHistory;
 
         private CancellationTokenSource profileWidgetCts = new ();
         private CancellationTokenSource systemMenuCts = new ();
@@ -53,27 +54,28 @@ namespace DCL.UI.Sidebar
             SkyboxMenuController skyboxMenuController,
             ControlsPanelController controlsPanelController,
             ISidebarBus sidebarBus,
-            ChatEntryConfigurationSO chatEntryConfiguration,
             IWeb3IdentityCache identityCache,
             IProfileRepository profileRepository,
             IWebBrowser webBrowser,
-            bool includeCameraReel)
+            bool includeCameraReel,
+            ChatView chatView,
+            IChatHistory chatHistory)
             : base(viewFactory)
         {
             this.mvcManager = mvcManager;
             this.profileIconWidgetController = profileIconWidgetController;
-            this.profileMenuController = profileMenuMenuWidgetController;
+            profileMenuController = profileMenuMenuWidgetController;
             this.sidebarBus = sidebarBus;
             this.notificationsBusController = notificationsBusController;
             this.notificationsMenuController = notificationsMenuController;
             this.skyboxMenuController = skyboxMenuController;
             this.controlsPanelController = controlsPanelController;
-            this.chatEntryConfiguration = chatEntryConfiguration;
-
             this.identityCache = identityCache;
             this.profileRepository = profileRepository;
             this.webBrowser = webBrowser;
             this.includeCameraReel = includeCameraReel;
+            this.chatView = chatView;
+            this.chatHistory = chatHistory;
         }
 
         public override void Dispose()
@@ -108,6 +110,7 @@ namespace DCL.UI.Sidebar
             viewInstance.skyboxButton.Button.onClick.AddListener(OpenSkyboxSettings);
             viewInstance.SkyboxMenuView.OnViewHidden += OnSkyboxSettingsClosed;
             viewInstance.controlsButton.onClick.AddListener(OnControlsButtonClicked);
+            viewInstance.unreadMessagesButton.onClick.AddListener(OnUnreadMessagesButtonClicked);
 
             if (includeCameraReel)
                 viewInstance.cameraReelButton.onClick.AddListener(() => OpenExplorePanelInSection(ExploreSections.CameraReel));
@@ -115,6 +118,34 @@ namespace DCL.UI.Sidebar
             {
                 viewInstance.cameraReelButton.gameObject.SetActive(false);
                 viewInstance.InWorldCameraButton.gameObject.SetActive(false);
+            }
+
+            chatHistory.ReadMessagesChanged += OnChatHistoryReadMessagesChanged;
+            chatHistory.MessageAdded += OnChatHistoryMessageAdded;
+            chatView.FoldingChanged += OnChatViewFoldingChanged;
+        }
+
+        private void OnChatHistoryMessageAdded(ChatChannel destinationChannel, ChatMessage addedMessage)
+        {
+            viewInstance!.chatUnreadMessagesNumber.Number = chatHistory.TotalMessages - chatHistory.ReadMessages;
+        }
+
+        private void OnChatViewFoldingChanged(bool isUnfolded)
+        {
+            // TODO: The sidebar should provide a mechanism to fix the icon of a button, so it can be active while the Chat window is unfolded
+        }
+
+        private void OnChatHistoryReadMessagesChanged(ChatChannel changedChannel)
+        {
+            viewInstance!.chatUnreadMessagesNumber.Number = chatHistory.TotalMessages - chatHistory.ReadMessages;
+        }
+
+        private void OnUnreadMessagesButtonClicked()
+        {
+            if (!chatView.IsUnfolded)
+            {
+                chatView.IsUnfolded = true;
+                chatView.ShowNewMessages();
             }
         }
 
@@ -137,8 +168,13 @@ namespace DCL.UI.Sidebar
         private void CloseAllWidgets()
         {
             systemMenuCts = systemMenuCts.SafeRestart();
-            if (profileMenuController.State is ControllerState.ViewFocused or ControllerState.ViewBlurred) { profileMenuController.HideViewAsync(systemMenuCts.Token).Forget(); }
-            if (skyboxMenuController.State is ControllerState.ViewFocused or ControllerState.ViewBlurred) { skyboxMenuController.HideViewAsync(systemMenuCts.Token).Forget(); }
+
+            if (profileMenuController.State is ControllerState.ViewFocused or ControllerState.ViewBlurred)
+                profileMenuController.HideViewAsync(systemMenuCts.Token).Forget();
+
+            if (skyboxMenuController.State is ControllerState.ViewFocused or ControllerState.ViewBlurred)
+                skyboxMenuController.HideViewAsync(systemMenuCts.Token).Forget();
+
             notificationsMenuController.ToggleNotificationsPanel(true);
             viewInstance!.sidebarSettingsWidget.CloseElement();
             sidebarBus.UnblockSidebar();
@@ -171,6 +207,7 @@ namespace DCL.UI.Sidebar
         protected override void OnViewShow()
         {
             profileWidgetCts = profileWidgetCts.SafeRestart();
+
             //We load the data into the profile widget
             profileIconWidgetController.LaunchViewLifeCycleAsync(new CanvasOrdering(CanvasOrdering.SortingLayer.Persistent, 0), new ControllerNoData(), profileWidgetCts.Token).Forget();
             UpdateFrameColorAsync().Forget();
@@ -179,7 +216,9 @@ namespace DCL.UI.Sidebar
         private async UniTaskVoid UpdateFrameColorAsync()
         {
             Profile? profile = await profileRepository.GetAsync(identityCache.Identity!.Address, profileWidgetCts.Token);
-            viewInstance!.FaceFrame.color = chatEntryConfiguration.GetNameColor(profile?.Name);
+
+            if (profile != null)
+                viewInstance!.FaceFrame.color = profile.UserNameColor;
         }
 
         protected override void OnViewClose()
@@ -192,10 +231,9 @@ namespace DCL.UI.Sidebar
         private void OpenProfileMenu()
         {
             if (profileMenuController.State is ControllerState.ViewFocused or ControllerState.ViewBlurred)
-            {
+
                 //Profile is already open
                 return;
-            }
 
             CloseAllWidgets();
             sidebarBus.BlockSidebar();

@@ -6,24 +6,24 @@ using DCL.Chat;
 using DCL.Chat.Commands;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
-using DCL.Emoji;
 using DCL.Input;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
 using DCL.Profiles;
+using DCL.Settings.Settings;
+using DCL.UI.InputFieldFormatting;
 using DCL.UI.MainUI;
+using DCL.UI.Profiles.Helpers;
 using MVC;
-using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 
 namespace DCL.PluginSystem.Global
 {
-    public class ChatPlugin : IDCLGlobalPlugin<ChatPlugin.ChatSettings>
+    public class ChatPlugin : IDCLGlobalPlugin<ChatPluginSettings>
     {
-        private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IMVCManager mvcManager;
         private readonly IChatHistory chatHistory;
         private readonly IChatMessagesBus chatMessagesBus;
@@ -36,11 +36,12 @@ namespace DCL.PluginSystem.Global
         private readonly ViewDependencies viewDependencies;
         private readonly IChatCommandsBus chatCommandsBus;
         private readonly IRoomHub roomHub;
+        private readonly IAssetsProvisioner assetsProvisioner;
+        private readonly ITextFormatter hyperlinkTextFormatter;
 
         private ChatController chatController;
 
         public ChatPlugin(
-            IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
             IChatMessagesBus chatMessagesBus,
             IChatHistory chatHistory,
@@ -52,9 +53,9 @@ namespace DCL.PluginSystem.Global
             Entity playerEntity,
             ViewDependencies viewDependencies,
             IChatCommandsBus chatCommandsBus,
-            IRoomHub roomHub)
+            IRoomHub roomHub,
+            IAssetsProvisioner assetsProvisioner, ITextFormatter hyperlinkTextFormatter)
         {
-            this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
             this.chatHistory = chatHistory;
             this.chatMessagesBus = chatMessagesBus;
@@ -65,6 +66,8 @@ namespace DCL.PluginSystem.Global
             this.playerEntity = playerEntity;
             this.viewDependencies = viewDependencies;
             this.chatCommandsBus = chatCommandsBus;
+            this.assetsProvisioner = assetsProvisioner;
+            this.hyperlinkTextFormatter = hyperlinkTextFormatter;
             this.mainUIView = mainUIView;
             this.inputBlock = inputBlock;
             this.roomHub = roomHub;
@@ -74,9 +77,9 @@ namespace DCL.PluginSystem.Global
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
 
-        public async UniTask InitializeAsync(ChatSettings settings, CancellationToken ct)
+        public async UniTask InitializeAsync(ChatPluginSettings settings, CancellationToken ct)
         {
-            ChatEntryConfigurationSO chatEntryConfiguration = (await assetsProvisioner.ProvideMainAssetAsync(settings.ChatEntryConfiguration, ct)).Value;
+            ProvidedAsset<ChatAudioSettingsAsset> chatSettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.ChatSettingsAsset, ct);
 
             chatController = new ChatController(
                 () =>
@@ -85,7 +88,6 @@ namespace DCL.PluginSystem.Global
                     view.gameObject.SetActive(true);
                     return view;
                 },
-                chatEntryConfiguration,
                 chatMessagesBus,
                 chatHistory,
                 entityParticipantTable,
@@ -95,54 +97,17 @@ namespace DCL.PluginSystem.Global
                 inputBlock,
                 viewDependencies,
                 chatCommandsBus,
-                roomHub
+                roomHub,
+                chatSettingsAsset.Value,
+                hyperlinkTextFormatter
             );
 
             mvcManager.RegisterController(chatController);
         }
+    }
 
-        public class ChatSettings : IDCLPluginSettings
-        {
-            [field: Header(nameof(ChatPlugin) + "." + nameof(ChatSettings))]
-            [field: Space]
-            [field: SerializeField]
-            public AssetReferenceT<ChatEntryConfigurationSO> ChatEntryConfiguration { get; private set; }
-
-            [Serializable]
-            public class EmojiSuggestionPanelRef : ComponentReference<EmojiSuggestionPanelView>
-            {
-                public EmojiSuggestionPanelRef(string guid) : base(guid) { }
-            }
-
-            [Serializable]
-            public class EmojiSuggestionRef : ComponentReference<EmojiSuggestionView>
-            {
-                public EmojiSuggestionRef(string guid) : base(guid) { }
-            }
-
-            [Serializable]
-            public class EmojiSectionRef : ComponentReference<EmojiSectionView>
-            {
-                public EmojiSectionRef(string guid) : base(guid) { }
-            }
-
-            [Serializable]
-            public class EmojiButtonRef : ComponentReference<EmojiButton>
-            {
-                public EmojiButtonRef(string guid) : base(guid) { }
-            }
-
-            [Serializable]
-            public class EmojiPanelRef : ComponentReference<EmojiPanelView>
-            {
-                public EmojiPanelRef(string guid) : base(guid) { }
-            }
-
-            [Serializable]
-            public class MainUIRef : ComponentReference<MainUIView>
-            {
-                public MainUIRef(string guid) : base(guid) { }
-            }
-        }
+    public class ChatPluginSettings : IDCLPluginSettings
+    {
+        [field: SerializeField] public AssetReferenceT<ChatAudioSettingsAsset> ChatSettingsAsset { get; private set; }
     }
 }

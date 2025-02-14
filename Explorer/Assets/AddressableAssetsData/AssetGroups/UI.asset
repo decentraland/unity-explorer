@@ -82,6 +82,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 734732fb25eed5944b9c5a5814249f81
+    m_Address: MentionUserButton.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 73b47c88148e7a14f9ea5e351d2d792d
     m_Address: Assets/DCL/MapRenderer/Textures/MapRenderer.spriteatlasv2
     m_ReadOnly: 0
@@ -124,6 +129,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: bf1104b23d6ed8f4ab84e9a0da93e10d
     m_Address: Passport
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c325bf3c176cc034d83115896fd851da
+    m_Address: OpenUserProfileButton.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

@@ -67,6 +67,8 @@ using DCL.SceneLoadingScreens.LoadingScreen;
 using DCL.SidebarBus;
 using DCL.UI.MainUI;
 using DCL.StylizedSkybox.Scripts.Plugin;
+using DCL.UI.InputFieldFormatting;
+using DCL.UI.Profiles.Helpers;
 using DCL.UserInAppInitializationFlow;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
@@ -286,13 +288,13 @@ namespace Global.Dynamic
             var wearableCatalog = new WearableStorage();
             var characterPreviewFactory = new CharacterPreviewFactory(staticContainer.ComponentsContainer.ComponentPoolsRegistry);
             IWebBrowser webBrowser = bootstrapContainer.WebBrowser;
-            ChatEntryConfigurationSO chatEntryConfiguration = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.ChatEntryConfiguration, ct)).Value;
+            IProfileNameColorHelper profileNameColorHelper = new ProfileNameColorHelper(dynamicSettings.UserNameColors);
             NametagsData nametagsData = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.NametagsData, ct)).Value;
 
             IProfileCache profileCache = new DefaultProfileCache();
 
             var profileRepository = new LogProfileRepository(
-                new RealmProfileRepository(staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData, profileCache)
+                new RealmProfileRepository(staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData, profileCache, profileNameColorHelper)
             );
 
             var genesisTerrain = new TerrainGenerator(staticContainer.Profiler);
@@ -501,7 +503,6 @@ namespace Global.Dynamic
             var connectionStatusPanelPlugin = new ConnectionStatusPanelPlugin(userInAppInAppInitializationFlow, mvcManager, mainUIView, roomsStatus, currentSceneInfo, reloadSceneController, globalWorld, playerEntity, debugBuilder, chatCommandsBus);
             var chatTeleporter = new ChatTeleporter(realmNavigator, new ChatEnvironmentValidator(bootstrapContainer.Environment), bootstrapContainer.DecentralandUrlsSource);
 
-
             var chatCommands = new List<IChatCommand>
             {
                 new GoToChatCommand(chatTeleporter, staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource),
@@ -517,7 +518,7 @@ namespace Global.Dynamic
 
             chatCommands.Add(new HelpChatCommand(chatCommands, appArgs));
 
-            IChatMessagesBus coreChatMessageBus = new MultiplayerChatMessagesBus(messagePipesHub, profileRepository, new MessageDeduplication<double>())
+            IChatMessagesBus coreChatMessageBus = new MultiplayerChatMessagesBus(messagePipesHub, profileRepository, selfProfile, new MessageDeduplication<double>())
                                                  .WithSelfResend(identityCache, profileRepository)
                                                  .WithIgnoreSymbols()
                                                  .WithCommands(chatCommands)
@@ -581,10 +582,11 @@ namespace Global.Dynamic
             IUserCalendar userCalendar = new GoogleUserCalendar(webBrowser);
             ISystemClipboard clipboard = new UnityClipboard();
             IClipboardManager clipboardManager = new ClipboardManager(clipboard);
+            ITextFormatter hyperlinkTextFormatter = new HyperlinkTextFormatter(profileCache, selfProfile);
 
             bool includeCameraReel = staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.CAMERA_REEL) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.CAMERA_REEL)) || Application.isEditor;
 
-            var viewDependencies = new ViewDependencies(dclInput, unityEventSystem, new MVCManagerMenusAccessFacade(mvcManager, clipboard), clipboardManager, dclCursor, profileCache);
+            var viewDependencies = new ViewDependencies(dclInput, unityEventSystem, new MVCManagerMenusAccessFacade(mvcManager, clipboard, clipboardManager), clipboardManager, dclCursor, profileCache, profileNameColorHelper, roomHub);
 
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
@@ -629,7 +631,7 @@ namespace Global.Dynamic
                     staticContainer.MainPlayerAvatarBaseProxy,
                     debugBuilder,
                     staticContainer.CacheCleaner,
-                    chatEntryConfiguration,
+                    profileNameColorHelper,
                     new DefaultFaceFeaturesHandler(wearableCatalog),
                     nametagsData,
                     defaultTexturesContainer.TextureArrayContainerFactory,
@@ -651,12 +653,12 @@ namespace Global.Dynamic
                     webBrowser,
                     dynamicWorldDependencies.Web3Authenticator,
                     userInAppInAppInitializationFlow,
-                    profileCache, sidebarBus, dclInput, chatEntryConfiguration,
-                    globalWorld, playerEntity, includeCameraReel),
+                    profileCache, sidebarBus, dclInput,
+                    globalWorld, playerEntity, includeCameraReel, chatHistory),
                 new ErrorPopupPlugin(mvcManager, assetsProvisioner),
                 connectionStatusPanelPlugin,
                 new MinimapPlugin(mvcManager, minimap),
-                new ChatPlugin(assetsProvisioner,
+                new ChatPlugin(
                     mvcManager,
                     chatMessagesBus,
                     chatHistory,
@@ -668,7 +670,9 @@ namespace Global.Dynamic
                     playerEntity,
                     viewDependencies,
                     chatCommandsBus,
-                    roomHub),
+                    roomHub,
+                    assetsProvisioner,
+                    hyperlinkTextFormatter),
                 new ExplorePanelPlugin(
                     assetsProvisioner,
                     mvcManager,
@@ -699,7 +703,6 @@ namespace Global.Dynamic
                     notificationsBusController,
                     characterPreviewEventBus,
                     mapPathEventBus,
-                    chatEntryConfiguration,
                     backpackEventBus,
                     thirdPartyNftProviderSource,
                     wearablesProvider,
@@ -769,7 +772,6 @@ namespace Global.Dynamic
                     dclCursor,
                     profileRepository,
                     characterPreviewFactory,
-                    chatEntryConfiguration,
                     staticContainer.RealmData,
                     assetBundlesURL,
                     staticContainer.WebRequestsContainer.WebRequestController,
@@ -820,7 +822,8 @@ namespace Global.Dynamic
                     mainUIView.SidebarView.EnsureNotNull().InWorldCameraButton,
                     dynamicWorldDependencies.RootUIDocument,
                     globalWorld,
-                    debugBuilder));
+                    debugBuilder,
+                    profileNameColorHelper));
 
             if (dynamicWorldParams.EnableAnalytics)
                 globalPlugins.Add(new AnalyticsPlugin(
