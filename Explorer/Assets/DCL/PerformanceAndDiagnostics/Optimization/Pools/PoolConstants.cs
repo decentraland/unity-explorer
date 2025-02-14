@@ -32,7 +32,9 @@ true;
         /// <summary>
         ///     Initial capacity of pools connected to the initial capacity of the asset promises per scene
         /// </summary>
-        public const int ASSET_PROMISES_PER_SCENE_COUNT = ENTITIES_COUNT_PER_SCENE / 2;
+        public const int MAX_ASSET_PROMISES_PER_SCENE_COUNT = ENTITIES_COUNT_PER_SCENE / 2;
+
+        public const int INITIAL_ASSET_PROMISES_PER_SCENE_COUNT = MAX_ASSET_PROMISES_PER_SCENE_COUNT / 2;
 
         /// <summary>
         ///     Initial capacity of pools connected to pointer events processing per scene

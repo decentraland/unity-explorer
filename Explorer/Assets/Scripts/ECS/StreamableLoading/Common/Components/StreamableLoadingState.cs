@@ -56,7 +56,7 @@ namespace ECS.StreamableLoading.Common.Components
                 state.PartialDownloadingData = null;
             },
             collectionCheck: PoolConstants.CHECK_COLLECTIONS,
-            defaultCapacity: PoolConstants.ASSET_PROMISES_PER_SCENE_COUNT / 2, maxSize: PoolConstants.ASSET_PROMISES_PER_SCENE_COUNT);
+            defaultCapacity: PoolConstants.INITIAL_ASSET_PROMISES_PER_SCENE_COUNT, maxSize: PoolConstants.MAX_ASSET_PROMISES_PER_SCENE_COUNT);
 
         public static StreamableLoadingState Create() =>
             POOL.Get();

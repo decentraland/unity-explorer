@@ -18,11 +18,6 @@ namespace DCL.WebRequests.CustomDownloadHandlers
             this.buffersPool = buffersPool;
         }
 
-        protected override void CompleteContent()
-        {
-
-        }
-
         protected override bool ReceiveData(byte[] receivedData, int dataLength)
         {
             if (dataLength == 0)

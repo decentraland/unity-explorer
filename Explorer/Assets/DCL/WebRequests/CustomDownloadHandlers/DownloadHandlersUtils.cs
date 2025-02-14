@@ -1,17 +1,20 @@
+using System;
 using System.Text;
 
 namespace DCL.WebRequests.CustomDownloadHandlers
 {
-    public class DownloadHandlersUtils
+    public static class DownloadHandlersUtils
     {
         private static readonly StringBuilder STRING_BUILDER = new ();
+        private const string BYTES_HEADER = "bytes=";
+        private const string BYTES_HEADER_SEPARATOR = "-";
 
         public static string GetContentRangeHeaderValue(long start, long end)
         {
             STRING_BUILDER.Clear();
-            STRING_BUILDER.Append("bytes=");
+            STRING_BUILDER.Append(BYTES_HEADER);
             STRING_BUILDER.Append(start);
-            STRING_BUILDER.Append("-");
+            STRING_BUILDER.Append(BYTES_HEADER_SEPARATOR);
             STRING_BUILDER.Append(end);
             return STRING_BUILDER.ToString();
         }
@@ -25,7 +28,7 @@ namespace DCL.WebRequests.CustomDownloadHandlers
             int separatorIndex = input.IndexOf('/');
             if (separatorIndex == -1 || separatorIndex == input.Length - 1) return false;
 
-            string secondPart = input.Substring(separatorIndex + 1);
+            ReadOnlySpan<char> secondPart = input.AsSpan(separatorIndex + 1);
             return int.TryParse(secondPart, out result);
         }
     }
