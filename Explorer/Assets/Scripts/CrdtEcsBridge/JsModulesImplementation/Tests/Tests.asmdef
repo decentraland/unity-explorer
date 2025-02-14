@@ -2,6 +2,7 @@
     "name": "Engine.Tests",
     "rootNamespace": "",
     "references": [
+        "GUID:9659fcb6593e30b46909c1245ed056df",
         "GUID:27619889b8ba8c24980f49ee34dbb44a",
         "GUID:0acc523941302664db1f4e527237feb3",
         "GUID:9f890bfbf13e43c481227c49a4e6cb11",

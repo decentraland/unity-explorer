@@ -152,7 +152,7 @@ namespace SceneRuntime
             return jsArray;
         }
 
-        public object ConvertToScriptTypedArrays(IReadOnlyList<IMemoryOwner<byte>> byteArrays)
+        public ScriptObject ConvertToScriptTypedArrays(IReadOnlyList<IMemoryOwner<byte>> byteArrays)
         {
             var js2DArray = (ScriptObject) engine.Evaluate("[]"); // create an outer array
 

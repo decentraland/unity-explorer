@@ -64,6 +64,7 @@ namespace DCL.MapRenderer
                 layers[MapLayer.SearchResults].SharedActive = true;
                 layers[MapLayer.LiveEvents].SharedActive = false;
                 layers[MapLayer.Category].SharedActive = false;
+                layers[MapLayer.ParcelsAtlas].SharedActive = false;
             }
             catch (OperationCanceledException)
             {
@@ -124,9 +125,12 @@ namespace DCL.MapRenderer
         {
             foreach (MapLayer mapLayer in ALL_LAYERS)
             {
-                if (!EnumUtils.HasFlag(mask, mapLayer) || !layers.TryGetValue(mapLayer, out MapLayerStatus mapLayerStatus) || mapLayerStatus.ActivityOwners.Count == 0 || mapLayerStatus.SharedActive == active)
+                if (!EnumUtils.HasFlag(mask, mapLayer))
                     continue;
 
+                if (!layers.TryGetValue(mapLayer, out var mapLayerStatus) || mapLayerStatus.ActivityOwners.Count == 0 || mapLayerStatus.SharedActive == active)
+                    continue;
+                    
                 mapLayerStatus.SharedActive = active;
 
                 // Cancel activation/deactivation flow
