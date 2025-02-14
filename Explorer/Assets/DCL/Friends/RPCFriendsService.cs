@@ -1,7 +1,6 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.Multiplayer.Connectivity;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.Web3;
@@ -34,23 +33,17 @@ namespace DCL.Friends
         private const int CONNECTION_TIMEOUT_SECS = 10;
         private const int CONNECTION_RETRIES = 3;
         private const int RETRY_STREAM_THROTTLE_MS = 30000;
-        private const int ONLINE_CONNECTIVITY_POLLING_MS = 5000;
 
         private readonly URLAddress apiUrl;
         private readonly IFriendsEventBus eventBus;
         private readonly IWeb3IdentityCache identityCache;
         private readonly FriendsCache friendsCache;
         private readonly ISelfProfile selfProfile;
-        private readonly IOnlineUsersProvider onlineUsersProvider;
         private readonly List<FriendRequest> receivedFriendRequestsBuffer = new();
         private readonly List<FriendRequest> sentFriendRequestsBuffer = new();
         private readonly Dictionary<string, string> authChainBuffer = new();
         private readonly List<FriendProfile> friendProfileBuffer = new();
-
         private readonly SemaphoreSlim handshakeMutex = new(1, 1);
-
-        // TODO: remove as it should not be necessary anymore once the server stream works as expected
-        private readonly Dictionary<string, FriendProfile> profiles = new();
 
         private RpcClientModule? module;
         private RpcClientPort? port;
@@ -66,15 +59,13 @@ namespace DCL.Friends
             IFriendsEventBus eventBus,
             IWeb3IdentityCache identityCache,
             FriendsCache friendsCache,
-            ISelfProfile selfProfile,
-            IOnlineUsersProvider onlineUsersProvider)
+            ISelfProfile selfProfile)
         {
             this.apiUrl = apiUrl;
             this.eventBus = eventBus;
             this.identityCache = identityCache;
             this.friendsCache = friendsCache;
             this.selfProfile = selfProfile;
-            this.onlineUsersProvider = onlineUsersProvider;
         }
 
         public void Dispose()
@@ -188,8 +179,6 @@ namespace DCL.Friends
 
         public async UniTask SubscribeToConnectivityStatusAsync(CancellationToken ct)
         {
-            // PollFromArchipelagoApiAsync().Forget();
-
             // We try to keep the stream open until cancellation is requested
             // If by any reason the rpc connection has a problem, we need to wait until it is restored, so we re-open the stream
             while (!ct.IsCancellationRequested)
@@ -208,46 +197,6 @@ namespace DCL.Friends
             }
 
             return;
-
-            // TODO: remove this as it should not longer be necessary when the server stream works as expected
-            async UniTask PollFromArchipelagoApiAsync()
-            {
-                while (!ct.IsCancellationRequested)
-                {
-                    try
-                    {
-                        await UniTask.Delay(ONLINE_CONNECTIVITY_POLLING_MS, cancellationToken: ct);
-
-                        if (friendsCache.Count == 0) continue;
-
-                        IReadOnlyCollection<OnlineUserData> onlineUsers =
-                            await onlineUsersProvider.GetAsync(friendsCache, ct);
-
-                        foreach (string friend in friendsCache)
-                        {
-                            var isOnline = false;
-
-                            foreach (OnlineUserData onlineUser in onlineUsers)
-                            {
-                                if (onlineUser.avatarId != friend) continue;
-                                isOnline = true;
-                                break;
-                            }
-
-                            if (!profiles.TryGetValue(friend, out FriendProfile? profile)) continue;
-
-                            if (isOnline)
-                                eventBus.BroadcastFriendConnected(profile);
-                            else
-                                eventBus.BroadcastFriendDisconnected(profile);
-                        }
-                    }
-                    catch (Exception e) when (e is not OperationCanceledException)
-                    {
-                        ReportHub.LogException(e, new ReportData(ReportCategory.FRIENDS));
-                    }
-                }
-            }
 
             async UniTask OpenStreamAndProcessUpdatesAsync()
             {
@@ -691,8 +640,6 @@ namespace DCL.Friends
                 profile.HasClaimedName,
                 URLAddress.FromString(profile.ProfilePictureUrl));
 
-            profiles[fp.Address] = fp;
-
             return fp;
         }
 
@@ -702,8 +649,6 @@ namespace DCL.Friends
                 profile.Name,
                 profile.HasClaimedName,
                 profile.Avatar.FaceSnapshotUrl);
-
-            profiles[fp.Address] = fp;
 
             return fp;
         }
