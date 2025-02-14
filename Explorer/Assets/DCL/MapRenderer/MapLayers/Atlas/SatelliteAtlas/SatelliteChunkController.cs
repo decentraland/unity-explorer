@@ -17,8 +17,7 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
     {
         private const float SATURATION_VALUE = 1f;
         private const string CHUNKS_API = "https://media.githubusercontent.com/media/genesis-city/parcels/new-client-images/maps/lod-0/3/";
-        private static readonly Color FINAL_COLOR = Color.white;
-        private static readonly Color INITIAL_COLOR = new (0, 0, 0, 0);
+
         private readonly MapRendererTextureContainer textureContainer;
 
         private readonly IWebRequestController webRequestController;
@@ -74,7 +73,7 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
         {
             linkedCts = CancellationTokenSource.CreateLinkedTokenSource(internalCts.Token, ct);
             atlasChunk.MainSpriteRenderer.enabled = false;
-            atlasChunk.MainSpriteRenderer.color = INITIAL_COLOR;
+            atlasChunk.MainSpriteRenderer.color = AtlasChunkConstants.INITIAL_COLOR;
             var url = $"{CHUNKS_API}{chunkId.x}%2C{chunkId.y}.jpg";
 
             var textureTask = webRequestController.GetTextureAsync(
@@ -107,8 +106,8 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
             float pixelsPerUnit = texture.width / chunkWorldSize;
 
             atlasChunk.MainSpriteRenderer.enabled = true;
-            atlasChunk.LoadingSpriteRenderer.DOColor(INITIAL_COLOR, 0.5f).OnComplete(() => atlasChunk.LoadingSpriteRenderer.gameObject.SetActive(false));
-            atlasChunk.MainSpriteRenderer.DOColor(FINAL_COLOR, 0.5f);
+            atlasChunk.LoadingSpriteRenderer.DOColor(AtlasChunkConstants.INITIAL_COLOR, 0.5f).OnComplete(() => atlasChunk.LoadingSpriteRenderer.gameObject.SetActive(false));
+            atlasChunk.MainSpriteRenderer.DOColor(AtlasChunkConstants.FINAL_COLOR, 0.5f);
 
             atlasChunk.MainSpriteRenderer.sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), VectorUtilities.OneHalf, pixelsPerUnit,
                 0, SpriteMeshType.FullRect, Vector4.one, false);

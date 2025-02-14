@@ -20,6 +20,8 @@ namespace DCL.MapRenderer.MapLayers.Atlas
 
         private int parcelSize => coordsUtils.ParcelSize;
 
+        private bool isFetched;
+
         public ParcelChunkAtlasController(Transform parent, int chunkSize,
             ICoordsUtils coordsUtils, IMapCullingController cullingController, ChunkBuilder chunkBuilder)
             : base(parent, coordsUtils, cullingController)
@@ -33,10 +35,17 @@ namespace DCL.MapRenderer.MapLayers.Atlas
             parcelsInsideChunk = Mathf.Max(1, chunkSize / parcelSize);
         }
 
-        public async UniTask InitializeAsync(CancellationToken ct)
+        public UniTask InitializeAsync(CancellationToken ct)
         {
-            var linkedCt = CancellationTokenSource.CreateLinkedTokenSource(ctsDisposing.Token, ct).Token;
+            //Lazy Initialization to avoid unnecessary memory usage.
+            //This images are not squared neither compressed. They takea big chunk of memory
+            //Whatsmore, they are not commonly used. So, we can lazily get them
+            //TODO: If we want to do it on initialization, we should work on the images from this map
+            return UniTask.CompletedTask;
+        }
 
+        private async UniTask LocalInitializeAsync()
+        {
             ClearCurrentChunks();
             float halfParcelSize = parcelSize * 0.5f;
 
@@ -57,7 +66,7 @@ namespace DCL.MapRenderer.MapLayers.Atlas
                     // Subtract half parcel size to displace the pivot, this allow easier PositionToCoords calculations.
                     Vector3 localPosition = new Vector3((parcelSize * i) - halfParcelSize, (parcelSize * j) - halfParcelSize, 0);
 
-                    var instance = chunkBuilder.Invoke(chunkLocalPosition: localPosition, coordsCenter, instantiationParent, linkedCt);
+                    var instance = chunkBuilder.Invoke(chunkLocalPosition: localPosition, coordsCenter, instantiationParent, CancellationToken.None);
                     chunksCreating.Add(instance);
                 }
             }
@@ -84,6 +93,11 @@ namespace DCL.MapRenderer.MapLayers.Atlas
 
         UniTask IMapLayerController.EnableAsync(CancellationToken cancellationToken)
         {
+            if (!isFetched)
+            {
+                LocalInitializeAsync().Forget();
+                isFetched = true;
+            }
             instantiationParent.gameObject.SetActive(true);
             return UniTask.CompletedTask;
         }

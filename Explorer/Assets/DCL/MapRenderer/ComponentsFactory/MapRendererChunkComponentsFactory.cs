@@ -205,9 +205,6 @@ namespace DCL.MapRenderer.ComponentsFactory
         {
             var chunkAtlas = new ParcelChunkAtlasController(configuration.AtlasRoot, IMapRendererSettings.ATLAS_CHUNK_SIZE, coordsUtils, cullingController, chunkBuilder: CreateChunkAsync);
 
-            // initialize Atlas but don't block the flow (to accelerate loading time)
-            chunkAtlas.InitializeAsync(cancellationToken).SuppressCancellationThrow().Forget();
-
             layers.Add(MapLayer.ParcelsAtlas, chunkAtlas);
             return UniTask.CompletedTask;
 
