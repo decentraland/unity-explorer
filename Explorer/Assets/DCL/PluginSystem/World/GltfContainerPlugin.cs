@@ -34,7 +34,6 @@ namespace DCL.PluginSystem.World
         private readonly ECSWorldSingletonSharedDependencies globalDeps;
         private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
         private readonly ILaunchMode launchMode;
-        private readonly bool localSceneDevelopment;
         private readonly bool useRemoteAssetBundles;
         private readonly IWebRequestController webRequestController;
         private readonly ILoadingStatus loadingStatus;
@@ -69,6 +68,8 @@ namespace DCL.PluginSystem.World
                 false,
                 false,
                 new GltFastSceneDownloadStrategy(sharedDependencies.SceneData));
+
+            bool localSceneDevelopment = launchMode.CurrentMode is LaunchMode.LocalSceneDevelopment;
 
             // Asset loading
             PrepareGltfAssetLoadingSystem.InjectToWorld(ref builder, assetsCache, localSceneDevelopment, useRemoteAssetBundles);
