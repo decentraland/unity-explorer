@@ -37,6 +37,18 @@ namespace SceneRuntime.Apis.Modules.RestrictedActionsApi
         [UsedImplicitly]
         public void MovePlayerTo(
             double newRelativePositionX, double newRelativePositionY, double newRelativePositionZ,
+            double cameraTargetX, double cameraTargetY, double cameraTargetZ,
+            double avatarTargetX, double avatarTargetY, double avatarTargetZ)
+        {
+            api.TryMovePlayerTo(
+                new Vector3((float)newRelativePositionX, (float)newRelativePositionY, (float)newRelativePositionZ),
+                new Vector3((float)cameraTargetX, (float)cameraTargetY, (float)cameraTargetZ),
+                new Vector3((float)avatarTargetX, (float)avatarTargetY, (float)avatarTargetZ));
+        }
+
+        [UsedImplicitly]
+        public void MovePlayerToCameraTargetOnly(
+            double newRelativePositionX, double newRelativePositionY, double newRelativePositionZ,
             double cameraTargetX, double cameraTargetY, double cameraTargetZ)
         {
             api.TryMovePlayerTo(
@@ -46,15 +58,14 @@ namespace SceneRuntime.Apis.Modules.RestrictedActionsApi
         }
 
         [UsedImplicitly]
-        public void MovePlayerTo(
+        public void MovePlayerToAvatarTargetOnly(
             double newRelativePositionX, double newRelativePositionY, double newRelativePositionZ,
-            double cameraTargetX, double cameraTargetY, double cameraTargetZ,
             double avatarTargetX, double avatarTargetY, double avatarTargetZ)
         {
             api.TryMovePlayerTo(
                 new Vector3((float)newRelativePositionX, (float)newRelativePositionY, (float)newRelativePositionZ),
-                new Vector3((float)cameraTargetX, (float)cameraTargetY, (float)cameraTargetZ),
-                new Vector3((float)avatarTargetX, (float)avatarTargetY, (float)avatarTargetZ));
+                new Vector3((float)avatarTargetX, (float)avatarTargetY, (float)avatarTargetZ),
+                null);
         }
 
         [UsedImplicitly]
