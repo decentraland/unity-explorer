@@ -150,6 +150,10 @@ namespace DCL.Notifications.NewNotification
 
             viewInstance.FriendsNotificationView.NotificationTypeImage.sprite = notificationIconTypes.GetNotificationIcon(notification.Type);
 
+            if (notification.Type == NotificationType.SOCIAL_SERVICE_FRIENDSHIP_ACCEPTED)
+                viewInstance.FriendsNotificationView.PlayAcceptedNotificationAudio();
+            else
+                viewInstance.FriendsNotificationView.PlayRequestNotificationAudio();
             await AnimateNotificationCanvasGroupAsync(viewInstance.FriendsNotificationViewCanvasGroup);
         }
 

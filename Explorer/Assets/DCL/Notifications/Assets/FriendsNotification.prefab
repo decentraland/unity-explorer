@@ -480,15 +480,14 @@ MonoBehaviour:
   <MainButton>k__BackingField: {fileID: 1974615107952363819}
   <CloseButton>k__BackingField: {fileID: 3219249816707429487}
   <HeaderText>k__BackingField: {fileID: 4609991108150892024}
-  <UserNameText>k__BackingField: {fileID: 0}
-  <UserAddressText>k__BackingField: {fileID: 0}
-  <UserAddressSeparator>k__BackingField: {fileID: 0}
   <TitleText>k__BackingField: {fileID: 1913272022558761674}
   <TimeText>k__BackingField: {fileID: 3997278871462557347}
   <NotificationImage>k__BackingField: {fileID: 6865413914531715066}
   <NotificationImageBackground>k__BackingField: {fileID: 4531311540494379692}
   <NotificationTypeImage>k__BackingField: {fileID: 2445410349030607296}
   <ChatEntryConfiguration>k__BackingField: {fileID: 11400000, guid: 6afb31861b85441b6ab2b988819bb96a, type: 2}
+  <RequestNotificationAudio>k__BackingField: {fileID: 11400000, guid: b6493777141cb4794b18ce0545cc47d3, type: 2}
+  <AcceptedNotificationAudio>k__BackingField: {fileID: 11400000, guid: b8c021e5ddb204814adf04f0793f36d3, type: 2}
 --- !u!225 &2183384421184382549
 CanvasGroup:
   m_ObjectHideFlags: 0

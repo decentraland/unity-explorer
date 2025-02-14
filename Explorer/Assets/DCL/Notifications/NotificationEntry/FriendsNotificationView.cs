@@ -1,3 +1,4 @@
+using DCL.Audio;
 using DCL.Chat;
 using DCL.NotificationsBusController.NotificationTypes;
 using DCL.UI;
@@ -56,6 +57,18 @@ namespace DCL.Notifications.NotificationEntry
 
         [field: SerializeField]
         public ChatEntryConfigurationSO ChatEntryConfiguration { get; private set; }
+
+        [field: SerializeField]
+        public AudioClipConfig RequestNotificationAudio { get; private set; }
+
+        [field: SerializeField]
+        public AudioClipConfig AcceptedNotificationAudio { get; private set; }
+
+        public void PlayRequestNotificationAudio() =>
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(RequestNotificationAudio);
+
+        public void PlayAcceptedNotificationAudio() =>
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(AcceptedNotificationAudio);
 
         public void ConfigureFromAcceptedNotificationData(FriendRequestAcceptedNotification notification)
         {
