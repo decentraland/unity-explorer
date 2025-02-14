@@ -47,6 +47,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             friendEventBus.OnOtherUserRemovedTheFriendship += RemoveFriend;
 
             friendOnlineStatusCache.OnFriendBecameOnline += FriendBecameOnline;
+            friendOnlineStatusCache.OnFriendBecameAway += FriendBecameAway;
             friendOnlineStatusCache.OnFriendBecameOffline += FriendBecameOffline;
         }
 
@@ -59,6 +60,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             addFriendProfileCts.SafeCancelAndDispose();
 
             friendOnlineStatusCache.OnFriendBecameOnline -= FriendBecameOnline;
+            friendOnlineStatusCache.OnFriendBecameAway -= FriendBecameAway;
             friendOnlineStatusCache.OnFriendBecameOffline -= FriendBecameOffline;
         }
 
@@ -81,6 +83,15 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             offlineFriends.Remove(friendProfile);
             if (!onlineFriends.Contains(friendProfile))
                 AddNewFriendProfile(friendProfile, OnlineStatus.ONLINE);
+
+            RefreshLoopList();
+        }
+
+        private void FriendBecameAway(FriendProfile friendProfile)
+        {
+            offlineFriends.Remove(friendProfile);
+            if (!onlineFriends.Contains(friendProfile))
+                AddNewFriendProfile(friendProfile, OnlineStatus.AWAY);
 
             RefreshLoopList();
         }

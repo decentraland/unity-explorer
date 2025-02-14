@@ -1,8 +1,6 @@
-using DCL.Diagnostics;
 using DCL.Friends.UI.FriendPanel;
 using System;
 using System.Collections.Generic;
-using UnityEngine;
 
 namespace DCL.Friends
 {
@@ -49,10 +47,7 @@ namespace DCL.Friends
         private bool FriendOnlineStatusChanged(FriendProfile friendProfile, OnlineStatus onlineStatus)
         {
             if (friendsOnlineStatus.TryGetValue(friendProfile.Address, out OnlineStatus currentStatus) && currentStatus == onlineStatus)
-            {
-                ReportHub.Log(LogType.Warning, new ReportData(ReportCategory.FRIENDS), $"Received duplicate connectivity update for User {friendProfile.Name} with status {onlineStatus}");
                 return false;
-            }
 
             friendsOnlineStatus[friendProfile.Address] = onlineStatus;
             return true;
