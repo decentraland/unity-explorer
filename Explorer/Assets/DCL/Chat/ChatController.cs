@@ -7,8 +7,13 @@ using DCL.Chat.MessageBus;
 using DCL.Input;
 using DCL.Input.Component;
 using DCL.Input.Systems;
+using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
+using DCL.Profiles;
+using DCL.Settings.Settings;
+using DCL.UI.InputFieldFormatting;
+using DCL.UI.Profiles.Helpers;
 using ECS.Abstract;
 using MVC;
 using System.Threading;
@@ -22,7 +27,7 @@ namespace DCL.Chat
         public delegate void ChatBubbleVisibilityChangedDelegate(bool isVisible);
 
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
-        private readonly ChatEntryConfigurationSO chatEntryConfiguration;
+        private readonly IProfileNameColorHelper profileNameColorHelper;
         private readonly IChatMessagesBus chatMessagesBus;
         private readonly NametagsData nametagsData;
         private readonly IChatHistory chatHistory;
@@ -31,7 +36,8 @@ namespace DCL.Chat
         private readonly IInputBlock inputBlock;
         private readonly ViewDependencies viewDependencies;
         private readonly IChatCommandsBus chatCommandsBus;
-
+        private readonly ITextFormatter hyperlinkTextFormatter;
+        private readonly ChatAudioSettingsAsset chatAudioSettings;
         private SingleInstanceEntity cameraEntity;
 
         // Used exclusively to calculate the new value of the read messages once the Unread messages separator has been viewed
@@ -44,7 +50,7 @@ namespace DCL.Chat
 
         public ChatController(
             ViewFactoryMethod viewFactory,
-            ChatEntryConfigurationSO chatEntryConfiguration,
+            IProfileNameColorHelper profileNameColorHelper,
             IChatMessagesBus chatMessagesBus,
             IChatHistory chatHistory,
             IReadOnlyEntityParticipantTable entityParticipantTable,
@@ -53,9 +59,10 @@ namespace DCL.Chat
             Entity playerEntity,
             IInputBlock inputBlock,
             ViewDependencies viewDependencies,
-            IChatCommandsBus chatCommandsBus) : base(viewFactory)
+            IChatCommandsBus chatCommandsBus,
+            ChatAudioSettingsAsset chatAudioSettings, ITextFormatter hyperlinkTextFormatter) : base(viewFactory)
         {
-            this.chatEntryConfiguration = chatEntryConfiguration;
+            this.profileNameColorHelper = profileNameColorHelper;
             this.chatMessagesBus = chatMessagesBus;
             this.chatHistory = chatHistory;
             this.entityParticipantTable = entityParticipantTable;
@@ -65,6 +72,8 @@ namespace DCL.Chat
             this.inputBlock = inputBlock;
             this.viewDependencies = viewDependencies;
             this.chatCommandsBus = chatCommandsBus;
+            this.chatAudioSettings = chatAudioSettings;
+            this.hyperlinkTextFormatter = hyperlinkTextFormatter;
         }
 
         public void Clear() // Called by a command
@@ -111,7 +120,7 @@ namespace DCL.Chat
             chatCommandsBus.OnClearChat += Clear;
 
             viewInstance!.InjectDependencies(viewDependencies);
-            viewInstance!.Initialize(chatHistory.Channels, ChatChannel.NEARBY_CHANNEL, nametagsData.showChatBubbles, chatEntryConfiguration);
+            viewInstance!.Initialize(chatHistory.Channels, ChatChannel.NEARBY_CHANNEL, nametagsData.showChatBubbles, chatAudioSettings);
 
             viewInstance.PointerEnter += OnChatViewPointerEnter;
             viewInstance.PointerExit += OnChatViewPointerExit;
@@ -252,7 +261,16 @@ namespace DCL.Chat
             {
                 Entity entity = entry.Entity;
                 GenerateChatBubbleComponent(entity, chatMessage);
-                viewInstance!.PlayMessageReceivedSfx();
+
+                switch (chatAudioSettings.chatAudioSettings)
+                {
+                    case ChatAudioSettings.NONE:
+                        return;
+                    case ChatAudioSettings.MENTIONS_ONLY when chatMessage.IsMention:
+                    case ChatAudioSettings.ALL:
+                        viewInstance!.PlayMessageReceivedSfx(chatMessage.IsMention);
+                        break;
+                }
             }
             else if (isSentByOwnUser)
                 GenerateChatBubbleComponent(playerEntity, chatMessage);
@@ -261,7 +279,7 @@ namespace DCL.Chat
         private void GenerateChatBubbleComponent(Entity e, ChatMessage chatMessage)
         {
             if (nametagsData is { showChatBubbles: true, showNameTags: true })
-                world.AddOrGet(e, new ChatBubbleComponent(chatMessage.Message, chatMessage.SenderValidatedName, chatMessage.WalletAddress));
+                world.AddOrGet(e, new ChatBubbleComponent(chatMessage.Message, chatMessage.SenderValidatedName, chatMessage.WalletAddress, chatMessage.IsMention));
         }
 
         private void DisableUnwantedInputs()
@@ -341,7 +359,16 @@ namespace DCL.Chat
 
         private void OnChatBusMessageAdded(ChatChannel.ChannelId channelId, ChatMessage chatMessage)
         {
-            chatHistory.AddMessage(channelId, chatMessage);
+            if (!chatMessage.SystemMessage)
+            {
+                string formattedText = hyperlinkTextFormatter.FormatText(chatMessage.Message);
+                var newChatMessage = ChatMessage.CopyWithNewMessage(formattedText, chatMessage);
+                chatHistory.AddMessage(channelId, newChatMessage);
+            }
+            else
+            {
+                chatHistory.AddMessage(channelId, chatMessage);
+            }
         }
     }
 }

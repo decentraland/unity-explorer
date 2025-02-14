@@ -1,26 +1,23 @@
-﻿using Cysharp.Threading.Tasks;
-using DCL.Chat;
-using DCL.Profiles;
+﻿using DCL.Profiles;
+using DCL.UI.Profiles.Helpers;
 using System;
 using System.Threading;
-using UnityEngine;
-using UnityEngine.UI;
 
 namespace DCL.UI.ProfileElements
 {
     public class UserNameElementController : IDisposable
     {
         public readonly UserNameElement Element;
-        private readonly ChatEntryConfigurationSO chatEntryConfiguration;
+        private readonly IProfileNameColorHelper profileNameColorHelper;
 
         private Profile currentProfile;
 
         public UserNameElementController(
             UserNameElement element,
-            ChatEntryConfigurationSO chatEntryConfiguration)
+            IProfileNameColorHelper profileNameColorHelper)
         {
             this.Element = element;
-            this.chatEntryConfiguration = chatEntryConfiguration;
+            this.profileNameColorHelper = profileNameColorHelper;
 
             element.CopyNameWarningNotification.Hide(true);
 
@@ -38,9 +35,9 @@ namespace DCL.UI.ProfileElements
         {
             currentProfile = profile;
 
-            Element.UserNameText.text = profile.Name;
-            Element.UserNameText.color = chatEntryConfiguration.GetNameColor(profile.Name);
-            Element.UserNameHashtagText.text = $"#{profile.UserId[^4..]}";
+            Element.UserNameText.text = profile.ValidatedName;
+            Element.UserNameText.color = profile.UserNameColor;
+            Element.UserNameHashtagText.text = profile.WalletId;
             Element.UserNameHashtagText.gameObject.SetActive(!profile.HasClaimedName);
             Element.VerifiedMark.SetActive(profile.HasClaimedName);
         }

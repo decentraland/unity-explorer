@@ -8,6 +8,7 @@ using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using DCL.Ipfs;
 using DCL.Profiles;
 using DCL.Profiles.Self;
+using DCL.UI.Profiles.Helpers;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
@@ -81,7 +82,7 @@ namespace DCL.InWorldCamera.Playground
 
             return new SelfProfile(
                 new LogProfileRepository(
-                    new RealmProfileRepository(IWebRequestController.DEFAULT, realmData, new DefaultProfileCache())
+                    new RealmProfileRepository(IWebRequestController.DEFAULT, realmData, new DefaultProfileCache(), new ProfileNameColorHelper(new List<Color>()))
                 ),
                 web3IdentityCache,
                 new EquippedWearables(),

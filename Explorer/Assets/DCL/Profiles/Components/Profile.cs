@@ -7,6 +7,7 @@ using ECS.StreamableLoading.Textures;
 using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
+using UnityEngine;
 
 namespace DCL.Profiles
 {
@@ -23,7 +24,9 @@ namespace DCL.Profiles
 
         private string userId;
         private string name;
+        private string mentionName;
         private bool hasClaimedName;
+
         public StreamableLoadingResult<SpriteData>.WithFallback? ProfilePicture { get; set; }
 
         public string UserId
@@ -48,15 +51,28 @@ namespace DCL.Profiles
             }
         }
 
-        //The name of the user after passing character validation, without the # part
-        //For users with claimed names would be the same as DisplayName
+        /// <summary>
+        ///     The color calculated for this username
+        /// </summary>
+        public Color UserNameColor { get; internal set; }
+
+        /// <summary>
+        ///     The name of the user after passing character validation, without the # part
+        ///     For users with claimed names would be the same as DisplayName
+        /// </summary>
+
         public string ValidatedName { get; private set; }
 
-        //The # part of the name for users without claimed name, otherwise null, includes the #
+        /// <summary>
+        ///     The # part of the name for users without claimed name, otherwise null, includes the # character at the beginning
+        /// </summary>
         public string? WalletId { get; private set; }
 
         public string DisplayName { get; private set; }
         public string UnclaimedName { get; internal set; }
+
+        //The Display Name with @ before it. Cached here to avoid further allocations when receiving messages from other players.
+        public string MentionName => string.IsNullOrEmpty(mentionName) ? mentionName = "@" + DisplayName : mentionName;
 
         public bool HasClaimedName
         {

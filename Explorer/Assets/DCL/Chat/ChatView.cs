@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
+using DCL.Settings.Settings;
 using DCL.Chat.History;
 using DCL.UI;
 using MVC;
@@ -70,8 +71,8 @@ namespace DCL.Chat
         private CanvasGroup scrollToBottomCanvasGroup;
 
         [Header("Audio")]
-        [SerializeField]
-        private AudioClipConfig chatReceiveMessageAudio;
+        [SerializeField]private AudioClipConfig chatReceiveMessageAudio;
+        [SerializeField] private AudioClipConfig chatReceiveMentionMessageAudio;
 
         /// <summary>
         /// Raised when the mouse pointer hovers any part of the chat window.
@@ -124,12 +125,12 @@ namespace DCL.Chat
         // The latest amount of messages added to the chat that must be animated yet
         private int entriesPendingToAnimate;
         private CancellationTokenSource fadeoutCts;
+        private CancellationTokenSource popupCts;
 
         private bool isInputSelected;
 
         private IReadOnlyDictionary<ChatChannel.ChannelId, ChatChannel>? channels;
         private ChatChannel? currentChannel;
-        private ChatEntryConfigurationSO chatEntryConfiguration;
 
         /// <summary>
         /// Get or sets the current content of the input box.
@@ -179,12 +180,16 @@ namespace DCL.Chat
         {
             chatInputBox.Dispose();
             fadeoutCts.SafeCancelAndDispose();
+            popupCts.SafeCancelAndDispose();
         }
 
-        public void Initialize(IReadOnlyDictionary<ChatChannel.ChannelId, ChatChannel> chatChannels, ChatChannel.ChannelId defaultChannelId, bool areChatBubblesVisible, ChatEntryConfigurationSO chatEntryConfiguration)
+        public void Initialize(IReadOnlyDictionary<ChatChannel.ChannelId, ChatChannel> chatChannels,
+            ChatChannel.ChannelId defaultChannelId,
+            bool areChatBubblesVisible,
+            ChatAudioSettingsAsset chatAudioSettings
+        )
         {
             this.channels = chatChannels;
-            this.chatEntryConfiguration = chatEntryConfiguration;
             closeChatButton.onClick.AddListener(OnCloseChatButtonClicked);
             chatMessageViewer.Initialize(CalculateUsernameColor);
             chatMessageViewer.ChatMessageOptionsButtonClicked += OnChatMessageOptionsButtonClicked;
@@ -196,7 +201,7 @@ namespace DCL.Chat
             chatBubblesToggle.Toggle.onValueChanged.AddListener(OnToggleChatBubblesValueChanged);
             chatBubblesToggle.IsSoundEnabled = true;
 
-            chatInputBox.Initialize();
+            chatInputBox.Initialize(chatAudioSettings);
             chatInputBox.InputBoxSelectionChanged += OnInputBoxSelectionChanged;
             chatInputBox.EmojiSelectionVisibilityChanged += OnEmojiSelectionVisibilityChanged;
             chatInputBox.InputChanged += OnInputChanged;
@@ -286,9 +291,7 @@ namespace DCL.Chat
         public void FocusInputBoxWithText(string text)
         {
             if (gameObject.activeInHierarchy)
-            {
                 chatInputBox.FocusInputBoxWithText(text);
-            }
         }
 
         /// <summary>
@@ -330,9 +333,9 @@ namespace DCL.Chat
         /// <summary>
         /// Plays the sound FX of the chat receiving a new message.
         /// </summary>
-        public void PlayMessageReceivedSfx()
+        public void PlayMessageReceivedSfx(bool isMention)
         {
-            UIAudioEventsBus.Instance.SendPlayAudioEvent(chatReceiveMessageAudio);
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(isMention? chatReceiveMentionMessageAudio : chatReceiveMessageAudio);
         }
 
         /// <summary>
@@ -460,11 +463,13 @@ namespace DCL.Chat
                 messageText,
                 closePopupTask.Task);
 
-            viewDependencies.GlobalUIViews.ShowChatEntryMenuPopupAsync(data);
+            popupCts = popupCts.SafeRestart();
+            viewDependencies.GlobalUIViews.ShowChatEntryMenuPopupAsync(data, popupCts.Token).Forget();
         }
 
         private void OnCloseChatButtonClicked()
         {
+            popupCts.SafeCancelAndDispose();
             IsUnfolded = false;
         }
 
@@ -490,7 +495,7 @@ namespace DCL.Chat
         }
 
         private Color CalculateUsernameColor(ChatMessage chatMessage) =>
-            chatEntryConfiguration.GetNameColor(chatMessage.SenderValidatedName);
+            viewDependencies.ProfileNameColorHelper.GetNameColor(chatMessage.SenderValidatedName);
 
         private void OnChatMessageViewerScrollPositionChanged(Vector2 scrollPosition)
         {
@@ -505,6 +510,5 @@ namespace DCL.Chat
             if (chatMessageViewer.IsSeparatorVisible && chatMessageViewer.IsItemVisible(chatMessageViewer.CurrentSeparatorIndex))
                 UnreadMessagesSeparatorViewed?.Invoke();
         }
-
     }
 }

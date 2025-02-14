@@ -17,6 +17,7 @@ using DCL.NotificationsBusController.NotificationsBus;
 using DCL.Passport;
 using DCL.Profiles;
 using DCL.Profiles.Self;
+using DCL.UI.Profiles.Helpers;
 using DCL.WebRequests;
 using ECS;
 using MVC;
@@ -33,7 +34,7 @@ namespace DCL.PluginSystem.Global
         private readonly ICursor cursor;
         private readonly IProfileRepository profileRepository;
         private readonly ICharacterPreviewFactory characterPreviewFactory;
-        private readonly ChatEntryConfigurationSO chatEntryConfiguration;
+        private readonly IProfileNameColorHelper profileNameColorHelper;
         private readonly IRealmData realmData;
         private readonly URLDomain assetBundleURL;
         private readonly IWebRequestController webRequestController;
@@ -59,7 +60,7 @@ namespace DCL.PluginSystem.Global
             ICursor cursor,
             IProfileRepository profileRepository,
             ICharacterPreviewFactory characterPreviewFactory,
-            ChatEntryConfigurationSO chatEntryConfiguration,
+            IProfileNameColorHelper profileNameColorHelper,
             IRealmData realmData,
             URLDomain assetBundleURL,
             IWebRequestController webRequestController,
@@ -83,7 +84,7 @@ namespace DCL.PluginSystem.Global
             this.cursor = cursor;
             this.profileRepository = profileRepository;
             this.characterPreviewFactory = characterPreviewFactory;
-            this.chatEntryConfiguration = chatEntryConfiguration;
+            this.profileNameColorHelper = profileNameColorHelper;
             this.realmData = realmData;
             this.assetBundleURL = assetBundleURL;
             this.webRequestController = webRequestController;
@@ -126,7 +127,7 @@ namespace DCL.PluginSystem.Global
                 cursor,
                 profileRepository,
                 characterPreviewFactory,
-                chatEntryConfiguration,
+                profileNameColorHelper,
                 rarityBackgroundsMapping,
                 rarityColorMappings,
                 categoryIconsMapping,

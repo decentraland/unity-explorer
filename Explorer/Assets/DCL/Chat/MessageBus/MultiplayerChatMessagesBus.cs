@@ -5,8 +5,10 @@ using DCL.Multiplayer.Connections.Messaging;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.Messaging.Pipe;
 using DCL.Profiles;
+using DCL.Profiles.Self;
 using LiveKit.Proto;
 using System;
+using System.Text;
 using System.Threading;
 
 namespace DCL.Chat.MessageBus
@@ -17,14 +19,16 @@ namespace DCL.Chat.MessageBus
         private readonly IProfileRepository profileRepository;
         private readonly IMessageDeduplication<double> messageDeduplication;
         private readonly CancellationTokenSource cancellationTokenSource = new ();
+        private readonly ISelfProfile selfProfile;
 
         public event Action<ChatChannel.ChannelId, ChatMessage>? MessageAdded;
 
-        public MultiplayerChatMessagesBus(IMessagePipesHub messagePipesHub, IProfileRepository profileRepository, IMessageDeduplication<double> messageDeduplication)
+        public MultiplayerChatMessagesBus(IMessagePipesHub messagePipesHub, IProfileRepository profileRepository, ISelfProfile selfProfile, IMessageDeduplication<double> messageDeduplication)
         {
             this.messagePipesHub = messagePipesHub;
             this.profileRepository = profileRepository;
             this.messageDeduplication = messageDeduplication;
+            this.selfProfile = selfProfile;
 
             messagePipesHub.IslandPipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Chat>(Decentraland.Kernel.Comms.Rfc4.Packet.MessageOneofCase.Chat, OnMessageReceived);
             messagePipesHub.ScenePipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Chat>(Decentraland.Kernel.Comms.Rfc4.Packet.MessageOneofCase.Chat, OnMessageReceived);
@@ -53,6 +57,13 @@ namespace DCL.Chat.MessageBus
                 ChatChannel.ChannelId parsedChannelId = ParseChatChannelIdFromPayloadMessage(receivedMessage.Payload.Message);
                 string chatMessage = ParseChatMessageFromPayloadMessage(receivedMessage.Payload.Message);
 
+                Profile? ownProfile = await selfProfile.ProfileAsync(cancellationTokenSource.Token);
+
+                var isMention = false;
+
+                if (ownProfile != null)
+                    isMention = IsMention(chatMessage, ownProfile.MentionName);
+
                 MessageAdded?.Invoke(
                     parsedChannelId,
                     new ChatMessage(
@@ -60,7 +71,8 @@ namespace DCL.Chat.MessageBus
                         profile?.ValidatedName ?? string.Empty,
                         receivedMessage.FromWalletId,
                         false,
-                        profile?.WalletId ?? null
+                        profile?.WalletId ?? null,
+                        isMention
                     )
                 );
             }
@@ -76,19 +88,16 @@ namespace DCL.Chat.MessageBus
                 return new ChatChannel.ChannelId(parsedChannelType, channelIdName);
             }
             else
-            {
+
                 // TODO: Remove this line once this code is merged to dev
                 return ChatChannel.NEARBY_CHANNEL;
-            }
         }
 
-        private string ParseChatMessageFromPayloadMessage(string payloadMessage)
-        {
-            // TODO: Remove this line once this code is merged to dev
-            return payloadMessage.StartsWith("<") ? payloadMessage.Substring(payloadMessage.IndexOf('>') + 1)
-                                                  : payloadMessage;
-            return payloadMessage;
-        }
+        private bool IsMention(string chatMessage, string userName) =>
+            chatMessage.Contains(userName, StringComparison.Ordinal);
+
+        private string ParseChatMessageFromPayloadMessage(string payloadMessage) =>
+            payloadMessage.Substring(payloadMessage.IndexOf('>') + 1);
 
         public void Send(ChatChannel.ChannelId channelId, string message, string origin)
         {

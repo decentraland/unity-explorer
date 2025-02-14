@@ -9,12 +9,17 @@ namespace DCL.Chat
 {
     public class ChatEntryMessageBubbleElement : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {
+        [field: SerializeField] internal Color backgroundDefaultColor { get; private set; }
+        [field: SerializeField] internal Color backgroundMentionedColor { get; private set; }
+
         [field: SerializeField] internal ChatEntryUsernameElement usernameElement { get; private set; }
         [field: SerializeField] internal RectTransform backgroundRectTransform { get; private set; }
+        [field: SerializeField] internal Image backgroundImage { get; private set; }
         [field: SerializeField] internal Button? messageOptionsButton { get; private set; }
         [field: SerializeField] internal ChatEntryMessageContentElement messageContentElement { get; private set; }
         [field: SerializeField] internal ChatEntryConfigurationSO configurationSo { get; private set; }
         [field: SerializeField] internal RectTransform popupPosition { get; private set; }
+        [field: SerializeField] internal GameObject mentionedOutline { get; private set; }
 
         private Vector2 backgroundSize;
 
@@ -35,7 +40,7 @@ namespace DCL.Chat
 
         public void SetupHyperlinkHandlerDependencies(ViewDependencies dependencies)
         {
-            messageContentElement.hyperlinkHandler.InjectDependencies(dependencies);
+            messageContentElement.textHyperlinkHandler.InjectDependencies(dependencies);
         }
 
         public void SetMessageData(ChatMessage data)
@@ -47,6 +52,10 @@ namespace DCL.Chat
             backgroundSize.y = Mathf.Max(messageContentElement.messageContentRectTransform.sizeDelta.y + backgroundHeightOffset);
             backgroundSize.x = CalculatePreferredWidth(data);
             backgroundRectTransform.sizeDelta = backgroundSize;
+            mentionedOutline.SetActive(data.IsMention);
+
+            //TODO FRAN URGENT: There is an issue with masks and alphas interfering with the color that should be visible here
+            backgroundImage.color = data.IsMention ? backgroundMentionedColor : backgroundDefaultColor;
         }
 
         private float CalculatePreferredWidth(ChatMessage message)

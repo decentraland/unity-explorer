@@ -70,6 +70,7 @@ namespace DCL.Chat
         private int messageCountWhenSeparatorWasSet;
 
         private ViewDependencies viewDependencies;
+        private CancellationTokenSource popupCts;
 
         /// <summary>
         /// Gets whether the scroll view is showing the bottom of the content, and it can't scroll down anymore.
@@ -271,6 +272,7 @@ namespace DCL.Chat
         public void Dispose()
         {
             fadeoutCts.SafeCancelAndDispose();
+            popupCts.SafeCancelAndDispose();
         }
 
         private void Start()
@@ -312,6 +314,10 @@ namespace DCL.Chat
                     ChatEntryView itemScript = item!.GetComponent<ChatEntryView>()!;
                     SetItemData(index, itemData, itemScript);
                     itemScript.messageBubbleElement.SetupHyperlinkHandlerDependencies(viewDependencies);
+                    itemScript.OnChatEntryClicked -= OnChatEntryClicked;
+
+                    if (itemData is { SentByOwnUser: false, SystemMessage: false })
+                        itemScript.OnChatEntryClicked += OnChatEntryClicked;
 
                     Button? messageOptionsButton = itemScript.messageBubbleElement.messageOptionsButton;
                     messageOptionsButton?.onClick.RemoveAllListeners();
@@ -322,6 +328,16 @@ namespace DCL.Chat
             }
 
             return item;
+        }
+
+        private void OnChatEntryClicked(string walletAddress, Vector2 contextMenuPosition)
+        {
+            var profile = viewDependencies.ProfileCache.Get(walletAddress);
+            if (profile != null)
+            {
+                popupCts = popupCts.SafeRestart();
+                viewDependencies.GlobalUIViews.ShowUserProfileContextMenu(profile, contextMenuPosition, popupCts.Token);
+            }
         }
 
         private void OnChatMessageOptionsButtonClicked(string itemDataMessage, ChatEntryView itemScript)
