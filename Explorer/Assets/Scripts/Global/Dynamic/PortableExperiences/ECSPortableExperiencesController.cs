@@ -36,7 +36,6 @@ namespace PortableExperiences.Controller
         private readonly FeatureFlagsCache featureFlagsCache;
         private readonly ILaunchMode launchMode;
         private readonly IDecentralandUrlsSource urlsSources;
-        private readonly bool isLocalSceneDevelopment;
         private GlobalWorld globalWorld;
 
         public Dictionary<ENS, Entity> PortableExperienceEntities { get; } = new ();
@@ -118,7 +117,7 @@ namespace PortableExperiences.Controller
                 result.comms?.adapter ?? string.Empty,
                 result.comms?.protocol ?? string.Empty,
                 portableExperiencePath.Value,
-                isLocalSceneDevelopment
+                launchMode.CurrentMode is LaunchMode.LocalSceneDevelopment
             );
 
             ISceneFacade parentScene = scenesCache.Scenes.FirstOrDefault(s => s.SceneStateProvider.IsCurrent);
