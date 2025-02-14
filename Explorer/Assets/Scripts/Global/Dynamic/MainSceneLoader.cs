@@ -26,6 +26,7 @@ using ECS.StreamableLoading.Cache.Disk.Lock;
 using Global.AppArgs;
 using Global.Dynamic.RealmUrl;
 using Global.Dynamic.RealmUrl.Names;
+using Global.Versioning;
 using MVC;
 using Plugins.TexturesFuse.TexturesServerWrap.CompressShaders;
 using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
@@ -77,6 +78,8 @@ namespace Global.Dynamic
 
         private void Awake()
         {
+
+
             InitializeFlowAsync(destroyCancellationToken).Forget();
         }
 
@@ -129,6 +132,9 @@ namespace Global.Dynamic
 #endif
             );
 
+            DCLVersion dclVersion = DCLVersion.FromAppArgs(applicationParametersParser);
+            SystemInfoUtils.Log(dclVersion.Version);
+
             bool compressionEnabled = IPlatform.DEFAULT.IsNot(IPlatform.Kind.Windows) || applicationParametersParser.HasFlag(AppArgsFlags.FORCE_TEXTURE_COMPRESSION);
 
             if (IPlatform.DEFAULT.Is(IPlatform.Kind.Mac) && SystemInfo.processorType!.Contains("Intel", StringComparison.InvariantCultureIgnoreCase))
@@ -167,6 +173,8 @@ namespace Global.Dynamic
 
             var diskCache = NewInstanceDiskCache(applicationParametersParser);
 
+
+
             bootstrapContainer = await BootstrapContainer.CreateAsync(
                 debugSettings,
                 sceneLoaderSettings: settings,
@@ -184,6 +192,7 @@ namespace Global.Dynamic
                 diskCache,
                 world,
                 decentralandEnvironment,
+                dclVersion,
                 destroyCancellationToken
             );
 
@@ -214,6 +223,7 @@ namespace Global.Dynamic
                     dynamicSettings, uiToolkitRoot, scenesUIRoot, cursorRoot, backgroundMusic, worldInfoTool.EnsureNotNull(), playerEntity,
                     applicationParametersParser,
                     coroutineRunner: this,
+                    dclVersion,
                     destroyCancellationToken);
 
                 if (!isLoaded)
@@ -261,9 +271,7 @@ namespace Global.Dynamic
 
         private async UniTask<bool> DoesApplicationRequireVersionUpdateAsync(IAppArgs applicationParametersParser, SplashScreen splashScreen, CancellationToken ct)
         {
-            applicationParametersParser.TryGetValue(AppArgsFlags.SIMULATE_VERSION, out string? version);
-            string? currentVersion = version ?? Application.version;
-
+            DCLVersion currentVersion = DCLVersion.FromAppArgs(applicationParametersParser);
             bool runVersionControl = debugSettings.EnableVersionUpdateGuard;
 
             if (applicationParametersParser.HasDebugFlag() && !Application.isEditor)
@@ -275,7 +283,7 @@ namespace Global.Dynamic
             var appVersionGuard = new ApplicationVersionGuard(staticContainer!.WebRequestsContainer.WebRequestController, bootstrapContainer!.WebBrowser);
             string? latestVersion = await appVersionGuard.GetLatestVersionAsync(ct);
 
-            if (!currentVersion.IsOlderThan(latestVersion))
+            if (!currentVersion.Version.IsOlderThan(latestVersion))
                 return false;
 
             splashScreen.Hide();
@@ -285,7 +293,7 @@ namespace Global.Dynamic
             ControllerBase<LauncherRedirectionScreenView, ControllerNoData>.ViewFactoryMethod authScreenFactory =
                 LauncherRedirectionScreenController.CreateLazily(appVerRedirectionScreenPrefab.Value.GetComponent<LauncherRedirectionScreenView>(), null);
 
-            var launcherRedirectionScreenController = new LauncherRedirectionScreenController(appVersionGuard, authScreenFactory, currentVersion, latestVersion);
+            var launcherRedirectionScreenController = new LauncherRedirectionScreenController(appVersionGuard, authScreenFactory, currentVersion.Version, latestVersion);
             dynamicWorldContainer!.MvcManager.RegisterController(launcherRedirectionScreenController);
 
             await dynamicWorldContainer!.MvcManager.ShowAsync(LauncherRedirectionScreenController.IssueCommand(), ct);

@@ -1,3 +1,4 @@
+using Microsoft.ClearScript;
 using Microsoft.ClearScript.JavaScript;
 using System;
 using System.Buffers;
@@ -9,7 +10,7 @@ namespace SceneRuntime
     {
         ITypedArray<byte> CreateUint8Array(int bytes);
 
-        object ConvertToScriptTypedArrays(IReadOnlyList<IMemoryOwner<byte>> byteArrays);
+        ScriptObject ConvertToScriptTypedArrays(IReadOnlyList<IMemoryOwner<byte>> byteArrays);
 
         ITypedArray<byte> CreateUint8Array(ReadOnlyMemory<byte> memory);
     }
