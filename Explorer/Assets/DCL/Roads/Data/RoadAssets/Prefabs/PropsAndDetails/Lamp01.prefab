@@ -48,12 +48,24 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: -6164785231652290193, guid: 6ff383c9645b82240b168ad955fd9a05, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 6ff383c9645b82240b168ad955fd9a05, type: 3}
       propertyPath: m_Name
       value: Lamp01
       objectReference: {fileID: 0}
     - target: {fileID: 1783937690337203154, guid: 6ff383c9645b82240b168ad955fd9a05, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1783937690337203154, guid: 6ff383c9645b82240b168ad955fd9a05, type: 3}
       propertyPath: m_CastShadows
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4742473837712756890, guid: 6ff383c9645b82240b168ad955fd9a05, type: 3}
+      propertyPath: m_Enabled
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4742473837712756890, guid: 6ff383c9645b82240b168ad955fd9a05, type: 3}
@@ -67,6 +79,10 @@ PrefabInstance:
     - target: {fileID: 4742473837712756890, guid: 6ff383c9645b82240b168ad955fd9a05, type: 3}
       propertyPath: m_LODs.Array.data[2].screenRelativeHeight
       value: 0.016199676
+      objectReference: {fileID: 0}
+    - target: {fileID: 7120831135728340645, guid: 6ff383c9645b82240b168ad955fd9a05, type: 3}
+      propertyPath: m_Enabled
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -82,6 +98,16 @@ PrefabInstance:
 --- !u!205 &1838028961081150547 stripped
 LODGroup:
   m_CorrespondingSourceObject: {fileID: 4742473837712756890, guid: 6ff383c9645b82240b168ad955fd9a05, type: 3}
+  m_PrefabInstance: {fileID: 6363968139913108681}
+  m_PrefabAsset: {fileID: 0}
+--- !u!23 &4216246105765941868 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 7120831135728340645, guid: 6ff383c9645b82240b168ad955fd9a05, type: 3}
+  m_PrefabInstance: {fileID: 6363968139913108681}
+  m_PrefabAsset: {fileID: 0}
+--- !u!23 &4652370897562652443 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 1783937690337203154, guid: 6ff383c9645b82240b168ad955fd9a05, type: 3}
   m_PrefabInstance: {fileID: 6363968139913108681}
   m_PrefabAsset: {fileID: 0}
 --- !u!1 &6093425957826306456 stripped
@@ -130,6 +156,13 @@ MonoBehaviour:
   Name: Lamp01
   Reference: {fileID: 1838028961081150547}
   Transform: {fileID: 6907363163446049570}
+  RefRenderers:
+  - {fileID: 8224438444402023846}
+  - {fileID: 8224438444402023846}
+  - {fileID: 4216246105765941868}
+  - {fileID: 4216246105765941868}
+  - {fileID: 4652370897562652443}
+  - {fileID: 4652370897562652443}
   ObjectSize: 5.2464285
   Bounds:
     m_Center: {x: 0, y: 2.6237364, z: 0}
@@ -157,7 +190,7 @@ MonoBehaviour:
     e33: 0
   CombinedLodsRenderers:
   - parent: {fileID: 6907363163446049570}
-    combinedMesh: {fileID: 1937243874650443335}
+    combinedMesh: {fileID: 3672349359153108242}
     SharedMaterial: {fileID: 2100000, guid: 52d66a84579d7f04b8b40717fa9dc9f1, type: 2}
     RenderParamsSerialized:
     - layer: 0
@@ -188,7 +221,7 @@ MonoBehaviour:
       lightProbeProxyVolume: {fileID: 0}
       motionVectorMode: 1
   - parent: {fileID: 6907363163446049570}
-    combinedMesh: {fileID: -2846566880832912672}
+    combinedMesh: {fileID: -6218588556998642467}
     SharedMaterial: {fileID: 2100000, guid: a4704a1146f6a65499d2dedae82c0edc, type: 2}
     RenderParamsSerialized:
     - layer: 0
@@ -223,7 +256,12 @@ Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 6ff383c9645b82240b168ad955fd9a05, type: 3}
   m_PrefabInstance: {fileID: 6363968139913108681}
   m_PrefabAsset: {fileID: 0}
---- !u!43 &-2846566880832912672
+--- !u!23 &8224438444402023846 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: -6164785231652290193, guid: 6ff383c9645b82240b168ad955fd9a05, type: 3}
+  m_PrefabInstance: {fileID: 6363968139913108681}
+  m_PrefabAsset: {fileID: 0}
+--- !u!43 &-6218588556998642467
 Mesh:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -408,7 +446,7 @@ Mesh:
     offset: 0
     size: 0
     path: 
---- !u!43 &1937243874650443335
+--- !u!43 &3672349359153108242
 Mesh:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}

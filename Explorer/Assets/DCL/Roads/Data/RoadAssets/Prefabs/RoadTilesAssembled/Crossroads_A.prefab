@@ -282,6 +282,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 9002257495272462172}
     m_Modifications:
+    - target: {fileID: 2854452434184493496, guid: 906661b63634c3b4bb183313838bfb2b, type: 3}
+      propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 7045620984918732489, guid: 906661b63634c3b4bb183313838bfb2b, type: 3}
       propertyPath: m_LocalScale.x
       value: 0.0015
@@ -441,6 +445,18 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 9002257495272462172}
     m_Modifications:
+    - target: {fileID: 3307339555969220598, guid: 7e5c21da0b5fa464296b041944dba1ba, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5639585847214607526, guid: 7e5c21da0b5fa464296b041944dba1ba, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6400090070870576197, guid: 7e5c21da0b5fa464296b041944dba1ba, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 6927135464531419166, guid: 7e5c21da0b5fa464296b041944dba1ba, type: 3}
       propertyPath: m_LocalScale.x
       value: 0.001
@@ -496,6 +512,10 @@ PrefabInstance:
     - target: {fileID: 7739983157676980900, guid: 7e5c21da0b5fa464296b041944dba1ba, type: 3}
       propertyPath: m_Name
       value: RoadTileCornersAll
+      objectReference: {fileID: 0}
+    - target: {fileID: 8402205571913913252, guid: 7e5c21da0b5fa464296b041944dba1ba, type: 3}
+      propertyPath: m_Enabled
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

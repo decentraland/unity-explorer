@@ -1,5 +1,6 @@
 ﻿using DCL.Roads.GPUInstancing.Playground;
 using DCL.Roads.Settings;
+using System;
 using UnityEngine;
 
 namespace DCL.Roads.GPUInstancing
@@ -21,6 +22,11 @@ namespace DCL.Roads.GPUInstancing
         [Space] public bool Run;
 
         private int currentPrefabId;
+
+        private void Awake()
+        {
+            AddRoadsToService();
+        }
 
         public void Update()
         {

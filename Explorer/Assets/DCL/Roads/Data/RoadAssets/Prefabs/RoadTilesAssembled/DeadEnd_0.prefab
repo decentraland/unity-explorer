@@ -414,6 +414,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: HedgeCapsule
       objectReference: {fileID: 0}
+    - target: {fileID: 7303024313507133109, guid: 38f0dfed4829b3544b04655173484af8, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -534,6 +538,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 6578349561275120063, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -583,6 +591,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 5307406345201536387}
     m_Modifications:
+    - target: {fileID: 1294518469113949188, guid: c6052d331eb850c44834477dfd08fa76, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 2608075109790206969, guid: c6052d331eb850c44834477dfd08fa76, type: 3}
       propertyPath: m_Name
       value: RoadTileDeadend
@@ -637,6 +649,18 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3421168715568582979, guid: c6052d331eb850c44834477dfd08fa76, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6888887374550054594, guid: c6052d331eb850c44834477dfd08fa76, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6961432972630878603, guid: c6052d331eb850c44834477dfd08fa76, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7654700448404462503, guid: c6052d331eb850c44834477dfd08fa76, type: 3}
+      propertyPath: m_Enabled
       value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
@@ -826,6 +850,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: HedgeCapsule (2)
       objectReference: {fileID: 0}
+    - target: {fileID: 7303024313507133109, guid: 38f0dfed4829b3544b04655173484af8, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -934,6 +962,10 @@ PrefabInstance:
     - target: {fileID: 2902643551049145214, guid: 38f0dfed4829b3544b04655173484af8, type: 3}
       propertyPath: m_Name
       value: HedgeCapsule (1)
+      objectReference: {fileID: 0}
+    - target: {fileID: 7303024313507133109, guid: 38f0dfed4829b3544b04655173484af8, type: 3}
+      propertyPath: m_Enabled
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

@@ -34,6 +34,7 @@ namespace DCL.Roads.GPUInstancing
 
         private static void RenderCandidateIndirect(GPUInstancingLODGroupWithBuffer candidate, GPUInstancingBuffers buffers)
         {
+
             for (var i = 0; i < candidate.LODGroup.CombinedLodsRenderers.Count; i++)
             {
                 CombinedLodsRenderer combinedLodRenderer = candidate.LODGroup.CombinedLodsRenderers[i];
@@ -61,7 +62,6 @@ namespace DCL.Roads.GPUInstancing
             int _nLODCount = candidate.LODGroup.LodsScreenSpaceSizes.Length;
 
             buffers.LODLevels = new GraphicsBuffer(GraphicsBuffer.Target.Structured, GraphicsBuffer.UsageFlags.None, _nInstanceCount, sizeof(uint) * 4);
-
             {
                 buffers.InstanceLookUpAndDither = new GraphicsBuffer(GraphicsBuffer.Target.Structured, GraphicsBuffer.UsageFlags.None, _nInstanceCount * _nLODCount, sizeof(uint) * 2);
                 NativeArray<uint> natArray = new NativeArray<uint>(_nInstanceCount * _nLODCount * 2, Allocator.Temp, NativeArrayOptions.UninitializedMemory);
@@ -120,7 +120,7 @@ namespace DCL.Roads.GPUInstancing
                 combinedLodRenderer.InitializeRenderParams(instancingMaterials);
                 ref RenderParams rparams = ref combinedLodRenderer.RenderParamsArray[0];
 
-                // rparams.camera = Camera.current;
+                rparams.camera = Camera.main;
                 rparams.worldBounds = RENDER_PARAMS_WORLD_BOUNDS;
                 rparams.matProps = new MaterialPropertyBlock();
                 rparams.matProps.SetBuffer("_PerInstanceBuffer", buffers.PerInstanceMatrices);
@@ -141,22 +141,19 @@ namespace DCL.Roads.GPUInstancing
         {
             if (lodGroup == null) return;
 
-            if (candidatesBuffersTable.TryGetValue(lodGroup, out GPUInstancingBuffers buffers))
-            {
+            if (candidatesBuffersTable.Remove(lodGroup, out GPUInstancingBuffers buffers))
                 buffers.Dispose();
-                candidatesBuffersTable.Remove(lodGroup);
-            }
         }
     }
 
     public class GPUInstancingBuffers : IDisposable
     {
-        public GraphicsBuffer PerInstanceMatrices;
-        public List<GraphicsBuffer> DrawArgs;
-        public List<GraphicsBuffer.IndirectDrawIndexedArgs[]> DrawArgsCommandData;
-
         public GraphicsBuffer LODLevels;
         public GraphicsBuffer InstanceLookUpAndDither;
+        public GraphicsBuffer PerInstanceMatrices;
+
+        public List<GraphicsBuffer> DrawArgs;
+        public List<GraphicsBuffer.IndirectDrawIndexedArgs[]> DrawArgsCommandData;
 
         public void Dispose()
         {

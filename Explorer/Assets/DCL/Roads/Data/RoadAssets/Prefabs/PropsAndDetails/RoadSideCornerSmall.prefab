@@ -49,6 +49,10 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -8636182447433532508, guid: 14c353cd19b5ed543b9bb8851997011b, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8636182447433532508, guid: 14c353cd19b5ed543b9bb8851997011b, type: 3}
       propertyPath: m_CastShadows
       value: 0
       objectReference: {fileID: 0}
@@ -57,6 +61,10 @@ PrefabInstance:
       value: RoadSideCornerSmall
       objectReference: {fileID: 0}
     - target: {fileID: 2416971236662606226, guid: 14c353cd19b5ed543b9bb8851997011b, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4742473837712756890, guid: 14c353cd19b5ed543b9bb8851997011b, type: 3}
       propertyPath: m_Enabled
       value: 0
       objectReference: {fileID: 0}
@@ -76,6 +84,10 @@ PrefabInstance:
       propertyPath: m_Enabled
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 7342138800443175179, guid: 14c353cd19b5ed543b9bb8851997011b, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -90,6 +102,11 @@ PrefabInstance:
 --- !u!4 &345860427014422763 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 14c353cd19b5ed543b9bb8851997011b, type: 3}
+  m_PrefabInstance: {fileID: 235884021952947968}
+  m_PrefabAsset: {fileID: 0}
+--- !u!23 &819684366512856228 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: -8636182447433532508, guid: 14c353cd19b5ed543b9bb8851997011b, type: 3}
   m_PrefabInstance: {fileID: 235884021952947968}
   m_PrefabAsset: {fileID: 0}
 --- !u!1 &1118984619941632593 stripped
@@ -137,6 +154,9 @@ MonoBehaviour:
   Name: RoadSideCornerSmall
   Reference: {fileID: 4798200095235504026}
   Transform: {fileID: 345860427014422763}
+  RefRenderers:
+  - {fileID: 7395617651910055435}
+  - {fileID: 819684366512856228}
   ObjectSize: 1
   Bounds:
     m_Center: {x: -0.5, y: 0.049999975, z: 0.5}
@@ -163,7 +183,7 @@ MonoBehaviour:
     e33: 0
   CombinedLodsRenderers:
   - parent: {fileID: 345860427014422763}
-    combinedMesh: {fileID: 1535256777912303878}
+    combinedMesh: {fileID: -3026964156936409935}
     SharedMaterial: {fileID: 2100000, guid: 080ee30e4f4ff5c4fae19015bec5167c, type: 2}
     RenderParamsSerialized:
     - layer: 0
@@ -189,7 +209,12 @@ LODGroup:
   m_CorrespondingSourceObject: {fileID: 4742473837712756890, guid: 14c353cd19b5ed543b9bb8851997011b, type: 3}
   m_PrefabInstance: {fileID: 235884021952947968}
   m_PrefabAsset: {fileID: 0}
---- !u!43 &1535256777912303878
+--- !u!23 &7395617651910055435 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 7342138800443175179, guid: 14c353cd19b5ed543b9bb8851997011b, type: 3}
+  m_PrefabInstance: {fileID: 235884021952947968}
+  m_PrefabAsset: {fileID: 0}
+--- !u!43 &-3026964156936409935
 Mesh:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}

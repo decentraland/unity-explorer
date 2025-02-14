@@ -235,6 +235,10 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -7511558181221131132, guid: 84366f692ac68a74fa0b72a63c361aff, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -7511558181221131132, guid: 84366f692ac68a74fa0b72a63c361aff, type: 3}
       propertyPath: m_CastShadows
       value: 0
       objectReference: {fileID: 0}
@@ -263,6 +267,11 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: -370385816633091300}
   m_SourcePrefab: {fileID: 100100000, guid: 84366f692ac68a74fa0b72a63c361aff, type: 3}
+--- !u!23 &7901343163526339748 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: -7511558181221131132, guid: 84366f692ac68a74fa0b72a63c361aff, type: 3}
+  m_PrefabInstance: {fileID: 8819912978155454496}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &8550024305409097073 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 84366f692ac68a74fa0b72a63c361aff, type: 3}
@@ -285,6 +294,8 @@ MonoBehaviour:
   Name: RoadTileL
   Reference: {fileID: 0}
   Transform: {fileID: 9073655261472565195}
+  RefRenderers:
+  - {fileID: 7901343163526339748}
   ObjectSize: 16
   Bounds:
     m_Center: {x: 0, y: 0, z: 0}

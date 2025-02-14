@@ -53,6 +53,10 @@ PrefabInstance:
       value: RoadSideClosedOff
       objectReference: {fileID: 0}
     - target: {fileID: 4742473837712756890, guid: 45d506f664fdbc24ea715b84db4b667e, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4742473837712756890, guid: 45d506f664fdbc24ea715b84db4b667e, type: 3}
       propertyPath: m_LODs.Array.data[0].screenRelativeHeight
       value: 0.13831817
       objectReference: {fileID: 0}
@@ -60,7 +64,15 @@ PrefabInstance:
       propertyPath: m_LODs.Array.data[1].screenRelativeHeight
       value: 0.048087455
       objectReference: {fileID: 0}
+    - target: {fileID: 5646753623344606977, guid: 45d506f664fdbc24ea715b84db4b667e, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 7809520289854331560, guid: 45d506f664fdbc24ea715b84db4b667e, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8131591485423999938, guid: 45d506f664fdbc24ea715b84db4b667e, type: 3}
       propertyPath: m_Enabled
       value: 0
       objectReference: {fileID: 0}
@@ -133,6 +145,9 @@ MonoBehaviour:
   Name: RoadSideClosedOff
   Reference: {fileID: 8142017896406890452}
   Transform: {fileID: 3937374822286885029}
+  RefRenderers:
+  - {fileID: 9183869298469079119}
+  - {fileID: 4753500650892868748}
   ObjectSize: 16.000002
   Bounds:
     m_Center: {x: 0, y: 0.049999997, z: -0.00000047683716}
@@ -159,7 +174,7 @@ MonoBehaviour:
     e33: 0
   CombinedLodsRenderers:
   - parent: {fileID: 3937374822286885029}
-    combinedMesh: {fileID: -8167476591535426452}
+    combinedMesh: {fileID: -873746405229726159}
     SharedMaterial: {fileID: 2100000, guid: 080ee30e4f4ff5c4fae19015bec5167c, type: 2}
     RenderParamsSerialized:
     - layer: 0
@@ -180,12 +195,22 @@ MonoBehaviour:
       lightProbeUsage: 1
       lightProbeProxyVolume: {fileID: 0}
       motionVectorMode: 1
+--- !u!23 &4753500650892868748 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 8131591485423999938, guid: 45d506f664fdbc24ea715b84db4b667e, type: 3}
+  m_PrefabInstance: {fileID: 3544021707692402510}
+  m_PrefabAsset: {fileID: 0}
 --- !u!205 &8142017896406890452 stripped
 LODGroup:
   m_CorrespondingSourceObject: {fileID: 4742473837712756890, guid: 45d506f664fdbc24ea715b84db4b667e, type: 3}
   m_PrefabInstance: {fileID: 3544021707692402510}
   m_PrefabAsset: {fileID: 0}
---- !u!43 &-8167476591535426452
+--- !u!23 &9183869298469079119 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 5646753623344606977, guid: 45d506f664fdbc24ea715b84db4b667e, type: 3}
+  m_PrefabInstance: {fileID: 3544021707692402510}
+  m_PrefabAsset: {fileID: 0}
+--- !u!43 &-873746405229726159
 Mesh:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}

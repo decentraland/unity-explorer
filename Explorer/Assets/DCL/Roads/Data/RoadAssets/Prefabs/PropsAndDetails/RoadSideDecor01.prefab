@@ -49,12 +49,20 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -7578448282079770498, guid: 455bd1c33ae1c814e80059a9aaddc441, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -7578448282079770498, guid: 455bd1c33ae1c814e80059a9aaddc441, type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 
       objectReference: {fileID: 2100000, guid: 080ee30e4f4ff5c4fae19015bec5167c, type: 2}
     - target: {fileID: 919132149155446097, guid: 455bd1c33ae1c814e80059a9aaddc441, type: 3}
       propertyPath: m_Name
       value: RoadSideDecor01
+      objectReference: {fileID: 0}
+    - target: {fileID: 1386865200143816641, guid: 455bd1c33ae1c814e80059a9aaddc441, type: 3}
+      propertyPath: m_Enabled
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1386865200143816641, guid: 455bd1c33ae1c814e80059a9aaddc441, type: 3}
       propertyPath: m_CastShadows
@@ -65,10 +73,18 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 2100000, guid: 080ee30e4f4ff5c4fae19015bec5167c, type: 2}
     - target: {fileID: 2101851462128310710, guid: 455bd1c33ae1c814e80059a9aaddc441, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2101851462128310710, guid: 455bd1c33ae1c814e80059a9aaddc441, type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 
       objectReference: {fileID: 2100000, guid: 080ee30e4f4ff5c4fae19015bec5167c, type: 2}
     - target: {fileID: 2958262529490601848, guid: 455bd1c33ae1c814e80059a9aaddc441, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4742473837712756890, guid: 455bd1c33ae1c814e80059a9aaddc441, type: 3}
       propertyPath: m_Enabled
       value: 0
       objectReference: {fileID: 0}
@@ -98,6 +114,21 @@ PrefabInstance:
 --- !u!205 &3900521971472242239 stripped
 LODGroup:
   m_CorrespondingSourceObject: {fileID: 4742473837712756890, guid: 455bd1c33ae1c814e80059a9aaddc441, type: 3}
+  m_PrefabInstance: {fileID: 8642925301787412133}
+  m_PrefabAsset: {fileID: 0}
+--- !u!23 &6999200431455932123 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: -7578448282079770498, guid: 455bd1c33ae1c814e80059a9aaddc441, type: 3}
+  m_PrefabInstance: {fileID: 8642925301787412133}
+  m_PrefabAsset: {fileID: 0}
+--- !u!23 &7264011839685136740 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 1386865200143816641, guid: 455bd1c33ae1c814e80059a9aaddc441, type: 3}
+  m_PrefabInstance: {fileID: 8642925301787412133}
+  m_PrefabAsset: {fileID: 0}
+--- !u!23 &7699624850596126483 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 2101851462128310710, guid: 455bd1c33ae1c814e80059a9aaddc441, type: 3}
   m_PrefabInstance: {fileID: 8642925301787412133}
   m_PrefabAsset: {fileID: 0}
 --- !u!4 &8105194792326734158 stripped
@@ -150,6 +181,13 @@ MonoBehaviour:
   Name: RoadSideDecor01
   Reference: {fileID: 3900521971472242239}
   Transform: {fileID: 8105194792326734158}
+  RefRenderers:
+  - {fileID: 7699624850596126483}
+  - {fileID: 7699624850596126483}
+  - {fileID: 6999200431455932123}
+  - {fileID: 6999200431455932123}
+  - {fileID: 7264011839685136740}
+  - {fileID: 7264011839685136740}
   ObjectSize: 4.366378
   Bounds:
     m_Center: {x: -0.00000047683716, y: 0.1825516, z: 7.5}
@@ -177,7 +215,7 @@ MonoBehaviour:
     e33: 0
   CombinedLodsRenderers:
   - parent: {fileID: 8105194792326734158}
-    combinedMesh: {fileID: 1630189970507768189}
+    combinedMesh: {fileID: -4625873230261680876}
     SharedMaterial: {fileID: 2100000, guid: 080ee30e4f4ff5c4fae19015bec5167c, type: 2}
     RenderParamsSerialized:
     - layer: 0
@@ -208,7 +246,7 @@ MonoBehaviour:
       lightProbeProxyVolume: {fileID: 0}
       motionVectorMode: 1
   - parent: {fileID: 8105194792326734158}
-    combinedMesh: {fileID: -4350694176670908495}
+    combinedMesh: {fileID: -5279916914201280423}
     SharedMaterial: {fileID: 2100000, guid: fcd067b2a5f3ade45846eef4205a2cb8, type: 2}
     RenderParamsSerialized:
     - layer: 0
@@ -238,7 +276,7 @@ MonoBehaviour:
       lightProbeUsage: 1
       lightProbeProxyVolume: {fileID: 0}
       motionVectorMode: 1
---- !u!43 &-4350694176670908495
+--- !u!43 &-5279916914201280423
 Mesh:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -423,7 +461,7 @@ Mesh:
     offset: 0
     size: 0
     path: 
---- !u!43 &1630189970507768189
+--- !u!43 &-4625873230261680876
 Mesh:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}

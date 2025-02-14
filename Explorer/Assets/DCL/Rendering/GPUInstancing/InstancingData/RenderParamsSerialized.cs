@@ -22,7 +22,7 @@ namespace DCL.Roads.GPUInstancing.Playground
         // Probes
         public ReflectionProbeUsage reflectionProbeUsage;
         public LightProbeUsage lightProbeUsage;
-        public LightProbeProxyVolume lightProbeProxyVolume;
+        // public LightProbeProxyVolume lightProbeProxyVolume;
 
         public MotionVectorGenerationMode motionVectorMode;
 
@@ -37,7 +37,7 @@ namespace DCL.Roads.GPUInstancing.Playground
 
             reflectionProbeUsage = rend.reflectionProbeUsage;
             lightProbeUsage = rend.lightProbeUsage;
-            lightProbeProxyVolume = null; // no custom proxy volume
+            // lightProbeProxyVolume = null; // no custom proxy volume
 
             motionVectorMode = rend.motionVectorGenerationMode;
         }
@@ -61,7 +61,7 @@ namespace DCL.Roads.GPUInstancing.Playground
                 shadowCastingMode = shadowCastingMode,
                 reflectionProbeUsage = reflectionProbeUsage,
                 lightProbeUsage = lightProbeUsage,
-                lightProbeProxyVolume = lightProbeProxyVolume, // no custom proxy volume
+                // lightProbeProxyVolume = lightProbeProxyVolume, // no custom proxy volume
                 motionVectorMode = motionVectorMode,
             };
         }

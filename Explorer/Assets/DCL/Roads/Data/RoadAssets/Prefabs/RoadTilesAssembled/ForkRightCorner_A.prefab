@@ -220,6 +220,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 7055678820053741279}
     m_Modifications:
+    - target: {fileID: 1380931762282181176, guid: 2b330de14a22e4e499b3d18d89278567, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1670565146334938724, guid: 2b330de14a22e4e499b3d18d89278567, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4699516570873870722, guid: 2b330de14a22e4e499b3d18d89278567, type: 3}
       propertyPath: m_Name
       value: RoadTileRightCornerStraight
@@ -274,6 +282,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5364871002273604408, guid: 2b330de14a22e4e499b3d18d89278567, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8402656706552482419, guid: 2b330de14a22e4e499b3d18d89278567, type: 3}
+      propertyPath: m_Enabled
       value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []

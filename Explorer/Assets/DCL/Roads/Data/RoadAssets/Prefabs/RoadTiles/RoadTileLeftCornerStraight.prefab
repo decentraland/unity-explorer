@@ -173,6 +173,10 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -7511558181221131132, guid: 84366f692ac68a74fa0b72a63c361aff, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -7511558181221131132, guid: 84366f692ac68a74fa0b72a63c361aff, type: 3}
       propertyPath: m_CastShadows
       value: 0
       objectReference: {fileID: 0}
@@ -223,6 +227,8 @@ MonoBehaviour:
   Name: RoadTileLeftCornerStraight
   Reference: {fileID: 0}
   Transform: {fileID: 5364871002273604408}
+  RefRenderers:
+  - {fileID: 6501215563661973591}
   ObjectSize: 16
   Bounds:
     m_Center: {x: 0, y: 0, z: 0}
@@ -263,6 +269,11 @@ MonoBehaviour:
 --- !u!4 &5364871002273604408 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 84366f692ac68a74fa0b72a63c361aff, type: 3}
+  m_PrefabInstance: {fileID: 5618628378928252115}
+  m_PrefabAsset: {fileID: 0}
+--- !u!23 &6501215563661973591 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: -7511558181221131132, guid: 84366f692ac68a74fa0b72a63c361aff, type: 3}
   m_PrefabInstance: {fileID: 5618628378928252115}
   m_PrefabAsset: {fileID: 0}
 --- !u!1001 &7498658045858777687

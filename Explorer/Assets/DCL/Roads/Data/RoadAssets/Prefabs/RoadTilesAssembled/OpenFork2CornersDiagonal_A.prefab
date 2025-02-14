@@ -196,6 +196,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1009204568762992779}
     m_Modifications:
+    - target: {fileID: 2431683042401123805, guid: f91d15f5ec8ff934893936d0bb09ceb6, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 2608593210208550544, guid: f91d15f5ec8ff934893936d0bb09ceb6, type: 3}
       propertyPath: m_LocalScale.x
       value: 0.0009999999
@@ -251,6 +255,10 @@ PrefabInstance:
     - target: {fileID: 3420559889377371178, guid: f91d15f5ec8ff934893936d0bb09ceb6, type: 3}
       propertyPath: m_Name
       value: RoadTile2CornersDiagonal
+      objectReference: {fileID: 0}
+    - target: {fileID: 6463237886596142853, guid: f91d15f5ec8ff934893936d0bb09ceb6, type: 3}
+      propertyPath: m_Enabled
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

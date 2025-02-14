@@ -412,6 +412,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: RoadTileLWithCorner
       objectReference: {fileID: 0}
+    - target: {fileID: 4376725232526633733, guid: a0168356423e90f40a09a8586e4e00c4, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4694594434200999573, guid: a0168356423e90f40a09a8586e4e00c4, type: 3}
       propertyPath: InstancesBuffer.Array.size
       value: 1
@@ -452,13 +456,25 @@ PrefabInstance:
       propertyPath: InstancesBuffer.Array.data[0].instColourTint.z
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 6475403175479416888, guid: a0168356423e90f40a09a8586e4e00c4, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 6703239481862877598, guid: a0168356423e90f40a09a8586e4e00c4, type: 3}
       propertyPath: m_Size
       value: 4.3663797
       objectReference: {fileID: 0}
     - target: {fileID: 6703239481862877598, guid: a0168356423e90f40a09a8586e4e00c4, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6703239481862877598, guid: a0168356423e90f40a09a8586e4e00c4, type: 3}
       propertyPath: m_LocalReferencePoint.z
       value: 7.500004
+      objectReference: {fileID: 0}
+    - target: {fileID: 8194497884945383551, guid: a0168356423e90f40a09a8586e4e00c4, type: 3}
+      propertyPath: m_Enabled
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8374355730949675776, guid: a0168356423e90f40a09a8586e4e00c4, type: 3}
       propertyPath: InstancesBuffer.Array.size
@@ -781,6 +797,10 @@ PrefabInstance:
       propertyPath: m_Size
       value: 2.7376783
       objectReference: {fileID: 0}
+    - target: {fileID: 6578349561275120063, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -929,6 +949,10 @@ PrefabInstance:
     - target: {fileID: 7303024313507133109, guid: c3f0925194868a5478e507bcc2cc31ba, type: 3}
       propertyPath: m_Size
       value: 4.2895336
+      objectReference: {fileID: 0}
+    - target: {fileID: 7303024313507133109, guid: c3f0925194868a5478e507bcc2cc31ba, type: 3}
+      propertyPath: m_Enabled
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7303024313507133109, guid: c3f0925194868a5478e507bcc2cc31ba, type: 3}
       propertyPath: m_LocalReferencePoint.x

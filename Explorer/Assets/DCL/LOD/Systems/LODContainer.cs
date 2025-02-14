@@ -34,7 +34,7 @@ namespace DCL.LOD.Systems
         private ProvidedAsset<RoadSettingsAsset> roadSettingsAsset;
         private List<GameObject> roadAssetsPrefabList;
         private ProvidedAsset<LODSettingsAsset> lodSettingsAsset;
-        private GPUInstancingService_Old gpuInstancingServiceOld;
+        private GPUInstancingService gpuInstancingService;
         private RealmData realmData;
 
         public LODPlugin LODPlugin { get; private set; } = null!;
@@ -58,11 +58,11 @@ namespace DCL.LOD.Systems
             TextureArrayContainerFactory textureArrayContainerFactory,
             IDebugContainerBuilder debugBuilder,
             bool lodEnabled,
-            GPUInstancingService_Old gpuInstancingServiceOld,
+            GPUInstancingService gpuInstancingService,
             CancellationToken ct)
         {
             var container = new LODContainer(assetsProvisioner);
-            container.gpuInstancingServiceOld = gpuInstancingServiceOld;
+            container.gpuInstancingService = gpuInstancingService;
             container.realmData = realmData;
 
             return await container.InitializeContainerAsync<LODContainer, LODContainerSettings>(settingsContainer, ct, c =>
@@ -121,7 +121,7 @@ namespace DCL.LOD.Systems
             foreach (AssetReferenceGameObject? t in roadSettingsAsset.Value.RoadAssetsReference)
             {
                 var prefab = await assetsProvisioner.ProvideMainAssetAsync(t, ct: ct);
-                prefab.Value.GetComponent<GPUInstancingPrefabData_Old>().HideVisuals();
+                // prefab.Value.GetComponent<GPUInstancingPrefabData>().HideVisuals();
                 roadAssetsPrefabList.Add(prefab.Value);
             }
 
@@ -131,9 +131,9 @@ namespace DCL.LOD.Systems
         private void SwitchRoadsInstancedRendering(RealmKind realmKind)
         {
             if (realmKind == RealmKind.GenesisCity)
-                gpuInstancingServiceOld.AddToIndirect(roadSettingsAsset.Value.IndirectCandidates);
+                gpuInstancingService.AddToIndirect(roadSettingsAsset.Value.IndirectLODGroups);
             else
-                gpuInstancingServiceOld.Remove(roadSettingsAsset.Value.IndirectCandidates);
+                gpuInstancingService.Remove(roadSettingsAsset.Value.IndirectLODGroups);
         }
 
         [Serializable]

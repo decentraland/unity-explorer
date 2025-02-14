@@ -49,6 +49,10 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -7511558181221131132, guid: 84366f692ac68a74fa0b72a63c361aff, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -7511558181221131132, guid: 84366f692ac68a74fa0b72a63c361aff, type: 3}
       propertyPath: m_CastShadows
       value: 0
       objectReference: {fileID: 0}
@@ -107,6 +111,8 @@ MonoBehaviour:
   Name: RoadTileLWithCorner
   Reference: {fileID: 0}
   Transform: {fileID: 271521470279489331}
+  RefRenderers:
+  - {fileID: 1409503031744621660}
   ObjectSize: 16
   Bounds:
     m_Center: {x: 0, y: 0, z: 0}
@@ -144,6 +150,11 @@ MonoBehaviour:
       lightProbeUsage: 1
       lightProbeProxyVolume: {fileID: 0}
       motionVectorMode: 1
+--- !u!23 &1409503031744621660 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: -7511558181221131132, guid: 84366f692ac68a74fa0b72a63c361aff, type: 3}
+  m_PrefabInstance: {fileID: 310214199783190744}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &692751004925570557
 PrefabInstance:
   m_ObjectHideFlags: 0

@@ -253,6 +253,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1009204568762992779}
     m_Modifications:
+    - target: {fileID: 587094877079476800, guid: c1a361b3b556f234d8ee57426bbea2b5, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1294518469113949188, guid: c1a361b3b556f234d8ee57426bbea2b5, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 2608075109790206969, guid: c1a361b3b556f234d8ee57426bbea2b5, type: 3}
       propertyPath: m_Name
       value: RoadTileClosedOff
@@ -307,6 +315,18 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3421168715568582979, guid: c1a361b3b556f234d8ee57426bbea2b5, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6216986622243669611, guid: c1a361b3b556f234d8ee57426bbea2b5, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6961432972630878603, guid: c1a361b3b556f234d8ee57426bbea2b5, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7654700448404462503, guid: c1a361b3b556f234d8ee57426bbea2b5, type: 3}
+      propertyPath: m_Enabled
       value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []

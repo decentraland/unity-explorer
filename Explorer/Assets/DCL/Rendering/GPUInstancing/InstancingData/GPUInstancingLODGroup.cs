@@ -17,6 +17,7 @@ namespace DCL.Roads.GPUInstancing.Playground
         public string Name;
         public LODGroup Reference;
         public Transform Transform;
+        public List<Renderer> RefRenderers = new ();
 
         [Header("LOD GROUP DATA")]
         public float ObjectSize;
@@ -27,6 +28,25 @@ namespace DCL.Roads.GPUInstancing.Playground
         [Space]
         public List<CombinedLodsRenderer> CombinedLodsRenderers;
 
+        [ContextMenu(nameof(HideAll))]
+        public void HideAll()
+        {
+            foreach (Renderer refRenderer in RefRenderers)
+                refRenderer.enabled = false;
+
+            if (Reference == null) return;
+            bool isAllRenderersDisabled = Reference.GetLODs().All(lod => lod.renderers.All(lodRenderer => lodRenderer.enabled));
+            if (isAllRenderersDisabled) Reference.enabled = false;
+        }
+
+        [ContextMenu(nameof(ShowAll))]
+        public void ShowAll()
+        {
+            if(Reference!= null) Reference.enabled = true;
+
+            foreach (Renderer refRenderer in RefRenderers) refRenderer.enabled = true;
+        }
+
         [ContextMenu(nameof(CollectStandaloneRenderers))]
         public void CollectStandaloneRenderers()
         {
@@ -34,6 +54,7 @@ namespace DCL.Roads.GPUInstancing.Playground
             var meshFilter = GetComponent<MeshFilter>();
             var combinedRenderer = new CombinedLodsRenderer(renderer.sharedMaterial,  renderer,  meshFilter);
             CombinedLodsRenderers = new List<CombinedLodsRenderer> { combinedRenderer };
+            RefRenderers.Add(renderer);
 
             // Position at origin (but not scale!)
             transform.position = Vector3.zero;
@@ -113,6 +134,8 @@ namespace DCL.Roads.GPUInstancing.Playground
             BuildLODMatrix(lods.Length);
 
             UpdateBoundsByCombinedLods();
+
+            HideAll();
             AssetDatabase.SaveAssets();
         }
 
@@ -154,7 +177,7 @@ namespace DCL.Roads.GPUInstancing.Playground
         private void CollectCombineInstances(LOD[] lods, Dictionary<(Material, Transform), CombinedLodsRenderer> combineDict)
         {
             foreach (LOD lod in lods)
-            foreach (Renderer rend in lod.renderers)
+            foreach (Renderer rend  in lod.renderers)
             {
                 if (rend is not MeshRenderer)
                 {
@@ -196,6 +219,8 @@ namespace DCL.Roads.GPUInstancing.Playground
 
                     // NOTE (Vit): it can add equal meshes, but how otherwise we can treat LOD inside compute shader?
                     combineDict[key].AddCombineInstance(ci, rend);
+
+                    RefRenderers.Add(rend);
                 }
             }
         }
