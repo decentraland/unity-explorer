@@ -64,8 +64,8 @@ namespace SceneRuntime.Apis.Modules.RestrictedActionsApi
         {
             api.TryMovePlayerTo(
                 new Vector3((float)newRelativePositionX, (float)newRelativePositionY, (float)newRelativePositionZ),
-                new Vector3((float)avatarTargetX, (float)avatarTargetY, (float)avatarTargetZ),
-                null);
+                null,
+                new Vector3((float)avatarTargetX, (float)avatarTargetY, (float)avatarTargetZ));
         }
 
         [UsedImplicitly]
