@@ -182,7 +182,7 @@ MonoBehaviour:
   <PanelCanvasGroup>k__BackingField: {fileID: 1655248004995997028}
   <ChatEntryConfiguration>k__BackingField: {fileID: 11400000, guid: 6afb31861b85441b6ab2b988819bb96a, type: 2}
   toastFadeInDuration: 0.3
-  toastVisibleDuration: 1
+  toastVisibleDuration: 3
   toastVFadeOutDuration: 0.3
   <ShowNotificationSound>k__BackingField: {fileID: 11400000, guid: 33affe5a01ca04bcdaf10484c87793e2, type: 2}
 --- !u!223 &5182163631995387074
