@@ -1,6 +1,5 @@
 using Cysharp.Threading.Tasks;
 using DCL.Backpack;
-using DCL.Diagnostics;
 using DCL.NotificationsBusController.NotificationsBus;
 using DCL.NotificationsBusController.NotificationTypes;
 using DCL.UI;
@@ -141,8 +140,6 @@ namespace DCL.Notifications.NewNotification
 
         private async UniTask ProcessFriendsNotificationAsync(INotification notification)
         {
-            ReportHub.Log(new ReportData(ReportCategory.FRIENDS), $"New friend notification received: {notification.Type}, {notification.Id}, {notification.GetHeader()}");
-
             viewInstance!.FriendsNotificationView.HeaderText.text = notification.GetHeader();
             viewInstance.FriendsNotificationView.NotificationType = notification.Type;
             viewInstance.FriendsNotificationView.Notification = notification;
@@ -177,11 +174,9 @@ namespace DCL.Notifications.NewNotification
                     viewInstance!.NotificationView.NotificationImageBackground.sprite = rarityBackgroundMapping.GetTypeImage(rewardAssignedNotification.Metadata.Rarity);
                     break;
                 case FriendRequestAcceptedNotification friendRequestAcceptedNotification:
-                    ReportHub.Log(new ReportData(ReportCategory.FRIENDS), $"New friend notification accepted: sender: {friendRequestAcceptedNotification.Metadata.Sender.Address}, receiver: {friendRequestAcceptedNotification.Metadata.Receiver.Address}, requestId: {friendRequestAcceptedNotification.Metadata.RequestId}");
                     viewInstance!.FriendsNotificationView.ConfigureFromAcceptedNotificationData(friendRequestAcceptedNotification);
                     break;
                 case FriendRequestReceivedNotification friendRequestReceivedNotification:
-                    ReportHub.Log(new ReportData(ReportCategory.FRIENDS), $"New friend notification received: sender: {friendRequestReceivedNotification.Metadata.Sender.Address}, receiver: {friendRequestReceivedNotification.Metadata.Receiver.Address}, requestId: {friendRequestReceivedNotification.Metadata.RequestId}");
                     viewInstance!.FriendsNotificationView.ConfigureFromReceivedNotificationData(friendRequestReceivedNotification);
                     break;
             }
