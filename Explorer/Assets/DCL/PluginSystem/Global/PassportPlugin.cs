@@ -8,7 +8,6 @@ using DCL.Backpack;
 using DCL.BadgesAPIService;
 using DCL.Browser;
 using DCL.CharacterPreview;
-using DCL.Chat;
 using DCL.Input;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -17,7 +16,6 @@ using DCL.NotificationsBusController.NotificationsBus;
 using DCL.Passport;
 using DCL.Profiles;
 using DCL.Profiles.Self;
-using DCL.UI.Profiles.Helpers;
 using DCL.WebRequests;
 using ECS;
 using MVC;
@@ -34,7 +32,6 @@ namespace DCL.PluginSystem.Global
         private readonly ICursor cursor;
         private readonly IProfileRepository profileRepository;
         private readonly ICharacterPreviewFactory characterPreviewFactory;
-        private readonly IProfileNameColorHelper profileNameColorHelper;
         private readonly IRealmData realmData;
         private readonly URLDomain assetBundleURL;
         private readonly IWebRequestController webRequestController;
@@ -60,7 +57,6 @@ namespace DCL.PluginSystem.Global
             ICursor cursor,
             IProfileRepository profileRepository,
             ICharacterPreviewFactory characterPreviewFactory,
-            IProfileNameColorHelper profileNameColorHelper,
             IRealmData realmData,
             URLDomain assetBundleURL,
             IWebRequestController webRequestController,
@@ -84,7 +80,6 @@ namespace DCL.PluginSystem.Global
             this.cursor = cursor;
             this.profileRepository = profileRepository;
             this.characterPreviewFactory = characterPreviewFactory;
-            this.profileNameColorHelper = profileNameColorHelper;
             this.realmData = realmData;
             this.assetBundleURL = assetBundleURL;
             this.webRequestController = webRequestController;
@@ -118,16 +113,15 @@ namespace DCL.PluginSystem.Global
                 assetsProvisioner.ProvideMainAssetValueAsync(passportSettings.RarityBackgroundsMapping, ct),
                 assetsProvisioner.ProvideMainAssetValueAsync(passportSettings.RarityInfoPanelBackgroundsMapping, ct));
 
-            PassportView chatView = (await assetsProvisioner.ProvideMainAssetAsync(passportSettings.PassportPrefab, ct: ct)).Value.GetComponent<PassportView>();
+            PassportView chatView = (await assetsProvisioner.ProvideMainAssetAsync(passportSettings.PassportPrefab, ct)).Value.GetComponent<PassportView>();
 
-            ECSThumbnailProvider thumbnailProvider = new ECSThumbnailProvider(realmData, world, assetBundleURL, webRequestController);
+            var thumbnailProvider = new ECSThumbnailProvider(realmData, world, assetBundleURL, webRequestController);
 
             passportController = new PassportController(
                 PassportController.CreateLazily(chatView, null),
                 cursor,
                 profileRepository,
                 characterPreviewFactory,
-                profileNameColorHelper,
                 rarityBackgroundsMapping,
                 rarityColorMappings,
                 categoryIconsMapping,

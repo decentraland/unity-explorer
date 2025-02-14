@@ -7,16 +7,13 @@ using DCL.Chat.Commands;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
 using DCL.Input;
-using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
-using DCL.Profiles;
 using DCL.Settings.Settings;
 using DCL.UI.InputFieldFormatting;
 using DCL.UI.MainUI;
 using DCL.UI.Profiles.Helpers;
 using MVC;
-using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -36,7 +33,6 @@ namespace DCL.PluginSystem.Global
         private readonly MainUIView mainUIView;
         private readonly ViewDependencies viewDependencies;
         private readonly IChatCommandsBus chatCommandsBus;
-        private readonly IProfileNameColorHelper profileNameColorHelper;
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly ITextFormatter hyperlinkTextFormatter;
 
@@ -54,7 +50,6 @@ namespace DCL.PluginSystem.Global
             Entity playerEntity,
             ViewDependencies viewDependencies,
             IChatCommandsBus chatCommandsBus,
-            IProfileNameColorHelper profileNameColorHelper,
             IAssetsProvisioner assetsProvisioner, ITextFormatter hyperlinkTextFormatter)
         {
             this.mvcManager = mvcManager;
@@ -67,7 +62,6 @@ namespace DCL.PluginSystem.Global
             this.playerEntity = playerEntity;
             this.viewDependencies = viewDependencies;
             this.chatCommandsBus = chatCommandsBus;
-            this.profileNameColorHelper = profileNameColorHelper;
             this.assetsProvisioner = assetsProvisioner;
             this.hyperlinkTextFormatter = hyperlinkTextFormatter;
             this.mainUIView = mainUIView;
@@ -89,7 +83,6 @@ namespace DCL.PluginSystem.Global
                     view.gameObject.SetActive(true);
                     return view;
                 },
-                profileNameColorHelper,
                 chatMessagesBus,
                 chatHistory,
                 entityParticipantTable,
@@ -105,13 +98,10 @@ namespace DCL.PluginSystem.Global
 
             mvcManager.RegisterController(chatController);
         }
-
     }
 
     public class ChatPluginSettings : IDCLPluginSettings
     {
-
         [field: SerializeField] public AssetReferenceT<ChatAudioSettingsAsset> ChatSettingsAsset { get; private set; }
-
     }
 }

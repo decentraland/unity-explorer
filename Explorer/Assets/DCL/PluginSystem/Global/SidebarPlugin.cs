@@ -4,7 +4,6 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Backpack;
 using DCL.Browser;
-using DCL.Chat;
 using DCL.Chat.History;
 using DCL.Notifications;
 using DCL.Notifications.NotificationsMenu;
@@ -15,7 +14,6 @@ using DCL.StylizedSkybox.Scripts;
 using DCL.UI.Controls;
 using DCL.UI.MainUI;
 using DCL.UI.ProfileElements;
-using DCL.UI.Profiles.Helpers;
 using DCL.UI.Sidebar;
 using DCL.UI.Skybox;
 using DCL.UserInAppInitializationFlow;
@@ -45,7 +43,6 @@ namespace DCL.PluginSystem.Global
         private readonly IProfileCache profileCache;
         private readonly ISidebarBus sidebarBus;
         private readonly DCLInput input;
-        private readonly IProfileNameColorHelper profileNameColorHelper;
         private readonly Arch.Core.World world;
         private readonly Entity playerEntity;
         private readonly bool includeCameraReel;
@@ -66,7 +63,6 @@ namespace DCL.PluginSystem.Global
             IProfileCache profileCache,
             ISidebarBus sidebarBus,
             DCLInput input,
-            IProfileNameColorHelper profileNameColorHelper,
             Arch.Core.World world,
             Entity playerEntity,
             bool includeCameraReel,
@@ -86,7 +82,6 @@ namespace DCL.PluginSystem.Global
             this.profileCache = profileCache;
             this.sidebarBus = sidebarBus;
             this.input = input;
-            this.profileNameColorHelper = profileNameColorHelper;
             this.world = world;
             this.playerEntity = playerEntity;
             this.includeCameraReel = includeCameraReel;
@@ -99,10 +94,10 @@ namespace DCL.PluginSystem.Global
 
         public async UniTask InitializeAsync(SidebarSettings settings, CancellationToken ct)
         {
-            NotificationIconTypes notificationIconTypes = (await assetsProvisioner.ProvideMainAssetAsync(settings.NotificationIconTypesSO, ct: ct)).Value;
+            NotificationIconTypes notificationIconTypes = (await assetsProvisioner.ProvideMainAssetAsync(settings.NotificationIconTypesSO, ct)).Value;
             NftTypeIconSO rarityBackgroundMapping = await assetsProvisioner.ProvideMainAssetValueAsync(settings.RarityColorMappings, ct);
 
-            ControlsPanelView panelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.ControlsPanelPrefab, ct: ct)).GetComponent<ControlsPanelView>();
+            ControlsPanelView panelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.ControlsPanelPrefab, ct)).GetComponent<ControlsPanelView>();
             ControlsPanelController.Preallocate(panelViewAsset, null!, out ControlsPanelView controlsPanelView);
 
             mvcManager.RegisterController(new SidebarController(() =>
@@ -115,11 +110,10 @@ namespace DCL.PluginSystem.Global
                 notificationsBusController,
                 new NotificationsMenuController(mainUIView.SidebarView.NotificationsMenuView, notificationsRequestController, notificationsBusController, notificationIconTypes, webRequestController, sidebarBus, rarityBackgroundMapping, web3IdentityCache),
                 new ProfileWidgetController(() => mainUIView.SidebarView.ProfileWidget, web3IdentityCache, profileRepository, webRequestController),
-                new ProfileMenuController(() => mainUIView.SidebarView.ProfileMenuView, web3IdentityCache, profileRepository, webRequestController, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, mvcManager, profileNameColorHelper),
+                new ProfileMenuController(() => mainUIView.SidebarView.ProfileMenuView, web3IdentityCache, profileRepository, webRequestController, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, mvcManager),
                 new SkyboxMenuController(() => mainUIView.SidebarView.SkyboxMenuView, settings.SkyboxSettingsAsset),
                 new ControlsPanelController(() => controlsPanelView, mvcManager, input),
                 sidebarBus,
-                profileNameColorHelper,
                 web3IdentityCache,
                 profileRepository,
                 webBrowser,

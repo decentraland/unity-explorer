@@ -7,10 +7,8 @@ using DCL.Chat.MessageBus;
 using DCL.Input;
 using DCL.Input.Component;
 using DCL.Input.Systems;
-using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
-using DCL.Profiles;
 using DCL.Settings.Settings;
 using DCL.UI.InputFieldFormatting;
 using DCL.UI.Profiles.Helpers;
@@ -27,7 +25,6 @@ namespace DCL.Chat
         public delegate void ChatBubbleVisibilityChangedDelegate(bool isVisible);
 
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
-        private readonly IProfileNameColorHelper profileNameColorHelper;
         private readonly IChatMessagesBus chatMessagesBus;
         private readonly NametagsData nametagsData;
         private readonly IChatHistory chatHistory;
@@ -50,7 +47,6 @@ namespace DCL.Chat
 
         public ChatController(
             ViewFactoryMethod viewFactory,
-            IProfileNameColorHelper profileNameColorHelper,
             IChatMessagesBus chatMessagesBus,
             IChatHistory chatHistory,
             IReadOnlyEntityParticipantTable entityParticipantTable,
@@ -62,7 +58,6 @@ namespace DCL.Chat
             IChatCommandsBus chatCommandsBus,
             ChatAudioSettingsAsset chatAudioSettings, ITextFormatter hyperlinkTextFormatter) : base(viewFactory)
         {
-            this.profileNameColorHelper = profileNameColorHelper;
             this.chatMessagesBus = chatMessagesBus;
             this.chatHistory = chatHistory;
             this.entityParticipantTable = entityParticipantTable;
@@ -139,26 +134,25 @@ namespace DCL.Chat
             // TODO: Use localization systems here:
             chatHistory.AddMessage(ChatChannel.NEARBY_CHANNEL, ChatMessage.NewFromSystem("Type /help for available commands."));
 
-//            ChatChannel.ChannelId id = chatHistory.AddChannel(ChatChannel.ChatChannelType.User, "USER1");
-//            chatHistory.AddMessage(id, new ChatMessage("USER1", "user", "", false, false, "", true));
-//            id = chatHistory.AddChannel(ChatChannel.ChatChannelType.User, "USER2");
-//            chatHistory.AddMessage(id, new ChatMessage("USER2", "user", "", false, false, "", true));
-//            id = chatHistory.AddChannel(ChatChannel.ChatChannelType.User, "USER3");
-//            chatHistory.AddMessage(id, new ChatMessage("USER3", "user", "", false, false, "", true));
-//            id = chatHistory.AddChannel(ChatChannel.ChatChannelType.User, "USER4");
-//            chatHistory.AddMessage(id, new ChatMessage("USER4", "user", "", false, false, "", true));
+            //            ChatChannel.ChannelId id = chatHistory.AddChannel(ChatChannel.ChatChannelType.User, "USER1");
+            //            chatHistory.AddMessage(id, new ChatMessage("USER1", "user", "", false, false, "", true));
+            //            id = chatHistory.AddChannel(ChatChannel.ChatChannelType.User, "USER2");
+            //            chatHistory.AddMessage(id, new ChatMessage("USER2", "user", "", false, false, "", true));
+            //            id = chatHistory.AddChannel(ChatChannel.ChatChannelType.User, "USER3");
+            //            chatHistory.AddMessage(id, new ChatMessage("USER3", "user", "", false, false, "", true));
+            //            id = chatHistory.AddChannel(ChatChannel.ChatChannelType.User, "USER4");
+            //            chatHistory.AddMessage(id, new ChatMessage("USER4", "user", "", false, false, "", true));
         }
 
         //        private int current = 0;
- //       private ChatChannel.ChannelId[] ids = new []
- //       {
- //           ChatChannel.NEARBY_CHANNEL,
-    //        new ChatChannel.ChannelId(ChatChannel.ChatChannelType.User, "USER1"),
-    //        new ChatChannel.ChannelId(ChatChannel.ChatChannelType.User, "USER2"),
-    //        new ChatChannel.ChannelId(ChatChannel.ChatChannelType.User, "USER3"),
-    //        new ChatChannel.ChannelId(ChatChannel.ChatChannelType.User, "USER4")
-   //     };
-
+        //       private ChatChannel.ChannelId[] ids = new []
+        //       {
+        //           ChatChannel.NEARBY_CHANNEL,
+        //        new ChatChannel.ChannelId(ChatChannel.ChatChannelType.User, "USER1"),
+        //        new ChatChannel.ChannelId(ChatChannel.ChatChannelType.User, "USER2"),
+        //        new ChatChannel.ChannelId(ChatChannel.ChatChannelType.User, "USER3"),
+        //        new ChatChannel.ChannelId(ChatChannel.ChatChannelType.User, "USER4")
+        //     };
 
         private void OnChatHistoryMessageAdded(ChatChannel destinationChannel, ChatMessage addedMessage)
         {
@@ -340,15 +334,15 @@ namespace DCL.Chat
 
         private void OnToggleNametagsShortcutPerformed(InputAction.CallbackContext obj)
         {
-//            chatHistory.AddMessage(viewInstance!.CurrentChannel, new ChatMessage("NEW!", "Test", "", false, "", true));
+            //            chatHistory.AddMessage(viewInstance!.CurrentChannel, new ChatMessage("NEW!", "Test", "", false, "", true));
             nametagsData.showNameTags = !nametagsData.showNameTags;
             viewInstance!.EnableChatBubblesVisibilityField = nametagsData.showNameTags;
         }
 
         private void OnUIClickPerformed(InputAction.CallbackContext obj)
         {
-//            current = (current + 1) % chatHistory.Channels.Count;
-//            viewInstance.CurrentChannel = ids[current];
+            //            current = (current + 1) % chatHistory.Channels.Count;
+            //            viewInstance.CurrentChannel = ids[current];
             viewInstance!.Click();
         }
 
@@ -366,9 +360,7 @@ namespace DCL.Chat
                 chatHistory.AddMessage(channelId, newChatMessage);
             }
             else
-            {
                 chatHistory.AddMessage(channelId, chatMessage);
-            }
         }
     }
 }

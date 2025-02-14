@@ -1,6 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Profiles;
-using DCL.UI.Profiles.Helpers;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using MVC;
@@ -13,7 +12,6 @@ namespace DCL.UI.ProfileElements
     {
         private readonly IWeb3IdentityCache identityCache;
         private readonly IProfileRepository profileRepository;
-        private readonly IProfileNameColorHelper profileNameColorHelper;
         private readonly IWebRequestController webRequestController;
 
         private ImageController profileImageController;
@@ -25,20 +23,18 @@ namespace DCL.UI.ProfileElements
             ViewFactoryMethod viewFactory,
             IWeb3IdentityCache identityCache,
             IProfileRepository profileRepository,
-            IWebRequestController webRequestController,
-            IProfileNameColorHelper profileNameColorHelper
+            IWebRequestController webRequestController
         ) : base(viewFactory)
         {
             this.identityCache = identityCache;
             this.profileRepository = profileRepository;
-            this.profileNameColorHelper = profileNameColorHelper;
             this.webRequestController = webRequestController;
         }
 
         protected override void OnViewInstantiated()
         {
             base.OnViewInstantiated();
-            nameElementController = new UserNameElementController(viewInstance!.UserNameElement, profileNameColorHelper);
+            nameElementController = new UserNameElementController(viewInstance!.UserNameElement);
             walletAddressElementController = new UserWalletAddressElementController(viewInstance.UserWalletAddressElement);
             profileImageController = new ImageController(viewInstance.FaceSnapshotImage, webRequestController);
         }

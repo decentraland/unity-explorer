@@ -1,5 +1,4 @@
 ﻿using DCL.Profiles;
-using DCL.UI.Profiles.Helpers;
 using System;
 using System.Threading;
 
@@ -8,16 +7,13 @@ namespace DCL.UI.ProfileElements
     public class UserNameElementController : IDisposable
     {
         public readonly UserNameElement Element;
-        private readonly IProfileNameColorHelper profileNameColorHelper;
 
         private Profile currentProfile;
 
         public UserNameElementController(
-            UserNameElement element,
-            IProfileNameColorHelper profileNameColorHelper)
+            UserNameElement element)
         {
-            this.Element = element;
-            this.profileNameColorHelper = profileNameColorHelper;
+            Element = element;
 
             element.CopyNameWarningNotification.Hide(true);
 
@@ -42,12 +38,10 @@ namespace DCL.UI.ProfileElements
             Element.VerifiedMark.SetActive(profile.HasClaimedName);
         }
 
-
         public void Dispose()
         {
             Element.CopyUserNameButton.onClick.RemoveAllListeners();
             Element.CopyNameWarningNotification.Hide(true);
         }
-
     }
 }
