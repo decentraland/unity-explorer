@@ -231,6 +231,7 @@ namespace DCL.Notifications.NotificationsMenu
                 ReportCategory.UI);
 
             Texture2D texture = ownedTexture.Texture;
+            texture.Compress(false);
 
             Sprite? thumbnailSprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height),
                 VectorUtilities.OneHalf, PIXELS_PER_UNIT, 0, SpriteMeshType.FullRect, Vector4.one, false);
