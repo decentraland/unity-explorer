@@ -71,8 +71,10 @@ namespace DCL.Profiles
         public string DisplayName { get; private set; }
         public string UnclaimedName { get; internal set; }
 
-        //The Display Name with @ before it. Cached here to avoid further allocations when receiving messages from other players.
-        public string MentionName => string.IsNullOrEmpty(mentionName) ? mentionName = "@" + DisplayName : mentionName;
+        /// <summary>
+        /// The Display Name with @ before it. Cached here to avoid further allocations when receiving messages from other players.
+        /// </summary>
+        public string MentionName => string.IsNullOrEmpty(mentionName) ? mentionName = '@' + DisplayName : mentionName;
 
         public bool HasClaimedName
         {
