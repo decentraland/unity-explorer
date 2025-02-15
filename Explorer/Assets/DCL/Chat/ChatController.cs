@@ -155,27 +155,8 @@ namespace DCL.Chat
             chatHistory.AddMessage(ChatChannel.NEARBY_CHANNEL, ChatMessage.NewFromSystem("Type /help for available commands."));
 
             memberListCts = new CancellationTokenSource();
-            UniTask.RunOnThreadPool(UpdateMembersData);
-
-            //            ChatChannel.ChannelId id = chatHistory.AddChannel(ChatChannel.ChatChannelType.User, "USER1");
-            //            chatHistory.AddMessage(id, new ChatMessage("USER1", "user", "", false, false, "", true));
-            //            id = chatHistory.AddChannel(ChatChannel.ChatChannelType.User, "USER2");
-            //            chatHistory.AddMessage(id, new ChatMessage("USER2", "user", "", false, false, "", true));
-            //            id = chatHistory.AddChannel(ChatChannel.ChatChannelType.User, "USER3");
-            //            chatHistory.AddMessage(id, new ChatMessage("USER3", "user", "", false, false, "", true));
-            //            id = chatHistory.AddChannel(ChatChannel.ChatChannelType.User, "USER4");
-            //            chatHistory.AddMessage(id, new ChatMessage("USER4", "user", "", false, false, "", true));
+            UniTask.RunOnThreadPool(UpdateMembersDataAsync);
         }
-
-        //        private int current = 0;
-        //       private ChatChannel.ChannelId[] ids = new []
-        //       {
-        //           ChatChannel.NEARBY_CHANNEL,
-        //        new ChatChannel.ChannelId(ChatChannel.ChatChannelType.User, "USER1"),
-        //        new ChatChannel.ChannelId(ChatChannel.ChatChannelType.User, "USER2"),
-        //        new ChatChannel.ChannelId(ChatChannel.ChatChannelType.User, "USER3"),
-        //        new ChatChannel.ChannelId(ChatChannel.ChatChannelType.User, "USER4")
-        //     };
 
         private void OnChatHistoryMessageAdded(ChatChannel destinationChannel, ChatMessage addedMessage)
         {
@@ -228,13 +209,12 @@ namespace DCL.Chat
         private void OnViewScrollBottomReached()
         {
             MarkCurrentChannelAsRead();
-
-            memberListCts = new CancellationTokenSource();
-            UniTask.RunOnThreadPool(UpdateMembersData);
         }
 
-        private async UniTask UpdateMembersData()
+        private async UniTask UpdateMembersDataAsync()
         {
+            const int WAIT_TIME_IN_BETWEEN_UPDATES = 500;
+
             while (!memberListCts.IsCancellationRequested)
             {
                 // If the player jumps to another room (like a world) while the member list is visible, it must refresh
@@ -248,7 +228,7 @@ namespace DCL.Chat
                 if(canUpdateParticipants && islandRoom.Participants.RemoteParticipantIdentities().Count != viewInstance!.MemberCount)
                     viewInstance!.MemberCount = islandRoom.Participants.RemoteParticipantIdentities().Count;
 
-                await UniTask.Delay(500);
+                await UniTask.Delay(WAIT_TIME_IN_BETWEEN_UPDATES);
             }
         }
 
@@ -381,15 +361,12 @@ namespace DCL.Chat
 
         private void OnToggleNametagsShortcutPerformed(InputAction.CallbackContext obj)
         {
-            //            chatHistory.AddMessage(viewInstance!.CurrentChannel, new ChatMessage("NEW!", "Test", "", false, "", true));
             nametagsData.showNameTags = !nametagsData.showNameTags;
             viewInstance!.EnableChatBubblesVisibilityField = nametagsData.showNameTags;
         }
 
         private void OnUIClickPerformed(InputAction.CallbackContext obj)
         {
-            //            current = (current + 1) % chatHistory.Channels.Count;
-            //            viewInstance.CurrentChannel = ids[current];
             viewInstance!.Click();
         }
 
@@ -449,7 +426,7 @@ namespace DCL.Chat
                 newMemberData.ProfilePicture = profile.ProfilePicture.Value.Asset.Sprite;
                 newMemberData.ConnectionStatus = ChatMemberConnectionStatus.Online; // TODO: Get this info from somewhere, when the other shapes are developed
                 newMemberData.WalletId = profile.WalletId;
-                newMemberData.ProfileColor = viewDependencies.ProfileNameColorHelper.GetNameColor(profile.ValidatedName);
+                newMemberData.ProfileColor = profile.UserNameColor;
             }
 
             return newMemberData;

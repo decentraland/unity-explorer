@@ -147,6 +147,9 @@ namespace DCL.Chat
         /// </summary>
         public event UnreadMessagesSeparatorViewedDelegate UnreadMessagesSeparatorViewed;
 
+        /// <summary>
+        /// Raised when the Member list panel changes its visibility (which implies that the message list may appear or hide).
+        /// </summary>
         public event MemberListVisibilityChangedDelegate MemberListVisibilityChanged;
 
         private ViewDependencies viewDependencies;
@@ -308,6 +311,7 @@ namespace DCL.Chat
                 if(value == panelBackgroundCanvasGroup.gameObject.activeInHierarchy)
                     return;
 
+                memberListView.IsVisible = false;
                 panelBackgroundCanvasGroup.gameObject.SetActive(value);
                 chatMessageViewer.SetVisibility(value);
 
@@ -316,9 +320,6 @@ namespace DCL.Chat
                     chatMessageViewer.HideSeparator();
                     SetScrollToBottomVisibility(false);
                 }
-
-                if (value)
-                    memberListView.IsVisible = false;
 
                 FoldingChanged?.Invoke(value);
             }
