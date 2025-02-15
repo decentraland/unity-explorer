@@ -13,7 +13,6 @@ using DCL.Backpack.BackpackBus;
 using DCL.BadgesAPIService;
 using DCL.Browser;
 using DCL.CharacterPreview;
-using DCL.Chat;
 using DCL.Chat.Commands;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
@@ -23,7 +22,6 @@ using DCL.EventsApi;
 using DCL.FeatureFlags;
 using DCL.Input;
 using DCL.InWorldCamera.CameraReelStorageService;
-using DCL.Landscape;
 using DCL.LOD.Systems;
 using DCL.MapRenderer;
 using DCL.Minimap;
@@ -80,8 +78,6 @@ using ECS.SceneLifeCycle.CurrentScene;
 using ECS.SceneLifeCycle.LocalSceneDevelopment;
 using ECS.SceneLifeCycle.Realm;
 using Global.AppArgs;
-using Global.Dynamic.Landscapes;
-using Global.Dynamic.Misc;
 using Global.Dynamic.ChatCommands;
 using Global.Versioning;
 using LiveKit.Internal.FFIClients.Pools;
@@ -183,7 +179,6 @@ namespace Global.Dynamic
             IWeb3IdentityCache identityCache = dynamicWorldDependencies.Web3IdentityCache;
             IAssetsProvisioner assetsProvisioner = dynamicWorldDependencies.AssetsProvisioner;
             IDebugContainerBuilder debugBuilder = dynamicWorldDependencies.DebugContainerBuilder;
-            ITeleportBusController teleportBusController = new TeleportBusController();
             ObjectProxy<INavmapBus> explorePanelNavmapBus = new ObjectProxy<INavmapBus>();
             INavmapBus sharedNavmapCommandBus = new SharedNavmapBus(explorePanelNavmapBus);
 
@@ -460,7 +455,7 @@ namespace Global.Dynamic
 
             var currentSceneInfo = new CurrentSceneInfo();
 
-            var connectionStatusPanelPlugin = new ConnectionStatusPanelPlugin(initializationFlowContainer.InitializationFlow, mvcManager, mainUIView, roomsStatus, currentSceneInfo, reloadSceneController, globalWorld, playerEntity, debugBuilder, chatCommandsBus));
+            var connectionStatusPanelPlugin = new ConnectionStatusPanelPlugin(initializationFlowContainer.InitializationFlow, mvcManager, mainUIView, roomsStatus, currentSceneInfo, reloadSceneController, globalWorld, playerEntity, debugBuilder, chatCommandsBus);
 
             var chatTeleporter = new ChatTeleporter(realmNavigator, new ChatEnvironmentValidator(bootstrapContainer.Environment), bootstrapContainer.DecentralandUrlsSource);
 
@@ -746,7 +741,7 @@ namespace Global.Dynamic
                     mvcManager,
                     staticContainer.InputBlock),
                 realmNavigatorContainer.CreatePlugin(),
-¡            };
+            };
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);
 
