@@ -1,7 +1,9 @@
 using Cysharp.Threading.Tasks;
-using DCL.AsyncLoadReporting;
 using DCL.Ipfs;
 using DCL.Landscape;
+using DCL.RealmNavigation;
+using DCL.Utilities;
+using ECS;
 using ECS.SceneLifeCycle.Realm;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common;
@@ -39,7 +41,7 @@ namespace Global.Dynamic.Landscapes
             if (landscapeEnabled == false)
                 return EnumResult<LandscapeError>.ErrorResult(LandscapeError.LandscapeDisabled);
 
-            if (realmController.IsGenesis())
+            if (realmController.RealmData.IsGenesis())
             {
                 //TODO (Juani): The globalWorld terrain would be hidden. We need to implement the re-usage when going back
                 worldsTerrain.SwitchVisibility(false);
@@ -54,7 +56,7 @@ namespace Global.Dynamic.Landscapes
             {
                 genesisTerrain.Hide();
 
-                if (realmController.IsLocalScene())
+                if (realmController.RealmData.IsLocalScene())
                     await GenerateStaticScenesTerrainAsync(landscapeLoadReport, ct);
                 else
                     await GenerateFixedScenesTerrainAsync(landscapeLoadReport, ct);
@@ -66,7 +68,7 @@ namespace Global.Dynamic.Landscapes
         //TODO should it accept isLocal instead of encapsulating it?
         public Result IsParcelInsideTerrain(Vector2Int parcel, bool isLocal)
         {
-            IContainParcel terrain = isLocal && !realmController.IsGenesis() ? worldsTerrain : genesisTerrain;
+            IContainParcel terrain = isLocal && !realmController.RealmData.IsGenesis() ? worldsTerrain : genesisTerrain;
 
             return !terrain.Contains(parcel)
                 ? Result.ErrorResult($"Parcel {parcel} is outside of the bounds.")

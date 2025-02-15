@@ -2,6 +2,8 @@ name: Unity Cloud Build
 
 on:
   pull_request:
+    paths:
+      - 'Explorer/**'
     types:
       - opened
       - reopened
@@ -144,14 +146,18 @@ jobs:
       - name: Set default values
         id: set_defaults
         run: |
+          # Clean build logic
           if [ "${{ github.event.inputs.clean_build }}" ]; then
             clean_build=${{ github.event.inputs.clean_build }}
           elif [ "${{ inputs.clean_build }}" ]; then
             clean_build=${{ inputs.clean_build }}
-          elif [ "${{ github.event.label.name }}" == "clean-build" ]; then
-            clean_build=true
           else
             clean_build=false
+            if [ "${{ github.event_name }}" == "pull_request" ]; then
+              echo "Checking PR labels: ${{ join(github.event.pull_request.labels.*.name, ', ') }}"
+              # Proper label check with spaces
+              clean_build=$(echo "${{ join(github.event.pull_request.labels.*.name, ' ') }}" | grep -qw 'clean-build' && echo true || echo false)
+            fi
           fi
           echo "Set clean_build to: $clean_build"
           echo "clean_build=${clean_build}" >> $GITHUB_OUTPUT
@@ -233,7 +239,8 @@ jobs:
           API_KEY: ${{ secrets.UNITY_CLOUD_API_KEY }}
           ORG_ID: ${{ secrets.UNITY_CLOUD_ORG_ID }}
           PROJECT_ID: ${{ secrets.UNITY_CLOUD_PROJECT_ID }}
-          POLL_TIME: 60 # In seconds (int)
+          POLL_TIME: 60  # Set the polling time in seconds
+          GLOBAL_TIMEOUT: 10800  # Set the global timeout in seconds (e.g., 3 hours)
           TARGET: t_${{ matrix.target }}
           BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
           COMMIT_SHA: ${{ needs.prebuild.outputs.commit_sha }}
@@ -255,7 +262,7 @@ jobs:
           PARAM_SENTRY_UPLOAD_DEBUG_SYMBOLS: ${{ needs.prebuild.outputs.sentry_upload_symbols }}
           PARAM_SEGMENT_WRITE_KEY: ${{ secrets.SEGMENT_WRITE_KEY }}
           PARAM_INSTALL_SOURCE: ${{ needs.prebuild.outputs.install_source }}
-
+          PARAM_UNITY_EXTRA_PARAMS: '-disable-assembly-updater'
         run: python -u scripts/cloudbuild/build.py
 
       - name: 'Tar artifact to maintain original permissions'

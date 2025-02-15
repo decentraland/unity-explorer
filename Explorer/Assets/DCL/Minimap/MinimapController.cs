@@ -4,9 +4,6 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.Character.Components;
-using DCL.Chat.Commands;
-using DCL.Chat.History;
-using DCL.Chat.MessageBus;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.ExplorePanel;
@@ -36,22 +33,20 @@ namespace DCL.Minimap
     public partial class MinimapController : ControllerBase<MinimapView>, IMapActivityOwner
     {
         private const MapLayer RENDER_LAYERS = MapLayer.SatelliteAtlas | MapLayer.PlayerMarker | MapLayer.ScenesOfInterest | MapLayer.Favorites | MapLayer.HotUsersMarkers | MapLayer.Pins | MapLayer.Path | MapLayer.LiveEvents;
+
         private const float ANIMATION_TIME = 0.2f;
-        private const string ORIGIN = "minimap";
 
         private readonly IMapRenderer mapRenderer;
         private readonly IMVCManager mvcManager;
         private readonly IPlacesAPIService placesAPIService;
         private readonly IRealmData realmData;
-        private readonly IChatMessagesBus chatMessagesBus;
+        private readonly IRealmNavigator realmNavigator;
         private readonly IScenesCache scenesCache;
         private readonly IMapPathEventBus mapPathEventBus;
         private readonly ISceneRestrictionBusController sceneRestrictionBusController;
-        private readonly IRealmController realmController;
-
-        private readonly string startParcelInGenesis;
-
-        private CancellationTokenSource cts;
+        private readonly Vector2Int startParcelInGenesis;
+        private readonly CancellationTokenSource disposeCts;
+        private CancellationTokenSource? placesApiCts;
         private MapRendererTrackPlayerPosition mapRendererTrackPlayerPosition;
         private IMapCameraController? mapCameraController;
         private Vector2Int previousParcelPosition;
@@ -67,33 +62,33 @@ namespace DCL.Minimap
             IMapRenderer mapRenderer,
             IMVCManager mvcManager,
             IPlacesAPIService placesAPIService,
-            IRealmController realmController,
-            IChatMessagesBus chatMessagesBus,
+            IRealmData realmData,
+            IRealmNavigator realmNavigator,
             IScenesCache scenesCache,
             IMapPathEventBus mapPathEventBus,
             ISceneRestrictionBusController sceneRestrictionBusController,
-            string startParcelInGenesis
+            Vector2Int startParcelInGenesis
         ) : base(() => minimapView)
         {
             this.mapRenderer = mapRenderer;
             this.mvcManager = mvcManager;
             this.placesAPIService = placesAPIService;
-            this.realmController = realmController;
-            realmData = realmController.RealmData;
-            this.chatMessagesBus = chatMessagesBus;
+            this.realmData = realmData;
+            this.realmNavigator = realmNavigator;
             this.scenesCache = scenesCache;
             this.mapPathEventBus = mapPathEventBus;
             this.sceneRestrictionBusController = sceneRestrictionBusController;
             this.startParcelInGenesis = startParcelInGenesis;
             minimapView.SetCanvasActive(false);
+            disposeCts = new CancellationTokenSource();
         }
 
         public void HookPlayerPositionTrackingSystem(TrackPlayerPositionSystem system) =>
             AddModule(new BridgeSystemBinding<TrackPlayerPositionSystem>(this, QueryPlayerPositionQuery, system));
 
-        public void OnRealmChanged(RealmType realmType)
+        private void OnRealmChanged(RealmKind realmKind)
         {
-            SetGenesisMode(realmType is RealmType.GenesisCity);
+            SetGenesisMode(realmKind is RealmKind.GenesisCity);
             previousParcelPosition = new Vector2Int(int.MaxValue, int.MaxValue);
         }
 
@@ -105,13 +100,14 @@ namespace DCL.Minimap
             viewInstance.sideMenuButton.onClick.AddListener(OpenSideMenu);
 
             viewInstance.goToGenesisCityButton.onClick.AddListener(() =>
-                chatMessagesBus.Send(ChatChannel.NEARBY_CHANNEL, $"/{ChatCommandsUtils.COMMAND_GOTO} {startParcelInGenesis}", ORIGIN));
+                realmNavigator.TeleportToParcelAsync(startParcelInGenesis, disposeCts.Token, false).Forget());
 
             viewInstance.SideMenuCanvasGroup.alpha = 0;
             viewInstance.SideMenuCanvasGroup.gameObject.SetActive(false);
             new SideMenuController(viewInstance.sideMenuView);
             sceneRestrictionsController = new SceneRestrictionsController(viewInstance.sceneRestrictionsView, sceneRestrictionBusController);
-            SetGenesisMode(realmController.IsGenesis());
+            SetGenesisMode(realmData.IsGenesis());
+            realmData.RealmType.OnUpdate += OnRealmChanged;
             mapPathEventBus.OnShowPinInMinimapEdge += ShowPinInMinimapEdge;
             mapPathEventBus.OnHidePinInMinimapEdge += HidePinInMinimapEdge;
             mapPathEventBus.OnRemovedDestination += HidePinInMinimapEdge;
@@ -217,8 +213,8 @@ namespace DCL.Minimap
                 return;
 
             previousParcelPosition = playerParcelPosition;
-            cts.SafeCancelAndDispose();
-            cts = new CancellationTokenSource();
+            placesApiCts.SafeCancelAndDispose();
+            placesApiCts = new CancellationTokenSource();
             RetrieveParcelInfoAsync(playerParcelPosition).Forget();
 
             bool isNotEmptyParcel = scenesCache.Contains(playerParcelPosition);
@@ -237,7 +233,7 @@ namespace DCL.Minimap
                         viewInstance!.placeNameText.text = realmData.RealmName.Replace(".dcl.eth", string.Empty);
                     else
                     {
-                        PlacesData.PlaceInfo? placeInfo = await placesAPIService.GetPlaceAsync(playerParcelPosition, cts.Token);
+                        PlacesData.PlaceInfo? placeInfo = await placesAPIService.GetPlaceAsync(playerParcelPosition, placesApiCts.Token);
                         viewInstance!.placeNameText.text = placeInfo?.title ?? "Unknown place";
                     }
                 }
@@ -267,7 +263,8 @@ namespace DCL.Minimap
 
         public override void Dispose()
         {
-            cts.SafeCancelAndDispose();
+            placesApiCts.SafeCancelAndDispose();
+            disposeCts.Cancel();
             mapPathEventBus.OnShowPinInMinimapEdge -= ShowPinInMinimapEdge;
             mapPathEventBus.OnHidePinInMinimapEdge -= HidePinInMinimapEdge;
             sceneRestrictionsController?.Dispose();

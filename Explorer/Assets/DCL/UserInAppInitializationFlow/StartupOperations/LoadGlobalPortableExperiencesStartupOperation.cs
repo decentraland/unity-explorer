@@ -1,9 +1,9 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
-using DCL.AsyncLoadReporting;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
 using DCL.Profiles.Self;
+using DCL.RealmNavigation;
 using DCL.Utilities.Extensions;
 using Global.Dynamic.DebugSettings;
 using PortableExperiences.Controller;
@@ -35,12 +35,12 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
             this.portableExperiencesController = portableExperiencesController;
         }
 
-        protected override UniTask InternalExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct)
+        protected override UniTask InternalExecuteAsync(IStartupOperation.Params args, CancellationToken ct)
         {
             float finalizationProgress = loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.GlobalPXsLoading);
             LoadDebugPortableExperiences(ct);
             LoadRemotePortableExperiences(ct);
-            report.SetProgress(finalizationProgress);
+            args.Report.SetProgress(finalizationProgress);
             return UniTask.CompletedTask;
         }
 

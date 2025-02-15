@@ -26,6 +26,7 @@ using DCL.AvatarRendering.AvatarShape.Helpers;
 using DCL.Multiplayer.Profiles.Entities;
 using DCL.AvatarRendering.Loading.Assets;
 using DCL.UI.Profiles.Helpers;
+using DCL.Quality;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Pool;
@@ -50,6 +51,7 @@ namespace DCL.PluginSystem.Global
         private readonly IPerformanceBudget frameTimeCapBudget;
         private readonly ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy;
         private readonly IPerformanceBudget memoryBudget;
+        private readonly IRendererFeaturesCache rendererFeaturesCache;
         private readonly IRealmData realmData;
 
         private readonly AttachmentsAssetsCache attachmentsAssetsCache;
@@ -83,6 +85,7 @@ namespace DCL.PluginSystem.Global
             IAssetsProvisioner assetsProvisioner,
             IPerformanceBudget frameTimeCapBudget,
             IPerformanceBudget memoryBudget,
+            IRendererFeaturesCache rendererFeaturesCache,
             IRealmData realmData,
             ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy,
             IDebugContainerBuilder debugContainerBuilder,
@@ -105,6 +108,7 @@ namespace DCL.PluginSystem.Global
             this.profileNameColorHelper = profileNameColorHelper;
             this.defaultFaceFeaturesHandler = defaultFaceFeaturesHandler;
             this.memoryBudget = memoryBudget;
+            this.rendererFeaturesCache = rendererFeaturesCache;
             this.nametagsData = nametagsData;
             this.textureArrayContainerFactory = textureArrayContainerFactory;
             this.remoteEntities = remoteEntities;
@@ -165,7 +169,7 @@ namespace DCL.PluginSystem.Global
             FinishAvatarMatricesCalculationSystem.InjectToWorld(ref builder, skinningStrategy,
                 avatarTransformMatrixJobWrapper);
 
-            AvatarShapeVisibilitySystem.InjectToWorld(ref builder);
+            AvatarShapeVisibilitySystem.InjectToWorld(ref builder, rendererFeaturesCache);
             AvatarCleanUpSystem.InjectToWorld(ref builder, frameTimeCapBudget, vertOutBuffer, avatarMaterialPoolHandler,
                 avatarPoolRegistry, computeShaderPool, attachmentsAssetsCache, mainPlayerAvatarBaseProxy,
                 avatarTransformMatrixJobWrapper);

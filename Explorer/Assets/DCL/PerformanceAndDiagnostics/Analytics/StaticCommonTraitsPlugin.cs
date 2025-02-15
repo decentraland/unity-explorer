@@ -1,7 +1,7 @@
 ﻿using Global.AppArgs;
+using Global.Versioning;
 using Segment.Analytics;
 using Segment.Serialization;
-using System;
 using UnityEngine;
 
 namespace DCL.PerformanceAndDiagnostics.Analytics
@@ -16,19 +16,21 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         private readonly JsonElement launcherAnonymousId;
 
         private readonly JsonElement dclRendererType = SystemInfo.deviceType.ToString(); // Desktop, Console, Handeheld (Mobile), Unknown
-        private readonly JsonElement rendererVersion = Application.version;
+        private readonly JsonElement rendererVersion;
         private readonly JsonElement installSource;
         private readonly JsonElement os = SystemInfo.operatingSystem;
         private readonly JsonElement runtime;
 
         public override PluginType Type => PluginType.Enrichment;
 
-        public StaticCommonTraitsPlugin(IAppArgs appArgs, LauncherTraits launcherTraits, BuildData buildData)
+        public StaticCommonTraitsPlugin(IAppArgs appArgs, string sessionId, string launcherAnonymousId, BuildData buildData, DCLVersion dclVersion)
         {
-            sessionId = !string.IsNullOrEmpty(launcherTraits.SessionId) ? launcherTraits.SessionId : SystemInfo.deviceUniqueIdentifier + DateTime.Now.ToString("yyyyMMddHHmmssfff");
-            launcherAnonymousId = launcherTraits.LauncherAnonymousId;
+            this.sessionId = sessionId;
+            this.launcherAnonymousId = launcherAnonymousId;
+
             runtime = ChooseRuntime(appArgs);
             installSource = buildData.InstallSource;
+            rendererVersion = dclVersion.Version;
         }
 
         private static string ChooseRuntime(IAppArgs appArgs)

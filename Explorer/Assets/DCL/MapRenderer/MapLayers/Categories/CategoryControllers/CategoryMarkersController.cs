@@ -17,6 +17,8 @@ namespace DCL.MapRenderer.MapLayers.Categories
 {
     internal class CategoryMarkersController : MapLayerControllerBase, IMapCullingListener<ICategoryMarker>, IMapLayerController, IZoomScalingLayer
     {
+        public bool ZoomBlocked { get; set; }
+
         private const string EMPTY_PARCEL_NAME = "Empty parcel";
 
         internal delegate ICategoryMarker CategoryMarkerBuilder(
@@ -136,8 +138,11 @@ namespace DCL.MapRenderer.MapLayers.Categories
                     mapCullingController.StartTracking(marker, this);
             }
 
-            foreach (ICategoryMarker clusterableMarker in clusterController.UpdateClusters(zoomLevel, baseZoom, zoom, markers))
-                mapCullingController.StartTracking(clusterableMarker, this);
+            if (!ZoomBlocked)
+            {
+                foreach (ICategoryMarker clusterableMarker in clusterController.UpdateClusters(zoomLevel, baseZoom, zoom, markers))
+                    mapCullingController.StartTracking(clusterableMarker, this);
+            }
         }
 
         private static bool IsEmptyParcel(PlacesData.PlaceInfo sceneInfo) =>
@@ -145,11 +150,14 @@ namespace DCL.MapRenderer.MapLayers.Categories
 
         public void ApplyCameraZoom(float baseZoom, float zoom, int zoomLevel)
         {
+            if (ZoomBlocked)
+                return;
+
             this.baseZoom = baseZoom;
             this.zoom = zoom;
             this.zoomLevel = zoomLevel;
 
-            if (isEnabled)
+            if (isEnabled && !ZoomBlocked)
                 foreach (ICategoryMarker clusterableMarker in clusterController.UpdateClusters(zoomLevel, baseZoom, zoom, markers))
                     mapCullingController.StartTracking(clusterableMarker, this);
 
@@ -178,8 +186,12 @@ namespace DCL.MapRenderer.MapLayers.Categories
             foreach (ICategoryMarker marker in markers.Values)
                 mapCullingController.StartTracking(marker, this);
 
-            foreach (ICategoryMarker clusterableMarker in clusterController.UpdateClusters(zoomLevel, baseZoom, zoom, markers))
-                mapCullingController.StartTracking(clusterableMarker, this);
+            if (!ZoomBlocked)
+            {
+                foreach (ICategoryMarker clusterableMarker in clusterController.UpdateClusters(zoomLevel, baseZoom, zoom, markers))
+                    mapCullingController.StartTracking(clusterableMarker, this);
+            }
+
             isEnabled = true;
         }
 
@@ -187,6 +199,8 @@ namespace DCL.MapRenderer.MapLayers.Categories
         {
             foreach (var marker in markers.Values)
                 marker.ResetScale(coordsUtils.ParcelSize);
+
+            clusterController.ResetToBaseScale();
         }
 
         protected override void DisposeImpl()

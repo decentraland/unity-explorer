@@ -52,6 +52,7 @@ namespace DCL.Navmap
         private CancellationTokenSource? showPlaceGalleryCancellationToken;
         private Vector2Int? currentBaseParcel;
         private Vector2Int? destination;
+        private Section? currentSection;
 
         public PlaceInfoPanelController(PlaceInfoPanelView view,
             IWebRequestController webRequestController,
@@ -95,14 +96,14 @@ namespace DCL.Navmap
 
             view.EventsTabButton.onClick.AddListener(() =>
             {
-                Toggle(Section.EVENTS);
-                FetchAndShowEventsOfThePlace();
+                if (Toggle(Section.EVENTS))
+                    FetchAndShowEventsOfThePlace();
             });
 
             view.PhotosTabButton.onClick.AddListener(() =>
             {
-                Toggle(Section.PHOTOS);
-                FetchPhotos();
+                if (Toggle(Section.PHOTOS))
+                    FetchPhotos();
             });
 
             view.OverviewTabButton.onClick.AddListener(() => Toggle(Section.OVERVIEW));
@@ -180,8 +181,14 @@ namespace DCL.Navmap
             view.LiveEventContainer.SetActive(false);
         }
 
-        public void Toggle(Section section)
+        /// <summary>
+        /// Returns true if the section was toggled to a different one, false otherwise.
+        /// </summary>
+        public bool Toggle(Section section)
         {
+            if (currentSection == section)
+                return false;
+
             if (section != Section.PHOTOS)
             {
                 showPlaceGalleryCancellationToken?.SafeCancelAndDispose();
@@ -194,6 +201,9 @@ namespace DCL.Navmap
             view.OverviewTabSelected.SetActive(section == Section.OVERVIEW);
             view.PhotosTabContainer.SetActive(section == Section.PHOTOS);
             view.PhotosTabSelected.SetActive(section == Section.PHOTOS);
+
+            currentSection = section;
+            return true;
         }
 
         private void SetCategories(PlacesData.PlaceInfo place)

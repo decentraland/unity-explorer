@@ -3,13 +3,9 @@ name: Enforce QA and DEV Approvals
 on:
   pull_request:
     types:
-      - opened
-      - reopened
-      - synchronize
-      - review_requested
-      - ready_for_review
       - labeled
       - unlabeled
+    draft: false
   pull_request_review:
 
 jobs:
@@ -50,21 +46,17 @@ jobs:
       REPO_NAME: ${{ needs.setup-context.outputs.repo_name }}
 
     steps:
-      - name: Check for excluding labels
+      - name: Validate Group Approvals
         run: |
           # Check if the label "auto-pr" is set
           LABELS=$(gh api \
             "/repos/$REPO_OWNER/$REPO_NAME/issues/$PR_NUMBER/labels" --jq '.[].name')
 
           if echo "$LABELS" | grep -q "auto-pr"; then
-            echo "SKIP=true" >> $GITHUB_ENV
             echo ">>> Skipping approval validation as 'auto-pr' label is set."
             exit 0
           fi
 
-      - name: Validate Group Approvals
-        if: env.SKIP != 'true'
-        run: |
           # Define the teams
           QA_TEAM="qa"
           DEV_TEAM="explorer-devs"
@@ -73,8 +65,7 @@ jobs:
           fetch_team_members() {
             local team_slug=$1
             echo "Fetching team members for team: $team_slug"
-            gh api \
-              "/orgs/$REPO_OWNER/teams/$team_slug/members" --jq '.[].login'
+            gh api "/orgs/$REPO_OWNER/teams/$team_slug/members" --jq '.[].login'
           }
 
           QA_MEMBERS=$(fetch_team_members "$QA_TEAM")
@@ -85,8 +76,7 @@ jobs:
 
           # Fetch PR reviews
           echo ">>> Fetching PR reviews for PR #$PR_NUMBER"
-          PR_REVIEWS=$(gh api \
-            "/repos/$REPO_OWNER/$REPO_NAME/pulls/$PR_NUMBER/reviews" --jq '.[] | select(.state == "APPROVED") | .user.login')
+          PR_REVIEWS=$(gh api "/repos/$REPO_OWNER/$REPO_NAME/pulls/$PR_NUMBER/reviews" --jq '.[] | select(.state == "APPROVED") | .user.login')
 
           echo "Approved Reviews: $PR_REVIEWS"
 

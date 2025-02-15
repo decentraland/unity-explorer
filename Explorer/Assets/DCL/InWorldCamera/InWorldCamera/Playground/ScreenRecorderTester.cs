@@ -16,6 +16,8 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading;
+using DCL.Browser.DecentralandUrls;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using UnityEngine;
 using Utility;
 
@@ -73,6 +75,7 @@ namespace DCL.InWorldCamera.Playground
                         web3IdentityCache,
                         IWebRequestController.DEFAULT,
                         URLDomain.FromString("TestRealm"),
+                        URLDomain.EMPTY,
                         new ServerAbout(
                             lambdas: new ContentEndpoint(profileUrl)
                         )

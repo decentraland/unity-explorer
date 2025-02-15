@@ -19,6 +19,8 @@ namespace DCL.Chat.Commands
 
         private readonly IWorldInfoHub worldInfoHub;
 
+        public bool DebugOnly => true;
+
         public ShowEntityChatCommand(IWorldInfoHub worldInfoHub)
         {
             this.worldInfoHub = worldInfoHub;

@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
-using DCL.AsyncLoadReporting;
+using DCL.RealmNavigation;
+using DCL.Utilities;
 using ECS.SceneLifeCycle.Realm;
 using System.Threading;
 using Utility.Types;
@@ -17,12 +18,12 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
             this.landscape = landscape;
         }
 
-        protected override async UniTask InternalExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct)
+        protected override async UniTask InternalExecuteAsync(IStartupOperation.Params args, CancellationToken ct)
         {
             float finalizationProgress = loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.LandscapeLoading);
-            AsyncLoadProcessReport landscapeLoadReport = report.CreateChildReport(finalizationProgress);
+            AsyncLoadProcessReport landscapeLoadReport = args.Report.CreateChildReport(finalizationProgress);
             await landscape.LoadTerrainAsync(landscapeLoadReport, ct);
-            report.SetProgress(finalizationProgress);
+            args.Report.SetProgress(finalizationProgress);
         }
     }
 }

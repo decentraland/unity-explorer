@@ -64,6 +64,7 @@ namespace DCL.MapRenderer
                 layers[MapLayer.SearchResults].SharedActive = true;
                 layers[MapLayer.LiveEvents].SharedActive = false;
                 layers[MapLayer.Category].SharedActive = false;
+                layers[MapLayer.ParcelsAtlas].SharedActive = false;
             }
             catch (OperationCanceledException)
             {
@@ -76,6 +77,10 @@ namespace DCL.MapRenderer
         {
             const int MIN_ZOOM = 5;
             const int MAX_ZOOM = 300;
+
+            // Each time we open the fullscreen map, we unblock zoom for all layers
+            foreach (IZoomScalingLayer layer in zoomScalingLayers)
+                layer.ZoomBlocked = false;
 
             // Clamp texture to the maximum size allowed, preserving aspect ratio
             Vector2Int zoomValues = cameraInput.ZoomValues;
@@ -99,8 +104,12 @@ namespace DCL.MapRenderer
             mapCameraController.OnReleasing -= ReleaseCamera;
             mapCameraController.ZoomChanged -= OnCameraZoomChanged;
 
+            // Each time we close the fullscreen map, we reset the scale for all layers and block its zoom
             foreach (IZoomScalingLayer layer in zoomScalingLayers)
+            {
                 layer.ResetToBaseScale();
+                layer.ZoomBlocked = true;
+            }
 
             DisableLayers(owner, mapCameraController.EnabledLayers);
             mapCameraPool.Release(mapCameraController);
@@ -116,9 +125,12 @@ namespace DCL.MapRenderer
         {
             foreach (MapLayer mapLayer in ALL_LAYERS)
             {
-                if (!EnumUtils.HasFlag(mask, mapLayer) || !layers.TryGetValue(mapLayer, out MapLayerStatus mapLayerStatus) || mapLayerStatus.ActivityOwners.Count == 0 || mapLayerStatus.SharedActive == active)
+                if (!EnumUtils.HasFlag(mask, mapLayer))
                     continue;
 
+                if (!layers.TryGetValue(mapLayer, out var mapLayerStatus) || mapLayerStatus.ActivityOwners.Count == 0 || mapLayerStatus.SharedActive == active)
+                    continue;
+                    
                 mapLayerStatus.SharedActive = active;
 
                 // Cancel activation/deactivation flow

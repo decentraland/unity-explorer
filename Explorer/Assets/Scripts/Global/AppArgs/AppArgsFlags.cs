@@ -18,10 +18,13 @@
         public const string FORCED_EMOTES = "self-force-emotes";
         public const string SELF_PREVIEW_EMOTES = "self-preview-emotes";
         public const string SELF_PREVIEW_WEARABLES = "self-preview-wearables";
+        public const string SELF_PREVIEW_BUILDER_COLLECTION = "self-preview-builder-collection";
 
         public const string CAMERA_REEL = "camera-reel";
 
         public const string FORCE_TEXTURE_COMPRESSION = "force-texture-compression";
+        public const string DISABLE_DISK_CACHE = "disable-disk-cache";
+        public const string DISABLE_DISK_CACHE_CLEANUP = "disable-disk-cache-cleanup";
 
         public static class Multiplayer
         {

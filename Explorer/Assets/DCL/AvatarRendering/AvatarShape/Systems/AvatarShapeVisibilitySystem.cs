@@ -6,6 +6,7 @@ using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Character.Components;
 using DCL.CharacterCamera;
 using DCL.ECSComponents;
+using DCL.Quality;
 using DCL.Rendering.Avatar;
 using ECS.Abstract;
 using System.Runtime.CompilerServices;
@@ -16,9 +17,15 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
     [UpdateInGroup(typeof(CameraGroup))]
     public partial class AvatarShapeVisibilitySystem : BaseUnityLoopSystem
     {
+        private readonly OutlineRendererFeature? outlineFeature;
         private SingleInstanceEntity camera;
+        private Plane[] planes;
 
-        public AvatarShapeVisibilitySystem(World world) : base(world) { }
+        public AvatarShapeVisibilitySystem(World world, IRendererFeaturesCache outlineFeature) : base(world)
+        {
+            this.outlineFeature = outlineFeature.GetRendererFeature<OutlineRendererFeature>();
+            planes = new Plane[6];
+        }
 
         public override void Initialize()
         {
@@ -38,31 +45,23 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
         public bool IsVisibleInCamera(Camera camera, Bounds bounds)
         {
-            Plane[] planes = GeometryUtility.CalculateFrustumPlanes(camera);
+            GeometryUtility.CalculateFrustumPlanes(camera, planes);
             return GeometryUtility.TestPlanesAABB(planes, bounds);
         }
 
-        public bool IsWithinCameraDistance(Camera camera, Transform objectTransform, float maxDistance)
+        public bool IsWithinCameraDistance(Camera camera, Transform objectTransform, float maxDistancesquared)
         {
-            float distance = Vector3.Distance(camera.transform.position, objectTransform.position);
-            return distance <= maxDistance;
+            var diff = camera.transform.position - objectTransform.position;
+            float distance = diff.sqrMagnitude;
+            return distance <= maxDistancesquared;
         }
 
         [Query]
-        private void GetAvatarsVisibleWithOutline(in AvatarBase avatarBase, ref AvatarShapeComponent avatarShape, ref AvatarCachedVisibilityComponent avatarCachedVisibility)
+        private void GetAvatarsVisibleWithOutline(in AvatarBase avatarBase, ref AvatarShapeComponent avatarShape)
         {
-            if (IsWithinCameraDistance(camera.GetCameraComponent(World).Camera, avatarBase.HeadAnchorPoint, 8.0f) && IsVisibleInCamera(camera.GetCameraComponent(World).Camera, avatarBase.AvatarSkinnedMeshRenderer.bounds))
+            if (outlineFeature != null && outlineFeature.isActive && IsWithinCameraDistance(camera.GetCameraComponent(World).Camera, avatarBase.HeadAnchorPoint, 64.0f) && IsVisibleInCamera(camera.GetCameraComponent(World).Camera, avatarBase.AvatarSkinnedMeshRenderer.bounds))
             {
-                foreach (var avs in avatarShape.InstantiatedWearables)
-                {
-                    if (avs.OutlineCompatible)
-                    {
-                        foreach (var rend in avs.Renderers)
-                        {
-                            OutlineRendererFeature.m_OutlineRenderers.Add(rend);
-                        }
-                    }
-                }
+                OutlineRendererFeature.m_OutlineRenderers.AddRange(avatarShape.OutlineCompatibleRenderers);
             }
         }
 
@@ -115,6 +114,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                 Hide(ref avatarShape);
             else
                 Show(ref avatarShape);
+
             avatarCachedVisibility.IsVisible = shouldBeHidden;
         }
 

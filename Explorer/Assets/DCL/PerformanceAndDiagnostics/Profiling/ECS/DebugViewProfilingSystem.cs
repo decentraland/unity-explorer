@@ -8,11 +8,13 @@ using ECS;
 using ECS.Abstract;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.CurrentScene;
+using Global.Versioning;
 using SceneRuntime;
 using System;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using UnityEngine;
+using UnityEngine.Diagnostics;
 using static DCL.Utilities.ConversionUtils;
 
 namespace DCL.Profiling.ECS
@@ -65,7 +67,7 @@ namespace DCL.Profiling.ECS
         private bool sceneMetricsEnabled;
 
         private DebugViewProfilingSystem(World world, IRealmData realmData, IProfiler profiler, MemoryBudget memoryBudget, IDebugContainerBuilder debugBuilder,
-            V8ActiveEngines v8ActiveEngines, IScenesCache scenesCache) : base(world)
+            V8ActiveEngines v8ActiveEngines, IScenesCache scenesCache, DCLVersion dclVersion) : base(world)
         {
             this.realmData = realmData;
             this.profiler = profiler;
@@ -78,7 +80,7 @@ namespace DCL.Profiling.ECS
 
             void CreateView()
             {
-                var version = new ElementBinding<string>(Application.version);
+                var version = new ElementBinding<string>(dclVersion.Version);
 
                 debugBuilder.TryAddWidget(IDebugContainerBuilder.Categories.PERFORMANCE)
                            ?.SetVisibilityBinding(performanceVisibilityBinding = new DebugWidgetVisibilityBinding(true))
@@ -111,6 +113,13 @@ namespace DCL.Profiling.ECS
                             .AddCustomMarker("Js-Heap Total Exec [MB]:", jsHeapTotalExecutable = new ElementBinding<string>(string.Empty))
                             .AddCustomMarker("Js Heap Limit per engine [MB]:", jsHeapLimit = new ElementBinding<string>(string.Empty))
                             .AddCustomMarker("Js Engines Count:", jsEnginesCount = new ElementBinding<string>(string.Empty));
+
+                debugBuilder.TryAddWidget(IDebugContainerBuilder.Categories.CRASH)?
+                            .AddSingleButton("FatalError", () => { Utils.ForceCrash(ForcedCrashCategory.FatalError); })
+                            .AddSingleButton("Abort", () => { Utils.ForceCrash(ForcedCrashCategory.Abort); })
+                            .AddSingleButton("MonoAbort", () => { Utils.ForceCrash(ForcedCrashCategory.MonoAbort); })
+                            .AddSingleButton("AccessViolation", () => { Utils.ForceCrash(ForcedCrashCategory.AccessViolation); })
+                            .AddSingleButton("PureVirtualFunction", () => { Utils.ForceCrash(ForcedCrashCategory.PureVirtualFunction); });
             }
         }
 

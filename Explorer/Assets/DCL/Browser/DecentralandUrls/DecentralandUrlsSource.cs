@@ -79,6 +79,8 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.ApiPlaces => $"https://places.decentraland.{ENV}/api/places",
                 DecentralandUrl.ApiAuth => $"https://auth-api.decentraland.{ENV}",
                 DecentralandUrl.AuthSignature => $"https://decentraland.{ENV}/auth/requests",
+                DecentralandUrl.BuilderApiDtos => $"https://builder-api.decentraland.{ENV}/v1/collections/[COL-ID]/items",
+                DecentralandUrl.BuilderApiContent => $"https://builder-api.decentraland.{ENV}/v1/storage/contents/",
                 DecentralandUrl.POI => $"https://dcl-lists.decentraland.{ENV}/pois",
                 DecentralandUrl.Map => $"https://places.decentraland.{ENV}/api/map",
                 DecentralandUrl.ContentModerationReport => $"https://places.decentraland.{ENV}/api/report",
@@ -108,6 +110,7 @@ namespace DCL.Browser.DecentralandUrls
                 // TODO: use the environment once the service is deployed to prod
                 DecentralandUrl.ApiFriends => "wss://rpc-social-service-ea.decentraland.zone",
                 // DecentralandUrl.ApiFriends => $"wss://rpc-social-service-ea.decentraland.{ENV}",
+                DecentralandUrl.AssetBundleRegistry => $"https://asset-bundle-registry.decentraland.{ENV}/entities/active",
                 _ => throw new ArgumentOutOfRangeException(nameof(decentralandUrl), decentralandUrl, null!)
             };
     }

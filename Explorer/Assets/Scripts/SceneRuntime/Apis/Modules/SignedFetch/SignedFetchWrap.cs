@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.WebRequests;
+using DCL.WebRequests.GenericDelete;
 using ECS;
 using JetBrains.Annotations;
 using Newtonsoft.Json;
@@ -73,7 +74,7 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
                 Byte[] result = hash.ComputeHash(enc.GetBytes(value));
 
                 foreach (Byte b in result)
-                Sb.Append(b.ToString("x2"));
+                    Sb.Append(b.ToString("x2"));
             }
 
             return Sb.ToString();
@@ -88,11 +89,7 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
             string hashBody = request.init.body.Length > 0 ? sha256_hash(request.init.body) : null;
             string signatureMetadata = CreateSignatureMetadata(hashBody);
 
-            string hostUrl = decentralandUrlsSource.Url(DecentralandUrl.Host);
-
             var headers = new WebRequestHeadersInfo(request.init?.headers)
-                         .Add("Origin", hostUrl)
-                         .Add("Referer", hostUrl)
                          .WithSign(signatureMetadata, unixTimestamp);
 
             var signInfo = WebRequestSignInfo.NewFromRaw(
@@ -152,6 +149,16 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
                                 headersInfo: headers,
                                 signInfo: signInfo,
                                 reportCategory: GetReportData());
+                            break;
+                        case "delete":
+                            response = await webController.DeleteAsync<FlatFetchResponse<GenericDeleteRequest>, FlatFetchResponse>(
+                                request.url,
+                                new FlatFetchResponse<GenericDeleteRequest>(),
+                                GenericDeleteArguments.FromJsonOrDefault(request.init?.body),
+                                cancellationTokenSource.Token,
+                                headersInfo: headers,
+                                signInfo: signInfo,
+                                reportCategory: GetReportData());
 
                             break;
                         default: throw new Exception($"Method {method} is not supported for signed fetch");
@@ -194,7 +201,6 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
 
             var metadata = new SignatureMetadata
             {
-                origin = decentralandUrlsSource.Url(DecentralandUrl.Host),
                 sceneId = sceneData.SceneEntityDefinition.id!,
                 parcel = $"{parcel.x},{parcel.y}",
                 tld = decentralandUrlsSource.DecentralandDomain,
@@ -220,7 +226,6 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
         [Serializable]
         private struct SignatureMetadata
         {
-            public string origin;
             public string sceneId;
             public string parcel;
 

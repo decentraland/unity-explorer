@@ -32,12 +32,15 @@ namespace DCL.AvatarRendering.Wearables.Components.Intentions
             Results.Add(resultElement);
         }
 
-        public GetWearableByParamIntention(IReadOnlyList<(string, string)> requestParams, string userID, List<IWearable> results, int totalAmount)
+        public bool NeedsBuilderAPISigning { get; }
+
+        public GetWearableByParamIntention(IReadOnlyList<(string, string)> requestParams, string userID, List<IWearable> results, int totalAmount, bool needsBuilderAPISigning = false)
         {
             Params = requestParams;
             UserID = userID;
             Results = results;
             TotalAmount = totalAmount;
+            NeedsBuilderAPISigning = needsBuilderAPISigning;
             CommonArguments = new CommonLoadingArguments(URLAddress.EMPTY, cancellationTokenSource: new CancellationTokenSource());
         }
 
@@ -48,6 +51,6 @@ namespace DCL.AvatarRendering.Wearables.Components.Intentions
             obj is GetWearableByParamIntention other && Equals(other);
 
         public override int GetHashCode() =>
-            HashCode.Combine(Params, UserID, CancellationTokenSource, CommonArguments);
+            HashCode.Combine(Params, UserID);
     }
 }

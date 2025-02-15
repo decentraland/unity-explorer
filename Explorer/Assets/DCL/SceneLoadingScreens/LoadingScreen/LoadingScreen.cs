@@ -1,6 +1,6 @@
 using Cysharp.Threading.Tasks;
-using DCL.AsyncLoadReporting;
 using DCL.Diagnostics;
+using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using MVC;
 using System;
@@ -88,6 +88,9 @@ namespace DCL.SceneLoadingScreens.LoadingScreen
 
                 if (loadReport.GetStatus().TaskStatus == UniTaskStatus.Pending)
                     ReportHub.LogError(ReportCategory.SCENE_LOADING, "Loading screen finished unexpectedly, but the loading process continues");
+
+                if (finalResult.HasValue && !result.Success)
+                    ReportHub.LogError(ReportCategory.SCENE_LOADING, $"Loading screen finished with an error after the flow has finished: {result.Error.AsMessage()}");
 
                 return result;
             }

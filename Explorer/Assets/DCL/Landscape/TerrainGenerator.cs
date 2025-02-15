@@ -1,5 +1,4 @@
 using Cysharp.Threading.Tasks;
-using DCL.AsyncLoadReporting;
 using DCL.Diagnostics;
 using DCL.Landscape.Jobs;
 using DCL.Landscape.NoiseGeneration;
@@ -11,6 +10,7 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Threading;
 using DCL.Profiling;
+using DCL.Utilities;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
@@ -27,7 +27,7 @@ namespace DCL.Landscape
         private const float ROOT_VERTICAL_SHIFT = -0.01f; // fix for not clipping with scene (potential) floor
 
         // increment this number if we want to force the users to generate a new terrain cache
-        private const int CACHE_VERSION = 9;
+        private const int CACHE_VERSION = 10;
 
         private const float PROGRESS_COUNTER_EMPTY_PARCEL_DATA = 0.1f;
         private const float PROGRESS_COUNTER_TERRAIN_DATA = 0.3f;
@@ -216,6 +216,7 @@ namespace DCL.Landscape
                     {
                         await GenerateTerrainDataAsync(chunkModel, terrainModel, worldSeed, cancellationToken, processReport);
                         await UniTask.Yield(cancellationToken);
+                        noiseGenCache.ResetNoiseNativeArrayProvider();
                     }
 
                     processReport?.SetProgress(PROGRESS_COUNTER_DIG_HOLES);

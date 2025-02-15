@@ -30,5 +30,8 @@ namespace ECS.StreamableLoading.Textures
         {
             ownedTexture2D = asset;
         }
+
+        public override string ToString() =>
+            $"{nameof(Texture2DData)} {Asset.name} {Asset.width}x{Asset.height}";
     }
 }

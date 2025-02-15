@@ -13,6 +13,7 @@ using ECS.ComponentsPooling.Systems;
 using ECS.SceneLifeCycle.Reporting;
 using System.Threading;
 using UnityEngine;
+using SDKAvatarShapesMotionSystem = DCL.Character.CharacterMotion.Systems.SDKAvatarShapesMotionSystem;
 
 namespace DCL.PluginSystem.Global
 {
@@ -79,6 +80,7 @@ namespace DCL.PluginSystem.Global
             HandsIKSystem.InjectToWorld(ref builder, debugContainerBuilder);
             HeadIKSystem.InjectToWorld(ref builder, debugContainerBuilder);
             ReleasePoolableComponentSystem<Transform, CharacterTransform>.InjectToWorld(ref builder, componentPoolsRegistry);
+            SDKAvatarShapesMotionSystem.InjectToWorld(ref builder);
         }
     }
 }

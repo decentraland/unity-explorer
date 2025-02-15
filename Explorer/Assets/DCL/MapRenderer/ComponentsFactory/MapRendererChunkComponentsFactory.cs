@@ -1,5 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.MapPins.Bus;
 using DCL.EventsApi;
 using DCL.MapPins.Bus;
 using DCL.MapRenderer.CoordsUtils;
@@ -19,12 +20,12 @@ using DCL.Navmap;
 using DCL.NotificationsBusController.NotificationsBus;
 using DCL.PlacesAPIService;
 using DCL.WebRequests;
+using ECS.SceneLifeCycle.Realm;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Pool;
-using Utility.TeleportBus;
 using Object = UnityEngine.Object;
 
 namespace DCL.MapRenderer.ComponentsFactory
@@ -41,7 +42,7 @@ namespace DCL.MapRenderer.ComponentsFactory
         private readonly IMapRendererSettings mapSettings;
         private readonly IMapPathEventBus mapPathEventBus;
         private readonly IMapPinsEventBus mapPinsEventBus;
-        private readonly ITeleportBusController teleportBusController;
+        private readonly IRealmNavigator realmNavigator;
         private readonly INotificationsBusController notificationsBusController;
         private readonly INavmapBus navmapBus;
         private readonly IOnlineUsersProvider onlineUsersProvider;
@@ -65,7 +66,7 @@ namespace DCL.MapRenderer.ComponentsFactory
             IMapPathEventBus mapPathEventBus,
             IMapPinsEventBus mapPinsEventBus,
             INotificationsBusController notificationsBusController,
-            ITeleportBusController teleportBusController,
+            IRealmNavigator realmNavigator,
             INavmapBus navmapBus,
             IOnlineUsersProvider onlineUsersProvider)
         {
@@ -77,7 +78,7 @@ namespace DCL.MapRenderer.ComponentsFactory
             this.placesAPIService = placesAPIService;
             this.eventsApiService = eventsApiService;
             this.mapPathEventBus = mapPathEventBus;
-            this.teleportBusController = teleportBusController;
+            this.realmNavigator = realmNavigator;
             this.notificationsBusController = notificationsBusController;
             this.mapPinsEventBus = mapPinsEventBus;
             this.navmapBus = navmapBus;
@@ -127,7 +128,7 @@ namespace DCL.MapRenderer.ComponentsFactory
                 CreateParcelAtlasAsync(layers, configuration, coordsUtils, cullingController, cancellationToken),
                 CreateSatelliteAtlasAsync(layers, configuration, coordsUtils, cullingController, cancellationToken),
                 playerMarkerInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, mapSettings, assetsProvisioner, mapPathEventBus, cancellationToken),
-                hotUsersMarkersInstaller.InstallAsync(layers, configuration, coordsUtils, cullingController, assetsProvisioner, mapSettings, teleportBusController, onlineUsersProvider, cancellationToken),
+                hotUsersMarkersInstaller.InstallAsync(layers, configuration, coordsUtils, cullingController, assetsProvisioner, mapSettings, onlineUsersProvider, realmNavigator, cancellationToken),
                 mapPathInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, mapSettings, assetsProvisioner, mapPathEventBus, notificationsBusController, cancellationToken)
                 /* List of other creators that can be executed in parallel */);
 
@@ -203,9 +204,6 @@ namespace DCL.MapRenderer.ComponentsFactory
         private UniTask CreateParcelAtlasAsync(Dictionary<MapLayer, IMapLayerController> layers, MapRendererConfiguration configuration, ICoordsUtils coordsUtils, IMapCullingController cullingController, CancellationToken cancellationToken)
         {
             var chunkAtlas = new ParcelChunkAtlasController(configuration.AtlasRoot, IMapRendererSettings.ATLAS_CHUNK_SIZE, coordsUtils, cullingController, chunkBuilder: CreateChunkAsync);
-
-            // initialize Atlas but don't block the flow (to accelerate loading time)
-            chunkAtlas.InitializeAsync(cancellationToken).SuppressCancellationThrow().Forget();
 
             layers.Add(MapLayer.ParcelsAtlas, chunkAtlas);
             return UniTask.CompletedTask;

@@ -40,11 +40,16 @@ using Global.AppArgs;
 using System.Collections.Generic;
 using System.Threading;
 using DCL.PerformanceAndDiagnostics.Analytics;
+using DCL.RealmNavigation;
 using DCL.UserInAppInitializationFlow;
+using ECS.StreamableLoading.Cache.Disk;
+using ECS.StreamableLoading.Textures;
 using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using PortableExperiences.Controller;
 using SceneRunner.Mapping;
+using System.IO;
 using UnityEngine;
+using UnityEngine.UIElements;
 using Utility;
 using MultiplayerPlugin = DCL.PluginSystem.World.MultiplayerPlugin;
 
@@ -144,6 +149,8 @@ namespace Global
             WorldVolumeMacBus worldVolumeMacBus,
             bool enableAnalytics,
             IAnalyticsController analyticsController,
+            IDiskCache diskCache,
+            UIDocument scenesUIRoot,
             CancellationToken ct)
         {
             ProfilingCounters.CleanAllCounters();
@@ -183,7 +190,6 @@ namespace Global
                 new ConcurrentLoadingPerformanceBudget(staticSettings.AssetsLoadingBudget),
                 new FrameTimeCapBudget(staticSettings.FrameTimeCap, profilingProvider),
                 new MemoryBudget(memoryCap, profilingProvider, staticSettings.MemoryThresholds),
-                new SceneAssetLock(),
                 new SceneMapping()
             );
 
@@ -200,14 +206,15 @@ namespace Global
             container.PhysicsTickProvider = new PhysicsTickProvider();
             container.FeatureFlagsCache = new FeatureFlagsCache();
 
-            container.PortableExperiencesController = new ECSPortableExperiencesController(web3IdentityProvider, container.WebRequestsContainer.WebRequestController, container.ScenesCache, container.FeatureFlagsCache, localSceneDevelopment);
+            container.PortableExperiencesController = new ECSPortableExperiencesController(web3IdentityProvider, container.WebRequestsContainer.WebRequestController, container.ScenesCache, container.FeatureFlagsCache, localSceneDevelopment, decentralandUrlsSource);
 
 
             container.FeatureFlagsProvider = new HttpFeatureFlagsProvider(container.WebRequestsContainer.WebRequestController,
                 container.FeatureFlagsCache);
 
+            var textureDiskCache = new DiskCache<Texture2DData>(diskCache, new TextureDiskSerializer());
             var assetBundlePlugin = new AssetBundlesPlugin(reportHandlingSettings, container.CacheCleaner, container.WebRequestsContainer.WebRequestController);
-            var textureResolvePlugin = new TexturesLoadingPlugin(container.WebRequestsContainer.WebRequestController, container.CacheCleaner);
+            var textureResolvePlugin = new TexturesLoadingPlugin(container.WebRequestsContainer.WebRequestController, container.CacheCleaner, textureDiskCache);
 
             ExtendedObjectPool<Texture2D> videoTexturePool = VideoTextureFactory.CreateVideoTexturesPool();
 
@@ -223,7 +230,7 @@ namespace Global
             {
                 new TransformsPlugin(sharedDependencies, exposedPlayerTransform, exposedGlobalDataContainer.ExposedCameraData),
                 new BillboardPlugin(exposedGlobalDataContainer.ExposedCameraData),
-                new NFTShapePlugin(decentralandUrlsSource, container.assetsProvisioner, sharedDependencies.FrameTimeBudget, componentsContainer.ComponentPoolsRegistry, container.WebRequestsContainer.WebRequestController, container.CacheCleaner),
+                new NFTShapePlugin(decentralandUrlsSource, container.assetsProvisioner, sharedDependencies.FrameTimeBudget, componentsContainer.ComponentPoolsRegistry, container.WebRequestsContainer.WebRequestController, container.CacheCleaner, textureDiskCache),
                 new TextShapePlugin(sharedDependencies.FrameTimeBudget, container.CacheCleaner, componentsContainer.ComponentPoolsRegistry),
                 new MaterialsPlugin(sharedDependencies, videoTexturePool),
                 textureResolvePlugin,
@@ -236,7 +243,7 @@ namespace Global
                 assetBundlePlugin,
                 new GltfContainerPlugin(sharedDependencies, container.CacheCleaner, container.SceneReadinessReportQueue, componentsContainer.ComponentPoolsRegistry, localSceneDevelopment, useRemoteAssetBundles, container.WebRequestsContainer.WebRequestController, container.LoadingStatus),
                 new InteractionPlugin(sharedDependencies, profilingProvider, exposedGlobalDataContainer.GlobalInputEvents, componentsContainer.ComponentPoolsRegistry, container.assetsProvisioner),
-                new SceneUIPlugin(sharedDependencies, container.assetsProvisioner, container.InputBlock, container.InputProxy),
+                new SceneUIPlugin(sharedDependencies, container.assetsProvisioner, container.InputBlock, container.InputProxy, scenesUIRoot),
                 container.CharacterContainer.CreateWorldPlugin(componentsContainer.ComponentPoolsRegistry),
                 new AnimatorPlugin(),
                 new TweenPlugin(),
@@ -248,6 +255,7 @@ namespace Global
                 new RealmInfoPlugin(container.RealmData, container.RoomHubProxy),
                 new InputModifierPlugin(globalWorld, container.PlayerEntity, container.SceneRestrictionBusController),
                 new MainCameraPlugin(componentsContainer.ComponentPoolsRegistry, container.assetsProvisioner, container.CacheCleaner, exposedGlobalDataContainer.ExposedCameraData, container.SceneRestrictionBusController, globalWorld),
+                new LightSourcePlugin(componentsContainer.ComponentPoolsRegistry, container.assetsProvisioner, container.CacheCleaner),
 
 #if UNITY_EDITOR
                 new GizmosWorldPlugin(),

@@ -2,6 +2,7 @@ using Arch.SystemGroups;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.World.Dependencies;
+using DCL.RealmNavigation;
 using DCL.ResourcesUnloading;
 using DCL.WebRequests;
 using ECS.Abstract;
@@ -15,9 +16,9 @@ using ECS.Unity.GLTFContainer.Components;
 using ECS.Unity.GLTFContainer.Systems;
 using ECS.Unity.Visibility.Systems;
 using System.Collections.Generic;
-using DCL.UserInAppInitializationFlow;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.GLTF;
+using ECS.StreamableLoading.GLTF.DownloadProvider;
 
 namespace DCL.PluginSystem.World
 {
@@ -59,7 +60,13 @@ namespace DCL.PluginSystem.World
         {
             var buffer = sharedDependencies.EntityEventsBuilder.Rent<GltfContainerComponent>();
 
-            LoadGLTFSystem.InjectToWorld(ref builder, new NoCache<GLTFData, GetGLTFIntention>(false, false), sharedDependencies.SceneData, webRequestController);
+            LoadGLTFSystem.InjectToWorld(
+                ref builder,
+                NoCache<GLTFData, GetGLTFIntention>.INSTANCE,
+                webRequestController,
+                false,
+                false,
+                new GltFastSceneDownloadStrategy(sharedDependencies.SceneData));
 
             // Asset loading
             PrepareGltfAssetLoadingSystem.InjectToWorld(ref builder, assetsCache, localSceneDevelopment, useRemoteAssetBundles);

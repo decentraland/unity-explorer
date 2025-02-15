@@ -6,6 +6,7 @@ using DCL.Utilities.Extensions;
 using ECS;
 using ECS.SceneLifeCycle;
 using Global.AppArgs;
+using Global.Versioning;
 using SceneRuntime;
 using Segment.Serialization;
 using UnityEngine;
@@ -27,7 +28,8 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.Playgrounds
                     new ApplicationParametersParser(),
                     analyticsConfiguration.EnsureNotNull(),
                     new LauncherTraits(),
-                    new BuildData()
+                    new BuildData(),
+                    DCLVersion.Mock()
                 ),
                 new RealmData(),
                 new Profiler(),
