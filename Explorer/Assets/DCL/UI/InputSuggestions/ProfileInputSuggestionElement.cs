@@ -13,12 +13,10 @@ namespace DCL.UI.SuggestionPanel
         protected override void SetupContinuation(ProfileInputSuggestionData data)
         {
             SuggestionId = data.ProfileData.DisplayName;
-            simpleUserNameElement.Setup(data.ProfileData, data.UsernameColor);
-            faceFrame.color = data.UsernameColor;
-            //Disabled for now, we need to implement the profile picture fetching.
-            //The data should probably be stored in the profile so we don't need to have access to webRequestController everywhere.
-            //Potentially add a ProfileDisplayData to the profile and store both the color and the profile picture
-            //faceSnapshotImage.SetImage(data.UserFaceIcon);
+            simpleUserNameElement.Setup(data.ProfileData, data.ProfileData.UserNameColor);
+            faceFrame.color = data.ProfileData.UserNameColor;
+            //faceSnapshotImage.sprite = data.ProfileData.ProfilePicture
+            //TODO FRAN issue #3276-> Disabled for now, we need to implement the profile picture fetching properly and reuse of profile element.
         }
     }
 }

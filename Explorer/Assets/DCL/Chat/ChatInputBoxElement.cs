@@ -404,11 +404,11 @@ namespace DCL.Chat
                     if (profileSuggestionsDictionary.TryGetValue(profile.DisplayName, out ProfileInputSuggestionData profileSuggestionData))
                     {
                         if (profileSuggestionData.ProfileData != profile)
-                            profileSuggestionsDictionary[profile.DisplayName] = new ProfileInputSuggestionData(profile, profileSuggestionData.UsernameColor);
+                            profileSuggestionsDictionary[profile.DisplayName] = new ProfileInputSuggestionData(profile);
                     }
                     else
                     {
-                        profileSuggestionsDictionary.TryAdd(profile.DisplayName, new ProfileInputSuggestionData(profile, profile.UserNameColor));
+                        profileSuggestionsDictionary.TryAdd(profile.DisplayName, new ProfileInputSuggestionData(profile));
                     }
                 }
             }
