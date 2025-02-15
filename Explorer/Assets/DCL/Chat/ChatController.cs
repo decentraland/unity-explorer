@@ -13,12 +13,10 @@ using DCL.Nametags;
 using DCL.Profiles;
 using DCL.Settings.Settings;
 using DCL.UI.InputFieldFormatting;
-using DCL.UI.Profiles.Helpers;
 using ECS.Abstract;
 using LiveKit.Proto;
 using LiveKit.Rooms;
 using MVC;
-using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine.InputSystem;
@@ -47,8 +45,10 @@ namespace DCL.Chat
         private readonly ChatAudioSettingsAsset chatAudioSettings;
         private SingleInstanceEntity cameraEntity;
         private bool isMemberListInitialized;
+
         private CancellationTokenSource memberListCts;
         private string previousRoomSid = string.Empty;
+        private readonly Dictionary<string, ChatMemberListView.MemberData> membersBuffer = new ();
 
         // Used exclusively to calculate the new value of the read messages once the Unread messages separator has been viewed
         private int messageCountWhenSeparatorViewed;
@@ -420,7 +420,7 @@ namespace DCL.Chat
 
         private Dictionary<string, ChatMemberListView.MemberData> GenerateMemberList()
         {
-            Dictionary<string, ChatMemberListView.MemberData> members = new Dictionary<string, ChatMemberListView.MemberData>();
+            membersBuffer.Clear();
 
             // Island room
             IReadOnlyCollection<string> islandIdentities = islandRoom.Participants.RemoteParticipantIdentities();
@@ -430,10 +430,10 @@ namespace DCL.Chat
                 ChatMemberListView.MemberData newMember = GetMemberDataFromParticipantIdentity(identity);
 
                 if (!string.IsNullOrEmpty(newMember.Name))
-                    members.Add(identity, newMember);
+                    membersBuffer.Add(identity, newMember);
             }
 
-            return members;
+            return membersBuffer;
         }
 
         private ChatMemberListView.MemberData GetMemberDataFromParticipantIdentity(string identity)
@@ -449,7 +449,7 @@ namespace DCL.Chat
                 newMemberData.ProfilePicture = profile.ProfilePicture.Value.Asset.Sprite;
                 newMemberData.ConnectionStatus = ChatMemberConnectionStatus.Online; // TODO: Get this info from somewhere, when the other shapes are developed
                 newMemberData.WalletId = profile.WalletId;
-                newMemberData.ProfileColor = chatEntryConfiguration.GetNameColor(profile.ValidatedName);
+                newMemberData.ProfileColor = viewDependencies.ProfileNameColorHelper.GetNameColor(profile.ValidatedName);
             }
 
             return newMemberData;

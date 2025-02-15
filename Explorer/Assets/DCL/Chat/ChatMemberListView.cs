@@ -1,7 +1,9 @@
 using MVC;
 using SuperScrollView;
 using System.Collections.Generic;
+using System.Threading;
 using UnityEngine;
+using Utility;
 
 namespace DCL.Chat
 {
@@ -35,6 +37,8 @@ namespace DCL.Chat
         private ViewDependencies viewDependencies;
         private bool isInitialized;
         private bool isVisible;
+
+        private CancellationTokenSource contextMenuCts = new ();
 
         public bool IsVisible
         {
@@ -93,9 +97,10 @@ namespace DCL.Chat
             return newItem;
         }
 
-        private void OnContextMenuButtonClicked(ChatMemberListViewItem listItem, Transform buttonPosition)
+        private async void OnContextMenuButtonClicked(ChatMemberListViewItem listItem, Transform buttonPosition)
         {
-            viewDependencies.GlobalUIViews.ShowUserProfileContextMenu(viewDependencies.ProfileCache.Get(listItem.Id), listItem.ProfileColor, buttonPosition);
+            contextMenuCts = contextMenuCts.SafeRestart();
+            await viewDependencies.GlobalUIViews.ShowUserProfileContextMenu(viewDependencies.ProfileCache.Get(listItem.Id), buttonPosition.position, contextMenuCts.Token);
         }
     }
 }

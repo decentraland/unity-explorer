@@ -246,7 +246,6 @@ namespace DCL.Chat
         )
         {
             this.channels = chatChannels;
-            this.chatEntryConfiguration = chatEntryConfiguration;
             closeChatButton.onClick.AddListener(OnCloseChatButtonClicked);
             memberListOpeningButton.onClick.AddListener(OnMemberListOpeningButtonClicked);
             memberListClosingButton.onClick.AddListener(OnMemberListClosingButtonClicked);
@@ -629,6 +628,7 @@ namespace DCL.Chat
             memberListTitlebar.gameObject.SetActive(isVisible);
             defaultChatTitlebar.gameObject.SetActive(!isVisible);
             chatPanel.SetActive(!isVisible);
+            chatInputBox.gameObject.SetActive(!isVisible);
 
             MemberListVisibilityChanged?.Invoke(isVisible);
         }
