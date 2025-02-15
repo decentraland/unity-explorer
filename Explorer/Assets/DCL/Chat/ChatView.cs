@@ -24,6 +24,7 @@ namespace DCL.Chat
         public delegate void InputBoxFocusChangedDelegate(bool hasFocus);
         public delegate void InputSubmittedDelegate(ChatChannel channel, string message, string origin);
         public delegate void EmojiSelectionVisibilityChangedDelegate(bool isVisible);
+        public delegate void MemberListVisibilityChangedDelegate(bool isVisible);
         public delegate void ScrollBottomReachedDelegate();
         public delegate void PointerEventDelegate();
         public delegate void ChatBubbleVisibilityChangedDelegate(bool isVisible);
@@ -60,6 +61,33 @@ namespace DCL.Chat
 
         [SerializeField]
         private ChatMessageViewerElement chatMessageViewer;
+
+        [SerializeField]
+        private Button memberListButton;
+
+        [SerializeField]
+        private TMP_Text memberListNumberText;
+
+        [SerializeField]
+        private TMP_Text memberListNumberText2;
+
+        [SerializeField]
+        private ChatMemberListView memberListView;
+
+        [SerializeField]
+        private Button memberListOpeningButton;
+
+        [SerializeField]
+        private Button memberListClosingButton;
+
+        [SerializeField]
+        private GameObject defaultChatTitlebar;
+
+        [SerializeField]
+        private GameObject memberListTitlebar;
+
+        [SerializeField]
+        private GameObject chatPanel;
 
         [SerializeField]
         private Button scrollToBottomButton;
@@ -119,6 +147,11 @@ namespace DCL.Chat
         /// </summary>
         public event UnreadMessagesSeparatorViewedDelegate UnreadMessagesSeparatorViewed;
 
+        /// <summary>
+        /// Raised when the Member list panel changes its visibility (which implies that the message list may appear or hide).
+        /// </summary>
+        public event MemberListVisibilityChangedDelegate MemberListVisibilityChanged;
+
         private ViewDependencies viewDependencies;
         private UniTaskCompletionSource closePopupTask;
 
@@ -131,6 +164,11 @@ namespace DCL.Chat
 
         private IReadOnlyDictionary<ChatChannel.ChannelId, ChatChannel>? channels;
         private ChatChannel? currentChannel;
+
+        private readonly List<ChatMemberListView.MemberData> sortedMemberData = new();
+        private bool isMemberListDirty; // These flags are necessary in order to allow the UI respond to state changes that happen in other threads
+        private bool isMemberListCountDirty;
+        private int memberListCount;
 
         /// <summary>
         /// Get or sets the current content of the input box.
@@ -176,6 +214,27 @@ namespace DCL.Chat
             panelBackgroundCanvasGroup.alpha = 0;
         }
 
+        private void Update()
+        {
+            // Applies to the UI the data changes performed previously
+            if (isMemberListDirty && IsMemberListVisible)
+            {
+                // In the nearby channel, members are presented alphabetically
+                sortedMemberData.Sort((a, b) => string.Compare(a.Name, b.Name, StringComparison.OrdinalIgnoreCase));
+                memberListView.SetData(sortedMemberData);
+                memberListCount = sortedMemberData.Count; // The amount of members must match the amount of items in the list
+            }
+
+            if (isMemberListDirty || (isMemberListCountDirty && !IsMemberListVisible)) // Once the member list is visible, the number does not change
+            {
+                memberListNumberText.text = memberListCount.ToString();
+                memberListNumberText2.text = memberListNumberText.text;
+            }
+
+            isMemberListDirty = false;
+            isMemberListCountDirty = false;
+        }
+
         public void Dispose()
         {
             chatInputBox.Dispose();
@@ -191,10 +250,13 @@ namespace DCL.Chat
         {
             this.channels = chatChannels;
             closeChatButton.onClick.AddListener(OnCloseChatButtonClicked);
+            memberListOpeningButton.onClick.AddListener(OnMemberListOpeningButtonClicked);
+            memberListClosingButton.onClick.AddListener(OnMemberListClosingButtonClicked);
             chatMessageViewer.Initialize(CalculateUsernameColor);
             chatMessageViewer.ChatMessageOptionsButtonClicked += OnChatMessageOptionsButtonClicked;
             chatMessageViewer.ChatMessageViewerScrollPositionChanged += OnChatMessageViewerScrollPositionChanged;
             scrollToBottomButton.onClick.AddListener(OnScrollToEndButtonClicked);
+            memberListView.VisibilityChanged += OnMemberListViewVisibilityChanged;
 
             chatBubblesToggle.IsSoundEnabled = false;
             chatBubblesToggle.Toggle.isOn = areChatBubblesVisible;
@@ -235,6 +297,8 @@ namespace DCL.Chat
             }
         }
 
+        public bool IsMemberListVisible => memberListView.IsVisible;
+
         /// <summary>
         /// Gets or sets whether the chat panel is open or close (the input box is visible in any case).
         /// </summary>
@@ -247,6 +311,7 @@ namespace DCL.Chat
                 if(value == panelBackgroundCanvasGroup.gameObject.activeInHierarchy)
                     return;
 
+                memberListView.IsVisible = false;
                 panelBackgroundCanvasGroup.gameObject.SetActive(value);
                 chatMessageViewer.SetVisibility(value);
 
@@ -281,6 +346,7 @@ namespace DCL.Chat
         /// </summary>
         public void FocusInputBox()
         {
+            memberListView.IsVisible = false; // Pressing enter while member list is visible shows the chat again
             chatInputBox.FocusInputBox();
         }
 
@@ -371,6 +437,43 @@ namespace DCL.Chat
             viewDependencies = dependencies;
             chatInputBox.InjectDependencies(dependencies);
             chatMessageViewer.InjectDependencies(dependencies);
+            memberListView.InjectDependencies(dependencies);
+        }
+
+        /// <summary>
+        /// Replaces the data of the participants in the current channel.
+        /// The list will be refreshed during the next Update.
+        /// </summary>
+        /// <param name="memberData">The data of the members to be displayed in the member list.</param>
+        public void SetMemberData(Dictionary<string, ChatMemberListView.MemberData> memberData)
+        {
+            sortedMemberData.Clear();
+
+            if(memberData.Count > sortedMemberData.Capacity)
+                sortedMemberData.Capacity = memberData.Count;
+
+            foreach (KeyValuePair<string, ChatMemberListView.MemberData> keyValuePair in memberData)
+                sortedMemberData.Add(keyValuePair.Value);
+
+            isMemberListDirty = true;
+        }
+
+        /// <summary>
+        /// Gets or sets the amount of participants in the current channel.
+        /// The UI will be refreshed in the next Update.
+        /// </summary>
+        public int MemberCount
+        {
+            get => memberListCount;
+
+            set
+            {
+                if (memberListCount != value)
+                {
+                    isMemberListCountDirty = true;
+                    memberListCount = value;
+                }
+            }
         }
 
         /// <summary>
@@ -509,6 +612,26 @@ namespace DCL.Chat
 
             if (chatMessageViewer.IsSeparatorVisible && chatMessageViewer.IsItemVisible(chatMessageViewer.CurrentSeparatorIndex))
                 UnreadMessagesSeparatorViewed?.Invoke();
+        }
+
+        private void OnMemberListClosingButtonClicked()
+        {
+            memberListView.IsVisible = false;
+        }
+
+        private void OnMemberListOpeningButtonClicked()
+        {
+            memberListView.IsVisible = true;
+        }
+
+        private void OnMemberListViewVisibilityChanged(bool isVisible)
+        {
+            memberListTitlebar.gameObject.SetActive(isVisible);
+            defaultChatTitlebar.gameObject.SetActive(!isVisible);
+            chatPanel.SetActive(!isVisible);
+            chatInputBox.gameObject.SetActive(!isVisible);
+
+            MemberListVisibilityChanged?.Invoke(isVisible);
         }
     }
 }

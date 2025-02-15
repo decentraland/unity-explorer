@@ -7,15 +7,20 @@ using DCL.Chat.MessageBus;
 using DCL.Input;
 using DCL.Input.Component;
 using DCL.Input.Systems;
+using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
+using DCL.Profiles;
 using DCL.Settings.Settings;
 using DCL.UI.InputFieldFormatting;
-using DCL.UI.Profiles.Helpers;
 using ECS.Abstract;
+using LiveKit.Proto;
+using LiveKit.Rooms;
 using MVC;
+using System.Collections.Generic;
 using System.Threading;
 using UnityEngine.InputSystem;
+using Utility;
 using Utility.Arch;
 
 namespace DCL.Chat
@@ -33,9 +38,17 @@ namespace DCL.Chat
         private readonly IInputBlock inputBlock;
         private readonly ViewDependencies viewDependencies;
         private readonly IChatCommandsBus chatCommandsBus;
+        private readonly IRoom islandRoom;
+        private readonly IRoom sceneRoom;
+
         private readonly ITextFormatter hyperlinkTextFormatter;
         private readonly ChatAudioSettingsAsset chatAudioSettings;
         private SingleInstanceEntity cameraEntity;
+        private bool isMemberListInitialized;
+
+        private CancellationTokenSource memberListCts;
+        private string previousRoomSid = string.Empty;
+        private readonly Dictionary<string, ChatMemberListView.MemberData> membersBuffer = new ();
 
         // Used exclusively to calculate the new value of the read messages once the Unread messages separator has been viewed
         private int messageCountWhenSeparatorViewed;
@@ -56,6 +69,7 @@ namespace DCL.Chat
             IInputBlock inputBlock,
             ViewDependencies viewDependencies,
             IChatCommandsBus chatCommandsBus,
+            IRoomHub roomHub,
             ChatAudioSettingsAsset chatAudioSettings, ITextFormatter hyperlinkTextFormatter) : base(viewFactory)
         {
             this.chatMessagesBus = chatMessagesBus;
@@ -67,6 +81,8 @@ namespace DCL.Chat
             this.inputBlock = inputBlock;
             this.viewDependencies = viewDependencies;
             this.chatCommandsBus = chatCommandsBus;
+            this.islandRoom = roomHub.IslandRoom();
+            this.sceneRoom = roomHub.SceneRoom().Room();
             this.chatAudioSettings = chatAudioSettings;
             this.hyperlinkTextFormatter = hyperlinkTextFormatter;
         }
@@ -94,12 +110,15 @@ namespace DCL.Chat
             viewInstance.ScrollBottomReached -= OnViewScrollBottomReached;
             viewInstance.UnreadMessagesSeparatorViewed -= OnViewUnreadMessagesSeparatorViewed;
             viewInstance.FoldingChanged -= OnViewFoldingChanged;
+            viewInstance.MemberListVisibilityChanged -= OnMemberListVisibilityChanged;
 
             viewDependencies.DclInput.UI.Click.performed -= OnUIClickPerformed;
             viewDependencies.DclInput.Shortcuts.ToggleNametags.performed -= OnToggleNametagsShortcutPerformed;
             viewDependencies.DclInput.Shortcuts.OpenChat.performed -= OnOpenChatShortcutPerformed;
             viewDependencies.DclInput.Shortcuts.OpenChatCommandLine.performed -= OnOpenChatCommandLineShortcutPerformed;
             viewDependencies.DclInput.UI.Submit.performed -= OnSubmitShorcutPerformed;
+
+            memberListCts.SafeCancelAndDispose();
 
             viewInstance.Dispose();
         }
@@ -124,6 +143,7 @@ namespace DCL.Chat
             viewInstance.EmojiSelectionVisibilityChanged += OnViewEmojiSelectionVisibilityChanged;
             viewInstance.ChatBubbleVisibilityChanged += OnViewChatBubbleVisibilityChanged;
             viewInstance.InputSubmitted += OnViewInputSubmitted;
+            viewInstance.MemberListVisibilityChanged += OnMemberListVisibilityChanged;
             viewInstance.ScrollBottomReached += OnViewScrollBottomReached;
             viewInstance.UnreadMessagesSeparatorViewed += OnViewUnreadMessagesSeparatorViewed;
             viewInstance.FoldingChanged += OnViewFoldingChanged;
@@ -134,25 +154,9 @@ namespace DCL.Chat
             // TODO: Use localization systems here:
             chatHistory.AddMessage(ChatChannel.NEARBY_CHANNEL, ChatMessage.NewFromSystem("Type /help for available commands."));
 
-            //            ChatChannel.ChannelId id = chatHistory.AddChannel(ChatChannel.ChatChannelType.User, "USER1");
-            //            chatHistory.AddMessage(id, new ChatMessage("USER1", "user", "", false, false, "", true));
-            //            id = chatHistory.AddChannel(ChatChannel.ChatChannelType.User, "USER2");
-            //            chatHistory.AddMessage(id, new ChatMessage("USER2", "user", "", false, false, "", true));
-            //            id = chatHistory.AddChannel(ChatChannel.ChatChannelType.User, "USER3");
-            //            chatHistory.AddMessage(id, new ChatMessage("USER3", "user", "", false, false, "", true));
-            //            id = chatHistory.AddChannel(ChatChannel.ChatChannelType.User, "USER4");
-            //            chatHistory.AddMessage(id, new ChatMessage("USER4", "user", "", false, false, "", true));
+            memberListCts = new CancellationTokenSource();
+            UniTask.RunOnThreadPool(UpdateMembersDataAsync);
         }
-
-        //        private int current = 0;
-        //       private ChatChannel.ChannelId[] ids = new []
-        //       {
-        //           ChatChannel.NEARBY_CHANNEL,
-        //        new ChatChannel.ChannelId(ChatChannel.ChatChannelType.User, "USER1"),
-        //        new ChatChannel.ChannelId(ChatChannel.ChatChannelType.User, "USER2"),
-        //        new ChatChannel.ChannelId(ChatChannel.ChatChannelType.User, "USER3"),
-        //        new ChatChannel.ChannelId(ChatChannel.ChatChannelType.User, "USER4")
-        //     };
 
         private void OnChatHistoryMessageAdded(ChatChannel destinationChannel, ChatMessage addedMessage)
         {
@@ -207,6 +211,27 @@ namespace DCL.Chat
             MarkCurrentChannelAsRead();
         }
 
+        private async UniTask UpdateMembersDataAsync()
+        {
+            const int WAIT_TIME_IN_BETWEEN_UPDATES = 500;
+
+            while (!memberListCts.IsCancellationRequested)
+            {
+                // If the player jumps to another room (like a world) while the member list is visible, it must refresh
+                if (previousRoomSid != islandRoom.Info.Sid && viewInstance!.IsMemberListVisible)
+                {
+                    previousRoomSid = islandRoom.Info.Sid;
+                    RefreshMemberList();
+                }
+
+                // Updates the amount of members
+                if(canUpdateParticipants && islandRoom.Participants.RemoteParticipantIdentities().Count != viewInstance!.MemberCount)
+                    viewInstance!.MemberCount = islandRoom.Participants.RemoteParticipantIdentities().Count;
+
+                await UniTask.Delay(WAIT_TIME_IN_BETWEEN_UPDATES);
+            }
+        }
+
         protected override void OnBlur()
         {
             viewDependencies.DclInput.UI.Submit.performed -= OnSubmitShorcutPerformed;
@@ -244,6 +269,8 @@ namespace DCL.Chat
             chatHistory.Channels[viewInstance!.CurrentChannel].MarkAllMessagesAsRead();
             messageCountWhenSeparatorViewed = chatHistory.Channels[viewInstance.CurrentChannel].ReadMessages;
         }
+
+        private bool canUpdateParticipants => islandRoom.Info.ConnectionState == ConnectionState.ConnConnected;
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
             UniTask.Never(ct);
@@ -334,15 +361,12 @@ namespace DCL.Chat
 
         private void OnToggleNametagsShortcutPerformed(InputAction.CallbackContext obj)
         {
-            //            chatHistory.AddMessage(viewInstance!.CurrentChannel, new ChatMessage("NEW!", "Test", "", false, "", true));
             nametagsData.showNameTags = !nametagsData.showNameTags;
             viewInstance!.EnableChatBubblesVisibilityField = nametagsData.showNameTags;
         }
 
         private void OnUIClickPerformed(InputAction.CallbackContext obj)
         {
-            //            current = (current + 1) % chatHistory.Channels.Count;
-            //            viewInstance.CurrentChannel = ids[current];
             viewInstance!.Click();
         }
 
@@ -362,5 +386,57 @@ namespace DCL.Chat
             else
                 chatHistory.AddMessage(channelId, chatMessage);
         }
+
+        private void OnMemberListVisibilityChanged(bool isVisible)
+        {
+            if (isVisible && canUpdateParticipants)
+            {
+                RefreshMemberList();
+            }
+        }
+
+        private Dictionary<string, ChatMemberListView.MemberData> GenerateMemberList()
+        {
+            membersBuffer.Clear();
+
+            // Island room
+            IReadOnlyCollection<string> islandIdentities = islandRoom.Participants.RemoteParticipantIdentities();
+
+            foreach (string identity in islandIdentities)
+            {
+                ChatMemberListView.MemberData newMember = GetMemberDataFromParticipantIdentity(identity);
+
+                if (!string.IsNullOrEmpty(newMember.Name))
+                    membersBuffer.Add(identity, newMember);
+            }
+
+            return membersBuffer;
+        }
+
+        private ChatMemberListView.MemberData GetMemberDataFromParticipantIdentity(string identity)
+        {
+            Profile profile = viewDependencies.ProfileCache.Get(identity);
+
+            ChatMemberListView.MemberData newMemberData = new ChatMemberListView.MemberData();
+            newMemberData.Id = identity;
+
+            if (profile != null)
+            {
+                newMemberData.Name = profile.ValidatedName;
+                newMemberData.ProfilePicture = profile.ProfilePicture.Value.Asset.Sprite;
+                newMemberData.ConnectionStatus = ChatMemberConnectionStatus.Online; // TODO: Get this info from somewhere, when the other shapes are developed
+                newMemberData.WalletId = profile.WalletId;
+                newMemberData.ProfileColor = profile.UserNameColor;
+            }
+
+            return newMemberData;
+        }
+
+        private void RefreshMemberList()
+        {
+            Dictionary<string, ChatMemberListView.MemberData> members = GenerateMemberList();
+            viewInstance!.SetMemberData(members);
+        }
+
     }
 }

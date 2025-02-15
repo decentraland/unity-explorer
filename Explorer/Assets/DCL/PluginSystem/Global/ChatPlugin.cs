@@ -7,8 +7,10 @@ using DCL.Chat.Commands;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
 using DCL.Input;
+using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
+using DCL.Profiles;
 using DCL.Settings.Settings;
 using DCL.UI.InputFieldFormatting;
 using DCL.UI.MainUI;
@@ -33,6 +35,7 @@ namespace DCL.PluginSystem.Global
         private readonly MainUIView mainUIView;
         private readonly ViewDependencies viewDependencies;
         private readonly IChatCommandsBus chatCommandsBus;
+        private readonly IRoomHub roomHub;
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly ITextFormatter hyperlinkTextFormatter;
 
@@ -50,6 +53,7 @@ namespace DCL.PluginSystem.Global
             Entity playerEntity,
             ViewDependencies viewDependencies,
             IChatCommandsBus chatCommandsBus,
+            IRoomHub roomHub,
             IAssetsProvisioner assetsProvisioner, ITextFormatter hyperlinkTextFormatter)
         {
             this.mvcManager = mvcManager;
@@ -66,6 +70,7 @@ namespace DCL.PluginSystem.Global
             this.hyperlinkTextFormatter = hyperlinkTextFormatter;
             this.mainUIView = mainUIView;
             this.inputBlock = inputBlock;
+            this.roomHub = roomHub;
         }
 
         public void Dispose() { }
@@ -92,6 +97,7 @@ namespace DCL.PluginSystem.Global
                 inputBlock,
                 viewDependencies,
                 chatCommandsBus,
+                roomHub,
                 chatSettingsAsset.Value,
                 hyperlinkTextFormatter
             );

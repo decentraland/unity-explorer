@@ -347,6 +347,7 @@ namespace DCL.Chat
 
         private void SetItemData(int index, ChatMessage itemData, ChatEntryView itemView)
         {
+            // TODO: Can we now get the color from the profile instead of using a delegate?
             Color playerNameColor = calculateUsernameColor!(itemData);
 
             itemView.usernameElement.userName.color = playerNameColor;
@@ -384,6 +385,11 @@ namespace DCL.Chat
         private void OnScrollRectValueChanged(Vector2 scrollPosition)
         {
             ChatMessageViewerScrollPositionChanged?.Invoke(scrollPosition);
+        }
+
+        private void OnEnable()
+        {
+            loopList.RefreshAllShownItem(); // This avoids artifacts when new items are added while the object is disabled
         }
     }
 }

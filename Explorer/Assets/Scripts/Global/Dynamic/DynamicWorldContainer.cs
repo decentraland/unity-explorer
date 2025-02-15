@@ -670,6 +670,7 @@ namespace Global.Dynamic
                     playerEntity,
                     viewDependencies,
                     chatCommandsBus,
+                    roomHub,
                     assetsProvisioner,
                     hyperlinkTextFormatter),
                 new ExplorePanelPlugin(
