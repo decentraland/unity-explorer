@@ -330,7 +330,6 @@ namespace DCL.Chat
                 return;
             }
 
-            //Send message and clear Input Field
             if (chatAudioSettings.chatAudioSettings == ChatAudioSettings.ALL)
                 UIAudioEventsBus.Instance.SendPlayAudioEvent(chatSendMessageAudio);
 
@@ -415,7 +414,6 @@ namespace DCL.Chat
             }
         }
 
-#region Emojis
         private void InitializeEmojiPanelController()
         {
             emojiPanelController = new EmojiPanelController(emojiPanel, emojiPanelConfiguration, emojiMappingJson, emojiSectionViewPrefab, emojiButtonPrefab);
@@ -438,6 +436,5 @@ namespace DCL.Chat
 
             inputField.InsertTextAtSelectedPosition(emoji);
         }
-#endregion
     }
 }

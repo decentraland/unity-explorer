@@ -1,8 +1,8 @@
-﻿
-namespace MVC
+﻿namespace MVC
 {
     /// <summary>
-    /// A view that needs to access some external systems without needing a controller.
+    ///     A view with access to some external systems without needing a controller.
+    ///     These dependencies must not be able to change the state of the game in any meaningful way.
     /// </summary>
     public interface IViewWithGlobalDependencies
     {

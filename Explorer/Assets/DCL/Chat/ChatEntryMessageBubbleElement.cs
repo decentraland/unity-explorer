@@ -7,6 +7,10 @@ using UnityEngine.UI;
 
 namespace DCL.Chat
 {
+    /// <summary>
+    ///     This class represents the part of the chat entry that contains the chat bubble, so its where we display the text of the message
+    ///     and also now we display a button that when clicked opens an option panel
+    /// </summary>
     public class ChatEntryMessageBubbleElement : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {
         [field: SerializeField] internal Color backgroundDefaultColor { get; private set; }
@@ -38,11 +42,18 @@ namespace DCL.Chat
             messageOptionsButton?.gameObject.SetActive(false);
         }
 
+        /// <summary>
+        ///     Setup the dependencies needed for the hyperlink handler.
+        /// </summary>
         public void SetupHyperlinkHandlerDependencies(ViewDependencies dependencies)
         {
             messageContentElement.textHyperlinkHandler.InjectDependencies(dependencies);
         }
 
+        /// <summary>
+        ///  Sets the chat message data into the chat bubble, adapting the background size accordingly and changing the color & outline if it's a mention
+        /// </summary>
+        /// <param name="data"> a ChatMessage </param>
         public void SetMessageData(ChatMessage data)
         {
             usernameElement.SetUsername(data.SenderValidatedName, data.SenderWalletId);

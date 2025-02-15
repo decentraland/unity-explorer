@@ -15,7 +15,7 @@ using Utility;
 namespace MVC
 {
     /// <summary>
-    /// Provides access to a limited set of views previously registered in the MVC Manager.
+    /// Provides access to a limited set of views previously registered in the MVC Manager. This allows views without controllers to a restricted MVC
     /// </summary>
     public class MVCManagerMenusAccessFacade
     {
