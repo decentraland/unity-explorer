@@ -12,7 +12,7 @@ namespace DCL.UI.SuggestionPanel
 
     public class InputSuggestionPanelController
     {
-        public event SuggestionSelectedDelegate SuggestionSelectedEvent;
+        public event SuggestionSelectedDelegate SuggestionSelected;
 
         private readonly InputSuggestionPanelElement suggestionPanel;
 
@@ -23,12 +23,12 @@ namespace DCL.UI.SuggestionPanel
         {
             this.suggestionPanel = suggestionPanel;
             this.suggestionPanel.InjectDependencies(viewDependencies);
-            this.suggestionPanel.SuggestionSelectedEvent += OnSuggestionSelected;
+            this.suggestionPanel.SuggestionSelected += OnSuggestionSelected;
         }
 
         private void OnSuggestionSelected(string suggestionId)
         {
-            SuggestionSelectedEvent?.Invoke(suggestionId);
+            SuggestionSelected?.Invoke(suggestionId);
         }
 
         public void SetPanelVisibility(bool isVisible)
@@ -36,6 +36,16 @@ namespace DCL.UI.SuggestionPanel
             suggestionPanel.SetPanelVisibility(isVisible);
         }
 
+        /// <summary>
+        /// Processes the text using the sent Regex, checking in the suggestionDataMap for coincidences and returns if there was a match.
+        /// If there was a match, it displays the suggestionPanel with the list of suggestions obtained from the suggestionDataMap that match.
+        /// </summary>
+        /// <param name="inputText"> The text where the suggestions must be matched </param>
+        /// <param name="regex"> The Regex used to match the suggestions </param>
+        /// <param name="suggestionType"> The Type of Suggestion, used when displaying the suggestions </param>
+        /// <param name="suggestionDataMap"> The Dictionary that contains all the possible suggestion data values to display</param>
+        /// <typeparam name="T"> The type of suggestion element data</typeparam>
+        /// <returns> The match if there was one or an empty match if there was none </returns>
         public Match HandleSuggestionsSearch<T>(string inputText, Regex regex, InputSuggestionType suggestionType, Dictionary<string, T> suggestionDataMap) where T : IInputSuggestionElementData
         {
             Match match = regex.Match(inputText);

@@ -9,7 +9,7 @@ namespace DCL.UI.SuggestionPanel
 {
     public class InputSuggestionPanelElement : MonoBehaviour, IViewWithGlobalDependencies
     {
-        public event SuggestionSelectedDelegate SuggestionSelectedEvent;
+        public event SuggestionSelectedDelegate SuggestionSelected;
 
         [Header("Panel Configuration")]
         [SerializeField] private SuggestionPanelConfigurationSO configurationSo;
@@ -62,14 +62,14 @@ namespace DCL.UI.SuggestionPanel
 
         private void OnSuggestionSelected(string suggestionId)
         {
-            SuggestionSelectedEvent?.Invoke(suggestionId);
+            SuggestionSelected?.Invoke(suggestionId);
             SetPanelVisibility(false);
         }
 
         private void OnSubmit(InputAction.CallbackContext obj)
         {
             if (lastSelectedInputSuggestion != null && IsActive)
-                SuggestionSelectedEvent?.Invoke(lastSelectedInputSuggestion.SuggestionId);
+                SuggestionSelected?.Invoke(lastSelectedInputSuggestion.SuggestionId);
             else
                 SetPanelVisibility(false);
         }
@@ -90,6 +90,12 @@ namespace DCL.UI.SuggestionPanel
                 SetSelection(0);
         }
 
+        /// <summary>
+        /// Processes the list of found suggestions and displays them on the panel
+        /// </summary>
+        /// <param name="suggestionType"> The type of suggestion will change the max amount we can display as well as which pool to bring elements from </param>
+        /// <param name="foundSuggestions"> The list of found suggestions to display </param>
+        /// <typeparam name="T"> The type of Suggestion Element Data to use </typeparam>
         public void SetSuggestionValues<T>(InputSuggestionType suggestionType, IList<T> foundSuggestions) where T : IInputSuggestionElementData
         {
             noResultsIndicator.gameObject.SetActive(foundSuggestions.Count == 0);

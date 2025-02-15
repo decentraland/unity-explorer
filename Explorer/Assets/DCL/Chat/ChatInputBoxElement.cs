@@ -112,7 +112,7 @@ namespace DCL.Chat
             InitializeEmojiMapping(emojiPanelController!.EmojiNameMapping);
 
             suggestionPanelController = new InputSuggestionPanelController(suggestionPanel, viewDependencies);
-            suggestionPanelController.SuggestionSelectedEvent += OnSuggestionSelected;
+            suggestionPanelController.SuggestionSelected += OnSuggestionSelected;
 
             inputField.onSelect.AddListener(OnInputSelected);
             inputField.onDeselect.AddListener(OnInputDeselected);
@@ -349,7 +349,7 @@ namespace DCL.Chat
             if (suggestionPanelController != null)
             {
                 suggestionPanelController.Dispose();
-                suggestionPanelController.SuggestionSelectedEvent -= OnSuggestionSelected;
+                suggestionPanelController.SuggestionSelected -= OnSuggestionSelected;
             }
 
             emojiPanelCts.SafeCancelAndDispose();
