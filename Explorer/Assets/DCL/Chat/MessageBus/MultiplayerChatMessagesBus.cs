@@ -9,12 +9,15 @@ using DCL.Profiles.Self;
 using LiveKit.Proto;
 using System;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 
 namespace DCL.Chat.MessageBus
 {
     public class MultiplayerChatMessagesBus : IChatMessagesBus
     {
+        private static readonly Regex USERNAME_REGEX = new (@"(?<=^|\s)@([A-Za-z0-9]{3,15}(?:#[A-Za-z0-9]{4})?)(?=\s|$)", RegexOptions.Compiled);
+
         private readonly IMessagePipesHub messagePipesHub;
         private readonly IProfileRepository profileRepository;
         private readonly IMessageDeduplication<double> messageDeduplication;
@@ -93,8 +96,16 @@ namespace DCL.Chat.MessageBus
                 return ChatChannel.NEARBY_CHANNEL;
         }
 
-        private bool IsMention(string chatMessage, string userName) =>
-            chatMessage.Contains(userName, StringComparison.Ordinal);
+        private bool IsMention(string chatMessage, string userName)
+        {
+            foreach (Match match in USERNAME_REGEX.Matches(chatMessage))
+            {
+                if (match.Value == userName)
+                    return true;
+            }
+
+            return false;
+        }
 
         private string ParseChatMessageFromPayloadMessage(string payloadMessage) =>
             payloadMessage.Substring(payloadMessage.IndexOf('>') + 1);
