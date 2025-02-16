@@ -20,10 +20,11 @@ namespace DCL.UI.HyperlinkHandler
     /// </summary>
     public class TextHyperlinkHandlerElement : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler, IPointerMoveHandler, IViewWithGlobalDependencies
     {
+        private const string LINK_SELECTED_OPENING_STYLE = "<u>";
+        private const string LINK_SELECTED_CLOSING_STYLE = "</u>";
         private const string REALM_CHANGE_CONFIRMATION_MESSAGE = "Are you sure you want to enter this World?";
 
         [SerializeField] private TMP_Text textComponent;
-        [SerializeField] private TMP_StyleSheet styleSheet;
 
         private readonly Dictionary<string, Action<string>> linkHandlers = new ();
         private readonly StringBuilder stringBuilder = new ();
@@ -34,14 +35,12 @@ namespace DCL.UI.HyperlinkHandler
         private bool isHovering;
         private int lastHighlightedIndex = -1;
         private string originalText;
-        private TMP_Style linkSelectedStyle;
         private TMP_LinkInfo lastLink;
         private CancellationTokenSource cancellationTokenSource;
 
         private void Awake()
         {
             AddLinkHandlers();
-            linkSelectedStyle = styleSheet.GetStyle("LinkSelected");
         }
 
         public void OnPointerClick(PointerEventData eventData)
@@ -192,9 +191,9 @@ namespace DCL.UI.HyperlinkHandler
             stringBuilder.Clear();
 
             stringBuilder.Append(originalText.AsSpan(0, startIndex))
-                         .Append(linkSelectedStyle.styleOpeningDefinition)
+                         .Append(LINK_SELECTED_OPENING_STYLE)
                          .Append(originalText.AsSpan(startIndex, linkInfo.linkTextLength))
-                         .Append(linkSelectedStyle.styleClosingDefinition)
+                         .Append(LINK_SELECTED_CLOSING_STYLE)
                          .Append(originalText.AsSpan(endIndex));
 
             textComponent.text = stringBuilder.ToString();
