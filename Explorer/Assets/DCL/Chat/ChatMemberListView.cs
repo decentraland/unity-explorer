@@ -91,13 +91,13 @@ namespace DCL.Chat
             memberItem.ConnectionStatus = members[index].ConnectionStatus;
             memberItem.Tag = members[index].WalletId;
             memberItem.ProfileColor = members[index].ProfileColor;
-            memberItem.ContextMenuButtonClicked -= OnContextMenuButtonClicked;
-            memberItem.ContextMenuButtonClicked += OnContextMenuButtonClicked;
+            memberItem.ContextMenuButtonClicked -= OnContextMenuButtonClickedAsync;
+            memberItem.ContextMenuButtonClicked += OnContextMenuButtonClickedAsync;
 
             return newItem;
         }
 
-        private async void OnContextMenuButtonClicked(ChatMemberListViewItem listItem, Transform buttonPosition)
+        private async void OnContextMenuButtonClickedAsync(ChatMemberListViewItem listItem, Transform buttonPosition)
         {
             contextMenuCts = contextMenuCts.SafeRestart();
             await viewDependencies.GlobalUIViews.ShowUserProfileContextMenu(viewDependencies.ProfileCache.Get(listItem.Id), buttonPosition.position, contextMenuCts.Token);
