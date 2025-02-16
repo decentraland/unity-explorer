@@ -482,7 +482,7 @@ namespace Global.Dynamic
                                                  .WithDebugPanel(debugBuilder);
 
             IChatMessagesBus chatMessagesBus = dynamicWorldParams.EnableAnalytics
-                ? new ChatMessagesBusAnalyticsDecorator(coreChatMessageBus, bootstrapContainer.Analytics!)
+                ? new ChatMessagesBusAnalyticsDecorator(coreChatMessageBus, bootstrapContainer.Analytics!, profileCache, selfProfile)
                 : coreChatMessageBus;
 
             var coreBackpackEventBus = new BackpackEventBus();
