@@ -15,6 +15,8 @@ namespace DCL.LOD.Components
         public byte SuccessfullLODs;
         public byte FailedLODs;
 
+
+        private readonly int lodLevels;
         public LODCacheInfo(LODGroup lodGroup, int lodLevels)
         {
             LodGroup = lodGroup;
@@ -23,8 +25,9 @@ namespace DCL.LOD.Components
             LODChangeRelativeDistance = 0;
             SuccessfullLODs = 0;
             FailedLODs = 0;
+            this.lodLevels = lodLevels;
         }
-        
+      
         public void Dispose()
         {
             foreach (var lodAsset in LODAssets)

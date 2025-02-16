@@ -20,7 +20,6 @@ namespace DCL.ResourcesUnloading.UnloadStrategies
             unloadStrategies = new UnloadStrategyBase[]
             {
                 new StandardUnloadStrategy(DEFAULT_FRAME_FAILURE_THRESHOLD, cacheCleaner),
-                new ReduceLoadingRadiusUnloadStrategy(DEFAULT_FRAME_FAILURE_THRESHOLD, realmPartitionSettings),
                 new UnloadUnusedAssetUnloadStrategy(DEFAULT_FRAME_FAILURE_THRESHOLD)
             };
         }

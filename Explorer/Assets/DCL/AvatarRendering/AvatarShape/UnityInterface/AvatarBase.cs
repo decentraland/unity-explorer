@@ -93,6 +93,8 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         [field: SerializeField] public Transform RightFootAnchorPoint { get; private set; }
         [field: SerializeField] public Transform RightToeBaseAnchorPoint { get; private set; }
 
+        [field: SerializeField] public GameObject GhostRenderer { get; private set; }
+
         private void Awake()
         {
             if (!AvatarAnimator)
