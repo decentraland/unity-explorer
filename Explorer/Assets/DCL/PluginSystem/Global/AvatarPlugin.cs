@@ -7,7 +7,6 @@ using DCL.AvatarRendering.AvatarShape.Systems;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.AvatarRendering.DemoScripts.Systems;
 using DCL.AvatarRendering.Wearables.Helpers;
-using DCL.Chat;
 using DCL.DebugUtilities;
 using DCL.Nametags;
 using DCL.Optimization.PerformanceBudgeting;
@@ -26,6 +25,7 @@ using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.Helpers;
 using DCL.Multiplayer.Profiles.Entities;
 using DCL.AvatarRendering.Loading.Assets;
+using DCL.UI.Profiles.Helpers;
 using DCL.Quality;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -45,7 +45,7 @@ namespace DCL.PluginSystem.Global
 
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly CacheCleaner cacheCleaner;
-        private readonly ChatEntryConfigurationSO chatEntryConfiguration;
+        private readonly IProfileNameColorHelper profileNameColorHelper;
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
         private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly IPerformanceBudget frameTimeCapBudget;
@@ -90,7 +90,7 @@ namespace DCL.PluginSystem.Global
             ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy,
             IDebugContainerBuilder debugContainerBuilder,
             CacheCleaner cacheCleaner,
-            ChatEntryConfigurationSO chatEntryConfiguration,
+            IProfileNameColorHelper profileNameColorHelper,
             DefaultFaceFeaturesHandler defaultFaceFeaturesHandler,
             NametagsData nametagsData,
             TextureArrayContainerFactory textureArrayContainerFactory,
@@ -105,7 +105,7 @@ namespace DCL.PluginSystem.Global
             this.mainPlayerAvatarBaseProxy = mainPlayerAvatarBaseProxy;
             this.debugContainerBuilder = debugContainerBuilder;
             this.cacheCleaner = cacheCleaner;
-            this.chatEntryConfiguration = chatEntryConfiguration;
+            this.profileNameColorHelper = profileNameColorHelper;
             this.defaultFaceFeaturesHandler = defaultFaceFeaturesHandler;
             this.memoryBudget = memoryBudget;
             this.rendererFeaturesCache = rendererFeaturesCache;
@@ -174,7 +174,7 @@ namespace DCL.PluginSystem.Global
                 avatarPoolRegistry, computeShaderPool, attachmentsAssetsCache, mainPlayerAvatarBaseProxy,
                 avatarTransformMatrixJobWrapper);
 
-            NametagPlacementSystem.InjectToWorld(ref builder, nametagViewPool, chatEntryConfiguration, nametagsData, chatBubbleConfiguration);
+            NametagPlacementSystem.InjectToWorld(ref builder, nametagViewPool, profileNameColorHelper, nametagsData, chatBubbleConfiguration);
             NameTagCleanUpSystem.InjectToWorld(ref builder, nametagsData, nametagViewPool);
 
             //Debug scripts

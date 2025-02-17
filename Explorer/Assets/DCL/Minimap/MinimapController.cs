@@ -4,8 +4,6 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.Character.Components;
-using DCL.Chat.Commands;
-using DCL.Chat.MessageBus;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.ExplorePanel;
@@ -48,7 +46,6 @@ namespace DCL.Minimap
         private readonly ISceneRestrictionBusController sceneRestrictionBusController;
         private readonly Vector2Int startParcelInGenesis;
         private readonly CancellationTokenSource disposeCts;
-
         private CancellationTokenSource? placesApiCts;
         private MapRendererTrackPlayerPosition mapRendererTrackPlayerPosition;
         private IMapCameraController? mapCameraController;

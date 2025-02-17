@@ -1,4 +1,5 @@
 using DCL.Chat.Commands;
+using DCL.Chat.History;
 using DCL.DebugUtilities;
 using DCL.Profiles;
 using DCL.Web3.Identities;
@@ -10,8 +11,8 @@ namespace DCL.Chat.MessageBus
 {
     public interface IChatMessagesBus : IDisposable
     {
-        public event Action<ChatMessage> MessageAdded;
-        public void Send(string message, string origin);
+        public event Action<ChatChannel.ChannelId, ChatMessage> MessageAdded;
+        public void Send(ChatChannel.ChannelId channelId, string message, string origin);
     }
 
     public static class ChatMessageBusExtensions
@@ -23,7 +24,7 @@ namespace DCL.Chat.MessageBus
         {
             void CreateTestChatEntry()
             {
-                messagesBus.Send(StringUtils.GenerateRandomString(UnityEngine.Random.Range(1, 250)), "debug panel");
+                messagesBus.Send(ChatChannel.NEARBY_CHANNEL, StringUtils.GenerateRandomString(UnityEngine.Random.Range(1, 250)), "debug panel");
             }
 
             debugContainerBuilder.TryAddWidget("Chat")?.AddControl(new DebugButtonDef("Create chat message", CreateTestChatEntry), null!);

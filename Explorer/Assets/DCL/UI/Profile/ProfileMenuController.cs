@@ -1,7 +1,6 @@
 ﻿using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
-using DCL.Chat;
 using DCL.Profiles;
 using DCL.UI.SystemMenu;
 using DCL.UserInAppInitializationFlow;
@@ -32,11 +31,10 @@ namespace DCL.UI.ProfileElements
             IWeb3Authenticator web3Authenticator,
             IUserInAppInitializationFlow userInAppInitializationFlow,
             IProfileCache profileCache,
-            IMVCManager mvcManager,
-            ChatEntryConfigurationSO chatEntryConfiguration
+            IMVCManager mvcManager
         ) : base(viewFactory)
         {
-            profileSectionController = new ProfileSectionController(() => viewInstance!.ProfileMenu, identityCache, profileRepository, webRequestController, chatEntryConfiguration);
+            profileSectionController = new ProfileSectionController(() => viewInstance!.ProfileMenu, identityCache, profileRepository, webRequestController);
             systemSectionController = new SystemMenuController(() => viewInstance!.SystemMenuView, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, identityCache, mvcManager);
             systemSectionController.OnClosed += OnClose;
         }

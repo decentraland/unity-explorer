@@ -1,5 +1,3 @@
-using DCL.Input;
-using DCL.Input.Component;
 using DCL.UI;
 using System;
 using System.Collections.Generic;
@@ -12,8 +10,8 @@ namespace DCL.Emoji
 {
     public class EmojiSearchController
     {
-        public event Action<string> OnEmojiSelected;
-        public event Action<string> OnSearchTextChanged;
+        public event Action<string> EmojiSelected;
+        public event Action<string> SearchTextChanged;
 
         private readonly SearchBarView view;
         private CancellationTokenSource cts;
@@ -46,7 +44,7 @@ namespace DCL.Emoji
         private EmojiButton CreatePoolElements(Transform parent, EmojiButton emojiButton)
         {
             EmojiButton poolElement = Object.Instantiate(emojiButton, parent);
-            poolElement.OnEmojiSelected += (emojiCode) => OnEmojiSelected?.Invoke(emojiCode);
+            poolElement.EmojiSelected += (emojiCode) => EmojiSelected?.Invoke(emojiCode);
             return poolElement;
         }
 
@@ -59,7 +57,7 @@ namespace DCL.Emoji
         private void OnValueChanged(string searchText)
         {
             view.clearSearchButton.gameObject.SetActive(!string.IsNullOrEmpty(searchText));
-            OnSearchTextChanged?.Invoke(searchText);
+            SearchTextChanged?.Invoke(searchText);
         }
 
         public void SetValues(List<EmojiData> foundEmojis)

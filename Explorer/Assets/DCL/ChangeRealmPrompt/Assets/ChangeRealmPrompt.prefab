@@ -1579,7 +1579,7 @@ MonoBehaviour:
   <CloseButton>k__BackingField: {fileID: 6350800476113885467}
   <ContinueButton>k__BackingField: {fileID: 4323582271544481263}
   <CancelButton>k__BackingField: {fileID: 2493130869277956874}
-  <MessageText>k__BackingField: {fileID: 0}
+  <MessageText>k__BackingField: {fileID: 2120140030454988638}
   <RealmText>k__BackingField: {fileID: 5324196972733275058}
 --- !u!222 &799493355526906641
 CanvasRenderer:

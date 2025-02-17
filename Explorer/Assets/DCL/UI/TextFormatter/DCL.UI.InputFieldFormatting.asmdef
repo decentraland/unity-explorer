@@ -1,0 +1,18 @@
+{
+  "name": "DCL.UI.InputFieldFormatting",
+  "rootNamespace": "",
+  "references": [
+    "GUID:e56a0d6a94c144c784012e63b6043100",
+    "GUID:d5368878df29ff849933a7d3586d18c6",
+    "GUID:fa7b3fdbb04d67549916da7bd2af58ab"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

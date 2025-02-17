@@ -15,6 +15,7 @@ using ECS.Prioritization.Components;
 using System.Runtime.CompilerServices;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.ECSComponents;
+using DCL.UI.Profiles.Helpers;
 using UnityEngine;
 using UnityEngine.Pool;
 
@@ -33,7 +34,7 @@ namespace DCL.Nametags
         private const string NAMETAG_DEFAULT_WALLET_ID = "0000";
 
         private readonly IObjectPool<NametagView> nametagViewPool;
-        private readonly ChatEntryConfigurationSO chatEntryConfiguration;
+        private readonly IProfileNameColorHelper profileNameColorHelper;
         private readonly NametagsData nametagsData;
         private readonly ChatBubbleConfigurationSO chatBubbleConfigurationSo;
 
@@ -43,13 +44,13 @@ namespace DCL.Nametags
         public NametagPlacementSystem(
             World world,
             IObjectPool<NametagView> nametagViewPool,
-            ChatEntryConfigurationSO chatEntryConfiguration,
+            IProfileNameColorHelper profileNameColorHelper,
             NametagsData nametagsData,
             ChatBubbleConfigurationSO chatBubbleConfigurationSo
         ) : base(world)
         {
             this.nametagViewPool = nametagViewPool;
-            this.chatEntryConfiguration = chatEntryConfiguration;
+            this.profileNameColorHelper = profileNameColorHelper;
             this.nametagsData = nametagsData;
             this.chatBubbleConfigurationSo = chatBubbleConfigurationSo;
         }
@@ -82,7 +83,7 @@ namespace DCL.Nametags
         {
             if (partitionComponent.IsBehind || IsOutOfRenderRange(camera, characterTransform) || (camera.Mode == CameraMode.FirstPerson && World.Has<PlayerComponent>(e))) return;
 
-            NametagView nametagView = CreateNameTagView(in avatarShape, profile.HasClaimedName, true);
+            NametagView nametagView = CreateNameTagView(in avatarShape, profile.HasClaimedName, true, profile);
             UpdateTagPosition(nametagView, camera.Camera, characterTransform.Position);
 
             World.Add(e, nametagView);
@@ -120,8 +121,8 @@ namespace DCL.Nametags
                 return;
 
             nametagView.Id = avatarShape.ID;
-            nametagView.Username.color = chatEntryConfiguration.GetNameColor(avatarShape.Name);
-            nametagView.SetUsername(avatarShape.Name, avatarShape.ID.Substring(avatarShape.ID.Length - 4), profile.HasClaimedName, true);
+            nametagView.Username.color = profile.UserNameColor;
+            nametagView.SetUsername(profile.ValidatedName, profile.WalletId, profile.HasClaimedName, true);
             nametagView.gameObject.name = avatarShape.ID;
             UpdateTagTransparencyAndScale(nametagView, camera.Camera, characterTransform.Position);
 
@@ -133,7 +134,7 @@ namespace DCL.Nametags
         private void ProcessChatBubbleComponents(Entity e, in ChatBubbleComponent chatBubbleComponent, in NametagView nametagView)
         {
             if (nametagsData.showChatBubbles)
-                nametagView.SetChatMessage(chatBubbleComponent.ChatMessage);
+                nametagView.SetChatMessage(chatBubbleComponent.ChatMessage, chatBubbleComponent.IsMention);
 
             World.Remove<ChatBubbleComponent>(e);
         }
@@ -187,12 +188,12 @@ namespace DCL.Nametags
         private bool IsOutOfRenderRange(CameraComponent camera, CharacterTransform characterTransform) =>
             Vector3.Distance(camera.Camera.transform.position, characterTransform.Position) > chatBubbleConfigurationSo.maxDistance;
 
-        private NametagView CreateNameTagView(in AvatarShapeComponent avatarShape, bool hasClaimedName, bool useVerifiedIcon)
+        private NametagView CreateNameTagView(in AvatarShapeComponent avatarShape, bool hasClaimedName, bool useVerifiedIcon, Profile? profile = null)
         {
             NametagView nametagView = nametagViewPool.Get();
             nametagView.gameObject.name = avatarShape.ID;
             nametagView.Id = avatarShape.ID;
-            nametagView.Username.color = chatEntryConfiguration.GetNameColor(avatarShape.Name);
+            nametagView.Username.color = profile?.UserNameColor ?? profileNameColorHelper.GetNameColor(avatarShape.Name);
             nametagView.InjectConfiguration(chatBubbleConfigurationSo);
 
             int walletIdLastDigitsIndex = avatarShape.ID.Length - 4;

@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Threading;
 
 namespace Utility
@@ -20,7 +21,7 @@ namespace Utility
                     await UniTask.Yield(cancellationToken: ct);
                     iterationCount = 0;
                 }
-                if (key.StartsWith(prefix))
+                if (key.StartsWith(prefix, true, CultureInfo.InvariantCulture))
                     result.Add(dictionary[key]);
             }
             return result;

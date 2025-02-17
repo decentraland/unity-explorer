@@ -40,6 +40,8 @@ namespace DCL.Multiplayer.Connections.Rooms
 
         public event Room.MetaDelegate? RoomMetadataChanged;
 
+        public event Room.SidDelegate? RoomSidChanged;
+
         public LogRoom() : this(new Room()) { }
 
         public LogRoom(IRoom origin)
@@ -63,6 +65,15 @@ namespace DCL.Multiplayer.Connections.Rooms
             this.origin.ConnectionStateChanged += OriginOnConnectionStateChanged;
             this.origin.ConnectionUpdated += OriginOnConnectionUpdated;
             this.origin.RoomMetadataChanged += OriginOnRoomMetadataChanged;
+            this.origin.RoomSidChanged += OriginOnRoomSidChanged;
+        }
+
+        private void OriginOnRoomSidChanged(string sid)
+        {
+            ReportHub
+                .WithReport(ReportCategory.LIVEKIT)
+                .Log($"{PREFIX} room sid changed {sid}");
+            RoomSidChanged?.Invoke(sid);
         }
 
         private void OriginOnRoomMetadataChanged(string metadata)

@@ -1,0 +1,14 @@
+{
+    "name": "DCL.UI.Profile.Helpers",
+    "rootNamespace": "",
+    "references": ["GUID:9e314663ce958b746873cb22d57ede55"],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

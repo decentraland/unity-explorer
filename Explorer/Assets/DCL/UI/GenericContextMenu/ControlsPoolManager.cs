@@ -13,6 +13,9 @@ namespace DCL.UI.GenericContextMenu
         private readonly IObjectPool<GenericContextMenuButtonWithTextView> buttonPool;
         private readonly IObjectPool<GenericContextMenuToggleView> togglePool;
         private readonly IObjectPool<GenericContextMenuUserProfileView> userProfilePool;
+        private readonly IObjectPool<GenericContextMenuOpenUserProfileButtonView> openUserProfileButtonPool;
+        private readonly IObjectPool<GenericContextMenuMentionUserButtonView> mentionUserButtonPool;
+
         private readonly List<GenericContextMenuComponentBase> currentControls = new ();
 
         public ControlsPoolManager(
@@ -20,7 +23,9 @@ namespace DCL.UI.GenericContextMenu
             GenericContextMenuSeparatorView separatorPrefab,
             GenericContextMenuButtonWithTextView buttonPrefab,
             GenericContextMenuToggleView togglePrefab,
-            GenericContextMenuUserProfileView userProfilePrefab)
+            GenericContextMenuUserProfileView userProfilePrefab,
+            GenericContextMenuOpenUserProfileButtonView openUserProfileButtonPrefab,
+            GenericContextMenuMentionUserButtonView mentionUserButtonPrefab)
         {
             separatorPool = new ObjectPool<GenericContextMenuSeparatorView>(
                 createFunc: () => GameObject.Instantiate(separatorPrefab, controlsParent),
@@ -45,6 +50,18 @@ namespace DCL.UI.GenericContextMenu
                 actionOnGet: userProfileView => userProfileView.gameObject.SetActive(true),
                 actionOnRelease: userProfileView => userProfileView.gameObject.SetActive(false),
                 actionOnDestroy: userProfileView => GameObject.Destroy(userProfileView.gameObject));
+
+            openUserProfileButtonPool = new ObjectPool<GenericContextMenuOpenUserProfileButtonView>(
+                createFunc: () => GameObject.Instantiate(openUserProfileButtonPrefab, controlsParent),
+                actionOnGet: buttonView => buttonView.gameObject.SetActive(true),
+                actionOnRelease: buttonView => buttonView.gameObject.SetActive(false),
+                actionOnDestroy: buttonView => GameObject.Destroy(buttonView.gameObject));
+
+            mentionUserButtonPool = new ObjectPool<GenericContextMenuMentionUserButtonView>(
+                createFunc: () => GameObject.Instantiate(mentionUserButtonPrefab, controlsParent),
+                actionOnGet: buttonView => buttonView.gameObject.SetActive(true),
+                actionOnRelease: buttonView => buttonView.gameObject.SetActive(false),
+                actionOnDestroy: buttonView => GameObject.Destroy(buttonView.gameObject));
         }
 
         public GenericContextMenuComponentBase GetContextMenuComponent<T>(T settings, int index) where T : IContextMenuControlSettings
@@ -55,6 +72,8 @@ namespace DCL.UI.GenericContextMenu
                                                             ButtonContextMenuControlSettings buttonSettings => GetButton(buttonSettings),
                                                             ToggleContextMenuControlSettings toggleSettings => GetToggle(toggleSettings),
                                                             UserProfileContextMenuControlSettings userProfileSettings => GetUserProfile(userProfileSettings),
+                                                            MentionUserButtonContextMenuControlSettings mentionUserButtonContextMenuControlSettings => GetMentionUserButton(mentionUserButtonContextMenuControlSettings),
+                                                            OpenUserProfileButtonContextMenuControlSettings openUserProfileButtonContextMenuControlSettings => GetOpenUserProfileButton(openUserProfileButtonContextMenuControlSettings),
                                                             _ => throw new ArgumentOutOfRangeException()
                                                         };
             component!.transform.SetSiblingIndex(index);
@@ -95,6 +114,22 @@ namespace DCL.UI.GenericContextMenu
             return separatorView;
         }
 
+        private GenericContextMenuComponentBase GetMentionUserButton(MentionUserButtonContextMenuControlSettings settings)
+        {
+            GenericContextMenuMentionUserButtonView userProfileView = mentionUserButtonPool.Get();
+            userProfileView.Configure(settings);
+
+            return userProfileView;
+        }
+
+        private GenericContextMenuComponentBase GetOpenUserProfileButton(OpenUserProfileButtonContextMenuControlSettings settings)
+        {
+            GenericContextMenuOpenUserProfileButtonView userProfileView = openUserProfileButtonPool.Get();
+            userProfileView.Configure(settings);
+
+            return userProfileView;
+        }
+
         public void Dispose() =>
             ReleaseAllCurrentControls();
 
@@ -117,6 +152,12 @@ namespace DCL.UI.GenericContextMenu
                         break;
                     case GenericContextMenuUserProfileView userProfileView:
                         userProfilePool.Release(userProfileView);
+                        break;
+                    case GenericContextMenuMentionUserButtonView buttonView:
+                        mentionUserButtonPool.Release(buttonView);
+                        break;
+                    case GenericContextMenuOpenUserProfileButtonView buttonView:
+                        openUserProfileButtonPool.Release(buttonView);
                         break;
                 }
             }

@@ -2,10 +2,10 @@ using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack;
 using DCL.Browser;
-using DCL.Chat;
 using DCL.InWorldCamera.PassportBridge;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Profiles;
+using DCL.UI.Profiles.Helpers;
 using DCL.WebRequests;
 using MVC;
 using System;
@@ -40,7 +40,7 @@ namespace DCL.InWorldCamera.PhotoDetail
             NftTypeIconSO rarityBackgrounds,
             NFTColorsSO rarityColors,
             NftTypeIconSO categoryIcons,
-            ChatEntryConfigurationSO chatEntryConfiguration,
+            IProfileNameColorHelper profileNameColorHelper,
             int visiblePersonDefaultCapacity,
             int visiblePersonMaxSize,
             int equippedWearableDefaultCapacity,
@@ -48,7 +48,7 @@ namespace DCL.InWorldCamera.PhotoDetail
             Action wearableMarketClicked)
         {
             visiblePersonPool = new ObjectPool<VisiblePersonController>(
-                createFunc: () => CreateVisiblePerson(visiblePersonPrefab, visiblePersonParent, webRequestController, profileRepository, mvcManager, wearableStorage, wearablesProvider, chatEntryConfiguration, passportBridge),
+                createFunc: () => CreateVisiblePerson(visiblePersonPrefab, visiblePersonParent, webRequestController, profileRepository, mvcManager, wearableStorage, wearablesProvider, profileNameColorHelper, passportBridge),
                 actionOnGet: visiblePerson => visiblePerson.view.gameObject.SetActive(true),
                 actionOnRelease: visiblePerson => VisiblePersonRelease(visiblePerson, emptyProfileImage),
                 actionOnDestroy: visiblePerson => GameObject.Destroy(visiblePerson.view.gameObject),
@@ -115,11 +115,11 @@ namespace DCL.InWorldCamera.PhotoDetail
             IMVCManager mvcManager,
             IWearableStorage wearableStorage,
             IWearablesProvider wearablesProvider,
-            ChatEntryConfigurationSO chatEntryConfiguration,
+            IProfileNameColorHelper profileNameColorHelper,
             IPassportBridge passportBridge)
         {
             VisiblePersonView view = GameObject.Instantiate(visiblePersonPrefab, visiblePersonParent);
-            return new VisiblePersonController(view, webRequestController, profileRepository, mvcManager, wearableStorage, wearablesProvider, passportBridge, this, chatEntryConfiguration);
+            return new VisiblePersonController(view, webRequestController, profileRepository, mvcManager, wearableStorage, wearablesProvider, passportBridge, this, profileNameColorHelper);
         }
 
         public VisiblePersonController GetVisiblePerson() =>

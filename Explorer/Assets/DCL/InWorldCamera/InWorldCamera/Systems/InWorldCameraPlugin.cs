@@ -24,6 +24,7 @@ using DCL.Nametags;
 using DCL.PlacesAPIService;
 using DCL.Profiles;
 using DCL.Profiles.Self;
+using DCL.UI.Profiles.Helpers;
 using DCL.WebRequests;
 using ECS;
 using ECS.SceneLifeCycle.Realm;
@@ -71,6 +72,7 @@ namespace DCL.PluginSystem.Global
         private readonly UIDocument rootUIDocument;
         private readonly Arch.Core.World globalWorld;
         private readonly IDebugContainerBuilder debugContainerBuilder;
+        private readonly IProfileNameColorHelper profileNameColorHelper;
         private readonly NametagsData nametagsData;
 
         private ScreenRecorder recorder;
@@ -94,6 +96,7 @@ namespace DCL.PluginSystem.Global
             UIDocument rootUIDocument,
             Arch.Core.World globalWorld,
             IDebugContainerBuilder debugContainerBuilder,
+            IProfileNameColorHelper profileNameColorHelper,
             NametagsData nametagsData)
         {
             this.input = input;
@@ -121,8 +124,8 @@ namespace DCL.PluginSystem.Global
             this.rootUIDocument = rootUIDocument;
             this.globalWorld = globalWorld;
             this.debugContainerBuilder = debugContainerBuilder;
+            this.profileNameColorHelper = profileNameColorHelper;
             this.nametagsData = nametagsData;
-
             factory = new InWorldCameraFactory();
         }
 
@@ -144,12 +147,11 @@ namespace DCL.PluginSystem.Global
             PhotoDetailView photoDetailViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.PhotoDetailPrefab, ct: ct)).GetComponent<PhotoDetailView>();
             ControllerBase<PhotoDetailView, PhotoDetailParameter>.ViewFactoryMethod viewFactoryMethod = PhotoDetailController.Preallocate(photoDetailViewAsset, null, out PhotoDetailView explorePanelView);
 
-            (NFTColorsSO rarityColorMappings, NftTypeIconSO categoryIconsMapping, NftTypeIconSO rarityBackgroundsMapping, ChatEntryConfigurationSO chatEntryConfiguration) = await UniTask.WhenAll(
+            (NFTColorsSO rarityColorMappings, NftTypeIconSO categoryIconsMapping, NftTypeIconSO rarityBackgroundsMapping) = await UniTask.WhenAll(
                 assetsProvisioner.ProvideMainAssetValueAsync(settings.RarityColorMappings, ct),
                 assetsProvisioner.ProvideMainAssetValueAsync(settings.CategoryIconsMapping, ct),
-                assetsProvisioner.ProvideMainAssetValueAsync(settings.RarityBackgroundsMapping, ct),
-                assetsProvisioner.ProvideMainAssetValueAsync(settings.ChatEntryConfiguration, ct));
-
+                assetsProvisioner.ProvideMainAssetValueAsync(settings.RarityBackgroundsMapping, ct))
+                ;
             mvcManager.RegisterController(new PhotoDetailController(viewFactoryMethod,
                 new PhotoDetailInfoController(explorePanelView.GetComponentInChildren<PhotoDetailInfoView>(),
                     cameraReelStorageService,
@@ -166,7 +168,7 @@ namespace DCL.PluginSystem.Global
                     rarityBackgroundsMapping,
                     rarityColorMappings,
                     categoryIconsMapping,
-                    chatEntryConfiguration),
+                    profileNameColorHelper),
                 cameraReelScreenshotsStorage,
                 systemClipboard,
                 decentralandUrlsSource,

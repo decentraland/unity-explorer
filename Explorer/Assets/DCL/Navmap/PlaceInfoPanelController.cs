@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.Chat.Commands;
+using DCL.Chat.History;
 using DCL.Chat.MessageBus;
 using DCL.EventsApi;
 using DCL.InWorldCamera.CameraReelGallery;
@@ -272,7 +273,7 @@ namespace DCL.Navmap
                 mapPathEventBus.ArrivedToDestination();
 
             navmapBus.JumpIn(place!);
-            chatMessagesBus.Send($"/{ChatCommandsUtils.COMMAND_GOTO} {currentBaseParcel?.x},{currentBaseParcel?.y}", "jump in");
+            chatMessagesBus.Send(ChatChannel.NEARBY_CHANNEL, $"/{ChatCommandsUtils.COMMAND_GOTO} {currentBaseParcel?.x},{currentBaseParcel?.y}", "jump in");
         }
 
         private void Share()

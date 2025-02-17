@@ -1,5 +1,4 @@
 ﻿using Cysharp.Threading.Tasks;
-using DCL.Chat;
 using DCL.Profiles;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
@@ -13,7 +12,6 @@ namespace DCL.UI.ProfileElements
     {
         private readonly IWeb3IdentityCache identityCache;
         private readonly IProfileRepository profileRepository;
-        private readonly ChatEntryConfigurationSO chatEntryConfiguration;
         private readonly IWebRequestController webRequestController;
 
         private ImageController profileImageController;
@@ -25,20 +23,18 @@ namespace DCL.UI.ProfileElements
             ViewFactoryMethod viewFactory,
             IWeb3IdentityCache identityCache,
             IProfileRepository profileRepository,
-            IWebRequestController webRequestController,
-            ChatEntryConfigurationSO chatEntryConfiguration
+            IWebRequestController webRequestController
         ) : base(viewFactory)
         {
             this.identityCache = identityCache;
             this.profileRepository = profileRepository;
-            this.chatEntryConfiguration = chatEntryConfiguration;
             this.webRequestController = webRequestController;
         }
 
         protected override void OnViewInstantiated()
         {
             base.OnViewInstantiated();
-            nameElementController = new UserNameElementController(viewInstance!.UserNameElement, chatEntryConfiguration);
+            nameElementController = new UserNameElementController(viewInstance!.UserNameElement);
             walletAddressElementController = new UserWalletAddressElementController(viewInstance.UserWalletAddressElement);
             profileImageController = new ImageController(viewInstance.FaceSnapshotImage, webRequestController);
         }
@@ -58,7 +54,7 @@ namespace DCL.UI.ProfileElements
 
             nameElementController.Setup(profile);
             walletAddressElementController.Setup(profile);
-            viewInstance!.FaceFrame.color = chatEntryConfiguration.GetNameColor(profile.Name);
+            viewInstance!.FaceFrame.color = profile.UserNameColor;
 
             profileImageController!.StopLoading();
 

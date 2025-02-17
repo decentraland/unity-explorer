@@ -5,7 +5,6 @@ using LiveKit.Rooms.DataPipes;
 using LiveKit.Rooms.Info;
 using LiveKit.Rooms.Participants;
 using LiveKit.Rooms.Tracks.Hub;
-using System;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -32,6 +31,7 @@ namespace DCL.Multiplayer.Connections.Rooms
         public event ConnectionStateChangeDelegate? ConnectionStateChanged;
         public event ConnectionDelegate? ConnectionUpdated;
         public event Room.MetaDelegate? RoomMetadataChanged;
+        public event Room.SidDelegate? RoomSidChanged;
 
         public void UpdateLocalMetadata(string metadata)
         {

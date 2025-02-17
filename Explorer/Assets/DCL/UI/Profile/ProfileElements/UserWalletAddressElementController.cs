@@ -1,5 +1,4 @@
-﻿using Cysharp.Threading.Tasks;
-using DCL.Profiles;
+﻿using DCL.Profiles;
 using System;
 using System.Threading;
 

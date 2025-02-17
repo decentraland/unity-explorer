@@ -26,7 +26,6 @@ MonoBehaviour:
   - rid: 3022170012058910723
   - rid: 1841402216112979969
   - rid: 4340256219339423747
-  - rid: 4340256301410942981
   - rid: 7162477498503790594
   - rid: 2174542042650378245
   - rid: 4340256782807990272
@@ -49,6 +48,8 @@ MonoBehaviour:
   - rid: 6849204606292983808
   - rid: 4782308287844188162
   - rid: 2168772563850493955
+  - rid: 7621844642437005314
+  - rid: 7621844642437005315
   references:
     version: 2
     RefIds:
@@ -239,6 +240,11 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
         <ControlsSettingsAsset>k__BackingField:
           m_AssetGUID: 26489687fb2f3419886df8e49f34b006
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        <ChatSettingsAsset>k__BackingField:
+          m_AssetGUID: a358ab6eb8d31ca488364e13b54f5f9c
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
@@ -513,35 +519,6 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
-    - rid: 4340256301410942981
-      type: {class: ChatPlugin/ChatSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
-      data:
-        <EmojiButtonPrefab>k__BackingField:
-          m_AssetGUID: 7d0a647adf3334ee1a142e7bf69f128d
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_EditorAssetChanged: 0
-        <EmojiSectionPrefab>k__BackingField:
-          m_AssetGUID: d4552d3a2432742f58c63ba71bdfb50e
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_EditorAssetChanged: 0
-        <EmojiSuggestionPrefab>k__BackingField:
-          m_AssetGUID: 5bc332aa8fd2147cab980e20e64bec03
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_EditorAssetChanged: 0
-        <ChatEntryConfiguration>k__BackingField:
-          m_AssetGUID: 6afb31861b85441b6ab2b988819bb96a
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_EditorAssetChanged: 0
-        <EmojiPanelConfiguration>k__BackingField:
-          m_AssetGUID: 51646f2adc3264ba7bf9b4f90febbd22
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_EditorAssetChanged: 0
-        <EmojiMappingJson>k__BackingField: {fileID: 4900000, guid: 7355ae17e96e64b9592813524510dc45, type: 3}
     - rid: 4340256782807990272
       type: {class: StylizedSkyboxPlugin/StylizedSkyboxSettings, ns: DCL.StylizedSkybox.Scripts.Plugin, asm: DCL.Plugins}
       data:
@@ -571,6 +548,16 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
         GenericContextMenuUserProfilePrefab:
           m_AssetGUID: fe90941e720314adfb13574446732ea7
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        GenericContextMenuMentionUserButtonPrefab:
+          m_AssetGUID: 734732fb25eed5944b9c5a5814249f81
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        GenericContextMenuViewUserProfileButtonPrefab:
+          m_AssetGUID: c325bf3c176cc034d83115896fd851da
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
@@ -763,6 +750,27 @@ MonoBehaviour:
       data:
         ChangeRealmPromptPrefab:
           m_AssetGUID: 6b1f7cd8901871f42a19a8244244839e
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+    - rid: 7621844642437005314
+      type: {class: ChatPluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        <ChatSettingsAsset>k__BackingField:
+          m_AssetGUID: a358ab6eb8d31ca488364e13b54f5f9c
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+    - rid: 7621844642437005315
+      type: {class: GenericPopupsPlugin/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        PastePopupToastPrefab:
+          m_AssetGUID: d67c9347412c7d04aa84f48952e986fc
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        ChatEntryMenuPopupPrefab:
+          m_AssetGUID: f74fa2421d947f4439553458ae5fbd93
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
