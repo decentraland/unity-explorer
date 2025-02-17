@@ -107,8 +107,8 @@ namespace DCL.Chat.MessageBus
             return false;
         }
 
-        private string ParseChatMessageFromPayloadMessage(string payloadMessage) =>
-            payloadMessage.Substring(payloadMessage.IndexOf('>') + 1);
+        private string ParseChatMessageFromPayloadMessage(string payloadMessage) => payloadMessage;
+            // payloadMessage.Substring(payloadMessage.IndexOf('>') + 1); TODO: Use this line when private conversations are implemented
 
         public void Send(ChatChannel.ChannelId channelId, string message, string origin)
         {
@@ -130,9 +130,11 @@ namespace DCL.Chat.MessageBus
 
         private string BuildChatChannelMessage(ChatChannel.ChannelId channelId, string message)
         {
+            return message;
+
             // TODO: Remove this line once this code is merged to dev
             channelId = ChatChannel.NEARBY_CHANNEL;
-            return $"<{channelId.Id}>{message}";
+            return $"<{channelId.Id}>{message}"; // TODO: Use this when private conversations are implemented
         }
     }
 }
