@@ -120,8 +120,12 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 
                 if (newFriendProfile != null)
                 {
-                    AddNewFriendProfile(newFriendProfile.ToFriendProfile(), OnlineStatus.OFFLINE);
-                    RefreshLoopList();
+                    FriendProfile friendProfile = newFriendProfile.ToFriendProfile();
+                    if (!offlineFriends.Contains(friendProfile) && !onlineFriends.Contains(friendProfile))
+                    {
+                        AddNewFriendProfile(friendProfile, OnlineStatus.OFFLINE);
+                        RefreshLoopList();
+                    }
                 }
                 else
                     ReportHub.LogError(new ReportData(ReportCategory.FRIENDS), $"Couldn't fetch new friend profile for user {friendId}");
