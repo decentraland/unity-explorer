@@ -9,13 +9,13 @@ using DCL.Roads.Settings;
 using DCL.Roads.Systems;
 using ECS;
 using Global;
-using Global.Dynamic;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using DCL.Optimization.Pools;
-using DCL.ResourcesUnloading;
+using DCL.Roads.GPUInstancing;
+using DCL.Roads.GPUInstancing.Playground;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 
@@ -34,6 +34,8 @@ namespace DCL.LOD.Systems
         private ProvidedAsset<RoadSettingsAsset> roadSettingsAsset;
         private List<GameObject> roadAssetsPrefabList;
         private ProvidedAsset<LODSettingsAsset> lodSettingsAsset;
+        private GPUInstancingService gpuInstancingService;
+        private RealmData realmData;
 
         public LODPlugin LODPlugin { get; private set; } = null!;
 
@@ -48,8 +50,7 @@ namespace DCL.LOD.Systems
             this.assetsProvisioner = assetsProvisioner;
         }
 
-        public static async UniTask<(LODContainer? container, bool success)> CreateAsync(
-            IAssetsProvisioner assetsProvisioner,
+        public static async UniTask<(LODContainer? container, bool success)> CreateAsync(IAssetsProvisioner assetsProvisioner,
             IDecentralandUrlsSource decentralandUrlsSource,
             StaticContainer staticContainer,
             IPluginSettingsContainer settingsContainer,
@@ -57,9 +58,12 @@ namespace DCL.LOD.Systems
             TextureArrayContainerFactory textureArrayContainerFactory,
             IDebugContainerBuilder debugBuilder,
             bool lodEnabled,
+            GPUInstancingService gpuInstancingService,
             CancellationToken ct)
         {
             var container = new LODContainer(assetsProvisioner);
+            container.gpuInstancingService = gpuInstancingService;
+            container.realmData = realmData;
 
             return await container.InitializeContainerAsync<LODContainer, LODContainerSettings>(settingsContainer, ct, c =>
             {
@@ -104,6 +108,8 @@ namespace DCL.LOD.Systems
         {
             roadSettingsAsset.Dispose();
             lodSettingsAsset.Dispose();
+
+            realmData.RealmType.OnUpdate -= SwitchRoadsInstancedRendering;
         }
 
         protected override async UniTask InitializeInternalAsync(LODContainerSettings lodContainerSettings, CancellationToken ct)
@@ -113,7 +119,21 @@ namespace DCL.LOD.Systems
             roadAssetsPrefabList = new List<GameObject>();
 
             foreach (AssetReferenceGameObject? t in roadSettingsAsset.Value.RoadAssetsReference)
-                roadAssetsPrefabList.Add((await assetsProvisioner.ProvideMainAssetAsync(t, ct: ct)).Value);
+            {
+                var prefab = await assetsProvisioner.ProvideMainAssetAsync(t, ct: ct);
+                // prefab.Value.GetComponent<GPUInstancingPrefabData>().HideVisuals();
+                roadAssetsPrefabList.Add(prefab.Value);
+            }
+
+            realmData.RealmType.OnUpdate += SwitchRoadsInstancedRendering;
+        }
+
+        private void SwitchRoadsInstancedRendering(RealmKind realmKind)
+        {
+            if (realmKind == RealmKind.GenesisCity)
+                gpuInstancingService.AddToIndirect(roadSettingsAsset.Value.IndirectLODGroups);
+            else
+                gpuInstancingService.Remove(roadSettingsAsset.Value.IndirectLODGroups);
         }
 
         [Serializable]

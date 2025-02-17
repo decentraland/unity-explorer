@@ -6,6 +6,7 @@ namespace Utility
     {
         public static readonly Vector2Int MIN_PARCEL = -150 * Vector2Int.one;
         public static readonly Vector2Int MAX_PARCEL = new (163, 158);
+        public static readonly Vector2Int EXTENTS = MAX_PARCEL - MIN_PARCEL;
 
         // max parcel if City would be square (but it is not)
         public static readonly Vector2Int MAX_SQUARE_CITY_PARCEL = 150 * Vector2Int.one;

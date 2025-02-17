@@ -74,7 +74,7 @@ namespace Global.Dynamic
         private BootstrapContainer? bootstrapContainer;
         private StaticContainer? staticContainer;
         private DynamicWorldContainer? dynamicWorldContainer;
-        private GlobalWorld? globalWorld;
+        private GlobalWorld? _globalWorld;
 
         private void Awake()
         {
@@ -86,12 +86,9 @@ namespace Global.Dynamic
         private void OnDestroy()
         {
             if (dynamicWorldContainer != null)
-            {
-                foreach (IDCLGlobalPlugin plugin in dynamicWorldContainer.GlobalPlugins)
-                    plugin.SafeDispose(ReportCategory.ENGINE);
+            { foreach (IDCLGlobalPlugin plugin in dynamicWorldContainer.GlobalPlugins) plugin.SafeDispose(ReportCategory.ENGINE);
 
-                if (globalWorld != null)
-                    dynamicWorldContainer.RealmController.DisposeGlobalWorld();
+                if (_globalWorld != null) dynamicWorldContainer.RealmController.DisposeGlobalWorld();
 
                 dynamicWorldContainer.SafeDispose(ReportCategory.ENGINE);
             }
@@ -140,8 +137,7 @@ namespace Global.Dynamic
             if (IPlatform.DEFAULT.Is(IPlatform.Kind.Mac) && SystemInfo.processorType!.Contains("Intel", StringComparison.InvariantCultureIgnoreCase))
                 compressionEnabled = false;
 
-            ITexturesFuse TextureFuseFactory() =>
-                ITexturesFuse.NewDefault();
+            ITexturesFuse TextureFuseFactory() => ITexturesFuse.NewDefault();
 
             ICompressShaders compressShaders = compressionEnabled ? ICompressShaders.NewDefault(TextureFuseFactory, IPlatform.DEFAULT) : ICompressShaders.NewEmpty();
 
@@ -243,11 +239,11 @@ namespace Global.Dynamic
                     return;
                 }
 
-                globalWorld = bootstrap.CreateGlobalWorld(bootstrapContainer, staticContainer!, dynamicWorldContainer!, debugUiRoot, playerEntity);
+                _globalWorld = bootstrap.CreateGlobalWorld(bootstrapContainer, staticContainer!, dynamicWorldContainer!, debugUiRoot, playerEntity);
 
                 await bootstrap.LoadStartingRealmAsync(dynamicWorldContainer!, ct);
 
-                await bootstrap.UserInitializationAsync(dynamicWorldContainer!, globalWorld, playerEntity, ct);
+                await bootstrap.UserInitializationAsync(dynamicWorldContainer!, _globalWorld, playerEntity, ct);
 
                 //This is done in order to release the memory usage of the splash screen logo animation sprites
                 //The logo is used only at first launch, so we can safely release it after the game is loaded
