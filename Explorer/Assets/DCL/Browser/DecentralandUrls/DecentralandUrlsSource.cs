@@ -1,4 +1,5 @@
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using Global.Dynamic.LaunchModes;
 using System;
 using System.Collections.Generic;
 
@@ -17,15 +18,14 @@ namespace DCL.Browser.DecentralandUrls
 
         private readonly Dictionary<DecentralandUrl, string> cache = new ();
         private readonly string environmentDomainLowerCase;
-        private readonly bool isLocalSceneDevelopment;
-
+        private readonly ILaunchMode launchMode;
 
         public string DecentralandDomain => environmentDomainLowerCase;
 
-        public DecentralandUrlsSource(DecentralandEnvironment environment, bool isLocalSceneDevelopment = false)
+        public DecentralandUrlsSource(DecentralandEnvironment environment, ILaunchMode launchMode)
         {
             environmentDomainLowerCase = environment.ToString()!.ToLower();
-            this.isLocalSceneDevelopment = isLocalSceneDevelopment;
+            this.launchMode = launchMode;
 
             switch (environment)
             {
@@ -60,15 +60,13 @@ namespace DCL.Browser.DecentralandUrls
             return url!;
         }
 
-        public string GetHostnameForFeatureFlag()
-        {
-            if (isLocalSceneDevelopment)
+        public string GetHostnameForFeatureFlag() =>
+            launchMode.CurrentMode switch
             {
-                return "localhost";
-            }
-
-            return Url(DecentralandUrl.Host);
-        }
+                LaunchMode.Play => Url(DecentralandUrl.Host),
+                LaunchMode.LocalSceneDevelopment => "localhost", //TODO should this behaviour be extracted to Url() call?
+                _ => throw new ArgumentOutOfRangeException()
+            };
 
         private static string RawUrl(DecentralandUrl decentralandUrl) =>
             decentralandUrl switch
@@ -85,6 +83,7 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.Map => $"https://places.decentraland.{ENV}/api/map",
                 DecentralandUrl.ContentModerationReport => $"https://places.decentraland.{ENV}/api/report",
                 DecentralandUrl.GateKeeperSceneAdapter => $"https://comms-gatekeeper.decentraland.{ENV}/get-scene-adapter",
+                DecentralandUrl.LocalGateKeeperSceneAdapter => "https://comms-gatekeeper-local.decentraland.org/get-scene-adapter",
                 DecentralandUrl.ApiEvents => $"https://events.decentraland.{ENV}/api/events",
                 DecentralandUrl.OpenSea => $"https://opensea.decentraland.{ENV}",
                 DecentralandUrl.Host => $"https://decentraland.{ENV}",

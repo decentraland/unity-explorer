@@ -1,7 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.RoomHubs;
-using DCL.Utilities.Extensions;
 using System;
 using System.Threading;
 using Utility.Types;

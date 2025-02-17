@@ -54,7 +54,12 @@ namespace DCL.Web3.Identities
                         new PlayerPrefsIdentityProvider(
                             new PlayerPrefsIdentityProvider.DecentralandIdentityWithNethereumAccountJsonSerializer(
                                 web3AccountFactory ?? new Web3AccountFactory()
-                            )
+                            ),
+#if UNITY_EDITOR
+                            new IPlayerPrefsIdentityProviderKeyStrategy.Const()
+#else
+                            new MemoryMappedFilePlayerPrefsIdentityProviderKeyStrategy()
+#endif
                         )
                     )
                 );

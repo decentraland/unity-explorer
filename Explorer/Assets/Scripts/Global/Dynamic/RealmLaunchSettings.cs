@@ -8,13 +8,14 @@ using SceneRunner.Scene;
 using System.Text.RegularExpressions;
 using DCL.FeatureFlags;
 using DCL.UserInAppInitializationFlow.StartupOperations;
+using Global.Dynamic.LaunchModes;
 using Unity.Mathematics;
 using UnityEngine;
 
 namespace Global.Dynamic
 {
     [Serializable]
-    public class RealmLaunchSettings
+    public class RealmLaunchSettings : ILaunchMode
     {
         [Serializable]
         public struct PredefinedScenes
@@ -38,20 +39,29 @@ namespace Global.Dynamic
         [SerializeField] private string[] portableExperiencesEnsToLoadAtGameStart;
 
         private bool isLocalSceneDevelopmentRealm;
-        public bool IsLocalSceneDevelopmentRealm => isLocalSceneDevelopmentRealm
 
-                                                    // This is for development purposes only,
-                                                    // so we can easily start local development from the editor without application args
-                                                    || initialRealm == InitialRealm.Localhost;
+        public LaunchMode CurrentMode => isLocalSceneDevelopmentRealm
+
+                                         // This is for development purposes only,
+                                         // so we can easily start local development from the editor without application args
+                                         || initialRealm == InitialRealm.Localhost
+            ? LaunchMode.LocalSceneDevelopment
+            : LaunchMode.Play;
 
         public IReadOnlyList<int2> GetPredefinedParcels()
         {
             if (predefinedScenes.enabled)
                 return predefinedScenes.parcels.Select(p => new int2(p.x, p.y)).ToList();
 
-            return IsLocalSceneDevelopmentRealm
-                ? new List<int2> { new (targetScene.x, targetScene.y) }
-                : Array.Empty<int2>();
+            return CurrentMode switch
+                   {
+                       LaunchMode.Play => Array.Empty<int2>(),
+                       LaunchMode.LocalSceneDevelopment => new List<int2>
+                       {
+                           new (targetScene.x, targetScene.y)
+                       },
+                       _ => throw new ArgumentOutOfRangeException()
+                   };
         }
 
         public HybridSceneParams CreateHybridSceneParams()
@@ -64,7 +74,7 @@ namespace Global.Dynamic
                     HybridSceneContentServer = remoteHybridSceneContentServer,
                     World = remoteHybridSceneContentServer.Equals(HybridSceneContentServer.World)
                         ? remoteHibridWorld
-                        : ""
+                        : "",
                 };
             }
 
