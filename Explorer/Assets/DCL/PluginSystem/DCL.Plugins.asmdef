@@ -158,7 +158,10 @@
         "GUID:a128e9c160e44f65a2f4e0cf0fc535c6",
         "GUID:09c5cab4669b047398fa5d42a2f64f5b",
         "GUID:07fae1aaf8481a840a6165058ced43aa",
-        "GUID:04e9a70e2a3843908ecb2c5135189184"
+        "GUID:04e9a70e2a3843908ecb2c5135189184",
+        "GUID:6495f30b61f24ad388388f1ab06a3b31",
+        "GUID:977f79b5e6de8468d8967dfff5ca8128",
+        "GUID:26b8f796ecc6b4a2ab621c9a7e70fd11"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

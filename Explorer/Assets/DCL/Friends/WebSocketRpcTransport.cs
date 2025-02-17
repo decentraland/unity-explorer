@@ -11,11 +11,11 @@ namespace DCL.Friends
     public class WebSocketRpcTransport : ITransport
     {
         private readonly Uri uri;
-        private readonly ClientWebSocket webSocket;
         private readonly CancellationTokenSource lifeCycleCancellationToken = new ();
         private readonly byte[] receiveBuffer;
+        private readonly ClientWebSocket webSocket;
 
-        private bool isConnected => webSocket.State == WebSocketState.Open;
+        private bool isConnected => State == WebSocketState.Open;
 
         public event Action? OnCloseEvent;
         public event Action<string>? OnErrorEvent;
@@ -25,22 +25,28 @@ namespace DCL.Friends
         public WebSocketState State => webSocket.State;
 
         public WebSocketRpcTransport(Uri uri,
-            int bufferSize = 4096)
+            int bufferSize = 100000)
         {
             this.uri = uri;
-            webSocket = new ClientWebSocket();
             receiveBuffer = new byte[bufferSize];
+            webSocket = new ClientWebSocket();
         }
 
         public void Dispose()
         {
             lifeCycleCancellationToken.SafeCancelAndDispose();
-            webSocket.Dispose();
+
+            try
+            {
+                webSocket.Abort();
+                webSocket.Dispose();
+            }
+            catch (ObjectDisposedException) { }
         }
 
         public async UniTask ConnectAsync(CancellationToken ct)
         {
-            if (webSocket.State is WebSocketState.Open)
+            if (State is WebSocketState.Open or WebSocketState.Connecting)
                 throw new Exception("Web socket already connected");
 
             await webSocket.ConnectAsync(uri, ct);
@@ -91,23 +97,38 @@ namespace DCL.Friends
 
         public async UniTask SendMessageAsync(byte[] data, CancellationToken ct)
         {
-            try { await webSocket.SendAsync(data, WebSocketMessageType.Binary, true, ct); }
-            catch (WebSocketException e) { OnErrorEvent?.Invoke(e.Message); }
+            try
+            {
+                await webSocket.SendAsync(data, WebSocketMessageType.Binary, true, ct);
+            }
+            catch (WebSocketException e)
+            {
+                OnErrorEvent?.Invoke(e.Message);
+            }
         }
 
         public async UniTask SendMessageAsync(string data, CancellationToken ct)
         {
-            try { await webSocket.SendAsync(Encoding.UTF8.GetBytes(data), WebSocketMessageType.Text, true, ct); }
-            catch (WebSocketException e) { OnErrorEvent?.Invoke(e.Message); }
+            try
+            {
+                await webSocket.SendAsync(Encoding.UTF8.GetBytes(data), WebSocketMessageType.Text, true, ct);
+            }
+            catch (WebSocketException e)
+            {
+                OnErrorEvent?.Invoke(e.Message);
+            }
         }
 
         public void Close() =>
             CloseAsync(lifeCycleCancellationToken.Token).Forget();
 
-        private async UniTask CloseAsync(CancellationToken ct)
+        public async UniTask CloseAsync(CancellationToken ct)
         {
-            await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "", ct);
-            OnCloseEvent?.Invoke();
+            if (State is WebSocketState.Open or WebSocketState.CloseReceived)
+            {
+                await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "", ct);
+                OnCloseEvent?.Invoke();
+            }
         }
     }
 }

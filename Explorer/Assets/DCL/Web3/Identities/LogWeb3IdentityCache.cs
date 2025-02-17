@@ -7,6 +7,18 @@ namespace DCL.Web3.Identities
     {
         private readonly IWeb3IdentityCache origin;
 
+        public event Action? OnIdentityCleared
+        {
+            add => origin.OnIdentityCleared += value;
+            remove => origin.OnIdentityCleared -= value;
+        }
+
+        public event Action? OnIdentityChanged
+        {
+            add => origin.OnIdentityChanged += value;
+            remove => origin.OnIdentityChanged -= value;
+        }
+
         public LogWeb3IdentityCache(IWeb3IdentityCache origin)
         {
             this.origin = origin;

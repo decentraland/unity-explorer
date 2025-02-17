@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ce7c0b4646084ca790d31ec5034e03c7, type: 3}
+  m_Name: FriendRequestContextMenuSettings
+  m_EditorClassIdentifier: 
+  contextMenuWidth: 250
+  viewProfileSprite: {fileID: 21300000, guid: c42ef609dd1154fa9a0e37d744af5614, type: 3}
+  viewProfileText: View Profile
+  blockSprite: {fileID: 21300000, guid: 493ac3c2397b64caea2decabee6048e8, type: 3}
+  blockText: Block
+  reportSprite: {fileID: 21300000, guid: 3bfacc159ebe34861ad08dd502c313fc, type: 3}
+  reportText: Report
