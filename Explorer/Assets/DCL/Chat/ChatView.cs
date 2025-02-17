@@ -209,6 +209,78 @@ namespace DCL.Chat
         /// </summary>
         public bool IsScrollToBottomButtonVisible => scrollToBottomButton.gameObject.activeInHierarchy;
 
+        /// <summary>
+        /// Gets or sets the amount of participants in the current channel.
+        /// The UI will be refreshed in the next Update.
+        /// </summary>
+        public int MemberCount
+        {
+            get => memberListCount;
+
+            set
+            {
+                if (memberListCount != value)
+                {
+                    isMemberListCountDirty = true;
+                    memberListCount = value;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Gets whether the message list panel is visible or not (if the chat is folded, it is considered not visible).
+        /// </summary>
+        public bool IsMessageListVisible => chatMessageViewer.IsVisible && IsUnfolded;
+
+        /// <summary>
+        /// Gets or sets the chat channel to be displayed, using its Id.
+        /// </summary>
+        public ChatChannel.ChannelId CurrentChannel
+        {
+            get => currentChannel!.Id;
+
+            set
+            {
+                if (currentChannel == null || !currentChannel.Id.Equals(value))
+                {
+                    currentChannel = channels![value];
+
+                    chatMessageViewer.SetData(currentChannel.Messages);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Gets whether the member list panel is visible or not (if the chat is unfolded, it is considered not visible):
+        /// </summary>
+        public bool IsMemberListVisible => memberListView.IsVisible && IsUnfolded;
+
+        /// <summary>
+        /// Gets or sets whether the chat panel is open or close (the input box is visible in any case).
+        /// </summary>
+        public bool IsUnfolded
+        {
+            get => panelBackgroundCanvasGroup.gameObject.activeInHierarchy;
+
+            set
+            {
+                if(value == panelBackgroundCanvasGroup.gameObject.activeInHierarchy)
+                    return;
+
+                memberListView.IsVisible = false;
+                panelBackgroundCanvasGroup.gameObject.SetActive(value);
+                chatMessageViewer.IsVisible = value;
+
+                if (!value)
+                {
+                    chatMessageViewer.HideSeparator();
+                    SetScrollToBottomVisibility(false);
+                }
+
+                FoldingChanged?.Invoke(value);
+            }
+        }
+
         private void Start()
         {
             panelBackgroundCanvasGroup.alpha = 0;
@@ -277,52 +349,6 @@ namespace DCL.Chat
         private void OnScrollToEndButtonClicked()
         {
             chatMessageViewer.ShowLastMessage(true);
-        }
-
-        /// <summary>
-        /// Gets or sets the chat channel to be displayed, using its Id.
-        /// </summary>
-        public ChatChannel.ChannelId CurrentChannel
-        {
-            get => currentChannel!.Id;
-
-            set
-            {
-                if (currentChannel == null || !currentChannel.Id.Equals(value))
-                {
-                    currentChannel = channels![value];
-
-                    chatMessageViewer.SetData(currentChannel.Messages);
-                }
-            }
-        }
-
-        public bool IsMemberListVisible => memberListView.IsVisible;
-
-        /// <summary>
-        /// Gets or sets whether the chat panel is open or close (the input box is visible in any case).
-        /// </summary>
-        public bool IsUnfolded
-        {
-            get => panelBackgroundCanvasGroup.gameObject.activeInHierarchy;
-
-            set
-            {
-                if(value == panelBackgroundCanvasGroup.gameObject.activeInHierarchy)
-                    return;
-
-                memberListView.IsVisible = false;
-                panelBackgroundCanvasGroup.gameObject.SetActive(value);
-                chatMessageViewer.SetVisibility(value);
-
-                if (!value)
-                {
-                    chatMessageViewer.HideSeparator();
-                    SetScrollToBottomVisibility(false);
-                }
-
-                FoldingChanged?.Invoke(value);
-            }
         }
 
         /// <summary>
@@ -456,24 +482,6 @@ namespace DCL.Chat
                 sortedMemberData.Add(keyValuePair.Value);
 
             isMemberListDirty = true;
-        }
-
-        /// <summary>
-        /// Gets or sets the amount of participants in the current channel.
-        /// The UI will be refreshed in the next Update.
-        /// </summary>
-        public int MemberCount
-        {
-            get => memberListCount;
-
-            set
-            {
-                if (memberListCount != value)
-                {
-                    isMemberListCountDirty = true;
-                    memberListCount = value;
-                }
-            }
         }
 
         /// <summary>

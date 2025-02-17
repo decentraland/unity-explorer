@@ -44,7 +44,6 @@ namespace DCL.Chat
         private readonly ITextFormatter hyperlinkTextFormatter;
         private readonly ChatAudioSettingsAsset chatAudioSettings;
         private SingleInstanceEntity cameraEntity;
-        private bool isMemberListInitialized;
 
         private CancellationTokenSource memberListCts;
         private string previousRoomSid = string.Empty;
@@ -165,7 +164,7 @@ namespace DCL.Chat
             CreateChatBubble(destinationChannel, addedMessage, isSentByOwnUser);
 
             // If the chat is showing the channel that receives the message and the scroll view is at the bottom, mark everything as read
-            if (viewInstance!.IsUnfolded && destinationChannel.Id.Equals(viewInstance.CurrentChannel) && viewInstance.IsScrollAtBottom)
+            if (viewInstance!.IsMessageListVisible && destinationChannel.Id.Equals(viewInstance.CurrentChannel) && viewInstance.IsScrollAtBottom)
                 MarkCurrentChannelAsRead();
 
             if (isSentByOwnUser)

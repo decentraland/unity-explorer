@@ -93,6 +93,22 @@ namespace DCL.Chat
         public int CurrentSeparatorIndex => chatMessages!.Count - messageCountWhenSeparatorWasSet + separatorPositionIndex;
 
         /// <summary>
+        /// Gets or sets whether the UI is visible.
+        /// </summary>
+        public bool IsVisible
+        {
+            get => loopList.gameObject.activeInHierarchy;
+
+            set
+            {
+                loopList.gameObject.SetActive(value);
+
+                if (!value) // Note: This is necessary to avoid items animating when re-opening the chat window
+                    entriesPendingToAnimate = 0;
+            }
+        }
+
+        /// <summary>
         /// Initializes the UI element and provides all its external dependencies.
         /// </summary>
         /// <param name="delegateImplementation">An external function that provides a way to calculate the color to be used to display a user name.</param>
@@ -114,18 +130,6 @@ namespace DCL.Chat
             // Replaces the chat items (it uses pools to store item instances so they will be reused)
             loopList.SetListItemCount(0);
             loopList.SetListItemCount(chatMessages.Count);
-        }
-
-        /// <summary>
-        /// Shows or hides the UI element.
-        /// </summary>
-        /// <param name="show">Whether the viewer is visible or not.</param>
-        public void SetVisibility(bool show)
-        {
-            loopList.gameObject.SetActive(show);
-
-            if (!show) // Note: This is necessary to avoid items animating when re-opening the chat window
-                entriesPendingToAnimate = 0;
         }
 
         /// <summary>
