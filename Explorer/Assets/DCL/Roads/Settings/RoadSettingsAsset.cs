@@ -22,19 +22,19 @@ namespace DCL.Roads.Settings
         IReadOnlyList<RoadDescription> IRoadSettingsAsset.RoadDescriptions => RoadDescriptions;
         IReadOnlyList<AssetReferenceGameObject> IRoadSettingsAsset.RoadAssetsReference => RoadAssetsReference;
 
-#if UNITY_EDITOR
         public void HideAll()
         {
             // foreach (GPUInstancingLODGroup prop in PropsAndTiles)
-                // prop.HideAll();
+            // prop.HideAll();
         }
 
         public void ShowAll()
         {
             // foreach (GPUInstancingLODGroup prop in PropsAndTiles)
-                // prop.ShowAll();
+            // prop.ShowAll();
         }
 
+#if UNITY_EDITOR
         public void CollectGPUInstancingLODGroups(Vector2Int min, Vector2Int max)
         {
             Dictionary<string, GPUInstancingPrefabData> loadedPrefabs = LoadAllPrefabs();

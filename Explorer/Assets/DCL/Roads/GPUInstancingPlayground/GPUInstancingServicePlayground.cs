@@ -54,7 +54,7 @@ namespace DCL.Roads.GPUInstancing
         [ContextMenu(nameof(RoadConfigCollect))]
         private void RoadConfigCollect()
         {
-            RoadsConfig.CollectGPUInstancingLODGroups(ParcelsMin, ParcelsMax);
+            // RoadsConfig.CollectGPUInstancingLODGroups(ParcelsMin, ParcelsMax);
         }
 
         [ContextMenu(nameof(AddRoadsToService))]
