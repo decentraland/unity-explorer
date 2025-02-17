@@ -173,7 +173,7 @@ namespace Global
             container.texturesFuse = texturesFuse;
 
             var exposedPlayerTransform = new ExposedTransform();
-            container.GPUInstancingService = new GPUInstancingService();
+            container.GPUInstancingService = new GPUInstancingService(null, null);
             container.CharacterContainer = new CharacterContainer(container.assetsProvisioner, exposedGlobalDataContainer.ExposedCameraData, exposedPlayerTransform);
 
             bool result = await InitializeContainersAsync(container, settingsContainer, ct);

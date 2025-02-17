@@ -2,6 +2,7 @@
 #include "Includes/CullingFunctions.cginc"
 #include "Includes/CameraFunctions.cginc"
 
+#pragma enable_d3d11_debug_symbols
 #pragma kernel CameraCullingAndLODCalculationKernel
 
 ////////////////////
@@ -14,34 +15,32 @@ struct PerInstance
     float4x4 worldMatrix;
     float3 colour;
 };
-RWStructuredBuffer<PerInstance> PerInstanceData;
-uniform uint nInstBufferSize;
+shared RWStructuredBuffer<PerInstance> PerInstanceData;
 
-// LOD
-uniform uint nLODCount;
-uniform float4x4 lodSizes;
-
-// Shadow
-uniform float fShadowDistance;
-
-// Frustum
-uniform bool isFrustumCulling;
-uniform float3 vCameraPosition;
-uniform float fCameraHalfAngle;
-uniform float fMaxDistance;
-uniform float minCullingDistance;
-uniform float4x4 matCamera_MVP;
-uniform float3 vBoundsCenter;
-uniform float3 vBoundsExtents;
-uniform float frustumOffset;
+struct GroupData
+{
+    float4x4 lodSizes;
+    float4x4 matCamera_MVP;
+    float3 vCameraPosition;
+    float fShadowDistance;
+    float3 vBoundsCenter;
+    float frustumOffset;
+    float3 vBoundsExtents;
+    float fCameraHalfAngle;
+    float fMaxDistance;
+    float minCullingDistance;
+    uint nInstBufferSize;
+    uint nMaxLOD_GB;
+};
+StructuredBuffer<GroupData> GroupDataBuffer;
 
 // Occlusion
-uniform bool isOcclusionCulling;
-uniform float occlusionOffset;
-uniform uint occlusionAccuracy;
-uniform float4 hiZTxtrSize;
-uniform Texture2D<float4> hiZMap;
-uniform SamplerState sampler_hiZMap;
+// uniform bool isOcclusionCulling;
+// uniform float occlusionOffset;
+// uniform uint occlusionAccuracy;
+// uniform float4 hiZTxtrSize;
+// uniform Texture2D<float4> hiZMap;
+// uniform SamplerState sampler_hiZMap;
 
 
 ////////////////////
@@ -49,45 +48,48 @@ uniform SamplerState sampler_hiZMap;
 ////////////////////
 RWStructuredBuffer<uint4> PerInstance_LODLevels; // LOD_A, LOD_B, LOD_Dither, LOD_Shadow 
 
-[numthreads(GPUI_THREADS, 1, 1)]
+[numthreads(1, 1, 1)]
 void CameraCullingAndLODCalculationKernel(uint3 id : SV_DispatchThreadID)
 {
-    if (id.x >= nInstBufferSize)
+    if (id.x >= GroupDataBuffer[0].nInstBufferSize)
         return;
+
+    //PerInstance_LODLevels[id.x] = uint4(id.x, id.x * 2, id.x * 3, id.x * 4);
+    //return;
 
     float fDistance;
     float fScreenSpaceSize;
     const float4x4 mInstMatrix = PerInstanceData[id.x].worldMatrix;
-    EvaluateInstanceDistance(mInstMatrix, fDistance, fScreenSpaceSize, vBoundsExtents, vCameraPosition, fCameraHalfAngle);
+    EvaluateInstanceDistance(mInstMatrix, fDistance, fScreenSpaceSize, GroupDataBuffer[0].vBoundsExtents, GroupDataBuffer[0].vCameraPosition, GroupDataBuffer[0].fCameraHalfAngle);
     
     bool bCulled = false;
     
     // Distance culling
-    if (fDistance >= fMaxDistance)
+    if (fDistance >= GroupDataBuffer[0].fMaxDistance)
     {
         bCulled = true;
     }
 
-    if (bCulled == false && fDistance >= minCullingDistance)
+    if (bCulled == false && fDistance >= GroupDataBuffer[0].minCullingDistance)
     {
         float4 BoundingBox[8];
-        CalculateBoundingBox(mInstMatrix, BoundingBox, matCamera_MVP, vBoundsCenter, vBoundsExtents);
+        CalculateBoundingBox(mInstMatrix, BoundingBox, GroupDataBuffer[0].matCamera_MVP, GroupDataBuffer[0].vBoundsCenter, GroupDataBuffer[0].vBoundsExtents);
 
         // OBB Frustum Culling
-        if (isFrustumCulling)
+        //if (GroupDataBuffer[0].isFrustumCulling)
         {
-            bCulled = IsFrustumCulled(BoundingBox, frustumOffset);
+            bCulled = IsFrustumCulled(BoundingBox, GroupDataBuffer[0].frustumOffset);
         }
     
         // Hierarchical Z-Buffer Occlusion Culling      
-        if (bCulled == false && isOcclusionCulling)
-        {
-            bCulled = IsOcclusionCulled(BoundingBox, hiZTxtrSize, occlusionOffset, occlusionAccuracy,hiZMap, sampler_hiZMap);
-        }
+        // if (bCulled == false && isOcclusionCulling)
+        // {
+        //     bCulled = IsOcclusionCulled(BoundingBox, hiZTxtrSize, occlusionOffset, occlusionAccuracy,hiZMap, sampler_hiZMap);
+        // }
     }
 
     if (bCulled == false)
     {
-        PerInstance_LODLevels[id.x] = EvaluateLODLevel(nLODCount, lodSizes, fShadowDistance, fScreenSpaceSize, fDistance);
+        PerInstance_LODLevels[id.x] = EvaluateLODLevel(GroupDataBuffer[0].nMaxLOD_GB, GroupDataBuffer[0].lodSizes, GroupDataBuffer[0].fShadowDistance, fScreenSpaceSize, fDistance);
     }
 }

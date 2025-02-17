@@ -1,5 +1,6 @@
 ﻿#include "Includes/PlatformSpecifications.cginc"
 
+#pragma enable_d3d11_debug_symbols
 #pragma kernel ComputeLODBufferAccumulation
 
 ////////////////////
@@ -7,16 +8,17 @@
 ////////////////////
 uniform uint nInstBufferSize;
 uniform uint nLODCount;
-uniform uint arrLODCount[8];
+//shared uniform uint arrLODCount[8];
+shared RWStructuredBuffer<uint> arrLODCount;
 RWStructuredBuffer<uint4> PerInstance_LODLevels; // LOD_A, LOD_B, LOD_Dither, LOD_Shadow
 
 ////////////////////
 // UNIFORM OUTPUTS
 ////////////////////
-RWStructuredBuffer<uint> IndirectDrawIndexedArgsBuffer; // 5x UINT, per draw args
+shared RWStructuredBuffer<uint> IndirectDrawIndexedArgsBuffer; // 5x UINT, per draw args
 RWStructuredBuffer<uint2> InstanceLookUpAndDither;
 
-[numthreads(GPUI_THREADS, 1, 1)]
+[numthreads(512, 1, 1)]
 void ComputeLODBufferAccumulation(uint3 id : SV_DispatchThreadID)
 {
     if (id.x >= nInstBufferSize)
