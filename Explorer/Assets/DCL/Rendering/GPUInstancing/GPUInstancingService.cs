@@ -99,9 +99,9 @@ namespace DCL.Roads.GPUInstancing
 
         private void RenderCandidateIndirect(GPUInstancingLODGroupWithBuffer candidate, GPUInstancingBuffers buffers)
         {
-            Camera cam = Camera.main;
-            float halfAngle = 0.5f * cam.fieldOfView * Mathf.Deg2Rad;
-            Matrix4x4 camMVP = cam.projectionMatrix * cam.worldToCameraMatrix;
+            // Camera cam = Camera.main;
+            // float halfAngle = 0.5f * cam.fieldOfView * Mathf.Deg2Rad;
+            // Matrix4x4 camMVP = cam.projectionMatrix * cam.worldToCameraMatrix;
             // FrustumCullingAndLODGenComputeShader.SetMatrix(ComputeVar_lodSizes, candidate.LODGroup.LODSizesMatrix); // float4x4
             // FrustumCullingAndLODGenComputeShader.SetVector(ComputeVar_vBoundsCenter,candidate.LODGroup.Bounds.center); // float3
             // FrustumCullingAndLODGenComputeShader.SetVector(ComputeVar_vBoundsExtents,candidate.LODGroup.Bounds.extents); // float3
@@ -116,41 +116,41 @@ namespace DCL.Roads.GPUInstancing
             // FrustumCullingAndLODGenComputeShader.SetBool(ComputeVar_isFrustumCulling, true);
             // FrustumCullingAndLODGenComputeShader.SetFloat(ComputeVar_frustumOffset, 0.0f); // float
 
-            GroupData groupData = new GroupData();
-            groupData.lodSizes = candidate.LODGroup.LODSizesMatrix;
-            groupData.matCamera_MVP = camMVP;
-            groupData.vCameraPosition = cam.transform.position;
-            groupData.fShadowDistance = 0.0f;
-            groupData.vBoundsCenter = candidate.LODGroup.Bounds.center;
-            groupData.frustumOffset = 0.0f;
-            groupData.vBoundsExtents = candidate.LODGroup.Bounds.extents;
-            groupData.fCameraHalfAngle = halfAngle;
-            groupData.fMaxDistance = cam.farClipPlane;
-            groupData.minCullingDistance = cam.nearClipPlane;
-            groupData.nInstBufferSize = (uint)buffers.PerInstanceMatrices.count;
-            groupData.nMaxLOD_GB = (uint)candidate.LODGroup.LodsScreenSpaceSizes.Length;
-
-            List<GroupData> groupDataList = new List<GroupData>();
-            groupDataList.Add(groupData);
-            buffers.GroupData.SetData(groupDataList, 0, 0, 1);
-            FrustumCullingAndLODGenComputeShader.SetBuffer(FrustumCullingAndLODGenComputeShader_KernelIDs, ComputeVar_GroupDataBuffer, buffers.GroupData);
-            FrustumCullingAndLODGenComputeShader.SetBuffer(FrustumCullingAndLODGenComputeShader_KernelIDs, ComputeVar_PerInstanceData, buffers.PerInstanceMatrices);
-            FrustumCullingAndLODGenComputeShader.SetBuffer(FrustumCullingAndLODGenComputeShader_KernelIDs, ComputeVar_PerInstance_LODLevels, buffers.LODLevels);
-            FrustumCullingAndLODGenComputeShader.Dispatch(FrustumCullingAndLODGenComputeShader_KernelIDs, buffers.PerInstanceMatrices.count, 1, 1);
+            // GroupData groupData = new GroupData();
+            // groupData.lodSizes = candidate.LODGroup.LODSizesMatrix;
+            // groupData.matCamera_MVP = camMVP;
+            // groupData.vCameraPosition = cam.transform.position;
+            // groupData.fShadowDistance = 0.0f;
+            // groupData.vBoundsCenter = candidate.LODGroup.Bounds.center;
+            // groupData.frustumOffset = 0.0f;
+            // groupData.vBoundsExtents = candidate.LODGroup.Bounds.extents;
+            // groupData.fCameraHalfAngle = halfAngle;
+            // groupData.fMaxDistance = cam.farClipPlane;
+            // groupData.minCullingDistance = cam.nearClipPlane;
+            // groupData.nInstBufferSize = (uint)buffers.PerInstanceMatrices.count;
+            // groupData.nMaxLOD_GB = (uint)candidate.LODGroup.LodsScreenSpaceSizes.Length;
+            //
+            // List<GroupData> groupDataList = new List<GroupData>();
+            // groupDataList.Add(groupData);
+            // buffers.GroupData.SetData(groupDataList, 0, 0, 1);
+            // FrustumCullingAndLODGenComputeShader.SetBuffer(FrustumCullingAndLODGenComputeShader_KernelIDs, ComputeVar_GroupDataBuffer, buffers.GroupData);
+            // FrustumCullingAndLODGenComputeShader.SetBuffer(FrustumCullingAndLODGenComputeShader_KernelIDs, ComputeVar_PerInstanceData, buffers.PerInstanceMatrices);
+            // FrustumCullingAndLODGenComputeShader.SetBuffer(FrustumCullingAndLODGenComputeShader_KernelIDs, ComputeVar_PerInstance_LODLevels, buffers.LODLevels);
+            // FrustumCullingAndLODGenComputeShader.Dispatch(FrustumCullingAndLODGenComputeShader_KernelIDs, buffers.PerInstanceMatrices.count, 1, 1);
 
             ///////
             ///////
-            IndirectBufferGenerationComputeShader.SetInt(ComputeVar_nInstBufferSize, buffers.PerInstanceMatrices.count); // uint
-            IndirectBufferGenerationComputeShader.SetInt(ComputeVar_nLODCount, candidate.LODGroup.LodsScreenSpaceSizes.Length); // uint
-            GraphicsBuffer arrLODCount = new GraphicsBuffer(GraphicsBuffer.Target.Structured, GraphicsBuffer.UsageFlags.None, 8, sizeof(uint));
-            var arrLOD = new int[8] { 0, 0, 0, 0, 0, 0, 0, 0 };
-            arrLODCount.SetData(arrLOD, 0, 0, 8);
+            // IndirectBufferGenerationComputeShader.SetInt(ComputeVar_nInstBufferSize, buffers.PerInstanceMatrices.count); // uint
+            // IndirectBufferGenerationComputeShader.SetInt(ComputeVar_nLODCount, candidate.LODGroup.LodsScreenSpaceSizes.Length); // uint
+            // GraphicsBuffer arrLODCount = new GraphicsBuffer(GraphicsBuffer.Target.Structured, GraphicsBuffer.UsageFlags.None, 8, sizeof(uint));
+            // var arrLOD = new int[8] { 0, 0, 0, 0, 0, 0, 0, 0 };
+            // arrLODCount.SetData(arrLOD, 0, 0, 8);
 
-            IndirectBufferGenerationComputeShader.SetBuffer(IndirectBufferGenerationComputeShader_KernelIDs, ComputeVar_arrLODCount, arrLODCount); // uint[8]
-            IndirectBufferGenerationComputeShader.SetBuffer(IndirectBufferGenerationComputeShader_KernelIDs, ComputeVar_IndirectDrawIndexedArgsBuffer, buffers.DrawArgs[0]);
-            IndirectBufferGenerationComputeShader.SetBuffer(IndirectBufferGenerationComputeShader_KernelIDs, ComputeVar_PerInstance_LODLevels, buffers.LODLevels);
-            IndirectBufferGenerationComputeShader.SetBuffer(IndirectBufferGenerationComputeShader_KernelIDs, ComputeVar_InstanceLookUpAndDither, buffers.InstanceLookUpAndDither);
-            IndirectBufferGenerationComputeShader.Dispatch(IndirectBufferGenerationComputeShader_KernelIDs, buffers.PerInstanceMatrices.count, 1, 1);
+            // IndirectBufferGenerationComputeShader.SetBuffer(IndirectBufferGenerationComputeShader_KernelIDs, ComputeVar_arrLODCount, arrLODCount); // uint[8]
+            // IndirectBufferGenerationComputeShader.SetBuffer(IndirectBufferGenerationComputeShader_KernelIDs, ComputeVar_IndirectDrawIndexedArgsBuffer, buffers.DrawArgs[0]);
+            // IndirectBufferGenerationComputeShader.SetBuffer(IndirectBufferGenerationComputeShader_KernelIDs, ComputeVar_PerInstance_LODLevels, buffers.LODLevels);
+            // IndirectBufferGenerationComputeShader.SetBuffer(IndirectBufferGenerationComputeShader_KernelIDs, ComputeVar_InstanceLookUpAndDither, buffers.InstanceLookUpAndDither);
+            // IndirectBufferGenerationComputeShader.Dispatch(IndirectBufferGenerationComputeShader_KernelIDs, buffers.PerInstanceMatrices.count, 1, 1);
 
             for (var i = 0; i < candidate.LODGroup.CombinedLodsRenderers.Count; i++)
             {
