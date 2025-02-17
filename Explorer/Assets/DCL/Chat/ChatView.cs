@@ -494,7 +494,11 @@ namespace DCL.Chat
                 RefreshMessages();
 
                 chatMessageViewer.ShowItem(chatMessageViewer.CurrentSeparatorIndex - 1); // It shows the first of the unread messages at least
+
                 SetScrollToBottomVisibility(!IsScrollAtBottom);
+
+                if (chatMessageViewer.IsScrollAtBottom)
+                    ScrollBottomReached?.Invoke();
 
                 // The separator will always be visible when this occurs
                 UnreadMessagesSeparatorViewed?.Invoke();
