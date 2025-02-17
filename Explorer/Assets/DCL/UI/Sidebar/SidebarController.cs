@@ -10,12 +10,12 @@ using DCL.Profiles;
 using DCL.SidebarBus;
 using DCL.UI.Controls;
 using DCL.UI.ProfileElements;
+using DCL.UI.Sidebar.SidebarActionsBus;
 using DCL.UI.Skybox;
 using DCL.Web3.Identities;
 using MVC;
 using System;
 using System.Threading;
-using UnityEngine;
 using Utility;
 
 namespace DCL.UI.Sidebar
@@ -34,7 +34,9 @@ namespace DCL.UI.Sidebar
         private readonly IProfileRepository profileRepository;
         private readonly IWeb3IdentityCache identityCache;
         private readonly IWebBrowser webBrowser;
+        private readonly ISidebarActionsBus sidebarActionsBus;
         private readonly bool includeCameraReel;
+        private readonly bool includeFriends;
 
         private CancellationTokenSource profileWidgetCts = new ();
         private CancellationTokenSource systemMenuCts = new ();
@@ -57,7 +59,9 @@ namespace DCL.UI.Sidebar
             IWeb3IdentityCache identityCache,
             IProfileRepository profileRepository,
             IWebBrowser webBrowser,
-            bool includeCameraReel)
+            ISidebarActionsBus sidebarActionsBus,
+            bool includeCameraReel,
+            bool includeFriends)
             : base(viewFactory)
         {
             this.mvcManager = mvcManager;
@@ -73,7 +77,11 @@ namespace DCL.UI.Sidebar
             this.identityCache = identityCache;
             this.profileRepository = profileRepository;
             this.webBrowser = webBrowser;
+            this.sidebarActionsBus = sidebarActionsBus;
             this.includeCameraReel = includeCameraReel;
+            this.includeFriends = includeFriends;
+
+            sidebarActionsBus.SubscribeOnCloseAllWidgets(CloseAllWidgets);
         }
 
         public override void Dispose()
@@ -116,6 +124,8 @@ namespace DCL.UI.Sidebar
                 viewInstance.cameraReelButton.gameObject.SetActive(false);
                 viewInstance.InWorldCameraButton.gameObject.SetActive(false);
             }
+
+            viewInstance.PersistentFriendsPanelOpener.gameObject.SetActive(includeFriends);
         }
 
         private void OnHelpButtonClicked()
@@ -127,6 +137,7 @@ namespace DCL.UI.Sidebar
         private void OnControlsButtonClicked()
         {
             mvcManager.ShowAsync(ControlsPanelController.IssueCommand()).Forget();
+            sidebarActionsBus.OpenWidget();
         }
 
         private void OnAutoHideToggleChanged(bool value)
@@ -150,6 +161,7 @@ namespace DCL.UI.Sidebar
             sidebarBus.BlockSidebar();
             viewInstance!.sidebarSettingsWidget.ShowAsync(CancellationToken.None).Forget();
             viewInstance.sidebarSettingsButton.OnSelect(null);
+            sidebarActionsBus.OpenWidget();
         }
 
         private void OnSidebarSettingsClosed()
@@ -203,6 +215,7 @@ namespace DCL.UI.Sidebar
             systemMenuCts = systemMenuCts.SafeRestart();
             viewInstance!.ProfileMenuView.gameObject.SetActive(true);
             profileMenuController.LaunchViewLifeCycleAsync(new CanvasOrdering(CanvasOrdering.SortingLayer.Overlay, 0), new ControllerNoData(), systemMenuCts.Token).Forget();
+            sidebarActionsBus.OpenWidget();
         }
 
         private void OpenSkyboxSettings()
@@ -213,6 +226,7 @@ namespace DCL.UI.Sidebar
             systemMenuCts = systemMenuCts.SafeRestart();
             viewInstance!.skyboxButton.SetSelected(true);
             skyboxMenuController.LaunchViewLifeCycleAsync(new CanvasOrdering(CanvasOrdering.SortingLayer.Overlay, 0), new ControllerNoData(), systemMenuCts.Token).Forget();
+            sidebarActionsBus.OpenWidget();
         }
 
         private void OnSkyboxSettingsClosed()
@@ -226,6 +240,7 @@ namespace DCL.UI.Sidebar
             CloseAllWidgets();
             sidebarBus.BlockSidebar();
             notificationsMenuController.ToggleNotificationsPanel(false);
+            sidebarActionsBus.OpenWidget();
         }
 
         private void OpenExplorePanelInSection(ExploreSections section, BackpackSections backpackSection = BackpackSections.Avatar)
@@ -235,6 +250,7 @@ namespace DCL.UI.Sidebar
             mvcManager.ShowAsync(
                 ExplorePanelController.IssueCommand(
                     new ExplorePanelParameter(section, backpackSection)));
+            sidebarActionsBus.OpenWidget();
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>

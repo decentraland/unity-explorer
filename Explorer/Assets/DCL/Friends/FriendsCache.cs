@@ -7,11 +7,9 @@ namespace DCL.Friends
     {
         private readonly HashSet<string> friends = new ();
 
-        int ICollection<string>.Count => friends.Count;
-
         public bool IsReadOnly => false;
 
-        int IReadOnlyCollection<string>.Count => friends.Count;
+        public int Count => friends.Count;
 
         public IEnumerator<string> GetEnumerator() =>
             friends.GetEnumerator();

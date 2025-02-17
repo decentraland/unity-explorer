@@ -1,4 +1,6 @@
 ﻿using DCL.EmotesWheel;
+using DCL.Friends.UI;
+using DCL.Friends.UI.FriendPanel;
 using DCL.Notifications.NotificationsMenu;
 using DCL.UI.Buttons;
 using DCL.UI.Controls;
@@ -32,6 +34,10 @@ namespace DCL.UI.Sidebar
         [field: SerializeField] internal Button backpackButton { get; private set; }
         [field: SerializeField] internal Button cameraReelButton { get; private set; }
         [field: SerializeField] internal Button settingsButton { get; private set; }
+
+        [field: Header("Friends")]
+        [field: SerializeField] public PersistentFriendPanelOpenerView PersistentFriendsPanelOpener { get; private set; }
+        [field: SerializeField] public NotificationIndicatorView FriendRequestNotificationIndicator { get; private set; }
 
         [field: Header("Skybox")]
         [field: SerializeField] internal SimpleHoverableButton skyboxButton { get; private set; }
