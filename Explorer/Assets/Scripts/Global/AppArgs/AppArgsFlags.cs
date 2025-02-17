@@ -12,6 +12,7 @@
 
         public const string ENVIRONMENT = "dclenv";
         public const string REALM = "realm";
+        public const string COMMS_ADAPTER = "comms-adapter";
         public const string LOCAL_SCENE = "local-scene";
         public const string POSITION = "position";
 
@@ -21,6 +22,10 @@
         public const string SELF_PREVIEW_BUILDER_COLLECTIONS = "self-preview-builder-collections";
 
         public const string CAMERA_REEL = "camera-reel";
+        public const string FRIENDS = "friends";
+        public const string FRIENDS_API_URL = "friends-api-url";
+        public const string FRIENDS_ONLINE_STATUS = "friends-online-status";
+        public const string FRIENDS_USER_BLOCKING = "friends-user-blocking";
 
         public const string FORCE_TEXTURE_COMPRESSION = "force-texture-compression";
         public const string DISABLE_DISK_CACHE = "disable-disk-cache";
