@@ -3,7 +3,7 @@ using System;
 using System.Buffers;
 using System.Text;
 
-namespace ECS.StreamableLoading.Cache.Disk
+namespace DCL.Optimization.Hashing
 {
     public readonly struct HashKey : IDisposable
     {
@@ -17,7 +17,7 @@ namespace ECS.StreamableLoading.Cache.Disk
         public static HashKey FromString(string key)
         {
             using var keyMemory = OwnedMemory.FromString(key);
-            var computedHash = DiskHashing.ComputeHash(keyMemory.Memory.AsSpan());
+            var computedHash = SHA256Hashing.ComputeHash(keyMemory.Memory.AsSpan());
             return new HashKey(computedHash);
         }
 

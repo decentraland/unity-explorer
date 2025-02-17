@@ -12,6 +12,7 @@ using DCL.Web3.Accounts.Factory;
 using DCL.Web3.Identities;
 using ECS;
 using ECS.Abstract;
+using Global.Dynamic.LaunchModes;
 using LiveKit.Internal.FFIClients;
 using LiveKit.Internal.FFIClients.Pools;
 using LiveKit.Internal.FFIClients.Pools.Memory;
@@ -44,7 +45,7 @@ namespace DCL.Multiplayer.Connections.Demo
                 Debug.Log
             );
 
-            IWeb3IdentityCache? identityCache = await ArchipelagoFakeIdentityCache.NewAsync(new DecentralandUrlsSource(DecentralandEnvironment.Zone), new Web3AccountFactory());
+            IWeb3IdentityCache? identityCache = await ArchipelagoFakeIdentityCache.NewAsync(new DecentralandUrlsSource(DecentralandEnvironment.Zone, ILaunchMode.PLAY), new Web3AccountFactory());
 
             var archipelagoIslandRoom = new ArchipelagoIslandRoom(
                 loonCharacterObject,

@@ -34,9 +34,11 @@ using DCL.Multiplayer.Connections.Archipelago.Rooms;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.GateKeeper.Meta;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms;
+using DCL.Multiplayer.Connections.GateKeeper.Rooms.Options;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.Pools;
 using DCL.Multiplayer.Connections.RoomHubs;
+using DCL.Multiplayer.Connections.Rooms.Connective;
 using DCL.Multiplayer.Connections.Rooms.Status;
 using DCL.Multiplayer.Connections.Systems.Throughput;
 using DCL.Multiplayer.Connectivity;
@@ -305,6 +307,7 @@ namespace Global.Dynamic
             var wearablesProvider = new ApplicationParametersWearablesProvider(appArgs,
                 new ECSWearablesProvider(identityCache, globalWorld), builderDTOsURL.Value);
 
+            //TODO should be unified with LaunchMode
             bool localSceneDevelopment = !string.IsNullOrEmpty(dynamicWorldParams.LocalSceneDevelopmentRealm);
             bool builderWearablesPreview = appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_BUILDER_COLLECTION);
 
@@ -322,11 +325,12 @@ namespace Global.Dynamic
 
             var terrainContainer = TerrainContainer.Create(staticContainer, realmContainer, dynamicWorldParams.EnableLandscape, localSceneDevelopment);
 
-            var sceneRoomMetaDataSource = new SceneRoomMetaDataSource(staticContainer.RealmData, staticContainer.CharacterContainer.Transform, globalWorld, dynamicWorldParams.IsolateScenesCommunication);
+            var playSceneMetaDataSource = new SceneRoomMetaDataSource(staticContainer.RealmData, staticContainer.CharacterContainer.Transform, globalWorld, dynamicWorldParams.IsolateScenesCommunication).WithLog();
+            var localDevelopmentMetaDataSource = ConstSceneRoomMetaDataSource.FromMachineUUID().WithLog();
 
-            var metaDataSource = new SceneRoomLogMetaDataSource(sceneRoomMetaDataSource);
+            GateKeeperSceneRoomOptions gateKeeperSceneRoomOptions = new GateKeeperSceneRoomOptions(staticContainer.LaunchMode, bootstrapContainer.DecentralandUrlsSource, playSceneMetaDataSource, localDevelopmentMetaDataSource);
 
-            IGateKeeperSceneRoom gateKeeperSceneRoom = new GateKeeperSceneRoom(staticContainer.WebRequestsContainer.WebRequestController, metaDataSource, bootstrapContainer.DecentralandUrlsSource, staticContainer.ScenesCache)
+            IGateKeeperSceneRoom gateKeeperSceneRoom = new GateKeeperSceneRoom(staticContainer.WebRequestsContainer.WebRequestController, staticContainer.ScenesCache, gateKeeperSceneRoomOptions)
                .AsActivatable();
 
             var currentAdapterAddress = ICurrentAdapterAddress.NewDefault(staticContainer.RealmData);
@@ -344,7 +348,10 @@ namespace Global.Dynamic
 
             LocalSceneDevelopmentController? localSceneDevelopmentController = localSceneDevelopment ? new LocalSceneDevelopmentController(reloadSceneController, dynamicWorldParams.LocalSceneDevelopmentRealm) : null;
 
-            IRoomHub roomHub = localSceneDevelopment ? NullRoomHub.INSTANCE : new RoomHub(archipelagoIslandRoom, gateKeeperSceneRoom);
+            IRoomHub roomHub = new RoomHub(
+                localSceneDevelopment ? IConnectiveRoom.Null.INSTANCE : archipelagoIslandRoom,
+                gateKeeperSceneRoom
+            );
 
             var islandThroughputBunch = new ThroughputBufferBunch(new ThroughputBuffer(), new ThroughputBuffer());
             var sceneThroughputBunch = new ThroughputBufferBunch(new ThroughputBuffer(), new ThroughputBuffer());
@@ -471,7 +478,8 @@ namespace Global.Dynamic
                 new ReloadSceneChatCommand(reloadSceneController),
                 new LoadPortableExperienceChatCommand(staticContainer.PortableExperiencesController, staticContainer.FeatureFlagsCache),
                 new KillPortableExperienceChatCommand(staticContainer.PortableExperiencesController, staticContainer.FeatureFlagsCache),
-                new VersionChatCommand(dclVersion)
+                new VersionChatCommand(dclVersion),
+                new RoomsChatCommand(roomHub),
             };
 
             chatCommands.Add(new HelpChatCommand(chatCommands, appArgs));

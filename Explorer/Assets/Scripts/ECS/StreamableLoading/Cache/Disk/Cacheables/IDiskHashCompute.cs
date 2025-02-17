@@ -1,3 +1,5 @@
+using DCL.Optimization.Hashing;
+
 namespace ECS.StreamableLoading.Cache.Disk.Cacheables
 {
     public interface IDiskHashCompute<in TAsset>
