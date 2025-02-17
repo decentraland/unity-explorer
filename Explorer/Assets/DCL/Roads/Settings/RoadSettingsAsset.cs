@@ -2,7 +2,9 @@ using DCL.Roads.GPUInstancing.Playground;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+#if UNITY_EDITOR
 using UnityEditor;
+#endif
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using Utility;
@@ -22,19 +24,19 @@ namespace DCL.Roads.Settings
         IReadOnlyList<RoadDescription> IRoadSettingsAsset.RoadDescriptions => RoadDescriptions;
         IReadOnlyList<AssetReferenceGameObject> IRoadSettingsAsset.RoadAssetsReference => RoadAssetsReference;
 
+#if UNITY_EDITOR
         public void HideAll()
         {
-            // foreach (GPUInstancingLODGroup prop in PropsAndTiles)
-            // prop.HideAll();
+            foreach (GPUInstancingLODGroup prop in PropsAndTiles)
+                prop.HideAll();
         }
 
         public void ShowAll()
         {
-            // foreach (GPUInstancingLODGroup prop in PropsAndTiles)
-            // prop.ShowAll();
+            foreach (GPUInstancingLODGroup prop in PropsAndTiles)
+                prop.ShowAll();
         }
 
-#if UNITY_EDITOR
         public void CollectGPUInstancingLODGroups(Vector2Int min, Vector2Int max)
         {
             Dictionary<string, GPUInstancingPrefabData> loadedPrefabs = LoadAllPrefabs();

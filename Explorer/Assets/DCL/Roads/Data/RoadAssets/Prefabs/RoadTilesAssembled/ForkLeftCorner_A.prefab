@@ -73,7 +73,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8002080348103897268}
-  - component: {fileID: -4709863256733225602}
   - component: {fileID: 3061738081745624263}
   m_Layer: 0
   m_Name: ForkLeftCorner_A
@@ -98,23 +97,6 @@ Transform:
   - {fileID: 6297858528812128592}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &-4709863256733225602
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7145674244392909985}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 910e9d8905854143bf4a85c5df7c15a5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  InstancedRenderers: []
-  InstancedLODGroups: []
-  whitelistShaders:
-  - {fileID: 4800000, guid: 56a9743f8d94f684190dc11bb521fb78, type: 3}
-  - {fileID: 4800000, guid: d7dd1c3f4cba1d441a7d295a168bac0d, type: 3}
 --- !u!114 &3061738081745624263
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -32,7 +32,7 @@ namespace DCL.Roads.GPUInstancing.Playground
 
 #if UNITY_EDITOR
         [ContextMenu(nameof(HideAll))]
-        private void HideAll()
+        public void HideAll()
         {
             foreach (Renderer refRenderer in RefRenderers)
                 refRenderer.enabled = false;
@@ -43,7 +43,7 @@ namespace DCL.Roads.GPUInstancing.Playground
         }
 
         [ContextMenu(nameof(ShowAll))]
-        private void ShowAll()
+        public void ShowAll()
         {
             if(Reference!= null) Reference.enabled = true;
 
