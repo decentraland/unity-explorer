@@ -4,7 +4,6 @@ using DCL.Multiplayer.Connectivity;
 using DCL.UI.GenericContextMenu;
 using DCL.UI.GenericContextMenu.Controls.Configs;
 using DCL.Web3;
-using DCL.Web3.Identities;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
 using System.Threading;
@@ -27,7 +26,6 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         private CancellationTokenSource? jumpToFriendLocationCts;
 
         public FriendSectionController(FriendsSectionView view,
-            IWeb3IdentityCache web3IdentityCache,
             IMVCManager mvcManager,
             ISystemClipboard systemClipboard,
             FriendListRequestManager requestManager,

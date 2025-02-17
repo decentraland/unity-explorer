@@ -13,7 +13,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections
 {
     public class FriendPanelUserView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {
-        protected List<Button> buttons = new ();
+        protected readonly List<Button> buttons = new ();
 
         [field: SerializeField] public Image Background { get; private set; }
         [field: SerializeField] public Color NormalColor { get; private set; }
@@ -104,13 +104,13 @@ namespace DCL.Friends.UI.FriendPanel.Sections
                 buttons[i].gameObject.SetActive(isActive);
         }
 
-        protected void UnHover()
+        private void UnHover()
         {
             ToggleButtonView(false);
             Background.color = NormalColor;
         }
 
-        protected void Hover()
+        private void Hover()
         {
             ToggleButtonView(true);
             Background.color = HoveredColor;

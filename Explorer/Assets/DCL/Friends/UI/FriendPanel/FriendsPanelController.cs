@@ -88,7 +88,6 @@ namespace DCL.Friends.UI.FriendPanel
                     includeUserBlocking);
             else
                 friendSectionController = new FriendSectionController(instantiatedView.FriendsSection,
-                    web3IdentityCache,
                     mvcManager,
                     systemClipboard,
                     new FriendListRequestManager(friendsService, friendEventBus, profileRepository, webRequestController, profileThumbnailCache, instantiatedView.FriendsSection.LoopList, FRIENDS_PAGE_SIZE, FRIENDS_FETCH_ELEMENTS_THRESHOLD),

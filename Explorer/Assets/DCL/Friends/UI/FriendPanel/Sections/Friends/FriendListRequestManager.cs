@@ -1,8 +1,6 @@
-using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Profiles;
-using DCL.Web3;
 using DCL.WebRequests;
 using SuperScrollView;
 using System;
