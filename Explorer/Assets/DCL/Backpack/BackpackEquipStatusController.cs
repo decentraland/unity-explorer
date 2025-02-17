@@ -143,7 +143,6 @@ namespace DCL.Backpack
                                         && !appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_WEARABLES);
 
             var profile = await selfProfile.UpdateProfileAsync(publish: publishProfileChange, ct);
-            // TODO: is it a single responsibility issue? perhaps we can move it elsewhere?
             MultithreadingUtility.AssertMainThread(nameof(UpdateProfileAsync), true);
             UpdateAvatarInWorld(profile!);
         }
