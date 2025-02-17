@@ -3,8 +3,10 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+#if UNITY_EDITOR
 using Unity.EditorCoroutines.Editor;
 using UnityEditor;
+#endif
 using UnityEngine;
 
 namespace DCL.Roads.GPUInstancing.Playground
@@ -19,7 +21,7 @@ namespace DCL.Roads.GPUInstancing.Playground
         public List<LODGroup> InstancedLODGroups;
 
         public Shader[] whitelistShaders;
-
+#if UNITY_EDITOR
         private void SetPrefabRootTransformToZero()
         {
             if (transform.position != Vector3.zero) transform.position = Vector3.zero;
@@ -280,7 +282,6 @@ namespace DCL.Roads.GPUInstancing.Playground
             return getComponent != null && getComponent.GetLODs().Any(lod => lod.renderers.Any(lodRenderer => meshRenderer == lodRenderer));
         }
 
-#if UNITY_EDITOR
         [ContextMenu(nameof(CollectSelfData))]
         public void CollectSelfData()
         {

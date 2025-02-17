@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+#if UNITY_EDITOR
 using UnityEditor;
+#endif
 using UnityEngine;
 using Object = UnityEngine.Object;
 
@@ -28,6 +30,7 @@ namespace DCL.Roads.GPUInstancing.Playground
         [Space]
         public List<CombinedLodsRenderer> CombinedLodsRenderers;
 
+#if UNITY_EDITOR
         [ContextMenu(nameof(HideAll))]
         public void HideAll()
         {
@@ -275,6 +278,7 @@ namespace DCL.Roads.GPUInstancing.Playground
 
             return whitelistShaders.Where(shader => shader != null).Any(shader => material.shader == shader || material.shader.name == shader.name || material.shader.name.StartsWith(shader.name) || shader.name.StartsWith(material.shader.name));
         }
+#endif
 
         public bool Equals(GPUInstancingLODGroup other)
         {
@@ -282,8 +286,7 @@ namespace DCL.Roads.GPUInstancing.Playground
             if (ReferenceEquals(this, other)) return true;
 
             // Check if they're instances of the same prefab
-            if (AreSameNestedPrefabInstance(gameObject, other.gameObject))
-                return true;
+            // if (AreSameNestedPrefabInstance(gameObject, other.gameObject)) return true;
 
             // Check basic properties
             if (Name != other.Name) return false;
@@ -357,19 +360,6 @@ namespace DCL.Roads.GPUInstancing.Playground
             return hashCode.ToHashCode();
         }
 
-        public bool AreSameNestedPrefabInstance(GameObject obj1, GameObject obj2)
-        {
-            GameObject prefabRoot1 = PrefabUtility.GetNearestPrefabInstanceRoot(obj1);
-            GameObject prefabRoot2 = PrefabUtility.GetNearestPrefabInstanceRoot(obj2);
-
-            if (prefabRoot1 == null || prefabRoot2 == null)
-                return false;
-
-            GameObject prefabAsset1 = PrefabUtility.GetCorrespondingObjectFromSource(prefabRoot1);
-            GameObject prefabAsset2 = PrefabUtility.GetCorrespondingObjectFromSource(prefabRoot2);
-
-            return prefabAsset1 == prefabAsset2;
-        }
 
         public override bool Equals(object obj) =>
             Equals(obj as GPUInstancingLODGroup);
