@@ -37,6 +37,7 @@ namespace DCL.Chat
         [SerializeField] private CustomInputField inputField;
         [SerializeField] private CharacterCounterView characterCounter;
         [SerializeField] private RectTransform pastePopupPosition;
+        [SerializeField] private GameObject outlineObject;
 
         [Header("Emojis")]
         [SerializeField] private EmojiPanelConfigurationSO emojiPanelConfiguration;
@@ -288,6 +289,7 @@ namespace DCL.Chat
 
         private void OnInputDeselected(string _)
         {
+            outlineObject.SetActive(false);
             isInputSelected = false;
             emojiPanelButton.SetColor(false);
             characterCounter.gameObject.SetActive(false);
@@ -298,6 +300,7 @@ namespace DCL.Chat
         {
             InputBoxSelectionChanged?.Invoke(true);
 
+            outlineObject.SetActive(true);
             UIAudioEventsBus.Instance.SendPlayAudioEvent(enterInputAudio);
 
             if (isInputSelected) return;
