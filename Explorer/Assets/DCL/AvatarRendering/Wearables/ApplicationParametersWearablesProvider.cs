@@ -65,14 +65,27 @@ namespace DCL.AvatarRendering.Wearables
                 }
             }
 
-            if (appArgs.TryGetValue(AppArgsFlags.SELF_PREVIEW_BUILDER_COLLECTION, out string? collectionId))
+            if (appArgs.TryGetValue(AppArgsFlags.SELF_PREVIEW_BUILDER_COLLECTIONS, out string? collectionsCsv))
             {
-                return await source.GetAsync(pageSize, pageNumber, ct, sortingField, orderBy, category, collectionType, name, results,
-                    loadingArguments: new CommonLoadingArguments(
-                        builderDTOsUrl.Replace(BUILDER_DTO_URL_COL_ID, collectionId),
-                        cancellationTokenSource: new CancellationTokenSource()
-                    ),
-                    needsBuilderAPISigning: true);
+                string[] collections = collectionsCsv!.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                                                   .ToArray();
+
+                results ??= new List<IWearable>();
+                var localBuffer = new List<IWearable>();
+                for (var i = 0; i < collections.Length; i++)
+                {
+                    // localBuffer accumulates the loaded wearables
+                    await source.GetAsync(pageSize, pageNumber, ct, sortingField, orderBy, category, collectionType, name, localBuffer,
+                        loadingArguments: new CommonLoadingArguments(
+                            builderDTOsUrl.Replace(BUILDER_DTO_URL_COL_ID, collections[i]),
+                            cancellationTokenSource: new CancellationTokenSource()
+                        ),
+                        needsBuilderAPISigning: true);
+                }
+
+                int pageIndex = pageNumber - 1;
+                results.AddRange(localBuffer.Skip(pageIndex * pageSize).Take(pageSize));
+                return (results, localBuffer.Count);
             }
 
             // Regular path without any "self-preview" element
