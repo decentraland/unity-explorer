@@ -30,7 +30,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
 
         private readonly IWebRequestController webRequests;
         private readonly IScenesCache scenesCache;
-        private readonly IGateKeeperSceneRoomOptions options;
+        private readonly GateKeeperSceneRoomOptions options;
 
         /// <summary>
         ///     The scene the current LiveKit room corresponds to
@@ -44,7 +44,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
         public GateKeeperSceneRoom(
             IWebRequestController webRequests,
             IScenesCache scenesCache,
-            IGateKeeperSceneRoomOptions options
+            GateKeeperSceneRoomOptions options
         )
         {
             this.webRequests = webRequests;
