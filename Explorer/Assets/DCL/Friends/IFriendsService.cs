@@ -1,5 +1,4 @@
 using Cysharp.Threading.Tasks;
-using DCL.Profiles;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -9,10 +8,6 @@ namespace DCL.Friends
 {
     public interface IFriendsService : IDisposable
     {
-        UniTask<PaginatedFriendsResult> GetOnlineFriendsAsync(int pageNum, int pageSize, CancellationToken ct);
-
-        UniTask<PaginatedFriendsResult> GetOfflineFriendsAsync(int pageNum, int pageSize, CancellationToken ct);
-
         UniTask<PaginatedFriendsResult> GetFriendsAsync(int pageNum, int pageSize, CancellationToken ct);
 
         UniTask<PaginatedFriendsResult> GetMutualFriendsAsync(string userId, int pageNum, int pageSize, CancellationToken ct);
@@ -36,21 +31,21 @@ namespace DCL.Friends
 
     public readonly struct PaginatedFriendsResult : IDisposable
     {
-        private readonly List<Profile> friends;
+        private readonly List<FriendProfile> friends;
 
-        public IReadOnlyList<Profile> Friends => friends;
+        public IReadOnlyList<FriendProfile> Friends => friends;
         public int TotalAmount { get; }
 
-        public PaginatedFriendsResult(IEnumerable<Profile> profiles, int totalAmount)
+        public PaginatedFriendsResult(IEnumerable<FriendProfile> profiles, int totalAmount)
         {
-            friends = ListPool<Profile>.Get();
+            friends = ListPool<FriendProfile>.Get();
             friends.AddRange(profiles);
             TotalAmount = totalAmount;
         }
 
         public void Dispose()
         {
-            ListPool<Profile>.Release(friends);
+            ListPool<FriendProfile>.Release(friends);
         }
     }
 

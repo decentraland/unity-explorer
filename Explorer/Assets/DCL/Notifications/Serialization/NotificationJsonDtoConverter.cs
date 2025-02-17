@@ -8,6 +8,20 @@ namespace DCL.Notifications.Serialization
 {
     public class NotificationJsonDtoConverter : JsonConverter<List<INotification>>
     {
+        private const string FRIENDSHIP_RECEIVED_TYPE = "social_service_friendship_request";
+        private const string FRIENDSHIP_ACCEPTED_TYPE = "social_service_friendship_accepted";
+
+        private readonly List<string> excludedTypes = new ();
+
+        public NotificationJsonDtoConverter(bool includeFriendsNotifications)
+        {
+            if (!includeFriendsNotifications)
+            {
+                excludedTypes.Add(FRIENDSHIP_RECEIVED_TYPE);
+                excludedTypes.Add(FRIENDSHIP_ACCEPTED_TYPE);
+            }
+        }
+
         public override void WriteJson(JsonWriter writer, List<INotification> value, JsonSerializer serializer)
         {
             writer.WriteStartArray();
@@ -35,6 +49,9 @@ namespace DCL.Notifications.Serialization
                 if (type == null)
                     continue;
 
+                if (excludedTypes.Contains(type))
+                    continue;
+
                 INotification notificationObject = type switch
                 {
                     "events_started" => new EventStartedNotification(),
@@ -42,6 +59,8 @@ namespace DCL.Notifications.Serialization
                     "reward_assignment" => new RewardAssignedNotification(),
                     "reward_in_progress" => new RewardInProgressNotification(),
                     "badge_granted" => new BadgeGrantedNotification(),
+                    FRIENDSHIP_RECEIVED_TYPE => new FriendRequestReceivedNotification(),
+                    FRIENDSHIP_ACCEPTED_TYPE => new FriendRequestAcceptedNotification(),
                     _ => null
                 };
 

@@ -8,7 +8,7 @@ using UnityEngine.UI;
 
 namespace DCL.Notifications.NotificationEntry
 {
-    public class NotificationView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
+    public class NotificationView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, INotificationView
     {
         public event Action<NotificationType, INotification> NotificationClicked;
         public NotificationType NotificationType { get; set; }
@@ -24,31 +24,31 @@ namespace DCL.Notifications.NotificationEntry
         public Image Background { get; private set; }
 
         [field: SerializeField]
-        public GameObject UnreadImage { get; private set; }
+        public GameObject UnreadImage { get; set; }
 
         [field: SerializeField]
         public Button MainButton { get; private set; }
 
         [field: SerializeField]
-        public Button CloseButton { get; private set; }
+        public Button CloseButton { get; set; }
 
         [field: SerializeField]
-        public TMP_Text HeaderText { get; private set; }
+        public TMP_Text HeaderText { get; set; }
 
         [field: SerializeField]
-        public TMP_Text TitleText { get; private set; }
+        public TMP_Text TitleText { get; set; }
 
         [field: SerializeField]
-        public TMP_Text TimeText { get; private set; }
+        public TMP_Text TimeText { get; set; }
 
         [field: SerializeField]
-        public ImageView NotificationImage { get; private set; }
+        public ImageView NotificationImage { get; set; }
 
         [field: SerializeField]
         public Image NotificationImageBackground { get; private set; }
 
         [field: SerializeField]
-        public Image NotificationTypeImage { get; private set; }
+        public Image NotificationTypeImage { get; set; }
 
         private void Start()
         {

@@ -1,20 +1,22 @@
+using System;
 using UnityEngine;
 
 namespace DCL.Web3.Identities
 {
     public partial class PlayerPrefsIdentityProvider : IWeb3IdentityCache
     {
-        private const string DEFAULT_PREFS_KEY = "Web3Authentication.Identity";
-
-        private readonly string playerPrefsKey;
         private readonly IWeb3IdentityJsonSerializer identitySerializer;
+        private readonly IPlayerPrefsIdentityProviderKeyStrategy keyStrategy;
+
+        public event Action? OnIdentityCleared;
+        public event Action? OnIdentityChanged;
 
         public IWeb3Identity? Identity
         {
             get
             {
-                if (!PlayerPrefs.HasKey(playerPrefsKey)) return null;
-                string json = PlayerPrefs.GetString(playerPrefsKey, string.Empty)!;
+                if (!PlayerPrefs.HasKey(keyStrategy.PlayerPrefsKey)) return null;
+                string json = PlayerPrefs.GetString(keyStrategy.PlayerPrefsKey, string.Empty)!;
                 if (string.IsNullOrEmpty(json)) return null;
                 return identitySerializer.Deserialize(json);
             }
@@ -24,21 +26,28 @@ namespace DCL.Web3.Identities
                 if (value == null)
                     Clear();
                 else
-                    PlayerPrefs.SetString(playerPrefsKey, identitySerializer.Serialize(value));
+                {
+                    PlayerPrefs.SetString(keyStrategy.PlayerPrefsKey, identitySerializer.Serialize(value));
+                    OnIdentityChanged?.Invoke();
+                }
             }
         }
 
-        public PlayerPrefsIdentityProvider(IWeb3IdentityJsonSerializer identitySerializer, string playerPrefsKey = DEFAULT_PREFS_KEY)
+        public PlayerPrefsIdentityProvider(IWeb3IdentityJsonSerializer identitySerializer, IPlayerPrefsIdentityProviderKeyStrategy keyStrategy)
         {
             this.identitySerializer = identitySerializer;
-            this.playerPrefsKey = playerPrefsKey;
+            this.keyStrategy = keyStrategy;
         }
 
-        public void Dispose() { }
+        public void Dispose()
+        {
+            keyStrategy.Dispose();
+        }
 
         public void Clear()
         {
-            PlayerPrefs.DeleteKey(playerPrefsKey);
+            PlayerPrefs.DeleteKey(keyStrategy.PlayerPrefsKey);
+            OnIdentityCleared?.Invoke();
         }
     }
 }
