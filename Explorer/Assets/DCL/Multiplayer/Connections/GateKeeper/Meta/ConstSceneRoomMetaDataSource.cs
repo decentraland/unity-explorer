@@ -28,7 +28,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
             return new ConstSceneRoomMetaDataSource(hashed);
         }
 
-        public bool ScenesCommunicationIsIsolated => true;
+        public bool ScenesCommunicationIsIsolated => false;
 
         public bool MetadataIsDirty => false;
 
