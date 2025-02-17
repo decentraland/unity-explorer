@@ -12,10 +12,10 @@ namespace DCL.Roads.GPUInstancing
     [ExecuteAlways]
     public class GPUInstancingServicePlayground : MonoBehaviour
     {
-    #if UNITY_EDITOR
         public ComputeShader FrustumCullingAndLODGenComputeShader;
         public ComputeShader IndirectBufferGenerationComputeShader;
 
+#if UNITY_EDITOR
         private GPUInstancingService instancingService;
 
         public Transform roadsRoot;
@@ -41,7 +41,7 @@ namespace DCL.Roads.GPUInstancing
 
         private void OnEnable()
         {
-            instancingService = new (FrustumCullingAndLODGenComputeShader, IndirectBufferGenerationComputeShader);
+            instancingService = new GPUInstancingService(FrustumCullingAndLODGenComputeShader, IndirectBufferGenerationComputeShader);
         }
 
         private void OnDisable()
@@ -79,8 +79,8 @@ namespace DCL.Roads.GPUInstancing
         [ContextMenu(nameof(AddRoadsToService))]
         private void AddRoadsToService()
         {
-            instancingService.Dispose();
-            instancingService.AddToIndirect(RoadsConfig.IndirectLODGroups);
+            instancingService?.Dispose();
+            instancingService?.AddToIndirect(RoadsConfig.IndirectLODGroups);
         }
 
         [ContextMenu(nameof(HideAll))]

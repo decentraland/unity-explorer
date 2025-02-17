@@ -460,6 +460,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d3d1aa6130624aef8f718d1dc5f139a9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  FrustumCullingAndLODGenComputeShader: {fileID: 7200000, guid: 17fd5bf4525e4c7eb3384974e131d2a8, type: 3}
+  IndirectBufferGenerationComputeShader: {fileID: 7200000, guid: ce2f103db0fd4bf086f0f4a36ae38c03, type: 3}
   launchSettings:
     initialRealm: 0
     targetScene: {x: 0, y: 0}
@@ -494,10 +496,10 @@ MonoBehaviour:
     <DropdownField>k__BackingField: {fileID: 9197481963319205126, guid: 63de32c36b8356d42bb93522421d6379, type: 3}
   debugSettings:
     showSplash: 1
-    showAuthentication: 1
+    showAuthentication: 0
     showLoading: 1
     enableLandscape: 0
-    enableLOD: 0
+    enableLOD: 1
     enableVersionUpdateGuard: 0
     enableEmulateNoLivekitConnection: 0
     enableRemotePortableExperiences: 0

@@ -43,6 +43,9 @@ namespace Global.Dynamic
 {
     public class MainSceneLoader : MonoBehaviour, ICoroutineRunner
     {
+        public ComputeShader FrustumCullingAndLODGenComputeShader;
+        public ComputeShader IndirectBufferGenerationComputeShader;
+
         [Header("Startup Config")] [SerializeField]
         private RealmLaunchSettings launchSettings = null!;
 
@@ -200,7 +203,8 @@ namespace Global.Dynamic
 
                 bool isLoaded;
                 Entity playerEntity = world.Create(new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY));
-                (staticContainer, isLoaded) = await bootstrap.LoadStaticContainerAsync(bootstrapContainer, globalPluginSettingsContainer, debugContainerBuilder, playerEntity, TextureFuseFactory(), memoryCap, scenesUIRoot, ct);
+                (staticContainer, isLoaded) = await bootstrap.LoadStaticContainerAsync(FrustumCullingAndLODGenComputeShader, IndirectBufferGenerationComputeShader, bootstrapContainer,
+                    globalPluginSettingsContainer, debugContainerBuilder, playerEntity, TextureFuseFactory(), memoryCap, scenesUIRoot, ct);
 
                 if (!isLoaded)
                 {

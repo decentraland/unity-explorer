@@ -132,6 +132,7 @@ namespace Global
         }
 
         public static async UniTask<(StaticContainer? container, bool success)> CreateAsync(
+            ComputeShader frustumCullingAndLODGenComputeShader, ComputeShader indirectBufferGenerationComputeShader,
             IDecentralandUrlsSource decentralandUrlsSource,
             IAssetsProvisioner assetsProvisioner,
             IReportsHandlingSettings reportHandlingSettings,
@@ -173,7 +174,7 @@ namespace Global
             container.texturesFuse = texturesFuse;
 
             var exposedPlayerTransform = new ExposedTransform();
-            container.GPUInstancingService = new GPUInstancingService(null, null);
+            container.GPUInstancingService = new GPUInstancingService(frustumCullingAndLODGenComputeShader, indirectBufferGenerationComputeShader);
             container.CharacterContainer = new CharacterContainer(container.assetsProvisioner, exposedGlobalDataContainer.ExposedCameraData, exposedPlayerTransform);
 
             bool result = await InitializeContainersAsync(container, settingsContainer, ct);
