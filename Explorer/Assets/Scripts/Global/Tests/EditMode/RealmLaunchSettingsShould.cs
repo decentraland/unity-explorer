@@ -3,6 +3,7 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.WebRequests;
 using Global.AppArgs;
 using Global.Dynamic;
+using Global.Dynamic.LaunchModes;
 using Global.Dynamic.RealmUrl;
 using Global.Dynamic.RealmUrl.Names;
 using NUnit.Framework;
@@ -21,13 +22,12 @@ namespace Global.Tests.EditMode
                 "decentraland://?realm=http://127.0.0.1:8000&position=100,100&local-scene=true"
             });
 
-            DecentralandUrlsSource dclUrlSource = new (DecentralandEnvironment.Org);
-
             realmLaunchSettings.ApplyConfig(applicationParametersParser);
 
+            DecentralandUrlsSource dclUrlSource = new (DecentralandEnvironment.Org, realmLaunchSettings);
             IRealmUrls realmUrls = new RealmUrls(realmLaunchSettings, new RealmNamesMap(IWebRequestController.DEFAULT), dclUrlSource);
 
-            Assert.IsTrue(realmLaunchSettings.IsLocalSceneDevelopmentRealm);
+            Assert.IsTrue(realmLaunchSettings.CurrentMode is LaunchMode.LocalSceneDevelopment);
             Assert.AreEqual("http://127.0.0.1:8000", realmUrls.LocalSceneDevelopmentRealmBlocking()!);
             Assert.AreEqual(100, realmLaunchSettings.targetScene.x);
             Assert.AreEqual(100, realmLaunchSettings.targetScene.y);
@@ -43,13 +43,12 @@ namespace Global.Tests.EditMode
                 "decentraland://?realm=http://127.0.0.1:8000&position=70,70",
             });
 
-            DecentralandUrlsSource dclUrlSource = new (DecentralandEnvironment.Org);
-
             realmLaunchSettings.ApplyConfig(applicationParametersParser);
 
+            DecentralandUrlsSource dclUrlSource = new (DecentralandEnvironment.Org, realmLaunchSettings);
             IRealmUrls realmUrls = new RealmUrls(realmLaunchSettings, new RealmNamesMap(IWebRequestController.DEFAULT), dclUrlSource);
 
-            Assert.IsFalse(realmLaunchSettings.IsLocalSceneDevelopmentRealm);
+            Assert.IsFalse(realmLaunchSettings.CurrentMode is LaunchMode.LocalSceneDevelopment);
             Assert.AreEqual("http://127.0.0.1:8000", realmUrls.StartingRealmBlocking());
             Assert.AreEqual(70, realmLaunchSettings.targetScene.x);
             Assert.AreEqual(70, realmLaunchSettings.targetScene.y);
@@ -84,10 +83,9 @@ namespace Global.Tests.EditMode
                 realm,
             });
 
-            DecentralandUrlsSource dclUrlSource = new (DecentralandEnvironment.Org);
-
             realmLaunchSettings.ApplyConfig(applicationParametersParser);
 
+            DecentralandUrlsSource dclUrlSource = new (DecentralandEnvironment.Org, realmLaunchSettings);
             IRealmUrls realmUrls = new RealmUrls(realmLaunchSettings, new RealmNamesMap(IWebRequestController.DEFAULT), dclUrlSource);
 
             Assert.AreEqual(realm, realmUrls.StartingRealmBlocking());
@@ -105,10 +103,9 @@ namespace Global.Tests.EditMode
                 world,
             });
 
-            DecentralandUrlsSource dclUrlSource = new (DecentralandEnvironment.Org);
-
             realmLaunchSettings.ApplyConfig(applicationParametersParser);
 
+            DecentralandUrlsSource dclUrlSource = new (DecentralandEnvironment.Org, realmLaunchSettings);
             IRealmUrls realmUrls = new RealmUrls(realmLaunchSettings, new RealmNamesMap(IWebRequestController.DEFAULT), dclUrlSource);
 
             Assert.AreEqual($"https://worlds-content-server.decentraland.org/world/{world}", realmUrls.StartingRealmBlocking());

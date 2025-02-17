@@ -22,6 +22,7 @@ using ECS.StreamableLoading.NFTShapes;
 using ECS.StreamableLoading.NFTShapes.URNs;
 using ECS.StreamableLoading.Textures;
 using ECS.Unity.Transforms.Components;
+using Global.Dynamic.LaunchModes;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -68,7 +69,7 @@ namespace DCL.SDKComponents.NFTShape.Demo
                         }
                     )
                 ).InitializeAndReturnSelf(),
-                w => new LoadCycleNftShapeSystem(w, new BasedURNSource(new DecentralandUrlsSource(DecentralandEnvironment.Org))),
+                w => new LoadCycleNftShapeSystem(w, new BasedURNSource(new DecentralandUrlsSource(DecentralandEnvironment.Org, ILaunchMode.PLAY))),
                 w => new InstantiateNftShapeSystem(w, new PoolNFTShapeRendererFactory(new ComponentPoolsRegistry(), framesPool), new FrameTimeCapBudget.Default(), framePrefabs, buffer),
                 w => new VisibilityNftShapeSystem(w, buffer)
             );

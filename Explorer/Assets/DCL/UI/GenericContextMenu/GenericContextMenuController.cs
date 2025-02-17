@@ -14,9 +14,9 @@ namespace DCL.UI.GenericContextMenu
         private enum ContextMenuOpenDirection
         {
             BOTTOM_RIGHT,
+            TOP_RIGHT,
             BOTTOM_LEFT,
             TOP_LEFT,
-            TOP_RIGHT
         }
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;

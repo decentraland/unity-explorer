@@ -246,6 +246,7 @@ GameObject:
   - component: {fileID: 4754064954679370281}
   - component: {fileID: 2380315831848862698}
   - component: {fileID: 7506631029325872581}
+  - component: {fileID: 1933976336223896686}
   m_Layer: 5
   m_Name: ButtonWithTextAndIcon
   m_TagString: Untagged
@@ -369,10 +370,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   <RectTransformComponent>k__BackingField: {fileID: 5856922699228769623}
+  <HorizontalLayoutComponent>k__BackingField: {fileID: 7506631029325872581}
   <ButtonComponent>k__BackingField: {fileID: 4754064954679370281}
   <TextComponent>k__BackingField: {fileID: 8655627310085805794}
   <ImageComponent>k__BackingField: {fileID: 6260016763612421407}
-  <HorizontalLayoutComponent>k__BackingField: {fileID: 7506631029325872581}
 --- !u!114 &7506631029325872581
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -399,3 +400,18 @@ MonoBehaviour:
   m_ChildScaleWidth: 0
   m_ChildScaleHeight: 0
   m_ReverseArrangement: 0
+--- !u!114 &1933976336223896686
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6449720775875921457}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1cdc6c1a43024e58bcd05d3e69a19db4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  <Button>k__BackingField: {fileID: 4754064954679370281}
+  <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
+  <ButtonHoverAudio>k__BackingField: {fileID: 11400000, guid: 59da234351971c0498a566fb811b0c36, type: 2}

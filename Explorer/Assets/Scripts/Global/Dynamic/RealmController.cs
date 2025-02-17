@@ -22,7 +22,8 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
  using DCL.RealmNavigation;
-using Unity.Mathematics;
+ using Global.AppArgs;
+ using Unity.Mathematics;
 
 namespace Global.Dynamic
 {
@@ -48,13 +49,13 @@ namespace Global.Dynamic
         private readonly bool isLocalSceneDevelopment;
         private readonly RealmNavigatorDebugView realmNavigatorDebugView;
         private readonly URLDomain assetBundleRegistry;
-
+        private readonly IAppArgs appArgs;
 
         private GlobalWorld? globalWorld;
         private Entity realmEntity;
 
 
-        
+
         public IRealmData RealmData => realmData;
 
         public URLDomain? CurrentDomain { get; private set; }
@@ -83,7 +84,8 @@ namespace Global.Dynamic
             IComponentPool<PartitionComponent> partitionComponentPool,
             RealmNavigatorDebugView realmNavigatorDebugView,
             bool isLocalSceneDevelopment,
-            URLDomain assetBundleRegistry)
+            URLDomain assetBundleRegistry,
+            IAppArgs appArgs)
         {
             this.web3IdentityCache = web3IdentityCache;
             this.webRequestController = webRequestController;
@@ -98,6 +100,7 @@ namespace Global.Dynamic
             this.isLocalSceneDevelopment = isLocalSceneDevelopment;
             this.realmNavigatorDebugView = realmNavigatorDebugView;
             this.assetBundleRegistry = assetBundleRegistry;
+            this.appArgs = appArgs;
         }
 
         public async UniTask SetRealmAsync(URLDomain realm, CancellationToken ct)
@@ -120,7 +123,7 @@ namespace Global.Dynamic
                 new IpfsRealm(web3IdentityCache, webRequestController, realm, assetBundleRegistry, result),
                 result.configurations.realmName.EnsureNotNull("Realm name not found"),
                 result.configurations.networkId,
-                result.comms?.adapter ?? result.comms?.fixedAdapter ?? "offline:offline", //"offline property like in previous implementation"
+                ResolveCommsAdapter(result),
                 result.comms?.protocol ?? "v3",
                 hostname,
                 isLocalSceneDevelopment
@@ -274,6 +277,15 @@ namespace Global.Dynamic
                     : new Uri(realm.Value).Host;
 
             return hostname;
+        }
+
+        private string ResolveCommsAdapter(ServerAbout about)
+        {
+            if (appArgs.TryGetValue(AppArgsFlags.COMMS_ADAPTER, out string? arg) && !string.IsNullOrEmpty(arg))
+                return arg;
+
+            //"offline property like in previous implementation"
+            return about.comms?.adapter ?? about.comms?.fixedAdapter ?? "offline:offline";
         }
     }
 }
