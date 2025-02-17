@@ -84,9 +84,10 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
 
             system.Update(0);
 
-            while (!world.Get<StreamableLoadingState>(promises[0].Entity).PartialDownloadingData.HasValue)
+            foreach (var assetPromise in promises)
             {
-                await UniTask.Yield();
+                await assetPromise.ToUniTaskAsync(world);
+                assetPromise.ForgetLoading(world);
             }
 
             foreach (var assetPromise in promises)

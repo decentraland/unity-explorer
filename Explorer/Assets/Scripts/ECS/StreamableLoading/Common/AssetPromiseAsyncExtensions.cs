@@ -23,5 +23,21 @@ namespace ECS.StreamableLoading.Common
             // Return promise as it is modified
             return promise;
         }
+
+        /// <summary>
+        ///     Wait for the results to be ready, does not consume and does not destroy the entity
+        /// </summary>
+        public static async UniTask<AssetPromise<TAsset, TLoadingIntention>> ToUniTaskAsyncWithoutDestroy<TAsset, TLoadingIntention>(this AssetPromise<TAsset, TLoadingIntention> promise,
+            World world,
+            PlayerLoopTiming playerLoopTiming = PlayerLoopTiming.Update,
+            CancellationToken cancellationToken = default)
+            where TLoadingIntention: IAssetIntention, IEquatable<TLoadingIntention>
+        {
+            do await UniTask.Yield(playerLoopTiming, cancellationToken);
+            while (!promise.TryGetResult(world, out _));
+
+            // Return promise as it is modified
+            return promise;
+        }
     }
 }
