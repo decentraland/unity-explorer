@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
-using Utility;
 
 namespace DCL.Roads.GPUInstancing.Playground
 {

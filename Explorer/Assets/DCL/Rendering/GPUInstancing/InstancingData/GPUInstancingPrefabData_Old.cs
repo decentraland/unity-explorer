@@ -30,12 +30,12 @@ namespace DCL.Roads.GPUInstancing.Playground
         }
 
         [ContextMenu(nameof(HideVisuals))]
-        public void HideVisuals()
+        private void HideVisuals()
         {
             foreach (Renderer instancedRenderer in InstancedRenderers) { instancedRenderer.enabled = false; }
         }
 
-        public void ShowVisuals()
+        private void ShowVisuals()
         {
             return;
 
@@ -189,7 +189,7 @@ namespace DCL.Roads.GPUInstancing.Playground
         private bool IsSingleRenderingDataSame(MeshRenderer meshRenderer, GPUInstancingCandidate_Old existing) =>
             AreMeshRenderersEquivalent(meshRenderer, existing.Lods_Old[0].MeshRenderingDatas[0].Renderer);
 
-        public static bool AreMeshRenderersEquivalent(MeshRenderer mrA, MeshRenderer mrB)
+        private static bool AreMeshRenderersEquivalent(MeshRenderer mrA, MeshRenderer mrB)
         {
             if (mrA == null) return false;
             if (mrA.GetComponent<MeshFilter>().sharedMesh != mrB.GetComponent<MeshFilter>().sharedMesh) return false;
@@ -215,10 +215,10 @@ namespace DCL.Roads.GPUInstancing.Playground
             return true;
         }
 
-        public static bool HasSimilarName(GameObject go1, GameObject go2) =>
+        private static bool HasSimilarName(GameObject go1, GameObject go2) =>
             go1.name.Contains(go2.name) || go2.name.Contains(go1.name);
 
-        public static bool AreSamePrefabAsset(GameObject go1, GameObject go2)
+        private static bool AreSamePrefabAsset(GameObject go1, GameObject go2)
         {
             if (go1 == null || go2 == null) return false;
 
@@ -283,7 +283,7 @@ namespace DCL.Roads.GPUInstancing.Playground
         }
 
         [ContextMenu(nameof(CollectSelfData))]
-        public void CollectSelfData()
+        private void CollectSelfData()
         {
             string assetPath = PrefabUtility.GetPrefabAssetPathOfNearestInstanceRoot(gameObject);
 

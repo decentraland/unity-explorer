@@ -295,10 +295,10 @@ namespace DCL.Roads.GPUInstancing
         {
             foreach (GPUInstancingPrefabData_Old prefab in originalPrefabs)
             {
-                prefab.CollectSelfData();
-                prefab.ShowVisuals();
-
 #if UNITY_EDITOR
+                // prefab.CollectSelfData();
+                // prefab.ShowVisuals();
+
                 EditorUtility.SetDirty(this);
                 AssetDatabase.SaveAssets();
 #endif
@@ -307,10 +307,10 @@ namespace DCL.Roads.GPUInstancing
 
         private void SpawnOriginalPrefab(GPUInstancingPrefabData_Old prefab, Vector2 pos)
         {
-            if (DisableMeshRenderers)
-                prefab.HideVisuals();
-            else
-                prefab.ShowVisuals();
+            // if (DisableMeshRenderers)
+            //     prefab.HideVisuals();
+            // else
+            //     prefab.ShowVisuals();
 
             if (originalInstance == null || originalInstance.name != prefab.name)
             {
@@ -322,7 +322,7 @@ namespace DCL.Roads.GPUInstancing
                 originalInstance.transform.Translate(pos.x, 0, pos.y);
             }
 
-            prefab.CollectSelfData();
+            // prefab.CollectSelfData();
         }
     }
 }

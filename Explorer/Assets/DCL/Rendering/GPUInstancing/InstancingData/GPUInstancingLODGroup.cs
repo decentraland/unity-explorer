@@ -32,7 +32,7 @@ namespace DCL.Roads.GPUInstancing.Playground
 
 #if UNITY_EDITOR
         [ContextMenu(nameof(HideAll))]
-        public void HideAll()
+        private void HideAll()
         {
             foreach (Renderer refRenderer in RefRenderers)
                 refRenderer.enabled = false;
@@ -43,7 +43,7 @@ namespace DCL.Roads.GPUInstancing.Playground
         }
 
         [ContextMenu(nameof(ShowAll))]
-        public void ShowAll()
+        private void ShowAll()
         {
             if(Reference!= null) Reference.enabled = true;
 
@@ -51,7 +51,7 @@ namespace DCL.Roads.GPUInstancing.Playground
         }
 
         [ContextMenu(nameof(CollectStandaloneRenderers))]
-        public void CollectStandaloneRenderers()
+        private void CollectStandaloneRenderers()
         {
             var renderer = GetComponent<MeshRenderer>();
             var meshFilter = GetComponent<MeshFilter>();
@@ -79,7 +79,7 @@ namespace DCL.Roads.GPUInstancing.Playground
         }
 
         [ContextMenu(nameof(CollectSelfData))]
-        public void CollectSelfData()
+        private void CollectSelfData()
         {
             if (GetComponentsInChildren<GPUInstancingLODGroup>().Length > 1)
                 Debug.LogWarning($"{name} has nested GPU instancing candidates, that could lead to duplication of meshes!");
@@ -142,7 +142,7 @@ namespace DCL.Roads.GPUInstancing.Playground
             AssetDatabase.SaveAssets();
         }
 
-        public void BuildLODMatrix(int lodsLength)
+        private void BuildLODMatrix(int lodsLength)
         {
             LODSizesMatrix = new Matrix4x4();
             const float overlapFactor = 0.20f;
@@ -253,7 +253,7 @@ namespace DCL.Roads.GPUInstancing.Playground
             Debug.Log($"Combined mesh saved as a sub-asset in: {assetPath}");
         }
 
-        public void UpdateBoundsByCombinedLods()
+        private void UpdateBoundsByCombinedLods()
         {
             var isInitialized = false;
 
@@ -359,7 +359,6 @@ namespace DCL.Roads.GPUInstancing.Playground
 
             return hashCode.ToHashCode();
         }
-
 
         public override bool Equals(object obj) =>
             Equals(obj as GPUInstancingLODGroup);

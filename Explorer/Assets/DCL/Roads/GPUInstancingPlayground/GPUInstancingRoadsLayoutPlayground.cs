@@ -179,15 +179,15 @@ namespace DCL.Roads.GPUInstancing.Playground
 
                 if (prefab != null)
                 {
-                    GPUInstancingPrefabData_Old gpuInstancedPrefabBeh = prefab.GetComponent<GPUInstancingPrefabData_Old>();
-                    gpuInstancedPrefabBeh.CollectSelfData();
+                    // GPUInstancingPrefabData_Old gpuInstancedPrefabBeh = prefab.GetComponent<GPUInstancingPrefabData_Old>();
+                    // gpuInstancedPrefabBeh.CollectSelfData();
+                    //
+                    // if (HideRoadsVisual)
+                    //     gpuInstancedPrefabBeh.HideVisuals();
+                    // else
+                    //     gpuInstancedPrefabBeh.ShowVisuals();
 
-                    if (HideRoadsVisual)
-                        gpuInstancedPrefabBeh.HideVisuals();
-                    else
-                        gpuInstancedPrefabBeh.ShowVisuals();
-
-                    cachedPrefabs.Add(gpuInstancedPrefabBeh);
+                    // cachedPrefabs.Add(gpuInstancedPrefabBeh);
                 }
 
                 operation.Release();

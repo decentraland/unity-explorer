@@ -25,14 +25,14 @@ namespace DCL.Roads.Settings
 #if UNITY_EDITOR
         public void HideAll()
         {
-            foreach (GPUInstancingLODGroup prop in PropsAndTiles)
-                prop.HideAll();
+            // foreach (GPUInstancingLODGroup prop in PropsAndTiles)
+                // prop.HideAll();
         }
 
         public void ShowAll()
         {
-            foreach (GPUInstancingLODGroup prop in PropsAndTiles)
-                prop.ShowAll();
+            // foreach (GPUInstancingLODGroup prop in PropsAndTiles)
+                // prop.ShowAll();
         }
 
         public void CollectGPUInstancingLODGroups(Vector2Int min, Vector2Int max)
