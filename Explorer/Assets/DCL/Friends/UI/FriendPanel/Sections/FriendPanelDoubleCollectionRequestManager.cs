@@ -83,9 +83,9 @@ namespace DCL.Friends.UI.FriendPanel.Sections
         {
             LoopListViewItem2 listItem = null;
             int onlineFriendMarker = excludeFirstCollection ? 0 : GetFirstCollectionCount();
-            if (GetFirstCollectionCount() == 0) onlineFriendMarker++; //Count the empty element
+            if (GetFirstCollectionCount() == 0 && !excludeFirstCollection) onlineFriendMarker++; //Count the empty element
             int offlineFriendMarker = excludeSecondCollection ? 0 : GetSecondCollectionCount();
-            if (GetSecondCollectionCount() == 0) offlineFriendMarker++; //Count the empty element
+            if (GetSecondCollectionCount() == 0 && !excludeSecondCollection) offlineFriendMarker++; //Count the empty element
 
             if (index == 0)
             {
@@ -97,7 +97,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections
             }
             else if (index > 0 && index <= onlineFriendMarker)
             {
-                if (GetFirstCollectionCount() == 0)
+                if (GetFirstCollectionCount() == 0 && !excludeFirstCollection)
                     listItem = loopListView.NewListViewItem(loopListView.ItemPrefabDataList[emptyElementIndex].mItemPrefab.name);
                 else
                 {
@@ -122,7 +122,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections
             }
             else if (index > onlineFriendMarker + 1 && index <= onlineFriendMarker + 1 + offlineFriendMarker + 1)
             {
-                if (GetSecondCollectionCount() == 0)
+                if (GetSecondCollectionCount() == 0 && !excludeSecondCollection)
                     listItem = loopListView.NewListViewItem(loopListView.ItemPrefabDataList[emptyElementIndex].mItemPrefab.name);
                 else
                 {
@@ -173,10 +173,10 @@ namespace DCL.Friends.UI.FriendPanel.Sections
             if (!excludeSecondCollection)
                 count += GetSecondCollectionCount();
 
-            if (GetFirstCollectionCount() == 0)
+            if (GetFirstCollectionCount() == 0 && !excludeFirstCollection)
                 count++;
 
-            if (GetSecondCollectionCount() == 0)
+            if (GetSecondCollectionCount() == 0 && !excludeSecondCollection)
                 count++;
 
             return count;
