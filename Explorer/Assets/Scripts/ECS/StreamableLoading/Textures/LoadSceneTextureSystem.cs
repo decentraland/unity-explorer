@@ -36,7 +36,7 @@ namespace ECS.StreamableLoading.Textures
             // Fallback to regular texture download
             // Needed for external textures
             ReportHub.Log(GetReportCategory(), $"Texture not found in  scene AssetBundle. Downloading from URL: {intention.CommonArguments.URL.Value}");
-            var result = await TryTextureDownload(intention, ct);
+            var result = await TryTextureDownloadAsync(intention, ct);
 
             return new StreamableLoadingResult<Texture2DData>(new Texture2DData(result.EnsureNotNull()));
         }
