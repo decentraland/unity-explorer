@@ -69,24 +69,26 @@ namespace ECS.SceneLifeCycle.Systems
         
         private void UpdateSceneReadiness(Vector2Int parcel)
         {
-            if (!scenesCache.TryGetByParcel(parcel, out var currentScene)){
+            if (scenesCache.TryGetByParcel(parcel, out var currentScene))
+            {
+                if (currentActiveScene != currentScene)
+                {
+                    currentActiveScene?.SetIsCurrent(false);
+
+                    currentActiveScene = currentScene;
+                
+                    currentActiveScene.SetIsCurrent(true);
+                    currentSceneInfo.Update(currentActiveScene);
+                    scenesCache.SetCurrentScene(currentActiveScene);
+                }
+            }
+            else
+            {
                 if(currentActiveScene != null)
                 {
                     currentActiveScene.SetIsCurrent(false);
                     currentActiveScene = null;
                 }
-                return;
-            }
-                
-            if (currentActiveScene != currentScene)
-            {
-                currentActiveScene?.SetIsCurrent(false);
-
-                currentActiveScene = currentScene;
-                
-                currentActiveScene.SetIsCurrent(true);
-                currentSceneInfo.Update(currentActiveScene);
-                scenesCache.SetCurrentScene(currentActiveScene);
             }
         }
 
