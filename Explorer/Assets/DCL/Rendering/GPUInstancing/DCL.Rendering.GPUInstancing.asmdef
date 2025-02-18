@@ -2,9 +2,10 @@
     "name": "DCL.Rendering.GPUInstancing",
     "rootNamespace": "",
     "references": [
+        "GUID:15fc0a57446b3144c949da3e2b9737a9",
+        "GUID:df380645f10b7bc4b97d4f5eb6303d95",
         "GUID:fa7b3fdbb04d67549916da7bd2af58ab",
-        "GUID:478a2357cc57436488a56e564b08d223",
-        "GUID:30e71cae72d2eb34584696878bc78813"
+        "GUID:e0eedfa2deb9406daf86fd8368728e39"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

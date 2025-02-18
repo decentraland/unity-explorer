@@ -18,7 +18,6 @@ namespace DCL.Roads.GPUInstancing.Playground
             {
                 Matrix4x4 localToRootMatrix = transform.worldToLocalMatrix * lodGroup.transform.localToWorldMatrix; // root * child
                 TryAddToCollected(lodGroup, localToRootMatrix);
-                // lodGroup.HideAll();
             }
 
             foreach (KeyValuePair<GPUInstancingLODGroup,List<PerInstanceBuffer>> pair in candidatesTable)

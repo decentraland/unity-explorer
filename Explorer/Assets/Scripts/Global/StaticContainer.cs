@@ -48,7 +48,10 @@ using ECS.StreamableLoading.Textures;
 using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using PortableExperiences.Controller;
 using System.IO;
+using System.Linq;
 using UnityEngine;
+using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
 using UnityEngine.UIElements;
 using Utility;
 using MultiplayerPlugin = DCL.PluginSystem.World.MultiplayerPlugin;
@@ -132,7 +135,6 @@ namespace Global
         }
 
         public static async UniTask<(StaticContainer? container, bool success)> CreateAsync(
-            ComputeShader frustumCullingAndLODGenComputeShader, ComputeShader indirectBufferGenerationComputeShader,
             IDecentralandUrlsSource decentralandUrlsSource,
             IAssetsProvisioner assetsProvisioner,
             IReportsHandlingSettings reportHandlingSettings,
@@ -174,7 +176,7 @@ namespace Global
             container.texturesFuse = texturesFuse;
 
             var exposedPlayerTransform = new ExposedTransform();
-            container.GPUInstancingService = new GPUInstancingService(frustumCullingAndLODGenComputeShader, indirectBufferGenerationComputeShader);
+
             container.CharacterContainer = new CharacterContainer(container.assetsProvisioner, exposedGlobalDataContainer.ExposedCameraData, exposedPlayerTransform);
 
             bool result = await InitializeContainersAsync(container, settingsContainer, ct);
@@ -225,6 +227,16 @@ namespace Global
                 if (container.ScenesCache.CurrentScene != null)
                     diagnosticsContainer.Sentry!.AddCurrentSceneToScope(scope, container.ScenesCache.CurrentScene.Info);
             });
+
+            var renderFeature = container.QualityContainer.RendererFeaturesCache.GetRendererFeature<GPUInstancingRenderFeature>();
+            if (renderFeature != null)
+            {
+                container.GPUInstancingService = new GPUInstancingService(renderFeature.Settings);
+                renderFeature.Initialize(container.GPUInstancingService, container.RealmData);
+            }
+            else
+                ReportHub.LogError("No renderer feature presented.", ReportCategory.GPU_INSTANCING);
+
 
             container.LoadingStatus = enableAnalytics ? new LoadingStatusAnalyticsDecorator(new LoadingStatus(), analyticsController) : new LoadingStatus();
 

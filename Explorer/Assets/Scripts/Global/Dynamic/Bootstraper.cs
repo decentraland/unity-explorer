@@ -99,7 +99,6 @@ namespace Global.Dynamic
         }
 
         public async UniTask<(StaticContainer?, bool)> LoadStaticContainerAsync(
-            ComputeShader frustumCullingAndLODGenComputeShader, ComputeShader indirectBufferGenerationComputeShader,
             BootstrapContainer bootstrapContainer,
             PluginSettingsContainer globalPluginSettingsContainer,
             IDebugContainerBuilder debugContainerBuilder,
@@ -110,8 +109,6 @@ namespace Global.Dynamic
             CancellationToken ct
         ) =>
             await StaticContainer.CreateAsync(
-                frustumCullingAndLODGenComputeShader,
-                indirectBufferGenerationComputeShader,
                 bootstrapContainer.DecentralandUrlsSource,
                 bootstrapContainer.AssetsProvisioner,
                 bootstrapContainer.ReportHandlingSettings,

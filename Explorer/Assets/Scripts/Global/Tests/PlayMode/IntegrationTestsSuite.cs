@@ -62,7 +62,6 @@ namespace Global.Tests.PlayMode
             var diagnosticsContainer = DiagnosticsContainer.Create(reportSettings);
 
             (StaticContainer? staticContainer, bool success) = await StaticContainer.CreateAsync(
-                null, null,
                 dclUrls,
                 assetProvisioner,
                 Substitute.For<IReportsHandlingSettings>(),
