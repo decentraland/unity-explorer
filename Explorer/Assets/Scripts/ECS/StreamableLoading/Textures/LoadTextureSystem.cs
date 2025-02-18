@@ -37,7 +37,7 @@ namespace ECS.StreamableLoading.Textures
 
         protected abstract UniTask<StreamableLoadingResult<Texture2DData>> GetTextureAsync(GetTextureIntention intention, IPartitionComponent partition, CancellationToken ct);
 
-        protected async UniTask<IOwnedTexture2D> TryTextureDownload(GetTextureIntention intention, CancellationToken ct)
+        protected async UniTask<IOwnedTexture2D> TryTextureDownloadAsync(GetTextureIntention intention, CancellationToken ct)
         {
             // Attempts should be always 1 as there is a repeat loop in `LoadSystemBase`
             var result = await webRequestController.GetTextureAsync(
