@@ -78,7 +78,7 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
             List<AssetPromise<AssetBundleData, GetAssetBundleIntention>> resolvedPromises = new List<ABPromise>();
             foreach (ABPromise assetPromise in promises)
             {
-                AssetPromise<AssetBundleData,GetAssetBundleIntention> prom = await assetPromise.ToUniTaskAsyncWithoutDestroy(world);
+                AssetPromise<AssetBundleData,GetAssetBundleIntention> prom = await assetPromise.ToUniTaskWithoutDestroyAsync(world);
                 resolvedPromises.Add(prom);
             }
 
@@ -108,7 +108,7 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
             List<AssetPromise<AssetBundleData, GetAssetBundleIntention>> resolvedPromises = new List<ABPromise>();
             foreach (ABPromise assetPromise in promises)
             {
-                AssetPromise<AssetBundleData,GetAssetBundleIntention> prom = await assetPromise.ToUniTaskAsyncWithoutDestroy(world);
+                AssetPromise<AssetBundleData,GetAssetBundleIntention> prom = await assetPromise.ToUniTaskWithoutDestroyAsync(world);
                 resolvedPromises.Add(prom);
             }
 

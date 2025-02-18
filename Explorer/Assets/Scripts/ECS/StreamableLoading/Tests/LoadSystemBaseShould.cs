@@ -123,7 +123,7 @@ namespace ECS.StreamableLoading.Tests
             // Launch the flow
             system.Update(0);
 
-            await promise.ToUniTaskAsyncWithoutDestroy(world, cancellationToken: promise.LoadingIntention.CommonArguments.CancellationToken);
+            await promise.ToUniTaskWithoutDestroyAsync(world, cancellationToken: promise.LoadingIntention.CommonArguments.CancellationToken);
             Assert.AreEqual(AssetSource.NONE, world.Get<TIntention>(promise.Entity).CommonArguments.PermittedSources);
         }
 

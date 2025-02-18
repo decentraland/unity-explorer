@@ -27,7 +27,7 @@ namespace ECS.StreamableLoading.Common
         /// <summary>
         ///     Wait for the results to be ready, does not consume and does not destroy the entity
         /// </summary>
-        public static async UniTask<AssetPromise<TAsset, TLoadingIntention>> ToUniTaskAsyncWithoutDestroy<TAsset, TLoadingIntention>(this AssetPromise<TAsset, TLoadingIntention> promise,
+        public static async UniTask<AssetPromise<TAsset, TLoadingIntention>> ToUniTaskWithoutDestroyAsync<TAsset, TLoadingIntention>(this AssetPromise<TAsset, TLoadingIntention> promise,
             World world,
             PlayerLoopTiming playerLoopTiming = PlayerLoopTiming.Update,
             CancellationToken cancellationToken = default)
