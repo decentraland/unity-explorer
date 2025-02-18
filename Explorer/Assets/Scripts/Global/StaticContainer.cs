@@ -49,6 +49,7 @@ using ECS.StreamableLoading.Cache.Disk.Lock;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
+using Global.Dynamic.LaunchModes;
 using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using PortableExperiences.Controller;
 using System.Buffers;
@@ -112,8 +113,8 @@ namespace Global
         public IPortableExperiencesController PortableExperiencesController { get; private set; }
         public IDebugContainerBuilder DebugContainerBuilder { get; private set; }
         public ISceneRestrictionBusController SceneRestrictionBusController { get; private set; }
-
         public ILoadingStatus LoadingStatus { get; private set; }
+        public ILaunchMode LaunchMode { get; private set; }
 
         public void Dispose()
         {
@@ -146,7 +147,7 @@ namespace Global
             DiagnosticsContainer diagnosticsContainer,
             IWeb3IdentityCache web3IdentityProvider,
             IEthereumApi ethereumApi,
-            bool localSceneDevelopment,
+            ILaunchMode launchMode,
             bool useRemoteAssetBundles,
             World globalWorld,
             Entity playerEntity,
@@ -176,6 +177,7 @@ namespace Global
             container.MemoryCap = memoryCap;
             container.SceneRestrictionBusController = new SceneRestrictionBusController();
             container.texturesFuse = texturesFuse;
+            container.LaunchMode = launchMode;
 
             var exposedPlayerTransform = new ExposedTransform();
 
@@ -212,8 +214,7 @@ namespace Global
             container.PhysicsTickProvider = new PhysicsTickProvider();
             container.FeatureFlagsCache = new FeatureFlagsCache();
 
-            container.PortableExperiencesController = new ECSPortableExperiencesController(web3IdentityProvider, container.WebRequestsContainer.WebRequestController, container.ScenesCache, container.FeatureFlagsCache, localSceneDevelopment, decentralandUrlsSource);
-
+            container.PortableExperiencesController = new ECSPortableExperiencesController(web3IdentityProvider, container.WebRequestsContainer.WebRequestController, container.ScenesCache, container.FeatureFlagsCache, launchMode, decentralandUrlsSource);
 
             container.FeatureFlagsProvider = new HttpFeatureFlagsProvider(container.WebRequestsContainer.WebRequestController,
                 container.FeatureFlagsCache);
@@ -248,7 +249,7 @@ namespace Global
                 new VisibilityPlugin(),
                 new AudioSourcesPlugin(sharedDependencies, container.WebRequestsContainer.WebRequestController, container.CacheCleaner, container.assetsProvisioner),
                 assetBundlePlugin,
-                new GltfContainerPlugin(sharedDependencies, container.CacheCleaner, container.SceneReadinessReportQueue, componentsContainer.ComponentPoolsRegistry, localSceneDevelopment, useRemoteAssetBundles, container.WebRequestsContainer.WebRequestController, container.LoadingStatus),
+                new GltfContainerPlugin(sharedDependencies, container.CacheCleaner, container.SceneReadinessReportQueue, componentsContainer.ComponentPoolsRegistry, launchMode, useRemoteAssetBundles, container.WebRequestsContainer.WebRequestController, container.LoadingStatus),
                 new InteractionPlugin(sharedDependencies, profilingProvider, exposedGlobalDataContainer.GlobalInputEvents, componentsContainer.ComponentPoolsRegistry, container.assetsProvisioner),
                 new SceneUIPlugin(sharedDependencies, container.assetsProvisioner, container.InputBlock, container.InputProxy, scenesUIRoot),
                 container.CharacterContainer.CreateWorldPlugin(componentsContainer.ComponentPoolsRegistry),

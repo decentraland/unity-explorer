@@ -2,7 +2,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Browser;
-using DCL.Browser.DecentralandUrls;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PerformanceAndDiagnostics.Analytics;
@@ -15,14 +14,13 @@ using DCL.Web3.Abstract;
 using DCL.Web3.Accounts.Factory;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
-using DCL.WebRequests;
 using DCL.WebRequests.Analytics;
-using ECS.SceneLifeCycle.Realm;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Common.Components;
 using Global.AppArgs;
 using Plugins.RustSegment.SegmentServerWrap;
 using Global.Dynamic.DebugSettings;
+using Global.Dynamic.LaunchModes;
 using Global.Dynamic.RealmUrl;
 using Global.Versioning;
 using Plugins.TexturesFuse.TexturesServerWrap.CompressShaders;
@@ -55,7 +53,7 @@ namespace Global.Dynamic
         public WorldVolumeMacBus WorldVolumeMacBus { get; private set; }
         public IReportsHandlingSettings ReportHandlingSettings => reportHandlingSettings.Value;
         public IAppArgs ApplicationParametersParser { get; private set; }
-        public bool LocalSceneDevelopment { get; private set; }
+        public ILaunchMode LaunchMode { get; private set; }
         public bool UseRemoteAssetBundles { get; private set; }
 
         public DecentralandEnvironment Environment { get; private set; }
@@ -100,7 +98,7 @@ namespace Global.Dynamic
                 AssetsProvisioner = new AddressablesProvisioner(),
                 DecentralandUrlsSource = decentralandUrlsSource,
                 WebBrowser = browser,
-                LocalSceneDevelopment = realmLaunchSettings.IsLocalSceneDevelopmentRealm,
+                LaunchMode = realmLaunchSettings,
                 UseRemoteAssetBundles = realmLaunchSettings.useRemoteAssetsBundles,
                 ApplicationParametersParser = applicationParametersParser,
                 DebugSettings = debugSettings,
@@ -122,7 +120,7 @@ namespace Global.Dynamic
                     CrashDetector.Initialize(container.Analytics);
                 }
 
-                bool enableSceneDebugConsole = realmLaunchSettings.IsLocalSceneDevelopmentRealm || applicationParametersParser.HasFlag(AppArgsFlags.SCENE_CONSOLE);
+                bool enableSceneDebugConsole = realmLaunchSettings.CurrentMode is LaunchModes.LaunchMode.LocalSceneDevelopment || applicationParametersParser.HasFlag(AppArgsFlags.SCENE_CONSOLE);
                 container.DiagnosticsContainer = DiagnosticsContainer.Create(container.ReportHandlingSettings, enableSceneDebugConsole);
                 container.DiagnosticsContainer.AddSentryScopeConfigurator(AddIdentityToSentryScope);
 

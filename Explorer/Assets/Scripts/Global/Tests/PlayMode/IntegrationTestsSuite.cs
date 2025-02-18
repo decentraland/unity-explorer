@@ -17,7 +17,6 @@ using DCL.Web3;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
-using Global.AppArgs;
 using MVC;
 using MVC.PopupsController.PopupCloser;
 using NSubstitute;
@@ -27,6 +26,7 @@ using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.WebRequests.Analytics;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Common.Components;
+using Global.Dynamic.LaunchModes;
 using SceneRuntime.Factory.WebSceneSource;
 using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using UnityEngine;
@@ -47,7 +47,7 @@ namespace Global.Tests.PlayMode
             PluginSettingsContainer sceneSettingsContainer = await Addressables.LoadAssetAsync<PluginSettingsContainer>(WORLD_CONTAINER_ADDRESS);
             UIDocument scenesUI = (await Addressables.LoadAssetAsync<GameObject>(SCENES_UI_ADDRESS)).GetComponent<UIDocument>(); // This is / should be the only place where we load this via Addressables
             IAssetsProvisioner assetProvisioner = new AddressablesProvisioner().WithErrorTrace();
-            IDecentralandUrlsSource dclUrls = new DecentralandUrlsSource(DecentralandEnvironment.Org);
+            IDecentralandUrlsSource dclUrls = new DecentralandUrlsSource(DecentralandEnvironment.Org, ILaunchMode.PLAY);
 
             IWeb3IdentityCache identityCache = new MemoryWeb3IdentityCache();
 
@@ -73,7 +73,7 @@ namespace Global.Tests.PlayMode
                 diagnosticsContainer,
                 identityCache,
                 Substitute.For<IEthereumApi>(),
-                false,
+                ILaunchMode.PLAY,
                 false,
                 World.Create(),
                 new Entity(),

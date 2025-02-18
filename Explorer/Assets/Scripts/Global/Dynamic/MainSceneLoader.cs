@@ -162,7 +162,7 @@ namespace Global.Dynamic
             World world = World.Create();
 
             var splashScreen = new SplashScreen(splashScreenAnimation, splashRoot, debugSettings.ShowSplash, splashScreenText);
-            var decentralandUrlsSource = new DecentralandUrlsSource(decentralandEnvironment, launchSettings.IsLocalSceneDevelopmentRealm);
+            var decentralandUrlsSource = new DecentralandUrlsSource(decentralandEnvironment, launchSettings);
 
             var texturesFuse = TextureFuseFactory();
 

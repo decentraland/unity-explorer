@@ -15,12 +15,12 @@ namespace DCL.Profiles
             this.origin = origin;
         }
 
-        public async UniTask SetAsync(Profile profile, CancellationToken ct)
+        public async UniTask SetAsync(Profile profile, bool publish, CancellationToken ct)
         {
             ReportHub
                .WithReport(ReportCategory.PROFILE)
                .Log($"ProfileRepository: set requested for profile: {profile}");
-            await origin.SetAsync(profile, ct);
+            await origin.SetAsync(profile, publish: publish, ct);
             ReportHub
                .WithReport(ReportCategory.PROFILE)
                .Log($"ProfileRepository: set finished for profile: {profile}");

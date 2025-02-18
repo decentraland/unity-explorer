@@ -2,6 +2,7 @@ using Arch.Core;
 using AssetManagement;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Optimization.Hashing;
 using DCL.WebRequests;
 using DCL.WebRequests.PartialDownload;
 using ECS.Prioritization.Components;

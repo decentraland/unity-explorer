@@ -27,6 +27,7 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         AuthSignature,
 
         GateKeeperSceneAdapter,
+        LocalGateKeeperSceneAdapter,
 
         OpenSea,
 

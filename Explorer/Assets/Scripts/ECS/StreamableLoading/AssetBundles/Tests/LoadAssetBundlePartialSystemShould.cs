@@ -1,6 +1,7 @@
 ﻿using AssetManagement;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Optimization.Hashing;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Web3.Identities;
 using DCL.WebRequests;

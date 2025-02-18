@@ -1,5 +1,4 @@
 using DCL.Clipboard;
-using DCL.Profiles;
 using System;
 using UnityEngine;
 
@@ -18,24 +17,35 @@ namespace DCL.UI.GenericContextMenu.Controls.Configs
             BLOCKED,
         }
 
-        internal Profile profile;
-        internal FriendshipStatus friendshipStatus;
+        internal string userName;
+        internal string userAddress;
+        internal bool hasClaimedName;
+        internal Sprite? userThumbnail;
         internal Color userColor;
+        internal FriendshipStatus friendshipStatus;
         internal readonly RectOffset horizontalLayoutPadding;
         internal readonly ISystemClipboard systemClipboard;
-        internal readonly Action<Profile> requestFriendshipAction;
+        internal readonly Action<string, FriendshipStatus> requestFriendshipAction;
 
-        public UserProfileContextMenuControlSettings(ISystemClipboard systemClipboard, Action<Profile> requestFriendshipAction, RectOffset? horizontalLayoutPadding = null)
+        public UserProfileContextMenuControlSettings(ISystemClipboard systemClipboard, Action<string, FriendshipStatus> requestFriendshipAction, RectOffset? horizontalLayoutPadding = null)
         {
             this.systemClipboard = systemClipboard;
             this.requestFriendshipAction = requestFriendshipAction;
             this.horizontalLayoutPadding = horizontalLayoutPadding ?? DEFAULT_HORIZONTAL_LAYOUT_PADDING;
         }
 
-        public void SetInitialData(Profile profile, Color userColor, FriendshipStatus friendshipStatus)
+        public void SetInitialData(string userName,
+            string userAddress,
+            bool hasClaimedName,
+            Color userColor,
+            FriendshipStatus friendshipStatus,
+            Sprite? userThumbnail = null)
         {
-            this.profile = profile;
+            this.userName = userName;
+            this.userAddress = userAddress;
+            this.hasClaimedName = hasClaimedName;
             this.userColor = userColor;
+            this.userThumbnail = userThumbnail;
             this.friendshipStatus = friendshipStatus;
         }
     }

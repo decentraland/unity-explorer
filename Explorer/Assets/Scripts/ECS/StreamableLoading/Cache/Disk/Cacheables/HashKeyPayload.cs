@@ -1,3 +1,4 @@
+using DCL.Optimization.Hashing;
 using DCL.Optimization.ThreadSafePool;
 using System.Buffers.Binary;
 using System.Collections.Generic;
@@ -24,7 +25,7 @@ namespace ECS.StreamableLoading.Cache.Disk.Cacheables
 
         public HashKey NewHashKey()
         {
-            var memory = DiskHashing.ComputeHash(memoryList);
+            var memory = SHA256Hashing.ComputeHash(memoryList);
             return HashKey.FromOwnedMemory(memory);
         }
 
