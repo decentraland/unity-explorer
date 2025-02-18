@@ -1,7 +1,7 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.AuthenticationScreenFlow;
 using DCL.Chat;
-using DCL.ExplorePanel;
+using DCL.Friends.UI.FriendPanel;
 using DCL.InWorldCamera.PhotoDetail;
 using DCL.Passport;
 using DCL.PerformanceAndDiagnostics.Analytics.EventBased;
@@ -10,7 +10,6 @@ using MVC;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using UnityEngine;
 
 namespace DCL.PerformanceAndDiagnostics.Analytics
 {
@@ -37,6 +36,8 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
                 { typeof(PassportController), CreateAnalytics<PassportController>(c => new PassportAnalytics(analytics, c)) },
                 { typeof(AuthenticationScreenController), CreateAnalytics<AuthenticationScreenController>(c => new AuthenticationScreenAnalytics(analytics, c)) },
                 { typeof(SidebarController), CreateAnalytics<SidebarController>(c => new SupportAnalytics(analytics, c)) },
+                { typeof(FriendsPanelController), CreateAnalytics<FriendsPanelController>(c => new FriendsPanelAnalytics(analytics, c)) },
+                { typeof(PersistentFriendPanelOpenerController), CreateAnalytics<PersistentFriendPanelOpenerController>(c => new PersistentFriendPanelOpenerAnalytics(analytics, c)) },
             };
 
             Func<IController, IDisposable> CreateAnalytics<T>(Func<T, IDisposable> factory) where T: IController =>
