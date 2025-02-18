@@ -607,19 +607,14 @@ namespace Global.Dynamic
                 new ProfilePlugin(profileRepository, profileCache, staticContainer.CacheCleaner),
                 new MapRendererPlugin(mapRendererContainer.MapRenderer),
                 new SidebarPlugin(
-                    assetsProvisioner,
-                    mvcManager,
-                    mainUIView,
-                    notificationsBusController,
-                    notificationsRequestController,
-                    identityCache,
-                    profileRepository,
+                    assetsProvisioner, mvcManager, mainUIView, notificationsBusController,
+                    notificationsRequestController, identityCache, profileRepository,
                     staticContainer.WebRequestsContainer.WebRequestController,
-                    webBrowser,
-                    dynamicWorldDependencies.Web3Authenticator,
+                    webBrowser, dynamicWorldDependencies.Web3Authenticator,
                     initializationFlowContainer.InitializationFlow,
                     profileCache, sidebarBus, dclInput, sidebarActionsBus,
-                    globalWorld, playerEntity, includeCameraReel, includeFriends, chatHistory),
+                    globalWorld, playerEntity, includeCameraReel, includeFriends,
+                    chatHistory, profileNameColorHelper),
                 new ErrorPopupPlugin(mvcManager, assetsProvisioner),
                 connectionStatusPanelPlugin,
                 new MinimapPlugin(mvcManager, minimap),
@@ -730,7 +725,8 @@ namespace Global.Dynamic
                     assetsProvisioner,
                     mvcManager,
                     staticContainer.WebRequestsContainer.WebRequestController,
-                    notificationsBusController),
+                    notificationsBusController,
+                    profileNameColorHelper),
                 new RewardPanelPlugin(mvcManager, assetsProvisioner, notificationsBusController, staticContainer.WebRequestsContainer.WebRequestController),
                 new PassportPlugin(
                     assetsProvisioner,
@@ -826,7 +822,8 @@ namespace Global.Dynamic
                     includeUserBlocking,
                     appArgs,
                     staticContainer.FeatureFlagsCache,
-                    sidebarActionsBus));
+                    sidebarActionsBus,
+                    profileNameColorHelper));
             }
 
             if (dynamicWorldParams.EnableAnalytics)

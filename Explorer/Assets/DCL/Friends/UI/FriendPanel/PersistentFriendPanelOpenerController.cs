@@ -3,6 +3,7 @@ using DCL.Friends.UI.FriendPanel.Sections;
 using DCL.Friends.UI.Requests;
 using DCL.NotificationsBusController.NotificationsBus;
 using DCL.NotificationsBusController.NotificationTypes;
+using DCL.UI.Profiles.Helpers;
 using DCL.Web3;
 using MVC;
 using System;
@@ -18,6 +19,7 @@ namespace DCL.Friends.UI.FriendPanel
         private readonly DCLInput dclInput;
         private readonly IPassportBridge passportBridge;
         private readonly IFriendsService friendsService;
+        private readonly IProfileNameColorHelper profileNameColorHelper;
 
         private FriendsPanelController? friendsPanelController;
         private bool isFriendPanelControllerOpen;
@@ -30,13 +32,15 @@ namespace DCL.Friends.UI.FriendPanel
             DCLInput dclInput,
             INotificationsBusController notificationsBusController,
             IPassportBridge passportBridge,
-            IFriendsService friendsService)
+            IFriendsService friendsService,
+            IProfileNameColorHelper profileNameColorHelper)
             : base(viewFactory)
         {
             this.mvcManager = mvcManager;
             this.dclInput = dclInput;
             this.passportBridge = passportBridge;
             this.friendsService = friendsService;
+            this.profileNameColorHelper = profileNameColorHelper;
 
             notificationsBusController.SubscribeToNotificationTypeClick(NotificationType.SOCIAL_SERVICE_FRIENDSHIP_REQUEST, FriendRequestReceived);
             notificationsBusController.SubscribeToNotificationTypeClick(NotificationType.SOCIAL_SERVICE_FRIENDSHIP_ACCEPTED, FriendRequestAccepted);
@@ -92,8 +96,8 @@ namespace DCL.Friends.UI.FriendPanel
                             Request = new FriendRequest(
                                 friendRequestId: notification.Metadata.RequestId,
                                 timestamp: GetDateTimeFromString(notification.Timestamp),
-                                from: notification.Metadata.Sender.ToFriendProfile(),
-                                to: notification.Metadata.Receiver.ToFriendProfile(),
+                                from: notification.Metadata.Sender.ToFriendProfile(profileNameColorHelper),
+                                to: notification.Metadata.Receiver.ToFriendProfile(profileNameColorHelper),
                                 messageBody: notification.Metadata.Message)
                         }), ct).Forget();
                         break;

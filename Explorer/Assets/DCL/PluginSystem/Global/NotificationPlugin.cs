@@ -5,6 +5,7 @@ using DCL.Backpack;
 using DCL.Notifications;
 using DCL.Notifications.NewNotification;
 using DCL.NotificationsBusController.NotificationsBus;
+using DCL.UI.Profiles.Helpers;
 using DCL.WebRequests;
 using MVC;
 using System;
@@ -20,17 +21,20 @@ namespace DCL.PluginSystem.Global
         private readonly IMVCManager mvcManager;
         private readonly IWebRequestController webRequestController;
         private readonly INotificationsBusController notificationsBusController;
+        private readonly IProfileNameColorHelper profileNameColorHelper;
 
         public NotificationPlugin(
             IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
             IWebRequestController webRequestController,
-            INotificationsBusController notificationsBusController)
+            INotificationsBusController notificationsBusController,
+            IProfileNameColorHelper profileNameColorHelper)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
             this.webRequestController = webRequestController;
             this.notificationsBusController = notificationsBusController;
+            this.profileNameColorHelper = profileNameColorHelper;
         }
 
         public async UniTask InitializeAsync(NotificationSettings settings, CancellationToken ct)
@@ -45,7 +49,8 @@ namespace DCL.PluginSystem.Global
                     notificationsBusController,
                     notificationIconTypes,
                     rarityBackgroundMapping,
-                    webRequestController
+                    webRequestController,
+                    profileNameColorHelper
                 );
 
             mvcManager.RegisterController(newNotificationController);
