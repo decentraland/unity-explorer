@@ -29,7 +29,7 @@ namespace ECS.StreamableLoading.Textures
         protected override async UniTask<StreamableLoadingResult<Texture2DData>> GetTextureAsync(GetTextureIntention intention, IPartitionComponent partition, CancellationToken ct)
         {
             // First we try to get the AB texture. It will already be compressed and cached by the AB system
-            var assetBundleResult = await TryAssetBundleDownload(intention, partition, ct);
+            var assetBundleResult = await TryAssetBundleDownloadAsync(intention, partition, ct);
             if (assetBundleResult.Succeeded)
                 return assetBundleResult;
 
@@ -42,7 +42,7 @@ namespace ECS.StreamableLoading.Textures
         }
 
 
-        private async UniTask<StreamableLoadingResult<Texture2DData>> TryAssetBundleDownload(GetTextureIntention intention, IPartitionComponent partition, CancellationToken ct)
+        private async UniTask<StreamableLoadingResult<Texture2DData>> TryAssetBundleDownloadAsync(GetTextureIntention intention, IPartitionComponent partition, CancellationToken ct)
         {
             if (!string.IsNullOrEmpty(intention.FileHash))
             {
