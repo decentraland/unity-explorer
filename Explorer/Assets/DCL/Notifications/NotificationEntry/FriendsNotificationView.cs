@@ -56,9 +56,6 @@ namespace DCL.Notifications.NotificationEntry
         public Image NotificationTypeImage { get; set; }
 
         [field: SerializeField]
-        public ChatEntryConfigurationSO ChatEntryConfiguration { get; private set; }
-
-        [field: SerializeField]
         public AudioClipConfig RequestNotificationAudio { get; private set; }
 
         [field: SerializeField]
@@ -72,7 +69,8 @@ namespace DCL.Notifications.NotificationEntry
 
         public void ConfigureFromAcceptedNotificationData(FriendRequestAcceptedNotification notification)
         {
-            Color userColor = ChatEntryConfiguration.GetNameColor(notification.Metadata.Sender.Name);
+            //TODO FRAN: FIX THIS
+            Color userColor = Color.white;//ChatEntryConfiguration.GetNameColor(notification.Metadata.Sender.Name);
             SetTitleText(notification, notification.Metadata.Sender, userColor);
             NotificationImageBackground.color = userColor;
             Notification = notification;
@@ -81,7 +79,8 @@ namespace DCL.Notifications.NotificationEntry
 
         public void ConfigureFromReceivedNotificationData(FriendRequestReceivedNotification notification)
         {
-            Color userColor = ChatEntryConfiguration.GetNameColor(notification.Metadata.Sender.Name);
+            //TODO FRAN: FIX THIS
+            Color userColor = Color.white;// ChatEntryConfiguration.GetNameColor(notification.Metadata.Sender.Name);
             SetTitleText(notification, notification.Metadata.Sender, userColor);
             NotificationImageBackground.color = userColor;
             Notification = notification;

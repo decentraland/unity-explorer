@@ -45,7 +45,6 @@ namespace DCL.PluginSystem.Global
         private readonly ISidebarBus sidebarBus;
         private readonly DCLInput input;
         private readonly ISidebarActionsBus sidebarActionsBus;
-        private readonly ChatEntryConfigurationSO chatEntryConfigurationSo;
         private readonly Arch.Core.World world;
         private readonly Entity playerEntity;
         private readonly bool includeCameraReel;
@@ -67,7 +66,6 @@ namespace DCL.PluginSystem.Global
             IProfileCache profileCache,
             ISidebarBus sidebarBus,
             DCLInput input,
-            ChatEntryConfigurationSO chatEntryConfigurationSo,
             ISidebarActionsBus sidebarActionsBus,
             Arch.Core.World world,
             Entity playerEntity,
@@ -89,7 +87,6 @@ namespace DCL.PluginSystem.Global
             this.profileCache = profileCache;
             this.sidebarBus = sidebarBus;
             this.input = input;
-            this.chatEntryConfigurationSo = chatEntryConfigurationSo;
             this.sidebarActionsBus = sidebarActionsBus;
             this.world = world;
             this.playerEntity = playerEntity;

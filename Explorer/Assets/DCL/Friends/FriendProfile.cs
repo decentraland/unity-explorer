@@ -1,10 +1,12 @@
 using CommunicationData.URLHelpers;
 using DCL.Web3;
+using UnityEngine;
 
 namespace DCL.Friends
 {
     public class FriendProfile
     {
+        public Color UserNameColor { get; } = Color.white; //TODO FRAN: FIX THIS
         public Web3Address Address { get; }
         public string Name { get; }
         public bool HasClaimedName { get; }

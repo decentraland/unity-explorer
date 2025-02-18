@@ -5,7 +5,6 @@ using DCL.Backpack;
 using DCL.BadgesAPIService;
 using DCL.Browser;
 using DCL.CharacterPreview;
-using DCL.Chat;
 using DCL.Clipboard;
 using DCL.Diagnostics;
 using DCL.Friends;
@@ -546,7 +545,7 @@ namespace DCL.Passport
                 contextMenu.AddControl(new ButtonContextMenuControlSettings(viewInstance.BlockText, viewInstance.BlockSprite, () => BlockUserClicked(inputData.UserId)));
 
             userProfileContextMenuControlSettings.SetInitialData(profile.Name, profile.UserId, profile.HasClaimedName,
-                viewInstance.ChatEntryConfiguration.GetNameColor(profile.Name), ConvertFriendshipStatus(friendshipStatus),
+                profile.UserNameColor, ConvertFriendshipStatus(friendshipStatus),
                 thumbnailSprite);
         }
 

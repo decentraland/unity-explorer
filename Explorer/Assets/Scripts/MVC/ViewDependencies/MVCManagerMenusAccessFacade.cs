@@ -66,7 +66,8 @@ namespace MVC
         {
             closeContextMenuTask?.TrySetResult();
             closeContextMenuTask = new UniTaskCompletionSource();
-            userProfileContextMenuControlSettings.SetInitialData(profile, profile.UserNameColor, UserProfileContextMenuControlSettings.FriendshipStatus.NONE);
+            //TODO FRAN URGENT-> FIX FRIENDSHIP STATUS
+            userProfileContextMenuControlSettings.SetInitialData(profile.DisplayName, profile.WalletId, profile.HasClaimedName,profile.UserNameColor, UserProfileContextMenuControlSettings.FriendshipStatus.NONE);
             mentionUserButtonContextMenuControlSettings.SetData(profile);
             openUserProfileButtonContextMenuControlSettings.SetData(profile);
 

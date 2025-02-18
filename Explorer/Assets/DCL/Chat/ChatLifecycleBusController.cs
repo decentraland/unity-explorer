@@ -1,10 +1,9 @@
 using Cysharp.Threading.Tasks;
-using DCL.Chat;
-using DCL.Friends.Chat;
+using DCL.Chat.ChatLifecycleBus;
 using MVC;
 using System;
 
-namespace DCL.Friends
+namespace DCL.Chat
 {
     public class ChatLifecycleBusController : IChatLifecycleBusController, IDisposable
     {

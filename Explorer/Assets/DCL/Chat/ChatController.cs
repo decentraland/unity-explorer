@@ -5,7 +5,7 @@ using DCL.Chat.Commands;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
 using DCL.Emoji;
-using DCL.Friends.Chat;
+using DCL.Chat.ChatLifecycleBus;
 using DCL.Input;
 using DCL.Input.Component;
 using DCL.Input.Systems;

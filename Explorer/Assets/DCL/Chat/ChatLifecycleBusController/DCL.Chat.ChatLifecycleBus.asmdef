@@ -1,5 +1,5 @@
 {
-    "name": "DCL.Friends.Chat",
+    "name": "DCL.Chat.ChatLifecycleBus",
     "rootNamespace": "",
     "references": [],
     "includePlatforms": [],

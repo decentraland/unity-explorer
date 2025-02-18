@@ -1,7 +1,7 @@
 {
     "name": "DCL.UI.Profile.Helpers",
     "rootNamespace": "",
-    "references": ["GUID:9e314663ce958b746873cb22d57ede55"],
+    "references": [],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,

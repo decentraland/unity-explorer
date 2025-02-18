@@ -21,7 +21,8 @@ using DCL.DebugUtilities;
 using DCL.EventsApi;
 using DCL.FeatureFlags;
 using DCL.Friends;
-using DCL.Friends.Chat;
+using DCL.Chat;
+using DCL.Chat.ChatLifecycleBus;
 using DCL.Friends.Passport;
 using DCL.Input;
 using DCL.InWorldCamera.CameraReelStorageService;
@@ -617,7 +618,7 @@ namespace Global.Dynamic
                     webBrowser,
                     dynamicWorldDependencies.Web3Authenticator,
                     initializationFlowContainer.InitializationFlow,
-                    profileCache, sidebarBus, dclInput, chatEntryConfiguration, sidebarActionsBus,
+                    profileCache, sidebarBus, dclInput, sidebarActionsBus,
                     globalWorld, playerEntity, includeCameraReel, includeFriends, chatHistory),
                 new ErrorPopupPlugin(mvcManager, assetsProvisioner),
                 connectionStatusPanelPlugin,

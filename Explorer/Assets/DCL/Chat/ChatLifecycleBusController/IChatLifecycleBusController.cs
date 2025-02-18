@@ -1,6 +1,6 @@
 using System;
 
-namespace DCL.Friends.Chat
+namespace DCL.Chat.ChatLifecycleBus
 {
     public interface IChatLifecycleBusController
     {
