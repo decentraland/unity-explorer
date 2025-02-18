@@ -4,12 +4,12 @@ using DCL.Ipfs;
 using DCL.LOD.Components;
 using DCL.LOD.Systems;
 using DCL.Multiplayer.Connections.DecentralandUrls;
-using DCL.Optimization.Pools;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Reporting;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.TestSuite;
+using Global.Dynamic.LaunchModes;
 using NSubstitute;
 using NUnit.Framework;
 using UnityEngine;
@@ -59,7 +59,7 @@ namespace DCL.LOD.Tests
 
             sceneLODInfo = SceneLODInfo.Create();
             sceneLODInfo.metadata = new LODCacheInfo(new GameObject().AddComponent<LODGroup>(), 2);
-            system = new UpdateSceneLODInfoSystem(world, lodSettings, scenesCache, sceneReadinessReportQueue, new DecentralandUrlsSource(DecentralandEnvironment.Org));
+            system = new UpdateSceneLODInfoSystem(world, lodSettings, scenesCache, sceneReadinessReportQueue, new DecentralandUrlsSource(DecentralandEnvironment.Org, ILaunchMode.PLAY));
         }
 
         [Test]

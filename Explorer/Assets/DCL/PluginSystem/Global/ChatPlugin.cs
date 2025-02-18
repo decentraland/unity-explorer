@@ -6,6 +6,8 @@ using DCL.Chat;
 using DCL.Chat.Commands;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
+using DCL.Emoji;
+using DCL.Friends.Chat;
 using DCL.Input;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Tables;
@@ -33,6 +35,7 @@ namespace DCL.PluginSystem.Global
         private readonly Arch.Core.World world;
         private readonly Entity playerEntity;
         private readonly MainUIView mainUIView;
+        private readonly IChatLifecycleBusController chatLifecycleBusController;
         private readonly ViewDependencies viewDependencies;
         private readonly IChatCommandsBus chatCommandsBus;
         private readonly IRoomHub roomHub;
@@ -49,6 +52,7 @@ namespace DCL.PluginSystem.Global
             NametagsData nametagsData,
             MainUIView mainUIView,
             IInputBlock inputBlock,
+            IChatLifecycleBusController chatLifecycleBusController,
             Arch.Core.World world,
             Entity playerEntity,
             ViewDependencies viewDependencies,
@@ -70,6 +74,7 @@ namespace DCL.PluginSystem.Global
             this.hyperlinkTextFormatter = hyperlinkTextFormatter;
             this.mainUIView = mainUIView;
             this.inputBlock = inputBlock;
+            this.chatLifecycleBusController = chatLifecycleBusController;
             this.roomHub = roomHub;
         }
 
@@ -94,6 +99,7 @@ namespace DCL.PluginSystem.Global
                 nametagsData,
                 world,
                 playerEntity,
+                chatLifecycleBusController,
                 inputBlock,
                 viewDependencies,
                 chatCommandsBus,

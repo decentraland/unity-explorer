@@ -287,6 +287,11 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
+        <UnfriendConfirmationPrefab>k__BackingField:
+          m_AssetGUID: a341d15dd51544eb9985664704a7c43a
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
     - rid: 2174542042650378245
       type: {class: QualityContainer/Settings, ns: DCL.Quality, asm: DCL.Plugins}
       data:

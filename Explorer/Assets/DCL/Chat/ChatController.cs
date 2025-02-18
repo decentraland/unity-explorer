@@ -4,6 +4,8 @@ using DCL.CharacterCamera;
 using DCL.Chat.Commands;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
+using DCL.Emoji;
+using DCL.Friends.Chat;
 using DCL.Input;
 using DCL.Input.Component;
 using DCL.Input.Systems;
@@ -65,6 +67,7 @@ namespace DCL.Chat
             NametagsData nametagsData,
             World world,
             Entity playerEntity,
+            IChatLifecycleBusController chatLifecycleBusController,
             IInputBlock inputBlock,
             ViewDependencies viewDependencies,
             IChatCommandsBus chatCommandsBus,
@@ -84,6 +87,7 @@ namespace DCL.Chat
             this.sceneRoom = roomHub.SceneRoom().Room();
             this.chatAudioSettings = chatAudioSettings;
             this.hyperlinkTextFormatter = hyperlinkTextFormatter;
+            chatLifecycleBusController.SubscribeToHideChatCommand(HideBusCommandReceived);
         }
 
         public void Clear() // Called by a command
@@ -120,6 +124,11 @@ namespace DCL.Chat
             memberListCts.SafeCancelAndDispose();
 
             viewInstance.Dispose();
+        }
+
+        private void HideBusCommandReceived()
+        {
+            HideViewAsync(CancellationToken.None).Forget();
         }
 
         protected override void OnViewInstantiated()

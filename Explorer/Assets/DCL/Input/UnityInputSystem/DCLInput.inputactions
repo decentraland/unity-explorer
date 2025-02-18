@@ -2156,6 +2156,15 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
+                },
+                {
+                    "name": "FriendPanel",
+                    "type": "Button",
+                    "id": "beb1ee53-edda-4028-98bb-2706bb7d853e",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
                 }
             ],
             "bindings": [
@@ -2332,6 +2341,17 @@
                     "processors": "",
                     "groups": "",
                     "action": "Controls",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "a9c17c82-b11f-4a40-84ef-a26e3cf7f085",
+                    "path": "<Keyboard>/l",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "FriendPanel",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }
