@@ -103,17 +103,20 @@ namespace DCL.Chat
             chatHistory.ReadMessagesChanged -= OnChatHistoryReadMessagesChanged;
             chatCommandsBus.OnClearChat -= Clear;
 
-            viewInstance!.PointerEnter -= OnChatViewPointerEnter;
-            viewInstance.PointerExit -= OnChatViewPointerExit;
-
-            viewInstance.InputBoxFocusChanged -= OnViewInputBoxFocusChanged;
-            viewInstance.EmojiSelectionVisibilityChanged -= OnViewEmojiSelectionVisibilityChanged;
-            viewInstance.ChatBubbleVisibilityChanged -= OnViewChatBubbleVisibilityChanged;
-            viewInstance.InputSubmitted -= OnViewInputSubmitted;
-            viewInstance.ScrollBottomReached -= OnViewScrollBottomReached;
-            viewInstance.UnreadMessagesSeparatorViewed -= OnViewUnreadMessagesSeparatorViewed;
-            viewInstance.FoldingChanged -= OnViewFoldingChanged;
-            viewInstance.MemberListVisibilityChanged -= OnMemberListVisibilityChanged;
+            if (viewInstance != null)
+            {
+                viewInstance.PointerEnter -= OnChatViewPointerEnter;
+                viewInstance.PointerExit -= OnChatViewPointerExit;
+                viewInstance.InputBoxFocusChanged -= OnViewInputBoxFocusChanged;
+                viewInstance.EmojiSelectionVisibilityChanged -= OnViewEmojiSelectionVisibilityChanged;
+                viewInstance.ChatBubbleVisibilityChanged -= OnViewChatBubbleVisibilityChanged;
+                viewInstance.InputSubmitted -= OnViewInputSubmitted;
+                viewInstance.ScrollBottomReached -= OnViewScrollBottomReached;
+                viewInstance.UnreadMessagesSeparatorViewed -= OnViewUnreadMessagesSeparatorViewed;
+                viewInstance.FoldingChanged -= OnViewFoldingChanged;
+                viewInstance.MemberListVisibilityChanged -= OnMemberListVisibilityChanged;
+                viewInstance.Dispose();
+            }
 
             viewDependencies.DclInput.UI.Click.performed -= OnUIClickPerformed;
             viewDependencies.DclInput.Shortcuts.ToggleNametags.performed -= OnToggleNametagsShortcutPerformed;
@@ -122,8 +125,6 @@ namespace DCL.Chat
             viewDependencies.DclInput.UI.Submit.performed -= OnSubmitShorcutPerformed;
 
             memberListCts.SafeCancelAndDispose();
-
-            viewInstance.Dispose();
         }
 
         private void HideBusCommandReceived()
