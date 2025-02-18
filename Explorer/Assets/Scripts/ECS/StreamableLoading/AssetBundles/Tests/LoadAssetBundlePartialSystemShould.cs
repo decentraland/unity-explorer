@@ -37,13 +37,27 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
         //size 7600
         private string assetPath => $"{Application.dataPath + "/../TestResources/AssetBundles/bafkreid3xecd44iujaz5qekbdrt5orqdqj3wivg5zc5mya3zkorjhyrkda"}";
         private const int REQUESTS_COUNT = 5;
-
-        private readonly List<ABPromise> promises = new (REQUESTS_COUNT);
         private readonly ArrayPool<byte> buffersPool = ArrayPool<byte>.Shared;
 
+        private List<ABPromise> promises;
+
+        [SetUp]
+        public void Setup()
+        {
+            promises = new List<ABPromise>(REQUESTS_COUNT);
+        }
+
+        [TearDown]
+        public void UnloadAllBundles()
+        {
+            foreach (ABPromise assetPromise in promises)
+                assetPromise.Consume(world);
+
+            AssetBundle.UnloadAllAssetBundles(false);
+        }
 
         [Test]
-        public void ParallelABLoadsWithCacheShould()
+        public async Task ParallelABLoadsWithCacheShould()
         {
             IDiskCache<PartialLoadingState> diskCachePartials = Substitute.For<IDiskCache<PartialLoadingState>>();
             IWebRequestController webRequestController = Substitute.For<IWebRequestController>();
@@ -59,6 +73,8 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
             for (var i = 0; i < REQUESTS_COUNT; i++) promises.Add(NewABPromise());
 
             system.Update(0);
+
+            await UniTask.WhenAll(promises.Select(p => p.ToUniTaskAsyncWithoutDestroy(world)));
 
             foreach (var assetPromise in promises)
             {
@@ -84,11 +100,7 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
 
             system.Update(0);
 
-            foreach (var assetPromise in promises)
-            {
-                await assetPromise.ToUniTaskAsync(world);
-                assetPromise.ForgetLoading(world);
-            }
+            await UniTask.WhenAll(promises.Select(p => p.ToUniTaskAsyncWithoutDestroy(world)));
 
             foreach (var assetPromise in promises)
             {
@@ -118,7 +130,7 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
         }
 
         private LoadAssetBundleSystem CreateSystem(IWebRequestController webRequestController, IDiskCache<PartialLoadingState> diskCachePartials) =>
-            new (world, Substitute.For<IStreamableCache<AssetBundleData, GetAssetBundleIntention>>(), webRequestController, buffersPool, new AssetBundleLoadingMutex(), diskCachePartials);
+            new (world, new NoCache<AssetBundleData, GetAssetBundleIntention>(true, false), webRequestController, buffersPool, new AssetBundleLoadingMutex(), diskCachePartials);
 
         [TearDown]
         public void Cleanup()
