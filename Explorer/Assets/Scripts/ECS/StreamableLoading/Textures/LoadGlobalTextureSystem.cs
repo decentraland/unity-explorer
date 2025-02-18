@@ -27,7 +27,7 @@ namespace ECS.StreamableLoading.Textures
         protected override async UniTask<StreamableLoadingResult<Texture2DData>> GetTextureAsync(GetTextureIntention intention, IPartitionComponent partition, CancellationToken ct)
         {
             //Global world always looks for the texture download
-            var result = await TryTextureDownload(intention, ct);
+            var result = await TryTextureDownloadAsync(intention, ct);
             return new StreamableLoadingResult<Texture2DData>(new Texture2DData(result.EnsureNotNull()));
         }
     }
