@@ -12,5 +12,9 @@ namespace DCL.Friends.UI.Requests
         /// Needed in case request is null
         /// </summary>
         public Web3Address? DestinationUser;
+        /// <summary>
+        /// Needed in case the request was accepted from another flow, and we need to display the modal
+        /// </summary>
+        public FriendProfile? OneShotFriendAccepted;
     }
 }

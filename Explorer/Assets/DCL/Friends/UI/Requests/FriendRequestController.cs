@@ -65,7 +65,7 @@ namespace DCL.Friends.UI.Requests
             viewInstance.cancel.CloseButton.onClick.AddListener(Close);
 
             viewInstance.received.BackButton.onClick.AddListener(Close);
-            viewInstance.received.AcceptButton.onClick.AddListener(Accept);
+            viewInstance.received.AcceptButton.onClick.AddListener(() => Accept(inputData.Request!.From));
             viewInstance.received.RejectButton.onClick.AddListener(Reject);
             viewInstance.received.CloseButton.onClick.AddListener(Close);
         }
@@ -76,7 +76,9 @@ namespace DCL.Friends.UI.Requests
 
             Web3Address selfAddress = identityCache.EnsuredIdentity().Address;
 
-            if (fr == null)
+            if (inputData.OneShotFriendAccepted != null)
+                Accept(inputData.OneShotFriendAccepted);
+            else if (fr == null)
             {
                 if (inputData.DestinationUser == null)
                     throw new Exception("Destination user must be set for new friend request");
@@ -285,7 +287,7 @@ namespace DCL.Friends.UI.Requests
             }
         }
 
-        private void Accept()
+        private void Accept(FriendProfile target)
         {
             requestOperationCancellationToken = requestOperationCancellationToken.SafeRestart();
             AcceptThenCloseAsync(requestOperationCancellationToken.Token).Forget();
@@ -293,11 +295,11 @@ namespace DCL.Friends.UI.Requests
 
             async UniTaskVoid AcceptThenCloseAsync(CancellationToken ct)
             {
-                await friendsService.AcceptFriendshipAsync(inputData.Request!.From.Address, ct);
+                await friendsService.AcceptFriendshipAsync(target.Address, ct);
 
                 await ShowOperationConfirmationAsync(
                     ViewState.CONFIRMED_ACCEPTED,
-                    viewInstance!.acceptedConfirmed, inputData.Request.From,
+                    viewInstance!.acceptedConfirmed, target,
                     "You And <color=#FF8362>{0}</color> Are Now Friends!",
                     ct);
 
