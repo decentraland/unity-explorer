@@ -34,8 +34,8 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
     [TestFixture]
     public class LoadAssetBundlePartialSystemShould :  UnitySystemTestBase<LoadAssetBundleSystem>
     {
-        //size 7600
-        private string assetPath => $"{Application.dataPath + "/../TestResources/AssetBundles/bafkreid3xecd44iujaz5qekbdrt5orqdqj3wivg5zc5mya3zkorjhyrkda"}";
+        //size 64800
+        private string assetPath => $"{Application.dataPath + "/../TestResources/AssetBundles/shark"}";
         private const int REQUESTS_COUNT = 5;
         private readonly ArrayPool<byte> buffersPool = ArrayPool<byte>.Shared;
 
@@ -64,7 +64,7 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
             system = CreateSystem(webRequestController, diskCachePartials);
             system.Initialize();
             byte[] fileBytes = File.ReadAllBytes(assetPath);
-            var partialLoadingStateInCache = new PartialLoadingState(7600);
+            var partialLoadingStateInCache = new PartialLoadingState(fileBytes.Length);
             partialLoadingStateInCache.AppendData(fileBytes);
 
             diskCachePartials.ContentAsync(Arg.Any<HashKey>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
@@ -74,13 +74,17 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
 
             system.Update(0);
 
-            await UniTask.WhenAll(promises.Select(p => p.ToUniTaskAsyncWithoutDestroy(world)));
-
-            foreach (var assetPromise in promises)
+            List<AssetPromise<AssetBundleData, GetAssetBundleIntention>> resolvedPromises = new List<ABPromise>();
+            foreach (ABPromise assetPromise in promises)
             {
-                StreamableLoadingState streamableLoadingState = world.Get<StreamableLoadingState>(assetPromise.Entity);
-                Assert.That(streamableLoadingState.PartialDownloadingData.HasValue, Is.True);
-                Assert.That(streamableLoadingState.PartialDownloadingData.Value.FullyDownloaded, Is.True);
+                AssetPromise<AssetBundleData,GetAssetBundleIntention> prom = await assetPromise.ToUniTaskAsyncWithoutDestroy(world);
+                resolvedPromises.Add(prom);
+            }
+
+            foreach (var assetPromise in resolvedPromises)
+            {
+                Assert.That(assetPromise.Result.HasValue, Is.True);
+                Assert.That(assetPromise.Result.Value.Succeeded, Is.True);
             }
         }
 
@@ -100,19 +104,30 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
 
             system.Update(0);
 
-            await UniTask.WhenAll(promises.Select(p => p.ToUniTaskAsyncWithoutDestroy(world)));
-
-            foreach (var assetPromise in promises)
+            List<AssetPromise<AssetBundleData, GetAssetBundleIntention>> resolvedPromises = new List<ABPromise>();
+            foreach (ABPromise assetPromise in promises)
             {
-                StreamableLoadingState streamableLoadingState = world.Get<StreamableLoadingState>(assetPromise.Entity);
-                Assert.That(streamableLoadingState.PartialDownloadingData.HasValue, Is.True);
-                Assert.That(streamableLoadingState.PartialDownloadingData.Value.FullyDownloaded, Is.True);
+                AssetPromise<AssetBundleData,GetAssetBundleIntention> prom = await assetPromise.ToUniTaskAsyncWithoutDestroy(world);
+                resolvedPromises.Add(prom);
+            }
+
+            foreach (var assetPromise in resolvedPromises)
+            {
+                Assert.That(assetPromise.Result.HasValue, Is.True);
+                Assert.That(assetPromise.Result.Value.Succeeded, Is.True);
             }
         }
 
         private ABPromise NewABPromiseRemoteAsset(int index)
         {
-            var intention = new GetAssetBundleIntention(new CommonLoadingArguments("https://ab-cdn.decentraland.org/v36/bafkreiaetzu4kz4wqwadrlglcu5r7wyxjuvz7y2gsugtc7sqsgqv4aellu/bafkreibfutn7mfd2mu3ux6g5eg6qek3gctuhdcot2y4mjzttwzmiqrwlpi_mac"));
+            string assetUrl;
+            #if UNITY_STANDALONE_WIN
+            assetUrl = "https://ab-cdn.decentraland.org/v36/bafkreiaetzu4kz4wqwadrlglcu5r7wyxjuvz7y2gsugtc7sqsgqv4aellu/bafkreibfutn7mfd2mu3ux6g5eg6qek3gctuhdcot2y4mjzttwzmiqrwlpi_windows";
+            #endif
+            #if UNITY_STANDALONE_OSX
+            assetUrl = "https://ab-cdn.decentraland.org/v36/bafkreiaetzu4kz4wqwadrlglcu5r7wyxjuvz7y2gsugtc7sqsgqv4aellu/bafkreibfutn7mfd2mu3ux6g5eg6qek3gctuhdcot2y4mjzttwzmiqrwlpi_mac";
+            #endif
+            var intention = new GetAssetBundleIntention(new CommonLoadingArguments(assetUrl));
             intention.Hash = $"req{index}";
             var partition = PartitionComponent.TOP_PRIORITY;
             var assetPromise = ABPromise.Create(world, intention, partition);
