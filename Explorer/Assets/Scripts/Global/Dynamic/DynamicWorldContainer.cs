@@ -803,7 +803,9 @@ namespace Global.Dynamic
                     includeUserBlocking,
                     appArgs,
                     staticContainer.FeatureFlagsCache,
-                    sidebarActionsBus));
+                    sidebarActionsBus,
+                    dynamicWorldParams.EnableAnalytics,
+                    bootstrapContainer.Analytics));
             }
 
             if (dynamicWorldParams.EnableAnalytics)
