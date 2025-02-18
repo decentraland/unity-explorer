@@ -64,7 +64,7 @@ namespace DCL.Profiles.Self.Playground
 
             var profile = await selfProfile.ProfileAsync(ct);
             ReportHub.Log(ReportData.UNSPECIFIED, $"Profile is found {profile != null}");
-            await selfProfile.PublishAsync(ct);
+            await selfProfile.UpdateProfileAsync(publish: true, ct);
             ReportHub.Log(ReportData.UNSPECIFIED, $"Profile is published successfully");
         }
     }

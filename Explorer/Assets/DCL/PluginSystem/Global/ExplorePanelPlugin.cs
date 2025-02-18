@@ -50,6 +50,7 @@ using DCL.SDKComponents.MediaStream.Settings;
 using DCL.Settings.Settings;
 using DCL.Utilities;
 using ECS.SceneLifeCycle.Realm;
+using Global.AppArgs;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Audio;
@@ -106,6 +107,7 @@ namespace DCL.PluginSystem.Global
         private readonly IUserCalendar userCalendar;
         private readonly ISystemClipboard clipboard;
         private readonly ObjectProxy<INavmapBus> explorePanelNavmapBus;
+        private readonly IAppArgs appArgs;
 
         private readonly bool includeCameraReel;
 
@@ -164,7 +166,8 @@ namespace DCL.PluginSystem.Global
             IUserCalendar userCalendar,
             ISystemClipboard clipboard,
             ObjectProxy<INavmapBus> explorePanelNavmapBus,
-            bool includeCameraReel)
+            bool includeCameraReel,
+            IAppArgs appArgs)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -211,6 +214,7 @@ namespace DCL.PluginSystem.Global
             this.clipboard = clipboard;
             this.explorePanelNavmapBus = explorePanelNavmapBus;
             this.includeCameraReel = includeCameraReel;
+            this.appArgs = appArgs;
         }
 
         public void Dispose()
@@ -253,7 +257,8 @@ namespace DCL.PluginSystem.Global
                 cursor,
                 emoteProvider,
                 world,
-                playerEntity
+                playerEntity,
+                appArgs
             );
 
             ExplorePanelView panelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.ExplorePanelPrefab, ct: ct)).GetComponent<ExplorePanelView>();

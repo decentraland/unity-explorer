@@ -537,8 +537,8 @@ namespace Global.Dynamic
             ITextFormatter hyperlinkTextFormatter = new HyperlinkTextFormatter(profileCache, selfProfile);
 
             bool includeCameraReel = staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.CAMERA_REEL) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.CAMERA_REEL)) || Application.isEditor;
-            bool includeFriends = staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.FRIENDS) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.FRIENDS)) || Application.isEditor;
-            bool includeUserBlocking = staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.FRIENDS_USER_BLOCKING) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.FRIENDS_USER_BLOCKING)) || Application.isEditor;
+            bool includeFriends = (staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.FRIENDS) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.FRIENDS)) || Application.isEditor) && !localSceneDevelopment;
+            bool includeUserBlocking = staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.FRIENDS_USER_BLOCKING) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.FRIENDS_USER_BLOCKING));
 
             var notificationsRequestController = new NotificationsRequestController(staticContainer.WebRequestsContainer.WebRequestController, notificationsBusController, bootstrapContainer.DecentralandUrlsSource, identityCache, includeFriends);
             notificationsRequestController.StartGettingNewNotificationsOverTimeAsync(ct).SuppressCancellationThrow().Forget();
@@ -679,7 +679,8 @@ namespace Global.Dynamic
                     userCalendar,
                     clipboard,
                     explorePanelNavmapBus,
-                    includeCameraReel
+                    includeCameraReel,
+                    appArgs
                 ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),

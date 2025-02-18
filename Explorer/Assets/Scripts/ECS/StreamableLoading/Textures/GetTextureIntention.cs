@@ -4,6 +4,7 @@ using ECS.StreamableLoading.Common.Components;
 using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using System;
 using System.Threading;
+using SceneRunner.Scene;
 using UnityEngine;
 
 namespace ECS.StreamableLoading.Textures
