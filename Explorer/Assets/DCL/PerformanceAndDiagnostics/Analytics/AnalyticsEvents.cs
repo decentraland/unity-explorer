@@ -87,7 +87,7 @@
             public const string OPEN_FRIENDS_PANEL = "friends_panel_opened";
             public const string ONLINE_FRIEND_CLICKED = "online_friend_clicked";
             public const string JUMP_TO_FRIEND_CLICKED = "jump_to_friend_clicked";
-            public const string FRIENDSHIP_NOTIFICATION_CLICKED = "friendship_notification_clicked";
+            public const string FRIENDSHIP_NOTIFICATION_CLICKED = "notification_clicked";
         }
     }
 }

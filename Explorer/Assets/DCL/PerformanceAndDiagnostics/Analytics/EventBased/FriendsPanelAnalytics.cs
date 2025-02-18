@@ -1,5 +1,7 @@
 using DCL.Friends.UI.FriendPanel;
+using Segment.Serialization;
 using System;
+using UnityEngine;
 
 namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
 {
@@ -28,10 +30,17 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
         private void TrackFriendPanelOpen() =>
             analytics.Track(AnalyticsEvents.Friends.OPEN_FRIENDS_PANEL);
 
-        private void TrackOnlineFriendClicked() =>
-            analytics.Track(AnalyticsEvents.Friends.ONLINE_FRIEND_CLICKED);
+        private void TrackOnlineFriendClicked(string targetAddress) =>
+            analytics.Track(AnalyticsEvents.Friends.ONLINE_FRIEND_CLICKED, new JsonObject
+            {
+                {"receiver_id", targetAddress}
+            });
 
-        private void JumpToFriendClicked() =>
-            analytics.Track(AnalyticsEvents.Friends.JUMP_TO_FRIEND_CLICKED);
+        private void JumpToFriendClicked(string targetAddress, Vector2Int parcel) =>
+            analytics.Track(AnalyticsEvents.Friends.JUMP_TO_FRIEND_CLICKED, new JsonObject
+            {
+                {"receiver_id", targetAddress},
+                {"friend_position", parcel.ToString()},
+            });
     }
 }

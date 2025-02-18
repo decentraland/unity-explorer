@@ -13,6 +13,7 @@ using ECS.SceneLifeCycle.Realm;
 using MVC;
 using System;
 using System.Threading;
+using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.Pool;
 using Utility;
@@ -48,8 +49,8 @@ namespace DCL.Friends.UI.FriendPanel
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
 
         public event Action? FriendsPanelOpened;
-        public event Action? OnlineFriendClicked;
-        public event Action? JumpToFriendClicked;
+        public event Action<string>? OnlineFriendClicked;
+        public event Action<string, Vector2Int>? JumpToFriendClicked;
 
         public FriendsPanelController(ViewFactoryMethod viewFactory,
             FriendsPanelView instantiatedView,
@@ -147,11 +148,11 @@ namespace DCL.Friends.UI.FriendPanel
             UnregisterCloseHotkey();
         }
 
-        private void OnlineFriendClick() =>
-            OnlineFriendClicked?.Invoke();
+        private void OnlineFriendClick(string targetAddress) =>
+            OnlineFriendClicked?.Invoke(targetAddress);
 
-        private void JumpToFriendClick() =>
-            JumpToFriendClicked?.Invoke();
+        private void JumpToFriendClick(string targetAddress, Vector2Int parcel) =>
+            JumpToFriendClicked?.Invoke(targetAddress, parcel);
 
         public UniTask InitAsync(CancellationToken ct)
         {

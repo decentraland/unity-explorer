@@ -1,4 +1,5 @@
 using DCL.Friends.UI.FriendPanel;
+using Segment.Serialization;
 using System;
 
 namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
@@ -23,7 +24,10 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
         }
 
         private void TrackFriendshipNotificationClicked() =>
-            analytics.Track(AnalyticsEvents.Friends.FRIENDSHIP_NOTIFICATION_CLICKED);
+            analytics.Track(AnalyticsEvents.Friends.FRIENDSHIP_NOTIFICATION_CLICKED, new JsonObject
+            {
+                {"notification_type", "friends"}
+            });
 
     }
 }
