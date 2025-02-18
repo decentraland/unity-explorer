@@ -17,7 +17,7 @@ namespace SceneRuntime.Apis.Modules.CommunicationsControllerApi
 
         private readonly ISceneExceptionsHandler sceneExceptionsHandler;
 
-        public CommunicationsControllerAPIWrapper(ICommunicationsControllerAPI api, IInstancePoolsProvider instancePoolsProvider, ISceneExceptionsHandler sceneExceptionsHandler) : base(api)
+        public CommunicationsControllerAPIWrapper(ICommunicationsControllerAPI api, IInstancePoolsProvider instancePoolsProvider, ISceneExceptionsHandler sceneExceptionsHandler, bool isLocalSceneDevelopment) : base(api, isLocalSceneDevelopment)
         {
             this.instancePoolsProvider = instancePoolsProvider;
             this.sceneExceptionsHandler = sceneExceptionsHandler;
