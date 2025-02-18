@@ -10,18 +10,20 @@ using DCL.AvatarRendering.Loading.Systems.Abstract;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
 using DCL.Optimization.Pools;
+using ECS.StreamableLoading;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
+using ECS.StreamableLoading.GLTF;
 using SceneRunner.Scene;
+using System;
 using AssetBundleManifestPromise = ECS.StreamableLoading.Common.AssetPromise<SceneRunner.Scene.SceneAssetBundleManifest, DCL.AvatarRendering.Wearables.Components.GetWearableAssetBundleManifestIntention>;
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
 using AudioPromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AudioClips.AudioClipData, ECS.StreamableLoading.AudioClips.GetAudioClipIntention>;
-using EmotesFromRealmPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesDTOList,
-    DCL.AvatarRendering.Emotes.GetEmotesByPointersFromRealmIntention>;
-using EmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution,
-    DCL.AvatarRendering.Emotes.GetEmotesByPointersIntention>;
+using EmotesFromRealmPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesDTOList, DCL.AvatarRendering.Emotes.GetEmotesByPointersFromRealmIntention>;
+using EmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution, DCL.AvatarRendering.Emotes.GetEmotesByPointersIntention>;
+using GltfPromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.GLTF.GLTFData, ECS.StreamableLoading.GLTF.GetGLTFIntention>;
 
 namespace DCL.AvatarRendering.Emotes
 {
@@ -38,6 +40,7 @@ namespace DCL.AvatarRendering.Emotes
             FinalizeEmoteDTOQuery(World!);
             FinalizeAssetBundleManifestLoadingQuery(World);
             FinalizeAssetBundleLoadingQuery(World);
+            FinalizeGltfLoadingQuery(World);
             FinalizeAudioClipPromiseQuery(World);
             ConsumeAndDisposeFinishedEmotePromiseQuery(World);
         }
@@ -92,7 +95,32 @@ namespace DCL.AvatarRendering.Emotes
         }
 
         [Query]
-        private void FinalizeAssetBundleLoading(Entity entity, ref AssetBundlePromise promise, ref IEmote emote, ref BodyShape bodyShape)
+        private void FinalizeGltfLoading(
+            Entity entity,
+            ref GltfPromise promise,
+            ref IEmote emote,
+            ref BodyShape bodyShape)
+        {
+            FinalizeAssetLoading<GLTFData, GetGLTFIntention>(entity, ref promise, ref emote, bodyShape, result => result.ToRegularAsset());
+        }
+
+        [Query]
+        private void FinalizeAssetBundleLoading(
+            Entity entity,
+            ref AssetBundlePromise promise,
+            ref IEmote emote,
+            in BodyShape bodyShape)
+        {
+            FinalizeAssetLoading<AssetBundleData, GetAssetBundleIntention>(entity, ref promise, ref emote, bodyShape, result => result.ToRegularAsset());
+        }
+
+        private void FinalizeAssetLoading<TAsset, TLoadingIntention>(
+            Entity entity,
+            ref AssetPromise<TAsset, TLoadingIntention> promise,
+            ref IEmote emote,
+            BodyShape bodyShape,
+            Func<StreamableLoadingResult<TAsset>, AttachmentRegularAsset> toRegularAsset)
+            where TLoadingIntention: IAssetIntention, IEquatable<TLoadingIntention>
         {
             if (promise.TryForgetWithEntityIfCancelled(entity, World!))
             {
@@ -100,11 +128,11 @@ namespace DCL.AvatarRendering.Emotes
                 return;
             }
 
-            if (promise.SafeTryConsume(World, GetReportCategory(), out StreamableLoadingResult<AssetBundleData> result))
+            if (promise.SafeTryConsume(World, GetReportCategory(), out StreamableLoadingResult<TAsset> result))
             {
                 if (result.Succeeded)
                 {
-                    var asset = new StreamableLoadingResult<AttachmentRegularAsset>(result.ToRegularAsset());
+                    var asset = new StreamableLoadingResult<AttachmentRegularAsset>(toRegularAsset.Invoke(result));
 
                     if (emote.IsUnisex() && emote.HasSameClipForAllGenders())
                     {

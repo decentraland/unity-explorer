@@ -10,11 +10,13 @@ using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common.Components;
+using ECS.StreamableLoading.GLTF;
 using System;
 using UnityEngine;
 using Utility;
 using StreamableResult = ECS.StreamableLoading.Common.Components.StreamableLoadingResult<DCL.AvatarRendering.Emotes.EmotesResolution>;
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
+using GltfPromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.GLTF.GLTFData, ECS.StreamableLoading.GLTF.GetGLTFIntention>;
 
 namespace DCL.AvatarRendering.Emotes.Load
 {
@@ -39,6 +41,7 @@ namespace DCL.AvatarRendering.Emotes.Load
         protected override void Update(float t)
         {
             GetEmotesFromRealmQuery(World, t);
+            GetEmotesFromLocalSceneQuery(World, t);
         }
 
         [Query]
@@ -138,6 +141,96 @@ namespace DCL.AvatarRendering.Emotes.Load
                     customEmbeddedSubDirectory: customStreamingSubdirectory,
                     cancellationTokenSource: intention.CancellationTokenSource,
                     manifest: intention.AssetBundleManifest),
+                partitionComponent);
+
+            emote.UpdateLoadingStatus(true);
+            World.Create(promise, emote, intention.BodyShape);
+
+            return true;
+        }
+
+        [Query]
+        [None(typeof(StreamableResult))]
+        private void GetEmotesFromLocalScene([Data] float dt, in Entity entity,
+            ref GetSceneEmoteFromLocalSceneIntention intention,
+            ref IPartitionComponent partitionComponent)
+        {
+            URN urn = intention.NewSceneEmoteURN();
+
+            if (intention.Timeout.IsTimeout(dt))
+            {
+                if (!World.Has<StreamableResult>(entity))
+                {
+                    ReportHub.LogWarning(GetReportCategory(), $"Loading scenes emotes timed out {urn}");
+                    World.Add(entity, new StreamableResult(GetReportCategory(), new TimeoutException($"Scene emote timeout {urn}")));
+                }
+
+                return;
+            }
+
+            if (!emoteStorage.TryGetElement(urn, out IEmote emote))
+            {
+                var dto = new EmoteDTO
+                {
+                    id = urn,
+                    metadata = new EmoteDTO.Metadata
+                    {
+                        id = urn,
+                        emoteDataADR74 = new EmoteDTO.Metadata.Data
+                        {
+                            loop = intention.Loop,
+                            category = "emote",
+                            hides = Array.Empty<string>(),
+                            replaces = Array.Empty<string>(),
+                            tags = Array.Empty<string>(),
+                            removesDefaultHiding = Array.Empty<string>(),
+                            representations = new AvatarAttachmentDTO.Representation[]
+                            {
+                                new ()
+                                {
+                                    contents = Array.Empty<string>(),
+                                    bodyShapes = new[]
+                                    {
+                                        BodyShape.MALE.Value,
+                                        BodyShape.FEMALE.Value,
+                                    },
+                                    overrideHides = Array.Empty<string>(),
+                                    overrideReplaces = Array.Empty<string>(),
+                                    mainFile = string.Empty,
+                                },
+                            },
+                        },
+                    },
+                };
+
+                emote = emoteStorage.GetOrAddByDTO(dto);
+            }
+
+            if (emote.IsLoading) return;
+
+            if (CreateGltfPromiseIfRequired(emote, in intention, partitionComponent)) return;
+
+            if (emote.AssetResults[intention.BodyShape] is { Succeeded: true })
+            {
+                // We need to add a reference here, so it is not lost if the flow interrupts in between (i.e. before creating instances of CachedWearable)
+                emote.AssetResults[intention.BodyShape]?.Asset!.AddReference();
+            }
+            else
+            {
+                // TODO check if we really need to do this
+                World.Add(entity, new StreamableResult(GetReportCategory(), new Exception($"Scene emote failed to load {urn}")));
+                return;
+            }
+
+            World.Add(entity, new StreamableResult(new EmotesResolution(RepoolableList<IEmote>.FromElement(emote), 1)));
+        }
+
+        private bool CreateGltfPromiseIfRequired(IEmote emote, in GetSceneEmoteFromLocalSceneIntention intention, IPartitionComponent partitionComponent)
+        {
+            if (emote.AssetResults[intention.BodyShape] != null) return false;
+
+            var promise = GltfPromise.Create(World,
+                GetGLTFIntention.Create(intention.EmotePath, intention.EmoteHash, mecanimAnimationClips: true),
                 partitionComponent);
 
             emote.UpdateLoadingStatus(true);

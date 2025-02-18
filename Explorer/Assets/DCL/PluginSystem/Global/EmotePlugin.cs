@@ -57,6 +57,7 @@ namespace DCL.PluginSystem.Global
         private readonly Entity playerEntity;
         private AudioSource? audioSourceReference;
         private EmotesWheelController? emotesWheelController;
+        private bool localSceneDevelopment;
 
         public EmotePlugin(IWebRequestController webRequestController,
             IEmoteStorage emoteStorage,
@@ -76,7 +77,8 @@ namespace DCL.PluginSystem.Global
             IInputBlock inputBlock,
             Arch.Core.World world,
             Entity playerEntity,
-            string builderContentURL)
+            string builderContentURL,
+            bool localSceneDevelopment)
         {
             this.messageBus = messageBus;
             this.debugBuilder = debugBuilder;
@@ -96,6 +98,7 @@ namespace DCL.PluginSystem.Global
             this.world = world;
             this.playerEntity = playerEntity;
             this.inputBlock = inputBlock;
+            this.localSceneDevelopment = localSceneDevelopment;
 
             audioClipsCache = new AudioClipsCache();
             cacheCleaner.Register(audioClipsCache);
@@ -127,6 +130,17 @@ namespace DCL.PluginSystem.Global
             RemoteEmotesSystem.InjectToWorld(ref builder, web3IdentityCache, entityParticipantTable, messageBus, arguments.PlayerEntity);
 
             LoadSceneEmotesSystem.InjectToWorld(ref builder, emoteStorage, customStreamingSubdirectory);
+
+            /*if (localSceneDevelopment)
+            {
+                LoadGLTFSystem.InjectToWorld(
+                    ref builder,
+                    NoCache<GLTFData, GetGLTFIntention>.INSTANCE,
+                    webRequestController,
+                    false,
+                    true,
+                    new GltFastSceneDownloadStrategy(sharedDependencies.SceneData));
+            }*/
         }
 
         public async UniTask InitializeAsync(EmoteSettings settings, CancellationToken ct)
