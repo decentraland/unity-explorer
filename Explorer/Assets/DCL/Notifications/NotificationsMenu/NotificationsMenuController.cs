@@ -6,6 +6,7 @@ using DCL.Notifications.NotificationEntry;
 using DCL.NotificationsBusController.NotificationsBus;
 using DCL.NotificationsBusController.NotificationTypes;
 using DCL.SidebarBus;
+using DCL.UI.Profiles.Helpers;
 using DCL.Utilities;
 using DCL.Web3;
 using DCL.Web3.Identities;
@@ -43,6 +44,7 @@ namespace DCL.Notifications.NotificationsMenu
         private readonly List<INotification> notifications = new ();
         private readonly CancellationTokenSource lifeCycleCts = new ();
         private readonly IWeb3IdentityCache web3IdentityCache;
+        private readonly IProfileNameColorHelper profileNameColorHelper;
 
         private CancellationTokenSource? notificationThumbnailCts;
         private CancellationTokenSource? notificationPanelCts = new ();
@@ -57,7 +59,8 @@ namespace DCL.Notifications.NotificationsMenu
             IWebRequestController webRequestController,
             ISidebarBus sidebarBus,
             NftTypeIconSO rarityBackgroundMapping,
-            IWeb3IdentityCache web3IdentityCache)
+            IWeb3IdentityCache web3IdentityCache,
+            IProfileNameColorHelper profileNameColorHelper)
         {
             notificationThumbnailCts = new CancellationTokenSource();
 
@@ -69,6 +72,7 @@ namespace DCL.Notifications.NotificationsMenu
             this.sidebarBus = sidebarBus;
             this.rarityBackgroundMapping = rarityBackgroundMapping;
             this.web3IdentityCache = web3IdentityCache;
+            this.profileNameColorHelper = profileNameColorHelper;
             this.view.OnViewShown += OnViewShown;
             this.view.LoopList.InitListView(0, OnGetItemByIndex);
             this.view.CloseButton.onClick.AddListener(ClosePanel);
@@ -231,12 +235,12 @@ namespace DCL.Notifications.NotificationsMenu
                     break;
                 case FriendRequestReceivedNotification friendRequestReceivedNotification:
                     FriendsNotificationView friendNotificationView = (FriendsNotificationView)notificationView;
-                    friendNotificationView.ConfigureFromReceivedNotificationData(friendRequestReceivedNotification);
+                    friendNotificationView.ConfigureFromReceivedNotificationData(friendRequestReceivedNotification, profileNameColorHelper);
                     friendNotificationView.TimeText.gameObject.SetActive(true);
                     break;
                 case FriendRequestAcceptedNotification friendRequestAcceptedNotification:
                     FriendsNotificationView friendNotificationView2 = (FriendsNotificationView)notificationView;
-                    friendNotificationView2.ConfigureFromAcceptedNotificationData(friendRequestAcceptedNotification);
+                    friendNotificationView2.ConfigureFromAcceptedNotificationData(friendRequestAcceptedNotification, profileNameColorHelper);
                     friendNotificationView2.TimeText.gameObject.SetActive(true);
                     break;
             }
