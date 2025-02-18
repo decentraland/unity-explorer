@@ -22,6 +22,7 @@ using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Cache.InMemory;
 using Global.AppArgs;
 using Global.Dynamic.DebugSettings;
+using Global.Dynamic.LaunchModes;
 using Global.Dynamic.RealmUrl;
 using Global.Versioning;
 using MVC;
@@ -119,7 +120,7 @@ namespace Global.Dynamic
                 bootstrapContainer.DiagnosticsContainer,
                 bootstrapContainer.IdentityCache,
                 bootstrapContainer.VerifiedEthereumApi,
-                bootstrapContainer.LocalSceneDevelopment,
+                bootstrapContainer.LaunchMode,
                 bootstrapContainer.UseRemoteAssetBundles,
                 world,
                 playerEntity,
@@ -179,7 +180,7 @@ namespace Global.Dynamic
                     StartParcel = realmLaunchSettings.targetScene,
                     IsolateScenesCommunication = realmLaunchSettings.isolateSceneCommunication,
                     EnableLandscape = debugSettings.EnableLandscape,
-                    EnableLOD = debugSettings.EnableLOD && !realmLaunchSettings.IsLocalSceneDevelopmentRealm,
+                    EnableLOD = debugSettings.EnableLOD && realmLaunchSettings.CurrentMode is LaunchMode.Play,
                     EnableAnalytics = EnableAnalytics,
                     HybridSceneParams = realmLaunchSettings.CreateHybridSceneParams(),
                     LocalSceneDevelopmentRealm = localSceneDevelopmentRealm ?? string.Empty,
@@ -229,7 +230,7 @@ namespace Global.Dynamic
             IWebJsSources webJsSources = new WebJsSources(new JsCodeResolver(
                 staticContainer.WebRequestsContainer.WebRequestController));
 
-            if (!realmLaunchSettings.IsLocalSceneDevelopmentRealm)
+            if (realmLaunchSettings.CurrentMode is LaunchMode.Play)
             {
                 var memoryCache = new MemoryCache<string, string>();
                 staticContainer.CacheCleaner.Register(memoryCache);

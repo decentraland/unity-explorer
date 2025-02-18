@@ -1,4 +1,5 @@
 using DCL.Diagnostics;
+using DCL.Optimization.Hashing;
 using DCL.Optimization.ThreadSafePool;
 using System.Collections.Generic;
 using System.Text;
@@ -10,7 +11,7 @@ namespace ECS.StreamableLoading.Cache.Disk
         private static readonly IReadOnlyDictionary<byte, string> CACHED_SYMBOLS;
 
         private static readonly ThreadSafeObjectPool<StringBuilder> STRING_BUILDER_POOL = new (
-            () => new StringBuilder(DiskHashing.SHA256_HASH_LENGTH * 2), //because in dex each byte takes 2 symbols
+            () => new StringBuilder(SHA256Hashing.SHA256_HASH_LENGTH * 2), //because in dex each byte takes 2 symbols
             actionOnRelease: sb => sb.Clear()
         );
 
@@ -28,8 +29,7 @@ namespace ECS.StreamableLoading.Cache.Disk
         {
             using var __ = STRING_BUILDER_POOL.Get(out var sb);
 
-            foreach (byte b in key.Hash.Memory)
-                sb.Append(CACHED_SYMBOLS[b]!);
+            HashUtility.ExecutePerByte(key.Hash.Memory, sb, static tuple => tuple.context.Append(tuple.stringifiedByte));
 
             if (extension.StartsWith('.') == false)
                 sb.Append('.');

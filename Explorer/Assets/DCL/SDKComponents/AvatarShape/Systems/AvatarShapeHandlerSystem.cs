@@ -3,7 +3,9 @@ using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
 using DCL.AvatarRendering.Emotes;
+using DCL.Character.CharacterMotion.Components;
 using DCL.Character.Components;
+using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using ECS.Abstract;
@@ -45,6 +47,8 @@ namespace ECS.Unity.AvatarShape.Systems
             var globalWorldEntity = globalWorld.Create(
                 pbAvatarShape, partitionComponent,
                 new CharacterTransform(transformComponent.Transform),
+                new CharacterInterpolationMovementComponent(transformComponent.Transform.position, transformComponent.Transform.position, transformComponent.Transform.rotation),
+                new CharacterAnimationComponent(),
                 new CharacterEmoteComponent());
             World.Add(entity, new SDKAvatarShapeComponent(globalWorldEntity));
 

@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using ECS.SceneLifeCycle.Realm;
+using Global.Dynamic.LaunchModes;
 using Global.Dynamic.RealmUrl.Names;
 using System;
 using System.Threading;
@@ -37,7 +38,12 @@ namespace Global.Dynamic.RealmUrl
         }
 
         public async UniTask<string?> LocalSceneDevelopmentRealmAsync(CancellationToken ct) =>
-            realmLaunchSettings.IsLocalSceneDevelopmentRealm ? await StartingRealmAsync(ct) : null;
+            realmLaunchSettings.CurrentMode switch
+            {
+                LaunchMode.Play => null,
+                LaunchMode.LocalSceneDevelopment => await StartingRealmAsync(ct),
+                _ => throw new ArgumentOutOfRangeException()
+            };
 
         private async UniTask<string> CustomRealmAsync(CancellationToken ct)
         {

@@ -45,6 +45,10 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
 
         class Null : IConnectiveRoom
         {
+            public static readonly Null INSTANCE = new ();
+
+            protected Null() { }
+
             public UniTask<bool> StartAsync() =>
                 UniTask.FromResult(true);
 

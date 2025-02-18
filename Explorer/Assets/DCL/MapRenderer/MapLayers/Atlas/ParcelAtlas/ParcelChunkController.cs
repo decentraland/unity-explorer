@@ -6,6 +6,8 @@ using DCL.WebRequests;
 using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using System;
 using System.Threading;
+using DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas;
+using DG.Tweening;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using Utility;
@@ -15,6 +17,8 @@ namespace DCL.MapRenderer.MapLayers.Atlas
     public class ParcelChunkController : IChunkController
     {
         private const int PIXELS_PER_UNIT = 50;
+        private const int LOCAL_SCALE_LOADING_SPRITE = 8;
+
 
         private readonly SpriteRenderer spriteRenderer;
 
@@ -22,6 +26,8 @@ namespace DCL.MapRenderer.MapLayers.Atlas
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
 
         private IOwnedTexture2D? currentOwnedTexture;
+        private readonly AtlasChunk atlasChunk;
+
         private string CHUNKS_API => decentralandUrlsSource.Url(DecentralandUrl.ApiChunks);
 
         public ParcelChunkController(
@@ -35,13 +41,17 @@ namespace DCL.MapRenderer.MapLayers.Atlas
             this.webRequestController = webRequestController;
             this.decentralandUrlsSource = decentralandUrlsSource;
             spriteRenderer = prefab;
+            atlasChunk = prefab.GetComponent<AtlasChunk>();
+            atlasChunk.LoadingSpriteRenderer.gameObject.SetActive(true);
+            atlasChunk.MainSpriteRenderer.enabled = false;
+            atlasChunk.LoadingSpriteRenderer.transform.localScale = Vector3.one * LOCAL_SCALE_LOADING_SPRITE;
+
 #if UNITY_EDITOR
             prefab.gameObject.name = $"Chunk {coordsCenter.x},{coordsCenter.y}";
 #endif
-            Transform transform = spriteRenderer.transform;
 
-            transform.localScale = Vector3.one * PIXELS_PER_UNIT;
-            transform.localPosition = chunkLocalPosition;
+            atlasChunk.transform.localScale = Vector3.one * PIXELS_PER_UNIT;
+            atlasChunk.transform.localPosition = chunkLocalPosition;
         }
 
         public void Dispose()
@@ -52,6 +62,8 @@ namespace DCL.MapRenderer.MapLayers.Atlas
 
         public async UniTask LoadImageAsync(int chunkSize, int parcelSize, Vector2Int mapPosition, CancellationToken ct)
         {
+            atlasChunk.MainSpriteRenderer.color = AtlasChunkConstants.INITIAL_COLOR;
+            
             var url = $"{CHUNKS_API}?center={mapPosition.x},{mapPosition.y}&width={chunkSize}&height={chunkSize}&size={parcelSize}";
             var textureTask = webRequestController.GetTextureAsync(
                 new CommonArguments(URLAddress.FromString(url)),
@@ -80,6 +92,10 @@ namespace DCL.MapRenderer.MapLayers.Atlas
 
             spriteRenderer.sprite =
                 Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), VectorUtilities.OneHalf, PIXELS_PER_UNIT, 0, SpriteMeshType.FullRect, Vector4.one, false);
+
+            atlasChunk.MainSpriteRenderer.enabled = true;
+            atlasChunk.LoadingSpriteRenderer.DOColor(AtlasChunkConstants.INITIAL_COLOR, 0.5f).OnComplete(() => atlasChunk.LoadingSpriteRenderer.gameObject.SetActive(false));
+            atlasChunk.MainSpriteRenderer.DOColor(AtlasChunkConstants.FINAL_COLOR, 0.5f);
         }
 
         public void SetDrawOrder(int order)

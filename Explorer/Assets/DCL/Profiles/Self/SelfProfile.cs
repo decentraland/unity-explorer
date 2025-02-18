@@ -74,7 +74,7 @@ namespace DCL.Profiles.Self
             return profile;
         }
 
-        public async UniTask<Profile?> PublishAsync(CancellationToken ct)
+        public async UniTask<Profile?> UpdateProfileAsync(bool publish, CancellationToken ct)
         {
             Profile? profile = await ProfileAsync(ct);
 
@@ -111,7 +111,7 @@ namespace DCL.Profiles.Self
 
             OwnProfile = profile;
 
-            await profileRepository.SetAsync(newProfile, ct);
+            await profileRepository.SetAsync(newProfile, publish, ct);
             return await profileRepository.GetAsync(newProfile.UserId, newProfile.Version, ct);
         }
 
@@ -131,7 +131,7 @@ namespace DCL.Profiles.Self
 
             newProfile.UserId = web3IdentityCache.Identity.Address;
 
-            await profileRepository.SetAsync(newProfile, ct);
+            await profileRepository.SetAsync(newProfile, publish: true, ct);
             return await profileRepository.GetAsync(newProfile.UserId, newProfile.Version, ct);
         }
 
