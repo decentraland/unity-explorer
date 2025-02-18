@@ -28,8 +28,8 @@ namespace ECS.StreamableLoading.Textures
         {
             this.webRequestController = webRequestController;
         }
-        
-        protected override async UniTask<StreamableLoadingResult<Texture2DData>> FlowInternalAsync(GetTextureIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
+
+        protected override async UniTask<StreamableLoadingResult<Texture2DData>> FlowInternalAsync(GetTextureIntention intention, StreamableLoadingState state, IPartitionComponent partition, CancellationToken ct)
         {
             CheckVideoTexture(intention);
             return await GetTextureAsync(intention, partition, ct);

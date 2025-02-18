@@ -73,7 +73,7 @@ namespace ECS.StreamableLoading.Textures
 
             private DiskHashCompute() { }
 
-            protected override void FillPayload(IHashKeyPayload keyPayload, GetTextureIntention asset)
+            protected override void FillPayload(IHashKeyPayload keyPayload, in GetTextureIntention asset)
             {
                 keyPayload.Put(asset.cacheKey);
                 keyPayload.Put((int)asset.WrapMode);

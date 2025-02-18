@@ -39,7 +39,7 @@ namespace ECS.StreamableLoading.NFTShapes
 
             private DiskHashCompute() { }
 
-            protected override void FillPayload(IHashKeyPayload keyPayload, GetNFTShapeIntention asset)
+            protected override void FillPayload(IHashKeyPayload keyPayload, in GetNFTShapeIntention asset)
             {
                 keyPayload.Put(asset.URN);
             }

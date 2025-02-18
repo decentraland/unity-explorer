@@ -1,9 +1,12 @@
 ﻿using DCL.WebRequests;
+using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Tests;
+using NSubstitute;
 using NUnit.Framework;
+using System.Buffers;
 using UnityEngine;
-using Utility.Multithreading;
+using UnityEngine.TestTools;
 
 namespace ECS.StreamableLoading.AssetBundles.Tests
 {
@@ -22,18 +25,41 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
         private string failPath => $"file://{Application.dataPath + "/../TestResources/AssetBundles/non_existing"}";
         private string wrongTypePath => $"file://{Application.dataPath + "/../TestResources/CRDT/arraybuffer.test"}";
 
-        protected override GetAssetBundleIntention CreateSuccessIntention() =>
-
+        protected override GetAssetBundleIntention CreateSuccessIntention()
+        {
             // omit cacheHash so it won't be cached
-            new (new CommonLoadingArguments(successPath));
+            var intention = new GetAssetBundleIntention(new CommonLoadingArguments(successPath))
+                {
+                    Hash = successPath,
+                };
 
-        protected override GetAssetBundleIntention CreateNotFoundIntention() =>
-            new (new CommonLoadingArguments(failPath));
+            return intention;
+        }
 
-        protected override GetAssetBundleIntention CreateWrongTypeIntention() =>
-            new (new CommonLoadingArguments(wrongTypePath));
+
+        protected override GetAssetBundleIntention CreateNotFoundIntention()
+        {
+            var intention = new GetAssetBundleIntention(new CommonLoadingArguments(failPath))
+            {
+                Hash = successPath,
+            };
+
+            return intention;
+        }
+
+        protected override GetAssetBundleIntention CreateWrongTypeIntention()
+        {
+            LogAssert.Expect(LogType.Error, "Failed to read data for the AssetBundle 'IO.Stream'.");
+
+            var intention = new GetAssetBundleIntention(new CommonLoadingArguments(wrongTypePath))
+            {
+                Hash = successPath,
+            };
+
+            return intention;
+        }
 
         protected override LoadAssetBundleSystem CreateSystem() =>
-            new (world, cache, IWebRequestController.DEFAULT, new AssetBundleLoadingMutex());
+            new (world, cache, IWebRequestController.DEFAULT, ArrayPool<byte>.Shared, new AssetBundleLoadingMutex(), Substitute.For<IDiskCache<PartialLoadingState>>());
     }
 }
