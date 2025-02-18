@@ -53,12 +53,6 @@ namespace ECS.Unity.GLTFContainer.Tests
             createGltfAssetFromAssetBundleSystem = new CreateGltfAssetFromAssetBundleSystem(world, budget, budget);
         }
 
-        [TearDown]
-        public void TearDown()
-        {
-            resources.UnloadBundle();
-        }
-
         [Test]
         public void CreateGetIntent()
         {

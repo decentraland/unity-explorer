@@ -4,6 +4,7 @@ using ECS.StreamableLoading.Common.Components;
 using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using System;
 using System.Threading;
+using SceneRunner.Scene;
 using UnityEngine;
 
 namespace ECS.StreamableLoading.Textures
@@ -72,7 +73,7 @@ namespace ECS.StreamableLoading.Textures
 
             private DiskHashCompute() { }
 
-            protected override void FillPayload(IHashKeyPayload keyPayload, GetTextureIntention asset)
+            protected override void FillPayload(IHashKeyPayload keyPayload, in GetTextureIntention asset)
             {
                 keyPayload.Put(asset.cacheKey);
                 keyPayload.Put((int)asset.WrapMode);

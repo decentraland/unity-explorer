@@ -24,12 +24,9 @@ namespace DCL.WebRequests
 
         public readonly int Timeout;
 
-        public readonly DownloadHandler? CustomDownloadHandler;
-
-        public CommonArguments(URLAddress url, DownloadHandler? customDownloadHandler = null, int attemptsCount = DEFAULT_ATTEMPTS_COUNT, int timeout = DEFAULT_TIMEOUT, float attemptsDelay = DEFAULT_ATTEMPTS_DELAY)
+        public CommonArguments(URLAddress url, int attemptsCount = DEFAULT_ATTEMPTS_COUNT, int timeout = DEFAULT_TIMEOUT, float attemptsDelay = DEFAULT_ATTEMPTS_DELAY)
         {
             URL = url;
-            CustomDownloadHandler = customDownloadHandler;
             AttemptsCount = attemptsCount;
             Timeout = timeout;
             AttemptsDelay = attemptsDelay;
@@ -53,6 +50,6 @@ namespace DCL.WebRequests
             Mathf.Max(0, AttemptsDelay);
 
         public override string ToString() =>
-            $"CommonArguments: {URL} with attempts {AttemptsCount} with timeout {Timeout} with downloadHandler {CustomDownloadHandler}";
+            $"CommonArguments: {URL} with attempts {AttemptsCount} with timeout {Timeout}";
     }
 }

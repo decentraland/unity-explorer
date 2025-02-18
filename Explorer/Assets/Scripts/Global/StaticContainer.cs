@@ -44,10 +44,15 @@ using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.RealmNavigation;
 using DCL.UserInAppInitializationFlow;
 using ECS.StreamableLoading.Cache.Disk;
+using ECS.StreamableLoading.Cache.Disk.CleanUp;
+using ECS.StreamableLoading.Cache.Disk.Lock;
+using ECS.StreamableLoading.Common;
+using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
 using Global.Dynamic.LaunchModes;
 using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using PortableExperiences.Controller;
+using System.Buffers;
 using System.IO;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -151,6 +156,7 @@ namespace Global
             bool enableAnalytics,
             IAnalyticsController analyticsController,
             IDiskCache diskCache,
+            IDiskCache<PartialLoadingState> partialsDiskCache,
             UIDocument scenesUIRoot,
             CancellationToken ct)
         {
@@ -213,8 +219,9 @@ namespace Global
             container.FeatureFlagsProvider = new HttpFeatureFlagsProvider(container.WebRequestsContainer.WebRequestController,
                 container.FeatureFlagsCache);
 
+            ArrayPool<byte> buffersPool = ArrayPool<byte>.Create(1024 * 1024 * 50, 50);
             var textureDiskCache = new DiskCache<Texture2DData>(diskCache, new TextureDiskSerializer());
-            var assetBundlePlugin = new AssetBundlesPlugin(reportHandlingSettings, container.CacheCleaner, container.WebRequestsContainer.WebRequestController);
+            var assetBundlePlugin = new AssetBundlesPlugin(reportHandlingSettings, container.CacheCleaner, container.WebRequestsContainer.WebRequestController, buffersPool, partialsDiskCache);
             var textureResolvePlugin = new TexturesLoadingPlugin(container.WebRequestsContainer.WebRequestController, container.CacheCleaner, textureDiskCache);
 
             ExtendedObjectPool<Texture2D> videoTexturePool = VideoTextureFactory.CreateVideoTexturesPool();

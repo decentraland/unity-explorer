@@ -1,4 +1,5 @@
 ﻿using DCL.Optimization.Pools;
+using DCL.WebRequests.CustomDownloadHandlers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,6 +9,7 @@ namespace DCL.WebRequests
 {
     public struct WebRequestHeadersInfo : IDisposable
     {
+        private const string RANGE_HEADER = "Range";
         private const string EMPTY_HEADER = "";
 
         private static readonly IReadOnlyDictionary<string, string> EMPTY_HEADERS = new Dictionary<string, string>();
@@ -24,6 +26,12 @@ namespace DCL.WebRequests
 
             foreach ((string key, string s) in headers ?? EMPTY_HEADERS)
                 Add(key, s);
+        }
+
+        public WebRequestHeadersInfo WithRange(long start, long end)
+        {
+            Add(RANGE_HEADER, DownloadHandlersUtils.GetContentRangeHeaderValue(start, end));
+            return this;
         }
 
         internal static WebRequestHeadersInfo NewEmpty() =>

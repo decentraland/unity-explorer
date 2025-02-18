@@ -43,7 +43,7 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
         }
 
         protected sealed override async UniTask<StreamableLoadingResult<TAsset>> FlowInternalAsync(TIntention intention,
-            IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
+            StreamableLoadingState state, IPartitionComponent partition, CancellationToken ct)
         {
             await realmData.WaitConfiguredAsync();
 
