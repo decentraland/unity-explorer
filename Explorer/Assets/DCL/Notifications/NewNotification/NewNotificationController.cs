@@ -3,6 +3,7 @@ using DCL.Backpack;
 using DCL.NotificationsBusController.NotificationsBus;
 using DCL.NotificationsBusController.NotificationTypes;
 using DCL.UI;
+using DCL.UI.Profiles.Helpers;
 using DCL.WebRequests;
 using DG.Tweening;
 using MVC;
@@ -26,6 +27,7 @@ namespace DCL.Notifications.NewNotification
         private readonly NftTypeIconSO rarityBackgroundMapping;
         private readonly IWebRequestController webRequestController;
         private readonly Queue<INotification> notificationQueue = new ();
+        private readonly IProfileNameColorHelper profileNameColorHelper;
         private bool isDisplaying;
         private ImageController thumbnailImageController;
         private ImageController badgeThumbnailImageController;
@@ -38,13 +40,14 @@ namespace DCL.Notifications.NewNotification
             INotificationsBusController notificationsBusController,
             NotificationIconTypes notificationIconTypes,
             NftTypeIconSO rarityBackgroundMapping,
-            IWebRequestController webRequestController
-        ) : base(viewFactory)
+            IWebRequestController webRequestController,
+            IProfileNameColorHelper profileNameColorHelper) : base(viewFactory)
         {
             this.notificationsBusController = notificationsBusController;
             this.notificationIconTypes = notificationIconTypes;
             this.rarityBackgroundMapping = rarityBackgroundMapping;
             this.webRequestController = webRequestController;
+            this.profileNameColorHelper = profileNameColorHelper;
             notificationsBusController.SubscribeToAllNotificationTypesReceived(QueueNewNotification);
             cts = new CancellationTokenSource();
             cts.Token.ThrowIfCancellationRequested();
@@ -178,10 +181,10 @@ namespace DCL.Notifications.NewNotification
                     viewInstance!.NotificationView.NotificationImageBackground.sprite = rarityBackgroundMapping.GetTypeImage(rewardAssignedNotification.Metadata.Rarity);
                     break;
                 case FriendRequestAcceptedNotification friendRequestAcceptedNotification:
-                    viewInstance!.FriendsNotificationView.ConfigureFromAcceptedNotificationData(friendRequestAcceptedNotification);
+                    viewInstance!.FriendsNotificationView.ConfigureFromAcceptedNotificationData(friendRequestAcceptedNotification, profileNameColorHelper);
                     break;
                 case FriendRequestReceivedNotification friendRequestReceivedNotification:
-                    viewInstance!.FriendsNotificationView.ConfigureFromReceivedNotificationData(friendRequestReceivedNotification);
+                    viewInstance!.FriendsNotificationView.ConfigureFromReceivedNotificationData(friendRequestReceivedNotification, profileNameColorHelper);
                     break;
             }
         }

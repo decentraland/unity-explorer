@@ -2,6 +2,7 @@ using DCL.Audio;
 using DCL.Chat;
 using DCL.NotificationsBusController.NotificationTypes;
 using DCL.UI;
+using DCL.UI.Profiles.Helpers;
 using System;
 using TMPro;
 using UnityEngine;
@@ -67,20 +68,18 @@ namespace DCL.Notifications.NotificationEntry
         public void PlayAcceptedNotificationAudio() =>
             UIAudioEventsBus.Instance.SendPlayAudioEvent(AcceptedNotificationAudio);
 
-        public void ConfigureFromAcceptedNotificationData(FriendRequestAcceptedNotification notification)
+        public void ConfigureFromAcceptedNotificationData(FriendRequestAcceptedNotification notification, IProfileNameColorHelper profileNameColorHelper)
         {
-            //TODO FRAN: FIX THIS
-            Color userColor = Color.white;//ChatEntryConfiguration.GetNameColor(notification.Metadata.Sender.Name);
+            Color userColor = profileNameColorHelper.GetNameColor(notification.Metadata.Sender.Name);
             SetTitleText(notification, notification.Metadata.Sender, userColor);
             NotificationImageBackground.color = userColor;
             Notification = notification;
             NotificationType = notification.Type;
         }
 
-        public void ConfigureFromReceivedNotificationData(FriendRequestReceivedNotification notification)
+        public void ConfigureFromReceivedNotificationData(FriendRequestReceivedNotification notification, IProfileNameColorHelper profileNameColorHelper)
         {
-            //TODO FRAN: FIX THIS
-            Color userColor = Color.white;// ChatEntryConfiguration.GetNameColor(notification.Metadata.Sender.Name);
+            Color userColor = profileNameColorHelper.GetNameColor(notification.Metadata.Sender.Name);
             SetTitleText(notification, notification.Metadata.Sender, userColor);
             NotificationImageBackground.color = userColor;
             Notification = notification;
