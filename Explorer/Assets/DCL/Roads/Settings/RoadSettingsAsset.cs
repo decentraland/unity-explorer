@@ -37,6 +37,9 @@ namespace DCL.Roads.Settings
                 prop.ShowAll();
         }
 
+        public void CollectGPUInstancingLODGroups() =>
+            CollectGPUInstancingLODGroups(-200 * Vector2Int.one, 200 * Vector2Int.one);
+
         public void CollectGPUInstancingLODGroups(Vector2Int min, Vector2Int max)
         {
             Dictionary<string, GPUInstancingPrefabData> loadedPrefabs = LoadAllPrefabs();
