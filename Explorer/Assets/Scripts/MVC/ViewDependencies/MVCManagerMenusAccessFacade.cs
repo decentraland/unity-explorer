@@ -2,12 +2,15 @@
 using DCL.ChangeRealmPrompt;
 using DCL.Clipboard;
 using DCL.ExternalUrlPrompt;
+using DCL.Friends;
 using DCL.Passport;
 using DCL.Profiles;
 using DCL.TeleportPrompt;
 using DCL.UI;
 using DCL.UI.GenericContextMenu;
 using DCL.UI.GenericContextMenu.Controls.Configs;
+using DCL.Utilities;
+using System;
 using System.Threading;
 using UnityEngine;
 using Utility;
@@ -22,19 +25,21 @@ namespace MVC
         private readonly IMVCManager mvcManager;
         private readonly GenericContextMenu contextMenu;
         private readonly IClipboardManager clipboardManager;
+        private readonly ObjectProxy<IFriendsService> friendServiceProxy;
+
         private readonly UserProfileContextMenuControlSettings userProfileContextMenuControlSettings;
         private readonly MentionUserButtonContextMenuControlSettings mentionUserButtonContextMenuControlSettings;
         private readonly OpenUserProfileButtonContextMenuControlSettings openUserProfileButtonContextMenuControlSettings;
         private UniTaskCompletionSource closeContextMenuTask;
         private CancellationTokenSource cancellationTokenSource;
 
-        public MVCManagerMenusAccessFacade(IMVCManager mvcManager, ISystemClipboard systemClipboard, IClipboardManager clipboardManager)
+        public MVCManagerMenusAccessFacade(IMVCManager mvcManager, ISystemClipboard systemClipboard, IClipboardManager clipboardManager, ObjectProxy<IFriendsService> friendServiceProxy)
         {
             this.mvcManager = mvcManager;
             this.clipboardManager = clipboardManager;
+            this.friendServiceProxy = friendServiceProxy;
 
-            //TODO FRAN -> Add proper request friend action here when Friends functionality is merged to dev
-            userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings(systemClipboard, null);
+            userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings(systemClipboard, friendServiceProxy.Configured? OnFriendsButtonClicked : null);
             openUserProfileButtonContextMenuControlSettings = new OpenUserProfileButtonContextMenuControlSettings(OnShowUserPassportClicked);
             mentionUserButtonContextMenuControlSettings = new MentionUserButtonContextMenuControlSettings(OnPasteUserClicked);
             contextMenu = new GenericContextMenu(230, new Vector2(5,-10), anchorPoint: GenericContextMenuAnchorPoint.BOTTOM_LEFT)
@@ -62,18 +67,50 @@ namespace MVC
         public UniTask ShowPassport(string userId, CancellationToken ct) =>
             mvcManager.ShowAsync(PassportController.IssueCommand(new PassportController.Params(userId)), ct);
 
-        public UniTask ShowUserProfileContextMenu(Profile profile, Vector3 position, CancellationToken ct)
+        public async UniTask ShowUserProfileContextMenuAsync(Profile profile, Vector3 position, CancellationToken ct)
         {
             closeContextMenuTask?.TrySetResult();
             closeContextMenuTask = new UniTaskCompletionSource();
-            //TODO FRAN URGENT-> FIX FRIENDSHIP STATUS
-            userProfileContextMenuControlSettings.SetInitialData(profile.DisplayName, profile.WalletId, profile.HasClaimedName,profile.UserNameColor, UserProfileContextMenuControlSettings.FriendshipStatus.NONE);
+
+            FriendshipStatus friendshipStatus = FriendshipStatus.NONE;
+            if (friendServiceProxy.Configured)
+                friendshipStatus = await friendServiceProxy.Object.GetFriendshipStatusAsync(profile.DisplayName, ct);
+
+            userProfileContextMenuControlSettings.SetInitialData(profile.DisplayName, profile.WalletId, profile.HasClaimedName,profile.UserNameColor, ConvertFriendshipStatus(friendshipStatus));
             mentionUserButtonContextMenuControlSettings.SetData(profile);
             openUserProfileButtonContextMenuControlSettings.SetData(profile);
 
-            return mvcManager.ShowAsync(GenericContextMenuController.IssueCommand(
+            await mvcManager.ShowAsync(GenericContextMenuController.IssueCommand(
                 new GenericContextMenuParameter(contextMenu, position, closeTask: closeContextMenuTask.Task)), ct);
         }
+
+        private UserProfileContextMenuControlSettings.FriendshipStatus ConvertFriendshipStatus(FriendshipStatus friendshipStatus)
+        {
+            return friendshipStatus switch
+                   {
+                       FriendshipStatus.NONE => UserProfileContextMenuControlSettings.FriendshipStatus.NONE,
+                       FriendshipStatus.FRIEND => UserProfileContextMenuControlSettings.FriendshipStatus.FRIEND,
+                       FriendshipStatus.REQUEST_SENT => UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_SENT,
+                       FriendshipStatus.REQUEST_RECEIVED => UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_RECEIVED,
+                       FriendshipStatus.BLOCKED => UserProfileContextMenuControlSettings.FriendshipStatus.BLOCKED,
+                       _ => UserProfileContextMenuControlSettings.FriendshipStatus.NONE
+                   };
+        }
+
+        private void OnFriendsButtonClicked(string s, UserProfileContextMenuControlSettings.FriendshipStatus friendshipStatus)
+        {
+            switch (friendshipStatus)
+            {
+                case UserProfileContextMenuControlSettings.FriendshipStatus.NONE: break;
+                case UserProfileContextMenuControlSettings.FriendshipStatus.FRIEND: break;
+                case UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_SENT: break;
+                case UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_RECEIVED: break;
+                case UserProfileContextMenuControlSettings.FriendshipStatus.BLOCKED: break;
+                default: throw new ArgumentOutOfRangeException(nameof(friendshipStatus), friendshipStatus, null);
+            }
+
+        }
+
 
         private void OnShowUserPassportClicked(Profile data)
         {
@@ -84,9 +121,10 @@ namespace MVC
         private void OnPasteUserClicked(Profile data)
         {
             closeContextMenuTask.TrySetResult();
-            //We need to add an extra character after adding the mention to the chat.
+            //Per design request we need to add an extra character after adding the mention to the chat.
             clipboardManager.Copy(this, data.MentionName + " ");
             clipboardManager.Paste(this);
         }
+
     }
 }
