@@ -80,7 +80,7 @@ namespace DCL.Multiplayer.Emotes
         private async UniTaskVoid SelfSendWithDelayAsync(URN urn, uint id)
         {
             await UniTask.Delay(TimeSpan.FromSeconds(LATENCY), cancellationToken: cancellationTokenSource.Token);
-            Inbox(RemotePlayerMovementComponent.TEST_ID, urn, id);
+            Inbox(RemotePlayerMovementComponent.SELF_REPLICA_ID, urn, id);
         }
 
         private void OnMessageReceived(ReceivedMessage<PlayerEmote> receivedMessage)

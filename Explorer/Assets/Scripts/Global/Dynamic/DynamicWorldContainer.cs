@@ -376,8 +376,10 @@ namespace Global.Dynamic
                 actionOnRelease: queue => queue.Clear()
             );
 
+            var remoteMetadata = new RemoteMetadata(roomHub, staticContainer.RealmData);
+
             var remoteEntities = new RemoteEntities(
-                roomHub,
+                remoteMetadata,
                 entityParticipantTable,
                 staticContainer.ComponentsContainer.ComponentPoolsRegistry,
                 queuePoolFullMovementMessage,
@@ -510,14 +512,12 @@ namespace Global.Dynamic
 
             var multiplayerEmotesMessageBus = new MultiplayerEmotesMessageBus(messagePipesHub, multiplayerDebugSettings);
 
-            var remoteMetadata = new DebounceRemoteMetadata(new RemoteMetadata(roomHub, staticContainer.RealmData));
-
             var characterPreviewEventBus = new CharacterPreviewEventBus();
             var sidebarBus = new SidebarBus();
             AudioMixer generalAudioMixer = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.GeneralAudioMixer, ct)).Value;
             var audioMixerVolumesController = new AudioMixerVolumesController(generalAudioMixer);
 
-            var multiplayerMovementMessageBus = new MultiplayerMovementMessageBus(messagePipesHub, entityParticipantTable, globalWorld);
+            var multiplayerMovementMessageBus = new MultiplayerMovementMessageBus(messagePipesHub, entityParticipantTable, remoteMetadata, globalWorld);
 
             var badgesAPIClient = new BadgesAPIClient(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
 

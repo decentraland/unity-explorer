@@ -52,7 +52,7 @@ namespace DCL.Multiplayer.Movement
         {
             Vector2Int parcel = position.ToParcel();
 
-            int parcelIndex = parcelEncoder.Encode(parcel);
+            // int parcelIndex = parcelEncoder.Encode(parcel); parcel is encoded in metadata
 
             var relativePosition = new Vector2(
                 position.x - (parcel.x * ParcelMathHelper.PARCEL_SIZE),
@@ -76,8 +76,9 @@ namespace DCL.Multiplayer.Movement
             int compressedVelocityY = CompressedVelocity(velocity.y, maxVelocity, velocityBits);
             int compressedVelocityZ = CompressedVelocity(velocity.z, maxVelocity, velocityBits);
 
-            return (uint)parcelIndex
-                   | ((long)compressedX << MessageEncodingSettings.PARCEL_BITS)
+            // TODO: utilize 17 bits that were used for parcel (now moved to metadata)
+            return // (uint)parcelIndex
+                ((long)compressedX << MessageEncodingSettings.PARCEL_BITS)
                    | ((long)compressedZ << (MessageEncodingSettings.PARCEL_BITS + xzBits))
                    | ((long)compressedY << (MessageEncodingSettings.PARCEL_BITS + xzBits + xzBits))
                    | ((long)compressedVelocityX << (MessageEncodingSettings.PARCEL_BITS + xzBits + xzBits + yBits))
@@ -85,12 +86,12 @@ namespace DCL.Multiplayer.Movement
                    | ((long)compressedVelocityZ << (MessageEncodingSettings.PARCEL_BITS + xzBits + xzBits + yBits + velocityBits + velocityBits));
         }
 
-        public NetworkMovementMessage Decompress(CompressedNetworkMovementMessage compressedMessage)
+        public NetworkMovementMessage Decompress(CompressedNetworkMovementMessage compressedMessage, Vector2Int parcel)
         {
             int compressedTemporalData = compressedMessage.temporalData;
             int tier = (compressedMessage.temporalData >> encodingSettings.TIER_START_BIT) & MessageEncodingSettings.TWO_BITS_MASK;
 
-            (Vector3 position, Vector3 correctedVelocity) = DecompressMovementData(compressedMessage.movementData, encodingSettings.GetConfigForTier(tier));
+            (Vector3 position, Vector3 correctedVelocity) = DecompressMovementData(compressedMessage.movementData, parcel, encodingSettings.GetConfigForTier(tier));
 
             int rotationMask = (1 << encodingSettings.ROTATION_Y_BITS) - 1;
             int compressedRotation = (compressedTemporalData >> encodingSettings.ROTATION_START_BIT) & rotationMask;
@@ -129,7 +130,7 @@ namespace DCL.Multiplayer.Movement
             };
         }
 
-        private (Vector3 position, Vector3 velocity) DecompressMovementData(long movementData, MovementEncodingConfig settings)
+        private (Vector3 position, Vector3 velocity) DecompressMovementData(long movementData, Vector2Int parcel, MovementEncodingConfig settings)
         {
             const int PARCEL_BITS = MessageEncodingSettings.PARCEL_BITS;
             const int PARCEL_MASK = (1 << PARCEL_BITS) - 1;
@@ -145,7 +146,7 @@ namespace DCL.Multiplayer.Movement
             int velocityBits = settings.VELOCITY_AXIS_FIELD_SIZE_IN_BITS;
             int velocityMask = (1 << velocityBits) - 1;
 
-            Vector2Int parcel = parcelEncoder.Decode((int)(movementData & PARCEL_MASK));
+            // Vector2Int parcel = parcelEncoder.Decode((int)(movementData & PARCEL_MASK));
 
             var extractedX = (int)((movementData >> PARCEL_BITS) & xzMask);
             var extractedZ = (int)((movementData >> (PARCEL_BITS + xzBits)) & xzMask);
