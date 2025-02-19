@@ -44,13 +44,13 @@ namespace ECS.StreamableLoading.GLTF
             this.downloadStrategy = downloadStrategy;
         }
 
-        protected override async UniTask<StreamableLoadingResult<GLTFData>> FlowInternalAsync(GetGLTFIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
+        protected override async UniTask<StreamableLoadingResult<GLTFData>> FlowInternalAsync(GetGLTFIntention intention, StreamableLoadingState state, IPartitionComponent partition, CancellationToken ct)
         {
             var reportData = new ReportData(GetReportCategory());
 
             // Acquired budget is released inside GLTFastDownloadedProvider once the GLTF has been fetched
             // Cannot inject DownloadProvider from outside, because it needs the AcquiredBudget and PartitionComponent
-            IGLTFastDisposableDownloadProvider gltFastDownloadProvider = downloadStrategy.CreateDownloadProvider(World, intention, partition, reportData, webRequestController, acquiredBudget);
+            IGLTFastDisposableDownloadProvider gltFastDownloadProvider = downloadStrategy.CreateDownloadProvider(World, intention, partition, reportData, webRequestController, state.AcquiredBudget!);
 
             var gltfImport = new GltfImport(
                 downloadProvider: gltFastDownloadProvider,

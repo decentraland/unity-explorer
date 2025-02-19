@@ -14,6 +14,7 @@ using DCL.Input;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connectivity;
 using DCL.NotificationsBusController.NotificationsBus;
+using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.RealmNavigation;
@@ -58,6 +59,8 @@ namespace DCL.PluginSystem.Global
         private readonly IAppArgs appArgs;
         private readonly FeatureFlagsCache featureFlagsCache;
         private readonly ISidebarActionsBus sidebarActionsBus;
+        private readonly IAnalyticsController? analyticsController;
+        private readonly bool useAnalytics;
 
         private CancellationTokenSource friendServiceSubscriptionCancellationToken = new ();
         private RPCFriendsService? friendsService;
@@ -89,7 +92,9 @@ namespace DCL.PluginSystem.Global
             bool includeUserBlocking,
             IAppArgs appArgs,
             FeatureFlagsCache featureFlagsCache,
-            ISidebarActionsBus sidebarActionsBus)
+            ISidebarActionsBus sidebarActionsBus,
+            bool useAnalytics,
+            IAnalyticsController? analyticsController)
         {
             this.mainUIView = mainUIView;
             this.dclUrlSource = dclUrlSource;
@@ -115,6 +120,8 @@ namespace DCL.PluginSystem.Global
             this.appArgs = appArgs;
             this.featureFlagsCache = featureFlagsCache;
             this.sidebarActionsBus = sidebarActionsBus;
+            this.useAnalytics = useAnalytics;
+            this.analyticsController = analyticsController;
         }
 
         public void Dispose()
@@ -136,7 +143,9 @@ namespace DCL.PluginSystem.Global
             friendsService = new RPCFriendsService(GetApiUrl(),
                 friendEventBus, web3IdentityCache, friendsCache, selfProfile);
 
-            friendServiceProxy.SetObject(friendsService);
+            IFriendsService injectableFriendService = useAnalytics ? new FriendServiceAnalyticsDecorator(friendsService, analyticsController!) : friendsService;
+
+            friendServiceProxy.SetObject(injectableFriendService);
 
             // Fire and forget as this task will never finish
             var cts = CancellationTokenSource.CreateLinkedTokenSource(friendServiceSubscriptionCancellationToken.Token, ct);
@@ -164,7 +173,7 @@ namespace DCL.PluginSystem.Global
                 mainUIView.FriendsPanelViewView,
                 chatLifecycleBusController,
                 mainUIView.SidebarView.FriendRequestNotificationIndicator,
-                friendsService,
+                injectableFriendService,
                 friendEventBus,
                 mvcManager,
                 web3IdentityCache,
@@ -188,7 +197,7 @@ namespace DCL.PluginSystem.Global
                 dclInput,
                 notificationsBusController,
                 passportBridge,
-                friendsService);
+                injectableFriendService);
 
             mvcManager.RegisterController(persistentFriendsOpenerController);
 
@@ -196,7 +205,7 @@ namespace DCL.PluginSystem.Global
 
             var friendRequestController = new FriendRequestController(
                 FriendRequestController.CreateLazily(friendRequestPrefab, null),
-                web3IdentityCache, friendsService, profileRepository,
+                web3IdentityCache, injectableFriendService, profileRepository,
                 inputBlock, profileThumbnailCache);
 
             mvcManager.RegisterController(friendRequestController);
@@ -211,7 +220,7 @@ namespace DCL.PluginSystem.Global
 
             unfriendConfirmationPopupController = new UnfriendConfirmationPopupController(
                 UnfriendConfirmationPopupController.CreateLazily(unfriendConfirmationPopupPrefab, null),
-                friendsService, profileRepository, profileThumbnailCache);
+                injectableFriendService, profileRepository, profileThumbnailCache);
 
             mvcManager.RegisterController(unfriendConfirmationPopupController);
 

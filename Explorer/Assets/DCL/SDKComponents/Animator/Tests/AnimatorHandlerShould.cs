@@ -91,7 +91,6 @@ namespace DCL.SDKComponents.Animator.Tests
         {
             createGltfAssetFromAssetBundleSystem.Dispose();
             finalizeGltfContainerLoadingSystem.Dispose();
-            resources.UnloadBundle();
         }
 
 

@@ -19,6 +19,7 @@ namespace DCL.WebRequests
         public readonly bool SuppressErrors;
         private readonly InitializeRequest<TWebRequestArgs, TWebRequest> initializeRequest;
         private readonly TWebRequestArgs args;
+        private readonly DownloadHandler? customDownloadHandler;
         private readonly WebRequestHeadersInfo headersInfo;
         private readonly WebRequestSignInfo? signInfo;
         private readonly ISet<long>? responseCodeIgnores;
@@ -33,7 +34,8 @@ namespace DCL.WebRequests
             WebRequestHeadersInfo headersInfo,
             WebRequestSignInfo? signInfo,
             ISet<long>? responseCodeIgnores = null,
-            bool suppressErrors = false
+            bool suppressErrors = false,
+            DownloadHandler? customDownloadHandler = null
         )
         {
             this.initializeRequest = initializeRequest;
@@ -44,6 +46,7 @@ namespace DCL.WebRequests
             this.headersInfo = headersInfo;
             this.signInfo = signInfo;
             SuppressErrors = suppressErrors;
+            this.customDownloadHandler = customDownloadHandler;
             this.responseCodeIgnores = responseCodeIgnores;
         }
 
@@ -92,8 +95,8 @@ namespace DCL.WebRequests
 
         private void AssignDownloadHandler(UnityWebRequest unityWebRequest)
         {
-            if (CommonArguments.CustomDownloadHandler != null)
-                unityWebRequest.downloadHandler = CommonArguments.CustomDownloadHandler;
+            if (customDownloadHandler != null)
+                unityWebRequest.downloadHandler = customDownloadHandler;
         }
 
         private void AssignTimeout(UnityWebRequest unityWebRequest)

@@ -124,6 +124,7 @@ namespace DCL.Passport
         public event Action<string, bool>? PassportOpened;
         public event Action<string, bool, string>? BadgesSectionOpened;
         public event Action<string, bool>? BadgeSelected;
+        public event Action<string, Vector2Int>? JumpToFriendClicked;
 
         public PassportController(
             ViewFactoryMethod viewFactory,
@@ -544,7 +545,9 @@ namespace DCL.Passport
                                      .AddControl(new SeparatorContextMenuControlSettings(CONTEXT_MENU_SEPARATOR_HEIGHT, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.left, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.right));
 
             if (friendOnlineStatusCacheProxy.Object!.GetFriendStatus(inputData.UserId) != OnlineStatus.OFFLINE)
-                contextMenu.AddControl(new ButtonContextMenuControlSettings(viewInstance.JumpInText, viewInstance.JumpInSprite, () => FriendListSectionUtilities.JumpToFriendLocation(profile.UserId, jumpToFriendLocationCts, getUserPositionBuffer, onlineUsersProvider, realmNavigator)));
+                contextMenu.AddControl(new ButtonContextMenuControlSettings(viewInstance.JumpInText, viewInstance.JumpInSprite,
+                    () => FriendListSectionUtilities.JumpToFriendLocation(profile.UserId, jumpToFriendLocationCts, getUserPositionBuffer, onlineUsersProvider, realmNavigator,
+                        parcel => JumpToFriendClicked?.Invoke(profile.UserId, parcel))));
 
             if (friendshipStatus != FriendshipStatus.BLOCKED && includeUserBlocking)
                 contextMenu.AddControl(new ButtonContextMenuControlSettings(viewInstance.BlockText, viewInstance.BlockSprite, () => BlockUserClicked(inputData.UserId)));
