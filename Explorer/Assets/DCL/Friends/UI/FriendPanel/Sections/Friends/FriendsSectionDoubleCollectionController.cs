@@ -54,6 +54,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 
             doubleCollectionRequestManager.JumpInClicked += JumpInClick;
             doubleCollectionRequestManager.ContextMenuClicked += ContextMenuClicked;
+            doubleCollectionRequestManager.NoFriendsInCollections += ShowEmptyState;
+            doubleCollectionRequestManager.AtLeastOneFriendInCollections += HideEmptyState;
         }
 
         public override void Dispose()
@@ -61,7 +63,21 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             base.Dispose();
             requestManager.ContextMenuClicked -= ContextMenuClicked;
             requestManager.JumpInClicked -= JumpInClick;
+            requestManager.NoFriendsInCollections -= ShowEmptyState;
+            requestManager.AtLeastOneFriendInCollections -= HideEmptyState;
             jumpToFriendLocationCts.SafeCancelAndDispose();
+        }
+
+        private void ShowEmptyState()
+        {
+            view.SetEmptyState(true);
+            view.SetScrollViewState(false);
+        }
+
+        private void HideEmptyState()
+        {
+            view.SetEmptyState(false);
+            view.SetScrollViewState(true);
         }
 
         private void HandleContextMenuUserProfileButton(string userId, UserProfileContextMenuControlSettings.FriendshipStatus friendshipStatus)
