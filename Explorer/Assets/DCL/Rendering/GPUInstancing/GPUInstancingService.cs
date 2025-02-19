@@ -90,13 +90,14 @@ namespace DCL.Roads.GPUInstancing
 
         public void RenderIndirect()
         {
+            Camera cam = Camera.main;
+
             foreach ((GPUInstancingLODGroupWithBuffer candidate, GPUInstancingBuffers buffers) in candidatesBuffersTable)
-                RenderCandidateIndirect(candidate, buffers);
+                RenderCandidateIndirect(candidate, buffers, cam);
         }
 
-        private void RenderCandidateIndirect(GPUInstancingLODGroupWithBuffer candidate, GPUInstancingBuffers buffers)
+        private void RenderCandidateIndirect(GPUInstancingLODGroupWithBuffer candidate, GPUInstancingBuffers buffers, Camera cam)
         {
-            Camera cam = Camera.main;
             float halfAngle = 0.5f * cam.fieldOfView * Mathf.Deg2Rad;
             Matrix4x4 camMVP = cam.projectionMatrix * cam.worldToCameraMatrix;
 
