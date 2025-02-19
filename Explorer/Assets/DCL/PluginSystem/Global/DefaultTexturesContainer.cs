@@ -81,7 +81,7 @@ namespace DCL.PluginSystem.Global
                 defaultTextures.Add(new TextureArrayKey(TextureArrayConstants.BASE_MAP_TEX_ARR, 256), mainTex256);
                 defaultTextures.Add(new TextureArrayKey(TextureArrayConstants.BASE_MAP_TEX_ARR, 512) , mainTex512);
 
-                texturesContainer.TextureArrayContainerFactory = new TextureArrayContainerFactory(defaultTextures, enableRawGltfWearables: appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_BUILDER_COLLECTION));
+                texturesContainer.TextureArrayContainerFactory = new TextureArrayContainerFactory(defaultTextures, enableRawGltfWearables: appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_BUILDER_COLLECTIONS));
             });
         }
     }
