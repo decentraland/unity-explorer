@@ -138,12 +138,12 @@ namespace DCL.Roads.GPUInstancing
                 for (int j = 0; j < array.Length; j++)
                     array[j].instanceCount = 0;
 
-            for (var i = 0; i < buffers.DrawArgs.Count; i++)
-                buffers.DrawArgs[i].SetData(buffers.DrawArgsCommandData[i]);
+            for (var i = 0; i < buffers.DrawArgsForCombinedRenderer.Count; i++)
+                buffers.DrawArgsForCombinedRenderer[i].SetData(buffers.DrawArgsCommandData[i]);
 
             IndirectBufferGenerationComputeShader.SetBuffer(IndirectBufferGenerationComputeShader_KernelIDs, ComputeVar_GroupDataBuffer, buffers.GroupData);
             IndirectBufferGenerationComputeShader.SetBuffer(IndirectBufferGenerationComputeShader_KernelIDs, ComputeVar_arrLODCount, buffers.ArrLODCount); // uint[8]
-            IndirectBufferGenerationComputeShader.SetBuffer(IndirectBufferGenerationComputeShader_KernelIDs, ComputeVar_IndirectDrawIndexedArgsBuffer, buffers.DrawArgs[0]);
+            IndirectBufferGenerationComputeShader.SetBuffer(IndirectBufferGenerationComputeShader_KernelIDs, ComputeVar_IndirectDrawIndexedArgsBuffer, buffers.DrawArgsForCombinedRenderer[0]);
             IndirectBufferGenerationComputeShader.SetBuffer(IndirectBufferGenerationComputeShader_KernelIDs, ComputeVar_PerInstance_LODLevels, buffers.LODLevels);
             IndirectBufferGenerationComputeShader.SetBuffer(IndirectBufferGenerationComputeShader_KernelIDs, ComputeVar_InstanceLookUpAndDither, buffers.InstanceLookUpAndDither);
             IndirectBufferGenerationComputeShader.Dispatch(IndirectBufferGenerationComputeShader_KernelIDs, Mathf.CeilToInt((float)buffers.PerInstanceMatrices.count / (int)IndirectBufferGeneration_ThreadGroupSize_X), 1, 1);
@@ -156,7 +156,7 @@ namespace DCL.Roads.GPUInstancing
                 var RenderParams = combinedLodRenderer.RenderParamsArray[0];
                 RenderParams.camera = cam;
 
-                Graphics.RenderMeshIndirect(RenderParams, combinedLodRenderer.CombinedMesh, buffers.DrawArgs[i], commandCount: lodCount);
+                Graphics.RenderMeshIndirect(RenderParams, combinedLodRenderer.CombinedMesh, buffers.DrawArgsForCombinedRenderer[i], commandCount: lodCount);
             }
         }
 
@@ -186,7 +186,7 @@ namespace DCL.Roads.GPUInstancing
             buffers.PerInstanceMatrices = new GraphicsBuffer(GraphicsBuffer.Target.Structured, GraphicsBuffer.UsageFlags.None, _nInstanceCount, Marshal.SizeOf(typeof(PerInstanceBuffer)));
             buffers.PerInstanceMatrices.SetData(candidate.InstancesBuffer, 0, 0, _nInstanceCount);
 
-            buffers.DrawArgs = new List<GraphicsBuffer>();
+            buffers.DrawArgsForCombinedRenderer = new List<GraphicsBuffer>();
             buffers.DrawArgsCommandData = new List<GraphicsBuffer.IndirectDrawIndexedArgs[]>();
 
             var cam = Camera.main;
@@ -200,7 +200,7 @@ namespace DCL.Roads.GPUInstancing
                     continue;
                 }
 
-                var drawArgsBuffer = new GraphicsBuffer(GraphicsBuffer.Target.IndirectArguments, count: _nLODCount, GraphicsBuffer.IndirectDrawIndexedArgs.size);
+                var lodLevelsDrawArgs = new GraphicsBuffer(GraphicsBuffer.Target.IndirectArguments, count: _nLODCount, GraphicsBuffer.IndirectDrawIndexedArgs.size);
                 var drawArgsCommandData = new GraphicsBuffer.IndirectDrawIndexedArgs[_nLODCount];
 
                 for (var lodLevel = 0; lodLevel < _nLODCount; lodLevel++)
@@ -218,7 +218,7 @@ namespace DCL.Roads.GPUInstancing
                     drawArgsCommandData[lodLevel].startInstance = (uint)lodLevel * (uint)candidate.InstancesBuffer.Count;
                 }
 
-                drawArgsBuffer.SetData(drawArgsCommandData, 0, 0, count: _nLODCount);
+                lodLevelsDrawArgs.SetData(drawArgsCommandData, 0, 0, count: _nLODCount);
 
                 combinedLodRenderer.InitializeRenderParams(instancingMaterials);
                 ref RenderParams rparams = ref combinedLodRenderer.RenderParamsArray[0];
@@ -228,7 +228,7 @@ namespace DCL.Roads.GPUInstancing
                 rparams.matProps.SetBuffer("_PerInstanceBuffer", buffers.PerInstanceMatrices);
                 rparams.matProps.SetBuffer("_PerInstanceLookUpAndDitherBuffer", buffers.InstanceLookUpAndDither);
 
-                buffers.DrawArgs.Add(drawArgsBuffer);
+                buffers.DrawArgsForCombinedRenderer.Add(lodLevelsDrawArgs);
                 buffers.DrawArgsCommandData.Add(drawArgsCommandData);
             }
         }
@@ -259,7 +259,7 @@ namespace DCL.Roads.GPUInstancing
                     submeshIndex: 0, // TODO (Vit): we need to combine mesh without submeshes for our LOD to work here
                     material: combinedLodRenderer.SharedMaterial,
                     shaderPass: -1, // which pass of the shader to use, or -1 which renders all passes.
-                    bufferWithArgs: buffers.DrawArgs[i],
+                    bufferWithArgs: buffers.DrawArgsForCombinedRenderer[i],
                     argsOffset: lodCount
                     // ,properties: new MaterialPropertyBlock()
                 );
@@ -275,7 +275,7 @@ namespace DCL.Roads.GPUInstancing
         public GraphicsBuffer GroupData;
         public GraphicsBuffer ArrLODCount;
 
-        public List<GraphicsBuffer> DrawArgs;
+        public List<GraphicsBuffer> DrawArgsForCombinedRenderer;
         public List<GraphicsBuffer.IndirectDrawIndexedArgs[]> DrawArgsCommandData;
 
         public void Dispose()
@@ -295,11 +295,11 @@ namespace DCL.Roads.GPUInstancing
             ArrLODCount?.Dispose();
             ArrLODCount = null;
 
-            foreach (GraphicsBuffer drawArg in DrawArgs)
+            foreach (GraphicsBuffer drawArg in DrawArgsForCombinedRenderer)
                 drawArg?.Dispose();
 
-            DrawArgs.Clear();
-            DrawArgs = null;
+            DrawArgsForCombinedRenderer.Clear();
+            DrawArgsForCombinedRenderer = null;
         }
     }
 }
