@@ -98,9 +98,28 @@ namespace DCL.Systems
             Vector3 vectorToCamera = entityPosition - cameraTransform;
             float sqrDistance = Vector3.SqrMagnitude(vectorToCamera);
 
-            PartitionAssetEntitiesSystem.ResolvePartitionFromDistance(partitionSettings, cameraForward, partitionComponent, sqrDistance, vectorToCamera);
+            ResolvePartitionFromDistance(partitionSettings, cameraForward, partitionComponent, sqrDistance, vectorToCamera);
 
             partitionComponent.IsDirty = bucket != partitionComponent.Bucket || isBehind != partitionComponent.IsBehind;
+        }
+
+        private static void ResolvePartitionFromDistance(IPartitionSettings partitionSettings, Vector3 cameraForward, PartitionComponent partitionComponent,
+            float sqrDistance, Vector3 vectorToCamera)
+        {
+            // Find the bucket
+            byte bucketIndex;
+
+            for (bucketIndex = 0; bucketIndex < partitionSettings.SqrDistanceBuckets.Count; bucketIndex++)
+            {
+                if (sqrDistance < partitionSettings.SqrDistanceBuckets[bucketIndex])
+                    break;
+            }
+
+            partitionComponent.Bucket = bucketIndex;
+
+            // Is behind is a dot product
+            // mind that taking cosines is not cheap
+            partitionComponent.IsBehind = Vector3.Dot(cameraForward, vectorToCamera) < 0;
         }
     }
 }
