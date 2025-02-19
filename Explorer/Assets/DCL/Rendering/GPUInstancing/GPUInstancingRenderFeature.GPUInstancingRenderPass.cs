@@ -35,6 +35,8 @@ public partial class GPUInstancingRenderFeature
 
         public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
         {
+            return;
+
             if(instancingService == null || !realmData.Configured) return;
 
             CommandBuffer cmd = CommandBufferPool.Get(PROFILER_TAG);

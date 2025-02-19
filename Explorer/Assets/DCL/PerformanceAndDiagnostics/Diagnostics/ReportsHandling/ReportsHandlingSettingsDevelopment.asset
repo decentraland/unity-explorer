@@ -496,6 +496,48 @@ MonoBehaviour:
       Severity: 4
     - Category: ALWAYS
       Severity: 1
+    - Category: GPU_INSTANCING
+      Severity: 0
+    - Category: GPU_INSTANCING
+      Severity: 4
+    - Category: GPU_INSTANCING
+      Severity: 1
+    - Category: EVENTS
+      Severity: 0
+    - Category: EVENTS
+      Severity: 4
+    - Category: EVENTS
+      Severity: 1
+    - Category: FRIENDS
+      Severity: 0
+    - Category: FRIENDS
+      Severity: 4
+    - Category: FRIENDS
+      Severity: 1
+    - Category: CAMERA_REEL
+      Severity: 0
+    - Category: CAMERA_REEL
+      Severity: 4
+    - Category: CAMERA_REEL
+      Severity: 1
+    - Category: DISK_CACHE
+      Severity: 0
+    - Category: DISK_CACHE
+      Severity: 4
+    - Category: DISK_CACHE
+      Severity: 1
+    - Category: IN_WORLD_CAMERA
+      Severity: 0
+    - Category: IN_WORLD_CAMERA
+      Severity: 4
+    - Category: IN_WORLD_CAMERA
+      Severity: 1
+    - Category: LIGHT_SOURCE
+      Severity: 0
+    - Category: LIGHT_SOURCE
+      Severity: 4
+    - Category: LIGHT_SOURCE
+      Severity: 1
   sentryMatrix:
     entries: []
   debounceEnabled: 1
