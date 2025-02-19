@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using UnityEngine.Pool;
 
 namespace DCL.AvatarRendering.Wearables
 {
@@ -71,7 +72,7 @@ namespace DCL.AvatarRendering.Wearables
                                                    .ToArray();
 
                 results ??= new List<IWearable>();
-                var localBuffer = new List<IWearable>();
+                var localBuffer = ListPool<IWearable>.Get();
                 for (var i = 0; i < collections.Length; i++)
                 {
                     // localBuffer accumulates the loaded wearables
@@ -85,7 +86,11 @@ namespace DCL.AvatarRendering.Wearables
 
                 int pageIndex = pageNumber - 1;
                 results.AddRange(localBuffer.Skip(pageIndex * pageSize).Take(pageSize));
-                return (results, localBuffer.Count);
+
+                int count = localBuffer.Count;
+                ListPool<IWearable>.Release(localBuffer);
+
+                return (results, count);
             }
 
             // Regular path without any "self-preview" element
