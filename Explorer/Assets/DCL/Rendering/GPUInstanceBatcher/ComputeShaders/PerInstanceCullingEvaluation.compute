@@ -87,8 +87,8 @@ void CameraCullingAndLODCalculationKernel(uint3 id : SV_DispatchThreadID)
 
     if (bCulled == false)
     {
-        PerInstance_LODLevels[id.x] = uint4(0,8,0,8);
-        //PerInstance_LODLevels[id.x] = EvaluateLODLevel(GroupDataBuffer[0].nMaxLOD_GB, GroupDataBuffer[0].lodSizes, GroupDataBuffer[0].fShadowDistance, fScreenSpaceSize, fDistance);
+        //PerInstance_LODLevels[id.x] = uint4(0,8,0,8);
+        PerInstance_LODLevels[id.x] = EvaluateLODLevel(GroupDataBuffer[0].nMaxLOD_GB, GroupDataBuffer[0].lodSizes, GroupDataBuffer[0].fShadowDistance, fScreenSpaceSize, fDistance);
     }
     else
     {
