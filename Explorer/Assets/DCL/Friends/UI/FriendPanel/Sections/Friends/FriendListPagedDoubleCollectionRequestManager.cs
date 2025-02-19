@@ -26,6 +26,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 
         public event Action<FriendProfile>? JumpInClicked;
         public event Action<FriendProfile, Vector2, FriendListUserView>? ContextMenuClicked;
+        public event Action? NoFriendsInCollections;
+        public event Action? AtLeastOneFriendInCollections;
 
         public FriendListPagedDoubleCollectionRequestManager(IFriendsService friendsService,
             IFriendsEventBus friendEventBus,
@@ -66,6 +68,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 
         private void AddNewFriendProfile(FriendProfile friendProfile, OnlineStatus onlineStatus)
         {
+            int previousTotalCount = offlineFriends.Count + onlineFriends.Count;
+
             if (onlineStatus == OnlineStatus.OFFLINE)
             {
                 offlineFriends.Add(friendProfile);
@@ -76,6 +80,9 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
                 onlineFriends.Add(friendProfile);
                 FriendsSorter.SortFriendList(onlineFriends);
             }
+
+            if (previousTotalCount == 0)
+                AtLeastOneFriendInCollections?.Invoke();
         }
 
         private void FriendBecameOnline(FriendProfile friendProfile)
@@ -139,6 +146,9 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             onlineFriends.RemoveAll(friendProfile => friendProfile.Address.ToString().Equals(userid));
             offlineFriends.RemoveAll(friendProfile => friendProfile.Address.ToString().Equals(userid));
             RefreshLoopList();
+
+            if (offlineFriends.Count + onlineFriends.Count == 0)
+                NoFriendsInCollections?.Invoke();
         }
 
         protected override FriendProfile GetFirstCollectionElement(int index) =>
