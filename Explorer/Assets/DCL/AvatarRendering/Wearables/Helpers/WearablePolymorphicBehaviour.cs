@@ -9,6 +9,7 @@ using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.Diagnostics;
 using DCL.Optimization.Pools;
 using ECS.Prioritization.Components;
+using ECS.StreamableLoading;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.GLTF;
@@ -321,6 +322,21 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             return new StreamableLoadingResult<AttachmentAssetBase>(new AttachmentTextureAsset(TextureUtilities.EnsureRGBA32Format(result.Asset!.Asset), result.Asset));
         }
 
+        /*public static AttachmentRegularAsset ToRegularAsset<T>(this StreamableLoadingResult<T> result) where T : IStreamableRefCountData
+        {
+            GameObject go = result.Asset!.containerGameObject;
+
+            // collect all renderers
+            List<AttachmentRegularAsset.RendererInfo> rendererInfos = AttachmentRegularAsset.RENDERER_INFO_POOL.Get();
+
+            using PoolExtensions.Scope<List<SkinnedMeshRenderer>> pooledList = go.GetComponentsInChildrenIntoPooledList<SkinnedMeshRenderer>();
+
+            foreach (SkinnedMeshRenderer skinnedMeshRenderer in pooledList.Value)
+                rendererInfos.Add(new AttachmentRegularAsset.RendererInfo(skinnedMeshRenderer, skinnedMeshRenderer.sharedMaterial));
+
+            return new AttachmentRegularAsset(go, rendererInfos, result.Asset);
+        }*/
+
         public static AttachmentRegularAsset ToRegularAsset(this StreamableLoadingResult<AssetBundleData> result)
         {
             GameObject go = result.Asset!.GetMainAsset<GameObject>();
@@ -348,7 +364,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             foreach (SkinnedMeshRenderer skinnedMeshRenderer in pooledList.Value)
                 rendererInfos.Add(new AttachmentRegularAsset.RendererInfo(skinnedMeshRenderer, skinnedMeshRenderer.sharedMaterial));
 
-            return new AttachmentRegularAsset(go, rendererInfos, result.Asset);
+            return new AttachmentRegularAsset(go, rendererInfos, result.Asset, result.Asset.AnimationClips);
         }
 
         public static void AssignWearableAsset(this IWearable wearable, AttachmentRegularAsset attachmentRegularAsset, BodyShape bodyShape)

@@ -149,6 +149,8 @@ namespace DCL.AvatarRendering.Emotes.Load
             return true;
         }
 
+        // TODO: Abstract common logic between both queries...
+
         [Query]
         [None(typeof(StreamableResult))]
         private void GetEmotesFromLocalScene([Data] float dt, in Entity entity,
