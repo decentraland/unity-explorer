@@ -20,6 +20,8 @@ using DCL.WebRequests;
 using ECS;
 using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.Cache;
+using ECS.StreamableLoading.GLTF;
+using ECS.StreamableLoading.GLTF.DownloadProvider;
 using MVC;
 using System;
 using System.Collections.Generic;
@@ -131,16 +133,17 @@ namespace DCL.PluginSystem.Global
 
             LoadSceneEmotesSystem.InjectToWorld(ref builder, emoteStorage, customStreamingSubdirectory);
 
-            /*if (localSceneDevelopment)
+            if (localSceneDevelopment)
             {
+                // TODO: Manage conflicts with other LoadGLTFSystem running in global...
                 LoadGLTFSystem.InjectToWorld(
                     ref builder,
                     NoCache<GLTFData, GetGLTFIntention>.INSTANCE,
                     webRequestController,
                     false,
                     true,
-                    new GltFastSceneDownloadStrategy(sharedDependencies.SceneData));
-            }*/
+                    new GltFastRealmDataDownloadStrategy(realmData));
+            }
         }
 
         public async UniTask InitializeAsync(EmoteSettings settings, CancellationToken ct)
