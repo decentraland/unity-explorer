@@ -65,13 +65,13 @@ namespace DCL.Roads.GPUInstancing
         public GPUInstancingService(ComputeShader frustumCullingAndLODGenComputeShader, ComputeShader indirectBufferGenerationComputeShader)
         {
             FrustumCullingAndLODGenComputeShader = frustumCullingAndLODGenComputeShader;
-            IndirectBufferGenerationComputeShader = indirectBufferGenerationComputeShader;
             FrustumCullingAndLODGenComputeShader_KernelIDs = FrustumCullingAndLODGenComputeShader.FindKernel(FrustumCullingAndLODGenComputeShader_KernelName);
             FrustumCullingAndLODGenComputeShader.GetKernelThreadGroupSizes(FrustumCullingAndLODGenComputeShader_KernelIDs,
                 out FrustumCullingAndLODGen_ThreadGroupSize_X,
                 out FrustumCullingAndLODGen_ThreadGroupSize_Y,
                 out FrustumCullingAndLODGen_ThreadGroupSize_Z);
-            IndirectBufferGenerationComputeShader = _IndirectBufferGenerationComputeShader;
+
+            IndirectBufferGenerationComputeShader = indirectBufferGenerationComputeShader;
             IndirectBufferGenerationComputeShader_KernelIDs = IndirectBufferGenerationComputeShader.FindKernel(IndirectBufferGenerationComputeShader_KernelName);
             IndirectBufferGenerationComputeShader.GetKernelThreadGroupSizes(IndirectBufferGenerationComputeShader_KernelIDs,
                 out IndirectBufferGeneration_ThreadGroupSize_X,
@@ -140,30 +140,14 @@ namespace DCL.Roads.GPUInstancing
             {
                 CombinedLodsRenderer combinedLodRenderer = candidate.LODGroup.CombinedLodsRenderers[i];
                 int lodCount = candidate.LODGroup.LodsScreenSpaceSizes.Length;
+
                 var RenderParams = combinedLodRenderer.RenderParamsArray[0];
                 RenderParams.camera = cam;
+
                 Graphics.RenderMeshIndirect(RenderParams, combinedLodRenderer.CombinedMesh, buffers.DrawArgs[i], commandCount: lodCount);
             }
         }
 
-        private void RenderCandidateIndirect(CommandBuffer cmd, GPUInstancingLODGroupWithBuffer candidate, GPUInstancingBuffers buffers)
-        {
-            for (var i = 0; i < candidate.LODGroup.CombinedLodsRenderers.Count; i++)
-            {
-                CombinedLodsRenderer combinedLodRenderer = candidate.LODGroup.CombinedLodsRenderers[i];
-                int lodCount = candidate.LODGroup.LodsScreenSpaceSizes.Length;
-
-                cmd.DrawMeshInstancedIndirect(
-                    combinedLodRenderer.CombinedMesh,
-                    submeshIndex: 0, // TODO (Vit): we need to combine mesh without submeshes for our LOD to work
-                    material: combinedLodRenderer.SharedMaterial,
-                    shaderPass: -1, // which pass of the shader to use, or -1 which renders all passes.
-                    bufferWithArgs: buffers.DrawArgs[i],
-                    argsOffset: lodCount
-                    // ,properties: new MaterialPropertyBlock()
-                );
-            }
-        }
         public void AddToIndirect(List<GPUInstancingLODGroupWithBuffer> candidates)
         {
             foreach (GPUInstancingLODGroupWithBuffer candidate in candidates)
@@ -192,6 +176,8 @@ namespace DCL.Roads.GPUInstancing
 
             buffers.DrawArgs = new List<GraphicsBuffer>();
             buffers.DrawArgsCommandData = new List<GraphicsBuffer.IndirectDrawIndexedArgs[]>();
+
+            var cam = Camera.main;
             foreach (var combinedLodRenderer in candidate.LODGroup.CombinedLodsRenderers)
             {
                 Mesh combinedMesh = combinedLodRenderer.CombinedMesh;
@@ -225,8 +211,7 @@ namespace DCL.Roads.GPUInstancing
 
                 combinedLodRenderer.InitializeRenderParams(instancingMaterials);
                 ref RenderParams rparams = ref combinedLodRenderer.RenderParamsArray[0];
-
-                rparams.camera = Camera.main;
+                rparams.camera = cam;
                 rparams.worldBounds = RENDER_PARAMS_WORLD_BOUNDS;
                 rparams.matProps = new MaterialPropertyBlock();
                 rparams.matProps.SetBuffer("_PerInstanceBuffer", buffers.PerInstanceMatrices);
@@ -249,6 +234,25 @@ namespace DCL.Roads.GPUInstancing
 
             if (candidatesBuffersTable.Remove(lodGroup, out GPUInstancingBuffers buffers))
                 buffers.Dispose();
+        }
+
+        private void RenderCandidateIndirectViaCommandBuffer(CommandBuffer cmd, GPUInstancingLODGroupWithBuffer candidate, GPUInstancingBuffers buffers)
+        {
+            for (var i = 0; i < candidate.LODGroup.CombinedLodsRenderers.Count; i++)
+            {
+                CombinedLodsRenderer combinedLodRenderer = candidate.LODGroup.CombinedLodsRenderers[i];
+                int lodCount = candidate.LODGroup.LodsScreenSpaceSizes.Length;
+
+                cmd.DrawMeshInstancedIndirect(
+                    combinedLodRenderer.CombinedMesh,
+                    submeshIndex: 0, // TODO (Vit): we need to combine mesh without submeshes for our LOD to work here
+                    material: combinedLodRenderer.SharedMaterial,
+                    shaderPass: -1, // which pass of the shader to use, or -1 which renders all passes.
+                    bufferWithArgs: buffers.DrawArgs[i],
+                    argsOffset: lodCount
+                    // ,properties: new MaterialPropertyBlock()
+                );
+            }
         }
     }
 
