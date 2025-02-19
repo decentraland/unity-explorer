@@ -29,6 +29,8 @@ namespace CrdtEcsBridge.RestrictedActions
         private readonly IEmotesMessageBus messageBus;
         private readonly bool localSceneDevelopment;
 
+        public bool LocalSceneDevelopment => localSceneDevelopment;
+
         public GlobalWorldActions(World world, Entity playerEntity, IEmotesMessageBus messageBus, bool localSceneDevelopment)
         {
             this.world = world;
