@@ -1,5 +1,6 @@
 using Arch.Core;
 using Arch.SystemGroups;
+using Arch.SystemGroups.DefaultSystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.GLTFast.Wrappers;
@@ -18,6 +19,7 @@ using UnityEngine;
 
 namespace ECS.StreamableLoading.GLTF
 {
+    // [UpdateInGroup(typeof(PresentationSystemGroup))]
     [UpdateInGroup(typeof(StreamableLoadingGroup))]
     public partial class LoadGLTFSystem: LoadSystemBase<GLTFData, GetGLTFIntention>
     {
@@ -60,6 +62,7 @@ namespace ECS.StreamableLoading.GLTF
                 NodeNameMethod = NameImportMethod.OriginalUnique,
                 AnisotropicFilterLevel = 0,
                 GenerateMipMaps = false,
+                AnimationMethod = intention.MecanimAnimationClips ? AnimationMethod.Mecanim : AnimationMethod.Legacy
             };
 
             bool success = await gltfImport.Load(importFilesByHash ? intention.Hash : intention.Name, gltFastSettings, ct);

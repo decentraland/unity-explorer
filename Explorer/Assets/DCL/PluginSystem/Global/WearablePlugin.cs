@@ -93,8 +93,11 @@ namespace DCL.AvatarRendering.Wearables
             if (builderWearablesPreview)
             {
                 FinalizeRawWearableLoadingSystem.InjectToWorld(ref builder, wearableStorage, realmData);
+
+                // TODO: Manage conflicts with other LoadGLTFSystem running in global...
                 LoadGLTFSystem.InjectToWorld(ref builder,
-                    new NoCache<GLTFData, GetGLTFIntention>(false, false),
+                    // new NoCache<GLTFData, GetGLTFIntention>(false, false),
+                    NoCache<GLTFData, GetGLTFIntention>.INSTANCE,
                     webRequestController,
                     true,
                     true,
