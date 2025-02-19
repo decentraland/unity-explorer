@@ -8,7 +8,7 @@ using ECS.Abstract;
 
 namespace DCL.Rendering.GPUInstancing.Systems
 {
-    [UpdateInGroup(typeof(PresentationSystemGroup))]
+    [UpdateInGroup(typeof(PreRenderingSystemGroup))]
     [LogCategory(ReportCategory.GPU_INSTANCING)]
     public partial class GPUInstancingRenderSystem : BaseUnityLoopSystem
     {
