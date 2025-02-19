@@ -149,8 +149,10 @@ namespace Utility
             Vector3 min = bounds.min;
             Vector3 max = bounds.max;
 
-            return boundingPlanes.MinX < min.x && boundingPlanes.MaxX > max.x
-                                               && boundingPlanes.MinZ < min.z && boundingPlanes.MaxZ > max.z;
+            return Mathf.Ceil(boundingPlanes.MinX) <= Mathf.Ceil(min.x) &&
+                   Mathf.Ceil(boundingPlanes.MaxX) >= Mathf.Ceil(max.x) &&
+                   Mathf.Ceil(boundingPlanes.MinZ) <= Mathf.Ceil(min.z) &&
+                   Mathf.Ceil(boundingPlanes.MaxZ) >= Mathf.Ceil(max.z);
         }
 
         /// <summary>
