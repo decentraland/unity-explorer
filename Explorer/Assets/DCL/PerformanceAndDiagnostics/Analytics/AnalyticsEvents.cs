@@ -81,5 +81,19 @@
             public const string LOGIN_REQUESTED = "login_requested";
             public const string VERIFICATION_REQUESTED = "verification_requested";
         }
+
+        public static class Friends
+        {
+            public const string OPEN_FRIENDS_PANEL = "friends_panel_opened";
+            public const string ONLINE_FRIEND_CLICKED = "online_friend_clicked";
+            public const string JUMP_TO_FRIEND_CLICKED = "jump_to_friend_clicked";
+            public const string FRIENDSHIP_NOTIFICATION_CLICKED = "notification_clicked";
+
+            public const string REQUEST_SENT = "friend_request_sent";
+            public const string REQUEST_CANCELED = "friend_request_canceled";
+            public const string REQUEST_ACCEPTED = "friend_request_accepted";
+            public const string REQUEST_REJECTED = "friend_request_rejected";
+            public const string FRIENDSHIP_DELETED = "friendship_deleted";
+        }
     }
 }
