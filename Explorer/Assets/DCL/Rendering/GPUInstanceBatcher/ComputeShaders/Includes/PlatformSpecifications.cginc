@@ -1,8 +1,6 @@
 #ifndef _DCL_PLATFORM_SPECIFICATIONS_
 #define _DCL_PLATFORM_SPECIFICATIONS_
 
-// This should be done CPU side really
-
 #if SHADER_API_METAL
     #define GPUI_THREADS 256
     #define GPUI_THREADS_2D 16
