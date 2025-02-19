@@ -74,6 +74,9 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             // this should really check for keyword _EMISSION, however for some reason it's rather inconsistent.
             var emissionColor = originalMaterial.GetColor("_EmissionColor");
             avatarMaterial.SetColor("_Emissive_Color", emissionColor);
+            avatarMaterial.DisableKeyword("_IS_CLIPPING_MODE");
+            avatarMaterial.DisableKeyword("_IS_CLIPPING_TRANSMODE");
+            avatarMaterial.SetInt(Z_WRITE_MODE, 1);
 
             if (originalMaterial.IsKeywordEnabled("_ALPHATEST_ON") || originalMaterial.GetFloat(ALPHA_CLIP) > 0)
                 ConfigureAlphaTest(originalMaterial, avatarMaterial, baseColor);

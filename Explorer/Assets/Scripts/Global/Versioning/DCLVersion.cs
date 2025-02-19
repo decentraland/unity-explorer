@@ -21,7 +21,6 @@ namespace Global.Versioning
                 ?? inEditorVersion
                 ?? UnityEngine.Application.version;
 
-            ReportHub.LogProductionInfo($"Current Decentraland version: {currentVersion}");
             return new DCLVersion(currentVersion);
         }
 

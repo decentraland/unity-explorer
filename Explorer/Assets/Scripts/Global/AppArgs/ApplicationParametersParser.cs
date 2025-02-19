@@ -11,7 +11,6 @@ namespace Global.AppArgs
 {
     public class ApplicationParametersParser : IAppArgs
     {
-        private const string REALM_PARAM = "realm";
         private readonly Dictionary<string, string> appParameters = new ();
 
         private static readonly IReadOnlyDictionary<string, string> ALWAYS_IN_EDITOR = new Dictionary<string, string>
@@ -96,7 +95,7 @@ namespace Global.AppArgs
                 appParameters[uriQueryKey] = uriQuery.Get(uriQueryKey);
             }
 
-            if (appParameters.TryGetValue(REALM_PARAM, out string? realmParamValue))
+            if (appParameters.TryGetValue(AppArgsFlags.REALM, out string? realmParamValue))
             {
                 // Patch for WinOS sometimes affecting the 'realm' parameter in deep links putting a '/' at the end
                 if (realmParamValue.EndsWith('/'))
@@ -105,7 +104,7 @@ namespace Global.AppArgs
                 // Patch for MacOS removing the ':' from the realm parameter protocol
                 realmParamValue = Regex.Replace(realmParamValue, @"(https?)//(.*?)$", @"$1://$2");
 
-                appParameters[REALM_PARAM] = realmParamValue;
+                appParameters[AppArgsFlags.REALM] = realmParamValue;
             }
         }
 

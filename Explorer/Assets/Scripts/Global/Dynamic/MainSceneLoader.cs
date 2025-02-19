@@ -78,6 +78,8 @@ namespace Global.Dynamic
 
         private void Awake()
         {
+
+
             InitializeFlowAsync(destroyCancellationToken).Forget();
         }
 
@@ -130,6 +132,9 @@ namespace Global.Dynamic
 #endif
             );
 
+            DCLVersion dclVersion = DCLVersion.FromAppArgs(applicationParametersParser);
+            SystemInfoUtils.Log(dclVersion.Version);
+
             bool compressionEnabled = IPlatform.DEFAULT.IsNot(IPlatform.Kind.Windows) || applicationParametersParser.HasFlag(AppArgsFlags.FORCE_TEXTURE_COMPRESSION);
 
             if (IPlatform.DEFAULT.Is(IPlatform.Kind.Mac) && SystemInfo.processorType!.Contains("Intel", StringComparison.InvariantCultureIgnoreCase))
@@ -155,7 +160,7 @@ namespace Global.Dynamic
             World world = World.Create();
 
             var splashScreen = new SplashScreen(splashScreenAnimation, splashRoot, debugSettings.ShowSplash, splashScreenText);
-            var decentralandUrlsSource = new DecentralandUrlsSource(decentralandEnvironment, launchSettings.IsLocalSceneDevelopmentRealm);
+            var decentralandUrlsSource = new DecentralandUrlsSource(decentralandEnvironment, launchSettings);
 
             var texturesFuse = TextureFuseFactory();
 
@@ -168,7 +173,7 @@ namespace Global.Dynamic
 
             var diskCache = NewInstanceDiskCache(applicationParametersParser);
 
-            DCLVersion dclVersion = DCLVersion.FromAppArgs(applicationParametersParser);
+
 
             bootstrapContainer = await BootstrapContainer.CreateAsync(
                 debugSettings,
