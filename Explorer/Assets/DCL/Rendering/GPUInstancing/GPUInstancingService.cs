@@ -134,8 +134,11 @@ namespace DCL.Roads.GPUInstancing
 
             buffers.ArrLODCount.SetData(arrLOD, 0, 0, 8);
 
-            for (var lodLevel = 0; lodLevel < candidate.LODGroup.LodsScreenSpaceSizes.Length; lodLevel++)
-                buffers.DrawArgs[lodLevel].SetData(new[] { zeroDrawArgs });
+            foreach (var drawArgs in buffers.DrawArgs)
+            {
+                var drawArgsCommandData = new GraphicsBuffer.IndirectDrawIndexedArgs[drawArgs.count];
+                drawArgs.SetData(drawArgsCommandData);
+            }
 
             IndirectBufferGenerationComputeShader.SetBuffer(IndirectBufferGenerationComputeShader_KernelIDs, ComputeVar_GroupDataBuffer, buffers.GroupData);
             IndirectBufferGenerationComputeShader.SetBuffer(IndirectBufferGenerationComputeShader_KernelIDs, ComputeVar_arrLODCount, buffers.ArrLODCount); // uint[8]
@@ -196,7 +199,7 @@ namespace DCL.Roads.GPUInstancing
                     continue;
                 }
 
-                var drawArgsBuffer = new GraphicsBuffer(GraphicsBuffer.Target.IndirectArguments, _nLODCount, GraphicsBuffer.IndirectDrawIndexedArgs.size);
+                var drawArgsBuffer = new GraphicsBuffer(GraphicsBuffer.Target.IndirectArguments, count: _nLODCount, GraphicsBuffer.IndirectDrawIndexedArgs.size);
                 var drawArgsCommandData = new GraphicsBuffer.IndirectDrawIndexedArgs[_nLODCount];
 
 
