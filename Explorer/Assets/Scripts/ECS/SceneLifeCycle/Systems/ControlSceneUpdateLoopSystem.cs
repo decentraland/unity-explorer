@@ -29,17 +29,19 @@ namespace ECS.SceneLifeCycle.Systems
         private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
 
         private readonly IScenesCache scenesCache;
+        private readonly SceneBudget sceneBudget;
 
         internal ControlSceneUpdateLoopSystem(World world,
             IRealmPartitionSettings realmPartitionSettings,
             CancellationToken destroyCancellationToken,
             IScenesCache scenesCache,
-            ISceneReadinessReportQueue sceneReadinessReportQueue) : base(world)
+            ISceneReadinessReportQueue sceneReadinessReportQueue, SceneBudget sceneBudget = null) : base(world)
         {
             this.realmPartitionSettings = realmPartitionSettings;
             this.destroyCancellationToken = destroyCancellationToken;
             this.scenesCache = scenesCache;
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
+            this.sceneBudget = sceneBudget;
         }
 
         protected override void Update(float t)
@@ -95,6 +97,7 @@ namespace ECS.SceneLifeCycle.Systems
                 {
                     // So we know the scene has started
                     scenesCache.Add(scene, promise.LoadingIntention.DefinitionComponent.Parcels);
+                    sceneBudget.AddLoadedScene(scene.SceneData.SceneEntityDefinition.id);
                 }
                 World.Add(entity, scene);
             }

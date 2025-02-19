@@ -80,10 +80,10 @@ namespace SceneRuntime.Factory
         {
             await EnsureCalledOnMainThreadAsync();
 
-            jsSourcesCache.Cache(
-                $"{realmData.RealmName} {sceneShortInfo.BaseParcel.x},{sceneShortInfo.BaseParcel.y} {sceneShortInfo.Name}.js",
-                sourceCode
-            );
+            //jsSourcesCache.Cache(
+            //    $"{sceneShortInfo.Name}.js",
+            //    sourceCode
+            //);
 
             (var pair, IReadOnlyDictionary<string, string> moduleDictionary) = await UniTask.WhenAll(GetJsInitSourceCodeAsync(ct), GetJsModuleDictionaryAsync(JS_MODULE_NAMES, ct));
 

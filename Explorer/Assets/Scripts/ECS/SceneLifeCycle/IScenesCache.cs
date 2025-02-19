@@ -36,6 +36,7 @@ namespace ECS.SceneLifeCycle
         void ClearScenes(bool clearPortableExperiences = false);
 
         void SetCurrentScene(ISceneFacade sceneFacade);
+
     }
 
     public class ScenesCache : IScenesCache
@@ -45,10 +46,14 @@ namespace ECS.SceneLifeCycle
         private readonly Dictionary<string, ISceneFacade> portableExperienceScenesByUrn = new (PoolConstants.PORTABLE_EXPERIENCES_INITIAL_COUNT);
 
         private readonly HashSet<ISceneFacade> scenes = new (PoolConstants.SCENES_COUNT);
+        //Scenes that are loaded and not yet marked as disposed
+        private HashSet<ISceneFacade> activeScenes = new (PoolConstants.SCENES_COUNT);
 
         public IReadOnlyCollection<ISceneFacade> Scenes => scenes;
         public IReadOnlyCollection<ISceneFacade> PortableExperiencesScenes => portableExperienceScenesByUrn.Values;
         public ISceneFacade? CurrentScene { get; private set; }
+        
+        public int ScenesLoaded => activeScenes.Count;
 
         public void Add(ISceneFacade sceneFacade, IReadOnlyList<Vector2Int> parcels)
         {
@@ -56,6 +61,7 @@ namespace ECS.SceneLifeCycle
                 scenesByParcels.Add(parcels[i], sceneFacade);
 
             scenes.Add(sceneFacade);
+            activeScenes.Add(sceneFacade);
         }
 
         public void AddNonRealScene(IReadOnlyList<Vector2Int> parcels)
@@ -127,6 +133,7 @@ namespace ECS.SceneLifeCycle
             nonRealSceneByParcel.Clear();
             if (clearPortableExperiences) portableExperienceScenesByUrn.Clear();
             scenes.Clear();
+            activeScenes.Clear();
         }
 
         public void SetCurrentScene(ISceneFacade sceneFacade)
@@ -134,5 +141,6 @@ namespace ECS.SceneLifeCycle
             if (CurrentScene != sceneFacade)
                 CurrentScene = sceneFacade;
         }
+
     }
 }

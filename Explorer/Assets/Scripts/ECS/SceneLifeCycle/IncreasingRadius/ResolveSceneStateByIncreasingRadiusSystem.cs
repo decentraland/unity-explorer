@@ -16,6 +16,7 @@ using ECS.StreamableLoading.Common;
 using SceneRunner.Scene;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using DCL.Optimization.PerformanceBudgeting;
 using Unity.Collections;
 using Unity.Jobs;
 using Utility;
@@ -34,20 +35,33 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             .WithAll<SceneDefinitionComponent, PartitionComponent, VisualSceneState>()
                                                                        .WithNone<ISceneFacade, AssetPromise<ISceneFacade, GetSceneFacadeIntention>, SceneLODInfo, RoadInfo, EmptySceneComponent>();
 
+        private static readonly QueryDescription START_SCENES_UNLOADING = new QueryDescription()
+            .WithAll<SceneDefinitionComponent, PartitionComponent, VisualSceneState>()
+            .WithAny<ISceneFacade, AssetPromise<ISceneFacade, GetSceneFacadeIntention>, SceneLODInfo, RoadInfo, EmptySceneComponent>();
+        
         private readonly IRealmPartitionSettings realmPartitionSettings;
 
         internal JobHandle? sortingJobHandle;
 
         private NativeList<OrderedData> orderedData;
+        private NativeList<OrderedData> unloadOrderedData;
 
-        internal ResolveSceneStateByIncreasingRadiusSystem(World world, IRealmPartitionSettings realmPartitionSettings) : base(world)
+
+        private SceneBudget sceneBudget;
+
+        internal ResolveSceneStateByIncreasingRadiusSystem(World world, IRealmPartitionSettings realmPartitionSettings, SceneBudget sceneBudget = null) : base(world)
         {
             this.realmPartitionSettings = realmPartitionSettings;
+            this.sceneBudget = sceneBudget;
 
             // Set initial capacity to 1/3 of the total capacity required for all rings
             orderedData = new NativeList<OrderedData>(
                 ParcelMathJobifiedHelper.GetRingsArraySize(realmPartitionSettings.MaxLoadingDistanceInParcels) / 3,
                 Allocator.Persistent);
+            
+            unloadOrderedData = new NativeList<OrderedData>(
+                ParcelMathJobifiedHelper.GetRingsArraySize(realmPartitionSettings.MaxLoadingDistanceInParcels) / 3,
+                Allocator.Persistent); 
         }
 
         protected override void OnDispose()
@@ -154,6 +168,9 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
 
             for (var i = 0; i < orderedData.Length && promisesCreated < realmPartitionSettings.ScenesRequestBatchSize; i++)
             {
+                if (!sceneBudget.TrySpendBudget())
+                    break;
+                
                 OrderedData data = orderedData[i];
 
                 // As sorting is throttled Entity might gone out of scope
@@ -163,6 +180,8 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                 // We can't save component to data as sorting is throttled and components could change
                 var components
                     = World.Get<SceneDefinitionComponent, PartitionComponent, VisualSceneState>(data.Entity);
+                
+                sceneBudget.AddLoadingScene(components.t0.Value.Definition.id);
 
                 switch (components.t2.Value.CurrentVisualSceneState)
                 {
@@ -185,10 +204,20 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         [All(typeof(SceneDefinitionComponent))]
         [None(typeof(DeleteEntityIntention))]
         [Any(typeof(SceneLODInfo), typeof(ISceneFacade), typeof(AssetPromise<ISceneFacade, GetSceneFacadeIntention>), typeof(RoadInfo))]
-        private void StartUnloading(in Entity entity, ref PartitionComponent partitionComponent)
+        private void StartUnloading(in Entity entity, ref PartitionComponent partitionComponent, ref SceneDefinitionComponent sceneDefinitionComponent)
         {
             if (partitionComponent.OutOfRange)
+            {
+                sceneBudget.AddUnloadingScene(sceneDefinitionComponent.Definition.id);
                 World.Add(entity, DeleteEntityIntention.DeferredDeletion);
+
+            }
+
+            if (partitionComponent.RawSqrDistance >= sceneBudget.OverridenUnloadingSqrDistance)
+            {
+                sceneBudget.AddUnloadingScene(sceneDefinitionComponent.Definition.id);
+                World.Add(entity, DeleteEntityIntention.DeferredDeletion);
+            }
         }
 
         /// <summary>
