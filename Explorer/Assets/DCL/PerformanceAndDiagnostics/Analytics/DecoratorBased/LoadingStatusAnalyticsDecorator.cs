@@ -23,12 +23,11 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             this.analytics = analytics;
         }
 
-
         private void OnLoadingStageChanged(LoadingStatus.LoadingStage stage)
         {
             analytics.Track(AnalyticsEvents.General.INITIAL_LOADING, new JsonObject
             {
-                { STAGE_KEY, $"7.{loadingScreenStageId++} - loading screen: {stage}" },
+                { STAGE_KEY, $"7.{(byte)stage} - loading screen: {stage.ToString()}" },
             });
         }
 

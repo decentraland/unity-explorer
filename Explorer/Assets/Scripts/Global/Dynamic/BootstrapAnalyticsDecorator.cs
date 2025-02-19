@@ -87,7 +87,7 @@ namespace Global.Dynamic
 
             analytics.Track(General.INITIAL_LOADING, new JsonObject
             {
-                { STAGE_KEY, "2 - dynamic container loaded" },
+                { STAGE_KEY, "3 - dynamic container loaded" },
                 { RESULT_KEY, result.Item2 ? "success" : "failure" },
             });
 
@@ -100,7 +100,7 @@ namespace Global.Dynamic
 
             analytics.Track(General.INITIAL_LOADING, new JsonObject
             {
-                { STAGE_KEY, "3 - feature flag initialized" },
+                { STAGE_KEY, "2 - feature flag initialized" },
             });
 
             return result;
