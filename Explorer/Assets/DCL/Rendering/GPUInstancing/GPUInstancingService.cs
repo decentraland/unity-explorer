@@ -27,6 +27,15 @@ namespace DCL.Roads.GPUInstancing
             public uint nMaxLOD_GB;
         };
 
+        private readonly GraphicsBuffer.IndirectDrawIndexedArgs zeroDrawArgs = new()
+        {
+            indexCountPerInstance = 0,
+            instanceCount = 0,
+            startIndex = 0,
+            baseVertexIndex = 0,
+            startInstance = 0
+        };
+
         private const float STREET_MAX_HEIGHT = 10f;
         private static readonly Bounds RENDER_PARAMS_WORLD_BOUNDS =
             new (Vector3.zero, new Vector3(GenesisCityData.EXTENTS.x * ParcelMathHelper.PARCEL_SIZE, STREET_MAX_HEIGHT, GenesisCityData.EXTENTS.y * ParcelMathHelper.PARCEL_SIZE));
@@ -125,10 +134,8 @@ namespace DCL.Roads.GPUInstancing
 
             buffers.ArrLODCount.SetData(arrLOD, 0, 0, 8);
 
-            // int[] resetArr = new int[5] { 0, 0, 0, 0, 0 };
-            // //for (var lodLevel = 0; lodLevel < candidate.LODGroup.LodsScreenSpaceSizes.Length; lodLevel++)
-            // var lodLevel = 0;
-            //     buffers.DrawArgs[lodLevel].SetData(resetArr, 1, 1, 1);
+            for (var lodLevel = 0; lodLevel < candidate.LODGroup.LodsScreenSpaceSizes.Length; lodLevel++)
+                buffers.DrawArgs[lodLevel].SetData(new[] { zeroDrawArgs });
 
             IndirectBufferGenerationComputeShader.SetBuffer(IndirectBufferGenerationComputeShader_KernelIDs, ComputeVar_GroupDataBuffer, buffers.GroupData);
             IndirectBufferGenerationComputeShader.SetBuffer(IndirectBufferGenerationComputeShader_KernelIDs, ComputeVar_arrLODCount, buffers.ArrLODCount); // uint[8]
