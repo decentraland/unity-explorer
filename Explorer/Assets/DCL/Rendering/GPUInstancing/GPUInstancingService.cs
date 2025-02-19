@@ -202,7 +202,7 @@ namespace DCL.Roads.GPUInstancing
                     }
 
                     drawArgsCommandData[lodLevel].indexCountPerInstance = combinedMesh.GetIndexCount(lodLevel);
-                    drawArgsCommandData[lodLevel].instanceCount = lodLevel == 0 ? (uint)candidate.InstancesBuffer.Count : 0;
+                    drawArgsCommandData[lodLevel].instanceCount = 0;//lodLevel == 0 ? (uint)candidate.InstancesBuffer.Count : 0;
                     drawArgsCommandData[lodLevel].startIndex = combinedMesh.GetIndexStart(lodLevel);
                     drawArgsCommandData[lodLevel].baseVertexIndex = combinedMesh.GetBaseVertex(lodLevel);
                     drawArgsCommandData[lodLevel].startInstance = (uint)lodLevel * (uint)candidate.InstancesBuffer.Count;
