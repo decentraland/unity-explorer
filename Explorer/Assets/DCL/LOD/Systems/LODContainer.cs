@@ -118,9 +118,7 @@ namespace DCL.LOD.Systems
             lodSettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(lodContainerSettings.LODSettingAsset, ct: ct);
             roadAssetsPrefabList = new List<GameObject>();
 
-#if !UNITY_EDITOR
             roadSettingsAsset.Value.CollectGPUInstancingLODGroups();
-#endif
 
             foreach (AssetReferenceGameObject? t in roadSettingsAsset.Value.RoadAssetsReference)
             {

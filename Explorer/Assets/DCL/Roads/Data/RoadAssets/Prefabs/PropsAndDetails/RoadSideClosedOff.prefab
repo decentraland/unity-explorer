@@ -148,6 +148,8 @@ MonoBehaviour:
   RefRenderers:
   - {fileID: 9183869298469079119}
   - {fileID: 4753500650892868748}
+  - {fileID: 9183869298469079119}
+  - {fileID: 4753500650892868748}
   ObjectSize: 16.000002
   Bounds:
     m_Center: {x: 0, y: 0.049999997, z: -0.00000047683716}
@@ -165,7 +167,7 @@ MonoBehaviour:
     e12: 0
     e13: 0
     e20: 0.13831817
-    e21: 0.048087455
+    e21: 0
     e22: 0
     e23: 0
     e30: 0
@@ -174,7 +176,7 @@ MonoBehaviour:
     e33: 0
   CombinedLodsRenderers:
   - parent: {fileID: 3937374822286885029}
-    combinedMesh: {fileID: -873746405229726159}
+    combinedMesh: {fileID: -9197671375776170464}
     SharedMaterial: {fileID: 2100000, guid: 080ee30e4f4ff5c4fae19015bec5167c, type: 2}
     RenderParamsSerialized:
     - layer: 0
@@ -184,7 +186,6 @@ MonoBehaviour:
       shadowCastingMode: 1
       reflectionProbeUsage: 1
       lightProbeUsage: 1
-      lightProbeProxyVolume: {fileID: 0}
       motionVectorMode: 1
     - layer: 0
       renderingLayerMask: 1
@@ -193,7 +194,6 @@ MonoBehaviour:
       shadowCastingMode: 0
       reflectionProbeUsage: 1
       lightProbeUsage: 1
-      lightProbeProxyVolume: {fileID: 0}
       motionVectorMode: 1
 --- !u!23 &4753500650892868748 stripped
 MeshRenderer:
@@ -210,7 +210,7 @@ MeshRenderer:
   m_CorrespondingSourceObject: {fileID: 5646753623344606977, guid: 45d506f664fdbc24ea715b84db4b667e, type: 3}
   m_PrefabInstance: {fileID: 3544021707692402510}
   m_PrefabAsset: {fileID: 0}
---- !u!43 &-873746405229726159
+--- !u!43 &-9197671375776170464
 Mesh:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}

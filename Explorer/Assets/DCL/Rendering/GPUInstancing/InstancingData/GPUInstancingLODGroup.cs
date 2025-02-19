@@ -147,6 +147,9 @@ namespace DCL.Roads.GPUInstancing.Playground
             LODSizesMatrix = new Matrix4x4();
             const float overlapFactor = 0.20f;
 
+            var rowEnd = 0;
+            var col = 0;
+
             for (var i = 0; i < lodsLength && i < MAX_LODS_LEVEL; i++)
             {
                 float endValue = LodsScreenSpaceSizes[i];
@@ -169,12 +172,14 @@ namespace DCL.Roads.GPUInstancing.Playground
                 //      - row2 & row3 for 'end'
                 //    i < 4 => row0 & row2, i >= 4 => row1 & row3
                 int rowStart = i < 4 ? 0 : 1;
-                int rowEnd = rowStart + 2; // 2 or 3
-                int col = i % 4;
+                rowEnd = rowStart + 2; // 2 or 3
+                col = i % 4;
 
                 LODSizesMatrix[rowStart, col] = startValue;
                 LODSizesMatrix[rowEnd, col] = endValue;
             }
+
+            LODSizesMatrix[rowEnd, col] = 0; // zero for the end of last LOD
         }
 
         private void CollectCombineInstances(LOD[] lods, Dictionary<(Material, Transform), CombinedLodsRenderer> combineDict)

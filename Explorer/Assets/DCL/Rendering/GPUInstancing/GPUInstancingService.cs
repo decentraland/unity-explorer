@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using UnityEngine;
 using UnityEngine.Rendering;
-using UnityEngine.Serialization;
 using Utility;
 
 namespace DCL.Roads.GPUInstancing
@@ -134,7 +133,7 @@ namespace DCL.Roads.GPUInstancing
 
             buffers.ArrLODCount.SetData(arrLOD, 0, 0, 8);
 
-            // Zero-out draw args - will be calcualted by compute shaders
+            // Zero-out draw args - will be calculated by compute shaders
             foreach (var array in buffers.DrawArgsCommandData)
                 for (int j = 0; j < array.Length; j++)
                     array[j].instanceCount = 0;
@@ -213,7 +212,7 @@ namespace DCL.Roads.GPUInstancing
                     }
 
                     drawArgsCommandData[lodLevel].indexCountPerInstance = combinedMesh.GetIndexCount(lodLevel);
-                    drawArgsCommandData[lodLevel].instanceCount = 0;//lodLevel == 0 ? (uint)candidate.InstancesBuffer.Count : 0;
+                    drawArgsCommandData[lodLevel].instanceCount = 0;
                     drawArgsCommandData[lodLevel].startIndex = combinedMesh.GetIndexStart(lodLevel);
                     drawArgsCommandData[lodLevel].baseVertexIndex = combinedMesh.GetBaseVertex(lodLevel);
                     drawArgsCommandData[lodLevel].startInstance = (uint)lodLevel * (uint)candidate.InstancesBuffer.Count;

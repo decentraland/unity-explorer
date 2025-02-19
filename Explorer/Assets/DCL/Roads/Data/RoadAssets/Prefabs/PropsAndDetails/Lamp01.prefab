@@ -163,6 +163,12 @@ MonoBehaviour:
   - {fileID: 4216246105765941868}
   - {fileID: 4652370897562652443}
   - {fileID: 4652370897562652443}
+  - {fileID: 8224438444402023846}
+  - {fileID: 8224438444402023846}
+  - {fileID: 4216246105765941868}
+  - {fileID: 4216246105765941868}
+  - {fileID: 4652370897562652443}
+  - {fileID: 4652370897562652443}
   ObjectSize: 5.2464285
   Bounds:
     m_Center: {x: 0, y: 2.6237364, z: 0}
@@ -182,7 +188,7 @@ MonoBehaviour:
     e13: 0
     e20: 0.044585507
     e21: 0.03014187
-    e22: 0.016199676
+    e22: 0
     e23: 0
     e30: 0
     e31: 0
@@ -190,7 +196,7 @@ MonoBehaviour:
     e33: 0
   CombinedLodsRenderers:
   - parent: {fileID: 6907363163446049570}
-    combinedMesh: {fileID: 3672349359153108242}
+    combinedMesh: {fileID: 1597310520470339453}
     SharedMaterial: {fileID: 2100000, guid: 52d66a84579d7f04b8b40717fa9dc9f1, type: 2}
     RenderParamsSerialized:
     - layer: 0
@@ -200,7 +206,6 @@ MonoBehaviour:
       shadowCastingMode: 1
       reflectionProbeUsage: 1
       lightProbeUsage: 1
-      lightProbeProxyVolume: {fileID: 0}
       motionVectorMode: 1
     - layer: 0
       renderingLayerMask: 1
@@ -209,7 +214,6 @@ MonoBehaviour:
       shadowCastingMode: 1
       reflectionProbeUsage: 1
       lightProbeUsage: 1
-      lightProbeProxyVolume: {fileID: 0}
       motionVectorMode: 1
     - layer: 0
       renderingLayerMask: 1
@@ -218,10 +222,9 @@ MonoBehaviour:
       shadowCastingMode: 0
       reflectionProbeUsage: 1
       lightProbeUsage: 1
-      lightProbeProxyVolume: {fileID: 0}
       motionVectorMode: 1
   - parent: {fileID: 6907363163446049570}
-    combinedMesh: {fileID: -6218588556998642467}
+    combinedMesh: {fileID: -3811917334096631929}
     SharedMaterial: {fileID: 2100000, guid: a4704a1146f6a65499d2dedae82c0edc, type: 2}
     RenderParamsSerialized:
     - layer: 0
@@ -231,7 +234,6 @@ MonoBehaviour:
       shadowCastingMode: 1
       reflectionProbeUsage: 1
       lightProbeUsage: 1
-      lightProbeProxyVolume: {fileID: 0}
       motionVectorMode: 1
     - layer: 0
       renderingLayerMask: 1
@@ -240,7 +242,6 @@ MonoBehaviour:
       shadowCastingMode: 1
       reflectionProbeUsage: 1
       lightProbeUsage: 1
-      lightProbeProxyVolume: {fileID: 0}
       motionVectorMode: 1
     - layer: 0
       renderingLayerMask: 1
@@ -249,7 +250,6 @@ MonoBehaviour:
       shadowCastingMode: 0
       reflectionProbeUsage: 1
       lightProbeUsage: 1
-      lightProbeProxyVolume: {fileID: 0}
       motionVectorMode: 1
 --- !u!4 &6907363163446049570 stripped
 Transform:
@@ -261,7 +261,7 @@ MeshRenderer:
   m_CorrespondingSourceObject: {fileID: -6164785231652290193, guid: 6ff383c9645b82240b168ad955fd9a05, type: 3}
   m_PrefabInstance: {fileID: 6363968139913108681}
   m_PrefabAsset: {fileID: 0}
---- !u!43 &-6218588556998642467
+--- !u!43 &-3811917334096631929
 Mesh:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -446,7 +446,7 @@ Mesh:
     offset: 0
     size: 0
     path: 
---- !u!43 &3672349359153108242
+--- !u!43 &1597310520470339453
 Mesh:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
