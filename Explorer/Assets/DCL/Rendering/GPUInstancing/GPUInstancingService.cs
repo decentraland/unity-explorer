@@ -134,11 +134,13 @@ namespace DCL.Roads.GPUInstancing
 
             buffers.ArrLODCount.SetData(arrLOD, 0, 0, 8);
 
-            foreach (var drawArgs in buffers.DrawArgs)
-            {
-                var drawArgsCommandData = new GraphicsBuffer.IndirectDrawIndexedArgs[drawArgs.count];
-                drawArgs.SetData(drawArgsCommandData);
-            }
+            // Zero-out draw args - will be calcualted by compute shaders
+            foreach (var array in buffers.DrawArgsCommandData)
+                for (int j = 0; j < array.Length; j++)
+                    array[j].instanceCount = 0;
+
+            for (var i = 0; i < buffers.DrawArgs.Count; i++)
+                buffers.DrawArgs[i].SetData(buffers.DrawArgsCommandData[i]);
 
             IndirectBufferGenerationComputeShader.SetBuffer(IndirectBufferGenerationComputeShader_KernelIDs, ComputeVar_GroupDataBuffer, buffers.GroupData);
             IndirectBufferGenerationComputeShader.SetBuffer(IndirectBufferGenerationComputeShader_KernelIDs, ComputeVar_arrLODCount, buffers.ArrLODCount); // uint[8]
@@ -201,7 +203,6 @@ namespace DCL.Roads.GPUInstancing
 
                 var drawArgsBuffer = new GraphicsBuffer(GraphicsBuffer.Target.IndirectArguments, count: _nLODCount, GraphicsBuffer.IndirectDrawIndexedArgs.size);
                 var drawArgsCommandData = new GraphicsBuffer.IndirectDrawIndexedArgs[_nLODCount];
-
 
                 for (var lodLevel = 0; lodLevel < _nLODCount; lodLevel++)
                 {
