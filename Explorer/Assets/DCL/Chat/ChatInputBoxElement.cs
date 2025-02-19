@@ -345,7 +345,7 @@ namespace DCL.Chat
         {
             if (emojiPanelController != null)
             {
-                emojiPanelController.EmojiSelected -= AddEmojiToInput;
+                emojiPanelController.EmojiSelected -= OnEmojiSelected;
                 emojiPanelController.Dispose();
             }
 
@@ -420,7 +420,7 @@ namespace DCL.Chat
         private void InitializeEmojiPanelController()
         {
             emojiPanelController = new EmojiPanelController(emojiPanel, emojiPanelConfiguration, emojiMappingJson, emojiSectionViewPrefab, emojiButtonPrefab);
-            emojiPanelController.EmojiSelected += AddEmojiToInput;
+            emojiPanelController.EmojiSelected += OnEmojiSelected;
             emojiPanelButton.Button.onClick.AddListener(ToggleEmojiPanel);
         }
 
@@ -431,13 +431,17 @@ namespace DCL.Chat
         }
 
 
-        private void AddEmojiToInput(string emoji)
+        private void OnEmojiSelected(string emoji)
         {
-            UIAudioEventsBus.Instance.SendPlayAudioEvent(addEmojiAudio);
+            AddEmojiToInput();
+            return;
 
-            if (!inputField.IsWithinCharacterLimit(emoji.Length)) return;
-
-            inputField.InsertTextAtSelectedPosition(emoji);
+            void AddEmojiToInput()
+            {
+                UIAudioEventsBus.Instance.SendPlayAudioEvent(addEmojiAudio);
+                if (!inputField.IsWithinCharacterLimit(emoji.Length)) return;
+                inputField.InsertTextAtSelectedPosition(emoji);
+            }
         }
     }
 }

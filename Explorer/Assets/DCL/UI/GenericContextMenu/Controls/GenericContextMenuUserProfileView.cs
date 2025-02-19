@@ -68,7 +68,7 @@ namespace DCL.UI.GenericContextMenu.Controls
         }
 
         private void InvokeSettingsAction(UserProfileContextMenuControlSettings settings) =>
-            settings.requestFriendshipAction(settings.userAddress, settings.friendshipStatus);
+            settings.friendButtonClickAction(settings.userAddress, settings.friendshipStatus);
 
         private void CopyUserInfo(UserProfileContextMenuControlSettings settings, CopyUserInfoSection section)
         {
@@ -121,6 +121,9 @@ namespace DCL.UI.GenericContextMenu.Controls
             RemoveFriendButton.gameObject.SetActive(false);
             CancelFriendButton.gameObject.SetActive(false);
             AcceptFriendButton.gameObject.SetActive(false);
+
+            //If we don't send any action, we don't show any button
+            if (settings.friendButtonClickAction == null) return;
 
             Button buttonToActivate = settings.friendshipStatus switch
             {

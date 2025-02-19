@@ -158,7 +158,7 @@ namespace DCL.UI.HyperlinkHandler
 
             if (profile == null) return;
 
-            await viewDependencies.GlobalUIViews.ShowUserProfileContextMenu(profile, GetLastCharacterPosition(lastLink), cancellationTokenSource.Token);
+            await viewDependencies.GlobalUIViews.ShowUserProfileContextMenuAsync(profile, GetLastCharacterPosition(lastLink), cancellationTokenSource.Token);
         }
 
         private async UniTaskVoid OpenUrlAsync(string url, CancellationToken ct) =>

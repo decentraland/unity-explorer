@@ -318,10 +318,10 @@ namespace DCL.Chat
                     ChatEntryView itemScript = item!.GetComponent<ChatEntryView>()!;
                     SetItemData(index, itemData, itemScript);
                     itemScript.messageBubbleElement.SetupHyperlinkHandlerDependencies(viewDependencies);
-                    itemScript.OnChatEntryClicked -= OnChatEntryClicked;
+                    itemScript.ChatEntryClicked -= OnChatEntryClicked;
 
                     if (itemData is { SentByOwnUser: false, SystemMessage: false })
-                        itemScript.OnChatEntryClicked += OnChatEntryClicked;
+                        itemScript.ChatEntryClicked += OnChatEntryClicked;
 
                     Button? messageOptionsButton = itemScript.messageBubbleElement.messageOptionsButton;
                     messageOptionsButton?.onClick.RemoveAllListeners();
@@ -340,7 +340,7 @@ namespace DCL.Chat
             if (profile != null)
             {
                 popupCts = popupCts.SafeRestart();
-                viewDependencies.GlobalUIViews.ShowUserProfileContextMenu(profile, contextMenuPosition, popupCts.Token);
+                viewDependencies.GlobalUIViews.ShowUserProfileContextMenuAsync(profile, contextMenuPosition, popupCts.Token);
             }
         }
 

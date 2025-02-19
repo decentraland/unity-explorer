@@ -10,7 +10,7 @@ namespace DCL.Chat
     {
         public delegate void ChatEntryClickedDelegate(string walletAddress, Vector2 contextMenuPosition);
 
-        public ChatEntryClickedDelegate? OnChatEntryClicked;
+        public ChatEntryClickedDelegate? ChatEntryClicked;
 
         [field: SerializeField] internal RectTransform rectTransform { get; private set; }
         [field: SerializeField] internal CanvasGroup chatEntryCanvasGroup { get; private set; }
@@ -34,7 +34,7 @@ namespace DCL.Chat
 
         private void OpenContextMenu()
         {
-            OnChatEntryClicked?.Invoke(chatMessage.WalletAddress, playerIcon.transform.position);
+            ChatEntryClicked?.Invoke(chatMessage.WalletAddress, playerIcon.transform.position);
         }
 
         public void AnimateChatEntry()

@@ -32,7 +32,6 @@ namespace DCL.Profiles
         public string UserId
         {
             get => userId;
-
             internal set
             {
                 userId = value;
@@ -43,7 +42,6 @@ namespace DCL.Profiles
         public string Name
         {
             get => name;
-
             internal set
             {
                 name = value;
@@ -60,7 +58,6 @@ namespace DCL.Profiles
         ///     The name of the user after passing character validation, without the # part
         ///     For users with claimed names would be the same as DisplayName
         /// </summary>
-
         public string ValidatedName { get; private set; }
 
         /// <summary>
@@ -68,6 +65,10 @@ namespace DCL.Profiles
         /// </summary>
         public string? WalletId { get; private set; }
 
+        /// <summary>
+        ///     The name of the user after passing character validation, including the
+        ///     Wallet Id (if the user doesnt have a claimed name)
+        /// </summary>
         public string DisplayName { get; private set; }
         public string UnclaimedName { get; internal set; }
 
