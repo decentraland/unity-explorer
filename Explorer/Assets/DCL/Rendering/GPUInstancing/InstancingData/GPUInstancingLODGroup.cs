@@ -1,9 +1,7 @@
-﻿using System;
+﻿using DCL.Roads.GPUInstancing.Utils;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-#if UNITY_EDITOR
-using UnityEditor;
-#endif
 using UnityEngine;
 using Object = UnityEngine.Object;
 
@@ -75,7 +73,6 @@ namespace DCL.Roads.GPUInstancing.Playground
             ObjectSize = Mathf.Max(Bounds.size.x, Bounds.size.y, Bounds.size.z);
 
             BuildLODMatrix(1);
-            AssetDatabase.SaveAssets();
         }
 
         [ContextMenu(nameof(CollectSelfData))]
@@ -118,7 +115,7 @@ namespace DCL.Roads.GPUInstancing.Playground
             foreach (CombinedLodsRenderer combinedMeshRenderer in combineDict.Values)
             {
                 CombinedLodsRenderers.Add(combinedMeshRenderer);
-                SaveCombinedMeshAsSubAsset(combinedMeshRenderer.CombinedMesh);
+                MeshCombiner.SaveCombinedMeshAsSubAsset(combinedMeshRenderer.CombinedMesh, this.gameObject);
             }
 
             // LOD Group
@@ -139,7 +136,6 @@ namespace DCL.Roads.GPUInstancing.Playground
             UpdateBoundsByCombinedLods();
 
             HideAll();
-            AssetDatabase.SaveAssets();
         }
 
         private void BuildLODMatrix(int lodsLength)
@@ -233,30 +229,7 @@ namespace DCL.Roads.GPUInstancing.Playground
             }
         }
 
-        private void SaveCombinedMeshAsSubAsset(Mesh combinedMesh)
-        {
-            string assetPath = AssetDatabase.GetAssetPath(this);
 
-            if (string.IsNullOrEmpty(assetPath))
-            {
-                Debug.LogWarning("Selected object is not a prefab asset. The combined mesh will not be saved as a sub-asset.");
-                return;
-            }
-
-            Object[] allAssets = AssetDatabase.LoadAllAssetsAtPath(assetPath);
-
-            foreach (Object asset in allAssets)
-            {
-                if (asset is Mesh && asset.name == combinedMesh.name)
-                {
-                    AssetDatabase.RemoveObjectFromAsset(asset);
-                    DestroyImmediate(asset, true);
-                }
-            }
-
-            AssetDatabase.AddObjectToAsset(combinedMesh, assetPath);
-            Debug.Log($"Combined mesh saved as a sub-asset in: {assetPath}");
-        }
 
         private void UpdateBoundsByCombinedLods()
         {

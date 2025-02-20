@@ -2,9 +2,6 @@ using DCL.Roads.GPUInstancing.Playground;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-#if UNITY_EDITOR
-using UnityEditor;
-#endif
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using Utility;
@@ -66,21 +63,6 @@ namespace DCL.Roads.Settings
         }
 
 #if UNITY_EDITOR
-        public void HideAll()
-        {
-            foreach (GPUInstancingLODGroup prop in PropsAndTiles)
-                prop.HideAll();
-        }
-
-        public void ShowAll()
-        {
-            foreach (GPUInstancingLODGroup prop in PropsAndTiles)
-                prop.ShowAll();
-        }
-
-        public void CollectGPUInstancingLODGroups() =>
-            CollectGPUInstancingLODGroups(-200 * Vector2Int.one, 200 * Vector2Int.one);
-
         public void CollectGPUInstancingLODGroups(Vector2Int min, Vector2Int max)
         {
             Dictionary<string, GPUInstancingPrefabData> loadedPrefabs = LoadAllPrefabs();
@@ -110,8 +92,8 @@ namespace DCL.Roads.Settings
                                .OrderBy(group => group.LODGroup.Name)
                                .ToList();
 
-            EditorUtility.SetDirty(this);
-            AssetDatabase.SaveAssets();
+            UnityEditor.EditorUtility.SetDirty(this);
+            UnityEditor.AssetDatabase.SaveAssets();
             return;
 
             bool IsOutOfRange(Vector2Int roadCoordinate) =>
@@ -125,8 +107,8 @@ namespace DCL.Roads.Settings
 
             foreach (AssetReferenceGameObject assetRef in RoadAssetsReference)
             {
-                string assetPath = AssetDatabase.GUIDToAssetPath(assetRef.AssetGUID);
-                GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(assetPath);
+                string assetPath = UnityEditor.AssetDatabase.GUIDToAssetPath(assetRef.AssetGUID);
+                GameObject prefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>(assetPath);
 
                 if (prefab == null)
                 {
