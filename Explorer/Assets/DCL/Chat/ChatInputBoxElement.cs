@@ -14,6 +14,7 @@ using System.Threading;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
+using UnityEngine.Pool;
 using Utility;
 
 namespace DCL.Chat
@@ -390,17 +391,19 @@ namespace DCL.Chat
         {
             GetParticipantProfiles(participantProfiles);
 
-            var profileSuggestions = profileSuggestionsDictionary.ToList();
+            var profileSuggestions = ListPool<KeyValuePair<string, ProfileInputSuggestionData>>.Get();
+            profileSuggestions.AddRange(profileSuggestionsDictionary);
 
             for (var index = 0; index < profileSuggestions.Count; index++)
             {
                 KeyValuePair<string, ProfileInputSuggestionData> suggestion = profileSuggestions[index];
-
                 bool isThereProfileForSuggestion = participantProfiles.FindIndex((profile) => profile.UserId == suggestion.Value.GetId()) > -1;
-
                 if (!isThereProfileForSuggestion)
-                    profileSuggestionsDictionary.Remove(suggestion.Key);
+                        profileSuggestionsDictionary.Remove(suggestion.Key);
             }
+
+            profileSuggestions.Clear();
+            ListPool<KeyValuePair<string, ProfileInputSuggestionData>>.Release(profileSuggestions);
 
             //We add or update the remaining participants
             foreach (Profile? profile in participantProfiles)
