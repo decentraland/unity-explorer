@@ -3,6 +3,8 @@ using DCL.ChangeRealmPrompt;
 using DCL.Clipboard;
 using DCL.ExternalUrlPrompt;
 using DCL.Friends;
+using DCL.Friends.UI;
+using DCL.Friends.UI.Requests;
 using DCL.Passport;
 using DCL.Profiles;
 using DCL.TeleportPrompt;
@@ -10,6 +12,7 @@ using DCL.UI;
 using DCL.UI.GenericContextMenu;
 using DCL.UI.GenericContextMenu.Controls.Configs;
 using DCL.Utilities;
+using DCL.Web3;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -41,7 +44,7 @@ namespace MVC
             this.friendServiceProxy = friendServiceProxy;
             this.profileCache = profileCache;
 
-            userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings(systemClipboard, friendServiceProxy.Configured? OnFriendsButtonClicked : null);
+            userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings(systemClipboard, OnFriendsButtonClicked);
             openUserProfileButtonContextMenuControlSettings = new OpenUserProfileButtonContextMenuControlSettings(OnShowUserPassportClicked);
             mentionUserButtonContextMenuControlSettings = new MentionUserButtonContextMenuControlSettings(OnPasteUserClicked);
             contextMenu = new GenericContextMenu(230, new Vector2(5,-10), anchorPoint: GenericContextMenuAnchorPoint.BOTTOM_LEFT)
@@ -74,12 +77,14 @@ namespace MVC
             closeContextMenuTask?.TrySetResult();
             closeContextMenuTask = new UniTaskCompletionSource();
 
-            FriendshipStatus friendshipStatus = FriendshipStatus.NONE;
+            UserProfileContextMenuControlSettings.FriendshipStatus contextMenuFriendshipStatus = UserProfileContextMenuControlSettings.FriendshipStatus.DISABLED;
 
             if (friendServiceProxy.Configured)
-                friendshipStatus = await friendServiceProxy.Object.GetFriendshipStatusAsync(profile.DisplayName, ct);
-
-            userProfileContextMenuControlSettings.SetInitialData(profile.DisplayName, profile.UserId, profile.HasClaimedName, profile.UserNameColor, ConvertFriendshipStatus(friendshipStatus));
+            {
+                var friendshipStatus = await friendServiceProxy.Object.GetFriendshipStatusAsync(profile.DisplayName, ct);
+                contextMenuFriendshipStatus = ConvertFriendshipStatus(friendshipStatus);
+            }
+            userProfileContextMenuControlSettings.SetInitialData(profile.DisplayName, profile.UserId, profile.HasClaimedName, profile.UserNameColor, contextMenuFriendshipStatus);
             mentionUserButtonContextMenuControlSettings.SetData(profile);
             openUserProfileButtonContextMenuControlSettings.SetData(profile);
 
@@ -100,20 +105,86 @@ namespace MVC
                    };
         }
 
-        private void OnFriendsButtonClicked(string s, UserProfileContextMenuControlSettings.FriendshipStatus friendshipStatus)
+        private void OnFriendsButtonClicked(string userAddress, UserProfileContextMenuControlSettings.FriendshipStatus friendshipStatus)
         {
             //TODO FRAN Issue #3408: we should only have this logic in one place, not repeated in each place that uses this context menu
             switch (friendshipStatus)
             {
-                case UserProfileContextMenuControlSettings.FriendshipStatus.NONE: break;
-                case UserProfileContextMenuControlSettings.FriendshipStatus.FRIEND: break;
-                case UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_SENT: break;
-                case UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_RECEIVED: break;
+                case UserProfileContextMenuControlSettings.FriendshipStatus.NONE:
+                    SendFriendRequest(userAddress);
+                    break;
+                case UserProfileContextMenuControlSettings.FriendshipStatus.FRIEND:
+                    RemoveFriend(userAddress);
+                    break;
+                case UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_SENT:
+                    CancelFriendRequest(userAddress);
+                    break;
+                case UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_RECEIVED:
+                    AcceptFriendship(userAddress);
+                    break;
                 case UserProfileContextMenuControlSettings.FriendshipStatus.BLOCKED: break;
                 default: throw new ArgumentOutOfRangeException(nameof(friendshipStatus), friendshipStatus, null);
             }
 
         }
+
+        private void RemoveFriend(string userAddress)
+        {
+            cancellationTokenSource = cancellationTokenSource.SafeRestart();
+            RemoveFriendAsync(cancellationTokenSource.Token).Forget();
+            return;
+
+            async UniTaskVoid RemoveFriendAsync(CancellationToken ct)
+            {
+                await mvcManager.ShowAsync(UnfriendConfirmationPopupController.IssueCommand(new UnfriendConfirmationPopupController.Params
+                {
+                    UserId = new Web3Address(userAddress),
+                }), ct);
+            }
+        }
+
+        private void CancelFriendRequest(string userAddress)
+        {
+            IFriendsService friendService = friendServiceProxy.Object;
+            cancellationTokenSource = cancellationTokenSource.SafeRestart();
+            CancelFriendRequestThenChangeInteractionStatusAsync(cancellationTokenSource.Token).Forget();
+            return;
+
+            async UniTaskVoid CancelFriendRequestThenChangeInteractionStatusAsync(CancellationToken ct)
+            {
+                await friendService.CancelFriendshipAsync(userAddress, ct);
+            }
+        }
+
+        private void SendFriendRequest(string userAddress)
+        {
+            cancellationTokenSource = cancellationTokenSource.SafeRestart();
+            ShowFriendRequestUIAsync(cancellationTokenSource.Token).Forget();
+            return;
+
+            async UniTaskVoid ShowFriendRequestUIAsync(CancellationToken ct)
+            {
+                await mvcManager.ShowAsync(FriendRequestController.IssueCommand(new FriendRequestParams
+                {
+                    DestinationUser = new Web3Address(userAddress),
+                }), ct);
+            }
+        }
+
+        private void AcceptFriendship(string userAddress)
+        {
+            cancellationTokenSource = cancellationTokenSource.SafeRestart();
+            IFriendsService friendService = friendServiceProxy.Object!;
+
+            AcceptFriendRequestThenChangeInteractionStatusAsync(cancellationTokenSource.Token).Forget();
+            return;
+
+            async UniTaskVoid AcceptFriendRequestThenChangeInteractionStatusAsync(CancellationToken ct)
+            {
+                await friendService.AcceptFriendshipAsync(userAddress, ct);
+            }
+        }
+
 
 
         private void OnShowUserPassportClicked(Profile data)

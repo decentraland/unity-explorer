@@ -19,7 +19,7 @@ namespace DCL.PluginSystem.Global
         private readonly IClipboardManager clipboardManager;
 
         private PastePopupToastController? pasteToastButtonController;
-        private ChatEntryMenuPopupController chatEntryMenuPopupController;
+        private ChatEntryMenuPopupController? chatEntryMenuPopupController;
 
         public GenericPopupsPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -34,6 +34,7 @@ namespace DCL.PluginSystem.Global
         public void Dispose()
         {
             pasteToastButtonController?.Dispose();
+            chatEntryMenuPopupController?.Dispose();
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)

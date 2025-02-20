@@ -122,9 +122,6 @@ namespace DCL.UI.GenericContextMenu.Controls
             CancelFriendButton.gameObject.SetActive(false);
             AcceptFriendButton.gameObject.SetActive(false);
 
-            //If we don't send any action, we don't show any button
-            if (settings.friendButtonClickAction == null) return;
-
             Button buttonToActivate = settings.friendshipStatus switch
             {
                 UserProfileContextMenuControlSettings.FriendshipStatus.NONE => AddFriendButton,

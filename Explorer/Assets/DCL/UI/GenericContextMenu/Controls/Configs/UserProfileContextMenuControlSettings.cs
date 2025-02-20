@@ -15,6 +15,7 @@ namespace DCL.UI.GenericContextMenu.Controls.Configs
             REQUEST_SENT,
             REQUEST_RECEIVED,
             BLOCKED,
+            DISABLED,
         }
 
         internal string userName;
