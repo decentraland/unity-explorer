@@ -24,7 +24,6 @@ using DCL.Nametags;
 using DCL.PlacesAPIService;
 using DCL.Profiles;
 using DCL.Profiles.Self;
-using DCL.UI.Profiles.Helpers;
 using DCL.WebRequests;
 using ECS;
 using ECS.SceneLifeCycle.Realm;
@@ -72,7 +71,6 @@ namespace DCL.PluginSystem.Global
         private readonly UIDocument rootUIDocument;
         private readonly Arch.Core.World globalWorld;
         private readonly IDebugContainerBuilder debugContainerBuilder;
-        private readonly IProfileNameColorHelper profileNameColorHelper;
         private readonly NametagsData nametagsData;
 
         private ScreenRecorder recorder;
@@ -96,7 +94,6 @@ namespace DCL.PluginSystem.Global
             UIDocument rootUIDocument,
             Arch.Core.World globalWorld,
             IDebugContainerBuilder debugContainerBuilder,
-            IProfileNameColorHelper profileNameColorHelper,
             NametagsData nametagsData)
         {
             this.input = input;
@@ -124,7 +121,6 @@ namespace DCL.PluginSystem.Global
             this.rootUIDocument = rootUIDocument;
             this.globalWorld = globalWorld;
             this.debugContainerBuilder = debugContainerBuilder;
-            this.profileNameColorHelper = profileNameColorHelper;
             this.nametagsData = nametagsData;
             factory = new InWorldCameraFactory();
         }
@@ -167,8 +163,8 @@ namespace DCL.PluginSystem.Global
                     new PassportBridgeOpener(),
                     rarityBackgroundsMapping,
                     rarityColorMappings,
-                    categoryIconsMapping,
-                    profileNameColorHelper),
+                    categoryIconsMapping
+                    ),
                 cameraReelScreenshotsStorage,
                 systemClipboard,
                 decentralandUrlsSource,

@@ -26,6 +26,7 @@ namespace MVC
         private readonly GenericContextMenu contextMenu;
         private readonly IClipboardManager clipboardManager;
         private readonly ObjectProxy<IFriendsService> friendServiceProxy;
+        private readonly IProfileCache profileCache;
 
         private readonly UserProfileContextMenuControlSettings userProfileContextMenuControlSettings;
         private readonly MentionUserButtonContextMenuControlSettings mentionUserButtonContextMenuControlSettings;
@@ -33,11 +34,12 @@ namespace MVC
         private UniTaskCompletionSource closeContextMenuTask;
         private CancellationTokenSource cancellationTokenSource;
 
-        public MVCManagerMenusAccessFacade(IMVCManager mvcManager, ISystemClipboard systemClipboard, IClipboardManager clipboardManager, ObjectProxy<IFriendsService> friendServiceProxy)
+        public MVCManagerMenusAccessFacade(IMVCManager mvcManager, ISystemClipboard systemClipboard, IClipboardManager clipboardManager, ObjectProxy<IFriendsService> friendServiceProxy, IProfileCache profileCache)
         {
             this.mvcManager = mvcManager;
             this.clipboardManager = clipboardManager;
             this.friendServiceProxy = friendServiceProxy;
+            this.profileCache = profileCache;
 
             userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings(systemClipboard, friendServiceProxy.Configured? OnFriendsButtonClicked : null);
             openUserProfileButtonContextMenuControlSettings = new OpenUserProfileButtonContextMenuControlSettings(OnShowUserPassportClicked);
@@ -126,5 +128,20 @@ namespace MVC
             clipboardManager.Paste(this);
         }
 
+
+        public async UniTask ShowUserProfileContextMenuFromWalledIdAsync(string walletId, Vector3 position, CancellationToken ct)
+        {
+            Profile profile = profileCache.Get(walletId);
+            if (profile == null) return;
+            await ShowUserProfileContextMenuAsync(profile, position, ct );
+        }
+
+
+        public async UniTask ShowUserProfileContextMenuFromUserNameAsync(string userName, Vector3 position, CancellationToken ct)
+        {
+            Profile profile = profileCache.GetByUserName(userName);
+            if (profile == null) return;
+            await ShowUserProfileContextMenuAsync(profile, position, ct );
+        }
     }
 }

@@ -8,7 +8,6 @@ using DCL.Profiles;
 using DCL.Profiles.Self;
 using LiveKit.Proto;
 using System;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 

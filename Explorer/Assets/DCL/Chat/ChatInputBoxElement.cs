@@ -65,6 +65,7 @@ namespace DCL.Chat
         private EmojiPanelController? emojiPanelController;
         private InputSuggestionPanelController? suggestionPanelController;
         private ViewDependencies viewDependencies;
+        private IProfileCache profileCache;
 
         private CancellationTokenSource emojiPanelCts = new ();
         private bool isInputSelected;
@@ -104,10 +105,11 @@ namespace DCL.Chat
         /// </summary>
         public event InputChangedDelegate? InputChanged;
 
-        public void Initialize(ChatAudioSettingsAsset chatAudioSettings)
+        public void Initialize(ChatAudioSettingsAsset chatAudioSettings, IProfileCache profileCache)
         {
             device = InputSystem.GetDevice<Mouse>();
             this.chatAudioSettings = chatAudioSettings;
+            this.profileCache = profileCache;
 
             InitializeEmojiPanelController();
             InitializeEmojiMapping(emojiPanelController!.EmojiNameMapping);
@@ -400,7 +402,7 @@ namespace DCL.Chat
             //We add or update the remaining participants
             foreach (string? participant in remoteParticipantIdentities)
             {
-                Profile? profile = viewDependencies.ProfileCache.Get(participant);
+                Profile? profile = profileCache.Get(participant);
 
                 if (profile != null)
                 {

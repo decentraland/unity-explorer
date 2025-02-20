@@ -45,7 +45,6 @@ namespace DCL.Friends
         private readonly Dictionary<string, string> authChainBuffer = new();
         private readonly List<FriendProfile> friendProfileBuffer = new();
         private readonly SemaphoreSlim handshakeMutex = new(1, 1);
-        private readonly IProfileNameColorHelper profileNameColorHelper;
 
         private RpcClientModule? module;
         private RpcClientPort? port;
@@ -61,15 +60,13 @@ namespace DCL.Friends
             IFriendsEventBus eventBus,
             IWeb3IdentityCache identityCache,
             FriendsCache friendsCache,
-            ISelfProfile selfProfile,
-            IProfileNameColorHelper profileNameColorHelper)
+            ISelfProfile selfProfile)
         {
             this.apiUrl = apiUrl;
             this.eventBus = eventBus;
             this.identityCache = identityCache;
             this.friendsCache = friendsCache;
             this.selfProfile = selfProfile;
-            this.profileNameColorHelper = profileNameColorHelper;
         }
 
         public void Dispose()
@@ -643,7 +640,7 @@ namespace DCL.Friends
                 profile.Name,
                 profile.HasClaimedName,
                 URLAddress.FromString(profile.ProfilePictureUrl),
-                profileNameColorHelper.GetNameColor(profile.Name));
+                ProfileNameColorHelper.GetNameColor(profile.Name));
 
             return fp;
         }
@@ -654,7 +651,7 @@ namespace DCL.Friends
                 profile.Name,
                 profile.HasClaimedName,
                 profile.Avatar.FaceSnapshotUrl,
-                profileNameColorHelper.GetNameColor(profile.Name));
+                ProfileNameColorHelper.GetNameColor(profile.Name));
             return fp;
         }
     }

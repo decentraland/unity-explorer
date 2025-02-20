@@ -2,7 +2,9 @@ using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.Settings.Settings;
 using DCL.Chat.History;
+using DCL.Profiles;
 using DCL.UI;
+using DCL.UI.Profiles.Helpers;
 using MVC;
 using DG.Tweening;
 using System;
@@ -317,7 +319,7 @@ namespace DCL.Chat
         public void Initialize(IReadOnlyDictionary<ChatChannel.ChannelId, ChatChannel> chatChannels,
             ChatChannel.ChannelId defaultChannelId,
             bool areChatBubblesVisible,
-            ChatAudioSettingsAsset chatAudioSettings
+            ChatAudioSettingsAsset chatAudioSettings, IProfileCache profileCache
         )
         {
             this.channels = chatChannels;
@@ -335,7 +337,7 @@ namespace DCL.Chat
             chatBubblesToggle.Toggle.onValueChanged.AddListener(OnToggleChatBubblesValueChanged);
             chatBubblesToggle.IsSoundEnabled = true;
 
-            chatInputBox.Initialize(chatAudioSettings);
+            chatInputBox.Initialize(chatAudioSettings, profileCache);
             chatInputBox.InputBoxSelectionChanged += OnInputBoxSelectionChanged;
             chatInputBox.EmojiSelectionVisibilityChanged += OnEmojiSelectionVisibilityChanged;
             chatInputBox.InputChanged += OnInputChanged;
@@ -610,7 +612,7 @@ namespace DCL.Chat
         }
 
         private Color CalculateUsernameColor(ChatMessage chatMessage) =>
-            viewDependencies.ProfileNameColorHelper.GetNameColor(chatMessage.SenderValidatedName);
+            ProfileNameColorHelper.GetNameColor(chatMessage.SenderValidatedName);
 
         private void OnChatMessageViewerScrollPositionChanged(Vector2 scrollPosition)
         {
