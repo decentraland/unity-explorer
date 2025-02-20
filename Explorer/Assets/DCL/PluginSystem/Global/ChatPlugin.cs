@@ -6,7 +6,6 @@ using DCL.Chat;
 using DCL.Chat.Commands;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
-using DCL.Emoji;
 using DCL.Chat.ChatLifecycleBus;
 using DCL.Input;
 using DCL.Multiplayer.Connections.RoomHubs;
@@ -16,7 +15,6 @@ using DCL.Profiles;
 using DCL.Settings.Settings;
 using DCL.UI.InputFieldFormatting;
 using DCL.UI.MainUI;
-using DCL.UI.Profiles.Helpers;
 using MVC;
 using System.Threading;
 using UnityEngine;
@@ -41,6 +39,7 @@ namespace DCL.PluginSystem.Global
         private readonly IRoomHub roomHub;
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly ITextFormatter hyperlinkTextFormatter;
+        private readonly IProfileCache profileCache;
 
         private ChatController chatController;
 
@@ -58,7 +57,9 @@ namespace DCL.PluginSystem.Global
             ViewDependencies viewDependencies,
             IChatCommandsBus chatCommandsBus,
             IRoomHub roomHub,
-            IAssetsProvisioner assetsProvisioner, ITextFormatter hyperlinkTextFormatter)
+            IAssetsProvisioner assetsProvisioner,
+            ITextFormatter hyperlinkTextFormatter,
+            IProfileCache profileCache)
         {
             this.mvcManager = mvcManager;
             this.chatHistory = chatHistory;
@@ -72,6 +73,7 @@ namespace DCL.PluginSystem.Global
             this.chatCommandsBus = chatCommandsBus;
             this.assetsProvisioner = assetsProvisioner;
             this.hyperlinkTextFormatter = hyperlinkTextFormatter;
+            this.profileCache = profileCache;
             this.mainUIView = mainUIView;
             this.inputBlock = inputBlock;
             this.chatLifecycleBusController = chatLifecycleBusController;
@@ -105,7 +107,8 @@ namespace DCL.PluginSystem.Global
                 chatCommandsBus,
                 roomHub,
                 chatSettingsAsset.Value,
-                hyperlinkTextFormatter
+                hyperlinkTextFormatter,
+                profileCache
             );
 
             mvcManager.RegisterController(chatController);

@@ -18,7 +18,6 @@ using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.RealmNavigation;
 using DCL.UI.MainUI;
-using DCL.UI.Profiles.Helpers;
 using DCL.UI.Sidebar.SidebarActionsBus;
 using DCL.Utilities;
 using DCL.Web3.Identities;
@@ -59,7 +58,6 @@ namespace DCL.PluginSystem.Global
         private readonly IAppArgs appArgs;
         private readonly FeatureFlagsCache featureFlagsCache;
         private readonly ISidebarActionsBus sidebarActionsBus;
-        private readonly IProfileNameColorHelper profileNameColorHelper;
 
         private CancellationTokenSource friendServiceSubscriptionCancellationToken = new ();
         private RPCFriendsService? friendsService;
@@ -91,8 +89,7 @@ namespace DCL.PluginSystem.Global
             bool includeUserBlocking,
             IAppArgs appArgs,
             FeatureFlagsCache featureFlagsCache,
-            ISidebarActionsBus sidebarActionsBus,
-            IProfileNameColorHelper profileNameColorHelper)
+            ISidebarActionsBus sidebarActionsBus)
         {
             this.mainUIView = mainUIView;
             this.dclUrlSource = dclUrlSource;
@@ -118,7 +115,6 @@ namespace DCL.PluginSystem.Global
             this.appArgs = appArgs;
             this.featureFlagsCache = featureFlagsCache;
             this.sidebarActionsBus = sidebarActionsBus;
-            this.profileNameColorHelper = profileNameColorHelper;
         }
 
         public void Dispose()
@@ -138,7 +134,7 @@ namespace DCL.PluginSystem.Global
             var friendsCache = new FriendsCache();
 
             friendsService = new RPCFriendsService(GetApiUrl(),
-                friendEventBus, web3IdentityCache, friendsCache, selfProfile, profileNameColorHelper);
+                friendEventBus, web3IdentityCache, friendsCache, selfProfile);
 
             friendServiceProxy.SetObject(friendsService);
 
@@ -192,8 +188,7 @@ namespace DCL.PluginSystem.Global
                 dclInput,
                 notificationsBusController,
                 passportBridge,
-                friendsService,
-                profileNameColorHelper);
+                friendsService);
 
             mvcManager.RegisterController(persistentFriendsOpenerController);
 

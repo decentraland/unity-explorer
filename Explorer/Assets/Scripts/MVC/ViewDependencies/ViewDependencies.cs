@@ -1,8 +1,6 @@
 ﻿using DCL.Clipboard;
 using DCL.Input;
 using DCL.Multiplayer.Connections.RoomHubs;
-using DCL.Profiles;
-using DCL.UI.Profiles.Helpers;
 
 namespace MVC
 {
@@ -17,20 +15,16 @@ namespace MVC
         public readonly MVCManagerMenusAccessFacade GlobalUIViews;
         public readonly IClipboardManager ClipboardManager;
         public readonly ICursor Cursor;
-        public readonly IProfileCache ProfileCache;
-        public readonly IProfileNameColorHelper ProfileNameColorHelper;
         public readonly IRoomHub RoomHub;
 
         public ViewDependencies(DCLInput dclInput, IEventSystem eventSystem, MVCManagerMenusAccessFacade globalUIViews, IClipboardManager clipboardManager, ICursor cursor,
-            IProfileCache profileCache, IProfileNameColorHelper profileNameColorHelper, IRoomHub roomHub)
+            IRoomHub roomHub)
         {
             DclInput = dclInput;
             EventSystem = eventSystem;
             GlobalUIViews = globalUIViews;
             ClipboardManager = clipboardManager;
             Cursor = cursor;
-            ProfileCache = profileCache;
-            ProfileNameColorHelper = profileNameColorHelper;
             RoomHub = roomHub;
         }
 

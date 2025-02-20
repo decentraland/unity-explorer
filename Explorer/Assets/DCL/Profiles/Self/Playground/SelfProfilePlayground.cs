@@ -6,14 +6,11 @@ using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
 using DCL.Ipfs;
-using DCL.UI.Profiles.Helpers;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
 using System.Collections.Generic;
 using System.Threading;
-using DCL.Browser.DecentralandUrls;
-using DCL.Multiplayer.Connections.DecentralandUrls;
 using UnityEngine;
 
 namespace DCL.Profiles.Self.Playground
@@ -49,9 +46,7 @@ namespace DCL.Profiles.Self.Playground
                                 )
                             )
                         ),
-                        new DefaultProfileCache(),
-                        new ProfileNameColorHelper(new List<Color>())
-                    )
+                        new DefaultProfileCache())
                 ),
                 web3IdentityCache,
                 new EquippedWearables(),

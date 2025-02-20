@@ -1,7 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Input;
-using DCL.Profiles;
 using DCL.UI.Utilities;
 using MVC;
 using System;
@@ -154,11 +153,7 @@ namespace DCL.UI.HyperlinkHandler
 
         private async UniTaskVoid OpenUserProfileContextMenuAsync(string userName)
         {
-            Profile profile = viewDependencies.ProfileCache.GetByUserName(userName);
-
-            if (profile == null) return;
-
-            await viewDependencies.GlobalUIViews.ShowUserProfileContextMenuAsync(profile, GetLastCharacterPosition(lastLink), cancellationTokenSource.Token);
+            await viewDependencies.GlobalUIViews.ShowUserProfileContextMenuFromUserNameAsync(userName, GetLastCharacterPosition(lastLink), cancellationTokenSource.Token);
         }
 
         private async UniTaskVoid OpenUrlAsync(string url, CancellationToken ct) =>

@@ -34,7 +34,6 @@ namespace DCL.Nametags
         private const string NAMETAG_DEFAULT_WALLET_ID = "0000";
 
         private readonly IObjectPool<NametagView> nametagViewPool;
-        private readonly IProfileNameColorHelper profileNameColorHelper;
         private readonly NametagsData nametagsData;
         private readonly ChatBubbleConfigurationSO chatBubbleConfigurationSo;
 
@@ -44,13 +43,11 @@ namespace DCL.Nametags
         public NametagPlacementSystem(
             World world,
             IObjectPool<NametagView> nametagViewPool,
-            IProfileNameColorHelper profileNameColorHelper,
             NametagsData nametagsData,
             ChatBubbleConfigurationSO chatBubbleConfigurationSo
         ) : base(world)
         {
             this.nametagViewPool = nametagViewPool;
-            this.profileNameColorHelper = profileNameColorHelper;
             this.nametagsData = nametagsData;
             this.chatBubbleConfigurationSo = chatBubbleConfigurationSo;
         }
@@ -173,7 +170,7 @@ namespace DCL.Nametags
         private void UpdateTagPosition(NametagView view, Camera camera, Vector3 newPosition)
         {
             view.transform.position = newPosition;
-            view.transform.LookAt(view.transform.position + camera.transform.rotation * Vector3.forward, camera.transform.rotation * Vector3.up);
+            view.transform.LookAt(view.transform.position + (camera.transform.rotation * Vector3.forward), camera.transform.rotation * Vector3.up);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -193,7 +190,7 @@ namespace DCL.Nametags
             NametagView nametagView = nametagViewPool.Get();
             nametagView.gameObject.name = avatarShape.ID;
             nametagView.Id = avatarShape.ID;
-            nametagView.Username.color = profile?.UserNameColor ?? profileNameColorHelper.GetNameColor(avatarShape.Name);
+            nametagView.Username.color = profile?.UserNameColor ?? ProfileNameColorHelper.GetNameColor(avatarShape.Name);
             nametagView.InjectConfiguration(chatBubbleConfigurationSo);
 
             int walletIdLastDigitsIndex = avatarShape.ID.Length - 4;

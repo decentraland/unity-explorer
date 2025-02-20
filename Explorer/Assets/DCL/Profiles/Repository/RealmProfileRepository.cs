@@ -24,7 +24,6 @@ namespace DCL.Profiles
         private readonly IProfileCache profileCache;
         private readonly URLBuilder urlBuilder = new ();
         private readonly Dictionary<string, byte[]> files = new ();
-        private readonly IProfileNameColorHelper profileNameColorHelper;
         // Catalyst servers requires a face thumbnail texture of 256x256
         // Otherwise it will fail when the profile is published
         private readonly byte[] whiteTexturePng = new Texture2D(256, 256).EncodeToPNG();
@@ -32,13 +31,11 @@ namespace DCL.Profiles
         public RealmProfileRepository(
             IWebRequestController webRequestController,
             IRealmData realm,
-            IProfileCache profileCache,
-            IProfileNameColorHelper profileNameColorHelper)
+            IProfileCache profileCache)
         {
             this.webRequestController = webRequestController;
             this.realm = realm;
             this.profileCache = profileCache;
-            this.profileNameColorHelper = profileNameColorHelper;
         }
 
         public async UniTask SetAsync(Profile profile, bool publish, CancellationToken ct)
@@ -122,7 +119,7 @@ namespace DCL.Profiles
                 // the check always fails. So its necessary to get a new instance each time
                 Profile profile = Profile.Create();
                 profileDto.CopyTo(profile);
-                profile.UserNameColor = profileNameColorHelper.GetNameColor(profile.DisplayName);
+                profile.UserNameColor = ProfileNameColorHelper.GetNameColor(profile.DisplayName);
 
                 profileCache.Set(id, profile);
 

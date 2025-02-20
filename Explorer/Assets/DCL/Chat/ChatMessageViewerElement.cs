@@ -336,12 +336,8 @@ namespace DCL.Chat
 
         private void OnChatEntryClicked(string walletAddress, Vector2 contextMenuPosition)
         {
-            var profile = viewDependencies.ProfileCache.Get(walletAddress);
-            if (profile != null)
-            {
-                popupCts = popupCts.SafeRestart();
-                viewDependencies.GlobalUIViews.ShowUserProfileContextMenuAsync(profile, contextMenuPosition, popupCts.Token);
-            }
+            popupCts = popupCts.SafeRestart();
+            viewDependencies.GlobalUIViews.ShowUserProfileContextMenuFromWalledIdAsync(walletAddress, contextMenuPosition, popupCts.Token).Forget();
         }
 
         private void OnChatMessageOptionsButtonClicked(string itemDataMessage, ChatEntryView itemScript)

@@ -4,7 +4,6 @@ using DCL.CharacterCamera;
 using DCL.Chat.Commands;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
-using DCL.Emoji;
 using DCL.Chat.ChatLifecycleBus;
 using DCL.Input;
 using DCL.Input.Component;
@@ -42,6 +41,7 @@ namespace DCL.Chat
         private readonly IChatCommandsBus chatCommandsBus;
         private readonly IRoom islandRoom;
         private readonly IRoom sceneRoom;
+        private readonly IProfileCache profileCache;
 
         private readonly ITextFormatter hyperlinkTextFormatter;
         private readonly ChatAudioSettingsAsset chatAudioSettings;
@@ -72,7 +72,7 @@ namespace DCL.Chat
             ViewDependencies viewDependencies,
             IChatCommandsBus chatCommandsBus,
             IRoomHub roomHub,
-            ChatAudioSettingsAsset chatAudioSettings, ITextFormatter hyperlinkTextFormatter) : base(viewFactory)
+            ChatAudioSettingsAsset chatAudioSettings, ITextFormatter hyperlinkTextFormatter, IProfileCache profileCache) : base(viewFactory)
         {
             this.chatMessagesBus = chatMessagesBus;
             this.chatHistory = chatHistory;
@@ -87,6 +87,7 @@ namespace DCL.Chat
             this.sceneRoom = roomHub.SceneRoom().Room();
             this.chatAudioSettings = chatAudioSettings;
             this.hyperlinkTextFormatter = hyperlinkTextFormatter;
+            this.profileCache = profileCache;
             chatLifecycleBusController.SubscribeToHideChatCommand(HideBusCommandReceived);
         }
 
@@ -143,7 +144,7 @@ namespace DCL.Chat
             chatCommandsBus.OnClearChat += Clear;
 
             viewInstance!.InjectDependencies(viewDependencies);
-            viewInstance!.Initialize(chatHistory.Channels, ChatChannel.NEARBY_CHANNEL, nametagsData.showChatBubbles, chatAudioSettings);
+            viewInstance!.Initialize(chatHistory.Channels, ChatChannel.NEARBY_CHANNEL, nametagsData.showChatBubbles, chatAudioSettings, profileCache);
 
             viewInstance.PointerEnter += OnChatViewPointerEnter;
             viewInstance.PointerExit += OnChatViewPointerExit;
@@ -424,10 +425,12 @@ namespace DCL.Chat
 
         private ChatMemberListView.MemberData GetMemberDataFromParticipantIdentity(string identity)
         {
-            Profile profile = viewDependencies.ProfileCache.Get(identity);
+            Profile? profile = profileCache.Get(identity);
 
-            ChatMemberListView.MemberData newMemberData = new ChatMemberListView.MemberData();
-            newMemberData.Id = identity;
+            ChatMemberListView.MemberData newMemberData = new ChatMemberListView.MemberData
+                {
+                    Id = identity,
+                };
 
             if (profile != null)
             {

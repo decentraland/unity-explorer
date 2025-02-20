@@ -14,7 +14,6 @@ using DCL.StylizedSkybox.Scripts;
 using DCL.UI.Controls;
 using DCL.UI.MainUI;
 using DCL.UI.ProfileElements;
-using DCL.UI.Profiles.Helpers;
 using DCL.UI.Sidebar;
 using DCL.UI.Sidebar.SidebarActionsBus;
 using DCL.UI.Skybox;
@@ -51,7 +50,6 @@ namespace DCL.PluginSystem.Global
         private readonly bool includeCameraReel;
         private readonly bool includeFriends;
         private readonly IChatHistory chatHistory;
-        private readonly IProfileNameColorHelper profileNameColorHelper;
 
         public SidebarPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -73,7 +71,7 @@ namespace DCL.PluginSystem.Global
             Entity playerEntity,
             bool includeCameraReel,
             bool includeFriends,
-            IChatHistory chatHistory, IProfileNameColorHelper profileNameColorHelper)
+            IChatHistory chatHistory)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -95,7 +93,6 @@ namespace DCL.PluginSystem.Global
             this.includeCameraReel = includeCameraReel;
             this.includeFriends = includeFriends;
             this.chatHistory = chatHistory;
-            this.profileNameColorHelper = profileNameColorHelper;
         }
 
         public void Dispose() { }
@@ -118,7 +115,7 @@ namespace DCL.PluginSystem.Global
                 },
                 mvcManager,
                 notificationsBusController,
-                new NotificationsMenuController(mainUIView.SidebarView.NotificationsMenuView, notificationsRequestController, notificationsBusController, notificationIconTypes, webRequestController, sidebarBus, rarityBackgroundMapping, web3IdentityCache, profileNameColorHelper),
+                new NotificationsMenuController(mainUIView.SidebarView.NotificationsMenuView, notificationsRequestController, notificationsBusController, notificationIconTypes, webRequestController, sidebarBus, rarityBackgroundMapping, web3IdentityCache),
                 new ProfileWidgetController(() => mainUIView.SidebarView.ProfileWidget, web3IdentityCache, profileRepository, webRequestController),
                 new ProfileMenuController(() => mainUIView.SidebarView.ProfileMenuView, web3IdentityCache, profileRepository, webRequestController, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, mvcManager),
                 new SkyboxMenuController(() => mainUIView.SidebarView.SkyboxMenuView, settings.SkyboxSettingsAsset),

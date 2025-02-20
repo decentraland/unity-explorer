@@ -9,7 +9,6 @@ using DCL.InWorldCamera.ReelActions;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.InWorldCamera.PassportBridge;
 using DCL.Profiles;
-using DCL.UI.Profiles.Helpers;
 using DCL.WebRequests;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
@@ -62,8 +61,7 @@ namespace DCL.InWorldCamera.PhotoDetail
             IPassportBridge passportBridge,
             NftTypeIconSO rarityBackgrounds,
             NFTColorsSO rarityColors,
-            NftTypeIconSO categoryIcons,
-            IProfileNameColorHelper profileNameColorHelper)
+            NftTypeIconSO categoryIcons)
         {
             this.view = view;
             this.cameraReelStorageService = cameraReelStorageService;
@@ -88,7 +86,6 @@ namespace DCL.InWorldCamera.PhotoDetail
                 rarityBackgrounds,
                 rarityColors,
                 categoryIcons,
-                profileNameColorHelper,
                 VISIBLE_PERSON_DEFAULT_POOL_SIZE,
                 VISIBLE_PERSON_MAX_POOL_CAPACITY,
                 EQUIPPED_WEARABLE_DEFAULT_POOL_SIZE,
