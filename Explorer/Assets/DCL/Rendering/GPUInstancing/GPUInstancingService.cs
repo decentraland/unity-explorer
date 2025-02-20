@@ -163,10 +163,10 @@ namespace DCL.Roads.GPUInstancing
             IndirectBufferGenerationComputeShader.Dispatch(IndirectBufferGenerationComputeShader_KernelIDs, Mathf.CeilToInt((float)buffers.PerInstanceMatrices.count / (int)IndirectBufferGeneration_ThreadGroupSize_X), 1, 1);
 
             DrawArgsInstanceCountTransferComputeShader.SetBuffer(DrawArgsInstanceCountTransferComputeShader_KernelIDs, ComputeVar_GroupDataBuffer, buffers.GroupData);
-            DrawArgsInstanceCountTransferComputeShader.SetBuffer(DrawArgsInstanceCountTransferComputeShader_KernelIDs, ComputeVar_PerInstance_LODLevels, buffers.LODLevels);
+            DrawArgsInstanceCountTransferComputeShader.SetBuffer(DrawArgsInstanceCountTransferComputeShader_KernelIDs, ComputeVar_arrLODCount, buffers.ArrLODCount);
             DrawArgsInstanceCountTransferComputeShader.SetBuffer(DrawArgsInstanceCountTransferComputeShader_KernelIDs, ComputeVar_IndirectDrawIndexedArgsBuffer, buffers.DrawArgs);
             DrawArgsInstanceCountTransferComputeShader.SetInt(ComputeVar_nSubMeshCount, candidate.LODGroup.CombinedLodsRenderers.Count);
-            IndirectBufferGenerationComputeShader.Dispatch(IndirectBufferGenerationComputeShader_KernelIDs, 1, 1, 1);
+            DrawArgsInstanceCountTransferComputeShader.Dispatch(DrawArgsInstanceCountTransferComputeShader_KernelIDs, 1, 1, 1);
 
             for (var i = 0; i < candidate.LODGroup.CombinedLodsRenderers.Count; i++)
             {
