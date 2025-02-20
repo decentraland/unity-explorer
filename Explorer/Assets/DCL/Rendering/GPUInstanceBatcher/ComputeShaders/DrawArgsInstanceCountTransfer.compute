@@ -1,0 +1,53 @@
+﻿#include "Includes/PlatformSpecifications.cginc"
+
+#pragma enable_d3d11_debug_symbols
+#pragma kernel DrawArgsInstanceCountTransfer
+
+////////////////////
+// UNIFORM INPUTS
+////////////////////
+
+shared RWStructuredBuffer<uint> arrLODCount;
+
+struct GroupData
+{
+    float4x4 lodSizes;
+    float4x4 matCamera_MVP;
+    float3 vCameraPosition;
+    float fShadowDistance;
+    float3 vBoundsCenter;
+    float frustumOffset;
+    float3 vBoundsExtents;
+    float fCameraHalfAngle;
+    float fMaxDistance;
+    float minCullingDistance;
+    uint nInstBufferSize;
+    uint nLODCount;
+};
+StructuredBuffer<GroupData> GroupDataBuffer;
+
+uniform uint nSubMeshCount;
+
+////////////////////
+// UNIFORM OUTPUTS
+////////////////////
+shared RWStructuredBuffer<uint> IndirectDrawIndexedArgsBuffer; // 5x UINT, per draw args
+
+[numthreads(1, 1, 1)]
+void DrawArgsInstanceCountTransfer(uint3 id : SV_DispatchThreadID)
+{
+    if (id.x >= GroupDataBuffer[0].nInstBufferSize)
+        return;
+
+    const uint nSizeOfDrawArgs = 5;
+    const uint nInstanceCountOffsetInArgsBuffer = 1;
+    const uint nLODCount = GroupDataBuffer[0].nLODCount;
+    
+    for (uint nSubmesh = 0; nSubmesh < nSubMeshCount; ++nSubmesh)
+    {
+        for (uint nLOD = 0; nLOD < nLODCount; ++nLOD)
+        {
+            IndirectDrawIndexedArgsBuffer[(nSubmesh * nSizeOfDrawArgs * nLODCount) + (nLOD * nSizeOfDrawArgs) + nInstanceCountOffsetInArgsBuffer] = arrLODCount[nLOD];
+        }
+    }
+}
