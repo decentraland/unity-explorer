@@ -746,7 +746,7 @@ namespace Global.Dynamic
                 ),
                 new GenericContextMenuPlugin(assetsProvisioner, mvcManager),
                 realmNavigatorContainer.CreatePlugin(),
-                new GPUInstancingPlugin(staticContainer.GPUInstancingService, staticContainer.RealmData),
+                new GPUInstancingPlugin(staticContainer.GPUInstancingService, staticContainer.RealmData, staticContainer.LoadingStatus),
 
             };
 
