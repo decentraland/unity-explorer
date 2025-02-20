@@ -21,8 +21,8 @@ namespace ECS.StreamableLoading.Cache
 
         private bool disposed;
 
-        public IDictionary<string, UniTaskCompletionSource<StreamableLoadingResult<TAssetData>?>> OngoingRequests { get; }
-            = new Dictionary<string, UniTaskCompletionSource<StreamableLoadingResult<TAssetData>?>>();
+        public IDictionary<string, UniTaskCompletionSource<OngoingRequestResult<TAssetData>>> OngoingRequests { get; }
+            = new Dictionary<string, UniTaskCompletionSource<OngoingRequestResult<TAssetData>>>();
 
         public IDictionary<string, StreamableLoadingResult<TAssetData>> IrrecoverableFailures { get; }
             = new Dictionary<string, StreamableLoadingResult<TAssetData>>();

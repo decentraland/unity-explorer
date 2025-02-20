@@ -99,6 +99,26 @@ MonoBehaviour:
       isEnabled: 1
     - eventName: verification_requested
       isEnabled: 1
+  - groupName: Friends
+    events:
+    - eventName: friends_panel_opened
+      isEnabled: 1
+    - eventName: online_friend_clicked
+      isEnabled: 1
+    - eventName: jump_to_friend_clicked
+      isEnabled: 1
+    - eventName: notification_clicked
+      isEnabled: 1
+    - eventName: friend_request_sent
+      isEnabled: 1
+    - eventName: friend_request_canceled
+      isEnabled: 1
+    - eventName: friend_request_accepted
+      isEnabled: 1
+    - eventName: friend_request_rejected
+      isEnabled: 1
+    - eventName: friendship_deleted
+      isEnabled: 1
   useLocalEnvVariableFallback: 0
   flushSize: 20
   flushInterval: 30

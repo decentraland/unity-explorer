@@ -1,3 +1,5 @@
+using System;
+
 namespace DCL.Web3.Identities
 {
     public class ProxyIdentityCache : IWeb3IdentityCache
@@ -16,6 +18,18 @@ namespace DCL.Web3.Identities
         {
             memory.Dispose();
             storage.Dispose();
+        }
+
+        public event Action? OnIdentityCleared
+        {
+            add => memory.OnIdentityCleared += value;
+            remove => memory.OnIdentityCleared -= value;
+        }
+
+        public event Action? OnIdentityChanged
+        {
+            add => memory.OnIdentityChanged += value;
+            remove => memory.OnIdentityChanged -= value;
         }
 
         public IWeb3Identity? Identity

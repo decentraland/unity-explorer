@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Optimization.Hashing;
 using ECS.StreamableLoading.Cache.Disk.CleanUp;
 using ECS.StreamableLoading.Cache.Disk.Lock;
 using System;
@@ -110,7 +111,7 @@ namespace ECS.StreamableLoading.Cache.Disk
         }
     }
 
-    public class DiskCache<T> : IDiskCache<T> where T: class
+    public class DiskCache<T> : IDiskCache<T>
     {
         private readonly IDiskCache diskCache;
         private readonly IDiskSerializer<T> serializer;
@@ -123,9 +124,12 @@ namespace ECS.StreamableLoading.Cache.Disk
 
         public async UniTask<EnumResult<TaskError>> PutAsync(HashKey key, string extension, T data, CancellationToken token)
         {
-            using SlicedOwnedMemory<byte> serializedData = await serializer.SerializeAsync(data, token);
+            using SlicedOwnedMemory<byte> serializedData = Serialize(data);
             return await diskCache.PutAsync(key, extension, serializedData.Memory, token);
         }
+
+        private SlicedOwnedMemory<byte> Serialize(T data) =>
+            serializer.Serialize(data);
 
         public async UniTask<EnumResult<Option<T>, TaskError>> ContentAsync(HashKey key, string extension, CancellationToken token)
         {
@@ -134,7 +138,7 @@ namespace ECS.StreamableLoading.Cache.Disk
             if (result.Success == false)
                 return EnumResult<Option<T>, TaskError>.ErrorResult(result.Error!.Value.State, result.Error.Value.Message!);
 
-            SlicedOwnedMemory<byte>? data = result.Value;
+            using SlicedOwnedMemory<byte>? data = result.Value;
 
             if (data == null)
                 return EnumResult<Option<T>, TaskError>.SuccessResult(Option<T>.None);

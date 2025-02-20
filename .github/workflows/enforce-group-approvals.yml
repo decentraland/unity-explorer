@@ -2,24 +2,24 @@ name: Enforce QA and DEV Approvals
 
 on:
   pull_request:
-    types:
-      - labeled
-      - unlabeled
-    draft: false
+    branches: [dev]
+    types: [labeled, unlabeled]
   pull_request_review:
+    types: [submitted]
 
 jobs:
-  setup-context:
-    if: github.event.pull_request.base.ref == 'dev'
+  enforce-approvals:
+    if: >
+      github.event.pull_request.draft == false &&
+      github.event.review.state != 'changes_requested' &&
+      github.event.review.state != 'commented' &&
+      github.event.pull_request.base.ref == 'dev'
     runs-on: ubuntu-latest
-    outputs:
-      pr_number: ${{ steps.set-vars.outputs.pr_number }}
-      repo_owner: ${{ steps.set-vars.outputs.repo_owner }}
-      repo_name: ${{ steps.set-vars.outputs.repo_name }}
+    env:
+      GH_TOKEN: ${{ secrets.ORG_ACCESS_TOKEN }}
 
     steps:
       - name: Set PR number and repo details
-        id: set-vars
         run: |
           echo "Fetching context details..."
           PR_NUMBER=${{ github.event.pull_request.number }}
@@ -31,21 +31,10 @@ jobs:
           REPO_OWNER=${{ github.repository_owner }}
           REPO_NAME=$(echo ${{ github.repository }} | cut -d'/' -f2)
 
-          echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
-          echo "repo_owner=$REPO_OWNER" >> $GITHUB_OUTPUT
-          echo "repo_name=$REPO_NAME" >> $GITHUB_OUTPUT
+          echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
+          echo "REPO_OWNER=$REPO_OWNER" >> $GITHUB_ENV
+          echo "REPO_NAME=$REPO_NAME" >> $GITHUB_ENV
 
-  enforce-approvals:
-    if: github.event.pull_request.base.ref == 'dev'
-    needs: setup-context
-    runs-on: ubuntu-latest
-    env:
-      GH_TOKEN: ${{ secrets.ORG_ACCESS_TOKEN }}
-      PR_NUMBER: ${{ needs.setup-context.outputs.pr_number }}
-      REPO_OWNER: ${{ needs.setup-context.outputs.repo_owner }}
-      REPO_NAME: ${{ needs.setup-context.outputs.repo_name }}
-
-    steps:
       - name: Validate Group Approvals
         run: |
           # Check if the label "auto-pr" is set
@@ -78,7 +67,8 @@ jobs:
           echo ">>> Fetching PR reviews for PR #$PR_NUMBER"
           PR_REVIEWS=$(gh api "/repos/$REPO_OWNER/$REPO_NAME/pulls/$PR_NUMBER/reviews" --jq '.[] | select(.state == "APPROVED") | .user.login')
 
-          echo "Approved Reviews: $PR_REVIEWS"
+          echo "Approved Reviews:"
+          echo "$PR_REVIEWS"
 
           # Validate approvals
           HAS_QA_APPROVAL=false

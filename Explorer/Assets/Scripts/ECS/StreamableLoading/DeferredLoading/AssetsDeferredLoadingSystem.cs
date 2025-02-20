@@ -15,7 +15,7 @@ namespace ECS.StreamableLoading.DeferredLoading
     /// </summary>
     [UpdateInGroup(typeof(StreamableLoadingGroup))]
     [UpdateAfter(typeof(PrepareAssetBundleLoadingParametersSystem))]
-    [UpdateBefore(typeof(LoadTextureSystem))]
+    [UpdateBefore(typeof(LoadSceneTextureSystem))]
     [UpdateBefore(typeof(LoadAudioClipSystem))]
     [UpdateBefore(typeof(LoadNFTShapeSystem))]
     [UpdateBefore(typeof(LoadAssetBundleSystem))]

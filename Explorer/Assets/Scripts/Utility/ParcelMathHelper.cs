@@ -9,6 +9,7 @@ namespace Utility
     {
         public const int PARCEL_SIZE = 16;
         public const float SQR_PARCEL_SIZE = PARCEL_SIZE * PARCEL_SIZE;
+        private const float BOUNDS_OFFSET_EPSILON = 0.1f;
 
         public static readonly SceneGeometry UNDEFINED_SCENE_GEOMETRY = new (
             Vector3.zero,
@@ -149,11 +150,12 @@ namespace Utility
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool Contains(this in SceneCircumscribedPlanes boundingPlanes, Bounds bounds)
         {
-            Vector3 min = bounds.min;
-            Vector3 max = bounds.max;
+            bounds.Expand(-BOUNDS_OFFSET_EPSILON);
 
-            return boundingPlanes.MinX < min.x && boundingPlanes.MaxX > max.x
-                                               && boundingPlanes.MinZ < min.z && boundingPlanes.MaxZ > max.z;
+            return boundingPlanes.MinX < bounds.min.x &&
+                   boundingPlanes.MaxX > bounds.max.x &&
+                   boundingPlanes.MinZ < bounds.min.z &&
+                   boundingPlanes.MaxZ > bounds.max.z;
         }
 
         /// <summary>

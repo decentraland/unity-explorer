@@ -31,6 +31,7 @@ namespace DCL.Nametags
     {
         private const float NAMETAG_SCALE_MULTIPLIER = 0.15f;
         private const string NAMETAG_DEFAULT_WALLET_ID = "0000";
+        private const float NAMETAG_MAX_HEIGHT = 4f;
 
         private readonly IObjectPool<NametagView> nametagViewPool;
         private readonly ChatEntryConfigurationSO chatEntryConfiguration;
@@ -164,7 +165,7 @@ namespace DCL.Nametags
 //            avatarBounds.DrawInEditor(Color.red);
 //#endif
 
-            UpdateTagPosition(nametagView, camera.Camera, characterTransform.Position + new Vector3(0.0f, avatarSkinningComponent.LocalBounds.max.y, 0.0f));
+            UpdateTagPosition(nametagView, camera.Camera, characterTransform.Position + new Vector3(0.0f, Mathf.Min(avatarSkinningComponent.LocalBounds.max.y, NAMETAG_MAX_HEIGHT), 0.0f));
             UpdateTagTransparencyAndScale(nametagView, camera.Camera, characterTransform.Position);
         }
 

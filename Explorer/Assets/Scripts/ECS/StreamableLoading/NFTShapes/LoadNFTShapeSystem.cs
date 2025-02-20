@@ -35,7 +35,7 @@ namespace ECS.StreamableLoading.NFTShapes
             this.webContentSizes = webContentSizes;
         }
 
-        protected override async UniTask<StreamableLoadingResult<Texture2DData>> FlowInternalAsync(GetNFTShapeIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
+        protected override async UniTask<StreamableLoadingResult<Texture2DData>> FlowInternalAsync(GetNFTShapeIntention intention, StreamableLoadingState state, IPartitionComponent partition, CancellationToken ct)
         {
             string imageUrl = await ImageUrlAsync(intention.CommonArguments, ct);
             bool isOkSize = await webContentSizes.IsOkSizeAsync(imageUrl, ct);

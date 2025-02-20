@@ -14,6 +14,7 @@ using CommunicationData.URLHelpers;
 using DCL.Browser.DecentralandUrls;
 using DCL.FeatureFlags;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using Global.AppArgs;
 using Unity.Mathematics;
 using UnityEngine;
 using Utility.Storage;
@@ -36,7 +37,8 @@ namespace DCL.RealmNavigation
             ILoadingScreen loadingScreen,
             bool localSceneDevelopment,
             IDecentralandUrlsSource urlsSource,
-            FeatureFlagsCache featureFlagsCache)
+            FeatureFlagsCache featureFlagsCache,
+            IAppArgs appArgs)
         {
             var teleportController = new TeleportController(staticContainer.SceneReadinessReportQueue);
 
@@ -64,7 +66,8 @@ namespace DCL.RealmNavigation
                                .GetReferenceTypePool<PartitionComponent>(),
                 realmNavigatorDebugView,
                 localSceneDevelopment,
-                assetBundleRegistry
+                assetBundleRegistry,
+                appArgs
             );
 
             BuildDebugWidget(teleportController, debugContainerBuilder, loadingScreen, loadingScreenTimeout);
