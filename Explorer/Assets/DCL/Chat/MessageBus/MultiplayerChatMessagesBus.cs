@@ -8,7 +8,6 @@ using DCL.Profiles;
 using DCL.Profiles.Self;
 using LiveKit.Proto;
 using System;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 
@@ -57,8 +56,8 @@ namespace DCL.Chat.MessageBus
 
                 Profile? profile = await profileRepository.GetAsync(receivedMessage.FromWalletId, cancellationTokenSource.Token);
 
-                ChatChannel.ChannelId parsedChannelId = ParseChatChannelIdFromPayloadMessage(receivedMessage.Payload.Message);
-                string chatMessage = ParseChatMessageFromPayloadMessage(receivedMessage.Payload.Message);
+                ChatChannel.ChannelId parsedChannelId = ChatChannel.NEARBY_CHANNEL;
+                string chatMessage = receivedMessage.Payload.Message;
 
                 Profile? ownProfile = await selfProfile.ProfileAsync(cancellationTokenSource.Token);
 
@@ -81,21 +80,6 @@ namespace DCL.Chat.MessageBus
             }
         }
 
-        private ChatChannel.ChannelId ParseChatChannelIdFromPayloadMessage(string payloadMessage)
-        {
-            // TODO: Remove this line once this code is merged to dev
-            if (false)
-            {
-                string channelId = payloadMessage.Substring(1, payloadMessage.IndexOf('>'));
-                ChatChannel.ChannelId.GetTypeAndNameFromId(channelId, out ChatChannel.ChatChannelType parsedChannelType, out string channelIdName);
-                return new ChatChannel.ChannelId(parsedChannelType, channelIdName);
-            }
-            else
-
-                // TODO: Remove this line once this code is merged to dev
-                return ChatChannel.NEARBY_CHANNEL;
-        }
-
         private bool IsMention(string chatMessage, string userName)
         {
             foreach (Match match in USERNAME_REGEX.Matches(chatMessage))
@@ -106,9 +90,6 @@ namespace DCL.Chat.MessageBus
 
             return false;
         }
-
-        private string ParseChatMessageFromPayloadMessage(string payloadMessage) => payloadMessage;
-            // payloadMessage.Substring(payloadMessage.IndexOf('>') + 1); TODO: Use this line when private conversations are implemented
 
         public void Send(ChatChannel.ChannelId channelId, string message, string origin)
         {
@@ -123,18 +104,9 @@ namespace DCL.Chat.MessageBus
         private void SendTo(ChatChannel.ChannelId channelId, string message, double timestamp, IMessagePipe messagePipe)
         {
             MessageWrap<Decentraland.Kernel.Comms.Rfc4.Chat> chat = messagePipe.NewMessage<Decentraland.Kernel.Comms.Rfc4.Chat>();
-            chat.Payload.Message = BuildChatChannelMessage(channelId, message);
+            chat.Payload.Message = message;
             chat.Payload.Timestamp = timestamp;
             chat.SendAndDisposeAsync(cancellationTokenSource.Token, DataPacketKind.KindReliable).Forget();
-        }
-
-        private string BuildChatChannelMessage(ChatChannel.ChannelId channelId, string message)
-        {
-            return message;
-
-            // TODO: Remove this line once this code is merged to dev
-            channelId = ChatChannel.NEARBY_CHANNEL;
-            return $"<{channelId.Id}>{message}"; // TODO: Use this when private conversations are implemented
         }
     }
 }
