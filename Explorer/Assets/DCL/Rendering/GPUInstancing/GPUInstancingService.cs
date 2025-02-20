@@ -59,10 +59,12 @@ namespace DCL.Roads.GPUInstancing
         protected uint IndirectBufferGeneration_ThreadGroupSize_Y = 1;
         protected uint IndirectBufferGeneration_ThreadGroupSize_Z = 1;
 
-        public ComputeShader DrawArgsInstanceCountTransferShader;
-        private string DrawArgsInstanceCountTransferShader_KernelName = "DrawArgsInstanceCountTransfer";
-        protected static int DrawArgsInstanceCountTransferShader_KernelIDs;
-
+        public ComputeShader DrawArgsInstanceCountTransferComputeShader;
+        private string DrawArgsInstanceCountTransferComputeShader_KernelName = "DrawArgsInstanceCountTransfer";
+        protected static int DrawArgsInstanceCountTransferComputeShader_KernelIDs;
+        protected uint DrawArgsInstanceCountTransfer_ThreadGroupSize_X = 1;
+        protected uint DrawArgsInstanceCountTransfer_ThreadGroupSize_Y = 1;
+        protected uint DrawArgsInstanceCountTransfer_ThreadGroupSize_Z = 1;
 
         private static readonly int ComputeVar_PerInstance_LODLevels  = Shader.PropertyToID("PerInstance_LODLevels"); // RWStructuredBuffer<uint4>
         private static readonly int ComputeVar_PerInstanceData = Shader.PropertyToID("PerInstanceData"); // RWStructuredBuffer<PerInstance>
@@ -70,15 +72,14 @@ namespace DCL.Roads.GPUInstancing
         private static readonly int ComputeVar_GroupDataBuffer = Shader.PropertyToID("GroupDataBuffer"); // RWStructuredBuffer<GroupData> size 196 align 4
         private static readonly int ComputeVar_arrLODCount = Shader.PropertyToID("arrLODCount");
         private static readonly int ComputeVar_IndirectDrawIndexedArgsBuffer = Shader.PropertyToID("IndirectDrawIndexedArgsBuffer");
+        private static readonly int ComputeVar_nSubMeshCount = Shader.PropertyToID("nSubMeshCount");
 
-        public GPUInstancingService(GPUInstancingRenderFeature.GPUInstancingRenderFeature_Settings renderFeatureSettings) : this(
-                renderFeatureSettings.FrustumCullingAndLODGenComputeShader,
-                renderFeatureSettings.IndirectBufferGenerationComputeShader,
-                renderFeatureSettings.DrawArgsInstanceCountTransferShader)
+        public GPUInstancingService(GPUInstancingRenderFeature.GPUInstancingRenderFeature_Settings renderFeatureSettings)
+            : this(renderFeatureSettings.FrustumCullingAndLODGenComputeShader, renderFeatureSettings.IndirectBufferGenerationComputeShader, renderFeatureSettings.DrawArgsInstanceCountTransferComputeShader)
         {
         }
 
-        public GPUInstancingService(ComputeShader frustumCullingAndLODGenComputeShader, ComputeShader indirectBufferGenerationComputeShader, ComputeShader drawArgsInstanceCountTransferShader)
+        public GPUInstancingService(ComputeShader frustumCullingAndLODGenComputeShader, ComputeShader indirectBufferGenerationComputeShader, ComputeShader drawArgsInstanceCountTransferComputeShader)
         {
             FrustumCullingAndLODGenComputeShader = frustumCullingAndLODGenComputeShader;
             FrustumCullingAndLODGenComputeShader_KernelIDs = FrustumCullingAndLODGenComputeShader.FindKernel(FrustumCullingAndLODGenComputeShader_KernelName);
@@ -94,9 +95,12 @@ namespace DCL.Roads.GPUInstancing
                 out IndirectBufferGeneration_ThreadGroupSize_Y,
                 out IndirectBufferGeneration_ThreadGroupSize_Z);
 
-            DrawArgsInstanceCountTransferShader = drawArgsInstanceCountTransferShader;
-            DrawArgsInstanceCountTransferShader_KernelIDs = DrawArgsInstanceCountTransferShader.FindKernel(DrawArgsInstanceCountTransferShader_KernelName);
-
+            DrawArgsInstanceCountTransferComputeShader = drawArgsInstanceCountTransferComputeShader;
+            DrawArgsInstanceCountTransferComputeShader_KernelIDs = DrawArgsInstanceCountTransferComputeShader.FindKernel(DrawArgsInstanceCountTransferComputeShader_KernelName);
+            DrawArgsInstanceCountTransferComputeShader.GetKernelThreadGroupSizes(DrawArgsInstanceCountTransferComputeShader_KernelIDs,
+                out DrawArgsInstanceCountTransfer_ThreadGroupSize_X,
+                out DrawArgsInstanceCountTransfer_ThreadGroupSize_Y,
+                out DrawArgsInstanceCountTransfer_ThreadGroupSize_Z);
         }
 
         public void Dispose()
@@ -158,10 +162,11 @@ namespace DCL.Roads.GPUInstancing
             IndirectBufferGenerationComputeShader.SetBuffer(IndirectBufferGenerationComputeShader_KernelIDs, ComputeVar_InstanceLookUpAndDither, buffers.InstanceLookUpAndDither);
             IndirectBufferGenerationComputeShader.Dispatch(IndirectBufferGenerationComputeShader_KernelIDs, Mathf.CeilToInt((float)buffers.PerInstanceMatrices.count / (int)IndirectBufferGeneration_ThreadGroupSize_X), 1, 1);
 
-            DrawArgsInstanceCountTransferShader.SetBuffer(DrawArgsInstanceCountTransferShader_KernelIDs, ComputeVar_GroupDataBuffer, buffers.GroupData);
-            DrawArgsInstanceCountTransferShader.SetBuffer(DrawArgsInstanceCountTransferShader_KernelIDs, ComputeVar_arrLODCount, buffers.ArrLODCount);
-            DrawArgsInstanceCountTransferShader.SetBuffer(DrawArgsInstanceCountTransferShader_KernelIDs, ComputeVar_IndirectDrawIndexedArgsBuffer, buffers.DrawArgs);
-            DrawArgsInstanceCountTransferShader.Dispatch(DrawArgsInstanceCountTransferShader_KernelIDs, Mathf.CeilToInt((float)buffers.PerInstanceMatrices.count / (int)IndirectBufferGeneration_ThreadGroupSize_X), 1, 1);
+            DrawArgsInstanceCountTransferComputeShader.SetBuffer(DrawArgsInstanceCountTransferComputeShader_KernelIDs, ComputeVar_GroupDataBuffer, buffers.GroupData);
+            DrawArgsInstanceCountTransferComputeShader.SetBuffer(DrawArgsInstanceCountTransferComputeShader_KernelIDs, ComputeVar_PerInstance_LODLevels, buffers.LODLevels);
+            DrawArgsInstanceCountTransferComputeShader.SetBuffer(DrawArgsInstanceCountTransferComputeShader_KernelIDs, ComputeVar_IndirectDrawIndexedArgsBuffer, buffers.DrawArgs);
+            DrawArgsInstanceCountTransferComputeShader.SetInt(ComputeVar_nSubMeshCount, candidate.LODGroup.CombinedLodsRenderers.Count);
+            IndirectBufferGenerationComputeShader.Dispatch(IndirectBufferGenerationComputeShader_KernelIDs, 1, 1, 1);
 
             for (var i = 0; i < candidate.LODGroup.CombinedLodsRenderers.Count; i++)
             {

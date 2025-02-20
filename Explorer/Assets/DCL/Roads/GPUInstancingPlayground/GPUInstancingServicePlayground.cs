@@ -14,6 +14,7 @@ namespace DCL.Roads.GPUInstancing
     {
         public ComputeShader FrustumCullingAndLODGenComputeShader;
         public ComputeShader IndirectBufferGenerationComputeShader;
+        public ComputeShader DrawArgsInstanceCountTransferComputeShader;
 
 #if UNITY_EDITOR
         private GPUInstancingService instancingService;
@@ -41,7 +42,7 @@ namespace DCL.Roads.GPUInstancing
 
         private void OnEnable()
         {
-            instancingService = new GPUInstancingService(FrustumCullingAndLODGenComputeShader, IndirectBufferGenerationComputeShader, null);
+            instancingService = new GPUInstancingService(FrustumCullingAndLODGenComputeShader, IndirectBufferGenerationComputeShader, DrawArgsInstanceCountTransferComputeShader);
         }
 
         private void OnDisable()

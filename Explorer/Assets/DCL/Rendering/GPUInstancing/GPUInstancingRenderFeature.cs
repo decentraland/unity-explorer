@@ -49,6 +49,6 @@ public partial class GPUInstancingRenderFeature : ScriptableRendererFeature
     {
         public ComputeShader FrustumCullingAndLODGenComputeShader;
         public ComputeShader IndirectBufferGenerationComputeShader;
-        public ComputeShader DrawArgsInstanceCountTransferShader;
+        public ComputeShader DrawArgsInstanceCountTransferComputeShader;
     }
 }
