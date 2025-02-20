@@ -16,7 +16,6 @@ namespace DCL.Roads.GPUInstancing
         public ComputeShader IndirectBufferGenerationComputeShader;
         public ComputeShader DrawArgsInstanceCountTransferComputeShader;
 
-#if UNITY_EDITOR
         private GPUInstancingService instancingService;
 
         public Transform roadsRoot;
@@ -87,13 +86,15 @@ namespace DCL.Roads.GPUInstancing
         [ContextMenu(nameof(HideAll))]
         private void HideAll()
         {
-            RoadsConfig.HideAll();
+            foreach (GPUInstancingLODGroup prop in RoadsConfig.PropsAndTiles)
+                prop.HideAll();
         }
 
         [ContextMenu(nameof(ShowAll))]
         private void ShowAll()
         {
-            RoadsConfig.ShowAll();
+            foreach (GPUInstancingLODGroup prop in RoadsConfig.PropsAndTiles)
+                prop.ShowAll();
         }
 
         [ContextMenu("DEBUG - Cache Prefabs")]
@@ -148,6 +149,5 @@ namespace DCL.Roads.GPUInstancing
             return roadCoordinate.x < ParcelsMin.x || roadCoordinate.x > ParcelsMax.x ||
                    roadCoordinate.y < ParcelsMin.y || roadCoordinate.y > ParcelsMax.y;
         }
-#endif
     }
 }
