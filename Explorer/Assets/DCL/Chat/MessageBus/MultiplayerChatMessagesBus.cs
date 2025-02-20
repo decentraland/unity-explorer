@@ -54,12 +54,12 @@ namespace DCL.Chat.MessageBus
                 if (messageDeduplication.TryPass(receivedMessage.FromWalletId, receivedMessage.Payload.Timestamp) == false)
                     return;
 
-                Profile? profile = await profileRepository.GetAsync(receivedMessage.FromWalletId, cancellationTokenSource.Token);
+                Profile profile = await profileRepository.GetAsync(receivedMessage.FromWalletId, cancellationTokenSource.Token);
 
                 ChatChannel.ChannelId parsedChannelId = ChatChannel.NEARBY_CHANNEL;
                 string chatMessage = receivedMessage.Payload.Message;
 
-                Profile? ownProfile = await selfProfile.ProfileAsync(cancellationTokenSource.Token);
+                Profile ownProfile = await selfProfile.ProfileAsync(cancellationTokenSource.Token);
 
                 var isMention = false;
 
@@ -87,7 +87,6 @@ namespace DCL.Chat.MessageBus
                 if (match.Value == userName)
                     return true;
             }
-
             return false;
         }
 
