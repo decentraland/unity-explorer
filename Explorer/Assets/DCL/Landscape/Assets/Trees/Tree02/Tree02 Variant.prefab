@@ -80,7 +80,8 @@ PrefabInstance:
       propertyPath: m_AnimateCrossFading
       value: 1
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 6367646867474405593, guid: ef75b96575e6f4f47a635b6fad41f46a, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
