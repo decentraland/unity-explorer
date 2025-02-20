@@ -18,10 +18,10 @@ namespace DCL.UI.InputFieldFormatting
         private static readonly Regex RICH_TEXT_TAG_REGEX = new (@"<(?!\/?(b|i)(>|\s))[^>]+>", RegexOptions.Compiled);
         private static readonly Regex WEBSITE_REGEX = new (@"(?<=^|\s)(https?:\/\/)([a-zA-Z0-9-]+\.)*[a-zA-Z0-9][a-zA-Z0-9-]+\.[a-zA-Z]{2,}(\/[^\s]*)?(?=\s|$)",
             RegexOptions.Compiled);
-        private static readonly Regex SCENE_REGEX = new (@"(?<=^|\s)(-?\d{1,3}),(-?\d{1,3})(?=\s|$)", RegexOptions.Compiled);
-        private static readonly Regex WORLD_REGEX = new (@"(?<=^|\s)*[a-zA-Z0-9]*\.dcl\.eth(?=\s|$)", RegexOptions.Compiled);
+        private static readonly Regex SCENE_REGEX = new (@"(?<=^|\s)(-?\d{1,3}),(-?\d{1,3})(?=\s|!|\?|\.|,|$)", RegexOptions.Compiled);
+        private static readonly Regex WORLD_REGEX = new (@"(?<=^|\s)*[a-zA-Z0-9]*\.dcl\.eth(?=\s|!|\?|\.|,|$)", RegexOptions.Compiled);
         // This Regex will detect any pattern of format @username#1234 being the part with the "#" optional. This requires the username to start and/or end with an empty space or start/end of line.
-        private static readonly Regex USERNAME_REGEX = new (@"(?<=^|\s)@([A-Za-z0-9]{3,15}(?:#[A-Za-z0-9]{4})?)(?=\s|$)", RegexOptions.Compiled);
+        private static readonly Regex USERNAME_REGEX = new (@"(?<=^|\s)@([A-Za-z0-9]{3,15}(?:#[A-Za-z0-9]{4})?)(?=\s|!|\?|\.|,|$)", RegexOptions.Compiled);
 
         private readonly StringBuilder mainStringBuilder = new ();
         private readonly StringBuilder tempStringBuilder = new ();
