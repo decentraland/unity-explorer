@@ -81,7 +81,7 @@ namespace MVC
 
             if (friendServiceProxy.Configured)
             {
-                var friendshipStatus = await friendServiceProxy.Object.GetFriendshipStatusAsync(profile.DisplayName, ct);
+                var friendshipStatus = await friendServiceProxy.Object.GetFriendshipStatusAsync(profile.UserId, ct);
                 contextMenuFriendshipStatus = ConvertFriendshipStatus(friendshipStatus);
             }
             userProfileContextMenuControlSettings.SetInitialData(profile.DisplayName, profile.UserId, profile.HasClaimedName, profile.UserNameColor, contextMenuFriendshipStatus);
