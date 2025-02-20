@@ -1,3 +1,4 @@
+using DCL.Web3.Abstract;
 using DCL.Web3.Accounts.Factory;
 using System;
 
@@ -5,6 +6,9 @@ namespace DCL.Web3.Identities
 {
     public interface IWeb3IdentityCache : IDisposable
     {
+        event Action OnIdentityCleared;
+        event Action OnIdentityChanged;
+
         IWeb3Identity? Identity { get; set; }
 
         void Clear();
@@ -12,6 +16,9 @@ namespace DCL.Web3.Identities
         class Fake : IWeb3IdentityCache
         {
             private readonly IWeb3Identity? identity;
+
+            public event Action? OnIdentityCleared;
+            public event Action? OnIdentityChanged;
 
             public Fake() : this(new IWeb3Identity.Random()) { }
 
@@ -45,18 +52,35 @@ namespace DCL.Web3.Identities
         {
             private readonly IWeb3IdentityCache origin;
 
-            public Default()
+            public Default(IWeb3AccountFactory? web3AccountFactory = null)
             {
                 origin = new LogWeb3IdentityCache(
                     new ProxyIdentityCache(
                         new MemoryWeb3IdentityCache(),
                         new PlayerPrefsIdentityProvider(
                             new PlayerPrefsIdentityProvider.DecentralandIdentityWithNethereumAccountJsonSerializer(
-                                new Web3AccountFactory()
-                            )
+                                web3AccountFactory ?? new Web3AccountFactory()
+                            ),
+#if UNITY_EDITOR
+                            new IPlayerPrefsIdentityProviderKeyStrategy.Const()
+#else
+                            new MemoryMappedFilePlayerPrefsIdentityProviderKeyStrategy()
+#endif
                         )
                     )
                 );
+            }
+
+            public event Action? OnIdentityCleared
+            {
+                add => origin.OnIdentityCleared += value;
+                remove => origin.OnIdentityCleared -= value;
+            }
+
+            public event Action? OnIdentityChanged
+            {
+                add => origin.OnIdentityChanged += value;
+                remove => origin.OnIdentityChanged -= value;
             }
 
             public IWeb3Identity? Identity

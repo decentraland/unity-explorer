@@ -3,8 +3,8 @@ using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
+using Global.Dynamic.LaunchModes;
 using System;
-using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using System.Linq;
 using System.Threading;
 using UnityEngine;
@@ -43,7 +43,7 @@ namespace DCL.InWorldCamera.CameraReelStorageService.Playground
         {
             get
             {
-                var urlsSource = new DecentralandUrlsSource(Env);
+                var urlsSource = new DecentralandUrlsSource(Env, ILaunchMode.PLAY);
                 return new CameraReelImagesMetadataRemoteDatabase(webRequestController, urlsSource);
             }
         }

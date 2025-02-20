@@ -80,6 +80,11 @@ namespace DCL.Diagnostics
         public const string GENERIC_WEB_REQUEST = nameof(GENERIC_WEB_REQUEST);
 
         /// <summary>
+        ///     Partial Loading requests
+        /// </summary>
+        public const string PARTIAL_LOADING = nameof(PARTIAL_LOADING);
+
+        /// <summary>
         ///     Texture related web request
         /// </summary>
         public const string TEXTURE_WEB_REQUEST = nameof(TEXTURE_WEB_REQUEST);
@@ -294,6 +299,16 @@ namespace DCL.Diagnostics
 
         public const string ONBOARDING = nameof(ONBOARDING);
 
+        public const string EVENTS = nameof(EVENTS);
+
         public const string IN_WORLD_CAMERA = nameof(IN_WORLD_CAMERA);
+
+        public const string FRIENDS = nameof(FRIENDS);
+
+        public const string DISK_CACHE = nameof(DISK_CACHE);
+
+        public const string LIGHT_SOURCE = nameof(LIGHT_SOURCE);
+
+        public const string ALWAYS = nameof(ALWAYS);
     }
 }

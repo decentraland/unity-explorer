@@ -14,18 +14,25 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         PrivacyPolicy,
         TermsOfUse,
 
+        ApiChunks,
+
         ApiPlaces,
         POI,
+        Map,
         ContentModerationReport,
+
+        ApiEvents,
 
         ApiAuth,
         AuthSignature,
 
         GateKeeperSceneAdapter,
+        LocalGateKeeperSceneAdapter,
 
         OpenSea,
 
         PeerAbout,
+        RemotePeers,
 
         DAO,
 
@@ -48,5 +55,9 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         CameraReelLink,
 
         ApiFriends,
+        AssetBundleRegistry,
+
+        BuilderApiDtos,
+        BuilderApiContent,
     }
 }

@@ -25,7 +25,9 @@ namespace DCL.DebugUtilities
             public const string ROOM_INFO = "Room: Info";
             public const string ROOM_ISLAND = "Room: Island";
             public const string ROOM_SCENE = "Room: Scene";
+            public const string ROOM_THROUGHPUT = "Room: Throughput";
             public const string PERFORMANCE = "Performance";
+            public const string CRASH = "Crash";
             public const string MEMORY = "Memory";
             public const string CURRENT_SCENE = "Current scene";
             public const string REALM = "Realm";

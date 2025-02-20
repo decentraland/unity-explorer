@@ -4,6 +4,7 @@ using DCL.MapPins.Bus;
 using DCL.MapRenderer;
 using DCL.MapRenderer.ComponentsFactory;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Navmap;
 using DCL.NotificationsBusController.NotificationsBus;
 using DCL.PlacesAPIService;
 using DCL.PluginSystem;
@@ -11,6 +12,11 @@ using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+using DCL.EventsApi;
+using DCL.Multiplayer.Connectivity;
+using DCL.MapRenderer.MapLayers;
+using ECS;
+using ECS.SceneLifeCycle.Realm;
 
 namespace Global.Dynamic
 {
@@ -33,9 +39,14 @@ namespace Global.Dynamic
             IDecentralandUrlsSource decentralandUrlsSource,
             IAssetsProvisioner assetsProvisioner,
             IPlacesAPIService placesAPIService,
+            IEventsApiService eventsAPIService,
             IMapPathEventBus mapPathEventBus,
             IMapPinsEventBus mapPinsEventBus,
             INotificationsBusController notificationsBusController,
+            IRealmNavigator teleportBusController,
+            IRealmData realmData,
+            INavmapBus navmapBus,
+            IOnlineUsersProvider onlineUsersProvider,
             CancellationToken ct)
         {
             var mapRendererContainer = new MapRendererContainer(assetsProvisioner, new MapRendererTextureContainer());
@@ -49,13 +60,19 @@ namespace Global.Dynamic
                     decentralandUrlsSource,
                     c.TextureContainer,
                     placesAPIService,
+                    eventsAPIService,
                     mapPathEventBus,
                     mapPinsEventBus,
-                    notificationsBusController));
+                    notificationsBusController,
+                    teleportBusController,
+                    navmapBus,
+                    onlineUsersProvider));
 
                 await mapRenderer.InitializeAsync(ct);
                 c.MapRenderer = mapRenderer;
             });
+
+            realmData.RealmType.OnUpdate += kind => mapRendererContainer.MapRenderer.SetSharedLayer(MapLayer.PlayerMarker, kind is RealmKind.GenesisCity);
 
             return mapRendererContainer;
         }
@@ -63,11 +80,6 @@ namespace Global.Dynamic
         protected override async UniTask InitializeInternalAsync(Settings settings, CancellationToken ct)
         {
             mapRendererSettings = await assetsProvisioner.ProvideMainAssetAsync(settings.MapRendererSettings, ct, nameof(settings.MapRendererSettings));
-        }
-
-        public override void Dispose()
-        {
-            base.Dispose();
         }
 
         public class Settings : IDCLPluginSettings

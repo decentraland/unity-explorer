@@ -3,17 +3,22 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.Pools;
+using DCL.PlacesAPIService.Serialization;
 using DCL.WebRequests;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
+using Utility.Times;
 
 namespace DCL.PlacesAPIService
 {
     public class PlacesAPIClient : IPlacesAPIClient
     {
+        private static readonly JsonSerializerSettings SERIALIZER_SETTINGS = new () { Converters = new JsonConverter[] { new PlacesByCategoryJsonDtoConverter() } };
         private static readonly URLParameter WITH_REALMS_DETAIL = new ("with_realms_detail", "true");
+        private static readonly URLParameter ONLY_FAVORITES = new ("only_favorites", "true");
 
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
@@ -23,6 +28,7 @@ namespace DCL.PlacesAPIService
         private string baseURL => decentralandUrlsSource.Url(DecentralandUrl.ApiPlaces);
         private URLDomain baseURLDomain => URLDomain.FromString(baseURL);
         private URLAddress poiURL => URLAddress.FromString(decentralandUrlsSource.Url(DecentralandUrl.POI));
+        private URLAddress mapApiUrl => URLAddress.FromString(decentralandUrlsSource.Url(DecentralandUrl.Map));
         private URLAddress contentModerationReportURL => URLAddress.FromString(decentralandUrlsSource.Url(DecentralandUrl.ContentModerationReport));
 
         public PlacesAPIClient(IWebRequestController webRequestController, IDecentralandUrlsSource decentralandUrlsSource)
@@ -31,17 +37,56 @@ namespace DCL.PlacesAPIService
             this.decentralandUrlsSource = decentralandUrlsSource;
         }
 
-        private URLBuilder ResetURLBuilder()
+        public async UniTask<PlacesData.PlacesAPIResponse> GetPlacesAsync(CancellationToken ct,
+            string? searchString = null,
+            (int pageNumber, int pageSize)? pagination = null,
+            string? sortBy = null, string? sortDirection = null,
+            string? category = null,
+            bool? onlyFavorites = null,
+            bool? addRealmDetails = null,
+            IReadOnlyList<string>? positions = null,
+            List<PlacesData.PlaceInfo>? resultBuffer = null)
         {
             urlBuilder.Clear();
-            return urlBuilder;
-        }
+            urlBuilder.AppendDomain(URLDomain.FromString(baseURL));
 
-        public async UniTask<PlacesData.PlacesAPIResponse> SearchPlacesAsync(string searchString, int pageNumber, int pageSize, CancellationToken ct)
-        {
-            string url = baseURL + "?search={0}&offset={1}&limit={2}";
+            if (!string.IsNullOrEmpty(searchString))
+                urlBuilder.AppendParameter(new URLParameter("search", searchString.Replace(" ", "+")));
 
-            GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> result = webRequestController.GetAsync(string.Format(url, searchString.Replace(" ", "+"), pageNumber * pageSize, pageSize), ct, ReportCategory.UI);
+            if (pagination != null)
+            {
+                urlBuilder.AppendParameter(new URLParameter("offset", (pagination?.pageNumber * pagination?.pageSize).ToString()!));
+                urlBuilder.AppendParameter(new URLParameter("limit", pagination?.pageSize.ToString()!));
+            }
+
+            if (!string.IsNullOrEmpty(sortBy))
+                urlBuilder.AppendParameter(new URLParameter("order_by", sortBy));
+
+            if (!string.IsNullOrEmpty(sortDirection))
+                urlBuilder.AppendParameter(new URLParameter("order", sortDirection));
+
+            if (!string.IsNullOrEmpty(category))
+                urlBuilder.AppendParameter(new URLParameter("categories", category.ToLower()));
+
+            if (onlyFavorites != null)
+                urlBuilder.AppendParameter(ONLY_FAVORITES);
+
+            if (addRealmDetails != null)
+                urlBuilder.AppendParameter(WITH_REALMS_DETAIL);
+
+            if (positions != null)
+                foreach (string xy in positions)
+                    urlBuilder.AppendParameter(new URLParameter("positions", xy));
+
+            URLAddress url = urlBuilder.Build();
+
+            ulong timestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
+
+            GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> result = webRequestController.GetAsync(
+                url, ct,
+                ReportCategory.UI,
+                signInfo: WebRequestSignInfo.NewFromUrl(url, timestamp, "get"),
+                headersInfo: new WebRequestHeadersInfo().WithSign(string.Empty, timestamp));
 
             PlacesData.PlacesAPIResponse response = PlacesData.PLACES_API_RESPONSE_POOL.Get();
 
@@ -52,135 +97,52 @@ namespace DCL.PlacesAPIService
             if (response.data == null)
                 throw new PlacesAPIException($"No place info retrieved:\n{searchString}");
 
-            return response;
-        }
-
-        public async UniTask<PlacesData.PlacesAPIResponse> GetMostActivePlacesAsync(int pageNumber, int pageSize, string filter = "", string sort = "", CancellationToken ct = default)
-        {
-            string url = baseURL + "?order_by={3}&order=desc&with_realms_detail=true&offset={0}&limit={1}&{2}";
-
-            GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> result = webRequestController.GetAsync(string.Format(url, pageNumber * pageSize, pageSize, filter, sort), ct, ReportCategory.UI);
-
-            PlacesData.PlacesAPIResponse response = PlacesData.PLACES_API_RESPONSE_POOL.Get();
-
-            await result.OverwriteFromJsonAsync(response, WRJsonParser.Unity,
-                             createCustomExceptionOnFailure: static (_, text) => new PlacesAPIException("Error parsing most active places info:", text))
-                        .WithCustomExceptionAsync(static exc => new PlacesAPIException(exc, "Error fetching most active places info:"));
-
-            if (response.data == null)
-                throw new PlacesAPIException("No place info retrieved");
+            resultBuffer?.AddRange(response.data);
 
             return response;
         }
 
-        public async UniTask<PlacesData.PlaceInfo?> GetPlaceAsync(Vector2Int coords, CancellationToken ct)
+        public async UniTask<PlacesData.PlaceInfo?> GetPlaceAsync(string placeId, CancellationToken ct)
         {
-            string url = baseURL + "?positions={0},{1}&with_realms_detail=true";
+            ulong timestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
+            var url = $"{baseURL}/{placeId}?with_realms_detail=true";
 
-            GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> result = webRequestController.GetAsync(string.Format(url, coords.x, coords.y), ct, ReportCategory.UI);
-
-            using PlacesData.PlacesAPIResponse response = PlacesData.PLACES_API_RESPONSE_POOL.Get();
-
-            await result.OverwriteFromJsonAsync(response, WRJsonParser.Unity,
-                             createCustomExceptionOnFailure: static (_, text) => new PlacesAPIException("Error parsing place info:", text))
-                        .WithCustomExceptionAsync(static exc => new PlacesAPIException(exc, "Error fetching place info:"));
-
-            if (response.data.Count == 0)
-                return null;
-
-            return response.data[0];
-        }
-
-        public async UniTask<PlacesData.PlaceInfo?> GetPlaceAsync(string placeUUID, CancellationToken ct)
-        {
-            var url = $"{baseURL}/{placeUUID}?with_realms_detail=true";
-
-            GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> result = webRequestController.GetAsync(url, ct, ReportCategory.UI);
+            GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> result = webRequestController.GetAsync(
+                url, ct, ReportCategory.UI,
+                signInfo: WebRequestSignInfo.NewFromUrl(url, timestamp, "get"),
+                headersInfo: new WebRequestHeadersInfo().WithSign(string.Empty, timestamp));
 
             PlacesData.PlacesAPIGetParcelResponse response = await result.CreateFromJson<PlacesData.PlacesAPIGetParcelResponse>(WRJsonParser.Unity,
                                                                               createCustomExceptionOnFailure: static (_, text) => new PlacesAPIException("Error parsing place info:", text))
                                                                          .WithCustomExceptionAsync(static exc => new PlacesAPIException(exc, "Error fetching place info:"));
 
             if (!response.ok)
-                throw new NotAPlaceException(placeUUID);
+                throw new NotAPlaceException(placeId);
 
             // At this moment WR is already disposed
             return response.data;
         }
 
-        public async UniTask<List<PlacesData.PlaceInfo>> GetPlacesByCoordsListAsync(IReadOnlyList<Vector2Int> coordsList, List<PlacesData.PlaceInfo> targetList, CancellationToken ct)
+        public async UniTask SetPlaceFavoriteAsync(string placeId, bool isFavorite, CancellationToken ct)
         {
-            targetList.Clear();
-
-            if (coordsList.Count == 0)
-                return targetList;
-
-            IURLBuilder url = ResetURLBuilder()
-               .AppendDomain(baseURLDomain);
-
-            foreach (Vector2Int coords in coordsList)
-                url.AppendParameter(("positions", $"{coords.x},{coords.y}")).AppendParameter(WITH_REALMS_DETAIL);
-
-            GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> result = webRequestController.GetAsync(new CommonArguments(url.Build()), ct, ReportCategory.UI);
-
-            using PoolExtensions.Scope<PlacesData.PlacesAPIResponse> rentedList = PlacesData.PLACES_API_RESPONSE_POOL.AutoScope();
-
-            await result.OverwriteFromJsonAsync(rentedList.Value, WRJsonParser.Unity,
-                             createCustomExceptionOnFailure: static (_, text) => new PlacesAPIException("Error parsing places info:", text))
-                        .WithCustomExceptionAsync(static exc => new PlacesAPIException(exc, "Error fetching places info:"));
-
-            targetList.AddRange(rentedList.Value.data);
-
-            return targetList;
-        }
-
-        public async UniTask<PlacesData.IPlacesAPIResponse> GetFavoritesAsync(int pageNumber, int pageSize, CancellationToken ct)
-        {
-            string url = baseURL + "?only_favorites=true&with_realms_detail=true&offset={0}&limit={1}";
-
-            GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> result = webRequestController.GetAsync(string.Format(url, pageNumber * pageSize, pageSize), ct, ReportCategory.UI);
-
-            PlacesData.PlacesAPIResponse response = PlacesData.PLACES_API_RESPONSE_POOL.Get();
-
-            await result.OverwriteFromJsonAsync(response, WRJsonParser.Unity,
-                             createCustomExceptionOnFailure: static (_, text) => new PlacesAPIException("Error parsing get favorites response:", text))
-                        .WithCustomExceptionAsync(static exc => new PlacesAPIException(exc, "Error fetching places info:"));
-
-            if (response.data == null)
-                throw new Exception("No favorites info retrieved");
-
-            return response;
-        }
-
-        public async UniTask<PlacesData.IPlacesAPIResponse> GetAllFavoritesAsync(CancellationToken ct)
-        {
-            string url = baseURL + "?only_favorites=true&with_realms_detail=true";
-
-            GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> result = webRequestController.GetAsync(url, ct, ReportCategory.UI);
-
-            PlacesData.PlacesAPIResponse response = PlacesData.PLACES_API_RESPONSE_POOL.Get();
-
-            await result.OverwriteFromJsonAsync(response, WRJsonParser.Unity,
-                             createCustomExceptionOnFailure: static (_, text) => new PlacesAPIException("Error parsing favorites info:", text))
-                        .WithCustomExceptionAsync(static exc => new PlacesAPIException(exc, "Error fetching favorites info:"));
-
-            if (response.data == null)
-                throw new PlacesAPIException($"No favorites info retrieved");
-
-            return response;
-        }
-
-        public async UniTask SetPlaceFavoriteAsync(string placeUUID, bool isFavorite, CancellationToken ct)
-        {
+            ulong unixTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
             string url = baseURL + "/{0}/favorites";
             const string FAVORITE_PAYLOAD = "{\"favorites\": true}";
             const string NOT_FAVORITE_PAYLOAD = "{\"favorites\": false}";
 
-            await webRequestController.PatchAsync(string.Format(url, placeUUID), GenericPatchArguments.CreateJson(isFavorite ? FAVORITE_PAYLOAD : NOT_FAVORITE_PAYLOAD), ct, ReportCategory.UI)
+            var fullUrl = string.Format(url, placeId);
+
+            await webRequestController.PatchAsync(
+                                           fullUrl,
+                                           GenericPatchArguments.CreateJson(isFavorite ? FAVORITE_PAYLOAD : NOT_FAVORITE_PAYLOAD),
+                                           ct,
+                                           ReportCategory.UI,
+                                           signInfo: WebRequestSignInfo.NewFromUrl(fullUrl, unixTimestamp, "patch"),
+                                           headersInfo: new WebRequestHeadersInfo().WithSign(string.Empty, unixTimestamp))
                                       .WithCustomExceptionAsync(static exc => new PlacesAPIException(exc, "Error setting place favorite:"));
         }
 
-        public async UniTask SetPlaceVoteAsync(bool? isUpvote, string placeUUID, CancellationToken ct)
+        public async UniTask RatePlaceAsync(bool? isUpvote, string placeId, CancellationToken ct)
         {
             string url = baseURL + "/{0}/likes";
             const string LIKE_PAYLOAD = "{\"like\": true}";
@@ -194,13 +156,23 @@ namespace DCL.PlacesAPIService
             else
                 payload = isUpvote == true ? LIKE_PAYLOAD : DISLIKE_PAYLOAD;
 
-            await webRequestController.PostAsync(string.Format(url, placeUUID), GenericPostArguments.CreateJson(payload), ct, ReportCategory.UI)
+            var fullUrl = string.Format(url, placeId);
+            ulong unixTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
+
+            await webRequestController.PatchAsync(
+                                           fullUrl,
+                                           GenericPatchArguments.CreateJson(payload),
+                                           ct,
+                                           ReportCategory.UI,
+                                           signInfo: WebRequestSignInfo.NewFromUrl(fullUrl, unixTimestamp, "patch"),
+                                           headersInfo: new WebRequestHeadersInfo().WithSign(string.Empty, unixTimestamp))
                                       .WithCustomExceptionAsync(static exc => new PlacesAPIException(exc, "Error setting place vote:"));
         }
 
         public async UniTask<List<string>> GetPointsOfInterestCoordsAsync(CancellationToken ct)
         {
-            GenericDownloadHandlerUtils.Adapter<GenericPostRequest, GenericPostArguments> result = webRequestController.PostAsync(poiURL, GenericPostArguments.Empty, ct, ReportCategory.UI);
+            GenericDownloadHandlerUtils.Adapter<GenericPostRequest, GenericPostArguments> result = webRequestController.PostAsync(
+                poiURL, GenericPostArguments.Empty, ct, ReportCategory.UI);
 
             PointsOfInterestCoordsAPIResponse response = await result.CreateFromJson<PointsOfInterestCoordsAPIResponse>(WRJsonParser.Unity,
                 createCustomExceptionOnFailure: static (_, text) => new PlacesAPIException("Error parsing get POIs response:", text));
@@ -211,10 +183,24 @@ namespace DCL.PlacesAPIService
             return response.data;
         }
 
+        public async UniTask<IReadOnlyList<OptimizedPlaceInMapResponse>> GetOptimizedPlacesFromTheMapAsync(string category, CancellationToken ct)
+        {
+            var url = $"{mapApiUrl}?categories={category}";
+
+            List<OptimizedPlaceInMapResponse> categoryPlaces = await webRequestController.GetAsync(url, ct, ReportCategory.UI)
+                                                                                 .CreateFromNewtonsoftJsonAsync<List<OptimizedPlaceInMapResponse>>(serializerSettings: SERIALIZER_SETTINGS);
+
+            if (categoryPlaces == null)
+                throw new Exception($"No Places for category {category} retrieved");
+
+            return categoryPlaces;
+        }
+
         public async UniTask ReportPlaceAsync(PlaceContentReportPayload placeContentReportPayload, CancellationToken ct)
         {
             // POST for getting a signed url
-            GenericDownloadHandlerUtils.Adapter<GenericPostRequest, GenericPostArguments> postResult = webRequestController.PostAsync(contentModerationReportURL, GenericPostArguments.Empty, ct, ReportCategory.UI);
+            GenericDownloadHandlerUtils.Adapter<GenericPostRequest, GenericPostArguments> postResult = webRequestController.PostAsync(
+                contentModerationReportURL, GenericPostArguments.Empty, ct, ReportCategory.UI);
 
             using PoolExtensions.Scope<ReportPlaceAPIResponse> responseRental = PlacesData.REPORT_PLACE_API_RESPONSE_POOL.AutoScope();
             ReportPlaceAPIResponse response = responseRental.Value;

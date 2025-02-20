@@ -1,4 +1,5 @@
 using DCL.CharacterPreview;
+using DCL.Chat;
 using DCL.InWorldCamera.CameraReelGallery;
 using DCL.Passport.Modals;
 using DCL.Passport.Modules;
@@ -6,6 +7,8 @@ using DCL.Passport.Modules.Badges;
 using DCL.UI;
 using MVC;
 using SoftMasking;
+using System;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -78,6 +81,65 @@ namespace DCL.Passport
 
         [field: SerializeField]
         public SoftMask ViewportSoftMask { get; private set; }
+
+        [field: SerializeField]
+        public GameObject FriendInteractionContainer { get; private set; }
+
+        [field: SerializeField]
+        public Button AddFriendButton { get; private set; }
+
+        [field: SerializeField]
+        public Button AcceptFriendButton { get; private set; }
+
+        [field: SerializeField]
+        public Button RemoveFriendButton { get; private set; }
+
+        [field: SerializeField]
+        public Button CancelFriendButton { get; private set; }
+
+        [field: SerializeField]
+        public MutualFriendsConfig MutualFriends { get; private set; }
+
+        [field: Header("Context menu")]
+        [field: SerializeField]
+        public ChatEntryConfigurationSO ChatEntryConfiguration { get; private set; }
+        [field: SerializeField]
+        public Button ContextMenuButton { get; private set; }
+
+        [field: SerializeField]
+        public Sprite BlockSprite { get; private set; }
+
+        [field: SerializeField]
+        public string BlockText { get; private set; } = "Block";
+
+        [field: SerializeField]
+        public Sprite JumpInSprite { get; private set; }
+
+        [field: SerializeField]
+        public string JumpInText { get; private set; } = "Jump to Location";
+
+        [Serializable]
+        public struct MutualFriendsConfig
+        {
+            public GameObject Root;
+            public MutualThumbnail[] Thumbnails;
+            public TMP_Text AmountLabel;
+
+            [Serializable]
+            public struct MutualThumbnail
+            {
+                public GameObject Root;
+                public ImageView Image;
+            }
+        }
+
+#if UNITY_EDITOR
+        private void Awake()
+        {
+            // Copy material in editor so we don't get asset changes
+            BackgroundImage.material = new Material(BackgroundImage.material);
+        }
+#endif
 
         public void OpenPhotosSection()
         {

@@ -26,18 +26,16 @@ namespace ECS.SceneLifeCycle.Systems
         private readonly IScenesCache scenesCache;
         private readonly ILODCache lodCache;
         private readonly ILODSettingsAsset lodSettingsAsset;
-        private readonly SceneAssetLock sceneAssetLock;
         private readonly VisualSceneStateResolver visualSceneStateResolver;
 
         internal UpdateVisualSceneStateSystem(World world, IRealmData realmData, IScenesCache scenesCache, ILODCache lodCache,
-            ILODSettingsAsset lodSettingsAsset, VisualSceneStateResolver visualSceneStateResolver, SceneAssetLock sceneAssetLock) : base(world)
+            ILODSettingsAsset lodSettingsAsset, VisualSceneStateResolver visualSceneStateResolver) : base(world)
         {
             this.realmData = realmData;
             this.scenesCache = scenesCache;
             this.lodCache = lodCache;
             this.lodSettingsAsset = lodSettingsAsset;
             this.visualSceneStateResolver = visualSceneStateResolver;
-            this.sceneAssetLock = sceneAssetLock;
         }
 
         protected override void Update(float t)
@@ -72,7 +70,7 @@ namespace ECS.SceneLifeCycle.Systems
             if (!visualSceneState.IsDirty) return;
 
             if (visualSceneState.CurrentVisualSceneState == VisualSceneStateEnum.SHOWING_SCENE) return;
-            
+
             visualSceneState.IsDirty = false;
             World.Add(entity, SceneLODInfo.Create());
         }
@@ -114,11 +112,11 @@ namespace ECS.SceneLifeCycle.Systems
             {
                 //Dispose scene
                 sceneFacade.DisposeSceneFacadeAndRemoveFromCache(scenesCache,
-                    sceneDefinitionComponent.Parcels, sceneAssetLock);
+                    sceneDefinitionComponent.Parcels);
                 World.Remove<ISceneFacade, AssetPromise<ISceneFacade, GetSceneFacadeIntention>>(entity);
             }
         }
-        
+
         [Query]
         [All(typeof(SceneLODInfo))]
         private void CleanPromiseLODSharedState(in Entity entity,
@@ -137,7 +135,7 @@ namespace ECS.SceneLifeCycle.Systems
         private void UpdateVisualSceneState(ref PartitionComponent partitionComponent,
             ref SceneDefinitionComponent sceneDefinitionComponent, ref VisualSceneState visualSceneState)
         {
-            if (partitionComponent.IsDirty)
+            if (partitionComponent.IsDirty && !sceneDefinitionComponent.IsPortableExperience) // Visual State is never changed for Portable Experiences
                 visualSceneStateResolver.ResolveVisualSceneState(ref visualSceneState, partitionComponent,
                     sceneDefinitionComponent, lodSettingsAsset, realmData);
         }

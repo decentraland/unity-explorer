@@ -3,7 +3,6 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.MapRenderer.ComponentsFactory;
-using DCL.Utilities.Extensions;
 using DCL.WebRequests;
 using DG.Tweening;
 using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
@@ -11,16 +10,14 @@ using System.Threading;
 using UnityEngine;
 using Utility;
 using UnityEngine.AddressableAssets;
-using UnityEngine.ResourceManagement.AsyncOperations;
-using Object = UnityEngine.Object;
 
 namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
 {
     public class SatelliteChunkController : IChunkController
     {
-        private const string CHUNKS_API = "https://media.githubusercontent.com/media/genesis-city/genesis.city/master/map/latest/3/";
-        private static readonly Color FINAL_COLOR = Color.white;
-        private static readonly Color INITIAL_COLOR = new (0, 0, 0, 0);
+        private const float SATURATION_VALUE = 1f;
+        private const string CHUNKS_API = "https://media.githubusercontent.com/media/genesis-city/parcels/new-client-images/maps/lod-0/3/";
+
         private readonly MapRendererTextureContainer textureContainer;
 
         private readonly IWebRequestController webRequestController;
@@ -28,7 +25,7 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
 
         private CancellationTokenSource? internalCts;
         private CancellationTokenSource? linkedCts;
-        private int webRequestAttempts;
+        private static readonly int SATURATION = Shader.PropertyToID("_Saturation");
 
         private IOwnedTexture2D? currentOwnedTexture;
 
@@ -38,14 +35,14 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
             MapRendererTextureContainer textureContainer,
             Vector3 chunkLocalPosition,
             Vector2Int coordsCenter,
-            Transform parent,
             int drawOrder)
         {
             this.webRequestController = webRequestController;
             this.textureContainer = textureContainer;
             internalCts = new CancellationTokenSource();
 
-            atlasChunk = Object.Instantiate(prefab, parent).GetComponent<AtlasChunk>();
+            prefab.material.SetFloat(SATURATION, SATURATION_VALUE);
+            atlasChunk = prefab.GetComponent<AtlasChunk>();
             atlasChunk.transform.localPosition = chunkLocalPosition;
             atlasChunk.LoadingSpriteRenderer.sortingOrder = drawOrder;
             atlasChunk.MainSpriteRenderer.sortingOrder = drawOrder;
@@ -74,14 +71,13 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
 
         public async UniTask LoadImageAsync(Vector2Int chunkId, float chunkWorldSize, CancellationToken ct)
         {
-            webRequestAttempts = 0;
             linkedCts = CancellationTokenSource.CreateLinkedTokenSource(internalCts.Token, ct);
             atlasChunk.MainSpriteRenderer.enabled = false;
-            atlasChunk.MainSpriteRenderer.color = INITIAL_COLOR;
+            atlasChunk.MainSpriteRenderer.color = AtlasChunkConstants.INITIAL_COLOR;
             var url = $"{CHUNKS_API}{chunkId.x}%2C{chunkId.y}.jpg";
 
             var textureTask = webRequestController.GetTextureAsync(
-                new CommonArguments(URLAddress.FromString(url)),
+                new CommonArguments(URLAddress.FromString(url), attemptsCount: 1),
                 new GetTextureArguments(TextureType.Albedo),
                 GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp, FilterMode.Trilinear),
                 linkedCts.Token,
@@ -110,8 +106,8 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
             float pixelsPerUnit = texture.width / chunkWorldSize;
 
             atlasChunk.MainSpriteRenderer.enabled = true;
-            atlasChunk.LoadingSpriteRenderer.DOColor(INITIAL_COLOR, 0.5f).OnComplete(() => atlasChunk.LoadingSpriteRenderer.gameObject.SetActive(false));
-            atlasChunk.MainSpriteRenderer.DOColor(FINAL_COLOR, 0.5f);
+            atlasChunk.LoadingSpriteRenderer.DOColor(AtlasChunkConstants.INITIAL_COLOR, 0.5f).OnComplete(() => atlasChunk.LoadingSpriteRenderer.gameObject.SetActive(false));
+            atlasChunk.MainSpriteRenderer.DOColor(AtlasChunkConstants.FINAL_COLOR, 0.5f);
 
             atlasChunk.MainSpriteRenderer.sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), VectorUtilities.OneHalf, pixelsPerUnit,
                 0, SpriteMeshType.FullRect, Vector4.one, false);

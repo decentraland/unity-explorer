@@ -1,6 +1,8 @@
+using DCL.Diagnostics;
 using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Web;
 using UnityEngine;
@@ -9,7 +11,6 @@ namespace Global.AppArgs
 {
     public class ApplicationParametersParser : IAppArgs
     {
-        private const string REALM_PARAM = "realm";
         private readonly Dictionary<string, string> appParameters = new ();
 
         private static readonly IReadOnlyDictionary<string, string> ALWAYS_IN_EDITOR = new Dictionary<string, string>
@@ -27,6 +28,8 @@ namespace Global.AppArgs
 
             if (useInEditorFlags && Application.isEditor)
                 AddAlwaysInEditorFlags();
+
+            LogArguments();
         }
 
         public bool HasFlag(string flagName) =>
@@ -92,7 +95,7 @@ namespace Global.AppArgs
                 appParameters[uriQueryKey] = uriQuery.Get(uriQueryKey);
             }
 
-            if (appParameters.TryGetValue(REALM_PARAM, out string? realmParamValue))
+            if (appParameters.TryGetValue(AppArgsFlags.REALM, out string? realmParamValue))
             {
                 // Patch for WinOS sometimes affecting the 'realm' parameter in deep links putting a '/' at the end
                 if (realmParamValue.EndsWith('/'))
@@ -101,8 +104,25 @@ namespace Global.AppArgs
                 // Patch for MacOS removing the ':' from the realm parameter protocol
                 realmParamValue = Regex.Replace(realmParamValue, @"(https?)//(.*?)$", @"$1://$2");
 
-                appParameters[REALM_PARAM] = realmParamValue;
+                appParameters[AppArgsFlags.REALM] = realmParamValue;
             }
+        }
+
+        private void LogArguments()
+        {
+            const int COUNT_PER_LINE = 7;
+            var sb = new StringBuilder(COUNT_PER_LINE * appParameters.Count);
+            var count = 1;
+
+            sb.AppendLine("Application arguments:");
+
+            foreach ((string? key, string? value) in appParameters)
+            {
+                sb.Append("Arg ").Append(count).Append(": ").Append(key).Append(" = ").Append(value).Append("\n");
+                count++;
+            }
+
+            ReportHub.LogProductionInfo(sb.ToString());
         }
     }
 }

@@ -1,7 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.GateKeeper.Meta;
+using DCL.Multiplayer.Connections.GateKeeper.Rooms.Options;
 using DCL.Multiplayer.Connections.Rooms.Connective;
 using DCL.WebRequests;
 using ECS.SceneLifeCycle;
@@ -29,10 +29,8 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
         }
 
         private readonly IWebRequestController webRequests;
-        private readonly ISceneRoomMetaDataSource metaDataSource;
-
-        private readonly string sceneHandleUrl;
         private readonly IScenesCache scenesCache;
+        private readonly GateKeeperSceneRoomOptions options;
 
         /// <summary>
         ///     The scene the current LiveKit room corresponds to
@@ -45,22 +43,20 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
 
         public GateKeeperSceneRoom(
             IWebRequestController webRequests,
-            ISceneRoomMetaDataSource metaDataSource,
-            IDecentralandUrlsSource decentralandUrlsSource,
-            IScenesCache scenesCache)
+            IScenesCache scenesCache,
+            GateKeeperSceneRoomOptions options
+        )
         {
             this.webRequests = webRequests;
-            this.metaDataSource = metaDataSource;
             this.scenesCache = scenesCache;
-
-            sceneHandleUrl = decentralandUrlsSource.Url(DecentralandUrl.GateKeeperSceneAdapter);
+            this.options = options;
         }
 
         public IGateKeeperSceneRoom AsActivatable() =>
             new Activatable(this);
 
-        public bool IsSceneConnected(string? sceneId) =>
-            !metaDataSource.ScenesCommunicationIsIsolated || sceneId == connectedScene?.SceneData.SceneEntityDefinition.id;
+        private bool IsSceneConnected(string? sceneId) =>
+            !options.SceneRoomMetaDataSource.ScenesCommunicationIsIsolated || sceneId == connectedScene?.SceneData.SceneEntityDefinition.id;
 
         public override async UniTask StopAsync()
         {
@@ -73,7 +69,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
         }
 
         protected override RoomSelection SelectValidRoom() =>
-            metaDataSource.GetMetadataInput().Equals(previousMetaData) ? RoomSelection.PREVIOUS : RoomSelection.NEW;
+            options.SceneRoomMetaDataSource.GetMetadataInput().Equals(previousMetaData) ? RoomSelection.PREVIOUS : RoomSelection.NEW;
 
         protected override UniTask PrewarmAsync(CancellationToken token) =>
             UniTask.CompletedTask;
@@ -84,7 +80,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
 
             try
             {
-                var result = await metaDataSource.MetaDataAsync(metaDataSource.GetMetadataInput(), token);
+                var result = await options.SceneRoomMetaDataSource.MetaDataAsync(options.SceneRoomMetaDataSource.GetMetadataInput(), token);
 
                 if (result.Success == false)
                     return;
@@ -97,7 +93,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
                 if (meta.sceneId == null)
                 {
                     connectedScene = null;
-                    await DisconnectCurrentRoomAsync(token);
+                    await DisconnectCurrentRoomAsync(true, token);
 
                     // After disconnection we need to wait for metadata to change
                     waitForReconnectionRequiredTask = WaitForMetadataIsDirtyAsync(token);
@@ -106,7 +102,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
 
                     async UniTask WaitForMetadataIsDirtyAsync(CancellationToken token)
                     {
-                        while (!metaDataSource.MetadataIsDirty)
+                        while (!options.SceneRoomMetaDataSource.MetadataIsDirty)
                             await UniTask.Yield(token);
                     }
                 }
@@ -135,7 +131,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
                     async UniTask WaitForReconnectionRequiredAsync(CancellationToken token)
                     {
                         while (CurrentState() is IConnectiveRoom.State.Running
-                               && !metaDataSource.MetadataIsDirty)
+                               && !options.SceneRoomMetaDataSource.MetadataIsDirty)
                             await UniTask.Yield(token);
                     }
                 }
@@ -154,8 +150,9 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
 
         private async UniTask<string> ConnectionStringAsync(MetaData meta, CancellationToken token)
         {
+            string url = options.AdapterUrl;
             AdapterResponse response = await webRequests.SignedFetchPostAsync(
-                                                             sceneHandleUrl,
+                                                             url,
                                                              meta.ToJson(),
                                                              token)
                                                         .CreateFromJson<AdapterResponse>(WRJsonParser.Unity);

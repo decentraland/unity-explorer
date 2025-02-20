@@ -39,12 +39,18 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
 
         State CurrentState();
 
+        AttemptToConnectState AttemptToConnectState { get; }
+
         ConnectionLoopHealth CurrentConnectionLoopHealth { get; }
 
         IRoom Room();
 
         class Null : IConnectiveRoom
         {
+            public static readonly Null INSTANCE = new ();
+
+            protected Null() { }
+
             public UniTask<bool> StartAsync() =>
                 UniTask.FromResult(true);
 
@@ -53,6 +59,8 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
 
             public State CurrentState() =>
                 State.Stopped;
+
+            public AttemptToConnectState AttemptToConnectState => AttemptToConnectState.None;
 
             public ConnectionLoopHealth CurrentConnectionLoopHealth => ConnectionLoopHealth.Stopped;
 

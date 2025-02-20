@@ -12,6 +12,7 @@ using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using SceneRunner.Debugging;
 using System.Threading;
 using DCL.FeatureFlags;
+using Global.Versioning;
 using UnityEngine.UIElements;
 using Utility;
 
@@ -21,15 +22,24 @@ namespace Global.Dynamic
     {
         UniTask PreInitializeSetupAsync(UIDocument cursorRoot, UIDocument debugUiRoot, CancellationToken ct);
 
-        UniTask<(StaticContainer?, bool)> LoadStaticContainerAsync(BootstrapContainer bootstrapContainer, PluginSettingsContainer globalPluginSettingsContainer, DebugViewsCatalog debugViewsCatalog, Entity playerEntity, ITexturesFuse texturesFuse,
-            bool isTextureCompressionEnabled, ISystemMemoryCap memoryCap, CancellationToken ct);
+        UniTask<(StaticContainer?, bool)> LoadStaticContainerAsync(
+            BootstrapContainer bootstrapContainer,
+            PluginSettingsContainer globalPluginSettingsContainer,
+            IDebugContainerBuilder debugContainerBuilder,
+            Entity playerEntity,
+            ITexturesFuse texturesFuse,
+            ISystemMemoryCap memoryCap,
+            UIDocument scenesUIRoot,
+            CancellationToken ct
+        );
 
         UniTask<(DynamicWorldContainer?, bool)> LoadDynamicWorldContainerAsync(BootstrapContainer bootstrapContainer, StaticContainer staticContainer, PluginSettingsContainer scenePluginSettingsContainer, DynamicSceneLoaderSettings settings, DynamicSettings dynamicSettings,
-            UIDocument uiToolkitRoot, UIDocument cursorRoot, AudioClipConfig backgroundMusic,
+            UIDocument uiToolkitRoot, UIDocument scenesUIRoot, UIDocument cursorRoot, AudioClipConfig backgroundMusic,
             WorldInfoTool worldInfoTool,
             Entity playerEntity,
             IAppArgs appArgs,
             ICoroutineRunner coroutineRunner,
+            DCLVersion dclVersion,
             CancellationToken ct);
 
         UniTask<bool> InitializePluginsAsync(StaticContainer staticContainer, DynamicWorldContainer dynamicWorldContainer,

@@ -11,9 +11,11 @@ using DCL.NotificationsBusController.NotificationsBus;
 using DCL.Profiles;
 using DCL.SidebarBus;
 using DCL.StylizedSkybox.Scripts;
+using DCL.UI.Controls;
 using DCL.UI.MainUI;
 using DCL.UI.ProfileElements;
 using DCL.UI.Sidebar;
+using DCL.UI.Sidebar.SidebarActionsBus;
 using DCL.UI.Skybox;
 using DCL.UserInAppInitializationFlow;
 using DCL.Web3.Authenticators;
@@ -41,10 +43,13 @@ namespace DCL.PluginSystem.Global
         private readonly IUserInAppInitializationFlow userInAppInitializationFlow;
         private readonly IProfileCache profileCache;
         private readonly ISidebarBus sidebarBus;
+        private readonly DCLInput input;
+        private readonly ISidebarActionsBus sidebarActionsBus;
         private readonly ChatEntryConfigurationSO chatEntryConfigurationSo;
         private readonly Arch.Core.World world;
         private readonly Entity playerEntity;
         private readonly bool includeCameraReel;
+        private readonly bool includeFriends;
 
         public SidebarPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -60,10 +65,13 @@ namespace DCL.PluginSystem.Global
             IUserInAppInitializationFlow userInAppInitializationFlow,
             IProfileCache profileCache,
             ISidebarBus sidebarBus,
+            DCLInput input,
             ChatEntryConfigurationSO chatEntryConfigurationSo,
+            ISidebarActionsBus sidebarActionsBus,
             Arch.Core.World world,
             Entity playerEntity,
-            bool includeCameraReel)
+            bool includeCameraReel,
+            bool includeFriends)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -78,10 +86,13 @@ namespace DCL.PluginSystem.Global
             this.userInAppInitializationFlow = userInAppInitializationFlow;
             this.profileCache = profileCache;
             this.sidebarBus = sidebarBus;
+            this.input = input;
             this.chatEntryConfigurationSo = chatEntryConfigurationSo;
+            this.sidebarActionsBus = sidebarActionsBus;
             this.world = world;
             this.playerEntity = playerEntity;
             this.includeCameraReel = includeCameraReel;
+            this.includeFriends = includeFriends;
         }
 
         public void Dispose() { }
@@ -92,6 +103,9 @@ namespace DCL.PluginSystem.Global
         {
             NotificationIconTypes notificationIconTypes = (await assetsProvisioner.ProvideMainAssetAsync(settings.NotificationIconTypesSO, ct: ct)).Value;
             NftTypeIconSO rarityBackgroundMapping = await assetsProvisioner.ProvideMainAssetValueAsync(settings.RarityColorMappings, ct);
+
+            ControlsPanelView panelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.ControlsPanelPrefab, ct: ct)).GetComponent<ControlsPanelView>();
+            ControlsPanelController.Preallocate(panelViewAsset, null!, out ControlsPanelView controlsPanelView);
 
             mvcManager.RegisterController(new SidebarController(() =>
                 {
@@ -105,12 +119,15 @@ namespace DCL.PluginSystem.Global
                 new ProfileWidgetController(() => mainUIView.SidebarView.ProfileWidget, web3IdentityCache, profileRepository, webRequestController),
                 new ProfileMenuController(() => mainUIView.SidebarView.ProfileMenuView, web3IdentityCache, profileRepository, webRequestController, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, mvcManager, chatEntryConfigurationSo),
                 new SkyboxMenuController(() => mainUIView.SidebarView.SkyboxMenuView, settings.SkyboxSettingsAsset),
+                new ControlsPanelController(() => controlsPanelView, mvcManager, input),
                 sidebarBus,
                 chatEntryConfigurationSo,
                 web3IdentityCache,
                 profileRepository,
                 webBrowser,
-                includeCameraReel
+                sidebarActionsBus,
+                includeCameraReel,
+                includeFriends
             ));
         }
 
@@ -124,6 +141,9 @@ namespace DCL.PluginSystem.Global
 
             [field: SerializeField]
             public StylizedSkyboxSettingsAsset SkyboxSettingsAsset { get; private set; }
+
+            [field: SerializeField]
+            public AssetReferenceGameObject ControlsPanelPrefab;
         }
     }
 }

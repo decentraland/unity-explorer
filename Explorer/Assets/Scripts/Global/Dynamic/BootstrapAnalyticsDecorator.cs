@@ -15,6 +15,7 @@ using SceneRunner.Debugging;
 using Segment.Serialization;
 using System.Threading;
 using DCL.FeatureFlags;
+using Global.Versioning;
 using UnityEngine.UIElements;
 using Utility;
 using static DCL.PerformanceAndDiagnostics.Analytics.AnalyticsEvents;
@@ -47,11 +48,18 @@ namespace Global.Dynamic
             return core.PreInitializeSetupAsync(cursorRoot, debugUiRoot, ct);
         }
 
-        public async UniTask<(StaticContainer?, bool)> LoadStaticContainerAsync(BootstrapContainer bootstrapContainer, PluginSettingsContainer globalPluginSettingsContainer, DebugViewsCatalog debugViewsCatalog, Entity playerEntity, ITexturesFuse texturesFuse,
-            bool isTextureCompressionEnabled,
-            ISystemMemoryCap memoryCap, CancellationToken ct)
+        public async UniTask<(StaticContainer?, bool)> LoadStaticContainerAsync(
+            BootstrapContainer bootstrapContainer,
+            PluginSettingsContainer globalPluginSettingsContainer,
+            IDebugContainerBuilder debugContainerBuilder,
+            Entity playerEntity,
+            ITexturesFuse texturesFuse,
+            ISystemMemoryCap memoryCap,
+            UIDocument scenesUIRoot,
+            CancellationToken ct
+        )
         {
-            (StaticContainer? container, bool isSuccess) result = await core.LoadStaticContainerAsync(bootstrapContainer, globalPluginSettingsContainer, debugViewsCatalog, playerEntity, texturesFuse, isTextureCompressionEnabled, memoryCap, ct);
+            (StaticContainer? container, bool isSuccess) result = await core.LoadStaticContainerAsync(bootstrapContainer, globalPluginSettingsContainer, debugContainerBuilder, playerEntity, texturesFuse, memoryCap, scenesUIRoot, ct);
 
             analytics.SetCommonParam(result.container!.RealmData, bootstrapContainer.IdentityCache, result.container.CharacterContainer.Transform);
 
@@ -65,20 +73,21 @@ namespace Global.Dynamic
         }
 
         public async UniTask<(DynamicWorldContainer?, bool)> LoadDynamicWorldContainerAsync(BootstrapContainer bootstrapContainer, StaticContainer staticContainer, PluginSettingsContainer scenePluginSettingsContainer, DynamicSceneLoaderSettings settings, DynamicSettings dynamicSettings,
-            UIDocument uiToolkitRoot, UIDocument cursorRoot, AudioClipConfig backgroundMusic,
+            UIDocument uiToolkitRoot, UIDocument scenesUIRoot, UIDocument cursorRoot, AudioClipConfig backgroundMusic,
             WorldInfoTool worldInfoTool,
             Entity playerEntity,
             IAppArgs appArgs,
             ICoroutineRunner coroutineRunner,
+            DCLVersion dclVersion,
             CancellationToken ct)
         {
             (DynamicWorldContainer? container, bool) result =
                 await core.LoadDynamicWorldContainerAsync(bootstrapContainer, staticContainer, scenePluginSettingsContainer,
-                    settings, dynamicSettings, uiToolkitRoot, cursorRoot, backgroundMusic, worldInfoTool, playerEntity, appArgs, coroutineRunner, ct);
+                    settings, dynamicSettings, uiToolkitRoot, scenesUIRoot, cursorRoot, backgroundMusic, worldInfoTool, playerEntity, appArgs, coroutineRunner, dclVersion, ct);
 
             analytics.Track(General.INITIAL_LOADING, new JsonObject
             {
-                { STAGE_KEY, "2 - dynamic container loaded" },
+                { STAGE_KEY, "3 - dynamic container loaded" },
                 { RESULT_KEY, result.Item2 ? "success" : "failure" },
             });
 
@@ -91,7 +100,7 @@ namespace Global.Dynamic
 
             analytics.Track(General.INITIAL_LOADING, new JsonObject
             {
-                { STAGE_KEY, "3 - feature flag initialized" },
+                { STAGE_KEY, "2 - feature flag initialized" },
             });
 
             return result;
@@ -142,6 +151,7 @@ namespace Global.Dynamic
         public void ApplyFeatureFlagConfigs(FeatureFlagsCache featureFlagsCache)
         {
             core.ApplyFeatureFlagConfigs(featureFlagsCache);
+
             //No analytics to track on this step
         }
 

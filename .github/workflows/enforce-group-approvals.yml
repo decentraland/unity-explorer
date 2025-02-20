@@ -1,0 +1,96 @@
+name: Enforce QA and DEV Approvals
+
+on:
+  pull_request:
+    branches: [dev]
+    types: [labeled, unlabeled]
+  pull_request_review:
+    types: [submitted]
+
+jobs:
+  enforce-approvals:
+    if: >
+      github.event.pull_request.draft == false &&
+      github.event.review.state != 'changes_requested' &&
+      github.event.review.state != 'commented' &&
+      github.event.pull_request.base.ref == 'dev'
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.ORG_ACCESS_TOKEN }}
+
+    steps:
+      - name: Set PR number and repo details
+        run: |
+          echo "Fetching context details..."
+          PR_NUMBER=${{ github.event.pull_request.number }}
+          if [ -z "$PR_NUMBER" ]; then
+            echo "::error::PR number is missing from the event context."
+            exit 1
+          fi
+
+          REPO_OWNER=${{ github.repository_owner }}
+          REPO_NAME=$(echo ${{ github.repository }} | cut -d'/' -f2)
+
+          echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
+          echo "REPO_OWNER=$REPO_OWNER" >> $GITHUB_ENV
+          echo "REPO_NAME=$REPO_NAME" >> $GITHUB_ENV
+
+      - name: Validate Group Approvals
+        run: |
+          # Check if the label "auto-pr" is set
+          LABELS=$(gh api \
+            "/repos/$REPO_OWNER/$REPO_NAME/issues/$PR_NUMBER/labels" --jq '.[].name')
+
+          if echo "$LABELS" | grep -q "auto-pr"; then
+            echo ">>> Skipping approval validation as 'auto-pr' label is set."
+            exit 0
+          fi
+
+          # Define the teams
+          QA_TEAM="qa"
+          DEV_TEAM="explorer-devs"
+
+          # Fetch team members
+          fetch_team_members() {
+            local team_slug=$1
+            echo "Fetching team members for team: $team_slug"
+            gh api "/orgs/$REPO_OWNER/teams/$team_slug/members" --jq '.[].login'
+          }
+
+          QA_MEMBERS=$(fetch_team_members "$QA_TEAM")
+          DEV_MEMBERS=$(fetch_team_members "$DEV_TEAM")
+
+          echo ">>> QA Team Members: $QA_MEMBERS"
+          echo ">>> DEV Team Members: $DEV_MEMBERS"
+
+          # Fetch PR reviews
+          echo ">>> Fetching PR reviews for PR #$PR_NUMBER"
+          PR_REVIEWS=$(gh api "/repos/$REPO_OWNER/$REPO_NAME/pulls/$PR_NUMBER/reviews" --jq '.[] | select(.state == "APPROVED") | .user.login')
+
+          echo "Approved Reviews:"
+          echo "$PR_REVIEWS"
+
+          # Validate approvals
+          HAS_QA_APPROVAL=false
+          HAS_DEV_APPROVAL=false
+
+          for reviewer in $PR_REVIEWS; do
+            if echo "$QA_MEMBERS" | grep -q "^$reviewer$"; then
+              HAS_QA_APPROVAL=true
+            fi
+
+            if echo "$DEV_MEMBERS" | grep -q "^$reviewer$"; then
+              HAS_DEV_APPROVAL=true
+            fi
+          done
+
+          if [ "$HAS_QA_APPROVAL" != true ] || [ "$HAS_DEV_APPROVAL" != true ]; then
+            MISSING=()
+            [ "$HAS_QA_APPROVAL" != true ] && MISSING+=("QA approval")
+            [ "$HAS_DEV_APPROVAL" != true ] && MISSING+=("DEV approval")
+            MISSING_MSG=$(IFS=", "; echo "${MISSING[*]}")
+            echo "::error::PR must have at least 1: $MISSING_MSG."
+            exit 1
+          fi
+
+          echo ">>> PR has the required approvals."

@@ -2107,6 +2107,24 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
+                },
+                {
+                    "name": "Controls",
+                    "type": "Button",
+                    "id": "ff9cdfbe-b880-4633-aaae-c5b3849d7f08",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "FriendPanel",
+                    "type": "Button",
+                    "id": "beb1ee53-edda-4028-98bb-2706bb7d853e",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
                 }
             ],
             "bindings": [
@@ -2272,6 +2290,28 @@
                     "processors": "",
                     "groups": "",
                     "action": "OpenChatCommandLine",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "a2b44e8b-33bb-4468-9439-8836ae0a5796",
+                    "path": "<Keyboard>/h",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Controls",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "a9c17c82-b11f-4a40-84ef-a26e3cf7f085",
+                    "path": "<Keyboard>/l",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "FriendPanel",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }
@@ -3064,6 +3104,15 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
+                },
+                {
+                    "name": "ToggleNametags",
+                    "type": "Button",
+                    "id": "35bcdb9a-cdac-4391-a47e-6f6a134f694d",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
                 }
             ],
             "bindings": [
@@ -3515,6 +3564,17 @@
                     "processors": "",
                     "groups": "",
                     "action": "Screenshot",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "a39e9815-f60c-4e5d-afef-3fe7fcd03dfa",
+                    "path": "<Keyboard>/n",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "ToggleNametags",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

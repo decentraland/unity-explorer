@@ -1,5 +1,4 @@
-using System;
-using DCL.UserInAppInitializationFlow;
+using DCL.RealmNavigation;
 using DCL.Utilities;
 using Segment.Serialization;
 
@@ -12,7 +11,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         private int loadingScreenStageId;
 
         private readonly IAnalyticsController analytics;
-        
+
         public ReactiveProperty<LoadingStatus.LoadingStage> CurrentStage => core.CurrentStage;
         public ReactiveProperty<string> AssetState => core.AssetState;
         private bool isFirstLoading;
@@ -24,12 +23,11 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             this.analytics = analytics;
         }
 
-
         private void OnLoadingStageChanged(LoadingStatus.LoadingStage stage)
         {
             analytics.Track(AnalyticsEvents.General.INITIAL_LOADING, new JsonObject
             {
-                { STAGE_KEY, $"7.{loadingScreenStageId++} - loading screen: {stage}" },
+                { STAGE_KEY, $"7.{(byte)stage} - loading screen: {stage.ToString()}" },
             });
         }
 
@@ -39,16 +37,16 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         }
 
         public float SetCurrentStage(LoadingStatus.LoadingStage stage)
-        {            
+        {
             //After the first loading screen flow, we dont want to report analytics anymore
             if (isFirstLoading)
             {
                 OnLoadingStageChanged(stage);
-                isFirstLoading = stage != LoadingStatus.LoadingStage.Completed; 
+                isFirstLoading = stage != LoadingStatus.LoadingStage.Completed;
             }
             return core.SetCurrentStage(stage);
         }
 
-     
+
     }
 }

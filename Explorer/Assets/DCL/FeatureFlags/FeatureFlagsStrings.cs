@@ -20,7 +20,11 @@
         public const string SKYBOX_SETTINGS = "alfa-skybox-settings";
         public const string SKYBOX_SETTINGS_VARIANT = "settings";
         public const string VIDEO_PRIORITIZATION = "alfa-video-prioritization";
+        public const string ASSET_BUNDLE_FALLBACK = "alfa-asset-bundle-fallback";
 
         public const string CAMERA_REEL = "alfa-camera-reel";
+        public const string FRIENDS = "alfa-friends";
+        public const string FRIENDS_USER_BLOCKING = "alfa-friends-user-blocking";
+        public const string FRIENDS_ONLINE_STATUS = "alfa-friends-online-status";
     }
 }

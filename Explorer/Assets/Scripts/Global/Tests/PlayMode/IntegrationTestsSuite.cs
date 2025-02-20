@@ -17,16 +17,21 @@ using DCL.Web3;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
-using Global.AppArgs;
 using MVC;
 using MVC.PopupsController.PopupCloser;
 using NSubstitute;
 using System;
 using System.Threading;
 using DCL.PerformanceAndDiagnostics.Analytics;
+using DCL.WebRequests.Analytics;
+using ECS.StreamableLoading.Cache.Disk;
+using ECS.StreamableLoading.Common.Components;
+using Global.Dynamic.LaunchModes;
 using SceneRuntime.Factory.WebSceneSource;
 using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
+using UnityEngine;
 using UnityEngine.AddressableAssets;
+using UnityEngine.UIElements;
 
 namespace Global.Tests.PlayMode
 {
@@ -34,13 +39,15 @@ namespace Global.Tests.PlayMode
     {
         private const string GLOBAL_CONTAINER_ADDRESS = "Integration Tests Global Container";
         private const string WORLD_CONTAINER_ADDRESS = "Integration Tests World Container";
+        private const string SCENES_UI_ADDRESS = "ScenesUIRootCanvas";
 
         public static async UniTask<(StaticContainer staticContainer, SceneSharedContainer sceneSharedContainer)> CreateStaticContainer(CancellationToken ct)
         {
             PluginSettingsContainer globalSettingsContainer = await Addressables.LoadAssetAsync<PluginSettingsContainer>(GLOBAL_CONTAINER_ADDRESS);
             PluginSettingsContainer sceneSettingsContainer = await Addressables.LoadAssetAsync<PluginSettingsContainer>(WORLD_CONTAINER_ADDRESS);
+            UIDocument scenesUI = (await Addressables.LoadAssetAsync<GameObject>(SCENES_UI_ADDRESS)).GetComponent<UIDocument>(); // This is / should be the only place where we load this via Addressables
             IAssetsProvisioner assetProvisioner = new AddressablesProvisioner().WithErrorTrace();
-            IDecentralandUrlsSource dclUrls = new DecentralandUrlsSource(DecentralandEnvironment.Org);
+            IDecentralandUrlsSource dclUrls = new DecentralandUrlsSource(DecentralandEnvironment.Org, ILaunchMode.PLAY);
 
             IWeb3IdentityCache identityCache = new MemoryWeb3IdentityCache();
 
@@ -59,14 +66,14 @@ namespace Global.Tests.PlayMode
                 dclUrls,
                 assetProvisioner,
                 Substitute.For<IReportsHandlingSettings>(),
-                Substitute.For<IAppArgs>(),
+                Substitute.For<IDebugContainerBuilder>(),
+                WebRequestsContainer.Create(new IWeb3IdentityCache.Default(), ITexturesFuse.NewTestInstance(), Substitute.For<IDebugContainerBuilder>(), 1000, false),
                 ITexturesFuse.NewTestInstance(),
-                new DebugViewsCatalog(),
                 globalSettingsContainer,
                 diagnosticsContainer,
                 identityCache,
                 Substitute.For<IEthereumApi>(),
-                false,
+                ILaunchMode.PLAY,
                 false,
                 World.Create(),
                 new Entity(),
@@ -74,8 +81,11 @@ namespace Global.Tests.PlayMode
                 new WorldVolumeMacBus(),
                 false,
                 Substitute.For<IAnalyticsController>(),
-                false,
-                ct);
+                new IDiskCache.Fake(),
+                Substitute.For<IDiskCache<PartialLoadingState>>(),
+                scenesUI,
+                ct
+            );
 
             if (!success)
                 throw new Exception("Cannot create the static container");

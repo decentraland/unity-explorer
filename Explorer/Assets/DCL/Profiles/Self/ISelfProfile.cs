@@ -8,7 +8,7 @@ namespace DCL.Profiles.Self
     {
         UniTask<Profile?> ProfileAsync(CancellationToken ct);
 
-        UniTask<Profile?> PublishAsync(CancellationToken ct);
+        UniTask<Profile?> UpdateProfileAsync(bool publish, CancellationToken ct);
 
         /// <summary>
         /// It only updates the basic info of the profile and ignore the rest of the data.
@@ -31,7 +31,7 @@ namespace DCL.Profiles.Self
             bool isPublished = await selfProfile.IsProfilePublishedAsync(ct);
 
             if (isPublished == false)
-                await selfProfile.PublishAsync(ct);
+                await selfProfile.UpdateProfileAsync(true, ct);
 
             return (await selfProfile.ProfileAsync(ct)).EnsureNotNull();
         }

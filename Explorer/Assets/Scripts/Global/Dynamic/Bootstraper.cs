@@ -17,14 +17,21 @@ using DCL.UI.MainUI;
 using DCL.UserInAppInitializationFlow;
 using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
+using DCL.WebRequests.Analytics;
+using ECS.StreamableLoading.Cache.Disk;
+using ECS.StreamableLoading.Cache.InMemory;
+using ECS.StreamableLoading.Common.Components;
 using Global.AppArgs;
 using Global.Dynamic.DebugSettings;
+using Global.Dynamic.LaunchModes;
+using Global.Dynamic.RealmUrl;
+using Global.Versioning;
 using MVC;
 using Plugins.TexturesFuse.TexturesServerWrap.CompressShaders;
 using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using SceneRunner.Debugging;
+using SceneRuntime.Factory.JsSource;
 using SceneRuntime.Factory.WebSceneSource;
-using SceneRuntime.Factory.WebSceneSource.Cache;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -36,11 +43,14 @@ namespace Global.Dynamic
     public class Bootstrap : IBootstrap
     {
         private readonly IDebugSettings debugSettings;
-        private readonly IDecentralandUrlsSource decentralandUrlsSource;
+        private readonly IRealmUrls realmUrls;
         private readonly IAppArgs appArgs;
         private readonly ISplashScreen splashScreen;
         private readonly ICompressShaders compressShaders;
         private readonly RealmLaunchSettings realmLaunchSettings;
+        private readonly WebRequestsContainer webRequestsContainer;
+        private readonly IDiskCache diskCache;
+        private readonly IDiskCache<PartialLoadingState> partialsDiskCache;
         private readonly World world;
 
         private URLDomain? startingRealm;
@@ -49,20 +59,27 @@ namespace Global.Dynamic
 
         public bool EnableAnalytics { private get; init; }
 
-        public Bootstrap(IDebugSettings debugSettings,
+        public Bootstrap(
+            IDebugSettings debugSettings,
             IAppArgs appArgs,
             ISplashScreen splashScreen,
             ICompressShaders compressShaders,
-            IDecentralandUrlsSource decentralandUrlsSource,
+            IRealmUrls realmUrls,
             RealmLaunchSettings realmLaunchSettings,
+            WebRequestsContainer webRequestsContainer,
+            IDiskCache diskCache,
+            IDiskCache<PartialLoadingState> partialsDiskCache,
             World world)
         {
             this.debugSettings = debugSettings;
-            this.decentralandUrlsSource = decentralandUrlsSource;
+            this.realmUrls = realmUrls;
             this.appArgs = appArgs;
             this.splashScreen = splashScreen;
             this.compressShaders = compressShaders;
             this.realmLaunchSettings = realmLaunchSettings;
+            this.webRequestsContainer = webRequestsContainer;
+            this.diskCache = diskCache;
+            this.partialsDiskCache = partialsDiskCache;
             this.world = world;
         }
 
@@ -75,7 +92,8 @@ namespace Global.Dynamic
 
             cursorRoot.EnsureNotNull();
 
-            startingRealm = URLDomain.FromString(realmLaunchSettings.GetStartingRealm(decentralandUrlsSource));
+            string realm = await realmUrls.StartingRealmAsync(token);
+            startingRealm = URLDomain.FromString(realm);
 
             // Hides the debug UI during the initial flow
             debugUiRoot.rootVisualElement.EnsureNotNull().style.display = DisplayStyle.None;
@@ -88,25 +106,25 @@ namespace Global.Dynamic
         public async UniTask<(StaticContainer?, bool)> LoadStaticContainerAsync(
             BootstrapContainer bootstrapContainer,
             PluginSettingsContainer globalPluginSettingsContainer,
-            DebugViewsCatalog debugViewsCatalog,
+            IDebugContainerBuilder debugContainerBuilder,
             Entity playerEntity,
             ITexturesFuse texturesFuse,
-            bool isTextureCompressionEnabled,
             ISystemMemoryCap memoryCap,
+            UIDocument sceneUIRoot,
             CancellationToken ct
         ) =>
             await StaticContainer.CreateAsync(
                 bootstrapContainer.DecentralandUrlsSource,
                 bootstrapContainer.AssetsProvisioner,
                 bootstrapContainer.ReportHandlingSettings,
-                appArgs,
+                debugContainerBuilder,
+                webRequestsContainer,
                 texturesFuse,
-                debugViewsCatalog,
                 globalPluginSettingsContainer,
                 bootstrapContainer.DiagnosticsContainer,
                 bootstrapContainer.IdentityCache,
                 bootstrapContainer.VerifiedEthereumApi,
-                bootstrapContainer.LocalSceneDevelopment,
+                bootstrapContainer.LaunchMode,
                 bootstrapContainer.UseRemoteAssetBundles,
                 world,
                 playerEntity,
@@ -114,7 +132,9 @@ namespace Global.Dynamic
                 bootstrapContainer.WorldVolumeMacBus,
                 EnableAnalytics,
                 bootstrapContainer.Analytics,
-                isTextureCompressionEnabled,
+                diskCache,
+                partialsDiskCache,
+                sceneUIRoot,
                 ct
             );
 
@@ -124,12 +144,14 @@ namespace Global.Dynamic
             DynamicSceneLoaderSettings settings,
             DynamicSettings dynamicSettings,
             UIDocument uiToolkitRoot,
+            UIDocument scenesUIRoot,
             UIDocument cursorRoot,
             AudioClipConfig backgroundMusic,
             WorldInfoTool worldInfoTool,
             Entity playerEntity,
             IAppArgs appArgs,
             ICoroutineRunner coroutineRunner,
+            DCLVersion dclVersion,
             CancellationToken ct)
         {
             dynamicWorldDependencies = new DynamicWorldDependencies
@@ -140,6 +162,7 @@ namespace Global.Dynamic
                 staticContainer,
                 scenePluginSettingsContainer,
                 uiToolkitRoot,
+                scenesUIRoot,
                 cursorRoot,
                 dynamicSettings,
                 bootstrapContainer.Web3Authenticator,
@@ -148,6 +171,9 @@ namespace Global.Dynamic
                 worldInfoTool
             );
 
+            string defaultStartingRealm = await realmUrls.StartingRealmAsync(ct);
+            string? localSceneDevelopmentRealm = await realmUrls.LocalSceneDevelopmentRealmAsync(ct);
+
             return await DynamicWorldContainer.CreateAsync(
                 bootstrapContainer,
                 dynamicWorldDependencies,
@@ -155,14 +181,14 @@ namespace Global.Dynamic
                 {
                     StaticLoadPositions = realmLaunchSettings.GetPredefinedParcels(),
                     Realms = settings.Realms,
-                    DefaultStartingRealm = realmLaunchSettings.GetStartingRealm(decentralandUrlsSource),
+                    DefaultStartingRealm = defaultStartingRealm,
                     StartParcel = realmLaunchSettings.targetScene,
                     IsolateScenesCommunication = realmLaunchSettings.isolateSceneCommunication,
                     EnableLandscape = debugSettings.EnableLandscape,
-                    EnableLOD = debugSettings.EnableLOD && !realmLaunchSettings.IsLocalSceneDevelopmentRealm,
+                    EnableLOD = debugSettings.EnableLOD && realmLaunchSettings.CurrentMode is LaunchMode.Play,
                     EnableAnalytics = EnableAnalytics,
                     HybridSceneParams = realmLaunchSettings.CreateHybridSceneParams(),
-                    LocalSceneDevelopmentRealm = realmLaunchSettings.GetLocalSceneDevelopmentRealm(decentralandUrlsSource) ?? string.Empty,
+                    LocalSceneDevelopmentRealm = localSceneDevelopmentRealm ?? string.Empty,
                     AppParameters = appArgs,
                 },
                 backgroundMusic,
@@ -170,6 +196,7 @@ namespace Global.Dynamic
                 playerEntity,
                 appArgs,
                 coroutineRunner,
+                dclVersion,
                 ct);
         }
 
@@ -208,11 +235,11 @@ namespace Global.Dynamic
             IWebJsSources webJsSources = new WebJsSources(new JsCodeResolver(
                 staticContainer.WebRequestsContainer.WebRequestController));
 
-            if (!realmLaunchSettings.IsLocalSceneDevelopmentRealm)
+            if (realmLaunchSettings.CurrentMode is LaunchMode.Play)
             {
-                MemoryJsSourcesCache cache = new ();
-                staticContainer.CacheCleaner.Register(cache);
-                webJsSources = new CachedWebJsSources(webJsSources, cache);
+                var memoryCache = new MemoryCache<string, string>();
+                staticContainer.CacheCleaner.Register(memoryCache);
+                webJsSources = new CachedWebJsSources(webJsSources, memoryCache, new DiskCache<string>(diskCache, new StringDiskSerializer()));
             }
 
             SceneSharedContainer sceneSharedContainer = SceneSharedContainer.Create(

@@ -61,6 +61,10 @@ namespace DCL.MapRenderer
                 }
 
                 layers[MapLayer.SatelliteAtlas].SharedActive = true;
+                layers[MapLayer.SearchResults].SharedActive = true;
+                layers[MapLayer.LiveEvents].SharedActive = false;
+                layers[MapLayer.Category].SharedActive = false;
+                layers[MapLayer.ParcelsAtlas].SharedActive = false;
             }
             catch (OperationCanceledException)
             {
@@ -73,6 +77,10 @@ namespace DCL.MapRenderer
         {
             const int MIN_ZOOM = 5;
             const int MAX_ZOOM = 300;
+
+            // Each time we open the fullscreen map, we unblock zoom for all layers
+            foreach (IZoomScalingLayer layer in zoomScalingLayers)
+                layer.ZoomBlocked = false;
 
             // Clamp texture to the maximum size allowed, preserving aspect ratio
             Vector2Int zoomValues = cameraInput.ZoomValues;
@@ -96,33 +104,40 @@ namespace DCL.MapRenderer
             mapCameraController.OnReleasing -= ReleaseCamera;
             mapCameraController.ZoomChanged -= OnCameraZoomChanged;
 
+            // Each time we close the fullscreen map, we reset the scale for all layers and block its zoom
             foreach (IZoomScalingLayer layer in zoomScalingLayers)
+            {
                 layer.ResetToBaseScale();
+                layer.ZoomBlocked = true;
+            }
 
             DisableLayers(owner, mapCameraController.EnabledLayers);
             mapCameraPool.Release(mapCameraController);
         }
 
-        private void OnCameraZoomChanged(float baseZoom, float newZoom)
+        private void OnCameraZoomChanged(float baseZoom, float newZoom, int zoomLevel)
         {
             foreach (IZoomScalingLayer layer in zoomScalingLayers)
-                layer.ApplyCameraZoom(baseZoom, newZoom);
+                layer.ApplyCameraZoom(baseZoom, newZoom, zoomLevel);
         }
 
         public void SetSharedLayer(MapLayer mask, bool active)
         {
             foreach (MapLayer mapLayer in ALL_LAYERS)
             {
-                if (!EnumUtils.HasFlag(mask, mapLayer) || !layers.TryGetValue(mapLayer, out MapLayerStatus mapLayerStatus) || mapLayerStatus.ActivityOwners.Count == 0 || mapLayerStatus.SharedActive == active)
+                if (!EnumUtils.HasFlag(mask, mapLayer))
                     continue;
 
+                if (!layers.TryGetValue(mapLayer, out var mapLayerStatus) || mapLayerStatus.ActivityOwners.Count == 0 || mapLayerStatus.SharedActive == active)
+                    continue;
+                    
                 mapLayerStatus.SharedActive = active;
 
                 // Cancel activation/deactivation flow
                 ResetCancellationSource(mapLayerStatus);
 
                 if (active)
-                    mapLayerStatus.MapLayerController.Enable(mapLayerStatus.CTS.Token).SuppressCancellationThrow().Forget();
+                    mapLayerStatus.MapLayerController.EnableAsync(mapLayerStatus.CTS.Token).SuppressCancellationThrow().Forget();
                 else
                     mapLayerStatus.MapLayerController.Disable(mapLayerStatus.CTS.Token).SuppressCancellationThrow().Forget();
             }
@@ -146,7 +161,7 @@ namespace DCL.MapRenderer
                 {
                     // Cancel deactivation flow
                     ResetCancellationSource(mapLayerStatus);
-                    mapLayerStatus.MapLayerController.Enable(mapLayerStatus.CTS.Token).SuppressCancellationThrow().Forget();
+                    mapLayerStatus.MapLayerController.EnableAsync(mapLayerStatus.CTS.Token).SuppressCancellationThrow().Forget();
                 }
 
                 mapLayerStatus.ActivityOwners.Add(owner);

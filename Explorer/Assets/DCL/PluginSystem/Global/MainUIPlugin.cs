@@ -12,15 +12,18 @@ namespace DCL.PluginSystem.Global
         private readonly IMVCManager mvcManager;
         private readonly ISidebarBus sidebarBus;
         private readonly MainUIView mainUIView;
+        private readonly bool isFriendsEnabled;
 
         public MainUIPlugin(
             IMVCManager mvcManager,
             ISidebarBus sidebarBus,
-            MainUIView mainUIView)
+            MainUIView mainUIView,
+            bool isFriendsEnabled)
         {
             this.mvcManager = mvcManager;
             this.sidebarBus = sidebarBus;
             this.mainUIView = mainUIView;
+            this.isFriendsEnabled = isFriendsEnabled;
         }
 
         public void Dispose()
@@ -40,7 +43,8 @@ namespace DCL.PluginSystem.Global
                     return view;
                 },
                 sidebarBus,
-                mvcManager
+                mvcManager,
+                isFriendsEnabled
             );
 
             mvcManager.RegisterController(mainUIController);

@@ -7,7 +7,6 @@ using ECS.StreamableLoading.Common.Components;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using UnityEngine.Pool;
-using Utility;
 using static ECS.StreamableLoading.Common.Components.StreamableLoadingState;
 
 namespace ECS.StreamableLoading.DeferredLoading
@@ -18,7 +17,7 @@ namespace ECS.StreamableLoading.DeferredLoading
 
         private readonly List<IntentionData> loadingIntentions;
 
-        private readonly QueryDescription[] sameBoatQueries;
+        protected QueryDescription[] sameBoatQueries;
         private readonly IPerformanceBudget memoryBudget;
 
         protected DeferredLoadingSystem(World world, QueryDescription[] sameBoatQueries, IReleasablePerformanceBudget releasablePerformanceLoadingBudget, IPerformanceBudget memoryBudget) : base(world)
@@ -57,7 +56,7 @@ namespace ECS.StreamableLoading.DeferredLoading
 
                         var intentionData = new IntentionData
                         {
-                            StatePointer = new ManagedTypePointer<StreamableLoadingState>(ref state),
+                            State = state,
                             PartitionComponent = partition
                         };
 
@@ -81,19 +80,15 @@ namespace ECS.StreamableLoading.DeferredLoading
                 if (!memoryBudget.TrySpendBudget()) break;
                 if (!releasablePerformanceLoadingBudget.TrySpendBudget(out IAcquiredBudget acquiredBudget)) break;
 
-                ref StreamableLoadingState state = ref loadingIntentions[i].StatePointer.Value;
-                state.SetAllowed(acquiredBudget!);
+                loadingIntentions[i].State.SetAllowed(acquiredBudget);
             }
 
             // Set the rest to forbidden
             for (; i < loadingIntentions.Count; i++)
-            {
-                ref StreamableLoadingState state = ref loadingIntentions[i].StatePointer.Value;
-                state.Forbid();
-            }
+                loadingIntentions[i].State.Forbid();
         }
 
-        public override void Dispose()
+        protected override void OnDispose()
         {
             ListPool<IntentionData>.Release(loadingIntentions);
         }
@@ -101,7 +96,7 @@ namespace ECS.StreamableLoading.DeferredLoading
         internal struct IntentionData
         {
             public IPartitionComponent PartitionComponent;
-            public ManagedTypePointer<StreamableLoadingState> StatePointer;
+            public StreamableLoadingState State;
         }
     }
 }

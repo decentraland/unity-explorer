@@ -54,8 +54,6 @@ MonoBehaviour:
       Severity: 4
     - Category: TEXTURES
       Severity: 4
-    - Category: GLTF_CONTAINER
-      Severity: 4
     - Category: MATERIALS
       Severity: 4
     - Category: PRIMITIVE_COLLIDERS
@@ -122,8 +120,6 @@ MonoBehaviour:
       Severity: 1
     - Category: TEXTURES
       Severity: 1
-    - Category: GLTF_CONTAINER
-      Severity: 1
     - Category: MATERIALS
       Severity: 1
     - Category: PRIMITIVE_COLLIDERS
@@ -190,6 +186,26 @@ MonoBehaviour:
       Severity: 1
     - Category: TEXTURES
       Severity: 0
+    - Category: ALWAYS
+      Severity: 3
+    - Category: ALWAYS
+      Severity: 2
+    - Category: ALWAYS
+      Severity: 0
+    - Category: ALWAYS
+      Severity: 4
+    - Category: ALWAYS
+      Severity: 1
+    - Category: FRIENDS
+      Severity: 4
+    - Category: FRIENDS
+      Severity: 1
+    - Category: FRIENDS
+      Severity: 0
+    - Category: FRIENDS
+      Severity: 2
+    - Category: FRIENDS
+      Severity: 3
   sentryMatrix:
     entries:
     - Category: AUDIO_SOURCES

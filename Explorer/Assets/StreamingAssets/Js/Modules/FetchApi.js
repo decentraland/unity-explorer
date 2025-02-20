@@ -41,11 +41,7 @@ declare function fetch(url: string, init?: RequestInit): Promise<Response>
 
 async function restrictedFetch(message) {
     const canUseFetch = true // TODO: this should come from somewhere
-
-    if (message.url.toLowerCase().substr(0, 8) !== "https://") {
-            return Promise.reject(new Error("Can't make an unsafe http request, please upgrade to https. url=" + message.url))
-        }
-
+    
     if (!canUseFetch) {
         return Promise.reject(new Error("This scene is not allowed to use fetch."))
     }

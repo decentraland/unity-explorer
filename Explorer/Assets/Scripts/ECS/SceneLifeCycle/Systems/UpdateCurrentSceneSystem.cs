@@ -24,7 +24,6 @@ namespace ECS.SceneLifeCycle.Systems
 
         private Vector2Int lastParcelProcessed;
 
-        private readonly SceneAssetLock sceneAssetLock;
 
         private readonly IDebugContainerBuilder debugBuilder;
         private readonly ElementBinding<string> sceneNameBinding;
@@ -35,13 +34,12 @@ namespace ECS.SceneLifeCycle.Systems
         private GameObject sceneBoundsCube;
 
         internal UpdateCurrentSceneSystem(World world, IRealmData realmData, IScenesCache scenesCache, CurrentSceneInfo currentSceneInfo,
-                                            Entity playerEntity, SceneAssetLock sceneAssetLock, IDebugContainerBuilder debugBuilder) : base(world)
+            Entity playerEntity, IDebugContainerBuilder debugBuilder) : base(world)
         {
             this.realmData = realmData;
             this.scenesCache = scenesCache;
             this.currentSceneInfo = currentSceneInfo;
             this.playerEntity = playerEntity;
-            this.sceneAssetLock = sceneAssetLock;
             ResetProcessedParcel();
 
             debugInfoVisibilityBinding = new DebugWidgetVisibilityBinding(true);
@@ -73,7 +71,6 @@ namespace ECS.SceneLifeCycle.Systems
 
             Vector3 playerPos = World.Get<CharacterTransform>(playerEntity).Transform.position;
             Vector2Int parcel = playerPos.ToParcel();
-            UpdateSceneReadiness(parcel);
             UpdateCurrentScene(parcel);
             UpdateCurrentSceneInfo(parcel);
 
@@ -81,23 +78,9 @@ namespace ECS.SceneLifeCycle.Systems
                 RefreshSceneDebugInfo();
         }
 
-        public override void Dispose()
+        protected override void OnDispose()
         {
-            base.Dispose();
-
             GameObject.Destroy(sceneBoundsCube);
-        }
-
-        private void UpdateSceneReadiness(Vector2Int parcel)
-        {
-
-            if (!scenesCache.TryGetByParcel(parcel, out var currentScene))
-                return;
-
-            sceneAssetLock.TryLock(currentScene);
-
-            if (!currentScene.SceneStateProvider.IsCurrent)
-                currentScene.SetIsCurrent(true);
         }
 
         private void UpdateCurrentScene(Vector2Int parcel)

@@ -23,7 +23,8 @@
         "GUID:286980af24684da6acc1caa413039811",
         "GUID:1d2c76eb8b48e0b40940e8b31a679ce1",
         "GUID:fc37ca6521833154cab08ec51af097d9",
-        "GUID:fdc035e0abb695e408d8ccf2c3bd63a5"
+        "GUID:fdc035e0abb695e408d8ccf2c3bd63a5",
+        "Quality.RenderFeatures"
     ],
     "includePlatforms": [
         "Editor"

@@ -3,6 +3,7 @@ using DCL.WebRequests;
 using JetBrains.Annotations;
 using Microsoft.ClearScript;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using Utility;
 
@@ -13,7 +14,7 @@ namespace SceneRuntime.Apis.Modules.FetchApi
         private readonly CancellationTokenSource cancellationTokenSource;
         private readonly IWebRequestController webController;
 
-        public SimpleFetchApiWrapper(ISimpleFetchApi api, IWebRequestController webController) : base(api)
+        public SimpleFetchApiWrapper(ISimpleFetchApi api, IWebRequestController webController, bool isLocalSceneDevelopment) : base(api, isLocalSceneDevelopment)
         {
             cancellationTokenSource = new CancellationTokenSource();
             this.webController = webController;
@@ -32,11 +33,13 @@ namespace SceneRuntime.Apis.Modules.FetchApi
 
             async UniTask<ResponseToJs> FetchAsync(CancellationToken ct)
             {
-                ISimpleFetchApi.Response response = await api.FetchAsync(requestMethod, url, headers, hasBody, body, redirect, timeout, webController, ct);
+                ISimpleFetchApi.Response response = await api.FetchAsync(requestMethod, url, headers, hasBody, body, redirect, timeout, webController, ct, isLocalSceneDevelopment);
 
                 var headersToJs = new PropertyBag();
-                foreach (var header in response.Headers)
-                    headersToJs.Add(header.Key, header.Value);
+
+                if (response.Headers != null)
+                    foreach (KeyValuePair<string, string> header in response.Headers)
+                        headersToJs.Add(header.Key, header.Value);
 
                 return new ResponseToJs
                 {
@@ -55,7 +58,6 @@ namespace SceneRuntime.Apis.Modules.FetchApi
         [Serializable]
         public struct ResponseToJs
         {
-            public PropertyBag headers;
             public bool ok;
             public bool redirected;
             public int status;
@@ -63,6 +65,7 @@ namespace SceneRuntime.Apis.Modules.FetchApi
             public string url;
             public string data;
             public string type;
+            public PropertyBag headers;
         }
     }
 }

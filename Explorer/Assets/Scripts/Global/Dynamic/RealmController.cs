@@ -6,7 +6,6 @@ using DCL.Diagnostics;
 using DCL.Ipfs;
 using DCL.LOD.Components;
 using DCL.Optimization.Pools;
-using DCL.ParcelsService;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
@@ -22,9 +21,9 @@ using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using DCL.DebugUtilities;
-using ECS.SceneLifeCycle.Realm;
-using Unity.Mathematics;
+ using DCL.RealmNavigation;
+ using Global.AppArgs;
+ using Unity.Mathematics;
 
 namespace Global.Dynamic
 {
@@ -46,30 +45,18 @@ namespace Global.Dynamic
         private readonly TeleportController teleportController;
         private readonly PartitionDataContainer partitionDataContainer;
         private readonly IScenesCache scenesCache;
-        private readonly SceneAssetLock sceneAssetLock;
         private readonly IComponentPool<PartitionComponent> partitionComponentPool;
         private readonly bool isLocalSceneDevelopment;
+        private readonly RealmNavigatorDebugView realmNavigatorDebugView;
+        private readonly URLDomain assetBundleRegistry;
+        private readonly IAppArgs appArgs;
 
         private GlobalWorld? globalWorld;
         private Entity realmEntity;
 
+
+
         public IRealmData RealmData => realmData;
-
-        private readonly RealmNavigatorDebugView realmNavigatorDebugView;
-
-        public RealmType Type
-        {
-            get
-            {
-                if (isLocalSceneDevelopment)
-                    return RealmType.LocalScene;
-
-                if (realmData is { Configured: true, ScenesAreFixed: false })
-                    return RealmType.GenesisCity;
-
-                return RealmType.World;
-            }
-        }
 
         public URLDomain? CurrentDomain { get; private set; }
 
@@ -94,11 +81,11 @@ namespace Global.Dynamic
             RealmData realmData,
             IScenesCache scenesCache,
             PartitionDataContainer partitionDataContainer,
-            SceneAssetLock sceneAssetLock,
-            IDebugContainerBuilder debugContainerBuilder,
             IComponentPool<PartitionComponent> partitionComponentPool,
-            bool isLocalSceneDevelopment
-        )
+            RealmNavigatorDebugView realmNavigatorDebugView,
+            bool isLocalSceneDevelopment,
+            URLDomain assetBundleRegistry,
+            IAppArgs appArgs)
         {
             this.web3IdentityCache = web3IdentityCache;
             this.webRequestController = webRequestController;
@@ -109,10 +96,11 @@ namespace Global.Dynamic
             this.retrieveSceneFromVolatileWorld = retrieveSceneFromVolatileWorld;
             this.scenesCache = scenesCache;
             this.partitionDataContainer = partitionDataContainer;
-            this.sceneAssetLock = sceneAssetLock;
             this.partitionComponentPool = partitionComponentPool;
             this.isLocalSceneDevelopment = isLocalSceneDevelopment;
-            realmNavigatorDebugView = new RealmNavigatorDebugView(debugContainerBuilder);
+            this.realmNavigatorDebugView = realmNavigatorDebugView;
+            this.assetBundleRegistry = assetBundleRegistry;
+            this.appArgs = appArgs;
         }
 
         public async UniTask SetRealmAsync(URLDomain realm, CancellationToken ct)
@@ -132,10 +120,10 @@ namespace Global.Dynamic
             string hostname = ResolveHostname(realm, result);
 
             realmData.Reconfigure(
-                new IpfsRealm(web3IdentityCache, webRequestController, realm, result),
+                new IpfsRealm(web3IdentityCache, webRequestController, realm, assetBundleRegistry, result),
                 result.configurations.realmName.EnsureNotNull("Realm name not found"),
                 result.configurations.networkId,
-                result.comms?.adapter ?? result.comms?.fixedAdapter ?? "offline:offline", //"offline property like in previous implementation"
+                ResolveCommsAdapter(result),
                 result.comms?.protocol ?? "v3",
                 hostname,
                 isLocalSceneDevelopment
@@ -238,7 +226,6 @@ namespace Global.Dynamic
             realmData.Invalidate();
 
             await UniTask.WhenAll(loadedScenes.Select(s => s.DisposeAsync()));
-            sceneAssetLock.Reset();
 
             CurrentDomain = null;
 
@@ -290,6 +277,15 @@ namespace Global.Dynamic
                     : new Uri(realm.Value).Host;
 
             return hostname;
+        }
+
+        private string ResolveCommsAdapter(ServerAbout about)
+        {
+            if (appArgs.TryGetValue(AppArgsFlags.COMMS_ADAPTER, out string? arg) && !string.IsNullOrEmpty(arg))
+                return arg;
+
+            //"offline property like in previous implementation"
+            return about.comms?.adapter ?? about.comms?.fixedAdapter ?? "offline:offline";
         }
     }
 }

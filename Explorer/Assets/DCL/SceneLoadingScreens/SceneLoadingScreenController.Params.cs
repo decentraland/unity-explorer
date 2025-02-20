@@ -1,4 +1,4 @@
-using DCL.AsyncLoadReporting;
+using DCL.Utilities;
 using System.Threading;
 
 namespace DCL.SceneLoadingScreens

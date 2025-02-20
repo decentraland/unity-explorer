@@ -33,8 +33,7 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
             this.webRequestController = webRequestController;
         }
 
-        protected sealed override async UniTask<StreamableLoadingResult<TAsset>> FlowInternalAsync(
-            TIntention intention, IAcquiredBudget acquiredBudget,
+        protected sealed override async UniTask<StreamableLoadingResult<TAsset>> FlowInternalAsync(TIntention intention, StreamableLoadingState state,
             IPartitionComponent partition, CancellationToken ct)
         {
             var finalTargetList = RepoolableList<TDTO>.NewList();

@@ -11,6 +11,8 @@ using DCL.WebRequests;
 using ECS;
 using System.Collections.Generic;
 using System.Threading;
+using DCL.Browser.DecentralandUrls;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using UnityEngine;
 
 namespace DCL.Profiles.Self.Playground
@@ -39,6 +41,7 @@ namespace DCL.Profiles.Self.Playground
                                     web3IdentityCache,
                                     IWebRequestController.DEFAULT,
                                     URLDomain.FromString(url),
+                                    URLDomain.EMPTY,
                                     new ServerAbout(
                                         lambdas: new ContentEndpoint(url)
                                     )
@@ -59,7 +62,7 @@ namespace DCL.Profiles.Self.Playground
 
             var profile = await selfProfile.ProfileAsync(ct);
             ReportHub.Log(ReportData.UNSPECIFIED, $"Profile is found {profile != null}");
-            await selfProfile.PublishAsync(ct);
+            await selfProfile.UpdateProfileAsync(publish: true, ct);
             ReportHub.Log(ReportData.UNSPECIFIED, $"Profile is published successfully");
         }
     }

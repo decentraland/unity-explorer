@@ -8,6 +8,8 @@
 
         URLAddress Build();
 
+        IURLBuilder AppendDomain(in URLDomain domain);
+
         IURLBuilder AppendDomainWithReplacedPath(in URLDomain domain, in URLSubdirectory newPath);
 
         IURLBuilder AppendSubDirectory(in URLSubdirectory subdirectory);

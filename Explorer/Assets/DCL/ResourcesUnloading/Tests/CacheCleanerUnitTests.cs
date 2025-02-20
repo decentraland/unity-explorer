@@ -2,17 +2,16 @@
 using DCL.AvatarRendering.Loading.Assets;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.LOD;
-using DCL.Optimization;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.Profiles;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.Cache;
+using ECS.StreamableLoading.Cache.InMemory;
 using ECS.StreamableLoading.NFTShapes;
 using ECS.StreamableLoading.Textures;
 using ECS.Unity.GLTFContainer.Asset.Cache;
-using ECS.Unity.GLTFContainer.Asset.Components;
 using NSubstitute;
 using NUnit.Framework;
 using UnityEngine;
@@ -37,8 +36,7 @@ namespace DCL.ResourcesUnloading.Tests
         private ILODCache lodAssetsPool;
         private IRoadAssetPool roadAssetPool;
         private IEmoteStorage emoteStorage;
-        private IStreamableCache<ProfileData, GetProfileIntention> profileIntentionCache;
-        private IJsSourcesCache jsSourcesCache;
+        private IMemoryCache<string, string> jsSourcesCache;
 
         [SetUp]
         public void SetUp()
@@ -59,8 +57,7 @@ namespace DCL.ResourcesUnloading.Tests
             roadAssetPool = Substitute.For<IRoadAssetPool>();
             nftShapeCache = Substitute.For<ISizedStreamableCache<Texture2DData, GetNFTShapeIntention>>();
             emoteStorage = Substitute.For<IEmoteStorage>();
-            profileIntentionCache = Substitute.For<IStreamableCache<ProfileData, GetProfileIntention>>();
-            jsSourcesCache = Substitute.For<IJsSourcesCache>();
+            jsSourcesCache = Substitute.For<IMemoryCache<string, string>>();
 
             cacheCleaner = new CacheCleaner(releasablePerformanceBudget, null);
 
@@ -76,7 +73,6 @@ namespace DCL.ResourcesUnloading.Tests
             cacheCleaner.Register(roadAssetPool);
             cacheCleaner.Register(nftShapeCache);
             cacheCleaner.Register(emoteStorage);
-            cacheCleaner.Register(profileIntentionCache);
             cacheCleaner.Register(jsSourcesCache);
         }
 

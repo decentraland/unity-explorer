@@ -58,7 +58,7 @@ namespace SceneRuntime.Apis.Modules.Runtime
             public string realmName;
             public int networkId;
             public string commsAdapter;
-            public bool preview;
+            public bool isPreview;
             public string protocol;
 
             public RealmInfo(IRealmData realmData) : this(
@@ -77,7 +77,7 @@ namespace SceneRuntime.Apis.Modules.Runtime
                 this.realmName = realmName;
                 this.networkId = networkId;
                 this.commsAdapter = commsAdapter;
-                preview = isPreview;
+                this.isPreview = isPreview;
                 this.protocol = protocol;
             }
         }

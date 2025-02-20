@@ -1,3 +1,4 @@
+using ECS.StreamableLoading.Cache.Disk.Cacheables;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.NFTShapes.URNs;
 using System;
@@ -31,5 +32,17 @@ namespace ECS.StreamableLoading.NFTShapes
 
         public override int GetHashCode() =>
             URN.GetHashCode();
+
+        public class DiskHashCompute : AbstractDiskHashCompute<GetNFTShapeIntention>
+        {
+            public static readonly DiskHashCompute INSTANCE = new ();
+
+            private DiskHashCompute() { }
+
+            protected override void FillPayload(IHashKeyPayload keyPayload, in GetNFTShapeIntention asset)
+            {
+                keyPayload.Put(asset.URN);
+            }
+        }
     }
 }

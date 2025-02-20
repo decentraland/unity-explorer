@@ -18,9 +18,9 @@ namespace DCL.Notifications
 {
     public class NotificationsRequestController
     {
-        private static readonly JsonSerializerSettings SERIALIZER_SETTINGS = new () { Converters = new JsonConverter[] { new NotificationJsonDtoConverter() } };
         private static readonly TimeSpan NOTIFICATIONS_DELAY = TimeSpan.FromSeconds(5);
 
+        private readonly JsonSerializerSettings serializerSettings;
         private readonly IWebRequestController webRequestController;
         private readonly INotificationsBusController notificationsBusController;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
@@ -38,13 +38,16 @@ namespace DCL.Notifications
             IWebRequestController webRequestController,
             INotificationsBusController notificationsBusController,
             IDecentralandUrlsSource decentralandUrlsSource,
-            IWeb3IdentityCache web3IdentityCache
+            IWeb3IdentityCache web3IdentityCache,
+            bool includeFriendsNotifications
         )
         {
             this.webRequestController = webRequestController;
             this.notificationsBusController = notificationsBusController;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.web3IdentityCache = web3IdentityCache;
+
+            serializerSettings = new () { Converters = new JsonConverter[] { new NotificationJsonDtoConverter(includeFriendsNotifications) } };
 
             lastPolledTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
 
@@ -77,9 +80,9 @@ namespace DCL.Notifications
                                                commonArguments,
                                                ct,
                                                ReportCategory.UI,
-                                               signInfo: WebRequestSignInfo.NewFromRaw(string.Empty, commonArguments.URL, unixTimestamp, "get"),
+                                               signInfo: WebRequestSignInfo.NewFromUrl(commonArguments.URL, unixTimestamp, "get"),
                                                headersInfo: new WebRequestHeadersInfo().WithSign(string.Empty, unixTimestamp))
-                                          .CreateFromNewtonsoftJsonAsync<List<INotification>>(serializerSettings: SERIALIZER_SETTINGS);
+                                          .CreateFromNewtonsoftJsonAsync<List<INotification>>(serializerSettings: serializerSettings);
 
             return notifications;
         }
@@ -108,9 +111,9 @@ namespace DCL.Notifications
                                                    commonArguments,
                                                    ct,
                                                    ReportCategory.UI,
-                                                   signInfo: WebRequestSignInfo.NewFromRaw(string.Empty, commonArguments.URL, unixTimestamp, "get"),
+                                                   signInfo: WebRequestSignInfo.NewFromUrl(commonArguments.URL, unixTimestamp, "get"),
                                                    headersInfo: new WebRequestHeadersInfo().WithSign(string.Empty, unixTimestamp))
-                                              .CreateFromNewtonsoftJsonAsync<List<INotification>>(serializerSettings: SERIALIZER_SETTINGS);
+                                              .CreateFromNewtonsoftJsonAsync<List<INotification>>(serializerSettings: serializerSettings);
 
                 if (notifications.Count > 0)
                     lastPolledTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
@@ -141,7 +144,7 @@ namespace DCL.Notifications
                                            GenericPutArguments.CreateJson(bodyBuilder.ToString()),
                                            ct,
                                            ReportCategory.UI,
-                                           signInfo: WebRequestSignInfo.NewFromRaw(string.Empty, commonArgumentsForSetRead.URL, unixTimestamp, "put"),
+                                           signInfo: WebRequestSignInfo.NewFromUrl(commonArgumentsForSetRead.URL, unixTimestamp, "put"),
                                            headersInfo: new WebRequestHeadersInfo().WithSign(string.Empty, unixTimestamp))
                                       .WithNoOpAsync();
         }
