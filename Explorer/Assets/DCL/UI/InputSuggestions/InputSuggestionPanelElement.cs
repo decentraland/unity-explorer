@@ -191,6 +191,7 @@ namespace DCL.UI.SuggestionPanel
                 viewDependencies.DclInput.UI.Submit.performed -= OnSubmit;
             }
 
+            lastSelectedInputSuggestion = null;
             currentIndex = 0;
             IsActive = isVisible;
             gameObject.SetActive(isVisible);
