@@ -24,16 +24,16 @@ uint4 EvaluateLODLevel(uint nLODCount, float4x4 mLODScreenSpaceSizes, float fSha
         if ((fScreenSpaceSize <= fLODInnerSize_A) && (fScreenSpaceSize >= fLODOuterSize_A))
         {
             output[0] = i;
-            // if (i < nLODCount-1)
-            // {
-            //     const float fLODInnerSize_B = mLODScreenSpaceSizes[(i+1) / 4][(i+1) % 4];
-            //     const float fLODOuterSize_B = mLODScreenSpaceSizes[(i+8+1) / 4][(i+8+1) % 4];
-            //     if ((fScreenSpaceSize <= fLODInnerSize_B) && (fScreenSpaceSize >= fLODOuterSize_B))
-            //     {
-            //         output[1] = i+1;
-            //         output[2] = uint((fScreenSpaceSize - fLODInnerSize_B) / (fLODInnerSize_A - fLODInnerSize_B) * 255);
-            //     }
-            // }
+            if (i < nLODCount-1)
+            {
+                const float fLODInnerSize_B = mLODScreenSpaceSizes[(i+1) / 4][(i+1) % 4];
+                const float fLODOuterSize_B = mLODScreenSpaceSizes[(i+8+1) / 4][(i+8+1) % 4];
+                if ((fScreenSpaceSize <= fLODInnerSize_B) && (fScreenSpaceSize >= fLODOuterSize_B))
+                {
+                    output[1] = i+1;
+                    output[2] = uint((fScreenSpaceSize - fLODInnerSize_B) / (fLODOuterSize_A - fLODInnerSize_B) * 255);
+                }
+            }
             // else
             // {
             //     const float fPercentageOfFinalLOD = (fScreenSpaceSize / (fLODInnerSize_A - fLODOuterSize_A));
