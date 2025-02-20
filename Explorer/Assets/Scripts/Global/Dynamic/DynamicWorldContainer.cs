@@ -551,7 +551,7 @@ namespace Global.Dynamic
             ISidebarActionsBus sidebarActionsBus = new SidebarActionsBusController();
             MVCManagerMenusAccessFacade menusAccessFacade = new MVCManagerMenusAccessFacade(mvcManager, clipboard, clipboardManager, friendServiceProxy, profileCache);
 
-            var viewDependencies = new ViewDependencies(dclInput, unityEventSystem, menusAccessFacade, clipboardManager, dclCursor, roomHub);
+            var viewDependencies = new ViewDependencies(dclInput, unityEventSystem, menusAccessFacade, clipboardManager, dclCursor);
 
             var globalPlugins = new List<IDCLGlobalPlugin>
             {

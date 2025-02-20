@@ -69,13 +69,8 @@ namespace MVC
         public UniTask ShowPassport(string userId, CancellationToken ct) =>
             mvcManager.ShowAsync(PassportController.IssueCommand(new PassportController.Params(userId)), ct);
 
-        public async UniTask ShowUserProfileContextMenuAsync(string walletId, Vector3 position, CancellationToken ct)
+        public async UniTask ShowUserProfileContextMenuAsync(Profile profile, Vector3 position, CancellationToken ct)
         {
-            Profile profile = profileCache.Get(walletId);
-
-            if(profile == null)
-                return;
-
             closeContextMenuTask?.TrySetResult();
             closeContextMenuTask = new UniTaskCompletionSource();
 

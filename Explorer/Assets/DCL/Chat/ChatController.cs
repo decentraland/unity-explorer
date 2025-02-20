@@ -457,7 +457,7 @@ namespace DCL.Chat
 
             foreach (string identity in islandIdentities)
             {
-                Profile profile = viewDependencies.ProfileCache.Get(identity);
+                Profile profile = profileCache.Get(identity);
 
                 if(profile != null)
                     outProfiles.Add(profile);
