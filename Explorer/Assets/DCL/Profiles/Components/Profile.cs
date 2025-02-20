@@ -29,6 +29,9 @@ namespace DCL.Profiles
 
         public StreamableLoadingResult<SpriteData>.WithFallback? ProfilePicture { get; set; }
 
+        /// <summary>
+        /// Is the complete wallet address of the user
+        /// </summary>
         public string UserId
         {
             get => userId;

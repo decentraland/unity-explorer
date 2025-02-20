@@ -75,10 +75,11 @@ namespace MVC
             closeContextMenuTask = new UniTaskCompletionSource();
 
             FriendshipStatus friendshipStatus = FriendshipStatus.NONE;
+
             if (friendServiceProxy.Configured)
                 friendshipStatus = await friendServiceProxy.Object.GetFriendshipStatusAsync(profile.DisplayName, ct);
 
-            userProfileContextMenuControlSettings.SetInitialData(profile.DisplayName, profile.WalletId, profile.HasClaimedName,profile.UserNameColor, ConvertFriendshipStatus(friendshipStatus));
+            userProfileContextMenuControlSettings.SetInitialData(profile.DisplayName, profile.UserId, profile.HasClaimedName, profile.UserNameColor, ConvertFriendshipStatus(friendshipStatus));
             mentionUserButtonContextMenuControlSettings.SetData(profile);
             openUserProfileButtonContextMenuControlSettings.SetData(profile);
 
@@ -101,6 +102,7 @@ namespace MVC
 
         private void OnFriendsButtonClicked(string s, UserProfileContextMenuControlSettings.FriendshipStatus friendshipStatus)
         {
+            //TODO FRAN Issue #3408: we should only have this logic in one place, not repeated in each place that uses this context menu
             switch (friendshipStatus)
             {
                 case UserProfileContextMenuControlSettings.FriendshipStatus.NONE: break;

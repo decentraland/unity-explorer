@@ -1,5 +1,6 @@
 using DCL.Chat.History;
 using MVC;
+using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -70,21 +71,54 @@ namespace DCL.Chat
 
         private float CalculatePreferredWidth(ChatMessage message)
         {
-            int nameLenght = message.SenderValidatedName.Length + (string.IsNullOrEmpty(message.SenderWalletId) ? 0 : message.SenderWalletId.Length);
-            int emojisCount = GetEmojisCount(message.Message);
-
+            int nameLength = message.SenderValidatedName.Length;
+            string walletId = message.SenderWalletId;
+            int walletIdLength = string.IsNullOrEmpty(walletId) ? 0 : walletId.Length;
+            int nameTotalLength = nameLength + walletIdLength;
+            string messageText = message.Message;
             TMP_Text messageContentText = messageContentElement.messageContentText;
+            int parsedTextLength = messageContentText.textInfo.characterCount;
 
-            if (nameLenght > (emojisCount > 0 ? messageContentText.GetParsedText().Length + emojisCount : messageContentText.GetParsedText().Length))
+            var emojisCount = 0;
+            var needsEmojiCount = false;
+
+            if (nameTotalLength > parsedTextLength)
+            {
+                needsEmojiCount = true;
+                emojisCount = GetEmojisCount(messageText);
+            }
+
+            if (nameTotalLength > (needsEmojiCount && emojisCount > 0 ? parsedTextLength + emojisCount : parsedTextLength))
                 return usernameElement.GetUserNamePreferredWidth(backgroundWidthOffset, verifiedBadgeWidth);
+            Vector2 preferredValues = messageContentText.GetPreferredValues(messageText, maxEntryWidth, 0);
 
-            if (messageContentText.GetPreferredValues(message.Message, maxEntryWidth, 0).x < maxEntryWidth - backgroundWidthOffset)
-                return messageContentText.GetPreferredValues(message.Message, maxEntryWidth, 0).x + backgroundWidthOffset;
+            if (preferredValues.x < maxEntryWidth - backgroundWidthOffset)
+                return preferredValues.x + backgroundWidthOffset;
 
             return maxEntryWidth;
         }
 
-        private int GetEmojisCount(string message) =>
-            message.Split("\\U0").Length - 1;
+        private int GetEmojisCount(string message)
+        {
+            if (string.IsNullOrEmpty(message))
+                return 0;
+
+            ReadOnlySpan<char> messageSpan = message.AsSpan();
+            int count = 0;
+
+            // Find all occurrences of "\U0"
+            for (var i = 0; i < messageSpan.Length - 2; i++)
+            {
+                if (messageSpan[i] == '\\' &&
+                    i + 2 < messageSpan.Length &&
+                    messageSpan[i + 1] == 'U' &&
+                    messageSpan[i + 2] == '0')
+                {
+                    count++;
+                    i += 2;
+                }
+            }
+            return count;
+        }
     }
 }
