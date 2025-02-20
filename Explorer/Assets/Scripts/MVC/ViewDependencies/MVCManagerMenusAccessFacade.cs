@@ -133,5 +133,20 @@ namespace MVC
             clipboardManager.Paste(this);
         }
 
+
+        public async UniTask ShowUserProfileContextMenuFromWalledIdAsync(string walletId, Vector3 position, CancellationToken ct)
+        {
+            Profile profile = profileCache.Get(walletId);
+            if (profile == null) return;
+            await ShowUserProfileContextMenuAsync(profile, position, ct );
+        }
+
+
+        public async UniTask ShowUserProfileContextMenuFromUserNameAsync(string userName, Vector3 position, CancellationToken ct)
+        {
+            Profile profile = profileCache.GetByUserName(userName);
+            if (profile == null) return;
+            await ShowUserProfileContextMenuAsync(profile, position, ct );
+        }
     }
 }

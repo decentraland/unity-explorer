@@ -37,7 +37,6 @@ namespace DCL.InWorldCamera.PhotoDetail
         private readonly IPassportBridge passportBridge;
         private readonly List<EquippedWearableController> wearableControllers = new();
         private readonly PhotoDetailPoolManager photoDetailPoolManager;
-        private readonly IProfileNameColorHelper profileNameColorHelper;
 
         private VisiblePerson? visiblePerson;
         private bool isShowingWearables;
@@ -51,8 +50,7 @@ namespace DCL.InWorldCamera.PhotoDetail
             IWearableStorage wearableStorage,
             IWearablesProvider wearablesProvider,
             IPassportBridge passportBridge,
-            PhotoDetailPoolManager photoDetailPoolManager,
-            IProfileNameColorHelper profileNameColorHelper)
+            PhotoDetailPoolManager photoDetailPoolManager)
         {
             this.view = view;
             this.profileRepository = profileRepository;
@@ -61,7 +59,6 @@ namespace DCL.InWorldCamera.PhotoDetail
             this.wearablesProvider = wearablesProvider;
             this.passportBridge = passportBridge;
             this.photoDetailPoolManager = photoDetailPoolManager;
-            this.profileNameColorHelper = profileNameColorHelper;
 
             this.imageController = new ImageController(view.profileImage, webRequestController);
             this.view.userProfileButton.onClick.AddListener(ShowPersonPassportClicked);
@@ -78,7 +75,7 @@ namespace DCL.InWorldCamera.PhotoDetail
             view.wearableListLoadingSpinner.SetActive(false);
             view.wearableListEmptyMessage.SetActive(false);
             loadWearablesCts = loadWearablesCts.SafeRestart();
-            Color userColor = profileNameColorHelper.GetNameColor(visiblePerson.userName);
+            Color userColor = ProfileNameColorHelper.GetNameColor(visiblePerson.userName);
 
             view.userName.text = visiblePerson.userName;
             view.userName.color = userColor;

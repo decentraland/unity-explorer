@@ -41,6 +41,7 @@ namespace DCL.Chat
         private readonly IChatCommandsBus chatCommandsBus;
         private readonly IRoom islandRoom;
         private readonly IRoom sceneRoom;
+        private readonly IProfileCache profileCache;
 
         private readonly ITextFormatter hyperlinkTextFormatter;
         private readonly ChatAudioSettingsAsset chatAudioSettings;
@@ -72,7 +73,7 @@ namespace DCL.Chat
             ViewDependencies viewDependencies,
             IChatCommandsBus chatCommandsBus,
             IRoomHub roomHub,
-            ChatAudioSettingsAsset chatAudioSettings, ITextFormatter hyperlinkTextFormatter) : base(viewFactory)
+            ChatAudioSettingsAsset chatAudioSettings, ITextFormatter hyperlinkTextFormatter, IProfileCache profileCache) : base(viewFactory)
         {
             this.chatMessagesBus = chatMessagesBus;
             this.chatHistory = chatHistory;
@@ -87,6 +88,7 @@ namespace DCL.Chat
             this.sceneRoom = roomHub.SceneRoom().Room();
             this.chatAudioSettings = chatAudioSettings;
             this.hyperlinkTextFormatter = hyperlinkTextFormatter;
+            this.profileCache = profileCache;
             chatLifecycleBusController.SubscribeToHideChatCommand(HideBusCommandReceived);
         }
 
@@ -423,8 +425,10 @@ namespace DCL.Chat
 
         private ChatMemberListView.MemberData GetMemberDataFromParticipantIdentity(Profile profile)
         {
-            ChatMemberListView.MemberData newMemberData = new ChatMemberListView.MemberData();
-            newMemberData.Id = profile.UserId;
+            ChatMemberListView.MemberData newMemberData = new ChatMemberListView.MemberData
+                {
+                    Id = profile.UserId,
+                };
 
             if (profile != null)
             {

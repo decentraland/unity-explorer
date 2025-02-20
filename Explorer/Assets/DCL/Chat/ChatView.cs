@@ -4,6 +4,7 @@ using DCL.Settings.Settings;
 using DCL.Chat.History;
 using DCL.Profiles;
 using DCL.UI;
+using DCL.UI.Profiles.Helpers;
 using MVC;
 using DG.Tweening;
 using System;
@@ -614,7 +615,7 @@ namespace DCL.Chat
         }
 
         private Color CalculateUsernameColor(ChatMessage chatMessage) =>
-            viewDependencies.ProfileNameColorHelper.GetNameColor(chatMessage.SenderValidatedName);
+            ProfileNameColorHelper.GetNameColor(chatMessage.SenderValidatedName);
 
         private void OnChatMessageViewerScrollPositionChanged(Vector2 scrollPosition)
         {

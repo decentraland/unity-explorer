@@ -5,20 +5,20 @@ using Random = System.Random;
 
 namespace DCL.UI.Profiles.Helpers
 {
-    public class ProfileNameColorHelper : IProfileNameColorHelper
+    public static class ProfileNameColorHelper
     {
         private static readonly Color DEFAULT_COLOR = Color.white;
+        private static List<Color> nameColors;
+        private static byte[] asciiValues;
+        private static int seed;
 
-        private readonly List<Color> nameColors;
-        private byte[] asciiValues;
-        private int seed;
 
-        public ProfileNameColorHelper(List<Color> nameColors)
+        public static void SetNameColors(List<Color> colors)
         {
-            this.nameColors = nameColors;
+            nameColors = colors;
         }
 
-        public Color GetNameColor(string username)
+        public static Color GetNameColor(string username)
         {
             if (nameColors.Count == 0) return DEFAULT_COLOR;
 

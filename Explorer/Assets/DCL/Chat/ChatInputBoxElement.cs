@@ -65,6 +65,7 @@ namespace DCL.Chat
         private EmojiPanelController? emojiPanelController;
         private InputSuggestionPanelController? suggestionPanelController;
         private ViewDependencies viewDependencies;
+        private IProfileCache profileCache;
 
         private CancellationTokenSource emojiPanelCts = new ();
         private bool isInputSelected;

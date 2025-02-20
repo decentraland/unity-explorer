@@ -3,7 +3,6 @@ using DCL.Clipboard;
 using DCL.Multiplayer.Connectivity;
 using DCL.UI.GenericContextMenu;
 using DCL.UI.GenericContextMenu.Controls.Configs;
-using DCL.Utilities;
 using DCL.Web3;
 using ECS.SceneLifeCycle.Realm;
 using MVC;

@@ -25,7 +25,6 @@ using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.Helpers;
 using DCL.Multiplayer.Profiles.Entities;
 using DCL.AvatarRendering.Loading.Assets;
-using DCL.UI.Profiles.Helpers;
 using DCL.Quality;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -45,7 +44,6 @@ namespace DCL.PluginSystem.Global
 
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly CacheCleaner cacheCleaner;
-        private readonly IProfileNameColorHelper profileNameColorHelper;
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
         private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly IPerformanceBudget frameTimeCapBudget;
@@ -90,7 +88,6 @@ namespace DCL.PluginSystem.Global
             ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy,
             IDebugContainerBuilder debugContainerBuilder,
             CacheCleaner cacheCleaner,
-            IProfileNameColorHelper profileNameColorHelper,
             DefaultFaceFeaturesHandler defaultFaceFeaturesHandler,
             NametagsData nametagsData,
             TextureArrayContainerFactory textureArrayContainerFactory,
@@ -105,7 +102,6 @@ namespace DCL.PluginSystem.Global
             this.mainPlayerAvatarBaseProxy = mainPlayerAvatarBaseProxy;
             this.debugContainerBuilder = debugContainerBuilder;
             this.cacheCleaner = cacheCleaner;
-            this.profileNameColorHelper = profileNameColorHelper;
             this.defaultFaceFeaturesHandler = defaultFaceFeaturesHandler;
             this.memoryBudget = memoryBudget;
             this.rendererFeaturesCache = rendererFeaturesCache;
@@ -174,7 +170,7 @@ namespace DCL.PluginSystem.Global
                 avatarPoolRegistry, computeShaderPool, attachmentsAssetsCache, mainPlayerAvatarBaseProxy,
                 avatarTransformMatrixJobWrapper);
 
-            NametagPlacementSystem.InjectToWorld(ref builder, nametagViewPool, profileNameColorHelper, nametagsData, chatBubbleConfiguration);
+            NametagPlacementSystem.InjectToWorld(ref builder, nametagViewPool, nametagsData, chatBubbleConfiguration);
             NameTagCleanUpSystem.InjectToWorld(ref builder, nametagsData, nametagViewPool);
 
             //Debug scripts

@@ -272,13 +272,13 @@ namespace Global.Dynamic
             var wearableCatalog = new WearableStorage();
             var characterPreviewFactory = new CharacterPreviewFactory(staticContainer.ComponentsContainer.ComponentPoolsRegistry);
             IWebBrowser webBrowser = bootstrapContainer.WebBrowser;
-            IProfileNameColorHelper profileNameColorHelper = new ProfileNameColorHelper(dynamicSettings.UserNameColors);
+            ProfileNameColorHelper.SetNameColors(dynamicSettings.UserNameColors);
             NametagsData nametagsData = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.NametagsData, ct)).Value;
 
             IProfileCache profileCache = new DefaultProfileCache();
 
             var profileRepository = new LogProfileRepository(
-                new RealmProfileRepository(staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData, profileCache, profileNameColorHelper)
+                new RealmProfileRepository(staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData, profileCache)
             );
 
             static IMultiPool MultiPoolFactory() =>
@@ -549,8 +549,9 @@ namespace Global.Dynamic
             IChatLifecycleBusController chatLifecycleBusController = new ChatLifecycleBusController(mvcManager);
 
             ISidebarActionsBus sidebarActionsBus = new SidebarActionsBusController();
+            MVCManagerMenusAccessFacade menusAccessFacade = new MVCManagerMenusAccessFacade(mvcManager, clipboard, clipboardManager, friendServiceProxy, profileCache);
 
-            var viewDependencies = new ViewDependencies(dclInput, unityEventSystem, new MVCManagerMenusAccessFacade(mvcManager, clipboard, clipboardManager, friendServiceProxy, profileCache), clipboardManager, dclCursor, profileCache, profileNameColorHelper);
+            var viewDependencies = new ViewDependencies(dclInput, unityEventSystem, menusAccessFacade, clipboardManager, dclCursor, roomHub);
 
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
@@ -596,7 +597,6 @@ namespace Global.Dynamic
                     staticContainer.MainPlayerAvatarBaseProxy,
                     debugBuilder,
                     staticContainer.CacheCleaner,
-                    profileNameColorHelper,
                     new DefaultFaceFeaturesHandler(wearableCatalog),
                     nametagsData,
                     defaultTexturesContainer.TextureArrayContainerFactory,
@@ -614,7 +614,7 @@ namespace Global.Dynamic
                     initializationFlowContainer.InitializationFlow,
                     profileCache, sidebarBus, dclInput, sidebarActionsBus,
                     globalWorld, playerEntity, includeCameraReel, includeFriends,
-                    chatHistory, profileNameColorHelper),
+                    chatHistory),
                 new ErrorPopupPlugin(mvcManager, assetsProvisioner),
                 connectionStatusPanelPlugin,
                 new MinimapPlugin(mvcManager, minimap),
@@ -633,7 +633,8 @@ namespace Global.Dynamic
                     chatCommandsBus,
                     roomHub,
                     assetsProvisioner,
-                    hyperlinkTextFormatter),
+                    hyperlinkTextFormatter,
+                    profileCache),
                 new ExplorePanelPlugin(
                     assetsProvisioner,
                     mvcManager,
@@ -726,8 +727,7 @@ namespace Global.Dynamic
                     assetsProvisioner,
                     mvcManager,
                     staticContainer.WebRequestsContainer.WebRequestController,
-                    notificationsBusController,
-                    profileNameColorHelper),
+                    notificationsBusController),
                 new RewardPanelPlugin(mvcManager, assetsProvisioner, notificationsBusController, staticContainer.WebRequestsContainer.WebRequestController),
                 new PassportPlugin(
                     assetsProvisioner,
@@ -794,7 +794,6 @@ namespace Global.Dynamic
                     dynamicWorldDependencies.RootUIDocument,
                     globalWorld,
                     debugBuilder,
-                    profileNameColorHelper,
                     nametagsData));
 
             if (includeFriends)
@@ -823,8 +822,7 @@ namespace Global.Dynamic
                     includeUserBlocking,
                     appArgs,
                     staticContainer.FeatureFlagsCache,
-                    sidebarActionsBus,
-                    profileNameColorHelper));
+                    sidebarActionsBus));
             }
 
             if (dynamicWorldParams.EnableAnalytics)

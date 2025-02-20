@@ -85,7 +85,7 @@ namespace DCL.InWorldCamera.Playground
 
             return new SelfProfile(
                 new LogProfileRepository(
-                    new RealmProfileRepository(IWebRequestController.DEFAULT, realmData, new DefaultProfileCache(), new ProfileNameColorHelper(new List<Color>()))
+                    new RealmProfileRepository(IWebRequestController.DEFAULT, realmData, new DefaultProfileCache())
                 ),
                 web3IdentityCache,
                 new EquippedWearables(),
