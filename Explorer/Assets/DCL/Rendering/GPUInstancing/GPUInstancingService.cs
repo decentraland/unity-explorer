@@ -10,6 +10,7 @@ namespace DCL.Roads.GPUInstancing
 {
     public class GPUInstancingService : IDisposable
     {
+
         struct GroupData
         {
             public Matrix4x4 lodSizes;
@@ -32,7 +33,7 @@ namespace DCL.Roads.GPUInstancing
             instanceCount = 0,
             startIndex = 0,
             baseVertexIndex = 0,
-            startInstance = 0
+            startInstance = 0,
         };
 
         private const float STREET_MAX_HEIGHT = 10f;
@@ -58,6 +59,11 @@ namespace DCL.Roads.GPUInstancing
         protected uint IndirectBufferGeneration_ThreadGroupSize_Y = 1;
         protected uint IndirectBufferGeneration_ThreadGroupSize_Z = 1;
 
+        public ComputeShader DrawArgsInstanceCountTransferShader;
+        private string DrawArgsInstanceCountTransferShader_KernelName = "DrawArgsInstanceCountTransfer";
+        protected static int DrawArgsInstanceCountTransferShader_KernelIDs;
+
+
         private static readonly int ComputeVar_PerInstance_LODLevels  = Shader.PropertyToID("PerInstance_LODLevels"); // RWStructuredBuffer<uint4>
         private static readonly int ComputeVar_PerInstanceData = Shader.PropertyToID("PerInstanceData"); // RWStructuredBuffer<PerInstance>
         private static readonly int ComputeVar_InstanceLookUpAndDither = Shader.PropertyToID("InstanceLookUpAndDither"); // RWStructuredBuffer<uint2>
@@ -65,12 +71,14 @@ namespace DCL.Roads.GPUInstancing
         private static readonly int ComputeVar_arrLODCount = Shader.PropertyToID("arrLODCount");
         private static readonly int ComputeVar_IndirectDrawIndexedArgsBuffer = Shader.PropertyToID("IndirectDrawIndexedArgsBuffer");
 
-        public GPUInstancingService(GPUInstancingRenderFeature.GPUInstancingRenderFeature_Settings renderFeatureSettings)
-            : this(renderFeatureSettings.FrustumCullingAndLODGenComputeShader, renderFeatureSettings.IndirectBufferGenerationComputeShader)
+        public GPUInstancingService(GPUInstancingRenderFeature.GPUInstancingRenderFeature_Settings renderFeatureSettings) : this(
+                renderFeatureSettings.FrustumCullingAndLODGenComputeShader,
+                renderFeatureSettings.IndirectBufferGenerationComputeShader,
+                renderFeatureSettings.DrawArgsInstanceCountTransferShader)
         {
         }
 
-        public GPUInstancingService(ComputeShader frustumCullingAndLODGenComputeShader, ComputeShader indirectBufferGenerationComputeShader)
+        public GPUInstancingService(ComputeShader frustumCullingAndLODGenComputeShader, ComputeShader indirectBufferGenerationComputeShader, ComputeShader drawArgsInstanceCountTransferShader)
         {
             FrustumCullingAndLODGenComputeShader = frustumCullingAndLODGenComputeShader;
             FrustumCullingAndLODGenComputeShader_KernelIDs = FrustumCullingAndLODGenComputeShader.FindKernel(FrustumCullingAndLODGenComputeShader_KernelName);
@@ -85,6 +93,10 @@ namespace DCL.Roads.GPUInstancing
                 out IndirectBufferGeneration_ThreadGroupSize_X,
                 out IndirectBufferGeneration_ThreadGroupSize_Y,
                 out IndirectBufferGeneration_ThreadGroupSize_Z);
+
+            DrawArgsInstanceCountTransferShader = drawArgsInstanceCountTransferShader;
+            DrawArgsInstanceCountTransferShader_KernelIDs = DrawArgsInstanceCountTransferShader.FindKernel(DrawArgsInstanceCountTransferShader_KernelName);
+
         }
 
         public void Dispose()
@@ -134,27 +146,22 @@ namespace DCL.Roads.GPUInstancing
             buffers.ArrLODCount.SetData(arrLOD, 0, 0, 8);
 
             // Zero-out draw args - will be calculated by compute shaders
-            var commands_0 = buffers.DrawArgsCommandDataPerCombinedRenderer[0];
-            for (int j = 0; j < commands_0.Length; j++)
-                commands_0[j].instanceCount = 0;
+            for (var i = 0; i < buffers.DrawArgsCommandData.Length; i++)
+                buffers.DrawArgsCommandData[i].instanceCount = 0;
 
-            buffers.DrawArgsPerCombinedRenderer[0].SetData(commands_0);
+            buffers.DrawArgs.SetData(buffers.DrawArgsCommandData);
 
             IndirectBufferGenerationComputeShader.SetBuffer(IndirectBufferGenerationComputeShader_KernelIDs, ComputeVar_GroupDataBuffer, buffers.GroupData);
             IndirectBufferGenerationComputeShader.SetBuffer(IndirectBufferGenerationComputeShader_KernelIDs, ComputeVar_arrLODCount, buffers.ArrLODCount); // uint[8]
-            IndirectBufferGenerationComputeShader.SetBuffer(IndirectBufferGenerationComputeShader_KernelIDs, ComputeVar_IndirectDrawIndexedArgsBuffer, buffers.DrawArgsPerCombinedRenderer[0]);
+            IndirectBufferGenerationComputeShader.SetBuffer(IndirectBufferGenerationComputeShader_KernelIDs, ComputeVar_IndirectDrawIndexedArgsBuffer, buffers.DrawArgs);
             IndirectBufferGenerationComputeShader.SetBuffer(IndirectBufferGenerationComputeShader_KernelIDs, ComputeVar_PerInstance_LODLevels, buffers.LODLevels);
             IndirectBufferGenerationComputeShader.SetBuffer(IndirectBufferGenerationComputeShader_KernelIDs, ComputeVar_InstanceLookUpAndDither, buffers.InstanceLookUpAndDither);
             IndirectBufferGenerationComputeShader.Dispatch(IndirectBufferGenerationComputeShader_KernelIDs, Mathf.CeilToInt((float)buffers.PerInstanceMatrices.count / (int)IndirectBufferGeneration_ThreadGroupSize_X), 1, 1);
 
-            for (var i = 1; i < buffers.DrawArgsCommandDataPerCombinedRenderer.Count; i++)
-            {
-                var array = buffers.DrawArgsCommandDataPerCombinedRenderer[i];
-                for (int j = 0; j < array.Length; j++)
-                    array[j].instanceCount = commands_0[j].instanceCount;
-
-                buffers.DrawArgsPerCombinedRenderer[i].SetData(array);
-            }
+            DrawArgsInstanceCountTransferShader.SetBuffer(DrawArgsInstanceCountTransferShader_KernelIDs, ComputeVar_GroupDataBuffer, buffers.GroupData);
+            DrawArgsInstanceCountTransferShader.SetBuffer(DrawArgsInstanceCountTransferShader_KernelIDs, ComputeVar_arrLODCount, buffers.ArrLODCount);
+            DrawArgsInstanceCountTransferShader.SetBuffer(DrawArgsInstanceCountTransferShader_KernelIDs, ComputeVar_IndirectDrawIndexedArgsBuffer, buffers.DrawArgs);
+            DrawArgsInstanceCountTransferShader.Dispatch(DrawArgsInstanceCountTransferShader_KernelIDs, Mathf.CeilToInt((float)buffers.PerInstanceMatrices.count / (int)IndirectBufferGeneration_ThreadGroupSize_X), 1, 1);
 
             for (var i = 0; i < candidate.LODGroup.CombinedLodsRenderers.Count; i++)
             {
@@ -164,7 +171,7 @@ namespace DCL.Roads.GPUInstancing
                 var RenderParams = combinedLodRenderer.RenderParamsArray[0];
                 RenderParams.camera = cam;
 
-                Graphics.RenderMeshIndirect(RenderParams, combinedLodRenderer.CombinedMesh, buffers.DrawArgsPerCombinedRenderer[i], commandCount: lodCount);
+                Graphics.RenderMeshIndirect(RenderParams, combinedLodRenderer.CombinedMesh, buffers.DrawArgs, commandCount: lodCount, startCommand: i*lodCount);
             }
         }
 
@@ -194,12 +201,15 @@ namespace DCL.Roads.GPUInstancing
             buffers.PerInstanceMatrices = new GraphicsBuffer(GraphicsBuffer.Target.Structured, GraphicsBuffer.UsageFlags.None, _nInstanceCount, Marshal.SizeOf(typeof(PerInstanceBuffer)));
             buffers.PerInstanceMatrices.SetData(candidate.InstancesBuffer, 0, 0, _nInstanceCount);
 
-            buffers.DrawArgsPerCombinedRenderer = new List<GraphicsBuffer>();
-            buffers.DrawArgsCommandDataPerCombinedRenderer = new List<GraphicsBuffer.IndirectDrawIndexedArgs[]>();
-
             var cam = Camera.main;
-            foreach (var combinedLodRenderer in candidate.LODGroup.CombinedLodsRenderers)
+
+            int combinedRenderersCount = candidate.LODGroup.CombinedLodsRenderers.Count;
+            buffers.DrawArgs = new GraphicsBuffer(GraphicsBuffer.Target.IndirectArguments, count: combinedRenderersCount * _nLODCount, GraphicsBuffer.IndirectDrawIndexedArgs.size);
+            buffers.DrawArgsCommandData = new GraphicsBuffer.IndirectDrawIndexedArgs[combinedRenderersCount * _nLODCount];
+
+            for (var combinedRendererId = 0; combinedRendererId < combinedRenderersCount; combinedRendererId++)
             {
+                CombinedLodsRenderer combinedLodRenderer = candidate.LODGroup.CombinedLodsRenderers[combinedRendererId];
                 Mesh combinedMesh = combinedLodRenderer.CombinedMesh;
 
                 if (combinedMesh == null)
@@ -208,25 +218,23 @@ namespace DCL.Roads.GPUInstancing
                     continue;
                 }
 
-                var lodLevelsDrawArgs = new GraphicsBuffer(GraphicsBuffer.Target.IndirectArguments, count: _nLODCount, GraphicsBuffer.IndirectDrawIndexedArgs.size);
-                var drawArgsCommandData = new GraphicsBuffer.IndirectDrawIndexedArgs[_nLODCount];
-
                 for (var lodLevel = 0; lodLevel < _nLODCount; lodLevel++)
                 {
-                    if (lodLevel > combinedMesh.subMeshCount - 1)
+                    if (lodLevel < combinedMesh.subMeshCount)
                     {
-                        drawArgsCommandData[lodLevel].instanceCount = 0;
-                        continue;
+                        buffers.DrawArgsCommandData[lodLevel + (combinedRendererId *_nLODCount)].instanceCount = 0;
+                        buffers.DrawArgsCommandData[lodLevel + (combinedRendererId *_nLODCount)].indexCountPerInstance = combinedMesh.GetIndexCount(lodLevel);
+                        buffers.DrawArgsCommandData[lodLevel + (combinedRendererId *_nLODCount)].startIndex = combinedMesh.GetIndexStart(lodLevel);
+                        buffers.DrawArgsCommandData[lodLevel + (combinedRendererId *_nLODCount)].baseVertexIndex = combinedMesh.GetBaseVertex(lodLevel);
+                        buffers.DrawArgsCommandData[lodLevel + (combinedRendererId *_nLODCount)].startInstance = (uint)lodLevel * (uint)candidate.InstancesBuffer.Count;
                     }
-
-                    drawArgsCommandData[lodLevel].indexCountPerInstance = combinedMesh.GetIndexCount(lodLevel);
-                    drawArgsCommandData[lodLevel].instanceCount = 0;
-                    drawArgsCommandData[lodLevel].startIndex = combinedMesh.GetIndexStart(lodLevel);
-                    drawArgsCommandData[lodLevel].baseVertexIndex = combinedMesh.GetBaseVertex(lodLevel);
-                    drawArgsCommandData[lodLevel].startInstance = (uint)lodLevel * (uint)candidate.InstancesBuffer.Count;
+                    else
+                    {
+                        buffers.DrawArgsCommandData[lodLevel + (combinedRendererId *_nLODCount)] = zeroDrawArgs;
+                    }
                 }
 
-                lodLevelsDrawArgs.SetData(drawArgsCommandData, 0, 0, count: _nLODCount);
+                buffers.DrawArgs.SetData(buffers.DrawArgsCommandData, 0, 0, count: combinedRenderersCount * _nLODCount);
 
                 combinedLodRenderer.InitializeRenderParams(instancingMaterials);
                 ref RenderParams rparams = ref combinedLodRenderer.RenderParamsArray[0];
@@ -235,9 +243,6 @@ namespace DCL.Roads.GPUInstancing
                 rparams.matProps = new MaterialPropertyBlock();
                 rparams.matProps.SetBuffer("_PerInstanceBuffer", buffers.PerInstanceMatrices);
                 rparams.matProps.SetBuffer("_PerInstanceLookUpAndDitherBuffer", buffers.InstanceLookUpAndDither);
-
-                buffers.DrawArgsPerCombinedRenderer.Add(lodLevelsDrawArgs);
-                buffers.DrawArgsCommandDataPerCombinedRenderer.Add(drawArgsCommandData);
             }
         }
 
@@ -267,7 +272,7 @@ namespace DCL.Roads.GPUInstancing
                     submeshIndex: 0, // TODO (Vit): we need to combine mesh without submeshes for our LOD to work here
                     material: combinedLodRenderer.SharedMaterial,
                     shaderPass: -1, // which pass of the shader to use, or -1 which renders all passes.
-                    bufferWithArgs: buffers.DrawArgsPerCombinedRenderer[i],
+                    bufferWithArgs: buffers.DrawArgs,
                     argsOffset: lodCount
                     // ,properties: new MaterialPropertyBlock()
                 );
@@ -283,8 +288,8 @@ namespace DCL.Roads.GPUInstancing
         public GraphicsBuffer GroupData;
         public GraphicsBuffer ArrLODCount;
 
-        public List<GraphicsBuffer> DrawArgsPerCombinedRenderer;
-        public List<GraphicsBuffer.IndirectDrawIndexedArgs[]> DrawArgsCommandDataPerCombinedRenderer;
+        public GraphicsBuffer DrawArgs;
+        public GraphicsBuffer.IndirectDrawIndexedArgs[] DrawArgsCommandData;
 
         public void Dispose()
         {
@@ -303,11 +308,8 @@ namespace DCL.Roads.GPUInstancing
             ArrLODCount?.Dispose();
             ArrLODCount = null;
 
-            foreach (GraphicsBuffer drawArg in DrawArgsPerCombinedRenderer)
-                drawArg?.Dispose();
-
-            DrawArgsPerCombinedRenderer.Clear();
-            DrawArgsPerCombinedRenderer = null;
+            DrawArgs?.Dispose();
+            DrawArgs = null;
         }
     }
 }

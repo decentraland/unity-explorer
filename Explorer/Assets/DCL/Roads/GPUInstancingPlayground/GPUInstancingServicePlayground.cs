@@ -41,7 +41,7 @@ namespace DCL.Roads.GPUInstancing
 
         private void OnEnable()
         {
-            instancingService = new GPUInstancingService(FrustumCullingAndLODGenComputeShader, IndirectBufferGenerationComputeShader);
+            instancingService = new GPUInstancingService(FrustumCullingAndLODGenComputeShader, IndirectBufferGenerationComputeShader, null);
         }
 
         private void OnDisable()
