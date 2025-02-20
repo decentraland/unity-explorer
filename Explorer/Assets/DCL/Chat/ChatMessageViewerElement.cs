@@ -340,7 +340,7 @@ namespace DCL.Chat
             if (profile != null)
             {
                 popupCts = popupCts.SafeRestart();
-                viewDependencies.GlobalUIViews.ShowUserProfileContextMenuAsync(profile, contextMenuPosition, popupCts.Token);
+                viewDependencies.GlobalUIViews.ShowUserProfileContextMenuAsync(walletAddress, contextMenuPosition, popupCts.Token);
             }
         }
 

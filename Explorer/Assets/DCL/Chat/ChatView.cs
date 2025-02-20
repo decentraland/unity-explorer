@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.Settings.Settings;
 using DCL.Chat.History;
+using DCL.Profiles;
 using DCL.UI;
 using MVC;
 using DG.Tweening;
@@ -17,6 +18,8 @@ using Utility;
 
 namespace DCL.Chat
 {
+    public delegate void GetParticipantProfilesDelegate(List<Profile> outProfiles);
+
     // Note: The view never changes any data (chatMessages), that's done by the controller
     public class ChatView : ViewBase, IView, IViewWithGlobalDependencies, IPointerEnterHandler, IPointerExitHandler, IDisposable
     {
@@ -317,7 +320,8 @@ namespace DCL.Chat
         public void Initialize(IReadOnlyDictionary<ChatChannel.ChannelId, ChatChannel> chatChannels,
             ChatChannel.ChannelId defaultChannelId,
             bool areChatBubblesVisible,
-            ChatAudioSettingsAsset chatAudioSettings
+            ChatAudioSettingsAsset chatAudioSettings,
+            GetParticipantProfilesDelegate getParticipantProfilesDelegate
         )
         {
             this.channels = chatChannels;
@@ -335,7 +339,7 @@ namespace DCL.Chat
             chatBubblesToggle.Toggle.onValueChanged.AddListener(OnToggleChatBubblesValueChanged);
             chatBubblesToggle.IsSoundEnabled = true;
 
-            chatInputBox.Initialize(chatAudioSettings);
+            chatInputBox.Initialize(chatAudioSettings, getParticipantProfilesDelegate);
             chatInputBox.InputBoxSelectionChanged += OnInputBoxSelectionChanged;
             chatInputBox.EmojiSelectionVisibilityChanged += OnEmojiSelectionVisibilityChanged;
             chatInputBox.InputChanged += OnInputChanged;

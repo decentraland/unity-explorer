@@ -26,6 +26,7 @@ namespace MVC
         private readonly GenericContextMenu contextMenu;
         private readonly IClipboardManager clipboardManager;
         private readonly ObjectProxy<IFriendsService> friendServiceProxy;
+        private readonly IProfileCache profileCache;
 
         private readonly UserProfileContextMenuControlSettings userProfileContextMenuControlSettings;
         private readonly MentionUserButtonContextMenuControlSettings mentionUserButtonContextMenuControlSettings;
@@ -33,11 +34,12 @@ namespace MVC
         private UniTaskCompletionSource closeContextMenuTask;
         private CancellationTokenSource cancellationTokenSource;
 
-        public MVCManagerMenusAccessFacade(IMVCManager mvcManager, ISystemClipboard systemClipboard, IClipboardManager clipboardManager, ObjectProxy<IFriendsService> friendServiceProxy)
+        public MVCManagerMenusAccessFacade(IMVCManager mvcManager, ISystemClipboard systemClipboard, IClipboardManager clipboardManager, ObjectProxy<IFriendsService> friendServiceProxy, IProfileCache profileCache)
         {
             this.mvcManager = mvcManager;
             this.clipboardManager = clipboardManager;
             this.friendServiceProxy = friendServiceProxy;
+            this.profileCache = profileCache;
 
             userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings(systemClipboard, friendServiceProxy.Configured? OnFriendsButtonClicked : null);
             openUserProfileButtonContextMenuControlSettings = new OpenUserProfileButtonContextMenuControlSettings(OnShowUserPassportClicked);
@@ -67,8 +69,13 @@ namespace MVC
         public UniTask ShowPassport(string userId, CancellationToken ct) =>
             mvcManager.ShowAsync(PassportController.IssueCommand(new PassportController.Params(userId)), ct);
 
-        public async UniTask ShowUserProfileContextMenuAsync(Profile profile, Vector3 position, CancellationToken ct)
+        public async UniTask ShowUserProfileContextMenuAsync(string walletId, Vector3 position, CancellationToken ct)
         {
+            Profile profile = profileCache.Get(walletId);
+
+            if(profile == null)
+                return;
+
             closeContextMenuTask?.TrySetResult();
             closeContextMenuTask = new UniTaskCompletionSource();
 

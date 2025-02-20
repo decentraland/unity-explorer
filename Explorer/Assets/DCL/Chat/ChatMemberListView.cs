@@ -100,7 +100,7 @@ namespace DCL.Chat
         private async void OnContextMenuButtonClickedAsync(ChatMemberListViewItem listItem, Transform buttonPosition)
         {
             contextMenuCts = contextMenuCts.SafeRestart();
-            await viewDependencies.GlobalUIViews.ShowUserProfileContextMenuAsync(viewDependencies.ProfileCache.Get(listItem.Id), buttonPosition.position, contextMenuCts.Token);
+            await viewDependencies.GlobalUIViews.ShowUserProfileContextMenuAsync(listItem.Id, buttonPosition.position, contextMenuCts.Token);
         }
     }
 }

@@ -73,6 +73,9 @@ namespace DCL.Chat
         private ChatAudioSettingsAsset chatAudioSettings;
         private CancellationTokenSource popupCts;
 
+        private GetParticipantProfilesDelegate GetParticipantProfiles;
+        private readonly List<Profile> participantProfiles = new ();
+
         public string InputBoxText
         {
             get => inputField.text;
@@ -104,10 +107,11 @@ namespace DCL.Chat
         /// </summary>
         public event InputChangedDelegate? InputChanged;
 
-        public void Initialize(ChatAudioSettingsAsset chatAudioSettings)
+        public void Initialize(ChatAudioSettingsAsset chatAudioSettings, GetParticipantProfilesDelegate getParticipantProfiles)
         {
             device = InputSystem.GetDevice<Mouse>();
             this.chatAudioSettings = chatAudioSettings;
+            this.GetParticipantProfiles = getParticipantProfiles;
 
             InitializeEmojiPanelController();
             InitializeEmojiMapping(emojiPanelController!.EmojiNameMapping);
@@ -383,9 +387,7 @@ namespace DCL.Chat
 
         private void UpdateProfileNameMap()
         {
-            //NOTE: This information should come from the channel where this chat is taking place and that channel should make sure this list is updated.
-            //For now this will work, but is not the final implementation, this will be changed in the next shape.
-            IReadOnlyCollection<string> remoteParticipantIdentities = viewDependencies.RoomHub.IslandRoom().Participants.RemoteParticipantIdentities();
+            GetParticipantProfiles(participantProfiles);
 
             var profileSuggestions = profileSuggestionsDictionary.ToList();
 
@@ -393,15 +395,15 @@ namespace DCL.Chat
             {
                 KeyValuePair<string, ProfileInputSuggestionData> suggestion = profileSuggestions[index];
 
-                if (!remoteParticipantIdentities.Contains(suggestion.Value.GetId()))
+                bool isThereProfileForSuggestion = participantProfiles.FindIndex((profile) => profile.UserId == suggestion.Value.GetId()) > -1;
+
+                if (!isThereProfileForSuggestion)
                     profileSuggestionsDictionary.Remove(suggestion.Key);
             }
 
             //We add or update the remaining participants
-            foreach (string? participant in remoteParticipantIdentities)
+            foreach (Profile? profile in participantProfiles)
             {
-                Profile? profile = viewDependencies.ProfileCache.Get(participant);
-
                 if (profile != null)
                 {
                     if (profileSuggestionsDictionary.TryGetValue(profile.DisplayName, out ProfileInputSuggestionData profileSuggestionData))

@@ -4,7 +4,6 @@ using DCL.CharacterCamera;
 using DCL.Chat.Commands;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
-using DCL.Emoji;
 using DCL.Chat.ChatLifecycleBus;
 using DCL.Input;
 using DCL.Input.Component;
@@ -50,6 +49,7 @@ namespace DCL.Chat
         private CancellationTokenSource memberListCts;
         private string previousRoomSid = string.Empty;
         private readonly Dictionary<string, ChatMemberListView.MemberData> membersBuffer = new ();
+        private readonly List<Profile> participantProfileBuffer = new ();
 
         // Used exclusively to calculate the new value of the read messages once the Unread messages separator has been viewed
         private int messageCountWhenSeparatorViewed;
@@ -143,7 +143,7 @@ namespace DCL.Chat
             chatCommandsBus.OnClearChat += Clear;
 
             viewInstance!.InjectDependencies(viewDependencies);
-            viewInstance!.Initialize(chatHistory.Channels, ChatChannel.NEARBY_CHANNEL, nametagsData.showChatBubbles, chatAudioSettings);
+            viewInstance!.Initialize(chatHistory.Channels, ChatChannel.NEARBY_CHANNEL, nametagsData.showChatBubbles, chatAudioSettings, GetProfilesFromParticipants);
 
             viewInstance.PointerEnter += OnChatViewPointerEnter;
             viewInstance.PointerExit += OnChatViewPointerExit;
@@ -408,26 +408,23 @@ namespace DCL.Chat
         {
             membersBuffer.Clear();
 
-            // Island room
-            IReadOnlyCollection<string> islandIdentities = islandRoom.Participants.RemoteParticipantIdentities();
+            GetProfilesFromParticipants(participantProfileBuffer);
 
-            foreach (string identity in islandIdentities)
+            for (int i = 0; i < participantProfileBuffer.Count; ++i)
             {
-                ChatMemberListView.MemberData newMember = GetMemberDataFromParticipantIdentity(identity);
+                ChatMemberListView.MemberData newMember = GetMemberDataFromParticipantIdentity(participantProfileBuffer[i]);
 
                 if (!string.IsNullOrEmpty(newMember.Name))
-                    membersBuffer.Add(identity, newMember);
+                    membersBuffer.Add(newMember.Name, newMember);
             }
 
             return membersBuffer;
         }
 
-        private ChatMemberListView.MemberData GetMemberDataFromParticipantIdentity(string identity)
+        private ChatMemberListView.MemberData GetMemberDataFromParticipantIdentity(Profile profile)
         {
-            Profile profile = viewDependencies.ProfileCache.Get(identity);
-
             ChatMemberListView.MemberData newMemberData = new ChatMemberListView.MemberData();
-            newMemberData.Id = identity;
+            newMemberData.Id = profile.UserId;
 
             if (profile != null)
             {
@@ -447,5 +444,20 @@ namespace DCL.Chat
             viewInstance!.SetMemberData(members);
         }
 
+        private void GetProfilesFromParticipants(List<Profile> outProfiles)
+        {
+            outProfiles.Clear();
+
+            // Island room
+            IReadOnlyCollection<string> islandIdentities = islandRoom.Participants.RemoteParticipantIdentities();
+
+            foreach (string identity in islandIdentities)
+            {
+                Profile profile = viewDependencies.ProfileCache.Get(identity);
+
+                if(profile != null)
+                    outProfiles.Add(profile);
+            }
+        }
     }
 }
