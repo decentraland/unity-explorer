@@ -97,7 +97,6 @@ namespace ECS.SceneLifeCycle.Systems
                 {
                     // So we know the scene has started
                     scenesCache.Add(scene, promise.LoadingIntention.DefinitionComponent.Parcels);
-                    sceneBudget.AddLoadedScene(scene.SceneData.SceneEntityDefinition.id);
                 }
                 World.Add(entity, scene);
             }

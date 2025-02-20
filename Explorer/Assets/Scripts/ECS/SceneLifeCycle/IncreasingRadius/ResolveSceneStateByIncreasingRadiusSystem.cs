@@ -32,12 +32,9 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         private static readonly Comparer COMPARER_INSTANCE = new ();
 
         private static readonly QueryDescription START_SCENES_LOADING = new QueryDescription()
-            .WithAll<SceneDefinitionComponent, PartitionComponent, VisualSceneState>()
+            .WithAll<SceneDefinitionComponent, PartitionComponent, VisualSceneState, SceneGateComponent>()
                                                                        .WithNone<ISceneFacade, AssetPromise<ISceneFacade, GetSceneFacadeIntention>, SceneLODInfo, RoadInfo, EmptySceneComponent>();
 
-        private static readonly QueryDescription START_SCENES_UNLOADING = new QueryDescription()
-            .WithAll<SceneDefinitionComponent, PartitionComponent, VisualSceneState>()
-            .WithAny<ISceneFacade, AssetPromise<ISceneFacade, GetSceneFacadeIntention>, SceneLODInfo, RoadInfo, EmptySceneComponent>();
         
         private readonly IRealmPartitionSettings realmPartitionSettings;
 
@@ -168,9 +165,6 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
 
             for (var i = 0; i < orderedData.Length && promisesCreated < realmPartitionSettings.ScenesRequestBatchSize; i++)
             {
-                if (!sceneBudget.TrySpendBudget())
-                    break;
-                
                 OrderedData data = orderedData[i];
 
                 // As sorting is throttled Entity might gone out of scope
@@ -179,10 +173,11 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
 
                 // We can't save component to data as sorting is throttled and components could change
                 var components
-                    = World.Get<SceneDefinitionComponent, PartitionComponent, VisualSceneState>(data.Entity);
-                
-                sceneBudget.AddLoadingScene(components.t0.Value.Definition.id);
+                    = World.Get<SceneDefinitionComponent, PartitionComponent, VisualSceneState, SceneGateComponent>(data.Entity);
 
+                if (!components.t3.Value.canLoad)
+                    continue;
+                
                 switch (components.t2.Value.CurrentVisualSceneState)
                 {
                     case VisualSceneStateEnum.SHOWING_LOD:
@@ -207,13 +202,6 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         private void StartUnloading(in Entity entity, ref PartitionComponent partitionComponent, ref SceneDefinitionComponent sceneDefinitionComponent)
         {
             if (partitionComponent.OutOfRange)
-            {
-                sceneBudget.AddUnloadingScene(sceneDefinitionComponent.Definition.id);
-                World.Add(entity, DeleteEntityIntention.DeferredDeletion);
-
-            }
-
-            if (partitionComponent.RawSqrDistance >= sceneBudget.OverridenUnloadingSqrDistance)
             {
                 sceneBudget.AddUnloadingScene(sceneDefinitionComponent.Definition.id);
                 World.Add(entity, DeleteEntityIntention.DeferredDeletion);

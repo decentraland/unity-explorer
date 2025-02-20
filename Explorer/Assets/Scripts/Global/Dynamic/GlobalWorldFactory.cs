@@ -157,7 +157,8 @@ namespace Global.Dynamic
                 partitionSettings, sceneReadinessReportQueue, scenesCache);
 
             SceneBudget capSceneLoading = new SceneBudget();
-            
+
+            SceneGateSystem.InjectToWorld(ref builder);
             ResolveSceneStateByIncreasingRadiusSystem.InjectToWorld(ref builder, realmPartitionSettings, capSceneLoading);
             //Removed, since we now have landscape surrounding the world
             //CreateEmptyPointersInFixedRealmSystem.InjectToWorld(ref builder, jobsMathHelper, realmPartitionSettings);
