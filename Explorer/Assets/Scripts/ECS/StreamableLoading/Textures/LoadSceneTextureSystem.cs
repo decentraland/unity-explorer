@@ -53,16 +53,7 @@ namespace ECS.StreamableLoading.Textures
                 {
                     assetBundlePromise = await assetBundlePromise.ToUniTaskAsync(World, cancellationToken: ct);
                     if (assetBundlePromise.TryGetResult(World, out var depResult) && depResult.Succeeded)
-                    {
-                        // Unfortunate hack that needs to be done. If the texture was first loaded as the dependency, the asset was never loaded.
-                        // We can confirm this by checking the asset type that should have been requested, as marked above
-                        if (!depResult.Asset!.HasLoaded())
-                        {
-                            Texture2D texture =  (Texture2D) await depResult.Asset.AssetBundle.LoadAllAssetsAsync(typeof(Texture2D));
-                            return new StreamableLoadingResult<Texture2DData>(new Texture2DData(texture));
-                        }
-                        return new StreamableLoadingResult<Texture2DData>(new Texture2DData(depResult.Asset!.GetMainAsset<Texture2D>().EnsureNotNull()));
-                    }
+                        return new StreamableLoadingResult<Texture2DData>(new Texture2DData(depResult.Asset!.GetMainAsset<Texture2D>()));
                 }
                 catch (OperationCanceledException)
                 {

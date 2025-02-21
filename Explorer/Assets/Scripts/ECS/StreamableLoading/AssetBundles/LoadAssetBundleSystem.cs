@@ -138,7 +138,11 @@ namespace ECS.StreamableLoading.AssetBundles
         {
             // if the type was not specified don't load any assets (we don't know when they will be indirectly requested)
             if (expectedObjType == null)
-                return new StreamableLoadingResult<AssetBundleData>(new AssetBundleData(assetBundle, metrics, dependencies, memoryStream));
+            {
+                // Unfortunate hack that needs to be done. A texture can be loaded as the dependency, but then requested from the scene.
+                // If we dont load the main asset, the one requeted from the scene wont work
+                return await TryToLoadTexture(assetBundle, metrics, loadingMutex, dependencies, memoryStream, version, source, ct);
+            }
 
             if (lookForShaderAssets && expectedObjType == typeof(GameObject))
             {
@@ -160,6 +164,26 @@ namespace ECS.StreamableLoading.AssetBundles
             // After this point it's no longer possible to load other assets from the asset bundle
 
             return new StreamableLoadingResult<AssetBundleData>(assetBundleData);
+        }
+
+        private static async UniTask<StreamableLoadingResult<AssetBundleData>> TryToLoadTexture(AssetBundle assetBundle, AssetBundleMetrics? metrics, AssetBundleLoadingMutex loadingMutex, AssetBundleData[] dependencies, AssetBundleData.MemoryStream memoryStream, string version, string source, CancellationToken ct)
+        {
+            using var _ = await loadingMutex.AcquireAsync(ct);
+
+            var asyncOp = assetBundle.LoadAllAssetsAsync();
+            await asyncOp.WithCancellation(ct);
+            Object[]? assets = asyncOp.allAssets;
+
+            if (assets.Length > 0 && assets[0] is Texture2D)
+            {
+                var assetBundleDataTexture = new AssetBundleData(assetBundle, metrics, assets[0], typeof(Texture2D), dependencies,
+                    version: version,
+                    source: source);
+
+                return new StreamableLoadingResult<AssetBundleData>(assetBundleDataTexture);
+            }
+
+            return new StreamableLoadingResult<AssetBundleData>(new AssetBundleData(assetBundle, metrics, dependencies, memoryStream));
         }
 
         private static async UniTask<Object> LoadAllAssetsAsync(AssetBundle assetBundle, Type objectType, string? mainAsset, AssetBundleLoadingMutex loadingMutex, ReportData reportCategory,
