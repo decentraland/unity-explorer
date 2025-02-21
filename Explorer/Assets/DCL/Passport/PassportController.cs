@@ -235,6 +235,7 @@ namespace DCL.Passport
 
             viewInstance.PhotosSectionButton.gameObject.SetActive(enableCameraReel);
             viewInstance.FriendInteractionContainer.SetActive(enableFriendshipInteractions);
+            viewInstance.MutualFriends.Root.SetActive(enableFriendshipInteractions);
         }
 
         private void ShowContextMenu()
