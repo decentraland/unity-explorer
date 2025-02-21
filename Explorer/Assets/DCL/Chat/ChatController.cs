@@ -49,7 +49,7 @@ namespace DCL.Chat
 
         private CancellationTokenSource memberListCts;
         private string previousRoomSid = string.Empty;
-        private readonly Dictionary<string, ChatMemberListView.MemberData> membersBuffer = new ();
+        private readonly List<ChatMemberListView.MemberData> membersBuffer = new ();
         private readonly List<Profile> participantProfileBuffer = new ();
 
         // Used exclusively to calculate the new value of the read messages once the Unread messages separator has been viewed
@@ -406,7 +406,7 @@ namespace DCL.Chat
             }
         }
 
-        private Dictionary<string, ChatMemberListView.MemberData> GenerateMemberList()
+        private List<ChatMemberListView.MemberData> GenerateMemberList()
         {
             membersBuffer.Clear();
 
@@ -417,7 +417,7 @@ namespace DCL.Chat
                 ChatMemberListView.MemberData newMember = GetMemberDataFromParticipantIdentity(participantProfileBuffer[i]);
 
                 if (!string.IsNullOrEmpty(newMember.Name))
-                    membersBuffer.Add(newMember.Name, newMember);
+                    membersBuffer.Add(newMember);
             }
 
             return membersBuffer;
@@ -444,7 +444,7 @@ namespace DCL.Chat
 
         private void RefreshMemberList()
         {
-            Dictionary<string, ChatMemberListView.MemberData> members = GenerateMemberList();
+            List<ChatMemberListView.MemberData> members = GenerateMemberList();
             viewInstance!.SetMemberData(members);
         }
 

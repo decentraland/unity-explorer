@@ -476,15 +476,10 @@ namespace DCL.Chat
         /// The list will be refreshed during the next Update.
         /// </summary>
         /// <param name="memberData">The data of the members to be displayed in the member list.</param>
-        public void SetMemberData(Dictionary<string, ChatMemberListView.MemberData> memberData)
+        public void SetMemberData(List<ChatMemberListView.MemberData> memberData)
         {
             sortedMemberData.Clear();
-
-            if(memberData.Count > sortedMemberData.Capacity)
-                sortedMemberData.Capacity = memberData.Count;
-
-            foreach (KeyValuePair<string, ChatMemberListView.MemberData> keyValuePair in memberData)
-                sortedMemberData.Add(keyValuePair.Value);
+            sortedMemberData.AddRange(memberData);
 
             isMemberListDirty = true;
         }
