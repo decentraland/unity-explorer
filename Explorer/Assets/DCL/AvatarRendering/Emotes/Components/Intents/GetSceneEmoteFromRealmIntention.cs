@@ -9,7 +9,7 @@ using System.Threading;
 
 namespace DCL.AvatarRendering.Emotes
 {
-    public struct GetSceneEmoteFromRealmIntention : IEquatable<GetSceneEmoteFromRealmIntention>, IAssetIntention
+    public struct GetSceneEmoteFromRealmIntention : IEquatable<GetSceneEmoteFromRealmIntention>, IEmoteAssetIntention
     {
         private const string SCENE_EMOTE_PREFIX = "urn:decentraland:off-chain:scene-emote";
 
@@ -22,7 +22,7 @@ namespace DCL.AvatarRendering.Emotes
         public BodyShape BodyShape { get; }
         public bool IsAssetBundleProcessed { get; set; }
 
-        public LoadTimeout Timeout;
+        public LoadTimeout Timeout { get; }
 
         public GetSceneEmoteFromRealmIntention(
             string sceneId,

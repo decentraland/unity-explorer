@@ -8,7 +8,7 @@ using System.Threading;
 
 namespace DCL.AvatarRendering.Emotes
 {
-    public struct GetSceneEmoteFromLocalSceneIntention : IEquatable<GetSceneEmoteFromLocalSceneIntention>, IAssetIntention
+    public struct GetSceneEmoteFromLocalSceneIntention : IEquatable<GetSceneEmoteFromLocalSceneIntention>, IEmoteAssetIntention
     {
         private const string SCENE_EMOTE_PREFIX = "urn:decentraland:off-chain:scene-emote";
 
@@ -17,7 +17,7 @@ namespace DCL.AvatarRendering.Emotes
         public string EmoteHash { get; }
         public bool Loop { get; }
         public BodyShape BodyShape { get; }
-        public LoadTimeout Timeout;
+        public LoadTimeout Timeout { get; }
 
         public GetSceneEmoteFromLocalSceneIntention(
             ISceneData sceneData,
