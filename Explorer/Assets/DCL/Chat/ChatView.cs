@@ -452,6 +452,7 @@ namespace DCL.Chat
         public void OnPointerExit(PointerEventData eventData)
         {
             PointerExit?.Invoke();
+            panelBackgroundCanvasGroup.DOFade(0, BackgroundFadeTime);
             chatMessageViewer.SetScrollbarVisibility(false, BackgroundFadeTime);
             chatMessageViewer.StartChatEntriesFadeout();
         }
