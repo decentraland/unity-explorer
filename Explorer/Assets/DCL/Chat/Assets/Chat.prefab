@@ -268,7 +268,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 0, b: 0, a: 0.4}
+  m_Color: {r: 0, g: 0, b: 0, a: 0.5019608}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -1299,6 +1299,10 @@ PrefabInstance:
       propertyPath: m_AnchorMax.y
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 2944423419978137263, guid: ea750bd9ff3dc7b4dad365fa29a4672b, type: 3}
+      propertyPath: m_Color.a
+      value: 0.8
+      objectReference: {fileID: 0}
     - target: {fileID: 3028374557075060334, guid: ea750bd9ff3dc7b4dad365fa29a4672b, type: 3}
       propertyPath: m_Pivot.x
       value: 0
@@ -1416,8 +1420,36 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6339583016895566205, guid: ea750bd9ff3dc7b4dad365fa29a4672b, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: -8
+      objectReference: {fileID: 0}
+    - target: {fileID: 6339583016895566205, guid: ea750bd9ff3dc7b4dad365fa29a4672b, type: 3}
       propertyPath: m_SizeDelta.y
       value: 16
+      objectReference: {fileID: 0}
+    - target: {fileID: 6531318387485468839, guid: ea750bd9ff3dc7b4dad365fa29a4672b, type: 3}
+      propertyPath: m_ChildAlignment
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6531318387485468839, guid: ea750bd9ff3dc7b4dad365fa29a4672b, type: 3}
+      propertyPath: m_Padding.m_Left
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 6531318387485468839, guid: ea750bd9ff3dc7b4dad365fa29a4672b, type: 3}
+      propertyPath: m_ChildScaleWidth
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6531318387485468839, guid: ea750bd9ff3dc7b4dad365fa29a4672b, type: 3}
+      propertyPath: m_Padding.m_Right
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6531318387485468839, guid: ea750bd9ff3dc7b4dad365fa29a4672b, type: 3}
+      propertyPath: m_ChildControlWidth
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6531318387485468839, guid: ea750bd9ff3dc7b4dad365fa29a4672b, type: 3}
+      propertyPath: m_ChildForceExpandWidth
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7031145879623465609, guid: ea750bd9ff3dc7b4dad365fa29a4672b, type: 3}
       propertyPath: m_AnchorMax.y
@@ -1438,6 +1470,14 @@ PrefabInstance:
     - target: {fileID: 7031145879623465609, guid: ea750bd9ff3dc7b4dad365fa29a4672b, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8915002937023591448, guid: ea750bd9ff3dc7b4dad365fa29a4672b, type: 3}
+      propertyPath: m_Padding.w
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 8915002937023591448, guid: ea750bd9ff3dc7b4dad365fa29a4672b, type: 3}
+      propertyPath: m_Softness.y
+      value: 10
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects:
