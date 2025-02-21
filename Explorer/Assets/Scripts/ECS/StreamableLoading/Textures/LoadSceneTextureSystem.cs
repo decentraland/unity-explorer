@@ -53,7 +53,7 @@ namespace ECS.StreamableLoading.Textures
                 {
                     assetBundlePromise = await assetBundlePromise.ToUniTaskAsync(World, cancellationToken: ct);
                     if (assetBundlePromise.TryGetResult(World, out var depResult) && depResult.Succeeded)
-                        return new StreamableLoadingResult<Texture2DData>(new Texture2DData(depResult.Asset!.GetMainAsset<Texture2D>()));
+                        return new StreamableLoadingResult<Texture2DData>(new Texture2DData(depResult.Asset!.GetMainAsset<Texture2D>().EnsureNotNull()));
                 }
                 catch (OperationCanceledException)
                 {
