@@ -1,10 +1,11 @@
-﻿using Arch.Core;
+using Arch.Core;
 using Arch.SystemGroups;
 using DCL.Character.Components;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using ECS.Abstract;
 using ECS.SceneLifeCycle.CurrentScene;
+using SceneRunner.Scene;
 using UnityEngine;
 using UnityEngine.Rendering;
 using Utility;
@@ -22,9 +23,6 @@ namespace ECS.SceneLifeCycle.Systems
         private readonly IScenesCache scenesCache;
         private readonly CurrentSceneInfo currentSceneInfo;
 
-        private Vector2Int lastParcelProcessed;
-
-
         private readonly IDebugContainerBuilder debugBuilder;
         private readonly ElementBinding<string> sceneNameBinding;
         private readonly ElementBinding<string> sceneParcelsBinding;
@@ -32,6 +30,7 @@ namespace ECS.SceneLifeCycle.Systems
         private readonly DebugWidgetVisibilityBinding debugInfoVisibilityBinding;
         private bool showDebugCube;
         private GameObject sceneBoundsCube;
+        private ISceneFacade currentActiveScene;
 
         internal UpdateCurrentSceneSystem(World world, IRealmData realmData, IScenesCache scenesCache, CurrentSceneInfo currentSceneInfo,
             Entity playerEntity, IDebugContainerBuilder debugBuilder) : base(world)
@@ -40,7 +39,6 @@ namespace ECS.SceneLifeCycle.Systems
             this.scenesCache = scenesCache;
             this.currentSceneInfo = currentSceneInfo;
             this.playerEntity = playerEntity;
-            ResetProcessedParcel();
 
             debugInfoVisibilityBinding = new DebugWidgetVisibilityBinding(true);
             sceneNameBinding = new ElementBinding<string>(string.Empty);
@@ -56,54 +54,47 @@ namespace ECS.SceneLifeCycle.Systems
             this.debugBuilder = debugBuilder;
         }
 
-        private void ResetProcessedParcel()
-        {
-            lastParcelProcessed = new Vector2Int(int.MinValue, int.MinValue);
-        }
-
         protected override void Update(float t)
         {
             if (!realmData.Configured)
-            {
-                ResetProcessedParcel();
                 return;
-            }
 
             Vector3 playerPos = World.Get<CharacterTransform>(playerEntity).Transform.position;
             Vector2Int parcel = playerPos.ToParcel();
-            UpdateCurrentScene(parcel);
-            UpdateCurrentSceneInfo(parcel);
+            UpdateSceneReadiness(parcel);
 
             if (debugBuilder.IsVisible && debugInfoVisibilityBinding.IsConnectedAndExpanded)
                 RefreshSceneDebugInfo();
+        }
+        
+        private void UpdateSceneReadiness(Vector2Int parcel)
+        {
+            if (scenesCache.TryGetByParcel(parcel, out var currentScene))
+            {
+                if (currentActiveScene != currentScene)
+                {
+                    currentActiveScene?.SetIsCurrent(false);
+
+                    currentActiveScene = currentScene;
+                
+                    currentActiveScene.SetIsCurrent(true);
+                    currentSceneInfo.Update(currentActiveScene);
+                    scenesCache.SetCurrentScene(currentActiveScene);
+                }
+            }
+            else
+            {
+                if(currentActiveScene != null)
+                {
+                    currentActiveScene.SetIsCurrent(false);
+                    currentActiveScene = null;
+                }
+            }
         }
 
         protected override void OnDispose()
         {
             GameObject.Destroy(sceneBoundsCube);
-        }
-
-        private void UpdateCurrentScene(Vector2Int parcel)
-        {
-            if (lastParcelProcessed == parcel) return;
-            scenesCache.TryGetByParcel(lastParcelProcessed, out var lastProcessedScene);
-            scenesCache.TryGetByParcel(parcel, out var currentScene);
-
-            if (lastProcessedScene != currentScene)
-                lastProcessedScene?.SetIsCurrent(false);
-
-            if (currentScene is { SceneStateProvider: { IsCurrent: false } })
-                currentScene.SetIsCurrent(true);
-
-            lastParcelProcessed = parcel;
-            scenesCache.SetCurrentScene(currentScene);
-        }
-
-        private void UpdateCurrentSceneInfo(Vector2Int parcel)
-        {
-            scenesCache.TryGetByParcel(parcel, out var currentScene);
-            currentSceneInfo.Update(currentScene);
-            scenesCache.SetCurrentScene(currentScene);
         }
 
         private void RefreshSceneDebugInfo()
