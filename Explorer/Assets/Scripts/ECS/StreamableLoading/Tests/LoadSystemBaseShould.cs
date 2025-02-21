@@ -11,6 +11,7 @@ using NUnit.Framework;
 using SceneRunner.Scene.Tests;
 using System;
 using System.Threading.Tasks;
+using UnityEngine;
 
 namespace ECS.StreamableLoading.Tests
 {
@@ -122,8 +123,8 @@ namespace ECS.StreamableLoading.Tests
             // Launch the flow
             system.Update(0);
 
+            await promise.ToUniTaskWithoutDestroyAsync(world, cancellationToken: promise.LoadingIntention.CommonArguments.CancellationToken);
             Assert.AreEqual(AssetSource.NONE, world.Get<TIntention>(promise.Entity).CommonArguments.PermittedSources);
-            await promise.ToUniTaskAsync(world, cancellationToken: promise.LoadingIntention.CommonArguments.CancellationToken);
         }
 
         [Test]

@@ -11,7 +11,9 @@ using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
+using System;
 using System.Threading;
+using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.Pool;
 using Utility;
@@ -46,6 +48,10 @@ namespace DCL.Friends.UI.FriendPanel
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
 
+        public event Action? FriendsPanelOpened;
+        public event Action<string>? OnlineFriendClicked;
+        public event Action<string, Vector2Int>? JumpToFriendClicked;
+
         public FriendsPanelController(ViewFactoryMethod viewFactory,
             FriendsPanelView instantiatedView,
             IChatLifecycleBusController chatLifecycleBusController,
@@ -74,6 +80,7 @@ namespace DCL.Friends.UI.FriendPanel
             this.includeUserBlocking = includeUserBlocking;
 
             if (isConnectivityStatusEnabled)
+            {
                 friendSectionControllerConnectivity = new FriendsSectionDoubleCollectionController(instantiatedView.FriendsSection,
                     friendsService,
                     friendEventBus,
@@ -86,6 +93,9 @@ namespace DCL.Friends.UI.FriendPanel
                     systemClipboard,
                     friendsConnectivityStatusTracker,
                     includeUserBlocking);
+                friendSectionControllerConnectivity.OnlineFriendClicked += OnlineFriendClick;
+                friendSectionControllerConnectivity.JumpInClicked += JumpToFriendClick;
+            }
             else
                 friendSectionController = new FriendSectionController(instantiatedView.FriendsSection,
                     mvcManager,
@@ -125,12 +135,24 @@ namespace DCL.Friends.UI.FriendPanel
             requestsSectionController.ReceivedRequestsCountChanged -= FriendRequestCountChanged;
             friendsPanelCts.SafeCancelAndDispose();
 
+            if (friendSectionControllerConnectivity != null)
+            {
+                friendSectionControllerConnectivity.OnlineFriendClicked -= OnlineFriendClick;
+                friendSectionControllerConnectivity.JumpInClicked -= JumpToFriendClick;
+            }
+
             blockedSectionController.Dispose();
             friendSectionController?.Dispose();
             friendSectionControllerConnectivity?.Dispose();
             requestsSectionController.Dispose();
             UnregisterCloseHotkey();
         }
+
+        private void OnlineFriendClick(string targetAddress) =>
+            OnlineFriendClicked?.Invoke(targetAddress);
+
+        private void JumpToFriendClick(string targetAddress, Vector2Int parcel) =>
+            JumpToFriendClicked?.Invoke(targetAddress, parcel);
 
         public UniTask InitAsync(CancellationToken ct)
         {
@@ -179,8 +201,11 @@ namespace DCL.Friends.UI.FriendPanel
         internal void CloseFriendsPanel(InputAction.CallbackContext obj) =>
             closeTaskCompletionSource.TrySetResult();
 
-        protected override void OnViewShow() =>
+        protected override void OnViewShow()
+        {
             RegisterCloseHotkey();
+            FriendsPanelOpened?.Invoke();
+        }
 
         protected override void OnBeforeViewShow()
         {

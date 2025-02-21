@@ -23,6 +23,8 @@ using DCL.WebRequests.Analytics;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Cache.Disk.CleanUp;
 using ECS.StreamableLoading.Cache.Disk.Lock;
+using ECS.StreamableLoading.Common;
+using ECS.StreamableLoading.Common.Components;
 using Global.AppArgs;
 using Global.Dynamic.RealmUrl;
 using Global.Dynamic.RealmUrl.Names;
@@ -172,6 +174,7 @@ namespace Global.Dynamic
             var realmUrls = new RealmUrls(launchSettings, new RealmNamesMap(webRequestsContainer.WebRequestController), decentralandUrlsSource);
 
             var diskCache = NewInstanceDiskCache(applicationParametersParser);
+            var partialsDiskCache = NewInstancePartialDiskCache(applicationParametersParser);
 
 
 
@@ -190,6 +193,7 @@ namespace Global.Dynamic
                    .WithLog("Load Guard"),
                 realmUrls,
                 diskCache,
+                partialsDiskCache,
                 world,
                 decentralandEnvironment,
                 dclVersion,
@@ -318,6 +322,31 @@ namespace Global.Dynamic
             // We restore all inputs except EmoteWheel and FreeCamera as they should be disabled by default
             staticContainer!.InputBlock.EnableAll(InputMapComponent.Kind.FREE_CAMERA,
                 InputMapComponent.Kind.EMOTE_WHEEL);
+        }
+
+        private static IDiskCache<PartialLoadingState> NewInstancePartialDiskCache(IAppArgs appArgs)
+        {
+            if (appArgs.HasFlag(AppArgsFlags.DISABLE_DISK_CACHE))
+            {
+                ReportHub.Log(ReportData.UNSPECIFIED, $"Disable disk cache, flag --{AppArgsFlags.DISABLE_DISK_CACHE} is passed");
+                return IDiskCache<PartialLoadingState>.Null.INSTANCE;
+            }
+
+            var cacheDirectory = CacheDirectory.NewDefaultSubdirectory("partials");
+            var filesLock = new FilesLock();
+
+            IDiskCleanUp diskCleanUp;
+
+            if (appArgs.HasFlag(AppArgsFlags.DISABLE_DISK_CACHE_CLEANUP))
+            {
+                ReportHub.Log(ReportData.UNSPECIFIED, $"Disable disk cache cleanup, flag --{AppArgsFlags.DISABLE_DISK_CACHE_CLEANUP} is passed");
+                diskCleanUp = IDiskCleanUp.None.INSTANCE;
+            }
+            else
+                diskCleanUp = new LRUDiskCleanUp(cacheDirectory, filesLock);
+
+            var partialCache = new DiskCache<PartialLoadingState>(new DiskCache(cacheDirectory, filesLock, diskCleanUp), new PartialDiskSerializer());
+            return partialCache;
         }
 
         private static IDiskCache NewInstanceDiskCache(IAppArgs appArgs)

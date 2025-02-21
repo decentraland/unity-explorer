@@ -99,18 +99,13 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             if (friendshipStatus == UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_SENT)
                 CancelFriendshipRequestAsync(friendshipOperationCts.Token).Forget();
             else if (friendshipStatus == UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_RECEIVED)
-                AcceptFriendshipAsync(friendshipOperationCts.Token).Forget();
+                mvcManager.ShowAsync(FriendRequestController.IssueCommand(new FriendRequestParams { OneShotFriendAccepted = lastClickedProfileCtx }), ct: friendshipOperationCts.Token).Forget();
 
             return;
 
             async UniTaskVoid CancelFriendshipRequestAsync(CancellationToken ct)
             {
                 await friendsService.CancelFriendshipAsync(userId, ct);
-            }
-
-            async UniTaskVoid AcceptFriendshipAsync(CancellationToken ct)
-            {
-                await friendsService.AcceptFriendshipAsync(userId, ct);
             }
         }
 
@@ -155,19 +150,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
         {
             friendshipOperationCts = friendshipOperationCts.SafeRestart();
 
-            AcceptFriendshipAsync(friendshipOperationCts.Token).Forget();
-
-            async UniTaskVoid AcceptFriendshipAsync(CancellationToken ct)
-            {
-                try
-                {
-                    await friendsService.AcceptFriendshipAsync(request.From.Address, ct);
-                }
-                catch(Exception e)
-                {
-                    ReportHub.LogException(e, new ReportData(ReportCategory.FRIENDS));
-                }
-            }
+            mvcManager.ShowAsync(FriendRequestController.IssueCommand(new FriendRequestParams { OneShotFriendAccepted = request.From}), ct: friendshipOperationCts.Token).Forget();
         }
 
         private void ContextMenuClicked(FriendProfile friendProfile, Vector2 buttonPosition, RequestUserView elementView)

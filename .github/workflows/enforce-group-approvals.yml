@@ -3,23 +3,23 @@ name: Enforce QA and DEV Approvals
 on:
   pull_request:
     branches: [dev]
-    types:
-      - labeled
-      - unlabeled
-    draft: false
+    types: [labeled, unlabeled]
   pull_request_review:
     types: [submitted]
 
 jobs:
   enforce-approvals:
-    if: github.event.review.state != 'changes_requested' && github.event.review.state != 'commented' && github.event.pull_request.base.ref == 'dev'
+    if: >
+      github.event.pull_request.draft == false &&
+      github.event.review.state != 'changes_requested' &&
+      github.event.review.state != 'commented' &&
+      github.event.pull_request.base.ref == 'dev'
     runs-on: ubuntu-latest
     env:
       GH_TOKEN: ${{ secrets.ORG_ACCESS_TOKEN }}
 
     steps:
       - name: Set PR number and repo details
-        id: set-vars
         run: |
           echo "Fetching context details..."
           PR_NUMBER=${{ github.event.pull_request.number }}
