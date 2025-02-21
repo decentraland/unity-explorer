@@ -136,7 +136,6 @@ namespace ECS.StreamableLoading.AssetBundles
             bool lookForShaderAssets,
             CancellationToken ct)
         {
-            // if the type was not specified don't load any assets (we don't know when they will be indirectly requested)
             if (expectedObjType == null)
             {
                 // Unfortunate hack that needs to be done. A texture can be loaded as the dependency, but then requested from the scene.
@@ -183,6 +182,7 @@ namespace ECS.StreamableLoading.AssetBundles
                 return new StreamableLoadingResult<AssetBundleData>(assetBundleDataTexture);
             }
 
+            // if the type was not specified don't load any assets (we don't know when they will be indirectly requested)
             return new StreamableLoadingResult<AssetBundleData>(new AssetBundleData(assetBundle, metrics, dependencies, memoryStream));
         }
 
