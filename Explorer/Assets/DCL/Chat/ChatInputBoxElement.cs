@@ -8,13 +8,13 @@ using DCL.UI.CustomInputField;
 using DCL.UI.SuggestionPanel;
 using MVC;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using UnityEngine.Pool;
+using UnityEngine.UI;
 using Utility;
 
 namespace DCL.Chat
@@ -39,6 +39,7 @@ namespace DCL.Chat
         [SerializeField] private CharacterCounterView characterCounter;
         [SerializeField] private RectTransform pastePopupPosition;
         [SerializeField] private GameObject outlineObject;
+        [SerializeField] private LayoutElement layoutElement;
 
         [Header("Emojis")]
         [SerializeField] private EmojiPanelConfigurationSO emojiPanelConfiguration;
@@ -198,6 +199,7 @@ namespace DCL.Chat
             UIAudioEventsBus.Instance.SendPlayAudioEvent(chatInputTextAudio);
             closePopupTask.TrySetResult();
             characterCounter.SetCharacterCount(inputText.Length);
+            layoutElement.preferredHeight = inputField.preferredHeight;
             InputChanged?.Invoke(inputText);
         }
 
@@ -207,8 +209,7 @@ namespace DCL.Chat
         /// <param name="text">The new content of the input box.</param>
         public void FocusInputBoxWithText(string text)
         {
-            if (inputField.isFocused)
-                inputField.SelectInputField(text);
+            inputField.SelectInputField(text);
         }
 
         /// <summary>
