@@ -158,6 +158,10 @@ namespace DCL.UI.Sidebar
                 chatView.IsUnfolded = true;
                 chatView.ShowNewMessages();
             }
+            else
+            {
+                chatView.IsUnfolded = false;
+            }
         }
 
         private void OnHelpButtonClicked()
