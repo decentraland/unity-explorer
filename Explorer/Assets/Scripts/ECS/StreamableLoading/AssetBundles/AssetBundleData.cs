@@ -138,7 +138,5 @@ namespace ECS.StreamableLoading.AssetBundles
 
         public string GetInstanceName() => description;
 
-        public bool HasLoaded() =>
-            mainAsset != null;
     }
 }
