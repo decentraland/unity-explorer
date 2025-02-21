@@ -10,7 +10,6 @@ namespace DCL.Landscape
 {
     public class TerrainFactory
     {
-        private const int ALPHAMAP_RESOLUTION = 512;
         private readonly TerrainGenerationData terrainGenData;
 
         private TreePrototype[] treePrototypes;
@@ -101,14 +100,14 @@ namespace DCL.Landscape
         }
 
         public TerrainData CreateTerrainData(int terrainChunkSize, float maxHeight) =>
-            CreateTerrainData(terrainChunkSize, terrainChunkSize, maxHeight);
+            CreateTerrainData(terrainChunkSize, terrainChunkSize, terrainChunkSize, maxHeight);
 
-        private TerrainData CreateTerrainData(int heightmapResolution, int terrainChunkSize, float maxHeight)
+        private TerrainData CreateTerrainData(int heightmapResolution, int alphamapResolution, int terrainChunkSize, float maxHeight)
         {
             var terrainData = new TerrainData
             {
                 heightmapResolution = heightmapResolution + 1,
-                alphamapResolution = ALPHAMAP_RESOLUTION,
+                alphamapResolution = alphamapResolution,
                 size = new Vector3(terrainChunkSize, Mathf.Max(maxHeight, 0.1f), terrainChunkSize),
                 terrainLayers = terrainGenData.terrainLayers,
                 treePrototypes = GetTreePrototypes(),
