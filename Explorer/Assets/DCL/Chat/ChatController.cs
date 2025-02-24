@@ -20,6 +20,7 @@ using LiveKit.Rooms;
 using MVC;
 using System.Collections.Generic;
 using System.Threading;
+using UnityEngine;
 using UnityEngine.InputSystem;
 using Utility;
 using Utility.Arch;
@@ -124,7 +125,7 @@ namespace DCL.Chat
             viewDependencies.DclInput.Shortcuts.ToggleNametags.performed -= OnToggleNametagsShortcutPerformed;
             viewDependencies.DclInput.Shortcuts.OpenChat.performed -= OnOpenChatShortcutPerformed;
             viewDependencies.DclInput.Shortcuts.OpenChatCommandLine.performed -= OnOpenChatCommandLineShortcutPerformed;
-            viewDependencies.DclInput.UI.Submit.performed -= OnSubmitShorcutPerformed;
+            viewDependencies.DclInput.UI.Submit.performed -= OnSubmitShortcutPerformed;
 
             memberListCts.SafeCancelAndDispose();
         }
@@ -245,14 +246,16 @@ namespace DCL.Chat
 
         protected override void OnBlur()
         {
-            viewDependencies.DclInput.UI.Submit.performed -= OnSubmitShorcutPerformed;
+            viewDependencies.DclInput.UI.Submit.performed -= OnSubmitShortcutPerformed;
             viewInstance!.DisableInputBoxSubmissions();
         }
 
         protected override void OnFocus()
         {
-            viewInstance!.EnableInputBoxSubmissions();
-            viewDependencies.DclInput.UI.Submit.performed += OnSubmitShorcutPerformed;
+            if (viewInstance!.IsFocused) return;
+
+            viewInstance.EnableInputBoxSubmissions();
+            viewDependencies.DclInput.UI.Submit.performed += OnSubmitShortcutPerformed;
         }
 
         protected override void OnViewShow()
@@ -381,7 +384,7 @@ namespace DCL.Chat
             viewInstance!.Click();
         }
 
-        private void OnSubmitShorcutPerformed(InputAction.CallbackContext obj)
+        private void OnSubmitShortcutPerformed(InputAction.CallbackContext obj)
         {
             viewInstance!.FocusInputBox();
         }

@@ -285,6 +285,8 @@ namespace DCL.Chat
             }
         }
 
+        public bool IsFocused { get; private set; }
+
         private void Start()
         {
             panelBackgroundCanvasGroup.alpha = 0;
@@ -361,6 +363,7 @@ namespace DCL.Chat
         /// </summary>
         public void DisableInputBoxSubmissions()
         {
+            IsFocused = false;
             chatInputBox.DisableInputBoxSubmissions();
         }
 
@@ -369,6 +372,7 @@ namespace DCL.Chat
         /// </summary>
         public void EnableInputBoxSubmissions()
         {
+            IsFocused = true;
             chatInputBox.EnableInputBoxSubmissions();
         }
 
