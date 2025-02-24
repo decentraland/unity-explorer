@@ -583,7 +583,7 @@ namespace DCL.Chat
             closePopupTask = new UniTaskCompletionSource();
 
             ChatEntryMenuPopupData data = new ChatEntryMenuPopupData(
-                chatEntryView.messageBubbleElement.popupPosition,
+                chatEntryView.messageBubbleElement.popupPosition.position,
                 messageText,
                 closePopupTask.Task);
 
