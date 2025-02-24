@@ -82,11 +82,11 @@ namespace DCL.Multiplayer.Connections.Systems.Debug
 
         protected virtual void UpdateInternal()
         {
-            connectionQuality.SetAndUpdate(room.Room().Participants.LocalParticipant().ConnectionQuality.ToString());
-            connectiveState.SetAndUpdate(room.Room().Info.ConnectionState.ToString());
-            connectionLoopHealth.SetAndUpdate(room.CurrentConnectionLoopHealth.ToString());
-            attemptToConnectState.SetAndUpdate(room.AttemptToConnectState.ToString());
-            stateScene.SetAndUpdate(room.CurrentState().ToString());
+            connectionQuality.SetAndUpdate(room.Room().Participants.LocalParticipant().ConnectionQuality.ToStringNonAlloc());
+            connectiveState.SetAndUpdate(room.Room().Info.ConnectionState.ToStringNonAlloc());
+            connectionLoopHealth.SetAndUpdate(room.CurrentConnectionLoopHealth.ToStringNonAlloc());
+            attemptToConnectState.SetAndUpdate(room.AttemptToConnectState.ToStringNonAlloc());
+            stateScene.SetAndUpdate(room.CurrentState().ToStringNonAlloc());
             selfSid.SetAndUpdate(room.CurrentState() is IConnectiveRoom.State.Running ? room.Room().Participants.LocalParticipant().Sid : "Not connected");
             selfMetadata.SetAndUpdate(room.CurrentState() is IConnectiveRoom.State.Running ? room.Room().Participants.LocalParticipant().Metadata : "Not connected");
             roomSid.SetAndUpdate(room.CurrentState() is IConnectiveRoom.State.Running ? room.Room().Info.Sid : "Not connected");

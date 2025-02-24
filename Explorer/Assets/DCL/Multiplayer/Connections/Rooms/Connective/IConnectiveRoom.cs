@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using LiveKit.Proto;
 using LiveKit.Rooms;
 using System;
 
@@ -87,5 +88,55 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
             room.CurrentState() is IConnectiveRoom.State.Running
                 ? room.Room().Participants.RemoteParticipantIdentities().Count.ToString()
                 : "Not connected";
+
+        public static string ToStringNonAlloc(this AttemptToConnectState state) =>
+            state switch
+            {
+                AttemptToConnectState.None => "None",
+                AttemptToConnectState.Success => "Success",
+                AttemptToConnectState.Error => "Error",
+                AttemptToConnectState.NoConnectionRequired => "NoConnectionRequired",
+                _ => throw new ArgumentOutOfRangeException(nameof(state), state, null)
+            };
+
+        public static string ToStringNonAlloc(this ConnectionQuality quality) =>
+            quality switch
+            {
+                ConnectionQuality.QualityPoor => "QualityPoor",
+                ConnectionQuality.QualityGood => "QualityGood",
+                ConnectionQuality.QualityExcellent => "QualityExcellent",
+                ConnectionQuality.QualityLost => "QualityLost",
+                _ => throw new ArgumentOutOfRangeException(nameof(quality), quality, null)
+            };
+
+        public static string ToStringNonAlloc(this ConnectionState state) =>
+            state switch
+            {
+                ConnectionState.ConnDisconnected => "ConnDisconnected",
+                ConnectionState.ConnConnected => "ConnConnected",
+                ConnectionState.ConnReconnecting => "ConnReconnecting",
+                _ => throw new ArgumentOutOfRangeException(nameof(state), state, null)
+            };
+
+        public static string ToStringNonAlloc(this IConnectiveRoom.State state) =>
+            state switch
+            {
+                IConnectiveRoom.State.Stopped => "Stopped",
+                IConnectiveRoom.State.Starting => "Starting",
+                IConnectiveRoom.State.Running => "Running",
+                IConnectiveRoom.State.Stopping => "Stopping",
+                _ => throw new ArgumentOutOfRangeException(nameof(state), state, null)
+            };
+
+        public static string ToStringNonAlloc(this IConnectiveRoom.ConnectionLoopHealth health) =>
+            health switch
+            {
+                IConnectiveRoom.ConnectionLoopHealth.Prewarming => "Prewarming",
+                IConnectiveRoom.ConnectionLoopHealth.PrewarmFailed => "PrewarmFailed",
+                IConnectiveRoom.ConnectionLoopHealth.Running => "PrewarmFailed",
+                IConnectiveRoom.ConnectionLoopHealth.Stopped => "Stopped",
+                IConnectiveRoom.ConnectionLoopHealth.CycleFailed => "CycleFailed",
+                _ => throw new ArgumentOutOfRangeException(nameof(health), health, null)
+            };
     }
 }
