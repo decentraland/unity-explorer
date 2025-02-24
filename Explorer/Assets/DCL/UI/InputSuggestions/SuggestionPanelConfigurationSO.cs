@@ -8,7 +8,6 @@ namespace DCL.UI.SuggestionPanel
     {
         [Header("Panel Settings")]
         [field: SerializeField] internal float minHeight = 50;
-        [field: SerializeField] internal float entryHeight = 34;
         [field: SerializeField] internal float padding = 16;
         [field: SerializeField] internal float maxHeight = 340;
 

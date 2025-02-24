@@ -1,15 +1,23 @@
+using System;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace DCL.UI.SuggestionPanel
 {
+    [Serializable]
+    public struct SuggestionElementData
+    {
+        [field: SerializeField] public int MaxSuggestionAmount { get; private set; }
+        [field: SerializeField] public float SuggestionElementHeight { get; private set; }
+    }
+
     public abstract class BaseInputSuggestionElement : MonoBehaviour
     {
         public delegate void SuggestionSelectedDelegate(string suggestionId);
 
         public event SuggestionSelectedDelegate SuggestionSelectedEvent;
 
-        [field: SerializeField] public int MaxSuggestionAmount { get; private set; }
+        [field:SerializeField] public SuggestionElementData SuggestionElementData { get; private set; }
 
         /// <summary>
         /// The value returned in the SuggestionSelectedEvent, each suggestion type should assign this the correct value that is expected on the receiver end

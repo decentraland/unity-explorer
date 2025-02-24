@@ -23,7 +23,8 @@ namespace DCL.UI.SuggestionPanel
         public bool IsActive { get; private set; }
 
         private readonly Dictionary<InputSuggestionType, ObjectPool<BaseInputSuggestionElement>> suggestionItemsPools = new ();
-        private readonly Dictionary<InputSuggestionType, int> maxSuggestionsPerType = new ();
+        private readonly Dictionary<InputSuggestionType, SuggestionElementData> suggestionDataPerType = new ();
+
         private readonly List<BaseInputSuggestionElement> usedPoolItems = new ();
 
         private InputSuggestionType currentSuggestionType;
@@ -49,7 +50,7 @@ namespace DCL.UI.SuggestionPanel
                 );
 
                 suggestionItemsPools.Add(suggestionElement.GetSuggestionType(), suggestionPool);
-                maxSuggestionsPerType.Add(suggestionElement.GetSuggestionType(), suggestionElement.MaxSuggestionAmount);
+                suggestionDataPerType.Add(suggestionElement.GetSuggestionType(), suggestionElement.SuggestionElementData);
             }
         }
 
@@ -102,7 +103,7 @@ namespace DCL.UI.SuggestionPanel
 
             if (suggestionType == InputSuggestionType.NONE) return;
 
-            int maxSuggestions = maxSuggestionsPerType[suggestionType];
+            int maxSuggestions = suggestionDataPerType[suggestionType].MaxSuggestionAmount;
 
             scrollViewComponent.vertical = foundSuggestions.Count > maxSuggestions;
 
@@ -111,7 +112,7 @@ namespace DCL.UI.SuggestionPanel
             if (foundSuggestions.Count <= 1)
                 scrollViewHeight = configurationSo.minHeight;
             else if (foundSuggestions.Count <= maxSuggestions)
-                scrollViewHeight = (configurationSo.entryHeight * foundSuggestions.Count) + configurationSo.padding;
+                scrollViewHeight = (suggestionDataPerType[suggestionType].SuggestionElementHeight * foundSuggestions.Count) + configurationSo.padding;
 
             ScrollViewRect.sizeDelta = new Vector2(ScrollViewRect.sizeDelta.x, scrollViewHeight);
 

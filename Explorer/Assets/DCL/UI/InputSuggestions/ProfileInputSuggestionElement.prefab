@@ -324,6 +324,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   <MaxSuggestionAmount>k__BackingField: 5
+  <SuggestionElementHeight>k__BackingField: 40
+  <SuggestionElementData>k__BackingField:
+    <MaxSuggestionAmount>k__BackingField: 5
+    <SuggestionElementHeight>k__BackingField: 40
   selectionButton: {fileID: 7583984127850801498}
   selectedBackground: {fileID: 5978463543333982807}
   faceSnapshotImage: {fileID: 7886327566689672897}
