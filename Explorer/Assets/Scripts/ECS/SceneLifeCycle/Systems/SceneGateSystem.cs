@@ -25,6 +25,7 @@ namespace ECS.SceneLifeCycle.Systems
         private readonly List<SceneData> scenePartitions = new ();
 
         private readonly int scenesToLoad;
+        private int currentLoadedScenes;
 
         public SceneGateSystem(World world) : base(world)
         {
@@ -34,42 +35,36 @@ namespace ECS.SceneLifeCycle.Systems
         protected override void Update(float t)
         {
             AddSceneGateQuery(World);
+            
             scenePartitions.Sort(static (a, b) => a.partitionComponent.RawSqrDistance.CompareTo(b.partitionComponent.RawSqrDistance));
 
-            int currentLoadedScenes = 0;
-            for (int index = 0; index < scenePartitions.Count; index++)
+            for (int index = 0; index < scenePartitions.Count && index < scenesToLoad; index++)
             {
                 var sceneDataA = scenePartitions[index];
 
                 if (sceneDataA.partitionComponent.RawSqrDistance is >= 102400 or < 0) continue;
 
-                if (currentLoadedScenes < scenesToLoad)
+                
+                UnityEngine.Debug.Log("ABOUT TO ANALYZE " + sceneDataA.id.Definition.metadata.scene.DecodedBase);
+
+                if (!SceneHasLoaded(sceneDataA.entity) && currentLoadedScenes < scenesToLoad)
                 {
+                    UnityEngine.Debug.Log("JUANI A SCENE WILL LOAD " + sceneDataA.id.Definition.metadata.scene.DecodedBase);
                     sceneDataA.SceneGateComponent.canLoad = true;
                     currentLoadedScenes++;
-                }
-                else
+                }else if (!SceneHasLoaded(sceneDataA.entity) && currentLoadedScenes >= scenesToLoad)
                 {
-                    //Means it loaded and requires unload
-                    if (World.Has<ISceneFacade>(sceneDataA.entity)
-                        || World.Has<AssetPromise<ISceneFacade, GetSceneFacadeIntention>>(sceneDataA.entity))
-                    {
-                        World.Add(sceneDataA.entity, DeleteEntityIntention.DeferredDeletion);
-                        sceneDataA.SceneGateComponent.canLoad = false;
-                    }
+                    UnityEngine.Debug.Log("HERE IS WHERE THE UNLOAD SHOULD BE TRIGGERED " + sceneDataA.id.Definition.metadata.scene.DecodedBase);
+                    //We are wanting to load more scenes than we are memory allowed. What to do?
+                    //1. Wait for a scene to unload 
+                    //2. Use distances+1 to unload scenes, as we normally do
                 }
             }
-
-            if (Input.GetKeyDown(KeyCode.P))
-            {
-                foreach (var scenePartition in scenePartitions)
-                {
-                    if (scenePartition.partitionComponent.RawSqrDistance < 0)
-                        return;
-                    UnityEngine.Debug.Log(Time.frameCount + " " +
-                                          scenePartition.id.Definition.id + " " + scenePartition.id.Definition.metadata.scene.DecodedBase + " " + scenePartition.partitionComponent.RawSqrDistance);
-                }
-            }
+        }
+        
+        private bool SceneHasLoaded(in Entity entity)
+        {
+            return World.Has<ISceneFacade>(entity) || World.Has<AssetPromise<ISceneFacade, GetSceneFacadeIntention>>(entity);
         }
 
         [Query]

@@ -58,14 +58,20 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
 
         public void AddSceneMessageHandler(string sceneId, ISceneCommunicationPipe.MsgType msgType, ISceneCommunicationPipe.SceneMessageHandler onSceneMessage)
         {
-            SubscriberKey key = new (sceneId, msgType);
-            sceneMessageHandlers.Add(key, onSceneMessage);
+            lock (sceneMessageHandlers)
+            {
+                SubscriberKey key = new (sceneId, msgType);
+                sceneMessageHandlers.Add(key, onSceneMessage);
+            }
         }
 
         public void RemoveSceneMessageHandler(string sceneId, ISceneCommunicationPipe.MsgType msgType, ISceneCommunicationPipe.SceneMessageHandler onSceneMessage)
         {
-            SubscriberKey key = new (sceneId, msgType);
-            sceneMessageHandlers.Remove(key);
+            lock (sceneMessageHandlers)
+            {
+                SubscriberKey key = new (sceneId, msgType);
+                sceneMessageHandlers.Remove(key);
+            }
         }
 
         public void SendMessage(ReadOnlySpan<byte> message, string sceneId, ISceneCommunicationPipe.ConnectivityAssertiveness assertiveness, CancellationToken ct, string? specialRecipient = null)
