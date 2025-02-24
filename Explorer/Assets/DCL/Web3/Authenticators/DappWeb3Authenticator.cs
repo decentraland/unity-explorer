@@ -2,8 +2,6 @@ using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Web3.Abstract;
-using DCL.Web3.Accounts;
-using DCL.Web3.Accounts.Factory;
 using DCL.Web3.Chains;
 using DCL.Web3.Identities;
 using Newtonsoft.Json;
@@ -28,6 +26,8 @@ namespace DCL.Web3.Authenticators
         private readonly IWeb3IdentityCache identityCache;
         private readonly IWeb3AccountFactory web3AccountFactory;
         private readonly HashSet<string> whitelistMethods;
+        // Allow only one web3 operation at a time
+        private readonly SemaphoreSlim mutex = new(1, 1);
 
         private SocketIO? webSocket;
         private UniTaskCompletionSource<SocketIOResponse>? signatureOutcomeTask;
@@ -61,8 +61,14 @@ namespace DCL.Web3.Authenticators
             if (!whitelistMethods.Contains(request.method))
                 throw new Web3Exception($"The method is not allowed: {request.method}");
 
+            await mutex.WaitAsync(ct);
+
+            SynchronizationContext originalSyncContext = SynchronizationContext.Current;
+
             try
             {
+                await UniTask.SwitchToMainThread(ct);
+
                 await ConnectToServerAsync();
 
                 SignatureIdResponse authenticationResponse = await RequestEthMethodAsync(new AuthorizedEthApiRequest
@@ -83,13 +89,24 @@ namespace DCL.Web3.Authenticators
 
                 MethodResponse<T> response = await RequestWalletConfirmationAsync<MethodResponse<T>>(authenticationResponse.requestId, signatureExpiration, ct);
 
+                await DisconnectFromServerAsync();
+
                 // Strip out the requestId & sender fields. We assume that will not be needed by the client
                 return response.result;
             }
-            finally
+            catch (Exception)
             {
                 await DisconnectFromServerAsync();
-                await UniTask.SwitchToMainThread(ct);
+                throw;
+            }
+            finally
+            {
+                if (originalSyncContext != null)
+                    await UniTask.SwitchToSynchronizationContext(originalSyncContext, ct);
+                else
+                    await UniTask.SwitchToMainThread(ct);
+
+                mutex.Release();
             }
         }
 
@@ -103,8 +120,14 @@ namespace DCL.Web3.Authenticators
         /// <exception cref="Web3Exception"></exception>
         public async UniTask<IWeb3Identity> LoginAsync(CancellationToken ct)
         {
+            await mutex.WaitAsync(ct);
+
+            SynchronizationContext originalSyncContext = SynchronizationContext.Current;
+
             try
             {
+                await UniTask.SwitchToMainThread(ct);
+
                 await ConnectToServerAsync();
 
                 var ephemeralAccount = web3AccountFactory.CreateRandomAccount();
@@ -131,6 +154,8 @@ namespace DCL.Web3.Authenticators
                 LoginResponse response = await RequestWalletConfirmationAsync<LoginResponse>(authenticationResponse.requestId,
                     signatureExpiration, ct);
 
+                await DisconnectFromServerAsync();
+
                 if (string.IsNullOrEmpty(response.sender))
                     throw new Web3Exception($"Cannot solve the signer's address from the signature. Request id: {authenticationResponse.requestId}");
 
@@ -143,10 +168,19 @@ namespace DCL.Web3.Authenticators
                 return new DecentralandIdentity(new Web3Address(response.sender),
                     ephemeralAccount, sessionExpiration, authChain);
             }
-            finally
+            catch (Exception)
             {
                 await DisconnectFromServerAsync();
-                await UniTask.SwitchToMainThread(ct);
+                throw;
+            }
+            finally
+            {
+                if (originalSyncContext != null)
+                    await UniTask.SwitchToSynchronizationContext(originalSyncContext, ct);
+                else
+                    await UniTask.SwitchToMainThread(ct);
+
+                mutex.Release();
             }
         }
 
@@ -213,8 +247,10 @@ namespace DCL.Web3.Authenticators
 
         private async UniTask ConnectToServerAsync()
         {
-            SocketIO webSocket = InitializeWebSocket();
-            await webSocket.ConnectAsync().AsUniTask().Timeout(TimeSpan.FromSeconds(TIMEOUT_SECONDS));
+            await InitializeWebSocket()
+                 .ConnectAsync()
+                 .AsUniTask()
+                 .Timeout(TimeSpan.FromSeconds(TIMEOUT_SECONDS));
         }
 
         private void ProcessSignatureOutcomeMessage(SocketIOResponse response)

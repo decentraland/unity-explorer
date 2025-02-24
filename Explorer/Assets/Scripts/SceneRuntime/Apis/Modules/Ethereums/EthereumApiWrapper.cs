@@ -17,8 +17,7 @@ namespace SceneRuntime.Apis.Modules.Ethereums
         private readonly IEthereumApi ethereumApi;
         private readonly ISceneExceptionsHandler sceneExceptionsHandler;
         private readonly IWeb3IdentityCache web3IdentityCache;
-
-        private CancellationTokenSource sendCancellationToken;
+        private readonly CancellationTokenSource sendCancellationToken;
         private CancellationTokenSource signMessageCancellationToken;
 
         public EthereumApiWrapper(IEthereumApi ethereumApi, ISceneExceptionsHandler sceneExceptionsHandler, IWeb3IdentityCache web3IdentityCache) : this(
@@ -129,10 +128,7 @@ namespace SceneRuntime.Apis.Modules.Ethereums
                 }
             }
 
-            // TODO: support cancellations by id (?)
-            sendCancellationToken = sendCancellationToken.SafeRestart();
-
-            return SendAndFormatAsync(id, method, JsonConvert.DeserializeObject<object[]>(jsonParams), sendCancellationToken.Token)
+            return SendAndFormatAsync(id, method, JsonConvert.DeserializeObject<object[]>(jsonParams) ?? Array.Empty<object>(), sendCancellationToken.Token)
                .ToDisconnectedPromise();
         }
     }
