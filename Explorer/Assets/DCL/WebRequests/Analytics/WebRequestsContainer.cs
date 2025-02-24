@@ -32,7 +32,8 @@ namespace DCL.WebRequests.Analytics
             IWeb3IdentityCache web3IdentityProvider,
             ITexturesFuse texturesFuse,
             IDebugContainerBuilder debugContainerBuilder,
-            int totalBudget,
+            int coreBudget,
+            int sceneBudget,
             bool isTextureCompressionEnabled
         )
         {
@@ -53,12 +54,13 @@ namespace DCL.WebRequests.Analytics
                                       .WithDebugMetrics(cannotConnectToHostExceptionDebugMetric, requestCompleteDebugMetric)
                                       .WithLog()
                                       .WithArtificialDelay(options)
-                                      .WithBudget(totalBudget);
+                .WithBudget(coreBudget);
 
             var sceneWebRequestController = new WebRequestController(analyticsContainer, web3IdentityProvider, textureFuseRequestHub)
                 .WithDebugMetrics(cannotConnectToHostExceptionDebugMetric, requestCompleteDebugMetric)
                 .WithLog()
-                .WithBudget(5);
+                .WithArtificialDelay(options)
+                .WithBudget(sceneBudget);
 
             CreateStressTestUtility();
             CreateWebRequestDelayUtility();
