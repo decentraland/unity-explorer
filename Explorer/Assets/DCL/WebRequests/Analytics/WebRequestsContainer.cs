@@ -14,15 +14,18 @@ namespace DCL.WebRequests.Analytics
     {
         public IWebRequestController WebRequestController { get; }
 
+        public IWebRequestController SceneWebRequestController { get; }
+
         public IWebRequestsAnalyticsContainer AnalyticsContainer { get; }
 
         private WebRequestsContainer(
             IWebRequestController webRequestController,
-            IWebRequestsAnalyticsContainer analyticsContainer
-        )
+            IWebRequestController sceneWebRequestController,
+            IWebRequestsAnalyticsContainer analyticsContainer)
         {
             WebRequestController = webRequestController;
             AnalyticsContainer = analyticsContainer;
+            SceneWebRequestController = sceneWebRequestController;
         }
 
         public static WebRequestsContainer Create(
@@ -44,17 +47,24 @@ namespace DCL.WebRequests.Analytics
             var requestCompleteDebugMetric = new ElementBinding<ulong>(0);
             var cannotConnectToHostExceptionDebugMetric = new ElementBinding<ulong>(0);
 
-            var webRequestController = new WebRequestController(analyticsContainer, web3IdentityProvider, new RequestHub(texturesFuse, isTextureCompressionEnabled))
+            var textureFuseRequestHub = new RequestHub(texturesFuse, isTextureCompressionEnabled);
+
+            var webRequestController = new WebRequestController(analyticsContainer, web3IdentityProvider, textureFuseRequestHub)
                                       .WithDebugMetrics(cannotConnectToHostExceptionDebugMetric, requestCompleteDebugMetric)
                                       .WithLog()
                                       .WithArtificialDelay(options)
                                       .WithBudget(totalBudget);
 
+            var sceneWebRequestController = new WebRequestController(analyticsContainer, web3IdentityProvider, textureFuseRequestHub)
+                .WithDebugMetrics(cannotConnectToHostExceptionDebugMetric, requestCompleteDebugMetric)
+                .WithLog()
+                .WithBudget(5);
+
             CreateStressTestUtility();
             CreateWebRequestDelayUtility();
             CreateWebRequestsMetricsDebugUtility();
 
-            return new WebRequestsContainer(webRequestController, analyticsContainer);
+            return new WebRequestsContainer(webRequestController, sceneWebRequestController, analyticsContainer);
 
             void CreateWebRequestsMetricsDebugUtility()
             {
