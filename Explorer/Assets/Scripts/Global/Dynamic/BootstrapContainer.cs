@@ -200,7 +200,6 @@ namespace Global.Dynamic
         {
             if (analyticsConfig.TryGetSegmentConfiguration(out Configuration segmentConfiguration))
                 return new RustSegmentAnalyticsService(segmentConfiguration.WriteKey!)
-                      .WithCountFlush(analyticsConfig.FlushSize)
                       .WithTimeFlush(TimeSpan.FromSeconds(analyticsConfig.FlushInterval), token);
 
             // Fall back to debug if segment is not configured
