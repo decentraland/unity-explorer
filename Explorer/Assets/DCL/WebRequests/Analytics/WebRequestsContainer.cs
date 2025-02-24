@@ -48,19 +48,23 @@ namespace DCL.WebRequests.Analytics
             var requestCompleteDebugMetric = new ElementBinding<ulong>(0);
             var cannotConnectToHostExceptionDebugMetric = new ElementBinding<ulong>(0);
 
+            var sceneAvailableBudget = new ElementBinding<ulong>((ulong)sceneBudget);
+            var coreAvailableBudget = new ElementBinding<ulong>((ulong)sceneBudget);
+
+
             var textureFuseRequestHub = new RequestHub(texturesFuse, isTextureCompressionEnabled);
 
             var webRequestController = new WebRequestController(analyticsContainer, web3IdentityProvider, textureFuseRequestHub)
                                       .WithDebugMetrics(cannotConnectToHostExceptionDebugMetric, requestCompleteDebugMetric)
                                       .WithLog()
                                       .WithArtificialDelay(options)
-                .WithBudget(coreBudget);
+                .WithBudget(coreBudget, coreAvailableBudget);
 
             var sceneWebRequestController = new WebRequestController(analyticsContainer, web3IdentityProvider, textureFuseRequestHub)
                 .WithDebugMetrics(cannotConnectToHostExceptionDebugMetric, requestCompleteDebugMetric)
                 .WithLog()
                 .WithArtificialDelay(options)
-                .WithBudget(sceneBudget);
+                .WithBudget(sceneBudget, sceneAvailableBudget);
 
             CreateStressTestUtility();
             CreateWebRequestDelayUtility();
@@ -75,6 +79,10 @@ namespace DCL.WebRequests.Analytics
                     .AddMarker("Requests cannot connect", cannotConnectToHostExceptionDebugMetric,
                         DebugLongMarkerDef.Unit.NoFormat)
                     .AddMarker("Requests complete", requestCompleteDebugMetric,
+                        DebugLongMarkerDef.Unit.NoFormat)
+                    .AddMarker("Core budget", coreAvailableBudget,
+                        DebugLongMarkerDef.Unit.NoFormat)
+                    .AddMarker("Scene budget", sceneAvailableBudget,
                         DebugLongMarkerDef.Unit.NoFormat);
             }
 
