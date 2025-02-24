@@ -323,8 +323,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b8a099ade8dc4f37be24a9a7fc30bb88, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  <MaxSuggestionAmount>k__BackingField: 5
-  <SuggestionElementHeight>k__BackingField: 40
   <SuggestionElementData>k__BackingField:
     <MaxSuggestionAmount>k__BackingField: 5
     <SuggestionElementHeight>k__BackingField: 40
@@ -663,7 +661,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.08627451, g: 0.08235294, b: 0.09411765, a: 1}
+  m_Color: {r: 0.2627451, g: 0.2509804, b: 0.2901961, a: 1}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1

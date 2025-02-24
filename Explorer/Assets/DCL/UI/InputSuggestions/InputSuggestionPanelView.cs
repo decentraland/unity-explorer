@@ -182,6 +182,7 @@ namespace DCL.UI.SuggestionPanel
             }
             else
             {
+                lastSelectedInputSuggestion?.SetSelectionState(false);
                 viewDependencies.DclInput.UI.ActionUp.performed -= OnArrowUp;
                 viewDependencies.DclInput.UI.ActionDown.performed -= OnArrowDown;
                 viewDependencies.DclInput.UI.Submit.performed -= OnSubmit;
