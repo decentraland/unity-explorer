@@ -33,6 +33,9 @@ namespace Plugins.RustSegment.SegmentServerWrap
 
         private static volatile RustSegmentAnalyticsService? current;
 
+        private long trackId;
+        private long flushId;
+
         public RustSegmentAnalyticsService(string writerKey)
         {
             if (string.IsNullOrWhiteSpace(writerKey))
@@ -111,6 +114,9 @@ namespace Plugins.RustSegment.SegmentServerWrap
                 list.Add(mContext);
 
                 afterClean.Add(operationId, (Operation.Track, list));
+
+                trackId++;
+                ReportHub.Log(ReportCategory.ANALYTICS, $"{nameof(RustSegmentAnalyticsService)} Track scheduled operationId: {operationId} trackId: {trackId}");
             }
         }
 
@@ -126,6 +132,9 @@ namespace Plugins.RustSegment.SegmentServerWrap
                 ulong operationId = NativeMethods.SegmentServerFlush();
                 AlertIfInvalid(operationId);
                 afterClean.Add(operationId, (Operation.Flush, ListPool<MarshaledString>.Get()!));
+
+                flushId++;
+                ReportHub.Log(ReportCategory.ANALYTICS, $"{nameof(RustSegmentAnalyticsService)} Flush scheduled operationId: {operationId} flushId: {flushId}");
             }
         }
 
