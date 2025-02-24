@@ -25,6 +25,12 @@ namespace MVC
     /// </summary>
     public class MVCManagerMenusAccessFacade
     {
+        private static readonly RectOffset CONTEXT_MENU_VERTICAL_LAYOUT_PADDING = new (15, 15, 20, 25);
+        private const int CONTEXT_MENU_SEPARATOR_HEIGHT = 20;
+        private const int CONTEXT_MENU_ELEMENTS_SPACING = 5;
+        private const int CONTEXT_MENU_WIDTH = 250;
+
+
         private readonly IMVCManager mvcManager;
         private readonly GenericContextMenu contextMenu;
         private readonly IClipboardManager clipboardManager;
@@ -47,7 +53,7 @@ namespace MVC
             userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings(systemClipboard, OnFriendsButtonClicked);
             openUserProfileButtonContextMenuControlSettings = new OpenUserProfileButtonContextMenuControlSettings(OnShowUserPassportClicked);
             mentionUserButtonContextMenuControlSettings = new MentionUserButtonContextMenuControlSettings(OnPasteUserClicked);
-            contextMenu = new GenericContextMenu(230, new Vector2(5,-10), anchorPoint: GenericContextMenuAnchorPoint.BOTTOM_LEFT)
+            contextMenu = new GenericContextMenu(CONTEXT_MENU_WIDTH, new Vector2(5,-10), verticalLayoutPadding: CONTEXT_MENU_VERTICAL_LAYOUT_PADDING, elementsSpacing: CONTEXT_MENU_ELEMENTS_SPACING, anchorPoint: GenericContextMenuAnchorPoint.BOTTOM_LEFT)
                          .AddControl(userProfileContextMenuControlSettings)
                          .AddControl(new SeparatorContextMenuControlSettings())
                          .AddControl(openUserProfileButtonContextMenuControlSettings)
