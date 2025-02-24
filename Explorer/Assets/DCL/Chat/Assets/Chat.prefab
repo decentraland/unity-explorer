@@ -325,7 +325,7 @@ RectTransform:
   m_GameObject: {fileID: 9152785347356188261}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 6252910912605816960}
@@ -397,6 +397,7 @@ MonoBehaviour:
   chatInputBox: {fileID: 5059819421467020040}
   panelBackgroundCanvasGroup: {fileID: 1851953206125699832}
   closeChatButton: {fileID: 1104092725699042680}
+  closeMemberListButton: {fileID: 284947053875497143}
   chatMessageViewer: {fileID: 682925133115260549}
   memberListButton: {fileID: 6253540580963880779}
   memberListNumberText: {fileID: 3684810972491727855}
@@ -705,6 +706,17 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 59623bf8df2e8c147b5b255b7256f444, type: 3}
+--- !u!114 &284947053875497143 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 1799939917915520820, guid: 59623bf8df2e8c147b5b255b7256f444, type: 3}
+  m_PrefabInstance: {fileID: 1949774983281342339}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!114 &1104092725699042680 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 1467180068358793979, guid: 59623bf8df2e8c147b5b255b7256f444, type: 3}

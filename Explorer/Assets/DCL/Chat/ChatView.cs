@@ -64,6 +64,9 @@ namespace DCL.Chat
         private Button closeChatButton;
 
         [SerializeField]
+        private Button closeMemberListButton;
+
+        [SerializeField]
         private ChatMessageViewerElement chatMessageViewer;
 
         [SerializeField]
@@ -329,6 +332,7 @@ namespace DCL.Chat
         {
             this.channels = chatChannels;
             closeChatButton.onClick.AddListener(OnCloseChatButtonClicked);
+            closeMemberListButton.onClick.AddListener(OnCloseChatButtonClicked);
             memberListOpeningButton.onClick.AddListener(OnMemberListOpeningButtonClicked);
             memberListClosingButton.onClick.AddListener(OnMemberListClosingButtonClicked);
             chatMessageViewer.Initialize(CalculateUsernameColor);
@@ -579,7 +583,7 @@ namespace DCL.Chat
             closePopupTask = new UniTaskCompletionSource();
 
             ChatEntryMenuPopupData data = new ChatEntryMenuPopupData(
-                chatEntryView.messageBubbleElement.popupPosition.position,
+                chatEntryView.messageBubbleElement.popupPosition,
                 messageText,
                 closePopupTask.Task);
 
