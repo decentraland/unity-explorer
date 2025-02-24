@@ -50,7 +50,7 @@ namespace DCL.Chat
         [SerializeField] private EmojiPanelView emojiPanel;
 
         [Header("Suggestion Panel")]
-        [SerializeField] private InputSuggestionPanelElement suggestionPanel;
+        [SerializeField] private InputSuggestionPanelView suggestionPanel;
 
         [Header("Audio")]
         [SerializeField] private AudioClipConfig addEmojiAudio;

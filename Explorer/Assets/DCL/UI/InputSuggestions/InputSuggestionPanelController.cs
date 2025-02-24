@@ -13,12 +13,12 @@ namespace DCL.UI.SuggestionPanel
     {
         public event SuggestionSelectedDelegate SuggestionSelected;
 
-        private readonly InputSuggestionPanelElement suggestionPanel;
+        private readonly InputSuggestionPanelView suggestionPanel;
 
         private CancellationTokenSource searchCts = new ();
         private string lastMatch;
 
-        public InputSuggestionPanelController(InputSuggestionPanelElement suggestionPanel, ViewDependencies viewDependencies)
+        public InputSuggestionPanelController(InputSuggestionPanelView suggestionPanel, ViewDependencies viewDependencies)
         {
             this.suggestionPanel = suggestionPanel;
             this.suggestionPanel.InjectDependencies(viewDependencies);

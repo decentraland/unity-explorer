@@ -7,7 +7,7 @@ using UnityEngine.UI;
 
 namespace DCL.UI.SuggestionPanel
 {
-    public class InputSuggestionPanelElement : MonoBehaviour, IViewWithGlobalDependencies
+    public class InputSuggestionPanelView : MonoBehaviour, IViewWithGlobalDependencies
     {
         public event SuggestionSelectedDelegate SuggestionSelected;
 
