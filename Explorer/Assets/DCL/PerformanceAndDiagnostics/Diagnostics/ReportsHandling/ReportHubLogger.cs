@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DCL.Optimization.Iterations;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using Utility;
@@ -25,8 +26,15 @@ namespace DCL.Diagnostics
         void ILogHandler.LogFormat(LogType logType, Object context, string format, params object[] args)
         {
             // Report to all reports
-            foreach ((_, IReportHandler handler) in reportHandlers)
-                handler.LogFormat(logType, ReportData.UNSPECIFIED, context, format, args);
+            reportHandlers.ForeachNonAlloc(
+                (logType, context, format, args),
+                static (ctx, item) =>
+                {
+                    (ReportHandler _, IReportHandler handler) = item;
+                    (LogType logType, Object? context, string? format, object[]? args) = ctx;
+                    handler.LogFormat(logType, ReportData.UNSPECIFIED, context, format, args);
+                }
+            );
         }
 
         /// <summary>
@@ -34,8 +42,15 @@ namespace DCL.Diagnostics
         /// </summary>
         void ILogHandler.LogException(Exception exception, Object context)
         {
-            foreach ((_, IReportHandler handler) in reportHandlers)
-                handler.LogException(exception, ReportData.UNSPECIFIED, context);
+            reportHandlers.ForeachNonAlloc(
+                (exception, context),
+                static (ctx, item) =>
+                {
+                    (ReportHandler _, IReportHandler handler) = item;
+                    (Exception? exception, Object? context) = ctx;
+                    handler.LogException(exception, ReportData.UNSPECIFIED, context);
+                }
+            );
         }
 
         /// <summary>
@@ -48,11 +63,17 @@ namespace DCL.Diagnostics
         [HideInCallstack]
         public void Log(LogType logType, ReportData reportData, object message, ReportHandler reportToHandlers = ReportHandler.All)
         {
-            foreach ((ReportHandler type, IReportHandler handler) in reportHandlers)
-            {
-                if (EnumUtils.HasFlag(reportToHandlers, type))
-                    handler.Log(logType, reportData, null, message);
-            }
+            reportHandlers.ForeachNonAlloc(
+                (logType, reportData, message, reportToHandlers),
+                static (ctx, item) =>
+                {
+                    (LogType logType, ReportData reportData, object? message, ReportHandler reportToHandlers) = ctx;
+                    (ReportHandler type, IReportHandler? handler) = item;
+
+                    if (EnumUtils.HasFlag(reportToHandlers, type))
+                        handler.Log(logType, reportData, null, message);
+                }
+            );
         }
 
         /// <summary>
@@ -68,14 +89,19 @@ namespace DCL.Diagnostics
         {
             try
             {
-                foreach ((ReportHandler type, IReportHandler handler) in reportHandlers)
-                    if (EnumUtils.HasFlag(reportToHandlers, type))
-                        handler.Log(logType, reportData, context, message);
+                reportHandlers.ForeachNonAlloc(
+                    (logType, reportData, message, context, reportToHandlers),
+                    static (ctx, item) =>
+                    {
+                        (LogType logType, ReportData reportData, object? message, Object context, ReportHandler reportToHandlers) = ctx;
+                        (ReportHandler type, IReportHandler? handler) = item;
+
+                        if (EnumUtils.HasFlag(reportToHandlers, type))
+                            handler.Log(logType, reportData, context, message);
+                    }
+                );
             }
-            catch (Exception e)
-            {
-                emergencyLog(new Exception($"Some error while logging the message: '{message}'", e));
-            }
+            catch (Exception e) { emergencyLog(new Exception($"Some error while logging the message: '{message}'", e)); }
         }
 
         /// <summary>
@@ -89,11 +115,17 @@ namespace DCL.Diagnostics
         [HideInCallstack]
         public void LogFormat(LogType logType, ReportData reportData, object message, ReportHandler reportHandler = ReportHandler.All, params object[] args)
         {
-            foreach ((ReportHandler type, IReportHandler handler) in reportHandlers)
-            {
-                if (EnumUtils.HasFlag(reportHandler, type))
-                    handler.LogFormat(logType, reportData, null, message, args);
-            }
+            reportHandlers.ForeachNonAlloc(
+                (logType, reportData, message, reportHandler, args),
+                static (ctx, item) =>
+                {
+                    (LogType logType, ReportData reportData, object? message, ReportHandler reportHandler, object[] args) = ctx;
+                    (ReportHandler type, IReportHandler? handler) = item;
+
+                    if (EnumUtils.HasFlag(reportHandler, type))
+                        handler.LogFormat(logType, reportData, null, message, args);
+                }
+            );
         }
 
         /// <summary>
@@ -104,11 +136,17 @@ namespace DCL.Diagnostics
         [HideInCallstack]
         public void LogException<T>(T ecsSystemException, ReportHandler reportHandler = ReportHandler.All) where T: Exception, IDecentralandException
         {
-            foreach ((ReportHandler type, IReportHandler handler) in reportHandlers)
-            {
-                if (EnumUtils.HasFlag(reportHandler, type))
-                    handler.LogException(ecsSystemException);
-            }
+            reportHandlers.ForeachNonAlloc(
+                (ecsSystemException, reportHandler),
+                static (ctx, item) =>
+                {
+                    (T ecsSystemException, ReportHandler reportHandler) = ctx;
+                    (ReportHandler type, IReportHandler handler) = item;
+
+                    if (EnumUtils.HasFlag(reportHandler, type))
+                        handler.LogException(ecsSystemException);
+                }
+            );
         }
 
         /// <summary>
@@ -120,11 +158,17 @@ namespace DCL.Diagnostics
         [HideInCallstack]
         public void LogException(Exception exception, ReportData reportData, ReportHandler reportHandler = ReportHandler.All)
         {
-            foreach ((ReportHandler type, IReportHandler handler) in reportHandlers)
-            {
-                if (EnumUtils.HasFlag(reportHandler, type))
-                    handler.LogException(exception, reportData, null);
-            }
+            reportHandlers.ForeachNonAlloc(
+                (exception, reportData, reportHandler),
+                static (ctx, item) =>
+                {
+                    (Exception? exception, ReportData reportData, ReportHandler reportHandler) = ctx;
+                    (ReportHandler type, IReportHandler handler) = item;
+
+                    if (EnumUtils.HasFlag(reportHandler, type))
+                        handler.LogException(exception, reportData, null);
+                }
+            );
         }
     }
 }
