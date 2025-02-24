@@ -6,14 +6,14 @@ use std::sync::{
 
 use segment::{
     message::{BatchMessage, User},
-    AutoBatcher, Batcher, HttpClient,
+    HttpClient,
 };
 use tokio::sync::Mutex;
 
-use crate::{operations, FfiCallbackFn, OperationHandleId, Response};
+use crate::{operations, queue_batcher::QueueBatcher, FfiCallbackFn, OperationHandleId, Response};
 
 pub struct Context {
-    pub batcher: AutoBatcher,
+    pub batcher: QueueBatcher,
     callback_fn: Box<dyn Fn(OperationHandleId, Response) + Send + Sync>,
 }
 
@@ -102,6 +102,23 @@ impl Server {
             }
         }
     }
+
+    pub fn unflushed_batches_count(&self) -> usize {
+        let state_lock = self.state.lock();
+        if state_lock.is_err() {
+            return 0;
+        }
+
+        let state = state_lock.unwrap();
+
+        match &*state {
+            ServerState::Disposed => 0,
+            ServerState::Ready(server) => {
+                let lock = server.context.blocking_lock();
+                lock.batcher.len()
+            }
+        }
+    }
 }
 
 impl SegmentServer {
@@ -111,11 +128,10 @@ impl SegmentServer {
 
     fn new(writer_key: String, callback_fn: FfiCallbackFn) -> Self {
         let client = HttpClient::default();
-        let batcher = Batcher::new(None);
-        let auto_batcher = AutoBatcher::new(client, batcher, writer_key);
+        let queue_batcher = QueueBatcher::new(client, writer_key);
 
         let context = Context {
-            batcher: auto_batcher,
+            batcher: queue_batcher,
             callback_fn: Box::new(move |id, response| unsafe {
                 callback_fn(id, response);
             }),
