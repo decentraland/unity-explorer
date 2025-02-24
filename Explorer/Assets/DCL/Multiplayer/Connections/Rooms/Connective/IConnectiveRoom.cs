@@ -74,6 +74,8 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
 
     public static class GateKeeperSceneRoomExtensions
     {
+        private const string UNDEFINED = nameof(UNDEFINED);
+
         public static UniTask<bool> StartIfNotAsync(this IConnectiveRoom room) =>
             room.CurrentState() is IConnectiveRoom.State.Stopped or IConnectiveRoom.State.Stopping
                 ? room.StartAsync()
@@ -96,7 +98,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
                 AttemptToConnectState.Success => "Success",
                 AttemptToConnectState.Error => "Error",
                 AttemptToConnectState.NoConnectionRequired => "NoConnectionRequired",
-                _ => throw new ArgumentOutOfRangeException(nameof(state), state, null)
+                _ => UNDEFINED,
             };
 
         public static string ToStringNonAlloc(this ConnectionQuality quality) =>
@@ -106,7 +108,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
                 ConnectionQuality.QualityGood => "QualityGood",
                 ConnectionQuality.QualityExcellent => "QualityExcellent",
                 ConnectionQuality.QualityLost => "QualityLost",
-                _ => throw new ArgumentOutOfRangeException(nameof(quality), quality, null)
+                _ => UNDEFINED,
             };
 
         public static string ToStringNonAlloc(this ConnectionState state) =>
@@ -115,7 +117,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
                 ConnectionState.ConnDisconnected => "ConnDisconnected",
                 ConnectionState.ConnConnected => "ConnConnected",
                 ConnectionState.ConnReconnecting => "ConnReconnecting",
-                _ => throw new ArgumentOutOfRangeException(nameof(state), state, null)
+                _ => UNDEFINED,
             };
 
         public static string ToStringNonAlloc(this IConnectiveRoom.State state) =>
@@ -125,7 +127,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
                 IConnectiveRoom.State.Starting => "Starting",
                 IConnectiveRoom.State.Running => "Running",
                 IConnectiveRoom.State.Stopping => "Stopping",
-                _ => throw new ArgumentOutOfRangeException(nameof(state), state, null)
+                _ => UNDEFINED,
             };
 
         public static string ToStringNonAlloc(this IConnectiveRoom.ConnectionLoopHealth health) =>
@@ -136,7 +138,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
                 IConnectiveRoom.ConnectionLoopHealth.Running => "PrewarmFailed",
                 IConnectiveRoom.ConnectionLoopHealth.Stopped => "Stopped",
                 IConnectiveRoom.ConnectionLoopHealth.CycleFailed => "CycleFailed",
-                _ => throw new ArgumentOutOfRangeException(nameof(health), health, null)
+                _ => UNDEFINED,
             };
     }
 }
