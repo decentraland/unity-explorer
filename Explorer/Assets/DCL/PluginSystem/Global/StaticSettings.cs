@@ -49,7 +49,6 @@ namespace DCL.PluginSystem.Global
         [field: SerializeField] public int ScenesLoadingBudget { get; private set; } = 100;
         [field: SerializeField] public int AssetsLoadingBudget { get; private set; } = 50;
         [field: SerializeField] public int CoreWebRequestsBudget { get; private set; } = 20;
-
         [field: SerializeField] public int SceneWebRequestsBudget { get; private set; } = 5;
 
 

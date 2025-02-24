@@ -47,14 +47,12 @@ namespace DCL.WebRequests.Analytics
             var options = new ElementBindingOptions();
             var requestCompleteDebugMetric = new ElementBinding<ulong>(0);
             var cannotConnectToHostExceptionDebugMetric = new ElementBinding<ulong>(0);
-
             var sceneAvailableBudget = new ElementBinding<ulong>((ulong)sceneBudget);
-            var coreAvailableBudget = new ElementBinding<ulong>((ulong)sceneBudget);
-
+            var coreAvailableBudget = new ElementBinding<ulong>((ulong)coreBudget);
 
             var textureFuseRequestHub = new RequestHub(texturesFuse, isTextureCompressionEnabled);
 
-            var webRequestController = new WebRequestController(analyticsContainer, web3IdentityProvider, textureFuseRequestHub)
+            var coreWebRequestController = new WebRequestController(analyticsContainer, web3IdentityProvider, textureFuseRequestHub)
                                       .WithDebugMetrics(cannotConnectToHostExceptionDebugMetric, requestCompleteDebugMetric)
                                       .WithLog()
                                       .WithArtificialDelay(options)
@@ -70,7 +68,7 @@ namespace DCL.WebRequests.Analytics
             CreateWebRequestDelayUtility();
             CreateWebRequestsMetricsDebugUtility();
 
-            return new WebRequestsContainer(webRequestController, sceneWebRequestController, analyticsContainer);
+            return new WebRequestsContainer(coreWebRequestController, sceneWebRequestController, analyticsContainer);
 
             void CreateWebRequestsMetricsDebugUtility()
             {
@@ -102,7 +100,7 @@ namespace DCL.WebRequests.Analytics
 
             void CreateStressTestUtility()
             {
-                var stressTestUtility = new WebRequestStressTestUtility(webRequestController);
+                var stressTestUtility = new WebRequestStressTestUtility(coreWebRequestController);
 
                 var count = new ElementBinding<int>(50);
                 var retriesCount = new ElementBinding<int>(3);
