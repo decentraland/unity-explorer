@@ -156,11 +156,6 @@ namespace DCL.UI.SuggestionPanel
                     }
 
             }
-
-            if (usedPoolItems.Count > 0)
-                SetSelection(0);
-            else
-                lastSelectedInputSuggestion = null;
         }
 
         private void SetSelection(int index)
@@ -191,10 +186,14 @@ namespace DCL.UI.SuggestionPanel
                 viewDependencies.DclInput.UI.Submit.performed -= OnSubmit;
             }
 
-            lastSelectedInputSuggestion = null;
-            currentIndex = 0;
-            IsActive = isVisible;
             gameObject.SetActive(isVisible);
+
+            if (isVisible && usedPoolItems.Count > 0)
+                SetSelection(0);
+            else
+                lastSelectedInputSuggestion = null;
+
+            IsActive = isVisible;
         }
     }
 }

@@ -55,7 +55,7 @@ namespace MVC
             mentionUserButtonContextMenuControlSettings = new MentionUserButtonContextMenuControlSettings(OnPasteUserClicked);
             contextMenu = new GenericContextMenu(CONTEXT_MENU_WIDTH, new Vector2(5,-10), verticalLayoutPadding: CONTEXT_MENU_VERTICAL_LAYOUT_PADDING, elementsSpacing: CONTEXT_MENU_ELEMENTS_SPACING, anchorPoint: GenericContextMenuAnchorPoint.BOTTOM_LEFT)
                          .AddControl(userProfileContextMenuControlSettings)
-                         .AddControl(new SeparatorContextMenuControlSettings())
+                         .AddControl(new SeparatorContextMenuControlSettings(height: CONTEXT_MENU_SEPARATOR_HEIGHT))
                          .AddControl(openUserProfileButtonContextMenuControlSettings)
                          .AddControl(mentionUserButtonContextMenuControlSettings);
         }
