@@ -103,7 +103,6 @@ namespace DCL.Passport
 
         private CameraReelGalleryController? cameraReelGalleryController;
         private Profile? ownProfile;
-        private Profile? targetProfile;
         private bool isOwnProfile;
         private string? currentUserId;
         private CancellationTokenSource? openPassportFromBadgeNotificationCts;
@@ -249,11 +248,9 @@ namespace DCL.Passport
                          .AddControl(userProfileContextMenuControlSettings)
                          .AddControl(contextMenuSeparator = new GenericContextMenuElement(new SeparatorContextMenuControlSettings(CONTEXT_MENU_SEPARATOR_HEIGHT, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.left, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.right), false))
                          .AddControl(contextMenuJumpInButton = new GenericContextMenuElement(new ButtonContextMenuControlSettings(viewInstance.JumpInText, viewInstance.JumpInSprite,
-                              () => FriendListSectionUtilities.JumpToFriendLocation(targetProfile!.UserId, jumpToFriendLocationCts, getUserPositionBuffer, onlineUsersProvider, realmNavigator,
-                                  parcel => JumpToFriendClicked?.Invoke(targetProfile.UserId, parcel))), false))
+                              () => FriendListSectionUtilities.JumpToFriendLocation(inputData.UserId, jumpToFriendLocationCts, getUserPositionBuffer, onlineUsersProvider, realmNavigator,
+                                  parcel => JumpToFriendClicked?.Invoke(inputData.UserId, parcel))), false))
                          .AddControl(contextMenuBlockUserButton = new GenericContextMenuElement(new ButtonContextMenuControlSettings(viewInstance.BlockText, viewInstance.BlockSprite, () => BlockUserClicked(inputData.UserId)), false));
-
-            ;
         }
 
         private void ShowContextMenu()
@@ -301,7 +298,6 @@ namespace DCL.Passport
         protected override void OnViewClose()
         {
             passportErrorsController!.Hide(true);
-            targetProfile = null;
 
             inputBlock.Enable(InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.CAMERA, InputMapComponent.Kind.PLAYER, InputMapComponent.Kind.IN_WORLD_CAMERA);
 
@@ -555,7 +551,6 @@ namespace DCL.Passport
                 ReportHub.Log(LogType.Error, new ReportData(ReportCategory.FRIENDS), $"Failed to show context menu button for user {inputData.UserId}. Profile is null.");
                 return;
             }
-            targetProfile = profile;
 
             Sprite? thumbnailSprite = await profileThumbnailCache.GetThumbnailAsync(profile, ct);
 
