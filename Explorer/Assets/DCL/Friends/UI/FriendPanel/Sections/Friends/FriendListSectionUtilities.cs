@@ -3,6 +3,7 @@ using DCL.Diagnostics;
 using DCL.Multiplayer.Connectivity;
 using DCL.UI.GenericContextMenu.Controls.Configs;
 using ECS.SceneLifeCycle.Realm;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -21,7 +22,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             CancellationTokenSource? jumpToFriendLocationCts,
             string[] getUserPositionBuffer,
             IOnlineUsersProvider onlineUsersProvider,
-            IRealmNavigator realmNavigator)
+            IRealmNavigator realmNavigator,
+            Action<Vector2Int>? parcelCalculatedCallback = null)
         {
             jumpToFriendLocationCts = jumpToFriendLocationCts.SafeRestart();
             JumpToFriendLocationAsync(jumpToFriendLocationCts.Token).Forget();
@@ -39,6 +41,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
                 OnlineUserData userData = onlineData.First();
                 Vector2Int parcel = userData.position.ToParcel();
                 realmNavigator.TeleportToParcelAsync(parcel, ct, false).Forget();
+                parcelCalculatedCallback?.Invoke(parcel);
             }
         }
 
@@ -51,7 +54,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             string[] getUserPositionBuffer,
             CancellationTokenSource? jumpToFriendLocationCts,
             bool includeUserBlocking,
-            bool isFriendInGame)
+            bool isFriendInGame,
+            Action<Vector2Int>? parcelCalculatedCallback = null)
         {
             GenericContextMenu contextMenu = new GenericContextMenu(contextMenuSettings.ContextMenuWidth, verticalLayoutPadding: CONTEXT_MENU_VERTICAL_LAYOUT_PADDING, elementsSpacing: CONTEXT_MENU_ELEMENTS_SPACING)
                                             .AddControl(userProfileContextMenuControlSettings)
@@ -61,7 +65,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             if (isFriendInGame)
                 contextMenu.AddControl(new ButtonContextMenuControlSettings(contextMenuSettings.JumpToLocationText,
                     contextMenuSettings.JumpToLocationSprite,
-                    () => JumpToFriendLocation(friendProfile.Address, jumpToFriendLocationCts, getUserPositionBuffer, onlineUsersProvider, realmNavigator)));
+                    () => JumpToFriendLocation(friendProfile.Address, jumpToFriendLocationCts, getUserPositionBuffer, onlineUsersProvider, realmNavigator, parcelCalculatedCallback)));
 
             if (includeUserBlocking)
                 contextMenu.AddControl(new ButtonContextMenuControlSettings(contextMenuSettings.BlockText, contextMenuSettings.BlockSprite, () => BlockUserClicked(friendProfile)));

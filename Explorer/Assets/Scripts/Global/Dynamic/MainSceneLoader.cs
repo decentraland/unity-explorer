@@ -23,6 +23,8 @@ using DCL.WebRequests.Analytics;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Cache.Disk.CleanUp;
 using ECS.StreamableLoading.Cache.Disk.Lock;
+using ECS.StreamableLoading.Common;
+using ECS.StreamableLoading.Common.Components;
 using Global.AppArgs;
 using Global.Dynamic.RealmUrl;
 using Global.Dynamic.RealmUrl.Names;
@@ -34,6 +36,7 @@ using SceneRunner.Debugging;
 using System;
 using System.Linq;
 using System.Threading;
+using Global.Dynamic.LaunchModes;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -171,9 +174,8 @@ namespace Global.Dynamic
             var webRequestsContainer = WebRequestsContainer.Create(identityCache, texturesFuse, debugContainerBuilder, staticSettings.WebRequestsBudget, compressionEnabled);
             var realmUrls = new RealmUrls(launchSettings, new RealmNamesMap(webRequestsContainer.WebRequestController), decentralandUrlsSource);
 
-            var diskCache = NewInstanceDiskCache(applicationParametersParser);
-
-
+            var diskCache = NewInstanceDiskCache(applicationParametersParser, launchSettings);
+            var partialsDiskCache = NewInstancePartialDiskCache(applicationParametersParser, launchSettings);
 
             bootstrapContainer = await BootstrapContainer.CreateAsync(
                 debugSettings,
@@ -190,6 +192,7 @@ namespace Global.Dynamic
                    .WithLog("Load Guard"),
                 realmUrls,
                 diskCache,
+                partialsDiskCache,
                 world,
                 decentralandEnvironment,
                 dclVersion,
@@ -320,8 +323,46 @@ namespace Global.Dynamic
                 InputMapComponent.Kind.EMOTE_WHEEL);
         }
 
-        private static IDiskCache NewInstanceDiskCache(IAppArgs appArgs)
+        private static IDiskCache<PartialLoadingState> NewInstancePartialDiskCache(IAppArgs appArgs, RealmLaunchSettings launchSettings)
         {
+            if (launchSettings.CurrentMode == LaunchMode.LocalSceneDevelopment)
+            {
+                ReportHub.Log(ReportData.UNSPECIFIED, "Disk cached disabled while LSD");
+                return IDiskCache<PartialLoadingState>.Null.INSTANCE;
+            }
+            
+            
+            if (appArgs.HasFlag(AppArgsFlags.DISABLE_DISK_CACHE))
+            {
+                ReportHub.Log(ReportData.UNSPECIFIED, $"Disable disk cache, flag --{AppArgsFlags.DISABLE_DISK_CACHE} is passed");
+                return IDiskCache<PartialLoadingState>.Null.INSTANCE;
+            }
+
+            var cacheDirectory = CacheDirectory.NewDefaultSubdirectory("partials");
+            var filesLock = new FilesLock();
+
+            IDiskCleanUp diskCleanUp;
+
+            if (appArgs.HasFlag(AppArgsFlags.DISABLE_DISK_CACHE_CLEANUP))
+            {
+                ReportHub.Log(ReportData.UNSPECIFIED, $"Disable disk cache cleanup, flag --{AppArgsFlags.DISABLE_DISK_CACHE_CLEANUP} is passed");
+                diskCleanUp = IDiskCleanUp.None.INSTANCE;
+            }
+            else
+                diskCleanUp = new LRUDiskCleanUp(cacheDirectory, filesLock);
+
+            var partialCache = new DiskCache<PartialLoadingState>(new DiskCache(cacheDirectory, filesLock, diskCleanUp), new PartialDiskSerializer());
+            return partialCache;
+        }
+
+        private static IDiskCache NewInstanceDiskCache(IAppArgs appArgs, RealmLaunchSettings launchSettings)
+        {
+            if (launchSettings.CurrentMode == LaunchMode.LocalSceneDevelopment)
+            {
+                ReportHub.Log(ReportData.UNSPECIFIED, "Disk cached disabled while LSD");
+                return new IDiskCache.Fake();
+            }
+            
             if (appArgs.HasFlag(AppArgsFlags.DISABLE_DISK_CACHE))
             {
                 ReportHub.Log(ReportData.UNSPECIFIED, $"Disable disk cache, flag --{AppArgsFlags.DISABLE_DISK_CACHE} is passed");

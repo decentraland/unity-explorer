@@ -23,6 +23,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using DCL.WebRequests;
+using Global.AppArgs;
 using UnityEngine.Pool;
 
 namespace DCL.PluginSystem.Global
@@ -52,7 +53,7 @@ namespace DCL.PluginSystem.Global
         private readonly IWebRequestController webRequestController;
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
         private readonly IInputBlock inputBlock;
-
+        private readonly IAppArgs appArgs;
         private BackpackBusController? busController;
         private BackpackEquipStatusController? backpackEquipStatusController;
 
@@ -80,7 +81,8 @@ namespace DCL.PluginSystem.Global
             ICursor cursor,
             IEmoteProvider emoteProvider,
             Arch.Core.World world,
-            Entity playerEntity)
+            Entity playerEntity,
+            IAppArgs appArgs)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.web3Identity = web3Identity;
@@ -104,6 +106,7 @@ namespace DCL.PluginSystem.Global
             this.emoteProvider = emoteProvider;
             this.world = world;
             this.playerEntity = playerEntity;
+            this.appArgs = appArgs;
 
             backpackCommandBus = new BackpackCommandBus();
         }
@@ -195,7 +198,8 @@ namespace DCL.PluginSystem.Global
                 forceRender,
                 web3Identity,
                 world,
-                playerEntity
+                playerEntity,
+                appArgs
             );
 
             backpackController = new BackpackController(

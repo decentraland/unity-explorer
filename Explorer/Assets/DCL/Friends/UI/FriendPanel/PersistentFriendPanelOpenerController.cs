@@ -25,6 +25,8 @@ namespace DCL.Friends.UI.FriendPanel
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
 
+        public event Action? FriendshipNotificationClicked;
+
         public PersistentFriendPanelOpenerController(ViewFactoryMethod viewFactory,
             IMVCManager mvcManager,
             DCLInput dclInput,
@@ -61,6 +63,8 @@ namespace DCL.Friends.UI.FriendPanel
             if (parameters.Length == 0 || parameters[0] is not FriendRequestAcceptedNotification)
                 return;
 
+            FriendshipNotificationClicked?.Invoke();
+
             FriendRequestAcceptedNotification friendRequestAcceptedNotification = (FriendRequestAcceptedNotification)parameters[0];
 
             passportBridge.ShowAsync(new Web3Address(friendRequestAcceptedNotification.Metadata.Sender.Address)).Forget();
@@ -70,6 +74,8 @@ namespace DCL.Friends.UI.FriendPanel
         {
             if (parameters.Length == 0 || parameters[0] is not FriendRequestReceivedNotification)
                 return;
+
+            FriendshipNotificationClicked?.Invoke();
 
             friendRequestReceivedCts = friendRequestReceivedCts.SafeRestart();
             ManageFriendRequestReceivedNotificationAsync((FriendRequestReceivedNotification)parameters[0], friendRequestReceivedCts.Token).Forget();
