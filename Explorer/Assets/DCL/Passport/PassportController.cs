@@ -103,6 +103,7 @@ namespace DCL.Passport
 
         private CameraReelGalleryController? cameraReelGalleryController;
         private Profile? ownProfile;
+        private Profile? targetProfile;
         private bool isOwnProfile;
         private string? currentUserId;
         private CancellationTokenSource? openPassportFromBadgeNotificationCts;
@@ -117,6 +118,9 @@ namespace DCL.Passport
         private PassportSection alreadyLoadedSections;
         private BadgesDetails_PassportModuleController? badgesDetailsPassportModuleController;
         private GenericContextMenu contextMenu;
+        private GenericContextMenuElement contextMenuSeparator;
+        private GenericContextMenuElement contextMenuJumpInButton;
+        private GenericContextMenuElement contextMenuBlockUserButton;
 
         private UniTaskCompletionSource? contextMenuCloseTask;
         private CancellationTokenSource jumpToFriendLocationCts = new ();
@@ -240,6 +244,16 @@ namespace DCL.Passport
             viewInstance.PhotosSectionButton.gameObject.SetActive(enableCameraReel);
             viewInstance.FriendInteractionContainer.SetActive(enableFriendshipInteractions);
             viewInstance.MutualFriends.Root.SetActive(enableFriendshipInteractions);
+
+            contextMenu = new GenericContextMenu(CONTEXT_MENU_WIDTH, CONTEXT_MENU_OFFSET, CONTEXT_MENU_VERTICAL_LAYOUT_PADDING, CONTEXT_MENU_ELEMENTS_SPACING)
+                         .AddControl(userProfileContextMenuControlSettings)
+                         .AddControl(contextMenuSeparator = new GenericContextMenuElement(new SeparatorContextMenuControlSettings(CONTEXT_MENU_SEPARATOR_HEIGHT, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.left, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.right), false))
+                         .AddControl(contextMenuJumpInButton = new GenericContextMenuElement(new ButtonContextMenuControlSettings(viewInstance.JumpInText, viewInstance.JumpInSprite,
+                              () => FriendListSectionUtilities.JumpToFriendLocation(targetProfile!.UserId, jumpToFriendLocationCts, getUserPositionBuffer, onlineUsersProvider, realmNavigator,
+                                  parcel => JumpToFriendClicked?.Invoke(targetProfile.UserId, parcel))), false))
+                         .AddControl(contextMenuBlockUserButton = new GenericContextMenuElement(new ButtonContextMenuControlSettings(viewInstance.BlockText, viewInstance.BlockSprite, () => BlockUserClicked(inputData.UserId)), false));
+
+            ;
         }
 
         private void ShowContextMenu()
@@ -287,6 +301,7 @@ namespace DCL.Passport
         protected override void OnViewClose()
         {
             passportErrorsController!.Hide(true);
+            targetProfile = null;
 
             inputBlock.Enable(InputMapComponent.Kind.SHORTCUTS, InputMapComponent.Kind.CAMERA, InputMapComponent.Kind.PLAYER, InputMapComponent.Kind.IN_WORLD_CAMERA);
 
@@ -540,22 +555,15 @@ namespace DCL.Passport
                 ReportHub.Log(LogType.Error, new ReportData(ReportCategory.FRIENDS), $"Failed to show context menu button for user {inputData.UserId}. Profile is null.");
                 return;
             }
+            targetProfile = profile;
 
             Sprite? thumbnailSprite = await profileThumbnailCache.GetThumbnailAsync(profile, ct);
 
             viewInstance!.ContextMenuButton.gameObject.SetActive(true);
 
-            contextMenu = new GenericContextMenu(CONTEXT_MENU_WIDTH, CONTEXT_MENU_OFFSET, CONTEXT_MENU_VERTICAL_LAYOUT_PADDING, CONTEXT_MENU_ELEMENTS_SPACING)
-                                     .AddControl(userProfileContextMenuControlSettings)
-                                     .AddControl(new SeparatorContextMenuControlSettings(CONTEXT_MENU_SEPARATOR_HEIGHT, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.left, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.right));
-
-            if (friendOnlineStatusCacheProxy.Object!.GetFriendStatus(inputData.UserId) != OnlineStatus.OFFLINE)
-                contextMenu.AddControl(new ButtonContextMenuControlSettings(viewInstance.JumpInText, viewInstance.JumpInSprite,
-                    () => FriendListSectionUtilities.JumpToFriendLocation(profile.UserId, jumpToFriendLocationCts, getUserPositionBuffer, onlineUsersProvider, realmNavigator,
-                        parcel => JumpToFriendClicked?.Invoke(profile.UserId, parcel))));
-
-            if (friendshipStatus != FriendshipStatus.BLOCKED && includeUserBlocking)
-                contextMenu.AddControl(new ButtonContextMenuControlSettings(viewInstance.BlockText, viewInstance.BlockSprite, () => BlockUserClicked(inputData.UserId)));
+            contextMenuJumpInButton.Enabled = friendOnlineStatusCacheProxy.Object!.GetFriendStatus(inputData.UserId) != OnlineStatus.OFFLINE;
+            contextMenuBlockUserButton.Enabled = friendshipStatus != FriendshipStatus.BLOCKED && includeUserBlocking;
+            contextMenuSeparator.Enabled = contextMenuJumpInButton.Enabled || contextMenuBlockUserButton.Enabled;
 
             userProfileContextMenuControlSettings.SetInitialData(profile.Name, profile.UserId, profile.HasClaimedName,
                 viewInstance.ChatEntryConfiguration.GetNameColor(profile.Name), ConvertFriendshipStatus(friendshipStatus),
