@@ -52,8 +52,16 @@ namespace DCL.SDKComponents.AvatarAttach.Tests
             sceneStateProvider.IsCurrent.Returns(true);
             var mainPlayerAvatarBase = new ObjectProxy<AvatarBase>();
             mainPlayerAvatarBase.SetObject(playerAvatarBase);
-            system = new AvatarAttachHandlerSystem(world, mainPlayerAvatarBase, sceneStateProvider);
-            setupSystem = new AvatarAttachHandlerSetupSystem(world, mainPlayerAvatarBase, sceneStateProvider);
+
+            system = new AvatarAttachHandlerSystem(world,
+                globalWorld,
+                mainPlayerAvatarBase,
+                sceneStateProvider);
+
+            setupSystem = new AvatarAttachHandlerSetupSystem(world,
+                globalWorld,
+                mainPlayerAvatarBase,
+                sceneStateProvider);
 
             entity = world.Create(PartitionComponent.TOP_PRIORITY);
             entityTransformComponent = AddTransformToEntity(entity);
@@ -212,10 +220,8 @@ namespace DCL.SDKComponents.AvatarAttach.Tests
         [Test]
         public async Task VerifyAllAnchorPoints()
         {
-            bool ApproximatelyEqual(Vector3 a, Vector3 b)
-            {
-                return Vector3.SqrMagnitude(a - b) < Mathf.Epsilon * Mathf.Epsilon;
-            }
+            bool ApproximatelyEqual(Vector3 a, Vector3 b) =>
+                Vector3.SqrMagnitude(a - b) < Mathf.Epsilon * Mathf.Epsilon;
 
             // Workaround for Unity bug not awaiting async Setup correctly
             await UniTask.WaitUntil(() => system != null);
@@ -251,10 +257,10 @@ namespace DCL.SDKComponents.AvatarAttach.Tests
                 { AvatarAnchorPointType.AaptRightUpLeg, () => playerAvatarBase.RightUpLegAnchorPoint },
                 { AvatarAnchorPointType.AaptRightLeg, () => playerAvatarBase.RightLegAnchorPoint },
                 { AvatarAnchorPointType.AaptRightFoot, () => playerAvatarBase.RightFootAnchorPoint },
-                { AvatarAnchorPointType.AaptRightToeBase, () => playerAvatarBase.RightToeBaseAnchorPoint }
+                { AvatarAnchorPointType.AaptRightToeBase, () => playerAvatarBase.RightToeBaseAnchorPoint },
             };
 
-            foreach (var anchorPoint in anchorPointMap)
+            foreach (KeyValuePair<AvatarAnchorPointType, Func<Transform>> anchorPoint in anchorPointMap)
             {
                 // Set the anchor point
                 pbAvatarAttachComponent.AnchorPointId = anchorPoint.Key;
@@ -266,7 +272,7 @@ namespace DCL.SDKComponents.AvatarAttach.Tests
                 system.Update(0);
 
                 // After update, position should match the anchor point
-                var position = anchorPoint.Value().position;
+                Vector3 position = anchorPoint.Value().position;
 
                 if (anchorPoint.Key == AvatarAnchorPointType.AaptPosition)
                     position += Vector3.up * AvatarAttachUtils.OLD_CLIENT_PIVOT_CORRECTION;
