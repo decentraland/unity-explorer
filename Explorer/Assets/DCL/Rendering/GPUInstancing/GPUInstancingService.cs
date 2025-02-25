@@ -1,4 +1,5 @@
-﻿using DCL.Roads.GPUInstancing.Playground;
+﻿using DCL.Landscape.Settings;
+using DCL.Roads.GPUInstancing.Playground;
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
@@ -10,6 +11,7 @@ namespace DCL.Roads.GPUInstancing
 {
     public class GPUInstancingService : IDisposable
     {
+        private readonly GPUInstancingRenderFeature.GPUInstancingRenderFeature_Settings settings;
 
         struct GroupData
         {
@@ -76,28 +78,25 @@ namespace DCL.Roads.GPUInstancing
 
         private Camera renderCamera;
 
-        public GPUInstancingService(GPUInstancingRenderFeature.GPUInstancingRenderFeature_Settings renderFeatureSettings)
-            : this(renderFeatureSettings.FrustumCullingAndLODGenComputeShader, renderFeatureSettings.IndirectBufferGenerationComputeShader, renderFeatureSettings.DrawArgsInstanceCountTransferComputeShader)
+        public GPUInstancingService(GPUInstancingRenderFeature.GPUInstancingRenderFeature_Settings settings)
         {
-        }
+            this.settings = settings;
 
-        public GPUInstancingService(ComputeShader frustumCullingAndLODGenComputeShader, ComputeShader indirectBufferGenerationComputeShader, ComputeShader drawArgsInstanceCountTransferComputeShader)
-        {
-            FrustumCullingAndLODGenComputeShader = frustumCullingAndLODGenComputeShader;
+            FrustumCullingAndLODGenComputeShader = settings.FrustumCullingAndLODGenComputeShader;
             FrustumCullingAndLODGenComputeShader_KernelIDs = FrustumCullingAndLODGenComputeShader.FindKernel(FrustumCullingAndLODGenComputeShader_KernelName);
             FrustumCullingAndLODGenComputeShader.GetKernelThreadGroupSizes(FrustumCullingAndLODGenComputeShader_KernelIDs,
                 out FrustumCullingAndLODGen_ThreadGroupSize_X,
                 out FrustumCullingAndLODGen_ThreadGroupSize_Y,
                 out FrustumCullingAndLODGen_ThreadGroupSize_Z);
 
-            IndirectBufferGenerationComputeShader = indirectBufferGenerationComputeShader;
+            IndirectBufferGenerationComputeShader = settings.IndirectBufferGenerationComputeShader;
             IndirectBufferGenerationComputeShader_KernelIDs = IndirectBufferGenerationComputeShader.FindKernel(IndirectBufferGenerationComputeShader_KernelName);
             IndirectBufferGenerationComputeShader.GetKernelThreadGroupSizes(IndirectBufferGenerationComputeShader_KernelIDs,
                 out IndirectBufferGeneration_ThreadGroupSize_X,
                 out IndirectBufferGeneration_ThreadGroupSize_Y,
                 out IndirectBufferGeneration_ThreadGroupSize_Z);
 
-            DrawArgsInstanceCountTransferComputeShader = drawArgsInstanceCountTransferComputeShader;
+            DrawArgsInstanceCountTransferComputeShader = settings.DrawArgsInstanceCountTransferComputeShader;
             DrawArgsInstanceCountTransferComputeShader_KernelIDs = DrawArgsInstanceCountTransferComputeShader.FindKernel(DrawArgsInstanceCountTransferComputeShader_KernelName);
             DrawArgsInstanceCountTransferComputeShader.GetKernelThreadGroupSizes(DrawArgsInstanceCountTransferComputeShader_KernelIDs,
                 out DrawArgsInstanceCountTransfer_ThreadGroupSize_X,
@@ -146,14 +145,12 @@ namespace DCL.Roads.GPUInstancing
             groupData.frustumOffset = 0.0f;
             groupData.vBoundsExtents = candidate.LODGroup.Bounds.extents;
             groupData.fCameraHalfAngle = halfAngle;
-            groupData.fMaxDistance = cam.farClipPlane;
+            groupData.fMaxDistance = settings.MaxDistance;
             groupData.minCullingDistance = cam.nearClipPlane;
             groupData.nInstBufferSize = (uint)buffers.PerInstanceMatrices.count;
             groupData.nMaxLOD_GB = (uint)candidate.LODGroup.LodsScreenSpaceSizes.Length;
 
-            List<GroupData> groupDataList = new List<GroupData>();
-            groupDataList.Add(groupData);
-            buffers.GroupData.SetData(groupDataList, 0, 0, 1);
+            buffers.GroupData.SetData(new List<GroupData> { groupData }, 0, 0, 1);
             FrustumCullingAndLODGenComputeShader.SetBuffer(FrustumCullingAndLODGenComputeShader_KernelIDs, ComputeVar_GroupDataBuffer, buffers.GroupData);
             FrustumCullingAndLODGenComputeShader.SetBuffer(FrustumCullingAndLODGenComputeShader_KernelIDs, ComputeVar_PerInstanceData, buffers.PerInstanceMatrices);
             FrustumCullingAndLODGenComputeShader.SetBuffer(FrustumCullingAndLODGenComputeShader_KernelIDs, ComputeVar_PerInstance_LODLevels, buffers.LODLevels);

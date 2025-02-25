@@ -1,8 +1,10 @@
-﻿using DCL.Roads.GPUInstancing;
+﻿using DCL.Landscape.Settings;
+using DCL.Roads.GPUInstancing;
 using ECS;
 using System;
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
+using UnityEngine.Serialization;
 
 public partial class GPUInstancingRenderFeature : ScriptableRendererFeature
 {
@@ -50,5 +52,10 @@ public partial class GPUInstancingRenderFeature : ScriptableRendererFeature
         public ComputeShader FrustumCullingAndLODGenComputeShader;
         public ComputeShader IndirectBufferGenerationComputeShader;
         public ComputeShader DrawArgsInstanceCountTransferComputeShader;
+
+        [SerializeField] private LandscapeData landscapeData;
+        [SerializeField] private float maxDistanceMultiplayer = 1;
+
+        public float MaxDistance => landscapeData.DetailDistance * maxDistanceMultiplayer;
     }
 }

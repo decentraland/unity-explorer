@@ -1,10 +1,12 @@
-﻿using DCL.Roads.GPUInstancing.Playground;
+﻿using DCL.Landscape.Settings;
+using DCL.Roads.GPUInstancing.Playground;
 using DCL.Roads.Settings;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
+using UnityEngine.Serialization;
 using Utility;
 
 namespace DCL.Roads.GPUInstancing
@@ -12,6 +14,8 @@ namespace DCL.Roads.GPUInstancing
     [ExecuteAlways]
     public class GPUInstancingServicePlayground : MonoBehaviour
     {
+        public LandscapeData LandscapeData;
+
         public ComputeShader FrustumCullingAndLODGenComputeShader;
         public ComputeShader IndirectBufferGenerationComputeShader;
         public ComputeShader DrawArgsInstanceCountTransferComputeShader;
@@ -41,7 +45,7 @@ namespace DCL.Roads.GPUInstancing
 
         private void OnEnable()
         {
-            instancingService = new GPUInstancingService(FrustumCullingAndLODGenComputeShader, IndirectBufferGenerationComputeShader, DrawArgsInstanceCountTransferComputeShader);
+            // instancingService = new GPUInstancingService(FrustumCullingAndLODGenComputeShader, IndirectBufferGenerationComputeShader, DrawArgsInstanceCountTransferComputeShader, LandscapeData);
         }
 
         private void OnDisable()
