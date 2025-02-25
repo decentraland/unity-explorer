@@ -8,17 +8,29 @@ namespace Plugins.RustSegment.SegmentServerWrap.Playground
 {
     public class SegmentServerWrapPlayground : MonoBehaviour
     {
+        [SerializeField] private bool fillMode;
+        [SerializeField] private long unFlushedBatches;
+
         private IAnalyticsService service = null!;
 
         private void Start()
         {
             Initialize();
+            Identify();
+        }
+
+        public void Update()
+        {
+            if (fillMode)
+                Track();
+
+            unFlushedBatches = (long) NativeMethods.SegmentServerUnFlushedBatchesCount();
         }
 
         [ContextMenu(nameof(Initialize))]
         private void Initialize()
         {
-            string key = Environment.GetEnvironmentVariable("SEGMENT_WRITE_KEY")!;
+            string key = "WqI7aI1XeKUBlHtMJXZSo5dneDQE2mGD";
 
             if (string.IsNullOrWhiteSpace(key))
                 throw new Exception("Segment Write Key is not set.");
