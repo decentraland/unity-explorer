@@ -100,7 +100,7 @@ MonoBehaviour:
         e31: 0
         e32: 0
         e33: 1
-      instColourTint: {x: 1, y: 1, z: 1}
+      instColourTint: {x: 1, y: 1, z: 1, w: 1}
   - Name: RoadSideStraight
     LODGroup: {fileID: 487577220416695816}
     InstancesBuffer:
@@ -121,7 +121,7 @@ MonoBehaviour:
         e31: 0
         e32: 0
         e33: 1
-      instColourTint: {x: 1, y: 1, z: 1}
+      instColourTint: {x: 1, y: 1, z: 1, w: 1}
     - instMatrix:
         e00: -0.000025629997
         e01: 0
@@ -139,7 +139,7 @@ MonoBehaviour:
         e31: 0
         e32: 0
         e33: 1
-      instColourTint: {x: 1, y: 1, z: 1}
+      instColourTint: {x: 1, y: 1, z: 1, w: 1}
   - Name: RoadSideDecor01
     LODGroup: {fileID: 2219400197325554935}
     InstancesBuffer:
@@ -160,7 +160,7 @@ MonoBehaviour:
         e31: 0
         e32: 0
         e33: 1
-      instColourTint: {x: 1, y: 1, z: 1}
+      instColourTint: {x: 1, y: 1, z: 1, w: 1}
     - instMatrix:
         e00: -1
         e01: 0
@@ -178,7 +178,7 @@ MonoBehaviour:
         e31: 0
         e32: 0
         e33: 1
-      instColourTint: {x: 1, y: 1, z: 1}
+      instColourTint: {x: 1, y: 1, z: 1, w: 1}
   - Name: Lamp01
     LODGroup: {fileID: 3790099938915242161}
     InstancesBuffer:
@@ -199,7 +199,7 @@ MonoBehaviour:
         e31: 0
         e32: 0
         e33: 1
-      instColourTint: {x: 1, y: 1, z: 1}
+      instColourTint: {x: 1, y: 1, z: 1, w: 1}
   - Name: HedgeMiddleLarge
     LODGroup: {fileID: 9087474844775345695}
     InstancesBuffer:
@@ -220,7 +220,7 @@ MonoBehaviour:
         e31: 0
         e32: 0
         e33: 1
-      instColourTint: {x: 1, y: 1, z: 1}
+      instColourTint: {x: 1, y: 1, z: 1, w: 1}
 --- !u!1 &7328220689003275785
 GameObject:
   m_ObjectHideFlags: 0

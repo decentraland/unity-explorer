@@ -102,7 +102,7 @@ MonoBehaviour:
         e31: 0
         e32: 0
         e33: 1
-      instColourTint: {x: 1, y: 1, z: 1}
+      instColourTint: {x: 1, y: 1, z: 1, w: 1}
   - Name: RoadSideStraight
     LODGroup: {fileID: 4689985682979362914}
     InstancesBuffer:
@@ -123,7 +123,7 @@ MonoBehaviour:
         e31: 0
         e32: 0
         e33: 1
-      instColourTint: {x: 1, y: 1, z: 1}
+      instColourTint: {x: 1, y: 1, z: 1, w: 1}
     - instMatrix:
         e00: -0.000025629997
         e01: 0
@@ -141,7 +141,7 @@ MonoBehaviour:
         e31: 0
         e32: 0
         e33: 1
-      instColourTint: {x: 1, y: 1, z: 1}
+      instColourTint: {x: 1, y: 1, z: 1, w: 1}
   - Name: RoadSideDecor01
     LODGroup: {fileID: 6421835647448838813}
     InstancesBuffer:
@@ -162,7 +162,7 @@ MonoBehaviour:
         e31: 0
         e32: 0
         e33: 1
-      instColourTint: {x: 1, y: 1, z: 1}
+      instColourTint: {x: 1, y: 1, z: 1, w: 1}
     - instMatrix:
         e00: -1
         e01: 0
@@ -180,7 +180,7 @@ MonoBehaviour:
         e31: 0
         e32: 0
         e33: 1
-      instColourTint: {x: 1, y: 1, z: 1}
+      instColourTint: {x: 1, y: 1, z: 1, w: 1}
   - Name: Lamp01
     LODGroup: {fileID: 2640305455759509490}
     InstancesBuffer:
@@ -201,7 +201,7 @@ MonoBehaviour:
         e31: 0
         e32: 0
         e33: 1
-      instColourTint: {x: 1, y: 1, z: 1}
+      instColourTint: {x: 1, y: 1, z: 1, w: 1}
   - Name: HedgeMiddleLarge
     LODGroup: {fileID: 6531125070392445232}
     InstancesBuffer:
@@ -222,7 +222,7 @@ MonoBehaviour:
         e31: 0
         e32: 0
         e33: 1
-      instColourTint: {x: 1, y: 1, z: 1}
+      instColourTint: {x: 1, y: 1, z: 1, w: 1}
   - Name: Bench01
     LODGroup: {fileID: 5651416745966725892}
     InstancesBuffer:
@@ -243,7 +243,7 @@ MonoBehaviour:
         e31: 0
         e32: 0
         e33: 1
-      instColourTint: {x: 1, y: 1, z: 1}
+      instColourTint: {x: 1, y: 1, z: 1, w: 1}
     - instMatrix:
         e00: -0.000008940696
         e01: 0
@@ -261,7 +261,7 @@ MonoBehaviour:
         e31: 0
         e32: 0
         e33: 1
-      instColourTint: {x: 1, y: 1, z: 1}
+      instColourTint: {x: 1, y: 1, z: 1, w: 1}
 --- !u!1 &7481651600361898752
 GameObject:
   m_ObjectHideFlags: 0

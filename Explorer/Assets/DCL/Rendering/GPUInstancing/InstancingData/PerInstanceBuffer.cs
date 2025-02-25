@@ -8,12 +8,12 @@ namespace DCL.Roads.GPUInstancing.Playground
     public struct PerInstanceBuffer : IEquatable<PerInstanceBuffer>
     {
         public Matrix4x4 instMatrix;
-        public Vector3 instColourTint;
+        public Vector4 instColourTint;
 
         public PerInstanceBuffer(Matrix4x4 instMatrix)
         {
             this.instMatrix = instMatrix;
-            this.instColourTint = Vector3.one;
+            this.instColourTint = Vector4.one; // white colour
         }
 
         public bool Equals(PerInstanceBuffer other) =>

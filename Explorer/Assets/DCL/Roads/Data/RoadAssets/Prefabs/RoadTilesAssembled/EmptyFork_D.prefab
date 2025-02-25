@@ -131,7 +131,7 @@ MonoBehaviour:
         e31: 0
         e32: 0
         e33: 1
-      instColourTint: {x: 1, y: 1, z: 1}
+      instColourTint: {x: 1, y: 1, z: 1, w: 1}
   - Name: RoadSideCornerSmall
     LODGroup: {fileID: 5961490043919582149}
     InstancesBuffer:
@@ -152,7 +152,7 @@ MonoBehaviour:
         e31: 0
         e32: 0
         e33: 1
-      instColourTint: {x: 1, y: 1, z: 1}
+      instColourTint: {x: 1, y: 1, z: 1, w: 1}
     - instMatrix:
         e00: -0.0066787004
         e01: 0
@@ -170,7 +170,7 @@ MonoBehaviour:
         e31: 0
         e32: 0
         e33: 1
-      instColourTint: {x: 1, y: 1, z: 1}
+      instColourTint: {x: 1, y: 1, z: 1, w: 1}
   - Name: HedgeBallGreen
     LODGroup: {fileID: 3833073149418550620}
     InstancesBuffer:
@@ -191,7 +191,7 @@ MonoBehaviour:
         e31: 0
         e32: 0
         e33: 1
-      instColourTint: {x: 1, y: 1, z: 1}
+      instColourTint: {x: 1, y: 1, z: 1, w: 1}
 --- !u!1001 &2682052727550297406
 PrefabInstance:
   m_ObjectHideFlags: 0

@@ -133,19 +133,16 @@ namespace DCL.Roads.GPUInstancing
 
         private void RenderCandidateIndirect(GPUInstancingLODGroupWithBuffer candidate, GPUInstancingBuffers buffers, Camera cam)
         {
-            float halfAngle = 0.5f * cam.fieldOfView * Mathf.Deg2Rad;
-            Matrix4x4 camMVP = cam.projectionMatrix * cam.worldToCameraMatrix;
-
             GroupData groupData = new GroupData
             {
                 lodSizes = candidate.LODGroup.LODSizesMatrix,
-                matCamera_MVP = camMVP,
+                matCamera_MVP = cam.projectionMatrix * cam.worldToCameraMatrix,
                 vCameraPosition = cam.transform.position,
                 fShadowDistance = 0.0f,
                 vBoundsCenter = candidate.LODGroup.Bounds.center,
                 frustumOffset = 0.0f,
                 vBoundsExtents = candidate.LODGroup.Bounds.extents,
-                fCameraHalfAngle = halfAngle,
+                fCameraHalfAngle = 0.5f * cam.fieldOfView * Mathf.Deg2Rad,
                 fMaxDistance = settings.MaxDistance,
                 minCullingDistance = cam.nearClipPlane,
                 nInstBufferSize = (uint)buffers.PerInstanceMatrices.count,

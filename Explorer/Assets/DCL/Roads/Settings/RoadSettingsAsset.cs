@@ -58,7 +58,7 @@ namespace DCL.Roads.Settings
                 }
 
                 foreach (PerInstanceBuffer instanceData in candidate.InstancesBuffer)
-                    matrices.Add(new PerInstanceBuffer { instMatrix = roadRoot * instanceData.instMatrix });
+                    matrices.Add(new PerInstanceBuffer(roadRoot * instanceData.instMatrix));
             }
         }
 
