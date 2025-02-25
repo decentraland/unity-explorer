@@ -78,6 +78,8 @@ namespace DCL.Roads.GPUInstancing
 
         private Camera renderCamera;
 
+        public LandscapeData LandscapeData { private get; set; }
+
         public GPUInstancingService(GPUInstancingRenderFeature.GPUInstancingRenderFeature_Settings settings)
         {
             this.settings = settings;
@@ -143,7 +145,7 @@ namespace DCL.Roads.GPUInstancing
                 frustumOffset = 0.0f,
                 vBoundsExtents = candidate.LODGroup.Bounds.extents,
                 fCameraHalfAngle = 0.5f * cam.fieldOfView * Mathf.Deg2Rad,
-                fMaxDistance = settings.MaxDistance,
+                fMaxDistance = LandscapeData.DetailDistance * settings.MaxDistanceScaleFactor,
                 minCullingDistance = cam.nearClipPlane,
                 nInstBufferSize = (uint)buffers.PerInstanceMatrices.count,
                 nMaxLOD_GB = (uint)candidate.LODGroup.LodsScreenSpaceSizes.Length,
