@@ -251,7 +251,9 @@ namespace DCL.WebRequests
             new DebugMetricsWebRequestController(origin, requestCannotConnectDebugMetric,
                 requestCompleteDebugMetric);
 
-        public static IWebRequestController WithBudget(this IWebRequestController origin, int totalBudget) =>
-            new BudgetedWebRequestController(origin, totalBudget);
+        public static IWebRequestController WithBudget(this IWebRequestController origin, int totalBudget, ElementBinding<ulong> debugBudget)
+        {
+            return new BudgetedWebRequestController(origin, totalBudget, debugBudget);
+        }
     }
 }
