@@ -121,7 +121,7 @@ MonoBehaviour:
       isEnabled: 1
   useLocalEnvVariableFallback: 0
   flushSize: 20
-  flushInterval: 30
+  flushInterval: 60
   segmentWriteKey: 
   <PerformanceReportInterval>k__BackingField: 15
   <Mode>k__BackingField: 0
