@@ -30,7 +30,7 @@ namespace Plugins.RustSegment.SegmentServerWrap.Playground
         [ContextMenu(nameof(Initialize))]
         private void Initialize()
         {
-            string key = "WqI7aI1XeKUBlHtMJXZSo5dneDQE2mGD";
+            string key = Environment.GetEnvironmentVariable("SEGMENT_WRITE_KEY")!;
 
             if (string.IsNullOrWhiteSpace(key))
                 throw new Exception("Segment Write Key is not set.");
