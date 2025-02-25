@@ -136,21 +136,23 @@ namespace DCL.Roads.GPUInstancing
             float halfAngle = 0.5f * cam.fieldOfView * Mathf.Deg2Rad;
             Matrix4x4 camMVP = cam.projectionMatrix * cam.worldToCameraMatrix;
 
-            GroupData groupData = new GroupData();
-            groupData.lodSizes = candidate.LODGroup.LODSizesMatrix;
-            groupData.matCamera_MVP = camMVP;
-            groupData.vCameraPosition = cam.transform.position;
-            groupData.fShadowDistance = 0.0f;
-            groupData.vBoundsCenter = candidate.LODGroup.Bounds.center;
-            groupData.frustumOffset = 0.0f;
-            groupData.vBoundsExtents = candidate.LODGroup.Bounds.extents;
-            groupData.fCameraHalfAngle = halfAngle;
-            groupData.fMaxDistance = settings.MaxDistance;
-            groupData.minCullingDistance = cam.nearClipPlane;
-            groupData.nInstBufferSize = (uint)buffers.PerInstanceMatrices.count;
-            groupData.nMaxLOD_GB = (uint)candidate.LODGroup.LodsScreenSpaceSizes.Length;
+            GroupData groupData = new GroupData
+            {
+                lodSizes = candidate.LODGroup.LODSizesMatrix,
+                matCamera_MVP = camMVP,
+                vCameraPosition = cam.transform.position,
+                fShadowDistance = 0.0f,
+                vBoundsCenter = candidate.LODGroup.Bounds.center,
+                frustumOffset = 0.0f,
+                vBoundsExtents = candidate.LODGroup.Bounds.extents,
+                fCameraHalfAngle = halfAngle,
+                fMaxDistance = settings.MaxDistance,
+                minCullingDistance = cam.nearClipPlane,
+                nInstBufferSize = (uint)buffers.PerInstanceMatrices.count,
+                nMaxLOD_GB = (uint)candidate.LODGroup.LodsScreenSpaceSizes.Length,
+            };
 
-            buffers.GroupData.SetData(new List<GroupData> { groupData }, 0, 0, 1);
+            buffers.GroupData.SetData(new[] { groupData }, 0, 0, 1);
             FrustumCullingAndLODGenComputeShader.SetBuffer(FrustumCullingAndLODGenComputeShader_KernelIDs, ComputeVar_GroupDataBuffer, buffers.GroupData);
             FrustumCullingAndLODGenComputeShader.SetBuffer(FrustumCullingAndLODGenComputeShader_KernelIDs, ComputeVar_PerInstanceData, buffers.PerInstanceMatrices);
             FrustumCullingAndLODGenComputeShader.SetBuffer(FrustumCullingAndLODGenComputeShader_KernelIDs, ComputeVar_PerInstance_LODLevels, buffers.LODLevels);
