@@ -1,4 +1,5 @@
 ﻿using Arch.Core;
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Browser;
@@ -208,26 +209,33 @@ namespace Global.Dynamic
             return new DebugAnalyticsService();
         }
 
-        private static (
-            IVerifiedEthereumApi web3VerifiedAuthenticator,
-            IWeb3VerifiedAuthenticator web3Authenticator
-            )
+        private static (IVerifiedEthereumApi web3VerifiedAuthenticator, IWeb3VerifiedAuthenticator web3Authenticator)
             CreateWeb3Dependencies(
                 DynamicSceneLoaderSettings sceneLoaderSettings,
                 IWeb3AccountFactory web3AccountFactory,
                 IWeb3IdentityCache identityCache,
                 IWebBrowser webBrowser,
                 BootstrapContainer container,
-                IDecentralandUrlsSource decentralandUrlsSource
-            )
+                IDecentralandUrlsSource decentralandUrlsSource)
         {
+            URLBuilder urlBuilder = new URLBuilder();
+            urlBuilder.AppendDomain(URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.ApiRpc)));
+
+            // TODO: this is a temporary thing until we solve the network in a better way
+            // if (decentralandUrlsSource.Environment == DecentralandEnvironment.Org)
+            //     urlBuilder.AppendPath(new URLPath("mainnet"));
+            // else
+                urlBuilder.AppendPath(new URLPath("sepolia"));
+
             var dappWeb3Authenticator = new DappWeb3Authenticator(
                 webBrowser,
-                decentralandUrlsSource.Url(DecentralandUrl.ApiAuth),
-                decentralandUrlsSource.Url(DecentralandUrl.AuthSignature),
+                URLAddress.FromString(decentralandUrlsSource.Url(DecentralandUrl.ApiAuth)),
+                URLAddress.FromString(decentralandUrlsSource.Url(DecentralandUrl.AuthSignatureWebApp)),
+                urlBuilder.Build(),
                 identityCache,
                 web3AccountFactory,
-                new HashSet<string>(sceneLoaderSettings.Web3WhitelistMethods)
+                new HashSet<string>(sceneLoaderSettings.Web3WhitelistMethods),
+                new HashSet<string>(sceneLoaderSettings.Web3ReadOnlyMethods)
             );
 
             IWeb3VerifiedAuthenticator coreWeb3Authenticator = new ProxyVerifiedWeb3Authenticator(dappWeb3Authenticator, identityCache);

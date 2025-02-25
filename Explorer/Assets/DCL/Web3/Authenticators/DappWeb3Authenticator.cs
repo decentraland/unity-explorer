@@ -1,6 +1,6 @@
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
-using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Web3.Abstract;
 using DCL.Web3.Chains;
 using DCL.Web3.Identities;
@@ -12,6 +12,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Net.WebSockets;
 using System.Threading;
 
 namespace DCL.Web3.Authenticators
@@ -19,95 +20,79 @@ namespace DCL.Web3.Authenticators
     public partial class DappWeb3Authenticator : IWeb3VerifiedAuthenticator, IVerifiedEthereumApi
     {
         private const int TIMEOUT_SECONDS = 30;
+        private const int RPC_BUFFER_SIZE = 50000;
 
         private readonly IWebBrowser webBrowser;
-        private readonly string serverUrl;
-        private readonly string signatureUrl;
+        private readonly URLAddress authApiUrl;
+        private readonly URLAddress signatureWebAppUrl;
+        private readonly URLAddress rpcServerUrl;
         private readonly IWeb3IdentityCache identityCache;
         private readonly IWeb3AccountFactory web3AccountFactory;
         private readonly HashSet<string> whitelistMethods;
-        // Allow only one web3 operation at a time
-        private readonly SemaphoreSlim mutex = new(1, 1);
+        private readonly HashSet<string> readOnlyMethods;
 
-        private SocketIO? webSocket;
+        // Allow only one web3 operation at a time
+        private readonly SemaphoreSlim mutex = new (1, 1);
+        private readonly byte[] rpcByteBuffer = new byte[RPC_BUFFER_SIZE];
+
+        private int authApiPendingOperations;
+        private int rpcPendingOperations;
+        private SocketIO? authApiWebSocket;
+        private ClientWebSocket? rpcWebSocket;
         private UniTaskCompletionSource<SocketIOResponse>? signatureOutcomeTask;
         private IWeb3VerifiedAuthenticator.VerificationDelegate? loginVerificationCallback;
         private IVerifiedEthereumApi.VerificationDelegate? signatureVerificationCallback;
 
         public DappWeb3Authenticator(IWebBrowser webBrowser,
-            string serverUrl,
-            string signatureUrl,
+            URLAddress authApiUrl,
+            URLAddress signatureWebAppUrl,
+            URLAddress rpcServerUrl,
             IWeb3IdentityCache identityCache,
             IWeb3AccountFactory web3AccountFactory,
-            HashSet<string> whitelistMethods
-        )
+            HashSet<string> whitelistMethods,
+            HashSet<string> readOnlyMethods)
         {
             this.webBrowser = webBrowser;
-            this.serverUrl = serverUrl;
-            this.signatureUrl = signatureUrl;
+            this.authApiUrl = authApiUrl;
+            this.signatureWebAppUrl = signatureWebAppUrl;
+            this.rpcServerUrl = rpcServerUrl;
             this.identityCache = identityCache;
             this.web3AccountFactory = web3AccountFactory;
             this.whitelistMethods = whitelistMethods;
+            this.readOnlyMethods = readOnlyMethods;
         }
 
         public void Dispose()
         {
-            try { webSocket?.Dispose(); }
+            try { authApiWebSocket?.Dispose(); }
             catch (ObjectDisposedException) { }
         }
 
-        public async UniTask<T> SendAsync<T>(EthApiRequest request, CancellationToken ct)
+        public async UniTask<EthApiResponse> SendAsync(EthApiRequest request, CancellationToken ct)
         {
             if (!whitelistMethods.Contains(request.method))
                 throw new Web3Exception($"The method is not allowed: {request.method}");
 
-            await mutex.WaitAsync(ct);
-
-            SynchronizationContext originalSyncContext = SynchronizationContext.Current;
-
-            try
+            if (string.Equals(request.method, "eth_accounts")
+                || string.Equals(request.method, "eth_requestAccounts"))
             {
-                await UniTask.SwitchToMainThread(ct);
+                string[] accounts = Array.Empty<string>();
 
-                await ConnectToServerAsync();
+                if (identityCache.Identity != null)
+                    accounts = new string[] { identityCache.EnsuredIdentity().Address };
 
-                SignatureIdResponse authenticationResponse = await RequestEthMethodAsync(new AuthorizedEthApiRequest
+                return new EthApiResponse
                 {
-                    method = request.method,
-                    @params = request.@params,
-                    authChain = identityCache.Identity!.AuthChain.ToArray(),
-                }, ct);
-
-                DateTime signatureExpiration = DateTime.UtcNow.AddMinutes(5);
-
-                if (!string.IsNullOrEmpty(authenticationResponse.expiration))
-                    signatureExpiration = DateTime.Parse(authenticationResponse.expiration, null, DateTimeStyles.RoundtripKind);
-
-                await UniTask.SwitchToMainThread(ct);
-
-                signatureVerificationCallback?.Invoke(authenticationResponse.code, signatureExpiration);
-
-                MethodResponse<T> response = await RequestWalletConfirmationAsync<MethodResponse<T>>(authenticationResponse.requestId, signatureExpiration, ct);
-
-                await DisconnectFromServerAsync();
-
-                // Strip out the requestId & sender fields. We assume that will not be needed by the client
-                return response.result;
+                    id = request.id,
+                    jsonrpc = "2.0",
+                    result = accounts,
+                };
             }
-            catch (Exception)
-            {
-                await DisconnectFromServerAsync();
-                throw;
-            }
-            finally
-            {
-                if (originalSyncContext != null)
-                    await UniTask.SwitchToSynchronizationContext(originalSyncContext, ct);
-                else
-                    await UniTask.SwitchToMainThread(ct);
 
-                mutex.Release();
-            }
+            if (IsReadOnly(request))
+                return await SendWithoutConfirmationAsync(request, ct);
+
+            return await SendWithConfirmationAsync(request, ct);
         }
 
         /// <summary>
@@ -128,7 +113,7 @@ namespace DCL.Web3.Authenticators
             {
                 await UniTask.SwitchToMainThread(ct);
 
-                await ConnectToServerAsync();
+                await ConnectToAuthApiAsync();
 
                 var ephemeralAccount = web3AccountFactory.CreateRandomAccount();
 
@@ -136,7 +121,7 @@ namespace DCL.Web3.Authenticators
                 DateTime sessionExpiration = DateTime.UtcNow.AddDays(7);
                 string ephemeralMessage = CreateEphemeralMessage(ephemeralAccount, sessionExpiration);
 
-                SignatureIdResponse authenticationResponse = await RequestEthMethodAsync(new EthApiRequest
+                SignatureIdResponse authenticationResponse = await RequestEthMethodWithSignatureAsync(new LoginAuthApiRequest
                 {
                     method = "dcl_personal_sign",
                     @params = new object[] { ephemeralMessage },
@@ -151,10 +136,10 @@ namespace DCL.Web3.Authenticators
 
                 loginVerificationCallback?.Invoke(authenticationResponse.code, signatureExpiration, authenticationResponse.requestId);
 
-                LoginResponse response = await RequestWalletConfirmationAsync<LoginResponse>(authenticationResponse.requestId,
+                LoginAuthApiResponse response = await RequestWalletConfirmationAsync<LoginAuthApiResponse>(authenticationResponse.requestId,
                     signatureExpiration, ct);
 
-                await DisconnectFromServerAsync();
+                await DisconnectFromAuthApiAsync();
 
                 if (string.IsNullOrEmpty(response.sender))
                     throw new Web3Exception($"Cannot solve the signer's address from the signature. Request id: {authenticationResponse.requestId}");
@@ -170,7 +155,7 @@ namespace DCL.Web3.Authenticators
             }
             catch (Exception)
             {
-                await DisconnectFromServerAsync();
+                await DisconnectFromAuthApiAsync();
                 throw;
             }
             finally
@@ -184,10 +169,8 @@ namespace DCL.Web3.Authenticators
             }
         }
 
-        public async UniTask LogoutAsync(CancellationToken cancellationToken)
-        {
-            await DisconnectFromServerAsync();
-        }
+        public async UniTask LogoutAsync(CancellationToken cancellationToken) =>
+            await DisconnectFromAuthApiAsync();
 
         public void SetVerificationListener(IWeb3VerifiedAuthenticator.VerificationDelegate? callback) =>
             loginVerificationCallback = callback;
@@ -195,31 +178,153 @@ namespace DCL.Web3.Authenticators
         public void AddVerificationListener(IVerifiedEthereumApi.VerificationDelegate callback) =>
             signatureVerificationCallback = callback;
 
-        private SocketIO InitializeWebSocket()
+        private async UniTask DisconnectFromAuthApiAsync()
         {
-            if (webSocket != null) return webSocket;
+            if (authApiWebSocket is { Connected: true })
+                await authApiWebSocket.DisconnectAsync();
+        }
 
-            var uri = new Uri(serverUrl);
+        private async UniTask<EthApiResponse> SendWithoutConfirmationAsync(EthApiRequest request, CancellationToken ct)
+        {
+            SynchronizationContext originalSyncContext = SynchronizationContext.Current;
 
-            webSocket = new SocketIO(uri, new SocketIOOptions
+            try
             {
-                Transport = TransportProtocol.WebSocket,
-            });
+                rpcPendingOperations++;
 
-            webSocket.JsonSerializer = new NewtonsoftJsonSerializer(new JsonSerializerSettings());
+                await mutex.WaitAsync(ct);
 
-            webSocket.On("outcome", ProcessSignatureOutcomeMessage);
+                await UniTask.SwitchToMainThread(ct);
 
-            return webSocket;
+                await ConnectToRpcAsync(ct);
+
+                var response = await RequestEthMethodWithoutSignature(request, ct)
+                   .Timeout(TimeSpan.FromSeconds(TIMEOUT_SECONDS));
+
+                if (rpcPendingOperations <= 1)
+                    await DisconnectFromRpcAsync(ct);
+
+                return response;
+            }
+            catch (Exception)
+            {
+                await DisconnectFromRpcAsync(ct);
+                throw;
+            }
+            finally
+            {
+                if (originalSyncContext != null)
+                    await UniTask.SwitchToSynchronizationContext(originalSyncContext, ct);
+                else
+                    await UniTask.SwitchToMainThread(ct);
+
+                mutex.Release();
+                rpcPendingOperations--;
+            }
         }
 
-        private async UniTask DisconnectFromServerAsync()
+        private async UniTask DisconnectFromRpcAsync(CancellationToken ct)
         {
-            if (webSocket is { Connected: true })
-                await webSocket.DisconnectAsync();
+            if (rpcWebSocket == null) return;
+
+            await rpcWebSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "", ct);
+            rpcWebSocket.Abort();
+            rpcWebSocket.Dispose();
+            rpcWebSocket = null;
         }
 
-        private AuthChain CreateAuthChain(LoginResponse response, string ephemeralMessage)
+        private async UniTask ConnectToRpcAsync(CancellationToken ct)
+        {
+            if (rpcWebSocket?.State == WebSocketState.Open) return;
+
+            rpcWebSocket = new ClientWebSocket();
+            await rpcWebSocket.ConnectAsync(new Uri(rpcServerUrl), ct);
+        }
+
+        private async UniTask<EthApiResponse> RequestEthMethodWithoutSignature(EthApiRequest request, CancellationToken ct)
+        {
+            string reqJson = JsonConvert.SerializeObject(request);
+            byte[] bytes = System.Text.Encoding.UTF8.GetBytes(reqJson);
+            await rpcWebSocket!.SendAsync(bytes, WebSocketMessageType.Text, true, ct);
+
+            while (!ct.IsCancellationRequested && rpcWebSocket.State == WebSocketState.Open)
+            {
+                WebSocketReceiveResult result = await rpcWebSocket.ReceiveAsync(rpcByteBuffer, ct);
+
+                if (result.MessageType is WebSocketMessageType.Text or WebSocketMessageType.Binary)
+                {
+                    string resJson = System.Text.Encoding.UTF8.GetString(rpcByteBuffer, 0, result.Count);
+                    EthApiResponse response = JsonConvert.DeserializeObject<EthApiResponse>(resJson);
+
+                    if (response.id == request.id)
+                        return response;
+                }
+            }
+
+            throw new Web3Exception("Unexpected data received from rpc");
+        }
+
+        private async UniTask<EthApiResponse> SendWithConfirmationAsync(EthApiRequest request, CancellationToken ct)
+        {
+            SynchronizationContext originalSyncContext = SynchronizationContext.Current;
+
+            try
+            {
+                authApiPendingOperations++;
+
+                await mutex.WaitAsync(ct);
+
+                await UniTask.SwitchToMainThread(ct);
+
+                await ConnectToAuthApiAsync();
+
+                SignatureIdResponse authenticationResponse = await RequestEthMethodWithSignatureAsync(new AuthorizedEthApiRequest
+                {
+                    method = request.method,
+                    @params = request.@params,
+                    authChain = identityCache.Identity!.AuthChain.ToArray(),
+                }, ct);
+
+                DateTime signatureExpiration = DateTime.UtcNow.AddMinutes(5);
+
+                if (!string.IsNullOrEmpty(authenticationResponse.expiration))
+                    signatureExpiration = DateTime.Parse(authenticationResponse.expiration, null, DateTimeStyles.RoundtripKind);
+
+                await UniTask.SwitchToMainThread(ct);
+
+                signatureVerificationCallback?.Invoke(authenticationResponse.code, signatureExpiration);
+
+                MethodResponse response = await RequestWalletConfirmationAsync<MethodResponse>(authenticationResponse.requestId, signatureExpiration, ct);
+
+                if (authApiPendingOperations <= 1)
+                    await DisconnectFromAuthApiAsync();
+
+                // Strip out the requestId & sender fields. We assume that will not be needed by the client
+                return new EthApiResponse
+                {
+                    id = request.id,
+                    result = response.result,
+                    jsonrpc = "2.0",
+                };
+            }
+            catch (Exception)
+            {
+                await DisconnectFromAuthApiAsync();
+                throw;
+            }
+            finally
+            {
+                if (originalSyncContext != null)
+                    await UniTask.SwitchToSynchronizationContext(originalSyncContext, ct);
+                else
+                    await UniTask.SwitchToMainThread(ct);
+
+                mutex.Release();
+                authApiPendingOperations--;
+            }
+        }
+
+        private AuthChain CreateAuthChain(LoginAuthApiResponse response, string ephemeralMessage)
         {
             var authChain = AuthChain.Create();
 
@@ -245,26 +350,33 @@ namespace DCL.Web3.Authenticators
         private string CreateEphemeralMessage(IWeb3Account ephemeralAccount, DateTime expiration) =>
             $"Decentraland Login\nEphemeral address: {ephemeralAccount.Address.OriginalFormat}\nExpiration: {expiration:yyyy-MM-ddTHH:mm:ss.fffZ}";
 
-        private async UniTask ConnectToServerAsync()
-        {
-            await InitializeWebSocket()
-                 .ConnectAsync()
-                 .AsUniTask()
-                 .Timeout(TimeSpan.FromSeconds(TIMEOUT_SECONDS));
-        }
-
-        private void ProcessSignatureOutcomeMessage(SocketIOResponse response)
-        {
+        private void ProcessSignatureOutcomeMessage(SocketIOResponse response) =>
             signatureOutcomeTask?.TrySetResult(response);
+
+        private async UniTask<T> RequestWalletConfirmationAsync<T>(string requestId, DateTime expiration, CancellationToken ct)
+        {
+            webBrowser.OpenUrl($"{signatureWebAppUrl}/{requestId}");
+
+            signatureOutcomeTask?.TrySetCanceled(ct);
+            signatureOutcomeTask = new UniTaskCompletionSource<SocketIOResponse>();
+
+            TimeSpan duration = expiration - DateTime.UtcNow;
+
+            try
+            {
+                SocketIOResponse response = await signatureOutcomeTask.Task.Timeout(duration).AttachExternalCancellation(ct);
+                return response.GetValue<T>();
+            }
+            catch (TimeoutException) { throw new SignatureExpiredException(expiration); }
         }
 
-        private async UniTask<SignatureIdResponse> RequestEthMethodAsync(
+        private async UniTask<SignatureIdResponse> RequestEthMethodWithSignatureAsync(
             object request,
             CancellationToken ct)
         {
             UniTaskCompletionSource<SignatureIdResponse> task = new ();
 
-            await webSocket!.EmitAsync("request", ct,
+            await authApiWebSocket!.EmitAsync("request", ct,
                 r =>
                 {
                     SignatureIdResponse signatureIdResponse = r.GetValue<SignatureIdResponse>();
@@ -281,73 +393,37 @@ namespace DCL.Web3.Authenticators
                              .AttachExternalCancellation(ct);
         }
 
-        private async UniTask<T> RequestWalletConfirmationAsync<T>(string requestId, DateTime expiration, CancellationToken ct)
+        private async UniTask ConnectToAuthApiAsync()
         {
-            webBrowser.OpenUrl($"{signatureUrl}/{requestId}");
-
-            signatureOutcomeTask?.TrySetCanceled(ct);
-            signatureOutcomeTask = new UniTaskCompletionSource<SocketIOResponse>();
-
-            TimeSpan duration = expiration - DateTime.UtcNow;
-
-            try
+            if (authApiWebSocket == null)
             {
-                SocketIOResponse response = await signatureOutcomeTask.Task.Timeout(duration).AttachExternalCancellation(ct);
-                return response.GetValue<T>();
+                var uri = new Uri(authApiUrl);
+
+                authApiWebSocket = new SocketIO(uri, new SocketIOOptions
+                {
+                    Transport = TransportProtocol.WebSocket,
+                });
+
+                authApiWebSocket.JsonSerializer = new NewtonsoftJsonSerializer(new JsonSerializerSettings());
+
+                authApiWebSocket.On("outcome", ProcessSignatureOutcomeMessage);
             }
-            catch (TimeoutException) { throw new SignatureExpiredException(expiration); }
+
+            if (authApiWebSocket.Connected) return;
+
+            await authApiWebSocket
+                 .ConnectAsync()
+                 .AsUniTask()
+                 .Timeout(TimeSpan.FromSeconds(TIMEOUT_SECONDS));
         }
 
-        public class Default : IWeb3VerifiedAuthenticator, IVerifiedEthereumApi
+        private bool IsReadOnly(EthApiRequest request)
         {
-            private readonly IWeb3VerifiedAuthenticator originAuth;
-            private readonly IVerifiedEthereumApi originApi;
+            foreach (string method in readOnlyMethods)
+                if (string.Equals(method, request.method, StringComparison.OrdinalIgnoreCase))
+                    return true;
 
-            public Default(IWeb3IdentityCache identityCache, IDecentralandUrlsSource decentralandUrlsSource, IWeb3AccountFactory web3AccountFactory)
-            {
-                string serverUrl = decentralandUrlsSource.Url(DecentralandUrl.ApiAuth);
-                string signatureUrl = decentralandUrlsSource.Url(DecentralandUrl.AuthSignature);
-
-                var origin = new DappWeb3Authenticator(
-                    new UnityAppWebBrowser(decentralandUrlsSource),
-                    serverUrl,
-                    signatureUrl,
-                    identityCache,
-                    web3AccountFactory,
-                    new HashSet<string>(
-                        new[]
-                        {
-                            "eth_getBalance",
-                            "eth_call",
-                            "eth_blockNumber",
-                            "eth_signTypedData_v4",
-                        }
-                    )
-                );
-
-                originApi = origin;
-                originAuth = origin;
-            }
-
-            public void Dispose()
-            {
-                originAuth.Dispose(); // Disposes both
-            }
-
-            public UniTask<T> SendAsync<T>(EthApiRequest request, CancellationToken ct) =>
-                originApi.SendAsync<T>(request, ct);
-
-            public void AddVerificationListener(IVerifiedEthereumApi.VerificationDelegate callback) =>
-                originApi.AddVerificationListener(callback);
-
-            public UniTask<IWeb3Identity> LoginAsync(CancellationToken ct) =>
-                originAuth.LoginAsync(ct);
-
-            public UniTask LogoutAsync(CancellationToken cancellationToken) =>
-                originAuth.LogoutAsync(cancellationToken);
-
-            public void SetVerificationListener(IWeb3VerifiedAuthenticator.VerificationDelegate? callback) =>
-                originAuth.SetVerificationListener(callback);
+            return false;
         }
     }
 }

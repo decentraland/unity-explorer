@@ -62,8 +62,9 @@ namespace SceneRuntime.Apis.Modules.Ethereums
 
                 try
                 {
-                    string signature = await ethereumApi.SendAsync<string>(new EthApiRequest
+                    var response = await ethereumApi.SendAsync(new EthApiRequest
                     {
+                        id = Guid.NewGuid().GetHashCode(),
                         method = "personal_sign",
                         @params = new object[]
                         {
@@ -72,7 +73,7 @@ namespace SceneRuntime.Apis.Modules.Ethereums
                         },
                     }, ct);
 
-                    return new SignMessageResponse(hex, message, signature);
+                    return new SignMessageResponse(hex, message, (string)response.result);
                 }
                 catch (Exception e)
                 {
@@ -96,8 +97,9 @@ namespace SceneRuntime.Apis.Modules.Ethereums
             {
                 try
                 {
-                    object result = await ethereumApi.SendAsync<object>(new EthApiRequest
+                    var result = await ethereumApi.SendAsync(new EthApiRequest
                     {
+                        id = (long)id,
                         method = method,
                         @params = @params,
                     }, ct);
@@ -106,9 +108,9 @@ namespace SceneRuntime.Apis.Modules.Ethereums
                     {
                         jsonAnyResponse = JsonConvert.SerializeObject(new SendEthereumMessageResponse.Payload
                         {
-                            id = (long)id,
-                            jsonrpc = "2.0",
-                            result = result,
+                            id = result.id,
+                            jsonrpc = result.jsonrpc,
+                            result = result.result,
                         }),
                     };
                 }
