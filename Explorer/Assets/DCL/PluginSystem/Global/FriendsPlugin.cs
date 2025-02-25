@@ -5,7 +5,6 @@ using DCL.AssetsProvision;
 using DCL.Clipboard;
 using DCL.FeatureFlags;
 using DCL.Friends;
-using DCL.Chat.ChatLifecycleBus;
 using DCL.Friends.UI;
 using DCL.Friends.UI.FriendPanel;
 using DCL.Friends.UI.PushNotifications;
@@ -186,7 +185,7 @@ namespace DCL.PluginSystem.Global
                 onlineUsersProvider,
                 realmNavigator,
                 friendsConnectivityStatusTracker,
-                sidebarActionsBus,
+//                sidebarActionsBus,
                 includeUserBlocking,
                 isConnectivityStatusEnabled,
                 sharedSpaceManager);

@@ -21,8 +21,6 @@ using DCL.DebugUtilities;
 using DCL.EventsApi;
 using DCL.FeatureFlags;
 using DCL.Friends;
-using DCL.Chat;
-using DCL.Chat.ChatLifecycleBus;
 using DCL.Friends.Passport;
 using DCL.Input;
 using DCL.InWorldCamera.CameraReelStorageService;

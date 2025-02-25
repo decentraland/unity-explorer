@@ -6,7 +6,6 @@ using DCL.Chat;
 using DCL.Chat.Commands;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
-using DCL.Chat.ChatLifecycleBus;
 using DCL.Input;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Tables;

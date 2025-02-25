@@ -1,13 +1,11 @@
 using Cysharp.Threading.Tasks;
 using DCL.Clipboard;
-using DCL.Chat.ChatLifecycleBus;
 using DCL.Friends.UI.FriendPanel.Sections.Blocked;
 using DCL.Friends.UI.FriendPanel.Sections.Friends;
 using DCL.Friends.UI.FriendPanel.Sections.Requests;
 using DCL.Multiplayer.Connectivity;
 using DCL.Profiles;
 using DCL.UI.SharedSpaceManager;
-using DCL.UI.Sidebar.SidebarActionsBus;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS.SceneLifeCycle.Realm;
@@ -41,7 +39,7 @@ namespace DCL.Friends.UI.FriendPanel
         private readonly FriendsSectionDoubleCollectionController? friendSectionControllerConnectivity;
         private readonly RequestsSectionController requestsSectionController;
         private readonly DCLInput dclInput;
-        private readonly ISidebarActionsBus sidebarActionsBus;
+//        private readonly ISidebarActionsBus sidebarActionsBus;
         private readonly bool includeUserBlocking;
         private readonly ISharedSpaceManager sharedSpaceManager;
 
@@ -71,7 +69,7 @@ namespace DCL.Friends.UI.FriendPanel
             IOnlineUsersProvider onlineUsersProvider,
             IRealmNavigator realmNavigator,
             IFriendsConnectivityStatusTracker friendsConnectivityStatusTracker,
-            ISidebarActionsBus sidebarActionsBus,
+//            ISidebarActionsBus sidebarActionsBus,
             bool includeUserBlocking,
             bool isConnectivityStatusEnabled,
             ISharedSpaceManager sharedSpaceManager) : base(viewFactory)
@@ -79,7 +77,7 @@ namespace DCL.Friends.UI.FriendPanel
 //            this.chatLifecycleBusController = chatLifecycleBusController;
             this.sidebarRequestNotificationIndicator = sidebarRequestNotificationIndicator;
             this.dclInput = dclInput;
-            this.sidebarActionsBus = sidebarActionsBus;
+//            this.sidebarActionsBus = sidebarActionsBus;
             this.includeUserBlocking = includeUserBlocking;
             this.sharedSpaceManager = sharedSpaceManager;
 
@@ -125,7 +123,7 @@ namespace DCL.Friends.UI.FriendPanel
                 passportBridge);
 
             requestsSectionController.ReceivedRequestsCountChanged += FriendRequestCountChanged;
-            sidebarActionsBus.SubscribeOnWidgetOpen(() => CloseFriendsPanel(default(InputAction.CallbackContext)));
+ //           sidebarActionsBus.SubscribeOnWidgetOpen(() => CloseFriendsPanel(default(InputAction.CallbackContext)));
         }
 
         public override void Dispose()
@@ -221,7 +219,7 @@ namespace DCL.Friends.UI.FriendPanel
 
             ToggleTabs(inputData.TabToShow);
 
-            sidebarActionsBus.CloseAllWidgets();
+//            sidebarActionsBus.CloseAllWidgets();
         }
 
         protected override void OnViewClose()
