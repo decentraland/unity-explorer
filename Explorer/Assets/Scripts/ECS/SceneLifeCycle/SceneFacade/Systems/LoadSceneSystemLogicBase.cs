@@ -26,7 +26,7 @@ namespace ECS.SceneLifeCycle.Systems
 
         public async UniTask<ISceneFacade> FlowAsync(ISceneFactory sceneFactory, GetSceneFacadeIntention intention, ReportData reportCategory, IPartitionComponent partition, CancellationToken ct)
         {
-            ReportHub.Log(ReportCategory.ALWAYS, $"Loading scene '{intention.DefinitionComponent.Definition.metadata.display.title}' began");
+            ReportHub.Log(ReportCategory.ALWAYS, $"Loading scene '{intention.DefinitionComponent.Definition.GetLogSceneName()}' began");
 
             var definitionComponent = intention.DefinitionComponent;
             var ipfsPath = definitionComponent.IpfsPath;
@@ -61,7 +61,7 @@ namespace ECS.SceneLifeCycle.Systems
             await UniTask.SwitchToMainThread();
 
             sceneFacade.Initialize();
-            ReportHub.Log(ReportCategory.ALWAYS, $"Loading scene '{intention.DefinitionComponent.Definition.metadata.display.title}' ended");
+            ReportHub.Log(ReportCategory.ALWAYS, $"Loading scene '{intention.DefinitionComponent.Definition.GetLogSceneName()}' ended");
             return sceneFacade;
         }
 

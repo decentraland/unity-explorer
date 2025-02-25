@@ -79,6 +79,8 @@ namespace ECS.SceneLifeCycle.Systems
                         // Provide basic Thread Pool synchronization context
                         SynchronizationContext.SetSynchronizationContext(new SynchronizationContext());
 
+                        ReportHub.Log(ReportCategory.ALWAYS, $"Scene '{scene.SceneData.SceneEntityDefinition.GetLogSceneName()}' started");
+
                         // FPS is set by another system
                         await scene.StartUpdateLoopAsync(fps, destroyCancellationToken);
                     }

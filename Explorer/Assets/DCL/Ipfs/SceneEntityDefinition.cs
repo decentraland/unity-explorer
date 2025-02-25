@@ -8,5 +8,8 @@ namespace DCL.Ipfs
         public SceneEntityDefinition() { }
 
         public SceneEntityDefinition(string id, SceneMetadata metadata) : base(id, metadata) { }
+
+        public string GetLogSceneName() =>
+            $"{id} @ {metadata.scene.DecodedBase}";
     }
 }

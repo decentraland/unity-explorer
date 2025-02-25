@@ -2,6 +2,7 @@
 using Arch.System;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle;
@@ -45,6 +46,8 @@ namespace ECS.SceneLifeCycle.Systems
         private void UnloadLoadedScene(in Entity entity, ref SceneDefinitionComponent definitionComponent, ref ISceneFacade sceneFacade)
         {
             sceneFacade.DisposeSceneFacadeAndRemoveFromCache(scenesCache, definitionComponent.Parcels);
+
+            ReportHub.Log(ReportCategory.ALWAYS, $"Scene '{definitionComponent.Definition.GetLogSceneName()}' disposed");
 
             // Keep definition so it won't be downloaded again = Cache in ECS itself
             if (!localSceneDevelopment)
