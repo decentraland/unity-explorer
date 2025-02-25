@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   parcelSize: 16
   terrainSize: 4800
-  chunkSize: 512
+  chunkSize: 1024
   heightScaleNerf: 0.25
   seed: 97
   terrainHoleEdgeSize: 0.5
