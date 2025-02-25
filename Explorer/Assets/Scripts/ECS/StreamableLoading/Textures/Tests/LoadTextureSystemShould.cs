@@ -9,7 +9,7 @@ using UnityEngine;
 namespace ECS.StreamableLoading.Textures.Tests
 {
     [TestFixture]
-    public class LoadTextureSystemShould : LoadSystemBaseShould<LoadSceneTextureSystem, Texture2DData, GetTextureIntention>
+    public class LoadTextureSystemShould : LoadSystemBaseShould<LoadTextureSystem, Texture2DData, GetTextureIntention>
     {
         private string successPath => $"file://{Application.dataPath + "/../TestResources/Images/alphaTexture.png"}";
         private string failPath => $"file://{Application.dataPath + "/../TestResources/Images/non_existing.png"}";
@@ -24,9 +24,9 @@ namespace ECS.StreamableLoading.Textures.Tests
         protected override GetTextureIntention CreateWrongTypeIntention() =>
             new () { CommonArguments = new CommonLoadingArguments(wrongTypePath) };
 
-        protected override LoadSceneTextureSystem CreateSystem()
+        protected override LoadTextureSystem CreateSystem()
         {
-            return new LoadSceneTextureSystem (world, cache, TestWebRequestController.INSTANCE, IDiskCache<Texture2DData>.Null.INSTANCE);
+            return new LoadTextureSystem (world, cache, TestWebRequestController.INSTANCE, IDiskCache<Texture2DData>.Null.INSTANCE);
         }
 
         protected override void AssertSuccess(Texture2DData data)
