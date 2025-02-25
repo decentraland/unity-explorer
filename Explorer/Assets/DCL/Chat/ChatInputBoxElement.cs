@@ -140,14 +140,16 @@ namespace DCL.Chat
         public void DisableInputBoxSubmissions()
         {
             viewDependencies.ClipboardManager.OnPaste -= PasteClipboardText;
-            inputField.onSubmit.RemoveListener(InputFieldSubmitEvent);
+            viewDependencies.DclInput.UI.Close.performed -= OnUICloseInput;
+            inputField.onSubmit.RemoveListener(OnInputFieldSubmitted);
             inputField.DeactivateInputField();
         }
 
         public void EnableInputBoxSubmissions()
         {
-            inputField.onSubmit.AddListener(InputFieldSubmitEvent);
+            inputField.onSubmit.AddListener(OnInputFieldSubmitted);
             viewDependencies.ClipboardManager.OnPaste += PasteClipboardText;
+            viewDependencies.DclInput.UI.Close.performed += OnUICloseInput;
         }
 
         public void ClosePopups()
@@ -317,7 +319,30 @@ namespace DCL.Chat
             characterCounter.gameObject.SetActive(true);
         }
 
-        private void InputFieldSubmitEvent(string submittedText)
+        private void OnUICloseInput(InputAction.CallbackContext callbackContext)
+        {
+            if (suggestionPanel.IsActive)
+            {
+                suggestionPanelController!.SetPanelVisibility(false);
+                lastMatch = Match.Empty;
+                inputField.SelectInputField();
+                return;
+            }
+
+            if (emojiPanel.gameObject.activeInHierarchy)
+            {
+                emojiPanelButton.SetState(false);
+                emojiPanelController!.SetPanelVisibility(false);
+                EmojiSelectionVisibilityChanged?.Invoke(false);
+                inputField.SelectInputField();
+                return;
+            }
+
+            inputField.DeactivateInputField();
+            inputField.OnDeselect(null);
+        }
+
+        private void OnInputFieldSubmitted(string submittedText)
         {
             if (suggestionPanel.IsActive)
             {

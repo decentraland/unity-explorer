@@ -13,6 +13,7 @@ using System.Threading;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.InputSystem;
 using UnityEngine.Serialization;
 using UnityEngine.UI;
 using Utility;
@@ -352,9 +353,16 @@ namespace DCL.Chat
             chatInputBox.InputChanged += OnInputChanged;
             chatInputBox.InputSubmitted += OnInputSubmitted;
 
+            viewDependencies.DclInput.UI.Close.performed += OnUIClosePerformed;
             closePopupTask = new UniTaskCompletionSource();
 
             CurrentChannel = defaultChannelId;
+        }
+
+        private void OnUIClosePerformed(InputAction.CallbackContext callbackContext)
+        {
+            if (memberListView.IsVisible)
+                OnMemberListClosingButtonClicked();
         }
 
         private void OnScrollToEndButtonClicked()
