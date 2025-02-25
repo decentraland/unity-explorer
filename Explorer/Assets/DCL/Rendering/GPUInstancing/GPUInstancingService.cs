@@ -74,6 +74,8 @@ namespace DCL.Roads.GPUInstancing
         private static readonly int ComputeVar_IndirectDrawIndexedArgsBuffer = Shader.PropertyToID("IndirectDrawIndexedArgsBuffer");
         private static readonly int ComputeVar_nSubMeshCount = Shader.PropertyToID("nSubMeshCount");
 
+        private Camera renderCamera;
+
         public GPUInstancingService(GPUInstancingRenderFeature.GPUInstancingRenderFeature_Settings renderFeatureSettings)
             : this(renderFeatureSettings.FrustumCullingAndLODGenComputeShader, renderFeatureSettings.IndirectBufferGenerationComputeShader, renderFeatureSettings.DrawArgsInstanceCountTransferComputeShader)
         {
@@ -112,12 +114,22 @@ namespace DCL.Roads.GPUInstancing
             instancingMaterials.Clear();
         }
 
+        public void SetCamera(Camera camera)
+        {
+            renderCamera = camera;
+
+            foreach ((GPUInstancingLODGroupWithBuffer candidate, GPUInstancingBuffers _) in candidatesBuffersTable)
+            foreach (var renderer in candidate.LODGroup.CombinedLodsRenderers)
+                for (var i = 0; i < renderer.RenderParamsArray.Length; i++)
+                    renderer.RenderParamsArray[i].camera = renderCamera;
+        }
+
         public void RenderIndirect()
         {
-            Camera cam = Camera.main;
+            if(renderCamera == null) return;
 
             foreach ((GPUInstancingLODGroupWithBuffer candidate, GPUInstancingBuffers buffers) in candidatesBuffersTable)
-                RenderCandidateIndirect(candidate, buffers, cam);
+                RenderCandidateIndirect(candidate, buffers, renderCamera);
         }
 
         private void RenderCandidateIndirect(GPUInstancingLODGroupWithBuffer candidate, GPUInstancingBuffers buffers, Camera cam)
@@ -173,10 +185,7 @@ namespace DCL.Roads.GPUInstancing
                 CombinedLodsRenderer combinedLodRenderer = candidate.LODGroup.CombinedLodsRenderers[i];
                 int lodCount = candidate.LODGroup.LodsScreenSpaceSizes.Length;
 
-                var RenderParams = combinedLodRenderer.RenderParamsArray[0];
-                RenderParams.camera = cam;
-
-                Graphics.RenderMeshIndirect(RenderParams, combinedLodRenderer.CombinedMesh, buffers.DrawArgs, commandCount: lodCount, startCommand: i*lodCount);
+                Graphics.RenderMeshIndirect(combinedLodRenderer.RenderParamsArray[0], combinedLodRenderer.CombinedMesh, buffers.DrawArgs, commandCount: lodCount, startCommand: i*lodCount);
             }
         }
 
@@ -205,8 +214,6 @@ namespace DCL.Roads.GPUInstancing
             // TODO : set flag to Lock
             buffers.PerInstanceMatrices = new GraphicsBuffer(GraphicsBuffer.Target.Structured, GraphicsBuffer.UsageFlags.None, _nInstanceCount, Marshal.SizeOf(typeof(PerInstanceBuffer)));
             buffers.PerInstanceMatrices.SetData(candidate.InstancesBuffer, 0, 0, _nInstanceCount);
-
-            var cam = Camera.main;
 
             int combinedRenderersCount = candidate.LODGroup.CombinedLodsRenderers.Count;
             buffers.DrawArgs = new GraphicsBuffer(GraphicsBuffer.Target.IndirectArguments, count: combinedRenderersCount * _nLODCount, GraphicsBuffer.IndirectDrawIndexedArgs.size);
@@ -243,7 +250,7 @@ namespace DCL.Roads.GPUInstancing
 
                 combinedLodRenderer.InitializeRenderParams(instancingMaterials);
                 ref RenderParams rparams = ref combinedLodRenderer.RenderParamsArray[0];
-                rparams.camera = cam;
+                rparams.camera = renderCamera;
                 rparams.worldBounds = RENDER_PARAMS_WORLD_BOUNDS;
                 rparams.matProps = new MaterialPropertyBlock();
                 rparams.matProps.SetBuffer("_PerInstanceBuffer", buffers.PerInstanceMatrices);

@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
+using DCL.CharacterCamera;
 using DCL.Diagnostics;
 using DCL.RealmNavigation;
 using DCL.Roads.GPUInstancing;
@@ -16,18 +17,32 @@ namespace DCL.Rendering.GPUInstancing.Systems
         private readonly GPUInstancingService gpuInstancingService;
         private readonly IRealmData realmData;
         private readonly ILoadingStatus loadingStatus;
+        private readonly ExposedCameraData exposedCameraData;
 
-        public GPUInstancingRenderSystem(World world, GPUInstancingService gpuInstancingService, IRealmData realmData, ILoadingStatus loadingStatus) : base(world)
+        private bool isCameraCached;
+
+        public GPUInstancingRenderSystem(World world,
+            GPUInstancingService gpuInstancingService,
+            IRealmData realmData,
+            ILoadingStatus loadingStatus,
+            ExposedCameraData exposedCameraData) : base(world)
         {
             this.gpuInstancingService = gpuInstancingService;
             this.realmData = realmData;
             this.loadingStatus = loadingStatus;
+            this.exposedCameraData = exposedCameraData;
         }
 
         protected override void Update(float t)
         {
-            if (loadingStatus.CurrentStage.Value == LoadingStatus.LoadingStage.Completed && realmData.Configured)
+            if (isCameraCached && loadingStatus.CurrentStage.Value == LoadingStatus.LoadingStage.Completed && realmData.Configured)
                 gpuInstancingService.RenderIndirect();
+
+            if (!isCameraCached && exposedCameraData.CinemachineBrain.OutputCamera != null)
+            {
+                gpuInstancingService.SetCamera(exposedCameraData.CinemachineBrain.OutputCamera);
+                isCameraCached = true;
+            }
         }
     }
 }
