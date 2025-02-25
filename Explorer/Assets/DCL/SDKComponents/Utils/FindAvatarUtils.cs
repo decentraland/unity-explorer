@@ -16,7 +16,7 @@ namespace DCL.SDKComponents.Utils
         [Conditional("UNITY_EDITOR")]
         [Conditional("DEBUG")]
         private static void AssertMainThread() =>
-            MultithreadingUtility.AssertMainThread(nameof(FindAvatarUtils));
+            MultithreadingUtility.AssertMainThread(nameof(FindAvatarUtils), true);
 
         public static LightResult<AvatarBase> AvatarWithID(World globalWorld, string id)
         {
