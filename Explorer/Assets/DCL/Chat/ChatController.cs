@@ -82,7 +82,6 @@ namespace DCL.Chat
             NametagsData nametagsData,
             World world,
             Entity playerEntity,
-//            IChatLifecycleBusController chatLifecycleBusController,
             IInputBlock inputBlock,
             ViewDependencies viewDependencies,
             IChatCommandsBus chatCommandsBus,
@@ -103,7 +102,6 @@ namespace DCL.Chat
             this.chatAudioSettings = chatAudioSettings;
             this.hyperlinkTextFormatter = hyperlinkTextFormatter;
             this.profileCache = profileCache;
-//            chatLifecycleBusController.SubscribeToHideChatCommand(HideBusCommandReceived);
         }
 
         public void Clear() // Called by a command
@@ -136,7 +134,6 @@ namespace DCL.Chat
 
             viewDependencies.DclInput.UI.Click.performed -= OnUIClickPerformed;
             viewDependencies.DclInput.Shortcuts.ToggleNametags.performed -= OnToggleNametagsShortcutPerformed;
-//            viewDependencies.DclInput.Shortcuts.OpenChat.performed -= OnOpenChatShortcutPerformed;
             viewDependencies.DclInput.Shortcuts.OpenChatCommandLine.performed -= OnOpenChatCommandLineShortcutPerformed;
             viewDependencies.DclInput.UI.Submit.performed -= OnSubmitShortcutPerformed;
 
@@ -276,7 +273,6 @@ namespace DCL.Chat
             base.OnViewShow();
             viewDependencies.DclInput.UI.Click.performed += OnUIClickPerformed;
             viewDependencies.DclInput.Shortcuts.ToggleNametags.performed += OnToggleNametagsShortcutPerformed;
- //           viewDependencies.DclInput.Shortcuts.OpenChat.performed += OnOpenChatShortcutPerformed;
             viewDependencies.DclInput.Shortcuts.OpenChatCommandLine.performed += OnOpenChatCommandLineShortcutPerformed;
         }
 
@@ -285,7 +281,6 @@ namespace DCL.Chat
             base.OnViewClose();
             viewDependencies.DclInput.UI.Click.performed -= OnUIClickPerformed;
             viewDependencies.DclInput.Shortcuts.ToggleNametags.performed -= OnToggleNametagsShortcutPerformed;
- //           viewDependencies.DclInput.Shortcuts.OpenChat.performed -= OnOpenChatShortcutPerformed;
             viewDependencies.DclInput.Shortcuts.OpenChatCommandLine.performed -= OnOpenChatCommandLineShortcutPerformed;
 
             MarkCurrentChannelAsRead();
@@ -375,11 +370,6 @@ namespace DCL.Chat
 
         private void OnChatViewPointerEnter() =>
             world.AddOrGet(cameraEntity, new CameraBlockerComponent());
-
-        private void OnOpenChatShortcutPerformed(InputAction.CallbackContext obj)
-        {
-            viewInstance!.FocusInputBoxWithText(string.Empty);
-        }
 
         private void OnOpenChatCommandLineShortcutPerformed(InputAction.CallbackContext obj)
         {

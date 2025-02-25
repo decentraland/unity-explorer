@@ -185,7 +185,6 @@ namespace DCL.PluginSystem.Global
                 onlineUsersProvider,
                 realmNavigator,
                 friendsConnectivityStatusTracker,
-//                sidebarActionsBus,
                 includeUserBlocking,
                 isConnectivityStatusEnabled,
                 sharedSpaceManager);
@@ -195,8 +194,6 @@ namespace DCL.PluginSystem.Global
             mvcManager.RegisterController(friendsPanelController);
 
             var persistentFriendsOpenerController = new PersistentFriendPanelOpenerController(() => mainUIView.SidebarView.PersistentFriendsPanelOpener,
-//                mvcManager,
-//                dclInput,
                 notificationsBusController,
                 passportBridge,
                 injectableFriendService,

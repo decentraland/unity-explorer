@@ -158,15 +158,6 @@ namespace DCL.UI.Sidebar
         private void OnUnreadMessagesButtonClicked()
         {
             sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.Chat, null);
-/*            if (!chatView.IsUnfolded)
-            {
-                chatView.IsUnfolded = true;
-                chatView.ShowNewMessages();
-            }
-            else
-            {
-                chatView.IsUnfolded = false;
-            }*/
         }
 
         private void OnHelpButtonClicked()
