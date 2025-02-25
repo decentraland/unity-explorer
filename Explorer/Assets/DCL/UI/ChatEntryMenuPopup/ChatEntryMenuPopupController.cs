@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Clipboard;
 using MVC;
+using System;
 using System.Threading;
 using UnityEngine;
 
@@ -34,9 +35,16 @@ namespace DCL.UI
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
-        protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
-            UniTask.WhenAny(inputData.CloseTask ?? UniTask.Never(ct),
+        protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
+            await UniTask.WhenAny(inputData.CloseTask ?? UniTask.Never(ct),
                 viewInstance!.CopyButton.OnClickAsync(ct));
+
+
+        protected override void OnViewClose()
+        {
+            inputData.OnPopupClose?.Invoke();
+            base.OnViewClose();
+        }
     }
 
     public struct ChatEntryMenuPopupData
@@ -44,11 +52,13 @@ namespace DCL.UI
         public readonly string CopiedText;
         public readonly UniTask? CloseTask;
         public readonly Vector2 Position;
+        public readonly Action OnPopupClose;
 
-        public ChatEntryMenuPopupData(Vector2 position, string copiedText, UniTask? closeTask = null)
+        public ChatEntryMenuPopupData(Vector2 position, string copiedText, Action onPopupClose, UniTask? closeTask = null)
         {
             Position = position;
             CopiedText = copiedText;
+            OnPopupClose = onPopupClose;
             CloseTask = closeTask;
         }
     }

@@ -4,7 +4,6 @@ using DCL.Settings.Settings;
 using DCL.Chat.History;
 using DCL.Profiles;
 using DCL.UI;
-using DCL.UI.Profiles.Helpers;
 using MVC;
 using DG.Tweening;
 using System;
@@ -336,7 +335,7 @@ namespace DCL.Chat
             closeMemberListButton.onClick.AddListener(OnCloseChatButtonClicked);
             memberListOpeningButton.onClick.AddListener(OnMemberListOpeningButtonClicked);
             memberListClosingButton.onClick.AddListener(OnMemberListClosingButtonClicked);
-            chatMessageViewer.Initialize(CalculateUsernameColor);
+            chatMessageViewer.Initialize();
             chatMessageViewer.ChatMessageOptionsButtonClicked += OnChatMessageOptionsButtonClicked;
             chatMessageViewer.ChatMessageViewerScrollPositionChanged += OnChatMessageViewerScrollPositionChanged;
             scrollToBottomButton.onClick.AddListener(OnScrollToEndButtonClicked);
@@ -591,8 +590,9 @@ namespace DCL.Chat
             closePopupTask = new UniTaskCompletionSource();
 
             ChatEntryMenuPopupData data = new ChatEntryMenuPopupData(
-                chatEntryView.messageBubbleElement.popupPosition.position,
+                chatEntryView.messageBubbleElement.PopupPosition,
                 messageText,
+                () => chatEntryView.messageBubbleElement.HideOptionsButton(),
                 closePopupTask.Task);
 
             popupCts = popupCts.SafeRestart();
@@ -625,9 +625,6 @@ namespace DCL.Chat
         {
             ChatBubbleVisibilityChanged?.Invoke(isToggled);
         }
-
-        private Color CalculateUsernameColor(ChatMessage chatMessage) =>
-            ProfileNameColorHelper.GetNameColor(chatMessage.SenderValidatedName);
 
         private void OnChatMessageViewerScrollPositionChanged(Vector2 scrollPosition)
         {

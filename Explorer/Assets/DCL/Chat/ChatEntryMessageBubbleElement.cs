@@ -1,3 +1,4 @@
+using Cysharp.Threading.Tasks;
 using DCL.Chat.History;
 using MVC;
 using System;
@@ -27,6 +28,7 @@ namespace DCL.Chat
         [field: SerializeField] internal GameObject mentionedOutline { get; private set; }
 
         private Vector2 backgroundSize;
+        private bool popupOpen;
 
         private float backgroundHeightOffset => configurationSo.BackgroundHeightOffset;
         private float backgroundWidthOffset => configurationSo.BackgroundWidthOffset;
@@ -40,6 +42,15 @@ namespace DCL.Chat
 
         public void OnPointerExit(PointerEventData eventData)
         {
+            if (!popupOpen)
+                messageOptionsButton?.gameObject.SetActive(false);
+        }
+
+        public Vector3 PopupPosition => popupPosition.position;
+
+        public void HideOptionsButton()
+        {
+            popupOpen = false;
             messageOptionsButton?.gameObject.SetActive(false);
         }
 
@@ -67,6 +78,12 @@ namespace DCL.Chat
             mentionedOutline.SetActive(data.IsMention);
 
             backgroundImage.color = data.IsMention ? backgroundMentionedColor : backgroundDefaultColor;
+            messageOptionsButton?.onClick.AddListener(OnMessageOptionsClicked);
+        }
+
+        private void OnMessageOptionsClicked()
+        {
+            popupOpen = true;
         }
 
         private float CalculatePreferredWidth(ChatMessage message)
