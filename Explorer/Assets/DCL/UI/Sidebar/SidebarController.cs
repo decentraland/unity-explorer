@@ -11,6 +11,7 @@ using DCL.Profiles;
 using DCL.SidebarBus;
 using DCL.UI.Controls;
 using DCL.UI.ProfileElements;
+using DCL.UI.SharedSpaceManager;
 using DCL.UI.Sidebar.SidebarActionsBus;
 using DCL.UI.Skybox;
 using DCL.Web3.Identities;
@@ -39,6 +40,7 @@ namespace DCL.UI.Sidebar
         private readonly bool includeFriends;
         private readonly ChatView chatView;
         private readonly IChatHistory chatHistory;
+        private readonly ISharedSpaceManager sharedSpaceManager;
 
         private CancellationTokenSource profileWidgetCts = new ();
         private CancellationTokenSource systemMenuCts = new ();
@@ -64,7 +66,8 @@ namespace DCL.UI.Sidebar
             bool includeCameraReel,
             bool includeFriends,
             ChatView chatView,
-            IChatHistory chatHistory)
+            IChatHistory chatHistory,
+            ISharedSpaceManager sharedSpaceManager)
             : base(viewFactory)
         {
             this.mvcManager = mvcManager;
@@ -83,6 +86,7 @@ namespace DCL.UI.Sidebar
             this.chatView = chatView;
             this.chatHistory = chatHistory;
             this.includeFriends = includeFriends;
+            this.sharedSpaceManager = sharedSpaceManager;
 
             sidebarActionsBus.SubscribeOnCloseAllWidgets(CloseAllWidgets);
         }
@@ -153,7 +157,8 @@ namespace DCL.UI.Sidebar
 
         private void OnUnreadMessagesButtonClicked()
         {
-            if (!chatView.IsUnfolded)
+            sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.Chat, null);
+/*            if (!chatView.IsUnfolded)
             {
                 chatView.IsUnfolded = true;
                 chatView.ShowNewMessages();
@@ -161,7 +166,7 @@ namespace DCL.UI.Sidebar
             else
             {
                 chatView.IsUnfolded = false;
-            }
+            }*/
         }
 
         private void OnHelpButtonClicked()

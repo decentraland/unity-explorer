@@ -4,7 +4,6 @@ using DCL.CharacterCamera;
 using DCL.Chat.Commands;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
-using DCL.Chat.ChatLifecycleBus;
 using DCL.Input;
 using DCL.Input.Component;
 using DCL.Input.Systems;
@@ -58,6 +57,21 @@ namespace DCL.Chat
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
 
+        public bool IsUnfolded
+        {
+            get => viewInstance.IsUnfolded;
+
+            set
+            {
+                viewInstance.IsUnfolded = value;
+
+                // When opened from outside, it should show the unread messages
+                if (value)
+                    viewInstance.ShowNewMessages();
+            }
+
+        }
+
         public event ChatBubbleVisibilityChangedDelegate? ChatBubbleVisibilityChanged;
 
         public ChatController(
@@ -68,7 +82,7 @@ namespace DCL.Chat
             NametagsData nametagsData,
             World world,
             Entity playerEntity,
-            IChatLifecycleBusController chatLifecycleBusController,
+//            IChatLifecycleBusController chatLifecycleBusController,
             IInputBlock inputBlock,
             ViewDependencies viewDependencies,
             IChatCommandsBus chatCommandsBus,
@@ -89,7 +103,7 @@ namespace DCL.Chat
             this.chatAudioSettings = chatAudioSettings;
             this.hyperlinkTextFormatter = hyperlinkTextFormatter;
             this.profileCache = profileCache;
-            chatLifecycleBusController.SubscribeToHideChatCommand(HideBusCommandReceived);
+//            chatLifecycleBusController.SubscribeToHideChatCommand(HideBusCommandReceived);
         }
 
         public void Clear() // Called by a command
@@ -122,7 +136,7 @@ namespace DCL.Chat
 
             viewDependencies.DclInput.UI.Click.performed -= OnUIClickPerformed;
             viewDependencies.DclInput.Shortcuts.ToggleNametags.performed -= OnToggleNametagsShortcutPerformed;
-            viewDependencies.DclInput.Shortcuts.OpenChat.performed -= OnOpenChatShortcutPerformed;
+//            viewDependencies.DclInput.Shortcuts.OpenChat.performed -= OnOpenChatShortcutPerformed;
             viewDependencies.DclInput.Shortcuts.OpenChatCommandLine.performed -= OnOpenChatCommandLineShortcutPerformed;
             viewDependencies.DclInput.UI.Submit.performed -= OnSubmitShortcutPerformed;
 
@@ -262,7 +276,7 @@ namespace DCL.Chat
             base.OnViewShow();
             viewDependencies.DclInput.UI.Click.performed += OnUIClickPerformed;
             viewDependencies.DclInput.Shortcuts.ToggleNametags.performed += OnToggleNametagsShortcutPerformed;
-            viewDependencies.DclInput.Shortcuts.OpenChat.performed += OnOpenChatShortcutPerformed;
+ //           viewDependencies.DclInput.Shortcuts.OpenChat.performed += OnOpenChatShortcutPerformed;
             viewDependencies.DclInput.Shortcuts.OpenChatCommandLine.performed += OnOpenChatCommandLineShortcutPerformed;
         }
 
@@ -271,7 +285,7 @@ namespace DCL.Chat
             base.OnViewClose();
             viewDependencies.DclInput.UI.Click.performed -= OnUIClickPerformed;
             viewDependencies.DclInput.Shortcuts.ToggleNametags.performed -= OnToggleNametagsShortcutPerformed;
-            viewDependencies.DclInput.Shortcuts.OpenChat.performed -= OnOpenChatShortcutPerformed;
+ //           viewDependencies.DclInput.Shortcuts.OpenChat.performed -= OnOpenChatShortcutPerformed;
             viewDependencies.DclInput.Shortcuts.OpenChatCommandLine.performed -= OnOpenChatCommandLineShortcutPerformed;
 
             MarkCurrentChannelAsRead();

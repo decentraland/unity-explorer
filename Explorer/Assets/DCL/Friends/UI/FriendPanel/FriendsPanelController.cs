@@ -6,6 +6,7 @@ using DCL.Friends.UI.FriendPanel.Sections.Friends;
 using DCL.Friends.UI.FriendPanel.Sections.Requests;
 using DCL.Multiplayer.Connectivity;
 using DCL.Profiles;
+using DCL.UI.SharedSpaceManager;
 using DCL.UI.Sidebar.SidebarActionsBus;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
@@ -33,7 +34,7 @@ namespace DCL.Friends.UI.FriendPanel
         private const int FRIENDS_REQUEST_PAGE_SIZE = 100;
         private const int FRIENDS_FETCH_ELEMENTS_THRESHOLD = 5;
 
-        private readonly IChatLifecycleBusController chatLifecycleBusController;
+//        private readonly IChatLifecycleBusController chatLifecycleBusController;
         private readonly NotificationIndicatorView sidebarRequestNotificationIndicator;
         private readonly BlockedSectionController blockedSectionController;
         private readonly FriendSectionController? friendSectionController;
@@ -42,6 +43,7 @@ namespace DCL.Friends.UI.FriendPanel
         private readonly DCLInput dclInput;
         private readonly ISidebarActionsBus sidebarActionsBus;
         private readonly bool includeUserBlocking;
+        private readonly ISharedSpaceManager sharedSpaceManager;
 
         private CancellationTokenSource friendsPanelCts = new ();
         private UniTaskCompletionSource closeTaskCompletionSource = new ();
@@ -54,7 +56,7 @@ namespace DCL.Friends.UI.FriendPanel
 
         public FriendsPanelController(ViewFactoryMethod viewFactory,
             FriendsPanelView instantiatedView,
-            IChatLifecycleBusController chatLifecycleBusController,
+//            IChatLifecycleBusController chatLifecycleBusController,
             NotificationIndicatorView sidebarRequestNotificationIndicator,
             IFriendsService friendsService,
             IFriendsEventBus friendEventBus,
@@ -71,13 +73,15 @@ namespace DCL.Friends.UI.FriendPanel
             IFriendsConnectivityStatusTracker friendsConnectivityStatusTracker,
             ISidebarActionsBus sidebarActionsBus,
             bool includeUserBlocking,
-            bool isConnectivityStatusEnabled) : base(viewFactory)
+            bool isConnectivityStatusEnabled,
+            ISharedSpaceManager sharedSpaceManager) : base(viewFactory)
         {
-            this.chatLifecycleBusController = chatLifecycleBusController;
+//            this.chatLifecycleBusController = chatLifecycleBusController;
             this.sidebarRequestNotificationIndicator = sidebarRequestNotificationIndicator;
             this.dclInput = dclInput;
             this.sidebarActionsBus = sidebarActionsBus;
             this.includeUserBlocking = includeUserBlocking;
+            this.sharedSpaceManager = sharedSpaceManager;
 
             if (isConnectivityStatusEnabled)
             {
@@ -188,18 +192,18 @@ namespace DCL.Friends.UI.FriendPanel
 
         private void RegisterCloseHotkey()
         {
-            dclInput.Shortcuts.FriendPanel.performed += CloseFriendsPanel;
+ //           dclInput.Shortcuts.FriendPanel.performed += CloseFriendsPanel;
             dclInput.UI.Close.performed += CloseFriendsPanel;
         }
 
         private void UnregisterCloseHotkey()
         {
-            dclInput.Shortcuts.FriendPanel.performed -= CloseFriendsPanel;
+//            dclInput.Shortcuts.FriendPanel.performed -= CloseFriendsPanel;
             dclInput.UI.Close.performed -= CloseFriendsPanel;
         }
 
         internal void CloseFriendsPanel(InputAction.CallbackContext obj) =>
-            closeTaskCompletionSource.TrySetResult();
+            sharedSpaceManager.HideAsync(PanelsSharingSpace.Friends, null);
 
         protected override void OnViewShow()
         {
@@ -213,7 +217,7 @@ namespace DCL.Friends.UI.FriendPanel
             friendsPanelCts = friendsPanelCts.SafeRestart();
             closeTaskCompletionSource = new UniTaskCompletionSource();
 
-            chatLifecycleBusController.HideChat();
+ //           chatLifecycleBusController.HideChat();
 
             ToggleTabs(inputData.TabToShow);
 
@@ -224,7 +228,7 @@ namespace DCL.Friends.UI.FriendPanel
         {
             base.OnViewClose();
 
-            chatLifecycleBusController.ShowChat();
+ //           chatLifecycleBusController.ShowChat();
 
             UnregisterCloseHotkey();
         }
@@ -237,6 +241,7 @@ namespace DCL.Friends.UI.FriendPanel
             viewInstance.RequestsTabButton.onClick.AddListener(() => ToggleTabs(FriendsPanelTab.REQUESTS));
             viewInstance.BlockedTabButton.onClick.AddListener(() => ToggleTabs(FriendsPanelTab.BLOCKED));
             viewInstance.CloseButton.onClick.AddListener(() => CloseFriendsPanel(default(InputAction.CallbackContext)));
+            viewInstance.BackgroundCloseButton.onClick.AddListener(() => CloseFriendsPanel(default(InputAction.CallbackContext)));
 
             viewInstance.BlockedTabButton.gameObject.SetActive(includeUserBlocking);
 
@@ -260,8 +265,9 @@ namespace DCL.Friends.UI.FriendPanel
 
         protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
         {
-            await UniTask.WhenAny(viewInstance!.CloseButton.OnClickAsync(ct), viewInstance!.BackgroundCloseButton.OnClickAsync(ct), closeTaskCompletionSource.Task);
-            await HideViewAsync(ct);
+            await UniTask.Never(ct);
+//            await UniTask.WhenAny(viewInstance!.CloseButton.OnClickAsync(ct), viewInstance!.BackgroundCloseButton.OnClickAsync(ct), closeTaskCompletionSource.Task);
+//            await HideViewAsync(ct);
         }
     }
 }

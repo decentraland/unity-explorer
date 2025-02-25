@@ -19,6 +19,7 @@ using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.RealmNavigation;
 using DCL.UI.MainUI;
+using DCL.UI.SharedSpaceManager;
 using DCL.UI.Sidebar.SidebarActionsBus;
 using DCL.Utilities;
 using DCL.Web3.Identities;
@@ -51,7 +52,6 @@ namespace DCL.PluginSystem.Global
         private readonly ObjectProxy<IFriendsService> friendServiceProxy;
         private readonly ObjectProxy<IFriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy;
         private readonly IProfileThumbnailCache profileThumbnailCache;
-        private readonly IChatLifecycleBusController chatLifecycleBusController;
         private readonly IOnlineUsersProvider onlineUsersProvider;
         private readonly IRealmNavigator realmNavigator;
         private readonly INotificationsBusController notificationsBusController;
@@ -61,6 +61,7 @@ namespace DCL.PluginSystem.Global
         private readonly ISidebarActionsBus sidebarActionsBus;
         private readonly IAnalyticsController? analyticsController;
         private readonly bool useAnalytics;
+        private readonly ISharedSpaceManager sharedSpaceManager;
 
         private CancellationTokenSource friendServiceSubscriptionCancellationToken = new ();
         private RPCFriendsService? friendsService;
@@ -85,7 +86,6 @@ namespace DCL.PluginSystem.Global
             ObjectProxy<IFriendsService> friendServiceProxy,
             ObjectProxy<IFriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy,
             IProfileThumbnailCache profileThumbnailCache,
-            IChatLifecycleBusController chatLifecycleBusController,
             INotificationsBusController notificationsBusController,
             IOnlineUsersProvider onlineUsersProvider,
             IRealmNavigator realmNavigator,
@@ -94,7 +94,8 @@ namespace DCL.PluginSystem.Global
             FeatureFlagsCache featureFlagsCache,
             ISidebarActionsBus sidebarActionsBus,
             bool useAnalytics,
-            IAnalyticsController? analyticsController)
+            IAnalyticsController? analyticsController,
+            ISharedSpaceManager sharedSpaceManager)
         {
             this.mainUIView = mainUIView;
             this.dclUrlSource = dclUrlSource;
@@ -112,7 +113,6 @@ namespace DCL.PluginSystem.Global
             this.friendServiceProxy = friendServiceProxy;
             this.friendOnlineStatusCacheProxy = friendOnlineStatusCacheProxy;
             this.profileThumbnailCache = profileThumbnailCache;
-            this.chatLifecycleBusController = chatLifecycleBusController;
             this.onlineUsersProvider = onlineUsersProvider;
             this.realmNavigator = realmNavigator;
             this.notificationsBusController = notificationsBusController;
@@ -122,6 +122,7 @@ namespace DCL.PluginSystem.Global
             this.sidebarActionsBus = sidebarActionsBus;
             this.useAnalytics = useAnalytics;
             this.analyticsController = analyticsController;
+            this.sharedSpaceManager = sharedSpaceManager;
         }
 
         public void Dispose()
@@ -171,7 +172,6 @@ namespace DCL.PluginSystem.Global
                     return panelView;
                 },
                 mainUIView.FriendsPanelViewView,
-                chatLifecycleBusController,
                 mainUIView.SidebarView.FriendRequestNotificationIndicator,
                 injectableFriendService,
                 friendEventBus,
@@ -188,16 +188,20 @@ namespace DCL.PluginSystem.Global
                 friendsConnectivityStatusTracker,
                 sidebarActionsBus,
                 includeUserBlocking,
-                isConnectivityStatusEnabled);
+                isConnectivityStatusEnabled,
+                sharedSpaceManager);
+
+            sharedSpaceManager.RegisterPanelController(PanelsSharingSpace.Friends, friendsPanelController);
 
             mvcManager.RegisterController(friendsPanelController);
 
             var persistentFriendsOpenerController = new PersistentFriendPanelOpenerController(() => mainUIView.SidebarView.PersistentFriendsPanelOpener,
-                mvcManager,
-                dclInput,
+//                mvcManager,
+//                dclInput,
                 notificationsBusController,
                 passportBridge,
-                injectableFriendService);
+                injectableFriendService,
+                sharedSpaceManager);
 
             mvcManager.RegisterController(persistentFriendsOpenerController);
 
@@ -207,6 +211,8 @@ namespace DCL.PluginSystem.Global
                 FriendRequestController.CreateLazily(friendRequestPrefab, null),
                 web3IdentityCache, injectableFriendService, profileRepository,
                 inputBlock, profileThumbnailCache);
+
+            sharedSpaceManager.RegisterPanelController(PanelsSharingSpace.FriendRequest, friendRequestController);
 
             mvcManager.RegisterController(friendRequestController);
 

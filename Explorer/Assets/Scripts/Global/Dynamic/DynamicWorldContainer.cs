@@ -73,6 +73,7 @@ using DCL.UI.MainUI;
 using DCL.StylizedSkybox.Scripts.Plugin;
 using DCL.UI.InputFieldFormatting;
 using DCL.UI.Profiles.Helpers;
+using DCL.UI.SharedSpaceManager;
 using DCL.UI.Sidebar.SidebarActionsBus;
 using DCL.UserInAppInitializationFlow;
 using DCL.Utilities;
@@ -546,12 +547,12 @@ namespace Global.Dynamic
             var friendServiceProxy = new ObjectProxy<IFriendsService>();
             var friendOnlineStatusCacheProxy = new ObjectProxy<IFriendsConnectivityStatusTracker>();
             IProfileThumbnailCache profileThumbnailCache = new ProfileThumbnailCache(staticContainer.WebRequestsContainer.WebRequestController);
-            IChatLifecycleBusController chatLifecycleBusController = new ChatLifecycleBusController(mvcManager);
 
             ISidebarActionsBus sidebarActionsBus = new SidebarActionsBusController();
             MVCManagerMenusAccessFacade menusAccessFacade = new MVCManagerMenusAccessFacade(mvcManager, clipboard, clipboardManager, friendServiceProxy, profileCache);
 
             var viewDependencies = new ViewDependencies(dclInput, unityEventSystem, menusAccessFacade, clipboardManager, dclCursor);
+            ISharedSpaceManager sharedSpaceManager = new SharedSpaceManager(mvcManager, dclInput);
 
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
@@ -614,7 +615,7 @@ namespace Global.Dynamic
                     initializationFlowContainer.InitializationFlow,
                     profileCache, sidebarBus, dclInput, sidebarActionsBus,
                     globalWorld, playerEntity, includeCameraReel, includeFriends,
-                    chatHistory),
+                    chatHistory, sharedSpaceManager),
                 new ErrorPopupPlugin(mvcManager, assetsProvisioner),
                 connectionStatusPanelPlugin,
                 new MinimapPlugin(mvcManager, minimap),
@@ -626,7 +627,6 @@ namespace Global.Dynamic
                     nametagsData,
                     mainUIView,
                     staticContainer.InputBlock,
-                    chatLifecycleBusController,
                     globalWorld,
                     playerEntity,
                     viewDependencies,
@@ -634,7 +634,8 @@ namespace Global.Dynamic
                     roomHub,
                     assetsProvisioner,
                     hyperlinkTextFormatter,
-                    profileCache),
+                    profileCache,
+                    sharedSpaceManager),
                 new ExplorePanelPlugin(
                     assetsProvisioner,
                     mvcManager,
@@ -815,7 +816,6 @@ namespace Global.Dynamic
                     friendServiceProxy,
                     friendOnlineStatusCacheProxy,
                     profileThumbnailCache,
-                    chatLifecycleBusController,
                     notificationsBusController,
                     onlineUsersProvider,
                     realmNavigator,
@@ -824,7 +824,8 @@ namespace Global.Dynamic
                     staticContainer.FeatureFlagsCache,
                     sidebarActionsBus,
                     dynamicWorldParams.EnableAnalytics,
-                    bootstrapContainer.Analytics));
+                    bootstrapContainer.Analytics,
+                    sharedSpaceManager));
             }
 
             if (dynamicWorldParams.EnableAnalytics)
