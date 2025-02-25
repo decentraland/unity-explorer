@@ -18,28 +18,24 @@ namespace DCL.Settings.ModuleControllers
             this.view = view;
             this.systemMemoryCap = systemMemoryCap;
 
-            view.DropdownView.Dropdown.value = settingsDataStore.HasKey(MEMORY_CAP_DATA_STORE_KEY)
-                ? settingsDataStore.GetDropdownValue(MEMORY_CAP_DATA_STORE_KEY)
-                : GetIndexFromMemoryCap(systemMemoryCap.MemoryCapInMB);
+            if (settingsDataStore.HasKey(MEMORY_CAP_DATA_STORE_KEY))
+            {
+                view.DropdownView.Dropdown.value = settingsDataStore.GetDropdownValue(MEMORY_CAP_DATA_STORE_KEY) < view.DropdownView.Dropdown.options.Count ? settingsDataStore.GetDropdownValue(MEMORY_CAP_DATA_STORE_KEY) : DefaultMemoryCap();
+            }
+            else
+            {
+                view.DropdownView.Dropdown.value = DefaultMemoryCap();
+            }
 
+            
             view.DropdownView.Dropdown.onValueChanged.AddListener(SetMemoryLimitSettings);
-
             SetMemoryLimitSettings(view.DropdownView.Dropdown.value);
         }
 
-        private int GetIndexFromMemoryCap(long memoryCapInMB)
+        //The default value is the minimum that comes form the SO
+        private int DefaultMemoryCap()
         {
-            if (memoryCapInMB == SystemInfo.systemMemorySize)
-                return 0;
-
-            long capInGb = memoryCapInMB / 1024;
-
-            for (var i = 0; i < view.DropdownView.Dropdown.options.Count; i++)
-                if (int.TryParse(view.DropdownView.Dropdown.options[i].text, out int result)
-                    && result == capInGb)
-                    return i;
-
-            return 2;
+            return view.DropdownView.Dropdown.options.Count - 1;
         }
 
         public override void Dispose()

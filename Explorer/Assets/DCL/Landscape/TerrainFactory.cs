@@ -85,6 +85,7 @@ namespace DCL.Landscape
             Terrain terrain = Terrain.CreateTerrainGameObject(terrainData)
                                      .GetComponent<Terrain>();
 
+            terrain.treeBillboardDistance = 0; //setting to zero as we use LODGroups from speedtree
             terrain.shadowCastingMode = ShadowCastingMode.Off;
             terrain.materialTemplate = material;
             terrain.detailObjectDistance = 200;
