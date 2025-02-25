@@ -21,6 +21,7 @@ using DCL.Passport;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.Utilities;
+using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
 using ECS.SceneLifeCycle.Realm;
@@ -61,6 +62,7 @@ namespace DCL.PluginSystem.Global
         private readonly IProfileThumbnailCache profileThumbnailCache;
         private readonly IOnlineUsersProvider onlineUsersProvider;
         private readonly IRealmNavigator realmNavigator;
+        private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly bool enableFriends;
         private readonly bool includeUserBlocking;
 
@@ -95,6 +97,7 @@ namespace DCL.PluginSystem.Global
             IProfileThumbnailCache profileThumbnailCache,
             IOnlineUsersProvider onlineUsersProvider,
             IRealmNavigator realmNavigator,
+            IWeb3IdentityCache web3IdentityCache,
             bool enableFriends,
             bool includeUserBlocking
         )
@@ -127,6 +130,7 @@ namespace DCL.PluginSystem.Global
             this.profileThumbnailCache = profileThumbnailCache;
             this.onlineUsersProvider = onlineUsersProvider;
             this.realmNavigator = realmNavigator;
+            this.web3IdentityCache = web3IdentityCache;
             this.enableFriends = enableFriends;
             this.includeUserBlocking = includeUserBlocking;
         }
@@ -180,6 +184,7 @@ namespace DCL.PluginSystem.Global
                 profileThumbnailCache,
                 onlineUsersProvider,
                 realmNavigator,
+                web3IdentityCache,
                 passportSettings.GridLayoutFixedColumnCount,
                 passportSettings.ThumbnailHeight,
                 passportSettings.ThumbnailWidth,

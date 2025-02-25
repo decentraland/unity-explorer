@@ -13,11 +13,12 @@ using ECS.StreamableLoading.Common.Systems;
 using ECS.Unity.Textures.Utils;
 using System;
 using System.Threading;
-using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 
 namespace ECS.StreamableLoading.Textures
 {
-    public abstract class LoadTextureSystem : LoadSystemBase<Texture2DData, GetTextureIntention>
+    [UpdateInGroup(typeof(StreamableLoadingGroup))]
+    [LogCategory(ReportCategory.TEXTURES)]
+    public partial class LoadTextureSystem : LoadSystemBase<Texture2DData, GetTextureIntention>
     {
         private readonly IWebRequestController webRequestController;
 
@@ -31,14 +32,8 @@ namespace ECS.StreamableLoading.Textures
 
         protected override async UniTask<StreamableLoadingResult<Texture2DData>> FlowInternalAsync(GetTextureIntention intention, StreamableLoadingState state, IPartitionComponent partition, CancellationToken ct)
         {
-            CheckVideoTexture(intention);
-            return await GetTextureAsync(intention, partition, ct);
-        }
+            if (intention.IsVideoTexture) throw new NotSupportedException($"{nameof(LoadTextureSystem)} does not support video textures. They should be handled by {nameof(VideoTextureUtils)}");
 
-        protected abstract UniTask<StreamableLoadingResult<Texture2DData>> GetTextureAsync(GetTextureIntention intention, IPartitionComponent partition, CancellationToken ct);
-
-        protected async UniTask<IOwnedTexture2D> TryTextureDownloadAsync(GetTextureIntention intention, CancellationToken ct)
-        {
             // Attempts should be always 1 as there is a repeat loop in `LoadSystemBase`
             var result = await webRequestController.GetTextureAsync(
                 intention.CommonArguments,
@@ -47,13 +42,8 @@ namespace ECS.StreamableLoading.Textures
                 ct,
                 GetReportData()
             );
-            return result;
-        }
 
-        private void CheckVideoTexture(GetTextureIntention intention)
-        {
-            if (intention.IsVideoTexture)
-                throw new NotSupportedException($"{nameof(LoadTextureSystem)} does not support video textures. They should be handled by {nameof(VideoTextureUtils)}");
+            return new StreamableLoadingResult<Texture2DData>(new Texture2DData(result.EnsureNotNull()));
         }
     }
 }
