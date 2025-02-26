@@ -1,6 +1,7 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Web3.Abstract;
 using DCL.Web3.Chains;
 using DCL.Web3.Identities;
@@ -21,19 +22,26 @@ namespace DCL.Web3.Authenticators
     {
         private const int TIMEOUT_SECONDS = 30;
         private const int RPC_BUFFER_SIZE = 50000;
+        private const string NETWORK_MAINNET = "mainnet";
+        private const string NETWORK_SEPOLIA = "sepolia";
+        private const string MAINNET_CHAIN_ID = "0x1";
+        private const string SEPOLIA_CHAIN_ID = "0xaa36a7";
+        private const string MAINNET_NET_VERSION = "1";
+        private const string SEPOLIA_NET_VERSION = "11155111";
 
         private readonly IWebBrowser webBrowser;
         private readonly URLAddress authApiUrl;
         private readonly URLAddress signatureWebAppUrl;
-        private readonly URLAddress rpcServerUrl;
+        private readonly URLDomain rpcServerUrl;
         private readonly IWeb3IdentityCache identityCache;
         private readonly IWeb3AccountFactory web3AccountFactory;
         private readonly HashSet<string> whitelistMethods;
         private readonly HashSet<string> readOnlyMethods;
-
+        private readonly DecentralandEnvironment environment;
         // Allow only one web3 operation at a time
         private readonly SemaphoreSlim mutex = new (1, 1);
         private readonly byte[] rpcByteBuffer = new byte[RPC_BUFFER_SIZE];
+        private readonly URLBuilder urlBuilder = new ();
 
         private int authApiPendingOperations;
         private int rpcPendingOperations;
@@ -46,11 +54,12 @@ namespace DCL.Web3.Authenticators
         public DappWeb3Authenticator(IWebBrowser webBrowser,
             URLAddress authApiUrl,
             URLAddress signatureWebAppUrl,
-            URLAddress rpcServerUrl,
+            URLDomain rpcServerUrl,
             IWeb3IdentityCache identityCache,
             IWeb3AccountFactory web3AccountFactory,
             HashSet<string> whitelistMethods,
-            HashSet<string> readOnlyMethods)
+            HashSet<string> readOnlyMethods,
+            DecentralandEnvironment environment)
         {
             this.webBrowser = webBrowser;
             this.authApiUrl = authApiUrl;
@@ -60,6 +69,7 @@ namespace DCL.Web3.Authenticators
             this.web3AccountFactory = web3AccountFactory;
             this.whitelistMethods = whitelistMethods;
             this.readOnlyMethods = readOnlyMethods;
+            this.environment = environment;
         }
 
         public void Dispose()
@@ -86,6 +96,32 @@ namespace DCL.Web3.Authenticators
                     id = request.id,
                     jsonrpc = "2.0",
                     result = accounts,
+                };
+            }
+
+            if (string.Equals(request.method, "eth_chainId"))
+            {
+                // TODO: this is a temporary thing until we solve the network in a better way
+                string chainId = environment == DecentralandEnvironment.Org ? MAINNET_CHAIN_ID : SEPOLIA_CHAIN_ID;
+
+                return new EthApiResponse
+                {
+                    id = request.id,
+                    jsonrpc = "2.0",
+                    result = chainId,
+                };
+            }
+
+            if (string.Equals(request.method, "net_version"))
+            {
+                // TODO: this is a temporary thing until we solve the network in a better way
+                string chainId = environment == DecentralandEnvironment.Org ? MAINNET_NET_VERSION : SEPOLIA_NET_VERSION;
+
+                return new EthApiResponse
+                {
+                    id = request.id,
+                    jsonrpc = "2.0",
+                    result = chainId,
                 };
             }
 
@@ -196,7 +232,9 @@ namespace DCL.Web3.Authenticators
 
                 await UniTask.SwitchToMainThread(ct);
 
-                await ConnectToRpcAsync(ct);
+                // TODO: this is a temporary thing until we solve the network in a better way (probably it should be parametrized)
+                string network = environment == DecentralandEnvironment.Org ? NETWORK_MAINNET : NETWORK_SEPOLIA;
+                await ConnectToRpcAsync(network, ct);
 
                 var response = await RequestEthMethodWithoutSignature(request, ct)
                    .Timeout(TimeSpan.FromSeconds(TIMEOUT_SECONDS));
@@ -233,12 +271,16 @@ namespace DCL.Web3.Authenticators
             rpcWebSocket = null;
         }
 
-        private async UniTask ConnectToRpcAsync(CancellationToken ct)
+        private async UniTask ConnectToRpcAsync(string network, CancellationToken ct)
         {
             if (rpcWebSocket?.State == WebSocketState.Open) return;
 
+            urlBuilder.Clear();
+            urlBuilder.AppendDomain(rpcServerUrl);
+            urlBuilder.AppendPath(new URLPath(network));
+
             rpcWebSocket = new ClientWebSocket();
-            await rpcWebSocket.ConnectAsync(new Uri(rpcServerUrl), ct);
+            await rpcWebSocket.ConnectAsync(new Uri(urlBuilder.Build()), ct);
         }
 
         private async UniTask<EthApiResponse> RequestEthMethodWithoutSignature(EthApiRequest request, CancellationToken ct)
@@ -247,7 +289,7 @@ namespace DCL.Web3.Authenticators
             byte[] bytes = System.Text.Encoding.UTF8.GetBytes(reqJson);
             await rpcWebSocket!.SendAsync(bytes, WebSocketMessageType.Text, true, ct);
 
-            while (!ct.IsCancellationRequested && rpcWebSocket.State == WebSocketState.Open)
+            while (!ct.IsCancellationRequested && rpcWebSocket?.State == WebSocketState.Open)
             {
                 WebSocketReceiveResult result = await rpcWebSocket.ReceiveAsync(rpcByteBuffer, ct);
 
@@ -258,6 +300,11 @@ namespace DCL.Web3.Authenticators
 
                     if (response.id == request.id)
                         return response;
+                }
+                else if (result.MessageType == WebSocketMessageType.Close)
+                {
+                    await DisconnectFromRpcAsync(ct);
+                    break;
                 }
             }
 

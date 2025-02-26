@@ -54,6 +54,11 @@ namespace SceneRuntime.Apis.Modules.Ethereums
         [PublicAPI("Used by StreamingAssets/Js/Modules/EthereumController.js")]
         public object SignMessage(string message)
         {
+            signMessageCancellationToken = signMessageCancellationToken.SafeRestart();
+
+            return RequestPersonalSignatureAsync(signMessageCancellationToken.Token)
+               .ToDisconnectedPromise();
+
             async UniTask<SignMessageResponse> RequestPersonalSignatureAsync(CancellationToken ct)
             {
                 await UniTask.SwitchToMainThread();
@@ -83,16 +88,14 @@ namespace SceneRuntime.Apis.Modules.Ethereums
                     return new SignMessageResponse(hex, message, string.Empty);
                 }
             }
-
-            signMessageCancellationToken = signMessageCancellationToken.SafeRestart();
-
-            return RequestPersonalSignatureAsync(signMessageCancellationToken.Token)
-               .ToDisconnectedPromise();
         }
 
         [PublicAPI("Used by StreamingAssets/Js/Modules/EthereumController.js")]
         public object SendAsync(double id, string method, string jsonParams)
         {
+            return SendAndFormatAsync(id, method, JsonConvert.DeserializeObject<object[]>(jsonParams) ?? Array.Empty<object>(), sendCancellationToken.Token)
+               .ToDisconnectedPromise();
+
             async UniTask<SendEthereumMessageResponse> SendAndFormatAsync(double id, string method, object[] @params, CancellationToken ct)
             {
                 try
@@ -106,12 +109,7 @@ namespace SceneRuntime.Apis.Modules.Ethereums
 
                     return new SendEthereumMessageResponse
                     {
-                        jsonAnyResponse = JsonConvert.SerializeObject(new SendEthereumMessageResponse.Payload
-                        {
-                            id = result.id,
-                            jsonrpc = result.jsonrpc,
-                            result = result.result,
-                        }),
+                        jsonAnyResponse = JsonConvert.SerializeObject(result),
                     };
                 }
                 catch (Exception e)
@@ -120,7 +118,7 @@ namespace SceneRuntime.Apis.Modules.Ethereums
 
                     return new SendEthereumMessageResponse
                     {
-                        jsonAnyResponse = JsonConvert.SerializeObject(new SendEthereumMessageResponse.Payload
+                        jsonAnyResponse = JsonConvert.SerializeObject(new EthApiResponse
                         {
                             id = (long)id,
                             jsonrpc = "2.0",
@@ -129,9 +127,6 @@ namespace SceneRuntime.Apis.Modules.Ethereums
                     };
                 }
             }
-
-            return SendAndFormatAsync(id, method, JsonConvert.DeserializeObject<object[]>(jsonParams) ?? Array.Empty<object>(), sendCancellationToken.Token)
-               .ToDisconnectedPromise();
         }
     }
 }

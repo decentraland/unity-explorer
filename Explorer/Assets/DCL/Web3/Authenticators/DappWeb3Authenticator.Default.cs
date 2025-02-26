@@ -20,14 +20,7 @@ namespace DCL.Web3.Authenticators
             {
                 URLAddress authApiUrl = URLAddress.FromString(decentralandUrlsSource.Url(DecentralandUrl.ApiAuth));
                 URLAddress signatureUrl = URLAddress.FromString(decentralandUrlsSource.Url(DecentralandUrl.AuthSignatureWebApp));
-
-                URLBuilder urlBuilder = new URLBuilder();
-
-                const string NETWORK = "sepolia";
-
-                URLAddress rpcServerUrl = urlBuilder.AppendDomain(URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.ApiRpc)))
-                                                    .AppendPath(new URLPath(NETWORK))
-                                                    .Build();
+                URLDomain rpcServerUrl = URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.ApiRpc));
 
                 var origin = new DappWeb3Authenticator(
                     new UnityAppWebBrowser(decentralandUrlsSource),
@@ -61,7 +54,8 @@ namespace DCL.Web3.Authenticators
                         "eth_getTransactionCount",
                         "eth_getBlockByNumber",
                         "eth_getCode",
-                    }
+                    },
+                    decentralandUrlsSource.Environment
                 );
 
                 originApi = origin;

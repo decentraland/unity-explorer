@@ -218,24 +218,16 @@ namespace Global.Dynamic
                 BootstrapContainer container,
                 IDecentralandUrlsSource decentralandUrlsSource)
         {
-            URLBuilder urlBuilder = new URLBuilder();
-            urlBuilder.AppendDomain(URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.ApiRpc)));
-
-            // TODO: this is a temporary thing until we solve the network in a better way
-            // if (decentralandUrlsSource.Environment == DecentralandEnvironment.Org)
-            //     urlBuilder.AppendPath(new URLPath("mainnet"));
-            // else
-                urlBuilder.AppendPath(new URLPath("sepolia"));
-
             var dappWeb3Authenticator = new DappWeb3Authenticator(
                 webBrowser,
                 URLAddress.FromString(decentralandUrlsSource.Url(DecentralandUrl.ApiAuth)),
                 URLAddress.FromString(decentralandUrlsSource.Url(DecentralandUrl.AuthSignatureWebApp)),
-                urlBuilder.Build(),
+                URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.ApiRpc)),
                 identityCache,
                 web3AccountFactory,
                 new HashSet<string>(sceneLoaderSettings.Web3WhitelistMethods),
-                new HashSet<string>(sceneLoaderSettings.Web3ReadOnlyMethods)
+                new HashSet<string>(sceneLoaderSettings.Web3ReadOnlyMethods),
+                decentralandUrlsSource.Environment
             );
 
             IWeb3VerifiedAuthenticator coreWeb3Authenticator = new ProxyVerifiedWeb3Authenticator(dappWeb3Authenticator, identityCache);
