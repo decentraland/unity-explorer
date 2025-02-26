@@ -50,8 +50,13 @@ namespace DCL.Roads.GPUInstancing.Playground
         {
             if (!instancingMaterials.TryGetValue(sharedMat, out Material instancedMat))
             {
+                var keyword = new LocalKeyword(sharedMat.shader, GPU_INSTANCING_KEYWORD);
+
+                Debug.Log($"Adding new material {sharedMat.name}");
+                sharedMat.DisableKeyword(keyword);
+
                 instancedMat = new Material(sharedMat) { name = $"{sharedMat.name}_GPUInstancingIndirect" };
-                instancedMat.EnableKeyword(new LocalKeyword(instancedMat.shader, GPU_INSTANCING_KEYWORD));
+                instancedMat.EnableKeyword(keyword);
                 instancingMaterials.Add(sharedMat, instancedMat);
             }
 

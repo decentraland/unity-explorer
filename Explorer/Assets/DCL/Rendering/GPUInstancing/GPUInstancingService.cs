@@ -246,6 +246,8 @@ namespace DCL.Roads.GPUInstancing
 
                 buffers.DrawArgs.SetData(buffers.DrawArgsCommandData, 0, 0, count: combinedRenderersCount * _nLODCount);
 
+                Debug.Log($"Inizializing render params for {candidate.Name} with material {combinedLodRenderer.SharedMaterial.name} ", combinedLodRenderer.SharedMaterial);
+
                 combinedLodRenderer.InitializeRenderParams(instancingMaterials);
                 ref RenderParams rparams = ref combinedLodRenderer.RenderParamsArray[0];
                 rparams.camera = renderCamera;
