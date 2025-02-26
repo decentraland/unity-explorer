@@ -335,19 +335,19 @@ PrefabInstance:
     - target: {fileID: 4764279983273362534, guid: 906661b63634c3b4bb183313838bfb2b, type: 3}
       propertyPath: CombinedLodsRenderers.Array.data[2].SharedMaterial
       value: 
-      objectReference: {fileID: 2100000, guid: 080ee30e4f4ff5c4fae19015bec5167c, type: 2}
+      objectReference: {fileID: 2100000, guid: fcd067b2a5f3ade45846eef4205a2cb8, type: 2}
     - target: {fileID: 4764279983273362534, guid: 906661b63634c3b4bb183313838bfb2b, type: 3}
       propertyPath: CombinedLodsRenderers.Array.data[3].SharedMaterial
       value: 
-      objectReference: {fileID: 2100000, guid: 080ee30e4f4ff5c4fae19015bec5167c, type: 2}
+      objectReference: {fileID: 2100000, guid: 5721e1ca88803ff48b9d8efefee458ca, type: 2}
     - target: {fileID: 4764279983273362534, guid: 906661b63634c3b4bb183313838bfb2b, type: 3}
       propertyPath: CombinedLodsRenderers.Array.data[5].SharedMaterial
       value: 
-      objectReference: {fileID: 2100000, guid: fcd067b2a5f3ade45846eef4205a2cb8, type: 2}
+      objectReference: {fileID: 2100000, guid: 080ee30e4f4ff5c4fae19015bec5167c, type: 2}
     - target: {fileID: 4764279983273362534, guid: 906661b63634c3b4bb183313838bfb2b, type: 3}
       propertyPath: CombinedLodsRenderers.Array.data[6].SharedMaterial
       value: 
-      objectReference: {fileID: 2100000, guid: fcd067b2a5f3ade45846eef4205a2cb8, type: 2}
+      objectReference: {fileID: 2100000, guid: 5721e1ca88803ff48b9d8efefee458ca, type: 2}
     - target: {fileID: 7045620984918732489, guid: 906661b63634c3b4bb183313838bfb2b, type: 3}
       propertyPath: m_LocalScale.x
       value: 0.0015

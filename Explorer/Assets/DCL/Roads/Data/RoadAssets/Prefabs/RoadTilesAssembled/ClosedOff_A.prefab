@@ -302,15 +302,15 @@ PrefabInstance:
     - target: {fileID: 4090971949909690010, guid: c1a361b3b556f234d8ee57426bbea2b5, type: 3}
       propertyPath: CombinedLodsRenderers.Array.data[1].SharedMaterial
       value: 
-      objectReference: {fileID: 2100000, guid: 080ee30e4f4ff5c4fae19015bec5167c, type: 2}
+      objectReference: {fileID: 2100000, guid: fcd067b2a5f3ade45846eef4205a2cb8, type: 2}
     - target: {fileID: 4831224819157020985, guid: c1a361b3b556f234d8ee57426bbea2b5, type: 3}
       propertyPath: CombinedLodsRenderers.Array.data[1].SharedMaterial
       value: 
-      objectReference: {fileID: 2100000, guid: 080ee30e4f4ff5c4fae19015bec5167c, type: 2}
+      objectReference: {fileID: 2100000, guid: fcd067b2a5f3ade45846eef4205a2cb8, type: 2}
     - target: {fileID: 5308330572355371797, guid: c1a361b3b556f234d8ee57426bbea2b5, type: 3}
       propertyPath: CombinedLodsRenderers.Array.data[1].SharedMaterial
       value: 
-      objectReference: {fileID: 2100000, guid: 080ee30e4f4ff5c4fae19015bec5167c, type: 2}
+      objectReference: {fileID: 2100000, guid: fcd067b2a5f3ade45846eef4205a2cb8, type: 2}
     - target: {fileID: 6216986622243669611, guid: c1a361b3b556f234d8ee57426bbea2b5, type: 3}
       propertyPath: m_Enabled
       value: 0
@@ -326,7 +326,7 @@ PrefabInstance:
     - target: {fileID: 9184577439793999093, guid: c1a361b3b556f234d8ee57426bbea2b5, type: 3}
       propertyPath: CombinedLodsRenderers.Array.data[1].SharedMaterial
       value: 
-      objectReference: {fileID: 2100000, guid: 080ee30e4f4ff5c4fae19015bec5167c, type: 2}
+      objectReference: {fileID: 2100000, guid: fcd067b2a5f3ade45846eef4205a2cb8, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

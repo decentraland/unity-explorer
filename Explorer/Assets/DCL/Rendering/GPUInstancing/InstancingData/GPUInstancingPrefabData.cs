@@ -29,7 +29,7 @@ namespace DCL.Roads.GPUInstancing.Playground
         private static void AdjustMaterialChangeInPrefab(GPUInstancingLODGroup lodGroup)
         {
             foreach (var combinedRenderer in lodGroup.CombinedLodsRenderers)
-                combinedRenderer.SharedMaterial = combinedRenderer.RenderParamsSerialized[0].RefRenderer.sharedMaterial;
+                combinedRenderer.SharedMaterial = combinedRenderer.RenderParamsSerialized[0].RefRenderer.sharedMaterials[combinedRenderer.SubMeshId];
         }
 
         private void TryAddToCollected(GPUInstancingLODGroup newCandidate, Matrix4x4 localToRootMatrix)
