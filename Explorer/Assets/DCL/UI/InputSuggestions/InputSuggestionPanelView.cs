@@ -79,62 +79,65 @@ namespace DCL.UI.SuggestionPanel
                 SetPanelVisibility(false);
         }
 
-
-private void OnArrowDown(InputAction.CallbackContext obj)
-{
-    if (currentIndex < usedPoolItems.Count - 1)
-    {
-        int nextIndex = currentIndex + 1;
-        if (needToScroll && nextIndex > lastVisibleSuggestionIndex)
+        private void OnArrowDown(InputAction.CallbackContext obj)
         {
-            float targetPosition = 1f - ((float)(nextIndex + 1 - visibleSuggestionsCount) / (usedPoolItems.Count - visibleSuggestionsCount));
-            scrollViewComponent.verticalNormalizedPosition = Mathf.Clamp01(targetPosition);
-            firstVisibleSuggestionIndex = nextIndex - visibleSuggestionsCount + 1;
-            lastVisibleSuggestionIndex = nextIndex;
+            if (currentIndex < usedPoolItems.Count - 1)
+            {
+                int nextIndex = currentIndex + 1;
+
+                if (needToScroll && nextIndex > lastVisibleSuggestionIndex)
+                {
+                    float targetPosition = 1f - ((float)(nextIndex + 1 - visibleSuggestionsCount) / (usedPoolItems.Count - visibleSuggestionsCount));
+                    scrollViewComponent.verticalNormalizedPosition = Mathf.Clamp01(targetPosition);
+                    firstVisibleSuggestionIndex = nextIndex - visibleSuggestionsCount + 1;
+                    lastVisibleSuggestionIndex = nextIndex;
+                }
+
+                SetSelection(nextIndex);
+            }
+            else
+            {
+                if (needToScroll)
+                {
+                    scrollViewComponent.verticalNormalizedPosition = 1f;
+                    firstVisibleSuggestionIndex = 0;
+                    lastVisibleSuggestionIndex = Mathf.Min(visibleSuggestionsCount - 1, usedPoolItems.Count - 1);
+                }
+
+                SetSelection(0);
+            }
         }
 
-        SetSelection(nextIndex);
-    }
-    else
-    {
-        if (needToScroll)
+        private void OnArrowUp(InputAction.CallbackContext obj)
         {
-            scrollViewComponent.verticalNormalizedPosition = 1f;
-            firstVisibleSuggestionIndex = 0;
-            lastVisibleSuggestionIndex = Mathf.Min(visibleSuggestionsCount - 1, usedPoolItems.Count - 1);
-        }
+            if (currentIndex > 0)
+            {
+                int prevIndex = currentIndex - 1;
 
-        SetSelection(0);
-    }
-}
+                if (needToScroll && prevIndex < firstVisibleSuggestionIndex)
+                {
+                    float targetPosition = 1f - ((float)prevIndex / (usedPoolItems.Count - visibleSuggestionsCount));
+                    scrollViewComponent.verticalNormalizedPosition = Mathf.Clamp01(targetPosition);
+                    firstVisibleSuggestionIndex = prevIndex;
+                    lastVisibleSuggestionIndex = prevIndex + visibleSuggestionsCount - 1;
+                }
 
-private void OnArrowUp(InputAction.CallbackContext obj)
-{
-    if (currentIndex > 0)
-    {
-        int prevIndex = currentIndex - 1;
-        if (needToScroll && prevIndex < firstVisibleSuggestionIndex)
-        {
-            float targetPosition = 1f - ((float)prevIndex / (usedPoolItems.Count - visibleSuggestionsCount));
-            scrollViewComponent.verticalNormalizedPosition = Mathf.Clamp01(targetPosition);
-            firstVisibleSuggestionIndex = prevIndex;
-            lastVisibleSuggestionIndex = prevIndex + visibleSuggestionsCount - 1;
-        }
-        SetSelection(prevIndex);
-    }
-    else
-    {
-        int lastIndex = usedPoolItems.Count - 1;
-        if (needToScroll)
-        {
-            scrollViewComponent.verticalNormalizedPosition = 0f;
-            firstVisibleSuggestionIndex = Mathf.Max(0, lastIndex - visibleSuggestionsCount + 1);
-            lastVisibleSuggestionIndex = lastIndex;
-        }
-        SetSelection(lastIndex);
-    }
-}
+                SetSelection(prevIndex);
+            }
+            else
+            {
+                int lastIndex = usedPoolItems.Count - 1;
 
+                if (needToScroll)
+                {
+                    scrollViewComponent.verticalNormalizedPosition = 0f;
+                    firstVisibleSuggestionIndex = Mathf.Max(0, lastIndex - visibleSuggestionsCount + 1);
+                    lastVisibleSuggestionIndex = lastIndex;
+                }
+
+                SetSelection(lastIndex);
+            }
+        }
 
         /// <summary>
         /// Processes the list of found suggestions and displays them on the panel
@@ -142,7 +145,7 @@ private void OnArrowUp(InputAction.CallbackContext obj)
         /// <param name="suggestionType"> The type of suggestion will change the max amount we can display as well as which pool to bring elements from </param>
         /// <param name="foundSuggestions"> The list of found suggestions to display </param>
         /// <typeparam name="T"> The type of Suggestion Element Data to use </typeparam>
-        public void SetSuggestionValues<T>(InputSuggestionType suggestionType, IList<T> foundSuggestions) where T : IInputSuggestionElementData
+        public void SetSuggestionValues<T>(InputSuggestionType suggestionType, IList<T> foundSuggestions) where T: IInputSuggestionElementData
         {
             noResultsIndicator.gameObject.SetActive(foundSuggestions.Count == 0);
 
@@ -154,7 +157,9 @@ private void OnArrowUp(InputAction.CallbackContext obj)
 
             float scrollViewHeight;
 
-            if (foundSuggestions.Count <= maxVisibleSuggestions)
+            if (foundSuggestions.Count == 0)
+                scrollViewHeight = configurationSo.noResultsHeight;
+            else if (foundSuggestions.Count > 0 && foundSuggestions.Count <= maxVisibleSuggestions)
                 scrollViewHeight = (suggestionDataPerType[suggestionType].SuggestionElementHeight * foundSuggestions.Count) + configurationSo.padding;
             else
             {
@@ -164,8 +169,10 @@ private void OnArrowUp(InputAction.CallbackContext obj)
                 lastVisibleSuggestionIndex = maxVisibleSuggestions - 1;
                 scrollViewHeight = (suggestionDataPerType[suggestionType].SuggestionElementHeight * maxVisibleSuggestions) + configurationSo.padding;
             }
+
             ScrollViewRect.sizeDelta = new Vector2(ScrollViewRect.sizeDelta.x, scrollViewHeight);
             scrollViewComponent.verticalNormalizedPosition = 1;
+
             //if the suggestion type is different, we release all items from the pool,
             //otherwise, we only release the elements that are over the found suggestion amount.
             if (currentSuggestionType != InputSuggestionType.NONE)
@@ -189,23 +196,22 @@ private void OnArrowUp(InputAction.CallbackContext obj)
 
             currentSuggestionType = suggestionType;
 
-                for (var i = 0; i < foundSuggestions.Count; i++)
+            for (var i = 0; i < foundSuggestions.Count; i++)
+            {
+                T elementData = foundSuggestions[i];
+
+                if (usedPoolItems.Count > i)
                 {
-                    T elementData = foundSuggestions[i];
-
-                    if (usedPoolItems.Count > i)
-                    {
-                        usedPoolItems[i].Setup(elementData);
-                        usedPoolItems[i].gameObject.transform.SetAsLastSibling();
-                    }
-                    else
-                    {
-                        BaseInputSuggestionElement suggestionElement = suggestionItemsPools[suggestionType].Get();
-                        suggestionElement.Setup(elementData);
-                        suggestionElement.gameObject.transform.SetAsLastSibling();
-                        usedPoolItems.Add(suggestionElement);
-                    }
-
+                    usedPoolItems[i].Setup(elementData);
+                    usedPoolItems[i].gameObject.transform.SetAsLastSibling();
+                }
+                else
+                {
+                    BaseInputSuggestionElement suggestionElement = suggestionItemsPools[suggestionType].Get();
+                    suggestionElement.Setup(elementData);
+                    suggestionElement.gameObject.transform.SetAsLastSibling();
+                    usedPoolItems.Add(suggestionElement);
+                }
             }
         }
 
