@@ -102,7 +102,7 @@ MonoBehaviour:
         e31: 0
         e32: 0
         e33: 1
-      instColourTint: {x: 1, y: 1, z: 1, w: 1}
+      instColourTint: {x: 1, y: 1, z: 1, w: 0}
   - Name: RoadSideL
     LODGroup: {fileID: 1703318222885391071}
     InstancesBuffer:
@@ -123,7 +123,7 @@ MonoBehaviour:
         e31: 0
         e32: 0
         e33: 1
-      instColourTint: {x: 1, y: 1, z: 1, w: 1}
+      instColourTint: {x: 1, y: 1, z: 1, w: 0}
   - Name: RoadSideDecor01
     LODGroup: {fileID: 2449416686031698212}
     InstancesBuffer:
@@ -144,7 +144,7 @@ MonoBehaviour:
         e31: 0
         e32: 0
         e33: 1
-      instColourTint: {x: 1, y: 1, z: 1, w: 1}
+      instColourTint: {x: 1, y: 1, z: 1, w: 0}
     - instMatrix:
         e00: -1
         e01: 0
@@ -162,7 +162,7 @@ MonoBehaviour:
         e31: 0
         e32: 0
         e33: 1
-      instColourTint: {x: 1, y: 1, z: 1, w: 1}
+      instColourTint: {x: 1, y: 1, z: 1, w: 0}
   - Name: Lamp01
     LODGroup: {fileID: 4274242971668986804}
     InstancesBuffer:
@@ -183,7 +183,7 @@ MonoBehaviour:
         e31: 0
         e32: 0
         e33: 1
-      instColourTint: {x: 1, y: 1, z: 1, w: 1}
+      instColourTint: {x: 1, y: 1, z: 1, w: 0}
     - instMatrix:
         e00: 1
         e01: 0
@@ -201,7 +201,7 @@ MonoBehaviour:
         e31: 0
         e32: 0
         e33: 1
-      instColourTint: {x: 1, y: 1, z: 1, w: 1}
+      instColourTint: {x: 1, y: 1, z: 1, w: 0}
   - Name: HedgeBallGreen
     LODGroup: {fileID: 4174551295853694223}
     InstancesBuffer:
@@ -222,7 +222,7 @@ MonoBehaviour:
         e31: 0
         e32: 0
         e33: 1
-      instColourTint: {x: 1, y: 1, z: 1, w: 1}
+      instColourTint: {x: 1, y: 1, z: 1, w: 0}
   - Name: Bench01
     LODGroup: {fileID: 4047604935585099731}
     InstancesBuffer:
@@ -243,7 +243,7 @@ MonoBehaviour:
         e31: 0
         e32: 0
         e33: 1
-      instColourTint: {x: 1, y: 1, z: 1, w: 1}
+      instColourTint: {x: 1, y: 1, z: 1, w: 0}
 --- !u!1 &6629692934358463266
 GameObject:
   m_ObjectHideFlags: 0
@@ -284,10 +284,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 6650811805225445222}
     m_Modifications:
-    - target: {fileID: 1838028961081150547, guid: 10defc8dbd6761c4ba65c7a769500619, type: 3}
-      propertyPath: m_Enabled
-      value: 0
-      objectReference: {fileID: 0}
     - target: {fileID: 6093425957826306456, guid: 10defc8dbd6761c4ba65c7a769500619, type: 3}
       propertyPath: m_Name
       value: Lamp01 (1)
@@ -406,10 +402,6 @@ PrefabInstance:
       propertyPath: m_Materials.Array.data[0]
       value: 
       objectReference: {fileID: 2100000, guid: 416e2d348062da84ea557a9e24ab560d, type: 2}
-    - target: {fileID: 7303024313507133109, guid: c3f0925194868a5478e507bcc2cc31ba, type: 3}
-      propertyPath: m_Enabled
-      value: 0
-      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -483,10 +475,6 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 6578349561275120063, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
-      propertyPath: m_Enabled
-      value: 0
-      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -516,18 +504,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 6650811805225445222}
     m_Modifications:
-    - target: {fileID: 5080249195655604249, guid: 25767ecd8e6958f4fac61668cc9f75c9, type: 3}
-      propertyPath: m_Enabled
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 7197782347758655817, guid: 25767ecd8e6958f4fac61668cc9f75c9, type: 3}
-      propertyPath: m_Enabled
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 7238429965779881601, guid: 25767ecd8e6958f4fac61668cc9f75c9, type: 3}
-      propertyPath: m_Enabled
-      value: 0
-      objectReference: {fileID: 0}
     - target: {fileID: 8550024305409097073, guid: 25767ecd8e6958f4fac61668cc9f75c9, type: 3}
       propertyPath: m_Name
       value: RoadTileL
@@ -623,10 +599,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 6650811805225445222}
     m_Modifications:
-    - target: {fileID: 1838028961081150547, guid: 10defc8dbd6761c4ba65c7a769500619, type: 3}
-      propertyPath: m_Enabled
-      value: 0
-      objectReference: {fileID: 0}
     - target: {fileID: 6093425957826306456, guid: 10defc8dbd6761c4ba65c7a769500619, type: 3}
       propertyPath: m_Name
       value: Lamp01

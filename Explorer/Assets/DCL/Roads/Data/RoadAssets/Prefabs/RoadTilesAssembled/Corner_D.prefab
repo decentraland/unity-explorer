@@ -66,7 +66,7 @@ MonoBehaviour:
         e31: 0
         e32: 0
         e33: 1
-      instColourTint: {x: 1, y: 1, z: 1, w: 1}
+      instColourTint: {x: 1, y: 1, z: 1, w: 0}
   - Name: RoadSideL
     LODGroup: {fileID: 6967474519578713183}
     InstancesBuffer:
@@ -87,7 +87,7 @@ MonoBehaviour:
         e31: 0
         e32: 0
         e33: 1
-      instColourTint: {x: 1, y: 1, z: 1, w: 1}
+      instColourTint: {x: 1, y: 1, z: 1, w: 0}
   - Name: RoadSideCornerSmall
     LODGroup: {fileID: 2743218069925159664}
     InstancesBuffer:
@@ -108,7 +108,7 @@ MonoBehaviour:
         e31: 0
         e32: 0
         e33: 1
-      instColourTint: {x: 1, y: 1, z: 1, w: 1}
+      instColourTint: {x: 1, y: 1, z: 1, w: 0}
   - Name: RoadSideDecor01
     LODGroup: {fileID: 6170016984043065802}
     InstancesBuffer:
@@ -129,7 +129,7 @@ MonoBehaviour:
         e31: 0
         e32: 0
         e33: 1
-      instColourTint: {x: 1, y: 1, z: 1, w: 1}
+      instColourTint: {x: 1, y: 1, z: 1, w: 0}
     - instMatrix:
         e00: -1
         e01: 0
@@ -147,7 +147,7 @@ MonoBehaviour:
         e31: 0
         e32: 0
         e33: 1
-      instColourTint: {x: 1, y: 1, z: 1, w: 1}
+      instColourTint: {x: 1, y: 1, z: 1, w: 0}
   - Name: HedgeBallGreen
     LODGroup: {fileID: 6281358938959199915}
     InstancesBuffer:
@@ -168,7 +168,7 @@ MonoBehaviour:
         e31: 0
         e32: 0
         e33: 1
-      instColourTint: {x: 1, y: 1, z: 1, w: 1}
+      instColourTint: {x: 1, y: 1, z: 1, w: 0}
   - Name: Bench01
     LODGroup: {fileID: 7912408764581896867}
     InstancesBuffer:
@@ -189,7 +189,7 @@ MonoBehaviour:
         e31: 0
         e32: 0
         e33: 1
-      instColourTint: {x: 1, y: 1, z: 1, w: 1}
+      instColourTint: {x: 1, y: 1, z: 1, w: 0}
 --- !u!1 &8180920719214761154
 GameObject:
   m_ObjectHideFlags: 0
@@ -320,10 +320,6 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 6578349561275120063, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
-      propertyPath: m_Enabled
-      value: 0
-      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -408,22 +404,6 @@ PrefabInstance:
     - target: {fileID: 616839192262397321, guid: a0168356423e90f40a09a8586e4e00c4, type: 3}
       propertyPath: m_Name
       value: RoadTileLWithCorner
-      objectReference: {fileID: 0}
-    - target: {fileID: 4376725232526633733, guid: a0168356423e90f40a09a8586e4e00c4, type: 3}
-      propertyPath: m_Enabled
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6475403175479416888, guid: a0168356423e90f40a09a8586e4e00c4, type: 3}
-      propertyPath: m_Enabled
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6703239481862877598, guid: a0168356423e90f40a09a8586e4e00c4, type: 3}
-      propertyPath: m_Enabled
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8194497884945383551, guid: a0168356423e90f40a09a8586e4e00c4, type: 3}
-      propertyPath: m_Enabled
-      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -542,10 +522,6 @@ PrefabInstance:
     - target: {fileID: 2902643551049145214, guid: c3f0925194868a5478e507bcc2cc31ba, type: 3}
       propertyPath: m_Name
       value: HedgeBallGreen
-      objectReference: {fileID: 0}
-    - target: {fileID: 7303024313507133109, guid: c3f0925194868a5478e507bcc2cc31ba, type: 3}
-      propertyPath: m_Enabled
-      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7856360062436562299, guid: c3f0925194868a5478e507bcc2cc31ba, type: 3}
       propertyPath: m_Materials.Array.data[0]

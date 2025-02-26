@@ -141,14 +141,14 @@ MonoBehaviour:
     combinedMesh: {fileID: 6549383457765728042, guid: 84366f692ac68a74fa0b72a63c361aff, type: 3}
     SharedMaterial: {fileID: 2100000, guid: dd0321a8c4ece7449b2ffaadb9d0ab2f, type: 2}
     RenderParamsSerialized:
-    - layer: 0
+    - RefRenderer: {fileID: 1409503031744621660}
+      layer: 0
       renderingLayerMask: 1
       rendererPriority: 0
       receiveShadows: 1
       shadowCastingMode: 0
       reflectionProbeUsage: 1
       lightProbeUsage: 1
-      lightProbeProxyVolume: {fileID: 0}
       motionVectorMode: 1
 --- !u!23 &1409503031744621660 stripped
 MeshRenderer:

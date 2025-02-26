@@ -134,7 +134,7 @@ MonoBehaviour:
         e31: 0
         e32: 0
         e33: 1
-      instColourTint: {x: 1, y: 1, z: 1, w: 1}
+      instColourTint: {x: 1, y: 1, z: 1, w: 0}
   - Name: RoadSideDeadend
     LODGroup: {fileID: 7915308539768491210}
     InstancesBuffer:
@@ -155,7 +155,7 @@ MonoBehaviour:
         e31: 0
         e32: 0
         e33: 1
-      instColourTint: {x: 1, y: 1, z: 1, w: 1}
+      instColourTint: {x: 1, y: 1, z: 1, w: 0}
   - Name: RoadSideDecor01
     LODGroup: {fileID: 8178837599264306223}
     InstancesBuffer:
@@ -176,7 +176,7 @@ MonoBehaviour:
         e31: 0
         e32: 0
         e33: 1
-      instColourTint: {x: 1, y: 1, z: 1, w: 1}
+      instColourTint: {x: 1, y: 1, z: 1, w: 0}
     - instMatrix:
         e00: 0.00010508299
         e01: 0
@@ -194,7 +194,7 @@ MonoBehaviour:
         e31: 0
         e32: 0
         e33: 1
-      instColourTint: {x: 1, y: 1, z: 1, w: 1}
+      instColourTint: {x: 1, y: 1, z: 1, w: 0}
     - instMatrix:
         e00: -1
         e01: 0
@@ -212,7 +212,7 @@ MonoBehaviour:
         e31: 0
         e32: 0
         e33: 1
-      instColourTint: {x: 1, y: 1, z: 1, w: 1}
+      instColourTint: {x: 1, y: 1, z: 1, w: 0}
   - Name: HedgeCapsule
     LODGroup: {fileID: 7460542364601586085}
     InstancesBuffer:
@@ -233,7 +233,7 @@ MonoBehaviour:
         e31: 0
         e32: 0
         e33: 1
-      instColourTint: {x: 1, y: 1, z: 1, w: 1}
+      instColourTint: {x: 1, y: 1, z: 1, w: 0}
     - instMatrix:
         e00: 0.48215115
         e01: 0
@@ -251,7 +251,7 @@ MonoBehaviour:
         e31: 0
         e32: 0
         e33: 1
-      instColourTint: {x: 1, y: 1, z: 1, w: 1}
+      instColourTint: {x: 1, y: 1, z: 1, w: 0}
     - instMatrix:
         e00: 0.48215115
         e01: 0
@@ -269,7 +269,7 @@ MonoBehaviour:
         e31: 0
         e32: 0
         e33: 1
-      instColourTint: {x: 1, y: 1, z: 1, w: 1}
+      instColourTint: {x: 1, y: 1, z: 1, w: 0}
   - Name: Bench01
     LODGroup: {fileID: 1111203531400197074}
     InstancesBuffer:
@@ -290,7 +290,7 @@ MonoBehaviour:
         e31: 0
         e32: 0
         e33: 1
-      instColourTint: {x: 1, y: 1, z: 1, w: 1}
+      instColourTint: {x: 1, y: 1, z: 1, w: 0}
 --- !u!1001 &3641974035382158614
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -299,10 +299,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 5537537562552051092}
     m_Modifications:
-    - target: {fileID: 1294518469113949188, guid: c6052d331eb850c44834477dfd08fa76, type: 3}
-      propertyPath: m_Enabled
-      value: 0
-      objectReference: {fileID: 0}
     - target: {fileID: 2608075109790206969, guid: c6052d331eb850c44834477dfd08fa76, type: 3}
       propertyPath: m_Name
       value: RoadTileDeadend
@@ -345,18 +341,6 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3421168715568582979, guid: c6052d331eb850c44834477dfd08fa76, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6888887374550054594, guid: c6052d331eb850c44834477dfd08fa76, type: 3}
-      propertyPath: m_Enabled
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6961432972630878603, guid: c6052d331eb850c44834477dfd08fa76, type: 3}
-      propertyPath: m_Enabled
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 7654700448404462503, guid: c6052d331eb850c44834477dfd08fa76, type: 3}
-      propertyPath: m_Enabled
       value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
@@ -454,10 +438,6 @@ PrefabInstance:
       propertyPath: m_Name
       value: HedgeCapsule
       objectReference: {fileID: 0}
-    - target: {fileID: 7303024313507133109, guid: 38f0dfed4829b3544b04655173484af8, type: 3}
-      propertyPath: m_Enabled
-      value: 0
-      objectReference: {fileID: 0}
     - target: {fileID: 7856360062436562299, guid: 38f0dfed4829b3544b04655173484af8, type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 
@@ -535,10 +515,6 @@ PrefabInstance:
       propertyPath: m_Name
       value: HedgeCapsule (1)
       objectReference: {fileID: 0}
-    - target: {fileID: 7303024313507133109, guid: 38f0dfed4829b3544b04655173484af8, type: 3}
-      propertyPath: m_Enabled
-      value: 0
-      objectReference: {fileID: 0}
     - target: {fileID: 7856360062436562299, guid: 38f0dfed4829b3544b04655173484af8, type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 
@@ -603,10 +579,6 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2094422023557664462, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6578349561275120063, guid: 46f9a82953425f446a7c33ed3f2addda, type: 3}
-      propertyPath: m_Enabled
       value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
@@ -681,10 +653,6 @@ PrefabInstance:
     - target: {fileID: 2902643551049145214, guid: 38f0dfed4829b3544b04655173484af8, type: 3}
       propertyPath: m_Name
       value: HedgeCapsule (2)
-      objectReference: {fileID: 0}
-    - target: {fileID: 7303024313507133109, guid: 38f0dfed4829b3544b04655173484af8, type: 3}
-      propertyPath: m_Enabled
-      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7856360062436562299, guid: 38f0dfed4829b3544b04655173484af8, type: 3}
       propertyPath: m_Materials.Array.data[0]

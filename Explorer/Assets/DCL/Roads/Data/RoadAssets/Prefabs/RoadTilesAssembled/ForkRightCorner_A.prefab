@@ -109,91 +109,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 78b95809cfdb462baad63b4f7e8ea5dd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  IndirectCandidates:
-  - Name: RoadTileRightCornerStraight
-    LODGroup: {fileID: 3617992554820554555}
-    InstancesBuffer:
-    - instMatrix:
-        e00: 1
-        e01: 0
-        e02: 0
-        e03: 0
-        e10: 0
-        e11: 1
-        e12: 0
-        e13: 0
-        e20: 0
-        e21: 0
-        e22: 1
-        e23: 0
-        e30: 0
-        e31: 0
-        e32: 0
-        e33: 1
-      instColourTint: {x: 1, y: 1, z: 1, w: 1}
-  - Name: RoadSideStraight
-    LODGroup: {fileID: 8374667437615879406}
-    InstancesBuffer:
-    - instMatrix:
-        e00: 0.0000027418134
-        e01: 0
-        e02: -1
-        e03: 0
-        e10: 0
-        e11: 1
-        e12: 0
-        e13: 0
-        e20: 1
-        e21: 0
-        e22: 0.0000027418134
-        e23: 0
-        e30: 0
-        e31: 0
-        e32: 0
-        e33: 1
-      instColourTint: {x: 1, y: 1, z: 1, w: 1}
-  - Name: RoadSideDecor01
-    LODGroup: {fileID: 1448598302027637246}
-    InstancesBuffer:
-    - instMatrix:
-        e00: -1
-        e01: 0
-        e02: 0.000009715555
-        e03: 0
-        e10: 0
-        e11: 1
-        e12: 0
-        e13: 0
-        e20: -0.000009715555
-        e21: 0
-        e22: -1
-        e23: 0
-        e30: 0
-        e31: 0
-        e32: 0
-        e33: 1
-      instColourTint: {x: 1, y: 1, z: 1, w: 1}
-  - Name: RoadSideCornerSmall
-    LODGroup: {fileID: 3216650454040222574}
-    InstancesBuffer:
-    - instMatrix:
-        e00: -1
-        e01: 0
-        e02: 0.000064015374
-        e03: -8
-        e10: 0
-        e11: 1
-        e12: 0
-        e13: 0
-        e20: -0.000064015374
-        e21: 0
-        e22: -1
-        e23: 8
-        e30: 0
-        e31: 0
-        e32: 0
-        e33: 1
-      instColourTint: {x: 1, y: 1, z: 1, w: 1}
+  IndirectCandidates: []
 --- !u!1001 &3315065508708563288
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -275,52 +191,8 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 2b330de14a22e4e499b3d18d89278567, type: 3}
---- !u!114 &1448598302027637246 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 4186956767674914982, guid: 2b330de14a22e4e499b3d18d89278567, type: 3}
-  m_PrefabInstance: {fileID: 3315065508708563288}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: dc16ca85c1b34d6d949a26e57d69ab33, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
---- !u!114 &3216650454040222574 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 189903317849317942, guid: 2b330de14a22e4e499b3d18d89278567, type: 3}
-  m_PrefabInstance: {fileID: 3315065508708563288}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: dc16ca85c1b34d6d949a26e57d69ab33, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
---- !u!114 &3617992554820554555 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 2032473131384272483, guid: 2b330de14a22e4e499b3d18d89278567, type: 3}
-  m_PrefabInstance: {fileID: 3315065508708563288}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: dc16ca85c1b34d6d949a26e57d69ab33, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!4 &7238027066576656992 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 5364871002273604408, guid: 2b330de14a22e4e499b3d18d89278567, type: 3}
   m_PrefabInstance: {fileID: 3315065508708563288}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &8374667437615879406 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 6501422347249593782, guid: 2b330de14a22e4e499b3d18d89278567, type: 3}
-  m_PrefabInstance: {fileID: 3315065508708563288}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: dc16ca85c1b34d6d949a26e57d69ab33, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 

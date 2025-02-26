@@ -66,7 +66,7 @@ MonoBehaviour:
         e31: 0
         e32: 0
         e33: 1
-      instColourTint: {x: 1, y: 1, z: 1, w: 1}
+      instColourTint: {x: 1, y: 1, z: 1, w: 0}
   - Name: RoadSideCornerSmall
     LODGroup: {fileID: 6849968813040516302}
     InstancesBuffer:
@@ -87,7 +87,7 @@ MonoBehaviour:
         e31: 0
         e32: 0
         e33: 1
-      instColourTint: {x: 1, y: 1, z: 1, w: 1}
+      instColourTint: {x: 1, y: 1, z: 1, w: 0}
     - instMatrix:
         e00: -0.0066787004
         e01: 0
@@ -105,7 +105,7 @@ MonoBehaviour:
         e31: 0
         e32: 0
         e33: 1
-      instColourTint: {x: 1, y: 1, z: 1, w: 1}
+      instColourTint: {x: 1, y: 1, z: 1, w: 0}
   - Name: HedgeBallGreen
     LODGroup: {fileID: 5878502352688870470}
     InstancesBuffer:
@@ -126,7 +126,7 @@ MonoBehaviour:
         e31: 0
         e32: 0
         e33: 1
-      instColourTint: {x: 1, y: 1, z: 1, w: 1}
+      instColourTint: {x: 1, y: 1, z: 1, w: 0}
 --- !u!1 &4783921372560920980
 GameObject:
   m_ObjectHideFlags: 0
@@ -200,10 +200,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 607279141905300918}
     m_Modifications:
-    - target: {fileID: 125380523699007166, guid: 87388263d70179141800685d5c6a1906, type: 3}
-      propertyPath: m_Enabled
-      value: 0
-      objectReference: {fileID: 0}
     - target: {fileID: 5098803116772435749, guid: 87388263d70179141800685d5c6a1906, type: 3}
       propertyPath: m_LocalScale.x
       value: 0.0009999999
@@ -259,10 +255,6 @@ PrefabInstance:
     - target: {fileID: 5587074633515957663, guid: 87388263d70179141800685d5c6a1906, type: 3}
       propertyPath: m_Name
       value: RoadTile2Corners
-      objectReference: {fileID: 0}
-    - target: {fileID: 8520133663454753584, guid: 87388263d70179141800685d5c6a1906, type: 3}
-      propertyPath: m_Enabled
-      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -359,10 +351,6 @@ PrefabInstance:
     - target: {fileID: 2902643551049145214, guid: c3f0925194868a5478e507bcc2cc31ba, type: 3}
       propertyPath: m_Name
       value: HedgeBallGreen
-      objectReference: {fileID: 0}
-    - target: {fileID: 7303024313507133109, guid: c3f0925194868a5478e507bcc2cc31ba, type: 3}
-      propertyPath: m_Enabled
-      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

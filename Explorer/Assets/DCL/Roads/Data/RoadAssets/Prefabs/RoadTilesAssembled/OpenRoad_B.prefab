@@ -98,7 +98,7 @@ MonoBehaviour:
         e31: 0
         e32: 0
         e33: 1
-      instColourTint: {x: 1, y: 1, z: 1, w: 1}
+      instColourTint: {x: 1, y: 1, z: 1, w: 0}
   - Name: RoadSideStraight
     LODGroup: {fileID: 3662528169251428093}
     InstancesBuffer:
@@ -119,7 +119,7 @@ MonoBehaviour:
         e31: 0
         e32: 0
         e33: 1
-      instColourTint: {x: 1, y: 1, z: 1, w: 1}
+      instColourTint: {x: 1, y: 1, z: 1, w: 0}
   - Name: RoadSideDecor01
     LODGroup: {fileID: 5976652901196538861}
     InstancesBuffer:
@@ -140,7 +140,7 @@ MonoBehaviour:
         e31: 0
         e32: 0
         e33: 1
-      instColourTint: {x: 1, y: 1, z: 1, w: 1}
+      instColourTint: {x: 1, y: 1, z: 1, w: 0}
   - Name: HedgeMiddleLarge
     LODGroup: {fileID: 5493080353175256334}
     InstancesBuffer:
@@ -161,7 +161,7 @@ MonoBehaviour:
         e31: 0
         e32: 0
         e33: 1
-      instColourTint: {x: 1, y: 1, z: 1, w: 1}
+      instColourTint: {x: 1, y: 1, z: 1, w: 0}
 --- !u!1 &7577275457085050935
 GameObject:
   m_ObjectHideFlags: 0
@@ -203,10 +203,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 2300553666195517352}
     m_Modifications:
-    - target: {fileID: 1762870089203298562, guid: 42063baa639a06d47a07f4b219ee7f67, type: 3}
-      propertyPath: m_Enabled
-      value: 0
-      objectReference: {fileID: 0}
     - target: {fileID: 3006021722993469650, guid: 42063baa639a06d47a07f4b219ee7f67, type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 
@@ -308,14 +304,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 2300553666195517352}
     m_Modifications:
-    - target: {fileID: 1380931762282181176, guid: 6c3dd4f75102f2e42bb181b20c2705d0, type: 3}
-      propertyPath: m_Enabled
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1670565146334938724, guid: 6c3dd4f75102f2e42bb181b20c2705d0, type: 3}
-      propertyPath: m_Enabled
-      value: 0
-      objectReference: {fileID: 0}
     - target: {fileID: 4699516570873870722, guid: 6c3dd4f75102f2e42bb181b20c2705d0, type: 3}
       propertyPath: m_Name
       value: RoadTileOneStraight
