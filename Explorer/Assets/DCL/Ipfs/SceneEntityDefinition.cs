@@ -12,6 +12,6 @@ namespace DCL.Ipfs
         public SceneEntityDefinition(string id, SceneMetadata metadata) : base(id, metadata) { }
 
         public string GetLogSceneName() =>
-            logSceneName ??= $"{id} @ {metadata.scene?.DecodedBase}";
+            logSceneName ??= $"{metadata.scene?.DecodedBase} - {id}";
     }
 }

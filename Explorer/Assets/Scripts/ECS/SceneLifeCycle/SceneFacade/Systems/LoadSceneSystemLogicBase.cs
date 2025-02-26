@@ -26,11 +26,11 @@ namespace ECS.SceneLifeCycle.Systems
 
         public async UniTask<ISceneFacade> FlowAsync(ISceneFactory sceneFactory, GetSceneFacadeIntention intention, ReportData reportCategory, IPartitionComponent partition, CancellationToken ct)
         {
-            ReportHub.Log(ReportCategory.ALWAYS, $"Loading scene '{intention.DefinitionComponent.Definition.GetLogSceneName()}' began");
-
             var definitionComponent = intention.DefinitionComponent;
             var ipfsPath = definitionComponent.IpfsPath;
             var definition = definitionComponent.Definition;
+
+            ReportHub.Log(ReportCategory.ALWAYS, $"Loading scene '{definition?.GetLogSceneName()}' began");
 
             // Warning! Obscure Logic!
             // Each scene can override the content base url, so we need to check if the scene definition has a base url
@@ -61,7 +61,7 @@ namespace ECS.SceneLifeCycle.Systems
             await UniTask.SwitchToMainThread();
 
             sceneFacade.Initialize();
-            ReportHub.Log(ReportCategory.ALWAYS, $"Loading scene '{intention.DefinitionComponent.Definition.GetLogSceneName()}' ended");
+            ReportHub.Log(ReportCategory.ALWAYS, $"Loading scene '{sceneFacade.Info}' ended");
             return sceneFacade;
         }
 

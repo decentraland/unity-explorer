@@ -31,8 +31,6 @@ namespace ECS.SceneLifeCycle.Tests
         public void StartScene()
         {
             ISceneFacade scene = Substitute.For<ISceneFacade>();
-            ISceneFacade fakeScene = new ISceneFacade.FakeSceneFacade();
-            scene.SceneData.Returns(fakeScene.SceneData);
 
             // Create resolve promise
             var promise = AssetPromise<ISceneFacade, GetSceneFacadeIntention>.Create(world, new GetSceneFacadeIntention(), PartitionComponent.TOP_PRIORITY);
@@ -50,8 +48,6 @@ namespace ECS.SceneLifeCycle.Tests
         public async Task StartSceneWithCorrectFPS()
         {
             ISceneFacade scene = Substitute.For<ISceneFacade>();
-            ISceneFacade fakeScene = new ISceneFacade.FakeSceneFacade();
-            scene.SceneData.Returns(fakeScene.SceneData);
 
             // Create resolve promise
             var promise = AssetPromise<ISceneFacade, GetSceneFacadeIntention>.Create(world, new GetSceneFacadeIntention(), PartitionComponent.TOP_PRIORITY);
