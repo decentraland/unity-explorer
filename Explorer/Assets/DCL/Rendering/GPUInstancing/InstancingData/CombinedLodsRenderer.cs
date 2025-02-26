@@ -15,12 +15,15 @@ namespace DCL.Roads.GPUInstancing.Playground
         public Mesh CombinedMesh => combinedMesh ??= CreateCombinedMesh();
 
         public Material SharedMaterial;
+        public int SubMeshId;
 
         public List<RenderParamsSerialized> RenderParamsSerialized;
         public RenderParams[] RenderParamsArray { get; private set; }// array for submeshes
 
-        public CombinedLodsRenderer(Material material, Renderer rend)
+        public CombinedLodsRenderer(Material material, Renderer rend, int subMeshId)
         {
+            SubMeshId = subMeshId;
+
             СombineInstances = new List<CombineInstance>();
             RenderParamsSerialized = new List<RenderParamsSerialized>();
 
@@ -31,6 +34,8 @@ namespace DCL.Roads.GPUInstancing.Playground
 
         public CombinedLodsRenderer(Material material, Renderer rend, MeshFilter meshFilter)
         {
+            SubMeshId = 0;
+
             parent = rend.transform.parent;
             SharedMaterial = material;
             combinedMesh = meshFilter.sharedMesh;

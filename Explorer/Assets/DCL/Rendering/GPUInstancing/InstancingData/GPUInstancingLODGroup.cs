@@ -221,7 +221,7 @@ namespace DCL.Roads.GPUInstancing.Playground
                     (Material mat, Transform parent) key = (mat, rend.transform.parent);
 
                     if (!combineDict.ContainsKey(key))
-                        combineDict[key] = new CombinedLodsRenderer(mat, rend);
+                        combineDict[key] = new CombinedLodsRenderer(mat, rend, subMeshIndex);
 
                     // NOTE (Vit): it can add equal meshes, but how otherwise we can treat LOD inside compute shader?
                     combineDict[key].AddCombineInstance(ci, rend);

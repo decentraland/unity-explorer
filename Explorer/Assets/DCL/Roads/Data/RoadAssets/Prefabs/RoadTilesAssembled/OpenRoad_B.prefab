@@ -210,7 +210,7 @@ PrefabInstance:
     - target: {fileID: 3167230315515256952, guid: 42063baa639a06d47a07f4b219ee7f67, type: 3}
       propertyPath: CombinedLodsRenderers.Array.data[1].SharedMaterial
       value: 
-      objectReference: {fileID: 2100000, guid: a040b0cb96966f14989182b6e9a3e5fd, type: 2}
+      objectReference: {fileID: 2100000, guid: 5721e1ca88803ff48b9d8efefee458ca, type: 2}
     - target: {fileID: 3167230315515256952, guid: 42063baa639a06d47a07f4b219ee7f67, type: 3}
       propertyPath: CombinedLodsRenderers.Array.data[2].SharedMaterial
       value: 
@@ -319,7 +319,7 @@ PrefabInstance:
     - target: {fileID: 4186956767674914982, guid: 6c3dd4f75102f2e42bb181b20c2705d0, type: 3}
       propertyPath: CombinedLodsRenderers.Array.data[1].SharedMaterial
       value: 
-      objectReference: {fileID: 2100000, guid: 080ee30e4f4ff5c4fae19015bec5167c, type: 2}
+      objectReference: {fileID: 2100000, guid: fcd067b2a5f3ade45846eef4205a2cb8, type: 2}
     - target: {fileID: 4699516570873870722, guid: 6c3dd4f75102f2e42bb181b20c2705d0, type: 3}
       propertyPath: m_Name
       value: RoadTileOneStraight
