@@ -47,7 +47,7 @@ namespace ECS.SceneLifeCycle.Systems
         {
             sceneFacade.DisposeSceneFacadeAndRemoveFromCache(scenesCache, definitionComponent.Parcels);
 
-            ReportHub.Log(ReportCategory.ALWAYS, $"Scene '{definitionComponent.Definition?.GetLogSceneName()}' disposed");
+            ReportHub.LogProductionInfo($"Scene '{definitionComponent.Definition?.GetLogSceneName()}' disposed");
 
             // Keep definition so it won't be downloaded again = Cache in ECS itself
             if (!localSceneDevelopment)
