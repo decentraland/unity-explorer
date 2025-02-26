@@ -138,6 +138,9 @@ namespace Plugins.RustSegment.SegmentServerWrap
             }
         }
 
+        public static ulong UnflushedCount() =>
+            NativeMethods.SegmentServerUnFlushedBatchesCount();
+
         [MonoPInvokeCallback(typeof(NativeMethods.SegmentFfiCallback))]
         private static void Callback(ulong operationId, NativeMethods.Response response)
         {

@@ -60,6 +60,7 @@ namespace DCL.PluginSystem.Global
             MovementBadgesSystem.InjectToWorld(ref builder, analytics, realmData, arguments.PlayerEntity, identityCache, debugContainerBuilder, walkedDistanceAnalytics);
             AnalyticsEmotesSystem.InjectToWorld(ref builder, analytics, realmData, arguments.PlayerEntity);
             ScreencaptureAnalyticsSystem.InjectToWorld(ref builder, analytics, cameraReelStorageService);
+            DebugAnalyticsSystem.InjectToWorld(ref builder, debugContainerBuilder);
         }
 
         public void Dispose()
