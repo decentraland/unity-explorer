@@ -20,6 +20,7 @@ pub struct Context {
 pub struct SegmentServer {
     context: Arc<Mutex<Context>>,
     next_id: AtomicU64,
+    unflushed_count_cache: AtomicU64,
 }
 
 pub enum ServerState {
@@ -103,7 +104,7 @@ impl Server {
         }
     }
 
-    pub fn unflushed_batches_count(&self) -> usize {
+    pub fn unflushed_batches_count(&self) -> u64 {
         let state_lock = self.state.lock();
         if state_lock.is_err() {
             return 0;
@@ -113,10 +114,7 @@ impl Server {
 
         match &*state {
             ServerState::Disposed => 0,
-            ServerState::Ready(server) => {
-                let lock = server.context.blocking_lock();
-                lock.batcher.len()
-            }
+            ServerState::Ready(server) => server.unflushed_count_cache.load(Ordering::Relaxed),
         }
     }
 }
@@ -139,6 +137,7 @@ impl SegmentServer {
 
         Self {
             next_id: AtomicU64::new(1), //0 is invalid,
+            unflushed_count_cache: AtomicU64::new(0),
             context: Arc::new(Mutex::new(context)),
         }
     }
@@ -173,6 +172,7 @@ impl SegmentServer {
         let result = context.batcher.push(msg).await;
 
         let response_code = Self::result_as_response_code(result);
+        self.update_unflushed_count_cache(&context, &response_code);
         context.call_callback(id, response_code);
     }
 
@@ -183,6 +183,7 @@ impl SegmentServer {
         let result = context.batcher.flush().await;
 
         let response_code = Self::result_as_response_code(result);
+        instance.update_unflushed_count_cache(&context, &response_code);
         context.call_callback(id, response_code);
     }
 
@@ -209,6 +210,13 @@ impl SegmentServer {
                 segment::Error::DeserializeError(_) => Response::ErrorDeserialize,
                 segment::Error::NetworkError(_) => Response::ErrorNetwork,
             },
+        }
+    }
+
+    fn update_unflushed_count_cache(&self, context: &Context, response: &Response) {
+        if matches!(response, Response::Success) {
+            let len = context.batcher.len() as u64;
+            self.unflushed_count_cache.store(len, Ordering::Relaxed);
         }
     }
 }

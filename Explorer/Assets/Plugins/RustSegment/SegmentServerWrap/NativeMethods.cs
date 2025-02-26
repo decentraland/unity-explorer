@@ -46,7 +46,7 @@ namespace Plugins.RustSegment.SegmentServerWrap
         );
 
         [DllImport(LIBRARY_NAME, CallingConvention = CALLING_CONVENTION, CharSet = CHAR_SET, EntryPoint = "segment_server_unflushed_batches_count")]
-        internal static extern nuint SegmentServerUnFlushedBatchesCount();
+        internal static extern ulong SegmentServerUnFlushedBatchesCount();
 
         [DllImport(LIBRARY_NAME, CallingConvention = CALLING_CONVENTION, CharSet = CHAR_SET, EntryPoint = "segment_server_flush")]
         internal static extern ulong SegmentServerFlush();
