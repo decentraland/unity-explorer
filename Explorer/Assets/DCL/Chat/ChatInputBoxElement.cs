@@ -292,7 +292,12 @@ namespace DCL.Chat
 
         private void PasteClipboardText(object sender, string pastedText)
         {
-            inputField.InsertTextAtSelectedPosition(pastedText);
+            InsertTextAtCaretPosition(pastedText);
+        }
+
+        public void InsertTextAtCaretPosition(string text)
+        {
+            inputField.InsertTextAtCaretPosition(text);
             characterCounter.SetCharacterCount(inputField.text.Length);
         }
 
@@ -472,7 +477,7 @@ namespace DCL.Chat
             {
                 UIAudioEventsBus.Instance.SendPlayAudioEvent(addEmojiAudio);
                 if (!inputField.IsWithinCharacterLimit(emoji.Length)) return;
-                inputField.InsertTextAtSelectedPosition(emoji);
+                inputField.InsertTextAtCaretPosition(emoji);
             }
         }
     }

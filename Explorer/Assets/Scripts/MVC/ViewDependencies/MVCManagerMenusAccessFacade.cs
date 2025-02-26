@@ -1,5 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.ChangeRealmPrompt;
+using DCL.Chat.InputBus;
 using DCL.Clipboard;
 using DCL.ExternalUrlPrompt;
 using DCL.Friends;
@@ -13,7 +14,6 @@ using DCL.UI.GenericContextMenu;
 using DCL.UI.GenericContextMenu.Controls.Configs;
 using DCL.Utilities;
 using DCL.Web3;
-using JetBrains.Annotations;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -34,9 +34,9 @@ namespace MVC
 
         private readonly IMVCManager mvcManager;
         private readonly GenericContextMenu contextMenu;
-        private readonly IClipboardManager clipboardManager;
         private readonly ObjectProxy<IFriendsService> friendServiceProxy;
         private readonly IProfileCache profileCache;
+        private readonly IChatInputBus chatInputBus;
 
         private readonly UserProfileContextMenuControlSettings userProfileContextMenuControlSettings;
         private readonly MentionUserButtonContextMenuControlSettings mentionUserButtonContextMenuControlSettings;
@@ -44,16 +44,21 @@ namespace MVC
         private UniTaskCompletionSource closeContextMenuTask;
         private CancellationTokenSource cancellationTokenSource;
 
-        public MVCManagerMenusAccessFacade(IMVCManager mvcManager, ISystemClipboard systemClipboard, IClipboardManager clipboardManager, ObjectProxy<IFriendsService> friendServiceProxy, IProfileCache profileCache)
+        public MVCManagerMenusAccessFacade(
+            IMVCManager mvcManager,
+            ISystemClipboard systemClipboard,
+            ObjectProxy<IFriendsService> friendServiceProxy,
+            IProfileCache profileCache,
+            IChatInputBus chatInputBus)
         {
             this.mvcManager = mvcManager;
-            this.clipboardManager = clipboardManager;
             this.friendServiceProxy = friendServiceProxy;
             this.profileCache = profileCache;
+            this.chatInputBus = chatInputBus;
 
             userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings(systemClipboard, OnFriendsButtonClicked);
             openUserProfileButtonContextMenuControlSettings = new OpenUserProfileButtonContextMenuControlSettings(OnShowUserPassportClicked);
-            mentionUserButtonContextMenuControlSettings = new MentionUserButtonContextMenuControlSettings(OnPasteUserClicked);
+            mentionUserButtonContextMenuControlSettings = new MentionUserButtonContextMenuControlSettings(OnMentionUserClicked);
             contextMenu = new GenericContextMenu(CONTEXT_MENU_WIDTH, CONTEXT_MENU_OFFSET, CONTEXT_MENU_VERTICAL_LAYOUT_PADDING, CONTEXT_MENU_ELEMENTS_SPACING, anchorPoint: GenericContextMenuAnchorPoint.BOTTOM_LEFT)
                          .AddControl(userProfileContextMenuControlSettings)
                          .AddControl(new SeparatorContextMenuControlSettings(CONTEXT_MENU_SEPARATOR_HEIGHT, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.left, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.right))
@@ -79,7 +84,7 @@ namespace MVC
         public UniTask ShowPassport(string userId, CancellationToken ct) =>
             mvcManager.ShowAsync(PassportController.IssueCommand(new PassportController.Params(userId)), ct);
 
-        public async UniTask ShowUserProfileContextMenuAsync(Profile profile, Vector3 position, CancellationToken ct, Action onHide = null)
+        public async UniTask ShowUserProfileContextMenuAsync(Profile profile, Vector3 position, CancellationToken ct, Action onContextMenuHide = null)
         {
             closeContextMenuTask?.TrySetResult();
             closeContextMenuTask = new UniTaskCompletionSource();
@@ -96,7 +101,7 @@ namespace MVC
             openUserProfileButtonContextMenuControlSettings.SetData(profile);
 
             await mvcManager.ShowAsync(GenericContextMenuController.IssueCommand(
-                new GenericContextMenuParameter(contextMenu, position, actionOnHide:onHide, closeTask: closeContextMenuTask.Task)), ct);
+                new GenericContextMenuParameter(contextMenu, position, actionOnHide:onContextMenuHide, closeTask: closeContextMenuTask.Task)), ct);
         }
 
         private UserProfileContextMenuControlSettings.FriendshipStatus ConvertFriendshipStatus(FriendshipStatus friendshipStatus)
@@ -200,14 +205,13 @@ namespace MVC
             closeContextMenuTask.TrySetResult();
             ShowPassport(data.UserId, cancellationTokenSource.Token).Forget();
         }
-        private void OnPasteUserClicked(Profile data)
+
+        private void OnMentionUserClicked(Profile data)
         {
             closeContextMenuTask.TrySetResult();
             //Per design request we need to add an extra character after adding the mention to the chat.
-            clipboardManager.Copy(this, data.MentionName + " ");
-            clipboardManager.Paste(this);
+            chatInputBus.InsertText(data.MentionName + " ");
         }
-
 
         public async UniTask ShowUserProfileContextMenuFromWalletIdAsync(string walletId, Vector3 position, CancellationToken ct, Action onHide = null)
         {

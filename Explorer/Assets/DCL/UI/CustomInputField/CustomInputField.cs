@@ -86,7 +86,7 @@ namespace DCL.UI.CustomInputField
         public bool IsWithinCharacterLimit(int newTextLenght = 0) =>
             text.Length + newTextLenght < characterLimit;
 
-        public void InsertTextAtSelectedPosition(string newText)
+        public void InsertTextAtCaretPosition(string newText)
         {
             InsertTextAtPosition(newText, stringPosition);
             OnSelect(null);

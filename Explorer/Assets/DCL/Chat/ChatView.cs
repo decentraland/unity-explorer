@@ -415,6 +415,15 @@ namespace DCL.Chat
         }
 
         /// <summary>
+        /// Inserts the sent text at the caret position
+        /// </summary>
+        /// <param name="text"> the text to be inserted </param>
+        public void InsertTextInInputBox(string text)
+        {
+            chatInputBox.InsertTextAtCaretPosition(text);
+        }
+
+        /// <summary>
         /// Makes sure the chat window is showing all the messages stored in the data for the current channel.
         /// </summary>
         public void RefreshMessages()

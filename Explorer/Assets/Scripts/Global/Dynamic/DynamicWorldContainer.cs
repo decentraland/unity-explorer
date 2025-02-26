@@ -23,6 +23,7 @@ using DCL.FeatureFlags;
 using DCL.Friends;
 using DCL.Chat;
 using DCL.Chat.ChatLifecycleBus;
+using DCL.Chat.InputBus;
 using DCL.Friends.Passport;
 using DCL.Input;
 using DCL.InWorldCamera.CameraReelStorageService;
@@ -547,9 +548,10 @@ namespace Global.Dynamic
             var friendOnlineStatusCacheProxy = new ObjectProxy<IFriendsConnectivityStatusTracker>();
             IProfileThumbnailCache profileThumbnailCache = new ProfileThumbnailCache(staticContainer.WebRequestsContainer.WebRequestController);
             IChatLifecycleBusController chatLifecycleBusController = new ChatLifecycleBusController(mvcManager);
+            IChatInputBus chatInputBus = new ChatInputBus();
 
             ISidebarActionsBus sidebarActionsBus = new SidebarActionsBusController();
-            MVCManagerMenusAccessFacade menusAccessFacade = new MVCManagerMenusAccessFacade(mvcManager, clipboard, clipboardManager, friendServiceProxy, profileCache);
+            MVCManagerMenusAccessFacade menusAccessFacade = new MVCManagerMenusAccessFacade(mvcManager, clipboard, friendServiceProxy, profileCache, chatInputBus);
 
             var viewDependencies = new ViewDependencies(dclInput, unityEventSystem, menusAccessFacade, clipboardManager, dclCursor);
 
@@ -634,7 +636,8 @@ namespace Global.Dynamic
                     roomHub,
                     assetsProvisioner,
                     hyperlinkTextFormatter,
-                    profileCache),
+                    profileCache,
+                    chatInputBus),
                 new ExplorePanelPlugin(
                     assetsProvisioner,
                     mvcManager,

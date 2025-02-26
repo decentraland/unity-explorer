@@ -7,6 +7,7 @@ using DCL.Chat.Commands;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
 using DCL.Chat.ChatLifecycleBus;
+using DCL.Chat.InputBus;
 using DCL.Input;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Tables;
@@ -40,6 +41,7 @@ namespace DCL.PluginSystem.Global
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly ITextFormatter hyperlinkTextFormatter;
         private readonly IProfileCache profileCache;
+        private readonly IChatInputBus chatInputBus;
 
         private ChatController chatController;
 
@@ -59,7 +61,8 @@ namespace DCL.PluginSystem.Global
             IRoomHub roomHub,
             IAssetsProvisioner assetsProvisioner,
             ITextFormatter hyperlinkTextFormatter,
-            IProfileCache profileCache)
+            IProfileCache profileCache,
+            IChatInputBus chatInputBus)
         {
             this.mvcManager = mvcManager;
             this.chatHistory = chatHistory;
@@ -74,6 +77,7 @@ namespace DCL.PluginSystem.Global
             this.assetsProvisioner = assetsProvisioner;
             this.hyperlinkTextFormatter = hyperlinkTextFormatter;
             this.profileCache = profileCache;
+            this.chatInputBus = chatInputBus;
             this.mainUIView = mainUIView;
             this.inputBlock = inputBlock;
             this.chatLifecycleBusController = chatLifecycleBusController;
@@ -108,7 +112,8 @@ namespace DCL.PluginSystem.Global
                 roomHub,
                 chatSettingsAsset.Value,
                 hyperlinkTextFormatter,
-                profileCache
+                profileCache,
+                chatInputBus
             );
 
             mvcManager.RegisterController(chatController);
