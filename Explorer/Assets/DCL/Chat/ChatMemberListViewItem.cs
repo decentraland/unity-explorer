@@ -1,3 +1,4 @@
+using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -7,7 +8,7 @@ namespace DCL.Chat
 {
     public class ChatMemberListViewItem : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {
-        public delegate void ContextMenuButtonClickedDelegate(ChatMemberListViewItem listItem, Transform buttonPosition);
+        public delegate void ContextMenuButtonClickedDelegate(ChatMemberListViewItem listItem, Transform buttonPosition, Action OnMenuHide);
 
         /// <summary>
         ///
@@ -33,6 +34,8 @@ namespace DCL.Chat
         private Button contextMenuButton;
 
         public string Id { get; set; }
+
+        private bool isContextMenuOpen;
 
         public string Name
         {
@@ -72,7 +75,8 @@ namespace DCL.Chat
 
         public void OnPointerExit(PointerEventData eventData)
         {
-            contextMenuButton.gameObject.SetActive(false);
+            if (!isContextMenuOpen)
+                contextMenuButton.gameObject.SetActive(false);
         }
 
         private void Start()
@@ -82,7 +86,14 @@ namespace DCL.Chat
 
         private void OnContextMenuButtonClicked()
         {
-            ContextMenuButtonClicked?.Invoke(this, contextMenuButton.transform);
+            isContextMenuOpen = true;
+            ContextMenuButtonClicked?.Invoke(this, contextMenuButton.transform, OnContextMenuHide);
+        }
+
+        private void OnContextMenuHide()
+        {
+            isContextMenuOpen = false;
+            contextMenuButton.gameObject.SetActive(false);
         }
     }
 }
