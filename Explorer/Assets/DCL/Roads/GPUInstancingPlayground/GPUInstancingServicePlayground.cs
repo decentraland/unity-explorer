@@ -12,6 +12,7 @@ namespace DCL.Roads.GPUInstancing
     [ExecuteAlways]
     public class GPUInstancingServicePlayground : MonoBehaviour
     {
+#if UNITY_EDITOR
         public ComputeShader FrustumCullingAndLODGenComputeShader;
         public ComputeShader IndirectBufferGenerationComputeShader;
         public ComputeShader DrawArgsInstanceCountTransferComputeShader;
@@ -149,5 +150,7 @@ namespace DCL.Roads.GPUInstancing
             return roadCoordinate.x < ParcelsMin.x || roadCoordinate.x > ParcelsMax.x ||
                    roadCoordinate.y < ParcelsMin.y || roadCoordinate.y > ParcelsMax.y;
         }
+#endif
+
     }
 }
