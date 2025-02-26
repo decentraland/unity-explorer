@@ -54,7 +54,7 @@ namespace DCL.RealmNavigation
 
         public float SetCurrentStage(LoadingStage stage)
         {
-            ReportHub.Log(ReportCategory.ALWAYS, $"Current loading stage: {stage}");
+            ReportHub.LogProductionInfo($"Current loading stage: {stage}");
             CurrentStage.Value = stage;
             return PROGRESS[stage];
         }
