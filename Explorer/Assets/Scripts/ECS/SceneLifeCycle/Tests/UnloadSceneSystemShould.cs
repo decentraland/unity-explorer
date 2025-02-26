@@ -1,5 +1,4 @@
 ﻿using Arch.Core;
-using DCL.LOD;
 using ECS.LifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.SceneLifeCycle.Systems;
@@ -23,6 +22,9 @@ namespace ECS.SceneLifeCycle.Tests
         public void DisposeLoadedScene()
         {
             ISceneFacade scene = Substitute.For<ISceneFacade>();
+            ISceneFacade fakeScene = new ISceneFacade.FakeSceneFacade();
+            scene.SceneData.Returns(fakeScene.SceneData);
+
             Entity e = world.Create(scene, new DeleteEntityIntention(), new SceneDefinitionComponent());
 
             system.Update(0f);
