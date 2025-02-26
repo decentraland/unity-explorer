@@ -7,9 +7,7 @@ namespace DCL.UI.SuggestionPanel
     public class SuggestionPanelConfigurationSO : ScriptableObject
     {
         [Header("Panel Settings")]
-        [field: SerializeField] internal float minHeight = 50;
         [field: SerializeField] internal float padding = 16;
-        [field: SerializeField] internal float maxHeight = 340;
 
         [Header("Suggestion Elements")]
         [field: SerializeField] private List<BaseInputSuggestionElement> suggestionElements;

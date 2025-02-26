@@ -31,6 +31,10 @@ namespace DCL.UI.SuggestionPanel
         private int currentIndex;
         private BaseInputSuggestionElement lastSelectedInputSuggestion;
         private ViewDependencies viewDependencies;
+        private int firstVisibleSuggestionIndex;
+        private int lastVisibleSuggestionIndex;
+        private int visibleSuggestionsCount;
+        private bool needToScroll;
 
         public void InjectDependencies(ViewDependencies dependencies)
         {
@@ -75,21 +79,62 @@ namespace DCL.UI.SuggestionPanel
                 SetPanelVisibility(false);
         }
 
-        private void OnArrowUp(InputAction.CallbackContext obj)
+
+private void OnArrowDown(InputAction.CallbackContext obj)
+{
+    if (currentIndex < usedPoolItems.Count - 1)
+    {
+        int nextIndex = currentIndex + 1;
+        if (needToScroll && nextIndex > lastVisibleSuggestionIndex)
         {
-            if (currentIndex > 0)
-                SetSelection(currentIndex - 1);
-            else
-                SetSelection(usedPoolItems.Count - 1);
+            float targetPosition = 1f - ((float)(nextIndex + 1 - visibleSuggestionsCount) / (usedPoolItems.Count - visibleSuggestionsCount));
+            scrollViewComponent.verticalNormalizedPosition = Mathf.Clamp01(targetPosition);
+            firstVisibleSuggestionIndex = nextIndex - visibleSuggestionsCount + 1;
+            lastVisibleSuggestionIndex = nextIndex;
         }
 
-        private void OnArrowDown(InputAction.CallbackContext obj)
+        SetSelection(nextIndex);
+    }
+    else
+    {
+        if (needToScroll)
         {
-            if (currentIndex < usedPoolItems.Count - 1)
-                SetSelection(currentIndex + 1);
-            else
-                SetSelection(0);
+            scrollViewComponent.verticalNormalizedPosition = 1f;
+            firstVisibleSuggestionIndex = 0;
+            lastVisibleSuggestionIndex = Mathf.Min(visibleSuggestionsCount - 1, usedPoolItems.Count - 1);
         }
+
+        SetSelection(0);
+    }
+}
+
+private void OnArrowUp(InputAction.CallbackContext obj)
+{
+    if (currentIndex > 0)
+    {
+        int prevIndex = currentIndex - 1;
+        if (needToScroll && prevIndex < firstVisibleSuggestionIndex)
+        {
+            float targetPosition = 1f - ((float)prevIndex / (usedPoolItems.Count - visibleSuggestionsCount));
+            scrollViewComponent.verticalNormalizedPosition = Mathf.Clamp01(targetPosition);
+            firstVisibleSuggestionIndex = prevIndex;
+            lastVisibleSuggestionIndex = prevIndex + visibleSuggestionsCount - 1;
+        }
+        SetSelection(prevIndex);
+    }
+    else
+    {
+        int lastIndex = usedPoolItems.Count - 1;
+        if (needToScroll)
+        {
+            scrollViewComponent.verticalNormalizedPosition = 0f;
+            firstVisibleSuggestionIndex = Mathf.Max(0, lastIndex - visibleSuggestionsCount + 1);
+            lastVisibleSuggestionIndex = lastIndex;
+        }
+        SetSelection(lastIndex);
+    }
+}
+
 
         /// <summary>
         /// Processes the list of found suggestions and displays them on the panel
@@ -103,19 +148,24 @@ namespace DCL.UI.SuggestionPanel
 
             if (suggestionType == InputSuggestionType.NONE) return;
 
-            int maxSuggestions = suggestionDataPerType[suggestionType].MaxSuggestionAmount;
+            int maxVisibleSuggestions = suggestionDataPerType[suggestionType].MaxSuggestionAmount;
 
-            scrollViewComponent.vertical = foundSuggestions.Count > maxSuggestions;
+            scrollViewComponent.vertical = foundSuggestions.Count > maxVisibleSuggestions;
 
-            float scrollViewHeight = configurationSo.maxHeight;
+            float scrollViewHeight;
 
-            if (foundSuggestions.Count <= 1)
-                scrollViewHeight = configurationSo.minHeight;
-            else if (foundSuggestions.Count <= maxSuggestions)
+            if (foundSuggestions.Count <= maxVisibleSuggestions)
                 scrollViewHeight = (suggestionDataPerType[suggestionType].SuggestionElementHeight * foundSuggestions.Count) + configurationSo.padding;
-
+            else
+            {
+                needToScroll = true;
+                firstVisibleSuggestionIndex = 0;
+                visibleSuggestionsCount = maxVisibleSuggestions;
+                lastVisibleSuggestionIndex = maxVisibleSuggestions - 1;
+                scrollViewHeight = (suggestionDataPerType[suggestionType].SuggestionElementHeight * maxVisibleSuggestions) + configurationSo.padding;
+            }
             ScrollViewRect.sizeDelta = new Vector2(ScrollViewRect.sizeDelta.x, scrollViewHeight);
-
+            scrollViewComponent.verticalNormalizedPosition = 1;
             //if the suggestion type is different, we release all items from the pool,
             //otherwise, we only release the elements that are over the found suggestion amount.
             if (currentSuggestionType != InputSuggestionType.NONE)
@@ -182,6 +232,7 @@ namespace DCL.UI.SuggestionPanel
             }
             else
             {
+                needToScroll = false;
                 lastSelectedInputSuggestion?.SetSelectionState(false);
                 viewDependencies.DclInput.UI.ActionUp.performed -= OnArrowUp;
                 viewDependencies.DclInput.UI.ActionDown.performed -= OnArrowDown;
