@@ -23,7 +23,7 @@ namespace Plugins.RustSegment.SegmentServerWrap.Playground
             if (string.IsNullOrWhiteSpace(key))
                 throw new Exception("Segment Write Key is not set.");
 
-            service = new RustSegmentAnalyticsService(key);
+            service = new RustSegmentAnalyticsService(key, null);
         }
 
         [ContextMenu(nameof(Identify))]

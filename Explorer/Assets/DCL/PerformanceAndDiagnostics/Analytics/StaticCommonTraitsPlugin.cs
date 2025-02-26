@@ -63,7 +63,20 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
     public struct LauncherTraits
     {
-        public string LauncherAnonymousId;
-        public string SessionId;
+        public readonly string LauncherAnonymousId;
+        public readonly string SessionId;
+
+        private LauncherTraits(string launcherAnonymousId, string sessionId)
+        {
+            LauncherAnonymousId = launcherAnonymousId;
+            SessionId = sessionId;
+        }
+
+        public static LauncherTraits FromAppArgs(IAppArgs appArgs)
+        {
+            appArgs.TryGetValue(AppArgsFlags.Analytics.LAUNCHER_ID, out string? launcherAnonymousId);
+            appArgs.TryGetValue(AppArgsFlags.Analytics.SESSION_ID, out string? sessionId);
+            return new LauncherTraits(launcherAnonymousId!, sessionId!);
+        }
     }
 }
