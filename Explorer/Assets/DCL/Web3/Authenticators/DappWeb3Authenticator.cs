@@ -236,7 +236,7 @@ namespace DCL.Web3.Authenticators
                 string network = environment == DecentralandEnvironment.Org ? NETWORK_MAINNET : NETWORK_SEPOLIA;
                 await ConnectToRpcAsync(network, ct);
 
-                var response = await RequestEthMethodWithoutSignature(request, ct)
+                var response = await RequestEthMethodWithoutSignatureAsync(request, ct)
                    .Timeout(TimeSpan.FromSeconds(TIMEOUT_SECONDS));
 
                 if (rpcPendingOperations <= 1)
@@ -283,7 +283,7 @@ namespace DCL.Web3.Authenticators
             await rpcWebSocket.ConnectAsync(new Uri(urlBuilder.Build()), ct);
         }
 
-        private async UniTask<EthApiResponse> RequestEthMethodWithoutSignature(EthApiRequest request, CancellationToken ct)
+        private async UniTask<EthApiResponse> RequestEthMethodWithoutSignatureAsync(EthApiRequest request, CancellationToken ct)
         {
             string reqJson = JsonConvert.SerializeObject(request);
             byte[] bytes = System.Text.Encoding.UTF8.GetBytes(reqJson);
