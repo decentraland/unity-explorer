@@ -13,19 +13,22 @@ namespace ECS.StreamableLoading.Common.Components
 
         private MemoryOwner<byte> memoryOwner;
 
-        public PartialLoadingState(int fullFileSize)
+        public PartialLoadingState(int fullFileSize, bool isFileFullyDownloaded = false)
         {
             memoryOwner = MemoryOwner<byte>.Allocate(fullFileSize, FULL_FILE_POOL);
             NextRangeStart = 0;
             FullFileSize = fullFileSize;
+            IsFileFullyDownloaded = isFileFullyDownloaded;
         }
 
-        public PartialLoadingState(in PartialLoadingState otherInstance) : this(otherInstance.FullFileSize)
+        public PartialLoadingState(in PartialLoadingState otherInstance, bool isFileFullyDownloaded = false) : this(otherInstance.FullFileSize, isFileFullyDownloaded)
         {
             AppendData(otherInstance.FullData[..otherInstance.NextRangeStart]);
         }
 
         public int NextRangeStart { get; private set; }
+        
+        public bool IsFileFullyDownloaded;
         public readonly bool FullyDownloaded => NextRangeStart >= FullFileSize;
         public readonly ReadOnlyMemory<byte> FullData => memoryOwner.Memory;
 
@@ -33,6 +36,7 @@ namespace ECS.StreamableLoading.Common.Components
         {
             data.CopyTo(memoryOwner.Memory[NextRangeStart..]);
             NextRangeStart += data.Length;
+            IsFileFullyDownloaded = FullyDownloaded;
         }
 
         /// <summary>

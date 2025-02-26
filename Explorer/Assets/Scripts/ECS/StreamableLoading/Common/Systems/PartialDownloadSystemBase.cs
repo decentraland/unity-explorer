@@ -69,9 +69,8 @@ namespace ECS.StreamableLoading.Common.Systems
                     {
                         PartialLoadingState cachedState = cachedPartial.Value.Value;
                         state.SetChunkData(cachedState);
-
                         // If the cached data is complete, process it directly
-                        if (cachedState.FullyDownloaded)
+                        if (cachedState.IsFileFullyDownloaded)
                             return await ProcessCompletedDataAsync(state, intention, partition, ct);
                     }
                     else

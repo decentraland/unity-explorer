@@ -14,7 +14,7 @@ namespace ECS.StreamableLoading.Common
 
         private static SlicedOwnedMemory<byte> SerializeInternal(PartialLoadingState data)
         {
-            var meta = new Meta(data.FullFileSize);
+            var meta = new Meta(data.FullFileSize, data.IsFileFullyDownloaded);
             Span<byte> metaData = stackalloc byte[Meta.META_SIZE];
             meta.ToSpan(metaData);
 
@@ -33,34 +33,38 @@ namespace ECS.StreamableLoading.Common
             var meta = Meta.FromSpan(data.Memory.Span);
             var fileData = data.Memory.Slice(Meta.META_SIZE);
 
-            var partialLoadingState = new PartialLoadingState(meta.MaxFileSize);
+            var partialLoadingState = new PartialLoadingState(meta.MaxFileSize, meta.IsFullyDownloaded);
             partialLoadingState.AppendData(fileData);
             return UniTask.FromResult(partialLoadingState);
         }
 
         private readonly struct Meta
         {
-            public const int META_SIZE = 4;
+            public const int META_SIZE = 5;
             public readonly int MaxFileSize;
+            public readonly bool IsFullyDownloaded;
 
-            public Meta(int maxFileSize)
+            public Meta(int maxFileSize, bool isFullyDownloaded)
             {
                 this.MaxFileSize = maxFileSize;
+                this.IsFullyDownloaded = isFullyDownloaded;
             }
 
             public void ToSpan(Span<byte> span)
             {
-                for (int i = 0; i < 4; i++)
+                span[0] = (byte)(IsFullyDownloaded ? 1 : 0);
+                for (int i = 1; i < 5; i++)
                     span[i] = (byte)((MaxFileSize >> (i * 8)) & 0xFF);
             }
 
             public static Meta FromSpan(ReadOnlySpan<byte> array)
             {
                 var maxFileSize = 0;
-                for (var i = 0; i < 4; i++)
+                var isFullyDownloaded = array[0] == 1;
+                for (var i = 1; i < 5; i++)
                     maxFileSize |= array[i] << (i * 8);
 
-                return new Meta(maxFileSize);
+                return new Meta(maxFileSize, isFullyDownloaded);
             }
         }
     }
