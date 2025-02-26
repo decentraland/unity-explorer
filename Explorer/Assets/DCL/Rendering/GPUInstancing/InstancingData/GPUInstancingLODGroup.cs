@@ -3,7 +3,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using Object = UnityEngine.Object;
 
 namespace DCL.Roads.GPUInstancing.Playground
 {
@@ -17,7 +16,7 @@ namespace DCL.Roads.GPUInstancing.Playground
         public string Name;
         public LODGroup Reference;
         public Transform Transform;
-        public List<Renderer> RefRenderers = new ();
+        public List<Renderer> RefRenderers;
 
         [Header("LOD GROUP DATA")]
         public float ObjectSize;
@@ -55,7 +54,7 @@ namespace DCL.Roads.GPUInstancing.Playground
             var meshFilter = GetComponent<MeshFilter>();
             var combinedRenderer = new CombinedLodsRenderer(renderer.sharedMaterial,  renderer,  meshFilter);
             CombinedLodsRenderers = new List<CombinedLodsRenderer> { combinedRenderer };
-            RefRenderers.Add(renderer);
+            RefRenderers = new List<Renderer> { renderer };
 
             // Position at origin (but not scale!)
             transform.position = Vector3.zero;
@@ -180,6 +179,8 @@ namespace DCL.Roads.GPUInstancing.Playground
 
         private void CollectCombineInstances(LOD[] lods, Dictionary<(Material, Transform), CombinedLodsRenderer> combineDict)
         {
+            RefRenderers = new List<Renderer>();
+
             foreach (LOD lod in lods)
             foreach (Renderer rend  in lod.renderers)
             {
@@ -196,6 +197,7 @@ namespace DCL.Roads.GPUInstancing.Playground
                     Debug.LogWarning($"Renderer '{rend.name}' is missing a MeshFilter or its mesh.");
                     continue;
                 }
+
 
                 for (var subMeshIndex = 0; subMeshIndex < rend.sharedMaterials.Length; subMeshIndex++)
                 {
@@ -228,8 +230,6 @@ namespace DCL.Roads.GPUInstancing.Playground
                 }
             }
         }
-
-
 
         private void UpdateBoundsByCombinedLods()
         {
@@ -284,25 +284,25 @@ namespace DCL.Roads.GPUInstancing.Playground
             }
 
             // Check Combined Renderers
-            // if (CombinedLodsRenderers == null || other.CombinedLodsRenderers == null) return false;
-            // if (CombinedLodsRenderers.Count != other.CombinedLodsRenderers.Count) return false;
+            if (CombinedLodsRenderers == null || other.CombinedLodsRenderers == null) return false;
+            if (CombinedLodsRenderers.Count != other.CombinedLodsRenderers.Count) return false;
 
             // Compare essential properties of combined renderers
-            // for (int i = 0; i < CombinedLodsRenderers.Count; i++)
-            // {
-            //     var thisRenderer = CombinedLodsRenderers[i];
-            //     var otherRenderer = other.CombinedLodsRenderers[i];
-            //
-            //     // Check if meshes have the same vertex count and submesh count
-            //     if (thisRenderer.CombinedMesh.vertexCount != otherRenderer.CombinedMesh.vertexCount)
-            //         return false;
-            //     if (thisRenderer.CombinedMesh.subMeshCount != otherRenderer.CombinedMesh.subMeshCount)
-            //         return false;
-            //
-            //     // Compare materials
-            //     if (thisRenderer.SharedMaterial.shader != otherRenderer.SharedMaterial.shader)
-            //         return false;
-            // }
+            for (int i = 0; i < CombinedLodsRenderers.Count; i++)
+            {
+                var thisRenderer = CombinedLodsRenderers[i];
+                var otherRenderer = other.CombinedLodsRenderers[i];
+
+                // Check if meshes have the same vertex count and submesh count
+                if (thisRenderer.CombinedMesh.vertexCount != otherRenderer.CombinedMesh.vertexCount)
+                    return false;
+                if (thisRenderer.CombinedMesh.subMeshCount != otherRenderer.CombinedMesh.subMeshCount)
+                    return false;
+
+                // Compare materials
+                if (thisRenderer.SharedMaterial != otherRenderer.SharedMaterial)
+                    return false;
+            }
 
             return true;
         }

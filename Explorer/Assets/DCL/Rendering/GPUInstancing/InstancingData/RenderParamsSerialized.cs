@@ -10,6 +10,8 @@ namespace DCL.Roads.GPUInstancing.Playground
     {
         private const string GPU_INSTANCING_KEYWORD = "_GPU_INSTANCER_BATCHER";
 
+        public Renderer RefRenderer;
+
         // Layers
         public int layer;
         public uint renderingLayerMask;
@@ -28,6 +30,8 @@ namespace DCL.Roads.GPUInstancing.Playground
 
         public RenderParamsSerialized(Renderer rend)
         {
+            RefRenderer = rend;
+
             layer = rend.gameObject.layer;
             renderingLayerMask = rend.renderingLayerMask;
             rendererPriority = rend.rendererPriority;

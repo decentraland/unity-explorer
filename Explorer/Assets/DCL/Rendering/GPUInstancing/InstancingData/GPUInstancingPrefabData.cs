@@ -16,12 +16,20 @@ namespace DCL.Roads.GPUInstancing.Playground
 
             foreach (GPUInstancingLODGroup lodGroup in GetComponentsInChildren<GPUInstancingLODGroup>())
             {
+                AdjustMaterialChangeInPrefab(lodGroup);
+
                 Matrix4x4 localToRootMatrix = transform.worldToLocalMatrix * lodGroup.transform.localToWorldMatrix; // root * child
                 TryAddToCollected(lodGroup, localToRootMatrix);
             }
 
             foreach (KeyValuePair<GPUInstancingLODGroup,List<PerInstanceBuffer>> pair in candidatesTable)
                 IndirectCandidates.Add(new GPUInstancingLODGroupWithBuffer(pair.Key, pair.Value));
+        }
+
+        private static void AdjustMaterialChangeInPrefab(GPUInstancingLODGroup lodGroup)
+        {
+            foreach (var combinedRenderer in lodGroup.CombinedLodsRenderers)
+                combinedRenderer.SharedMaterial = combinedRenderer.RenderParamsSerialized[0].RefRenderer.sharedMaterial;
         }
 
         private void TryAddToCollected(GPUInstancingLODGroup newCandidate, Matrix4x4 localToRootMatrix)
