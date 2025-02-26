@@ -28,15 +28,17 @@ namespace CrdtEcsBridge.RestrictedActions
         private readonly Entity playerEntity;
         private readonly IEmotesMessageBus messageBus;
         private readonly bool localSceneDevelopment;
+        private readonly bool useRemoteAssetBundles;
 
         public bool LocalSceneDevelopment => localSceneDevelopment;
 
-        public GlobalWorldActions(World world, Entity playerEntity, IEmotesMessageBus messageBus, bool localSceneDevelopment)
+        public GlobalWorldActions(World world, Entity playerEntity, IEmotesMessageBus messageBus, bool localSceneDevelopment, bool useRemoteAssetBundles)
         {
             this.world = world;
             this.playerEntity = playerEntity;
             this.messageBus = messageBus;
             this.localSceneDevelopment = localSceneDevelopment;
+            this.useRemoteAssetBundles = useRemoteAssetBundles;
         }
 
         public void MoveAndRotatePlayer(Vector3 newPlayerPosition, Vector3? newCameraTarget)
@@ -98,7 +100,7 @@ namespace CrdtEcsBridge.RestrictedActions
 
         public async UniTask TriggerSceneEmoteAsync(ISceneData sceneData, string src, string hash, bool loop, CancellationToken ct)
         {
-            if (localSceneDevelopment)
+            if (localSceneDevelopment && !useRemoteAssetBundles)
                 await TriggerSceneEmoteFromLocalSceneAsync(sceneData,src,hash, loop, ct);
             else
                 await TriggerSceneEmoteFromAssetBundleAsync(

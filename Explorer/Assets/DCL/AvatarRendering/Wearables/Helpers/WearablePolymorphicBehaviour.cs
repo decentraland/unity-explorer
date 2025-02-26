@@ -25,6 +25,7 @@ using AssetBundleManifestPromise = ECS.StreamableLoading.Common.AssetPromise<Sce
 using RawGltfPromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.GLTF.GLTFData, ECS.StreamableLoading.GLTF.GetGLTFIntention>;
 using TexturePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.Texture2DData, ECS.StreamableLoading.Textures.GetTextureIntention>;
 using IAvatarAttachment = DCL.AvatarRendering.Loading.Components.IAvatarAttachment;
+using Object = UnityEngine.Object;
 
 namespace DCL.AvatarRendering.Wearables.Helpers
 {
@@ -322,21 +323,6 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             return new StreamableLoadingResult<AttachmentAssetBase>(new AttachmentTextureAsset(TextureUtilities.EnsureRGBA32Format(result.Asset!.Asset), result.Asset));
         }
 
-        /*public static AttachmentRegularAsset ToRegularAsset<T>(this StreamableLoadingResult<T> result) where T : IStreamableRefCountData
-        {
-            GameObject go = result.Asset!.containerGameObject;
-
-            // collect all renderers
-            List<AttachmentRegularAsset.RendererInfo> rendererInfos = AttachmentRegularAsset.RENDERER_INFO_POOL.Get();
-
-            using PoolExtensions.Scope<List<SkinnedMeshRenderer>> pooledList = go.GetComponentsInChildrenIntoPooledList<SkinnedMeshRenderer>();
-
-            foreach (SkinnedMeshRenderer skinnedMeshRenderer in pooledList.Value)
-                rendererInfos.Add(new AttachmentRegularAsset.RendererInfo(skinnedMeshRenderer, skinnedMeshRenderer.sharedMaterial));
-
-            return new AttachmentRegularAsset(go, rendererInfos, result.Asset);
-        }*/
-
         public static AttachmentRegularAsset ToRegularAsset(this StreamableLoadingResult<AssetBundleData> result)
         {
             GameObject go = result.Asset!.GetMainAsset<GameObject>();
@@ -349,7 +335,12 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             foreach (SkinnedMeshRenderer skinnedMeshRenderer in pooledList.Value)
                 rendererInfos.Add(new AttachmentRegularAsset.RendererInfo(skinnedMeshRenderer, skinnedMeshRenderer.sharedMaterial));
 
-            return new AttachmentRegularAsset(go, rendererInfos, result.Asset);
+            // Scene emotes come with only 1 animation
+            AnimationClip[]? animationClips = null;
+            if (go.TryGetComponent<Animation>(out var animation))
+                animationClips = new[] { animation.clip };
+
+            return new AttachmentRegularAsset(go, rendererInfos, result.Asset, animationClips);
         }
 
         public static AttachmentRegularAsset ToRegularAsset(this StreamableLoadingResult<GLTFData> result)

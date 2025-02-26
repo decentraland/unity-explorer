@@ -837,8 +837,8 @@ namespace Global.Dynamic
                 globalWorld,
                 staticContainer.SceneReadinessReportQueue,
                 localSceneDevelopment,
-                profileRepository
-            );
+                profileRepository,
+                bootstrapContainer.UseRemoteAssetBundles);
 
             staticContainer.RoomHubProxy.SetObject(roomHub);
 

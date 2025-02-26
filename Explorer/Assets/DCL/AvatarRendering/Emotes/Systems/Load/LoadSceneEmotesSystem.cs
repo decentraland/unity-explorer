@@ -46,7 +46,7 @@ namespace DCL.AvatarRendering.Emotes.Load
 
         [Query]
         [None(typeof(StreamableResult))]
-        private void GetEmotesFromRealm([Data] float dt, in Entity entity,
+        private void GetEmotesFromRealm([Data] float dt, Entity entity,
             ref GetSceneEmoteFromRealmIntention intention,
             ref IPartitionComponent partitionComponent)
         {
@@ -62,7 +62,7 @@ namespace DCL.AvatarRendering.Emotes.Load
 
         [Query]
         [None(typeof(StreamableResult))]
-        private void GetEmotesFromLocalScene([Data] float dt, in Entity entity,
+        private void GetEmotesFromLocalScene([Data] float dt, Entity entity,
             ref GetSceneEmoteFromLocalSceneIntention intention,
             ref IPartitionComponent partitionComponent)
         {
@@ -71,7 +71,7 @@ namespace DCL.AvatarRendering.Emotes.Load
 
         private void ProcessSceneEmoteIntention<T>(
             float dt,
-            in Entity entity,
+            Entity entity,
             ref T intention,
             ref IPartitionComponent partitionComponent
         ) where T : struct, IEmoteAssetIntention
@@ -128,7 +128,7 @@ namespace DCL.AvatarRendering.Emotes.Load
 
             if (emote.IsLoading) return;
 
-            if (CreatePromiseIfRequired(emote, intention, partitionComponent)) return;
+            if (CreatePromiseIfRequired(ref emote, intention, partitionComponent)) return;
 
             if (emote.AssetResults[intention.BodyShape] is { Succeeded: true })
             {
@@ -143,7 +143,7 @@ namespace DCL.AvatarRendering.Emotes.Load
             World.Add(entity, new StreamableResult(new EmotesResolution(RepoolableList<IEmote>.FromElement(emote), 1)));
         }
 
-        private bool CreatePromiseIfRequired<T>(IEmote emote, in T intention, IPartitionComponent partitionComponent)
+        private bool CreatePromiseIfRequired<T>(ref IEmote emote, in T intention, IPartitionComponent partitionComponent)
             where T : struct, IEmoteAssetIntention
         {
             if (emote.AssetResults[intention.BodyShape] != null) return false;

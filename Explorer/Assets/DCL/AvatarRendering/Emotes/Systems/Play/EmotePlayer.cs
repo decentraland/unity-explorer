@@ -44,7 +44,7 @@ namespace DCL.AvatarRendering.Emotes.Play
 
             if (!pools.ContainsKey(mainAsset))
             {
-                if (IsValid(mainAsset))
+                if (IsValid(mainAsset, animationClips))
                     pools.Add(mainAsset, new GameObjectPool<EmoteReferences>(poolRoot, () => CreateNewEmoteReference(mainAsset, animationClips), onRelease: releaseEmoteReferences));
                 else
                     return false;
@@ -78,7 +78,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             view.SetAnimatorTrigger(view.IsAnimatorInTag(AnimationHashes.EMOTE) || view.IsAnimatorInTag(AnimationHashes.EMOTE_LOOP) ? AnimationHashes.EMOTE_RESET : AnimationHashes.EMOTE);
             view.SetAnimatorBool(AnimationHashes.EMOTE_LOOP, emoteComponent.EmoteLoop);
 
-            if (emoteReferences.propClip != null)
+            if (emoteReferences.propClip != null && emoteReferences.animator != null)
             {
                 emoteReferences.animator.SetTrigger(emoteReferences.propClipHash);
                 emoteReferences.animator.SetBool(AnimationHashes.LOOP, emoteComponent.EmoteLoop);
@@ -101,21 +101,19 @@ namespace DCL.AvatarRendering.Emotes.Play
             return true;
         }
 
-        private static bool IsValid(GameObject mainAsset) =>
-            mainAsset.GetComponent<Animator>();
+        private static bool IsValid(GameObject mainAsset, IReadOnlyList<AnimationClip>? animationClips) =>
+            mainAsset.GetComponent<Animator>() || animationClips is { Count: > 0 };
 
         private static EmoteReferences CreateNewEmoteReference(GameObject mainAsset, IReadOnlyList<AnimationClip>? animationClips)
         {
-            GameObject mainGameObject = Object.Instantiate(mainAsset)!;
+            GameObject mainGameObject = Object.Instantiate(mainAsset);
 
-            Animator animator = mainGameObject.GetComponent<Animator>().EnsureNotNull();
-            EmoteReferences references = mainGameObject.AddComponent<EmoteReferences>()!;
-            IReadOnlyList<Renderer> renderers = mainGameObject.GetComponentsInChildren<Renderer>()!;
-            RuntimeAnimatorController runtimeAnimator = animator.runtimeAnimatorController!;
-            List<AnimationClip> uniqueClips = ListPool<AnimationClip>.Get()!;
+            Animator? animator = mainGameObject.GetComponent<Animator>();
+            EmoteReferences references = mainGameObject.AddComponent<EmoteReferences>();
+            IReadOnlyList<Renderer> renderers = mainGameObject.GetComponentsInChildren<Renderer>();
+            List<AnimationClip> uniqueClips = ListPool<AnimationClip>.Get()!; // TODO: This should be a hashset...
 
             ExtractClips(animationClips ?? animator.runtimeAnimatorController.animationClips,
-                // runtimeAnimator,
                 uniqueClips,
                 out AnimationClip? avatarClip, out AnimationClip? propClip, out int propClipHash);
 
@@ -153,7 +151,8 @@ namespace DCL.AvatarRendering.Emotes.Play
             ListPool<AnimationClip>.Release(uniqueClips);
 
             // some of our legacy emotes have unity events that we are not handling, so we disable that system to avoid further errors
-            animator.fireEvents = false;
+            if (animator != null)
+                animator.fireEvents = false;
 
             return references;
         }
@@ -168,7 +167,6 @@ namespace DCL.AvatarRendering.Emotes.Play
 
         private static void ExtractClips(
             IReadOnlyList<AnimationClip> animationClips,
-            // RuntimeAnimatorController runtimeAnimator,
             List<AnimationClip> uniqueClips,
             out AnimationClip? avatarClip,
             out AnimationClip? propClip,
@@ -178,7 +176,6 @@ namespace DCL.AvatarRendering.Emotes.Play
             propClip = null;
             propClipHash = 0;
 
-            // foreach (AnimationClip clip in runtimeAnimator.animationClips!)
             foreach (AnimationClip clip in animationClips)
                 if (!uniqueClips.Contains(clip))
                     uniqueClips.Add(clip);

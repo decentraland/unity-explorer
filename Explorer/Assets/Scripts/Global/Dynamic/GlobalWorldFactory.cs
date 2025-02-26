@@ -70,6 +70,7 @@ namespace Global.Dynamic
         private readonly HybridSceneParams hybridSceneParams;
         private readonly bool localSceneDevelopment;
         private readonly IProfileRepository profileRepository;
+        private readonly bool useRemoteAssetBundles;
 
         public GlobalWorldFactory(in StaticContainer staticContainer,
             CameraSamplingData cameraSamplingData, RealmSamplingData realmSamplingData,
@@ -82,7 +83,8 @@ namespace Global.Dynamic
             World world,
             ISceneReadinessReportQueue sceneReadinessReportQueue,
             bool localSceneDevelopment,
-            IProfileRepository profileRepository)
+            IProfileRepository profileRepository,
+            bool useRemoteAssetBundles)
         {
             partitionedWorldsAggregateFactory = staticContainer.SingletonSharedDependencies.AggregateFactory;
             componentPoolsRegistry = staticContainer.ComponentsContainer.ComponentPoolsRegistry;
@@ -107,6 +109,7 @@ namespace Global.Dynamic
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
             this.world = world;
             this.profileRepository = profileRepository;
+            this.useRemoteAssetBundles = useRemoteAssetBundles;
 
             memoryBudget = staticContainer.SingletonSharedDependencies.MemoryBudget;
             physicsTickProvider = staticContainer.PhysicsTickProvider;
@@ -200,7 +203,7 @@ namespace Global.Dynamic
 
             var globalWorld = new GlobalWorld(world, worldSystems, finalizeWorldSystems, cameraSamplingData, realmSamplingData, destroyCancellationSource);
 
-            sceneFactory.SetGlobalWorldActions(new GlobalWorldActions(globalWorld.EcsWorld, playerEntity, emotesMessageBus, localSceneDevelopment));
+            sceneFactory.SetGlobalWorldActions(new GlobalWorldActions(globalWorld.EcsWorld, playerEntity, emotesMessageBus, localSceneDevelopment, useRemoteAssetBundles));
 
             return globalWorld;
         }
