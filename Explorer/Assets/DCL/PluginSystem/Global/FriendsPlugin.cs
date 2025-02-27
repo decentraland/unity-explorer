@@ -194,10 +194,12 @@ namespace DCL.PluginSystem.Global
             mvcManager.RegisterController(friendsPanelController);
 
             var persistentFriendsOpenerController = new PersistentFriendPanelOpenerController(() => mainUIView.SidebarView.PersistentFriendsPanelOpener,
+                mvcManager,
                 notificationsBusController,
                 passportBridge,
                 injectableFriendService,
-                sharedSpaceManager);
+                sharedSpaceManager,
+                friendsPanelController);
 
             mvcManager.RegisterController(persistentFriendsOpenerController);
 
@@ -207,8 +209,6 @@ namespace DCL.PluginSystem.Global
                 FriendRequestController.CreateLazily(friendRequestPrefab, null),
                 web3IdentityCache, injectableFriendService, profileRepository,
                 inputBlock, profileThumbnailCache);
-
-            sharedSpaceManager.RegisterPanelController(PanelsSharingSpace.FriendRequest, friendRequestController);
 
             mvcManager.RegisterController(friendRequestController);
 

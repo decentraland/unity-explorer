@@ -1,23 +1,26 @@
 using Cysharp.Threading.Tasks;
 using DCL.StylizedSkybox.Scripts;
+using DCL.UI.SharedSpaceManager;
 using MVC;
 using System.Threading;
 using Utility;
 
 namespace DCL.UI.Skybox
 {
-    public class SkyboxMenuController : ControllerBase<SkyboxMenuView>
+    public class SkyboxMenuController : ControllerBase<SkyboxMenuView>, IPanelInSharedSpace
     {
         private const int SECONDS_IN_DAY = 86400;
 
         private readonly StylizedSkyboxSettingsAsset skyboxSettings;
+        private readonly ISharedSpaceManager sharedSpaceManager;
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
         private CancellationTokenSource skyboxMenuCts = new ();
 
-        public SkyboxMenuController(ViewFactoryMethod viewFactory, StylizedSkyboxSettingsAsset skyboxSettings) : base(viewFactory)
+        public SkyboxMenuController(ViewFactoryMethod viewFactory, StylizedSkyboxSettingsAsset skyboxSettings, ISharedSpaceManager sharedSpaceManager) : base(viewFactory)
         {
             this.skyboxSettings = skyboxSettings;
+            this.sharedSpaceManager = sharedSpaceManager;
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
@@ -86,7 +89,7 @@ namespace DCL.UI.Skybox
 
         private void OnClose()
         {
-            HideViewAsync(skyboxMenuCts.Token).Forget();
+            sharedSpaceManager.HideAsync(PanelsSharingSpace.Skybox).Forget();
         }
 
         public override void Dispose()
@@ -95,6 +98,18 @@ namespace DCL.UI.Skybox
             skyboxMenuCts.SafeCancelAndDispose();
             skyboxSettings.UseDynamicTimeChanged -= OnUseDynamicTimeChanged;
             skyboxSettings.NormalizedTimeChanged -= OnNormalizedTimeChanged;
+        }
+
+        public bool IsVisibleInSharedSpace => State != ControllerState.ViewHidden;
+
+        public async UniTask ShowInSharedSpaceAsync(CancellationToken ct, object parameters = null)
+        {
+            await LaunchViewLifeCycleAsync(new CanvasOrdering(CanvasOrdering.SortingLayer.Overlay, 0), new ControllerNoData(), ct);
+        }
+
+        public async UniTask HideInSharedSpaceAsync(CancellationToken ct)
+        {
+            await HideViewAsync(skyboxMenuCts.Token);
         }
     }
 }

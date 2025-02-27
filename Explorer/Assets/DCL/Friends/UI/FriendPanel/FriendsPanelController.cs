@@ -19,7 +19,7 @@ using Utility;
 
 namespace DCL.Friends.UI.FriendPanel
 {
-    public class FriendsPanelController : ControllerBase<FriendsPanelView, FriendsPanelParameter>
+    public class FriendsPanelController : ControllerBase<FriendsPanelView, FriendsPanelParameter>, IPanelInSharedSpace
     {
         public enum FriendsPanelTab
         {
@@ -192,7 +192,7 @@ namespace DCL.Friends.UI.FriendPanel
         }
 
         internal void CloseFriendsPanel(InputAction.CallbackContext obj) =>
-            sharedSpaceManager.HideAsync(PanelsSharingSpace.Friends, null);
+            closeTaskCompletionSource.TrySetResult();
 
         protected override void OnViewShow()
         {
@@ -248,7 +248,20 @@ namespace DCL.Friends.UI.FriendPanel
 
         protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
         {
-            await UniTask.Never(ct);
+            await UniTask.WhenAny(viewInstance!.CloseButton.OnClickAsync(ct), viewInstance!.BackgroundCloseButton.OnClickAsync(ct), closeTaskCompletionSource.Task);
+            await sharedSpaceManager.HideAsync(PanelsSharingSpace.Friends);
+        }
+
+        public bool IsVisibleInSharedSpace => State != ControllerState.ViewHidden;
+
+        public async UniTask ShowInSharedSpaceAsync(CancellationToken ct, object parameters = null)
+        {
+            await UniTask.CompletedTask;
+        }
+
+        public async UniTask HideInSharedSpaceAsync(CancellationToken ct)
+        {
+            await HideViewAsync(new CancellationToken());
         }
     }
 }

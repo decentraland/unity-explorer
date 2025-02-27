@@ -10,13 +10,15 @@ using DCL.WebRequests;
 using MVC;
 using System.Threading;
 using Utility;
+using DCL.UI.SharedSpaceManager;
 
 namespace DCL.UI.ProfileElements
 {
-    public class ProfileMenuController : ControllerBase<ProfileMenuView>
+    public class ProfileMenuController : ControllerBase<ProfileMenuView>, IPanelInSharedSpace
     {
         private readonly ProfileSectionController profileSectionController;
         private readonly SystemMenuController systemSectionController;
+        private readonly ISharedSpaceManager? sharedSpaceManager;
 
         private CancellationTokenSource profileMenuCts = new ();
 
@@ -31,11 +33,13 @@ namespace DCL.UI.ProfileElements
             IWeb3Authenticator web3Authenticator,
             IUserInAppInitializationFlow userInAppInitializationFlow,
             IProfileCache profileCache,
-            IMVCManager mvcManager
+            IMVCManager mvcManager,
+            ISharedSpaceManager? sharedSpaceManager
         ) : base(viewFactory)
         {
             profileSectionController = new ProfileSectionController(() => viewInstance!.ProfileMenu, identityCache, profileRepository, webRequestController);
             systemSectionController = new SystemMenuController(() => viewInstance!.SystemMenuView, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, identityCache, mvcManager);
+            this.sharedSpaceManager = sharedSpaceManager;
             systemSectionController.OnClosed += OnClose;
         }
 
@@ -67,7 +71,16 @@ namespace DCL.UI.ProfileElements
         {
             await systemSectionController.HideViewAsync(profileMenuCts.Token);
             await profileSectionController.HideViewAsync(profileMenuCts.Token);
-            await HideViewAsync(profileMenuCts.Token);
+
+            if (sharedSpaceManager == null)
+            {
+                await HideViewAsync(profileMenuCts.Token);
+            }
+            else
+            {
+                // When called by the sidebar
+                await sharedSpaceManager.HideAsync(PanelsSharingSpace.SidebarProfile);
+            }
         }
 
         public override void Dispose()
@@ -77,5 +90,13 @@ namespace DCL.UI.ProfileElements
             profileSectionController.Dispose();
             systemSectionController.Dispose();
         }
+
+        public bool IsVisibleInSharedSpace => State != ControllerState.ViewHidden;
+
+        public async UniTask ShowInSharedSpaceAsync(CancellationToken ct, object parameters = null) =>
+            await LaunchViewLifeCycleAsync(new CanvasOrdering(CanvasOrdering.SortingLayer.Overlay, 0), new ControllerNoData(), ct);
+
+        public async UniTask HideInSharedSpaceAsync(CancellationToken ct) =>
+            await HideViewAsync(ct);
     }
 }

@@ -14,6 +14,7 @@ namespace DCL.Friends.UI.FriendPanel
 {
     public class PersistentFriendPanelOpenerController : ControllerBase<PersistentFriendPanelOpenerView>
     {
+        private readonly IMVCManager mvcManager;
         private readonly IPassportBridge passportBridge;
         private readonly IFriendsService friendsService;
         private readonly ISharedSpaceManager sharedSpaceManager;
@@ -26,15 +27,19 @@ namespace DCL.Friends.UI.FriendPanel
         public event Action? FriendshipNotificationClicked;
 
         public PersistentFriendPanelOpenerController(ViewFactoryMethod viewFactory,
+            IMVCManager mvcManager,
             INotificationsBusController notificationsBusController,
             IPassportBridge passportBridge,
             IFriendsService friendsService,
-            ISharedSpaceManager sharedSpaceManager)
+            ISharedSpaceManager sharedSpaceManager,
+            FriendsPanelController friendsPanelController)
             : base(viewFactory)
         {
+            this.mvcManager = mvcManager;
             this.passportBridge = passportBridge;
             this.friendsService = friendsService;
             this.sharedSpaceManager = sharedSpaceManager;
+            this.friendsPanelController = friendsPanelController;
 
             notificationsBusController.SubscribeToNotificationTypeClick(NotificationType.SOCIAL_SERVICE_FRIENDSHIP_REQUEST, FriendRequestReceived);
             notificationsBusController.SubscribeToNotificationTypeClick(NotificationType.SOCIAL_SERVICE_FRIENDSHIP_ACCEPTED, FriendRequestAccepted);
@@ -83,7 +88,7 @@ namespace DCL.Friends.UI.FriendPanel
                             ToggleFriendsPanel();
                         break;
                     case FriendshipStatus.REQUEST_RECEIVED:
-                        sharedSpaceManager.ShowAsync(PanelsSharingSpace.FriendRequest, new FriendRequestParams
+                        mvcManager.ShowAsync(FriendRequestController.IssueCommand(new FriendRequestParams
                         {
                             Request = new FriendRequest(
                                 friendRequestId: notification.Metadata.RequestId,
@@ -91,7 +96,7 @@ namespace DCL.Friends.UI.FriendPanel
                                 from: notification.Metadata.Sender.ToFriendProfile(),
                                 to: notification.Metadata.Receiver.ToFriendProfile(),
                                 messageBody: notification.Metadata.Message)
-                        }).Forget();
+                        }), ct).Forget();
                         break;
                     default:
                         passportBridge.ShowAsync(new Web3Address(notification.Metadata.Sender.Address)).Forget();

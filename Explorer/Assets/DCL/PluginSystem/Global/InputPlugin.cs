@@ -11,6 +11,7 @@ using DCL.Input.Component;
 using DCL.Input.Crosshair;
 using DCL.Input.Systems;
 using DCL.Multiplayer.Emotes;
+using DCL.UI.SharedSpaceManager;
 using MVC;
 using System;
 using System.Threading;
@@ -45,6 +46,7 @@ namespace DCL.PluginSystem.Global
         private readonly UIDocument sceneUIDocument;
         private readonly UIDocument cursorUIDocument;
         private readonly IExposedCameraData cameraData;
+        private readonly ISharedSpaceManager sharedSpaceManager;
         private CrosshairCanvas crosshairCanvas = null!;
 
         public InputPlugin(
@@ -59,7 +61,8 @@ namespace DCL.PluginSystem.Global
             UIDocument rootUIDocument,
             UIDocument sceneUIDocument,
             UIDocument cursorUIDocument,
-            IExposedCameraData cameraData)
+            IExposedCameraData cameraData,
+            ISharedSpaceManager sharedSpaceManager)
         {
             this.dclInput = dclInput;
             this.cursor = cursor;
@@ -73,6 +76,7 @@ namespace DCL.PluginSystem.Global
             this.sceneUIDocument = sceneUIDocument;
             this.cursorUIDocument = cursorUIDocument;
             this.cameraData = cameraData;
+            this.sharedSpaceManager = sharedSpaceManager;
 
             dclInput.Enable();
         }
@@ -102,7 +106,7 @@ namespace DCL.PluginSystem.Global
             UpdateInputMovementSystem.InjectToWorld(ref builder, dclInput);
             UpdateCameraInputSystem.InjectToWorld(ref builder, dclInput);
             DropPlayerFromFreeCameraSystem.InjectToWorld(ref builder, dclInput.FreeCamera.DropPlayer);
-            UpdateEmoteInputSystem.InjectToWorld(ref builder, dclInput, messageBus, mvcManager);
+            UpdateEmoteInputSystem.InjectToWorld(ref builder, dclInput, messageBus, mvcManager, sharedSpaceManager);
             UpdateCursorInputSystem.InjectToWorld(ref builder, dclInput, eventSystem, cursor, crosshairCanvas, cameraData);
             UpdateShowHideUIInputSystem.InjectToWorld(ref builder, dclInput, mvcManager, debugContainerBuilder, rootUIDocument, sceneUIDocument, cursorUIDocument);
         }

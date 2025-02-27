@@ -10,6 +10,7 @@ using DCL.Input;
 using DCL.Multiplayer.Emotes;
 using DCL.Profiles;
 using DCL.SDKComponents.InputModifier.Components;
+using DCL.UI.SharedSpaceManager;
 using ECS.Abstract;
 using MVC;
 using System;
@@ -29,18 +30,20 @@ namespace DCL.AvatarRendering.Emotes
         private readonly IMVCManager mvcManager;
         private readonly DCLInput.ShortcutsActions shortcuts;
         private readonly DCLInput.EmotesActions emotesActions;
+        private readonly ISharedSpaceManager sharedSpaceManager;
 
         private int triggeredEmote = -1;
         private bool isWheelBlocked;
         private int framesAfterWheelWasClosed;
 
         private UpdateEmoteInputSystem(World world, DCLInput dclInput, IEmotesMessageBus messageBus,
-            IMVCManager mvcManager) : base(world)
+            IMVCManager mvcManager, ISharedSpaceManager sharedSpaceManager) : base(world)
         {
             shortcuts = dclInput.Shortcuts;
             emotesActions = dclInput.Emotes;
             this.messageBus = messageBus;
             this.mvcManager = mvcManager;
+            this.sharedSpaceManager = sharedSpaceManager;
 
             this.mvcManager.OnViewClosed += OnEmoteWheelClosed;
 
@@ -148,7 +151,8 @@ namespace DCL.AvatarRendering.Emotes
             $"Slot {i}";
 
         private void OpenEmoteWheel() =>
-            mvcManager.ShowAsync(EmotesWheelController.IssueCommand()).Forget();
+                sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.EmotesWheel).Forget();
+ //           mvcManager.ShowAsync(EmotesWheelController.IssueCommand()).Forget();
 
         private void OnEmoteWheelClosed(IController obj)
         {

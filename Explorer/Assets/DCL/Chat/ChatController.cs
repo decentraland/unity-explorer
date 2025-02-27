@@ -13,10 +13,12 @@ using DCL.Nametags;
 using DCL.Profiles;
 using DCL.Settings.Settings;
 using DCL.UI.InputFieldFormatting;
+using DCL.UI.SharedSpaceManager;
 using ECS.Abstract;
 using LiveKit.Proto;
 using LiveKit.Rooms;
 using MVC;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine.InputSystem;
@@ -25,9 +27,14 @@ using Utility.Arch;
 
 namespace DCL.Chat
 {
-    public class ChatController : ControllerBase<ChatView>
+    public class ChatController : ControllerBase<ChatView>, IPanelInSharedSpace
     {
         public delegate void ChatBubbleVisibilityChangedDelegate(bool isVisible);
+
+        /// <summary>
+        /// Raised when the UI is folded or unfolded.
+        /// </summary>
+        public event ChatView.FoldingChangedDelegate FoldingChanged;
 
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
         private readonly IChatMessagesBus chatMessagesBus;
@@ -215,6 +222,8 @@ namespace DCL.Chat
         {
             if (!isUnfolded)
                 MarkCurrentChannelAsRead();
+
+            FoldingChanged?.Invoke(isUnfolded);
         }
 
         private void OnChatHistoryReadMessagesChanged(ChatChannel changedChannel)
@@ -295,7 +304,7 @@ namespace DCL.Chat
         private bool canUpdateParticipants => islandRoom.Info.ConnectionState == ConnectionState.ConnConnected;
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
-            UniTask.Never(ct);
+            UniTask.CompletedTask;
 
         private void CreateChatBubble(ChatChannel channel, ChatMessage chatMessage, bool isSentByOwnUser)
         {
@@ -468,6 +477,20 @@ namespace DCL.Chat
                 if(profile != null)
                     outProfiles.Add(profile);
             }
+        }
+
+        public bool IsVisibleInSharedSpace => State != ControllerState.ViewHidden && viewInstance!.IsUnfolded;
+
+        public async UniTask ShowInSharedSpaceAsync(CancellationToken ct, object parameters = null)
+        {
+            IsUnfolded = true;
+            await UniTask.CompletedTask;
+        }
+
+        public async UniTask HideInSharedSpaceAsync(CancellationToken ct)
+        {
+            IsUnfolded = false;
+            await UniTask.CompletedTask;
         }
     }
 }

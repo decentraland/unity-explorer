@@ -5,6 +5,10 @@ namespace DCL.UI.SharedSpaceManager
     {
         Chat,
         Friends,
-        FriendRequest
+        Notifications,
+        Skybox,
+        EmotesWheel,
+        SidebarSettings,
+        SidebarProfile
     }
 }

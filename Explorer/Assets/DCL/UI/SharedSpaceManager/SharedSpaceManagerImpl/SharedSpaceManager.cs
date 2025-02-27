@@ -1,9 +1,10 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Chat;
+using DCL.EmotesWheel;
 using DCL.Friends.UI.FriendPanel;
-using DCL.Friends.UI.Requests;
 using MVC;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -13,13 +14,11 @@ namespace DCL.UI.SharedSpaceManager
 {
     public class SharedSpaceManager : ISharedSpaceManager, IDisposable
     {
-        private FriendsPanelController friendsController;
-        private ChatController chatController;
-        private FriendRequestController friendRequestController;
         private readonly IMVCManager mvcManager;
         private readonly DCLInput dclInput;
 
         private CancellationTokenSource cts = new ();
+        private Dictionary<PanelsSharingSpace, IPanelInSharedSpace> controllers = new ();
 
         public SharedSpaceManager(IMVCManager mvcManager,
                                   DCLInput dclInput)
@@ -39,38 +38,80 @@ namespace DCL.UI.SharedSpaceManager
                 return;
 
             cts = cts.SafeRestart();
+            await HideAllAsync();
 
+            IPanelInSharedSpace controllerInSharedSpace = controllers[panel];
+
+            // Each panel has a different situation and implementation, and has to be shown in a different way
             switch (panel)
             {
                 case PanelsSharingSpace.Chat:
                 {
-                    if (chatController.State == ControllerState.ViewHidden)
+                    if ((controllerInSharedSpace as IController).State == ControllerState.ViewHidden)
                     {
-                        await HideAllAsync();
                         await mvcManager.ShowAsync(ChatController.IssueCommand(), cts.Token);
                     }
-                    else
+
+                    if (!controllerInSharedSpace.IsVisibleInSharedSpace)
                     {
-                        chatController.IsUnfolded = true;
+                        await controllerInSharedSpace.ShowInSharedSpaceAsync(cts.Token);
                     }
+
                     break;
                 }
                 case PanelsSharingSpace.Friends:
                 {
-                    if (friendsController.State == ControllerState.ViewHidden)
+                    if (!controllerInSharedSpace.IsVisibleInSharedSpace)
                     {
-                        await HideAllAsync();
+                        await (controllers[PanelsSharingSpace.Chat] as IController).HideViewAsync(cts.Token);
                         await mvcManager.ShowAsync(FriendsPanelController.IssueCommand((FriendsPanelParameter)parameters), cts.Token);
                     }
+
                     break;
                 }
-                case PanelsSharingSpace.FriendRequest:
+                case PanelsSharingSpace.Notifications:
                 {
-                    if (friendRequestController.State == ControllerState.ViewHidden)
+                    if (!controllerInSharedSpace.IsVisibleInSharedSpace)
                     {
-                        await HideAllAsync();
-                        await mvcManager.ShowAsync(FriendRequestController.IssueCommand((FriendRequestParams)parameters), cts.Token);
+                        await controllerInSharedSpace.ShowInSharedSpaceAsync(cts.Token);
                     }
+
+                    break;
+                }
+                case PanelsSharingSpace.Skybox:
+                {
+                    if (!controllerInSharedSpace.IsVisibleInSharedSpace)
+                    {
+                        await controllerInSharedSpace.ShowInSharedSpaceAsync(cts.Token);
+                    }
+
+                    break;
+                }
+                case PanelsSharingSpace.EmotesWheel:
+                {
+                    if (!controllerInSharedSpace.IsVisibleInSharedSpace)
+                    {
+                        await mvcManager.ShowAsync(EmotesWheelController.IssueCommand(), cts.Token);
+                    }
+
+                    break;
+                }
+                case PanelsSharingSpace.SidebarProfile:
+                {
+                    if (!controllerInSharedSpace.IsVisibleInSharedSpace)
+                    {
+                        await controllerInSharedSpace.ShowInSharedSpaceAsync(cts.Token);
+                    }
+
+                    break;
+                }
+                case PanelsSharingSpace.SidebarSettings:
+                {
+                    if (!controllerInSharedSpace.IsVisibleInSharedSpace)
+                    {
+                        await controllerInSharedSpace.ShowInSharedSpaceAsync(cts.Token);
+                    }
+
                     break;
                 }
             }
@@ -85,22 +126,19 @@ namespace DCL.UI.SharedSpaceManager
 
             cts = cts.SafeRestart();
 
+            IPanelInSharedSpace controllerInSharedSpace = controllers[panel];
+
             switch (panel)
             {
-                case PanelsSharingSpace.Chat:
-                {
-                    chatController.IsUnfolded = !chatController.IsUnfolded;
-                    break;
-                }
                 case PanelsSharingSpace.Friends:
                 {
-                    await friendsController.HideViewAsync(cts.Token);
+                    await controllerInSharedSpace.HideInSharedSpaceAsync(cts.Token);
                     await mvcManager.ShowAsync(ChatController.IssueCommand());
                     break;
                 }
-                case PanelsSharingSpace.FriendRequest:
+                default:
                 {
-                    // TODO
+                    await controllerInSharedSpace.HideInSharedSpaceAsync(cts.Token);
                     break;
                 }
             }
@@ -113,26 +151,7 @@ namespace DCL.UI.SharedSpaceManager
             if (!IsRegistered(panel))
                 return;
 
-            bool show = false;
-
-            switch (panel)
-            {
-                case PanelsSharingSpace.Chat:
-                {
-                    show = chatController.State == ControllerState.ViewHidden;
-                    break;
-                }
-                case PanelsSharingSpace.Friends:
-                {
-                    show = friendsController.State == ControllerState.ViewHidden;
-                    break;
-                }
-                case PanelsSharingSpace.FriendRequest:
-                {
-                    show = chatController.State == ControllerState.ViewHidden;
-                    break;
-                }
-            }
+            bool show = !controllers[panel].IsVisibleInSharedSpace;
 
             if(show)
                 await ShowAsync(panel, parameters);
@@ -140,31 +159,20 @@ namespace DCL.UI.SharedSpaceManager
                 await HideAsync(panel, parameters);
         }
 
-        public void RegisterPanelController(PanelsSharingSpace panel, IController controller)
+        public void RegisterPanelController(PanelsSharingSpace panel, IPanelInSharedSpace controller)
         {
             Debug.Log("YEAH REGISTER: " + panel);
 
             if (IsRegistered(panel))
                 Debug.LogError($"The panel {panel} was already registered in the shared space manager!");
 
-            switch (panel)
+            if (panel == PanelsSharingSpace.Chat)
             {
-                case PanelsSharingSpace.Chat:
-                {
-                    chatController = controller as ChatController;
-                    break;
-                }
-                case PanelsSharingSpace.Friends:
-                {
-                    friendsController = controller as FriendsPanelController;
-                    break;
-                }
-                case PanelsSharingSpace.FriendRequest:
-                {
-                    friendRequestController = controller as FriendRequestController;
-                    break;
-                }
+                ChatController chatController = controller as ChatController;
+                chatController.FoldingChanged += OnChatControllerFoldingChanged;
             }
+
+            controllers.Add(panel, controller);
         }
 
         public void Dispose()
@@ -185,30 +193,35 @@ namespace DCL.UI.SharedSpaceManager
 
         private bool IsRegistered(PanelsSharingSpace panel)
         {
-            switch (panel)
-            {
-                case PanelsSharingSpace.Chat:
-                    return chatController != null;
-                case PanelsSharingSpace.Friends:
-                    return friendsController != null;
-                case PanelsSharingSpace.FriendRequest:
-                    return friendRequestController != null;
-            }
-
-            return false;
+            return controllers.ContainsKey(panel);
         }
 
-        private async UniTask HideAllAsync()
+        private async UniTask HideAllAsync(PanelsSharingSpace? panelToIgnore = null)
         {
-            if(friendsController.State != ControllerState.ViewHidden)
-                await friendsController.HideViewAsync(cts.Token);
+            foreach (KeyValuePair<PanelsSharingSpace,IPanelInSharedSpace> controllerInSharedSpace in controllers)
+                if((!panelToIgnore.HasValue || controllerInSharedSpace.Key != panelToIgnore) && controllerInSharedSpace.Value.IsVisibleInSharedSpace)
+                    await controllerInSharedSpace.Value.HideInSharedSpaceAsync(cts.Token);
+        }
+/*
+        private bool CheckAllPanelsAreHidden()
+        {
+            bool areHidden = true;
 
-            if(friendRequestController.State != ControllerState.ViewHidden)
-                await friendRequestController.HideViewAsync(cts.Token);
+            foreach (KeyValuePair<PanelsSharingSpace,IControllerInSharedSpace> controllerInSharedSpace in controllers)
+                if (controllerInSharedSpace.Value.IsVisibleInSharedSpace)
+                {
+                    areHidden = false;
+                    break;
+                }
 
-            if(chatController.State != ControllerState.ViewHidden)
-                await chatController.HideViewAsync(cts.Token);
 
+            return areHidden;
+        }
+*/
+        private void OnChatControllerFoldingChanged(bool isUnfolded)
+        {
+            if(controllers[PanelsSharingSpace.Chat].IsVisibleInSharedSpace)
+                HideAllAsync(PanelsSharingSpace.Chat).Forget();
         }
     }
 }

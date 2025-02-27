@@ -12,7 +12,9 @@ using DCL.Input.Component;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI;
+using DCL.UI.SharedSpaceManager;
 using MVC;
+using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -21,7 +23,7 @@ using Avatar = DCL.Profiles.Avatar;
 
 namespace DCL.EmotesWheel
 {
-    public class EmotesWheelController : ControllerBase<EmotesWheelView>
+    public class EmotesWheelController : ControllerBase<EmotesWheelView>, IPanelInSharedSpace
     {
         private const string? EMPTY_IMAGE_TYPE = "empty";
         private readonly ISelfProfile selfProfile;
@@ -39,8 +41,9 @@ namespace DCL.EmotesWheel
         private CancellationTokenSource? fetchProfileCts;
         private CancellationTokenSource? slotSetUpCts;
         private readonly DCLInput dclInput;
+        private readonly ISharedSpaceManager sharedSpaceManager;
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Overlay;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
 
         public EmotesWheelController(ViewFactoryMethod viewFactory,
             ISelfProfile selfProfile,
@@ -52,7 +55,8 @@ namespace DCL.EmotesWheel
             IInputBlock inputBlock,
             DCLInput dclInput,
             IMVCManager mvcManager,
-            ICursor cursor)
+            ICursor cursor,
+            ISharedSpaceManager sharedSpaceManager)
             : base(viewFactory)
         {
             this.selfProfile = selfProfile;
@@ -66,6 +70,7 @@ namespace DCL.EmotesWheel
             emoteWheelInput = this.dclInput.EmoteWheel;
             this.mvcManager = mvcManager;
             this.cursor = cursor;
+            this.sharedSpaceManager = sharedSpaceManager;
 
             emoteWheelInput.Customize.performed += OpenBackpack;
             emoteWheelInput.Close.performed += Close;
@@ -84,7 +89,7 @@ namespace DCL.EmotesWheel
 
         protected override void OnViewInstantiated()
         {
-            viewInstance!.OnClose += Close;
+            viewInstance!.Closed += Close;
             viewInstance.EditButton.onClick.AddListener(OpenBackpack);
             viewInstance.CurrentEmoteName.text = "";
 
@@ -120,8 +125,12 @@ namespace DCL.EmotesWheel
             }
         }
 
-        protected override void OnViewShow() =>
+        protected override void OnViewShow()
+        {
+//const int ONE_LESS_THAN_SIDEBAR = -21; // Otherwise it's not possible to click on sidebar buttons, the background blocks the raycast
+//viewInstance.SetDrawOrder(new CanvasOrdering(Layer, ONE_LESS_THAN_SIDEBAR));
             ListenToSlotsInput(this.dclInput.EmoteWheel);
+        }
 
         protected override void OnViewClose()
         {
@@ -141,6 +150,7 @@ namespace DCL.EmotesWheel
             UnblockShortcutToEmoteSlotsSetup();
 
             await closeViewTask.Task;
+            await sharedSpaceManager.HideAsync(PanelsSharingSpace.EmotesWheel);
         }
 
         private void SetUpSlots(Profile profile)
@@ -283,5 +293,17 @@ namespace DCL.EmotesWheel
 
         private static int GetSlotFromInputName(string name) =>
             int.Parse(name[^1].ToString());
+
+        public bool IsVisibleInSharedSpace => State != ControllerState.ViewHidden;
+
+        public async UniTask ShowInSharedSpaceAsync(CancellationToken ct, object parameters = null)
+        {
+            await UniTask.CompletedTask;
+        }
+
+        public async UniTask HideInSharedSpaceAsync(CancellationToken ct)
+        {
+            await HideViewAsync(ct);
+        }
     }
 }

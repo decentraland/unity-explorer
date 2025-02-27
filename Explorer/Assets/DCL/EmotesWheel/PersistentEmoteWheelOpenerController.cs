@@ -4,6 +4,7 @@ using System.Threading;
 
 namespace DCL.EmotesWheel
 {
+    // TODO: REMOVE
     public class PersistentEmoteWheelOpenerController : ControllerBase<PersistentEmoteWheelOpenerView>
     {
         private readonly IMVCManager mvcManager;
@@ -16,16 +17,16 @@ namespace DCL.EmotesWheel
         {
             this.mvcManager = mvcManager;
 
-            mvcManager.OnViewShowed += OnViewShowed;
-            mvcManager.OnViewClosed += OnViewClosed;
+ //           mvcManager.OnViewShowed += OnViewShowed;
+  //          mvcManager.OnViewClosed += OnViewClosed;
         }
 
         public override void Dispose()
         {
             base.Dispose();
 
-            mvcManager.OnViewShowed -= OnViewShowed;
-            mvcManager.OnViewClosed -= OnViewClosed;
+//            mvcManager.OnViewShowed -= OnViewShowed;
+ //           mvcManager.OnViewClosed -= OnViewClosed;
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
@@ -35,7 +36,7 @@ namespace DCL.EmotesWheel
         {
             base.OnViewInstantiated();
 
-            viewInstance.OpenEmoteWheelButton.onClick.AddListener(OpenEmoteWheel);
+ //           viewInstance.OpenEmoteWheelButton.onClick.AddListener(OpenEmoteWheel);
         }
 
         private void OpenEmoteWheel()
@@ -49,8 +50,8 @@ namespace DCL.EmotesWheel
             if (controller is not EmotesWheelController) return;
 
             // TODO: this should not be handled here. Instead it should be handled by a Toggle component in the view
-            viewInstance.EmotesDisabledContainer.SetActive(false);
-            viewInstance.EmotesEnabledContainer.SetActive(true);
+//            viewInstance.EmotesDisabledContainer.SetActive(false);
+//            viewInstance.EmotesEnabledContainer.SetActive(true);
         }
 
         private void OnViewClosed(IController controller)
@@ -58,8 +59,8 @@ namespace DCL.EmotesWheel
             if (controller is not EmotesWheelController) return;
 
             // TODO: this should not be handled here. Instead it should be handled by a Toggle component in the view
-            viewInstance.EmotesDisabledContainer.SetActive(true);
-            viewInstance.EmotesEnabledContainer.SetActive(false);
+//            viewInstance.EmotesDisabledContainer.SetActive(true);
+//            viewInstance.EmotesEnabledContainer.SetActive(false);
         }
     }
 }

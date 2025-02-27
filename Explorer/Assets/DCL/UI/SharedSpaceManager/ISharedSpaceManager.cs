@@ -1,13 +1,13 @@
 ﻿using Cysharp.Threading.Tasks;
-using MVC;
 
 namespace DCL.UI.SharedSpaceManager
 {
+    // TODO: Rename to ISharedUISpaceManager
     public interface ISharedSpaceManager
     {
-        UniTask ShowAsync(PanelsSharingSpace panel, object parameters);
-        UniTask HideAsync(PanelsSharingSpace panel, object parameters);
-        UniTask ToggleVisibilityAsync(PanelsSharingSpace panel, object parameters);
-        void RegisterPanelController(PanelsSharingSpace panel, IController controller);
+        UniTask ShowAsync(PanelsSharingSpace panel, object parameters = null);
+        UniTask HideAsync(PanelsSharingSpace panel, object parameters = null);
+        UniTask ToggleVisibilityAsync(PanelsSharingSpace panel, object parameters = null);
+        void RegisterPanelController(PanelsSharingSpace panel, IPanelInSharedSpace controller);
     }
 }

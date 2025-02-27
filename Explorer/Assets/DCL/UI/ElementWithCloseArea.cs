@@ -1,23 +1,41 @@
 ﻿using Cysharp.Threading.Tasks;
+using DCL.UI.SharedSpaceManager;
 using MVC;
+using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace DCL.UI
 {
-    public class ElementWithCloseArea : ViewBaseWithAnimationElement, IView
+    public class ElementWithCloseArea : ViewBaseWithAnimationElement, IView, IPanelInSharedSpace
     {
+        public event Action Closed;
+
         [field: SerializeField] internal Button closeAreaButton { get; private set; }
 
         private void Awake()
         {
-            closeAreaButton?.onClick.AddListener(CloseElement);
+            closeAreaButton.onClick.AddListener(OnCloseAreaButtonClicked);
         }
 
-        public void CloseElement()
+        private void OnCloseAreaButtonClicked()
         {
-            if (gameObject.activeSelf) { HideAsync(CancellationToken.None).Forget(); }
+            Closed?.Invoke();
+        }
+
+        public bool IsVisibleInSharedSpace => gameObject.activeSelf;
+
+        public async UniTask ShowInSharedSpaceAsync(CancellationToken ct, object parameters = null)
+        {
+            gameObject.SetActive(true);
+            await PlayShowAnimationAsync(ct);
+            await UniTask.CompletedTask;
+        }
+
+        public async UniTask HideInSharedSpaceAsync(CancellationToken ct)
+        {
+            await HideAsync(ct);
         }
     }
 }

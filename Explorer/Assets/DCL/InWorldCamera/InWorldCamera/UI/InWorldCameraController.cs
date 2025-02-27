@@ -9,6 +9,7 @@ using DCL.InWorldCamera.Playground;
 using DCL.UI;
 using ECS.Abstract;
 using MVC;
+using System;
 using System.Diagnostics;
 using System.Threading;
 using UnityEngine;
@@ -156,15 +157,22 @@ namespace DCL.InWorldCamera.UI
             if (toOpen)
             {
                 viewInstance?.ShortcutsInfoPanel.ShowAsync(CancellationToken.None).Forget();
+                viewInstance!.ShortcutsInfoPanel.Closed += OnShortcutsInfoPanelClosed;
                 viewInstance?.ShortcutsInfoButton.OnSelect(null);
                 shortcutPanelIsOpen = true;
             }
             else
             {
+                viewInstance!.ShortcutsInfoPanel.Closed -= OnShortcutsInfoPanelClosed;
                 viewInstance?.ShortcutsInfoPanel.HideAsync(CancellationToken.None).Forget();
                 viewInstance?.ShortcutsInfoButton.OnDeselect(null);
                 shortcutPanelIsOpen = false;
             }
+        }
+
+        private void OnShortcutsInfoPanelClosed()
+        {
+            ToggleShortcutsInfo(false);
         }
 
         private void OnScreenshotUploaded(CameraReelResponse _, CameraReelStorageStatus storage, string __) =>

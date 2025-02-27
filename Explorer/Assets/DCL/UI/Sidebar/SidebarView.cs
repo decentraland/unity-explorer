@@ -48,6 +48,8 @@ namespace DCL.UI.Sidebar
         [field: SerializeField] internal ElementWithCloseArea sidebarSettingsWidget { get; private set; }
         [field: SerializeField] internal Toggle autoHideToggle { get; private set; }
 
+        [field: Header("Emotes")]
+        [field: SerializeField] internal Button emotesWheelButton { get; private set; }
 
         [field: Header("Help")]
         [field: SerializeField] internal Button helpButton { get; private set; }

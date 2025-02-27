@@ -16,6 +16,7 @@ using DCL.Profiles.Self;
 using DCL.Web3.Identities;
 using DCL.ResourcesUnloading;
 using DCL.UI.MainUI;
+using DCL.UI.SharedSpaceManager;
 using DCL.WebRequests;
 using ECS;
 using ECS.StreamableLoading.AudioClips;
@@ -57,6 +58,7 @@ namespace DCL.PluginSystem.Global
         private readonly Entity playerEntity;
         private AudioSource? audioSourceReference;
         private EmotesWheelController? emotesWheelController;
+        private readonly ISharedSpaceManager sharedSpaceManager;
 
         public EmotePlugin(IWebRequestController webRequestController,
             IEmoteStorage emoteStorage,
@@ -76,7 +78,8 @@ namespace DCL.PluginSystem.Global
             IInputBlock inputBlock,
             Arch.Core.World world,
             Entity playerEntity,
-            string builderContentURL)
+            string builderContentURL,
+            ISharedSpaceManager sharedSpaceManager)
         {
             this.messageBus = messageBus;
             this.debugBuilder = debugBuilder;
@@ -96,6 +99,7 @@ namespace DCL.PluginSystem.Global
             this.world = world;
             this.playerEntity = playerEntity;
             this.inputBlock = inputBlock;
+            this.sharedSpaceManager = sharedSpaceManager;
 
             audioClipsCache = new AudioClipsCache();
             cacheCleaner.Register(audioClipsCache);
@@ -154,7 +158,9 @@ namespace DCL.PluginSystem.Global
 
             emotesWheelController = new EmotesWheelController(EmotesWheelController.CreateLazily(emotesWheelPrefab, null),
                 selfProfile, emoteStorage, emoteWheelRarityBackgrounds, world, playerEntity, thumbnailProvider,
-                inputBlock, dclInput, mvcManager, cursor);
+                inputBlock, dclInput, mvcManager, cursor, sharedSpaceManager);
+
+            sharedSpaceManager.RegisterPanelController(PanelsSharingSpace.EmotesWheel, emotesWheelController);
 
             mvcManager.RegisterController(emotesWheelController);
         }

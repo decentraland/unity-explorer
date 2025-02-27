@@ -84,6 +84,7 @@ MonoBehaviour:
   <sidebarSettingsButton>k__BackingField: {fileID: 1441228183698799381}
   <sidebarSettingsWidget>k__BackingField: {fileID: 2506691189012929090}
   <autoHideToggle>k__BackingField: {fileID: 6705180925666095888}
+  <emotesWheelButton>k__BackingField: {fileID: 2030530796887550123}
   <helpButton>k__BackingField: {fileID: 2978611201982790949}
   <controlsButton>k__BackingField: {fileID: 2642532882811586268}
   <unreadMessagesButton>k__BackingField: {fileID: 6088716717838591032}
@@ -102,7 +103,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 0, g: 0, b: 0, a: 0.8}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
@@ -1303,6 +1304,17 @@ MonoBehaviour:
 --- !u!114 &1734187727223042766 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 4039510815974631522, guid: 58646341e04d9404dbdad22f4c50cf14, type: 3}
+  m_PrefabInstance: {fileID: 2314334691772897964}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &2030530796887550123 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 4338037518215000583, guid: 58646341e04d9404dbdad22f4c50cf14, type: 3}
   m_PrefabInstance: {fileID: 2314334691772897964}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 0}
