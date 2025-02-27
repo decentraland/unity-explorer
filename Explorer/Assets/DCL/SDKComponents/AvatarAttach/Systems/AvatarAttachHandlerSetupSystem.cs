@@ -2,10 +2,13 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
+using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
+using DCL.Multiplayer.Connections.Typing;
 using DCL.SDKComponents.AvatarAttach.Components;
+using DCL.SDKComponents.Utils;
 using DCL.Utilities;
 using ECS.Abstract;
 using ECS.Groups;
@@ -21,11 +24,14 @@ namespace DCL.SDKComponents.AvatarAttach.Systems
     [LogCategory(ReportCategory.AVATAR_ATTACH)]
     public partial class AvatarAttachHandlerSetupSystem : BaseUnityLoopSystem
     {
+        private static readonly QueryDescription AVATAR_QUERY = new QueryDescription().WithAll<AvatarBase, AvatarShapeComponent>();
         private readonly ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy;
         private readonly ISceneStateProvider sceneStateProvider;
+        private readonly World globalWorld;
 
-        public AvatarAttachHandlerSetupSystem(World world, ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy, ISceneStateProvider sceneStateProvider) : base(world)
+        public AvatarAttachHandlerSetupSystem(World world, World globalWorld, ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy, ISceneStateProvider sceneStateProvider) : base(world)
         {
+            this.globalWorld = globalWorld;
             this.mainPlayerAvatarBaseProxy = mainPlayerAvatarBaseProxy;
             this.sceneStateProvider = sceneStateProvider;
         }
@@ -43,7 +49,10 @@ namespace DCL.SDKComponents.AvatarAttach.Systems
         {
             if (!sceneStateProvider.IsCurrent) return;
 
-            AvatarAttachComponent component = AvatarAttachUtils.GetAnchorPointTransform(pbAvatarAttach.AnchorPointId, mainPlayerAvatarBaseProxy.Object!);
+            LightResult<AvatarBase> result = FindAvatarUtils.AvatarWithID(globalWorld, pbAvatarAttach.AvatarId);
+            if (!result.Success) return;
+
+            AvatarAttachComponent component = AvatarAttachUtils.GetAnchorPointTransform(pbAvatarAttach.AnchorPointId, result.Result);
 
             AvatarAttachUtils.ApplyAnchorPointTransformValues(transformComponent, component);
             transformComponent.UpdateCache();
