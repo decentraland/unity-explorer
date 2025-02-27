@@ -116,7 +116,7 @@ namespace ECS.StreamableLoading.Cache.Disk
             if (endOfRead > data.Length)
                 endOfRead = data.Length;
 
-            var slice = data.Slice(offset, endOfRead);
+            var slice = data.Slice(offset, endOfRead - offset);
             slice.CopyTo(buffer.Span);
             return slice.Length;
         }
