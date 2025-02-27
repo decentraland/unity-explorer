@@ -1,5 +1,4 @@
 using CrdtEcsBridge.Components;
-using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.Rooms;
 using DCL.Multiplayer.Connections.Typing;
@@ -77,7 +76,7 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
             {
                 Packet packet = messageParser.ParseFrom(data).EnsureNotNull("Message is not parsed")!;
                 var name = packet.MessageCase;
-                NotifySubscribersAsync(name, packet, participant, cts.Token).Forget();
+                NotifySubscribers(name, packet, participant, cts.Token);
             }
             catch (Exception e)
             {
@@ -88,10 +87,8 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
             }
         }
 
-        private async UniTaskVoid NotifySubscribersAsync(Packet.MessageOneofCase name, Packet packet, Participant participant, CancellationToken ctsToken)
+        private void NotifySubscribers(Packet.MessageOneofCase name, Packet packet, Participant participant, CancellationToken ctsToken)
         {
-            await UniTask.SwitchToMainThread();
-
             try
             {
                 foreach (Action<(Packet, Participant)>? action in SubscribersList(name))

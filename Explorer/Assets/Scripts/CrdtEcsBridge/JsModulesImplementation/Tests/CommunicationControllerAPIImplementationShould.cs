@@ -41,13 +41,8 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
 
             engine = new V8ScriptEngine();
             var arrayCtor = (ScriptObject)engine.Global.GetProperty("Array");
-            var uint8ArrayCtor = (ScriptObject)engine.Global.GetProperty("Uint8Array");
 
             jsOperations = Substitute.For<IJsOperations>();
-
-            jsOperations.GetTempUint8Array().Returns(
-                x => uint8ArrayCtor.Invoke(true, IJsOperations.LIVEKIT_MAX_SIZE));
-
             jsOperations.NewArray().Returns(x => arrayCtor.Invoke(true));
 
             api = new CommunicationsControllerAPIImplementation(sceneData, sceneCommunicationPipe,
@@ -73,7 +68,6 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
             CollectionAssert.AreEqual(expectedCalls, sceneCommunicationPipe.sendMessageCalls);
 
             // Assert JSOperations called
-            jsOperations.Received(1).GetTempUint8Array();
             jsOperations.Received(1).NewArray();
         }
 
