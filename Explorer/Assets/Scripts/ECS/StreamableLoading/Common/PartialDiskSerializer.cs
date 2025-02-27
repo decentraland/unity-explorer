@@ -2,7 +2,6 @@ using Cysharp.Threading.Tasks;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Common.Components;
 using System;
-using System.Buffers;
 using System.Threading;
 
 namespace ECS.StreamableLoading.Common
@@ -15,17 +14,7 @@ namespace ECS.StreamableLoading.Common
         private static SerializeMemoryIterator<State> SerializeInternal(PartialLoadingState data)
         {
             var meta = new Meta(data.FullFileSize, data.IsFileFullyDownloaded);
-            Span<byte> metaData = stackalloc byte[Meta.META_SIZE];
-            meta.ToSpan(metaData);
-
             var state = new State(meta, data.FullData);
-
-            int targetSize = Meta.META_SIZE + data.NextRangeStart;
-            var memoryOwner = new SlicedOwnedMemory<byte>(MemoryPool<byte>.Shared.Rent(targetSize), targetSize);
-            var memory = memoryOwner.Memory;
-
-            metaData.CopyTo(memory.Span);
-            data.FullData.Span.Slice(0, data.NextRangeStart).CopyTo(memory.Slice(Meta.META_SIZE, data.NextRangeStart).Span);
 
             return SerializeMemoryIterator<State>.New(
                 state,
@@ -55,8 +44,6 @@ namespace ECS.StreamableLoading.Common
                     return SerializeMemoryIterator.CanReadNextData(index, source.FullData.Length, bufferLength);
                 }
             );
-
-            //return memoryOwner;
         }
 
         public UniTask<PartialLoadingState> DeserializeAsync(SlicedOwnedMemory<byte> data, CancellationToken token)
