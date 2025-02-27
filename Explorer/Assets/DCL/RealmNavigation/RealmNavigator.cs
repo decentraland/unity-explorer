@@ -119,7 +119,7 @@ namespace DCL.RealmNavigation
             CancellationToken ct
         )
         {
-            ReportHub.Log(ReportCategory.ALWAYS, $"Trying to teleport to {teleportParams.CurrentDestinationParcel}. Attempt #{attemptsCount}");
+            ReportHub.LogProductionInfo($"Trying to teleport to {teleportParams.CurrentDestinationParcel}. Attempt #{attemptsCount}");
             EnumResult<TaskError> lastOpResult = await ops.ExecuteAsync(logOpName, attemptsCount, teleportParams, ct);
 
             if (lastOpResult.Success == false)
