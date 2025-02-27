@@ -2,17 +2,17 @@ using Cysharp.Threading.Tasks;
 using ECS.StreamableLoading.Cache.Disk;
 using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using System;
-using System.Buffers;
 using System.Threading;
+using Unity.Collections;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using Object = UnityEngine.Object;
 
 namespace ECS.StreamableLoading.Textures
 {
-    public class TextureDiskSerializer : IDiskSerializer<Texture2DData, SerializeMemoryIterator<Texture2DData>>
+    public class TextureDiskSerializer : IDiskSerializer<Texture2DData, SerializeMemoryIterator<TextureDiskSerializer.State>>
     {
-        public SerializeMemoryIterator<Texture2DData> Serialize(Texture2DData data) =>
+        public SerializeMemoryIterator<State> Serialize(Texture2DData data) =>
             ToArray(data);
 
         public async UniTask<Texture2DData> DeserializeAsync(SlicedOwnedMemory<byte> data, CancellationToken token)
@@ -30,26 +30,52 @@ namespace ECS.StreamableLoading.Textures
             return new Texture2DData(new MemoryOwnedTexture2D(data, texture));
         }
 
-        private static SerializeMemoryIterator<Texture2DData> ToArray(Texture2DData data)
+        private static SerializeMemoryIterator<State> ToArray(Texture2DData data)
         {
             var textureData = data.Asset.GetRawTextureData<byte>()!;
 
             var meta = new Meta(data.Asset);
-            Span<byte> metaData = stackalloc byte[meta.ArrayLength];
-            meta.ToSpan(metaData);
+            State state = new State(meta, textureData);
 
-            int targetSize = metaData.Length + textureData.Length;
-            var memoryOwner = new SlicedOwnedMemory<byte>(MemoryPool<byte>.Shared!.Rent(targetSize)!, targetSize);
-            var memory = memoryOwner.Memory;
+            return SerializeMemoryIterator<State>.New(
+                state,
+                static (source, index, buffer) =>
+                {
+                    if (index == 0)
+                    {
+                        source.Meta.ToSpan(buffer.Span);
+                        return source.Meta.ArrayLength;
+                    }
 
-            metaData.CopyTo(memory.Span);
-            textureData.AsSpan().CopyTo(memory.Slice(metaData.Length).Span);
+                    // Address meta offset
+                    index -= 1;
 
-            return SerializeMemoryIterator<Texture2DData>.New(
-                data,
-                static (source, index, buffer) => { },
-                static (source, index) => { }
+                    var span = source.TextureData.AsSpan();
+                    return SerializeMemoryIterator.ReadNextData(index, span, buffer);
+                },
+                static (source, index, bufferLength) =>
+                {
+                    if (index == 0)
+                        return true;
+
+                    // Address meta offset
+                    index -= 1;
+
+                    return SerializeMemoryIterator.CanReadNextData(index, source.TextureData.Length, bufferLength);
+                }
             );
+        }
+
+        public struct State
+        {
+            public readonly Meta Meta;
+            public readonly NativeArray<byte> TextureData;
+
+            public State(Meta meta, NativeArray<byte> textureData)
+            {
+                Meta = meta;
+                TextureData = textureData;
+            }
         }
 
         [Serializable]
@@ -73,7 +99,7 @@ namespace ECS.StreamableLoading.Textures
             public int ArrayLength => 11;
 
             /// <param name="span">Span with size of ArrayLength</param>
-            public void ToSpan(Span<byte> span)
+            public readonly void ToSpan(Span<byte> span)
             {
                 span[0] = (byte)(width & 0xFF);
                 span[1] = (byte)((width >> 8) & 0xFF);

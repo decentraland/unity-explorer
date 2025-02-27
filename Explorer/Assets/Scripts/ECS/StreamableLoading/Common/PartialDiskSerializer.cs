@@ -7,18 +7,18 @@ using System.Threading;
 
 namespace ECS.StreamableLoading.Common
 {
-    public class PartialDiskSerializer : IDiskSerializer<PartialLoadingState, SerializeMemoryIterator<PartialLoadingState>>
+    public class PartialDiskSerializer : IDiskSerializer<PartialLoadingState, SerializeMemoryIterator<PartialDiskSerializer.State>>
     {
-        public struct State { }
-
-        public SerializeMemoryIterator<PartialLoadingState> Serialize(PartialLoadingState data) =>
+        public SerializeMemoryIterator<State> Serialize(PartialLoadingState data) =>
             SerializeInternal(data);
 
-        private static SerializeMemoryIterator<PartialLoadingState> SerializeInternal(PartialLoadingState data)
+        private static SerializeMemoryIterator<State> SerializeInternal(PartialLoadingState data)
         {
             var meta = new Meta(data.FullFileSize, data.IsFileFullyDownloaded);
             Span<byte> metaData = stackalloc byte[Meta.META_SIZE];
             meta.ToSpan(metaData);
+
+            var state = new State(meta, data.FullData);
 
             int targetSize = Meta.META_SIZE + data.NextRangeStart;
             var memoryOwner = new SlicedOwnedMemory<byte>(MemoryPool<byte>.Shared.Rent(targetSize), targetSize);
@@ -27,8 +27,36 @@ namespace ECS.StreamableLoading.Common
             metaData.CopyTo(memory.Span);
             data.FullData.Span.Slice(0, data.NextRangeStart).CopyTo(memory.Slice(Meta.META_SIZE, data.NextRangeStart).Span);
 
+            return SerializeMemoryIterator<State>.New(
+                state,
+                static (source, index, buffer) =>
+                {
+                    if (index == 0)
+                    {
+                        source.Meta.ToSpan(buffer.Span);
+                        return Meta.META_SIZE;
+                    }
+
+                    // Address meta offset
+                    index -= 1;
+
+                    var span = source.FullData.Span;
+                    return SerializeMemoryIterator.ReadNextData(index, span, buffer);
+
+                },
+                static (source, index, bufferLength) =>
+                {
+                    if (index == 0)
+                        return true;
+
+                    // Address meta offset
+                    index -= 1;
+
+                    return SerializeMemoryIterator.CanReadNextData(index, source.FullData.Length, bufferLength);
+                }
+            );
+
             //return memoryOwner;
-            throw new NotImplementedException();
         }
 
         public UniTask<PartialLoadingState> DeserializeAsync(SlicedOwnedMemory<byte> data, CancellationToken token)
@@ -41,7 +69,19 @@ namespace ECS.StreamableLoading.Common
             return UniTask.FromResult(partialLoadingState);
         }
 
-        private readonly struct Meta
+        public readonly struct State
+        {
+            public readonly Meta Meta;
+            public readonly ReadOnlyMemory<byte> FullData;
+
+            public State(Meta meta, ReadOnlyMemory<byte> fullData)
+            {
+                Meta = meta;
+                FullData = fullData;
+            }
+        }
+
+        public readonly struct Meta
         {
             public const int META_SIZE = 5;
             public readonly int MaxFileSize;

@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Optimization.Hashing;
+using DCL.Optimization.ThreadSafePool;
 using System;
 using System.Buffers;
 using System.Threading;
@@ -93,19 +94,43 @@ namespace ECS.StreamableLoading.Cache.Disk
         bool MoveNext();
     }
 
+    public static class SerializeMemoryIterator
+    {
+        public const int CHUNK_SIZE = 128 * 1024; //128 kb
+
+        public static readonly ThreadSafeObjectPool<byte[]> POOL = new (static () => new byte[CHUNK_SIZE]);
+
+        public static bool CanReadNextData(int index, int dataLength, int bufferLength)
+        {
+            int nextBufferStartRead = bufferLength * index;
+            return nextBufferStartRead < dataLength;
+        }
+
+        public static int ReadNextData(int index, ReadOnlySpan<byte> data, Memory<byte> buffer)
+        {
+            int offset = buffer.Length * index;
+            int length = buffer.Length;
+
+            // Clamp if buffer length exceeds remaining data length
+            if (offset + length >= data.Length)
+                length = data.Length - offset;
+
+            data.Slice(offset, length).CopyTo(buffer.Span);
+            return length;
+        }
+    }
+
     public struct SerializeMemoryIterator<T> : IMemoryIterator
     {
-        public const int MAX_CHUNK_SIZE = 512 * 1024; //512 kb
-
         /// <summary>
         /// Returns written byte count
         /// </summary>
         public delegate int FillBufferDelegate(T source, int currentIndex, Memory<byte> buffer);
 
-        public delegate bool CanMoveNextDelegate(T source, int currentIndex);
+        public delegate bool CanMoveNextDelegate(T source, int currentIndex, int bufferSize);
 
         private readonly T source;
-        private readonly SlicedOwnedMemory<byte> buffer;
+        private readonly byte[] buffer;
         private readonly FillBufferDelegate fillBufferDelegate;
         private readonly CanMoveNextDelegate canMoveNextDelegate;
 
@@ -120,9 +145,7 @@ namespace ECS.StreamableLoading.Cache.Disk
             this.fillBufferDelegate = fillBufferDelegate;
             this.canMoveNextDelegate = canMoveNextDelegate;
             index = -1;
-
-            // TODO better allocator
-            buffer = new SlicedOwnedMemory<byte>(dasdadj);
+            buffer = SerializeMemoryIterator.POOL.Get();
         }
 
         public static SerializeMemoryIterator<T> New(T source, FillBufferDelegate fillBufferDelegate, CanMoveNextDelegate canMoveNextFunc) =>
@@ -135,23 +158,22 @@ namespace ECS.StreamableLoading.Cache.Disk
                 if (index == -1)
                     return ReadOnlyMemory<byte>.Empty;
 
-                int writtenCount = fillBufferDelegate(source, index, buffer.Memory);
-                return buffer.Memory.Slice(0, writtenCount);
+                int writtenCount = fillBufferDelegate(source, index, buffer);
+                return buffer.AsMemory(0, writtenCount);
             }
         }
 
         public bool MoveNext()
         {
-            bool can = canMoveNextDelegate((source, index));
+            // index == -1 because it doesn't make a sense to put an uniteratable sequence
+            bool can = index == -1 || canMoveNextDelegate(source, index, buffer.Length);
             if (can) index++;
             return can;
         }
 
         public void Dispose()
         {
-            // TODO release managed resources here
-            buffer.Dispose();
-            throw new NotImplementedException();
+            SerializeMemoryIterator.POOL.Release(buffer);
         }
     }
 }
