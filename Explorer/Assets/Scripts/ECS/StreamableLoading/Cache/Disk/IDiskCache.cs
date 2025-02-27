@@ -109,14 +109,16 @@ namespace ECS.StreamableLoading.Cache.Disk
         public static int ReadNextData(int index, ReadOnlySpan<byte> data, Memory<byte> buffer)
         {
             int offset = buffer.Length * index;
-            int length = buffer.Length;
+            int lengthToRead = buffer.Length;
 
-            // Clamp if buffer length exceeds remaining data length
-            if (offset + length >= data.Length)
-                length = data.Length - offset;
+            int endOfRead = offset + lengthToRead;
 
-            data.Slice(offset, length).CopyTo(buffer.Span);
-            return length;
+            if (endOfRead > data.Length)
+                endOfRead = data.Length;
+
+            var slice = data.Slice(offset, endOfRead);
+            slice.CopyTo(buffer.Span);
+            return slice.Length;
         }
     }
 
@@ -166,9 +168,14 @@ namespace ECS.StreamableLoading.Cache.Disk
         public bool MoveNext()
         {
             // index == -1 because it doesn't make a sense to put an uniteratable sequence
-            bool can = index == -1 || canMoveNextDelegate(source, index, buffer.Length);
-            if (can) index++;
-            return can;
+            if (index == -1)
+            {
+                index++;
+                return true;
+            }
+
+            index++;
+            return canMoveNextDelegate(source, index, buffer.Length);
         }
 
         public void Dispose()
