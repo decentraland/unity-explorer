@@ -1,19 +1,19 @@
 ﻿using MVC;
 using UnityEngine;
 using UnityEngine.UI;
+using IView = MVC.IView;
 
 namespace DCL.UI.ProfileElements
 {
-    public class ProfileThumbnailView : ViewBase, IView
+    public class ProfileThumbnailView : SimpleView<Color>
     {
-        [field: SerializeField] public Image ThumbnailBackground { get; private set; }
         [field: SerializeField] public ImageView ThumbnailImageView { get; private set; }
-        [field: SerializeField] private Sprite defaultEmptyThumbnail;
+        [SerializeField] private Image thumbnailBackground;
+        [SerializeField] private Sprite defaultEmptyThumbnail;
 
-        public void Setup(Sprite userThumbnail, Color userColor)
+        protected override void Setup(Color userColor)
         {
-            ThumbnailImageView.SetImage(userThumbnail ?? defaultEmptyThumbnail);
-            ThumbnailBackground.color = userColor;
+            thumbnailBackground.color = userColor;
         }
     }
 }

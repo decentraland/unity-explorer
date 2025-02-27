@@ -1,68 +1,56 @@
-﻿using Cysharp.Threading.Tasks;
+﻿using CommunicationData.URLHelpers;
+using Cysharp.Threading.Tasks;
 using DCL.Profiles;
-using DCL.Web3.Identities;
-using DCL.WebRequests;
+using DCL.UI.Profiles;
+using DCL.Web3;
 using MVC;
 using System.Threading;
-using Utility;
+using UnityEngine;
 
 namespace DCL.UI.ProfileElements
 {
-    public class ProfileThumbnailController : ControllerBase<ProfileThumbnailView>
+    public readonly struct ProfileThumbnailData
     {
-        private readonly IWeb3IdentityCache identityCache;
-        private readonly IProfileRepository profileRepository;
-        private readonly IWebRequestController webRequestController;
+        public readonly Color Color;
+        public readonly URLAddress FaceSnapshotUrl;
+        public readonly Web3Address UserAddress;
+        public ProfileThumbnailData(URLAddress faceSnapshotUrl, Color color, Web3Address userAddress)
+        {
+            FaceSnapshotUrl = faceSnapshotUrl;
+            Color = color;
+            UserAddress = userAddress;
+        }
+    }
 
-        private ImageController profileImageController;
-        private CancellationTokenSource cts;
+    public class ProfileThumbnailController : SimpleController <ProfileThumbnailView, ProfileThumbnailData, Color>
+    {
+        private readonly IProfileThumbnailCache profileThumbnailCache;
+
 
         public ProfileThumbnailController(
-            ViewFactoryMethod viewFactory,
-            IWeb3IdentityCache identityCache,
-            IProfileRepository profileRepository,
-            IWebRequestController webRequestController
-        ) : base(viewFactory)
+            ProfileThumbnailView view,
+            ProfileThumbnailData data,
+            IProfileThumbnailCache profileThumbnailCache) : base(view, data)
         {
-            this.identityCache = identityCache;
-            this.profileRepository = profileRepository;
-            this.webRequestController = webRequestController;
+            this.profileThumbnailCache = profileThumbnailCache;
         }
 
-        protected override void OnViewInstantiated()
+        protected override Color ProcessData(ProfileThumbnailData data) =>
+            inputData.Color;
+
+        public override void UpdateView()
         {
-            base.OnViewInstantiated();
+            base.UpdateView();
+            UpdateThumbnailAsync().Forget();
         }
 
-        protected override void OnBeforeViewShow()
+        private async UniTaskVoid UpdateThumbnailAsync()
         {
-            base.OnBeforeViewShow();
-            cts = cts.SafeRestart();
-            SetupAsync(cts.Token).Forget();
+            await viewInstance.ThumbnailImageView.LoadThumbnailSafeAsync(profileThumbnailCache, inputData.UserAddress, inputData.FaceSnapshotUrl, new CancellationToken() );
         }
 
-        private async UniTaskVoid SetupAsync(CancellationToken ct)
+        public override void Dispose()
         {
-            Profile? profile = await profileRepository.GetAsync(identityCache.Identity!.Address, ct);
-
-            if (profile == null) return;
-
-            profileImageController!.StopLoading();
-
-            //temporarily disabled the profile image request until we have the correct
-            //picture deployment
-            //await profileImageController!.RequestImageAsync(profile.Avatar.FaceSnapshotUrl, ct);
-        }
-
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
-
-        protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
-            UniTask.Never(ct);
-
-        public new void Dispose()
-        {
-            cts.SafeCancelAndDispose();
-            profileImageController.StopLoading();
         }
     }
 }

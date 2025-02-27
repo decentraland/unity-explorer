@@ -35,7 +35,6 @@ namespace DCL.UI.ProfileElements
         protected override void OnViewInstantiated()
         {
             base.OnViewInstantiated();
-
             profileImageController = new ImageController(viewInstance.FaceSnapshotImage, webRequestController);
         }
 
