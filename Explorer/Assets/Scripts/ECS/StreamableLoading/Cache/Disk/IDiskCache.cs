@@ -176,4 +176,34 @@ namespace ECS.StreamableLoading.Cache.Disk
             SerializeMemoryIterator.POOL.Release(buffer);
         }
     }
+
+    public struct SingleMemoryIterator : IMemoryIterator
+    {
+        private readonly byte[] data;
+        private int index;
+
+        public SingleMemoryIterator(byte[] data) : this()
+        {
+            this.data = data;
+            index = -1;
+        }
+
+        public ReadOnlyMemory<byte> Current => data;
+
+        public bool MoveNext()
+        {
+            if (index == -1)
+            {
+                index = 0;
+                return true;
+            }
+
+            return false;
+        }
+
+        public void Dispose()
+        {
+            //ignore
+        }
+    }
 }

@@ -29,9 +29,10 @@ namespace ECS.StreamableLoading.Cache.Disk.Playgrounds
             IDiskCache diskCache = NewDiskCache();
             using HashKey hashKey = HashKey.FromString(testFile);
 
-            //var result = await diskCache.PutAsync(hashKey, testExtension, testData, destroyCancellationToken);
-            //print($"Put result: success {result.Success} and error {result.Error?.Message}");
-            throw new NotImplementedException();
+            using SingleMemoryIterator iterator = new SingleMemoryIterator(testData);
+
+            var result = await diskCache.PutAsync(hashKey, testExtension, iterator, destroyCancellationToken);
+            print($"Put result: success {result.Success} and error {result.Error?.Message}");
 
             var contentResult = await diskCache.ContentAsync(hashKey, testExtension, destroyCancellationToken);
             print($"Content result: success {contentResult.Success} and error {contentResult.Error?.Message}");
