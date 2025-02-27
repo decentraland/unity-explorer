@@ -12,7 +12,6 @@ using DCL.SidebarBus;
 using DCL.UI.Controls;
 using DCL.UI.ProfileElements;
 using DCL.UI.SharedSpaceManager;
-using DCL.UI.Sidebar.SidebarActionsBus;
 using DCL.UI.Skybox;
 using DCL.Web3.Identities;
 using MVC;
@@ -35,7 +34,6 @@ namespace DCL.UI.Sidebar
         private readonly IProfileRepository profileRepository;
         private readonly IWeb3IdentityCache identityCache;
         private readonly IWebBrowser webBrowser;
-        private readonly ISidebarActionsBus sidebarActionsBus;
         private readonly bool includeCameraReel;
         private readonly bool includeFriends;
         private readonly ChatView chatView;
@@ -62,7 +60,6 @@ namespace DCL.UI.Sidebar
             IWeb3IdentityCache identityCache,
             IProfileRepository profileRepository,
             IWebBrowser webBrowser,
-            ISidebarActionsBus sidebarActionsBus,
             bool includeCameraReel,
             bool includeFriends,
             ChatView chatView,
@@ -81,14 +78,11 @@ namespace DCL.UI.Sidebar
             this.identityCache = identityCache;
             this.profileRepository = profileRepository;
             this.webBrowser = webBrowser;
-            this.sidebarActionsBus = sidebarActionsBus;
             this.includeCameraReel = includeCameraReel;
             this.chatView = chatView;
             this.chatHistory = chatHistory;
             this.includeFriends = includeFriends;
             this.sharedSpaceManager = sharedSpaceManager;
-
-//            sidebarActionsBus.SubscribeOnCloseAllWidgets(CloseAllWidgets);
         }
 
         public override void Dispose()

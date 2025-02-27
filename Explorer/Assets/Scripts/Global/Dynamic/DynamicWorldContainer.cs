@@ -72,7 +72,6 @@ using DCL.StylizedSkybox.Scripts.Plugin;
 using DCL.UI.InputFieldFormatting;
 using DCL.UI.Profiles.Helpers;
 using DCL.UI.SharedSpaceManager;
-using DCL.UI.Sidebar.SidebarActionsBus;
 using DCL.UserInAppInitializationFlow;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
@@ -546,7 +545,6 @@ namespace Global.Dynamic
             var friendOnlineStatusCacheProxy = new ObjectProxy<IFriendsConnectivityStatusTracker>();
             IProfileThumbnailCache profileThumbnailCache = new ProfileThumbnailCache(staticContainer.WebRequestsContainer.WebRequestController);
 
-            ISidebarActionsBus sidebarActionsBus = new SidebarActionsBusController();
             MVCManagerMenusAccessFacade menusAccessFacade = new MVCManagerMenusAccessFacade(mvcManager, clipboard, clipboardManager, friendServiceProxy, profileCache);
 
             var viewDependencies = new ViewDependencies(dclInput, unityEventSystem, menusAccessFacade, clipboardManager, dclCursor);
@@ -611,7 +609,7 @@ namespace Global.Dynamic
                     staticContainer.WebRequestsContainer.WebRequestController,
                     webBrowser, dynamicWorldDependencies.Web3Authenticator,
                     initializationFlowContainer.InitializationFlow,
-                    profileCache, sidebarBus, dclInput, sidebarActionsBus,
+                    profileCache, sidebarBus, dclInput,
                     globalWorld, playerEntity, includeCameraReel, includeFriends,
                     chatHistory, sharedSpaceManager),
                 new ErrorPopupPlugin(mvcManager, assetsProvisioner),
@@ -821,7 +819,6 @@ namespace Global.Dynamic
                     includeUserBlocking,
                     appArgs,
                     staticContainer.FeatureFlagsCache,
-                    sidebarActionsBus,
                     dynamicWorldParams.EnableAnalytics,
                     bootstrapContainer.Analytics,
                     sharedSpaceManager));

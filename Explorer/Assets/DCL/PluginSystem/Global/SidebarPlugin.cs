@@ -16,7 +16,6 @@ using DCL.UI.MainUI;
 using DCL.UI.ProfileElements;
 using DCL.UI.SharedSpaceManager;
 using DCL.UI.Sidebar;
-using DCL.UI.Sidebar.SidebarActionsBus;
 using DCL.UI.Skybox;
 using DCL.UserInAppInitializationFlow;
 using DCL.Web3.Authenticators;
@@ -45,7 +44,6 @@ namespace DCL.PluginSystem.Global
         private readonly IProfileCache profileCache;
         private readonly ISidebarBus sidebarBus;
         private readonly DCLInput input;
-        private readonly ISidebarActionsBus sidebarActionsBus;
         private readonly Arch.Core.World world;
         private readonly Entity playerEntity;
         private readonly bool includeCameraReel;
@@ -68,7 +66,6 @@ namespace DCL.PluginSystem.Global
             IProfileCache profileCache,
             ISidebarBus sidebarBus,
             DCLInput input,
-            ISidebarActionsBus sidebarActionsBus,
             Arch.Core.World world,
             Entity playerEntity,
             bool includeCameraReel,
@@ -90,7 +87,6 @@ namespace DCL.PluginSystem.Global
             this.profileCache = profileCache;
             this.sidebarBus = sidebarBus;
             this.input = input;
-            this.sidebarActionsBus = sidebarActionsBus;
             this.world = world;
             this.playerEntity = playerEntity;
             this.includeCameraReel = includeCameraReel;
@@ -128,7 +124,6 @@ namespace DCL.PluginSystem.Global
                 web3IdentityCache,
                 profileRepository,
                 webBrowser,
-                sidebarActionsBus,
                 includeCameraReel,
                 includeFriends,
                 mainUIView.ChatView,

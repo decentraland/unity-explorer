@@ -64,7 +64,6 @@ namespace DCL.UI.MainUI
 //            mvcManager.ShowAsync(ChatController.IssueCommand()).Forget();
             sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat).Forget();
             mvcManager.ShowAsync(ConnectionStatusPanelController.IssueCommand()).Forget();
-            mvcManager.ShowAsync(PersistentEmoteWheelOpenerController.IssueCommand()).Forget();
 
             if (isFriendsEnabled)
             {

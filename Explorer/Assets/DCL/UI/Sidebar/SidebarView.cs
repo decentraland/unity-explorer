@@ -28,7 +28,6 @@ namespace DCL.UI.Sidebar
 
 
         [field: Header("Explore Panel Shortcuts")]
-        [field: SerializeField] public PersistentEmoteWheelOpenerView PersistentEmoteWheelOpener { get; private set; }
         [field: SerializeField] public Button InWorldCameraButton { get; private set; }
         [field: SerializeField] internal Button mapButton { get; private set; }
         [field: SerializeField] internal Button backpackButton { get; private set; }

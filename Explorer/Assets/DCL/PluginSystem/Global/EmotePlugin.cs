@@ -145,10 +145,6 @@ namespace DCL.PluginSystem.Global
             foreach (IEmote embeddedEmote in embeddedEmotes)
                 emoteStorage.AddEmbeded(embeddedEmote.GetUrn(), embeddedEmote);
 
-            var persistentEmoteWheelOpenerController = new PersistentEmoteWheelOpenerController(() => mainUIView.SidebarView.PersistentEmoteWheelOpener, mvcManager);
-
-            mvcManager.RegisterController(persistentEmoteWheelOpenerController);
-
             EmotesWheelView emotesWheelPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.EmotesWheelPrefab, ct))
                                                .Value.GetComponent<EmotesWheelView>();
 

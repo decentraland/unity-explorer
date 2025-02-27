@@ -19,7 +19,6 @@ using DCL.Profiles.Self;
 using DCL.RealmNavigation;
 using DCL.UI.MainUI;
 using DCL.UI.SharedSpaceManager;
-using DCL.UI.Sidebar.SidebarActionsBus;
 using DCL.Utilities;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
@@ -57,7 +56,6 @@ namespace DCL.PluginSystem.Global
         private readonly bool includeUserBlocking;
         private readonly IAppArgs appArgs;
         private readonly FeatureFlagsCache featureFlagsCache;
-        private readonly ISidebarActionsBus sidebarActionsBus;
         private readonly IAnalyticsController? analyticsController;
         private readonly bool useAnalytics;
         private readonly ISharedSpaceManager sharedSpaceManager;
@@ -91,7 +89,6 @@ namespace DCL.PluginSystem.Global
             bool includeUserBlocking,
             IAppArgs appArgs,
             FeatureFlagsCache featureFlagsCache,
-            ISidebarActionsBus sidebarActionsBus,
             bool useAnalytics,
             IAnalyticsController? analyticsController,
             ISharedSpaceManager sharedSpaceManager)
@@ -118,7 +115,6 @@ namespace DCL.PluginSystem.Global
             this.includeUserBlocking = includeUserBlocking;
             this.appArgs = appArgs;
             this.featureFlagsCache = featureFlagsCache;
-            this.sidebarActionsBus = sidebarActionsBus;
             this.useAnalytics = useAnalytics;
             this.analyticsController = analyticsController;
             this.sharedSpaceManager = sharedSpaceManager;
