@@ -48,6 +48,7 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.SDKComponents.MediaStream.Settings;
 using DCL.Settings.Settings;
+using DCL.UI.Profiles;
 using DCL.Utilities;
 using ECS.SceneLifeCycle.Realm;
 using Global.AppArgs;

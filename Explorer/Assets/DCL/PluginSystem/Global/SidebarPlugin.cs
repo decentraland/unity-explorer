@@ -14,6 +14,7 @@ using DCL.StylizedSkybox.Scripts;
 using DCL.UI.Controls;
 using DCL.UI.MainUI;
 using DCL.UI.ProfileElements;
+using DCL.UI.Profiles;
 using DCL.UI.Sidebar;
 using DCL.UI.Sidebar.SidebarActionsBus;
 using DCL.UI.Skybox;

@@ -3,6 +3,7 @@ using DCL.Input;
 using DCL.Input.Component;
 using DCL.Profiles;
 using DCL.UI;
+using DCL.UI.Profiles;
 using DCL.Web3;
 using DCL.Web3.Identities;
 using MVC;

@@ -10,6 +10,7 @@ using DCL.NotificationsBusController.NotificationTypes;
 using DCL.Settings;
 using DCL.UI;
 using DCL.UI.ProfileElements;
+using DCL.UI.Profiles;
 using MVC;
 using System.Collections.Generic;
 using System.Linq;

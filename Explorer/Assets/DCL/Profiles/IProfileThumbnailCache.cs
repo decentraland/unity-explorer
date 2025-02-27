@@ -1,9 +1,8 @@
 using Cysharp.Threading.Tasks;
-using DCL.Profiles;
 using System.Threading;
 using UnityEngine;
 
-namespace DCL.Friends
+namespace DCL.Profiles
 {
     public interface IProfileThumbnailCache
     {

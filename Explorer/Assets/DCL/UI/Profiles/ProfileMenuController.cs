@@ -2,6 +2,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.Profiles;
+using DCL.UI.ProfileElements;
 using DCL.UI.SystemMenu;
 using DCL.UserInAppInitializationFlow;
 using DCL.Web3.Authenticators;
@@ -11,7 +12,7 @@ using MVC;
 using System.Threading;
 using Utility;
 
-namespace DCL.UI.ProfileElements
+namespace DCL.UI.Profiles
 {
     public class ProfileMenuController : ControllerBase<ProfileMenuView>
     {

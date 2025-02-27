@@ -11,6 +11,7 @@ using DCL.Profiles;
 using DCL.SidebarBus;
 using DCL.UI.Controls;
 using DCL.UI.ProfileElements;
+using DCL.UI.Profiles;
 using DCL.UI.Sidebar.SidebarActionsBus;
 using DCL.UI.Skybox;
 using DCL.Web3.Identities;

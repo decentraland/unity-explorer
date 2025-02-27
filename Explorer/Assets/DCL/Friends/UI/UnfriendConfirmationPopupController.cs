@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Profiles;
+using DCL.UI.Profiles;
 using DCL.Web3;
 using MVC;
 using System.Threading;

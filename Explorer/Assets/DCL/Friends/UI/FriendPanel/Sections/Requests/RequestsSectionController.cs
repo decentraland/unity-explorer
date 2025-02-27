@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Clipboard;
 using DCL.Diagnostics;
 using DCL.Friends.UI.Requests;
+using DCL.Profiles;
 using DCL.UI.GenericContextMenu;
 using DCL.UI.GenericContextMenu.Controls.Configs;
 using MVC;

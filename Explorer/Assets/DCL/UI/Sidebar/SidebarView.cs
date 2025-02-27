@@ -5,6 +5,7 @@ using DCL.Notifications.NotificationsMenu;
 using DCL.UI.Buttons;
 using DCL.UI.Controls;
 using DCL.UI.ProfileElements;
+using DCL.UI.Profiles;
 using DCL.UI.Skybox;
 using MVC;
 using UnityEngine;
