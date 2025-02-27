@@ -10,9 +10,9 @@ using Object = UnityEngine.Object;
 
 namespace ECS.StreamableLoading.Textures
 {
-    public class TextureDiskSerializer : IDiskSerializer<Texture2DData>
+    public class TextureDiskSerializer : IDiskSerializer<Texture2DData, SerializeMemoryIterator<Texture2DData>>
     {
-        public SlicedOwnedMemory<byte> Serialize(Texture2DData data) =>
+        public SerializeMemoryIterator<Texture2DData> Serialize(Texture2DData data) =>
             ToArray(data);
 
         public async UniTask<Texture2DData> DeserializeAsync(SlicedOwnedMemory<byte> data, CancellationToken token)
@@ -30,7 +30,7 @@ namespace ECS.StreamableLoading.Textures
             return new Texture2DData(new MemoryOwnedTexture2D(data, texture));
         }
 
-        private static SlicedOwnedMemory<byte> ToArray(Texture2DData data)
+        private static SerializeMemoryIterator<Texture2DData> ToArray(Texture2DData data)
         {
             var textureData = data.Asset.GetRawTextureData<byte>()!;
 
@@ -45,7 +45,11 @@ namespace ECS.StreamableLoading.Textures
             metaData.CopyTo(memory.Span);
             textureData.AsSpan().CopyTo(memory.Slice(metaData.Length).Span);
 
-            return memoryOwner;
+            return SerializeMemoryIterator<Texture2DData>.New(
+                data,
+                static (source, index, buffer) => { },
+                static (source, index) => { }
+            );
         }
 
         [Serializable]

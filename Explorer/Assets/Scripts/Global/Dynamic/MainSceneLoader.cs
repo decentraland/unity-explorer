@@ -330,8 +330,8 @@ namespace Global.Dynamic
                 ReportHub.Log(ReportData.UNSPECIFIED, "Disk cached disabled while LSD");
                 return IDiskCache<PartialLoadingState>.Null.INSTANCE;
             }
-            
-            
+
+
             if (appArgs.HasFlag(AppArgsFlags.DISABLE_DISK_CACHE))
             {
                 ReportHub.Log(ReportData.UNSPECIFIED, $"Disable disk cache, flag --{AppArgsFlags.DISABLE_DISK_CACHE} is passed");
@@ -351,7 +351,7 @@ namespace Global.Dynamic
             else
                 diskCleanUp = new LRUDiskCleanUp(cacheDirectory, filesLock);
 
-            var partialCache = new DiskCache<PartialLoadingState>(new DiskCache(cacheDirectory, filesLock, diskCleanUp), new PartialDiskSerializer());
+            var partialCache = new DiskCache<PartialLoadingState, SerializeMemoryIterator<PartialLoadingState>>(new DiskCache(cacheDirectory, filesLock, diskCleanUp), new PartialDiskSerializer());
             return partialCache;
         }
 
@@ -362,7 +362,7 @@ namespace Global.Dynamic
                 ReportHub.Log(ReportData.UNSPECIFIED, "Disk cached disabled while LSD");
                 return new IDiskCache.Fake();
             }
-            
+
             if (appArgs.HasFlag(AppArgsFlags.DISABLE_DISK_CACHE))
             {
                 ReportHub.Log(ReportData.UNSPECIFIED, $"Disable disk cache, flag --{AppArgsFlags.DISABLE_DISK_CACHE} is passed");

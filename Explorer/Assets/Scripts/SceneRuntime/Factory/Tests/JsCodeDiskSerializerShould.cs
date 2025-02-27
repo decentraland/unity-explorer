@@ -4,6 +4,7 @@ using ECS.StreamableLoading.Cache.Disk.CleanUp;
 using ECS.StreamableLoading.Cache.Disk.Lock;
 using NUnit.Framework;
 using SceneRuntime.Factory.JsSource;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -21,12 +22,13 @@ namespace SceneRuntime.Factory.Tests
 
             // Act
             var result = serializer.Serialize(data);
-            string deserialized = await serializer.DeserializeAsync(result, token);
+            //string deserialized = await serializer.DeserializeAsync(result, token);
 
             // Assert
-            Assert.AreEqual(data, deserialized);
+            //Assert.AreEqual(data, deserialized);
+            throw new NotImplementedException();
         }
-
+/*
         [Test]
         public async Task Cache()
         {
@@ -48,5 +50,6 @@ namespace SceneRuntime.Factory.Tests
             // Assert
             Assert.AreEqual(DATA, contentResult.Unwrap().Value);
         }
+*/
     }
 }

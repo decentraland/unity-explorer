@@ -7,12 +7,14 @@ using System.Threading;
 
 namespace ECS.StreamableLoading.Common
 {
-    public class PartialDiskSerializer : IDiskSerializer<PartialLoadingState>
+    public class PartialDiskSerializer : IDiskSerializer<PartialLoadingState, SerializeMemoryIterator<PartialLoadingState>>
     {
-        public SlicedOwnedMemory<byte> Serialize(PartialLoadingState data) =>
+        public struct State { }
+
+        public SerializeMemoryIterator<PartialLoadingState> Serialize(PartialLoadingState data) =>
             SerializeInternal(data);
 
-        private static SlicedOwnedMemory<byte> SerializeInternal(PartialLoadingState data)
+        private static SerializeMemoryIterator<PartialLoadingState> SerializeInternal(PartialLoadingState data)
         {
             var meta = new Meta(data.FullFileSize, data.IsFileFullyDownloaded);
             Span<byte> metaData = stackalloc byte[Meta.META_SIZE];
@@ -25,7 +27,8 @@ namespace ECS.StreamableLoading.Common
             metaData.CopyTo(memory.Span);
             data.FullData.Span.Slice(0, data.NextRangeStart).CopyTo(memory.Slice(Meta.META_SIZE, data.NextRangeStart).Span);
 
-            return memoryOwner;
+            //return memoryOwner;
+            throw new NotImplementedException();
         }
 
         public UniTask<PartialLoadingState> DeserializeAsync(SlicedOwnedMemory<byte> data, CancellationToken token)
@@ -53,6 +56,7 @@ namespace ECS.StreamableLoading.Common
             public void ToSpan(Span<byte> span)
             {
                 span[0] = (byte)(IsFullyDownloaded ? 1 : 0);
+
                 for (int i = 1; i < 5; i++)
                     span[i] = (byte)((MaxFileSize >> (i * 8)) & 0xFF);
             }
@@ -61,6 +65,7 @@ namespace ECS.StreamableLoading.Common
             {
                 var maxFileSize = 0;
                 var isFullyDownloaded = array[0] == 1;
+
                 for (var i = 1; i < 5; i++)
                     maxFileSize |= array[i] << (i * 8);
 
