@@ -4,6 +4,7 @@ using UnityEngine;
 using Vector2 = UnityEngine.Vector2;
 using DG.Tweening;
 using System;
+using System.Text.RegularExpressions;
 using System.Threading;
 using Utility;
 
@@ -28,6 +29,8 @@ namespace DCL.Nametags
         private const int DEFAULT_BUBBLE_IDLE_TIME_MS = 5000;
         private const string WALLET_ID_OPENING_STYLE = "<color=#FFFFFF66><font=\"LiberationSans SDF\">";
         private const string WALLET_ID_CLOSING_STYLE = "</font></color>";
+
+        private static readonly Regex SINGLE_EMOJI_REGEX = new (@"^\s*\\U[0-9a-fA-F]{8}\s*$", RegexOptions.Compiled);
 
         [field: SerializeField] public TMP_Text Username { get; private set; }
         [field: SerializeField] public SpriteRenderer BackgroundSprite { get; private set; }
@@ -246,9 +249,9 @@ namespace DCL.Nametags
             );
         }
 
-        private void SetHeightAndTextStyle(string messageContent)
+        private void SetHeightAndTextStyle(string message)
         {
-            if (messageContent.Contains("\\U") && messageContent.Length == EMOJI_LENGTH)
+            if (SINGLE_EMOJI_REGEX.Match(message).Success)
             {
                 additionalHeight = chatBubbleConfiguration?.singleEmojiExtraHeight ?? DEFAULT_SINGLE_EMOJI_EXTRA_HEIGHT;
                 this.messageContent.fontSize = chatBubbleConfiguration?.singleEmojiSize ?? DEFAULT_SINGLE_EMOJI_SIZE;
