@@ -130,6 +130,12 @@ namespace ECS.StreamableLoading.Common.Systems
 
                     return default(StreamableLoadingResult<TData>);
                 }
+                //This catch is a workaround for the loading breaking bug caused by multiple scenes having same asset hash
+                //but with different file sizes, it won't load the asset but won't block the loading
+                catch (UnityWebRequestException e) when (e.ResponseCode == 416)
+                {
+                    return new StreamableLoadingResult<TData>(new ReportData(), e);
+                }
                 finally
                 {
                     if (downloadedData.DestinationArray != null)
