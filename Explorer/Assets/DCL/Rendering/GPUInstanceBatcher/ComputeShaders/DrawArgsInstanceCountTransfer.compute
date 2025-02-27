@@ -1,32 +1,16 @@
 ﻿#include "Includes/PlatformSpecifications.cginc"
+#include "Includes/Structures.cginc"
 
-#pragma enable_d3d11_debug_symbols
+// Uncomment for debug symbols - do not commit uncommented
+//#pragma enable_d3d11_debug_symbols
 #pragma kernel DrawArgsInstanceCountTransfer
 
 ////////////////////
 // UNIFORM INPUTS
 ////////////////////
-
 shared RWStructuredBuffer<uint> arrLODCount;
-
-struct GroupData
-{
-    float4x4 lodSizes;
-    float4x4 matCamera_MVP;
-    float3 vCameraPosition;
-    float fShadowDistance;
-    float3 vBoundsCenter;
-    float frustumOffset;
-    float3 vBoundsExtents;
-    float fCameraHalfAngle;
-    float fMaxDistance;
-    float minCullingDistance;
-    uint nInstBufferSize;
-    uint nLODCount;
-};
 StructuredBuffer<GroupData> GroupDataBuffer;
-
-uniform uint nSubMeshCount;
+uniform uint nSubMeshCount; // TODO: would be better if this wasn't a uniform for minor perf benefit
 
 ////////////////////
 // UNIFORM OUTPUTS

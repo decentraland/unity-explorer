@@ -1,7 +1,7 @@
 ﻿#ifndef _DCL_CULLING_FUNCTIONS_
 #define _DCL_CULLING_FUNCTIONS_
 
-inline void CalculateBoundingBox(in float4x4 objectTransformMatrix, inout float4 BoundingBox[8], float4x4 matCamera_MVP, float3 vBoundsCenter, float3 vBoundsExtents)
+inline void CalculateBoundingBox(in float4x4 objectTransformMatrix, float4x4 matCamera_MVP, float3 vBoundsCenter, float3 vBoundsExtents, inout float4 BoundingBox[8])
 {
     // Calculate clip space matrix
     float4x4 to_clip_space_mat = mul(matCamera_MVP, objectTransformMatrix);
@@ -105,7 +105,7 @@ inline float OcclusionSample(float4 BoundingRect, float LOD, float xOffset, Text
 
 inline bool IsOcclusionCulled(float4 BoundingBox[8], float4 hiZTxtrSize, float occlusionOffset, uint occlusionAccuracy, Texture2D<float4> hiZMap, SamplerState sampler_hiZMap)
 {
-    // NOTE: for Direct3D, the clipping space z coordinate ranges from 0 to w and for OpenGL, it ranges from -w to w. However, since we use Unity's Projection Matrix directly,
+    // NOTE: for Direct3D, the clipping space z coordinate ranges from 0 to w, for OpenGL, it ranges from -w to w and 1 to 0 for Metal. However, since we use Unity's Projection Matrix directly,
     // there is no need to worry about the difference between platforms. The projection matrix will always be left handed.
     // Also, the reversed depth value between these APIs are taken care of in the blit and compute shaders while creating the hiZ depth texture.
      

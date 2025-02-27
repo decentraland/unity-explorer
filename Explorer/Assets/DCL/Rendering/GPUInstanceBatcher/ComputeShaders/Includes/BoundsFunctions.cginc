@@ -1,18 +1,6 @@
 ﻿#ifndef _DCL_BOUNDS_FUNCTIONS_
 #define _DCL_BOUNDS_FUNCTIONS_
 
-// Bounding Box
-// uniform float3 boundsCenter;
-// uniform float3 boundsExtents;
-
-// Bounding Sphere
-
-// Bounding Capsule (Avatar)
-// uniform float4x4 modifierTransform;
-// uniform float modifierRadius;
-// uniform float modifierHeight;
-// uniform float3 modifierAxis;
-
 #include "MathematicsFunctions.cginc"
 
 inline bool TestBoundingBox(float3 position, float3 boundsCentre, float3 boundsExtents)
