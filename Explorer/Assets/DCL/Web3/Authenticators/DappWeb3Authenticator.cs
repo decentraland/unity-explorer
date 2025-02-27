@@ -101,8 +101,7 @@ namespace DCL.Web3.Authenticators
 
             if (string.Equals(request.method, "eth_chainId"))
             {
-                // TODO: this is a temporary thing until we solve the network in a better way
-                string chainId = environment == DecentralandEnvironment.Org ? MAINNET_CHAIN_ID : SEPOLIA_CHAIN_ID;
+                string chainId = GetChainId();
 
                 return new EthApiResponse
                 {
@@ -114,14 +113,13 @@ namespace DCL.Web3.Authenticators
 
             if (string.Equals(request.method, "net_version"))
             {
-                // TODO: this is a temporary thing until we solve the network in a better way
-                string chainId = environment == DecentralandEnvironment.Org ? MAINNET_NET_VERSION : SEPOLIA_NET_VERSION;
+                string netVersion = GetNetVersion();
 
                 return new EthApiResponse
                 {
                     id = request.id,
                     jsonrpc = "2.0",
-                    result = chainId,
+                    result = netVersion,
                 };
             }
 
@@ -232,9 +230,7 @@ namespace DCL.Web3.Authenticators
 
                 await UniTask.SwitchToMainThread(ct);
 
-                // TODO: this is a temporary thing until we solve the network in a better way (probably it should be parametrized)
-                string network = environment == DecentralandEnvironment.Org ? NETWORK_MAINNET : NETWORK_SEPOLIA;
-                await ConnectToRpcAsync(network, ct);
+                await ConnectToRpcAsync(GetNetworkId(), ct);
 
                 var response = await RequestEthMethodWithoutSignatureAsync(request, ct)
                    .Timeout(TimeSpan.FromSeconds(TIMEOUT_SECONDS));
@@ -472,5 +468,17 @@ namespace DCL.Web3.Authenticators
 
             return false;
         }
+
+        private string GetNetVersion() =>
+            // TODO: this is a temporary thing until we solve the network in a better way
+            environment == DecentralandEnvironment.Org ? MAINNET_NET_VERSION : SEPOLIA_NET_VERSION;
+
+        private string GetChainId() =>
+            // TODO: this is a temporary thing until we solve the network in a better way
+            environment == DecentralandEnvironment.Org ? MAINNET_CHAIN_ID : SEPOLIA_CHAIN_ID;
+
+        private string GetNetworkId() =>
+            // TODO: this is a temporary thing until we solve the network in a better way (probably it should be parametrized)
+            environment == DecentralandEnvironment.Org ? NETWORK_MAINNET : NETWORK_SEPOLIA;
     }
 }
