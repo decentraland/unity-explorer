@@ -1,10 +1,10 @@
 ﻿using CrdtEcsBridge.PoolsProviders;
 using Microsoft.ClearScript;
+using Microsoft.ClearScript.JavaScript;
 using SceneRunner.Scene;
 using SceneRuntime;
 using SceneRuntime.Apis.Modules.CommunicationsControllerApi;
 using System;
-using System.Buffers;
 using System.Collections.Generic;
 using System.Threading;
 using Utility;
@@ -18,16 +18,16 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
         /// </summary>
         private const byte REQ_CRDT_STATE = 2;
 
-        protected readonly List<IMemoryOwner<byte>> eventsToProcess = new ();
+        protected readonly List<ITypedArray<byte>> eventsToProcess = new ();
         private readonly CancellationTokenSource cancellationTokenSource = new ();
         private readonly ISceneCommunicationPipe sceneCommunicationPipe;
         private readonly string sceneId;
-        private readonly IJsOperations jsOperations;
+        protected readonly IJsOperations jsOperations;
         private readonly ISceneCommunicationPipe.MsgType typeToHandle;
-
+        private readonly ScriptObject eventArray;
         private readonly ISceneCommunicationPipe.SceneMessageHandler onMessageReceivedCached;
 
-        internal IReadOnlyList<IMemoryOwner<byte>> EventsToProcess => eventsToProcess;
+        internal IReadOnlyList<ITypedArray<byte>> EventsToProcess => eventsToProcess;
 
         protected CommunicationsControllerAPIImplementationBase(
             ISceneData sceneData,
@@ -39,7 +39,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
             this.sceneCommunicationPipe = sceneCommunicationPipe;
             this.jsOperations = jsOperations;
             this.typeToHandle = typeToHandle;
-
+            eventArray = jsOperations.NewArray();
             onMessageReceivedCached = OnMessageReceived;
 
             this.sceneCommunicationPipe.AddSceneMessageHandler(sceneId, typeToHandle, onMessageReceivedCached);
@@ -48,9 +48,6 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
         public void Dispose()
         {
             sceneCommunicationPipe.RemoveSceneMessageHandler(sceneId, typeToHandle, onMessageReceivedCached);
-
-            lock (eventsToProcess) { CleanUpReceivedMessages(); }
-
             cancellationTokenSource.SafeCancelAndDispose();
         }
 
@@ -71,18 +68,14 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
         {
             lock (eventsToProcess)
             {
-                ScriptObject result = jsOperations.ConvertToScriptTypedArrays(eventsToProcess);
-                CleanUpReceivedMessages();
-                return result;
+                eventArray.SetProperty("length", eventsToProcess.Count);
+
+                for (int i = 0; i < eventsToProcess.Count; i++)
+                    eventArray.SetProperty(i, eventsToProcess[i]);
+
+                eventsToProcess.Clear();
+                return eventArray;
             }
-        }
-
-        private void CleanUpReceivedMessages()
-        {
-            foreach (IMemoryOwner<byte>? message in eventsToProcess)
-                message.Dispose();
-
-            eventsToProcess.Clear();
         }
 
         protected void EncodeAndSendMessage(ISceneCommunicationPipe.MsgType msgType, ReadOnlySpan<byte> message, ISceneCommunicationPipe.ConnectivityAssertiveness assertivenes, string? specialRecipient)
