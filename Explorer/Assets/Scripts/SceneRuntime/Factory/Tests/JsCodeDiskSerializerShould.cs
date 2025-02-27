@@ -1,3 +1,4 @@
+using DCL.Optimization.Hashing;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Cache.Disk.CleanUp;
 using ECS.StreamableLoading.Cache.Disk.Lock;
@@ -19,7 +20,7 @@ namespace SceneRuntime.Factory.Tests
             var token = new CancellationToken();
 
             // Act
-            var result = await serializer.SerializeAsync(data, token);
+            var result = serializer.Serialize(data);
             string deserialized = await serializer.DeserializeAsync(result, token);
 
             // Assert

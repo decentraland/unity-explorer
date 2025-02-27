@@ -1,9 +1,12 @@
+using Cysharp.Threading.Tasks;
 using DCL.UI.GenericContextMenu.Controls.Configs;
 using System;
+using System.Threading;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
+using Utility;
 
 namespace DCL.UI.GenericContextMenu.Controls
 {
@@ -12,47 +15,73 @@ namespace DCL.UI.GenericContextMenu.Controls
         private const int USER_NAME_MIN_HEIGHT = 20;
         private const int FACE_FRAME_MIN_HEIGHT = 60;
         private const int FRIEND_BUTTON_MIN_HEIGHT = 40;
+        private const int COPY_ANIMATION_DURATION = 1000;
 
-        [field: SerializeField] public Image FaceFrame { get; private set; }
-        [field: SerializeField] public Image FaceRim { get; private set; }
+        private enum CopyUserInfoSection
+        {
+            NAME,
+            ADDRESS
+        }
+
+        [field: SerializeField] public Image ThumbnailBackground { get; private set; }
+        [field: SerializeField] public ImageView ThumbnailImageView { get; private set; }
         [field: SerializeField] public TMP_Text UserName { get; private set; }
         [field: SerializeField] public TMP_Text UserNameTag { get; private set; }
         [field: SerializeField] public TMP_Text UserAddress { get; private set; }
         [field: SerializeField] public Image ClaimedNameBadge { get; private set; }
         [field: SerializeField] public GameObject ClaimedNameBadgeSeparator { get; private set; }
         [field: SerializeField] public Button CopyNameButton { get; private set; }
+        [field: SerializeField] public WarningNotificationView CopyNameToast { get; private set; }
         [field: SerializeField] public Button CopyAddressButton { get; private set; }
+        [field: SerializeField] public WarningNotificationView CopyAddressToast { get; private set; }
         [field: SerializeField] public VerticalLayoutGroup ContentVerticalLayout { get; private set; }
 
         [field: Header("Friendship Button")]
         [field: SerializeField] public Button AddFriendButton { get; private set; }
-        [field: SerializeField] public Image AddFriendButtonImage { get; private set; }
-        [field: SerializeField] public TMP_Text AddFriendButtonText { get; private set; }
-
-        [field: Space(10)]
-        [field: SerializeField] public Sprite AddFriendSprite { get; private set; }
-        [field: SerializeField] public string AddFriendText { get; private set; }
-        [field: SerializeField] public Sprite AlreadyFriendSprite { get; private set; }
-        [field: SerializeField] public string AlreadyFriendText { get; private set; }
+        [field: SerializeField] public Button AcceptFriendButton { get; private set; }
+        [field: SerializeField] public Button RemoveFriendButton { get; private set; }
+        [field: SerializeField] public Button CancelFriendButton { get; private set; }
 
         [field: Header("Components cache")]
         [field: SerializeField] private RectTransform userNameRectTransform;
         [field: SerializeField] private RectTransform faceFrameRectTransform;
         [field: SerializeField] private RectTransform userAddressRectTransform;
-        [field: SerializeField] private RectTransform addButtonRectTransform;
+        [field: SerializeField] private RectTransform buttonContainerRectTransform;
+        [field: SerializeField] private Sprite defaultEmptyThumbnail;
+
+        private CancellationTokenSource copyAnimationCts = new();
 
         public void Configure(UserProfileContextMenuControlSettings settings)
         {
             HorizontalLayoutComponent.padding = settings.horizontalLayoutPadding;
 
-            ConfigureUserNameAndTag(settings.profile.Name, settings.profile.UserId, settings.profile.HasClaimedName, settings.userColor);
-            ConfigureAddFriendButton(settings.friendshipStatus);
+            ConfigureUserNameAndTag(settings.userName, settings.userAddress, settings.hasClaimedName, settings.userColor);
+            ThumbnailImageView.SetImage(settings.userThumbnail ?? defaultEmptyThumbnail);
+            ConfigureFriendshipButton(settings);
 
             RectTransformComponent.sizeDelta = new Vector2(RectTransformComponent.sizeDelta.x, CalculateComponentHeight());
 
-            CopyNameButton.onClick.AddListener(() => settings.systemClipboard.Set(settings.profile.Name));
-            CopyAddressButton.onClick.AddListener(() => settings.systemClipboard.Set(settings.profile.UserId));
-            AddFriendButton.onClick.AddListener(() => settings.requestFriendshipAction(settings.profile));
+            copyAnimationCts = copyAnimationCts.SafeRestart();
+
+            CopyNameButton.onClick.AddListener(() => CopyUserInfo(settings, CopyUserInfoSection.NAME));
+            CopyAddressButton.onClick.AddListener(() => CopyUserInfo(settings, CopyUserInfoSection.ADDRESS));
+        }
+
+        private void InvokeSettingsAction(UserProfileContextMenuControlSettings settings) =>
+            settings.requestFriendshipAction(settings.userAddress, settings.friendshipStatus);
+
+        private void CopyUserInfo(UserProfileContextMenuControlSettings settings, CopyUserInfoSection section)
+        {
+            settings.systemClipboard.Set(section == CopyUserInfoSection.NAME ? settings.userName : settings.userAddress);
+            CopyNameAnimationAsync(copyAnimationCts.Token).Forget();
+
+            async UniTaskVoid CopyNameAnimationAsync(CancellationToken ct)
+            {
+                WarningNotificationView toast = section == CopyUserInfoSection.NAME ? CopyNameToast : CopyAddressToast;
+                toast.Show(ct);
+                await UniTask.Delay(COPY_ANIMATION_DURATION, cancellationToken: ct);
+                toast.Hide(ct: ct);
+            }
         }
 
         private void ConfigureUserNameAndTag(string userName, string userAddress, bool hasClaimedName, Color userColor)
@@ -66,11 +95,10 @@ namespace DCL.UI.GenericContextMenu.Controls
             ClaimedNameBadge.gameObject.SetActive(hasClaimedName);
             ClaimedNameBadgeSeparator.gameObject.SetActive(hasClaimedName);
 
-            FaceFrame.color = userColor;
-            userColor.r += 0.3f;
-            userColor.g += 0.3f;
-            userColor.b += 0.3f;
-            FaceRim.color = userColor;
+            CopyAddressToast.Hide(true);
+            CopyNameToast.Hide(true);
+
+            ThumbnailBackground.color = userColor;
         }
 
         private float CalculateComponentHeight()
@@ -81,39 +109,30 @@ namespace DCL.UI.GenericContextMenu.Controls
                                 + HorizontalLayoutComponent.padding.bottom
                                 + HorizontalLayoutComponent.padding.top
                                 + (ContentVerticalLayout.spacing * 2);
-            if (AddFriendButton.gameObject.activeSelf)
-                totalHeight += Math.Max(addButtonRectTransform.rect.height, FRIEND_BUTTON_MIN_HEIGHT) + ContentVerticalLayout.spacing;
+            if (AddFriendButton.gameObject.activeSelf || AcceptFriendButton.gameObject.activeSelf || RemoveFriendButton.gameObject.activeSelf || CancelFriendButton.gameObject.activeSelf)
+                totalHeight += Math.Max(buttonContainerRectTransform.rect.height, FRIEND_BUTTON_MIN_HEIGHT) + ContentVerticalLayout.spacing;
 
             return totalHeight;
         }
 
-        private void ConfigureAddFriendButton(UserProfileContextMenuControlSettings.FriendshipStatus friendshipStatus)
+        private void ConfigureFriendshipButton(UserProfileContextMenuControlSettings settings)
         {
-            switch (friendshipStatus)
+            AddFriendButton.gameObject.SetActive(false);
+            RemoveFriendButton.gameObject.SetActive(false);
+            CancelFriendButton.gameObject.SetActive(false);
+            AcceptFriendButton.gameObject.SetActive(false);
+
+            Button buttonToActivate = settings.friendshipStatus switch
             {
-                case UserProfileContextMenuControlSettings.FriendshipStatus.NONE:
-                    AddFriendButton.gameObject.SetActive(true);
-                    AddFriendButton.interactable = true;
-                    AddFriendButtonImage.sprite = AddFriendSprite;
-                    AddFriendButtonText.text = AddFriendText;
-                    break;
-                case UserProfileContextMenuControlSettings.FriendshipStatus.FRIEND:
-                    AddFriendButton.gameObject.SetActive(true);
-                    AddFriendButton.interactable = false;
-                    AddFriendButtonImage.sprite = AlreadyFriendSprite;
-                    AddFriendButtonText.text = AlreadyFriendText;
-                    break;
-                case UserProfileContextMenuControlSettings.FriendshipStatus.BLOCKED:
-                    AddFriendButton.gameObject.SetActive(false);
-                    break;
-                case UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_RECEIVED:
-                case UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_SENT:
-                    AddFriendButton.gameObject.SetActive(true);
-                    AddFriendButton.interactable = false;
-                    AddFriendButtonImage.sprite = AddFriendSprite;
-                    AddFriendButtonText.text = AddFriendText;
-                    break;
-            }
+                UserProfileContextMenuControlSettings.FriendshipStatus.NONE => AddFriendButton,
+                UserProfileContextMenuControlSettings.FriendshipStatus.FRIEND => RemoveFriendButton,
+                UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_SENT => CancelFriendButton,
+                UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_RECEIVED => AcceptFriendButton,
+                _ => null
+            };
+
+            buttonToActivate?.gameObject.SetActive(true);
+            buttonToActivate?.onClick.AddListener(() => InvokeSettingsAction(settings));
         }
 
         public override void UnregisterListeners()
@@ -121,13 +140,18 @@ namespace DCL.UI.GenericContextMenu.Controls
             CopyNameButton.onClick.RemoveAllListeners();
             CopyAddressButton.onClick.RemoveAllListeners();
             AddFriendButton.onClick.RemoveAllListeners();
+            AcceptFriendButton.onClick.RemoveAllListeners();
+            RemoveFriendButton.onClick.RemoveAllListeners();
+            CancelFriendButton.onClick.RemoveAllListeners();
+            copyAnimationCts.SafeCancelAndDispose();
         }
 
         public override void RegisterCloseListener(Action listener)
         {
-            CopyNameButton.onClick.AddListener(new UnityAction(listener));
-            CopyAddressButton.onClick.AddListener(new UnityAction(listener));
             AddFriendButton.onClick.AddListener(new UnityAction(listener));
+            AcceptFriendButton.onClick.AddListener(new UnityAction(listener));
+            RemoveFriendButton.onClick.AddListener(new UnityAction(listener));
+            CancelFriendButton.onClick.AddListener(new UnityAction(listener));
         }
     }
 }

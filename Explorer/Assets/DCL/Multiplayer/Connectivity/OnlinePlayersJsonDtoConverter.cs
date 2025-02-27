@@ -17,7 +17,7 @@ namespace DCL.Multiplayer.Connectivity
             writer.WriteEndArray();
         }
 
-        public override List<OnlineUserData> ReadJson(JsonReader reader, Type objectType, List<OnlineUserData> existingValue, bool hasExistingValue, JsonSerializer serializer)
+        public override List<OnlineUserData> ReadJson(JsonReader reader, Type objectType, List<OnlineUserData>? existingValue, bool hasExistingValue, JsonSerializer serializer)
         {
             if (reader.TokenType == JsonToken.Null)
                 return null;

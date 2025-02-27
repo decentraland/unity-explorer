@@ -1,6 +1,9 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Chat;
 using DCL.EmotesWheel;
+using DCL.Friends.UI;
+using DCL.Friends.UI.FriendPanel;
+using DCL.Friends.UI.PushNotifications;
 using DCL.Minimap;
 using DCL.SidebarBus;
 using DCL.UI.ConnectionStatusPanel;
@@ -25,6 +28,7 @@ namespace DCL.UI.MainUI
 
         private readonly ISidebarBus sidebarBus;
         private readonly IMVCManager mvcManager;
+        private readonly bool isFriendsEnabled;
 
         private bool waitingToShowSidebar;
         private bool waitingToHideSidebar;
@@ -39,10 +43,12 @@ namespace DCL.UI.MainUI
         public MainUIController(
             ViewFactoryMethod viewFactory,
             ISidebarBus sidebarBus,
-            IMVCManager mvcManager) : base(viewFactory)
+            IMVCManager mvcManager,
+            bool isFriendsEnabled) : base(viewFactory)
         {
             this.sidebarBus = sidebarBus;
             this.mvcManager = mvcManager;
+            this.isFriendsEnabled = isFriendsEnabled;
         }
 
         protected override void OnViewInstantiated()
@@ -56,6 +62,13 @@ namespace DCL.UI.MainUI
             mvcManager.ShowAsync(ChatController.IssueCommand()).Forget();
             mvcManager.ShowAsync(ConnectionStatusPanelController.IssueCommand()).Forget();
             mvcManager.ShowAsync(PersistentEmoteWheelOpenerController.IssueCommand()).Forget();
+
+            if (isFriendsEnabled)
+            {
+                mvcManager.ShowAsync(FriendPushNotificationController.IssueCommand()).Forget();
+                mvcManager.ShowAsync(PersistentFriendPanelOpenerController.IssueCommand()).Forget();
+            }
+
             showingSidebar = true;
         }
 

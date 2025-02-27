@@ -16,6 +16,7 @@ namespace DCL.UI
         private readonly ImageView view;
         private readonly IWebRequestController webRequestController;
         private CancellationTokenSource cts;
+        public event Action<Sprite>? SpriteLoaded;
 
         public ImageController(ImageView view, IWebRequestController webRequestController)
         {
@@ -58,8 +59,9 @@ namespace DCL.UI
 
                 var texture = ownedTexture.Texture;
                 texture.filterMode = FilterMode.Bilinear;
-                view.Image.sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), VectorUtilities.OneHalf, PIXELS_PER_UNIT, 0, SpriteMeshType.FullRect, Vector4.one, false);
-                view.LoadingObject.SetActive(false);
+                Sprite sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), VectorUtilities.OneHalf, PIXELS_PER_UNIT, 0, SpriteMeshType.FullRect, Vector4.one, false);
+                SetImage(sprite);
+                SpriteLoaded?.Invoke(sprite);
                 view.Image.enabled = true;
             }
             catch (Exception e)

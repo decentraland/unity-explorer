@@ -99,9 +99,8 @@ MonoBehaviour:
           isMultiselect: 0
           options:
           - Max
-          - 20
+          - 32
           - 16
-          - 10
           defaultOptionIndex: 1
         <Feature>k__BackingField: 6
     - rid: 5242998342527483906

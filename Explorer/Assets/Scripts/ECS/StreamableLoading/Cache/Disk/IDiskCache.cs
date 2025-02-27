@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Optimization.Hashing;
 using System;
 using System.Buffers;
 using System.Threading;
@@ -54,7 +55,7 @@ namespace ECS.StreamableLoading.Cache.Disk
 
     public interface IDiskSerializer<T>
     {
-        UniTask<SlicedOwnedMemory<byte>> SerializeAsync(T data, CancellationToken token);
+        SlicedOwnedMemory<byte> Serialize(T data);
 
         /// <param name="data">Takes ownership of Memory and is responsible for its disposal</param>
         UniTask<T> DeserializeAsync(SlicedOwnedMemory<byte> data, CancellationToken token);

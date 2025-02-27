@@ -30,8 +30,7 @@ namespace ECS.StreamableLoading.Common.Components
 
         public readonly CancellationTokenSource CancellationTokenSource;
 
-        public CommonLoadingArguments(URLAddress url,
-            URLSubdirectory customEmbeddedSubDirectory = default,
+        public CommonLoadingArguments(URLAddress url, URLSubdirectory customEmbeddedSubDirectory = default,
             int timeout = StreamableLoadingDefaults.TIMEOUT,
             int attempts = StreamableLoadingDefaults.ATTEMPTS_COUNT,
             AssetSource permittedSources = AssetSource.WEB,
@@ -51,8 +50,7 @@ namespace ECS.StreamableLoading.Common.Components
         /// <summary>
         ///     Use URLAddress instead of string
         /// </summary>
-        public CommonLoadingArguments(string url,
-            URLSubdirectory customEmbeddedSubDirectory = default,
+        public CommonLoadingArguments(string url, URLSubdirectory customEmbeddedSubDirectory = default,
             int timeout = StreamableLoadingDefaults.TIMEOUT,
             int attempts = StreamableLoadingDefaults.ATTEMPTS_COUNT,
             AssetSource permittedSources = AssetSource.WEB,

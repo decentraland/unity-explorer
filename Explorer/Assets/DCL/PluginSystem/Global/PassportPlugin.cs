@@ -9,16 +9,22 @@ using DCL.BadgesAPIService;
 using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.Chat;
+using DCL.Clipboard;
+using DCL.Friends;
 using DCL.Input;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Multiplayer.Connectivity;
 using DCL.Multiplayer.Profiles.Poses;
 using DCL.NotificationsBusController.NotificationsBus;
 using DCL.Passport;
 using DCL.Profiles;
 using DCL.Profiles.Self;
+using DCL.Utilities;
+using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
+using ECS.SceneLifeCycle.Realm;
 using MVC;
 using System.Threading;
 using UnityEngine;
@@ -50,6 +56,15 @@ namespace DCL.PluginSystem.Global
         private readonly Arch.Core.World world;
         private readonly Entity playerEntity;
         private readonly bool enableCameraReel;
+        private readonly ObjectProxy<IFriendsService> friendsService;
+        private readonly ObjectProxy<IFriendsConnectivityStatusTracker> friendOnlineStatusCache;
+        private readonly ISystemClipboard systemClipboard;
+        private readonly IProfileThumbnailCache profileThumbnailCache;
+        private readonly IOnlineUsersProvider onlineUsersProvider;
+        private readonly IRealmNavigator realmNavigator;
+        private readonly IWeb3IdentityCache web3IdentityCache;
+        private readonly bool enableFriends;
+        private readonly bool includeUserBlocking;
 
         private PassportController? passportController;
 
@@ -75,7 +90,16 @@ namespace DCL.PluginSystem.Global
             ICameraReelScreenshotsStorage cameraReelScreenshotsStorage,
             Arch.Core.World world,
             Entity playerEntity,
-            bool enableCameraReel
+            bool enableCameraReel,
+            ObjectProxy<IFriendsService> friendsService,
+            ObjectProxy<IFriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy,
+            ISystemClipboard systemClipboard,
+            IProfileThumbnailCache profileThumbnailCache,
+            IOnlineUsersProvider onlineUsersProvider,
+            IRealmNavigator realmNavigator,
+            IWeb3IdentityCache web3IdentityCache,
+            bool enableFriends,
+            bool includeUserBlocking
         )
         {
             this.assetsProvisioner = assetsProvisioner;
@@ -100,6 +124,15 @@ namespace DCL.PluginSystem.Global
             this.cameraReelStorageService = cameraReelStorageService;
             this.cameraReelScreenshotsStorage = cameraReelScreenshotsStorage;
             this.enableCameraReel = enableCameraReel;
+            this.friendsService = friendsService;
+            this.friendOnlineStatusCache = friendOnlineStatusCacheProxy;
+            this.systemClipboard = systemClipboard;
+            this.profileThumbnailCache = profileThumbnailCache;
+            this.onlineUsersProvider = onlineUsersProvider;
+            this.realmNavigator = realmNavigator;
+            this.web3IdentityCache = web3IdentityCache;
+            this.enableFriends = enableFriends;
+            this.includeUserBlocking = includeUserBlocking;
         }
 
         public void Dispose()
@@ -145,10 +178,19 @@ namespace DCL.PluginSystem.Global
                 remoteMetadata,
                 cameraReelStorageService,
                 cameraReelScreenshotsStorage,
+                friendsService,
+                friendOnlineStatusCache,
+                systemClipboard,
+                profileThumbnailCache,
+                onlineUsersProvider,
+                realmNavigator,
+                web3IdentityCache,
                 passportSettings.GridLayoutFixedColumnCount,
                 passportSettings.ThumbnailHeight,
                 passportSettings.ThumbnailWidth,
-                enableCameraReel
+                enableCameraReel,
+                enableFriends,
+                includeUserBlocking
             );
 
             mvcManager.RegisterController(passportController);

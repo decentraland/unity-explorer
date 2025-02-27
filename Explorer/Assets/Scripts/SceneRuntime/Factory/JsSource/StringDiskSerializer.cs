@@ -12,7 +12,7 @@ namespace SceneRuntime.Factory.JsSource
     {
         private static readonly MemoryPool<byte> POOL = MemoryPool<byte>.Shared!;
 
-        public UniTask<SlicedOwnedMemory<byte>> SerializeAsync(string data, CancellationToken token)
+        public SlicedOwnedMemory<byte> Serialize(string data)
         {
             var memory = data.AsMemory();
             var bytes = memory.AsBytes();
@@ -21,7 +21,7 @@ namespace SceneRuntime.Factory.JsSource
 
             bytes.CopyTo(buffer.Memory);
 
-            return new UniTask<SlicedOwnedMemory<byte>>(new SlicedOwnedMemory<byte>(buffer, bytes.Length));
+            return new SlicedOwnedMemory<byte>(buffer, bytes.Length);
         }
 
         public UniTask<string> DeserializeAsync(SlicedOwnedMemory<byte> data, CancellationToken token)

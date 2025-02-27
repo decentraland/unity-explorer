@@ -13,9 +13,9 @@ namespace DCL.UI.GenericContextMenu
         private enum ContextMenuOpenDirection
         {
             BOTTOM_RIGHT,
+            TOP_RIGHT,
             BOTTOM_LEFT,
             TOP_LEFT,
-            TOP_RIGHT
         }
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
@@ -66,9 +66,11 @@ namespace DCL.UI.GenericContextMenu
 
             for (var i = 0; i < inputData.Config.contextMenuSettings.Count; i++)
             {
-                IContextMenuControlSettings config = inputData.Config.contextMenuSettings[i];
+                GenericContextMenuElement config = inputData.Config.contextMenuSettings[i];
 
-                GenericContextMenuComponentBase component = controlsPoolManager.GetContextMenuComponent(config, i);
+                if (!config.Enabled) continue;
+
+                GenericContextMenuComponentBase component = controlsPoolManager.GetContextMenuComponent(config.setting, i);
 
                 component.RegisterCloseListener(TriggerContextMenuClose);
 

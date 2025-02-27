@@ -8,6 +8,9 @@ namespace SceneRunner.Scene
 {
     public class SceneAssetBundleManifest
     {
+        //From v25 onwards, the asset bundle path contains the sceneID in the hash
+        //This was done to solve cache issues
+        public const int ASSET_BUNDLE_VERSION_REQUIRES_HASH = 25;
         public static readonly SceneAssetBundleManifest NULL = new ();
 
         private readonly URLDomain assetBundlesBaseUrl;
@@ -16,12 +19,7 @@ namespace SceneRunner.Scene
         private readonly string sceneID;
         private readonly string buildDate;
         private readonly bool ignoreConvertedFiles;
-
-        //From v25 onwards, the asset bundle path contains the sceneID in the hash
-        //This was done to solve cache issues
-        public const int ASSET_BUNDLE_VERSION_REQUIRES_HASH = 25;
-        private bool hasSceneIDInPath;
-
+        private readonly bool hasSceneIDInPath;
 
         public SceneAssetBundleManifest(URLDomain assetBundlesBaseUrl, string version, IReadOnlyList<string> files, string sceneID, string buildDate)
         {
@@ -52,7 +50,6 @@ namespace SceneRunner.Scene
             convertedFiles = new HashSet<string>();
         }
 
-
         public unsafe Hash128 ComputeHash(string hash)
         {
             Span<char> hashBuilder = stackalloc char[buildDate.Length + hash.Length];
@@ -65,7 +62,8 @@ namespace SceneRunner.Scene
         public bool Contains(string hash) =>
             ignoreConvertedFiles || convertedFiles.Contains(hash);
 
-        public bool TryGet(string hash, out string convertedFile) => convertedFiles.TryGetValue(hash, out convertedFile);
+        public bool TryGet(string hash, out string convertedFile) =>
+            convertedFiles.TryGetValue(hash, out convertedFile);
 
         public URLAddress GetAssetBundleURL(string hash)
         {
@@ -81,11 +79,9 @@ namespace SceneRunner.Scene
         public string GetSceneID() =>
             sceneID;
 
-        //Used for the OngoingRequests cache. We need to avoid version and sceneID in this URL to able to reuse assets.
+        //Used for the OngoingRequests cache. We need to avoid version and sceneID in this URL to be able to reuse assets.
         //The first loaded hash will be the one used for all the other requests
-        public URLAddress GetCacheableURL(string hash)
-        {
-            return assetBundlesBaseUrl.Append(new URLPath(hash));
-        }
+        public URLAddress GetCacheableURL(string hash) =>
+            assetBundlesBaseUrl.Append(new URLPath(hash));
     }
 }

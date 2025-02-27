@@ -20,8 +20,10 @@ using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Cache.InMemory;
+using ECS.StreamableLoading.Common.Components;
 using Global.AppArgs;
 using Global.Dynamic.DebugSettings;
+using Global.Dynamic.LaunchModes;
 using Global.Dynamic.RealmUrl;
 using Global.Versioning;
 using MVC;
@@ -48,6 +50,7 @@ namespace Global.Dynamic
         private readonly RealmLaunchSettings realmLaunchSettings;
         private readonly WebRequestsContainer webRequestsContainer;
         private readonly IDiskCache diskCache;
+        private readonly IDiskCache<PartialLoadingState> partialsDiskCache;
         private readonly World world;
 
         private URLDomain? startingRealm;
@@ -65,6 +68,7 @@ namespace Global.Dynamic
             RealmLaunchSettings realmLaunchSettings,
             WebRequestsContainer webRequestsContainer,
             IDiskCache diskCache,
+            IDiskCache<PartialLoadingState> partialsDiskCache,
             World world)
         {
             this.debugSettings = debugSettings;
@@ -75,6 +79,7 @@ namespace Global.Dynamic
             this.realmLaunchSettings = realmLaunchSettings;
             this.webRequestsContainer = webRequestsContainer;
             this.diskCache = diskCache;
+            this.partialsDiskCache = partialsDiskCache;
             this.world = world;
         }
 
@@ -119,7 +124,7 @@ namespace Global.Dynamic
                 bootstrapContainer.DiagnosticsContainer,
                 bootstrapContainer.IdentityCache,
                 bootstrapContainer.VerifiedEthereumApi,
-                bootstrapContainer.LocalSceneDevelopment,
+                bootstrapContainer.LaunchMode,
                 bootstrapContainer.UseRemoteAssetBundles,
                 world,
                 playerEntity,
@@ -128,6 +133,7 @@ namespace Global.Dynamic
                 EnableAnalytics,
                 bootstrapContainer.Analytics,
                 diskCache,
+                partialsDiskCache,
                 sceneUIRoot,
                 ct
             );
@@ -179,7 +185,7 @@ namespace Global.Dynamic
                     StartParcel = realmLaunchSettings.targetScene,
                     IsolateScenesCommunication = realmLaunchSettings.isolateSceneCommunication,
                     EnableLandscape = debugSettings.EnableLandscape,
-                    EnableLOD = debugSettings.EnableLOD && !realmLaunchSettings.IsLocalSceneDevelopmentRealm,
+                    EnableLOD = debugSettings.EnableLOD && realmLaunchSettings.CurrentMode is LaunchMode.Play,
                     EnableAnalytics = EnableAnalytics,
                     HybridSceneParams = realmLaunchSettings.CreateHybridSceneParams(),
                     LocalSceneDevelopmentRealm = localSceneDevelopmentRealm ?? string.Empty,
@@ -229,7 +235,7 @@ namespace Global.Dynamic
             IWebJsSources webJsSources = new WebJsSources(new JsCodeResolver(
                 staticContainer.WebRequestsContainer.WebRequestController));
 
-            if (!realmLaunchSettings.IsLocalSceneDevelopmentRealm)
+            if (realmLaunchSettings.CurrentMode is LaunchMode.Play)
             {
                 var memoryCache = new MemoryCache<string, string>();
                 staticContainer.CacheCleaner.Register(memoryCache);
@@ -240,7 +246,7 @@ namespace Global.Dynamic
                 in staticContainer,
                 bootstrapContainer.DecentralandUrlsSource,
                 bootstrapContainer.IdentityCache,
-                staticContainer.WebRequestsContainer.WebRequestController,
+                staticContainer.WebRequestsContainer.SceneWebRequestController,
                 dynamicWorldContainer.RealmController.RealmData,
                 dynamicWorldContainer.ProfileRepository,
                 dynamicWorldContainer.RoomHub,
