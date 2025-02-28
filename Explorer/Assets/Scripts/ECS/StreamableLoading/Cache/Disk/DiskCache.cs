@@ -143,7 +143,7 @@ namespace ECS.StreamableLoading.Cache.Disk
             if (result.Success == false)
                 return EnumResult<Option<T>, TaskError>.ErrorResult(result.Error!.Value.State, result.Error.Value.Message!);
 
-            using SlicedOwnedMemory<byte>? data = result.Value;
+            SlicedOwnedMemory<byte>? data = result.Value;
 
             if (data == null)
                 return EnumResult<Option<T>, TaskError>.SuccessResult(Option<T>.None);

@@ -48,12 +48,15 @@ namespace ECS.StreamableLoading.Common
 
         public UniTask<PartialLoadingState> DeserializeAsync(SlicedOwnedMemory<byte> data, CancellationToken token)
         {
-            var meta = Meta.FromSpan(data.Memory.Span);
-            var fileData = data.Memory.Slice(Meta.META_SIZE);
+            using (data)
+            {
+                var meta = Meta.FromSpan(data.Memory.Span);
+                var fileData = data.Memory.Slice(Meta.META_SIZE);
 
-            var partialLoadingState = new PartialLoadingState(meta.MaxFileSize, meta.IsFullyDownloaded);
-            partialLoadingState.AppendData(fileData);
-            return UniTask.FromResult(partialLoadingState);
+                var partialLoadingState = new PartialLoadingState(meta.MaxFileSize, meta.IsFullyDownloaded);
+                partialLoadingState.AppendData(fileData);
+                return UniTask.FromResult(partialLoadingState);
+            }
         }
 
         public readonly struct State
