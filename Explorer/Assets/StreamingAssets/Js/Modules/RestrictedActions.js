@@ -2,39 +2,16 @@ module.exports.movePlayerTo = async function(message) {
     const cameraTarget = message.cameraTarget != undefined
     const avatarTarget = message.avatarTarget != undefined
     
-    if (cameraTarget && avatarTarget) {
-        UnityRestrictedActionsApi.MovePlayerTo(
-            message.newRelativePosition.x,
-            message.newRelativePosition.y,
-            message.newRelativePosition.z,
-            message.cameraTarget.x,
-            message.cameraTarget.y,
-            message.cameraTarget.z,
-            message.avatarTarget.x,
-            message.avatarTarget.y,
-            message.avatarTarget.z)
-    } else if (cameraTarget) {
-        UnityRestrictedActionsApi.MovePlayerToCameraTargetOnly(
-            message.newRelativePosition.x,
-            message.newRelativePosition.y,
-            message.newRelativePosition.z,
-            message.cameraTarget.x,
-            message.cameraTarget.y,
-            message.cameraTarget.z)
-    } else if (avatarTarget) {
-        UnityRestrictedActionsApi.MovePlayerToAvatarTargetOnly(
-            message.newRelativePosition.x,
-            message.newRelativePosition.y,
-            message.newRelativePosition.z,
-            message.avatarTarget.x,
-            message.avatarTarget.y,
-            message.avatarTarget.z)
-    } else {
-        UnityRestrictedActionsApi.MovePlayerTo(
-            message.newRelativePosition.x,
-            message.newRelativePosition.y,
-            message.newRelativePosition.z)
-    }
+    UnityRestrictedActionsApi.MovePlayerTo(
+        message.newRelativePosition.x,
+        message.newRelativePosition.y,
+        message.newRelativePosition.z,
+        cameraTarget ? message.cameraTarget.x : null,
+        cameraTarget ? message.cameraTarget.y : null,
+        cameraTarget ? message.cameraTarget.z : null,
+        avatarTarget ? message.avatarTarget.x : null,
+        avatarTarget ? message.avatarTarget.y : null,
+        avatarTarget ? message.avatarTarget.z : null)
     
     return {};
 }
