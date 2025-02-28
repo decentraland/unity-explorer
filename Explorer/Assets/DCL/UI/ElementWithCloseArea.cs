@@ -24,12 +24,14 @@ namespace DCL.UI
             Closed?.Invoke();
         }
 
+        public event IPanelInSharedSpace.ViewShowingCompleteDelegate? ViewShowingComplete;
         public bool IsVisibleInSharedSpace => gameObject.activeSelf;
 
         public async UniTask ShowInSharedSpaceAsync(CancellationToken ct, object parameters = null)
         {
             gameObject.SetActive(true);
             await PlayShowAnimationAsync(ct);
+            ViewShowingComplete?.Invoke(this);
             await UniTask.CompletedTask;
         }
 

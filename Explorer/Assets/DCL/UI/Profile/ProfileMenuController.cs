@@ -45,8 +45,11 @@ namespace DCL.UI.ProfileElements
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
-        protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
-            UniTask.Never(ct);
+        protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
+        {
+            ViewShowingComplete?.Invoke(this);
+            await UniTask.Never(ct);
+        }
 
         protected override void OnViewInstantiated()
         {
@@ -91,6 +94,7 @@ namespace DCL.UI.ProfileElements
             systemSectionController.Dispose();
         }
 
+        public event IPanelInSharedSpace.ViewShowingCompleteDelegate? ViewShowingComplete;
         public bool IsVisibleInSharedSpace => State != ControllerState.ViewHidden;
 
         public async UniTask ShowInSharedSpaceAsync(CancellationToken ct, object parameters = null) =>

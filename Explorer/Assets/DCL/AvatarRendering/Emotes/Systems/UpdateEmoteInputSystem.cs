@@ -75,7 +75,7 @@ namespace DCL.AvatarRendering.Emotes
                 TriggerEmoteQuery(World, triggeredEmote);
                 triggeredEmote = -1;
             }
-
+/*
             if (shortcuts.EmoteWheel.WasReleasedThisFrame()
                 // Close and open actions conflicts each other since they are assigned to the same input key
                 // we need to avoid opening it again after it has been recently closed
@@ -89,7 +89,7 @@ namespace DCL.AvatarRendering.Emotes
             }
 
             if (framesAfterWheelWasClosed > 0)
-                framesAfterWheelWasClosed--;
+                framesAfterWheelWasClosed--;*/
         }
 
         [Query]

@@ -149,6 +149,8 @@ namespace DCL.EmotesWheel
 
             UnblockShortcutToEmoteSlotsSetup();
 
+            ViewShowingComplete?.Invoke(this);
+
             await closeViewTask.Task;
             await sharedSpaceManager.HideAsync(PanelsSharingSpace.EmotesWheel);
         }
@@ -247,7 +249,7 @@ namespace DCL.EmotesWheel
 
         private void UnblockUnwantedInputs()
         {
-            inputBlock.Disable(InputMapComponent.Kind.EMOTES, InputMapComponent.Kind.SHORTCUTS);
+            inputBlock.Disable(InputMapComponent.Kind.EMOTES/*, InputMapComponent.Kind.SHORTCUTS*/);
         }
 
         // Note: This must be called once the menu has loaded and is ready to be closed
@@ -294,6 +296,7 @@ namespace DCL.EmotesWheel
         private static int GetSlotFromInputName(string name) =>
             int.Parse(name[^1].ToString());
 
+        public event IPanelInSharedSpace.ViewShowingCompleteDelegate? ViewShowingComplete;
         public bool IsVisibleInSharedSpace => State != ControllerState.ViewHidden;
 
         public async UniTask ShowInSharedSpaceAsync(CancellationToken ct, object parameters = null)

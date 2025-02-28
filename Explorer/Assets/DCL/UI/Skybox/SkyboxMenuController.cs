@@ -23,8 +23,12 @@ namespace DCL.UI.Skybox
             this.sharedSpaceManager = sharedSpaceManager;
         }
 
-        protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
-            UniTask.Never(ct);
+        protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
+        {
+            ViewShowingComplete?.Invoke(this);
+            await UniTask.WaitUntilCanceled(ct);
+        }
+
 
         protected override void OnViewInstantiated()
         {
@@ -100,6 +104,7 @@ namespace DCL.UI.Skybox
             skyboxSettings.NormalizedTimeChanged -= OnNormalizedTimeChanged;
         }
 
+        public event IPanelInSharedSpace.ViewShowingCompleteDelegate? ViewShowingComplete;
         public bool IsVisibleInSharedSpace => State != ControllerState.ViewHidden;
 
         public async UniTask ShowInSharedSpaceAsync(CancellationToken ct, object parameters = null)

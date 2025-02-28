@@ -41,7 +41,6 @@ namespace DCL.UI.Sidebar
         private readonly ISharedSpaceManager sharedSpaceManager;
 
         private CancellationTokenSource profileWidgetCts = new ();
-        private CancellationTokenSource systemMenuCts = new ();
 
         public event Action? HelpOpened;
 
@@ -113,7 +112,6 @@ namespace DCL.UI.Sidebar
             viewInstance.helpButton.onClick.AddListener(OnHelpButtonClicked);
             notificationsBusController.SubscribeToNotificationTypeReceived(NotificationType.REWARD_ASSIGNMENT, OnRewardNotificationReceived);
             notificationsBusController.SubscribeToNotificationTypeClick(NotificationType.REWARD_ASSIGNMENT, OnRewardNotificationClicked);
-//            viewInstance.sidebarSettingsWidget.OnViewHidden += OnSidebarSettingsClosed;
             viewInstance.skyboxButton.Button.onClick.AddListener(OpenSkyboxSettings);
             viewInstance.SkyboxMenuView.OnViewHidden += OnSkyboxSettingsClosed;
             viewInstance.controlsButton.onClick.AddListener(OnControlsButtonClicked);
@@ -134,10 +132,10 @@ namespace DCL.UI.Sidebar
             chatHistory.MessageAdded += OnChatHistoryMessageAdded;
             chatView.FoldingChanged += OnChatViewFoldingChanged;
 
-            sharedSpaceManager.RegisterPanelController(PanelsSharingSpace.Notifications, notificationsMenuController);
-            sharedSpaceManager.RegisterPanelController(PanelsSharingSpace.Skybox, skyboxMenuController);
-            sharedSpaceManager.RegisterPanelController(PanelsSharingSpace.SidebarProfile, profileMenuController);
-            sharedSpaceManager.RegisterPanelController(PanelsSharingSpace.SidebarSettings, viewInstance!.sidebarSettingsWidget);
+            sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Notifications, notificationsMenuController);
+            sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Skybox, skyboxMenuController);
+            sharedSpaceManager.RegisterPanel(PanelsSharingSpace.SidebarProfile, profileMenuController);
+            sharedSpaceManager.RegisterPanel(PanelsSharingSpace.SidebarSettings, viewInstance!.sidebarSettingsWidget);
         }
 
         private void OnEmotesWheelButtonClicked()
@@ -162,6 +160,7 @@ namespace DCL.UI.Sidebar
 
         private void OnUnreadMessagesButtonClicked()
         {
+            sidebarBus.BlockSidebar();
             sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.Chat);
         }
 
@@ -174,7 +173,6 @@ namespace DCL.UI.Sidebar
         private void OnControlsButtonClicked()
         {
             mvcManager.ShowAsync(ControlsPanelController.IssueCommand()).Forget();
- //           sidebarActionsBus.OpenWidget();
         }
 
         private void OnAutoHideToggleChanged(bool value)
@@ -182,31 +180,13 @@ namespace DCL.UI.Sidebar
             sidebarBus.SetAutoHideSidebarStatus(value);
         }
 
-        private void CloseAllWidgets()
-        {
-            systemMenuCts = systemMenuCts.SafeRestart();
-/*
-            if (profileMenuController.State is ControllerState.ViewFocused or ControllerState.ViewBlurred)
-                profileMenuController.HideViewAsync(systemMenuCts.Token).Forget();
-
-            if (skyboxMenuController.State is ControllerState.ViewFocused or ControllerState.ViewBlurred)
-                skyboxMenuController.HideViewAsync(systemMenuCts.Token).Forget();
-
-            notificationsMenuController.ToggleNotificationsPanel(true);
-            viewInstance!.sidebarSettingsWidget.CloseElement();*/
-            sidebarBus.UnblockSidebar();
-        }
-
         private void OpenSidebarSettings()
         {
-            CloseAllWidgets();
             sidebarBus.BlockSidebar();
 
             sharedSpaceManager.ShowAsync(PanelsSharingSpace.SidebarSettings).Forget();
             viewInstance.sidebarSettingsButton.OnSelect(null);
             viewInstance.sidebarSettingsWidget.Closed += OnSidebarSettingsClosed;
-
- //           sidebarActionsBus.OpenWidget();
         }
 
         private void OnSidebarSettingsClosed()
@@ -248,7 +228,6 @@ namespace DCL.UI.Sidebar
         {
             base.OnViewClose();
             profileWidgetCts.SafeCancelAndDispose();
-            systemMenuCts.SafeCancelAndDispose();
         }
 
         private void OpenProfileMenu()
@@ -258,51 +237,35 @@ namespace DCL.UI.Sidebar
                 //Profile is already open
                 return;
 
-            CloseAllWidgets();
             sidebarBus.BlockSidebar();
 
-            systemMenuCts = systemMenuCts.SafeRestart();
             viewInstance!.ProfileMenuView.gameObject.SetActive(true);
-            sharedSpaceManager.ShowAsync(PanelsSharingSpace.SidebarProfile).Forget();
-//            profileMenuController.LaunchViewLifeCycleAsync(new CanvasOrdering(CanvasOrdering.SortingLayer.Overlay, 0), new ControllerNoData(), systemMenuCts.Token).Forget();
- //           sidebarActionsBus.OpenWidget();
+            sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.SidebarProfile).Forget();
         }
 
-        private void OpenSkyboxSettings()
+        private async void OpenSkyboxSettings()
         {
-            CloseAllWidgets();
             sidebarBus.BlockSidebar();
 
-            systemMenuCts = systemMenuCts.SafeRestart();
-            viewInstance!.skyboxButton.SetSelected(true);
-            sharedSpaceManager.ShowAsync(PanelsSharingSpace.Skybox).Forget();
-//            skyboxMenuController.LaunchViewLifeCycleAsync(new CanvasOrdering(CanvasOrdering.SortingLayer.Overlay, 0), new ControllerNoData(), systemMenuCts.Token).Forget();
-//            sidebarActionsBus.OpenWidget();
+            await sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.Skybox);
         }
 
         private void OnSkyboxSettingsClosed()
         {
             sidebarBus.UnblockSidebar();
-            viewInstance!.skyboxButton.SetSelected(false);
         }
 
         private async void OpenNotificationsPanel()
         {
-            CloseAllWidgets();
             sidebarBus.BlockSidebar();
             await sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.Notifications);
-//            notificationsMenuController.ToggleNotificationsPanel(false);
- //           sidebarActionsBus.OpenWidget();
         }
 
         private async void OpenExplorePanelInSection(ExploreSections section, BackpackSections backpackSection = BackpackSections.Avatar)
         {
-            CloseAllWidgets();
-
             mvcManager.ShowAsync(
                 ExplorePanelController.IssueCommand(
                     new ExplorePanelParameter(section, backpackSection)));
-//            sidebarActionsBus.OpenWidget();
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>

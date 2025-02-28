@@ -265,7 +265,7 @@ namespace DCL.Chat
 
         protected override void OnBlur()
         {
-            viewDependencies.DclInput.UI.Submit.performed -= OnSubmitShortcutPerformed;
+ //           viewDependencies.DclInput.UI.Submit.performed -= OnSubmitShortcutPerformed;
             viewInstance!.DisableInputBoxSubmissions();
         }
 
@@ -274,7 +274,7 @@ namespace DCL.Chat
             if (viewInstance!.IsFocused) return;
 
             viewInstance.EnableInputBoxSubmissions();
-            viewDependencies.DclInput.UI.Submit.performed += OnSubmitShortcutPerformed;
+ //           viewDependencies.DclInput.UI.Submit.performed += OnSubmitShortcutPerformed;
         }
 
         protected override void OnViewShow()
@@ -303,8 +303,11 @@ namespace DCL.Chat
 
         private bool canUpdateParticipants => islandRoom.Info.ConnectionState == ConnectionState.ConnConnected;
 
-        protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
-            UniTask.CompletedTask;
+        protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
+        {
+            ViewShowingComplete?.Invoke(this);
+            await UniTask.Never(ct);
+        }
 
         private void CreateChatBubble(ChatChannel channel, ChatMessage chatMessage, bool isSentByOwnUser)
         {
@@ -479,11 +482,13 @@ namespace DCL.Chat
             }
         }
 
+        public event IPanelInSharedSpace.ViewShowingCompleteDelegate? ViewShowingComplete;
         public bool IsVisibleInSharedSpace => State != ControllerState.ViewHidden && viewInstance!.IsUnfolded;
 
         public async UniTask ShowInSharedSpaceAsync(CancellationToken ct, object parameters = null)
         {
             IsUnfolded = true;
+            ViewShowingComplete?.Invoke(this);
             await UniTask.CompletedTask;
         }
 

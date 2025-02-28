@@ -156,7 +156,7 @@ namespace DCL.PluginSystem.Global
                 selfProfile, emoteStorage, emoteWheelRarityBackgrounds, world, playerEntity, thumbnailProvider,
                 inputBlock, dclInput, mvcManager, cursor, sharedSpaceManager);
 
-            sharedSpaceManager.RegisterPanelController(PanelsSharingSpace.EmotesWheel, emotesWheelController);
+            sharedSpaceManager.RegisterPanel(PanelsSharingSpace.EmotesWheel, emotesWheelController);
 
             mvcManager.RegisterController(emotesWheelController);
         }

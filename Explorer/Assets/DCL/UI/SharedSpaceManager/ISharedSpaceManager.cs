@@ -8,6 +8,6 @@ namespace DCL.UI.SharedSpaceManager
         UniTask ShowAsync(PanelsSharingSpace panel, object parameters = null);
         UniTask HideAsync(PanelsSharingSpace panel, object parameters = null);
         UniTask ToggleVisibilityAsync(PanelsSharingSpace panel, object parameters = null);
-        void RegisterPanelController(PanelsSharingSpace panel, IPanelInSharedSpace controller);
+        void RegisterPanel(PanelsSharingSpace panel, IPanelInSharedSpace controller);
     }
 }

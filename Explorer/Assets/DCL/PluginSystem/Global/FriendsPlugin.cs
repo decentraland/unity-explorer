@@ -185,7 +185,7 @@ namespace DCL.PluginSystem.Global
                 isConnectivityStatusEnabled,
                 sharedSpaceManager);
 
-            sharedSpaceManager.RegisterPanelController(PanelsSharingSpace.Friends, friendsPanelController);
+            sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Friends, friendsPanelController);
 
             mvcManager.RegisterController(friendsPanelController);
 

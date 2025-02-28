@@ -95,16 +95,7 @@ namespace DCL.Notifications.NotificationsMenu
             sidebarBus.UnblockSidebar();
             notificationPanelCts = notificationPanelCts.SafeRestart();
             sharedSpaceManager.HideAsync(PanelsSharingSpace.Notifications).Forget();
-//            view.HideAsync(notificationPanelCts.Token).Forget();
         }
-/*
-        public void ToggleNotificationsPanel(bool forceClose)
-        {
-            notificationPanelCts = notificationPanelCts.SafeRestart();
-
-            if (!forceClose && !view.gameObject.activeSelf) { view.ShowAsync(notificationPanelCts.Token).Forget(); }
-            else if (view.gameObject.activeSelf) { view.HideAsync(notificationPanelCts.Token).Forget(); }
-        }*/
 
         private void OnViewShown()
         {
@@ -283,12 +274,14 @@ namespace DCL.Notifications.NotificationsMenu
             view.LoopList.RefreshAllShownItem();
         }
 
+        public event IPanelInSharedSpace.ViewShowingCompleteDelegate? ViewShowingComplete;
         public bool IsVisibleInSharedSpace => view.gameObject.activeSelf;
 
         public async UniTask ShowInSharedSpaceAsync(CancellationToken ct, object parameters = null)
         {
             notificationPanelCts = notificationPanelCts.SafeRestart();
             await view.ShowAsync(notificationPanelCts.Token);
+            ViewShowingComplete?.Invoke(this);
         }
 
         public async UniTask HideInSharedSpaceAsync(CancellationToken ct)

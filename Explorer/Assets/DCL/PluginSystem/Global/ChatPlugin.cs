@@ -110,7 +110,7 @@ namespace DCL.PluginSystem.Global
                 profileCache
             );
 
-            sharedSpaceManager.RegisterPanelController(PanelsSharingSpace.Chat, chatController);
+            sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Chat, chatController);
 
             mvcManager.RegisterController(chatController);
         }
