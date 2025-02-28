@@ -66,9 +66,6 @@ namespace ECS.StreamableLoading.Cache.Disk
         UniTask<T> DeserializeAsync([TakesOwnership] SlicedOwnedMemory<byte> data, CancellationToken token);
     }
 
-    /// <summary>
-    /// Required because MemoryOwner does not guarantee that the memory is the exact size
-    /// </summary>
     public readonly struct SlicedOwnedMemory<T> : IDisposable where T : unmanaged
     {
         private readonly UnmanagedMemoryManager<T> memoryManager;
@@ -82,7 +79,7 @@ namespace ECS.StreamableLoading.Cache.Disk
             {
                 void* memory = UnsafeUtility.Malloc(length, 64, Allocator.Persistent);
                 ptr = new IntPtr(memory);
-                memoryManager = new UnmanagedMemoryManager<T>(memory, length);
+                memoryManager = UnmanagedMemoryManager<T>.New(memory, length);
             }
 
             ReportHub.LogProductionInfo($"Request to allocate memory with size: {Utility.ByteSize.ToReadableString((ulong)length)}");
@@ -91,18 +88,28 @@ namespace ECS.StreamableLoading.Cache.Disk
         public void Dispose()
         {
             unsafe { UnsafeUtility.Free(ptr.ToPointer(), Allocator.Persistent); }
+            UnmanagedMemoryManager<T>.Release(memoryManager);
         }
     }
 
     public unsafe class UnmanagedMemoryManager<T> : MemoryManager<T> where T : unmanaged
     {
-        private readonly void* ptr;
-        private readonly int length;
+        private static readonly ThreadSafeObjectPool<UnmanagedMemoryManager<T>> POOL = new (() => new UnmanagedMemoryManager<T>());
 
-        public UnmanagedMemoryManager(void* ptr, int length)
+        private void* ptr;
+        private int length;
+
+        public static UnmanagedMemoryManager<T> New(void* ptr, int length)
         {
-            this.ptr = ptr;
-            this.length = length;
+            var instance = POOL.Get();
+            instance.ptr = ptr;
+            instance.length = length;
+            return instance;
+        }
+
+        public static void Release(UnmanagedMemoryManager<T> instance)
+        {
+            POOL.Release(instance);
         }
 
         public override Span<T> GetSpan() =>
