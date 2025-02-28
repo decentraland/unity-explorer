@@ -92,6 +92,8 @@ namespace ECS.StreamableLoading.Cache.Disk
     {
         ReadOnlyMemory<byte> Current { get; }
 
+        int? TotalSize { get; }
+
         bool MoveNext();
     }
 
@@ -166,6 +168,8 @@ namespace ECS.StreamableLoading.Cache.Disk
             }
         }
 
+        public int? TotalSize => null;
+
         public bool MoveNext()
         {
             // index == -1 because it doesn't make a sense to put an uniteratable sequence
@@ -197,6 +201,8 @@ namespace ECS.StreamableLoading.Cache.Disk
         }
 
         public ReadOnlyMemory<byte> Current => data;
+
+        public int? TotalSize => data.Length;
 
         public bool MoveNext()
         {
