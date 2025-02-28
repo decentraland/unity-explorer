@@ -82,7 +82,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             FriendListSectionUtilities.OpenProfilePassport(contextMenuFriendProfile, passportBridge);
 
         private void BlockUserCtx() =>
-            FriendListSectionUtilities.BlockUserClicked(contextMenuFriendProfile);
+            FriendListSectionUtilities.BlockUserClicked(mvcManager, contextMenuFriendProfile.Address, contextMenuFriendProfile.Name);
 
         private void ShowEmptyState()
         {

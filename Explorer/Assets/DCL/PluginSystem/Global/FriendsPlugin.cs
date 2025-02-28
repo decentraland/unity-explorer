@@ -7,6 +7,7 @@ using DCL.FeatureFlags;
 using DCL.Friends;
 using DCL.Friends.Chat;
 using DCL.Friends.UI;
+using DCL.Friends.UI.BlockUserPrompt;
 using DCL.Friends.UI.FriendPanel;
 using DCL.Friends.UI.PushNotifications;
 using DCL.Friends.UI.Requests;
@@ -225,6 +226,17 @@ namespace DCL.PluginSystem.Global
             mvcManager.RegisterController(unfriendConfirmationPopupController);
 
             loadingStatus.CurrentStage.Subscribe(PreWarmFriends);
+
+            if (includeUserBlocking)
+            {
+                BlockUserPromptView blockUserPromptPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.BlockUserPromptPrefab, ct)).Value;
+
+                var blockUserPromptController = new BlockUserPromptController(
+                    BlockUserPromptController.CreateLazily(blockUserPromptPrefab, null),
+                    injectableFriendService);
+
+                mvcManager.RegisterController(blockUserPromptController);
+            }
         }
 
         private void PreWarmFriends(LoadingStatus.LoadingStage stage)
@@ -304,6 +316,9 @@ namespace DCL.PluginSystem.Global
         [field: SerializeField]
         public UnfriendConfirmationPopupAssetReference UnfriendConfirmationPrefab { get; set; }
 
+        [field: SerializeField]
+        public BlockUserPromptPopupAssetReference BlockUserPromptPrefab { get; set; }
+
         [Serializable]
         public class FriendRequestAssetReference : ComponentReference<FriendRequestView>
         {
@@ -314,6 +329,12 @@ namespace DCL.PluginSystem.Global
         public class UnfriendConfirmationPopupAssetReference : ComponentReference<UnfriendConfirmationPopupView>
         {
             public UnfriendConfirmationPopupAssetReference(string guid) : base(guid) { }
+        }
+
+        [Serializable]
+        public class BlockUserPromptPopupAssetReference : ComponentReference<BlockUserPromptView>
+        {
+            public BlockUserPromptPopupAssetReference(string guid) : base(guid) { }
         }
     }
 }
