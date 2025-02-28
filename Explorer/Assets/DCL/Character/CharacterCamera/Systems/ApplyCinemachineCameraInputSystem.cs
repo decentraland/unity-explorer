@@ -88,12 +88,6 @@ namespace DCL.CharacterCamera.Systems
                 case CameraMode.Free:
                     cinemachinePreset.ForceFreeCameraLookAt(lookAtIntent);
                     break;
-                case CameraMode.SDKCamera:
-                    // Character main cameras have to be updated since we don't know to which one will
-                    // return after the SDK camera is disabled.
-                    cinemachinePreset.ForceThirdPersonCameraLookAt(lookAtIntent);
-                    cinemachinePreset.ForceFirstPersonCameraLookAt(lookAtIntent);
-                    break;
                 default:
                     ReportHub.LogError(GetReportData(), $"Camera mode is unknown {camera.Mode}");
                     break;
