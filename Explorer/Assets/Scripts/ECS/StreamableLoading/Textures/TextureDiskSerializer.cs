@@ -128,24 +128,5 @@ namespace ECS.StreamableLoading.Textures
                     linear = array[10] == 1,
                 };
         }
-
-        private class MemoryOwnedTexture2D : IOwnedTexture2D
-        {
-            private readonly SlicedOwnedMemory<byte> memoryOwner;
-
-            public Texture2D Texture { get; }
-
-            public MemoryOwnedTexture2D(SlicedOwnedMemory<byte> memoryOwner, Texture2D texture)
-            {
-                this.memoryOwner = memoryOwner;
-                Texture = texture;
-            }
-
-            public void Dispose()
-            {
-                memoryOwner.Dispose();
-                Object.Destroy(Texture);
-            }
-        }
     }
 }

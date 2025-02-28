@@ -5,6 +5,8 @@ using DCL.Optimization.ThreadSafePool;
 using System;
 using System.Buffers;
 using System.Threading;
+using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
 using Utility.Ownership;
 using Utility.Types;
 
@@ -67,25 +69,51 @@ namespace ECS.StreamableLoading.Cache.Disk
     /// <summary>
     /// Required because MemoryOwner does not guarantee that the memory is the exact size
     /// </summary>
-    public readonly struct SlicedOwnedMemory<T> : IDisposable
+    public readonly struct SlicedOwnedMemory<T> : IDisposable where T : unmanaged
     {
-        private readonly IMemoryOwner<T> owner;
-        private readonly int length;
+        private readonly UnmanagedMemoryManager<T> memoryManager;
+        private readonly IntPtr ptr;
 
-        public Memory<T> Memory => owner.Memory.Slice(0, length);
+        public Memory<T> Memory => memoryManager.Memory;
 
-        public SlicedOwnedMemory(IMemoryOwner<T> owner, int length)
+        public SlicedOwnedMemory(int length)
         {
-            this.owner = owner;
-            this.length = length;
+            unsafe
+            {
+                void* memory = UnsafeUtility.Malloc(length, 64, Allocator.Persistent);
+                ptr = new IntPtr(memory);
+                memoryManager = new UnmanagedMemoryManager<T>(memory, length);
+            }
 
             ReportHub.LogProductionInfo($"Request to allocate memory with size: {Utility.ByteSize.ToReadableString((ulong)length)}");
         }
 
         public void Dispose()
         {
-            owner.Dispose();
+            unsafe { UnsafeUtility.Free(ptr.ToPointer(), Allocator.Persistent); }
         }
+    }
+
+    public unsafe class UnmanagedMemoryManager<T> : MemoryManager<T> where T : unmanaged
+    {
+        private readonly void* ptr;
+        private readonly int length;
+
+        public UnmanagedMemoryManager(void* ptr, int length)
+        {
+            this.ptr = ptr;
+            this.length = length;
+        }
+
+        public override Span<T> GetSpan() =>
+            new (ptr, length);
+
+        public override MemoryHandle Pin(int elementIndex = 0) =>
+            new ((byte*)ptr + (elementIndex * sizeof(T)));
+
+        public override void Unpin() { }
+
+        protected override void Dispose(bool disposing) { }
     }
 
     public interface IMemoryIterator : IDisposable

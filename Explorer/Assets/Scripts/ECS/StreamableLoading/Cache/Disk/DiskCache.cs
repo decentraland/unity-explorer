@@ -3,7 +3,6 @@ using DCL.Optimization.Hashing;
 using ECS.StreamableLoading.Cache.Disk.CleanUp;
 using ECS.StreamableLoading.Cache.Disk.Lock;
 using System;
-using System.Buffers;
 using System.IO;
 using System.Threading;
 using Utility.Multithreading;
@@ -76,7 +75,7 @@ namespace ECS.StreamableLoading.Cache.Disk
 
                 {
                     await using var stream = new FileStream(path, FileMode.Open, FileAccess.Read);
-                    data = new SlicedOwnedMemory<byte>(MemoryPool<byte>.Shared!.Rent((int)stream.Length)!, (int)stream.Length);
+                    data = new SlicedOwnedMemory<byte>((int)stream.Length);
                     int _ = await stream.ReadAsync(data.Memory, token);
                 }
 
