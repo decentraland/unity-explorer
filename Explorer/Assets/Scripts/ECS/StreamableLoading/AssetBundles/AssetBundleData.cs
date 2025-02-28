@@ -76,7 +76,7 @@ namespace ECS.StreamableLoading.AssetBundles
         }
 
         /// <summary>
-        ///     Constructor for dependencies (with the unknown asset type)
+        ///     Constructor for dependencies (with the unknown asset type) used for partial flow
         /// </summary>
         internal AssetBundleData(AssetBundle assetBundle, AssetBundleMetrics? metrics, AssetBundleData[] dependencies, MemoryStream underlyingMemory) : base(assetBundle, ReportCategory.ASSET_BUNDLES)
         {
@@ -87,6 +87,19 @@ namespace ECS.StreamableLoading.AssetBundles
             this.assetType = null;
             Dependencies = dependencies;
             this.underlyingMemory = underlyingMemory;
+        }
+
+        /// <summary>
+        ///     Constructor for dependencies (with the unknown asset type) used for regular flow
+        /// </summary>
+        public AssetBundleData(AssetBundle assetBundle, AssetBundleMetrics? metrics, AssetBundleData[] dependencies) : base(assetBundle, ReportCategory.ASSET_BUNDLES)
+        {
+            //Dependencies cant be unloaded, since we dont know who will need them =(
+            Metrics = metrics;
+
+            this.mainAsset = null;
+            this.assetType = null;
+            Dependencies = dependencies;
         }
 
         public AssetBundleData(AssetBundle assetBundle, AssetBundleMetrics? metrics, GameObject mainAsset, AssetBundleData[] dependencies)
