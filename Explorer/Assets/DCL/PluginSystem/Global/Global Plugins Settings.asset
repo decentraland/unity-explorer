@@ -684,8 +684,8 @@ MonoBehaviour:
         frameTimeCapDeepProfiler: 300
         <ScenesLoadingBudget>k__BackingField: 100
         <AssetsLoadingBudget>k__BackingField: 50
-        <CoreWebRequestsBudget>k__BackingField: 17
-        <SceneWebRequestsBudget>k__BackingField: 3
+        <CoreWebRequestsBudget>k__BackingField: 19
+        <SceneWebRequestsBudget>k__BackingField: 1
     - rid: 6784895265412481026
       type: {class: CharacterCameraSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
