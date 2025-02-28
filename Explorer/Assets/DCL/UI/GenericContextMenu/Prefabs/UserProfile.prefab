@@ -2368,6 +2368,7 @@ MonoBehaviour:
   <CopyAddressButton>k__BackingField: {fileID: 5266447519604905867}
   <CopyAddressToast>k__BackingField: {fileID: 5916987618369578755}
   <ContentVerticalLayout>k__BackingField: {fileID: 6147078409291930632}
+  <ProfilePictureView>k__BackingField: {fileID: 7153360308053593950}
   <AddFriendButton>k__BackingField: {fileID: 7225785648317091492}
   <AcceptFriendButton>k__BackingField: {fileID: 2792953813415601642}
   <RemoveFriendButton>k__BackingField: {fileID: 2926700669047740195}
@@ -4659,6 +4660,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 1e79e296834574c5d9138852d94c8998, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &7153360308053593950 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 609007630589666506, guid: d64840fd5d5fce94fbdc7bddcba01226, type: 3}
+  m_PrefabInstance: {fileID: 7725492478520159124}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 946db314bdcc52a41a226ff3aa3acbbd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!224 &7506355118190265003 stripped

@@ -6,6 +6,7 @@ using DCL.Web3;
 using MVC;
 using System.Threading;
 using UnityEngine;
+using Utility;
 
 namespace DCL.UI.ProfileElements
 {
@@ -22,13 +23,13 @@ namespace DCL.UI.ProfileElements
         }
     }
 
-    public class ProfileThumbnailController : SimpleController <ProfileThumbnailView, ProfileThumbnailData, Color>
+    public class ProfilePictureController : SimpleController <ProfilePictureView, ProfileThumbnailData, Color>
     {
         private readonly IProfileThumbnailCache profileThumbnailCache;
+        private CancellationTokenSource cts;
 
-
-        public ProfileThumbnailController(
-            ProfileThumbnailView view,
+        public ProfilePictureController(
+            ProfilePictureView view,
             ProfileThumbnailData data,
             IProfileThumbnailCache profileThumbnailCache) : base(view, data)
         {
@@ -46,11 +47,13 @@ namespace DCL.UI.ProfileElements
 
         private async UniTaskVoid UpdateThumbnailAsync()
         {
-            await viewInstance.ThumbnailImageView.LoadThumbnailSafeAsync(profileThumbnailCache, inputData.UserAddress, inputData.FaceSnapshotUrl, new CancellationToken() );
+            cts = cts.SafeRestart();
+            await viewInstance.ThumbnailImageView.LoadThumbnailSafeAsync(profileThumbnailCache, inputData.UserAddress, inputData.FaceSnapshotUrl, cts.Token );
         }
 
         public override void Dispose()
         {
+            cts.SafeCancelAndDispose();
         }
     }
 }

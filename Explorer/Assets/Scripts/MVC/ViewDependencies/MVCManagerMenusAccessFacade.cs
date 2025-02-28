@@ -37,6 +37,7 @@ namespace MVC
         private readonly ObjectProxy<IFriendsService> friendServiceProxy;
         private readonly IProfileCache profileCache;
         private readonly IChatInputBus chatInputBus;
+        private readonly IProfileThumbnailCache profileThumbnailCache;
 
         private readonly UserProfileContextMenuControlSettings userProfileContextMenuControlSettings;
         private readonly MentionUserButtonContextMenuControlSettings mentionUserButtonContextMenuControlSettings;
@@ -49,12 +50,13 @@ namespace MVC
             ISystemClipboard systemClipboard,
             ObjectProxy<IFriendsService> friendServiceProxy,
             IProfileCache profileCache,
-            IChatInputBus chatInputBus)
+            IChatInputBus chatInputBus, IProfileThumbnailCache profileThumbnailCache)
         {
             this.mvcManager = mvcManager;
             this.friendServiceProxy = friendServiceProxy;
             this.profileCache = profileCache;
             this.chatInputBus = chatInputBus;
+            this.profileThumbnailCache = profileThumbnailCache;
 
             userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings(systemClipboard, OnFriendsButtonClicked);
             openUserProfileButtonContextMenuControlSettings = new OpenUserProfileButtonContextMenuControlSettings(OnShowUserPassportClicked);
@@ -96,7 +98,10 @@ namespace MVC
                 var friendshipStatus = await friendServiceProxy.Object.GetFriendshipStatusAsync(profile.UserId, ct);
                 contextMenuFriendshipStatus = ConvertFriendshipStatus(friendshipStatus);
             }
-            userProfileContextMenuControlSettings.SetInitialData(profile.DisplayName, profile.UserId, profile.HasClaimedName, profile.UserNameColor, contextMenuFriendshipStatus);
+
+            Sprite thumbnailSprite = await profileThumbnailCache.GetThumbnailAsync(profile, ct);
+
+            userProfileContextMenuControlSettings.SetInitialData(profile.DisplayName, profile.UserId, profile.HasClaimedName, profile.UserNameColor, contextMenuFriendshipStatus, thumbnailSprite);
             mentionUserButtonContextMenuControlSettings.SetData(profile);
             openUserProfileButtonContextMenuControlSettings.SetData(profile);
 

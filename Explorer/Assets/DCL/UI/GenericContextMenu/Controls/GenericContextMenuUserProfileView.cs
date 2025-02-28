@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.UI.GenericContextMenu.Controls.Configs;
+using DCL.UI.ProfileElements;
 using System;
 using System.Threading;
 using TMPro;
@@ -23,8 +24,6 @@ namespace DCL.UI.GenericContextMenu.Controls
             ADDRESS
         }
 
-        [field: SerializeField] public Image ThumbnailBackground { get; private set; }
-        [field: SerializeField] public ImageView ThumbnailImageView { get; private set; }
         [field: SerializeField] public TMP_Text UserName { get; private set; }
         [field: SerializeField] public TMP_Text UserNameTag { get; private set; }
         [field: SerializeField] public TMP_Text UserAddress { get; private set; }
@@ -35,6 +34,7 @@ namespace DCL.UI.GenericContextMenu.Controls
         [field: SerializeField] public Button CopyAddressButton { get; private set; }
         [field: SerializeField] public WarningNotificationView CopyAddressToast { get; private set; }
         [field: SerializeField] public VerticalLayoutGroup ContentVerticalLayout { get; private set; }
+        [field: SerializeField] public ProfilePictureView ProfilePictureView { get; private set; }
 
         [field: Header("Friendship Button")]
         [field: SerializeField] public Button AddFriendButton { get; private set; }
@@ -56,7 +56,8 @@ namespace DCL.UI.GenericContextMenu.Controls
             HorizontalLayoutComponent.padding = settings.horizontalLayoutPadding;
 
             ConfigureUserNameAndTag(settings.userName, settings.userAddress, settings.hasClaimedName, settings.userColor);
-            ThumbnailImageView.SetImage(settings.userThumbnail ?? defaultEmptyThumbnail);
+
+            ProfilePictureView.ThumbnailImageView.SetImage(settings.userThumbnail ?? defaultEmptyThumbnail);
             ConfigureFriendshipButton(settings);
 
             RectTransformComponent.sizeDelta = new Vector2(RectTransformComponent.sizeDelta.x, CalculateComponentHeight());
@@ -98,7 +99,7 @@ namespace DCL.UI.GenericContextMenu.Controls
             CopyAddressToast.Hide(true);
             CopyNameToast.Hide(true);
 
-            ThumbnailBackground.color = userColor;
+            ProfilePictureView.Setup(userColor);
         }
 
         private float CalculateComponentHeight()
