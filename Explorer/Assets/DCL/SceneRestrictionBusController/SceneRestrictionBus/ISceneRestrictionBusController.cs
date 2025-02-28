@@ -6,5 +6,6 @@ namespace DCL.SceneRestrictionBusController.SceneRestrictionBus
     {
         void PushSceneRestriction(SceneRestriction.SceneRestriction sceneRestriction);
         void SubscribeToSceneRestriction(SceneRestrictionBusController.SceneRestrictionReceivedDelegate callback);
+        void UnsubscribeToSceneRestriction(SceneRestrictionBusController.SceneRestrictionReceivedDelegate callback);
     }
 }

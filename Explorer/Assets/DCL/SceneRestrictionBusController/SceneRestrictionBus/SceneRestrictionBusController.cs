@@ -13,6 +13,9 @@ namespace DCL.SceneRestrictionBusController.SceneRestrictionBus
         public void SubscribeToSceneRestriction(SceneRestrictionReceivedDelegate callback) =>
             sceneRestrictionReceivedDelegate += callback;
 
+        public void UnsubscribeToSceneRestriction(SceneRestrictionReceivedDelegate callback) =>
+            sceneRestrictionReceivedDelegate -= callback;
+
         public void Dispose() =>
             sceneRestrictionReceivedDelegate = null;
     }
