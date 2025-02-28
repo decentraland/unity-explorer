@@ -36,7 +36,7 @@ namespace SceneRuntime.Factory.Tests
             foreach (byte[] bytes in list)
                 output.AddRange(bytes);
 
-            var slicedOwnedMemory = new SlicedOwnedMemory<byte>(new Owner(output.ToArray().AsMemory()), output.Count);
+            var slicedOwnedMemory = new SlicedOwnedMemory<byte>(output.Count);
 
             string deserialized = await serializer.DeserializeAsync(slicedOwnedMemory, token);
 
