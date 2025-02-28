@@ -27,7 +27,11 @@ namespace ECS.StreamableLoading.Textures
             unsafe { texture.LoadRawTextureData((IntPtr)handle.Pointer + meta.ArrayLength, data.Memory.Length - meta.ArrayLength); }
 
             texture.Apply();
-            return new Texture2DData(new MemoryOwnedTexture2D(data, texture));
+
+            // LoadRawTextureData copies the data
+            data.Dispose();
+
+            return new Texture2DData(texture);
         }
 
         private static SerializeMemoryIterator<State> ToArray(Texture2DData data)
