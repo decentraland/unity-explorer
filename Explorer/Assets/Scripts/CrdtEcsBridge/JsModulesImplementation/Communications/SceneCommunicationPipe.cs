@@ -27,7 +27,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
         {
             this.sceneRoom = sceneRoom;
             messagePipe = messagePipesHub.ScenePipe();
-            messagePipe.Subscribe<Scene>(Packet.MessageOneofCase.Scene, InvokeSubscriber);
+            messagePipe.Subscribe<Scene>(Packet.MessageOneofCase.Scene, InvokeSubscriber, IMessagePipe.ThreadStrict.ORIGIN_THREAD);
         }
 
         private void InvokeSubscriber(ReceivedMessage<Scene> message)
