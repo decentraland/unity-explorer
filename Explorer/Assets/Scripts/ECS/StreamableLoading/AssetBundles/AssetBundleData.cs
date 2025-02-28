@@ -1,14 +1,13 @@
 ﻿using CommunityToolkit.HighPerformance;
-using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Profiling;
+using ECS.StreamableLoading.Cache.Disk;
 using System;
 using System.Buffers;
 using System.IO;
 using Unity.Profiling;
 using UnityEngine;
 using UnityEngine.Assertions;
-using Utility;
 using Object = UnityEngine.Object;
 
 namespace ECS.StreamableLoading.AssetBundles
@@ -28,9 +27,9 @@ namespace ECS.StreamableLoading.AssetBundles
             private bool disposed;
 
             internal readonly Stream stream;
-            private readonly IMemoryOwner<byte> ownedMemory;
+            private readonly SlicedOwnedMemory<byte> ownedMemory;
 
-            public MemoryStream(IMemoryOwner<byte> ownedMemory)
+            public MemoryStream(SlicedOwnedMemory<byte> ownedMemory)
             {
                 this.ownedMemory = ownedMemory;
                 stream = ownedMemory.Memory.AsStream();

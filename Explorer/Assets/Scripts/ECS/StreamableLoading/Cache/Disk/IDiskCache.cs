@@ -1,3 +1,4 @@
+using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Optimization.Hashing;
@@ -66,8 +67,10 @@ namespace ECS.StreamableLoading.Cache.Disk
         UniTask<T> DeserializeAsync([TakesOwnership] SlicedOwnedMemory<byte> data, CancellationToken token);
     }
 
-    public readonly struct SlicedOwnedMemory<T> : IDisposable where T : unmanaged
+    public readonly struct SlicedOwnedMemory<T> : IDisposable where T: unmanaged
     {
+        public static readonly unsafe SlicedOwnedMemory<T> EMPTY = new (UnmanagedMemoryManager<T>.New((void*)0, 0));
+
         private readonly UnmanagedMemoryManager<T> memoryManager;
         private readonly IntPtr ptr;
 
@@ -85,14 +88,24 @@ namespace ECS.StreamableLoading.Cache.Disk
             ReportHub.LogProductionInfo($"Request to allocate memory with size: {Utility.ByteSize.ToReadableString((ulong)length)}");
         }
 
+        private SlicedOwnedMemory(UnmanagedMemoryManager<T> memoryManager)
+        {
+            this.memoryManager = memoryManager;
+            ptr = IntPtr.Zero;
+        }
+
         public void Dispose()
         {
+            if (ptr == IntPtr.Zero)
+                return;
+
             unsafe { UnsafeUtility.Free(ptr.ToPointer(), Allocator.Persistent); }
+
             UnmanagedMemoryManager<T>.Release(memoryManager);
         }
     }
 
-    public unsafe class UnmanagedMemoryManager<T> : MemoryManager<T> where T : unmanaged
+    public unsafe class UnmanagedMemoryManager<T> : MemoryManager<T> where T: unmanaged
     {
         private static readonly ThreadSafeObjectPool<UnmanagedMemoryManager<T>> POOL = new (() => new UnmanagedMemoryManager<T>());
 
