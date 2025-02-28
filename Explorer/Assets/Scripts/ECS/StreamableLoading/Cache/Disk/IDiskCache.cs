@@ -5,6 +5,7 @@ using DCL.Optimization.ThreadSafePool;
 using System;
 using System.Buffers;
 using System.Threading;
+using Utility.Ownership;
 using Utility.Types;
 
 namespace ECS.StreamableLoading.Cache.Disk
@@ -60,7 +61,7 @@ namespace ECS.StreamableLoading.Cache.Disk
         Ti Serialize(T data);
 
         /// <param name="data">Takes ownership of Memory and is responsible for its disposal</param>
-        UniTask<T> DeserializeAsync(SlicedOwnedMemory<byte> data, CancellationToken token);
+        UniTask<T> DeserializeAsync([TakesOwnership] SlicedOwnedMemory<byte> data, CancellationToken token);
     }
 
     /// <summary>
