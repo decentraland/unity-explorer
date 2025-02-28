@@ -760,6 +760,7 @@ namespace Global.Dynamic
                     profileThumbnailCache,
                     onlineUsersProvider,
                     realmNavigator,
+                    identityCache,
                     includeFriends,
                     includeUserBlocking
                 ),

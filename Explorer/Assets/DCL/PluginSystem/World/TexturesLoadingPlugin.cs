@@ -10,6 +10,8 @@ using ECS.StreamableLoading.Textures;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using ECS.StreamableLoading.Cache;
+using Global.Dynamic.LaunchModes;
 
 namespace DCL.PluginSystem.World
 {
@@ -18,18 +20,26 @@ namespace DCL.PluginSystem.World
         private readonly IWebRequestController webRequestController;
         private readonly IDiskCache<Texture2DData> diskCache;
 
-        private readonly TexturesCache<GetTextureIntention> texturesCache = new ();
+        private readonly IStreamableCache<Texture2DData, GetTextureIntention> texturesCache;
 
-        public TexturesLoadingPlugin(IWebRequestController webRequestController, CacheCleaner cacheCleaner, IDiskCache<Texture2DData> diskCache)
+        public TexturesLoadingPlugin(IWebRequestController webRequestController, CacheCleaner cacheCleaner, IDiskCache<Texture2DData> diskCache, ILaunchMode launchMode)
         {
             this.webRequestController = webRequestController;
             this.diskCache = diskCache;
-            cacheCleaner.Register(texturesCache);
+            if (launchMode.CurrentMode == LaunchMode.LocalSceneDevelopment)
+            {
+                texturesCache = new NoCache<Texture2DData, GetTextureIntention>(true, true);
+            }
+            else
+            {
+                texturesCache = new TexturesCache<GetTextureIntention>();
+                cacheCleaner.Register((TexturesCache<GetTextureIntention>)texturesCache);
+            }
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
-            LoadSceneTextureSystem.InjectToWorld(ref builder, texturesCache, webRequestController, diskCache);
+            LoadTextureSystem.InjectToWorld(ref builder, texturesCache, webRequestController, diskCache);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)

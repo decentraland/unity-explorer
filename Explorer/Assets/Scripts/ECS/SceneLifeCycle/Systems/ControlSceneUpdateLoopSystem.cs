@@ -86,6 +86,7 @@ namespace ECS.SceneLifeCycle.Systems
                 }
 
                 RunOnThreadPoolAsync().Forget();
+                ReportHub.LogProductionInfo($"Scene '{scene.Info}' started");
 
                 if (promise.LoadingIntention.DefinitionComponent.IsPortableExperience)
                 {

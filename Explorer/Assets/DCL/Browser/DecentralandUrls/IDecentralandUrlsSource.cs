@@ -7,6 +7,7 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         const string LAUNCHER_DOWNLOAD_URL = "https://github.com/decentraland/launcher/releases/download";
 
         string DecentralandDomain { get; }
+        DecentralandEnvironment Environment { get; }
 
         string Url(DecentralandUrl decentralandUrl);
         string GetHostnameForFeatureFlag();

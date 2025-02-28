@@ -14,22 +14,26 @@ namespace DCL.WebRequests.Analytics
     {
         public IWebRequestController WebRequestController { get; }
 
+        public IWebRequestController SceneWebRequestController { get; }
+
         public IWebRequestsAnalyticsContainer AnalyticsContainer { get; }
 
         private WebRequestsContainer(
             IWebRequestController webRequestController,
-            IWebRequestsAnalyticsContainer analyticsContainer
-        )
+            IWebRequestController sceneWebRequestController,
+            IWebRequestsAnalyticsContainer analyticsContainer)
         {
             WebRequestController = webRequestController;
             AnalyticsContainer = analyticsContainer;
+            SceneWebRequestController = sceneWebRequestController;
         }
 
         public static WebRequestsContainer Create(
             IWeb3IdentityCache web3IdentityProvider,
             ITexturesFuse texturesFuse,
             IDebugContainerBuilder debugContainerBuilder,
-            int totalBudget,
+            int coreBudget,
+            int sceneBudget,
             bool isTextureCompressionEnabled
         )
         {
@@ -43,18 +47,28 @@ namespace DCL.WebRequests.Analytics
             var options = new ElementBindingOptions();
             var requestCompleteDebugMetric = new ElementBinding<ulong>(0);
             var cannotConnectToHostExceptionDebugMetric = new ElementBinding<ulong>(0);
+            var sceneAvailableBudget = new ElementBinding<ulong>((ulong)sceneBudget);
+            var coreAvailableBudget = new ElementBinding<ulong>((ulong)coreBudget);
 
-            var webRequestController = new WebRequestController(analyticsContainer, web3IdentityProvider, new RequestHub(texturesFuse, isTextureCompressionEnabled))
+            var textureFuseRequestHub = new RequestHub(texturesFuse, isTextureCompressionEnabled);
+
+            var coreWebRequestController = new WebRequestController(analyticsContainer, web3IdentityProvider, textureFuseRequestHub)
                                       .WithDebugMetrics(cannotConnectToHostExceptionDebugMetric, requestCompleteDebugMetric)
                                       .WithLog()
                                       .WithArtificialDelay(options)
-                                      .WithBudget(totalBudget);
+                .WithBudget(coreBudget, coreAvailableBudget);
+
+            var sceneWebRequestController = new WebRequestController(analyticsContainer, web3IdentityProvider, textureFuseRequestHub)
+                .WithDebugMetrics(cannotConnectToHostExceptionDebugMetric, requestCompleteDebugMetric)
+                .WithLog()
+                .WithArtificialDelay(options)
+                .WithBudget(sceneBudget, sceneAvailableBudget);
 
             CreateStressTestUtility();
             CreateWebRequestDelayUtility();
             CreateWebRequestsMetricsDebugUtility();
 
-            return new WebRequestsContainer(webRequestController, analyticsContainer);
+            return new WebRequestsContainer(coreWebRequestController, sceneWebRequestController, analyticsContainer);
 
             void CreateWebRequestsMetricsDebugUtility()
             {
@@ -63,6 +77,10 @@ namespace DCL.WebRequests.Analytics
                     .AddMarker("Requests cannot connect", cannotConnectToHostExceptionDebugMetric,
                         DebugLongMarkerDef.Unit.NoFormat)
                     .AddMarker("Requests complete", requestCompleteDebugMetric,
+                        DebugLongMarkerDef.Unit.NoFormat)
+                    .AddMarker("Core budget", coreAvailableBudget,
+                        DebugLongMarkerDef.Unit.NoFormat)
+                    .AddMarker("Scene budget", sceneAvailableBudget,
                         DebugLongMarkerDef.Unit.NoFormat);
             }
 
@@ -82,7 +100,7 @@ namespace DCL.WebRequests.Analytics
 
             void CreateStressTestUtility()
             {
-                var stressTestUtility = new WebRequestStressTestUtility(webRequestController);
+                var stressTestUtility = new WebRequestStressTestUtility(coreWebRequestController);
 
                 var count = new ElementBinding<int>(50);
                 var retriesCount = new ElementBinding<int>(3);
