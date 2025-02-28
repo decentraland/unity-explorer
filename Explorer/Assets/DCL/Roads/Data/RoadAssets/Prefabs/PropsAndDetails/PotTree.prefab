@@ -348,8 +348,16 @@ PrefabInstance:
       propertyPath: m_Enabled
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: -4983193138751140783, guid: 9bd4a572eff9d834f9249e2d5dbe14f5, type: 3}
+      propertyPath: m_CastShadows
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: -2976301379775544199, guid: 9bd4a572eff9d834f9249e2d5dbe14f5, type: 3}
       propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -2976301379775544199, guid: 9bd4a572eff9d834f9249e2d5dbe14f5, type: 3}
+      propertyPath: m_CastShadows
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -267521942256160667, guid: 9bd4a572eff9d834f9249e2d5dbe14f5, type: 3}

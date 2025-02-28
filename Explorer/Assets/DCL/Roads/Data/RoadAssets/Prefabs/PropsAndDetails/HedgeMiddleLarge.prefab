@@ -499,12 +499,20 @@ PrefabInstance:
       propertyPath: m_Enabled
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: -4833235432774017520, guid: f85fd30a3320f1749840a8434ec77d76, type: 3}
+      propertyPath: m_CastShadows
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: f85fd30a3320f1749840a8434ec77d76, type: 3}
       propertyPath: m_Name
       value: HedgeMiddleLarge
       objectReference: {fileID: 0}
     - target: {fileID: 3219595356371676077, guid: f85fd30a3320f1749840a8434ec77d76, type: 3}
       propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3219595356371676077, guid: f85fd30a3320f1749840a8434ec77d76, type: 3}
+      propertyPath: m_CastShadows
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4112282293538901509, guid: f85fd30a3320f1749840a8434ec77d76, type: 3}
