@@ -84,8 +84,6 @@ namespace ECS.StreamableLoading.Cache.Disk
                 ptr = new IntPtr(memory);
                 memoryManager = UnmanagedMemoryManager<T>.New(memory, length);
             }
-
-            ReportHub.LogProductionInfo($"Request to allocate memory with size: {Utility.ByteSize.ToReadableString((ulong)length)}");
         }
 
         private SlicedOwnedMemory(UnmanagedMemoryManager<T> memoryManager)
