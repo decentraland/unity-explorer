@@ -63,6 +63,7 @@ namespace DCL.Roads.GPUInstancing.Playground
 
             //  mergeSubMeshes == false, so each submesh represents separate LOD level
             combinedMesh.CombineMeshes(СombineInstances.ToArray(), mergeSubMeshes: false, useMatrices: true);
+            combinedMesh.UploadMeshData(true); // disable read/write
             combinedMesh.name = $"{parent.name}_{SharedMaterial.name}";
 
             return combinedMesh;
