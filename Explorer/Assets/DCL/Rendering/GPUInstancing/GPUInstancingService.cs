@@ -1,4 +1,5 @@
-﻿using DCL.Landscape.Settings;
+﻿using DCL.Diagnostics;
+using DCL.Landscape.Settings;
 using DCL.Roads.GPUInstancing.Playground;
 using System;
 using System.Collections.Generic;
@@ -182,6 +183,7 @@ namespace DCL.Roads.GPUInstancing
                 CombinedLodsRenderer combinedLodRenderer = candidate.LODGroup.CombinedLodsRenderers[i];
                 int lodCount = candidate.LODGroup.LodsScreenSpaceSizes.Length;
 
+                ReportHub.Log(ReportCategory.GPU_INSTANCING, $"{Time.frameCount}: renedering {combinedLodRenderer.CombinedMesh.name} with material {combinedLodRenderer.SharedMaterial.name}");
                 Graphics.RenderMeshIndirect(combinedLodRenderer.RenderParamsArray[0], combinedLodRenderer.CombinedMesh, buffers.DrawArgs, commandCount: lodCount, startCommand: i*lodCount);
             }
         }
