@@ -194,9 +194,6 @@ namespace DCL.WebRequests
 
             public CreateFromJsonOp(WRJsonParser jsonParser, WRThreadFlags threadFlags = WRThreadFlags.SwitchToThreadPool | WRThreadFlags.SwitchBackToMainThread, CreateExceptionOnParseFail? createCustomExceptionOnFailure = null, JsonSerializerSettings? newtonsoftSettings = null)
             {
-                if (jsonParser == WRJsonParser.Unity && (threadFlags & WRThreadFlags.SwitchToThreadPool) != 0)
-                    throw new NotSupportedException("Can't use the Unity's json parser on a background thread");
-
                 this.jsonParser = jsonParser;
                 this.threadFlags = threadFlags;
                 this.newtonsoftSettings = newtonsoftSettings;
@@ -206,30 +203,30 @@ namespace DCL.WebRequests
             public async UniTask<T?> ExecuteAsync(TRequest request, CancellationToken ct)
             {
                 DownloadHandler downloadHandler = request.UnityWebRequest.downloadHandler;
+                string text = null;
 
-                if (jsonParser == WRJsonParser.Unity
-                    || jsonParser == WRJsonParser.NewtonsoftInEditor && !Application.isEditor)
+                try
                 {
-                    string text = downloadHandler.text;
-
-                    try { return JsonUtility.FromJson<T>(text); }
-                    catch (Exception ex)
+                    if (jsonParser == WRJsonParser.Unity
+#if !UNITY_EDITOR
+                        || jsonParser == WRJsonParser.NewtonsoftInEditor
+#endif
+                        )
                     {
-                        if (createCustomExceptionOnFailure != null)
-                            throw createCustomExceptionOnFailure(ex, text);
-                        else
-                            throw;
+                        text = downloadHandler.text;
+
+                        if ((threadFlags & WRThreadFlags.SwitchToThreadPool) != 0)
+                            await UniTask.SwitchToThreadPool();
+
+                        return JsonUtility.FromJson<T>(text);
                     }
-                }
-                else
-                {
-                    var nativeData = downloadHandler.nativeData;
-
-                    if ((threadFlags & WRThreadFlags.SwitchToThreadPool) != 0)
-                        await UniTask.SwitchToThreadPool();
-
-                    try
+                    else
                     {
+                        var nativeData = downloadHandler.nativeData;
+
+                        if ((threadFlags & WRThreadFlags.SwitchToThreadPool) != 0)
+                            await UniTask.SwitchToThreadPool();
+
                         var serializer = JsonSerializer.CreateDefault(newtonsoftSettings);
 
                         unsafe
@@ -244,14 +241,18 @@ namespace DCL.WebRequests
                             return serializer.Deserialize<T>(jsonReader);
                         }
                     }
-                    finally
-                    {
-                        const WRThreadFlags SWITCH = WRThreadFlags.SwitchToThreadPool
-                                                     | WRThreadFlags.SwitchBackToMainThread;
-
-                        if ((threadFlags & SWITCH) == SWITCH)
-                            await UniTask.SwitchToMainThread();
-                    }
+                }
+                catch (Exception ex)
+                {
+                    if (createCustomExceptionOnFailure != null && text != null)
+                        throw createCustomExceptionOnFailure(ex, text);
+                    else
+                        throw;
+                }
+                finally
+                {
+                    if (threadFlags == WRThreadFlags.SwitchToThreadPoolAndBack)
+                        await UniTask.SwitchToMainThread();
                 }
             }
         }
@@ -266,9 +267,6 @@ namespace DCL.WebRequests
 
             public OverwriteFromJsonAsyncOp(T target, WRJsonParser jsonParser, WRThreadFlags threadFlags, CreateExceptionOnParseFail? createCustomExceptionOnFailure)
             {
-                if (jsonParser == WRJsonParser.Unity && (threadFlags & WRThreadFlags.SwitchToThreadPool) != 0)
-                    throw new NotSupportedException("Can't use the Unity's json parser on a background thread");
-
                 Target = target;
                 this.jsonParser = jsonParser;
                 this.threadFlags = threadFlags;
@@ -278,30 +276,30 @@ namespace DCL.WebRequests
             public async UniTask<T?> ExecuteAsync(TRequest request, CancellationToken ct)
             {
                 DownloadHandler downloadHandler = request.UnityWebRequest.downloadHandler;
+                string text = null;
 
-                if (jsonParser == WRJsonParser.Unity
-                    || jsonParser == WRJsonParser.NewtonsoftInEditor && !Application.isEditor)
+                try
                 {
-                    string text = downloadHandler.text;
-
-                    try { JsonUtility.FromJsonOverwrite(text, Target); }
-                    catch (Exception ex)
+                    if (jsonParser == WRJsonParser.Unity
+#if !UNITY_EDITOR
+                        || jsonParser == WRJsonParser.NewtonsoftInEditor
+#endif
+                        )
                     {
-                        if (createCustomExceptionOnFailure != null)
-                            throw createCustomExceptionOnFailure(ex, text);
-                        else
-                            throw;
+                        text = downloadHandler.text;
+
+                        if ((threadFlags & WRThreadFlags.SwitchToThreadPool) != 0)
+                            await UniTask.SwitchToThreadPool();
+
+                        JsonUtility.FromJsonOverwrite(text, Target);
                     }
-                }
-                else
-                {
-                    var nativeData = downloadHandler.nativeData;
-
-                    if ((threadFlags & WRThreadFlags.SwitchToThreadPool) != 0)
-                        await UniTask.SwitchToThreadPool();
-
-                    try
+                    else
                     {
+                        var nativeData = downloadHandler.nativeData;
+
+                        if ((threadFlags & WRThreadFlags.SwitchToThreadPool) != 0)
+                            await UniTask.SwitchToThreadPool();
+
                         var serializer = JsonSerializer.CreateDefault();
 
                         unsafe
@@ -316,14 +314,18 @@ namespace DCL.WebRequests
                             serializer.Populate(jsonReader, Target);
                         }
                     }
-                    finally
-                    {
-                        const WRThreadFlags SWITCH = WRThreadFlags.SwitchToThreadPool
-                                                     | WRThreadFlags.SwitchBackToMainThread;
-
-                        if ((threadFlags & SWITCH) == SWITCH)
-                            await UniTask.SwitchToMainThread();
-                    }
+                }
+                catch (Exception ex)
+                {
+                    if (createCustomExceptionOnFailure != null && text != null)
+                        throw createCustomExceptionOnFailure(ex, text);
+                    else
+                        throw;
+                }
+                finally
+                {
+                    if (threadFlags == WRThreadFlags.SwitchToThreadPoolAndBack)
+                        await UniTask.SwitchToMainThread();
                 }
 
                 return Target;
