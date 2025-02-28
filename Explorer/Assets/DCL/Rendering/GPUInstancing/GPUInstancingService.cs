@@ -13,6 +13,7 @@ namespace DCL.Roads.GPUInstancing
     public class GPUInstancingService : IDisposable
     {
         private readonly GPUInstancingRenderFeature.GPUInstancingRenderFeature_Settings settings;
+        private readonly GroupData[] groupDataArray = new GroupData[1];
 
         struct GroupData
         {
@@ -28,6 +29,22 @@ namespace DCL.Roads.GPUInstancing
             public float minCullingDistance;
             public uint nInstBufferSize;
             public uint nMaxLOD_GB;
+
+            public void Set(Camera cam, float maxDistance, GPUInstancingLODGroupWithBuffer candidate, uint instancesCount)
+            {
+                lodSizes = candidate.LODGroup.LODSizesMatrix;
+                matCamera_MVP = cam.projectionMatrix * cam.worldToCameraMatrix;
+                vCameraPosition = cam.transform.position;
+                fShadowDistance = 0.0f;
+                vBoundsCenter = candidate.LODGroup.Bounds.center;
+                frustumOffset = 0.0f;
+                vBoundsExtents = candidate.LODGroup.Bounds.extents;
+                fCameraHalfAngle = 0.5f * cam.fieldOfView * Mathf.Deg2Rad;
+                fMaxDistance = maxDistance;
+                minCullingDistance = cam.nearClipPlane;
+                nInstBufferSize = instancesCount;
+                nMaxLOD_GB = (uint)candidate.LODGroup.LodsScreenSpaceSizes.Length;
+            }
         };
 
         private readonly GraphicsBuffer.IndirectDrawIndexedArgs zeroDrawArgs = new()
@@ -136,23 +153,9 @@ namespace DCL.Roads.GPUInstancing
 
         private void RenderCandidateIndirect(GPUInstancingLODGroupWithBuffer candidate, GPUInstancingBuffers buffers, Camera cam)
         {
-            GroupData groupData = new GroupData
-            {
-                lodSizes = candidate.LODGroup.LODSizesMatrix,
-                matCamera_MVP = cam.projectionMatrix * cam.worldToCameraMatrix,
-                vCameraPosition = cam.transform.position,
-                fShadowDistance = 0.0f,
-                vBoundsCenter = candidate.LODGroup.Bounds.center,
-                frustumOffset = 0.0f,
-                vBoundsExtents = candidate.LODGroup.Bounds.extents,
-                fCameraHalfAngle = 0.5f * cam.fieldOfView * Mathf.Deg2Rad,
-                fMaxDistance = LandscapeData.DetailDistance * settings.MaxDistanceScaleFactor,
-                minCullingDistance = cam.nearClipPlane,
-                nInstBufferSize = (uint)buffers.PerInstanceMatrices.count,
-                nMaxLOD_GB = (uint)candidate.LODGroup.LodsScreenSpaceSizes.Length,
-            };
+            groupDataArray[0].Set(cam, LandscapeData.DetailDistance * settings.MaxDistanceScaleFactor, candidate, (uint)buffers.PerInstanceMatrices.count);
 
-            buffers.GroupData.SetData(new[] { groupData }, 0, 0, 1);
+            buffers.GroupData.SetData(groupDataArray, 0, 0, 1);
             FrustumCullingAndLODGenComputeShader.SetBuffer(FrustumCullingAndLODGenComputeShader_KernelIDs, ComputeVar_GroupDataBuffer, buffers.GroupData);
             FrustumCullingAndLODGenComputeShader.SetBuffer(FrustumCullingAndLODGenComputeShader_KernelIDs, ComputeVar_PerInstanceData, buffers.PerInstanceMatrices);
             FrustumCullingAndLODGenComputeShader.SetBuffer(FrustumCullingAndLODGenComputeShader_KernelIDs, ComputeVar_PerInstance_LODLevels, buffers.LODLevels);
@@ -183,7 +186,6 @@ namespace DCL.Roads.GPUInstancing
                 CombinedLodsRenderer combinedLodRenderer = candidate.LODGroup.CombinedLodsRenderers[i];
                 int lodCount = candidate.LODGroup.LodsScreenSpaceSizes.Length;
 
-                ReportHub.Log(ReportCategory.GPU_INSTANCING, $"{Time.frameCount}: renedering {combinedLodRenderer.CombinedMesh.name} with material {combinedLodRenderer.SharedMaterial.name}");
                 Graphics.RenderMeshIndirect(combinedLodRenderer.RenderParamsArray[0], combinedLodRenderer.CombinedMesh, buffers.DrawArgs, commandCount: lodCount, startCommand: i*lodCount);
             }
         }
