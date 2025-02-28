@@ -49,7 +49,7 @@ float4x4 MatrixRotate(float3 n, float a)
 	);
 }
 
-// m: matrix to scale
+// m: matrix to rotate
 // angle: angles for x,y,z
 // returns rotation matrix
 float4x4 MatrixRotateXYZ(float3 angle)
@@ -66,7 +66,7 @@ float4x4 MatrixRotateXYZ(float3 angle)
 }
 
 
-// Scales the matrix "m" by "scale" scales for x,y,z.
+// Scales the matrix "m" by "scale" scales for x,y,z. OVERWRITES MATRIX
 float4x4 SetScaleOfMatrix(float4x4 m, float3 scale)
 {
     m._m00_m10_m20_m30 = m._m00_m10_m20_m30 * scale.x / length(m._m00_m10_m20_m30);
@@ -77,7 +77,7 @@ float4x4 SetScaleOfMatrix(float4x4 m, float3 scale)
 }
 
 // Scales the matrix "m" by "scale" scales for x,y,z.
-float4x4 SetScaleOfMatrixPercentage(float4x4 m, float3 scale)
+float4x4 ScaleMatrix(float4x4 m, float3 scale)
 {
     m._m00_m10_m20_m30 = m._m00_m10_m20_m30 * scale.x;
     m._m01_m11_m21_m31 = m._m01_m11_m21_m31 * scale.y;
@@ -97,7 +97,7 @@ float4x4 TRS(in float3 position, in float4x4 rotationMatrix, in float3 scale)
     return result;
 }
 
-// Returns a quaternion that represents a rotation of "angle" degrees along "axis". 
+// Returns a quaternion that represents a rotation of "angle" in radians along "axis". 
 float4 AngleAxis(float3 axis, float angle)
 {
     // Calculate the sin( theta / 2) once for optimization

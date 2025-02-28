@@ -411,7 +411,7 @@
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "c05d8ec5d986b974c4d4a31012fc4dc9712d63f4"
+      "hash": "f274c6d43388519de28debba7b9089e98f783988"
     },
     "io.sentry.unity": {
       "version": "https://github.com/getsentry/unity.git#2.1.3",
