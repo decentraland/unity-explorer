@@ -6,6 +6,6 @@ namespace DCL.Web3
 {
     public interface IEthereumApi : IDisposable
     {
-        UniTask<T> SendAsync<T>(EthApiRequest request, CancellationToken ct);
+        UniTask<EthApiResponse> SendAsync(EthApiRequest request, CancellationToken ct);
     }
 }
