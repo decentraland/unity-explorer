@@ -2459,7 +2459,6 @@ MonoBehaviour:
   <LoadingObject>k__BackingField: {fileID: 177029839170546256}
   <EmptyState>k__BackingField: {fileID: 5376825434192449184}
   <TabNotificationIndicator>k__BackingField: {fileID: 1205339925646602635}
-  <ChatEntryConfiguration>k__BackingField: {fileID: 11400000, guid: 6afb31861b85441b6ab2b988819bb96a, type: 2}
   <ContextMenuSettings>k__BackingField: {fileID: 11400000, guid: 299c6c9d8edbc42f59268a946bf4b95b, type: 2}
 --- !u!1 &8535229563382706920
 GameObject:
@@ -2727,7 +2726,6 @@ MonoBehaviour:
   <LoopList>k__BackingField: {fileID: 5426848382744531652}
   <LoadingObject>k__BackingField: {fileID: 3062264601300482726}
   <EmptyState>k__BackingField: {fileID: 7649171565629304203}
-  <ChatEntryConfiguration>k__BackingField: {fileID: 11400000, guid: 6afb31861b85441b6ab2b988819bb96a, type: 2}
   <ContextMenuSettings>k__BackingField: {fileID: 11400000, guid: 07e0683d80a294ef987133cec67f6d99, type: 2}
 --- !u!1 &9016221308760038758
 GameObject:
@@ -4697,11 +4695,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2988973775201219658, guid: 7842eaf6eb5af984291ecacc1280f742, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 12
+      value: 10
       objectReference: {fileID: 0}
     - target: {fileID: 2988973775201219658, guid: 7842eaf6eb5af984291ecacc1280f742, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 12
+      value: 10
       objectReference: {fileID: 0}
     - target: {fileID: 3783773368439746124, guid: 7842eaf6eb5af984291ecacc1280f742, type: 3}
       propertyPath: m_Color.a

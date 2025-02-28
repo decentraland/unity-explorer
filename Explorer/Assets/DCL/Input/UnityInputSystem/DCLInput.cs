@@ -1487,6 +1487,24 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""ActionUp"",
+                    ""type"": ""Button"",
+                    ""id"": ""32ed56bf-0d55-4259-b2e8-0859588765ca"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""ActionDown"",
+                    ""type"": ""Button"",
+                    ""id"": ""88b91896-4abe-4728-b828-0e6a082b00f7"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -2004,6 +2022,28 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""groups"": """",
                     ""action"": ""Close"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""e23e65c2-8ff3-445f-919e-359ffa536845"",
+                    ""path"": ""<Keyboard>/upArrow"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""ActionUp"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""f4579625-4380-4a27-bb39-011d5684ebb6"",
+                    ""path"": ""<Keyboard>/downArrow"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""ActionDown"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -3665,6 +3705,8 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         m_UI_ControllerDelta = m_UI.FindAction("ControllerDelta", throwIfNotFound: true);
         m_UI_ControllerFastCursor = m_UI.FindAction("ControllerFastCursor", throwIfNotFound: true);
         m_UI_Close = m_UI.FindAction("Close", throwIfNotFound: true);
+        m_UI_ActionUp = m_UI.FindAction("ActionUp", throwIfNotFound: true);
+        m_UI_ActionDown = m_UI.FindAction("ActionDown", throwIfNotFound: true);
         // Shortcuts
         m_Shortcuts = asset.FindActionMap("Shortcuts", throwIfNotFound: true);
         m_Shortcuts_MainMenu = m_Shortcuts.FindAction("MainMenu", throwIfNotFound: true);
@@ -4168,6 +4210,8 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
     private readonly InputAction m_UI_ControllerDelta;
     private readonly InputAction m_UI_ControllerFastCursor;
     private readonly InputAction m_UI_Close;
+    private readonly InputAction m_UI_ActionUp;
+    private readonly InputAction m_UI_ActionDown;
     public struct UIActions
     {
         private @DCLInput m_Wrapper;
@@ -4186,6 +4230,8 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         public InputAction @ControllerDelta => m_Wrapper.m_UI_ControllerDelta;
         public InputAction @ControllerFastCursor => m_Wrapper.m_UI_ControllerFastCursor;
         public InputAction @Close => m_Wrapper.m_UI_Close;
+        public InputAction @ActionUp => m_Wrapper.m_UI_ActionUp;
+        public InputAction @ActionDown => m_Wrapper.m_UI_ActionDown;
         public InputActionMap Get() { return m_Wrapper.m_UI; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -4237,6 +4283,12 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @Close.started += instance.OnClose;
             @Close.performed += instance.OnClose;
             @Close.canceled += instance.OnClose;
+            @ActionUp.started += instance.OnActionUp;
+            @ActionUp.performed += instance.OnActionUp;
+            @ActionUp.canceled += instance.OnActionUp;
+            @ActionDown.started += instance.OnActionDown;
+            @ActionDown.performed += instance.OnActionDown;
+            @ActionDown.canceled += instance.OnActionDown;
         }
 
         private void UnregisterCallbacks(IUIActions instance)
@@ -4283,6 +4335,12 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @Close.started -= instance.OnClose;
             @Close.performed -= instance.OnClose;
             @Close.canceled -= instance.OnClose;
+            @ActionUp.started -= instance.OnActionUp;
+            @ActionUp.performed -= instance.OnActionUp;
+            @ActionUp.canceled -= instance.OnActionUp;
+            @ActionDown.started -= instance.OnActionDown;
+            @ActionDown.performed -= instance.OnActionDown;
+            @ActionDown.canceled -= instance.OnActionDown;
         }
 
         public void RemoveCallbacks(IUIActions instance)
@@ -4918,6 +4976,8 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         void OnControllerDelta(InputAction.CallbackContext context);
         void OnControllerFastCursor(InputAction.CallbackContext context);
         void OnClose(InputAction.CallbackContext context);
+        void OnActionUp(InputAction.CallbackContext context);
+        void OnActionDown(InputAction.CallbackContext context);
     }
     public interface IShortcutsActions
     {

@@ -1,7 +1,7 @@
 using DCL.Audio;
-using DCL.Chat;
 using DCL.NotificationsBusController.NotificationTypes;
 using DCL.UI;
+using DCL.UI.Profiles.Helpers;
 using System;
 using TMPro;
 using UnityEngine;
@@ -56,9 +56,6 @@ namespace DCL.Notifications.NotificationEntry
         public Image NotificationTypeImage { get; set; }
 
         [field: SerializeField]
-        public ChatEntryConfigurationSO ChatEntryConfiguration { get; private set; }
-
-        [field: SerializeField]
         public AudioClipConfig RequestNotificationAudio { get; private set; }
 
         [field: SerializeField]
@@ -72,7 +69,7 @@ namespace DCL.Notifications.NotificationEntry
 
         public void ConfigureFromAcceptedNotificationData(FriendRequestAcceptedNotification notification)
         {
-            Color userColor = ChatEntryConfiguration.GetNameColor(notification.Metadata.Sender.Name);
+            Color userColor = ProfileNameColorHelper.GetNameColor(notification.Metadata.Sender.Name);
             SetTitleText(notification, notification.Metadata.Sender, userColor);
             NotificationImageBackground.color = userColor;
             Notification = notification;
@@ -81,7 +78,7 @@ namespace DCL.Notifications.NotificationEntry
 
         public void ConfigureFromReceivedNotificationData(FriendRequestReceivedNotification notification)
         {
-            Color userColor = ChatEntryConfiguration.GetNameColor(notification.Metadata.Sender.Name);
+            Color userColor = ProfileNameColorHelper.GetNameColor(notification.Metadata.Sender.Name);
             SetTitleText(notification, notification.Metadata.Sender, userColor);
             NotificationImageBackground.color = userColor;
             Notification = notification;
