@@ -1,4 +1,5 @@
-﻿using DCL.Roads.GPUInstancing.Playground;
+﻿using DCL.Rendering.GPUInstancing.InstancingData;
+using DCL.Roads.GPUInstancing.Playground;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using Unity.Collections;

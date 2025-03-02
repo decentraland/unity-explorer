@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DCL.Diagnostics;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -24,7 +25,6 @@ namespace DCL.Roads.GPUInstancing.Playground
         // Probes
         public ReflectionProbeUsage reflectionProbeUsage;
         public LightProbeUsage lightProbeUsage;
-        // public LightProbeProxyVolume lightProbeProxyVolume;
 
         public MotionVectorGenerationMode motionVectorMode;
 
@@ -41,7 +41,6 @@ namespace DCL.Roads.GPUInstancing.Playground
 
             reflectionProbeUsage = rend.reflectionProbeUsage;
             lightProbeUsage = rend.lightProbeUsage;
-            // lightProbeProxyVolume = null; // no custom proxy volume
 
             motionVectorMode = rend.motionVectorGenerationMode;
         }
@@ -50,9 +49,9 @@ namespace DCL.Roads.GPUInstancing.Playground
         {
             if (!instancingMaterials.TryGetValue(sharedMat, out Material instancedMat))
             {
-                var keyword = new LocalKeyword(sharedMat.shader, GPU_INSTANCING_KEYWORD);
+                ReportHub.Log(ReportCategory.GPU_INSTANCING, $"Creating new GPU Instanced sharedMaterial based on material: {sharedMat.name}");
 
-                Debug.Log($"Adding new material {sharedMat.name}");
+                var keyword = new LocalKeyword(sharedMat.shader, GPU_INSTANCING_KEYWORD);
                 sharedMat.DisableKeyword(keyword);
 
                 instancedMat = new Material(sharedMat) { name = $"{sharedMat.name}_GPUInstancingIndirect" };
@@ -63,6 +62,7 @@ namespace DCL.Roads.GPUInstancing.Playground
             return new RenderParams
             {
                 material = instancedMat,
+
                 layer = layer,
                 renderingLayerMask = renderingLayerMask,
                 rendererPriority = rendererPriority,
@@ -70,7 +70,6 @@ namespace DCL.Roads.GPUInstancing.Playground
                 shadowCastingMode = shadowCastingMode,
                 reflectionProbeUsage = reflectionProbeUsage,
                 lightProbeUsage = lightProbeUsage,
-                // lightProbeProxyVolume = lightProbeProxyVolume, // no custom proxy volume
                 motionVectorMode = motionVectorMode,
             };
         }

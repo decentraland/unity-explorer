@@ -93,6 +93,8 @@ namespace DCL.Roads.GPUInstancing
         private static readonly int ComputeVar_arrLODCount = Shader.PropertyToID("arrLODCount");
         private static readonly int ComputeVar_IndirectDrawIndexedArgsBuffer = Shader.PropertyToID("IndirectDrawIndexedArgsBuffer");
         private static readonly int ComputeVar_nSubMeshCount = Shader.PropertyToID("nSubMeshCount");
+        private static readonly int MAT_PER_INSTANCE_BUFFER = Shader.PropertyToID("_PerInstanceBuffer");
+        private static readonly int PER_INSTANCE_LOOK_UP_AND_DITHER_BUFFER = Shader.PropertyToID("_PerInstanceLookUpAndDitherBuffer");
 
         private Camera renderCamera;
 
@@ -249,8 +251,8 @@ namespace DCL.Roads.GPUInstancing
                     rparams.camera = renderCamera;
                     rparams.worldBounds = RENDER_PARAMS_WORLD_BOUNDS;
                     rparams.matProps = new MaterialPropertyBlock();
-                    rparams.matProps.SetBuffer("_PerInstanceBuffer", buffers.PerInstanceMatrices);
-                    rparams.matProps.SetBuffer("_PerInstanceLookUpAndDitherBuffer", buffers.InstanceLookUpAndDither);
+                    rparams.matProps.SetBuffer(MAT_PER_INSTANCE_BUFFER, buffers.PerInstanceMatrices);
+                    rparams.matProps.SetBuffer(PER_INSTANCE_LOOK_UP_AND_DITHER_BUFFER, buffers.InstanceLookUpAndDither);
                 }
             }
         }

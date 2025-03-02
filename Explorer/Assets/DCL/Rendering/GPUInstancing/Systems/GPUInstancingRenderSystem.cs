@@ -36,7 +36,10 @@ namespace DCL.Rendering.GPUInstancing.Systems
         protected override void Update(float t)
         {
             if (isCameraCached && loadingStatus.CurrentStage.Value == LoadingStatus.LoadingStage.Completed && realmData.Configured)
+            {
                 gpuInstancingService.RenderIndirect();
+                return;
+            }
 
             if (!isCameraCached && exposedCameraData.CinemachineBrain.OutputCamera != null)
             {

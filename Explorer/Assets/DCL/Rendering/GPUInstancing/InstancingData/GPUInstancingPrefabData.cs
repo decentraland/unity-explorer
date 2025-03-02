@@ -1,7 +1,9 @@
-﻿using System.Collections.Generic;
+﻿using DCL.Diagnostics;
+using DCL.Roads.GPUInstancing.Playground;
+using System.Collections.Generic;
 using UnityEngine;
 
-namespace DCL.Roads.GPUInstancing.Playground
+namespace DCL.Rendering.GPUInstancing.InstancingData
 {
     public class GPUInstancingPrefabData : MonoBehaviour
     {
@@ -36,7 +38,7 @@ namespace DCL.Roads.GPUInstancing.Playground
         {
             if (candidatesTable.TryGetValue(newCandidate, out List<PerInstanceBuffer> instances))
             {
-                Debug.Log($"Same LODGroup for {newCandidate.Transform.name}", newCandidate);
+                ReportHub.Log(ReportCategory.GPU_INSTANCING, $"Adding {nameof(PerInstanceBuffer)} to existing LODGroup: {newCandidate.Transform.name}");
                 instances.Add(new PerInstanceBuffer(localToRootMatrix));
             }
             else

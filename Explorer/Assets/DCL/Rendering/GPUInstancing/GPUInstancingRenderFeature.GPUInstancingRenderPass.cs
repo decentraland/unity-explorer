@@ -1,6 +1,5 @@
 ﻿using DCL.Roads.GPUInstancing;
 using ECS;
-using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 
@@ -25,23 +24,18 @@ public partial class GPUInstancingRenderFeature
         }
 
         // Called before executing the render pass.
-
         public override void OnCameraSetup(CommandBuffer cmd, ref RenderingData renderingData)
         {
             // Configure camera targets, if needed
         }
 
         // The actual execution of the pass
-
         public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
         {
-            return;
-
             if(instancingService == null || !realmData.Configured) return;
 
             CommandBuffer cmd = CommandBufferPool.Get(PROFILER_TAG);
 
-            Debug.Log("VVV RenderPass execute");
             try
             {
                 instancingService.RenderIndirect();
