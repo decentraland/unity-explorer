@@ -3,6 +3,7 @@ using DCL.Diagnostics;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
 using System;
+using UnityEngine;
 
 namespace ECS.StreamableLoading.Common
 {
@@ -132,6 +133,7 @@ namespace ECS.StreamableLoading.Common
 
         private void DestroyEntity(World world)
         {
+            Debug.Log("Destroying entity");
             world.Get<StreamableLoadingState>(Entity).Dispose();
 
             world.Destroy(Entity);

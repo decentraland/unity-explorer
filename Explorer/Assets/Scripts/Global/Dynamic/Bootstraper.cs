@@ -247,7 +247,7 @@ namespace Global.Dynamic
                 in staticContainer,
                 bootstrapContainer.DecentralandUrlsSource,
                 bootstrapContainer.IdentityCache,
-                staticContainer.WebRequestsContainer.SceneWebRequestController,
+                staticContainer.WebRequestsContainer.WebRequestController,
                 dynamicWorldContainer.RealmController.RealmData,
                 dynamicWorldContainer.ProfileRepository,
                 dynamicWorldContainer.RoomHub,

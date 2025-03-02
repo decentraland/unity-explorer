@@ -3,6 +3,7 @@ using DCL.Optimization.Pools;
 using ECS.StreamableLoading.Cache.Disk;
 using System;
 using System.Runtime.CompilerServices;
+using UnityEngine;
 using UnityEngine.Assertions;
 using UnityEngine.Pool;
 
@@ -44,15 +45,17 @@ namespace ECS.StreamableLoading.Common.Components
         private static readonly ObjectPool<StreamableLoadingState> POOL = new (() => new StreamableLoadingState(),
             actionOnGet: state =>
             {
+                Debug.Log("Getting streamable loading state from pool");
                 state.disposed = false;
                 state.Value = Status.NotStarted;
             },
             actionOnRelease: state =>
             {
+                Debug.Log("Returning streamable loading state from pool");
                 state.DisposeBudgetIfExists();
 
-                state.PartialDownloadingData?.Dispose();
-                state.PartialDownloadingData = null;
+                //state.PartialDownloadingData?.Dispose();
+                //state.PartialDownloadingData = null;
             },
             collectionCheck: PoolConstants.CHECK_COLLECTIONS,
             defaultCapacity: PoolConstants.INITIAL_ASSET_PROMISES_PER_SCENE_COUNT, maxSize: PoolConstants.MAX_ASSET_PROMISES_PER_SCENE_COUNT);
