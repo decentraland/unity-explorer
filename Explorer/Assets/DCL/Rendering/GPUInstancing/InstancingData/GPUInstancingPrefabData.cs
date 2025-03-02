@@ -31,7 +31,7 @@ namespace DCL.Rendering.GPUInstancing.InstancingData
         private static void AdjustMaterialChangeInPrefab(GPUInstancingLODGroup lodGroup)
         {
             foreach (var combinedRenderer in lodGroup.CombinedLodsRenderers)
-                combinedRenderer.SharedMaterial = combinedRenderer.RenderParamsSerialized[0].RefRenderer.sharedMaterials[combinedRenderer.SubMeshId];
+                combinedRenderer.SharedMaterial = combinedRenderer.RenderParamsSerialized.RefRenderer.sharedMaterials[combinedRenderer.SubMeshId];
         }
 
         private void TryAddToCollected(GPUInstancingLODGroup newCandidate, Matrix4x4 localToRootMatrix)

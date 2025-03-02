@@ -1,5 +1,6 @@
 ﻿using DCL.Diagnostics;
 using DCL.Landscape.Settings;
+using DCL.Rendering.GPUInstancing.InstancingData;
 using DCL.Roads.GPUInstancing.Playground;
 using System;
 using System.Collections.Generic;
@@ -174,7 +175,7 @@ namespace DCL.Roads.GPUInstancing
                     CombinedLodsRenderer combinedLodRenderer = candidate.LODGroup.CombinedLodsRenderers[i];
                     int lodCount = candidate.LODGroup.LodsScreenSpaceSizes.Length;
 
-                    Graphics.RenderMeshIndirect(combinedLodRenderer.RenderParamsArray[0], combinedLodRenderer.CombinedMesh, buffers.DrawArgs, commandCount: lodCount, startCommand: i*lodCount);
+                    Graphics.RenderMeshIndirect(combinedLodRenderer.RenderParamsArray, combinedLodRenderer.CombinedMesh, buffers.DrawArgs, commandCount: lodCount, startCommand: i*lodCount);
                 }
             }
         }
@@ -185,8 +186,7 @@ namespace DCL.Roads.GPUInstancing
 
             foreach ((GPUInstancingLODGroupWithBuffer candidate, GPUInstancingBuffers _) in candidatesBuffersTable)
             foreach (var renderer in candidate.LODGroup.CombinedLodsRenderers)
-                for (var i = 0; i < renderer.RenderParamsArray.Length; i++)
-                    renderer.RenderParamsArray[i].camera = renderCamera;
+                    renderer.RenderParamsArray.camera = renderCamera;
         }
 
         public void AddToIndirect(List<GPUInstancingLODGroupWithBuffer> candidates)
@@ -244,10 +244,10 @@ namespace DCL.Roads.GPUInstancing
 
                     buffers.DrawArgs.SetData(buffers.DrawArgsCommandData, 0, 0, count: combinedRenderersCount * _nLODCount);
 
-                    Debug.Log($"Inizializing render params for {candidate.Name} with material {combinedLodRenderer.SharedMaterial.name} ", combinedLodRenderer.SharedMaterial);
+                    Debug.Log($"Initializing render params for {candidate.Name} with material {combinedLodRenderer.SharedMaterial.name} ", combinedLodRenderer.SharedMaterial);
 
                     combinedLodRenderer.InitializeRenderParams(instancingMaterials);
-                    ref RenderParams rparams = ref combinedLodRenderer.RenderParamsArray[0];
+                    ref RenderParams rparams = ref combinedLodRenderer.RenderParamsArray;
                     rparams.camera = renderCamera;
                     rparams.worldBounds = RENDER_PARAMS_WORLD_BOUNDS;
                     rparams.matProps = new MaterialPropertyBlock();
@@ -264,39 +264,6 @@ namespace DCL.Roads.GPUInstancing
                 if (candidate!= null && candidatesBuffersTable.Remove(candidate, out GPUInstancingBuffers buffers))
                     buffers.Dispose();
             }
-        }
-    }
-
-    public class GPUInstancingBuffers : IDisposable
-    {
-        public GraphicsBuffer LODLevels;
-        public GraphicsBuffer InstanceLookUpAndDither;
-        public GraphicsBuffer PerInstanceMatrices;
-        public GraphicsBuffer GroupData;
-        public GraphicsBuffer ArrLODCount;
-
-        public GraphicsBuffer DrawArgs;
-        public GraphicsBuffer.IndirectDrawIndexedArgs[] DrawArgsCommandData;
-
-        public void Dispose()
-        {
-            LODLevels?.Dispose();
-            LODLevels = null;
-
-            InstanceLookUpAndDither?.Dispose();
-            InstanceLookUpAndDither = null;
-
-            PerInstanceMatrices?.Dispose();
-            PerInstanceMatrices = null;
-
-            GroupData?.Dispose();
-            GroupData = null;
-
-            ArrLODCount?.Dispose();
-            ArrLODCount = null;
-
-            DrawArgs?.Dispose();
-            DrawArgs = null;
         }
     }
 }

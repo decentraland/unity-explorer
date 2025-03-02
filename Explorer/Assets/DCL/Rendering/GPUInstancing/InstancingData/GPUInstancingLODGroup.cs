@@ -1,4 +1,5 @@
-﻿using DCL.Roads.GPUInstancing.Utils;
+﻿using DCL.Rendering.GPUInstancing.InstancingData;
+using DCL.Rendering.GPUInstancing.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -52,8 +53,10 @@ namespace DCL.Roads.GPUInstancing.Playground
         {
             var renderer = GetComponent<MeshRenderer>();
             var meshFilter = GetComponent<MeshFilter>();
-            var combinedRenderer = new CombinedLodsRenderer(renderer.sharedMaterial,  renderer,  meshFilter);
-            CombinedLodsRenderers = new List<CombinedLodsRenderer> { combinedRenderer };
+
+            CombinedLodsRenderers = new List<CombinedLodsRenderer> {
+                new (renderer.sharedMaterial,  renderer,  meshFilter)
+            };
             RefRenderers = new List<Renderer> { renderer };
 
             // Position at origin (but not scale!)
@@ -83,7 +86,6 @@ namespace DCL.Roads.GPUInstancing.Playground
             CombinedLodsRenderers = new List<CombinedLodsRenderer>();
 
             LODGroup lodGroup = GetComponent<LODGroup>();
-
             if (lodGroup == null)
             {
                 Debug.LogWarning("Selected GameObject does not have a LODGroup component.");
@@ -91,7 +93,6 @@ namespace DCL.Roads.GPUInstancing.Playground
             }
 
             LOD[] lods = lodGroup.GetLODs();
-
             if (lods.Length == 0)
             {
                 Debug.LogWarning("LODGroup has no LOD levels.");
@@ -102,20 +103,17 @@ namespace DCL.Roads.GPUInstancing.Playground
             transform.position = Vector3.zero;
             transform.rotation = Quaternion.identity;
 
-            var combineDict = new Dictionary<(Material, Transform), CombinedLodsRenderer>();
-            CollectCombineInstances(lods, combineDict);
+            var meshCombiner = new LodsMeshCombiner(whitelistedShaders, this.transform, lods);
+            meshCombiner.CollectCombineInstances();
 
-            if (combineDict.Count == 0)
+            if (meshCombiner.IsEmpty())
             {
                 Debug.LogWarning("No valid meshes found to combine.");
                 return;
             }
 
-            foreach (CombinedLodsRenderer combinedMeshRenderer in combineDict.Values)
-            {
-                CombinedLodsRenderers.Add(combinedMeshRenderer);
-                MeshCombiner.SaveCombinedMeshAsSubAsset(combinedMeshRenderer.CombinedMesh, this.gameObject);
-            }
+            RefRenderers = meshCombiner.RefRenderers;
+            CombinedLodsRenderers.AddRange(meshCombiner.BuildCombinedLodsRenderers());
 
             // LOD Group
             Reference = lodGroup;
@@ -131,7 +129,6 @@ namespace DCL.Roads.GPUInstancing.Playground
                 LodsScreenSpaceSizes[i] = lods[i].screenRelativeTransitionHeight;
 
             BuildLODMatrix(lods.Length);
-
             UpdateBoundsByCombinedLods();
 
             HideAll();
@@ -139,8 +136,9 @@ namespace DCL.Roads.GPUInstancing.Playground
 
         private void BuildLODMatrix(int lodsLength)
         {
+            const float OVERLAP_FACTOR = 0.20f;
+
             LODSizesMatrix = new Matrix4x4();
-            const float overlapFactor = 0.20f;
 
             var rowEnd = 0;
             var col = 0;
@@ -156,12 +154,12 @@ namespace DCL.Roads.GPUInstancing.Playground
                 {
                     float prevEnd = LodsScreenSpaceSizes[i - 1];
                     float difference = prevEnd - endValue;
-                    float overlap = difference * overlapFactor;
+                    float overlap = difference * OVERLAP_FACTOR;
 
                     startValue = prevEnd + overlap;
                 }
 
-                // 4) Write [startValue, endValue] into LODSizesMatrix.
+                // Write [startValue, endValue] into LODSizesMatrix.
                 //    The pattern:
                 //      - row0 & row1 for 'start'
                 //      - row2 & row3 for 'end'
@@ -176,61 +174,6 @@ namespace DCL.Roads.GPUInstancing.Playground
 
             LODSizesMatrix[rowEnd, col] = 0; // zero for the end of last LOD
         }
-
-        private void CollectCombineInstances(LOD[] lods, Dictionary<(Material, Transform), CombinedLodsRenderer> combineDict)
-        {
-            RefRenderers = new List<Renderer>();
-
-            foreach (LOD lod in lods)
-            foreach (Renderer rend  in lod.renderers)
-            {
-                if (rend is not MeshRenderer)
-                {
-                    Debug.LogWarning($"Renderer '{rend.name}' is missing in LODGroup assigned renderers.");
-                    continue;
-                }
-
-                MeshFilter mf = rend.GetComponent<MeshFilter>();
-
-                if (mf == null || mf.sharedMesh == null)
-                {
-                    Debug.LogWarning($"Renderer '{rend.name}' is missing a MeshFilter or its mesh.");
-                    continue;
-                }
-
-
-                for (var subMeshIndex = 0; subMeshIndex < rend.sharedMaterials.Length; subMeshIndex++)
-                {
-                    Material mat = rend.sharedMaterials[subMeshIndex];
-
-                    if (mat == null || !IsInWhitelist(mat, whitelistedShaders))
-                    {
-                        Debug.LogWarning($"Renderer '{rend.name}' does not have a material or has not valid shader.");
-                        continue;
-                    }
-
-                    var ci = new CombineInstance
-                    {
-                        mesh = mf.sharedMesh,
-                        subMeshIndex = subMeshIndex,
-
-                        // Convert the renderer's transform into the local space of the prefab root.
-                        transform = rend.transform.localToWorldMatrix * transform.worldToLocalMatrix,
-                    };
-
-                    (Material mat, Transform parent) key = (mat, rend.transform.parent);
-
-                    if (!combineDict.ContainsKey(key))
-                        combineDict[key] = new CombinedLodsRenderer(mat, rend, subMeshIndex);
-
-                    // NOTE (Vit): it can add equal meshes, but how otherwise we can treat LOD inside compute shader?
-                    combineDict[key].AddCombineInstance(ci, rend);
-
-                    RefRenderers.Add(rend);
-                }
-            }
-        }
-
         private void UpdateBoundsByCombinedLods()
         {
             var isInitialized = false;
@@ -245,62 +188,39 @@ namespace DCL.Roads.GPUInstancing.Playground
                 else Bounds.Encapsulate(lodsRenderer.CombinedMesh.bounds);
             }
         }
-
-        private static bool IsInWhitelist(Material material, Shader[] whitelistShaders)
-        {
-            if (whitelistShaders == null || whitelistShaders.Length == 0)
-            {
-                Debug.LogError("No whitelist shaders defined!");
-                return false;
-            }
-
-            return whitelistShaders.Where(shader => shader != null).Any(shader => material.shader == shader || material.shader.name == shader.name || material.shader.name.StartsWith(shader.name) || shader.name.StartsWith(material.shader.name));
-        }
 #endif
 
         public bool Equals(GPUInstancingLODGroup other)
         {
+            const float EPS = 0.001f;
+
             if (other == null) return false;
             if (ReferenceEquals(this, other)) return true;
 
-            // Check if they're instances of the same prefab
-            // if (AreSameNestedPrefabInstance(gameObject, other.gameObject)) return true;
-
             // Check basic properties
             if (Name != other.Name) return false;
-            if (Math.Abs(ObjectSize - other.ObjectSize) > 0.001f) return false; // Float comparison with epsilon
+            if (Math.Abs(ObjectSize - other.ObjectSize) > EPS) return false;
 
-            // Check LOD screen space sizes
-            if (LodsScreenSpaceSizes == null || other.LodsScreenSpaceSizes == null) return false;
-            if (LodsScreenSpaceSizes.Length != other.LodsScreenSpaceSizes.Length) return false;
-
-            // Compare LOD sizes with tolerance
-            const float lodSizeTolerance = 0.001f;
+            // Check LOD sizes
+            if (LodsScreenSpaceSizes == null || other.LodsScreenSpaceSizes == null || LodsScreenSpaceSizes.Length != other.LodsScreenSpaceSizes.Length)
+                return false;
 
             for (var i = 0; i < LodsScreenSpaceSizes.Length; i++)
-            {
-                if (Math.Abs(LodsScreenSpaceSizes[i] - other.LodsScreenSpaceSizes[i]) > lodSizeTolerance)
+                if (Math.Abs(LodsScreenSpaceSizes[i] - other.LodsScreenSpaceSizes[i]) > EPS)
                     return false;
-            }
 
-            // Check Combined Renderers
-            if (CombinedLodsRenderers == null || other.CombinedLodsRenderers == null) return false;
-            if (CombinedLodsRenderers.Count != other.CombinedLodsRenderers.Count) return false;
+            // Check CombinedLods
+            if (CombinedLodsRenderers == null || other.CombinedLodsRenderers == null || CombinedLodsRenderers.Count != other.CombinedLodsRenderers.Count)
+                return false;
 
-            // Compare essential properties of combined renderers
-            for (int i = 0; i < CombinedLodsRenderers.Count; i++)
+            for (var i = 0; i < CombinedLodsRenderers.Count; i++)
             {
                 var thisRenderer = CombinedLodsRenderers[i];
                 var otherRenderer = other.CombinedLodsRenderers[i];
 
-                // Check if meshes have the same vertex count and submesh count
-                if (thisRenderer.CombinedMesh.vertexCount != otherRenderer.CombinedMesh.vertexCount)
-                    return false;
-                if (thisRenderer.CombinedMesh.subMeshCount != otherRenderer.CombinedMesh.subMeshCount)
-                    return false;
-
-                // Compare materials
-                if (thisRenderer.SharedMaterial != otherRenderer.SharedMaterial)
+                if (thisRenderer.CombinedMesh.vertexCount != otherRenderer.CombinedMesh.vertexCount ||
+                    thisRenderer.CombinedMesh.subMeshCount != otherRenderer.CombinedMesh.subMeshCount ||
+                    thisRenderer.SharedMaterial != otherRenderer.SharedMaterial)
                     return false;
             }
 

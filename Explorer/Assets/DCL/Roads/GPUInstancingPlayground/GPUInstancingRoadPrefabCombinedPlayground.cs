@@ -151,7 +151,7 @@ namespace DCL.Roads.GPUInstancingPlayground
                 drawArgsBuffer.SetData(drawArgsCommandData, 0, 0, count: lodCount);
 
                 combinedLodRenderer.InitializeRenderParams(instancingMaterials);
-                ref RenderParams rparams = ref combinedLodRenderer.RenderParamsArray[0];
+                ref RenderParams rparams = ref combinedLodRenderer.RenderParamsArray;
 
                 // rparams.camera = Camera.current;
                 rparams.matProps = new MaterialPropertyBlock();
@@ -169,7 +169,7 @@ namespace DCL.Roads.GPUInstancingPlayground
 
                 int lodCount = candidate.LODGroup.LodsScreenSpaceSizes.Length;
 
-                Graphics.RenderMeshIndirect(combinedLodRenderer.RenderParamsArray[0], combinedLodRenderer.CombinedMesh, drawArgsBuffer, commandCount: lodCount);
+                Graphics.RenderMeshIndirect(combinedLodRenderer.RenderParamsArray, combinedLodRenderer.CombinedMesh, drawArgsBuffer, commandCount: lodCount);
             }
         }
 

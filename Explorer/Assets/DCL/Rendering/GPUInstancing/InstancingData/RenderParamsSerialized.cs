@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-namespace DCL.Roads.GPUInstancing.Playground
+namespace DCL.Rendering.GPUInstancing.InstancingData
 {
     [Serializable]
     public struct RenderParamsSerialized
