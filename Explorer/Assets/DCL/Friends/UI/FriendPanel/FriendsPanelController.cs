@@ -117,7 +117,7 @@ namespace DCL.Friends.UI.FriendPanel
                 includeUserBlocking);
             blockedSectionController = new BlockedSectionController(instantiatedView.BlockedSection,
                 mvcManager,
-                new BlockedRequestManager(profileRepository, web3IdentityCache, webRequestController, profileThumbnailCache, FRIENDS_PAGE_SIZE, FRIENDS_FETCH_ELEMENTS_THRESHOLD),
+                new BlockedRequestManager(friendsService, friendEventBus, webRequestController, profileThumbnailCache, FRIENDS_PAGE_SIZE, FRIENDS_FETCH_ELEMENTS_THRESHOLD),
                 systemClipboard,
                 passportBridge,
                 profileThumbnailCache);
