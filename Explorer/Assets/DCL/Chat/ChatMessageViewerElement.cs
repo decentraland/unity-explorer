@@ -314,7 +314,7 @@ namespace DCL.Chat
                     return null;
                 }
 
-                ChatMessage itemData = chatMessages[index - (isIndexAfterSeparator ? 1 : 0)]; // Ignores the index used for the separator
+                ChatMessage itemData = chatMessages[messageIndex]; // Ignores the index used for the separator
 
                 if (itemData.IsPaddingElement)
                     item = listView.NewListViewItem(listView.ItemPrefabDataList[(int)ChatItemPrefabIndex.Padding].mItemPrefab.name);
