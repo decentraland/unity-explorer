@@ -3,6 +3,8 @@ using UnityEngine;
 
 public class ChatContentRescaler : MonoBehaviour
 {
+    //TODO: Fix this so the logic is properly distributed and no references to internal components of other game objects are made (like input field and inputFieldRectTransform)
+    //Created ticket for this: #3247
     [SerializeField] private TMP_InputField inputField;
     [SerializeField] private RectTransform inputFieldRectTransform;
     [SerializeField] private RectTransform contentRectTransform;

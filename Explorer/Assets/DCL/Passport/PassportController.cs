@@ -5,7 +5,6 @@ using DCL.Backpack;
 using DCL.BadgesAPIService;
 using DCL.Browser;
 using DCL.CharacterPreview;
-using DCL.Chat;
 using DCL.Clipboard;
 using DCL.Diagnostics;
 using DCL.Friends;
@@ -65,7 +64,6 @@ namespace DCL.Passport
         private readonly ICursor cursor;
         private readonly IProfileRepository profileRepository;
         private readonly ICharacterPreviewFactory characterPreviewFactory;
-        private readonly ChatEntryConfigurationSO chatEntryConfiguration;
         private readonly NftTypeIconSO rarityBackgrounds;
         private readonly NFTColorsSO rarityColors;
         private readonly NftTypeIconSO categoryIcons;
@@ -137,7 +135,6 @@ namespace DCL.Passport
             ICursor cursor,
             IProfileRepository profileRepository,
             ICharacterPreviewFactory characterPreviewFactory,
-            ChatEntryConfigurationSO chatEntryConfiguration,
             NftTypeIconSO rarityBackgrounds,
             NFTColorsSO rarityColors,
             NftTypeIconSO categoryIcons,
@@ -173,7 +170,6 @@ namespace DCL.Passport
             this.cursor = cursor;
             this.profileRepository = profileRepository;
             this.characterPreviewFactory = characterPreviewFactory;
-            this.chatEntryConfiguration = chatEntryConfiguration;
             this.rarityBackgrounds = rarityBackgrounds;
             this.rarityColors = rarityColors;
             this.categoryIcons = categoryIcons;
@@ -218,13 +214,13 @@ namespace DCL.Passport
             Assert.IsNotNull(world);
             passportErrorsController = new PassportErrorsController(viewInstance!.ErrorNotification);
             characterPreviewController = new PassportCharacterPreviewController(viewInstance.CharacterPreviewView, characterPreviewFactory, world, characterPreviewEventBus);
-            commonPassportModules.Add(new UserBasicInfo_PassportModuleController(viewInstance.UserBasicInfoModuleView, chatEntryConfiguration, selfProfile, passportErrorsController));
+            commonPassportModules.Add(new UserBasicInfo_PassportModuleController(viewInstance.UserBasicInfoModuleView, selfProfile, passportErrorsController));
             overviewPassportModules.Add(new UserDetailedInfo_PassportModuleController(viewInstance.UserDetailedInfoModuleView, mvcManager, selfProfile, viewInstance.AddLinkModal, passportErrorsController, passportProfileInfoController));
             overviewPassportModules.Add(new EquippedItems_PassportModuleController(viewInstance.EquippedItemsModuleView, world, rarityBackgrounds, rarityColors, categoryIcons, thumbnailProvider, webBrowser, decentralandUrlsSource, passportErrorsController));
             overviewPassportModules.Add(new BadgesOverview_PassportModuleController(viewInstance.BadgesOverviewModuleView, badgesAPIClient, passportErrorsController, webRequestController));
 
             badgesDetailsPassportModuleController = new BadgesDetails_PassportModuleController(viewInstance.BadgesDetailsModuleView, viewInstance.BadgeInfoModuleView, badgesAPIClient, passportErrorsController, webRequestController, selfProfile);
-            cameraReelGalleryController = new CameraReelGalleryController(viewInstance.CameraReelGalleryModuleView, cameraReelStorageService,cameraReelScreenshotsStorage, new ReelGalleryConfigParams(gridLayoutFixedColumnCount, thumbnailHeight, thumbnailWidth, false, false), false);
+            cameraReelGalleryController = new CameraReelGalleryController(viewInstance.CameraReelGalleryModuleView, cameraReelStorageService, cameraReelScreenshotsStorage, new ReelGalleryConfigParams(gridLayoutFixedColumnCount, thumbnailHeight, thumbnailWidth, false, false), false);
             cameraReelGalleryController.ThumbnailClicked += ThumbnailClicked;
             badgesPassportModules.Add(badgesDetailsPassportModuleController);
 
@@ -362,7 +358,7 @@ namespace DCL.Passport
                 if (profile == null)
                     return;
 
-                UpdateBackgroundColor(profile.Name);
+                UpdateBackgroundColor(profile.UserNameColor);
 
                 if (sectionToLoad == PassportSection.OVERVIEW)
                 {
@@ -384,9 +380,9 @@ namespace DCL.Passport
             }
         }
 
-        private void UpdateBackgroundColor(string profileName)
+        private void UpdateBackgroundColor(Color profileColor)
         {
-            Color.RGBToHSV(chatEntryConfiguration.GetNameColor(profileName), out float h, out float s, out float v);
+            Color.RGBToHSV(profileColor, out float h, out float s, out float v);
             viewInstance?.BackgroundImage.material.SetColor(BG_SHADER_COLOR_1, Color.HSVToRGB(h, s, Mathf.Clamp01(v - 0.3f)));
         }
 
@@ -400,9 +396,8 @@ namespace DCL.Passport
             foreach (IPassportModuleController module in passportModulesToSetup)
             {
                 if (module is BadgesDetails_PassportModuleController badgesDetailsController && !string.IsNullOrEmpty(badgeIdSelected))
-                {
                     badgesDetailsController.SetBadgeByDefault(badgeIdSelected);
-                }
+
                 module.Setup(profile);
             }
         }
@@ -455,7 +450,7 @@ namespace DCL.Passport
             LoadPassportSectionAsync(currentUserId!, PassportSection.BADGES, characterPreviewLoadingCts.Token, badgeIdSelected).Forget();
             currentSection = PassportSection.BADGES;
             viewInstance.BadgeInfoModuleView.gameObject.SetActive(true);
-            characterPreviewController?.OnHide(triggerOnHideBusEvent: false);
+            characterPreviewController?.OnHide(false);
             bool isOwnPassport = ownProfile?.UserId == currentUserId;
             BadgesSectionOpened?.Invoke(currentUserId!, isOwnPassport, OpenBadgeSectionOrigin.BUTTON.ToString());
         }
@@ -562,7 +557,7 @@ namespace DCL.Passport
             contextMenuSeparator.Enabled = contextMenuJumpInButton.Enabled || contextMenuBlockUserButton.Enabled;
 
             userProfileContextMenuControlSettings.SetInitialData(targetProfile.Name, targetProfile.UserId, targetProfile.HasClaimedName,
-                viewInstance.ChatEntryConfiguration.GetNameColor(targetProfile.Name), ConvertFriendshipStatus(friendshipStatus),
+                targetProfile.UserNameColor, ConvertFriendshipStatus(friendshipStatus),
                 thumbnailSprite);
         }
 

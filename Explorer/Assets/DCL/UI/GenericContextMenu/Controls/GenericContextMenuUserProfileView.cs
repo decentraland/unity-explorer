@@ -35,6 +35,7 @@ namespace DCL.UI.GenericContextMenu.Controls
         [field: SerializeField] public Button CopyAddressButton { get; private set; }
         [field: SerializeField] public WarningNotificationView CopyAddressToast { get; private set; }
         [field: SerializeField] public VerticalLayoutGroup ContentVerticalLayout { get; private set; }
+        [field: SerializeField] public GameObject FriendsButtonsContainer  { get; private set; }
 
         [field: Header("Friendship Button")]
         [field: SerializeField] public Button AddFriendButton { get; private set; }
@@ -68,7 +69,7 @@ namespace DCL.UI.GenericContextMenu.Controls
         }
 
         private void InvokeSettingsAction(UserProfileContextMenuControlSettings settings) =>
-            settings.requestFriendshipAction(settings.userAddress, settings.friendshipStatus);
+            settings.friendButtonClickAction(settings.userAddress, settings.friendshipStatus);
 
         private void CopyUserInfo(UserProfileContextMenuControlSettings settings, CopyUserInfoSection section)
         {
@@ -117,6 +118,14 @@ namespace DCL.UI.GenericContextMenu.Controls
 
         private void ConfigureFriendshipButton(UserProfileContextMenuControlSettings settings)
         {
+            if (settings.friendshipStatus == UserProfileContextMenuControlSettings.FriendshipStatus.DISABLED)
+            {
+                FriendsButtonsContainer.gameObject.SetActive(false);
+                return;
+            }
+
+            FriendsButtonsContainer.gameObject.SetActive(true);
+
             AddFriendButton.gameObject.SetActive(false);
             RemoveFriendButton.gameObject.SetActive(false);
             CancelFriendButton.gameObject.SetActive(false);
