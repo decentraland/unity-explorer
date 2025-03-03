@@ -128,6 +128,7 @@ namespace Global
             QualityContainer.Dispose();
             Profiler.Dispose();
             texturesFuse.Dispose();
+            SceneRestrictionBusController.Dispose();
         }
 
         public async UniTask InitializeAsync(StaticSettings settings, CancellationToken ct)
