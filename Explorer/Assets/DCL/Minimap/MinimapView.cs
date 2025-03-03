@@ -62,6 +62,9 @@ namespace DCL.Minimap
         internal Button goToGenesisCityButton { get; private set; }
 
         [field: SerializeField]
+        internal TMP_Text goToGenesisCityText { get; private set; }
+
+        [field: SerializeField]
         internal RuntimeAnimatorController genesisCityAnimatorController { get; private set; }
 
         [field: SerializeField]
