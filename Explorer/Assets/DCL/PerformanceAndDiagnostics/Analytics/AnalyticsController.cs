@@ -15,7 +15,10 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         private readonly IAnalyticsService analytics;
 
         public AnalyticsConfiguration Configuration { get; }
+
         public string SessionID { get; }
+
+        public string ServiceInfo => analytics.GetType().Name;
 
         public AnalyticsController(
             IAnalyticsService analyticsService,

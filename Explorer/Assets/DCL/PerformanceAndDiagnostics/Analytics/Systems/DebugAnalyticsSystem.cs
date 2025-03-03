@@ -27,7 +27,10 @@ namespace DCL.Analytics.Systems
             if (widget == null)
                 return;
 
+            var serviceBinding = new ElementBinding<string>(analyticsController.ServiceInfo);
+
             widget.SetVisibilityBinding(visibilityBinding);
+            widget.AddCustomMarker("Service", serviceBinding);
             widget.AddMarker("Unflushed Count", binding, DebugLongMarkerDef.Unit.NoFormat);
             widget.AddSingleButton("Manual Flush", analyticsController.Flush);
         }
