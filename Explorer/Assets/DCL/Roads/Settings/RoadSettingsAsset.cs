@@ -1,7 +1,7 @@
+using DCL.LOD;
 using DCL.Rendering.GPUInstancing.InstancingData;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
@@ -78,8 +78,8 @@ namespace DCL.Roads.Settings
 
                 if (!loadedPrefabs.TryGetValue(roadDescription.RoadModel, out GPUInstancingPrefabData prefab))
                 {
-                    Debug.LogWarning($"Can't find prefab {roadDescription.RoadModel}");
-                    continue;
+                    Debug.LogWarning($"Can't find prefab {roadDescription.RoadModel}, using default");
+                    prefab = loadedPrefabs[RoadAssetsPool.DEFAULT_ROAD_KEY];
                 }
 
                 var roadRoot = Matrix4x4.TRS(
