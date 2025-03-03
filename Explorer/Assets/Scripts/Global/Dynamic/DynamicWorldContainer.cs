@@ -808,7 +808,6 @@ namespace Global.Dynamic
                     assetsProvisioner,
                     identityCache,
                     profileRepository,
-                    clipboard,
                     staticContainer.WebRequestsContainer.WebRequestController,
                     staticContainer.LoadingStatus,
                     staticContainer.InputBlock,

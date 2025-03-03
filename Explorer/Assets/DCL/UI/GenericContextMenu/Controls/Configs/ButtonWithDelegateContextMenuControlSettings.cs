@@ -9,7 +9,7 @@ namespace DCL.UI.GenericContextMenu.Controls.Configs
         internal readonly int horizontalLayoutSpacing;
         internal readonly bool horizontalLayoutReverseArrangement;
         internal readonly Delegate callback;
-        internal string profile;
+        internal string data;
 
         /// <summary>
         ///     Button component settings for the context menu. This is reused by other generic buttons that have custom functionality but same settings.
@@ -24,9 +24,9 @@ namespace DCL.UI.GenericContextMenu.Controls.Configs
             this.horizontalLayoutReverseArrangement = horizontalLayoutReverseArrangement;
         }
 
-        public void SetData(string profile)
+        public void SetData(string data)
         {
-            this.profile = profile;
+            this.data = data;
         }
     }
 }

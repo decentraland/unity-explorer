@@ -1,5 +1,4 @@
 using Cysharp.Threading.Tasks;
-using DCL.Clipboard;
 using DCL.Diagnostics;
 using DCL.Friends.UI.Requests;
 using DCL.Profiles;
@@ -33,7 +32,6 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             IFriendsService friendsService,
             IFriendsEventBus friendEventBus,
             IMVCManager mvcManager,
-            ISystemClipboard systemClipboard,
             RequestsRequestManager requestManager,
             IPassportBridge passportBridge,
             IProfileThumbnailCache profileThumbnailCache,
@@ -44,7 +42,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
             this.profileThumbnailCache = profileThumbnailCache;
 
             contextMenu = new GenericContextMenu(view.ContextMenuSettings.ContextMenuWidth, verticalLayoutPadding: CONTEXT_MENU_VERTICAL_LAYOUT_PADDING, elementsSpacing: CONTEXT_MENU_ELEMENTS_SPACING)
-                         .AddControl(userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings(systemClipboard, HandleContextMenuUserProfileButton))
+                         .AddControl(userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings(HandleContextMenuUserProfileButton))
                          .AddControl(new SeparatorContextMenuControlSettings(CONTEXT_MENU_SEPARATOR_HEIGHT, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.left, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.right))
                          .AddControl(new ButtonContextMenuControlSettings(view.ContextMenuSettings.ViewProfileText, view.ContextMenuSettings.ViewProfileSprite, () => OpenProfilePassport(lastClickedProfileCtx!)));
 

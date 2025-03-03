@@ -196,7 +196,7 @@ namespace DCL.Passport
             notificationBusController.SubscribeToNotificationTypeReceived(NotificationType.BADGE_GRANTED, OnBadgeNotificationReceived);
             notificationBusController.SubscribeToNotificationTypeClick(NotificationType.BADGE_GRANTED, OnBadgeNotificationClicked);
 
-            userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings(systemClipboard, ExecuteFriendshipOperationFromContextMenu);
+            userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings(ExecuteFriendshipOperationFromContextMenu);
         }
 
         private void ThumbnailClicked(List<CameraReelResponseCompact> reels, int index, Action<CameraReelResponseCompact> reelDeleteIntention) =>

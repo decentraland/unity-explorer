@@ -1,5 +1,4 @@
 using Cysharp.Threading.Tasks;
-using DCL.Clipboard;
 using DCL.Multiplayer.Connectivity;
 using DCL.Profiles;
 using DCL.UI.GenericContextMenu;
@@ -39,7 +38,6 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             IProfileThumbnailCache profileThumbnailCache,
             IOnlineUsersProvider onlineUsersProvider,
             IRealmNavigator realmNavigator,
-            ISystemClipboard systemClipboard,
             IFriendsConnectivityStatusTracker friendsConnectivityStatusTracker,
             bool includeUserBlocking)
             : base(view, friendsService, friendEventBus, mvcManager, doubleCollectionRequestManager)
@@ -51,7 +49,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             this.friendsConnectivityStatusTracker = friendsConnectivityStatusTracker;
             this.includeUserBlocking = includeUserBlocking;
 
-            userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings(systemClipboard, HandleContextMenuUserProfileButton);
+            userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings(HandleContextMenuUserProfileButton);
 
             doubleCollectionRequestManager.JumpInClicked += JumpInClick;
             doubleCollectionRequestManager.ContextMenuClicked += ContextMenuClicked;

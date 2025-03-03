@@ -60,6 +60,7 @@ namespace MVC
                 contextMenuFriendshipStatus = ConvertFriendshipStatus(friendshipStatus);
             }
 
+            //TODO FRAN> FIX THIS
             Sprite thumbnailSprite = null;
 
             userProfileContextMenuControlSettings.SetInitialData(profile.DisplayName, profile.UserId, profile.HasClaimedName, profile.UserNameColor, contextMenuFriendshipStatus, thumbnailSprite);

@@ -2,7 +2,6 @@ using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
-using DCL.Clipboard;
 using DCL.FeatureFlags;
 using DCL.Friends;
 using DCL.Chat.ChatLifecycleBus;
@@ -41,7 +40,6 @@ namespace DCL.PluginSystem.Global
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IProfileRepository profileRepository;
-        private readonly ISystemClipboard systemClipboard;
         private readonly IWebRequestController webRequestController;
         private readonly ILoadingStatus loadingStatus;
         private readonly IInputBlock inputBlock;
@@ -75,7 +73,6 @@ namespace DCL.PluginSystem.Global
             IAssetsProvisioner assetsProvisioner,
             IWeb3IdentityCache web3IdentityCache,
             IProfileRepository profileRepository,
-            ISystemClipboard systemClipboard,
             IWebRequestController webRequestController,
             ILoadingStatus loadingStatus,
             IInputBlock inputBlock,
@@ -102,7 +99,6 @@ namespace DCL.PluginSystem.Global
             this.assetsProvisioner = assetsProvisioner;
             this.web3IdentityCache = web3IdentityCache;
             this.profileRepository = profileRepository;
-            this.systemClipboard = systemClipboard;
             this.webRequestController = webRequestController;
             this.loadingStatus = loadingStatus;
             this.inputBlock = inputBlock;
@@ -178,7 +174,6 @@ namespace DCL.PluginSystem.Global
                 mvcManager,
                 web3IdentityCache,
                 profileRepository,
-                systemClipboard,
                 webRequestController,
                 profileThumbnailCache,
                 dclInput,

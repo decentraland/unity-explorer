@@ -116,10 +116,10 @@ namespace DCL.UI.GenericContextMenu
 
         private GenericContextMenuComponentBase GetMentionUserButton(MentionUserButtonContextMenuControlSettings settings)
         {
-            GenericContextMenuMentionUserButtonView userProfileView = mentionUserButtonPool.Get();
-            userProfileView.Configure(settings);
+            GenericContextMenuMentionUserButtonView mentionUserButton = mentionUserButtonPool.Get();
+            mentionUserButton.Configure(settings);
 
-            return userProfileView;
+            return mentionUserButton;
         }
 
         private GenericContextMenuComponentBase GetOpenUserProfileButton(OpenUserProfileButtonContextMenuControlSettings settings)
