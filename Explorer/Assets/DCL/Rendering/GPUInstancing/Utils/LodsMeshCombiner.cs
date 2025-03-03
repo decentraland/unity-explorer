@@ -96,6 +96,7 @@ namespace DCL.Rendering.GPUInstancing.Utils
                 return false;
             }
 
+            // DCL/Scene.shader was not always recognized during collection. So this is the only hack that worked.
             bool isValid = whitelistShaders.Where(shader => shader != null)
                                            .Any(shader => material.shader == shader ||
                                                           material.shader.name == shader.name ||

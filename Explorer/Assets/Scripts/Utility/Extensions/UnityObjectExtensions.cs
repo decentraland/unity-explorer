@@ -11,6 +11,7 @@ namespace Utility
 {
     public static class QuaternionExtensions
     {
+        // avoid Unity exceptions for undefined Quaternions (Quaternion by its definition cannot have all zero values)
         public static Quaternion SelfOrIdentity(this Quaternion quaternion) =>
             quaternion is { x: 0, y: 0, z: 0, w: 0 } ? Quaternion.identity : quaternion;
     }

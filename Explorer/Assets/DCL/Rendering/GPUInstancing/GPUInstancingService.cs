@@ -128,10 +128,10 @@ namespace DCL.Roads.GPUInstancing
         public void Dispose()
         {
             foreach (GPUInstancingBuffers buffers in candidatesBuffersTable.Values)
-                buffers.Dispose();
+                buffers?.Dispose();
 
-            candidatesBuffersTable.Clear();
-            instancingMaterials.Clear();
+            candidatesBuffersTable?.Clear();
+            instancingMaterials?.Clear();
         }
 
         public void RenderIndirect()

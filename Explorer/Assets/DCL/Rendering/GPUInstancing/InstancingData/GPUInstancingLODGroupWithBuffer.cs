@@ -24,13 +24,8 @@ namespace DCL.Roads.GPUInstancing.Playground
             return Name == other.Name && Equals(LODGroup, other.LODGroup);
         }
 
-        public override bool Equals(object obj)
-        {
-            if (obj is null) return false;
-            if (ReferenceEquals(this, obj)) return true;
-            if (obj.GetType() != GetType()) return false;
-            return Equals((GPUInstancingLODGroupWithBuffer) obj);
-        }
+        public override bool Equals(object obj) =>
+            obj is GPUInstancingLODGroupWithBuffer other && Equals(other);
 
         public override int GetHashCode() =>
             HashCode.Combine(Name, LODGroup);

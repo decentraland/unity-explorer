@@ -176,17 +176,9 @@ namespace DCL.Roads.GPUInstancing.Playground
         }
         private void UpdateBoundsByCombinedLods()
         {
-            var isInitialized = false;
-
-            foreach (CombinedLodsRenderer lodsRenderer in CombinedLodsRenderers)
-            {
-                if (!isInitialized)
-                {
-                    Bounds = lodsRenderer.CombinedMesh.bounds;
-                    isInitialized = true;
-                }
-                else Bounds.Encapsulate(lodsRenderer.CombinedMesh.bounds);
-            }
+            Bounds = CombinedLodsRenderers[0].CombinedMesh.bounds;
+            for (var i = 1; i < CombinedLodsRenderers.Count; i++)
+                Bounds.Encapsulate(CombinedLodsRenderers[i].CombinedMesh.bounds);
         }
 #endif
 
