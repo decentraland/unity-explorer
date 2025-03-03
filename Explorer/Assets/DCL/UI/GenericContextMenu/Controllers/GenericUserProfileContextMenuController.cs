@@ -65,7 +65,7 @@ namespace MVC
 
             userProfileContextMenuControlSettings.SetInitialData(profile.ValidatedName, profile.UserId,
                 profile.HasClaimedName, profile.UserNameColor, contextMenuFriendshipStatus, profile.Avatar.FaceSnapshotUrl);
-            mentionUserButtonContextMenuControlSettings.SetData(profile.DisplayName);
+            mentionUserButtonContextMenuControlSettings.SetData(profile.MentionName);
             openUserProfileButtonContextMenuControlSettings.SetData(profile.UserId);
 
             await mvcManager.ShowAsync(GenericContextMenuController.IssueCommand(

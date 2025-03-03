@@ -88,7 +88,7 @@ namespace DCL.Chat
             ChatMemberListViewItem memberItem = newItem.GetComponent<ChatMemberListViewItem>();
             memberItem.Id = members[index].Id;
             memberItem.Name = members[index].Name;
-            memberItem.SetupProfilePicture(viewDependencies, members[index].ProfileColor, members[index].Name, members[index].Id);
+            memberItem.SetupProfilePicture(viewDependencies, members[index].ProfileColor, members[index].FaceSnapshotUrl, members[index].Id);
             memberItem.ConnectionStatus = members[index].ConnectionStatus;
             memberItem.Tag = members[index].WalletId;
             memberItem.NameTextColor = members[index].ProfileColor;
