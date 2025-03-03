@@ -8,11 +8,23 @@ namespace Plugins.RustSegment.SegmentServerWrap.Playground
 {
     public class SegmentServerWrapPlayground : MonoBehaviour
     {
+        [SerializeField] private bool fillMode;
+        [SerializeField] private long unFlushedBatches;
+
         private IAnalyticsService service = null!;
 
         private void Start()
         {
             Initialize();
+            Identify();
+        }
+
+        public void Update()
+        {
+            if (fillMode)
+                Track();
+
+            unFlushedBatches = (long) NativeMethods.SegmentServerUnFlushedBatchesCount();
         }
 
         [ContextMenu(nameof(Initialize))]
