@@ -33,6 +33,7 @@ using ABPromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoadin
 namespace ECS.StreamableLoading.AssetBundles.Tests
 {
     [TestFixture]
+    [Ignore("Currently ignored as partial flow has been disabled")]
     public class LoadAssetBundlePartialSystemShould :  UnitySystemTestBase<LoadAssetBundleSystem>
     {
         //size 64800
