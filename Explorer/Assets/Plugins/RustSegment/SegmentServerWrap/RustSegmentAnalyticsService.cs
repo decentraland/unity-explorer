@@ -33,7 +33,7 @@ namespace Plugins.RustSegment.SegmentServerWrap
 
         private static volatile RustSegmentAnalyticsService? current;
 
-        public RustSegmentAnalyticsService(string writerKey)
+        public RustSegmentAnalyticsService(string writerKey, string? anonId)
         {
             if (string.IsNullOrWhiteSpace(writerKey))
                 throw new ArgumentNullException(nameof(writerKey), "Invalid key is null or empty");
@@ -41,7 +41,7 @@ namespace Plugins.RustSegment.SegmentServerWrap
             if (current != null)
                 throw new Exception("Rust Segment previous instance is not disposed");
 
-            this.anonId = SystemInfo.deviceUniqueIdentifier!;
+            this.anonId = anonId ?? SystemInfo.deviceUniqueIdentifier!;
 
             using var mWriterKey = new MarshaledString(writerKey);
             bool result = NativeMethods.SegmentServerInitialize(mWriterKey.Ptr, Callback);

@@ -162,16 +162,8 @@ namespace Global.Dynamic
 
             if (container.enableAnalytics)
             {
-                IAnalyticsService service = CreateAnalyticsService(analyticsConfig, container.ApplicationParametersParser, ct);
-
-                appArgs.TryGetValue(AppArgsFlags.Analytics.LAUNCHER_ID, out string? launcherAnonymousId);
-                appArgs.TryGetValue(AppArgsFlags.Analytics.SESSION_ID, out string? sessionId);
-
-                LauncherTraits launcherTraits = new LauncherTraits
-                {
-                    LauncherAnonymousId = launcherAnonymousId!,
-                    SessionId = sessionId!,
-                };
+                LauncherTraits launcherTraits = LauncherTraits.FromAppArgs(appArgs);
+                IAnalyticsService service = CreateAnalyticsService(analyticsConfig, launcherTraits, container.ApplicationParametersParser, ct);
 
                 var analyticsController = new AnalyticsController(service, appArgs, analyticsConfig, launcherTraits, buildData, dclVersion);
                 var criticalLogsAnalyticsHandler = new CriticalLogsAnalyticsHandler(analyticsController);
@@ -182,25 +174,25 @@ namespace Global.Dynamic
             return (coreBootstrap, IAnalyticsController.Null);
         }
 
-        private static IAnalyticsService CreateAnalyticsService(AnalyticsConfiguration analyticsConfig, IAppArgs args, CancellationToken token)
+        private static IAnalyticsService CreateAnalyticsService(AnalyticsConfiguration analyticsConfig, LauncherTraits launcherTraits, IAppArgs args, CancellationToken token)
         {
             // Force segment in release
             if (!args.HasDebugFlag())
-                return CreateSegmentAnalyticsOrFallbackToDebug(analyticsConfig, token);
+                return CreateSegmentAnalyticsOrFallbackToDebug(analyticsConfig, launcherTraits, token);
 
             return analyticsConfig.Mode switch
                    {
-                       AnalyticsMode.SEGMENT => CreateSegmentAnalyticsOrFallbackToDebug(analyticsConfig, token),
+                       AnalyticsMode.SEGMENT => CreateSegmentAnalyticsOrFallbackToDebug(analyticsConfig, launcherTraits, token),
                        AnalyticsMode.DEBUG_LOG => new DebugAnalyticsService(),
                        AnalyticsMode.DISABLED => throw new InvalidOperationException("Trying to create analytics when it is disabled"),
                        _ => throw new ArgumentOutOfRangeException(),
                    };
         }
 
-        private static IAnalyticsService CreateSegmentAnalyticsOrFallbackToDebug(AnalyticsConfiguration analyticsConfig, CancellationToken token)
+        private static IAnalyticsService CreateSegmentAnalyticsOrFallbackToDebug(AnalyticsConfiguration analyticsConfig, LauncherTraits launcherTraits, CancellationToken token)
         {
             if (analyticsConfig.TryGetSegmentConfiguration(out Configuration segmentConfiguration))
-                return new RustSegmentAnalyticsService(segmentConfiguration.WriteKey!)
+                return new RustSegmentAnalyticsService(segmentConfiguration.WriteKey!, launcherTraits.LauncherAnonymousId)
                       .WithCountFlush(analyticsConfig.FlushSize)
                       .WithTimeFlush(TimeSpan.FromSeconds(analyticsConfig.FlushInterval), token);
 
