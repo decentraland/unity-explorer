@@ -14,12 +14,10 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Blocked
     {
         private readonly IFriendsService friendsService;
         private readonly IFriendsEventBus friendsEventBus;
-        private readonly List<FriendProfile> blockedProfiles = new ();
+        private readonly List<BlockedProfile> blockedProfiles = new ();
 
-        private FriendProfile? userProfile;
-
-        public event Action<FriendProfile>? UnblockClicked;
-        public event Action<FriendProfile, Vector2, BlockedUserView>? ContextMenuClicked;
+        public event Action<BlockedProfile>? UnblockClicked;
+        public event Action<BlockedProfile, Vector2, BlockedUserView>? ContextMenuClicked;
 
         public BlockedRequestManager(
             IFriendsService friendsService,
@@ -41,11 +39,15 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Blocked
 
         protected override void CustomiseElement(BlockedUserView elementView, int index)
         {
+            BlockedProfile element = blockedProfiles[index];
+
             elementView.UnblockButton.onClick.RemoveAllListeners();
-            elementView.UnblockButton.onClick.AddListener(() => UnblockClicked?.Invoke(elementView.UserProfile));
+            elementView.UnblockButton.onClick.AddListener(() => UnblockClicked?.Invoke(element));
 
             elementView.ContextMenuButton.onClick.RemoveAllListeners();
-            elementView.ContextMenuButton.onClick.AddListener(() => ContextMenuClicked?.Invoke(elementView.UserProfile, elementView.ContextMenuButton.transform.position, elementView));
+            elementView.ContextMenuButton.onClick.AddListener(() => ContextMenuClicked?.Invoke(element, elementView.ContextMenuButton.transform.position, elementView));
+
+            elementView.BlockedDate = element.Timestamp;
         }
 
         protected override async UniTask<int> FetchDataAsync(int pageNumber, int pageSize, CancellationToken ct)
@@ -55,7 +57,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Blocked
 
         private int MockedData()
         {
-            blockedProfiles.Add(new FriendProfile(new Web3Address("0xbdfdd873d70fbf9273180f98ee30404115a1a674"), "NftIsland", true, URLAddress.FromString("http://profile-images.decentraland.org/entities/bafkreigb23roa4vsdhzrvqxw7xllbviota45yu3j3htduudbcjx2wiztny/face.png"), ProfileNameColorHelper.GetNameColor("NftIsland")));
+            blockedProfiles.Add(new BlockedProfile(new Web3Address("0xbdfdd873d70fbf9273180f98ee30404115a1a674"), "NftIsland", true, URLAddress.FromString("http://profile-images.decentraland.org/entities/bafkreigb23roa4vsdhzrvqxw7xllbviota45yu3j3htduudbcjx2wiztny/face.png"), new DateTime(), ProfileNameColorHelper.GetNameColor("NftIsland")));
             return blockedProfiles.Count;
         }
 

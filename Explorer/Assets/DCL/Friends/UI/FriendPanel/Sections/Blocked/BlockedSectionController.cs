@@ -20,7 +20,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Blocked
         private readonly UserProfileContextMenuControlSettings userProfileContextMenuControlSettings;
         private readonly IProfileThumbnailCache profileThumbnailCache;
 
-        private FriendProfile? lastClickedProfileCtx;
+        private BlockedProfile? lastClickedProfileCtx;
 
         public BlockedSectionController(BlockedSectionView view,
             IMVCManager mvcManager,
@@ -49,10 +49,10 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Blocked
             requestManager.ContextMenuClicked -= ContextMenuClicked;
         }
 
-        private void UnblockUserClicked(FriendProfile profile) =>
+        private void UnblockUserClicked(BlockedProfile profile) =>
             mvcManager.ShowAsync(BlockUserPromptController.IssueCommand(new BlockUserPromptParams(profile.Address, profile.Name, BlockUserPromptParams.UserBlockAction.UNBLOCK))).Forget();
 
-        private void ContextMenuClicked(FriendProfile friendProfile, Vector2 buttonPosition, BlockedUserView elementView)
+        private void ContextMenuClicked(BlockedProfile friendProfile, Vector2 buttonPosition, BlockedUserView elementView)
         {
             lastClickedProfileCtx = friendProfile;
             userProfileContextMenuControlSettings.SetInitialData(friendProfile.Name, friendProfile.Address, friendProfile.HasClaimedName,
