@@ -33,6 +33,7 @@ using DCL.UI.GenericContextMenu.Controls.Configs;
 using DCL.UI.Profiles;
 using DCL.Utilities;
 using DCL.Web3;
+using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
@@ -97,6 +98,7 @@ namespace DCL.Passport
         private readonly string[] getUserPositionBuffer = new string[1];
         private readonly IOnlineUsersProvider onlineUsersProvider;
         private readonly IRealmNavigator realmNavigator;
+        private readonly IWeb3IdentityCache web3IdentityCache;
 
         private CameraReelGalleryController? cameraReelGalleryController;
         private Profile? ownProfile;
@@ -114,6 +116,9 @@ namespace DCL.Passport
         private PassportSection alreadyLoadedSections;
         private BadgesDetails_PassportModuleController? badgesDetailsPassportModuleController;
         private GenericContextMenu contextMenu;
+        private GenericContextMenuElement contextMenuSeparator;
+        private GenericContextMenuElement contextMenuJumpInButton;
+        private GenericContextMenuElement contextMenuBlockUserButton;
 
         private UniTaskCompletionSource? contextMenuCloseTask;
         private CancellationTokenSource jumpToFriendLocationCts = new ();
@@ -154,6 +159,7 @@ namespace DCL.Passport
             IProfileThumbnailCache profileThumbnailCache,
             IOnlineUsersProvider onlineUsersProvider,
             IRealmNavigator realmNavigator,
+            IWeb3IdentityCache web3IdentityCache,
             int gridLayoutFixedColumnCount,
             int thumbnailHeight,
             int thumbnailWidth,
@@ -185,6 +191,7 @@ namespace DCL.Passport
             this.profileThumbnailCache = profileThumbnailCache;
             this.onlineUsersProvider = onlineUsersProvider;
             this.realmNavigator = realmNavigator;
+            this.web3IdentityCache = web3IdentityCache;
             this.gridLayoutFixedColumnCount = gridLayoutFixedColumnCount;
             this.thumbnailHeight = thumbnailHeight;
             this.thumbnailWidth = thumbnailWidth;
@@ -232,6 +239,15 @@ namespace DCL.Passport
 
             viewInstance.PhotosSectionButton.gameObject.SetActive(enableCameraReel);
             viewInstance.FriendInteractionContainer.SetActive(enableFriendshipInteractions);
+            viewInstance.MutualFriends.Root.SetActive(enableFriendshipInteractions);
+
+            contextMenu = new GenericContextMenu(CONTEXT_MENU_WIDTH, CONTEXT_MENU_OFFSET, CONTEXT_MENU_VERTICAL_LAYOUT_PADDING, CONTEXT_MENU_ELEMENTS_SPACING)
+                         .AddControl(userProfileContextMenuControlSettings)
+                         .AddControl(contextMenuSeparator = new GenericContextMenuElement(new SeparatorContextMenuControlSettings(CONTEXT_MENU_SEPARATOR_HEIGHT, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.left, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.right), false))
+                         .AddControl(contextMenuJumpInButton = new GenericContextMenuElement(new ButtonContextMenuControlSettings(viewInstance.JumpInText, viewInstance.JumpInSprite,
+                              () => FriendListSectionUtilities.JumpToFriendLocation(inputData.UserId, jumpToFriendLocationCts, getUserPositionBuffer, onlineUsersProvider, realmNavigator,
+                                  parcel => JumpToFriendClicked?.Invoke(inputData.UserId, parcel))), false))
+                         .AddControl(contextMenuBlockUserButton = new GenericContextMenuElement(new ButtonContextMenuControlSettings(viewInstance.BlockText, viewInstance.BlockSprite, () => BlockUserClicked(inputData.UserId)), false));
         }
 
         private void ShowContextMenu()
@@ -536,17 +552,9 @@ namespace DCL.Passport
 
             viewInstance!.ContextMenuButton.gameObject.SetActive(true);
 
-            contextMenu = new GenericContextMenu(CONTEXT_MENU_WIDTH, CONTEXT_MENU_OFFSET, CONTEXT_MENU_VERTICAL_LAYOUT_PADDING, CONTEXT_MENU_ELEMENTS_SPACING)
-                                     .AddControl(userProfileContextMenuControlSettings)
-                                     .AddControl(new SeparatorContextMenuControlSettings(CONTEXT_MENU_SEPARATOR_HEIGHT, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.left, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.right));
-
-            if (friendOnlineStatusCacheProxy.Object!.GetFriendStatus(inputData.UserId) != OnlineStatus.OFFLINE)
-                contextMenu.AddControl(new ButtonContextMenuControlSettings(viewInstance.JumpInText, viewInstance.JumpInSprite,
-                    () => FriendListSectionUtilities.JumpToFriendLocation(profile.UserId, jumpToFriendLocationCts, getUserPositionBuffer, onlineUsersProvider, realmNavigator,
-                        parcel => JumpToFriendClicked?.Invoke(profile.UserId, parcel))));
-
-            if (friendshipStatus != FriendshipStatus.BLOCKED && includeUserBlocking)
-                contextMenu.AddControl(new ButtonContextMenuControlSettings(viewInstance.BlockText, viewInstance.BlockSprite, () => BlockUserClicked(inputData.UserId)));
+            contextMenuJumpInButton.Enabled = friendOnlineStatusCacheProxy.Object!.GetFriendStatus(inputData.UserId) != OnlineStatus.OFFLINE;
+            contextMenuBlockUserButton.Enabled = friendshipStatus != FriendshipStatus.BLOCKED && includeUserBlocking;
+            contextMenuSeparator.Enabled = contextMenuJumpInButton.Enabled || contextMenuBlockUserButton.Enabled;
 
             userProfileContextMenuControlSettings.SetInitialData(profile.Name, profile.UserId, profile.HasClaimedName,
                 profile.UserNameColor, ConvertFriendshipStatus(friendshipStatus),
@@ -576,7 +584,7 @@ namespace DCL.Passport
             var config = viewInstance!.MutualFriends;
             config.Root.SetActive(false);
 
-            if (inputData.IsOwnProfile) return;
+            if (inputData.IsOwnProfile || (web3IdentityCache.Identity != null && web3IdentityCache.Identity.Address.Equals(inputData.UserId))) return;
             if (!friendServiceProxy.Configured) return;
 
             IFriendsService friendService = friendServiceProxy.Object!;

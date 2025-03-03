@@ -16,7 +16,7 @@ namespace DCL.UI.InputFieldFormatting
         private const string OWN_PROFILE_CLOSING_STYLE = "</color>";
 
         private static readonly Regex RICH_TEXT_TAG_REGEX = new (@"<(?!\/?(b|i)(>|\s))[^>]+>", RegexOptions.Compiled);
-        private static readonly Regex WEBSITE_REGEX = new (@"(?<=^|\s)(https?:\/\/)([a-zA-Z0-9-]+\.)*[a-zA-Z0-9][a-zA-Z0-9-]+\.[a-zA-Z]{2,}(\/[^\s]*)?(?=\s|$)",
+        private static readonly Regex WEBSITE_REGEX = new (@"(?<=^|\s)(https?:\/\/)([a-zA-Z0-9-]+\.)*[a-zA-Z0-9-]+\.[a-zA-Z]{2,}(\/[^\s]*)?(?=\s|$)",
             RegexOptions.Compiled);
         private static readonly Regex SCENE_REGEX = new (@"(?<=^|\s)(-?\d{1,3}),(-?\d{1,3})(?=\s|!|\?|\.|,|$)", RegexOptions.Compiled);
         private static readonly Regex WORLD_REGEX = new (@"(?<=^|\s)*[a-zA-Z0-9]*\.dcl\.eth(?=\s|!|\?|\.|,|$)", RegexOptions.Compiled);

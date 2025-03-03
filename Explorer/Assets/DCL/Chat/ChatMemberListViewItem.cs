@@ -46,6 +46,11 @@ namespace DCL.Chat
             set => tagText.text = value;
         }
 
+        public Sprite ProfilePicture
+        {
+            set => profilePicture.sprite = value;
+        }
+
         public ChatMemberConnectionStatus ConnectionStatus
         {
             set => connectionStatusText.text = value.ToString(); // TODO: Localize this
@@ -71,8 +76,7 @@ namespace DCL.Chat
 
         public void SetupProfilePicture(ViewDependencies viewDependencies, Color userColor, string faceSnapshotUrl, string userId)
         {
-            profilePictureView.InjectDependencies(viewDependencies);
-            profilePictureView.Setup(userColor, faceSnapshotUrl, userId);
+            profilePictureView.SetupWithDependencies(viewDependencies, userColor, faceSnapshotUrl, userId);
         }
 
         private void Start()

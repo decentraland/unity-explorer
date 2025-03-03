@@ -73,7 +73,8 @@ namespace DCL.PluginSystem.Global
             Entity playerEntity,
             bool includeCameraReel,
             bool includeFriends,
-            IChatHistory chatHistory, ViewDependencies viewDependencies)
+            IChatHistory chatHistory,
+            ViewDependencies viewDependencies)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;

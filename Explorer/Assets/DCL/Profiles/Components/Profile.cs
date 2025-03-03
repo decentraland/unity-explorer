@@ -91,7 +91,7 @@ namespace DCL.Profiles
             }
         }
 
-        public bool HasConnectedWeb3 { get; internal set; }
+        public bool HasConnectedWeb3 { get; set; }
         public string? Description { get; set; }
         public int TutorialStep { get; set; }
         public string? Email { get; internal set; }

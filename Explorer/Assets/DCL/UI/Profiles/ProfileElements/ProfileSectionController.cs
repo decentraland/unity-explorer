@@ -12,8 +12,6 @@ namespace DCL.UI.ProfileElements
         private readonly IWeb3IdentityCache identityCache;
         private readonly IProfileRepository profileRepository;
         private readonly ViewDependencies viewDependencies;
-
-        private ImageController profileImageController;
         private UserNameElementController nameElementController;
         private UserWalletAddressElementController walletAddressElementController;
         private CancellationTokenSource cts;
@@ -62,7 +60,6 @@ namespace DCL.UI.ProfileElements
         public new void Dispose()
         {
             cts.SafeCancelAndDispose();
-            profileImageController.StopLoading();
             nameElementController.Dispose();
             walletAddressElementController.Dispose();
         }

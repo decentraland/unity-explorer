@@ -1,4 +1,4 @@
-﻿using Cysharp.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using DCL.Clipboard;
 using DCL.Input;
 using DCL.Profiles;

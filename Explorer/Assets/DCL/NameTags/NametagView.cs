@@ -23,7 +23,6 @@ namespace DCL.Nametags
         private const float DEFAULT_BUBBLE_ANIMATION_OUT_DURATION = 0.35f;
         private const float DEFAULT_SINGLE_EMOJI_EXTRA_HEIGHT = 0.1f;
         private const float DEFAULT_SINGLE_EMOJI_SIZE = 3.5f;
-        private const int EMOJI_LENGTH = 10;
         private const int DEFAULT_OPACITY_MAX_DISTANCE = 20;
         private const int DEFAULT_ADDITIONAL_MS_PER_CHARACTER = 20;
         private const int DEFAULT_BUBBLE_IDLE_TIME_MS = 5000;

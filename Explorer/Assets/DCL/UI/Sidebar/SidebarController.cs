@@ -217,6 +217,7 @@ namespace DCL.UI.Sidebar
         protected override void OnViewShow()
         {
             profileWidgetCts = profileWidgetCts.SafeRestart();
+
             //We load the data into the profile widget
             profileIconWidgetController.LaunchViewLifeCycleAsync(new CanvasOrdering(CanvasOrdering.SortingLayer.Persistent, 0), new ControllerNoData(), profileWidgetCts.Token).Forget();
         }

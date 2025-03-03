@@ -7,7 +7,7 @@ namespace DCL.Landscape
     {
         // Note: [units] = Unity units (1 unit = 1 meter)
 
-        private const int MAX_CHUNK_SIZE = 512; // Maximum size of a chunk in Unity [units]
+        private const int MAX_CHUNK_SIZE = 1024; // Maximum size of a chunk in Unity [units]
         private const int MIN_CHUNKS_PER_SIDE = 2; // Minimum number of chunks along one side of terrain, ensuring at least a 2x2 grid
 
         public readonly int2 MinParcel;
