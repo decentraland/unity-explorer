@@ -14,8 +14,6 @@ namespace DCL.Roads.GPUInstancing
     [ExecuteAlways]
     public class GPUInstancingServicePlayground : MonoBehaviour
     {
-        private GPUInstancingService instancingService;
-
         public Transform roadsRoot;
         public RoadSettingsAsset RoadsConfig;
 
@@ -29,27 +27,13 @@ namespace DCL.Roads.GPUInstancing
 
         public bool OnePrefabDebug;
         [Space] public bool Run;
+        private GPUInstancingService instancingService;
 
         private int currentPrefabId;
 
         private void Awake()
         {
             AddRoadsToService();
-        }
-
-        private void OnEnable()
-        {
-            var rendererFeaturesCache = new RendererFeaturesCache();
-            var renderFeature = rendererFeaturesCache.GetRendererFeature<GPUInstancingRenderFeature>();
-            instancingService = new GPUInstancingService(renderFeature.Settings);
-        }
-
-        private void OnDisable()
-        {
-            instancingService.Dispose();
-
-            DestroyImmediate(roadsRoot);
-            roadsRoot = null;
         }
 
         public void Update()
@@ -60,6 +44,21 @@ namespace DCL.Roads.GPUInstancing
                 AddPrefabToService();
 
             instancingService.RenderIndirect();
+        }
+
+        private void OnEnable()
+        {
+            var rendererFeaturesCache = new RendererFeaturesCache();
+            GPUInstancingRenderFeature renderFeature = rendererFeaturesCache.GetRendererFeature<GPUInstancingRenderFeature>();
+            instancingService = new GPUInstancingService(renderFeature.Settings);
+        }
+
+        private void OnDisable()
+        {
+            instancingService.Dispose();
+
+            DestroyImmediate(roadsRoot);
+            roadsRoot = null;
         }
 
         [ContextMenu(nameof(AddPrefabToService))]
@@ -73,7 +72,9 @@ namespace DCL.Roads.GPUInstancing
         [ContextMenu(nameof(RoadConfigCollect))]
         private void RoadConfigCollect()
         {
+#if UNITY_EDITOR
             RoadsConfig.CollectGPUInstancingLODGroups(ParcelsMin, ParcelsMax);
+#endif
         }
 
         [ContextMenu(nameof(AddRoadsToService))]

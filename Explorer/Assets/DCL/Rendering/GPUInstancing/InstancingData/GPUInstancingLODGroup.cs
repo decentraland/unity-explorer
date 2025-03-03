@@ -28,7 +28,6 @@ namespace DCL.Roads.GPUInstancing.Playground
         [Space]
         public List<CombinedLodsRenderer> CombinedLodsRenderers;
 
-#if UNITY_EDITOR
         [ContextMenu(nameof(HideAll))]
         public void HideAll()
         {
@@ -180,7 +179,6 @@ namespace DCL.Roads.GPUInstancing.Playground
             for (var i = 1; i < CombinedLodsRenderers.Count; i++)
                 Bounds.Encapsulate(CombinedLodsRenderers[i].CombinedMesh.bounds);
         }
-#endif
 
         public bool Equals(GPUInstancingLODGroup other)
         {
