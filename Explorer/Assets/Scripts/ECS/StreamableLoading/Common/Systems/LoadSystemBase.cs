@@ -138,7 +138,7 @@ namespace ECS.StreamableLoading.Common.Systems
                 if (cache.OngoingRequests.SyncTryGetValue(intention.CommonArguments.GetCacheableURL(), out UniTaskCompletionSource<OngoingRequestResult<TAsset>>? cachedSource))
                 {
                     // Release budget immediately, if we don't do it and load a lot of bundles with dependencies sequentially, it will be a deadlock
-                    state.AcquiredBudget?.Release();
+                    state.AcquiredBudget!.Release();
 
                     OngoingRequestResult<TAsset> ongoingRequestResult;
 
@@ -146,7 +146,7 @@ namespace ECS.StreamableLoading.Common.Systems
                     (requestIsNotFulfilled, ongoingRequestResult) = await cachedSource.Task.SuppressCancellationThrow();
 
                     //Temporarly disabled as we don't have partial loading integrated
-                    //SynchronizePartialData(state, ongoingRequestResult);
+                    SynchronizePartialData(state, ongoingRequestResult);
 
                     result = ongoingRequestResult.Result;
 
@@ -209,14 +209,13 @@ namespace ECS.StreamableLoading.Common.Systems
 
             state.DisposeBudgetIfExists();
 
-            //Temporarly disabled as we don't have partial loading integrated
             // Special path for partial downloading
-            /*if (state.PartialDownloadingData is { FullyDownloaded: false } && !cache.IrrecoverableFailures.TryGetValue(intention.CommonArguments.GetCacheableURL(), out _))
+            if (state.PartialDownloadingData is { FullyDownloaded: false } && !cache.IrrecoverableFailures.TryGetValue(intention.CommonArguments.GetCacheableURL(), out _))
             {
                 // Return the promise for re-evaluation
                 state.RequestReevaluate();
                 return;
-            }*/
+            }
 
             // Remove current source flag from the permitted sources
             // it indicates that the current source was used
