@@ -45,12 +45,7 @@ namespace DCL.Chat
         {
             set => tagText.text = value;
         }
-
-        public Sprite ProfilePicture
-        {
-            set => profilePicture.sprite = value;
-        }
-
+        
         public ChatMemberConnectionStatus ConnectionStatus
         {
             set => connectionStatusText.text = value.ToString(); // TODO: Localize this
