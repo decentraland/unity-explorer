@@ -1,6 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.UI.GenericContextMenu.Controls.Configs;
-//using DCL.UI.ProfileElements;
+using DCL.UI.ProfileElements;
 using MVC;
 using System;
 using System.Threading;
@@ -35,7 +35,7 @@ namespace DCL.UI.GenericContextMenu.Controls
         [field: SerializeField] public Button CopyAddressButton { get; private set; }
         [field: SerializeField] public WarningNotificationView CopyAddressToast { get; private set; }
         [field: SerializeField] public VerticalLayoutGroup ContentVerticalLayout { get; private set; }
-       // [field: SerializeField] public ProfilePictureView ProfilePictureView { get; private set; }
+        [field: SerializeField] public ProfilePictureView ProfilePictureView { get; private set; }
 
         [field: Header("Friendship Button")]
         [field: SerializeField] public Button AddFriendButton { get; private set; }
@@ -59,7 +59,7 @@ namespace DCL.UI.GenericContextMenu.Controls
 
             ConfigureUserNameAndTag(settings.userName, settings.userAddress, settings.hasClaimedName, settings.userColor);
 
-            //ProfilePictureView.Setup();.SetImage(settings.userThumbnail ?? defaultEmptyThumbnail);
+            ProfilePictureView.Setup(settings.userColor, settings.userThumbnailAddress, settings.userAddress);
             ConfigureFriendshipButton(settings);
 
             RectTransformComponent.sizeDelta = new Vector2(RectTransformComponent.sizeDelta.x, CalculateComponentHeight());
@@ -160,6 +160,7 @@ namespace DCL.UI.GenericContextMenu.Controls
         public void InjectDependencies(ViewDependencies dependencies)
         {
             this.viewDependencies = dependencies;
+            ProfilePictureView.InjectDependencies(dependencies);
         }
     }
 }

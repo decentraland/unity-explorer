@@ -287,7 +287,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 946db314bdcc52a41a226ff3aa3acbbd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  <ThumbnailImageView>k__BackingField: {fileID: 2554876876778093011}
+  thumbnailImageView: {fileID: 2554876876778093011}
   thumbnailBackground: {fileID: 1550108083613389261}
   defaultEmptyThumbnail: {fileID: 21300000, guid: b296cda0724854cf0861c9ff691847c2, type: 3}
 --- !u!1001 &8382066678153965059

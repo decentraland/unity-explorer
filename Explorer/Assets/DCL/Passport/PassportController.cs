@@ -550,7 +550,7 @@ namespace DCL.Passport
 
             userProfileContextMenuControlSettings.SetInitialData(profile.Name, profile.UserId, profile.HasClaimedName,
                 profile.UserNameColor, ConvertFriendshipStatus(friendshipStatus),
-                thumbnailSprite);
+                profile.Avatar.FaceSnapshotUrl);
         }
 
         private static void BlockUserClicked(string userId)

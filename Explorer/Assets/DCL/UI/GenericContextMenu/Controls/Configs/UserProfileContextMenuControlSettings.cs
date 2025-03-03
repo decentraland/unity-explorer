@@ -20,7 +20,7 @@ namespace DCL.UI.GenericContextMenu.Controls.Configs
         internal string userName;
         internal string userAddress;
         internal bool hasClaimedName;
-        internal Sprite? userThumbnail;
+        internal string userThumbnailAddress;
         internal Color userColor;
         internal FriendshipStatus friendshipStatus;
         internal readonly RectOffset horizontalLayoutPadding;
@@ -37,13 +37,13 @@ namespace DCL.UI.GenericContextMenu.Controls.Configs
             bool hasClaimedName,
             Color userColor,
             FriendshipStatus friendshipStatus,
-            Sprite? userThumbnail = null)
+            string userThumbnailAddress = null)
         {
             this.userName = userName;
             this.userAddress = userAddress;
             this.hasClaimedName = hasClaimedName;
             this.userColor = userColor;
-            this.userThumbnail = userThumbnail;
+            this.userThumbnailAddress = userThumbnailAddress;
             this.friendshipStatus = friendshipStatus;
         }
     }

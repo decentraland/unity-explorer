@@ -85,7 +85,6 @@ namespace DCL.Friends.UI.FriendPanel
                     mvcManager,
                     new FriendListPagedDoubleCollectionRequestManager(friendsService, friendEventBus, webRequestController, profileThumbnailCache, profileRepository, friendsConnectivityStatusTracker, instantiatedView.FriendsSection.LoopList, FRIENDS_PAGE_SIZE, FRIENDS_FETCH_ELEMENTS_THRESHOLD),
                     passportBridge,
-                    profileThumbnailCache,
                     onlineUsersProvider,
                     realmNavigator,
                     friendsConnectivityStatusTracker,
@@ -98,7 +97,6 @@ namespace DCL.Friends.UI.FriendPanel
                     mvcManager,
                     new FriendListRequestManager(friendsService, friendEventBus, profileRepository, webRequestController, profileThumbnailCache, instantiatedView.FriendsSection.LoopList, FRIENDS_PAGE_SIZE, FRIENDS_FETCH_ELEMENTS_THRESHOLD),
                     passportBridge,
-                    profileThumbnailCache,
                     onlineUsersProvider,
                     realmNavigator,
                     includeUserBlocking);
@@ -108,7 +106,6 @@ namespace DCL.Friends.UI.FriendPanel
                 mvcManager,
                 new RequestsRequestManager(friendsService, friendEventBus, webRequestController, profileThumbnailCache, FRIENDS_REQUEST_PAGE_SIZE, instantiatedView.RequestsSection.LoopList),
                 passportBridge,
-                profileThumbnailCache,
                 includeUserBlocking);
             blockedSectionController = new BlockedSectionController(instantiatedView.BlockedSection,
                 web3IdentityCache,

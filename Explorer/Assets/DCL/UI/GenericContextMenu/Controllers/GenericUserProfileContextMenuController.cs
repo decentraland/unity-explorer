@@ -63,7 +63,7 @@ namespace MVC
             //TODO FRAN> FIX THIS
             Sprite thumbnailSprite = null;
 
-            userProfileContextMenuControlSettings.SetInitialData(profile.DisplayName, profile.UserId, profile.HasClaimedName, profile.UserNameColor, contextMenuFriendshipStatus, thumbnailSprite);
+            userProfileContextMenuControlSettings.SetInitialData(profile.DisplayName, profile.UserId, profile.HasClaimedName, profile.UserNameColor, contextMenuFriendshipStatus, profile.Avatar.FaceSnapshotUrl);
             mentionUserButtonContextMenuControlSettings.SetData(profile.DisplayName);
             openUserProfileButtonContextMenuControlSettings.SetData(profile.UserId);
 

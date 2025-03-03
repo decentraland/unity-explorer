@@ -16,7 +16,6 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
     {
         private readonly IMVCManager mvcManager;
         private readonly IPassportBridge passportBridge;
-        private readonly IProfileThumbnailCache profileThumbnailCache;
         private readonly UserProfileContextMenuControlSettings userProfileContextMenuControlSettings;
         private readonly IOnlineUsersProvider onlineUsersProvider;
         private readonly IRealmNavigator realmNavigator;
@@ -29,14 +28,12 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             IMVCManager mvcManager,
             FriendListRequestManager requestManager,
             IPassportBridge passportBridge,
-            IProfileThumbnailCache profileThumbnailCache,
             IOnlineUsersProvider onlineUsersProvider,
             IRealmNavigator realmNavigator,
             bool includeUserBlocking) : base(view, requestManager)
         {
             this.mvcManager = mvcManager;
             this.passportBridge = passportBridge;
-            this.profileThumbnailCache = profileThumbnailCache;
             this.onlineUsersProvider = onlineUsersProvider;
             this.includeUserBlocking = includeUserBlocking;
             this.realmNavigator = realmNavigator;
@@ -67,7 +64,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         {
             userProfileContextMenuControlSettings.SetInitialData(friendProfile.Name, friendProfile.Address, friendProfile.HasClaimedName,
                 friendProfile.UserNameColor, UserProfileContextMenuControlSettings.FriendshipStatus.FRIEND,
-                profileThumbnailCache.GetThumbnail(friendProfile.Address.ToString()));
+                friendProfile.FacePictureUrl);
 
             elementView.CanUnHover = false;
 
