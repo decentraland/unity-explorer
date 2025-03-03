@@ -616,7 +616,7 @@ namespace Global.Dynamic
                     initializationFlowContainer.InitializationFlow,
                     profileCache, sidebarBus, dclInput, sidebarActionsBus,
                     globalWorld, playerEntity, includeCameraReel, includeFriends,
-                    chatHistory),
+                    chatHistory, viewDependencies),
                 new ErrorPopupPlugin(mvcManager, assetsProvisioner),
                 connectionStatusPanelPlugin,
                 new MinimapPlugin(mvcManager, minimap),
@@ -659,7 +659,6 @@ namespace Global.Dynamic
                     equippedEmotes,
                     webBrowser,
                     emotesCache,
-                    realmNavigator,
                     forceRender,
                     dclInput,
                     staticContainer.RealmData,
@@ -684,7 +683,8 @@ namespace Global.Dynamic
                     clipboard,
                     explorePanelNavmapBus,
                     includeCameraReel,
-                    appArgs
+                    appArgs,
+                    viewDependencies
                 ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),

@@ -1,7 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Profiles;
 using DCL.Web3.Identities;
-using DCL.WebRequests;
 using MVC;
 using System.Threading;
 using Utility;
@@ -14,7 +13,7 @@ namespace DCL.UI.ProfileElements
 
         private readonly IWeb3IdentityCache identityCache;
         private readonly IProfileRepository profileRepository;
-        private readonly IWebRequestController webRequestController;
+        private readonly ViewDependencies viewDependencies;
 
         private ImageController? profileImageController;
         private CancellationTokenSource? loadProfileCts;
@@ -24,18 +23,12 @@ namespace DCL.UI.ProfileElements
         public ProfileWidgetController(ViewFactoryMethod viewFactory,
             IWeb3IdentityCache identityCache,
             IProfileRepository profileRepository,
-            IWebRequestController webRequestController
+            ViewDependencies viewDependencies
         ) : base(viewFactory)
         {
             this.identityCache = identityCache;
             this.profileRepository = profileRepository;
-            this.webRequestController = webRequestController;
-        }
-
-        protected override void OnViewInstantiated()
-        {
-            base.OnViewInstantiated();
-            profileImageController = new ImageController(viewInstance.FaceSnapshotImage, webRequestController);
+            this.viewDependencies = viewDependencies;
         }
 
         protected override void OnBeforeViewShow()
@@ -53,19 +46,17 @@ namespace DCL.UI.ProfileElements
         {
             Profile? profile = await profileRepository.GetAsync(identityCache.Identity!.Address, ct);
 
-            if (viewInstance.NameLabel != null) viewInstance.NameLabel.text = profile?.Name ?? GUEST_NAME;
+            if (profile == null) return;
+
+            if (viewInstance!.NameLabel != null) viewInstance.NameLabel.text = profile.ValidatedName ?? GUEST_NAME;
 
             if (viewInstance.AddressLabel != null)
             {
-                if (profile is { HasClaimedName: false })
-                    viewInstance.AddressLabel.text = $"#{profile.UserId[^4..]}";
+                if (profile.HasClaimedName == false)
+                    viewInstance.AddressLabel.text = profile.WalletId;
             }
 
-            profileImageController!.StopLoading();
-
-            //temporarily disabled the profile image request untill we have the correct
-            //picture deployment
-            //await profileImageController!.RequestImageAsync(profile.Avatar.FaceSnapshotUrl, ct);
+            viewInstance.ProfilePictureView.SetupWithDependencies(viewDependencies, profile.UserNameColor, profile.Avatar.FaceSnapshotUrl, profile.UserId);
         }
     }
 }

@@ -24,6 +24,12 @@ namespace DCL.UI.ProfileElements
             LoadThumbnailAsync(faceSnapshotUrl, userId).Forget();
         }
 
+        public void SetupWithDependencies(ViewDependencies dependencies, Color userColor, string faceSnapshotUrl, string userId)
+        {
+            viewDependencies = dependencies;
+            Setup(userColor, faceSnapshotUrl, userId);
+        }
+
         private async UniTaskVoid LoadThumbnailAsync(string faceSnapshotUrl, string userId)
         {
             try
