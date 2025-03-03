@@ -240,21 +240,6 @@ namespace DCL.Roads.GPUInstancing.Playground
                     hashCode.Add(size);
             }
 
-            // Add hash of combined renderers essential properties
-            // if (CombinedLodsRenderers != null)
-            // {
-            //     foreach (var renderer in CombinedLodsRenderers)
-            //     {
-            //         if (renderer.CombinedMesh != null)
-            //         {
-            //             hashCode.Add(renderer.CombinedMesh.vertexCount);
-            //             hashCode.Add(renderer.CombinedMesh.subMeshCount);
-            //         }
-            //         if (renderer.SharedMaterial != null && renderer.SharedMaterial.shader != null)
-            //             hashCode.Add(renderer.SharedMaterial.shader.name);
-            //     }
-            // }
-
             return hashCode.ToHashCode();
         }
 
