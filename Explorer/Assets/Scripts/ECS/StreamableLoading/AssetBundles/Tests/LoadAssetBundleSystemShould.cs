@@ -1,7 +1,10 @@
 ﻿using DCL.WebRequests;
+using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Tests;
+using NSubstitute;
 using NUnit.Framework;
+using System.Buffers;
 using UnityEngine;
 using Utility.Multithreading;
 
@@ -34,6 +37,6 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
             new (new CommonLoadingArguments(wrongTypePath));
 
         protected override LoadAssetBundleSystem CreateSystem() =>
-            new (world, cache, IWebRequestController.DEFAULT, new AssetBundleLoadingMutex());
+            new (world, cache, IWebRequestController.DEFAULT, ArrayPool<byte>.Shared, new AssetBundleLoadingMutex(), Substitute.For<IDiskCache<PartialLoadingState>>());
     }
 }

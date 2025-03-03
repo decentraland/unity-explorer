@@ -3,6 +3,7 @@ using DCL.Diagnostics;
 using DCL.Multiplayer.Connectivity;
 using DCL.UI.GenericContextMenu.Controls.Configs;
 using ECS.SceneLifeCycle.Realm;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -21,7 +22,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             CancellationTokenSource? jumpToFriendLocationCts,
             string[] getUserPositionBuffer,
             IOnlineUsersProvider onlineUsersProvider,
-            IRealmNavigator realmNavigator)
+            IRealmNavigator realmNavigator,
+            Action<Vector2Int>? parcelCalculatedCallback = null)
         {
             jumpToFriendLocationCts = jumpToFriendLocationCts.SafeRestart();
             JumpToFriendLocationAsync(jumpToFriendLocationCts.Token).Forget();
@@ -39,37 +41,32 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
                 OnlineUserData userData = onlineData.First();
                 Vector2Int parcel = userData.position.ToParcel();
                 realmNavigator.TeleportToParcelAsync(parcel, ct, false).Forget();
+                parcelCalculatedCallback?.Invoke(parcel);
             }
         }
 
-        internal static GenericContextMenu BuildContextMenu(FriendProfile friendProfile,
+        internal static (GenericContextMenu, GenericContextMenuElement) BuildContextMenu(
             FriendListContextMenuConfiguration contextMenuSettings,
             UserProfileContextMenuControlSettings userProfileContextMenuControlSettings,
-            IOnlineUsersProvider onlineUsersProvider,
-            IRealmNavigator realmNavigator,
-            IPassportBridge passportBridge,
-            string[] getUserPositionBuffer,
-            CancellationTokenSource? jumpToFriendLocationCts,
             bool includeUserBlocking,
-            bool isFriendInGame)
+            Action openProfilePassportCallback,
+            Action jumpToFriendCallback,
+            Action blockUserCallback)
         {
+            GenericContextMenuElement jumpInElement;
+
             GenericContextMenu contextMenu = new GenericContextMenu(contextMenuSettings.ContextMenuWidth, verticalLayoutPadding: CONTEXT_MENU_VERTICAL_LAYOUT_PADDING, elementsSpacing: CONTEXT_MENU_ELEMENTS_SPACING)
                                             .AddControl(userProfileContextMenuControlSettings)
                                             .AddControl(new SeparatorContextMenuControlSettings(CONTEXT_MENU_SEPARATOR_HEIGHT, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.left, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.right))
-                                            .AddControl(new ButtonContextMenuControlSettings(contextMenuSettings.ViewProfileText, contextMenuSettings.ViewProfileSprite, () => OpenProfilePassport(friendProfile, passportBridge)));
+                                            .AddControl(new ButtonContextMenuControlSettings(contextMenuSettings.ViewProfileText, contextMenuSettings.ViewProfileSprite, openProfilePassportCallback))
+                                            .AddControl(jumpInElement = new GenericContextMenuElement(new ButtonContextMenuControlSettings(contextMenuSettings.JumpToLocationText,
+                                                 contextMenuSettings.JumpToLocationSprite, jumpToFriendCallback), false))
+                                            .AddControl(new GenericContextMenuElement(new ButtonContextMenuControlSettings(contextMenuSettings.BlockText, contextMenuSettings.BlockSprite, blockUserCallback), includeUserBlocking));
 
-            if (isFriendInGame)
-                contextMenu.AddControl(new ButtonContextMenuControlSettings(contextMenuSettings.JumpToLocationText,
-                    contextMenuSettings.JumpToLocationSprite,
-                    () => JumpToFriendLocation(friendProfile.Address, jumpToFriendLocationCts, getUserPositionBuffer, onlineUsersProvider, realmNavigator)));
-
-            if (includeUserBlocking)
-                contextMenu.AddControl(new ButtonContextMenuControlSettings(contextMenuSettings.BlockText, contextMenuSettings.BlockSprite, () => BlockUserClicked(friendProfile)));
-
-            return contextMenu;
+            return (contextMenu, jumpInElement);
         }
 
-        private static void BlockUserClicked(FriendProfile profile)
+        internal static void BlockUserClicked(FriendProfile profile)
         {
             ReportHub.Log(LogType.Error, new ReportData(ReportCategory.FRIENDS), $"Block user button clicked for {profile.Address.ToString()}. Users should not be able to reach this");
         }

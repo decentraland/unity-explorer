@@ -83,6 +83,18 @@ namespace DCL.AuthenticationScreenFlow
         [field: SerializeField]
         public Button RequestAlphaAccessButton { get; private set; } = null!;
 
+        [field: SerializeField]
+        public GameObject ErrorPopupRoot { get; private set; } = null!;
+
+        [field: SerializeField]
+        public Button ErrorPopupRetryButton { get; private set; } = null!;
+
+        [field: SerializeField]
+        public Button ErrorPopupExitButton { get; private set; } = null!;
+
+        [field: SerializeField]
+        public Button ErrorPopupCloseButton { get; private set; } = null!;
+
         public async UniTaskVoid StartVerificationCountdownAsync(DateTime expiration, CancellationToken ct)
         {
             do

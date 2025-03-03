@@ -36,7 +36,7 @@ namespace ECS.StreamableLoading.AssetBundles
             this.mainAsset = mainAsset;
             Dependencies = dependencies;
             this.assetType = assetType;
-            
+
             description = $"AB:{AssetBundle?.name}_{version}_{source}";
             UnloadAB();
         }
@@ -60,7 +60,7 @@ namespace ECS.StreamableLoading.AssetBundles
 
         protected override ref ProfilerCounterValue<int> referencedCount => ref ProfilingCounters.ABReferencedAmount;
 
-        
+
         private void UnloadAB()
         {
             //We immediately unload the asset bundle, as we don't need it anymore.
@@ -72,12 +72,12 @@ namespace ECS.StreamableLoading.AssetBundles
             unloaded = true;
             AssetBundle?.UnloadAsync(false);
         }
-        
+
         protected override void DestroyObject()
         {
             foreach (AssetBundleData child in Dependencies)
                 child.Dereference();
-            
+
             if(mainAsset!=null)
                 Object.DestroyImmediate(mainAsset, true);
 
@@ -95,6 +95,6 @@ namespace ECS.StreamableLoading.AssetBundles
         }
 
         public string GetInstanceName() => description;
-            
+
     }
 }

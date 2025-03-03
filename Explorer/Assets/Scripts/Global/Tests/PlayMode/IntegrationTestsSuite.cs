@@ -25,6 +25,7 @@ using System.Threading;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.WebRequests.Analytics;
 using ECS.StreamableLoading.Cache.Disk;
+using ECS.StreamableLoading.Common.Components;
 using Global.Dynamic.LaunchModes;
 using SceneRuntime.Factory.WebSceneSource;
 using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
@@ -66,7 +67,7 @@ namespace Global.Tests.PlayMode
                 assetProvisioner,
                 Substitute.For<IReportsHandlingSettings>(),
                 Substitute.For<IDebugContainerBuilder>(),
-                WebRequestsContainer.Create(new IWeb3IdentityCache.Default(), ITexturesFuse.NewTestInstance(), Substitute.For<IDebugContainerBuilder>(), 1000, false),
+                WebRequestsContainer.Create(new IWeb3IdentityCache.Default(), ITexturesFuse.NewTestInstance(), Substitute.For<IDebugContainerBuilder>(), 1000, 1000, false),
                 ITexturesFuse.NewTestInstance(),
                 globalSettingsContainer,
                 diagnosticsContainer,
@@ -81,6 +82,7 @@ namespace Global.Tests.PlayMode
                 false,
                 Substitute.For<IAnalyticsController>(),
                 new IDiskCache.Fake(),
+                Substitute.For<IDiskCache<PartialLoadingState>>(),
                 scenesUI,
                 ct
             );

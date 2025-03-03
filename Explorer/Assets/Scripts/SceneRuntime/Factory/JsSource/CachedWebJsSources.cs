@@ -8,6 +8,7 @@ using ECS.StreamableLoading.Cache.InMemory;
 using SceneRuntime.Factory.WebSceneSource;
 using System;
 using System.Threading;
+using Utility.Types;
 
 namespace SceneRuntime.Factory.JsSource
 {
@@ -30,7 +31,7 @@ namespace SceneRuntime.Factory.JsSource
             if (key.StartsWith("file://", StringComparison.Ordinal))
                 return await origin.SceneSourceCodeAsync(path, ct);
 
-            var result = await cache.ContentOrFetchAsync(key, origin, static v => SceneSourceCodeAsync(v), ct);
+            EnumResult<Option<string>, TaskError> result = await cache.ContentOrFetchAsync(key, origin, true, static v => SceneSourceCodeAsync(v), ct);
 
             if (result.Success == false)
                 throw new Exception($"CachedWebJsSources: SceneSourceCodeAsync failed for url {path.Value}: {result.Error!.Value.State} {result.Error!.Value.Message}");
@@ -45,7 +46,7 @@ namespace SceneRuntime.Factory.JsSource
         {
             public static readonly DiskHashCompute INSTANCE = new ();
 
-            protected override void FillPayload(IHashKeyPayload keyPayload, string asset)
+            protected override void FillPayload(IHashKeyPayload keyPayload, in string asset)
             {
                 keyPayload.Put(asset);
             }

@@ -3,7 +3,6 @@ using DCL.Optimization.Hashing;
 using ECS.StreamableLoading.Cache.Disk.CleanUp;
 using ECS.StreamableLoading.Cache.Disk.Lock;
 using System;
-using System.Buffers;
 using System.IO;
 using System.Threading;
 using Utility.Multithreading;
@@ -24,7 +23,7 @@ namespace ECS.StreamableLoading.Cache.Disk
             this.diskCleanUp = diskCleanUp;
         }
 
-        public async UniTask<EnumResult<TaskError>> PutAsync(HashKey key, string extension, ReadOnlyMemory<byte> data, CancellationToken token)
+        public async UniTask<EnumResult<TaskError>> PutAsync<Ti>(HashKey key, string extension, Ti data, CancellationToken token) where Ti: IMemoryIterator
         {
             await using var scope = await ExecuteOnThreadPoolScope.NewScopeAsync();
 
@@ -36,8 +35,16 @@ namespace ECS.StreamableLoading.Cache.Disk
                 if (success == false)
                     return EnumResult<TaskError>.ErrorResult(TaskError.MessageError, "File is being used");
 
-                await using var stream = new FileStream(path, FileMode.Create, FileAccess.Write);
-                await stream.WriteAsync(data, token);
+                {
+                    await using var stream = new FileStream(path, FileMode.Create, FileAccess.Write);
+
+                    while (data.MoveNext())
+                    {
+                        var chunk = data.Current;
+                        await stream.WriteAsync(chunk, token);
+                    }
+                }
+
                 diskCleanUp.CleanUpIfNeeded();
             }
             catch (TimeoutException) { return EnumResult<TaskError>.ErrorResult(TaskError.Timeout); }
@@ -68,7 +75,7 @@ namespace ECS.StreamableLoading.Cache.Disk
 
                 {
                     await using var stream = new FileStream(path, FileMode.Open, FileAccess.Read);
-                    data = new SlicedOwnedMemory<byte>(MemoryPool<byte>.Shared!.Rent((int)stream.Length)!, (int)stream.Length);
+                    data = new SlicedOwnedMemory<byte>((int)stream.Length);
                     int _ = await stream.ReadAsync(data.Memory, token);
                 }
 
@@ -111,12 +118,12 @@ namespace ECS.StreamableLoading.Cache.Disk
         }
     }
 
-    public class DiskCache<T> : IDiskCache<T> where T: class
+    public class DiskCache<T, Ts> : IDiskCache<T> where Ts: IMemoryIterator
     {
         private readonly IDiskCache diskCache;
-        private readonly IDiskSerializer<T> serializer;
+        private readonly IDiskSerializer<T, Ts> serializer;
 
-        public DiskCache(IDiskCache diskCache, IDiskSerializer<T> serializer)
+        public DiskCache(IDiskCache diskCache, IDiskSerializer<T, Ts> serializer)
         {
             this.diskCache = diskCache;
             this.serializer = serializer;
@@ -124,8 +131,8 @@ namespace ECS.StreamableLoading.Cache.Disk
 
         public async UniTask<EnumResult<TaskError>> PutAsync(HashKey key, string extension, T data, CancellationToken token)
         {
-            using SlicedOwnedMemory<byte> serializedData = await serializer.SerializeAsync(data, token);
-            return await diskCache.PutAsync(key, extension, serializedData.Memory, token);
+            using var iterator = serializer.Serialize(data);
+            return await diskCache.PutAsync(key, extension, iterator, token);
         }
 
         public async UniTask<EnumResult<Option<T>, TaskError>> ContentAsync(HashKey key, string extension, CancellationToken token)

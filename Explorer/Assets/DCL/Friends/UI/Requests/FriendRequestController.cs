@@ -17,6 +17,8 @@ namespace DCL.Friends.UI.Requests
         private const int MUTUAL_PAGE_SIZE_BY_DESIGN = 3;
         private const int OPERATION_CONFIRMED_WAIT_TIME_MS = 5000;
         private const string DATE_FORMAT = "MMM dd";
+        private const string FRIEND_REQUEST_SENT_FORMAT = "Friend Request Sent To <color=#73D3D3>{0}</color>";
+        private const string FRIEND_REQUEST_ACCEPTED_FORMAT = "You And <color=#FF8362>{0}</color> Are Now Friends!";
 
         private readonly IWeb3IdentityCache identityCache;
         private readonly IFriendsService friendsService;
@@ -65,7 +67,7 @@ namespace DCL.Friends.UI.Requests
             viewInstance.cancel.CloseButton.onClick.AddListener(Close);
 
             viewInstance.received.BackButton.onClick.AddListener(Close);
-            viewInstance.received.AcceptButton.onClick.AddListener(Accept);
+            viewInstance.received.AcceptButton.onClick.AddListener(() => Accept(inputData.Request!.From));
             viewInstance.received.RejectButton.onClick.AddListener(Reject);
             viewInstance.received.CloseButton.onClick.AddListener(Close);
         }
@@ -76,7 +78,9 @@ namespace DCL.Friends.UI.Requests
 
             Web3Address selfAddress = identityCache.EnsuredIdentity().Address;
 
-            if (fr == null)
+            if (inputData.OneShotFriendAccepted != null)
+                Accept(inputData.OneShotFriendAccepted);
+            else if (fr == null)
             {
                 if (inputData.DestinationUser == null)
                     throw new Exception("Destination user must be set for new friend request");
@@ -255,7 +259,7 @@ namespace DCL.Friends.UI.Requests
                     await ShowOperationConfirmationAsync(
                         ViewState.CONFIRMED_SENT,
                         viewInstance.sentConfirmed, request.To,
-                        "Friend Request Sent To <color=#73D3D3>{0}</color>",
+                        FRIEND_REQUEST_SENT_FORMAT,
                         ct);
 
                     Close();
@@ -285,7 +289,7 @@ namespace DCL.Friends.UI.Requests
             }
         }
 
-        private void Accept()
+        private void Accept(FriendProfile target)
         {
             requestOperationCancellationToken = requestOperationCancellationToken.SafeRestart();
             AcceptThenCloseAsync(requestOperationCancellationToken.Token).Forget();
@@ -293,12 +297,12 @@ namespace DCL.Friends.UI.Requests
 
             async UniTaskVoid AcceptThenCloseAsync(CancellationToken ct)
             {
-                await friendsService.AcceptFriendshipAsync(inputData.Request!.From.Address, ct);
+                await friendsService.AcceptFriendshipAsync(target.Address, ct);
 
                 await ShowOperationConfirmationAsync(
                     ViewState.CONFIRMED_ACCEPTED,
-                    viewInstance!.acceptedConfirmed, inputData.Request.From,
-                    "You And <color=#FF8362>{0}</color> Are Now Friends!",
+                    viewInstance!.acceptedConfirmed, target,
+                    FRIEND_REQUEST_ACCEPTED_FORMAT,
                     ct);
 
                 Close();

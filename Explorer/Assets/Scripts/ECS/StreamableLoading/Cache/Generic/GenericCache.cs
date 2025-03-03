@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Optimization.Hashing;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Cache.Disk.Cacheables;
 using ECS.StreamableLoading.Cache.InMemory;
@@ -23,19 +24,26 @@ namespace ECS.StreamableLoading.Cache.Generic
             this.extension = extension;
         }
 
-        public async UniTask<EnumResult<TaskError>> PutAsync(TKey key, T value, CancellationToken token)
+        public async UniTask<EnumResult<TaskError>> PutAsync(TKey key, T value, bool qualifiedForDiskCache, CancellationToken token)
         {
             memoryCache.Put(key, value);
-            using var hashKey = diskHashCompute.ComputeHash(key);
+
+            if (!qualifiedForDiskCache)
+                return EnumResult<TaskError>.SuccessResult();
+
+            using HashKey hashKey = diskHashCompute.ComputeHash(in key);
             return await diskCache.PutAsync(hashKey, extension, value, token);
         }
 
-        public async UniTask<EnumResult<Option<T>, TaskError>> ContentAsync(TKey key, CancellationToken token)
+        public async UniTask<EnumResult<Option<T>, TaskError>> ContentAsync(TKey key, bool qualifiedForDiskCache, CancellationToken token)
         {
             if (memoryCache.TryGet(key, out T result))
                 return EnumResult<Option<T>, TaskError>.SuccessResult(Option<T>.Some(result));
 
-            using var hashKey = diskHashCompute.ComputeHash(key);
+            if (!qualifiedForDiskCache)
+                return EnumResult<Option<T>, TaskError>.SuccessResult(Option<T>.None);
+
+            using HashKey hashKey = diskHashCompute.ComputeHash(in key);
             var diskResult = await diskCache.ContentAsync(hashKey, extension, token);
 
             if (diskResult.Success)

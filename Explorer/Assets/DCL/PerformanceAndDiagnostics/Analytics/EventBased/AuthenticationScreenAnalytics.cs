@@ -13,8 +13,6 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
         private readonly IAnalyticsController analytics;
         private readonly AuthenticationScreenController authenticationController;
 
-        private int stepsCounter;
-
         public AuthenticationScreenAnalytics(IAnalyticsController analytics, AuthenticationScreenController authenticationController)
         {
             this.analytics = analytics;
@@ -30,11 +28,6 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
 
         private void OnAuthenticationScreenStateChanged(AuthenticationStatus state)
         {
-            analytics.Track(General.INITIAL_LOADING, new JsonObject
-            {
-                { STATE_KEY, $"7.0.{++stepsCounter} - authentication state: {state.ToString()}" },
-            });
-
             switch (state)
             {
                 // Triggers when the user is already logged in

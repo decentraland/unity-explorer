@@ -16,8 +16,10 @@ using System;
 using System.Threading;
 using AssetManagement;
 using DCL.WebRequests;
+using ECS.StreamableLoading.Cache.Disk;
+using System.Buffers;
+using System.IO;
 using UnityEngine;
-using UnityEngine.Networking;
 using Object = UnityEngine.Object;
 
 namespace ECS.StreamableLoading.AssetBundles
@@ -38,7 +40,10 @@ namespace ECS.StreamableLoading.AssetBundles
 
         internal LoadAssetBundleSystem(World world,
             IStreamableCache<AssetBundleData, GetAssetBundleIntention> cache,
-            IWebRequestController webRequestController, AssetBundleLoadingMutex loadingMutex) : base(world, cache)
+            IWebRequestController webRequestController,
+            ArrayPool<byte> buffersPool,
+            AssetBundleLoadingMutex loadingMutex,
+            IDiskCache<PartialLoadingState> partialDiskCache) : base(world, cache)
         {
             this.loadingMutex = loadingMutex;
             this.webRequestController = webRequestController;
@@ -56,7 +61,7 @@ namespace ECS.StreamableLoading.AssetBundles
             return await UniTask.WhenAll(assetBundleMetadata.dependencies.Select(hash => WaitForDependencyAsync(manifest, hash, customEmbeddedSubdirectory, partition, ct)));
         }
 
-        protected override async UniTask<StreamableLoadingResult<AssetBundleData>> FlowInternalAsync(GetAssetBundleIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
+        protected override async UniTask<StreamableLoadingResult<AssetBundleData>> FlowInternalAsync(GetAssetBundleIntention intention, StreamableLoadingState state, IPartitionComponent partition, CancellationToken ct)
         {
             AssetBundleLoadingResult assetBundleResult = await webRequestController
                .GetAssetBundleAsync(intention.CommonArguments, new GetAssetBundleArguments(loadingMutex, intention.cacheHash), ct, GetReportCategory(),
@@ -65,7 +70,7 @@ namespace ECS.StreamableLoading.AssetBundles
             AssetBundle? assetBundle = assetBundleResult.AssetBundle;
 
             // Release budget now to not hold it until dependencies are resolved to prevent a deadlock
-            acquiredBudget.Release();
+            state.AcquiredBudget!.Release();
 
             // if GetContent prints an error, null will be thrown
             if (assetBundle == null)
@@ -140,7 +145,7 @@ namespace ECS.StreamableLoading.AssetBundles
             // if the type was not specified don't load any assets
             if (expectedObjType == null)
                 return new StreamableLoadingResult<AssetBundleData>(new AssetBundleData(assetBundle, metrics, dependencies));
-            
+
             if (lookForShaderAssets && expectedObjType == typeof(GameObject))
             {
                 //If there are no dependencies, it means that this gameobject asset bundle has the shader in it.

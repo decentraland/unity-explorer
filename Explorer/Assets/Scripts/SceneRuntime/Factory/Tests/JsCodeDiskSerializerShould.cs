@@ -4,8 +4,12 @@ using ECS.StreamableLoading.Cache.Disk.CleanUp;
 using ECS.StreamableLoading.Cache.Disk.Lock;
 using NUnit.Framework;
 using SceneRuntime.Factory.JsSource;
+using System;
+using System.Buffers;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using UnityEngine.Pool;
 
 namespace SceneRuntime.Factory.Tests
 {
@@ -20,18 +24,46 @@ namespace SceneRuntime.Factory.Tests
             var token = new CancellationToken();
 
             // Act
-            var result = await serializer.SerializeAsync(data, token);
-            string deserialized = await serializer.DeserializeAsync(result, token);
+            using var result = serializer.Serialize(data);
+
+            var list = ListPool<byte[]>.Get();
+
+            while (result.MoveNext())
+                list.Add(result.Current.ToArray());
+
+            var output = new List<byte>();
+
+            foreach (byte[] bytes in list)
+                output.AddRange(bytes);
+
+            var slicedOwnedMemory = new SlicedOwnedMemory<byte>(output.Count);
+
+            string deserialized = await serializer.DeserializeAsync(slicedOwnedMemory, token);
 
             // Assert
             Assert.AreEqual(data, deserialized);
+        }
+
+        private class Owner : IMemoryOwner<byte>
+        {
+            public Owner(Memory<byte> memory)
+            {
+                Memory = memory;
+            }
+
+            public void Dispose()
+            {
+                //ignore
+            }
+
+            public Memory<byte> Memory { get; }
         }
 
         [Test]
         public async Task Cache()
         {
             // Arrange
-            var diskCache = new DiskCache<string>(new DiskCache(CacheDirectory.New("Test"), new FilesLock(), IDiskCleanUp.None.INSTANCE), new StringDiskSerializer());
+            var diskCache = new DiskCache<string, SerializeMemoryIterator<StringDiskSerializer.State>>(new DiskCache(CacheDirectory.New("Test"), new FilesLock(), IDiskCleanUp.None.INSTANCE), new StringDiskSerializer());
             var key = HashKey.FromString("https://decentraland.org/images/ui/dark-atlas-v3.png");
             const string DATA = "Test data string";
             const string EXTENSION = "txt";

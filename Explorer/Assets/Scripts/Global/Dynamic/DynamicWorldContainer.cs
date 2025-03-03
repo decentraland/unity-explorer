@@ -309,7 +309,7 @@ namespace Global.Dynamic
 
             //TODO should be unified with LaunchMode
             bool localSceneDevelopment = !string.IsNullOrEmpty(dynamicWorldParams.LocalSceneDevelopmentRealm);
-            bool builderWearablesPreview = appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_BUILDER_COLLECTION);
+            bool builderWearablesPreview = appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_BUILDER_COLLECTIONS);
 
             var realmContainer = RealmContainer.Create(
                 staticContainer,
@@ -530,8 +530,8 @@ namespace Global.Dynamic
             ISystemClipboard clipboard = new UnityClipboard();
 
             bool includeCameraReel = staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.CAMERA_REEL) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.CAMERA_REEL)) || Application.isEditor;
-            bool includeFriends = staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.FRIENDS) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.FRIENDS)) || Application.isEditor;
-            bool includeUserBlocking = staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.FRIENDS_USER_BLOCKING) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.FRIENDS_USER_BLOCKING)) || Application.isEditor;
+            bool includeFriends = (staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.FRIENDS) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.FRIENDS)) || Application.isEditor) && !localSceneDevelopment;
+            bool includeUserBlocking = staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.FRIENDS_USER_BLOCKING) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.FRIENDS_USER_BLOCKING));
 
             var notificationsRequestController = new NotificationsRequestController(staticContainer.WebRequestsContainer.WebRequestController, notificationsBusController, bootstrapContainer.DecentralandUrlsSource, identityCache, includeFriends);
             notificationsRequestController.StartGettingNewNotificationsOverTimeAsync(ct).SuppressCancellationThrow().Forget();
@@ -739,6 +739,7 @@ namespace Global.Dynamic
                     profileThumbnailCache,
                     onlineUsersProvider,
                     realmNavigator,
+                    identityCache,
                     includeFriends,
                     includeUserBlocking
                 ),
@@ -803,7 +804,9 @@ namespace Global.Dynamic
                     includeUserBlocking,
                     appArgs,
                     staticContainer.FeatureFlagsCache,
-                    sidebarActionsBus));
+                    sidebarActionsBus,
+                    dynamicWorldParams.EnableAnalytics,
+                    bootstrapContainer.Analytics));
             }
 
             if (dynamicWorldParams.EnableAnalytics)

@@ -20,6 +20,7 @@ using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Cache.InMemory;
+using ECS.StreamableLoading.Common.Components;
 using Global.AppArgs;
 using Global.Dynamic.DebugSettings;
 using Global.Dynamic.LaunchModes;
@@ -36,6 +37,7 @@ using System.Threading;
 using UnityEngine;
 using UnityEngine.UIElements;
 using Utility;
+using JsCodeResolver = DCL.AssetsProvision.CodeResolver.JsCodeResolver;
 
 namespace Global.Dynamic
 {
@@ -49,6 +51,7 @@ namespace Global.Dynamic
         private readonly RealmLaunchSettings realmLaunchSettings;
         private readonly WebRequestsContainer webRequestsContainer;
         private readonly IDiskCache diskCache;
+        private readonly IDiskCache<PartialLoadingState> partialsDiskCache;
         private readonly World world;
 
         private URLDomain? startingRealm;
@@ -66,6 +69,7 @@ namespace Global.Dynamic
             RealmLaunchSettings realmLaunchSettings,
             WebRequestsContainer webRequestsContainer,
             IDiskCache diskCache,
+            IDiskCache<PartialLoadingState> partialsDiskCache,
             World world)
         {
             this.debugSettings = debugSettings;
@@ -76,6 +80,7 @@ namespace Global.Dynamic
             this.realmLaunchSettings = realmLaunchSettings;
             this.webRequestsContainer = webRequestsContainer;
             this.diskCache = diskCache;
+            this.partialsDiskCache = partialsDiskCache;
             this.world = world;
         }
 
@@ -129,6 +134,7 @@ namespace Global.Dynamic
                 EnableAnalytics,
                 bootstrapContainer.Analytics,
                 diskCache,
+                partialsDiskCache,
                 sceneUIRoot,
                 ct
             );
@@ -234,14 +240,14 @@ namespace Global.Dynamic
             {
                 var memoryCache = new MemoryCache<string, string>();
                 staticContainer.CacheCleaner.Register(memoryCache);
-                webJsSources = new CachedWebJsSources(webJsSources, memoryCache, new DiskCache<string>(diskCache, new StringDiskSerializer()));
+                webJsSources = new CachedWebJsSources(webJsSources, memoryCache, new DiskCache<string, SerializeMemoryIterator<StringDiskSerializer.State>>(diskCache, new StringDiskSerializer()));
             }
 
             SceneSharedContainer sceneSharedContainer = SceneSharedContainer.Create(
                 in staticContainer,
                 bootstrapContainer.DecentralandUrlsSource,
                 bootstrapContainer.IdentityCache,
-                staticContainer.WebRequestsContainer.WebRequestController,
+                staticContainer.WebRequestsContainer.SceneWebRequestController,
                 dynamicWorldContainer.RealmController.RealmData,
                 dynamicWorldContainer.ProfileRepository,
                 dynamicWorldContainer.RoomHub,

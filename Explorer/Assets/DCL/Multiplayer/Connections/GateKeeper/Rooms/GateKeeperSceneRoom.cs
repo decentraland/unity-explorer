@@ -93,7 +93,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
                 if (meta.sceneId == null)
                 {
                     connectedScene = null;
-                    await DisconnectCurrentRoomAsync(token);
+                    await DisconnectCurrentRoomAsync(true, token);
 
                     // After disconnection we need to wait for metadata to change
                     waitForReconnectionRequiredTask = WaitForMetadataIsDirtyAsync(token);

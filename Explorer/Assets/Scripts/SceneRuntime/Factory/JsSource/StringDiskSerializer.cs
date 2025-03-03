@@ -8,20 +8,31 @@ using System.Threading;
 
 namespace SceneRuntime.Factory.JsSource
 {
-    public class StringDiskSerializer : IDiskSerializer<string>
+    public class StringDiskSerializer : IDiskSerializer<string, SerializeMemoryIterator<StringDiskSerializer.State>>
     {
         private static readonly MemoryPool<byte> POOL = MemoryPool<byte>.Shared!;
 
-        public UniTask<SlicedOwnedMemory<byte>> SerializeAsync(string data, CancellationToken token)
+        public readonly struct State
+        {
+            public readonly ReadOnlyMemory<byte> StringBytes;
+
+            public State(ReadOnlyMemory<byte> stringBytes)
+            {
+                StringBytes = stringBytes;
+            }
+        }
+
+        public SerializeMemoryIterator<State> Serialize(string data)
         {
             var memory = data.AsMemory();
             var bytes = memory.AsBytes();
+            var state = new State(bytes);
 
-            var buffer = POOL.Rent(bytes.Length)!;
-
-            bytes.CopyTo(buffer.Memory);
-
-            return new UniTask<SlicedOwnedMemory<byte>>(new SlicedOwnedMemory<byte>(buffer, bytes.Length));
+            return SerializeMemoryIterator<State>.New(
+                state,
+                static (source, index, buffer) => SerializeMemoryIterator.ReadNextData(index, source.StringBytes.Span, buffer),
+                static (source, index, bufferLength) => SerializeMemoryIterator.CanReadNextData(index, source.StringBytes.Length, bufferLength)
+            );
         }
 
         public UniTask<string> DeserializeAsync(SlicedOwnedMemory<byte> data, CancellationToken token)
