@@ -15,6 +15,7 @@ namespace DCL.UI.GenericContextMenu.Controls.Configs
             REQUEST_SENT,
             REQUEST_RECEIVED,
             BLOCKED,
+            DISABLED,
         }
 
         internal string userName;
@@ -25,12 +26,12 @@ namespace DCL.UI.GenericContextMenu.Controls.Configs
         internal FriendshipStatus friendshipStatus;
         internal readonly RectOffset horizontalLayoutPadding;
         internal readonly ISystemClipboard systemClipboard;
-        internal readonly Action<string, FriendshipStatus> requestFriendshipAction;
+        internal readonly Action<string, FriendshipStatus> friendButtonClickAction;
 
-        public UserProfileContextMenuControlSettings(ISystemClipboard systemClipboard, Action<string, FriendshipStatus> requestFriendshipAction, RectOffset? horizontalLayoutPadding = null)
+        public UserProfileContextMenuControlSettings(ISystemClipboard systemClipboard, Action<string, FriendshipStatus> friendButtonClickAction, RectOffset? horizontalLayoutPadding = null)
         {
             this.systemClipboard = systemClipboard;
-            this.requestFriendshipAction = requestFriendshipAction;
+            this.friendButtonClickAction = friendButtonClickAction;
             this.horizontalLayoutPadding = horizontalLayoutPadding ?? DEFAULT_HORIZONTAL_LAYOUT_PADDING;
         }
 

@@ -30,6 +30,8 @@ namespace ECS.SceneLifeCycle.Systems
             var ipfsPath = definitionComponent.IpfsPath;
             var definition = definitionComponent.Definition;
 
+            ReportHub.LogProductionInfo( $"Loading scene '{definition?.GetLogSceneName()}' began");
+
             // Warning! Obscure Logic!
             // Each scene can override the content base url, so we need to check if the scene definition has a base url
             // and if it does, we use it, otherwise we use the realm's base url
@@ -59,6 +61,7 @@ namespace ECS.SceneLifeCycle.Systems
             await UniTask.SwitchToMainThread();
 
             sceneFacade.Initialize();
+            ReportHub.LogProductionInfo($"Loading scene '{sceneFacade.Info}' ended");
             return sceneFacade;
         }
 

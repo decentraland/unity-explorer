@@ -20,10 +20,11 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         private readonly UserProfileContextMenuControlSettings userProfileContextMenuControlSettings;
         private readonly IOnlineUsersProvider onlineUsersProvider;
         private readonly IRealmNavigator realmNavigator;
-        private readonly bool includeUserBlocking;
         private readonly string[] getUserPositionBuffer = new string[1];
+        private readonly GenericContextMenu contextMenu;
 
         private CancellationTokenSource? jumpToFriendLocationCts;
+        private FriendProfile contextMenuFriendProfile;
 
         public FriendSectionController(FriendsSectionView view,
             IMVCManager mvcManager,
@@ -39,10 +40,12 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             this.passportBridge = passportBridge;
             this.profileThumbnailCache = profileThumbnailCache;
             this.onlineUsersProvider = onlineUsersProvider;
-            this.includeUserBlocking = includeUserBlocking;
             this.realmNavigator = realmNavigator;
 
             userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings(systemClipboard, HandleContextMenuUserProfileButton);
+
+            contextMenu = FriendListSectionUtilities.BuildContextMenu(view.ContextMenuSettings,
+                userProfileContextMenuControlSettings, includeUserBlocking, OpenProfilePassportCtx, null, BlockUserCtx).Item1;
 
             requestManager.ContextMenuClicked += ContextMenuClicked;
             requestManager.JumpInClicked += JumpInClicked;
@@ -56,6 +59,12 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             jumpToFriendLocationCts.SafeCancelAndDispose();
         }
 
+        private void OpenProfilePassportCtx() =>
+            FriendListSectionUtilities.OpenProfilePassport(contextMenuFriendProfile, passportBridge);
+
+        private void BlockUserCtx() =>
+            FriendListSectionUtilities.BlockUserClicked(contextMenuFriendProfile);
+
         private void HandleContextMenuUserProfileButton(string userId, UserProfileContextMenuControlSettings.FriendshipStatus friendshipStatus)
         {
             mvcManager.ShowAsync(UnfriendConfirmationPopupController.IssueCommand(new UnfriendConfirmationPopupController.Params
@@ -66,17 +75,17 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 
         private void ContextMenuClicked(FriendProfile friendProfile, Vector2 buttonPosition, FriendListUserView elementView)
         {
+            contextMenuFriendProfile = friendProfile;
+
             userProfileContextMenuControlSettings.SetInitialData(friendProfile.Name, friendProfile.Address, friendProfile.HasClaimedName,
-                view.ChatEntryConfiguration.GetNameColor(friendProfile.Name), UserProfileContextMenuControlSettings.FriendshipStatus.FRIEND,
+                friendProfile.UserNameColor, UserProfileContextMenuControlSettings.FriendshipStatus.FRIEND,
                 profileThumbnailCache.GetThumbnail(friendProfile.Address.ToString()));
 
             elementView.CanUnHover = false;
 
             mvcManager.ShowAsync(GenericContextMenuController.IssueCommand(
                            new GenericContextMenuParameter(
-                               config: FriendListSectionUtilities.BuildContextMenu(friendProfile, view.ContextMenuSettings,
-                                   userProfileContextMenuControlSettings, onlineUsersProvider, realmNavigator, passportBridge,
-                                   getUserPositionBuffer, jumpToFriendLocationCts, includeUserBlocking, false),
+                               config: contextMenu,
                                anchorPosition: buttonPosition,
                                actionOnHide: () => elementView.CanUnHover = true,
                                closeTask: panelLifecycleTask?.Task))

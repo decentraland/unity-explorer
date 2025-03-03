@@ -61,7 +61,7 @@
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "0186b8d6d65df551f09d006d3f5d93ed75eccd8f"
+      "hash": "8c3fe3666739c0829c173e95e8e9d77234cde5a8"
     },
     "com.decentraland.rpc-csharp": {
       "version": "https://github.com/decentraland/rpc-csharp.git?path=rpc-csharp/src",
@@ -434,7 +434,7 @@
       "dependencies": {
         "com.unity.nuget.newtonsoft-json": "3.2.1"
       },
-      "hash": "93a5e3472390bc3e31c825632e46029ab773452f"
+      "hash": "4d02af4b7063c3d20ccbda56e6ed7029cc3e1197"
     },
     "sc.stylizedwater2": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/StylizedWater2",

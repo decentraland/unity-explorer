@@ -1,26 +1,19 @@
-﻿using Cysharp.Threading.Tasks;
-using DCL.Chat;
-using DCL.Profiles;
+﻿using DCL.Profiles;
 using System;
 using System.Threading;
-using UnityEngine;
-using UnityEngine.UI;
 
 namespace DCL.UI.ProfileElements
 {
     public class UserNameElementController : IDisposable
     {
         public readonly UserNameElement Element;
-        private readonly ChatEntryConfigurationSO chatEntryConfiguration;
 
         private Profile currentProfile;
 
         public UserNameElementController(
-            UserNameElement element,
-            ChatEntryConfigurationSO chatEntryConfiguration)
+            UserNameElement element)
         {
-            this.Element = element;
-            this.chatEntryConfiguration = chatEntryConfiguration;
+            Element = element;
 
             element.CopyNameWarningNotification.Hide(true);
 
@@ -38,19 +31,17 @@ namespace DCL.UI.ProfileElements
         {
             currentProfile = profile;
 
-            Element.UserNameText.text = profile.Name;
-            Element.UserNameText.color = chatEntryConfiguration.GetNameColor(profile.Name);
-            Element.UserNameHashtagText.text = $"#{profile.UserId[^4..]}";
+            Element.UserNameText.text = profile.ValidatedName;
+            Element.UserNameText.color = profile.UserNameColor;
+            Element.UserNameHashtagText.text = profile.WalletId;
             Element.UserNameHashtagText.gameObject.SetActive(!profile.HasClaimedName);
             Element.VerifiedMark.SetActive(profile.HasClaimedName);
         }
-
 
         public void Dispose()
         {
             Element.CopyUserNameButton.onClick.RemoveAllListeners();
             Element.CopyNameWarningNotification.Hide(true);
         }
-
     }
 }
