@@ -2,7 +2,6 @@ using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack;
 using DCL.Browser;
-using DCL.Chat;
 using DCL.InWorldCamera.PassportBridge;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Profiles;
@@ -40,7 +39,6 @@ namespace DCL.InWorldCamera.PhotoDetail
             NftTypeIconSO rarityBackgrounds,
             NFTColorsSO rarityColors,
             NftTypeIconSO categoryIcons,
-            ChatEntryConfigurationSO chatEntryConfiguration,
             int visiblePersonDefaultCapacity,
             int visiblePersonMaxSize,
             int equippedWearableDefaultCapacity,
@@ -48,7 +46,7 @@ namespace DCL.InWorldCamera.PhotoDetail
             Action wearableMarketClicked)
         {
             visiblePersonPool = new ObjectPool<VisiblePersonController>(
-                createFunc: () => CreateVisiblePerson(visiblePersonPrefab, visiblePersonParent, webRequestController, profileRepository, mvcManager, wearableStorage, wearablesProvider, chatEntryConfiguration, passportBridge),
+                createFunc: () => CreateVisiblePerson(visiblePersonPrefab, visiblePersonParent, webRequestController, profileRepository, mvcManager, wearableStorage, wearablesProvider, passportBridge),
                 actionOnGet: visiblePerson => visiblePerson.view.gameObject.SetActive(true),
                 actionOnRelease: visiblePerson => VisiblePersonRelease(visiblePerson, emptyProfileImage),
                 actionOnDestroy: visiblePerson => GameObject.Destroy(visiblePerson.view.gameObject),
@@ -115,11 +113,10 @@ namespace DCL.InWorldCamera.PhotoDetail
             IMVCManager mvcManager,
             IWearableStorage wearableStorage,
             IWearablesProvider wearablesProvider,
-            ChatEntryConfigurationSO chatEntryConfiguration,
             IPassportBridge passportBridge)
         {
             VisiblePersonView view = GameObject.Instantiate(visiblePersonPrefab, visiblePersonParent);
-            return new VisiblePersonController(view, webRequestController, profileRepository, mvcManager, wearableStorage, wearablesProvider, passportBridge, this, chatEntryConfiguration);
+            return new VisiblePersonController(view, webRequestController, profileRepository, mvcManager, wearableStorage, wearablesProvider, passportBridge, this);
         }
 
         public VisiblePersonController GetVisiblePerson() =>

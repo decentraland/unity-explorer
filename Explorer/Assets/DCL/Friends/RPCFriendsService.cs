@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Profiles;
 using DCL.Profiles.Self;
+using DCL.UI.Profiles.Helpers;
 using DCL.Web3;
 using DCL.Web3.Chains;
 using DCL.Web3.Identities;
@@ -638,7 +639,8 @@ namespace DCL.Friends
             var fp = new FriendProfile(new Web3Address(profile.Address),
                 profile.Name,
                 profile.HasClaimedName,
-                URLAddress.FromString(profile.ProfilePictureUrl));
+                URLAddress.FromString(profile.ProfilePictureUrl),
+                ProfileNameColorHelper.GetNameColor(profile.Name));
 
             return fp;
         }
@@ -648,8 +650,8 @@ namespace DCL.Friends
             var fp = new FriendProfile(new Web3Address(profile.UserId),
                 profile.Name,
                 profile.HasClaimedName,
-                profile.Avatar.FaceSnapshotUrl);
-
+                profile.Avatar.FaceSnapshotUrl,
+                ProfileNameColorHelper.GetNameColor(profile.Name));
             return fp;
         }
     }

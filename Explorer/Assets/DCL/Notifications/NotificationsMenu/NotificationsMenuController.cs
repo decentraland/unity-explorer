@@ -105,7 +105,7 @@ namespace DCL.Notifications.NotificationsMenu
         {
             if (unreadNotifications > 0)
             {
-                view.LoopList.DoActionForEachShownItem((item2, param) =>
+                view.LoopList.DoActionForEachShownItem((item2, _) =>
                 {
                     INotificationView notificationView = item2!.GetComponent<INotificationView>();
                     INotification notificationData = notificationView.Notification;
