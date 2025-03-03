@@ -1,11 +1,10 @@
-﻿using DCL.Rendering.GPUInstancing.InstancingData;
-using DCL.Rendering.GPUInstancing.Utils;
+﻿using DCL.Rendering.GPUInstancing.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-namespace DCL.Roads.GPUInstancing.Playground
+namespace DCL.Rendering.GPUInstancing.InstancingData
 {
     [Serializable]
     public class GPUInstancingLODGroup : MonoBehaviour, IEquatable<GPUInstancingLODGroup>

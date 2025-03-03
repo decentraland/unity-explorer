@@ -1,56 +1,58 @@
-﻿using DCL.Roads.GPUInstancing;
-using ECS;
+﻿using ECS;
 using System;
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
 
-public partial class GPUInstancingRenderFeature : ScriptableRendererFeature
+namespace DCL.Rendering.GPUInstancing
 {
-    [SerializeField] private GPUInstancingRenderFeature_Settings m_Settings;
-
-    public GPUInstancingRenderFeature_Settings Settings => m_Settings;
-
-    private GPUInstancingService instancingService;
-    private GPUInstancingRenderPass instancingRenderPass;
-    public GPUInstancingRenderFeature()
+    public partial class GPUInstancingRenderFeature : ScriptableRendererFeature
     {
-        m_Settings = new GPUInstancingRenderFeature_Settings();
-    }
+        [SerializeField] private GPUInstancingRenderFeature_Settings m_Settings;
 
-    public override void Create()
-    {
-        instancingRenderPass = new GPUInstancingRenderPass(instancingService)
+        public GPUInstancingRenderFeature_Settings Settings => m_Settings;
+
+        private GPUInstancingService instancingService;
+        private GPUInstancingRenderPass instancingRenderPass;
+        public GPUInstancingRenderFeature()
         {
-            renderPassEvent = RenderPassEvent.BeforeRenderingOpaques
-        };
-    }
+            m_Settings = new GPUInstancingRenderFeature_Settings();
+        }
 
-    public void Initialize(GPUInstancingService service, IRealmData realmData)
-    {
-        instancingService = service;
-        instancingRenderPass?.SetService(service, realmData);
-    }
+        public override void Create()
+        {
+            instancingRenderPass = new GPUInstancingRenderPass(instancingService)
+            {
+                renderPassEvent = RenderPassEvent.BeforeRenderingOpaques
+            };
+        }
 
-    // public override void SetupRenderPasses(ScriptableRenderer _renderer, in RenderingData _renderingData) { }
+        public void Initialize(GPUInstancingService service, IRealmData realmData)
+        {
+            instancingService = service;
+            instancingRenderPass?.SetService(service, realmData);
+        }
 
-    public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
-    {
-        if (instancingRenderPass != null)
-            renderer.EnqueuePass(instancingRenderPass);
-    }
+        // public override void SetupRenderPasses(ScriptableRenderer _renderer, in RenderingData _renderingData) { }
 
-    protected override void Dispose(bool _bDisposing)
-    {
-        // instancingRenderPass?.Dispose();
-    }
+        public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
+        {
+            if (instancingRenderPass != null)
+                renderer.EnqueuePass(instancingRenderPass);
+        }
 
-    [Serializable]
-    public class GPUInstancingRenderFeature_Settings
-    {
-        public ComputeShader FrustumCullingAndLODGenComputeShader;
-        public ComputeShader IndirectBufferGenerationComputeShader;
-        public ComputeShader DrawArgsInstanceCountTransferComputeShader;
+        protected override void Dispose(bool _bDisposing)
+        {
+            // instancingRenderPass?.Dispose();
+        }
 
-        public float MaxDistanceScaleFactor = 1;
+        [Serializable]
+        public class GPUInstancingRenderFeature_Settings
+        {
+            public ComputeShader FrustumCullingAndLODGenComputeShader;
+            public ComputeShader IndirectBufferGenerationComputeShader;
+            public ComputeShader DrawArgsInstanceCountTransferComputeShader;
+
+            public float MaxDistanceScaleFactor = 1;
+        }
     }
 }

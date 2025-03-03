@@ -13,8 +13,6 @@ using SceneRunner.Debugging;
 using System.Threading;
 using DCL.FeatureFlags;
 using Global.Versioning;
-using System.Threading.Tasks;
-using UnityEngine;
 using UnityEngine.UIElements;
 using Utility;
 

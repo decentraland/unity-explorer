@@ -1,6 +1,6 @@
 ﻿using DCL.Quality;
+using DCL.Rendering.GPUInstancing;
 using DCL.Rendering.GPUInstancing.InstancingData;
-using DCL.Roads.GPUInstancing.Playground;
 using DCL.Roads.Settings;
 using System.Collections.Generic;
 using System.Linq;

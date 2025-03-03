@@ -1,13 +1,12 @@
 ﻿using DCL.Landscape.Settings;
 using DCL.Rendering.GPUInstancing.InstancingData;
-using DCL.Roads.GPUInstancing.Playground;
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using UnityEngine;
 using Utility;
 
-namespace DCL.Roads.GPUInstancing
+namespace DCL.Rendering.GPUInstancing
 {
     public class GPUInstancingService : IDisposable
     {

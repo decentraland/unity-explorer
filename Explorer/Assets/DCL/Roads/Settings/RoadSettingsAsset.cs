@@ -1,5 +1,4 @@
 using DCL.Rendering.GPUInstancing.InstancingData;
-using DCL.Roads.GPUInstancing.Playground;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;

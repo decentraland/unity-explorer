@@ -14,8 +14,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using DCL.Optimization.Pools;
+using DCL.Rendering.GPUInstancing;
 using DCL.Roads.GPUInstancing;
-using DCL.Roads.GPUInstancing.Playground;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 

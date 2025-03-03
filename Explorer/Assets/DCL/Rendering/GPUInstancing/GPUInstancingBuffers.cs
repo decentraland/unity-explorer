@@ -1,7 +1,7 @@
 ﻿using System;
 using UnityEngine;
 
-namespace DCL.Roads.GPUInstancing
+namespace DCL.Rendering.GPUInstancing
 {
     public class GPUInstancingBuffers : IDisposable
     {

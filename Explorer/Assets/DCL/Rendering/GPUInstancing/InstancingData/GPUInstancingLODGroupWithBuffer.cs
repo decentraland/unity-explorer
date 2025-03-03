@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace DCL.Roads.GPUInstancing.Playground
+namespace DCL.Rendering.GPUInstancing.InstancingData
 {
     [Serializable]
     public class GPUInstancingLODGroupWithBuffer : IEquatable<GPUInstancingLODGroupWithBuffer>

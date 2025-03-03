@@ -2,7 +2,7 @@
 using System.Runtime.InteropServices;
 using UnityEngine;
 
-namespace DCL.Roads.GPUInstancing.Playground
+namespace DCL.Rendering.GPUInstancing.InstancingData
 {
     [Serializable, StructLayout(LayoutKind.Sequential)]
     public struct PerInstanceBuffer : IEquatable<PerInstanceBuffer>
