@@ -103,6 +103,7 @@ namespace DCL.Passport
 
         private CameraReelGalleryController? cameraReelGalleryController;
         private Profile? ownProfile;
+        private Profile? targetProfile;
         private bool isOwnProfile;
         private string? currentUserId;
         private CancellationTokenSource? openPassportFromBadgeNotificationCts;
@@ -250,7 +251,7 @@ namespace DCL.Passport
                          .AddControl(contextMenuJumpInButton = new GenericContextMenuElement(new ButtonContextMenuControlSettings(viewInstance.JumpInText, viewInstance.JumpInSprite,
                               () => FriendListSectionUtilities.JumpToFriendLocation(inputData.UserId, jumpToFriendLocationCts, getUserPositionBuffer, onlineUsersProvider, realmNavigator,
                                   parcel => JumpToFriendClicked?.Invoke(inputData.UserId, parcel))), false))
-                         .AddControl(contextMenuBlockUserButton = new GenericContextMenuElement(new ButtonContextMenuControlSettings(viewInstance.BlockText, viewInstance.BlockSprite, () => BlockUserClicked(inputData.UserId)), false));
+                         .AddControl(contextMenuBlockUserButton = new GenericContextMenuElement(new ButtonContextMenuControlSettings(viewInstance.BlockText, viewInstance.BlockSprite, BlockUserClicked), false));
         }
 
         private void ShowContextMenu()
@@ -544,15 +545,15 @@ namespace DCL.Passport
 
         private async UniTask SetupContextMenuAsync(FriendshipStatus friendshipStatus, CancellationToken ct)
         {
-            Profile? profile = await profileRepository.GetAsync(inputData.UserId, ct);
+            targetProfile = await profileRepository.GetAsync(inputData.UserId, ct);
 
-            if (profile == null)
+            if (targetProfile == null)
             {
                 ReportHub.Log(LogType.Error, new ReportData(ReportCategory.FRIENDS), $"Failed to show context menu button for user {inputData.UserId}. Profile is null.");
                 return;
             }
 
-            Sprite? thumbnailSprite = await profileThumbnailCache.GetThumbnailAsync(profile, ct);
+            Sprite? thumbnailSprite = await profileThumbnailCache.GetThumbnailAsync(targetProfile, ct);
 
             viewInstance!.ContextMenuButton.gameObject.SetActive(true);
 
@@ -560,15 +561,13 @@ namespace DCL.Passport
             contextMenuBlockUserButton.Enabled = friendshipStatus != FriendshipStatus.BLOCKED && includeUserBlocking;
             contextMenuSeparator.Enabled = contextMenuJumpInButton.Enabled || contextMenuBlockUserButton.Enabled;
 
-            userProfileContextMenuControlSettings.SetInitialData(profile.Name, profile.UserId, profile.HasClaimedName,
-                viewInstance.ChatEntryConfiguration.GetNameColor(profile.Name), ConvertFriendshipStatus(friendshipStatus),
+            userProfileContextMenuControlSettings.SetInitialData(targetProfile.Name, targetProfile.UserId, targetProfile.HasClaimedName,
+                viewInstance.ChatEntryConfiguration.GetNameColor(targetProfile.Name), ConvertFriendshipStatus(friendshipStatus),
                 thumbnailSprite);
         }
 
-        private static void BlockUserClicked(string userId)
-        {
-            ReportHub.Log(LogType.Error, new ReportData(ReportCategory.FRIENDS), $"Block user button clicked for {userId}. Users should not be able to reach this");
-        }
+        private void BlockUserClicked() =>
+            FriendListSectionUtilities.BlockUserClicked(mvcManager, targetProfile!.UserId, targetProfile.Name);
 
         private UserProfileContextMenuControlSettings.FriendshipStatus ConvertFriendshipStatus(FriendshipStatus friendshipStatus)
         {

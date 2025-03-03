@@ -67,7 +67,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             return (contextMenu, jumpInElement);
         }
 
-        internal static void BlockUserClicked(IMVCManager mvcManager, string targetUserAddress, string targetUserName) =>
+        public static void BlockUserClicked(IMVCManager mvcManager, string targetUserAddress, string targetUserName) =>
             mvcManager.ShowAsync(BlockUserPromptController.IssueCommand(new BlockUserPromptParams(targetUserAddress, targetUserName, BlockUserPromptParams.UserBlockAction.BLOCK))).Forget();
 
         internal static void OpenProfilePassport(FriendProfile profile, IPassportBridge passportBridge) =>
