@@ -551,7 +551,7 @@ namespace Global.Dynamic
             IChatInputBus chatInputBus = new ChatInputBus();
 
             ISidebarActionsBus sidebarActionsBus = new SidebarActionsBusController();
-            MVCManagerMenusAccessFacade menusAccessFacade = new MVCManagerMenusAccessFacade(mvcManager, clipboard, friendServiceProxy, profileCache, chatInputBus);
+            MVCManagerMenusAccessFacade menusAccessFacade = new MVCManagerMenusAccessFacade(mvcManager, clipboard, friendServiceProxy, profileCache, chatInputBus, includeUserBlocking);
 
             var viewDependencies = new ViewDependencies(dclInput, unityEventSystem, menusAccessFacade, clipboardManager, dclCursor);
 

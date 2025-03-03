@@ -72,6 +72,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2308a593e7fee41dbad5a6b14f89e0e7
+    m_Address: Assets/DCL/UI/GenericContextMenu/Prefabs/BlockUserButton.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 23318cb20f4dbe9429dd8be585ef75d6
     m_Address: CharacterPreviewContainer
     m_ReadOnly: 0

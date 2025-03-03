@@ -56,28 +56,9 @@ namespace DCL.Friends.UI.BlockUserPrompt
 
             async UniTaskVoid BlockUserAsync(CancellationToken ct)
             {
-                await ManageFriendshipStatusBeforeBlockingAsync(ct);
                 //TODO: await user block request
 
                 ClosePopup();
-            }
-        }
-
-        private async UniTask ManageFriendshipStatusBeforeBlockingAsync(CancellationToken ct)
-        {
-            FriendshipStatus friendshipStatus = await friendsService.GetFriendshipStatusAsync(inputData.TargetUserId, ct);
-
-            switch (friendshipStatus)
-            {
-                case FriendshipStatus.FRIEND:
-                    await friendsService.DeleteFriendshipAsync(inputData.TargetUserId, ct);
-                    break;
-                case FriendshipStatus.REQUEST_SENT:
-                    await friendsService.CancelFriendshipAsync(inputData.TargetUserId, ct);
-                    break;
-                case FriendshipStatus.REQUEST_RECEIVED:
-                    await friendsService.RejectFriendshipAsync(inputData.TargetUserId, ct);
-                    break;
             }
         }
 
