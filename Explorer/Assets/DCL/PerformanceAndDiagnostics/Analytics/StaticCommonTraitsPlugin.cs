@@ -61,7 +61,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         }
     }
 
-    public struct LauncherTraits
+    public readonly struct LauncherTraits
     {
         public readonly string LauncherAnonymousId;
         public readonly string SessionId;
