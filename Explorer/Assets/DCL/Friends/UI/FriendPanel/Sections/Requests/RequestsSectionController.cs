@@ -155,7 +155,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
         {
             lastClickedProfileCtx = friendProfile;
             userProfileContextMenuControlSettings.SetInitialData(friendProfile.Name, friendProfile.Address, friendProfile.HasClaimedName,
-                view.ChatEntryConfiguration.GetNameColor(friendProfile.Name),
+                friendProfile.UserNameColor,
                 elementView.ParentStatus == FriendPanelStatus.SENT ? UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_SENT : UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_RECEIVED,
                 profileThumbnailCache.GetThumbnail(friendProfile.Address.ToString()));
             elementView.CanUnHover = false;

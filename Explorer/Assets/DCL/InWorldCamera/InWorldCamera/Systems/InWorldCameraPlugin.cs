@@ -122,7 +122,6 @@ namespace DCL.PluginSystem.Global
             this.globalWorld = globalWorld;
             this.debugContainerBuilder = debugContainerBuilder;
             this.nametagsData = nametagsData;
-
             factory = new InWorldCameraFactory();
         }
 
@@ -144,12 +143,11 @@ namespace DCL.PluginSystem.Global
             PhotoDetailView photoDetailViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.PhotoDetailPrefab, ct: ct)).GetComponent<PhotoDetailView>();
             ControllerBase<PhotoDetailView, PhotoDetailParameter>.ViewFactoryMethod viewFactoryMethod = PhotoDetailController.Preallocate(photoDetailViewAsset, null, out PhotoDetailView explorePanelView);
 
-            (NFTColorsSO rarityColorMappings, NftTypeIconSO categoryIconsMapping, NftTypeIconSO rarityBackgroundsMapping, ChatEntryConfigurationSO chatEntryConfiguration) = await UniTask.WhenAll(
+            (NFTColorsSO rarityColorMappings, NftTypeIconSO categoryIconsMapping, NftTypeIconSO rarityBackgroundsMapping) = await UniTask.WhenAll(
                 assetsProvisioner.ProvideMainAssetValueAsync(settings.RarityColorMappings, ct),
                 assetsProvisioner.ProvideMainAssetValueAsync(settings.CategoryIconsMapping, ct),
-                assetsProvisioner.ProvideMainAssetValueAsync(settings.RarityBackgroundsMapping, ct),
-                assetsProvisioner.ProvideMainAssetValueAsync(settings.ChatEntryConfiguration, ct));
-
+                assetsProvisioner.ProvideMainAssetValueAsync(settings.RarityBackgroundsMapping, ct))
+                ;
             mvcManager.RegisterController(new PhotoDetailController(viewFactoryMethod,
                 new PhotoDetailInfoController(explorePanelView.GetComponentInChildren<PhotoDetailInfoView>(),
                     cameraReelStorageService,
@@ -165,8 +163,8 @@ namespace DCL.PluginSystem.Global
                     new PassportBridgeOpener(),
                     rarityBackgroundsMapping,
                     rarityColorMappings,
-                    categoryIconsMapping,
-                    chatEntryConfiguration),
+                    categoryIconsMapping
+                    ),
                 cameraReelScreenshotsStorage,
                 systemClipboard,
                 decentralandUrlsSource,

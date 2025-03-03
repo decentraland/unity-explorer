@@ -1,4 +1,6 @@
-﻿using DCL.Roads.GPUInstancing.Playground;
+﻿using DCL.Quality;
+using DCL.Rendering.GPUInstancing.InstancingData;
+using DCL.Roads.GPUInstancing.Playground;
 using DCL.Roads.Settings;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,11 +14,6 @@ namespace DCL.Roads.GPUInstancing
     [ExecuteAlways]
     public class GPUInstancingServicePlayground : MonoBehaviour
     {
-#if UNITY_EDITOR
-        public ComputeShader FrustumCullingAndLODGenComputeShader;
-        public ComputeShader IndirectBufferGenerationComputeShader;
-        public ComputeShader DrawArgsInstanceCountTransferComputeShader;
-
         private GPUInstancingService instancingService;
 
         public Transform roadsRoot;
@@ -42,7 +39,9 @@ namespace DCL.Roads.GPUInstancing
 
         private void OnEnable()
         {
-            // instancingService = new GPUInstancingService(FrustumCullingAndLODGenComputeShader, IndirectBufferGenerationComputeShader, DrawArgsInstanceCountTransferComputeShader, LandscapeData);
+            var rendererFeaturesCache = new RendererFeaturesCache();
+            var renderFeature = rendererFeaturesCache.GetRendererFeature<GPUInstancingRenderFeature>();
+            instancingService = new GPUInstancingService(renderFeature.Settings);
         }
 
         private void OnDisable()
@@ -150,7 +149,5 @@ namespace DCL.Roads.GPUInstancing
             return roadCoordinate.x < ParcelsMin.x || roadCoordinate.x > ParcelsMax.x ||
                    roadCoordinate.y < ParcelsMin.y || roadCoordinate.y > ParcelsMax.y;
         }
-#endif
-
     }
 }
