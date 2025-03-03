@@ -116,9 +116,11 @@ namespace DCL.Friends.UI.FriendPanel
                 profileThumbnailCache,
                 includeUserBlocking);
             blockedSectionController = new BlockedSectionController(instantiatedView.BlockedSection,
-                web3IdentityCache,
+                mvcManager,
                 new BlockedRequestManager(profileRepository, web3IdentityCache, webRequestController, profileThumbnailCache, FRIENDS_PAGE_SIZE, FRIENDS_FETCH_ELEMENTS_THRESHOLD),
-                passportBridge);
+                systemClipboard,
+                passportBridge,
+                profileThumbnailCache);
 
             requestsSectionController.ReceivedRequestsCountChanged += FriendRequestCountChanged;
             sidebarActionsBus.SubscribeOnWidgetOpen(() => CloseFriendsPanel(default(InputAction.CallbackContext)));

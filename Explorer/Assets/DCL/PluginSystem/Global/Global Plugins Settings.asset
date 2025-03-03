@@ -292,6 +292,11 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
+        <BlockUserPromptPrefab>k__BackingField:
+          m_AssetGUID: 93a86930ad6d44ebd85b46f9c6ebad72
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
     - rid: 2174542042650378245
       type: {class: QualityContainer/Settings, ns: DCL.Quality, asm: DCL.Plugins}
       data:
@@ -671,7 +676,8 @@ MonoBehaviour:
         frameTimeCapDeepProfiler: 300
         <ScenesLoadingBudget>k__BackingField: 100
         <AssetsLoadingBudget>k__BackingField: 50
-        <WebRequestsBudget>k__BackingField: 20
+        <CoreWebRequestsBudget>k__BackingField: 20
+        <SceneWebRequestsBudget>k__BackingField: 5
     - rid: 6784895265412481026
       type: {class: CharacterCameraSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:

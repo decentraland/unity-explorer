@@ -317,6 +317,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 93a86930ad6d44ebd85b46f9c6ebad72
+    m_Address: Assets/DCL/Friends/UI/Prefabs/BlockUserPrompt.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 96ae0a2159a39234f858ea23bdcc74ad
     m_Address: Assets/TextMesh Pro/Fonts & Materials/Inter-SemiBold SDF.asset
     m_ReadOnly: 0

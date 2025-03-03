@@ -5,6 +5,7 @@ using DCL.WebRequests;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using UnityEngine;
 
 namespace DCL.Friends.UI.FriendPanel.Sections.Blocked
 {
@@ -17,7 +18,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Blocked
         private List<FriendProfile> blockedProfiles = new ();
 
         public event Action<FriendProfile>? UnblockClicked;
-        public event Action<FriendProfile>? ContextMenuClicked;
+        public event Action<FriendProfile, Vector2, BlockedUserView>? ContextMenuClicked;
 
         public BlockedRequestManager(IProfileRepository profileRepository,
             IWeb3IdentityCache web3IdentityCache,
@@ -42,7 +43,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Blocked
             elementView.UnblockButton.onClick.AddListener(() => UnblockClicked?.Invoke(elementView.UserProfile));
 
             elementView.ContextMenuButton.onClick.RemoveAllListeners();
-            elementView.ContextMenuButton.onClick.AddListener(() => ContextMenuClicked?.Invoke(elementView.UserProfile));
+            elementView.ContextMenuButton.onClick.AddListener(() => ContextMenuClicked?.Invoke(elementView.UserProfile, elementView.ContextMenuButton.transform.position, elementView));
         }
 
         protected override async UniTask<int> FetchDataAsync(int pageNumber, int pageSize, CancellationToken ct)
