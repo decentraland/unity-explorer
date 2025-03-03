@@ -214,12 +214,11 @@ MonoBehaviour:
     e32: 0
     e33: 0
   CombinedLodsRenderers:
-  - parent: {fileID: 8105194792326734158}
-    combinedMesh: {fileID: -172055481650319879}
+  - SubMeshId: 0
+    CombinedMesh: {fileID: -2601411851347631087}
     SharedMaterial: {fileID: 2100000, guid: 080ee30e4f4ff5c4fae19015bec5167c, type: 2}
-    SubMeshId: 0
     RenderParamsSerialized:
-    - RefRenderer: {fileID: 7699624850596126483}
+      RefRenderer: {fileID: 7699624850596126483}
       layer: 0
       renderingLayerMask: 1
       rendererPriority: 0
@@ -228,30 +227,11 @@ MonoBehaviour:
       reflectionProbeUsage: 1
       lightProbeUsage: 1
       motionVectorMode: 1
-    - RefRenderer: {fileID: 6999200431455932123}
-      layer: 0
-      renderingLayerMask: 1
-      rendererPriority: 0
-      receiveShadows: 1
-      shadowCastingMode: 1
-      reflectionProbeUsage: 1
-      lightProbeUsage: 1
-      motionVectorMode: 1
-    - RefRenderer: {fileID: 7264011839685136740}
-      layer: 0
-      renderingLayerMask: 1
-      rendererPriority: 0
-      receiveShadows: 1
-      shadowCastingMode: 0
-      reflectionProbeUsage: 1
-      lightProbeUsage: 1
-      motionVectorMode: 1
-  - parent: {fileID: 8105194792326734158}
-    combinedMesh: {fileID: 9024873625010611090}
+  - SubMeshId: 1
+    CombinedMesh: {fileID: -794997776318157660}
     SharedMaterial: {fileID: 2100000, guid: fcd067b2a5f3ade45846eef4205a2cb8, type: 2}
-    SubMeshId: 1
     RenderParamsSerialized:
-    - RefRenderer: {fileID: 7699624850596126483}
+      RefRenderer: {fileID: 7699624850596126483}
       layer: 0
       renderingLayerMask: 1
       rendererPriority: 0
@@ -260,25 +240,7 @@ MonoBehaviour:
       reflectionProbeUsage: 1
       lightProbeUsage: 1
       motionVectorMode: 1
-    - RefRenderer: {fileID: 6999200431455932123}
-      layer: 0
-      renderingLayerMask: 1
-      rendererPriority: 0
-      receiveShadows: 1
-      shadowCastingMode: 1
-      reflectionProbeUsage: 1
-      lightProbeUsage: 1
-      motionVectorMode: 1
-    - RefRenderer: {fileID: 7264011839685136740}
-      layer: 0
-      renderingLayerMask: 1
-      rendererPriority: 0
-      receiveShadows: 1
-      shadowCastingMode: 0
-      reflectionProbeUsage: 1
-      lightProbeUsage: 1
-      motionVectorMode: 1
---- !u!43 &-172055481650319879
+--- !u!43 &-2601411851347631087
 Mesh:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -463,7 +425,7 @@ Mesh:
     offset: 0
     size: 0
     path: 
---- !u!43 &9024873625010611090
+--- !u!43 &-794997776318157660
 Mesh:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}

@@ -253,11 +253,11 @@ MonoBehaviour:
     e32: 0
     e33: 0
   CombinedLodsRenderers:
-  - parent: {fileID: 0}
-    combinedMesh: {fileID: 6549383457765728042, guid: 84366f692ac68a74fa0b72a63c361aff, type: 3}
+  - SubMeshId: 0
+    CombinedMesh: {fileID: 6549383457765728042, guid: 84366f692ac68a74fa0b72a63c361aff, type: 3}
     SharedMaterial: {fileID: 2100000, guid: d0b780b8306aec843bb9acf5005dcd01, type: 2}
     RenderParamsSerialized:
-    - RefRenderer: {fileID: 6501215563661973591}
+      RefRenderer: {fileID: 6501215563661973591}
       layer: 0
       renderingLayerMask: 1
       rendererPriority: 0
