@@ -1,5 +1,4 @@
 using Cysharp.Threading.Tasks;
-using DCL.Chat;
 using DCL.Diagnostics;
 using DCL.Profiles;
 using DCL.Profiles.Self;
@@ -23,7 +22,6 @@ namespace DCL.Passport.Modules
 
         public UserBasicInfo_PassportModuleController(
             UserBasicInfo_PassportModuleView view,
-            ChatEntryConfigurationSO chatEntryConfiguration,
             ISelfProfile selfProfile,
             PassportErrorsController passportErrorsController)
         {
@@ -31,7 +29,7 @@ namespace DCL.Passport.Modules
             this.selfProfile = selfProfile;
             this.passportErrorsController = passportErrorsController;
 
-            nameElementController = new UserNameElementController(view.UserNameElement, chatEntryConfiguration);
+            nameElementController = new UserNameElementController(view.UserNameElement);
             walletAddressElementController = new UserWalletAddressElementController(view.UserWalletAddressElement);
         }
 
@@ -42,6 +40,7 @@ namespace DCL.Passport.Modules
             walletAddressElementController.Setup(profile);
 
             checkEditionAvailabilityCts = checkEditionAvailabilityCts.SafeRestart();
+
             // TODO (Santi): Uncomment this when the name's edition is available
             //CheckForEditionAvailabilityAsync(checkEditionAvailabilityCts.Token).Forget();
         }
@@ -65,7 +64,7 @@ namespace DCL.Passport.Modules
             try
             {
                 view.EditionButton.gameObject.SetActive(false);
-                var ownProfile = await selfProfile.ProfileAsync(ct);
+                Profile? ownProfile = await selfProfile.ProfileAsync(ct);
 
                 if (ownProfile?.UserId == currentProfile.UserId)
                     view.EditionButton.gameObject.SetActive(true);

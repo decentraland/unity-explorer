@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
 namespace DCL.Input
 {
@@ -17,6 +18,8 @@ namespace DCL.Input
         private readonly Vector2 normalCursorHotspot;
         private readonly Vector2 interactionCursorHotspot;
         private CursorStyle cursorStyle = CursorStyle.None;
+
+        public bool IsStyleForced { get; private set; }
 
         public DCLCursor(Texture2D normalCursor, Texture2D interactionCursor, Vector2 normalCursorHotspot, Vector2 interactionCursorHotspot)
         {
@@ -47,9 +50,11 @@ namespace DCL.Input
             Cursor.visible = visible;
         }
 
-        public void SetStyle(CursorStyle style)
+        public void SetStyle(CursorStyle style, bool force = false)
         {
             if (cursorStyle == style) return;
+            IsStyleForced = force;
+
             cursorStyle = style;
 
             switch (cursorStyle)

@@ -6,6 +6,7 @@ using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.UI.Profiles.Helpers;
 using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
 using System;
@@ -109,7 +110,8 @@ namespace DCL.Profiles.Self
             if (newProfile.Avatar.IsSameAvatar(profile.Avatar))
                 return profile;
 
-            OwnProfile = profile;
+            newProfile.UserNameColor = ProfileNameColorHelper.GetNameColor(profile.DisplayName);
+            OwnProfile = newProfile;
 
             await profileRepository.SetAsync(newProfile, publish, ct);
             return await profileRepository.GetAsync(newProfile.UserId, newProfile.Version, ct);

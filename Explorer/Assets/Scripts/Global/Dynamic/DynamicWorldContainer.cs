@@ -13,7 +13,6 @@ using DCL.Backpack.BackpackBus;
 using DCL.BadgesAPIService;
 using DCL.Browser;
 using DCL.CharacterPreview;
-using DCL.Chat;
 using DCL.Chat.Commands;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
@@ -22,7 +21,9 @@ using DCL.DebugUtilities;
 using DCL.EventsApi;
 using DCL.FeatureFlags;
 using DCL.Friends;
-using DCL.Friends.Chat;
+using DCL.Chat;
+using DCL.Chat.ChatLifecycleBus;
+using DCL.Chat.InputBus;
 using DCL.Friends.Passport;
 using DCL.Input;
 using DCL.InWorldCamera.CameraReelStorageService;
@@ -72,6 +73,8 @@ using DCL.SceneLoadingScreens.LoadingScreen;
 using DCL.SidebarBus;
 using DCL.UI.MainUI;
 using DCL.StylizedSkybox.Scripts.Plugin;
+using DCL.UI.InputFieldFormatting;
+using DCL.UI.Profiles.Helpers;
 using DCL.UI.Sidebar.SidebarActionsBus;
 using DCL.UserInAppInitializationFlow;
 using DCL.Utilities;
@@ -256,8 +259,8 @@ namespace Global.Dynamic
 
             ExposedGlobalDataContainer exposedGlobalDataContainer = staticContainer.ExposedGlobalDataContainer;
 
-            PopupCloserView popupCloserView = Object.Instantiate((await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.PopupCloserView, ct: CancellationToken.None)).Value.GetComponent<PopupCloserView>()).EnsureNotNull();
-            MainUIView mainUIView = Object.Instantiate((await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.MainUIView, ct: CancellationToken.None)).Value.GetComponent<MainUIView>()).EnsureNotNull();
+            PopupCloserView popupCloserView = Object.Instantiate((await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.PopupCloserView, CancellationToken.None)).Value.GetComponent<PopupCloserView>()).EnsureNotNull();
+            MainUIView mainUIView = Object.Instantiate((await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.MainUIView, CancellationToken.None)).Value.GetComponent<MainUIView>()).EnsureNotNull();
 
             var coreMvcManager = new MVCManager(new WindowStackManager(), new CancellationTokenSource(), popupCloserView);
 
@@ -272,7 +275,7 @@ namespace Global.Dynamic
             var wearableCatalog = new WearableStorage();
             var characterPreviewFactory = new CharacterPreviewFactory(staticContainer.ComponentsContainer.ComponentPoolsRegistry);
             IWebBrowser webBrowser = bootstrapContainer.WebBrowser;
-            ChatEntryConfigurationSO chatEntryConfiguration = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.ChatEntryConfiguration, ct)).Value;
+            ProfileNameColorHelper.SetNameColors(dynamicSettings.UserNameColors);
             NametagsData nametagsData = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.NametagsData, ct)).Value;
 
             IProfileCache profileCache = new DefaultProfileCache();
@@ -463,10 +466,13 @@ namespace Global.Dynamic
 
             dynamicWorldDependencies.WorldInfoTool.Initialize(worldInfoHub);
 
+            var chatCommandsBus = new ChatCommandsBus();
             var characterDataPropagationUtility = new CharacterDataPropagationUtility(staticContainer.ComponentsContainer.ComponentPoolsRegistry.AddComponentPool<SDKProfile>());
 
             var currentSceneInfo = new CurrentSceneInfo();
-            var connectionStatusPanelPlugin = new ConnectionStatusPanelPlugin(initializationFlowContainer.InitializationFlow, mvcManager, mainUIView, roomsStatus, currentSceneInfo, reloadSceneController, globalWorld, playerEntity, debugBuilder);
+
+            var connectionStatusPanelPlugin = new ConnectionStatusPanelPlugin(initializationFlowContainer.InitializationFlow, mvcManager, mainUIView, roomsStatus, currentSceneInfo, reloadSceneController, globalWorld, playerEntity, debugBuilder, chatCommandsBus);
+
             var chatTeleporter = new ChatTeleporter(realmNavigator, new ChatEnvironmentValidator(bootstrapContainer.Environment), bootstrapContainer.DecentralandUrlsSource);
 
             var chatCommands = new List<IChatCommand>
@@ -474,26 +480,26 @@ namespace Global.Dynamic
                 new GoToChatCommand(chatTeleporter, staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource),
                 new GoToLocalChatCommand(chatTeleporter),
                 new WorldChatCommand(chatTeleporter),
-                new DebugPanelChatCommand(debugBuilder, connectionStatusPanelPlugin),
+                new DebugPanelChatCommand(debugBuilder, chatCommandsBus),
                 new ShowEntityChatCommand(worldInfoHub),
-                new ClearChatCommand(chatHistory),
                 new ReloadSceneChatCommand(reloadSceneController),
                 new LoadPortableExperienceChatCommand(staticContainer.PortableExperiencesController, staticContainer.FeatureFlagsCache),
                 new KillPortableExperienceChatCommand(staticContainer.PortableExperiencesController, staticContainer.FeatureFlagsCache),
                 new VersionChatCommand(dclVersion),
                 new RoomsChatCommand(roomHub),
+                new ClearChatCommand(chatCommandsBus)
             };
 
             chatCommands.Add(new HelpChatCommand(chatCommands, appArgs));
 
-            IChatMessagesBus coreChatMessageBus = new MultiplayerChatMessagesBus(messagePipesHub, profileRepository, new MessageDeduplication<double>())
+            IChatMessagesBus coreChatMessageBus = new MultiplayerChatMessagesBus(messagePipesHub, profileRepository, selfProfile, new MessageDeduplication<double>())
                                                  .WithSelfResend(identityCache, profileRepository)
                                                  .WithIgnoreSymbols()
                                                  .WithCommands(chatCommands)
                                                  .WithDebugPanel(debugBuilder);
 
             IChatMessagesBus chatMessagesBus = dynamicWorldParams.EnableAnalytics
-                ? new ChatMessagesBusAnalyticsDecorator(coreChatMessageBus, bootstrapContainer.Analytics!)
+                ? new ChatMessagesBusAnalyticsDecorator(coreChatMessageBus, bootstrapContainer.Analytics!, profileCache, selfProfile)
                 : coreChatMessageBus;
 
             var coreBackpackEventBus = new BackpackEventBus();
@@ -530,6 +536,8 @@ namespace Global.Dynamic
 
             IUserCalendar userCalendar = new GoogleUserCalendar(webBrowser);
             ISystemClipboard clipboard = new UnityClipboard();
+            IClipboardManager clipboardManager = new ClipboardManager(clipboard);
+            ITextFormatter hyperlinkTextFormatter = new HyperlinkTextFormatter(profileCache, selfProfile);
 
             bool includeCameraReel = staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.CAMERA_REEL) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.CAMERA_REEL)) || Application.isEditor;
             bool includeFriends = (staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.FRIENDS) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.FRIENDS)) || Application.isEditor) && !localSceneDevelopment;
@@ -542,8 +550,12 @@ namespace Global.Dynamic
             var friendOnlineStatusCacheProxy = new ObjectProxy<IFriendsConnectivityStatusTracker>();
             IProfileThumbnailCache profileThumbnailCache = new ProfileThumbnailCache(staticContainer.WebRequestsContainer.WebRequestController);
             IChatLifecycleBusController chatLifecycleBusController = new ChatLifecycleBusController(mvcManager);
+            IChatInputBus chatInputBus = new ChatInputBus();
 
             ISidebarActionsBus sidebarActionsBus = new SidebarActionsBusController();
+            MVCManagerMenusAccessFacade menusAccessFacade = new MVCManagerMenusAccessFacade(mvcManager, clipboard, friendServiceProxy, profileCache, chatInputBus);
+
+            var viewDependencies = new ViewDependencies(dclInput, unityEventSystem, menusAccessFacade, clipboardManager, dclCursor);
 
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
@@ -589,7 +601,6 @@ namespace Global.Dynamic
                     staticContainer.MainPlayerAvatarBaseProxy,
                     debugBuilder,
                     staticContainer.CacheCleaner,
-                    chatEntryConfiguration,
                     new DefaultFaceFeaturesHandler(wearableCatalog),
                     nametagsData,
                     defaultTexturesContainer.TextureArrayContainerFactory,
@@ -600,23 +611,35 @@ namespace Global.Dynamic
                 new ProfilePlugin(profileRepository, profileCache, staticContainer.CacheCleaner),
                 new MapRendererPlugin(mapRendererContainer.MapRenderer),
                 new SidebarPlugin(
-                    assetsProvisioner,
-                    mvcManager,
-                    mainUIView,
-                    notificationsBusController,
-                    notificationsRequestController,
-                    identityCache,
-                    profileRepository,
+                    assetsProvisioner, mvcManager, mainUIView, notificationsBusController,
+                    notificationsRequestController, identityCache, profileRepository,
                     staticContainer.WebRequestsContainer.WebRequestController,
-                    webBrowser,
-                    dynamicWorldDependencies.Web3Authenticator,
+                    webBrowser, dynamicWorldDependencies.Web3Authenticator,
                     initializationFlowContainer.InitializationFlow,
-                    profileCache, sidebarBus, dclInput, chatEntryConfiguration, sidebarActionsBus,
-                    globalWorld, playerEntity, includeCameraReel, includeFriends),
+                    profileCache, sidebarBus, dclInput, sidebarActionsBus,
+                    globalWorld, playerEntity, includeCameraReel, includeFriends,
+                    chatHistory),
                 new ErrorPopupPlugin(mvcManager, assetsProvisioner),
                 connectionStatusPanelPlugin,
                 new MinimapPlugin(mvcManager, minimap),
-                new ChatPlugin(assetsProvisioner, mvcManager, chatMessagesBus, chatHistory, entityParticipantTable, nametagsData, dclInput, unityEventSystem, mainUIView, staticContainer.InputBlock, chatLifecycleBusController, globalWorld, playerEntity),
+                new ChatPlugin(
+                    mvcManager,
+                    chatMessagesBus,
+                    chatHistory,
+                    entityParticipantTable,
+                    nametagsData,
+                    mainUIView,
+                    staticContainer.InputBlock,
+                    chatLifecycleBusController,
+                    globalWorld,
+                    playerEntity,
+                    viewDependencies,
+                    chatCommandsBus,
+                    roomHub,
+                    assetsProvisioner,
+                    hyperlinkTextFormatter,
+                    profileCache,
+                    chatInputBus),
                 new ExplorePanelPlugin(
                     assetsProvisioner,
                     mvcManager,
@@ -647,7 +670,6 @@ namespace Global.Dynamic
                     notificationsBusController,
                     characterPreviewEventBus,
                     mapPathEventBus,
-                    chatEntryConfiguration,
                     backpackEventBus,
                     thirdPartyNftProviderSource,
                     wearablesProvider,
@@ -685,7 +707,7 @@ namespace Global.Dynamic
                     assetsProvisioner,
                     mvcManager,
                     dclCursor,
-                    realmUrl => chatMessagesBus.Send($"/{ChatCommandsUtils.COMMAND_GOTO} {realmUrl}", "RestrictedActionAPI")),
+                    realmUrl => chatMessagesBus.Send(ChatChannel.NEARBY_CHANNEL, $"/{ChatCommandsUtils.COMMAND_GOTO} {realmUrl}", "RestrictedActionAPI")),
                 new NftPromptPlugin(assetsProvisioner, webBrowser, mvcManager, nftInfoAPIClient, staticContainer.WebRequestsContainer.WebRequestController, dclCursor),
                 staticContainer.CharacterContainer.CreateGlobalPlugin(),
                 staticContainer.QualityContainer.CreatePlugin(),
@@ -718,7 +740,6 @@ namespace Global.Dynamic
                     dclCursor,
                     profileRepository,
                     characterPreviewFactory,
-                    chatEntryConfiguration,
                     staticContainer.RealmData,
                     assetBundlesURL,
                     staticContainer.WebRequestsContainer.WebRequestController,
@@ -745,6 +766,7 @@ namespace Global.Dynamic
                     includeFriends,
                     includeUserBlocking
                 ),
+                new GenericPopupsPlugin(assetsProvisioner, mvcManager, clipboardManager),
                 new GenericContextMenuPlugin(assetsProvisioner, mvcManager),
                 realmNavigatorContainer.CreatePlugin(),
                 new GPUInstancingPlugin(staticContainer.GPUInstancingService, assetsProvisioner, staticContainer.RealmData, staticContainer.LoadingStatus, exposedGlobalDataContainer.ExposedCameraData),

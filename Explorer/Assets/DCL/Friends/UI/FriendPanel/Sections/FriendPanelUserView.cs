@@ -1,5 +1,4 @@
 using CommunicationData.URLHelpers;
-using DCL.Chat;
 using DCL.UI;
 using DCL.WebRequests;
 using System;
@@ -21,7 +20,6 @@ namespace DCL.Friends.UI.FriendPanel.Sections
         [field: SerializeField] public Button MainButton { get; private set; }
 
         [field: Header("User")]
-        [field: SerializeField] public ChatEntryConfigurationSO ChatEntryConfiguration { get; private set; }
         [field: SerializeField] public TMP_Text UserName { get; private set; }
         [field: SerializeField] public TMP_Text UserNameTag { get; private set; }
         [field: SerializeField] public GameObject VerifiedIcon { get; private set; }
@@ -82,7 +80,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections
             UnHover();
             UserProfile = friendProfile;
 
-            Color userColor = ChatEntryConfiguration.GetNameColor(friendProfile.Name);
+            Color userColor = friendProfile.UserNameColor;
 
             UserName.text = friendProfile.Name;
             UserName.color = userColor;

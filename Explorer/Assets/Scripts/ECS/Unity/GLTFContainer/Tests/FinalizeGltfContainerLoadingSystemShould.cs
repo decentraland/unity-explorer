@@ -56,6 +56,17 @@ namespace ECS.Unity.GLTFContainer.Tests
             createGltfAssetFromAssetBundleSystem = new CreateGltfAssetFromAssetBundleSystem(world, budget, budget);
         }
 
+        [TearDown]
+        public void TearDown()
+        {
+            //temp try catch to circumvent false positive error due to the partial flow removal
+            try {
+                resources.UnloadBundle();}
+            catch (Exception e)
+            {
+            }
+        }
+
         private async Task InstantiateAssetBundle(string hash, Entity promiseEntity)
         {
             StreamableLoadingResult<AssetBundleData> assetBundleData = await resources.LoadAssetBundle(hash);

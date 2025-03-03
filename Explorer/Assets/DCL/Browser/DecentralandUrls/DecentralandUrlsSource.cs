@@ -17,22 +17,23 @@ namespace DCL.Browser.DecentralandUrls
 
 
         private readonly Dictionary<DecentralandUrl, string> cache = new ();
-        private readonly string environmentDomainLowerCase;
         private readonly ILaunchMode launchMode;
 
-        public string DecentralandDomain => environmentDomainLowerCase;
+        public string DecentralandDomain { get; }
+        public DecentralandEnvironment Environment { get; }
 
         public DecentralandUrlsSource(DecentralandEnvironment environment, ILaunchMode launchMode)
         {
-            environmentDomainLowerCase = environment.ToString()!.ToLower();
+            Environment = environment;
+            DecentralandDomain = environment.ToString()!.ToLower();
             this.launchMode = launchMode;
 
             switch (environment)
             {
                 case DecentralandEnvironment.Org:
                 case DecentralandEnvironment.Zone:
-                    ASSET_BUNDLE_URL = string.Format(ASSET_BUNDLE_URL_TEMPLATE, environmentDomainLowerCase);
-                    GENESIS_URL = string.Format(GENESIS_URL_TEMPLATE, environmentDomainLowerCase);
+                    ASSET_BUNDLE_URL = string.Format(ASSET_BUNDLE_URL_TEMPLATE, DecentralandDomain);
+                    GENESIS_URL = string.Format(GENESIS_URL_TEMPLATE, DecentralandDomain);
                     break;
                 case DecentralandEnvironment.Today:
 
@@ -40,7 +41,7 @@ namespace DCL.Browser.DecentralandUrls
                     //We want to fetch pointers from org, but asset bundles from today
                     //Thats because how peer-testing.decentraland.org works.
                     //Its a catalyst that replicates the org environment and eth network, but doesnt propagate back to the production catalysts
-                    environmentDomainLowerCase = DecentralandEnvironment.Org.ToString()!.ToLower();
+                    DecentralandDomain = DecentralandEnvironment.Org.ToString()!.ToLower();
                     ASSET_BUNDLE_URL = "https://ab-cdn.decentraland.today";
 
                     //On staging, we hardcode the catalyst because its the only valid one with a valid comms configuration
@@ -53,7 +54,7 @@ namespace DCL.Browser.DecentralandUrls
         {
             if (cache.TryGetValue(decentralandUrl, out string? url) == false)
             {
-                url = RawUrl(decentralandUrl).Replace(ENV, environmentDomainLowerCase);
+                url = RawUrl(decentralandUrl).Replace(ENV, DecentralandDomain);
                 cache[decentralandUrl] = url;
             }
 
@@ -76,7 +77,8 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.TermsOfUse => $"https://decentraland.{ENV}/terms",
                 DecentralandUrl.ApiPlaces => $"https://places.decentraland.{ENV}/api/places",
                 DecentralandUrl.ApiAuth => $"https://auth-api.decentraland.{ENV}",
-                DecentralandUrl.AuthSignature => $"https://decentraland.{ENV}/auth/requests",
+                DecentralandUrl.ApiRpc => $"wss://rpc.decentraland.{ENV}",
+                DecentralandUrl.AuthSignatureWebApp => $"https://decentraland.{ENV}/auth/requests",
                 DecentralandUrl.BuilderApiDtos => $"https://builder-api.decentraland.{ENV}/v1/collections/[COL-ID]/items",
                 DecentralandUrl.BuilderApiContent => $"https://builder-api.decentraland.{ENV}/v1/storage/contents/",
                 DecentralandUrl.POI => $"https://dcl-lists.decentraland.{ENV}/pois",
