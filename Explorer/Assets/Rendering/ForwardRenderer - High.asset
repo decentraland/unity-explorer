@@ -173,7 +173,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ff2a98f790a0453da51b245c6caf70c3, type: 3}
   m_Name: GPUInstancingRenderFeature
   m_EditorClassIdentifier: 
-  m_Active: 1
+  m_Active: 0
   m_Settings:
     FrustumCullingAndLODGenComputeShader: {fileID: 7200000, guid: 17fd5bf4525e4c7eb3384974e131d2a8, type: 3}
     IndirectBufferGenerationComputeShader: {fileID: 7200000, guid: ce2f103db0fd4bf086f0f4a36ae38c03, type: 3}

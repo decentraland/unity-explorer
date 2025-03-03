@@ -8,7 +8,6 @@ using DCL.PluginSystem.Global;
 using DCL.RealmNavigation;
 using DCL.Roads.GPUInstancing;
 using ECS;
-using System;
 using System.Threading;
 
 namespace DCL.Rendering.GPUInstancing.Systems

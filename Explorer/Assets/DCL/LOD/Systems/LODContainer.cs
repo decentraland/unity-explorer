@@ -118,19 +118,11 @@ namespace DCL.LOD.Systems
             lodSettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(lodContainerSettings.LODSettingAsset, ct: ct);
             roadAssetsPrefabList = new List<GameObject>();
 
-            // var loadedPrefabs = new Dictionary<string, GPUInstancingPrefabData>();
             foreach (AssetReferenceGameObject? t in roadSettingsAsset.Value.RoadAssetsReference)
             {
                 var prefab = await assetsProvisioner.ProvideMainAssetAsync(t, ct: ct);
-                // prefab.Value.GetComponent<GPUInstancingPrefabData>().HideVisuals();
-
-                // GPUInstancingPrefabData instanceBehaviour = prefab.Value.GetComponent<GPUInstancingPrefabData>();
-                // loadedPrefabs[prefab.Value.name] = instanceBehaviour;
-
                 roadAssetsPrefabList.Add(prefab.Value);
             }
-            // roadSettingsAsset.Value.CollectGPUInstancingLODGroupsRuntime(loadedPrefabs);
-
 
             realmData.RealmType.OnUpdate += SwitchRoadsInstancedRendering;
         }

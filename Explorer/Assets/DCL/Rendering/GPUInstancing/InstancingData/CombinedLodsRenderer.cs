@@ -2,70 +2,38 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace DCL.Roads.GPUInstancing.Playground
+namespace DCL.Rendering.GPUInstancing.InstancingData
 {
     [Serializable]
     public class CombinedLodsRenderer
     {
-        public List<CombineInstance> СombineInstances;
-
-        public Transform parent;
-
-        [SerializeField] private Mesh combinedMesh;
-        public Mesh CombinedMesh => combinedMesh ??= CreateCombinedMesh();
-
-        public Material SharedMaterial;
         public int SubMeshId;
 
-        public List<RenderParamsSerialized> RenderParamsSerialized;
-        public RenderParams[] RenderParamsArray { get; private set; }// array for submeshes
+        public Mesh CombinedMesh;
+        public Material SharedMaterial;
 
-        public CombinedLodsRenderer(Material material, Renderer rend, int subMeshId)
+        public RenderParamsSerialized RenderParamsSerialized;
+        public RenderParams RenderParamsArray;
+
+        public CombinedLodsRenderer(Material material, Mesh combinedMesh, int subMeshId, RenderParamsSerialized renderParams)
         {
+            RenderParamsSerialized = renderParams;
             SubMeshId = subMeshId;
-
-            СombineInstances = new List<CombineInstance>();
-            RenderParamsSerialized = new List<RenderParamsSerialized>();
-
-            parent = rend.transform.parent;
-
             SharedMaterial = material;
+            CombinedMesh = combinedMesh;
         }
 
         public CombinedLodsRenderer(Material material, Renderer rend, MeshFilter meshFilter)
         {
+            RenderParamsSerialized = new RenderParamsSerialized(rend);
             SubMeshId = 0;
-
-            parent = rend.transform.parent;
             SharedMaterial = material;
-            combinedMesh = meshFilter.sharedMesh;
-
-            RenderParamsSerialized = new List<RenderParamsSerialized> { new (rend) };
+            CombinedMesh = meshFilter.sharedMesh;
         }
 
         public void InitializeRenderParams(Dictionary<Material, Material> instancingMaterials)
         {
-            RenderParamsArray = new RenderParams[RenderParamsSerialized.Count];
-
-            for (var i = 0; i < RenderParamsSerialized.Count; i++)
-                RenderParamsArray[i] = RenderParamsSerialized[i].ToRenderParams(SharedMaterial, instancingMaterials);
-        }
-
-        public void AddCombineInstance(CombineInstance combineInstance, Renderer rend)
-        {
-            СombineInstances.Add(combineInstance);
-            RenderParamsSerialized.Add(new RenderParamsSerialized(rend));
-        }
-
-        public Mesh CreateCombinedMesh()
-        {
-            combinedMesh = new Mesh();
-
-            //  mergeSubMeshes == false, so each submesh represents separate LOD level
-            combinedMesh.CombineMeshes(СombineInstances.ToArray(), mergeSubMeshes: false, useMatrices: true);
-            combinedMesh.name = $"{parent.name}_{SharedMaterial.name}";
-
-            return combinedMesh;
+            RenderParamsArray = RenderParamsSerialized.ToRenderParams(SharedMaterial, instancingMaterials);
         }
     }
 }

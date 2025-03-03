@@ -32,12 +32,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ff2a98f790a0453da51b245c6caf70c3, type: 3}
   m_Name: GPUInstancingRenderFeature
   m_EditorClassIdentifier: 
-  m_Active: 1
+  m_Active: 0
   m_Settings:
     FrustumCullingAndLODGenComputeShader: {fileID: 7200000, guid: 17fd5bf4525e4c7eb3384974e131d2a8, type: 3}
     IndirectBufferGenerationComputeShader: {fileID: 7200000, guid: ce2f103db0fd4bf086f0f4a36ae38c03, type: 3}
     DrawArgsInstanceCountTransferComputeShader: {fileID: 7200000, guid: 1581f9e286d943f4aa378de7282cd920, type: 3}
-    landscapeData: {fileID: 11400000, guid: 32f2b877400526d4cbf648ba5c5064b4, type: 2}
+    MaxDistanceScaleFactor: 1
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -1,10 +1,14 @@
+using DCL.Rendering.GPUInstancing.InstancingData;
 using DCL.Roads.GPUInstancing.Playground;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using Utility;
+using Debug = UnityEngine.Debug;
 
 namespace DCL.Roads.Settings
 {
@@ -92,8 +96,8 @@ namespace DCL.Roads.Settings
                                .OrderBy(group => group.LODGroup.Name)
                                .ToList();
 
-            UnityEditor.EditorUtility.SetDirty(this);
-            UnityEditor.AssetDatabase.SaveAssets();
+            EditorUtility.SetDirty(this);
+            AssetDatabase.SaveAssets();
             return;
 
             bool IsOutOfRange(Vector2Int roadCoordinate) =>
@@ -101,14 +105,14 @@ namespace DCL.Roads.Settings
                 roadCoordinate.y < min.y || roadCoordinate.y > max.y;
         }
 
-        private Dictionary<string,GPUInstancingPrefabData> LoadAllPrefabs()
+        private Dictionary<string, GPUInstancingPrefabData> LoadAllPrefabs()
         {
             var loadedPrefabs = new Dictionary<string, GPUInstancingPrefabData>();
 
             foreach (AssetReferenceGameObject assetRef in RoadAssetsReference)
             {
-                string assetPath = UnityEditor.AssetDatabase.GUIDToAssetPath(assetRef.AssetGUID);
-                GameObject prefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>(assetPath);
+                string assetPath = AssetDatabase.GUIDToAssetPath(assetRef.AssetGUID);
+                GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(assetPath);
 
                 if (prefab == null)
                 {

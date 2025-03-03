@@ -816,7 +816,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1701440523}
   - component: {fileID: 1701440529}
-  - component: {fileID: 1701440530}
   m_Layer: 0
   m_Name: _EntryPoint
   m_TagString: Untagged
@@ -851,9 +850,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c5b4a08ea67a4b1db0750b8977a4a2aa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  FrustumCullingAndLODGenComputeShader: {fileID: 0}
-  IndirectBufferGenerationComputeShader: {fileID: 0}
-  DrawArgsInstanceCountTransferComputeShader: {fileID: 0}
   roadsRoot: {fileID: 0}
   RoadsConfig: {fileID: 11400000, guid: d7baa85a7da60ef4b8b5252d78fa1b3d, type: 2}
   originalPrefabs: []
@@ -863,27 +859,6 @@ MonoBehaviour:
   ParcelsMax: {x: 500, y: 500}
   OnePrefabDebug: 0
   Run: 0
---- !u!114 &1701440530
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1701440522}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 31d2c19bba004128a417824fd4517053, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  Prefabs: []
-  PrefabId: 0
-  CandidateID: 0
-  LodRendererID: 0
-  LodLevel: 0
-  Run: 0
-  FrustumCullingAndLODGenComputeShader: {fileID: 0}
-  IndirectBufferGenerationComputeShader: {fileID: 0}
-  LookUpAndDitherDebug: 
 --- !u!1 &1758766808
 GameObject:
   m_ObjectHideFlags: 0
