@@ -26,9 +26,9 @@ namespace DCL.UI.ProfileElements
 
         private async UniTaskVoid LoadThumbnailAsync(string faceSnapshotUrl, string userId)
         {
-            cts = cts.SafeRestart();
             try
             {
+                cts = cts.SafeRestart();
                 thumbnailImageView.IsLoading = true;
                 thumbnailImageView.ImageEnabled = false;
 

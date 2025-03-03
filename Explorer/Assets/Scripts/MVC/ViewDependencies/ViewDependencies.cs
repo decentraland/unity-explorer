@@ -18,8 +18,11 @@ namespace MVC
         public readonly IMVCManagerMenusAccessFacade GlobalUIViews;
         public readonly IClipboardManager ClipboardManager;
         public readonly ICursor Cursor;
+
         private readonly IProfileThumbnailCache thumbnailCache;
-        public UniTask<Sprite> GetThumbnailAsync(string userId, string thumbnailUrl, CancellationToken ct = default) => thumbnailCache.GetThumbnailAsync(userId, thumbnailUrl, ct);
+
+        public async UniTask<Sprite> GetThumbnailAsync(string userId, string thumbnailUrl, CancellationToken ct) =>
+            await thumbnailCache.GetThumbnailAsync(userId, thumbnailUrl, ct);
 
         public ViewDependencies(DCLInput dclInput, IEventSystem eventSystem, IMVCManagerMenusAccessFacade globalUIViews, IClipboardManager clipboardManager, ICursor cursor,
             IProfileThumbnailCache thumbnailCache)
