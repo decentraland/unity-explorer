@@ -101,6 +101,7 @@ namespace DCL.SDKComponents.Animator.Systems
 
             animation.playAutomatically = true;
             animation.enabled = true;
+            animation.cullingType = AnimationCullingType.BasedOnRenderers;
             animation.Stop();
 
             // Putting the component in play state if playAutomatically was true at that point.

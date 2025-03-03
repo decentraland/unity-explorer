@@ -91,6 +91,10 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
             using (PoolExtensions.Scope<List<Animation>> animationScope = GltfContainerAsset.ANIMATIONS_POOL.AutoScope())
             {
                 instance.GetComponentsInChildren(true, animationScope.Value);
+                foreach (Animation sAnimation in animationScope.Value)
+                {
+                    sAnimation.cullingType = AnimationCullingType.BasedOnRenderers;
+                }
                 result.Animations.AddRange(animationScope.Value);
             }
 
