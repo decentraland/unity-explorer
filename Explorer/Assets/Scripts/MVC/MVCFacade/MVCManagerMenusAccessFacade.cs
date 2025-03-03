@@ -1,9 +1,12 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.ChangeRealmPrompt;
+using DCL.Chat.InputBus;
 using DCL.ExternalUrlPrompt;
+using DCL.Friends;
 using DCL.Profiles;
 using DCL.TeleportPrompt;
 using DCL.UI;
+using DCL.Utilities;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -24,11 +27,14 @@ namespace MVC
 
         public MVCManagerMenusAccessFacade(
             IMVCManager mvcManager,
-            IProfileCache profileCache
+            IProfileCache profileCache,
+            ObjectProxy<IFriendsService> friendServiceProxy,
+            IChatInputBus chatInputBus
             )
         {
             this.mvcManager = mvcManager;
             this.profileCache = profileCache;
+            genericUserProfileContextMenuController = new GenericUserProfileContextMenuController(friendServiceProxy, chatInputBus, mvcManager);
         }
 
         public async UniTask ShowExternalUrlPromptAsync(string url, CancellationToken ct) =>
@@ -52,7 +58,7 @@ namespace MVC
             closeContextMenuTask?.TrySetResult();
             closeContextMenuTask = new UniTaskCompletionSource();
 
-
+            await genericUserProfileContextMenuController.ShowUserProfileContextMenuAsync(profile, position, ct, onContextMenuHide);
         }
 
         public async UniTask ShowUserProfileContextMenuFromWalletIdAsync(string walletId, Vector3 position, CancellationToken ct, Action onHide = null)

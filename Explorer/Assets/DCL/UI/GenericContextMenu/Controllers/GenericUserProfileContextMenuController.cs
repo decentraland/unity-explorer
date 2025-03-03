@@ -24,20 +24,23 @@ namespace MVC
         private const int CONTEXT_MENU_ELEMENTS_SPACING = 5;
         private const int CONTEXT_MENU_WIDTH = 250;
 
+        private readonly ObjectProxy<IFriendsService> friendServiceProxy;
+        private readonly IMVCManager mvcManager;
+        private readonly IChatInputBus chatInputBus;
+
         private readonly UserProfileContextMenuControlSettings userProfileContextMenuControlSettings;
         private readonly MentionUserButtonContextMenuControlSettings mentionUserButtonContextMenuControlSettings;
         private readonly OpenUserProfileButtonContextMenuControlSettings openUserProfileButtonContextMenuControlSettings;
-        private readonly ObjectProxy<IFriendsService> friendServiceProxy;
         private readonly GenericContextMenu contextMenu;
-        private readonly IMVCManager mvcManager;
-        private readonly IChatInputBus chatInputBus;
 
         private CancellationTokenSource cancellationTokenSource;
         private UniTaskCompletionSource closeContextMenuTask;
 
-        public GenericUserProfileContextMenuController(ObjectProxy<IFriendsService> friendServiceProxy)
+        public GenericUserProfileContextMenuController(ObjectProxy<IFriendsService> friendServiceProxy, IChatInputBus chatInputBus, IMVCManager mvcManager)
         {
             this.friendServiceProxy = friendServiceProxy;
+            this.chatInputBus = chatInputBus;
+            this.mvcManager = mvcManager;
             userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings(OnFriendsButtonClicked);
             openUserProfileButtonContextMenuControlSettings = new OpenUserProfileButtonContextMenuControlSettings(OnShowUserPassportClicked);
             mentionUserButtonContextMenuControlSettings = new MentionUserButtonContextMenuControlSettings(OnMentionUserClicked);
@@ -60,10 +63,8 @@ namespace MVC
                 contextMenuFriendshipStatus = ConvertFriendshipStatus(friendshipStatus);
             }
 
-            //TODO FRAN> FIX THIS
-            Sprite thumbnailSprite = null;
-
-            userProfileContextMenuControlSettings.SetInitialData(profile.DisplayName, profile.UserId, profile.HasClaimedName, profile.UserNameColor, contextMenuFriendshipStatus, profile.Avatar.FaceSnapshotUrl);
+            userProfileContextMenuControlSettings.SetInitialData(profile.ValidatedName, profile.UserId,
+                profile.HasClaimedName, profile.UserNameColor, contextMenuFriendshipStatus, profile.Avatar.FaceSnapshotUrl);
             mentionUserButtonContextMenuControlSettings.SetData(profile.DisplayName);
             openUserProfileButtonContextMenuControlSettings.SetData(profile.UserId);
 
@@ -178,7 +179,7 @@ namespace MVC
             chatInputBus.InsertText(userName + " ");
         }
 
-        public UniTask ShowPassport(string userId, CancellationToken ct) =>
+        private UniTask ShowPassport(string userId, CancellationToken ct) =>
             mvcManager.ShowAsync(PassportController.IssueCommand(new PassportController.Params(userId)), ct);
 
     }
