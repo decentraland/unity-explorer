@@ -86,5 +86,24 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
             return result;
         }
+
+        public UniTask<PaginatedBlockedProfileResult> GetBlockedUsersAsync(int pageNum, int pageSize, CancellationToken ct) =>
+            core.GetBlockedUsersAsync(pageNum, pageSize, ct);
+
+        public async UniTask BlockUserAsync(string userId, CancellationToken ct)
+        {
+            await core.BlockUserAsync(userId, ct);
+
+            analytics.Track(AnalyticsEvents.Friends.BLOCK_USER, new JsonObject
+            {
+                {"receiver_id", userId}
+            });
+        }
+
+        public UniTask UnblockUserAsync(string userId, CancellationToken ct) =>
+            core.UnblockUserAsync(userId, ct);
+
+        public UniTask<UserBlockingStatus> GetUserBlockingStatusAsync(CancellationToken ct) =>
+            core.GetUserBlockingStatusAsync(ct);
     }
 }

@@ -94,6 +94,8 @@
             public const string REQUEST_ACCEPTED = "friend_request_accepted";
             public const string REQUEST_REJECTED = "friend_request_rejected";
             public const string FRIENDSHIP_DELETED = "friendship_deleted";
+
+            public const string BLOCK_USER = "block_user";
         }
     }
 }

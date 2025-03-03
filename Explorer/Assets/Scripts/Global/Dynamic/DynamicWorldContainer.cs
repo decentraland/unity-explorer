@@ -546,6 +546,7 @@ namespace Global.Dynamic
 
             var friendServiceProxy = new ObjectProxy<IFriendsService>();
             var friendOnlineStatusCacheProxy = new ObjectProxy<IFriendsConnectivityStatusTracker>();
+            var userBlockingCacheProxy = new ObjectProxy<IUserBlockingCache>();
             IProfileThumbnailCache profileThumbnailCache = new ProfileThumbnailCache(staticContainer.WebRequestsContainer.WebRequestController);
             IChatLifecycleBusController chatLifecycleBusController = new ChatLifecycleBusController(mvcManager);
             IChatInputBus chatInputBus = new ChatInputBus();
@@ -818,6 +819,7 @@ namespace Global.Dynamic
                     new MVCPassportBridge(mvcManager),
                     friendServiceProxy,
                     friendOnlineStatusCacheProxy,
+                    userBlockingCacheProxy,
                     profileThumbnailCache,
                     chatLifecycleBusController,
                     notificationsBusController,

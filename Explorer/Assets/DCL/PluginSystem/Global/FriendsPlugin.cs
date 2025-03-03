@@ -51,6 +51,7 @@ namespace DCL.PluginSystem.Global
         private readonly IPassportBridge passportBridge;
         private readonly ObjectProxy<IFriendsService> friendServiceProxy;
         private readonly ObjectProxy<IFriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy;
+        private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
         private readonly IProfileThumbnailCache profileThumbnailCache;
         private readonly IChatLifecycleBusController chatLifecycleBusController;
         private readonly IOnlineUsersProvider onlineUsersProvider;
@@ -85,6 +86,7 @@ namespace DCL.PluginSystem.Global
             IPassportBridge passportBridge,
             ObjectProxy<IFriendsService> friendServiceProxy,
             ObjectProxy<IFriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy,
+            ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
             IProfileThumbnailCache profileThumbnailCache,
             IChatLifecycleBusController chatLifecycleBusController,
             INotificationsBusController notificationsBusController,
@@ -112,6 +114,7 @@ namespace DCL.PluginSystem.Global
             this.passportBridge = passportBridge;
             this.friendServiceProxy = friendServiceProxy;
             this.friendOnlineStatusCacheProxy = friendOnlineStatusCacheProxy;
+            this.userBlockingCacheProxy = userBlockingCacheProxy;
             this.profileThumbnailCache = profileThumbnailCache;
             this.chatLifecycleBusController = chatLifecycleBusController;
             this.onlineUsersProvider = onlineUsersProvider;
@@ -159,6 +162,14 @@ namespace DCL.PluginSystem.Global
 
             if (isConnectivityStatusEnabled)
                 friendsService.SubscribeToConnectivityStatusAsync(cts.Token).Forget();
+
+            //TODO: developments need to be deployed in order to activate this feature
+            if (includeUserBlocking && false)
+            {
+                friendsService.SubscribeToUserBlockUpdatersAsync(cts.Token).Forget();
+                IUserBlockingCache userBlockingCache = new UserBlockingCache(friendsService, friendEventBus, web3IdentityCache);
+                userBlockingCacheProxy.SetObject(userBlockingCache);
+            }
 
             // We need to restart the connection to the service as identity changes
             // since that affects which friends the user can access

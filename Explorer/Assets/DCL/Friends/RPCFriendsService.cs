@@ -31,6 +31,13 @@ namespace DCL.Friends
         private const string SUBSCRIBE_FRIENDSHIP_UPDATES_PROCEDURE_NAME = "SubscribeToFriendshipUpdates";
         private const string GET_MUTUAL_FRIENDS_PROCEDURE_NAME = "GetMutualFriends";
         private const string SUBSCRIBE_TO_CONNECTIVITY_UPDATES = "SubscribeToFriendConnectivityUpdates";
+
+        private const string SUBSCRIBE_TO_BLOCK_STATUS_UPDATES = "SubscribeToUserBlockUpdates";
+        private const string GET_BLOCKED_USERS = "GetBlockedUsers";
+        private const string GET_BLOCKING_STATUS = "GetBlockingStatus";
+        private const string BLOCK_USER = "BlockUser";
+        private const string UNBLOCK_USER = "UnblockUser";
+
         private const int CONNECTION_TIMEOUT_SECS = 10;
         private const int CONNECTION_RETRIES = 3;
         private const int RETRY_STREAM_THROTTLE_MS = 30000;
@@ -229,6 +236,109 @@ namespace DCL.Friends
                     }
                 }
             }
+        }
+
+        public async UniTask SubscribeToUserBlockUpdatersAsync(CancellationToken ct)
+        {
+            // We try to keep the stream open until cancellation is requested
+            // If by any reason the rpc connection has a problem, we need to wait until it is restored, so we re-open the stream
+            while (!ct.IsCancellationRequested)
+            {
+                try
+                {
+                    await EnsureRpcConnectionAsync(ct);
+                    await OpenStreamAndProcessUpdatesAsync();
+                }
+                catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogException(e, new ReportData(ReportCategory.FRIENDS)); }
+
+                await UniTask.Delay(RETRY_STREAM_THROTTLE_MS, cancellationToken: ct);
+            }
+
+            return;
+
+            async UniTask OpenStreamAndProcessUpdatesAsync()
+            {
+
+            }
+        }
+
+        public async UniTask<PaginatedBlockedProfileResult> GetBlockedUsersAsync(int pageNum, int pageSize, CancellationToken ct)
+        {
+            await EnsureRpcConnectionAsync(ct);
+
+            // var payload = new GetFriendsPayload
+            // {
+            //     Pagination = new Pagination
+            //     {
+            //         Offset = pageNum * pageSize,
+            //         Limit = pageSize,
+            //     },
+            // };
+            //
+            // var response = await module!
+            //                     .CallUnaryProcedure<PaginatedFriendsProfilesResponse>(GET_BLOCKED_USERS, payload)
+            //                     .AttachExternalCancellation(ct)
+            //                     .Timeout(TimeSpan.FromSeconds(TIMEOUT_SECONDS));
+            //
+            // IEnumerable<FriendProfile> profiles = ToClientFriendProfiles(response.Friends);
+
+            return new PaginatedBlockedProfileResult(new List<BlockedProfile>(), 0);
+        }
+
+        public async UniTask BlockUserAsync(string userId, CancellationToken ct)
+        {
+            await EnsureRpcConnectionAsync(ct);
+
+            // await UpdateFriendshipAsync(new UpsertFriendshipPayload
+            // {
+            //     Reject = new UpsertFriendshipPayload.Types.RejectPayload
+            //     {
+            //         User = new User
+            //         {
+            //             Address = friendId,
+            //         },
+            //     },
+            // }, ct);
+            //
+            // eventBus.BroadcastThatYouRejectedFriendRequestReceivedFromOtherUser(friendId);
+        }
+
+        public async UniTask UnblockUserAsync(string userId, CancellationToken ct)
+        {
+            await EnsureRpcConnectionAsync(ct);
+
+            // await UpdateFriendshipAsync(new UpsertFriendshipPayload
+            // {
+            //     Reject = new UpsertFriendshipPayload.Types.RejectPayload
+            //     {
+            //         User = new User
+            //         {
+            //             Address = friendId,
+            //         },
+            //     },
+            // }, ct);
+            //
+            // eventBus.BroadcastThatYouRejectedFriendRequestReceivedFromOtherUser(friendId);
+        }
+
+        public async UniTask<UserBlockingStatus> GetUserBlockingStatusAsync(CancellationToken ct)
+        {
+            await EnsureRpcConnectionAsync(ct);
+
+            // await UpdateFriendshipAsync(new UpsertFriendshipPayload
+            // {
+            //     Reject = new UpsertFriendshipPayload.Types.RejectPayload
+            //     {
+            //         User = new User
+            //         {
+            //             Address = friendId,
+            //         },
+            //     },
+            // }, ct);
+            //
+            // eventBus.BroadcastThatYouRejectedFriendRequestReceivedFromOtherUser(friendId);
+
+            return new UserBlockingStatus();
         }
 
         public async UniTask<PaginatedFriendsResult> GetFriendsAsync(int pageNum, int pageSize, CancellationToken ct)

@@ -1,5 +1,6 @@
 using DCL.WebRequests;
 using System;
+using System.Globalization;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -20,7 +21,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Blocked
             set
             {
                 blockedDate = value;
-                BlockedDateText.SetText($"{blockedDate:MM/dd}");
+                BlockedDateText.SetText(blockedDate.ToString("MMM dd", CultureInfo.InvariantCulture).ToUpper());
             }
         }
 
