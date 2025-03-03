@@ -1,4 +1,3 @@
-using DCL.Clipboard;
 using System;
 using UnityEngine;
 
@@ -25,12 +24,10 @@ namespace DCL.UI.GenericContextMenu.Controls.Configs
         internal Color userColor;
         internal FriendshipStatus friendshipStatus;
         internal readonly RectOffset horizontalLayoutPadding;
-        internal readonly ISystemClipboard systemClipboard;
         internal readonly Action<string, FriendshipStatus> friendButtonClickAction;
 
-        public UserProfileContextMenuControlSettings(ISystemClipboard systemClipboard, Action<string, FriendshipStatus> friendButtonClickAction, RectOffset? horizontalLayoutPadding = null)
+        public UserProfileContextMenuControlSettings(Action<string, FriendshipStatus> friendButtonClickAction, RectOffset? horizontalLayoutPadding = null)
         {
-            this.systemClipboard = systemClipboard;
             this.friendButtonClickAction = friendButtonClickAction;
             this.horizontalLayoutPadding = horizontalLayoutPadding ?? DEFAULT_HORIZONTAL_LAYOUT_PADDING;
         }

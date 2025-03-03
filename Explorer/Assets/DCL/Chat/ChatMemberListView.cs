@@ -17,8 +17,8 @@ namespace DCL.Chat
         {
             public string Id;
             public string Name;
+            public string FaceSnapshotUrl;
             public string WalletId;
-            public Sprite ProfilePicture;
             public ChatMemberConnectionStatus ConnectionStatus;
             public Color ProfileColor;
         }
@@ -88,10 +88,10 @@ namespace DCL.Chat
             ChatMemberListViewItem memberItem = newItem.GetComponent<ChatMemberListViewItem>();
             memberItem.Id = members[index].Id;
             memberItem.Name = members[index].Name;
-            memberItem.ProfilePicture = members[index].ProfilePicture;
+            memberItem.SetupProfilePicture(viewDependencies, members[index].ProfileColor, members[index].Name, members[index].Id);
             memberItem.ConnectionStatus = members[index].ConnectionStatus;
             memberItem.Tag = members[index].WalletId;
-            memberItem.ProfileColor = members[index].ProfileColor;
+            memberItem.NameTextColor = members[index].ProfileColor;
             memberItem.ContextMenuButtonClicked -= OnContextMenuButtonClickedAsync;
             memberItem.ContextMenuButtonClicked += OnContextMenuButtonClickedAsync;
 

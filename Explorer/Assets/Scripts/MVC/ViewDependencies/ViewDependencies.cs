@@ -1,5 +1,9 @@
-﻿using DCL.Clipboard;
+﻿using Cysharp.Threading.Tasks;
+using DCL.Clipboard;
 using DCL.Input;
+using DCL.Profiles;
+using System.Threading;
+using UnityEngine;
 
 namespace MVC
 {
@@ -11,17 +15,21 @@ namespace MVC
     {
         public readonly DCLInput DclInput;
         public readonly IEventSystem EventSystem;
-        public readonly MVCManagerMenusAccessFacade GlobalUIViews;
+        public readonly IMVCManagerMenusAccessFacade GlobalUIViews;
         public readonly IClipboardManager ClipboardManager;
         public readonly ICursor Cursor;
+        private readonly IProfileThumbnailCache thumbnailCache;
+        public UniTask<Sprite> GetThumbnailAsync(string userId, string thumbnailUrl, CancellationToken ct = default) => thumbnailCache.GetThumbnailAsync(userId, thumbnailUrl, ct);
 
-        public ViewDependencies(DCLInput dclInput, IEventSystem eventSystem, MVCManagerMenusAccessFacade globalUIViews, IClipboardManager clipboardManager, ICursor cursor)
+        public ViewDependencies(DCLInput dclInput, IEventSystem eventSystem, IMVCManagerMenusAccessFacade globalUIViews, IClipboardManager clipboardManager, ICursor cursor,
+            IProfileThumbnailCache thumbnailCache)
         {
             DclInput = dclInput;
             EventSystem = eventSystem;
             GlobalUIViews = globalUIViews;
             ClipboardManager = clipboardManager;
             Cursor = cursor;
+            this.thumbnailCache = thumbnailCache;
         }
 
     }

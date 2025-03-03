@@ -1,7 +1,7 @@
 namespace DCL.UI.GenericContextMenu.Controls
 {
-    public class GenericContextMenuMentionUserButtonView : GenericContextMenuButtonWithProfileView
+    public class GenericContextMenuMentionUserButtonView : GenericContextMenuButtonWithTextView
     {
-        
+
     }
 }

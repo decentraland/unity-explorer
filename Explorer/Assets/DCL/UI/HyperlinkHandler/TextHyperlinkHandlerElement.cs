@@ -102,7 +102,6 @@ namespace DCL.UI.HyperlinkHandler
             linkHandlers.Add(HyperlinkConstants.PROFILE, HandleUserLink);
         }
 
-        // Expected format is "linkType=linkValue"
         private void ProcessLink(string linkType, string linkValue)
         {
             if (linkHandlers.TryGetValue(linkType, out Action<string> linkHandler))

@@ -23,37 +23,4 @@ namespace DCL.UI.ProfileElements
         }
     }
 
-    public class ProfilePictureController : SimpleController <ProfilePictureView, ProfileThumbnailData, Color>
-    {
-        private readonly IProfileThumbnailCache profileThumbnailCache;
-        private CancellationTokenSource cts;
-
-        public ProfilePictureController(
-            ProfilePictureView view,
-            ProfileThumbnailData data,
-            IProfileThumbnailCache profileThumbnailCache) : base(view, data)
-        {
-            this.profileThumbnailCache = profileThumbnailCache;
-        }
-
-        protected override Color ProcessData(ProfileThumbnailData data) =>
-            inputData.Color;
-
-        public override void UpdateView()
-        {
-            base.UpdateView();
-            UpdateThumbnailAsync().Forget();
-        }
-
-        private async UniTaskVoid UpdateThumbnailAsync()
-        {
-            cts = cts.SafeRestart();
-            await viewInstance.ThumbnailImageView.LoadThumbnailSafeAsync(profileThumbnailCache, inputData.UserAddress, inputData.FaceSnapshotUrl, cts.Token );
-        }
-
-        public override void Dispose()
-        {
-            cts.SafeCancelAndDispose();
-        }
-    }
 }

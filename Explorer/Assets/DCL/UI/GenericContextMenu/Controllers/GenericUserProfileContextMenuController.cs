@@ -1,15 +1,10 @@
-﻿using Cysharp.Threading.Tasks;
-using DCL.ChangeRealmPrompt;
+using Cysharp.Threading.Tasks;
 using DCL.Chat.InputBus;
-using DCL.Clipboard;
-using DCL.ExternalUrlPrompt;
 using DCL.Friends;
 using DCL.Friends.UI;
 using DCL.Friends.UI.Requests;
 using DCL.Passport;
 using DCL.Profiles;
-using DCL.TeleportPrompt;
-using DCL.UI;
 using DCL.UI.GenericContextMenu;
 using DCL.UI.GenericContextMenu.Controls.Configs;
 using DCL.Utilities;
@@ -21,10 +16,7 @@ using Utility;
 
 namespace MVC
 {
-    /// <summary>
-    /// Provides access to a limited set of views previously registered in the MVC Manager. This allows views without controllers to a restricted MVC
-    /// </summary>
-    public class MVCManagerMenusAccessFacade
+    public class GenericUserProfileContextMenuController
     {
         private static readonly RectOffset CONTEXT_MENU_VERTICAL_LAYOUT_PADDING = new (15, 15, 20, 25);
         private static readonly Vector2 CONTEXT_MENU_OFFSET = new (5,-10);
@@ -32,33 +24,21 @@ namespace MVC
         private const int CONTEXT_MENU_ELEMENTS_SPACING = 5;
         private const int CONTEXT_MENU_WIDTH = 250;
 
-        private readonly IMVCManager mvcManager;
-        private readonly GenericContextMenu contextMenu;
-        private readonly ObjectProxy<IFriendsService> friendServiceProxy;
-        private readonly IProfileCache profileCache;
-        private readonly IChatInputBus chatInputBus;
-        private readonly IProfileThumbnailCache profileThumbnailCache;
-
         private readonly UserProfileContextMenuControlSettings userProfileContextMenuControlSettings;
         private readonly MentionUserButtonContextMenuControlSettings mentionUserButtonContextMenuControlSettings;
         private readonly OpenUserProfileButtonContextMenuControlSettings openUserProfileButtonContextMenuControlSettings;
-        private UniTaskCompletionSource closeContextMenuTask;
+        private readonly ObjectProxy<IFriendsService> friendServiceProxy;
+        private readonly GenericContextMenu contextMenu;
+        private readonly IMVCManager mvcManager;
+        private readonly IChatInputBus chatInputBus;
+
         private CancellationTokenSource cancellationTokenSource;
+        private UniTaskCompletionSource closeContextMenuTask;
 
-        public MVCManagerMenusAccessFacade(
-            IMVCManager mvcManager,
-            ISystemClipboard systemClipboard,
-            ObjectProxy<IFriendsService> friendServiceProxy,
-            IProfileCache profileCache,
-            IChatInputBus chatInputBus, IProfileThumbnailCache profileThumbnailCache)
+        public GenericUserProfileContextMenuController(ObjectProxy<IFriendsService> friendServiceProxy)
         {
-            this.mvcManager = mvcManager;
             this.friendServiceProxy = friendServiceProxy;
-            this.profileCache = profileCache;
-            this.chatInputBus = chatInputBus;
-            this.profileThumbnailCache = profileThumbnailCache;
-
-            userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings(systemClipboard, OnFriendsButtonClicked);
+            userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings(OnFriendsButtonClicked);
             openUserProfileButtonContextMenuControlSettings = new OpenUserProfileButtonContextMenuControlSettings(OnShowUserPassportClicked);
             mentionUserButtonContextMenuControlSettings = new MentionUserButtonContextMenuControlSettings(OnMentionUserClicked);
             contextMenu = new GenericContextMenu(CONTEXT_MENU_WIDTH, CONTEXT_MENU_OFFSET, CONTEXT_MENU_VERTICAL_LAYOUT_PADDING, CONTEXT_MENU_ELEMENTS_SPACING, anchorPoint: GenericContextMenuAnchorPoint.BOTTOM_LEFT)
@@ -68,29 +48,10 @@ namespace MVC
                          .AddControl(mentionUserButtonContextMenuControlSettings);
         }
 
-        public UniTask ShowExternalUrlPromptAsync(string url, CancellationToken ct) =>
-            mvcManager.ShowAsync(ExternalUrlPromptController.IssueCommand(new ExternalUrlPromptController.Params(url)), ct);
-
-        public UniTask ShowTeleporterPromptAsync(Vector2Int coords, CancellationToken ct) =>
-            mvcManager.ShowAsync(TeleportPromptController.IssueCommand(new TeleportPromptController.Params(coords)), ct);
-
-        public UniTask ShowChangeRealmPromptAsync(string message, string realm, CancellationToken ct) =>
-            mvcManager.ShowAsync(ChangeRealmPromptController.IssueCommand(new ChangeRealmPromptController.Params(message, realm)), ct);
-
-        public UniTask ShowPastePopupToastAsync(PastePopupToastData data, CancellationToken ct) =>
-            mvcManager.ShowAsync(PastePopupToastController.IssueCommand(data), ct);
-
-        public UniTask ShowChatEntryMenuPopupAsync(ChatEntryMenuPopupData data, CancellationToken ct) =>
-            mvcManager.ShowAsync(ChatEntryMenuPopupController.IssueCommand(data), ct);
-
-        public UniTask ShowPassport(string userId, CancellationToken ct) =>
-            mvcManager.ShowAsync(PassportController.IssueCommand(new PassportController.Params(userId)), ct);
-
         public async UniTask ShowUserProfileContextMenuAsync(Profile profile, Vector3 position, CancellationToken ct, Action onContextMenuHide = null)
         {
             closeContextMenuTask?.TrySetResult();
             closeContextMenuTask = new UniTaskCompletionSource();
-
             UserProfileContextMenuControlSettings.FriendshipStatus contextMenuFriendshipStatus = UserProfileContextMenuControlSettings.FriendshipStatus.DISABLED;
 
             if (friendServiceProxy.Configured)
@@ -99,11 +60,11 @@ namespace MVC
                 contextMenuFriendshipStatus = ConvertFriendshipStatus(friendshipStatus);
             }
 
-            Sprite thumbnailSprite = await profileThumbnailCache.GetThumbnailAsync(profile, ct);
+            Sprite thumbnailSprite = null;
 
             userProfileContextMenuControlSettings.SetInitialData(profile.DisplayName, profile.UserId, profile.HasClaimedName, profile.UserNameColor, contextMenuFriendshipStatus, thumbnailSprite);
-            mentionUserButtonContextMenuControlSettings.SetData(profile);
-            openUserProfileButtonContextMenuControlSettings.SetData(profile);
+            mentionUserButtonContextMenuControlSettings.SetData(profile.DisplayName);
+            openUserProfileButtonContextMenuControlSettings.SetData(profile.UserId);
 
             await mvcManager.ShowAsync(GenericContextMenuController.IssueCommand(
                 new GenericContextMenuParameter(contextMenu, position, actionOnHide:onContextMenuHide, closeTask: closeContextMenuTask.Task)), ct);
@@ -202,35 +163,22 @@ namespace MVC
             }
         }
 
-
-
-        private void OnShowUserPassportClicked(Profile data)
+        private void OnShowUserPassportClicked(string userId)
         {
             cancellationTokenSource = cancellationTokenSource.SafeRestart();
             closeContextMenuTask.TrySetResult();
-            ShowPassport(data.UserId, cancellationTokenSource.Token).Forget();
+            ShowPassport(userId, cancellationTokenSource.Token).Forget();
         }
 
-        private void OnMentionUserClicked(Profile data)
+        private void OnMentionUserClicked(string userName)
         {
             closeContextMenuTask.TrySetResult();
             //Per design request we need to add an extra character after adding the mention to the chat.
-            chatInputBus.InsertText(data.MentionName + " ");
+            chatInputBus.InsertText(userName + " ");
         }
 
-        public async UniTask ShowUserProfileContextMenuFromWalletIdAsync(string walletId, Vector3 position, CancellationToken ct, Action onHide = null)
-        {
-            Profile profile = profileCache.Get(walletId);
-            if (profile == null) return;
-            await ShowUserProfileContextMenuAsync(profile, position, ct, onHide);
-        }
+        public UniTask ShowPassport(string userId, CancellationToken ct) =>
+            mvcManager.ShowAsync(PassportController.IssueCommand(new PassportController.Params(userId)), ct);
 
-
-        public async UniTask ShowUserProfileContextMenuFromUserNameAsync(string userName, Vector3 position, CancellationToken ct)
-        {
-            Profile profile = profileCache.GetByUserName(userName);
-            if (profile == null) return;
-            await ShowUserProfileContextMenuAsync(profile, position, ct );
-        }
     }
 }
