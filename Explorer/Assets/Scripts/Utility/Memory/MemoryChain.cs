@@ -61,6 +61,11 @@ namespace Utility.Memory
             AppendData(LastSpan().Slice(0, data.leftSpaceInLast));
         }
 
+        public unsafe void AppendData(void* memory, int size)
+        {
+            AppendData(new Span<byte>(memory, size));
+        }
+
         /// <summary>
         /// Doesn't borrow MemoryChain and returns a stream that reads from it
         /// </summary>
@@ -126,7 +131,7 @@ namespace Utility.Memory
                 if (buffer == null) throw new ArgumentNullException(nameof(buffer));
 
                 if (offset < 0 || count < 0 || offset + count > buffer.Length)
-                    throw new ArgumentOutOfRangeException();
+                    throw new ArgumentOutOfRangeException($"Buffer length: {buffer.Length}, offset: {offset}, count: {count}");
 
                 if (slabIndex >= chain.slabs.Count)
                     return 0;
