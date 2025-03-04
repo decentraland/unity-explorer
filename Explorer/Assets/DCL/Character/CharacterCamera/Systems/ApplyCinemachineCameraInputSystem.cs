@@ -72,8 +72,11 @@ namespace DCL.CharacterCamera.Systems
 
         [Query]
         [None(typeof(InWorldCameraComponent))]
-        private void ForceLookAt(in Entity entity, ref CameraComponent camera, ref ICinemachinePreset cinemachinePreset, in CameraLookAtIntent lookAtIntent)
+        private void ForceLookAt(in Entity entity, in CameraComponent camera, ref ICinemachinePreset cinemachinePreset, in CameraLookAtIntent lookAtIntent)
         {
+            // Only process the LookAtIntent if we're not in SDKCamera mode
+            if (camera.Mode == CameraMode.SDKCamera) return;
+
             switch (camera.Mode)
             {
                 case CameraMode.DroneView:
