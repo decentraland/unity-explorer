@@ -100,8 +100,15 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             });
         }
 
-        public UniTask UnblockUserAsync(string userId, CancellationToken ct) =>
-            core.UnblockUserAsync(userId, ct);
+        public async UniTask UnblockUserAsync(string userId, CancellationToken ct)
+        {
+            await core.UnblockUserAsync(userId, ct);
+
+            analytics.Track(AnalyticsEvents.Friends.UNBLOCK_USER, new JsonObject
+            {
+                {"receiver_id", userId}
+            });
+        }
 
         public UniTask<UserBlockingStatus> GetUserBlockingStatusAsync(CancellationToken ct) =>
             core.GetUserBlockingStatusAsync(ct);
