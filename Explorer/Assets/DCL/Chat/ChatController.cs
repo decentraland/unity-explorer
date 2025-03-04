@@ -28,8 +28,18 @@ using Utility.Arch;
 
 namespace DCL.Chat
 {
-    public class ChatController : ControllerBase<ChatView>, IPanelInSharedSpace
+    public class ChatController : ControllerBase<ChatView, ChatController.ShowParams>, IPanelInSharedSpace
     {
+        public struct ShowParams
+        {
+            public readonly bool ShowUnfolded;
+
+            public ShowParams(bool showUnfolded)
+            {
+                ShowUnfolded = showUnfolded;
+            }
+        }
+
         public delegate void ChatBubbleVisibilityChangedDelegate(bool isVisible);
 
         /// <summary>
@@ -261,7 +271,6 @@ namespace DCL.Chat
 
         protected override void OnBlur()
         {
- //           viewDependencies.DclInput.UI.Submit.performed -= OnSubmitShortcutPerformed;
             viewInstance!.DisableInputBoxSubmissions();
         }
 
@@ -270,7 +279,6 @@ namespace DCL.Chat
             if (viewInstance!.IsFocused) return;
 
             viewInstance.EnableInputBoxSubmissions();
- //           viewDependencies.DclInput.UI.Submit.performed += OnSubmitShortcutPerformed;
         }
 
         protected override void OnViewShow()
@@ -279,6 +287,8 @@ namespace DCL.Chat
             viewDependencies.DclInput.UI.Click.performed += OnUIClickPerformed;
             viewDependencies.DclInput.Shortcuts.ToggleNametags.performed += OnToggleNametagsShortcutPerformed;
             viewDependencies.DclInput.Shortcuts.OpenChatCommandLine.performed += OnOpenChatCommandLineShortcutPerformed;
+
+            viewInstance.IsUnfolded = inputData.ShowUnfolded;
         }
 
         protected override void OnViewClose()
@@ -479,31 +489,28 @@ namespace DCL.Chat
         }
 
         public event IPanelInSharedSpace.ViewShowingCompleteDelegate? ViewShowingComplete;
-        public bool IsVisibleInSharedSpace => State != ControllerState.ViewHidden && viewInstance!.IsUnfolded;
+        public bool IsVisibleInSharedSpace => State != ControllerState.ViewHidden && GetViewVisibility() && viewInstance!.IsUnfolded;
 
         public async UniTask ShowInSharedSpaceAsync(CancellationToken ct, object parameters = null)
         {
-//            if(State == ControllerState.ViewHidden)
-//                await LaunchViewLifeCycleAsync(new CanvasOrdering(Layer, 0), /*TODO*/new ControllerNoData(), ct);
-//            else
             if(State != ControllerState.ViewHidden)
             {
-                IsUnfolded = true; // TODO: will be done in the OnViewShow
+                if(!GetViewVisibility())
+                    SetViewVisibility(true);
+
+                ShowParams showParams = (ShowParams)parameters;
+                viewInstance.IsUnfolded = showParams.ShowUnfolded;
+
                 ViewShowingComplete?.Invoke(this);
             }
 
             await UniTask.CompletedTask;
         }
 
-        public async UniTask SetViewVisibility(bool visibility)
+        public void SetViewVisibility(bool visibility)
         {
             Debug.Log("YEAH SetVisibility " + visibility);
             viewInstance.gameObject.SetActive(visibility);
-
-            if(visibility)
-                ViewShowingComplete?.Invoke(this);
-
-            await UniTask.CompletedTask;
         }
 
         public bool GetViewVisibility()
@@ -515,6 +522,11 @@ namespace DCL.Chat
         {
             IsUnfolded = false;
             await UniTask.CompletedTask;
+        }
+
+        public void FocusInputBox()
+        {
+            viewInstance.FocusInputBox();
         }
     }
 }

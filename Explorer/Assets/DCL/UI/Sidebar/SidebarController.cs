@@ -161,7 +161,7 @@ namespace DCL.UI.Sidebar
         private void OnUnreadMessagesButtonClicked()
         {
             sidebarBus.BlockSidebar();
-            sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.Chat);
+            sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.Chat, new ChatController.ShowParams(true));
         }
 
         private void OnHelpButtonClicked()

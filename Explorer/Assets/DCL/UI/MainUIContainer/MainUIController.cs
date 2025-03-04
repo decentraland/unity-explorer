@@ -1,4 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
+using DCL.Chat;
 using DCL.EmotesWheel;
 using DCL.Friends.UI.FriendPanel;
 using DCL.Friends.UI.PushNotifications;
@@ -62,7 +63,7 @@ namespace DCL.UI.MainUI
             mvcManager.ShowAsync(SidebarController.IssueCommand()).Forget();
             mvcManager.ShowAsync(MinimapController.IssueCommand()).Forget();
 //            mvcManager.ShowAsync(ChatController.IssueCommand()).Forget();
-            sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat).Forget();
+            sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatController.ShowParams(true, false)).Forget();
             mvcManager.ShowAsync(ConnectionStatusPanelController.IssueCommand()).Forget();
 
             if (isFriendsEnabled)
