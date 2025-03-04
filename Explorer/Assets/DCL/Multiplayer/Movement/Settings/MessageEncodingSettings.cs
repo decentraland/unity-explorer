@@ -10,7 +10,11 @@ namespace DCL.Multiplayer.Movement.Settings
 
         public const int TWO_BITS_MASK = 0x3;
 
-        public const int PARCEL_BITS = 17;
+        /// <summary>
+        ///     TODO: remove this
+        /// </summary>
+        public const int PARCEL_BITS = 0;
+
         private const int MOVEMENT_KIND_BITS = 2;
 
         // int32 - 9 (Anim) - 2 (Tiers) = 21 bits

@@ -3,8 +3,8 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms;
 using DCL.Multiplayer.Connections.RoomHubs;
+using DCL.Multiplayer.Movement;
 using ECS;
-using LiveKit.Rooms;
 using LiveKit.Rooms.Participants;
 using SceneRunner.Scene;
 using System;
@@ -20,7 +20,8 @@ namespace DCL.Multiplayer.Profiles.Poses
         private readonly ConcurrentDictionary<string, IRemoteMetadata.ParticipantMetadata> metadata = new ();
         private readonly IRealmData realmData;
 
-        private string sceneRoomSId;
+        private string previousSceneRoomSId;
+        private Vector2Int? previousParcel;
 
         public RemoteMetadata(IRoomHub roomHub, IRealmData realmData)
         {
@@ -51,12 +52,12 @@ namespace DCL.Multiplayer.Profiles.Poses
                 if (string.IsNullOrEmpty(participant.Metadata))
                     return;
 
-                IslandMetadata message;
+                PeerMetadata message;
 
-                try { message = JsonUtility.FromJson<IslandMetadata>(participant.Metadata); }
+                try { message = JsonUtility.FromJson<PeerMetadata>(participant.Metadata); }
                 catch (Exception) { return; }
 
-                ParticipantsOnUpdatesFromParticipant(participant, new IRemoteMetadata.ParticipantMetadata(new Vector2Int(message.x, message.y), URLDomain.FromString(message.lambdasEndpoint)));
+                ParticipantsOnUpdatesFromParticipant(participant, message.ToRemoteMetadata());
             }
         }
 
@@ -80,12 +81,12 @@ namespace DCL.Multiplayer.Profiles.Poses
                 ISceneData? sceneInfo = sceneRoom.ConnectedScene;
                 if (sceneInfo == null) return;
 
-                SceneRoomMetadata message;
+                PeerMetadata message;
 
-                try { message = JsonUtility.FromJson<SceneRoomMetadata>(participant.Metadata); }
+                try { message = JsonUtility.FromJson<PeerMetadata>(participant.Metadata); }
                 catch (Exception) { return; }
 
-                ParticipantsOnUpdatesFromParticipant(participant, new IRemoteMetadata.ParticipantMetadata(sceneInfo.SceneShortInfo.BaseParcel, URLDomain.FromString(message.lambdasEndpoint)));
+                ParticipantsOnUpdatesFromParticipant(participant, message.ToRemoteMetadata());
             }
         }
 
@@ -95,52 +96,58 @@ namespace DCL.Multiplayer.Profiles.Poses
             ReportHub.Log(ReportCategory.MULTIPLAYER_MOVEMENT, $"{nameof(RemoteMetadata)}: metadata of {participant.Identity} is {participantMetadata}");
         }
 
-        public void BroadcastSelfParcel(Vector2Int pose)
+        public void Remove(string walletId)
         {
-            if (!realmData.Configured)
-                return;
-
-            // Broadcasting self position makes sense only for the island
-            SendAsync(new IslandMetadata(pose.x, pose.y, realmData.Ipfs.LambdasBaseUrl.Value)).Forget();
+            metadata.Remove(walletId, out _);
         }
 
-        public void BroadcastSelfMetadata()
+        public void BroadcastMetadata(Vector2Int pose)
         {
             if (!realmData.Configured)
                 return;
 
             string currentRoomSid = roomHub.SceneRoom().Room().Info.Sid;
+            bool sceneRoomChanged = previousSceneRoomSId != currentRoomSid;
+            previousSceneRoomSId = currentRoomSid;
 
-            if (sceneRoomSId != currentRoomSid)
-            {
-                SendAsync(new SceneRoomMetadata(realmData.Ipfs.LambdasBaseUrl.Value)).Forget();
-                sceneRoomSId = currentRoomSid;
-            }
+            bool parcelChanged = previousParcel != pose;
+            previousParcel = pose;
+
+            var peerMetadata = new PeerMetadata(pose.x, pose.y, realmData.Ipfs.LambdasBaseUrl.Value);
+
+            SendAsync(peerMetadata, sceneRoomChanged, parcelChanged).Forget();
         }
 
-        private async UniTaskVoid SendAsync(IslandMetadata islandMetadata)
+        private async UniTaskVoid SendAsync(PeerMetadata peerMetadata, bool sceneRoomChanged, bool parcelChanged)
         {
             await UniTask.SwitchToThreadPool();
-            roomHub.IslandRoom().UpdateLocalMetadata(islandMetadata.ToJson());
-            ReportHub.Log(ReportCategory.MULTIPLAYER, $"{nameof(RemoteMetadata)}: {nameof(IslandMetadata)} {islandMetadata} of self is sent");
-        }
 
-        private async UniTaskVoid SendAsync(SceneRoomMetadata sceneRoomMetadata)
-        {
-            await UniTask.SwitchToThreadPool();
-            roomHub.SceneRoom().Room().UpdateLocalMetadata(sceneRoomMetadata.ToJson());
-            ReportHub.Log(ReportCategory.MULTIPLAYER, $"{nameof(RemoteMetadata)}: {nameof(SceneRoomMetadata)} {sceneRoomMetadata} of self is sent");
+            string encodedMetadata = peerMetadata.ToJson();
+
+            if (parcelChanged || sceneRoomChanged)
+                roomHub.SceneRoom().Room().UpdateLocalMetadata(encodedMetadata);
+
+            if (parcelChanged)
+                roomHub.IslandRoom().UpdateLocalMetadata(encodedMetadata);
+
+            // Update local metadata immediately (needed for self-replica)
+            metadata[RemotePlayerMovementComponent.SELF_REPLICA_ID] = peerMetadata.ToRemoteMetadata();
+
+            ReportHub.Log(ReportCategory.MULTIPLAYER, $"{nameof(RemoteMetadata)}: {nameof(PeerMetadata)} {peerMetadata} of self is sent");
         }
 
         //TODO later transfer to Proto
         [Serializable]
-        public struct IslandMetadata
+        public struct PeerMetadata
         {
+            // Even for Scene Rooms parcel must be written as well because:
+            // 1. There is only one room in realms
+            // 2. User can be still connected to the old scene room for a short time
             public int x;
             public int y;
             public string lambdasEndpoint;
 
-            public IslandMetadata(int x, int y, string lambdasEndpoint)
+            public PeerMetadata(int x, int y, string lambdasEndpoint)
             {
                 this.x = x;
                 this.y = y;
@@ -152,23 +159,9 @@ namespace DCL.Multiplayer.Profiles.Poses
 
             public override string ToString() =>
                 ToJson();
-        }
 
-        [Serializable]
-        public struct SceneRoomMetadata
-        {
-            public string lambdasEndpoint;
-
-            public SceneRoomMetadata(string lambdasEndpoint)
-            {
-                this.lambdasEndpoint = lambdasEndpoint;
-            }
-
-            public string ToJson() =>
-                JsonUtility.ToJson(this)!;
-
-            public override string ToString() =>
-                ToJson();
+            public IRemoteMetadata.ParticipantMetadata ToRemoteMetadata() =>
+                new (new Vector2Int(x, y), URLDomain.FromString(lambdasEndpoint));
         }
     }
 }

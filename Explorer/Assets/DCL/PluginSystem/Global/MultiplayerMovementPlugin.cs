@@ -35,8 +35,6 @@ namespace DCL.PluginSystem.Global
 
         private ProvidedAsset<MultiplayerMovementSettings> settings;
 
-        private Entity? selfReplicaEntity;
-
         public MultiplayerMovementPlugin(IAssetsProvisioner assetsProvisioner, MultiplayerMovementMessageBus messageBus, IDebugContainerBuilder debugBuilder
           , RemoteEntities remoteEntities, ExposedTransform playerTransform, ProvidedAsset<MultiplayerDebugSettings> debugSettings, IAppArgs appArgs,
             IReadOnlyEntityParticipantTable entityParticipantTable, IRealmData realmData, IRemoteMetadata remoteMetadata, FeatureFlagsCache featureFlagsCache)
