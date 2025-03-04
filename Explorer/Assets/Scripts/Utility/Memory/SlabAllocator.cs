@@ -62,7 +62,7 @@ namespace Utility.Memory
             freeIndexes = new NativeArray<int>(chunksCount, Allocator.Persistent);
             freeCount = chunksCount;
 
-            for (int i = 0; i < this.chunkSize; i++)
+            for (int i = 0; i < freeCount; i++)
                 freeIndexes[i] = i;
         }
 
