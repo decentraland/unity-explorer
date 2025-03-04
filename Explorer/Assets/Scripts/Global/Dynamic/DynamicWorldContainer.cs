@@ -21,6 +21,7 @@ using DCL.DebugUtilities;
 using DCL.EventsApi;
 using DCL.FeatureFlags;
 using DCL.Friends;
+using DCL.Chat.InputBus;
 using DCL.Friends.Passport;
 using DCL.Input;
 using DCL.InWorldCamera.CameraReelStorageService;
@@ -546,8 +547,10 @@ namespace Global.Dynamic
             var friendServiceProxy = new ObjectProxy<IFriendsService>();
             var friendOnlineStatusCacheProxy = new ObjectProxy<IFriendsConnectivityStatusTracker>();
             IProfileThumbnailCache profileThumbnailCache = new ProfileThumbnailCache(staticContainer.WebRequestsContainer.WebRequestController);
+            IChatInputBus chatInputBus = new ChatInputBus();
 
-            MVCManagerMenusAccessFacade menusAccessFacade = new MVCManagerMenusAccessFacade(mvcManager, clipboard, clipboardManager, friendServiceProxy, profileCache);
+            ISidebarActionsBus sidebarActionsBus = new SidebarActionsBusController();
+            MVCManagerMenusAccessFacade menusAccessFacade = new MVCManagerMenusAccessFacade(mvcManager, clipboard, friendServiceProxy, profileCache, chatInputBus);
 
             var viewDependencies = new ViewDependencies(dclInput, unityEventSystem, menusAccessFacade, clipboardManager, dclCursor);
 
@@ -632,6 +635,7 @@ namespace Global.Dynamic
                     assetsProvisioner,
                     hyperlinkTextFormatter,
                     profileCache,
+                    chatInputBus,
                     sharedSpaceManager),
                 new ExplorePanelPlugin(
                     assetsProvisioner,
@@ -757,6 +761,7 @@ namespace Global.Dynamic
                     profileThumbnailCache,
                     onlineUsersProvider,
                     realmNavigator,
+                    identityCache,
                     includeFriends,
                     includeUserBlocking
                 ),

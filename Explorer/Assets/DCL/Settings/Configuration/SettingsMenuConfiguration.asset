@@ -40,7 +40,7 @@ MonoBehaviour:
       - rid: 5242998342527483921
     - <GroupTitle>k__BackingField: Chat
       <Modules>k__BackingField:
-      - rid: 7621844554961125378
+      - rid: 7621844939572510720
   <ControlsSectionConfig>k__BackingField:
     <SettingsGroups>k__BackingField:
     - <GroupTitle>k__BackingField: Mouse
@@ -99,9 +99,8 @@ MonoBehaviour:
           isMultiselect: 0
           options:
           - Max
-          - 20
+          - 32
           - 16
-          - 10
           defaultOptionIndex: 1
         <Feature>k__BackingField: 6
     - rid: 5242998342527483906
@@ -258,7 +257,7 @@ MonoBehaviour:
           - 144
           defaultOptionIndex: 0
         <Feature>k__BackingField: 5
-    - rid: 7621844554961125378
+    - rid: 7621844939572510720
       type: {class: DropdownModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:
         <View>k__BackingField: {fileID: 743815267364520677, guid: f999deca82ccdc14ebae40250c8eb0c9, type: 3}
@@ -271,5 +270,5 @@ MonoBehaviour:
           - All
           - Mentions Only
           - None
-          defaultOptionIndex: 0
+          defaultOptionIndex: 1
         <Feature>k__BackingField: 7

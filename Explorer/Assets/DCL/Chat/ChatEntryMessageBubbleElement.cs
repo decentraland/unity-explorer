@@ -1,3 +1,4 @@
+using Cysharp.Threading.Tasks;
 using DCL.Chat.History;
 using MVC;
 using System;
@@ -16,7 +17,6 @@ namespace DCL.Chat
     {
         [field: SerializeField] internal Color backgroundDefaultColor { get; private set; }
         [field: SerializeField] internal Color backgroundMentionedColor { get; private set; }
-
         [field: SerializeField] internal ChatEntryUsernameElement usernameElement { get; private set; }
         [field: SerializeField] internal RectTransform backgroundRectTransform { get; private set; }
         [field: SerializeField] internal Image backgroundImage { get; private set; }
@@ -27,11 +27,7 @@ namespace DCL.Chat
         [field: SerializeField] internal GameObject mentionedOutline { get; private set; }
 
         private Vector2 backgroundSize;
-
-        private float backgroundHeightOffset => configurationSo.BackgroundHeightOffset;
-        private float backgroundWidthOffset => configurationSo.BackgroundWidthOffset;
-        private float maxEntryWidth => configurationSo.MaxEntryWidth;
-        private float verifiedBadgeWidth => configurationSo.VerifiedBadgeWidth;
+        private bool popupOpen;
 
         public void OnPointerEnter(PointerEventData eventData)
         {
@@ -40,6 +36,15 @@ namespace DCL.Chat
 
         public void OnPointerExit(PointerEventData eventData)
         {
+            if (!popupOpen)
+                messageOptionsButton?.gameObject.SetActive(false);
+        }
+
+        public Vector3 PopupPosition => popupPosition.position;
+
+        public void HideOptionsButton()
+        {
+            popupOpen = false;
             messageOptionsButton?.gameObject.SetActive(false);
         }
 
@@ -61,12 +66,18 @@ namespace DCL.Chat
             messageContentElement.SetMessageContent(data.Message);
 
             backgroundSize = backgroundRectTransform.sizeDelta;
-            backgroundSize.y = Mathf.Max(messageContentElement.messageContentRectTransform.sizeDelta.y + backgroundHeightOffset);
+            backgroundSize.y = Mathf.Max(messageContentElement.messageContentRectTransform.sizeDelta.y + configurationSo.BackgroundHeightOffset);
             backgroundSize.x = CalculatePreferredWidth(data);
             backgroundRectTransform.sizeDelta = backgroundSize;
             mentionedOutline.SetActive(data.IsMention);
 
             backgroundImage.color = data.IsMention ? backgroundMentionedColor : backgroundDefaultColor;
+            messageOptionsButton?.onClick.AddListener(OnMessageOptionsClicked);
+        }
+
+        private void OnMessageOptionsClicked()
+        {
+            popupOpen = true;
         }
 
         private float CalculatePreferredWidth(ChatMessage message)
@@ -89,13 +100,13 @@ namespace DCL.Chat
             }
 
             if (nameTotalLength > (needsEmojiCount && emojisCount > 0 ? parsedTextLength + emojisCount : parsedTextLength))
-                return usernameElement.GetUserNamePreferredWidth(backgroundWidthOffset, verifiedBadgeWidth);
-            Vector2 preferredValues = messageContentText.GetPreferredValues(messageText, maxEntryWidth, 0);
+                return usernameElement.GetUserNamePreferredWidth(configurationSo.BackgroundWidthOffset, configurationSo.VerifiedBadgeWidth);
+            Vector2 preferredValues = messageContentText.GetPreferredValues(messageText, configurationSo.MaxEntryWidth, 0);
 
-            if (preferredValues.x < maxEntryWidth - backgroundWidthOffset)
-                return preferredValues.x + backgroundWidthOffset;
+            if (preferredValues.x < configurationSo.MaxEntryWidth - configurationSo.BackgroundWidthOffset)
+                return preferredValues.x + configurationSo.BackgroundWidthOffset;
 
-            return maxEntryWidth;
+            return configurationSo.MaxEntryWidth;
         }
 
         private int GetEmojisCount(string message)

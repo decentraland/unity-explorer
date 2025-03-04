@@ -1,5 +1,6 @@
 using MVC;
 using SuperScrollView;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -97,10 +98,10 @@ namespace DCL.Chat
             return newItem;
         }
 
-        private async void OnContextMenuButtonClickedAsync(ChatMemberListViewItem listItem, Transform buttonPosition)
+        private async void OnContextMenuButtonClickedAsync(ChatMemberListViewItem listItem, Transform buttonPosition, Action onMenuHide)
         {
             contextMenuCts = contextMenuCts.SafeRestart();
-            await viewDependencies.GlobalUIViews.ShowUserProfileContextMenuFromWalledIdAsync(listItem.Id, buttonPosition.position, contextMenuCts.Token);
+            await viewDependencies.GlobalUIViews.ShowUserProfileContextMenuFromWalletIdAsync(listItem.Id, buttonPosition.position, contextMenuCts.Token, onMenuHide);
         }
     }
 }

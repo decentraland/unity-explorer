@@ -1229,7 +1229,7 @@ MonoBehaviour:
   <Button>k__BackingField: {fileID: 4323582271544481263}
   <ButtonAnimator>k__BackingField: {fileID: 7323720308144267393}
   <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
-  <ButtonHoverAudio>k__BackingField: {fileID: 0}
+  <ButtonHoverAudio>k__BackingField: {fileID: 11400000, guid: 59da234351971c0498a566fb811b0c36, type: 2}
 --- !u!95 &7323720308144267393
 Animator:
   serializedVersion: 5
@@ -1654,7 +1654,7 @@ MonoBehaviour:
   <Button>k__BackingField: {fileID: 2493130869277956874}
   <ButtonAnimator>k__BackingField: {fileID: 7374951028353463474}
   <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
-  <ButtonHoverAudio>k__BackingField: {fileID: 0}
+  <ButtonHoverAudio>k__BackingField: {fileID: 11400000, guid: 59da234351971c0498a566fb811b0c36, type: 2}
 --- !u!95 &7374951028353463474
 Animator:
   serializedVersion: 5

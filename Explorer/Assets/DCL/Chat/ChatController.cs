@@ -4,6 +4,7 @@ using DCL.CharacterCamera;
 using DCL.Chat.Commands;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
+using DCL.Chat.InputBus;
 using DCL.Input;
 using DCL.Input.Component;
 using DCL.Input.Systems;
@@ -57,13 +58,12 @@ namespace DCL.Chat
         private readonly ViewDependencies viewDependencies;
         private readonly IChatCommandsBus chatCommandsBus;
         private readonly IRoom islandRoom;
-        private readonly IRoom sceneRoom;
         private readonly IProfileCache profileCache;
-
         private readonly ITextFormatter hyperlinkTextFormatter;
         private readonly ChatAudioSettingsAsset chatAudioSettings;
-        private SingleInstanceEntity cameraEntity;
+        private readonly IChatInputBus chatInputBus;
 
+        private SingleInstanceEntity cameraEntity;
         private CancellationTokenSource memberListCts;
         private string previousRoomSid = string.Empty;
         private readonly List<ChatMemberListView.MemberData> membersBuffer = new ();
@@ -104,7 +104,9 @@ namespace DCL.Chat
             ViewDependencies viewDependencies,
             IChatCommandsBus chatCommandsBus,
             IRoomHub roomHub,
-            ChatAudioSettingsAsset chatAudioSettings, ITextFormatter hyperlinkTextFormatter, IProfileCache profileCache) : base(viewFactory)
+            ChatAudioSettingsAsset chatAudioSettings,
+            ITextFormatter hyperlinkTextFormatter,
+            IProfileCache profileCache, IChatInputBus chatInputBus) : base(viewFactory)
         {
             this.chatMessagesBus = chatMessagesBus;
             this.chatHistory = chatHistory;
@@ -116,10 +118,10 @@ namespace DCL.Chat
             this.viewDependencies = viewDependencies;
             this.chatCommandsBus = chatCommandsBus;
             this.islandRoom = roomHub.IslandRoom();
-            this.sceneRoom = roomHub.SceneRoom().Room();
             this.chatAudioSettings = chatAudioSettings;
             this.hyperlinkTextFormatter = hyperlinkTextFormatter;
             this.profileCache = profileCache;
+            this.chatInputBus = chatInputBus;
         }
 
         public void Clear() // Called by a command
@@ -134,6 +136,7 @@ namespace DCL.Chat
             chatHistory.MessageAdded -= OnChatHistoryMessageAdded;
             chatHistory.ReadMessagesChanged -= OnChatHistoryReadMessagesChanged;
             chatCommandsBus.OnClearChat -= Clear;
+            chatInputBus.InsertTextInChat -= OnInputTextInserted;
 
             if (viewInstance != null)
             {
@@ -167,6 +170,7 @@ namespace DCL.Chat
             chatHistory.MessageAdded += OnChatHistoryMessageAdded; // TODO: This should not exist, the only way to add a chat message from outside should be by using the bus
             chatHistory.ReadMessagesChanged += OnChatHistoryReadMessagesChanged;
             chatCommandsBus.OnClearChat += Clear;
+            chatInputBus.InsertTextInChat += OnInputTextInserted;
 
             viewInstance!.InjectDependencies(viewDependencies);
             viewInstance!.Initialize(chatHistory.Channels, ChatChannel.NEARBY_CHANNEL, nametagsData.showChatBubbles, chatAudioSettings, GetProfilesFromParticipants);
@@ -408,6 +412,12 @@ namespace DCL.Chat
         private void OnSubmitShortcutPerformed(InputAction.CallbackContext obj)
         {
             viewInstance!.FocusInputBox();
+        }
+
+        private void OnInputTextInserted(string text)
+        {
+            viewInstance!.FocusInputBox();
+            viewInstance.InsertTextInInputBox(text);
         }
 
         private void OnChatBusMessageAdded(ChatChannel.ChannelId channelId, ChatMessage chatMessage)

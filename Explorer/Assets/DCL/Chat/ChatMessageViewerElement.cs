@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Chat.History;
+using DCL.UI.Profiles.Helpers;
 using DG.Tweening;
 using MVC;
 using SuperScrollView;
@@ -64,7 +65,6 @@ namespace DCL.Chat
 
         private IReadOnlyList<ChatMessage>? chatMessages;
         private CancellationTokenSource? fadeoutCts;
-        private CalculateUsernameColorDelegate? calculateUsernameColor;
 
         private int separatorPositionIndex;
         private int messageCountWhenSeparatorWasSet;
@@ -111,10 +111,8 @@ namespace DCL.Chat
         /// <summary>
         /// Initializes the UI element and provides all its external dependencies.
         /// </summary>
-        /// <param name="delegateImplementation">An external function that provides a way to calculate the color to be used to display a user name.</param>
-        public void Initialize(CalculateUsernameColorDelegate delegateImplementation)
+        public void Initialize()
         {
-            calculateUsernameColor = delegateImplementation;
             loopList.InitListView(0, OnGetItemByIndex);
             loopList.ScrollRect.onValueChanged.AddListener(OnScrollRectValueChanged);
         }
@@ -316,6 +314,9 @@ namespace DCL.Chat
                                                 : listView.ItemPrefabDataList[(int)ChatItemPrefabIndex.ChatEntry].mItemPrefab.name);
 
                     ChatEntryView itemScript = item!.GetComponent<ChatEntryView>()!;
+                    Button? messageOptionsButton = itemScript.messageBubbleElement.messageOptionsButton;
+                    messageOptionsButton?.onClick.RemoveAllListeners();
+
                     SetItemData(index, itemData, itemScript);
                     itemScript.messageBubbleElement.SetupHyperlinkHandlerDependencies(viewDependencies);
                     itemScript.ChatEntryClicked -= OnChatEntryClicked;
@@ -323,8 +324,6 @@ namespace DCL.Chat
                     if (itemData is { SentByOwnUser: false, SystemMessage: false })
                         itemScript.ChatEntryClicked += OnChatEntryClicked;
 
-                    Button? messageOptionsButton = itemScript.messageBubbleElement.messageOptionsButton;
-                    messageOptionsButton?.onClick.RemoveAllListeners();
 
                     messageOptionsButton?.onClick.AddListener(() =>
                         OnChatMessageOptionsButtonClicked(itemData.Message, itemScript));
@@ -337,7 +336,7 @@ namespace DCL.Chat
         private void OnChatEntryClicked(string walletAddress, Vector2 contextMenuPosition)
         {
             popupCts = popupCts.SafeRestart();
-            viewDependencies.GlobalUIViews.ShowUserProfileContextMenuFromWalledIdAsync(walletAddress, contextMenuPosition, popupCts.Token).Forget();
+            viewDependencies.GlobalUIViews.ShowUserProfileContextMenuFromWalletIdAsync(walletAddress, contextMenuPosition, popupCts.Token).Forget();
         }
 
         private void OnChatMessageOptionsButtonClicked(string itemDataMessage, ChatEntryView itemScript)
@@ -347,8 +346,7 @@ namespace DCL.Chat
 
         private void SetItemData(int index, ChatMessage itemData, ChatEntryView itemView)
         {
-            // TODO: Can we now get the color from the profile instead of using a delegate?
-            Color playerNameColor = calculateUsernameColor!(itemData);
+            Color playerNameColor = ProfileNameColorHelper.GetNameColor(itemData.SenderValidatedName);
 
             itemView.usernameElement.userName.color = playerNameColor;
 
