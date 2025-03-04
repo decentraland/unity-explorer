@@ -10,6 +10,7 @@ using Unity.Profiling;
 using UnityEngine;
 using UnityEngine.Assertions;
 using Utility;
+using Utility.Memory;
 using Object = UnityEngine.Object;
 
 namespace ECS.StreamableLoading.AssetBundles
@@ -28,13 +29,11 @@ namespace ECS.StreamableLoading.AssetBundles
 
             private bool disposed;
 
-            internal readonly Stream stream;
-            private readonly SlicedOwnedMemory<byte> ownedMemory;
+            internal readonly MemoryChain memoryChain;
 
-            public MemoryStream(SlicedOwnedMemory<byte> ownedMemory)
+            public MemoryStream(MemoryChain memoryChain)
             {
-                this.ownedMemory = ownedMemory;
-                stream = ownedMemory.Memory.AsStream();
+                this.memoryChain = memoryChain;
                 disposed = false;
             }
 
@@ -44,9 +43,7 @@ namespace ECS.StreamableLoading.AssetBundles
                     return;
 
                 disposed = true;
-
-                ownedMemory.Dispose();
-                stream.Dispose();
+                memoryChain.Dispose();
             }
         }
 
@@ -65,7 +62,8 @@ namespace ECS.StreamableLoading.AssetBundles
 
         private bool unloaded;
 
-        public AssetBundleData(AssetBundle assetBundle, AssetBundleMetrics? metrics, Object mainAsset, Type assetType, AssetBundleData[] dependencies, string version = "", string source = "")
+        public AssetBundleData(AssetBundle assetBundle, AssetBundleMetrics? metrics, Object mainAsset, Type assetType, AssetBundleData[] dependencies,
+            string version = "", string source = "")
             : base(assetBundle, ReportCategory.ASSET_BUNDLES)
         {
             Metrics = metrics;
@@ -92,9 +90,7 @@ namespace ECS.StreamableLoading.AssetBundles
         }
 
         public AssetBundleData(AssetBundle assetBundle, AssetBundleMetrics? metrics, GameObject mainAsset, AssetBundleData[] dependencies)
-        : this(assetBundle, metrics, mainAsset, typeof(GameObject), dependencies)
-        {
-        }
+            : this(assetBundle, metrics, mainAsset, typeof(GameObject), dependencies) { }
 
         protected override ref ProfilerCounterValue<int> totalCount => ref ProfilingCounters.ABDataAmount;
 
@@ -108,6 +104,7 @@ namespace ECS.StreamableLoading.AssetBundles
         {
             if (unloaded)
                 return;
+
             unloaded = true;
             AssetBundle?.UnloadAsync(false);
             ownedStream.Dispose();
@@ -128,16 +125,17 @@ namespace ECS.StreamableLoading.AssetBundles
             underlyingMemory.Dispose();
         }
 
-        public T GetMainAsset<T>() where T : Object
+        public T GetMainAsset<T>() where T: Object
         {
             Assert.IsNotNull(assetType, "GetMainAsset can't be called on the Asset Bundle that was not loaded with the asset type specified");
 
             if (assetType != typeof(T))
                 throw new ArgumentException("Asset type mismatch: " + typeof(T) + " != " + assetType);
+
             return (T)mainAsset!;
         }
 
-        public string GetInstanceName() => description;
-
+        public string GetInstanceName() =>
+            description;
     }
 }

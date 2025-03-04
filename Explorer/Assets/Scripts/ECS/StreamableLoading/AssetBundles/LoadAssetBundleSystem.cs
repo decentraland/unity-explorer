@@ -3,7 +3,6 @@ using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.Optimization.ThreadSafePool;
 using ECS.Prioritization.Components;
@@ -18,7 +17,6 @@ using AssetManagement;
 using DCL.WebRequests;
 using ECS.StreamableLoading.Cache.Disk;
 using System.Buffers;
-using System.IO;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
@@ -49,10 +47,11 @@ namespace ECS.StreamableLoading.AssetBundles
 
         protected override async UniTask<StreamableLoadingResult<AssetBundleData>> ProcessCompletedDataAsync(StreamableLoadingState state, GetAssetBundleIntention intention, IPartitionComponent partition, CancellationToken ct)
         {
-            var memoryStream = new AssetBundleData.MemoryStream(state.ClaimOwnershipOverFullyDownloadedData());
+            var memoryChain = state.ClaimOwnershipOverFullyDownloadedData();
+            using var memoryStream = new AssetBundleData.MemoryStream(memoryChain);
 
             await UniTask.SwitchToMainThread();
-            AssetBundle? assetBundle = await AssetBundle.LoadFromStreamAsync(memoryStream.stream);
+            AssetBundle? assetBundle = await AssetBundle.LoadFromStreamAsync(memoryStream.memoryChain.AsStream())!;
 
             // Release budget now to not hold it until dependencies are resolved to prevent a deadlock
             state.AcquiredBudget!.Release();

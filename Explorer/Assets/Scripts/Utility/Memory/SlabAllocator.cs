@@ -32,6 +32,11 @@ namespace Utility.Memory
 
     public interface ISlabAllocator : IDisposable
     {
+        /// <summary>
+        /// Shared slab allocator with size 16 MB per slab
+        /// </summary>
+        public static readonly ThreadSafeSlabAllocator<DynamicSlabAllocator> SHARED = new (new DynamicSlabAllocator(128 * 1024, 128));
+
         bool CanAllocate { get; }
 
         SlabItem Allocate();

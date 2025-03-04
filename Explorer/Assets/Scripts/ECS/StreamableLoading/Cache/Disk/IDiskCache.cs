@@ -8,6 +8,7 @@ using System.Buffers;
 using System.Threading;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
+using Utility.Memory;
 using Utility.Ownership;
 using Utility.Types;
 
@@ -134,14 +135,6 @@ namespace ECS.StreamableLoading.Cache.Disk
         protected override void Dispose(bool disposing) { }
     }
 
-    public interface IMemoryIterator : IDisposable
-    {
-        ReadOnlyMemory<byte> Current { get; }
-
-        int? TotalSize { get; }
-
-        bool MoveNext();
-    }
 
     public static class SerializeMemoryIterator
     {

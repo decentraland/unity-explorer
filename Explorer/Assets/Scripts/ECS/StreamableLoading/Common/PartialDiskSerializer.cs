@@ -13,37 +13,39 @@ namespace ECS.StreamableLoading.Common
 
         private static SerializeMemoryIterator<State> SerializeInternal(PartialLoadingState data)
         {
-            var meta = new Meta(data.FullFileSize, data.IsFileFullyDownloaded);
-            var slice = data.FullData.Slice(0, data.NextRangeStart);
-            var state = new State(meta, slice);
+            throw new NotImplementedException();
 
-            return SerializeMemoryIterator<State>.New(
-                state,
-                static (source, index, buffer) =>
-                {
-                    if (index == 0)
-                    {
-                        source.Meta.ToSpan(buffer.Span);
-                        return Meta.META_SIZE;
-                    }
-
-                    // Address meta offset
-                    index -= 1;
-
-                    var span = source.FullData.Span;
-                    return SerializeMemoryIterator.ReadNextData(index, span, buffer);
-                },
-                static (source, index, bufferLength) =>
-                {
-                    if (index == 0)
-                        return true;
-
-                    // Address meta offset
-                    index -= 1;
-
-                    return SerializeMemoryIterator.CanReadNextData(index, source.FullData.Length, bufferLength);
-                }
-            );
+            // var meta = new Meta(data.FullFileSize, data.IsFileFullyDownloaded);
+            // var slice = data.FullData.Slice(0, data.NextRangeStart);
+            // var state = new State(meta, slice);
+            //
+            // return SerializeMemoryIterator<State>.New(
+            //     state,
+            //     static (source, index, buffer) =>
+            //     {
+            //         if (index == 0)
+            //         {
+            //             source.Meta.ToSpan(buffer.Span);
+            //             return Meta.META_SIZE;
+            //         }
+            //
+            //         // Address meta offset
+            //         index -= 1;
+            //
+            //         var span = source.FullData.Span;
+            //         return SerializeMemoryIterator.ReadNextData(index, span, buffer);
+            //     },
+            //     static (source, index, bufferLength) =>
+            //     {
+            //         if (index == 0)
+            //             return true;
+            //
+            //         // Address meta offset
+            //         index -= 1;
+            //
+            //         return SerializeMemoryIterator.CanReadNextData(index, source.FullData.Length, bufferLength);
+            //     }
+            // );
         }
 
         public UniTask<PartialLoadingState> DeserializeAsync(SlicedOwnedMemory<byte> data, CancellationToken token)

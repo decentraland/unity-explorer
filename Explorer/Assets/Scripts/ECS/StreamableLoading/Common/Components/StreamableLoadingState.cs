@@ -5,6 +5,7 @@ using System;
 using System.Runtime.CompilerServices;
 using UnityEngine.Assertions;
 using UnityEngine.Pool;
+using Utility.Memory;
 
 namespace ECS.StreamableLoading.Common.Components
 {
@@ -79,14 +80,15 @@ namespace ECS.StreamableLoading.Common.Components
         public ReadOnlyMemory<byte> GetFullyDownloadedData()
         {
             Assert.IsTrue(PartialDownloadingData is { FullyDownloaded: true });
-            return PartialDownloadingData!.Value.FullData;
+            //return PartialDownloadingData!.Value.FullData;
+            throw new NotImplementedException();
         }
 
-        public SlicedOwnedMemory<byte> ClaimOwnershipOverFullyDownloadedData()
+        public MemoryChain ClaimOwnershipOverFullyDownloadedData()
         {
             Assert.IsTrue(PartialDownloadingData is { FullyDownloaded: true });
             PartialLoadingState value = PartialDownloadingData!.Value;
-            SlicedOwnedMemory<byte> owner = value.TransferMemoryOwnership();
+            MemoryChain owner = value.TransferMemoryOwnership();
             PartialDownloadingData = value;
             return owner;
         }
