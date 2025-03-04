@@ -132,12 +132,13 @@ namespace Utility.Memory
 
             public override int Read(byte[] buffer, int offset, int count)
             {
-                if (buffer == null) throw new ArgumentNullException(nameof(buffer));
+                if (buffer == null)
+                    throw new ArgumentNullException(nameof(buffer));
 
                 if (offset < 0 || count < 0 || offset + count > buffer.Length)
-                    throw new ArgumentOutOfRangeException($"Buffer length: {buffer.Length}, offset: {offset}, count: {count}");
+                    throw new ArgumentOutOfRangeException(nameof(offset), $"Buffer length: {buffer.Length}, offset: {offset}, count: {count}");
 
-                if (slabIndex >= chain.slabs.Count)
+                if (slabIndex >= chain.slabs.Count || totalRead >= totalLength)
                     return 0;
 
                 int bytesRead = 0;
@@ -148,11 +149,22 @@ namespace Utility.Memory
                     int slabSize = currentSlab.Length;
                     int validDataInSlab = IsLastSlab(slabIndex) ? slabSize - chain.leftSpaceInLast : slabSize;
 
-                    if (totalRead >= totalLength)
-                        break;
+                    if (slabOffset >= validDataInSlab)
+                    {
+                        slabIndex++;
+                        slabOffset = 0;
+                        continue;
+                    }
 
                     int bytesAvailable = validDataInSlab - slabOffset;
+
+                    if (bytesAvailable <= 0)
+                        break;
+
                     int bytesToCopy = Math.Min(count, bytesAvailable);
+
+                    if (bytesToCopy <= 0 || slabOffset + bytesToCopy > currentSlab.Length)
+                        throw new ArgumentOutOfRangeException(nameof(bytesToCopy), $"Invalid bytesToCopy: {bytesToCopy}, slabOffset: {slabOffset}, slabSize: {currentSlab.Length}");
 
                     currentSlab.Slice(slabOffset, bytesToCopy).CopyTo(buffer.AsSpan(offset, bytesToCopy));
 
@@ -161,12 +173,6 @@ namespace Utility.Memory
                     bytesRead += bytesToCopy;
                     slabOffset += bytesToCopy;
                     totalRead += bytesToCopy;
-
-                    if (slabOffset >= validDataInSlab)
-                    {
-                        slabIndex++;
-                        slabOffset = 0;
-                    }
                 }
 
                 return bytesRead;
