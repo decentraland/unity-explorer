@@ -239,7 +239,10 @@ namespace SceneRunner
                     new LogSimpleFetchApi(new SimpleFetchApiImplementation(syncDeps.sceneData.SceneShortInfo)),
                     new CommunicationsControllerAPIImplementation(syncDeps.sceneData, messagePipesHub, jsOperations, syncDeps.CRDTMemoryAllocator),
                     syncDeps,
-                    sceneRuntime) { }
+                    sceneRuntime)
+            {
+                // syncDeps.
+            }
 
             public void Dispose()
             {

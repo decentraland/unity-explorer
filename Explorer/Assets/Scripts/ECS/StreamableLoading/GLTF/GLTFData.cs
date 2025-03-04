@@ -14,6 +14,8 @@ namespace ECS.StreamableLoading.GLTF
             this.containerGameObject = containerGameObject;
         }
 
+        public AnimationClip[]? AnimationClips => gltfImportedData.GetAnimationClips();
+
         public void Dispose()
         {
             gltfImportedData.Dispose();

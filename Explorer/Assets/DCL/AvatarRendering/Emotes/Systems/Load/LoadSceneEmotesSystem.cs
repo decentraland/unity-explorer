@@ -10,11 +10,13 @@ using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common.Components;
+using ECS.StreamableLoading.GLTF;
 using System;
 using UnityEngine;
 using Utility;
 using StreamableResult = ECS.StreamableLoading.Common.Components.StreamableLoadingResult<DCL.AvatarRendering.Emotes.EmotesResolution>;
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
+using GltfPromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.GLTF.GLTFData, ECS.StreamableLoading.GLTF.GetGLTFIntention>;
 
 namespace DCL.AvatarRendering.Emotes.Load
 {
@@ -39,11 +41,12 @@ namespace DCL.AvatarRendering.Emotes.Load
         protected override void Update(float t)
         {
             GetEmotesFromRealmQuery(World, t);
+            GetEmotesFromLocalSceneQuery(World, t);
         }
 
         [Query]
         [None(typeof(StreamableResult))]
-        private void GetEmotesFromRealm([Data] float dt, in Entity entity,
+        private void GetEmotesFromRealm([Data] float dt, Entity entity,
             ref GetSceneEmoteFromRealmIntention intention,
             ref IPartitionComponent partitionComponent)
         {
@@ -54,6 +57,25 @@ namespace DCL.AvatarRendering.Emotes.Load
                     static i => $"Scene emote request cancelled {i.EmoteHash}"))
                 return;
 
+            ProcessSceneEmoteIntention(dt, entity, ref intention, ref partitionComponent);
+        }
+
+        [Query]
+        [None(typeof(StreamableResult))]
+        private void GetEmotesFromLocalScene([Data] float dt, Entity entity,
+            ref GetSceneEmoteFromLocalSceneIntention intention,
+            ref IPartitionComponent partitionComponent)
+        {
+            ProcessSceneEmoteIntention(dt, entity, ref intention, ref partitionComponent);
+        }
+
+        private void ProcessSceneEmoteIntention<T>(
+            float dt,
+            Entity entity,
+            ref T intention,
+            ref IPartitionComponent partitionComponent
+        ) where T : struct, IEmoteAssetIntention
+        {
             URN urn = intention.NewSceneEmoteURN();
 
             if (intention.Timeout.IsTimeout(dt))
@@ -63,7 +85,6 @@ namespace DCL.AvatarRendering.Emotes.Load
                     ReportHub.LogWarning(GetReportCategory(), $"Loading scenes emotes timed out {urn}");
                     World.Add(entity, new StreamableResult(GetReportCategory(), new TimeoutException($"Scene emote timeout {urn}")));
                 }
-
                 return;
             }
 
@@ -95,7 +116,7 @@ namespace DCL.AvatarRendering.Emotes.Load
                                     },
                                     overrideHides = Array.Empty<string>(),
                                     overrideReplaces = Array.Empty<string>(),
-                                    mainFile = "",
+                                    mainFile = string.Empty,
                                 },
                             },
                         },
@@ -106,43 +127,50 @@ namespace DCL.AvatarRendering.Emotes.Load
             }
 
             if (emote.IsLoading) return;
-            if (CreateAssetBundlePromiseIfRequired(emote, in intention, partitionComponent)) return;
 
-            if (emote.AssetResults[intention.BodyShape] != null && !intention.IsAssetBundleProcessed)
+            if (CreatePromiseIfRequired(ref emote, intention, partitionComponent)) return;
+
+            if (emote.AssetResults[intention.BodyShape] is { Succeeded: true })
             {
-                // TODO: it may occur that the requested emote does not support the body shape
-                // If that is the case, the promise will never be resolved
-                intention.IsAssetBundleProcessed = true;
-
-                if (emote.AssetResults[intention.BodyShape] is { Succeeded: true })
-                {
-                    // We need to add a reference here, so it is not lost if the flow interrupts in between (i.e. before creating instances of CachedWearable)
-                    emote.AssetResults[intention.BodyShape]?.Asset!.AddReference();
-                }
+                emote.AssetResults[intention.BodyShape]?.Asset!.AddReference();
             }
-
-            if (!intention.IsAssetBundleProcessed) return;
+            else if (intention is GetSceneEmoteFromLocalSceneIntention)
+            {
+                World.Add(entity, new StreamableResult(GetReportCategory(), new Exception($"Scene emote failed to load {urn}")));
+                return;
+            }
 
             World.Add(entity, new StreamableResult(new EmotesResolution(RepoolableList<IEmote>.FromElement(emote), 1)));
         }
 
-        private bool CreateAssetBundlePromiseIfRequired(IEmote emote, in GetSceneEmoteFromRealmIntention intention, IPartitionComponent partitionComponent)
+        private bool CreatePromiseIfRequired<T>(ref IEmote emote, in T intention, IPartitionComponent partitionComponent)
+            where T : struct, IEmoteAssetIntention
         {
             if (emote.AssetResults[intention.BodyShape] != null) return false;
 
-            // The resolution of the AB promise will be finalized by FinalizeEmoteAssetBundleSystem
-            var promise = AssetBundlePromise.Create(World,
-                GetAssetBundleIntention.FromHash(typeof(GameObject),
-                    intention.EmoteHash + PlatformUtils.GetCurrentPlatform(),
-                    permittedSources: intention.PermittedSources,
-                    customEmbeddedSubDirectory: customStreamingSubdirectory,
-                    cancellationTokenSource: intention.CancellationTokenSource,
-                    manifest: intention.AssetBundleManifest),
-                partitionComponent);
+            if (intention is GetSceneEmoteFromRealmIntention realmIntention)
+            {
+                var promise = AssetBundlePromise.Create(World,
+                    GetAssetBundleIntention.FromHash(typeof(GameObject),
+                        realmIntention.EmoteHash + PlatformUtils.GetCurrentPlatform(),
+                        permittedSources: realmIntention.PermittedSources,
+                        customEmbeddedSubDirectory: customStreamingSubdirectory,
+                        cancellationTokenSource: realmIntention.CancellationTokenSource,
+                        manifest: realmIntention.AssetBundleManifest),
+                    partitionComponent);
+
+                World.Create(promise, emote, intention.BodyShape);
+            }
+            else if (intention is GetSceneEmoteFromLocalSceneIntention localIntention)
+            {
+                var promise = GltfPromise.Create(World,
+                    GetGLTFIntention.Create(localIntention.EmotePath, localIntention.EmoteHash, mecanimAnimationClips: true),
+                    partitionComponent);
+
+                World.Create(promise, emote, intention.BodyShape);
+            }
 
             emote.UpdateLoadingStatus(true);
-            World.Create(promise, emote, intention.BodyShape);
-
             return true;
         }
     }

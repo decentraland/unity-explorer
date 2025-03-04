@@ -94,16 +94,16 @@ namespace CrdtEcsBridge.RestrictedActions
             if (!sceneData.SceneContent.TryGetHash(src, out string hash))
                 return false;
 
-            if (sceneData.AssetBundleManifest == SceneAssetBundleManifest.NULL)
+            // TODO: Find a way to remove LocalSceneDevelopment from the globalWorldActions...
+            // if (sceneData.AssetBundleManifest == SceneAssetBundleManifest.NULL)
+            if (sceneData.AssetBundleManifest == SceneAssetBundleManifest.NULL && !globalWorldActions.LocalSceneDevelopment)
                 return false;
 
             try
             {
                 await UniTask.SwitchToMainThread();
 
-                await globalWorldActions.TriggerSceneEmoteAsync(
-                    sceneData.SceneEntityDefinition.id ?? sceneData.SceneEntityDefinition.metadata.scene.DecodedBase.ToString(),
-                    sceneData.AssetBundleManifest, hash, loop, ct);
+                await globalWorldActions.TriggerSceneEmoteAsync(sceneData, src, hash, loop, ct);
             }
             catch (OperationCanceledException) { return false; }
             catch (Exception e)

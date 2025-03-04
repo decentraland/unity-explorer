@@ -37,4 +37,17 @@ namespace ECS.StreamableLoading.GLTF.DownloadProvider
         public IGLTFastDisposableDownloadProvider CreateDownloadProvider(World world, GetGLTFIntention intention, IPartitionComponent partitionComponent, ReportData reportData, IWebRequestController webRequestController, IAcquiredBudget acquiredBudget) =>
             new GltFastGlobalDownloadProvider(world, contentDownloadUrl, partitionComponent, reportData, webRequestController, acquiredBudget);
     }
+
+    public struct GltFastRealmDataDownloadStrategy : IGltFastDownloadStrategy
+    {
+        private readonly IRealmData realmData;
+
+        public GltFastRealmDataDownloadStrategy(IRealmData realmData)
+        {
+            this.realmData = realmData;
+        }
+
+        public IGLTFastDisposableDownloadProvider CreateDownloadProvider(World world, GetGLTFIntention intention, IPartitionComponent partitionComponent, ReportData reportData, IWebRequestController webRequestController, IAcquiredBudget acquiredBudget) =>
+            new GltFastGlobalDownloadProvider(world, realmData.Ipfs.ContentBaseUrl.Value, partitionComponent, reportData, webRequestController, acquiredBudget);
+    }
 }

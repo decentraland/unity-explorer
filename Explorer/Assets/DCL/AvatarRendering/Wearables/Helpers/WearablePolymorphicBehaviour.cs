@@ -9,6 +9,7 @@ using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.Diagnostics;
 using DCL.Optimization.Pools;
 using ECS.Prioritization.Components;
+using ECS.StreamableLoading;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.GLTF;
@@ -24,6 +25,7 @@ using AssetBundleManifestPromise = ECS.StreamableLoading.Common.AssetPromise<Sce
 using RawGltfPromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.GLTF.GLTFData, ECS.StreamableLoading.GLTF.GetGLTFIntention>;
 using TexturePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.Texture2DData, ECS.StreamableLoading.Textures.GetTextureIntention>;
 using IAvatarAttachment = DCL.AvatarRendering.Loading.Components.IAvatarAttachment;
+using Object = UnityEngine.Object;
 
 namespace DCL.AvatarRendering.Wearables.Helpers
 {
@@ -333,7 +335,12 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             foreach (SkinnedMeshRenderer skinnedMeshRenderer in pooledList.Value)
                 rendererInfos.Add(new AttachmentRegularAsset.RendererInfo(skinnedMeshRenderer, skinnedMeshRenderer.sharedMaterial));
 
-            return new AttachmentRegularAsset(go, rendererInfos, result.Asset);
+            // Scene emotes come with only 1 animation
+            AnimationClip[]? animationClips = null;
+            if (go.TryGetComponent<Animation>(out var animation))
+                animationClips = new[] { animation.clip };
+
+            return new AttachmentRegularAsset(go, rendererInfos, result.Asset, animationClips);
         }
 
         public static AttachmentRegularAsset ToRegularAsset(this StreamableLoadingResult<GLTFData> result)
@@ -348,7 +355,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             foreach (SkinnedMeshRenderer skinnedMeshRenderer in pooledList.Value)
                 rendererInfos.Add(new AttachmentRegularAsset.RendererInfo(skinnedMeshRenderer, skinnedMeshRenderer.sharedMaterial));
 
-            return new AttachmentRegularAsset(go, rendererInfos, result.Asset);
+            return new AttachmentRegularAsset(go, rendererInfos, result.Asset, result.Asset.AnimationClips);
         }
 
         public static void AssignWearableAsset(this IWearable wearable, AttachmentRegularAsset attachmentRegularAsset, BodyShape bodyShape)
