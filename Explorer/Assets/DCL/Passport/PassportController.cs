@@ -548,8 +548,6 @@ namespace DCL.Passport
                 return;
             }
 
-            Sprite? thumbnailSprite = await profileThumbnailCache.GetThumbnailAsync(profile, ct);
-
             viewInstance!.ContextMenuButton.gameObject.SetActive(true);
 
             contextMenuJumpInButton.Enabled = friendOnlineStatusCacheProxy.Object!.GetFriendStatus(inputData.UserId) != OnlineStatus.OFFLINE;
