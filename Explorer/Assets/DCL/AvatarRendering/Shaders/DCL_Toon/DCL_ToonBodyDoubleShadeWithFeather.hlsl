@@ -225,19 +225,19 @@ float4 fragDoubleShadeFeather(VertexOutput i, half facing : VFACE) : SV_TARGET
         float3 Set_BaseColor = lerp( (_BaseColor.rgb*_MainTex_var.rgb), ((_BaseColor.rgb*_MainTex_var.rgb)*Set_LightColor), _Is_LightColor_Base );
         
         // 1st ShadeMap
-        int n1st_ShadeMapArrID = _1st_ShadeMapArr_ID;
+        int n1st_ShadeMapArrID = -1;//_1st_ShadeMapArr_ID;
         float4 _1st_ShadeMap_var = lerp(SAMPLE_1ST_SHADEMAP(TRANSFORM_TEX(Set_UV0, _1st_ShadeMap),n1st_ShadeMapArrID),float4(Set_BaseColor.rgb, _MainTex_var.a),_Use_BaseAs1st);
         float3 Set_1st_ShadeColor = lerp( (_1st_ShadeColor.rgb*_1st_ShadeMap_var.rgb), ((_1st_ShadeColor.rgb*_1st_ShadeMap_var.rgb)*Set_LightColor), _Is_LightColor_1st_Shade );
         // 2nd ShadeMap
-        int n2nd_ShadeMapArrID = _2nd_ShadeMapArr_ID;
+        int n2nd_ShadeMapArrID = -1;//_2nd_ShadeMapArr_ID;
         float4 _2nd_ShadeMap_var = lerp(SAMPLE_2ND_SHADEMAP(TRANSFORM_TEX(Set_UV0, _2nd_ShadeMap),n2nd_ShadeMapArrID),_1st_ShadeMap_var,_Use_1stAs2nd);
         float3 Set_2nd_ShadeColor = lerp( (_2nd_ShadeColor.rgb*_2nd_ShadeMap_var.rgb), ((_2nd_ShadeColor.rgb*_2nd_ShadeMap_var.rgb)*Set_LightColor), _Is_LightColor_2nd_Shade );
         float _HalfLambert_var = 0.5*dot(lerp( i.normalDir, normalDirection, _Is_NormalMapToBase ),lightDirection)+0.5;
     
-        int nSet_1st_ShadePositionArrID = _Set_1st_ShadePositionArr_ID;
+        int nSet_1st_ShadePositionArrID = -1;//_Set_1st_ShadePositionArr_ID;
         float4 _Set_1st_ShadePosition_var = SAMPLE_SET_1ST_SHADEPOSITION(TRANSFORM_TEX(Set_UV0,_Set_1st_ShadePosition),nSet_1st_ShadePositionArrID);
 
-        int nSet_2nd_ShadePositionArrID = _Set_2nd_ShadePositionArr_ID;
+        int nSet_2nd_ShadePositionArrID = -1;//_Set_2nd_ShadePositionArr_ID;
         float4 _Set_2nd_ShadePosition_var = SAMPLE_SET_2ND_SHADEPOSITION(TRANSFORM_TEX(Set_UV0,_Set_2nd_ShadePosition),nSet_2nd_ShadePositionArrID);
         // SHARED END
     
@@ -249,13 +249,13 @@ float4 fragDoubleShadeFeather(VertexOutput i, half facing : VFACE) : SV_TARGET
         float3 Set_FinalBaseColor = lerp(Set_BaseColor,lerp(Set_1st_ShadeColor,Set_2nd_ShadeColor,saturate((1.0 + ( (_HalfLambert_var - (_ShadeColor_Step-_1st2nd_Shades_Feather)) * ((1.0 - _Set_2nd_ShadePosition_var.rgb).r - 1.0) ) / (_ShadeColor_Step - (_ShadeColor_Step-_1st2nd_Shades_Feather))))),Set_FinalShadowMask); // Final Color
 
         // SHARED START
-        int nSet_HighColorMaskArrID = _Set_HighColorMaskArr_ID;
+        int nSet_HighColorMaskArrID = -1;//_Set_HighColorMaskArr_ID;
         float4 _Set_HighColorMask_var = SAMPLE_HIGHCOLORMASK(TRANSFORM_TEX(Set_UV0, _Set_HighColorMask), nSet_HighColorMaskArrID);
 
         float _Specular_var = 0.5*dot(halfDirection,lerp( i.normalDir, normalDirection, _Is_NormalMapToHighColor ))+0.5; //  Specular                
         float _TweakHighColorMask_var = (saturate((_Set_HighColorMask_var.g+_Tweak_HighColorMaskLevel))*lerp( (1.0 - step(_Specular_var,(1.0 - pow(abs(_HighColor_Power),5)))), pow(abs(_Specular_var),exp2(lerp(11,1,_HighColor_Power))), _Is_SpecularToHighColor ));
     
-        int nHighColor_TexArrID = _HighColor_TexArr_ID;
+        int nHighColor_TexArrID = -1;//_HighColor_TexArr_ID;
         float4 _HighColor_Tex_var = SAMPLE_HIGHCOLOR(TRANSFORM_TEX(Set_UV0, _HighColor_Tex), nHighColor_TexArrID);
         float3 _HighColor_var = (lerp( (_HighColor_Tex_var.rgb*_HighColor.rgb), ((_HighColor_Tex_var.rgb*_HighColor.rgb)*Set_LightColor), _Is_LightColor_HighColor )*_TweakHighColorMask_var);
         // SHARED END
@@ -263,7 +263,7 @@ float4 fragDoubleShadeFeather(VertexOutput i, half facing : VFACE) : SV_TARGET
         float3 Set_HighColor = (lerp(SATURATE_IF_SDR((Set_FinalBaseColor-_TweakHighColorMask_var)), Set_FinalBaseColor, lerp(_Is_BlendAddToHiColor,1.0,_Is_SpecularToHighColor) )+lerp( _HighColor_var, (_HighColor_var*((1.0 - Set_FinalShadowMask)+(Set_FinalShadowMask*_TweakHighColorOnShadow))), _Is_UseTweakHighColorOnShadow ));
 
         // Rimlight - Mainlight only
-        int nSet_RimLightMaskArrID = _Set_RimLightMaskArr_ID;
+        int nSet_RimLightMaskArrID = -1;//_Set_RimLightMaskArr_ID;
         float4 _Set_RimLightMask_var = SAMPLE_SET_RIMLIGHTMASK(TRANSFORM_TEX(Set_UV0, _Set_RimLightMask), nSet_RimLightMaskArrID);
         float3 _Is_LightColor_RimLight_var = lerp( _RimLightColor.rgb, (_RimLightColor.rgb*Set_LightColor), _Is_LightColor_RimLight );
         float _RimArea_var = abs(1.0 - dot(lerp( i.normalDir, normalDirection, _Is_NormalMapToRimLight ),viewDirection));
@@ -303,7 +303,7 @@ float4 fragDoubleShadeFeather(VertexOutput i, half facing : VFACE) : SV_TARGET
         //v.2.0.7
         float2 _Rot_MatCapNmUV_var = RotateUV(Set_UV0, (_Rotate_NormalMapForMatCapUV*3.141592654), float2(0.5, 0.5), 1.0);
         //V.2.0.6
-        int nNormalMapForMatCapArrID = _NormalMapForMatCapArr_ID;
+        int nNormalMapForMatCapArrID = -1;//_NormalMapForMatCapArr_ID;
         float3 _NormalMapForMatCap_var = UnpackNormalScale(SAMPLE_NORMALMAPFORMATCAP(TRANSFORM_TEX(_Rot_MatCapNmUV_var, _NormalMapForMatCap), nNormalMapForMatCapArrID), _BumpScaleMatcap);
         // MatCap with camera skew correction
         float3 viewNormal = (mul(UNITY_MATRIX_V, float4(lerp( i.normalDir, mul( _NormalMapForMatCap_var.rgb, tangentTransform ).rgb, _Is_NormalMapForMatCap ),0))).rgb;
@@ -327,7 +327,7 @@ float4 fragDoubleShadeFeather(VertexOutput i, half facing : VFACE) : SV_TARGET
         int nMatCap_SamplerArrID = _MatCap_SamplerArr_ID;
         float4 _MatCap_Sampler_var = SAMPLE_MATCAP(TRANSFORM_TEX(_Rot_MatCapUV_var, _MatCap_Sampler), nMatCap_SamplerArrID, _BlurLevelMatcap);
 
-        int nSet_MatcapMaskArrID = _Set_MatcapMaskArr_ID;
+        int nSet_MatcapMaskArrID = -1;//_Set_MatcapMaskArr_ID;
         float4 _Set_MatcapMask_var = SAMPLE_SET_MATCAPMASK(TRANSFORM_TEX(Set_UV0, _Set_MatcapMask), nSet_MatcapMaskArrID);
 
         // MatcapMask

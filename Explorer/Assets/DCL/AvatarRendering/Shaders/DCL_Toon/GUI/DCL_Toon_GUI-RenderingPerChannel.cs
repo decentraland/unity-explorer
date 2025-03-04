@@ -12,7 +12,7 @@ namespace UnityEditor.Rendering.DCL_Toon
             FirstShade,
             SecondShade,
             Highlight,
-            AngelRing,
+            //AngelRing,
             RimLight,
             Outline,
             Max,
@@ -128,7 +128,7 @@ namespace UnityEditor.Rendering.DCL_Toon
                 m_channelNames.Add(_ChannelEnum.FirstShade.ToString());
                 m_channelNames.Add(_ChannelEnum.SecondShade.ToString());
                 m_channelNames.Add(_ChannelEnum.Highlight.ToString());
-                m_channelNames.Add(_ChannelEnum.AngelRing.ToString());
+                //m_channelNames.Add(_ChannelEnum.AngelRing.ToString());
                 m_channelNames.Add(_ChannelEnum.RimLight.ToString());
                 m_channelNames.Add(_ChannelEnum.Outline.ToString());
             }
@@ -140,7 +140,7 @@ namespace UnityEditor.Rendering.DCL_Toon
                 m_clippingMatte.Add(_ChannelEnum.FirstShade.ToString());
                 m_clippingMatte.Add(_ChannelEnum.SecondShade.ToString());
                 m_clippingMatte.Add(_ChannelEnum.Highlight.ToString());
-                m_clippingMatte.Add(_ChannelEnum.AngelRing.ToString());
+                //m_clippingMatte.Add(_ChannelEnum.AngelRing.ToString());
 
 
             }

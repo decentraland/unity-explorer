@@ -7,29 +7,29 @@ Shader "DCL/DCL_Toon"
         [HideInInspector] [PerRendererData] _HighlightWidth ("Highlight Width", Float) = 1.0
         
         [HideInInspector] [PerRendererData] _MainTexArr_ID ("MainTex Array ID", Integer) = -1
-        [HideInInspector] [PerRendererData] _1st_ShadeMapArr_ID ("1st Shade Map Array ID", Integer) = -1
-        [HideInInspector] [PerRendererData] _2nd_ShadeMapArr_ID ("2nd Shader Map Array ID", Integer) = -1
+//        [HideInInspector] [PerRendererData] _1st_ShadeMapArr_ID ("1st Shade Map Array ID", Integer) = -1
+//        [HideInInspector] [PerRendererData] _2nd_ShadeMapArr_ID ("2nd Shader Map Array ID", Integer) = -1
         [HideInInspector] [PerRendererData] _NormalMapArr_ID ("Normal Map Array ID", Integer) = -1
-        [HideInInspector] [PerRendererData] _Set_1st_ShadePositionArr_ID ("Set 1st Shade Position Array ID", Integer) = -1
-        [HideInInspector] [PerRendererData] _Set_2nd_ShadePositionArr_ID ("Set 2nd Shade Position Array ID", Integer) = -1
-        [HideInInspector] [PerRendererData] _ShadingGradeMapArr_ID ("Shading Grade Map Array ID", Integer) = -1
-        [HideInInspector] [PerRendererData] _HighColor_TexArr_ID ("High Color Array ID", Integer) = -1
-        [HideInInspector] [PerRendererData] _Set_HighColorMaskArr_ID ("Set High Color Array ID", Integer) = -1
-        [HideInInspector] [PerRendererData] _Set_RimLightMaskArr_ID ("Set Rim Light Mask Array ID", Integer) = -1
+//        [HideInInspector] [PerRendererData] _Set_1st_ShadePositionArr_ID ("Set 1st Shade Position Array ID", Integer) = -1
+//        [HideInInspector] [PerRendererData] _Set_2nd_ShadePositionArr_ID ("Set 2nd Shade Position Array ID", Integer) = -1
+//        [HideInInspector] [PerRendererData] _ShadingGradeMapArr_ID ("Shading Grade Map Array ID", Integer) = -1
+//        [HideInInspector] [PerRendererData] _HighColor_TexArr_ID ("High Color Array ID", Integer) = -1
+//        [HideInInspector] [PerRendererData] _Set_HighColorMaskArr_ID ("Set High Color Array ID", Integer) = -1
+//        [HideInInspector] [PerRendererData] _Set_RimLightMaskArr_ID ("Set Rim Light Mask Array ID", Integer) = -1
         [HideInInspector] [PerRendererData] _MatCap_SamplerArr_ID ("MatCap Array ID", Integer) = -1
-        [HideInInspector] [PerRendererData] _NormalMapForMatCapArr_ID ("Normal Map for MatCap Array ID", Integer) = -1
-        [HideInInspector] [PerRendererData] _Set_MatcapMaskArr_ID ("Set MatCap Mask Array ID", Integer) = -1
+//        [HideInInspector] [PerRendererData] _NormalMapForMatCapArr_ID ("Normal Map for MatCap Array ID", Integer) = -1
+//        [HideInInspector] [PerRendererData] _Set_MatcapMaskArr_ID ("Set MatCap Mask Array ID", Integer) = -1
         [HideInInspector] [PerRendererData] _Emissive_TexArr_ID ("Emissive Array ID", Integer) = -1
-        [HideInInspector] [PerRendererData] _ClippingMaskArr_ID ("Clipping Mask Array ID", Integer) = -1
-        [HideInInspector] [PerRendererData] _AngelRing_SamplerArr_ID ("Angel Ring Array ID", Integer) = -1
-        [HideInInspector] [PerRendererData] _Outline_SamplerArr_ID ("Outline Sampler Array ID", Integer) = -1
-        [HideInInspector] [PerRendererData] _OutlineTexArr_ID ("Outline Texture Array ID", Integer) = -1
-        [HideInInspector] [PerRendererData] _BakedNormalArr_ID ("Baked Normal Array ID", Integer) = -1
-        [HideInInspector] [PerRendererData] _OcclusionMapArr_ID ("Occlusion Map Array ID", Integer) = -1
+//        [HideInInspector] [PerRendererData] _ClippingMaskArr_ID ("Clipping Mask Array ID", Integer) = -1
+//        [HideInInspector] [PerRendererData] _AngelRing_SamplerArr_ID ("Angel Ring Array ID", Integer) = -1
+//        [HideInInspector] [PerRendererData] _Outline_SamplerArr_ID ("Outline Sampler Array ID", Integer) = -1
+//        [HideInInspector] [PerRendererData] _OutlineTexArr_ID ("Outline Texture Array ID", Integer) = -1
+//        [HideInInspector] [PerRendererData] _BakedNormalArr_ID ("Baked Normal Array ID", Integer) = -1
+//        [HideInInspector] [PerRendererData] _OcclusionMapArr_ID ("Occlusion Map Array ID", Integer) = -1
         [HideInInspector] [PerRendererData] _MetallicGlossMapArr_ID ("MetallicGlossMap Array ID", Integer) = -1
-        [HideInInspector] [PerRendererData] _BaseMapArr_ID ("BaseMap Array ID", Integer) = -1
-        [HideInInspector] [PerRendererData] _BumpMapArr_ID ("BumpMap Array ID", Integer) = -1
-        [HideInInspector] [PerRendererData] _EmissionMapArr_ID ("Emission Map Array ID", Integer) = -1
+//        [HideInInspector] [PerRendererData] _BaseMapArr_ID ("BaseMap Array ID", Integer) = -1
+//        [HideInInspector] [PerRendererData] _BumpMapArr_ID ("BumpMap Array ID", Integer) = -1
+//        [HideInInspector] [PerRendererData] _EmissionMapArr_ID ("Emission Map Array ID", Integer) = -1
 
         [HideInInspector] [PerRendererData] _lastWearableVertCount ("Last wearable Vert Count", Integer) = -1
         [HideInInspector] [PerRendererData] _lastAvatarVertCount ("Last avatar vert count", Integer) = -1
@@ -56,7 +56,7 @@ Shader "DCL/DCL_Toon"
         _StencilNo("Stencil No", Float) = 1
         _StencilOpPass("Stencil Operation", Float) = 0
         _StencilOpFail("Stencil Operation", Float) = 0
-        //[Enum(OFF, 0, ON, 1)] _TransparentEnabled("Transparent Mode", int) = 0
+        [Enum(OFF, 0, ON, 1)] _TransparentEnabled("Transparent Mode", int) = 0
 
         // DoubleShadeWithFeather
         // 0:_IS_CLIPPING_OFF      1:_IS_CLIPPING_MODE    2:_IS_CLIPPING_TRANSMODE
@@ -181,31 +181,9 @@ Shader "DCL/DCL_Toon"
         [Toggle(_)] _Inverse_MatcapMask ("Inverse_MatcapMask", Float ) = 0
         //v.2.0.5
         [Toggle(_)] _Is_Ortho ("Orthographic Projection for MatCap", Float ) = 0
-        //// Angel Rings
-        //[Toggle(_)] _AngelRing("AngelRing", Float) = 0
-        //_AngelRing_Sampler("AngelRing_Sampler", 2D) = "black" {}
-        //_AngelRing_Color("AngelRing_Color", Color) = (1, 1, 1, 1)
-        //[Toggle(_)] _Is_LightColor_AR("Is_LightColor_AR", Float) = 1
-        //_AR_OffsetU("AR_OffsetU", Range(0, 0.5)) = 0
-        //_AR_OffsetV("AR_OffsetV", Range(0, 1)) = 0.3
-        //[Toggle(_)] _ARSampler_AlphaOn("ARSampler_AlphaOn", Float) = 0
-        //
-        //v.2.0.7 Emissive
-        //[KeywordEnum(SIMPLE,ANIMATION)] _EMISSIVE("EMISSIVE MODE", Float) = 0
         _Emissive_Tex ("Emissive_Tex", 2D) = "white" {}
         [HDR]_Emissive_Color ("Emissive_Color", Color) = (0,0,0,1)
-        //_Base_Speed ("Base_Speed", Float ) = 0
-        //_Scroll_EmissiveU ("Scroll_EmissiveU", Range(-1, 1)) = 0
-        //_Scroll_EmissiveV ("Scroll_EmissiveV", Range(-1, 1)) = 0
-        //_Rotate_EmissiveUV ("Rotate_EmissiveUV", Float ) = 0
-        //[Toggle(_)] _Is_PingPong_Base ("Is_PingPong_Base", Float ) = 0
-        //[Toggle(_)] _Is_ColorShift ("Activate ColorShift", Float ) = 0
-        //[HDR]_ColorShift ("ColorSift", Color) = (0,0,0,1)
-        //_ColorShift_Speed ("ColorShift_Speed", Float ) = 0
-        //[Toggle(_)] _Is_ViewShift ("Activate ViewShift", Float ) = 0
-        //[HDR]_ViewShift ("ViewSift", Color) = (0,0,0,1)
-        //[Toggle(_)] _Is_ViewCoord_Scroll ("Is_ViewCoord_Scroll", Float ) = 0
-        //
+
 //Outline
         [KeywordEnum(NML,POS)] _OUTLINE("OUTLINE MODE", Float) = 0
         _Outline_Width ("Outline_Width", Float ) = 0
