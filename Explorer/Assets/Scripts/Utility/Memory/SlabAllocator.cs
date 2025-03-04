@@ -51,6 +51,7 @@ namespace Utility.Memory
         private readonly int chunksCount;
         private NativeArray<int> freeIndexes;
         private int freeCount;
+        private bool disposed;
 
         public SlabAllocator(int chunkSize, int chunksCount) : this()
         {
@@ -88,9 +89,12 @@ namespace Utility.Memory
 
         public void Dispose()
         {
-            unsafe { UnsafeUtility.Free(ptr.ToPointer(), Allocator.Persistent); }
+            if (disposed)
+                return;
 
+            unsafe { UnsafeUtility.Free(ptr.ToPointer(), Allocator.Persistent); }
             freeIndexes.Dispose();
+            disposed = true;
         }
     }
 
@@ -107,6 +111,7 @@ namespace Utility.Memory
             this.chunkSize = chunkSize;
             this.chunksCount = chunksCount;
             allocators = new NativeList<SlabAllocator>(Allocator.Persistent);
+            freeAllocators = new NativeList<int>(8, Allocator.Persistent);
             ptrToAllocatorIndex = new NativeHashMap<IntPtr, int>(8, Allocator.Persistent);
 
             AddNewAllocator();
@@ -170,7 +175,7 @@ namespace Utility.Memory
         {
             unsafe
             {
-                ref SlabAllocator allocator = ref UnsafeUtility.ArrayElementAsRef<SlabAllocator>(allocators.GetUnsafeList(), index);
+                ref SlabAllocator allocator = ref UnsafeUtility.ArrayElementAsRef<SlabAllocator>(allocators.GetUnsafePtr(), index);
                 return ref allocator;
             }
         }
