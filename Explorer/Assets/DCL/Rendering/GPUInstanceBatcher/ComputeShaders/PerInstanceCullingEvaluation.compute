@@ -29,7 +29,7 @@ void CameraCullingAndLODCalculationKernel(uint3 id : SV_DispatchThreadID)
     float fDistance;
     float fScreenSpaceSize;
     const float4x4 mInstMatrix = PerInstanceData[id.x].worldMatrix;
-    EvaluateInstanceDistance(mInstMatrix, fDistance, fScreenSpaceSize, GroupDataBuffer[0].vBoundsExtents, GroupDataBuffer[0].vCameraPosition, GroupDataBuffer[0].fCameraHalfAngle);
+    EvaluateInstanceDistance(mInstMatrix, GroupDataBuffer[0].vBoundsExtents, GroupDataBuffer[0].vCameraPosition, GroupDataBuffer[0].fCameraHalfAngle, fDistance, fScreenSpaceSize);
     
     bool bCulled = false;
     

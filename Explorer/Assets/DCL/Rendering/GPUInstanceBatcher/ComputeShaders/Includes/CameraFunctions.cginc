@@ -3,7 +3,7 @@
 
 #include "Includes/Structures.cginc"
 
-inline void EvaluateInstanceDistance(float4x4 instanceMatrix, out float dist, out float maxViewSize, float3 vBoundsExtents, float3 vCameraPosition, float fCameraHalfAngle)
+inline void EvaluateInstanceDistance(float4x4 instanceMatrix, float3 vBoundsExtents, float3 vCameraPosition, float fCameraHalfAngle, out float dist, out float maxViewSize)
 {
     float3 scale = float3(length(instanceMatrix._11_12_13), length(instanceMatrix._21_22_23), length(instanceMatrix._31_32_33));
     dist = abs(distance(instanceMatrix._14_24_34, vCameraPosition));
