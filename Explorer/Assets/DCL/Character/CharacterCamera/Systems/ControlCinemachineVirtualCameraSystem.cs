@@ -203,8 +203,7 @@ namespace DCL.Character.CharacterCamera.Systems
                     SetActiveCamera(ref cameraState, cinemachinePreset.ThirdPersonCameraData.Camera);
                     break;
                 case CameraMode.DroneView:
-                    if (camera.PreviousMode == CameraMode.ThirdPerson)
-                        cinemachinePreset.DroneViewCameraData.Camera.m_Transitions.m_InheritPosition = true;
+                    cinemachinePreset.DroneViewCameraData.Camera.m_Transitions.m_InheritPosition = camera.PreviousMode == CameraMode.ThirdPerson;
 
                     SetActiveCamera(ref cameraState, cinemachinePreset.DroneViewCameraData.Camera);
                     break;

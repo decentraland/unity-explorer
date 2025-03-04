@@ -79,17 +79,15 @@ namespace DCL.CharacterCamera.Systems
 
             switch (camera.Mode)
             {
-                case CameraMode.DroneView:
-                    cinemachinePreset.ForceThirdPersonCameraLookAt(lookAtIntent);
-                    break;
-                case CameraMode.ThirdPerson:
-                    cinemachinePreset.ForceThirdPersonCameraLookAt(lookAtIntent);
-                    break;
                 case CameraMode.FirstPerson:
                     cinemachinePreset.ForceFirstPersonCameraLookAt(lookAtIntent);
                     break;
                 case CameraMode.Free:
-                    cinemachinePreset.ForceFreeCameraLookAt(lookAtIntent);
+                case CameraMode.ThirdPerson:
+                    cinemachinePreset.ForceThirdPersonCameraLookAt(lookAtIntent);
+                    break;
+                case CameraMode.DroneView:
+                    cinemachinePreset.ForceDroneCameraLookAt(lookAtIntent);
                     break;
                 default:
                     ReportHub.LogError(GetReportData(), $"Camera mode is unknown {camera.Mode}");

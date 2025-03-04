@@ -22,14 +22,11 @@ namespace DCL.CharacterCamera
             cinemachinePreset.FirstPersonCameraData.POV.m_VerticalAxis.Value = verticalAxis;
         }
 
-        // TODO: THIS SHOULD BE FOR DRONE CAMERA, NOT FREE CAMERA...
-        public static void ForceFreeCameraLookAt(this ICinemachinePreset cinemachinePreset, CameraLookAtIntent lookAtIntent)
+        public static void ForceDroneCameraLookAt(this ICinemachinePreset cinemachinePreset, CameraLookAtIntent lookAtIntent)
         {
-            if (cinemachinePreset.FreeCameraData.POV == null) return;
-
             (float horizontalAxis, float verticalAxis) = GetHorizontalAndVerticalAxisForIntent(lookAtIntent);
-            cinemachinePreset.FreeCameraData.POV.m_HorizontalAxis.Value = horizontalAxis;
-            cinemachinePreset.FreeCameraData.POV.m_VerticalAxis.Value = verticalAxis;
+            cinemachinePreset.DroneViewCameraData.Camera.m_XAxis.Value = horizontalAxis;
+            cinemachinePreset.DroneViewCameraData.Camera.m_YAxis.Value = verticalAxis;
         }
 
         private static (float, float) GetHorizontalAndVerticalAxisForIntent(CameraLookAtIntent lookAtIntent)
