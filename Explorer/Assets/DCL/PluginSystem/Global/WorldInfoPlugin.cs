@@ -54,12 +54,12 @@ namespace DCL.PluginSystem.Global
 
                 if (world == null)
                 {
-                    chatHistory.AddMessage(ChatMessage.NewFromSystem($"World not found: {poseBinding.Value}"));
+                    chatHistory.AddMessage(ChatChannel.NEARBY_CHANNEL, ChatMessage.NewFromSystem($"World not found: {poseBinding.Value}"));
                     return;
                 }
 
                 var message = ChatMessage.NewFromSystem(world.EntityComponentsInfo(entityIdBinding.Value));
-                chatHistory.AddMessage(message);
+                chatHistory.AddMessage(ChatChannel.NEARBY_CHANNEL, message);
             }
 
             void OnClickShowAllEntities()
@@ -68,7 +68,7 @@ namespace DCL.PluginSystem.Global
 
                 if (world == null)
                 {
-                    chatHistory.AddMessage(ChatMessage.NewFromSystem($"World not found: {poseBinding.Value}"));
+                    chatHistory.AddMessage(ChatChannel.NEARBY_CHANNEL, ChatMessage.NewFromSystem($"World not found: {poseBinding.Value}"));
                     return;
                 }
 
@@ -76,7 +76,7 @@ namespace DCL.PluginSystem.Global
 
                 if (idList.Count == 0)
                 {
-                    chatHistory.AddMessage(ChatMessage.NewFromSystem("No entities found"));
+                    chatHistory.AddMessage(ChatChannel.NEARBY_CHANNEL, ChatMessage.NewFromSystem("No entities found"));
                     return;
                 }
 
@@ -87,7 +87,7 @@ namespace DCL.PluginSystem.Global
                     sb.AppendLine(id.ToString());
 
                 var message = ChatMessage.NewFromSystem(sb.ToString());
-                chatHistory.AddMessage(message);
+                chatHistory.AddMessage(ChatChannel.NEARBY_CHANNEL, message);
             }
 
             return UniTask.CompletedTask;

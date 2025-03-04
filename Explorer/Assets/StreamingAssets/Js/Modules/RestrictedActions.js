@@ -1,18 +1,17 @@
 module.exports.movePlayerTo = async function(message) {
-    if (message.cameraTarget != undefined) {
-        UnityRestrictedActionsApi.MovePlayerTo(
-            message.newRelativePosition.x,
-            message.newRelativePosition.y,
-            message.newRelativePosition.z,
-            message.cameraTarget.x,
-            message.cameraTarget.y,
-            message.cameraTarget.z)
-    } else {
-        UnityRestrictedActionsApi.MovePlayerTo(
-            message.newRelativePosition.x,
-            message.newRelativePosition.y,
-            message.newRelativePosition.z)
-    }
+    const cameraTarget = message.cameraTarget != undefined
+    const avatarTarget = message.avatarTarget != undefined
+    
+    UnityRestrictedActionsApi.MovePlayerTo(
+        message.newRelativePosition.x,
+        message.newRelativePosition.y,
+        message.newRelativePosition.z,
+        cameraTarget ? message.cameraTarget.x : null,
+        cameraTarget ? message.cameraTarget.y : null,
+        cameraTarget ? message.cameraTarget.z : null,
+        avatarTarget ? message.avatarTarget.x : null,
+        avatarTarget ? message.avatarTarget.y : null,
+        avatarTarget ? message.avatarTarget.z : null)
     
     return {};
 }

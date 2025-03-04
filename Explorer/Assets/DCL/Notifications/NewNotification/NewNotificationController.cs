@@ -38,8 +38,7 @@ namespace DCL.Notifications.NewNotification
             INotificationsBusController notificationsBusController,
             NotificationIconTypes notificationIconTypes,
             NftTypeIconSO rarityBackgroundMapping,
-            IWebRequestController webRequestController
-        ) : base(viewFactory)
+            IWebRequestController webRequestController) : base(viewFactory)
         {
             this.notificationsBusController = notificationsBusController;
             this.notificationIconTypes = notificationIconTypes;

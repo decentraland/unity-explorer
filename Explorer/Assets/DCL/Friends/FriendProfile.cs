@@ -1,21 +1,24 @@
 using CommunicationData.URLHelpers;
 using DCL.Web3;
+using UnityEngine;
 
 namespace DCL.Friends
 {
     public class FriendProfile
     {
+        public Color UserNameColor { get; }
         public Web3Address Address { get; }
         public string Name { get; }
         public bool HasClaimedName { get; }
         public URLAddress FacePictureUrl { get; }
 
-        public FriendProfile(Web3Address address, string name, bool hasClaimedName, URLAddress facePictureUrl)
+        public FriendProfile(Web3Address address, string name, bool hasClaimedName, URLAddress facePictureUrl, Color userNameColor)
         {
             Address = address;
             Name = name;
             HasClaimedName = hasClaimedName;
             FacePictureUrl = facePictureUrl;
+            UserNameColor = userNameColor;
         }
 
         private bool Equals(FriendProfile other) =>
