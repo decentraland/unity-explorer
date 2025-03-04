@@ -95,6 +95,8 @@ namespace Utility.Memory
             private int slabOffset;
             private int totalRead;
 
+            private int totalLength;
+
             private ChainStream() { }
 
             public static ChainStream New(in MemoryChain chain)
@@ -117,6 +119,8 @@ namespace Utility.Memory
                     instance.slabOffset = 0;
                     instance.totalRead = 0;
 
+                    instance.totalLength = instance.TotalValidDataLength();
+
                     return instance;
                 }
             }
@@ -137,16 +141,14 @@ namespace Utility.Memory
                     return 0;
 
                 int bytesRead = 0;
-                int totalValidData = TotalValidDataLength();
 
                 while (count > 0 && slabIndex < chain.slabs.Count)
                 {
                     Span<byte> currentSlab = chain.slabs[slabIndex].AsSpan();
-
                     int slabSize = currentSlab.Length;
                     int validDataInSlab = IsLastSlab(slabIndex) ? slabSize - chain.leftSpaceInLast : slabSize;
 
-                    if (totalRead >= totalValidData)
+                    if (totalRead >= totalLength)
                         break;
 
                     int bytesAvailable = validDataInSlab - slabOffset;
@@ -184,28 +186,64 @@ namespace Utility.Memory
             }
 
             private bool IsLastSlab(int index) =>
-                (index == chain.slabs.Count - 1);
+                index == chain.slabs.Count - 1;
 
             public override long Seek(long offset, SeekOrigin origin)
             {
-                throw new NotSupportedException();
+                long newPos;
+
+                switch (origin)
+                {
+                    case SeekOrigin.Begin:
+                        newPos = offset;
+                        break;
+                    case SeekOrigin.Current:
+                        newPos = totalRead + offset;
+                        break;
+                    case SeekOrigin.End:
+                        newPos = totalLength + offset;
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException(nameof(origin), "Invalid seek origin");
+                }
+
+                if (newPos < 0 || newPos > totalLength)
+                    throw new ArgumentOutOfRangeException(nameof(offset), $"Seek position is out of bounds, offset {offset}, newPos {newPos}, total length {totalLength}");
+
+                totalRead = (int)newPos;
+                slabIndex = 0;
+                slabOffset = 0;
+                int remaining = (int)newPos;
+
+                foreach (var slab in chain.slabs)
+                {
+                    int slabSize = slab.AsSpan().Length;
+                    int validDataInSlab = IsLastSlab(slabIndex) ? slabSize - chain.leftSpaceInLast : slabSize;
+
+                    if (remaining < validDataInSlab)
+                    {
+                        slabOffset = remaining;
+                        break;
+                    }
+
+                    remaining -= validDataInSlab;
+                    slabIndex++;
+                }
+
+                return totalRead;
             }
 
-            public override void SetLength(long value)
-            {
+            public override void SetLength(long value) =>
                 throw new NotSupportedException();
-            }
 
-            public override void Write(byte[] buffer, int offset, int count)
-            {
+            public override void Write(byte[] buffer, int offset, int count) =>
                 throw new NotSupportedException();
-            }
 
             protected override void Dispose(bool disposing)
             {
                 base.Dispose(disposing);
 
-                if (disposing == false)
+                if (!disposing)
                 {
                     chain.Dispose();
 
@@ -221,15 +259,14 @@ namespace Utility.Memory
             }
 
             public override bool CanRead => true;
-            public override bool CanSeek => false;
+            public override bool CanSeek => true;
             public override bool CanWrite => false;
-
-            public override long Length => TotalValidDataLength();
+            public override long Length { get; }
 
             public override long Position
             {
                 get => totalRead;
-                set => throw new NotSupportedException();
+                set => Seek(value, SeekOrigin.Begin);
             }
         }
     }
