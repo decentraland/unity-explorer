@@ -96,6 +96,11 @@ pub extern "C" fn segment_server_flush() -> OperationHandleId {
 }
 
 #[no_mangle]
+pub extern "C" fn segment_server_unflushed_batches_count() -> u64 {
+    SEGMENT_SERVER.unflushed_batches_count()
+}
+
+#[no_mangle]
 pub extern "C" fn segment_server_dispose() -> bool {
     SEGMENT_SERVER.dispose()
 }

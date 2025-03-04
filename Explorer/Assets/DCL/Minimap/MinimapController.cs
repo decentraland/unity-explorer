@@ -33,7 +33,8 @@ namespace DCL.Minimap
     public partial class MinimapController : ControllerBase<MinimapView>, IMapActivityOwner
     {
         private const MapLayer RENDER_LAYERS = MapLayer.SatelliteAtlas | MapLayer.PlayerMarker | MapLayer.ScenesOfInterest | MapLayer.Favorites | MapLayer.HotUsersMarkers | MapLayer.Pins | MapLayer.Path | MapLayer.LiveEvents;
-
+        private const string DEFAULT_BACK_FROM_WORLD_TEXT = "JUMP BACK TO GENESIS CITY";
+        private static readonly Dictionary<string, string> CUSTOM_BACK_FROM_WORLD_TEXTS = new () { {"onboardingdcl.dcl.eth", "EXIT TUTORIAL"} };
         private const float ANIMATION_TIME = 0.2f;
 
         private readonly IMapRenderer mapRenderer;
@@ -257,6 +258,9 @@ namespace DCL.Minimap
 
             foreach (GameObject go in viewInstance.objectsToActivateForWorlds)
                 go.SetActive(!isGenesisModeActivated);
+
+            if (!isGenesisModeActivated)
+                viewInstance.goToGenesisCityText.text = CUSTOM_BACK_FROM_WORLD_TEXTS.GetValueOrDefault(realmData.RealmName, DEFAULT_BACK_FROM_WORLD_TEXT);
 
             viewInstance.minimapAnimator.runtimeAnimatorController = isGenesisModeActivated ? viewInstance.genesisCityAnimatorController : viewInstance.worldsAnimatorController;
         }

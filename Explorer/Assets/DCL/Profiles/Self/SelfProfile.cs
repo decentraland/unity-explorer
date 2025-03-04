@@ -132,6 +132,7 @@ namespace DCL.Profiles.Self
                                                .Build();
 
             newProfile.UserId = web3IdentityCache.Identity.Address;
+            newProfile.UserNameColor = ProfileNameColorHelper.GetNameColor(profile.DisplayName);
 
             await profileRepository.SetAsync(newProfile, publish: true, ct);
             return await profileRepository.GetAsync(newProfile.UserId, newProfile.Version, ct);
