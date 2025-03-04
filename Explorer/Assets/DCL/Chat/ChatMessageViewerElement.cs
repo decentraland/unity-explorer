@@ -317,7 +317,7 @@ namespace DCL.Chat
                     Button? messageOptionsButton = itemScript.messageBubbleElement.messageOptionsButton;
                     messageOptionsButton?.onClick.RemoveAllListeners();
 
-                    SetItemData(index, itemData, itemScript);
+                    SetItemDataAsync(index, itemData, itemScript).Forget();
                     itemScript.messageBubbleElement.SetupHyperlinkHandlerDependencies(viewDependencies);
                     itemScript.ChatEntryClicked -= OnChatEntryClicked;
 
@@ -344,19 +344,17 @@ namespace DCL.Chat
             ChatMessageOptionsButtonClicked?.Invoke(itemDataMessage, itemScript);
         }
 
-        private void SetItemData(int index, ChatMessage itemData, ChatEntryView itemView)
+        private async UniTaskVoid SetItemDataAsync(int index, ChatMessage itemData, ChatEntryView itemView)
         {
-            Color playerNameColor = ProfileNameColorHelper.GetNameColor(itemData.SenderValidatedName);
-
-            itemView.usernameElement.userName.color = playerNameColor;
-
-            if (!itemData.SystemMessage)
+            if (itemData.SystemMessage) itemView.usernameElement.userName.color = ProfileNameColorHelper.GetNameColor(itemData.SenderValidatedName);
+            else
             {
-                itemView.ProfileBackground!.color = playerNameColor;
-                playerNameColor.r += 0.3f;
-                playerNameColor.g += 0.3f;
-                playerNameColor.b += 0.3f;
-                itemView.ProfileOutline!.color = playerNameColor;
+                var profile = await viewDependencies.GetProfileAsync(itemData.WalletAddress, CancellationToken.None);
+                if (profile != null)
+                {
+                    itemView.usernameElement.userName.color = profile.UserNameColor;
+                    itemView.ProfilePictureView.SetupWithDependencies(viewDependencies, profile.UserNameColor, profile.Avatar.FaceSnapshotUrl, profile.UserId);
+                }
             }
 
             itemView.SetItemData(itemData);

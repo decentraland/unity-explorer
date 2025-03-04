@@ -45,7 +45,7 @@ namespace DCL.Chat
         {
             set => tagText.text = value;
         }
-        
+
         public ChatMemberConnectionStatus ConnectionStatus
         {
             set => connectionStatusText.text = value.ToString(); // TODO: Localize this

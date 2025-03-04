@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Clipboard;
 using DCL.Input;
+using DCL.Multiplayer.Profiles.Poses;
 using DCL.Profiles;
 using System.Threading;
 using UnityEngine;
@@ -20,12 +21,17 @@ namespace MVC
         public readonly ICursor Cursor;
 
         private readonly IProfileThumbnailCache thumbnailCache;
+        private readonly IProfileRepository profileRepository;
+        private readonly IRemoteMetadata remoteMetadata;
 
         public async UniTask<Sprite> GetThumbnailAsync(string userId, string thumbnailUrl, CancellationToken ct) =>
             await thumbnailCache.GetThumbnailAsync(userId, thumbnailUrl, ct);
 
+        public async UniTask<Profile> GetProfileAsync(string walletId, CancellationToken ct) =>
+            await profileRepository.GetAsync(walletId, 0, remoteMetadata.GetLambdaDomainOrNull(walletId), ct);
+
         public ViewDependencies(DCLInput dclInput, IEventSystem eventSystem, IMVCManagerMenusAccessFacade globalUIViews, IClipboardManager clipboardManager, ICursor cursor,
-            IProfileThumbnailCache thumbnailCache)
+            IProfileThumbnailCache thumbnailCache, IProfileRepository profileRepository, IRemoteMetadata remoteMetadata)
         {
             DclInput = dclInput;
             EventSystem = eventSystem;
@@ -33,6 +39,8 @@ namespace MVC
             ClipboardManager = clipboardManager;
             Cursor = cursor;
             this.thumbnailCache = thumbnailCache;
+            this.profileRepository = profileRepository;
+            this.remoteMetadata = remoteMetadata;
         }
 
     }
