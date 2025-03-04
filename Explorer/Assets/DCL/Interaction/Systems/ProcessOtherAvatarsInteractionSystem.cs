@@ -4,11 +4,13 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Friends.UserBlocking;
 using DCL.Input;
 using DCL.Interaction.PlayerOriginated.Components;
 using DCL.Interaction.Utility;
 using DCL.Passport;
 using DCL.Profiles;
+using DCL.Utilities;
 using ECS.Abstract;
 using MVC;
 using UnityEngine.InputSystem;
@@ -27,17 +29,20 @@ namespace DCL.Interaction.Systems
         private readonly DCLInput dclInput;
         private readonly IMVCManager mvcManager;
         private readonly HoverFeedbackComponent.Tooltip viewProfileTooltip = new (VIEW_PROFILE_TOOLTIP, InputAction.IaPointer);
+        private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
         private Profile? currentProfileHovered;
 
         private ProcessOtherAvatarsInteractionSystem(
             World world,
             IEventSystem eventSystem,
             DCLInput dclInput,
-            IMVCManager mvcManager) : base(world)
+            IMVCManager mvcManager,
+            ObjectProxy<IUserBlockingCache> userBlockingCacheProxy) : base(world)
         {
             this.eventSystem = eventSystem;
             this.dclInput = dclInput;
             this.mvcManager = mvcManager;
+            this.userBlockingCacheProxy = userBlockingCacheProxy;
 
             dclInput.Player.Pointer!.performed += OpenPassport;
         }
@@ -66,7 +71,8 @@ namespace DCL.Interaction.Systems
 
             EntityReference entityRef = entityInfo.Value.EntityReference;
 
-            if (!entityRef.IsAlive(World!) || !World!.TryGet(entityRef, out Profile? profile))
+            if (!entityRef.IsAlive(World!) || !World!.TryGet(entityRef, out Profile? profile)
+                                           || (userBlockingCacheProxy.Configured && profile != null && (userBlockingCacheProxy.Object!.BlockedUsers.Contains(profile.UserId) || userBlockingCacheProxy.Object!.BlockedByUsers.Contains(profile.UserId))))
                 return;
 
             currentProfileHovered = profile;
