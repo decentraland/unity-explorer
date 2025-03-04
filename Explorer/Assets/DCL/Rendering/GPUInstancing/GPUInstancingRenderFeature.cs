@@ -32,7 +32,6 @@ namespace DCL.Rendering.GPUInstancing
             instancingRenderPass?.SetService(service, realmData);
         }
 
-        // public override void SetupRenderPasses(ScriptableRenderer _renderer, in RenderingData _renderingData) { }
 
         public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
         {
@@ -42,7 +41,7 @@ namespace DCL.Rendering.GPUInstancing
 
         protected override void Dispose(bool _bDisposing)
         {
-            // instancingRenderPass?.Dispose();
+            // TODO: dispose renderPass if needed;
         }
 
         [Serializable]

@@ -72,6 +72,8 @@ namespace DCL.Roads.Settings
 
             var tempIndirectCandidates = new Dictionary<GPUInstancingLODGroupWithBuffer, HashSet<PerInstanceBuffer>>();
 
+            Undo.RecordObject(this, "Collect GPU Instancing LOD Groups");
+
             foreach (RoadDescription roadDescription in RoadDescriptions)
             {
                 if (IsOutOfRange(roadDescription.RoadCoordinate)) continue;
@@ -95,8 +97,7 @@ namespace DCL.Roads.Settings
                                .OrderBy(group => group.LODGroup.Name)
                                .ToList();
 
-            EditorUtility.SetDirty(this);
-            AssetDatabase.SaveAssets();
+            AssetDatabase.SaveAssetIfDirty(this);
             return;
 
             bool IsOutOfRange(Vector2Int roadCoordinate) =>

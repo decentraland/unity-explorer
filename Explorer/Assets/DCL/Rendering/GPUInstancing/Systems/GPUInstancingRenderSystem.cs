@@ -4,7 +4,6 @@ using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.CharacterCamera;
 using DCL.Diagnostics;
 using DCL.RealmNavigation;
-using DCL.Roads.GPUInstancing;
 using ECS;
 using ECS.Abstract;
 
@@ -35,17 +34,14 @@ namespace DCL.Rendering.GPUInstancing.Systems
 
         protected override void Update(float t)
         {
-            if (isCameraCached && loadingStatus.CurrentStage.Value == LoadingStatus.LoadingStage.Completed && realmData.Configured)
-            {
-                gpuInstancingService.RenderIndirect();
-                return;
-            }
-
             if (!isCameraCached && exposedCameraData.CinemachineBrain.OutputCamera != null)
             {
                 gpuInstancingService.SetCamera(exposedCameraData.CinemachineBrain.OutputCamera);
                 isCameraCached = true;
             }
+
+            if (isCameraCached && loadingStatus.CurrentStage.Value == LoadingStatus.LoadingStage.Completed && realmData.Configured)
+                gpuInstancingService.RenderIndirect();
         }
     }
 }

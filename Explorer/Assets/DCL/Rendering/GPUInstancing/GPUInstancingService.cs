@@ -61,28 +61,26 @@ namespace DCL.Rendering.GPUInstancing
         private readonly Dictionary<GPUInstancingLODGroupWithBuffer, GPUInstancingBuffers> candidatesBuffersTable = new ();
         private readonly Dictionary<Material, Material> instancingMaterials = new ();
 
-          int[] arrLOD = new int[8] { 0, 0, 0, 0, 0, 0, 0, 0 };
+        private readonly ComputeShader FrustumCullingAndLODGenComputeShader;
+        private readonly string FrustumCullingAndLODGenComputeShader_KernelName = "CameraCullingAndLODCalculationKernel";
+        private readonly int FrustumCullingAndLODGenComputeShader_KernelIDs;
+        private uint FrustumCullingAndLODGen_ThreadGroupSize_X = 1;
+        private uint FrustumCullingAndLODGen_ThreadGroupSize_Y = 1;
+        private uint FrustumCullingAndLODGen_ThreadGroupSize_Z = 1;
 
-        public ComputeShader FrustumCullingAndLODGenComputeShader;
-        private string FrustumCullingAndLODGenComputeShader_KernelName = "CameraCullingAndLODCalculationKernel";
-        protected static int FrustumCullingAndLODGenComputeShader_KernelIDs;
-        protected uint FrustumCullingAndLODGen_ThreadGroupSize_X = 1;
-        protected uint FrustumCullingAndLODGen_ThreadGroupSize_Y = 1;
-        protected uint FrustumCullingAndLODGen_ThreadGroupSize_Z = 1;
+        private readonly ComputeShader IndirectBufferGenerationComputeShader;
+        private readonly string IndirectBufferGenerationComputeShader_KernelName = "ComputeLODBufferAccumulation";
+        private readonly int IndirectBufferGenerationComputeShader_KernelIDs;
+        private uint IndirectBufferGeneration_ThreadGroupSize_X = 1;
+        private uint IndirectBufferGeneration_ThreadGroupSize_Y = 1;
+        private uint IndirectBufferGeneration_ThreadGroupSize_Z = 1;
 
-        public ComputeShader IndirectBufferGenerationComputeShader;
-        private string IndirectBufferGenerationComputeShader_KernelName = "ComputeLODBufferAccumulation";
-        protected static int IndirectBufferGenerationComputeShader_KernelIDs;
-        protected uint IndirectBufferGeneration_ThreadGroupSize_X = 1;
-        protected uint IndirectBufferGeneration_ThreadGroupSize_Y = 1;
-        protected uint IndirectBufferGeneration_ThreadGroupSize_Z = 1;
-
-        public ComputeShader DrawArgsInstanceCountTransferComputeShader;
-        private string DrawArgsInstanceCountTransferComputeShader_KernelName = "DrawArgsInstanceCountTransfer";
-        protected static int DrawArgsInstanceCountTransferComputeShader_KernelIDs;
-        protected uint DrawArgsInstanceCountTransfer_ThreadGroupSize_X = 1;
-        protected uint DrawArgsInstanceCountTransfer_ThreadGroupSize_Y = 1;
-        protected uint DrawArgsInstanceCountTransfer_ThreadGroupSize_Z = 1;
+        private readonly ComputeShader DrawArgsInstanceCountTransferComputeShader;
+        private readonly string DrawArgsInstanceCountTransferComputeShader_KernelName = "DrawArgsInstanceCountTransfer";
+        private readonly int DrawArgsInstanceCountTransferComputeShader_KernelIDs;
+        private uint DrawArgsInstanceCountTransfer_ThreadGroupSize_X = 1;
+        private uint DrawArgsInstanceCountTransfer_ThreadGroupSize_Y = 1;
+        private uint DrawArgsInstanceCountTransfer_ThreadGroupSize_Z = 1;
 
         private static readonly int ComputeVar_PerInstance_LODLevels  = Shader.PropertyToID("PerInstance_LODLevels"); // RWStructuredBuffer<uint4>
         private static readonly int ComputeVar_PerInstanceData = Shader.PropertyToID("PerInstanceData"); // RWStructuredBuffer<PerInstance>
@@ -93,6 +91,8 @@ namespace DCL.Rendering.GPUInstancing
         private static readonly int ComputeVar_nSubMeshCount = Shader.PropertyToID("nSubMeshCount");
         private static readonly int MAT_PER_INSTANCE_BUFFER = Shader.PropertyToID("_PerInstanceBuffer");
         private static readonly int PER_INSTANCE_LOOK_UP_AND_DITHER_BUFFER = Shader.PropertyToID("_PerInstanceLookUpAndDitherBuffer");
+
+        private readonly int[] arrLOD = new int[8] { 0, 0, 0, 0, 0, 0, 0, 0 };
 
         private Camera renderCamera;
 
