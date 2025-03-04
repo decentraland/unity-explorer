@@ -9,6 +9,7 @@ namespace DCL.UI.SharedSpaceManager
         Skybox,
         EmotesWheel,
         SidebarSettings,
-        SidebarProfile
+        SidebarProfile,
+        Explore
     }
 }

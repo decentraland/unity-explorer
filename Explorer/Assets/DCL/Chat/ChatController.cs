@@ -21,6 +21,7 @@ using MVC;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using UnityEngine;
 using UnityEngine.InputSystem;
 using Utility;
 using Utility.Arch;
@@ -145,11 +146,6 @@ namespace DCL.Chat
             viewDependencies.DclInput.UI.Submit.performed -= OnSubmitShortcutPerformed;
 
             memberListCts.SafeCancelAndDispose();
-        }
-
-        private void HideBusCommandReceived()
-        {
-            HideViewAsync(CancellationToken.None).Forget();
         }
 
         protected override void OnViewInstantiated()
@@ -487,9 +483,32 @@ namespace DCL.Chat
 
         public async UniTask ShowInSharedSpaceAsync(CancellationToken ct, object parameters = null)
         {
-            IsUnfolded = true;
-            ViewShowingComplete?.Invoke(this);
+//            if(State == ControllerState.ViewHidden)
+//                await LaunchViewLifeCycleAsync(new CanvasOrdering(Layer, 0), /*TODO*/new ControllerNoData(), ct);
+//            else
+            if(State != ControllerState.ViewHidden)
+            {
+                IsUnfolded = true; // TODO: will be done in the OnViewShow
+                ViewShowingComplete?.Invoke(this);
+            }
+
             await UniTask.CompletedTask;
+        }
+
+        public async UniTask SetViewVisibility(bool visibility)
+        {
+            Debug.Log("YEAH SetVisibility " + visibility);
+            viewInstance.gameObject.SetActive(visibility);
+
+            if(visibility)
+                ViewShowingComplete?.Invoke(this);
+
+            await UniTask.CompletedTask;
+        }
+
+        public bool GetViewVisibility()
+        {
+            return viewInstance.gameObject.activeInHierarchy;
         }
 
         public async UniTask HideInSharedSpaceAsync(CancellationToken ct)

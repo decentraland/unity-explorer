@@ -118,9 +118,9 @@ namespace DCL.Friends.UI.FriendPanel
             viewInstance!.OpenFriendPanelButton.onClick.AddListener(ToggleFriendsPanel);
         }
 
-        private void ToggleFriendsPanel()
+        private async void ToggleFriendsPanel()
         {
-            sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.Friends, new FriendsPanelParameter());
+            await sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.Friends, new FriendsPanelParameter());
         }
     }
 }

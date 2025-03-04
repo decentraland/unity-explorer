@@ -109,7 +109,7 @@ namespace DCL.UI.Skybox
 
         public async UniTask ShowInSharedSpaceAsync(CancellationToken ct, object parameters = null)
         {
-            await LaunchViewLifeCycleAsync(new CanvasOrdering(CanvasOrdering.SortingLayer.Overlay, 0), new ControllerNoData(), ct);
+            await LaunchViewLifeCycleAsync(new CanvasOrdering(Layer, 0), new ControllerNoData(), ct);
         }
 
         public async UniTask HideInSharedSpaceAsync(CancellationToken ct)

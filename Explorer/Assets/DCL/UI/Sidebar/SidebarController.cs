@@ -263,9 +263,7 @@ namespace DCL.UI.Sidebar
 
         private async void OpenExplorePanelInSection(ExploreSections section, BackpackSections backpackSection = BackpackSections.Avatar)
         {
-            mvcManager.ShowAsync(
-                ExplorePanelController.IssueCommand(
-                    new ExplorePanelParameter(section, backpackSection)));
+            await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Explore, new ExplorePanelParameter(section, backpackSection));
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>

@@ -92,12 +92,12 @@ namespace MVC
                 modules[i].OnViewShow();
 
             await WaitForCloseIntentAsync(ct);
+
+            Debug.Log("AFTER  WaitForCloseIntentAsync" + this);
         }
 
         public async UniTask HideViewAsync(CancellationToken ct)
         {
-            State = ControllerState.ViewHidden;
-
             //Ideally this should never happen but as HideViewAsync can be called at any point it means the controller might not have instantiated the view yet
             if (viewInstance == null) return;
 
@@ -106,6 +106,9 @@ namespace MVC
 
             OnViewClose();
             await viewInstance.HideAsync(ct);
+
+            Debug.Log("view hidden!!!! " + this);
+            State = ControllerState.ViewHidden;
         }
 
         public void SetViewCanvasActive(bool isActive)

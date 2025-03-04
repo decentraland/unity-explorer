@@ -404,6 +404,7 @@ namespace Global.Dynamic
             livekitHealthCheck.WithRetries();
 
             var chatHistory = new ChatHistory();
+            ISharedSpaceManager sharedSpaceManager = new SharedSpaceManager(mvcManager, dclInput);
 
             var initializationFlowContainer = InitializationFlowContainer.Create(staticContainer,
                 bootstrapContainer,
@@ -451,7 +452,8 @@ namespace Global.Dynamic
                 staticContainer.ScenesCache,
                 mapPathEventBus,
                 staticContainer.SceneRestrictionBusController,
-                dynamicWorldParams.StartParcel
+                dynamicWorldParams.StartParcel,
+                sharedSpaceManager
             );
 
             var worldInfoHub = new LocationBasedWorldInfoHub(
@@ -548,7 +550,6 @@ namespace Global.Dynamic
             MVCManagerMenusAccessFacade menusAccessFacade = new MVCManagerMenusAccessFacade(mvcManager, clipboard, clipboardManager, friendServiceProxy, profileCache);
 
             var viewDependencies = new ViewDependencies(dclInput, unityEventSystem, menusAccessFacade, clipboardManager, dclCursor);
-            ISharedSpaceManager sharedSpaceManager = new SharedSpaceManager(mvcManager, dclInput);
 
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
@@ -678,7 +679,8 @@ namespace Global.Dynamic
                     clipboard,
                     explorePanelNavmapBus,
                     includeCameraReel,
-                    appArgs
+                    appArgs,
+                    sharedSpaceManager
                 ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),
@@ -792,7 +794,8 @@ namespace Global.Dynamic
                     dynamicWorldDependencies.RootUIDocument,
                     globalWorld,
                     debugBuilder,
-                    nametagsData));
+                    nametagsData,
+                    sharedSpaceManager));
 
             if (includeFriends)
             {

@@ -10,17 +10,17 @@ namespace DCL.ExplorePanel
     public class ExplorePanelInputHandler : IDisposable, IExplorePanelEscapeAction
     {
         private readonly DCLInput dclInput;
-        private readonly IMVCManager mvcManager;
+//        private readonly IMVCManager mvcManager;
         private readonly LinkedList<Action<InputAction.CallbackContext>> escapeActions = new ();
-        private readonly bool includeCameraReel;
-        private static ExploreSections lastShownSection;
+ //       private readonly bool includeCameraReel;
+ //       private static ExploreSections lastShownSection;
 
-        public ExplorePanelInputHandler(DCLInput dclInput, IMVCManager mvcManager, bool includeCameraReel)
+        public ExplorePanelInputHandler(DCLInput dclInput/*, IMVCManager mvcManager, bool includeCameraReel*/)
         {
             this.dclInput = dclInput;
-            this.mvcManager = mvcManager;
-            this.includeCameraReel = includeCameraReel;
-            lastShownSection = ExploreSections.Navmap;
+//            this.mvcManager = mvcManager;
+//            this.includeCameraReel = includeCameraReel;
+//            lastShownSection = ExploreSections.Navmap;
             RegisterHotkeys();
         }
 
@@ -51,26 +51,26 @@ namespace DCL.ExplorePanel
 
         private void RegisterHotkeys()
         {
-            dclInput.Shortcuts.MainMenu.performed += OnMainMenuHotkeyPressed;
+          /*  dclInput.Shortcuts.MainMenu.performed += OnMainMenuHotkeyPressed;
             dclInput.Shortcuts.Map.performed += OnMapHotkeyPressed;
             dclInput.Shortcuts.Settings.performed += OnSettingsHotkeyPressed;
             dclInput.Shortcuts.Backpack.performed += OnBackpackHotkeyPressed;
-            dclInput.InWorldCamera.CameraReel.performed += OnCameraReelHotkeyPressed;
+            dclInput.InWorldCamera.CameraReel.performed += OnCameraReelHotkeyPressed;*/
         }
 
         private void UnregisterHotkeys()
         {
-            dclInput.Shortcuts.MainMenu.performed -= OnMainMenuHotkeyPressed;
+       /*     dclInput.Shortcuts.MainMenu.performed -= OnMainMenuHotkeyPressed;
             dclInput.Shortcuts.Map.performed -= OnMapHotkeyPressed;
             dclInput.Shortcuts.Settings.performed -= OnSettingsHotkeyPressed;
             dclInput.Shortcuts.Backpack.performed -= OnBackpackHotkeyPressed;
-            dclInput.InWorldCamera.CameraReel.performed -= OnCameraReelHotkeyPressed;
+            dclInput.InWorldCamera.CameraReel.performed -= OnCameraReelHotkeyPressed;*/
 
             foreach (var escapeAction in escapeActions)
                 dclInput.UI.Close.performed -= escapeAction;
             escapeActions.Clear();
         }
-
+/*
         private void OnMainMenuHotkeyPressed(InputAction.CallbackContext obj) =>
             mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(lastShownSection)));
 
@@ -98,6 +98,6 @@ namespace DCL.ExplorePanel
 
             mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.CameraReel)));
             lastShownSection = ExploreSections.CameraReel;
-        }
+        }*/
     }
 }

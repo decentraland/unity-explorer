@@ -44,7 +44,7 @@ namespace DCL.Friends.UI.FriendPanel
         private CancellationTokenSource friendsPanelCts = new ();
         private UniTaskCompletionSource closeTaskCompletionSource = new ();
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
         public event Action? FriendsPanelOpened;
         public event Action<string>? OnlineFriendClicked;
@@ -250,7 +250,9 @@ namespace DCL.Friends.UI.FriendPanel
         {
             ViewShowingComplete?.Invoke(this);
             await UniTask.WhenAny(viewInstance!.CloseButton.OnClickAsync(ct), viewInstance!.BackgroundCloseButton.OnClickAsync(ct), closeTaskCompletionSource.Task);
-            await sharedSpaceManager.HideAsync(PanelsSharingSpace.Friends);
+// TODO event
+        //    if(State != ControllerState.ViewHidden)
+        //        await sharedSpaceManager.HideAsync(PanelsSharingSpace.Friends);
         }
 
         public event IPanelInSharedSpace.ViewShowingCompleteDelegate? ViewShowingComplete;
@@ -263,7 +265,10 @@ namespace DCL.Friends.UI.FriendPanel
 
         public async UniTask HideInSharedSpaceAsync(CancellationToken ct)
         {
-            await HideViewAsync(new CancellationToken());
+    //        await HideViewAsync(new CancellationToken());
+            closeTaskCompletionSource.TrySetResult();
+
+            await UniTask.WaitUntil(() => State == ControllerState.ViewHidden, PlayerLoopTiming.Update, ct);
         }
     }
 }

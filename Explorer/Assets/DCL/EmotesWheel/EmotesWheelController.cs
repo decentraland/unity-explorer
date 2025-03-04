@@ -43,7 +43,7 @@ namespace DCL.EmotesWheel
         private readonly DCLInput dclInput;
         private readonly ISharedSpaceManager sharedSpaceManager;
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
         public EmotesWheelController(ViewFactoryMethod viewFactory,
             ISelfProfile selfProfile,
@@ -152,7 +152,7 @@ namespace DCL.EmotesWheel
             ViewShowingComplete?.Invoke(this);
 
             await closeViewTask.Task;
-            await sharedSpaceManager.HideAsync(PanelsSharingSpace.EmotesWheel);
+     //       await sharedSpaceManager.HideAsync(PanelsSharingSpace.EmotesWheel);
         }
 
         private void SetUpSlots(Profile profile)
@@ -238,18 +238,16 @@ namespace DCL.EmotesWheel
         private void OpenBackpack(InputAction.CallbackContext context) =>
             OpenBackpack();
 
-        private void OpenBackpack()
+        private async void OpenBackpack()
         {
-            mvcManager.ShowAsync(
-                ExplorePanelController.IssueCommand(
-                    new ExplorePanelParameter(ExploreSections.Backpack, BackpackSections.Emotes)));
+            await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Explore, new ExplorePanelParameter(ExploreSections.Backpack, BackpackSections.Emotes));
 
-            Close();
+  //          Close();
         }
 
         private void UnblockUnwantedInputs()
         {
-            inputBlock.Disable(InputMapComponent.Kind.EMOTES/*, InputMapComponent.Kind.SHORTCUTS*/);
+            inputBlock.Disable(InputMapComponent.Kind.EMOTES);
         }
 
         // Note: This must be called once the menu has loaded and is ready to be closed
@@ -261,7 +259,7 @@ namespace DCL.EmotesWheel
         private void BlockUnwantedInputs()
         {
             inputBlock.Disable(InputMapComponent.Kind.EMOTE_WHEEL);
-            inputBlock.Enable(InputMapComponent.Kind.EMOTES, InputMapComponent.Kind.SHORTCUTS);
+            inputBlock.Enable(InputMapComponent.Kind.EMOTES);
         }
 
         private void ListenToSlotsInput(InputActionMap inputActionMap)
@@ -306,7 +304,10 @@ namespace DCL.EmotesWheel
 
         public async UniTask HideInSharedSpaceAsync(CancellationToken ct)
         {
-            await HideViewAsync(ct);
+            //await HideViewAsync(ct);
+            Close();
+
+            await UniTask.WaitUntil(() => State == ControllerState.ViewHidden, PlayerLoopTiming.Update, ct);
         }
     }
 }
