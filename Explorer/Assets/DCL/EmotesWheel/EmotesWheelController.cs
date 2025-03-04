@@ -152,7 +152,6 @@ namespace DCL.EmotesWheel
             ViewShowingComplete?.Invoke(this);
 
             await closeViewTask.Task;
-     //       await sharedSpaceManager.HideAsync(PanelsSharingSpace.EmotesWheel);
         }
 
         private void SetUpSlots(Profile profile)
@@ -241,8 +240,6 @@ namespace DCL.EmotesWheel
         private async void OpenBackpack()
         {
             await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Explore, new ExplorePanelParameter(ExploreSections.Backpack, BackpackSections.Emotes));
-
-  //          Close();
         }
 
         private void UnblockUnwantedInputs()
@@ -304,7 +301,6 @@ namespace DCL.EmotesWheel
 
         public async UniTask HideInSharedSpaceAsync(CancellationToken ct)
         {
-            //await HideViewAsync(ct);
             Close();
 
             await UniTask.WaitUntil(() => State == ControllerState.ViewHidden, PlayerLoopTiming.Update, ct);

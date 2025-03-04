@@ -26,9 +26,8 @@ namespace DCL.UI.Skybox
         protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
         {
             ViewShowingComplete?.Invoke(this);
-            await UniTask.WaitUntilCanceled(ct);
+            await UniTask.WaitUntilCanceled(skyboxMenuCts.Token);
         }
-
 
         protected override void OnViewInstantiated()
         {
@@ -93,7 +92,7 @@ namespace DCL.UI.Skybox
 
         private void OnClose()
         {
-            sharedSpaceManager.HideAsync(PanelsSharingSpace.Skybox).Forget();
+            skyboxMenuCts.Cancel();
         }
 
         public override void Dispose()
@@ -109,12 +108,14 @@ namespace DCL.UI.Skybox
 
         public async UniTask ShowInSharedSpaceAsync(CancellationToken ct, object parameters = null)
         {
-            await LaunchViewLifeCycleAsync(new CanvasOrdering(Layer, 0), new ControllerNoData(), ct);
+            await UniTask.CompletedTask;
         }
 
         public async UniTask HideInSharedSpaceAsync(CancellationToken ct)
         {
-            await HideViewAsync(skyboxMenuCts.Token);
+            skyboxMenuCts.Cancel();
+
+            await UniTask.WaitUntil(() => State == ControllerState.ViewHidden, PlayerLoopTiming.Update, ct);
         }
     }
 }

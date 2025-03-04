@@ -250,9 +250,6 @@ namespace DCL.Friends.UI.FriendPanel
         {
             ViewShowingComplete?.Invoke(this);
             await UniTask.WhenAny(viewInstance!.CloseButton.OnClickAsync(ct), viewInstance!.BackgroundCloseButton.OnClickAsync(ct), closeTaskCompletionSource.Task);
-// TODO event
-        //    if(State != ControllerState.ViewHidden)
-        //        await sharedSpaceManager.HideAsync(PanelsSharingSpace.Friends);
         }
 
         public event IPanelInSharedSpace.ViewShowingCompleteDelegate? ViewShowingComplete;
@@ -265,7 +262,6 @@ namespace DCL.Friends.UI.FriendPanel
 
         public async UniTask HideInSharedSpaceAsync(CancellationToken ct)
         {
-    //        await HideViewAsync(new CancellationToken());
             closeTaskCompletionSource.TrySetResult();
 
             await UniTask.WaitUntil(() => State == ControllerState.ViewHidden, PlayerLoopTiming.Update, ct);

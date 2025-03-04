@@ -3,6 +3,7 @@ using DCL.Chat;
 using DCL.EmotesWheel;
 using DCL.ExplorePanel;
 using DCL.Friends.UI.FriendPanel;
+using DCL.UI.Skybox;
 using MVC;
 using System;
 using System.Collections.Generic;
@@ -91,8 +92,12 @@ namespace DCL.UI.SharedSpaceManager
                     {
                         if (!controllerInSharedSpace.IsVisibleInSharedSpace)
                         {
+                            // The chat is hidden while the friends panel is present
                             (controllers[PanelsSharingSpace.Chat] as ChatController).SetViewVisibility(false);
+
                             await mvcManager.ShowAsync(FriendsPanelController.IssueCommand((FriendsPanelParameter)parameters), cts.Token);
+
+                            // Once the friends panel is hidden, chat must appear
                             bool isShowingChat = panelBeingShown == PanelsSharingSpace.Chat;
                             await controllers[PanelsSharingSpace.Chat].ShowInSharedSpaceAsync(cts.Token, new ChatController.ShowParams(isShowingChat));
                         }
@@ -119,7 +124,7 @@ namespace DCL.UI.SharedSpaceManager
                     case PanelsSharingSpace.Skybox:
                     {
                         if (!controllerInSharedSpace.IsVisibleInSharedSpace)
-                            await controllerInSharedSpace.ShowInSharedSpaceAsync(cts.Token);
+                            await mvcManager.ShowAsync(SkyboxMenuController.IssueCommand(), cts.Token);
                         else
                         {
                             isShowing = false;
