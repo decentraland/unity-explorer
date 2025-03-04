@@ -9,6 +9,7 @@ using DCL.Clipboard;
 using DCL.Diagnostics;
 using DCL.Friends;
 using DCL.Friends.UI;
+using DCL.Friends.UI.BlockUserPrompt;
 using DCL.Friends.UI.FriendPanel;
 using DCL.Friends.UI.FriendPanel.Sections.Friends;
 using DCL.Friends.UI.Requests;
@@ -235,6 +236,7 @@ namespace DCL.Passport
             viewInstance.AddFriendButton.onClick.AddListener(SendFriendRequest);
             viewInstance.CancelFriendButton.onClick.AddListener(CancelFriendRequest);
             viewInstance.RemoveFriendButton.onClick.AddListener(RemoveFriend);
+            viewInstance.UnblockFriendButton.onClick.AddListener(UnblockUser);
             viewInstance.ContextMenuButton.onClick.AddListener(ShowContextMenu);
 
             viewInstance.PhotosSectionButton.gameObject.SetActive(enableCameraReel);
@@ -531,7 +533,9 @@ namespace DCL.Passport
                     case FriendshipStatus.REQUEST_RECEIVED:
                         viewInstance!.AcceptFriendButton.gameObject.SetActive(true);
                         break;
-                    case FriendshipStatus.BLOCKED: break;
+                    case FriendshipStatus.BLOCKED:
+                        viewInstance!.UnblockFriendButton.gameObject.SetActive(true);
+                        break;
                 }
 
                 await SetupContextMenuAsync(friendshipStatus, ct);
@@ -625,6 +629,7 @@ namespace DCL.Passport
             viewInstance.AddFriendButton.gameObject.SetActive(false);
             viewInstance.CancelFriendButton.gameObject.SetActive(false);
             viewInstance.RemoveFriendButton.gameObject.SetActive(false);
+            viewInstance.UnblockFriendButton.gameObject.SetActive(false);
         }
 
         private void ExecuteFriendshipOperationFromContextMenu(string profile,
@@ -653,6 +658,20 @@ namespace DCL.Passport
                 {
                     UserId = new Web3Address(inputData.UserId),
                 }), ct);
+
+                ShowFriendshipInteraction();
+            }
+        }
+
+        private void UnblockUser()
+        {
+            friendshipOperationCts = friendshipOperationCts.SafeRestart();
+            UnblockAndThenChangeInteractionStatus(friendshipOperationCts.Token).Forget();
+            return;
+
+            async UniTaskVoid UnblockAndThenChangeInteractionStatus(CancellationToken ct)
+            {
+                await mvcManager.ShowAsync(BlockUserPromptController.IssueCommand(new BlockUserPromptParams(targetProfile!.UserId, targetProfile.Name, BlockUserPromptParams.UserBlockAction.UNBLOCK)), ct);
 
                 ShowFriendshipInteraction();
             }
