@@ -41,5 +41,12 @@ namespace DCL.UI.Buttons
                 Animator.SetTrigger(UIAnimationHashes.UNHOVER);
             }
         }
+
+        public void Deselect()
+        {
+            selected = false;
+            Animator.ResetTrigger(UIAnimationHashes.HOVER);
+            Animator.SetTrigger(UIAnimationHashes.UNHOVER);
+        }
     }
 }

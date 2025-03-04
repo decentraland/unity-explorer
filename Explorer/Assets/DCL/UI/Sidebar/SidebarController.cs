@@ -3,6 +3,7 @@ using DCL.Browser;
 using DCL.Chat;
 using DCL.Chat.History;
 using DCL.ExplorePanel;
+using DCL.MarketplaceCredits;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Notifications.NotificationsMenu;
 using DCL.NotificationsBusController.NotificationsBus;
@@ -28,6 +29,7 @@ namespace DCL.UI.Sidebar
         private readonly ISidebarBus sidebarBus;
         private readonly INotificationsBusController notificationsBusController;
         private readonly NotificationsMenuController notificationsMenuController;
+        private readonly MarketplaceCreditsMenuController marketplaceCreditsMenuController;
         private readonly ProfileMenuController profileMenuController;
         private readonly SkyboxMenuController skyboxMenuController;
         private readonly ControlsPanelController controlsPanelController;
@@ -52,6 +54,7 @@ namespace DCL.UI.Sidebar
             IMVCManager mvcManager,
             INotificationsBusController notificationsBusController,
             NotificationsMenuController notificationsMenuController,
+            MarketplaceCreditsMenuController marketplaceCreditsMenuController,
             ProfileWidgetController profileIconWidgetController,
             ProfileMenuController profileMenuMenuWidgetController,
             SkyboxMenuController skyboxMenuController,
@@ -73,6 +76,7 @@ namespace DCL.UI.Sidebar
             this.sidebarBus = sidebarBus;
             this.notificationsBusController = notificationsBusController;
             this.notificationsMenuController = notificationsMenuController;
+            this.marketplaceCreditsMenuController = marketplaceCreditsMenuController;
             this.skyboxMenuController = skyboxMenuController;
             this.controlsPanelController = controlsPanelController;
             this.identityCache = identityCache;
@@ -92,6 +96,7 @@ namespace DCL.UI.Sidebar
             base.Dispose();
 
             notificationsMenuController.Dispose();
+            marketplaceCreditsMenuController.Dispose();
         }
 
         protected override void OnViewInstantiated()
@@ -109,7 +114,8 @@ namespace DCL.UI.Sidebar
 
             viewInstance.ProfileWidget.OpenProfileButton.onClick.AddListener(OpenProfileMenu);
             viewInstance.sidebarSettingsButton.onClick.AddListener(OpenSidebarSettings);
-            viewInstance.notificationsButton.onClick.AddListener(OpenNotificationsPanel);
+            viewInstance.notificationsButton.Button.onClick.AddListener(OpenNotificationsPanel);
+            viewInstance.MarketplaceCreditsButton.Button.onClick.AddListener(OpenMarketplaceCreditsPanel);
             viewInstance.autoHideToggle.onValueChanged.AddListener(OnAutoHideToggleChanged);
             viewInstance.backpackNotificationIndicator.SetActive(false);
             viewInstance.helpButton.onClick.AddListener(OnHelpButtonClicked);
@@ -192,6 +198,7 @@ namespace DCL.UI.Sidebar
                 skyboxMenuController.HideViewAsync(systemMenuCts.Token).Forget();
 
             notificationsMenuController.ToggleNotificationsPanel(true);
+            marketplaceCreditsMenuController.ToggleMarketplaceCreditsPanel(true);
             viewInstance!.sidebarSettingsWidget.CloseElement();
             sidebarBus.UnblockSidebar();
         }
@@ -283,6 +290,14 @@ namespace DCL.UI.Sidebar
             CloseAllWidgets();
             sidebarBus.BlockSidebar();
             notificationsMenuController.ToggleNotificationsPanel(false);
+            sidebarActionsBus.OpenWidget();
+        }
+
+        private void OpenMarketplaceCreditsPanel()
+        {
+            CloseAllWidgets();
+            sidebarBus.BlockSidebar();
+            marketplaceCreditsMenuController.ToggleMarketplaceCreditsPanel(false);
             sidebarActionsBus.OpenWidget();
         }
 
