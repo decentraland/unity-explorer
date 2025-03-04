@@ -24,6 +24,7 @@ using DCL.Nametags;
 using DCL.PlacesAPIService;
 using DCL.Profiles;
 using DCL.Profiles.Self;
+using DCL.UI.SharedSpaceManager;
 using DCL.WebRequests;
 using ECS;
 using ECS.SceneLifeCycle.Realm;
@@ -72,6 +73,7 @@ namespace DCL.PluginSystem.Global
         private readonly Arch.Core.World globalWorld;
         private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly NametagsData nametagsData;
+        private readonly ISharedSpaceManager sharedSpaceManager;
 
         private ScreenRecorder recorder;
         private GameObject hud;
@@ -94,7 +96,8 @@ namespace DCL.PluginSystem.Global
             UIDocument rootUIDocument,
             Arch.Core.World globalWorld,
             IDebugContainerBuilder debugContainerBuilder,
-            NametagsData nametagsData)
+            NametagsData nametagsData,
+            ISharedSpaceManager sharedSpaceManager)
         {
             this.input = input;
             this.selfProfile = selfProfile;
@@ -122,6 +125,7 @@ namespace DCL.PluginSystem.Global
             this.globalWorld = globalWorld;
             this.debugContainerBuilder = debugContainerBuilder;
             this.nametagsData = nametagsData;
+            this.sharedSpaceManager = sharedSpaceManager;
             factory = new InWorldCameraFactory();
         }
 
@@ -172,7 +176,7 @@ namespace DCL.PluginSystem.Global
                 new PhotoDetailStringMessages(settings.ShareToXMessage, settings.PhotoSuccessfullyDownloadedMessage, settings.LinkCopiedMessage)));
 
 
-            inWorldCameraController = new InWorldCameraController(() => hud.GetComponent<InWorldCameraView>(), sidebarButton, globalWorld, mvcManager, cameraReelStorageService);
+            inWorldCameraController = new InWorldCameraController(() => hud.GetComponent<InWorldCameraView>(), sidebarButton, globalWorld, mvcManager, cameraReelStorageService, sharedSpaceManager);
             mvcManager.RegisterController(inWorldCameraController);
         }
 

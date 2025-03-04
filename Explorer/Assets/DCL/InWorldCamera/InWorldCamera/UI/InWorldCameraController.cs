@@ -7,6 +7,7 @@ using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using DCL.InWorldCamera.Playground;
 using DCL.UI;
+using DCL.UI.SharedSpaceManager;
 using ECS.Abstract;
 using MVC;
 using System;
@@ -30,6 +31,7 @@ namespace DCL.InWorldCamera.UI
         private readonly World world;
         private readonly IMVCManager mvcManager;
         private readonly ICameraReelStorageService storageService;
+        private readonly ISharedSpaceManager sharedSpaceManager;
 
         private SingleInstanceEntity? cameraInternal;
 
@@ -43,12 +45,13 @@ namespace DCL.InWorldCamera.UI
         public bool IsVfxInProgress => viewInstance != null && viewInstance.IsVfxInProgress;
 
 
-        public InWorldCameraController(ViewFactoryMethod viewFactory, Button sidebarButton, World world, IMVCManager mvcManager, ICameraReelStorageService storageService) : base(viewFactory)
+        public InWorldCameraController(ViewFactoryMethod viewFactory, Button sidebarButton, World world, IMVCManager mvcManager, ICameraReelStorageService storageService, ISharedSpaceManager sharedSpaceManager) : base(viewFactory)
         {
             this.world = world;
             this.mvcManager = mvcManager;
             this.storageService = storageService;
             this.sidebarButton = sidebarButton;
+            this.sharedSpaceManager = sharedSpaceManager;
 
             ctx = new CancellationTokenSource();
 
@@ -123,12 +126,11 @@ namespace DCL.InWorldCamera.UI
             viewInstance?.ScreenshotCaptureAnimation(image, splashDuration, middlePauseDuration, transitionDuration);
         }
 
-        private void OpenCameraReelGallery()
+        private async void OpenCameraReelGallery()
         {
             RequestDisableInWorldCamera();
 
-            mvcManager.ShowAsync(
-                ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.CameraReel, BackpackSections.Avatar)));
+            await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Explore, new ExplorePanelParameter(ExploreSections.CameraReel, BackpackSections.Avatar));
         }
 
         private void RequestTakeScreenshot()
@@ -163,9 +165,13 @@ namespace DCL.InWorldCamera.UI
             }
             else
             {
-                viewInstance!.ShortcutsInfoPanel.Closed -= OnShortcutsInfoPanelClosed;
-                viewInstance?.ShortcutsInfoPanel.HideAsync(CancellationToken.None).Forget();
-                viewInstance?.ShortcutsInfoButton.OnDeselect(null);
+                if (viewInstance != null)
+                {
+                    viewInstance!.ShortcutsInfoPanel.Closed -= OnShortcutsInfoPanelClosed;
+                    viewInstance?.ShortcutsInfoPanel.HideAsync(CancellationToken.None).Forget();
+                    viewInstance?.ShortcutsInfoButton.OnDeselect(null);
+                }
+
                 shortcutPanelIsOpen = false;
             }
         }
