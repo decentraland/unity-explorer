@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace DCL.Friends
+namespace DCL.Friends.UserBlocking
 {
     public class ReadOnlyHashSet<T> : IReadOnlyCollection<T>
     {

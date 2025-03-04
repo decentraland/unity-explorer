@@ -1,5 +1,5 @@
 
-namespace DCL.Friends
+namespace DCL.Friends.UserBlocking
 {
     public interface IUserBlockingCache
     {

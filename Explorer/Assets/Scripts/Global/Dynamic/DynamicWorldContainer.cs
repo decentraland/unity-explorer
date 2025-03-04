@@ -25,6 +25,7 @@ using DCL.Chat;
 using DCL.Chat.ChatLifecycleBus;
 using DCL.Chat.InputBus;
 using DCL.Friends.Passport;
+using DCL.Friends.UserBlocking;
 using DCL.Input;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.LOD.Systems;
@@ -605,7 +606,8 @@ namespace Global.Dynamic
                     defaultTexturesContainer.TextureArrayContainerFactory,
                     wearableCatalog,
                     remoteEntities,
-                    staticContainer.CharacterContainer.Transform),
+                    staticContainer.CharacterContainer.Transform,
+                    userBlockingCacheProxy),
                 new MainUIPlugin(mvcManager, sidebarBus, mainUIView, includeFriends),
                 new ProfilePlugin(profileRepository, profileCache, staticContainer.CacheCleaner),
                 new MapRendererPlugin(mapRendererContainer.MapRenderer),

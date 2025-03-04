@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Friends.UserBlocking;
 using DCL.Web3.Identities;
 using System;
 using System.Collections.Generic;

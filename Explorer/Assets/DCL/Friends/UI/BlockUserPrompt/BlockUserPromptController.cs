@@ -1,5 +1,7 @@
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using MVC;
+using System;
 using System.Threading;
 using Utility;
 
@@ -24,8 +26,9 @@ namespace DCL.Friends.UI.BlockUserPrompt
         public override void Dispose()
         {
             base.Dispose();
-            viewInstance!.BlockButton.onClick.RemoveAllListeners();
-            viewInstance!.UnblockButton.onClick.RemoveAllListeners();
+
+            viewInstance?.BlockButton.onClick.RemoveAllListeners();
+            viewInstance?.UnblockButton.onClick.RemoveAllListeners();
         }
 
         protected override void OnViewInstantiated()
@@ -56,9 +59,18 @@ namespace DCL.Friends.UI.BlockUserPrompt
 
             async UniTaskVoid BlockUserAsync(CancellationToken ct)
             {
-                //TODO: await user block request
-
-                ClosePopup();
+                try
+                {
+                    await friendsService.BlockUserAsync(inputData.TargetUserId, ct);
+                }
+                catch (Exception e)
+                {
+                    ReportHub.LogException(e, new ReportData(ReportCategory.FRIENDS));
+                }
+                finally
+                {
+                    ClosePopup();
+                }
             }
         }
 
@@ -69,9 +81,18 @@ namespace DCL.Friends.UI.BlockUserPrompt
 
             async UniTaskVoid UnblockUserAsync(CancellationToken ct)
             {
-                //TODO: await user unblock request
-
-                ClosePopup();
+                try
+                {
+                    await friendsService.UnblockUserAsync(inputData.TargetUserId, ct);
+                }
+                catch (Exception e)
+                {
+                    ReportHub.LogException(e, new ReportData(ReportCategory.FRIENDS));
+                }
+                finally
+                {
+                    ClosePopup();
+                }
             }
         }
 

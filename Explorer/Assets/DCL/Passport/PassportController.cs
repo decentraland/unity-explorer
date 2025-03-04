@@ -577,6 +577,7 @@ namespace DCL.Passport
                 FriendshipStatus.REQUEST_SENT => UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_SENT,
                 FriendshipStatus.REQUEST_RECEIVED => UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_RECEIVED,
                 FriendshipStatus.BLOCKED => UserProfileContextMenuControlSettings.FriendshipStatus.DISABLED,
+                FriendshipStatus.BLOCKED_BY => UserProfileContextMenuControlSettings.FriendshipStatus.DISABLED,
                 _ => UserProfileContextMenuControlSettings.FriendshipStatus.NONE
             };
         }

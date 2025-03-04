@@ -25,6 +25,7 @@ using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.Helpers;
 using DCL.Multiplayer.Profiles.Entities;
 using DCL.AvatarRendering.Loading.Assets;
+using DCL.Friends.UserBlocking;
 using DCL.Quality;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -51,6 +52,7 @@ namespace DCL.PluginSystem.Global
         private readonly IPerformanceBudget memoryBudget;
         private readonly IRendererFeaturesCache rendererFeaturesCache;
         private readonly IRealmData realmData;
+        private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
 
         private readonly AttachmentsAssetsCache attachmentsAssetsCache;
 
@@ -93,7 +95,8 @@ namespace DCL.PluginSystem.Global
             TextureArrayContainerFactory textureArrayContainerFactory,
             IWearableStorage wearableStorage,
             RemoteEntities remoteEntities,
-            ExposedTransform playerTransform
+            ExposedTransform playerTransform,
+            ObjectProxy<IUserBlockingCache> userBlockingCacheProxy
         )
         {
             this.assetsProvisioner = assetsProvisioner;
@@ -110,6 +113,7 @@ namespace DCL.PluginSystem.Global
             this.remoteEntities = remoteEntities;
             this.playerTransform = playerTransform;
             this.wearableStorage = wearableStorage;
+            this.userBlockingCacheProxy = userBlockingCacheProxy;
             componentPoolsRegistry = poolsRegistry;
             avatarTransformMatrixJobWrapper = new AvatarTransformMatrixJobWrapper();
             attachmentsAssetsCache = new AttachmentsAssetsCache(100, poolsRegistry);
@@ -156,7 +160,7 @@ namespace DCL.PluginSystem.Global
 
             AvatarInstantiatorSystem.InjectToWorld(ref builder, frameTimeCapBudget, memoryBudget, avatarPoolRegistry, avatarMaterialPoolHandler,
                 computeShaderPool, attachmentsAssetsCache, skinningStrategy, vertOutBuffer, mainPlayerAvatarBaseProxy, defaultFaceFeaturesHandler,
-                wearableStorage,  avatarTransformMatrixJobWrapper);
+                wearableStorage,  avatarTransformMatrixJobWrapper, userBlockingCacheProxy);
 
             MakeVertsOutBufferDefragmentationSystem.InjectToWorld(ref builder, vertOutBuffer, skinningStrategy);
 

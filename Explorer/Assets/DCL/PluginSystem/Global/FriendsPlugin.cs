@@ -11,6 +11,7 @@ using DCL.Friends.UI.BlockUserPrompt;
 using DCL.Friends.UI.FriendPanel;
 using DCL.Friends.UI.PushNotifications;
 using DCL.Friends.UI.Requests;
+using DCL.Friends.UserBlocking;
 using DCL.Input;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connectivity;
@@ -164,9 +165,9 @@ namespace DCL.PluginSystem.Global
                 friendsService.SubscribeToConnectivityStatusAsync(cts.Token).Forget();
 
             //TODO: developments need to be deployed in order to activate this feature
-            if (includeUserBlocking && false)
+            if (includeUserBlocking)
             {
-                friendsService.SubscribeToUserBlockUpdatersAsync(cts.Token).Forget();
+                // friendsService.SubscribeToUserBlockUpdatersAsync(cts.Token).Forget();
                 IUserBlockingCache userBlockingCache = new UserBlockingCache(friendsService, friendEventBus, web3IdentityCache);
                 userBlockingCacheProxy.SetObject(userBlockingCache);
             }

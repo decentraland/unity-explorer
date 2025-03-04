@@ -12,6 +12,7 @@ using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Character.Components;
+using DCL.Friends.UserBlocking;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.Utilities;
@@ -107,7 +108,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests.Instantiate
             system = new AvatarInstantiatorSystem(world, budget, budget, avatarPoolRegistry, materialPoolHandler, computeShaderPool,
                 Substitute.For<IAttachmentsAssetsCache>(), new ComputeShaderSkinning(), new FixedComputeBufferHandler(10000, 4, 4),
                 new ObjectProxy<AvatarBase>(), defaultFaceFeaturesHandler, new WearableStorage(),
-                new AvatarTransformMatrixJobWrapper());
+                new AvatarTransformMatrixJobWrapper(), new ObjectProxy<IUserBlockingCache>());
         }
 
         private IEmote GetMockEmote(string materialName, string category)

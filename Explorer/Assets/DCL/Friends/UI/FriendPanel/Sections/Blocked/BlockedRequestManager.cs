@@ -29,7 +29,29 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Blocked
         {
             this.friendsService = friendsService;
             this.friendsEventBus = friendsEventBus;
+
+            friendsEventBus.OnYouBlockedProfile += BlockProfile;
+            friendsEventBus.OnYouUnblockedProfile += UnblockProfile;
         }
+
+        public override void Dispose()
+        {
+            base.Dispose();
+
+            friendsEventBus.OnYouBlockedProfile -= BlockProfile;
+            friendsEventBus.OnYouUnblockedProfile -= UnblockProfile;
+        }
+
+        private void BlockProfile(BlockedProfile profile)
+        {
+            if (blockedProfiles.Contains(profile)) return;
+
+            blockedProfiles.Add(profile);
+            FriendsSorter.SortFriendList(blockedProfiles);
+        }
+
+        private void UnblockProfile(BlockedProfile profile) =>
+            blockedProfiles.Remove(profile);
 
         public override int GetCollectionCount() =>
             blockedProfiles.Count;
@@ -53,6 +75,16 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Blocked
         protected override async UniTask<int> FetchDataAsync(int pageNumber, int pageSize, CancellationToken ct)
         {
             return MockedData();
+
+            using PaginatedBlockedProfileResult result = await friendsService.GetBlockedUsersAsync(pageNumber, pageSize, ct);
+
+            foreach (var blockedProfile in result.BlockedProfiles)
+                if (!blockedProfiles.Contains(blockedProfile))
+                    blockedProfiles.Add(blockedProfile);
+
+            FriendsSorter.SortFriendList(blockedProfiles);
+
+            return result.TotalAmount;
         }
 
         private int MockedData()
