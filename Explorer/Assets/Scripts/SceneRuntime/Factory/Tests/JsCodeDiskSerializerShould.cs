@@ -36,7 +36,21 @@ namespace SceneRuntime.Factory.Tests
             foreach (byte[] bytes in list)
                 output.AddRange(bytes);
 
+            unsafe
+            {
+                fixed (char* str = data)
+                {
+                    byte* p = (byte*)str;
+
+                    for (int i = 0; i < output.Count; i++)
+                        Assert.AreEqual(p[i], output[i], $"Bytes at {i} are not same {p[i]} and {output[i]}");
+                }
+            }
+
             var slicedOwnedMemory = new SlicedOwnedMemory<byte>(output.Count);
+
+            for (int i = 0; i < output.Count; i++)
+                slicedOwnedMemory.Memory.Span[i] = output[i];
 
             string deserialized = await serializer.DeserializeAsync(slicedOwnedMemory, token);
 
