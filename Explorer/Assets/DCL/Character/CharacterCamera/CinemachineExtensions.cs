@@ -8,7 +8,6 @@ namespace DCL.CharacterCamera
         public static void ForceThirdPersonCameraLookAt(this ICinemachinePreset cinemachinePreset, CameraLookAtIntent lookAtIntent)
         {
             (float horizontalAxis, float verticalAxis) = GetHorizontalAndVerticalAxisForIntent(lookAtIntent);
-
             cinemachinePreset.ThirdPersonCameraData.Camera.m_XAxis.Value = horizontalAxis;
             cinemachinePreset.ThirdPersonCameraData.Camera.m_YAxis.Value = verticalAxis;
         }
