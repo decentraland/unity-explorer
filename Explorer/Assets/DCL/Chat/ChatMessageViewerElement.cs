@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Chat.History;
+using DCL.Diagnostics;
 using DCL.UI.Profiles.Helpers;
 using DG.Tweening;
 using MVC;
@@ -124,6 +125,9 @@ namespace DCL.Chat
         public void SetData(IReadOnlyList<ChatMessage> messages)
         {
             chatMessages = messages;
+            separatorPositionIndex = 0;
+            IsSeparatorVisible = false;
+            messageCountWhenSeparatorWasSet = 0;
 
             // Replaces the chat items (it uses pools to store item instances so they will be reused)
             loopList.SetListItemCount(0);
@@ -302,8 +306,15 @@ namespace DCL.Chat
             else
             {
                 bool isIndexAfterSeparator = IsSeparatorVisible && index > CurrentSeparatorIndex;
+                var messageIndex = index - (isIndexAfterSeparator ? 1 : 0);
 
-                ChatMessage itemData = chatMessages[index - (isIndexAfterSeparator ? 1 : 0)]; // Ignores the index used for the separator
+                if (messageIndex < 0)
+                {
+                    ReportHub.LogWarning(ReportCategory.UI, $"Chat message index is out of range: {messageIndex}, index: {index}, current separator index: {CurrentSeparatorIndex}");
+                    return null;
+                }
+
+                ChatMessage itemData = chatMessages[messageIndex]; // Ignores the index used for the separator
 
                 if (itemData.IsPaddingElement)
                     item = listView.NewListViewItem(listView.ItemPrefabDataList[(int)ChatItemPrefabIndex.Padding].mItemPrefab.name);
