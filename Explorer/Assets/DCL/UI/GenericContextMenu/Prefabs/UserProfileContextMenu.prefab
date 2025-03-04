@@ -2290,7 +2290,7 @@ GameObject:
   - component: {fileID: 397649757038291972}
   - component: {fileID: 2575353825847782281}
   m_Layer: 5
-  m_Name: UserProfile
+  m_Name: UserProfileContextMenu
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2356,8 +2356,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   <RectTransformComponent>k__BackingField: {fileID: 7932506456355191914}
   <HorizontalLayoutComponent>k__BackingField: {fileID: 6350846824430724434}
-  <ThumbnailBackground>k__BackingField: {fileID: 9130310938297743961}
-  <ThumbnailImageView>k__BackingField: {fileID: 5206944579799142983}
   <UserName>k__BackingField: {fileID: 3491478124094445621}
   <UserNameTag>k__BackingField: {fileID: 771603195827902067}
   <UserAddress>k__BackingField: {fileID: 2953806123082676366}
@@ -2369,6 +2367,7 @@ MonoBehaviour:
   <CopyAddressToast>k__BackingField: {fileID: 5916987618369578755}
   <ContentVerticalLayout>k__BackingField: {fileID: 6147078409291930632}
   <ProfilePictureView>k__BackingField: {fileID: 7153360308053593950}
+  <FriendsButtonsContainer>k__BackingField: {fileID: 6291169718427371070}
   <AddFriendButton>k__BackingField: {fileID: 7225785648317091492}
   <AcceptFriendButton>k__BackingField: {fileID: 2792953813415601642}
   <RemoveFriendButton>k__BackingField: {fileID: 2926700669047740195}
@@ -4642,6 +4641,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 605195446501450412, guid: d64840fd5d5fce94fbdc7bddcba01226, type: 3}
+      propertyPath: m_PreferredHeight
+      value: 60
+      objectReference: {fileID: 0}
     - target: {fileID: 7319283368522151503, guid: d64840fd5d5fce94fbdc7bddcba01226, type: 3}
       propertyPath: m_Name
       value: ProfilePictureContainer
@@ -4651,17 +4654,6 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: d64840fd5d5fce94fbdc7bddcba01226, type: 3}
---- !u!114 &5206944579799142983 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 2554876876778093011, guid: d64840fd5d5fce94fbdc7bddcba01226, type: 3}
-  m_PrefabInstance: {fileID: 7725492478520159124}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1e79e296834574c5d9138852d94c8998, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!114 &7153360308053593950 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 609007630589666506, guid: d64840fd5d5fce94fbdc7bddcba01226, type: 3}
@@ -4678,14 +4670,3 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 224503025678412095, guid: d64840fd5d5fce94fbdc7bddcba01226, type: 3}
   m_PrefabInstance: {fileID: 7725492478520159124}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &9130310938297743961 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 1550108083613389261, guid: d64840fd5d5fce94fbdc7bddcba01226, type: 3}
-  m_PrefabInstance: {fileID: 7725492478520159124}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
