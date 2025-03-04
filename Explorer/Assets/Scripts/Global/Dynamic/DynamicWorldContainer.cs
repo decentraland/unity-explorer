@@ -549,7 +549,6 @@ namespace Global.Dynamic
             IProfileThumbnailCache profileThumbnailCache = new ProfileThumbnailCache(staticContainer.WebRequestsContainer.WebRequestController);
             IChatInputBus chatInputBus = new ChatInputBus();
 
-            ISidebarActionsBus sidebarActionsBus = new SidebarActionsBusController();
             MVCManagerMenusAccessFacade menusAccessFacade = new MVCManagerMenusAccessFacade(mvcManager, clipboard, friendServiceProxy, profileCache, chatInputBus);
 
             var viewDependencies = new ViewDependencies(dclInput, unityEventSystem, menusAccessFacade, clipboardManager, dclCursor);
