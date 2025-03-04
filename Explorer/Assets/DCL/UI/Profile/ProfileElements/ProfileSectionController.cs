@@ -14,10 +14,10 @@ namespace DCL.UI.ProfileElements
         private readonly IProfileRepository profileRepository;
         private readonly IWebRequestController webRequestController;
 
-        private ImageController profileImageController;
-        private UserNameElementController nameElementController;
-        private UserWalletAddressElementController walletAddressElementController;
-        private CancellationTokenSource cts;
+        private ImageController? profileImageController;
+        private UserNameElementController? nameElementController;
+        private UserWalletAddressElementController? walletAddressElementController;
+        private CancellationTokenSource? cts;
 
         public ProfileSectionController(
             ViewFactoryMethod viewFactory,
@@ -52,8 +52,8 @@ namespace DCL.UI.ProfileElements
 
             if (profile == null) return;
 
-            nameElementController.Setup(profile);
-            walletAddressElementController.Setup(profile);
+            nameElementController?.Setup(profile);
+            walletAddressElementController?.Setup(profile);
             viewInstance!.FaceFrame.color = profile.UserNameColor;
 
             profileImageController!.StopLoading();
@@ -71,9 +71,9 @@ namespace DCL.UI.ProfileElements
         public new void Dispose()
         {
             cts.SafeCancelAndDispose();
-            profileImageController.StopLoading();
-            nameElementController.Dispose();
-            walletAddressElementController.Dispose();
+            profileImageController?.StopLoading();
+            nameElementController?.Dispose();
+            walletAddressElementController?.Dispose();
         }
     }
 }
