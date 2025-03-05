@@ -1,6 +1,6 @@
+using DCL.Optimization.Memory;
 using NUnit.Framework;
 using UnityEngine;
-using Utility.Memory;
 
 namespace Utility.Tests
 {

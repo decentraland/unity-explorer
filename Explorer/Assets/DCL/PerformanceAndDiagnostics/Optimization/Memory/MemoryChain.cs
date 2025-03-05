@@ -1,9 +1,10 @@
+using Sentry;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine.Pool;
 
-namespace Utility.Memory
+namespace DCL.Optimization.Memory
 {
     public struct MemoryChain : IDisposable
     {
@@ -13,12 +14,30 @@ namespace Utility.Memory
         /// Doesn't own allocator
         /// </summary>
         private readonly ThreadSafeSlabAllocator<DynamicSlabAllocator> allocator;
-        private readonly List<SlabItem> slabs;
+        internal readonly List<SlabItem> slabs;
         private int leftSpaceInLast;
 
 #if UNITY_EDITOR || DEBUG
         private string? disposedBy;
 #endif
+
+        public readonly int TotalLength
+        {
+            get
+            {
+                {
+                    int totalValid = 0;
+
+                    for (int i = 0; i < slabs.Count; i++)
+                    {
+                        int slabSize = slabs[i].AsSpan().Length;
+                        totalValid += IsLastSlab(i) ? slabSize - leftSpaceInLast : slabSize;
+                    }
+
+                    return totalValid;
+                }
+            }
+        }
 
         public MemoryChain(ThreadSafeSlabAllocator<DynamicSlabAllocator> allocator) : this()
         {
@@ -87,11 +106,17 @@ namespace Utility.Memory
         public readonly Stream AsStream() =>
             ChainStream.New(this);
 
+        public readonly ChainMemoryIterator AsMemoryIterator() =>
+            new (this);
+
         private void AllocateNewSlab()
         {
             slabs.Add(allocator.Allocate());
             leftSpaceInLast = LastSpan().Length;
         }
+
+        private readonly bool IsLastSlab(int index) =>
+            index == slabs.Count - 1;
 
         private readonly Span<byte> LastSpan()
         {
@@ -133,7 +158,7 @@ namespace Utility.Memory
                     instance.slabOffset = 0;
                     instance.totalRead = 0;
 
-                    instance.totalLength = instance.TotalValidDataLength();
+                    instance.totalLength = chain.TotalLength;
 
                     return instance;
                 }
@@ -161,7 +186,7 @@ namespace Utility.Memory
                 {
                     Span<byte> currentSlab = chain.slabs[slabIndex].AsSpan();
                     int slabSize = currentSlab.Length;
-                    int validDataInSlab = IsLastSlab(slabIndex) ? slabSize - chain.leftSpaceInLast : slabSize;
+                    int validDataInSlab = chain.IsLastSlab(slabIndex) ? slabSize - chain.leftSpaceInLast : slabSize;
 
                     if (slabOffset >= validDataInSlab)
                     {
@@ -192,22 +217,6 @@ namespace Utility.Memory
                 return bytesRead;
             }
 
-            private int TotalValidDataLength()
-            {
-                int totalValid = 0;
-
-                for (int i = 0; i < chain.slabs.Count; i++)
-                {
-                    int slabSize = chain.slabs[i].AsSpan().Length;
-                    totalValid += IsLastSlab(i) ? slabSize - chain.leftSpaceInLast : slabSize;
-                }
-
-                return totalValid;
-            }
-
-            private bool IsLastSlab(int index) =>
-                index == chain.slabs.Count - 1;
-
             public override long Seek(long offset, SeekOrigin origin)
             {
                 long newPos = origin switch
@@ -229,7 +238,7 @@ namespace Utility.Memory
                 foreach (var slab in chain.slabs)
                 {
                     int slabSize = slab.AsSpan().Length;
-                    int validDataInSlab = IsLastSlab(slabIndex) ? slabSize - chain.leftSpaceInLast : slabSize;
+                    int validDataInSlab = chain.IsLastSlab(slabIndex) ? slabSize - chain.leftSpaceInLast : slabSize;
 
                     if (remaining < validDataInSlab)
                     {
@@ -275,6 +284,51 @@ namespace Utility.Memory
                 get => totalRead;
                 set => Seek(value, SeekOrigin.Begin);
             }
+        }
+    }
+
+    public struct ChainMemoryIterator : IMemoryIterator
+    {
+        private readonly MemoryChain memoryChain;
+        private readonly SlabItem buffer;
+        private readonly UnmanagedMemoryManager<byte> unmanagedMemoryManager;
+        private int index;
+
+        internal ChainMemoryIterator(MemoryChain memoryChain) : this()
+        {
+            this.memoryChain = memoryChain;
+            buffer = ISlabAllocator.SHARED.Allocate();
+
+            unsafe { unmanagedMemoryManager = UnmanagedMemoryManager<byte>.New(buffer.ptr.ToPointer()!, buffer.chunkSize); }
+
+            index = -1;
+
+            if (memoryChain.slabs.Count > 0 && memoryChain.slabs[0].chunkSize != unmanagedMemoryManager.Memory.Length)
+                throw new Exception("Buffers have different sizes");
+        }
+
+        public readonly void Dispose()
+        {
+            ISlabAllocator.SHARED.Release(buffer);
+            UnmanagedMemoryManager<byte>.Release(unmanagedMemoryManager);
+        }
+
+        public readonly ReadOnlyMemory<byte> Current
+        {
+            get
+            {
+                var slab = memoryChain.slabs[index];
+                slab.AsSpan().CopyTo(unmanagedMemoryManager.Memory.Span);
+                return unmanagedMemoryManager.Memory;
+            }
+        }
+
+        public readonly int? TotalSize => memoryChain.TotalLength;
+
+        public bool MoveNext()
+        {
+            index++;
+            return index < memoryChain.slabs.Count;
         }
     }
 }

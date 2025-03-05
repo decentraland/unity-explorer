@@ -1,9 +1,9 @@
+using DCL.Optimization.Memory;
 using NUnit.Framework;
 using System;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
-using Utility.Memory;
 using Random = UnityEngine.Random;
 
 namespace Utility.Tests

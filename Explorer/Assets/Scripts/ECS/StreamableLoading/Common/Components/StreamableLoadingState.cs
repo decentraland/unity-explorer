@@ -1,3 +1,4 @@
+using DCL.Optimization.Memory;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using ECS.StreamableLoading.Cache.Disk;
@@ -5,7 +6,6 @@ using System;
 using System.Runtime.CompilerServices;
 using UnityEngine.Assertions;
 using UnityEngine.Pool;
-using Utility.Memory;
 
 namespace ECS.StreamableLoading.Common.Components
 {

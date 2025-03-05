@@ -351,7 +351,7 @@ namespace Global.Dynamic
             else
                 diskCleanUp = new LRUDiskCleanUp(cacheDirectory, filesLock);
 
-            // TODO var partialCache = new DiskCache<PartialLoadingState, SerializeMemoryIterator<PartialDiskSerializer.State>>(new DiskCache(cacheDirectory, filesLock, diskCleanUp), new PartialDiskSerializer());
+            var partialCache = new DiskCache<PartialLoadingState, PartialDiskSerializer.PartialMemoryIterator>(new DiskCache(cacheDirectory, filesLock, diskCleanUp), new PartialDiskSerializer());
             //return partialCache;
             return IDiskCache<PartialLoadingState>.Null.INSTANCE;
         }

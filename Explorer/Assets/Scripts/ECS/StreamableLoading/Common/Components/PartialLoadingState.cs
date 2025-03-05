@@ -1,5 +1,5 @@
-﻿using System;
-using Utility.Memory;
+﻿using DCL.Optimization.Memory;
+using System;
 
 namespace ECS.StreamableLoading.Common.Components
 {
@@ -42,6 +42,9 @@ namespace ECS.StreamableLoading.Common.Components
             memoryOwner = MemoryChain.EMPTY;
             return memoryOwnerToReturn;
         }
+
+        public readonly ChainMemoryIterator AsIterator() =>
+            memoryOwner.AsMemoryIterator();
 
         public void Dispose()
         {

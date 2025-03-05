@@ -1,6 +1,6 @@
+using DCL.Optimization.Memory;
 using NUnit.Framework;
 using System;
-using Utility.Memory;
 using Random = UnityEngine.Random;
 
 namespace Utility.Tests

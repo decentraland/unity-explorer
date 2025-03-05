@@ -4,8 +4,8 @@ using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using DCL.Diagnostics;
+using DCL.Optimization.Memory;
 using ECS.Abstract;
-using Utility.Memory;
 
 namespace DCL.Allocators
 {

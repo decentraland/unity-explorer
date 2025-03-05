@@ -1,6 +1,6 @@
 using System;
 
-namespace Utility.Memory
+namespace DCL.Optimization.Memory
 {
     public interface IMemoryIterator : IDisposable
     {

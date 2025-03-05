@@ -2,13 +2,13 @@ using System;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 
-namespace Utility.Memory
+namespace DCL.Optimization.Memory
 {
     public readonly struct SlabItem
     {
         internal readonly IntPtr ptr;
         internal readonly int index;
-        private readonly int chunkSize;
+        public readonly int chunkSize;
         private readonly int offset;
 
         public SlabItem(IntPtr ptr, int index, int chunkSize)

@@ -1,6 +1,7 @@
 ﻿using Cysharp.Threading.Tasks;
 using Cysharp.Threading.Tasks.Triggers;
 using DCL.Diagnostics;
+using DCL.Optimization.Memory;
 using DCL.Profiling;
 using DCL.WebRequests;
 using System;
@@ -9,7 +10,6 @@ using System.Threading;
 using Unity.Profiling;
 using UnityEngine;
 using UnityEngine.Assertions;
-using Utility.Memory;
 using Object = UnityEngine.Object;
 
 namespace ECS.StreamableLoading.AssetBundles
