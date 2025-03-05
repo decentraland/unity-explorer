@@ -17,6 +17,7 @@ namespace ECS.StreamableLoading.Common
         private static PartialMemoryIterator SerializeInternal(PartialLoadingState data)
         {
             var meta = new Meta(data.FullFileSize, data.IsFileFullyDownloaded);
+            //TODO implement reference counting to avoid copying
             var copy = data.DeepCopy();
             var transferred = copy.TransferMemoryOwnership();
             return new PartialMemoryIterator(meta, transferred);

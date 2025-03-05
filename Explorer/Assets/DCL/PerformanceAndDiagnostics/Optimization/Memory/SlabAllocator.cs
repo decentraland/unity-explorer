@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.InteropServices;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 
@@ -73,7 +74,7 @@ namespace DCL.Optimization.Memory
 
         public SlabAllocator(int chunkSize, int chunksCount) : this()
         {
-            unsafe { ptr = new IntPtr(UnsafeUtility.Malloc(chunkSize * chunksCount, 64, Allocator.Persistent)!); }
+            ptr = Malloc((nuint) (chunkSize * chunksCount));
 
             this.chunkSize = chunkSize;
             this.chunksCount = chunksCount;
@@ -112,11 +113,17 @@ namespace DCL.Optimization.Memory
             if (disposed)
                 return;
 
-            unsafe { UnsafeUtility.Free(ptr.ToPointer()!, Allocator.Persistent); }
+            Free(ptr);
 
             freeIndexes.Dispose();
             disposed = true;
         }
+
+        [DllImport("libc", EntryPoint = "malloc", CallingConvention = CallingConvention.Cdecl)]
+        private static extern IntPtr Malloc(nuint size);
+
+        [DllImport("libc", EntryPoint = "free", CallingConvention = CallingConvention.Cdecl)]
+        private static extern void Free(IntPtr ptr);
     }
 
     public struct DynamicSlabAllocator : ISlabAllocator
