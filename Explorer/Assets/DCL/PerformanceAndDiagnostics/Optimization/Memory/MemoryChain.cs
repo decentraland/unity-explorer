@@ -15,7 +15,7 @@ namespace DCL.Optimization.Memory
         /// </summary>
         private readonly ThreadSafeSlabAllocator<DynamicSlabAllocator> allocator;
         internal readonly List<SlabItem> slabs;
-        private int leftSpaceInLast;
+        internal int leftSpaceInLast { get; private set; }
 
 #if UNITY_EDITOR || DEBUG
         private string? disposedBy;
@@ -289,17 +289,24 @@ namespace DCL.Optimization.Memory
 
     public struct ChainMemoryIterator : IMemoryIterator
     {
-        private readonly MemoryChain memoryChain;
         private readonly SlabItem buffer;
         private readonly UnmanagedMemoryManager<byte> unmanagedMemoryManager;
+        private readonly List<SlabItem> slabItems;
+        private readonly int slabsCount;
+        private readonly int leftInLastSlab;
+        private readonly int totalLength;
         private int index;
 
         internal ChainMemoryIterator(MemoryChain memoryChain) : this()
         {
-            this.memoryChain = memoryChain;
             buffer = ISlabAllocator.SHARED.Allocate();
 
             unsafe { unmanagedMemoryManager = UnmanagedMemoryManager<byte>.New(buffer.ptr.ToPointer()!, buffer.chunkSize); }
+
+            slabItems = memoryChain.slabs;
+            slabsCount = memoryChain.slabs.Count;
+            leftInLastSlab = memoryChain.leftSpaceInLast;
+            totalLength = memoryChain.TotalLength;
 
             index = -1;
 
@@ -313,22 +320,26 @@ namespace DCL.Optimization.Memory
             UnmanagedMemoryManager<byte>.Release(unmanagedMemoryManager);
         }
 
+        private readonly bool IsLast() =>
+            slabsCount - 1 == index;
+
         public readonly ReadOnlyMemory<byte> Current
         {
             get
             {
-                var slab = memoryChain.slabs[index];
-                slab.AsSpan().CopyTo(unmanagedMemoryManager.Memory.Span);
+                var slab = slabItems[index].AsSpan();
+                int bytesToRead = IsLast() ? slab.Length - leftInLastSlab : slab.Length;
+                slab.Slice(0, bytesToRead).CopyTo(unmanagedMemoryManager.Memory.Span);
                 return unmanagedMemoryManager.Memory;
             }
         }
 
-        public readonly int? TotalSize => memoryChain.TotalLength;
+        public readonly int? TotalSize => totalLength;
 
         public bool MoveNext()
         {
             index++;
-            return index < memoryChain.slabs.Count;
+            return index < slabsCount;
         }
     }
 }
