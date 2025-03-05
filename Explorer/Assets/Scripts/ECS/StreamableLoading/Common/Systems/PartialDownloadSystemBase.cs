@@ -118,7 +118,7 @@ namespace ECS.StreamableLoading.Common.Systems
                         finalBytesCount = downloadedData.FullFileSize - chunkRange.RangeStart;
 
                     // Write the downloaded data to the full data stream by starting from the last range start
-                    partialState.AppendData(downloadedData.DestinationArray.AsMemory()[..finalBytesCount]);
+                    partialState.AppendData(downloadedData.DestinationArray.AsMemory()[..finalBytesCount].Span);
 
                     if (isQualifiedForDiskCache)
                         partialDiskCache.PutAsync(diskHashKey!.Value, PARTIALS_FILES_EXTENSION, partialState, ct).Forget();
