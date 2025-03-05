@@ -72,7 +72,7 @@ namespace DCL.Interaction.Systems
             EntityReference entityRef = entityInfo.Value.EntityReference;
 
             if (!entityRef.IsAlive(World!) || !World!.TryGet(entityRef, out Profile? profile)
-                                           || (userBlockingCacheProxy.Configured && profile != null && (userBlockingCacheProxy.Object!.BlockedUsers.Contains(profile.UserId) || userBlockingCacheProxy.Object!.BlockedByUsers.Contains(profile.UserId))))
+                                           || (userBlockingCacheProxy.Configured && profile != null && userBlockingCacheProxy.Object!.UserIsBlocked(profile.UserId)))
                 return;
 
             currentProfileHovered = profile;

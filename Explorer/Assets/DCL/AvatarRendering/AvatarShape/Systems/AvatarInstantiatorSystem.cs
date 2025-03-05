@@ -97,7 +97,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         {
             if (!userBlockingCacheProxy.Configured) return;
 
-            if (userBlockingCacheProxy.Object!.BlockedUsers.Contains(avatarShapeComponent.ID) || userBlockingCacheProxy.Object!.BlockedByUsers.Contains(avatarShapeComponent.ID))
+            if (userBlockingCacheProxy.Object!.UserIsBlocked(avatarShapeComponent.ID))
                 World.Add(entity, new BlockedPlayerComponent());
         }
 

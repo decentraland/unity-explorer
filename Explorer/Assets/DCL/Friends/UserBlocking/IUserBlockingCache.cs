@@ -5,5 +5,7 @@ namespace DCL.Friends.UserBlocking
     {
         ReadOnlyHashSet<string> BlockedUsers { get; }
         ReadOnlyHashSet<string> BlockedByUsers { get; }
+
+        bool UserIsBlocked(string userId);
     }
 }

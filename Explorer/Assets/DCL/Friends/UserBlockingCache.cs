@@ -53,6 +53,9 @@ namespace DCL.Friends
             web3IdentityCache.OnIdentityChanged -= IdentityChanged;
         }
 
+        public bool UserIsBlocked(string userId) =>
+            BlockedUsers.Contains(userId) || BlockedByUsers.Contains(userId);
+
         private void IdentityChanged()
         {
             fetchCts = fetchCts.SafeRestart();
