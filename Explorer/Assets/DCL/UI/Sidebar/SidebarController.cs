@@ -198,7 +198,7 @@ namespace DCL.UI.Sidebar
                 skyboxMenuController.HideViewAsync(systemMenuCts.Token).Forget();
 
             notificationsMenuController.ToggleNotificationsPanel(true);
-            marketplaceCreditsMenuController.ToggleMarketplaceCreditsPanel(true);
+            marketplaceCreditsMenuController.ClosePanel();
             viewInstance!.sidebarSettingsWidget.CloseElement();
             sidebarBus.UnblockSidebar();
         }
@@ -297,7 +297,7 @@ namespace DCL.UI.Sidebar
         {
             CloseAllWidgets();
             sidebarBus.BlockSidebar();
-            marketplaceCreditsMenuController.ToggleMarketplaceCreditsPanel(false);
+            marketplaceCreditsMenuController.OpenPanel();
             sidebarActionsBus.OpenWidget();
         }
 

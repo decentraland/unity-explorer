@@ -3,6 +3,7 @@ using DCL.SidebarBus;
 using DCL.UI.Buttons;
 using System;
 using System.Threading;
+using UnityEngine.UI;
 using Utility;
 
 namespace DCL.MarketplaceCredits
@@ -24,34 +25,36 @@ namespace DCL.MarketplaceCredits
             this.view = view;
             this.sidebarBus = sidebarBus;
 
-            view.CloseButton.onClick.AddListener(ClosePanel);
+            foreach (Button closeButton in view.CloseButtons)
+                closeButton.onClick.AddListener(ClosePanel);
         }
 
-        public void ToggleMarketplaceCreditsPanel(bool forceClose)
+        public void OpenPanel()
         {
-            marketplaceCreditsCts = marketplaceCreditsCts.SafeRestart();
+            if (view.gameObject.activeSelf)
+                return;
 
-            if (!forceClose && !view.gameObject.activeSelf)
-                view.ShowAsync(marketplaceCreditsCts.Token).Forget();
-            else if (view.gameObject.activeSelf)
-            {
-                view.HideAsync(marketplaceCreditsCts.Token).Forget();
-                sidebarButton.Deselect();
-            }
+            marketplaceCreditsCts = marketplaceCreditsCts.SafeRestart();
+            view.ShowAsync(marketplaceCreditsCts.Token).Forget();
+        }
+
+        public void ClosePanel()
+        {
+            if (!view.gameObject.activeSelf)
+                return;
+
+            sidebarBus.UnblockSidebar();
+            marketplaceCreditsCts = marketplaceCreditsCts.SafeRestart();
+            view.HideAsync(marketplaceCreditsCts.Token).Forget();
+            sidebarButton.Deselect();
         }
 
         public void Dispose()
         {
             marketplaceCreditsCts.SafeCancelAndDispose();
-            view.CloseButton.onClick.RemoveListener(ClosePanel);
-        }
 
-        private void ClosePanel()
-        {
-            sidebarBus.UnblockSidebar();
-            marketplaceCreditsCts = marketplaceCreditsCts.SafeRestart();
-            view.HideAsync(marketplaceCreditsCts.Token).Forget();
-            sidebarButton.Deselect();
+            foreach (Button closeButton in view.CloseButtons)
+                closeButton.onClick.RemoveListener(ClosePanel);
         }
     }
 }
