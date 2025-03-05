@@ -4,8 +4,6 @@ using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Common.Components;
 using System;
 using System.Threading;
-using Unity.Collections;
-using Unity.Collections.LowLevel.Unsafe;
 
 namespace ECS.StreamableLoading.Common
 {
@@ -48,9 +46,8 @@ namespace ECS.StreamableLoading.Common
             {
                 unsafe
                 {
-                    void* p = UnsafeUtility.Malloc(Meta.META_SIZE, 16, Allocator.Persistent)!;
-                    ptr = new IntPtr(p);
-                    metaMemory = UnmanagedMemoryManager<byte>.New(p, Meta.META_SIZE);
+                    ptr = NativeAlloc.Malloc(Meta.META_SIZE);
+                    metaMemory = UnmanagedMemoryManager<byte>.New(ptr.ToPointer(), Meta.META_SIZE);
                     var span = metaMemory.Memory.Span;
                     meta.ToSpan(span);
                 }
@@ -62,7 +59,7 @@ namespace ECS.StreamableLoading.Common
 
             public void Dispose()
             {
-                unsafe { UnsafeUtility.Free(ptr.ToPointer()!, Allocator.Persistent); }
+                NativeAlloc.Free(ptr);
 
                 UnmanagedMemoryManager<byte>.Release(metaMemory);
                 iterator.Dispose();

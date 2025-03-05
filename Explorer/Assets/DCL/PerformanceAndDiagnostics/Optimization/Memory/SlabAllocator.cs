@@ -74,7 +74,7 @@ namespace DCL.Optimization.Memory
 
         public SlabAllocator(int chunkSize, int chunksCount) : this()
         {
-            ptr = Malloc((nuint) (chunkSize * chunksCount));
+            ptr = NativeAlloc.Malloc((nuint)(chunkSize * chunksCount));
 
             this.chunkSize = chunkSize;
             this.chunksCount = chunksCount;
@@ -89,8 +89,6 @@ namespace DCL.Optimization.Memory
         public readonly SlabAllocatorInfo Info => new (chunkSize * chunksCount, chunkSize, chunksCount, chunksCount - freeCount);
 
         public bool CanAllocate => freeCount > 0;
-
-        public bool FullFree => freeCount == chunksCount;
 
         public SlabItem Allocate()
         {
@@ -113,17 +111,11 @@ namespace DCL.Optimization.Memory
             if (disposed)
                 return;
 
-            Free(ptr);
+            NativeAlloc.Free(ptr);
 
             freeIndexes.Dispose();
             disposed = true;
         }
-
-        [DllImport("libc", EntryPoint = "malloc", CallingConvention = CallingConvention.Cdecl)]
-        private static extern IntPtr Malloc(nuint size);
-
-        [DllImport("libc", EntryPoint = "free", CallingConvention = CallingConvention.Cdecl)]
-        private static extern void Free(IntPtr ptr);
     }
 
     public struct DynamicSlabAllocator : ISlabAllocator
