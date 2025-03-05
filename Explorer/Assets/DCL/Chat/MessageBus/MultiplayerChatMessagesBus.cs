@@ -1,11 +1,13 @@
 using Cysharp.Threading.Tasks;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus.Deduplication;
+using DCL.Friends.UserBlocking;
 using DCL.Multiplayer.Connections.Messaging;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.Messaging.Pipe;
 using DCL.Profiles;
 using DCL.Profiles.Self;
+using DCL.Utilities;
 using LiveKit.Proto;
 using System;
 using System.Text.RegularExpressions;
@@ -22,15 +24,21 @@ namespace DCL.Chat.MessageBus
         private readonly IMessageDeduplication<double> messageDeduplication;
         private readonly CancellationTokenSource cancellationTokenSource = new ();
         private readonly ISelfProfile selfProfile;
+        private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
 
         public event Action<ChatChannel.ChannelId, ChatMessage>? MessageAdded;
 
-        public MultiplayerChatMessagesBus(IMessagePipesHub messagePipesHub, IProfileRepository profileRepository, ISelfProfile selfProfile, IMessageDeduplication<double> messageDeduplication)
+        public MultiplayerChatMessagesBus(IMessagePipesHub messagePipesHub,
+            IProfileRepository profileRepository,
+            ISelfProfile selfProfile,
+            IMessageDeduplication<double> messageDeduplication,
+            ObjectProxy<IUserBlockingCache> userBlockingCacheProxy)
         {
             this.messagePipesHub = messagePipesHub;
             this.profileRepository = profileRepository;
             this.messageDeduplication = messageDeduplication;
             this.selfProfile = selfProfile;
+            this.userBlockingCacheProxy = userBlockingCacheProxy;
 
             messagePipesHub.IslandPipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Chat>(Decentraland.Kernel.Comms.Rfc4.Packet.MessageOneofCase.Chat, OnMessageReceived);
             messagePipesHub.ScenePipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Chat>(Decentraland.Kernel.Comms.Rfc4.Packet.MessageOneofCase.Chat, OnMessageReceived);
@@ -51,7 +59,8 @@ namespace DCL.Chat.MessageBus
         {
             using (receivedMessage)
             {
-                if (messageDeduplication.TryPass(receivedMessage.FromWalletId, receivedMessage.Payload.Timestamp) == false)
+                if (messageDeduplication.TryPass(receivedMessage.FromWalletId, receivedMessage.Payload.Timestamp) == false
+                    || (userBlockingCacheProxy.Configured && userBlockingCacheProxy.Object!.UserIsBlocked(receivedMessage.FromWalletId)))
                     return;
 
                 Profile profile = await profileRepository.GetAsync(receivedMessage.FromWalletId, cancellationTokenSource.Token);

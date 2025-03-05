@@ -491,7 +491,9 @@ namespace Global.Dynamic
 
             chatCommands.Add(new HelpChatCommand(chatCommands, appArgs));
 
-            IChatMessagesBus coreChatMessageBus = new MultiplayerChatMessagesBus(messagePipesHub, profileRepository, selfProfile, new MessageDeduplication<double>())
+            var userBlockingCacheProxy = new ObjectProxy<IUserBlockingCache>();
+
+            IChatMessagesBus coreChatMessageBus = new MultiplayerChatMessagesBus(messagePipesHub, profileRepository, selfProfile, new MessageDeduplication<double>(), userBlockingCacheProxy)
                                                  .WithSelfResend(identityCache, profileRepository)
                                                  .WithIgnoreSymbols()
                                                  .WithCommands(chatCommands)
@@ -547,7 +549,7 @@ namespace Global.Dynamic
 
             var friendServiceProxy = new ObjectProxy<IFriendsService>();
             var friendOnlineStatusCacheProxy = new ObjectProxy<IFriendsConnectivityStatusTracker>();
-            var userBlockingCacheProxy = new ObjectProxy<IUserBlockingCache>();
+
             IProfileThumbnailCache profileThumbnailCache = new ProfileThumbnailCache(staticContainer.WebRequestsContainer.WebRequestController);
             IChatLifecycleBusController chatLifecycleBusController = new ChatLifecycleBusController(mvcManager);
             IChatInputBus chatInputBus = new ChatInputBus();
