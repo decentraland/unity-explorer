@@ -167,7 +167,7 @@ namespace DCL.PluginSystem.Global
             //TODO: developments need to be deployed in order to activate this feature
             if (includeUserBlocking)
             {
-                // friendsService.SubscribeToUserBlockUpdatersAsync(cts.Token).Forget();
+                friendsService.SubscribeToUserBlockUpdatersAsync(cts.Token).Forget();
                 IUserBlockingCache userBlockingCache = new UserBlockingCache(friendsService, friendEventBus, web3IdentityCache);
                 userBlockingCacheProxy.SetObject(userBlockingCache);
             }
