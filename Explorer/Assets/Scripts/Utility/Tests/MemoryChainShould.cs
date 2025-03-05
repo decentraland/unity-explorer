@@ -58,6 +58,33 @@ namespace Utility.Tests
             UnsafeUtility.Free(randomData, Allocator.Persistent);
         }
 
+        [Test]
+        public unsafe void CopyDataWithIterator()
+        {
+            using var a = new ThreadSafeSlabAllocator<DynamicSlabAllocator>(
+                new DynamicSlabAllocator(SIZE, 2)
+            );
+
+            int size = 2 * 1024 * Random.Range(800, 1024);
+            void* data = NewRandomData(size);
+            var span = new Span<byte>(data, size);
+            using var chain = new MemoryChain(a);
+            chain.AppendData(span);
+
+            using var second = new MemoryChain(a);
+            using var iterator = chain.AsMemoryIterator();
+
+            while (iterator.MoveNext())
+                second.AppendData(iterator.Current.Span);
+
+            using var stream = second.AsStream();
+            var buffer = new byte[stream.Length];
+            stream.Read(buffer);
+
+            CollectionAssert.AreEqual(new Span<byte>(data, size).ToArray(), buffer);
+            UnsafeUtility.Free(data, Allocator.Persistent);
+        }
+
         private static unsafe void* NewRandomData(int size)
         {
             void* randomData = UnsafeUtility.Malloc(size, 64, Allocator.Persistent);

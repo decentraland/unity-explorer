@@ -278,7 +278,7 @@ namespace DCL.Optimization.Memory
             public override bool CanRead => true;
             public override bool CanSeek => true;
             public override bool CanWrite => false;
-            public override long Length { get; }
+            public override long Length => totalLength;
 
             public override long Position
             {
