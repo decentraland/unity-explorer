@@ -51,6 +51,10 @@ namespace DCL.Notifications.NotificationsMenu
         private int unreadNotifications;
         private Web3Address? previousWeb3Identity;
 
+        public bool IsVisibleInSharedSpace => view.gameObject.activeSelf;
+
+        public event IPanelInSharedSpace.ViewShowingCompleteDelegate? ViewShowingComplete;
+
         public NotificationsMenuController(
             NotificationsMenuView view,
             NotificationsRequestController notificationsRequestController,
@@ -88,6 +92,19 @@ namespace DCL.Notifications.NotificationsMenu
             lifeCycleCts.SafeCancelAndDispose();
             this.view.OnViewShown -= OnViewShown;
             this.view.CloseButton.onClick.RemoveListener(ClosePanel);
+        }
+
+        public async UniTask OnShownInSharedSpaceAsync(CancellationToken ct, object parameters = null)
+        {
+            notificationPanelCts = notificationPanelCts.SafeRestart();
+            await view.ShowAsync(notificationPanelCts.Token);
+            ViewShowingComplete?.Invoke(this);
+        }
+
+        public async UniTask OnHiddenInSharedSpaceAsync(CancellationToken ct)
+        {
+            notificationPanelCts = notificationPanelCts.SafeRestart();
+            await view.HideAsync(notificationPanelCts.Token);
         }
 
         private void ClosePanel()
@@ -272,22 +289,6 @@ namespace DCL.Notifications.NotificationsMenu
             notifications.Insert(0, notification);
             view.LoopList.SetListItemCount(notifications.Count, false);
             view.LoopList.RefreshAllShownItem();
-        }
-
-        public event IPanelInSharedSpace.ViewShowingCompleteDelegate? ViewShowingComplete;
-        public bool IsVisibleInSharedSpace => view.gameObject.activeSelf;
-
-        public async UniTask ShowInSharedSpaceAsync(CancellationToken ct, object parameters = null)
-        {
-            notificationPanelCts = notificationPanelCts.SafeRestart();
-            await view.ShowAsync(notificationPanelCts.Token);
-            ViewShowingComplete?.Invoke(this);
-        }
-
-        public async UniTask HideInSharedSpaceAsync(CancellationToken ct)
-        {
-            notificationPanelCts = notificationPanelCts.SafeRestart();
-            await view.HideAsync(notificationPanelCts.Token);
         }
     }
 }

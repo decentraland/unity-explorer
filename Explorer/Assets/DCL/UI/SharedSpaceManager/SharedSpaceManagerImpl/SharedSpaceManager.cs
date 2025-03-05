@@ -1,5 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Chat;
+using DCL.Diagnostics;
 using DCL.EmotesWheel;
 using DCL.ExplorePanel;
 using DCL.Friends.UI.FriendPanel;
@@ -8,26 +9,25 @@ using MVC;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using UnityEngine;
 using UnityEngine.InputSystem;
 
 namespace DCL.UI.SharedSpaceManager
 {
-    // Note: Take into account that Explore is a fullscreen view, Chat is persistent, and the rest are either popups and may not have a controller
+    // PLEASE read the summary in ISharedSpaceManager
     public class SharedSpaceManager : ISharedSpaceManager, IDisposable
     {
         private readonly IMVCManager mvcManager;
         private readonly DCLInput dclInput;
+        private readonly Dictionary<PanelsSharingSpace, IPanelInSharedSpace> controllers = new ();
 
         private CancellationTokenSource cts = new ();
-        private Dictionary<PanelsSharingSpace, IPanelInSharedSpace> controllers = new ();
         private bool isShowing; // true whenever a view is being shown, so other calls wait for them to finish
         private bool isHiding; // true whenever a view is being hidden, so other calls wait for them to finish
-        private bool isShowingChat; // true whenever the chat view is being shown, so other calls wait for them to finish (exceptional case)
-        private PanelsSharingSpace panelBeingShown = PanelsSharingSpace.Chat;
+        private PanelsSharingSpace panelBeingShown = PanelsSharingSpace.Chat; // Showing a panel may make other panels show too internally, this is the panel that started the process
 
-        public SharedSpaceManager(IMVCManager mvcManager,
-                                  DCLInput dclInput)
+        private bool IsExplorePanelVisible => controllers[PanelsSharingSpace.Explore].IsVisibleInSharedSpace;
+
+        public SharedSpaceManager(IMVCManager mvcManager, DCLInput dclInput)
         {
             this.mvcManager = mvcManager;
             this.dclInput = dclInput;
@@ -46,17 +46,20 @@ namespace DCL.UI.SharedSpaceManager
 
         public async UniTask ShowAsync(PanelsSharingSpace panel, object parameters = null)
         {
-            Debug.Log("YEAH SHOW: " + panel);
-
             if (!IsRegistered(panel))
+            {
+                ReportHub.LogError(ReportCategory.UI, $"The panel {panel} is not registered in the shared space manager!");
                 return;
+            }
 
-            if(isShowing || isHiding || isShowingChat)
+            if (isShowing || isHiding)
+            {
+                ReportHub.Log(ReportCategory.UI, $"The panel {panel} could not be shown, there is another panel still being shown or hidden.");
                 return;
+            }
 
             isShowing = true; // Set to false when the view is shown, see OnControllerViewShowingComplete
             panelBeingShown = panel;
-            Debug.Log("<color=red>YEAH ---> showing TRUE " + panel + "</color>");
 
             try
             {
@@ -73,18 +76,11 @@ namespace DCL.UI.SharedSpaceManager
                     case PanelsSharingSpace.Chat:
                     {
                         if ((controllerInSharedSpace as IController).State == ControllerState.ViewHidden)
-                        {
                             await mvcManager.ShowAsync(ChatController.IssueCommand((ChatController.ShowParams)parameters), cts.Token);
-                        }
                         else if (!controllerInSharedSpace.IsVisibleInSharedSpace)
-                        {
-                            await controllerInSharedSpace.ShowInSharedSpaceAsync(cts.Token, parameters);
-                        }
+                            await controllerInSharedSpace.OnShownInSharedSpaceAsync(cts.Token, parameters);
                         else
-                        {
                             isShowing = false;
-                            Debug.Log("<color=red>YEAH ---> showing FALSE (cancel) " + panel + "</color>");
-                        }
 
                         break;
                     }
@@ -99,25 +95,10 @@ namespace DCL.UI.SharedSpaceManager
 
                             // Once the friends panel is hidden, chat must appear
                             bool isShowingChat = panelBeingShown == PanelsSharingSpace.Chat;
-                            await controllers[PanelsSharingSpace.Chat].ShowInSharedSpaceAsync(cts.Token, new ChatController.ShowParams(isShowingChat));
+                            await controllers[PanelsSharingSpace.Chat].OnShownInSharedSpaceAsync(cts.Token, new ChatController.ShowParams(isShowingChat));
                         }
                         else
-                        {
                             isShowing = false;
-                            Debug.Log("<color=red>YEAH ---> showing FALSE (cancel) " + panel + "</color>");
-                        }
-
-                        break;
-                    }
-                    case PanelsSharingSpace.Notifications:
-                    {
-                        if (!controllerInSharedSpace.IsVisibleInSharedSpace)
-                            await controllerInSharedSpace.ShowInSharedSpaceAsync(cts.Token);
-                        else
-                        {
-                            isShowing = false;
-                            Debug.Log("<color=red>YEAH ---> showing FALSE (cancel) " + panel + "</color>");
-                        }
 
                         break;
                     }
@@ -126,10 +107,7 @@ namespace DCL.UI.SharedSpaceManager
                         if (!controllerInSharedSpace.IsVisibleInSharedSpace)
                             await mvcManager.ShowAsync(SkyboxMenuController.IssueCommand(), cts.Token);
                         else
-                        {
                             isShowing = false;
-                            Debug.Log("<color=red>YEAH ---> showing FALSE (cancel) " + panel + "</color>");
-                        }
 
                         break;
                     }
@@ -138,50 +116,27 @@ namespace DCL.UI.SharedSpaceManager
                         if (!controllerInSharedSpace.IsVisibleInSharedSpace)
                             await mvcManager.ShowAsync(EmotesWheelController.IssueCommand(), cts.Token);
                         else
-                        {
                             isShowing = false;
-                            Debug.Log("<color=red>YEAH ---> showing FALSE (cancel) " + panel + "</color>");
-                        }
-
-                        break;
-                    }
-                    case PanelsSharingSpace.SidebarProfile:
-                    {
-                        if (!controllerInSharedSpace.IsVisibleInSharedSpace)
-                            await controllerInSharedSpace.ShowInSharedSpaceAsync(cts.Token);
-                        else
-                        {
-                            isShowing = false;
-                            Debug.Log("<color=red>YEAH ---> showing FALSE (cancel) " + panel + "</color>");
-                        }
-
-                        break;
-                    }
-                    case PanelsSharingSpace.SidebarSettings:
-                    {
-                        if (!controllerInSharedSpace.IsVisibleInSharedSpace)
-                            await controllerInSharedSpace.ShowInSharedSpaceAsync(cts.Token);
-                        else
-                        {
-                            isShowing = false;
-                            Debug.Log("<color=red>YEAH ---> showing FALSE (cancel) " + panel + "</color>");
-                        }
 
                         break;
                     }
                     case PanelsSharingSpace.Explore:
                     {
-                        Debug.Log("entrará?");
                         if (!controllerInSharedSpace.IsVisibleInSharedSpace) // Fullscreen views work differently...
-                        {
-                            Debug.Log("sí");
                             await mvcManager.ShowAsync(ExplorePanelController.IssueCommand((ExplorePanelParameter)parameters), cts.Token);
-                        }
                         else
-                        {
                             isShowing = false;
-                            Debug.Log("<color=red>YEAH ---> showing FALSE (cancel) " + panel + "</color>");
-                        }
+
+                        break;
+                    }
+                    case PanelsSharingSpace.Notifications:
+                    case PanelsSharingSpace.SidebarProfile:
+                    case PanelsSharingSpace.SidebarSettings:
+                    {
+                        if (!controllerInSharedSpace.IsVisibleInSharedSpace)
+                            await controllerInSharedSpace.OnShownInSharedSpaceAsync(cts.Token);
+                        else
+                            isShowing = false;
 
                         break;
                     }
@@ -191,9 +146,6 @@ namespace DCL.UI.SharedSpaceManager
             {
                 isShowing = false;
                 isHiding = false;
-                isShowingChat = false;
-
-                Debug.Log("<color=red>YEAH ---> showing and hiding FALSE ERROR! " + panel + "</color>");
 
                 if (!(ex is OperationCanceledException))
                     throw;
@@ -207,13 +159,10 @@ namespace DCL.UI.SharedSpaceManager
 
         public async UniTask HideAsync(PanelsSharingSpace panel, object parameters = null)
         {
-            Debug.Log("YEAH HIDE: " + panel);
-
             if (!IsRegistered(panel))
                 return;
 
             isHiding = true;
-            Debug.Log("<color=yellow>YEAH ---> hiding TRUE " + panel + "</color>");
 
             try
             {
@@ -223,13 +172,15 @@ namespace DCL.UI.SharedSpaceManager
                 {
                     case PanelsSharingSpace.Friends:
                     {
-                        await controllerInSharedSpace.HideInSharedSpaceAsync(cts.Token);
-                        await controllers[PanelsSharingSpace.Chat].ShowInSharedSpaceAsync(cts.Token, new ChatController.ShowParams(true));
+                        await controllerInSharedSpace.OnHiddenInSharedSpaceAsync(cts.Token);
+
+                        // When friends panel is not present, the chat panel must be
+                        await controllers[PanelsSharingSpace.Chat].OnShownInSharedSpaceAsync(cts.Token, new ChatController.ShowParams(true));
                         break;
                     }
                     default:
                     {
-                        await controllerInSharedSpace.HideInSharedSpaceAsync(cts.Token);
+                        await controllerInSharedSpace.OnHiddenInSharedSpaceAsync(cts.Token);
                         break;
                     }
                 }
@@ -241,14 +192,11 @@ namespace DCL.UI.SharedSpaceManager
             finally
             {
                 isHiding = false;
-                Debug.Log("<color=yellow>YEAH ---> hiding FALSE " + panel + "</color>");
             }
         }
 
         public async UniTask ToggleVisibilityAsync(PanelsSharingSpace panel, object parameters = null)
         {
-            Debug.Log("YEAH TOGGLE: " + panel);
-
             if (!IsRegistered(panel))
                 return;
 
@@ -262,10 +210,11 @@ namespace DCL.UI.SharedSpaceManager
 
         public void RegisterPanel(PanelsSharingSpace panel, IPanelInSharedSpace controller)
         {
-            Debug.Log("YEAH REGISTER: " + panel);
-
             if (IsRegistered(panel))
-                Debug.LogError($"The panel {panel} was already registered in the shared space manager!");
+            {
+                ReportHub.LogError(ReportCategory.UI, $"The panel {panel} was already registered in the shared space manager!");
+                return;
+            }
 
             controller.ViewShowingComplete += OnControllerViewShowingComplete;
 
@@ -285,6 +234,36 @@ namespace DCL.UI.SharedSpaceManager
             dclInput.Shortcuts.Backpack.performed -= OnInputShortcutsBackpackPerformed;
             dclInput.InWorldCamera.CameraReel.performed -= OnInputShortcutsCameraReelPerformed;
         }
+
+        private bool IsRegistered(PanelsSharingSpace panel)
+        {
+            return controllers.ContainsKey(panel);
+        }
+
+        private async UniTask HideAllAsync(PanelsSharingSpace? panelToIgnore = null)
+        {
+            foreach (KeyValuePair<PanelsSharingSpace,IPanelInSharedSpace> controllerInSharedSpace in controllers)
+                if((!panelToIgnore.HasValue || controllerInSharedSpace.Key != panelToIgnore) && controllerInSharedSpace.Value.IsVisibleInSharedSpace)
+                    await HideAsync(controllerInSharedSpace.Key);
+        }
+
+        private void OnControllerViewShowingComplete(IPanelInSharedSpace controller)
+        {
+            // Showing some panels may make others be visible too (like the chat), but we only consider the showing process as finished if the event was raised by the panel that started it
+            if (controllers[panelBeingShown] == controller)
+                isShowing = false;
+        }
+
+        private async void OnUISubmitPerformed(InputAction.CallbackContext obj)
+        {
+            if (IsRegistered(PanelsSharingSpace.Chat) && !IsExplorePanelVisible)
+            {
+                await ShowAsync(PanelsSharingSpace.Chat, new ChatController.ShowParams(true));
+                (controllers[PanelsSharingSpace.Chat] as ChatController).FocusInputBox();
+            }
+        }
+
+        #region Shortcut handlers
 
         private async void OnInputShortcutsCameraReelPerformed(InputAction.CallbackContext obj)
         {
@@ -334,39 +313,6 @@ namespace DCL.UI.SharedSpaceManager
                 await ToggleVisibilityAsync(PanelsSharingSpace.Chat, new ChatController.ShowParams(true));
         }
 
-        private async void OnUISubmitPerformed(InputAction.CallbackContext obj)
-        {
-            if (IsRegistered(PanelsSharingSpace.Chat) && !IsExplorePanelVisible)
-            {
-                await ShowAsync(PanelsSharingSpace.Chat, new ChatController.ShowParams(true));
-                (controllers[PanelsSharingSpace.Chat] as ChatController).FocusInputBox();
-            }
-        }
-
-        private bool IsRegistered(PanelsSharingSpace panel)
-        {
-            return controllers.ContainsKey(panel);
-        }
-
-        private async UniTask HideAllAsync(PanelsSharingSpace? panelToIgnore = null)
-        {
-            foreach (KeyValuePair<PanelsSharingSpace,IPanelInSharedSpace> controllerInSharedSpace in controllers)
-                if((!panelToIgnore.HasValue || controllerInSharedSpace.Key != panelToIgnore) && controllerInSharedSpace.Value.IsVisibleInSharedSpace)
-                    await HideAsync(controllerInSharedSpace.Key);
-        }
-
-        private void OnControllerViewShowingComplete(IPanelInSharedSpace controller)
-        {
-            Debug.Log("OnControllerViewShowingComplete " + controller);
-
-            // Showing some panels may make others be visible too (like the chat), but we only consider the showing process as finished if the event was raised by the panel that started it
-            if (controllers[panelBeingShown] == controller)
-            {
-                isShowing = false;
-                Debug.Log("<color=red>YEAH ---> showing FALSE " + controller + "</color>");
-            }
-        }
-
-        private bool IsExplorePanelVisible => controllers[PanelsSharingSpace.Explore].IsVisibleInSharedSpace;
+        #endregion
     }
 }

@@ -92,8 +92,6 @@ namespace MVC
                 modules[i].OnViewShow();
 
             await WaitForCloseIntentAsync(ct);
-
-            Debug.Log("AFTER  WaitForCloseIntentAsync" + this);
         }
 
         public async UniTask HideViewAsync(CancellationToken ct)
@@ -107,7 +105,6 @@ namespace MVC
             OnViewClose();
             await viewInstance.HideAsync(ct);
 
-            Debug.Log("view hidden!!!! " + this);
             State = ControllerState.ViewHidden;
         }
 

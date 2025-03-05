@@ -45,10 +45,13 @@ namespace DCL.Friends.UI.FriendPanel
         private UniTaskCompletionSource closeTaskCompletionSource = new ();
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
+        public bool IsVisibleInSharedSpace => State != ControllerState.ViewHidden;
 
         public event Action? FriendsPanelOpened;
         public event Action<string>? OnlineFriendClicked;
         public event Action<string, Vector2Int>? JumpToFriendClicked;
+
+        public event IPanelInSharedSpace.ViewShowingCompleteDelegate? ViewShowingComplete;
 
         public FriendsPanelController(ViewFactoryMethod viewFactory,
             FriendsPanelView instantiatedView,
@@ -141,6 +144,18 @@ namespace DCL.Friends.UI.FriendPanel
             friendSectionControllerConnectivity?.Dispose();
             requestsSectionController.Dispose();
             UnregisterCloseHotkey();
+        }
+
+        public async UniTask OnShownInSharedSpaceAsync(CancellationToken ct, object parameters = null)
+        {
+            await UniTask.CompletedTask;
+        }
+
+        public async UniTask OnHiddenInSharedSpaceAsync(CancellationToken ct)
+        {
+            closeTaskCompletionSource.TrySetResult();
+
+            await UniTask.WaitUntil(() => State == ControllerState.ViewHidden, PlayerLoopTiming.Update, ct);
         }
 
         private void OnlineFriendClick(string targetAddress) =>
@@ -250,21 +265,6 @@ namespace DCL.Friends.UI.FriendPanel
         {
             ViewShowingComplete?.Invoke(this);
             await UniTask.WhenAny(viewInstance!.CloseButton.OnClickAsync(ct), viewInstance!.BackgroundCloseButton.OnClickAsync(ct), closeTaskCompletionSource.Task);
-        }
-
-        public event IPanelInSharedSpace.ViewShowingCompleteDelegate? ViewShowingComplete;
-        public bool IsVisibleInSharedSpace => State != ControllerState.ViewHidden;
-
-        public async UniTask ShowInSharedSpaceAsync(CancellationToken ct, object parameters = null)
-        {
-            await UniTask.CompletedTask;
-        }
-
-        public async UniTask HideInSharedSpaceAsync(CancellationToken ct)
-        {
-            closeTaskCompletionSource.TrySetResult();
-
-            await UniTask.WaitUntil(() => State == ControllerState.ViewHidden, PlayerLoopTiming.Update, ct);
         }
     }
 }

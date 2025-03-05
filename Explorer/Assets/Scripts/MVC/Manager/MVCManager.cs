@@ -4,7 +4,6 @@ using MVC.PopupsController.PopupCloser;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using UnityEngine;
 
 namespace MVC
 {
@@ -145,10 +144,9 @@ namespace MVC
         private async UniTask ShowFullScreenAsync<TView, TInputData>(ShowCommand<TView, TInputData> command, IController controller, CancellationToken ct)
             where TView: IView
         {
-            Debug.Log("entoy dentro");
             if (windowsStackManager.CurrentFullscreenController == controller)
                 return;
-            Debug.Log("totalmente dentro");
+
             // Push new fullscreen controller
             FullscreenPushInfo fullscreenPushInfo = windowsStackManager.PushFullscreen(controller);
 

@@ -44,6 +44,9 @@ namespace DCL.EmotesWheel
         private readonly ISharedSpaceManager sharedSpaceManager;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
+        public bool IsVisibleInSharedSpace => State != ControllerState.ViewHidden;
+
+        public event IPanelInSharedSpace.ViewShowingCompleteDelegate? ViewShowingComplete;
 
         public EmotesWheelController(ViewFactoryMethod viewFactory,
             ISelfProfile selfProfile,
@@ -87,6 +90,18 @@ namespace DCL.EmotesWheel
             UnregisterSlotsInput(emoteWheelInput);
         }
 
+        public async UniTask OnShownInSharedSpaceAsync(CancellationToken ct, object parameters = null)
+        {
+            await UniTask.CompletedTask;
+        }
+
+        public async UniTask OnHiddenInSharedSpaceAsync(CancellationToken ct)
+        {
+            Close();
+
+            await UniTask.WaitUntil(() => State == ControllerState.ViewHidden, PlayerLoopTiming.Update, ct);
+        }
+
         protected override void OnViewInstantiated()
         {
             viewInstance!.Closed += Close;
@@ -127,8 +142,6 @@ namespace DCL.EmotesWheel
 
         protected override void OnViewShow()
         {
-//const int ONE_LESS_THAN_SIDEBAR = -21; // Otherwise it's not possible to click on sidebar buttons, the background blocks the raycast
-//viewInstance.SetDrawOrder(new CanvasOrdering(Layer, ONE_LESS_THAN_SIDEBAR));
             ListenToSlotsInput(this.dclInput.EmoteWheel);
         }
 
@@ -290,20 +303,5 @@ namespace DCL.EmotesWheel
 
         private static int GetSlotFromInputName(string name) =>
             int.Parse(name[^1].ToString());
-
-        public event IPanelInSharedSpace.ViewShowingCompleteDelegate? ViewShowingComplete;
-        public bool IsVisibleInSharedSpace => State != ControllerState.ViewHidden;
-
-        public async UniTask ShowInSharedSpaceAsync(CancellationToken ct, object parameters = null)
-        {
-            await UniTask.CompletedTask;
-        }
-
-        public async UniTask HideInSharedSpaceAsync(CancellationToken ct)
-        {
-            Close();
-
-            await UniTask.WaitUntil(() => State == ControllerState.ViewHidden, PlayerLoopTiming.Update, ct);
-        }
     }
 }

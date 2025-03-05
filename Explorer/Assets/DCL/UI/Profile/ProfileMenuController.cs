@@ -44,6 +44,15 @@ namespace DCL.UI.ProfileElements
         }
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
+        public bool IsVisibleInSharedSpace => State != ControllerState.ViewHidden;
+
+        public event IPanelInSharedSpace.ViewShowingCompleteDelegate? ViewShowingComplete;
+
+        public async UniTask OnShownInSharedSpaceAsync(CancellationToken ct, object parameters = null) =>
+            await LaunchViewLifeCycleAsync(new CanvasOrdering(CanvasOrdering.SortingLayer.Overlay, 0), new ControllerNoData(), ct);
+
+        public async UniTask OnHiddenInSharedSpaceAsync(CancellationToken ct) =>
+            await HideViewAsync(ct);
 
         protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
         {
@@ -76,14 +85,10 @@ namespace DCL.UI.ProfileElements
             await profileSectionController.HideViewAsync(profileMenuCts.Token);
 
             if (sharedSpaceManager == null)
-            {
                 await HideViewAsync(profileMenuCts.Token);
-            }
             else
-            {
                 // When called by the sidebar
                 await sharedSpaceManager.HideAsync(PanelsSharingSpace.SidebarProfile);
-            }
         }
 
         public override void Dispose()
@@ -93,14 +98,5 @@ namespace DCL.UI.ProfileElements
             profileSectionController.Dispose();
             systemSectionController.Dispose();
         }
-
-        public event IPanelInSharedSpace.ViewShowingCompleteDelegate? ViewShowingComplete;
-        public bool IsVisibleInSharedSpace => State != ControllerState.ViewHidden;
-
-        public async UniTask ShowInSharedSpaceAsync(CancellationToken ct, object parameters = null) =>
-            await LaunchViewLifeCycleAsync(new CanvasOrdering(CanvasOrdering.SortingLayer.Overlay, 0), new ControllerNoData(), ct);
-
-        public async UniTask HideInSharedSpaceAsync(CancellationToken ct) =>
-            await HideViewAsync(ct);
     }
 }

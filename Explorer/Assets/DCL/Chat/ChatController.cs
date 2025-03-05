@@ -19,7 +19,6 @@ using ECS.Abstract;
 using LiveKit.Proto;
 using LiveKit.Rooms;
 using MVC;
-using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -33,6 +32,9 @@ namespace DCL.Chat
     {
         public struct ShowParams
         {
+            /// <summary>
+            /// Indicates whether the chat panel should be folded or unfolded when its view is shown.
+            /// </summary>
             public readonly bool ShowUnfolded;
 
             public ShowParams(bool showUnfolded)
@@ -42,11 +44,6 @@ namespace DCL.Chat
         }
 
         public delegate void ChatBubbleVisibilityChangedDelegate(bool isVisible);
-
-        /// <summary>
-        /// Raised when the UI is folded or unfolded.
-        /// </summary>
-        public event ChatView.FoldingChangedDelegate FoldingChanged;
 
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
         private readonly IChatMessagesBus chatMessagesBus;
@@ -90,7 +87,10 @@ namespace DCL.Chat
 
         }
 
+        public bool IsVisibleInSharedSpace => State != ControllerState.ViewHidden && GetViewVisibility() && viewInstance!.IsUnfolded;
+
         public event ChatBubbleVisibilityChangedDelegate? ChatBubbleVisibilityChanged;
+        public event IPanelInSharedSpace.ViewShowingCompleteDelegate? ViewShowingComplete;
 
         public ChatController(
             ViewFactoryMethod viewFactory,
@@ -159,6 +159,54 @@ namespace DCL.Chat
             viewDependencies.DclInput.UI.Submit.performed -= OnSubmitShortcutPerformed;
 
             memberListCts.SafeCancelAndDispose();
+        }
+
+        public async UniTask OnShownInSharedSpaceAsync(CancellationToken ct, object parameters = null)
+        {
+            if(State != ControllerState.ViewHidden)
+            {
+                if(!GetViewVisibility())
+                    SetViewVisibility(true);
+
+              ShowParams showParams = (ShowParams)parameters;
+                viewInstance.IsUnfolded = showParams.ShowUnfolded;
+
+                ViewShowingComplete?.Invoke(this);
+            }
+
+            await UniTask.CompletedTask;
+        }
+
+        public async UniTask OnHiddenInSharedSpaceAsync(CancellationToken ct)
+        {
+            IsUnfolded = false;
+            await UniTask.CompletedTask;
+        }
+
+        /// <summary>
+        /// Makes the input box gain the focus so the user can start typing.
+        /// </summary>
+        public void FocusInputBox()
+        {
+            viewInstance.FocusInputBox();
+        }
+
+        /// <summary>
+        /// Makes the chat panel (including the input box) invisible or visible (it does not hide the view).
+        /// </summary>
+        /// <param name="visibility">Whether to make the panel visible.</param>
+        public void SetViewVisibility(bool visibility)
+        {
+            viewInstance.gameObject.SetActive(visibility);
+        }
+
+        /// <summary>
+        /// Indicates whether the panel is invisible or not (the view is never hidden as it is a Persistent panel).
+        /// </summary>
+        /// <returns>True if the panel is visible; False otherwise.</returns>
+        public bool GetViewVisibility()
+        {
+            return viewInstance.gameObject.activeInHierarchy;
         }
 
         protected override void OnViewInstantiated()
@@ -232,8 +280,6 @@ namespace DCL.Chat
         {
             if (!isUnfolded)
                 MarkCurrentChannelAsRead();
-
-            FoldingChanged?.Invoke(isUnfolded);
         }
 
         private void OnChatHistoryReadMessagesChanged(ChatChannel changedChannel)
@@ -496,47 +542,6 @@ namespace DCL.Chat
                 if(profile != null)
                     outProfiles.Add(profile);
             }
-        }
-
-        public event IPanelInSharedSpace.ViewShowingCompleteDelegate? ViewShowingComplete;
-        public bool IsVisibleInSharedSpace => State != ControllerState.ViewHidden && GetViewVisibility() && viewInstance!.IsUnfolded;
-
-        public async UniTask ShowInSharedSpaceAsync(CancellationToken ct, object parameters = null)
-        {
-            if(State != ControllerState.ViewHidden)
-            {
-                if(!GetViewVisibility())
-                    SetViewVisibility(true);
-
-                ShowParams showParams = (ShowParams)parameters;
-                viewInstance.IsUnfolded = showParams.ShowUnfolded;
-
-                ViewShowingComplete?.Invoke(this);
-            }
-
-            await UniTask.CompletedTask;
-        }
-
-        public void SetViewVisibility(bool visibility)
-        {
-            Debug.Log("YEAH SetVisibility " + visibility);
-            viewInstance.gameObject.SetActive(visibility);
-        }
-
-        public bool GetViewVisibility()
-        {
-            return viewInstance.gameObject.activeInHierarchy;
-        }
-
-        public async UniTask HideInSharedSpaceAsync(CancellationToken ct)
-        {
-            IsUnfolded = false;
-            await UniTask.CompletedTask;
-        }
-
-        public void FocusInputBox()
-        {
-            viewInstance.FocusInputBox();
         }
     }
 }

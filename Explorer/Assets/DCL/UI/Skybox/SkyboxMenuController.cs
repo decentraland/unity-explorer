@@ -12,15 +12,29 @@ namespace DCL.UI.Skybox
         private const int SECONDS_IN_DAY = 86400;
 
         private readonly StylizedSkyboxSettingsAsset skyboxSettings;
-        private readonly ISharedSpaceManager sharedSpaceManager;
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
         private CancellationTokenSource skyboxMenuCts = new ();
 
-        public SkyboxMenuController(ViewFactoryMethod viewFactory, StylizedSkyboxSettingsAsset skyboxSettings, ISharedSpaceManager sharedSpaceManager) : base(viewFactory)
+        public bool IsVisibleInSharedSpace => State != ControllerState.ViewHidden;
+
+        public event IPanelInSharedSpace.ViewShowingCompleteDelegate? ViewShowingComplete;
+
+        public SkyboxMenuController(ViewFactoryMethod viewFactory, StylizedSkyboxSettingsAsset skyboxSettings) : base(viewFactory)
         {
             this.skyboxSettings = skyboxSettings;
-            this.sharedSpaceManager = sharedSpaceManager;
+        }
+
+        public async UniTask OnShownInSharedSpaceAsync(CancellationToken ct, object parameters = null)
+        {
+            await UniTask.CompletedTask;
+        }
+
+        public async UniTask OnHiddenInSharedSpaceAsync(CancellationToken ct)
+        {
+            skyboxMenuCts.Cancel();
+
+            await UniTask.WaitUntil(() => State == ControllerState.ViewHidden, PlayerLoopTiming.Update, ct);
         }
 
         protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
@@ -101,21 +115,6 @@ namespace DCL.UI.Skybox
             skyboxMenuCts.SafeCancelAndDispose();
             skyboxSettings.UseDynamicTimeChanged -= OnUseDynamicTimeChanged;
             skyboxSettings.NormalizedTimeChanged -= OnNormalizedTimeChanged;
-        }
-
-        public event IPanelInSharedSpace.ViewShowingCompleteDelegate? ViewShowingComplete;
-        public bool IsVisibleInSharedSpace => State != ControllerState.ViewHidden;
-
-        public async UniTask ShowInSharedSpaceAsync(CancellationToken ct, object parameters = null)
-        {
-            await UniTask.CompletedTask;
-        }
-
-        public async UniTask HideInSharedSpaceAsync(CancellationToken ct)
-        {
-            skyboxMenuCts.Cancel();
-
-            await UniTask.WaitUntil(() => State == ControllerState.ViewHidden, PlayerLoopTiming.Update, ct);
         }
     }
 }

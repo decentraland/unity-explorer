@@ -12,8 +12,6 @@ using DCL.UI;
 using DCL.UI.ProfileElements;
 using DCL.UI.SharedSpaceManager;
 using MVC;
-using NUnit.Framework.Constraints;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -32,7 +30,6 @@ namespace DCL.ExplorePanel
         private readonly ProfileMenuController profileMenuController;
         private readonly DCLInput dclInput;
         private readonly IExplorePanelEscapeAction explorePanelEscapeAction;
-//        private readonly IMVCManager mvcManager;
         private readonly IInputBlock inputBlock;
         private readonly bool includeCameraReel;
         private readonly ISharedSpaceManager sharedSpaceManager;
@@ -51,6 +48,9 @@ namespace DCL.ExplorePanel
         public CameraReelController CameraReelController { get; }
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Fullscreen;
+        public bool IsVisibleInSharedSpace => State != ControllerState.ViewHidden;
+
+        public event IPanelInSharedSpace.ViewShowingCompleteDelegate? ViewShowingComplete;
 
         public ExplorePanelController(ViewFactoryMethod viewFactory,
             NavmapController navmapController,
@@ -62,7 +62,6 @@ namespace DCL.ExplorePanel
             DCLInput dclInput,
             IExplorePanelEscapeAction explorePanelEscapeAction,
             INotificationsBusController notificationBusController,
-//            IMVCManager mvcManager,
             IInputBlock inputBlock,
             bool includeCameraReel,
             ISharedSpaceManager sharedSpaceManager)
@@ -75,7 +74,6 @@ namespace DCL.ExplorePanel
             this.profileWidgetController = profileWidgetController;
             this.dclInput = dclInput;
             this.explorePanelEscapeAction = explorePanelEscapeAction;
- //           this.mvcManager = mvcManager;
             this.profileMenuController = profileMenuController;
             notificationBusController.SubscribeToNotificationTypeClick(NotificationType.REWARD_ASSIGNMENT, OnRewardAssigned);
             this.inputBlock = inputBlock;
@@ -83,10 +81,10 @@ namespace DCL.ExplorePanel
             this.sharedSpaceManager = sharedSpaceManager;
         }
 
-        private void OnRewardAssigned(object[] parameters)
+        private async void OnRewardAssigned(object[] parameters)
         {
             if(State == ControllerState.ViewHidden)
-                sharedSpaceManager.ShowAsync(PanelsSharingSpace.Explore, new ExplorePanelParameter(ExploreSections.Backpack)); // TODO: move to the shared space manager?
+                await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Explore, new ExplorePanelParameter(ExploreSections.Backpack)); // TODO: move to the shared space manager?
             else
                 ShowSection(ExploreSections.Backpack);
         }
@@ -97,6 +95,18 @@ namespace DCL.ExplorePanel
 
             profileWidgetCts.SafeCancelAndDispose();
             profileMenuCts.SafeCancelAndDispose();
+        }
+
+        public async UniTask OnShownInSharedSpaceAsync(CancellationToken ct, object parameters = null)
+        {
+            await UniTask.CompletedTask;
+        }
+
+        public async UniTask OnHiddenInSharedSpaceAsync(CancellationToken ct)
+        {
+            isControlClosing = true;
+
+            await UniTask.WaitUntil(() => State == ControllerState.ViewHidden, PlayerLoopTiming.Update, ct);
         }
 
         protected override void OnViewInstantiated()
@@ -138,7 +148,6 @@ namespace DCL.ExplorePanel
 
         protected override void OnViewShow()
         {
-            Debug.Log("EXPLORE PANEL ON");
             isControlClosing = false;
             sectionSelectorController!.ResetAnimators();
 
@@ -164,7 +173,6 @@ namespace DCL.ExplorePanel
 
             BlockUnwantedInputs();
             RegisterHotkeys();
-            Debug.Log("EXPLORE PANEL OFF");
         }
 
         private void ToggleSection(bool isOn, TabSelectorView tabSelectorView, ExploreSections shownSection, bool animate)
@@ -296,7 +304,6 @@ namespace DCL.ExplorePanel
             await UniTask.WhenAny(viewInstance!.CloseButton.OnClickAsync(ct),
                                   UniTask.WaitUntil(() => isControlClosing, PlayerLoopTiming.Update, ct),
                                   viewInstance.ProfileMenuView.SystemMenuView.LogoutButton.OnClickAsync(ct));
-   //         await sharedSpaceManager.HideAsync(PanelsSharingSpace.Explore);
         }
 
         private void ShowProfileMenu()
@@ -316,30 +323,16 @@ namespace DCL.ExplorePanel
             else
                 ShowProfileMenuAsync(profileMenuCts.Token).Forget();
         }
-
-        public event IPanelInSharedSpace.ViewShowingCompleteDelegate? ViewShowingComplete;
-        public bool IsVisibleInSharedSpace => State != ControllerState.ViewHidden;
-
-        public async UniTask ShowInSharedSpaceAsync(CancellationToken ct, object parameters = null)
-        {
-   //         ExplorePanelParameter exploreParams = (ExplorePanelParameter)parameters;
-   //         ShowSection(exploreParams.Section);
-   //         ViewShowingComplete?.Invoke(this);
-            await UniTask.CompletedTask;
-        }
-
-        public async UniTask HideInSharedSpaceAsync(CancellationToken ct)
-        {
-            isControlClosing = true;
-
-            await UniTask.WaitUntil(() => State == ControllerState.ViewHidden, PlayerLoopTiming.Update, ct);
-        }
     }
 
     public readonly struct ExplorePanelParameter
     {
         public readonly ExploreSections Section;
         public readonly BackpackSections? BackpackSection;
+
+        /// <summary>
+        /// Whether a specific section has to be opened when the explore panel is shown or not (using the default one).
+        /// </summary>
         public readonly bool IsSectionProvided;
 
         public ExplorePanelParameter(ExploreSections section, BackpackSections? backpackSection = null)
