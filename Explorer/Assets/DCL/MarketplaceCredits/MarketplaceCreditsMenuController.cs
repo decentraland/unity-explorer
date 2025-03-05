@@ -41,7 +41,7 @@ namespace DCL.MarketplaceCredits
 
             showHideMenuCts = showHideMenuCts.SafeRestart();
             view.ShowAsync(showHideMenuCts.Token).Forget();
-            view.OpenSectionView(MarketplaceCreditsSection.WELCOME);
+            OpenSectionView(MarketplaceCreditsSection.WELCOME);
         }
 
         public void ClosePanel()
