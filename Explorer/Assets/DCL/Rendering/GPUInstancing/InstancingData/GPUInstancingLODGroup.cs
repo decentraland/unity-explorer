@@ -1,4 +1,5 @@
-﻿using DCL.Rendering.GPUInstancing.Utils;
+﻿using DCL.Diagnostics;
+using DCL.Rendering.GPUInstancing.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -79,21 +80,21 @@ namespace DCL.Rendering.GPUInstancing.InstancingData
         private void CollectSelfData()
         {
             if (GetComponentsInChildren<GPUInstancingLODGroup>().Length > 1)
-                Debug.LogWarning($"{name} has nested GPU instancing candidates, that could lead to duplication of meshes!");
+                ReportHub.LogWarning(ReportCategory.GPU_INSTANCING, $"{name} has nested GPU instancing candidates, that could lead to duplication of meshes!");
 
             CombinedLodsRenderers = new List<CombinedLodsRenderer>();
 
             LODGroup lodGroup = GetComponent<LODGroup>();
             if (lodGroup == null)
             {
-                Debug.LogWarning("Selected GameObject does not have a LODGroup component.");
+                ReportHub.LogWarning(ReportCategory.GPU_INSTANCING, "Selected GameObject does not have a LODGroup component.");
                 return;
             }
 
             LOD[] lods = lodGroup.GetLODs();
             if (lods.Length == 0)
             {
-                Debug.LogWarning("LODGroup has no LOD levels.");
+                ReportHub.LogWarning(ReportCategory.GPU_INSTANCING, "LODGroup has no LOD levels.");
                 return;
             }
 
@@ -106,7 +107,7 @@ namespace DCL.Rendering.GPUInstancing.InstancingData
 
             if (meshCombiner.IsEmpty())
             {
-                Debug.LogWarning("No valid meshes found to combine.");
+                ReportHub.LogWarning(ReportCategory.GPU_INSTANCING, "No valid meshes found to combine.");
                 return;
             }
 

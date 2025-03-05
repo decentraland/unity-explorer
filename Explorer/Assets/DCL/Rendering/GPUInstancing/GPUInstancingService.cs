@@ -1,4 +1,5 @@
-﻿using DCL.Landscape.Settings;
+﻿using DCL.Diagnostics;
+using DCL.Landscape.Settings;
 using DCL.Rendering.GPUInstancing.InstancingData;
 using System;
 using System.Collections.Generic;
@@ -219,7 +220,7 @@ namespace DCL.Rendering.GPUInstancing
 
                     if (combinedMesh == null)
                     {
-                        Debug.LogWarning($"{candidate.Name} has combined lod renderer equal to null for material {combinedLodRenderer.SharedMaterial.name}", candidate.LODGroup.Reference.gameObject);
+                        ReportHub.LogWarning(ReportCategory.GPU_INSTANCING, $"{candidate.Name} has combined lod renderer equal to null for material {combinedLodRenderer.SharedMaterial.name}");
                         continue;
                     }
 
@@ -241,7 +242,7 @@ namespace DCL.Rendering.GPUInstancing
 
                     buffers.DrawArgs.SetData(buffers.DrawArgsCommandData, 0, 0, count: combinedRenderersCount * _nLODCount);
 
-                    Debug.Log($"Initializing render params for {candidate.Name} with material {combinedLodRenderer.SharedMaterial.name} ", combinedLodRenderer.SharedMaterial);
+                    ReportHub.Log(ReportCategory.GPU_INSTANCING, $"Initializing render params for {candidate.Name} with material {combinedLodRenderer.SharedMaterial.name}");
 
                     combinedLodRenderer.InitializeRenderParams(instancingMaterials);
                     ref RenderParams rparams = ref combinedLodRenderer.RenderParamsArray;

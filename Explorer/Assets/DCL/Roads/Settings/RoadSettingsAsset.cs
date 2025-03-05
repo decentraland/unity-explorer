@@ -1,13 +1,12 @@
+using DCL.Diagnostics;
 using DCL.LOD;
 using DCL.Rendering.GPUInstancing.InstancingData;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEditor;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using Utility;
-using Debug = UnityEngine.Debug;
 
 namespace DCL.Roads.Settings
 {
@@ -32,7 +31,7 @@ namespace DCL.Roads.Settings
             {
                 if (!loadedPrefabs.TryGetValue(roadDescription.RoadModel, out GPUInstancingPrefabData prefab))
                 {
-                    Debug.LogWarning($"Can't find prefab {roadDescription.RoadModel}");
+                    ReportHub.LogWarning(ReportCategory.GPU_INSTANCING, $"Can't find prefab {roadDescription.RoadModel}");
                     continue;
                 }
 
@@ -72,7 +71,7 @@ namespace DCL.Roads.Settings
 
             var tempIndirectCandidates = new Dictionary<GPUInstancingLODGroupWithBuffer, HashSet<PerInstanceBuffer>>();
 
-            Undo.RecordObject(this, "Collect GPU Instancing LOD Groups");
+            UnityEditor.Undo.RecordObject(this, "Collect GPU Instancing LOD Groups");
 
             foreach (RoadDescription roadDescription in RoadDescriptions)
             {
@@ -80,7 +79,7 @@ namespace DCL.Roads.Settings
 
                 if (!loadedPrefabs.TryGetValue(roadDescription.RoadModel, out GPUInstancingPrefabData prefab))
                 {
-                    Debug.LogWarning($"Can't find prefab {roadDescription.RoadModel}, using default");
+                    ReportHub.LogWarning(ReportCategory.GPU_INSTANCING, $"Can't find prefab {roadDescription.RoadModel}, using default");
                     prefab = loadedPrefabs[RoadAssetsPool.DEFAULT_ROAD_KEY];
                 }
 
@@ -97,7 +96,7 @@ namespace DCL.Roads.Settings
                                .OrderBy(group => group.LODGroup.Name)
                                .ToList();
 
-            AssetDatabase.SaveAssetIfDirty(this);
+            UnityEditor.AssetDatabase.SaveAssetIfDirty(this);
             return;
 
             bool IsOutOfRange(Vector2Int roadCoordinate) =>
@@ -111,12 +110,12 @@ namespace DCL.Roads.Settings
 
             foreach (AssetReferenceGameObject assetRef in RoadAssetsReference)
             {
-                string assetPath = AssetDatabase.GUIDToAssetPath(assetRef.AssetGUID);
-                GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(assetPath);
+                string assetPath = UnityEditor.AssetDatabase.GUIDToAssetPath(assetRef.AssetGUID);
+                GameObject prefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>(assetPath);
 
                 if (prefab == null)
                 {
-                    Debug.LogError($"Failed to load prefab at path: {assetPath}");
+                    ReportHub.LogError(ReportCategory.GPU_INSTANCING, $"Failed to load prefab at path: {assetPath}");
                     continue;
                 }
 
@@ -124,7 +123,7 @@ namespace DCL.Roads.Settings
 
                 if (instanceBehaviour == null)
                 {
-                    Debug.LogError($"Prefab {prefab.name} doesn't have PrefabInstanceDataBehaviour component");
+                    ReportHub.LogError(ReportCategory.GPU_INSTANCING, $"Prefab {prefab.name} doesn't have PrefabInstanceDataBehaviour component");
                     continue;
                 }
 

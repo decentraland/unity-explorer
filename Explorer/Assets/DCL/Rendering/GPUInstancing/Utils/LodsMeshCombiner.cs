@@ -1,4 +1,5 @@
-﻿using DCL.Rendering.GPUInstancing.InstancingData;
+﻿using DCL.Diagnostics;
+using DCL.Rendering.GPUInstancing.InstancingData;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -69,13 +70,13 @@ namespace DCL.Rendering.GPUInstancing.Utils
         {
             if (rend is not MeshRenderer)
             {
-                Debug.LogWarning($"Renderer '{rend.name}' is missing in LODGroup assigned renderers.");
+                ReportHub.LogWarning(ReportCategory.GPU_INSTANCING, $"Renderer '{rend.name}' is missing in LODGroup assigned renderers.");
                 return false;
             }
 
             if (meshFilter == null || meshFilter.sharedMesh == null)
             {
-                Debug.LogWarning($"Renderer '{rend.name}' is missing a MeshFilter or its mesh.");
+                ReportHub.LogWarning(ReportCategory.GPU_INSTANCING, $"Renderer '{rend.name}' is missing a MeshFilter or its mesh.");
                 return false;
             }
 
@@ -86,13 +87,13 @@ namespace DCL.Rendering.GPUInstancing.Utils
         {
             if (material == null)
             {
-                Debug.LogWarning("Renderer does not have a material or has not valid shader.");
+                ReportHub.LogWarning(ReportCategory.GPU_INSTANCING, "Renderer does not have a material or has not valid shader.");
                 return false;
             }
 
             if (whitelistShaders == null || whitelistShaders.Length == 0)
             {
-                Debug.LogError("No whitelist shaders defined!");
+                ReportHub.LogError(ReportCategory.GPU_INSTANCING, "No whitelist shaders defined!");
                 return false;
             }
 
@@ -105,7 +106,7 @@ namespace DCL.Rendering.GPUInstancing.Utils
 
             if (!isValid)
             {
-                Debug.LogWarning("Renderer has not a valid shader.");
+                ReportHub.LogWarning(ReportCategory.GPU_INSTANCING, "Renderer has not a valid shader.");
                 return false;
             }
 

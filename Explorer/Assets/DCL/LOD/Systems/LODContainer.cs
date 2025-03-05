@@ -15,7 +15,6 @@ using System.Linq;
 using System.Threading;
 using DCL.Optimization.Pools;
 using DCL.Rendering.GPUInstancing;
-using DCL.Roads.GPUInstancing;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 
