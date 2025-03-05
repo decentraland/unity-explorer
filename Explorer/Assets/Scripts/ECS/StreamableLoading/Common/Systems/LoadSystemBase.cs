@@ -146,7 +146,7 @@ namespace ECS.StreamableLoading.Common.Systems
                     (requestIsNotFulfilled, ongoingRequestResult) = await cachedSource.Task.SuppressCancellationThrow();
 
                     //Temporarly disabled as we don't have partial loading integrated
-                    SynchronizePartialData(state, ongoingRequestResult);
+                    state.SyncOrReplaceChunkData(ongoingRequestResult);
 
                     result = ongoingRequestResult.Result;
 
@@ -181,21 +181,6 @@ namespace ECS.StreamableLoading.Common.Systems
                 result = new StreamableLoadingResult<TAsset>(GetReportCategory(), e);
             }
             finally { FinalizeLoading(entity, intention, result, source, state); }
-        }
-
-        /// <summary>
-        ///     Synchronizes Partial Loading Data of the request that waiting for another requests of the same Asset to finish
-        ///     <para>
-        ///         Provokes Partial Data to be copied in order to keep both promises independent
-        ///     </para>
-        /// </summary>
-        private static void SynchronizePartialData(StreamableLoadingState state, in OngoingRequestResult<TAsset> ongoingRequestResult)
-        {
-            state.PartialDownloadingData?.Dispose();
-            state.PartialDownloadingData = null;
-
-            if (ongoingRequestResult is { PartialDownloadingData: { IsFileFullyDownloaded: false } })
-                state.PartialDownloadingData = new PartialLoadingState(ongoingRequestResult.PartialDownloadingData.Value);
         }
 
         protected virtual void DisposeAbandonedResult(TAsset asset) { }

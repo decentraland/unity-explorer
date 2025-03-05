@@ -55,7 +55,9 @@ namespace ECS.StreamableLoading.Common.Components
                 state.PartialDownloadingData = null;
             },
             collectionCheck: PoolConstants.CHECK_COLLECTIONS,
-            defaultCapacity: PoolConstants.INITIAL_ASSET_PROMISES_PER_SCENE_COUNT, maxSize: PoolConstants.MAX_ASSET_PROMISES_PER_SCENE_COUNT);
+            defaultCapacity: PoolConstants.INITIAL_ASSET_PROMISES_PER_SCENE_COUNT,
+            maxSize: PoolConstants.MAX_ASSET_PROMISES_PER_SCENE_COUNT
+        );
 
         public static StreamableLoadingState Create() =>
             POOL.Get();
@@ -74,14 +76,7 @@ namespace ECS.StreamableLoading.Common.Components
         /// <summary>
         ///     Is set when the partial downloading is supported for the given type of asset promise and has started
         /// </summary>
-        public PartialLoadingState? PartialDownloadingData { get; internal set; }
-
-        public ReadOnlyMemory<byte> GetFullyDownloadedData()
-        {
-            Assert.IsTrue(PartialDownloadingData is { IsFileFullyDownloaded: true });
-            //return PartialDownloadingData!.Value.FullData;
-            throw new NotImplementedException();
-        }
+        public PartialLoadingState? PartialDownloadingData { get; private set; }
 
         public MemoryChain ClaimOwnershipOverFullyDownloadedData()
         {
@@ -150,6 +145,22 @@ namespace ECS.StreamableLoading.Common.Components
         public void SetChunkData(PartialLoadingState partialDownloadingData)
         {
             PartialDownloadingData = partialDownloadingData;
+        }
+
+        /// <summary>
+        ///     Synchronizes Partial Loading Data of the request that waiting for another requests of the same Asset to finish
+        ///     <para>
+        ///         Provokes Partial Data to be copied in order to keep both promises independent
+        ///     </para>
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void SyncOrReplaceChunkData<T>(in OngoingRequestResult<T> ongoingRequestResult)
+        {
+            PartialDownloadingData?.Dispose();
+            PartialDownloadingData = null;
+
+            if (ongoingRequestResult is { PartialDownloadingData: { IsFileFullyDownloaded: false } })
+                PartialDownloadingData = ongoingRequestResult.PartialDownloadingData.Value.DeepCopy();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
