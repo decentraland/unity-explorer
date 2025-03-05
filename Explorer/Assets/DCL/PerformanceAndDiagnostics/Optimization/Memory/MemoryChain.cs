@@ -91,7 +91,7 @@ namespace DCL.Optimization.Memory
         public void AppendData(in MemoryChain data)
         {
             for (int i = 0; i < data.slabs.Count - 1; i++) AppendData(data.slabs[i].AsSpan());
-            var lastSpan = data.slabs[data.slabs.Count - 1].AsSpan();
+            var lastSpan = data.LastSpan();
             AppendData(lastSpan.Slice(0, lastSpan.Length - data.leftSpaceInLast));
         }
 
@@ -295,6 +295,8 @@ namespace DCL.Optimization.Memory
 
     public struct ChainMemoryIterator : IMemoryIterator
     {
+        public static readonly ChainMemoryIterator EMPTY = new (null);
+
         private readonly SlabItem buffer;
         private readonly UnmanagedMemoryManager<byte> unmanagedMemoryManager;
         private readonly IReadOnlyList<SlabItem> slabItems;
@@ -320,8 +322,25 @@ namespace DCL.Optimization.Memory
                 throw new Exception("Buffers have different sizes");
         }
 
+        private ChainMemoryIterator(UnmanagedMemoryManager<byte>? empty)
+        {
+            buffer = new SlabItem();
+
+            unmanagedMemoryManager = empty!;
+
+            slabItems = ArraySegment<SlabItem>.Empty;
+            slabsCount = 0;
+            leftInLastSlab = 0;
+            totalLength = 0;
+
+            index = -1;
+        }
+
         public readonly void Dispose()
         {
+            if (unmanagedMemoryManager == null)
+                return;
+
             ISlabAllocator.SHARED.Release(buffer);
             UnmanagedMemoryManager<byte>.Release(unmanagedMemoryManager);
         }

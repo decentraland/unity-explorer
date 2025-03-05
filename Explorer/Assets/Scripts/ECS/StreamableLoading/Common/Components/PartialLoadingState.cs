@@ -28,9 +28,9 @@ namespace ECS.StreamableLoading.Common.Components
         private readonly bool IsFullyLoaded() =>
             NextRangeStart >= FullFileSize;
 
-        internal void AppendData(ReadOnlyMemory<byte> data)
+        internal void AppendData(ReadOnlySpan<byte> data)
         {
-            memoryOwner.AppendData(data.Span);
+            memoryOwner.AppendData(data);
             NextRangeStart += data.Length;
             IsFileFullyDownloaded = IsFullyLoaded();
         }

@@ -17,7 +17,9 @@ namespace ECS.StreamableLoading.Common
         private static PartialMemoryIterator SerializeInternal(PartialLoadingState data)
         {
             var meta = new Meta(data.FullFileSize, data.IsFileFullyDownloaded);
-            return new PartialMemoryIterator(meta, data.AsIterator());
+            var copy = data.DeepCopy();
+            var transferred = copy.TransferMemoryOwnership();
+            return new PartialMemoryIterator(meta, transferred);
         }
 
         public UniTask<PartialLoadingState> DeserializeAsync(SlicedOwnedMemory<byte> data, CancellationToken token)
@@ -25,7 +27,7 @@ namespace ECS.StreamableLoading.Common
             using (data)
             {
                 var meta = Meta.FromSpan(data.Memory.Span);
-                var fileData = data.Memory.Slice(Meta.META_SIZE);
+                var fileData = data.Memory.Slice(Meta.META_SIZE).Span;
 
                 var partialLoadingState = new PartialLoadingState(meta.MaxFileSize, meta.IsFullyDownloaded);
                 partialLoadingState.AppendData(fileData);
@@ -37,10 +39,11 @@ namespace ECS.StreamableLoading.Common
         {
             private readonly IntPtr ptr;
             private readonly UnmanagedMemoryManager<byte> metaMemory;
+            private readonly MemoryChain ownedChain;
             private ChainMemoryIterator iterator;
             private int index;
 
-            public PartialMemoryIterator(Meta meta, ChainMemoryIterator chainMemoryIterator) : this()
+            public PartialMemoryIterator(Meta meta, MemoryChain ownedChain) : this()
             {
                 unsafe
                 {
@@ -51,16 +54,18 @@ namespace ECS.StreamableLoading.Common
                     meta.ToSpan(span);
                 }
 
-                iterator = chainMemoryIterator;
+                this.ownedChain = ownedChain;
+                iterator = ownedChain.AsMemoryIterator();
                 index = -1;
             }
 
-            public readonly void Dispose()
+            public void Dispose()
             {
                 unsafe { UnsafeUtility.Free(ptr.ToPointer()!, Allocator.Persistent); }
 
                 UnmanagedMemoryManager<byte>.Release(metaMemory);
                 iterator.Dispose();
+                ownedChain.Dispose();
             }
 
             public readonly ReadOnlyMemory<byte> Current
