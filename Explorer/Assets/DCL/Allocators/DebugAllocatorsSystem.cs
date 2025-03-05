@@ -28,7 +28,7 @@ namespace DCL.Allocators
             chunksCount = new ElementBinding<ulong>(0);
             chunksInUseCount = new ElementBinding<ulong>(0);
 
-            var widget = debugBuilder.TryAddWidget(IDebugContainerBuilder.Categories.ANALYTICS);
+            var widget = debugBuilder.TryAddWidget(IDebugContainerBuilder.Categories.ALLOCATORS);
 
             if (widget == null)
                 return;
