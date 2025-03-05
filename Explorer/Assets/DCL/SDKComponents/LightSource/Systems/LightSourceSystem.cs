@@ -123,6 +123,7 @@ namespace DCL.SDKComponents.LightSource.Systems
                 }
                 else
                 {
+                    DereferenceTexture(ref lightSourceComponent.TextureMaskPromise);
                     lightSourceInstance.cookie = null;
                 }
             }
