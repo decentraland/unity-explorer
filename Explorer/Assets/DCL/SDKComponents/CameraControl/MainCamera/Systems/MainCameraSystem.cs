@@ -174,6 +174,7 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
                 previousCameraPosition.HasValue ? Vector3.Distance(virtualCameraInstance.transform.position, previousCameraPosition.Value) : 0f);
 
             VirtualCameraUtils.ConfigureCameraLookAt(World, entitiesMap, virtualCameraComponent.Value);
+            VirtualCameraUtils.ConfigureVirtualCameraFOV(World, entitiesMap, virtualCamCRDTEntity, virtualCameraComponent.Value);
 
             mainCameraComponent.virtualCameraCRDTEntity = virtualCamCRDTEntity;
             mainCameraComponent.virtualCameraInstance = virtualCameraInstance;

@@ -99,6 +99,24 @@ namespace DCL.SDKComponents.CameraControl.MainCamera
             }
         }
 
+        public static void ConfigureVirtualCameraFOV(
+            in World world,
+            IReadOnlyDictionary<CRDTEntity,Entity> entitiesMap,
+            CRDTEntity virtualCamCRDTEntity,
+            in VirtualCameraComponent virtualCameraComponent)
+        {
+            if (!entitiesMap.TryGetValue(virtualCamCRDTEntity, out Entity vCamEntity)) return;
+
+            var pbVirtualCamera = world.Get<PBVirtualCamera>(vCamEntity);
+            if (!pbVirtualCamera.HasFov) return;
+
+            var freeLookCamera = virtualCameraComponent.virtualCameraInstance;
+
+            // Apply to all rigs (top, middle, bottom)
+            freeLookCamera.m_CommonLens = true;
+            freeLookCamera.m_Lens.FieldOfView = pbVirtualCamera.Fov;
+        }
+
         internal static float CalculateDistanceBlendTime(float distanceBetweenCameras, float speedValue) =>
             distanceBetweenCameras / speedValue;
     }
