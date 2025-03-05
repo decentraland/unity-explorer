@@ -59,9 +59,9 @@ namespace DCL.Friends
         private void IdentityChanged()
         {
             fetchCts = fetchCts.SafeRestart();
-            FetchDataASync(fetchCts.Token).Forget();
+            FetchDataAsync(fetchCts.Token).Forget();
 
-            async UniTaskVoid FetchDataASync(CancellationToken ct)
+            async UniTaskVoid FetchDataAsync(CancellationToken ct)
             {
                 UserBlockingStatus blockingStatus = await friendsService.GetUserBlockingStatusAsync(ct);
                 blockedUsers.Clear();

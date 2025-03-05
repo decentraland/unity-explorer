@@ -667,10 +667,10 @@ namespace DCL.Passport
         private void UnblockUser()
         {
             friendshipOperationCts = friendshipOperationCts.SafeRestart();
-            UnblockAndThenChangeInteractionStatus(friendshipOperationCts.Token).Forget();
+            UnblockAndThenChangeInteractionStatusAsync(friendshipOperationCts.Token).Forget();
             return;
 
-            async UniTaskVoid UnblockAndThenChangeInteractionStatus(CancellationToken ct)
+            async UniTaskVoid UnblockAndThenChangeInteractionStatusAsync(CancellationToken ct)
             {
                 await mvcManager.ShowAsync(BlockUserPromptController.IssueCommand(new BlockUserPromptParams(targetProfile!.UserId, targetProfile.Name, BlockUserPromptParams.UserBlockAction.UNBLOCK)), ct);
 
