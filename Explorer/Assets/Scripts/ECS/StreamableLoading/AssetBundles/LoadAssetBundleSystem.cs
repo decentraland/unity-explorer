@@ -52,7 +52,7 @@ namespace ECS.StreamableLoading.AssetBundles
             ReportHub.Log(GetReportCategory(), $"{nameof(ProcessCompletedDataAsync)} Processing: {count}, {intention.Hash} {intention.ExpectedObjectType?.FullName} {intention.CommonArguments.URL.Value}");
             var memoryChain = state.ClaimOwnershipOverFullyDownloadedData();
             AssetBundleData.InMemoryAssetBundle inMemoryAssetBundle = await AssetBundleData.InMemoryAssetBundle.NewAsync(memoryChain);
-            ReportHub.LogProductionInfo($"{nameof(ProcessCompletedDataAsync)} Process finished: {count}, {intention.Hash} {intention.ExpectedObjectType?.FullName} {intention.CommonArguments.URL.Value}");
+            ReportHub.Log(GetReportCategory(), $"{nameof(ProcessCompletedDataAsync)} Process finished: {count}, {intention.Hash} {intention.ExpectedObjectType?.FullName} {intention.CommonArguments.URL.Value}");
 
             // Release budget now to not hold it until dependencies are resolved to prevent a deadlock
             state.AcquiredBudget!.Release();
