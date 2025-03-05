@@ -23,14 +23,16 @@ namespace ECS.StreamableLoading.Common.Components
 
         public int NextRangeStart { get; private set; }
 
-        public bool IsFileFullyDownloaded;
-        public readonly bool FullyDownloaded => NextRangeStart >= FullFileSize;
+        public bool IsFileFullyDownloaded { get; private set; }
+
+        private readonly bool IsFullyLoaded() =>
+            NextRangeStart >= FullFileSize;
 
         internal void AppendData(ReadOnlyMemory<byte> data)
         {
             memoryOwner.AppendData(data.Span);
             NextRangeStart += data.Length;
-            IsFileFullyDownloaded = FullyDownloaded;
+            IsFileFullyDownloaded = IsFullyLoaded();
         }
 
         /// <summary>
@@ -42,6 +44,9 @@ namespace ECS.StreamableLoading.Common.Components
             memoryOwner = MemoryChain.EMPTY;
             return memoryOwnerToReturn;
         }
+
+        public PartialLoadingState DeepCopy() =>
+            new (this, IsFileFullyDownloaded);
 
         public readonly ChainMemoryIterator AsIterator() =>
             memoryOwner.AsMemoryIterator();

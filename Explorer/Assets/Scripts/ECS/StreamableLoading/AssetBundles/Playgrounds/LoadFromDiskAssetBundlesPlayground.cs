@@ -20,14 +20,14 @@ namespace DCL.AssetsProvision.Playgrounds
                 // 5 is meta
                 fs.Seek(5, SeekOrigin.Begin);
 
-                using var c = new MemoryChain(ISlabAllocator.SHARED);
+                var c = new MemoryChain(ISlabAllocator.SHARED);
                 using var memory = new MemoryStream((int)(fs.Length - 5));
                 await fs.CopyToAsync(memory);
 
                 c.AppendData(memory.ToArray());
-                using var stream = c.AsStream();
+                using var stream = c.ToStream();
 
-                var ab = await AssetBundle.LoadFromStreamAsync(stream);
+                var ab = AssetBundle.LoadFromStream(stream);
                 if (ab) ab.Unload(true);
             }
         }

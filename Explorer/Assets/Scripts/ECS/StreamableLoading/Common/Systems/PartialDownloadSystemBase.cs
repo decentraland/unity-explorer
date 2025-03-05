@@ -69,6 +69,7 @@ namespace ECS.StreamableLoading.Common.Systems
                     {
                         PartialLoadingState cachedState = cachedPartial.Value.Value;
                         state.SetChunkData(cachedState);
+
                         // If the cached data is complete, process it directly
                         if (cachedState.IsFileFullyDownloaded)
                             return await ProcessCompletedDataAsync(state, intention, partition, ct);
@@ -125,17 +126,15 @@ namespace ECS.StreamableLoading.Common.Systems
                     state.SetChunkData(partialState);
 
                     // Check if the download is complete
-                    if (partialState.FullyDownloaded)
+                    if (partialState.IsFileFullyDownloaded)
                         return await ProcessCompletedDataAsync(state, intention, partition, ct);
 
                     return default(StreamableLoadingResult<TData>);
                 }
+
                 //This catch is a workaround for the loading breaking bug caused by multiple scenes having same asset hash
                 //but with different file sizes, it won't load the asset but won't block the loading
-                catch (UnityWebRequestException e) when (e.ResponseCode == 416)
-                {
-                    return new StreamableLoadingResult<TData>(new ReportData(), e);
-                }
+                catch (UnityWebRequestException e) when (e.ResponseCode == 416) { return new StreamableLoadingResult<TData>(new ReportData(), e); }
                 finally
                 {
                     if (downloadedData.DestinationArray != null)

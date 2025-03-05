@@ -28,14 +28,12 @@ namespace ECS.StreamableLoading.AssetBundles
             private const string METRICS_FILENAME = "metrics.json";
 
             internal readonly AssetBundle Bundle;
-            private readonly MemoryChain memoryChain;
             private readonly Stream stream;
             private bool unloaded;
 
-            private InMemoryAssetBundle(AssetBundle bundle, MemoryChain memoryChain, Stream stream)
+            private InMemoryAssetBundle(AssetBundle bundle, Stream stream)
             {
                 this.Bundle = bundle;
-                this.memoryChain = memoryChain;
                 this.stream = stream;
                 unloaded = false;
             }
@@ -44,16 +42,16 @@ namespace ECS.StreamableLoading.AssetBundles
 
             public static async UniTask<InMemoryAssetBundle> NewAsync(MemoryChain memoryChain)
             {
-                var memoryStream = memoryChain.AsStream();
+                var memoryStream = memoryChain.ToStream();
 
                 await UniTask.SwitchToMainThread();
                 var assetBundle = await AssetBundle.LoadFromStreamAsync(memoryStream)!;
 
-                return new InMemoryAssetBundle(assetBundle, memoryChain, memoryStream);
+                return new InMemoryAssetBundle(assetBundle, memoryStream);
             }
 
             public static InMemoryAssetBundle FromAssetBundle(AssetBundle assetBundle) =>
-                new (assetBundle, new MemoryChain(), Stream.Null!);
+                new (assetBundle, Stream.Null!);
 
             public async UniTask UnloadNotAllObjectsAsync()
             {
@@ -76,7 +74,6 @@ namespace ECS.StreamableLoading.AssetBundles
                 await UniTask.SwitchToMainThread();
                 if (Bundle) await Bundle.UnloadAsync(true)!;
                 stream.Dispose();
-                memoryChain.Dispose();
             }
 
             public async UniTask<(string? metrics, string? metadata)> MetricsAndMetadataJsonAsync(AssetBundleLoadingMutex loadingMutex, CancellationToken ct)

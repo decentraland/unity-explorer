@@ -1,7 +1,6 @@
 using DCL.Optimization.Memory;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
-using ECS.StreamableLoading.Cache.Disk;
 using System;
 using System.Runtime.CompilerServices;
 using UnityEngine.Assertions;
@@ -79,14 +78,14 @@ namespace ECS.StreamableLoading.Common.Components
 
         public ReadOnlyMemory<byte> GetFullyDownloadedData()
         {
-            Assert.IsTrue(PartialDownloadingData is { FullyDownloaded: true });
+            Assert.IsTrue(PartialDownloadingData is { IsFileFullyDownloaded: true });
             //return PartialDownloadingData!.Value.FullData;
             throw new NotImplementedException();
         }
 
         public MemoryChain ClaimOwnershipOverFullyDownloadedData()
         {
-            Assert.IsTrue(PartialDownloadingData is { FullyDownloaded: true });
+            Assert.IsTrue(PartialDownloadingData is { IsFileFullyDownloaded: true });
             PartialLoadingState value = PartialDownloadingData!.Value;
             MemoryChain owner = value.TransferMemoryOwnership();
             PartialDownloadingData = value;

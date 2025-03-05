@@ -194,7 +194,7 @@ namespace ECS.StreamableLoading.Common.Systems
             state.PartialDownloadingData?.Dispose();
             state.PartialDownloadingData = null;
 
-            if (ongoingRequestResult is { PartialDownloadingData: { FullyDownloaded: false } })
+            if (ongoingRequestResult is { PartialDownloadingData: { IsFileFullyDownloaded: false } })
                 state.PartialDownloadingData = new PartialLoadingState(ongoingRequestResult.PartialDownloadingData.Value);
         }
 
@@ -210,7 +210,7 @@ namespace ECS.StreamableLoading.Common.Systems
             state.DisposeBudgetIfExists();
 
             // Special path for partial downloading
-            if (state.PartialDownloadingData is { FullyDownloaded: false } && !cache.IrrecoverableFailures.TryGetValue(intention.CommonArguments.GetCacheableURL(), out _))
+            if (state.PartialDownloadingData is { IsFileFullyDownloaded: false } && !cache.IrrecoverableFailures.TryGetValue(intention.CommonArguments.GetCacheableURL(), out _))
             {
                 // Return the promise for re-evaluation
                 state.RequestReevaluate();
