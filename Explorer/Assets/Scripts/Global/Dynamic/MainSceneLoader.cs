@@ -352,8 +352,7 @@ namespace Global.Dynamic
                 diskCleanUp = new LRUDiskCleanUp(cacheDirectory, filesLock);
 
             var partialCache = new DiskCache<PartialLoadingState, PartialDiskSerializer.PartialMemoryIterator>(new DiskCache(cacheDirectory, filesLock, diskCleanUp), new PartialDiskSerializer());
-            //return partialCache;
-            return IDiskCache<PartialLoadingState>.Null.INSTANCE;
+            return partialCache;
         }
 
         private static IDiskCache NewInstanceDiskCache(IAppArgs appArgs, RealmLaunchSettings launchSettings)
