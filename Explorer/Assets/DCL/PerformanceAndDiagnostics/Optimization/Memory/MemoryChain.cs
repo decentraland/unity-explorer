@@ -331,7 +331,7 @@ namespace DCL.Optimization.Memory
                 var slab = slabItems[index].AsSpan();
                 int bytesToRead = IsLast() ? slab.Length - leftInLastSlab : slab.Length;
                 slab.Slice(0, bytesToRead).CopyTo(unmanagedMemoryManager.Memory.Span);
-                return unmanagedMemoryManager.Memory;
+                return unmanagedMemoryManager.Memory.Slice(0, bytesToRead);
             }
         }
 
