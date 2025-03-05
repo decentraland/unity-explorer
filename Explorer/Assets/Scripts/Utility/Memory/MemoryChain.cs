@@ -210,22 +210,13 @@ namespace Utility.Memory
 
             public override long Seek(long offset, SeekOrigin origin)
             {
-                long newPos;
-
-                switch (origin)
-                {
-                    case SeekOrigin.Begin:
-                        newPos = offset;
-                        break;
-                    case SeekOrigin.Current:
-                        newPos = totalRead + offset;
-                        break;
-                    case SeekOrigin.End:
-                        newPos = totalLength + offset;
-                        break;
-                    default:
-                        throw new ArgumentOutOfRangeException(nameof(origin), "Invalid seek origin");
-                }
+                long newPos = origin switch
+                              {
+                                  SeekOrigin.Begin => offset,
+                                  SeekOrigin.Current => totalRead + offset,
+                                  SeekOrigin.End => totalLength + offset,
+                                  _ => throw new ArgumentOutOfRangeException(nameof(origin), "Invalid seek origin")
+                              };
 
                 if (newPos < 0 || newPos > totalLength)
                     throw new ArgumentOutOfRangeException(nameof(offset), $"Seek position is out of bounds, offset {offset}, newPos {newPos}, total length {totalLength}");

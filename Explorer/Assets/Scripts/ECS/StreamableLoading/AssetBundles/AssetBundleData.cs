@@ -19,6 +19,9 @@ namespace ECS.StreamableLoading.AssetBundles
     /// </summary>
     public class AssetBundleData : StreamableRefCountData<AssetBundle>
     {
+        /// <summary>
+        /// Keeps ownership of MemoryChain because its lifetime has to be aligned with the asset bundle
+        /// </summary>
         public class InMemoryAssetBundle
         {
             private const string METADATA_FILENAME = "metadata.json";
