@@ -91,7 +91,8 @@ namespace DCL.Optimization.Memory
         public void AppendData(in MemoryChain data)
         {
             for (int i = 0; i < data.slabs.Count - 1; i++) AppendData(data.slabs[i].AsSpan());
-            AppendData(LastSpan().Slice(0, data.leftSpaceInLast));
+            var lastSpan = data.slabs[data.slabs.Count - 1].AsSpan();
+            AppendData(lastSpan.Slice(0, lastSpan.Length - data.leftSpaceInLast));
         }
 
         public unsafe void AppendData(void* memory, int size)
@@ -100,10 +101,10 @@ namespace DCL.Optimization.Memory
         }
 
         /// <summary>
-        /// Doesn't borrow MemoryChain and returns a stream that reads from it
+        /// Consumes MemoryChain and returns a stream that reads from it
         /// </summary>
         /// <returns></returns>
-        public readonly Stream AsStream() =>
+        public Stream ToStream() =>
             ChainStream.New(this);
 
         public readonly ChainMemoryIterator AsMemoryIterator() =>
@@ -262,17 +263,21 @@ namespace DCL.Optimization.Memory
 
             protected override void Dispose(bool disposing)
             {
-                base.Dispose(disposing);
+                lock (INSTANCES)
+                {
+                    base.Dispose(disposing);
 
-                if (!disposing)
-                    lock (INSTANCES)
-                    {
-                        chain = EMPTY;
-                        slabIndex = 0;
-                        slabOffset = 0;
-                        totalRead = 0;
-                        INSTANCES.Add(this);
-                    }
+                    if (disposing)
+                        return;
+
+                    chain.Dispose();
+
+                    chain = EMPTY;
+                    slabIndex = 0;
+                    slabOffset = 0;
+                    totalRead = 0;
+                    INSTANCES.Add(this);
+                }
             }
 
             public override bool CanRead => true;
@@ -292,7 +297,7 @@ namespace DCL.Optimization.Memory
     {
         private readonly SlabItem buffer;
         private readonly UnmanagedMemoryManager<byte> unmanagedMemoryManager;
-        private readonly List<SlabItem> slabItems;
+        private readonly IReadOnlyList<SlabItem> slabItems;
         private readonly int slabsCount;
         private readonly int leftInLastSlab;
         private readonly int totalLength;
