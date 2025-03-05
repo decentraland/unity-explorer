@@ -26,21 +26,14 @@ namespace SceneRuntime.Apis.Modules.RestrictedActionsApi
 
         [UsedImplicitly]
         public void MovePlayerTo(
-            double newRelativePositionX, double newRelativePositionY, double newRelativePositionZ)
-        {
-            api.TryMovePlayerTo(
-                new Vector3((float)newRelativePositionX, (float)newRelativePositionY, (float)newRelativePositionZ),
-                null);
-        }
-
-        [UsedImplicitly]
-        public void MovePlayerTo(
             double newRelativePositionX, double newRelativePositionY, double newRelativePositionZ,
-            double cameraTargetX, double cameraTargetY, double cameraTargetZ)
+            double? cameraTargetX, double? cameraTargetY, double? cameraTargetZ,
+            double? avatarTargetX, double? avatarTargetY, double? avatarTargetZ)
         {
             api.TryMovePlayerTo(
                 new Vector3((float)newRelativePositionX, (float)newRelativePositionY, (float)newRelativePositionZ),
-                new Vector3((float)cameraTargetX, (float)cameraTargetY, (float)cameraTargetZ));
+                cameraTargetX.HasValue && cameraTargetY.HasValue && cameraTargetZ.HasValue ? new Vector3((float)cameraTargetX, (float)cameraTargetY, (float)cameraTargetZ) : null,
+                avatarTargetX.HasValue && avatarTargetY.HasValue && avatarTargetZ.HasValue ? new Vector3((float)avatarTargetX, (float)avatarTargetY, (float)avatarTargetZ) : null);
         }
 
         [UsedImplicitly]

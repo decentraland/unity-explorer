@@ -78,7 +78,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             contextMenuFriendProfile = friendProfile;
 
             userProfileContextMenuControlSettings.SetInitialData(friendProfile.Name, friendProfile.Address, friendProfile.HasClaimedName,
-                view.ChatEntryConfiguration.GetNameColor(friendProfile.Name), UserProfileContextMenuControlSettings.FriendshipStatus.FRIEND,
+                friendProfile.UserNameColor, UserProfileContextMenuControlSettings.FriendshipStatus.FRIEND,
                 profileThumbnailCache.GetThumbnail(friendProfile.Address.ToString()));
 
             elementView.CanUnHover = false;

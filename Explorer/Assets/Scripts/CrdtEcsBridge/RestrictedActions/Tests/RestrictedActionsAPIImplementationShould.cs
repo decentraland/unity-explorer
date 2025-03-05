@@ -55,21 +55,25 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
         }
 
         [Test]
-        [TestCase(true)]
-        [TestCase(false)]
-        public void MovePlayerTo(bool withCameraTarget)
+        [TestCase(true, true)]
+        [TestCase(false, true)]
+        [TestCase(true, false)]
+        [TestCase(false, false)]
+        public void MovePlayerTo(bool withCameraTarget, bool withRotation)
         {
             // Arrange
             Vector3 testNewRelativePosition = new Vector3(5, 5, 3);
             Vector3? testCameraTarget = withCameraTarget ? new Vector3(5, 3, 2) : null;
+            Vector3? testAvatarTarget = withCameraTarget ? new Vector3(2, 6, -3) : null;
 
             // Act
-            restrictedActionsAPIImplementation.TryMovePlayerTo(testNewRelativePosition, testCameraTarget);
+            restrictedActionsAPIImplementation.TryMovePlayerTo(testNewRelativePosition, testCameraTarget, testAvatarTarget);
 
             // Assert
             globalWorldActions.Received(1).MoveAndRotatePlayer(
                 sceneData.Geometry.BaseParcelPosition + testNewRelativePosition,
-                sceneData.Geometry.BaseParcelPosition + testCameraTarget);
+                withCameraTarget ? sceneData.Geometry.BaseParcelPosition + testCameraTarget : null,
+                testAvatarTarget);
 
             globalWorldActions.Received(1).RotateCamera(
                 withCameraTarget ? sceneData.Geometry.BaseParcelPosition + testCameraTarget : null,

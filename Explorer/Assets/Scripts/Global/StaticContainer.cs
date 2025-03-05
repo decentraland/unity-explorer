@@ -37,7 +37,6 @@ using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.Reporting;
 using Global.AppArgs;
-using SceneRunner.Mapping;
 using System.Collections.Generic;
 using System.Threading;
 using DCL.PerformanceAndDiagnostics.Analytics;
@@ -52,6 +51,7 @@ using ECS.StreamableLoading.Textures;
 using Global.Dynamic.LaunchModes;
 using Plugins.TexturesFuse.TexturesServerWrap.Unzips;
 using PortableExperiences.Controller;
+using SceneRunner.Mapping;
 using System.Buffers;
 using System.IO;
 using UnityEngine;
@@ -123,6 +123,7 @@ namespace Global
             QualityContainer.Dispose();
             Profiler.Dispose();
             texturesFuse.Dispose();
+            SceneRestrictionBusController.Dispose();
         }
 
         public async UniTask InitializeAsync(StaticSettings settings, CancellationToken ct)
@@ -220,7 +221,7 @@ namespace Global
                 container.FeatureFlagsCache);
 
             ArrayPool<byte> buffersPool = ArrayPool<byte>.Create(1024 * 1024 * 50, 50);
-            var textureDiskCache = new DiskCache<Texture2DData>(diskCache, new TextureDiskSerializer());
+            var textureDiskCache = new DiskCache<Texture2DData, SerializeMemoryIterator<TextureDiskSerializer.State>>(diskCache, new TextureDiskSerializer());
             var assetBundlePlugin = new AssetBundlesPlugin(reportHandlingSettings, container.CacheCleaner, container.WebRequestsContainer.WebRequestController, buffersPool, partialsDiskCache);
             var textureResolvePlugin = new TexturesLoadingPlugin(container.WebRequestsContainer.WebRequestController, container.CacheCleaner, textureDiskCache, launchMode);
 

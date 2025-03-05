@@ -1,6 +1,5 @@
 using DCL.Audio;
 using UnityEngine;
-using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace DCL.Chat
@@ -8,13 +7,13 @@ namespace DCL.Chat
     public class EmojiButtonView : MonoBehaviour
     {
         [field: SerializeField]
-        public Button Button { get; private set;}
+        public Button Button { get; private set; }
 
         [field: SerializeField]
-        public Image OffSprite { get; private set;}
+        public Image OffSprite { get; private set; }
 
         [field: SerializeField]
-        public Image OnSprite { get; private set;}
+        public Image OnSprite { get; private set; }
 
         [field: SerializeField]
         private Color unfocusedColor;

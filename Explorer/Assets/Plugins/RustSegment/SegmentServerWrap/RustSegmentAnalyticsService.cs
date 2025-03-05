@@ -33,7 +33,10 @@ namespace Plugins.RustSegment.SegmentServerWrap
 
         private static volatile RustSegmentAnalyticsService? current;
 
-        public RustSegmentAnalyticsService(string writerKey)
+        private long trackId;
+        private long flushId;
+
+        public RustSegmentAnalyticsService(string writerKey, string? anonId)
         {
             if (string.IsNullOrWhiteSpace(writerKey))
                 throw new ArgumentNullException(nameof(writerKey), "Invalid key is null or empty");
@@ -41,7 +44,7 @@ namespace Plugins.RustSegment.SegmentServerWrap
             if (current != null)
                 throw new Exception("Rust Segment previous instance is not disposed");
 
-            this.anonId = SystemInfo.deviceUniqueIdentifier!;
+            this.anonId = anonId ?? SystemInfo.deviceUniqueIdentifier!;
 
             using var mWriterKey = new MarshaledString(writerKey);
             bool result = NativeMethods.SegmentServerInitialize(mWriterKey.Ptr, Callback);
@@ -111,6 +114,9 @@ namespace Plugins.RustSegment.SegmentServerWrap
                 list.Add(mContext);
 
                 afterClean.Add(operationId, (Operation.Track, list));
+
+                trackId++;
+                ReportHub.Log(ReportCategory.ANALYTICS, $"{nameof(RustSegmentAnalyticsService)} Track scheduled operationId: {operationId} trackId: {trackId}");
             }
         }
 
@@ -126,8 +132,14 @@ namespace Plugins.RustSegment.SegmentServerWrap
                 ulong operationId = NativeMethods.SegmentServerFlush();
                 AlertIfInvalid(operationId);
                 afterClean.Add(operationId, (Operation.Flush, ListPool<MarshaledString>.Get()!));
+
+                flushId++;
+                ReportHub.Log(ReportCategory.ANALYTICS, $"{nameof(RustSegmentAnalyticsService)} Flush scheduled operationId: {operationId} flushId: {flushId}");
             }
         }
+
+        public static ulong UnflushedCount() =>
+            NativeMethods.SegmentServerUnFlushedBatchesCount();
 
         [MonoPInvokeCallback(typeof(NativeMethods.SegmentFfiCallback))]
         private static void Callback(ulong operationId, NativeMethods.Response response)
