@@ -102,14 +102,16 @@ namespace ECS.SceneLifeCycle.SceneDefinition
                     while (charPosition < readerPosition)
                     {
                         int charSize = UTF8Utility.UTF8_CHAR_SIZE[dataPtr[startByte]];
-                        charPosition += (charSize >> 2) + 1;
                         startByte += charSize;
+
+                        // Code points that need 4 bytes in UTF-8 need two chars in UTF-16.
+                        charPosition += (charSize >> 2) + 1;
                     }
 
                     var scene = serializer.Deserialize<SceneEntityDefinition>(jsonReader);
 
                     if (jsonReader.LineNumber != 1)
-                        throw new NotImplementedException("Can't parse json that contains newlines");
+                        throw new NotImplementedException("Can't parse multi-line json");
 
                     int endByte = startByte;
                     readerPosition = jsonReader.LinePosition;
@@ -117,8 +119,8 @@ namespace ECS.SceneLifeCycle.SceneDefinition
                     while (charPosition < readerPosition)
                     {
                         int charSize = UTF8Utility.UTF8_CHAR_SIZE[dataPtr[endByte]];
-                        charPosition += (charSize >> 2) + 1;
                         endByte += charSize;
+                        charPosition += (charSize >> 2) + 1;
                     }
 
                     if (scene != null)

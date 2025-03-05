@@ -1,7 +1,11 @@
 ﻿namespace DCL.Utilities
 {
-    public class UTF8Utility
+    public static class UTF8Utility
     {
+        /// <summary>
+        /// A lookup table that tells you the size of a Unicode code point in UTF-8 given its first
+        /// byte. Note that supplementary code points (4 bytes in UTF-8) require two chars in UTF-16.
+        /// </summary>
         public static readonly byte[] UTF8_CHAR_SIZE;
 
         static UTF8Utility()
