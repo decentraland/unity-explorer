@@ -407,11 +407,11 @@
       }
     },
     "decentraland.grassshader": {
-      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/StylizedGrassShader#feat/updategrassshaderforindirect",
+      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/StylizedGrassShader",
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "add488e1316f86e7c874a4ba5d53c9d06ef7588c"
+      "hash": "a1c9ff43b1fe6a20c594d719a750cb42ed3c02c6"
     },
     "io.sentry.unity": {
       "version": "https://github.com/getsentry/unity.git#2.1.3",
