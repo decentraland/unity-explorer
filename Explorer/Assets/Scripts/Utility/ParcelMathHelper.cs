@@ -147,8 +147,8 @@ namespace Utility
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool Contains(this in SceneCircumscribedPlanes boundingPlanes, Bounds bounds)
         {
-            float shrinkAmount = Mathf.Min(bounds.size.x * 0.5f,
-                Mathf.Min(bounds.size.z * 0.5f, BOUNDS_OFFSET_EPSILON));
+            float shrinkAmount = Mathf.Min(bounds.size.x / 2,
+                Mathf.Min(bounds.size.z / 2, BOUNDS_OFFSET_EPSILON));
 
             bounds.Expand(-shrinkAmount);
 
