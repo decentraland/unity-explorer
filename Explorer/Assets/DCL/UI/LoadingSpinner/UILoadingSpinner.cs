@@ -38,8 +38,8 @@ namespace DCL.UI.LoadingSpinner
             else
             {
                 material = new Material(img.material);
-                img.material = material;
             }
+            img.material = material;
         }
 
         private void UpdateValues()
