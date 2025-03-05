@@ -1,5 +1,4 @@
 using Arch.Core;
-using AssetManagement;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Optimization.Hashing;
@@ -59,7 +58,10 @@ namespace ECS.StreamableLoading.Common.Systems
 
                 bool isQualifiedForDiskCache = intention.IsQualifiedForDiskCache();
 
-                if (isQualifiedForDiskCache)
+                diskHashKey = diskHashCompute.ComputeHash(intention);
+
+                //TODO commented yet to explore the issue with the crash
+                if (false)
                 {
                     diskHashKey = diskHashCompute.ComputeHash(intention);
 
@@ -121,7 +123,7 @@ namespace ECS.StreamableLoading.Common.Systems
                     partialState.AppendData(downloadedData.DestinationArray.AsMemory()[..finalBytesCount].Span);
 
                     if (isQualifiedForDiskCache)
-                        partialDiskCache.PutAsync(diskHashKey!.Value, PARTIALS_FILES_EXTENSION, partialState, ct).Forget();
+                        PutToDisk(diskHashKey.Value, partialState, ct).Forget();
 
                     state.SetChunkData(partialState);
 
@@ -142,6 +144,17 @@ namespace ECS.StreamableLoading.Common.Systems
                 }
             }
             finally { diskHashKey?.Dispose(); }
+        }
+
+        /// <summary>
+        /// Makes copy and puts it to disk without blocking the main load flow
+        /// </summary>
+        private async UniTaskVoid PutToDisk(HashKey diskHashKey, PartialLoadingState partialState, CancellationToken ct)
+        {
+            //TODO implement reference counting to avoid copying
+            // without copying it causes crash due a race condition
+            var copy = partialState.DeepCopy();
+            await partialDiskCache.PutAsync(diskHashKey, PARTIALS_FILES_EXTENSION, copy, ct);
         }
 
         protected abstract UniTask<StreamableLoadingResult<TData>> ProcessCompletedDataAsync(StreamableLoadingState state, TIntention intention, IPartitionComponent partition, CancellationToken ct);

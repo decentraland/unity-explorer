@@ -15,10 +15,7 @@ namespace ECS.StreamableLoading.Common
         private static PartialMemoryIterator SerializeInternal(PartialLoadingState data)
         {
             var meta = new Meta(data.FullFileSize, data.IsFileFullyDownloaded);
-            //TODO implement reference counting to avoid copying
-            var copy = data.DeepCopy();
-            var transferred = copy.TransferMemoryOwnership();
-            return new PartialMemoryIterator(meta, transferred);
+            return new PartialMemoryIterator(meta, data.PeekMemory(), false);
         }
 
         public UniTask<PartialLoadingState> DeserializeAsync(SlicedOwnedMemory<byte> data, CancellationToken token)
@@ -39,10 +36,11 @@ namespace ECS.StreamableLoading.Common
             private readonly IntPtr ptr;
             private readonly UnmanagedMemoryManager<byte> metaMemory;
             private readonly MemoryChain ownedChain;
+            private readonly bool ownChain;
             private ChainMemoryIterator iterator;
             private int index;
 
-            public PartialMemoryIterator(Meta meta, MemoryChain ownedChain) : this()
+            public PartialMemoryIterator(Meta meta, MemoryChain ownedChain, bool ownChain) : this()
             {
                 unsafe
                 {
@@ -53,6 +51,7 @@ namespace ECS.StreamableLoading.Common
                 }
 
                 this.ownedChain = ownedChain;
+                this.ownChain = ownChain;
                 iterator = ownedChain.AsMemoryIterator();
                 index = -1;
             }
@@ -63,7 +62,9 @@ namespace ECS.StreamableLoading.Common
 
                 UnmanagedMemoryManager<byte>.Release(metaMemory);
                 iterator.Dispose();
-                ownedChain.Dispose();
+
+                if (ownChain)
+                    ownedChain.Dispose();
             }
 
             public readonly ReadOnlyMemory<byte> Current

@@ -35,6 +35,9 @@ namespace ECS.StreamableLoading.Common.Components
             IsFileFullyDownloaded = IsFullyLoaded();
         }
 
+        internal MemoryChain PeekMemory() =>
+            memoryOwner;
+
         /// <summary>
         ///     When the memory ownership is transferred, the responsibility to dispose of the memory will be on the external caller
         /// </summary>
