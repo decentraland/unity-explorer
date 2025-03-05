@@ -9,7 +9,7 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
     public class LogMessagePipe : IMessagePipe
     {
         private readonly IMessagePipe origin;
-         private readonly string fromPipe;
+        private readonly string fromPipe;
         private readonly Dictionary<Type, string> cachedMessages = new ();
 
         public LogMessagePipe(IMessagePipe origin, string fromPipe)
@@ -24,17 +24,22 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
             return origin.NewMessage<T>();
         }
 
-        public void Subscribe<T>(Packet.MessageOneofCase ofCase, Action<ReceivedMessage<T>> onMessageReceived) where T: class, IMessage, new()
+        public void Subscribe<T>(Packet.MessageOneofCase ofCase, Action<ReceivedMessage<T>> onMessageReceived, IMessagePipe.ThreadStrict threadStrict) where T: class, IMessage, new()
         {
             ReportHub.Log(
                 ReportCategory.LIVEKIT, $"From: {fromPipe} LogMessagePipe: Subscribing to messages of type {typeof(T).FullName}");
 
-            origin.Subscribe<T>(ofCase, rm =>
-            {
-                ReportHub.Log(
-                    ReportCategory.LIVEKIT,$"From: {fromPipe} LogMessagePipe: Received message of type {typeof(T).FullName} with content {rm.Payload} from {rm.FromWalletId}");
-                onMessageReceived(rm);
-            });
+            origin.Subscribe<T>(
+                ofCase,
+                rm =>
+                {
+                    ReportHub.Log(
+                        ReportCategory.LIVEKIT, $"From: {fromPipe} LogMessagePipe: Received message of type {typeof(T).FullName} with content {rm.Payload} from {rm.FromWalletId}");
+
+                    onMessageReceived(rm);
+                },
+                threadStrict
+            );
         }
 
         public void Dispose()
