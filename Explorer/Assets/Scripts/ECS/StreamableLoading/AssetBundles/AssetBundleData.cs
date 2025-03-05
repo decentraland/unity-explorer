@@ -1,9 +1,15 @@
-﻿using DCL.Diagnostics;
+﻿using Cysharp.Threading.Tasks;
+using Cysharp.Threading.Tasks.Triggers;
+using DCL.Diagnostics;
 using DCL.Profiling;
+using DCL.WebRequests;
 using System;
+using System.IO;
+using System.Threading;
 using Unity.Profiling;
 using UnityEngine;
 using UnityEngine.Assertions;
+using Utility.Memory;
 using Object = UnityEngine.Object;
 
 namespace ECS.StreamableLoading.AssetBundles
@@ -13,10 +19,84 @@ namespace ECS.StreamableLoading.AssetBundles
     /// </summary>
     public class AssetBundleData : StreamableRefCountData<AssetBundle>
     {
+        public class InMemoryAssetBundle
+        {
+            private const string METADATA_FILENAME = "metadata.json";
+            private const string METRICS_FILENAME = "metrics.json";
+
+            internal readonly AssetBundle Bundle;
+            private readonly MemoryChain memoryChain;
+            private readonly Stream stream;
+            private bool unloaded;
+
+            private InMemoryAssetBundle(AssetBundle bundle, MemoryChain memoryChain, Stream stream)
+            {
+                this.Bundle = bundle;
+                this.memoryChain = memoryChain;
+                this.stream = stream;
+                unloaded = false;
+            }
+
+            public bool IsEmpty => Bundle == null;
+
+            public static async UniTask<InMemoryAssetBundle> NewAsync(MemoryChain memoryChain)
+            {
+                var memoryStream = memoryChain.AsStream();
+
+                await UniTask.SwitchToMainThread();
+                var assetBundle = await AssetBundle.LoadFromStreamAsync(memoryStream)!;
+
+                return new InMemoryAssetBundle(assetBundle, memoryChain, memoryStream);
+            }
+
+            public static InMemoryAssetBundle FromAssetBundle(AssetBundle assetBundle) =>
+                new (assetBundle, new MemoryChain(), Stream.Null!);
+
+            public async UniTask UnloadNotAllObjectsAsync()
+            {
+                if (Bundle)
+                {
+                    await UniTask.SwitchToMainThread();
+                    await Bundle.UnloadAsync(false)!;
+                }
+            }
+
+            public async UniTask UnloadAsync()
+            {
+                if (unloaded)
+                {
+                    ReportHub.LogError(ReportCategory.ASSET_BUNDLES, "Asset bundle already unloaded");
+                    return;
+                }
+
+                unloaded = true;
+                await UniTask.SwitchToMainThread();
+                if (Bundle) await Bundle.UnloadAsync(true)!;
+                stream.Dispose();
+                memoryChain.Dispose();
+            }
+
+            public async UniTask<(string? metrics, string? metadata)> MetricsAndMetadataJsonAsync(AssetBundleLoadingMutex loadingMutex, CancellationToken ct)
+            {
+                if (unloaded)
+                    throw new Exception("Already unloaded");
+
+                string? metricsJson;
+                string? metadataJson;
+
+                using (AssetBundleLoadingMutex.LoadingRegion _ = await loadingMutex.AcquireAsync(ct))
+                {
+                    metricsJson = Bundle.LoadAsset<TextAsset>(METRICS_FILENAME)?.text;
+                    metadataJson = Bundle.LoadAsset<TextAsset>(METADATA_FILENAME)?.text;
+                }
+
+                return (metricsJson, metadataJson);
+            }
+        }
+
         private readonly Object? mainAsset;
         private readonly Type? assetType;
-
-        internal AssetBundle AssetBundle => Asset;
+        private readonly InMemoryAssetBundle inMemoryAssetBundle;
 
         public readonly AssetBundleData[] Dependencies;
 
@@ -26,9 +106,9 @@ namespace ECS.StreamableLoading.AssetBundles
 
         private bool unloaded;
 
-        public AssetBundleData(AssetBundle assetBundle, AssetBundleMetrics? metrics, Object mainAsset, Type assetType, AssetBundleData[] dependencies,
+        public AssetBundleData(InMemoryAssetBundle assetBundle, AssetBundleMetrics? metrics, Object mainAsset, Type assetType, AssetBundleData[] dependencies,
             string version = "", string source = "")
-            : base(assetBundle, ReportCategory.ASSET_BUNDLES)
+            : base(assetBundle.Bundle, ReportCategory.ASSET_BUNDLES)
         {
             Metrics = metrics;
 
@@ -36,23 +116,26 @@ namespace ECS.StreamableLoading.AssetBundles
             Dependencies = dependencies;
             this.assetType = assetType;
 
-            description = $"AB:{AssetBundle?.name}_{version}_{source}";
+            description = $"AB:{Asset?.name}_{version}_{source}";
+
+            this.inMemoryAssetBundle = assetBundle;
         }
 
         /// <summary>
         ///     Constructor for dependencies (with the unknown asset type)
         /// </summary>
-        internal AssetBundleData(AssetBundle assetBundle, AssetBundleMetrics? metrics, AssetBundleData[] dependencies) : base(assetBundle, ReportCategory.ASSET_BUNDLES)
+        internal AssetBundleData(InMemoryAssetBundle assetBundle, AssetBundleMetrics? metrics, AssetBundleData[] dependencies) : base(assetBundle.Bundle, ReportCategory.ASSET_BUNDLES)
         {
             // Dependencies cant be unloaded, since we don't know who will need them =(
             Metrics = metrics;
 
             this.mainAsset = null;
             this.assetType = null;
+            this.inMemoryAssetBundle = assetBundle;
             Dependencies = dependencies;
         }
 
-        public AssetBundleData(AssetBundle assetBundle, AssetBundleMetrics? metrics, GameObject mainAsset, AssetBundleData[] dependencies)
+        public AssetBundleData(InMemoryAssetBundle assetBundle, AssetBundleMetrics? metrics, GameObject mainAsset, AssetBundleData[] dependencies)
             : this(assetBundle, metrics, mainAsset, typeof(GameObject), dependencies) { }
 
         protected override ref ProfilerCounterValue<int> totalCount => ref ProfilingCounters.ABDataAmount;
@@ -65,13 +148,9 @@ namespace ECS.StreamableLoading.AssetBundles
         //When cache in cleaned, the AssetBundleData will be removed from the list. Its there doing nothing
         internal void UnloadAB()
         {
-            if (unloaded)
-                return;
-
+            if (unloaded) return;
             unloaded = true;
-
-            if (AssetBundle)
-                AssetBundle.UnloadAsync(false);
+            inMemoryAssetBundle.UnloadNotAllObjectsAsync().Forget();
         }
 
         protected override void DestroyObject()
@@ -82,8 +161,7 @@ namespace ECS.StreamableLoading.AssetBundles
             if (mainAsset != null)
                 Object.DestroyImmediate(mainAsset, true);
 
-            if (AssetBundle)
-                AssetBundle.UnloadAsync(unloadAllLoadedObjects: true);
+            inMemoryAssetBundle.UnloadAsync().Forget();
         }
 
         public T GetMainAsset<T>() where T: Object

@@ -40,7 +40,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
             try
             {
                 assetBundleData = await LoadAssetBundleSystem.CreateAssetBundleDataAsync(
-                    assetBundle,
+                   AssetBundleData.InMemoryAssetBundle.FromAssetBundle(assetBundle),
                     null,
                     typeof(GameObject),
                     "",

@@ -26,8 +26,6 @@ namespace ECS.StreamableLoading.AssetBundles
     [LogCategory(ReportCategory.ASSET_BUNDLES)]
     public partial class LoadAssetBundleSystem : PartialDownloadSystemBase<AssetBundleData, GetAssetBundleIntention>
     {
-        private const string METADATA_FILENAME = "metadata.json";
-        private const string METRICS_FILENAME = "metrics.json";
         private static readonly ThreadSafeObjectPool<AssetBundleMetadata> METADATA_POOL
             = new (() => new AssetBundleMetadata(),
                 actionOnRelease: metadata => metadata.Clear()
@@ -49,36 +47,25 @@ namespace ECS.StreamableLoading.AssetBundles
 
         protected override async UniTask<StreamableLoadingResult<AssetBundleData>> ProcessCompletedDataAsync(StreamableLoadingState state, GetAssetBundleIntention intention, IPartitionComponent partition, CancellationToken ct)
         {
-            AssetBundle? assetBundle;
             long count = Interlocked.Increment(ref performedCount);
 
-            {
-                ReportHub.Log(GetReportCategory(), $"{nameof(ProcessCompletedDataAsync)} Processing: {count}, {intention.Hash} {intention.ExpectedObjectType?.FullName} {intention.CommonArguments.URL.Value}");
-                using var memoryChain = state.ClaimOwnershipOverFullyDownloadedData();
-                using var memoryStream = memoryChain.AsStream();
-
-                await UniTask.SwitchToMainThread();
-                assetBundle = await AssetBundle.LoadFromStreamAsync(memoryStream)!;
-                ReportHub.Log(GetReportCategory(), $"{nameof(ProcessCompletedDataAsync)} Process finished: {count}, {intention.Hash} {intention.ExpectedObjectType?.FullName} {intention.CommonArguments.URL.Value}");
-            }
+            ReportHub.Log(GetReportCategory(), $"{nameof(ProcessCompletedDataAsync)} Processing: {count}, {intention.Hash} {intention.ExpectedObjectType?.FullName} {intention.CommonArguments.URL.Value}");
+            var memoryChain = state.ClaimOwnershipOverFullyDownloadedData();
+            AssetBundleData.InMemoryAssetBundle inMemoryAssetBundle = await AssetBundleData.InMemoryAssetBundle.NewAsync(memoryChain);
+            ReportHub.LogProductionInfo($"{nameof(ProcessCompletedDataAsync)} Process finished: {count}, {intention.Hash} {intention.ExpectedObjectType?.FullName} {intention.CommonArguments.URL.Value}");
 
             // Release budget now to not hold it until dependencies are resolved to prevent a deadlock
             state.AcquiredBudget!.Release();
 
-            if (assetBundle == null)
+            if (inMemoryAssetBundle.IsEmpty)
+            {
+                await inMemoryAssetBundle.UnloadAsync();
                 throw new NullReferenceException($"{intention.Hash} Asset Bundle is null");
+            }
 
             try
             {
-                // get metrics
-                string? metricsJSON;
-                string? metadataJSON;
-
-                using (AssetBundleLoadingMutex.LoadingRegion _ = await loadingMutex.AcquireAsync(ct))
-                {
-                    metricsJSON = assetBundle.LoadAsset<TextAsset>(METRICS_FILENAME)?.text;
-                    metadataJSON = assetBundle.LoadAsset<TextAsset>(METADATA_FILENAME)?.text;
-                }
+                (string? metricsJSON, string? metadataJSON) = await inMemoryAssetBundle.MetricsAndMetadataJsonAsync(loadingMutex, ct)!;
 
                 // Switch to thread pool to parse JSONs
                 await UniTask.SwitchToThreadPool();
@@ -105,17 +92,12 @@ namespace ECS.StreamableLoading.AssetBundles
                 string version = intention.Manifest != null ? intention.Manifest.GetVersion() : string.Empty;
                 string source = intention.CommonArguments.CurrentSource.ToStringNonAlloc();
 
-                StreamableLoadingResult<AssetBundleData> result = await CreateAssetBundleDataAsync(assetBundle, metrics, intention.ExpectedObjectType, mainAsset, loadingMutex, dependencies, GetReportData(), version, source, intention.LookForShaderAssets, ct);
+                StreamableLoadingResult<AssetBundleData> result = await CreateAssetBundleDataAsync(inMemoryAssetBundle, metrics, intention.ExpectedObjectType, mainAsset, loadingMutex, dependencies, GetReportData(), version, source, intention.LookForShaderAssets, ct);
                 return result;
             }
             catch (Exception)
             {
-                // If the loading process didn't finish successfully unload the bundle
-                await UniTask.SwitchToMainThread();
-
-                if (assetBundle)
-                    assetBundle.Unload(true);
-
+                await inMemoryAssetBundle.UnloadAsync();
                 throw;
             }
         }
@@ -133,7 +115,7 @@ namespace ECS.StreamableLoading.AssetBundles
         }
 
         internal static async UniTask<StreamableLoadingResult<AssetBundleData>> CreateAssetBundleDataAsync(
-            AssetBundle assetBundle,
+            AssetBundleData.InMemoryAssetBundle inMemoryAssetBundle,
             AssetBundleMetrics? metrics,
             Type? expectedObjType, string? mainAsset,
             AssetBundleLoadingMutex loadingMutex,
@@ -147,7 +129,7 @@ namespace ECS.StreamableLoading.AssetBundles
         {
             // if the type was not specified don't load any assets (we don't know when they will be indirectly requested)
             if (expectedObjType == null)
-                return new StreamableLoadingResult<AssetBundleData>(new AssetBundleData(assetBundle, metrics, dependencies));
+                return new StreamableLoadingResult<AssetBundleData>(new AssetBundleData(inMemoryAssetBundle, metrics, dependencies));
 
             if (lookForShaderAssets && expectedObjType == typeof(GameObject))
             {
@@ -155,12 +137,12 @@ namespace ECS.StreamableLoading.AssetBundles
                 //All gameobject asset bundles should at least have the dependency on the shader.
                 //This will cause a material leak, as the same material will be loaded again. This needs to be solved at asset bundle level
                 if (dependencies.Length == 0)
-                    throw new AssetBundleContainsShaderException(assetBundle.name);
+                    throw new AssetBundleContainsShaderException(inMemoryAssetBundle.Bundle.name);
             }
 
-            Object? asset = await LoadAllAssetsAsync(assetBundle, expectedObjType, mainAsset, loadingMutex, reportCategory, ct);
+            Object? asset = await LoadAllAssetsAsync(inMemoryAssetBundle.Bundle, expectedObjType, mainAsset, loadingMutex, reportCategory, ct);
 
-            var assetBundleData = new AssetBundleData(assetBundle, metrics, asset, expectedObjType, dependencies,
+            var assetBundleData = new AssetBundleData(inMemoryAssetBundle, metrics, asset, expectedObjType, dependencies,
                 version: version,
                 source: source);
 
