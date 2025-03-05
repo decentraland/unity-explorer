@@ -258,7 +258,30 @@ namespace DCL.Friends
 
             async UniTask OpenStreamAndProcessUpdatesAsync()
             {
-
+                // IUniTaskAsyncEnumerable<FriendConnectivityUpdate> stream =
+                //     module!.CallServerStream<FriendConnectivityUpdate>(SUBSCRIBE_TO_BLOCK_STATUS_UPDATES, new Empty());
+                //
+                // await foreach (var response in stream.WithCancellation(ct))
+                // {
+                //     try
+                //     {
+                //         switch (response.Status)
+                //         {
+                //             case UserBlockedUpdate.Blocked:
+                //                 eventBus.BroadcastOtherUserBlockedYou(ToClientFriendProfile(response.Friend));
+                //                 break;
+                //             case UserBlockedUpdate.Unblocked:
+                //                 eventBus.BroadcastOtherUserUnblockedYou(ToClientFriendProfile(response.Friend));
+                //                 break;
+                //         }
+                //     }
+                //
+                //     // Do exception handling as we need to keep the stream open in case we have an internal error in the processing of the data
+                //     catch (Exception e) when (e is not OperationCanceledException)
+                //     {
+                //         ReportHub.LogException(e, new ReportData(ReportCategory.FRIENDS));
+                //     }
+                // }
             }
         }
 
@@ -300,7 +323,7 @@ namespace DCL.Friends
             //     },
             // }, ct);
             //
-            // eventBus.BroadcastThatYouRejectedFriendRequestReceivedFromOtherUser(friendId);
+            // eventBus.BroadcastYouBlockedProfile(response.BlockedProfile);
         }
 
         public async UniTask UnblockUserAsync(string userId, CancellationToken ct)
@@ -318,7 +341,7 @@ namespace DCL.Friends
             //     },
             // }, ct);
             //
-            // eventBus.BroadcastThatYouRejectedFriendRequestReceivedFromOtherUser(friendId);
+            // eventBus.BroadcastYouUnblockedProfile(response.BlockedProfile);
         }
 
         public async UniTask<UserBlockingStatus> GetUserBlockingStatusAsync(CancellationToken ct)
