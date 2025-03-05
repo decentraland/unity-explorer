@@ -111,7 +111,8 @@ namespace DCL.Optimization.Memory
 
         private void AllocateNewSlab()
         {
-            slabs.Add(allocator.Allocate());
+            SlabItem newSlab = allocator.Allocate();
+            slabs.Add(newSlab);
             leftSpaceInLast = LastSpan().Length;
         }
 
