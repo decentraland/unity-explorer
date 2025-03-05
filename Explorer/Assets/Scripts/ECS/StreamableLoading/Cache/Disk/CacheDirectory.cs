@@ -16,6 +16,9 @@ namespace ECS.StreamableLoading.Cache.Disk
             this.Path = path;
         }
 
+        public static CacheDirectory NewExact(string fullPath) =>
+            new (fullPath);
+
         public static CacheDirectory New(string subdirectory)
         {
             string dirPath = System.IO.Path.Combine(Application.persistentDataPath!, subdirectory);

@@ -1,7 +1,9 @@
 using DCL.Diagnostics;
 using DCL.Optimization.Hashing;
 using DCL.Optimization.ThreadSafePool;
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Text;
 
 namespace ECS.StreamableLoading.Cache.Disk
@@ -40,6 +42,20 @@ namespace ECS.StreamableLoading.Cache.Disk
             ReportHub.Log(ReportCategory.DISK_CACHE, $"Hash name from key to {path}");
 
             return path;
+        }
+
+        /// <summary>
+        /// Not optimised for production use, replace byte[]
+        /// </summary>
+        public static (HashKey key, string extension) UnpackedFromPath(string path)
+        {
+            string extension = Path.GetExtension(path) ?? string.Empty;
+            string withoutExtension = Path.GetFileNameWithoutExtension(path)!;
+            byte[]? bytes = HashUtility.BytesFromString(withoutExtension);
+            var memory = OwnedMemory.FromPool(bytes.Length);
+            Buffer.BlockCopy(bytes, 0, memory.Memory, 0, bytes.Length);
+            var hash = HashKey.FromOwnedMemory(memory);
+            return (hash, extension);
         }
     }
 }

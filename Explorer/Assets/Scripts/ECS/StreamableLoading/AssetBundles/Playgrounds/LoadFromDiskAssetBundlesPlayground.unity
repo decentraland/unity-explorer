@@ -228,7 +228,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c089e087971d49fcbe0d2be18e18a3e5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  dirPath: /Users/nickkhalow/Library/Application Support/Decentraland/Explorer/partialsTrue
+  dirPath: /Users/nickkhalow/Library/Application Support/Decentraland/Explorer/DiskCacheV1/partials
 --- !u!114 &917619050
 MonoBehaviour:
   m_ObjectHideFlags: 0
