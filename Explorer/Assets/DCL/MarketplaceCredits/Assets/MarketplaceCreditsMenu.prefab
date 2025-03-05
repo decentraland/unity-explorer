@@ -156,8 +156,8 @@ GameObject:
   - component: {fileID: 1294365732413967683}
   - component: {fileID: 2799808484097172145}
   - component: {fileID: 3010431317392945909}
-  - component: {fileID: 3765102252090958517}
   - component: {fileID: 3907901269748301517}
+  - component: {fileID: 3765102252090958517}
   m_Layer: 5
   m_Name: MarketplaceCreditsMenu
   m_TagString: Untagged
@@ -297,6 +297,20 @@ MonoBehaviour:
   m_FlexibleWidth: -1
   m_FlexibleHeight: -1
   m_LayoutPriority: 1
+--- !u!114 &3907901269748301517
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4785629390260472247}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 38b1c5e9144d4ef39861c60d5bc3c592, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  <fadeTime>k__BackingField: 0.3
+  <canvasGroup>k__BackingField: {fileID: 2799808484097172145}
 --- !u!114 &3765102252090958517
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -315,20 +329,8 @@ MonoBehaviour:
   <CloseButtons>k__BackingField:
   - {fileID: 759566672434952338}
   - {fileID: 4723671895938667204}
---- !u!114 &3907901269748301517
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4785629390260472247}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 38b1c5e9144d4ef39861c60d5bc3c592, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  <fadeTime>k__BackingField: 0.3
-  <canvasGroup>k__BackingField: {fileID: 2799808484097172145}
+  <WelcomeView>k__BackingField: {fileID: 4266060441270789246}
+  <GoalsOfTheWeekView>k__BackingField: {fileID: 6987591857266816133}
 --- !u!1 &8035103094975700236
 GameObject:
   m_ObjectHideFlags: 0
@@ -467,6 +469,17 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 87ffd39b3543c5341a4d626fdf11f366, type: 3}
+--- !u!114 &6987591857266816133 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 8976313059006562759, guid: 87ffd39b3543c5341a4d626fdf11f366, type: 3}
+  m_PrefabInstance: {fileID: 2047639121429902658}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 947e9369018e43d88a43d93109c9bcba, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!224 &7821805712663718647 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 8135205393400111029, guid: 87ffd39b3543c5341a4d626fdf11f366, type: 3}
@@ -486,7 +499,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7820506595964585650, guid: 2239fe1869970f040b9940962d97930d, type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8982438740495392865, guid: 2239fe1869970f040b9940962d97930d, type: 3}
       propertyPath: m_Pivot.x
@@ -573,6 +586,17 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 2239fe1869970f040b9940962d97930d, type: 3}
+--- !u!114 &4266060441270789246 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 166880078770281896, guid: 2239fe1869970f040b9940962d97930d, type: 3}
+  m_PrefabInstance: {fileID: 4135702840481659350}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2eb3edb4c76f46ab960203119a32d6d6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!224 &5029675962775951799 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 8982438740495392865, guid: 2239fe1869970f040b9940962d97930d, type: 3}

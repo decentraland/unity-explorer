@@ -13,8 +13,10 @@ namespace DCL.MarketplaceCredits
         private readonly MarketplaceCreditsMenuView view;
         private readonly HoverableAndSelectableButtonWithAnimator sidebarButton;
         private readonly ISidebarBus sidebarBus;
+        private readonly MarketplaceCreditsWelcomeController marketplaceCreditsWelcomeController;
+        private readonly MarketplaceCreditsGoalsOfTheWeekController marketplaceCreditsGoalsOfTheWeekController;
 
-        private CancellationTokenSource marketplaceCreditsCts;
+        private CancellationTokenSource showHideMenuCts;
 
         public MarketplaceCreditsMenuController(
             MarketplaceCreditsMenuView view,
@@ -27,6 +29,9 @@ namespace DCL.MarketplaceCredits
 
             foreach (Button closeButton in view.CloseButtons)
                 closeButton.onClick.AddListener(ClosePanel);
+
+            marketplaceCreditsWelcomeController = new MarketplaceCreditsWelcomeController(view.WelcomeView, this);
+            marketplaceCreditsGoalsOfTheWeekController = new MarketplaceCreditsGoalsOfTheWeekController(view.GoalsOfTheWeekView, this);
         }
 
         public void OpenPanel()
@@ -34,8 +39,9 @@ namespace DCL.MarketplaceCredits
             if (view.gameObject.activeSelf)
                 return;
 
-            marketplaceCreditsCts = marketplaceCreditsCts.SafeRestart();
-            view.ShowAsync(marketplaceCreditsCts.Token).Forget();
+            showHideMenuCts = showHideMenuCts.SafeRestart();
+            view.ShowAsync(showHideMenuCts.Token).Forget();
+            view.OpenSectionView(MarketplaceCreditsSection.WELCOME);
         }
 
         public void ClosePanel()
@@ -44,17 +50,23 @@ namespace DCL.MarketplaceCredits
                 return;
 
             sidebarBus.UnblockSidebar();
-            marketplaceCreditsCts = marketplaceCreditsCts.SafeRestart();
-            view.HideAsync(marketplaceCreditsCts.Token).Forget();
+            showHideMenuCts = showHideMenuCts.SafeRestart();
+            view.HideAsync(showHideMenuCts.Token).Forget();
             sidebarButton.Deselect();
         }
 
+        public void OpenSectionView(MarketplaceCreditsSection section) =>
+            view.OpenSectionView(section);
+
         public void Dispose()
         {
-            marketplaceCreditsCts.SafeCancelAndDispose();
+            showHideMenuCts.SafeCancelAndDispose();
 
             foreach (Button closeButton in view.CloseButtons)
-                closeButton.onClick.RemoveListener(ClosePanel);
+                closeButton.onClick.RemoveAllListeners();
+
+            marketplaceCreditsWelcomeController.Dispose();
+            marketplaceCreditsGoalsOfTheWeekController.Dispose();
         }
     }
 }

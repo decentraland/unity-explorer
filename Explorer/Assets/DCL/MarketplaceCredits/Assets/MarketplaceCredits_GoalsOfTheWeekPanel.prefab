@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 8135205393400111029}
   - component: {fileID: 8926350402708237147}
   - component: {fileID: 3957008472686966436}
+  - component: {fileID: 8976313059006562759}
   m_Layer: 5
   m_Name: MarketplaceCredits_GoalsOfTheWeekPanel
   m_TagString: Untagged
@@ -75,3 +76,15 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 2
+--- !u!114 &8976313059006562759
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5507880821520102086}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 947e9369018e43d88a43d93109c9bcba, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 

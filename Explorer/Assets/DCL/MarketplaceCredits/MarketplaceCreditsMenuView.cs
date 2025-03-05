@@ -5,9 +5,36 @@ using UnityEngine.UI;
 
 namespace DCL.MarketplaceCredits
 {
+    public enum MarketplaceCreditsSection
+    {
+        WELCOME,
+        GOALS_OF_THE_WEEK,
+    }
+
     public class MarketplaceCreditsMenuView : ViewBaseWithAnimationElement
     {
         [field: SerializeField]
-        public List<Button> CloseButtons { get; private set; } = null!;
+        public List<Button> CloseButtons { get; private set; }
+
+        [field: SerializeField]
+        public MarketplaceCreditsWelcomeView WelcomeView { get; private set; }
+
+        [field: SerializeField]
+        public MarketplaceCreditsGoalsOfTheWeekView GoalsOfTheWeekView { get; private set; }
+
+        public void OpenSectionView(MarketplaceCreditsSection section)
+        {
+            switch (section)
+            {
+                case MarketplaceCreditsSection.WELCOME:
+                    WelcomeView.gameObject.SetActive(true);
+                    GoalsOfTheWeekView.gameObject.SetActive(false);
+                    break;
+                case MarketplaceCreditsSection.GOALS_OF_THE_WEEK:
+                    WelcomeView.gameObject.SetActive(false);
+                    GoalsOfTheWeekView.gameObject.SetActive(true);
+                    break;
+            }
+        }
     }
 }
