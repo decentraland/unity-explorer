@@ -26,7 +26,7 @@ namespace Utility.Tests
             chain.AppendData(span);
 
             var buffer = new byte[SIZE];
-            using var stream = chain.AsStream();
+            using var stream = chain.ToStream();
             stream.Read(buffer);
 
             CollectionAssert.AreEqual(span.ToArray(), buffer);
@@ -48,7 +48,7 @@ namespace Utility.Tests
 
             chain.AppendData(randomData, size);
 
-            var stream = chain.AsStream();
+            var stream = chain.ToStream();
 
             var buffer = new byte[stream.Length];
 
@@ -77,7 +77,7 @@ namespace Utility.Tests
             while (iterator.MoveNext())
                 second.AppendData(iterator.Current.Span);
 
-            using var stream = second.AsStream();
+            using var stream = second.ToStream();
             var buffer = new byte[stream.Length];
             stream.Read(buffer);
 
