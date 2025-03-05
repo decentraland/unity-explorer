@@ -9,6 +9,8 @@ namespace DCL.Diagnostics
     {
         public const string FEATURE_FLAGS = nameof(FEATURE_FLAGS);
 
+        public const string ALLOCATORS = nameof(ALLOCATORS);
+
         /// <summary>
         ///     Everything connected to raw assets and addressables
         /// </summary>

@@ -30,12 +30,30 @@ namespace Utility.Memory
         }
     }
 
+    public readonly struct SlabAllocatorInfo
+    {
+        public readonly int TotalAllocatedMemory;
+        public readonly int ChunkSize;
+        public readonly int ChunksCount;
+        public readonly int ChunksInUseCount;
+
+        public SlabAllocatorInfo(int totalAllocatedMemory, int chunkSize, int chunksCount, int chunksInUseCount)
+        {
+            TotalAllocatedMemory = totalAllocatedMemory;
+            ChunkSize = chunkSize;
+            ChunksCount = chunksCount;
+            ChunksInUseCount = chunksInUseCount;
+        }
+    }
+
     public interface ISlabAllocator : IDisposable
     {
         /// <summary>
         /// Shared slab allocator with size 16 MB per slab
         /// </summary>
         public static readonly ThreadSafeSlabAllocator<DynamicSlabAllocator> SHARED = new (new DynamicSlabAllocator(128 * 1024, 128));
+
+        SlabAllocatorInfo Info { get; }
 
         bool CanAllocate { get; }
 
@@ -55,7 +73,7 @@ namespace Utility.Memory
 
         public SlabAllocator(int chunkSize, int chunksCount) : this()
         {
-            unsafe { ptr = new IntPtr(UnsafeUtility.Malloc(chunkSize * chunksCount, 64, Allocator.Persistent)); }
+            unsafe { ptr = new IntPtr(UnsafeUtility.Malloc(chunkSize * chunksCount, 64, Allocator.Persistent)!); }
 
             this.chunkSize = chunkSize;
             this.chunksCount = chunksCount;
@@ -66,6 +84,8 @@ namespace Utility.Memory
             for (int i = 0; i < freeCount; i++)
                 freeIndexes[i] = i;
         }
+
+        public readonly SlabAllocatorInfo Info => new (chunkSize * chunksCount, chunkSize, chunksCount, chunksCount - freeCount);
 
         public bool CanAllocate => freeCount > 0;
 
@@ -92,7 +112,8 @@ namespace Utility.Memory
             if (disposed)
                 return;
 
-            unsafe { UnsafeUtility.Free(ptr.ToPointer(), Allocator.Persistent); }
+            unsafe { UnsafeUtility.Free(ptr.ToPointer()!, Allocator.Persistent); }
+
             freeIndexes.Dispose();
             disposed = true;
         }
@@ -139,6 +160,26 @@ namespace Utility.Memory
             allocators.Add(allocator);
             freeAllocators.Add(index);
             ptrToAllocatorIndex.Add(allocator.ptr, index);
+        }
+
+        public SlabAllocatorInfo Info
+        {
+            get
+            {
+                int count = allocators.Length;
+                int totalAllocatedMemory = 0;
+                int chunksInUseCount = 0;
+
+                for (int i = 0; i < count; i++)
+                {
+                    ref SlabAllocator allocator = ref AllocatorAt(i);
+                    var info = allocator.Info;
+                    totalAllocatedMemory += info.TotalAllocatedMemory;
+                    chunksInUseCount += info.ChunksInUseCount;
+                }
+
+                return new SlabAllocatorInfo(totalAllocatedMemory, chunkSize, chunksCount * count, chunksInUseCount);
+            }
         }
 
         public bool CanAllocate => true;
@@ -193,6 +234,14 @@ namespace Utility.Memory
         public void Dispose()
         {
             lock (this) { allocator.Dispose(); }
+        }
+
+        public SlabAllocatorInfo Info
+        {
+            get
+            {
+                lock (this) { return allocator.Info; }
+            }
         }
 
         public bool CanAllocate

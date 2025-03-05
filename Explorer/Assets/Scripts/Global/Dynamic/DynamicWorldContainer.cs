@@ -1,6 +1,7 @@
 using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.Allocators;
 using DCL.AssetsProvision;
 using DCL.Audio;
 using DCL.AvatarRendering.Emotes;
@@ -68,6 +69,7 @@ using DCL.PluginSystem.Global;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.RealmNavigation;
+using DCL.Roads.Systems;
 using DCL.SceneLoadingScreens.LoadingScreen;
 using DCL.SidebarBus;
 using DCL.UI.MainUI;
@@ -589,6 +591,7 @@ namespace Global.Dynamic
                 new EmotePlugin(staticContainer.WebRequestsContainer.WebRequestController, emotesCache, staticContainer.RealmData, multiplayerEmotesMessageBus, debugBuilder,
                     assetsProvisioner, selfProfile, mvcManager, dclInput, staticContainer.CacheCleaner, identityCache, entityParticipantTable, assetBundlesURL, mainUIView, dclCursor, staticContainer.InputBlock, globalWorld, playerEntity, builderContentURL.Value),
                 new ProfilingPlugin(staticContainer.Profiler, staticContainer.RealmData, staticContainer.SingletonSharedDependencies.MemoryBudget, debugBuilder, staticContainer.ScenesCache, dclVersion),
+                new AllocatorsPlugin(debugBuilder),
                 new AvatarPlugin(
                     staticContainer.ComponentsContainer.ComponentPoolsRegistry,
                     assetsProvisioner,

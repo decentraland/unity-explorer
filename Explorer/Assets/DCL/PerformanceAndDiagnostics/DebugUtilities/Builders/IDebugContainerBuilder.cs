@@ -32,6 +32,7 @@ namespace DCL.DebugUtilities
             public const string CURRENT_SCENE = "Current scene";
             public const string REALM = "Realm";
             public const string ANALYTICS = "Analytics";
+            public const string ALLOCATORS = "Allocators";
         }
     }
 
