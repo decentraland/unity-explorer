@@ -14,14 +14,23 @@ namespace DCL.SDKComponents.CameraControl.MainCamera
     {
         private const float MINIMUM_LOOK_AT_DISTANCE_SQR = 0.25f * 0.25f;
 
-        public static bool TryGetVirtualCameraComponent(in World world, IReadOnlyDictionary<CRDTEntity,Entity> entitiesMap, CRDTEntity targetCRDTEntity, out VirtualCameraComponent? returnComponent)
+        public static bool TryGetVirtualCameraComponents(
+            in World world,
+            IReadOnlyDictionary<CRDTEntity,Entity> entitiesMap,
+            CRDTEntity targetCRDTEntity,
+            out VirtualCameraComponent? returnComponent,
+            out PBVirtualCamera? returnPBComponent)
         {
             returnComponent = null;
+            returnPBComponent = null;
+
             if (!entitiesMap.TryGetValue(targetCRDTEntity, out Entity virtualCameraEntity)
-                || !world.TryGet(virtualCameraEntity, out VirtualCameraComponent virtualCameraComponent))
+                || !world.TryGet(virtualCameraEntity, out VirtualCameraComponent virtualCameraComponent)
+                || !world.TryGet(virtualCameraEntity, out PBVirtualCamera? pbVirtualCameraComponent))
                 return false;
 
             returnComponent = virtualCameraComponent;
+            returnPBComponent = pbVirtualCameraComponent;
 
             return true;
         }
@@ -38,12 +47,8 @@ namespace DCL.SDKComponents.CameraControl.MainCamera
             return null;
         }
 
-        public static void ConfigureVirtualCameraTransition(in World world, IReadOnlyDictionary<CRDTEntity,Entity> entitiesMap, IExposedCameraData cameraData, CRDTEntity virtualCamCRDTEntity, float distanceBetweenCameras)
+        public static void ConfigureVirtualCameraTransition(IExposedCameraData cameraData, in PBVirtualCamera pbVirtualCamera, float distanceBetweenCameras)
         {
-            if (!entitiesMap.TryGetValue(virtualCamCRDTEntity, out Entity vCamEntity)) return;
-
-            var pbVirtualCamera = world.Get<PBVirtualCamera>(vCamEntity);
-
             // Using cinemachine custom blends array doesn't work because there's no direct way of getting the custom
             //  blend index, and we would have to hardcode it...
             if (pbVirtualCamera.DefaultTransition == null)
@@ -99,15 +104,8 @@ namespace DCL.SDKComponents.CameraControl.MainCamera
             }
         }
 
-        public static void ConfigureVirtualCameraFOV(
-            in World world,
-            IReadOnlyDictionary<CRDTEntity,Entity> entitiesMap,
-            CRDTEntity virtualCamCRDTEntity,
-            in VirtualCameraComponent virtualCameraComponent)
+        public static void ConfigureVirtualCameraFOV(in PBVirtualCamera pbVirtualCamera, in VirtualCameraComponent virtualCameraComponent)
         {
-            if (!entitiesMap.TryGetValue(virtualCamCRDTEntity, out Entity vCamEntity)) return;
-
-            var pbVirtualCamera = world.Get<PBVirtualCamera>(vCamEntity);
             if (!pbVirtualCamera.HasFov) return;
 
             var freeLookCamera = virtualCameraComponent.virtualCameraInstance;
